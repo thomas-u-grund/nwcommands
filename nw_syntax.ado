@@ -3,14 +3,14 @@
 *! Author      : Thomas Grund, University College Dublin
 *! Email	   : thomas.u.grund@gmail.com
 
-capture program drop _nwsyntax
-program _nwsyntax
+capture program drop nw_syntax
+program nw_syntax
 	syntax [anything],[max(integer 1) min(passthru) nocurrent name(string)]
 	unw_defs
 	
 	if "`_dta[NWversion]'" == "" {
 		char _dta[NWversion] = "2"
-		mata: `nw' = nws_create()
+		mata: nw = nws_create()
 	}
 
 	if "`name'" == "" {
@@ -35,14 +35,14 @@ program _nwsyntax
 	}
 
 	if "`anything'" == ""  & "`current'" == ""{
-		mata: st_local("_temp", `nws'.get_current_name())
-		mata: st_numscalar("r(id)",`nws'.get_index_of_current())
+		mata: st_local("_temp", nw.nws.get_current_name())
+		mata: st_numscalar("r(id)",nw.nws.get_index_of_current())
 	}
 	else {
 		capture nwunab _temp : `anything', max(`max') `min'
 		local networks_count : word count `_temp'
 		local lastnet : word `networks_count' of `_temp'
-		mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
+		mata: st_numscalar("r(id)", first_index_match(nw.nws.names, "`lastnet'"))
 	}
 
 	c_local `netobj' "`nws'.pdefs[`r(id)']"

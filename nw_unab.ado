@@ -3,8 +3,8 @@
 *! Author      : Thomas Grund, University College Dublin
 *! Email	   : thomas.u.grund@gmail.com
 
-capture program drop nwunab
-program nwunab, rclass
+capture program drop nw_unab
+program nw_unab, rclass
 	syntax anything, [ min(passthru) max(passthru)]
 	gettoken macro_name _temp : anything, parse(":")
 	local _temp : subinstr local _temp ":" ""
@@ -13,7 +13,8 @@ program nwunab, rclass
 	
 	preserve
 	drop _all
-	mata: st_global("r(names)", nw.nws.get_names())
+	unw_defs
+	mata: st_global("r(names)", `nw.nws'.get_names())
 	foreach n in `r(names)' {
 		noi gen `n' = .
 	}

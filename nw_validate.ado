@@ -1,7 +1,10 @@
-//!! Deprecated
+*! Date        : 15oct2015
+*! Version     : 2.0
+*! Author      : Thomas Grund, University College Dublin
+*! Email	   : thomas.u.grund@gmail.com
 
-capture program drop nwvalidate
-program nwvalidate
+capture program drop nw_validate
+program nw_validate
 	syntax anything(name=netname) [, self(string) ]
 	unw_defs
 	
@@ -21,4 +24,3 @@ program nwvalidate
 		mata: st_global("r(exists)", "false")
 	}
 end
-
