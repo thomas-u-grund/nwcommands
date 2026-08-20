@@ -36,7 +36,7 @@ Cheap, high-confidence fixes to things already built:
 Highest-value additions for credible igraph-style coverage:
 - Complete the distance-family sparse migration (unblocks `nwcloseness`/`nwgeodesic`/`nwreach`/`nwbridges`/`nwpath` scalability).
 - ✅ Cohesive subgroups: k-cores — `nwkcore` + `NWdef::calculate_kcore()`, sparse-neighbor-based degree-peeling (Seidman 1983), certified against 4 hand-computable cases (see `docs/CERTIFICATION.md`). **Remaining**: cliques/k-plexes.
-- Per-node eccentricity + network radius (small addition to `nwgeodesic`'s existing distance computation).
+- ✅ Per-node eccentricity + network radius — added to `nwgeodesic` (`generate()`, `r(radius)`). Surfaced a genuine Stata `syntax`-parser bug along the way (see `docs/CERTIFICATION.md`).
 - Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — also directly useful as an ERGM/one-mode-projection primitive later.
 
 ## Stage 3 — Classical social network analysis (high priority per project brief)
@@ -86,7 +86,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 11. CUG test wrapper around `nwrandom, census()` — Medium value, Small effort
 12. Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort
 13. Structural-equivalence workflow packaging + role-variable output — Medium value, Small effort
-14. Per-node eccentricity + radius — Low-medium value, Trivial effort
+14. ✅ Per-node eccentricity + radius — Low-medium value, Trivial effort — done (`nwgeodesic`)
 15. Ego-network induced-subgraph extraction — Medium value (unblocks ego-network size/density/composition), Medium effort
 16. Export-format parity (add GML/GraphML/edgelist to `nwexport`) — Low-medium value, Small effort
 17. CONCOR — Medium value, Medium effort

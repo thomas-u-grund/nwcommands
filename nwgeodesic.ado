@@ -24,6 +24,7 @@
 {opt sympopt(options)}
 {opth name(string)}
 {opt nwreplace}
+{opth generate(newvarname)}
 {opt xvars}]
 
 
@@ -35,6 +36,7 @@
 {synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
+{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; default = {it:_eccentricity}{p_end}
 {synopt:{opt xvars}}Do not generate Stata variables{p_end}
 
 
@@ -48,6 +50,15 @@ is saved as a new network called {help newnetname} (default: {it:geodesic}).
 {pstd}
 With option {opt sym} the distances are calculated from the symmetrized network. Option {opt symopt()}
 allows control over the symmetrization (see options in {help nwsym}).
+
+{pstd}
+{cmd:nwgeodesic} also generates a new variable (default: {it:_eccentricity}) that stores each node's
+{it:eccentricity} - the length of the longest shortest path from that node to any other node - and
+returns the network's {it:radius} (the smallest eccentricity across all nodes) as {bf:r(radius)}.
+Like the diameter, both are undefined (missing for a node's eccentricity; {bf:r(radius) = -1}) when
+the network has unconnected pairs and {bf:unconnected()} was not specified. An existing {it:generate()}
+variable is overwritten when {bf:nwreplace} is specified (there is no separate {bf:replace} option for
+just the variable).
 
 {pstd}
 By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. Non-existent paths are excluded from 
@@ -107,7 +118,8 @@ networks, and centrality. {it:Physical Review E} 64, 016132.
     {txt}    Paths: {res}120
     {txt}    Unconnected paths: {res} 15
     {txt}    Average shortest path length: {res} (not defined)
-    {txt}    Diameter: {res} (not defined){txt}
+    {txt}    Diameter: {res} (not defined)
+    {txt}    Radius: {res} (not defined){txt}
 
 {pstd}
 In this first example, the average shortest path length is not defined because there
@@ -131,6 +143,11 @@ them the length 6.
     {txt}    Average shortest path length: {res} 2.925
     {txt}    Diameter: {res} 6{txt}
 
+{pstd}
+({cmd:nwgeodesic} also reports the network {it:radius} - the minimum node eccentricity - as an
+additional line here, and, unless {bf:xvars} is specified, generates a per-node {it:_eccentricity}
+variable; not reproduced above since it depends on live data.)
+
 	
 {title:Stored results}	
 
@@ -138,6 +155,7 @@ them the length 6.
 	  {bf:r(nodes)}		number of nodes
 	  {bf:r(numpaths)}	number of shortest paths
 	  {bf:r(diameter)}	network diameter
+	  {bf:r(radius)}	network radius (minimum node eccentricity)
 	  {bf:r(avgpath)}	average shortest path length
 		  
 	Macros
@@ -154,7 +172,7 @@ them the length 6.
 capture program drop nwgeodesic
 program nwgeodesic
 	version 9
-	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) xvars unconnected(string) sym symopt(string)]
+	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) xvars unconnected(string) sym symopt(string) generate(string)]
 
 	capture
 	unw_defs
@@ -167,8 +185,24 @@ program nwgeodesic
 	
 	tempname symnet
 	local symmetrized "false"
-	
-	nw_syntax `netname', max(1)	
+
+	nw_syntax `netname', max(1)
+
+	local eccvar "`generate'"
+	if "`eccvar'" == "" {
+		local eccvar "_eccentricity"
+	}
+	// Deliberately reuses nwreplace (not a separate replace option): this
+	// syntax line already declares a dead, unused `noreplace' option, and
+	// Stata's syntax parser silently fails to populate a `replace' local
+	// when both `replace' and `noreplace' are declared together - verified
+	// directly rather than assumed. Piggybacking on the existing, already-
+	// working nwreplace avoids the collision entirely.
+	capture confirm variable `eccvar'
+	if _rc == 0 & "`nwreplace'" == "" {
+		di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
+		err 99
+	}
 
 	if "`sym'" != "" {
 		di "{txt}Geodesics calculated on the symmetrized network."
@@ -245,11 +279,27 @@ program nwgeodesic
 	mata: st_global("r(symmetrized)", "`symmetrized'")
 	mata: st_numscalar("r(diameter)", max(*`netobj'->get_matrix()))
 	mata: st_numscalar("r(alpha)", `alpha')
-	
+
+	// Per-node eccentricity (max distance from a node to any other node) and
+	// network radius (min eccentricity). Missing propagates through max()
+	// exactly like it already does for r(diameter) above: a node that
+	// cannot reach every other node has undefined (missing) eccentricity
+	// unless unconnected() was specified.
+	tempname __nw_ecc
+	mata: `__nw_ecc' = rowmax(*`netobj'->get_matrix())
+	mata: st_numscalar("r(radius)", min(`__nw_ecc'))
+	if "`xvars'" == "" {
+		qui capture drop `eccvar'
+		qui gen `eccvar' = .
+		mata: st_store((1::`nodes'), "`eccvar'", `__nw_ecc')
+	}
+	mata: mata drop `__nw_ecc'
+
 	// Adjust for unconnected networks
 	if `r(unconnected)' != 0 & "`unconnected'" == "" {
 		mata: st_numscalar("r(avgpath)", -1)
 		mata: st_numscalar("r(diameter)",-1)
+		mata: st_numscalar("r(radius)",-1)
 	}
 
 	di "{hline 40}"
@@ -277,11 +327,13 @@ program nwgeodesic
 	
 	if `r(unconnected)' == 0 | "`unconnected'" != "" {
 		di "{txt}    Average shortest path length: {res} `r(avgpath)'"
-		di "{txt}    Diameter: {res} `r(diameter)'"	
+		di "{txt}    Diameter: {res} `r(diameter)'"
+		di "{txt}    Radius: {res} `r(radius)'"
 	}
 	else {
 		di "{txt}    Average shortest path length: {res} (not defined)"
-		di "{txt}    Diameter: {res} (not defined)"	
+		di "{txt}    Diameter: {res} (not defined)"
+		di "{txt}    Radius: {res} (not defined)"
 	}
 
 	capture _return drop _geo
