@@ -14,6 +14,7 @@ f animate.ado
 f nw2fromedge.ado
 f nw2project.ado
 f nwaddnodes.ado
+f nwbalance.ado
 f nwbetween.ado
 f nwburt.ado
 f nwclear.ado

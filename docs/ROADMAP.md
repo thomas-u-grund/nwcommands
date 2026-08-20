@@ -23,9 +23,9 @@ Commits 1-7 complete and verified (see `docs/SPARSE_BACKEND.md`): additive CSR/C
 ## Stage 1 — Consolidate existing functionality
 
 Cheap, high-confidence fixes to things already built:
-- Fix `nwgenvar.ado` (dead code — filename/program-name mismatch, never actually loadable).
-- Fix or remove `nwgenerate.ado`'s 8 dead commented-out dispatch branches (`dyadprob`/`homophily`/`lattice`/`path`/`pref`/`ring`/`small`/`transpose`).
-- Document `nwbalance.ado` (structural balance) — write `.sthlp`, add `cscripts/test_nwbalance.do`. Real, correct, currently invisible.
+- ✅ Fixed `nwgenvar.ado` (was dead code — filename/program-name mismatch, never actually loadable; now a genuine thin wrapper matching `nwgen.ado`).
+- ✅ `nwgenerate.ado`'s 8 dead commented-out dispatch branches (`dyadprob`/`homophily`/`lattice`/`path`/`pref`/`ring`/`small`/`transpose`) now error clearly instead of silently no-op'ing. **Remaining**: actually restore each shortcut against its target command's current syntax (each needs individual verification — the commented-out bodies predate several syntax changes) — Medium effort, not done yet.
+- ✅ Documented `nwbalance.ado` (structural balance) — `.sthlp` written, `cscripts/test_nwbalance.do` added, certified against a hand-derived signed-K4 worked example. Also fixed a real bug (`save test, replace` polluting the user's working directory with an unused debug file). **Found, not fixed**: a network with zero closed triads errors instead of returning zero — the Stata-reshape-based triad enumeration pipeline needs an empty-result guard; flagged as its own follow-up (Small-Medium effort) rather than risked in the same pass as the documentation work.
 - Document `nwrecode.ado` — write `.sthlp`. Real, correct, currently invisible.
 - Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwqap`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors.
 - Migrate `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors (small, low-risk, already-proven pattern).

@@ -35,12 +35,16 @@ Per-feature stage tracking. A feature is not "done" until all four stages are ch
 | `nw2project` (two-mode one-mode projection) | ✅ | ✅ | ✅ | ✅ | Phantom command (spec existed, .ado didn't) built fresh, sparse-native. All 5 `stat()` formulas match the pre-existing documented worked example exactly. `test_nw2project.do`, both modes. |
 | `nwburt` (Burt structural holes: effsize/efficiency/constraint/hierarchy) | ✅ | ✅ | ✅ | ✅ | Revived from git history (`master:nwburt.ado`), modernized (`nw_syntax`, `st_store`, `replace` guard). Found and fixed a real bug in the process: matrix multiplication on a missing-diagonal input silently corrupts every two-step redundancy/constraint calculation to 0 — fixed by zeroing the diagonal before the matrix products. `test_nwburt.do`, both modes, matches both documented worked examples (star=3, K4=1) and a from-scratch regression re-derivation of the historical formulas. |
 
+| `nwgenvar` dead-code fix | ✅ | ✅ | ✅ | ✅ (inherits `nwgen`'s doc) | Was a broken duplicate of `nwgenerate.ado` under a mismatched filename, never actually loadable as `nwgenvar`. Converted to a genuine thin wrapper matching `nwgen.ado`'s proven pattern. Verified working via `nwgenerate.ado`'s own certified test pattern. |
+| `nwgenerate.ado` dead dispatch branches | ✅ (partial) | ✅ | ✅ | — | 8 silently-no-op'ing shortcut branches (`dyadprob`/`homophily`/`lattice`/`path`/`pref`/`ring`/`small`/`transpose`) now give a clear, immediate error instead of silently doing nothing. Full restoration (re-wiring each to its target command's current syntax) deferred - see ROADMAP.md Stage 1. |
+| `nwbalance` docs+tests+bugfix | ✅ | ✅ | ✅ | ✅ | Was undocumented (no `.sthlp`) and untested. Also fixed a real bug: an unconditional `save test, replace` wrote an unwanted `test.dta` into the user's working directory on every call (unused debug leftover) - removed. Certified against a hand-derived signed-K4 worked example (Cartwright-Harary strong balance). One genuine pre-existing limitation found and documented, not silently fixed: a network with zero closed triads errors (r(2000)) instead of reporting zero - flagged in ROADMAP.md as a real gap in the reshape-based triad enumeration pipeline. |
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |
 |---|---|---|
-| `nwbalance` docs+tests | Stage 1 | Trivial |
-| `nwgenvar`/`nwgenerate` dead-code fixes | Stage 1 | Trivial |
+| `nwgenerate.ado` full shortcut restoration (8 branches) | Stage 1 | Medium |
+| `nwbalance` zero-closed-triads edge case | Stage 1 | Small-Medium |
 | Alter-aggregation (`nwgen ... = mean(alter.x)`) | Stage 5, top | Medium |
 | Distance-family sparse migration | Stage 0 remainder | Large |
 | `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` | Stage 4 | Large |
