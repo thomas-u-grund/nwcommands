@@ -35,7 +35,7 @@ Cheap, high-confidence fixes to things already built:
 
 Highest-value additions for credible igraph-style coverage:
 - Complete the distance-family sparse migration (unblocks `nwcloseness`/`nwgeodesic`/`nwreach`/`nwbridges`/`nwpath` scalability).
-- Cohesive subgroups: k-cores (cheap, high-value, natural sparse-BFS-adjacent algorithm — start here), then cliques/k-plexes.
+- ✅ Cohesive subgroups: k-cores — `nwkcore` + `NWdef::calculate_kcore()`, sparse-neighbor-based degree-peeling (Seidman 1983), certified against 4 hand-computable cases (see `docs/CERTIFICATION.md`). **Remaining**: cliques/k-plexes.
 - Per-node eccentricity + network radius (small addition to `nwgeodesic`'s existing distance computation).
 - Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — also directly useful as an ERGM/one-mode-projection primitive later.
 
@@ -79,7 +79,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 4. Fix `nwgenvar`/`nwgenerate` dead code — Low value individually, Trivial effort, correctness hygiene
 5. Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator
 6. Distance-family sparse migration — High value (unblocks 5 commands), Large effort
-7. k-cores — High value, Small-Medium effort
+7. ✅ k-cores — High value, Small-Medium effort — done (`nwkcore`)
 8. Weighted betweenness variant — Medium value, Small effort
 9. `nwneighbor` sparse migration — Low value alone, Small effort, low risk
 10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort

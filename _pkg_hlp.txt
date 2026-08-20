@@ -51,6 +51,7 @@ f nwimport.sthlp
 f nwinstall.sthlp
 f nwissymmetric.sthlp
 f nwkatz.sthlp
+f nwkcore.sthlp
 f nwkeep.sthlp
 f nwkeepnodes.sthlp
 f nwlattice.sthlp

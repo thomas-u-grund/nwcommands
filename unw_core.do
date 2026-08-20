@@ -902,6 +902,7 @@ class `NWdef' {
 	real matrix calculate_clustering()
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
+	real matrix calculate_kcore()
 	real matrix correlate_nodes()
 	
 	void set()
@@ -1417,6 +1418,102 @@ real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scala
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(Louvain(w, res))
+}
+
+/*
+	k-core decomposition (Seidman 1983): the coreness of a node is the
+	largest k such that the node belongs to a maximal subgraph in which
+	every node has degree >= k within that subgraph. Standard iterative
+	peeling algorithm: repeatedly remove the remaining node with the
+	smallest current degree, assigning it a coreness of
+	max(coreness-so-far, its degree at removal) - the max() keeps
+	coreness monotone non-decreasing across the peeling order, which is
+	what makes the result a genuine core decomposition rather than just a
+	degree-removal order.
+
+	Uses the sparse neighbors()/neighbors_in() accessors (never the dense
+	matrix), and coreness is computed on the network treated as
+	undirected (the standard definition; directed networks use the union
+	of out- and in-neighbors as the effective neighbor set, matching how
+	calculate_components() already treats directed networks for the same
+	kind of undirected-sense structural question).
+
+	Implemented as straightforward peeling with a linear scan for the
+	current minimum-degree node each removal: O(n) removals x O(n) scan
+	= O(n^2), plus O(n+m) total neighbor-list work. Correct and usable up
+	to at least several thousand nodes; the classical Batagelj-Zaversnik
+	bucket-queue refinement (O(n+m) total) is a documented future
+	optimization, not implemented here - see docs/ROADMAP.md.
+*/
+real matrix `NWdef'::calculate_kcore(){
+	real scalar n, i, j, k, minidx, mindeg, klevel, remaining, maxdeg
+	real matrix deg, active, core, nb, adjmat
+
+	n = get_nodes()
+	deg = J(n, 1, 0)
+	for (i = 1; i <= n; i++){
+		if (isdirect){
+			deg[i] = rows(uniqrows(neighbors(i) \ neighbors_in(i)))
+		}
+		else {
+			deg[i] = degree(i)
+		}
+	}
+
+	maxdeg = max(deg)
+	if (maxdeg == 0){
+		// no ties anywhere: every node is a trivial 0-core, in isolation
+		return(J(n,1,0))
+	}
+
+	// padded neighbor-list matrix (row i = node i's neighbors, missing-
+	// padded to maxdeg columns) - same convention as get_adjlist() in
+	// this file, chosen specifically to avoid taking the address of a
+	// loop-reused local (which would make every pointer alias the same,
+	// final value) rather than a genuine pointer-array-of-neighbor-lists.
+	adjmat = J(n, maxdeg, .)
+	for (i = 1; i <= n; i++){
+		if (isdirect){
+			nb = uniqrows(neighbors(i) \ neighbors_in(i))
+		}
+		else {
+			nb = neighbors(i)
+		}
+		if (rows(nb) > 0){
+			adjmat[i, (1::rows(nb))'] = nb'
+		}
+	}
+
+	active = J(n, 1, 1)
+	core = J(n, 1, 0)
+	klevel = 0
+
+	for (remaining = n; remaining >= 1; remaining--){
+		minidx = 0
+		mindeg = .
+		for (i = 1; i <= n; i++){
+			if (active[i] == 1 & (mindeg == . | deg[i] < mindeg)){
+				mindeg = deg[i]
+				minidx = i
+			}
+		}
+		if (mindeg > klevel){
+			klevel = mindeg
+		}
+		core[minidx] = klevel
+		active[minidx] = 0
+
+		for (k = 1; k <= maxdeg; k++){
+			j = adjmat[minidx, k]
+			if (j != .){
+				if (active[j] == 1){
+					deg[j] = deg[j] - 1
+				}
+			}
+		}
+	}
+
+	return(core)
 }
 
 
