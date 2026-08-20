@@ -116,6 +116,16 @@ The number of an observation {help _n} in {help newvar} corresponds to the {help
 of a node in a network.
 
 
+{title:Generating variables from alter/neighbor attributes}
+
+{pstd}
+{cmd:nwgen} {it:newvar} {cmd:=} {it:stat}{cmd:(alter.}{it:srcvar}{cmd:)} generates a variable summarizing
+an existing Stata variable's values among each node's network neighbors (alters) - e.g.
+{cmd:nwgen exposure = mean(alter.smoking)}. {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max},
+{bf:sd}, {bf:count}. This is a thin shortcut for {help nwaltergen}, which documents the full syntax,
+options, and missing-value/directed-network conventions.
+
+
 {title:Generating networks}
 
 {pstd}

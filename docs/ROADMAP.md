@@ -55,7 +55,7 @@ Highest-value additions for credible igraph-style coverage:
 
 ## Stage 5 — Stata-native integration (high priority per project brief)
 
-- **Alter/neighbor aggregation** (`nwgen exposure = mean(alter.smoking)`-style): extend `nwgenerate.ado`'s existing dispatch-table architecture with an `alter()`/`neighbor()` aggregation function family (mean/sum/proportion/min/max over a node's neighbor set's Stata-variable values). The single highest-leverage gap found in this audit for Stata-specific competitive differentiation — no comparable one-line syntax exists in igraph/sna's R-based workflows.
+- ✅ **Alter/neighbor aggregation** (`nwgen exposure = mean(alter.smoking)`-style): `nwaltergen` (new command) + `NWdef::calculate_alterstat()`, supporting `mean`/`sum`/`min`/`max`/`sd`/`count`. `nwgen` dispatches to it automatically via a narrow, isolated `regexm()` pre-check that leaves `nwgenerate.ado`'s fragile legacy parser completely untouched. The single highest-leverage gap found in this audit for Stata-specific competitive differentiation — no comparable one-line syntax exists in igraph/sna's R-based workflows. **Remaining**: `proportion()`-style categorical aggregation (achievable today via `mean()` on a 0/1 indicator, so not a hard blocker), lagged/multi-hop exposure.
 - Dyadic dataset export (general, not just dyad-census) — natural pairing with the above.
 - Ego/alter comparison variables, lagged network exposure — follow-on extensions once the aggregation primitive exists.
 
@@ -77,7 +77,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 2. `nwburt` revival — High value, Small effort, proven historical code
 3. `nwbalance` docs+tests — Medium value, Trivial effort
 4. Fix `nwgenvar`/`nwgenerate` dead code — Low value individually, Trivial effort, correctness hygiene
-5. Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator
+5. ✅ Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator — done (`nwaltergen`, `nwgen` shortcut)
 6. Distance-family sparse migration — High value (unblocks 5 commands), Large effort
 7. ✅ k-cores — High value, Small-Medium effort — done (`nwkcore`)
 8. Weighted betweenness variant — Medium value, Small effort

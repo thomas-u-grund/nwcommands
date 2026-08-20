@@ -903,6 +903,7 @@ class `NWdef' {
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
 	real matrix calculate_kcore()
+	real matrix calculate_alterstat()
 	real matrix correlate_nodes()
 	
 	void set()
@@ -1514,6 +1515,64 @@ real matrix `NWdef'::calculate_kcore(){
 	}
 
 	return(core)
+}
+
+
+/*
+	Alter/neighbor attribute aggregation - the Mata half of
+	-nwaltergen newvar = stat(alter.srcvar)-, this session's Stata-native-
+	integration primitive (nwgen exposure = mean(alter.smoking)-style).
+	srcvar is a node-indexed column vector (row i = node i's value, same
+	alignment convention as calculate_kcore()'s return). For directed
+	networks, "alter" means out-neighbors only (who ego is tied to), not
+	the union used by calculate_kcore() - a deliberate, documented
+	difference: kcore's union answers an undirected structural question,
+	exposure/alter-aggregation is inherently about the direction of the
+	tie. Missing srcvar values among a node's alters are dropped before
+	aggregating (available-case, matching egen's convention), never
+	silently propagated - the Burt bug earlier this session was exactly
+	this failure mode via a different mechanism (matrix multiplication),
+	worth guarding against explicitly here too.
+*/
+real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar stat){
+	real scalar n, i, m
+	real matrix result, nb, vals
+
+	n = get_nodes()
+	result = J(n, 1, .)
+
+	for (i = 1; i <= n; i++){
+		nb = neighbors(i)
+		if (rows(nb) > 0){
+			vals = srcvar[nb]
+			vals = select(vals, vals :!= .)
+		}
+		else {
+			vals = J(0, 1, .)
+		}
+		m = rows(vals)
+
+		if (stat == "mean"){
+			if (m > 0) result[i] = mean(vals)
+		}
+		else if (stat == "sum"){
+			result[i] = (m > 0 ? sum(vals) : 0)
+		}
+		else if (stat == "min"){
+			if (m > 0) result[i] = min(vals)
+		}
+		else if (stat == "max"){
+			if (m > 0) result[i] = max(vals)
+		}
+		else if (stat == "sd"){
+			if (m > 1) result[i] = sqrt(variance(vals))
+		}
+		else if (stat == "count"){
+			result[i] = m
+		}
+	}
+
+	return(result)
 }
 
 

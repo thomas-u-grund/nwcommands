@@ -1,6 +1,10 @@
 capture program drop nwgen
 program nwgen
 	local arg ="`0'"
+	if regexm(`"`arg'"', "=[ ]*(mean|sum|min|max|sd|count)\(alter\.") {
+		nwaltergen `arg'
+		exit
+	}
 	nwgenerate `arg'
 end
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
