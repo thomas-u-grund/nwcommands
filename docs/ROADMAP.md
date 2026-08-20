@@ -28,7 +28,7 @@ Cheap, high-confidence fixes to things already built:
 - ✅ Documented `nwbalance.ado` (structural balance) — `.sthlp` written, `cscripts/test_nwbalance.do` added, certified against a hand-derived signed-K4 worked example. Also fixed a real bug (`save test, replace` polluting the user's working directory with an unused debug file). **Found, not fixed**: a network with zero closed triads errors instead of returning zero — the Stata-reshape-based triad enumeration pipeline needs an empty-result guard; flagged as its own follow-up (Small-Medium effort) rather than risked in the same pass as the documentation work.
 - Document `nwrecode.ado` — write `.sthlp`. Real, correct, currently invisible.
 - Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwqap`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors.
-- Migrate `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors (small, low-risk, already-proven pattern).
+- ✅ Migrated `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors. Surfaced a real, previously-invisible bug: the old `mode(incoming)` branch had a stray unbalanced paren (a genuine Mata syntax error) and had zero test coverage — could never have actually run. Now fixed and certified (see `docs/CERTIFICATION.md`).
 - Fix silent weight-handling gaps: betweenness (add a weighted/Dijkstra-based variant alongside the existing unweighted one — do not change the current default without a documented, tested option), eigenvector centrality (`nosym`-style `weighted` option instead of always dichotomizing).
 
 ## Stage 2 — Core graph-analysis gaps
@@ -81,7 +81,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 6. Distance-family sparse migration — High value (unblocks 5 commands), Large effort
 7. ✅ k-cores — High value, Small-Medium effort — done (`nwkcore`)
 8. Weighted betweenness variant — Medium value, Small effort
-9. `nwneighbor` sparse migration — Low value alone, Small effort, low risk
+9. ✅ `nwneighbor` sparse migration — Low value alone, Small effort, low risk — done, and surfaced a real broken/untested `mode(incoming)` bug in the process
 10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort
 11. CUG test wrapper around `nwrandom, census()` — Medium value, Small effort
 12. Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort
