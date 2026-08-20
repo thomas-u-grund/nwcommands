@@ -12,8 +12,10 @@ f _nwsyntax_other.ado
 f _opts_oneof.ado
 f animate.ado
 f nw2fromedge.ado
+f nw2project.ado
 f nwaddnodes.ado
 f nwbetween.ado
+f nwburt.ado
 f nwclear.ado
 f nwcloseness.ado
 f nwclustering.ado

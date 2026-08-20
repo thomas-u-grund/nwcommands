@@ -14,6 +14,7 @@ f netname.sthlp
 f newnetname.sthlp
 f nodeid.sthlp
 f nw2fromedge.sthlp
+f nw2project.sthlp
 f nw_alphabetical.sthlp
 f nw_intro.sthlp
 f nw_programming.sthlp
@@ -21,6 +22,7 @@ f nw_start.sthlp
 f nw_topical.sthlp
 f nwaddnodes.sthlp
 f nwbetween.sthlp
+f nwburt.sthlp
 f nwcentrality.sthlp
 f nwclear.sthlp
 f nwcloseness.sthlp

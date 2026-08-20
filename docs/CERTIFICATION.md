@@ -28,13 +28,19 @@ Per-feature stage tracking. A feature is not "done" until all four stages are ch
 | `nwcommunity`/`nwmodularity` (Louvain community detection) | ✅ | ✅ | ✅ | ✅ | 3 hand-computable networks, exact match |
 | `build_sparse_index()` rowidx sizing bugfix | ✅ | ✅ | ✅ | ✅ | dedicated regression test added |
 
+## Session 2 additions (2026-08-21)
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| `nw2project` (two-mode one-mode projection) | ✅ | ✅ | ✅ | ✅ | Phantom command (spec existed, .ado didn't) built fresh, sparse-native. All 5 `stat()` formulas match the pre-existing documented worked example exactly. `test_nw2project.do`, both modes. |
+| `nwburt` (Burt structural holes: effsize/efficiency/constraint/hierarchy) | ✅ | ✅ | ✅ | ✅ | Revived from git history (`master:nwburt.ado`), modernized (`nw_syntax`, `st_store`, `replace` guard). Found and fixed a real bug in the process: matrix multiplication on a missing-diagonal input silently corrupts every two-step redundancy/constraint calculation to 0 — fixed by zeroing the diagonal before the matrix products. `test_nwburt.do`, both modes, matches both documented worked examples (star=3, K4=1) and a from-scratch regression re-derivation of the historical formulas. |
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |
 |---|---|---|
-| `nw2project` | Stage 3, #1 | Small |
-| `nwburt` revival | Stage 3, #2 | Small |
 | `nwbalance` docs+tests | Stage 1 | Trivial |
 | `nwgenvar`/`nwgenerate` dead-code fixes | Stage 1 | Trivial |
 | Alter-aggregation (`nwgen ... = mean(alter.x)`) | Stage 5, top | Medium |
 | Distance-family sparse migration | Stage 0 remainder | Large |
+| `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` | Stage 4 | Large |
