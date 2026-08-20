@@ -19,6 +19,7 @@ f nwcloseness.ado
 f nwclustering.ado
 f nwcollapse.ado
 f nwcomponents.ado
+f nwcommunity.ado
 f nwcompressobs.ado
 f nwcontext.ado
 f nwcorrelate.ado
@@ -47,6 +48,7 @@ f nwkeep.ado
 f nwkeepnodes.ado
 f nwlattice.ado
 f nwload.ado
+f nwmodularity.ado
 f nwmovie.ado
 f nwname.ado
 f nwneighbor.ado

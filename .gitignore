@@ -1,0 +1,7 @@
+# Derived/regenerable test artifacts (regenerated from cscripts/ automatically)
+lib/cscripts_prod/
+lib/*.log
+*.log
+
+# Editor/OS
+.DS_Store

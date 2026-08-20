@@ -22,6 +22,7 @@ f nwcloseness.sthlp
 f nwclustering.sthlp
 f nwcollapse.sthlp
 f nwcommands.sthlp
+f nwcommunity.sthlp
 f nwcomponents.sthlp
 f nwcompressobs.sthlp
 f nwcontext.sthlp
@@ -51,6 +52,7 @@ f nwkeep.sthlp
 f nwkeepnodes.sthlp
 f nwlattice.sthlp
 f nwload.sthlp
+f nwmodularity.sthlp
 f nwmovie.sthlp
 f nwname.sthlp
 f nwneighbor.sthlp

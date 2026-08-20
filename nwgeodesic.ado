@@ -1,167 +1,311 @@
-*! Date        : 3oct2014
-*! Version     : 1.1
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! 14jul2016: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##generator:[NW-2.3] Generators}
+{marker top2}
+{helpb nw_topical##analysis:[NW-2.6] Analysis}
 
+{title:Title}
+
+{p2colset 9 10 10 2}{...}
+{p2col:nwgeodesic {hline 2} Calculate shortest paths between nodes}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmd:nwgeodesic} 
+[{it:{help netname}}]
+[{cmd:,}
+{opth unconnected(int)}
+{opt nosym}
+{opt sympopt(options)}
+{opth name(string)}
+{opt nwreplace}
+{opt xvars}]
+
+
+{synoptset 30 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opth unconnected(int)}}Define the length of the path between two unconnected nodes{p_end}
+{synopt:{opth alpha(real)}}Deal with valued networks{p_end}
+{synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
+{synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
+{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+
+
+{title:Description}
+
+{pstd}
+{cmd:nwgeodesic} calculates the shortest paths (also known as geodesic distances) between all nodes {it:i} and {it:j}, the average shortest path length
+and the diameter of the (un-)weighted network {help netname} according to Opsahl et al. (2010). The matrix of distances
+is saved as a new network called {help newnetname} (default: {it:geodesic}). 
+
+{pstd}
+With option {opt sym} the distances are calculated from the symmetrized network. Option {opt symopt()}
+allows control over the symmetrization (see options in {help nwsym}).
+
+{pstd}
+By default, the distance between two unconnected nodes {it:i} and {it:j}, i.e. there is no path that connects node {it:i} with node {it:j}, is set to missing. Non-existent paths are excluded from 
+the calculation of the average shortest path length (unless option {bf:unconnected()} is specified). 
+
+{pstd}
+The option {bf:unconnected(max)} sets the distance of non-connected nodes to the maximum distance 
+observed in the network plus 1.
+
+{pstd}
+Following Opsahl et al. (2010) the shortest path between node {it:i} and node {it:j}
+for a given {it:alpha} is defined as:
+
+{pmore}
+{it:d_w_alpha(i,j) = min (1 / w_ih^alpha + ... + 1 / w_hj^alpha )}
+
+{pstd}
+where {it:w_ih} is the weight (value) of the tie between node {it:i} and node {it:h}. When {bf:{it:alpha} = 1}
+this formula reduces to: 
+
+{pmore}
+{it:d_w_alpha(i,j) = min (1 / w_ih + ... + 1 / w_hj)}
+
+{pstd}
+which is essentially what Newman (2001) and Brandes (2001) suggested. This simply equates the distance between two
+nodes with the inverse of the weight of the tie that connects them. Such a solution for dealing with 
+valued networks, however, does not explicitly account for the number of steps that need to be taken to connect to nodes.
+In contrast, Opsahl et al. (2010) allows giving different weight to longer and shorter paths. When {bf:{it:alpha} = 0}
+the formula above ignores tie weights.
+
+
+{title:References}
+
+{pstd}
+Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical Sociology} 25, 163–177.
+
+{pstd}
+Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks: Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
+
+{pstd}
+Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, weighted
+networks, and centrality. {it:Physical Review E} 64, 016132.
+
+
+{title:Example}
+	
+    {com}. nwwebuse florentine, nwclear
+    {com}. nwgeodesic flomarriage
+
+    {res}{hline 40}
+    {txt}  Network name: {res}flomarriage
+    {txt}  Network of shortest paths: {res}_geodesic
+    {hline 40}
+    {txt}    Nodes: {res}16
+    {txt}    Symmetrized : {res}(already undirected)
+        {hline 36}
+    {txt}    Paths: {res}120
+    {txt}    Unconnected paths: {res} 15
+    {txt}    Average shortest path length: {res} (not defined)
+    {txt}    Diameter: {res} (not defined){txt}
+
+{pstd}
+In this first example, the average shortest path length is not defined because there
+are 15 non-existent paths. There is one isolate node who cannot connect to any of the
+other 15 nodes. The next example, makes use of the option {bf:unconnected()} to assign
+these non-existent paths a certain length. Here, the option {bf:unconnected(max)} assigns
+them the length 6.
+
+    {com}. nwgeodesic flomarriage, unconnected(max)
+
+    {res}{hline 40}
+    {txt}  Network name: {res}flomarriage
+    {txt}  Network of shortest paths: {res}_geodesic
+    {hline 40}
+    {txt}    Nodes: {res}16
+    {txt}    Symmetrized : {res}(already undirected)
+        {hline 36}
+    {txt}    Paths: {res}120
+    {txt}    Unconnected paths: {res} 15
+    {txt}    Unconnected paths replaced with: {res} 6
+    {txt}    Average shortest path length: {res} 2.925
+    {txt}    Diameter: {res} 6{txt}
+
+	
+{title:Stored results}	
+
+	Scalars
+	  {bf:r(nodes)}		number of nodes
+	  {bf:r(numpaths)}	number of shortest paths
+	  {bf:r(diameter)}	network diameter
+	  {bf:r(avgpath)}	average shortest path length
+		  
+	Macros
+	  {bf:r(symmetrized)}	calculated on symmetrized network
+	  {bf:r(netname)}	name of the original network
+	  {bf:r(netname)}	name of the new distance network	  
+		  
+		  
+{title:See also}
+
+	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
+
+***/
 capture program drop nwgeodesic
 program nwgeodesic
 	version 9
-	syntax [anything(name=netname)], [ vars(string) noreplace id(string) name(string) xvars  unconnected(string) nosym]
+	syntax [anything(name=netname)], [ nwreplace force noreplace name(string) alpha(real 0) xvars unconnected(string) sym symopt(string)]
 
-	_nwsyntax `netname', max(1)
-	
-	mata: nw_geo = nw_mata`id'	
-	mata: nw_geo = nw_geo :/ nw_geo
-	mata: _editmissing(nw_geo, 0)
-	
-	local symmetrized = 0
-	if "`sym'" == "" {
-		//di "{txt}Geodesics calculated on the symmetrized network (lower triangle)."
-		mata: nw_geo = editvalue((nw_geo + nw_geo'),2,1)
-		local symmetrized = 1
-	}
+	capture
+	unw_defs
+	nw_syntax `netname'
+	local origname "`netname'"
 	
 	if "`name'" == "" {
-		local name "geodesic"
+		local name "`nwgen_geodesic'"
 	}
-
-	mata: distances = getgeodesic(nw_geo)
 	
+	tempname symnet
+	local symmetrized "false"
+	
+	nw_syntax `netname', max(1)	
+
+	if "`sym'" != "" {
+		di "{txt}Geodesics calculated on the symmetrized network."
+		nwsym `netname', generate(`symnet') `symopt' noreplace
+		nw_syntax `symnet', max(1)
+		local symmetrized "true"
+	}
+	capture nw_syntax `name', other(_check)
+	if _rc == 0 & "`nwreplace'" == "" {
+		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
+		error 99
+	}
+	capture nwdrop `name'
+	nwduplicate `netname', name(`name')
+	nw_syntax `name'
+	
+	if ("`valued'" == "false" & `alpha' != 1 ){
+		di "{txt}Network is unvalued; {bf:alpha = `alpha'} is ignored."
+		local alpha = 1
+	}
+	
+	if (`alpha' == 0) {
+		mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "brute"))
+	}
+	else if (`nodes' > 100 & "`force'" == ""){
+		di "{txt}Calculated on unvalued network because network size exceeds 100."
+		di "Use option {bf:force} to calculate distance on valued network nevertheless." 
+		mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "brute"))	
+	}
+	else {
+		mata: `netobj'->set_edge(`netobj'->calculate_distances(`alpha', "dijkstra"))	
+	}
+	
+	// Get number of unconnected links
+	mata: st_numscalar("r(unconnected)", sum((*`netobj'->get_matrix()):==.) - sum(diagonal(*`netobj'->get_matrix()):==.))
+	
+	// Deal with non-existing paths
 	if "`unconnected'" != "" {
+		mata: d = diagonal(*`netobj'->get_matrix())
 		if "`unconnected'" == "max" {
-			mata: _editvalue(distances, -1, (max(distances) + 1))
+			mata: st_local("unconnected", strofreal(max(*`netobj'->get_matrix())+1))
+			mata: _editvalue((*`netobj'->get_matrix()),., `unconnected')
 		}
-		
 		capture confirm number `unconnected'
 		if _rc == 0 {
-			mata: _editvalue(distances, -1, `unconnected')
+			mata: _editvalue((*`netobj'->get_matrix()),.,`unconnected')
 		}
-	}
-	
-	mata: diagonal = diagonal(distances)
-	mata: distances = distances - diag(diagonal)
-	mata: unconnected = (distances :== -1)	
-
-	tempvar lgc
-	qui nwgen `lgc' = lgc(`netname')
-	qui putmata lgc = `lgc' if _n <= `nodes'
-	mata: distances_lgc = distances :* (distances :>= 0)	
-	mata: unconnected_lgc = (distances_lgc :== -1)
-
-	if "`vars'" == "" {
-		local vars = "_geo1"
-		capture drop _geo1
-		local onesize "\$nwsize_`id'"
-		forvalues i=2/`=`onesize''{
-			local vars "`vars' _geo`i'"
-		}
-	}
-	
-	foreach v in `vars' {
-		capture drop `v'
+		mata: _diag((*`netobj'->get_matrix()), d)
+		mata: mata drop d
 	}
 
-	nwset, name(`name') mat(distances) vars(`vars')	
-	if "`sym'" == "" {
-		nwname `name', newdirected("false")
-	}
-	nwcurrent
-	local geonet = r(current)
-	
-	if "`xvars'" == "" {
-		capture drop `vars'
-		nwtostata, mat(distances) gen(`vars')
-	}
-	
-	mata: st_rclear()
 	mata: st_numscalar("r(nodes)", `nodes')
-	mata: st_global("r(netname)","`netname'")
-	mata: st_numscalar("r(symmetrized)", `symmetrized')
-	mata: st_numscalar("r(numpaths)", sum(lgc)^2 - sum(lgc))
+	mata: st_numscalar("r(numpaths)", `nodes' * (`nodes' - 1))
 
+	// Get number of paths in distance network
 	if "`directed'" == "false" {
 		mata: st_numscalar("r(numpaths)", (`r(numpaths)' / 2))
 	}
 	
+	// Get average shortest path length
+	tempname s
+	mata: _sum = sum(*`netobj'->get_matrix())
+
+	mata: st_numscalar("r(avgpath)", (_sum / (`r(numpaths)')))
+	if ("`directed'" == "false"){
+		mata: st_numscalar("r(avgpath)", (_sum / (`r(numpaths)' * 2)))
+		mata: st_numscalar("r(unconnected)",(`r(unconnected)' / 2))
+	}		
+	mata: mata drop _sum
+	
+	// Get rest
+	mata: st_global("r(netname)","`origname'")
+	mata: st_global("r(geodesic)","`name'")
+	mata: st_global("r(symmetrized)", "`symmetrized'")
+	mata: st_numscalar("r(diameter)", max(*`netobj'->get_matrix()))
+	mata: st_numscalar("r(alpha)", `alpha')
+	
+	// Adjust for unconnected networks
+	if `r(unconnected)' != 0 & "`unconnected'" == "" {
+		mata: st_numscalar("r(avgpath)", -1)
+		mata: st_numscalar("r(diameter)",-1)
+	}
+
 	di "{hline 40}"
-	di "{txt}  Network name: {res}`netname'"
-	di "{txt}  Network of shortest paths: {res}`geonet'"
+	di "{txt}  Network name: {res}`r(netname)'"
+	di "{txt}  Network of shortest paths: {res}`r(geodesic)'"
 	di "{hline 40}"
 	di "{txt}    Nodes: {res}`r(nodes)'"
-	di "{txt}    Symmetrized : {res}`symmetrized'"
-	di "    {hline 36}"
-	di "{txt}    Paths (largest component) : {res}`r(numpaths)'"
 	
-	mata: st_numscalar("r(diameter)", max(distances_lgc))
-	mata: st_numscalar("r(avgpath)", (sum(distances_lgc) / (sum(lgc)^2 - sum(lgc))))
-	mata: st_numscalar("r(lgc_nodes)", sum(lgc))
-	di "{txt}    Diameter (largest component): {res}`r(diameter)'"
-	di "{txt}    Average shortest path (largest component): {res}`r(avgpath)'"
+	if "`directed'" == "true" {
+		di "{txt}    Symmetrized : {res}`r(symmetrized)'"
+	}
+	else {
+		di "{txt}    Symmetrized : {res}(already undirected)"
+	}
+	if "`valued'" == "true" {
+		di "{txt}    ALpha : {res}`r(alpha)'"
+	}
+	di "    {hline 36}"
+	di "{txt}    Paths: {res}`r(numpaths)'"
+	di "{txt}    Unconnected paths: {res} `r(unconnected)'"
+	
+	if "`unconnected'" != "" {
+		di "{txt}    Unconnected paths replaced with: {res} `unconnected'"
+	}
+	
+	if `r(unconnected)' == 0 | "`unconnected'" != "" {
+		di "{txt}    Average shortest path length: {res} `r(avgpath)'"
+		di "{txt}    Diameter: {res} `r(diameter)'"	
+	}
+	else {
+		di "{txt}    Average shortest path length: {res} (not defined)"
+		di "{txt}    Diameter: {res} (not defined)"	
+	}
 
-	//mata: distances
-	mata: mata drop nw_geo
-	mata: mata drop distances
-	mata: mata drop diagonal 
-	capture mata: mata drop lgc
-	mata: mata drop unconnected
-	capture mata: mata drop distances_lgc
-	capture mata: mata drop unconnected_lgc
-
+	capture _return drop _geo
+	_return hold _geo
+	capture nwdrop `symnet'
+	
+	if "`xvars'" == "" {
+		nwload `name'
+	}
+	_return restore _geo
 end
 
+/*
 capture mata mata drop getgeodesic()
-capture mata mata drop distances()
+
 
 mata:
-real matrix getgeodesic(real matrix nwadj)
+void getgeodesic(pointer (class nw_def scalar) scalar nw)
 {
-	distances = distances(nwadj)
-	if (min(distances) >= 0 ) { 
-		avgdist = sum(distances)/(rows(nwadj)*rows(nwadj) - rows(nwadj))
-		st_numscalar("r(L)", avgdist) 
+	if (min(*nw->get_distance()) >= 0 ) { 
+		st_numscalar("r(L)", sum(nw->get_distance())/(rows(*nw->get_distance())*rows(*nw->get_distance()) - rows(*nw->get_distance()))) 
 	}
 	else {
 		st_numscalar("r(L)", -1) 
 	}
-	return(distances)
 }
-
-//function returns matrix of distances. When distance is infinite missing is returned.
-real matrix distances(real matrix nw) {	
-	real scalar nodes
-	real matrix power
-	real matrix distance
-	real matrix found
-
-	
-	nodes = rows(nw)
-	found = nw
-	distance = nw
-	power = nw
-
-	num_found_previous = -1
-	num_found = 0
-	i = 1
-	while ((i<= (nodes / 2)) & (num_found < (nodes*nodes - nodes))) {
-	//while ((i<= (nodes / 2)) & (num_found < (nodes*nodes - nodes))  & (num_found > num_found_previous)) {
-		i = i+1
-		power = power * nw
-		power = power:/power
-		_editmissing(power,0)
-		temp = power - found - I(nodes)
-		_editvalue(temp, -1, 0)
-		temp = temp * i
-		distance = distance + temp
-		num_found_previous = num_found
-		found = distance:/distance
-		num_found = sum(found)
-		_editmissing(found, 0)	
-	}
-	_editvalue(distance, 0, -1)
-	distance = distance + I(nodes)
-	return(distance)
-}
-end
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+end*/

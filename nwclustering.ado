@@ -1,85 +1,157 @@
-*! Date        : 3oct2014
-*! Version     : 1.0.4
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+
 
 capture program drop nwclustering
 program nwclustering
 	version 9
-	syntax [anything(name=netname)][, GENerate(string)]
+	syntax [anything(name=netname)][, measure(string) SYMmetrize GENerate(string)]
 	set more off
-
-	_nwsyntax `netname', max(9999)
-	_nwsetobs
-		
-	if `networks' > 1 {
-		local k = 1
-	}
-
-	qui foreach netname_temp in `netname' {
-		_nwsyntax_other `netname_temp'
-		nwtomata `netname_temp', mat(onenet)
 	
-		if "`generate'" == "" {
-			local generate = "_clustering"
-		}
+	unw_defs
 	
-		capture drop `generate'`k'
-		qui gen `generate'`k' = .
-		if _N <= `othernodes' {
-			set obs `othernodes'
-		}
-		mata: onenet = onenet :/ onenet
-		mata: _editmissing(onenet, 0)
-		mata: st_rclear()
-		mata: c = cluster(onenet)		
-		mata: st_store((1::`othernodes'),"`generate'`k'", c[,1])
-		mata: st_numscalar("r(cluster_avg)", mean(c[,1]))
-		mata: st_numscalar("r(cluster_overall)",(sum(c[,2]) / sum(c[,3])))
-		mata: mata drop c
-		local k = `k' + 1
-		
-		noi di "{hline 40}"
-		noi di "{txt}  Network name: {res}`othername'"
-		noi di "{hline 40}"
-		noi di "{txt}    Average clustering coefficient: {res}`r(cluster_avg)'"
-		noi di "{txt}    Overall clustering coefficient: {res}`r(cluster_overall)'"
-		noi di " "
+	nw_syntax `netname', max(1)
+	nw_datasync `netname'
+	local original "`netname'"
+
+	tempname symnet
+	if "`symmetrize'" != ""  {
+		nwsym `netname', generate(`symnet') mode(max)
+		nw_syntax
 	}
+	
+	if "`measure'" == "" {
+		local measure "binary"
+	}
+	
+	_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
+	
+	if "`is2mode'" == "true" {
+		di "{err}{pstd}Network is a two-mode network. Automatically, switched to command {bf:nw2clustering}."
+		nw2clustering `netname', measure(`measure') generate(`generate')
+		exit
+	}
+	
+	if ("`directed'" == "true" & "`measure'" != "binary") {
+		di "{err}{pstd}Clustering coefficient not defined for networks that are both weighted and directed."
+		di "{err}Either choose {bf:measure(binary)} or symmetrize the network."
+		exit
+	}
+	
+	if "`generate'" == "" {
+		local generate = "_clustering"
+	}
+	
+	capture drop `generate'
+	qui gen `generate' = .
+	
+	tempfile temp clustering edge_list adj_list
+	nw_syntax `netname'
+	nw_datasync `netname'
+
+	preserve
+	
+	qui {
+	nw_syntax `netname'
+	unw_defs
+	nwtoedge `netname', full
+	rename `nw_ego' ego
+	rename `nw_alter' alter
+	if "`netname'" != "value" {
+		rename `netname' value
+	}
+	drop if value == 0 | value == .
+	drop if alter == ego
+    save `edge_list', replace
+
+	use `edge_list', clear
+	order ego alter
+	rename alter alter_
+	rename value value_
+	bys ego: gen n = _n
+	reshape wide alter_ value_, i(ego) j(n)
+	save `adj_list', replace
+
+	use `edge_list', clear
+	rename value value0
+	rename ego ego0
+	rename alter ego
+	merge m:m ego using `adj_list', nogenerate
+	rename ego alter0
+	reshape long alter_ value_, i(ego0 alter0) j(id)
+	drop id
+	drop if alter_ == "" | alter_ == ego0
+	rename alter_ ego1
+	rename value_ value1
+	order ego0 value0 alter0 value1 ego1 
+
+	rename ego0 ego
+	merge m:m ego using `adj_list', nogenerate
+	rename ego ego0
+	reshape long alter_ value_, i(ego0 alter0 ego1) j(id)
+	drop id
+	drop if alter_ == ""
+	rename value_ value2
+	rename ego1 ego2
+	rename alter0 ego1
+	gen closed = (alter_ == ego2)
+	collapse (max) closed, by(ego0 ego1 ego2 value0 value1)
+	
+	gen binary = 1
+	gen arithmetic = (value0 + value1)/2
+	gen geometric = sqrt(value0 * value1)
+	gen minimum = min(value0, value1)
+	gen maximum = max(value0, value1)
+
+	drop if ego2 == ""
+	gen closed_value = closed * `measure'
+	sum closed_value
+	local closed_3paths = r(sum)
+	sum `measure'
+	local potential_3paths = r(sum)
+	
+	capture bys ego1: egen pot = total(`measure')
+	capture bys ego1: egen clo = total(closed_value)
+	capture bys ego1: keep if _n == 1
+	
+	gen `generate' = .
+	capture replace `generate' = clo / pot
+	
+	keep ego1 `generate'
+	rename ego1 `nw_nodename'
+	
+	drop if `nw_nodename' == ""
+	save `clustering'
+
+	sum `generate'
+	local C_avg = r(mean)
+
+	restore
+	capture drop `generate'
+	merge m:m `nw_nodename' using `clustering', nogenerate
+	
+	}
+	mata: st_rclear()
+	mata: st_numscalar("r(cluster_global)", `=`closed_3paths' / `potential_3paths'')
+	mata: st_global("r(measure)", "`measure'")	
+	mata: st_numscalar("r(cluster_avg)", `C_avg')
+	
+	if "`symmetrize'" != "" {
+		local netname "`original'"
+	}
+	
+	noi di "{hline 40}"
+	noi di "{txt}  Network name: {res}`netname'"
+	if "`symmetrize'" != "" {
+		noi di "{txt}  Symmetrized: {res}true"
+		mata: st_global("r(symmetrized)", "false")
+	}
+	noi di "{hline 40}"
+	noi di "{txt}    Measure: {res}`measure'"
+	noi di "{txt}    Average clustering coefficient: {res}`=round(`r(cluster_avg)',0.001)'"
+	noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
+	noi di " "
+	_return hold rcluster
+	capture nwdrop `symnet'	
+	_return restore rcluster
 end
 
 
-
-
-capture mata mata drop cluster()
-mata:
-// function returns a matrix with the membership to components. 
-real matrix cluster(real matrix nw) {	
-	real matrix cluster
-	real matrix alters
-	real matrix id
-	real matrix closed_triplets
-	real matrix potential_triples
-	
-	closed_triplets = J(rows(nw),1,0)
-	potential_triplets = rowsum(nw) :* (rowsum(nw):-1)
-	id = (1::rows(nw))
-	for ( i = 1 ; i <= rows(nw); i++) {
-		alters = select(id, (nw[i,])')
-		for (j = 1; j <= rows(alters); j++){
-			alter_id = alters[j]
-			closed_triplets[i,1] = closed_triplets[i,1] + sum((nw[i,]:== nw[alter_id,]) :& (nw[i,]:==1))
-		}	
-	}
-	cluster = J(rows(nw),3,0)
-	cluster[,1] = (closed_triplets:/potential_triplets)
-	cluster[,2] = closed_triplets
-	cluster[,3] = potential_triplets
-	return(editmissing(cluster,0))
-}
-end
-
-	
-	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

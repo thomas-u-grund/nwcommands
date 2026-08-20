@@ -8,7 +8,7 @@ clear mata
 
 /* -------------------------------------------------------------------- */
 //!! require a Stata version change before release
-version 14
+version 12
 
 
 
@@ -44,8 +44,8 @@ unw_defs
 local 	vxNWs		nws
 local 	vxNWsdef	nws_def
 local 	vxNWsder	nws_der		
-local 	vxNWdef		nw_def		
-*/
+local 	vxNWdef		nw_def	*/	
+
 
 local 	NWs			`vxNWs'
 local 	NWsdef		`vxNWsdef'
@@ -67,6 +67,259 @@ local 	errNWsExists	483
 /* -------------------------------------------------------------------- */
 					/* Utilities			*/
 mata:
+
+
+class priorityQueue {
+	real matrix queue
+	real matrix positions
+	real scalar counter
+	
+	void insert()
+	real matrix removeMin()
+	real matrix removeIndex()
+	real matrix removePosition()
+	void init()
+	real scalar isEmpty()
+	void changeKey()
+	void changeKeyIndex()
+	void show()
+	void swapPositions()
+	void bubbleUp()
+	void bubbleDown()
+	void new()
+}
+
+void priorityQueue::changeKeyIndex(real scalar index, real scalar newKey){
+	real scalar pos 
+
+	if (newKey != . ){
+		if (positions[index] == .) {
+			queue = queue, (newKey\index)
+			positions[index] = cols(queue)
+			bubbleUp(cols(queue))
+		}
+		else if (index < cols(positions)) {
+			pos = positions[index]
+			changeKey(pos, newKey)
+			bubbleUp(pos)
+		}
+	}
+}
+
+void priorityQueue::new(){
+	this.init()
+	counter = 0
+}
+
+void priorityQueue::swapPositions(real scalar a, real scalar b){
+	
+	real scalar indexA, indexB, p
+	real matrix temp
+	
+	if (a <= cols(queue) & b <= cols(queue) & a != b) {
+
+		indexA = queue[2,a]
+		indexB = queue[2,b]
+		temp = queue[.,a]
+		queue[.,a] = queue[.,b]
+		queue[.,b] = temp
+		p = positions[indexA]
+		positions[indexA] = positions[indexB]
+		positions[indexB] = p
+	}
+}
+
+void priorityQueue::bubbleUp(real scalar pos){
+	
+	real scalar p, parent, parentKey, key, index, parentIndex
+	real matrix temp
+	
+	parent = trunc(pos / 2)
+	if (parent == 0) {
+		parent = 1
+	}
+	parentIndex = queue[2,parent]
+	parentKey = queue[1,parent]
+	
+	key = queue[1,pos]
+	index = queue[2, pos]
+
+	// Bubble up
+	if (key < parentKey & parent != pos ) {
+		swapPositions(pos, parent)
+		bubbleUp(parent)
+	}
+}
+
+void priorityQueue::bubbleDown(real scalar pos){
+	
+	real scalar p, child1, child2, child1Key, child2Key, key, index, child1Index, child2Index, childMinKey, childMin
+	real matrix temp
+	
+	if (pos < cols(queue)) {
+	child1 = pos * 2
+	child2 = pos * 2 + 1
+	child1Key = .
+	child2Key = .
+	child1Index = .
+	child2Index = .
+
+	if (cols(queue) >= child1){
+		child1Key = queue[1,child1]
+		child1Index = queue[2,child1]
+	}
+	if (cols(queue) >= child2){
+		child2Key = queue[1,child2]
+		child2Index = queue[2,child2]
+	}
+	childMinKey = min((child1Key, child2Key))
+	childMin = child1
+	if (childMinKey == child2Key) {
+		childMin = child2
+	}
+	
+	key = queue[1,pos]
+	index = queue[2,pos]
+
+	// Bubble down
+	if (key > child1Key & key < child2Key) {
+		swapPositions(pos, childMin)
+		bubbleDown(childMin)
+	}
+	else if (key >= child1Key) {
+		swapPositions(pos, child1)
+		bubbleDown(child1)
+	}
+	else if (key > child2Key) {
+		swapPositions(pos, child2)
+		bubbleDown(child2)
+	}
+	}
+}
+
+
+void priorityQueue::show(){
+	"Queue"
+	queue
+	"Positions"
+	positions
+}
+
+
+void priorityQueue::changeKey(real scalar pos, real scalar newKey){
+	real matrix temp
+	
+	temp = queue[1,pos]
+	queue[1,pos] = newKey
+	if (newKey < temp) {
+		bubbleUp(pos)
+		bubbleUp(pos)
+	}
+	else {
+		bubbleDown(pos)
+		bubbleDown(pos)
+	}
+}
+
+void priorityQueue::init(){
+	queue = J(2,0,.)
+	counter = 0
+	positions = J(1,0,.)
+}
+
+real scalar priorityQueue::isEmpty(){
+	return(cols(queue) < 1)
+}
+
+void priorityQueue::insert(real scalar newEntry){	
+	
+	counter = counter + 1
+
+	// Add new entry at the end of the list
+	queue = queue, (newEntry\ (counter))
+	positions = positions, ((cols(queue) ))
+	
+	// Check position of newEntry
+	real scalar k, parent
+	real matrix temp
+	k = cols(queue)
+	parent = trunc(k / 2 )
+	if (parent == 0) {
+		parent = 1
+	}
+
+	// If necessary bubbleUp the newEntry
+	while (queue[1,k] < queue[1,parent] & parent != k){
+		bubbleUp(k)
+		k = parent
+		parent = trunc(k / 2)
+		if (parent == 0) {
+			parent = 1
+		}
+	}	
+}
+
+
+real matrix priorityQueue::removeMin(){
+	real matrix temp, p, c
+	
+	temp = J(2,1,.)
+	if (isEmpty() == 0) {
+		p = queue[2,1]
+		temp = queue[.,1]
+		c = cols(queue)
+		if (c > 1) {
+			swapPositions(1, c)
+			queue = queue[,(1..(c-1))]
+			if (isEmpty() == 0){
+				bubbleDown(2)
+				bubbleDown(1)
+			}
+		}
+		else {
+			queue = J(2,0,.)
+		}	
+		positions[p] = .
+	}
+	return(temp)
+}
+
+real matrix priorityQueue::removePosition(real scalar pos){
+	real matrix temp
+	
+	temp = J(2,1,.)
+	if (isEmpty() == 0  & pos <= cols(queue)) {
+		temp = queue[.,pos]
+		swapPositions(pos, cols(queue))
+		positions[queue[2,cols(queue)]] = .
+		queue = queue[,(1..(cols(queue)-1))]
+		if (pos < cols(queue)) {
+			bubbleDown(pos)
+			bubbleUp(pos)
+		}
+	}
+	return(temp)
+}
+
+real matrix priorityQueue::removeIndex(real scalar index){
+	real matrix temp, pos
+	
+	temp = J(2,1,.)
+	if (isEmpty() == 0  & index <= cols(positions)) {
+		pos = positions[index]
+		temp = queue[.,pos]
+		swapPositions(pos, cols(queue))
+		positions[queue[2,cols(queue)]] = .
+		queue = queue[,(1..(cols(queue)-1))]
+		if (pos < cols(queue)) {
+			bubbleDown(pos)
+			bubbleUp(pos)
+		}
+	}
+	return(temp)
+}
+
+
 /* 
 	Find the first index of matching string 
 */
@@ -115,7 +368,358 @@ real matrix match_xy(string matrix x, string matrix y){
 	return(M)
 }
 
-end
+/* 
+
+Dijkstra's algorithm for finding shortest paths
+
+*/
+
+real matrix Dijkstra_dist(real matrix G, real scalar alpha){
+	real scalar n, i
+	real matrix dist, Ginv
+	
+	n = rows(G)
+	Ginv = (J(n,n,1):/ G)
+	dist = Dijkstra(Ginv,1, alpha)[.,1]
+	for (i  = 2; i<= n; i++) {
+		dist = (dist, Dijkstra(Ginv,i, alpha)[.,1])
+	}
+	return(dist')
+}
+
+
+real matrix Dijkstra(real matrix G, real scalar source ,real scalar alpha){
+	real matrix Q, dist, prev, alt, u, neighbors
+	real scalar k,i,n, nneigh, oneneigh
+	
+
+	_editvalue(G,.,0)
+	n = rows(G)
+
+	Q = (1::n)
+	dist = J(n,1,.)
+	prev = J(n,1,.)
+	
+	dist[source] = 0
+
+	while (rows(Q) > 0){
+
+		u = select(Q,(dist[Q] :== min(dist[Q])))
+		u = u[1]
+		Q = select(Q, (Q:!=u))
+		
+		alt = ((G[u,.]):^alpha) :+ dist[u]
+		neighbors = select((1::n),(G[u,.] :!= 0)')
+		nneigh = rows(neighbors)
+		for (i = 1; i<= nneigh; i++) {
+			oneneigh = neighbors[i]
+			if (alt[oneneigh] < dist[oneneigh]){
+				dist[oneneigh] = alt[oneneigh]
+				prev[oneneigh] = u
+			}
+		}
+	}
+	return(dist, prev)
+}
+
+// BROKEN function - Does not give correct results !!!
+
+real matrix Dijkstra_fast(real matrix G, real matrix Glist, real scalar source ,real scalar alpha){
+	real matrix Q, dist, prev, alt, u, neighbors
+	real scalar k,i,n, nneigh, oneneigh, nlist
+	
+
+	//_editvalue(G,.,0)
+	n = rows(G)
+	nlist = cols(Glist)
+	
+	Q = (1::n)
+	dist = J(n,1,.)
+	prev = J(n,1,.)
+	
+	dist[source] = 0
+
+	while (rows(Q) > 0){
+
+		u = select(Q,(dist[Q] :== min(dist[Q])))
+		u = u[1]
+		Q = select(Q, (Q:!=u))
+		
+		alt = ((G[u,.]):^alpha) :+ dist[u]
+		alt = ((G[u,.]):^alpha) :+ dist[u]
+		nneigh = Glist[u,nlist]
+		if (nneigh > 0){
+			neighbors =  Glist[u,(1::nneigh)]
+		}
+
+		for (i = 1; i<= nneigh; i++) {
+			oneneigh = neighbors[i]
+			
+			if (alt[oneneigh] < dist[oneneigh]){
+				dist[oneneigh] = alt[oneneigh]
+				prev[oneneigh] = u
+			}
+		}
+	}
+	return(dist, prev)
+}
+
+
+real matrix Floyd_Warshall(real matrix G, scalar alpha){
+	real matrix dist, z
+	real scalar n, i, j, k
+	
+
+	_editvalue(G,0,.)
+	dist = G
+	n = rows(G)
+	
+	for (i = 1; i<=n; i++){
+		if (i != j) {
+		for (j= 1 ; j<=n; j++) {
+			if (j != k & k != i) {
+			for (k = 1; k<=n; k++) {
+				if ((dist[i,j] > (dist[i,k] + (dist[k,j]))) | dist[i,j] ==.){
+					dist[i,j] = (dist[i,k] + (dist[k,j]))
+				}
+			}
+			}
+		}
+		}
+	}
+	return(dist)
+}
+
+real matrix Brute_dist(real matrix G){
+	real matrix dist, found, prev, prev_old
+	real scalar i, n
+	
+	n = rows(G)
+	_editmissing(G,0)
+	
+	dist = G
+	prev = G
+	_editvalue(prev,0,.)
+	prev_old = prev
+	found = G
+	i = 2
+	
+	while ((sum(found) < (n * n-1)) & i < n){
+		found = found * G
+		found = found :/ found
+		_editmissing(found, 0)
+		_diag(found, 0)
+		dist = dist :+ ((found :!= 0) :* (prev:==.) :* (dist:==0) :* i)
+		_diag(dist, J(n,1,0)) 
+		i = i + 1
+		prev = dist :/ dist
+		if (prev == prev_old) {
+			i = n
+		}
+		prev_old = prev
+	}
+	_editvalue(dist,0,.)
+	return(dist)
+}
+
+real matrix correlate_nets_rep(real scalar reps, real matrix net1, real matrix net2){
+	real matrix temp_net1, results, permutationVec, perm_net1, ifcond
+	real scalar nsize, i
+	
+	temp_net1 = net1
+	nsize = rows(temp_net1)
+	results = J(reps, 1, 0)
+	for (i = 1; i <= reps; i ++) {
+		permutationVec = unorder(nsize)
+		perm_net1 = temp_net1[permutationVec, permutationVec]
+		results[i] = correlate_nets(perm_net1, net2)
+	}
+	return(results)
+}
+
+real scalar correlate_nets(real matrix net1, real matrix net2){
+	real scalar r, c
+	real matrix Z, temp, corr
+	
+	Z = J(rows(net1), cols(net1), 1)
+	r = rows(net1)
+	c = cols(net1)
+	
+	temp = J(sum(Z:!=0),2, 0)
+	temp[.,1] = select(vec(net1), vec(Z))
+	temp[.,2] = select(vec(net2), vec(Z))
+	corr = correlation(temp)
+	return(corr[2,1])
+}
+
+/*
+
+Community detection: Newman modularity Q and the Louvain method (Blondel et al. 2008)
+
+*/
+
+real scalar Modularity(real matrix W, real matrix membership, real scalar resolution){
+	real matrix k, idx
+	real scalar m2, ncomm, q, c
+
+	k = rowsum(W)
+	m2 = sum(k)
+
+	if (m2 == 0){
+		return(0)
+	}
+
+	ncomm = max(membership)
+	q = 0
+	for (c = 1; c <= ncomm; c++){
+		idx = selectindex(membership :== c)
+		if (cols(idx) > 0){
+			q = q + sum(W[idx, idx]) - resolution * (sum(k[idx,1])^2) / m2
+		}
+	}
+	return(q / m2)
+}
+
+/*
+	Pops and returns the first element of row vector X, shrinking X in
+	place (Mata passes matrix arguments by reference by default - verified
+	directly before relying on it here). Used as a FIFO dequeue (Queue, new
+	elements appended at the back) and, equivalently, a LIFO pop (Stack,
+	new elements prepended at the front) by calculate_betweenness()'s
+	Brandes' algorithm - both just need "take the front element". Not
+	previously defined anywhere in this file; calculate_betweenness() has
+	called it since it was written, so nwbetween.ado has never been able to
+	run to completion until this was added.
+*/
+real scalar dequeue(real matrix X){
+	real scalar v
+
+	v = X[1,1]
+	if (cols(X) > 1){
+		X = X[1,(2::cols(X))]
+	}
+	else {
+		X = J(1,0,.)
+	}
+	return(v)
+}
+
+/*
+	Sum of edge weights from node i to all nodes currently assigned to community c
+*/
+real scalar nw_community_kin(real matrix W, real scalar i, real matrix comm, real scalar c){
+	real matrix idx
+
+	idx = selectindex(comm :== c)
+	if (cols(idx) == 0){
+		return(0)
+	}
+	return(sum(W[i, idx]))
+}
+
+/*
+	Remap an arbitrary integer-labeled vector to dense labels 1..k
+*/
+real matrix nw_community_denserelabel(real matrix v){
+	real matrix u, out
+	real scalar i, n
+
+	n = rows(v)
+	u = uniqrows(v)
+	out = J(n, 1, 0)
+	for (i = 1; i <= n; i++){
+		out[i,1] = selectindex(u :== v[i,1])
+	}
+	return(out)
+}
+
+/*
+	Louvain community detection (Blondel et al. 2008): greedy local modularity-gain
+	moves (phase 1, fixed node visiting order for reproducibility), then aggregate
+	communities into a super-node graph and recurse (phase 2), until a full sweep at
+	some level produces no further moves.
+*/
+real matrix Louvain(real matrix W, real scalar resolution){
+	real matrix k, comm, Stot, level_comm, W2, M, agg_comm, finalcomm, neighbor_comms, idx
+	real scalar n, m2, i, c_old, best_c, best_gain, gain, moved, sweep, k_i, a, c, nc2
+
+	n = rows(W)
+	k = rowsum(W)
+	m2 = sum(k)
+
+	if (m2 == 0 | n <= 1){
+		return((1::n))
+	}
+
+	comm = (1::n)
+	Stot = k
+
+	moved = 1
+	sweep = 0
+	while (moved == 1 & sweep < 100){
+		moved = 0
+		sweep = sweep + 1
+		for (i = 1; i <= n; i++){
+			c_old = comm[i,1]
+			k_i = k[i,1]
+
+			Stot[c_old,1] = Stot[c_old,1] - k_i
+
+			idx = selectindex(W[i,.] :!= 0)
+			if (cols(idx) > 0){
+				neighbor_comms = uniqrows(comm[idx',1])
+			}
+			else {
+				neighbor_comms = J(0,1,0)
+			}
+			if (sum(neighbor_comms :== c_old) == 0){
+				neighbor_comms = neighbor_comms \ c_old
+			}
+
+			best_c = c_old
+			best_gain = nw_community_kin(W, i, comm, c_old) / m2 - resolution * Stot[c_old,1] * k_i / (m2^2)
+
+			for (a = 1; a <= rows(neighbor_comms); a++){
+				c = neighbor_comms[a,1]
+				gain = nw_community_kin(W, i, comm, c) / m2 - resolution * Stot[c,1] * k_i / (m2^2)
+				if (gain > best_gain + 1e-12){
+					best_gain = gain
+					best_c = c
+				}
+			}
+
+			comm[i,1] = best_c
+			Stot[best_c,1] = Stot[best_c,1] + k_i
+			if (best_c != c_old){
+				moved = 1
+			}
+		}
+	}
+
+	level_comm = nw_community_denserelabel(comm)
+	nc2 = max(level_comm)
+
+	if (nc2 == n){
+		return(level_comm)
+	}
+
+	M = J(n, nc2, 0)
+	for (i = 1; i <= n; i++){
+		M[i, level_comm[i,1]] = 1
+	}
+	W2 = M' * W * M
+
+	agg_comm = Louvain(W2, resolution)
+
+	finalcomm = J(n, 1, 0)
+	for (i = 1; i <= n; i++){
+		finalcomm[i,1] = agg_comm[level_comm[i,1],1]
+	}
+
+	return(nw_community_denserelabel(finalcomm))
+}
+
+
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
 
@@ -126,14 +730,18 @@ mata:
 	Version 1 gobal object
 		nwsdef is definition of networks
 		nwsder is derived from nws
+		
+		datasync:  allows switching off -nw_datasync- for speed-up
 */
 
 class `NWs' {
 	class `NWsdef' scalar nws
 	class `NWsder' scalar nwsder
-//!! methods:
+	
 }
 
+
+/* -------------------------------------------------------------------- */
 /* -------------------------------------------------------------------- */
 /* 
 	Version 1 definition of a network
@@ -152,44 +760,114 @@ class `NWdef' {
 	string scalar 		label
 	string scalar		caption
 	string rowvector 	nodes
+	string scalar 		twomodedescription
+	real scalar         nodesmode1
+	real scalar         nodesmode2
 	string rowvector	nodesvar
 	string rowvector 	modes
 	real colvector		match // holds information about case numbers to which nodes 1,2,3... match
+	string scalar 		description_mode1
+	string scalar 		description_mode2
 	
 	real matrix 		edge
 	`BOOL'				isdirect
 	`BOOL'				isvalued
 	`BOOL'		 		is2mode
 	`BOOL'				isselfloop
+              
 	
-//!! how edge matrix is stored	
-	real scalar 		edgetype  
+//!! how edge matrix is stored
+	real scalar 		edgetype
+
+/* -------------------------------------------------------------------- */
+	/*
+		Sparse index (CSR out-neighbors, CSC-style in-neighbors for directed
+		networks). Derived from `edge`; rebuilt lazily on first access after
+		any structural change. Additive only as of introduction: `edge`
+		remains the authoritative source of truth and every existing method
+		is unaffected. See build_sparse_index()/ensure_sparse_built().
+
+		Invalidated by every NWdef method that writes `edge` directly. NOT
+		invalidated by external mutation through the pointer returned by
+		get_matrix() (e.g. nwreplace.ado writes through it) - callers that
+		mix raw get_matrix() writes with the new sparse accessors on the
+		same object must not assume the cache reflects such writes.
+	*/
+	real colvector		rowptr		// length nodes+1; out-CSR row pointers
+	real colvector		colidx		// length nnz; target node per entry
+	real colvector		cweight		// length nnz; tie weight per entry
+	real colvector		rowptr_in	// length nodes+1; in-CSC (directed only)
+	real colvector		colidx_in	// length nnz; source node per entry
+	real colvector		edgeid_in	// length nnz; index into colidx/cweight
+	`BOOL'				sparse_built
+
+	/*
+		Whether `edge' currently holds valid dense data. Missing (the
+		default for every network built through the traditional dense
+		path - create()/create_by_name()/set_edge()/init_edge() never
+		touch this field) or `True' both mean "yes, `edge' is valid, use
+		it directly" (see ensure_dense_built(): only an explicit `False'
+		triggers on-demand materialization). Only set_edge_from_triplets()
+		- a genuinely sparse-native construction path that never allocates
+		an N x N matrix - sets this to `False'. See ensure_dense_built().
+	*/
+	`BOOL'				edge_dense_built
+/* -------------------------------------------------------------------- */
+
 //!! methods:
 
 	void symmetrize()
-	void create() 
+	void create()
 	void create_by_name()
+	void create_by_name_sparse()
 	void init_edge()
+	void init_edge_sparse()
 
 	string scalar get_name()
 	real scalar get_nodes()
 	string matrix get_nodenames()
-	string scalar get_nodesvar()
-	real matrix get_matrix()
-	real matrix get_matrix_unvalued()
+	string scalar get_nodenames_string()
+	string matrix get_nodesvar()
+	string scalar get_nodesvar_string()
+	real scalar get_nodeid_from_nodename()
+
 	string matrix get_edgelist()
+	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
 	real matrix get_indegree()
-	pointer(real matrix) get_matrix_original()
+	string matrix get_modes()
+	
+	pointer(real matrix) get_matrix()
+	pointer(real matrix) get_matrix_mod()
+	pointer(real matrix) get_matrix_unvalued()
+	real matrix get_matrix_copy()
+	real matrix get_matrix_unvalued_copy()
+	real matrix get_adjlist()
+	real matrix get_path()
+
+	void build_sparse_index()
+	void build_reverse_index()
+	void ensure_sparse_built()
+	void invalidate_sparse()
+	void set_edge_from_triplets()
+	void ensure_dense_built()
+	real matrix neighbors()
+	real matrix neighbors_in()
+	real scalar degree()
+	real scalar degree_in()
+	real scalar has_edge()
+	real scalar edge_weight()
+	real matrix edgelist()
 
 	string scalar is_selfloop()
 	string scalar is_valued()
 	string scalar is_directed()
 	string scalar is_2mode()
-	real scalar get_selfloop_boolean()
-	real scalar get_valued_boolean()
-	real scalar get_directed_boolean()
-	real scalar get_2mode_boolean()
+	real scalar is_selfloop_boolean()
+	real scalar is_valued_boolean()
+	real scalar is_directed_boolean()
+	real scalar is_2mode_boolean()
+	real scalar has_node()
 	string scalar get_label()
 	string scalar get_caption()
 	string scalar get_vars()
@@ -202,10 +880,34 @@ class `NWdef' {
 	real scalar get_arcs_sum()
 	real scalar get_density()
 	real scalar get_selfloops_number()
+    real scalar get_nodes_mode1()
+    real scalar get_nodes_mode2() 
+	string scalar get_description_mode1()
+	string scalar get_description_mode2()
+	
+    real scalar check_valued()
+    real scalar check_symmetry()
+	
+	real matrix single_source_dijkstra()
+	real matrix calculate_shortestpaths_dijkstra()
+    real matrix calculate_dyadcensus()
+	real matrix calculate_triadcensus()
+	real matrix calculate_distances()
+	real matrix calculate_distances_without()
+	real scalar calculate_distance_pair()
+	real matrix calculate_betweenness()
+	//real matrix calculate_betweennessWeighted()
+	real matrix calculate_components()
+	real matrix calculate_lgc()
+	real matrix calculate_clustering()
+	real scalar calculate_modularity()
+	real matrix detect_communities_louvain()
+	real matrix correlate_nodes()
 	
 	void set()
 	void set_name()
 	void set_nodenames()
+	void set_nodesvar()
 	void set_nodes_from_string()
 	void set_edge()
 	void set_label()
@@ -215,6 +917,11 @@ class `NWdef' {
 	void set_directed()
 	void set_valued()
 	void set_2mode()
+	void set_modes()
+	void set_nodes_mode1()
+	void set_nodes_mode2()
+	void set_description_mode1()
+	void set_description_mode2()
 	
 	void connect_edge()
 	void add_node()
@@ -223,36 +930,1201 @@ class `NWdef' {
 	void update_nodesvar()
 	void update_match()
 	void data_sync()
-	string scalar check_symmetry()
 	void keep_nodes()
 	void drop_nodes()
+	void permute()
+	void clean_matrix_2mode()
+	`BOOL' rename_nodename()
+	
+	//void export_gexf()
 }
 
-string scalar `NWdef'::get_nodesvar(){
+
+
+/*
+void `NWdef'::export_gexf(string scalar fname){
+	real scalar fh_out, i
+	string scalar line
+	string matrix elist
+	
+	if (fileexists(fname)){
+		unlink(fname)
+	}
+	
+	fh_out = fopen(fname, "w")
+	fput(fh_out,`"<?xml version=”1.0” encoding=”UTF−8”?>"')
+	fput(fh_out,`"<gexf xmlns=”http://www.gexf.net/1.2draft""')
+	fput(fh_out,`"      xmlns:xsi=”http://www.w3.org/2001/XMLSchema−instance”"')
+	fput(fh_out,`"      xsi:schemaLocation=”http://www.gexf.net/1.2draft"')
+	fput(fh_out,`"                          http://www.gexf.net/1.2draft/gexf.xsd”"')
+	fput(fh_out,`"      version=”1.2”>"')
+	fput(fh_out,`"   <meta lastmodifieddate=”2009−03−20”>"')
+	fput(fh_out,`"      <creator>nwcommands.org</creator>"')
+	fput(fh_out,`"      <description>`r(netname)'</description>"')
+	fput(fh_out,`"   </meta>"')
+	
+	// General network characteristics
+	if (is_directed_boolean()){
+		fput(fh_out,`"   <graph defaultedgetype="directed">"')
+	}
+	else {
+		fput(fh_out,`"   <graph defaultedgetype="undirected">"')
+	}
+	
+	// Insert nodes
+	fput(fh_out,`"      <nodes>"')
+	for(i = 1 ; i <= get_nodes(); i++){
+		line = `"        <node id=""' + nodes[i] + `"" label = "' + nodes[i] + `"">"'
+		// TODO - insert node viz:attributes
+		fput(fh_out,line)
+	}
+	fput(fh_out,`"      </nodes>"')
+	
+	// Insert edges
+	fput(fh_out,`"      <edges>"')
+	elist = get_edgelist(is_directed_boolean()==0)
+	fput(fh_out,`"      </edges>"')
+	for (i = 1 ; i < rows(elist); i++){
+		line = `"        <edge id=""' + strofreal(i) + `"" source=""' + elist[i,1] + `"" target=""' + elist[i,2] + `""/>"'
+		// TODO - insert edge viz:attributes
+		fput(fh_out,line)
+	}
+	fput(fh_out,`"   </graph>"')
+	fput(fh_out,`"</gefx>"')	
+}*/
+
+real matrix `NWdef'::calculate_shortestpaths_dijkstra() {
+	real scalar i, n, m, k,l
+	real matrix D, adjlist
+	
+	n = get_nodes()
+	adjlist = get_adjlist()
+	D = J(n,n,.)
+	l = 1
+	for(i = 1; i <= n; i++) {
+		l = m
+		m = mod(floor(10 * i/n),10) * 10
+		if (m != l & m != 0) {
+			printf("{txt}..%2.0f", m)
+			displayflush()
+		}
+		D[i,.] = (single_source_dijkstra(adjlist, i)[.,1])' 
+	}
+	return(D)
+}
+
+real scalar `NWdef'::get_nodeid_from_nodename(string n){
+	if (has_node(n)){
+		return(select((1::get_nodes())', get_nodenames() :== n))
+	}
+	else {
+		return(-1)
+	}
+}
+
+
+real scalar `NWdef'::has_node(string scalar n) {
+	return(sum(get_nodenames():==n))
+}
+
+real matrix `NWdef'::single_source_dijkstra(real matrix adjlist, real scalar s){
+	real matrix d, n, pred, u_tuple
+	string matrix color
+	real scalar w, i, wx, j, v, u, u_dist, cond1, cond2, stop
+	
+	w = (*get_matrix())
+	
+	class priorityQueue Q
+	
+	
+	Q = priorityQueue()
+	n = cols(w)
+	
+	d = J(n,1,.)
+	color = J(n,1,"white")
+	pred = J(n,(n+1),.)
+
+	d[s] = 0
+	pred[s,1] = -1
+	
+	
+	// check for isolates
+	if (adjlist[s,1]==.) {
+		return(d,pred)
+	}
+
+	else {
+	for (i = 1; i <= n; i++){
+		if (i == s) {
+			Q.insert(0)
+		}
+		else {
+			wx = w[s,i]
+			if (wx == 0){
+				wx = .
+			}
+			Q.insert(wx)
+		}
+	}
+
+	while (Q.isEmpty() == 0){
+		//"Q first"
+		//Q.show()
+		u_tuple = Q.removeMin()
+		//"Q second"
+		//Q.show()
+		u_dist = u_tuple[1]
+		u = u_tuple[2]
+		i = 1
+		stop = 0
+		while (adjlist[u,i] != . & stop == 0) {
+			v = adjlist[u,i]
+			cond1 = ((d[u] + w[u,v]) <= d[v])
+			cond2 = ((d[u] + w[u,v]) == d[v])
+			if (cond1 == 1){
+				d[v] = d[u] + w[u,v]
+				Q.changeKeyIndex(v,d[v])
+				if (cond2 == 1) {
+					if (pred[v,(n+1)] == .) {
+						pred[v,1] = u
+						pred[v,(n+1)] = 2
+					}
+					else {
+						pred[v,pred[v,(n+1)]] = u
+						pred[v,(n+1)] = pred[v,(n+1)] + 1
+					}
+				}
+				else {
+					pred[v,.] = J(1,(n+1),.)
+					pred[v,1] = u
+					pred[v,(n+1)] = 2
+				}
+			}
+			i = i + 1
+			if (i > cols(adjlist)) {
+				i = i - 1
+				stop = 1
+			}
+		}
+		color[u] = "black"
+	}
+	return(d, pred)
+	}
+} 
+
+/*
+	Avoids forcing dense materialization on a sparse-natively-built network
+	(edge_dense_built == `False') that hasn't needed one yet: reads min/max
+	straight from the sparse weight store instead of *get_matrix(). Falls
+	back to the dense read otherwise (unaffected, matches original
+	behavior exactly). An all-zero/no-edge sparse network is unvalued.
+*/
+real scalar `NWdef'::check_valued(){
+	real scalar mi, ma
+
+	if (edge_dense_built == `False' & sparse_built == `True'){
+		if (rows(cweight) == 0){
+			return(0)
+		}
+		mi = min(cweight)
+		ma = max(cweight)
+	}
+	else {
+		mi = min(*get_matrix())
+		ma = max(*get_matrix())
+	}
+
+	if ((mi >= 0 &  mi <= 1) & (ma>=0 & ma <=1)) {
+		return(0)
+	}
+	else {
+		return(1)
+	}
+}
+
+real matrix `NWdef'::correlate_nodes(scalar outinboth){
+	real matrix i_intvec, ctemp, C, selection, i_outvec, i_invec, j_outvec, j_invec,temp
+	real scalar i,j, Corr, cmax, cmin, num_cols, num_rows, num
+	C = J(rows(*get_matrix()), cols(*get_matrix()), 0)
+	for(i = 1; i<= rows(*get_matrix()); i++){
+		for(j = 1; j<= cols(*get_matrix()); j++){
+				
+			selection = J(1, cols(*get_matrix()), 1)
+			selection[i] = 0
+			selection[j] = 0
+			i_outvec = (select((*get_matrix())[i,.], selection))'
+			i_invec = (select((*get_matrix())[.,i]', selection))'	
+			j_outvec = (select((*get_matrix())[j,.], selection))'
+			j_invec = (select((*get_matrix())[.,j]', selection))'
+			
+			if (outinboth == 1) {
+				temp = J(rows(i_outvec), 2, 0)
+				temp[.,1] = i_outvec
+				temp[.,2] = j_outvec
+				Corr = correlation(temp)
+				
+				if (Corr[2,1]==.){
+					ctemp = (sum(i_outvec), sum(j_outvec))
+					cmax = max(ctemp)
+					cmin = min(ctemp)
+					if (cmin > 0) {
+						Corr[2,1] = cmin / cmax
+					}
+					if (cmin == 0 & cmax > 0) {
+						Corr[2,1] = -1
+					}
+					if (cmin == 0 & cmax == 0) {
+						Corr[2,1] = 1
+					}
+				}
+				C[i,j] = Corr[2,1]
+			}
+			if (outinboth == 2) {
+				temp = J(rows(i_invec), 2, 0)
+				temp[.,1] = i_intvec
+				temp[.,2] = j_invec
+				Corr = correlation(temp)
+				
+				if (Corr[2,1]==.){
+					ctemp = (sum(i_outvec), sum(j_outvec))
+					cmax = max(ctemp)
+					cmin = min(ctemp)
+					if (cmin > 0) {
+						Corr[2,1] = cmin / cmax
+					}
+					if (cmin == 0 & cmax > 0) {
+						Corr[2,1] = -1
+					}
+					if (cmin == 0 & cmax == 0) {
+						Corr[2,1] = 1
+					}
+				}
+				C[i,j] = Corr[2,1]
+			}
+			if (outinboth == 3) {
+				num_cols = cols(i_outvec)
+				num_rows = rows(i_invec)
+				num =  num_cols + num_rows
+				temp = J(num,2,0)
+				temp[(1::num_cols),1] = i_outvec
+				temp[((num_cols + 1)::num),1] = i_invec
+				temp[(1::num_cols),2] = j_outvec
+				temp[((num_cols + 1)::num),2] = j_invec			
+
+				Corr = correlation(temp)
+				
+				if (Corr[2,1]==.){
+					ctemp = (sum(i_outvec), sum(j_outvec))
+					cmax = max(ctemp)
+					cmin = min(ctemp)
+					if (cmin > 0) {
+						Corr[2,1] = cmin / cmax
+					}
+					if (cmin == 0 & cmax > 0) {
+						Corr[2,1] = -1
+					}
+					if (cmin == 0 & cmax == 0) {
+						Corr[2,1] = 1
+					}
+				}
+				C[i,j] = Corr[2,1]
+			}
+		}
+	}
+	return(C)
+}
+
+real matrix `NWdef'::calculate_clustering(real scalar mode) {	
+	real matrix cluster
+	real matrix alters, alters1, alters2
+	real matrix id
+	real matrix closed_triples
+	real matrix potential_triples
+	real scalar i, j, k, alter1_id, alter2_id
+
+	closed_triples = J(get_nodes(),1,0)
+	potential_triples = J(get_nodes(),1,0)
+	id = (1::get_nodes())
+	
+	// unvalued
+	if (mode == 0){
+		for ( i = 1 ; i <= get_nodes(); i++) {
+			// union of out- and in-neighbors (matches the original dense
+			// out-row-plus-in-column derivation exactly; a nonzero pattern
+			// is unaffected by valued vs. unvalued, so the sparse index -
+			// built from `edge' - gives the identical alter set)
+			alters = uniqrows(neighbors(i) \ neighbors_in(i))
+			// BUGFIX (intentional, not a silent side effect of the sparse
+			// migration): the original dense select(id, mask) here read a
+			// mask built from a `!=0' comparison against a matrix that
+			// includes the (missing, since self-loops are disabled by
+			// default) diagonal entry. Mata's select() treats a missing
+			// mask value as "keep", so the original always included node
+			// i in its own alters list whenever self-loops were disabled -
+			// poisoning that node's potential_triples to missing via `.'
+			// arithmetic propagation, silently dropping it from downstream
+			// aggregates the same as a legitimately zero-potential node.
+			// neighbors()/neighbors_in() correctly exclude i by
+			// construction (missing/zero diagonal entries are never
+			// stored), so this is fixed as of this session. Verified dead
+			// code as of the same session: no shipped .ado file calls
+			// calculate_clustering() today (nwclustering.ado has its own
+			// independent Stata-side implementation), so this had no
+			// effect on any prior shipped output.
+			for (j = 1; j <= rows(alters); j++){
+				alter1_id = alters[j]
+				for (k = (j+1); k <= rows(alters); k++){
+					if (k <= rows(alters)) {
+						alter2_id = alters[k]	
+						potential_triples[i,1] = potential_triples[i,1] + 2
+						closed_triples[i,1] = closed_triples[i,1] + (*get_matrix_unvalued())[alter1_id,alter2_id] + (*get_matrix_unvalued())[alter2_id,alter1_id]	
+					}
+				}	
+			}
+		}		
+	}
+	
+	// arithmetic mean
+	if (mode == 1){
+		for ( i = 1 ; i <= get_nodes(); i++) {
+			// out-neighbors only (matches the original's asymmetric,
+			// out-row-only derivation for the weighted modes exactly -
+			// preserved as-is, not "fixed" to match mode 0's union)
+			alters = neighbors(i)
+			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
+			// neighbors() excludes i by construction. See mode 0's comment.
+			for (j = 1; j <= rows(alters); j++){
+				alter1_id = alters[j]
+				for (k = (j+1); k <= rows(alters); k++){
+					if (k <= rows(alters)) {
+						alter2_id = alters[k]	
+						potential_triples[i,1] = potential_triples[i,1] + (((*get_matrix())[i,alter1_id] :+ (*get_matrix())[i,alter2_id]):/2)
+						closed_triples[i,1] = closed_triples[i,1] + (((*get_matrix())[i,alter1_id] :+ (*get_matrix())[i,alter2_id]):/2) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
+					}
+				}	
+			}
+		}
+	}
+	
+	// geometric mean
+	if (mode == 2){
+		for ( i = 1 ; i <= get_nodes(); i++) {
+			// out-neighbors only (matches the original's asymmetric,
+			// out-row-only derivation for the weighted modes exactly -
+			// preserved as-is, not "fixed" to match mode 0's union)
+			alters = neighbors(i)
+			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
+			// neighbors() excludes i by construction. See mode 0's comment.
+			for (j = 1; j <= rows(alters); j++){
+				alter1_id = alters[j]
+				for (k = (j+1); k <= rows(alters); k++){
+					if (k <= rows(alters)) {
+						alter2_id = alters[k]	
+						potential_triples[i,1] = potential_triples[i,1] + (sqrt((*get_matrix())[i,alter1_id] :* (*get_matrix())[i,alter2_id]))
+						closed_triples[i,1] = closed_triples[i,1] + (sqrt((*get_matrix())[i,alter1_id] :* (*get_matrix())[i,alter2_id])) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
+					}
+				}	
+			}
+		}
+	}
+	// maximum
+	if (mode == 3){
+		for ( i = 1 ; i <= get_nodes(); i++) {
+			// out-neighbors only (matches the original's asymmetric,
+			// out-row-only derivation for the weighted modes exactly -
+			// preserved as-is, not "fixed" to match mode 0's union)
+			alters = neighbors(i)
+			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
+			// neighbors() excludes i by construction. See mode 0's comment.
+			for (j = 1; j <= rows(alters); j++){
+				alter1_id = alters[j]
+				for (k = (j+1); k <= rows(alters); k++){
+					if (k <= rows(alters)) {
+						alter2_id = alters[k]	
+						potential_triples[i,1] = potential_triples[i,1] + (max(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id])))
+						closed_triples[i,1] = closed_triples[i,1] + (max(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id]))) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
+					}
+				}	
+			}
+		}
+	}
+	// minimum
+	if (mode == 4){
+		for ( i = 1 ; i <= get_nodes(); i++) {
+			// out-neighbors only (matches the original's asymmetric,
+			// out-row-only derivation for the weighted modes exactly -
+			// preserved as-is, not "fixed" to match mode 0's union)
+			alters = neighbors(i)
+			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
+			// neighbors() excludes i by construction. See mode 0's comment.
+			for (j = 1; j <= rows(alters); j++){
+				alter1_id = alters[j]
+				for (k = (j+1); k <= rows(alters); k++){
+					if (k <= rows(alters)) {
+						alter2_id = alters[k]	
+						potential_triples[i,1] = potential_triples[i,1] + (min(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id])))
+						closed_triples[i,1] = closed_triples[i,1] + (min(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id]))) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
+					}
+				}	
+			}
+		}
+	}
+	
+	potential_triples = editvalue(potential_triples, 0, .)
+	cluster = J(get_nodes(),3,0)
+	cluster[,1] = (closed_triples:/potential_triples)
+	cluster[,2] = closed_triples
+	cluster[,3] = potential_triples
+	return(cluster)
+}
+
+real matrix `NWdef'::calculate_lgc(){
+	real matrix lgc, c
+	real scalar i, max
+
+	max = 1
+	c = calculate_components()
+	for (i = 2; i<= max(c); i++){
+		if (sum(c[,1] :== i) > sum(c[,1] :== max)){
+			max = i
+		}
+	}
+	return(c[,1]:==max)
+}
+
+/*
+	Newman modularity Q of a given partition (1-indexed community membership vector)
+*/
+real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar resolution){
+	real matrix w
+	real scalar res
+
+	res = (args() == 2 ? resolution : 1)
+	w = *get_matrix_mod(1,0)
+	_diag(w, 0)
+	return(Modularity(w, membership, res))
+}
+
+/*
+	Detect communities via the Louvain method (Blondel et al. 2008)
+*/
+real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scalar resolution){
+	real matrix w
+	real scalar val, res
+
+	val = (args() >= 1 ? valued : 1)
+	res = (args() == 2 ? resolution : 1)
+	w = *get_matrix_mod(val, 0)
+	_diag(w, 0)
+	return(Louvain(w, res))
+}
+
+
+real matrix `NWdef'::calculate_distances_without(){
+	real scalar i, j, value1, value2
+	real matrix res
+	
+	res = J(get_nodes(), get_nodes(),0)
+	
+	for (i = 1; i<=get_nodes(); i++){
+		for (j = 1; j<= get_nodes(); j++){
+			if	((*get_matrix())[i,j] != 0 & (*get_matrix())[i,j] != .){
+				value1 = (*get_matrix())[i,j]
+				value2 = (*get_matrix())[j,i]
+				(*get_matrix())[i,j] = 0
+				(*get_matrix())[j,i] = 0
+				res[i,j] = calculate_distance_pair(i,j)
+				(*get_matrix())[i,j] = value1
+				(*get_matrix())[j,i] = value2
+			}
+		}
+	}
+	return(res)
+}
+
+real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar length)
+{
+	real scalar i, j, z, new_paths, id_next, new_temp, reach_num, found, step, temp, temp_new, nodes
+	real matrix ids, paths, path_next, reach_next, reach_ids, paths_new, paths_sofar, paths_valid
+
+	found = 0
+	nodes = get_nodes()
+	ids = (1::nodes)
+	paths_sofar = J(1,1,ego)
+	step = 0
+
+	// no path from ego to alter
+	if (calculate_distances(1, "brute")[ego, alter] == .){
+		found = 1
+		return(J(0,0,.))
+	}
+	else {
+	 while (found == 0 & step <= nodes) {
+		new_paths = 0
+		step = step + 1
+		for (z = 1; z<= rows(paths_sofar); z ++) {
+			id_next = paths_sofar[z, step]
+			reach_next = ((*get_matrix())[id_next,])'
+			if (reach_next[alter,1] != 0) {
+				found = 1
+			}
+			new_paths = new_paths + sum(reach_next)
+		}
+		
+		paths_new = J(new_paths, (step + 1),0)
+
+		temp = 1
+		if (rows(paths_new)> 0) {
+		  for (i = 1; i<= rows(paths_sofar); i ++) {
+			id_next = paths_sofar[i, step]
+			reach_next = ((*get_matrix())[id_next,])'
+			_editmissing(reach_next,0)
+			reach_ids = select(ids, reach_next)
+			reach_num = sum(reach_next)
+			if (reach_num > 0){
+				path_next = J(reach_num, (step + 1),0)
+				path_next[,step] = J(reach_num,1,id_next)
+				path_next[,(step+1)] = reach_ids
+				for (j = 1; j<step;j++){
+					path_next[,j] = J(reach_num,1,paths_sofar[i,j])
+				}
+				new_temp = temp + (rows(path_next) - 1)
+				paths_new[(temp::new_temp),] = path_next
+				temp = new_temp + 1
+			}
+		   }
+		  }
+		  paths_sofar = paths_new
+		
+	}
+	paths_valid = paths_sofar[,(step + 1)] :== alter
+	paths = select(paths_sofar, paths_valid)
+	return(paths)
+	}
+}
+
+/*
+	Weak (undirected-sense) connected components, via BFS over the sparse
+	neighbor index instead of dense row/column pulls. Component numbering
+	preserves the original dense implementation exactly: seeds are chosen
+	in ascending node order (1..N), so the k-th component discovered gets
+	label k under both implementations, node-for-node identical output -
+	verified directly against the prior dense implementation in
+	cscripts/test_sparse_index.do's dual-mode BFS before this method was
+	changed. For directed networks, neighbors_in() is unioned with
+	neighbors() per node, matching the old (*nw)[next,] :+ ((*nw)[,next])'
+	out-plus-in behavior exactly.
+*/
+real matrix `NWdef'::calculate_components(){
+	real scalar ncomp, next, i, numnodes, cur, qn
+	real matrix visited, comp, queue, nb
+
+	numnodes = get_nodes()
+	visited = J(numnodes,1,0)
+	comp = J(numnodes,1,0)
+	ncomp = 1
+	next = 1
+
+	// as long as not everybody has been visited
+	while (sum(visited) != numnodes){
+		// find next not visited node
+		while (visited[next,1]==1) {
+			next = next + 1
+		}
+
+		// bfs from next, assign component id to everybody reachable
+		visited[next,1] = 1
+		comp[next,1] = ncomp
+		queue = next
+
+		while (rows(queue) > 0){
+			cur = queue[1,1]
+			qn = rows(queue)
+			if (qn > 1){
+				queue = queue[(2::qn),1]
+			}
+			else {
+				queue = J(0,1,0)
+			}
+			nb = neighbors(cur)
+			if (isdirect){
+				nb = nb \ neighbors_in(cur)
+			}
+			for (i = 1; i <= rows(nb); i++){
+				if (visited[nb[i,1],1]==0){
+					visited[nb[i,1],1] = 1
+					comp[nb[i,1],1] = ncomp
+					queue = queue \ nb[i,1]
+				}
+			}
+		}
+		ncomp = ncomp + 1
+	}
+	return(comp)
+}
+
+real matrix `NWdef'::get_adjlist(){
+	real scalar n, i, numneighb
+	real matrix Glist
+
+	numneighb = rowsum(*get_matrix() :!= 0 :& *get_matrix() :!= . )
+	
+	Glist  = J(get_nodes(),max(numneighb),.)
+	
+	for (i = 1; i <= get_nodes(); i++){
+		if (numneighb[i] > 0){ 
+			Glist[i,(1..(numneighb[i]))] = selectindex((*get_matrix() :!= 0 :& *get_matrix() :!= .)[i,.])
+		}
+	}
+	return((Glist))
+}
+
+/*
+	Sparse index (CSR out-neighbors + CSC-style in-neighbors for directed
+	networks), derived from `edge`. `edge` remains the single source of
+	truth; this is a rebuildable cache, invalidated by any method that
+	mutates `edge` (see the `sparse_built = `False'' calls in set_edge(),
+	init_edge(), add_node(), keep_nodes(), drop_nodes(), symmetrize(), and
+	clean_matrix_2mode()) and lazily rebuilt on next access via
+	ensure_sparse_built(). Self-loops and missing cells are excluded, same
+	as the rest of the class's edge-counting conventions.
+*/
+void `NWdef'::build_sparse_index(){
+	real matrix e, nzmask, rowidx, idx
+	real scalar n, nnz, i, k, pos
+
+	n = get_nodes()
+	e = edge
+	nzmask = (e :!= 0 :& e :!= .)
+
+	nnz = sum(nzmask)
+	rowptr = J(n + 1, 1, 0)
+	rowidx = J(nnz, 1, 0)
+	colidx = J(nnz, 1, 0)
+	cweight = J(nnz, 1, 0)
+
+	pos = 1
+	for (i = 1; i <= n; i++){
+		rowptr[i] = pos
+		if (n > 0){
+			idx = selectindex(nzmask[i,.])
+			k = cols(idx)
+			if (k > 0){
+				colidx[(pos::(pos+k-1)),1] = idx'
+				cweight[(pos::(pos+k-1)),1] = e[i,idx]'
+			}
+			pos = pos + k
+		}
+	}
+	rowptr[n + 1] = pos
+
+	if (isdirect & nnz > 0){
+		for (i = 1; i <= n; i++){
+			if (rowptr[i+1] > rowptr[i]){
+				rowidx[(rowptr[i]::(rowptr[i+1]-1)),1] = J(rowptr[i+1]-rowptr[i], 1, i)
+			}
+		}
+		build_reverse_index(rowidx, nnz)
+	}
+	else {
+		rowptr_in = J(0, 1, 0)
+		colidx_in = J(0, 1, 0)
+		edgeid_in = J(0, 1, 0)
+	}
+
+	sparse_built = `True'
+}
+
+/*
+	Builds the CSC-style reverse (in-neighbor) index from the forward CSR's
+	own row labels (`rowidx`, one source-node label per stored entry).
+	`edgeid_in` points back into colidx/cweight rather than duplicating
+	weights, so a forward-index rebuild can never desync it from the
+	reverse one.
+*/
+void `NWdef'::build_reverse_index(real matrix rowidx, real scalar nnz){
+	real matrix perm, sorted_target
+	real scalar n, j, pos
+
+	n = get_nodes()
+
+	if (nnz == 0){
+		rowptr_in = J(n + 1, 1, 1)
+		colidx_in = J(0, 1, 0)
+		edgeid_in = J(0, 1, 0)
+		return
+	}
+
+	perm = order(colidx, 1)
+	colidx_in = rowidx[perm,1]
+	edgeid_in = perm
+	sorted_target = colidx[perm,1]
+
+	rowptr_in = J(n + 1, 1, 0)
+	pos = 1
+	for (j = 1; j <= n; j++){
+		rowptr_in[j] = pos
+		while (pos <= nnz){
+			if (sorted_target[pos,1] != j) break
+			pos = pos + 1
+		}
+	}
+	rowptr_in[n + 1] = pos
+}
+
+void `NWdef'::ensure_sparse_built(){
+	if (sparse_built != `True'){
+		build_sparse_index()
+	}
+}
+
+/*
+	Marks the sparse cache stale. Public, for the (few) callers outside this
+	class that mutate `edge' by writing through the get_matrix() pointer
+	directly rather than through an NWdef mutator method - e.g. nwreplace.ado.
+*/
+void `NWdef'::invalidate_sparse(){
+	sparse_built = `False'
+}
+
+/*
+	Genuinely sparse-native construction: builds the CSR/CSC index directly
+	from an edge triplet list (ego, alter, weight - all length-nnz
+	colvectors, 1-indexed against the network's existing node count) and
+	NEVER allocates the N x N `edge' matrix. Node identity/count/names must
+	already be set (via create()/create_by_name(), same precondition as
+	set_edge()). `edge' is left as an empty placeholder and
+	`edge_dense_built' is set false, so any later call that genuinely needs
+	the dense matrix (get_matrix() et al.) materializes it on demand -
+	see ensure_dense_built() - rather than never being able to get one.
+
+	This is the actual fix for the O(N^2) creation bottleneck identified in
+	this session's architecture report (nwfromedge.ado's make_matrix(),
+	which unconditionally allocates J(nodes,nodes,0) regardless of edge
+	count): a caller with a triplet list can build a network here in
+	O(nnz log nnz) time and O(nnz) memory, full stop.
+
+	Ego/alter are expected pre-mapped to dense 1..n node ids (exactly what
+	nwfromedge.ado's existing node-id dictionary stage already produces,
+	before it hands off to the dense make_matrix() helper today - that
+	mapping stage is unaffected and fully reusable, per the architecture
+	report).
+*/
+void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real matrix weight, real scalar directed){
+	real scalar n, nnz, i, pos
+	real matrix ord, sorted_ego, sorted_alter, sorted_weight
+
+	n = get_nodes()
+	isdirect = directed
+	nnz = rows(ego)
+
+	edge = J(0,0,0)
+	edge_dense_built = `False'
+
+	if (nnz == 0){
+		rowptr = J(n+1,1,1)
+		colidx = J(0,1,0)
+		cweight = J(0,1,0)
+	}
+	else {
+		ord = order(ego, 1)
+		sorted_ego = ego[ord,1]
+		sorted_alter = alter[ord,1]
+		sorted_weight = weight[ord,1]
+
+		rowptr = J(n+1,1,0)
+		colidx = sorted_alter
+		cweight = sorted_weight
+		pos = 1
+		for (i=1; i<=n; i++){
+			rowptr[i] = pos
+			while (pos <= nnz){
+				if (sorted_ego[pos,1] != i) break
+				pos = pos + 1
+			}
+		}
+		rowptr[n+1] = pos
+	}
+
+	if (isdirect & nnz > 0){
+		build_reverse_index(sorted_ego, nnz)
+	}
+	else {
+		rowptr_in = J(0, 1, 0)
+		colidx_in = J(0, 1, 0)
+		edgeid_in = J(0, 1, 0)
+	}
+
+	if (nnz > 0){
+		isvalued = (min(weight) < 0 | max(weight) > 1)
+	}
+	else {
+		isvalued = `False'
+	}
+
+	sparse_built = `True'
+}
+
+/*
+	Materializes `edge' from the sparse triplet store on first demand,
+	guarded against accidentally allocating an unreasonably large dense
+	matrix (nw_max_dense_nodes, from unw_defs.ado - a network built
+	sparse-natively and queried only through sparse-native accessors never
+	hits this at all). Called from every get_matrix*() accessor, so every
+	existing dense-matrix-consuming command keeps working unchanged on a
+	sparse-natively-built network up to that size limit, with a clear error
+	instead of silently exhausting memory beyond it - the compatibility
+	strategy from this session's architecture report.
+*/
+void `NWdef'::ensure_dense_built(){
+	real matrix e
+	real scalar n, i
+
+	if (edge_dense_built != `False'){
+		return
+	}
+
+	n = get_nodes()
+	if (n > `nw_max_dense_nodes'){
+		error_handle("Network `" + get_name() + "' has " + strofreal(n) + " nodes; materializing a dense " + strofreal(n) + "x" + strofreal(n) + " matrix would require approximately " + strofreal(round((n*n*8/1024^3)*100)/100) + " GB and has been refused. Use a sparse-native command (neighbors(), degree(), calculate_components(), etc.) instead, which never requires the dense matrix.", `errDenseTooLarge')
+	}
+
+	ensure_sparse_built()
+	e = J(n, n, 0)
+	for (i = 1; i <= n; i++){
+		if (rowptr[i+1] > rowptr[i]){
+			e[i, colidx[(rowptr[i]::(rowptr[i+1]-1)),1]'] = cweight[(rowptr[i]::(rowptr[i+1]-1)),1]'
+		}
+	}
+	if (isselfloop == 0){
+		_diag(e, .)
+	}
+	edge = e
+	edge_dense_built = `True'
+}
+
+/*
+	Neighbors of node i. For undirected networks `edge` is already stored
+	symmetrically, so the out-CSR alone already lists every neighbor -
+	directed and undirected networks share this one accessor.
+*/
+real matrix `NWdef'::neighbors(real scalar i){
+	ensure_sparse_built()
+	if (rowptr[i+1] > rowptr[i]){
+		return(colidx[(rowptr[i]::(rowptr[i+1]-1)),1])
+	}
+	return(J(0,1,0))
+}
+
+real matrix `NWdef'::neighbors_in(real scalar i){
+	ensure_sparse_built()
+	if (!isdirect){
+		return(neighbors(i))
+	}
+	if (rowptr_in[i+1] > rowptr_in[i]){
+		return(colidx_in[(rowptr_in[i]::(rowptr_in[i+1]-1)),1])
+	}
+	return(J(0,1,0))
+}
+
+real scalar `NWdef'::degree(real scalar i){
+	ensure_sparse_built()
+	return(rowptr[i+1] - rowptr[i])
+}
+
+real scalar `NWdef'::degree_in(real scalar i){
+	ensure_sparse_built()
+	if (!isdirect){
+		return(degree(i))
+	}
+	return(rowptr_in[i+1] - rowptr_in[i])
+}
+
+real scalar `NWdef'::has_edge(real scalar i, real scalar j){
+	ensure_sparse_built()
+	if (rowptr[i+1] > rowptr[i]){
+		return(sum(colidx[(rowptr[i]::(rowptr[i+1]-1)),1] :== j) > 0)
+	}
+	return(0)
+}
+
+real scalar `NWdef'::edge_weight(real scalar i, real scalar j){
+	real matrix idx
+
+	ensure_sparse_built()
+	if (rowptr[i+1] > rowptr[i]){
+		idx = selectindex(colidx[(rowptr[i]::(rowptr[i+1]-1)),1] :== j)
+		if (cols(idx) > 0){
+			return(cweight[rowptr[i] + idx[1] - 1, 1])
+		}
+	}
+	return(0)
+}
+
+/*
+	Sparse-native edge enumeration: source, target, weight - one row per
+	stored entry, O(nnz). Not wired into any command yet (see get_edgelist()
+	for the existing O(N^2) dense-scan version consumed by nwtoedge today).
+*/
+real matrix `NWdef'::edgelist(){
+	real matrix out
+	real scalar n, i, nnz
+
+	ensure_sparse_built()
+	n = get_nodes()
+	nnz = rows(colidx)
+	out = J(nnz, 3, 0)
+	for (i = 1; i <= n; i++){
+		if (rowptr[i+1] > rowptr[i]){
+			out[(rowptr[i]::(rowptr[i+1]-1)), 1] = J(rowptr[i+1]-rowptr[i], 1, i)
+		}
+	}
+	if (nnz > 0){
+		out[.,2] = colidx
+		out[.,3] = cweight
+	}
+	return(out)
+}
+
+void `NWdef'::permute(){
+	real matrix perm
+	perm = unorder(get_nodes())
+	set_edge((*get_matrix())[perm, perm])
+}
+
+real scalar `NWdef'::calculate_distance_pair(real scalar ego, real scalar alter){
+	real scalar found, distance
+	real matrix temp, temp2
+	
+	distance = 1
+	found = 0
+	temp = (*get_matrix())
+	_editmissing(temp,0)
+	temp2 = temp
+
+	while (found == 0 & distance < get_nodes()){
+		if (temp[ego, alter] != 0 & temp[ego,alter] != .) {
+			found = 1
+			return(distance)
+		}
+		else {
+			temp = temp * temp2
+		}
+		distance = distance + 1
+	}
+	return(-1)
+}
+
+real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
+	if (alg == "brute"){
+		return(Brute_dist(*get_matrix_unvalued()))
+	}
+	else {
+		return(Dijkstra_dist(*get_matrix(), alpha))
+	}
+}
+
+/*
+real matrix `NWdef'::calculate_betweenness_weighted(){
+	real matrix P 
+	real scalar n,i
+	
+	n = get_nodes()
+	for (i = 1, i 
+}*/
+
+/*
+real matrix calculate_betweenness_weighted_node(real scalar node){
+	real matrix P, adjlist, B
+	real scalar n, i, nx, k
+
+	n = get_nodes()
+	nx = n + 2
+	B = J(n,1,.)
+	adjlist = get_adjlist()
+	P = single_source_dijkstra(adjlist, node)
+	k = node
+	for (i = 1; i<= n; i++){
+		
+	}
+}*/
+
+real matrix `NWdef'::calculate_betweenness(){
+	real matrix adjacencyList, Cb,Stack,P,nP, S, D, Queue, Dd
+	real matrix nb
+	real scalar m, k, n, s, v, j, w, idx
+
+	// adjacencyList's own N x (N-1) shape is unchanged (still one row per
+	// node, sized for the worst case) - only the O(N^2) dense-matrix scan
+	// that used to populate it is replaced, with the sparse index instead.
+	// The `>0' filter is preserved exactly: neighbors() includes any
+	// nonzero, non-missing tie (so a negative tie, e.g. in a signed
+	// network, would be included), so it's re-checked here per candidate
+	// to match the original's positive-only semantics precisely.
+	adjacencyList=J(get_nodes(),get_nodes()-1,.)
+	for (m=1; m<=get_nodes(); m++) {
+		nb = neighbors(m)
+		k=1
+		for (idx=1; idx<=rows(nb); idx++) {
+			n = nb[idx,1]
+			if ( m!=n & edge_weight(m,n)>0){
+				adjacencyList[m,k++]=n
+			}
+		}
+    }
+
+	Cb=J(1,get_nodes(),0)
+	
+	for(s=1; s<=get_nodes(); s++) {
+		Stack=J(1,0,.)
+		P=J(get_nodes(),get_nodes(),.)
+		nP=J(get_nodes(),1,1)
+		S=J(1,get_nodes(),0)
+		S[s]=1
+		D=J(1,get_nodes(),-1)
+		D[s]=0
+		Queue=J(1,0,.)
+		Queue=(cols(Queue)? Queue,s : s)
+		while(cols(Queue)) {
+			v=dequeue(Queue)
+		
+			Stack=cols(Stack)? v,Stack : v
+			for(j=1; j<=sum(adjacencyList[v,.]:<.);j++) {
+				w=adjacencyList[v,j]
+				if(D[w]<0) {
+					Queue=(cols(Queue)? Queue,w : w)
+					D[w]=D[v]+1
+				}
+				if(D[w]==D[v]+1) {
+					S[w]=S[w]+S[v]
+					P[w,nP[w]]=v; nP[w]=nP[w]+1
+				}     
+			}	
+		}
+		
+		Dd=J(1,get_nodes(),0)
+		
+		while (cols(Stack)) {
+			w=dequeue(Stack)
+  
+			for(j=1; j<nP[w]; j++) {
+				v=P[w,j]
+				Dd[v]=Dd[v]+(S[v]/S[w])*(1+Dd[w])
+			}
+			if (w!=s) Cb[w]=Cb[w]+Dd[w]
+		}
+	}
+
+	// BUGFIX (intentional, per user direction, separate from the sparse
+	// migration): summing over every node as source visits each undirected
+	// shortest path twice (once from each endpoint), doubling every score.
+	// Standard practice - and what nwbetween.ado's own `standardize' formula
+	// already assumes - is to halve for undirected networks.
+	if (!isdirect){
+		Cb = Cb :/ 2
+	}
+	return(Cb')
+}
+
+
+void `NWdef'::clean_matrix_2mode(){
+	real matrix z
+	z = ((J(get_nodes(),1, modes):== J(1,get_nodes(), modes')):== 1)
+	_editvalue(z, 1, .)
+	edge = edge :+ z
+	sparse_built = `False'
+}
+
+void `NWdef'::set_description_mode1(string scalar description){
+	description_mode1 = description
+}
+
+void `NWdef'::set_description_mode2(string scalar description){
+	description_mode2 = description
+}
+
+string scalar `NWdef'::get_description_mode1(){
+	return(description_mode1)
+}
+
+string scalar `NWdef'::get_description_mode2(){
+	return(description_mode2)
+}
+
+void `NWdef'::set_nodes_mode1(real scalar m1){
+	nodesmode1 = m1
+	nodesmode2 = get_nodes() - m1
+}
+
+void `NWdef'::set_nodes_mode2(real scalar m2){
+	nodesmode2 = m2
+}
+
+void `NWdef'::set_modes(string rowvector m){
+	modes = m
+}
+
+string matrix `NWdef'::get_modes(){
+    if (cols(modes) == 0) {
+		set_modes(J(1,get_nodes(),"1"))
+	}
+	return(modes)
+}
+
+real scalar `NWdef'::get_nodes_mode1(){
+    return(sum(modes:=="1"))
+}
+
+real scalar `NWdef'::get_nodes_mode2(){
+    return(sum(modes:=="2"))
+}
+
+string scalar `NWdef'::get_nodesvar_string(){
 	return(invtokens(nodesvar," "))
 }
 
-string matrix `NWdef'::get_edgelist(real scalar undirected, real scalar isolates0){
-	string matrix sender, receiver
+string matrix `NWdef'::get_nodesvar(){
+	return(nodesvar)
+}
+
+string scalar `NWdef'::get_nodenames_string(){
+	return(invtokens(nodes,";"))
+}
+
+void `NWdef'::set_nodesvar(string matrix v){
+	nodesvar = v
+}
+
+string matrix `NWdef'::get_edgelist_compressed(real scalar undirected){
+	string matrix _edge
+	_edge = get_edgelist(undirected)
+	return(select(_edge, ((_edge[,3]:!= ".") :& (_edge[,3]:!= "0"))))
+}
+
+string matrix `NWdef'::get_edgelist(real scalar undirected){
+	string matrix sender, receiver, sender_num, receiver_num
 	real scalar i, size
 	real matrix e, z
 	
-	e = get_matrix()
-	if is_
-	if (undirected == 1) {
-		z = (J(rows(e), cols(e), 1) :- uppertriangle(J(rows(e), cols(e),1))) * (`missing2')
-		e = e:* uppertriangle(J(rows(e), cols(e),1)) +  z 
-	}
-	size = rows(e)
-	sender = nodes'
-	receiver = J(size, 1, nodes[1])
+	receiver = J(get_nodes(), 1, nodes)	
+	sender = J(1,get_nodes(), nodes')
 	
-	for(i = 2; i<= size; i++){
-		sender = (sender \ nodes')
-		receiver = (receiver \(J(size, 1, nodes[i])))
+	receiver_num = J(get_nodes(), 1, (1::get_nodes())')
+	sender_num = J(1, get_nodes(), (1::get_nodes()))
+	
+
+	// -- TODO -- change to pointer matrix
+
+	e = get_matrix_copy()
+	if (undirected == 1) {
+		z = lowertriangle(J(get_nodes(), get_nodes(), 1),1)  
 	}
-	return((sender, receiver, strofreal(vec(e))))
+	else {
+		z = J(get_nodes(), get_nodes(), 1)
+	}
+	return(select((vec(sender), vec(receiver), strofreal(vec(e)), strofreal(vec(z)), strofreal(vec(e')),strofreal(vec(sender_num)), strofreal(vec(receiver_num))), vec(z)))
 }
+
 
 void `NWdef'::drop_nodes(rowvector d){
 	keep_nodes(d:==0)
@@ -274,22 +2146,23 @@ void `NWdef'::keep_nodes(rowvector k){
 		nodesvar = nodesvar_new
 		modes = modes_new
 		edge = edge_new
+		sparse_built = `False'
 	}
 }
 
-real scalar `NWdef'::get_selfloop_boolean(){
+real scalar `NWdef'::is_selfloop_boolean(){
 	return(isselfloop)
 }
 
-real scalar `NWdef'::get_valued_boolean(){
+real scalar `NWdef'::is_valued_boolean(){
 	return(isvalued)
 }
 
-real scalar `NWdef'::get_directed_boolean(){
+real scalar `NWdef'::is_directed_boolean(){
 	return(isdirect)
 }
 
-real scalar `NWdef'::get_2mode_boolean(){
+real scalar `NWdef'::is_2mode_boolean(){
 	return(is2mode)
 }
 	
@@ -301,13 +2174,43 @@ void `NWdef'::set_2mode(real scalar d){
 	is2mode = d
 }
 
-string scalar `NWdef'::check_symmetry(){
+real scalar `NWdef'::check_symmetry(){
 //!! TODO - change when network not saved as matrix edge
 	if (edge == edge'){
-		return("true")
+		return(1)
 	}
-	return("false")
+	return(0)
 }
+
+/*
+pointer (real matrix) scalar `NWdef'::get_symmetrize(string scalar mode){
+//!! TODO - change when network not saved as matrix edge	
+	real matrix d, res1, res2
+	d = diagonal(edge)
+	
+	if (mode == "sum") {
+		return(&(edge  + edge'))
+	}
+	if (mode == "mean") {
+		return(&((edge  + edge'):/2))
+	}
+	if (mode == "max") {
+		res2 = (edge')
+		res2 = ((edge') :> edge):* res2
+		res1 = edge
+		res1 = (edge :>= (edge')):* res1
+		return(&res1 + res2
+	}
+	if (mode == "min") {
+		res2 = (edge')
+		res2 = ((edge') :< edge):* res2
+		res1 = edge
+		res1 = (edge :<= (edge')):* res1
+		edge = res1 + res2
+	}
+	_diag(edge,d)
+	set_directed(0)
+}*/
 
 void `NWdef'::symmetrize(string scalar mode){
 //!! TODO - change when network not saved as matrix edge	
@@ -336,28 +2239,62 @@ void `NWdef'::symmetrize(string scalar mode){
 	}
 	_diag(edge,d)
 	set_directed(0)
+	sparse_built = `False'
 }
 
-real matrix `NWdef'::get_indegree(real scalar valued){
-	real matrix e 
-	if (valued == 0){
-		e = get_matrix()
+/*
+	Generalized (Opsahl et al. 2010) degree centrality: k_i * (s_i/k_i)^alpha,
+	where k_i is unweighted degree (tie count) and s_i is weighted degree
+	(tie-value sum). Both use the sparse index instead of a full-matrix
+	rowsum/colsum. get_indegree() falls back to the forward (out) index for
+	undirected networks, matching how neighbors_in() does the same - `edge'
+	already stores undirected ties symmetrically, so out-ties are the
+	complete tie set and no reverse index is built for them in the first
+	place (build_sparse_index() only builds rowptr_in/colidx_in/edgeid_in
+	when isdirect).
+*/
+real matrix `NWdef'::get_indegree(real scalar alpha){
+	real matrix s, k
+	real scalar i, n
+
+	ensure_sparse_built()
+	n = get_nodes()
+	s = J(n,1,0)
+	k = J(n,1,0)
+	if (!isdirect){
+		for (i=1; i<=n; i++){
+			if (rowptr[i+1] > rowptr[i]){
+				k[i,1] = rowptr[i+1] - rowptr[i]
+				s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+			}
+		}
 	}
 	else {
-		e = get_matrix_unvalued()
+		for (i=1; i<=n; i++){
+			if (rowptr_in[i+1] > rowptr_in[i]){
+				k[i,1] = rowptr_in[i+1] - rowptr_in[i]
+				s[i,1] = sum(cweight[edgeid_in[(rowptr_in[i]::(rowptr_in[i+1]-1)),1],1])
+			}
+		}
 	}
-	return(colsum(e)')
+	return(editmissing((k :* ((s :/ k) :^ alpha)),0))
 }
 
-real matrix `NWdef'::get_outdegree(real scalar valued){
-	real matrix e 
-	if (valued == 0){
-		e = get_matrix()
+real matrix `NWdef'::get_outdegree(real scalar alpha){
+	real matrix s, k
+	real scalar i, n
+
+	ensure_sparse_built()
+	n = get_nodes()
+	s = J(n,1,0)
+	k = J(n,1,0)
+	for (i=1; i<=n; i++){
+		if (rowptr[i+1] > rowptr[i]){
+			k[i,1] = rowptr[i+1] - rowptr[i]
+			s[i,1] = sum(cweight[(rowptr[i]::(rowptr[i+1]-1)),1])
+		}
 	}
-	else {
-		e = get_matrix_unvalued()
-	}
-	return(rowsum(e))
+	return(editmissing((k :* ((s :/ k) :^ alpha)),0))
 }
 
 string matrix `NWdef'::get_nodenames(){
@@ -408,7 +2345,7 @@ void `NWdef'::update_nodesvar(){
 	nodesvar = strtoname(nodes)
 	for(i = 1; i<=k;i++){
 		for(j = 1; j<=k;j++){
-			if (nodesvar[i] == nodesvar[j]){
+			if (nodesvar[i] == nodesvar[j] & i != j ){
 				j = k + 1
 				i = j
 				nodesvar = J(1,k,"`nwvars_def_pref'") + (strofreal(1::k))'
@@ -421,11 +2358,11 @@ void `NWdef'::update_nodesvar(){
 	Get number of self-loops
 */
 real scalar `NWdef'::get_selfloops_number(){
-	real matrix e
+	real matrix  d
 	
 	if (isselfloop == 1) { 
-		e = diagonal(get_matrix())
-		return(sum(e :/ e))	
+		d = diagonal(*get_matrix())
+		return(sum(d :/ d))	
 	}
 	else {
 		return(0)
@@ -436,26 +2373,10 @@ real scalar `NWdef'::get_selfloops_number(){
 	Get network density
 */
 real scalar `NWdef'::get_density(){
-	real matrix e
-	real scalar possnodes
-	
-	e = get_matrix()
-	
-	e = e:/e
-	possnodes = (cols(e) * cols(e) )
-	
-	if (isselfloop != 1){
-		_diag(e,0)
-		possnodes = possnodes - cols(e)
-	}
+	pointer(real matrix) scalar e
 
-	if (is2mode == 0) {
-		return(sum(e) / possnodes)
-	}
-	if (is2mode == 1){
-//!! TODO implement two- and multi-modes		
-		return(sum(e)/ possnodes)
-	}
+	e = get_matrix_unvalued()
+	return(sum(*e)/ sum(*e:!= .))
 }
 
 
@@ -463,70 +2384,70 @@ real scalar `NWdef'::get_density(){
 	Get edges counts
 */
 real scalar `NWdef'::get_edges_count(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(sum(e:!=. :& e:!=0)/2)
+	return(sum(*e:!=. :& *e:!=0)/2)
 }
 
 /*
 	Get sum of edge values
 */
 real scalar `NWdef'::get_edges_sum(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(sum(e)/2)
+	return(sum(*e)/2)
 }
 
 /*
 	Get arcs counts
 */
 real scalar `NWdef'::get_arcs_count(){
-	real matrix e
-	
+	pointer(real matrix) scalar e
+
 	e = get_matrix()
-	return(sum(e:!=. :& e:!=0))
+	return(sum(*e:!=. :& *e:!=0))
 }
 
 /*
 	Get sum of arc values
 */
 real scalar `NWdef'::get_arcs_sum(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(sum(e))
+	return(sum(*e))
 }
 
 /*
 	Get missing edge values
 */
 real scalar `NWdef'::get_missing_edges(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(sum(e:==.))
+	return(sum(*e:==.))
 }
 
 /*
 	Get minimum edge value
 */
 real scalar `NWdef'::get_minimum(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(min(e))
+	return(min(*e))
 }
 
 /*
 	Get maximum edge value
 */
 real scalar `NWdef'::get_maximum(){
-	real matrix e
+	pointer(real matrix) scalar e
 	
 	e = get_matrix()
-	return(max(e))
+	return(max(*e))
 }
 
 /*
@@ -553,6 +2474,25 @@ void `NWdef'::set_nodes(rowvector n){
 void `NWdef'::set_nodenames(rowvector n){
 	nodes = n
 }
+
+`BOOL' `NWdef'::rename_nodename(string scalar oldname, string scalar newname){
+	real scalar i
+	if (cols(selectindex(nodes:== newname)) != 0) {
+		return(0)
+	}
+	else {
+		i = selectindex(nodes:== oldname)
+		if (cols(i) == 0) {
+			return(0)
+		}
+		else {
+			nodes[i[1]] = newname
+			update_nodesvar()
+			return(1)
+		}
+	}
+}
+
 
 void `NWdef'::set_nodes_from_string(string scalar s){
 	nodes = tokens(s,";")
@@ -689,15 +2629,39 @@ void `NWdef'::set(string scalar networkname, string colvector nodenames, real ma
 */
 void `NWdef'::create_by_name(string rowvector name) {
 	real scalar v
-	
+
 	zap()
-	nodes = name 
+	nodes = name
 	update_nodesvar()
 	init_edge()
 	if (_st_varindex("`nw_nodename'") == .) {
 		v =	st_addvar("str40","`nw_nodename'")
 	}
-	
+
+}
+
+/*
+	Genuinely sparse-native counterpart to create_by_name(): identical
+	except it calls init_edge_sparse() instead of init_edge(), so node
+	identity/count can be established WITHOUT allocating an N x N `edge'
+	matrix - create_by_name() itself does (via init_edge()'s
+	J(size,size,0)), which would defeat set_edge_from_triplets()'s purpose
+	for any caller that needs both. Added as a separate method rather than
+	changing create_by_name() itself: every existing command relies on
+	create_by_name() leaving `edge' immediately dense-valid, and changing
+	that default for everyone is a much larger, riskier change than this
+	narrowly-scoped addition needs.
+*/
+void `NWdef'::create_by_name_sparse(string rowvector name) {
+	real scalar v
+
+	zap()
+	nodes = name
+	update_nodesvar()
+	init_edge_sparse()
+	if (_st_varindex("`nw_nodename'") == .) {
+		v =	st_addvar("str40","`nw_nodename'")
+	}
 }
 
 /* 
@@ -708,11 +2672,17 @@ void `NWdef'::set_name(string scalar s) {
 }
 
 /* 
+	REMOVE SELFLOOPS!!!! This sucks
+	
 	Set isselfloop property
 */
 void `NWdef'::set_selfloop(real scalar d) {
 	isselfloop = d
+	if (isselfloop == 0) {
+		_diag(edge,.)
+	}
 }
+
 
 /* 
 	Set isdirect property
@@ -728,24 +2698,56 @@ void `NWdef'::init_edge() {
 	real scalar size
 //!! create edge matrix based on edgetype
 	size = cols(nodes)
-	edge = J(size, size, 0)	
+	edge = J(size, size, 0)
+	sparse_built = `False'
+	edge_dense_built = `True'
+}
+
+/*
+	Sparse-native counterpart to init_edge(): establishes an empty (no
+	edges yet) sparse index for `size' nodes WITHOUT allocating the N x N
+	`edge' matrix. Pairs with create_by_name_sparse() / a later
+	set_edge_from_triplets() call.
+*/
+void `NWdef'::init_edge_sparse() {
+	real scalar size
+
+	size = cols(nodes)
+	edge = J(0, 0, 0)
+	edge_dense_built = `False'
+	rowptr = J(size+1, 1, 1)
+	colidx = J(0, 1, 0)
+	cweight = J(0, 1, 0)
+	rowptr_in = J(0, 1, 0)
+	colidx_in = J(0, 1, 0)
+	edgeid_in = J(0, 1, 0)
+	sparse_built = `True'
 }
 
 /*
 	Set edge matrix
 */
 void `NWdef'::set_edge(real matrix edge1) {
-	edge = edge1
+	if (is_selfloop_boolean() == 0){
+		edge = edge1
+		_diag(edge, .)
+	}
+	else {
+		edge = edge1
+	}
+	sparse_built = `False'
+	edge_dense_built = `True'
 }
 
 /*
-	Get edge matrix
+	Get a copy of the edge matrix
 */
-real matrix `NWdef'::get_matrix() {
+real matrix `NWdef'::get_matrix_copy() {
 //!! generate edge matrix based on edgetype
 	real matrix e
+	ensure_dense_built()
 	e = edge
-	
+
 	if (isselfloop == 0){
 		_diag(e,.)
 		return(e)
@@ -757,12 +2759,14 @@ real matrix `NWdef'::get_matrix() {
 }
 
 /*
-	Get unvalued edge matrix
+	Get a copy of the unvalued edge matrix
+	and replace missings with zeros
 */
-real matrix `NWdef'::get_matrix_unvalued() {
+real matrix `NWdef'::get_matrix_unvalued_copy() {
 //!! generate edge matrix based on edgetype
 	real matrix e
-	e = edge:!= 0
+	ensure_dense_built()
+	e = (edge:!= 0 :& edge :!= .)
 	return(e)
 }
 
@@ -770,8 +2774,153 @@ real matrix `NWdef'::get_matrix_unvalued() {
 /*
 	Get pointer to edge matrix
 */
-pointer(real matrix) `NWdef'::get_matrix_original(){
+pointer(real matrix) `NWdef'::get_matrix(){
+	ensure_dense_built()
 	return(&edge)
+}
+
+/*
+	Get pointer to unvalued edge matrix
+	and replace missings with zeros
+*/
+pointer(real matrix) `NWdef'::get_matrix_unvalued(){
+	ensure_dense_built()
+	if (is_valued()== "false"){
+		return (&edge)
+	}
+	else {
+		return(&((edge:!=0 :& edge:!=.) :+ ((edge:==.) :* edge)))
+	}
+}
+
+/*
+	Get pointer to modified edge matrix.
+
+	For example:
+		get_matrix(0,0) - returns unvalued and undirected matrix
+		get_matrix(1,0) - returns valued and undirected matrix
+		get_matrix(0,1) - returns unvalued and directed matrix
+		get_matrix(1,1) - returns valued and directed matrix
+	
+	Note: Symmetrization uses option "max"
+	
+*/
+pointer(real matrix) `NWdef'::get_matrix_mod(real scalar getvalued, real scalar getdirected){
+	real matrix res1, res2, d
+
+	ensure_dense_built()
+	if (isvalued == getvalued & isdirect == getdirected){
+		return (&edge)
+	}
+	else {
+		if (getvalued == 0 & getdirected == 1){ 
+			if (isvalued == 0) {
+				return (&(edge))
+			}
+			else {
+				return(&((edge:>0 :& edge:!=.) :+ ((edge:==.) :* edge)))
+			}
+		}
+		if (getvalued == 1 & getdirected == 1){ 
+			return(&(edge))
+		}
+		if (getvalued == 1 & getdirected == 0){ 
+			if (isdirect == 0) {
+				return (&(edge))
+			}
+			else {
+				res2 = (edge')
+				res2 = ((edge') :> edge):* res2
+				res1 = edge
+				res1 = (edge :>= (edge')):* res1
+				return(&((res1 + res2) :+ ((edge:==.) :* edge)))
+			}
+		}
+		if (getvalued == 0 & getdirected == 0 ) {
+			if (isdirect == 0 & isvalued == 0) {
+				return (&(edge))
+			}
+			else {
+				res2 = (edge')
+				res2 = ((edge') :> edge):* res2
+				res1 = edge
+				res1 = (edge :>= (edge')):* res1
+				return(&(((res1 + res2):>0 :& (res1 + res2):!=.) :+ ((edge:==.) :* edge)))
+			}
+		}
+	}
+}
+
+
+
+
+real matrix `NWdef'::calculate_dyadcensus(){
+    real scalar asym
+    real scalar mutual
+    real scalar null
+
+    asym = sum((*get_matrix_unvalued() - *get_matrix_unvalued()'):==1) + sum((*get_matrix_unvalued() - *get_matrix_unvalued()'):==-1)
+    asym = asym / 2
+    mutual = sum(*get_matrix_unvalued():* (*get_matrix_unvalued()')) / 2
+    null = rows(*get_matrix_unvalued())
+    null = (null * (null - 1)) - asym - mutual
+
+    if (is_2mode_boolean() == 1) {
+        null = get_nodes_mode1() * get_nodes_mode2() - asym - mutual
+    }
+    return((mutual, asym, null))
+}
+
+real matrix `NWdef'::calculate_triadcensus(){
+	real matrix outdeg, indeg, deg, delta1, delta2, delta
+	real scalar pot, transTrip, transitivity
+	real scalar x_003,x_012,x_021D, x_021U, x_021C, x_030T, x_030C, x_102, x_120D, x_120U, x_120C, x_111D, x_111U, x_210, x_201, x_300
+	real scalar t201, t021D, t021U, t111D, t111U
+	real matrix M, C, E, Ecompl, diagonal
+	
+	E = abs(*get_matrix_unvalued()) + abs((*get_matrix_unvalued())')
+	E = E :/ E
+	_editmissing(E, 0)
+	
+	M = *get_matrix_unvalued() + *get_matrix_unvalued()'
+	_editvalue(M, 1, 0)
+	_editvalue(M, 2, 1)
+	_editmissing(M, 0)
+	
+	C = *get_matrix_unvalued() - M
+	_editmissing(C, 0)
+	
+	Ecompl = E
+	_editvalue(Ecompl, 0, 10)
+	_editvalue(Ecompl, 1, 0)
+	_editvalue(Ecompl, 10, 1)
+	diagonal = J(rows(Ecompl), 1, 0)
+	
+	_diag(Ecompl, diagonal)
+	x_003 = sum(diagonal((Ecompl * Ecompl * Ecompl))) / 6
+	x_012 = sum((Ecompl * Ecompl) :* (C + C')) / 2
+	x_102 = sum((Ecompl * Ecompl) :* M) / 2
+	x_021D = sum((C' * C) :* ( Ecompl :/ 2))
+	x_021U = sum((C * C') :* ( Ecompl :/ 2))
+	x_021C = sum((C * C) :* Ecompl)
+	x_030T = sum((C * C) :* C)
+	x_030C = sum(diagonal(C * C * C)) / 3
+	x_201 = sum((M * M) :* (Ecompl :/ 2))
+	x_120D = sum((C' * C) :* (M :/ 2))
+	x_120U = sum((C * C') :* (M :/ 2))
+	x_120C = sum((C * C) :* M)
+	x_210 = sum((M * M) :* ((C + C') :/ 2))
+	x_300 = sum(diagonal(M * M *M)) / 6
+	t201 = (M * M) :* Ecompl
+	t021D = (C' * C) :* Ecompl
+	t021U = (C * C') :* Ecompl
+	t111D = ((*get_matrix_unvalued() * *get_matrix_unvalued()') :* Ecompl) - t201 - t021U
+	x_111D = sum(t111D) / 2
+	t111U = ((*get_matrix_unvalued()' * *get_matrix_unvalued()) :* Ecompl) - t201 - t021D
+	x_111U = sum(t111U) / 2
+	
+	return((x_003,x_012, x_021D, x_021U, x_021C, x_030T, x_030C, x_102, x_111D, x_111U, x_120D, x_120U, x_120C, x_210, x_201, x_300))
+
 }
 
 /*
@@ -780,8 +2929,9 @@ pointer(real matrix) `NWdef'::get_matrix_original(){
 void `NWdef'::connect_edge(real scalar i, real rowvector rj) {
 	edge[i, rj] = J(1, cols(rj), 1)
 	if(!isdirect) {
-		edge[rj', i] = J(cols(rj), 1, 1)	
+		edge[rj', i] = J(cols(rj), 1, 1)
 	}
+	sparse_built = `False'
 }
 
 /*
@@ -796,13 +2946,12 @@ void `NWdef'::add_node(string scalar s) {
 	}
 	size = cols(nodes)
 	nodes = (nodes, s)
-	if(is2mode) {
-		modes = (modes, "")
-	}
-	edge = (edge, J(size, 1, 0)\J(1, size+1, 0)) 
+	nodesvar = (nodesvar, strtoname(s))
+	edge = (edge, J(size, 1, 0)\J(1, size+1, 0))
+	sparse_built = `False'
 }
 
-/* 
+/*
 	Cleanup of the network
 */
 void `NWdef'::zap() {
@@ -814,6 +2963,7 @@ void `NWdef'::zap() {
 	edge  = J(0, 0, 0)
 	isdirect = `False'
 	is2mode   = `False'
+	sparse_built = `False'
 }
 
 /*
@@ -907,12 +3057,16 @@ class `NWsdef' {
 	pointer(class `NWdef' scalar) rowvector 	pdefs
 	real scalar number  // number of networks in memory
 	pointer(class `NWdef' scalar) scalar pcurrent
+    `BOOL' datasync // flag for -nw_datasync- on/off
+    
 	
 //!! methods:
 	void zap()
 	void create()	
 	void create_by_name()
 	void add()
+	void add_existing()
+	real append()
 	void dumper()
 	void update_number()
 	void delete_index()
@@ -923,6 +3077,7 @@ class `NWsdef' {
 	string scalar get_names()
 	void make_current()
 	void make_current_from_name()
+	
 	real scalar get_index_of_current()
 	string scalar get_current_name()
 	real scalar get_max_nodes()
@@ -931,8 +3086,24 @@ class `NWsdef' {
 	void generate_current_nodesvar()
 	void duplicate()
 	void drop()
+	
+	void set_datasync()
+	real get_datasync()
+	
+	//void preserve()
 }
 
+
+void `NWsdef'::set_datasync(real onoff){
+	datasync = onoff
+}
+
+real `NWsdef'::get_datasync(){
+    if (datasync == .){
+        set_datasync(1)
+    }
+    return(datasync)
+}
 
 void `NWsdef'::drop_current_nodesvar(){
 	real scalar i
@@ -1006,6 +3177,11 @@ real scalar `NWsdef'::get_index_of_current(){
 	Get name of current network
 */
 string scalar `NWsdef'::get_current_name(){
+
+	if (strpos(get_names(),pcurrent->get_name()) == 0) {
+		make_current_from_name(tokens(get_names())[1])
+		//make_current_from_name(ustrword(get_names(),1))
+	}
 	return(pcurrent->get_name())
 }
 
@@ -1150,6 +3326,36 @@ void `NWsdef'::create_by_name(string rowvector s) {
 /*
 	Add one network
 */
+
+
+real `NWsdef'::append(pointer(class `NWs') scalar newnws){
+	string matrix s
+	real scalar c1, c2
+
+	s = (this.names'\ ((*newnws).nws.names)')
+	c1 = cols(this.pdefs)
+	c2 = cols((*newnws).nws.number)
+	
+	if (rows(uniqrows(s)) == c1 + c2){
+		pdefs = (pdefs, (*newnws).nws.pdefs)
+		names = (names, (*newnws).nws.names)
+		number = cols(pdefs)
+		return(1)
+	}
+	else {
+		return(0)
+	}
+}
+
+void `NWsdef'::add_existing(pointer(class `NWdef' scalar) scalar nw){
+	real scalar size
+	
+	add((*nw).get_name())
+	size = cols(pdefs)
+	pdefs[size] = nw
+}
+
+
 void `NWsdef'::add(string scalar s) {
 
 	real scalar i, size
@@ -1199,6 +3405,7 @@ void `NWsdef'::drop(string scalar netname){
 /* 
 	Add a duplicate of a network
 */
+
 void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	real scalar i, size
 	
@@ -1208,15 +3415,22 @@ void `NWsdef'::duplicate(string scalar netname, string scalar new_netname){
 	size = cols(pdefs)
 	pdefs[size] = &(`NWdef'())
 	pdefs[size]->set_name(new_netname)
-	pdefs[size]->set_edge(pdefs[i]->get_matrix())
+	pdefs[size]->set_edge(pdefs[i]->get_matrix_copy())
 	pdefs[size]->set_nodenames(pdefs[i]->get_nodenames())
 	
-	pdefs[size]->set_directed(pdefs[i]->get_directed_boolean())
-	pdefs[size]->set_valued(pdefs[i]->get_valued_boolean())
-	pdefs[size]->set_2mode(pdefs[i]->get_2mode_boolean())
+	if (pdefs[i]->is_2mode_boolean()){
+		pdefs[size]->set_modes(pdefs[i]->get_modes())
+	}
+	
+	pdefs[size]->set_nodesvar(pdefs[i]->get_nodesvar())
+	pdefs[size]->set_selfloop(pdefs[i]->is_selfloop_boolean())
+	pdefs[size]->set_directed(pdefs[i]->is_directed_boolean())
+	pdefs[size]->set_valued(pdefs[i]->is_valued_boolean())
+	pdefs[size]->set_2mode(pdefs[i]->is_2mode_boolean())
 
 	pdefs[size]->set_label(pdefs[i]->get_label())
 	pdefs[size]->set_caption(pdefs[i]->get_caption())
+	make_current(size)
 
 }
 
@@ -1247,7 +3461,7 @@ class `NWsder' {
 class `NWs' scalar nws_create()
 {
 	class `NWs'  scalar a 
+	
 	return(a)
 }
-
 end

@@ -1,69 +1,131 @@
-*! Date        : 19sept2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 1.0.0  3sept2014}{...}
+{marker topic}
+{helpb nw_topical##analysis:[NW-2.6] Analysis}
 
-/////////////////////////////////
-//
-// Algorithm from Brandes (2001), Journal of Mathematical Sociology
-// Implementation builds on Mata code from Modesto Escobar, 2014
-//
-/////////////////////////////////
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwbetween  {hline 2} Calculate betweenness centrality}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwbetween} 
+[{it:{help netlist}}]
+[{cmd:,}
+{opt generate}({it:{help newvarlist}})
+{opt nosym}
+{opt standardize}]
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt generate}({it:{help newvarlist}})}variable name for betweenness centrality; default = {it:_between}{p_end}
+{synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
+{synopt:{opt standardize}}standardize centrality scores{p_end}
+
+
+{title:Description}
+
+{pstd}
+Calculates the betweenness centrality for each node {it:i} in a {help netname:network} or {help netlist:network list} and 
+saves the result as a Stata variable. The command used the dichotomized network. 
+
+{pstd}
+The betweenness centrality for node {it:i} is equal to the number of shortest paths from all vertices to all 
+others that pass through node {it:i}. A node with high betweenness centrality has a large influence on the 
+transfer of items through the network, under the assumption that item transfer follows the shortest paths. 
+
+{pstd}
+When there is more than one shortest path from node {it:k} to node {it:l}, the betweenness scores of all nodes {it:i}
+on these paths increases proportionally.  
+
+{pstd}
+Formally, betweenness centrality of node {it:i} on graph {it:g} is defined as:
+
+{pmore}
+{it:Between_i(g) = sum ( sigma_st(i) / sigma_st )}
+
+{pstd}
+where, {it:sigma_st} is the total number of shortest paths from node {it:s} to node {it:t} and {sigma_st(i)} is the number of those 
+paths that pass through node {i}.
+
+{pstd}
+For the standardized betweenness centrality:
+
+{pmore}
+Directed network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))}
+
+{pmore}
+Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
+
+{pstd}
+The Stata variable {it:varname} is overwritten. In case, betweenness centrality is calculated
+for {it:z} networks at the same time (e.g. {bf:nwbetween glasgow1 glasgow2}), the command generates the variables
+{it:varname_z}, one for each network. 
+
+	
+{title:Examples}
+	
+	{cmd:. webnwuse gang, nwclear}
+	{cmd:. nwbetween gang}
+	{cmd:. sum _between}
+
+	
+{title:See also}
+
+	{help nwpath}, {help nwgeodesic}, {help nwcloseness}, {help nwkatz}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
+
+***/
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [GENerate(string) nosym standardize outputoff]
-	_nwsyntax `netname', max(9999)
-	_nwsetobs
+	syntax [anything(name=netname)], [alpha(real 0) GENerate(string) nosym standardize silent]
+	nw_syntax `netname'
+	local oldnetname `netname'
 	
-	if `networks' > 1 {
-		local k = 1
+	if "`generate'" == "" {
+		local generate "_between"
 	}
-	
+	capture drop `generate'*
+	local k = 1
 	local generate_all ""
 	
-	foreach netname_temp in `netname' {
-		nwtomata `netname_temp', mat(betweennet)
-		if "`sym'" != "" {
-			mata: betweennet = betweennet :+ betweennet'
-		}
-	
-		if "`sym'" == "" {
-			mata: betweennet = betweennet :/ betweennet
-			mata: _editmissing(betweennet, 0)
-		}
-		
-		mata: C = between(betweennet)
-		if "`sym'" != ""  {
-			mata: C = C:/2
-		}
-	
-		if "`generate'" == "" {
-			local generate "_between"
-		}
-		
-		
-		if "`outputoff'" == "" {
-		
-		local generate_all "`generate_all' `generate'`k'"
-		capture drop `generate'`k'
-		nwtostata, mat(C) gen(`generate'`k')
-		mata: mata drop betweennet
-		qui nwname `netname_temp'
-		if "`standardize'" != "" {
-			if "`r(directed)'" == "true" {
-				qui replace `generate'`k'  = `generate'`k'  / ((`nodes' - 1) * (`nodes' - 2))
-			}
-			else {
-				qui replace `generate'`k'   = `generate'`k'  / ((`nodes' - 1) * (`nodes' - 2) / 2)
-			}
-		}
-		}
-		local k = `k' + 1
+	capture confirm variable `generate'
+	if _rc == 0 & "`replace'" == "" {
+		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
+		err 99
 	}
+	capture drop `generate'
+	generate `generate' = .
+	
+	if "`nosym'" == "" {
+		nwsym `netname', generate(`netname'_symmetrized)
+		nw_syntax
+	}
+		
+	mata: st_store((1::`nodes'),"`generate'", `netobj'->calculate_betweenness())
+
+	if "`standardize'" != "" {
+		if "`directed'" == "true" {
+			qui replace `generate'  = `generate'  / ((`nodes' - 1) * (`nodes' - 2))
+		}
+		else {
+			qui replace `generate'   = `generate' / ((`nodes' - 1) * (`nodes' - 2) / 2)
+		}
+	}
+	
+	if "`nosym'" == "" {
+		nwdrop `oldnetname'_symmetrized
+		nwcurrent `oldnetname'
+	}
+
 	mata: st_rclear()
 
-	
 	di "{hline 40}"
 	di "{txt}  Network name: {res}`netname'"
 	di "{hline 40}"
@@ -71,94 +133,9 @@ program nwbetween
 	if "`standardize'" != "" {
 		di "{txt}    (standardized)"
 	}
-	if "`outputoff'" == "" {
-		sum `generate_all'
+	if "`silent'" == "" {
+		sum `generate'
 	}
-	mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(C)) :- C) / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1)))
-	mata: mata drop C
+	mata: st_numscalar("r(bw_central)", sum(J(`nodes',1,max(st_data((1::`nodes'), "`generate'"))) :- st_data((1::`nodes'), "`generate'")) / ((`nodes' - 2) * (`nodes' - 1) * (`nodes' - 1)))
 end
 
-
-/////////////////////////////////
-//
-// Algorithm from Brandes (2001), Journal of Mathematical Sociology
-// Implementation builds on Mata code from Modesto Escobar, 2014
-//
-/////////////////////////////////
-
-capture mata: mata drop between()
-capture mata: mata drop dequeue()
-
-mata:
-
-real scalar function dequeue(real vector Queue)
-{
-	qvalue=Queue[1]
-	for (q=1; q<cols(Queue); q++) { 
-		Queue[q]=Queue[q+1]
-	}
-	if(cols(Queue)==1) { 
-		Queue=J(1,0,.)
-	}
-	else {
-		Queue=Queue[1..cols(Queue)-1]
-	}
-	return(qvalue)
-}
-
-real vector between(real matrix net){
-
-	adjacencyList=J(rows(net),rows(net)-1,.)
-	for (m=1; m<=rows(net); m++) {
-		k=1
-		for (n=1; n<=rows(net); n++) {
-			if ( m!=n & net[m,n]>0) adjacencyList[m,k++]=n
-		}
-    }
-	
-	Cb=J(1,rows(net),0)
-	for(s=1; s<=rows(net); s++) {
-		Stack=J(1,0,.)
-		P=J(rows(net),rows(net),.)
-		nP=J(rows(net),1,1)
-		S=J(1,rows(net),0)
-		S[s]=1
-		D=J(1,rows(net),-1)
-		D[s]=0
-		Queue=J(1,0,.)
-		Queue=(cols(Queue)? Queue,s : s)
-		
-		while(cols(Queue)) {
-			v=dequeue(Queue)
-		
-			Stack=cols(Stack)? v,Stack : v
-			for(j=1; j<=sum(adjacencyList[v,.]:<.);j++) {
-				w=adjacencyList[v,j]
-				if(D[w]<0) {
-					Queue=(cols(Queue)? Queue,w : w)
-					D[w]=D[v]+1
-				}
-				if(D[w]==D[v]+1) {
-					S[w]=S[w]+S[v]
-					P[w,nP[w]]=v; nP[w]=nP[w]+1
-				}     
-			}	
-		}
-		
-		Dd=J(1,rows(net),0)
-		
-		while (cols(Stack)) {
-			w=dequeue(Stack)
-  
-			for(j=1; j<nP[w]; j++) {
-				v=P[w,j]
-				Dd[v]=Dd[v]+(S[v]/S[w])*(1+Dd[w])
-			}
-			if (w!=s) Cb[w]=Cb[w]+Dd[w]
-		}
-	}
-	return(Cb')
-}
-end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
