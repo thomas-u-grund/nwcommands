@@ -1038,6 +1038,411 @@ real matrix KPlex(real matrix adj, real scalar k, real rowvector R, real rowvect
 	return(results)
 }
 
+/*
+	bfs_augment(cap, flow, s, t, parent): a single Edmonds-Karp BFS
+	augmenting-step over an explicit N x N capacity/flow matrix pair
+	(the standard, textbook max-flow algorithm - BFS repeatedly finds
+	the shortest remaining-capacity path from s to t, augments along
+	it, until none remains). Returns 1 and fills `parent' with the
+	predecessor chain (parent[v] = the node BFS reached v from) if a
+	path with positive residual capacity (cap[u,v] - flow[u,v] > 0)
+	exists from s to t; returns 0 (parent left as J(1,N,0)) once none
+	does, at which point the accumulated flow equals the max flow
+	(the standard max-flow/min-cut theorem). Used by
+	maxflow_vertex_split() below on a "vertex-split" capacity graph,
+	not a plain edge-capacity graph - see that function's own header
+	comment for what the capacities themselves represent.
+*/
+real scalar bfs_augment(real matrix cap, real matrix flow, real scalar s, real scalar t, real rowvector parent){
+	real scalar N, u, v, qhead, qtail
+	real rowvector visited, queue
+
+	N = rows(cap)
+	visited = J(1,N,0)
+	parent = J(1,N,0)
+	queue = J(1,N,0)
+	qhead = 1
+	qtail = 1
+	queue[1] = s
+	visited[s] = 1
+
+	while (qhead <= qtail) {
+		u = queue[qhead]
+		qhead++
+		for (v=1; v<=N; v++) {
+			if (visited[v] == 0 & (cap[u,v] - flow[u,v]) > 0) {
+				visited[v] = 1
+				parent[v] = u
+				if (v == t) return(1)
+				qtail++
+				queue[qtail] = v
+			}
+		}
+	}
+	return(0)
+}
+
+/*
+	maxflow_vertex_split(adj, s, t): the *vertex* (node) version of
+	max-flow/min-cut, via the standard node-splitting reduction to
+	ordinary edge-capacity max-flow (Even 1979): every node v becomes
+	two nodes in the flow graph, v_in (index v) and v_out (index n+v),
+	joined by a capacity-1 edge - so routing flow through v at all
+	"costs" exactly 1 unit of a vertex cut, regardless of how many of
+	v's own ties get used - and every original tie (u,w) becomes two
+	effectively-uncapped edges u_out->w_in and w_out->u_in (undirected,
+	traversable either way; a large-but-finite capacity is used instead
+	of a true infinity since Mata has no such value and the true
+	maximum possible flow can never exceed n anyway). s and t
+	themselves get an uncapped v_in->v_out edge too, since a vertex cut
+	separating them is only meaningful for the nodes *between* them,
+	never s or t themselves. Requires s and t to not be directly tied
+	(adj[s,t]==0) - Menger's theorem's own vertex-connectivity form
+	only has a meaningful "separating vertex set" interpretation for
+	non-adjacent pairs; vertex_connectivity() below only ever calls
+	this on non-adjacent pairs, and separately handles the complete-
+	graph case (no non-adjacent pairs exist at all) on its own. By the
+	max-flow/min-cut theorem, the resulting max flow value from s_out
+	to t_in equals the minimum number of nodes whose removal
+	disconnects s from t - i.e. exactly Menger's own vertex-
+	connectivity between s and t.
+*/
+real scalar maxflow_vertex_split(real matrix adj, real scalar s, real scalar t){
+	real scalar n, N, bignum, u, v, i, maxf, pathflow, pf
+	real matrix cap, flow
+	real rowvector parent
+
+	n = rows(adj)
+	N = 2 * n
+	bignum = n + 10
+
+	cap = J(N, N, 0)
+	for (i=1; i<=n; i++) {
+		if (i==s | i==t) cap[i, n+i] = bignum
+		else cap[i, n+i] = 1
+	}
+	for (u=1; u<=n; u++) {
+		for (v=1; v<=n; v++) {
+			if (u != v & adj[u,v] != 0) {
+				cap[n+u, v] = bignum
+			}
+		}
+	}
+
+	flow = J(N, N, 0)
+	maxf = 0
+	while (bfs_augment(cap, flow, n+s, t, parent)) {
+		pathflow = bignum
+		v = t
+		while (v != n+s) {
+			u = parent[v]
+			pf = cap[u,v] - flow[u,v]
+			if (pf < pathflow) pathflow = pf
+			v = u
+		}
+		v = t
+		while (v != n+s) {
+			u = parent[v]
+			flow[u,v] = flow[u,v] + pathflow
+			flow[v,u] = flow[v,u] - pathflow
+			v = u
+		}
+		maxf = maxf + pathflow
+	}
+	return(maxf)
+}
+
+/*
+	vertex_connectivity(adj): the graph's overall vertex connectivity
+	kappa(G) - the minimum number of nodes whose removal disconnects
+	the graph or reduces it to a single node. By Menger's theorem,
+	kappa(G) equals the minimum, over every non-adjacent pair (s,t), of
+	the minimum vertex set separating them (maxflow_vertex_split(adj,
+	s, t)); a genuine brute-force over ALL non-adjacent pairs, O(n^2)
+	max-flow calls, rather than the smaller reference-vertex subset
+	Even's own more efficient algorithm restricts to - a deliberately
+	simpler, definitely-correct trade favoring hand-verifiability over
+	asymptotic optimality, matching this session's own established
+	precedent (see BronKerbosch()'s and is_valid_kplex()'s own header
+	comments) and appropriate at this package's target (moderate)
+	network scale. A complete graph (every pair adjacent - no
+	non-adjacent pair exists at all, so the Menger's-theorem loop above
+	would vacuously never run) is handled as its own base case:
+	kappa(K_n) = n-1 by definition (removing any n-1 of its n nodes
+	always leaves a single, trivially "connected" node; no smaller
+	vertex set can disconnect it since every remaining pair stays
+	tied). A graph that is already disconnected (a non-adjacent pair
+	exists with literally no path between them at all) has kappa(G)=0
+	by the same definition - maxflow_vertex_split() naturally returns 0
+	for such a pair (no augmenting path exists even before any node is
+	removed), so this falls out of the general loop with no special
+	case needed.
+*/
+real scalar vertex_connectivity(real matrix adj){
+	real scalar n, s, t, minflow, f
+	real scalar any_nonadjacent
+
+	n = rows(adj)
+	if (n <= 1) return(0)
+
+	any_nonadjacent = 0
+	minflow = n
+	for (s=1; s<=n; s++) {
+		for (t=s+1; t<=n; t++) {
+			if (adj[s,t] == 0) {
+				any_nonadjacent = 1
+				f = maxflow_vertex_split(adj, s, t)
+				if (f < minflow) minflow = f
+			}
+		}
+	}
+	if (any_nonadjacent == 0) return(n-1)
+	return(minflow)
+}
+
+/*
+	min_vertex_cutset(adj): a single minimum vertex cutset of the
+	graph (there can be several distinct ones of the same minimum
+	size; this returns whichever one the underlying max-flow search
+	happens to find first, which is all calculate_kcomponents() below
+	needs - any minimum cutset works equally well for its own
+	recursive splitting). Re-runs the same non-adjacent-pair search
+	vertex_connectivity() itself does, but this time keeps the
+	winning (s,t) pair's own final flow/capacity state instead of
+	discarding it, then extracts the actual cutset from it via the
+	standard max-flow/min-cut construction: after the flow is
+	maximal, do a BFS from s_out over the *residual* graph (edges
+	with cap-flow > 0) - every node reachable this way is on the
+	"s side" of the min cut. A node v (v != s,t) whose v_in *is*
+	reachable but whose own v_out is *not* is exactly a node whose
+	single unit of v_in->v_out capacity is fully used by the flow -
+	i.e. a member of the minimum vertex cutset itself. Returns an
+	empty (0-column) row vector for a complete graph (no non-adjacent
+	pair exists, so there is no meaningful "separating vertex set" at
+	all - calculate_kcomponents() itself never calls this in that
+	case, since vertex_connectivity() already reports k=n-1 there and
+	the recursion stops without needing to cut anything).
+*/
+real rowvector min_vertex_cutset(real matrix adj){
+	real scalar n, N, bignum, s, t, u, v, i, minflow, f, best_s, best_t
+	real matrix cap, flow
+	real rowvector parent, visited, queue, cutset
+	real scalar qhead, qtail, pathflow, pf
+
+	n = rows(adj)
+	minflow = n
+	best_s = 0
+	best_t = 0
+	for (s=1; s<=n; s++) {
+		for (t=s+1; t<=n; t++) {
+			if (adj[s,t] == 0) {
+				f = maxflow_vertex_split(adj, s, t)
+				if (f < minflow) {
+					minflow = f
+					best_s = s
+					best_t = t
+				}
+			}
+		}
+	}
+	if (best_s == 0) return(J(1,0,0))
+
+	// re-run max-flow on the winning pair, keeping its final flow
+	N = 2*n
+	bignum = n + 10
+	cap = J(N, N, 0)
+	for (i=1; i<=n; i++) {
+		if (i==best_s | i==best_t) cap[i, n+i] = bignum
+		else cap[i, n+i] = 1
+	}
+	for (u=1; u<=n; u++) {
+		for (v=1; v<=n; v++) {
+			if (u != v & adj[u,v] != 0) cap[n+u, v] = bignum
+		}
+	}
+	flow = J(N, N, 0)
+	while (bfs_augment(cap, flow, n+best_s, best_t, parent)) {
+		pathflow = bignum
+		v = best_t
+		while (v != n+best_s) {
+			u = parent[v]
+			pf = cap[u,v] - flow[u,v]
+			if (pf < pathflow) pathflow = pf
+			v = u
+		}
+		v = best_t
+		while (v != n+best_s) {
+			u = parent[v]
+			flow[u,v] = flow[u,v] + pathflow
+			flow[v,u] = flow[v,u] - pathflow
+			v = u
+		}
+	}
+
+	// BFS the residual graph from best_s's own "out" node
+	visited = J(1,N,0)
+	queue = J(1,N,0)
+	qhead = 1
+	qtail = 1
+	queue[1] = n+best_s
+	visited[n+best_s] = 1
+	while (qhead <= qtail) {
+		u = queue[qhead]
+		qhead++
+		for (v=1; v<=N; v++) {
+			if (visited[v]==0 & (cap[u,v]-flow[u,v])>0) {
+				visited[v] = 1
+				qtail++
+				queue[qtail] = v
+			}
+		}
+	}
+
+	cutset = J(1,0,0)
+	for (i=1; i<=n; i++) {
+		if (i==best_s | i==best_t) continue
+		if (visited[i]==1 & visited[n+i]==0) cutset = (cutset, i)
+	}
+	return(cutset)
+}
+
+/*
+	KComponents(origadj, nodeset, k): the recursive vertex-connectivity
+	decomposition underlying both k-components (Kanevsky 1993) and, in
+	its full generalized/all-levels form, Moody & White's (2003)
+	cohesive blocking - this implements it for one specific target
+	level k, not the full recursive-hierarchy-across-all-levels version
+	(see nwkcomponents.ado's own doc header for why that scoping choice
+	was made). `nodeset' is a 0/1 row vector over the *original* full
+	node set (1..cols(nodeset)), not a locally-reindexed subset - kept
+	this way throughout the recursion (mirroring BronKerbosch()'s/
+	KPlex()'s own R/P/X indicator-vector convention) specifically so
+	every result, at any recursion depth, is already a directly
+	comparable/stackable row of the same width, with no re-indexing
+	needed when building the final results matrix.
+
+	Algorithm: compute the induced subgraph's own vertex connectivity.
+	If it already meets the target k, the whole current node set
+	qualifies - report it and stop recursing this branch (a k-component
+	is, by definition, a MAXIMAL node set with connectivity >= k; once
+	a set qualifies, nothing about descending further into subsets of
+	it is meaningful for a fixed target k). Otherwise, find a minimum
+	vertex cutset (smaller than k, by construction, since a qualifying
+	connectivity was just ruled out), remove it, split the remainder
+	into its own connected components, and recurse into each
+	(component + cutset) node set - re-adding the cutset's own nodes to
+	every resulting branch, not just one, matching the standard
+	Moody-White convention that cutpoints/cutsets remain shared members
+	of whatever cohesive sub-blocks their removal reveals, rather than
+	being assigned to just one side. A node set smaller than k+1 nodes
+	is pruned immediately without even computing its own connectivity
+	(the maximum possible connectivity of an s-node graph is s-1, so no
+	set that small could ever reach a target of k).
+*/
+real matrix KComponents(real matrix origadj, real rowvector nodeset, real scalar k){
+	real matrix results, sub, childresults
+	real rowvector idx, cutset, cutset_orig, remaining, comp_of, newnodeset
+	real rowvector queue
+	real scalar n, conn, i, c, ncomp, is_cut, node0, u, w, w_in_remaining
+	real scalar qhead, qtail
+
+	n = cols(nodeset)
+	idx = selectindex(nodeset)
+	results = J(0, n, 0)
+
+	if (length(idx) < k+1) {
+		return(results)
+	}
+
+	sub = origadj[idx, idx]
+	conn = vertex_connectivity(sub)
+	if (conn >= k) {
+		results = nodeset
+		return(results)
+	}
+
+	// min_vertex_cutset() is guaranteed to return a genuinely non-empty
+	// cutset at this point, never the "no non-adjacent pair exists"
+	// empty case its own header comment describes - which matters,
+	// since an empty cutset here would make `remaining' below equal
+	// `idx' unchanged and recurse right back into this exact same
+	// (origadj, nodeset, k) call forever. The size guard just above
+	// (length(idx) < k+1) rules this out by a short, exact argument:
+	// min_vertex_cutset() only returns empty when its own input is a
+	// COMPLETE graph (every pair already adjacent - no non-adjacent
+	// pair for it to search over at all), and vertex_connectivity()
+	// gives a complete s-node graph connectivity exactly s-1 by
+	// definition. Having reached this line at all means conn < k, i.e.
+	// (if `sub' were complete) s-1 < k, i.e. s < k+1 - but the size
+	// guard already rejected any node set with length(idx) < k+1
+	// before ever computing `conn' in the first place. So any `sub'
+	// that is both complete AND passes the size guard would have to
+	// satisfy both s >= k+1 and s-1 < k (s < k+1) simultaneously -
+	// impossible. Reaching this line therefore proves `sub' is not
+	// complete, so a non-adjacent pair exists for min_vertex_cutset()
+	// to search over, so it cannot return empty.
+	cutset = min_vertex_cutset(sub)
+	cutset_orig = J(1,0,0)
+	for (i=1; i<=cols(cutset); i++) {
+		cutset_orig = (cutset_orig, idx[cutset[i]])
+	}
+
+	remaining = J(1,0,0)
+	for (i=1; i<=cols(idx); i++) {
+		is_cut = 0
+		for (c=1; c<=cols(cutset_orig); c++) {
+			if (idx[i]==cutset_orig[c]) is_cut = 1
+		}
+		if (is_cut==0) remaining = (remaining, idx[i])
+	}
+
+	// connected components of the "remaining" nodes, via BFS restricted
+	// to that set (plain BFS on origadj, but only ever stepping into
+	// nodes that are themselves members of "remaining")
+	comp_of = J(1, n, 0)
+	ncomp = 0
+	for (i=1; i<=cols(remaining); i++) {
+		node0 = remaining[i]
+		if (comp_of[node0] != 0) continue
+		ncomp++
+		queue = J(1, cols(remaining), 0)
+		qhead = 1
+		qtail = 1
+		queue[1] = node0
+		comp_of[node0] = ncomp
+		while (qhead <= qtail) {
+			u = queue[qhead]
+			qhead++
+			for (w=1; w<=n; w++) {
+				if (origadj[u,w] != 0) {
+					w_in_remaining = 0
+					for (c=1; c<=cols(remaining); c++) {
+						if (remaining[c]==w) w_in_remaining = 1
+					}
+					if (w_in_remaining==1 & comp_of[w]==0) {
+						comp_of[w] = ncomp
+						qtail++
+						queue[qtail] = w
+					}
+				}
+			}
+		}
+	}
+
+	for (c=1; c<=ncomp; c++) {
+		newnodeset = J(1, n, 0)
+		for (i=1; i<=n; i++) {
+			if (comp_of[i]==c) newnodeset[i] = 1
+		}
+		for (i=1; i<=cols(cutset_orig); i++) {
+			newnodeset[cutset_orig[i]] = 1
+		}
+		childresults = KComponents(origadj, newnodeset, k)
+		results = results \ childresults
+	}
+	return(results)
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -1233,6 +1638,7 @@ class `NWdef' {
 	real matrix calculate_nclique()
 	real matrix calculate_nclique_filtered()
 	real matrix calculate_nclan_filtered()
+	real matrix calculate_kcomponents()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -2163,6 +2569,28 @@ real matrix `NWdef'::calculate_nclan_filtered(real scalar n, real scalar minsize
 		keep[i] = nclan_diameter_ok(adj, ncliq[i,.], n)
 	}
 	return(select(ncliq, keep))
+}
+
+/*
+	Maximal k-components (Kanevsky 1993; the single-level case of Moody
+	& White's (2003) recursive cohesive blocking - see KComponents()'s
+	own header comment in this file for the full algorithm). Always
+	undirected and binary, for the same reason every other cohesive-
+	subgroup measure in this file is: vertex connectivity has no
+	natural directed or valued generalization in the classical sense
+	this package's other cohesive-subgroup commands already use.
+*/
+real matrix `NWdef'::calculate_kcomponents(real scalar k){
+	real matrix adj
+	real rowvector nodeset
+	real scalar n
+
+	n = get_nodes()
+	adj = (*get_matrix_mod(0,0)) :!= 0
+	_diag(adj, 0)
+
+	nodeset = J(1, n, 1)
+	return(KComponents(adj, nodeset, k))
 }
 
 /*

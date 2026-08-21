@@ -145,6 +145,7 @@
 {p2col:    {bf:{help nwgeodesic }}}Calculate shortest paths between nodes{p_end}
 {p2col:    {bf:{help nwhierarchy }}}Hierrachical clustering of nodes{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
+{p2col:    {bf:{help nwkcomponents }}}Maximal k-component enumeration{p_end}
 {p2col:    {bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
 {p2col:    {bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
 {p2col:    {bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}

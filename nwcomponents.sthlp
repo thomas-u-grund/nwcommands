@@ -78,6 +78,7 @@ option {bf:lgc} is specified, the command generates a new variable
 
  {title:See also}
  
-	{help nwgen}
+	{help nwgen}, {help nwkcomponents}
 
 last certified : 21 Aug 2026
+

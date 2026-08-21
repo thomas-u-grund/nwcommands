@@ -58,6 +58,7 @@ f nwimport.ado
 f nwinstall.ado
 f nwissymmetric.ado
 f nwkatz.ado
+f nwkcomponents.ado
 f nwkcore.ado
 f nwkeep.ado
 f nwkeepnodes.ado

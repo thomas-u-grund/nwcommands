@@ -105,6 +105,6 @@ for the moderate network sizes typical of SNA datasets, not specially guarded ag
 
 {title:See also}
 
-	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwgeodesic}, {help nwkcore}
+	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
 last certified : 21 Aug 2026

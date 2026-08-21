@@ -104,7 +104,7 @@ induced-subgraph diameter check - fine for the moderate network sizes typical of
 
 {title:See also}
 
-	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwgeodesic}, {help nwkcore}
+	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
 ***/
 
