@@ -22,6 +22,7 @@
 {it:{help nwplot##arrow_options:arrow_options}}
 {it:{help nwplot##layout_options:layout_options}}
 {it:{help nwplot##other_options:other_options}}
+{it:{help nwplot##export_options:export_options}}
 {it:{help twoway_options}}]
 	
 {synoptset 20}{...}
@@ -39,6 +40,8 @@
 	use existing coordinates, export coordinates{p_end}
 {p2col:{it:{help nwplot##other_options:other_options}}}other network plot options
 		{p_end}
+{p2col:{it:{help nwplot##export_options:export_options}}}export the plot directly
+	to a vector (SVG/PDF/EPS) or raster (PNG/TIF/...) file{p_end}
 {p2col:{it:{help twoway_options}}}normal twoway options for the whole plot
 		{p_end}
 	
@@ -140,21 +143,13 @@
 
 
 {synoptset 35 tabbed}{...}
-{p2col:{it:other_options}}Description{p_end}
-{marker other_options}{...}
-{p2line}
-{p2col:{opth aspectratio(float)}}height/width ratio{p_end}
-{p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
-{p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
-{p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end} 
-
-
-{synoptset 35 tabbed}{...}
 {marker layoutstyle}{...}
 {p2col:{it:layoutstyle}}{p_end}
 {p2line}
 {p2col:{cmd: mds}}modern multidimensional scaling; default when nodes < 50{p_end}
 {p2col:{cmd: mdsclassical}}classical multidimensional scaling; default when nodes > 50{p_end}
+{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout
+		{p_end}
 {p2col:{cmd: circle}}circle layout
 		{p_end}
 {p2col:{cmd: grid}}grid layout
@@ -163,8 +158,31 @@
 		{p_end}
 {p2col:{cmd: _layoutfunction}}advanced user-written layout function (see {help nwplot##layoutfunction:here}).
 		{p_end}
-		
-		
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:other_options}}Description{p_end}
+{marker other_options}{...}
+{p2line}
+{p2col:{opth aspectratio(float)}}height/width ratio{p_end}
+{p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
+{p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
+{p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:export_options}}Description{p_end}
+{marker export_options}{...}
+{p2line}
+{p2col:{opt export}({it:filename})}export the plot directly to {it:filename}; the format
+	(SVG/PDF/EPS/PNG/TIF/...) is inferred from the file extension, exactly as it would be by a
+	manual {help graph export} call afterward{p_end}
+{p2col:{opt replace}}overwrite {it:filename} if it already exists{p_end}
+{p2col:{opt exportopt}({it:{help graph export:export_options}})}pass additional options
+	straight through to the underlying {help graph export} call (e.g. {cmd:width()}/{cmd:height()}
+	for raster-format resolution){p_end}
+
+
 {title:Description}
 
 {pstd}
@@ -189,11 +207,19 @@ One can change the layout where nodes should be plotted:
 
 {pstd}
 Or obtain coordinates from layout and plot with coordinates. The option {bf:nodexy} can be used to write your
-own network layout functions, return coordinates and plot a network with these coordinates.
+own network layout functions, return coordinates and plot a network with these coordinates. Because
+{opt generate()} and {opt nodexy()} are a matched pair - one exports the node coordinates a layout produced,
+the other forces a later plot to reuse them - this is also how to plot several different networks (e.g. the same
+set of people observed at several waves) at identical node positions, so the reader can compare panels directly
+instead of re-deriving a fresh, unrelated layout for each one:
 
 	{cmd:. nwplot, gen(xcoord ycoord)}
 	{cmd:. replace xcoord = .2 if _n < 5}
 	{cmd:. nwplot, nodexy(xcoord ycoord)}
+
+	{cmd:. * fixed coordinates across two waves of the same network}
+	{cmd:. nwplot wave1, generate(x1 y1)}
+	{cmd:. nwplot wave2, nodexy(x1 y1)}
 
 {pstd}
 Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or 
@@ -220,7 +246,7 @@ Almost all elements in a network plot can be easily made bigger or smaller using
 Colors, symbols and size of nodes can be changed accoring to a {help varname}. Furthermore, the palettes used for display
 can be changed as well. 
 
-	{cmd:. webnwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwplot glasgow1, color(smoke1)}
 	{cmd:. nwplot, color(smoke1, colorpalette(red yellow cyan))}
  
@@ -248,15 +274,15 @@ The nwcommand come with two new schemes: s1network and s2network.
 This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path
 to color the edges of the original network and change the size of the edges on this path. 
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwpath flomarriage, ego(medici) alter(peruzzi) generate(sp)}
 {phang2}	
-	{cmd:. nwplot flomarriage, label(_nodelab) edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5)}
+	{cmd:. nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5)}
 	
 {pstd}
 Another example that changes the size and color of edges.
 
-	{cmd:. webnwuse gang, nwclear}
+	{cmd:. nwwebuse gang, nwclear}
 	{cmd:. nwplot}
 	{cmd:. nwplot gang, edgesize(gang)} 
 	{cmd:. nwgenerate blood = (gang==4)}
@@ -272,7 +298,7 @@ This is how to control the legend of the plot. All options that can be used for 
 Because nwplot uses twoway plots one can  use all general twoway options to e.g. control the title of a plot.
 
 {phang2}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}
 {cmd:. nwplot flomarriage, edgecolor(flobusiness) title("Florentine Marriages", color(red) size(huge))}
 {p_end}
@@ -286,12 +312,12 @@ Here, the nodes are plotted with the node labels saved with the network:
 More generally, one can use any {it:varname} as node labels. The next example, does the same as the previous command, 
 but shows how one could use node labels stored elsewhere:
 
-	{cmd:. nwplot flobusiness, label(_nodelab)}
+	{cmd:. nwplot flobusiness, label(wealth)}
 
 {pstd}
 The look and feel of node labels is changed with labelopt():
 
-	{cmd:. nwplot flobusiness, label(_nodelab) labelopt(mlabsize(huge) mlabcolor(red))}
+	{cmd:. nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))}
 	
 {pstd}
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these
@@ -304,56 +330,64 @@ underlying scatter plots. Here, the color and symbol of nodes is overwritten.
 {pstd}
 The next example shows how to only plot the largest component of the network.	
 
-	{cmd:. webnwuse glasgow, nwclear}
-	{cmd:. nwgen large = lgc(glasgow1)}
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwcomponents glasgow1, lgc generate(large)}
 	{cmd:. nwplot glasgow1 if large == 1}
 	
 {pstd}
 Alternative to display the largest component only:
 
-	{cmd:. webnsuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwplot glasgow1, layout(,lgc)}
-	
-
-{marker layoutfunction}{...}
-{title:Programming layout function}
 
 {pstd}
-One can use {bf:nwplot} together with user-written layout functions. In this way one can implement all sorts of network layout algorithms (e.g.
-Fruchtermann-Reingold, Kamadai-Kawai, and so on). Probably the easiest way to do this is:
+{bf:Publication-quality vector export.} {opt export()} saves the plot directly to a file, inferring the
+format from the extension - exactly what a manual {help graph export} call afterward would do, since
+{cmd:nwplot} produces an ordinary Stata graph and never replaces or bypasses it. SVG and PDF are both
+scalable vector formats: the plot stays crisp at any zoom level or print size, and both open cleanly in
+standard vector-graphics editors (e.g. Adobe Illustrator, Inkscape) for further touch-up - node/edge/label
+elements remain separate, editable objects rather than a fixed-resolution image.
 
-{pmore}
-1. Obtain adjacency matrix {it:matamatrix} of network with {help nwtomata:nwtomata, mat(matamatrix)}{p_end}
-
-{pmore}
-2. Implement desired layout function/program that calculates node coordinates with argument {it:matamatrix} and saves node coordinates in Stata variables {it:_myxcoord, _myycoord}.
-{p_end} 
-{pmore}
-3. Run nwplot with option {bf:nodexy(_myxcoord _myycoord) layout(nodexy)}
+	{cmd:. nwplot flomarriage, export("flomarriage.svg")}
+	{cmd:. nwplot flomarriage, export("flomarriage.pdf") replace}
 
 {pstd}
-However, this method does not work together with {help nwmovie}. Here, network plots are generated for each frame in between network
-waves. A more sophisticated advanced programming solution is the following:
+Raster formats (PNG, TIF, ...) are also supported the same way; {opt exportopt()} passes options straight
+through to the underlying {help graph export} call, most commonly {cmd:width()}/{cmd:height()} to control
+resolution:
 
-{pmore}
-1. Write and load mata function that takes as first argument the adjacency matrix of the network (after that all sorts of arguments can follow).
-This function needs to return a matrix that has exactly {it:nodes} rows and two columns (one for x- and one for y-coordinate). 
-	
-		{com}capture mata : mata drop myrandom()
-		mata:
-		real matrix function myrandom(real matrix net) {
-			return(runiform(rows(net), 2))
-		}
-		end{txt}
-		
-{pmore}
-This little mata function returns random coordinates for each node.
-		
-{pmore}
-2. Run nwplot with option {bf:layout(_layoutfunction) _layoutfunction(myrandom)}. 
+	{cmd:. nwplot flomarriage, export("flomarriage.png") exportopt(width(2000))}
 
 {pstd}
-This solution is compatible with {help nwmovie}. Notice that when {bf:_layoutfunction()} is used, all {help nwplot##layout_sub:layout_sub} options are ignored.
+The graph itself is unaffected by {opt export()} - it remains the normal, currently active Stata graph
+afterward, so the Graph Editor, {stata graph save}, and a second {help graph export} in a different format
+all continue to work exactly as they would without {opt export()}.
 
+{title:Stored results}
 
+{pstd}
+{cmd:nwplot} is {cmd:rclass}.
+
+	Macros:
+	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Weighted: yes (via {opt edgesize()}/{opt edgecolor()} - see the shortest-path example above).
+Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
+dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
+directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: the
+command plots a two-mode network's nodes and ties correctly (it has no bipartite-specific logic, but a
+bipartite network's ties are simply a subset of the same one-mode adjacency structure every other network
+uses) - the two modes are not visually distinguished automatically, though; pass the network's own
+{cmd:get_modes()}-derived mode variable to {opt color()} or {opt symbol()} to tell them apart at a glance
+(e.g. {cmd:nw2degree}'s own output, or any variable holding "1"/"2" per node). Self-loops: not rendered -
+a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
+in the package's own visualization roadmap rather than fixed here.
+
+{title:See also}
+		{help nwplotjs}, {help nwplotmatrix}
+
+last certified : 21 Aug 2026
 

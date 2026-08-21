@@ -71,6 +71,65 @@ Only after Stage 0-6 mature. Real reusable adjacency already exists (`NWsdef` mu
 
 Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — see audit). Prerequisites, in order: (1) an incremental single-edge sparse-index update path (current `build_sparse_index()` is a full O(N+M) rebuild with no patch capability — unacceptable for an MCMC inner loop toggling edges thousands of times/iteration); (2) a per-node/edge attribute-caching layer in `NWdef` (currently zero attribute storage in Mata — a deliberate design decision needed before `nodematch()`/`nodecov()`/`edgecov()` are possible without a prohibitively slow per-step Stata-dataset round-trip); (3) a reusable common-neighbor/shared-partner primitive (currently computed inline, differently, in two different places, decomposing to neither a per-edge nor an incremental statistic).
 
+## Visualization roadmap (`nwplot` subsystem)
+
+Compiled during the `nwplot` SVG-export modernisation audit (harmonisation unit 33 — see
+`docs/CERTIFICATION.md`), which added native `export()`/`replace`/`exportopt()`, fixed several real
+crashes in the default large-network layout, and inventoried the whole plotting subsystem
+(`nwplot`/`nwplotjs`/`nwplotmatrix`/`nwmovie`/`nwmoviexy`) end to end. Native Stata SVG/PDF export
+was directly verified (not assumed) to already produce fully-editable, publication-quality vector
+output for everything `nwplot` currently draws — nodes, edges, arrowheads, and labels all render as
+real, separate SVG objects (`<circle>`/`<line>`/`<path>`/`<text>`), not a flattened raster. That
+sets a high bar: most remaining gaps below are about `nwplot`'s own drawing logic, not about
+vector-export quality, which is already solved.
+
+**Already solved, not gaps** (confirmed by direct testing this unit, listed here so they aren't
+re-proposed later): publication-quality static vector export (SVG/PDF, `export()`); reusable/fixed
+node coordinates across multiple networks or waves (`generate()`/`nodexy()`, pre-existing, now
+documented as the intended mechanism); interactive pan/zoom/hover/drag graph exploration
+(`nwplotjs`, sigma.js-based, already shipped and independent of this unit's work).
+
+- **High value, small-medium effort**: self-loop rendering (currently invisible — a self-loop has
+  no visual effect at all, not even a small drawn arc; every other node-link tool in this space
+  draws *something* for it, so this is a real, visible gap for any network where self-loops are
+  substantively meaningful, e.g. self-citations, autocorrelation-style ties). Automatic two-mode
+  visual distinction (color/symbol by mode) — currently a fully-working manual workaround
+  (`color(modevar)`), just not automatic; a `bipartite`/`twomode` convenience flag that calls
+  `get_modes()` internally and pre-sets a sensible default color/symbol split would remove one
+  manual step for a very common use case.
+- **Medium value, medium effort**: parallel-edge rendering (two nodes tied by more than one
+  distinct relation/network currently overlap visually with no offset — relevant once multiplex
+  plotting on a shared layout becomes a real workflow, see Stage 7); a dedicated `nwlayout` command
+  separating layout calculation from plotting entirely (assessed this unit: **not** urgent — the
+  existing `generate()`/`nodexy()` pair already gives ~90% of the value of a separate command,
+  since coordinates are already Stata variables a user can compute once and reuse freely; a
+  standalone `nwlayout` would mainly buy a cleaner API surface and the ability to add layout
+  algorithms without touching `nwplot.ado`'s own already-large file, not new capability); additional
+  layouts beyond the existing mds/mdsclassical/frucht/circle/grid/nodexy set — Kamada-Kawai
+  specifically (a genuinely different stress-majorization objective from either MDS variant already
+  implemented, commonly expected in this space), Sugiyama/hierarchical (valuable specifically for
+  DAG-like directed networks, e.g. citation/influence networks), a dedicated bipartite two-row/
+  two-column layout (currently two-mode networks use the same layouts as one-mode, with no
+  mode-aware positioning).
+- **Lower value or large effort, not recommended soon**: community-hull/convex-region overlays
+  (real value for presenting community-detection results visually, but a non-trivial geometry
+  problem — convex hull computation plus hull-vs-hull and hull-vs-node overlap avoidance — and
+  `nwcommunity`'s own membership output already composes with `color()` today as a partial
+  substitute); edge bundling (a genuine large-network readability technique, but a substantial
+  algorithm to implement correctly, and this package's layouts are already capped at a few hundred–
+  low-thousands of nodes by design, softening the case for it); a custom SVG renderer bypassing
+  Stata's own `twoway`/`graph export` pipeline (assessed and explicitly **not justified**: this
+  unit's own direct SVG inspection found native Stata output already fully vector, fully editable,
+  and correct for every current `nwplot` feature — a custom renderer would only be worth building if
+  a *specific*, concrete rendering need genuinely couldn't be met natively, and none of the gaps
+  above require it); a browser-based/D3 interactive network explorer beyond what `nwplotjs` already
+  provides (assessed as low incremental value — `nwplotjs` already covers the interactive use case
+  this would target, and building a second, redundant interactive renderer is not a good use of
+  effort versus the gaps above); animation of longitudinal networks beyond what `nwmovie`/
+  `nwmoviexy` already do (out of this unit's scope — those commands are a separate, already-working
+  raster/GIF pipeline, currently blocked in this environment only by missing ImageMagick, not by
+  any design gap).
+
 ## Top 20 additions ranked by value/effort
 
 1. ✅ `nw2project` (two-mode projection) — Medium value, Small effort, spec already written — done (commits `1ba195e`/`531e018`; the roadmap checkmark was simply never added at the time). Re-verified working (`cscripts/test_nw2project.do` passes) during the harmonisation-phase Part I re-audit; "Supported network types" section added (harmonisation unit 17) — status **A**.
@@ -90,7 +149,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 15. ✅ Ego-network size/density — done (`nwego`, harmonisation unit 25) - turned out not to need induced-subgraph extraction at all, both are computable directly from the sparse neighbor accessors. A general induced-subgraph-extraction primitive (for composition/diversity and other measures that need an actual reusable subgraph object) remains open - Medium value, Medium effort.
 16. Export-format parity (add GML/GraphML/edgelist to `nwexport`) — Low-medium value, Small effort
 17. ✅ CONCOR — Medium value, Medium effort — done (`nwconcor`, harmonisation unit 21)
-18. `nwplot` test coverage (largest untested file in the package) — Risk-reduction value, Medium effort (many code paths)
+18. ✅ `nwplot` test coverage — done (harmonisation unit 33: SVG-export modernisation audit). Found and fixed 4 real crashes in the `mdsclassical` default layout (>50-node networks) and the `layout(,lgc)` path along the way — see `docs/CERTIFICATION.md`.
 19. ✅ Programming-API documentation chapter — Medium value (unlocks third-party extensibility), Small effort, pure documentation — done (new "[NW-5.2]" section in `nw_programming.sthlp`, including a 10-item pitfalls list drawn from real bugs found this session)
 20. ✅ Weighted eigenvector centrality option — Small value, Small effort — done (`nwevcent, weighted`)
 
@@ -104,7 +163,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 6. ✅ `nwevcent` — added a `weighted` option; also found and fixed a genuine eigenvalue-search bug along the way (silently correct in practice only because of Mata's `symeigensystem()` sort order — see `docs/CERTIFICATION.md`). Migrating off dense materialization was not attempted: eigendecomposition itself requires a dense solver in Mata (no sparse eigensolver available), so this stays dense by necessity, not oversight.
 7. `nwneighbor` — sparse migration + add induced-subgraph output (feeds Stage 3's ego-network work)
 8. `nwexport` — format parity with `nwimport` (currently 2 vs 6 formats)
-9. `nwplot` — test coverage (zero tests on the package's largest file)
+9. ✅ `nwplot` — test coverage — done (harmonisation unit 33), see item 18 above
 10. ✅ `nwrecode`/`nwbalance` — documentation (real functionality, currently invisible) — done; `nwrecode` also turned out to be completely non-functional (crashed on every call) and is now fixed, not just documented (harmonisation units 13-14)
 
 ## ERGM-readiness notes
