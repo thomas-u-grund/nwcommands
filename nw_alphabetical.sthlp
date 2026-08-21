@@ -20,6 +20,7 @@
 {p2col:{bf:{help nw2fromedge }}}Import two-mode network data from edgelist{p_end}
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:{bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
+{p2col:{bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:{bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:{bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:{bf:{help nwclustering }}}Clustering coefficient{p_end}

@@ -17,6 +17,7 @@ f nwaddnodes.ado
 f nwaltergen.ado
 f nwbalance.ado
 f nwbetween.ado
+f nwbrokerage.ado
 f nwburt.ado
 f nwclear.ado
 f nwcloseness.ado

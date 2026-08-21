@@ -19,6 +19,7 @@ f nwaddnodes.sthlp
 f nwaltergen.sthlp
 f nwbalance.sthlp
 f nwbetween.sthlp
+f nwbrokerage.sthlp
 f nwburt.sthlp
 f nwcentrality.sthlp
 f nwclear.sthlp

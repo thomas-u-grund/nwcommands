@@ -54,7 +54,7 @@ Degree/in/out/strength (A, sparse-migrated this session), betweenness (A, sparse
 |---|---|---|---|
 | Burt constraint (dyadic) | C | `nwconstraint` | returns unaggregated dyadic matrix only; no help file |
 | Effective size, efficiency, hierarchy | **A** (was E, recoverable) | `nwburt` | revived and committed since the original audit pass (`1ba195e`); re-verified and given a "Supported network types" section during the Part I re-audit (harmonisation unit 17). Cross-checking it against `nwconstraint` also surfaced a real math gotcha in `nwconstraint`'s own docs, since fixed |
-| Gould-Fernandez brokerage roles | E | — | confirmed absent |
+| Gould-Fernandez brokerage roles | **A** (new, harmonisation unit 23) | `nwbrokerage` | new `NWdef::calculate_brokerage()` Mata method, using the sparse `neighbors()`/`neighbors_in()` accessors directly; requires a caller-supplied group() variable (does not detect groups itself - pair with `nwconcor`/`nwcoreperiphery`/`nwcommunity` or a substantive attribute) |
 | Bridges (global/local/distance) | A (D-flagged) | `nwbridges` | correct, but depends on the not-yet-sparse-migrated `calculate_distances_without()` |
 
 ## E. Structural equivalence, roles and positions

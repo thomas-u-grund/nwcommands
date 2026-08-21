@@ -121,6 +121,7 @@
 {p2col:    {bf:{help .!2045!nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help .!2050!nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
+{p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:    {bf:{help nwcentrality }}}Node centrality measures{p_end}
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}

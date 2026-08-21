@@ -1075,6 +1075,7 @@ class `NWdef' {
 	real matrix detect_communities_louvain()
 	real matrix calculate_concor()
 	real matrix calculate_coreperiphery()
+	real matrix calculate_brokerage()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_similarity_index()
@@ -1653,6 +1654,64 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 	_diag(w, 0)
 
 	return(CorePeriphery(w, iter))
+}
+
+/*
+	Gould-Fernandez (1989) brokerage roles: for every directed two-path
+	a -> b -> c (a != c) through each node b, classifies the role b plays
+	using the group membership of a, b and c:
+	  1. coordinator    - g(a)=g(b)=g(c)              (broker within own group)
+	  2. gatekeeper      - g(a)!=g(b), g(b)=g(c)        (lets outside info into own group)
+	  3. representative  - g(a)=g(b), g(b)!=g(c)        (passes own-group info outward)
+	  4. consultant      - g(a)=g(c), g(a)!=g(b)        (outsider linking two members of one other group)
+	  5. liaison         - g(a), g(b), g(c) all distinct (bridges two unrelated groups)
+	Uses the sparse neighbor accessors directly (neighbors()/neighbors_in(),
+	the same primitives calculate_components()/calculate_kcore() already
+	use) rather than a dense adjacency matrix, so this scales the same way
+	those do. For an undirected network neighbors_in() already falls back
+	to neighbors() (see its own definition above), so a and c are drawn
+	from the same neighbor set - the definition degrades gracefully rather
+	than needing a separate undirected-specific formula. Returns an n x 5
+	matrix of per-node role counts, in the column order listed above.
+*/
+real matrix `NWdef'::calculate_brokerage(real matrix group){
+	real matrix result, innb, outnb
+	real scalar n, b, i, j, a, c, ga, gb, gc
+
+	n = get_nodes()
+	result = J(n, 5, 0)
+
+	for (b=1; b<=n; b++){
+		innb = neighbors_in(b)
+		outnb = neighbors(b)
+		gb = group[b,1]
+		for (i=1; i<=rows(innb); i++){
+			a = innb[i,1]
+			if (a == b) continue
+			ga = group[a,1]
+			for (j=1; j<=rows(outnb); j++){
+				c = outnb[j,1]
+				if (c == b | c == a) continue
+				gc = group[c,1]
+				if (ga==gb & gb==gc){
+					result[b,1] = result[b,1] + 1
+				}
+				else if (ga!=gb & gb==gc){
+					result[b,2] = result[b,2] + 1
+				}
+				else if (ga==gb & gb!=gc){
+					result[b,3] = result[b,3] + 1
+				}
+				else if (ga==gc & ga!=gb){
+					result[b,4] = result[b,4] + 1
+				}
+				else if (ga!=gb & gb!=gc & ga!=gc){
+					result[b,5] = result[b,5] + 1
+				}
+			}
+		}
+	}
+	return(result)
 }
 
 /*
