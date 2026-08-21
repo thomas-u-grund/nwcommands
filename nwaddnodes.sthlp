@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *!  15jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##manipulation:[NW-2.5] Manipulation}
 
@@ -14,10 +14,8 @@
 {p 8 17 2}
 {cmdab: nwaddnodes} 
 [{it:{help netname}}], 
-{opth newnodes(int)}
-[{cmd:vars}({it:{help newvarlist}})
-{cmd:labs}({it:lab1 lab2...})
-{opt generate}({it:{help newnetname}})]
+{cmd:nodenames}({it:n1, n2, ...})
+[{opt generate}({it:{help newnetname}})]
 
 {synoptline}
 {p2colreset}{...}
@@ -25,22 +23,23 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{syntab:Main}
-{synopt:{opth newnodes(int)}}number of nodes that should be added to the network.{p_end}
-{synopt:{opt vars}({it:{help newvarlist}})}names of new Stata variables that should be used for the additional nodes.{p_end}
-{synopt:{opt labs}({it:lab1 lab2...})}labels that should be used for the additional nodes.{p_end}
-{synopt:{opt generate}({it:{help newnetname}})}generate a new network and do not overwrite the original network{p_end}
+{synopt:{opt nodenames}({it:n1, n2, ...})}Node identifiers separated by comma{p_end}
+{synopt:{opt generate}({it:{help newnetname}})}Save as new network{p_end}
 	
 	
 {title:Description}
 
 {pstd}
-Add isolate nodes to an existing networks. By default, {help netname} is replaced, unless {bf:generate()} is specified.
+Add isolate nodes to an existing networks. By default, {help netname} is replaced, unless {bf:generate()} is specified. 
 
 
 {title:Examples}
 
+{pstd}
+This example adds three new nodes (isolates) to a random network with 5 nodes.
+
 	{cmd:. nwclear}
 	{cmd:. nwrandom 5, prob(.1)}
-	{cmd:. nwaddnodes, newnodes(2) labs(peter thomas)}
-	{cmd:. nwset, detail}
+	{cmd:. nwaddnodes, nodenames(Thomas Grund, Peter, Mathilde Turcotte)}
+
+last certified : 21 Aug 2026

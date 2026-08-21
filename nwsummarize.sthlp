@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.4  23aug2014 author: Thomas Grund}{...}
+{* *! version 2.0.0  17may2019 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##information:[NW-2.4] Information}
 
@@ -27,7 +27,7 @@
 {synoptline}
 {synopt:{opt mat}}Display adjacency matrix of the network{p_end}
 {synopt:{opt matonly}}Only display adjacency matrix of the network{p_end}
-{synopt:{opt detail}}Calculate additional (time-consuming) network measures, e.g. centralization, transitivity{p_end}
+{synopt:{opt detail}}Calculate additional network measures, e.g. centralization, transitivity{p_end}
 {synopt:{opth save(filename)}}Save network measures in file{p_end}
 {synoptline}
 {p2colreset}{...}
@@ -42,13 +42,16 @@
  
 {title:Examples}
 
-	{cmd:. webnwuse florentine}
-	{com}. nwsummarize flomarriage
+	{cmd:. nwwebuse florentine}
+	{cmd}. nwsummarize flomarriage
 	{res}{hline 50}
 	{txt}   Network name: {res} flomarriage
-	{txt}   Network id: {res} 12
-	{txt}   Directed: {res}false
+	{txt}   Network id: {res} 2
 	{txt}   Nodes: {res}16
+	{txt}   Directed: {res}false
+	{txt}   Valued: {res} false
+	{txt}   Two-mode: {res}false
+	{txt}   Selfloop: {res}false
 	{txt}   Edges: {res}20
 	{txt}   Minimum value: {res} 0
 	{txt}   Maximum value: {res} 1
@@ -61,8 +64,11 @@
 	{res}{hline 50}
 	{txt}   Network name: {res} mynet
 	{txt}   Network id: {res} 1
-	{txt}   Directed: {res}true
 	{txt}   Nodes: {res}5
+	{txt}   Directed: {res}true
+	{txt}   Valued: {res} false
+	{txt}   Two-mode: {res}false
+	{txt}   Selfloop: {res}false
 	{txt}   Arcs: {res}5
 	{txt}   Minimum value: {res} 0
 	{txt}   Maximum value: {res} 1
@@ -97,9 +103,12 @@
 	  
 	Macros
 	  {bf:r(directed)}	if network is directed or not (undirected)
+	  {bf:r(valued)}	if network is declared as valued or not
+	  {bf:r(mode2)}		if network two-mode or not
 	  {bf:r(name)}		name of the network
 	  
 
 {title:See also}
 
 	{help nwname}, {help nwdyads}, {help nwtriads}
+last certified : 21 Aug 2026

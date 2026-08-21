@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.4 3sept2014}{...}
+{* *! 15jul2016 Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
@@ -18,7 +18,7 @@
 {cmdab: nwreach} 
 [{it:{help netname}}]
 [{cmd:,}
-{opt nosym}
+{opt sym}
 {opth name(string)}
 {opt xvars}]
 
@@ -26,9 +26,9 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nosym}}do not symmetrize network before calculation{p_end}
-{synopt:{opth name(newnetname)}}name of the new network; default = {it:reach}{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
+{synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
+{synopt:{opt xvars}}Do not generate Stata variables{p_end}
 
 
 {title:Description}
@@ -38,16 +38,13 @@
 value 1 when there is at least one path between {it:nodes i} and {it:j} in the original network {help netname}, and
 0 if there is no such path. 
 
-{pstd}
-By default, reachability is calculated on the symmetrized original network.
-
 
 {title:Examples}
 	
 	{com}. nwclear
 	. nwrandom 10, prob(.1)
-	{com}. nwreach random
-	{com}. nwsummarize reach, matonly
+	{com}. nwreach random, sym
+	{com}. nwsummarize _reach, matonly
 
 	1    2    3    4    5    6    7    8    9   10
      {c TLC}{hline 51}{c TRC}
@@ -70,3 +67,5 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 {title:See also}
 
 	{help nwgeodesic}, {help nwpath}
+
+last certified : 21 Aug 2026

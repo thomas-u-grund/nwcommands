@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! 15jul2016 Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 
@@ -16,21 +16,24 @@
 {cmdab: nwpermute} 
 [{it:{help netname}}]
 [{cmd:,}
-{opth name(newnetname)}
+{opth generate(newnetname)}
+{opt replace}
 {opt xvars}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth name(newnetname)}}name of the new random network; default = {it:netname_perm}{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opth generate(newnetname)}}Save permutation as new network{p_end}
+{synopt:{opt replace}}Replace existing network with permutation{p_end}
+{synopt:{opt xvars}}Do not generate Stata variables{p_end}
 
 
 {title:Description}
 
 {pstd}
-Produces a random permutation of the network {help netname} and saves it as the new network {it:netname_perm}. 
-Essentially, ihe {help nodeid}'s of the nodes are randomly reshuffled. 
+Produces a random permutation of the network {help netname}. In such a permutation, the nodes are randomly
+reshuffled, while the overall structure of the network remains the same. Either option {bf:replace} or {bf:generate} needs to 
+be specfied. 
 
 {pstd}
 A simple example illustrates what the command does. First, we generate a regular lattice network. 
@@ -55,8 +58,8 @@ A simple example illustrates what the command does. First, we generate a regular
 {pstd}
 Now, let us permute the network {it:lattice}.
 		
-	{com}. nwpermute lattice
-	{com}. nwsummarize lattice_perm, matonly
+	{com}. nwpermute lattice, replace
+	{com}. nwsummarize lattice, matonly
 
 	     1   2   3   4   5   6   7   8   9
 	  {c TLC}{hline 37}{c TRC}
@@ -72,7 +75,7 @@ Now, let us permute the network {it:lattice}.
 	  {c BLC}{hline 37}{c BRC}
 
 {pstd}
-The structure of the network remains exactly the same, however, the nodes have different {help nodeid}'s. Often,
+The structure of the network remains exactly the same, however, the nodes have a different order. Often,
 such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for 
 these statistics) while keeping the overall structure of the network constant (see more {help nwqap}, {help nwcorrelate}).	
 	
@@ -80,17 +83,15 @@ these statistics) while keeping the overall structure of the network constant (s
 {title:Example}
 
 {pstd}
-The next example shows how the nodeid's of the nodes have changed after permutation.
 	
-	{cmd:. nwrandom 10, prob(.3)}
-	{cmd:. nwplot, label(_label)}
-	{cmd:. graph save g1.gph, replace}
-	{cmd:. nwpermute}
-	{cmd:. nwplot, labels(_label)}
-	{cmd:. graph save g2.gph, replace}
-	{cmd:. graph combine g1.gph g2.gph}
-	
+	{cmd:. nwclear}
+	{cmd:. nwrandom 10, prob(.1) name(mynet)}
+	{cmd:. nwplot mynet, lab layout(circle)}
+	{cmd:. nwpermute mynet, replace}
+	{cmd:. nwplot mynet, lab layout(circle)}
 
 {title:See also}
 
 	{help nwqap}, {help nwcorrelate}
+
+last certified : 21 Aug 2026

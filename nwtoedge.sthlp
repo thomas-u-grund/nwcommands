@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.1  16may2012 author: Thomas Grund}{...}
+{* *! 12jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtoedge {hline 2} Convert networks to edgelist}
+{p2col :nwtoedge {hline 2} Convert network to edgelist}
 {p2colreset}{...}
 
 
@@ -19,16 +19,16 @@
 {opth egovars(varlist)}
 {opth altervars(varlist)}
 {opth ego(newvarname)}
-{opth alter(newvarname)}
-{opt compress}]
+{opth alter(newvarname)}]
 		
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth egovars(varlist)}}keeps attributes of sending nodes{p_end}
-{synopt:{opth altervars(varlist)}}keeps attributes of receiving nodes {p_end}
-{synopt:{opth ego(newvarname)}}sender of ties; default = {it:_nwego}{p_end}
-{synopt:{opth alter(newvarname)}}receiver of ties; default = {it:_nwalter}{p_end}
+{synopt:{opth egovars(varlist)}}Keep attributes of sending nodes{p_end}
+{synopt:{opth altervars(varlist)}}Keep attributes of receiving nodes {p_end}
+{synopt:{opth ego(newvarname)}}Sender of ties; default = {it:_ego}{p_end}
+{synopt:{opth alter(newvarname)}}Receiver of ties; default = {it:_alter}{p_end}
+{synopt:{opt compress}Compress edgelist
 
 {p2colreset}{...}
 
@@ -36,32 +36,37 @@
 {title:Description}
 
 {pstd}
-{cmd:nwtoedge} makes an edgelist out of a network or a list of networks. 
+{cmd:nwtoedge} makes an edgelist from a network or a list of networks. 
 
 {pstd}
 An edgelist of a single network {help netname} produced by {cmd:nwtoedge} is a set of three variables representing
-the relations in the network. The first variable ({it:_nwego}) gives the {help nodelab}
-of the sending node {it:i} of a relationship; the second variable ({it:_nwalter}) gives the {help nodelab} of the 
-receiving node {it:j}. Lastly, a variable {it:netname} saves information about the 
-dyad pair ({it:i},{it:j}) in the network {it:netname}.
+the relations in the network. The first variable ({it:_ego}) gives the {help nodename}
+of the sending node {it:i} of a relationship; the second variable ({it:_alter}) gives the {help nodename} of the 
+receiving node {it:j}. Lastly, the variable {it:netname} saves information about the 
+dyad pair ({it:i},{it:j}) in the network {it:netname}. 
 
 {pstd}
-When the command is used with a {help netlist}, it generates one new variable for each network {it:netname} in the list.
+When a network is undirected only one entry for the dyad pair ({it:i},{it:j})
+is generated, unless option {opt full} is specified. 
 
 {pstd}
-One can also specify which attribute variables should be included in the new dataset. Option {opt egovars()} 
-generates new variables that match the attributes of the sender of a tie; option {opt altervars()} 
-generates new variables that match the attributes of the receiver of a tie.
+When the command is used with a {help netlist}, it generates one new variable for each network {it:netname} in the list. If only one
+of the networks in {help netlist} is directed, the option {opt full} is enforced.
+
+{pstd}
+One can also include node attributes (saved as normal Stata variables) in the edgelist. Option {opt egovars()} 
+generates new variables that match the attributes of the sender of a tie (ego); option {opt altervars()} 
+generates new variables that match the attributes of the receiver of a tie (alter).
 
 {pstd}
 For example, 
 
-	{cmd:. webnwuse glasgow1}
+	{cmd:. nwwebuse glasgow1}
 	{com}. nwtoedge glasgow1, egovars(sport1)
 	{com}. list
 {txt}
       {c TLC}{hline 9}{c -}{hline 7}{c -}{hline 10}{c -}{hline 13}{c TRC}
-      {c |} {res}_fromid   _toid   glasgow1   from_sport1 {txt}{c |}
+      {c |} {res}_ego    _alter    glasgow1   from_sport1 {txt}{c |}
       {c LT}{hline 9}{c -}{hline 7}{c -}{hline 10}{c -}{hline 13}{c RT}
    1. {c |} {res}      1       1          0       regular {txt}{c |}
    2. {c |} {res}      1       2          0       regular {txt}{c |}
@@ -83,21 +88,23 @@ For example,
 {pstd}
 loads the {help netexample:Glasgow data} and transforms the network {it:glasgow1} in an edgelist. For example, {it:glasgow1[11] = 1} means,
 that there is a network tie from node 1 to node 11. It also generates a new variable {it:from_sport1},
-which holds information about how often the sender of a tie does sport in wave1.				 
+which holds in this case information about the attribute of the sender of a tie on the original variable {it:sport1}.				 
 
 {pstd}
-The command can also transform two networks in edgelists at the same. When more than one {help netname} is given, the command 
-automatically invokes option {opt full}:
+For two-mode networks see {help nw2set:introduction to two-mode networks}) and {help nw2toedge}.
+
+{pstd}
+The command can also transform two (or more) networks in edgelists at the same time. 
 
 	{cmd:. nwtoedge glasgow1 glasgow2}
 	
 {pstd}
-This generates a datset with one variable for each network, {it:glasgow1} and {it:glasgow2}:
+This generates a dataset with one variable for each network, {it:glasgow1} and {it:glasgow2}:
 
 	{com}. list
 {txt}
       {c TLC}{hline 9}{c -}{hline 7}{c -}{hline 10}{c -}{hline 10}{c TRC}
-      {c |} {res}_fromid   _toid   glasgow1   glasgow2 {txt}{c |}
+      {c |} {res}_ego    _alter    glasgow1   glasgow2 {txt}{c |}
       {c LT}{hline 9}{c -}{hline 7}{c -}{hline 10}{c -}{hline 10}{c RT}
    1. {c |} {res}      1       1          0          0 {txt}{c |}
    2. {c |} {res}      1       2          0          0 {txt}{c |}
@@ -119,6 +126,8 @@ This generates a datset with one variable for each network, {it:glasgow1} and {i
  		.....	
 		
   
-{title:Also see}
+{title:See also}
 	
-	{help nwfromedge}, {help nwsave}
+	{help nwfromedge}, {help nw2toedge}, {help nwsave}
+
+last certified : 21 Aug 2026

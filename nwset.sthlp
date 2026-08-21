@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.4  20nov2014 author: Thomas Grund}{...}
+{* *! 6jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
@@ -52,15 +52,14 @@
 {synopthdr}
 {synoptline}
 
-{synopt:{opt edgelist}}declare data in edgelist format{p_end}
-{synopt:{opt directed}}force network to be directed{p_end}
-{synopt:{opt undirected}}force network to be undirected{p_end}
-{synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:network}{p_end}
-{synopt:{opt labs}({it:lab1 lab2...})}new node labels that are used for the network{p_end}
-{synopt:{opth labsfromvar(varname)}}new node labels that are used for the network{p_end}
-{synopt:{opt vars}({it:var1 var2...})}new variables that are used for the network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
-{synopt:{opt keeporiginal}}generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opt edgelist}}Declare data in edgelist format{p_end}
+{synopt:{opt directed}}Force network to be directed{p_end}
+{synopt:{opt undirected}}Force network to be undirected{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
+{synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
+{synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
+{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
 
 
 {title:Description}
@@ -72,9 +71,9 @@ an {help nwfromedge:edgelist} or created by any other {help nw_topical##generato
 invoked. But one can also explicitly declare data to be network data. 
 
 {pstd}
-Networks ultimately exist as objects in Stata. Once a network is declared one can interact with it by referring
-to its {help netname}. In practice, this works just as if one would refer to a {help varname} in other commands.
-The command sets a new network by assigning it an adjacency matrix. It can also be used to assign various meta-information
+Networks ultimately exist as objects in Mata. Once a network is declared one can interact with it from Stata by referring
+to its {help netname}. In practice, this works just as if one would refer to a {help varname} in other commands. The
+command sets a new network by assigning it an adjacency matrix. It can also be used to assign various meta-information
 to the network.
 
 {pstd}
@@ -83,6 +82,8 @@ has the dimensions {it:nodes} x {it:nodes}. The matrix cell {it:M_ij} = 0 when t
 and {it:j}. In binary networks, {it:M_ij} = 1 when there is a network relationship between nodes {it:i} and {it:j}.
 However, networks can also be valued, i.e. {it:M_ij} > 1; in undirected networks {it:M_ij = M_ji}.
 
+{pstd}
+The command automatically recognizes if the network is unvalued (only has values 0, 1 or missing) or valued.
 
 {pstd}
 There are three ways to explicitly declare data to be network data:
@@ -107,7 +108,7 @@ are no ties).
 
 	{cmd:. nwclear}
 	{cmd:. forvalues i = 1/5} {
-	{cmd:     gen v`i' = 0}
+	{cmd:     gen v = 0}
 	{cmd:  }}
 	{cmd:. nwset v*}
 
@@ -245,3 +246,4 @@ an adjacency list or an edgelist represented by Stata variables.
 {title:See also}
 
 	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}
+last certified : 21 Aug 2026

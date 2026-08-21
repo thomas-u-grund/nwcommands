@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *! 8jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##manipulation:[NW-2.5] Manipulation}
 
@@ -14,16 +14,20 @@
 {p 8 17 2}
 {cmdab: nwkeep} 
 [{it:{help netlist}}]
+
+{p 8 17 2}
+{cmdab: nwkeep} 
+[{it:{help netname}}]
 {ifin}
 [{cmd:,}
-{opth attr:ibutes(varlist)}
-{opt netonly}]
+{opt clean}]
+
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth attr:ibutes(varlist)}}Attribute variables that are included in the keep{p_end}
-{synopt:{opt netonly}}Only keep the network, but leave all Stata variables untouched{p_end}
+{synopt:{opt clean}}Drop node observations{p_end}
+
 
 {synoptline}
 {p2colreset}{...}
@@ -36,43 +40,35 @@ Keeps a network or a list of networks. The command is the network version of {he
 
 {pstd}
 It can also be used together with {help if} or {help in}. In this case, the command operates on the node-level
-and keeps only certain nodes from a network or network list. Another way to keep certain nodes of a network is using
-{help nwkeepnodes}, which mirrors {help nwdropnodes}.
-
-{title:Options}
-
-{phang}
-{opt attributes}({help varlist}) Attributes variables that are included in the keep. This option becomes relevant
-when only certain nodes of a network are kept. Node attributes are stored in normal Stata variables. Hence, when 
-nodes are dropped/kept the attribute variable need to be updated accordingly to correspond to the reduced network.{p_end}
-
-{phang}
-{opt netonly} Only keep the network, but leave the Stata variables that represent the adjacency matrix of the network untouched.
+and keeps only certain nodes of a network. 
 
 
 {title:Examples}
 
 {pstd}
-The following command loads data from the internet and keeps networks {it:glasgow1} and {it:glasgow3}.
+The following command loads data from the internet and keeps the network {it:flobusiness}.
 
-	{cmd: . webnwuse glasgow}
-	{res}
-	{txt}{it:Loading successful}
-	{res}{txt}(3 networks)
-	{hline 20}
-		{res}glasgow1
-		{res}glasgow2
-		{res}glasgow3
-
-	{com}. nwkeep glasgow1 glasgow3
+	{com}. nwwebuse florentine, nwclear}
 	{res}
 	{com}. nwds
-	{res}{txt}{col 1}glasgow1{col 20}glasgow3
+	{res}{txt}{col 1}flobusiness  {col 20}flomarriage
+	{res}
+	{com}. nwkeep flobusiness
+	{res}
+	{com}. nwds
+	{res}{txt}{col 1}flobusiness
+	
+	
+{pstd}
+Whenever a command allows a {help netlist}, networks can be abbreviated, just like variables. For example,
+
+	{cmd:. nwkeep fl*}
+
 
 {pstd}
-The next command keeps the first ten nodes of network {it:glasgow1}.
+The next command keeps the first ten nodes of network {it:flobusiness}.
 	
-	{cmd:. nwkeep glasgow1 if _n <= 10}
+	{cmd:. nwkeep flobusiness if _n <= 10}
 
 {pstd}
 One can also keep the first ten nodes of a network like this:
@@ -80,11 +76,26 @@ One can also keep the first ten nodes of a network like this:
 	{cmd:. nwkeepnodes glasgow1, nodes(1-10)}
 
 {pstd}
-Whenever a command allows a {help netlist}, all familiar usage known from {help varlist} can be used. For example,
+The following command keeps only nodes in the flomarriage network with seats in the civic council (seat == 1).
 
-	{cmd:. nwkeep gl*}
+	{com}. nwwebuse florentine, nwclear}
+	{res}
+	{com}. nwkeep flomarriage if seat == 1{txt}
+
+
+{title:Remarks}
+
+{pstd}
+By default, all dropped nodes remain in the dataset, i.e. they are only excluded from the network. With option
+{bf:clean}, dropped nodes are removed from the Stata dataset as well. Notice that for example the node
+"medici" in the Florentine dataset is a node in both the marriage and the business network. Hence, the option {bf:clean}
+would remove this node and all node attributes. In the example above, the node "medici" would be removed from the {bf:flomarriage}
+network, but not from the {bf:flobusiness} network. But with the option {bf:clean} all node attributes would be deleted as well (although the node "medici" remains in the {bf:flobusiness}
+network). 
 
 
 {title:Also see}
    
    {help nwclear}, {help nwdrop}, {help nwkeepnodes}, {help nwdropnodes}
+
+last certified : 21 Aug 2026

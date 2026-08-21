@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  16may2012}{...}
+{* *! version 2.0.0  26aug2016}{...}
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 
@@ -17,18 +17,18 @@
 {it:{help varname}} [{it:{help if}}]
 {cmd:,}
 [{opt mode}({it:{help nwexpand##expand_mode:mode}})
+{opt network}({it:{help netname}})
 {opth nodes(int)}
 {opt name}({it:{help newnetname}})
-{opt vars}({it:{help newvarlist}})
 {opt xvars}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}mode used to expand variable; default = {it:same}{p_end}
+{synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
 {synopt:{opth nodes(int)}}size of new network{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
-{synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
 {synopt:{opt xvars}}do not generate Stata variables{p_end}
 
 {synoptset 20 tabbed}{...}
@@ -57,8 +57,12 @@ and some function {it:expfcn} defined by {it:{help nwexpand##expand_mode:mode}}.
 {pstd}
 Valid modes are: {bf:same, dist, distinv, absdist, abdistinv, sender, receiver}
 
+{pstd}
+The option {bf:network(}{help netname}{bf:)} applies the node labels of {it:netname} when expanding the variable. Often specifying this
+option is needed.
+
 {pstd} 
-An example demomstrates how this works. First, we generate a small dataset with 6 observations and the new variable {it: gender}. This new variable
+An example demonstrates how this works. First, we generate a small dataset with 6 observations and the new variable {it: gender}. This new variable
 takes the value 0 for observations 1-3 and the value 1 for observations 4-6.
 
 	{cmd:. nwclear}
@@ -132,20 +136,25 @@ the edgecolors of ties differently when two nodes have the same value on some at
 loads the {it:gang} network and plots the color of ties in such a way that it shows if two gang members
 (who co-offend with each other) were either 1) both in prison before or 2) both not in prison before.
 
-	{cmd:. webnwuse gang, nwclear}
-	{cmd:. nwexpand Prison}
+	{cmd:. nwwebuse gang, nwclear}
+	{cmd:. nwexpand Prison, network(gang)}
 	{cmd:. nwplot gang, edgecolor(same_Prison)}
 
+{pstd}
+Notice how here the we need to specify the option {bf:network(gang)}. Otherwise, {bf:nwepxand} does not know that the labels
+of the gang network should be applied and it would consequently treat it is a completeley different network.	
 	
 {pstd}
 The next example loads the {it:glasgow} dataset and colors ties differently depending on whether the sender
 of a friendship tie did sport at wave1.
 
-	{cmd:. webnwuse glasgow, nwclear}
-	{cmd:. nwexpand sport1, mode(sender)}
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwexpand sport1, mode(sender) network(glasgow)}
 	{cmd:. nwplot glasgow1, edgecolor(sender_sport1)}
 	
 
 {title:See also}
 
 	{help nwcorrelate}
+
+last certified : 21 Aug 2026

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 2.0.0  1dec2016: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 
@@ -18,6 +18,7 @@
 [{cmd:,}
 {opt mat(matamatrix)}
 {opth density(float)}
+{opt weights(p1, p2,...)}
 {opth name(netname)}
 {opt xvars}
 {opt undirected}]
@@ -28,6 +29,7 @@
 {synoptline}
 {synopt:{opt mat}({it:matrix})}Stata or Mata matrix with tie probabilities{p_end}
 {synopt:{opth density(float)}}density of the new network{p_end}
+{synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opth name(netname)}}name of the new random network{p_end}
 {synopt:{opt xvars}}do not generate Stata variables{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
@@ -36,7 +38,7 @@
 {title:Description}
 
 {pstd}
-{cmd:nwdyadprob} generates a random network where each tie {it:x_ij} has the 
+{cmd:nwdyadprob} generates a (un-)directed random network where each tie {it:x_ij} has the 
 probability {it:p_ij} to exist. The values for {it:p_ij} are derived either 1) from the edge values
 in network {help netname} and the {it:density} (if given) or 2) from a Stata/Mata matrix specified in {bf:mat()}. The command can be used to create
 all sorts of networks.
@@ -56,7 +58,10 @@ When no {bf:density()} is given, the probability is simply:
 {pmore}
 {it:p_ij = e_ij}
 
-
+{pstd}
+With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
+{it:p_k} stands for the probability to sample tie weight {it:k}. The probabilities {it:p1, p2..., pn}
+do not necessarily have to sum up to one; they are standardized.
 
 {title:Example}
 
@@ -142,9 +147,11 @@ The result can be nicely plotted in the following way:
 {title:Remarks}
 
 {pstd}
-The program requires some additional programs ({bf:gsample, moremata}) that it will automatically install. 
+The program requires some additional programs ({bf:gsample, moremata}) that it automatically installs from the internet. 
 
 
 {title:See also}
 
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
+
+last certified : 21 Aug 2026
