@@ -113,6 +113,7 @@ program nwsave
 	 gen _nw_modes = ""
 	 gen _nw_mode1desc = ""
 	 gen _nw_mode2desc = ""
+	 gen _nw_provenance = ""
     }
 	local i = 1
 	
@@ -130,6 +131,7 @@ program nwsave
 		replace _nw_modes = `"`r(modes)'"' in `i'
 		replace _nw_mode1desc = `"`r(mode1desc)'"' in `i'
 		replace _nw_mode2desc = `"`r(mode2desc)'"' in `i'
+		replace _nw_provenance = `"`r(provenance)'"' in `i'
 		local i = `i' + 1
 	}
 	qui replace _nw_nets = `=`i'-1' in 1

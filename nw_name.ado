@@ -1,7 +1,7 @@
 capture program drop nw_name
 program nw_name
 	version 9
-	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newvars(string) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) ]
+	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newvars(string) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) ]
 	
 	nw_syntax `netname'
 	
@@ -95,6 +95,9 @@ program nw_name
 	if "`newmode2desc'" != "" {
 		mata: nw.nws.pdefs[`id']->set_description_mode2(`"`newmode2desc'"')
 	}
+	if "`newprovenance'" != "" {
+		mata: nw.nws.pdefs[`id']->set_provenance(`"`newprovenance'"')
+	}
 
 	mata: st_numscalar("r(id)", `id')
 	mata: st_global("r(netname)", nw.nws.pdefs[`id']->get_name())
@@ -115,5 +118,6 @@ program nw_name
 	mata: st_numscalar("r(nodes2)", nw.nws.pdefs[`id']->get_nodes_mode2())
 	mata: st_global("r(mode1desc)", nw.nws.pdefs[`id']->get_description_mode1())
 	mata: st_global("r(mode2desc)", nw.nws.pdefs[`id']->get_description_mode2())
+	mata: st_global("r(provenance)", nw.nws.pdefs[`id']->get_provenance())
 end
 

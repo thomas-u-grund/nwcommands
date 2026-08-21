@@ -28,7 +28,7 @@
 {synoptline}
 {synopt:{opt project(1|2)}}Mode/level to collapse to{p_end}
 {synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}{p_end}
-{synopt:{opt stat(min|max|minmax|sum|mean)}}How to combine tie values on a valued two-mode network; default = {it:minmax}{p_end}
+{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine)}}How to combine tie values (or, for the last 4, how to score shared-neighbor structure directly); default = {it:minmax}{p_end}
 {synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
@@ -73,6 +73,26 @@ neighbor, then take the maximum of those minima across all shared neighbors -
 substantively, the strongest shared bond{p_end}
 
 {pstd}
+The remaining four options score the {bf:shared-neighbor structure itself} rather than
+combining tie values - they are defined the same way regardless of whether the source
+network is valued, and are available for a valued source network too (unlike the five
+above, which require one):
+
+{p 8 12 2}{bf:stat(count)}{p_end}
+{p 12 12 2}the number of shared neighbors - identical to the default behaviour on an
+unvalued source network, but now requestable explicitly on a valued one too, ignoring
+tie strength entirely{p_end}
+{p 8 12 2}{bf:stat(binary)}{p_end}
+{p 12 12 2}1 whenever at least one shared neighbor exists, 0 (no tie) otherwise - a
+plain co-affiliation indicator{p_end}
+{p 8 12 2}{bf:stat(jaccard)}{p_end}
+{p 12 12 2}the Jaccard similarity of the two nodes' neighbor sets: shared neighbors
+divided by the size of the union of their neighbor sets{p_end}
+{p 8 12 2}{bf:stat(cosine)}{p_end}
+{p 12 12 2}the cosine similarity of the two nodes' neighbor sets: shared neighbors
+divided by the geometric mean of their two degrees{p_end}
+
+{pstd}
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5
 years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 
@@ -85,6 +105,11 @@ years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 		{c |} mean      {c |} 3.5    {c |}
 		{c |} minmax    {c |}   5    {c |}
 		{c BLC}{hline 12}{c -}{hline 8}{c BRC}
+
+{pstd}
+The projected network's provenance (which network and mode it was projected from, and with
+which {opt stat()}) is recorded on the new network itself, not just printed - see
+{bf:r(provenance)} via {help netname:nwname}, and {help nwsummarize}, which displays it.
 
 {title:Stored results}
 
@@ -126,7 +151,7 @@ program nw2project, rclass
 	if "`stat'" == "" {
 		local stat "minmax"
 	}
-	_opts_oneof "min max minmax sum mean" "stat" "`stat'" 6556
+	_opts_oneof "min max minmax sum mean count binary jaccard cosine" "stat" "`stat'" 6556
 
 	nw_syntax `netname'
 
@@ -167,12 +192,48 @@ program nw2project, rclass
 	mata: st_numscalar("nodes", cols(`__nw_names'))
 	mata: st_numscalar("ties", rows(`__nw_edges'))
 
+	// captured from the SOURCE network's own netobj before it is
+	// reassigned to the newly-created projected network below - a
+	// projected network otherwise records no trace of what it was
+	// projected from the moment nw2project returns (Part 4/roadmap
+	// provenance gap).
+	local srcname "`netname'"
+	mata: st_local("srcmodedesc", `project' == 1 ? `netobj'->get_description_mode1() : `netobj'->get_description_mode2())
+	// deliberately no literal apostrophes/quotes around `srcname' below
+	// (an earlier version wrote "network '`srcname''") - a literal
+	// embedded apostrophe survives one round of compound-quoting but
+	// corrupts the string once it passes through further macro
+	// re-expansion (nwname forwarding its full `0' to nw_name), found
+	// via a direct probe: the provenance note silently truncated mid-
+	// string and even clobbered unrelated option text following it.
+	local provnote "projected from network `srcname', mode `project'"
+	if "`srcmodedesc'" != "" {
+		local provnote "`provnote' (`srcmodedesc')"
+	}
+	local provnote "`provnote', stat=`stat'"
+
 	mata: nw.nws.add("`name'")
 	nw_syntax `name'
 	mata: `netobj'->create_by_name_sparse(`__nw_names')
+	// BUGFIX: create_by_name_sparse() calls zap() internally (wiping
+	// every field, including `name', back to blank - see its own header
+	// comment in unw_core.do), and nothing here re-set it afterward, so
+	// the projected network's own internal name field stayed blank even
+	// though nw.nws's separate container-level name list correctly said
+	// "`name'" existed. Explicit-netname code paths never noticed
+	// (they resolve names via the container list, not this field), but
+	// any *bare*/"current network" code path does read this field
+	// directly (pcurrent->get_name()) - confirmed via a direct probe:
+	// nwsave's own internal bare nwload call crashed with "subscript
+	// invalid" trying to index pdefs[0] after get_index_of_current()
+	// silently found no match. nwset.ado's own create_by_name() call
+	// (the dense sibling of this sparse method) already re-sets the
+	// name immediately afterward for exactly this reason - mirrored here.
+	mata: `netobj'->set_name("`name'")
 	mata: `netobj'->set_directed(0)
 	mata: `netobj'->set_edge_from_triplets(`__nw_edges'[.,1], `__nw_edges'[.,2], `__nw_edges'[.,3], 0)
 	mata: `netobj'->set_valued(1)
+	mata: `netobj'->set_provenance(`"`provnote'"')
 
 	mata: mata drop `__nw_names' `__nw_edges'
 
@@ -239,7 +300,7 @@ string rowvector nw2project_names(pointer(class nw_def scalar) scalar p, real sc
 */
 real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar level, string scalar stat){
 	real scalar nsel, valued, oa, ob, oi, oq, k, l, wiq, wjq, thismin, val, nout
-	real matrix sel, localidx, nb, nb2
+	real matrix sel, localidx, nb, nb2, degvec
 	real matrix minval, maxval, sumval, cntval, minmaxval, sharedcount
 	real matrix ego_tmp, alter_tmp, weight_tmp, out
 
@@ -258,10 +319,17 @@ real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar 
 	sumval = J(nsel, nsel, 0)
 	cntval = J(nsel, nsel, 0)
 	sharedcount = J(nsel, nsel, 0)
+	// far-level (affiliation) degree of each selected node - the shared
+	// set of neighbors visited below is the same "other mode" set this
+	// counts, so both jaccard's union term and cosine's normalizer reuse
+	// exactly the same neighbor lists nw2project_edges already builds,
+	// not a second pass over the network.
+	degvec = J(nsel, 1, 0)
 
 	for (oa=1; oa<=nsel; oa++){
 		oi = sel[oa,1]
 		nb = p->neighbors(oi)
+		degvec[oa,1] = rows(nb)
 		for (k=1; k<=rows(nb); k++){
 			oq = nb[k,1]
 			wiq = p->edge_weight(oi, oq)
@@ -292,7 +360,26 @@ real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar 
 	for (oa=1; oa<=nsel; oa++){
 		for (ob=(oa+1); ob<=nsel; ob++){
 			if (sharedcount[oa,ob] > 0){
-				if (!valued){
+				// count/binary/jaccard/cosine are pure shared-neighbor-
+				// structure statistics - defined the same way whether the
+				// source network is valued or not (unlike min/max/sum/
+				// mean/minmax, which only make sense on tie *values* and
+				// so keep falling back to the plain shared count on an
+				// unvalued source, exactly as before). Checked first so a
+				// valued network can still request them explicitly.
+				if (stat == "count"){
+					val = sharedcount[oa,ob]
+				}
+				else if (stat == "binary"){
+					val = 1
+				}
+				else if (stat == "jaccard"){
+					val = sharedcount[oa,ob] / (degvec[oa,1] + degvec[ob,1] - sharedcount[oa,ob])
+				}
+				else if (stat == "cosine"){
+					val = sharedcount[oa,ob] / sqrt(degvec[oa,1] * degvec[ob,1])
+				}
+				else if (!valued){
 					val = sharedcount[oa,ob]
 				}
 				else if (stat == "min"){
