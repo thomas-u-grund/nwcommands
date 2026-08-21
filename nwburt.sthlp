@@ -106,3 +106,4 @@ Burt, R. S. 1992. Structural Holes: The social structure of competition. Cambrid
 
 	{help nwconstraint}, {help nwbridges}
 
+last certified : 21 Aug 2026

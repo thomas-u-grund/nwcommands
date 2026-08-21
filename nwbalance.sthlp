@@ -79,3 +79,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 	{help nwtriads}, {help nwvalue}
 
+last certified : 21 Aug 2026
