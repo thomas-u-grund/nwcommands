@@ -71,6 +71,28 @@ assert _rc == 0
 nwplot, layout(mds)
 assert _rc == 0
 
+* --- repeated nwplot/layout(,lgc) calls on the same >50-node network
+* (no nwclear between calls) used to be flagged as "not reliably
+* reproducible" in docs/CERTIFICATION.md's own Pending table - this
+* turned out to share the exact root cause harmonisation unit 44 fixed
+* elsewhere (nwplot's own mdsclassical-layout degree/isolates
+* computation, which layout(,lgc) also passes through en route to
+* actually plotting, silently failed to clean up its own temporary
+* _degree/_outdegree/_indegree/_isolates variables via a compound
+* "capture drop A B C D" that fails entirely - drops nothing - the
+* instant any one of those four names doesn't exist, which is always
+* true for at least one of them). Re-verified clean across 12
+* alternating plain/lgc calls on a 200-node network and 8 separate
+* seeds before removing the Pending entry - not just a lucky repro.
+nwclear
+nwrandom 200, prob(.02)
+forvalues i = 1/4 {
+	nwplot
+	assert _rc == 0
+	nwplot, layout(,lgc)
+	assert _rc == 0
+}
+
 nwuse florentine, nwclear
 
 nwplot flomarriage, color(seat, colorpalette(red yellow))
