@@ -13,6 +13,7 @@ f netlist.sthlp
 f netname.sthlp
 f newnetname.sthlp
 f nodeid.sthlp
+f nw2degree.sthlp
 f nw2fromedge.sthlp
 f nw2project.sthlp
 f nw_alphabetical.sthlp

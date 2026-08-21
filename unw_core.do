@@ -1076,6 +1076,7 @@ class `NWdef' {
 	real matrix calculate_concor()
 	real matrix calculate_coreperiphery()
 	real matrix calculate_brokerage()
+	real matrix calculate_2mode_degree()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_similarity_index()
@@ -1710,6 +1711,40 @@ real matrix `NWdef'::calculate_brokerage(real matrix group){
 				}
 			}
 		}
+	}
+	return(result)
+}
+
+/*
+	Two-mode (bipartite) degree centrality (Borgatti & Everett 1997): a
+	node's raw degree can only ever reach as high as the *other* mode's
+	size (a mode-1 node can tie to at most every mode-2 node, never to
+	another mode-1 node, in a genuine two-mode network), so ordinary
+	degree centrality's usual n-1 normalization is wrong here - each
+	node's degree is instead normalized by the size of the *other* mode.
+	get_modes() (a string rowvector of "1"/"2" per node, already used by
+	nw2project.ado for the same purpose) is queried directly rather than
+	assumed from node-index ranges - confirmed empirically that a
+	bipartite network's mode-1/mode-2 node index ranges are an internal
+	storage detail, not something callers should hardcode.
+*/
+real matrix `NWdef'::calculate_2mode_degree(){
+	string matrix modes
+	real matrix result, idx1, idx2
+	real scalar n1, n2, i
+
+	modes = get_modes()
+	idx1 = selectindex(modes :== "1")
+	idx2 = selectindex(modes :== "2")
+	n1 = cols(idx1)
+	n2 = cols(idx2)
+
+	result = J(get_nodes(), 1, .)
+	for (i=1; i<=n1; i++){
+		result[idx1[i],1] = degree(idx1[i]) / n2
+	}
+	for (i=1; i<=n2; i++){
+		result[idx2[i],1] = degree(idx2[i]) / n1
 	}
 	return(result)
 }
