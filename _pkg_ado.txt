@@ -21,6 +21,7 @@ f nwbetween.ado
 f nwbrokerage.ado
 f nwburt.ado
 f nwclear.ado
+f nwclique.ado
 f nwcloseness.ado
 f nwclustering.ado
 f nwcollapse.ado

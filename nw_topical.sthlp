@@ -124,6 +124,7 @@
 {p2col:    {bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
 {p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:    {bf:{help nwcentrality }}}Node centrality measures{p_end}
+{p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}
 {p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method{p_end}
