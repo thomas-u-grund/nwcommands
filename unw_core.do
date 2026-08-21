@@ -945,6 +945,99 @@ real matrix BronKerbosch(real matrix adj, real rowvector R, real rowvector P, re
 	return(results)
 }
 
+/*
+	is_valid_kplex(S, k): S is the induced adjacency submatrix (diagonal
+	zeroed) of some candidate node set; true iff every member's degree
+	within S is at least (size of S) - k, the Seidman & Foster (1978)
+	definition of a k-plex (a k=1 plex is exactly a clique - every
+	member missing 0 ties - so this generalizes BronKerbosch()'s own
+	notion directly). A size-0 or size-1 set is trivially always valid
+	(nothing to violate).
+*/
+real scalar is_valid_kplex(real matrix S, real scalar k){
+	real scalar s
+
+	s = rows(S)
+	if (s <= 1) return(1)
+	return(min(rowsum(S)) :>= (s - k))
+}
+
+/*
+	KPlex(): maximal k-plex enumeration, structurally the same
+	Bron-Kerbosch-style R/P/X backtracking as BronKerbosch() above (see
+	its own header comment for the full explanation of the R/P/X
+	scheme and why plain 0/1 indicator row vectors are used instead of
+	index lists) - the only real difference is HOW a candidate is
+	determined to still be addable to the set being built. For a
+	clique, a candidate must be adjacent to every existing member,
+	checked by a cheap neighbor-row intersection; a k-plex candidate
+	only needs each member's own missing-tie budget (k-1) to still be
+	respected once the candidate joins, which depends on the exact
+	membership, not just simple adjacency - so `newR` is a genuine
+	*superset* check on the whole induced (m+1)-node submatrix, via
+	is_valid_kplex(), for every remaining candidate, at every level.
+	This is asymptotically more expensive than BronKerbosch()'s own
+	set-intersection update but unambiguously correct, matching this
+	session's own established preference (see BronKerbosch()'s own
+	comment) for hand-verifiable correctness over asymptotic elegance
+	at this package's target (moderate) network scale.
+
+	Correctness of reusing the same R/P/X maximality-tracking scheme
+	for k-plexes (not just cliques) rests on k-plexes being downward
+	*hereditary*: for any valid k-plex S and any subset S' of S, S' is
+	itself a valid k-plex under the same k. Proof sketch: for r in S',
+	degree_r(S') >= degree_r(S) - |S \ S'| (removing nodes can remove at
+	most that many of r's neighbors) >= (|S| - k) - |S \ S'| = |S'| - k,
+	using the given bound degree_r(S) >= |S| - k. This is exactly the
+	property BronKerbosch()'s own P/X bookkeeping relies on (a node
+	ruled out at one point in the search can never legitimately become
+	part of a still-unexplored maximal set built from a superset of the
+	current R), so the same non-redundant enumeration argument applies.
+*/
+real matrix KPlex(real matrix adj, real scalar k, real rowvector R, real rowvector P, real rowvector X){
+	real matrix results, childresults, S
+	real rowvector Pcopy, newR, newP, newX, Ridx, idx
+	real scalar n, v, u
+
+	n = cols(P)
+	results = J(0, n, 0)
+
+	if (sum(P) == 0 & sum(X) == 0){
+		return(R)
+	}
+
+	Pcopy = P
+	for (v = 1; v <= n; v++){
+		if (Pcopy[v] == 0) continue
+
+		newR = R
+		newR[v] = 1
+		Ridx = selectindex(newR)
+
+		newP = J(1, n, 0)
+		for (u = 1; u <= n; u++){
+			if (u == v | P[u] == 0) continue
+			idx = (Ridx, u)
+			S = adj[idx, idx]
+			if (is_valid_kplex(S, k)) newP[u] = 1
+		}
+
+		newX = J(1, n, 0)
+		for (u = 1; u <= n; u++){
+			if (X[u] == 0) continue
+			idx = (Ridx, u)
+			S = adj[idx, idx]
+			if (is_valid_kplex(S, k)) newX[u] = 1
+		}
+
+		childresults = KPlex(adj, k, newR, newP, newX)
+		results = results \ childresults
+		P[v] = 0
+		X[v] = 1
+	}
+	return(results)
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -1135,6 +1228,8 @@ class `NWdef' {
 	real matrix calculate_egostats()
 	real matrix calculate_cliques()
 	real matrix calculate_cliques_filtered()
+	real matrix calculate_kplex()
+	real matrix calculate_kplex_filtered()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -1904,6 +1999,51 @@ real matrix `NWdef'::calculate_cliques_filtered(real scalar minsize){
 	cliq = calculate_cliques()
 	sizes = rowsum(cliq)
 	return(select(cliq, sizes :>= minsize))
+}
+
+/*
+	Maximal k-plex enumeration (see KPlex()/is_valid_kplex() above for
+	the algorithm itself and the hereditary-property argument for why
+	the same maximality-tracking scheme BronKerbosch() uses for cliques
+	still applies). Always undirected and binary, for exactly the same
+	reason calculate_cliques() is: a k-plex's own definition (every
+	member's within-set degree at least |S|-k) has no natural directed
+	or valued generalization. A k=1 k-plex is identical to a clique
+	(every member missing 0 ties) - calculate_kplex(1) and
+	calculate_cliques() return the same partition of the same maximal
+	sets, though via a slower, more general code path; nwkplex.ado
+	itself requires k>=2 (a k=1 call is redirected to a hard error
+	suggesting nwclique instead, since nwclique already does that exact
+	case with the cheaper, purpose-built BronKerbosch() algorithm - see
+	nwkplex.ado's own guard).
+*/
+real matrix `NWdef'::calculate_kplex(real scalar k){
+	real matrix adj, R0, P0, X0
+	real scalar n
+
+	n = get_nodes()
+	adj = (*get_matrix_mod(0,0)) :!= 0
+	_diag(adj, 0)
+
+	R0 = J(1,n,0)
+	P0 = J(1,n,1)
+	X0 = J(1,n,0)
+
+	return(KPlex(adj, k, R0, P0, X0))
+}
+
+/*
+	calculate_kplex(), restricted to k-plexes of at least `minsize'
+	members - mirrors calculate_cliques_filtered()'s own thin-wrapper
+	pattern for the same reason (nwkplex.ado only ever needs one-line
+	mata: calls).
+*/
+real matrix `NWdef'::calculate_kplex_filtered(real scalar k, real scalar minsize){
+	real matrix kplex, sizes
+
+	kplex = calculate_kplex(k)
+	sizes = rowsum(kplex)
+	return(select(kplex, sizes :>= minsize))
 }
 
 /*

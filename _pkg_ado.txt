@@ -61,6 +61,7 @@ f nwkatz.ado
 f nwkcore.ado
 f nwkeep.ado
 f nwkeepnodes.ado
+f nwkplex.ado
 f nwlattice.ado
 f nwload.ado
 f nwmodularity.ado

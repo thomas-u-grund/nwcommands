@@ -97,7 +97,7 @@ network could take a long time; not specially guarded against here beyond this n
 
 {title:See also}
 
-	{help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
+	{help nwkplex}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
 
 ***/
 
