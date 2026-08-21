@@ -96,6 +96,6 @@ network could take a long time; not specially guarded against here beyond this n
 
 {title:See also}
 
-	{help nwkplex}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
+	{help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
 
 last certified : 21 Aug 2026

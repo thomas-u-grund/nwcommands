@@ -146,6 +146,8 @@
 {p2col:    {bf:{help nwhierarchy }}}Hierrachical clustering of nodes{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:    {bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
+{p2col:    {bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
+{p2col:    {bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
 {p2col:    {bf:{help nwneighbor }}}Extract the network neighbors of a node{p_end}
 {p2col:    {bf:{help nwpath }}}Calculate paths between nodes{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}

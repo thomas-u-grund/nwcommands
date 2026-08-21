@@ -113,7 +113,7 @@ specially guarded against here beyond this note.
 
 {title:See also}
 
-	{help nwclique}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
+	{help nwclique}, {help nwnclique}, {help nwnclan}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
 
 ***/
 

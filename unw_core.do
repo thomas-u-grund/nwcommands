@@ -1230,6 +1230,9 @@ class `NWdef' {
 	real matrix calculate_cliques_filtered()
 	real matrix calculate_kplex()
 	real matrix calculate_kplex_filtered()
+	real matrix calculate_nclique()
+	real matrix calculate_nclique_filtered()
+	real matrix calculate_nclan_filtered()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -2044,6 +2047,122 @@ real matrix `NWdef'::calculate_kplex_filtered(real scalar k, real scalar minsize
 	kplex = calculate_kplex(k)
 	sizes = rowsum(kplex)
 	return(select(kplex, sizes :>= minsize))
+}
+
+/*
+	nclan_diameter_ok(origadj, members, n): true iff the INDUCED
+	subgraph on `members' (built from origadj, the network's own
+	original, unthresholded adjacency - not the n-step adjacency
+	calculate_nclique() itself searches over) has every pair of its own
+	members connected by a within-group path of length <= n. This is
+	the extra condition that turns an n-clique into an n-clan (Mokken
+	1979): an n-clique only guarantees every pair's shortest path in
+	the WHOLE original network is <= n - that path may legitimately run
+	through nodes outside the n-clique itself, a well-known weakness of
+	the plain n-clique definition (Alba 1973) that can make an
+	n-clique's own members not even mutually reachable within n steps
+	if forced to stay inside the group. Reuses Brute_dist() directly on
+	the induced submatrix rather than writing a second distance
+	routine - Brute_dist() already returns missing for both the
+	diagonal and any genuinely unreachable pair (see its own header
+	comment), so both "disconnected within the group" and "too far
+	within the group" are captured by a single hasmissing()-after-
+	zeroing-the-diagonal check plus a max() bound.
+*/
+real scalar nclan_diameter_ok(real matrix origadj, real rowvector members, real scalar n){
+	real matrix idx, sub, subdist, diagzero
+	real scalar s
+
+	idx = selectindex(members)
+	s = length(idx)
+	if (s <= 1) return(1)
+
+	sub = origadj[idx, idx]
+	subdist = Brute_dist(sub)
+	diagzero = J(s, 1, 0)
+	_diag(subdist, diagzero)
+
+	if (hasmissing(subdist)) return(0)
+	return(max(subdist) :<= n)
+}
+
+/*
+	Maximal n-clique enumeration (Luce 1950): a generalization of an
+	ordinary clique where every pair of members need only be within
+	geodesic distance `n' of each other in the network as a whole,
+	rather than directly tied - a plain clique is the special case
+	n=1 (distance-1 "neighbors" are exactly direct ties), so, like
+	calculate_kplex()'s own k=1 case, nwnclique.ado requires n>=2 and
+	points to nwclique for n=1, which already implements that case more
+	cheaply via BronKerbosch() directly on the true adjacency matrix
+	rather than a distance matrix. This is exactly what
+	calculate_nclique() itself does for n>=2 - build the n-step
+	adjacency matrix (`geodesic distance <= n', missing/unreachable
+	pairs correctly excluded since a Mata comparison against a missing
+	value is always false, needing no separate special-casing) and
+	hand it to the *same* BronKerbosch() maximal-clique backtracking
+	nwclique.ado's own calculate_cliques() uses - an n-clique is simply
+	an ordinary clique of the "distance <= n" graph, not a different
+	search algorithm.
+*/
+real matrix `NWdef'::calculate_nclique(real scalar n){
+	real matrix D, adjn, R0, P0, X0
+	real scalar nn
+
+	nn = get_nodes()
+	D = calculate_distances(0, "brute")
+	adjn = (D :<= n)
+	_diag(adjn, 0)
+
+	R0 = J(1,nn,0)
+	P0 = J(1,nn,1)
+	X0 = J(1,nn,0)
+
+	return(BronKerbosch(adjn, R0, P0, X0))
+}
+
+/*
+	calculate_nclique(), restricted to n-cliques of at least `minsize'
+	members - mirrors calculate_cliques_filtered()/calculate_kplex_filtered()'s
+	own thin-wrapper pattern.
+*/
+real matrix `NWdef'::calculate_nclique_filtered(real scalar n, real scalar minsize){
+	real matrix ncliq, sizes
+
+	ncliq = calculate_nclique(n)
+	sizes = rowsum(ncliq)
+	return(select(ncliq, sizes :>= minsize))
+}
+
+/*
+	n-clans: the maximal n-cliques (calculate_nclique_filtered()) that
+	additionally satisfy nclan_diameter_ok() against the network's own
+	true adjacency matrix. Deliberately NOT a separate maximal-set
+	search of its own - matching the standard, established treatment
+	of n-clans in the literature (e.g. Wasserman & Faust 1994) and
+	every other SNA package's own convention: n-clans are reported as a
+	FILTERED SUBSET of the already-enumerated maximal n-cliques, not as
+	independently re-maximized sets of their own. A maximal n-clique
+	that fails the diameter check is simply not reported as a clan at
+	all (not replaced by some smaller, clan-qualifying subset of
+	itself) - a genuine, deliberate limitation of the n-clan concept
+	itself, not an implementation shortcut.
+*/
+real matrix `NWdef'::calculate_nclan_filtered(real scalar n, real scalar minsize){
+	real matrix ncliq, adj, keep
+	real scalar i
+
+	ncliq = calculate_nclique_filtered(n, minsize)
+	if (rows(ncliq) == 0) return(ncliq)
+
+	adj = (*get_matrix_mod(0,0)) :!= 0
+	_diag(adj, 0)
+
+	keep = J(rows(ncliq), 1, 0)
+	for (i=1; i<=rows(ncliq); i++) {
+		keep[i] = nclan_diameter_ok(adj, ncliq[i,.], n)
+	}
+	return(select(ncliq, keep))
 }
 
 /*
