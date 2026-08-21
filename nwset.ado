@@ -34,6 +34,17 @@
 {p 8 15 2}
 {cmd:nwset} [{it:{help varlist}}] {cmd:,} {opt bipartite} [{opt mat}({it:matamatrix})] [ {it:options} ]
 
+{pstd}Declare a temporal network from an edgelist (see {help nwset##temporal:below})
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt time(varname)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt interval(startvar endvar)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} {cmd:,} {opt eventtime(varname)} [ {it:options} ]
+
 
 {pstd}Display currently existing networks
 
@@ -73,6 +84,9 @@
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
 {synopt:{opt xvars}}Do not generate Stata variables{p_end}
 {synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
 
 
 {title:Description}
@@ -275,8 +289,46 @@ an explicit projection (see {help nw2project} - {bf:nwset} and the rest of the p
 automatically), or does not support two-mode data at all.
 
 
+{marker temporal}{...}
+{bf:{ul:5. Declare a temporal network}}
+
+{pstd}
+Time belongs to edges/ties, not to a separate network copy per timepoint. An edgelist can carry a
+temporal dimension via exactly one of three options - {bf:time()}, {bf:interval()}, or
+{bf:eventtime()} - matching three distinct semantics that are never conflated:
+
+{p 8 12 2}{bf:time({it:timevar})}{p_end}
+{p 12 12 2}{bf:snapshot} semantics: each row's own {it:timevar} value is the single instant that tie
+was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
+carrying its own recorded time{p_end}
+{p 8 12 2}{bf:interval({it:startvar endvar})}{p_end}
+{p 12 12 2}{bf:interval} semantics: each row is active for {it:startvar} <= {it:t} < {it:endvar} - a
+missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
+{p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
+{p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
+tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
+ordinary graph{p_end}
+
+{pstd}
+For example, this declares a snapshot network from three waves of ties:
+
+	{cmd:. nwset ego alter, time(wave) name(mynet)}
+
+{pstd}
+A temporal network is otherwise a completely ordinary {bf:nwset}-declared network - {help nwsummarize}
+shows its temporal metadata, and {help nwattime} produces an ordinary static network containing only
+the ties active at a given timepoint, usable with any {bf:nw*} command exactly like any other network.
+
+{pstd}
+{bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
+{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
+docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
+scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
+temporal ERGMs) is implemented or attempted here.
+
+
 {title:Remarks}
- 
+
 {pstd}
 The command {bf:nwset} or {bf:nwset, detail} without a {help varlist} or {bf:mat()} option, give a list of all
 networks that do currently exist in memory. A similar overview is provided by {help nwds} (which is very similar to {help ds}).
@@ -311,12 +363,12 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}
 ***/
 
 capture program drop nwset	
 program nwset
-syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bipartite TWOmode biprownames(varname) selfloop labs(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed]
+syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bipartite TWOmode biprownames(varname) selfloop labs(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
 
 	// twomode is a genuinely different declaration shape from
 	// bipartite, not a synonym for it - bipartite (long-established,
@@ -343,6 +395,10 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 		error 198
 	}
 	if "`twomode'" != "" {
+		if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
+			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands (see docs/ROADMAP.md)."
+			error 198
+		}
 		if "`varlist'" == "" {
 			di "{err}option {bf:twomode} requires exactly two (or three, for a valued network) variables: the mode-1 id, the mode-2 id, and optionally a tie value."
 			error 198
@@ -360,6 +416,151 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 		// been rejected by the "syntax" command itself, before this
 		// code ever runs, so none is threaded through here.
 		nw2fromedge `varlist', name(`name') `xvars' `keeporiginal'
+		exit
+	}
+	// Temporal metadata declaration (two-mode/temporal architecture
+	// initiative, Part II) - groundwork only: distinguishes snapshot
+	// (time()), interval (interval()), and event (eventtime())
+	// semantics per the user's own specification, storing per-edge
+	// time value(s) alongside the ordinary edgelist topology rather
+	// than pretending a network has no temporal dimension at all.
+	// Composability with twomode/bipartite is intentionally NOT
+	// attempted in this pass (tracked in docs/ROADMAP.md) - errors
+	// clearly below rather than silently doing something wrong.
+	if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
+		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
+		if `ntemporal_opts' > 1 {
+			di "{err}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event)."
+			error 198
+		}
+		if "`twomode'" != "" | "`bipartite'" != "" {
+			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands (see docs/ROADMAP.md)."
+			error 198
+		}
+		if "`varlist'" == "" {
+			di "{err}declaring temporal metadata requires an edgelist varlist: {it:ego alter} [{it:value}]."
+			error 198
+		}
+		local temporal_nvars : word count `varlist'
+		if `temporal_nvars' < 2 | `temporal_nvars' > 3 {
+			di "{err}temporal edgelist declaration requires exactly two (or three, for a valued network) variables; got `temporal_nvars'."
+			error 198
+		}
+		if "`name'" == "" {
+			local name "network"
+		}
+
+		local ego : word 1 of `varlist'
+		local alter : word 2 of `varlist'
+		local ivstart ""
+		local ivend ""
+		if "`time'" != "" {
+			confirm numeric variable `time'
+		}
+		if "`eventtime'" != "" {
+			confirm numeric variable `eventtime'
+		}
+		if "`interval'" != "" {
+			local ivstart : word 1 of `interval'
+			local ivend : word 2 of `interval'
+			confirm numeric variable `ivstart' `ivend'
+		}
+
+		// Resolve ego/alter to the exact string LABELS nwfromedge
+		// (called below) will end up using as node names, mirroring
+		// its own top-of-file numeric/string harmonization exactly
+		// (see nw2fromedge.ado's near-identical comment for the fuller
+		// explanation of why this must match: numeric-only pairs get
+		// an "n"-prefix, mixed numeric/string pairs do not) - captured
+		// as Mata state (survives past nwfromedge's own internal
+		// dataset manipulation, unlike Stata variables) before calling
+		// it, then used afterward to resolve each row's node-label
+		// pair to indices by LABEL, not position.
+		capture confirm numeric variable `ego'
+		local egonumeric = (_rc == 0)
+		capture confirm numeric variable `alter'
+		local alternumeric = (_rc == 0)
+		tempvar egolab alterlab
+		if `egonumeric' & `alternumeric' {
+			qui gen `egolab' = "n" + strofreal(`ego')
+			qui gen `alterlab' = "n" + strofreal(`alter')
+		}
+		else if `egonumeric' & !`alternumeric' {
+			qui gen `egolab' = strofreal(`ego')
+			qui gen `alterlab' = trim(`alter')
+		}
+		else if !`egonumeric' & `alternumeric' {
+			qui gen `egolab' = trim(`ego')
+			qui gen `alterlab' = strofreal(`alter')
+		}
+		else {
+			qui gen `egolab' = trim(`ego')
+			qui gen `alterlab' = trim(`alter')
+		}
+
+		tempname __lab1 __lab2 __tval __tval2
+		mata: `__lab1' = st_sdata(., "`egolab'")
+		mata: `__lab2' = st_sdata(., "`alterlab'")
+		// `__tval2' is only actually populated on the interval() branch
+		// below - given a harmless placeholder value here unconditionally
+		// so the unconditional (non-capture) cleanup drop near the end of
+		// this block always has something real to drop. An earlier
+		// version used `capture mata: mata drop `__tval2'' instead,
+		// which is the wrong fix: capture swallows the "not found" error
+		// on the time()/eventtime() branches (where `__tval2' was never
+		// created) but leaves Stata's own `_rc' polluted with that
+		// failure's return code, since nothing runs afterward to reset
+		// it - so the CALLER of nwset would see a stray nonzero _rc even
+		// though nwset itself succeeded. Found via a direct probe: the
+		// exact same nwset call reported _rc==0 under `set trace on'
+		// (trace happens to touch _rc as a side effect) but _rc==111
+		// without it - a real, confusing bug, not a flaky test.
+		mata: `__tval2' = J(0,1,.)
+		if "`time'" != "" {
+			mata: `__tval' = st_data(., "`time'")
+		}
+		if "`eventtime'" != "" {
+			mata: `__tval' = st_data(., "`eventtime'")
+		}
+		if "`interval'" != "" {
+			mata: `__tval' = st_data(., "`ivstart'")
+			mata: `__tval2' = st_data(., "`ivend'")
+		}
+
+		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected'
+		nw_syntax `name'
+		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
+
+		if "`time'" != "" {
+			mata: `netobj'->set_edge_time(build_edge_value_matrix(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval', `symmetric'))
+			mata: `netobj'->set_temporal_type("snapshot")
+			mata: `netobj'->set_timevar("`time'")
+		}
+		else if "`eventtime'" != "" {
+			// event ties are NOT folded into the ordinary edge matrix
+			// at all - raw sender/receiver/eventtime triplets only,
+			// resolved to node indices here so eventlist() consumers
+			// don't have to repeat the label lookup - see unw_core.do's
+			// own comment on `eventlist' for the full rationale (this
+			// package must not silently pretend a raw event stream is
+			// an ordinary persistent-tie graph). build_eventlist() is a
+			// standalone Mata function (unw_core.do), not an inline
+			// for-loop here, after confirming (during the unit-41
+			// mode-assignment fix) that Stata's one-line interactive
+			// `mata:' command form does not reliably parse a for-loop
+			// with a braced multi-statement body.
+			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval'))
+			mata: `netobj'->set_temporal_type("event")
+			mata: `netobj'->set_eventtimevar("`eventtime'")
+		}
+		else {
+			mata: `netobj'->set_edge_interval(build_edge_value_matrix(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval', `symmetric'), build_edge_value_matrix(`netobj'->get_nodenames(), `__lab1', `__lab2', `__tval2', `symmetric'))
+			mata: `netobj'->set_temporal_type("interval")
+			mata: `netobj'->set_startvar("`ivstart'")
+			mata: `netobj'->set_endvar("`ivend'")
+		}
+		mata: `netobj'->set_temporal(1)
+		mata: mata drop `__lab1' `__lab2' `__tval' `__tval2'
 		exit
 	}
 	set more off

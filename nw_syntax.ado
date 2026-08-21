@@ -5,7 +5,7 @@
 
 capture program drop nw_syntax
 program nw_syntax
-	syntax [anything],[max(integer 1) min(passthru) nocurrent name(string)]
+	syntax [anything],[max(integer 1) min(passthru) other(string) nocurrent name(string)]
 	unw_defs
 
 	if "`name'" == "" {
@@ -25,19 +25,31 @@ program nw_syntax
 	}
 	
 	if _rc != 0 {
-		di "{err}Network not found"
+		di "{err}Network {bf:`anything'} not found"
 	    error `errNWsNotFound'
 	}
 
 	mata: st_local("directed", `nws'.pdefs[`r(id)']->is_directed())
+	mata: st_local("valued", `nws'.pdefs[`r(id)']->is_valued())
 	mata: st_local("nodes", strofreal(`nws'.pdefs[`r(id)']->get_nodes()))
 	mata: st_local("selfloops", `nws'.pdefs[`r(id)']->is_selfloop())
-	
-	c_local selfloops "`selfloops'"
-	c_local nodes "`nodes'"
-	c_local directed "`directed'"
-	c_local netobj "`nws'.pdefs[`r(id)']"
-	c_local id `r(id)'
-	c_local netname `_temp'
+	mata: st_local("is2mode", `nws'.pdefs[`r(id)']->is_2mode())
+	mata: st_local("istemporal", `nws'.pdefs[`r(id)']->is_temporal())
+	mata: st_local("temporaltype", `nws'.pdefs[`r(id)']->get_temporal_type())
+	mata: st_local("datasync", strofreal(`nws'.get_datasync()))
+    mata: st_local("labs", invtokens(`nws'.pdefs[`r(id)']->get_nodenames(),","))
+
+	c_local `other'selfloops "`selfloops'"
+	c_local `other'nodes "`nodes'"
+	c_local `other'is2mode "`is2mode'"
+	c_local `other'istemporal "`istemporal'"
+	c_local `other'temporaltype "`temporaltype'"
+	c_local `other'directed "`directed'"
+	c_local `other'valued "`valued'"
+	c_local `other'netobj "`nws'.pdefs[`r(id)']"
+	c_local `other'datasync "`datasync'"
+	c_local `other'id `r(id)'
+	c_local `other'netname `_temp'
+	c_local `other'labs "`labs'"
 	c_local networks `networks_count'	
 end

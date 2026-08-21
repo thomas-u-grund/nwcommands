@@ -16,6 +16,7 @@ f nw2fromedge.ado
 f nw2project.ado
 f nwaddnodes.ado
 f nwaltergen.ado
+f nwattime.ado
 f nwbalance.ado
 f nwbetween.ado
 f nwbrokerage.ado
