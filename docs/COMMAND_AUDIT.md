@@ -53,11 +53,15 @@ files described multi-network ("z networks at once") behaviour with an implied o
 convention (e.g. `_outdegree_z`), but neither command actually looped over multiple networks — each
 processed exactly one network per call, despite `nwdegree`'s code containing clear vestigial
 scaffolding for an abandoned loop. This was a genuine doc/code mismatch, not a design choice.
-**`nwdegree` fixed** (harmonisation phase, unit 6 — see `docs/CERTIFICATION.md`): implemented real
-`netlist` support with `_<netname>`-suffixed output naming, rather than just correcting the docs to
-admit the feature didn't exist, since `nwdegree` is this project's own canonical example of a
-command where multi-network semantics are genuinely useful. `nwbetween` has the same doc claim and
-the same gap, not yet fixed — see Pending below.
+**Both fixed** (harmonisation phase, units 6 and 7 — see `docs/CERTIFICATION.md`): implemented real
+`netlist` support with `_<netname>`-suffixed output naming for both commands, rather than just
+correcting the docs to admit the feature didn't exist, since `nwdegree`/`nwbetween` are this
+project's own canonical examples of commands where multi-network semantics are genuinely useful.
+`nwbetween` additionally had a dead `alpha()` option (parsed, never referenced in the body) and a
+dead "already exists" guard — `capture drop \`generate'*` unconditionally deleted any matching
+variable *before* the confirm check ran, and there was no actual `replace` option in `syntax` at
+all, so the command always silently overwrote existing output variables regardless of intent. Both
+were fixed alongside the `netlist` work.
 
 ### Type C — multiple role-specific `netname`s (not a generic netlist)
 

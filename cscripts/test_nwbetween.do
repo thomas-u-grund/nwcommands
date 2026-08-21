@@ -73,3 +73,52 @@ assert bc4[2] == 3
 assert bc4[3] == 4
 assert bc4[4] == 3
 assert bc4[5] == 0
+
+* --- netlist (multi-network) support: harmonisation-phase fix. This
+* command's own doc has always described this behavior ("In case,
+* betweenness centrality is calculated for z networks at the same
+* time... the command generates the variables varname_z, one for
+* each network"), but the code never actually implemented it - fixed
+* here to do what it always claimed to do (same fix already made to
+* nwdegree). Uses the same two path graphs as above (A-B-C-D-E,
+* known betweenness 0/3/4/3/0) under two different network names, so
+* each half can be checked against the same hand-verified values.
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet1) undirected labs(A,B,C,D,E)
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet2) undirected labs(A,B,C,D,E)
+
+nwbetween pnet1 pnet2, generate(mbc) silent
+* multi-network default output naming: basevar_<netname>
+confirm variable mbc_pnet1
+confirm variable mbc_pnet2
+assert mbc_pnet1[1] == 0
+assert mbc_pnet1[2] == 3
+assert mbc_pnet1[3] == 4
+assert mbc_pnet1[4] == 3
+assert mbc_pnet1[5] == 0
+assert mbc_pnet2[1] == 0
+assert mbc_pnet2[2] == 3
+assert mbc_pnet2[3] == 4
+assert mbc_pnet2[4] == 3
+assert mbc_pnet2[5] == 0
+
+* single-network call remains completely unaffected: default names
+* have no suffix
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet1) undirected labs(A,B,C,D,E)
+nwbetween pnet1, silent
+assert _between[2] == 3
+
+* replace guard: previously dead code ("capture drop `generate'*"
+* unconditionally deleted any matching variable before the "already
+* exists" check ran, and there was no actual replace option in
+* syntax) - the guard now genuinely blocks an accidental second call
+* and genuinely permits a deliberate one via replace.
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet1) undirected labs(A,B,C,D,E)
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet2) undirected labs(A,B,C,D,E)
+nwbetween pnet1 pnet2, generate(mbc2) silent
+capture nwbetween pnet1 pnet2, generate(mbc2) silent
+assert _rc != 0
+nwbetween pnet1 pnet2, generate(mbc2) silent replace
+assert _rc == 0

@@ -77,6 +77,6 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 {title:See also}
 
-	{help nwcloseness}, {help nwbetweenness}, {help nwdegree}, {help nwcloseness}
+	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}
 
 last certified : 21 Aug 2026
