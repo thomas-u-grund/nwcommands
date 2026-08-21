@@ -16,13 +16,15 @@
 {cmd:nwaltergen} {it:newvar} {cmd:=} {it:stat}{cmd:(alter.}{it:srcvar}{cmd:)}
 [{cmd:,}
 {opth net(netname)}
-{opt replace}]
+{opt replace}
+{opth hop(int)}]
 
 {p 8 17 2}
 {cmd:nwaltergen} {it:newvar} {cmd:= proportion(alter.}{it:srcvar}{cmd:}{it:{help nwaltergen##propop:op}}{it:value}{cmd:)}
 [{cmd:,}
 {opth net(netname)}
-{opt replace}]
+{opt replace}
+{opth hop(int)}]
 
 {p 8 17 2}
 {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}.
@@ -36,6 +38,7 @@
 {synoptline}
 {synopt:{opth net(netname)}}Network to use; default = the current network{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opth hop(int)}}Aggregate over nodes exactly this many (unweighted) steps away, instead of direct neighbors; default = 1{p_end}
 
 {p2colreset}{...}
 
@@ -80,9 +83,21 @@ proportion is computed, exactly as for every other {it:stat} - a missing value i
 read as "not in this category".
 
 {pstd}
+{opth hop(int)} aggregates over nodes exactly that many (unweighted) steps away instead of direct
+(one-hop) neighbors - e.g. {cmd:mean(alter.smoking), hop(2)} is "the average smoking status among
+the contacts of a person's contacts" (excluding the person's own direct contacts, unless a network
+happens to reach them again by a different, exactly-2-step path). This is the standard multi-hop /
+lagged exposure question in diffusion research: does influence propagate beyond a node's immediate
+neighborhood? A node with no alters at exactly the requested hop distance (including one smaller
+than the network's diameter from it, or simply unreachable) is treated the same as a node with no
+direct alters: missing for {bf:mean}/{bf:min}/{bf:max}/{bf:sd}, 0 for {bf:sum}/{bf:count}. For a
+directed network, distance follows tie direction (out-going steps), matching {it:alter}'s own
+one-hop convention above; {opth hop(int)} works with {bf:proportion()} too.
+
+{pstd}
 {cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax (including
-{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)}) as a shortcut and dispatches to
-{cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
+{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)} and {opth hop(int)}) as a shortcut and
+dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
 {title:Examples}
@@ -91,6 +106,7 @@ read as "not in this category".
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
 	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
+	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
 
 
 {title:References}
@@ -113,7 +129,14 @@ program nwaltergen
 	gettoken expr options : 0, parse(",") bind
 	if "`options'" != "" {
 		local 0 `options'
-		syntax [, net(string) replace]
+		syntax [, net(string) replace hop(int 1)]
+	}
+	if "`hop'" == "" {
+		local hop = 1
+	}
+	if `hop' < 1 {
+		di as err "{err}hop() must be a positive integer."
+		error 198
 	}
 	local expr = subinstr("`expr'", " ", "", .)
 
@@ -191,18 +214,36 @@ program nwaltergen
 		mata: `__nw_srcvar' = (`__nw_srcvar' `matapropop' `propval')
 		mata: `__nw_srcvar'[selectindex(st_data(1::`nodes',"`srcvar'"):==.)] = J(sum(st_data(1::`nodes',"`srcvar'"):==.), 1, .)
 	}
-	mata: `__nw_alterstat' = `netobj'->calculate_alterstat(`__nw_srcvar', "`stat'")
+	if `hop' == 1 {
+		mata: `__nw_alterstat' = `netobj'->calculate_alterstat(`__nw_srcvar', "`stat'")
+	}
+	else {
+		// hop(k>1): aggregate over nodes at exactly k (unweighted)
+		// steps away instead of direct neighbors - see
+		// calculate_alterstat_hop()'s own header comment in
+		// unw_core.do. hop(1) deliberately still calls
+		// calculate_alterstat() directly above rather than
+		// calculate_alterstat_hop(...,1) - confirmed the two give
+		// bit-identical results, but keeping the well-established,
+		// unmodified 1-hop code path as the default minimizes any
+		// risk of this option regressing existing behavior.
+		mata: `__nw_alterstat' = `netobj'->calculate_alterstat_hop(`__nw_srcvar', "`stat'", `hop')
+	}
 
 	capture drop `newvarname'
 	qui gen `newvarname' = .
 	mata: st_store((1::`nodes'), "`newvarname'", `__nw_alterstat')
 	mata: mata drop `__nw_srcvar' `__nw_alterstat'
 
+	local hopsuffix ""
+	if `hop' > 1 {
+		local hopsuffix " (hop `hop')"
+	}
 	if `isproportion' {
-		label variable `newvarname' "proportion of alter.`srcvar' `propop' `propval'"
+		label variable `newvarname' "proportion of alter.`srcvar' `propop' `propval'`hopsuffix'"
 	}
 	else {
-		label variable `newvarname' "`stat' of alter.`srcvar'"
+		label variable `newvarname' "`stat' of alter.`srcvar'`hopsuffix'"
 	}
 
 	// _rc is left stale (111, "variable not found") from the earlier

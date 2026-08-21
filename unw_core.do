@@ -1080,6 +1080,7 @@ class `NWdef' {
 	real matrix calculate_egostats()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
+	real matrix calculate_alterstat_hop()
 	real matrix calculate_similarity_index()
 	real matrix correlate_nodes()
 	
@@ -1923,6 +1924,70 @@ real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar st
 		nb = neighbors(i)
 		if (rows(nb) > 0){
 			vals = srcvar[nb]
+			vals = select(vals, vals :!= .)
+		}
+		else {
+			vals = J(0, 1, .)
+		}
+		m = rows(vals)
+
+		if (stat == "mean"){
+			if (m > 0) result[i] = mean(vals)
+		}
+		else if (stat == "sum"){
+			result[i] = (m > 0 ? sum(vals) : 0)
+		}
+		else if (stat == "min"){
+			if (m > 0) result[i] = min(vals)
+		}
+		else if (stat == "max"){
+			if (m > 0) result[i] = max(vals)
+		}
+		else if (stat == "sd"){
+			if (m > 1) result[i] = sqrt(variance(vals))
+		}
+		else if (stat == "count"){
+			result[i] = m
+		}
+	}
+
+	return(result)
+}
+
+/*
+	Multi-hop generalization of calculate_alterstat() above: aggregates
+	srcvar over the nodes at exactly `hop' steps away (unweighted
+	shortest-path distance - hop count, not tie strength), instead of
+	over direct (1-hop) neighbors. `hop'==1 gives the same alter set as
+	calculate_alterstat() itself (not delegated to it directly, to avoid
+	any risk of the two aggregation code paths drifting apart silently -
+	the per-stat logic below is kept in lockstep with it by construction/
+	inspection instead). Distances come from calculate_distances(0,
+	"brute") - alpha is irrelevant to the "brute" algorithm (it always
+	computes unweighted distances on the unvalued matrix), and 0 is
+	passed only because the method signature requires some value.
+	Directed networks: calculate_distances()'s own distance matrix
+	already respects tie direction (distance from i to j via out-going
+	ties), matching calculate_alterstat()'s own established convention
+	that "alter" means out-neighbors, not the undirected union other
+	structural measures (e.g. calculate_kcore()) use. A node with no
+	alters at exactly `hop' steps (including an unreachable node, or
+	`hop' larger than the network's own diameter from that node) is
+	treated identically to a node with zero direct alters in
+	calculate_alterstat(): missing for mean/min/max/sd, 0 for sum/count.
+*/
+real matrix `NWdef'::calculate_alterstat_hop(real colvector srcvar, string scalar stat, real scalar hop){
+	real scalar n, i, m
+	real matrix result, D, idx, vals
+
+	n = get_nodes()
+	result = J(n, 1, .)
+	D = calculate_distances(0, "brute")
+
+	for (i = 1; i <= n; i++){
+		idx = selectindex(D[i,.] :== hop)'
+		if (rows(idx) > 0){
+			vals = srcvar[idx]
 			vals = select(vals, vals :!= .)
 		}
 		else {

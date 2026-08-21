@@ -156,3 +156,57 @@ assert reldif(prop3b[1], prop3[1]) < 1e-6
 * fail confusingly deep inside the Mata call.
 capture nwaltergen propbad = proportion(alter.category=="x")
 assert _rc != 0
+
+* --- hop(k) multi-hop/lagged exposure (harmonisation unit 28): 5-node
+* undirected chain A-B-C-D-E, srcvar = node position (A=1,...,E=5). From
+* A: hop(1) alter is B (value 2), hop(2) alter is C (value 3), hop(3)
+* alter is D (value 4) - a chain has exactly one node at each distance,
+* so these are exactly, not just approximately, checkable. hop(1) with
+* no hop() option at all must give bit-identical results to the
+* explicit hop(1) case (confirms the default truly is 1, not merely
+* documented as such).
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(chainnet) undirected labs(A,B,C,D,E)
+gen chainpos = _n
+nwaltergen hopdefault = mean(alter.chainpos)
+nwaltergen hop1 = mean(alter.chainpos), hop(1)
+nwaltergen hop2 = mean(alter.chainpos), hop(2)
+nwaltergen hop3 = mean(alter.chainpos), hop(3)
+assert _rc == 0
+assert hopdefault[1] == hop1[1]
+assert hop1[1] == 2
+assert hop2[1] == 3
+assert hop3[1] == 4
+* C (position 3, the chain's middle) has no node at distance 3 in either
+* direction (the chain only has 5 nodes) - missing, not spuriously 0.
+assert missing(hop3[3])
+
+* directed chain A->B->C: from A, the hop(2) out-alter is C.
+nwclear
+nwset, mat((0,1,0\0,0,1\0,0,0)) name(dchainnet) directed labs(A,B,C)
+gen dsrcvar = _n * 10
+nwaltergen dhop2 = sum(alter.dsrcvar), hop(2)
+assert _rc == 0
+assert dhop2[1] == 30
+* C has no outgoing ties at all - hop(2) sum/count from C is 0, not
+* missing (matching sum()'s own zero-alters convention elsewhere).
+assert dhop2[3] == 0
+
+* hop() combines with proportion().
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(chainnet2) undirected labs(A,B,C,D,E)
+gen cat2 = mod(_n, 2)
+nwaltergen prophop = proportion(alter.cat2==1), hop(2)
+assert _rc == 0
+
+* invalid hop() is rejected explicitly.
+capture noisily nwaltergen badhop = mean(alter.chainpos), hop(0)
+assert _rc != 0
+
+* nwgen's own dispatch passes hop() through correctly.
+nwclear
+nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(chainnet3) undirected labs(A,B,C,D,E)
+gen chainpos3 = _n
+nwgen hop2b = mean(alter.chainpos3), hop(2)
+assert _rc == 0
+assert hop2b[1] == 3
