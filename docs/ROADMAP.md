@@ -114,5 +114,5 @@ See Stage 8 and `docs/FEATURE_AUDIT.md`'s AH section. Summary: architecture is c
 ## Open items requiring a follow-up audit pass
 
 - Area J (similarity/homophily/mixing/assortativity) fell between fork assignments this pass — needs a dedicated read of `nwhomophily.ado` and a clean confirmation of assortativity's absence.
-- `nwkatz.ado` does not appear to do genuine Katz-style eigen-computation (just `rowsum`/`colsum`) — worth a dedicated correctness audit against the literature definition.
+- ✅ `nwkatz.ado` correctness audit complete (harmonisation phase): confirmed it computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality (`(I-alpha*A)^-1`) — documented explicitly rather than silently implied by the name/citation; formula/values unchanged for backwards compatibility. A genuine walk-counting Katz centrality implementation (W5) remains a real gap. Investigating this surfaced and fixed 5 unrelated real bugs that meant the command had never actually worked end to end — see `docs/CERTIFICATION.md`.
 - GML/GraphML import paths in `nwimport.ado` have lower test-fixture confidence than Pajek/UCINET — worth a dedicated correctness pass with real sample files.
