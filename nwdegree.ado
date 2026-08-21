@@ -232,23 +232,90 @@ program nwdegree
 		mata: `outdegree' = `netobj'->get_outdegree(`alpha')
 		mata: `indegree' = `netobj'->get_indegree(`alpha')
 
+		// BUGFIX (real, severe, silently-wrong-output bug - confirmed
+		// empirically before fixing, not assumed): the default (no
+		// explicit generate()) directed-network word order below used
+		// to be "_indegree _outdegree" (indegree word 1, outdegree word
+		// 2), but the extraction further down has always read word 1
+		// into the `_outdegree' local and word 2 into `_indegree' - the
+		// documented convention (see this file's own doc header: "the
+		// next example saves the out- and indegree centrality in the
+		// variables myout and myin", i.e. out=word1, in=word2). That
+		// mismatch meant every default `nwdegree' call on a directed
+		// network silently stored OUTdegree values into the variable
+		// literally named "_indegree", and INdegree values into the one
+		// named "_outdegree" - confirmed directly on a 4-node star
+		// network (A -> B,C,D): node A (true outdegree 3, indegree 0)
+		// came back with _indegree==3, _outdegree==0. The centralization
+		// r()-results were unaffected (computed straight from the
+		// underlying Mata vectors, never routed through these Stata
+		// variable names at all) - only the generated dataset variables
+		// were wrong. Same swap existed for the valued
+		// _instrength/_outstrength pair. Fixed by reordering both to
+		// out-then-in, matching the extraction and the documented
+		// convention, instead of changing the extraction to match the
+		// (undocumented, inconsistent) construction order.
+		//
+		// Separately fixed: "isolates" without an explicit generate()
+		// used to completely REPLACE netgenerate with the single word
+		// "_isolates", discarding the degree-name assignment entirely -
+		// on a directed network this left `_indegree' empty and
+		// `_outdegree' aliased to "_isolates", so "capture generate
+		// `_indegree' = ." silently no-ops (empty target name) and
+		// the very next "mata: st_store(..., "`_indegree'", ...)" (not
+		// wrapped in capture) crashed hard passing st_store() an empty
+		// variable-name string - this is the crash already flagged in
+		// docs/CERTIFICATION.md's Pending table. Fixed by APPENDING
+		// "_isolates" to the normal degree-name list instead of
+		// replacing it, so isolates can always be computed FROM
+		// properly-named degree variables exactly as the later isolates
+		// block already assumes.
 		local netgenerate "`generate'"
-		if "`isolates'" != "" & ("`netgenerate'" == "")  {
-			local netgenerate "_isolates"
-		}
-		else if ("`directed'" == "true") {
-			if "`netgenerate'" == "" {
-				local netgenerate "_indegree _outdegree"
+		if ("`netgenerate'" == "") {
+			if ("`directed'" == "true") {
 				if "`valued'" == "true" {
-					local netgenerate "_instrength _outstrength"
+					local netgenerate "_outstrength _instrength"
+				}
+				else {
+					local netgenerate "_outdegree _indegree"
+				}
+			}
+			else {
+				if "`valued'" == "true" {
+					local netgenerate "_strength"
+				}
+				else {
+					local netgenerate "_degree"
 				}
 			}
 		}
-		else {
-			if "`netgenerate'" == "" {
-				local netgenerate "_degree"
-				if "`valued'" == "true" {
-					local netgenerate "_strength"
+		// Give isolates its own word slot whenever the (default or
+		// user-supplied) netgenerate doesn't already have enough words
+		// for one - 2 slots for directed (out, in) + isolate = 3;
+		// 1 slot for undirected (degree) + isolate = 2. Covers not just
+		// the empty-generate() case above but also a caller who
+		// supplies generate() with fewer names than the full set (e.g.
+		// this file's own doc/test: "generate(myisolate) isolates" on
+		// an undirected network - 1 word given, needs 2) - previously
+		// that single given name got aliased to BOTH the ordinary
+		// degree slot and the isolate slot (whichever word-position
+		// rule was in play), so the real degree values written first
+		// were silently overwritten by the isolates 0/1 indicator right
+		// after, and the degree computation was lost entirely. Adding a
+		// distinct name here instead means the caller's own word(s)
+		// keep meaning whatever they already meant (degree names, read
+		// left to right) and isolate always gets a genuine, separate
+		// variable - never silently a degree variable in disguise.
+		if "`isolates'" != "" {
+			local ngwords : word count `netgenerate'
+			if ("`directed'" == "true") {
+				if `ngwords' < 3 {
+					local netgenerate "`netgenerate' _isolates"
+				}
+			}
+			else {
+				if `ngwords' < 2 {
+					local netgenerate "`netgenerate' _isolates"
 				}
 			}
 		}
@@ -268,7 +335,34 @@ program nwdegree
 		local _degree : word 1 of `netgenerate'
 		local _indegree : word 2 of `netgenerate'
 		local _outdegree : word 1 of `netgenerate'
-		local _isolate: word 1 of `netgenerate'
+		// BUGFIX: `_isolate' always read word 1 (the degree/outdegree
+		// name itself), regardless of how many degree-name words
+		// actually precede the isolate name - correct only by accident
+		// for the narrow "isolates with no other output requested"
+		// case. Broken for the doc's own worked example
+		// ("generate(myout myin mysiolate) isolates" - a directed
+		// network - documented as saving out/in-degree in myout/myin,
+		// so the isolate name "mysiolate" is word 3, not word 1): with
+		// the old code, `_isolate' would have resolved to "myout" (the
+		// OUTdegree name), so "capture generate `_isolate' = ." would
+		// silently no-op (myout already exists as a real degree
+		// variable) and the isolates block's own "replace `_isolate' =
+		// ..." would then silently OVERWRITE the user's real outdegree
+		// centrality values in "myout" with a 0/1 isolate indicator,
+		// while "mysiolate" itself was never created at all - a genuine
+		// silent-data-corruption bug, not just the directed-network
+		// crash already flagged in docs/CERTIFICATION.md's Pending
+		// table. Fixed by taking the isolate name from the word
+		// position immediately after however many degree-name words
+		// actually precede it (2 for directed - out then in - 1 for
+		// undirected), matching how netgenerate is now actually built
+		// above.
+		if ("`directed'" == "true") {
+			local _isolate : word 3 of `netgenerate'
+		}
+		else {
+			local _isolate : word 2 of `netgenerate'
+		}
 
 		// BUGFIX: this whole per-network body runs inside the outer
 		// "qui foreach netname_temp in `netname' { ... }" loop above, so
