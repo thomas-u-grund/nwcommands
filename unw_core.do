@@ -3726,7 +3726,20 @@ real matrix `NWdef'::calculate_dyadcensus(){
     asym = asym / 2
     mutual = sum(*get_matrix_unvalued():* (*get_matrix_unvalued()')) / 2
     null = rows(*get_matrix_unvalued())
-    null = (null * (null - 1)) - asym - mutual
+    // was "(null * (null - 1)) - asym - mutual" - n*(n-1) is the count
+    // of ORDERED pairs, but a dyad is an UNORDERED pair (i,j)==(j,i)),
+    // so the total dyad count is n*(n-1)/2, not n*(n-1) - the missing
+    // /2 silently doubled every reported null-dyad count (confirmed via
+    // 3 hand-computable networks: a fully-connected undirected triangle
+    // reported null=3 instead of the correct 0; a 3-node directed
+    // network with one mutual/one asym/one null dyad reported null=4
+    // instead of 1; an empty 3-node network reported null=6 instead of
+    // 3 - in every case exactly double the correct value, landing
+    // entirely in null since mutual/asym are computed independently and
+    // were already correct). reciprocity (mutual/(mutual+asym)) does not
+    // depend on null, so this bug was invisible in that stored result -
+    // only r(_001)/the displayed "Null" column were wrong.
+    null = (null * (null - 1) / 2) - asym - mutual
 
     if (is_2mode_boolean() == 1) {
         null = get_nodes_mode1() * get_nodes_mode2() - asym - mutual
