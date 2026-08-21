@@ -149,4 +149,4 @@ so it can be compared directly against the source network node-for-node.
 
 {title:See also}
 
-	{help nwsimilar}, {help nwcorrelate}
+	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}

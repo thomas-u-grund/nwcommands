@@ -136,4 +136,4 @@ node-for-node.
 
 {title:See also}
 
-	{help nwdissimilar}, {help nwcorrelate}
+	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}

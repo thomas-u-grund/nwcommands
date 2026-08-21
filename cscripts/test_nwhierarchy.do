@@ -65,3 +65,58 @@ nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D
 nwset, mat((0,2,0,2\2,0,2,0\0,2,0,2\2,0,2,0)) name(net2) undirected selfloop labs(A,B,C,D)
 nwhierarchy net1, disnet(net2)
 assert _rc == 0
+
+* --- groups(): the role/position-analysis packaging (harmonisation
+* unit 35). On the same 4-cycle A-B-C-D-A used above, structural
+* equivalence is hand-derivable directly from each node's own tie
+* profile: A ties to {B,D}, C ties to {B,D} - identical, dissimilarity
+* 0; B ties to {A,C}, D ties to {A,C} - also identical. So groups(2)
+* must split the cycle into exactly {A,C} and {B,D}, its two genuinely
+* distinct structural roles - not an arbitrary or order-dependent
+* split.
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
+nwhierarchy net1, groups(2)
+assert _rc == 0
+assert r(groups) == 2
+assert `"`r(rolevar)'"' == `"_role"'
+sort _nwnode
+tempname lab role
+mata: `lab' = st_sdata(., "_nwnode")
+mata: `role' = st_data(., "_role")
+mata: assert(select(`role', `lab':=="A") == select(`role', `lab':=="C"))
+mata: assert(select(`role', `lab':=="B") == select(`role', `lab':=="D"))
+mata: assert(select(`role', `lab':=="A") != select(`role', `lab':=="B"))
+mata: mata drop `lab' `role'
+
+* --- replace guard: a second groups() call without replace must be
+* rejected; with replace it must succeed.
+capture noisily nwhierarchy net1, groups(2)
+assert _rc != 0
+nwhierarchy net1, groups(2) replace
+assert _rc == 0
+
+* --- equivgen() honors a custom variable name.
+nwhierarchy net1, groups(2) equivgen(customrole) replace
+assert _rc == 0
+capture confirm variable customrole, exact
+assert _rc == 0
+
+* --- groups(1): the trivial case (everyone in one role) must still
+* run cleanly and put every node in the same group.
+nwhierarchy net1, groups(1) replace
+assert _rc == 0
+qui tab _role
+assert r(r) == 1
+
+* --- without groups(), behaviour is completely unchanged from before
+* this unit: no _role variable is generated, and r(groups)/r(rolevar)
+* are not set.
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
+nwhierarchy net1
+assert _rc == 0
+capture confirm variable _role
+assert _rc != 0
+assert r(groups) == .
+assert `"`r(rolevar)'"' == `""'
