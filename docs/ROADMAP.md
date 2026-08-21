@@ -92,7 +92,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 17. CONCOR — Medium value, Medium effort
 18. `nwplot` test coverage (largest untested file in the package) — Risk-reduction value, Medium effort (many code paths)
 19. Programming-API documentation chapter — Medium value (unlocks third-party extensibility), Small effort, pure documentation
-20. Weighted eigenvector centrality option — Small value, Small effort
+20. ✅ Weighted eigenvector centrality option — Small value, Small effort — done (`nwevcent, weighted`)
 
 ## Top 10 existing features to improve
 
@@ -101,7 +101,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 3. `nwconstraint` — either fold into the revived `nwburt` or add per-node aggregation + help file
 4. `nw2clustering` — sparse migration (currently O(N⁴)-shaped Stata reshape chain)
 5. `nwbetween` — add a genuinely weighted (Dijkstra-based) variant
-6. `nwevcent` — add a weighted option, migrate off forced dense materialization where possible
+6. ✅ `nwevcent` — added a `weighted` option; also found and fixed a genuine eigenvalue-search bug along the way (silently correct in practice only because of Mata's `symeigensystem()` sort order — see `docs/CERTIFICATION.md`). Migrating off dense materialization was not attempted: eigendecomposition itself requires a dense solver in Mata (no sparse eigensolver available), so this stays dense by necessity, not oversight.
 7. `nwneighbor` — sparse migration + add induced-subgraph output (feeds Stage 3's ego-network work)
 8. `nwexport` — format parity with `nwimport` (currently 2 vs 6 formats)
 9. `nwplot` — test coverage (zero tests on the package's largest file)
