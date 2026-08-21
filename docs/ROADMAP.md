@@ -151,8 +151,9 @@ round-trip (✅ fixed, unit 38); (2) `nwset` has no two-ID-variable edgelist for
 two-mode network (`nwset person organisation, twomode`) - that shape currently exists only as the
 separate `nw2fromedge` command, not inside `nwset` itself; (3) ordinary one-mode commands mostly have
 **zero** two-mode awareness - confirmed concretely for `nwdegree` (silently computes a meaningless
-one-mode degree on bipartite data, no error) and `NWdef::get_density()` (wrong, one-mode denominator)
-- `nwclustering.ado` is the one existing, proven model for the right pattern (auto-redirects to
+one-mode degree on bipartite data, no error; ✅ fixed, unit 40); `NWdef::get_density()` was
+**re-audited and found already correct** (✅ closed, unit 41 - see below, not the gap originally
+suspected here) - `nwclustering.ado` is the one existing, proven model for the right pattern (auto-redirects to
 `nw2clustering` when `is_2mode()` is true, flagged as "Model example" in
 `docs/NETWORK_TYPE_MATRIX.md`), not yet replicated elsewhere; (4) `nw2project`'s own `stat()` options
 are currently only `min|max|minmax|sum|mean` - no jaccard/cosine/binary/count projection exists yet,
@@ -168,8 +169,9 @@ new one.
 **Sequencing** (adapted from the user's own suggested workflow): audit (done) → fix mode-persistence
 bug (done, unit 38) → `nwset` two-ID-variable `twomode` syntax (done, unit 39) → migrate
 representative commands (`nwdegree` done, unit 40, following the proven `nwclustering` redirect
-pattern; `NWdef::get_density()` still open - wrong, one-mode denominator on bipartite data,
-confirmed via unit 38's own audit, not yet fixed) → extend
+pattern; `NWdef::get_density()` re-audited, done, unit 41 - see unit 41's own row: turned out to
+already be correct, root cause of the apparent gap was a real, much more serious bug found and
+fixed in `nw2fromedge` itself, not in density) → extend
 `nw2project` with the missing projection methods + provenance metadata → `nwsummarize` (the
 package's closest equivalent to a `nwdescribe` command - already displays two-mode metadata, extend
 for temporal once it exists) → temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`
@@ -229,3 +231,4 @@ See Stage 8 and `docs/FEATURE_AUDIT.md`'s AH section. Summary: architecture is c
 - Area J (similarity/homophily/mixing/assortativity) fell between fork assignments this pass — needs a dedicated read of `nwhomophily.ado` and a clean confirmation of assortativity's absence.
 - ✅ `nwkatz.ado` correctness audit complete (harmonisation phase): confirmed it computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality (`(I-alpha*A)^-1`) — documented explicitly rather than silently implied by the name/citation; formula/values unchanged for backwards compatibility. A genuine walk-counting Katz centrality implementation (W5) remains a real gap. Investigating this surfaced and fixed 5 unrelated real bugs that meant the command had never actually worked end to end — see `docs/CERTIFICATION.md`.
 - GML/GraphML import paths in `nwimport.ado` have lower test-fixture confidence than Pajek/UCINET — worth a dedicated correctness pass with real sample files.
+- **Version-control gap**: several already-shipped, tested, actively-relied-upon commands are not tracked in git at all (confirmed via `git status`/`git log`, discovered while committing harmonisation unit 41). `nw2clustering.ado`/`nw2set.ado`/`nw2toedge.ado` and their `cscripts/` tests were committed alongside unit 41 (they sit directly in the two-mode command family unit 41 was already touching); still outstanding: `nwbridges.ado`, `nwappend.ado`, `nwshared.ado`, `nwsimmelian.ado`, `nwnode.ado`, `nwnoderename.ado`/`.sthlp`, `nwplotjs.ado`/`.sthlp`, `nwpreserve.ado`, `nwrestore.ado`, and their respective `cscripts/` tests — all untracked (`git status` reports them `??`), and `_gnwdegree.ado`/`_growmedian2.ado` (untracked helper files, not yet audited for whether they're still-used or genuinely dead) alongside them. Needs a dedicated pass: confirm each file is genuinely finished/working (not abandoned WIP) via its own test, then commit in a coherent unit — do not `git add -A` blindly, since the working tree also has a large amount of separate scratch/output-artifact noise (generated `.html`/`.dta`/`.nwdta`/log files from running the test suite) that should stay untracked.
