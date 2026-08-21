@@ -53,15 +53,11 @@ in a directed network can be one of the following:
 {pstd}
 Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN
 classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command
-still runs, but 11 of the 16 categories (everything except {bf:_003}/{bf:_102}/{bf:_201}/{bf:_300},
-and except {bf:_210}, which has a known unresolved computation issue on undirected input - see
-below) are not meaningful for undirected data and reliably return 0, since an undirected network
+still runs, but 12 of the 16 categories (everything except {bf:_003}/{bf:_102}/{bf:_201}/{bf:_300})
+are not meaningful for undirected data and reliably return 0, since an undirected network
 has no asymmetric ties by construction - {cmd:nwtriads} prints a note to this effect when called on
-an undirected network. {bf:_210} does not reliably return 0 on undirected input despite the same
-mathematical argument applying to it; this is a known, unresolved bug (not yet root-caused), so
-{bf:_210} in particular should not be trusted on undirected data until fixed. Weighted: not
-applicable (a triad census is inherently a binary/dichotomous count). Signed: not checked.
-Two-mode: not checked.
+an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous
+count). Signed: not checked. Two-mode: not checked.
 
 
 {title:Examples}
@@ -112,4 +108,3 @@ Two-mode: not checked.
 
 
 
-last certified : 21 Aug 2026
