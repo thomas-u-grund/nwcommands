@@ -1,19 +1,19 @@
 # nwcommands Feature Audit
 
-Living document. Last updated: 2026-08-21, by autonomous development session.
+Living document. Last updated: 2026-08-21 (harmonisation phase, unit 16 reconciliation pass), by autonomous development session.
 
-Status legend: **A** fully implemented & reasonably complete · **B** implemented but incomplete · **C** partial/internal machinery, no complete user-facing command · **D** legacy/problematic (dense-matrix-bound, scalability-limited, or otherwise needing rework) · **E** not implemented.
+Status legend: **A** fully implemented, tested, certified & documented to current standards · **B** implemented but incomplete · **C** partial/internal machinery, no complete user-facing command · **D** legacy/problematic (dense-matrix-bound, scalability-limited, or otherwise needing rework) · **E** not implemented · **F** implemented (and possibly already functionally correct) but not yet certified/tested/documented to the harmonisation phase's current standards (`NWCOMMANDS_COMMAND_STYLE.md`/`NWCOMMANDS_HELP_STYLE.md`, the certification framework in `docs/CERTIFICATION.md`, an explicit network-type-compatibility classification) — a distinction the original A-E scheme didn't separately track; use this rather than marking something A merely because the code runs.
 
-Methodology: every classification below is based on reading the actual `.ado`/Mata bodies (syntax, options, Mata calls), not inferred from filenames. Conducted via 7 parallel static-analysis passes plus this session's own direct architecture work (sparse backend, community detection, bug fixes). Read-only — no functionality was changed by the audit itself.
+Methodology: every classification below is based on reading the actual `.ado`/Mata bodies (syntax, options, Mata calls), not inferred from filenames. Conducted via 7 parallel static-analysis passes plus this session's own direct architecture work (sparse backend, community detection, bug fixes) at the audit's original writing; reconciled against the harmonisation phase's own units 1-16 (see `docs/CERTIFICATION.md`) in a later pass — reconciliation updates are marked inline as "**Update (harmonisation unit N)**". Read-only — no functionality is changed by the audit itself, only by the harmonisation/implementation work it documents.
 
 ## Executive summary
 
 `nwcommands` has substantially more depth than its help-file surface suggests. The core (`nwset`/`nw_syntax`/`NWdef`) is sound and — as of this session — has a working sparse backend proven to scale to 100,000 nodes / 1,000,000 edges without ever allocating a dense matrix. Centrality, generators, dyad/triad census, I/O, and visualization are all real and mostly complete (B/A). The biggest gaps cluster in exactly the areas the project's own roadmap prioritizes: **structural equivalence/blockmodeling/core-periphery are almost entirely absent** (E across the board except a genuinely useful but unlabeled `nwsimilar`/`nwdissimilar`/`nwhierarchy` chain), **cohesive subgroups (cliques/k-cores/k-plexes) are completely absent**, and **Stata-native alter-aggregation (`mean(alter.x)`-style) does not exist anywhere** despite being architecturally straightforward to add.
 
 Several findings deserve special attention:
-- **`nw2project`** (one-mode projection from a two-mode network) is fully documented in three separate `.sthlp` files with a complete worked spec, but **the `.ado` file does not exist**. A phantom command.
+- **`nw2project`** (one-mode projection from a two-mode network): was a phantom command at the time of the original audit pass. **Update**: built and committed since (`1ba195e`/`531e018`); re-verified working during the Part I re-audit. Status **A** (unit 17 added the "Supported network types" section).
 - **`nwburt.ado`**, a complete, well-documented implementation of Burt's structural-holes suite (effective size, efficiency, constraint, hierarchy), existed in the last real git commit (2015) and was deleted during the years of uncommitted work; only a stripped-down, incomplete `nwconstraint.ado` (dyadic constraint matrix only, no per-node aggregation, no help file) survives in the working tree.
-- **`nwbalance.ado`** (structural balance / signed triads) is real, correct, and functional — with zero documentation and zero tests.
+- **`nwbalance.ado`** (structural balance / signed triads) is real, correct, and functional. **Update (harmonisation units 1/14)**: now documented (`.sthlp`) and tested, including a genuine zero-closed-triads crash (`collapse` erroring on an empty triad-level dataset) that has since been fixed.
 - **`nwergm.ado`** is not a native ERGM implementation — it shells out to R (and even auto-installs R), directly violating this project's own "no external runtime dependencies" principle. Reclassified D; any native ERGM work starts from zero.
 - **`nwgenvar.ado`** is dead code: it defines `program nwgenerate` under a mismatched filename, so Stata's ado-loader can never actually load it as `nwgenvar`.
 - **`nwgenerate.ado`** has several silently-dead commented-out dispatch branches (`dyadprob`, `homophily`, `lattice`, `path`, `pref`, `ring`, `small`, `transpose`).
@@ -46,14 +46,14 @@ Mostly A: node/edge counts, density, degree distribution, isolates, connectednes
 
 ## C. Centrality
 
-Degree/in/out/strength (A, sparse-migrated this session), betweenness (A, sparse-migrated + bug-fixed this session, but **unweighted only**), closeness (A via `nwgeodesic`, D-flagged), eigenvector (A, genuine `symeigensystem()` eigen-decomposition, but **dichotomizes weights silently** and dense-only), Katz (B — `nwkatz.ado` does NOT do genuine eigen-computation despite typical Katz-centrality expectations; just `rowsum`/`colsum`, worth auditing further), PageRank/Bonacich power/alpha/Hubbell/HITS/eccentricity/information/flow-betweenness/current-flow/bridging/distance-limited/group centrality — all **E**, not implemented. Centralization (network-level) exists for degree/betweenness.
+Degree/in/out/strength (A, sparse-migrated this session), betweenness (A, sparse-migrated + bug-fixed this session, but **unweighted only**), closeness (A via `nwgeodesic`, D-flagged), eigenvector (A, genuine `symeigensystem()` eigen-decomposition, but **dichotomizes weights silently** and dense-only), Katz (**F** — harmonisation unit 2 confirmed and fixed 5 real bugs, then explicitly documented that `nwkatz.ado` computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality `(I-alpha*A)^-1`; correctly implemented and tested for what it actually is, but a genuine walk-counting Katz remains a real **E** gap, tracked in `docs/ROADMAP.md`), PageRank/Bonacich power/alpha/Hubbell/HITS/eccentricity/information/flow-betweenness/current-flow/bridging/distance-limited/group centrality — all **E**, not implemented. Centralization (network-level) exists for degree/betweenness.
 
 ## D. Structural holes and brokerage
 
 | Feature | Status | Command | Notes |
 |---|---|---|---|
 | Burt constraint (dyadic) | C | `nwconstraint` | returns unaggregated dyadic matrix only; no help file |
-| Effective size, efficiency, hierarchy | **E in working tree, recoverable** | historical `nwburt.ado` | complete, documented, working implementation exists in git history (`git show master:nwburt.ado`), deleted during uncommitted-years drift |
+| Effective size, efficiency, hierarchy | **A** (was E, recoverable) | `nwburt` | revived and committed since the original audit pass (`1ba195e`); re-verified and given a "Supported network types" section during the Part I re-audit (harmonisation unit 17). Cross-checking it against `nwconstraint` also surfaced a real math gotcha in `nwconstraint`'s own docs, since fixed |
 | Gould-Fernandez brokerage roles | E | — | confirmed absent |
 | Bridges (global/local/distance) | A (D-flagged) | `nwbridges` | correct, but depends on the not-yet-sparse-migrated `calculate_distances_without()` |
 
@@ -95,7 +95,7 @@ Neighbor listing only (B, `nwneighbor` — binary-only, dense, no induced-subgra
 
 ## N. Two-mode/bipartite analysis (high priority)
 
-Core infrastructure real (`is2mode`/`nodesmode1`/`nodesmode2`/`modes` fields on `NWdef`, though storage is masked-square not true rectangular biadjacency). `nw2set`/`nw2fromedge`/`nw2toedge`: A. Bipartite clustering (`nw2clustering`): B, correct 4-path algorithm but D-flagged (Stata reshape/merge/collapse chain, O(N⁴)-shaped, not sparse-migrated). **`nw2project` (one-mode projection): E in the working tree despite being fully spec'd in three `.sthlp` cross-references — a phantom command, and the highest-value, lowest-ambiguity gap found in this entire audit.** Two-mode centrality/betweenness/eigenvector, bipartite communities/core-periphery/blockmodels, affiliation statistics, bipartite matching: **E**.
+Core infrastructure real (`is2mode`/`nodesmode1`/`nodesmode2`/`modes` fields on `NWdef`, though storage is masked-square not true rectangular biadjacency). `nw2set`/`nw2fromedge`/`nw2toedge`: A. Bipartite clustering (`nw2clustering`): B, correct 4-path algorithm but D-flagged (Stata reshape/merge/collapse chain, O(N⁴)-shaped, not sparse-migrated). **`nw2project` (one-mode projection): F** — was the highest-value, lowest-ambiguity gap found in the original audit pass (a phantom command despite being fully spec'd); built, tested, and committed since (`1ba195e`/`531e018`), re-verified working during the Part I re-audit; missing only the current-standard "Supported network types" doc section. Two-mode centrality/betweenness/eigenvector, bipartite communities/core-periphery/blockmodels, affiliation statistics, bipartite matching: **E**.
 
 ## O. Weighted/valued networks (cross-cutting)
 
@@ -103,7 +103,7 @@ Genuinely weight-aware: degree/strength (Opsahl generalized formula), transitivi
 
 ## P. Signed networks
 
-Structural balance (`nwbalance`, B — genuinely correct Cartwright-Harary triadic balance, D-flagged for its Stata reshape-chain implementation, **zero documentation, zero tests** — a hidden-functionality finding). Full 16-type signed triad census, frustration index, positive/negative degree or strength, signed communities/assortativity/blockmodels, positive/negative-only paths: **E**.
+Structural balance (`nwbalance`, B — genuinely correct Cartwright-Harary triadic balance, D-flagged for its Stata reshape-chain implementation. **Update (harmonisation units 1/14)**: documented and tested, zero-closed-triads crash fixed). Full 16-type signed triad census, frustration index, positive/negative degree or strength, signed communities/assortativity/blockmodels, positive/negative-only paths: **E**.
 
 ## Q. Graph transformations and graph algebra
 
@@ -115,7 +115,7 @@ Erdős-Rényi/Bernoulli, fixed-edge-count, dyad-census-conditioned (a genuine CU
 
 ## S. Permutation tests and network inference
 
-`nwqap.ado` (B) is a real, substantial, generic-estimator QAP regression engine (multiple predictor networks, node-attribute IVs auto-expanded, permutation-based p-values) — but **simple/Y-permutation QAP only**, not `eclass`, zero test coverage. MRQAP/QAPSPP (Dekker-Krackhardt-Snijders semi-partialling), QAP-X/independent-X permutation, CUG tests: **E**, though `nwrandom, census()` is a ready-made CUG null-model generator sitting unused. `nwpermute` is a solid general node-label-permutation engine.
+`nwqap.ado` (**F**, was B) is a real, substantial, generic-estimator QAP regression engine (multiple predictor networks, node-attribute IVs auto-expanded, permutation-based p-values) — but **simple/Y-permutation QAP only**, not `eclass`. **Update (harmonisation units 9/15)**: was actually completely non-functional (crashed on every call via a deprecated-wrapper bug, a display bug, and a permutation-degeneracy crash) before this session — all three fixed, comprehensive test coverage added, an explicit non-silent warning added for the weighted-DV-vs-binary-outcome gotcha (see area O). Still lacks `eclass`/QAPSPP, hence F not A. MRQAP/QAPSPP (Dekker-Krackhardt-Snijders semi-partialling), QAP-X/independent-X permutation, CUG tests: **E** for MRQAP/QAPSPP/QAP-X, **A** for CUG (`nwcug`, added this session), though `nwrandom, census()` remains a ready-made-but-unused dyad-census-conditioned CUG null-model generator alongside it. `nwpermute` is a solid general node-label-permutation engine.
 
 ## T. Network regression (high priority — target `nwregress`/`nwlogit`)
 

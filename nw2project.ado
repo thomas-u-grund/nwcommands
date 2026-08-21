@@ -93,6 +93,19 @@ years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 	  {bf:r(ties)}		number of ties in the projected network
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: not checked - the source two-mode network's ties are treated as undirected
+affiliations. Weighted: {bf:W1}, native - an unvalued source network projects to a shared-neighbor
+{it:count} (the standard bipartite-projection tie weight); a valued source network projects using
+{opt stat()}'s explicit choice of combination rule (see above) - tie strength is never silently
+discarded or reinterpreted as a distance. Signed: not checked. Two-mode: {bf:T3} - this command's
+entire purpose is projecting a two-mode network down to one mode, so the projection is always
+explicit and user-requested (via {opt project()}), never a silent side effect of some other
+operation - the canonical, correct way to project in this package.
+
+
 {title:See also}
 
 	{help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}

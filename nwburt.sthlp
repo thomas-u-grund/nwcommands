@@ -94,6 +94,17 @@ not yet, sparse-scalable.
 	  {bf:r(nodes)}		number of nodes
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, but not symmetrized - {it:p_ij} (the proportion of {it:i}'s outgoing
+investment in {it:j}) is computed from the raw adjacency matrix exactly as given, same convention as
+{help nwconstraint}. Weighted: {bf:W1}, native - tie weight is used directly as {it:p_ij}'s investment
+proportion, not as a distance. Signed: not supported, same reason as {help nwconstraint} - {it:p_ij}
+is a ratio to a sum of outgoing tie weights, only meaningful when all non-negative. Two-mode: not
+checked.
+
+
 {title:References}
 
 {pstd}

@@ -73,8 +73,8 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 
 ## Top 20 additions ranked by value/effort
 
-1. `nw2project` (two-mode projection) — Medium value, Small effort, spec already written
-2. `nwburt` revival — High value, Small effort, proven historical code
+1. ✅ `nw2project` (two-mode projection) — Medium value, Small effort, spec already written — done (commits `1ba195e`/`531e018`; the roadmap checkmark was simply never added at the time). Re-verified working (`cscripts/test_nw2project.do` passes) during the harmonisation-phase Part I re-audit; "Supported network types" section added (harmonisation unit 17) — status **A**.
+2. ✅ `nwburt` revival — High value, Small effort, proven historical code — done (commit `1ba195e`). Re-verified working (`cscripts/test_nwburt.do` passes) during the harmonisation-phase Part I re-audit; "Supported network types" section added, and a real, subtle math gotcha found and fixed in `nwconstraint`'s own docs while cross-checking the two commands against each other (harmonisation unit 17 — see `docs/CERTIFICATION.md`) — status **A**.
 3. ✅ `nwbalance` docs+tests — Medium value, Trivial effort — done, including the zero-closed-triads follow-up (harmonisation unit 14)
 4. Fix `nwgenvar`/`nwgenerate` dead code — Low value individually, Trivial effort, correctness hygiene
 5. ✅ Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator — done (`nwaltergen`, `nwgen` shortcut)
