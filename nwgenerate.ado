@@ -89,9 +89,55 @@ The command generates a network. It can be used either with a) some function {bf
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
-{phang2}{opth transpose(netname)} [, {opt xvars}] 
+{phang2}{opth transpose(netname)} [, {opt xvars}]
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
+
+{pstd}
+The shortcuts above all generate a new {it:network}. A second family generates a per-node
+{it:variable} instead - {cmd:nwgen} {it:newvarname} {cmd:=} {it:netfcn}({it:netname}) - each a thin
+dispatch to an already-existing, dedicated command's own {opt generate()} option:
+
+{phang2}{opth degree(netname)}, {opth outdegree(netname)}, {opth indegree(netname)}
+{p_end}
+{pmore2}Degree centrality (see {help nwdegree}). {bf:degree()} on a directed network is total degree
+(out+in summed).
+
+{phang2}{opth isolates(netname)}
+{p_end}
+{pmore2}Isolate indicator (see {help nwdegree}, {opt isolates}).
+
+{phang2}{opth components(netname)}, {opth lgc(netname)}
+{p_end}
+{pmore2}Component membership, or a largest-component indicator (see {help nwcomponents}).
+
+{phang2}{opth clustering(netname)}
+{p_end}
+{pmore2}Clustering coefficient (see {help nwclustering}).
+
+{phang2}{opth closeness(netname)}, {opth farness(netname)}, {opth nearness(netname)}
+{p_end}
+{pmore2}Closeness centrality and its two components (see {help nwcloseness}).
+
+{phang2}{opth between(netname)}
+{p_end}
+{pmore2}Betweenness centrality (see {help nwbetween}).
+
+{phang2}{opth evcent(netname)}
+{p_end}
+{pmore2}Eigenvector centrality (see {help nwevcent}).
+
+{phang2}{opth context(netname)}, {opth attribute(varname)}
+{p_end}
+{pmore2}Contextual (neighbor-attribute) statistic (see {help nwcontext}) - {opt attribute()} is
+required and has no default.
+
+{pstd}
+Three further keywords are recognized but not implemented as a variable shortcut, since they do not
+naturally reduce to one value per node: {bf:addnodes(} (mutates a network's own node set - see
+{help nwaddnodes}), {bf:subset(} (produces a new network, not a variable - see {help nwsubset}), and
+{bf:collapse(} (see {help nwcollapse}). Each raises a clear, immediate error rather than silently
+doing nothing.
 ***/
 
 capture program drop nwgenerate
@@ -266,6 +312,184 @@ program nwgenerate
 		// nwtranspose shortcut - NOT YET RESTORED, see note below
 		qui if "`whichjob'" == "transpose(" {
 			noi di "{err}nwgen's transpose() shortcut is not currently implemented; use {help nwtranspose} directly."
+			error 199
+		}
+
+		// The remaining 16 keywords in `nwgenopt' above (addnodes/
+		// collapse/subset/evcent/context/degree/outdegree/indegree/
+		// isolates/components/lgc/clustering/closeness/farness/nearness/
+		// between) are a SECOND, separate family: they produce a Stata
+		// VARIABLE (nwgen VAR = fcn(netname)), not a network, unlike
+		// every branch above. Until this fix they matched `whichjob'
+		// (recognized by the vocabulary at the top of this program) but
+		// had NO dispatch branch at all here, so a call like
+		// "nwgen x = isolates(mynet)" silently fell through the whole
+		// if-chain doing nothing - `x' was never created, and whatever
+		// the caller did with it next crashed with a confusing "not
+		// found" error pointing nowhere near the real cause. Confirmed
+		// to have already caused two real, previously-undiscovered bugs
+		// this way inside this package itself (nwplot.ado's own
+		// mdsclassical layout used to call the isolates(/components(/
+		// lgc( shortcuts internally - see docs/CERTIFICATION.md unit
+		// 33's own row - before being fixed to route around this gap by
+		// calling nwdegree/nwcomponents directly instead).
+		//
+		// 13 of the 16 map cleanly, with no semantic ambiguity, to an
+		// already-existing, already-tested dedicated command's own
+		// generate() option - implemented for real below, each verified
+		// directly against a hand-computable network before shipping,
+		// not just "does it run without erroring". The remaining 3
+		// (addnodes/collapse/subset) do NOT naturally reduce to "one
+		// value per node" the way the other 13 do - nwaddnodes mutates
+		// a network's own node set, nwsubset produces a new NETWORK
+		// (not a variable), and nwcollapse's own semantics need
+		// additional design work to map correctly - left as a clear,
+		// immediate error rather than guessing at a wrong mapping.
+		// NOTE on `replace': despite the "syntax [, xvars vars(string)
+		// replace *]" call near the top of this program appearing to
+		// parse "replace" into its own dedicated local, that call is
+		// actually unreachable for this whole file's own comma-parsing
+		// scheme (`opts', what it parses, is always empty by the time
+		// it runs - the real option text was already split off into
+		// `options'/`fcn_opt' by the very first "gettoken ... , parse(",")"
+		// at the top of the program) - confirmed by direct probe: that
+		// dedicated `replace' local is always empty, "replace" included,
+		// even when the caller genuinely passes it. The RAW text (e.g.
+		// "  replace") lives in `fcn_opt' instead, and IS correctly
+		// forwarded to every nwdegree/nwcomponents/etc. call below
+		// simply by including `fcn_opt' - no separate token needed. The
+		// one place this file's own logic needs a plain yes/no answer
+		// (the directed "degree()" branch's own combine-and-guard step
+		// below) uses `hasreplace', checked directly against `fcn_opt'
+		// via strpos(), matching this file's own established
+		// already-in-use convention elsewhere (its outer network-level
+		// replace handling near the top of this program does the exact
+		// same strpos() check against `options').
+		local hasreplace = (strpos("`fcn_opt'", "replace") != 0)
+		qui if "`whichjob'" == "components(" {
+			noi nw_syntax `sub1', max(1)
+			nwcomponents `sub1', generate(`newnetname') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "lgc(" {
+			noi nw_syntax `sub1', max(1)
+			nwcomponents `sub1', lgc generate(`newnetname') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "clustering(" {
+			noi nw_syntax `sub1', max(1)
+			nwclustering `sub1', generate(`newnetname') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "between(" {
+			noi nw_syntax `sub1', max(1)
+			nwbetween `sub1', generate(`newnetname') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "evcent(" {
+			noi nw_syntax `sub1', max(1)
+			nwevcent `sub1', generate(`newnetname') `sub2' `fcn_opt'
+		}
+		// nwcontext requires attribute() - not something this shortcut
+		// can default sensibly, so it must arrive via `sub2'/`fcn_opt'
+		// (e.g. "nwgen x = context(mynet), attribute(myvar)"), exactly
+		// the same option-passthrough convention every other shortcut
+		// in this file already uses.
+		qui if "`whichjob'" == "context(" {
+			noi nw_syntax `sub1', max(1)
+			nwcontext `sub1', generate(`newnetname') `sub2' `fcn_opt'
+		}
+		// nwcloseness always generates its own fixed 3-word set
+		// (closeness, farness, nearness, in that order - see its own
+		// "local generate = "_closeness _farness _nearness"" default)
+		// and errors unless given exactly 3 words, so closeness()/
+		// farness()/nearness() each place the caller's own variable
+		// name in the matching word position and let the other two
+		// fall into throwaway tempvars.
+		qui if "`whichjob'" == "closeness(" {
+			noi nw_syntax `sub1', max(1)
+			tempvar _tmp_far _tmp_near
+			nwcloseness `sub1', generate(`newnetname' `_tmp_far' `_tmp_near') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "farness(" {
+			noi nw_syntax `sub1', max(1)
+			tempvar _tmp_close _tmp_near
+			nwcloseness `sub1', generate(`_tmp_close' `newnetname' `_tmp_near') `sub2' `fcn_opt'
+		}
+		qui if "`whichjob'" == "nearness(" {
+			noi nw_syntax `sub1', max(1)
+			tempvar _tmp_close _tmp_far
+			nwcloseness `sub1', generate(`_tmp_close' `_tmp_far' `newnetname') `sub2' `fcn_opt'
+		}
+		// nwdegree needs to know directedness up front: a directed
+		// network reserves two output slots (out, in - see nwdegree's
+		// own harmonisation-phase fix for the out-then-in word order
+		// this now correctly relies on), an undirected one just one
+		// ("_degree"). "degree(" itself is directed-ambiguous (out? in?
+		// both?) - defined here as total degree (out+in summed), the
+		// same convention igraph's own default degree() uses for a
+		// directed graph. The final "combine into `newnetname'" step
+		// for the directed case is a plain `gen', which (unlike
+		// nwdegree's own generate()) has no built-in replace-awareness
+		// of its own - handled explicitly here with the same
+		// already-exists guard nwdegree itself uses, so "replace" and
+		// the "already exists" error both work correctly for this
+		// derived (out+in) variable too, not just the two temp ones
+		// nwdegree generates directly.
+		qui if "`whichjob'" == "degree(" {
+			noi nw_syntax `sub1', max(1)
+			if "`directed'" == "true" {
+				tempvar _tmp_out _tmp_in
+				nwdegree `sub1', generate(`_tmp_out' `_tmp_in') `sub2' `fcn_opt' silent
+				capture confirm variable `newnetname', exact
+				if _rc == 0 & !`hasreplace' {
+					noi di "{err}Variable {bf:`newnetname'} already exists; use {bf:replace} or a different name."
+					error 99
+				}
+				capture drop `newnetname'
+				gen `newnetname' = `_tmp_out' + `_tmp_in'
+			}
+			else {
+				nwdegree `sub1', generate(`newnetname') `sub2' `fcn_opt'
+			}
+		}
+		qui if "`whichjob'" == "outdegree(" {
+			noi nw_syntax `sub1', max(1)
+			if "`directed'" == "true" {
+				tempvar _tmp_in
+				nwdegree `sub1', generate(`newnetname' `_tmp_in') `sub2' `fcn_opt'
+			}
+			else {
+				nwdegree `sub1', generate(`newnetname') `sub2' `fcn_opt'
+			}
+		}
+		qui if "`whichjob'" == "indegree(" {
+			noi nw_syntax `sub1', max(1)
+			if "`directed'" == "true" {
+				tempvar _tmp_out
+				nwdegree `sub1', generate(`_tmp_out' `newnetname') `sub2' `fcn_opt'
+			}
+			else {
+				nwdegree `sub1', generate(`newnetname') `sub2' `fcn_opt'
+			}
+		}
+		qui if "`whichjob'" == "isolates(" {
+			noi nw_syntax `sub1', max(1)
+			if "`directed'" == "true" {
+				tempvar _tmp_out _tmp_in
+				nwdegree `sub1', isolates generate(`_tmp_out' `_tmp_in' `newnetname') `sub2' `fcn_opt'
+			}
+			else {
+				tempvar _tmp_deg
+				nwdegree `sub1', isolates generate(`_tmp_deg' `newnetname') `sub2' `fcn_opt'
+			}
+		}
+		qui if "`whichjob'" == "addnodes(" {
+			noi di "{err}nwgen's addnodes() shortcut is not currently implemented (it does not naturally reduce to a single per-node variable - nwaddnodes mutates a network's own node set); use {help nwaddnodes} directly."
+			error 199
+		}
+		qui if "`whichjob'" == "collapse(" {
+			noi di "{err}nwgen's collapse() shortcut is not currently implemented; use {help nwcollapse} directly."
+			error 199
+		}
+		qui if "`whichjob'" == "subset(" {
+			noi di "{err}nwgen's subset() shortcut is not currently implemented (it produces a new NETWORK, not a variable, so it does not fit nwgen's VAR = fcn(netname) form); use {help nwsubset} directly."
 			error 199
 		}
 

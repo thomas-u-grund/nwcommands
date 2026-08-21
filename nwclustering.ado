@@ -13,9 +13,11 @@ program nwclustering
 	local original "`netname'"
 
 	tempname symnet
+	local symnet_created = 0
 	if "`symmetrize'" != ""  {
 		nwsym `netname', generate(`symnet') mode(max)
 		nw_syntax
+		local symnet_created = 1
 	}
 	
 	if "`measure'" == "" {
@@ -150,7 +152,30 @@ program nwclustering
 	noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
 	noi di " "
 	_return hold rcluster
-	capture nwdrop `symnet'	
+	// BUGFIX: `symnet' is only ever actually created (tempname just
+	// reserves a name, it doesn't create anything) when `symmetrize' was
+	// given - the overwhelming common case (a plain "nwclustering
+	// netname, generate(x)" call, no symmetrize) never creates it at
+	// all, so this "capture nwdrop `symnet'" legitimately failed
+	// ("network not found") on every single ordinary call. `capture'
+	// swallows the failure, but "_return restore" (a low-level command
+	// for restoring held r()-class results, not an ordinary Stata
+	// command) does not itself reset `_rc' the way a normal successful
+	// command would - so the stale nonzero `_rc' from the failed nwdrop
+	// silently leaked out as this command's own return code on every
+	// plain call. Confirmed directly: "nwclustering mynet, generate(x)"
+	// on an already-undirected network returned _rc==482 despite
+	// completing correctly and printing its own results - the exact
+	// same bug class (a `capture'd cleanup on a conditionally-created
+	// temp object, nothing afterward resetting `_rc') already found and
+	// fixed repeatedly elsewhere this session. Fixed by only attempting
+	// the drop when `symnet' was actually created, guarded by the same
+	// condition that created it - not just wrapping it more, since that
+	// would still print the correct results while returning a
+	// misleading nonzero code to any caller that checks `_rc'.
+	if `symnet_created' {
+		capture nwdrop `symnet'
+	}
 	_return restore rcluster
 end
 

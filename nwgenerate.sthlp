@@ -88,7 +88,53 @@ The command generates a network. It can be used either with a) some function {bf
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
-{phang2}{opth transpose(netname)} [, {opt xvars}] 
+{phang2}{opth transpose(netname)} [, {opt xvars}]
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
+
+{pstd}
+The shortcuts above all generate a new {it:network}. A second family generates a per-node
+{it:variable} instead - {cmd:nwgen} {it:newvarname} {cmd:=} {it:netfcn}({it:netname}) - each a thin
+dispatch to an already-existing, dedicated command's own {opt generate()} option:
+
+{phang2}{opth degree(netname)}, {opth outdegree(netname)}, {opth indegree(netname)}
+{p_end}
+{pmore2}Degree centrality (see {help nwdegree}). {bf:degree()} on a directed network is total degree
+(out+in summed).
+
+{phang2}{opth isolates(netname)}
+{p_end}
+{pmore2}Isolate indicator (see {help nwdegree}, {opt isolates}).
+
+{phang2}{opth components(netname)}, {opth lgc(netname)}
+{p_end}
+{pmore2}Component membership, or a largest-component indicator (see {help nwcomponents}).
+
+{phang2}{opth clustering(netname)}
+{p_end}
+{pmore2}Clustering coefficient (see {help nwclustering}).
+
+{phang2}{opth closeness(netname)}, {opth farness(netname)}, {opth nearness(netname)}
+{p_end}
+{pmore2}Closeness centrality and its two components (see {help nwcloseness}).
+
+{phang2}{opth between(netname)}
+{p_end}
+{pmore2}Betweenness centrality (see {help nwbetween}).
+
+{phang2}{opth evcent(netname)}
+{p_end}
+{pmore2}Eigenvector centrality (see {help nwevcent}).
+
+{phang2}{opth context(netname)}, {opth attribute(varname)}
+{p_end}
+{pmore2}Contextual (neighbor-attribute) statistic (see {help nwcontext}) - {opt attribute()} is
+required and has no default.
+
+{pstd}
+Three further keywords are recognized but not implemented as a variable shortcut, since they do not
+naturally reduce to one value per node: {bf:addnodes(} (mutates a network's own node set - see
+{help nwaddnodes}), {bf:subset(} (produces a new network, not a variable - see {help nwsubset}), and
+{bf:collapse(} (see {help nwcollapse}). Each raises a clear, immediate error rather than silently
+doing nothing.
 last certified : 21 Aug 2026
