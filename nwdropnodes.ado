@@ -15,11 +15,16 @@ program nwdropnodes
 		local nodelist "`nodes'"
 	}	
 	
-	_nwsyntax `netname', max(1)
-	
+	// _nwsyntax only re-exports 4 locals (netobj/id/netname/networks) -
+	// this file also needs `nodes' (node count), which only nw_syntax
+	// itself provides; the option-supplied `nodes' local (the node
+	// list to drop) is already fully consumed into `nodelist' above,
+	// before this call would overwrite it with the node count.
+	nw_syntax `netname', max(1)
+
 	if "`generate'" != "" {
 		nwduplicate `netname', name(`generate') xvars
-		_nwsyntax `generate', max(1)
+		nw_syntax `generate', max(1)
 	}
 	
 	local newnodelist ""
@@ -35,12 +40,20 @@ program nwdropnodes
 	}
 	local nodelist "`newnodelist'"
 
-	scalar onevars = "\$nw_`id'"
-	local vars `=onevars'
+	// was reading the legacy pre-2016 $nw_<id>/$nwlabs_<id> globals,
+	// which the modern netobj/NWdef architecture never populates (empty
+	// for any network created the modern way) - nwname's own r(vars)/
+	// r(labs) are the direct modern equivalents (confirmed via
+	// get_nodesvar_string()/get_labs() in unw_core.do). r(vars) is
+	// already space-separated, matching the `: word `i' of `vars''
+	// extraction below; r(labs) is comma-separated (this package's
+	// established convention elsewhere), converted to space-separated
+	// here to match that same extraction pattern.
+	nwname `netname'
+	local vars "`r(vars)'"
 	local newvars ""
-	
-	scalar onelabs = "\$nwlabs_`id'"
-	local labs `=onelabs'
+
+	local labs = subinstr("`r(labs)'", ",", " ", .)
 	local newlabs ""
 	
 	// get new vars and new labs
@@ -68,9 +81,25 @@ program nwdropnodes
 		local i = `i' + 1
 		local onelab : word `i' of `labs'
 		mata: st_numscalar("r(include)", `keepmat'[`i',1])
-		if ("`r(include)'" == "1") {	
+		if ("`r(include)'" == "1") {
 			local newvars "`newvars' `onevar'"
-			local newlabs "`newlabs' `onelab'"
+			// comma-separated, not space-separated - this is what
+			// eventually reaches nwrandom's own labs() option (via
+			// nwreplacemat's size-changing path), which expects the
+			// same comma-separated format nwname's own r(labs)
+			// uses (confirmed directly: nwrandom's labs() silently
+			// treats a bare space-separated list as a single label
+			// for the first node, auto-generating default "n2"/"n3"-
+			// style labels for the rest, rather than erroring - a
+			// separate, genuinely silent bug in nwrandom.ado itself,
+			// not fixed here since this file does not need to pass
+			// it a malformed value to begin with).
+			if "`newlabs'" == "" {
+				local newlabs "`onelab'"
+			}
+			else {
+				local newlabs "`newlabs',`onelab'"
+			}
 		}
 		mata: st_rclear()
 	}

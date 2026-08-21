@@ -2,6 +2,18 @@ capture program drop nwreplacemat
 program nwreplacemat
 	version 9.0
 	syntax anything(name=netname), newmat(string) [vars(string) labs(string) nosync netonly xvars]
+
+	// nw_syntax itself exports a local called `labs' (the *current*
+	// network's own labels, via its own c_local labs "..." with no
+	// other() prefix given) - calling it immediately below would
+	// silently clobber the caller's own labs() option value before
+	// this file ever uses it, which is exactly what was happening
+	// here: labs() has never actually done anything in this command,
+	// confirmed directly by tracing `labs' immediately after the
+	// nw_syntax call below and finding it held the *original*
+	// network's labels, not whatever the caller passed. Captured into
+	// a differently-named local first so it survives.
+	local newmatlabs "`labs'"
 	nw_syntax `netname', max(1)
 
 	capture mat list `newmat'
@@ -32,13 +44,13 @@ program nwreplacemat
 			if "`vars'" != "" {
 				global nw_`id' "`vars'"
 			}
-			if "`labs'" != "" {
-				global nwlabs_`id' "`labs'"
+			if "`newmatlabs'" != "" {
+				global nwlabs_`id' "`newmatlabs'"
 			}
 		}
 		else {
 			nwdrop `netname', `netonly'
-			nwrandom `nodes', prob(1) name(`netname') vars(`vars') labs(`labs') `xvars'
+			nwrandom `nodes', prob(1) name(`netname') vars(`vars') labs(`newmatlabs') `xvars'
 			nwreplacemat `netname', newmat(`newmat') `nosync' `xvars'
 			// delete empty observations in Stata
 			nwcompressobs

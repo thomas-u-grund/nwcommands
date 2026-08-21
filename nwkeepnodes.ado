@@ -11,7 +11,13 @@ program nwkeepnodes
 		local nodelist "`nodes'"
 	}	
 	
-	_nwsyntax `netname', max(1)
+	// _nwsyntax only re-exports 4 locals (netobj/id/netname/networks) -
+	// this file also needs `nodes' (node count, used below); the
+	// option-supplied `nodes' local (the node list to *keep*) is
+	// already fully consumed into `nodelist' above, before this call
+	// would overwrite it with the node count - same fix, same
+	// reasoning as nwdropnodes.ado's own identical bug.
+	nw_syntax `netname', max(1)
 	
 	local newnodelist ""
 	foreach onenode in `nodelist' {

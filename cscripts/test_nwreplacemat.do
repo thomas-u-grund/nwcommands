@@ -18,10 +18,54 @@ do unw_core.do
 * typo in the invalid-dimensions guard.
 *
 * The size-CHANGING code path (used by nwdropnodes/nwkeepnodes to
-* shrink a network) is NOT fixed here - it is entangled with further
-* legacy globals ($nwsize_`id', $nw_`id', $nwlabs_`id') and is a
-* separate, larger, not-yet-started item (see docs/CERTIFICATION.md's
-* Pending table). This test covers only the same-size path.
+* shrink a network) was fixed in a later harmonisation unit (see
+* docs/CERTIFICATION.md): its default (non-netonly) recreate-via-
+* nwdrop+nwrandom+recursive-nwreplacemat approach turned out to
+* already produce the right *network structure* once the same-size
+* path above was fixed (since it bottoms out there recursively) -
+* but a second, independent bug meant its own labs() option never
+* actually worked at all: nw_syntax itself exports a local called
+* `labs' (the *current* network's own labels, via its own bare
+* c_local labs "..." with no other() prefix), which silently clobbered
+* nwreplacemat's own labs() option value immediately after nw_syntax
+* ran at the top of the file, before this file ever used it - found
+* by tracing `labs' immediately after that call and finding it held
+* the *original* (pre-resize) network's labels rather than whatever
+* the caller had actually passed. Fixed by capturing the caller's
+* labs() value into a differently-named local before calling
+* nw_syntax. This is the same "nw_syntax's own c_local exports can
+* silently shadow a caller's identically-named option local" bug
+* class already found once this session for `nodes' (nwdropnodes/
+* nwkeepnodes's own fix, see those files' test coverage) - `labs' is
+* a second instance of it, not previously recognized as the same
+* underlying pattern.
+
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) name(sizenet) undirected labs(A,B,C)
+mata: newmat4 = (0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)
+mata: st_matrix("newmat4", newmat4)
+nwreplacemat sizenet, newmat(newmat4) labs(A,B,C,D) vars(A B C D)
+assert _rc == 0
+nwname sizenet
+assert r(nodes) == 4
+assert `"`r(labs)'"' == `"A,B,C,D"'
+nwtomata sizenet, mat(M3)
+mata: assert(M3[1,4] == 0)
+mata: assert(M3[3,4] == 1)
+
+* labs() with a genuinely different label set (not just adding one) -
+* the specific case that was silently broken: nw_syntax's own clobber
+* of `labs' meant this always silently reverted to the *original*
+* network's own labels no matter what was passed.
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) name(sizenet2) undirected labs(X,Y,Z)
+mata: newmat2 = (0,1\1,0)
+mata: st_matrix("newmat2", newmat2)
+nwreplacemat sizenet2, newmat(newmat2) labs(P,Q) vars(P Q)
+assert _rc == 0
+nwname sizenet2
+assert r(nodes) == 2
+assert `"`r(labs)'"' == `"P,Q"'
 
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) name(net1) undirected labs(A,B,C)
