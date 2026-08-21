@@ -19,7 +19,17 @@
 {opt replace}]
 
 {p 8 17 2}
+{cmd:nwaltergen} {it:newvar} {cmd:= proportion(alter.}{it:srcvar}{cmd:}{it:{help nwaltergen##propop:op}}{it:value}{cmd:)}
+[{cmd:,}
+{opth net(netname)}
+{opt replace}]
+
+{p 8 17 2}
 {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}.
+
+{marker propop}{...}
+{p 8 17 2}
+{it:op} is {bf:==} or {bf:!=}; {it:value} must be numeric.
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -58,8 +68,21 @@ and 0 for {bf:sum}/{bf:count}. {bf:sd} additionally requires at least 2 non-miss
 (it is undefined for a single value) and returns missing otherwise.
 
 {pstd}
-{cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax as a shortcut and
-dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
+{bf:proportion(alter.}{it:srcvar}{bf:==}{it:value}{bf:)} (or {bf:!=}) gives the proportion of
+ego's alters whose {it:srcvar} equals (or does not equal) a specific numeric category - e.g. "the
+proportion of a person's contacts who work in sector 3" ({cmd:proportion(alter.sector==3)}). For an
+already-binary (0/1) {it:srcvar}, {cmd:mean(alter.}{it:srcvar}{cmd:)} already gives exactly "the
+proportion with {it:srcvar}==1", so a bare {cmd:proportion(alter.}{it:srcvar}{cmd:)} with no
+comparison is not offered as a separate synonym for it - {bf:proportion()}'s own value is for
+picking out one category of a variable with more than two categories, without first having to
+{cmd:generate} a 0/1 indicator by hand. Missing {it:srcvar} values are still dropped before the
+proportion is computed, exactly as for every other {it:stat} - a missing value is never silently
+read as "not in this category".
+
+{pstd}
+{cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax (including
+{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)}) as a shortcut and dispatches to
+{cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
 {title:Examples}
@@ -67,6 +90,7 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
+	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
 
 
 {title:References}
@@ -93,13 +117,52 @@ program nwaltergen
 	}
 	local expr = subinstr("`expr'", " ", "", .)
 
-	if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|sum|min|max|sd|count)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
-		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|sum|min|max|sd|count"
+	// proportion(alter.srcvar==value) / proportion(alter.srcvar!=value):
+	// the proportion of ego's alters whose srcvar equals (or does not
+	// equal) a specific category - the genuinely new capability;
+	// mean(alter.x) already covers "proportion with x==1" for an
+	// already-binary x, so a bare proportion(alter.x) (no comparison)
+	// is deliberately not offered as a separate synonym for mean() -
+	// one unambiguous way to ask for it. Only a numeric comparison
+	// value is supported (the common case: an integer-coded category) -
+	// checked explicitly with confirm number below rather than left to
+	// fail confusingly deep inside the Mata call. Implemented by
+	// building the 0/1 comparison indicator in Stata first, then
+	// reusing calculate_alterstat()'s existing, already-certified
+	// mean path on it - no unw_core.do changes needed at all.
+	local isproportion = 0
+	if regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=proportion\(alter\.([A-Za-z_][A-Za-z0-9_]*)(==|!=)(.+)\)$") {
+		local isproportion = 1
+		local newvarname = regexs(1)
+		local srcvar = regexs(2)
+		local propop = regexs(3)
+		local propval = regexs(4)
+		local stat = "mean"
+
+		// Mata's bare == / != test whole-matrix identity (one scalar),
+		// not an elementwise comparison - the elementwise operators are
+		// :== / :!= . Confirmed directly: a first attempt using the
+		// bare operator silently collapsed the comparison to a single
+		// scalar 0/1 instead of a per-alter vector, caught only by a
+		// downstream conformability error, not by any warning at the
+		// point of the mistake itself.
+		local matapropop = cond("`propop'" == "==", ":==", ":!=")
+
+		capture confirm number `propval'
+		if _rc {
+			di as err "{err}proportion()'s comparison value must be numeric; got {bf:`propval'}."
+			error 198
+		}
+	}
+	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|sum|min|max|sd|count)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
+		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|sum|min|max|sd|count|proportion(alter.srcvar==value)"
 		error 198
 	}
-	local newvarname = regexs(1)
-	local stat = regexs(2)
-	local srcvar = regexs(3)
+	else {
+		local newvarname = regexs(1)
+		local stat = regexs(2)
+		local srcvar = regexs(3)
+	}
 
 	confirm variable `srcvar'
 
@@ -118,6 +181,16 @@ program nwaltergen
 
 	tempname __nw_srcvar __nw_alterstat
 	mata: `__nw_srcvar' = st_data(1::`nodes', "`srcvar'")
+	if `isproportion' {
+		// preserves missingness through the comparison rather than
+		// letting a missing srcvar silently read as "not in category"
+		// (Mata's :== treats missing as an ordinary comparable value,
+		// not as "unknown" - a missing alter must still be *excluded*
+		// by calculate_alterstat()'s own downstream missing-dropping
+		// logic, exactly as it already is for every other stat).
+		mata: `__nw_srcvar' = (`__nw_srcvar' `matapropop' `propval')
+		mata: `__nw_srcvar'[selectindex(st_data(1::`nodes',"`srcvar'"):==.)] = J(sum(st_data(1::`nodes',"`srcvar'"):==.), 1, .)
+	}
 	mata: `__nw_alterstat' = `netobj'->calculate_alterstat(`__nw_srcvar', "`stat'")
 
 	capture drop `newvarname'
@@ -125,5 +198,23 @@ program nwaltergen
 	mata: st_store((1::`nodes'), "`newvarname'", `__nw_alterstat')
 	mata: mata drop `__nw_srcvar' `__nw_alterstat'
 
-	label variable `newvarname' "`stat' of alter.`srcvar'"
+	if `isproportion' {
+		label variable `newvarname' "proportion of alter.`srcvar' `propop' `propval'"
+	}
+	else {
+		label variable `newvarname' "`stat' of alter.`srcvar'"
+	}
+
+	// _rc is left stale (111, "variable not found") from the earlier
+	// "capture drop `newvarname'" line above - a plain, expected no-op
+	// on a variable that doesn't exist yet, but quietly-prefixed and
+	// inherently silent commands (confirm, mata:, local, label
+	// variable) do NOT refresh _rc even when they succeed (see
+	// nwbrokerage.ado's own header comment for the full explanation and
+	// how this was first found) - reset explicitly and silently here so
+	// a caller checking _rc right after this command sees this
+	// command's own actual outcome. Pre-existing in this file even for
+	// the original mean/sum/... path, not introduced by proportion() -
+	// fixed for both while already here.
+	capture confirm variable `newvarname', exact
 end
