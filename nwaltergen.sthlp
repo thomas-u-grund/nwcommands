@@ -15,13 +15,15 @@
 {cmd:nwaltergen} {it:newvar} {cmd:=} {it:stat}{cmd:(alter.}{it:srcvar}{cmd:)}
 [{cmd:,}
 {opth net(netname)}
-{opt replace}]
+{opt replace}
+{opth hop(int)}]
 
 {p 8 17 2}
 {cmd:nwaltergen} {it:newvar} {cmd:= proportion(alter.}{it:srcvar}{cmd:}{it:{help nwaltergen##propop:op}}{it:value}{cmd:)}
 [{cmd:,}
 {opth net(netname)}
-{opt replace}]
+{opt replace}
+{opth hop(int)}]
 
 {p 8 17 2}
 {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}.
@@ -35,6 +37,7 @@
 {synoptline}
 {synopt:{opth net(netname)}}Network to use; default = the current network{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opth hop(int)}}Aggregate over nodes exactly this many (unweighted) steps away, instead of direct neighbors; default = 1{p_end}
 
 {p2colreset}{...}
 
@@ -79,9 +82,21 @@ proportion is computed, exactly as for every other {it:stat} - a missing value i
 read as "not in this category".
 
 {pstd}
+{opth hop(int)} aggregates over nodes exactly that many (unweighted) steps away instead of direct
+(one-hop) neighbors - e.g. {cmd:mean(alter.smoking), hop(2)} is "the average smoking status among
+the contacts of a person's contacts" (excluding the person's own direct contacts, unless a network
+happens to reach them again by a different, exactly-2-step path). This is the standard multi-hop /
+lagged exposure question in diffusion research: does influence propagate beyond a node's immediate
+neighborhood? A node with no alters at exactly the requested hop distance (including one smaller
+than the network's diameter from it, or simply unreachable) is treated the same as a node with no
+direct alters: missing for {bf:mean}/{bf:min}/{bf:max}/{bf:sd}, 0 for {bf:sum}/{bf:count}. For a
+directed network, distance follows tie direction (out-going steps), matching {it:alter}'s own
+one-hop convention above; {opth hop(int)} works with {bf:proportion()} too.
+
+{pstd}
 {cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax (including
-{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)}) as a shortcut and dispatches to
-{cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
+{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)} and {opth hop(int)}) as a shortcut and
+dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
 {title:Examples}
@@ -90,6 +105,7 @@ read as "not in this category".
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
 	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
+	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
 
 
 {title:References}
