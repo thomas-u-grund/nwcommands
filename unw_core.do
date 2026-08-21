@@ -1476,8 +1476,28 @@ class `NWs' {
 		edge:		edge matrix
 		isdirect:	if is direct graph
 		is2mode:	if network is two-mode
-TODO:
-	modes is not handled yet 
+
+	`modes' (a per-node "1"/"2" string rowvector, get/set via
+	get_modes()/set_modes()) IS handled - populated by nwset's own
+	bipartite ingestion paths, queried via get_nodes_mode1()/
+	get_nodes_mode2()/is_2mode_boolean(), and (as of the nwsave/nwuse
+	persistence fix below) round-tripped through save/reload via
+	get_modes_labeled_string()/set_modes_from_labeled_string() - the
+	stale "TODO: modes is not handled yet" note this comment used to
+	carry here predates that persistence fix and was itself already
+	inaccurate before it (modes was already read/written throughout
+	the class), left uncorrected until now.
+
+	`nodesmode1'/`nodesmode2' (below) are themselves NOT reliable
+	sources of truth despite their names - get_nodes_mode1()/
+	get_nodes_mode2() recompute their answer directly from `modes'
+	every call and never read these two fields at all; only
+	set_nodes_mode1() ever writes them, and grep confirms nothing reads
+	them afterward. Left in place as genuinely dead/redundant fields
+	rather than removed, consistent with this package's general
+	preference for the smallest safe change over a speculative cleanup
+	unrelated to whatever fix is actually in progress - noted here so a
+	future reader does not mistake them for the authoritative store.
 */
 class `NWdef' {
 	string scalar 		name
@@ -1663,7 +1683,9 @@ class `NWdef' {
 	void set_nodes_mode2()
 	void set_description_mode1()
 	void set_description_mode2()
-	
+	string scalar get_modes_labeled_string()
+	void set_modes_from_labeled_string()
+
 	void connect_edge()
 	void add_node()
 	void zap()
@@ -3619,6 +3641,84 @@ string matrix `NWdef'::get_modes(){
 		set_modes(J(1,get_nodes(),"1"))
 	}
 	return(modes)
+}
+
+/*
+	Serializes the per-node mode assignment as "label=mode,label=mode,..."
+	pairs - keyed by each node's own label rather than by bare position,
+	so it survives round-tripping through nwsave/nwuse even though the
+	reload path (nwfromedge, rebuilding the network from a saved
+	edgelist) is not guaranteed to reproduce the exact original node
+	ordering. Used by nwsave.ado (via a new nw_name.ado r(modes) return)
+	to persist mode membership - previously NOT saved at all despite
+	is2mode itself being saved correctly, a genuine, previously-
+	undiscovered bug: nwsave's own edgelist-export step
+	(nwtoedge ... ignore2mode) discards mode information by design (it
+	is only meant to capture edges), and nothing else ever wrote the
+	`modes' array out as data, so every saved-and-reloaded two-mode
+	network silently lost its actual mode partition (only the boolean
+	"is this a two-mode network" flag survived) - confirmed directly via
+	a save/reload round-trip before this fix. See
+	set_modes_from_labeled_string() below for the matching reload side.
+*/
+string scalar `NWdef'::get_modes_labeled_string(){
+	string rowvector m
+	string scalar result
+	real scalar i
+
+	m = get_modes()
+	result = ""
+	for (i=1; i<=cols(nodes); i++) {
+		if (i > 1) result = result + ","
+		result = result + nodes[i] + "=" + m[i]
+	}
+	return(result)
+}
+
+/*
+	Reload side of get_modes_labeled_string() above - parses
+	"label=mode,label=mode,..." pairs and places each mode value at
+	whatever index that label currently occupies in `nodes' (via
+	first_index_match(), not a positional assumption), so it is robust
+	to the reloaded network's own node order potentially differing from
+	the order in effect when the string was originally saved. A label
+	from the string that is no longer found in the current `nodes'
+	array (should not normally happen - node identity is exactly what
+	the edgelist-based save/reload mechanism is meant to preserve - but
+	handled defensively rather than assumed) is silently skipped rather
+	than erroring. A blank string (e.g. reloading a legacy .nwdta file
+	saved before this fix existed, which never wrote this data out at
+	all) is a deliberate no-op: get_modes()'s own existing lazy default
+	(all nodes "1") applies exactly as it always has, with no attempt
+	to retroactively guess mode membership that was never actually
+	saved - the same "do not silently reinterpret old data" principle
+	nwuse.ado's own new2mode() handling already follows for is2mode.
+*/
+void `NWdef'::set_modes_from_labeled_string(string scalar s){
+	string scalar remaining, onepair, lab, md
+	real scalar idx, eqpos, commapos
+
+	if (s == "") return
+	get_modes()
+	remaining = s
+	while (strlen(remaining) > 0) {
+		commapos = strpos(remaining, ",")
+		if (commapos == 0) {
+			onepair = remaining
+			remaining = ""
+		}
+		else {
+			onepair = substr(remaining, 1, commapos-1)
+			remaining = substr(remaining, commapos+1, .)
+		}
+		eqpos = strpos(onepair, "=")
+		if (eqpos > 0) {
+			lab = substr(onepair, 1, eqpos-1)
+			md = substr(onepair, eqpos+1, .)
+			idx = first_index_match(nodes, lab)
+			if (idx > 0) modes[idx] = md
+		}
+	}
 }
 
 real scalar `NWdef'::get_nodes_mode1(){

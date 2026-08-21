@@ -130,6 +130,58 @@ documented as the intended mechanism); interactive pan/zoom/hover/drag graph exp
   raster/GIF pipeline, currently blocked in this environment only by missing ImageMagick, not by
   any design gap).
 
+## Two-mode/temporal architecture initiative (in progress)
+
+A large, user-requested architectural initiative: making two-mode/bipartite status a genuine,
+compositional property of the network object (already substantially true - see below - but with a
+real data-loss bug and several gaps fixed/closed as this progresses), and adding temporal metadata
+(snapshot/interval/event) as groundwork for future dynamic-network functionality, without building a
+full temporal-network modelling subsystem now. Tracked here across units since the full scope (audit
+→ metadata → `nwset` → command migration → `nw2*` compatibility → temporal slicing → full
+documentation pass → complete regression) spans many harmonisation units - see `docs/CERTIFICATION.md`
+for each unit's own certified row as they land.
+
+**Audit findings (harmonisation unit 38's own investigation, kept here rather than re-derived per
+unit)**: two-mode metadata is already real, first-class `NWdef` state (`is2mode`/`modes`/
+`get_nodes_mode1()`/`get_nodes_mode2()`/`description_mode1`/`description_mode2`), populated by
+`nwset`'s existing `bipartite` option and `nw2fromedge`/`nw2set` - the architecture the user asked
+for already substantially exists, contrary to the class's own stale "TODO: modes is not handled yet"
+comment (now corrected). The genuine gaps: (1) mode data was silently lost on every `nwsave`/`nwuse`
+round-trip (✅ fixed, unit 38); (2) `nwset` has no two-ID-variable edgelist form for declaring a
+two-mode network (`nwset person organisation, twomode`) - that shape currently exists only as the
+separate `nw2fromedge` command, not inside `nwset` itself; (3) ordinary one-mode commands mostly have
+**zero** two-mode awareness - confirmed concretely for `nwdegree` (silently computes a meaningless
+one-mode degree on bipartite data, no error) and `NWdef::get_density()` (wrong, one-mode denominator)
+- `nwclustering.ado` is the one existing, proven model for the right pattern (auto-redirects to
+`nw2clustering` when `is_2mode()` is true, flagged as "Model example" in
+`docs/NETWORK_TYPE_MATRIX.md`), not yet replicated elsewhere; (4) `nw2project`'s own `stat()` options
+are currently only `min|max|minmax|sum|mean` - no jaccard/cosine/binary/count projection exists yet,
+a genuine feature gap, not merely something to audit-and-retain; (5) a projected network's own
+metadata does not record its own provenance (which network/mode it was projected from, by what
+method) - lost the moment `nw2project` returns; (6) temporal metadata does not exist anywhere in the
+package at all (confirmed via a repo-wide grep) - genuinely greenfield, unlike two-mode.
+`docs/NETWORK_TYPE_MATRIX.md` already contains close to the exact command-by-command compatibility
+table the user's own Part XV/15 asked for (T1-T5/W1-W5 classification, ~20 commands already audited,
+~90 flagged "not yet audited") - extend that file as commands are migrated, rather than building a
+new one.
+
+**Sequencing** (adapted from the user's own suggested workflow): audit (done) → fix mode-persistence
+bug (done, unit 38) → `nwset` two-ID-variable `twomode` syntax → migrate representative commands
+(`nwdegree`/density first, following the proven `nwclustering` redirect pattern) → extend
+`nw2project` with the missing projection methods + provenance metadata → `nwsummarize` (the
+package's closest equivalent to a `nwdescribe` command - already displays two-mode metadata, extend
+for temporal once it exists) → temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`
++ basic `at()` slicing on one or two representative commands → full `docs/NETWORK_TYPE_MATRIX.md`
+audit pass across every remaining command → full regression sweep → this section marked complete.
+
+**Explicitly out of scope for this initiative** (per the user's own instructions): automatic
+projection under any circumstance (a command requiring a one-mode network must error or require an
+explicit `projection()`-style request, never silently project or silently pick a mode); a full
+temporal-network modelling subsystem (SAOMs, temporal ERGMs, relational-event models, dynamic
+community detection); a large windowing framework beyond what falls out naturally from the
+architecture; lambda sets/factions (separate, already-tracked cohesive-subgroup items, unrelated to
+this initiative despite superficial "network property" similarity).
+
 ## Top 20 additions ranked by value/effort
 
 1. ✅ `nw2project` (two-mode projection) — Medium value, Small effort, spec already written — done (commits `1ba195e`/`531e018`; the roadmap checkmark was simply never added at the time). Re-verified working (`cscripts/test_nw2project.do` passes) during the harmonisation-phase Part I re-audit; "Supported network types" section added (harmonisation unit 17) — status **A**.

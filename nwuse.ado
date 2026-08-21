@@ -1,116 +1,164 @@
-*! Date        : 11sept2014
-*! Version     : 1.0.1
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.1  13may2019 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##import:[NW-2.2] Import/Export}
 
+{title:Title}
+
+{p2colset 9 14 22 2}{...}
+{p2col :nwuse  {hline 2} Load Stata network dataset}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwuse} 
+{it:{help filename}}
+[{cmd:,}
+{cmd:clear}]
+
+{p 8 17 2}
+{cmdab: nwwebuse} 
+{it:{help netexample}}
+[{cmd:,}
+{cmd:nwclear}]
+
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt nwclear}}clear memory before loading dataset{p_end}
+{synopt:{opt nwappend}}append to existing data{p_end}
+
+        
+{title:Description}
+
+{pstd}
+{bf:nwuse} loads a Stata network dataset previously saved with {help nwsave}. This includes all networks and Stata variables. If {it:{help filename}}
+is specified without an extension, {bf:.nwdta} is assumed. If your {it:filename} contains embedded spaces, remember to enclose
+it in double quotes.
+
+     
+{title:Examples}
+        
+{pstd}
+This example creates 5 new random networks and {help nwsave:saves} them as {it:mynets}.A new dataset called {it:mynets.nwdta} is created in the working directory with the networks and all Stata variables.
+
+        {cmd:. nwclear}
+        {cmd:. nwrandom 20, ntimes(5) prob(.2)}
+        {cmd:. nwsave mynets}
+		{cmd:. nwclear}
+
+{pstd}
+One can bring the data back with:
+	
+        {cmd:. nwuse mynets}
+		
+{pstd}
+This load the Florentine dataset from the internet and appends it to the existing data.
+
+        {cmd:. nwwebuse florentine, nwappend}       
+        
+{title:See also}
+
+        {help nwwebuse}, {help nwsave}, {help use}, {help nwappend}
+***/
 capture program drop nwuse
 program nwuse
-	syntax anything [, nwclear clear *]
-	local webname = subinstr(`"`anything'"', ".dta","",99)
+	syntax anything [, nwclear nwappend force *]
+	local webname = subinstr(`"`anything'"', ".dta",".nwdta",999)
 	
-	`clear'
+	tempfile existing
+	capture save `existing'
+	
 	`nwclear'
-
-	if c(k) > 0 & _N > 0{
-		local reloadExisting = "yes"
-		gen _running = _n
-		tempfile existing 
-		qui save `existing' 
+	qui nwset
+	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
+		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
+		error 999
 	}
-	qui use `webname', `options'
 	
-	capture {
-		confirm variable _format _nets _name _size _directed _edgelabs
-		local f = _format[1]
-		local nets = _nets[1]
-		forvalues i = 1/`nets' {
-			local s = _size[`i']
-			confirm variable _nodevar`i'
-			confirm variable _nodelab`i'
-			if "`f'" == "edgelist"{
-				local nextname = _name[`i']
-				confirm variable _`nextname'
-			}
-			if "`f'" == "matrix" {
-				forvalues j = 1/`s' {
-					local nodevar `=_nodevar`i'[`j']'
-					confirm variable `nodevar'
-				}
-			}
-
-			if "`f'" != "matrix" & "`f'" != "edgelist" {
-				di "{err}File {bf:`webname'.dta} has the wrong format. Cannot find network meta-information."
-				error 6703	
-			}
-		}
+	qui if "`nwappend'" != "" {
+		capture qui nwcurrent
+		local current "`r(current)'"
 	}
-	if _rc != 0 {
-		di "{err}File {bf:`webname'.dta} has the wrong format. Cannot find network meta-information."
-		error 6702
-	}
-
-	local frmat = _format[1]
-	local nets = _nets[1]
-	local allnets ""
-	local allnames ""
-	forvalues i = 1 / `nets' {
-		local name = trim(_name[`i'])
-		local allnets "`allnets' _`name'"
-		local allnames "`allnames' `name'"
-		local size = _size[`i']
-		local directed = _directed[`i']
-		local edgelabs = _edgelabs[`i']
-		local vars ""
-		local labs ""
-		forvalues j = 1 / `size' {
-			local nextvar = _nodevar`i'[`j'] 
-			local nextlab = _nodelab`i'[`j']
-			local labs "`labs' `nextlab'"
-			local vars "`vars' `nextvar'"
-		}
 	
-		if "`directed'" == "false" {
-			local directed = ""
-			local undirected = "undirected"
+	if strpos("`webname'", ".nwdta") > 0 {
+		use `webname'
+	}
+	else {
+		use `webname'.nwdta
+	}
+	
+	confirm variable _nw_format _nw_nets _nw_netname _nw_size _nw_directed _nw_twomode _nw_selfloop _nw_title
+	// _nw_modes/_nw_mode1desc/_nw_mode2desc are a newer addition (mode
+	// membership was never actually saved before, despite the bare
+	// is-two-mode flag surviving correctly - see nwsave.ado's own
+	// comment for the full explanation) - not required here, unlike
+	// the columns above, so that a .nwdta file saved before this fix
+	// existed still loads cleanly; it just has no mode data to
+	// restore (exactly the same "do not silently reinterpret old
+	// data" principle new2mode() below already follows for is2mode).
+	capture confirm variable _nw_modes
+	local has_modes = (_rc == 0)
+	capture confirm variable _nw_mode1desc
+	local has_mode1desc = (_rc == 0)
+	capture confirm variable _nw_mode2desc
+	local has_mode2desc = (_rc == 0)
+	local f = _nw_format[1]
+	local nets = _nw_nets[1]
+	// check if network names already exist
+	qui forvalues i = 1/`nets' {
+		nwvalidate `=_nw_netname[`i']'
+		di `"if "`r(exists)'" == "true" & "`force'" == "" "'
+		if "`r(exists)'" == "true" & "`force'" == "" {
+			noi di "{err}network {it:`r(tryname)'} already exists; use option {bf:force}"
+			use `existing'
+			error 999
 		}
-		else {
-			local directed = "directed"
-			local undirected = ""
-		}
+	}
+	
+	qui forvalues i = 1/`nets' {
 		preserve
-		
-		local nname "_`name'"
-		if "`frmat'" == "edgelist"{
-			keep _fromid _toid `nname'
-			qui nwfromedge _fromid _toid `nname' if `nname' != . , name(`name') vars(`vars') labs(`labs') `undirected' `directed'
-		
-		}
-		if "`frmat'" == "matrix"{
-			local _netstub `vars'
-			qui nwset `_netstub', name(`name') vars(`vars') labs(`labs') `undirected'
+		local n = _nw_netname[`i']
+		local s = _nw_size[`i']
+		local d = _nw_directed[`i']
+		local t = _nw_twomode[`i']
+		local sl = _nw_selfloop[`i']
+		local tl = _nw_title[`i']
+		local v = _nw_valued[`i']
+		local md ""
+		local m1d ""
+		local m2d ""
+		if `has_modes' local md = _nw_modes[`i']
+		if `has_mode1desc' local m1d = _nw_mode1desc[`i']
+		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
+		keep if _nw_match_`n'_nw_ego == 1
+		nwfromedge _nw_ego _nw_alter `n', name("`n'")
+		nwname `_nw_netname', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("``v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"')
+		if "`d'"  == "false" {
+			nwsym `_nw_netname'
 		}
 		restore
 	}
 	
-	capture drop _*
-	capture drop `allnets'
-	
-	di 
-	di "{txt}{it:Loading successful}"
-	nwset
-	qui drop if _n > r(max_nodes)
-	qui if "`reloadExisting'" != "" {
-		gen _running=_n
-		merge m:m _running using `existing', nogenerate
-		drop _running
-		
+	if _rc != 0 {
+		di "{err}error in loading"
+		error 999
 	}
-	//nwload
-end
-
-
-
 	
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+	qui keep if _nwnode != ""
+	qui capture drop _nw_*
+	
+	nw_syntax _all, max(99999)
+	qui foreach onenet in `netname' {
+		capture drop `onenet'
+	}
+	
+	qui if "`nwappend'" != "" {
+		capture merge 1:1 _nwnode using `existing', nogenerate
+		capture order _nwnode _nwinclude
+		nwcurrent `current'
+	}
+end
