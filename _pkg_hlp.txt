@@ -65,6 +65,7 @@ f nwkatz.sthlp
 f nwkcore.sthlp
 f nwkeep.sthlp
 f nwkeepnodes.sthlp
+f nwkplex.sthlp
 f nwlattice.sthlp
 f nwload.sthlp
 f nwmodularity.sthlp

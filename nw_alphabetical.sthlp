@@ -62,6 +62,7 @@
 {p2col:{bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:{bf:{help nwkeep }}}Keep a network (or only certain nodes){p_end}
 {p2col:{bf:{help nwkeepnodes }}}Keep nodes of a network{p_end}
+{p2col:{bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
 {p2col:{bf:{help nwmodularity }}}Score a partition's modularity{p_end}
