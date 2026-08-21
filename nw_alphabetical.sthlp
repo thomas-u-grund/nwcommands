@@ -23,6 +23,7 @@
 {p2col:{bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
 {p2col:{bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:{bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
+{p2col:{bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:{bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:{bf:{help nwclustering }}}Clustering coefficient{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}

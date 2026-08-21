@@ -890,6 +890,61 @@ real matrix CorePeriphery(real matrix net, real scalar maxiter){
 	return(core \ nw_cp_fitness(net, core, idx))
 }
 
+/*
+	Bron-Kerbosch (1973) maximal clique enumeration, without pivoting -
+	the classic, textbook recursive algorithm: R is the clique built so
+	far, P is the set of candidates that could still extend it (every
+	remaining candidate is already known to be tied to every member of
+	R, an invariant maintained by intersecting with each chosen node's
+	own neighbor set on recursion), X is the set of candidates already
+	fully explored (excluded so the same maximal clique is never
+	reported twice, once found via a different member as the "last one
+	added"). A clique is maximal - reported - exactly when both P and X
+	are empty: no candidate remains that could extend it, and none was
+	skipped that would have. All three sets are represented as 0/1
+	indicator row vectors over 1..n (not lists of node indices) - Mata
+	has no lightweight dynamic set type, and elementwise :& intersection
+	is both simpler and faster than fiddling with `uniqrows()`-style set
+	operations on index lists for this. Deliberately the plain, unpivoted
+	version rather than the standard pivoting optimization (which
+	restricts the outer loop to a subset of P chosen to minimize
+	recursive branching) - correctness here is easier to reason about
+	and verify by hand than the pivoted variant, and this package's own
+	target network scale (moderate SNA datasets, not internet-scale
+	graphs) does not need the asymptotic improvement pivoting buys.
+	Worst-case exponential in the number of maximal cliques a graph can
+	have (a mathematical property of the *problem*, true of any correct
+	algorithm, not a defect of this particular implementation) - a dense
+	network could in principle take a very long time; not specially
+	guarded against here beyond documenting it (see nwclique.ado's own
+	"Supported network types" section).
+*/
+real matrix BronKerbosch(real matrix adj, real rowvector R, real rowvector P, real rowvector X){
+	real matrix results, childresults
+	real rowvector Pcopy, Nv, newR
+	real scalar n, v
+
+	n = cols(P)
+	results = J(0, n, 0)
+
+	if (sum(P) == 0 & sum(X) == 0){
+		return(R)
+	}
+
+	Pcopy = P
+	for (v = 1; v <= n; v++){
+		if (Pcopy[v] == 0) continue
+		Nv = adj[v,.]
+		newR = R
+		newR[v] = 1
+		childresults = BronKerbosch(adj, newR, P :& Nv, X :& Nv)
+		results = results \ childresults
+		P[v] = 0
+		X[v] = 1
+	}
+	return(results)
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -1078,6 +1133,8 @@ class `NWdef' {
 	real matrix calculate_brokerage()
 	real matrix calculate_2mode_degree()
 	real matrix calculate_egostats()
+	real matrix calculate_cliques()
+	real matrix calculate_cliques_filtered()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -1798,6 +1855,55 @@ real matrix `NWdef'::calculate_egostats(){
 		result[i,2] = actual / possible
 	}
 	return(result)
+}
+
+/*
+	Maximal clique enumeration (see BronKerbosch() above for the
+	algorithm itself). Always undirected and binary - a clique is
+	fundamentally a symmetric, presence/absence structure (Wasserman &
+	Faust 1994's own definition requires every pair of members to be
+	mutually adjacent, which has no natural directed or valued
+	generalization in the classical sense) - `get_matrix_mod(0,0)`
+	symmetrizes and binarizes a directed and/or valued network exactly
+	the way `nwclustering`'s own directed-network guard implies is
+	needed for a clustering-coefficient-family measure, the closest
+	existing analog. Returns a (number of cliques found) x n 0/1
+	indicator matrix, one row per maximal clique - cliques genuinely
+	overlap (a node can belong to several), so this is not a partition
+	the way `calculate_components()`'s single membership-id vector is;
+	the calling `.ado` derives whatever per-node summary it wants from
+	this full membership matrix.
+*/
+real matrix `NWdef'::calculate_cliques(){
+	real matrix adj, R0, P0, X0
+	real scalar n
+
+	n = get_nodes()
+	adj = (*get_matrix_mod(0,0)) :!= 0
+	_diag(adj, 0)
+
+	R0 = J(1,n,0)
+	P0 = J(1,n,1)
+	X0 = J(1,n,0)
+
+	return(BronKerbosch(adj, R0, P0, X0))
+}
+
+/*
+	calculate_cliques(), restricted to cliques of at least `minsize'
+	members - a thin, single-purpose wrapper so nwclique.ado only needs
+	one-line mata: calls throughout (a bare mata:/end block does not
+	nest correctly inside a running program's own execution flow, unlike
+	at file level after a program's own "end" - confirmed directly: it
+	silently truncates the program's own boundary detection instead of
+	behaving as a block-scoped Mata call).
+*/
+real matrix `NWdef'::calculate_cliques_filtered(real scalar minsize){
+	real matrix cliq, sizes
+
+	cliq = calculate_cliques()
+	sizes = rowsum(cliq)
+	return(select(cliq, sizes :>= minsize))
 }
 
 /*
