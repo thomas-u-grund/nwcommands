@@ -75,7 +75,7 @@ Shortest paths between one pair (`nwpath`, B — unweighted only, no batch/k-sho
 
 ## I. Dyads, triads and motifs
 
-Dyad census with reciprocity (A, `nwdyads`, **zero test coverage** — a real gap for an otherwise-solid command), full Davis-Leinhardt 16-type triad census (A, `nwtriads`, D-flagged — dense matrix-power algorithm). Simple triangle/transitive/cyclic/open-triple counts: B, derivable from the 16-type census but no dedicated convenience output. Node-level motif participation, arbitrary/4+-node motifs, cycle census beyond triads, signed triad census: **E**.
+Dyad census with reciprocity (A, `nwdyads`, now tested — harmonisation unit 31, which also found and fixed a genuine null-dyad-count bug, see `docs/CERTIFICATION.md`), full Davis-Leinhardt 16-type triad census (A, `nwtriads`, D-flagged — dense matrix-power algorithm). Simple triangle/transitive/cyclic/open-triple counts: B, derivable from the 16-type census but no dedicated convenience output. Node-level motif participation, arbitrary/4+-node motifs, cycle census beyond triads, signed triad census: **E**.
 
 ## J. Similarity, homophily, mixing and assortativity
 
