@@ -52,7 +52,7 @@
 {p2col:{bf:{help nwimport }}}Import network{p_end}
 {p2col:{bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
 {p2col:{bf:{help nwissymmetric }}}Check if network is symmetric{p_end}
-{p2col:{bf:{help nwkatz }}}Calculate Katz centrality{p_end}
+{p2col:{bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:{bf:{help nwkeep }}}Keep a network (or only certain nodes){p_end}
 {p2col:{bf:{help nwkeepnodes }}}Keep nodes of a network{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
