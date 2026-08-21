@@ -1160,7 +1160,38 @@ program nwplot, rclass
 		// same well-tested, heavily-used code path every other caller
 		// of nwdegree already relies on, so the isolate indicator is
 		// simply derived from it directly afterward.
-		capture drop _isolates _degree _outdegree _indegree
+		// BUGFIX: a single compound "capture drop A B C D" is NOT
+		// equivalent to dropping each variable independently - Stata's
+		// drop command is all-or-nothing over its whole varlist, so if
+		// even ONE named variable does not exist, the ENTIRE command
+		// fails and drops NOTHING, not even the others that do exist
+		// (confirmed via a direct, minimal probe: "capture drop a b c d"
+		// with only a/b existing left both a and b undropped). Exactly
+		// one of _degree (undirected) or _outdegree/_indegree (directed)
+		// is ever actually created by nwdegree below - the other name(s)
+		// never exist - so this compound drop always silently failed via
+		// `capture', on every single call, for every network, leaving
+		// _isolates and whichever of _degree/_outdegree/_indegree WAS
+		// created stranded in the dataset after nwplot returned. That
+		// stranded leftover then collided with nwdegree's own "variable
+		// already exists" guard on the very next call that tried to
+		// generate the same default variable name - nwplot's own next
+		// invocation (this exact line, on ANY network), a later user
+		// nwdegree call, or nwplot's internal isolates recomputation for
+		// a second network, all indistinguishably, since these are
+		// ordinary Stata dataset variables shared across the whole
+		// session, not scoped to any one network. This is the actual
+		// root cause of the "nwplot/nwdegree fail with a bare r(99)
+		// after creating a second network" report - reproduces
+		// identically on a single network (no second network needed),
+		// confirmed via a direct repro before this fix. Splitting into
+		// one drop per variable makes each one independent: a missing
+		// variable is silently skipped (via `capture'), not treated as
+		// a reason to abandon dropping the others.
+		capture drop _isolates
+		capture drop _degree
+		capture drop _outdegree
+		capture drop _indegree
 		qui nwdegree `netname', silent
 		capture confirm variable _degree
 		if _rc == 0 {
@@ -1171,7 +1202,15 @@ program nwplot, rclass
 		}
 		qui count if _isolates == 1
 		local isol = `r(N)'
-		capture drop _isolates _degree _outdegree _indegree
+		// same fix as the pre-emptive cleanup above - one drop per
+		// variable, not a single compound drop that silently fails
+		// entirely (and drops nothing) the moment any one of these four
+		// names doesn't exist, which is always true for at least one of
+		// _degree vs _outdegree/_indegree.
+		capture drop _isolates
+		capture drop _degree
+		capture drop _outdegree
+		capture drop _indegree
 		local nonisol = `nodes' - `isol'
 		
 		// Get number of components

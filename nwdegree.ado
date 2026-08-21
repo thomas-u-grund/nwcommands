@@ -270,10 +270,32 @@ program nwdegree
 		local _outdegree : word 1 of `netgenerate'
 		local _isolate: word 1 of `netgenerate'
 
-		foreach c in `_degree' `_indegree' `_outdegree' `_isolates' {
+		// BUGFIX: this whole per-network body runs inside the outer
+		// "qui foreach netname_temp in `netname' { ... }" loop above, so
+		// a plain "di" here was silently swallowed by that enclosing
+		// qui - the user got nothing but a bare, unexplained r(99), with
+		// no indication of which variable already existed or why (the
+		// exact complaint this was found while diagnosing: nwplot's own
+		// internal degree/isolates computation, elsewhere, left stale
+		// _outdegree/_indegree/_isolates variables behind after a
+		// compound "capture drop A B C D" silently failed in its
+		// entirety - see nwplot.ado's own fix - and the next call to
+		// generate those same names hit this guard with no visible
+		// explanation at all). "noi" makes this diagnostic actually
+		// reach the user, matching how every other user-facing message
+		// in this same command body is already marked.
+		//
+		// Also fixed a separate, adjacent typo found in the same line:
+		// this loop referenced `_isolates' (plural) which is never
+		// defined anywhere - `_isolate' (singular, set two lines above)
+		// is the real local - so the isolates target variable's own
+		// existence was never actually checked here at all, silently
+		// falling through to a bare "capture generate" later instead of
+		// this guard's own clear error message.
+		foreach c in `_degree' `_indegree' `_outdegree' `_isolate' {
 			capture confirm variable `c', exact
 			if _rc == 0 & "`replace'" == "" {
-				di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:generate()}"
+				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:generate()}"
 				err 99
 			}
 			capture drop `c'
