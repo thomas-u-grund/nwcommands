@@ -91,7 +91,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 16. Export-format parity (add GML/GraphML/edgelist to `nwexport`) — Low-medium value, Small effort
 17. CONCOR — Medium value, Medium effort
 18. `nwplot` test coverage (largest untested file in the package) — Risk-reduction value, Medium effort (many code paths)
-19. Programming-API documentation chapter — Medium value (unlocks third-party extensibility), Small effort, pure documentation
+19. ✅ Programming-API documentation chapter — Medium value (unlocks third-party extensibility), Small effort, pure documentation — done (new "[NW-5.2]" section in `nw_programming.sthlp`, including a 10-item pitfalls list drawn from real bugs found this session)
 20. ✅ Weighted eigenvector centrality option — Small value, Small effort — done (`nwevcent, weighted`)
 
 ## Top 10 existing features to improve
