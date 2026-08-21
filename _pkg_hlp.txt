@@ -32,6 +32,7 @@ f nwcompressobs.sthlp
 f nwconcor.sthlp
 f nwconstraint.sthlp
 f nwcontext.sthlp
+f nwcoreperiphery.sthlp
 f nwcorrelate.sthlp
 f nwcug.sthlp
 f nwcurrent.sthlp

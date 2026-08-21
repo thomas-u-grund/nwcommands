@@ -818,6 +818,78 @@ real matrix ConcorSplitIDs(real matrix net, real scalar depth, real scalar maxit
 	return(res)
 }
 
+/*
+	Fitness of a discrete core/periphery assignment (Borgatti & Everett 1999):
+	the Pearson correlation between the observed network `net' and the ideal
+	discrete core-periphery pattern it implies - a tie is "expected" between
+	any pair where at least one member is core (core-core and core-periphery
+	ties both count as structurally expected; only periphery-periphery pairs
+	are expected to be tie-free). Self-comparisons are excluded via `idx'
+	(precomputed once by the caller - see CorePeriphery below - since it is
+	the same off-diagonal mask on every call within one optimization run,
+	not worth recomputing per evaluation).
+*/
+real scalar nw_cp_fitness(real matrix net, real matrix core, real matrix idx){
+	real matrix pattern, avec, pvec
+	real scalar n
+
+	n = rows(net)
+	pattern = ((core * J(1,n,1)) :+ (J(n,1,1) * core')) :> 0
+	avec = vec(net)[idx,1]
+	pvec = vec(pattern)[idx,1]
+	return(correlation((avec,pvec))[1,2])
+}
+
+/*
+	Discrete core-periphery detection via local search: start from a degree-
+	based seed (above-average-degree nodes as an initial core guess), then
+	repeatedly try flipping each node's core/periphery status in turn
+	(fixed 1..n order, for reproducibility - the same convention Louvain
+	above already established), keeping the flip only if it improves the
+	fitness score, until a full sweep produces no further improvement or
+	`maxiter' sweeps are reached. This is a greedy local optimum, not a
+	guaranteed global one - the discrete core-periphery problem is
+	combinatorial (2^n possible partitions), the same character of problem
+	Louvain's own greedy local search already accepts for modularity.
+*/
+real matrix CorePeriphery(real matrix net, real scalar maxiter){
+	real matrix mask, idx, core, deg
+	real scalar n, sweep, moved, i, fit0, fit1
+
+	n = rows(net)
+	if (max(net) <= 0){
+		errprintf("Core-periphery detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+
+	mask = J(n,n,1)
+	_diag(mask, 0)
+	idx = selectindex(vec(mask))
+
+	deg = rowsum(net) :+ colsum(net)'
+	core = (deg :> mean(deg))
+
+	sweep = 0
+	moved = 1
+	while (moved & sweep < maxiter){
+		moved = 0
+		sweep++
+		for (i=1; i<=n; i++){
+			fit0 = nw_cp_fitness(net, core, idx)
+			core[i,1] = 1 - core[i,1]
+			fit1 = nw_cp_fitness(net, core, idx)
+			if (fit1 > fit0 + 1e-12){
+				moved = 1
+			}
+			else {
+				core[i,1] = 1 - core[i,1]
+			}
+		}
+	}
+
+	return(core \ nw_cp_fitness(net, core, idx))
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -1002,6 +1074,7 @@ class `NWdef' {
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
 	real matrix calculate_concor()
+	real matrix calculate_coreperiphery()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_similarity_index()
@@ -1558,6 +1631,28 @@ real matrix `NWdef'::calculate_concor(real scalar splits, | real scalar valued, 
 	out = J(n,1,.)
 	out[res[.,1],1] = res[.,2]
 	return(out)
+}
+
+/*
+	Discrete core-periphery detection (Borgatti & Everett 1999) - see
+	CorePeriphery()/nw_cp_fitness() above for the algorithm. Undirected
+	only (get_matrix_mod(val, 0) symmetrizes), matching the classical
+	model's own definition, which does not distinguish in-ties from
+	out-ties. Returns an (n+1)-row column vector: rows 1..n are the 0/1
+	core assignment, row n+1 is the fitness (correlation with the ideal
+	pattern this assignment implies) - the calling .ado splits these
+	apart rather than this needing two separate return channels.
+*/
+real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar maxiter){
+	real matrix w
+	real scalar val, iter
+
+	val = (args() >= 1 ? valued : 1)
+	iter = (args() == 2 ? maxiter : 100)
+	w = *get_matrix_mod(val, 0)
+	_diag(w, 0)
+
+	return(CorePeriphery(w, iter))
 }
 
 /*

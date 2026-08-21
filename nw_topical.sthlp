@@ -130,6 +130,7 @@
 {p2col:    {bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
 {p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
+{p2col:    {bf:{help nwcoreperiphery }}}Discrete core-periphery detection{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}

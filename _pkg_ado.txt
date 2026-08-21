@@ -28,6 +28,7 @@ f nwcompressobs.ado
 f nwconcor.ado
 f nwconstraint.ado
 f nwcontext.ado
+f nwcoreperiphery.ado
 f nwcorrelate.ado
 f nwcug.ado
 f nwcurrent.ado
