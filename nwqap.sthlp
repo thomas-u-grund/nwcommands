@@ -158,8 +158,29 @@ remains on the roadmap as a larger follow-on (see {browse "docs/CERTIFICATION.md
 
 {title:Stored results}
 
+{pstd}
+{cmd:nwqap} is an {bf:eclass} command: results are posted with {help ereturn:ereturn}, so
+{help estimates store}, {help estimates table}, and other standard postestimation commands
+that only need {it:e(b)}/{it:e(V)} (e.g. {help test}, {help lincom}) work as usual. {it:e(V)}
+is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a
+classical OLS/logit covariance matrix - dyadic network data violates the independent-
+observations assumption those classical formulas require, which is the entire reason QAP
+permutation testing exists in the first place. No {cmd:predict} subroutine is implemented.
+
+	Scalars
+	  {bf:e(N)}		number of dyad-level observations
+	  {bf:e(permutations)}	number of QAP permutations
+
+	Macros
+	  {bf:e(cmd)}		{bf:nwqap}
+	  {bf:e(title)}		title of estimation
+	  {bf:e(depvar)}	name of dependent network
+	  {bf:e(qap_regcmd)}	regression command used ({bf:type()})
+
 	Matrices
-	  {bf:e(pvalues)}	matrix with QAP p-values
+	  {bf:e(b)}		coefficient vector
+	  {bf:e(V)}		diagonal matrix of QAP-permutation coefficient variances
+	  {bf:e(pvalues)}	matrix with QAP p-values, in the same column order as {bf:e(b)}
 
 {title:See also}
 

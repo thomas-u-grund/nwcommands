@@ -1,5 +1,5 @@
-capture program drop nwqap	
-program nwqap
+capture program drop nwqap
+program nwqap, eclass
 syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) ]
     set more off
 
@@ -164,6 +164,15 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		save "`save'", replace
 	}	
 	matrix pvalues = J(1, `vars', .)
+	// QAP-based variance of each coefficient, from its own permutation
+	// distribution - not a classical OLS/logit variance (which is
+	// exactly what QAP permutation testing exists to avoid trusting:
+	// dyadic network data violates the independent-observations
+	// assumption those classical formulas need). Used below to post a
+	// genuinely valid e(V) for eclass/postestimation support, rather
+	// than either fabricating an invalid classical one or leaving
+	// postestimation commands like `test'/`lincom' unusable.
+	matrix permvar = J(1, `vars', .)
 	local k = 1
 	qui foreach entry in `formula' {
 		if ("`entry'" == "`net'") {
@@ -172,9 +181,13 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		else {
 			local orig_result = reg_results[1,`k']
 		}
-		
-		local novariation = "false"	
+
+		local novariation = "false"
 		sum `entry'
+		// captured immediately - the count calls below are also
+		// r-class and would otherwise overwrite r(Var)/r(mean) before
+		// this loop iteration gets to use them
+		local entryvar = r(Var)
 		if (`r(sd)' == 0) {
 			local novariation = "true"
 			di "`novariation'"
@@ -185,22 +198,24 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		count if `entry' > `upper_mark'
 		local upper = r(N)
 		count if `entry' < `lower_mark'
-		local lower = r(N)	
-		local outer = `upper' + `lower'	
+		local lower = r(N)
+		local outer = `upper' + `lower'
 		count
 		local total = r(N)
-		local p = `outer' / `total'	
+		local p = `outer' / `total'
 		if "`novariation'" == "true" {
 			local p = "."
 		}
 		if ("`entry'" == "`net'") {
 			mat pvalues[1,`vars'] = `p'
+			mat permvar[1,`vars'] = `entryvar'
 		}
 		else {
 			mat pvalues[1,`k'] = `p'
+			mat permvar[1,`k'] = `entryvar'
 			local k = `k' + 1
 		}
-	}	
+	}
 	restore
 	
 	//  Display results.
@@ -240,11 +255,51 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	di "{txt}{col 2}{ralign `=`max_l'+1':_cons}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`constant'}"
 	di "{txt}{hline `=`max_l' + 3'}{c BT}{hline 25}"
 	di "{error}`message'"
-	
-	mata: st_global("e(title)", "Multivariate regression quadratic assignment procedure")
-	mata: p = st_matrix("pvalues")
-	mata: st_matrix("e(pvalues)", p)
-	mata: mata drop datalong net_long perm_net onenet dvnet p
+
+	// eclass integration: e(b)/e(V) are posted properly (via
+	// ereturn post, using the already-tokenized IV names from the
+	// display loop above) rather than left as bare st_matrix writes,
+	// so estimates store/estimates table/ereturn list all work as
+	// expected for an estimation command. e(V) is a diagonal matrix
+	// built from each coefficient's own QAP-permutation variance
+	// (computed above, alongside the p-values) - not the classical
+	// OLS/logit covariance, which would be actively misleading here:
+	// dyadic network data violates the independent-observations
+	// assumption those formulas require, which is the entire reason
+	// QAP permutation testing exists in the first place. No predict
+	// subroutine is implemented (QAP prediction is not as well
+	// established a concept as for standard regression, and it's a
+	// separate concern from getting e(b)/e(V)/postestimation-storage
+	// support in place) - see docs/CERTIFICATION.md's Pending table.
+	local ivnames ""
+	forvalues k=2/`vars' {
+		local ivnames "`ivnames' ``k''"
+	}
+	tempname b V
+	matrix `b' = reg_results
+	matrix `V' = diag(permvar)
+	// Some regression commands (e.g. logit) attach their own equation
+	// name (their depvar) to e(b)'s column stripe, while regress does
+	// not - a bare "matrix colnames" call preserves any equation name
+	// already on the stripe rather than clearing it (per Stata's own
+	// documented behaviour), so `b' and `V' could end up with mismatched
+	// stripes (one eq-qualified, one not) depending on `type''s own
+	// convention. Blanked explicitly first so the two always match,
+	// regardless of the regression command used.
+	matrix coleq `b' = _
+	matrix coleq `V' = _
+	matrix roweq `V' = _
+	matrix colnames `b' = `ivnames' _cons
+	matrix colnames `V' = `ivnames' _cons
+	matrix rownames `V' = `ivnames' _cons
+	ereturn post `b' `V', depname(`net') obs(`dyads')
+	ereturn local cmd "nwqap"
+	ereturn local title "Multivariate regression quadratic assignment procedure (QAP)"
+	ereturn local depvar "`net'"
+	ereturn local qap_regcmd "`type'"
+	ereturn scalar permutations = `permutations'
+	ereturn matrix pvalues pvalues
+	mata: mata drop datalong net_long perm_net onenet dvnet
 
 end
 

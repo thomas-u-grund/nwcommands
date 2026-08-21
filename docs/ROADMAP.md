@@ -27,7 +27,7 @@ Cheap, high-confidence fixes to things already built:
 - ✅ `nwgenerate.ado`'s 8 dead commented-out dispatch branches (`dyadprob`/`homophily`/`lattice`/`path`/`pref`/`ring`/`small`/`transpose`) now error clearly instead of silently no-op'ing. **Remaining**: actually restore each shortcut against its target command's current syntax (each needs individual verification — the commented-out bodies predate several syntax changes) — Medium effort, not done yet.
 - ✅ Documented `nwbalance.ado` (structural balance) — `.sthlp` written, `cscripts/test_nwbalance.do` added, certified against a hand-derived signed-K4 worked example. Also fixed a real bug (`save test, replace` polluting the user's working directory with an unused debug file). **Follow-up now done** (harmonisation unit 14): the zero-closed-triads edge case (a network with no triangles errored r(2000) instead of returning zero) is fixed with an explicit empty-result guard, verified with real assertions in `cscripts/test_nwbalance.do`.
 - Document `nwrecode.ado` — write `.sthlp`. Real, correct, currently invisible.
-- Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwqap`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors.
+- Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors. `nwqap` now has substantial test coverage (see harmonisation units 9/15/19).
 - ✅ Migrated `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors. Surfaced a real, previously-invisible bug: the old `mode(incoming)` branch had a stray unbalanced paren (a genuine Mata syntax error) and had zero test coverage — could never have actually run. Now fixed and certified (see `docs/CERTIFICATION.md`).
 - ✅ Fix silent weight-handling gaps: betweenness — done (harmonisation unit 18): added a weighted/Dijkstra-based `weighted` option alongside the existing unweighted default, which is unchanged (a genuine additive option, not a behavior change to any existing call). Eigenvector centrality — already done (see the ✅ item below, `nwevcent, weighted`).
 
@@ -50,7 +50,7 @@ Highest-value additions for credible igraph-style coverage:
 
 ## Stage 4 — Network inference
 
-- `nwqap` → `nwregress`/`nwlogit`: wrap in a proper `eclass` shell (own `e(b)`/`e(V)`/`predict`), add QAPSPP (X-permutation/semi-partialling) as a second inference mode alongside the existing simple Y-permutation, certify with tests, confirm `esttab`/`estimates store` compatibility. Extension of substantial existing machinery, not a from-scratch build.
+- ✅ `nwqap` `eclass` shell — done (harmonisation unit 19): `ereturn post` of `e(b)`/`e(V)` (the latter a diagonal QAP-permutation-variance matrix, not a classical covariance), plus `e(N)`/`e(permutations)`/`e(cmd)`/`e(title)`/`e(depvar)`/`e(qap_regcmd)`/`e(pvalues)` — `estimates store`/`estimates table`/`test`/`lincom` all verified working. **Remaining**: a `predict` subroutine; QAPSPP (X-permutation/semi-partialling) as a second inference mode alongside the existing simple Y-permutation; confirm `esttab` compatibility; a possible dedicated `nwregress`/`nwlogit` command pair if a more Stata-native interface is wanted beyond `nwqap`'s current "any regression command via `type()`" design.
 - ✅ CUG tests — `nwcug`, wired against `nwrandom, density()`'s existing conditioned-generation capability (density conditioning, not `census()` — dyad-census conditioning for directed/reciprocity-focused tests remains a natural follow-on, not yet built). `stat()` takes a full command template (`##net##` token) rather than a bare command name, after finding that approach breaks on the second random draw for any command with a fixed-name default output variable.
 
 ## Stage 5 — Stata-native integration (high priority per project brief)
@@ -82,7 +82,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 7. ✅ k-cores — High value, Small-Medium effort — done (`nwkcore`)
 8. ✅ Weighted betweenness variant — Medium value, Small effort — done (harmonisation unit 18): `nwbetween, weighted alpha()`, a Dijkstra generalization of the existing Brandes'-algorithm BFS betweenness, verified to reduce to the exact same result as the unweighted function at `alpha(0)`
 9. ✅ `nwneighbor` sparse migration — Low value alone, Small effort, low risk — done, and surfaced a real broken/untested `mode(incoming)` bug in the process
-10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort
+10. `nwqap` `eclass` — done (harmonisation unit 19). QAPSPP / `predict` / dedicated `nwregress`/`nwlogit` — Very high value, Large effort, remaining
 11. ✅ CUG test wrapper around `nwrandom, density()` — Medium value, Small effort — done (`nwcug`)
 12. ✅ Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort — done (`nwsimindex`)
 13. Structural-equivalence workflow packaging + role-variable output — Medium value, Small effort
@@ -96,7 +96,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 
 ## Top 10 existing features to improve
 
-1. `nwqap` — add `eclass`, QAPSPP, tests (see Stage 4)
+1. `nwqap` — `eclass` done (unit 19); QAPSPP, `predict` remain (see Stage 4)
 2. `nwgeodesic`/`nwcloseness`/`nwreach`/`nwbridges`/`nwpath` — sparse migration (see Stage 0 remainder)
 3. `nwconstraint` — either fold into the revived `nwburt` or add per-node aggregation + help file
 4. `nw2clustering` — sparse migration (currently O(N⁴)-shaped Stata reshape chain)
