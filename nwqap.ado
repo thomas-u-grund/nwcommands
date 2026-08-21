@@ -17,9 +17,26 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	
 	local net = word("`formula'", 1)
-	_nwsyntax `net', max(1)	
+	nw_syntax `net', max(1)
 	nwtomata `net', mat(dvnet)
-	
+
+	// Binary-outcome regression commands (logit is this command's own
+	// default) treat any nonzero dependent-variable value as a positive
+	// outcome, per Stata's own documented semantics for these commands -
+	// so a valued/weighted dependent network's tie strength is silently
+	// collapsed to "tie present vs. absent" by the regression command
+	// itself, not by any code in this .ado. Warned explicitly here
+	// rather than left silent, per this package's harmonisation
+	// standard; a genuine weighted-QAP alternative is a separate,
+	// larger roadmap item (see docs/CERTIFICATION.md), not implemented
+	// by this warning.
+	if "`valued'" == "true" & inlist("`type'", "logit", "probit", "cloglog", "scobit") {
+		di "{txt}Note: {bf:`net'} is a valued/weighted network, but {bf:`type'} treats any"
+		di "{txt}nonzero tie value as a positive outcome - tie {it:strength} is not used."
+		di "{txt}Pass {bf:type()} with a regression command appropriate for a continuous"
+		di "{txt}outcome (e.g. {bf:type(regress)}) to model tie strength itself."
+	}
+
 	// Generate dataset in long format.
 	mata: datalong = J((`nodes' * `nodes'),`vars', 0)
 	
@@ -33,7 +50,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		// DV or IV is network
 		if (r(exists) == "true") {
 			nwname `entry'
-			local nextname "`r(name)'"
+			local nextname "`r(netname)'"
 			if r(nodes) != `nodes' {
 				di "{err}Networks of different size."
 				error 6056

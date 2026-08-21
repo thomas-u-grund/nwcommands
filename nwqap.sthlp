@@ -41,7 +41,7 @@
 
 {pstd}
 MR-QAP is a multiple regression procedure used to assess the impact of independent variables 
-upon a dependent variable. In standard regression techniques, the typical Òunit of analysisÓ 
+upon a dependent variable. In standard regression techniques, the typical ï¿½unit of analysisï¿½ 
 is an individual observation. In MR-QAP analysis, the unit of analysis is a dyad, a pair of individuals 
 who may or may not have some sort of relation connecting them to one another.
 
@@ -76,7 +76,7 @@ The raw output of this dyad-level regression is displayed with option {bf:detail
 Once a dataset is assembled and a regression is carried out, the resulting coefficients indicate 
 the direction of the effect of independent variables upon the dependent variable. However, calculating 
 the standard error of these coefficients has been shown to lead to biased results when autocorrelation 
-exists Ð which occurs, for instance, when interpersonal relations determine individual behavior 
+exists ï¿½ which occurs, for instance, when interpersonal relations determine individual behavior 
 (Krackhardt 1988). 
 
 {pstd}
@@ -100,10 +100,10 @@ of coefficients, {cmd:nwqap} calculates adjusted p-values and saves them in {it:
 Grund, T. and Densley, J. (2012). "Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang." European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
 
 {pmore}
-Krackhardt, David. (1987). ÒQAP Partialling as a Test of Spuriousness.Ó Social Networks 9: 171-186.
+Krackhardt, David. (1987). ï¿½QAP Partialling as a Test of Spuriousness.ï¿½ Social Networks 9: 171-186.
 
 {pmore}
-Krackhardt, David. (1988). ÒPredicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data.Ó Social Networks 10: 359-381.
+Krackhardt, David. (1988). ï¿½Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data.ï¿½ Social Networks 10: 359-381.
 
 
 {title:Examples}
@@ -136,11 +136,31 @@ when they already were friends at time1 (glasgow1). Furthermore two individuals 
 time1 (smoke1). There is no effect for both having scored the same on sport1. 
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, and undirected networks are not collapsed to unique dyads - both
+{it:(i,j)} and {it:(j,i)} appear as separate observations in the dyad-level dataset (for an
+undirected network they carry the same value, so this does not bias point estimates, but it does
+mean the reported "Number of obs" and any raw regression standard errors reflect double-counted
+dyads; QAP's own permutation-based p-values, not these raw standard errors, are what {cmd:nwqap}
+actually reports). Weighted: {bf:W3}, explicit binary-only for the dependent network under the
+default (and any other binary-outcome) {opt type()} - {help logit}, {help probit}, {help cloglog},
+and {help scobit} all treat any nonzero value as a positive outcome (this is those commands' own
+documented behavior, not something {cmd:nwqap} does intentionally) - so a valued/weighted
+dependent network's tie strength is silently discarded by the chosen regression command unless a
+continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} now warns
+explicitly when this combination is detected, rather than leaving it silent. Independent networks
+and variables are not affected - their values enter the regression directly, weighted or not.
+Signed: not checked. Two-mode: not checked. A full weighted-QAP alternative (rather than a warning)
+remains on the roadmap as a larger follow-on (see {browse "docs/CERTIFICATION.md":CERTIFICATION.md}).
+
+
 {title:Stored results}
 
 	Matrices
 	  {bf:e(pvalues)}	matrix with QAP p-values
-	
+
 {title:See also}
 
 	{help nwergm}, {help nwpermute}
