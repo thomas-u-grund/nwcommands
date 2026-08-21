@@ -51,7 +51,7 @@ Highest-value additions for credible igraph-style coverage:
 ## Stage 4 — Network inference
 
 - `nwqap` → `nwregress`/`nwlogit`: wrap in a proper `eclass` shell (own `e(b)`/`e(V)`/`predict`), add QAPSPP (X-permutation/semi-partialling) as a second inference mode alongside the existing simple Y-permutation, certify with tests, confirm `esttab`/`estimates store` compatibility. Extension of substantial existing machinery, not a from-scratch build.
-- CUG tests — wire `nwrandom, census()`'s existing conditioned-generation capability into a formal hypothesis-test command (generate K conditioned random networks, compare an observed statistic's percentile). The hard part (conditioned generation) already exists.
+- ✅ CUG tests — `nwcug`, wired against `nwrandom, density()`'s existing conditioned-generation capability (density conditioning, not `census()` — dyad-census conditioning for directed/reciprocity-focused tests remains a natural follow-on, not yet built). `stat()` takes a full command template (`##net##` token) rather than a bare command name, after finding that approach breaks on the second random draw for any command with a fixed-name default output variable.
 
 ## Stage 5 — Stata-native integration (high priority per project brief)
 
@@ -83,7 +83,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 8. Weighted betweenness variant — Medium value, Small effort
 9. ✅ `nwneighbor` sparse migration — Low value alone, Small effort, low risk — done, and surfaced a real broken/untested `mode(incoming)` bug in the process
 10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort
-11. CUG test wrapper around `nwrandom, census()` — Medium value, Small effort
+11. ✅ CUG test wrapper around `nwrandom, density()` — Medium value, Small effort — done (`nwcug`)
 12. ✅ Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort — done (`nwsimindex`)
 13. Structural-equivalence workflow packaging + role-variable output — Medium value, Small effort
 14. ✅ Per-node eccentricity + radius — Low-medium value, Trivial effort — done (`nwgeodesic`)

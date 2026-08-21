@@ -27,6 +27,7 @@ f nwcommunity.ado
 f nwcompressobs.ado
 f nwcontext.ado
 f nwcorrelate.ado
+f nwcug.ado
 f nwcurrent.ado
 f nwdegree.ado
 f nwdrop.ado
