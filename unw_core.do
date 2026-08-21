@@ -1929,6 +1929,68 @@ real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real sca
 	return(out[(1::nout),.])
 }
 
+/*
+	Node-naming utilities shared by nwset.ado's own mat()/varlist
+	ingestion and nwfromedge.ado's sparse-native construction (moved
+	here from nwset.ado during the sparse-backend migration's
+	nwfromedge rewiring, so both callers share one implementation
+	instead of nwfromedge depending on nwset.ado's own Mata block
+	having already been loaded first - a real, if latent, cross-file
+	availability risk avoided by centralizing shared utilities in this
+	always-loaded core file, matching first_index_match()'s own
+	existing precedent).
+*/
+string matrix get_node_suffix(real scalar nodes){
+	real matrix M
+	string matrix S
+
+	M = (1::nodes)
+	S = strofreal(M)
+	return(S)
+}
+
+string matrix get_nodenames_from_string(string scalar s, real scalar z, string scalar def){
+	string matrix nodenames, nodenamesrest
+	real scalar invalid, i, j
+
+	nodenames = (tokens(s,","))'
+	nodenames = select(nodenames, (J(rows(nodenames),1, ","):!= nodenames))
+	invalid = 0
+
+	// check for duplicates
+	for (i = 1; i<= (rows(nodenames)-1); i++){
+		for (j = i + 1; j <= rows(nodenames); j++){
+			if (nodenames[i] == nodenames[j]){
+				invalid = 1
+				i = rows(nodenames) + 1
+				j = rows(nodenames) + 1
+			}
+		}
+	}
+
+	if (invalid == 1){
+		nodenames =(J(z,1,def) + get_node_suffix(z))
+		return(nodenames)
+	}
+
+	if (rows(nodenames)< z){
+		nodenamesrest = (J(z,1,def) + get_node_suffix(z))
+		nodenamesrest[(1::rows(nodenames))] = nodenames
+		return(nodenamesrest)
+	}
+	if (rows(nodenames)> z){
+		return(nodenames[(1::z)])
+	}
+	return(nodenames)
+}
+
+string matrix get_nodenames_from_var(string scalar v, real scalar z, string scalar def){
+	string scalar s
+
+	s = invtokens(st_sdata((1,z), v))
+	return(get_nodenames_from_string(s, z, def))
+}
+
 
 
 
@@ -3437,10 +3499,30 @@ void `NWdef'::invalidate_sparse(){
 */
 void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real matrix weight, real scalar directed){
 	real scalar n, nnz, i, pos
-	real matrix ord, sorted_ego, sorted_alter, sorted_weight
+	real matrix ord, sorted_ego, sorted_alter, sorted_weight, keep
 
 	n = get_nodes()
 	isdirect = directed
+
+	// A stored weight of exactly 0 means "no tie" everywhere else in
+	// this class (every dense `edge' matrix is J(n,n,0)-initialized, so
+	// an unset cell already reads as 0, and get_arcs_count()/
+	// get_edges_count() both explicitly exclude *e==0 cells). The old
+	// dense make_matrix() path (removed with nwfromedge.ado's sparse-
+	// native rewiring) got this convention for free, since writing a 0
+	// into an already-zero cell is a no-op; a sparse index has no such
+	// implicit background value, so a zero-weight triplet must be
+	// dropped explicitly here or it becomes a real stored tie instead
+	// of the "no tie" every other accessor assumes (confirmed via
+	// nwcomponents' own regression test: a value-0 edgelist row was
+	// silently keeping an otherwise-isolated node connected until this
+	// filter was added).
+	if (rows(ego) > 0){
+		keep = selectindex(weight :!= 0)
+		ego = ego[keep,1]
+		alter = alter[keep,1]
+		weight = weight[keep,1]
+	}
 	nnz = rows(ego)
 
 	edge = J(0,0,0)
@@ -4152,6 +4234,7 @@ void `NWdef'::set_2mode(real scalar d){
 
 real scalar `NWdef'::check_symmetry(){
 //!! TODO - change when network not saved as matrix edge
+	ensure_dense_built()
 	if (edge == edge'){
 		return(1)
 	}
@@ -4189,8 +4272,9 @@ pointer (real matrix) scalar `NWdef'::get_symmetrize(string scalar mode){
 }*/
 
 void `NWdef'::symmetrize(string scalar mode){
-//!! TODO - change when network not saved as matrix edge	
+//!! TODO - change when network not saved as matrix edge
 	real matrix d, res1, res2
+	ensure_dense_built()
 	d = diagonal(edge)
 	
 	if (mode == "sum") {

@@ -209,8 +209,16 @@ program nwgenerate
 		nw_expnetexp `netexp'
 		nwset, mat(`netexp') name(`newnetname') `undirected' `options' xvars nodenames(`last_netobj'->get_nodenames())
 		qui nwsym `newnetname', check
-		
-		if `r(is_symmetric)' == 1 {
+
+		// nwsym's own help documents r(is_symmetric) as the string
+		// "true"/"false" (a numeric-scalar bug meant it was actually
+		// stored numeric until this was fixed as part of the
+		// sparse-backend migration's nwfromedge rewiring - nwfromedge's
+		// own check already expected the documented string form and
+		// was silently broken by the mismatch; this call site had
+		// instead been relying on the bug, so needs updating to match
+		// now that nwsym stores what it always documented).
+		if "`r(is_symmetric)'" == "true" {
 			nw_name `newnetname', newdirected(false)
 		}
 		
