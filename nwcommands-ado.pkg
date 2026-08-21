@@ -30,6 +30,7 @@ f nwcollapse.ado
 f nwcomponents.ado
 f nwcommunity.ado
 f nwcompressobs.ado
+f nwconstraint.ado
 f nwcontext.ado
 f nwcorrelate.ado
 f nwcug.ado

@@ -125,6 +125,7 @@
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}
 {p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
+{p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
@@ -195,6 +196,5 @@
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsyntax_other }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nwconstraint }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nwtostata }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}

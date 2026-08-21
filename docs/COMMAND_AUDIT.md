@@ -131,9 +131,12 @@ rather than silently picking one. This should be the template referenced when fi
 Commands most likely to be silently mishandling weights or two-mode data (highest-value follow-up
 targets, per the four audits' own flagged findings):
 
-- **`nwconstraint`** — zero documentation of directed/two-mode behaviour despite being
-  weight-driven by construction (row-normalizes the adjacency matrix); a user has no way to know
-  what it assumes.
+- **`nwconstraint`** — fixed (harmonisation phase, unit 8 — see `docs/CERTIFICATION.md`): had zero
+  documentation at all (no doc header in the `.ado`, no `.sthlp`, both index files literally said
+  "no help file yet") despite being weight-driven by construction (row-normalizes the adjacency
+  matrix). Documented, tested against a hand-computed example, classified **W1**/directed-
+  asymmetric/signed-unsupported/two-mode-not-checked, and added to all 4 packaging manifests (it
+  was missing from every one of them, not just undocumented).
 - **`nwqap`** — silently dichotomizes any weighted DV/IV network with no weighted alternative and
   no warning, despite being the flagship network-regression candidate (already a known roadmap
   item, now confirmed at the code level).
