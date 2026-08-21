@@ -63,10 +63,12 @@ program nwuse_old
 		local directed = _directed[`i']
 		local edgelabs = _edgelabs[`i']
 		local labs ""
+		local vars ""
 		forvalues j = 1 / `size' {
 			local nextvar = _nodevar`i'[`j'] 
 			local nextlab = _nodelab`i'[`j']
 			local labs "`labs', `nextlab'"
+			local vars "`vars' `nextvar'"
 		}
 	
 		if "`directed'" == "false" {
@@ -87,7 +89,7 @@ program nwuse_old
 		}
 		if "`frmat'" == "matrix"{
 			local _netstub `vars'
-			qui nwset `_netstub', overwrite name(`name') labs(`labs') `undirected'
+			nwset `_netstub', overwrite name(`name') labs(`labs') `undirected'
 		}
 		restore
 	}

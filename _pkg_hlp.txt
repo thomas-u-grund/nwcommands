@@ -66,6 +66,7 @@ f nworder.sthlp
 f nwpath.sthlp
 f nwpermute.sthlp
 f nwplot.sthlp
+f nwplotjs.sthlp
 f nwplotmatrix.sthlp
 f nwpref.sthlp
 f nwqap.sthlp
@@ -79,6 +80,7 @@ f nwring.sthlp
 f nwsave.sthlp
 f nwset.sthlp
 f nwsimindex.sthlp
+f nwsimmelian.sthlp
 f nwsmall.sthlp
 f nwsort.sthlp
 f nwsubset.sthlp
