@@ -1,9 +1,275 @@
+/***
+{smcl}
+{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##import:[NW-2.2] Import/Export}
+
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwimport  {hline 2} Import network}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwimport} 
+{it:{help filename}}
+, 
+{opt type}({it:{help nwimport##import_type:import_type}}[, {it:{help nwimport##type_sub:type_sub}}])
+[{opth name(newnetname)}
+{opt forcedirected}
+{opt forceundirected}
+{opt nwclear}
+{opt nwappend}]
+
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opth name(newnetname)}}name of the imported network; default = {it:filename}{p_end}
+{synopt:{opt forcedirected}}force network to be directed{p_end}
+{synopt:{opt forceundirected}}force network to be undirected{p_end}
+{synopt:{opt nwclear}}clear all data and networks{p_end}
+{synopt:{opt nwappend}}append to existing data{p_end}
+
+{synoptset 20 tabbed}{...}
+{marker import_type}{...}
+{p2col:{it:import_type}}Description{p_end}
+{p2line}
+{p2col:{cmd: pajek}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":Pajek NET file format}
+		{p_end}
+{p2col:{cmd: ucinet}}network is given in {help nwimport##ucinet:Ucinet file format}
+		{p_end}
+{p2col:{cmd: matrix}}network is given as an {help nwimport##matrix:adjacency matrix} (e.g. Excel, txt)
+		{p_end}
+{p2col:{cmd: edgelist}}network is given as an {help nwimport##edgelist:edgelist} (e.g. Excel, txt)
+		{p_end}
+{p2col:{cmd: compressed}}network is given as a {help nwimport##compressed:compressed edgelist} (e.g. txt, CSV)
+		{p_end}
+{p2col:{cmd: gml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/gml-format/":GML file format}
+	{p_end}
+{p2col:{cmd: graphml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/graphml-format/":GraphML file format}
+		{p_end}
+		
+
+{synoptset 20 tabbed}{...}
+{marker type_sub}{...}
+{p2col:{it:type_sub}}Description{p_end}
+{p2line}
+{p2col:{cmd: rownames}}matrix: first row in matrix contains variable names
+		{p_end}
+{p2col:{cmd: colnames}}matrix: first column in matrix contains variable names
+		{p_end}
+{p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
+		{p_end}		
+{p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
+		{p_end}			
+		
+{title:Description}
+
+{pstd}
+Imports networks from popular network file formats. The command automatically recognizes whether networks are directed or undirected. However, options
+{bf:forcedirected} and {bf:forceundirected} can be used to override automatic detection.
+
+The following network formats are supported:
+
+{pmore}{help nwimport##ucinet:- Ucinet}{p_end}
+{pmore}{help nwimport##pajek:- Pajek}{p_end}
+{pmore}{help nwimport##matrix:- Raw adjacency matrix}{p_end}
+{pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
+{pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
+{pmore}{help nwimport##gml:- GML}{p_end}
+{pmore}{help nwimport##graphml:- GraphML}{p_end}
+
+{pstd}
+Can also be used to import networks from the internet:
+
+{phang}
+{cmd:. nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)}{p_end}
+
+
+{marker ucinet}{...}
+{title:Import Ucinet DL format}
+
+{pstd}
+{cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
+multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
+networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
+or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
+
+{phang}
+{bf:Example 1:}{p_end}
+	dl n=4 format=fullmatrix
+	data:	
+	0 1 1 0	
+	1 0 1 1
+	1 1 0 0
+	0 1 0 0 
+
+{phang}
+{bf:Example 2:}{p_end}
+	dl n = 4, nm = 2
+	labels:
+	GroupA,GroupB,GroupC,GroupD
+	matrix labels:
+	Marriage,Business
+	data:
+	0 1 0 1
+	1 0 0 0
+	0 0 1 0
+	1 0 0 1
+
+	0 1 1 1
+	1 0 0 0
+	1 0 0 1
+	1 0 1 0
+	
+{phang}
+{bf:Example 3:}{p_end}
+	dl n = 4
+	format = lowerhalf
+	labels:
+	Sanders,Skvoretz
+	S.Smith,T.Smith
+	data:
+	2
+	1 2
+	1 1 2
+	0 1 0 2
+	
+{phang}
+{bf:Example 4:}{p_end}
+	DL n=5
+	format = edgelist1
+	labels:
+	george, sally, jim, billy, jane
+	data:
+	1 2
+	1 3
+	2 3
+	3 1
+	4 3
+
+{phang}
+{bf:Example 5:}{p_end}
+	DL n=5
+	format = edgelist1
+	labels embedded:
+	data:
+	george sally
+	george jim
+	sally jim
+	billy george
+	jane jim
+
+	
+{marker pajek}{...}
+{title:Import Pajek .net format}
+
+{pstd}
+{cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}. It also supports
+multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
+networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
+or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
+
+
+
+{marker matrix}{...}
+{title:Import raw adjacency matrix}
+
+{pstd}
+This imports networks that are in raw matrix format. Data can be saved as .txt, .xls or anything else. As delimiters "tab" "," ";" and " " are allowed. Furthermore, row
+and/or column names can be included as well. This import option can be used to load networks from e.g. Excel. When data has already been opened/entered to Stata,
+{help nwset} declares data as network data.
+
+{phang}
+{bf:Example 1:}{p_end}
+	0 1 1 0
+	1 0 0 0
+	0 0 0 1
+	0 1 0 0
+
+{phang}
+{bf:Example 2:}{p_end}
+	thomas,peter,susan,kim
+	0,1,1,0
+	1,0,0,0
+	0,0,0,1
+	0,1,0,0
+
+{pstd}
+Notice that the command recognises when variable names are given in the first row. However, variable names in the
+first column are not automatically recognized. One can make this explicit with the option {bf:type(matrix, rownames colnames)}.
+
+{pstd}
+Furthermore, the raw dataset can also contain additional attributes. When there are more variables than cases, all remaining
+variables are treated as attributes. 
+
+{phang}
+{bf:Example 2:}{p_end}
+	thomas,peter,susan,kim, sex
+	0,1,1,0, male
+	1,0,0,0, male
+	0,0,0,1, female
+	0,1,0,0, male
+	
+{marker edgelist}{...}
+{title:Import raw edgelist}
+
+{pstd}
+This imports networks in {help nwfromedge##edgelist:raw edgelist format}. Data can already be in Stata-dta format. Otherwise, delimiters "tab" "," ";" and " " are allowed. When two columns are given
+a non-valued network is loaded, when three columns are given a valued network is loaded. In case edgelist data has already been entered/opened
+in Stata, {help nwfromedge} generates a network. Node labels can be embedded in the edgelist.
+
+{phang}
+{bf:Example 1:}{p_end}
+	1 2
+	1 4
+	2 4
+	4 3
+
+{phang}
+{bf:Example 2:}{p_end}
+	peter,thomas,1
+	thomas,susan,4
+	susan,thomas3
+	geoff,john,2
+
+{marker compressed}{...}
+{title:Import compressed edgelist}
+
+{pstd}
+This imports networks in compressed edgelist format. As delimiter "," is allowed. 
+
+{phang}
+{bf:Example 1:}{p_end}
+	AS,MI,NY,TX
+	TX,CA
+	IL,AL,SD
+	AL,MI,CA,NY
+
+{phang}
+{bf:Example 2:}{p_end}
+	peter,thomas,mathilde,tim
+	thomas,susan
+	susan
+	geoff,john,michael
+
+***/
 capture program drop nwimport
 program nwimport
-	syntax anything, type(string) [ name(string) clear nwclear xvars *]
+	syntax anything, type(string) [ name(string) clear nwclear nwappend xvars forcedirected forceundirected *]
+	unw_defs
 	local fname `"`anything'"'
 	if strpos(`"`anything'"',`"""') == 0 {
 		local fname  `""`fname'""'
+	}
+	qui `nwclear'
+	qui nwset
+	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
+		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
+		error 999
 	}
 	
 	local options_original `"`options'"'
@@ -16,8 +282,7 @@ program nwimport
 	local typeoptions = subinstr("`typeoptions'",",","",.)
 	
 	set more off
-	qui `clear'
-	qui `nwclear'
+
 	
 	if "`name'" == "" {
 		local fname_temp =  lower(subinstr(`"`fname'"', char(34), "", .))
@@ -56,7 +321,7 @@ program nwimport
 		 capture _nwimport_edgelist `fname', `options' `typeoptions'
 	}
 	if "`import_type'" == "pajek" {
-		 capture _nwimport_pajek `fname', `options'		 
+		  _nwimport_pajek `fname', `options'		 
 	}
 	if "`import_type'" == "gml" {
 		capture _nwimport_gml `fname', `options'
@@ -65,7 +330,7 @@ program nwimport
 		capture _nwimport_graphml `fname', `options'
 	}
 	if "`import_type'" == "ucinet" {
-		  capture _nwimpdl `fname'
+		 capture _nwimpdl `fname'
 		  if "`nameoff'" == "" {
 			local nameoff = r(nameoff)
 		  }
@@ -79,12 +344,17 @@ program nwimport
 			nwname, id(`j')
 			local d `r(directed)'	
 
-			// check of network is undirected or not
-			nwissymmetric `r(name)'
-			if `r(issymmetric)' == 1 & "`d'" == "true" & "`directed'" == ""{
+			// check if network is undirected or not - r(is_symmetric)
+			// is documented (nwsym.ado) as the string "true"/"false";
+			// a numeric-scalar bug meant it was actually stored numeric
+			// until fixed as part of the sparse-backend migration, so
+			// this call site is updated to match what nwsym now
+			// actually stores.
+			qui nwsym, check
+			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == ""{
 				local newdirectedcmd "newdirected(false)"
 			}
-			if `r(issymmetric)' == 0 & "`d" == "false" & "`undirected'" == ""{
+			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == ""{
 				local newdirectedcmd "newdirected(true)"
 			}
 				
@@ -93,17 +363,19 @@ program nwimport
 				local newnamecmd "newname(`onename')"
 			}
 			nwname, id(`j') `newnamecmd' `newdirectedcmd'
+			if "`forceundirected'" != "" {
+				nwsym `r(netname)'
+			}
+			if "`forcedirected'" != "" {
+				nwname, id(`j') newdirected(true)
+			}
 			local i = `i' + 1
 			qui if "`xvars'" == ""{
-				nwload
+				nwload `r(netname)'
 			}
 		}
 		di "{hline 30}"
 		di  "{txt}{it:Importing successful}"
-		nwset
-		//di "{txt}(`=`nets_now'-`nets_before'' networks loaded)"
-		//di "{hline 30}"
-		//di 
 	}
 	else {
 		di 
@@ -132,10 +404,12 @@ program _nwimport_pajek
 		drop _all
 		
 		tempfile dict
-							
+		unw_defs
+		
 		file open importfile using `anything', read
 		file read importfile line
-	    while `"`line'"' != "" {
+		local labs ""
+		qui while `"`line'"' != "" {
 			// get first word
 			local f_cmd : word 1 of `line'
 			local f_cmd = lower("`f_cmd'")
@@ -148,11 +422,10 @@ program _nwimport_pajek
 				gen _value = 0
 				file read importfile line
 				local f_star = strpos(`"`line'"', "*")
-
+				
 				// parse node labels
 				if `f_star' != 1 {
 					tempname dict_handler
-
 					local num_attributes : word count `line'
 					local attributes "" 
 					forvalues k = 3/`num_attributes'{
@@ -166,11 +439,11 @@ program _nwimport_pajek
 						}
 					}
 					
-					postfile `dict_handler' _nodeid str30 _nodelab `attributes' using `dict'
+					postfile `dict_handler' str30  `nw_nodename' `attributes' using `dict'
 					while (`f_star' != 1) {
-						local tempid : word 1 of `line'
+						//local tempid : word 1 of `line'
 						local templab : word 2 of `line'
-						
+						local labs "`labs'`templab',"
 						local attributes_post ""
 						forvalues l = 3/`num_attributes' {
 
@@ -187,7 +460,9 @@ program _nwimport_pajek
 						local templab = cond("`templab'" == "", "`tempid'", "`templab'")
 						local templab = subinstr("`templab'", " ","_",.)
 						
-						post `dict_handler' (`tempid') ("`templab'") `attributes_post'
+						//post `dict_handler' (`tempid') ("`templab'") `attributes_post'
+
+						post `dict_handler' ("`templab'") `attributes_post'
 
 						file read importfile line
 						local f_star = cond(`"`line'"'=="", 1, strpos(`"`line'"', "*"))	
@@ -215,6 +490,7 @@ program _nwimport_pajek
 				local f_cmd : word 1 of `line'
 				local f_cmd = lower("`f_cmd'")
 			}
+
 			if lower("`f_cmd'") == "*arcs" {
 				local mode = "arcs"
 				local directed = "true"
@@ -239,26 +515,28 @@ program _nwimport_pajek
 			
 			// read edges from edgelist
 			if ("`mode'" == "arcs" | "`mode'" == "edges"){
-				local newN = _N + 1
-				set obs `newN'
 				local ego = word("`line'", 1)
 				local alter = word("`line'", 2)
-				replace _fromid = `ego' in `newN'
-				replace _toid = `alter' in `newN'
-				if (wordcount("`line'") - 2) > 0 {
-					local value = word("`line'", 3)
-				}
-				else {
-					local value = 1
-				}
-				replace _value = `value' in `newN'
-				
-				if "`mode'" == "edges"{
-					local newN = _N + 1
+				local newN = _N + 1
+				if "`ego'" != "" & "`alter'" != "" {
 					set obs `newN'
-					replace _fromid = `alter' in `newN'
-					replace _toid = `ego' in `newN'
+					replace _fromid = `ego' in `newN'
+					replace _toid = `alter' in `newN'
+					if (wordcount("`line'") - 2) > 0 {
+						local value = word("`line'", 3)
+					}
+					else {
+						local value = 1
+					}
 					replace _value = `value' in `newN'
+				
+					if "`mode'" == "edges"{
+						local newN = _N + 1
+						set obs `newN'
+						replace _fromid = `alter' in `newN'
+						replace _toid = `ego' in `newN'
+						replace _value = `value' in `newN'
+					}
 				}
 			}
 			
@@ -310,25 +588,11 @@ program _nwimport_pajek
 
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		nwfromedge _fromid _toid _value, xvars name(`name') labs(`labs') `nwfromedgeopt' 
-		
-		
-		qui nwname
-		local nodes = r(nodes)
-		
-		restore
-		
-		capture drop _nodeid
-		capture drop _nodelab
-		capture drop _xcoord
-		capture drop _ycoord 
-		
-		if _N < `nodes' {
-			set obs `nodes'
-		}
-	    gen _nodeid = _n if _n <= `nodes'
-		merge m:n _nodeid using `dict', nogenerate
-		qui nwname, newlabsfromvar(_nodelab)	
+		qui nwfromedge _fromid _toid _value, xvars name(`name') labs(`labs') `nwfromedgeopt' 
+	
+		unw_defs
+		nwload, labelonly
+		qui merge m:n `nw_nodename' using `dict', nogenerate
 end
 
 
@@ -509,7 +773,6 @@ program _nwimport_matrix
 				drop v1
 				foreach v of varlist _all {
 					if `v'[1] == "" {
-						noi di "`v'"
 						drop `v'
 					}
 				}
@@ -531,7 +794,6 @@ program _nwimport_matrix
 				drop v1
 				foreach v of varlist _all {
 					if `v'[1] == "" {
-						noi di "`v'"
 						drop `v'
 					}
 				}
@@ -946,6 +1208,7 @@ program _nwimpdl_nodelist1
 	file close `filehandler'
 	capture drop if _fromid == .
 	capture drop if _fromid == ""
+	
 	nwfromedge _all, name(`netlabs') labs(`labs') `directed' `undirected' `xvars'
 	restore
 end
@@ -1226,6 +1489,7 @@ program _nwimpdl
 	
 	if "`netlistonly'" == "" {
 		if lower("`format'") == "fullmatrix" {
+			di "full"
 			capture _nwimpdl_fullmatrix, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "nodelist1" {

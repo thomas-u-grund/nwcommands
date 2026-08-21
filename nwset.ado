@@ -735,55 +735,16 @@ end
 
 capture mata: mata drop check_bipartite()
 capture mata: mata drop get_2mode_edge()
-capture mata: mata drop get_node_suffix()
-capture mata: mata drop get_nodenames_from_string()
-capture mata: mata drop get_nodenames_from_var()
+
+// get_node_suffix()/get_nodenames_from_string()/get_nodenames_from_var()
+// moved to unw_core.do (sparse-backend migration, nwfromedge.ado's own
+// rewiring) - shared with nwfromedge.ado's sparse-native construction,
+// which cannot safely depend on this file's own Mata block having
+// already been loaded first. This file's own callers below are
+// unaffected - the functions are still callable by the same names,
+// just defined in the always-loaded core file now instead of here.
 
 mata:
-string matrix get_nodenames_from_var(string scalar v, real scalar z, string scalar def){
-	string scalar s 
-	
-	s = invtokens(st_sdata((1,z), v))
-	return(get_nodenames_from_string(s, z, def))
-}
-
-string matrix get_nodenames_from_string(string scalar s, real scalar z, string scalar def){
-	string matrix nodenames, nodenamesrest
-	real scalar invalid, i, j
-	
-	nodenames = (tokens(s,","))'
-	nodenames = select(nodenames, (J(rows(nodenames),1, ","):!= nodenames)) 
-	invalid = 0
-	
-	// check for duplicates
-	for (i = 1; i<= (rows(nodenames)-1); i++){
-		for (j = i + 1; j <= rows(nodenames); j++){
-			if (nodenames[i] == nodenames[j]){
-				invalid = 1
-				i = rows(nodenames) + 1
-				j = rows(nodenames) + 1
-			}
-		}
-	}
-	
-	if (invalid == 1){
-		nodenames =(J(z,1,def) + get_node_suffix(z))
-		return(nodenames)
-	}
-	
-	if (rows(nodenames)< z){
-		nodenamesrest = (J(z,1,def) + get_node_suffix(z))
-		//printf("{txt}Warning! Not enough node labels specified.")
-		nodenamesrest[(1::rows(nodenames))] = nodenames	
-		return(nodenamesrest)
-	}
-	if (rows(nodenames)> z){
-		//printf("{txt}Warning! Too many node labels specified.")
-		return(nodenames[(1::z)])
-	}
-	return(nodenames)	
-}
-
 real matrix get_2mode_edge(real matrix edge){
 	real scalar r, c, n
 	real matrix edge2
@@ -801,7 +762,7 @@ real matrix get_2mode_edge(real matrix edge){
 
 real matrix check_bipartite(real matrix edge, string scalar bip){
 	real scalar m
-	
+
 	if (bip == "bipartite"){
 		edge = get_2mode_edge(edge)
 	}
@@ -810,18 +771,5 @@ real matrix check_bipartite(real matrix edge, string scalar bip){
 		edge = edge[(1::m),(1::m)]
 	}
 	return(edge)
-}
-
-string matrix get_node_suffix(real scalar nodes){
-	real matrix M
-	string matrix S
-	real scalar i
-	
-	M = (1::nodes)
-	S = strofreal(M)
-	//for (i = 10; i <= nodes; i = i * 10) {
-		//S[(1::(i -1))] = J((i -1),1,"0") + S[(1::(i-1))]
-	//}
-	return(S)
 }
 end
