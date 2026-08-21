@@ -57,6 +57,9 @@ capture mata mata drop hamming_dissimilarity()
 
 mata:
 real matrix euclidean_dissimilarity(real matrix net, real scalar dtype){
+	real matrix S, i_outvec, i_invec, j_outvec, j_invec
+	real scalar i, j
+
 	S = J(rows(net), cols(net), 0)
 	for(i = 1; i<= rows(S); i++){
 		for(j = 1; j<= cols(S); j++){
@@ -88,6 +91,9 @@ real matrix euclidean_dissimilarity(real matrix net, real scalar dtype){
 }
 
 real matrix manhatten_dissimilarity(real matrix net ,real scalar dtype){
+	real matrix S, i_outvec, i_invec, j_outvec, j_invec
+	real scalar i, j
+
 	S = J(rows(net), cols(net), 0)
 	for(i = 1; i<= rows(S); i++){
 		for(j = 1; j<= cols(S); j++){
@@ -118,6 +124,9 @@ real matrix manhatten_dissimilarity(real matrix net ,real scalar dtype){
 }
 
 real matrix matches_dissimilarity(real matrix net,real scalar dtype){
+	real matrix S, i_outvec, i_invec, j_outvec, j_invec
+	real scalar i, j
+
 	S = J(rows(net), cols(net), 0)
 	for(i = 1; i<= rows(S); i++){
 		for(j = 1; j<= cols(S); j++){
@@ -154,6 +163,9 @@ real matrix matches_dissimilarity(real matrix net,real scalar dtype){
 }
 
 real matrix jaccard_dissimilarity(real matrix net,real scalar dtype){
+	real matrix S, i_outvec, i_invec, j_outvec, j_invec
+	real scalar i, j
+
 	S = J(rows(net), cols(net), 0)
 	for(i = 1; i<= rows(S); i++){
 		for(j = 1; j<= cols(S); j++){
@@ -190,6 +202,9 @@ real matrix jaccard_dissimilarity(real matrix net,real scalar dtype){
 }
 
 real matrix hamming_dissimilarity(real matrix net,real scalar dtype){
+	real matrix S, i_outvec, i_invec, j_outvec, j_invec
+	real scalar i, j
+
 	S = J(rows(net), cols(net), 0)
 	for(i = 1; i<= rows(S); i++){
 		for(j = 1; j<= cols(S); j++){
