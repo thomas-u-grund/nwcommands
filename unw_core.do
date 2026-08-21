@@ -1077,6 +1077,7 @@ class `NWdef' {
 	real matrix calculate_coreperiphery()
 	real matrix calculate_brokerage()
 	real matrix calculate_2mode_degree()
+	real matrix calculate_egostats()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_similarity_index()
@@ -1745,6 +1746,55 @@ real matrix `NWdef'::calculate_2mode_degree(){
 	}
 	for (i=1; i<=n2; i++){
 		result[idx2[i],1] = degree(idx2[i]) / n1
+	}
+	return(result)
+}
+
+/*
+	Ego-network size and density: an ego's alters are every node it has
+	any tie with (union of in- and out-neighbors for a directed network -
+	the standard "who is in ego's network at all" membership question,
+	distinct from nwaltergen's own directional alter-aggregation
+	convention, which deliberately keeps in/out separate for a different
+	purpose). Density is the proportion of *possible* ties actually
+	present *among the alters themselves* (ego itself excluded - the
+	standard convention, matching how ego-network density is normally
+	reported: how interconnected are my contacts with each other,
+	independent of their (by-definition complete) ties to me). Directed
+	networks count ordered alter-alter pairs (size*(size-1) possible
+	ties); undirected networks count unordered pairs (size*(size-1)/2).
+	An ego with fewer than 2 alters has no pair to assess - density is
+	reported missing for it, not spuriously 0 or 1.
+*/
+real matrix `NWdef'::calculate_egostats(){
+	real matrix result, nb
+	real scalar n, i, j, k, sz, possible, actual, a, b
+
+	n = get_nodes()
+	result = J(n, 2, .)
+
+	for (i=1; i<=n; i++){
+		nb = neighbors(i)
+		if (isdirect){
+			nb = uniqrows(nb \ neighbors_in(i))
+		}
+		sz = rows(nb)
+		result[i,1] = sz
+
+		if (sz < 2) continue
+
+		actual = 0
+		for (j=1; j<=sz; j++){
+			a = nb[j,1]
+			for (k=1; k<=sz; k++){
+				if (j == k) continue
+				if (!isdirect & k < j) continue
+				b = nb[k,1]
+				if (has_edge(a,b)) actual = actual + 1
+			}
+		}
+		possible = (isdirect ? sz*(sz-1) : sz*(sz-1)/2)
+		result[i,2] = actual / possible
 	}
 	return(result)
 }

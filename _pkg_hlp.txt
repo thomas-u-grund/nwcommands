@@ -46,6 +46,7 @@ f nwds.sthlp
 f nwduplicate.sthlp
 f nwdyadprob.sthlp
 f nwdyads.sthlp
+f nwego.sthlp
 f nwergm.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp
