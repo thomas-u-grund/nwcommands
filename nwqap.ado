@@ -113,11 +113,30 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			noisily di "{txt}Permutation: `=`perm_running'*50' out of `permutations'"
 			local perm_running = `perm_running' + 1
 		}
-		mata: perm_net = permute_net(dvnet)
-		mata: net_long = transformIntoLong(perm_net)
-		mata: st_store(., "`net'", net_long)
-		`type' `formula', `typeoptions'
-	
+		// A permutation can, by chance, produce a fully degenerate
+		// (no-variation) dependent network - the chosen regression
+		// command then can't fit it (e.g. logit's "outcome does not
+		// vary") and previously aborted the entire nwqap call rather
+		// than just that one permutation. Retried with a fresh draw
+		// instead, up to a generous attempt cap; only a pathologically
+		// small/structured network should ever exhaust it.
+		local permattempts = 0
+		local permok = 0
+		while `permok' == 0 {
+			local permattempts = `permattempts' + 1
+			mata: perm_net = permute_net(dvnet)
+			mata: net_long = transformIntoLong(perm_net)
+			mata: st_store(., "`net'", net_long)
+			capture `type' `formula', `typeoptions'
+			if _rc == 0 {
+				local permok = 1
+			}
+			else if `permattempts' >= 20 {
+				noi di "{err}Permutation `j' produced a degenerate dependent network (no variation) on 20 consecutive draws; aborting."
+				error _rc
+			}
+		}
+
 		mat temp_coeff = e(b)
 		local post_txt = ""
 		local varsminus = `vars' - 1
