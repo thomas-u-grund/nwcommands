@@ -35,6 +35,7 @@ f nwcorrelate.sthlp
 f nwcug.sthlp
 f nwcurrent.sthlp
 f nwdegree.sthlp
+f nwdissimilar.sthlp
 f nwdrop.sthlp
 f nwdropnodes.sthlp
 f nwds.sthlp
@@ -49,6 +50,7 @@ f nwfromedge.sthlp
 f nwgen.sthlp
 f nwgenerate.sthlp
 f nwgeodesic.sthlp
+f nwhierarchy.sthlp
 f nwhomophily.sthlp
 f nwimport.sthlp
 f nwinstall.sthlp
@@ -80,6 +82,7 @@ f nwreplacemat.sthlp
 f nwring.sthlp
 f nwsave.sthlp
 f nwset.sthlp
+f nwsimilar.sthlp
 f nwsimindex.sthlp
 f nwsimmelian.sthlp
 f nwsmall.sthlp

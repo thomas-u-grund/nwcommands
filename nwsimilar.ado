@@ -29,22 +29,60 @@ program nwsimilar
 	}
 	
 	nwtomatafast `netname'
+	// r(mata) is captured into a local immediately - nwname below is
+	// itself r-class and would otherwise overwrite it before it gets
+	// used further down (the exact same r()-pollution bug class fixed
+	// in nwqap.ado's harmonisation unit 19: r(Var) there, r(mata) here).
+	local srcmata "`r(mata)'"
+	// Default the similarity network's own node labels to the source
+	// network's labels, rather than nwset's generic n1/n2/... fallback
+	// - see nwdissimilar.ado's identical fix for the full explanation
+	// (a label mismatch makes nwcommands' master dataset treat the
+	// source and derived networks as having disjoint node sets).
+	nwname `netname'
+	local netlabs "`r(labs)'"
 
 	if "`type'" == "pearson" {
 		qui nwcorrelate `netname', name(`name')
-	}	
+	}
+	// Mata functions defined in an ado-file's trailing mata: block are
+	// private to that ado-file, not visible to a *different* ado-file's
+	// own mata: blocks - nwset's mat() option evaluates its argument
+	// inside nwset.ado's own private scope, so it could never see this
+	// file's private *_similarity() functions, regardless of
+	// adopath/timing (previously investigated inconclusively as a
+	// nwset/mat() "Mata-function-visibility" issue - this is the root
+	// cause; see nwdissimilar.ado's identical fix for the full
+	// explanation and a minimal confirming repro). Interactive mata
+	// *workspace variables* persist across ado-files' private scopes,
+	// unlike function definitions - fixed by evaluating the similarity
+	// function here (within its own defining file) into such a
+	// variable first, then passing the already-computed matrix's name
+	// to nwset instead of an unevaluated function call.
 	if "`type'" == "matches" {
-		nwset, mat(matches_similarity(`r(mata)', `dtype')) name(`name')
+		mata: __nwsim = matches_similarity(`srcmata', `dtype')
 	}
 	if "`type'" == "jaccard" {
-		nwset, mat(jaccard_similarity(`r(mata)', `dtype')) name(`name')
-	}	
+		mata: __nwsim = jaccard_similarity(`srcmata', `dtype')
+	}
 	if "`type'" == "hamming" {
-		nwset, mat(hamming_similarity(`r(mata)', `dtype')) name(`name')
+		mata: __nwsim = hamming_similarity(`srcmata', `dtype')
 	}
 	if "`type'" == "crossproduct" {
-		nwset, mat(hamming_similarity(`r(mata)', `dtype')) name(`name')
-	}	
+		// Was dispatching to hamming_similarity() (copy-paste from the
+		// line above) - crossproduct_similarity() itself was defined
+		// but dead, never actually reachable through any type() value.
+		mata: __nwsim = crossproduct_similarity(`srcmata', `dtype')
+	}
+	if inlist("`type'", "matches", "jaccard", "hamming", "crossproduct") {
+		// selfloop: a similarity matrix has a genuine, meaningful
+		// diagonal (a node is maximally similar to itself), unlike an
+		// ordinary relational network's diagonal, which defaults to
+		// missing (no self-ties) when selfloop is not given. See
+		// nwdissimilar.ado's identical fix for the full explanation.
+		nwset, mat(__nwsim) name(`name') selfloop labs(`netlabs')
+		capture mata mata drop __nwsim
+	}
 	if "`xvars'" == "" {
 		nwload `name'
 	}

@@ -122,6 +122,18 @@ Calculates the cross-product of the tie vectors of nodes {it:} and {it:j}
 {cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes ({bf:mode()} lets you restrict the comparison to incoming or
+outgoing ties only). Weighted: {bf:pearson} (via {help nwcorrelate}) and {bf:crossproduct} use
+tie weights directly; {bf:hamming}/{bf:jaccard}/{bf:matches} binarize each tie before comparing,
+so tie strength does not affect these three. Signed: not checked. Two-mode: not supported -
+operates on the network's own square adjacency matrix. The similarity network itself always
+carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits
+its source network's own node labels, so it can be compared directly against the source network
+node-for-node.
+
 {title:See also}
 
 	{help nwdissimilar}, {help nwcorrelate}

@@ -82,3 +82,19 @@ between nodes. Practially, option {bf:context(both)} stacks the vector of outgoi
 {cmd:. clustder dendrogram _clus_1}
 {cmd:. nwdendrogram _clus_1, label(_nodelab)}
 
+
+{title:Supported network types}
+
+{pstd}
+Same network-type support as the underlying dissimilarity computation - see
+{help nwdissimilar:nwdissimilar}'s own "Supported network types" section when using the
+default {bf:context()}/{bf:type()} form. The {bf:dismat()} and {bf:disnet()}
+forms bypass {cmd:nwdissimilar} entirely and use whatever matrix/network you supply directly -
+{cmd:nwhierarchy} does not itself validate that it is a genuine dissimilarity matrix (symmetric,
+zero diagonal, nonnegative). Stata's own {help clustermat} (which does the actual clustering)
+requires a matrix with no missing values, including on the diagonal.
+
+{title:See also}
+
+	{help nwdissimilar}, {help cluster}, {help clustermat}
+
