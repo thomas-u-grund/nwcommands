@@ -15,17 +15,35 @@ program nwrecode
 	local netname = substr("`arg'",1, `=`ruleStart'-1')
 	local rules = substr("`arg'",`ruleStart',.)
 
-	_nwsyntax_other `netname', max(9999)
-	
+	// was "_nwsyntax_other `netname', max(9999)" - _nwsyntax_other is
+	// incompatible with the modern network storage architecture (it
+	// references a legacy nw_mata<id> Mata global that no longer
+	// exists - the same bug already found and fixed in nwcloseness
+	// this session). nw_syntax's own other() option gives the exact
+	// same othernetname/othernodes/otherid/otherdirected naming
+	// convention _nwsyntax_other used, so it's a direct drop-in.
+	nw_syntax `netname', max(9999) other(other)
+
 	preserve
 	tokenize `generate'
 	local i = 1
 	foreach onenet in `othernetname' {
-		_nwsyntax `onenet'
+		// was "_nwsyntax `onenet'" - the deprecated _nwsyntax wrapper
+		// never re-exports `directed' at all (only netobj/id/netname/
+		// networks), so this local was always empty; nw_syntax
+		// exports it directly.
+		nw_syntax `onenet'
 		local onedirected `directed'
-		nwtoedge `onenet', forcedirected
+		// was "forcedirected" - nwtoedge has no such option; the
+		// option that actually forces both (i,j) and (j,i) into the
+		// edgelist (so an undirected network's recode applies
+		// symmetrically, not just to the upper triangle) is "full".
+		nwtoedge `onenet', full
 		recode `onenet' `rules', `options'		
-		qui nwfromedge _fromid _toid `onenet', name(__temp_network)
+		// was "_fromid _toid" - nwtoedge's actual default output
+		// variable names are _ego/_alter (see nwtoedge.ado's own
+		// ego()/alter() option defaults); _fromid/_toid never existed.
+		qui nwfromedge _ego _alter `onenet', name(__temp_network)
 		nwtomata __temp_network, mat(recodeNet)
 		if "`generate'" == "" & "`prefix'" == "" {
 			nwreplacemat `onenet', newmat(recodeNet)
