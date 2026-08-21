@@ -77,6 +77,7 @@ f nwreplacemat.sthlp
 f nwring.sthlp
 f nwsave.sthlp
 f nwset.sthlp
+f nwsimindex.sthlp
 f nwsmall.sthlp
 f nwsort.sthlp
 f nwsubset.sthlp

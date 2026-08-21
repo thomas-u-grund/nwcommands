@@ -73,6 +73,7 @@ f nwreplacemat.ado
 f nwring.ado
 f nwsave.ado
 f nwset.ado
+f nwsimindex.ado
 f nwsmall.ado
 f nwsort.ado
 f nwsubset.ado

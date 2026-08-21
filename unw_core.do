@@ -904,6 +904,7 @@ class `NWdef' {
 	real matrix detect_communities_louvain()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
+	real matrix calculate_similarity_index()
 	real matrix correlate_nodes()
 	
 	void set()
@@ -1573,6 +1574,89 @@ real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar st
 	}
 
 	return(result)
+}
+
+
+/*
+	Common-neighbor similarity indices (Liben-Nowell & Kleinberg 2007's
+	terminology): common-neighbor count, Jaccard, Dice/Sorensen, cosine
+	(Salton), Adamic-Adar. All computed on the undirected neighbor sense
+	(union of out/in for directed networks, same convention as
+	calculate_kcore() - a link-prediction/shared-neighborhood question is
+	as direction-agnostic as a k-core question, unlike calculate_alterstat's
+	exposure semantics, which are deliberately directional).
+
+	NB is the symmetric 0/1 "is a neighbor of" indicator matrix with a
+	zeroed diagonal - zeroing it kills two potential correctness bugs at
+	once: a self-loop artifically inflating a node's own neighbor count,
+	and node i or j themselves being counted as a "shared neighbor" of the
+	pair (i,j) via the k=i or k=j term in the matrix-multiply sum below.
+	CN = NB*NB' then gives every pairwise shared-neighbor count in one
+	matrix multiply: CN[i,j] = sum_k NB[i,k]*NB[j,k] = |N(i) intersect N(j)|.
+
+	Adamic-Adar weights each shared neighbor k by 1/log(degree(k)); k only
+	ever contributes to a genuine intersection term if it is tied to two
+	distinct nodes i != j, which forces degree(k) >= 2 automatically, so
+	the well-known log(1)=0 division blowup can never actually occur for a
+	real contributing term - the deg<2 guard below only protects the
+	weight *vector's* construction (so it is a well-defined, finite input
+	to the matrix product for every node, not just the ones that end up
+	mattering), the same defensive missing-value discipline used in
+	calculate_alterstat() and the nwburt fix earlier this session.
+*/
+real matrix `NWdef'::calculate_similarity_index(string scalar measure){
+	real scalar n, i, k
+	real matrix NB, nb, deg, CN, U, S, invlogdeg, degsum
+
+	n = get_nodes()
+	NB = J(n, n, 0)
+	for (i = 1; i <= n; i++){
+		if (isdirect){
+			nb = uniqrows(neighbors(i) \ neighbors_in(i))
+		}
+		else {
+			nb = neighbors(i)
+		}
+		if (rows(nb) > 0){
+			NB[i, nb'] = J(1, rows(nb), 1)
+		}
+	}
+	_diag(NB, J(n,1,0))
+
+	deg = rowsum(NB)
+	CN = NB * NB'
+	// Mata's elementwise operators do not broadcast a column against a row
+	// the way `deg :+ deg''s naive form would suggest (confirmed directly -
+	// it is a conformability error, not silently wrong output); degsum[i,j]
+	// = deg[i]+deg[j] via two ordinary (non-elementwise) outer-product-
+	// shaped matrix multiplications instead.
+	degsum = (deg * J(1,n,1)) :+ (J(n,1,1) * deg')
+
+	if (measure == "common"){
+		S = CN
+	}
+	else if (measure == "jaccard"){
+		U = degsum :- CN
+		S = CN :/ U
+	}
+	else if (measure == "dice"){
+		S = (2 :* CN) :/ degsum
+	}
+	else if (measure == "cosine"){
+		S = CN :/ sqrt(deg * deg')
+	}
+	else if (measure == "adamicadar"){
+		invlogdeg = J(n, 1, 0)
+		for (k = 1; k <= n; k++){
+			if (deg[k] >= 2){
+				invlogdeg[k] = 1 / log(deg[k])
+			}
+		}
+		S = NB * diag(invlogdeg) * NB'
+	}
+
+	_diag(S, J(n,1,.))
+	return(S)
 }
 
 

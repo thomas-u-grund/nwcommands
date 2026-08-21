@@ -37,7 +37,7 @@ Highest-value additions for credible igraph-style coverage:
 - Complete the distance-family sparse migration (unblocks `nwcloseness`/`nwgeodesic`/`nwreach`/`nwbridges`/`nwpath` scalability).
 - ✅ Cohesive subgroups: k-cores — `nwkcore` + `NWdef::calculate_kcore()`, sparse-neighbor-based degree-peeling (Seidman 1983), certified against 4 hand-computable cases (see `docs/CERTIFICATION.md`). **Remaining**: cliques/k-plexes.
 - ✅ Per-node eccentricity + network radius — added to `nwgeodesic` (`generate()`, `r(radius)`). Surfaced a genuine Stata `syntax`-parser bug along the way (see `docs/CERTIFICATION.md`).
-- Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — also directly useful as an ERGM/one-mode-projection primitive later.
+- ✅ Common-neighbor similarity family — `nwsimindex` (common/jaccard/dice/cosine/Adamic-Adar), computed via one matrix multiply rather than a per-pair loop. Deliberately distinct from `nwsimilar.ado` (structural equivalence over full tie profiles, a different question). Surfaced two follow-on items — see `docs/CERTIFICATION.md` Pending: `nw2project`'s `replace` option has the same bug this command's own `replace` was fixed to avoid, and `nw_helpwriter.ado`'s certification check is fragile against a common test-ending idiom.
 
 ## Stage 3 — Classical social network analysis (high priority per project brief)
 
@@ -84,7 +84,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 9. ✅ `nwneighbor` sparse migration — Low value alone, Small effort, low risk — done, and surfaced a real broken/untested `mode(incoming)` bug in the process
 10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort
 11. CUG test wrapper around `nwrandom, census()` — Medium value, Small effort
-12. Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort
+12. ✅ Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort — done (`nwsimindex`)
 13. Structural-equivalence workflow packaging + role-variable output — Medium value, Small effort
 14. ✅ Per-node eccentricity + radius — Low-medium value, Trivial effort — done (`nwgeodesic`)
 15. Ego-network induced-subgraph extraction — Medium value (unblocks ego-network size/density/composition), Medium effort
