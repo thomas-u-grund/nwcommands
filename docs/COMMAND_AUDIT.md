@@ -104,18 +104,34 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    new **network**" (in-place-modify is the default; `generate()` opts into a copy); in analytical
    commands elsewhere it names a new **Stata variable**. These should be documented as two
    deliberately distinct, well-established conventions, not collapsed into one.
-4. **Architecture split**: `nwcloseness`, `nworder`, and (fixed earlier this session)
-   `nwdissimilar`/`nwsimilar`/`nwhierarchy`/`nwtomatafast`/`nwqap` still use the legacy `_nwsyntax`/
-   `nwtomatafast` idiom instead of modern `nw_syntax`. Not purely cosmetic — `nwtomatafast` was
-   found to be **actually broken** by this reliance (see `docs/CERTIFICATION.md`), and `nwqap`'s use
-   of `_nwsyntax` was found to be **completely fatal**, not just legacy style: `_nwsyntax` only
-   re-exports 4 of the locals `nw_syntax` itself sets (`netobj`/`id`/`netname`/`networks`) to its own
-   caller, so `nwqap.ado`'s references to `nodes`/`directed`/`valued` were always empty, crashing
-   with r(3000) on every single call. Fixed (harmonisation unit 9) by migrating `nwqap` to
-   `nw_syntax` directly; `nwcloseness`/`nworder` have not been checked for the same failure mode and
-   remain open. Given `nwqap` looked like ordinary legacy style right up until it was actually run,
-   checking whether `nwcloseness`/`nworder` are similarly silently dead should take priority over
-   generic architecture cleanup elsewhere — this list is a real risk register, not just a style nit.
+4. **Architecture split**: 15 other files (`_nwnodelab`, `_nwnodeid`, `nwconstraint`, `nwdissimilar`,
+   `nwergm`, `nwdropnodes`, `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`,
+   `nwreplacemat`, `nwsimilar`, `nwrecode`, `nwutility`) still use the legacy `_nwsyntax`/
+   `nwtomatafast`/`_nwsyntax_other` idiom instead of modern `nw_syntax`. Not purely cosmetic —
+   `nwtomatafast` was found to be **actually broken** by this reliance (see `docs/CERTIFICATION.md`),
+   and three separate commands relying on `_nwsyntax`/`_nwsyntax_other` were found to be **completely
+   broken or silently wrong**, not just legacy style:
+   - `nwqap` (harmonisation unit 9): `_nwsyntax` only re-exports 4 of the locals `nw_syntax` itself
+     sets (`netobj`/`id`/`netname`/`networks`) to its own caller, so `nwqap.ado`'s references to
+     `nodes`/`directed`/`valued` were always empty, crashing with r(3000) on every single call. Fixed
+     by migrating to `nw_syntax` directly.
+   - `nwcloseness`/`nworder` (harmonisation unit 10): `_nwsyntax.ado` itself had a bug in the one
+     `netname` re-export it *does* attempt (`` c_local netname `name' `` referenced a local that was
+     never set, instead of `` `netname' ``, the one `nw_syntax` actually sets) — every caller relying
+     on that export got an empty netname back, with **no error at all**. `nwcloseness` silently ran
+     zero loop iterations and produced no output; `nworder` crashed with r(111) via a related but
+     separate bug in its own use of `nw_syntax`'s dead `name()` option. Fixed at the root in
+     `_nwsyntax.ado` (benefits every remaining caller of that export), plus command-specific fixes for
+     each (`nwcloseness` also needed migrating off the separately-broken, and — discovered mid-fix —
+     entirely-missing-from-disk `_nwsyntax_other.ado`, plus a third, independent multi-network
+     row-alignment bug; `nworder` needed its own `netname`/`name()` collision fixed).
+
+   15 files remain unchecked for the same class of failure; 4 of them (`nwmovie`, `nwmoviexy`,
+   `nwrecode`, `nwutility`) still call `_nwsyntax_other` specifically, which is now confirmed
+   incompatible with the modern architecture — any of the 4 that actually reaches that code path is
+   expected to crash the same way `nwcloseness` did before its fix. This list is a real risk
+   register, not just a style nit — three unrelated commands failing three different ways on the
+   same deprecated wrapper is not a coincidence worth dismissing.
 5. **Two `r()`-return idioms coexist**: commands added/touched this session (`nwkcore`, `nwcug`,
    `nwsimindex`, `nw2project`, `nwaltergen`) use `program X, rclass` + `return scalar`; the vast
    majority of older commands instead do `mata: st_rclear()` + `mata: st_numscalar("r(x)", ...)`

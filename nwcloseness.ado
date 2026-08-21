@@ -39,18 +39,28 @@ program nwcloseness
 			exit
 		}
 		
-		_nwsyntax_other `netname_temp'
-		
-		mata: nearness = J(`othernodes', 1,1) :/ far
-		mata: closeness = nearness :* (`othernodes' - 1)
+		nw_syntax `netname_temp'
+
+		mata: nearness = J(`nodes', 1,1) :/ far
+		mata: closeness = nearness :* (`nodes' - 1)
 		local _closeness : word 1 of `generate'
 		local _farness : word 2 of `generate'
 		local _nearness : word 3 of `generate'
 		nwdrop _tempgeodesic
 		restore
-		
+
 		_nwsetobs `netname_temp'
-		
+		// _nwsetobs only ensures enough observations exist - it does
+		// not align row i with node i of `netname_temp' specifically
+		// (a real, separate bug found while adding netlist test
+		// coverage: without this sync, st_store below wrote into
+		// whatever rows happened to be there, silently misplacing
+		// and even losing data for every network after the first).
+		// nw_datasync is this package's own established mechanism for
+		// that alignment (see e.g. nwdegree's netlist support).
+		tempvar included
+		nw_datasync `netname_temp', generate(`included')
+
 		qui capture drop `_closeness'`k'
 		qui gen `_closeness'`k' = .
 		qui capture drop `_farness'`k'
@@ -58,11 +68,12 @@ program nwcloseness
 		qui capture drop `_nearness'`k'
 		qui gen `_nearness'`k' =.
 		
-		mata: st_store((1::`othernodes'),"`_closeness'`k'",closeness)
-		mata: st_store((1::`othernodes'),"`_farness'`k'",far)
-		mata: st_store((1::`othernodes'),"`_nearness'`k'",nearness)
+		mata: st_store((1::`nodes'),"`_closeness'`k'",closeness)
+		mata: st_store((1::`nodes'),"`_farness'`k'",far)
+		mata: st_store((1::`nodes'),"`_nearness'`k'",nearness)
 	
 		local generate_all "`generate_all' `_closeness'`k' `_farness'`k' `_nearness'`k'"
+		capture drop `included'
 		mata: mata drop closeness far nearness geodesic
 		
 		local k = `k' + 1	
