@@ -171,10 +171,16 @@ bug (done, unit 38) → `nwset` two-ID-variable `twomode` syntax (done, unit 39)
 representative commands (`nwdegree` done, unit 40, following the proven `nwclustering` redirect
 pattern; `NWdef::get_density()` re-audited, done, unit 41 - see unit 41's own row: turned out to
 already be correct, root cause of the apparent gap was a real, much more serious bug found and
-fixed in `nw2fromedge` itself, not in density) → extend
-`nw2project` with the missing projection methods + provenance metadata → `nwsummarize` (the
-package's closest equivalent to a `nwdescribe` command - already displays two-mode metadata, extend
-for temporal once it exists) → temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`
+fixed in `nw2fromedge` itself, not in density) → `nw2project` extended with the missing projection
+methods (`count`/`binary`/`jaccard`/`cosine`) + provenance metadata (done, unit 42 - also surfaced
+and fixed two further real, pre-existing bugs found while verifying provenance's save/reload
+round-trip: `create_by_name_sparse()` silently wiping a network's own name via its internal
+`zap()` call with nothing restoring it afterward, and `nwuse.ado`'s reload loop referencing an
+undefined local `` `_nw_netname' `` instead of the already-correct `` `n' ``, silently operating
+on "current network" rather than the intended one for every `nwname`-based reload field) →
+`nwsummarize` (the package's closest equivalent to a `nwdescribe` command - already displays
+two-mode metadata and now provenance too, unit 42; extend for temporal once it exists) →
+temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`
 + basic `at()` slicing on one or two representative commands → full `docs/NETWORK_TYPE_MATRIX.md`
 audit pass across every remaining command → full regression sweep → this section marked complete.
 

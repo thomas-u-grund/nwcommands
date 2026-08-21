@@ -1534,7 +1534,8 @@ class `NWdef' {
 	real colvector		match // holds information about case numbers to which nodes 1,2,3... match
 	string scalar 		description_mode1
 	string scalar 		description_mode2
-	
+	string scalar 		provenance // human-readable origin note, e.g. how a projected network was derived - see set_provenance()/get_provenance()
+
 	real matrix 		edge
 	`BOOL'				isdirect
 	`BOOL'				isvalued
@@ -1650,7 +1651,8 @@ class `NWdef' {
     real scalar get_nodes_mode2() 
 	string scalar get_description_mode1()
 	string scalar get_description_mode2()
-	
+	string scalar get_provenance()
+
     real scalar check_valued()
     real scalar check_symmetry()
 	
@@ -1705,6 +1707,7 @@ class `NWdef' {
 	void set_nodes_mode2()
 	void set_description_mode1()
 	void set_description_mode2()
+	void set_provenance()
 	string scalar get_modes_labeled_string()
 	void set_modes_from_labeled_string()
 
@@ -3643,6 +3646,14 @@ string scalar `NWdef'::get_description_mode1(){
 
 string scalar `NWdef'::get_description_mode2(){
 	return(description_mode2)
+}
+
+void `NWdef'::set_provenance(string scalar note){
+	provenance = note
+}
+
+string scalar `NWdef'::get_provenance(){
+	return(provenance)
 }
 
 void `NWdef'::set_nodes_mode1(real scalar m1){

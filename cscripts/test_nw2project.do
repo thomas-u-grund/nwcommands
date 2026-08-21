@@ -157,3 +157,129 @@ assert _rc == 0
 capture nw_syntax collideproj_2, other(_check)
 assert _rc != 0
 di "=== REPLACE REUSES EXACT NAME VERIFIED ==="
+
+* --- new shared-neighbor-structure stat() options (count/binary/
+* jaccard/cosine) - Part 4 of the two-mode/temporal architecture
+* initiative's projection extension. Same Peter/Thomas/LiU/Oxford
+* dataset as the documented worked example above: both share both
+* institutions, so degree(Peter)=degree(Thomas)=2, shared=2.
+nwclear
+set obs 4
+gen ego = "Peter"
+gen alter = "LiU"
+gen value = 1
+replace ego = "Thomas" in 2
+replace alter = "LiU" in 2
+replace value = 1 in 2
+replace ego = "Peter" in 3
+replace alter = "Oxford" in 3
+replace value = 7 in 3
+replace ego = "Thomas" in 4
+replace alter = "Oxford" in 4
+replace value = 5 in 4
+nw2fromedge ego alter value, name(structnet)
+
+nw2project structnet, project(1) name(count_test) stat(count)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("count_test")]
+mata: st_numscalar("r(count)", p->edge_weight(1,2))
+assert reldif(r(count), 2) < 1e-8
+
+nw2project structnet, project(1) name(binary_test) stat(binary)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("binary_test")]
+mata: st_numscalar("r(binary)", p->edge_weight(1,2))
+assert reldif(r(binary), 1) < 1e-8
+
+nw2project structnet, project(1) name(jaccard_test) stat(jaccard)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("jaccard_test")]
+mata: st_numscalar("r(jaccard)", p->edge_weight(1,2))
+assert reldif(r(jaccard), 1) < 1e-8
+
+nw2project structnet, project(1) name(cosine_test) stat(cosine)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("cosine_test")]
+mata: st_numscalar("r(cosine)", p->edge_weight(1,2))
+assert reldif(r(cosine), 1) < 1e-8
+di "=== COUNT/BINARY/JACCARD/COSINE ON FULLY-OVERLAPPING NEIGHBORS (=1) VERIFIED ==="
+
+* a partial-overlap case where jaccard/cosine are not trivially 1:
+* A: Oxford, LiU, ETH (degree 3); B: Oxford, LiU (degree 2); shared=2.
+* jaccard = 2/(3+2-2) = 2/3; cosine = 2/sqrt(3*2) = .8164966
+nwclear
+set obs 5
+gen ego = "A"
+gen alter = "Oxford"
+replace ego = "A" in 2
+replace alter = "LiU" in 2
+replace ego = "A" in 3
+replace alter = "ETH" in 3
+replace ego = "B" in 4
+replace alter = "Oxford" in 4
+replace ego = "B" in 5
+replace alter = "LiU" in 5
+nw2fromedge ego alter, name(partialnet)
+
+nw2project partialnet, project(1) name(jaccard_partial) stat(jaccard)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("jaccard_partial")]
+mata: st_numscalar("r(jaccardp)", p->edge_weight(1,2))
+assert reldif(r(jaccardp), 2/3) < 1e-6
+
+nw2project partialnet, project(1) name(cosine_partial) stat(cosine)
+mata: p = nw.nws.pdefs[nw.nws.get_index_of("cosine_partial")]
+mata: st_numscalar("r(cosinep)", p->edge_weight(1,2))
+assert reldif(r(cosinep), 2/sqrt(6)) < 1e-6
+di "=== JACCARD/COSINE ON PARTIAL-OVERLAP NEIGHBORS VERIFIED ==="
+
+* --- provenance metadata: a projected network records where it came
+* from, on the network object itself (not merely printed and lost) -
+* Part 4/roadmap provenance gap. Checked both immediately and across a
+* real nwsave/nwuse round-trip, since the two are backed by genuinely
+* different code paths (nw2project.ado's own set_provenance() call vs.
+* nwsave.ado/nwuse.ado/nw_name.ado's newprovenance() persistence
+* wiring) - either could work while the other doesn't.
+* structnet is rebuilt fresh here rather than reused from earlier -
+* nwclear (in the partial-overlap block above) drops every previously
+* declared network, structnet included.
+nwclear
+set obs 4
+gen ego = "Peter"
+gen alter = "LiU"
+gen value = 1
+replace ego = "Thomas" in 2
+replace alter = "LiU" in 2
+replace value = 1 in 2
+replace ego = "Peter" in 3
+replace alter = "Oxford" in 3
+replace value = 7 in 3
+replace ego = "Thomas" in 4
+replace alter = "Oxford" in 4
+replace value = 5 in 4
+nw2fromedge ego alter value, name(structnet)
+
+nw2project structnet, project(1) name(provnet) stat(minmax)
+nwname provnet
+assert `"`r(provenance)'"' == "projected from network structnet, mode 1 (ego), stat=minmax"
+
+nwdrop structnet
+tempfile provfile
+nwsave `provfile'.nwdta
+nwclear
+nwuse `provfile'.nwdta, clear
+nwname provnet
+assert `"`r(provenance)'"' == "projected from network structnet, mode 1 (ego), stat=minmax"
+di "=== PROVENANCE SET + SAVE/RELOAD ROUND-TRIP VERIFIED ==="
+
+* --- regression guard: an ordinary (non-projected) network's own
+* provenance stays blank, and nwsave/nwuse of such a network is
+* unaffected by any of the above (also exercises the nwuse.ado
+* `_nw_netname'-vs-`n' local-macro bugfix found alongside this, on a
+* plain one-mode network rather than a projected one).
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(onemode) undirected labs(A,B,C)
+nwname onemode
+assert `"`r(provenance)'"' == ""
+tempfile plainfile
+nwsave `plainfile'.nwdta
+nwclear
+nwuse `plainfile'.nwdta, clear
+nwname onemode
+assert `"`r(provenance)'"' == ""
+di "=== PLAIN ONE-MODE NETWORK PROVENANCE/SAVE-RELOAD UNAFFECTED ==="

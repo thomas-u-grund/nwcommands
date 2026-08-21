@@ -27,7 +27,7 @@
 {synoptline}
 {synopt:{opt project(1|2)}}Mode/level to collapse to{p_end}
 {synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}{p_end}
-{synopt:{opt stat(min|max|minmax|sum|mean)}}How to combine tie values on a valued two-mode network; default = {it:minmax}{p_end}
+{synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine)}}How to combine tie values (or, for the last 4, how to score shared-neighbor structure directly); default = {it:minmax}{p_end}
 {synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
@@ -72,6 +72,26 @@ neighbor, then take the maximum of those minima across all shared neighbors -
 substantively, the strongest shared bond{p_end}
 
 {pstd}
+The remaining four options score the {bf:shared-neighbor structure itself} rather than
+combining tie values - they are defined the same way regardless of whether the source
+network is valued, and are available for a valued source network too (unlike the five
+above, which require one):
+
+{p 8 12 2}{bf:stat(count)}{p_end}
+{p 12 12 2}the number of shared neighbors - identical to the default behaviour on an
+unvalued source network, but now requestable explicitly on a valued one too, ignoring
+tie strength entirely{p_end}
+{p 8 12 2}{bf:stat(binary)}{p_end}
+{p 12 12 2}1 whenever at least one shared neighbor exists, 0 (no tie) otherwise - a
+plain co-affiliation indicator{p_end}
+{p 8 12 2}{bf:stat(jaccard)}{p_end}
+{p 12 12 2}the Jaccard similarity of the two nodes' neighbor sets: shared neighbors
+divided by the size of the union of their neighbor sets{p_end}
+{p 8 12 2}{bf:stat(cosine)}{p_end}
+{p 12 12 2}the cosine similarity of the two nodes' neighbor sets: shared neighbors
+divided by the geometric mean of their two degrees{p_end}
+
+{pstd}
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5
 years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 
@@ -84,6 +104,11 @@ years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 		{c |} mean      {c |} 3.5    {c |}
 		{c |} minmax    {c |}   5    {c |}
 		{c BLC}{hline 12}{c -}{hline 8}{c BRC}
+
+{pstd}
+The projected network's provenance (which network and mode it was projected from, and with
+which {opt stat()}) is recorded on the new network itself, not just printed - see
+{bf:r(provenance)} via {help netname:nwname}, and {help nwsummarize}, which displays it.
 
 {title:Stored results}
 

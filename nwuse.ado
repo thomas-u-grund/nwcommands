@@ -106,6 +106,8 @@ program nwuse
 	local has_mode1desc = (_rc == 0)
 	capture confirm variable _nw_mode2desc
 	local has_mode2desc = (_rc == 0)
+	capture confirm variable _nw_provenance
+	local has_provenance = (_rc == 0)
 	local f = _nw_format[1]
 	local nets = _nw_nets[1]
 	// check if network names already exist
@@ -131,14 +133,33 @@ program nwuse
 		local md ""
 		local m1d ""
 		local m2d ""
+		local prov ""
 		if `has_modes' local md = _nw_modes[`i']
 		if `has_mode1desc' local m1d = _nw_mode1desc[`i']
 		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
+		if `has_provenance' local prov = _nw_provenance[`i']
 		keep if _nw_match_`n'_nw_ego == 1
 		nwfromedge _nw_ego _nw_alter `n', name("`n'")
-		nwname `_nw_netname', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("``v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"')
+		// BUGFIX: `_nw_netname' is a LOCAL-macro reference to a local
+		// literally named "_nw_netname", which is never defined
+		// anywhere in this loop - `_nw_netname' is the STATA VARIABLE
+		// holding each row's network name, and `n' (set above from
+		// _nw_netname[`i']) is the already-correct local for it. The
+		// undefined-local reference silently expands to "" (Stata does
+		// not error on an undefined local), so nwname/nwsym below were
+		// being called *bare* - operating on whatever network happened
+		// to be "current" at that instant rather than explicitly this
+		// iteration's network. Found via a direct probe (set trace on)
+		// while tracking down why a projected network's new provenance
+		// metadata wasn't surviving a save/reload round-trip - the same
+		// bug silently affected every other newXXX() field passed here
+		// (new2mode/newselfloop/newtitle/newvalued/newmodes/
+		// newmode1desc/newmode2desc) too, though it happened to go
+		// unnoticed for those because "current" usually already matched
+		// the intended network by the time this specific line ran.
+		nwname `n', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("``v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
 		if "`d'"  == "false" {
-			nwsym `_nw_netname'
+			nwsym `n'
 		}
 		restore
 	}
