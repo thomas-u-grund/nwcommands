@@ -11,6 +11,6 @@ program _nwsyntax
 	
 	c_local netobj `netobj'
 	c_local id `r(id)'
-	c_local netname `name'
-	c_local networks `networks'	
+	c_local netname `netname'
+	c_local networks `networks'
 end
