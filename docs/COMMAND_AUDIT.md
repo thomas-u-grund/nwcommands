@@ -104,12 +104,12 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    new **network**" (in-place-modify is the default; `generate()` opts into a copy); in analytical
    commands elsewhere it names a new **Stata variable**. These should be documented as two
    deliberately distinct, well-established conventions, not collapsed into one.
-4. **Architecture split**: 15 other files (`_nwnodelab`, `_nwnodeid`, `nwconstraint`, `nwdissimilar`,
-   `nwergm`, `nwdropnodes`, `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`,
-   `nwreplacemat`, `nwsimilar`, `nwrecode`, `nwutility`) still use the legacy `_nwsyntax`/
-   `nwtomatafast`/`_nwsyntax_other` idiom instead of modern `nw_syntax`. Not purely cosmetic —
-   `nwtomatafast` was found to be **actually broken** by this reliance (see `docs/CERTIFICATION.md`),
-   and three separate commands relying on `_nwsyntax`/`_nwsyntax_other` were found to be **completely
+4. **Architecture split**: 13 other files (`nwconstraint`, `nwdissimilar`, `nwergm`, `nwdropnodes`,
+   `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`, `nwreplacemat`, `nwsimilar`,
+   `nwrecode`, `nwutility`) still use the legacy `_nwsyntax`/`nwtomatafast`/`_nwsyntax_other` idiom
+   instead of modern `nw_syntax`. Not purely cosmetic — `nwtomatafast` was found to be **actually
+   broken** by this reliance (see `docs/CERTIFICATION.md`), and five separate commands (plus a shared
+   pair of internal helpers) relying on `_nwsyntax`/`_nwsyntax_other` were found to be **completely
    broken or silently wrong**, not just legacy style:
    - `nwqap` (harmonisation unit 9): `_nwsyntax` only re-exports 4 of the locals `nw_syntax` itself
      sets (`netobj`/`id`/`netname`/`networks`) to its own caller, so `nwqap.ado`'s references to
@@ -125,13 +125,24 @@ Generators that *create* a network rather than operate on an existing one (`nwse
      each (`nwcloseness` also needed migrating off the separately-broken, and — discovered mid-fix —
      entirely-missing-from-disk `_nwsyntax_other.ado`, plus a third, independent multi-network
      row-alignment bug; `nworder` needed its own `netname`/`name()` collision fixed).
+   - `_nwnodelab`/`_nwnodeid` (harmonisation unit 11, internal helpers used by `nwdropnodes`/
+     `nwkeepnodes`): the same unexported-`nodes` bug (fixed the same way), plus a second, independent
+     bug found once the crash was gone — `nwname`'s `r(labs)` is comma-separated but both files fed it
+     into constructs expecting space-separated lists, so `_nwnodelab` silently returned empty labels
+     and `_nwnodeid` reported every valid label as not found.
 
-   15 files remain unchecked for the same class of failure; 4 of them (`nwmovie`, `nwmoviexy`,
-   `nwrecode`, `nwutility`) still call `_nwsyntax_other` specifically, which is now confirmed
-   incompatible with the modern architecture — any of the 4 that actually reaches that code path is
-   expected to crash the same way `nwcloseness` did before its fix. This list is a real risk
-   register, not just a style nit — three unrelated commands failing three different ways on the
-   same deprecated wrapper is not a coincidence worth dismissing.
+   13 files remain, triaged (not fixed) after the above: **confirmed broken** — `nwutility`,
+   `nwreplacemat` (also independently entangled with legacy `nw_mata<id>`/`$nwsize_<id>`/
+   `$nwdirected_<id>` globals, the same pre-2016 storage family already broken for `nwtomatafast` — the
+   largest remaining item in this family), `nwdropnodes`/`nwkeepnodes` (chain-blocked on
+   `nwreplacemat`), `nwrecode` (two independent bugs stacked), `nwmovie`/`nwmoviexy` (high-confidence
+   static finding, not empirically run — needs ImageMagick). **Confirmed fine for this specific bug
+   class**: `nwissymmetric`, `nwergm` (not fully exercised — needs R+`statnet`), `nwdissimilar`/
+   `nwsimilar`/`nwhierarchy` (blocked by the already-tracked, separate `nwset`/`mat()` Mata-visibility
+   issue elsewhere in this table). Full detail and suggested fix order in `docs/CERTIFICATION.md`'s
+   Pending table. This list is a real risk register, not just a style nit — five unrelated commands
+   (plus a shared helper pair) failing multiple different ways on the same deprecated wrapper is not a
+   coincidence worth dismissing.
 5. **Two `r()`-return idioms coexist**: commands added/touched this session (`nwkcore`, `nwcug`,
    `nwsimindex`, `nw2project`, `nwaltergen`) use `program X, rclass` + `return scalar`; the vast
    majority of older commands instead do `mata: st_rclear()` + `mata: st_numscalar("r(x)", ...)`
