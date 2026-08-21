@@ -23,6 +23,16 @@
 {opt mat}({it:matamatrix})
 [ {it:options} ]
 
+{pstd}Declare a two-mode network from an edgelist of two id variables (see {help nwset##twomode:below})
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:mode1id}} {it:{help varname:mode2id}} [{it:{help varname:tievalue}}] {cmd:,} {opt twomode} [ {it:options} ]
+
+{pstd}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:below})
+
+{p 8 15 2}
+{cmd:nwset} [{it:{help varlist}}] {cmd:,} {opt bipartite} [{opt mat}({it:matamatrix})] [ {it:options} ]
+
 
 {pstd}Display currently existing networks
 
@@ -53,6 +63,8 @@
 {synoptline}
 
 {synopt:{opt edgelist}}Declare data in edgelist format{p_end}
+{synopt:{opt bipartite}}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:Declare a two-mode network} below){p_end}
+{synopt:{opt twomode}}Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see {help nwset##twomode:Declare a two-mode network} below){p_end}
 {synopt:{opt directed}}Force network to be directed{p_end}
 {synopt:{opt undirected}}Force network to be undirected{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
@@ -169,9 +181,9 @@ The following command declares such data as network data and gives the new netwo
 
 	{cmd:. nwset fromid toid value, name(mynet) edgelist}
 
-	
+
 {pstd}
-{bf:{ul:2. Declare adjacency matrix from Mata matrix}}
+{bf:{ul:3. Declare adjacency matrix from Mata matrix}}
 
 {pstd}
 Set a network from a {it:nodes x nodes} Mata matrix that holds the adjacency matrix of the new network. The option
@@ -207,8 +219,61 @@ Now a network called {it:network} exists and we can interact with it. For exampl
 	3 {c |}  {res}1   1   0   0{txt}  {c |}
 	4 {c |}  {res}1   1   1   0{txt}  {c |}
           {c BLC}{hline 17}{c BRC}
- 
- 
+
+
+{marker twomode}{...}
+{pstd}
+{bf:{ul:4. Declare a two-mode network}}
+
+{pstd}
+A two-mode (bipartite) network has two distinct sets of nodes ("modes"), with ties running only
+{it:between} the two sets, never within either one - e.g. people and the organisations they belong
+to. Two-mode status is stored directly on the network object itself (queryable via
+{help nwsummarize} or {help nwname}'s own {bf:r(mode2)}/{bf:r(nodes1)}/{bf:r(nodes2)} results), the
+same as directed/valued/selfloop status - there are two ways to declare one, matching the two input
+shapes {bf:nwset} already supports for one-mode networks:
+
+{pstd}
+{bf:twomode} - from an edgelist of two (or three, for a valued network) id variables, one row per
+tie, directly analogous to {bf:edgelist} above. This is generally the more natural form when the
+data already looks like a list of affiliations:
+
+	{cmd:. nwclear}
+	{cmd:. use "http://nwcommands.org/data/institutions.dta", clear}
+	{cmd:. nwset person institution, twomode name(mynet)}
+
+{pstd}
+This also automatically sets each mode's own human-readable description from the variable names
+used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)} in
+{help nwname}/{help nwsummarize}), and (unless {bf:xvars} is given) generates a {it:_mode} variable
+holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
+full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
+{bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
+edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare
+{help varlist} alone, so combining them is rejected as an explicit error rather than guessed at.
+
+{pstd}
+{bf:bipartite} - from a Mata matrix, or from a {help varlist} interpreted as a {it:wide} affiliation
+matrix (each named variable is one mode-1 node, each observation is one mode-2 node) - the two-mode
+analogue of the plain adjacency-matrix forms in sections 1 and 3 above:
+
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,1,0\1,0,1\0,1,1)}
+	{cmd:. nwset, mat(net) bipartite name(mynet)}
+
+{pstd}
+Here {bf:net} is a 3 (mode 1) x 3 (mode 2) matrix - {bf:bipartite} tells {bf:nwset} the matrix's own
+columns are mode-1 nodes and its rows are mode-2 nodes, rather than treating it as an ordinary square
+one-mode adjacency matrix.
+
+{pstd}
+Ordinary {bf:nw*} commands inspect a network's own two-mode status and behave accordingly rather
+than requiring a separate command family for bipartite data - see each command's own help file for
+whether it has a native bipartite definition, works on the raw bipartite structure directly, requires
+an explicit projection (see {help nw2project} - {bf:nwset} and the rest of the package never project
+automatically), or does not support two-mode data at all.
+
+
 {title:Remarks}
  
 {pstd}
@@ -245,5 +310,5 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}
 last certified : 21 Aug 2026
