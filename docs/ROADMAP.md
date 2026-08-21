@@ -166,8 +166,10 @@ table the user's own Part XV/15 asked for (T1-T5/W1-W5 classification, ~20 comma
 new one.
 
 **Sequencing** (adapted from the user's own suggested workflow): audit (done) → fix mode-persistence
-bug (done, unit 38) → `nwset` two-ID-variable `twomode` syntax → migrate representative commands
-(`nwdegree`/density first, following the proven `nwclustering` redirect pattern) → extend
+bug (done, unit 38) → `nwset` two-ID-variable `twomode` syntax (done, unit 39) → migrate
+representative commands (`nwdegree` done, unit 40, following the proven `nwclustering` redirect
+pattern; `NWdef::get_density()` still open - wrong, one-mode denominator on bipartite data,
+confirmed via unit 38's own audit, not yet fixed) → extend
 `nw2project` with the missing projection methods + provenance metadata → `nwsummarize` (the
 package's closest equivalent to a `nwdescribe` command - already displays two-mode metadata, extend
 for temporal once it exists) → temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`

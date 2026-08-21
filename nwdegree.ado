@@ -182,6 +182,46 @@ program nwdegree
 	qui foreach netname_temp in `netname' {
 		nw_syntax `netname_temp'
 
+		// Plain degree has no meaningful definition on a two-mode
+		// network's own square-matrix sense (every node's "neighbors"
+		// are structurally confined to the opposite mode already, and
+		// the natural normalisation differs by mode) - nwdegree used
+		// to just silently compute it anyway, on whatever the raw
+		// bipartite adjacency happened to contain, producing a
+		// plausible-looking but meaningless number with no warning at
+		// all (confirmed empirically before this fix - a real,
+		// previously-undiscovered instance of exactly the "Category A"
+		// silent-wrong-result gap this initiative's own audit was
+		// looking for). Redirects to nw2degree instead, the same
+		// already-established, already-tested pattern nwclustering.ado
+		// uses for its own identical situation - not a warning about
+		// anything wrong with the data, so styled as an ordinary
+		// {txt} note rather than {err} (nwclustering's own version of
+		// this message uses {err}, arguably inconsistent with "don't
+		// call normal expected behaviour a warning"; not changed here
+		// to avoid an unrelated, out-of-scope edit to that file).
+		// nw2degree's own option set (generate()/replace/silent) is
+		// smaller than nwdegree's one-mode-specific one
+		// (alpha()/isolates/standardize/in()/out()/outputoff, none of
+		// which have a bipartite equivalent) - forwarding only what
+		// applies and naming explicitly, not silently, whatever was
+		// requested but doesn't carry over.
+		if "`is2mode'" == "true" {
+			local ignored_opts ""
+			if "`alpha'" != "0" local ignored_opts "`ignored_opts' alpha()"
+			if "`isolates'" != "" local ignored_opts "`ignored_opts' isolates"
+			if "`standardize'" != "" local ignored_opts "`ignored_opts' standardize"
+			if "`in'" != "" local ignored_opts "`ignored_opts' in()"
+			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
+			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
+			noi di "{txt}note: `netname_temp' is a two-mode network - using {bf:nw2degree} instead."
+			if "`ignored_opts'" != "" {
+				noi di "{txt}      the following option(s) have no bipartite equivalent and were ignored:{bf:`ignored_opts'}"
+			}
+			noi nw2degree `netname_temp', generate(`generate') `replace' `silent'
+			continue
+		}
+
 		tempvar included
 		nw_datasync `netname_temp', generate(`included')
 		local nodes_temp `nodes'
