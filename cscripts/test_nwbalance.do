@@ -61,24 +61,29 @@ assert r(balance) == 0
 di "=== SINGLE-NEGATIVE-TIE TRIAD: fully unbalanced, VERIFIED ==="
 
 /*
-	KNOWN LIMITATION, documented rather than silently worked around: a
-	network with zero closed triads (e.g. a path graph, no triangles)
-	causes nwbalance to error (r(2000), "no observations") instead of
-	gracefully reporting zero balanced/unbalanced triads. This is a
-	pre-existing gap in the command's Stata-reshape-based triad
-	enumeration pipeline (not something introduced or changed in this
-	session's documentation/bugfix pass) - fixing it properly means
-	auditing the multi-stage reshape/merge chain for empty-result
-	handling, out of scope for a documentation-and-quick-bugfix pass.
-	Recorded here as a regression-aware test so this limitation is
-	visible (and can be turned into a real assertion) whenever someone
-	does take on that larger fix - see docs/ROADMAP.md.
+	Previously a real bug, now fixed: a network with zero closed
+	triads (e.g. a path graph, no triangles) caused nwbalance to error
+	(r(2000), "no observations") because the command's Stata-reshape-
+	based triad enumeration pipeline fed a completely empty dataset
+	into Stata's own collapse command, which errors on zero
+	observations regardless of what it's collapsing. Fixed with an
+	explicit empty-result guard: every node genuinely has 0 closed
+	triads in this case (not an undefined count), built directly from
+	the network's own node list rather than collapsed from the (empty)
+	triad-level data. The per-node balance ratio (0/0) is correctly
+	left missing, not silently reported as 0 or 1.
 */
 nwclear
 nwset, mat((0,1,0\1,0,1\0,1,0)) name(pathnet) undirected labs(A,B,C)
-capture nwbalance pathnet
-assert _rc == 2000
-di "=== NO-TRIADS CASE: known limitation (errors rather than reporting zero), documented ==="
+nwbalance pathnet
+assert r(closed_triad) == 0
+assert r(balanced_triad) == 0
+assert r(unbalanced_triad) == 0
+assert r(balance) == .
+assert _clotriad[1] == 0
+assert _baltriad[1] == 0
+assert _balance[1] == .
+di "=== NO-TRIADS CASE: correctly reports zero (not an error), per-node ratio left missing, VERIFIED ==="
 
 * custom generate() names
 nwclear

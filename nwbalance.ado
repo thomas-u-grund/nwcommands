@@ -110,7 +110,13 @@ program nwbalance
 	
 	tempfile temp clustering edge_list adj_list
 	nw_syntax `netname'
-	nw_datasync `netname'
+	tempvar included
+	nw_datasync `netname', generate(`included')
+	// captured before preserve, for the zero-closed-triads guard
+	// below (a triangle-free network's node list can't be recovered
+	// from the empty reshape output that would otherwise feed the
+	// per-node collapse)
+	qui levelsof `nw_nodename' if `included', local(allnodes)
 
 	preserve
 	
@@ -160,7 +166,35 @@ program nwbalance
 	gen `balance' = ((value0 * value1 * value2) > 0)
 	gen `closed' = 1
 	gen `nw_nodename' = ego2
-	collapse (sum) `balance' `closed', by(`nw_nodename')
+
+	qui count
+	if r(N) == 0 {
+		// no closed triads anywhere in the network - collapse errors
+		// r(2000) "no observations" on a completely empty dataset,
+		// even though every node genuinely has 0 closed triads here
+		// (not an undefined/missing count). Build that all-zero
+		// per-node result directly instead of collapsing, using the
+		// node list captured before preserve.
+		// "clear" (bare) behaves like "clear all" in Stata - it would
+		// wipe Mata memory too, including this package's own
+		// singleton network-state object, corrupting every command
+		// called afterward for the rest of the session. "drop _all"
+		// clears the dataset only, leaving Mata state untouched.
+		drop _all
+		local nnodes : word count `allnodes'
+		qui set obs `nnodes'
+		gen `nw_nodename' = ""
+		local i = 0
+		foreach onenode of local allnodes {
+			local i = `i' + 1
+			qui replace `nw_nodename' = "`onenode'" in `i'
+		}
+		gen `balance' = 0
+		gen `closed' = 0
+	}
+	else {
+		collapse (sum) `balance' `closed', by(`nw_nodename')
+	}
 
 	tempfile bal
 
