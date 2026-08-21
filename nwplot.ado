@@ -1,17 +1,409 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linkˆping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0.0  2april2014}{...}
+{marker topic}
+{helpb nw_topical##visualization:[NW-2.8] Visualization}
 
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwplot {hline 2} Plot a network}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwplot}
+[{it:{help netname}}] 
+[{it:{help if}}]
+[{cmd:,} {it:{help nwplot##node_options:node_options}}
+{it:{help nwplot##label_options:label_options}}
+{it:{help nwplot##edge_options:edge_options}}
+{it:{help nwplot##arrow_options:arrow_options}}
+{it:{help nwplot##layout_options:layout_options}}
+{it:{help nwplot##other_options:other_options}}
+{it:{help nwplot##export_options:export_options}}
+{it:{help twoway_options}}]
+	
+{synoptset 20}{...}
+{p2col:{it:options}}Description{p_end}
+{p2line}
+{p2col:{it:{help nwplot##node_options:node_options}}}change look of
+       nodes (color, size, symbol, etc.){p_end}
+{p2col:{it:{help nwplot##label_options:label_options}}}display and change look of
+       node labels{p_end}
+{p2col:{it:{help nwplot##edge_options:edge_options}}}change look of 
+       edges (color, size, pattern, etc.){p_end}
+{p2col:{it:{help nwplot##arrow_options:arrow_options}}}change look of
+       arrows{p_end}
+{p2col:{it:{help nwplot##layout_options:layout_options}}}change the layout,
+	use existing coordinates, export coordinates{p_end}
+{p2col:{it:{help nwplot##other_options:other_options}}}other network plot options
+		{p_end}
+{p2col:{it:{help nwplot##export_options:export_options}}}export the plot directly
+	to a vector (SVG/PDF/EPS) or raster (PNG/TIF/...) file{p_end}
+{p2col:{it:{help twoway_options}}}normal twoway options for the whole plot
+		{p_end}
+	
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:node_options}}Description{p_end}
+{marker node_options}{...}
+{p2line}
+{synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}size of the nodes{p_end}
+{p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}color of the nodes{p_end}
+{p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}symbol of the nodes{p_end}
+{p2col:{opth nodefactor(float)}}multiply all node sizes by a factor{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:node_sub}}Description{p_end}
+{marker node_sub}{...}
+{p2line}
+{p2col:{opt norescale}}no automatic rescale{p_end}
+{p2col:{opt legendoff}}no legend for this attribute{p_end}
+{p2col:{opt forcekeys}({it:{help int}}...)}list of keys to be used in the legend{p_end}
+{p2col:{opt colorpalette}({it:{help colorstyle}}...)}list with colorstyles; change colorpalette{p_end}
+{p2col:{opt symbolpalette}({it:{help symbolstyle}}...)}list with symbolstyles; change symbolpalette{p_end}
+{p2col:{opth foreground(int...)}}values to be plotted in the foreground{p_end}
+{p2col:{opth sizebin(int)}}finetune size of nodes{p_end}
+{p2col:{opth mlcolor(colorstyle)}}lcolor of nodes{p_end}
+{p2col:{opth mlwidth(linewidthstyle)}}lwidth of nodes{p_end}
+{p2col:{opth nodeclash(real)}}separate overlaped node in mdsclassical{p_end}
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:label_options}}Description{p_end}
+{marker label_options}{...}
+{p2line}
+{p2col:{opt lab}}display node labels saved with network{p_end}
+{p2col:{opth label(varname)}}display node labels from variable{p_end}
+{synopt:{opt labelopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look of node labels (e.g. size, color){p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:edge_options}}Description{p_end}
+{marker edge_options}{...}
+{p2line}
+{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
+{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
+{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end} 
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:edgesub_sub}}Description{p_end}
+{marker edge_sub}{...}
+{p2line}
+{p2col:{opt legendoff}}no legend for this attribute{p_end}
+{p2col:{opt forcekeys}({it:{help int}}...)}list of keys to be used in the legend{p_end}
+{p2col:{opt edgecolorpalette}({it:{help colorstyle}}...)}list with colorstyles; change edgecolorpalette{p_end}
+{p2col:{opt edgepatternpalette}({it:{help linepatternstyle:pattern}}...)}list with linestyles; the same network as in edgecolor is used to display different line patterns{p_end}
+{p2col:{opth foreground(int...)}}values to be plotted in the foreground{p_end}
+	
+{synoptset 35 tabbed}{...}
+{p2col:{it:arrow_options}}Description{p_end}
+{marker arrow_options}{...}
+{p2line}
+{p2col:{opt arcstyle}({it:{help nwplot##arcstyle:arcstyle}})}change the look of arcs (curved, straight){p_end}
+{p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 2{p_end}
+{p2col:{opth arcsplines(int)}}resolution for curved arcs{p_end}
+{p2col:{opth arrowfactor(float)}}multiply arrowhead by a factor{p_end}
+{p2col:{opth arrowgap(float)}}control gap between arrowhead and node{p_end}
+{p2col:{opth arrowbarbfactor(float)}}control look of arrow{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{marker arcstyle}{...}
+{p2col:{it:arcstyle}}{p_end}
+{p2line}
+{p2col:{cmd: automatic}}plots arcs as curved lines, but only when they are reciprocated; default
+		{p_end}
+{p2col:{cmd: curved}}plots all arcs as curved lines
+		{p_end}
+{p2col:{cmd: straight}}plots all arcs as straight lines
+		{p_end}
+
+		
+{synoptset 35 tabbed}{...}
+{p2col:{it:layout_options}}Description{p_end}
+{marker layout_options}{...}
+{p2line}
+{p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
+{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
+{p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:layout_sub}}Description{p_end}
+{marker layout_sub}{...}
+{p2line}
+{p2col:{opt lgc}}only plot largest component{p_end}
+{p2col:{opth iterations(int)}}only relevant for layout = mds; maximum number of iterations in the multidimensional scaling procedure, default = 1000{p_end}
+{p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
+{p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{marker layoutstyle}{...}
+{p2col:{it:layoutstyle}}{p_end}
+{p2line}
+{p2col:{cmd: mds}}modern multidimensional scaling; default when nodes < 50{p_end}
+{p2col:{cmd: mdsclassical}}classical multidimensional scaling; default when nodes > 50{p_end}
+{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout
+		{p_end}
+{p2col:{cmd: circle}}circle layout
+		{p_end}
+{p2col:{cmd: grid}}grid layout
+		{p_end}
+{p2col:{cmd: nodexy}}use coordinates given in {opt nodexy()}; only needed to send options.
+		{p_end}
+{p2col:{cmd: _layoutfunction}}advanced user-written layout function (see {help nwplot##layoutfunction:here}).
+		{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:other_options}}Description{p_end}
+{marker other_options}{...}
+{p2line}
+{p2col:{opth aspectratio(float)}}height/width ratio{p_end}
+{p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
+{p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
+{p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:export_options}}Description{p_end}
+{marker export_options}{...}
+{p2line}
+{p2col:{opt export}({it:filename})}export the plot directly to {it:filename}; the format
+	(SVG/PDF/EPS/PNG/TIF/...) is inferred from the file extension, exactly as it would be by a
+	manual {help graph export} call afterward{p_end}
+{p2col:{opt replace}}overwrite {it:filename} if it already exists{p_end}
+{p2col:{opt exportopt}({it:{help graph export:export_options}})}pass additional options
+	straight through to the underlying {help graph export} call (e.g. {cmd:width()}/{cmd:height()}
+	for raster-format resolution){p_end}
+
+
+{title:Description}
+
+{pstd}
+This command plots a network. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it 
+is compatible with {bf:schemes()} and accepts all {help twoway_options}.
+
+{pstd}
+This example generates a random network and plots it. Because no {help netname} is given, the command refers to the
+{help nwcurrent:current network}.
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 20, prob(.2)}
+	{cmd:. nwplot}
+
+{pstd}
+One can change the layout where nodes should be plotted:
+	
+	{cmd:. nwplot, layout(mds)}
+	{cmd:. nwplot, layout(circle)}
+	{cmd:. nwplot, layout(grid)}
+	{cmd:. nwplot, layout(grid, columns(20))}
+
+{pstd}
+Or obtain coordinates from layout and plot with coordinates. The option {bf:nodexy} can be used to write your
+own network layout functions, return coordinates and plot a network with these coordinates. Because
+{opt generate()} and {opt nodexy()} are a matched pair - one exports the node coordinates a layout produced,
+the other forces a later plot to reuse them - this is also how to plot several different networks (e.g. the same
+set of people observed at several waves) at identical node positions, so the reader can compare panels directly
+instead of re-deriving a fresh, unrelated layout for each one:
+
+	{cmd:. nwplot, gen(xcoord ycoord)}
+	{cmd:. replace xcoord = .2 if _n < 5}
+	{cmd:. nwplot, nodexy(xcoord ycoord)}
+
+	{cmd:. * fixed coordinates across two waves of the same network}
+	{cmd:. nwplot wave1, generate(x1 y1)}
+	{cmd:. nwplot wave2, nodexy(x1 y1)}
+
+{pstd}
+Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or 
+asymmetrically connected (see {help nwdyads}). By default, asymmetrically connected dyads are represented as a straight line, whereas
+mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as 
+curved lines.
+
+	{cmd:. nwplot, arcstyle(automatic)}
+	{cmd:. nwplot, arcstyle(straight)}
+	{cmd:. nwplot, arcstyle(curved)}
+	{cmd:. nwplot, arcbend(0.3) arcsplines(20)} 
+
+{pstd}
+Almost all elements in a network plot can be easily made bigger or smaller using factors:
+
+	{cmd:. nwplot, nodefactor(2)}
+	{cmd:. nwplot, edgefactor(2)} 
+	{cmd:. nwplot, arrowfactor(4)}
+	{cmd:. nwplot, arrowbarbfactor(.2)}
+{phang2}	
+	{cmd:. nwplot, nodefactor(2) edgefactor(4) arrowfactor(2) arrowbarbfactor(.2)}{p_end}
+
+{pstd}
+Colors, symbols and size of nodes can be changed accoring to a {help varname}. Furthermore, the palettes used for display
+can be changed as well. 
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwplot glasgow1, color(smoke1)}
+	{cmd:. nwplot, color(smoke1, colorpalette(red yellow cyan))}
+ 
+	{cmd:. nwplot glasgow1, symbol(sport1)}
+	{cmd:. nwplot glasgow1, symbol(sport1, symbolpalette(T S))}
+
+	{cmd:. nwplot glasgow1, size(alcohol1)}
+	{cmd:. nwplot, size(alcohol1, forcekeys1(1 5 10 20))}
+ 
+	{cmd:. nwplot glasgow1, size(alcohol1) color(smoke1) symbol(sport1)}
+
+{pstd}
+The nwcommand come with two new schemes: s1network and s2network.
+
+	{cmd:. nwplot, scheme(s1network)}
+	{cmd:. nwplot, scheme(s2network)} 
+	{cmd:. nwplot, scheme(s2mono)}
+{phang2}
+	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(s1network)}{p_end}
+{phang2}	
+	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(economist)}{p_end}
+	{cmd:. set scheme s2network}
+
+{pstd}
+This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path
+to color the edges of the original network and change the size of the edges on this path. 
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwpath flomarriage, ego(medici) alter(peruzzi) generate(sp)}
+{phang2}	
+	{cmd:. nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5)}
+	
+{pstd}
+Another example that changes the size and color of edges.
+
+	{cmd:. nwwebuse gang, nwclear}
+	{cmd:. nwplot}
+	{cmd:. nwplot gang, edgesize(gang)} 
+	{cmd:. nwgenerate blood = (gang==4)}
+	{cmd:. nwplot blood}
+	{cmd:. nwplot gang, edgesize(gang) edgecolor(blood)}
+
+{pstd}
+This is how to control the legend of the plot. All options that can be used for twoway legends are valid.{p_end}
+	{phang2}
+	{cmd:. nwplot gang, size(Arrests, forcekeys(5 10 20)) legendopt(on pos(3) cols(1))}
+
+{pstd}
+Because nwplot uses twoway plots one can  use all general twoway options to e.g. control the title of a plot.
+
+{phang2}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
+{phang2}
+{cmd:. nwplot flomarriage, edgecolor(flobusiness) title("Florentine Marriages", color(red) size(huge))}
+{p_end}
+
+{pstd}
+Here, the nodes are plotted with the node labels saved with the network:
+	
+	{cmd:. nwplot flobusiness, lab}
+	
+{pstd}
+More generally, one can use any {it:varname} as node labels. The next example, does the same as the previous command, 
+but shows how one could use node labels stored elsewhere:
+
+	{cmd:. nwplot flobusiness, label(wealth)}
+
+{pstd}
+The look and feel of node labels is changed with labelopt():
+
+	{cmd:. nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))}
+	
+{pstd}
+The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these
+underlying scatter plots. Here, the color and symbol of nodes is overwritten.
+
+	{cmd:. nwplot flomarriage, scatteropt(mfcolor(green) msymbol(D))}
+	{cmd:. nwplot flomarriage, lineopt(lwidth(10) lcolor(green))}
+	
+
+{pstd}
+The next example shows how to only plot the largest component of the network.	
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwcomponents glasgow1, lgc generate(large)}
+	{cmd:. nwplot glasgow1 if large == 1}
+	
+{pstd}
+Alternative to display the largest component only:
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwplot glasgow1, layout(,lgc)}
+
+{pstd}
+{bf:Publication-quality vector export.} {opt export()} saves the plot directly to a file, inferring the
+format from the extension - exactly what a manual {help graph export} call afterward would do, since
+{cmd:nwplot} produces an ordinary Stata graph and never replaces or bypasses it. SVG and PDF are both
+scalable vector formats: the plot stays crisp at any zoom level or print size, and both open cleanly in
+standard vector-graphics editors (e.g. Adobe Illustrator, Inkscape) for further touch-up - node/edge/label
+elements remain separate, editable objects rather than a fixed-resolution image.
+
+	{cmd:. nwplot flomarriage, export("flomarriage.svg")}
+	{cmd:. nwplot flomarriage, export("flomarriage.pdf") replace}
+
+{pstd}
+Raster formats (PNG, TIF, ...) are also supported the same way; {opt exportopt()} passes options straight
+through to the underlying {help graph export} call, most commonly {cmd:width()}/{cmd:height()} to control
+resolution:
+
+	{cmd:. nwplot flomarriage, export("flomarriage.png") exportopt(width(2000))}
+
+{pstd}
+The graph itself is unaffected by {opt export()} - it remains the normal, currently active Stata graph
+afterward, so the Graph Editor, {stata graph save}, and a second {help graph export} in a different format
+all continue to work exactly as they would without {opt export()}.
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwplot} is {cmd:rclass}.
+
+	Macros:
+	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Weighted: yes (via {opt edgesize()}/{opt edgecolor()} - see the shortest-path example above).
+Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
+dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
+directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: the
+command plots a two-mode network's nodes and ties correctly (it has no bipartite-specific logic, but a
+bipartite network's ties are simply a subset of the same one-mode adjacency structure every other network
+uses) - the two modes are not visually distinguished automatically, though; pass the network's own
+{cmd:get_modes()}-derived mode variable to {opt color()} or {opt symbol()} to tell them apart at a glance
+(e.g. {cmd:nw2degree}'s own output, or any variable holding "1"/"2" per node). Self-loops: not rendered -
+a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
+in the package's own visualization roadmap rather than fixed here.
+
+{title:See also}
+		{help nwplotjs}, {help nwplotmatrix}
+
+***/
 capture program drop nwplot
-program nwplot
+program nwplot, rclass
 	version 9.0
+	unw_defs
+	
 	set more off
 	local 0_original = `"`0'"'
-	local layout = "" 
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) * ]
+	local layout = ""
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) * ]
 	local twowayopt `"`options'"'
 
+	nw_datasync `netname'
+	
 	// filter out lgc and nodeclash
 	local 0 "`layout'"
 	syntax [anything(name=something)], [ lgc nodeclash(string) *]
@@ -34,13 +426,18 @@ program nwplot
 	local ignorelgc = ""
 	
 	if "`lgc'" != "" {
-		nwgen `lgc_var' = lgc(`netname')
+		// was "nwgen `lgc_var' = lgc(`netname')" - same broken-shortcut
+		// bug as the mdsclassical block's own "components(")/"lgc("
+		// calls further down this file (see that fix's own comment for
+		// the full explanation); this is a second, independent call
+		// site hitting the identical issue, fixed the same way.
+		qui nwcomponents `netname', lgc generate(`lgc_var')
 		local if_lgc = " `lgc_var' == 1"
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) * ]
-	_nwsyntax `netname', max(1)
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) * ]
+	nw_syntax `netname', max(1)
 	qui nwsummarize `netname'
 	if `r(density)' == 0 {
 		di "{txt}Network empty. Plotting does not make sense.{txt}"
@@ -82,7 +479,7 @@ program nwplot
 			}
 		}
 		local netname "__temp_in"
-		_nwsyntax `netname', max(1)
+		nw_syntax `netname', max(1)
 	}
 
      if "`if'"!="" {
@@ -92,30 +489,23 @@ program nwplot
 		nwdrop __temp_if if (!(`if'))
 		if "`edgecolor'" != "" {
 			capture nwdrop _temp_edgecolor_if
-			nwgen __temp_edgecolor_if = `edgecolor'
+			nwduplicate `edgecolor', name(__temp_edgecolor_if)
 			local edgecolor "__temp_edgecolor_if"
-			if "`edgecolor'" != "`netname'" {
-				nwdrop __temp_edgecolor_if if (!(`if'))
-			}
+			nwdrop __temp_edgecolor_if if (!(`if'))
 		}
 		if "`edgesize'" != "" {
 			capture nwdrop _temp_edgesize_if
-			nwgen __temp_edgesize_if = `edgesize'
+			nwduplicate `edgesize', name(__temp_edgesize_if)
 			local edgesize "_temp_edgesize_if"
-			if "`edgesize'" != "`netname'" & "`edgesize'" != "`edgecolor'" {
-				nwdrop __temp_edgesize_if if (!(`if'))
-			}
+			nwdrop __temp_edgesize_if if (!(`if'))
 		}
 		
 		local netname "__temp_if"
 	}
-	_nwsyntax `netname', max(1)
+	nw_syntax `netname', max(1)
 	
 	qui if "`lab'" != ""{
-		capture drop _nodelab
-		capture drop _nodeid
-		nwload `netname', labelonly
-		local label "_nodelab"
+		local label "`nw_nodename'"
 	}
 	
 	capture which labellist
@@ -443,7 +833,6 @@ program nwplot
 		if "`forcekeys'" != "" {
 			local sizekeys "`forcekeys'"
 		}	
-		
 		capture drop __size
 		gen __size = `varlist'
 		if "`rescale'" == "" {
@@ -544,14 +933,15 @@ program nwplot
 		// check and clean networks as edgecolor and edgesize
 		local edgesizekeys_legendoff "`legendoff'"
 		local edgesize "`anything'"			
-		_nwsyntax_other `edgesize', max(1) nocurrent
+		nw_syntax `edgesize', max(1) nocurrent other(other)
 		local edgesize_directed = "`otherdirected'"	
-		_nwsyntax_other `edgesize', max(1) nocurrent forcedirected(true)
-		
 		local edgesize = trim("`othernetname'")
-		local othernetname = ""
-		qui nwsummarize `edgesize'
-		local siznodes = r(nodes)
+		local siznodes `othernodes'
+		
+		if "`labs'" != "`otherlabs'" & "`force'" == ""{
+			di "{err}{it:network} {bf:`edgesize'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}"
+			error 6056
+		}
 		
 		if `nodes' != `siznodes' {
 			di "{err}{it:network} {bf:`edgesize'} needs to be of the same size as {it:network} {bf:`netname'}"
@@ -605,13 +995,16 @@ program nwplot
 		// check and clean network 
 		local edgecolorkeys_legendoff "`legendoff'"
 		local edgecolor "`anything'"
-		_nwsyntax_other `edgecolor', max(1) nocurrent 
+		nw_syntax `edgecolor', max(1) nocurrent other(other)
 		local edgecolor_directed = "`otherdirected'"	
-		_nwsyntax_other `edgecolor', max(1) nocurrent forcedirected(true)
 		local edgecolor = trim("`othernetname'")
-		local othernetname = ""
-		qui nwsummarize `edgecolor'
-		local siznodes = r(nodes)
+		local siznodes = `othernodes'
+		
+		if "`labs'" != "`otherlabs'" & "`force'" == ""{
+			di "{err}{it:network} {bf:`edgecolor'} has different labels than {it:network} {bf:`netname'}; use option {bf:force}"
+			error 6056
+		}
+		
 		if `nodes' != `siznodes' {
 			di "{err}{it:network} {bf:`edgecolor'} needs to be of the same size as {it:network} {bf:`netname'}"
 			error 6056
@@ -730,22 +1123,89 @@ program nwplot
 		mata: Coord = J(`nodes', 2, 0)
 		mata: Coord[.,1] = J(`nodes', 1, 1.5) 
 		// Deal with isolates
-		tempvar _isolates
-		nwgen `_isolates' = isolates(`netname')	
-		qui count if `_isolates' == 1
+		//
+		// was "nwgen `_isolates' = isolates(`netname')" - "isolates(" is
+		// listed in nwgenerate.ado's own recognized-keyword vocabulary
+		// (so it parses without error) but has no actual dispatch branch
+		// implementing it (nwgenerate.ado only implements the
+		// NETWORK-producing shortcuts - large/duplicate/dyadprob/.../
+		// transpose; "isolates(" is one of a separate, larger family of
+		// VARIABLE-producing shortcuts - degree/outdegree/indegree/
+		// isolates/components/lgc/clustering/closeness/farness/nearness/
+		// between/evcent/context/addnodes/collapse/subset - that are all
+		// recognized but silently no-op instead of erroring). This meant
+		// the tempvar was never actually created, and the very next
+		// line ("count if `_isolates' == 1") crashed with a "not found"
+		// - meaning mdsclassical, the DEFAULT layout for any network
+		// with more than 50 nodes, was completely broken for every
+		// caller, not a rare edge case - confirmed via a minimal
+		// "nwrandom 60, prob(.15)" + "nwplot" repro, traced to this
+		// exact line via "set trace on". The general nwgen/nwgenerate
+		// variable-shortcut gap is a separate, much larger pre-existing
+		// issue (see docs/CERTIFICATION.md's Pending table) - out of
+		// scope to fix generally here; this fix routes nwplot's own
+		// internal isolates lookup through nwdegree's plain default
+		// degree computation instead (its own "isolates" option turned
+		// out to have a second, independent, genuine bug - confirmed
+		// via "set trace on": with "isolates" given and no explicit
+		// generate(), nwdegree.ado reserves only ONE output-variable
+		// name ("_isolates"), but its directed-network branch
+		// unconditionally needs TWO (outdegree and indegree storage) -
+		// crashing with an empty target variable name on any directed
+		// network, which "nwrandom" defaults to. Recorded as its own,
+		// separate, not-yet-fixed bug in docs/CERTIFICATION.md's
+		// Pending table rather than patched here, to keep this fix
+		// narrowly scoped to nwplot.ado. nwdegree's plain default
+		// behaviour - not the buggy "isolates" option - is exactly the
+		// same well-tested, heavily-used code path every other caller
+		// of nwdegree already relies on, so the isolate indicator is
+		// simply derived from it directly afterward.
+		capture drop _isolates _degree _outdegree _indegree
+		qui nwdegree `netname', silent
+		capture confirm variable _degree
+		if _rc == 0 {
+			qui gen _isolates = (_degree == 0)
+		}
+		else {
+			qui gen _isolates = (_outdegree == 0) & (_indegree == 0)
+		}
+		qui count if _isolates == 1
 		local isol = `r(N)'
+		capture drop _isolates _degree _outdegree _indegree
 		local nonisol = `nodes' - `isol'
 		
 		// Get number of components
+		//
+		// was "nwgenerate `_component' = components(`netname')" /
+		// "nwgen `_component' = lgc(`netname')" - "components(" and
+		// "lgc(" are two more instances of the exact same broken-
+		// shortcut family as "isolates(" just above (recognized by
+		// nwgenerate.ado's own keyword vocabulary, but with no actual
+		// dispatch branch implementing either one) - both calls
+		// silently left `_component' never created, which crashed the
+		// very next real statement ("tab `_component', ...") with
+		// "nothing found where name expected" / a Mata "invalid Stata
+		// variable name" error. Routed through nwcomponents instead -
+		// already well-tested (this session's own certification
+		// history), and it directly provides both the per-node
+		// component-id variable AND r(components) in one call, exactly
+		// what this code already expected to have. Note "local compnum"/
+		// "local compnum_nonisol" just below are otherwise-unused dead
+		// locals (confirmed via a direct grep across the whole file -
+		// nothing downstream ever references either one; the real
+		// downstream driver is "comp_nonisol", computed independently a
+		// few lines below from comp_freqid) - left in place rather than
+		// removed, since deleting unrelated dead code is out of scope
+		// for this fix.
 		tempvar _component
-		nwgen `_component' = components(`netname')
+		qui nwcomponents `netname', generate(`_component')
 		if "`lgc'" != "" {
-			qui nwgen `_component' = lgc(`netname')
+			qui nwcomponents `netname', lgc generate(`_component') replace
 			replace `_component' = 1 - `_component'
 			local components = 1
 		}
-		
-		local compnum = r(components)		
+
+		local compnum = r(components)
 		local compnum_nonisol = `compnum' - `isol'
 		qui tab `_component', matrow(comp_id) matcell(comp_freq)
 
@@ -780,7 +1240,7 @@ program nwplot
 			capture drop _id
 			gen _id = _n
 			
-			nwdrop `netname'_comp`i' if `_component' != comp_freqid[`i', 2], attributes(_id) netonly
+			nwdrop `netname'_comp`i' if `_component' != comp_freqid[`i', 2]
 			nwtomata `netname'_comp`i', mat(compmat)
 			// Original id's of selected nodes
 			mata: original_id = st_data((1::rows(compmat)), "_id")
@@ -811,7 +1271,7 @@ program nwplot
 			// Assign adjusted coordinates to original network
 			mata: Coord[original_id,.] = Coord_comp
 			mata: mata drop original_id 
-			nwdrop `netname'_comp`i', netonly
+			nwdrop `netname'_comp`i'
 		}
 		capture drop _id 
 	}
@@ -1135,8 +1595,28 @@ program nwplot
 	//di `"`graphcmd'"'
 	`graphcmd'
 
+	// export() is a thin wrapper around Stata's own native "graph
+	// export" - the just-drawn twoway graph above (`graphcmd') is an
+	// ordinary Stata graph object, so exporting it is nothing more than
+	// calling the same command a user would type by hand afterward;
+	// this does not touch or replace that graph object, so it remains
+	// fully available for graph editor/save/re-export use exactly as if
+	// export() had never been given. The output format (SVG/PDF/PNG/...)
+	// is inferred by "graph export" itself from the filename's own
+	// extension, matching Stata's own established convention - no
+	// separate format() option is added. exportopt() is a narrow,
+	// explicit passthrough for the handful of "graph export" options
+	// that are genuinely still useful to reach without leaving nwplot
+	// (chiefly raster width()/height() for PNG/TIF quality); anything
+	// more exotic is still one manual "graph export" call away.
+	if "`export'" != "" {
+		di "{text:Exporting graph to `export'...}"
+		graph export "`export'", `replace' `exportopt'
+		return local export "`export'"
+	}
+
 	restore
-	
+
 	if "`generate'" != "" {
 		di "{text:Export coordinates...}"
 		if (wordcount("`generate'") >= 2){
@@ -1174,6 +1654,28 @@ program nwplot
 	capture mata drop symbolkeysmap
 
 	//qui nwload `masternetname', labelonly
+
+	// The cleanup captures just above (several of which legitimately
+	// "fail" - e.g. the Coord_comp/compM/... Mata cluster only exists
+	// when the lgc/component code path actually ran) leave _rc stale
+	// at whatever the LAST one happened to return, since nothing
+	// between here and the end of the program is a capture-wrapped
+	// command that would refresh it (see nwcompressobs.ado's own
+	// certified row for the fuller explanation of this Stata
+	// behavior - quietly-prefixed commands, mata: blocks, and plain
+	// local assignment never update _rc even when they succeed). That
+	// stale _rc then survived all the way out to nwplot's own caller,
+	// including after a genuinely successful plot/export - confirmed
+	// directly while adding export() this unit, and previously worked
+	// around rather than fixed in cscripts/test_nwplot.do's own
+	// long-standing "assert _rc == 0 | _rc == 3000" pattern. The
+	// preceding "mata: st_numscalar("_rc", 0)" line was an earlier,
+	// ineffective attempt at this exact fix: st_numscalar("_rc", ...)
+	// only creates an ordinary Stata scalar literally named "_rc" in
+	// the dataset's own scalar namespace - it has no effect on the
+	// interpreter's real _rc state, which only a capture-wrapped
+	// command can deterministically set. Reset explicitly and silently.
+	capture confirm number 1
 end
 	
 capture program drop _getvaluelabel

@@ -40,6 +40,34 @@ dedicated audit fork that checked all of this evidence for every file before cla
 | `nwvalue2.ado` | `nwvalue` (mismatch) | `nwvalue.ado` | Near-identical to the active file (identical header date). Superseded. |
 | `unknown_nw2clustering.ado` | `nw2clustering` (mismatch) | `nw2clustering.ado` | The "unknown_" prefix appears to be exactly what it says — a previously-flagged, unidentified stray file. Not a simple duplicate: it lacks `nw2clustering.ado`'s `binary`-measure dichotomization branch, but adds two extra `r()` returns (`r(C_global)`, `r(measure)`) the active file doesn't have. **Follow-up worth doing**: port those two extra returns into `nw2clustering.ado` proper (tracked as a Pending item in `docs/CERTIFICATION.md`), since they appear to be a genuine improvement, not accidental drift. |
 
+## `old/js/` — vendored JavaScript libraries no longer referenced by any command
+
+Not `.ado` files, so the `old/ado/` convention above doesn't fit directly - a parallel `old/js/`
+subdirectory (same non-adopath-recursed root, same "archive rather than delete" policy) holds
+these instead. Found during the `nwplot` SVG-export modernisation audit (harmonisation unit 33):
+`nwplotjs.ado` (the package's interactive graph-exploration command, still active and NOT
+superseded by native Stata SVG export - see `docs/CERTIFICATION.md`'s own row for that unit) loads
+its JavaScript from `linkurious/` (a sigma.js fork, kept in place at the repo root, unarchived,
+because it is a genuine, live runtime dependency) via literal relative-path `file write` calls in
+`nwplotjs.ado` - confirmed by direct grep. `d3js/` and `sigmajs/` are two *separate*, earlier/
+parallel vendorings (plain D3.js, and a plain, non-fork copy of sigma.js) that are not referenced
+by any `.ado`/`.do` file anywhere in the repository (confirmed by a repo-wide grep for both
+directory names before archiving) and not referenced from inside `linkurious/` itself either
+(checked directly). Both were untracked in git (confirmed via `git ls-files`), so this move is a
+plain filesystem relocation, not a `git mv`.
+
+| Directory | Size | Referenced by | Reason archived |
+|---|---|---|---|
+| `d3js/` (now `old/js/d3js/`) | ~924K | Nothing - confirmed via repo-wide grep | Vendored D3.js (`d3.js`/`d3.min.js` plus upstream docs and a `hello.html` smoke file) from an early/parallel visualization experiment. No `.ado`/`.do` file ever loaded it. Superseded in practice by `nwplotjs`'s own sigma.js-based (`linkurious/`) interactive renderer, which is the one command actually shipped and tested. |
+| `sigmajs/` (now `old/js/sigmajs/`) | ~4.3M | Nothing - confirmed via repo-wide grep | Vendored plain (non-fork) sigma.js, distinct from the `linkurious/` fork `nwplotjs.ado` actually uses - includes its own early experiment artefacts (`nwcommands-net.gexf`/`nwcommands-net2.gexf` GEXF exports, `nwcommands.html`, `hello.html`/`test*.html`). Superseded by `linkurious/`, which has custom package-specific extensions (`sigma.nwcommands.extensions/`) this plain copy never gained. |
+
+**Not archived**: `linkurious/` itself - a live runtime dependency of the still-active, still-useful
+`nwplotjs.ado` (interactive pan/zoom/hover/drag graph exploration, including two bespoke edge
+renderers written for this package - `sigma.canvas.edges.curvedArrowFlex.js` and
+`sigma.canvas.edges.lineParallel1.js`, under `linkurious/sigma.nwcommands.extensions/canvas/` -
+genuine custom code, not vendored). None of this is superseded by native Stata SVG export, which
+is a static, non-interactive format.
+
 ## Not archived (checked and ruled out as duplicates)
 
 - `_growmedian2.ado` — no sibling `_growmedian.ado` exists; just an oddly-named singleton helper, not a version duplicate.
