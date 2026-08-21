@@ -62,6 +62,7 @@ f nworder.ado
 f nwpath.ado
 f nwpermute.ado
 f nwplot.ado
+f nwplotjs.ado
 f nwplotmatrix.ado
 f nwpref.ado
 f nwqap.ado
@@ -75,6 +76,7 @@ f nwring.ado
 f nwsave.ado
 f nwset.ado
 f nwsimindex.ado
+f nwsimmelian.ado
 f nwsmall.ado
 f nwsort.ado
 f nwsubset.ado
