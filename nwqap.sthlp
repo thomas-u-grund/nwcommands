@@ -41,7 +41,7 @@
 
 {pstd}
 MR-QAP is a multiple regression procedure used to assess the impact of independent variables 
-upon a dependent variable. In standard regression techniques, the typical �unit of analysis� 
+upon a dependent variable. In standard regression techniques, the typical "unit of analysis" 
 is an individual observation. In MR-QAP analysis, the unit of analysis is a dyad, a pair of individuals 
 who may or may not have some sort of relation connecting them to one another.
 
@@ -76,7 +76,7 @@ The raw output of this dyad-level regression is displayed with option {bf:detail
 Once a dataset is assembled and a regression is carried out, the resulting coefficients indicate 
 the direction of the effect of independent variables upon the dependent variable. However, calculating 
 the standard error of these coefficients has been shown to lead to biased results when autocorrelation 
-exists � which occurs, for instance, when interpersonal relations determine individual behavior 
+exists - which occurs, for instance, when interpersonal relations determine individual behavior 
 (Krackhardt 1988). 
 
 {pstd}
@@ -100,10 +100,10 @@ of coefficients, {cmd:nwqap} calculates adjusted p-values and saves them in {it:
 Grund, T. and Densley, J. (2012). "Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang." European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
 
 {pmore}
-Krackhardt, David. (1987). �QAP Partialling as a Test of Spuriousness.� Social Networks 9: 171-186.
+Krackhardt, David. (1987). "QAP Partialling as a Test of Spuriousness." Social Networks 9: 171-186.
 
 {pmore}
-Krackhardt, David. (1988). �Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data.� Social Networks 10: 359-381.
+Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data." Social Networks 10: 359-381.
 
 
 {title:Examples}
@@ -186,5 +186,4 @@ permutation testing exists in the first place. No {cmd:predict} subroutine is im
 
 	{help nwergm}, {help nwpermute}
 
-
-
+last certified : 21 Aug 2026
