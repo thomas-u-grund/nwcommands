@@ -12,6 +12,45 @@ Per-feature stage tracking. A feature is not "done" until all four stages are ch
 - **Edge cases**: empty network, isolates, disconnected components, directed/undirected, weighted, self-loops, non-consecutive node IDs — as applicable to the feature.
 - **Scalability** (sparse-backend features only): tested on a realistically large sparse network, memory/time checked, absence of accidental dense allocation confirmed.
 
+## Regression-sweep tier (adopted 2026-08-21)
+
+Through harmonisation units 19-28, every change - however small - triggered a full sweep of the
+entire `cscripts/` suite (~95 files) in both dev and production mode, launched as a background
+agent. This was safe but not efficient: as the suite grew, sweeps grew to 180-190 sequential Stata
+invocations and 5-40+ minutes; one sweep (unit 29, `nwclique`) hit an infrastructure hang (a `while
+read <&3` construct wedging a Stata child process via fd inheritance) and then a hard 10-minute
+bash-tool timeout on the fallback `for`-loop rewrite, without ever producing a result. A full sweep
+after every change also does not scale as a certification *strategy* - most changes have a narrow,
+knowable blast radius, and re-proving 90 unrelated commands still work is waste, not rigor.
+
+Adopted instead: match the certification tier to the change's actual dependency radius, escalating
+only when the risk warrants it.
+
+- **L1 - Local**: the changed command's own `cscripts/test_*.do`, both dev and production mode.
+  Default for a self-contained new command or a fix confined to one `.ado` file.
+- **L2 - Dependency**: L1 plus a handful of other tests that exercise the same `unw_core.do`
+  function(s) the change touched, or sit nearby in the file. Default when `unw_core.do` changed but
+  the change is a new, isolated addition (a new standalone function/class method not called by
+  anything pre-existing) rather than a modification to an already-shared function like
+  `neighbors()`, `get_matrix_mod()`, or `nw_syntax`'s own locals.
+- **L3 - Domain**: all tests in the same functional family (e.g. every centrality command, every
+  two-mode command, every structural-equivalence command). Default when a change touches logic
+  genuinely shared across a family - a common helper function, a shared display/output convention,
+  a cross-cutting bugfix pattern (e.g. the `_rc`-staleness fix applied identically across
+  `nwbrokerage`/`nwego`/`nwaltergen`/`nwclique`).
+- **L4 - Full**: the entire `cscripts/` suite, both modes. Reserved for genuine core/backend
+  changes (editing an *existing*, widely-relied-on `unw_core.do` function's own logic, not just
+  adding a new one), `nw_syntax`/`nwset`/netname-netlist-parser changes, and milestone/integration
+  checkpoints - not routine per-unit certification.
+
+If a lower tier's run surfaces an unexpected, seemingly-unrelated failure, escalate to the next
+tier rather than assuming it's a fluke. Documentation-only changes (a `.sthlp` regenerated via
+`nw_helpwriter`, a `.dlg` edit) need no numerical regression run at all - re-running the affected
+file's own test (to confirm the regeneration didn't corrupt anything, per unit 16's own established
+practice) is enough. Scalability/stress tests (100k-node sparse benchmarks) are their own separate
+concern, run only when a change could plausibly affect performance or storage, not as part of
+per-unit correctness certification.
+
 ## Status table
 
 | Feature | Implemented | Tested | Certified | Documented | Notes |
