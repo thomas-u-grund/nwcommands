@@ -31,6 +31,7 @@ f nwcorrelate.ado
 f nwcug.ado
 f nwcurrent.ado
 f nwdegree.ado
+f nwdissimilar.ado
 f nwdrop.ado
 f nwdropnodes.ado
 f nwds.ado
@@ -45,6 +46,7 @@ f nwfromedge.ado
 f nwgen.ado
 f nwgenerate.ado
 f nwgeodesic.ado
+f nwhierarchy.ado
 f nwhomophily.ado
 f nwimport.ado
 f nwinstall.ado
@@ -76,6 +78,7 @@ f nwreplacemat.ado
 f nwring.ado
 f nwsave.ado
 f nwset.ado
+f nwsimilar.ado
 f nwsimindex.ado
 f nwsimmelian.ado
 f nwsmall.ado

@@ -29,21 +29,72 @@ program nwdissimilar
 	}
 	
 	nwtomatafast `netname'
+	// r(mata) is captured into a local immediately - nwname below is
+	// itself r-class and would otherwise overwrite it before it gets
+	// used further down (the exact same r()-pollution bug class fixed
+	// in nwqap.ado's harmonisation unit 19: r(Var) there, r(mata) here).
+	local srcmata "`r(mata)'"
+	// Default the dissimilarity network's own node labels to the
+	// source network's labels (rather than nwset's generic n1/n2/...
+	// fallback) when the caller didn't request specific labels - so a
+	// derived dissimilarity network shares the same node identity as
+	// its source by default. Without this, a caller like nwhierarchy
+	// (which never passes labs()) ends up with a dissimilarity network
+	// whose node labels don't match the source network's own - and
+	// since nwcommands' master dataset keys rows by node label across
+	// all currently-tracked networks, mismatched labels make the two
+	// networks' node sets look like a disjoint union (e.g. 8 rows for
+	// two differently-labeled 4-node networks instead of a shared 4),
+	// which is exactly what broke nwhierarchy's default path.
+	if "`labs'" == "" {
+		nwname `netname'
+		local labs = "labs(`r(labs)')"
+	}
+	// Mata functions defined in an ado-file's trailing mata: block are
+	// private to that ado-file - visible only to mata code running
+	// from *within this same file* (e.g. this program body calling
+	// them directly). They are NOT visible to a *different* ado-file's
+	// own mata: blocks, even when that file is invoked synchronously
+	// from here (confirmed with a minimal two-ado-file repro: an
+	// identical function, called from its own defining ado-file,
+	// works; called from a second ado-file passed only the unevaluated
+	// expression text, it fails "not found", r(3499)). nwset's own
+	// mat() option evaluates whatever expression it is given inside
+	// nwset.ado's *own* private mata scope - so passing an unevaluated
+	// call to one of this file's private functions straight through to
+	// nwset, as this used to do, could never work, regardless of
+	// adopath/timing (previously investigated inconclusively - this is
+	// the root cause). Interactive mata *workspace variables*, unlike
+	// function definitions, persist across ado-files' private scopes -
+	// fixed by evaluating the dissimilarity function here (within its
+	// own defining file, where it is visible) into such a variable
+	// first, then passing that already-computed matrix's *name* to
+	// nwset instead of an unevaluated function call.
 	if "`type'" == "euclidean" {
-		nwset, mat(euclidean_dissimilarity(`r(mata)', `dtype')) name(`name') `labs' `vars'
+		mata: __nwdissim = euclidean_dissimilarity(`srcmata', `dtype')
 	}
 	if "`type'" == "manhatten" {
-		nwset, mat(manhatten_dissimilarity(`r(mata)', `dtype')) name(`name') `labs' `vars'
-	}	
+		mata: __nwdissim = manhatten_dissimilarity(`srcmata', `dtype')
+	}
 	if "`type'" == "nonmatches" {
-		nwset, mat(matches_dissimilarity(`r(mata)', `dtype')) name(`name') `labs' `vars'
+		mata: __nwdissim = matches_dissimilarity(`srcmata', `dtype')
 	}
 	if "`type'" == "jaccard" {
-		nwset, mat(jaccard_dissimilarity(`r(mata)', `dtype')) name(`name') `labs' `vars'
-	}	
+		mata: __nwdissim = jaccard_dissimilarity(`srcmata', `dtype')
+	}
 	if "`type'" == "hamming" {
-		nwset, mat(hamming_dissimilarity(`r(mata)', `dtype')) name(`name') `labs' `vars'
-	}	
+		mata: __nwdissim = hamming_dissimilarity(`srcmata', `dtype')
+	}
+	// selfloop: a (dis)similarity matrix has a genuine, meaningful
+	// diagonal (0 - a node is never dissimilar from itself), unlike an
+	// ordinary relational network's diagonal, which defaults to missing
+	// (no self-ties) when selfloop is not given. Without this, the
+	// diagonal came back missing on every retrieval (nwtomatafast,
+	// nwhierarchy's clustermat call, etc.), even though the dissimilarity
+	// functions above correctly compute 0 for the diagonal themselves -
+	// confirmed via a direct nwset/nwtomatafast round-trip probe.
+	nwset, mat(__nwdissim) name(`name') selfloop `labs' `vars'
+	capture mata mata drop __nwdissim
 	if "`xvars'" == "" {
 		nwload `name'
 	}
