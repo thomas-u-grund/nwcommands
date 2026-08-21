@@ -48,11 +48,16 @@ Confirmed via an actual multi-network internal loop (not just a local variable n
 `nwds`, `nwrecode`, `nwtoedge`/`nw2toedge`, `nwsave` (all networks), `nwrename` (bulk rename via
 Stata's own `rename` syntax).
 
-**`nwdegree` and `nwbetween` are miscategorised in their own documentation**: both `.sthlp` files
-describe multi-network ("z networks at once") behaviour with an implied output-naming convention
-(e.g. `_outdegree_z`), but neither command actually loops over multiple networks in its current
-code — each processes exactly one network per call. This is a genuine doc/code mismatch, not a
-design choice; see Pending below.
+**`nwdegree` and `nwbetween` were both miscategorised in their own documentation**: both `.sthlp`
+files described multi-network ("z networks at once") behaviour with an implied output-naming
+convention (e.g. `_outdegree_z`), but neither command actually looped over multiple networks — each
+processed exactly one network per call, despite `nwdegree`'s code containing clear vestigial
+scaffolding for an abandoned loop. This was a genuine doc/code mismatch, not a design choice.
+**`nwdegree` fixed** (harmonisation phase, unit 6 — see `docs/CERTIFICATION.md`): implemented real
+`netlist` support with `_<netname>`-suffixed output naming, rather than just correcting the docs to
+admit the feature didn't exist, since `nwdegree` is this project's own canonical example of a
+command where multi-network semantics are genuinely useful. `nwbetween` has the same doc claim and
+the same gap, not yet fixed — see Pending below.
 
 ### Type C — multiple role-specific `netname`s (not a generic netlist)
 
