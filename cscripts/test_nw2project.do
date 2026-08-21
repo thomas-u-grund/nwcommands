@@ -20,34 +20,49 @@ replace alter = "Oxford" in 4
 replace value = 5 in 4
 nw2fromedge ego alter value, name(mynet)
 
-nw2project mynet, project(2) name(minmax_test)
+// project(1) is persons (ego = ego/alter's first edgelist variable,
+// "ego" = Peter/Thomas) - matching nw2fromedge.ado's own documented
+// worked example exactly (Peter/Thomas sharing institutions LiU/
+// Oxford). Was "project(2)" here, silently passing only because of a
+// since-fixed nw2fromedge bug that assigned node modes by *position*
+// (nodes numbered by sorting persons' and institutions' labels
+// *together*) rather than by which edgelist variable a label actually
+// came from - "LiU"/"Oxford" happen to sort alphabetically before
+// "Peter"/"Thomas", so the old bug swapped mode1/mode2 for this exact
+// dataset and made project(2) silently mean "persons" instead of
+// "institutions". Now that nw2fromedge assigns modes by actual label
+// origin, project(1) is the one that means persons - reconfirmed
+// directly against the doc's own hand-worked values (unchanged).
+nw2project mynet, project(1) name(minmax_test)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("minmax_test")]
 mata: st_numscalar("r(minmax)", p->edge_weight(1,2))
 assert reldif(r(minmax), 5) < 1e-8
 
-nw2project mynet, project(2) name(min_test) stat(min)
+nw2project mynet, project(1) name(min_test) stat(min)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("min_test")]
 mata: st_numscalar("r(min)", p->edge_weight(1,2))
 assert reldif(r(min), 1) < 1e-8
 
-nw2project mynet, project(2) name(max_test) stat(max)
+nw2project mynet, project(1) name(max_test) stat(max)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("max_test")]
 mata: st_numscalar("r(max)", p->edge_weight(1,2))
 assert reldif(r(max), 7) < 1e-8
 
-nw2project mynet, project(2) name(sum_test) stat(sum)
+nw2project mynet, project(1) name(sum_test) stat(sum)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("sum_test")]
 mata: st_numscalar("r(sum)", p->edge_weight(1,2))
 assert reldif(r(sum), 14) < 1e-8
 
-nw2project mynet, project(2) name(mean_test) stat(mean)
+nw2project mynet, project(1) name(mean_test) stat(mean)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("mean_test")]
 mata: st_numscalar("r(mean)", p->edge_weight(1,2))
 assert reldif(r(mean), 3.5) < 1e-8
 
 di "=== ALL 5 STAT FORMULAS MATCH THE DOCUMENTED WORKED EXAMPLE EXACTLY ==="
 
-nw2project mynet, project(1) name(inst_test)
+// project(2) is now correctly institutions (LiU/Oxford, 2 of them) -
+// swapped from the pre-fix "project(1)" for the same reason as above.
+nw2project mynet, project(2) name(inst_test)
 mata: p = nw.nws.pdefs[nw.nws.get_index_of("inst_test")]
 mata: st_numscalar("r(nodes)", p->get_nodes())
 assert r(nodes) == 2

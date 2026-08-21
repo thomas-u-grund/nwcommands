@@ -339,6 +339,28 @@ real scalar first_index_match(string vector src, string scalar t)
 }
 
 /*
+	Build a two-mode "1"/"2" mode vector, one entry per node in
+	nodenames' own order, by testing label membership in group1labels -
+	NOT by node position. Used by nw2fromedge (see its own comment for
+	why position-based assignment is wrong: nodes are numbered by
+	sorting the combined label set of both edgelist variables together,
+	so a mode-1 and a mode-2 label can land at adjacent node indices).
+*/
+string colvector modes_from_labels(string rowvector nodenames, string colvector group1labels)
+{
+	real scalar n, i
+	string colvector result
+	n = cols(nodenames)
+	result = J(n, 1, "2")
+	for(i=1; i<=n; i++){
+		if (first_index_match(group1labels, nodenames[i]) > 0) {
+			result[i] = "1"
+		}
+	}
+	return(result)
+}
+
+/*
 	Display various error messages 
 */
 void error_handle(string scalar r, real scalar code){
