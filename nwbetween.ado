@@ -21,7 +21,9 @@
 {opt replace}
 {opt nosym}
 {opt standardize}
-{opt silent}]
+{opt silent}
+{opt weighted}
+{opt alpha(real)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -31,13 +33,20 @@
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt standardize}}standardize centrality scores{p_end}
 {synopt:{opt silent}}suppress the summary table of the generated variable{p_end}
+{synopt:{opt weighted}}calculate on weighted (Dijkstra) shortest paths instead of dichotomizing{p_end}
+{synopt:{opt alpha(real)}}weight-to-distance exponent used with {opt weighted}; default = 1{p_end}
 
 
 {title:Description}
 
 {pstd}
-Calculates the betweenness centrality for each node {it:i} in a {help netname:network} or {help netlist:network list} and 
-saves the result as a Stata variable. The command used the dichotomized network. 
+Calculates the betweenness centrality for each node {it:i} in a {help netname:network} or {help netlist:network list} and
+saves the result as a Stata variable. By default the command uses the dichotomized network (any tie
+with weight > 0 counts as an edge, tie strength ignored); pass {opt weighted} to compute genuinely
+weighted betweenness on Dijkstra shortest paths instead, using {opt alpha()} to control the
+weight-to-distance conversion (same convention as {help nwgeodesic}'s own {opt alpha()}: edge cost is
+{it:weight^alpha} - {opt alpha(1)}, the default, uses raw tie weight directly as distance/cost;
+{opt alpha(0)} reduces to the unweighted case).
 
 {pstd}
 The betweenness centrality for node {it:i} is equal to the number of shortest paths from all vertices to all 
@@ -88,12 +97,17 @@ generates one variable per network, named {it:varname_netname} (e.g. {it:_betwee
 Binary: yes, native. Directed: yes for the standardization normalizer (see the formulas above), but
 by default the network is symmetrized before computing betweenness at all - pass {opt nosym} to
 compute genuinely directed betweenness on the network as given; without {opt nosym} the reported
-scores reflect the symmetrized structure, not the original directed one. Weighted: {bf:W3}, explicit
-binary-only - any tie with weight strictly greater than zero is dichotomized to an edge; tie strength
-is never used as distance or otherwise (already noted above: "the command used the dichotomized
-network"). Signed: ties with weight less than or equal to zero, including negative ties, are treated
-as no tie at all - a negative (e.g. antagonistic) tie is not distinguished from an absent one; signed
-networks are not natively supported. Two-mode: not checked.
+scores reflect the symmetrized structure, not the original directed one (this applies identically
+whether or not {opt weighted} is used - symmetrization, via {help nwsym}'s default {cmd:max} mode,
+correctly combines rather than discards tie weights). Weighted: {bf:W2} - the default remains
+{bf:W3} (explicit binary-only: any tie with weight strictly greater than zero is dichotomized to an
+edge, tie strength otherwise ignored), but {opt weighted} now computes genuine Dijkstra-based
+betweenness using tie strength directly as distance/cost via {opt alpha()} - never silently
+implied, always an explicit opt-in. Signed: ties with weight less than or equal to zero, including
+negative ties, are treated as no tie at all in both the default and {opt weighted} cases - a
+negative (e.g. antagonistic) tie is not distinguished from an absent one, and {opt weighted}'s
+{it:weight^alpha} cost is undefined for a negative base in general, so signed networks are not
+natively supported by either mode. Two-mode: not checked.
 
 
 {title:See also}
@@ -104,7 +118,7 @@ networks are not natively supported. Two-mode: not checked.
 
 capture program drop nwbetween
 program nwbetween
-	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent]
+	syntax [anything(name=netname)], [replace GENerate(string) nosym standardize silent weighted alpha(real 1)]
 
 	// This command's own doc has always described netlist (multi-network)
 	// behavior ("In case, betweenness centrality is calculated for z
@@ -157,7 +171,12 @@ program nwbetween
 			nw_syntax
 		}
 
-		mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness())
+		if "`weighted'" != "" {
+			mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness_weighted(`alpha'))
+		}
+		else {
+			mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness())
+		}
 
 		if "`standardize'" != "" {
 			if "`directed'" == "true" {

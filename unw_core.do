@@ -896,7 +896,7 @@ class `NWdef' {
 	real matrix calculate_distances_without()
 	real scalar calculate_distance_pair()
 	real matrix calculate_betweenness()
-	//real matrix calculate_betweennessWeighted()
+	real matrix calculate_betweenness_weighted()
 	real matrix calculate_components()
 	real matrix calculate_lgc()
 	real matrix calculate_clustering()
@@ -2165,29 +2165,104 @@ real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 }
 
 /*
-real matrix `NWdef'::calculate_betweenness_weighted(){
-	real matrix P 
-	real scalar n,i
-	
-	n = get_nodes()
-	for (i = 1, i 
-}*/
+	Weighted (Dijkstra-based) generalization of calculate_betweenness()
+	above - same Brandes' (2001) two-phase structure (single-source
+	shortest-path-DAG discovery, then back-propagation of dependencies),
+	generalized from unweighted BFS to weighted Dijkstra: a plain FIFO
+	dequeue becomes a linear-scan extract-min over unsettled nodes (Mata
+	has no built-in priority queue/decrease-key), and the unweighted
+	hop-distance relaxation "D[w]==D[v]+1" becomes a real-valued
+	"D[w]==D[v]+cost(v,w)". Edge cost is edge_weight(v,w)^alpha, the
+	same alpha-exponent weight-to-distance convention this package
+	already uses for calculate_distances()/nwgeodesic (alpha=1: raw
+	weight used directly as cost/distance; alpha=0: every positive tie
+	costs 1, i.e. unweighted). Only strictly positive ties are edges at
+	all (same >0 filter as the unweighted version, so a negative tie in
+	a signed network is silently excluded here exactly as it already is
+	there - not silently misread as a valid Dijkstra edge cost, which a
+	negative weight cannot be).
+*/
+real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
+	real matrix adjacencyList, adjacencyCost, Cb, Stack, P, nP, S, D, Dd
+	real matrix nb, settled
+	real scalar m, k, n, s, v, j, w, idx, u, mindist, nn, cost
 
-/*
-real matrix calculate_betweenness_weighted_node(real scalar node){
-	real matrix P, adjlist, B
-	real scalar n, i, nx, k
-
-	n = get_nodes()
-	nx = n + 2
-	B = J(n,1,.)
-	adjlist = get_adjlist()
-	P = single_source_dijkstra(adjlist, node)
-	k = node
-	for (i = 1; i<= n; i++){
-		
+	nn = get_nodes()
+	adjacencyList = J(nn, nn-1, .)
+	adjacencyCost = J(nn, nn-1, .)
+	for (m=1; m<=nn; m++) {
+		nb = neighbors(m)
+		k=1
+		for (idx=1; idx<=rows(nb); idx++) {
+			n = nb[idx,1]
+			if ( m!=n & edge_weight(m,n)>0){
+				adjacencyList[m,k] = n
+				adjacencyCost[m,k] = edge_weight(m,n)^alpha
+				k++
+			}
+		}
 	}
-}*/
+
+	Cb=J(1,nn,0)
+
+	for(s=1; s<=nn; s++) {
+		Stack=J(1,0,.)
+		P=J(nn,nn,.)
+		nP=J(nn,1,1)
+		S=J(1,nn,0)
+		S[s]=1
+		D=J(1,nn,.)
+		D[s]=0
+		settled=J(1,nn,0)
+
+		for (m=1; m<=nn; m++) {
+			mindist=.
+			u=0
+			for (j=1; j<=nn; j++) {
+				if (settled[j]==0 & D[j]<. & (u==0 | D[j]<mindist)) {
+					mindist=D[j]
+					u=j
+				}
+			}
+			if (u==0) break
+			settled[u]=1
+			v=u
+
+			Stack=cols(Stack)? v,Stack : v
+			for(j=1; j<=sum(adjacencyList[v,.]:<.);j++) {
+				w=adjacencyList[v,j]
+				cost=adjacencyCost[v,j]
+				if (settled[w]) continue
+				if(D[w]==. | D[w]>D[v]+cost) {
+					D[w]=D[v]+cost
+					S[w]=0
+					nP[w]=1
+				}
+				if(D[w]==D[v]+cost) {
+					S[w]=S[w]+S[v]
+					P[w,nP[w]]=v; nP[w]=nP[w]+1
+				}
+			}
+		}
+
+		Dd=J(1,nn,0)
+
+		while (cols(Stack)) {
+			w=dequeue(Stack)
+
+			for(j=1; j<nP[w]; j++) {
+				v=P[w,j]
+				Dd[v]=Dd[v]+(S[v]/S[w])*(1+Dd[w])
+			}
+			if (w!=s) Cb[w]=Cb[w]+Dd[w]
+		}
+	}
+
+	if (!isdirect){
+		Cb = Cb :/ 2
+	}
+	return(Cb')
+}
 
 real matrix `NWdef'::calculate_betweenness(){
 	real matrix adjacencyList, Cb,Stack,P,nP, S, D, Queue, Dd

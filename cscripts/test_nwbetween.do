@@ -122,3 +122,32 @@ capture nwbetween pnet1 pnet2, generate(mbc2) silent
 assert _rc != 0
 nwbetween pnet1 pnet2, generate(mbc2) silent replace
 assert _rc == 0
+
+* --- weighted betweenness: genuine Dijkstra-based variant (previously
+* a real gap - the command always dichotomized, silently ignoring tie
+* strength). A-B=1, A-C=4, B-C=2, C-D=1: shortest A-C is via B (cost
+* 1+2=3, cheaper than the direct tie's own cost 4), so B sits on that
+* shortest path even though A-C also has a direct (more expensive)
+* tie; shortest A-D is A-B-C-D (cost 1+2+1=4), putting both B and C
+* on it. Hand-verified: A=0, B=2, C=2, D=0 (worked out by hand before
+* implementing calculate_betweenness_weighted() and confirmed
+* against it during development). Also confirmed alpha(0) reduces
+* the weighted algorithm to the exact same result as the unweighted
+* one - a strong internal-consistency check on the Dijkstra
+* generalization of the existing, already-verified BFS algorithm.
+nwclear
+nwset, mat((0,1,4,0\1,0,2,0\4,2,0,1\0,0,1,0)) name(wnet) undirected labs(A,B,C,D)
+nwbetween wnet, weighted alpha(1) silent
+assert _between[1] == 0
+assert _between[2] == 2
+assert _between[3] == 2
+assert _between[4] == 0
+
+nwclear
+nwset, mat((0,1,4,0\1,0,2,0\4,2,0,1\0,0,1,0)) name(wnet) undirected labs(A,B,C,D)
+nwbetween wnet, weighted alpha(0) generate(_wa0) silent
+nwbetween wnet, generate(_wu) silent
+assert _wa0[1] == _wu[1]
+assert _wa0[2] == _wu[2]
+assert _wa0[3] == _wu[3]
+assert _wa0[4] == _wu[4]

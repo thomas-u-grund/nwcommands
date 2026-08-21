@@ -29,7 +29,7 @@ Cheap, high-confidence fixes to things already built:
 - Document `nwrecode.ado` — write `.sthlp`. Real, correct, currently invisible.
 - Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwqap`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors.
 - ✅ Migrated `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors. Surfaced a real, previously-invisible bug: the old `mode(incoming)` branch had a stray unbalanced paren (a genuine Mata syntax error) and had zero test coverage — could never have actually run. Now fixed and certified (see `docs/CERTIFICATION.md`).
-- Fix silent weight-handling gaps: betweenness (add a weighted/Dijkstra-based variant alongside the existing unweighted one — do not change the current default without a documented, tested option), eigenvector centrality (`nosym`-style `weighted` option instead of always dichotomizing).
+- ✅ Fix silent weight-handling gaps: betweenness — done (harmonisation unit 18): added a weighted/Dijkstra-based `weighted` option alongside the existing unweighted default, which is unchanged (a genuine additive option, not a behavior change to any existing call). Eigenvector centrality — already done (see the ✅ item below, `nwevcent, weighted`).
 
 ## Stage 2 — Core graph-analysis gaps
 
@@ -80,7 +80,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 5. ✅ Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator — done (`nwaltergen`, `nwgen` shortcut)
 6. Distance-family sparse migration — High value (unblocks 5 commands), Large effort
 7. ✅ k-cores — High value, Small-Medium effort — done (`nwkcore`)
-8. Weighted betweenness variant — Medium value, Small effort
+8. ✅ Weighted betweenness variant — Medium value, Small effort — done (harmonisation unit 18): `nwbetween, weighted alpha()`, a Dijkstra generalization of the existing Brandes'-algorithm BFS betweenness, verified to reduce to the exact same result as the unweighted function at `alpha(0)`
 9. ✅ `nwneighbor` sparse migration — Low value alone, Small effort, low risk — done, and surfaced a real broken/untested `mode(incoming)` bug in the process
 10. `nwqap` → `eclass` + QAPSPP → `nwregress`/`nwlogit` — Very high value, Large effort
 11. ✅ CUG test wrapper around `nwrandom, density()` — Medium value, Small effort — done (`nwcug`)
