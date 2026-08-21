@@ -96,6 +96,6 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. Psychometrik
 
 {title:See also}
 
-	{help nwcloseness}, {help nwbetweenness}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
+	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
 last certified : 21 Aug 2026
