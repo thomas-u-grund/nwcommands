@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.1  17sept2014 author: Thomas Grund}{...}
+{* *! version 2.0.1  29may2019 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
@@ -17,34 +17,26 @@
 {p 8 17 2}
 {cmdab: nwpath} 
 [{it:{help netname}}],
-{opth ego(nodeid)}
-{opth alter(nodeid)}
-[{opth length(int)}
+[{opth ego(nodename)}
+{opth alter(nodename)} | 
+{opth egoid(nodeid)}
+{opth alterid(nodeid)}]
+{opth generate(newnetnamestub)}
 {opt sym}
-{opth generate(newnetname)}]
-
-{p 8 17 2}
-{cmdab: nwpath} 
-[{it:{help netname}}],
-{opt ego}({it:{help nodeid:nodelab}})
-{opt alter}({it:{help nodeid:nodelab}})
-[{opth length(int)}
-{opt sym}
-{opth generate(newnetname)}]
-
+{opt nwreplace}]
 
 
 {synoptset 23 tabbed}{...}
 {synopthdr}
 {synoptline}
 {syntab:Main}
-{synopt:{opth ego(nodeid)}}nodeid of network node {it:ego}{p_end}
-{synopt:{opth alter(nodeid)}}nodeid of network node {it:alter}{p_end}
-{synopt:{opt ego}({it:{help nodeid:nodelab}})}nodelab of network node {it:ego}{p_end}
-{synopt:{opt alter}({it:{help nodeid:nodelab}})}nodelab of network node {it:alter}{p_end}
-{synopt:{opth length(int)}}force length of paths{p_end}
-{synopt:{opt sym}}calculate paths on symmetrized network{p_end}
-{synopt:{opth generate(newnetname)}}save paths as networks{p_end}
+{synopt:{opth ego(nodename)}}Name of start node{p_end}
+{synopt:{opth alter(nodename)}}Name of destination node{p_end}
+{synopt:{opth egoid(nodeid)}}Nodeid of start node{p_end}
+{synopt:{opth alterid(nodeid)}}Nodeid of destination node{p_end}
+{synopt:{opth generate(newnetnamestub)}}Save paths as networks beginning with {it:newnetnamestub}{p_end}
+{synopt:{opt sym}}Symmetrize network for calculation{p_end}
+{synopt:{opt nwreplace}}Overwrite networks with {it:newnetnamestub}{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -52,39 +44,44 @@
 {title:Description}
 
 {pstd}
-{cmd: nwpath} calculates paths between node {it:ego} and node {it:alter}, i.e. ways how the nodes
-are connected with each other. By default, the shortest paths between the two nodes are returned. 
-When option {opt length()} is specified, only paths of the specified length are returned.
+{cmd: nwpath} calculates the shortest paths between node {it:ego} and node {it:alter}, i.e. ways how the nodes
+are connected with each other.
 
 {pstd}
-With option {opth generate(newnetname)} the command produces one new network for each valid path that is found. 
-For example, if three paths are found between nodes {it:ego} and {it:alter}, the networks {it:newnetname_1, newnetname_2, newnetname_2}
+With option {opth generate(newnetname)} the command produces one new network for each valid path that is found.
+For example, if three paths are found between nodes {it:ego} and {it:alter}, the networks {it:newnetnamestub_1, newnetnamestub_2, newnetnamestub_3}
 are produced.
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes ({opt sym} to symmetrize first). Weighted: not applicable - any nonzero
+tie is treated as traversable regardless of its value; there is currently no shortest-{it:weighted}
+-path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: not
+checked.
 
 
 {title:Options}
 
-{p2col 5 30 30 30:{opth ego(nodeid)}}Must be specified and indicates the startpoint of a path.
+{p2col 5 30 30 30:{opth ego(nodename)}}Must be specified and indicates the startpoint of a path.
 
-{p2col 5 30 30 30:{opth alter(nodeid)}}Must be specified and indicates the endpoint of a path.
-
-{p2col 5 30 30 30:{opth length(int)}}Defines the length of paths that should be returned. For example, 
-with {bf:length(4)} only paths of length 4 are returned.{p_end}
+{p2col 5 30 30 30:{opth alter(nodename)}}Must be specified and indicates the endpoint of a path.
 
 {p2col 5 30 30 30:{opt sym}}Calculates everything on the symmetrized network.{p_end}
 
-{p2col 5 30 30 30:{opth generate(newnetname)}}Save the paths as networks. This can be used to display 
+{p2col 5 30 30 30:{opth generate(newnetnamestub)}}Save the paths as networks. This can be used to display 
 paths using nwplot, see example.{p_end}
 
 
 {title:Remarks}
 
 {pstd}
-It can be a good idea to save the paths by specifying {opth generate(newnetname)} for plotting.
+It can be a good idea to save the paths between two nodes by specifying {opth generate(newnetname)} for plotting.
 For example, 
 
-	{cmd:. webnwuse florentine, nwclear}
-	{cmd:. nwpath flobusiness, ego(9) alter(11) generate(shortest)}
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwpath flobusiness, ego(medici) alter(peruzzi) generate(medici_peruzzi)}
 
 {pstd}	
 There are two shortest paths from node 9 to node 11, hence, the networks {it:shortest_1} and {it:shortest_2} are generated.
@@ -95,19 +92,16 @@ One can now use one of these new networks to represent the edgecolor when plotti
 
 {title:Examples}
 
-{pstd}
-{txt}Instead of using {help nodeid:nodeids} one can also use {help nodelab:nodelabs} to identify nodes.
 
-     {cmd:. webnwuse florentine}
+     {cmd:. nwwebuse florentine}
      {cmd:. nwpath flobusiness, ego(medici) alter(peruzzi)}
      {res}
      {hline 40}
      {txt}  Network: {res}flobusiness
      {hline 40}
-     {txt}    Ego                  : {res}9 (medici)
-     {txt}    Alter                : {res}11 (peruzzi)
+     {txt}    Ego                  : {res}medici
+     {txt}    Alter                : {res}peruzzi
      {txt}    Shortest path length : {res}3
-     {txt}    Selected length      : {res}3
      {hline 40}
 
      {txt}  Path 1:  {res}medici{txt} => {res}barbadori{txt} => {res}castellani{txt} => {res}peruzzi
@@ -117,16 +111,20 @@ One can now use one of these new networks to represent the edgecolor when plotti
 {title:Stores results}
 
 	Scalars:
-	  {bf:r(paths)}		 number of paths found
-	  {bf:r(path_length)}	 length of path specified in {bf:length()}
-	  {bf:r(path_shortest)}	 length of shortest path between nodes
+	  {bf:r(paths)}		 number of shortest paths found (0 if {it:ego} and {it:alter} are not connected)
+	  {bf:r(path_length)}	 length of the shortest path (-1 if not connected)
+	  {bf:r(path_shortest)}	 same as {bf:r(path_length)}; this command currently only ever finds
+	                    shortest paths, there is no {bf:length()} option to select a longer one
 	  {bf:r(ego)}		 nodeid of ego
 	  {bf:r(alter)}		 nodeid of alter
-	  
+
 	Matrices:
-	  {bf:r(paths_matrix)}	matrix with all paths
+	  {bf:r(paths_matrix)}	one row per path found, node ids along the path; only set when
+	                    {bf:r(paths)} > 0
 
 
 {title:Also see}
 
    {help nwgeodesic}
+
+last certified : 21 Aug 2026
