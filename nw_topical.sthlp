@@ -136,6 +136,7 @@
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
+{p2col:    {bf:{help nwego }}}Ego-network size and density{p_end}
 {p2col:    {bf:{help nwergm }}}Exponential Random Graph Model{p_end}
 {p2col:    {bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:    {bf:{help nwgen }}}Network extensions to generate{p_end}

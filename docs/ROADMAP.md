@@ -87,7 +87,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 12. ✅ Common-neighbor similarity family (Jaccard/Dice/cosine/Adamic-Adar) — Medium-high value, Small-Medium effort — done (`nwsimindex`)
 13. Structural-equivalence workflow packaging + role-variable output — Medium value, Small effort
 14. ✅ Per-node eccentricity + radius — Low-medium value, Trivial effort — done (`nwgeodesic`)
-15. Ego-network induced-subgraph extraction — Medium value (unblocks ego-network size/density/composition), Medium effort
+15. ✅ Ego-network size/density — done (`nwego`, harmonisation unit 25) - turned out not to need induced-subgraph extraction at all, both are computable directly from the sparse neighbor accessors. A general induced-subgraph-extraction primitive (for composition/diversity and other measures that need an actual reusable subgraph object) remains open - Medium value, Medium effort.
 16. Export-format parity (add GML/GraphML/edgelist to `nwexport`) — Low-medium value, Small effort
 17. ✅ CONCOR — Medium value, Medium effort — done (`nwconcor`, harmonisation unit 21)
 18. `nwplot` test coverage (largest untested file in the package) — Risk-reduction value, Medium effort (many code paths)
