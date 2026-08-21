@@ -4,16 +4,7 @@ do unw_core.do
 
 * nwqap's own permutation step (permute_net(), unorder()) draws from
 * Stata's ambient RNG state with no seed control exposed - a fixed
-* seed is set once here so every run below is reproducible. Small
-* test networks occasionally hit a real, separate, pre-existing
-* fragility while investigating this: a permutation can by chance
-* produce a dependent network with no variation at all, which the
-* chosen regression command (e.g. logit) cannot fit, aborting the
-* whole command with r(2000) instead of skipping/retrying that one
-* permutation - not fixed here (a robustness fix, not a correctness
-* one; noted in docs/CERTIFICATION.md's Pending table), but avoided
-* in this test suite by fixing the seed to draws that do not trigger
-* it for these specific small networks.
+* seed is set once here so every run below is reproducible.
 set seed 1
 
 * nwqap had zero test coverage before this session, and could not
@@ -94,3 +85,20 @@ nwclear
 nwset, mat((0,1\1,0)) name(labeltest)
 nwname labeltest
 assert `"`r(netname)'"' == `"labeltest"'
+
+* --- permutation-degeneracy robustness: a permutation can by chance
+* produce a fully degenerate (no-variation) dependent network, which
+* the chosen regression command can't fit (e.g. logit's "outcome
+* does not vary"). This used to abort the whole nwqap call with
+* r(2000) on the very first degenerate draw - now it retries with a
+* fresh permutation instead. seed 5 with this small, sparse 4-node
+* pair is confirmed (by direct instrumentation while building the
+* fix) to hit 4 degenerate draws across its 10 permutations - before
+* the fix this would have crashed on the first one; now it must
+* complete cleanly regardless.
+nwclear
+set seed 5
+nwset, mat((0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)) name(iv1) undirected labs(A,B,C,D)
+nwset, mat((0,1,0,0\1,0,1,0\0,1,0,0\0,0,0,0)) name(dv1) undirected labs(A,B,C,D)
+nwqap dv1 iv1, permutations(10)
+assert _rc == 0
