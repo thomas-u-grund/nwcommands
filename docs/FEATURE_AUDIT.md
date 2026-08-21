@@ -17,7 +17,7 @@ Several findings deserve special attention:
 - **`nwergm.ado`** is not a native ERGM implementation — it shells out to R (and even auto-installs R), directly violating this project's own "no external runtime dependencies" principle. Reclassified D; any native ERGM work starts from zero.
 - **`nwgenvar.ado`** is dead code: it defines `program nwgenerate` under a mismatched filename, so Stata's ado-loader can never actually load it as `nwgenvar`.
 - **`nwgenerate.ado`** has several silently-dead commented-out dispatch branches (`dyadprob`, `homophily`, `lattice`, `path`, `pref`, `ring`, `small`, `transpose`).
-- Weighted-network semantics are **mostly** handled deliberately and well (e.g. `nwgeodesic`'s `alpha` exponent correctly distinguishes weight-as-strength from weight-as-cost), but **betweenness centrality silently ignores weights** (plain BFS, not Dijkstra, despite the Brandes' algorithm structure) and **eigenvector centrality silently dichotomizes** — both real, precisely-located, fixable gaps.
+- Weighted-network semantics are **mostly** handled deliberately and well (e.g. `nwgeodesic`'s `alpha` exponent correctly distinguishes weight-as-strength from weight-as-cost). Two gaps flagged in the original audit pass — betweenness centrality silently ignoring weights (plain BFS, not Dijkstra, despite the Brandes' algorithm structure) and eigenvector centrality silently dichotomizing — are both now fixed (`nwevcent, weighted`; `nwbetween, weighted alpha()`, harmonisation unit 18), each as an explicit opt-in rather than a change to either command's existing default.
 
 ## A. Core network infrastructure
 
@@ -46,7 +46,7 @@ Mostly A: node/edge counts, density, degree distribution, isolates, connectednes
 
 ## C. Centrality
 
-Degree/in/out/strength (A, sparse-migrated this session), betweenness (A, sparse-migrated + bug-fixed this session, but **unweighted only**), closeness (A via `nwgeodesic`, D-flagged), eigenvector (A, genuine `symeigensystem()` eigen-decomposition, but **dichotomizes weights silently** and dense-only), Katz (**F** — harmonisation unit 2 confirmed and fixed 5 real bugs, then explicitly documented that `nwkatz.ado` computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality `(I-alpha*A)^-1`; correctly implemented and tested for what it actually is, but a genuine walk-counting Katz remains a real **E** gap, tracked in `docs/ROADMAP.md`), PageRank/Bonacich power/alpha/Hubbell/HITS/eccentricity/information/flow-betweenness/current-flow/bridging/distance-limited/group centrality — all **E**, not implemented. Centralization (network-level) exists for degree/betweenness.
+Degree/in/out/strength (A, sparse-migrated this session), betweenness (A, sparse-migrated + bug-fixed this session; **update, harmonisation unit 18**: a genuine weighted/Dijkstra variant, `weighted alpha()`, has since been added alongside the unweighted default), closeness (A via `nwgeodesic`, D-flagged), eigenvector (A, genuine `symeigensystem()` eigen-decomposition, but **dichotomizes weights silently** and dense-only), Katz (**F** — harmonisation unit 2 confirmed and fixed 5 real bugs, then explicitly documented that `nwkatz.ado` computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality `(I-alpha*A)^-1`; correctly implemented and tested for what it actually is, but a genuine walk-counting Katz remains a real **E** gap, tracked in `docs/ROADMAP.md`), PageRank/Bonacich power/alpha/Hubbell/HITS/eccentricity/information/flow-betweenness/current-flow/bridging/distance-limited/group centrality — all **E**, not implemented. Centralization (network-level) exists for degree/betweenness.
 
 ## D. Structural holes and brokerage
 
@@ -99,7 +99,7 @@ Core infrastructure real (`is2mode`/`nodesmode1`/`nodesmode2`/`modes` fields on 
 
 ## O. Weighted/valued networks (cross-cutting)
 
-Genuinely weight-aware: degree/strength (Opsahl generalized formula), transitivity/clustering (5 aggregation modes), shortest paths/closeness (`alpha` exponent, deliberately distinguishes strength from cost — a real design strength), community detection. **Confirmed gaps**: betweenness (plain unweighted BFS despite Brandes' structure), eigenvector centrality (silently dichotomizes), density (no weighted-sum variant), reciprocity (binary only), assortativity (doesn't exist at all).
+Genuinely weight-aware: degree/strength (Opsahl generalized formula), transitivity/clustering (5 aggregation modes), shortest paths/closeness (`alpha` exponent, deliberately distinguishes strength from cost — a real design strength), community detection. **Confirmed gaps**: density (no weighted-sum variant), reciprocity (binary only), assortativity (doesn't exist at all). Betweenness and eigenvector centrality were flagged here in the original audit pass (plain unweighted BFS / silent dichotomization respectively) — both fixed since (`nwbetween`/`nwevcent`'s `weighted` options).
 
 ## P. Signed networks
 
