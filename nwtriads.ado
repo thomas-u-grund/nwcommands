@@ -54,15 +54,11 @@ in a directed network can be one of the following:
 {pstd}
 Binary: yes. Directed: yes - this is the command's native case; the full 16-type MAN
 classification requires a genuine directed/asymmetric-dyad distinction. Undirected: the command
-still runs, but 11 of the 16 categories (everything except {bf:_003}/{bf:_102}/{bf:_201}/{bf:_300},
-and except {bf:_210}, which has a known unresolved computation issue on undirected input - see
-below) are not meaningful for undirected data and reliably return 0, since an undirected network
+still runs, but 12 of the 16 categories (everything except {bf:_003}/{bf:_102}/{bf:_201}/{bf:_300})
+are not meaningful for undirected data and reliably return 0, since an undirected network
 has no asymmetric ties by construction - {cmd:nwtriads} prints a note to this effect when called on
-an undirected network. {bf:_210} does not reliably return 0 on undirected input despite the same
-mathematical argument applying to it; this is a known, unresolved bug (not yet root-caused), so
-{bf:_210} in particular should not be trusted on undirected data until fixed. Weighted: not
-applicable (a triad census is inherently a binary/dichotomous count). Signed: not checked.
-Two-mode: not checked.
+an undirected network. Weighted: not applicable (a triad census is inherently a binary/dichotomous
+count). Signed: not checked. Two-mode: not checked.
 
 
 {title:Examples}
@@ -128,18 +124,18 @@ program nwtriads
 	// and asymmetric (C = net - M) dyad components, and for an
 	// undirected network every tie is symmetric by construction, so C
 	// is mathematically zero and every category that depends only on C
-	// should be trivially 0 regardless of the network's actual
-	// structure - confirmed by direct computation on two different
-	// undirected test networks before adding this note (11 of the 12
-	// non-mutual-only categories behaved exactly as predicted). One
-	// category, _210, was found NOT to reliably return 0 for undirected
-	// input despite the same mathematical argument applying to it -
-	// likely a Mata [symmetric]-matrix-type edge case inside
-	// calculate_triadcensus()'s own C-matrix construction, not yet
-	// root-caused or fixed (see docs/CERTIFICATION.md). The note below
-	// is deliberately worded as "not meaningful," not "always 0", so it
-	// stays accurate for _210 too rather than repeating a promise this
-	// command doesn't actually keep for every category.
+	// is trivially 0 regardless of the network's actual structure -
+	// confirmed by direct computation on several undirected test
+	// networks. _210 was previously found NOT to reliably return 0 for
+	// undirected input, suspected at the time to be a Mata
+	// [symmetric]-matrix-type edge case inside calculate_triadcensus()
+	// itself - that suspicion was wrong: the actual root cause (found by
+	// directly comparing calculate_triadcensus()'s own return-vector
+	// order against this file's r()-extraction below) was a simple
+	// swapped pair of indices right here in nwtriads.ado, reading
+	// r(_201) from x_210's position and r(_210) from x_201's position -
+	// now fixed. calculate_triadcensus() itself was correct the whole
+	// time; only the extraction was wrong.
 	if "`directed'" == "false" {
 		di "{txt}Note: {bf:`netname'} is undirected - most MAN triad categories"
 		di "{txt}are not meaningful for undirected data (there are no"
@@ -165,8 +161,23 @@ program nwtriads
 	mata: st_numscalar("r(_120D)", `triadcensus'[11])
 	mata: st_numscalar("r(_120U)", `triadcensus'[12])
 	mata: st_numscalar("r(_120C)", `triadcensus'[13])
-	mata: st_numscalar("r(_201)", `triadcensus'[14])
-	mata: st_numscalar("r(_210)", `triadcensus'[15])
+	// was st_numscalar("r(_201)", ...[14]) / st_numscalar("r(_210)",
+	// ...[15]) - swapped. calculate_triadcensus()'s own return statement
+	// (unw_core.do) orders its vector "..., x_120C, x_210, x_201, x_300"
+	// - index 14 is x_210, index 15 is x_201 - so this file had them
+	// backwards. Confirmed via 3 hand-computable undirected networks
+	// (see cscripts/test_nwtriads.do): a 5-node cycle (no triangles,
+	// 5 open 2-edge triads) reported _210=5/_201=0 before this fix -
+	// exactly the swap, since _210 should be 0 for any undirected
+	// network (no asymmetric dyads to form a 2-1-mutual/1-asym triad
+	// from) while _201 (2-edge open triads) should be 5. This also
+	// resolves the previously-suspected "Mata [symmetric]-matrix-type
+	// edge case" (see docs/CERTIFICATION.md's now-superseded Pending
+	// row) - direct probing found no such Mata quirk at all once this
+	// far simpler root cause was found; calculate_triadcensus() itself
+	// was correct the whole time.
+	mata: st_numscalar("r(_201)", `triadcensus'[15])
+	mata: st_numscalar("r(_210)", `triadcensus'[14])
 	mata: st_numscalar("r(_300)", `triadcensus'[16])
 
 	tempname r
