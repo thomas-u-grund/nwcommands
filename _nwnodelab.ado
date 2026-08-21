@@ -9,13 +9,20 @@ program _nwnodelab
 	_nwsyntax `netname'
 	nwname `netname'
 
-	if `nodeid' > `nodes' {
+	if `nodeid' > `r(nodes)' {
 		mata: st_rclear()
 		di "{err}{it:nodeid} {bf:`nodeid'} out of bounds"
 		error 600022
 	}
 	else {
-		local onelab : word `nodeid' of `r(labs)'
+		// r(labs) is comma-separated (see nw_name.ado's own
+		// invtokens with a comma delimiter), but "word N of ..."
+		// needs a space-separated list - without this conversion,
+		// the whole comma-joined string is one "word" and any
+		// nodeid past 1 silently returns empty.
+		local labs "`r(labs)'"
+		local labs : subinstr local labs "," " ", all
+		local onelab : word `nodeid' of `labs'
 	}
 	mata: st_rclear()
 	mata: st_numscalar("r(nodeid)", `nodeid')

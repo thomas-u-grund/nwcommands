@@ -2,14 +2,16 @@ capture program drop _nwnodeid
 program _nwnodeid
 	syntax [anything(name=netname)], nodelab(string) [detail]
 	_nwsyntax `netname'
-	
+	nwname `netname'
+	local netnodes `r(nodes)'
+
 	mata: st_rclear()
 	mata: st_global("r(netname)", "`netname'")
 	mata: st_global("r(nodelab)", "`nodelab'")
-	
+
 	capture confirm integer number `nodelab'
 	if _rc == 0 {
-		if `nodelab' > `nodes' {
+		if `nodelab' > `netnodes' {
 			
 			mata: st_numscalar("r(nodeid)", -1)
 			di "{err}{it:nodelab} {bf:`nodelab'} out of bounds"
@@ -21,6 +23,13 @@ program _nwnodeid
 	else {
 		nwname `netname'
 		local labs "`r(labs)'"
+		// r(labs) is comma-separated (see nw_name.ado's own
+		// invtokens with a comma delimiter), but the foreach loop
+		// below needs a space-separated list to iterate over
+		// individual labels - without this, the whole comma-joined
+		// string is treated as a single list item and never matches
+		// any individual label, silently failing every lookup.
+		local labs : subinstr local labs "," " ", all
 		mata: st_rclear()
 		mata: st_global("r(netname)", "`netname'")
 		mata: st_global("r(nodelab)", "`nodelab'")
