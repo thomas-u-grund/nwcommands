@@ -104,11 +104,18 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    new **network**" (in-place-modify is the default; `generate()` opts into a copy); in analytical
    commands elsewhere it names a new **Stata variable**. These should be documented as two
    deliberately distinct, well-established conventions, not collapsed into one.
-4. **Architecture split**: `nwcloseness`, `nwqap`, `nworder`, and (fixed earlier this session)
-   `nwdissimilar`/`nwsimilar`/`nwhierarchy`/`nwtomatafast` still use the legacy `_nwsyntax`/
+4. **Architecture split**: `nwcloseness`, `nworder`, and (fixed earlier this session)
+   `nwdissimilar`/`nwsimilar`/`nwhierarchy`/`nwtomatafast`/`nwqap` still use the legacy `_nwsyntax`/
    `nwtomatafast` idiom instead of modern `nw_syntax`. Not purely cosmetic — `nwtomatafast` was
-   found to be **actually broken** by this reliance (see `docs/CERTIFICATION.md`), so this list is a
-   real risk register, not just a style nit.
+   found to be **actually broken** by this reliance (see `docs/CERTIFICATION.md`), and `nwqap`'s use
+   of `_nwsyntax` was found to be **completely fatal**, not just legacy style: `_nwsyntax` only
+   re-exports 4 of the locals `nw_syntax` itself sets (`netobj`/`id`/`netname`/`networks`) to its own
+   caller, so `nwqap.ado`'s references to `nodes`/`directed`/`valued` were always empty, crashing
+   with r(3000) on every single call. Fixed (harmonisation unit 9) by migrating `nwqap` to
+   `nw_syntax` directly; `nwcloseness`/`nworder` have not been checked for the same failure mode and
+   remain open. Given `nwqap` looked like ordinary legacy style right up until it was actually run,
+   checking whether `nwcloseness`/`nworder` are similarly silently dead should take priority over
+   generic architecture cleanup elsewhere — this list is a real risk register, not just a style nit.
 5. **Two `r()`-return idioms coexist**: commands added/touched this session (`nwkcore`, `nwcug`,
    `nwsimindex`, `nw2project`, `nwaltergen`) use `program X, rclass` + `return scalar`; the vast
    majority of older commands instead do `mata: st_rclear()` + `mata: st_numscalar("r(x)", ...)`
@@ -137,9 +144,16 @@ targets, per the four audits' own flagged findings):
   matrix). Documented, tested against a hand-computed example, classified **W1**/directed-
   asymmetric/signed-unsupported/two-mode-not-checked, and added to all 4 packaging manifests (it
   was missing from every one of them, not just undocumented).
-- **`nwqap`** — silently dichotomizes any weighted DV/IV network with no weighted alternative and
-  no warning, despite being the flagship network-regression candidate (already a known roadmap
-  item, now confirmed at the code level).
+- **`nwqap`** — fixed (harmonisation phase, unit 9 — see `docs/CERTIFICATION.md`): on inspection this
+  was far worse than a silent-weight issue — the command crashed with r(3000) on every single call
+  (deprecated `_nwsyntax` usage left `nodes`/`directed`/`valued` undefined), so it had never actually
+  run, and its own weight-handling had never been exercised. Migrated to `nw_syntax`; fixed a second,
+  independent bug (misread `r(name)` instead of `r(netname)`, leaving every printed row label blank);
+  added an explicit warning when a valued DV network is combined with a binary-outcome `type()`
+  (confirmed by demonstration that `logit` gives the identical coefficient regardless of DV tie
+  weight - the dichotomization is `logit`'s own semantics, not something `nwqap.ado` does). The
+  flagship network-regression candidate's roadmap item (full weighted-QAP via `eclass`+QAPSPP) is
+  unchanged and still pending.
 - **`nwtriads`** — computes a directed-only 16-type MAN triad census with no guard when given an
   undirected network (several census categories, e.g. 021D/030T, are meaningless for undirected
   data).
