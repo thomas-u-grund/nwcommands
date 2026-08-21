@@ -104,11 +104,11 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    new **network**" (in-place-modify is the default; `generate()` opts into a copy); in analytical
    commands elsewhere it names a new **Stata variable**. These should be documented as two
    deliberately distinct, well-established conventions, not collapsed into one.
-4. **Architecture split**: 12 other files (`nwconstraint`, `nwdissimilar`, `nwergm`, `nwdropnodes`,
-   `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`, `nwreplacemat`, `nwsimilar`,
-   `nwrecode`) still use the legacy `_nwsyntax`/`nwtomatafast`/`_nwsyntax_other` idiom
+4. **Architecture split**: 10 other files (`nwconstraint`, `nwdissimilar`, `nwergm`, `nwdropnodes`,
+   `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`, `nwsimilar`) still use the
+   legacy `_nwsyntax`/`nwtomatafast`/`_nwsyntax_other` idiom
    instead of modern `nw_syntax`. Not purely cosmetic — `nwtomatafast` was found to be **actually
-   broken** by this reliance (see `docs/CERTIFICATION.md`), and five separate commands (plus a shared
+   broken** by this reliance (see `docs/CERTIFICATION.md`), and six separate commands (plus a shared
    pair of internal helpers) relying on `_nwsyntax`/`_nwsyntax_other` were found to be **completely
    broken or silently wrong**, not just legacy style:
    - `nwqap` (harmonisation unit 9): `_nwsyntax` only re-exports 4 of the locals `nw_syntax` itself
@@ -138,17 +138,29 @@ Generators that *create* a network rather than operate on an existing one (`nwse
      apparently never worked end to end; both its code paths are now hand-verified against its own
      documented formula.
 
-   12 files remain, triaged (not fixed) after the above: **confirmed broken** —
-   `nwreplacemat` (also independently entangled with legacy `nw_mata<id>`/`$nwsize_<id>`/
-   `$nwdirected_<id>` globals, the same pre-2016 storage family already broken for `nwtomatafast` — the
-   largest remaining item in this family), `nwdropnodes`/`nwkeepnodes` (chain-blocked on
-   `nwreplacemat`), `nwrecode` (two independent bugs stacked), `nwmovie`/`nwmoviexy` (high-confidence
-   static finding, not empirically run — needs ImageMagick). **Confirmed fine for this specific bug
-   class**: `nwissymmetric`, `nwergm` (not fully exercised — needs R+`statnet`), `nwdissimilar`/
-   `nwsimilar`/`nwhierarchy` (blocked by the already-tracked, separate `nwset`/`mat()` Mata-visibility
-   issue elsewhere in this table). Full detail and suggested fix order in `docs/CERTIFICATION.md`'s
-   Pending table. This list is a real risk register, not just a style nit — five unrelated commands
-   (plus a shared helper pair) failing multiple different ways on the same deprecated wrapper is not a
+   - `nwrecode`/`nwreplacemat` (harmonisation unit 13): `nwrecode` had the same crash class in two
+     places (outer netlist resolution and a per-network `directed` read `_nwsyntax` never exports
+     even after unit 10's fix), plus two more independent bugs (a nonexistent `nwtoedge` option
+     name, and nonexistent `nwfromedge` variable names) - but every code path still ended by calling
+     `nwreplacemat`, which was itself completely non-functional: its same-size path wrote to legacy
+     `nw_mata<id>`/`$nwdirected_<id>` globals the modern architecture never reads, silently doing
+     nothing while reporting success. Fixed using the modern `netobj->set_edge()`/`set_directed()`
+     methods instead. `nwreplacemat`'s size-*changing* path (needed by `nwdropnodes`/`nwkeepnodes`,
+     not by `nwrecode`) remains broken, entangled with further legacy globals.
+
+   10 files remain, triaged (not fixed) after the above: **confirmed broken** —
+   `nwreplacemat`'s size-*changing* path specifically (its same-size path was fixed in unit 13; the
+   size-changing path remains entangled with further legacy `$nwsize_<id>`/`$nw_<id>`/`$nwlabs_<id>`
+   globals, the same pre-2016 storage family already broken for `nwtomatafast` — the largest remaining
+   item in this family), `nwdropnodes`/`nwkeepnodes` (chain-blocked on that path, plus their own
+   additional `$nw_<id>`/`$nwlabs_<id>` reads confirmed empty under the modern architecture),
+   `nwmovie`/`nwmoviexy` (high-confidence static finding, not empirically run — needs ImageMagick).
+   **Confirmed fine for this specific bug class**: `nwissymmetric`, `nwergm` (not fully exercised —
+   needs R+`statnet`), `nwdissimilar`/`nwsimilar`/`nwhierarchy` (blocked by the already-tracked,
+   separate `nwset`/`mat()` Mata-visibility issue elsewhere in this table). Full detail and suggested
+   fix order in `docs/CERTIFICATION.md`'s Pending table. This list is a real risk register, not just a
+   style nit — six unrelated commands (plus a shared helper pair) failing multiple different ways on
+   the same deprecated wrapper is not a
    coincidence worth dismissing.
 5. **Two `r()`-return idioms coexist**: commands added/touched this session (`nwkcore`, `nwcug`,
    `nwsimindex`, `nw2project`, `nwaltergen`) use `program X, rclass` + `return scalar`; the vast
