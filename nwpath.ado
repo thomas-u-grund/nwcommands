@@ -1,147 +1,268 @@
-*! Date        : 15sept2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0.1  29may2019 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##generator:[NW-2.3] Generators}
+{marker top2}
+{helpb nw_topical##analysis:[NW-2.6] Analysis}
 
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwpath {hline 2} Calculate paths between nodes}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwpath} 
+[{it:{help netname}}],
+[{opth ego(nodename)}
+{opth alter(nodename)} | 
+{opth egoid(nodeid)}
+{opth alterid(nodeid)}]
+{opth generate(newnetnamestub)}
+{opt sym}
+{opt nwreplace}]
+
+
+{synoptset 23 tabbed}{...}
+{synopthdr}
+{synoptline}
+{syntab:Main}
+{synopt:{opth ego(nodename)}}Name of start node{p_end}
+{synopt:{opth alter(nodename)}}Name of destination node{p_end}
+{synopt:{opth egoid(nodeid)}}Nodeid of start node{p_end}
+{synopt:{opth alterid(nodeid)}}Nodeid of destination node{p_end}
+{synopt:{opth generate(newnetnamestub)}}Save paths as networks beginning with {it:newnetnamestub}{p_end}
+{synopt:{opt sym}}Symmetrize network for calculation{p_end}
+{synopt:{opt nwreplace}}Overwrite networks with {it:newnetnamestub}{p_end}
+{synoptline}
+{p2colreset}{...}
+
+		
+{title:Description}
+
+{pstd}
+{cmd: nwpath} calculates the shortest paths between node {it:ego} and node {it:alter}, i.e. ways how the nodes
+are connected with each other.
+
+{pstd}
+With option {opth generate(newnetname)} the command produces one new network for each valid path that is found.
+For example, if three paths are found between nodes {it:ego} and {it:alter}, the networks {it:newnetnamestub_1, newnetnamestub_2, newnetnamestub_3}
+are produced.
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes ({opt sym} to symmetrize first). Weighted: not applicable - any nonzero
+tie is treated as traversable regardless of its value; there is currently no shortest-{it:weighted}
+-path variant (see {help nwgeodesic} for weighted distances). Signed: not checked. Two-mode: not
+checked.
+
+
+{title:Options}
+
+{p2col 5 30 30 30:{opth ego(nodename)}}Must be specified and indicates the startpoint of a path.
+
+{p2col 5 30 30 30:{opth alter(nodename)}}Must be specified and indicates the endpoint of a path.
+
+{p2col 5 30 30 30:{opt sym}}Calculates everything on the symmetrized network.{p_end}
+
+{p2col 5 30 30 30:{opth generate(newnetnamestub)}}Save the paths as networks. This can be used to display 
+paths using nwplot, see example.{p_end}
+
+
+{title:Remarks}
+
+{pstd}
+It can be a good idea to save the paths between two nodes by specifying {opth generate(newnetname)} for plotting.
+For example, 
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwpath flobusiness, ego(medici) alter(peruzzi) generate(medici_peruzzi)}
+
+{pstd}	
+There are two shortest paths from node 9 to node 11, hence, the networks {it:shortest_1} and {it:shortest_2} are generated.
+One can now use one of these new networks to represent the edgecolor when plotting the original network. 
+	
+	{cmd:. nwplot flobusiness, edgecolor(shortest_1) scheme(s2network)}
+
+
+{title:Examples}
+
+
+     {cmd:. nwwebuse florentine}
+     {cmd:. nwpath flobusiness, ego(medici) alter(peruzzi)}
+     {res}
+     {hline 40}
+     {txt}  Network: {res}flobusiness
+     {hline 40}
+     {txt}    Ego                  : {res}medici
+     {txt}    Alter                : {res}peruzzi
+     {txt}    Shortest path length : {res}3
+     {hline 40}
+
+     {txt}  Path 1:  {res}medici{txt} => {res}barbadori{txt} => {res}castellani{txt} => {res}peruzzi
+     {txt}  Path 2:  {res}medici{txt} => {res}ridolfi{txt} => {res}strozzi{txt} => {res}peruzzi{txt}
+	
+
+{title:Stores results}
+
+	Scalars:
+	  {bf:r(paths)}		 number of shortest paths found (0 if {it:ego} and {it:alter} are not connected)
+	  {bf:r(path_length)}	 length of the shortest path (-1 if not connected)
+	  {bf:r(path_shortest)}	 same as {bf:r(path_length)}; this command currently only ever finds
+	                    shortest paths, there is no {bf:length()} option to select a longer one
+	  {bf:r(ego)}		 nodeid of ego
+	  {bf:r(alter)}		 nodeid of alter
+
+	Matrices:
+	  {bf:r(paths_matrix)}	one row per path found, node ids along the path; only set when
+	                    {bf:r(paths)} > 0
+
+
+{title:Also see}
+
+   {help nwgeodesic}
+
+***/
 capture program drop nwpath
 program nwpath
 	version 9
-	syntax [anything(name=netname)], ego(string) alter(string)[sym generate(string) _paths(string) _geodesic(string) length(string) name(string) xvars ]
+	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string)  name(string) ]
+	
+	if "`sym'" != "" & "`generate'" != "" {
+		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."
+		err 99
+	}
+	if "`ego'" == "" & "`egoid'" == "" {
+		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
+		err 99
+	}
+	if "`alter'" == "" & "`alterid'" == "" {
+		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
+		err 99
+	}
+	nw_syntax `netname', max(1)
+	
+	if `egoid' != 0 {
+		qui capture nwnode `netname', egoid(`egoid')
+		if _rc != 0 {
+			noi di "{err}Egoid {bf:`egoid'} out of bounds"
+			err 99
+		}
+		local ego "`r(nodename)'"
+	}
+	if `alterid' != 0 {
+		qui capture nwnode `netname', egoid(`alterid') 
+		if _rc != 0 {
+			noi di "{err}Alterid {bf:`alterid'} out of bounds"
+			err 99
+		}
+		local alter "`r(nodename)'"
+	}
+	
+	if "`directed'" == "false" {
+		local undirected_sign "<"
+	}
 	
 	set more off
 	if "`length'" == "" {
 		local length 0
 	}
 	
-	_nwsyntax `netname', max(1)
-	nwname `netname'
-	local labs "`r(labs)'"
-	mata: st_rclear()
-	
-	local uselab = 1
-	capture confirm integer number `ego'
-	if _rc == 0 {
-		local uselab = 0
+	// check if ego or alter does not exit
+	capture qui nwvalue `netname', ego("`ego'") alter("`alter'")
+	if _rc != 0 {
+		di "{err}Node {bf:`ego'} or {bf:`alter'} does not exist in network {it:`netname'}; check spelling"
+		error 99
 	}
+	local egoid `r(ego_id)'
+	local alterid `r(alter_id)'
+	local netname_orig `netname'
 	
-	qui _nwnodeid `netname', nodelab(`ego')
-	local ego = r(nodeid)
-	qui _nwnodeid `netname', nodelab(`alter')
-	local alter = r(nodeid)
-	qui _nwnodelab `netname', nodeid(`ego')
-	local ego_lab = r(nodelab)
-	qui _nwnodelab `netname', nodeid(`alter')
-	local alter_lab = r(nodelab)
-	
-	qui if "`_geodesic'" == "" {
-		if "`sym'" == ""{
-			nwgeodesic `netname', nosym unconnected(-1) xvars name(_temp_geodesic)
-		}
-		else {
-			nwgeodesic `netname', unconnected(-1) xvars name(_temp_geodesic)
-		}
-		qui nwvalue _temp_geodesic[`ego',`alter']
-		local shortestpath = r(value)
-		nwdrop _temp_geodesic
-	}
-	// distance matrix is given
-	else {
-		mata: st_numscalar("r(path_shortest)", `_geodesic'[`ego', `alter'])
-		local shortestpath = r(path_shortest)
-	}
-	
-	if `shortestpath' == -1 {
-		di "{err}no valid path exists from node {bf:`ego'} to node {bf:`alter'}."
-		mata: st_numscalar("r(path_shortest)", -1)
-		mata: st_numscalar("r(paths)", 0)
-		mata: st_numscalar("r(ego)", `ego')
-		mata: st_numscalar("r(alter)", `alter')
-		mata: st_global("r(ego_lab)", "`ego_lab'")
-		mata: st_global("r(alter_lab)", "`alter_lab'")
-		error 6299
-	}
-	
-	nwtomata `netname', mat(netpath)
+	tempname _path _sym
 	if "`sym'" != "" {
-		mata: netpath = netpath :+ netpath'
+		nwduplicate `netname', name(`_sym')
+		nwsym `_sym'
+		nw_syntax `_sym'
+		local symtext " (symmetrized)"
+		local undirected_sign "<"
 	}
-	mata: netpath = netpath :/ netpath
-	mata: _editmissing(netpath, 0)
+	mata: `_path' = `netobj'->get_path(`egoid', `alterid', `length')
+	mata: st_numscalar("r(paths)", rows(`_path'))
+	mata: st_numscalar("r(path_length)", cols(`_path') - 1)
+	mata: st_numscalar("r(ego)", `egoid')
+	mata: st_numscalar("r(alter)", `alterid')
+	// r(path_shortest): this command only ever finds shortest paths -
+	// length() is documented (and was previously documented as though
+	// implemented) but was never actually a real syntax option, so
+	// there is currently no way to request a longer, non-shortest path.
+	// r(path_shortest) is therefore always identical to r(path_length)
+	// today; kept as its own explicit return (rather than removed from
+	// the documented interface) so it is already in place, unchanged,
+	// on the day a real length()-selection option is eventually added.
+	mata: st_numscalar("r(path_shortest)", cols(`_path') - 1)
+	if `r(paths)' > 0 {
+		mata: st_matrix("r(paths_matrix)", `_path')
+	}
 
-	mata: path = getpath(netpath, `ego', `alter', `length')
-	mata: st_numscalar("r(paths)", rows(path))
-	if `length' == 0 {
-		local length = `shortestpath'
+
+	di ""
+	di "{hline 40}"
+	di "{txt}  Network: {res}`netname_orig'`symtext'"
+	di "{hline 40}"
+	di "{txt}    Ego                  : {res}`ego'"
+	di "{txt}    Alter                : {res}`alter'"
+	if `r(path_length)'>=0 {
+		di "{txt}    Shortest path length : {res}`r(path_length)'"
 	}
-	mata: st_numscalar("r(path_length)", `length')
-	local path_nets `r(paths)' 
+	else {
+		di "{txt}    Shortest path length : {res}not connected"
+	}
+	di "{hline 40}"
+	
+	forvalues i = 1/`r(paths)' {
+		local p "{txt}	Path `i': {res}`ego'"
+		forvalues j = 2/`=`r(path_length)'+1' {
+			mata: st_local("next", `netobj'->get_nodenames()[`_path'[`i',`j']])
+			local p "`p' `undirected_sign'=> `next'"
+		}
+		di "`p'"
+	}
+
 	
 	if "`generate'" != "" {
-		forvalues i=1/`path_nets'{
-			local pname "`generate'"
-			if (`path_nets' > 1) {
-				local pname "`pname'_`i'"
+		forvalues i = 1/`r(paths)' {
+			capture nw_syntax `generate'_`i', other("other")
+			if _rc == 0 & "`nwreplace'" == "" {
+				capture nwdrop `_sym'
+				di "{pstd} {err}Network {bf:`generate'_`i'} already exists; use {bf:nwreplace} or specify another stub {bf:generate()}{p_end}"
+				error 99
 			}
-			mata: newpath = makenet(path, `i', `nodes')
-			nwset, name(`pname') mat(newpath) vars(`vars')
+			capture nwdrop `generate'_`i'
+			nwduplicate `netname', name(`generate'_`i')
+			nw_syntax 
+			mata: `netobj'-> set_edge(makenet(`_path', `i', `nodes'))
 		}
 	}
 	
-	if "`_paths'" != "" {
-		mata: `_paths' = path
-	}
-	
-	mata: st_matrix("r(paths_matrix)", path)
-	mata: st_numscalar("r(paths)", rows(path))
-	mata: st_numscalar("r(path_length)", `length')
-	mata: st_numscalar("r(path_shortest)", `shortestpath')
-	mata: st_numscalar("r(ego)", `ego')
-	mata: st_numscalar("r(alter)", `alter')
-	mata: st_global("r(ego_lab)", "`ego_lab'")
-	mata: st_global("r(alter_lab)", "`alter_lab'")
-	di ""
-	di "{hline 40}"
-	di "{txt}  Network: {res}`netname'"
-	di "{hline 40}"
-	di "{txt}    Ego                  : {res}`ego' (`ego_lab')"
-	di "{txt}    Alter                : {res}`alter' (`alter_lab')"
-	di "{txt}    Shortest path length : {res}`r(path_shortest)'"
-	di "{txt}    Selected length      : {res}`r(path_length)'"
-	di "{hline 40}"
-	capture matrix temp_mat = r(paths_matrix)
-	capture local temp_rows = rowsof(r(paths_matrix))
-	if _rc != 0 {
-		local temp_rows = 0
-	}
-	capture local temp_cols = colsof(r(paths_matrix))
-	capture forvalues i = 1/`temp_rows' {
-		noi di ""
-		noi di "{txt}  Path `i': " _continue
-		forvalues j = 1/`temp_cols' {
-			local temp =  temp_mat[`i',`j']
-			local onelab : word `temp' of `labs'
-			if `uselab' == 1 {
-				noi di " {res}`onelab'" _continue
-			}
-			else {
-				noi di " {res}`temp'" _continue
-			}
-			if `j' < `temp_cols' {
-				noi di "{txt} =>" _continue
-			}
-		}
-	}
-	di ""
-	capture mata: mata drop path 
-	capture mata: mata drop netpath
+	tempname rstore
+	_return hold `rstore'
+	capture nwdrop `_sym'
+	_return restore `rstore'
+	capture mata: mata drop `_path'
 end
 
-
-capture mata mata drop getpath()
-capture mata mata drop makenet()
+capture mata: mata drop makenet()
 
 mata:
-real matrix makenet(real matrix path,  real scalar id, real scalar nodes){
+real matrix makenet(real matrix path, real scalar id, real scalar nodes){
+	real matrix net
+	real scalar i, ego, alter
 	net = J(nodes, nodes, 0)
 	for (i = 1; i < cols(path); i++){
 		ego = path[id, i]
@@ -150,67 +271,4 @@ real matrix makenet(real matrix path,  real scalar id, real scalar nodes){
 	}
 	return(net)
 }
-
-real matrix getpath(real matrix nw, real scalar ego, real scalar alter, real scalar length)
-{
-	real scalar found, step, temp, temp_new
-	real matrix ids, paths_new, paths_sofar, paths_valid
-	//, paths_new, paths_valid, path_temp, paths_sofar, path_next, 
-	
-	found = 0
-	nodes = rows(nw)
-	ids = (1::nodes)
-	paths_sofar = J(1,1,ego)
-	step = 0
-	
-
-	while (found == 0 & step <= nodes) {
-		new_paths = 0
-		step = step + 1
-		for (i = 1; i<= rows(paths_sofar); i ++) {
-			id_next = paths_sofar[i, step]
-			reach_next = (nw[id_next,])'
-			if (length != 0) {
-				if (step == length){
-					found = 1
-				}
-			}
-			else if (reach_next[alter,1] != 0) {
-				found = 1
-			}
-			new_paths = new_paths + sum(reach_next)
-		}
-		
-		paths_new = J(new_paths, (step + 1),0)
-		temp = 1
-		if (rows(paths_new)> 0) {
-		  for (i = 1; i<= rows(paths_sofar); i ++) {
-			id_next = paths_sofar[i, step]
-			reach_next = (nw[id_next,])'
-			reach_ids = select(ids, reach_next)
-			reach_num = sum(reach_next)
-			if (reach_num > 0){
-				path_next = J(reach_num, (step + 1),0)
-				path_next[,step] = J(reach_num,1,id_next)
-				path_next[,(step+1)] = reach_ids
-				for (j = 1; j<step;j++){
-					path_next[,j] = J(reach_num,1,paths_sofar[i,j])
-				}
-				new_temp = temp + (rows(path_next) - 1)
-				paths_new[(temp::new_temp),] = path_next
-				temp = new_temp + 1
-			}
-		   }
-		  }
-		  paths_sofar = paths_new
-		
-	}
-	paths_valid = paths_sofar[,(step + 1)] :== alter
-	paths = select(paths_sofar, paths_valid)
-	return(paths)
-}
-end	
-	
-	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+end
