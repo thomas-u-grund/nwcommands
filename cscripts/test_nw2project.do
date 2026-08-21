@@ -104,3 +104,41 @@ di "=== NON-TWO-MODE ERROR HANDLING VERIFIED ==="
 capture nw2project mynet, project(3)
 assert _rc == 198
 di "=== INVALID project() ERROR HANDLING VERIFIED ==="
+
+
+* --- replace semantics: reuse the exact requested name, not an
+* auto-incremented one (regression test for a real bug found while
+* building nwsimindex - see docs/CERTIFICATION.md)
+nwclear
+set obs 4
+gen ego2 = "Peter"
+gen alter2 = "LiU"
+gen value2 = 1
+replace ego2 = "Thomas" in 2
+replace alter2 = "LiU" in 2
+replace ego2 = "Peter" in 3
+replace alter2 = "Oxford" in 3
+replace ego2 = "Thomas" in 4
+replace alter2 = "Oxford" in 4
+nw2fromedge ego2 alter2 value2, name(mynet2)
+
+nw2project mynet2, project(2) name(collideproj)
+nw2project mynet2, project(2) name(collideproj)
+capture nw_syntax collideproj_1, other(_check)
+assert _rc == 0
+di "=== NAME COLLISION AUTO-INCREMENTS VERIFIED ==="
+
+nw2project mynet2, project(2) name(collideproj) replace
+* r(nodes)/r(ties) display line bugfix regression, checked immediately
+* (nw_syntax below is itself r-class and would otherwise clobber these):
+* the display line used to silently show blank via a bare `r(nodes)'
+* macro-lookup (no such local exists), r(nodes)/r(ties) were correct
+* all along - only the *display* line was ever affected.
+assert r(nodes) == 2
+assert r(ties) == 2
+
+capture nw_syntax collideproj, other(_check)
+assert _rc == 0
+capture nw_syntax collideproj_2, other(_check)
+assert _rc != 0
+di "=== REPLACE REUSES EXACT NAME VERIFIED ==="

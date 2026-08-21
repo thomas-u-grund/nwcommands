@@ -125,11 +125,26 @@ program nw2project, rclass
 	if "`name'" == "" {
 		local name "project"
 	}
+	// replace, when given, reuses the exact requested name (drop then
+	// recreate) rather than silently auto-incrementing to a different one.
+	// nw_validate's own r(validname) auto-increments unconditionally on a
+	// name collision; unconditionally taking it (as this line used to)
+	// meant replace never actually replaced anything - name was already
+	// switched to the incremented name before the "if replace" block
+	// below even ran, so that block dropped a network that was never
+	// going to be reused anyway. Found and fixed while building
+	// nwsimindex, which had copied this same pattern - see its own
+	// docs/CERTIFICATION.md entry.
 	nw_validate `name'
-	if "`r(exists)'"=="true" & "`replace'" == "" {
-		di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+	if "`r(exists)'" == "true" {
+		if "`replace'" == "" {
+			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+			local name = r(validname)
+		}
+		else {
+			capture nwdrop `name'
+		}
 	}
-	local name = r(validname)
 
 	tempname __nw_names __nw_edges
 
@@ -139,9 +154,6 @@ program nw2project, rclass
 	mata: st_numscalar("nodes", cols(`__nw_names'))
 	mata: st_numscalar("ties", rows(`__nw_edges'))
 
-	if "`replace'" != "" {
-		capture nwdrop `name'
-	}
 	mata: nw.nws.add("`name'")
 	nw_syntax `name'
 	mata: `netobj'->create_by_name_sparse(`__nw_names')
@@ -157,8 +169,21 @@ program nw2project, rclass
 	di "{hline 40}"
 	di "{txt}  Projected network: {res}`name'"
 	di "{txt}  Level: {res}`project'"
-	di "{txt}  Nodes: {res}`r(nodes)'"
-	di "{txt}  Ties: {res}`r(ties)'"
+	// A bare local-macro-style reference to r(nodes) here would treat
+	// "r(nodes)" as a LOCAL MACRO NAME to look up, not an r-class scalar
+	// reference, so it silently expands to "" (Stata does not error on an
+	// undefined local) - that was the original bug. An expression-
+	// substitution reference to r(nodes) is not the fix either: a
+	// "return scalar" statement only PUBLISHES r() to the caller when
+	// this program actually exits, so r(nodes) reads as missing from
+	// inside the same program body that just set it (confirmed via an
+	// isolated repro before settling on this fix - a subtlety worth
+	// remembering). The underlying Stata scalars "nodes"/"ties" set via
+	// st_numscalar() above ARE immediately readable within this scope, so
+	// reference those directly instead of the not-yet-published
+	// r()-result.
+	di "{txt}  Nodes: {res}`=nodes'"
+	di "{txt}  Ties: {res}`=ties'"
 
 	if "`xvars'" == "" {
 		nwload `name'

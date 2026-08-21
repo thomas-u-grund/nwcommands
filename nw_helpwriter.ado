@@ -23,15 +23,23 @@ program nw_helpwriter
 	
 	// A bare -do- leaves Stata's ambient _rc reading whatever the test
 	// file's OWN last-executed command set it to - which is frequently a
-	// deliberately-triggered error code from a `capture badcmd` +
-	// `assert _rc != 0` check near the end of the file, since a
-	// successful `assert` does not itself reset _rc back to 0. That
+	// deliberately-triggered error code from a "capture badcmd" +
+	// "assert _rc != 0" check near the end of the file, since a
+	// successful assert does not itself reset _rc back to 0. That
 	// false-negative silently skipped writing "last certified" for a
 	// fully-passing test - confirmed via an isolated repro before fixing.
-	// `capture noisily do` instead reports whether the do-file itself
+	// "capture noisily do" instead reports whether the do-file itself
 	// completed without an UNCAUGHT error (the only thing this check
-	// should care about), while `noisily` keeps the test's own output
+	// should care about), while "noisily" keeps the test's own output
 	// visible exactly as before.
+	// (Note: this comment intentionally avoids literal backtick pairs -
+	// nw_helpwriter's own line-copy loop above macro-processes every line
+	// of a .ado file it reads via compound double quotes, so an unbalanced
+	// or double-backtick-style pair anywhere in that file - doc header or
+	// program body alike - aborts the whole copy with a "too few quotes"
+	// error. Found the hard way while documenting nw2project.ado's
+	// replace-option fix; not otherwise fixed here, since correctly
+	// escaping arbitrary source lines is a larger, separate change.)
 	capture noisily do cscripts/test_`cmd'.do
 	if _rc == 0 {
 		file write helpwriter "last certified : `c(current_date)'" _newline
