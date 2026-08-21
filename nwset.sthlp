@@ -33,6 +33,17 @@
 {p 8 15 2}
 {cmd:nwset} [{it:{help varlist}}] {cmd:,} {opt bipartite} [{opt mat}({it:matamatrix})] [ {it:options} ]
 
+{pstd}Declare a temporal network from an edgelist (see {help nwset##temporal:below})
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt time(varname)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt interval(startvar endvar)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} {cmd:,} {opt eventtime(varname)} [ {it:options} ]
+
 
 {pstd}Display currently existing networks
 
@@ -72,6 +83,9 @@
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
 {synopt:{opt xvars}}Do not generate Stata variables{p_end}
 {synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
 
 
 {title:Description}
@@ -274,8 +288,46 @@ an explicit projection (see {help nw2project} - {bf:nwset} and the rest of the p
 automatically), or does not support two-mode data at all.
 
 
+{marker temporal}{...}
+{bf:{ul:5. Declare a temporal network}}
+
+{pstd}
+Time belongs to edges/ties, not to a separate network copy per timepoint. An edgelist can carry a
+temporal dimension via exactly one of three options - {bf:time()}, {bf:interval()}, or
+{bf:eventtime()} - matching three distinct semantics that are never conflated:
+
+{p 8 12 2}{bf:time({it:timevar})}{p_end}
+{p 12 12 2}{bf:snapshot} semantics: each row's own {it:timevar} value is the single instant that tie
+was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
+carrying its own recorded time{p_end}
+{p 8 12 2}{bf:interval({it:startvar endvar})}{p_end}
+{p 12 12 2}{bf:interval} semantics: each row is active for {it:startvar} <= {it:t} < {it:endvar} - a
+missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
+{p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
+{p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
+tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
+ordinary graph{p_end}
+
+{pstd}
+For example, this declares a snapshot network from three waves of ties:
+
+	{cmd:. nwset ego alter, time(wave) name(mynet)}
+
+{pstd}
+A temporal network is otherwise a completely ordinary {bf:nwset}-declared network - {help nwsummarize}
+shows its temporal metadata, and {help nwattime} produces an ordinary static network containing only
+the ties active at a given timepoint, usable with any {bf:nw*} command exactly like any other network.
+
+{pstd}
+{bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
+{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
+docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
+scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
+temporal ERGMs) is implemented or attempted here.
+
+
 {title:Remarks}
- 
+
 {pstd}
 The command {bf:nwset} or {bf:nwset, detail} without a {help varlist} or {bf:mat()} option, give a list of all
 networks that do currently exist in memory. A similar overview is provided by {help nwds} (which is very similar to {help ds}).
@@ -310,5 +362,5 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}
 last certified : 21 Aug 2026

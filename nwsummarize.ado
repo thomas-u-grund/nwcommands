@@ -213,6 +213,10 @@ program nwinf
 		mata: st_global("r(mode2_desc)", `netobj'->get_description_mode2())
 	}
 	mata: st_global("r(provenance)", `netobj'->get_provenance())
+	mata: st_global("r(temporal)", `netobj'->is_temporal())
+	if "`r(temporal)'" == "true" {
+		mata: st_global("r(temporaltype)", `netobj'->get_temporal_type())
+	}
 
 	if "`matonly'" == "" & "`silent'" == "" {
 		di "{hline 50}"
@@ -239,6 +243,10 @@ program nwinf
 		di "{txt}   Minimum value: {res} `r(minval)'"
 		di "{txt}   Maximum value: {res} `r(maxval)'"	
 		di "{txt}   Density: {res} `r(density)'"
+		di "{txt}   Temporal: {res}`r(temporal)'"
+		if "`r(temporal)'" == "true" {
+			di "{txt}      Temporal type: {res}`r(temporaltype)'"
+		}
 		if `"`r(provenance)'"' != "" {
 			di "{txt}   Provenance: {res} `r(provenance)'"
 		}

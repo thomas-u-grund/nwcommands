@@ -119,5 +119,11 @@ program nw_name
 	mata: st_global("r(mode1desc)", nw.nws.pdefs[`id']->get_description_mode1())
 	mata: st_global("r(mode2desc)", nw.nws.pdefs[`id']->get_description_mode2())
 	mata: st_global("r(provenance)", nw.nws.pdefs[`id']->get_provenance())
+	mata: st_global("r(temporal)", nw.nws.pdefs[`id']->is_temporal())
+	mata: st_global("r(temporaltype)", nw.nws.pdefs[`id']->get_temporal_type())
+	mata: st_global("r(timevar)", nw.nws.pdefs[`id']->get_timevar())
+	mata: st_global("r(startvar)", nw.nws.pdefs[`id']->get_startvar())
+	mata: st_global("r(endvar)", nw.nws.pdefs[`id']->get_endvar())
+	mata: st_global("r(eventtimevar)", nw.nws.pdefs[`id']->get_eventtimevar())
 end
 

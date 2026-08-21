@@ -361,7 +361,57 @@ string colvector modes_from_labels(string rowvector nodenames, string colvector 
 }
 
 /*
-	Display various error messages 
+	Build an n x n real matrix of per-edge values (time/start/end),
+	missing (.) everywhere else, by resolving each row's own node
+	LABELS to indices - not position - exactly the same reasoning as
+	modes_from_labels() above (see nw2fromedge.ado's own comment): the
+	underlying network's node order is not something a caller can
+	assume matches the original data's row order. Shared by nwset's
+	time()/interval() options - interval calls this twice (once for the
+	start values, once for the end values) rather than needing a
+	separate implementation.
+*/
+real matrix build_edge_value_matrix(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval, real scalar symmetric)
+{
+	real scalar n, k, i, j
+	real matrix m
+	n = cols(nodenames)
+	m = J(n, n, .)
+	for (k=1; k<=rows(lab1); k++){
+		i = first_index_match(nodenames, lab1[k])
+		j = first_index_match(nodenames, lab2[k])
+		if (i > 0 & j > 0) {
+			m[i,j] = tval[k]
+			if (symmetric) m[j,i] = tval[k]
+		}
+	}
+	return(m)
+}
+
+/*
+	Build an nevents x 3 (sender_id, receiver_id, eventtime) matrix by
+	resolving each row's node LABELS to indices - the eventtime
+	temporal-type counterpart to build_edge_value_matrix() above, kept
+	separate rather than reusing it since events are never folded into
+	an n x n edge-shaped matrix at all (see NWdef's own `eventlist'
+	field comment).
+*/
+real matrix build_eventlist(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector tval)
+{
+	real scalar nevents, k
+	real matrix ev
+	nevents = rows(lab1)
+	ev = J(nevents, 3, .)
+	for (k=1; k<=nevents; k++){
+		ev[k,1] = first_index_match(nodenames, lab1[k])
+		ev[k,2] = first_index_match(nodenames, lab2[k])
+		ev[k,3] = tval[k]
+	}
+	return(ev)
+}
+
+/*
+	Display various error messages
 */
 void error_handle(string scalar r, real scalar code){
 	errprintf(r)  
@@ -1536,6 +1586,31 @@ class `NWdef' {
 	string scalar 		description_mode2
 	string scalar 		provenance // human-readable origin note, e.g. how a projected network was derived - see set_provenance()/get_provenance()
 
+	// Temporal metadata (two-mode/temporal architecture initiative, Part
+	// II) - groundwork only, per the user's own explicit scope limit: no
+	// full temporal-network modelling subsystem. Three semantics
+	// distinguished by `temporaltype': "snapshot" (one timepoint per
+	// tie, `edgetime' parallels `edge'), "interval" (start<=t<end per
+	// tie, `edgestart'/`edgeend' parallel `edge'), "event" (timestamped
+	// relational events, NOT persistent ties - stored separately in
+	// `eventlist' as sender/receiver/eventtime triplets, never folded
+	// into `edge' at all, so no static command can accidentally treat
+	// an event stream as an ordinary graph without an explicit,
+	// separate aggregation step). `timevar'/`startvar'/`endvar'/
+	// `eventtimevar' are purely descriptive (the original Stata
+	// variable name(s) time was declared from), mirroring how
+	// `description_mode1'/`description_mode2' work for two-mode.
+	real scalar			istemporal
+	string scalar		temporaltype
+	string scalar		timevar
+	string scalar		startvar
+	string scalar		endvar
+	string scalar		eventtimevar
+	real matrix			edgetime
+	real matrix			edgestart
+	real matrix			edgeend
+	real matrix			eventlist
+
 	real matrix 		edge
 	`BOOL'				isdirect
 	`BOOL'				isvalued
@@ -1652,6 +1727,17 @@ class `NWdef' {
 	string scalar get_description_mode1()
 	string scalar get_description_mode2()
 	string scalar get_provenance()
+	real scalar is_temporal_boolean()
+	string scalar is_temporal()
+	string scalar get_temporal_type()
+	string scalar get_timevar()
+	string scalar get_startvar()
+	string scalar get_endvar()
+	string scalar get_eventtimevar()
+	pointer(real matrix) get_edge_time()
+	pointer(real matrix) get_edge_start()
+	pointer(real matrix) get_edge_end()
+	pointer(real matrix) get_eventlist()
 
     real scalar check_valued()
     real scalar check_symmetry()
@@ -1708,6 +1794,15 @@ class `NWdef' {
 	void set_description_mode1()
 	void set_description_mode2()
 	void set_provenance()
+	void set_temporal()
+	void set_temporal_type()
+	void set_timevar()
+	void set_startvar()
+	void set_endvar()
+	void set_eventtimevar()
+	void set_edge_time()
+	void set_edge_interval()
+	void set_eventlist()
 	string scalar get_modes_labeled_string()
 	void set_modes_from_labeled_string()
 
@@ -1726,6 +1821,114 @@ class `NWdef' {
 	
 	//void export_gexf()
 }
+
+/*
+	Basic temporal graph-view slicing (two-mode/temporal architecture
+	initiative, Part II): given a temporal network and a timepoint,
+	return the (i,j,weight) triplets of ties active at that instant -
+	the conceptual model requested is "temporal network -> select edges
+	active at t -> static graph view -> ordinary nw algorithm", so
+	these deliberately return the SAME triplet shape
+	set_edge_from_triplets() already consumes elsewhere (nw2project),
+	not a new representation. Documented interval convention:
+	start <= t < end; a missing end (edgeend == .) is treated as
+	open-ended (Mata's missing-as-+infinity comparison semantics
+	already make `ee[i,j] > at' true whenever ee[i,j] is missing, so no
+	special-casing is needed) - a missing START is NOT specially
+	handled (would need the opposite convention, missing-as-negative-
+	infinity, which Mata does not give for free) and is simply excluded,
+	a documented simplification, not silently wrong.
+*/
+real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real scalar at){
+	real matrix et, ed, out
+	real scalar n, i, j, nout
+	et = *(p->get_edge_time())
+	ed = *(p->get_matrix())
+	n = p->get_nodes()
+	out = J(n*n, 3, 0)
+	nout = 0
+	for (i=1; i<=n; i++){
+		for (j=1; j<=n; j++){
+			if (i != j & et[i,j] != . & et[i,j] == at & ed[i,j] != . & ed[i,j] != 0){
+				nout = nout + 1
+				out[nout,1] = i
+				out[nout,2] = j
+				out[nout,3] = ed[i,j]
+			}
+		}
+	}
+	if (nout == 0) return(J(0,3,0))
+	return(out[(1::nout),.])
+}
+
+real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real scalar at){
+	real matrix es, ee, ed, out
+	real scalar n, i, j, nout
+	es = *(p->get_edge_start())
+	ee = *(p->get_edge_end())
+	ed = *(p->get_matrix())
+	n = p->get_nodes()
+	out = J(n*n, 3, 0)
+	nout = 0
+	for (i=1; i<=n; i++){
+		for (j=1; j<=n; j++){
+			if (i != j & es[i,j] != . & es[i,j] <= at & ee[i,j] > at & ed[i,j] != . & ed[i,j] != 0){
+				nout = nout + 1
+				out[nout,1] = i
+				out[nout,2] = j
+				out[nout,3] = ed[i,j]
+			}
+		}
+	}
+	if (nout == 0) return(J(0,3,0))
+	return(out[(1::nout),.])
+}
+
+/*
+	Event slicing is a plain exact-timestamp match (no windowing/
+	aggregation - explicitly out of scope for this pass, see
+	docs/ROADMAP.md), producing a binary tie per matching event. This
+	is the ONE place an event network is allowed to become a persistent
+	graph, and only because the user explicitly requested exactly this
+	instant via at() - matching the specification's own "acceptable for
+	static commands to reject event networks without explicit window"
+	language: this command IS the explicit request.
+*/
+real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real scalar at){
+	real matrix ev, acc, out
+	real scalar nev, k, n, i, j, nout
+	ev = *(p->get_eventlist())
+	nev = rows(ev)
+	n = p->get_nodes()
+	// accumulate through a dense n x n indicator rather than emitting
+	// one triplet row per matching event directly - two+ events
+	// between the same pair at the exact same t would otherwise emit
+	// duplicate triplet rows, which set_edge_from_triplets() (the
+	// consumer) does not dedupe itself
+	acc = J(n, n, 0)
+	for (k=1; k<=nev; k++){
+		if (ev[k,3] != . & ev[k,3] == at){
+			i = ev[k,1]
+			j = ev[k,2]
+			if (i > 0 & j > 0 & i != j) acc[i,j] = 1
+		}
+	}
+	out = J(n*n, 3, 0)
+	nout = 0
+	for (i=1; i<=n; i++){
+		for (j=1; j<=n; j++){
+			if (acc[i,j] == 1){
+				nout = nout + 1
+				out[nout,1] = i
+				out[nout,2] = j
+				out[nout,3] = 1
+			}
+		}
+	}
+	if (nout == 0) return(J(0,3,0))
+	return(out[(1::nout),.])
+}
+
 
 
 
@@ -3656,6 +3859,96 @@ string scalar `NWdef'::get_provenance(){
 	return(provenance)
 }
 
+void `NWdef'::set_temporal(real scalar d){
+	istemporal = d
+}
+
+real scalar `NWdef'::is_temporal_boolean(){
+	// BUGFIX: an uninitialized `real scalar' class field defaults to
+	// Mata missing (.), not 0 - confirmed via a direct probe
+	// (`class{real scalar flag}; t=cls(); if(t.flag) printf("truthy")'
+	// prints "truthy" for a never-set field) - so a bare `if(istemporal)'
+	// would report EVERY ordinary, never-declared-temporal network as
+	// temporal, since `.' is truthy in Mata. Matches the existing,
+	// already-correct is_2mode()'s own `is2mode == 1' convention -
+	// mirrored here rather than inventing a second pattern.
+	return(istemporal == 1)
+}
+
+string scalar `NWdef'::is_temporal(){
+	if (istemporal == 1) return("true")
+	return("false")
+}
+
+void `NWdef'::set_temporal_type(string scalar t){
+	temporaltype = t
+}
+
+string scalar `NWdef'::get_temporal_type(){
+	return(temporaltype)
+}
+
+void `NWdef'::set_timevar(string scalar s){
+	timevar = s
+}
+
+string scalar `NWdef'::get_timevar(){
+	return(timevar)
+}
+
+void `NWdef'::set_startvar(string scalar s){
+	startvar = s
+}
+
+string scalar `NWdef'::get_startvar(){
+	return(startvar)
+}
+
+void `NWdef'::set_endvar(string scalar s){
+	endvar = s
+}
+
+string scalar `NWdef'::get_endvar(){
+	return(endvar)
+}
+
+void `NWdef'::set_eventtimevar(string scalar s){
+	eventtimevar = s
+}
+
+string scalar `NWdef'::get_eventtimevar(){
+	return(eventtimevar)
+}
+
+void `NWdef'::set_edge_time(real matrix m){
+	edgetime = m
+}
+
+pointer(real matrix) `NWdef'::get_edge_time(){
+	return(&edgetime)
+}
+
+void `NWdef'::set_edge_interval(real matrix s, real matrix e){
+	edgestart = s
+	edgeend = e
+}
+
+pointer(real matrix) `NWdef'::get_edge_start(){
+	return(&edgestart)
+}
+
+pointer(real matrix) `NWdef'::get_edge_end(){
+	return(&edgeend)
+}
+
+void `NWdef'::set_eventlist(real matrix m){
+	eventlist = m
+}
+
+pointer(real matrix) `NWdef'::get_eventlist(){
+	return(&eventlist)
+}
+
 void `NWdef'::set_nodes_mode1(real scalar m1){
 	nodesmode1 = m1
 	nodesmode2 = get_nodes() - m1
@@ -4752,7 +5045,7 @@ class `NWsdef' {
 	string rowvector 				names
 	pointer(class `NWdef' scalar) rowvector 	pdefs
 	real scalar number  // number of networks in memory
-	pointer(class `NWdef' scalar) scalar pcurrent
+	pointer(class nw_def scalar) scalar pcurrent
     `BOOL' datasync // flag for -nw_datasync- on/off
     
 	

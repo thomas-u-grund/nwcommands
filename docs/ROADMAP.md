@@ -179,10 +179,22 @@ round-trip: `create_by_name_sparse()` silently wiping a network's own name via i
 undefined local `` `_nw_netname' `` instead of the already-correct `` `n' ``, silently operating
 on "current network" rather than the intended one for every `nwname`-based reload field) →
 `nwsummarize` (the package's closest equivalent to a `nwdescribe` command - already displays
-two-mode metadata and now provenance too, unit 42; extend for temporal once it exists) →
+two-mode metadata and now provenance too, unit 42) →
 temporal metadata fields + `nwset` `time()`/`interval()`/`eventtime()`
-+ basic `at()` slicing on one or two representative commands → full `docs/NETWORK_TYPE_MATRIX.md`
-audit pass across every remaining command → full regression sweep → this section marked complete.
++ basic `at()` slicing via the new `nwattime` command (done, unit 43 - `nwsummarize`/`nwname` also
+extended for temporal display/returns in the same unit, closing that earlier item too) → full
+`docs/NETWORK_TYPE_MATRIX.md` audit pass across every remaining command → full regression sweep →
+this section marked complete.
+
+**Still open from unit 43** (not silently dropped, genuine follow-on items): composability between
+temporal declaration (`time()`/`interval()`/`eventtime()`) and `twomode`/`bipartite` in the same
+`nwset` call - currently an explicit, clear error rather than silently mishandled, but a two-mode
+temporal network cannot yet be declared at all; migrating individual existing commands to be
+temporal-aware (beyond the generic `nwattime` slice-then-run-anything path) - not attempted, matches
+the user's own "basic `at()` slicing on one or two representative commands" scope limit, not full
+command migration; windowed/aggregated event slicing (`nwattime` currently only supports an exact-
+timestamp match for event networks, no range/window) - deliberately deferred, matches the user's own
+"do not overbuild" instruction on windowing.
 
 **Explicitly out of scope for this initiative** (per the user's own instructions): automatic
 projection under any circumstance (a command requiring a one-mode network must error or require an
