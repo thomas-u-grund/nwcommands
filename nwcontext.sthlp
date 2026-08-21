@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  16may2012 author: Thomas Grund}{...}
+{* *! version 2.0.0  10sept2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##analysis:[NW-2.6] Analysis}
 
@@ -19,7 +19,6 @@
 [{opt stat}({it:{help nwcontext##statistic:statistic}})
 {opt mode}({it:{help nwcontext##context:context}})
 {opth generate(newvarname)}
-{opth mat(string)}
 {opt noweight}]
 
 
@@ -27,12 +26,11 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth attribute(varname)}}attribute variable{p_end}
-{synopt:{opt stat}({it:{help nwcontext##statistic:statistic}})}statistic that is used to calculate context variable for node i from attributes of network neighbors{p_end}
-{synopt:{opt mode}({it:{help nwcontext##context:context}})}defines network neighbors of node i as either nodes j who receive ties from i, send ties to j or both{p_end}
-{synopt:{opth generate(newvarname)}}name of the context variable to be generated; default = {it:_context_varname}{p_end}
-{synopt:{opth mat(string)}}name of new mata matrix where context variable should be stored instead{p_end}
-{synopt:{opt noweight}}ignores valued ties and treats all as binary{p_end}
+{synopt:{opth attribute(varname)}}Attribute variable{p_end}
+{synopt:{opt stat}({it:{help nwcontext##statistic:statistic}})}Statistic that is used to calculate context variable for node i from attributes of network neighbors{p_end}
+{synopt:{opt mode}({it:{help nwcontext##context:context}})}Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both{p_end}
+{synopt:{opth generate(newvarname)}}Name of the context variable to be generated; default = {it:_context_varname}{p_end}
+{synopt:{opt noweight}}Ignore valued ties and treats all as binary{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -69,9 +67,9 @@
 {p2line}
 {p2col:{cmd: outgoing}}network neighbors of node i are all nodes j who receive a tie from i; default
 		{p_end}
-{p2col:{cmd: incoming}}network neighbors of node i are all nodes j who send a tie to i; default
+{p2col:{cmd: incoming}}network neighbors of node i are all nodes j who send a tie to i
 		{p_end}
-{p2col:{cmd: both}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i
+{p2col:{cmd: both} or {cmd:either}}network neighbors of node i are all nodes j who either send a tie to i or receive a tie from i ({cmd:either} is the preferred term - matches {help nwneighbor}'s {opt mode()} - {cmd:both} is accepted for backwards compatibility)
 		{p_end}
 
 
@@ -104,12 +102,17 @@ Sometimes, however, one might want to calculate statistics including the attribu
 {pmore}
 {it:newvarname}[i] = {it:stat}({it:varname}[j]), for all {it:j} with {it:y_ij} > 0 or j == i
 
+{title:Scope}
+{pstd}
+Directed and undirected, weighted and unweighted, one-mode and two-mode.
 
 {title:Remarks}
 
 {pstd}
 In the case of undirected networks, no {it: mode} option needs to be specified. 
 
+{pstd}
+By default, nodes with missing attributes are excluded from the calculation.
 
 {title:Examples}
 
@@ -118,7 +121,7 @@ This example loads the Florentine marriage data. The variable {it:wealth} indica
 generates different variables: {it:w_avg} = average wealth of network neighbors,  {it:w_min} = wealth of poorest network neighbor,
 {it:w_min} = wealth of richest network neighbor, {it:w_sd} = standard deviation of wealth over network neighbors.
 
-	{com}. webnwuse florentine
+	{com}. nwwebuse florentine
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_avg)
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_min) stat(min)
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_max) stat(max)
@@ -151,10 +154,12 @@ generates different variables: {it:w_avg} = average wealth of network neighbors,
      {c BLC}{hline 8}{c -}{hline 10}{c -}{hline 10}{c -}{hline 10}{c -}{hline 10}{c BRC}
 	
 {pstd}
-One can plot the marriage network with {it:wealth} as node label to better understand how these values come about:
+You can plot the florentine marriage network with {it:wealth} as node label to better understand how these values come about:
 
 	{cmd:. nwplot flomarriage, label(wealth)}
 
-{title:Also see}
+{title:See also}
 
    {help nwneighbor}
+
+last certified : 21 Aug 2026
