@@ -124,7 +124,10 @@
 {p2col:    {bf:{help nwcentrality }}}Node centrality measures{p_end}
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}
+{p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method{p_end}
+{p2col:    {bf:{help nwmodularity }}}Score a partition's modularity{p_end}
 {p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
+{p2col:    {bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
 {p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}

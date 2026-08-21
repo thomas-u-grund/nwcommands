@@ -1,15 +1,95 @@
-*! Date        : 12oct2014
-*! Version     : 1.0.4
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0.0  18aug2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##analysis:[NW-2.6] Analysis}
+
+{title:Title}
+
+{p2colset 9 21 22 2}{...}
+{p2col :nwcomponents {hline 2} Calculate network components / largest component}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwcomponents} 
+[{it:{help netlist}}]
+[, {opt lgc}
+{opth generate(newvarname)
+{opt replace}]
+
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores information about components; default = {it:_component} or {it:_lgc}{p_end}
+{synopt:{opt replace}}Replace existing variable{p_end}
+{synopt:{opt lgc}}Calculate membership to largest component{p_end}
+
+{p2colreset}{...}
+	
+{title:Description}
+
+{pstd}
+Calculate the components of a network or a list of networks. A component is a set of nodes that are
+only connected among each other. All calculations are performed on the undirected network. Nodes can only belong to one component. 
+
+{pstd}
+By default, {cmd:nwcomponents} generates 
+a new variable {it:_components} which stores the component membership. When
+option {bf:lgc} is specified, the command generates a new variable 
+{it:_lgc} which stores information about membership to the largest component.
+
+
+{title:Stored results}
+
+	Scalars
+	  {bf:r(components)}		number of components
+	  
+	Matrices
+	  {bf:r(comp_sizeid)}		distribution over components
+	  
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwcomponents flomarriage}
+
+	{res}{hline 40}
+	{txt}  Network name: {res}flomarriage
+	{txt}  Components: {res}2
+
+	 {txt}_component {c |}      Freq.     Percent        Cum.
+	{hline 12}{c +}{hline 35}
+	{txt}          1 {c |}{res}         15       93.75       93.75
+	{txt}          2 {c |}{res}          1        6.25      100.00
+	{txt}{hline 12}{c +}{hline 35}
+	      Total {c |}{res}         16      100.00{txt}
+  
+ {pstd}
+ This shows that there are two components in the Florentine marriage network. All except one node belong to the first
+ component. Some alternative ways how the commands can be used.
+ 
+	{cmd:. nwwebuse glasgow}
+	{cmd:. nwcomponents glasgow1, generate(mycomponent)} 
+	{cmd:. nwcomponents _all, lgc} 
+	{cmd:. nwcomponents _all, lgc generate(mylgc)} 
+  
+
+ {title:See also}
+ 
+	{help nwgen}
+
+***/
 
 capture program drop nwcomponents
 program nwcomponents, rclass
 	version 9
-	syntax [anything(name=netname)][, lgc GENerate(string) ]
+	syntax [anything(name=netname)][, lgc GENerate(string) replace ]
 	set more off
 
-	_nwsyntax `netname', max(9999)
+	nw_syntax `netname', max(9999)
 	
 	if `networks' > 1 {
 		local k = 1
@@ -18,14 +98,7 @@ program nwcomponents, rclass
 	qui foreach netname_temp in `netname' {
 		nwname `netname_temp'
 		local nodes = r(nodes)
-		nwtomata `netname_temp', mat(onenet)
 
-		mata: onenet = onenet + onenet'
-		mata: onenet = onenet :/ onenet
-		mata: _editmissing(onenet,0)
-		mata: comp = components(onenet, 1)
-		mata: numcomp = max(comp)
-	
 		if "`generate'" == "" {
 			if "`lgc'" == "" {
 				local generate = "_component"
@@ -35,25 +108,42 @@ program nwcomponents, rclass
 			}
 		}
 		
+		// Checks the exact suffixed name this iteration is about to
+		// create, not the bare stem - Stata's own variable-name
+		// abbreviation would otherwise let `confirm variable
+		// _component' match an already-existing `_component1' on a
+		// later netlist iteration, falsely blocking that iteration
+		// even though its own target name is still free. Found while
+		// building nwconcor.ado's netlist support (same underlying
+		// bug in the same copy-pasted pattern - see its own certified
+		// row).
+		capture confirm variable `generate'`k', exact
+		if _rc == 0 & "`replace'" == "" {
+			noi di "{err}Variable {bf:`generate'`k'} already exists; specify {bf:replace}"
+			err 99
+		}
+		
 		capture drop `generate'`k'
 		gen `generate'`k' = .
-	
 		mata: st_rclear()
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-	
-		mata: st_store((1::`nodes'),"`generate'`k'", comp)
+		nw_syntax `netname_temp'
+		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
+
 		qui tab `generate'`k', matrow(comp_id) matcell(comp_size)
+		
 		mata: comp_id = st_matrix("comp_id")
+		mata: comp_number = rows(comp_id)
 		mata: comp_size = st_matrix("comp_size")
 		mata: comp_share = comp_size :/ (sum(comp_size))
-		mata: comp_sizeid = J(numcomp, 3, 0)
+		mata: comp_sizeid = J(comp_number, 3, 0)
 		mata: comp_sizeid[.,1] = comp_size
 		mata: comp_sizeid[.,2] = comp_id
 		mata: comp_sizeid[.,3] = comp_share
 		mata: comp_sizeid = sort(comp_sizeid, -1)
-		mata: st_numscalar("components", numcomp)
+		mata: st_numscalar("components", comp_number)
 		mata: st_matrix("comp_sizeid", comp_sizeid)
 			
 		matrix colnames comp_sizeid = size compid share
@@ -68,7 +158,7 @@ program nwcomponents, rclass
 		}
 		matrix rownames comp_sizeid = `rowlabs'
 		return matrix comp_sizeid = comp_sizeid
-		mata: mata drop comp numcomp comp_id comp_size comp_sizeid
+		mata: mata drop comp_number comp_share comp_id comp_size comp_sizeid
 
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname_temp'"
@@ -95,69 +185,3 @@ program nwcomponents, rclass
 		
 	}
 end
-
-capture mata mata drop components()
-mata:
-// function returns a matrix with the membership to components. 
-real matrix components(real matrix nw, real scalar undirected) {	
-	real scalar nodes
-	real scalar ncomp
-	real scalar next
-	real matrix visited
-	real matrix comp 	
-	real matrix bfs_queue
-	real matrix bfs_next
-	
-	nodes = rows(nw[.,.])
-	visited = J(nodes,1,0)
-	comp  = J(nodes,1,0)
-	ncomp = 1
-	next = 1 
-	
-	// as long as not everybody has been visited
-	while (sum(visited) != nodes){
-
-			// find next not visited node
-			while (visited[next,1]==1) {
-				next = next + 1
-			}
-
-			// perform bfs from next and visit everybody reachable
-		    // assign component id
-			// increment component id	
-			visited[next,1]=1
-			comp[next,1]=ncomp
-
-			bfs_queue = nw[next,]
-			if (undirected == 1){
-				bfs_queue = bfs_queue :+ (nw[,next])'
-			}
-			
-			bfs_next = J(1, nodes,0)
-			while (sum(bfs_queue)>0) {
-				for (i = 1 ; i<=nodes ; i++) {
-					if (bfs_queue[1,i]>= 1) {
-				    		bfs_queue[1,i]=0
-				    		if (visited[i,1]==0){
-				    			visited[i,1]=1		
-								comp[i,1]=ncomp
-				    			bfs_next = bfs_next + nw[i,]
-								if (undirected == 1){
-									bfs_next = bfs_next :+ (nw[,i])'
-								}
-				   	 	}
-					}
-				}
-				for (i = 1; i<=nodes ; i++){
-					if (bfs_next[1,i]>0 & visited[i,1]==0) {
-						bfs_queue[1,i]=1
-					}
-				}			
-			}
-			ncomp = ncomp + 1			
-		}
-	return(comp)
-}
-end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

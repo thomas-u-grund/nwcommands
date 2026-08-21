@@ -116,9 +116,17 @@ program nwcommunity, rclass
 			local netgenerate = "_community"
 		}
 
-		capture confirm variable `netgenerate'
+		// Checks the exact suffixed name this iteration is about to
+		// create, not the bare stem - Stata's own variable-name
+		// abbreviation would otherwise let `confirm variable
+		// _community' match an already-existing `_community1' on a
+		// later netlist iteration, falsely blocking that iteration
+		// even though its own target name is still free. Found while
+		// building nwconcor.ado's netlist support (same underlying
+		// bug, same fix - see its own certified row).
+		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
-			noi di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"
+			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
 			err 99
 		}
 

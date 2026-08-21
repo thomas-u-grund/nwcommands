@@ -44,7 +44,7 @@ Highest-value additions for credible igraph-style coverage:
 - **`nw2project`** — build fresh from its own existing, complete `.sthlp` spec (three cross-references already document `project()`/`stat(min|max|sum|mean)`). Highest-value, lowest-ambiguity item in the whole audit.
 - **`nwburt`** — revive from git history (`git show master:nwburt.ado`), modernize against the current `NWdef` API, certify. Complete Burt suite (effective size, efficiency, constraint with proper per-node aggregation, hierarchy) already proven and documented historically.
 - ✅ **`nwsimilar`/`nwdissimilar`/`nwhierarchy` chain fully unblocked** (harmonisation unit 20): the third, previously-unresolved layer of breakage is now root-caused and fixed — see `docs/CERTIFICATION.md`. All three commands run end-to-end, certified with hand-verified numeric assertions. **Remaining** (re-scoped down from "resolve nwset issue first" to just the packaging work originally envisioned): package the chain as a documented "role/position analysis" workflow; add an equivalence-class-to-Stata-variable output step (mirroring `nwcomponents`' pattern) — Small-Medium effort now that the chain itself works.
-- CONCOR — natural extension of the existing similarity engine; genuinely new algorithm work but with reusable input machinery already in place.
+- ✅ CONCOR — done (harmonisation unit 21): `nwconcor`, a new command with recursive `splits(k)` multi-level blockmodeling (up to 2^k blocks), directed networks supported natively (no `symmetrize` needed, unlike `nwcommunity`).
 - Blockmodeling / core-periphery — from scratch; the `nwsimilar`/`nwdissimilar` engine (now fully functional, harmonisation unit 20) is the reusable input layer.
 - Ego-network extraction as a true induced subgraph (currently only neighbor *listing* exists) — prerequisite for ego-network size/density/composition/effective-size, which are all otherwise blocked.
 
@@ -89,7 +89,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 14. ✅ Per-node eccentricity + radius — Low-medium value, Trivial effort — done (`nwgeodesic`)
 15. Ego-network induced-subgraph extraction — Medium value (unblocks ego-network size/density/composition), Medium effort
 16. Export-format parity (add GML/GraphML/edgelist to `nwexport`) — Low-medium value, Small effort
-17. CONCOR — Medium value, Medium effort
+17. ✅ CONCOR — Medium value, Medium effort — done (`nwconcor`, harmonisation unit 21)
 18. `nwplot` test coverage (largest untested file in the package) — Risk-reduction value, Medium effort (many code paths)
 19. ✅ Programming-API documentation chapter — Medium value (unlocks third-party extensibility), Small effort, pure documentation — done (new "[NW-5.2]" section in `nw_programming.sthlp`, including a 10-item pitfalls list drawn from real bugs found this session)
 20. ✅ Weighted eigenvector centrality option — Small value, Small effort — done (`nwevcent, weighted`)

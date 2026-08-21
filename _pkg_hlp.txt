@@ -29,6 +29,7 @@ f nwcommands.sthlp
 f nwcommunity.sthlp
 f nwcomponents.sthlp
 f nwcompressobs.sthlp
+f nwconcor.sthlp
 f nwconstraint.sthlp
 f nwcontext.sthlp
 f nwcorrelate.sthlp
