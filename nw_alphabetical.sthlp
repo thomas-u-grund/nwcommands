@@ -68,6 +68,8 @@
 {p2col:{bf:{help nwmodularity }}}Score a partition's modularity{p_end}
 {p2col:{bf:{help nwmovie }}}Animate a sequence of networks{p_end}
 {p2col:{bf:{help nwname }}}Check name and change meta-information of a network{p_end}
+{p2col:{bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
+{p2col:{bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
 {p2col:{bf:{help nwneighbor }}}Extract the network neighbors of a node{p_end}
 {p2col:{bf:{help nworder }}}Reorder networks in dataset{p_end}
 {p2col:{bf:{help nwpath }}}Calculate paths between nodes{p_end}
