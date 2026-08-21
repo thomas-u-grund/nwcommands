@@ -25,7 +25,7 @@ Commits 1-7 complete and verified (see `docs/SPARSE_BACKEND.md`): additive CSR/C
 Cheap, high-confidence fixes to things already built:
 - ✅ Fixed `nwgenvar.ado` (was dead code — filename/program-name mismatch, never actually loadable; now a genuine thin wrapper matching `nwgen.ado`).
 - ✅ `nwgenerate.ado`'s 8 dead commented-out dispatch branches (`dyadprob`/`homophily`/`lattice`/`path`/`pref`/`ring`/`small`/`transpose`) now error clearly instead of silently no-op'ing. **Remaining**: actually restore each shortcut against its target command's current syntax (each needs individual verification — the commented-out bodies predate several syntax changes) — Medium effort, not done yet.
-- ✅ Documented `nwbalance.ado` (structural balance) — `.sthlp` written, `cscripts/test_nwbalance.do` added, certified against a hand-derived signed-K4 worked example. Also fixed a real bug (`save test, replace` polluting the user's working directory with an unused debug file). **Found, not fixed**: a network with zero closed triads errors instead of returning zero — the Stata-reshape-based triad enumeration pipeline needs an empty-result guard; flagged as its own follow-up (Small-Medium effort) rather than risked in the same pass as the documentation work.
+- ✅ Documented `nwbalance.ado` (structural balance) — `.sthlp` written, `cscripts/test_nwbalance.do` added, certified against a hand-derived signed-K4 worked example. Also fixed a real bug (`save test, replace` polluting the user's working directory with an unused debug file). **Follow-up now done** (harmonisation unit 14): the zero-closed-triads edge case (a network with no triangles errored r(2000) instead of returning zero) is fixed with an explicit empty-result guard, verified with real assertions in `cscripts/test_nwbalance.do`.
 - Document `nwrecode.ado` — write `.sthlp`. Real, correct, currently invisible.
 - Add missing test coverage for otherwise-solid commands found untested this audit: `nwdyads`, `nwqap`, `nwsimilar`, `nwdissimilar`, `nwhierarchy`, `nwplot` (largest file in the package, zero tests), `nwneighbor`'s migration to sparse accessors.
 - ✅ Migrated `nwneighbor.ado` to the sparse `neighbors()`/`neighbors_in()` accessors. Surfaced a real, previously-invisible bug: the old `mode(incoming)` branch had a stray unbalanced paren (a genuine Mata syntax error) and had zero test coverage — could never have actually run. Now fixed and certified (see `docs/CERTIFICATION.md`).
@@ -75,7 +75,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 
 1. `nw2project` (two-mode projection) — Medium value, Small effort, spec already written
 2. `nwburt` revival — High value, Small effort, proven historical code
-3. `nwbalance` docs+tests — Medium value, Trivial effort
+3. ✅ `nwbalance` docs+tests — Medium value, Trivial effort — done, including the zero-closed-triads follow-up (harmonisation unit 14)
 4. Fix `nwgenvar`/`nwgenerate` dead code — Low value individually, Trivial effort, correctness hygiene
 5. ✅ Alter-aggregation (`mean(alter.x)`) — Very high value, Medium effort, top competitive differentiator — done (`nwaltergen`, `nwgen` shortcut)
 6. Distance-family sparse migration — High value (unblocks 5 commands), Large effort
@@ -105,7 +105,7 @@ Starts from zero, not from `nwergm.ado` (which is an R-bridge, not native — se
 7. `nwneighbor` — sparse migration + add induced-subgraph output (feeds Stage 3's ego-network work)
 8. `nwexport` — format parity with `nwimport` (currently 2 vs 6 formats)
 9. `nwplot` — test coverage (zero tests on the package's largest file)
-10. `nwrecode`/`nwbalance` — documentation (real functionality, currently invisible)
+10. ✅ `nwrecode`/`nwbalance` — documentation (real functionality, currently invisible) — done; `nwrecode` also turned out to be completely non-functional (crashed on every call) and is now fixed, not just documented (harmonisation units 13-14)
 
 ## ERGM-readiness notes
 
