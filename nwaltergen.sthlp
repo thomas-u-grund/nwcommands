@@ -18,7 +18,17 @@
 {opt replace}]
 
 {p 8 17 2}
+{cmd:nwaltergen} {it:newvar} {cmd:= proportion(alter.}{it:srcvar}{cmd:}{it:{help nwaltergen##propop:op}}{it:value}{cmd:)}
+[{cmd:,}
+{opth net(netname)}
+{opt replace}]
+
+{p 8 17 2}
 {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}.
+
+{marker propop}{...}
+{p 8 17 2}
+{it:op} is {bf:==} or {bf:!=}; {it:value} must be numeric.
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -57,8 +67,21 @@ and 0 for {bf:sum}/{bf:count}. {bf:sd} additionally requires at least 2 non-miss
 (it is undefined for a single value) and returns missing otherwise.
 
 {pstd}
-{cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax as a shortcut and
-dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
+{bf:proportion(alter.}{it:srcvar}{bf:==}{it:value}{bf:)} (or {bf:!=}) gives the proportion of
+ego's alters whose {it:srcvar} equals (or does not equal) a specific numeric category - e.g. "the
+proportion of a person's contacts who work in sector 3" ({cmd:proportion(alter.sector==3)}). For an
+already-binary (0/1) {it:srcvar}, {cmd:mean(alter.}{it:srcvar}{cmd:)} already gives exactly "the
+proportion with {it:srcvar}==1", so a bare {cmd:proportion(alter.}{it:srcvar}{cmd:)} with no
+comparison is not offered as a separate synonym for it - {bf:proportion()}'s own value is for
+picking out one category of a variable with more than two categories, without first having to
+{cmd:generate} a 0/1 indicator by hand. Missing {it:srcvar} values are still dropped before the
+proportion is computed, exactly as for every other {it:stat} - a missing value is never silently
+read as "not in this category".
+
+{pstd}
+{cmd:nwgen} recognizes the same {cmd:mean(alter.}{it:x}{cmd:)}-style syntax (including
+{cmd:proportion(alter.}{it:x}{cmd:==}{it:value}{cmd:)}) as a shortcut and dispatches to
+{cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
 {title:Examples}
@@ -66,6 +89,7 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
+	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
 
 
 {title:References}
