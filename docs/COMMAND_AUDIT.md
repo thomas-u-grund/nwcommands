@@ -104,9 +104,9 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    new **network**" (in-place-modify is the default; `generate()` opts into a copy); in analytical
    commands elsewhere it names a new **Stata variable**. These should be documented as two
    deliberately distinct, well-established conventions, not collapsed into one.
-4. **Architecture split**: 13 other files (`nwconstraint`, `nwdissimilar`, `nwergm`, `nwdropnodes`,
+4. **Architecture split**: 12 other files (`nwconstraint`, `nwdissimilar`, `nwergm`, `nwdropnodes`,
    `nwmoviexy`, `nwhierarchy`, `nwmovie`, `nwissymmetric`, `nwkeepnodes`, `nwreplacemat`, `nwsimilar`,
-   `nwrecode`, `nwutility`) still use the legacy `_nwsyntax`/`nwtomatafast`/`_nwsyntax_other` idiom
+   `nwrecode`) still use the legacy `_nwsyntax`/`nwtomatafast`/`_nwsyntax_other` idiom
    instead of modern `nw_syntax`. Not purely cosmetic — `nwtomatafast` was found to be **actually
    broken** by this reliance (see `docs/CERTIFICATION.md`), and five separate commands (plus a shared
    pair of internal helpers) relying on `_nwsyntax`/`_nwsyntax_other` were found to be **completely
@@ -130,8 +130,15 @@ Generators that *create* a network rather than operate on an existing one (`nwse
      bug found once the crash was gone — `nwname`'s `r(labs)` is comma-separated but both files fed it
      into constructs expecting space-separated lists, so `_nwnodelab` silently returned empty labels
      and `_nwnodeid` reported every valid label as not found.
+   - `nwutility` (harmonisation unit 12): 9 distinct bugs stacked together, including the same
+     unexported-`nodes` crash and `_nwsyntax_other` incompatibility, plus a copy-paste bug, a
+     nonexistent-command typo compounded with a `nwgenerate`-expression-translator misuse, a Mata
+     `max()`-on-missing-diagonal crash, two off-by-one loop bounds, a double-counted self term, and a
+     Mata naming collision with this package's own reserved `nw` global identifier. The command had
+     apparently never worked end to end; both its code paths are now hand-verified against its own
+     documented formula.
 
-   13 files remain, triaged (not fixed) after the above: **confirmed broken** — `nwutility`,
+   12 files remain, triaged (not fixed) after the above: **confirmed broken** —
    `nwreplacemat` (also independently entangled with legacy `nw_mata<id>`/`$nwsize_<id>`/
    `$nwdirected_<id>` globals, the same pre-2016 storage family already broken for `nwtomatafast` — the
    largest remaining item in this family), `nwdropnodes`/`nwkeepnodes` (chain-blocked on
