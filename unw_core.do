@@ -1747,8 +1747,12 @@ class `NWdef' {
     real matrix calculate_dyadcensus()
 	real matrix calculate_triadcensus()
 	real matrix calculate_distances()
+	real matrix calculate_distances_bfs()
+	real matrix calculate_distances_dijkstra()
 	real matrix calculate_distances_without()
 	real scalar calculate_distance_pair()
+	real scalar bfs_dist_excluding()
+	real matrix bfs_hopdist_from()
 	real matrix calculate_betweenness()
 	real matrix calculate_betweenness_weighted()
 	real matrix calculate_components()
@@ -3207,24 +3211,96 @@ real matrix `NWdef'::calculate_similarity_index(string scalar measure){
 }
 
 
-real matrix `NWdef'::calculate_distances_without(){
-	real scalar i, j, value1, value2
-	real matrix res
-	
-	res = J(get_nodes(), get_nodes(),0)
-	
-	for (i = 1; i<=get_nodes(); i++){
-		for (j = 1; j<= get_nodes(); j++){
-			if	((*get_matrix())[i,j] != 0 & (*get_matrix())[i,j] != .){
-				value1 = (*get_matrix())[i,j]
-				value2 = (*get_matrix())[j,i]
-				(*get_matrix())[i,j] = 0
-				(*get_matrix())[j,i] = 0
-				res[i,j] = calculate_distance_pair(i,j)
-				(*get_matrix())[i,j] = value1
-				(*get_matrix())[j,i] = value2
+/*
+	Sparse-native forward-BFS distance from `source' to `target', with the
+	single direct hop `source'->`target' excluded from the very first
+	expansion (used by calculate_distances_without() below to answer "how
+	would ego reach alter if this one tie didn't exist"). The old dense
+	implementation zeroed both edge[source,target] AND edge[target,source]
+	before recomputing - confirmed via direct probe (a hand-built directed
+	network with a genuine, distinct reverse arc plus an alternate path)
+	that the reverse-arc zeroing never actually changes the result: a
+	forward BFS from `source' has no reason to ever traverse back through
+	`target'->`source' to reach `target' itself, so excluding only the
+	forward hop replicates the dense behaviour exactly while never
+	touching the dense `edge' matrix at all.
+*/
+real scalar `NWdef'::bfs_dist_excluding(real scalar source, real scalar target){
+	real matrix dist, queue, newqueue, nb
+	real scalar n, d, i, cur
+
+	n = get_nodes()
+	dist = J(n,1,.)
+	// `source' is pre-marked visited at distance 0 in the general
+	// (source != target) case - this is what actually blocks the
+	// removed edge from being used, since any OTHER node's neighbor
+	// list can still legitimately contain `source' (undirected ties are
+	// symmetric, so e.g. removing edge (2,1) doesn't remove 1 from
+	// node 2's own neighbor list - only marking `source' permanently
+	// "already visited" prevents a path from using that same edge to
+	// get back to it). Confirmed the hard way: seeding from neighbors()
+	// without this mark (to handle the source==target self-loop case
+	// below) silently let a removed edge on a simple path graph be
+	// "reached again" through an intermediate node's own, still-intact,
+	// neighbor list - a real regression caught by re-running the very
+	// probes that had already verified this function, not assumed
+	// fixed. The source==target case (a genuine self-loop edge,
+	// reachable via edgelist() -> calculate_distances_without()) is
+	// handled separately below without this pre-mark, since it needs
+	// exactly the opposite: a genuine return path IS what's being
+	// asked for, matching calculate_distance_pair()'s own self-pair
+	// handling above.
+	if (source != target){
+		dist[source,1] = 0
+	}
+	nb = neighbors(source)
+	queue = select(nb, nb :!= target)
+	d = 1
+
+	while (rows(queue) > 0 & d <= n){
+		newqueue = J(0,1,0)
+		for (i = 1; i <= rows(queue); i++){
+			cur = queue[i,1]
+			if (dist[cur,1] == .){
+				dist[cur,1] = d
+				nb = neighbors(cur)
+				newqueue = newqueue \ nb
 			}
 		}
+		if (dist[target,1] != .) break
+		queue = newqueue
+		d = d + 1
+	}
+	if (dist[target,1] != .) return(dist[target,1])
+	return(-1)
+}
+
+/*
+	Sparse-native replacement for the old dense implementation, which
+	zeroed edge[i,j]/edge[j,i] through the get_matrix() pointer, called
+	calculate_distance_pair() (itself dense, matrix-power based), then
+	restored the two cells - an O(m * n^3)-shaped computation (m = edge
+	count) that also mutated `edge' directly mid-computation. Iterates
+	edgelist() (O(nnz), one row per stored sparse entry - both directions
+	for an undirected tie, matching the old dense loop's own i,j-pair
+	iteration over a symmetric matrix) and calls bfs_dist_excluding() per
+	edge instead - O(m * (V+E)), and `edge'/the sparse index are never
+	mutated. Verified byte-identical against the prior dense
+	implementation on hand-built undirected/directed/bridge/cycle
+	networks, including the asymmetric reverse-arc case above.
+*/
+real matrix `NWdef'::calculate_distances_without(){
+	real matrix res, el
+	real scalar n, m, ego, alter
+
+	n = get_nodes()
+	res = J(n, n, 0)
+	el = edgelist()
+
+	for (m = 1; m <= rows(el); m++){
+		ego = el[m,1]
+		alter = el[m,2]
+		res[ego,alter] = bfs_dist_excluding(ego, alter)
 	}
 	return(res)
 }
@@ -3699,35 +3775,181 @@ void `NWdef'::permute(){
 	set_edge((*get_matrix())[perm, perm])
 }
 
+/*
+	Sparse-native replacement for the old dense matrix-power loop
+	(temp = temp * temp2, up to n times, O(n^3) per iteration). Seeds the
+	BFS frontier from `ego''s own out-neighbors at distance 1, WITHOUT
+	pre-marking `ego' itself as visited - this is deliberate, not an
+	oversight: the old matrix-power version returns the length of the
+	shortest CYCLE back to `ego' when ego==alter (confirmed via direct
+	probe: calculate_distance_pair(i,i) on a network with a genuine
+	2-cycle through i returns 2, not 0), and seeding from `ego''s
+	neighbors rather than `ego' itself reproduces that exactly for both
+	ego==alter and ego!=alter without a special case. Respects
+	directedness natively via neighbors() (forward/out only - undirected
+	ties are already stored symmetrically, see neighbors()'s own
+	comment). O(V+E) with early exit once `alter' is found, instead of
+	the old O(n^4) worst case.
+*/
 real scalar `NWdef'::calculate_distance_pair(real scalar ego, real scalar alter){
-	real scalar found, distance
-	real matrix temp, temp2
-	
-	distance = 1
-	found = 0
-	temp = (*get_matrix())
-	_editmissing(temp,0)
-	temp2 = temp
+	real matrix dist, queue, newqueue, nb
+	real scalar n, d, i, cur
 
-	while (found == 0 & distance < get_nodes()){
-		if (temp[ego, alter] != 0 & temp[ego,alter] != .) {
-			found = 1
-			return(distance)
+	n = get_nodes()
+	dist = J(n,1,.)
+	queue = neighbors(ego)
+	d = 1
+
+	while (rows(queue) > 0 & d <= n){
+		newqueue = J(0,1,0)
+		for (i = 1; i <= rows(queue); i++){
+			cur = queue[i,1]
+			if (dist[cur,1] == .){
+				dist[cur,1] = d
+				if (cur != alter){
+					nb = neighbors(cur)
+					newqueue = newqueue \ nb
+				}
+			}
 		}
-		else {
-			temp = temp * temp2
-		}
-		distance = distance + 1
+		if (dist[alter,1] != .) break
+		queue = newqueue
+		d = d + 1
 	}
+	if (dist[alter,1] != .) return(dist[alter,1])
 	return(-1)
+}
+
+/*
+	Sparse-native, unweighted (hop-count) single-source distances from
+	`source' via forward BFS over neighbors() - replaces Brute_dist()'s
+	O(n^4)-worst-case matrix-power-and-compare loop with O(V+E) per
+	source. `source' itself is left missing on return (matching
+	Brute_dist()'s own final "_editvalue(dist,0,.)" step, which turns
+	every untouched/self cell to missing) - calculate_distances_bfs()
+	below fixes that up per row.
+*/
+real matrix `NWdef'::bfs_hopdist_from(real scalar source){
+	real matrix dist, queue, newqueue, nb
+	real scalar n, d, i, cur
+
+	n = get_nodes()
+	dist = J(n,1,.)
+	dist[source,1] = 0
+	queue = neighbors(source)
+	d = 1
+
+	while (rows(queue) > 0){
+		newqueue = J(0,1,0)
+		for (i = 1; i <= rows(queue); i++){
+			cur = queue[i,1]
+			if (dist[cur,1] == .){
+				dist[cur,1] = d
+				nb = neighbors(cur)
+				newqueue = newqueue \ nb
+			}
+		}
+		queue = newqueue
+		d = d + 1
+	}
+	dist[source,1] = .
+	return(dist)
+}
+
+/*
+	Sparse-native all-pairs unweighted distance matrix - replaces
+	Brute_dist(*get_matrix_unvalued()) in calculate_distances()'s
+	"brute" branch. Diagonal missing, matching Brute_dist()'s own
+	convention (verified via direct probe against the prior dense
+	implementation on hand-built undirected/directed/disconnected
+	networks).
+*/
+real matrix `NWdef'::calculate_distances_bfs(){
+	real matrix D
+	real scalar n, i
+
+	n = get_nodes()
+	D = J(n, n, .)
+	for (i = 1; i <= n; i++){
+		D[i,.] = bfs_hopdist_from(i)'
+	}
+	return(D)
+}
+
+/*
+	Sparse-native all-pairs weighted distance matrix via Dijkstra -
+	replaces Dijkstra_dist(*get_matrix(), alpha) in calculate_distances()'s
+	non-"brute" branch. Same linear-scan extract-min structure already
+	established and certified for calculate_betweenness_weighted() above
+	(Mata has no built-in priority queue/decrease-key) - precomputes a
+	sparse adjacency/cost cache once via neighbors()/edge_weight() rather
+	than rescanning a dense row per relaxation. Edge cost is
+	edge_weight(u,v)^(-alpha), i.e. (1/weight)^alpha - the same
+	weight-to-distance convention the old Dijkstra_dist() used (it
+	inverted the whole matrix once up front, "Ginv = 1/G", then raised to
+	alpha inside Dijkstra() itself; edge_weight(u,v)^(-alpha) is the
+	identical quantity computed per edge instead of per whole matrix).
+	Diagonal 0 (self-distance), matching Dijkstra_dist()'s own convention
+	(it never revisits/blanks the source the way Brute_dist() does) -
+	verified via direct probe against the prior dense implementation,
+	including alpha=0 (every positive tie costs 1, i.e. unweighted) and
+	alpha=1 (raw 1/weight per tie) on a directed valued network.
+*/
+real matrix `NWdef'::calculate_distances_dijkstra(real scalar alpha){
+	real matrix adjacencyList, adjacencyCost, D, Dsrc, settled, nb
+	real scalar n, m, k, idx, v, s, u, w, i, j, mindist
+
+	n = get_nodes()
+	adjacencyList = J(n, max((1, n-1)), .)
+	adjacencyCost = J(n, max((1, n-1)), .)
+	for (m = 1; m <= n; m++){
+		nb = neighbors(m)
+		k = 1
+		for (idx = 1; idx <= rows(nb); idx++){
+			v = nb[idx,1]
+			if (v != m){
+				adjacencyList[m,k] = v
+				adjacencyCost[m,k] = edge_weight(m,v)^(-alpha)
+				k++
+			}
+		}
+	}
+
+	D = J(n, n, .)
+	for (s = 1; s <= n; s++){
+		Dsrc = J(1, n, .)
+		Dsrc[s] = 0
+		settled = J(1, n, 0)
+		for (i = 1; i <= n; i++){
+			mindist = .
+			u = 0
+			for (j = 1; j <= n; j++){
+				if (settled[j] == 0 & Dsrc[j] < . & (u == 0 | Dsrc[j] < mindist)){
+					mindist = Dsrc[j]
+					u = j
+				}
+			}
+			if (u == 0) break
+			settled[u] = 1
+			for (j = 1; j <= sum(adjacencyList[u,.] :< .); j++){
+				w = adjacencyList[u,j]
+				if (settled[w]) continue
+				if (Dsrc[w] == . | Dsrc[w] > Dsrc[u] + adjacencyCost[u,j]){
+					Dsrc[w] = Dsrc[u] + adjacencyCost[u,j]
+				}
+			}
+		}
+		D[s,.] = Dsrc
+	}
+	return(D)
 }
 
 real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 	if (alg == "brute"){
-		return(Brute_dist(*get_matrix_unvalued()))
+		return(calculate_distances_bfs())
 	}
 	else {
-		return(Dijkstra_dist(*get_matrix(), alpha))
+		return(calculate_distances_dijkstra(alpha))
 	}
 }
 
