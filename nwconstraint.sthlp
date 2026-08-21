@@ -31,8 +31,11 @@ Calculates Burt's (1992) dyadic constraint for a {help netname:network} and stor
 new {help netname:network} (not a Stata variable) via {cmd:nwset, mat()} - the constraint matrix
 becomes the current network afterward. This is a different output shape than most other analysis
 commands in this package (which {opt generate()} a per-node Stata variable): {cmd:nwconstraint}
-returns the full dyadic {it:c_ij} matrix, from which a node's aggregate constraint can be obtained
-with a row sum (e.g. via {help nwtomata} or {help nwvalue}).
+returns the full dyadic {it:c_ij} matrix. {help nwburt} computes the standard per-node aggregate
+constraint (and Burt's related effective size/efficiency/hierarchy measures) directly as Stata
+variables - use it instead of this command if the dyadic matrix itself isn't what you need; see the
+"Aggregating to the node level" note below for why a plain row sum of this command's own output is
+{bf:not} equivalent to {help nwburt}'s aggregate.
 
 {pstd}
 Constraint measures the extent to which a node {it:i}'s relationships are concentrated through a
@@ -48,10 +51,20 @@ potential). Formally, for each pair {it:i,j}:
 every other contact {it:q})
 
 {pstd}
-The diagonal (self-constraint) is not meaningful and is not part of the returned network. A node
-{it:i}'s aggregate constraint (the quantity most commonly reported in the literature as "Burt's
-constraint") is {it:sum_j(c_ij)}, i.e. the row sum for {it:i} in the returned network - not computed
-automatically by this command.
+The diagonal (self-constraint) is not meaningful and is not part of the returned network.
+
+{pstd}
+{bf:Aggregating to the node level}: the quantity most commonly reported in the literature as "Burt's
+constraint" is node {it:i}'s aggregate constraint, {it:C_i = sum_j(c_ij)} for {it:j} in {it:i}'s
+direct contacts only - {bf:not} summed over every {it:j}. This distinction matters
+because {it:c_ij} can be nonzero even when {it:i} and {it:j} are not directly tied at all (the
+{it:sum_q(p_iq*p_qj)} indirect term alone can make it positive), so naively summing an entire row of
+this command's output - {it:sum_j(c_ij)} over {bf:all} {it:j} - silently over-counts and gives a
+different, larger number than the standard aggregate for any node with such indirect-only
+contributions. {help nwburt} computes the correctly-restricted aggregate directly (as {it:_constraint});
+this command intentionally does not, since restricting the sum to {it:N(i)} requires already knowing
+which entries of the raw network matrix are direct ties, which is exactly the extra step {help nwburt}
+takes care of.
 
 
 {title:Examples}
@@ -59,7 +72,8 @@ automatically by this command.
 	{cmd:. webnwuse gang, nwclear}
 	{cmd:. nwconstraint gang, name(gangconstraint)}
 	{cmd:. nwtomata gangconstraint, mat(C)}
-	{cmd:. mata: rowsum(C)}
+	{cmd:. nwtomata gang, mat(A)}
+	{cmd:. mata: rowsum(C :* (A :!= 0 :& A :< .))}
 
 
 {title:Supported network types}
@@ -88,6 +102,6 @@ Press.
 
 {title:See also}
 
-	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
+	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
 
 last certified : 21 Aug 2026
