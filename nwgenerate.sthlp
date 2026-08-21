@@ -60,9 +60,12 @@ The command generates a network. It can be used either with a) some function {bf
 {p_end}
 {pmore2}Extract the largest component as a network.
 
-{phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}] 
+{phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}]
 {p_end}
-{pmore2}Generate a network of paths between nodes (see {help nwpath}).
+{pmore2}Not currently implemented as a shortcut - {help nwpath} can produce zero, one, or several
+output networks (one per shortest path found), which does not fit this command's own "exactly one
+network per call" form. Use {help nwpath} directly - its own {opt generate()} option names one
+network per path found.
 
 {phang2}{opth permute(netname)} [, {opt xvars}] 
 {p_end}

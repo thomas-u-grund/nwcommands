@@ -61,9 +61,12 @@ The command generates a network. It can be used either with a) some function {bf
 {p_end}
 {pmore2}Extract the largest component as a network.
 
-{phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}] 
+{phang2}{opth path(netname)}, {opth ego(nodeid)} {opth alter(nodeid)} [{opth length(int)} {opt sym} {opt xvars}]
 {p_end}
-{pmore2}Generate a network of paths between nodes (see {help nwpath}).
+{pmore2}Not currently implemented as a shortcut - {help nwpath} can produce zero, one, or several
+output networks (one per shortest path found), which does not fit this command's own "exactly one
+network per call" form. Use {help nwpath} directly - its own {opt generate()} option names one
+network per path found.
 
 {phang2}{opth permute(netname)} [, {opt xvars}] 
 {p_end}
@@ -254,10 +257,16 @@ program nwgenerate
 			nwduplicate `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}	
 
-		// nwdyadprob shortcut - NOT YET RESTORED, see note below
+		// nwdyadprob shortcut - restored (harmonisation phase): maps
+		// directly onto nwdyadprob's own `name()' option. Its own
+		// weightnet argument is OPTIONAL (unlike every other netname-
+		// based shortcut here - nwdyadprob can generate a plain random
+		// dyad-probability network with no reference network at all),
+		// so this deliberately skips the pre-validation `nw_syntax'
+		// call the netname-required shortcuts below use - nwdyadprob
+		// resolves (or rejects) `sub1' entirely on its own.
 		qui if "`whichjob'" == "dyadprob(" {
-			noi di "{err}nwgen's dyadprob() shortcut is not currently implemented; use {help nwdyadprob} directly."
-			error 199
+			nwdyadprob `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 
 		// nwgeodesic shortcut
@@ -265,19 +274,40 @@ program nwgenerate
 			noi nw_syntax `sub1', max(1)
 			nwgeodesic `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwhomophily shortcut - NOT YET RESTORED, see note below
+		// nwhomophily shortcut - restored (harmonisation phase). Note
+		// `sub1' here is a VARIABLE name, not a netname (nwhomophily's
+		// own main argument is a varlist) - unlike every other
+		// shortcut in this file. Its own required sub-options
+		// (homophily()/density()) arrive via `sub2'/`fcn_opt' exactly
+		// like any other passthrough option (e.g. "nwgen mynet =
+		// homophily(myvar), homophily(0.5) density(0.3)") - the outer
+		// shortcut keyword and the identically-named inner sub-option
+		// are parsed at different levels by this program's own dispatch
+		// logic, so the name reuse is not actually ambiguous.
 		qui if "`whichjob'" == "homophily(" {
-			noi di "{err}nwgen's homophily() shortcut is not currently implemented; use {help nwhomophily} directly."
-			error 199
+			nwhomophily `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwlattice shortcut - NOT YET RESTORED, see note below
+		// nwlattice shortcut - restored (harmonisation phase). `sub1'
+		// is dimensions (e.g. "5 5"), not a netname - nwlattice's own
+		// main argument, matching pref(/random(/ring(/small( below.
 		qui if "`whichjob'" == "lattice(" {
-			noi di "{err}nwgen's lattice() shortcut is not currently implemented; use {help nwlattice} directly."
-			error 199
+			nwlattice `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwpath shortcut - NOT YET RESTORED, see note below
+		// nwpath shortcut - deliberately left as a clear error, not
+		// restored: nwpath can produce ZERO, ONE, or MANY output
+		// networks (one per shortest path found between ego and alter -
+		// there can be several of the same minimum length), and its own
+		// `name()' option is dead code (grep confirms it is declared in
+		// the syntax line but never referenced anywhere in the program
+		// body - `generate()' is the real, working stub-prefix option,
+		// producing `generate()'_1, `generate()'_2, ... one per path).
+		// Neither shape fits nwgen's own "exactly one network under
+		// exactly one name" contract - forcing a guess (e.g. always
+		// take path 1) would silently discard the other paths and
+		// misrepresent what nwpath actually found, worse than a clear
+		// error pointing at the real command.
 		qui if "`whichjob'" == "path(" {
-			noi di "{err}nwgen's path() shortcut is not currently implemented; use {help nwpath} directly."
+			noi di "{err}nwgen's path() shortcut is not currently implemented - nwpath can produce zero, one, or several output networks (one per shortest path found), which does not fit nwgen's own single-network-per-call form; use {help nwpath} directly (its own generate() option names one network per path found)."
 			error 199
 		}
 		// nwpermute shortcut
@@ -285,10 +315,10 @@ program nwgenerate
 			noi nw_syntax `sub1', max(1)
 			nwpermute `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwpref shortcut - NOT YET RESTORED, see note below
+		// nwpref shortcut - restored (harmonisation phase). `sub1' is a
+		// node count, not a netname, matching random( below.
 		qui if "`whichjob'" == "pref(" {
-			noi di "{err}nwgen's pref() shortcut is not currently implemented; use {help nwpref} directly."
-			error 199
+			nwpref `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwrandom shortcut
 		qui if "`whichjob'" == "random(" {
@@ -299,20 +329,30 @@ program nwgenerate
 			noi nw_syntax `sub1', max(1)
 			nwreach `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwring shortcut - NOT YET RESTORED, see note below
-		if "`whichjob'" == "ring(" {
-			noi di "{err}nwgen's ring() shortcut is not currently implemented; use {help nwring} directly."
-			error 199
+		// nwring shortcut - restored (harmonisation phase). `sub1' is a
+		// node count; nwring's own `k()' is required (no default) and
+		// arrives via `sub2'/`fcn_opt' like any other sub-option (e.g.
+		// "nwgen mynet = ring(10), k(2)").
+		qui if "`whichjob'" == "ring(" {
+			nwring `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwsmall shortcut - NOT YET RESTORED, see note below
+		// nwsmall shortcut - restored (harmonisation phase). Same shape
+		// as ring( - node count, required k() via sub-options.
 		qui if "`whichjob'" == "small(" {
-			noi di "{err}nwgen's small() shortcut is not currently implemented; use {help nwsmall} directly."
-			error 199
+			nwsmall `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
-		// nwtranspose shortcut - NOT YET RESTORED, see note below
+		// nwtranspose shortcut - restored (harmonisation phase).
+		// nwtranspose's own output-naming option is `generate()', not
+		// `name()' (unlike every other network-producing shortcut here) -
+		// with generate() given, it duplicates the source network under
+		// the new name first and transposes the COPY, leaving the
+		// original untouched; without it, nwtranspose mutates the
+		// source network in place, which would not fit nwgen's own
+		// "produces a new network under `newnetname'" contract at all -
+		// generate() is therefore always supplied here, unconditionally.
 		qui if "`whichjob'" == "transpose(" {
-			noi di "{err}nwgen's transpose() shortcut is not currently implemented; use {help nwtranspose} directly."
-			error 199
+			noi nw_syntax `sub1', max(1)
+			nwtranspose `sub1', `sub2' `fcn_opt' generate(`newnetname')
 		}
 
 		// The remaining 16 keywords in `nwgenopt' above (addnodes/

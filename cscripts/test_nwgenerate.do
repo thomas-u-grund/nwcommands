@@ -154,3 +154,74 @@ capture noisily nwgen x3 = subset(undstar)
 assert _rc == 199
 capture confirm variable x3
 assert _rc != 0
+
+
+* --- network-producing shortcuts (nwgen NEWNET = fcn(...)) - the
+* OTHER, older half of nwgenopt's dead-shortcut problem: 8 keywords
+* (dyadprob/homophily/lattice/path/pref/ring/small/transpose) had
+* their bodies commented out entirely at some point in this package's
+* history, replaced with a clear "not currently implemented" error
+* (an earlier harmonisation-phase fix, preventing the silent-no-op
+* symptom the variable-producing family above had). This unit restores
+* 5 of the 8 for real (dyadprob/pref/ring/small/transpose), each
+* mapping directly onto its own already-existing, already-tested
+* command; keeps path( as a deliberate, documented error (nwpath can
+* produce zero/one/many output networks, which does not fit nwgen's
+* own "exactly one network per call" contract); and found lattice(/
+* homophily( genuinely blocked by SEPARATE, pre-existing bugs in
+* nwlattice.ado/nwhomophily.ado THEMSELVES (confirmed by calling each
+* directly, bypassing this shortcut entirely - both fail identically
+* either way) - not fixed here, out of scope for restoring the
+* shortcut layer itself, tracked in docs/CERTIFICATION.md's own
+* Pending table as new, separate findings.
+
+nwclear
+nwgen ringnet = ring(6), k(2) undirected
+assert _rc == 0
+nwsummarize ringnet
+assert r(nodes) == 6
+assert r(edges) == 12
+
+nwclear
+nwgen smallnet = small(20), k(4) prob(.1) undirected
+assert _rc == 0
+nwsummarize smallnet
+assert r(nodes) == 20
+
+nwclear
+nwgen prefnet = pref(20), m0(2) m(2) undirected
+assert _rc == 0
+nwsummarize prefnet
+assert r(nodes) == 20
+
+nwclear
+nwgen dpnet = dyadprob(), mat(J(5,5,1))
+assert _rc == 0
+nwsummarize dpnet
+assert r(nodes) == 5
+assert r(density) == 1
+
+nwclear
+nwset, mat((0,1,0\0,0,1\0,0,0)) directed name(basenet) labs(A,B,C)
+nwgen transnet = transpose(basenet)
+assert _rc == 0
+nw_syntax basenet
+mata: e1 = *(`netobj'->get_matrix_unvalued())
+nw_syntax transnet
+mata: e2 = *(`netobj'->get_matrix_unvalued())
+mata: assert(e2 == e1')
+* generate() semantics: the SOURCE network must be left untouched,
+* not transposed in place (nwtranspose's own default, no-generate()
+* behaviour) - a real distinction this shortcut relies on getting
+* right, checked directly.
+nw_syntax basenet
+mata: assert(*(`netobj'->get_matrix_unvalued()) == e1)
+
+* path( - deliberately still an error, not silently doing nothing
+* and not guessing at a single "first path found" result.
+nwclear
+nwset, mat((0,1,0\0,0,1\0,0,0)) directed name(pathbase) labs(A,B,C)
+capture noisily nwgen pathnet = path(pathbase), ego(A) alter(C)
+assert _rc == 199
+capture confirm variable pathnet
+assert _rc != 0
