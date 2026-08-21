@@ -102,3 +102,53 @@ nwset, mat((0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)) name(iv1) undirected labs(A,B,C,D)
 nwset, mat((0,1,0,0\1,0,1,0\0,1,0,0\0,0,0,0)) name(dv1) undirected labs(A,B,C,D)
 nwqap dv1 iv1, permutations(10)
 assert _rc == 0
+
+* --- eclass integration: e(b)/e(V) posted via ereturn post (rather
+* than left as bare st_matrix writes) so estimates store/estimates
+* table/postestimation commands like test/lincom work normally.
+* logit's own e(b) carries an equation name (its depvar) on its
+* column stripe while regress's does not - a bare "matrix colnames"
+* call preserves whatever equation name is already on a stripe
+* rather than clearing it, so nwqap's own e(b)/e(V) previously ended
+* up with mismatched stripes (one eq-qualified, one not) specifically
+* under logit, crashing ereturn post with r(507) "name conflict" -
+* not under regress, since regress's e(b) has no equation name to
+* begin with. Fixed by explicitly blanking both stripes' equation
+* names before assigning column/row names. Both regression families
+* are exercised below so this never regresses silently for either
+* one.
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1) undirected labs(A,B,C,D,E)
+nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdv) undirected labs(A,B,C,D,E)
+nwqap wdv iv1, permutations(2) type(regress)
+assert _rc == 0
+assert e(N) == 20
+assert e(permutations) == 2
+assert `"`e(cmd)'"' == "nwqap"
+assert `"`e(depvar)'"' == "wdv"
+assert `"`e(qap_regcmd)'"' == "regress"
+mat b = e(b)
+mat V = e(V)
+assert colsof(b) == 2
+assert V[1,1] < .
+assert V[2,2] < .
+estimates store q_regress
+qui test iv1
+qui lincom iv1
+
+nwclear
+nwset, mat((0,1,0,1,1,0\1,0,1,0,0,1\0,1,0,1,0,0\1,0,1,0,1,1\1,0,0,1,0,0\0,1,0,1,0,0)) name(iv1) undirected labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,0,0,1\1,0,0,1,1,0\1,0,0,1,1,0\0,1,1,0,0,1\0,1,1,0,0,0\1,0,0,1,0,0)) name(bindv) undirected labs(A,B,C,D,E,F)
+nwqap bindv iv1, permutations(5) type(logit)
+assert _rc == 0
+assert `"`e(qap_regcmd)'"' == "logit"
+mat b = e(b)
+mat V = e(V)
+assert colsof(b) == 2
+estimates store q_logit
+qui test iv1
+
+estimates table q_regress q_logit
+qui estimates restore q_regress
+mat b3 = e(b)
+assert reldif(b3[1,1], 2) < 1e-6
