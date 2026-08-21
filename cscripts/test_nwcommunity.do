@@ -44,3 +44,16 @@ capture nwcommunity dirnet
 assert _rc != 0
 nwcommunity dirnet, symmetrize
 assert r(communities) >= 1
+
+* --- netlist regression: see test_nwcomponents.do's identical
+* comment - the same copy-pasted already-exists check had the same
+* bug here, found while building nwconcor.ado's netlist support.
+nwclear
+nwset, mat((0,1\1,0)) name(nA) undirected
+nwset, mat((0,1\1,0)) name(nB) undirected
+nwcommunity nA nB, generate(mynetlistcomm)
+assert _rc == 0
+capture confirm variable mynetlistcomm1, exact
+assert _rc == 0
+capture confirm variable mynetlistcomm2, exact
+assert _rc == 0

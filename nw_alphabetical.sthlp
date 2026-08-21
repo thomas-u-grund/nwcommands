@@ -24,8 +24,10 @@
 {p2col:{bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:{bf:{help nwclustering }}}Clustering coefficient{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}
+{p2col:{bf:{help nwcommunity }}}Detect communities via the Louvain method{p_end}
 {p2col:{bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
 {p2col:{bf:{help nwcompressobs }}}Compresses observations in Stata{p_end}
+{p2col:{bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
 {p2col:{bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
 {p2col:{bf:{help nwcontext }}}Create a context variable{p_end}
 {p2col:{bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
@@ -57,6 +59,7 @@
 {p2col:{bf:{help nwkeepnodes }}}Keep nodes of a network{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
+{p2col:{bf:{help nwmodularity }}}Score a partition's modularity{p_end}
 {p2col:{bf:{help nwmovie }}}Animate a sequence of networks{p_end}
 {p2col:{bf:{help nwname }}}Check name and change meta-information of a network{p_end}
 {p2col:{bf:{help nwneighbor }}}Extract the network neighbors of a node{p_end}

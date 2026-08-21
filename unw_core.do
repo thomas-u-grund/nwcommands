@@ -719,6 +719,105 @@ real matrix Louvain(real matrix W, real scalar resolution){
 	return(nw_community_denserelabel(finalcomm))
 }
 
+/*
+	CONCOR (CONvergence of iterated CORrelations - Breiger, Boorman & Arabie
+	1975): builds each node's tie profile (its outgoing ties stacked on its
+	incoming ties, self-tie excluded - this captures directed structure
+	naturally, unlike an undirected-only method such as Louvain above), takes
+	the pairwise correlation matrix of these profiles (Mata's built-in
+	correlation(), which treats each column as a variable and each row as an
+	observation - exactly this shape), then repeatedly re-correlates that
+	matrix with itself. In well-separated block structure this is a
+	contraction mapping that converges to a matrix of exactly +1/-1 entries
+	(nodes end up perfectly correlated within a block, perfectly anti-
+	correlated across the two halves of the split it induces); real data is
+	not always this clean, so convergence is capped at maxiter rather than
+	asserted. A zero-variance tie profile - every node has this within a
+	recursive sub-split once a block's members only tie to nodes *outside*
+	the block, since only within-block ties are considered at that point,
+	a normal and expected outcome, not a user-input error - produces a
+	missing correlation matrix rather than a division-by-zero crash; the
+	caller (ConcorSplitIDs below) checks for this and treats it as "this
+	branch cannot be split further," the same as any other degenerate
+	split. A genuinely isolated node in the *original, full* network (zero
+	ties in every direction, so it has no information to split on at any
+	depth) is instead checked once, explicitly, before recursion starts -
+	see calculate_concor below.
+*/
+real matrix ConcorConverge(real matrix net, real scalar maxiter){
+	real matrix profile, C, Cnew
+	real scalar iter
+
+	profile = net \ net'
+	C = correlation(profile)
+	if (hasmissing(C)){
+		return(C)
+	}
+	for (iter = 1; iter <= maxiter; iter++){
+		Cnew = correlation(C)
+		if (hasmissing(Cnew)){
+			return(Cnew)
+		}
+		if (max(abs(Cnew :- C)) < 1e-9){
+			return(Cnew)
+		}
+		C = Cnew
+	}
+	return(C)
+}
+
+/*
+	Recursively bisect `nodeidx' (a subset of 1..n, indexing into the original
+	network `net') `depth' times using CONCOR, returning a rows(nodeidx) x 2
+	matrix of [original node index, block id] pairs. Block ids for a depth-d
+	call are drawn from 1..2^d, but a branch that cannot be split further
+	(all its members end up on the same side of a bisection - a legitimate,
+	documented CONCOR outcome, not an error) simply keeps a single id across
+	its whole id range rather than every slot necessarily being used.
+*/
+real matrix ConcorSplitIDs(real matrix net, real scalar depth, real scalar maxiter, real matrix nodeidx){
+	real matrix sub, C, split, idxA, idxB, resA, resB, res
+	real scalar n
+
+	n = rows(nodeidx)
+	if (depth == 0 | n <= 1){
+		res = J(n, 2, .)
+		res[.,1] = nodeidx
+		res[.,2] = J(n,1,1)
+		return(res)
+	}
+
+	sub = net[nodeidx, nodeidx]
+	C = ConcorConverge(sub, maxiter)
+
+	if (hasmissing(C)){
+		res = J(n, 2, .)
+		res[.,1] = nodeidx
+		res[.,2] = J(n,1,1)
+		return(res)
+	}
+
+	split = (C[.,1] :> 0)
+
+	idxA = select(nodeidx, split)
+	idxB = select(nodeidx, 1 :- split)
+
+	if (rows(idxA) == 0 | rows(idxB) == 0){
+		res = J(n, 2, .)
+		res[.,1] = nodeidx
+		res[.,2] = J(n,1,1)
+		return(res)
+	}
+
+	resA = ConcorSplitIDs(net, depth-1, maxiter, idxA)
+	resB = ConcorSplitIDs(net, depth-1, maxiter, idxB)
+	resB[.,2] = resB[.,2] :+ 2^(depth-1)
+
+	res = resA \ resB
+	res = sort(res, 1)
+	return(res)
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -902,6 +1001,7 @@ class `NWdef' {
 	real matrix calculate_clustering()
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
+	real matrix calculate_concor()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_similarity_index()
@@ -1420,6 +1520,44 @@ real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scala
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(Louvain(w, res))
+}
+
+/*
+	CONCOR structural-equivalence blockmodel (Breiger, Boorman & Arabie 1975):
+	recursively bisects the network `splits' times (2^splits final blocks) via
+	iterated profile correlation - see ConcorSplitIDs/ConcorConverge above.
+	Unlike Louvain, this is defined for directed networks directly (a node's
+	profile already stacks its out-ties and in-ties separately) - no
+	symmetrize requirement. A node with literally zero ties in every
+	direction in the *original* network has no tie profile to compare
+	against anyone else's at any depth, so it is rejected explicitly here,
+	once, up front - a within-block "isolate" arising only during recursion
+	(a node whose ties all happen to lie outside its current block) is a
+	different, legitimate case, handled by ConcorSplitIDs itself.
+*/
+real matrix `NWdef'::calculate_concor(real scalar splits, | real scalar valued, real scalar maxiter){
+	real matrix w, res, out
+	real scalar val, iter, n
+
+	val = (args() >= 2 ? valued : 1)
+	iter = (args() == 3 ? maxiter : 25)
+	w = *get_matrix_mod(val, 1)
+	_diag(w, 0)
+	n = get_nodes()
+
+	if (min(rowsum(w) :+ colsum(w)') <= 0){
+		// _error()'s own message argument silently hits an undocumented
+		// ~100-char cap ("argument out of range", r(3300)) - confirmed
+		// by bisection; this message is longer, so errprintf()+exit()
+		// is used instead (no such limit found there).
+		errprintf("CONCOR requires every node to have at least one tie (incoming or outgoing) - remove isolates first (see nwdropnodes/nwkeepnodes) and try again.\n")
+		exit(error(6556))
+	}
+
+	res = ConcorSplitIDs(w, splits, iter, (1::n))
+	out = J(n,1,.)
+	out[res[.,1],1] = res[.,2]
+	return(out)
 }
 
 /*
