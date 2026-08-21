@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.1  3sept2014 author: Thomas Grund}{...}
+{* *! 5jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
@@ -21,22 +21,18 @@
 [{cmd:,}
 {opth name(newnetname)}
 {opt xvars}
-{opth vars(newvarlist)}
 {opt labs}({it:lab1 lab2 ...})
 {opt undirected}
-{opt directed}
-{opt keeporiginal}]
+{opt directed}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}name of the new network; default = {it:network}{p_end}
 {synopt:{opt xvars}}do not generate Stata variables{p_end}
-{synopt:{opth vars(newvarlist)}}overwrite Stata variables{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt undirected}}force the network to be undirected{p_end}
 {synopt:{opt directed}}force the network to be directed{p_end}
-{synopt:{opt keeporiginal}}keeps original id of nodes{p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
 
 {p2colreset}{...}
@@ -81,7 +77,7 @@ The following command declares such data as network data:
 					
 {pstd}
 This automatically generates the relevant meta-information for the network and makes it available for other programs under the {help netname} {it:mynet}. In case no {bf:name()}
-is specified, the command tries to come up with a suitable name for the new network. By default, it tries {it:network}, however, when a network with this name already exists, it comes
+is specified, the command tries to come up with a suitable name for the new network. By default, it tries {it:network}, however, if a network with this name already exists, it comes
 up with an alternative name {it:network_1} and so on (see {help nwvalidate}).
 
 {pstd}
@@ -120,4 +116,6 @@ Afterwards, it can be loaded as a network object again:
 	
 {title:Also see}
 	
-	{help nwtoedge}, {help nwuse}, {help nwsave}, {help webnwuse}, {help nwset}, {help nwimport}
+	{help nwtoedge}, {help nwuse}, {help nwsave}, {help webnwuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
+
+last certified : 21 Aug 2026

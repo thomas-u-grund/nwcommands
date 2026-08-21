@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *! version 2.0.0  19aug2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##information:[NW-2.4] Information}
 {marker top2}
@@ -23,15 +23,15 @@
 {synoptset 15 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth id(int)}}network ID of the the network that should be made the current network{p_end}
+{synopt:{opth id(int)}}Originl network ID of the the network that should be made the current network{p_end}
 {synoptline}
 	
 		
 {title:Description}
 
 {pstd}
-Almost all nwcommands allow that a {help netname} or {help netlist} is optional. In case, no network 
-is specified, by default, the nwcommands use the {it:current network}.
+Almost all nwcommands allow that a {help netname} or {help netlist} is optional. When no network 
+is specified in such a case, by default, the nwcommands apply the command to the {it:current network}.
 
 {pstd}
 The {it:current network} is simply the last network that has been {help nwset:set},
@@ -40,26 +40,37 @@ or {help nw_topical##generators:generated}. This is a convenient way to way acce
 network one worked with. 
 
 {pstd}
-{cmd:nwcurrent} changes the {it:current network}. It can be used either with {help netname} or with {bf:id()}.
+{cmd:nwcurrent} changes the {it:current network}. Typically, it can be used with a {help netname}. When used with {bf:id()}, the network ID refers to the original order the networks were generated in.
 The command also returns some information about the {it:current network}
 in the r() vector. 
 
 
 {title:Examples}
 
-	{cmd: nwuse florentine}
-	{cmd: nwcurrent flobusiness}
+	{com}. nwwebuse florentine
+	{com}. nwcurrent
+	{res}{hline 40}
+	{txt}   Current network: {res} flomarriage
+	{txt}   Number of nodes: {res} 16
+	{hline 40}
 
+	{com}. nwcurrent flobusiness
+	{res}{hline 40}
+	{txt}   Current network: {res} flobusiness
+	{txt}   Number of nodes: {res} 16
+	{hline 40}
 
-{title:Stored results}
+{title:Stored results} {txt}
 
 	Scalars:
-	  {bf:r(networks)}	number of networks
+	  r(networks)	number of networks
 	
 	Macros:
-	  {bf:r(current)}	name of current network
+	  r(current)	name of current network
 	  
 
 {title:Also see}
 
 	{help nwname}, {help nwload}, {help nwset}
+
+last certified : 21 Aug 2026

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.2.3  11feb2011}{...}
+{* *! version 2.0.0  18Aug2016}{...}
 {marker topic}
 {helpb nw_topical##utilities:[NW-2.7] Utilities}
 
@@ -25,7 +25,7 @@ some or all networks using {help nwdrop}.
 {pstd}
 This example loads network data and clears everything afterwards.
 
-	{cmd:. webnwuse glasgow}
+	{cmd:. nwwebuse glasgow}
 	{cmd:. nwclear}
 
 {pstd}	
@@ -38,3 +38,4 @@ with networks. For more information see {help nwdrop}.
 {title:See also}
 
   {help nwdrop}, {help clear}
+last certified : 21 Aug 2026

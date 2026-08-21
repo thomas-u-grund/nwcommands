@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *! 11jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##utilities:[NW-2.7] Utilities}
 
@@ -23,15 +23,17 @@
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth id(int)}}id of the the network that should be loaded{p_end}
-{synopt:{opt nocurrent}}only loads network as Stata variables, but does not make it the {it:current network}{p_end}
-{synopt:{opt labelonly}}only load the node labels as Stata variable{p_end}
-{synopt:{opt force}}by default nwload is not executed for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
+{synopt:{opt nocurrent}}Only load network as Stata variables, but do not make it the {it:current network}{p_end}
+{synopt:{opt labelonly}}Only load the node labels as Stata variable{p_end}
+{synopt:{opth generate(varname)}}Generate flag for nodes of the loaded network; default = {it:_nwinclude}{p_end}
+{synopt:{opt viewoff}}Unconnect view from network to dataset; default{p_end}
+{synopt:{opt viewon}}Establish view of network to dataset{p_end}
+{synopt:{opt force}}By default, matrix is not loaded for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
 		
 {title:Description}
 
 {pstd}
-Networks exist as objects in Stata. Once a network has been imported, generated or set, one can interact with
+Networks exist as objects in Mata. Once a networks have been imported, generated or set, one can interact with
 them by referring to their {help netname}, just as if one would interact with variables using their {help varname}. 
 
 {pstd}
@@ -54,9 +56,10 @@ a network relationship between nodes {it:i} and {it:j}. However, networks can al
 nwcommands support valued networks.
 
 {pstd}
-Loading a network as Stata variables can be useful if one wants to interact with (or look at) the network on this level. But notice 
-that changing one of the Stata variables does not change the underlying network, unless used in combination with {help nwsync}. To
-change values of the underlying network directly use {help nwreplace}. 
+Loading a network as Stata variables can be useful if one wants to interact with (or look at) the network through the dataset. But notice 
+that changing one of the Stata variables does not change the underlying network, unless a view of the network to the dataset is established with
+the option {bf:viewon}. But be careful, establishing such a view can also lead to unintended changes of an underlying network. The option {bf:viewoff}
+reverts back and unconnects a network from a view on the dataset. To change values of the underlying network directly use {help nwreplace} instead. 
 
 {pstd}
 For example, if one were to import/use a network with 16 nodes and drop all Stata variables, {bf:nwload} would create exactly
@@ -67,35 +70,35 @@ For example, if one were to import/use a network with 16 nodes and drop all Stat
 	{cmd:. nwload flomarriage}
 
 {pstd}
-All Stata variables can be deleted without deleting the underlying networks. With {bf:nwload} a network can always be brought back 
+All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option {bf:viewon}; see above). With {bf:nwload} a network can always be brought back 
 as Stata variables. In case the variables already exist, they are overwritten. If one wants to permanently drop a network one needs to
 use {help nwdrop} or {help nwclear} (very similar to how one would drop or clear normal variables). 
 
 {pstd}
-{bf:nwload} not only loads the adjacency matrix as variables, but also generates (or overwrites) three additional Stata variables:
+{bf:nwload} not only loads the adjacency matrix as variables, but also generates (or overwrites) the variable {it:_nwnode}. This variable identifies nodes. When
+the network is two-mode (see {help nw2set:introduction to two-mode networks), the command also creates the variable {it:_nwmode}. Lastly, the command
+generates (or overwrites) the variable {it:_nwinclude} (unless option {opt:generate()} specifies another variable name. This variable indicates which nodes
+are part of the network that has been loaded. 
 
-{synoptline}
-{synopt:{it:_nodelab}}This variable holds the node labels (see {help nodeid:nodelab}).{p_end}
-{synopt:{it:_nodeid}}This variable holds the node ids (see {help nodeid}).{p_end}
-{synopt:{it:_nodevar}}This variable holds the information about the variables that are used to represent the adjacency matrix of the network as Stata variables.{p_end}
-{synoptline}
+{pstd}
+Nodes and node attributes are represented as observations in the dataset and are matched with the variable {it:_nwnode}. Whenever a nwcommand uses or produces
+node-level attributes it matches the nodes with the observations.
 
 {pstd}
 One can only load the node labels of a network as a Stata variable with the option {bf:labelsonly} (this does neither load the adjacency matrix
-of a network as Stata variables nor other information, but just creates the variable {it:_nodelab}).
+of a network as Stata variables nor other information, but just creates the variable {it:_nwnode}).
 
 {pstd}
-These variables are created to simplify interaction with, e.g. node labels. For example, one can plot the Florentine marriage network and
-label the nodes accordingly with:
+For example, one can plot the Florentine marriage network and label the nodes accordingly with:
 
 	{cmd:. webnwuse florentine, nwclear}
-	{cmd:. nwplot flomarriage, label(_nodelab)}
+	{cmd:. nwplot flomarriage, label(_nwnode)}
 
 {pstd}
 Furthermore, {bf:nwload} makes {help netname} the current network, unless option {bf:nocurrent} is specified. Many nwcommands (although
 they do something with a network) do not require a network name. In the cases where no {help netname} is specified, a nwcommand 
 automatically runs with the {help nwcurrent:current network}. For programming your own network commands with this feature see 
-{help _nwsyntax}.
+{help nw_syntax}.
 
 {pstd}
 By default, all commands that generate a network (see {help nw_topical##generator:network generator}) also load the network as Stata variables. However, 
@@ -120,3 +123,5 @@ same variable names, the Stata variables are overwritten.
 {title:See also}
    
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}
+
+last certified : 21 Aug 2026
