@@ -44,6 +44,12 @@ settings (R script). Numbered by benchmark: `0x` = 30-node original, `1x` =
   `common_neighbors`/`neighbors_out`) at realistic sparse degree, used to
   pin the harmonisation-unit-83 GWESP gap on Mata's own per-call overhead
   before writing any native code.
+- `60_verbose_500sparse_r.R` — runs Statnet's own `ergm()` with
+  `verbose=TRUE` on benchmark 4's exact network, capturing its real
+  per-iteration MCMLE trace (theta, gradient, T²/degrees of freedom) - the
+  basis for harmonisation unit 84's direct iteration-by-iteration
+  comparison against `nwergm`'s own `verbose` output that root-caused the
+  convergence-at-scale problem.
 
 `nwset`'s own `mat()` option has a real, documented bug with bare Stata matrix
 names (`docs/CERTIFICATION.md`'s own Pending list) that a literal-expression
@@ -184,6 +190,44 @@ verification against Statnet's own current C source, and the Mata
 microbenchmark (`50_microbench_primitives.do`) that pinned the GWESP gap on
 interpreter overhead rather than an algorithmic difference before any C
 code was written.
+
+**MCMLE convergence-at-scale root-caused and fixed (harmonisation unit
+84)**: benchmarks 4 and 5 hitting the 20-iteration cap (still true after
+unit 83's native backend - that unit made each iteration faster, not the
+iteration count itself lower) turned out to be an invalid statistical test,
+not a stuck optimizer or a slow sampler. A real, verbose Statnet trace on
+the identical benchmark-4 network (`60_verbose_500sparse_r.R`) showed
+Statnet's own "confidence" convergence test uses an autocorrelation-
+discounted EFFECTIVE sample size as its own F-test degrees of freedom
+(non-integer, far below its raw recorded draw count, growing across
+iterations) - `nwergm`'s own equivalent test used the RAW `mcmcsamplesize`
+directly, which - given the same MCMC chain is thinned, not fully
+decorrelated - made its own implied confidence region far too tight to ever
+contain a genuinely converged estimate. `nwergm`'s own `verbose` output on
+the same network confirmed theta was already tracking Statnet's converged
+value from iteration 1; only the pass/fail TEST was broken. Fixed by
+applying the same lag-1-autocorrelation correction the final variance step
+already used one iteration earlier - inside the per-iteration test itself.
+Result, same five benchmarks, only this fix added on top of the native
+backend:
+
+| Benchmark | R `ergm` | nwergm (unit 83, native) | nwergm (unit 84, +convergence fix) | Iterations |
+|---|---|---|---|---|
+| 1: 30-node directed, edges+mutual | 0.29s | 0.311s | **0.278s** | 1 (was ~1-7) |
+| 2: 100-node directed, edges+mutual+nodematch | 0.484s | 0.495s | **0.306s** | 1 |
+| 3: 100-node undirected, edges+gwesp | 0.326s | 0.419s | **0.405s** | 1 |
+| 4: 500-node sparse, edges+nodematch+gwesp | 2.293s | 3.932s (capped, unconverged) | **2.785s** | 1 (was 20, unconverged) |
+| 5: 1000-node directed CONTROL (no gwesp) | 9.177s | 4.883s (capped, unconverged) | **3.267s** | 1 (was 20, unconverged) |
+
+All five benchmarks now converge properly (none hit the iteration cap) and
+run faster still, since a converged 1-2 iteration fit is less total MCMC
+work than a full, unconverged 20-iteration run. See `dev/ergm_benchmark_r_vs_stata/60_verbose_500sparse_r.R`
+for the real Statnet trace this diagnosis was based on and
+`docs/CERTIFICATION.md`'s unit-84 entry for the full account, including an
+honestly-disclosed open question the fix surfaced rather than resolved:
+whether the default `mcmcinterval` provides fully adequate MCMC mixing at
+500+ node GWESP scale (a precision question, not a convergence-test
+validity question) - see `docs/ERGM_ROADMAP.md`'s Performance section.
 
 ## Extending this suite
 
