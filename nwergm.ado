@@ -441,6 +441,32 @@ program nwergm, eclass
 		mata: `__td_gwesp'.decay = `gwesp'
 		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `__td_gwesp', ("gwesp_`gwesp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwesp'"
+		// ErgmGraph::enable_sp_cache() (Part XXV performance work,
+		// docs/CERTIFICATION.md unit 82) is DELIBERATELY NOT called here.
+		// It was built, exhaustively certified for correctness, wired in,
+		// and then measured directly against this suite's own realistic
+		// GWESP benchmarks (100-node and 500-node sparse networks) - and
+		// found to make BOTH slower (100-node: 23.1s -> 39.3s; a clean,
+		// controlled A/B test isolating the cache as the only variable),
+		// not faster. Root cause, fully characterized: TNT's own
+		// acceptance rate on a FITTED sparse model is very high (83-93%
+		// measured directly, not assumed) - so toggle()'s own cache-
+		// maintenance cost (paid on nearly every proposal, not
+		// occasionally) dominates the cheaper O(1) lookup's own savings
+		// at the LOW degree (~4-6) these realistic benchmark networks
+		// have. A degree sweep at a matched high acceptance rate found
+		// the cache only becomes a net win around degree ~30-40+ (1.6x
+		// faster there; 1.6-2x SLOWER at degree 4-20) - well above what
+		// either benchmark network has. Kept unwired rather than removed
+		// entirely: the machinery itself is correct and useful for
+		// genuinely dense networks, just not a good default for the
+		// sparse case this package's own realistic test networks
+		// represent. See docs/CERTIFICATION.md unit 82 and
+		// docs/ERGM_ROADMAP.md's own Performance section for the full,
+		// disclosed account - the same "implement, measure, and report
+		// honestly even when the obvious optimization does not pan out"
+		// discipline this project used for the batch-means variance
+		// estimator (unit 80).
 	}
 	if "`gwdegree'" != "" {
 		confirm number `gwdegree'
@@ -762,6 +788,10 @@ program nwergm_simulate
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
 		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
+		// enable_sp_cache() deliberately NOT called here either - see the
+		// main nwergm program's own gwesp block for the full, measured
+		// account of why (net loss at the low degree realistic sparse
+		// networks have; only a net win above roughly degree 30-40).
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: st_local("__ergm_simexpr", ErgmMatToLiteral(__nwergm_last_G.to_dense()))
 

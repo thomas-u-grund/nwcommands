@@ -55,6 +55,29 @@ A follow-on audit, distinct from the migration above: not "is there more to migr
 
 All four fixed identically (an `ensure_dense_built()` call as the first line of the method body), with dedicated permanent regression coverage in `cscripts/test_sparse_architecture_audit.do` — each probe builds a genuinely sparse-native network directly via `create_by_name_sparse()`+`set_edge_from_triplets()` (deliberately never touching any dense-materializing accessor beforehand) and asserts the fixed method now behaves correctly against it. Separately, all 8 new commands/capabilities added during this session's own subsequent stages-1-7 work (harmonisation units 58-66: `nwcohesion`, `nwaltergen diversity()`, `nwqap predict()`, `nwcug condition(census)`, `nwtoedge comparevars()`, `nwcommunity algorithm(labelprop)`, `nwspectral`, `nwturnover`) were reviewed against the same standard and found to introduce no new gap — see `docs/CERTIFICATION.md`'s own unit-67 entry for the per-command reasoning. Full `cscripts/` sweep (both modes) after these fixes: same pre-existing baseline fails, no regressions.
 
+## Package-wide performance guideline: never route large, per-observation data through `st_matrix()`
+
+Discovered during ERGM benchmarking (`docs/ERGM_ARCHITECTURE.md`'s integration-layer section has the original,
+ERGM-scoped writeup; this is the same finding promoted to a package-wide rule, since the same trap can recur
+anywhere Mata hands a large, linear-in-data-size object back to Stata — QAP permutation results, blockmodel
+assignments, structural-equivalence distance matrices, or any other per-observation/per-dyad object, not just
+ERGM's design matrix).
+
+`st_matrix()` is architected for small, model-sized objects — a coefficient vector, a variance-covariance
+matrix, a handful of summary rows. It is **not** architected for large, per-observation data, and does not
+degrade gracefully: a bare `st_matrix()` call on a 999,000×4 matrix did not complete within 2 minutes (killed)
+in isolated testing, while `st_store()` on the byte-identical data completed in 0.008 seconds — roughly four
+orders of magnitude, not a modest constant-factor difference. This is exactly the bug that silently sat in
+`nwergm.ado`'s MPLE design-matrix construction since it first shipped, invisible at the tiny node counts every
+prior certification network happened to use, and only surfaced when a 1,000-node benchmark network hung for
+35+ minutes (see `docs/CERTIFICATION.md` unit 81 for the full root-cause account).
+
+**The rule**: when a Mata routine produces an object whose size scales with the number of observations, dyads,
+nodes, or edges (rather than with the number of model parameters), get it into Stata via `st_store()` (writing
+directly into pre-sized dataset variables) or keep it in a Mata vector/frame — never stage it through an
+intermediate `st_matrix()` call, even transiently. `st_matrix()`/`st_matrix()`-backed `e(b)`/`e(V)` remain the
+right tool for genuinely model-sized objects (coefficients, their covariance matrix, small summary tables).
+
 ## Rebuilding
 
 `lib/build.do` recompiles `lib/lnwcommands.mlib` from `unw_core.do` (`do unw_core.do` → `mata mlib create` → `mata mlib add lnwcommands *()` → `mata mlib index`) — required after any `unw_core.do` change before production-mode testing.
