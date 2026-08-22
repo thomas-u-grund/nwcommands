@@ -368,7 +368,7 @@ an adjacency list or an edgelist represented by Stata variables.
 
 capture program drop nwset	
 program nwset
-syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bipartite TWOmode biprownames(varname) selfloop labs(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
+syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
 
 	// twomode is a genuinely different declaration shape from
 	// bipartite, not a synonym for it - bipartite (long-established,
@@ -710,11 +710,34 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 		if "`nodenames'" != "" {
 			mata: `netobj'->set_nodenames(`nodenames')
 		}
-	
+
+		// vars() lets a caller explicitly name the Stata variables
+		// nwload will later materialize this network into, overriding
+		// update_nodesvar()'s own auto-derived-from-node-names default
+		// (called internally by create_by_name() above). Documented
+		// since at least this file's own doc header ("can be set wit
+		// option vars()"), but the option itself had been silently
+		// dropped from this syntax line at some point - confirmed via
+		// direct probe that nwlattice.ado's own `` nwset, vars(...) ``
+		// call crashed with "option vars() not allowed" before this
+		// fix, the actual root cause behind nwlattice's own long-open
+		// Pending item (previously misdiagnosed as a missing
+		// nwvalidvars.ado, which turned out to be a red herring - see
+		// docs/CERTIFICATION.md).
+		if "`vars'" != "" {
+			mata: st_local("nwsetvarsnodes", strofreal(rows(`__nwnew')))
+			local varscount : word count `vars'
+			if `varscount' != `nwsetvarsnodes' {
+				di "{err}option {bf:vars()} needs to have as many entries as there are nodes in the network ({bf:`nwsetvarsnodes'})."
+				error 6070
+			}
+			mata: `netobj'->set_nodesvar(tokens("`vars'"))
+		}
+
 		if "`undirected'" != "" | "`bipartite'" != "" {
 			nwsym `name'
 		}
-		
+
 		if "`bipartite'" != "" {
 			mata: `netobj'->set_2mode(1)
 			mata: `netobj'->set_modes(`__modes')

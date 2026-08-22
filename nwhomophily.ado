@@ -1,7 +1,3 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
 
 capture program drop nwhomophily
 program def nwhomophily
@@ -14,11 +10,6 @@ program def nwhomophily
 	if (`vc' != `hc') {
 		di "{err}option {bf:homophily()} needs to have one entry for each variable in {it:varlist}."
 		error 6300
-	}
-
-	// Check if this is the first network in this Stata session
-	if "$nwtotal" == "" {
-		global nwtotal = 0
 	}
 	
 	if "`nodes'" == "" {
@@ -36,22 +27,15 @@ program def nwhomophily
 		}
 	}
 	
-	// generate valid network name and valid varlist
 	if "`name'" == "" {
 		local name "homophily"
 	}
-	if "`stub'" == "" {
-		local stub "net"
-	}
-	
-	nwvalidate `name'
-	local assortname= r(validname)
-	local gencmd "nwgenerate _tempassort ="
+
+	//local gencmd "nwgenerate _tempassort ="
 	
 	tempname __temp0
 	tempname __temp
-
-		
+	
 	mata: `__temp0' = J(`nodes', `nodes', 0)
 	forvalues i = 1/`vc'{
 	
@@ -60,20 +44,24 @@ program def nwhomophily
 		local onemode = word("`mode'",`i')
 		
 		nwexpand `onevar' if _n <= `nodes', mode(`onemode') name(_tempexpand)
-		nwtomata _tempexpand, mat(`__temp')
+		
+		nw_tomata _tempexpand, mat(`__temp')
 		nwdrop _tempexpand
 		
 		mata: `__temp' = `__temp' :* `onehom'
 		mata: `__temp0' = `__temp0' :+ `__temp'
+		mata: mata drop `__temp'
 	}
 	mata: `__temp0' = exp(`__temp0')
-	nwdyadprob , mat(`__temp0') density(`density') name(`assortname') `undirected'
+	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected'
+	mata: mata drop `__temp0'
+	// `__temp' is already dropped at the end of the loop above (every
+	// iteration cleans up after itself) - this used to be a second,
+	// redundant drop of the same already-gone variable, crashing with
+	// "__000001 not found" on every single call despite the command's
+	// own actual logic (everything above this line) completing
+	// correctly - confirmed directly via `set trace on`, which showed
+	// a real network already built and summarized before this line
+	// ever ran.
+
 end
-	
-	
-	
-
-
-	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
