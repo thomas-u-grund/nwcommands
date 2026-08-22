@@ -162,6 +162,17 @@ Generators that *create* a network rather than operate on an existing one (`nwse
    style nit — six unrelated commands (plus a shared helper pair) failing multiple different ways on
    the same deprecated wrapper is not a
    coincidence worth dismissing.
+
+   **Update (harmonisation unit 52)**: `_nwsyntax`/`_nwsyntax_other` have since been consolidated
+   away entirely - every live caller migrated to `nw_syntax` directly (with `other()` where a
+   genuine option-name collision existed, e.g. `nwdissimilar`'s own `labs()`), both deprecated files
+   deleted. The `nwmovie`/`nwmoviexy` "high-confidence static finding, not empirically run" above
+   was empirically confirmed: both commands crashed unconditionally on every call (`_nwsyntax_other`
+   referenced two legacy globals, `$nwtotal`/`nw_mata`id'`, that no longer exist), and `nwmovie.ado`
+   separately had its own unrelated typo (`local nxy2' = ...`, a stray quote) breaking any call
+   without `nodexys()`. Both fixed; a real `movie.gif` was produced and inspected end to end in this
+   same environment ImageMagick was assumed missing from - it is, in fact, installed here. See
+   `docs/CERTIFICATION.md`'s own unit 52 row for full detail.
 5. **Two `r()`-return idioms coexist**: commands added/touched this session (`nwkcore`, `nwcug`,
    `nwsimindex`, `nw2project`, `nwaltergen`) use `program X, rclass` + `return scalar`; the vast
    majority of older commands instead do `mata: st_rclear()` + `mata: st_numscalar("r(x)", ...)`

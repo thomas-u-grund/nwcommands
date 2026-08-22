@@ -4,10 +4,10 @@
 
 capture program drop nwmovie
 program nwmovie
-	syntax anything(name=netname), [z(integer 1) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) *]
+	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) *]
 
-	_nwsyntax `netname', max(999) min(2)
-	
+	nw_syntax `netname', max(999) min(2)
+
 	if "`fname'" == "" {
 		if c(os) == "Windows" {
 			local fname "`c(pwd)'\movie"
@@ -133,12 +133,28 @@ program nwmovie
 	
 
 	// make movie
-	_nwsyntax `netname', max(999) min(2)
+	nw_syntax `netname', max(999) min(2)
 	local all_nets "`netname'"
-	
+
+	// _nwsyntax_other referenced two legacy globals ($nwtotal,
+	// nw_mata`id') that no longer exist in the current NWsdef-based
+	// storage architecture - every call unconditionally crashed with
+	// "invalid syntax" (forvalues i = 1/$nwtotal, $nwtotal empty),
+	// confirmed directly via probe before this fix, meaning nwmovie
+	// could never actually complete a single call. Replaced with
+	// nw_syntax (other() to avoid clobbering this program's own
+	// same-named locals), which already handles empty/current-network
+	// resolution the modern way. _nwsyntax_other's own self-loop-removal
+	// side effect (also unconditionally broken, same nw_mata`id'
+	// reference) is dropped rather than reimplemented blind - nwmovie
+	// has no test coverage and needs ImageMagick to run end to end in
+	// any environment, so a from-scratch reimplementation of a
+	// side-effect that was already silently dead code could not be
+	// verified here; tracked as a separate, documented follow-up rather
+	// than risking new, equally-unverifiable behaviour in the same fix.
 	local sizeCheck = 0
 	qui foreach onenet in `all_nets' {
-		_nwsyntax_other `onenet'
+		nw_syntax `onenet', other(other)
 		if `sizeCheck' == 0 {
 			local sizeCheck = `othernodes'
 		}
@@ -149,23 +165,48 @@ program nwmovie
 			}
 		}
 	}
-	_nwsyntax `all_nets', max(999) min(2)
+	nw_syntax `all_nets', max(999) min(2)
 	local k : word count `netname'
-	
+
 	// check and clean networks as edgecolor and edgesize
 	local 0 `edgesizes'
 	syntax [anything(name=edgesizes)], [*]
 	local edgesizeopt `options'
-	_nwsyntax_other `edgesizes', exactly(`networks') nocurrent
-	local edgesize_check "`othernetname'"
-	
+	nw_syntax `edgesizes', other(other) max(9999)
+	// _nwsyntax_other's own exactly() option padded a short netlist by
+	// repeating its last element (e.g. one edgesize network specified,
+	// applied to all movie frames) - replicated directly since nw_syntax
+	// has no equivalent option of its own.
+	local edgesize_check ""
+	local last ""
+	forvalues i = 1/`networks' {
+		local next : word `i' of `othernetname'
+		if "`next'" != "" {
+			local last "`next'"
+		}
+		else {
+			local next "`last'"
+		}
+		local edgesize_check "`edgesize_check' `next'"
+	}
+
 	local 0 `edgecolors'
 	syntax [anything(name=edgecolors)], [*]
 	local edgecoloropt `options'
-	local othernetname = ""
-	_nwsyntax_other `edgecolors', exactly(`networks') nocurrent
-	local edgecolor_check "`othernetname'"
-	
+	nw_syntax `edgecolors', other(other) max(9999)
+	local edgecolor_check ""
+	local last ""
+	forvalues i = 1/`networks' {
+		local next : word `i' of `othernetname'
+		if "`next'" != "" {
+			local last "`next'"
+		}
+		else {
+			local next "`last'"
+		}
+		local edgecolor_check "`edgecolor_check' `next'"
+	}
+
 	capture drop _c1_* 
 	capture drop _c2_*
 	capture drop _frame_*
@@ -311,10 +352,22 @@ program nwmovie
 		local second : word `next' of `netname'
 		local expnum = `i' * 100
 		local st = string(`z',"%05.0f")
+		local xx1 : word `=(`i' - 1) * 2 + 1 ' of `nodexys'
+		local yy1 : word `=(`i' - 1) * 2 + 2 ' of `nodexys'
+		local nxy1 = "`xx1' `yy1'"
+		local xx2 : word `=(`next' - 1) * 2 + 1 ' of `nodexys'
+		local yy2 : word `=(`next' - 1) * 2 + 2 ' of `nodexys'
+		local nxy2 = "`xx2' `yy2'"
+		if "`nxy1'" != "" {
+			local nxy1 " nodexy(`nxy1') "
+		}
+		if "`nxy2'" != "" {
+			local nxy2 " nodexy(`nxy2') "
+		}			
 		
 		noi di "{txt}Processing network {bf:`first'}"
 		if `i' == 1 {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1' `options'
+			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1' `options'
 			capture graph export `"`c(pwd)'/first`st'.`pic'"', replace `picopt'
 			if _rc != 0 {
 				noi di "{err}No writing right for working directory. Try changing the working directory.{txt}"
@@ -322,12 +375,12 @@ program nwmovie
 			}
 		}
 		else {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1'  `options'	
+			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1'  `options'	
 			qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
 		}
 		local st = string(`z',"%05.0f")
 		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
-		qui nwplot `second', ignorelgc generate(_c2_x _c2_y) `sizecmd2' `symbolcmd2'  `colorcmd2' `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'	
+		qui nwplot `second', ignorelgc generate(_c2_x _c2_y) `nxy2' `sizecmd2' `symbolcmd2'  `colorcmd2' `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'	
 		local expnum = (`z' + `frames' + 2)
 		local st = string(`expnum',"%05.0f")
 		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'

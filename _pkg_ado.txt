@@ -7,8 +7,6 @@ f _nwevalnetexp.ado
 f _nwnodeid.ado
 f _nwnodelab.ado
 f _nwsetobs.ado
-f _nwsyntax.ado
-f _nwsyntax_other.ado
 f _opts_oneof.ado
 f animate.ado
 f nw2degree.ado

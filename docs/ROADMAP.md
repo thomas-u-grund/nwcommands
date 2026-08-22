@@ -1,6 +1,6 @@
 # nwcommands Roadmap
 
-Living document. Last updated: 2026-08-21. See `docs/FEATURE_AUDIT.md` for the evidence behind every claim here, and `docs/SPARSE_BACKEND.md` for the sparse-migration architecture.
+Living document. Last updated: 2026-08-22. See `docs/FEATURE_AUDIT.md` for the evidence behind every claim here, and `docs/SPARSE_BACKEND.md` for the sparse-migration architecture.
 
 ## Guiding principle
 
@@ -128,10 +128,16 @@ native SVG export is the package's one plotting/export path.
   above require it); a browser-based/D3 interactive network explorer (assessed at the time as low
   incremental value since `nwplotjs` already covered the interactive use case - `nwplotjs` has
   since been removed entirely, harmonisation unit 51, so this is now simply out of scope rather
-  than redundant); animation of longitudinal networks beyond what `nwmovie`/
-  `nwmoviexy` already do (out of this unit's scope — those commands are a separate, already-working
-  raster/GIF pipeline, currently blocked in this environment only by missing ImageMagick, not by
-  any design gap).
+  than redundant); animation of longitudinal networks beyond what `nwmovie`/`nwmoviexy` already do.
+  **Correction (harmonisation unit 52)**: at the time this was written, `nwmovie`/`nwmoviexy` were
+  assessed as "a separate, already-working raster/GIF pipeline" - this was wrong. Both commands
+  unconditionally crashed on every call (`_nwsyntax_other`, their shared netlist-resolution helper,
+  referenced two legacy globals that no longer exist in the current storage architecture), and
+  `nwmovie.ado` additionally had its own unrelated typo (a stray quote turning `local nxy2 = ...`
+  into a local literally named `nxy2'`, breaking any call that didn't supply `nodexys()` - the
+  common case). Both fixed in unit 52; a real animated GIF was produced and confirmed to actually
+  play, in this same environment ImageMagick was earlier assumed missing from - it is, in fact,
+  installed here.
 
 ## Two-mode/temporal architecture initiative (in progress)
 

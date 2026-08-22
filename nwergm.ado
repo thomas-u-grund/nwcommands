@@ -7,7 +7,11 @@ capture program drop nwergm
 program nwergm, sortpreserve
 syntax anything(name=netname), formula(string) [debug ergmoptions(string) rpath(string) ergmdetail keepfiles detail gof gofoptions(string) mcmc mcmcoptions(string) * ]
 	set more off
-	_nwsyntax `netname'
+	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
+	// only 4 of its locals) - this file's own syntax line has no option
+	// named the same as any of nw_syntax's other exports, so calling it
+	// directly is a safe, direct simplification.
+	nw_syntax `netname'
 	
 	local temp = strpos(`"`formula'"', "~")
 	if `temp' > 0 {
