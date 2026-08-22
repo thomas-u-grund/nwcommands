@@ -503,6 +503,49 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 }
 
 /* ===================================================================
+   EXTENSION DEMONSTRATION - NOT part of the real v1 term registry.
+
+   istar2: the undirected 2-star count, sum_i C(deg(i),2). Built and
+   certified purely to PROVE that docs/ERGM_ARCHITECTURE.md's own "how to
+   add a new term" walkthrough actually works end to end for a future
+   implementer who is not this code's original author - it deliberately
+   does NOT appear in nwergm.ado's option surface (2-star family terms
+   are, deliberately, a docs/ERGM_ROADMAP.md item rather than in v1
+   scope), and existing only as a certified, working term is the entire
+   point: see cscripts/test_nwergm_demoterm.do.
+
+   Change statistic: toggling (i,j) changes only i's and j's OWN 2-star
+   contribution (no third node is affected - the same "changes only
+   touch the endpoints' own local counts" shape as gwdegree above, not
+   the three-way shape gwesp needs). For endpoint degree d before the
+   toggle, C(d,2)=d*(d-1)/2 shifts by exactly +d when a tie is ADDED
+   (C(d+1,2)-C(d,2)=d) and by exactly -(d-1) when a tie is REMOVED
+   (C(d-1,2)-C(d,2)=-(d-1)) - both cases below via the single kernel
+   call so the sign/direction logic is identical to every other term's
+   own change() (this is not literally reused since istar2 needs no
+   decay/attr, but the analogous derivation to gwdegree's own change()
+   above is worth reading side by side).
+   =================================================================== */
+real scalar ergm_2star_kernel(real scalar d){
+	return(d*(d-1)/2)
+}
+real rowvector stat_istar2(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + ergm_2star_kernel(G.degree_total(i))
+	return(tot)
+}
+real rowvector change_istar2(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, di, dj, chg
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_total(i)
+	dj = G.degree_total(j)
+	chg = (ergm_2star_kernel(di+delta) - ergm_2star_kernel(di))
+	chg = chg + (ergm_2star_kernel(dj+delta) - ergm_2star_kernel(dj))
+	return(chg)
+}
+
+/* ===================================================================
    ErgmModel: an ordered list of term instances (name, npar, function
    pointers, ErgmTermData). This is the ONLY place that knows a model
    is "a list of terms" - the sampler, MPLE builder and MCMLE
