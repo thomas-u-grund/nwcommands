@@ -107,4 +107,4 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 
 {title:See also}
 
-	{help nwds}, {help nwsort}, {help order}, {help netlist}
+	{help nwds}, {help order}, {help netlist}

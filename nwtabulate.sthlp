@@ -110,7 +110,7 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 
 {pstd}
 Teh command produces the network version of {help tabulate twoway} for two networks. It
-shows the overlap of ties for two networks that share the same nodes (see {help nodename}) on the dyadic level. The
+shows the overlap of ties for two networks that share the same nodes (see {help nodeid}) on the dyadic level. The
 command essentially transforms {it:netname1} and {it:netname2} in edgelist format (see {help nwtoedge})
 and runs a normal {help tabulate twoway}, hence,
 all {help tabulate twoway:tabulate2_options} can be used as well.  
@@ -145,7 +145,7 @@ under the condition that the network and the attribute are unrelated.
 {title:Example}
 
 {pstd}
-This loads the Florentine {help netexamle:data} and shows the overlap between
+This loads the Florentine {help netexample:data} and shows the overlap between
 the networks {it:flomarriage} and {it:flobusiness}. Both have the same nodes, i.e. 16 Florentine families. 
 
      {com}. nwwebuse florentine, nwclear
@@ -244,7 +244,7 @@ under the condition that the network and the attribute are unrelated.
 {title:Example}
 
 {pstd}
-This loads the Florentine {help netexamle:data} and shows the attributes of the sending and receiving nodes for those pairs (i,j) who are connected
+This loads the Florentine {help netexample:data} and shows the attributes of the sending and receiving nodes for those pairs (i,j) who are connected
 with each other. In this case, it shows the marriage connections between Florentine families who both have a seat in the civic council and so on. For example,
 there are 12 undirected marriage ties between two Florentine families where both have a seat in the civic council. There are 4 marriage ties where one family
 has a seat in the civic council and the other one does not. 

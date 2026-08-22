@@ -336,7 +336,7 @@ networks that do currently exist in memory. A similar overview is provided by {h
 Although not really needed, networks can be represented with Stata variables (see {help nwload}). For this purpose, each network
 holds some meta-information about which Stata variables should be created when a network is loaded in such a way. This meta-information
 can be set wit option {bf:vars()}. When specified, it needs to have as many entries as there are nodes in the network. When not specified, 
-the program automatically makes a suggestion for variable names (see {help nwvalidvars}). 
+the program automatically makes a suggestion for variable names. 
 
 {pstd}
 Many network generators allow the option {bf:xvars}, 
@@ -362,5 +362,5 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}
 last certified : 21 Aug 2026

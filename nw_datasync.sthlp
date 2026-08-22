@@ -48,8 +48,4 @@ sorting of the observations on the variable {bf:_nwnode} does not correspond to 
 to switch syncing off. But keep in mind that then it is up to you to make sure that observations correspond to nodes in the network. In this case, the first observation in the
 dataset is matched with the first node in the network and so on.
 
-	
-{title:See also}
-
-   {help nwattributes: node attributes}
-last certified : 21 Aug 2026
+last certified : 22 Aug 2026

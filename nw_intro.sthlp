@@ -128,7 +128,7 @@ The intution and usage of these network extensions is very similar to what one i
 {center:{c |} {help tabulate}     {c |} {help nwtabulate}     {c |} Tabulate networks             {c |}}
 {center:{c |} {help correlate}    {c |} {help nwcorrelate}    {c |} Correlate networks            {c |}}
 {center:{c |} {help expand}       {c |} {help nwexpand}       {c |} Exand variable to network     {c |}}
-{center:{c |} {help syntax}       {c |} {help _nwsyntax}      {c |} Parse network syntax          {c |}}
+{center:{c |} {help syntax}       {c |} {help nw_syntax}      {c |} Parse network syntax          {c |}}
 {center:{c BLC}{hline 14}{c BT}{hline 16}{c BT}{hline 31}{c BRC}}
 
 

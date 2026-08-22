@@ -15,15 +15,15 @@
 {p 8 17 2}
 {cmdab: _nwnodeid} 
 [{it:{help netname}}],
-{opt nodelab}({help nodelab})
+{opt nodelab}({help nodeid:nodelab})
 [{opt detail}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nodelab}({help nodelab})}nodelab of network node i{p_end}
-{synopt:{opt detail}}displays the {help nodeid} and {help nodelab} of node i{p_end}
+{synopt:{opt nodelab}({help nodeid:nodelab})}nodelab of network node i{p_end}
+{synopt:{opt detail}}displays the {help nodeid} and {help nodeid:nodelab} of node i{p_end}
 {synoptline}
 {p2colreset}{...}
 

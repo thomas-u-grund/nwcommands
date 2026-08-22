@@ -21,32 +21,32 @@
 {title:Writing own network programs}
 
 {pstd}
-Writing own network programs is very easy. The nwcommands offer several helper programs that can be 
-included in such programs (see e.g. {help nwtomata}, {help _nwsyntax}).
+Writing own network programs is very easy. The nwcommands offer several helper programs that can be
+included in such programs (see e.g. {help nwtomata}, {help nw_syntax}).
 
 {pstd}
 Let us write our own program {it:myindegree} to calculte indegree centrality (see {help nwdegree}) of a
-network {help netname}. Let us program it in such a way that it can be called with a {help netname} as an argument 
+network {help netname}. Let us program it in such a way that it can be called with a {help netname} as an argument
 and an option {bf:generate()} to save the result.
 
 	{com}capture program drop myindegree
 	program myindegree
 		syntax [anything(name=netname)] , [ generate(string)]
-		
-		_nwsyntax `netname'
+
+		nw_syntax `netname'
 		nwtomata `netname', mat(net)
-		
+
 		local generate = cond("`generate'"=="", "_myindegree", "`generate'")
 
 		mata: indegree = colsum(net)'
 		getmata `generate' = indegree, force
 		mata: mata drop indegree net
 	end{txt}
-	
+
 {pstd}
-The logic of this little program is that after normal use of {help syntax}, {help _nwsyntax} is called to check if {it:anything}
-is a valid network and (if necessary) unabbreviates it (this is very similar to {help syntax}). By default, _nwsyntax only allows one
-network in {it:anything}, which is just what we want. When used with the defaults, _nwsyntax also leaves a local macro {it:netname} behind
+The logic of this little program is that after normal use of {help syntax}, {help nw_syntax} is called to check if {it:anything}
+is a valid network and (if necessary) unabbreviates it (this is very similar to {help syntax}). By default, nw_syntax only allows one
+network in {it:anything}, which is just what we want. When used with the defaults, nw_syntax also leaves a local macro {it:netname} behind
 which holds the unabbreviated network name. Next, in {bf:nwtomata} we refer to this {it:netname} and obtain a Mata matrix {it:net} from
 this network.
 
@@ -76,15 +76,15 @@ Let us write another simple program which takes an existing network as an argume
 	{com}capture program drop myinverse
 	program myinverse
 		syntax [anything(name=netname)] , [ generate(string)]
-		
-		_nwsyntax `netname'
+
+		nw_syntax `netname'
 		nwtomata `netname', mat(net)
-		
+
 		local generate = cond("`generate'"=="", "_myinverse", "`generate'")
 
 		mata: inverse = (net :== 0)
 		nwset, mat(inverse) name("`generate'")
-		mata: mata drop indegree inverse
+		mata: mata drop net inverse
 	end{txt}
 
 {pstd}
@@ -328,4 +328,4 @@ crashes.
 
 {title:See also}
 
-	{help _nwevalnetexp}, {help _nwsyntax}, {help nwtomata}
+	{help _nwevalnetexp}, {help nw_syntax}, {help nwtomata}

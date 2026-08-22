@@ -39,7 +39,7 @@ Drops a network or a list of networks. The command is the network version of {he
 
 {pstd}
 It can also be used with {help if} or {help in}. Then it only drops certain nodes from a network. This updates the
-Stata variable {help _nwinclude}, which indicates if a node is included in a network.
+Stata variable {bf:_nwinclude}, which indicates if a node is included in a network.
 
 {title:Examples}
 
