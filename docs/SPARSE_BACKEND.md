@@ -1,6 +1,6 @@
 # Sparse Graph Backend — Architecture & Status
 
-Living document. Last updated: 2026-08-21 (Commit 9: distance family - sparse-backend migration complete).
+Living document. Last updated: 2026-08-22 (harmonisation unit 67: general validation-stage audit - four latent `ensure_dense_built()` gaps found and fixed).
 
 ## Why
 
@@ -43,6 +43,17 @@ All in `unw_core.do` on the `NWdef` class, unless noted.
 ## Status: migration complete
 
 All nine commits are done. Every command-facing code path (`nwfromedge`/`nwset`'s `edgelist` option, `nwgeodesic`/`nwcloseness`/`nwreach`/`nwbridges`/`nwpath`, `calculate_components`/`calculate_clustering`/`calculate_betweenness`, `nwneighbor`) now goes through sparse-native construction and/or sparse accessors, with lazy, size-guarded dense materialization as the compatibility fallback for anything not yet migrated. The two standalone functions still fully dense (`Brute_dist()`, used only by `nclan_diameter_ok()`'s small induced-subgraph work; the eigendecomposition inside `nwevcent`) are dense by necessity or deliberately out of scope, not oversight — see `docs/ROADMAP.md` for the reasoning on each.
+
+## General validation-stage audit (harmonisation unit 67)
+
+A follow-on audit, distinct from the migration above: not "is there more to migrate" (answered above - no, by design, for the two dense-by-necessity exceptions) but "does every method that already touches the dense `edge` field do so *safely*". A systematic, comment-stripped scan of every `NWdef` method (161 total) for a bare `edge` reference with no `ensure_dense_built()` call in the same body found **four previously-undiscovered instances of the exact bug class `check_symmetry()`/`symmetrize()` were already fixed for during the migration itself, and this session's own earlier `keep_nodes()`/`drop_nodes()` fix (harmonisation unit 59) missed**:
+
+- **`clean_matrix_2mode()`** — has a live caller (`nw2fromedge.ado`) and was only "accidentally safe": that caller's own hardcoded `undirected` path always calls `nwsym`/`symmetrize()` first, which itself already calls `ensure_dense_built()` — not a designed guarantee. Confirmed the actual failure mode with an isolated probe: a genuinely sparse-native two-mode network, cleaned without going through `nwsym` first, hits a real Mata conformability error (`J(0,0,0) :+` an n×n matrix).
+- **`connect_edge()`** — zero live callers today (confirmed via grep; genuinely dead code).
+- **`add_node()`** — one live caller, `nwaddnodes.ado`, itself already documented elsewhere in `docs/CERTIFICATION.md` as broken for an unrelated reason, so this specific gap causes no current observable failure.
+- **`dumper()`** — a manual debug-only utility (no `.ado` command calls it); would have silently printed "no edges" for every node on a sparse-native network.
+
+All four fixed identically (an `ensure_dense_built()` call as the first line of the method body), with dedicated permanent regression coverage in `cscripts/test_sparse_architecture_audit.do` — each probe builds a genuinely sparse-native network directly via `create_by_name_sparse()`+`set_edge_from_triplets()` (deliberately never touching any dense-materializing accessor beforehand) and asserts the fixed method now behaves correctly against it. Separately, all 8 new commands/capabilities added during this session's own subsequent stages-1-7 work (harmonisation units 58-66: `nwcohesion`, `nwaltergen diversity()`, `nwqap predict()`, `nwcug condition(census)`, `nwtoedge comparevars()`, `nwcommunity algorithm(labelprop)`, `nwspectral`, `nwturnover`) were reviewed against the same standard and found to introduce no new gap — see `docs/CERTIFICATION.md`'s own unit-67 entry for the per-command reasoning. Full `cscripts/` sweep (both modes) after these fixes: same pre-existing baseline fails, no regressions.
 
 ## Rebuilding
 
