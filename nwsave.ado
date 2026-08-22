@@ -50,7 +50,7 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 
 {title:See also}
 
-        {help nwuse}, {help nwwebwuse}, {help save}
+        {help nwuse}, {help nwwebuse}, {help save}
 ***/
 capture program drop nwsave
 program nwsave

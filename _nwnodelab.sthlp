@@ -22,7 +22,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth nodeid(nodeid)}}nodeid of network node i{p_end}
-{synopt:{opt detail}}displays the {help nodeid} and {help nodelab} of node i{p_end}
+{synopt:{opt detail}}displays the {help nodeid} and {help nodeid:nodelab} of node i{p_end}
 {synoptline}
 {p2colreset}{...}
 

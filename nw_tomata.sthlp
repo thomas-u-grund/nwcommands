@@ -35,7 +35,7 @@ do not need to know Mata to use any of the nwcommands, but sometimes you might w
 adjacency matrix, for example, when programming your own network commands. 
 
 {pstd}
-{cmd:nw_tomata} returns a link to the {help netobj:Mata network object} and saves it in {bf:r(netobj)}. Furthermore,
+{cmd:nw_tomata} returns a link to the {help nw_programming##modernprogramming:Mata network object} and saves it in {bf:r(netobj)}. Furthermore,
 it returns a direct link to the underlying Mata adjacency matrix of the network object and saves it in
 {bf:r(adj)}.
 

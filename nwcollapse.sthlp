@@ -47,5 +47,5 @@ This collapses the first and the second node of a random network. The collapsed 
 	
 {title:See also}
 
-	{help collapse}, {help nwmerge}
+	{help collapse}
 last certified : 21 Aug 2026

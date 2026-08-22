@@ -1,3 +1,4 @@
+/***
 {smcl}
 {* *! version 2.0.1  5jun2019 author: Thomas Grund}{...}
 {marker topic}
@@ -60,4 +61,72 @@ Burt, R. S. 1992. Structural Holes: The social structure of competition. Cambrid
 
 	{help nwburt}, {help nwpath}
 
-last certified : 22 Aug 2026
+***/
+
+capture program drop nwbridges
+program nwbridges
+	syntax [anything(name=netname)] [, nwreplace name(string) type(string) distance]
+	nw_syntax `netname'
+	local oldname `netname'
+	local olddirected `netname'
+	local generate "`name'"
+	if "`type'" == "" {
+		local type "global"
+	}
+	_opts_oneof "local global distance" "type" "`type'" 6555
+	
+	if "`generate'" == "" {
+		local generate "_bridges"
+	}
+
+	capture nw_syntax `generate', other(other)
+	if _rc == 0 & "`nwreplace'" == "" {
+		di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace}"
+		err 99
+	}
+	capture nwdrop `generate'
+	nwduplicate `netname', name(`generate')
+
+	nw_syntax `generate'
+	mata: `netobj'->set_edge(`netobj'->calculate_distances_without())
+	if "`type'" == "global" {
+		nwreplace `generate' = (`generate' == -1)
+		local type "global"
+	}
+	if "`type'" == "local"{
+		nwreplace `generate' = (`generate' == -1 | `generate' > 2)
+		local type "local"
+	}
+	if "`type'" == "distance" {
+		local type "distance"
+	}
+	
+	if "`olddirected'" == "false" {
+		nwsym `generate', mode(min)
+	}
+	qui nwsummarize `generate'
+	if "`directed'" == "true" {
+		local bridges = `r(arcs)'
+	}
+	else {
+		local bridges = `r(edges)'
+	}
+	mata: st_rclear()
+	
+	nw_syntax `oldname'
+	mata: st_global("r(name)", "`netname'")
+	mata: st_global("r(directed)", "`directed'")
+	mata: st_global("r(bridges)", "`bridges'")
+	mata: st_global("r(bridges_type)", "`type'")
+	di ""
+	di "{hline 30}"
+	di "{txt}    Network      : {res}`netname'"
+	di "{txt}    Directed     : {res}`directed'"
+	di "{txt}    Bridges      : {res}`r(bridges)'"
+	di "{txt}    Type         : {res}`r(bridges_type)'"
+	di "{hline 30}"
+	
+end
+
+
+

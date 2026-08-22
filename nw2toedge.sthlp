@@ -39,8 +39,8 @@
 
 {pstd}
 An edgelist of a single network {help netname} produced by {cmd:nwtoedge} is a set of three variables representing
-the relations in the network. The first variable ({it:_ego}) gives the {help nodename}
-of the sending node {it:i} of a relationship; the second variable ({it:_alter}) gives the {help nodename} of the 
+the relations in the network. The first variable ({it:_ego}) gives the {help nodeid}
+of the sending node {it:i} of a relationship; the second variable ({it:_alter}) gives the {help nodeid} of the 
 receiving node {it:j}. Lastly, the variable {it:netname} saves information about the 
 dyad pair ({it:i},{it:j}) in the network {it:netname}. 
 

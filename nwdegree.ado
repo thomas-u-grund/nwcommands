@@ -144,7 +144,7 @@ The next example saves the out- and indegree centrality in the variables {it:myo
 	
 {title:See also}
 
-   {help nwbetween}, {help nwcloseness}, {help nwcluster}, {help nwevcent}, {help nwkatz} 
+   {help nwbetween}, {help nwcloseness}, {help nwclustering}, {help nwevcent}, {help nwkatz} 
 ***/
 
 capture program drop nwdegree
