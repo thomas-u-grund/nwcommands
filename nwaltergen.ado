@@ -27,7 +27,7 @@
 {opth hop(int)}]
 
 {p 8 17 2}
-{it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}.
+{it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}, {bf:diversity}.
 
 {marker propop}{...}
 {p 8 17 2}
@@ -66,9 +66,9 @@ in- and out-neighbors instead). For undirected networks the distinction does not
 Missing values of {it:srcvar} among a node's alters are dropped before the statistic is computed
 (so a node with 3 alters, one of whom has a missing {it:srcvar}, is summarized over the 2
 non-missing values) - never silently propagated into the result. A node with zero alters (after
-dropping missing values, if applicable) returns missing for {bf:mean}/{bf:min}/{bf:max}/{bf:sd},
-and 0 for {bf:sum}/{bf:count}. {bf:sd} additionally requires at least 2 non-missing alter values
-(it is undefined for a single value) and returns missing otherwise.
+dropping missing values, if applicable) returns missing for {bf:mean}/{bf:min}/{bf:max}/{bf:sd}/
+{bf:diversity}, and 0 for {bf:sum}/{bf:count}. {bf:sd} additionally requires at least 2 non-missing
+alter values (it is undefined for a single value) and returns missing otherwise.
 
 {pstd}
 {bf:proportion(alter.}{it:srcvar}{bf:==}{it:value}{bf:)} (or {bf:!=}) gives the proportion of
@@ -81,6 +81,21 @@ picking out one category of a variable with more than two categories, without fi
 {cmd:generate} a 0/1 indicator by hand. Missing {it:srcvar} values are still dropped before the
 proportion is computed, exactly as for every other {it:stat} - a missing value is never silently
 read as "not in this category".
+
+{pstd}
+{bf:diversity(alter.}{it:srcvar}{bf:)} gives Blau's (1977) index of heterogeneity among ego's
+alters' {it:srcvar} values - {bf:1 - sum(p_k^2)}, where {it:p_k} is the proportion of alters
+falling in category {it:k} of {it:srcvar} (treated as a categorical/discrete-coded variable, e.g.
+sector or ethnicity) - the standard "ego-network composition" measure: 0 when every alter shares
+the same category (no diversity), approaching 1 as alters spread evenly across many categories.
+This is the composition/diversity capability {help nwego}'s own "Supported network types" note
+originally left open - unlike ego-network size/density, it needs per-alter attribute {it:values},
+not just structural connectivity, so it belongs here alongside {help nwaltergen}'s other alter-
+attribute aggregations rather than in {help nwego} itself. Missing {it:srcvar} values are dropped
+before computing the index, exactly as for every other {it:stat}; an ego with zero alters (after
+dropping missing values) returns missing, not spuriously 0 (mirroring {bf:mean}/{bf:min}/{bf:max}/
+{bf:sd}'s own convention, not {bf:sum}/{bf:count}'s - diversity, like a mean, is undefined with no
+data to summarize, not naturally zero).
 
 {pstd}
 {opth hop(int)} aggregates over nodes exactly that many (unweighted) steps away instead of direct
@@ -107,6 +122,7 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
 	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
 	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
+	{cmd:. nwaltergen sectordiv = diversity(alter.sector)}
 
 
 {title:References}
@@ -114,6 +130,10 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 {pstd}
 Valente, T.W. (2005). Network models and methods for studying the diffusion of innovations. In
 {it:Models and Methods in Social Network Analysis}, Cambridge University Press.
+
+{pstd}
+Blau, P.M. (1977). {it:Inequality and Heterogeneity: A Primitive Theory of Social Structure}. Free
+Press. ({bf:diversity()}'s own index of heterogeneity)
 
 {title:See also}
 
@@ -177,8 +197,8 @@ program nwaltergen
 			error 198
 		}
 	}
-	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|sum|min|max|sd|count)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
-		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|sum|min|max|sd|count|proportion(alter.srcvar==value)"
+	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|sum|min|max|sd|count|diversity)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
+		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value)"
 		error 198
 	}
 	else {

@@ -210,3 +210,61 @@ gen chainpos3 = _n
 nwgen hop2b = mean(alter.chainpos3), hop(2)
 assert _rc == 0
 assert hop2b[1] == 3
+
+* --- diversity(alter.srcvar): Blau's (1977) index of heterogeneity,
+* 1-sum(p_k^2) - the ego-network composition/diversity capability
+* nwego's own doc header originally left open (ROADMAP.md's Stage 3
+* list). Star network A-B,A-C,A-D,A-E (undirected): B,C,D,E's category
+* values are 1,1,2,3 - A's alters split 2/4 category 1, 1/4 category 2,
+* 1/4 category 3, so Blau = 1-(.5^2+.25^2+.25^2) = 1-.375 = .625,
+* hand-computed and verified directly against calculate_alterstat()'s
+* Mata output before this test was written. Nodes B-E each have only A
+* as an alter (a single value) - Blau=0 by definition (one category,
+* p=1, no diversity), not missing.
+nwclear
+nwset, mat((0,1,1,1,1\1,0,0,0,0\1,0,0,0,0\1,0,0,0,0\1,0,0,0,0)) name(divnet) undirected labs(A,B,C,D,E)
+gen divcat = .
+replace divcat = 0 in 1
+replace divcat = 1 in 2
+replace divcat = 1 in 3
+replace divcat = 2 in 4
+replace divcat = 3 in 5
+nwaltergen divscore = diversity(alter.divcat)
+assert _rc == 0
+assert reldif(divscore[1], .625) < 1E-8
+forvalues i = 2/5 {
+	assert divscore[`i'] == 0
+}
+
+* all-identical-category alters: Blau=0 exactly, not merely close to 0.
+nwclear
+nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(divnet2) undirected labs(A,B,C,D)
+gen samecat = .
+replace samecat = 5 in 2
+replace samecat = 5 in 3
+replace samecat = 5 in 4
+nwaltergen divsame = diversity(alter.samecat)
+assert divsame[1] == 0
+
+* an isolate (zero alters) returns missing, matching mean/min/max/sd's
+* own convention - diversity of nothing is undefined, not spuriously 0.
+nwclear
+nwset, mat((0,0\0,0)) name(diviso) undirected labs(A,B)
+gen isocat = .
+replace isocat = 1 in 1
+replace isocat = 2 in 2
+nwaltergen diviso = diversity(alter.isocat)
+assert missing(diviso[1])
+assert missing(diviso[2])
+
+* nwgen's own dispatch recognizes diversity() too.
+nwclear
+nwset, mat((0,1,1,1,1\1,0,0,0,0\1,0,0,0,0\1,0,0,0,0\1,0,0,0,0)) name(divnet3) undirected labs(A,B,C,D,E)
+gen divcat3 = .
+replace divcat3 = 1 in 2
+replace divcat3 = 1 in 3
+replace divcat3 = 2 in 4
+replace divcat3 = 3 in 5
+nwaltergen divviaalter = diversity(alter.divcat3)
+nwgen divviagen2 = diversity(alter.divcat3)
+assert divviaalter == divviagen2

@@ -3110,6 +3110,33 @@ real matrix `NWdef'::calculate_kcore(){
 	this failure mode via a different mechanism (matrix multiplication),
 	worth guarding against explicitly here too.
 */
+/*
+	Blau's (1977) index of heterogeneity for a categorical variable:
+	1 - sum(p_k^2), where p_k is the proportion of `vals' falling in
+	category k - 0 when every value is identical (no diversity), and
+	approaching 1 as values spread evenly across many categories. Shared
+	by calculate_alterstat()'s and calculate_alterstat_hop()'s own
+	"diversity" stat branches (a small, pure math helper, unlike those two
+	functions' own per-node aggregation loops, which are deliberately kept
+	as independent copies - see calculate_alterstat_hop()'s own header
+	comment for why). Undefined for zero values - callers only invoke this
+	when `vals' is non-empty (m > 0), matching mean/min/max's own
+	established missing-for-empty convention.
+*/
+real scalar BlauIndex(real colvector vals){
+	real matrix distinct
+	real scalar m, j
+	real colvector p
+
+	m = rows(vals)
+	distinct = uniqrows(vals)
+	p = J(rows(distinct), 1, 0)
+	for (j=1; j<=rows(distinct); j++){
+		p[j] = sum(vals :== distinct[j]) / m
+	}
+	return(1 - sum(p:^2))
+}
+
 real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar stat){
 	real scalar n, i, m
 	real matrix result, nb, vals
@@ -3145,6 +3172,9 @@ real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar st
 		}
 		else if (stat == "count"){
 			result[i] = m
+		}
+		else if (stat == "diversity"){
+			if (m > 0) result[i] = BlauIndex(vals)
 		}
 	}
 
@@ -3209,6 +3239,9 @@ real matrix `NWdef'::calculate_alterstat_hop(real colvector srcvar, string scala
 		}
 		else if (stat == "count"){
 			result[i] = m
+		}
+		else if (stat == "diversity"){
+			if (m > 0) result[i] = BlauIndex(vals)
 		}
 	}
 

@@ -1,7 +1,7 @@
 capture program drop nwgen
 program nwgen
 	local arg ="`0'"
-	if regexm(`"`arg'"', "=[ ]*(mean|sum|min|max|sd|count|proportion)\(alter\.") {
+	if regexm(`"`arg'"', "=[ ]*(mean|sum|min|max|sd|count|diversity|proportion)\(alter\.") {
 		nwaltergen `arg'
 		exit
 	}
