@@ -29,6 +29,10 @@ source, comment, or identifier is copied anywhere in this codebase).
   validation, the NWdef→`ErgmGraph` bridge, term-option parsing (builds an
   `ErgmModel` from the user's requested options), MPLE-vs-MCMLE dispatch,
   and `ereturn` result posting.
+- `nwergm_estat.ado` — postestimation (`estat mcmcdiag`), dispatched via
+  `e(estat_cmd)` (set by `nwergm.ado`), not the `<cmd>_estat`-by-bare-
+  convention some other Stata packages use — see the "adding a new
+  `estat` subcommand" note below.
 - `cscripts/test_nwergm_statistics.do` / `test_nwergm_changestat.do` /
   `test_nwergm_mple.do` / `test_nwergm_mcmc.do` / `test_nwergm_mcmle.do` /
   `test_nwergm_ado.do` — the permanent certification suite, one file per
@@ -375,6 +379,33 @@ checks the result against real Statnet `ergm()` MCMLE output
   already exists") and its fix. **Any new tempname created inside
   `nwergm`'s program body that holds a genuine Mata object (as opposed to
   a Stata matrix/local) must be added to this list.**
+
+## Postestimation: adding a new `estat` subcommand
+
+`nwergm.ado` sets `ereturn local estat_cmd "nwergm_estat"` in both the MPLE
+and MCMLE branches. Stata's own `estat.ado` reads `e(estat_cmd)` and, if
+set, dispatches the entire `estat ...` command line to that program
+(`nwergm_estat mcmcdiag, ...` for `estat mcmcdiag, ...`) — this is the
+real, documented mechanism (confirmed by reading `estat.ado`'s own
+source), not the "just name your program `<cmd>_estat`" convention some
+other packages happen to also use as a coincidence of the same
+mechanism.
+
+**A genuinely non-obvious gotcha, found the hard way while building
+`estat mcmcdiag`**: `nwergm_estat` is a thin dispatcher that calls a
+separate `rclass` subroutine per subcommand (e.g.
+`nwergm_estat_mcmcdiag`). A nested `rclass` program call does **not**
+automatically propagate its own `r()` results back up through the calling
+program once that program returns — Stata's `estat.ado` itself handles
+this for its own call into `e(estat_cmd)` via an explicit `return add`
+immediately afterward, and any command-specific dispatcher must do the
+same for its own nested subcommand calls, or the subcommand's `r()`
+results silently read back as missing (while the subcommand's own
+`di`-based display output looks completely correct — this is what made it
+non-obvious rather than a simple typo; confirmed via an isolated 2-level
+`rclass`-nesting repro before concluding this was the actual cause). A
+future subcommand (e.g. a `gof` subcommand — see `docs/ERGM_ROADMAP.md`)
+must follow the same `nwergm_estat_mcmcdiag`/`return add` pattern.
 
 ## How to add a new term
 

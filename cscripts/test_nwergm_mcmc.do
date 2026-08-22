@@ -111,3 +111,67 @@ for (pick=1; pick<=nn*(nn-1); pick++) {
 }
 assert(asarray_elements(seen2) == 12)
 end
+
+* --- ErgmMCMCSampleDiag() (Part XIX: basic MCMC diagnostics need an
+* acceptance rate, which ErgmMCMCSample() itself deliberately does not
+* track - see unw_ergm.do's own header comment on ErgmMCMCSampleDiag).
+* Certified two ways: (1) under an identical seed, its own sample output
+* must be BYTE-IDENTICAL to ErgmMCMCSample()'s - the accept/reject draw
+* sequence is meant to be exactly the same algorithm, just additionally
+* tallied, so any divergence here would mean the tallying itself
+* perturbed the draw sequence (e.g. an extra runiform() call) rather than
+* merely counting it; (2) its own reported acceptance rate must exactly
+* match an INDEPENDENTLY hand-written duplicate of the identical loop
+* kept entirely inside this test file (not calling unw_ergm.do's own
+* counting logic at all) - a genuine second, independent implementation
+* of "count accepted proposals", not just re-reading the same number back.
+mata:
+mata set matastrict off
+
+M = ErgmModel()
+M.init()
+td = ErgmTermData()
+M.addterm("edges", 1, &stat_edges(), &change_edges(), td, ("edges"))
+
+rseed(3001)
+Ga = ErgmGraph()
+Ga.init(6, 0)
+sampA = ErgmMCMCSample(M, Ga, (-0.4), 200, 10, 500, &ergm_propose_tnt())
+
+rseed(3001)
+Gb = ErgmGraph()
+Gb.init(6, 0)
+diagB = ErgmMCMCSampleDiag(M, Gb, (-0.4), 200, 10, 500, &ergm_propose_tnt())
+
+printf("ErgmMCMCSampleDiag vs ErgmMCMCSample: max|diff|=%9.2e\n", max(abs(sampA - diagB.sample)))
+assert(max(abs(sampA - diagB.sample)) == 0)
+
+// independent hand-written duplicate of the identical loop, purely to
+// cross-check diagB.acceptrate without reusing unw_ergm.do's own tally.
+rseed(3001)
+Gc = ErgmGraph()
+Gc.init(6, 0)
+for (s=1; s<=200; s=s+1) {
+	prop = ergm_propose_tnt(Gc)
+	chg = M.full_change(Gc, prop[1], prop[2])
+	cutoff = (-0.4)*chg' + prop[3]
+	if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) Gc.toggle(prop[1], prop[2])
+}
+nacc = 0
+ntot = 0
+for (d=1; d<=500; d=d+1) {
+	for (s=1; s<=10; s=s+1) {
+		prop = ergm_propose_tnt(Gc)
+		chg = M.full_change(Gc, prop[1], prop[2])
+		cutoff = (-0.4)*chg' + prop[3]
+		ntot = ntot+1
+		if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+			Gc.toggle(prop[1], prop[2])
+			nacc = nacc+1
+		}
+	}
+}
+printf("independent acceptrate=%9.7f vs ErgmMCMCSampleDiag=%9.7f\n", nacc/ntot, diagB.acceptrate)
+assert(reldif(nacc/ntot, diagB.acceptrate) < 1e-10)
+assert(diagB.acceptrate > 0 & diagB.acceptrate <= 1)
+end

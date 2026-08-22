@@ -113,8 +113,16 @@ The effect library covers {opt edges}, {opt mutual}, {opt nodematch()}, {opt nod
 {opt nodeicov()}/{opt nodeocov()}, {opt edgecov()}, and the geometrically weighted
 {opt gwesp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()} family with FIXED decay only
 (curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space,
-offsets, and goodness-of-fit/MCMC-diagnostics postestimation commands are not yet implemented -
-see the roadmap.
+offsets, and goodness-of-fit postestimation are not yet implemented - see the roadmap. Basic MCMC
+diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt method(mcmle)}.
+
+{title:Postestimation}
+
+{pstd}
+{help nwergm_estat:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation
+(mean/SD/autocorrelation/effective sample size per statistic, plus the overall acceptance rate)
+after {opt method(mcmle)}. Not available after a pure MPLE fit, which involves no MCMC
+simulation.
 
 {title:Stored results}
 
@@ -124,6 +132,10 @@ see the roadmap.
 	  {bf:e(ties)}			number of observed ties
 	  {bf:e(converged)}		1 if MCMLE's own convergence test was satisfied (method(mcmle) only)
 	  {bf:e(mcmle_iterations)}	number of MCMLE outer iterations run (method(mcmle) only)
+	  {bf:e(mcmc_acceptrate)}	Metropolis-Hastings acceptance rate, final simulation (method(mcmle) only)
+	  {bf:e(mcmc_burnin)}		MCMC burn-in steps used (method(mcmle) only)
+	  {bf:e(mcmc_interval)}		MCMC thinning interval used (method(mcmle) only)
+	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
 
 	Macros
 	  {bf:e(cmd)}			{bf:nwergm}
@@ -132,10 +144,12 @@ see the roadmap.
 	  {bf:e(method)}		{bf:mple} or {bf:mcmle}
 	  {bf:e(directed)}		{bf:true}/{bf:false}
 	  {bf:e(proposal)}		Metropolis-Hastings proposal used (method(mcmle) only)
+	  {bf:e(estat_cmd)}		{bf:nwergm_estat} (postestimation dispatch)
 
 	Matrices
 	  {bf:e(b)}			coefficient vector
 	  {bf:e(V)}			variance-covariance matrix
+	  {bf:e(mcmcsample)}		final simulation's sufficient-statistic draws, samplesize x nparam (method(mcmle) only)
 
 {title:Examples}
 
@@ -442,6 +456,7 @@ program nwergm, eclass
 		ereturn local depvar "`netname'"
 		ereturn local method "mple"
 		ereturn local directed "`directed'"
+		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = rowsof(nw_ergm_D)
 		ereturn scalar nodes = `nodes'
 		mata: st_numscalar("e(ties)", `__nw_G'.nties)
@@ -472,6 +487,7 @@ program nwergm, eclass
 		// package's own nw2project.ado, here for e() instead of r().
 		mata: st_local("__ergm_converged", strofreal(`__fit'.converged))
 		mata: st_local("__ergm_niter", strofreal(`__fit'.niter))
+		mata: st_local("__ergm_acceptrate", strofreal(`__fit'.acceptrate))
 
 		matrix coleq `__b_mcmle' = _
 		matrix coleq `__V_mcmle' = _
@@ -487,11 +503,23 @@ program nwergm, eclass
 		ereturn local method "mcmle"
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
+		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = rowsof(nw_ergm_D)
 		ereturn scalar nodes = `nodes'
 		ereturn scalar converged = `__ergm_converged'
 		ereturn scalar mcmle_iterations = `__ergm_niter'
+		ereturn scalar mcmc_acceptrate = `__ergm_acceptrate'
+		ereturn scalar mcmc_burnin = `mcmcburnin'
+		ereturn scalar mcmc_interval = `mcmcinterval'
+		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		mata: st_numscalar("e(ties)", `__nw_G'.nties)
+		// the final simulation's own sufficient-statistic draws
+		// (samplesize x nparam), doubling as nwergm's basic MCMC
+		// diagnostics sample (Part XIX) - consumed by `estat mcmcdiag'
+		// (nwergm_estat.ado). Columns are unnamed (no natural row/column
+		// stripe applies to a raw draw-by-draw sample); `estat mcmcdiag'
+		// pulls coefficient names from e(b) instead.
+		mata: st_matrix("e(mcmcsample)", `__fit'.finalsample)
 
 		if `__ergm_converged' == 0 {
 			di "{err}Warning: MCMLE did NOT satisfy its own convergence test after `__ergm_niter' iterations."
