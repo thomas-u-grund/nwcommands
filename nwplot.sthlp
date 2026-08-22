@@ -259,10 +259,16 @@ can be changed as well.
 	{cmd:. nwplot glasgow1, size(alcohol1) color(smoke1) symbol(sport1)}
 
 {pstd}
-The nwcommand come with two new schemes: s1network and s2network.
+nwcommands ships three schemes purpose-built for network plots - s1network,
+s2network, and s3network - each giving node fill and edge line colors that
+are visually distinct by default (an ordinary Stata scheme such as the
+default {bf:stcolor} typically does not, since a single data series'
+marker and connecting line usually should match - reasonable for an
+ordinary statistical graph, not for a network plot). {cmd:nwplot} defaults
+to {bf:s1network} unless {opt scheme()} is specified explicitly.
 
 	{cmd:. nwplot, scheme(s1network)}
-	{cmd:. nwplot, scheme(s2network)} 
+	{cmd:. nwplot, scheme(s2network)}
 	{cmd:. nwplot, scheme(s2mono)}
 {phang2}
 	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(s1network)}{p_end}
@@ -389,5 +395,5 @@ in the package's own visualization roadmap rather than fixed here.
 {title:See also}
 		{help nwplotjs}, {help nwplotmatrix}
 
-last certified : 21 Aug 2026
+last certified : 22 Aug 2026
 

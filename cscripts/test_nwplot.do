@@ -93,6 +93,29 @@ forvalues i = 1/4 {
 	assert _rc == 0
 }
 
+* Default scheme regression: a reported bug had nodes and edges both
+* rendering identically (Stata's own default "stcolor" scheme defines
+* p1 and p1line as the same color - confirmed directly by rendering a
+* minimal scatter+line graph and inspecting the actual pixels). nwplot
+* must default to one of its own network-oriented schemes (which give
+* p1/p1line different colors) instead of silently inheriting whatever
+* graph scheme happens to be ambient, unless scheme() is given
+* explicitly. Placed here, before the "nwuse florentine" call below -
+* that call depends on an external/dead URL (r(601), not wrapped in
+* capture), which aborts the entire remainder of this do-file the
+* moment "do test_nwplot.do" reaches it (confirmed directly: nothing
+* after that line - including the Plot A-G SVG-export block further
+* down - actually executes under a plain "do" invocation, only under
+* "capture noisily do", which this session's own regression sweeps do
+* not use). Anything meant to actually run under the established
+* sweep methodology belongs above this comment, not below it.
+nwclear
+nwrandom 8, prob(.3)
+nwplot
+assert `"`r(scheme)'"' == `"s1network"'
+nwplot, scheme(s2network)
+assert `"`r(scheme)'"' == `"s2network"'
+
 nwuse florentine, nwclear
 
 nwplot flomarriage, color(seat, colorpalette(red yellow))
