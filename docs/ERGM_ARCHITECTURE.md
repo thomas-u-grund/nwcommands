@@ -70,6 +70,8 @@ class ErgmGraph {
     real scalar n, directed, nties
     pointer rowvector adjout, adjin   // asarray-handle adjacency sets
     real colvector dout, din          // degree bookkeeping
+    real matrix elist                 // live edge array (rows 1..nties valid)
+    pointer scalar edgepos            // asarray: canonical (i,j) -> row in elist
 
     void init(n, directed)
     real scalar has_edge(i, j)
@@ -85,10 +87,27 @@ For an undirected graph, `adjin` is simply aliased to `adjout` (a tie is
 stored symmetrically in both endpoints' own `adjout`), avoiding a second,
 redundant set of arrays. `common_neighbors(i,j)` iterates whichever of
 `i`/`j` has the smaller neighbor set — `O(min(deg_i, deg_j))`, not `O(n)`.
-`all_ties()` materializes the full tie list as an `nties × 2` matrix
-(`O(n + nties)`) and is deliberately used only outside the MCMC inner loop
-(model setup, certification, MPLE design construction) — never per
-proposal.
+
+`elist`/`edgepos` maintain a live array of every current tie (canonical
+`(min,max)` pairs for undirected, `(tail,head)` for directed), updated
+incrementally by `toggle()` — **not** rebuilt from the adjacency sets.
+Adding a tie appends to `elist` (amortized O(1) via capacity doubling —
+`elist` starts at a small fixed capacity and doubles whenever the live
+count would exceed it, the standard dynamic-array growth trick); removing
+one swaps the removed edge's row with the current last live row (found in
+O(1) via `edgepos`, an `asarray` mapping each live tie to its own row
+index) and shrinks the live count — no shifting or rebuilding of the rest
+of the array. `all_ties()` is now simply `elist[1::nties, .]`, an O(nties)
+slice. This replaced an earlier version where `all_ties()` reconstructed
+the tie list from scratch by iterating every node's own adjacency set —
+correct, but O(n + nties), and (see `docs/CERTIFICATION.md` harmonisation
+unit 79) the single dominant cost in the entire sampler once anything
+called it from inside the MCMC inner loop (the TNT proposal did, once per
+proposal, just to pick one random existing tie — see the proposal section
+below). Certified against an independent brute-force check (a from-scratch
+`has_edge()` scan over every possible dyad, comparing set-equality against
+`all_ties()`'s own output) across 1700 toggles on both directed and
+undirected graphs.
 
 ## `ErgmTermData`: the generic per-term-instance container
 
@@ -286,7 +305,16 @@ reinvented. Two proposals ship in v1:
   networks (where a uniform proposal would almost never touch an existing
   tie) — but requires the accompanying Hastings-ratio correction in
   `unw_ergm.do`'s own header comment on this function, without which the
-  chain would target the wrong stationary distribution.
+  chain would target the wrong stationary distribution. The tie-pick
+  itself is O(1) via `ErgmGraph`'s own live edge array (`elist`/
+  `edgepos`, described above) — this used to call `all_ties()` to
+  materialize the full tie list on every single proposal (O(n+nties)),
+  measured (`docs/CERTIFICATION.md` unit 79) at ~185x the cost of the
+  uniform proposal above at n=200 nodes; fixing it (unit 80) cut TNT's
+  own per-step cost by ~129x, to within ~13% of the uniform proposal's
+  own cost. The Q-branch (uniform dyad pick) was never affected — it was
+  already O(1) via closed-form index unranking, never touching
+  `all_ties()` at all.
 
 `ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)`
 is the actual Metropolis-Hastings loop: standard log-space accept/reject
@@ -329,16 +357,43 @@ different behavior):
    Statnet's full spectral/HAC long-run-variance estimator — still a
    genuine autocorrelation correction (not the naive, uncorrected
    covariance that would give systematically too-small standard errors),
-   just a simpler one.
+   just a simpler one. A batch-means alternative (robust to any
+   autocorrelation shape, not just AR(1)) was implemented and directly
+   compared against real Statnet reference values across 8 seeds on this
+   suite's own canonical network (`docs/CERTIFICATION.md` harmonisation
+   unit 80) — the lag-1 correction landed tightly clustered around
+   Statnet's own true value while batch-means (at nwergm's own default
+   samplesize) was far noisier and often badly biased. Rejected on that
+   direct evidence and removed rather than shipped as unused code; the
+   finding is recorded in `ErgmMCMLE()`'s own header comment. Statnet's
+   own full spectral/HAC estimator remains unattempted.
 
-Convergence is declared when every component of the centered sample mean
-is small relative to its own Monte Carlo standard error *and* the last
-step was untruncated (`gamma==1`) — a simplified stand-in for Statnet's
-own default "confidence" (Hotelling T²) termination test, disclosed the
-same way. Both simplifications are certified, not merely asserted safe:
+Convergence is declared via a genuine joint Hotelling's T² test (via its
+exact F transformation, Mata's own `invF()`) that the centered sample
+mean is statistically indistinguishable from the zero vector, *and* the
+last step was untruncated (`gamma==1`) — matching the actual statistical
+structure of Statnet's own default "confidence" termination method (a
+joint test across all parameters simultaneously, at the same 99%
+confidence level Statnet itself reports), not merely inspired by its
+name. An earlier version of this test used a per-coordinate rule ("every
+`|Dbar_k| < 0.5*se_k` simultaneously") that was a materially different,
+needlessly conservative test — requiring every marginal coordinate to
+individually clear its own threshold compounds probabilities across
+parameters, so even an already-converged theta had only a modest
+per-iteration chance of jointly clearing every coordinate under ordinary
+Monte Carlo noise. This was found, and fixed, via a real head-to-head
+benchmark against Statnet's own `ergm()` on identical data: the
+per-coordinate rule needed 10–20 MCMLE iterations where Statnet needed 1
+on the same network; the joint Hotelling test now typically needs 1–7 —
+see `docs/ERGM_ROADMAP.md`'s own Performance section for the full
+benchmark numbers (harmonisation unit 80). Both this and the step-length
+simplification above are certified, not merely asserted safe:
 `cscripts/test_nwergm_mcmle.do` fits `edges + mutual` on a real network and
 checks the result against real Statnet `ergm()` MCMLE output
-(`dev/ergm_reference/ref_mcmle.R`) within Monte Carlo tolerance.
+(`dev/ergm_reference/ref_mcmle.R`) within Monte Carlo tolerance, and
+`dev/ergm_benchmark_r_vs_stata/` is a permanent, repeatable head-to-head
+timing/coefficient comparison against a live R `ergm()` installation on a
+shared exported network (see its own README).
 
 ## The `.ado` integration layer
 

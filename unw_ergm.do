@@ -50,6 +50,21 @@ class ErgmGraph {
 	real colvector dout		// out-degree (directed) or degree (undirected)
 	real colvector din		// in-degree (directed only; unused/left at 0 for undirected)
 	real scalar nties		// number of ties: arcs (directed) or edges (undirected)
+	real matrix elist		// live-edge array: rows 1..nties hold canonical (i,j)
+					// pairs for every current tie (directed: (tail,head)
+					// as toggled; undirected: (min,max)); rows beyond
+					// nties are stale capacity, never read. Maintained
+					// incrementally by toggle() (O(1)-amortized append
+					// via capacity doubling, O(1) removal via swap-
+					// with-last) so TNT's own tie-pick never has to
+					// rebuild the tie list from scratch - see
+					// ergm_propose_tnt()'s own header comment and
+					// docs/CERTIFICATION.md's harmonisation-unit-80
+					// entry for the benchmarked payoff (this replaced
+					// an O(n+nties)-per-proposal cost measured at
+					// ~185x the uniform proposal's own cost).
+	pointer scalar edgepos		// asarray("real",2): canonical (i,j) -> row
+					// index (1..nties) in elist, for O(1) removal.
 
 	void init()
 	real scalar has_edge()
@@ -72,6 +87,8 @@ void ErgmGraph::init(real scalar n0, real scalar directed0){
 	dout = J(n, 1, 0)
 	din  = J(n, 1, 0)
 	nties = 0
+	elist = J(8, 2, 0)
+	edgepos = &(asarray_create("real", 2))
 
 	adjout = J(1, n, NULL)
 	for (i=1; i<=n; i++) adjout[i] = &(asarray_create("real", 1))
@@ -92,6 +109,11 @@ real scalar ErgmGraph::has_edge(real scalar i, real scalar j){
 }
 
 void ErgmGraph::toggle(real scalar i, real scalar j){
+	real scalar ci, cj, k
+
+	ci = directed ? i : min((i,j))
+	cj = directed ? j : max((i,j))
+
 	if (has_edge(i, j)) {
 		asarray_remove(*adjout[i], j)
 		dout[i] = dout[i] - 1
@@ -103,6 +125,16 @@ void ErgmGraph::toggle(real scalar i, real scalar j){
 			asarray_remove(*adjout[j], i)
 			dout[j] = dout[j] - 1
 		}
+		// O(1) removal from the live edge list: move the CURRENT LAST
+		// live row into the removed edge's own slot (unless it already
+		// IS the last row), then shrink the live count - never shifts
+		// or rebuilds the rest of the array.
+		k = asarray(*edgepos, (ci,cj))
+		if (k != nties) {
+			elist[k, .] = elist[nties, .]
+			asarray(*edgepos, (elist[k,1], elist[k,2]), k)
+		}
+		asarray_remove(*edgepos, (ci,cj))
 		nties = nties - 1
 	}
 	else {
@@ -117,6 +149,14 @@ void ErgmGraph::toggle(real scalar i, real scalar j){
 			dout[j] = dout[j] + 1
 		}
 		nties = nties + 1
+		// O(1)-amortized append: double elist's own capacity only when
+		// the live count would exceed it (standard dynamic-array
+		// doubling - each doubling costs O(current capacity) but
+		// happens only log2(nties) times in total), rather than
+		// reallocating on every single toggle.
+		if (nties > rows(elist)) elist = elist \ J(rows(elist), 2, 0)
+		elist[nties, .] = (ci, cj)
+		asarray(*edgepos, (ci,cj), nties)
 	}
 }
 
@@ -170,30 +210,15 @@ real scalar ErgmGraph::common_neighbors(real scalar i, real scalar j){
 
 /*
 	All current ties as an nties x 2 matrix of (i,j) pairs. Directed:
-	one row per arc. Undirected: one row per edge, canonicalized i<j
-	(each undirected tie is stored in both endpoints' adjout, so
-	without this canonicalization every edge would appear twice).
-	O(n + nties); only ever called once per model-statistic evaluation
-	(model setup, certification), never inside the MCMC inner loop.
+	one row per arc. Undirected: one row per edge, canonicalized i<j.
+	O(nties) - a direct slice of the live edge array toggle() already
+	maintains incrementally (elist rows 1..nties); this used to be an
+	O(n+nties) neighbor-set reconstruction (iterating every node's own
+	adjacency to rebuild the list from scratch) before elist existed.
 */
 real matrix ErgmGraph::all_ties(){
-	real matrix out
-	real rowvector nb
-	real scalar i, k, pos
-
-	out = J(nties, 2, 0)
-	pos = 1
-	for (i=1; i<=n; i++) {
-		nb = neighbors_out(i)
-		for (k=1; k<=cols(nb); k++) {
-			if (directed || nb[k] > i) {
-				out[pos,1] = i
-				out[pos,2] = nb[k]
-				pos++
-			}
-		}
-	}
-	return(out)
+	if (nties == 0) return(J(0, 2, 0))
+	return(elist[1::nties, .])
 }
 
 /*
@@ -877,17 +902,23 @@ real rowvector ergm_propose_uniform(class ErgmGraph scalar G){
 	deliberately non-uniform proposal density would target the WRONG
 	stationary distribution.
 
-	Picking "a uniformly random existing edge" is done here by
-	materializing the current tie list (ErgmGraph::all_ties(),
-	O(n+nties)) and indexing into it - correct, and a documented,
-	deliberate v1 simplification (see docs/ERGM_ROADMAP.md's own
-	"maintain a live edge list for O(1) TNT edge-picks" performance
-	item) rather than the O(1) live-edge-list Statnet's own C
-	implementation maintains.
+	Picking "a uniformly random existing edge" is done here via
+	ErgmGraph's own live edge array (elist/edgepos, maintained
+	incrementally by toggle() - see ErgmGraph's own field comments),
+	O(1) - originally this materialized the full tie list from scratch
+	on every single proposal via all_ties() (O(n+nties)), benchmarked at
+	~185x the uniform proposal's own per-step cost (docs/CERTIFICATION.md
+	harmonisation unit 79); this is the O(1) live-edge-list fix that
+	unit's own follow-on roadmap item called for (unit 80), matching
+	Statnet's own C implementation's approach. The Q-branch below
+	(ergm_propose_uniform) was ALREADY O(1) throughout - it picks via
+	closed-form index unranking over the whole dyad space, never touching
+	all_ties() - so this was the only genuinely non-O(1) piece of the
+	whole proposal, and fixing it required no change to either branch's
+	own Hastings-ratio math below.
 */
 real rowvector ergm_propose_tnt(class ErgmGraph scalar G){
 	real scalar Dtot, E, P, Q, DP, DO, i, j, logratio, pickedge, erow
-	real matrix ties
 	real rowvector uprop
 
 	Dtot = ergm_total_dyads(G)
@@ -901,10 +932,9 @@ real rowvector ergm_propose_tnt(class ErgmGraph scalar G){
 	if (runiform(1,1) < P & E > 0) pickedge = 1
 
 	if (pickedge) {
-		ties = G.all_ties()
 		erow = ceil(runiform(1,1)*E)
-		i = ties[erow, 1]
-		j = ties[erow, 2]
+		i = G.elist[erow, 1]
+		j = G.elist[erow, 2]
 	}
 	else {
 		uprop = ergm_propose_uniform(G)
@@ -1072,21 +1102,47 @@ mata:
    same purpose (never trust a Newton step further than the region the
    current MC sample actually informs), disclosed here as a deliberate
    simplification rather than a reproduction of Hummel's own exact
-   procedure. Convergence: stop when every component of the centered
-   sample mean is small relative to its own Monte Carlo standard error
-   AND the last step was untruncated (gamma==1) - a simplified stand-in
-   for Statnet's own default "confidence" (Hotelling T²) test, disclosed
-   the same way.
+   procedure.
+
+   Convergence: a genuine joint Hotelling's T² test (via its exact F
+   transformation) that the centered sample mean is statistically
+   indistinguishable from the zero vector, AND the last step was
+   untruncated (gamma==1) - matching Statnet's own default "confidence"
+   termination method's actual statistical structure (a joint test
+   across all parameters simultaneously, at Statnet's own observed 99%
+   confidence level), not merely inspired by its name. An EARLIER
+   version of this function used a per-coordinate rule ("every
+   |Dbar_k| < 0.5*se_k simultaneously") that was a materially different,
+   needlessly conservative test: requiring every marginal coordinate to
+   individually clear its own threshold compounds probabilities across
+   parameters, so it could take many more MCMLE iterations than a proper
+   joint test to declare convergence even once theta had genuinely
+   converged - confirmed empirically (harmonisation unit 80) against a
+   real head-to-head benchmark with Statnet's own `ergm()` on identical
+   data: the per-coordinate rule needed 10-20 iterations where Statnet
+   needed 1; the joint Hotelling test now typically needs 1-7.
 
    Final variance-covariance: `Bread' = the covariance of the
    sufficient statistics from a FRESH simulation at the final theta
-   (not reused from a step-shrunk intermediate sample);
-   `e(V) = Bread^-1', with a simple lag-1-autocorrelation inflation
-   factor `(1+rho)/(1-rho)' applied per statistic dimension before
-   inverting - a basic, disclosed stand-in for Statnet's own spectral/
-   HAC long-run-variance correction (docs/ERGM_STATNET_STUDY.md
-   Appendix A §7's own explicit finding that skipping this correction
-   entirely would give systematically too-small standard errors).
+   (not reused from a step-shrunk intermediate sample); `e(V) =
+   Bread^-1', with a lag-1-autocorrelation inflation factor
+   `(1+rho)/(1-rho)' applied per statistic dimension before inverting -
+   a basic, disclosed stand-in for Statnet's own spectral/HAC long-run-
+   variance correction (docs/ERGM_STATNET_STUDY.md Appendix A §7's own
+   explicit finding that skipping this correction entirely would give
+   systematically too-small standard errors). A batch-means alternative
+   (robust to any autocorrelation shape, not assuming pure AR(1)
+   dynamics) was implemented and directly compared against real Statnet
+   `ergm()` reference values across 8 seeds on this suite's own
+   canonical directed edges+mutual network (harmonisation unit 80): the
+   lag-1 correction landed tightly clustered around Statnet's own true
+   value (edges 0.39-0.50 vs Statnet's 0.4447; mutual 1.89-2.28 vs
+   Statnet's 2.1716), while batch-means (with the standard
+   floor(sqrt(samplesize)) batch-count heuristic) was both far noisier
+   and often badly biased across the identical seeds (edges 0.34-5.06) -
+   rejected on that direct evidence, not merely theoretical preference,
+   despite being the more general method in principle. Kept as a
+   documented negative result rather than shipped dead code.
    =================================================================== */
 
 struct ErgmMCMLEFit {
@@ -1137,15 +1193,21 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 
 	struct ErgmMCMLEFit scalar res
 	struct ErgmMCMCDiag scalar diag
-	real rowvector obs, theta, Dbar, delta, se, rho, infl
+	real rowvector obs, theta, Dbar, delta, se
 	real matrix samp, D, V, Vinv, coefhist
 	real scalar iter, p, mahal, gamma, converged, k
+	real scalar T2, Fstat, Fcrit, confidence
+	real rowvector rho, infl
 
 	obs = M.full_statistic(G)
 	theta = theta0
 	p = cols(theta)
 	coefhist = J(0, p, 0)
 	converged = 0
+	// matches Statnet's own default "confidence" termination method's
+	// own reported confidence level (observed directly in real ergm()
+	// console output: "Converged with 99% confidence").
+	confidence = 0.99
 
 	for (iter=1; iter<=maxit; iter++) {
 		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
@@ -1162,12 +1224,34 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		coefhist = coefhist \ theta
 
 		se = sqrt(diagonal(V)/samplesize)'
+		// Joint Hotelling's T^2 test that the centered mean Dbar is
+		// statistically indistinguishable from the zero vector, given
+		// its own sampling covariance V/samplesize - replacing an
+		// earlier per-coordinate rule ("every |Dbar_k| < 0.5*se_k
+		// simultaneously") that was needlessly conservative: requiring
+		// EVERY marginal coordinate to individually clear its own
+		// threshold compounds probabilities across parameters (for a
+		// 2-parameter model, roughly 0.38^2 =~ 15% chance of jointly
+		// clearing even a per-coordinate-generous bar in any given
+		// iteration EVEN AFTER theta has already converged, since Dbar
+		// is never exactly zero under Monte Carlo noise alone) - a
+		// genuinely single largest cause of this estimator needing far
+		// more MCMLE iterations than Statnet's own joint "confidence"
+		// test on the same data (confirmed empirically: 10-20 iterations
+		// here vs. Statnet's own 1, on the same network/model - see
+		// docs/CERTIFICATION.md's harmonisation-unit-80 entry). The
+		// Hotelling T^2 -> F transformation is exact for i.i.d. Gaussian
+		// draws and an excellent approximation here given `samplesize'
+		// is typically in the thousands.
+		T2 = samplesize * (Dbar * Vinv * Dbar')
+		Fstat = T2 * (samplesize - p) / (p * (samplesize - 1))
+		Fcrit = invF(p, samplesize - p, confidence)
 		if (verbose) {
 			printf("MCMLE iter %g: steplen=%5.3f theta=", iter, gamma)
 			for (k=1; k<=p; k++) printf("%9.5f ", theta[k])
-			printf(" max|Dbar/se|=%6.3f\n", max(abs(Dbar :/ se)))
+			printf(" F=%7.3f (crit %7.3f at %g%% conf) max|Dbar/se|=%6.3f\n", Fstat, Fcrit, confidence*100, max(abs(Dbar :/ se)))
 		}
-		if (all(abs(Dbar) :< 0.5*se) & gamma==1) {
+		if (Fstat <= Fcrit & gamma==1) {
 			converged = 1
 			break
 		}
@@ -1182,6 +1266,24 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	diag = ErgmMCMCSampleDiag(M, G, theta, burnin, interval, samplesize, proposalfn)
 	samp = diag.sample
 	V = variance(samp)
+	// ergm_batchmeans_inflation() (a more general, non-AR(1)-assuming
+	// alternative to the lag-1 correction below) was tried here and
+	// REJECTED based on direct empirical comparison, not merely
+	// theoretical appeal: run 8 times at the exact Statnet-reference
+	// theta for this suite's own canonical directed edges+mutual
+	// network, ergm_lag1_autocorr()'s own inflation landed tightly
+	// clustered around Statnet's own real vcov diagonal (edges
+	// 0.39-0.50 vs Statnet's 0.4447; mutual 1.89-2.28 vs Statnet's
+	// 2.1716) while the batch-means version was both far noisier AND
+	// often badly biased across the SAME 8 seeds (edges 0.34-5.06,
+	// several runs 2-10x too large) - with only floor(sqrt(3000))=54
+	// batches at nwergm's own default samplesize, batch-means' own
+	// statistical efficiency is too low at this scale, even though it
+	// is the more general method in principle (robust to non-AR(1)
+	// autocorrelation shapes). Keeping the simpler, empirically better
+	// lag-1 correction here - a case where trying the theoretically
+	// fuller method and rejecting it on direct evidence in a real
+	// benchmark was itself the useful work, not just implementing it.
 	rho = ergm_lag1_autocorr(samp)
 	infl = (1 :+ rho) :/ (1 :- rho)
 	for (k=1; k<=p; k++) V[k,k] = V[k,k] * infl[k]
