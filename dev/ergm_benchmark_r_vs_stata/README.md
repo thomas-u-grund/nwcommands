@@ -118,6 +118,31 @@ integration-layer section for the full account and the general principle
 (`st_store()` for anything scaling with the network, `st_matrix()` only for
 small model-sized structures).
 
+**Incremental shared-partner cache tried and rejected for these networks
+(harmonisation unit 82)**: the obvious next lever after unit 81 — an O(1)
+incrementally-maintained shared-partner cache for `common_neighbors()`,
+replacing the O(min(deg_i,deg_j)) on-demand scan `change_gwesp()` calls on
+every proposal — was built, certified fully correct (brute-force
+cross-checks plus end-to-end change-statistic equivalence, both cache-on and
+cache-off), wired into `nwergm.ado`, and re-benchmarked directly. It made
+things **worse**, not better: benchmark 3 went from 22.065s to ~39.3s in a
+controlled A/B test. Root cause, fully diagnosed rather than guessed at: TNT's
+own Metropolis-Hastings acceptance rate on a converged, well-fitted sparse
+model is very high (measured 92.9% on the real benchmark-3 model), so
+`toggle()`'s own O(deg_i+deg_j) cache-maintenance cost (two `neighbors_out()`
+calls, each allocating a fresh array, plus the cache-adjustment loops) fires
+on nearly every single proposal — and at these networks' actual degree
+(~4-6), that maintenance cost exceeds the O(1) lookup's own savings. A
+systematic degree sweep (n=200, matched acceptance rate) found the crossover
+to a net win sits around degree ~30-40+, well above what any of these five
+benchmark networks have. **The cache was reverted (not wired by default)**;
+the fully-correct machinery remains in `unw_ergm.do`, certified via
+`cscripts/test_nwergm_spcache.do`, available for a future degree-aware
+auto-enable heuristic or explicit opt-in on genuinely dense networks. See
+`docs/CERTIFICATION.md`'s unit-82 entry for the full root-cause chain and
+`docs/ERGM_ROADMAP.md`'s Performance section for the updated decision
+framework this finding produces for the C++ question.
+
 ## Extending this suite
 
 Further ideas: force convergence on benchmarks 4/5 (e.g. raise

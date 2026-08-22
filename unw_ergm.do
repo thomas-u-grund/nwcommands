@@ -65,6 +65,16 @@ class ErgmGraph {
 					// ~185x the uniform proposal's own cost).
 	pointer scalar edgepos		// asarray("real",2): canonical (i,j) -> row
 					// index (1..nties) in elist, for O(1) removal.
+	real scalar sp_cache_enabled	// 0 unless enable_sp_cache() has been
+					// called (opt-in - see that method's own
+					// header comment for why); toggle() checks
+					// this once (a single boolean test) before
+					// doing any shared-partner bookkeeping, so
+					// models that never use gwesp pay nothing.
+	pointer scalar sp_counts	// asarray("real",2), only allocated when
+					// sp_cache_enabled: canonical (a,b) -> current
+					// shared-partner count. Sparse - pairs with a
+					// count of 0 are simply absent, never stored.
 
 	void init()
 	real scalar has_edge()
@@ -77,6 +87,9 @@ class ErgmGraph {
 	real scalar common_neighbors()
 	real matrix all_ties()
 	real matrix to_dense()
+	void enable_sp_cache()
+	void sp_adjust()
+	real scalar shared_partners()
 }
 
 void ErgmGraph::init(real scalar n0, real scalar directed0){
@@ -89,6 +102,7 @@ void ErgmGraph::init(real scalar n0, real scalar directed0){
 	nties = 0
 	elist = J(8, 2, 0)
 	edgepos = &(asarray_create("real", 2))
+	sp_cache_enabled = 0
 
 	adjout = J(1, n, NULL)
 	for (i=1; i<=n; i++) adjout[i] = &(asarray_create("real", 1))
@@ -109,12 +123,26 @@ real scalar ErgmGraph::has_edge(real scalar i, real scalar j){
 }
 
 void ErgmGraph::toggle(real scalar i, real scalar j){
-	real scalar ci, cj, k
+	real scalar ci, cj, k, was_edge, m, x
+	real rowvector nbi, nbj
 
 	ci = directed ? i : min((i,j))
 	cj = directed ? j : max((i,j))
+	was_edge = has_edge(i, j)
 
-	if (has_edge(i, j)) {
+	// Shared-partner cache bookkeeping needs i's and j's own neighbor
+	// sets exactly as they stand BEFORE this toggle mutates anything
+	// below - captured here, once, regardless of add/remove, then
+	// applied after the normal adjacency/elist bookkeeping (see
+	// enable_sp_cache()'s own header comment for why this update is
+	// correct and why it is a SEPARATE derivation from that method's
+	// own from-scratch initialization formula).
+	if (sp_cache_enabled) {
+		nbi = neighbors_out(i)
+		nbj = neighbors_out(j)
+	}
+
+	if (was_edge) {
 		asarray_remove(*adjout[i], j)
 		dout[i] = dout[i] - 1
 		if (directed) {
@@ -157,6 +185,22 @@ void ErgmGraph::toggle(real scalar i, real scalar j){
 		if (nties > rows(elist)) elist = elist \ J(rows(elist), 2, 0)
 		elist[nties, .] = (ci, cj)
 		asarray(*edgepos, (ci,cj), nties)
+	}
+
+	// Adding tie (i,j) makes j a NEW shared-partner contributor for
+	// every pair (i,x) where x is (already) a neighbor of j - and
+	// symmetrically i for every pair (j,x); removing (i,j) undoes
+	// exactly that. O(deg_i + deg_j) per toggle, not O(min(deg_i,deg_j))
+	// per LOOKUP the way on-demand common_neighbors() costs when this
+	// cache is not enabled.
+	if (sp_cache_enabled) {
+		m = was_edge ? -1 : 1
+		for (x=1; x<=cols(nbj); x++) {
+			if (nbj[x] != i) sp_adjust(i, nbj[x], m)
+		}
+		for (x=1; x<=cols(nbi); x++) {
+			if (nbi[x] != j) sp_adjust(j, nbi[x], m)
+		}
 	}
 }
 
@@ -206,6 +250,87 @@ real scalar ErgmGraph::common_neighbors(real scalar i, real scalar j){
 		if (nb[k] != b && has_edge(b, nb[k])) cnt++
 	}
 	return(cnt)
+}
+
+/*
+	Enables the incremental shared-partner cache (Part XXV performance
+	work, docs/CERTIFICATION.md harmonisation unit 82): builds
+	`sp_counts' from scratch in O(sum_i deg_i^2) = O(m*davg) - for each
+	node i, every UNORDERED PAIR of i's own neighbors gains i as exactly
+	one shared partner. This specific "iterate pairs of one node's own
+	neighbors" formulation is deliberate, not incidental: an earlier,
+	independently-prototyped version of this same cache (during this
+	project's own initial development, before v1 shipped) instead tried
+	to build it by iterating over EDGES ("for edge (i,j), for every
+	other neighbor k of i: sp(j,k)+=1; for every other neighbor k of j:
+	sp(i,k)+=1") and that formulation DOUBLE-COUNTS every pair of a
+	shared node's own two edges - confirmed by direct comparison against
+	brute-force common_neighbors() at the time, which is exactly why v1
+	shipped with the on-demand version instead of this cache. Opt-in
+	(never called automatically by init()) because it costs real memory
+	and one-time setup work that only pays off for models that actually
+	use gwesp - `nwergm.ado' calls this only when a gwesp() term is
+	requested, immediately after bridging the graph and before any MCMC
+	runs. Once enabled, toggle() maintains `sp_counts' incrementally
+	forever after (see its own comment) - this method is meant to be
+	called exactly once, right after the graph's own initial ties are in
+	place, not repeatedly.
+*/
+void ErgmGraph::enable_sp_cache(){
+	real scalar i, j1, j2, m
+	real rowvector nb
+
+	sp_counts = &(asarray_create("real", 2))
+	for (i=1; i<=n; i++) {
+		nb = neighbors_out(i)
+		m = cols(nb)
+		for (j1=1; j1<=m-1; j1++) {
+			for (j2=j1+1; j2<=m; j2++) {
+				sp_adjust(nb[j1], nb[j2], 1)
+			}
+		}
+	}
+	sp_cache_enabled = 1
+}
+
+/*
+	Adds `delta' to the cached shared-partner count for canonical pair
+	(a,b), keeping `sp_counts' sparse (a pair whose count reaches exactly
+	0 is removed rather than stored as an explicit zero - `nties' itself
+	can reach into the hundreds of thousands, and most dyads never share
+	a partner at all, so this matters for memory at scale).
+*/
+void ErgmGraph::sp_adjust(real scalar a, real scalar b, real scalar delta){
+	real scalar ca, cb, cur
+
+	ca = min((a,b))
+	cb = max((a,b))
+	if (asarray_contains(*sp_counts, (ca,cb))) {
+		cur = asarray(*sp_counts, (ca,cb)) + delta
+	}
+	else {
+		cur = delta
+	}
+	if (cur == 0) asarray_remove(*sp_counts, (ca,cb))
+	else asarray(*sp_counts, (ca,cb), cur)
+}
+
+/*
+	O(1) shared-partner count when the cache is enabled; otherwise falls
+	back to on-demand common_neighbors() (O(min(deg_i,deg_j))) - the
+	exact same value either way, just a different cost. stat_gwesp()/
+	change_gwesp() call this instead of common_neighbors() directly so
+	they automatically benefit once a caller enables the cache, with zero
+	change needed to either function.
+*/
+real scalar ErgmGraph::shared_partners(real scalar a, real scalar b){
+	real scalar ca, cb
+
+	if (!sp_cache_enabled) return(common_neighbors(a,b))
+	ca = min((a,b))
+	cb = max((a,b))
+	if (asarray_contains(*sp_counts, (ca,cb))) return(asarray(*sp_counts, (ca,cb)))
+	return(0)
 }
 
 /*
@@ -553,10 +678,18 @@ real rowvector change_gwidegree(class ErgmGraph scalar G, real scalar i, real sc
 	This is the standard published GWESP change-statistic construction
 	(confirmed against ergm's own espOTP_change macro structure during
 	the Part I study, though that C code additionally maintains a
-	shared-partner cache for performance - not replicated here, since
-	common_neighbors() is already O(min(deg_i,deg_j)) and v1's target
-	scale does not need the extra caching layer; see
-	docs/ERGM_ROADMAP.md).
+	shared-partner cache for performance). v1 originally used
+	common_neighbors() directly here (O(min(deg_i,deg_j)) per lookup,
+	deemed sufficient at v1's own target scale); a real R-vs-Stata
+	benchmark subsequently showed GWESP-involving models 40-68x slower
+	than Statnet's own ergm() where GWESP-free models of similar or
+	larger size were only ~3x slower (docs/CERTIFICATION.md harmonisation
+	unit 81), pinning the gap specifically on this shared-partner
+	machinery - both functions below now call ErgmGraph::shared_partners()
+	instead, which is O(1) once a caller has enabled the incremental
+	cache (unit 82) and falls back to the identical common_neighbors()
+	computation otherwise, so this is a pure performance change with no
+	effect on either function's own return value.
 */
 real rowvector stat_gwesp(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real matrix ties
@@ -565,7 +698,7 @@ real rowvector stat_gwesp(class ErgmGraph scalar G, class ErgmTermData scalar td
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
-		p = G.common_neighbors(ties[k,1], ties[k,2])
+		p = G.shared_partners(ties[k,1], ties[k,2])
 		tot = tot + gw_kernel(p, td.decay)
 	}
 	return(tot)
@@ -576,7 +709,7 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 
 	delta = G.has_edge(i,j) ? -1 : 1
 
-	pij = G.common_neighbors(i,j)
+	pij = G.shared_partners(i,j)
 	chg = delta * gw_kernel(pij, td.decay)
 
 	nb = G.neighbors_out(i)
@@ -584,9 +717,9 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 		k = nb[m]
 		if (k==j) continue
 		if (!G.has_edge(j,k)) continue	// k must be a common neighbor of i and j
-		pik = G.common_neighbors(i,k)
+		pik = G.shared_partners(i,k)
 		chg = chg + (gw_kernel(pik+delta, td.decay) - gw_kernel(pik, td.decay))
-		pjk = G.common_neighbors(j,k)
+		pjk = G.shared_partners(j,k)
 		chg = chg + (gw_kernel(pjk+delta, td.decay) - gw_kernel(pjk, td.decay))
 	}
 	return(chg)
