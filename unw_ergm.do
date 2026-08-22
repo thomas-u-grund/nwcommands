@@ -872,3 +872,141 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 }
 
 end
+
+mata:
+
+/* ===================================================================
+   MCMLE (Monte Carlo maximum likelihood; Geyer & Thompson 1992,
+   Hummel/Hunter/Handcock 2012 - see docs/ERGM_STATNET_STUDY.md
+   Appendix A §6 for the full algorithm this is a deliberately
+   simplified version of). Outer loop: simulate at the current theta,
+   take a Newton step on the "naive" (non-lognormal) importance-
+   sampling surrogate log-likelihood using the simulated sample's own
+   mean/covariance of the CENTERED statistics (centered on the observed
+   network's own statistic - the target is exactly Dbar=0), continuing
+   sequentially (MCMLE.sequential=TRUE, Statnet's own default: the
+   network carries over between iterations rather than restarting from
+   the observed network every time - docs/ERGM_STATNET_STUDY.md
+   Appendix A §9).
+
+   Step length: rather than Hummel's own convex-hull linear program
+   (no general LP solver is available in Mata - see
+   docs/ERGM_STATNET_STUDY.md Appendix A §6a's own explicit
+   recommendation), v1 uses a trust-region-style cap on the Newton
+   step's own Mahalanobis norm (in the metric of the simulated sample's
+   covariance) - a simpler, well-understood damping device serving the
+   same purpose (never trust a Newton step further than the region the
+   current MC sample actually informs), disclosed here as a deliberate
+   simplification rather than a reproduction of Hummel's own exact
+   procedure. Convergence: stop when every component of the centered
+   sample mean is small relative to its own Monte Carlo standard error
+   AND the last step was untruncated (gamma==1) - a simplified stand-in
+   for Statnet's own default "confidence" (Hotelling T²) test, disclosed
+   the same way.
+
+   Final variance-covariance: `Bread' = the covariance of the
+   sufficient statistics from a FRESH simulation at the final theta
+   (not reused from a step-shrunk intermediate sample);
+   `e(V) = Bread^-1', with a simple lag-1-autocorrelation inflation
+   factor `(1+rho)/(1-rho)' applied per statistic dimension before
+   inverting - a basic, disclosed stand-in for Statnet's own spectral/
+   HAC long-run-variance correction (docs/ERGM_STATNET_STUDY.md
+   Appendix A §7's own explicit finding that skipping this correction
+   entirely would give systematically too-small standard errors).
+   =================================================================== */
+
+struct ErgmMCMLEFit {
+	real rowvector coef
+	real matrix vcov
+	real scalar converged
+	real scalar niter
+	real matrix coefhist
+}
+
+/*
+	Lag-1 autocorrelation of each column of `samp' (one row per
+	MCMC draw, already thinned by `interval' - so this is the
+	draw-to-draw autocorrelation of the RECORDED chain, not of every
+	raw MCMC step). Returns a row vector, one value per column.
+*/
+real rowvector ergm_lag1_autocorr(real matrix samp){
+	real scalar ndraw, k, ncol
+	real matrix x0, x1
+	real rowvector out
+
+	ndraw = rows(samp)
+	ncol = cols(samp)
+	out = J(1, ncol, 0)
+	if (ndraw < 3) return(out)
+	x0 = samp[1::(ndraw-1), .]
+	x1 = samp[2::ndraw, .]
+	for (k=1; k<=ncol; k++) {
+		if (variance(x0[.,k])==0 | variance(x1[.,k])==0) {
+			out[k] = 0
+		}
+		else {
+			out[k] = correlation((x0[.,k], x1[.,k]))[1,2]
+		}
+	}
+	return(out)
+}
+
+struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval,
+	real scalar samplesize, pointer(real rowvector function) scalar proposalfn,
+	real scalar verbose){
+
+	struct ErgmMCMLEFit scalar res
+	real rowvector obs, theta, Dbar, delta, se, rho, infl
+	real matrix samp, D, V, Vinv, coefhist
+	real scalar iter, p, mahal, gamma, converged, k
+
+	obs = M.full_statistic(G)
+	theta = theta0
+	p = cols(theta)
+	coefhist = J(0, p, 0)
+	converged = 0
+
+	for (iter=1; iter<=maxit; iter++) {
+		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
+		D = samp :- obs
+		Dbar = mean(D)
+		V = variance(D)
+		Vinv = invsym(V)
+		delta = -Dbar * Vinv
+
+		mahal = sqrt(delta * V * delta')
+		gamma = (mahal > 2 ? 2/mahal : 1)
+
+		theta = theta + gamma*delta
+		coefhist = coefhist \ theta
+
+		se = sqrt(diagonal(V)/samplesize)'
+		if (verbose) {
+			printf("MCMLE iter %g: steplen=%5.3f theta=", iter, gamma)
+			for (k=1; k<=p; k++) printf("%9.5f ", theta[k])
+			printf(" max|Dbar/se|=%6.3f\n", max(abs(Dbar :/ se)))
+		}
+		if (all(abs(Dbar) :< 0.5*se) & gamma==1) {
+			converged = 1
+			break
+		}
+	}
+
+	// Final variance-covariance from a fresh simulation at the
+	// converged (or last-tried) theta.
+	samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
+	V = variance(samp)
+	rho = ergm_lag1_autocorr(samp)
+	infl = (1 :+ rho) :/ (1 :- rho)
+	for (k=1; k<=p; k++) V[k,k] = V[k,k] * infl[k]
+
+	res.coef = theta
+	res.vcov = invsym(V)
+	res.converged = converged
+	res.niter = iter <= maxit ? iter : maxit
+	res.coefhist = coefhist
+	return(res)
+}
+
+end
