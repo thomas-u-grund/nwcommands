@@ -140,7 +140,10 @@ estimation method. See {help nwergm_estat} for full details.
 	  {bf:e(mcmle_iterations)}	number of MCMLE outer iterations run (method(mcmle) only)
 	  {bf:e(mcmc_acceptrate)}	Metropolis-Hastings acceptance rate, final simulation (method(mcmle) only)
 	  {bf:e(mcmc_burnin)}		MCMC burn-in steps used (method(mcmle) only)
-	  {bf:e(mcmc_interval)}		MCMC thinning interval used (method(mcmle) only)
+	  {bf:e(mcmc_interval)}		MCMC thinning interval requested (method(mcmle) only)
+	  {bf:e(mcmc_interval_final)}	MCMC thinning interval actually used for the last iteration - may
+					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
+					to reach an adequate effective sample size (method(mcmle) only)
 	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
 
 	Macros

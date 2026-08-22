@@ -141,7 +141,10 @@ estimation method. See {help nwergm_estat} for full details.
 	  {bf:e(mcmle_iterations)}	number of MCMLE outer iterations run (method(mcmle) only)
 	  {bf:e(mcmc_acceptrate)}	Metropolis-Hastings acceptance rate, final simulation (method(mcmle) only)
 	  {bf:e(mcmc_burnin)}		MCMC burn-in steps used (method(mcmle) only)
-	  {bf:e(mcmc_interval)}		MCMC thinning interval used (method(mcmle) only)
+	  {bf:e(mcmc_interval)}		MCMC thinning interval requested (method(mcmle) only)
+	  {bf:e(mcmc_interval_final)}	MCMC thinning interval actually used for the last iteration - may
+					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
+					to reach an adequate effective sample size (method(mcmle) only)
 	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
 
 	Macros
@@ -620,6 +623,7 @@ program nwergm, eclass
 		mata: st_local("__ergm_converged", strofreal(`__fit'.converged))
 		mata: st_local("__ergm_niter", strofreal(`__fit'.niter))
 		mata: st_local("__ergm_acceptrate", strofreal(`__fit'.acceptrate))
+		mata: st_local("__ergm_interval_final", strofreal(`__fit'.final_interval))
 
 		matrix coleq `__b_mcmle' = _
 		matrix coleq `__V_mcmle' = _
@@ -643,6 +647,14 @@ program nwergm, eclass
 		ereturn scalar mcmc_acceptrate = `__ergm_acceptrate'
 		ereturn scalar mcmc_burnin = `mcmcburnin'
 		ereturn scalar mcmc_interval = `mcmcinterval'
+		// The interval actually used for the LAST MCMLE iteration and the
+		// final diagnostics simulation (harmonisation unit 85) - may
+		// exceed `e(mcmc_interval)' (the caller-supplied starting value)
+		// when the adaptive-interval mechanism grew it because the
+		// achieved effective MCMC sample size fell short of the target
+		// floor; equal to `e(mcmc_interval)' whenever no growth was ever
+		// triggered (the ordinary case for small/well-mixing models).
+		ereturn scalar mcmc_interval_final = `__ergm_interval_final'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws

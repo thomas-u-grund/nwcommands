@@ -223,11 +223,39 @@ All five benchmarks now converge properly (none hit the iteration cap) and
 run faster still, since a converged 1-2 iteration fit is less total MCMC
 work than a full, unconverged 20-iteration run. See `dev/ergm_benchmark_r_vs_stata/60_verbose_500sparse_r.R`
 for the real Statnet trace this diagnosis was based on and
-`docs/CERTIFICATION.md`'s unit-84 entry for the full account, including an
-honestly-disclosed open question the fix surfaced rather than resolved:
-whether the default `mcmcinterval` provides fully adequate MCMC mixing at
-500+ node GWESP scale (a precision question, not a convergence-test
-validity question) - see `docs/ERGM_ROADMAP.md`'s Performance section.
+`docs/CERTIFICATION.md`'s unit-84 entry for the full account.
+
+**Adaptive interval closes the mixing-quality open question (harmonisation
+unit 85)**: unit 84's own fix could correctly report "converged" from a
+genuinely tiny effective MCMC sample size (35.7 out of 3000 raw draws on
+benchmark 4 at the then-fixed default `mcmcinterval`) - statistically
+valid, but leaving real precision on the table, exactly mirroring Statnet's
+own directly-observed behavior of growing its own interval ("New interval =
+512" then "1024") when its test isn't yet trustworthy. `ErgmMCMLE()` now
+grows `interval` (never shrinks it) whenever the achieved effective sample
+size falls short of a target floor (`max(200, 64*nparam)`, mirroring
+Statnet's own documented `MCMLE.effectiveSize=64`-per-parameter target),
+and only declares convergence once both the Hotelling test passes AND that
+floor is met. Small/well-mixing models (benchmarks 1 and 3) never trigger
+it at all - confirmed via a dedicated regression test
+(`cscripts/test_nwergm_adaptive_interval.do`) that growth does NOT fire
+under nwergm's own actual production defaults. Re-running the full suite
+with this fix added on top of unit 84:
+
+| Benchmark | R `ergm` | nwergm (unit 84) | nwergm (unit 85, +adaptive interval) | Iterations | Final interval |
+|---|---|---|---|---|---|
+| 1: 30-node directed, edges+mutual | 0.29s | 0.278s | 0.365s | 1 | 50 (unchanged) |
+| 2: 100-node directed, edges+mutual+nodematch | 0.484s | 0.306s | 0.352s | 2 | grown |
+| 3: 100-node undirected, edges+gwesp | 0.326s | 0.405s | 0.416s | 1 | 50 (unchanged) |
+| 4: 500-node sparse, edges+nodematch+gwesp | 2.293s | 2.785s | **3.744s** | 3 | 50→300→600 |
+| 5: 1000-node directed CONTROL (no gwesp) | 9.177s | 3.267s | **3.989s** | 3 | grown |
+
+All five still converge in 1-3 iterations at well under 4 seconds even for
+the largest networks, but benchmark 4's own fitted `gwesp` coefficient
+moved from 0.0179 (unit 84, single iteration, low effective sample size)
+to 0.0363 - much closer to Statnet's own 0.0371 - confirming the extra
+iterations bought real precision, not just a slower path to the same
+answer. See `docs/CERTIFICATION.md`'s unit-85 entry for the full account.
 
 ## Extending this suite
 
