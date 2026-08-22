@@ -112,9 +112,10 @@ extension.{p_end}
 The effect library covers {opt edges}, {opt mutual}, {opt nodematch()}, {opt nodecov()},
 {opt nodeicov()}/{opt nodeocov()}, {opt edgecov()}, and the geometrically weighted
 {opt gwesp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()} family with FIXED decay only
-(curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space,
-offsets, and goodness-of-fit postestimation are not yet implemented - see the roadmap. Basic MCMC
-diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt method(mcmle)}.
+(curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space
+and offsets are not yet implemented - see the roadmap. Basic MCMC diagnostics
+({help nwergm_estat:estat mcmcdiag}) and basic goodness of fit ({help nwergm_estat:estat gof})
+are both available; see {help nwergm_estat}.
 
 {title:Postestimation}
 
@@ -123,6 +124,12 @@ diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt meth
 (mean/SD/autocorrelation/effective sample size per statistic, plus the overall acceptance rate)
 after {opt method(mcmle)}. Not available after a pure MPLE fit, which involves no MCMC
 simulation.
+
+{pstd}
+{help nwergm_estat:estat gof} reports a basic simulation-based goodness-of-fit comparison
+(mean degree, average geodesic distance, complete-triad count) between the fitted model's own
+simulated networks and the network {cmd:nwergm} was fitted on - available after either
+estimation method. See {help nwergm_estat} for full details.
 
 {title:Stored results}
 
@@ -280,27 +287,45 @@ program nwergm, eclass
 	// surfacing as a baffling "Mata object __NNNNNN already exists".
 	local __ergm_matatemps ""
 
-	tempname __nw_G
-	mata: `__nw_G' = ErgmGraph()
-	mata: `__nw_G'.init(`nodes', ("`directed'"=="true"))
-	mata: ergm_bridge_from_netobj(`netobj', `__nw_G', ("`directed'"=="true"))
-	local __ergm_matatemps "`__ergm_matatemps' `__nw_G'"
+	// __nwergm_last_G/__nwergm_last_M are DELIBERATE fixed-name Mata
+	// singletons, not tempnames - `estat gof' (nwergm_estat.ado) needs to
+	// find this call's own fitted graph/model again later, in a SEPARATE
+	// program invocation with no access to this program's own locals.
+	// Each new nwergm call replaces (never accumulates) the previous
+	// call's singleton, guarded exactly like ergm_bridge_from_netobj()'s
+	// own redefinition guard below - this is a single, well-managed
+	// object, not the unmanaged per-call accumulation unit 73 fixed.
+	capture mata: mata drop __nwergm_last_G
+	mata: __nwergm_last_G = ErgmGraph()
+	mata: __nwergm_last_G.init(`nodes', ("`directed'"=="true"))
+	mata: ergm_bridge_from_netobj(`netobj', __nwergm_last_G, ("`directed'"=="true"))
+	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
+	// .nties mutates throughout MCMLE's own simulation (it IS the live
+	// MCMC state, not a frozen copy of the observed network - see its
+	// own class header comment), so reading e(ties) from it AFTER
+	// ErgmMCMLE() returns would report the last SIMULATED tie count, not
+	// the true observed one. A genuine bug of exactly this shape existed
+	// in this file from unit 72 through unit 75 (`e(ties)` was read from
+	// `__nwergm_last_G.nties` after fitting, in the method(mcmle) branch
+	// below), caught only once `estat gof` (Part XX) needed a genuinely
+	// correct observed density and its own reported "Observed" column
+	// didn't match the true network by hand-inspection.
+	mata: st_local("__ergm_obsties", strofreal(__nwergm_last_G.nties))
 
 	// --- build the model: one addterm() call per requested term.
-	tempname __nw_M
-	mata: `__nw_M' = ErgmModel()
-	mata: `__nw_M'.init()
-	local __ergm_matatemps "`__ergm_matatemps' `__nw_M'"
+	capture mata: mata drop __nwergm_last_M
+	mata: __nwergm_last_M = ErgmModel()
+	mata: __nwergm_last_M.init()
 
 	tempname __td_edges
 	mata: `__td_edges' = ErgmTermData()
-	mata: `__nw_M'.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
+	mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
 	local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
 
 	if "`mutual'" != "" {
 		tempname __td_mutual
 		mata: `__td_mutual' = ErgmTermData()
-		mata: `__nw_M'.addterm("mutual", 1, &stat_mutual(), &change_mutual(), `__td_mutual', ("mutual"))
+		mata: __nwergm_last_M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), `__td_mutual', ("mutual"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mutual'"
 	}
 
@@ -311,7 +336,7 @@ program nwergm, eclass
 		tempname __td_nm`__ergm_termidx'
 		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__nw_M'.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm`__ergm_termidx'', ("nodematch_`__ergm_v'"))
+		mata: __nwergm_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm`__ergm_termidx'', ("nodematch_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nm`__ergm_termidx''"
 	}
 
@@ -322,7 +347,7 @@ program nwergm, eclass
 		tempname __td_nc`__ergm_termidx'
 		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nc`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__nw_M'.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
+		mata: __nwergm_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nc`__ergm_termidx''"
 	}
 
@@ -333,7 +358,7 @@ program nwergm, eclass
 		tempname __td_ni`__ergm_termidx'
 		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_ni`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__nw_M'.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
+		mata: __nwergm_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ni`__ergm_termidx''"
 	}
 
@@ -344,7 +369,7 @@ program nwergm, eclass
 		tempname __td_no`__ergm_termidx'
 		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_no`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__nw_M'.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
+		mata: __nwergm_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_no`__ergm_termidx''"
 	}
 
@@ -359,7 +384,7 @@ program nwergm, eclass
 			error 198
 		}
 		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"=="true")))
-		mata: `__nw_M'.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
+		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
 	}
 
@@ -368,7 +393,7 @@ program nwergm, eclass
 		tempname __td_gwesp
 		mata: `__td_gwesp' = ErgmTermData()
 		mata: `__td_gwesp'.decay = `gwesp'
-		mata: `__nw_M'.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `__td_gwesp', ("gwesp_`gwesp'"))
+		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `__td_gwesp', ("gwesp_`gwesp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwesp'"
 	}
 	if "`gwdegree'" != "" {
@@ -376,7 +401,7 @@ program nwergm, eclass
 		tempname __td_gwdeg
 		mata: `__td_gwdeg' = ErgmTermData()
 		mata: `__td_gwdeg'.decay = `gwdegree'
-		mata: `__nw_M'.addterm("gwdegree", 1, &stat_gwdegree(), &change_gwdegree(), `__td_gwdeg', ("gwdegree_`gwdegree'"))
+		mata: __nwergm_last_M.addterm("gwdegree", 1, &stat_gwdegree(), &change_gwdegree(), `__td_gwdeg', ("gwdegree_`gwdegree'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdeg'"
 	}
 	if "`gwodegree'" != "" {
@@ -384,7 +409,7 @@ program nwergm, eclass
 		tempname __td_gwod
 		mata: `__td_gwod' = ErgmTermData()
 		mata: `__td_gwod'.decay = `gwodegree'
-		mata: `__nw_M'.addterm("gwodegree", 1, &stat_gwodegree(), &change_gwodegree(), `__td_gwod', ("gwodegree_`gwodegree'"))
+		mata: __nwergm_last_M.addterm("gwodegree", 1, &stat_gwodegree(), &change_gwodegree(), `__td_gwod', ("gwodegree_`gwodegree'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwod'"
 	}
 	if "`gwidegree'" != "" {
@@ -392,7 +417,7 @@ program nwergm, eclass
 		tempname __td_gwid
 		mata: `__td_gwid' = ErgmTermData()
 		mata: `__td_gwid'.decay = `gwidegree'
-		mata: `__nw_M'.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), `__td_gwid', ("gwidegree_`gwidegree'"))
+		mata: __nwergm_last_M.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), `__td_gwid', ("gwidegree_`gwidegree'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwid'"
 	}
 
@@ -407,13 +432,13 @@ program nwergm, eclass
 	}
 
 	tempname __nw_D
-	mata: `__nw_D' = `__nw_M'.build_mple_data(`__nw_G')
+	mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
 	mata: st_matrix("nw_ergm_D", `__nw_D')
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
 	local __ergm_p = colsof(nw_ergm_D) - 1
 
 	tempname __ergm_coefnames
-	mata: st_local("__ergm_coefnames", invtokens(`__nw_M'.coefnames))
+	mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.coefnames))
 
 	local __ergm_xlist ""
 	forvalues __k = 1/`__ergm_p' {
@@ -459,7 +484,7 @@ program nwergm, eclass
 		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = rowsof(nw_ergm_D)
 		ereturn scalar nodes = `nodes'
-		mata: st_numscalar("e(ties)", `__nw_G'.nties)
+		ereturn scalar ties = `__ergm_obsties'
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
 	}
@@ -472,7 +497,7 @@ program nwergm, eclass
 		else local __ergm_propfn "&ergm_propose_uniform()"
 
 		tempname __fit
-		mata: `__fit' = ErgmMCMLE(`__nw_M', `__nw_G', `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+		mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
 		tempname __b_mcmle __V_mcmle
@@ -512,7 +537,7 @@ program nwergm, eclass
 		ereturn scalar mcmc_burnin = `mcmcburnin'
 		ereturn scalar mcmc_interval = `mcmcinterval'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
-		mata: st_numscalar("e(ties)", `__nw_G'.nties)
+		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws
 		// (samplesize x nparam), doubling as nwergm's basic MCMC
 		// diagnostics sample (Part XIX) - consumed by `estat mcmcdiag'
