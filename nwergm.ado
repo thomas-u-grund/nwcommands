@@ -580,8 +580,28 @@ program nwergm, eclass
 		mata: `__theta0' = st_matrix("`__b_mple'")
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
-		if "`proposal'" == "tnt" local __ergm_propfn "&ergm_propose_tnt()"
-		else local __ergm_propfn "&ergm_propose_uniform()"
+		if "`proposal'" == "tnt" {
+			local __ergm_propfn "&ergm_propose_tnt()"
+			local __ergm_propcode 2
+		}
+		else {
+			local __ergm_propfn "&ergm_propose_uniform()"
+			local __ergm_propcode 1
+		}
+
+		// Native (C) MCMC backend eligibility (harmonisation unit 83) -
+		// decided ONCE here, before any MCMC runs, never inside
+		// ErgmMCMLE()'s own loop. Sets __nwergm_last_M.native_enabled;
+		// ErgmMCMCSample()/ErgmMCMCSampleDiag() (called internally by
+		// ErgmMCMLE() below) check that field themselves and fall back
+		// to the unmodified Mata sampler whenever it is 0 - a model
+		// using any term outside the native backend's own deliberately
+		// narrow scope (edges/mutual/nodematch/gwesp), or a platform
+		// with no compiled lib/plugins/ergm_mcmc.plugin, is completely
+		// unaffected by this call. See unw_ergm.do's own "Native (C)
+		// MCMC backend" section and docs/ERGM_ARCHITECTURE.md for the
+		// full design.
+		mata: ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode')
 
 		tempname __fit
 		mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
@@ -792,6 +812,16 @@ program nwergm_simulate
 		// main nwergm program's own gwesp block for the full, measured
 		// account of why (net loss at the low degree realistic sparse
 		// networks have; only a net win above roughly degree 30-40).
+		// ErgmNativeSetup() is likewise deliberately NOT called on this
+		// path (harmonisation unit 83): this loop calls ErgmMCMCSample()
+		// once PER SIMULATED NETWORK with samplesize=1, so `nsim' native
+		// plugin calls would each pay the native boundary's own fixed
+		// per-call overhead (frame create/drop, program define, dataset
+		// construction) for a single-row draw - exactly the "crossing
+		// the boundary too often" architecture this unit's own governing
+		// instructions warn against. __nwergm_last_M.native_enabled
+		// therefore simply stays at its ErgmModel::init() default of 0
+		// here, so every draw runs on the unmodified Mata sampler.
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: st_local("__ergm_simexpr", ErgmMatToLiteral(__nwergm_last_G.to_dense()))
 

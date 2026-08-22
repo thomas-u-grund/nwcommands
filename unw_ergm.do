@@ -786,6 +786,25 @@ class ErgmModel {
 	pointer rowvector td		// pointer(class ErgmTermData scalar) scalar, one per instance
 	string rowvector coefnames	// flat, length = sum(npar)
 
+	// Native (C) MCMC backend config (harmonisation unit 83) - NOT part
+	// of "what a model is" in any statistical sense; carried on ErgmModel
+	// purely because M already flows through every relevant call site
+	// (ErgmNativeSetup(), ErgmMCMCSample(), ErgmMCMCSampleDiag(),
+	// ErgmMCMLE()) and Mata class instances exhibit reference semantics
+	// across function calls (the same property ErgmGraph's own toggle()
+	// already relies on for MCMLE's sequential design) - this avoids
+	// needing genuine Mata "global" variables, which set matastrict on
+	// does not support declaring inside function bodies the way this
+	// unit's own first draft assumed (confirmed by direct trial). See
+	// this file's own "Native (C) MCMC backend" section for the full
+	// design.
+	real scalar native_enabled
+	real rowvector native_termcodes
+	real rowvector native_decays
+	real colvector native_attr
+	real scalar native_proposal
+	real scalar native_lastaccept
+
 	void init()
 	void addterm()
 	real scalar nparam()
@@ -803,6 +822,7 @@ void ErgmModel::init(){
 	chgfn = J(1, 0, NULL)
 	td = J(1, 0, NULL)
 	coefnames = J(1, 0, "")
+	native_enabled = 0
 }
 
 /*
@@ -967,6 +987,235 @@ end
 mata:
 
 /* ===================================================================
+   Native (C) MCMC backend - harmonisation unit 83, docs/CERTIFICATION.md.
+
+   See native/ergm_mcmc.c's own header comment for the full evidence
+   trail (Statnet source study, Mata microbenchmarks) motivating this
+   and the exact wire format. Summary of the design this Mata-side glue
+   implements:
+
+   - Scope: exactly the four terms native/ergm_mcmc.c's change_term()
+     supports (edges, mutual, nodematch, gwesp) - ErgmNativeSetup() below
+     is the ONLY place that decides eligibility, by inspecting the
+     model's own term names, once per `nwergm` call (never inside the
+     MCMC loop). Any other term present -> native stays disabled and
+     ErgmMCMCSample()/ErgmMCMCSampleDiag() run their original,
+     unmodified Mata code path exactly as before this unit.
+   - The Mata/native boundary is crossed exactly once per
+     ErgmMCMCSample()/ErgmMCMCSampleDiag() call (i.e. once per MCMLE
+     iteration), never once per proposal - the entire burnin+sampling
+     loop runs inside the single `plugin call`.
+   - Large, dyad-scale data (the edge list) crosses the boundary via
+     Stata dataset variables (SF_vdata/st_store), never st_matrix() -
+     the same package-wide rule this unit's own predecessor (unit 81)
+     established in docs/SPARSE_BACKEND.md. Small, model-scale data
+     (theta, term codes/decays, the observed statistic) crosses via a
+     single space-separated argument string.
+   - A dedicated Stata FRAME (`__ergm_native`) holds the plugin's own
+     input/output dataset, entirely isolated from whatever dataset is
+     in memory in the user's own current frame - no preserve/restore,
+     so this cannot conflict with any preserve nwergm.ado's own calling
+     context might already be holding.
+   - G is rebuilt from the native run's own final edge list after every
+     call, exactly reproducing ErgmMCMCSample()'s existing in-place-
+     mutation contract that ErgmMCMLE()'s sequential-MCMLE outer loop
+     depends on.
+   - RNG: seeded once per call from a value drawn via Mata's own
+     runiform() (so it is itself deterministic under `set seed`), then
+     iterated independently inside the C plugin (xorshift128+) - see
+     native/ergm_mcmc.c's own header for why this gives real Stata-seed
+     reproducibility without claiming (or needing) bit-identical sample
+     paths against the Mata backend.
+   =================================================================== */
+
+/*
+	Directory containing the installed nwergm.ado (hence, by this
+	project's own dev-repo layout, the sibling lib/plugins/ directory
+	holding the compiled plugin) - "" if nwergm.ado cannot be found on
+	the adopath (should not happen in practice, but ErgmNativeAvailable()
+	below treats that as "native unavailable", falling back to Mata,
+	rather than erroring).
+*/
+string scalar ErgmNativeInstallDir(){
+	string scalar full, dir, fn
+
+	full = findfile("nwergm.ado")
+	if (full == "") return("")
+	pathsplit(full, dir, fn)
+	return(dir)
+}
+
+string scalar ErgmNativePluginPath(){
+	string scalar dir
+
+	dir = ErgmNativeInstallDir()
+	if (dir == "") return("")
+	return(pathjoin(pathjoin(dir, "lib"), pathjoin("plugins", "ergm_mcmc.plugin")))
+}
+
+/*
+	Whether a compiled native plugin exists for THIS platform. Returns 0
+	(never errors) on any platform where lib/plugins/ergm_mcmc.plugin was
+	not built - the only currently-built platform is macOS (arm64 +
+	x86_64 fat binary; see native/Makefile and docs/ERGM_ARCHITECTURE.md's
+	native-backend section for the documented, not-yet-executed Windows/
+	Linux build recipe) - Windows/Linux users transparently get the
+	existing, fully-functional Mata backend instead, matching this
+	project's own explicit cross-platform requirement.
+*/
+real scalar ErgmNativeAvailable(){
+	string scalar p
+
+	p = ErgmNativePluginPath()
+	if (p == "") return(0)
+	return(fileexists(p))
+}
+
+/*
+	Decides, once per `nwergm` call (never inside the MCMC loop, per
+	this unit's own "term dispatch must be cheap" governing instruction),
+	whether the model M is eligible for the native backend, and if so
+	populates the small file-scope config globals ErgmMCMCSample()/
+	ErgmMCMCSampleDiag() check at their own top. ALWAYS resets
+	g_ergm_native_enabled first, so a call on an ineligible model
+	correctly disables native even if a previous, eligible `nwergm` call
+	earlier in the same session left it enabled. Returns 1 if native
+	will be used, 0 otherwise (nwergm.ado does not need to inspect this
+	return value - it exists mainly so cscripts/test_nwergm_native.do can
+	assert eligibility computed as expected on known model shapes).
+*/
+real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code){
+	real scalar t, code
+	string scalar nm
+	real rowvector termcodes, decays
+	real colvector attr
+	class ErgmTermData scalar tdt
+
+	M.native_enabled = 0
+
+	if (!ErgmNativeAvailable()) return(0)
+
+	termcodes = J(1, M.nterms, 0)
+	decays = J(1, M.nterms, 0)
+	attr = J(0, 1, 0)
+
+	for (t=1; t<=M.nterms; t++) {
+		if (M.npar[t] != 1) return(0)
+		nm = M.names[t]
+		tdt = *M.td[t]
+		if (nm == "edges") code = 1
+		else if (nm == "mutual") code = 2
+		else if (substr(nm, 1, 9) == "nodematch") {
+			code = 3
+			attr = tdt.attr
+		}
+		else if (substr(nm, 1, 5) == "gwesp") {
+			code = 4
+			decays[t] = tdt.decay
+		}
+		else return(0)
+		termcodes[t] = code
+	}
+
+	M.native_termcodes = termcodes
+	M.native_decays = decays
+	M.native_attr = attr
+	M.native_proposal = proposal_code
+	M.native_enabled = 1
+	return(1)
+}
+
+/*
+	Runs the entire burnin+sampling MCMC loop natively via a single
+	`plugin call` (see native/ergm_mcmc.c) and returns the same
+	(samplesize x nparam) statistic-LEVELS matrix ErgmMCMCSample() itself
+	returns - called from that function's (and ErgmMCMCSampleDiag()'s)
+	own native branch only, never directly. Mutates G in place to the
+	native run's own final network state (see this section's own header
+	comment) and leaves the acceptance rate over the sampling phase in
+	g_ergm_native_lastaccept for ErgmMCMCSampleDiag() to pick up.
+*/
+real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scalar G,
+		real rowvector theta, real scalar burnin, real scalar interval,
+		real scalar samplesize, real rowvector obs){
+
+	real matrix ties, out, newties
+	real scalar n, directed, nties, p, nobs_needed, i, rngseed, nties_out
+	string scalar origframe, argstr, cmd, outvarlist
+	string rowvector outvarnames
+	real colvector attrpad
+
+	n = G.n
+	directed = G.directed
+	ties = G.all_ties()
+	nties = rows(ties)
+	p = cols(theta)
+
+	nobs_needed = max((ergm_total_dyads(G), samplesize, n, 1))
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __ergm_native")
+	stata("frame create __ergm_native")
+	st_framecurrent("__ergm_native")
+
+	st_addobs(nobs_needed)
+	st_addvar("double", "v1")
+	st_addvar("double", "v2")
+	st_addvar("double", "v3")
+	outvarlist = ""
+	outvarnames = J(1, p, "")
+	for (i=1; i<=p; i++) {
+		outvarnames[i] = "v" + strofreal(3+i)
+		st_addvar("double", outvarnames[i])
+		outvarlist = outvarlist + " " + outvarnames[i]
+	}
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+
+	attrpad = M.native_attr
+	if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), 1, 0)
+	st_store((1::n), "v3", attrpad[1::n])
+
+	rngseed = floor(runiform(1,1) * 2147483647)
+
+	argstr = strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
+		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
+		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(p)
+	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_decays[i])
+	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i])
+	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i])
+
+	// Stata will not let an already-loaded plugin-type program be
+	// dropped and redefined within the same session (confirmed by
+	// direct trial: a `capture program drop` immediately followed by
+	// redefinition still errored "already defined" on the SECOND native
+	// call of a session) - since every call here uses the identical
+	// path, simply leaving an existing definition in place is correct;
+	// `capture` swallows exactly that one harmless case, while a genuine
+	// failure (bad path, corrupt plugin) still surfaces moments later
+	// when the `plugin call' below cannot find the command.
+	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
+
+	cmd = "plugin call ergmnativemcmc v1 v2 v3" + outvarlist + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+
+	nties_out = st_numscalar("__ergm_native_nties_out")
+	M.native_lastaccept = st_numscalar("__ergm_native_naccept") / st_numscalar("__ergm_native_ntried")
+
+	out = st_data((1::samplesize), outvarnames)
+	if (nties_out > 0) newties = st_data((1::nties_out), ("v1","v2"))
+	else newties = J(0, 2, 0)
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __ergm_native")
+
+	G.init(n, directed)
+	for (i=1; i<=rows(newties); i++) G.toggle(newties[i,1], newties[i,2])
+
+	return(out)
+}
+
+/* ===================================================================
    MCMC engine: Metropolis-Hastings simulation over binary graph space
    (Part X of the governing task brief). A proposal is a plain Mata
    function with the fixed signature
@@ -1109,6 +1358,21 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real matrix out
 
 	cur = M.full_statistic(G)
+
+	// Native backend fast path (harmonisation unit 83) - see this file's
+	// own "Native (C) MCMC backend" section above. M.native_enabled is
+	// set once per `nwergm' call by ErgmNativeSetup(), never inside this
+	// loop; when 0 (the ordinary case for any model using a term outside
+	// the native backend's own deliberately narrow scope, or on a
+	// platform with no compiled plugin) every line below this branch is
+	// completely unchanged from before this unit - proposalfn is simply
+	// unused in the native branch, since the plugin implements its own
+	// proposal/toggle loop natively (crossing the Mata/native boundary
+	// once for this whole call, not once per proposal).
+	if (M.native_enabled) {
+		return(ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur))
+	}
+
 	out = J(samplesize, cols(cur), 0)
 
 	for (step=1; step<=burnin; step++) {
@@ -1170,6 +1434,19 @@ struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class Er
 	real scalar step, draw, tail, head, logratio, cutoff, naccept, ntried
 
 	cur = M.full_statistic(G)
+
+	// Native backend fast path - see ErgmMCMCSample()'s own identical
+	// branch just above for the full rationale; the acceptance rate
+	// ErgmNativeSampleCore() tallies internally is picked up from
+	// M.native_lastaccept here since this function's own return type
+	// (unlike ErgmMCMCSample()'s bare matrix) has a natural place to put
+	// it.
+	if (M.native_enabled) {
+		res.sample = ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur)
+		res.acceptrate = M.native_lastaccept
+		return(res)
+	}
+
 	res.sample = J(samplesize, cols(cur), 0)
 
 	for (step=1; step<=burnin; step++) {
