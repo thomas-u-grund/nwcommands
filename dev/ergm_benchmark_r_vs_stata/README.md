@@ -39,6 +39,11 @@ settings (R script). Numbered by benchmark: `0x` = 30-node original, `1x` =
   import/reshape path the smaller benchmarks use — Stata BE's own
   `c(maxvar)=2048` hard cap breaks the wide-CSV/`reshape long` approach at
   1000+ columns (see the script's own header comment).
+- `50_microbench_primitives.do` — isolates nwergm's own Mata primitives
+  (`has_edge`/`toggle`/`ergm_propose_tnt`/each `change_*` term/
+  `common_neighbors`/`neighbors_out`) at realistic sparse degree, used to
+  pin the harmonisation-unit-83 GWESP gap on Mata's own per-call overhead
+  before writing any native code.
 
 `nwset`'s own `mat()` option has a real, documented bug with bare Stata matrix
 names (`docs/CERTIFICATION.md`'s own Pending list) that a literal-expression
@@ -142,6 +147,43 @@ auto-enable heuristic or explicit opt-in on genuinely dense networks. See
 `docs/CERTIFICATION.md`'s unit-82 entry for the full root-cause chain and
 `docs/ERGM_ROADMAP.md`'s Performance section for the updated decision
 framework this finding produces for the C++ question.
+
+**Native (C) MCMC backend (harmonisation unit 83)**: per the user's own
+explicit relaxation of this project's earlier Mata-first default (unit 82's
+own finding that the shared-partner cache did not close the GWESP gap
+satisfied the user's own stated conditional for reaching for C/C++), a
+genuine Stata C plugin (`native/ergm_mcmc.c`) now implements the entire
+MCMC sampling loop for the four terms this suite exercises
+(edges/mutual/nodematch/gwesp), auto-selected whenever a model is eligible
+and the compiled plugin is present, with the full Mata implementation kept
+as the always-available reference/fallback. Re-running all five benchmarks
+with the native backend engaged, same default settings, only the backend
+changed:
+
+| Benchmark | R `ergm` | nwergm (unit 81, Mata) | nwergm (unit 83, native) | Ratio now | Was |
+|---|---|---|---|---|---|
+| 1: 30-node directed, edges+mutual | 0.29s | 6.6-7.0s | **0.311s** | ~1.07x | ~23-25x |
+| 2: 100-node directed, edges+mutual+nodematch | 0.484s | 13.746s | **0.495s** | ~1.02x | ~28.4x |
+| 3: 100-node undirected, edges+gwesp | 0.326s | 22.065s | **0.419s** | ~1.29x | ~67.7x |
+| 4: 500-node sparse, edges+nodematch+gwesp | 2.293s | 93.174s | **3.932s** | ~1.72x (still hits the iteration cap) | ~40.6x |
+| 5: 1000-node directed CONTROL (no gwesp) | 9.177s | 27.762s | **4.883s** | ~0.53x (faster than R) | ~3.0x |
+
+Coefficients/standard errors are unchanged in character from the Mata
+backend (the native backend changes execution speed, not the statistical
+model) and were cross-certified against the Mata reference via
+`cscripts/test_nwergm_native.do` (statistical equivalence of sampled
+distributions from an identical starting network/theta, plus a
+self-consistency check that the network the plugin hands back genuinely
+matches the statistics it reports). Benchmarks 4 and 5 still hit the
+default 20-iteration MCMLE cap without converging - unchanged from unit 81,
+since the native backend accelerates each iteration, not the number of
+iterations MCMLE needs; investigating that is a separate, not-yet-started
+item (see `docs/ERGM_ROADMAP.md`'s Performance section). See
+`docs/CERTIFICATION.md`'s unit-83 entry for the full design, the fresh
+verification against Statnet's own current C source, and the Mata
+microbenchmark (`50_microbench_primitives.do`) that pinned the GWESP gap on
+interpreter overhead rather than an algorithmic difference before any C
+code was written.
 
 ## Extending this suite
 

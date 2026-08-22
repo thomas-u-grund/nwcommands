@@ -459,6 +459,117 @@ shared exported network (see its own README).
   for (e.g. `e(b)`/`e(V)` themselves) — the distinction is whether the
   matrix's own size scales with the DATA rather than with the MODEL.
 
+## Native (C) MCMC backend
+
+Harmonisation unit 83 (`docs/CERTIFICATION.md`) relaxed this project's
+earlier standing Mata-first default for `nwergm` specifically, after units
+80-82's own evidence (the GWESP gap surviving both the TNT/MPLE fixes and a
+correctly-reasoned-but-rejected shared-partner cache) pointed at Mata's own
+per-call interpreter overhead, not an algorithmic gap, as the remaining
+cause. This relaxation does **not** extend to the rest of `nwcommands`
+(`nwdegree`/`nwcomponents`/`nwset`/general sparse-backend code stay on the
+existing architecture per the user's own explicit scoping) and it does not
+mean "rewrite nwergm in C" — the Mata implementation remains the reference
+implementation, the correctness oracle, the fallback, and the only backend
+available on any platform without a compiled plugin.
+
+**Files**: `native/ergm_mcmc.c` (the kernel itself — read its own header
+comment first, it carries the full evidence trail and design rationale in
+more detail than this section repeats), `native/spi/` (StataCorp's own
+official Stata Plugin Interface 3.0 headers, redistributed exactly as
+published at stata.com/plugins for this purpose), `native/Makefile` (macOS
+build, verified; Windows/Linux recipes documented, not yet built — no
+toolchain was available). The compiled artifact lives at
+`lib/plugins/ergm_mcmc.plugin`; `unw_ergm.do`'s `ErgmNativeAvailable()`
+checks for it via `fileexists()` and never errors when it is absent.
+
+**The boundary is crossed once per `ErgmMCMCSample()`/`ErgmMCMCSampleDiag()`
+call** (i.e. once per MCMLE iteration) — the entire burnin+sampling loop
+(propose, evaluate every active term, accept/reject, toggle, record) runs
+inside a single `plugin call`. Crossing the Mata/native boundary once per
+*proposal* (potentially millions of times per fit) would reintroduce
+exactly the interpreter-crossing overhead this backend exists to eliminate
+— never design a native term or proposal that requires per-step round
+trips back into Mata.
+
+**Scope is decided once per model, never inside the loop**:
+`ErgmNativeSetup(M, proposal_code)` (called once by `nwergm.ado`, right
+before `ErgmMCMLE()`) inspects `M`'s own term names and populates
+`M.native_enabled`/`native_termcodes`/`native_decays`/`native_attr` — a
+model using any term outside the native kernel's own set (currently:
+`edges`, `mutual`, `nodematch`, `gwesp`) leaves `native_enabled` at its
+`ErgmModel::init()` default of 0, and `ErgmMCMCSample()`/
+`ErgmMCMCSampleDiag()`'s own top-of-function check falls straight through
+to the original, completely unmodified Mata loop. These native-backend
+config fields live on `ErgmModel` itself (not genuine Mata "global"
+variables — `set matastrict on` does not support declaring those inside a
+function body, confirmed by direct trial) purely because `M` already flows
+through every relevant call and Mata class instances exhibit reference
+semantics across calls, the same property `ErgmGraph::toggle()` already
+relies on for sequential MCMLE.
+
+**Data crossing the boundary**: the edge list (the one object whose size
+scales with the network) goes through Stata dataset variables in a
+dedicated, isolated frame (`st_addobs()`/`st_addvar()`/`st_store()`/
+`SF_vdata()` on the C side) — never `st_matrix()`, per the package-wide
+rule this section's own predecessor established (see the `.ado` integration
+layer section above and `docs/SPARSE_BACKEND.md`). Small, model-scale data
+(theta, term codes/decays, the observed statistic, MCMC control scalars)
+crosses via one space-separated argument string, tokenized on the C side
+with plain `strtok()`. Two Stata Plugin Interface contract details were
+confirmed by direct trial rather than assumed from general SPI
+documentation, and are load-bearing for anyone extending this file: the
+plugin's exported C entry point must be named exactly `stata_call`
+regardless of the Stata-side `program name, plugin` name chosen, and the
+`plugin call ..., "args"` string arrives as a single `argv[0]` token, not
+pre-split on whitespace.
+
+**RNG and reproducibility**: the plugin uses a self-contained xorshift128+
+generator, seeded once per call from a value the Mata caller draws via
+`runiform()` — so a given `set seed` reproducibly drives the same native
+run, satisfying the user's own explicit reproducibility requirement, but
+the native and Mata backends do NOT share an RNG stream and will not
+produce bit-identical sample paths for the same seed. This is disclosed and
+deliberate: `cscripts/test_nwergm_native.do`'s own cross-certification
+standard is statistical equivalence of sampled distributions (mean
+agreement within an autocorrelation-corrected Monte Carlo standard error,
+reusing `ergm_lag1_autocorr()`), not trajectory-level identity, matching
+the user's own stated contract.
+
+**No shared-partner cache in the native GWESP path**, deliberately: unit
+82's own finding (cache maintenance cost exceeds lookup savings below
+degree ~30-40 in Mata) has no logical reason to flip in compiled code, since
+both sides of that tradeoff shrink together — the C kernel's GWESP change
+statistic is a direct, correctness-preserving port of `common_neighbors()`'s
+own on-demand neighbor-intersection approach. A future degree-adaptive
+cache remains an open `docs/ERGM_ROADMAP.md` item, not implemented here.
+
+### How to add a new native term
+
+Mirrors the Mata term-extension walkthrough below, at the C level:
+
+1. Add a `TERMCODE_*` constant in `native/ergm_mcmc.c`.
+2. Add one `case` to `change_term()`'s `switch()` implementing the change
+   statistic (the graph primitives it needs — `has_edge()`,
+   `common_neighbors()`, `g->deg[i]` — are already available; add a new
+   primitive only if the term genuinely needs one, following the existing
+   O(1)/O(degree) discipline).
+3. If the term needs per-node adjacency enumeration (like `gwesp`), set
+   `need_adj` when that termcode is present during argument parsing.
+4. Extend `ErgmNativeSetup()` in `unw_ergm.do` to recognize the term's own
+   name pattern and map it to the new termcode.
+5. Rebuild (`cd native && make macos`), add a cross-certification case to
+   `cscripts/test_nwergm_native.do` (statistical-equivalence + self-
+   consistency, exactly like the two existing cases), and re-run the full
+   benchmark suite to confirm the term is actually worth native treatment
+   before shipping it — per the user's own "decide term by term through
+   profiling" instruction, not every future term needs or benefits from
+   this.
+
+The loop structure itself (`stata_call()`'s two `for` loops over
+burnin/sampling) never needs to change for a new term — only the dispatch
+table and argument-string layout grow.
+
 ## Postestimation: adding a new `estat` subcommand
 
 `nwergm.ado` sets `ereturn local estat_cmd "nwergm_estat"` in both the MPLE
