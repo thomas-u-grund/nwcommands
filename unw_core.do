@@ -1515,6 +1515,71 @@ real matrix KComponents(real matrix origadj, real rowvector nodeset, real scalar
 	return(results)
 }
 
+/*
+	CohesionHierarchy(origadj, nodeset): the full, multi-level Moody-White
+	(2003) recursive cohesive-blocking decomposition, built directly on top
+	of the existing single-level KComponents()/vertex_connectivity()
+	primitives (nwkcomponents.ado's own doc header explicitly frames this
+	as "a natural, separate follow-on built on the same k(int)-level
+	primitive" - this is that follow-on). Returns one row per cohesive
+	block found anywhere in the hierarchy (at any depth): column 1 is that
+	block's own ACTUAL vertex connectivity (not merely the level it was
+	searched for - see below), columns 2..cols(origadj)+1 are its 0/1
+	membership indicator over the full original node set.
+
+	Algorithm: compute `nodeset''s own actual connectivity kappa via
+	vertex_connectivity() and record (kappa, nodeset) as one block of the
+	hierarchy unconditionally - this differs from KComponents() itself,
+	which only ever reports sets meeting a REQUESTED target k; here every
+	visited node set is reported, at whatever its own true kappa turns out
+	to be, since the whole point of the hierarchy is to expose the nesting
+	structure across ALL levels, not just one. If `nodeset' is too small to
+	possibly contain a (kappa+1)-connected subset (fewer than kappa+2
+	nodes - the minimum size a (kappa+1)-connected subgraph could have),
+	recursion stops here. Otherwise, KComponents(origadj, nodeset, kappa+1)
+	finds every maximal (kappa+1)-or-better-connected child block within
+	`nodeset', and each becomes its own recursive call - note a child's
+	own reported kappa can turn out to be strictly greater than kappa+1
+	(KComponents only guarantees >= the requested target, not equality),
+	which is expected and matches a well-documented real property of
+	structural cohesion: the hierarchy can skip levels.
+
+	Termination: guaranteed, and needs no defensive equality check against
+	`nodeset' itself (contrast KComponents()'s own recursion, which does
+	need such reasoning - see its header comment) because every child
+	returned by KComponents(origadj, nodeset, kappa+1) is, by that
+	function's own contract, a set with connectivity >= kappa+1 - strictly
+	greater than `nodeset''s own just-computed connectivity kappa - so a
+	child can never be identical to `nodeset' (same node set would mean
+	same connectivity). Each recursive call therefore strictly increases
+	the target connectivity level, which is bounded above by n-1, so the
+	recursion depth is finite regardless of graph structure. A `nodeset'
+	with zero qualifying children (KComponents returns 0 rows - no subset
+	reaches kappa+1) simply contributes no further rows, via the ordinary
+	empty-loop behaviour below; no special case needed.
+*/
+real matrix CohesionHierarchy(real matrix origadj, real rowvector nodeset){
+	real matrix results, childresults, sub, kcomps
+	real rowvector idx
+	real scalar kappa, i
+
+	idx = selectindex(nodeset)
+	sub = origadj[idx, idx]
+	kappa = vertex_connectivity(sub)
+	results = (kappa, nodeset)
+
+	if (length(idx) < kappa + 2) {
+		return(results)
+	}
+
+	kcomps = KComponents(origadj, nodeset, kappa + 1)
+	for (i=1; i<=rows(kcomps); i++) {
+		childresults = CohesionHierarchy(origadj, kcomps[i,.])
+		results = results \ childresults
+	}
+	return(results)
+}
+
 
 					/* End utilities		*/
 /* -------------------------------------------------------------------- */
@@ -1773,6 +1838,7 @@ class `NWdef' {
 	real matrix calculate_nclique_filtered()
 	real matrix calculate_nclan_filtered()
 	real matrix calculate_kcomponents()
+	real matrix calculate_cohesion_hierarchy()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -1819,6 +1885,7 @@ class `NWdef' {
 	void data_sync()
 	void keep_nodes()
 	void drop_nodes()
+	pointer(class `NWdef' scalar) scalar extract_subgraph()
 	void permute()
 	void clean_matrix_2mode()
 	`BOOL' rename_nodename()
@@ -2907,6 +2974,27 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 
 	nodeset = J(1, n, 1)
 	return(KComponents(adj, nodeset, k))
+}
+
+/*
+	Full Moody & White (2003) cohesive-blocking hierarchy - see
+	CohesionHierarchy()'s own header comment for the algorithm. Always
+	undirected and binary, for the same reason calculate_kcomponents()
+	above is (vertex connectivity has no directed/valued generalization
+	this package uses). Column 1 of the result is each block's own actual
+	connectivity level; columns 2.. are its 0/1 node membership.
+*/
+real matrix `NWdef'::calculate_cohesion_hierarchy(){
+	real matrix adj
+	real rowvector nodeset
+	real scalar n
+
+	n = get_nodes()
+	adj = (*get_matrix_mod(0,0)) :!= 0
+	_diag(adj, 0)
+
+	nodeset = J(1, n, 1)
+	return(CohesionHierarchy(adj, nodeset))
 }
 
 /*
@@ -4414,6 +4502,14 @@ void `NWdef'::keep_nodes(rowvector k){
 	real matrix edge_new
 	string matrix modes_new, nodesvar_new, nodes_new
 
+	// sparse-native networks (edge_dense_built==`False') never populate
+	// `edge' - without this, keep_nodes()/drop_nodes() silently operated
+	// on an empty/stale dense matrix for such networks. Found while
+	// building the induced-subgraph primitive for nwcohesion (harmonisation
+	// unit 59) - every other dense-touching method already guards with
+	// this same call (see e.g. check_symmetry() above).
+	ensure_dense_built()
+
 	if (cols(k) == cols(nodes)){
 		nodes_new = select(nodes,k)
 		nodesvar_new = select(nodesvar,k)
@@ -4428,6 +4524,47 @@ void `NWdef'::keep_nodes(rowvector k){
 		edge = edge_new
 		sparse_built = `False'
 	}
+}
+
+/*
+	Return a fresh, unregistered NWdef instance holding the induced
+	subgraph on the nodes selected by `k' (a 0/1 rowvector, one entry per
+	node of the CALLING network, same convention as keep_nodes()) -
+	unlike keep_nodes()/drop_nodes(), which mutate the instance they are
+	called on, this leaves the calling network completely untouched and
+	hands back a standalone copy suitable for recursive algorithms (e.g.
+	nwcohesion's Moody-White hierarchy, nwego's induced ego-network
+	extraction) that need to keep re-deriving further subgraphs from the
+	ORIGINAL network at each step. The returned instance is never added
+	to the network store (`nw.nws' names/pdefs) - it exists only as long
+	as the caller holds the pointer, so purely-internal recursive use
+	never pollutes the user-visible named-network namespace. set_selfloop()
+	is called before set_edge() (the reverse of `NWsdef'::duplicate()'s
+	order) because set_edge()'s own diagonal-handling reads
+	is_selfloop_boolean() at the time it runs.
+*/
+pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
+	pointer(class `NWdef' scalar) scalar sub
+
+	ensure_dense_built()
+	sub = &(`NWdef'())
+	sub->set_name(get_name() + "_sub")
+	sub->set_selfloop(is_selfloop_boolean())
+	sub->set_directed(is_directed_boolean())
+	sub->set_valued(is_valued_boolean())
+	sub->set_2mode(is_2mode_boolean())
+	sub->set_edge(get_matrix_copy())
+	sub->set_nodenames(get_nodenames())
+	if (is_2mode_boolean() == 1){
+		sub->set_modes(get_modes())
+	}
+	sub->set_nodesvar(get_nodesvar())
+	sub->set_label(get_label())
+	sub->set_caption(get_caption())
+
+	sub->keep_nodes(k)
+
+	return(sub)
 }
 
 real scalar `NWdef'::is_selfloop_boolean(){

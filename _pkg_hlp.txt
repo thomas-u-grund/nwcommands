@@ -27,6 +27,7 @@ f nwclear.sthlp
 f nwclique.sthlp
 f nwcloseness.sthlp
 f nwclustering.sthlp
+f nwcohesion.sthlp
 f nwcollapse.sthlp
 f nwcommands.sthlp
 f nwcommunity.sthlp
