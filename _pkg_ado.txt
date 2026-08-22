@@ -104,6 +104,7 @@ f nwtomatafast.ado
 f nwtostata.ado
 f nwtranspose.ado
 f nwtriads.ado
+f nwturnover.ado
 f nwunab.ado
 f nwuse.ado
 f nwutility.ado

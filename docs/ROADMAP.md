@@ -65,7 +65,9 @@ Highest-value additions for credible igraph-style coverage:
 
 ## Stage 7 — Dynamic/multiplex/relational-event functionality
 
-Only after Stage 0-6 mature. Real reusable adjacency already exists (`NWsdef` multi-network storage, `nwcorrelate`, `nwmovie`'s multi-frame animation) — a stability/turnover command is a smaller lift than the "confirmed E" status suggests once those pieces are assembled deliberately.
+Only after Stage 0-6 mature (Stage 6 itself is not yet fully mature - motifs beyond triads, flow/cuts/matching, random walks, and large-network layouts remain open; Leiden remains open within community detection specifically). One genuinely tractable item was pulled forward regardless, per this section's own prior note that it needed no unfinished Stage 6 infrastructure:
+
+- ✅ Tie turnover/stability between two waves of the same network — done (harmonisation unit 66): new `nwturnover` command, comparing two same-node-set networks representing two time points directly (built entirely on existing `get_matrix_mod()` access, no new `NWdef` method needed - matching this line's own prior observation that "a stability/turnover command is a smaller lift than the confirmed E status suggests"). Reports stable/formed/dissolved tie counts, the standard Jaccard index of network change (Snijders et al.'s SIENA methodology), persistence rate, and a per-node local stability score. The rest of Stage 7 (genuine multi-wave/relational-event modeling, multiplex-network-specific commands) remains correctly deferred pending Stage 6's own remaining items.
 
 ## Stage 8 — Native ERGM (long-term flagship)
 
