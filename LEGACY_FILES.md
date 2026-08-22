@@ -71,6 +71,63 @@ further, since it is moot either way now that its only caller is gone. `d3js/`/`
 remain archived under `old/js/` unchanged - they were never referenced by `nwplotjs.ado` or
 anything else regardless.
 
+## Root-folder cleanup (harmonisation unit 53) — deleted outright, not archived
+
+Per the policy above ("delete only exact junk"), not moved to `old/`. Two categories, each file
+checked individually for live references before removal (grep across every `.ado`/`.do`/`.sthlp`
+in the repository) - `keep the subfolders` from the same instruction was interpreted literally:
+`demo/`'s own already-pending file deletions and `data/~$excel_example.xlsx` (an Office lock-file
+artifact) were left untouched, since they sit inside subfolders this pass was not scoped to touch.
+
+**Genuine scratch/temp artifacts** (untracked, so no `git rm` needed - they simply no longer
+appear in `git status`): `dijkstra.do`, `dump.smcl`, `log.smcl`, `priorityQueue.do`/`priorityQueue2.do`/
+`priorityQueue3.do`/`priorityQueueMin.do`/`priorityQueueTest.do` (only `priorityQueue.do` was ever
+referenced, by `dijkstra.do` itself - both scratch, neither referenced by any live command),
+`savetrial.do`, `speedtest.do`, `test.svg` (an orphaned old file - `cscripts/test_nwplot.do`'s own
+`"test.svg"` substring match is coincidental, it actually builds `relative_export_test.svg`),
+`nwclusteringTEMP.do`, `net.dta`/`ego_list.dta`/`paths.dta`/`potential_4paths.dta`/`alter_list.dta`
+(unreferenced scratch data), `nws_preserve` (unreferenced), and two files with a stray Private Use
+Area Unicode character (U+F009) appended to an otherwise-ordinary name - `nwset.sthlp`/
+`nwvalue.sthlp` (9507/1431 bytes, dated Jul 2016) - stale duplicates of the real, current,
+tracked `nwset.sthlp`/`nwvalue.sthlp` (16478/939 bytes), never referenced by name anywhere (nothing
+could reference an invisible-character filename on purpose).
+
+**Already-tracked, already-pending-deletion files, checked and confirmed safe to finalize** (these
+existed as uncommitted `git status` deletions from earlier, unrelated work - each verified rather
+than blindly committed, since committing a bad deletion here would be indistinguishable from
+introducing a regression): `.!2045!nwqap.sthlp`/`.!2050!nwqap.sthlp` (editor atomic-save temp
+artifacts - the "`.!NNNN!name`" pattern - superseded by the real, current `nwqap.sthlp`);
+`__v1nws_cls.mo` (an old compiled Mata object for the "Version 1" `NWs`/`NWsder` classes now
+defined inline in `unw_core.do` - zero references); `compressed_example.txt`/`glasgow.dta`/
+`klas12b.dta` (redundant root-level duplicates - proper copies already exist under `data/`, and
+`nwimport.ado`'s own apparent reference to `compressed_example.txt` is dead code, a misspelled
+local - `` `anyting' `` for `` `anything' `` - that has never actually done anything); `kapmine.dat`
+(its only apparent reference in `netexample.sthlp` is a coincidental filename match inside a
+worked example that fetches from an external URL, not the local file); `nwsave_old.ado`,
+`nwsort.ado`/`.sthlp`, `nwvalidvars.ado`/`.sthlp` (each confirmed byte-identical, via direct diff
+against `git show HEAD:<path>`, to an already-archived `deprecated/` counterpart - the deletion
+finalizes a move that had already happened in substance; `nwvalidvars.ado` in particular is the
+missing command already tracked in `docs/CERTIFICATION.md`'s own Pending table as breaking
+`nwlattice.ado` - restoring it to the root would partially undo an already-made, already-documented
+archival decision, so the real fix stays scoped to `nwlattice.ado` itself, as that Pending row
+already says); `index.html`, `junk.txt`, `madrid.dat`, `mmm.mmat`, `mycc.mmat`, `mydata.dta`,
+`myfile.dta`, `mynets.ddd`, `mynets.mmat`, `nwcommands.txt`, `sociomatrix10.eps`, `stata.toc`,
+`wiring.dat` (zero references anywhere, generic scratch/example names); `test.do` (a scratch runner
+only ever invoked by `nw_deployfile.ado`, itself unreferenced author-only release tooling, not a
+shipped package command); `test.dta` (its only reference, in `cscripts/test_nwbalance.do`, is a
+comment describing an already-fixed bug where an earlier version of `nwbalance.ado` used to write
+this exact file as an unwanted side effect - not a real dependency).
+
+**Deliberately left alone, needs its own dedicated pass**: `nwcommands-dlg.pkg`/`nwcommands-ext.pkg`/
+`nwcommands-ext1.pkg`/`nwcommands-hlp.pkg` are also pending, uncommitted root-level deletions, but
+unlike everything above they are package-distribution manifests `nwinstall.ado` references by name
+(`net install "nwcommands-hlp", all`, etc.) - whether they're safe to finalize depends on
+understanding the release/publish process behind them (are they meant to be regenerated from a
+`_pkg_dlg.txt`-style source list the way `nwcommands-ado.pkg` is from `_pkg_ado.txt`, or are they
+themselves the source of truth uploaded to nwcommands.org on release?) well enough to be sure
+finalizing the deletion doesn't break `nwinstall`'s own distribution mechanism - not established
+here, so left untouched rather than guessed at.
+
 ## Not archived (checked and ruled out as duplicates)
 
 - `_growmedian2.ado` — no sibling `_growmedian.ado` exists; just an oddly-named singleton helper, not a version duplicate.
