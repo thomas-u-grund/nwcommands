@@ -24,6 +24,7 @@
 {opt typeoptions(regoptions)}
 {opt detail}
 {opt save}({it:{help filename}})
+{opth predict(newnetname)}
 
 
 
@@ -36,6 +37,7 @@
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
 {synopt:{opt detail}}display details of regression results{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
+{synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 
 
 {title:Description}
@@ -72,6 +74,18 @@ regression one can use probit regression with option {it:asis}:
 
 {pstd}
 The raw output of this dyad-level regression is displayed with option {bf:detail}.
+
+{pstd}
+{opth predict(newnetname)} stores {bf:type()}'s own fitted dyad-level values - whatever statistic
+that regression command's own default {help predict} reports (predicted probability for
+{bf:logit}/{bf:probit}/{bf:cloglog}, the fitted linear mean for {bf:regress}, etc.) - as a new
+valued network, e.g. for comparing predicted tie probabilities against the observed network as a
+goodness-of-fit check. Captured from the one real (non-permuted), observed-data regression this
+command already runs internally to obtain {bf:type()}'s own coefficients - not from any of the
+{opth permutations(int)} null-model draws. The diagonal (excluded from estimation, like every
+self-tie in this command's dyadic reshaping) is set to 0 in the resulting network. A name collision
+with an existing network is handled the same non-destructive way every other network-creating
+command in this package handles it (auto-renamed with a warning, unless {it:newnetname} is free).
 
 {pstd}
 Once a dataset is assembled and a regression is carried out, the resulting coefficients indicate 
@@ -111,6 +125,7 @@ Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Reg
 	
 	{cmd:. webnwuse glasgow}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
+	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}
 
 
 	{txt}Multiple Regression Quadratic Assignment Procedure
@@ -166,7 +181,11 @@ that only need {it:e(b)}/{it:e(V)} (e.g. {help test}, {help lincom}) work as usu
 is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a
 classical OLS/logit covariance matrix - dyadic network data violates the independent-
 observations assumption those classical formulas require, which is the entire reason QAP
-permutation testing exists in the first place. No {cmd:predict} subroutine is implemented.
+permutation testing exists in the first place. A native postestimation {help predict} does not
+work after {cmd:nwqap} returns (see {help nwqap##independentvariables:Description} above for why -
+the dyad-level dataset {bf:type()} actually fits is a transient internal detail, not the current
+dataset once {cmd:nwqap} exits); use {opth predict(newnetname)} instead to capture fitted dyad-level
+values directly, at the one point internally where they are genuinely meaningful.
 
 	Scalars
 	  {bf:e(N)}		number of dyad-level observations
@@ -191,7 +210,7 @@ permutation testing exists in the first place. No {cmd:predict} subroutine is im
 
 capture program drop nwqap
 program nwqap, eclass
-syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) ]
+syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) ]
     set more off
 
 	mata: st_rclear()
@@ -348,7 +367,27 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		quietly `type' `formula'
 	}
 	mat reg_results = e(b)
-	
+
+	// predict(): captured HERE, not after the eclass ereturn post further
+	// down - this is the one point in the whole program where the
+	// dyad-level long-format dataset is still the active dataset AND
+	// `type''s own live estimation results (e(sample) etc.) genuinely
+	// correspond to it, so `type''s own native predict (whatever default
+	// statistic it reports - Pr(y=1) for logit/probit, the fitted mean
+	// for regress, etc.) is meaningful. Every later step (`restore' back
+	// to the original node-level dataset, this program's own `ereturn
+	// post' of QAP-permutation-based e(V)) intentionally does not touch
+	// Stata's native estimation-sample bookkeeping, so a plain postestimation
+	// `predict' typed by the user after nwqap returns would not work -
+	// this is why the previous version of this file explicitly did not
+	// offer one; genuine dyad-level fitted values are captured directly,
+	// on demand, instead.
+	if "`predict'" != "" {
+		tempvar __nw_fittedvar
+		qui predict `__nw_fittedvar'
+		mata: fitted_long = st_data(., "`__nw_fittedvar'")
+	}
+
 	// Calculate p-values.
 	use `results', clear
 	if "`save'" != "" {
@@ -408,7 +447,30 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		}
 	}
 	restore
-	
+
+	// predict(): reshape the dyad-level fitted values captured earlier
+	// back into an n x n matrix (transformOutOfLong() - the exact inverse
+	// of transformIntoLong()'s own column-major convention) and materialize
+	// them as a new network via nwset, which already handles a name
+	// collision the same non-destructive way every other network-creating
+	// command in this package does (auto-renames with a warning, unless
+	// the name is free). The diagonal is forced to a clean 0 rather than
+	// left holding whatever Stata's own predict returned for the
+	// diagonal's fully-missing predictors (always missing, since every
+	// network/attribute IV column has its own diagonal set missing before
+	// estimation - see the `_diag(onenet, ...)' calls above).
+	if "`predict'" != "" {
+		mata: fitted_mat = transformOutOfLong(fitted_long, `nodes')
+		mata: _diag(fitted_mat, J(`nodes', 1, 0))
+		if "`directed'" == "true" {
+			qui nwset, mat(fitted_mat) name(`predict') directed labs(`labs')
+		}
+		else {
+			qui nwset, mat(fitted_mat) name(`predict') undirected labs(`labs')
+		}
+		mata: mata drop fitted_long fitted_mat
+	}
+
 	//  Display results.
 	local max_l = 0
 	tokenize "`prefix'"
@@ -457,11 +519,12 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// OLS/logit covariance, which would be actively misleading here:
 	// dyadic network data violates the independent-observations
 	// assumption those formulas require, which is the entire reason
-	// QAP permutation testing exists in the first place. No predict
-	// subroutine is implemented (QAP prediction is not as well
-	// established a concept as for standard regression, and it's a
-	// separate concern from getting e(b)/e(V)/postestimation-storage
-	// support in place) - see docs/CERTIFICATION.md's Pending table.
+	// QAP permutation testing exists in the first place. Fitted dyad-level
+	// values (predict()) are captured separately, earlier in this program
+	// (see that block's own header comment) - a native postestimation
+	// predict cannot work after THIS ereturn post, since it runs against
+	// the current (node-level) dataset, not the transient dyad-level one
+	// type()'s own estimation actually ran against.
 	local ivnames ""
 	forvalues k=2/`vars' {
 		local ivnames "`ivnames' ``k''"
@@ -496,6 +559,7 @@ end
 
 capture mata mata drop transformIntoLong()
 capture mata mata drop permute_net()
+capture mata mata drop transformOutOfLong()
 mata:	
 real matrix transformIntoLong(real matrix mymat){ 
 	size = rows(mymat)
@@ -512,6 +576,26 @@ real matrix permute_net(real matrix nwadj) {
 	nsize = rows(nwadj)
 	permutationVec = unorder(nsize)
 	return (nwadj[permutationVec, permutationVec])
+}
+
+/*
+	Inverse of transformIntoLong() above: reshapes a dyad-indexed long
+	column vector back into an n x n matrix, using the identical
+	column-major indexing convention (column j occupies long-format rows
+	(j-1)*n+1 .. j*n) - used by predict()'s own fitted-value network
+	reconstruction below.
+*/
+real matrix transformOutOfLong(real matrix veclong, real scalar size){
+	real matrix mymat
+	real scalar j, startindex, endindex
+
+	mymat = J(size, size, 0)
+	for (j = 1; j <= size; j++) {
+		startindex = ((j-1) * size) + 1
+		endindex = (j * size)
+		mymat[,j] = veclong[|startindex,1\endindex,1|]
+	}
+	return(mymat)
 }
 end
 	

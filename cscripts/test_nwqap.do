@@ -152,3 +152,64 @@ estimates table q_regress q_logit
 qui estimates restore q_regress
 mat b3 = e(b)
 assert reldif(b3[1,1], 2) < 1e-6
+
+* --- predict(): a native postestimation `predict` cannot work after
+* nwqap returns (see nwqap.ado's own header comment for why - the
+* dyad-level dataset type() actually fits is gone by the time nwqap
+* exits), so predict() captures type()'s own fitted values directly,
+* at the one point internally where they're genuinely meaningful.
+* Reusing the exact wdv=2*iv1 network from this file's very first test
+* (type(regress), coefficient exactly 2, ~0 intercept) gives an
+* EXACTLY checkable result: since the fit is a perfect noiseless
+* linear relationship, the fitted network must reproduce the observed
+* wdv network almost exactly (up to floating-point rounding of the
+* regression coefficient itself), not merely "look plausible".
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1) undirected labs(A,B,C,D,E)
+nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdv) undirected labs(A,B,C,D,E)
+nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
+assert _rc == 0
+capture nw_syntax wdvfitted, other(_check)
+assert _rc == 0
+nwtomata wdvfitted, mat(fittedcheck)
+mata: st_numscalar("maxdiff", max(abs(fittedcheck - (0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0))))
+assert maxdiff < 1e-6
+mata: mata drop fittedcheck
+
+* diagonal is forced to a clean 0, not left holding predict()'s own
+* (always-missing, since every IV is missing on the diagonal by
+* construction) raw value.
+nwtomata wdvfitted, mat(fittedcheck2)
+mata: st_numscalar("diagsum", sum(abs(diagonal(fittedcheck2))))
+assert diagsum == 0
+mata: mata drop fittedcheck2
+
+* logit's own default predict is Pr(y=1) - bounded in [0,1], unlike
+* regress's unbounded fitted mean above; only a sanity-bound check is
+* possible here (logit's MLE fit isn't hand-computable the way a
+* perfect linear relationship is), which is exactly what's checked -
+* not asserted equal to any specific hand-derived value.
+nwclear
+nwset, mat((0,1,0,1,1,0\1,0,1,0,0,1\0,1,0,1,0,0\1,0,1,0,1,1\1,0,0,1,0,0\0,1,0,1,0,0)) name(iv1) undirected labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,0,0,1\1,0,0,1,1,0\1,0,0,1,1,0\0,1,1,0,0,1\0,1,1,0,0,0\1,0,0,1,0,0)) name(bindv) undirected labs(A,B,C,D,E,F)
+nwqap bindv iv1, permutations(3) type(logit) predict(bindvfitted)
+assert _rc == 0
+nwtomata bindvfitted, mat(logitfitted)
+mata: st_numscalar("minfit", min(logitfitted))
+mata: st_numscalar("maxfit", max(logitfitted))
+assert minfit >= 0 & minfit < .
+assert maxfit <= 1
+mata: mata drop logitfitted
+
+* --- predict()'s name-collision handling matches every other
+* network-creating command: a second call with the same predict()
+* name auto-renames rather than silently overwriting.
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1) undirected labs(A,B,C,D,E)
+nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdv) undirected labs(A,B,C,D,E)
+nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
+assert _rc == 0
+nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
+assert _rc == 0
+capture nw_syntax wdvfitted_1, other(_check)
+assert _rc == 0
