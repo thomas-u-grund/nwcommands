@@ -92,6 +92,7 @@ f nwsimindex.ado
 f nwsimmelian.ado
 f nwsmall.ado
 f nwsort.ado
+f nwspectral.ado
 f nwsubset.ado
 f nwsummarize.ado
 f nwsym.ado

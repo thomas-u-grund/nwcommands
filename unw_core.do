@@ -1918,6 +1918,7 @@ class `NWdef' {
 	real matrix calculate_nclan_filtered()
 	real matrix calculate_kcomponents()
 	real matrix calculate_cohesion_hierarchy()
+	real matrix calculate_laplacian()
 	real matrix calculate_kcore()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
@@ -3088,6 +3089,31 @@ real matrix `NWdef'::calculate_cohesion_hierarchy(){
 
 	nodeset = J(1, n, 1)
 	return(CohesionHierarchy(adj, nodeset))
+}
+
+/*
+	Graph Laplacian L = D - W (D the diagonal weighted-degree matrix), the
+	standard starting point for spectral graph analysis - Stage 6's
+	explicitly-flagged next roadmap item. Always undirected/symmetrized
+	(get_matrix_mod(valued, 0)) - the classical Laplacian spectrum results
+	(multiplicity of eigenvalue 0 equals the number of connected
+	components; the second-smallest eigenvalue, "algebraic connectivity"
+	or the Fiedler value, is a genuine measure of overall connectivity;
+	its eigenvector's sign gives a classical two-way spectral partition)
+	all assume a symmetric, undirected Laplacian - the same reasoning
+	every other connectivity-flavored measure in this file (k-components,
+	the cohesion hierarchy, Louvain) already applies. Self-loops are
+	excluded from the degree/weight construction the same way every other
+	such measure here already does (_diag(w,0) first).
+*/
+real matrix `NWdef'::calculate_laplacian(| real scalar valued){
+	real matrix w
+	real scalar val
+
+	val = (args() >= 1 ? valued : 1)
+	w = *get_matrix_mod(val, 0)
+	_diag(w, 0)
+	return(diag(rowsum(w)) - w)
 }
 
 /*
