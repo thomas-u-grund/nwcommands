@@ -1,0 +1,630 @@
+/*
+	unw_ergm.do -- native ERGM estimation core for nwcommands (nwergm).
+
+	Compiled into the same lnwcommands.mlib as unw_core.do (see lib/build.do,
+	which `do`s this file immediately after unw_core.do, before creating the
+	mlib) - kept as a SEPARATE source file rather than appended to
+	unw_core.do (already 6000+ lines) because the ERGM subsystem is
+	architecturally self-contained: it reads an observed network via the
+	existing NWdef sparse accessors exactly once (at setup), then works
+	entirely with its own graph representation (ErgmGraph, below) for the
+	MCMC-heavy inner loop.
+
+	This is a clean-room reimplementation against published statistical
+	definitions (Hunter & Handcock 2006; Hunter 2007; Morris, Handcock &
+	Hunter 2008; Hummel, Hunter & Handcock 2012; Geyer & Thompson 1992),
+	using the public Statnet `ergm` R package purely as a behavioural/
+	architectural reference and as a development-time certification target
+	(never a runtime dependency). No `ergm` source code, comment, or
+	identifier is copied here. See docs/ERGM_PROVENANCE.md for the full
+	licensing/attribution account and docs/ERGM_STATNET_STUDY.md for the
+	architecture study this implementation is based on. See
+	docs/ERGM_ARCHITECTURE.md for the developer-facing design document
+	(term API, extension guide, deliberate simplifications relative to
+	Statnet's own, much larger implementation).
+
+	Why not reuse NWdef's own CSR sparse index for the MCMC state: NWdef's
+	build_sparse_index() rebuilds the ENTIRE index from scratch on every
+	call (O(n+nnz)) - fine for a network that changes rarely, catastrophic
+	for MCMC, which toggles a single edge millions of times. ErgmGraph
+	below instead uses one Mata associative array (asarray()) per node as
+	an O(1)-average adjacency set, supporting genuine incremental
+	toggle/lookup - the same architectural lesson Statnet's own C
+	`edgetree` (a per-node binary search tree) encodes for the same reason,
+	confirmed directly from its source during the Part I study.
+*/
+
+set matastrict on
+
+mata:
+
+/* ===================================================================
+   ErgmGraph: mutable, toggle-friendly binary graph state for MCMC.
+   =================================================================== */
+
+class ErgmGraph {
+	real scalar n
+	real scalar directed
+	pointer rowvector adjout	// adjout[i]: asarray handle; keys = neighbors reachable via an outgoing tie from i (out-neighbors if directed, all neighbors if undirected); values unused (always 1)
+	pointer rowvector adjin		// directed only; adjin[i]: asarray handle of in-neighbors of i
+	real colvector dout		// out-degree (directed) or degree (undirected)
+	real colvector din		// in-degree (directed only; unused/left at 0 for undirected)
+	real scalar nties		// number of ties: arcs (directed) or edges (undirected)
+
+	void init()
+	real scalar has_edge()
+	void toggle()
+	real rowvector neighbors_out()
+	real rowvector neighbors_in()
+	real scalar degree_out()
+	real scalar degree_in()
+	real scalar degree_total()
+	real scalar common_neighbors()
+	real matrix all_ties()
+}
+
+void ErgmGraph::init(real scalar n0, real scalar directed0){
+	real scalar i
+
+	n = n0
+	directed = directed0
+	dout = J(n, 1, 0)
+	din  = J(n, 1, 0)
+	nties = 0
+
+	adjout = J(1, n, NULL)
+	for (i=1; i<=n; i++) adjout[i] = &(asarray_create("real", 1))
+
+	if (directed) {
+		adjin = J(1, n, NULL)
+		for (i=1; i<=n; i++) adjin[i] = &(asarray_create("real", 1))
+	}
+	else {
+		adjin = adjout	// undirected: a tie is stored symmetrically in both
+				// endpoints' own adjout, so "in" and "out" coincide -
+				// aliasing avoids a second, redundant set of arrays.
+	}
+}
+
+real scalar ErgmGraph::has_edge(real scalar i, real scalar j){
+	return(asarray_contains(*adjout[i], j))
+}
+
+void ErgmGraph::toggle(real scalar i, real scalar j){
+	if (has_edge(i, j)) {
+		asarray_remove(*adjout[i], j)
+		dout[i] = dout[i] - 1
+		if (directed) {
+			asarray_remove(*adjin[j], i)
+			din[j] = din[j] - 1
+		}
+		else {
+			asarray_remove(*adjout[j], i)
+			dout[j] = dout[j] - 1
+		}
+		nties = nties - 1
+	}
+	else {
+		asarray(*adjout[i], j, 1)
+		dout[i] = dout[i] + 1
+		if (directed) {
+			asarray(*adjin[j], i, 1)
+			din[j] = din[j] + 1
+		}
+		else {
+			asarray(*adjout[j], i, 1)
+			dout[j] = dout[j] + 1
+		}
+		nties = nties + 1
+	}
+}
+
+real rowvector ErgmGraph::neighbors_out(real scalar i){
+	return(asarray_keys(*adjout[i])')
+}
+
+real rowvector ErgmGraph::neighbors_in(real scalar i){
+	if (directed) return(asarray_keys(*adjin[i])')
+	return(asarray_keys(*adjout[i])')
+}
+
+real scalar ErgmGraph::degree_out(real scalar i){
+	return(dout[i])
+}
+
+real scalar ErgmGraph::degree_in(real scalar i){
+	if (directed) return(din[i])
+	return(dout[i])
+}
+
+real scalar ErgmGraph::degree_total(real scalar i){
+	if (directed) return(dout[i] + din[i])
+	return(dout[i])
+}
+
+/*
+	Number of nodes k that are neighbors of BOTH i and j (undirected
+	sense: k s.t. has_edge(i,k) and has_edge(j,k)) - the "shared
+	partner" count GWESP needs. Iterates whichever of i/j has the
+	smaller neighbor set, checking membership in the other's set -
+	O(min(deg_i,deg_j)), not O(n).
+*/
+real scalar ErgmGraph::common_neighbors(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, cnt, a, b
+
+	if (degree_out(i) <= degree_out(j)) {
+		a = i; b = j
+	}
+	else {
+		a = j; b = i
+	}
+	nb = neighbors_out(a)
+	cnt = 0
+	for (k=1; k<=cols(nb); k++) {
+		if (nb[k] != b && has_edge(b, nb[k])) cnt++
+	}
+	return(cnt)
+}
+
+/*
+	All current ties as an nties x 2 matrix of (i,j) pairs. Directed:
+	one row per arc. Undirected: one row per edge, canonicalized i<j
+	(each undirected tie is stored in both endpoints' adjout, so
+	without this canonicalization every edge would appear twice).
+	O(n + nties); only ever called once per model-statistic evaluation
+	(model setup, certification), never inside the MCMC inner loop.
+*/
+real matrix ErgmGraph::all_ties(){
+	real matrix out
+	real rowvector nb
+	real scalar i, k, pos
+
+	out = J(nties, 2, 0)
+	pos = 1
+	for (i=1; i<=n; i++) {
+		nb = neighbors_out(i)
+		for (k=1; k<=cols(nb); k++) {
+			if (directed || nb[k] > i) {
+				out[pos,1] = i
+				out[pos,2] = nb[k]
+				pos++
+			}
+		}
+	}
+	return(out)
+}
+
+/* ===================================================================
+   ErgmTermData: generic per-term-instance parameter container.
+
+   One instance per term appearing in a fitted model. Rather than a
+   distinct Mata class per term (impossible to dispatch polymorphically
+   in Mata anyway - see the function-pointer design below), every term
+   instance carries the same, small set of possible auxiliary fields;
+   each term's own statistic()/change() function reads only the fields
+   it actually needs. This is the "C struct" alternative the design
+   brief explicitly permits in place of C++ virtual classes.
+   =================================================================== */
+
+class ErgmTermData {
+	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree
+	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov: node-indexed covariate (already numeric-coded)
+	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
+}
+
+/* ===================================================================
+   Term API: each term is a pair of Mata functions with a fixed
+   signature, registered by name (see ErgmTermRegistry below). Adding a
+   new term means writing one such pair (plus a short registry entry
+   and Stata-side argument parsing in nwergm.ado) - the sampler, MPLE
+   builder, and MCMLE controller never reference a term by name and
+   never need to change.
+
+     statistic:  real rowvector fn(class ErgmGraph scalar G,
+                                    class ErgmTermData scalar td)
+                 -> current value of this term's statistic(s) (length
+                    = this term's own npar) on the whole graph G.
+
+     change:     real rowvector fn(class ErgmGraph scalar G,
+                                    real scalar i, real scalar j,
+                                    class ErgmTermData scalar td)
+                 -> the signed effect on this term's statistic(s) of
+                    toggling dyad (i,j) on graph G (G is NOT yet
+                    toggled when this is called - has_edge(i,j) still
+                    reflects the pre-toggle state).
+   =================================================================== */
+
+real rowvector stat_edges(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(G.nties)
+}
+real rowvector change_edges(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Reciprocated-tie count (directed only). Toggling (i,j) can only
+	affect the mutual count if the reverse tie (j,i) already exists;
+	otherwise the toggle is change=0 for this term, exactly as
+	confirmed from ergm's own c_mutual (src/changestats.c:2239) during
+	the Part I study.
+*/
+real rowvector stat_mutual(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, cnt
+	real rowvector nb
+
+	cnt = 0
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		for (j=1; j<=cols(nb); j++) {
+			if (nb[j] > i && G.has_edge(nb[j], i)) cnt++
+		}
+	}
+	return(cnt)
+}
+real rowvector change_mutual(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	if (!G.has_edge(j,i)) return(0)
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Homophily on a single categorical node attribute (exact match,
+	v1 scope - see docs/ERGM_ARCHITECTURE.md for the diff=/levels
+	extension already anticipated by this same td.attr field). Counts
+	ties whose two endpoints share the same (already numeric-coded)
+	attribute value.
+*/
+real rowvector stat_nodematch(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, cnt
+
+	ties = G.all_ties()
+	cnt = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) cnt++
+	}
+	return(cnt)
+}
+real rowvector change_nodematch(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	if (td.attr[i] != td.attr[j]) return(0)
+	return(G.has_edge(i,j) ? -1 : 1)
+}
+
+/*
+	Continuous node covariate (main effect): sum over ties of
+	attr[i]+attr[j] - the same symmetric-sum definition Statnet's own
+	nodecov uses for both directed and undirected networks (directional
+	decomposition is nodeicov/nodeocov below, not a variant of plain
+	nodecov itself - confirmed from the Part I study).
+*/
+real rowvector stat_nodecov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] + td.attr[ties[k,2]]
+	return(tot)
+}
+real rowvector change_nodecov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar v
+	v = td.attr[i] + td.attr[j]
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+/*
+	Directed sender covariate: sum over arcs of the SENDER's covariate
+	value (attr[tail]) - equivalently attr . outdegree. Directed only.
+*/
+real rowvector stat_nodeocov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + td.attr[i]*G.degree_out(i)
+	return(tot)
+}
+real rowvector change_nodeocov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(G.has_edge(i,j) ? -td.attr[i] : td.attr[i])
+}
+
+/*
+	Directed receiver covariate: sum over arcs of the RECEIVER's
+	covariate value (attr[head]) - equivalently attr . indegree.
+	Directed only.
+*/
+real rowvector stat_nodeicov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + td.attr[i]*G.degree_in(i)
+	return(tot)
+}
+real rowvector change_nodeicov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(G.has_edge(i,j) ? -td.attr[j] : td.attr[j])
+}
+
+/*
+	Dyadic covariate: sum over ties of covmat[i,j]. v1 takes a dense
+	n x n matrix (docs/ERGM_ROADMAP.md records sparse-input edgecov as
+	a follow-on - the term interface itself does not care how
+	td.edgecovmat was populated).
+*/
+real rowvector stat_edgecov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.edgecovmat[ties[k,1], ties[k,2]]
+	return(tot)
+}
+real rowvector change_edgecov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar v
+	v = td.edgecovmat[i,j]
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+/*
+	Shared weighting kernel used by both the GWESP and GW(o/i)degree
+	families (Hunter 2007): w(d) = exp(decay)*(1-(1-exp(-decay))^d),
+	the contribution a single node/edge with "local count" d (a degree
+	or a shared-partner count) makes to the sum. Both families are
+	exactly "sum of w(local count) over some set of graph elements" -
+	they differ only in which elements and which local count, which is
+	exactly what makes k-star-family fixed-decay terms cheap additions
+	once one of them exists (Stage 6/7 of the roadmap).
+*/
+real scalar gw_kernel(real scalar d, real scalar decay){
+	return(exp(decay) * (1 - (1-exp(-decay))^d))
+}
+
+/*
+	Geometrically weighted degree (Hunter 2007): sum_i w(deg(i)).
+	td.decay holds the (fixed, v1 scope - curved/free decay is a
+	roadmap item) decay parameter. Toggling (i,j) changes only i's and
+	j's OWN degree (unlike GWESP below, no third node is affected),
+	giving a much simpler two-term change statistic - useful as an
+	architecturally-contrasting second nonlocal term, exactly as the
+	design brief asks for.
+*/
+real rowvector stat_gwdegree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + gw_kernel(G.degree_total(i), td.decay)
+	return(tot)
+}
+real rowvector change_gwdegree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, di, dj, chg
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_total(i)
+	dj = G.degree_total(j)
+	chg = (gw_kernel(di+delta, td.decay) - gw_kernel(di, td.decay))
+	chg = chg + (gw_kernel(dj+delta, td.decay) - gw_kernel(dj, td.decay))
+	return(chg)
+}
+
+/*
+	Geometrically weighted OUT-degree (directed only): sum_i
+	w(outdegree(i)). Toggling (i,j) only changes i's own out-degree.
+*/
+real rowvector stat_gwodegree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + gw_kernel(G.degree_out(i), td.decay)
+	return(tot)
+}
+real rowvector change_gwodegree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, di
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_out(i)
+	return(gw_kernel(di+delta, td.decay) - gw_kernel(di, td.decay))
+}
+
+/*
+	Geometrically weighted IN-degree (directed only): sum_i
+	w(indegree(i)). Toggling (i,j) only changes j's own in-degree.
+*/
+real rowvector stat_gwidegree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + gw_kernel(G.degree_in(i), td.decay)
+	return(tot)
+}
+real rowvector change_gwidegree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, dj
+	delta = G.has_edge(i,j) ? -1 : 1
+	dj = G.degree_in(j)
+	return(gw_kernel(dj+delta, td.decay) - gw_kernel(dj, td.decay))
+}
+
+/*
+	Geometrically weighted edgewise shared partners (GWESP; Hunter
+	2007). Undirected only in v1 (directed OTP/ITP/OSP/ISP variants -
+	see the Part I study - are a roadmap item, not a cheap extension of
+	this one: they need a directed common-neighbor definition this
+	term does not compute). Statistic: exp(decay) * sum over edges
+	(i,j) of [1-(1-exp(-decay))^p_ij], p_ij = number of shared
+	partners of the tied dyad (i,j) - i.e. sum of gw_kernel(p_ij,decay)
+	over edges, same kernel as GWdegree, applied to shared-partner
+	counts instead of degrees.
+
+	Change statistic for toggling (i,j) has TWO parts, computed on the
+	graph BEFORE the toggle (has_edge/common_neighbors both read
+	pre-toggle state, matching every other change() function's own
+	contract):
+	  (1) the toggled dyad's own contribution, evaluated at its current
+	      shared-partner count p_ij (this does not depend on whether
+	      (i,j) itself is tied - shared partners are common neighbors,
+	      unrelated to the direct tie).
+	  (2) for every node k that is CURRENTLY a common neighbor of both
+	      i and j, the two edges (i,k) and (j,k) already exist and each
+	      have their own shared-partner count shift by +-1 (matching
+	      the sign of the (i,j) toggle) - their contribution to the sum
+	      changes accordingly. No other edge in the graph is affected.
+	This is the standard published GWESP change-statistic construction
+	(confirmed against ergm's own espOTP_change macro structure during
+	the Part I study, though that C code additionally maintains a
+	shared-partner cache for performance - not replicated here, since
+	common_neighbors() is already O(min(deg_i,deg_j)) and v1's target
+	scale does not need the extra caching layer; see
+	docs/ERGM_ROADMAP.md).
+*/
+real rowvector stat_gwesp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.common_neighbors(ties[k,1], ties[k,2])
+		tot = tot + gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, pij, chg, k, m, pik, pjk
+	real rowvector nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+
+	pij = G.common_neighbors(i,j)
+	chg = delta * gw_kernel(pij, td.decay)
+
+	nb = G.neighbors_out(i)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		if (!G.has_edge(j,k)) continue	// k must be a common neighbor of i and j
+		pik = G.common_neighbors(i,k)
+		chg = chg + (gw_kernel(pik+delta, td.decay) - gw_kernel(pik, td.decay))
+		pjk = G.common_neighbors(j,k)
+		chg = chg + (gw_kernel(pjk+delta, td.decay) - gw_kernel(pjk, td.decay))
+	}
+	return(chg)
+}
+
+/* ===================================================================
+   ErgmModel: an ordered list of term instances (name, npar, function
+   pointers, ErgmTermData). This is the ONLY place that knows a model
+   is "a list of terms" - the sampler, MPLE builder and MCMLE
+   controller (below) only ever call full_statistic()/full_change(),
+   never a term by name, so adding a term to the registry (see
+   nwergm.ado's own Stata-side dispatch) never requires touching them.
+   =================================================================== */
+
+class ErgmModel {
+	real scalar nterms
+	string rowvector names		// one entry per term INSTANCE (not per coefficient)
+	real rowvector npar		// coefficients contributed by each term instance
+	pointer rowvector statfn	// pointer(real rowvector function) scalar, one per instance
+	pointer rowvector chgfn	// pointer(real rowvector function) scalar, one per instance
+	pointer rowvector td		// pointer(class ErgmTermData scalar) scalar, one per instance
+	string rowvector coefnames	// flat, length = sum(npar)
+
+	void init()
+	void addterm()
+	real scalar nparam()
+	real rowvector full_statistic()
+	real rowvector full_change()
+}
+
+void ErgmModel::init(){
+	nterms = 0
+	names = J(1, 0, "")
+	npar = J(1, 0, .)
+	statfn = J(1, 0, NULL)
+	chgfn = J(1, 0, NULL)
+	td = J(1, 0, NULL)
+	coefnames = J(1, 0, "")
+}
+
+/*
+	Register one term instance. `cnames' must have length `npar' -
+	the caller (nwergm.ado's term-dispatch code) is responsible for
+	generating the right coefficient name(s) for this instance (e.g.
+	"nodematch_sex" for a single-category match, or multiple names for
+	a future diff=TRUE expansion) - the model object itself is
+	agnostic to what a term "means", only how many numbers it produces.
+*/
+void ErgmModel::addterm(string scalar name, real scalar npar0,
+	pointer(real rowvector function) scalar sfn,
+	pointer(real rowvector function) scalar cfn,
+	class ErgmTermData scalar td0,
+	string rowvector cnames){
+
+	nterms++
+	names = (names, name)
+	npar = (npar, npar0)
+	statfn = (statfn, sfn)
+	chgfn = (chgfn, cfn)
+	td = (td, &td0)
+	coefnames = (coefnames, cnames)
+}
+
+real scalar ErgmModel::nparam(){
+	return(sum(npar))
+}
+
+real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
+	real rowvector out, part
+	real scalar t, pos, k
+
+	out = J(1, nparam(), 0)
+	pos = 1
+	for (t=1; t<=nterms; t++) {
+		part = (*statfn[t])(G, *td[t])
+		for (k=1; k<=npar[t]; k++) {
+			out[pos] = part[k]
+			pos++
+		}
+	}
+	return(out)
+}
+
+real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, real scalar j){
+	real rowvector out, part
+	real scalar t, pos, k
+
+	out = J(1, nparam(), 0)
+	pos = 1
+	for (t=1; t<=nterms; t++) {
+		part = (*chgfn[t])(G, i, j, *td[t])
+		for (k=1; k<=npar[t]; k++) {
+			out[pos] = part[k]
+			pos++
+		}
+	}
+	return(out)
+}
+
+/* ===================================================================
+   Certification helper (Part IX of the design brief): compares the
+   model's own change() output against brute-force full recomputation
+   (statistic() before, toggle, statistic() after, difference) - the
+   permanent contract every term must satisfy. Returns the maximum
+   absolute discrepancy across all toggles tried; a caller (see
+   cscripts/test_nwergm_changestat.do) asserts this is ~0 across many
+   random small networks and every registered term, before any MCMC or
+   estimation code is ever trusted to consume that term's change().
+   =================================================================== */
+real scalar ErgmCertifyChangeStat(class ErgmModel scalar M, class ErgmGraph scalar G){
+	real scalar i, j, maxdiff
+	real rowvector s0, s1, chg, diff
+
+	maxdiff = 0
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed && j<i) continue
+			s0 = M.full_statistic(G)
+			chg = M.full_change(G, i, j)
+			G.toggle(i,j)
+			s1 = M.full_statistic(G)
+			G.toggle(i,j)	// restore
+			diff = abs((s1 - s0) - chg)
+			if (max(diff) > maxdiff) maxdiff = max(diff)
+		}
+	}
+	return(maxdiff)
+}
+
+end
