@@ -1,18 +1,136 @@
-*! Date        : 3sept2014
-*! Version     : 1.0.1
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0.0  2april2014}{...}
+{marker topic}
+{helpb nw_topical##visualization:[NW-2.8] Visualization}
 
-// TODO make sure it also works with larger networks (problem: matrix)
-// Do the whole thing from scratch and bypass plotmatrix...
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwplotmatrix {hline 2} Plot a network as sociomatrix}
+{p2colreset}{...}
 
 
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwplotmatrix}
+[{it:{help netname}}] 
+[{it:{help if}}]
+[{cmd:,}
+{opth sortby(varname)}
+{opt group}({it:{help varname}}, [{it:{help connect_options}}])
+{it:{help nwplotmatrix##label_options:label_options}}
+{it:{help nwplotmatrix##patch_options:patch_options}}
+{it:{help twoway_options}}]
+
+
+	
+{synoptset 35}{...}
+{p2col:{it:options}}Description{p_end}
+{p2line}
+{p2col:{opth sortby(varname)}}sort network nodes before plotting{p_end}
+{p2col:{opt group}({it:{help varname}}, [{it:{help connect_options}}])}group nodes by categorical variable{p_end}
+{p2col:{it:{help nwplotmatrix##label_options:label_options}}}display and change look of
+       axis labels{p_end}
+{p2col:{it:{help nwplotmatrix##patch_options:patch_options}}}change look of patches (e.g. color, tievalue){p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:label_options}}Description{p_end}
+{marker label_options}{...}
+{p2line}
+{p2col:{opt lab}display node labels{p_end}
+{p2col:{opth label(varname)}}display axis labels from variable{p_end}
+{synopt:{opt labelopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look of axis labels (e.g. size, color){p_end}
+
+
+{synoptset 35 tabbed}{...}
+{p2col:{it:patch_options}}Description{p_end}
+{marker patch_options}{...}
+{p2line}
+{p2col:{opt col:orpalette}({it:{help colstyle:colstyle...}})}list of colors for patches (representing tie values){p_end}
+{p2col:{opth lcolor(colorstyle)}}overwrite color of lines between patches{p_end}
+{p2col:{opth background(colorstyle)}}overwrite background color{p_end}
+{synopt:{opt tievalue}}show tie values as text inside patches{p_end}
+{p2col:{opt tievalueopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look and feel of tie value text{p_end}
+
+
+		
+{title:Description}
+
+{pstd}
+This command plots a network as a sociomatrix. It supports subnetworks specified by the {help if} condition. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it 
+is compatible with {bf:schemes()} and accepts all {help twoway_options}.
+
+{pstd}
+This loads the {help netexample:Florentine data} and makes a simple matrix plot.
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwplotmatrix flomarriage, lab}
+
+{pstd}
+The look and feel of the axis labels ca be overwritten with {opt labelopt()}. 
+	{cmd:. nwplotmatrix flomarriage, lab labelopt(labsize(tiny))}
+	
+{pstd}
+The following uses the values stored in variable {bf:wealth} as labels.
+	{cmd:. nwplotmatrix flomarriage, label(wealth)}
+
+
+{pstd}
+Notice that one can also use normal {help twoway_options} to control the y-axis and the x-axis independently from each other. For example, the
+following command produces the same output as the previous command:
+
+ 	{cmd:. nwplotmatrix flomarriage, ylabel(,labsize(tiny)) xlabel(,labsize(tiny))}
+
+{pstd}
+It can be useful to sort the nodes of the network before plotting a sociomatrix. This example sorts the nodes according
+to the values in variable {it:wealth}.
+
+	{cmd:. nwplotmatrix flomarriage, label(wealth) sortby(wealth)}
+
+{pstd}
+The command accepts all normal {help twoway_options}, e.g.
+
+	{cmd:. nwplotmatrix flomarriage, scheme(s1mono) title("mynet")}
+
+{pstd}
+One can also overwrite the colors used for the plot:
+
+	{cmd:. nwplotmatrix flomarriage, scheme(s1mono) colorpalette(black) background(yellow) lcolor(red)}
+
+{pstd}
+The command also allows to display the tie values inside the patches. The look and feel of these values is controlled with {bf: tievalueopt()}.
+
+	{cmd:. nwplotmatrix flomarriage, tievalue}
+	{cmd:. nwplotmatrix flomarriage, tievalue tievalueopt(mlabsize(tiny) mlabcolor(yellow))}
+
+
+{pstd}
+The option {opth group(varname)} sorts the nodes by {help varname} first and then adds lines
+to the sociomatrix to separate groups from each other. The example generates the variable seat, 
+which is one when a family had some seats in the council.
+
+	{cmd:. nwplotmatrix flomarriage, group(seat)}	
+
+{pstd}
+All normal {help connect_options:options for lines} can be applied as well.
+
+	{cmd:. nwplotmatrix flomarriage, group(seat, lcolor(green))}	
+	
+{title:See also}
+
+	{help nwplot}
+
+***/
 capture program drop nwplotmatrix
 program nwplotmatrix
-	syntax [anything(name=netname)] [if] ,[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) NODichotomize BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) ]
-	_nwsyntax `netname'
-
-	local onenodes `nodes'
+	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) ]
+	unw_defs
+	nw_syntax `netname'
+	
+	preserve
 	gettoken temp ylabel : ylabel, parse(",")
 	gettoken temp xlabel : xlabel, parse(",")
 	if substr(`"`ylabel'"',1,1) == "," {
@@ -21,34 +139,8 @@ program nwplotmatrix
 	if substr(`"`xlabel'"',1,1) == "," {
 		local xlabel = substr(`"`xlabel'"', 2,.)
 	}
-	preserve
-	nwduplicate `netname', name(__temp_sort) xvars
-	local netname "__temp_sort"
-	tempvar  nodelab 
-	tempvar originalSorting
-
-	// deal with if condition
-    if "`if'" != "" {
-		if "`label'" == "_nodeid" {
-			gen `nodelab' = _nodeid
-			local label "`nodelab'"
-		}
-		if "`label'" == "_nodelab" {
-			gen `nodelab' = _nodelab
-			local label "`nodelab'"
-		}
-		if "`label'" == "`sortby'"  & "`label'" != "" {
-			gen `nodelab' = `sortby'
-			local label "`nodelab'"
-		}
-		nwduplicate `netname', name(__temp_if) xvars
-		nwkeep __temp_if `if', attributes(`sortby' `label') 
-		_nwsyntax_other __temp_if
-		local netname "__temp_if"
-		drop if _n > `othernodes' 
-	}
+	
 	local oldoptions "`options'"
-		
 	local oldlcolor "`lcolor'"
     qui if "`group'" != "" {
 		local 0 "`group'"
@@ -60,22 +152,42 @@ program nwplotmatrix
 			local lcolor `""scheme p2line""'
 		}
 	}
-
-	// deal with sorting
-    qui if "`sortby'" != "" {
-		if "`lab" != "" {
-			nwload `netname', labelonly
-			local nl "_nodelab"
-		}
-		gen `originalSorting' = _n
-		nwsort `netname', by(`sortby') attributes(`originalSorting' `label' `groupvar')
+	
+	if "`tievalue'" != "" {
+		local freq = "freq"
 	}
+
+	nw_datasync `netname'
+	qui replace `nw_included' = . if `nw_included' == 0
+	
+	tempvar _sorting _group
+	tempname tempmat
+	gen `_sorting' = _n
+	if "`sortby'" == "" {
+		local sortby `_sorting'
+	}
+	
+	qui if "`group'" != "" {
+		local 0 "`group'"
+		syntax varlist(min=1 max=1) [, lcolor(string) *]
+		local groupvar "`varlist'"
+		local groupopt "`options'"
+		if "`lcolor'" == "" {
+			local lcolor `""scheme p2line""'
+		}
+		egen `_group' = group(`groupvar')
+		local sortby `_group'
+	}
+	
+	qui sort `nw_included' `sortby'
+	mata: st_matrix("`tempmat'",(*`netobj'->get_matrix())[st_data((1,`nodes'), ("`_sorting'")), st_data((1,`nodes'), ("`_sorting'"))])
+	
 	local xlines ""
 
 	qui if "`group'" != "" {
 		local groupopt "`options'"
-		forvalues i = 2/`onenodes' {
-			if (`groupvar'[`i'] != `groupvar'[`=`i'-1']) {
+		forvalues i = 2/`nodes' {
+			if (`_group'[`i'] != `_group'[`=`i'-1']) {
 				local xlines "`xlines' `=`i'-0.5'"
 				local ylines "`ylines' `=2 - `i' - 0.5'"
 			}
@@ -84,85 +196,18 @@ program nwplotmatrix
 		local ylinecmd `"yline(`ylines', `groupopt' lcolor(`lcolor'))"'
 	}
 	local options "`oldoptions'"
-
 	local lcolor `"`oldlcolor'"'
-	qui nwsociomatrix_noif `netname', `xlinecmd' `ylinecmd' `lab' label(`label') `nodichotomize' background(`background') ylabel(`labelopt' `ylabel') xlabel(`labelopt' `xlabel') legendopt(`legendopt') color(`colorpalette') lcolor(`lcolor') legend(`legend') `tievalue' tievalueopt(`tievalueopt') `options'
 	
-	capture nwdrop __temp*
+	if "`lab'" != "" {
+		local label `nw_nodename'
+	}
+	
+	if "`label'" != "" {
+		local l label(`label')
+	}
+	//nwsociomatrix_noif `netname', `xlinecmd' `ylinecmd' `lab' label(`label') `nodichotomize' background(`background') ylabel(`labelopt' `ylabel') xlabel(`labelopt' `xlabel') legendopt(`legendopt') color(`colorpalette') lcolor(`lcolor') legend(`legend') `tievalue' tievalueopt(`tievalueopt') `options'
+	qui plotmatrix, `xlinecmd' `ylinecmd' `l' legend(off) `freq' tievalueopt(`tievalueopt') ylabel(, angle(0) `ylabel') xlabel(, angle(90) `xlabel') aspect(1) mat(`tempmat') background(`background') color(`colorpalette') lcolor(`lcolor') `options'  
 	restore
-end
-
-
-
-capture program drop nwsociomatrix_noif	
-program nwsociomatrix_noif
-	syntax [anything(name=netname)] [if] ,[ gap(real 0.1) sortby(varlist) lab label(varname) nodichotomize BAckground(string) ylabel(string) xlabel(string) legendopt(string asis) COlor(string) LColor(string) legend(string asis) tievalue tievalueopt(string) * ]
-
-	_nwsyntax `netname', max(1)
-
-	// Version test
-	capture which plotmatrix
-	if _rc {
-		ssc install plotmatrix
-	}
-	
-	nwtomata `netname', mat(socionet)
-	
-	if "`dichotomize'" == "" {
-		mata: socionet = socionet :/ socionet
-		mata: _editmissing(socionet, 0)
-	}
-	else {
-		tempname tabresult
-		qui nwtabulate `netname', matrow(`tabresult')
-		local tabN = rowsof(`tabresult')
-		local split = ""
-		forvalues i = 1 / `tabN' {
-			local nextValue = `tabresult'[`i',1]
-			local split "`split' `nextValue'"
-		}
-		local split "split(`split')"
-	}
-
-	mata: st_matrix("onenet", socionet)
-	nwname `netname'
-	matrix rownames onenet = `r(labs)'
-	matrix colnames onenet = `r(labs)'	
-
-	if "`tievalue'" != "" {
-		local freq = "freq"
-	}
-
-	if "`maxticks'" == "" {
-		local maxticks = "maxticks(`nodes')"
-	}
-
-	if "`legend'" != "" {
-		if "`dichotomize'" != "" {
-			if strpos(`"`legend'"', "off") == 0 {
-				if strpos("`legend'", "label") == 0 & strpos("`legend'", "order") == 0{
-					local lab ""
-					local order ""
-					forvalues i = 1 / `tabN' {
-						local order "`order' `i'"
-						local nextValue = `tabresult'[`i',1]
-						//local legend `"`legend' label(`legendlab' `i' "`=`i'-1'")"'
-						local legend `"`legend' label(`legendlab' `i' "`nextValue'")"'
-					}
-					local legend `"`legend' order(`order')"'
-				}
-			}
-		}
-		else {
-			if strpos(`"`legend'"', "off") == 0  & strpos("`legend'", "order") == 0{
-				local legend `"on label(1 "0") label(2 "1") order(1 2)"'
-			}
-		}
-	}
-	else {
-		local legend "off"
-	}
-	plotmatrix, gap(`gap') `lab' label(`label') legend(`legend') `freq' tievalueopt(`tievalueopt') `maxticks' `split' ylabel(, angle(0) `ylabel') xlabel(, angle(90) `xlabel') aspect(1) mat(onenet) background(`background') color(`color') lcolor(`lcolor') `options'  
 end
 
 // The following code cas been modified....
@@ -196,7 +241,7 @@ local xnames = ""
 if "`label'" != "" {
 	forvalues i = 1/ `nodes' {
 		local onelab = `label'[`i']
-		local xnames "`xnames' `onelab'"
+		local xnames `"`xnames' "`onelab'""'
 	}
 }
 local ynames `"`xnames'"'
@@ -205,12 +250,6 @@ drop _all
 /* Find matrix dimensions and col/row names */
 local ny = rowsof(`mat')
 local nx = colsof(`mat')
-if "`ynames'" == "" {
-	local ynames: rowfullnames `mat'
-}
-if "`xnames'" == "" {
-	local xnames: colfullnames `mat'
-}
 
 local rowsmat = rowsof(`mat')
 local colsmat = colsof(`mat')
@@ -366,7 +405,7 @@ foreach cord of local clevels {
 local xlab ""
 forvalues i = 1 / `nodes'{
 	local onelab " "
-	if "`xnames'" != "" {
+	if `"`xnames'"' != "" {
 		local onelab : word `i' of `xnames'
 	}
 	local onelab `"`i' "`onelab'""'
@@ -378,7 +417,7 @@ local ylab ""
 forvalues i = 1 / `nodes'{
 	local onelab " "
 	local j = 1 - `i'
-	if "`ynames'" != "" {
+	if `"`ynames'"' != "" {
 		local onelab : word `i' of `ynames'
 	}
 	local onelab `"`j' "`onelab'""'
@@ -412,9 +451,6 @@ replace yy = yy + `gap' if (temp == 1 | temp == 2)
 replace yy = yy - `gap' if (temp == 3 | temp == 4) 
 
 twoway `txt', `scaleOff' legend(`legend') xlabel(`xlab', nogrid) ylabel(`ylab', nogrid) xtitle("") ytitle("") graphregion( c(white) lp(blank)) `twoway_opt' 
-
-di `"twoway `txt', `scaleOff' legend(`legend') xlabel(`xlab', nogrid) ylabel(`ylab', nogrid) xtitle("") ytitle("") graphregion( c(white) lp(blank)) `twoway_opt' "'
-
 end
 
 /************************************************ 
@@ -482,8 +518,3 @@ qui replace cb= cond( `var'==`prev', `pcent',cb)  /* This is the extra very last
 qui replace colorleg =  cond( `var'==`prev' , "`prev'",colorleg)
 
 end
-
-
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

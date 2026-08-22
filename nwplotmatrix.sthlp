@@ -120,5 +120,5 @@ All normal {help connect_options:options for lines} can be applied as well.
 	
 {title:See also}
 
-	{help nwplot}, {help nwplotjs}
+	{help nwplot}
 

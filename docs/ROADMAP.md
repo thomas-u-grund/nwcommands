@@ -87,8 +87,10 @@ vector-export quality, which is already solved.
 **Already solved, not gaps** (confirmed by direct testing this unit, listed here so they aren't
 re-proposed later): publication-quality static vector export (SVG/PDF, `export()`); reusable/fixed
 node coordinates across multiple networks or waves (`generate()`/`nodexy()`, pre-existing, now
-documented as the intended mechanism); interactive pan/zoom/hover/drag graph exploration
-(`nwplotjs`, sigma.js-based, already shipped and independent of this unit's work).
+documented as the intended mechanism). Interactive pan/zoom/hover/drag graph exploration
+(`nwplotjs`, sigma.js-based) was also in this category at the time this unit ran, but `nwplotjs`
+has since been removed entirely (harmonisation unit 51) - no longer needed now that `nwplot`'s own
+native SVG export is the package's one plotting/export path.
 
 - **High value, small-medium effort**: self-loop rendering (currently invisible — a self-loop has
   no visual effect at all, not even a small drawn arc; every other node-link tool in this space
@@ -123,10 +125,10 @@ documented as the intended mechanism); interactive pan/zoom/hover/drag graph exp
   unit's own direct SVG inspection found native Stata output already fully vector, fully editable,
   and correct for every current `nwplot` feature — a custom renderer would only be worth building if
   a *specific*, concrete rendering need genuinely couldn't be met natively, and none of the gaps
-  above require it); a browser-based/D3 interactive network explorer beyond what `nwplotjs` already
-  provides (assessed as low incremental value — `nwplotjs` already covers the interactive use case
-  this would target, and building a second, redundant interactive renderer is not a good use of
-  effort versus the gaps above); animation of longitudinal networks beyond what `nwmovie`/
+  above require it); a browser-based/D3 interactive network explorer (assessed at the time as low
+  incremental value since `nwplotjs` already covered the interactive use case - `nwplotjs` has
+  since been removed entirely, harmonisation unit 51, so this is now simply out of scope rather
+  than redundant); animation of longitudinal networks beyond what `nwmovie`/
   `nwmoviexy` already do (out of this unit's scope — those commands are a separate, already-working
   raster/GIF pipeline, currently blocked in this environment only by missing ImageMagick, not by
   any design gap).
@@ -250,5 +252,5 @@ See Stage 8 and `docs/FEATURE_AUDIT.md`'s AH section. Summary: architecture is c
 - Area J (similarity/homophily/mixing/assortativity) fell between fork assignments this pass — needs a dedicated read of `nwhomophily.ado` and a clean confirmation of assortativity's absence.
 - ✅ `nwkatz.ado` correctness audit complete (harmonisation phase): confirmed it computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality (`(I-alpha*A)^-1`) — documented explicitly rather than silently implied by the name/citation; formula/values unchanged for backwards compatibility. A genuine walk-counting Katz centrality implementation (W5) remains a real gap. Investigating this surfaced and fixed 5 unrelated real bugs that meant the command had never actually worked end to end — see `docs/CERTIFICATION.md`.
 - GML/GraphML import paths in `nwimport.ado` have lower test-fixture confidence than Pajek/UCINET — worth a dedicated correctness pass with real sample files.
-- **Version-control gap**: several already-shipped, tested, actively-relied-upon commands are not tracked in git at all (confirmed via `git status`/`git log`, discovered while committing harmonisation unit 41). `nw2clustering.ado`/`nw2set.ado`/`nw2toedge.ado` and their `cscripts/` tests were committed alongside unit 41 (they sit directly in the two-mode command family unit 41 was already touching); still outstanding: `nwbridges.ado`, `nwappend.ado`, `nwshared.ado`, `nwsimmelian.ado`, `nwnode.ado`, `nwnoderename.ado`/`.sthlp`, `nwplotjs.ado`/`.sthlp`, `nwpreserve.ado`, `nwrestore.ado`, and their respective `cscripts/` tests — all untracked (`git status` reports them `??`), and `_gnwdegree.ado`/`_growmedian2.ado` (untracked helper files, not yet audited for whether they're still-used or genuinely dead) alongside them. Needs a dedicated pass: confirm each file is genuinely finished/working (not abandoned WIP) via its own test, then commit in a coherent unit — do not `git add -A` blindly, since the working tree also has a large amount of separate scratch/output-artifact noise (generated `.html`/`.dta`/`.nwdta`/log files from running the test suite) that should stay untracked.
+- **Version-control gap**: several already-shipped, tested, actively-relied-upon commands are not tracked in git at all (confirmed via `git status`/`git log`, discovered while committing harmonisation unit 41). `nw2clustering.ado`/`nw2set.ado`/`nw2toedge.ado` and their `cscripts/` tests were committed alongside unit 41 (they sit directly in the two-mode command family unit 41 was already touching); still outstanding: `nwbridges.ado`, `nwappend.ado`, `nwshared.ado`, `nwsimmelian.ado`, `nwnode.ado`, `nwnoderename.ado`/`.sthlp`, `nwpreserve.ado`, `nwrestore.ado`, and their respective `cscripts/` tests (`nwplotjs.ado`/`.sthlp` dropped from this list - removed entirely, harmonisation unit 51, so there is nothing left to commit for it) — all untracked (`git status` reports them `??`), and `_gnwdegree.ado`/`_growmedian2.ado` (untracked helper files, not yet audited for whether they're still-used or genuinely dead) alongside them. Needs a dedicated pass: confirm each file is genuinely finished/working (not abandoned WIP) via its own test, then commit in a coherent unit — do not `git add -A` blindly, since the working tree also has a large amount of separate scratch/output-artifact noise (generated `.html`/`.dta`/`.nwdta`/log files from running the test suite) that should stay untracked.
 - **Compound-drop antipattern**, same class of bug fixed in `nwplot.ado` (harmonisation unit 44 — a single `capture drop A B C` fails and drops *nothing* if even one of A/B/C doesn't exist, since Stata's `drop varlist` is all-or-nothing): `nwmovie.ado`/`nwmoviexy.ado` both have `capture drop _frame_x _frame_y` (two variables). Not fixed in unit 44 — out of scope for that specific bug, and lower risk here since `_frame_x`/`_frame_y` are a matched pair that (on inspection so far) always appear to be created/dropped together, unlike unit 44's `_degree`/`_outdegree`/`_indegree` case where exactly one name is *always* missing depending on directedness, guaranteeing the failure on every call. Worth a dedicated check of `nwmovie`'s/`nwmoviexy`'s own code paths to confirm that pairing genuinely always holds before ruling out the same failure mode there.

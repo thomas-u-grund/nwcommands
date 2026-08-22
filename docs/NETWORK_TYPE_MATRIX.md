@@ -50,7 +50,7 @@ Includes the full data-management/lifecycle group (`nwset`, `nwaddnodes`, `nwsym
 etc. — these are largely Type D/structural and may not need weighted/two-mode classification at
 all, but should still get an explicit N/A pass rather than silent omission), the generator group
 (`nwrandom`, `nwpref`, `nwring`, `nwsmall`, `nwlattice`, `nwhomophily`), the full visualisation
-group (`nwplot`, `nwplotjs`, `nwplotmatrix`, `nwmovie`), import/export (`nwimport`, `nwexport`),
+group (`nwplot`, `nwplotmatrix`, `nwmovie`), import/export (`nwimport`, `nwexport`),
 and several analysis commands not yet reached (`nwevcent`, `nwgeodesic`, `nwsimindex`,
 `nwkcore`, `nwaltergen`, `nwcug`, `nwcommunity`, `nwmodularity`, `nwbalance`, `nwsummarize`,
 `nwtabulate`, `nwcontext`) — several of these were built or extended earlier this session with
