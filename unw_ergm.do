@@ -697,3 +697,178 @@ real matrix ErgmModel::build_mple_data(class ErgmGraph scalar G){
 }
 
 end
+
+mata:
+
+/* ===================================================================
+   MCMC engine: Metropolis-Hastings simulation over binary graph space
+   (Part X of the governing task brief). A proposal is a plain Mata
+   function with the fixed signature
+
+       real rowvector fn(class ErgmGraph scalar G)
+           -> (tail, head, logratio)
+
+   returning the proposed dyad and the log Hastings-ratio correction for
+   its own selection asymmetry (0 for a symmetric proposal). Proposals
+   know NOTHING about terms/change statistics, and terms know NOTHING
+   about how a toggle was chosen - the same separation Statnet's own
+   MHProposal/ModelTerm split enforces (docs/ERGM_STATNET_STUDY.md
+   Appendix B §6), confirmed as the right design rather than reinvented.
+   Adding a future proposal (e.g. a degree-constrained or block-
+   restricted one) means writing one such function; the sampler loop
+   below never changes.
+   =================================================================== */
+
+real scalar ergm_total_dyads(class ErgmGraph scalar G){
+	if (G.directed) return(G.n * (G.n - 1))
+	return(G.n * (G.n - 1) / 2)
+}
+
+/*
+	Uniform-random-dyad proposal: pick any of the D possible dyads with
+	equal probability, tie or not. Symmetric (logratio=0) - the
+	simplest possible correct MH proposal, and the natural fallback/
+	baseline `nwergm` ships alongside TNT.
+*/
+real rowvector ergm_propose_uniform(class ErgmGraph scalar G){
+	real scalar i, j, pick, row, col
+
+	pick = ceil(runiform(1,1) * ergm_total_dyads(G))
+	if (G.directed) {
+		// linear index -> (i,j), i != j, over the n x (n-1) directed dyad space
+		row = ceil(pick / (G.n - 1))
+		col = mod(pick - 1, G.n - 1) + 1
+		i = row
+		j = (col < row) ? col : col + 1
+	}
+	else {
+		// linear index -> unordered pair (i,j), i<j, row-major over the
+		// upper triangle
+		i = 1
+		while (pick > G.n - i) {
+			pick = pick - (G.n - i)
+			i++
+		}
+		j = i + pick
+	}
+	return((i, j, 0))
+}
+
+/*
+	TNT ("tie/no-tie") proposal (Morris, Handcock & Hunter 2008 - see
+	docs/ERGM_STATNET_STUDY.md Appendix B §6 for the exact formulas this
+	reproduces, re-derived from the published construction, independently
+	confirmed against the actual shipped Statnet constants during the
+	Part I study). With probability P=0.5, propose removing a uniformly
+	random EXISTING tie; otherwise (Q=1-P=0.5) propose toggling a
+	uniformly random dyad from the FULL dyad space (which may or may not
+	already be a tie). This dramatically improves mixing on sparse
+	networks relative to the uniform proposal above, whose vast majority
+	of draws land on non-ties and therefore almost never propose removing
+	anything - without TNT's own Hastings-ratio correction below, this
+	deliberately non-uniform proposal density would target the WRONG
+	stationary distribution.
+
+	Picking "a uniformly random existing edge" is done here by
+	materializing the current tie list (ErgmGraph::all_ties(),
+	O(n+nties)) and indexing into it - correct, and a documented,
+	deliberate v1 simplification (see docs/ERGM_ROADMAP.md's own
+	"maintain a live edge list for O(1) TNT edge-picks" performance
+	item) rather than the O(1) live-edge-list Statnet's own C
+	implementation maintains.
+*/
+real rowvector ergm_propose_tnt(class ErgmGraph scalar G){
+	real scalar Dtot, E, P, Q, DP, DO, i, j, logratio, pickedge, erow
+	real matrix ties
+	real rowvector uprop
+
+	Dtot = ergm_total_dyads(G)
+	E = G.nties
+	P = 0.5
+	Q = 0.5
+	DP = P * Dtot
+	DO = DP / Q
+
+	pickedge = 0
+	if (runiform(1,1) < P & E > 0) pickedge = 1
+
+	if (pickedge) {
+		ties = G.all_ties()
+		erow = ceil(runiform(1,1)*E)
+		i = ties[erow, 1]
+		j = ties[erow, 2]
+	}
+	else {
+		uprop = ergm_propose_uniform(G)
+		i = uprop[1]
+		j = uprop[2]
+	}
+
+	if (G.has_edge(i,j)) {
+		// removal proposal, regardless of which branch produced it
+		logratio = (E==1) ? -ln(DP+Q) : ln(E :/ (DO+E))
+	}
+	else {
+		// addition proposal
+		logratio = (E==0) ? ln(DP+Q) : ln(1 + DO :/ (E+1))
+	}
+	return((i, j, logratio))
+}
+
+/*
+	Metropolis-Hastings simulation. `proposalfn' has the fixed
+	`ergm_propose_*' signature above. Mutates G in place (its final
+	state is the last accepted network in the chain - callers that need
+	the ORIGINAL observed network preserved must pass a copy, e.g. via
+	ErgmGraph's own field-by-field duplication, matching how nwqap's own
+	permutation loop protects the observed network). Returns a
+   (samplesize x nparam) matrix of the model's sufficient statistics,
+   one row per post-interval draw, starting the running total from G's
+   own CURRENT statistic() (not from zero) so the returned rows are
+   statistic LEVELS, not deviations - matching Statnet's own convention
+   (docs/ERGM_STATNET_STUDY.md Appendix B §5) and letting a caller
+   compare them directly against the observed network's own statistic.
+*/
+real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta, real scalar burnin, real scalar interval,
+	real scalar samplesize, pointer(real rowvector function) scalar proposalfn){
+
+	real rowvector cur, prop, chg
+	real scalar step, draw, tail, head, logratio, cutoff
+	real matrix out
+
+	cur = M.full_statistic(G)
+	out = J(samplesize, cols(cur), 0)
+
+	for (step=1; step<=burnin; step++) {
+		prop = (*proposalfn)(G)
+		tail = prop[1]
+		head = prop[2]
+		logratio = prop[3]
+		chg = M.full_change(G, tail, head)
+		cutoff = (theta * chg') + logratio
+		if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+			G.toggle(tail, head)
+			cur = cur + chg
+		}
+	}
+
+	for (draw=1; draw<=samplesize; draw++) {
+		for (step=1; step<=interval; step++) {
+			prop = (*proposalfn)(G)
+			tail = prop[1]
+			head = prop[2]
+			logratio = prop[3]
+			chg = M.full_change(G, tail, head)
+			cutoff = (theta * chg') + logratio
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(tail, head)
+				cur = cur + chg
+			}
+		}
+		out[draw, .] = cur
+	}
+	return(out)
+}
+
+end
