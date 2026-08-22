@@ -50,6 +50,7 @@ f nwdyadprob.sthlp
 f nwdyads.sthlp
 f nwego.sthlp
 f nwergm.sthlp
+f nwergm_estat.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp
 f nwexport.sthlp

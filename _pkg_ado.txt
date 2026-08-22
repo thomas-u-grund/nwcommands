@@ -45,6 +45,7 @@ f nwdyadprob.ado
 f nwdyads.ado
 f nwego.ado
 f nwergm.ado
+f nwergm_estat.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado

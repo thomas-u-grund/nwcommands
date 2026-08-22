@@ -112,8 +112,16 @@ The effect library covers {opt edges}, {opt mutual}, {opt nodematch()}, {opt nod
 {opt nodeicov()}/{opt nodeocov()}, {opt edgecov()}, and the geometrically weighted
 {opt gwesp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()} family with FIXED decay only
 (curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space,
-offsets, and goodness-of-fit/MCMC-diagnostics postestimation commands are not yet implemented -
-see the roadmap.
+offsets, and goodness-of-fit postestimation are not yet implemented - see the roadmap. Basic MCMC
+diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt method(mcmle)}.
+
+{title:Postestimation}
+
+{pstd}
+{help nwergm_estat:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation
+(mean/SD/autocorrelation/effective sample size per statistic, plus the overall acceptance rate)
+after {opt method(mcmle)}. Not available after a pure MPLE fit, which involves no MCMC
+simulation.
 
 {title:Stored results}
 
@@ -123,6 +131,10 @@ see the roadmap.
 	  {bf:e(ties)}			number of observed ties
 	  {bf:e(converged)}		1 if MCMLE's own convergence test was satisfied (method(mcmle) only)
 	  {bf:e(mcmle_iterations)}	number of MCMLE outer iterations run (method(mcmle) only)
+	  {bf:e(mcmc_acceptrate)}	Metropolis-Hastings acceptance rate, final simulation (method(mcmle) only)
+	  {bf:e(mcmc_burnin)}		MCMC burn-in steps used (method(mcmle) only)
+	  {bf:e(mcmc_interval)}		MCMC thinning interval used (method(mcmle) only)
+	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
 
 	Macros
 	  {bf:e(cmd)}			{bf:nwergm}
@@ -131,10 +143,12 @@ see the roadmap.
 	  {bf:e(method)}		{bf:mple} or {bf:mcmle}
 	  {bf:e(directed)}		{bf:true}/{bf:false}
 	  {bf:e(proposal)}		Metropolis-Hastings proposal used (method(mcmle) only)
+	  {bf:e(estat_cmd)}		{bf:nwergm_estat} (postestimation dispatch)
 
 	Matrices
 	  {bf:e(b)}			coefficient vector
 	  {bf:e(V)}			variance-covariance matrix
+	  {bf:e(mcmcsample)}		final simulation's sufficient-statistic draws, samplesize x nparam (method(mcmle) only)
 
 {title:Examples}
 

@@ -914,6 +914,72 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	return(out)
 }
 
+/*
+	Identical Metropolis-Hastings loop to ErgmMCMCSample() above, plus an
+	acceptance-rate tally over the SAMPLING phase (post burn-in) - kept as
+	a separate function rather than adding an acceptance-rate return to
+	ErgmMCMCSample() itself, so ErgmMCMCSample()'s own already-certified
+	signature/behavior (used throughout the MCMLE outer loop, where
+	per-iteration acceptance rate is not needed) never changes. Used for
+	the one "final" simulation ErgmMCMLE() runs at its converged theta
+	(see below) - that draw is also nwergm's own basic MCMC diagnostics
+	sample (Part XIX of the governing design brief: trace/mean/SD/
+	autocorrelation/ESS/acceptance rate/convergence indicators), so it is
+	worth tallying acceptance for exactly that one pass rather than every
+	MCMLE iteration's own internal simulation.
+*/
+struct ErgmMCMCDiag {
+	real matrix sample
+	real scalar acceptrate
+}
+
+struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta, real scalar burnin, real scalar interval,
+	real scalar samplesize, pointer(real rowvector function) scalar proposalfn){
+
+	struct ErgmMCMCDiag scalar res
+	real rowvector cur, prop, chg
+	real scalar step, draw, tail, head, logratio, cutoff, naccept, ntried
+
+	cur = M.full_statistic(G)
+	res.sample = J(samplesize, cols(cur), 0)
+
+	for (step=1; step<=burnin; step++) {
+		prop = (*proposalfn)(G)
+		tail = prop[1]
+		head = prop[2]
+		logratio = prop[3]
+		chg = M.full_change(G, tail, head)
+		cutoff = (theta * chg') + logratio
+		if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+			G.toggle(tail, head)
+			cur = cur + chg
+		}
+	}
+
+	naccept = 0
+	ntried = 0
+	for (draw=1; draw<=samplesize; draw++) {
+		for (step=1; step<=interval; step++) {
+			prop = (*proposalfn)(G)
+			tail = prop[1]
+			head = prop[2]
+			logratio = prop[3]
+			chg = M.full_change(G, tail, head)
+			cutoff = (theta * chg') + logratio
+			ntried++
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(tail, head)
+				cur = cur + chg
+				naccept++
+			}
+		}
+		res.sample[draw, .] = cur
+	}
+	res.acceptrate = naccept / ntried
+	return(res)
+}
+
 end
 
 mata:
@@ -964,6 +1030,11 @@ struct ErgmMCMLEFit {
 	real scalar converged
 	real scalar niter
 	real matrix coefhist
+	real matrix finalsample	// the final simulation's own sufficient-statistic
+				// draws (samplesize x nparam) - doubles as nwergm's
+				// basic MCMC diagnostics sample (Part XIX)
+	real scalar acceptrate	// Metropolis-Hastings acceptance rate over that
+				// same final simulation's sampling phase
 }
 
 /*
@@ -1000,6 +1071,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	real scalar verbose){
 
 	struct ErgmMCMLEFit scalar res
+	struct ErgmMCMCDiag scalar diag
 	real rowvector obs, theta, Dbar, delta, se, rho, infl
 	real matrix samp, D, V, Vinv, coefhist
 	real scalar iter, p, mahal, gamma, converged, k
@@ -1037,8 +1109,13 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	}
 
 	// Final variance-covariance from a fresh simulation at the
-	// converged (or last-tried) theta.
-	samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
+	// converged (or last-tried) theta - via ErgmMCMCSampleDiag() rather
+	// than ErgmMCMCSample() purely so this one pass also yields an
+	// acceptance rate; the accept/reject draw sequence itself is
+	// identical (see ErgmMCMCSampleDiag()'s own header comment), so this
+	// substitution changes nothing about the numeric result.
+	diag = ErgmMCMCSampleDiag(M, G, theta, burnin, interval, samplesize, proposalfn)
+	samp = diag.sample
 	V = variance(samp)
 	rho = ergm_lag1_autocorr(samp)
 	infl = (1 :+ rho) :/ (1 :- rho)
@@ -1049,6 +1126,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	res.converged = converged
 	res.niter = iter <= maxit ? iter : maxit
 	res.coefhist = coefhist
+	res.finalsample = samp
+	res.acceptrate = diag.acceptrate
 	return(res)
 }
 
