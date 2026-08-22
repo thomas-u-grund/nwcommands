@@ -61,6 +61,7 @@ class ErgmGraph {
 	real scalar degree_total()
 	real scalar common_neighbors()
 	real matrix all_ties()
+	real matrix to_dense()
 }
 
 void ErgmGraph::init(real scalar n0, real scalar directed0){
@@ -192,6 +193,70 @@ real matrix ErgmGraph::all_ties(){
 			}
 		}
 	}
+	return(out)
+}
+
+/*
+	Dense n x n 0/1 adjacency matrix (1 = tie present), matching the
+	shape `nwset, mat(...)' expects - used only by nwergm's own `estat
+	gof' (Part XX) to materialize a simulated network back into a real
+	nw_def object so the package's own already-tested nwgeodesic/nwtriads
+	commands can compute genuine goodness-of-fit comparison statistics on
+	it, rather than reimplementing geodesic distance/triad census a
+	second time. Not used anywhere in the MCMC inner loop itself - O(n +
+	nties), called at most `nsim' times per `estat gof' call, the same
+	"materialize outside the hot loop" discipline all_ties() already
+	follows.
+*/
+real matrix ErgmGraph::to_dense(){
+	real matrix out
+	real rowvector nb
+	real scalar i, k
+
+	out = J(n, n, 0)
+	for (i=1; i<=n; i++) {
+		nb = neighbors_out(i)
+		for (k=1; k<=cols(nb); k++) out[i, nb[k]] = 1
+	}
+	return(out)
+}
+
+/*
+	Renders a real matrix as a literal Stata matrix-expression string,
+	e.g. "(0,1,0\1,0,1\0,1,0)" - used by `estat gof' (nwergm_estat.ado)
+	to hand a simulated network to `nwset, mat(...)' as a LITERAL
+	expression rather than an existing Stata matrix's bare NAME.
+	`nwset.ado' line 651 (`mata: mode1 = cols(`mat')') resolves its own
+	`mat()' argument as a bare Mata expression - a literal expression like
+	this one parses directly as an anonymous Mata matrix constant, but a
+	bare NAME referring to an existing Stata matrix does NOT auto-import
+	(confirmed by direct, isolated repro, independent of matastrict or of
+	this package's own ERGM code entirely: `matrix define X = (...)' then
+	`nwset, mat(X)' fails with "X not found" in a bare, freshly-started
+	Stata session using only the compiled lnwcommands.mlib) - a genuine,
+	previously-undiscovered bug in `nwset.ado' itself, recorded in
+	docs/CERTIFICATION.md's own Pending list rather than fixed here (out
+	of this subsystem's scope; every OTHER `nwset, mat(...)' call in this
+	package's own existing tests happens to always pass a literal
+	expression, which is why this had never previously surfaced). This
+	function exists so `estat gof' avoids that landmine entirely rather
+	than depending on a fix to unrelated, foundational code.
+*/
+string scalar ErgmMatToLiteral(real matrix X){
+	string scalar out
+	real scalar i, j, nr, nc
+
+	nr = rows(X)
+	nc = cols(X)
+	out = "("
+	for (i=1; i<=nr; i++) {
+		for (j=1; j<=nc; j++) {
+			out = out + strofreal(X[i,j])
+			if (j<nc) out = out + ","
+		}
+		if (i<nr) out = out + "\"
+	}
+	out = out + ")"
 	return(out)
 }
 

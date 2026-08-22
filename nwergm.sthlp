@@ -111,9 +111,10 @@ extension.{p_end}
 The effect library covers {opt edges}, {opt mutual}, {opt nodematch()}, {opt nodecov()},
 {opt nodeicov()}/{opt nodeocov()}, {opt edgecov()}, and the geometrically weighted
 {opt gwesp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()} family with FIXED decay only
-(curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space,
-offsets, and goodness-of-fit postestimation are not yet implemented - see the roadmap. Basic MCMC
-diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt method(mcmle)}.
+(curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space
+and offsets are not yet implemented - see the roadmap. Basic MCMC diagnostics
+({help nwergm_estat:estat mcmcdiag}) and basic goodness of fit ({help nwergm_estat:estat gof})
+are both available; see {help nwergm_estat}.
 
 {title:Postestimation}
 
@@ -122,6 +123,12 @@ diagnostics are available via {help nwergm_estat:estat mcmcdiag} after {opt meth
 (mean/SD/autocorrelation/effective sample size per statistic, plus the overall acceptance rate)
 after {opt method(mcmle)}. Not available after a pure MPLE fit, which involves no MCMC
 simulation.
+
+{pstd}
+{help nwergm_estat:estat gof} reports a basic simulation-based goodness-of-fit comparison
+(mean degree, average geodesic distance, complete-triad count) between the fitted model's own
+simulated networks and the network {cmd:nwergm} was fitted on - available after either
+estimation method. See {help nwergm_estat} for full details.
 
 {title:Stored results}
 

@@ -29,10 +29,10 @@ source, comment, or identifier is copied anywhere in this codebase).
   validation, the NWdef→`ErgmGraph` bridge, term-option parsing (builds an
   `ErgmModel` from the user's requested options), MPLE-vs-MCMLE dispatch,
   and `ereturn` result posting.
-- `nwergm_estat.ado` — postestimation (`estat mcmcdiag`), dispatched via
-  `e(estat_cmd)` (set by `nwergm.ado`), not the `<cmd>_estat`-by-bare-
-  convention some other Stata packages use — see the "adding a new
-  `estat` subcommand" note below.
+- `nwergm_estat.ado` — postestimation (`estat mcmcdiag`, `estat gof`),
+  dispatched via `e(estat_cmd)` (set by `nwergm.ado`), not the
+  `<cmd>_estat`-by-bare-convention some other Stata packages use — see
+  the "adding a new `estat` subcommand" note below.
 - `cscripts/test_nwergm_statistics.do` / `test_nwergm_changestat.do` /
   `test_nwergm_mple.do` / `test_nwergm_mcmc.do` / `test_nwergm_mcmle.do` /
   `test_nwergm_ado.do` — the permanent certification suite, one file per
@@ -405,7 +405,59 @@ results silently read back as missing (while the subcommand's own
 non-obvious rather than a simple typo; confirmed via an isolated 2-level
 `rclass`-nesting repro before concluding this was the actual cause). A
 future subcommand (e.g. a `gof` subcommand — see `docs/ERGM_ROADMAP.md`)
-must follow the same `nwergm_estat_mcmcdiag`/`return add` pattern.
+must follow the same `nwergm_estat_mcmcdiag`/`return add` pattern
+(`estat gof`, described next, already does).
+
+Two further, genuinely non-obvious lessons surfaced while building
+`estat gof`, worth knowing before writing another `.ado` file that needs
+either of these:
+
+- **A Mata function defined at one `.ado` file's own file scope is not
+  reliably callable from a different `.ado` file's own, separate
+  auto-load event** - even after the first file's own command has
+  already run successfully earlier in the same session. Confirmed by
+  direct trial: right after a successful `nwergm mynet, edges` call
+  (which itself calls `ergm_bridge_from_netobj()` internally), a plain
+  `capture mata: mata which ergm_bridge_from_netobj()` from the same
+  session fails to resolve it - even though it is defined at
+  `nwergm.ado`'s own file scope, guarded exactly like a normal file-scope
+  helper. It reliably works from an explicit `run nwergm.ado` (as opposed
+  to ordinary command auto-load) - which is why this was missed until a
+  plain `cscript`-style dev-mode test exercised the real auto-load path,
+  rather than an ad hoc scratch script using `run`. Fix: each `.ado`
+  file that needs a shared file-scope Mata helper must define its own
+  copy at its own file scope (`nwergm_estat.ado` has its own
+  `nwergm_estat_bridge_from_netobj()`, identical logic to
+  `ergm_bridge_from_netobj()`, distinct name) - this is not unwanted
+  duplication, it is the only combination confirmed to work reliably
+  under normal auto-load. Functions compiled into the `.mlib` library
+  (`ErgmGraph`, `stat_edges()`, etc.) are NOT affected - Mata's own
+  library-autoload mechanism is a completely different, reliable code
+  path from `.ado` file-scope code.
+- **`nwtriads.ado` has a genuine, pre-existing bug**, unrelated to
+  `nwergm`: it crashes with "n not found - data already wide" (r(111))
+  on any network with zero ties (confirmed via an isolated repro
+  independent of `nwergm` entirely - `nwset, mat((0,0\0,0)) undirected
+  name(x)` then `nwtriads x` reproduces it in a bare session). A
+  simulated network hitting exactly zero ties is a real possibility
+  during MCMC, so `estat gof` wraps every `nwtriads`/`nwgeodesic` call on
+  a simulated network in `capture`, excluding that draw from the
+  relevant average rather than crashing the whole command - the same
+  discipline any future GOF-adjacent code should follow. Not fixed at
+  the source (out of this subsystem's scope); see
+  `docs/CERTIFICATION.md`'s Pending list for the full disclosure.
+- **A related bug this uncovered, since fixed**: `nwergm.ado`'s own
+  `e(ties)` was captured from `__nwergm_last_G.nties` after
+  `ErgmMCMLE()` returned - but `__nwergm_last_G` is the live MCMC state,
+  mutated throughout simulation, not a frozen copy of the observed
+  network (see `ErgmGraph`'s own class comment). For any `method(mcmle)`
+  fit, `e(ties)` was silently reporting the last simulated tie count,
+  not the true observed one - caught only once `estat gof` needed a
+  genuinely correct observed mean degree and its own "Observed" column
+  didn't match the network by hand-inspection. Fixed by capturing the
+  observed tie count into a Stata local immediately after
+  `ergm_bridge_from_netobj()` runs (before any MCMC), and posting THAT
+  value as `e(ties)` in both branches.
 
 ## How to add a new term
 
