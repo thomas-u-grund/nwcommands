@@ -4373,6 +4373,15 @@ real matrix `NWdef'::calculate_betweenness(){
 
 void `NWdef'::clean_matrix_2mode(){
 	real matrix z
+	// General validation-stage finding (see docs/CERTIFICATION.md): this
+	// method reads/writes `edge' directly with no dense guard, unlike
+	// every other such method in this class. Its one live caller
+	// (nw2fromedge.ado) happens to always call symmetrize() first (via
+	// its own hardcoded `undirected' nwsym step), which itself already
+	// calls ensure_dense_built() - so this was "accidentally safe" by
+	// caller convention, not by design. Guarded explicitly here so it is
+	// actually safe for any future caller, not just the current one.
+	ensure_dense_built()
 	z = ((J(get_nodes(),1, modes):== J(1,get_nodes(), modes')):== 1)
 	_editvalue(z, 1, .)
 	edge = edge :+ z
@@ -5511,6 +5520,12 @@ real matrix `NWdef'::calculate_triadcensus(){
 	Update edge matrix given a list of nodes connecting to node i
 */
 void `NWdef'::connect_edge(real scalar i, real rowvector rj) {
+	// General validation-stage finding (see docs/CERTIFICATION.md): no
+	// live caller currently exists (confirmed via grep), but this method
+	// read/wrote `edge' directly with no dense guard, unlike every other
+	// dense-touching method in this class - would silently index into an
+	// empty/wrong-sized matrix for a sparse-natively-built network.
+	ensure_dense_built()
 	edge[i, rj] = J(1, cols(rj), 1)
 	if(!isdirect) {
 		edge[rj', i] = J(cols(rj), 1, 1)
@@ -5525,9 +5540,17 @@ void `NWdef'::add_node(string scalar s) {
 	real scalar idx, size
 	idx = first_index_match(nodes, s)
 	if(idx > 0) {
-		error_handle("`vlNWdef': node name already exists.", 
-			`errNodeDupName') 
+		error_handle("`vlNWdef': node name already exists.",
+			`errNodeDupName')
 	}
+	// General validation-stage finding (see docs/CERTIFICATION.md): this
+	// method's only live caller is nwaddnodes.ado, already documented as
+	// broken for an unrelated reason (see CERTIFICATION.md's own Pending
+	// row) - but it read/wrote `edge' directly with no dense guard,
+	// unlike every other dense-touching method in this class, and would
+	// have silently concatenated onto an empty/wrong-sized matrix for a
+	// sparse-natively-built network regardless of that unrelated bug.
+	ensure_dense_built()
 	size = cols(nodes)
 	nodes = (nodes, s)
 	nodesvar = (nodesvar, strtoname(s))
@@ -5613,9 +5636,15 @@ void `NWdef'::dumper(string scalar prefix) {
 	printf("\n")
 
 	// edges
+	// General validation-stage finding (see docs/CERTIFICATION.md): this
+	// debug-only dump (invoked manually, e.g. `nw.nws.dumper()`, no .ado
+	// command calls it) read `edge' directly with no dense guard - would
+	// have silently printed "no edges" for every node on a sparse-
+	// natively-built network instead of erroring or reflecting reality.
+	ensure_dense_built()
 	printf(prefix)
 	printf("edges:\n")
-	
+
 	for(i=1; i<=size; i++) {
 		printf(prefix)
 		printf("  %g.%s: ", i, nodes[i])
