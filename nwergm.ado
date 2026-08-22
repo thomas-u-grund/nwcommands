@@ -477,11 +477,26 @@ program nwergm, eclass
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
 	}
 
+	// Built directly as a Mata matrix and handed straight to st_store()
+	// below - NEVER routed through an intermediate Stata MATRIX
+	// (st_matrix()), which is fine at the tiny scale of this suite's own
+	// certification networks but catastrophically slow (effectively
+	// hangs - confirmed directly: a trivial 999000x4 st_matrix() call
+	// alone did not complete in over 2 minutes, where the equivalent
+	// st_store() directly from Mata took 0.008 seconds) once ndyads
+	// scales into the hundreds of thousands - i.e. any directed model
+	// with a few hundred nodes or more. Stata matrices are architected
+	// for small structures (coefficient vectors, VCV matrices), not
+	// bulk per-observation data - the dataset/variable system st_store()
+	// targets is what Stata itself uses for that, and performs
+	// accordingly. Found and fixed while building the R-vs-Stata
+	// benchmark suite's own large-network control case
+	// (docs/CERTIFICATION.md harmonisation unit 81).
 	tempname __nw_D
 	mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
-	mata: st_matrix("nw_ergm_D", `__nw_D')
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
-	local __ergm_p = colsof(nw_ergm_D) - 1
+	mata: st_local("__ergm_nrows", strofreal(rows(`__nw_D')))
+	mata: st_local("__ergm_p", strofreal(cols(`__nw_D')-1))
 
 	tempname __ergm_coefnames
 	mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.coefnames))
@@ -493,12 +508,12 @@ program nwergm, eclass
 
 	preserve
 	qui drop _all
-	qui set obs `=rowsof(nw_ergm_D)'
+	qui set obs `__ergm_nrows'
 	foreach __v of local __ergm_xlist {
 		qui gen double `__v' = .
 	}
 	qui gen double __ergm_y = .
-	mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), st_matrix("nw_ergm_D"))
+	mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), `__nw_D')
 
 	qui logit __ergm_y `__ergm_xlist', noconstant
 	tempname __b_mple __V_mple
@@ -521,14 +536,14 @@ program nwergm, eclass
 		matrix rownames `__V_mple' = `__ergm_coefnames'
 		matrix colnames `__V_mple' = `__ergm_coefnames'
 
-		ereturn post `__b_mple' `__V_mple', depname(`netname') obs(`=rowsof(nw_ergm_D)')
+		ereturn post `__b_mple' `__V_mple', depname(`netname') obs(`__ergm_nrows')
 		ereturn local cmd "nwergm"
 		ereturn local title "Exponential-family random graph model (MPLE)"
 		ereturn local depvar "`netname'"
 		ereturn local method "mple"
 		ereturn local directed "`directed'"
 		ereturn local estat_cmd "nwergm_estat"
-		ereturn scalar N = rowsof(nw_ergm_D)
+		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
 
@@ -567,7 +582,7 @@ program nwergm, eclass
 		matrix rownames `__V_mcmle' = `__ergm_coefnames'
 		matrix colnames `__V_mcmle' = `__ergm_coefnames'
 
-		ereturn post `__b_mcmle' `__V_mcmle', depname(`netname') obs(`=rowsof(nw_ergm_D)')
+		ereturn post `__b_mcmle' `__V_mcmle', depname(`netname') obs(`__ergm_nrows')
 		ereturn local cmd "nwergm"
 		ereturn local title "Exponential-family random graph model (MCMLE)"
 		ereturn local depvar "`netname'"
@@ -575,7 +590,7 @@ program nwergm, eclass
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
 		ereturn local estat_cmd "nwergm_estat"
-		ereturn scalar N = rowsof(nw_ergm_D)
+		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar converged = `__ergm_converged'
 		ereturn scalar mcmle_iterations = `__ergm_niter'

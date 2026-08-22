@@ -434,6 +434,30 @@ shared exported network (see its own README).
   already exists") and its fix. **Any new tempname created inside
   `nwergm`'s program body that holds a genuine Mata object (as opposed to
   a Stata matrix/local) must be added to this list.**
+- **Never routes a large, per-observation Mata matrix through an
+  intermediate Stata MATRIX.** The MPLE design matrix
+  (`ErgmModel::build_mple_data()`) is handed directly to `st_store()`
+  from Mata — never to `st_matrix()`. Stata matrices are architected for
+  small structures (coefficient vectors, VCV matrices), not bulk
+  per-observation data: a bare `mata: st_matrix("x", J(999000,4,1.5))`
+  call did not complete within 2 minutes (killed, not merely slow) in a
+  direct isolated test, where the equivalent `st_store()` call on the
+  identical data completed in 0.008 seconds. An earlier version of this
+  file routed the MPLE design matrix through exactly that slow path
+  (`st_matrix()` immediately after building it, then read back out of
+  that same Stata matrix later just to feed `st_store()`) — invisible at
+  the tiny scale (a handful of dyads) every existing certification
+  network uses, but effectively hanging any directed model at a few
+  hundred nodes or more (`docs/CERTIFICATION.md` unit 81 — found while
+  building a 1000-node benchmark, which went from not completing after
+  35+ minutes to 27.8 seconds once fixed). **Any future code path that
+  moves a Mata matrix whose row count scales with the network (dyad
+  count, tie count, node count) into Stata must go through `st_store()`
+  onto dataset variables, never through `st_matrix()`.** A handful of
+  scalars or a `nparam × nparam` covariance matrix is exactly the kind
+  of small, fixed-size structure `st_matrix()` remains the right tool
+  for (e.g. `e(b)`/`e(V)` themselves) — the distinction is whether the
+  matrix's own size scales with the DATA rather than with the MODEL.
 
 ## Postestimation: adding a new `estat` subcommand
 
