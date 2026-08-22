@@ -394,7 +394,7 @@ a self-loop currently has no visible effect on the plot (a zero-length tie), a k
 in the package's own visualization roadmap rather than fixed here.
 
 {title:See also}
-		{help nwplotjs}, {help nwplotmatrix}
+		{help nwplotmatrix}
 
 ***/
 capture program drop nwplot
@@ -1676,6 +1676,14 @@ program nwplot, rclass
 	// (chiefly raster width()/height() for PNG/TIF quality); anything
 	// more exotic is still one manual "graph export" call away.
 	if "`export'" != "" {
+		// SVG export needs Stata 16 or later - check explicitly rather
+		// than let "graph export" itself fail with a generic error (or,
+		// on an older Stata that silently accepts the option but
+		// produces a broken/incomplete file, worse: fail silently).
+		if substr(lower("`export'"), -4, .) == ".svg" & c(stata_version) < 16 {
+			di "{err}SVG export requires Stata 16 or later (this is Stata `c(stata_version)'). Export to a different format (png/pdf/eps/...), or upgrade Stata."
+			error 9
+		}
 		di "{text:Exporting graph to `export'...}"
 		graph export "`export'", `replace' `exportopt'
 		return local export "`export'"

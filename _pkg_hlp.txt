@@ -80,7 +80,6 @@ f nworder.sthlp
 f nwpath.sthlp
 f nwpermute.sthlp
 f nwplot.sthlp
-f nwplotjs.sthlp
 f nwplotmatrix.sthlp
 f nwpref.sthlp
 f nwqap.sthlp

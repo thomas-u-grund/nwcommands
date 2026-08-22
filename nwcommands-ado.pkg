@@ -81,7 +81,6 @@ f nworder.ado
 f nwpath.ado
 f nwpermute.ado
 f nwplot.ado
-f nwplotjs.ado
 f nwplotmatrix.ado
 f nwpref.ado
 f nwqap.ado

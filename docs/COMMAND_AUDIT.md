@@ -37,7 +37,7 @@ newly-added commands (`nwkcore`, `nwaltergen`, `nwsimindex`, `nwcug`, `nw2projec
 The large majority of analytical and single-network-transform commands: `nwbetween`, `nwbridges`,
 `nwclustering`, `nwconstraint`, `nwevcent`, `nwgeodesic`, `nwkatz`, `nwmixing`, `nwpath`, `nwreach`,
 `nwtriads`, `nwtranspose`, `nwsym`, `nwaddnodes`, `nwdropnodes`, `nwduplicate`, `nwsubset`,
-`nwreplacemat`, `nwnoderename`, `nwutility`, `nwvalue`, `nwplot`, `nwplotjs`, `nwplotmatrix`,
+`nwreplacemat`, `nwnoderename`, `nwutility`, `nwvalue`, `nwplot`, `nwplotmatrix`,
 `nwmovie`, `nwshared`, `nwsimmelian`, `nwsync`, `nwcurrent`, `nwname`, `nwnode`, `nw2clustering`, and
 others.
 

@@ -393,7 +393,7 @@ a self-loop currently has no visible effect on the plot (a zero-length tie), a k
 in the package's own visualization roadmap rather than fixed here.
 
 {title:See also}
-		{help nwplotjs}, {help nwplotmatrix}
+		{help nwplotmatrix}
 
 last certified : 22 Aug 2026
 
