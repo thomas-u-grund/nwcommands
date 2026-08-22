@@ -1566,6 +1566,13 @@ struct ErgmMCMLEFit {
 				// basic MCMC diagnostics sample (Part XIX)
 	real scalar acceptrate	// Metropolis-Hastings acceptance rate over that
 				// same final simulation's sampling phase
+	real scalar final_interval	// the (possibly grown - unit 85's own
+				// adaptive-interval mechanism) `interval' value
+				// actually used for the LAST MCMLE iteration and
+				// the final diagnostics simulation - equal to the
+				// caller-supplied interval whenever no growth was
+				// ever triggered (the ordinary case for small/
+				// well-mixing models).
 }
 
 /*
@@ -1597,7 +1604,7 @@ real rowvector ergm_lag1_autocorr(real matrix samp){
 }
 
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
-	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval,
+	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize, pointer(real rowvector function) scalar proposalfn,
 	real scalar verbose){
 
@@ -1605,9 +1612,22 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	struct ErgmMCMCDiag scalar diag
 	real rowvector obs, theta, Dbar, delta, se
 	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist
-	real scalar iter, p, mahal, gamma, converged, k, neff
+	real scalar iter, p, mahal, gamma, converged, k, neff, min_neff, interval_cap, growth, interval
 	real scalar T2, Fstat, Fcrit, confidence
 	real rowvector rho, infl
+
+	// Mata passes a bare-variable argument by reference, so this
+	// function's own adaptive-interval growth (below) reassigning its
+	// own copy of the requested interval could otherwise mutate a
+	// caller's variable if a future caller ever passes one in directly
+	// (today's only caller, `nwergm.ado', always passes a literal
+	// Stata-macro-substituted number, not a Mata variable, so this was
+	// never a live production bug - found while writing this unit's own
+	// certification test, `cscripts/test_nwergm_adaptive_interval.do',
+	// which DID pass a bare variable and observed it change value after
+	// the call). `interval0' is the untouched formal parameter; `interval'
+	// is this function's own private, freely-mutable working copy.
+	interval = interval0
 
 	obs = M.full_statistic(G)
 	theta = theta0
@@ -1618,6 +1638,33 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// own reported confidence level (observed directly in real ergm()
 	// console output: "Converged with 99% confidence").
 	confidence = 0.99
+
+	// ADAPTIVE INTERVAL (harmonisation unit 85, docs/CERTIFICATION.md) -
+	// closes the open question unit 84 surfaced rather than resolved:
+	// that unit's own effective-sample-size fix can correctly report
+	// "converged" from a genuinely tiny neff (35.7 out of 3000 raw draws
+	// measured on the 500-node sparse GWESP benchmark at the default
+	// `mcmcinterval'), which is statistically VALID as a test but leaves
+	// the resulting estimate's own PRECISION uncomfortably low - a
+	// direct, real Statnet trace on the identical network
+	// (`60_verbose_500sparse_r.R') showed Statnet's own interval is not
+	// a fixed default either ("New interval = 512" then "New interval =
+	// 1024", printed on its own non-converged iterations) - i.e. Statnet
+	// itself grows its own MCMC thinning when the achieved effective size
+	// is inadequate, rather than accepting a technically-passing but
+	// low-precision test. `min_neff' mirrors Statnet's own documented
+	// `MCMLE.effectiveSize=64'-per-parameter target (`control.ergm.R'),
+	// floored at 200 so a 1-2 parameter model still gets a reasonably
+	// precise fit rather than the bare minimum the raw formula would
+	// otherwise allow. `interval' itself becomes a per-iteration LOCAL,
+	// grown (never shrunk) whenever the achieved `neff' falls short -
+	// every existing caller of `ErgmMCMCSample()'/`ErgmMCMCSampleDiag()'
+	// below already takes `interval' as an ordinary parameter, so this
+	// needs no change anywhere outside this loop, including the native
+	// backend (unit 83), which simply receives whatever `interval' this
+	// loop passes it each call.
+	min_neff = max((200, 64*p))
+	interval_cap = 20000
 
 	for (iter=1; iter<=maxit; iter++) {
 		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
@@ -1700,11 +1747,24 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		if (verbose) {
 			printf("MCMLE iter %g: steplen=%5.3f theta=", iter, gamma)
 			for (k=1; k<=p; k++) printf("%9.5f ", theta[k])
-			printf(" F=%7.3f (crit %7.3f at %g%% conf, neff=%7.1f) max|Dbar/se|=%6.3f\n", Fstat, Fcrit, confidence*100, neff, max(abs(Dbar :/ se)))
+			printf(" F=%7.3f (crit %7.3f at %g%% conf, neff=%7.1f/%g) max|Dbar/se|=%6.3f interval=%g\n", Fstat, Fcrit, confidence*100, neff, min_neff, max(abs(Dbar :/ se)), interval)
 		}
-		if (Fstat <= Fcrit & gamma==1) {
+		if (Fstat <= Fcrit & gamma==1 & neff >= min_neff) {
 			converged = 1
 			break
+		}
+		// Not (yet) converged: if the achieved effective sample size is
+		// below the target floor, grow `interval' for the NEXT iteration
+		// so the next MCMC sample is less autocorrelated - capped both
+		// per-step (at most 8x in one jump, avoiding a single noisy
+		// autocorrelation estimate causing a wildly oversized next
+		// iteration) and in absolute terms (`interval_cap'). Left
+		// unchanged (no adaptation) whenever `neff' already clears the
+		// floor - the ordinary case for the small/well-mixing benchmarks
+		// (1-3), which never pay for this mechanism at all.
+		if (neff < min_neff) {
+			growth = min((8, ceil(min_neff/neff)))
+			interval = min((interval * growth, interval_cap))
 		}
 	}
 
@@ -1746,6 +1806,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	res.coefhist = coefhist
 	res.finalsample = samp
 	res.acceptrate = diag.acceptrate
+	res.final_interval = interval
 	return(res)
 }
 
