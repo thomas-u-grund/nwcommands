@@ -201,6 +201,47 @@ by the Statnet project. See {browse "docs/ERGM_PROVENANCE.md"} for the full lice
 provenance account, and {browse "docs/ERGM_STATNET_STUDY.md"} for the architecture study this
 implementation is based on.
 
+{title:Simulation}
+
+{p 8 17 2}
+{cmdab: nwergm} {cmd:simulate}
+{it:nodes}
+{cmd:,}
+{opt edges} [{opt mutual}]
+[{opt gwesp(real)}]
+[{opt gwdegree(real)}]
+[{opt gwodegree(real)}]
+[{opt gwidegree(real)}]
+{opt theta(numlist)}
+[{opt directed}
+{opt nsim(int)}
+{opt mcmcburnin(int)}
+{opt mcmcinterval(int)}
+{opt proposal(uniform|tnt)}
+{opt seed(int)}
+{opt generate(string)}]
+
+{pstd}
+{cmd:nwergm simulate} draws one or more networks from a fully-specified ERGM (fixed
+coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
+itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
+ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
+existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
+takes, but v1's simulate interface deliberately only supports the terms that need no external
+covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
+nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation (see
+{browse "docs/ERGM_ROADMAP.md"}). {opt theta()} supplies one coefficient per requested term, IN
+THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
+present, then any gw* terms in the order written) - there is no per-term coefficient
+sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
+estimation path uses rather than a parallel implementation.
+
+{pstd}
+{opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,
+matching {cmd:nwergm}'s own control conventions rather than continuing one long chain), named
+{opt generate()}{cmd:_1}, {opt generate()}{cmd:_2}, ... when {opt nsim()}{cmd: > 1} (default stub
+{cmd:ergmsim}), or plain {opt generate()} (default {cmd:ergmsim}) when {opt nsim(1)}.
+
 {title:See also}
 
 	{help nwqap}, {help nwrandom}, {help nwcug}
@@ -210,6 +251,11 @@ implementation is based on.
 capture program drop nwergm
 program nwergm, eclass
 	version 14
+	if `"`1'"' == "simulate" {
+		gettoken __ergm_sub 0 : 0
+		nwergm_simulate `0'
+		exit
+	}
 	syntax [anything(name=netname)] [, edges mutual ///
 		NODEMATCH(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) GWESP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
@@ -586,6 +632,132 @@ program nwergm_display
 	else {
 		di "{txt}Maximum pseudolikelihood estimate (not full ERGM maximum likelihood unless the model is dyad-independent)."
 	}
+end
+
+/*
+	nwergm simulate (Part X's own example syntax): draws one or more
+	networks from a fully-specified ERGM (fixed theta, not estimated),
+	via the same native MCMC engine nwergm's own estimation path uses.
+	v1 scope deliberately covers only the terms needing no external
+	covariate data (edges/mutual/the gw family) - see this program's own
+	SMCL doc header above ("Simulation" section) for the full rationale
+	and docs/ERGM_ROADMAP.md for extending this to covariate terms.
+*/
+capture program drop nwergm_simulate
+program nwergm_simulate
+	version 14
+	syntax anything(name=nodes) , edges [mutual ///
+		GWESP(real 0) GWDEGREE(real 0) GWODEGREE(real 0) GWIDEGREE(real 0) ///
+		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
+		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) ]
+
+	confirm integer number `nodes'
+	if `nodes' < 2 {
+		di "{err}nwergm simulate needs at least 2 nodes."
+		error 198
+	}
+	if "`theta'" == "" {
+		di "{err}option {bf:theta()} is required - one coefficient per requested term, in the same order the term options are listed (edges first)."
+		error 198
+	}
+	if "`mutual'" != "" & "`directed'" == "" {
+		di "{err}option {bf:mutual} requires {bf:directed}."
+		error 198
+	}
+	if (`gwodegree' != 0 | `gwidegree' != 0) & "`directed'" == "" {
+		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require {bf:directed}. Use {bf:gwdegree()} for an undirected simulation."
+		error 198
+	}
+	if `gwesp' != 0 & "`directed'" != "" {
+		di "{err}option {bf:gwesp()} (v1 scope) is undirected only."
+		error 198
+	}
+	if "`proposal'" == "" local proposal "tnt"
+	_opts_oneof "uniform tnt" "proposal" "`proposal'" 198
+	if "`generate'" == "" local generate "ergmsim"
+	if `seed' != -1 {
+		set seed `seed'
+	}
+
+	local __ergm_matatemps ""
+
+	capture mata: mata drop __nwergm_last_M
+	mata: __nwergm_last_M = ErgmModel()
+	mata: __nwergm_last_M.init()
+
+	tempname td_edges
+	mata: `td_edges' = ErgmTermData()
+	mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `td_edges', ("edges"))
+	local ntermtok "edges"
+	local __ergm_matatemps "`__ergm_matatemps' `td_edges'"
+
+	if "`mutual'" != "" {
+		tempname td_mutual
+		mata: `td_mutual' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), `td_mutual', ("mutual"))
+		local ntermtok "`ntermtok' mutual"
+		local __ergm_matatemps "`__ergm_matatemps' `td_mutual'"
+	}
+	if `gwesp' != 0 {
+		tempname td_gwesp
+		mata: `td_gwesp' = ErgmTermData()
+		mata: `td_gwesp'.decay = `gwesp'
+		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `td_gwesp', ("gwesp"))
+		local ntermtok "`ntermtok' gwesp"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwesp'"
+	}
+	if `gwdegree' != 0 {
+		tempname td_gwdeg
+		mata: `td_gwdeg' = ErgmTermData()
+		mata: `td_gwdeg'.decay = `gwdegree'
+		mata: __nwergm_last_M.addterm("gwdegree", 1, &stat_gwdegree(), &change_gwdegree(), `td_gwdeg', ("gwdegree"))
+		local ntermtok "`ntermtok' gwdegree"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwdeg'"
+	}
+	if `gwodegree' != 0 {
+		tempname td_gwod
+		mata: `td_gwod' = ErgmTermData()
+		mata: `td_gwod'.decay = `gwodegree'
+		mata: __nwergm_last_M.addterm("gwodegree", 1, &stat_gwodegree(), &change_gwodegree(), `td_gwod', ("gwodegree"))
+		local ntermtok "`ntermtok' gwodegree"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwod'"
+	}
+	if `gwidegree' != 0 {
+		tempname td_gwid
+		mata: `td_gwid' = ErgmTermData()
+		mata: `td_gwid'.decay = `gwidegree'
+		mata: __nwergm_last_M.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), `td_gwid', ("gwidegree"))
+		local ntermtok "`ntermtok' gwidegree"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwid'"
+	}
+
+	local nterm : word count `ntermtok'
+	local nth : word count `theta'
+	if `nth' != `nterm' {
+		di "{err}theta() supplies `nth' coefficient(s) but `nterm' term(s) were requested (`ntermtok') - exactly one coefficient per term, in listed order."
+		error 198
+	}
+	tempname thetamat
+	matrix `thetamat' = J(1, `nterm', 0)
+	forvalues __k = 1/`nterm' {
+		matrix `thetamat'[1,`__k'] = `: word `__k' of `theta''
+	}
+
+	forvalues __s = 1/`nsim' {
+		capture mata: mata drop __nwergm_last_G
+		mata: __nwergm_last_G = ErgmGraph()
+		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
+		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
+		mata: st_local("__ergm_simexpr", ErgmMatToLiteral(__nwergm_last_G.to_dense()))
+
+		local __ergm_simname = cond(`nsim'==1, "`generate'", "`generate'_`__s'")
+		capture nwdrop `__ergm_simname'
+		qui drop _all
+		qui set obs `nodes'
+		nwset, mat(`__ergm_simexpr') `=cond("`directed'"!="","directed","undirected")' name(`__ergm_simname')
+	}
+
+	mata: mata drop __nwergm_last_M __nwergm_last_G __gof_discard `__ergm_matatemps'
 end
 
 /*

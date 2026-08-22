@@ -200,6 +200,47 @@ by the Statnet project. See {browse "docs/ERGM_PROVENANCE.md"} for the full lice
 provenance account, and {browse "docs/ERGM_STATNET_STUDY.md"} for the architecture study this
 implementation is based on.
 
+{title:Simulation}
+
+{p 8 17 2}
+{cmdab: nwergm} {cmd:simulate}
+{it:nodes}
+{cmd:,}
+{opt edges} [{opt mutual}]
+[{opt gwesp(real)}]
+[{opt gwdegree(real)}]
+[{opt gwodegree(real)}]
+[{opt gwidegree(real)}]
+{opt theta(numlist)}
+[{opt directed}
+{opt nsim(int)}
+{opt mcmcburnin(int)}
+{opt mcmcinterval(int)}
+{opt proposal(uniform|tnt)}
+{opt seed(int)}
+{opt generate(string)}]
+
+{pstd}
+{cmd:nwergm simulate} draws one or more networks from a fully-specified ERGM (fixed
+coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
+itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
+ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
+existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
+takes, but v1's simulate interface deliberately only supports the terms that need no external
+covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
+nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation (see
+{browse "docs/ERGM_ROADMAP.md"}). {opt theta()} supplies one coefficient per requested term, IN
+THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
+present, then any gw* terms in the order written) - there is no per-term coefficient
+sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
+estimation path uses rather than a parallel implementation.
+
+{pstd}
+{opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,
+matching {cmd:nwergm}'s own control conventions rather than continuing one long chain), named
+{opt generate()}{cmd:_1}, {opt generate()}{cmd:_2}, ... when {opt nsim()}{cmd: > 1} (default stub
+{cmd:ergmsim}), or plain {opt generate()} (default {cmd:ergmsim}) when {opt nsim(1)}.
+
 {title:See also}
 
 	{help nwqap}, {help nwrandom}, {help nwcug}
