@@ -20,8 +20,10 @@
 {opth egovars(varlist)}
 {opth altervars(varlist)}
 {opth ego(newvarname)}
-{opth alter(newvarname)}]
-		
+{opth alter(newvarname)}
+{opth comparevars(varlist)}
+{opt comparemode}({it:{help nwexpand##expand_mode:mode}})]
+
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
@@ -29,7 +31,9 @@
 {synopt:{opth altervars(varlist)}}Keep attributes of receiving nodes {p_end}
 {synopt:{opth ego(newvarname)}}Sender of ties; default = {it:_ego}{p_end}
 {synopt:{opth alter(newvarname)}}Receiver of ties; default = {it:_alter}{p_end}
-{synopt:{opt compress}Compress edgelist
+{synopt:{opth comparevars(varlist)}}Add an ego/alter comparison column for each variable (e.g. {it:same}, {it:dist}){p_end}
+{synopt:{opt comparemode}({it:{help nwexpand##expand_mode:mode}})}Comparison used for {opt comparevars()}; default = {it:same}{p_end}
+{synopt:{opt compress}}Compress edgelist{p_end}
 
 {p2colreset}{...}
 
@@ -124,12 +128,31 @@ This generates a dataset with one variable for each network, {it:glasgow1} and {
   13. {c |} {res}      1      13          0          0 {txt}{c |}
   14. {c |} {res}      1      14          1          1 {txt}{c |}
   15. {c |} {res}      1      15          0          0 {txt}{c |}
- 		.....	
-		
-  
+ 		.....
+
+{pstd}
+{opth comparevars(varlist)} adds an ego/alter {it:comparison} column for each listed variable,
+alongside (not instead of) whatever {opt egovars()}/{opt altervars()} already add - e.g. "do ego
+and alter share the same value" or "how far apart are their values", rather than just the two raw
+values side by side. {opt comparemode()} picks which comparison (any {help nwexpand##expand_mode:
+nwexpand mode} - {bf:same} (the default), {bf:dist}, {bf:absdist}, {bf:distinv}, {bf:absdistinv},
+{bf:sender}, {bf:receiver}) applies to every variable in {opt comparevars()}; each variable is
+internally expanded via {help nwexpand} itself (so the exact same, already-certified comparison
+logic is used, not a reimplementation) and the resulting column is named {it:mode_varname} -
+matching {help nwexpand}'s own default naming - e.g. {opt comparevars(sport1)} with the default
+{bf:comparemode(same)} adds a column named {it:same_sport1}. {bf:dist}/{bf:distinv}/{bf:sender}/
+{bf:receiver} comparisons are directional (ego's value relative to alter's, not the reverse), so
+adding one automatically triggers the same "any directed network in the list forces {opt full}"
+rule already used for a mixed directed/undirected {help netlist} - every dyad appears in both
+directions, so the signed comparison is preserved correctly for both.
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(same)}
+	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(dist)}
+
 {title:See also}
 	
-	{help nwfromedge}, {help nw2toedge}, {help nwsave}
+	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}
 
 ***/
 
@@ -137,12 +160,47 @@ capture program drop nwtoedge
 program nwtoedge
 	version 9
 	syntax [anything(name=netname)][, isolates0 compress upper egovars(varlist) altervars(varlist) numeric ///
-	ego(name) alter(name) full ignore2mode] 
+	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string)]
 
 	unw_defs
 	nw_syntax `netname', max(9999)
 	local nets `netname'
-	
+
+	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
+	// "does this dyad share the same category?", "how far apart are
+	// ego's and alter's values?") - the Stage 5 roadmap item this adds.
+	// Rather than duplicating nwexpand's own same/dist/absdist/distinv/
+	// absdistinv/sender/receiver vocabulary, each compare variable is
+	// expanded into its own dyadic network via nwexpand itself (already
+	// certified, unmodified), auto-named "`comparemode'_`var'" (nwexpand's
+	// own default naming when name() is omitted) - then simply appended
+	// to `nets', so every downstream step (the directed/full check, tie
+	// extraction, merging) needs no changes at all: it already treats
+	// every entry in `nets' identically regardless of where it came from.
+	// dist()/distinv()/sender()/receiver() networks are directed by
+	// construction (ego's value minus alter's is not alter's minus
+	// ego's) - nwtoedge's own pre-existing "any directed network in the
+	// list forces full" rule already handles this correctly with no
+	// extra logic, giving both (i,j) and (j,i) rows so the signed
+	// comparison is preserved in both directions.
+	if "`comparevars'" != "" {
+		if "`comparemode'" == "" {
+			local comparemode "same"
+		}
+		// network(): without it, nwexpand falls back to its own generic
+		// "n1".."nK" node labels instead of the actual network's labels -
+		// silently breaking the (ego,alter) merge below, since it then
+		// treats the comparison network's dyads as an entirely different
+		// node set from every real network in `nets' (confirmed via a
+		// direct probe: the merge produced the union of both label sets
+		// instead of matching them, before this fix).
+		local firstnet : word 1 of `netname'
+		foreach cvar of varlist `comparevars' {
+			qui nwexpand `cvar', mode(`comparemode') network(`firstnet') nodes(`nodes') xvars
+			local nets "`nets' `comparemode'_`cvar'"
+		}
+	}
+
 	if "`ego'" == "" {
 		local ego = "`nw_ego'"
 	}

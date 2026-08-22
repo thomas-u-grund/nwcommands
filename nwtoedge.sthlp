@@ -19,8 +19,10 @@
 {opth egovars(varlist)}
 {opth altervars(varlist)}
 {opth ego(newvarname)}
-{opth alter(newvarname)}]
-		
+{opth alter(newvarname)}
+{opth comparevars(varlist)}
+{opt comparemode}({it:{help nwexpand##expand_mode:mode}})]
+
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
@@ -28,7 +30,9 @@
 {synopt:{opth altervars(varlist)}}Keep attributes of receiving nodes {p_end}
 {synopt:{opth ego(newvarname)}}Sender of ties; default = {it:_ego}{p_end}
 {synopt:{opth alter(newvarname)}}Receiver of ties; default = {it:_alter}{p_end}
-{synopt:{opt compress}Compress edgelist
+{synopt:{opth comparevars(varlist)}}Add an ego/alter comparison column for each variable (e.g. {it:same}, {it:dist}){p_end}
+{synopt:{opt comparemode}({it:{help nwexpand##expand_mode:mode}})}Comparison used for {opt comparevars()}; default = {it:same}{p_end}
+{synopt:{opt compress}}Compress edgelist{p_end}
 
 {p2colreset}{...}
 
@@ -123,11 +127,30 @@ This generates a dataset with one variable for each network, {it:glasgow1} and {
   13. {c |} {res}      1      13          0          0 {txt}{c |}
   14. {c |} {res}      1      14          1          1 {txt}{c |}
   15. {c |} {res}      1      15          0          0 {txt}{c |}
- 		.....	
-		
-  
+ 		.....
+
+{pstd}
+{opth comparevars(varlist)} adds an ego/alter {it:comparison} column for each listed variable,
+alongside (not instead of) whatever {opt egovars()}/{opt altervars()} already add - e.g. "do ego
+and alter share the same value" or "how far apart are their values", rather than just the two raw
+values side by side. {opt comparemode()} picks which comparison (any {help nwexpand##expand_mode:
+nwexpand mode} - {bf:same} (the default), {bf:dist}, {bf:absdist}, {bf:distinv}, {bf:absdistinv},
+{bf:sender}, {bf:receiver}) applies to every variable in {opt comparevars()}; each variable is
+internally expanded via {help nwexpand} itself (so the exact same, already-certified comparison
+logic is used, not a reimplementation) and the resulting column is named {it:mode_varname} -
+matching {help nwexpand}'s own default naming - e.g. {opt comparevars(sport1)} with the default
+{bf:comparemode(same)} adds a column named {it:same_sport1}. {bf:dist}/{bf:distinv}/{bf:sender}/
+{bf:receiver} comparisons are directional (ego's value relative to alter's, not the reverse), so
+adding one automatically triggers the same "any directed network in the list forces {opt full}"
+rule already used for a mixed directed/undirected {help netlist} - every dyad appears in both
+directions, so the signed comparison is preserved correctly for both.
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(same)}
+	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(dist)}
+
 {title:See also}
 	
-	{help nwfromedge}, {help nw2toedge}, {help nwsave}
+	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}
 
-last certified : 21 Aug 2026
+last certified : 22 Aug 2026
