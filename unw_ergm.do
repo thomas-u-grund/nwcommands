@@ -1604,8 +1604,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	struct ErgmMCMLEFit scalar res
 	struct ErgmMCMCDiag scalar diag
 	real rowvector obs, theta, Dbar, delta, se
-	real matrix samp, D, V, Vinv, coefhist
-	real scalar iter, p, mahal, gamma, converged, k
+	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist
+	real scalar iter, p, mahal, gamma, converged, k, neff
 	real scalar T2, Fstat, Fcrit, confidence
 	real rowvector rho, infl
 
@@ -1636,30 +1636,71 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		se = sqrt(diagonal(V)/samplesize)'
 		// Joint Hotelling's T^2 test that the centered mean Dbar is
 		// statistically indistinguishable from the zero vector, given
-		// its own sampling covariance V/samplesize - replacing an
-		// earlier per-coordinate rule ("every |Dbar_k| < 0.5*se_k
-		// simultaneously") that was needlessly conservative: requiring
-		// EVERY marginal coordinate to individually clear its own
-		// threshold compounds probabilities across parameters (for a
-		// 2-parameter model, roughly 0.38^2 =~ 15% chance of jointly
-		// clearing even a per-coordinate-generous bar in any given
-		// iteration EVEN AFTER theta has already converged, since Dbar
-		// is never exactly zero under Monte Carlo noise alone) - a
-		// genuinely single largest cause of this estimator needing far
-		// more MCMLE iterations than Statnet's own joint "confidence"
-		// test on the same data (confirmed empirically: 10-20 iterations
-		// here vs. Statnet's own 1, on the same network/model - see
-		// docs/CERTIFICATION.md's harmonisation-unit-80 entry). The
-		// Hotelling T^2 -> F transformation is exact for i.i.d. Gaussian
-		// draws and an excellent approximation here given `samplesize'
-		// is typically in the thousands.
-		T2 = samplesize * (Dbar * Vinv * Dbar')
-		Fstat = T2 * (samplesize - p) / (p * (samplesize - 1))
-		Fcrit = invF(p, samplesize - p, confidence)
+		// its own sampling covariance - replacing an earlier per-
+		// coordinate rule ("every |Dbar_k| < 0.5*se_k simultaneously")
+		// that was needlessly conservative: requiring EVERY marginal
+		// coordinate to individually clear its own threshold compounds
+		// probabilities across parameters (for a 2-parameter model,
+		// roughly 0.38^2 =~ 15% chance of jointly clearing even a
+		// per-coordinate-generous bar in any given iteration EVEN AFTER
+		// theta has already converged, since Dbar is never exactly zero
+		// under Monte Carlo noise alone) - a genuinely single largest
+		// cause of this estimator needing far more MCMLE iterations than
+		// Statnet's own joint "confidence" test on the same data
+		// (confirmed empirically: 10-20 iterations here vs. Statnet's
+		// own 1, on the same network/model - see docs/CERTIFICATION.md's
+		// harmonisation-unit-80 entry).
+		//
+		// EFFECTIVE-SAMPLE-SIZE CORRECTION (harmonisation unit 84,
+		// docs/CERTIFICATION.md): the T^2 -> F transformation above is
+		// exact only for i.i.d. draws - `samp' is a THINNED MCMC chain
+		// (thinned by `interval', not fully decorrelated), and treating
+		// it as i.i.d. of size `samplesize' badly UNDERSTATES the true
+		// sampling variance of Dbar whenever draws remain meaningfully
+		// autocorrelated. This was root-caused directly, not assumed:
+		// running nwergm's own MCMLE in verbose mode on the 500-node
+		// sparse GWESP benchmark showed theta stabilizing near its final
+		// value from iteration 1 onward (matching Statnet's own converged
+		// estimate closely) while Fstat stayed absurdly inflated
+		// (20-640, against a FIXED Fcrit=3.79 computed from the raw
+		// samplesize=3000) for the full 20-iteration cap - a real
+		// Statnet trace on the IDENTICAL network (verbose=TRUE,
+		// `dev/ergm_benchmark_r_vs_stata/60_verbose_500sparse_r.R')
+		// showed Statnet's own reported convergence-test degrees of
+		// freedom are non-integer and far smaller than its own raw
+		// recorded sample size (84.9, 129.4, 203.6 across its first three
+		// iterations, converging on the fourth) - i.e. Statnet's own
+		// "confidence" test already uses an autocorrelation-discounted
+		// EFFECTIVE sample size, not the raw draw count, exactly the
+		// piece missing here. Fixed by reusing the SAME lag-1
+		// autocorrelation machinery the final variance step already
+		// applies (`ergm_lag1_autocorr()'/the `(1+rho)/(1-rho)' inflation
+		// factor) one step earlier - inside this per-iteration test, not
+		// only in the one-off final reporting pass - inflating V's own
+		// diagonal per parameter and correspondingly shrinking the
+		// effective sample size `neff' used for T2/Fstat/Fcrit. The
+		// NEWTON STEP ITSELF (`delta'/`mahal'/`gamma'/the theta update
+		// above) deliberately still uses the UNINFLATED `V'/`Vinv' -
+		// theta was never the problem (it already tracks Statnet's own
+		// converged value from iteration 1), so this fix touches only the
+		// STATISTICAL TEST deciding when to stop, not the optimizer.
+		rho = ergm_lag1_autocorr(D)
+		infl = (1 :+ rho) :/ (1 :- rho)
+		Vc = V
+		for (k=1; k<=p; k++) Vc[k,k] = V[k,k] * infl[k]
+		Vcinv = invsym(Vc)
+		neff = samplesize / mean(infl')
+		// guard against a pathologically small effective sample size
+		// (near-unit-root autocorrelation) making the F distribution's
+		// own degrees of freedom invalid or the test meaningless.
+		if (neff < p + 2) neff = p + 2
+		T2 = neff * (Dbar * Vcinv * Dbar')
+		Fstat = T2 * (neff - p) / (p * (neff - 1))
+		Fcrit = invF(p, neff - p, confidence)
 		if (verbose) {
 			printf("MCMLE iter %g: steplen=%5.3f theta=", iter, gamma)
 			for (k=1; k<=p; k++) printf("%9.5f ", theta[k])
-			printf(" F=%7.3f (crit %7.3f at %g%% conf) max|Dbar/se|=%6.3f\n", Fstat, Fcrit, confidence*100, max(abs(Dbar :/ se)))
+			printf(" F=%7.3f (crit %7.3f at %g%% conf, neff=%7.1f) max|Dbar/se|=%6.3f\n", Fstat, Fcrit, confidence*100, neff, max(abs(Dbar :/ se)))
 		}
 		if (Fstat <= Fcrit & gamma==1) {
 			converged = 1
