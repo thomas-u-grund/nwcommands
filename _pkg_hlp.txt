@@ -1,6 +1,5 @@
 f _nwnodeid.sthlp
 f _nwnodelab.sthlp
-f _nwsyntax.sthlp
 f animate.sthlp
 f netexample.sthlp
 f netexp.sthlp

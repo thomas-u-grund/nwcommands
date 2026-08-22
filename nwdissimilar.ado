@@ -1,7 +1,16 @@
 capture program drop nwdissimilar
 program nwdissimilar
 	syntax [anything(name=netname)] [, type(string) labs(passthru) vars(passthru) name(string) context(string) xvars]
-	_nwsyntax `netname'
+	// _nwsyntax is a deprecated pure wrapper around nw_syntax, kept here
+	// only to resolve/default `netname' (nw_syntax's own c_local export
+	// re-populates it even when empty, meaning "use the current
+	// network") - calling nw_syntax directly here would ALSO export its
+	// own `labs' (the network's own comma-separated node-label string),
+	// silently clobbering this file's own `labs(passthru)' option value
+	// (genuinely consumed below, at the nwset call) before it's ever
+	// used. other() avoids that collision entirely.
+	nw_syntax `netname', other(other)
+	local netname "`othernetname'"
 	
 	if "`context'" == "" {
 		local context = "both"
