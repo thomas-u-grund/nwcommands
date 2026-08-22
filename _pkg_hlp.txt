@@ -97,6 +97,7 @@ f nwsimindex.sthlp
 f nwsimmelian.sthlp
 f nwsmall.sthlp
 f nwsort.sthlp
+f nwspectral.sthlp
 f nwsubset.sthlp
 f nwsummarize.sthlp
 f nwsym.sthlp
