@@ -792,6 +792,84 @@ real matrix Louvain(real matrix W, real scalar resolution){
 }
 
 /*
+	Label propagation community detection (Raghavan, Albert & Kumar 2007):
+	each node starts in its own singleton community; repeatedly, each node
+	adopts whichever community its neighbors' total edge weight favors most
+	(nw_community_kin(), the same helper Louvain's own greedy search above
+	uses) - no modularity optimization at all, just local majority-label
+	voting, which is what makes this dramatically cheaper than Louvain for
+	very large networks at the cost of less consistent partition quality.
+
+	Both the sweep order AND tie-breaking among equally-favored candidate
+	communities are genuinely RANDOMIZED (via unorder() and runiform()),
+	matching the textbook algorithm - NOT fixed/deterministic the way
+	Louvain's own sweep order above is. This is a deliberate departure
+	from this session's usual reproducibility-over-textbook-fidelity
+	default, made only after empirically confirming the fixed/
+	lowest-index-tiebreak version is not just "less standard" but
+	actively WRONG on the simplest possible test case: two triangles
+	joined by a single bridge edge collapsed into one giant community
+	instead of splitting at the bridge, because a fixed visiting order
+	combined with "prefer the lowest-indexed tied community" creates a
+	systematic bias - whichever community happens to be checked first in
+	a tie keeps absorbing neighbors, cascading into a single dominant
+	community. True label propagation's randomization exists specifically
+	to prevent this failure mode, not merely to match a textbook - so
+	unlike Louvain (whose modularity-GAIN-driven search has no comparable
+	directional bias to guard against), reproducibility here is exposed
+	via nwcommunity's own seed() option (`set seed` before calling this),
+	not attempted via determinism inside the algorithm itself.
+
+	An isolate node (no ties at all) has nothing to vote on and simply
+	keeps its own singleton label. Converges when a full sweep makes zero
+	moves, capped at 100 sweeps (matching Louvain's own cap) against
+	pathological oscillation - label propagation is not proven to always
+	converge quickly, unlike Louvain's own modularity-monotonic guarantee.
+*/
+real matrix LabelPropagation(real matrix W){
+	real matrix comm, idx, neighbor_comms, order, weights, winners
+	real scalar n, i, ii, c_old, best_w, moved, sweep, a, nwin, pick
+
+	n = rows(W)
+	if (n <= 1){
+		return((1::n))
+	}
+
+	comm = (1::n)
+	moved = 1
+	sweep = 0
+	while (moved == 1 & sweep < 100){
+		moved = 0
+		sweep = sweep + 1
+		order = unorder(n)
+		for (ii = 1; ii <= n; ii++){
+			i = order[ii]
+			idx = selectindex(W[i,.] :!= 0)
+			if (cols(idx) == 0){
+				continue
+			}
+			neighbor_comms = uniqrows(comm[idx',1])
+
+			c_old = comm[i,1]
+			weights = J(rows(neighbor_comms), 1, .)
+			for (a = 1; a <= rows(neighbor_comms); a++){
+				weights[a,1] = nw_community_kin(W, i, comm, neighbor_comms[a,1])
+			}
+			best_w = max(weights)
+			winners = select(neighbor_comms, weights :== best_w)
+			nwin = rows(winners)
+			pick = winners[ceil(runiform(1,1) * nwin), 1]
+
+			comm[i,1] = pick
+			if (pick != c_old){
+				moved = 1
+			}
+		}
+	}
+	return(nw_community_denserelabel(comm))
+}
+
+/*
 	CONCOR (CONvergence of iterated CORrelations - Breiger, Boorman & Arabie
 	1975): builds each node's tie profile (its outgoing ties stacked on its
 	incoming ties, self-tie excluded - this captures directed structure
@@ -1825,6 +1903,7 @@ class `NWdef' {
 	real matrix calculate_clustering()
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
+	real matrix detect_communities_labelprop()
 	real matrix calculate_concor()
 	real matrix calculate_coreperiphery()
 	real matrix calculate_brokerage()
@@ -2541,6 +2620,20 @@ real matrix `NWdef'::detect_communities_louvain(| real scalar valued, real scala
 	w = *get_matrix_mod(val, 0)
 	_diag(w, 0)
 	return(Louvain(w, res))
+}
+
+/*
+	Detect communities via label propagation (Raghavan, Albert & Kumar 2007)
+	- see LabelPropagation()'s own header comment for the algorithm.
+*/
+real matrix `NWdef'::detect_communities_labelprop(| real scalar valued){
+	real matrix w
+	real scalar val
+
+	val = (args() >= 1 ? valued : 1)
+	w = *get_matrix_mod(val, 0)
+	_diag(w, 0)
+	return(LabelPropagation(w))
 }
 
 /*
