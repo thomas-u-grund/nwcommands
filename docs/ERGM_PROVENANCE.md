@@ -99,6 +99,8 @@ R 4.6.0 with `ergm` 4.12.0 installed locally was used *during development only*,
 reference values (observed statistics, MPLE coefficients, small simulated distributions) for
 certifying `nwergm`'s own independently-written Mata/C implementation against a working
 Statnet installation — exactly as the brief's Part XXVII requires. `nwergm` itself never shells
-out to, links against, or otherwise depends on R or `ergm` at runtime; every certification
-script that invokes R is a development/test artifact (`cscripts/` or a dedicated
-`ergm_validation/` directory), not part of the shipped command.
+out to, links against, or otherwise depends on R or `ergm` at runtime; every R script that
+generates a reference value lives in `dev/ergm_reference/` (see its own `README.md`) - a
+development-only directory excluded from every package manifest, never part of the shipped
+command; the reference values it produces are hand-transcribed as literal constants into the
+permanent `cscripts/test_nwergm_*.do` certification suite.
