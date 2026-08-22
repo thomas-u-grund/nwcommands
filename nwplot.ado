@@ -260,10 +260,16 @@ can be changed as well.
 	{cmd:. nwplot glasgow1, size(alcohol1) color(smoke1) symbol(sport1)}
 
 {pstd}
-The nwcommand come with two new schemes: s1network and s2network.
+nwcommands ships three schemes purpose-built for network plots - s1network,
+s2network, and s3network - each giving node fill and edge line colors that
+are visually distinct by default (an ordinary Stata scheme such as the
+default {bf:stcolor} typically does not, since a single data series'
+marker and connecting line usually should match - reasonable for an
+ordinary statistical graph, not for a network plot). {cmd:nwplot} defaults
+to {bf:s1network} unless {opt scheme()} is specified explicitly.
 
 	{cmd:. nwplot, scheme(s1network)}
-	{cmd:. nwplot, scheme(s2network)} 
+	{cmd:. nwplot, scheme(s2network)}
 	{cmd:. nwplot, scheme(s2mono)}
 {phang2}
 	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(s1network)}{p_end}
@@ -437,6 +443,27 @@ program nwplot, rclass
 	
 	local 0 = `"`0_original'"'
 	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) * ]
+
+	// Default node fill color and edge line color are both resolved as
+	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
+	// left at "" here, `scheme' previously fell through to whatever
+	// graph scheme happened to be ambient (c(scheme), Stata's own
+	// ordinary default being "stcolor"). Confirmed directly (rendered a
+	// tiny two-point scatter+line graph with mfcolor("scheme p1") and
+	// lcolor("scheme p1line") under stcolor and inspected the actual
+	// pixels) that stcolor defines p1 and p1line as the identical blue -
+	// reasonable for an ordinary statistical graph (a single series'
+	// marker and connecting line usually SHOULD match), but wrong for a
+	// network plot, where nodes and edges need to read as visually
+	// distinct by default. Default to one of the package's own
+	// network-oriented schemes instead, which deliberately give p1/
+	// p1line different colors (see scheme-s1network.scheme) - already
+	// packaged in _pkg_ado.txt, just never actually used unless a caller
+	// remembered to pass scheme() explicitly.
+	if "`scheme'" == "" {
+		local scheme "s1network"
+	}
+
 	nw_syntax `netname', max(1)
 	qui nwsummarize `netname'
 	if `r(density)' == 0 {
@@ -1653,6 +1680,11 @@ program nwplot, rclass
 		graph export "`export'", `replace' `exportopt'
 		return local export "`export'"
 	}
+
+	// the scheme actually used to render this plot - "s1network" unless
+	// scheme() was given explicitly (see its own default assignment
+	// above)
+	return local scheme "`scheme'"
 
 	restore
 
