@@ -23,6 +23,7 @@
 {opt typeoptions(regoptions)}
 {opt detail}
 {opt save}({it:{help filename}})
+{opth predict(newnetname)}
 
 
 
@@ -35,6 +36,7 @@
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
 {synopt:{opt detail}}display details of regression results{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
+{synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 
 
 {title:Description}
@@ -71,6 +73,18 @@ regression one can use probit regression with option {it:asis}:
 
 {pstd}
 The raw output of this dyad-level regression is displayed with option {bf:detail}.
+
+{pstd}
+{opth predict(newnetname)} stores {bf:type()}'s own fitted dyad-level values - whatever statistic
+that regression command's own default {help predict} reports (predicted probability for
+{bf:logit}/{bf:probit}/{bf:cloglog}, the fitted linear mean for {bf:regress}, etc.) - as a new
+valued network, e.g. for comparing predicted tie probabilities against the observed network as a
+goodness-of-fit check. Captured from the one real (non-permuted), observed-data regression this
+command already runs internally to obtain {bf:type()}'s own coefficients - not from any of the
+{opth permutations(int)} null-model draws. The diagonal (excluded from estimation, like every
+self-tie in this command's dyadic reshaping) is set to 0 in the resulting network. A name collision
+with an existing network is handled the same non-destructive way every other network-creating
+command in this package handles it (auto-renamed with a warning, unless {it:newnetname} is free).
 
 {pstd}
 Once a dataset is assembled and a regression is carried out, the resulting coefficients indicate 
@@ -110,6 +124,7 @@ Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Reg
 	
 	{cmd:. webnwuse glasgow}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
+	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}
 
 
 	{txt}Multiple Regression Quadratic Assignment Procedure
@@ -165,7 +180,11 @@ that only need {it:e(b)}/{it:e(V)} (e.g. {help test}, {help lincom}) work as usu
 is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a
 classical OLS/logit covariance matrix - dyadic network data violates the independent-
 observations assumption those classical formulas require, which is the entire reason QAP
-permutation testing exists in the first place. No {cmd:predict} subroutine is implemented.
+permutation testing exists in the first place. A native postestimation {help predict} does not
+work after {cmd:nwqap} returns (see {help nwqap##independentvariables:Description} above for why -
+the dyad-level dataset {bf:type()} actually fits is a transient internal detail, not the current
+dataset once {cmd:nwqap} exits); use {opth predict(newnetname)} instead to capture fitted dyad-level
+values directly, at the one point internally where they are genuinely meaningful.
 
 	Scalars
 	  {bf:e(N)}		number of dyad-level observations
@@ -186,4 +205,3 @@ permutation testing exists in the first place. No {cmd:predict} subroutine is im
 
 	{help nwergm}, {help nwpermute}
 
-last certified : 21 Aug 2026
