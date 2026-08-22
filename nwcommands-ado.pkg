@@ -28,6 +28,7 @@ f nwclear.ado
 f nwclique.ado
 f nwcloseness.ado
 f nwclustering.ado
+f nwcohesion.ado
 f nwcollapse.ado
 f nwcomponents.ado
 f nwcommunity.ado
