@@ -68,3 +68,59 @@ assert r(p_less) >= 0 & r(p_less) <= 1
 * --- invalid rname() errors cleanly (stat() ran but never returned r(bogusname))
 capture nwcug fragnet, stat(nwcomponents ##net##, replace) rname(bogusname) reps(10)
 assert _rc != 0
+
+
+* --- condition(census): dyad-census/reciprocity-conditioned draws
+* (harmonisation unit 62), wired against nwrandom's own pre-existing
+* census() conditioning (dyadcensusGenerator()) - previously only
+* density-conditioned draws were available. A 4-node directed network
+* with a hand-built, exactly-known dyad census: 1-2 mutual (1->2,
+* 2->1), 1->3 and 2->4 asymmetric, the remaining 3 dyads (1-4, 2-3,
+* 3-4) null. 6 total dyads (4*3/2), so mutual=1/asym=2/null=3,
+* reciprocity = mutual/(mutual+asym) = 1/3 exactly.
+nwclear
+nwset, mat((0,1,1,0\1,0,0,1\0,0,0,0\0,0,0,0)) directed name(dyadnet)
+qui nwdyads dyadnet
+assert r(_100) == 1
+assert r(_010) == 2
+assert r(_001) == 3
+assert reldif(r(reciprocity), 1/3) < 1E-8
+
+* condition(census) draws must preserve the EXACT dyad census every
+* single draw (dyadcensusGenerator() places exactly the requested
+* mutual/asym counts, just at randomly-chosen dyads) - so reciprocity,
+* computed identically on every draw, is deterministically constant:
+* sd_null exactly 0, mean_null exactly equal to the observed value,
+* p_greater/p_less both exactly 1 (every draw ties the observed value,
+* satisfying both ">= observed" and "<= observed"). This is a much
+* stronger, structure-independent certification of condition(census)
+* than checking any one arbitrary stat()'s null distribution shape.
+nwcug dyadnet, stat(nwdyads ##net##) rname(reciprocity) reps(100) seed(20260822) condition(census)
+assert reldif(r(obs), 1/3) < 1E-8
+assert r(sd_null) < 1E-10
+assert reldif(r(mean_null), 1/3) < 1E-8
+assert r(p_greater) == 1
+assert r(p_less) == 1
+
+* condition(census) on an undirected network is rejected explicitly -
+* mutual/asymmetric/null dyad types have no meaning without direction.
+nwclear
+nwset, mat((0,1,1,0\1,0,0,1\1,0,0,0\0,1,0,0)) undirected name(undirnet)
+capture nwcug undirnet, stat(nwcomponents ##net##, replace) rname(components) reps(10) condition(census)
+assert _rc != 0
+
+* invalid condition() value errors cleanly.
+capture nwcug dyadnet, stat(nwdyads ##net##) rname(reciprocity) reps(10) condition(bogus)
+assert _rc != 0
+
+* condition(density) (the default, and passed explicitly) still behaves
+* exactly as before - no regression from adding condition().
+mata: A2 = J(10,10,0)
+mata: A2[1::5,1::5] = J(5,5,1) - I(5)
+mata: A2[6::10,6::10] = J(5,5,1) - I(5)
+nwclear
+nwset, mat(A2)
+nwname, newname(twoclique2)
+nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(500) seed(20260821) condition(density)
+assert r(mean_null) == 1
+assert r(sd_null) == 0

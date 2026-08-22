@@ -21,6 +21,7 @@
 [{opth reps(int)}
 {opt seed(int)}
 {opt tail(both|upper|lower)}
+{opt condition(density|census)}
 {opt silent}]
 
 {synoptset 25 tabbed}{...}
@@ -31,6 +32,7 @@
 {synopt:{opth reps(int)}}Number of conditioned random networks to draw; default = 1000{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before drawing (for reproducibility){p_end}
 {synopt:{opt tail(both|upper|lower)}}Which tail(s) to report a p-value for; default = {it:both}{p_end}
+{synopt:{opt condition(density|census)}}Null model to condition random draws on; default = {it:density}{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -60,6 +62,19 @@ test whether the Florentine marriage network's component count is unusual for it
 	{cmd:. nwcug flomarriage, stat(nwcomponents ##net##, replace) rname(components) reps(1000) seed(12345)}
 
 {pstd}
+{opt condition(density|census)} chooses what property of {help netname} the random draws must
+share, via {help nwrandom}'s own {bf:density()} (the default) or {bf:census()} conditioning.
+{bf:condition(density)} draws uniformly from every network with the same node count and density -
+the standard baseline used above. {bf:condition(census)} instead draws uniformly from every
+network with the {it:same dyad census} (identical mutual/asymmetric/null tie counts, via
+{help nwdyads}) as {help netname} - a stricter, reciprocity-aware null model: two directed networks
+can share the same overall density while differing sharply in how many ties are reciprocated, so a
+statistic that is unremarkable once density alone is held fixed can still be unusual once
+reciprocity is held fixed too (or vice versa). {bf:condition(census)} requires a directed network -
+mutual/asymmetric/null dyad types have no meaning for undirected ties, where every dyad is simply
+tied or not.
+
+{pstd}
 {bf:tail()} controls which p-value(s) are reported: {bf:upper} is the proportion of random draws with
 a statistic at least as large as observed (evidence the observed value is unusually {it:high});
 {bf:lower} is the proportion at least as small (unusually {it:low}); {bf:both} (the default) reports
@@ -84,20 +99,26 @@ indices. {it:Social Networks} 21(3), 239-267.
 
 {title:See also}
 
-	{help nwrandom}, {help nwpermute}, {help nwqap}
+	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
 ***/
 
 capture program drop nwcug
 program nwcug, rclass
 	version 12
-	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) silent]
+	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent]
 
 	local tail = lower("`tail'")
 	if "`tail'" == "" {
 		local tail "both"
 	}
 	_opts_oneof "both upper lower" "tail" "`tail'" 6556
+
+	local condition = lower("`condition'")
+	if "`condition'" == "" {
+		local condition "density"
+	}
+	_opts_oneof "density census" "condition" "`condition'" 6557
 
 	if `seed' != -1 {
 		set seed `seed'
@@ -106,9 +127,20 @@ program nwcug, rclass
 	nw_syntax `netname'
 	local origname "`netname'"
 
+	if "`condition'" == "census" & "`directed'" != "true" {
+		di "{err}condition(census) requires a directed network - mutual/asymmetric/null dyad types only exist for directed ties; use condition(density) (the default) for an undirected network."
+		error 198
+	}
+
 	tempname __nw_dens
 	mata: st_numscalar("obsdensity", `netobj'->get_density())
 	local obsdensity = obsdensity
+
+	if "`condition'" == "census" {
+		qui nwdyads `origname'
+		local obsmutual = r(_100)
+		local obsasym = r(_010)
+	}
 
 	local obscmd = subinstr("`stat'", "##net##", "`origname'", .)
 	qui `obscmd'
@@ -131,7 +163,12 @@ program nwcug, rclass
 	local drawcmd = subinstr("`stat'", "##net##", "`base'", .)
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
-		qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' xvars
+		if "`condition'" == "census" {
+			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base') xvars
+		}
+		else {
+			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' xvars
+		}
 		qui `drawcmd'
 		local v = r(`rname')
 		mata: nwcug_nullvals[`i'] = `v'
