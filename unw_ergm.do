@@ -525,6 +525,8 @@ class ErgmModel {
 	real scalar nparam()
 	real rowvector full_statistic()
 	real rowvector full_change()
+	real rowvector change_toward_one()
+	real matrix build_mple_data()
 }
 
 void ErgmModel::init(){
@@ -625,6 +627,73 @@ real scalar ErgmCertifyChangeStat(class ErgmModel scalar M, class ErgmGraph scal
 		}
 	}
 	return(maxdiff)
+}
+
+/* ===================================================================
+   MPLE (maximum pseudolikelihood estimation; Hunter & Handcock 2006 -
+   see docs/ERGM_STATNET_STUDY.md Appendix A section 5). For every dyad
+   (i,j), the change statistic "toward tie present" (NOT the raw
+   change() value, which is signed by the dyad's CURRENT state - a tied
+   dyad's own change() returns the REMOVAL effect, the negative of the
+   addition effect) is used as a row of covariates; the observed tie
+   indicator is the response. Fitting
+       logit P(Y_ij=1 | Y_-ij) = theta' * covariates_ij
+   by ordinary logistic regression on this design (done in Stata, via
+   nwergm.ado, not here - see Part XII of the governing task brief: use
+   Stata's own logit rather than reimplementing IRLS) recovers the MPLE
+   theta. This is exactly the MLE when every term is dyad-independent
+   AND the sample space itself is unconstrained (the "MPLE_is_MLE"
+   shortcut Statnet itself also takes - see docs/ERGM_STATNET_STUDY.md
+   section 1 step 5); it is the STARTING VALUE for MCMLE otherwise.
+   =================================================================== */
+
+/*
+	Change statistic for dyad (i,j) in the "toward tie present"
+	direction, regardless of the dyad's current state - i.e. Δg_ij
+	always means "value of g if Y_ij were set to 1", not "value of g if
+	the CURRENT tie were toggled". change() itself is antisymmetric in
+	the toggle direction (removing an existing tie is exactly the
+	negative of adding it back), so this is simply change() negated
+	when the dyad is currently tied.
+*/
+real rowvector ErgmModel::change_toward_one(class ErgmGraph scalar G, real scalar i, real scalar j){
+	real rowvector chg
+
+	chg = full_change(G, i, j)
+	if (G.has_edge(i,j)) return(-chg)
+	return(chg)
+}
+
+/*
+	Build the MPLE design: one row per dyad (ordered pairs for a
+	directed graph, i<j unordered pairs for undirected), columns =
+	change_toward_one()'s own nparam() covariates, final column = the
+	observed tie indicator (the response). Returned as a single real
+	matrix - nwergm.ado splits it into a Stata dataset (covariates +
+	response variable) and calls `logit ..., noconstant` (noconstant:
+	the edges term already plays the role of an intercept; adding a
+	second, redundant constant would make the design rank-deficient).
+*/
+real matrix ErgmModel::build_mple_data(class ErgmGraph scalar G){
+	real matrix out
+	real scalar i, j, ndyads, pos, p
+
+	p = nparam()
+	if (G.directed) ndyads = G.n * (G.n - 1)
+	else ndyads = G.n * (G.n - 1) / 2
+
+	out = J(ndyads, p+1, 0)
+	pos = 1
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed && j<i) continue
+			out[pos, (1..p)] = change_toward_one(G, i, j)
+			out[pos, p+1] = G.has_edge(i,j)
+			pos++
+		}
+	}
+	return(out)
 }
 
 end
