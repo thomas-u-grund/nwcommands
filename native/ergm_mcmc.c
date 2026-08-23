@@ -465,6 +465,97 @@ static double change_gwesp(graph_t *g, long i, long j, double decay) {
 #define TERMCODE_DEGRANGE       24
 #define TERMCODE_ODEGRANGE      25
 #define TERMCODE_IDEGRANGE      26
+#define TERMCODE_GWDSP          27
+#define TERMCODE_GWNSP          28
+#define TERMCODE_ESP            29
+#define TERMCODE_DSP            30
+#define TERMCODE_TRIANGLE       31
+
+/* exact-match indicator kernel, direct port of the `(x :== td.levels')`
+   rowvector construction esp()/dsp() use in unw_ergm.do - here evaluated
+   for a single target d (one native "slot" per requested d, exactly
+   like TERMCODE_NODEFACTOR/TERMCODE_DEGREE above) */
+static double ind_kernel(double x, double d) {
+	return (x == d) ? 1.0 : 0.0;
+}
+
+/* GWDSP change statistic - direct port of change_gwdsp() in
+   unw_ergm.do: the SAME two-neighbor-loop shape change_gwesp() above
+   uses, but WITHOUT its "must also be a tie" restriction and WITHOUT
+   its own-dyad term (shared_partners(i,j) itself does not depend on
+   whether i-j is tied, so toggling it contributes nothing via the
+   {i,j} dyad's own term - only via every OTHER dyad that gains/loses
+   i or j as a shared partner). */
+static double change_gwdsp(graph_t *g, long i, long j, double decay) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double chg = 0.0;
+	adjlist_t *nbi = &g->adj[i];
+	adjlist_t *nbj = &g->adj[j];
+	long m;
+	for (m = 0; m < nbi->len; m++) {
+		long k = nbi->nb[m];
+		double pk;
+		if (k == j) continue;
+		pk = (double)common_neighbors(g, j, k);
+		chg += gw_kernel(pk + delta, decay) - gw_kernel(pk, decay);
+	}
+	for (m = 0; m < nbj->len; m++) {
+		long k = nbj->nb[m];
+		double pk;
+		if (k == i) continue;
+		pk = (double)common_neighbors(g, i, k);
+		chg += gw_kernel(pk + delta, decay) - gw_kernel(pk, decay);
+	}
+	return chg;
+}
+
+/* esp(d) change statistic (one native slot per requested d, `p1'=d) -
+   same shape as change_gwesp() with `gw_kernel' replaced by
+   `ind_kernel', direct port of change_esp() in unw_ergm.do */
+static double change_esp(graph_t *g, long i, long j, double d) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double pij = (double)common_neighbors(g, i, j);
+	double chg = delta * ind_kernel(pij, d);
+	adjlist_t *nbi = &g->adj[i];
+	long m;
+	for (m = 0; m < nbi->len; m++) {
+		long k = nbi->nb[m];
+		double pik, pjk;
+		if (k == j) continue;
+		if (!has_edge(g, j, k)) continue;
+		pik = (double)common_neighbors(g, i, k);
+		chg += ind_kernel(pik + delta, d) - ind_kernel(pik, d);
+		pjk = (double)common_neighbors(g, j, k);
+		chg += ind_kernel(pjk + delta, d) - ind_kernel(pjk, d);
+	}
+	return chg;
+}
+
+/* dsp(d) change statistic (one native slot per requested d) - same
+   shape as change_gwdsp() with `gw_kernel' replaced by `ind_kernel',
+   direct port of change_dsp() in unw_ergm.do */
+static double change_dsp(graph_t *g, long i, long j, double d) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double chg = 0.0;
+	adjlist_t *nbi = &g->adj[i];
+	adjlist_t *nbj = &g->adj[j];
+	long m;
+	for (m = 0; m < nbi->len; m++) {
+		long k = nbi->nb[m];
+		double pk;
+		if (k == j) continue;
+		pk = (double)common_neighbors(g, j, k);
+		chg += ind_kernel(pk + delta, d) - ind_kernel(pk, d);
+	}
+	for (m = 0; m < nbj->len; m++) {
+		long k = nbj->nb[m];
+		double pk;
+		if (k == i) continue;
+		pk = (double)common_neighbors(g, i, k);
+		chg += ind_kernel(pk + delta, d) - ind_kernel(pk, d);
+	}
+	return chg;
+}
 
 /* d choose k, direct port of _ergm_choose() in unw_ergm.do */
 static double ergm_choose(double d, double k) {
@@ -612,6 +703,18 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			double dj = (double)degree_in_of(g, j);
 			return (double)(in_range(dj + delta, p1, p2) - in_range(dj, p1, p2));
 		}
+		case TERMCODE_GWDSP:
+			return change_gwdsp(g, i, j, p1);
+		case TERMCODE_GWNSP:
+			/* thin composition, matching stat_gwnsp()/change_gwnsp() in
+			   unw_ergm.do exactly: gwnsp = gwdsp - gwesp */
+			return change_gwdsp(g, i, j, p1) - change_gwesp(g, i, j, p1);
+		case TERMCODE_ESP:
+			return change_esp(g, i, j, p1);
+		case TERMCODE_DSP:
+			return change_dsp(g, i, j, p1);
+		case TERMCODE_TRIANGLE:
+			return delta * (double)common_neighbors(g, i, j);
 	}
 	return 0.0;
 }
@@ -738,7 +841,11 @@ STDLL stata_call(int argc, char *argv[]) {
 		attridx[i] = (int)next_long();
 		p1[i] = next_double();
 		p2[i] = next_double();
-		if (termcodes[i] == TERMCODE_GWESP) need_adj = 1;
+		switch (termcodes[i]) {
+			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
+			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
+				need_adj = 1;
+		}
 		switch (termcodes[i]) {
 			case TERMCODE_GWODEGREE: case TERMCODE_GWIDEGREE:
 			case TERMCODE_ODEGREE: case TERMCODE_IDEGREE:
