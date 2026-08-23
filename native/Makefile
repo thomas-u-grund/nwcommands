@@ -3,12 +3,18 @@
 # "Native (C) MCMC backend" section for the full design and
 # ergm_mcmc.c's own header comment for the evidence behind it.
 #
-# Output: ../lib/plugins/ergm_mcmc.plugin - unw_ergm.do's own
-# ErgmNativeAvailable()/ErgmNativePluginPath() look for exactly this
-# path (relative to the installed nwergm.ado's own directory), and
-# gracefully fall back to the pure-Mata backend when it is absent - so
-# a platform this Makefile has not been run on (or cannot target) is
-# simply not accelerated, never broken.
+# Output layout: ../lib/plugins/<platform>/ergm_mcmc*.plugin - one
+# subdirectory per platform (harmonisation unit 87), not a single shared
+# path, because macOS's and Windows's own plugins would otherwise both be
+# named "ergm_mcmc.plugin" and collide at the same location once all three
+# platforms' binaries ship from the same commit (built by separate CI
+# runners - see ../.github/workflows/build-plugins.yml - not chosen
+# one-at-a-time by a single developer's own machine). unw_ergm.do's own
+# ErgmNativePluginPath()/ErgmNativePluginSubdir() pick the right
+# subdirectory/filename for the running platform via c(os), and
+# ErgmNativeAvailable() gracefully falls back to the pure-Mata backend when
+# a given platform's binary is absent - so a platform this Makefile has not
+# been run on (or cannot target) is simply not accelerated, never broken.
 #
 # spi/stplugin.h and spi/stplugin.c are StataCorp's own official Stata
 # Plugin Interface (SPI) version 3.0 files, redistributed here exactly
@@ -23,33 +29,35 @@
 #
 #   make macos
 #
-# --- Windows (NOT built or verified in this repository - no Windows
-#     toolchain was available in the environment this unit was built
-#     in; documented here, per this unit's own explicit cross-platform
-#     requirement, so a Windows-side build is a single documented
-#     command away rather than an unknown gap) ---
+# --- Windows (built automatically by CI - see ../.github/workflows/
+#     build-plugins.yml - once this repo lives on GitHub; NOT built or
+#     verified directly in the environment this unit was authored in, no
+#     Windows toolchain was available there) ---
 #
 #   From a Visual Studio "x64 Native Tools" command prompt:
 #     cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c ^
-#        /Fe:..\lib\plugins\ergm_mcmc.plugin
+#        /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
 #
-# --- Linux (NOT built or verified in this repository - same reason as
-#     Windows above) ---
+# --- Linux (built automatically by CI, same reason as Windows above -
+#     no Linux toolchain/cross-compiler or Docker was available in the
+#     environment this unit was authored in) ---
 #
-#   gcc -shared -fPIC -DSYSTEM=OPUNIX -Ispi -O2 -o \
-#       ../lib/plugins/ergm_mcmc_unix.plugin ergm_mcmc.c spi/stplugin.c -ldl
+#   make unix
 #
-#   (Stata expects a Unix plugin named "<progname>_unix.plugin" specifically
-#   - unlike the Mac ".plugin" and Windows ".dll" conventions, per Stata's
-#   own plugin-loading documentation at stata.com/plugins/.)
+#   (Stata expects a Unix plugin named "<progname>_unix.plugin"
+#   specifically - unlike the Mac ".plugin" and Windows ".dll"/".plugin"
+#   conventions, per Stata's own plugin-loading documentation at
+#   stata.com/plugins/.)
 
 CC = clang
 CFLAGS = -O2 -Wall -Ispi
-OUT = ../lib/plugins/ergm_mcmc.plugin
+OUT = ../lib/plugins/macos/ergm_mcmc.plugin
+OUT_UNIX = ../lib/plugins/unix/ergm_mcmc_unix.plugin
 
-.PHONY: macos clean
+.PHONY: macos unix clean
 
 macos:
+	mkdir -p ../lib/plugins/macos
 	$(CC) -bundle -o ergm_mcmc.x86_64 ergm_mcmc.c spi/stplugin.c \
 		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
 	$(CC) -bundle -o ergm_mcmc.arm64 ergm_mcmc.c spi/stplugin.c \
@@ -60,5 +68,16 @@ macos:
 	@echo "Built $(OUT)"
 	@file $(OUT)
 
+# Run only on an actual Linux host (or Linux CI runner) - `gcc -shared`
+# targeting OPUNIX is meaningless cross-compiled from macOS without a
+# genuine Linux sysroot/toolchain, which this development environment did
+# not have.
+unix:
+	mkdir -p ../lib/plugins/unix
+	gcc -shared -fPIC -DSYSTEM=OPUNIX $(CFLAGS) -o $(OUT_UNIX) \
+		ergm_mcmc.c spi/stplugin.c -ldl
+	@echo "Built $(OUT_UNIX)"
+	@file $(OUT_UNIX)
+
 clean:
-	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 $(OUT)
+	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 $(OUT) $(OUT_UNIX)

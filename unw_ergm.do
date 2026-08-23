@@ -1045,12 +1045,50 @@ string scalar ErgmNativeInstallDir(){
 	return(dir)
 }
 
+/*
+	Platform-aware plugin location (harmonisation unit 87,
+	docs/CERTIFICATION.md - phase C, cross-platform native builds).
+	Three different platforms' own compiled plugin binaries need to
+	coexist in the SAME repository/install tree simultaneously (built by
+	separate CI runners on separate operating systems - see
+	.github/workflows/build-plugins.yml - not chosen one-at-a-time by a
+	single developer's own machine the way this project's earlier macOS-
+	only build was). Stata's own plugin-naming convention
+	(".plugin"/"_unix.plugin") is a human/packaging convention for
+	program-name-based auto-discovery via adopath WITHOUT an explicit
+	using() path - since every call site here always passes using() with
+	a full, explicit path (see ErgmNativeSampleCore()), the actual
+	on-disk filename Stata loads is never inferred from the program name,
+	so per-platform SUBDIRECTORIES (rather than colliding on a single
+	shared filename, which macOS's and Windows's own ".plugin" naming
+	would otherwise do) are the simplest, most robust way to ship all
+	three platforms' binaries from one commit without any one of them
+	overwriting another. `c(os)` is read via `st_global("c(os)")` since
+	Mata has no direct OS-detection primitive of its own - confirmed by
+	direct trial to return "MacOSX"/"Windows"/"Unix" on the three
+	platforms Stata supports.
+*/
+string scalar ErgmNativePluginSubdir(){
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("windows")
+	if (os == "Unix") return("unix")
+	return("macos")
+}
+
+string scalar ErgmNativePluginFilename(){
+	if (st_global("c(os)") == "Unix") return("ergm_mcmc_unix.plugin")
+	return("ergm_mcmc.plugin")
+}
+
 string scalar ErgmNativePluginPath(){
 	string scalar dir
 
 	dir = ErgmNativeInstallDir()
 	if (dir == "") return("")
-	return(pathjoin(pathjoin(dir, "lib"), pathjoin("plugins", "ergm_mcmc.plugin")))
+	return(pathjoin(pathjoin(dir, "lib"),
+		pathjoin("plugins", pathjoin(ErgmNativePluginSubdir(), ErgmNativePluginFilename()))))
 }
 
 /*
