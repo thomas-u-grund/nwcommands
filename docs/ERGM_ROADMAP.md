@@ -21,10 +21,12 @@ Each item is ranked on three axes, each High/Medium/Low:
 
 | Item | Usage | Effort | Infra value | Notes |
 |---|---|---|---|---|
-| `nodefactor()` | High | Low | Low | Directed-agnostic per-category main effect; nearly free once `nodematch`'s attribute-resolution machinery exists (same `check.ErgmTerm`-equivalent attribute lookup, different statistic). |
-| `nodemix()` | High | Medium | Low | Full mixing-matrix effect; needs a "levels x levels" coefficient block, a genuine but bounded extension of `nodematch`'s categorical machinery. |
-| `nodeifactor()`/`nodeofactor()` | High (directed research) | Low | Low | Directed sender/receiver category effects - deferred from v1 only to keep the initial release small; the term API already anticipates these (see `nodecov`'s own directed-semantics design note in the architecture doc). |
-| GWDSP (geometrically weighted dyadwise shared partners) | Medium | Medium | High | Shares the exact shared-partner cache `gwesp` v1 builds - this is the most "nearly free" post-v1 addition. |
+| ~~`nodefactor()`~~ **DONE (unit 88)** | High | Low | Low | Directed-agnostic per-category main effect - one coefficient per distinct level, each counting total degree among nodes at that level. Implemented, certified (brute-force change-statistic cross-check), wired into `nwergm.ado` as `nodefactor(varlist)`. |
+| ~~`nodemix()`~~ **DONE (unit 88)** | High | Medium | Low | Full mixing-matrix effect - one coefficient per distinct unordered level-pair (undirected v1 scope). Implemented, certified, wired in as `nodemix(varlist)`. |
+| ~~`absdist()` (Statnet's `absdiff`)~~ **DONE (unit 88)** | High (user-requested) | Low | Low | Sum over ties of `|x_i - x_j|` on a continuous covariate - a natural companion to the existing `nodecov` (sum). Implemented, certified, wired in as `absdist(varlist)`. |
+| ~~`nodematch(diff=TRUE)` (differential homophily)~~ **DONE (unit 88)** | High (user-requested) | Low-Medium | Low | One coefficient PER LEVEL rather than pooled across levels. Wired in as a separate `nodematchdiff(varlist)` option (not a suboption on `nodematch()` itself - Stata option syntax does not cleanly support a per-variable-in-a-varlist modifier the way R's `diff=TRUE` argument does). |
+| `nodeifactor()`/`nodeofactor()` | High (directed research) | Low | Low | Directed sender/receiver category effects - deferred from v1 only to keep the initial release small; the term API already anticipates these (see `nodecov`'s own directed-semantics design note in the architecture doc). Natural next small addition given `nodefactor()`/`nodeicov()`/`nodeocov()` are all now done - mostly copy-paste-adapt work. |
+| ~~GWDSP (geometrically weighted dyadwise shared partners)~~ **DONE (unit 88)** | Medium | Medium | High | Sums over EVERY dyad (tied or not), unlike GWESP's tied-only sum - `stat_gwdsp()` needs a genuine O(n²) full-dyad enumeration (no `all_ties()`-style shortcut), but the CHANGE statistic is structurally simpler than GWESP's own (no "must also be a tie" restriction, no separate own-dyad term). Implemented, certified, wired in as `gwdsp(real)`, undirected v1 scope, dyad-dependent (MCMLE only). Native (C) backend NOT extended to it yet - no evidence yet that it needs to be (unit 83's own "decide term by term through profiling" instruction). |
 | Directed GWESP variants (ITP/OTP/OSP/ISP beyond v1's default) | Medium | Medium | Medium | v1 ships one directed shared-partner definition (matching Statnet's own directed default); the others are the same cache with a different neighbor-direction rule. |
 | `gwnsp` (geometrically weighted nonedgewise shared partners) | Low-Medium | Medium | Medium | Same cache family as GWESP/GWDSP. |
 | Plain triangle / k-star / alternating-k-star family | Medium (mostly superseded by GW terms in modern practice) | Low-Medium | Low | Statnet itself now recommends GW terms over these for degeneracy reasons; still useful for teaching/replication of older models. |
@@ -35,6 +37,51 @@ Each item is ranked on three axes, each High/Medium/Low:
 | Bipartite terms (`b1nodematch`, `b1star`, `b2star`, bipartite GWESP analogues) | Medium (two-mode research) | High | High | Blocked on native bipartite dyad-space support in the proposal/constraint layer - see "Two-mode ERGMs" below; do not attempt term-by-term before that infrastructure exists. |
 | Curved parameters beyond fixed-decay GW terms (free/estimated decay) | Medium | High | High | Needs the `eta`-map (theta -> curved-parameter linking function) and its Jacobian in the MCMLE loop - a real architectural addition, not a term-only change; see `docs/ERGM_ARCHITECTURE.md`'s own "Curved parameters" section for the hook already left in the term interface. |
 | User-defined/custom terms | Medium (power users) | Medium | High | The term registry (`docs/ERGM_ARCHITECTURE.md`) is designed so this is "write a term following the documented contract, then register it" - a dedicated `nwergm` "how to add a term" tutorial is the main remaining work, not new estimator code. |
+
+### Prioritized survey of R ergm's remaining term library (harmonisation unit 88, phase D)
+
+Per the user's own explicit instruction: goes through R `ergm`'s own term
+library (the `ergm-terms` help page's full inventory) beyond what the table
+above already covers, prioritizes by (typical applied usefulness x
+implementation effort x whether the needed infrastructure already exists),
+and DEPRIORITIZES every two-mode/bipartite term as a single group (not
+itemized further - each would otherwise appear individually below) since
+two-mode ERGMs are their own later initiative, not a term-by-term
+extension of the current one-mode term library.
+
+**High priority (next wave candidates - low effort, existing infra covers most of the work):**
+
+| Term | Usage | Effort | Notes |
+|---|---|---|---|
+| `nodeifactor()`/`nodeofactor()` | High (directed research) | Low | Directed analogues of the now-done `nodefactor()` - copy-adapt using `degree_in()`/`degree_out()` in place of `degree_total()`. |
+| `degree(d)`/`idegree(d)`/`odegree(d)` | High (very commonly reported descriptively, sometimes as a model term) | Low | Indicator "does node have exactly degree d" summed over nodes - simple, degree accessors already exist. |
+| `isolates` | Medium-High | Low | `degree==0` count - trivial given existing degree accessors; a single-line term. |
+| `concurrent`/`concurrentties` | Medium (epidemiology-relevant: STI/contact-network modeling) | Low | `degree>=2` count and variants - same primitive as `isolates`. |
+| `triangle`/`ctriple` | Medium (classic, still taught/replicated even though GW terms are now preferred for degeneracy reasons) | Low-Medium | Plain (non-geometric) triangle count - the change statistic is a simplified GWESP special case (no decay weighting, just a raw shared-partner count), so most of GWESP's own machinery (shared-partner traversal) is directly reusable. |
+| `gwnsp` (geometrically weighted NONedgewise shared partners) | Medium | Low (once `gwdsp` exists) | `gwnsp = gwdsp - gwesp` at the statistic level for a shared decay - can likely be implemented as a thin composition of the two now-done terms rather than a new traversal. |
+
+**Medium priority (real value, moderate effort or depends on a not-yet-built primitive):**
+
+| Term | Usage | Effort | Notes |
+|---|---|---|---|
+| `kstar(k)`/`istar(k)`/`ostar(k)` | Medium (superseded by GW-degree terms in modern practice, per Statnet's own current guidance, but still used for replication/teaching) | Low-Medium | Direct degree-sequence combinatorial term (`C(degree,k)`), same shape as the `istar2` demonstration term `docs/ERGM_ARCHITECTURE.md`'s own "how to add a term" walkthrough already built and certified purely to prove the process works - promoting a REAL k-star family from that demonstration is mostly a scoping exercise, not new design work. |
+| `degrange(from,to)`/`idegrange()`/`odegrange()` | Medium | Low-Medium | Generalizes `degree(d)` to a range rather than an exact value. |
+| `transitiveties`/`cyclicalties` | Medium (directed triad structure beyond `mutual`) | Medium | Directed triad-closure indicators - needs a directed common-neighbor definition analogous to what GWESP's own directed OTP/ITP/OSP/ISP variants need (see the existing roadmap row above) - likely worth building together with those, not separately. |
+| Directed GWESP variants (OTP/ITP/OSP/ISP beyond v1's shipped default) | Medium | Medium | Already tracked above - same shared-partner cache infrastructure with a different neighbor-direction rule per variant. |
+| `esp(d)`/`dsp(d)` (fixed, non-geometric shared-partner count AT EXACTLY d) | Low-Medium (legacy - Statnet itself recommends GW terms over these) | Low (once GWESP/GWDSP's own shared-partner traversal exists, which it now does) | An indicator-at-exactly-d version of the now-done geometric terms - mostly useful for replicating older published models that predate the GW-term convention. |
+
+**Low priority / deferred (real but narrow use cases, or blocked on other infrastructure):**
+
+| Term | Usage | Effort | Notes |
+|---|---|---|---|
+| `sender`/`receiver` (per-node fixed effects) | Low (high-dimensional - one parameter per node, rarely used outside small networks) | Low | Trivial to implement but rarely statistically sensible at any real network size; low priority despite low effort. |
+| `hamming` (distance from a reference network) | Low (niche - temporal/multi-network comparison designs) | Medium | Needs a second network as input, similar plumbing to `edgecov()` but comparing structure rather than reading a covariate. |
+| `balance`/signed-tie structural-balance terms | Low (signed networks are a distinct data type this package does not otherwise support) | High | Would need signed-tie representation throughout, not just a new term - out of scope until/unless signed networks become a real initiative. |
+| Curved parameters (free/estimated decay for any GW term, rather than v1's fixed-decay-only scope) | Medium (statistically more flexible, but a real architectural addition) | High | Needs the `eta`-map (theta -> curved-parameter linking function) and its Jacobian inside the MCMLE loop, not a term-only change - see `docs/ERGM_ARCHITECTURE.md`'s own "Curved parameters" hook. Affects every GW term at once, not a per-term decision. |
+
+**Explicitly deprioritized as a group (per the user's own explicit instruction): all two-mode/bipartite terms** -
+`b1nodematch`/`b1star`/`b2star`/`b1degree`/`b2degree`/`b1mindegree`/`b2mindegree`/`gwb1degree`/`gwb2degree`/`b1cov`/`b2cov`/`b1factor`/`b2factor` and
+bipartite GWESP analogues. All of these are blocked on native bipartite dyad-space support in the proposal/constraint layer regardless of individual term effort (see "Two-mode ERGMs" elsewhere in this roadmap) - do not attempt any of them term-by-term before that infrastructure exists, and do not let their sheer number crowd out the one-mode items above in prioritization.
 
 ## Estimation/inference extensions
 

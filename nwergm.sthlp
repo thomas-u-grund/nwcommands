@@ -17,11 +17,16 @@
 {cmd:,}
 {opt edges} [{opt mutual}]
 [{opth nodematch(varlist)}]
+[{opth nodematchdiff(varlist)}]
 [{opth nodecov(varlist)}]
 [{opth nodeicov(varlist)}]
 [{opth nodeocov(varlist)}]
 [{opth edgecov(netname)}]
+[{opth absdist(varlist)}]
+[{opth nodefactor(varlist)}]
+[{opth nodemix(varlist)}]
 [{opt gwesp(real)}]
+[{opt gwdsp(real)}]
 [{opt gwdegree(real)}]
 [{opt gwodegree(real)}]
 [{opt gwidegree(real)}]
@@ -40,12 +45,17 @@
 {synoptline}
 {synopt:{opt edges}}Include the {cmd:edges} term (density/intercept); required{p_end}
 {synopt:{opt mutual}}Reciprocated-tie count; directed networks only{p_end}
-{synopt:{opth nodematch(varlist)}}Homophily on each listed categorical node attribute (exact match){p_end}
+{synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable){p_end}
+{synopt:{opth nodematchdiff(varlist)}}Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attribute, rather than pooled across levels{p_end}
 {synopt:{opth nodecov(varlist)}}Continuous node covariate main effect (sum over tie endpoints){p_end}
 {synopt:{opth nodeicov(varlist)}}Directed receiver-covariate effect; directed networks only{p_end}
 {synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
 {synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
+{synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
+{synopt:{opth nodefactor(varlist)}}One coefficient per distinct level of each listed categorical attribute, each counting total degree among nodes at that level{p_end}
+{synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected only{p_end}
+{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}

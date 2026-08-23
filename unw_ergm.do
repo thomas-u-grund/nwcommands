@@ -423,9 +423,11 @@ string scalar ErgmMatToLiteral(real matrix X){
    =================================================================== */
 
 class ErgmTermData {
-	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree
-	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov: node-indexed covariate (already numeric-coded)
+	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree/gwdsp
+	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov/absdist/nodefactor/nodemix: node-indexed covariate (already numeric-coded)
 	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
+	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
+	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic
 }
 
 /* ===================================================================
@@ -577,6 +579,170 @@ real rowvector change_edgecov(class ErgmGraph scalar G, real scalar i, real scal
 	return(G.has_edge(i,j) ? -v : v)
 }
 
+/* ===================================================================
+   Term-expansion wave 1 (harmonisation unit 88, docs/CERTIFICATION.md -
+   phase D): absdist, nodematch(diff=TRUE), nodefactor, nodemix. All four
+   are dyad-independent (their own change statistic depends only on the
+   toggled dyad's own endpoints' covariate values, never on the rest of
+   the graph) - the same architectural family as nodecov/nodeicov/
+   nodeocov/edgecov above, not the nonlocal GWESP/GW-degree family below.
+   =================================================================== */
+
+/*
+	Absolute difference (Hunter et al.'s "absdiff" in Statnet's own
+	terminology - named `absdist' here to match this project's own
+	existing `nodecov'-family naming convention rather than copying
+	Statnet's identifier verbatim): sum over ties of |attr[i] - attr[j]|.
+	A natural companion to `nodecov' (which sums attr[i]+attr[j]) for
+	continuous covariates where DISSIMILARITY, not combined level, is the
+	hypothesized mechanism (e.g. age heterophily/homophily strength).
+*/
+real rowvector stat_absdist(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + abs(td.attr[ties[k,1]] - td.attr[ties[k,2]])
+	return(tot)
+}
+real rowvector change_absdist(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar v
+	v = abs(td.attr[i] - td.attr[j])
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+/*
+	Differential nodematch (R ergm's `nodematch(attr, diff=TRUE)'): one
+	statistic PER DISTINCT LEVEL of a categorical attribute, each
+	counting ties whose two endpoints both carry THAT SPECIFIC level -
+	generalizing the existing single-parameter `stat_nodematch()' (pooled
+	homophily across all levels) to differential homophily (a separate
+	coefficient per level, since same-level ties among level A need not
+	behave like same-level ties among level B). `td.levels' (populated
+	once, in `nwergm.ado', from the distinct values actually present in
+	the attribute variable) fixes the level -> output-column mapping;
+	both functions below use `_ergm_level_index()' - a tiny linear scan,
+	fine here since the number of DISTINCT LEVELS is always small (this
+	is a per-toggle O(nlevels) cost, not O(n)).
+*/
+real scalar _ergm_level_index(real colvector levels, real scalar v){
+	real scalar k
+	for (k=1; k<=rows(levels); k++) if (levels[k] == v) return(k)
+	return(0)
+}
+real rowvector stat_nodematch_diff(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) {
+			idx = _ergm_level_index(td.levels, td.attr[ties[k,1]])
+			if (idx) out[idx] = out[idx] + 1
+		}
+	}
+	return(out)
+}
+real rowvector change_nodematch_diff(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+
+	out = J(1, rows(td.levels), 0)
+	if (td.attr[i] != td.attr[j]) return(out)
+	idx = _ergm_level_index(td.levels, td.attr[i])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+
+/*
+	Nodefactor (R ergm's `nodefactor(attr)'): one statistic per distinct
+	(non-baseline, in Statnet's own convention - v1 here includes every
+	observed level, leaving the usual `base' redundant-parameter
+	adjustment to the caller/MPLE design, exactly as this project already
+	does for `nodematch') level L of a categorical attribute, each
+	counting SUM OF DEGREE over nodes carrying that level - equivalently,
+	each tie (i,j) contributes 1 to level attr[i]'s own statistic AND 1
+	to level attr[j]'s own statistic (both endpoints' own levels get
+	credit, matching the standard "half the degree sum per level"
+	definition). Toggling (i,j) therefore touches exactly the two
+	(possibly equal) level-columns for attr[i] and attr[j].
+*/
+real rowvector stat_nodefactor(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_level_index(td.levels, td.attr[ties[k,1]])
+		if (idx) out[idx] = out[idx] + 1
+		idx = _ergm_level_index(td.levels, td.attr[ties[k,2]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodefactor(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, idx
+
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	idx = _ergm_level_index(td.levels, td.attr[i])
+	if (idx) out[idx] = out[idx] + delta
+	idx = _ergm_level_index(td.levels, td.attr[j])
+	if (idx) out[idx] = out[idx] + delta
+	return(out)
+}
+
+/*
+	Nodemix (R ergm's `nodemix(attr)'): one statistic per distinct
+	UNORDERED pair of levels {a,b} (including a==b, "within-level" ties -
+	v1 scope is undirected only, matching this project's own existing
+	`nodematch'/`nodecov' treatment of level pairs; directed's own
+	ordered-pair mixing matrix is a natural future extension using the
+	same `_ergm_levelpair_index()' lookup with an ordered rather than
+	canonicalized key), each counting ties whose two endpoints' levels
+	are EXACTLY that pair - the full categorical mixing matrix
+	`nodematch(diff=TRUE)' only shows the diagonal of. `td.levelpairs'
+	(populated once in `nwergm.ado' from the distinct pairs actually
+	observed) fixes the pair -> output-column mapping.
+*/
+real scalar _ergm_levelpair_index(real matrix levelpairs, real scalar a, real scalar b){
+	real scalar k, lo, hi
+	lo = min((a,b))
+	hi = max((a,b))
+	for (k=1; k<=rows(levelpairs); k++) {
+		if (levelpairs[k,1]==lo & levelpairs[k,2]==hi) return(k)
+	}
+	return(0)
+}
+real rowvector stat_nodemix(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_levelpair_index(td.levelpairs, td.attr[ties[k,1]], td.attr[ties[k,2]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodemix(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	idx = _ergm_levelpair_index(td.levelpairs, td.attr[i], td.attr[j])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+
 /*
 	Shared weighting kernel used by both the GWESP and GW(o/i)degree
 	families (Hunter 2007): w(d) = exp(decay)*(1-(1-exp(-decay))^d),
@@ -721,6 +887,70 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 		chg = chg + (gw_kernel(pik+delta, td.decay) - gw_kernel(pik, td.decay))
 		pjk = G.shared_partners(j,k)
 		chg = chg + (gw_kernel(pjk+delta, td.decay) - gw_kernel(pjk, td.decay))
+	}
+	return(chg)
+}
+
+/*
+	Geometrically weighted dyadwise shared partners (GWDSP; Hunter 2007) -
+	term-expansion wave 1, harmonisation unit 88. Undirected only in v1,
+	same scope disclosure as GWESP above. Statistic: sum of
+	gw_kernel(shared_partners(u,v), decay) over EVERY dyad {u,v} (u != v),
+	REGARDLESS of whether u,v are themselves tied - unlike GWESP, which
+	sums only over TIED dyads. `stat_gwdsp()' therefore genuinely needs to
+	enumerate all O(n^2) dyads from scratch (there is no O(nties) shortcut
+	the way `all_ties()' gives GWESP - shared partners are defined for
+	untied dyads too) - this matches the term's own real computational
+	cost in any implementation, Statnet's own included, and is only ever
+	paid once per full statistic() call (MPLE design-matrix construction,
+	the observed-network baseline, and each MCMLE iteration's own
+	Dbar centering), never inside the O(1)-target MCMC change-statistic
+	path below.
+
+	Change statistic for toggling (i,j): because shared_partners(u,v) for
+	the dyad {i,j} ITSELF does not depend on whether i-j is tied (shared
+	partners are common THIRD nodes), toggling (i,j) contributes NOTHING
+	to the GWDSP sum via the {i,j} dyad's own term - only via every OTHER
+	dyad that gains or loses i or j as a shared partner. This is exactly
+	GWESP's own "for each neighbor of j, adjust dyad (i,k); for each
+	neighbor of i, adjust dyad (j,k)" loop, but WITHOUT GWESP's own
+	"only if (i,k)/(j,k) is itself a tie" restriction (GWDSP counts every
+	dyad, tied or not) and without GWESP's own extra "own dyad" pij term
+	(which does not apply here) - making this change function structurally
+	simpler than GWESP's despite the statistic itself being more expensive
+	to compute from scratch.
+*/
+real rowvector stat_gwdsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, tot, p
+	tot = 0
+	for (i=1; i<=G.n-1; i++) {
+		for (j=i+1; j<=G.n; j++) {
+			p = G.shared_partners(i,j)
+			if (p > 0) tot = tot + gw_kernel(p, td.decay)
+		}
+	}
+	return(tot)
+}
+real rowvector change_gwdsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, chg, k, m, pk
+	real rowvector nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = 0
+
+	nb = G.neighbors_out(i)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		pk = G.shared_partners(j,k)
+		chg = chg + (gw_kernel(pk+delta, td.decay) - gw_kernel(pk, td.decay))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==i) continue
+		pk = G.shared_partners(i,k)
+		chg = chg + (gw_kernel(pk+delta, td.decay) - gw_kernel(pk, td.decay))
 	}
 	return(chg)
 }
