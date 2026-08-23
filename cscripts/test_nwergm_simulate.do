@@ -87,7 +87,15 @@ capture noisily nwergm simulate 5, edges mutual theta(-0.5 1.0)
 assert _rc == 198
 capture noisily nwergm simulate 5, edges gwodegree(.5) theta(-0.5 0.5)
 assert _rc == 198
-capture noisily nwergm simulate 5, edges gwesp(.5) directed theta(-0.5 0.5)
-assert _rc == 198
 capture noisily nwergm simulate 5, edges theta(-0.5 0.5)
 assert _rc == 198
+
+* --- directed gwesp: now supported too (harmonisation unit 91,
+* term-expansion wave 5 - R ergm's own default OTP directed
+* shared-partner definition), runs end to end without error. Used to
+* be an error-path case (gwesp() was undirected-only) - superseded.
+nwclear
+set seed 5005
+qui nwergm simulate 7, edges gwesp(.5) directed theta(-1.0 0.5) nsim(1) generate(dgwsim)
+qui nw_syntax dgwsim, max(1)
+assert `nodes' == 7
