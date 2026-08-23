@@ -614,6 +614,61 @@ real rowvector change_edgecov(class ErgmGraph scalar G, real scalar i, real scal
 	return(G.has_edge(i,j) ? -v : v)
 }
 
+/*
+	hamming(netname) (harmonisation unit 91, term-expansion wave 7):
+	Hamming distance to a reference network - the number of dyads whose
+	tie state DISAGREES with the same dyad's state in `td.edgecovmat'
+	(reused here as a plain 0/1 reference adjacency, not a continuous
+	covariate weight the way `edgecov()' above uses the same field -
+	each `ErgmTermData' instance only ever serves one term's own
+	purpose, so sharing the field is safe). Fresh-checked against R
+	ergm's own current `InitErgmTerm.hamming()`: the unweighted base
+	case (no `cov=' argument) is exactly this - a plain disagreement
+	count. Genuinely dyad-independent (each dyad's own contribution
+	depends only on that dyad's own current state and its own
+	reference value, never on any other dyad) - the SAME architectural
+	family as `edgecov'/`nodecov' above, not the nonlocal GWESP family.
+	Unlike `edgecov()', `stat_hamming()' needs a genuine ALL-DYADS scan
+	(not an `all_ties()' shortcut): an untied dyad in G can still
+	contribute to the mismatch count if the reference network has it
+	tied, so untied dyads cannot be skipped the way `edgecov()' safely
+	skips them (a covariate WEIGHT contributes exactly 0 through an
+	untied dyad; a mismatch INDICATOR does not).
+
+	Change statistic derivation: toggling (i,j) always flips its own
+	state (old_state -> 1-old_state). If the OLD state already agreed
+	with the reference, toggling necessarily creates a NEW mismatch
+	(+1, since old_state==ref forces new_state==1-ref!=ref). If the OLD
+	state already disagreed, toggling necessarily FIXES it (-1, by the
+	same reasoning in reverse). So the change is simply +1 if the dyad
+	currently agrees with the reference, -1 if it currently disagrees -
+	an O(1) toggle cost with no third-party/neighbor effects at all.
+*/
+real rowvector stat_hamming(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, tot
+
+	tot = 0
+	if (G.directed) {
+		for (i=1; i<=G.n; i++) {
+			for (j=1; j<=G.n; j++) {
+				if (i==j) continue
+				if (G.has_edge(i,j) != td.edgecovmat[i,j]) tot++
+			}
+		}
+	}
+	else {
+		for (i=1; i<=G.n-1; i++) {
+			for (j=i+1; j<=G.n; j++) {
+				if (G.has_edge(i,j) != td.edgecovmat[i,j]) tot++
+			}
+		}
+	}
+	return(tot)
+}
+real rowvector change_hamming(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(G.has_edge(i,j) == td.edgecovmat[i,j] ? 1 : -1)
+}
+
 /* ===================================================================
    Term-expansion wave 1 (harmonisation unit 88, docs/CERTIFICATION.md -
    phase D): absdist, nodematch(diff=TRUE), nodefactor, nodemix. All four

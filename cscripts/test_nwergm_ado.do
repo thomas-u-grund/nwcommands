@@ -269,3 +269,27 @@ capture noisily nwergm unet8, edges transitiveties
 assert _rc != 0
 capture noisily nwergm unet8, edges cyclicalties
 assert _rc != 0
+
+* --- term-expansion wave 7 wiring (harmonisation unit 91 continuation):
+* hamming(netname), sender, receiver - already brute-force certified at
+* the Mata level in cscripts/test_nwergm_termexpansion7.do.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(basenet5) labs(A,B,C,D,E)
+nwset, mat((0,1,0,0,1\1,0,0,1,0\0,0,0,1,1\0,1,1,0,0\1,0,1,0,0)) undirected name(refnet5) labs(A,B,C,D,E)
+qui nwergm basenet5, edges hamming(refnet5)
+assert _rc == 0
+assert colsof(e(b)) == 2
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet11) labs(A,B,C,D,E)
+qui nwergm dnet11, edges sender receiver
+assert _rc == 0
+assert colsof(e(b)) == 9
+
+* --- directed/undirected mismatch guard for sender/receiver fires.
+nwclear
+nwset, mat((0,1\1,0)) undirected name(unet9)
+capture noisily nwergm unet9, edges sender
+assert _rc != 0
+capture noisily nwergm unet9, edges receiver
+assert _rc != 0
