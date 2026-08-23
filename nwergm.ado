@@ -87,6 +87,8 @@
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
 {synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (OTP){p_end}
 {synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (OTP). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
+{synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -305,6 +307,7 @@ program nwergm, eclass
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
+		TRANSITIVETIES CYCLICALTIES ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -402,6 +405,10 @@ program nwergm, eclass
 	}
 	// esp()/dsp() now support directed networks too (wave 5) via the
 	// same automatic OTP default as gwesp()/gwdsp()/gwnsp() above.
+	if ("`transitiveties'" != "" | "`cyclicalties'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:transitiveties}/{bf:cyclicalties} require a directed network; {bf:`netname'} is undirected."
+		error 198
+	}
 
 	if `seed' != -1 {
 		set seed `seed'
@@ -865,6 +872,22 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_dsp'"
 	}
 
+	// --- term-expansion wave 6 (harmonisation unit 91 continuation):
+	// transitiveties/cyclicalties, directed-only, built on wave 5's OTP
+	// shared-partner machinery.
+	if "`transitiveties'" != "" {
+		tempname __td_tt
+		mata: `__td_tt' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("transitiveties", 1, &stat_transitiveties(), &change_transitiveties(), `__td_tt', ("transitiveties"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_tt'"
+	}
+	if "`cyclicalties'" != "" {
+		tempname __td_ct
+		mata: `__td_ct' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("cyclicalties", 1, &stat_cyclicalties(), &change_cyclicalties(), `__td_ct', ("cyclicalties"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
+	}
+
 	local __ergm_termidx = 0
 	foreach __ergm_v of local edgecov {
 		local ++__ergm_termidx
@@ -978,7 +1001,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}

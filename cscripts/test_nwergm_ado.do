@@ -251,3 +251,21 @@ set seed 2010
 qui nwergm dnet9, edges esp(1) dsp(1) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
 assert _rc == 0
 assert colsof(e(b)) == 3
+
+* --- term-expansion wave 6 wiring (harmonisation unit 91 continuation):
+* transitiveties/cyclicalties, directed only, built on wave 5's OTP
+* machinery - already brute-force certified at the Mata level in
+* cscripts/test_nwergm_termexpansion6.do.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet10) labs(A,B,C,D,E)
+set seed 2011
+qui nwergm dnet10, edges transitiveties cyclicalties mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 3
+
+nwclear
+nwset, mat((0,1\1,0)) undirected name(unet8)
+capture noisily nwergm unet8, edges transitiveties
+assert _rc != 0
+capture noisily nwergm unet8, edges cyclicalties
+assert _rc != 0
