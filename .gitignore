@@ -26,3 +26,7 @@ deprecated/nwcommands_2016.zip
 # no-longer-referenced visualization experiment - confirmed via grep that
 # no live .ado command reads from old/js/ - dead weight, not project code.
 old/js/
+
+.Rhistory
+*.swp
+.swp
