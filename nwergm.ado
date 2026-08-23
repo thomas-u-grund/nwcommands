@@ -74,6 +74,17 @@
 {synopt:{opt concurrent}}Count of nodes with (total) degree 2 or higher; undirected only{p_end}
 {synopt:{opt triangle}}Count of triangles (mutually tied triples); undirected only{p_end}
 {synopt:{opt ctriple}}Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only{p_end}
+{synopt:{opth nodeofactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting OUT-degree among nodes at that level; directed networks only{p_end}
+{synopt:{opth nodeifactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting IN-degree among nodes at that level; directed networks only{p_end}
+{synopt:{opt kstar(numlist)}}One coefficient per listed k value: count of k-stars ((total) degree choose k, summed over nodes); undirected only{p_end}
+{synopt:{opt ostar(numlist)}}One coefficient per listed k value: count of out-k-stars; directed networks only{p_end}
+{synopt:{opt istar(numlist)}}One coefficient per listed k value: count of in-k-stars; directed networks only{p_end}
+{synopt:{opt degrange(numlist)}}Semi-open-interval degree count: one coefficient per FROM value in this numlist, counting nodes with (total) degree in [from,to); pair with {opt degrangeto()}; undirected only{p_end}
+{synopt:{opt degrangeto(numlist)}}TO values pairing with {opt degrange()}, same order/length; omit for an open-ended upper bound{p_end}
+{synopt:{opt odegrange(numlist)}}Semi-open-interval OUT-degree count, paired with {opt odegrangeto()}; directed networks only{p_end}
+{synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
+{synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
+{synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -288,6 +299,10 @@ program nwergm, eclass
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
+		NODEIFACTOR(string) NODEOFACTOR(string) ///
+		KSTAR(string) ISTAR(string) OSTAR(string) ///
+		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
+		IDEGRANGE(string) IDEGRANGETO(string) ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -364,6 +379,26 @@ program nwergm, eclass
 	}
 	if "`ctriple'" != "" & "`directed'" != "true" {
 		di "{err}option {bf:ctriple} requires a directed network; {bf:`netname'} is undirected. Use {bf:triangle} for an undirected network."
+		error 198
+	}
+	if ("`nodeifactor'" != "" | "`nodeofactor'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:nodeifactor()}/{bf:nodeofactor()} require a directed network; {bf:`netname'} is undirected. Use {bf:nodefactor()} for an undirected network."
+		error 198
+	}
+	if "`kstar'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:kstar()} is undirected only; {bf:`netname'} is directed. Use {bf:ostar()}/{bf:istar()} for a directed network."
+		error 198
+	}
+	if ("`ostar'" != "" | "`istar'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:ostar()}/{bf:istar()} require a directed network; {bf:`netname'} is undirected. Use {bf:kstar()} for an undirected network."
+		error 198
+	}
+	if "`degrange'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:degrange()} is undirected only; {bf:`netname'} is directed. Use {bf:odegrange()}/{bf:idegrange()} for a directed network."
+		error 198
+	}
+	if ("`odegrange'" != "" | "`idegrange'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:odegrange()}/{bf:idegrange()} require a directed network; {bf:`netname'} is undirected. Use {bf:degrange()} for an undirected network."
 		error 198
 	}
 
@@ -534,7 +569,7 @@ program nwergm, eclass
 		// over whatever `td.levels' holds, so this is a pure `nwergm.ado'
 		// construction-time fix.
 		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
-		mata: if (rows(`__td_nf`__ergm_termidx''.levels) > 1) `__td_nf`__ergm_termidx''.levels = `__td_nf`__ergm_termidx''.levels[2::rows(`__td_nf`__ergm_termidx''.levels)]
+		mata: `__td_nf`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nf`__ergm_termidx''.levels)
 		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nf`__ergm_termidx''.levels)))
 		tempname __ergm_levvec2
 		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
@@ -630,6 +665,166 @@ program nwergm, eclass
 		mata: `__td_ctri' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), `__td_ctri', ("ctriple"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ctri'"
+	}
+
+	// --- term-expansion wave 3 (harmonisation unit 91): nodeifactor()/
+	// nodeofactor() (directed analogues of nodefactor(), same base-level
+	// omission), kstar()/istar()/ostar() (general k-star family, k as a
+	// numlist), degrange()/odegrange()/idegrange() (semi-open-interval
+	// degree counts, from()/to() as paired numlists).
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeofactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nof`__ergm_termidx'
+		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nof`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nof`__ergm_termidx''.levels = uniqrows(`__td_nof`__ergm_termidx''.attr)
+		mata: `__td_nof`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nof`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nof`__ergm_termidx''.levels)))
+		tempname __ergm_levvec3
+		mata: st_matrix("`__ergm_levvec3'", `__td_nof`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodeofactor", `__ergm_nlev', &stat_nodeofactor(), &change_nodeofactor(), `__td_nof`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nof`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeifactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nif`__ergm_termidx'
+		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nif`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nif`__ergm_termidx''.levels = uniqrows(`__td_nif`__ergm_termidx''.attr)
+		mata: `__td_nif`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nif`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nif`__ergm_termidx''.levels)))
+		tempname __ergm_levvec4
+		mata: st_matrix("`__ergm_levvec4'", `__td_nif`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodeifactor", `__ergm_nlev', &stat_nodeifactor(), &change_nodeifactor(), `__td_nif`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nif`__ergm_termidx''"
+	}
+
+	if "`kstar'" != "" {
+		tempname __td_kstar
+		mata: `__td_kstar' = ErgmTermData()
+		mata: `__td_kstar'.levels = strtoreal(tokens("`kstar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_kstar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `kstar' {
+			local __ergm_cnames "`__ergm_cnames' kstar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("kstar", `__ergm_nk', &stat_kstar(), &change_kstar(), `__td_kstar', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_kstar'"
+	}
+	if "`ostar'" != "" {
+		tempname __td_ostar
+		mata: `__td_ostar' = ErgmTermData()
+		mata: `__td_ostar'.levels = strtoreal(tokens("`ostar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_ostar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `ostar' {
+			local __ergm_cnames "`__ergm_cnames' ostar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("ostar", `__ergm_nk', &stat_ostar(), &change_ostar(), `__td_ostar', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ostar'"
+	}
+	if "`istar'" != "" {
+		tempname __td_istar
+		mata: `__td_istar' = ErgmTermData()
+		mata: `__td_istar'.levels = strtoreal(tokens("`istar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_istar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `istar' {
+			local __ergm_cnames "`__ergm_cnames' istar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("istar", `__ergm_nk', &stat_istar(), &change_istar(), `__td_istar', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_istar'"
+	}
+
+	if "`degrange'" != "" {
+		local __ergm_ndr : word count `degrange'
+		if "`degrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`degrangeto'"
+			local __ergm_ndto : word count `degrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}degrange() and degrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_dr
+		mata: `__td_dr' = ErgmTermData()
+		mata: `__td_dr'.levelpairs = strtoreal(tokens("`degrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' degrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("degrange", `__ergm_ndr', &stat_degrange(), &change_degrange(), `__td_dr', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_dr'"
+	}
+	if "`odegrange'" != "" {
+		local __ergm_ndr : word count `odegrange'
+		if "`odegrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`odegrangeto'"
+			local __ergm_ndto : word count `odegrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}odegrange() and odegrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_odr
+		mata: `__td_odr' = ErgmTermData()
+		mata: `__td_odr'.levelpairs = strtoreal(tokens("`odegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' odegrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("odegrange", `__ergm_ndr', &stat_odegrange(), &change_odegrange(), `__td_odr', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_odr'"
+	}
+	if "`idegrange'" != "" {
+		local __ergm_ndr : word count `idegrange'
+		if "`idegrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`idegrangeto'"
+			local __ergm_ndto : word count `idegrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}idegrange() and idegrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_idr
+		mata: `__td_idr' = ErgmTermData()
+		mata: `__td_idr'.levelpairs = strtoreal(tokens("`idegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' idegrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("idegrange", `__ergm_ndr', &stat_idegrange(), &change_idegrange(), `__td_idr', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_idr'"
 	}
 
 	local __ergm_termidx = 0
@@ -731,7 +926,12 @@ program nwergm, eclass
 	// ALSO dyad-dependent - unit 90 - since each depends on more than
 	// just its own two endpoints' attributes, via other nodes' degrees
 	// or shared third parties).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="")
+	// nodeofactor()/nodeifactor() are dyad-independent (like nodefactor -
+	// their change stat depends only on the toggled dyad's own endpoint
+	// attribute, not on other dyads' state), so they are deliberately
+	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
+	// idegrange are all degree-based and so are dyad-dependent (wave 3).
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}

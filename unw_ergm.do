@@ -626,6 +626,34 @@ real rowvector change_absdist(class ErgmGraph scalar G, real scalar i, real scal
 	fine here since the number of DISTINCT LEVELS is always small (this
 	is a per-toggle O(nlevels) cost, not O(n)).
 */
+/*
+	_ergm_drop_base_level(): drops the lowest-sorted (base) level from a
+	distinct-levels colvector, used by nodefactor()/nodeofactor()/
+	nodeifactor() to match R ergm's own base=1 convention (harmonisation
+	unit 90). Deliberately a plain, control-flow-free-at-the-call-site
+	function rather than an inline `nwergm.ado' one-liner: `mata: if
+	(cond) stmt' invoked as a single Stata-side "mata:" prefix command
+	(not inside a `mata\...\end' block) is NOT reliably parseable by
+	Mata's interactive/one-line reader - even the most trivial case
+	(`mata: if (1>0) x=x') fails with "unexpected end of line"/"<istmt>
+	incomplete", confirmed by direct isolated repro (unit 91 follow-up).
+	Wrapping the `if' in `{ }' does not fix it either ("invalid
+	expression"/still incomplete depending on exact form) - the `if'
+	construct itself is simply unsafe as a bare `nwergm.ado' one-liner.
+	A real, previously-undetected bug for exactly this reason (no
+	.ado-level wiring test existed for nodefactor() before unit 91's own
+	wave-3 wiring smoke test happened to exercise it). Fixed at all
+	three call sites (nodefactor/nodeofactor/nodeifactor in
+	`nwergm.ado') by replacing the inline `if' with a single assignment
+	to this ordinary function, which is safe since it contains no
+	control flow at the Stata-inline call site - only inside the
+	function body, which compiles normally like every other Mata
+	function in this file.
+*/
+real colvector _ergm_drop_base_level(real colvector levels){
+	if (rows(levels) > 1) return(levels[2::rows(levels)])
+	return(levels)
+}
 real scalar _ergm_level_index(real colvector levels, real scalar v){
 	real scalar k
 	for (k=1; k<=rows(levels); k++) if (levels[k] == v) return(k)
@@ -946,6 +974,230 @@ real rowvector stat_gwnsp(class ErgmGraph scalar G, class ErgmTermData scalar td
 }
 real rowvector change_gwnsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	return(change_gwdsp(G, i, j, td) - change_gwesp(G, i, j, td))
+}
+
+/* ===================================================================
+   Term-expansion wave 3 (harmonisation unit 91, docs/CERTIFICATION.md -
+   phase D, continuation of units 88/90): nodeifactor/nodeofactor
+   (directed analogues of nodefactor - unit 90's own base-level-omission
+   fix applies identically, done in nwergm.ado at construction time, not
+   here), kstar(k)/istar(k)/ostar(k) (a general k-star family - `td.levels'
+   holds the requested k-values, generalizing the existing `istar2'
+   DEMONSTRATION term's own C(d,2) special case to arbitrary k, without
+   touching that demonstration term itself), and degrange(from,to)/
+   idegrange/odegrange (semi-open-interval degree counts - `td.levelpairs'
+   holds (from,to) pairs, reusing the exact field `nodemix' already uses
+   for a different purpose, since both need "one statistic per requested
+   pair" bookkeeping). All cross-checked against R ergm's own current
+   source (`R/InitErgmTerm.R') before implementation, not assumed from
+   the existing `nodefactor'/`degree' analogues alone.
+   =================================================================== */
+
+/*
+	Nodeifactor/nodeofactor (R ergm's directed analogues of `nodefactor'):
+	exactly the categorical-indicator version of the already-implemented
+	`nodeicov'/`nodeocov' (continuous covariate sender/receiver effects),
+	the same relationship `nodefactor' has to `nodecov'. Each arc (i,j)
+	credits ONLY the sender i's own level (`nodeofactor') or ONLY the
+	receiver j's own level (`nodeifactor') - unlike undirected
+	`nodefactor', which credits BOTH endpoints per tie.
+*/
+real rowvector stat_nodeofactor(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_level_index(td.levels, td.attr[ties[k,1]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodeofactor(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+	out = J(1, rows(td.levels), 0)
+	idx = _ergm_level_index(td.levels, td.attr[i])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+real rowvector stat_nodeifactor(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_level_index(td.levels, td.attr[ties[k,2]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodeifactor(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+	out = J(1, rows(td.levels), 0)
+	idx = _ergm_level_index(td.levels, td.attr[j])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+
+/*
+	General k-star family: kstar(k)/istar(k)/ostar(k), `td.levels' holding
+	the requested (possibly multiple) k values - generalizes the
+	`istar2' DEMONSTRATION term's own hardcoded C(d,2) to arbitrary k via
+	`_ergm_choose()' (a direct product-formula binomial coefficient,
+	returning 0 when d<k since C(d,k) is 0 there by convention - no
+	special-casing needed elsewhere). `kstar' is undirected (total
+	degree); `istar'/`ostar' are directed analogues of `idegree'/
+	`odegree' the same way `kstar' relates to `degree' - a star COUNT
+	rather than an exact-degree INDICATOR.
+*/
+real scalar _ergm_choose(real scalar d, real scalar k){
+	real scalar m, out
+	if (d < k) return(0)
+	if (k == 0) return(1)
+	out = 1
+	for (m=0; m<=k-1; m++) out = out * (d-m)
+	for (m=1; m<=k; m++) out = out / m
+	return(out)
+}
+real rowvector stat_kstar(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levels); m++) out[m] = out[m] + _ergm_choose(G.degree_total(i), td.levels[m])
+	}
+	return(out)
+}
+real rowvector change_kstar(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, di, dj, m, kk
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_total(i)
+	dj = G.degree_total(j)
+	for (m=1; m<=rows(td.levels); m++) {
+		kk = td.levels[m]
+		out[m] = (_ergm_choose(di+delta,kk) - _ergm_choose(di,kk)) + (_ergm_choose(dj+delta,kk) - _ergm_choose(dj,kk))
+	}
+	return(out)
+}
+real rowvector stat_ostar(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levels); m++) out[m] = out[m] + _ergm_choose(G.degree_out(i), td.levels[m])
+	}
+	return(out)
+}
+real rowvector change_ostar(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, di, m, kk
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_out(i)
+	for (m=1; m<=rows(td.levels); m++) {
+		kk = td.levels[m]
+		out[m] = _ergm_choose(di+delta,kk) - _ergm_choose(di,kk)
+	}
+	return(out)
+}
+real rowvector stat_istar(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levels); m++) out[m] = out[m] + _ergm_choose(G.degree_in(i), td.levels[m])
+	}
+	return(out)
+}
+real rowvector change_istar(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, dj, m, kk
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	dj = G.degree_in(j)
+	for (m=1; m<=rows(td.levels); m++) {
+		kk = td.levels[m]
+		out[m] = _ergm_choose(dj+delta,kk) - _ergm_choose(dj,kk)
+	}
+	return(out)
+}
+
+/*
+	Degrange/idegrange/odegrange: semi-open-interval degree counts -
+	generalizes `degree(d)' (exact match) to a RANGE [from,to). `td.levelpairs'
+	holds one (from,to) row per requested range (reusing the field
+	`nodemix' uses for a different purpose - both just need "one
+	statistic per requested pair"). `to' of missing (`.') means no upper
+	bound (matching R ergm's own `to' default of `+Inf').
+*/
+real scalar _ergm_inrange(real scalar d, real scalar from, real scalar to){
+	if (d < from) return(0)
+	if (to >= .) return(1)
+	return(d < to)
+}
+real rowvector stat_degrange(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levelpairs), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levelpairs); m++) out[m] = out[m] + _ergm_inrange(G.degree_total(i), td.levelpairs[m,1], td.levelpairs[m,2])
+	}
+	return(out)
+}
+real rowvector change_degrange(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, di, dj, m
+	out = J(1, rows(td.levelpairs), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_total(i)
+	dj = G.degree_total(j)
+	for (m=1; m<=rows(td.levelpairs); m++) {
+		out[m] = (_ergm_inrange(di+delta,td.levelpairs[m,1],td.levelpairs[m,2]) - _ergm_inrange(di,td.levelpairs[m,1],td.levelpairs[m,2]))
+		out[m] = out[m] + (_ergm_inrange(dj+delta,td.levelpairs[m,1],td.levelpairs[m,2]) - _ergm_inrange(dj,td.levelpairs[m,1],td.levelpairs[m,2]))
+	}
+	return(out)
+}
+real rowvector stat_odegrange(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levelpairs), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levelpairs); m++) out[m] = out[m] + _ergm_inrange(G.degree_out(i), td.levelpairs[m,1], td.levelpairs[m,2])
+	}
+	return(out)
+}
+real rowvector change_odegrange(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, di, m
+	out = J(1, rows(td.levelpairs), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_out(i)
+	for (m=1; m<=rows(td.levelpairs); m++) out[m] = _ergm_inrange(di+delta,td.levelpairs[m,1],td.levelpairs[m,2]) - _ergm_inrange(di,td.levelpairs[m,1],td.levelpairs[m,2])
+	return(out)
+}
+real rowvector stat_idegrange(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, m
+	out = J(1, rows(td.levelpairs), 0)
+	for (i=1; i<=G.n; i++) {
+		for (m=1; m<=rows(td.levelpairs); m++) out[m] = out[m] + _ergm_inrange(G.degree_in(i), td.levelpairs[m,1], td.levelpairs[m,2])
+	}
+	return(out)
+}
+real rowvector change_idegrange(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, dj, m
+	out = J(1, rows(td.levelpairs), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	dj = G.degree_in(j)
+	for (m=1; m<=rows(td.levelpairs); m++) out[m] = _ergm_inrange(dj+delta,td.levelpairs[m,1],td.levelpairs[m,2]) - _ergm_inrange(dj,td.levelpairs[m,1],td.levelpairs[m,2])
+	return(out)
 }
 
 /*
