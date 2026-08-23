@@ -1364,6 +1364,530 @@ real scalar bfs_augment(real matrix cap, real matrix flow, real scalar s, real s
 }
 
 /*
+	Sparse vertex-split max-flow infrastructure (harmonisation unit
+	108, docs/CERTIFICATION.md; user directive: "optimize... for 10k
+	nodes... feel free to use C plugins or other libraries if needed").
+	build_vertexsplit_basecap()/maxflow_vertex_split_shared() above
+	already cut fast_min_cut_search()'s CALL COUNT from O(n^2) to
+	O(delta^2) (unit 102), but each of those O(delta^2) calls still
+	does O(n^2) work internally against a dense (2n)x(2n) matrix -
+	confirmed as the remaining reason nwkcomponents/nwcohesion still
+	do not complete at n=10,000 (28GB+/9.5GB+ RAM observed directly,
+	killed before finishing). This block represents the SAME vertex-
+	split graph as an explicit directed edge list instead - the
+	standard adjacency-list max-flow representation (parallel arrays
+	edgeTo/edgeCap, each edge's own reverse-edge index in edgeRev, and
+	a linked-list-style adjacency via headEdge[v]/nextEdge[e] - Mata
+	has no native array-of-lists type, so this is the usual
+	competitive-programming workaround) - built ONCE per
+	fast_min_cut_search()/min_vertex_cutset() call (an unavoidable
+	O(n^2) scan of the dense `adj' input itself, done via a single
+	vectorized selectindex() over the flattened matrix rather than an
+	interpreted double loop, so it is memory-bound, not interpreter-
+	loop-bound) and shared across all of that call's own O(delta^2)
+	queries via pointers - only the flow array (not the topology) is
+	reset between queries, and only the current query's own s/t
+	internal-edge capacities are temporarily bumped to `bignum' and
+	restored after, mirroring maxflow_vertex_split_shared()'s own
+	"mutate 2 cells, restore" discipline exactly. Each individual
+	max-flow query then costs O(kappa*(n+m)) instead of O(n^2) (kappa,
+	the flow value actually found, is bounded by the minimum degree
+	delta for every query fast_min_cut_search() makes - see its own
+	header comment - so this is a genuine asymptotic win for sparse
+	graphs, not just a constant-factor one).
+
+	Node numbering matches build_vertexsplit_basecap() exactly: 1..n
+	are "in" nodes, n+1..2n are "out" nodes. Internal edges (v_in ->
+	v_out) are built first, in node order, so internal edge v's own
+	forward-arc index is always exactly 2*v-1 (its reverse arc index
+	2*v) - used by maxflow_sparse_query() to find and patch the
+	current query's own s/t capacities directly, without a search.
+*/
+void build_vertexsplit_sparse(real matrix adj, real scalar bignum,
+		pointer(real colvector) scalar edgeToP,
+		pointer(real colvector) scalar edgeCapP,
+		pointer(real colvector) scalar edgeRevP,
+		pointer(real colvector) scalar headEdgeP,
+		pointer(real colvector) scalar nextEdgeP){
+	real scalar n, N, m, e, u
+	real matrix tempadj
+	real colvector nzidx, urow, vcol
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+
+	n = rows(adj)
+	N = 2 * n
+	tempadj = adj
+	_diag(tempadj, 0)
+
+	// Vectorized structural-edge extraction: vec() flattens column-
+	// major, so a nonzero at flattened index i corresponds to row
+	// r=mod(i-1,n)+1, col c=floor((i-1)/n)+1 - i.e. edge (u=r, w=c).
+	nzidx = selectindex(vec(tempadj) :!= 0)
+	m = rows(nzidx)
+	if (m > 0) {
+		urow = mod(nzidx :- 1, n) :+ 1
+		vcol = floor((nzidx :- 1) :/ n) :+ 1
+	}
+	else {
+		urow = J(0,1,0)
+		vcol = J(0,1,0)
+	}
+
+	edgeTo = J(2*(n+m), 1, 0)
+	edgeCap = J(2*(n+m), 1, 0)
+	edgeRev = J(2*(n+m), 1, 0)
+	headEdge = J(N, 1, 0)
+	nextEdge = J(2*(n+m), 1, 0)
+
+	e = 0
+	for (u=1; u<=n; u++) {
+		e++
+		edgeTo[e] = n+u
+		edgeCap[e] = 1
+		edgeRev[e] = e+1
+		nextEdge[e] = headEdge[u]
+		headEdge[u] = e
+
+		e++
+		edgeTo[e] = u
+		edgeCap[e] = 0
+		edgeRev[e] = e-1
+		nextEdge[e] = headEdge[n+u]
+		headEdge[n+u] = e
+	}
+
+	for (u=1; u<=m; u++) {
+		e++
+		edgeTo[e] = vcol[u]
+		edgeCap[e] = bignum
+		edgeRev[e] = e+1
+		nextEdge[e] = headEdge[n+urow[u]]
+		headEdge[n+urow[u]] = e
+
+		e++
+		edgeTo[e] = n+urow[u]
+		edgeCap[e] = 0
+		edgeRev[e] = e-1
+		nextEdge[e] = headEdge[vcol[u]]
+		headEdge[vcol[u]] = e
+	}
+
+	(*edgeToP) = edgeTo
+	(*edgeCapP) = edgeCap
+	(*edgeRevP) = edgeRev
+	(*headEdgeP) = headEdge
+	(*nextEdgeP) = nextEdge
+}
+
+/*
+	bfs_augment_sparse: the same Edmonds-Karp BFS augmenting step as
+	bfs_augment() above, but walking the edge-list/linked-adjacency
+	representation build_vertexsplit_sparse() builds instead of a
+	dense capacity matrix - so a node's neighbors are enumerated by
+	following its own headEdge/nextEdge chain (degree-proportional
+	work) rather than scanning an entire length-N row. `parentEdgeP'
+	receives, per visited node, the EDGE INDEX BFS reached it through
+	(not the predecessor node directly - the edge index is what
+	maxflow_sparse_query() needs to read residual capacity and, via
+	edgeRev, find the reverse edge to augment).
+*/
+real scalar bfs_augment_sparse(real colvector edgeTo, real colvector edgeCap, real colvector flow,
+		real colvector headEdge, real colvector nextEdge,
+		real scalar N, real scalar s, real scalar t,
+		pointer(real colvector) scalar parentEdgeP){
+	real colvector visited, queue, parentEdge
+	real scalar qhead, qtail, u, e, v
+
+	visited = J(N,1,0)
+	queue = J(N,1,0)
+	parentEdge = J(N,1,0)
+	qhead = 1
+	qtail = 1
+	queue[1] = s
+	visited[s] = 1
+
+	while (qhead <= qtail) {
+		u = queue[qhead]
+		qhead++
+		e = headEdge[u]
+		while (e != 0) {
+			if ((edgeCap[e] - flow[e]) > 0) {
+				v = edgeTo[e]
+				if (visited[v] == 0) {
+					visited[v] = 1
+					parentEdge[v] = e
+					if (v == t) {
+						(*parentEdgeP) = parentEdge
+						return(1)
+					}
+					qtail++
+					queue[qtail] = v
+				}
+			}
+			e = nextEdge[e]
+		}
+	}
+	(*parentEdgeP) = parentEdge
+	return(0)
+}
+
+/*
+	maxflow_sparse_query: the sparse-edge-list analogue of
+	maxflow_vertex_split_shared() - identical contract (shared base
+	topology via pointers, patches exactly the current query's own s/t
+	internal-edge capacities to `bignum' and restores them to 1
+	afterward, resets only the flow array between queries), computing
+	the same vertex-split max-flow value via the same Edmonds-Karp
+	augmenting-path loop, just walking edge lists instead of matrix
+	rows/columns.
+*/
+real scalar maxflow_sparse_query(pointer(real colvector) scalar edgeToP,
+		pointer(real colvector) scalar edgeCapP,
+		pointer(real colvector) scalar edgeRevP,
+		pointer(real colvector) scalar headEdgeP,
+		pointer(real colvector) scalar nextEdgeP,
+		real scalar n, real scalar bignum, real scalar s, real scalar t){
+	real scalar N, maxf, pathflow, pf, v, e, erev
+	real colvector flow, parentEdge
+
+	N = 2*n
+	(*edgeCapP)[2*s-1] = bignum
+	(*edgeCapP)[2*t-1] = bignum
+
+	flow = J(rows(*edgeToP), 1, 0)
+	maxf = 0
+	while (bfs_augment_sparse(*edgeToP, *edgeCapP, flow, *headEdgeP, *nextEdgeP, N, n+s, t, &parentEdge)) {
+		pathflow = bignum
+		v = t
+		while (v != n+s) {
+			e = parentEdge[v]
+			pf = (*edgeCapP)[e] - flow[e]
+			if (pf < pathflow) pathflow = pf
+			v = (*edgeToP)[(*edgeRevP)[e]]
+		}
+		v = t
+		while (v != n+s) {
+			e = parentEdge[v]
+			erev = (*edgeRevP)[e]
+			flow[e] = flow[e] + pathflow
+			flow[erev] = flow[erev] - pathflow
+			v = (*edgeToP)[erev]
+		}
+		maxf = maxf + pathflow
+	}
+
+	(*edgeCapP)[2*s-1] = 1
+	(*edgeCapP)[2*t-1] = 1
+	return(maxf)
+}
+
+/*
+	build_vertexsplit_sparse_edges: identical construction to
+	build_vertexsplit_sparse() above, but taking an already-sparse
+	symmetric edge list (eu, ev - each undirected tie listed once in
+	each direction, the same convention edgelist() uses elsewhere in
+	this file) directly, instead of scanning a dense adjacency matrix
+	to discover one. Exists so KComponentsEdges() below (its own header
+	comment explains why) never has to touch a dense n-by-n matrix at
+	all, at any recursion level - not even the single vectorized
+	vec()/selectindex() scan build_vertexsplit_sparse() still needs.
+*/
+void build_vertexsplit_sparse_edges(real scalar n, real colvector eu, real colvector ev, real scalar bignum,
+		pointer(real colvector) scalar edgeToP,
+		pointer(real colvector) scalar edgeCapP,
+		pointer(real colvector) scalar edgeRevP,
+		pointer(real colvector) scalar headEdgeP,
+		pointer(real colvector) scalar nextEdgeP){
+	real scalar N, m, e, u
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+
+	N = 2 * n
+	m = rows(eu)
+
+	edgeTo = J(2*(n+m), 1, 0)
+	edgeCap = J(2*(n+m), 1, 0)
+	edgeRev = J(2*(n+m), 1, 0)
+	headEdge = J(N, 1, 0)
+	nextEdge = J(2*(n+m), 1, 0)
+
+	e = 0
+	for (u=1; u<=n; u++) {
+		e++
+		edgeTo[e] = n+u
+		edgeCap[e] = 1
+		edgeRev[e] = e+1
+		nextEdge[e] = headEdge[u]
+		headEdge[u] = e
+
+		e++
+		edgeTo[e] = u
+		edgeCap[e] = 0
+		edgeRev[e] = e-1
+		nextEdge[e] = headEdge[n+u]
+		headEdge[n+u] = e
+	}
+
+	for (u=1; u<=m; u++) {
+		e++
+		edgeTo[e] = ev[u]
+		edgeCap[e] = bignum
+		edgeRev[e] = e+1
+		nextEdge[e] = headEdge[n+eu[u]]
+		headEdge[n+eu[u]] = e
+
+		e++
+		edgeTo[e] = n+eu[u]
+		edgeCap[e] = 0
+		edgeRev[e] = e-1
+		nextEdge[e] = headEdge[ev[u]]
+		headEdge[ev[u]] = e
+	}
+
+	(*edgeToP) = edgeTo
+	(*edgeCapP) = edgeCap
+	(*edgeRevP) = edgeRev
+	(*headEdgeP) = headEdge
+	(*nextEdgeP) = nextEdge
+}
+
+/*
+	fast_min_cut_search_edges: the edge-list-native equivalent of
+	fast_min_cut_search() above - identical Esfahanian & Hakimi (1984)
+	driver logic (see that function's own header comment for the full
+	algorithm explanation), but adjacency checks ("is v0 tied to i?",
+	"are two of v0's own neighbors tied to each other?") go through a
+	CSR (rowptr/colidx) built once from the edge list, or a boolean
+	marker array over v0's own neighbor set, instead of dense matrix
+	cell lookups - so this function never touches an n-by-n structure
+	anywhere, at any point. Exists for KComponentsEdges() below: a
+	subgraph whose vertex connectivity is being checked at recursion
+	depth d only needs O(edges in that subgraph) work here, not
+	O(n_d^2), which matters because a graph needing many sequential
+	small cuts before its "remaining" portion stabilizes pays this
+	function's own cost once per cut - confirmed directly (see
+	KComponentsEdges()'s own header comment) that this repeated
+	near-full-size O(n^2) cost, not the max-flow work itself, was the
+	dominant remaining reason a benchmark network took 79.9 seconds at
+	n=5,000 even after this same unit's sparse max-flow fix.
+*/
+real rowvector fast_min_cut_search_edges(real scalar n, real colvector eu, real colvector ev, | real scalar target){
+	real scalar m, i, j, v0, delta, f, minflow, best_s, best_t, bignum, e, has_target
+	real colvector deg, rowptr, colidx, cursor
+	real rowvector neighbors_v0, isNbrJ
+	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+
+	// BUGFIX (this unit): step (2) below - "v0 to every vertex it is
+	// NOT adjacent to" - is genuinely O(n-1-delta) queries, not O(delta)
+	// as this function's own header comment (inherited unmodified from
+	// harmonisation unit 102) claims. That claim was never actually
+	// wrong for the *specific* benchmark graphs unit 102 tested (delta
+	// happened to be close to n there), but is wrong in general: a
+	// vertex of degree 1 has essentially n-2 non-neighbors, all of
+	// which get queried. Confirmed as the real remaining bottleneck
+	// behind KComponentsEdges() taking 70+ seconds per recursion level
+	// on a benchmark network with a near-isolated minimum-degree node -
+	// direct per-call instrumentation showed ~5,000 max-flow queries in
+	// a single fast_min_cut_search_edges() call, not the expected O(1)
+	// handful. KComponentsEdges() (its only caller that matters for
+	// this fix) only ever needs to know whether connectivity is below
+	// its OWN fixed target k - not the exact global minimum - and only
+	// needs SOME (s,t) pair achieving a cut below k, not the smallest
+	// one. `target', when supplied, lets the search stop the instant
+	// any query returns a flow strictly less than it: correctness for
+	// KComponentsEdges()'s own purposes is unaffected (any cut < k
+	// proves conn < k and gives it a valid cutset to remove), while
+	// vertex_connectivity()/every other existing caller keeps getting
+	// the exact global minimum by simply not passing `target' at all.
+	has_target = (args() == 4)
+	m = rows(eu)
+	deg = J(n,1,0)
+	for (e=1; e<=m; e++) deg[eu[e]] = deg[eu[e]] + 1
+
+	delta = min(deg)
+	v0 = 1
+	for (i=1; i<=n; i++) {
+		if (deg[i] == delta) {
+			v0 = i
+			i = n + 1
+		}
+	}
+
+	minflow = delta
+	best_s = 0
+	best_t = 0
+
+	// CSR of the local subgraph, built once, O(n+m) - used only for
+	// adjacency checks below, never for the max-flow itself (that
+	// still goes through the edge-list vertex-split representation,
+	// same as fast_min_cut_search()).
+	rowptr = J(n+1,1,0)
+	for (i=1; i<=n; i++) rowptr[i+1] = rowptr[i] + deg[i]
+	cursor = rowptr[1::n]
+	colidx = J(m,1,0)
+	for (e=1; e<=m; e++) {
+		colidx[cursor[eu[e]]+1] = ev[e]
+		cursor[eu[e]] = cursor[eu[e]] + 1
+	}
+
+	bignum = n + 10
+	edgeToP = &edgeTo
+	edgeCapP = &edgeCap
+	edgeRevP = &edgeRev
+	headEdgeP = &headEdge
+	nextEdgeP = &nextEdge
+	build_vertexsplit_sparse_edges(n, eu, ev, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
+
+	// v0's own neighbor set and a marker array for O(1) "is i tied to
+	// v0?" checks. BUGFIX: Mata's a::b range operator produces a
+	// DESCENDING sequence when a>b (confirmed directly: "6::5" is
+	// (6,5), not empty) rather than an empty range - v0 is the
+	// MINIMUM-degree vertex, so deg[v0] can genuinely be 0 (an
+	// isolated node), making rowptr[v0]+1 > rowptr[v0+1] and silently
+	// pulling two bogus colidx entries into neighbors_v0 instead of
+	// correctly finding none, without this guard.
+	if (rowptr[v0]+1 <= rowptr[v0+1]) neighbors_v0 = colidx[(rowptr[v0]+1)::rowptr[v0+1]]'
+	else neighbors_v0 = J(1,0,0)
+	isNbrJ = J(1, n, 0)
+	if (cols(neighbors_v0) > 0) isNbrJ[neighbors_v0] = J(1, cols(neighbors_v0), 1)
+
+	// (2) v0 to every vertex it is NOT adjacent to. Early-exit (see
+	// this function's own header comment): once minflow is already
+	// strictly below `target', nothing this search could still find
+	// matters to KComponentsEdges() - it already knows conn < k and
+	// already has a valid (s,t) cutting pair.
+	for (i=1; i<=n & !(has_target & minflow < target); i++) {
+		if (i != v0 & isNbrJ[i] == 0) {
+			f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i)
+			if (f < minflow) {
+				minflow = f
+				best_s = v0
+				best_t = i
+			}
+		}
+	}
+
+	// (3) every non-adjacent pair among v0's own neighbors - a fresh
+	// marker array per neighbor_i (sized n but only ever populated
+	// with that node's own degree-many entries, so the O(n) J()
+	// allocation is the only per-i cost beyond the O(degree) fill).
+	for (i=1; i<=cols(neighbors_v0) & !(has_target & minflow < target); i++) {
+		isNbrJ = J(1, n, 0)
+		isNbrJ[colidx[(rowptr[neighbors_v0[i]]+1)::rowptr[neighbors_v0[i]+1]]'] = J(1, deg[neighbors_v0[i]], 1)
+		for (j=i+1; j<=cols(neighbors_v0) & !(has_target & minflow < target); j++) {
+			if (isNbrJ[neighbors_v0[j]] == 0) {
+				f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j])
+				if (f < minflow) {
+					minflow = f
+					best_s = neighbors_v0[i]
+					best_t = neighbors_v0[j]
+				}
+			}
+		}
+	}
+
+	return((minflow, best_s, best_t))
+}
+
+/*
+	min_vertex_cutset_edges_given: the edge-list-native equivalent of
+	min_vertex_cutset_given() above - same construction (re-run max-flow
+	on the winning pair, keeping its final flow state; BFS the residual
+	graph from s_out; a node whose v_in is reachable but v_out is not is
+	a cutset member), just sourced from an edge list instead of a dense
+	matrix, and using a CSR for the "plain degree bound, no max-flow
+	needed" branch's own neighbor-set lookup.
+*/
+real rowvector min_vertex_cutset_edges_given(real scalar n, real colvector eu, real colvector ev, real rowvector search){
+	real scalar N, bignum, v, i, minflow, best_s, best_t, v0, delta, e, m
+	real rowvector cutset, degrees
+	real colvector visited, queue, cutset_col, deg, rowptr, colidx, cursor
+	real scalar qhead, qtail
+	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+	real colvector flow, parentEdge
+	real scalar pathflow, pf, erev
+
+	minflow = search[1]
+	best_s = search[2]
+	best_t = search[3]
+
+	if (best_s == 0) {
+		if (minflow == 0) return(J(1,0,0))
+		m = rows(eu)
+		degrees = J(1, n, 0)
+		for (e=1; e<=m; e++) degrees[eu[e]] = degrees[eu[e]] + 1
+		delta = min(degrees)
+		v0 = 1
+		for (i=1; i<=n; i++) {
+			if (degrees[i] == delta) {
+				v0 = i
+				i = n + 1
+			}
+		}
+		return(select(ev', eu' :== v0))
+	}
+
+	N = 2*n
+	bignum = n + 10
+	edgeToP = &edgeTo
+	edgeCapP = &edgeCap
+	edgeRevP = &edgeRev
+	headEdgeP = &headEdge
+	nextEdgeP = &nextEdge
+	build_vertexsplit_sparse_edges(n, eu, ev, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
+	edgeCap[2*best_s-1] = bignum
+	edgeCap[2*best_t-1] = bignum
+
+	flow = J(rows(edgeTo), 1, 0)
+	while (bfs_augment_sparse(edgeTo, edgeCap, flow, headEdge, nextEdge, N, n+best_s, best_t, &parentEdge)) {
+		pathflow = bignum
+		v = best_t
+		while (v != n+best_s) {
+			e = parentEdge[v]
+			pf = edgeCap[e] - flow[e]
+			if (pf < pathflow) pathflow = pf
+			v = edgeTo[edgeRev[e]]
+		}
+		v = best_t
+		while (v != n+best_s) {
+			e = parentEdge[v]
+			erev = edgeRev[e]
+			flow[e] = flow[e] + pathflow
+			flow[erev] = flow[erev] - pathflow
+			v = edgeTo[erev]
+		}
+	}
+
+	visited = J(N,1,0)
+	queue = J(N,1,0)
+	qhead = 1
+	qtail = 1
+	queue[1] = n+best_s
+	visited[n+best_s] = 1
+	while (qhead <= qtail) {
+		v = queue[qhead]
+		qhead++
+		e = headEdge[v]
+		while (e != 0) {
+			if ((edgeCap[e]-flow[e])>0 & visited[edgeTo[e]]==0) {
+				visited[edgeTo[e]] = 1
+				qtail++
+				queue[qtail] = edgeTo[e]
+			}
+			e = nextEdge[e]
+		}
+	}
+
+	cutset_col = J(0,1,0)
+	for (i=1; i<=n; i++) {
+		if (i==best_s | i==best_t) continue
+		if (visited[i]==1 & visited[n+i]==0) cutset_col = (cutset_col \ i)
+	}
+	return(cutset_col')
+}
+
+/*
 	maxflow_vertex_split(adj, s, t): the *vertex* (node) version of
 	max-flow/min-cut, via the standard node-splitting reduction to
 	ordinary edge-capacity max-flow (Even 1979): every node v becomes
@@ -1535,8 +2059,8 @@ real scalar maxflow_vertex_split_shared(pointer(real matrix) scalar capptr, real
 real rowvector fast_min_cut_search(real matrix adj){
 	real scalar n, i, j, v0, delta, f, minflow, best_s, best_t, bignum
 	real rowvector degrees, neighbors_v0
-	real matrix basecap
-	pointer(real matrix) scalar capptr
+	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
 
 	n = rows(adj)
 	degrees = J(1, n, 0)
@@ -1556,21 +2080,35 @@ real rowvector fast_min_cut_search(real matrix adj){
 	best_s = 0
 	best_t = 0
 
-	// Built once and reused across every one of this function's own
-	// O(delta^2) max-flow queries below, instead of maxflow_vertex_
-	// split() rebuilding the same O(n^2) base matrix from `adj' on
-	// every single call - see maxflow_vertex_split_shared()'s own
-	// header comment for why this matters (the dominant remaining
-	// cost behind nwkcomponents still being slow at n=1000, even
-	// after every other fix in this same harmonisation unit).
+	// PERFORMANCE FIX (this unit): was built once as a dense (2n)x(2n)
+	// base capacity matrix (build_vertexsplit_basecap()) and shared via
+	// a pointer across all of this function's own O(delta^2) queries -
+	// a real win over rebuilding it from scratch every query (see
+	// maxflow_vertex_split_shared()'s own header comment, one unit
+	// ago), but each of those O(delta^2) queries still did O(n^2) work
+	// internally against that dense matrix - confirmed as the reason
+	// nwkcomponents/nwcohesion still did not complete at n=10,000
+	// (28GB+/9.5GB+ RAM observed directly before being killed).
+	// build_vertexsplit_sparse()/maxflow_sparse_query() below are the
+	// sparse-edge-list equivalent of the exact same "build once, share
+	// via pointers, patch 2 cells per query" pattern - see their own
+	// header comments. Verified byte-for-byte identical flow values
+	// against the dense build_vertexsplit_basecap()/maxflow_vertex_
+	// split_shared() pair (still kept, unmodified, as
+	// cscripts/test_vertex_connectivity.do's own reference oracle)
+	// across hundreds of random graphs before trusting this rewire.
 	bignum = n + 10
-	basecap = build_vertexsplit_basecap(adj, bignum)
-	capptr = &basecap
+	edgeToP = &edgeTo
+	edgeCapP = &edgeCap
+	edgeRevP = &edgeRev
+	headEdgeP = &headEdge
+	nextEdgeP = &nextEdge
+	build_vertexsplit_sparse(adj, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
 
 	// (2) v0 to every vertex it is NOT adjacent to
 	for (i=1; i<=n; i++) {
 		if (i != v0 & adj[v0,i] == 0) {
-			f = maxflow_vertex_split_shared(capptr, n, bignum, v0, i)
+			f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i)
 			if (f < minflow) {
 				minflow = f
 				best_s = v0
@@ -1584,7 +2122,7 @@ real rowvector fast_min_cut_search(real matrix adj){
 	for (i=1; i<=cols(neighbors_v0); i++) {
 		for (j=i+1; j<=cols(neighbors_v0); j++) {
 			if (adj[neighbors_v0[i], neighbors_v0[j]] == 0) {
-				f = maxflow_vertex_split_shared(capptr, n, bignum, neighbors_v0[i], neighbors_v0[j])
+				f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j])
 				if (f < minflow) {
 					minflow = f
 					best_s = neighbors_v0[i]
@@ -1636,16 +2174,42 @@ real scalar vertex_connectivity(real matrix adj){
 	the recursion stops without needing to cut anything).
 */
 real rowvector min_vertex_cutset(real matrix adj){
-	real scalar n, N, bignum, u, v, i, minflow, best_s, best_t, v0, delta
-	real matrix cap, flow
-	real rowvector parent, visited, queue, cutset, search, degrees
-	real scalar qhead, qtail, pathflow, pf
-
-	n = rows(adj)
 	// BUGFIX: used to re-run its own O(n^2) all-non-adjacent-pairs
 	// search identical to vertex_connectivity()'s own former one -
 	// same fix, see fast_min_cut_search()'s own header comment.
-	search = fast_min_cut_search(adj)
+	return(min_vertex_cutset_given(adj, fast_min_cut_search(adj)))
+}
+
+/*
+	min_vertex_cutset_given(adj, search): the actual work of
+	min_vertex_cutset() above, taking an already-computed
+	fast_min_cut_search() result instead of running its own - added
+	this unit so KComponents() (below) can call fast_min_cut_search()
+	exactly ONCE per recursion level (it already needs the result for
+	vertex_connectivity()'s own check) instead of running it a SECOND
+	time from scratch just to extract the cutset, whenever a cut turns
+	out to be needed. Each fast_min_cut_search() call pays an
+	unavoidable O(n^2) scan of the dense `adj' it's given (see that
+	function's own header comment) to build its sparse edge
+	representation, so skipping the redundant second call roughly
+	halves that per-level cost - confirmed as worth doing directly: a
+	10,000-node benchmark run was still taking several minutes even
+	after this same unit's sparse max-flow fix, well past what the
+	max-flow work alone would explain, before this and the
+	component-splitting BFS fix (KComponents()'s own comment below)
+	were also applied.
+*/
+real rowvector min_vertex_cutset_given(real matrix adj, real rowvector search){
+	real scalar n, N, bignum, v, i, minflow, best_s, best_t, v0, delta, e
+	real rowvector cutset, degrees
+	real colvector visited, queue, cutset_col
+	real scalar qhead, qtail
+	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
+	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+	real colvector flow, parentEdge
+	real scalar pathflow, pf, erev
+
+	n = rows(adj)
 	minflow = search[1]
 	best_s = search[2]
 	best_t = search[3]
@@ -1677,65 +2241,288 @@ real rowvector min_vertex_cutset(real matrix adj){
 		return(selectindex(adj[v0,.] :!= 0))
 	}
 
-	// re-run max-flow on the winning pair, keeping its final flow
+	// PERFORMANCE FIX (this unit): re-runs max-flow on the winning pair
+	// using the same sparse edge-list representation fast_min_cut_
+	// search() now uses, instead of rebuilding a dense (2n)x(2n)
+	// capacity matrix - see build_vertexsplit_sparse()/maxflow_sparse_
+	// query()'s own header comments. maxflow_sparse_query() itself
+	// resets its OWN internal flow array to 0 and restores its two
+	// patched capacity cells before returning, so its own flow state
+	// cannot be reused for cutset extraction here - the augmenting-
+	// path loop is therefore inlined directly against the SAME shared
+	// edge arrays instead, keeping this function's own `flow' array
+	// alive afterward for the residual-reachability BFS below (the
+	// same "keep the final flow state" need the original dense version
+	// had for exactly the same reason).
 	N = 2*n
 	bignum = n + 10
-	cap = J(N, N, 0)
-	for (i=1; i<=n; i++) {
-		if (i==best_s | i==best_t) cap[i, n+i] = bignum
-		else cap[i, n+i] = 1
-	}
-	for (u=1; u<=n; u++) {
-		for (v=1; v<=n; v++) {
-			if (u != v & adj[u,v] != 0) cap[n+u, v] = bignum
-		}
-	}
-	flow = J(N, N, 0)
-	while (bfs_augment(cap, flow, n+best_s, best_t, parent)) {
+	edgeToP = &edgeTo
+	edgeCapP = &edgeCap
+	edgeRevP = &edgeRev
+	headEdgeP = &headEdge
+	nextEdgeP = &nextEdge
+	build_vertexsplit_sparse(adj, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
+	edgeCap[2*best_s-1] = bignum
+	edgeCap[2*best_t-1] = bignum
+
+	flow = J(rows(edgeTo), 1, 0)
+	while (bfs_augment_sparse(edgeTo, edgeCap, flow, headEdge, nextEdge, N, n+best_s, best_t, &parentEdge)) {
 		pathflow = bignum
 		v = best_t
 		while (v != n+best_s) {
-			u = parent[v]
-			pf = cap[u,v] - flow[u,v]
+			e = parentEdge[v]
+			pf = edgeCap[e] - flow[e]
 			if (pf < pathflow) pathflow = pf
-			v = u
+			v = edgeTo[edgeRev[e]]
 		}
 		v = best_t
 		while (v != n+best_s) {
-			u = parent[v]
-			flow[u,v] = flow[u,v] + pathflow
-			flow[v,u] = flow[v,u] - pathflow
-			v = u
+			e = parentEdge[v]
+			erev = edgeRev[e]
+			flow[e] = flow[e] + pathflow
+			flow[erev] = flow[erev] - pathflow
+			v = edgeTo[erev]
 		}
 	}
 
-	// BFS the residual graph from best_s's own "out" node
-	visited = J(1,N,0)
-	queue = J(1,N,0)
+	// BFS the residual graph from best_s's own "out" node, following
+	// edge lists instead of scanning a dense row per dequeued node.
+	visited = J(N,1,0)
+	queue = J(N,1,0)
 	qhead = 1
 	qtail = 1
 	queue[1] = n+best_s
 	visited[n+best_s] = 1
 	while (qhead <= qtail) {
-		u = queue[qhead]
+		v = queue[qhead]
 		qhead++
-		for (v=1; v<=N; v++) {
-			if (visited[v]==0 & (cap[u,v]-flow[u,v])>0) {
-				visited[v] = 1
+		e = headEdge[v]
+		while (e != 0) {
+			if ((edgeCap[e]-flow[e])>0 & visited[edgeTo[e]]==0) {
+				visited[edgeTo[e]] = 1
 				qtail++
-				queue[qtail] = v
+				queue[qtail] = edgeTo[e]
+			}
+			e = nextEdge[e]
+		}
+	}
+
+	cutset_col = J(0,1,0)
+	for (i=1; i<=n; i++) {
+		if (i==best_s | i==best_t) continue
+		if (visited[i]==1 & visited[n+i]==0) cutset_col = (cutset_col \ i)
+	}
+	cutset = cutset_col'
+	return(cutset)
+}
+
+/*
+	build_edgelist_csr_dense(adj, euP, evP, rowptrP, colidxP):
+	one-time O(n^2) extraction of both representations KComponentsEdges()
+	needs from a dense adjacency matrix - a symmetric edge list (eu, ev,
+	the same convention build_vertexsplit_sparse() derives internally)
+	and a CSR (rowptr, colidx) of the same graph, built directly from
+	that edge list rather than re-scanning `adj' a second time.
+	Named this short (not build_edgelist_and_csr_from_dense, the first
+	choice) after hitting a previously-undocumented Mata constraint the
+	hard way: identifiers are capped at 32 characters - a 33-character
+	name compiles with "'<name>' found where name expected" at its own
+	definition, with no indication length is the problem (confirmed by
+	bisecting down to a minimal repro: identical code, only the name
+	changed, 32 chars compiles clean and 33 fails identically).
+*/
+void build_edgelist_csr_dense(real matrix adj,
+		pointer(real colvector) scalar euP, pointer(real colvector) scalar evP,
+		pointer(real colvector) scalar rowptrP, pointer(real colvector) scalar colidxP){
+	real scalar n, m, i, e
+	real matrix tempadj
+	real colvector nzidx, eu, ev, deg, rowptr, colidx, cursor
+
+	n = rows(adj)
+	tempadj = adj
+	_diag(tempadj, 0)
+	nzidx = selectindex(vec(tempadj) :!= 0)
+	m = rows(nzidx)
+	if (m > 0) {
+		eu = mod(nzidx :- 1, n) :+ 1
+		ev = floor((nzidx :- 1) :/ n) :+ 1
+	}
+	else {
+		eu = J(0,1,0)
+		ev = J(0,1,0)
+	}
+
+	deg = J(n,1,0)
+	for (e=1; e<=m; e++) deg[eu[e]] = deg[eu[e]] + 1
+	rowptr = J(n+1,1,0)
+	for (i=1; i<=n; i++) rowptr[i+1] = rowptr[i] + deg[i]
+	cursor = rowptr[1::n]
+	colidx = J(m,1,0)
+	for (e=1; e<=m; e++) {
+		colidx[cursor[eu[e]]+1] = ev[e]
+		cursor[eu[e]] = cursor[eu[e]] + 1
+	}
+
+	(*euP) = eu
+	(*evP) = ev
+	(*rowptrP) = rowptr
+	(*colidxP) = colidx
+}
+
+/*
+	csr_neighbors(rowptr, colidx, u): u's neighbor list from a CSR,
+	guarding against Mata's a::b range operator returning a DESCENDING
+	sequence (not empty) when a>b - see fast_min_cut_search_edges()'s
+	own header/inline comment for the direct confirmation ("6::5" is
+	(6,5)) and why a degree-0 node makes this guard necessary.
+*/
+real rowvector csr_neighbors(real colvector rowptr, real colvector colidx, real scalar u){
+	if (rowptr[u]+1 <= rowptr[u+1]) return(colidx[(rowptr[u]+1)::rowptr[u+1]]')
+	return(J(1,0,0))
+}
+
+/*
+	KComponentsEdges(nfull, eu, ev, rowptr, colidx, nodeset, k): the
+	edge-list/CSR-native equivalent of KComponents() above - identical
+	algorithm (see that function's own header comment for the full
+	explanation of the recursive cut-and-recurse decomposition), but
+	every step here costs time proportional to the CURRENT node set's
+	own edges, never O(n_level^2). `eu'/`ev'/`rowptr'/`colidx' describe
+	the ORIGINAL full graph (node IDs 1..nfull) and are identical at
+	every recursion depth - only `nodeset' changes.
+*/
+real matrix KComponentsEdges(real scalar nfull, real colvector eu, real colvector ev,
+		real colvector rowptr, real colvector colidx,
+		real rowvector nodeset, real scalar k){
+	real matrix results, childresults
+	real rowvector idx, cutset, cutset_orig, remaining, comp_of, newnodeset
+	real rowvector queue, remainingInd, candidates, search, inIdx, localMap, nbrs_u
+	real scalar n, conn, i, c, ncomp, is_cut, node0, u, w, nc, m
+	real scalar qhead, qtail
+	real colvector eu_local, ev_local, keep
+
+	n = cols(nodeset)
+	idx = selectindex(nodeset)
+	results = J(0, n, 0)
+
+	if (length(idx) < k+1) {
+		return(results)
+	}
+
+	// Filter the ORIGINAL edge list down to just this level's own node
+	// set, renumbered to a local 1..|idx| index space -
+	// O(m_full) (m_full = the ORIGINAL graph's total edge count, fixed
+	// for the whole recursion), not O(n_level^2).
+	inIdx = J(1, nfull, 0)
+	inIdx[idx] = J(1, cols(idx), 1)
+	localMap = J(1, nfull, 0)
+	localMap[idx] = (1::cols(idx))'
+
+	m = rows(eu)
+	if (m > 0) keep = selectindex(inIdx[eu]' :& inIdx[ev]')
+	else keep = J(0,1,0)
+	if (rows(keep) > 0) {
+		eu_local = localMap[eu[keep]]'
+		ev_local = localMap[ev[keep]]'
+	}
+	else {
+		eu_local = J(0,1,0)
+		ev_local = J(0,1,0)
+	}
+
+	// vertex_connectivity(sub)'s own n<=1 short-circuit is reproduced
+	// implicitly: fast_min_cut_search_edges() itself already returns
+	// (0,0,0) for a 1-node input with no non-adjacent-pair loop ever
+	// executing (same behavior as fast_min_cut_search(), verified
+	// directly).
+	// PERFORMANCE FIX (this unit): passes `k' as fast_min_cut_search_
+	// edges()'s own early-exit target - KComponentsEdges() only needs
+	// to know whether conn is below its OWN fixed target k, not the
+	// exact global minimum, and only needs SOME sub-k cutting pair, not
+	// the smallest one (see that function's own header comment for the
+	// full explanation and the measured cause: a near-isolated node's
+	// "every non-neighbor" scan is O(n), not O(delta), and was
+	// confirmed directly as the actual 70+-second-per-level cost this
+	// fixes). The "conn >= k, whole set qualifies" branch just below is
+	// completely unaffected - the early exit only ever fires once
+	// minflow is already known to be below k, which cannot happen on a
+	// branch that reports conn >= k.
+	search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
+	conn = search[1]
+	if (conn >= k) {
+		results = nodeset
+		return(results)
+	}
+
+	// min_vertex_cutset_edges_given() is guaranteed to return a
+	// genuinely non-empty cutset at this point - same short, exact
+	// argument as KComponents()'s own (now-removed) inline comment
+	// made for the dense version: reaching this line already proves
+	// `conn < k' on a node set with `length(idx) >= k+1', which rules
+	// out `sub' being complete (a complete s-node graph has
+	// connectivity s-1, and s-1<k together with s>=k+1 is impossible),
+	// so a non-adjacent pair always exists for it to search over.
+	cutset = min_vertex_cutset_edges_given(cols(idx), eu_local, ev_local, search)
+	cutset_orig = J(1,0,0)
+	for (i=1; i<=cols(cutset); i++) {
+		cutset_orig = (cutset_orig, idx[cutset[i]])
+	}
+
+	remaining = J(1,0,0)
+	for (i=1; i<=cols(idx); i++) {
+		is_cut = 0
+		for (c=1; c<=cols(cutset_orig); c++) {
+			if (idx[i]==cutset_orig[c]) is_cut = 1
+		}
+		if (is_cut==0) remaining = (remaining, idx[i])
+	}
+
+	// Connected components of "remaining", walking the ORIGINAL
+	// graph's own CSR (O(degree(u)) per dequeued node) instead of a
+	// dense row - remainingInd/comp_of are indexed by ORIGINAL node ID
+	// (0..nfull), matching the CSR's own numbering directly.
+	remainingInd = J(1, n, 0)
+	if (cols(remaining) > 0) remainingInd[remaining] = J(1, cols(remaining), 1)
+
+	comp_of = J(1, n, 0)
+	ncomp = 0
+	for (i=1; i<=cols(remaining); i++) {
+		node0 = remaining[i]
+		if (comp_of[node0] != 0) continue
+		ncomp++
+		queue = J(1, cols(remaining), 0)
+		qhead = 1
+		qtail = 1
+		queue[1] = node0
+		comp_of[node0] = ncomp
+		while (qhead <= qtail) {
+			u = queue[qhead]
+			qhead++
+			nbrs_u = csr_neighbors(rowptr, colidx, u)
+			candidates = select(nbrs_u, remainingInd[nbrs_u] :& (comp_of[nbrs_u] :== 0))
+			nc = cols(candidates)
+			for (c=1; c<=nc; c++) {
+				w = candidates[c]
+				comp_of[w] = ncomp
+				qtail++
+				queue[qtail] = w
 			}
 		}
 	}
 
-	cutset = J(1,0,0)
-	for (i=1; i<=n; i++) {
-		if (i==best_s | i==best_t) continue
-		if (visited[i]==1 & visited[n+i]==0) cutset = (cutset, i)
+	for (c=1; c<=ncomp; c++) {
+		newnodeset = J(1, n, 0)
+		for (i=1; i<=n; i++) {
+			if (comp_of[i]==c) newnodeset[i] = 1
+		}
+		for (i=1; i<=cols(cutset_orig); i++) {
+			newnodeset[cutset_orig[i]] = 1
+		}
+		childresults = KComponentsEdges(nfull, eu, ev, rowptr, colidx, newnodeset, k)
+		results = results \ childresults
 	}
-	return(cutset)
+	return(results)
 }
-
 /*
 	KComponents(origadj, nodeset, k): the recursive vertex-connectivity
 	decomposition underlying both k-components (Kanevsky 1993) and, in
@@ -1770,107 +2557,29 @@ real rowvector min_vertex_cutset(real matrix adj){
 	set that small could ever reach a target of k).
 */
 real matrix KComponents(real matrix origadj, real rowvector nodeset, real scalar k){
-	real matrix results, sub, childresults
-	real rowvector idx, cutset, cutset_orig, remaining, comp_of, newnodeset
-	real rowvector queue
-	real scalar n, conn, i, c, ncomp, is_cut, node0, u, w, w_in_remaining
-	real scalar qhead, qtail
+	real scalar nfull
+	real colvector eu, ev, rowptr, colidx
 
-	n = cols(nodeset)
-	idx = selectindex(nodeset)
-	results = J(0, n, 0)
-
-	if (length(idx) < k+1) {
-		return(results)
-	}
-
-	sub = origadj[idx, idx]
-	conn = vertex_connectivity(sub)
-	if (conn >= k) {
-		results = nodeset
-		return(results)
-	}
-
-	// min_vertex_cutset() is guaranteed to return a genuinely non-empty
-	// cutset at this point, never the "no non-adjacent pair exists"
-	// empty case its own header comment describes - which matters,
-	// since an empty cutset here would make `remaining' below equal
-	// `idx' unchanged and recurse right back into this exact same
-	// (origadj, nodeset, k) call forever. The size guard just above
-	// (length(idx) < k+1) rules this out by a short, exact argument:
-	// min_vertex_cutset() only returns empty when its own input is a
-	// COMPLETE graph (every pair already adjacent - no non-adjacent
-	// pair for it to search over at all), and vertex_connectivity()
-	// gives a complete s-node graph connectivity exactly s-1 by
-	// definition. Having reached this line at all means conn < k, i.e.
-	// (if `sub' were complete) s-1 < k, i.e. s < k+1 - but the size
-	// guard already rejected any node set with length(idx) < k+1
-	// before ever computing `conn' in the first place. So any `sub'
-	// that is both complete AND passes the size guard would have to
-	// satisfy both s >= k+1 and s-1 < k (s < k+1) simultaneously -
-	// impossible. Reaching this line therefore proves `sub' is not
-	// complete, so a non-adjacent pair exists for min_vertex_cutset()
-	// to search over, so it cannot return empty.
-	cutset = min_vertex_cutset(sub)
-	cutset_orig = J(1,0,0)
-	for (i=1; i<=cols(cutset); i++) {
-		cutset_orig = (cutset_orig, idx[cutset[i]])
-	}
-
-	remaining = J(1,0,0)
-	for (i=1; i<=cols(idx); i++) {
-		is_cut = 0
-		for (c=1; c<=cols(cutset_orig); c++) {
-			if (idx[i]==cutset_orig[c]) is_cut = 1
-		}
-		if (is_cut==0) remaining = (remaining, idx[i])
-	}
-
-	// connected components of the "remaining" nodes, via BFS restricted
-	// to that set (plain BFS on origadj, but only ever stepping into
-	// nodes that are themselves members of "remaining")
-	comp_of = J(1, n, 0)
-	ncomp = 0
-	for (i=1; i<=cols(remaining); i++) {
-		node0 = remaining[i]
-		if (comp_of[node0] != 0) continue
-		ncomp++
-		queue = J(1, cols(remaining), 0)
-		qhead = 1
-		qtail = 1
-		queue[1] = node0
-		comp_of[node0] = ncomp
-		while (qhead <= qtail) {
-			u = queue[qhead]
-			qhead++
-			for (w=1; w<=n; w++) {
-				if (origadj[u,w] != 0) {
-					w_in_remaining = 0
-					for (c=1; c<=cols(remaining); c++) {
-						if (remaining[c]==w) w_in_remaining = 1
-					}
-					if (w_in_remaining==1 & comp_of[w]==0) {
-						comp_of[w] = ncomp
-						qtail++
-						queue[qtail] = w
-					}
-				}
-			}
-		}
-	}
-
-	for (c=1; c<=ncomp; c++) {
-		newnodeset = J(1, n, 0)
-		for (i=1; i<=n; i++) {
-			if (comp_of[i]==c) newnodeset[i] = 1
-		}
-		for (i=1; i<=cols(cutset_orig); i++) {
-			newnodeset[cutset_orig[i]] = 1
-		}
-		childresults = KComponents(origadj, newnodeset, k)
-		results = results \ childresults
-	}
-	return(results)
+	// PERFORMANCE FIX (this unit): KComponents() is now a thin, one-time
+	// setup wrapper around KComponentsEdges() below, which does the
+	// entire recursion sparsely (never touching a dense matrix at any
+	// level). Before this fix, EVERY recursion level re-derived a fresh
+	// dense n_level-by-n_level submatrix (origadj indexed by the current
+	// node subset twice) and re-scanned it via fast_min_cut_search()'s
+	// own O(n^2) vec()/selectindex() extraction - fine for a single top-level call,
+	// but confirmed directly (a 10,000-node benchmark network) that a
+	// graph needing several SEQUENTIAL small cuts before its "remaining"
+	// portion stabilizes pays that near-full-size O(n^2) cost once per
+	// cut, compounding badly (79.9 seconds at n=5,000 for ~7 such
+	// levels, even after this same unit's earlier sparse max-flow and
+	// vectorized component-BFS fixes). Extracting the edge list AND a
+	// CSR adjacency ONCE here, up front - both O(n^2)/O(n+m)
+	// respectively, paid exactly once regardless of how many recursion
+	// levels follow - lets every level's own work scale with that
+	// level's own edge count instead.
+	nfull = cols(nodeset)
+	build_edgelist_csr_dense(origadj, &eu, &ev, &rowptr, &colidx)
+	return(KComponentsEdges(nfull, eu, ev, rowptr, colidx, nodeset, k))
 }
 
 /*
