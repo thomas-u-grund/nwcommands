@@ -123,7 +123,7 @@ Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Reg
 
 {title:Examples}
 	
-	{cmd:. webnwuse glasgow}
+	{cmd:. nwwebuse glasgow}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}
 

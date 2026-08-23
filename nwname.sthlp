@@ -52,7 +52,7 @@
 {pstd}
 This loads the Florentine data and returns various information about the {it:flobusiness} network.
 	
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwname flobusiness}
 	{cmd:. return list}
 

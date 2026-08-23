@@ -37,7 +37,7 @@ Displays results from hierarchical clustering (see {help nwhierarchy} or {help c
 		
 {title:Example}
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwhierarchy flomarriage}
 	{cmd:. nwdendrogram _clus_1}
 

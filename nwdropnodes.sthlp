@@ -65,7 +65,7 @@ which generates a new network instead and keeps the original network as it was.
 Drop the first three nodes of network {it:flomarriage} and save it as network {it:flomarriage_reduced}:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwdropnodes flomarriage, nodes(1/3) generate(flomarriage_reduced)}{p_end}
 
@@ -74,7 +74,7 @@ Drop the first three nodes of network {it:flomarriage} and save it as network {i
 Drop the nodes "medici" and "pucci":
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwdropnodes flomarriage, nodes(medici pucci)}{p_end}
 
@@ -83,7 +83,7 @@ Drop the nodes "medici" and "pucci":
 Alternatively, one can also drop nodes based on a mata matrix. This drops the first node:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. mata: k = (0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1)}{p_end}
 {pmore}
@@ -94,7 +94,7 @@ Everything this command does can also be achieved with {help nwdrop} using the {
 command also drops the first three nodes:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwdrop flomarriage if _n <= 3}{p_end}
 

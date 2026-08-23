@@ -69,7 +69,7 @@ The command mirrors {help nwdropnodes}.
 Keep the first seven nodes of network {it:flomarriage} and save it as network {it:flomarriage_reduced}:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwkeep flomarriage, nodes(1/7) generate(flomarriage_reduced)}{p_end}
 
@@ -78,7 +78,7 @@ Keep the first seven nodes of network {it:flomarriage} and save it as network {i
 Keep the nodes "medici" and "pucci":
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwkeepnodes flomarriage, nodes(medici pucci)}{p_end}
 
@@ -87,7 +87,7 @@ Keep the nodes "medici" and "pucci":
 Alternatively, one can also keep nodes based on a mata matrix. This drops the first node:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. mata: k = (0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1)}{p_end}
 {pmore}
@@ -98,7 +98,7 @@ Everything this command does can also be achieved with {help nwkeep} using the {
 command also keeps the first seven nodes:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwkeep flomarriage if _n <= 7}{p_end}
 

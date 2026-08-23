@@ -122,7 +122,7 @@ from these alters.
 
 {title:Example}
 
-{cmd:. webnwuse florentine}
+{cmd:. nwwebuse florentine}
 {cmd:. nwdissimilar flomarriage}
 
 {cmd:. nwdissimilar flomarriage, type(hamming) context(outgoing)}

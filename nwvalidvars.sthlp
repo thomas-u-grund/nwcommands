@@ -30,7 +30,7 @@ command comes up with a new suggestion for naming variables. This command is mos
 {title:Examples}
 
 	{cmd:. nwclear}
-	{cmd:. webnwuse gang}
+	{cmd:. nwwebuse gang}
 	{cmd:. nwvalidvars 10, stub(g)}
 	{cmd:. return list}
 

@@ -112,7 +112,7 @@ to have as many variables as there are networks you want to animate.
 Because nodes and networks at different points can vary, all node- and edge-level
 options are automatically invoked with the option {bf:norescale}.
 
-	{cmd:. webnwuse klas12b}, nwclear
+	{cmd:. nwwebuse klas12b}, nwclear
 	{cmd:. nwmovie _all}
 
 {pstd}

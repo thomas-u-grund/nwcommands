@@ -46,7 +46,7 @@ in the return vector. When no node with the specified label is found in network 
 
 {title:Examples}
 
-   {cmd:. webnwuse florentine}
+   {cmd:. nwwebuse florentine}
    {cmd:. _nwnodeid flomarriage, nodelab(medici)}
    
 		{txt}Network: {res}flomarriage

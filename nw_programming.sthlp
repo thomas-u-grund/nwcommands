@@ -63,7 +63,7 @@ Lastly, we bring the result, which is stored in the Mata matrix {it:indegree}, b
 {pstd}
 The program is called like this using the {help netexample:Florentine data}. It generates the Stata variable {it:myindegree_flomarriage}.
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. myindegree flomarriage, generate(myindegree_flomarriage)}	
 
 	
@@ -96,7 +96,7 @@ Afterwards, all we have to do is {help nwset} a new network using the option {bf
 {pstd}
 Now we can generate the network {it:flomarriage_inverse} as the inverse of {it:flomarriage} like this:
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. myinverse flormarriage, name(flomarriage_inverse)}
 	
 

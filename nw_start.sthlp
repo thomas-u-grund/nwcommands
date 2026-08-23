@@ -41,7 +41,7 @@ similar to how one declares data to be e.g. time-series data.
 Once networks have been imported, generated or set, one can interact with
 them by referring to their {help netname}, just as if one would interact with variables using their {help varname}. For example:
 
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 
 {pstd}	
 loads a network dataset on {help netexample##florentine:Florentine families} from the internet that includes two networks ({it:flobusiness, flomarriage}). After loading the data one can refer to these 
@@ -66,7 +66,7 @@ There are different ways to get network data into Stata.
 
 {pmore}{help nwset:1. Declare data to be network data}
 
-{pmore}{help webnwuse:2. Load network data from the internet}
+{pmore}{help nwwebuse:2. Load network data from the internet}
 
 {pmore}{help nwuse:3. Load network data one has saved before}
 
@@ -86,7 +86,7 @@ are available. Furthermore, many aspects like 1) the size, color, shape of nodes
 4) the look and feel of arrows, 5) the general layout of the network, and many other things can be changed. 
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore} 
 {cmd:. nwplot flomarriage}
 
@@ -157,7 +157,7 @@ normal Stata. One can {help nwaddnodes:add nodes to a network},
 load the Florentine data and drop two nodes:
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore} 
 {cmd:. nwdropnodes flomarriage, nodes(medici pucci)}{p_end}
 
@@ -167,7 +167,7 @@ variables. In fact, all abbreviations one is used from Stata can be used as well
 begins with "flom".
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore} 
 {cmd:. nwdrop flom*}{p_end}
 
@@ -198,7 +198,7 @@ of nodes in a network, e.g. {help nwdegree:degree centrality}, {help nwbetween:b
 Another program calculates the {help nwclustering:clustering coefficient} for each node.
 
 {pmore}
-{cmd:. webnwuse florentine, nwclear}{p_end}
+{cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore} 
 {cmd:. nwbetween flomarriage, generate(bw)}{p_end}
 
@@ -216,7 +216,7 @@ to one of the components.
 the Gang network and calculates for each node the number of network neighbors who have been to prison before:
 
 {pmore}
-{cmd:. webnwuse gang, nwclear}{p_end}
+{cmd:. nwwebuse gang, nwclear}{p_end}
 {pmore} 
 {cmd:. nwcontext gang, attribute(Prison) generate(Prison_sum) stat(sum)}{p_end}
 

@@ -92,8 +92,8 @@ rules overlap; for example, {cmd:(1/5=1) (3=2)}.
 {title:Examples}
 
 {pstd}Setup{p_end}
-{phang2}{cmd:. webnwuse gang}{p_end}
-{phang2}{cmd:. webnwuse glasgow}
+{phang2}{cmd:. nwwebuse gang}{p_end}
+{phang2}{cmd:. nwwebuse glasgow}
 
 {pstd}List the network adjacency matrix{p_end}
 {phang2}{cmd:. nwsummarize gang, mat}

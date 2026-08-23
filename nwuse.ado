@@ -91,9 +91,9 @@ program nwuse
 	// datasets that are plain .dta files rather than a genuine nwsave()
 	// restoration file (gang2/hpotter/institutions/klas12b/stockholm/
 	// usstates/example1 - see netexample.sthlp, which already advertises
-	// `webnwuse usstates`/`webnwuse klas12b`/etc. as the intended way to
-	// load them) could never be loaded via nwuse/webnwuse/nwwebuse at
-	// all - it always tried to fetch a nonexistent "<name>.nwdta" and
+	// `nwwebuse usstates`/`nwwebuse klas12b`/etc. as the intended way to
+	// load them) could never be loaded via nwuse/nwwebuse at all - it
+	// always tried to fetch a nonexistent "<name>.nwdta" and
 	// crashed, well before ever reaching the confirm-variable check
 	// below that would have been the natural place to detect a plain
 	// dataset. Only florentine/gang/glasgow actually ship a .nwdta

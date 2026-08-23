@@ -5,7 +5,7 @@ analyzing, visualizing, and statistically modeling networks, alongside Stata's o
 data commands.
 
 ```stata
-. webnwuse florentine, nwclear
+. nwwebuse florentine, nwclear
 . nwplot flomarriage, label(_nwnode)
 . nwbetween flomarriage
 . sum _between

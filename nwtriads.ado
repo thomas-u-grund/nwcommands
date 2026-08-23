@@ -63,7 +63,7 @@ count). Signed: not checked. Two-mode: not checked.
 
 {title:Examples}
 	
-{com}. webnwuse glasgow, nwclear
+{com}. nwwebuse glasgow, nwclear
 {res}
 {com}. nwtriads glasgow3
 {res}

@@ -44,7 +44,7 @@ allowed. The system maximum is 9999.
 {marker examples}{...}
 {title:Examples}
 
-	{cmd:. webnwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwunab nets : glasg*}
 	{cmd:. di `nets'}
 	     {txt}glasgow1 glasgow2 glasgow3

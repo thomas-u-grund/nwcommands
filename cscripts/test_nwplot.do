@@ -31,7 +31,7 @@ set graphics off
 * (nwcommands.org) - one of the package's own long-established
 * baseline-failure causes, unrelated to nwplot itself. That host is
 * fixed now (nwuse/nwwebuse reroute to this project's own GitHub repo -
-* see nwuse.ado/webnwuse.ado), so this uses the genuine "nwwebuse
+* see nwuse.ado/nwwebuse.ado), so this uses the genuine "nwwebuse
 * florentine" call again, exercising the real, now-working path rather
 * than a local-file substitute.
 

@@ -47,7 +47,7 @@ This command is mostly used for programming with networks.
 	  
 {title:Examples}
 
-   {cmd:. webnwuse florentine}
+   {cmd:. nwwebuse florentine}
    {cmd:. _nwnodelab flomarriage, nodeid(9)}
    
 		{txt}Network: {res}flomarriage

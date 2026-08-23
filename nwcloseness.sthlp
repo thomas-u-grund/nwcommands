@@ -60,7 +60,7 @@ for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2}),
 	
 {title:Examples}
 	
-	{cmd:. webnwuse gang, nwclear}
+	{cmd:. nwwebuse gang, nwclear}
 	{cmd:. nwclosenss gang}
 	{cmd:. sum _closeness _farness _nearness}
 	

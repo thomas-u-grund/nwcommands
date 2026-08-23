@@ -35,7 +35,7 @@ imports the network as undirected.
  
 {title:Examples}
 
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwissymmetric flomarrige}
 	{cmd:. return list}
 	
