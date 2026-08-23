@@ -4282,27 +4282,49 @@ real scalar `NWdef'::calculate_distance_pair(real scalar ego, real scalar alter)
 	below fixes that up per row.
 */
 real matrix `NWdef'::bfs_hopdist_from(real scalar source){
-	real matrix dist, queue, newqueue, nb
-	real scalar n, d, i, cur
+	real matrix dist, nb, q
+	real scalar n, head, tail, cur, k, nbn, nid
 
+	// PERFORMANCE FIX (this unit): rebuilt the frontier on every BFS
+	// level via "newqueue = newqueue \ nb" - repeated vertical matrix
+	// concatenation, which reallocates and copies the whole growing
+	// vector on every append. A level with a large frontier (routine
+	// for a random sparse graph, where most nodes are discovered within
+	// 2-3 hops) made this effectively quadratic in that level's own
+	// size, not the O(n+m) the surrounding algorithm was designed for -
+	// confirmed as the actual cause of nwgeodesic/nwcloseness not
+	// completing at n=10,000 in a reasonable time (docs/PERFORMANCE_
+	// BENCHMARKS.md), not a memory blow-up (RSS stayed flat while CPU
+	// stayed pegged during direct observation). Replaced with the
+	// standard array-based-queue BFS: a single preallocated length-n
+	// vector (a node is enqueued at most once, so n is always enough
+	// room) with a read pointer and a write pointer, no reallocation at
+	// any point. Produces identical distances to the original
+	// level-by-level formulation - verified directly against it (kept,
+	// unmodified, as a git-history reference oracle) across many random
+	// graphs before trusting this.
 	n = get_nodes()
 	dist = J(n,1,.)
 	dist[source,1] = 0
-	queue = neighbors(source)
-	d = 1
+	q = J(n,1,0)
+	head = 1
+	tail = 1
+	q[tail,1] = source
+	tail++
 
-	while (rows(queue) > 0){
-		newqueue = J(0,1,0)
-		for (i = 1; i <= rows(queue); i++){
-			cur = queue[i,1]
-			if (dist[cur,1] == .){
-				dist[cur,1] = d
-				nb = neighbors(cur)
-				newqueue = newqueue \ nb
+	while (head < tail){
+		cur = q[head,1]
+		head++
+		nb = neighbors(cur)
+		nbn = rows(nb)
+		for (k=1; k<=nbn; k++){
+			nid = nb[k,1]
+			if (dist[nid,1] == .){
+				dist[nid,1] = dist[cur,1] + 1
+				q[tail,1] = nid
+				tail++
 			}
 		}
-		queue = newqueue
-		d = d + 1
 	}
 	dist[source,1] = .
 	return(dist)
