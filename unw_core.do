@@ -2835,6 +2835,7 @@ class `NWdef' {
 	real scalar check_issymmetric()
 	real matrix calculate_burt()
 	real rowvector edge_weight_row()
+	real matrix calculate_constraint_dyadic()
 
 	string scalar is_selfloop()
 	string scalar is_valued()
@@ -5132,6 +5133,57 @@ real matrix `NWdef'::calculate_burt(){
 	hierarchy_out = hierarchy_out :+ mm
 
 	return((effsize, efficiency, constraint, hierarchy_out))
+}
+
+/*
+	Sparse-native replacement for nwconstraint.ado's own dense
+	constraint() function (net*net, an O(n^3) matrix product) - the
+	dyadic constraint matrix's only nonzero entries are direct ties
+	(p_ij) and 2-hop paths through a shared neighbor q (p_iq*p_qj),
+	so it can be built directly by walking each node's own
+	neighborhood, O(sum of degree^2), same idiom as calculate_burt()
+	above. Still returns a full dense n-by-n matrix (this command's
+	own documented output shape is the full dyadic network, unlike
+	nwburt's per-node summary) - this removes the O(n^3) COMPUTE cost
+	only, not the O(n^2) memory of the result itself, which is
+	inherent to what this command returns.
+	NOTE: this is nwconstraint.ado's OWN constraint() formula
+	(c_ij = (p_ij+p2_ij)^2, no extra tie-weight factor) - a different,
+	independently-documented quantity from calculate_burt()'s own
+	dyadicconstraint()-style per-edge term above (which does carry an
+	extra net_ij factor); the two are not interchangeable, matching
+	nwconstraint.ado's own help file's explicit warning that summing
+	its output is not equivalent to nwburt's aggregate.
+*/
+real matrix `NWdef'::calculate_constraint_dyadic(){
+	real scalar n, i, j, k, q, outdeg_i, wiq, piq
+	real matrix Ni, Nq, outdeg, c
+
+	n = get_nodes()
+	outdeg = J(n,1,0)
+	for (i=1; i<=n; i++) outdeg[i,1] = sum(edge_weight_row(i))
+
+	c = J(n,n,0)
+	for (i=1; i<=n; i++){
+		Ni = neighbors(i)
+		outdeg_i = outdeg[i,1]
+		if (outdeg_i == 0 | rows(Ni) == 0) continue
+
+		for (j=1; j<=rows(Ni); j++) c[i,Ni[j]] = c[i,Ni[j]] + edge_weight(i,Ni[j])/outdeg_i
+
+		for (k=1; k<=rows(Ni); k++){
+			q = Ni[k]
+			if (outdeg[q,1] == 0) continue
+			wiq = edge_weight(i,q)
+			piq = wiq/outdeg_i
+			Nq = neighbors(q)
+			for (j=1; j<=rows(Nq); j++) c[i,Nq[j]] = c[i,Nq[j]] + piq*(edge_weight(q,Nq[j])/outdeg[q,1])
+		}
+	}
+
+	c = c :* c
+	_diag(c, 0)
+	return(c)
 }
 
 void `NWdef'::permute(){
