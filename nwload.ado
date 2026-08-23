@@ -183,7 +183,16 @@ program nwload
 	mata: `nws'.drop_current_nodesvar()
 	
 	// make network the current network
-	if "`nocurrent'" == "" {
+	// Per Stata's own [P] syntax convention for a "no"-prefixed toggle:
+	// declaring `nocurrent' in the option list makes Stata define a
+	// local named after the STEM - `current', not `nocurrent' - set to
+	// the literal string "nocurrent" when the caller passes the
+	// option, empty otherwise. `nocurrent' itself is never populated at
+	// all, so checking it here always evaluated true regardless of
+	// whether the option was passed (see nwbetween.ado/nwevcent.ado,
+	// which had the identical bug - confirmed directly against a
+	// minimal, isolated test program). Fixed to check `current' instead.
+	if "`current'" == "" {
 		mata: `nws'.make_current_from_name("`netname'")
 	}
 	

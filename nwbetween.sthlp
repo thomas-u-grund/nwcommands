@@ -139,4 +139,4 @@ Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
 
 	{help nwpath}, {help nwgeodesic}, {help nwcloseness}, {help nwkatz}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
-last certified : 21 Aug 2026
+last certified : 23 Aug 2026

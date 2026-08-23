@@ -3722,7 +3722,24 @@ void `NWdef'::build_sparse_index(){
 	}
 	rowptr[n + 1] = pos
 
-	if (isdirect & nnz > 0){
+	if (isdirect){
+		// BUGFIX: this used to additionally require nnz > 0, skipping
+		// build_reverse_index() entirely for a directed network with
+		// zero ties - falling into the `else' branch below instead,
+		// which sets rowptr_in to J(0,1,0) (an EMPTY, 0-row matrix),
+		// not the correctly n+1-sized "no in-neighbors for any node"
+		// array build_reverse_index()'s own nnz==0 branch already knows
+		// how to produce (J(n+1,1,1)). Any subsequent neighbors_in()/
+		// degree_in() call on such a network then indexed rowptr_in[i+1]
+		// out of bounds on a 0-row matrix and crashed with "subscript
+		// invalid" - found directly via nw_evcentrality()'s own new
+		// sparse power iteration, which (unlike the prior dense
+		// symeigensystem()-based implementation) genuinely calls
+		// neighbors_in() and hit this on an all-isolates directed
+		// network. The fix is simply to always call
+		// build_reverse_index() for a directed network - it already
+		// handles nnz==0 correctly on its own, so no separate case is
+		// needed here at all.
 		for (i = 1; i <= n; i++){
 			if (rowptr[i+1] > rowptr[i]){
 				rowidx[(rowptr[i]::(rowptr[i+1]-1)),1] = J(rowptr[i+1]-rowptr[i], 1, i)

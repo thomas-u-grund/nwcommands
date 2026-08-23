@@ -125,4 +125,4 @@ same variable names, the Stata variables are overwritten.
    
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nw_intro##limits:feasible network sizes}
 
-last certified : 21 Aug 2026
+last certified : 23 Aug 2026
