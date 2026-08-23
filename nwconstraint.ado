@@ -116,11 +116,19 @@ program nwconstraint
 	// directly is a safe, direct simplification.
 	nw_syntax `netname'
 
-	nwtomata `netname', mat(onenet)
-	mata: c = constraint(onenet)
-	nwset, mat(c) `options'
-	capture mata: mata drop onenet
-	capture mata: mata drop c
+	// PERFORMANCE FIX: used to materialize the full dense n-by-n
+	// matrix via nwtomata, then compute constraint() via two dense
+	// O(n^3) matrix products - confirmed as one of the
+	// nwtomata-dependent family excluded from the n=10,000 benchmark
+	// tier (docs/PERFORMANCE_BENCHMARKS.md). calculate_constraint_dyadic()
+	// (unw_core.do) computes the identical dense n-by-n result directly
+	// from the sparse edge list, O(sum of degree^2) instead of O(n^3) -
+	// the output itself is still a dense matrix (this command's own
+	// documented return shape), only the compute cost is fixed.
+	tempname c
+	mata: `c' = `netobj'->calculate_constraint_dyadic()
+	nwset, mat(`c') `options'
+	capture mata: mata drop `c'
 end
 
 capture mata mata drop constraint()
