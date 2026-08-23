@@ -29,7 +29,7 @@
 {synopt:{opt type}({it:{help nwsimilar##type:type}})}Type of similarity between two nodes; default = pearson{p_end}
 {synopt:{opt mode}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new similarity network; default = {it:_similar}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}

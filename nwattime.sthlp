@@ -26,7 +26,7 @@
 {synoptline}
 {synopt:{opt at(#)}}The timepoint to slice at{p_end}
 {synopt:{opth name(newnetname)}}Name of the new static network; default = {it:atview}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}

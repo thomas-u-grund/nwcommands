@@ -56,11 +56,19 @@ foreach v in lattice1 lattice2 lattice3 lattice4 lattice5 lattice6 lattice7 latt
 	assert _rc == 0
 }
 
-* xvars suppresses variable generation
+* default (no xvars) does NOT generate Stata variables
 nwclear
-nwlattice 3 3, undirected xvars
+nwlattice 3 3, undirected
 capture confirm variable lattice1
 assert _rc != 0
+
+* xvars generates Stata variables
+nwclear
+nwlattice 3 3, undirected xvars
+foreach v in lattice1 lattice2 lattice3 lattice4 lattice5 lattice6 lattice7 lattice8 lattice9 {
+	capture confirm variable `v'
+	assert _rc == 0
+}
 
 * ntimes() generates multiple independent copies under name_1, name_2, ...
 nwclear

@@ -4,7 +4,7 @@ do unw_core.do
 
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet, unconnected(99)
+nwgeodesic mynet, unconnected(99) xvars
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -27,7 +27,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 99
 
 
-nwgeodesic mynet, sym unconnected(max) nwreplace
+nwgeodesic mynet, sym unconnected(max) nwreplace xvars
 assert `"`r(symmetrized)'"' == `"true"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -48,7 +48,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 2
 
 
-nwgeodesic mynet, nwreplace
+nwgeodesic mynet, nwreplace xvars
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -91,16 +91,16 @@ replace y = "E" in 6
 replace value = 0 in 6
 
 nwset x y value, edgelist undirected name(network)
-nwgeodesic network, alpha(0)
+nwgeodesic network, alpha(0) xvars
 assert B[1] == 2
 
-nwgeodesic network, alpha(0.5) nwreplace
+nwgeodesic network, alpha(0.5) nwreplace xvars
 assert B[1] > 1.4 & B[1] < 1.5
 
-nwgeodesic network, alpha(1) nwreplace
+nwgeodesic network, alpha(1) nwreplace xvars
 assert B[1] == 1
 
-nwgeodesic network, alpha(1.5) nwreplace
+nwgeodesic network, alpha(1.5) nwreplace xvars
 assert B[1] >= 0.7 & B[1] < 0.8
 
 
@@ -109,7 +109,7 @@ assert B[1] >= 0.7 & B[1] < 0.8
 * Path graph A-B-C-D-E (undirected, unweighted): ecc = 4,3,2,3,4; radius=2
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pathnet2) undirected labs(A,B,C,D,E)
-nwgeodesic pathnet2
+nwgeodesic pathnet2, xvars
 assert r(radius) == 2
 assert r(diameter) == 4
 assert _eccentricity[1] == 4
@@ -121,7 +121,7 @@ assert _eccentricity[5] == 4
 * K4 complete graph: every node has eccentricity 1, radius = diameter = 1
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4net2) undirected labs(A,B,C,D)
-nwgeodesic k4net2
+nwgeodesic k4net2, xvars
 assert r(radius) == 1
 assert r(diameter) == 1
 forvalues i = 1/4 {
@@ -133,7 +133,7 @@ forvalues i = 1/4 {
 * why it deliberately reuses nwreplace instead)
 capture nwgeodesic k4net2, generate(_eccentricity)
 assert _rc != 0
-nwgeodesic k4net2, generate(_eccentricity) nwreplace
+nwgeodesic k4net2, generate(_eccentricity) nwreplace xvars
 assert _rc == 0
 nwgeodesic k4net2, generate(myecc) nwreplace
 assert r(radius) == 1

@@ -53,7 +53,7 @@ program def nwhomophily
 		mata: mata drop `__temp'
 	}
 	mata: `__temp0' = exp(`__temp0')
-	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected'
+	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected' `xvars'
 	mata: mata drop `__temp0'
 	// `__temp' is already dropped at the end of the loop above (every
 	// iteration cleans up after itself) - this used to be a second,

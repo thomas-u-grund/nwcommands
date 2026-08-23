@@ -56,13 +56,21 @@ gen att2 = mod(_n,3)
 capture nwhomophily att1 att2, homophily(.8) density(.4)
 assert _rc != 0
 
-* xvars suppresses variable generation
+* default (no xvars) does NOT generate Stata variables
+nwclear
+set obs 20
+gen att = mod(_n,2)
+nwhomophily att, homophily(.8) density(.3)
+capture confirm variable n1
+assert _rc != 0
+
+* xvars generates Stata variables
 nwclear
 set obs 20
 gen att = mod(_n,2)
 nwhomophily att, homophily(.8) density(.3) xvars
-capture confirm variable _homophily1
-assert _rc != 0
+capture confirm variable n1
+assert _rc == 0
 
 * NOT asserted here (see docs/CERTIFICATION.md's own Pending row for
 * this): whether the homophily coefficient's actual statistical effect

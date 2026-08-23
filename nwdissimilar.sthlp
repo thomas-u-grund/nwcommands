@@ -30,7 +30,7 @@
 {synopt:{opt type}({it:{help nwdissimilar##type:type}})}Type of dissimilarity between two nodes; default = euclidean{p_end}
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new dissimilarity network; default = {it:_dissimilar}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}

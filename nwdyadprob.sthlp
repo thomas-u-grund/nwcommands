@@ -31,7 +31,7 @@
 {synopt:{opth density(float)}}density of the new network{p_end}
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opth name(netname)}}name of the new random network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
 
 

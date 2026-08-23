@@ -18,14 +18,12 @@
 {cmdab: nwtranspose} 
 [{it:{help netname}}]
 [{cmd:,}
-{cmd:generate}({it:{help newnetname}})
-{opt xvars}]
+{cmd:generate}({it:{help newnetname}})]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network{p_end}
-{synopt:{opt xvars}}Do not produce Stata variables{p_end}
 
 {synoptline}
 {p2colreset}{...}

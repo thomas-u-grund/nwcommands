@@ -5556,6 +5556,23 @@ void `NWdef'::add_node(string scalar s) {
 	nodesvar = (nodesvar, strtoname(s))
 	edge = (edge, J(size, 1, 0)\J(1, size+1, 0))
 	sparse_built = `False'
+	// `modes' was never extended here - genuinely harmless while `modes'
+	// itself is still empty (get_modes()'s own lazy-init sizes it fresh
+	// off get_nodes() on first read, whenever that happens), but once
+	// modes had ALREADY been populated (e.g. by an earlier nwset() call)
+	// this left it permanently undersized relative to `nodes' - any
+	// later get_modes_labeled_string() call (nwsummarize, nwsync, ...)
+	// then indexes past its end and errors "subscript invalid" (3301).
+	// Found via a real, previously-masked bug: nwaddnodes.ado used to
+	// always auto-call nwload() right after add_node(), and nwload's own
+	// chain happened to rebuild `modes' from scratch as a side effect,
+	// silently papering over the undersized array - once nwaddnodes
+	// stopped auto-loading by default (the xvars-consistency unit), the
+	// latent bug in add_node() itself finally surfaced. New nodes default
+	// to mode "1", the same single-mode default get_modes() itself uses.
+	if (cols(modes) > 0) {
+		modes = (modes, "1")
+	}
 }
 
 /*

@@ -29,7 +29,7 @@
 {synoptline}
 {synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
 {synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -81,13 +81,13 @@ program nwreach
 	}
 	
 	capture nwdrop `name'
-	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') xvars
+	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2')
 	qui nwreplace `name' = 1 if `name' != (`missing2')
 	qui nwreplace `name' = 0 if `name' == (`missing2')
 	nw_syntax `name'
 	mata: `netobj'->set_valued(0)
 	
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `name'
 	}
 end

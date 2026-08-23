@@ -67,7 +67,7 @@ program nwaddnodes
 	}
 
 
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `netname'
 	}
 end

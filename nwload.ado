@@ -102,16 +102,17 @@ automatically runs with the {help nwcurrent:current network}. For programming yo
 {help nw_syntax}.
 
 {pstd}
-By default, all commands that generate a network (see {help nw_topical##generator:network generator}) also load the network as Stata variables. However, 
-these network generators almost always have the option {bf:xvars}, which does not invoke {bf:nwload} after creating a new network. This can be useful
-when one deals with many networks at the same time and reaches the limits of variables that can be handled in Stata.
+By default, commands that generate a network (see {help nw_topical##generator:network generator}) do NOT also load the network as Stata
+variables - creating a network never silently spends Stata's own variable budget. Most network generators have the option {bf:xvars}, which
+DOES invoke {bf:nwload} after creating the new network, generating its Stata variables immediately. This is convenient for a single network at
+a time, but can exhaust Stata's variable limit if used while generating many networks at once.
 
 {pstd}
-For example this code generates 1000 random networks with 100 nodes each, but does not load the networks as Stata variables because {bf:xvars} is 
-specified. Afterwards, {bf:nwload} is used to load just one (the current network, here, the last random network that has been generated) as 
-Stata variables.
+For example this code generates 1000 random networks with 100 nodes each without ever loading any of them as Stata variables (the default -
+{bf:xvars} is NOT specified). Afterwards, {bf:nwload} is used to load just one (the current network, here, the last random network that has
+been generated) as Stata variables.
 
-	{cmd:. nwrandom 100, prob(.1) ntimes(1000) xvars}
+	{cmd:. nwrandom 100, prob(.1) ntimes(1000)}
 	{cmd:. nwload}
 
 {pstd}

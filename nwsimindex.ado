@@ -26,7 +26,7 @@
 {synoptline}
 {synopt:{opt measure(common|jaccard|dice|cosine|adamicadar)}}Which similarity index to compute; default = {it:jaccard}{p_end}
 {synopt:{opth name(newnetname)}}Name of the new similarity network; default = {it:simindex}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}
@@ -129,7 +129,7 @@ program nwsimindex, rclass
 	tempname __nw_sim
 	mata: `__nw_sim' = `netobj'->calculate_similarity_index("`measure'")
 
-	nwset, mat(`__nw_sim') name(`name') undirected labs(`labs') xvars
+	nwset, mat(`__nw_sim') name(`name') undirected labs(`labs')
 	mata: mata drop `__nw_sim'
 
 	nw_syntax `name'
@@ -145,7 +145,7 @@ program nwsimindex, rclass
 	di "{txt}  Nodes: {res}`nodes'"
 	di "{hline 40}"
 
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `name'
 	}
 end

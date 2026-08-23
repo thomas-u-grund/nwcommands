@@ -104,7 +104,7 @@ program nwdissimilar
 	// confirmed via a direct nwset/nwtomatafast round-trip probe.
 	nwset, mat(__nwdissim) name(`name') selfloop `labs' `vars'
 	capture mata mata drop __nwdissim
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `name'
 	}
 end

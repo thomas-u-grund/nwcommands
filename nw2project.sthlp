@@ -28,7 +28,7 @@
 {synopt:{opt project(1|2)}}Mode/level to collapse to{p_end}
 {synopt:{opth name(newnetname)}}Name of the new one-mode network; default = {it:project}{p_end}
 {synopt:{opt stat(min|max|minmax|sum|mean|count|binary|jaccard|cosine)}}How to combine tie values (or, for the last 4, how to score shared-neighbor structure directly); default = {it:minmax}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}

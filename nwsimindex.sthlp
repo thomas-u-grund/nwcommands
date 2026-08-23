@@ -25,7 +25,7 @@
 {synoptline}
 {synopt:{opt measure(common|jaccard|dice|cosine|adamicadar)}}Which similarity index to compute; default = {it:jaccard}{p_end}
 {synopt:{opth name(newnetname)}}Name of the new similarity network; default = {it:simindex}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables for the new network{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the new network{p_end}
 {synopt:{opt replace}}Replace an existing network of the same name{p_end}
 
 {p2colreset}{...}

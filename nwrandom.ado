@@ -39,7 +39,7 @@
 {synopt:{opth ntimes(int)}}number of random networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:random}{p_end}
 {synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -181,10 +181,22 @@ program nwrandom
 
 	mata: st_rclear()
 	nwset, mat(`__nwnew') name(`name') labs(`labs') `undirected' `selfloop'
-	nwload,`xvars'
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
 
 	capture mata: mata drop `__nwnew'
-	
+
+	// r(netlist) is documented (Stored results, above) as always being
+	// set to "list of new networks" - true for the ntimes()>1 branch's
+	// own early exit above, but this single-network base case never set
+	// it at all (found while dealing with xvars consistently project-
+	// wide, which happened to route more calls through this exact final
+	// stretch of the program).
+	mata: st_global("r(netlist)", "`name'")
 end
 
 

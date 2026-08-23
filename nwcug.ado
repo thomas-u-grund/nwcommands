@@ -164,10 +164,10 @@ program nwcug, rclass
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
 		if "`condition'" == "census" {
-			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base') xvars
+			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base')
 		}
 		else {
-			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' xvars
+			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt'
 		}
 		qui `drawcmd'
 		local v = r(`rname')

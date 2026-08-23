@@ -23,7 +23,7 @@ program nwdropnodes
 	nw_syntax `netname', max(1)
 
 	if "`generate'" != "" {
-		nwduplicate `netname', name(`generate') xvars
+		nwduplicate `netname', name(`generate')
 		nw_syntax `generate', max(1)
 	}
 	
