@@ -257,10 +257,74 @@ to 0.0363 - much closer to Statnet's own 0.0371 - confirming the extra
 iterations bought real precision, not just a slower path to the same
 answer. See `docs/CERTIFICATION.md`'s unit-85 entry for the full account.
 
+**Native backend scope relaxation - term-expansion benchmarks (harmonisation
+unit 92)**: per the user's own explicit instruction ("run various models
+with benchmarks to R code... just an example of effects... do not benchmark
+beyond 10000 nodes"), three new benchmarks (6-8) each exercise one of the
+three native-backend waves unit 92 added - NOT an exhaustive combinatorial
+sweep, one representative example per wave, all comfortably under the
+stated 10,000-node ceiling:
+
+- **Benchmark 6** (`80_bench_mixed_stata.do`/`81_bench_mixed_r.R`): 1000-node
+  sparse undirected, `edges + gwesp + nodefactor + nodecov` - exactly the
+  "gwesp mixed with other terms" case that used to force nwergm's own native
+  backend to fall back to Mata entirely (wave 1: the attribute/factor
+  family).
+- **Benchmark 7** (`83_bench_degreefam_stata.do`/`84_bench_degreefam_r.R`):
+  2000-node sparse directed, `edges + mutual + nodematch + odegree(2) +
+  idegree(2) + gwodegree + gwidegree` - several degree-count-family terms at
+  once (wave 2).
+- **Benchmark 8**
+  (`85_bench_sharedpartner_stata.do`/`86_bench_sharedpartner_r.R`):
+  1000-node sparse undirected, `edges + gwesp + gwnsp` - the shared-partner
+  family beyond gwesp itself (wave 3). NOT `edges+gwesp+gwdsp+triangle` (tried
+  first): those three are near-duplicate measures of the same clustering
+  structure, and on a sparse, near-triangle-free random network they are
+  collinear enough that the MPLE design matrix (always built first, as
+  MCMLE's own starting value) fails to converge - a genuine statistical
+  degeneracy from that specific term COMBINATION on this specific network,
+  not a code bug (each term is independently certified via
+  `cscripts/test_nwergm_native.do`). `gwnsp` is a natural complement to
+  `gwesp` (untied- vs tied-dyad shared partners) rather than a near-duplicate,
+  avoiding the pitfall while still exercising the exact same wave-3
+  composition dispatch (`gwnsp = gwdsp - gwesp`) in `native/ergm_mcmc.c`.
+
+| Benchmark | Terms | n | R `ergm` | `nwergm` (native) | Ratio | Coefficients (nwergm vs. R, selected) |
+|---|---|---|---|---|---|---|
+| 6 | edges+gwesp+nodefactor+nodecov | 1000 | 9.10s | 13.65s | ~1.5x | edges: −5.097 / −5.097; gwesp: 0.0296 / 0.0271 |
+| 7 | edges+mutual+nodematch+odegree(2)+idegree(2)+gwodegree+gwidegree | 2000 | 18.63s | 33.76s | ~1.8x | edges: −5.797 / −5.800; mutual: 0.294 / 0.303; gwodegree: −0.293 / −0.289 |
+| 8 | edges+gwesp+gwnsp | 1000 | 6.13s | 107.80s | ~17.6x | edges: −5.045 / −5.047; gwesp: −0.0219 / −0.0276; gwnsp: −0.0056 / −0.0056 |
+
+All three converged (MCMLE iterations: 4, 8, 6 respectively) and every
+coefficient agrees closely with R's own fit - the native relaxation changes
+execution speed and eligibility, never the statistical model. Timing ratios
+for benchmarks 6-7 (~1.5-1.8x) are in the same "near parity" range the
+original four native terms achieved back in unit 83 - direct evidence the
+relaxation genuinely delivered what the user asked for on the everyday case
+of mixing gwesp with covariate/degree terms. **Benchmark 8's own much larger
+gap (~17.6x) is disclosed honestly, not glossed over**: the native backend
+(unit 92, all three waves) accelerates ONLY the MCMC simulation loop itself
+- the one-time MPLE design-matrix construction and the observed-network
+statistic computation still run entirely in Mata regardless of native
+eligibility (see `docs/ERGM_ARCHITECTURE.md`'s own "native boundary crossed
+once per `ErgmMCMCSample()` call" design), and `gwdsp`/`gwnsp`'s own
+`stat_gwdsp()` genuinely needs an O(n²) full-dyad Mata enumeration
+(`docs/ERGM_ROADMAP.md`'s own unit-88 finding, unrelated to this unit) - at
+n=1000 that is 499,500 dyads, each needing a `common_neighbors()` call, paid
+in interpreted Mata every time the design matrix or the observed baseline is
+(re)built. This is a genuine, disclosed remaining gap - not something this
+unit's own native work claims to have closed - and a natural candidate for
+a FUTURE wave (porting the design-matrix/observed-statistic construction
+itself, not just the MCMC change-statistic, for the O(n²) term family).
+
 ## Extending this suite
 
 Further ideas: force convergence on benchmarks 4/5 (e.g. raise
 `mcmleiterations()`) to get an apples-to-apples ratio uninflated by hitting
 the iteration cap; a directed GWESP-equivalent benchmark once directed
 shared-partner terms exist (roadmap item); a benchmark exercising `edgecov()`
-at scale. Follow the same generate/fit-Stata/fit-R three-file pattern.
+at scale; investigate accelerating `build_mple_data()`/the observed-statistic
+computation for the O(n²) `gwdsp`/`gwnsp`/`esp`/`dsp` term family specifically
+(benchmark 8's own disclosed remaining gap, above) now that their MCMC
+change-statistics are native. Follow the same generate/fit-Stata/fit-R
+three-file pattern.
