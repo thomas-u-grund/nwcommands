@@ -1003,8 +1003,10 @@ real scalar nw_cp_fitness(real matrix net, real matrix core, real matrix idx){
 	Louvain's own greedy local search already accepts for modularity.
 */
 real matrix CorePeriphery(real matrix net, real scalar maxiter){
-	real matrix mask, idx, core, deg
-	real scalar n, sweep, moved, i, fit0, fit1
+	real matrix mask, idx, core, deg, periph
+	real scalar n, sweep, moved, i, m
+	real scalar sumA, sumAA, varA, sumP, sumAP, c_old, dirn, nP, wsum
+	real scalar sumP1, sumAP1, fit0, fit1, varP0, varP1
 
 	n = rows(net)
 	if (max(net) <= 0){
@@ -1019,24 +1021,98 @@ real matrix CorePeriphery(real matrix net, real scalar maxiter){
 	deg = rowsum(net) :+ colsum(net)'
 	core = (deg :> mean(deg))
 
+	// PERFORMANCE FIX (this unit): the search below is a greedy local
+	// search over n(*maxiter) candidate single-node flips, and every
+	// candidate used to be scored by calling nw_cp_fitness() TWICE
+	// (before and after the flip) - each call an O(n^2) full
+	// recomputation of the fitness correlation over the *entire*
+	// dyad set. That is O(n^2) work per candidate, O(n) candidates per
+	// sweep, so O(n^3) per sweep - the confirmed root cause of 255
+	// seconds at n=1,000 (docs/PERFORMANCE_BENCHMARKS.md, harmonisation
+	// unit 103). Flipping a single node i's core status only changes
+	// the "expected pattern" (core[a]+core[b])>0 at the 2(n-1)
+	// off-diagonal dyads touching i - and, since a periphery-periphery
+	// dyad is the only kind whose expected value depends on BOTH
+	// endpoints being periphery, the set of dyads that actually change
+	// value on the flip is exactly the dyads between i and every OTHER
+	// periphery node - so the whole correlation's sufficient statistics
+	// (sums needed for Pearson's r) can be updated in O(n) instead of
+	// recomputed in O(n^2). avec (the observed network) never changes
+	// during this search, so sumA/sumAA/varA are computed once, up
+	// front, outside the loop entirely.
+	m = n * (n-1)
+	sumA = sum(net)
+	sumAA = sum(net:^2)
+	varA = m*sumAA - sumA^2
+
+	// One O(n^2) pass to seed sumP/sumAP for the initial core vector -
+	// paid once, not per candidate.
+	{
+		real matrix pattern0
+		pattern0 = ((core * J(1,n,1)) :+ (J(n,1,1) * core')) :> 0
+		_diag(pattern0, 0)
+		sumP = sum(pattern0)
+		sumAP = sum(net :* pattern0)
+	}
+
 	sweep = 0
 	moved = 1
 	while (moved & sweep < maxiter){
 		moved = 0
 		sweep++
 		for (i=1; i<=n; i++){
-			fit0 = nw_cp_fitness(net, core, idx)
-			core[i,1] = 1 - core[i,1]
-			fit1 = nw_cp_fitness(net, core, idx)
+			// pattern is binary (0/1) throughout, so sum(pattern^2) ==
+			// sum(pattern) identically - var(P) reduces to sumP*(m-sumP)
+			// (a Bernoulli-sum variance), no separate sumPP needed.
+			// BUGFIX (caught during this unit's own cross-validation
+			// against the pre-fix algorithm, not introduced by it): a
+			// zero-variance dyad pattern (e.g. all-periphery or all-
+			// core) makes Mata's correlation() return missing (.), and
+			// Mata's missing sorts as GREATER than any real number
+			// (confirmed directly: ". > 5" is true) - so the pre-fix
+			// nw_cp_fitness()-based search actually treats a degenerate
+			// fitness as unconditionally "better" than any real one,
+			// greedily falling into (and, once there, permanently
+			// stuck in, since nothing can then compare greater than
+			// missing) a degenerate all-periphery/all-core state
+			// whenever the search happens to reach one - not the
+			// intended behavior, presumably, but the actual shipped
+			// one. An initial version of this rewrite used a "treat
+			// zero variance as fitness 0" fallback instead, which is
+			// more sensible in isolation but silently changes which
+			// local optimum the search converges to - caught by a
+			// deterministic 300-network cross-check against the actual
+			// pre-fix algorithm (preserved from git history), not by
+			// any theoretical review. Fixed by using an explicit
+			// missing value in the same zero-variance case, letting
+			// Mata's own `>' operator reproduce the exact same quirk.
+			varP0 = sumP*(m-sumP)
+			fit0 = (varP0 <= 0 | varA <= 0) ? . : (m*sumAP - sumA*sumP) / sqrt(varA*varP0)
+
+			c_old = core[i,1]
+			periph = (core :== 0)
+			periph[i,1] = 0
+			nP = sum(periph)
+			wsum = sum(periph :* (net[i,.]' :+ net[.,i]))
+			dirn = (c_old == 1 ? -1 : 1)
+			sumP1 = sumP + dirn*2*nP
+			sumAP1 = sumAP + dirn*wsum
+			varP1 = sumP1*(m-sumP1)
+			fit1 = (varP1 <= 0 | varA <= 0) ? . : (m*sumAP1 - sumA*sumP1) / sqrt(varA*varP1)
+
 			if (fit1 > fit0 + 1e-12){
+				core[i,1] = 1 - c_old
+				sumP = sumP1
+				sumAP = sumAP1
 				moved = 1
-			}
-			else {
-				core[i,1] = 1 - core[i,1]
 			}
 		}
 	}
 
+	// Final reported fitness computed via one exact, full O(n^2)
+	// recomputation (negligible cost paid once) rather than trusting
+	// the incrementally-tracked sumP/sumAP - avoids any concern about
+	// accumulated floating-point drift over many incremental updates.
 	return(core \ nw_cp_fitness(net, core, idx))
 }
 
