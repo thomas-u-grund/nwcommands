@@ -92,7 +92,7 @@ network per path found.
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
-{phang2}{opth transpose(netname)} [, {opt xvars}]
+{phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
 
@@ -207,7 +207,17 @@ program nwgenerate
 
 		// evaluate network expression
 		nw_expnetexp `netexp'
-		nwset, mat(`netexp') name(`newnetname') `undirected' `options' xvars nodenames(`last_netobj'->get_nodenames())
+		// The hardcoded literal `xvars' this line used to append
+		// unconditionally (on top of `options') was a real, latent bug:
+		// `options' already holds the caller's own full raw option text
+		// verbatim (set at this program's very first "gettoken arg
+		// options: arg, parse(",")" near the top) - so a caller who
+		// actually wrote "xvars" here would have hit "option xvars
+		// specified twice". Since `options' already carries the
+		// caller's own `xvars' through when given, no separate token is
+		// needed - matching how `undirected'/`replace' etc. already
+		// flow through the same way.
+		nwset, mat(`netexp') name(`newnetname') `undirected' `options' nodenames(`last_netobj'->get_nodenames())
 		qui nwsym `newnetname', check
 
 		// nwsym's own help documents r(is_symmetric) as the string

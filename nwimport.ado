@@ -370,7 +370,7 @@ program nwimport
 				nwname, id(`j') newdirected(true)
 			}
 			local i = `i' + 1
-			qui if "`xvars'" == ""{
+			qui if "`xvars'" != ""{
 				nwload `r(netname)'
 			}
 		}
@@ -588,7 +588,7 @@ program _nwimport_pajek
 
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		qui nwfromedge _fromid _toid _value, xvars name(`name') labs(`labs') `nwfromedgeopt' 
+		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt'
 	
 		unw_defs
 		nwload, labelonly
@@ -1128,7 +1128,7 @@ program _nwimport_compressed
 
 	//restore
 	
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload
 	}
 end

@@ -36,7 +36,7 @@
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
 
 {title:Description}

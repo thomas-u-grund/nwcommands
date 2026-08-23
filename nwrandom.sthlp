@@ -38,7 +38,7 @@
 {synopt:{opth ntimes(int)}}number of random networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:random}{p_end}
 {synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}

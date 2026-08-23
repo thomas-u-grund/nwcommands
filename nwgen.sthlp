@@ -196,6 +196,6 @@ The command can also be used to generate networks. There are two ways to do this
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
-{phang2}{opth transpose(netname)} [, {opt xvars}] 
+{phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).

@@ -30,7 +30,7 @@ program nwcloseness
 	set more off
 	qui foreach netname_temp in `netname' {
 		preserve
-		qui nwgeodesic `netname_temp', name(_tempgeodesic) `options' xvars
+		qui nwgeodesic `netname_temp', name(_tempgeodesic) `options'
 		nwname _tempgeodesic
 		nwtomata _tempgeodesic, mat(geodesic)
 		mata: st_numscalar("r(mindistance)", min(geodesic))

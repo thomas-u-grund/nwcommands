@@ -35,7 +35,7 @@
 {synopt:{opth nodes(integer)}}number of nodes; if not specified the number of valid cases of {it:{help varname}} is used{p_end}
 {synopt:{opth name(newnetname)}}name of the new random network{p_end}
 {synopt:{opth stub(string)}}stub used for variable names{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}

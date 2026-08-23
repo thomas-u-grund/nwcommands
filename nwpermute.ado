@@ -26,7 +26,7 @@
 {synoptline}
 {synopt:{opth generate(newnetname)}}Save permutation as new network{p_end}
 {synopt:{opt replace}}Replace existing network with permutation{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -114,7 +114,7 @@ program nwpermute
 		nw_syntax `generate'
 		mata: `netobj'->permute()
 	}
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `netname'
 	}
 end

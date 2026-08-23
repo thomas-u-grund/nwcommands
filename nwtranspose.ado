@@ -19,14 +19,12 @@
 {cmdab: nwtranspose} 
 [{it:{help netname}}]
 [{cmd:,}
-{cmd:generate}({it:{help newnetname}})
-{opt xvars}]
+{cmd:generate}({it:{help newnetname}})]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network{p_end}
-{synopt:{opt xvars}}Do not produce Stata variables{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -71,13 +69,13 @@ can specify that it should create a new network instead with {bf:generate()}.
 capture program drop nwtranspose
 program nwtranspose 
 	version 9
-	syntax [anything(name=netname)], [ xvars generate(string)]
-	
+	syntax [anything(name=netname)], [ generate(string)]
+
 	nw_syntax `netname', max(1)
 	local netobj1 `netobj'
-	
+
 	if ("`generate'" != ""){
-		nwduplicate `netname', name(`generate') `xvars'
+		nwduplicate `netname', name(`generate')
 		local netname `generate'
 	}
 	nw_syntax `netname', max(1)

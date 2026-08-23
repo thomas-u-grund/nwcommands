@@ -30,7 +30,7 @@
 {synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
 {synopt:{opth nodes(int)}}size of new network{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 {synoptset 20 tabbed}{...}
 {marker expand_mode}{...}
@@ -249,7 +249,12 @@ program nwexpand
 
 	}
 	nwset, mat(expnet) name(`name') labs(`labs') `undirected'
-	nwload, `xvars'
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
 	
 	capture mata: mata drop expnet 
 	capture mata: mata drop attr

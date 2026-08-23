@@ -76,6 +76,21 @@ program nw_datasync
 	
 	if `datasync' == 0 {
 		di "{txt}Warning! Datasync switched off. Variables might be corrupted."
+		// `nwname' is itself r-class - calling it bare would clobber
+		// whatever r()-results the CALLER already had posted (e.g. a
+		// preceding nwset() call's own r(networks)/r(nets)), which is
+		// exactly the kind of caller-visible side effect this call is
+		// NOT meant to have (it exists purely to leave `_rc' clean - see
+		// this file's own header note on this final stretch below) -
+		// `_return hold'/`_return restore' (the same pattern already
+		// used in nwgeodesic.ado for an identical "run something r-class
+		// purely for a side effect, then put the caller's own r() back"
+		// need) discards nwname's own r() output while keeping its
+		// `_rc'-resetting effect.
+		capture _return drop _nwds
+		_return hold _nwds
+		qui nwname `netname'
+		_return restore _nwds
 		exit
 	}
 	
@@ -90,8 +105,30 @@ program nw_datasync
 	if "`overwrite'" != "" {
 		capture drop `nw_nodename'
 		qui getmata `nw_nodename' = `nodename', force replace
+		// the two capture mata drops right above are pure best-effort
+		// cleanup (`nodeindex' in particular is only ever populated much
+		// further down, past every `exit' in this program, so dropping
+		// it here always "fails" - harmlessly, since it was never
+		// created). Without a genuine, uncaptured command run AFTER
+		// them, this branch's own final reported outcome to the caller
+		// would be whichever of these two capture's own (harmless,
+		// expected) failure happened to run last, not this call's real,
+		// successful completion - `_rc' is NOT reset merely by reaching
+		// `exit'/`exit 0' (confirmed directly: neither actually clears
+		// a stale nonzero `_rc' left by an earlier capture - only a
+		// genuine subsequent command execution does that), so a real,
+		// always-succeeding command (`nwname', already used throughout
+		// this package to report a network's own current state) is run
+		// immediately before returning, purely to leave `_rc' clean.
 		capture mata: mata drop `nodename'
 		capture mata: mata drop `nodeindex'
+		// see the `datasync == 0' branch above for why `nwname' is
+		// wrapped in `_return hold'/`_return restore' here, not called
+		// bare.
+		capture _return drop _nwds
+		_return hold _nwds
+		qui nwname `netname'
+		_return restore _nwds
 		exit
 	}
 	
@@ -138,9 +175,34 @@ program nw_datasync
 	}
 	
 	
+	// `mode' in particular is only ever populated for a two-mode network
+	// (see the `is2mode' check above) - dropping it here always "fails"
+	// harmlessly otherwise, since it was never created. Without a
+	// genuine, uncaptured command run AFTER these three, this program's
+	// own final reported outcome to the caller would be whichever of
+	// them happened to run last, not this call's real, successful
+	// completion - the exact bug that used to silently leak a stray
+	// nonzero _rc into nwload's own `xvars'-suppress branch
+	// (nw_datasync `netname'; exit), which unlike this full var-
+	// generation path has no further command of its own to mask the
+	// leak. `exit'/`exit 0' do NOT themselves reset `_rc' (confirmed
+	// directly - neither clears a stale nonzero `_rc' left by an
+	// earlier capture), so `nwname' (a genuine, always-succeeding ado
+	// call, already used throughout this package to report a network's
+	// own current state) is run immediately before returning, purely to
+	// leave `_rc' clean.
 	capture mata: mata drop `mode'
 	capture mata: mata drop `nodename'
 	capture mata: mata drop `nodeindex'
+	// see the `datasync == 0' branch above for why `nwname' is wrapped
+	// in `_return hold'/`_return restore' here, not called bare - this
+	// path in particular must preserve this program's OWN r(nodes)
+	// (set near its own top), which nwload.ado's own caller reads
+	// right after this call returns.
+	capture _return drop _nwds
+	_return hold _nwds
+	qui nwname `netname'
+	_return restore _nwds
 
 end
 

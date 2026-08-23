@@ -36,7 +36,7 @@
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; default = {it:_eccentricity}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -144,7 +144,7 @@ them the length 6.
 
 {pstd}
 ({cmd:nwgeodesic} also reports the network {it:radius} - the minimum node eccentricity - as an
-additional line here, and, unless {bf:xvars} is specified, generates a per-node {it:_eccentricity}
+additional line here, and, if {bf:xvars} is specified, generates a per-node {it:_eccentricity}
 variable; not reproduced above since it depends on live data.)
 
 	

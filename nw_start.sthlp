@@ -123,7 +123,7 @@ allow the options {bf:name(), vars(), labs(), ntimes(), xvars}.
 {center:{c |} {bf:vars()}       {c |} Stata variables for this network  {c |}}
 {center:{c |} {bf:labs()}       {c |} Node labels                       {c |}}
 {center:{c |} {bf:ntimes()}     {c |} Number networks to simulate       {c |}}
-{center:{c |} {bf:xvars}        {c |} Do not generate Stata variables   {c |}}
+{center:{c |} {bf:xvars}        {c |} Generate Stata variables          {c |}}
 {center:{c BLC}{hline 14}{c BT}{hline 35}{c BRC}}
 
 {pstd}

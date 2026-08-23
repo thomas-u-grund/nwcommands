@@ -82,7 +82,7 @@
 {synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
 {synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
 {synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
@@ -260,7 +260,7 @@ data already looks like a list of affiliations:
 {pstd}
 This also automatically sets each mode's own human-readable description from the variable names
 used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)} in
-{help nwname}/{help nwsummarize}), and (unless {bf:xvars} is given) generates a {it:_mode} variable
+{help nwname}/{help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
 holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
 full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
 {bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
@@ -340,11 +340,12 @@ can be set wit option {bf:vars()}. When specified, it needs to have as many entr
 the program automatically makes a suggestion for variable names. 
 
 {pstd}
-Many network generators allow the option {bf:xvars}, 
-which essentially only produces a network object, but does not load a network as Stata variables (see {help nwload}). It can be
-useful to surpress loading the adjacency matrix of a network in Stata when one deals with many or large networks. All commands
-that require a {help netname} still work, even when all Stata variables are dropped, e.g.{bf: drop _all}. This also means that one 
-can still deal with larger networks even when using {bf:Small Stata}.
+By default, network generators (including {cmd:nwset} itself) only produce a network object - they do NOT load a network as Stata
+variables (see {help nwload}). Many network generators allow the option {bf:xvars}, which ADDITIONALLY loads the new network as Stata
+variables right away (equivalent to following the generator with a separate {help nwload} call). Leaving {bf:xvars} unspecified keeps
+Stata's own variable budget free when one deals with many or large networks - all commands that require a {help netname} still work
+even when no Stata variables for that network exist at all, or after {bf: drop _all}. This also means that one can still deal with
+larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with

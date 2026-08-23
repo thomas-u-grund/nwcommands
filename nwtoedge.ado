@@ -196,7 +196,7 @@ program nwtoedge
 		// instead of matching them, before this fix).
 		local firstnet : word 1 of `netname'
 		foreach cvar of varlist `comparevars' {
-			qui nwexpand `cvar', mode(`comparemode') network(`firstnet') nodes(`nodes') xvars
+			qui nwexpand `cvar', mode(`comparemode') network(`firstnet') nodes(`nodes')
 			local nets "`nets' `comparemode'_`cvar'"
 		}
 	}

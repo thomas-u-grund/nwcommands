@@ -79,7 +79,12 @@ program nwlattice
 	}
 	
 	nwset, mat(newmat) vars(`latticevars') name(`name') `undirected' labs(`labs') 
-	nwload `randomname', `xvars'
+	if "`xvars'" == "" {
+		nwload `randomname', xvars
+	}
+	else {
+		nwload `randomname'
+	}
 	mata: mata drop newmat 
 end
 

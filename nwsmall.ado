@@ -51,7 +51,7 @@
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -184,7 +184,12 @@ program nwsmall
 	}
 	
 	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected' 
-	nwload, `xvars'
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
 	mata: st_rclear()
 end
 

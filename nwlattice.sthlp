@@ -34,7 +34,7 @@
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
 
 {title:Description}

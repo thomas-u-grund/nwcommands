@@ -28,7 +28,7 @@
 {synoptline}
 {synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
 {synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 
 {title:Description}

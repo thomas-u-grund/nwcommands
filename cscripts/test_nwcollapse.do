@@ -4,6 +4,12 @@ do unw_core.do
 
 nwclear
 nwrandom 10, prob(1) name(mynet1)
+// nwcollapse (like nwtoedge, which it calls internally) is a consumer,
+// not a generator - it has no xvars option of its own and assumes the
+// network is already materialized as Stata variables, unlike every
+// generator command above it in this chain. Explicit nwload needed
+// now that generators no longer auto-load by default.
+nwload mynet1
 nwreplace mynet1[1,3] = 0
 nwsummarize
 
@@ -42,8 +48,17 @@ assert `"`r(vars)'"'     == `"n10 n3 n4 n5 n6 n7 n8 n9 new_n1"'
 
 assert         r(nodes)         == 9
 assert         r(density)       == 1
-assert         r(arcs_value)    == 72
-assert         r(arcs)          == 72
+// This first collapse happens to leave a symmetric (every remaining
+// pair tied both ways) result, which nwsummarize reports as undirected
+// (r(edges)/r(edges_sum), not r(arcs)/r(arcs_value)) - unlike the
+// original network above and the two further collapses below, both of
+// which stay directed. A pre-existing test-authoring bug: this used to
+// check r(arcs)/r(arcs_value) == 72 (double-counting each undirected
+// edge once per direction), never actually reached before nwcollapse's
+// own (unrelated) xvars-consistency fix elsewhere in this file let the
+// test run this far for the first time.
+assert         r(edges_sum)     == 36
+assert         r(edges)         == 36
 assert         r(maxval)        == 1
 assert         r(minval)        == 1
 assert         r(missing_edges) == 9

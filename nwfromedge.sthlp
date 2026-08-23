@@ -29,7 +29,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}name of the new network; default = {it:network}{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt undirected}}force the network to be undirected{p_end}
 {synopt:{opt directed}}force the network to be directed{p_end}

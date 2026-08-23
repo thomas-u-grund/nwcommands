@@ -44,7 +44,6 @@
 {synopt:{opth groups(int)}}Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable{p_end}
 {synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates; default = {it:_role}. Ignored unless {opth groups(int)} is specified{p_end}
 {synopt:{opt replace}}Replace an existing {opth equivgen(newvarname)} variable{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}

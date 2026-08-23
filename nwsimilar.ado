@@ -87,7 +87,7 @@ program nwsimilar
 		nwset, mat(__nwsim) name(`name') selfloop labs(`netlabs')
 		capture mata mata drop __nwsim
 	}
-	if "`xvars'" == "" {
+	if "`xvars'" != "" {
 		nwload `name'
 	}
 end

@@ -37,7 +37,7 @@
 {synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
 
 {title:Description}
@@ -146,7 +146,12 @@ program nwpref
 	// depends on this working correctly to produce the network under
 	// the caller's chosen name at all.
 	nwset, mat(`__nwnew') name(`name') `undirected' labs(`labs')
-	nwload, `xvars' 
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
 	
 	
 end

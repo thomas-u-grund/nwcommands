@@ -93,12 +93,31 @@ assert _rc == 0
 nwdissimilar dnet, type(hamming) context(outgoing) name(_dout)
 assert _rc == 0
 
-* --- name()/xvars: a custom name must be honored, and xvars must
-* suppress the final nwload (leaving the current dataset untouched).
+* --- name()/xvars: a custom name must be honored, and (default, no
+* xvars) the final nwload must be suppressed (none of the new
+* dissimilarity network's own per-node variables appear - it inherits
+* net1's own A/B/C/D node labels as its default Stata variable names,
+* same convention nwset() itself uses when no vars() is given - the
+* current dataset's own keepme is untouched).
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
+gen keepme = 1
+nwdissimilar net1, type(euclidean) name(_customdis)
+assert _N == 4
+capture confirm variable keepme
+assert _rc == 0
+capture confirm variable A
+assert _rc != 0
+
+* xvars additionally invokes nwload, generating the new network's own
+* Stata variables (A.._D, inherited from net1's own node labels)
+* alongside keepme.
 nwclear
 nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
 gen keepme = 1
 nwdissimilar net1, type(euclidean) name(_customdis) xvars
 assert _N == 4
 capture confirm variable keepme
+assert _rc == 0
+capture confirm variable A
 assert _rc == 0

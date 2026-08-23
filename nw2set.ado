@@ -32,7 +32,7 @@
 {synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:network}{p_end}
 {synopt:{opt labs}({it:lab1 lab2...})}new node labels that are used for the network{p_end}
 {synopt:{opth rownames(varname)}}names of nodes on level 2{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -144,11 +144,12 @@ For example, this generates a Mata matrix and sets a two-mode network with 6 nod
 By default, two-mode networks are undirected. 
 
 {pstd}
-Many network generators allow the option {bf:xvars}, 
-which essentially only produces a network object, but does not load a network as Stata variables (see {help nwload}). It can be
-useful to surpress loading the adjacency matrix of a network in Stata when one deals with many or large networks. All commands
-that require a {help netname} still work, even when all Stata variables are dropped, e.g.{bf: drop _all}. This also means that one 
-can still deal with larger networks even when using {bf:Small Stata}.
+By default, network generators (including {cmd:nw2set} itself) only produce a network object - they do NOT load a network as Stata
+variables (see {help nwload}). Many network generators allow the option {bf:xvars}, which ADDITIONALLY loads the new network as Stata
+variables right away (equivalent to following the generator with a separate {help nwload} call). Leaving {bf:xvars} unspecified keeps
+Stata's own variable budget free when one deals with many or large networks - all commands that require a {help netname} still work
+even when no Stata variables for that network exist at all, or after {bf: drop _all}. This also means that one can still deal with
+larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with

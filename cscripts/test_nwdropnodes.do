@@ -103,3 +103,18 @@ nwsummarize net4
 assert r(nodes) == 3
 nwdegree net4
 assert _degree[1] == 0
+
+* --- generate(): leaves the source network untouched and produces the
+* modified copy under a new name (found genuinely broken while dealing
+* with xvars consistently project-wide - this always crashed with
+* "option xvars not allowed", since the internal nwduplicate call this
+* option relies on unconditionally passed a hardcoded xvars literal
+* that nwduplicate.ado's own syntax has never accepted at all).
+nwclear
+nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) name(net5) undirected labs(A,B,C,D)
+nwdropnodes net5, nodes(2) generate(net5_dropped)
+assert _rc == 0
+nwsummarize net5
+assert r(nodes) == 4
+nwsummarize net5_dropped
+assert r(nodes) == 3

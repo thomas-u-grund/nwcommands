@@ -114,7 +114,7 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 capture program drop nwsym
 program nwsym
 	version 9.0
-	syntax [anything(name=netname)][, check generate(string) vars(string) xvars noreplace mode(string)]
+	syntax [anything(name=netname)][, check generate(string) vars(string) noreplace mode(string)]
 	nw_syntax `netname', max(1)
 	
 	
