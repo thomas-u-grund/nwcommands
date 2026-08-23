@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nwcug {hline 2} Conditional Uniform Graph (CUG) test}
+{p2col :nwcug {hline 2}}Conditional Uniform Graph (CUG) test{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

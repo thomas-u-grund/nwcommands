@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nw_tomata {hline 2} Return adjacency matrix of network}
+{p2col :nw_tomata {hline 2}}Return adjacency matrix of network{p_end}
 {p2colreset}{...}
 
 

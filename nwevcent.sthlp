@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nwevcent {hline 2} Calculate eigenvector centrality}
+{p2col :nwevcent {hline 2}}Calculate eigenvector centrality{p_end}
 {p2colreset}{...}
 
 

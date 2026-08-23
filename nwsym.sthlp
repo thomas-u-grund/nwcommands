@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 14 22 2}{...}
-{p2col :nwsym  {hline 2} Symmetrize network}
+{p2col :nwsym  {hline 2}}Symmetrize network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

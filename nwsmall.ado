@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwsmall {hline 2} Generate a small-world network}
+{p2col :nwsmall {hline 2}}Generate a small-world network{p_end}
 {p2colreset}{...}
 
 

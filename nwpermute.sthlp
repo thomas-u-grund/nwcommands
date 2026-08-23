@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwpermute {hline 2} Generate permutation of a network}
+{p2col :nwpermute {hline 2}}Generate permutation of a network{p_end}
 {p2colreset}{...}
 
 

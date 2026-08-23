@@ -9,7 +9,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwname {hline 2} Obtain and change meta-information of a network}
+{p2col :nwname {hline 2}}Obtain and change meta-information of a network{p_end}
 {p2colreset}{...}
 
 

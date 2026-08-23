@@ -22,7 +22,7 @@
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} One-way table of dyads}
+{p2col :nwtabulate {hline 2}}One-way table of dyads{p_end}
 {p2colreset}{...}
 
 
@@ -80,7 +80,7 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} Two-way table of two networks}
+{p2col :nwtabulate {hline 2}}Two-way table of two networks{p_end}
 {p2colreset}{...}
 
 
@@ -183,7 +183,7 @@ relationship.
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} Two-way table of network and node attribute}
+{p2col :nwtabulate {hline 2}}Two-way table of network and node attribute{p_end}
 {p2colreset}{...}
 
 

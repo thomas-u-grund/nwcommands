@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwplotmatrix {hline 2} Plot a network as sociomatrix}
+{p2col :nwplotmatrix {hline 2}}Plot a network as sociomatrix{p_end}
 {p2colreset}{...}
 
 

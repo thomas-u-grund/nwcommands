@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwreplace  {hline 2} Replace network}
+{p2col :nwreplace  {hline 2}}Replace network{p_end}
 {p2colreset}{...}
 
 

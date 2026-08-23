@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwcompressobs {hline 2} Compresses observations in Stata}
+{p2col :nwcompressobs {hline 2}}Compresses observations in Stata{p_end}
 {p2colreset}{...}
 
 

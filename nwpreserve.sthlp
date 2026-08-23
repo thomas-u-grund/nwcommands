@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwpreserve {hline 2} Preserve and restore network data}
+{p2col :nwpreserve {hline 2}}Preserve and restore network data{p_end}
 {p2colreset}{...}
 
 

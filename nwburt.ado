@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 2.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwburt {hline 2} Calculate Burt structural hole measures}
+{p2col :nwburt {hline 2}}Calculate Burt structural hole measures{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

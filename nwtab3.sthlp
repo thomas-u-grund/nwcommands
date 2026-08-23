@@ -4,7 +4,7 @@
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} Two-way table of network and node-attribute}
+{p2col :nwtabulate {hline 2}}Two-way table of network and node-attribute{p_end}
 {p2colreset}{...}
 
 

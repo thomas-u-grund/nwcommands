@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwplot {hline 2} Plot a network}
+{p2col :nwplot {hline 2}}Plot a network{p_end}
 {p2colreset}{...}
 
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwvalidvars {hline 2} Validate Stata variables for network}
+{p2col :nwvalidvars {hline 2}}Validate Stata variables for network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

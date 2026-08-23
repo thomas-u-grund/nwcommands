@@ -3,12 +3,12 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwgen {hline 2} Network extensions to generate}
+{p2col :nwgen {hline 2}}Network extensions to generate{p_end}
 {p2colreset}{...}
 
 

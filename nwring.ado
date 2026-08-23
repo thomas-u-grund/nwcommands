@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwring {hline 2} Generate a ring-lattice network}
+{p2col :nwring {hline 2}}Generate a ring-lattice network{p_end}
 {p2colreset}{...}
 
 

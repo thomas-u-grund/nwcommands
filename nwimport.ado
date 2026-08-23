@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwimport  {hline 2} Import network}
+{p2col :nwimport  {hline 2}}Import network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

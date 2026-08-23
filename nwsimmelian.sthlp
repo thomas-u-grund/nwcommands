@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 2.0.0  18may2019 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwsimmelian {hline 2} Calculate Simmelian ties}
+{p2col :nwsimmelian {hline 2}}Calculate Simmelian ties{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

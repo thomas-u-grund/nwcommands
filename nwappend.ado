@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 14 22 2}{...}
-{p2col :nwappend {hline 2} Append network dataset}
+{p2col :nwappend {hline 2}}Append network dataset{p_end}
 {p2colreset}{...}
 
 

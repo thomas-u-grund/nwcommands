@@ -4,12 +4,12 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwbridges {hline 2} Calculate bridges}
+{p2col :nwbridges {hline 2}}Calculate bridges{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

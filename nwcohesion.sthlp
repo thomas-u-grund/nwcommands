@@ -1,11 +1,11 @@
 {smcl}
 {* *! version 1.0.0  22aug2026 author: Thomas Grund}{...}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nwcohesion {hline 2} Moody-White structural cohesion hierarchy{p_end}
+{p2col :nwcohesion {hline 2}}Moody-White structural cohesion hierarchy{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

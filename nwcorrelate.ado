@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 2.0.0  26aug2016}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwcorrelate {hline 2} Correlate networks and variables}
+{p2col :nwcorrelate {hline 2}}Correlate networks and variables{p_end}
 {p2colreset}{...}
 
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :_nwnodelab {hline 2} Returns the nodelab of a node given its nodeid}
+{p2col :_nwnodelab {hline 2}}Returns the nodelab of a node given its nodeid{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

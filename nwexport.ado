@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwexport  {hline 2} Export network as Pajek or Ucinet file}
+{p2col :nwexport  {hline 2}}Export network as Pajek or Ucinet file{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

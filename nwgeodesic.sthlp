@@ -3,7 +3,7 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
 
 {title:Title}
 

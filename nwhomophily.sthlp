@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwhomophily {hline 2} Generate a homophily network}
+{p2col :nwhomophily {hline 2}}Generate a homophily network{p_end}
 {p2colreset}{...}
 
 

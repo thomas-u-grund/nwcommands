@@ -5,7 +5,7 @@
 {title:Title}
 
 {p2colset 9 25 26 2}{...}
-{p2col :nwergm postestimation {hline 2} Postestimation tools for {cmd:nwergm}{p_end}
+{p2col :nwergm postestimation {hline 2}}Postestimation tools for {cmd:nwergm}{p_end}
 {p2colreset}{...}
 
 {title:Description}

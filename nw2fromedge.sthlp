@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nw2fromedge {hline 2} Import two-mode network data from edgelist}
+{p2col :nw2fromedge {hline 2}}Import two-mode network data from edgelist{p_end}
 {p2colreset}{...}
 
 

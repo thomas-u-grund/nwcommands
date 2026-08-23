@@ -9,7 +9,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwtranspose {hline 2} Transpose a network}
+{p2col :nwtranspose {hline 2}}Transpose a network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

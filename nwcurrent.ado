@@ -10,7 +10,7 @@
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nwcurrent {hline 2} Report and set current network}
+{p2col :nwcurrent {hline 2}}Report and set current network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

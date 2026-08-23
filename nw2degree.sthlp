@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nw2degree {hline 2} Two-mode (bipartite) degree centrality{p_end}
+{p2col :nw2degree {hline 2}}Two-mode (bipartite) degree centrality{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

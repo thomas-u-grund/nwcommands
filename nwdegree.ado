@@ -2,12 +2,12 @@
 {smcl}
 {* *!  4jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nwdegree {hline 2} Degree centrality and distribution}
+{p2col :nwdegree {hline 2}}Degree centrality and distribution{p_end}
 {p2colreset}{...}
 
 

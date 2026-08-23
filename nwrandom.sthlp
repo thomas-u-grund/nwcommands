@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwrandom {hline 2} Generate a random network}
+{p2col :nwrandom {hline 2}}Generate a random network{p_end}
 {p2colreset}{...}
 
 

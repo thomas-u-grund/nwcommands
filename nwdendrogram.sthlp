@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwdendrogram {hline 2} Plot a wheel dendrogram}
+{p2col :nwdendrogram {hline 2}}Plot a wheel dendrogram{p_end}
 {p2colreset}{...}
 
 
