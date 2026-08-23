@@ -6,7 +6,7 @@
 
 {title:Example networks}
 
-{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on the nwcommands.org server.
+{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on this package's own GitHub repository.
 {p_end}
 {hline}
 

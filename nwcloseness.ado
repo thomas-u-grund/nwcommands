@@ -1,7 +1,7 @@
 *! Date        : 24aug2014
 *! Version     : 1.0.4
 *! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+*! Email	   : thomas.u.grund@gmail.com
 
 * Calculates actor closeness centrality according to Sabidussi (1966)
 * See Wassermann & Faust (1994, p. 184)

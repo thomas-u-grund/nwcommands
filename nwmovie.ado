@@ -1,6 +1,6 @@
 *! Date        : 11feb2015
 *! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+*! Email	   : thomas.u.grund@gmail.com
 
 capture program drop nwmovie
 program nwmovie
