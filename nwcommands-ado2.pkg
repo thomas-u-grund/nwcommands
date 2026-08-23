@@ -40,3 +40,4 @@ f nwwebuse.ado
 f scheme-s1network.scheme
 f scheme-s2network.scheme
 f scheme-s3network.scheme
+f lib/lnwcommands.mlib
