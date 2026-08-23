@@ -43,9 +43,12 @@ Calculates the betweenness centrality for each node {it:i} in a {help netname:ne
 saves the result as a Stata variable. By default the command uses the dichotomized network (any tie
 with weight > 0 counts as an edge, tie strength ignored); pass {opt weighted} to compute genuinely
 weighted betweenness on Dijkstra shortest paths instead, using {opt alpha()} to control the
-weight-to-distance conversion (same convention as {help nwgeodesic}'s own {opt alpha()}: edge cost is
-{it:weight^alpha} - {opt alpha(1)}, the default, uses raw tie weight directly as distance/cost;
-{opt alpha(0)} reduces to the unweighted case).
+weight-to-distance conversion. This follows Opsahl, Agneessens and Skvoretz (2010) - the same
+generalization {help nwgeodesic}'s own {opt alpha()} already implements for weighted distances - where
+edge cost is {it:(1/weight)^alpha}: a STRONGER tie is a SHORTER effective distance, not a longer one.
+{opt alpha(1)}, the default, uses the reciprocal of the raw tie weight directly as distance/cost;
+{opt alpha(0)} reduces to the unweighted case (every positive tie costs exactly 1, ignoring its
+strength). See the References section below for the full citation.
 
 {pstd}
 The betweenness centrality for node {it:i} is equal to the number of shortest paths from all vertices to all 
@@ -119,6 +122,17 @@ negative ties, are treated as no tie at all in both the default and {opt weighte
 negative (e.g. antagonistic) tie is not distinguished from an absent one, and {opt weighted}'s
 {it:weight^alpha} cost is undefined for a negative base in general, so signed networks are not
 natively supported by either mode. Two-mode: not checked.
+
+
+{title:References}
+
+{pstd}
+Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical
+Sociology} 25, 163-177.
+
+{pstd}
+Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks:
+Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
 
 
 {title:See also}

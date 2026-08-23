@@ -4202,15 +4202,28 @@ real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 	dequeue becomes a linear-scan extract-min over unsettled nodes (Mata
 	has no built-in priority queue/decrease-key), and the unweighted
 	hop-distance relaxation "D[w]==D[v]+1" becomes a real-valued
-	"D[w]==D[v]+cost(v,w)". Edge cost is edge_weight(v,w)^alpha, the
+	"D[w]==D[v]+cost(v,w)". Edge cost is edge_weight(v,w)^(-alpha), i.e.
+	(1/weight)^alpha - Opsahl, Agneessens and Skvoretz (2010, Social
+	Networks 32(3), 245-251), the same tie-STRENGTH-to-distance
+	convention calculate_distances_dijkstra()/nwgeodesic already use for
+	exactly this reason (a stronger tie is a SHORTER effective distance,
+	the opposite of treating the raw weight as a cost) - alpha=1: cost
+	is 1/weight; alpha=0: every positive tie costs 1, i.e. unweighted.
+	BUGFIX: this used to be edge_weight(v,w)^alpha (no negation) - the
+	mathematical INVERSE of Opsahl's own definition and of this exact
+	function's own header comment, which already (wrongly) claimed "the
 	same alpha-exponent weight-to-distance convention this package
-	already uses for calculate_distances()/nwgeodesic (alpha=1: raw
-	weight used directly as cost/distance; alpha=0: every positive tie
-	costs 1, i.e. unweighted). Only strictly positive ties are edges at
-	all (same >0 filter as the unweighted version, so a negative tie in
-	a signed network is silently excluded here exactly as it already is
-	there - not silently misread as a valid Dijkstra edge cost, which a
-	negative weight cannot be).
+	already uses for calculate_distances()/nwgeodesic" while actually
+	computing its opposite. Confirmed via direct hand-calculation on
+	nwbetween.ado's own doc-header/cscripts test network (A-B=1, A-C=4,
+	B-C=2, C-D=1, undirected): under the corrected 1/weight cost,
+	cost(A,B) direct = 1/1 = 1, but cost(A,B) via C = 1/4 + 1/2 = 0.75 -
+	CHEAPER, so the true shortest A-B path runs through C, putting C (a
+	strongly-tied hub) correctly on the betweenness path it should be
+	on. The old, wrong formula priced every direct tie as literally its
+	own raw weight regardless of any stronger intermediary, silently
+	favoring direct ties over cheaper indirect ones - exactly backwards
+	from "a stronger tie means a shorter effective distance."
 */
 real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 	real matrix adjacencyList, adjacencyCost, Cb, Stack, P, nP, S, D, Dd
@@ -4227,7 +4240,7 @@ real matrix `NWdef'::calculate_betweenness_weighted(real scalar alpha){
 			n = nb[idx,1]
 			if ( m!=n & edge_weight(m,n)>0){
 				adjacencyList[m,k] = n
-				adjacencyCost[m,k] = edge_weight(m,n)^alpha
+				adjacencyCost[m,k] = edge_weight(m,n)^(-alpha)
 				k++
 			}
 		}

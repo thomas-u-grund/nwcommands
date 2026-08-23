@@ -125,22 +125,35 @@ assert _rc == 0
 
 * --- weighted betweenness: genuine Dijkstra-based variant (previously
 * a real gap - the command always dichotomized, silently ignoring tie
-* strength). A-B=1, A-C=4, B-C=2, C-D=1: shortest A-C is via B (cost
-* 1+2=3, cheaper than the direct tie's own cost 4), so B sits on that
-* shortest path even though A-C also has a direct (more expensive)
-* tie; shortest A-D is A-B-C-D (cost 1+2+1=4), putting both B and C
-* on it. Hand-verified: A=0, B=2, C=2, D=0 (worked out by hand before
-* implementing calculate_betweenness_weighted() and confirmed
-* against it during development). Also confirmed alpha(0) reduces
-* the weighted algorithm to the exact same result as the unweighted
-* one - a strong internal-consistency check on the Dijkstra
-* generalization of the existing, already-verified BFS algorithm.
+* strength), on Opsahl, Agneessens and Skvoretz's (2010) own weighted-
+* distance definition (see nwbetween.ado's own References section):
+* edge cost is (1/weight)^alpha, so a STRONGER tie is a SHORTER
+* effective distance, not a longer one. A-B=1, A-C=4, B-C=2, C-D=1
+* (undirected): at alpha=1, cost(A,B) direct = 1/1 = 1, but cost(A,B)
+* via C = 1/4 + 1/2 = 0.75 - CHEAPER, so the true shortest A-B path
+* runs through C; likewise cost(A,D) via C = 1/4 + 1/1 = 1.25, cheaper
+* than any path through B, and cost(B,D) via C = 1/2 + 1/1 = 1.5,
+* cheaper than via A. C therefore sits on all three of these shortest
+* paths (A-B, A-D, B-D) and nothing else does. Hand-verified: A=0,
+* B=0, C=3, D=0 (worked out by hand, confirmed against
+* calculate_betweenness_weighted() directly before being written here
+* as a permanent regression value - this exact test previously
+* asserted A=0,B=2,C=2,D=0, computed under a genuine, since-fixed bug
+* where edge cost was weight^alpha with NO negation, the mathematical
+* inverse of Opsahl's own definition, silently favoring a network's
+* direct ties over cheaper indirect ones through a stronger
+* intermediary). Also confirmed alpha(0) reduces the weighted
+* algorithm to the exact same result as the unweighted one (see below)
+* - a strong internal-consistency check on the Dijkstra generalization
+* of the existing, already-verified BFS algorithm; this check is
+* insensitive to the sign-of-alpha bug above, since w^0 == w^(-0) == 1
+* regardless, which is exactly why it did not itself catch the bug.
 nwclear
 nwset, mat((0,1,4,0\1,0,2,0\4,2,0,1\0,0,1,0)) name(wnet) undirected labs(A,B,C,D)
 nwbetween wnet, weighted alpha(1) silent
 assert _between[1] == 0
-assert _between[2] == 2
-assert _between[3] == 2
+assert _between[2] == 0
+assert _between[3] == 3
 assert _between[4] == 0
 
 nwclear
