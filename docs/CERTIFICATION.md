@@ -1088,6 +1088,17 @@ User-reported directly, with a real console transcript: (1) `nwergm flomarriage,
 | **Regression test added for the size limit specifically** | ✅ | ✅ | ✅ | ✅ | Every pre-existing assertion in `cscripts/test_nwergm_gof.do` used a 5-node network - comfortably under the ~16-node boundary, which is exactly why this bug shipped undetected. Added a new case using an 18-node random network (past the discovered boundary) exercising both `estat gof` and `nwergm simulate` end to end. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | All 23 `cscripts/test_nwergm*.do` files plus `test_nwbetween.do`/`test_nwgraph_native.do` (blast radius of the `calculate_betweenness_native()` fix) pass clean in both dev mode and production mode. |
 
+## Harmonisation phase, unit 110: `nwissymmetric` sparsified (first of the `nwtomata`-dependent family)
+
+Continuing the open items from `docs/PERFORMANCE_BENCHMARKS.md`'s own priority list (unit 103): the `nwtomata`-dependent family (`nwcloseness`, `nwburt`, `nwconstraint`, `nwissymmetric`, `nwsimilar`, `nwdissimilar`, `nwqap`) all materialize a full dense n-by-n matrix regardless of network sparsity. `nwissymmetric` is the simplest of the group - a single symmetry check - and closes first.
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **Sparse symmetry check** | ✅ | ✅ | ✅ | ✅ | `nwissymmetric.ado` called `nwtomata` to materialize the full dense matrix, then Mata's own `issymmetric()` - O(n^2) regardless of tie count. Added `check_issymmetric()` (`unw_core.do`): a network is symmetric iff every stored directed edge (i,j,w) has a matching reverse edge (j,i) with the identical weight - checked directly from the sparse edge list (`edgelist()`), O(m) edges times O(degree) per lookup, short-circuiting on the first asymmetric edge found. |
+| **Correctness, verified against the old dense implementation** | ✅ | ✅ | ✅ | ✅ | 300 random directed/undirected, binary/valued networks (n=3-25) cross-checked against Mata's own `issymmetric()` on the equivalent dense matrix - zero mismatches, including cases where the tie *pattern* is symmetric but a *weight* differs (confirmed the fix compares weights, not just presence). Zero prior test coverage existed for this command at all - new `cscripts/test_nwissymmetric.do` covers directed/undirected/valued/empty/one-sided-tie cases. |
+| **Measured net effect** | ✅ | ✅ | n/a | n/a | n=10,000: previously excluded from the benchmark tier entirely (dense-matrix dependent) - now **0.562 seconds**. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | New test passes clean in both dev mode and production mode; no other `.ado` file calls `nwissymmetric` internally (doc "See also" mentions only). |
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |
