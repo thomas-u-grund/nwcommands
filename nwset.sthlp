@@ -253,7 +253,7 @@ tie, directly analogous to {bf:edgelist} above. This is generally the more natur
 data already looks like a list of affiliations:
 
 	{cmd:. nwclear}
-	{cmd:. use "http://nwcommands.org/data/institutions.dta", clear}
+	{cmd:. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/institutions.dta", clear}
 	{cmd:. nwset person institution, twomode name(mynet)}
 
 {pstd}

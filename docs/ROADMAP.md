@@ -1,6 +1,26 @@
 # nwcommands Roadmap
 
-Living document. Last updated: 2026-08-22. See `docs/FEATURE_AUDIT.md` for the evidence behind every claim here, and `docs/SPARSE_BACKEND.md` for the sparse-migration architecture.
+Living document. Last updated: 2026-08-23. See `docs/FEATURE_AUDIT.md` for the evidence behind every claim here, and `docs/SPARSE_BACKEND.md` for the sparse-migration architecture.
+
+## Repository migration note (2026-08-23)
+
+This repository moved from `github.com/thomasgrund/nwcommands` (defunct account)
+to `github.com/thomas-u-grund/nwcommands` — full commit history, both
+`develop`/`master` branches, and all 90 existing release tags were preserved
+(no history rewrite; the old remote is kept, not deleted, as `old-origin`).
+`develop` is the repository's new default branch (it is genuinely the active
+development branch — `master` was found to be a stale, diverged legacy line
+during the migration, not simply an older point on the same history).
+`nwuse`/`nwwebuse`'s own default example-data host (`$nwwebpath`) was
+rerouted from the now-dead `nwcommands.org` to
+`https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data`,
+resolving a previously-logged dead-host gap. See `docs/CERTIFICATION.md`'s
+own harmonisation unit 89 for the complete account, including a privacy/
+secrets audit, what was deliberately excluded from the now-public repository
+(a book manuscript, personal notes, redundant/dead files) and why, and two
+genuine pre-existing bugs found (and one fixed) along the way. Package
+installation via `net install` was investigated but NOT completed — see
+that unit's own Pending-list entries.
 
 ## Guiding principle
 
@@ -259,5 +279,6 @@ See Stage 8 and `docs/FEATURE_AUDIT.md`'s AH section. Summary: architecture is c
 - Area J (similarity/homophily/mixing/assortativity) fell between fork assignments this pass — needs a dedicated read of `nwhomophily.ado` and a clean confirmation of assortativity's absence.
 - ✅ `nwkatz.ado` correctness audit complete (harmonisation phase): confirmed it computes a shortest-path distance-decay sum, not literature-canonical walk-counting Katz centrality (`(I-alpha*A)^-1`) — documented explicitly rather than silently implied by the name/citation; formula/values unchanged for backwards compatibility. A genuine walk-counting Katz centrality implementation (W5) remains a real gap. Investigating this surfaced and fixed 5 unrelated real bugs that meant the command had never actually worked end to end — see `docs/CERTIFICATION.md`.
 - GML/GraphML import paths in `nwimport.ado` have lower test-fixture confidence than Pajek/UCINET — worth a dedicated correctness pass with real sample files.
-- **Version-control gap**: several already-shipped, tested, actively-relied-upon commands are not tracked in git at all (confirmed via `git status`/`git log`, discovered while committing harmonisation unit 41). `nw2clustering.ado`/`nw2set.ado`/`nw2toedge.ado` and their `cscripts/` tests were committed alongside unit 41 (they sit directly in the two-mode command family unit 41 was already touching); still outstanding: `nwbridges.ado`, `nwappend.ado`, `nwshared.ado`, `nwsimmelian.ado`, `nwnode.ado`, `nwnoderename.ado`/`.sthlp`, `nwpreserve.ado`, `nwrestore.ado`, and their respective `cscripts/` tests (`nwplotjs.ado`/`.sthlp` dropped from this list - removed entirely, harmonisation unit 51, so there is nothing left to commit for it) — all untracked (`git status` reports them `??`), and `_gnwdegree.ado`/`_growmedian2.ado` (untracked helper files, not yet audited for whether they're still-used or genuinely dead) alongside them. Needs a dedicated pass: confirm each file is genuinely finished/working (not abandoned WIP) via its own test, then commit in a coherent unit — do not `git add -A` blindly, since the working tree also has a large amount of separate scratch/output-artifact noise (generated `.html`/`.dta`/`.nwdta`/log files from running the test suite) that should stay untracked.
+- ~~**Version-control gap**~~ **RESOLVED (2026-08-23, GitHub migration unit, docs/CERTIFICATION.md unit 89)**: as part of migrating the repository from `github.com/thomasgrund/nwcommands` to `github.com/thomas-u-grund/nwcommands` (see that unit's own entry for the full account - old remote preserved as `old-origin`, not deleted; full history/branches/tags preserved), the complete accumulated working-tree state (every file this bullet used to list, plus everything else that had piled up uncommitted across many harmonisation units since) was committed in one consolidated commit rather than left pending indefinitely. The original bullet text is kept below as the historical record of what was outstanding and why, not because it is still accurate.
+- **Version-control gap (historical - see the resolved note directly above)**: several already-shipped, tested, actively-relied-upon commands are not tracked in git at all (confirmed via `git status`/`git log`, discovered while committing harmonisation unit 41). `nw2clustering.ado`/`nw2set.ado`/`nw2toedge.ado` and their `cscripts/` tests were committed alongside unit 41 (they sit directly in the two-mode command family unit 41 was already touching); still outstanding: `nwbridges.ado`, `nwappend.ado`, `nwshared.ado`, `nwsimmelian.ado`, `nwnode.ado`, `nwnoderename.ado`/`.sthlp`, `nwpreserve.ado`, `nwrestore.ado`, and their respective `cscripts/` tests (`nwplotjs.ado`/`.sthlp` dropped from this list - removed entirely, harmonisation unit 51, so there is nothing left to commit for it) — all untracked (`git status` reports them `??`), and `_gnwdegree.ado`/`_growmedian2.ado` (untracked helper files, not yet audited for whether they're still-used or genuinely dead) alongside them. Needs a dedicated pass: confirm each file is genuinely finished/working (not abandoned WIP) via its own test, then commit in a coherent unit — do not `git add -A` blindly, since the working tree also has a large amount of separate scratch/output-artifact noise (generated `.html`/`.dta`/`.nwdta`/log files from running the test suite) that should stay untracked.
 - **Compound-drop antipattern**, same class of bug fixed in `nwplot.ado` (harmonisation unit 44 — a single `capture drop A B C` fails and drops *nothing* if even one of A/B/C doesn't exist, since Stata's `drop varlist` is all-or-nothing): `nwmovie.ado`/`nwmoviexy.ado` both have `capture drop _frame_x _frame_y` (two variables). Not fixed in unit 44 — out of scope for that specific bug, and lower risk here since `_frame_x`/`_frame_y` are a matched pair that (on inspection so far) always appear to be created/dropped together, unlike unit 44's `_degree`/`_outdegree`/`_indegree` case where exactly one name is *always* missing depending on directedness, guaranteeing the failure on every call. Worth a dedicated check of `nwmovie`'s/`nwmoviexy`'s own code paths to confirm that pairing genuinely always holds before ruling out the same failure mode there.
