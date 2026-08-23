@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! 12jul2016: Thomas Grund}{...}
 
 {title:Title}
 
@@ -14,29 +14,25 @@
 {cmdab: nwtab:ulate} 
 [{it:{help netname}}]
 [{cmd:,}
-{opt selfloop}
 {it:{help tabulate_oneway##tabulate1_options:tabulate1_options}}]
-
-{synoptset 20 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opt selfloop}}includes self-loops{p_end}
-
 
 {title:Description}
 
 {pstd}
-The one-way nwtabulate simply tabulates all dyads in the network and shows the distribution of dyad
-values. It works just as {help tabulate}, but on the level of network dyads. By default, the diagonal of
-the underlying adjacency matrix of {help netname} is excluded, unless {bf:selfloop} is specified.
+The one-way nwtabulate simply tabulates all ties in the network and shows the distribution of tie
+values. It works just as {help tabulate}, but on the level of network ties. The command recognizes when a network is undirected or selflooped.
 
 {pstd}
-The command calls {help tabulate} with a temporary variable that holds the dyads of a network, hence, all 
-{it:{help tabulate_oneway##tabulate1_options:tabulate1_options}} can be used.
+For example, for a directed network with 5 nodes, the commands displays the distribution of a total of 5 * 4 = 20 tie values. For an undirected network
+with 5 nodes, the commands displays the distribution of a total of (5 * 4)/2 = 10 tie values. 
+
+{pstd}
+The command makes use of the normal {help tabulate} command, hence, all 
+{it:{help tabulate_oneway##tabulate1_options:tabulate1_options}} can be applied. This can be useful to extract the distribution of tie values for further calculation.
 
 {title:Example}
 	
-   {cmd:. webnwuse gang}
+   {cmd:. nwwebuse gang}
    {cmd:. nwtabulate gang}
 {res}
 {txt}   Network:  {res}gang{txt}{col 24}Directed: {res}false{txt}
@@ -59,3 +55,8 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 {title:See also}
 
     {help nwtab2:two-way nwtabulate}, {help tabulate}
+
+
+
+version: 2.0.0
+certified: 12 Jul 2016, 18:18:50

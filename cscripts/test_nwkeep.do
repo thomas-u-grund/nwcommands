@@ -23,6 +23,7 @@ assert         r(networks) == 2
 nwclear
 nwset, mat((1,1,0\0,0,0\1,0,0)) name("first")
 nwkeep if _n < 3
+nwsummarize
 assert reldif( r(density)        , .5                ) <  1E-8
 assert         r(arcs_value)    == 1
 assert         r(arcs)          == 1

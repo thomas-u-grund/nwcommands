@@ -3,18 +3,15 @@ cscript
 do unw_core.do
 
 nwclear
-nwset, mat((1,1,0\0,0,0\1,0,0))
-nwsummarize
+nwrandom 4, density(1) name(mynet) labs(x1,x2,x3,x4)
+nwduplicate
+nwset
 
-nwduplicate, name("mycopy")
-nwsummarize mycopy
-assert reldif( r(density)        , .3333333333333333 ) <  1E-8
-assert         r(arcs_value)    == 2
-assert         r(arcs)          == 2
-assert         r(maxval)        == 1
-assert         r(minval)        == 0
-assert         r(missing_edges) == 3
-assert         r(selfloops)     == 0
-assert         r(nodes)         == 3
+assert `"`r(nets)'"' == `" mynet mynet_copy"'
+assert         r(networks) == 2
 
+drop _all
+nwload mynet_copy
+capture confirm variable x1
+assert _rc == 0
 

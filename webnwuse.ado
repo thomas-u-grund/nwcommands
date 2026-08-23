@@ -5,7 +5,7 @@
 
 capture program drop webnwuse
 program webnwuse
-	syntax anything [, * nwclear]
+	syntax anything [, * nwclear old]
 	
 	`nwclear'
 	capture drop _running 
@@ -37,13 +37,15 @@ program webnwuse
 	
 	local path = "\$nwwebpath"
 	local thispath = "`path'"
-	
+	if "`old'" != "" {
+		local old "_old"
+	}
 	local webname = subinstr("`anything'", ".dta","",99)
 	if substr("`webname'",1,4) == "http" {
-		nwuse_old `webname', `options'
+		nwuse`old' `webname', `options'
 	}
 	else {
-		nwuse_old `thispath'/`webname', `options'
+		nwuse`old' `thispath'/`webname', `options'
 	}
 	qui nwload, labelonly
 end

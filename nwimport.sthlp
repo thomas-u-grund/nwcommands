@@ -20,19 +20,17 @@
 {opt forcedirected}
 {opt forceundirected}
 {opt nwclear}
-{opt clear}]
+{opt nwappend}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nwclear}}clear all networks and variables{p_end}
-{synopt:{opt clear}}clear variables{p_end}
 {synopt:{opth name(newnetname)}}name of the imported network; default = {it:filename}{p_end}
 {synopt:{opt forcedirected}}force network to be directed{p_end}
 {synopt:{opt forceundirected}}force network to be undirected{p_end}
 {synopt:{opt nwclear}}clear all data and networks{p_end}
-{synopt:{opt clear}}clear all data, but keep networks{p_end}
+{synopt:{opt nwappend}}append to existing data{p_end}
 
 {synoptset 20 tabbed}{...}
 {marker import_type}{...}
@@ -256,3 +254,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 	thomas,susan
 	susan
 	geoff,john,michael
+
