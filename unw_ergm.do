@@ -1412,6 +1412,108 @@ real rowvector change_gwdsp(class ErgmGraph scalar G, real scalar i, real scalar
 	return(chg)
 }
 
+/*
+	esp(d)/dsp(d) - fixed, non-geometric shared-partner-count terms
+	(harmonisation unit 91, term-expansion wave 4): "number of TIED dyads
+	with EXACTLY d shared partners" (esp) / "number of dyads, tied or
+	not, with EXACTLY d shared partners" (dsp), one coefficient per
+	requested d (a numlist, matching R ergm's own vector-valued `d`
+	argument - fresh-checked against the current
+	`R/InitErgmTerm.dgw_sp.R`: `InitErgmTerm.desp()`/`InitErgmTerm.ddsp()`
+	both delegate to a shared `.d_sp_impl()` taking `d` as "a vector of
+	distinct integers" and a `type` argument selecting the shared-partner
+	definition - `UTP` for undirected, `OTP`/`ITP`/`RTP`/`OSP`/`ISP` for
+	various directed common-neighbor definitions, defaulting to `OTP`).
+	`nwergm` v1's own GWESP/GWDSP only implement the undirected UTP
+	definition (both are documented "undirected only" - no directed
+	common-neighbor machinery exists yet, see docs/ERGM_ROADMAP.md's own
+	still-open "Directed GWESP variants" item) - `esp()`/`dsp()` here are
+	scoped identically (undirected/UTP only), reusing the exact same
+	`ErgmGraph::shared_partners()` traversal GWESP/GWDSP already use and
+	are already certified against, rather than adding new directed
+	infrastructure as a side effect of this otherwise-small addition.
+
+	Both functions are the SAME change-statistic shape as
+	`stat_gwesp()`/`change_gwesp()` and `stat_gwdsp()`/`change_gwdsp()`
+	directly above, with `gw_kernel(p, decay)` (a single geometric-decay
+	scalar) replaced by the exact-match indicator ROWVECTOR
+	`(p :== td.levels')` (one 0/1 entry per requested d) - every other
+	line of reasoning (which dyads are affected by toggling (i,j), the
+	"own dyad" term esp needs that dsp does not, etc.) carries over
+	unchanged from the already-certified GW terms, so this is a
+	kernel-substitution exercise, not new term-design work.
+*/
+real rowvector stat_esp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, p
+	real rowvector tot
+
+	ties = G.all_ties()
+	tot = J(1, rows(td.levels), 0)
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners(ties[k,1], ties[k,2])
+		tot = tot + (p :== td.levels')
+	}
+	return(tot)
+}
+real rowvector change_esp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, pij, k, m, pik, pjk
+	real rowvector chg, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+
+	pij = G.shared_partners(i,j)
+	chg = delta * (pij :== td.levels')
+
+	nb = G.neighbors_out(i)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		if (!G.has_edge(j,k)) continue
+		pik = G.shared_partners(i,k)
+		chg = chg + ((pik+delta :== td.levels') - (pik :== td.levels'))
+		pjk = G.shared_partners(j,k)
+		chg = chg + ((pjk+delta :== td.levels') - (pjk :== td.levels'))
+	}
+	return(chg)
+}
+real rowvector stat_dsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, p
+	real rowvector tot
+
+	tot = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n-1; i++) {
+		for (j=i+1; j<=G.n; j++) {
+			p = G.shared_partners(i,j)
+			tot = tot + (p :== td.levels')
+		}
+	}
+	return(tot)
+}
+real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, k, m, pk
+	real rowvector chg, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = J(1, rows(td.levels), 0)
+
+	nb = G.neighbors_out(i)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		pk = G.shared_partners(j,k)
+		chg = chg + ((pk+delta :== td.levels') - (pk :== td.levels'))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==i) continue
+		pk = G.shared_partners(i,k)
+		chg = chg + ((pk+delta :== td.levels') - (pk :== td.levels'))
+	}
+	return(chg)
+}
+
 /* ===================================================================
    EXTENSION DEMONSTRATION - NOT part of the real v1 term registry.
 
