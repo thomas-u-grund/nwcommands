@@ -27,9 +27,16 @@
 [{opth nodemix(varlist)}]
 [{opt gwesp(real)}]
 [{opt gwdsp(real)}]
+[{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
 [{opt gwodegree(real)}]
 [{opt gwidegree(real)}]
+[{opt degree(numlist)}]
+[{opt odegree(numlist)}]
+[{opt idegree(numlist)}]
+[{opt concurrent}]
+[{opt triangle}]
+[{opt ctriple}]
 [{opt method(mple|mcmle)}
 {opt mcmcburnin(int)}
 {opt mcmcinterval(int)}
@@ -52,13 +59,20 @@
 {synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
 {synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
-{synopt:{opth nodefactor(varlist)}}One coefficient per distinct level of each listed categorical attribute, each counting total degree among nodes at that level{p_end}
+{synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
+{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected only. Satisfies gwdsp = gwesp + gwnsp{p_end}
+{synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
+{synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
+{synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
+{synopt:{opt concurrent}}Count of nodes with (total) degree 2 or higher; undirected only{p_end}
+{synopt:{opt triangle}}Count of triangles (mutually tied triples); undirected only{p_end}
+{synopt:{opt ctriple}}Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
