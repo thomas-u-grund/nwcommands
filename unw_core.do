@@ -2605,142 +2605,94 @@ real matrix `NWdef'::correlate_nodes(scalar outinboth){
 	return(C)
 }
 
-real matrix `NWdef'::calculate_clustering(real scalar mode) {	
+real matrix `NWdef'::calculate_clustering(real scalar mode) {
 	real matrix cluster
-	real matrix alters, alters1, alters2
-	real matrix id
+	real matrix alters, innb, outnb
 	real matrix closed_triples
 	real matrix potential_triples
-	real scalar i, j, k, alter1_id, alter2_id
+	real scalar i, j, k, alter1_id, alter2_id, w1, w2, ptrip
 
 	closed_triples = J(get_nodes(),1,0)
 	potential_triples = J(get_nodes(),1,0)
-	id = (1::get_nodes())
-	
-	// unvalued
-	if (mode == 0){
-		for ( i = 1 ; i <= get_nodes(); i++) {
-			// union of out- and in-neighbors (matches the original dense
-			// out-row-plus-in-column derivation exactly; a nonzero pattern
-			// is unaffected by valued vs. unvalued, so the sparse index -
-			// built from `edge' - gives the identical alter set)
-			alters = uniqrows(neighbors(i) \ neighbors_in(i))
-			// BUGFIX (intentional, not a silent side effect of the sparse
-			// migration): the original dense select(id, mask) here read a
-			// mask built from a `!=0' comparison against a matrix that
-			// includes the (missing, since self-loops are disabled by
-			// default) diagonal entry. Mata's select() treats a missing
-			// mask value as "keep", so the original always included node
-			// i in its own alters list whenever self-loops were disabled -
-			// poisoning that node's potential_triples to missing via `.'
-			// arithmetic propagation, silently dropping it from downstream
-			// aggregates the same as a legitimately zero-potential node.
-			// neighbors()/neighbors_in() correctly exclude i by
-			// construction (missing/zero diagonal entries are never
-			// stored), so this is fixed as of this session. Verified dead
-			// code as of the same session: no shipped .ado file calls
-			// calculate_clustering() today (nwclustering.ado has its own
-			// independent Stata-side implementation), so this had no
-			// effect on any prior shipped output.
-			for (j = 1; j <= rows(alters); j++){
-				alter1_id = alters[j]
-				for (k = (j+1); k <= rows(alters); k++){
-					if (k <= rows(alters)) {
-						alter2_id = alters[k]	
-						potential_triples[i,1] = potential_triples[i,1] + 2
-						closed_triples[i,1] = closed_triples[i,1] + (*get_matrix_unvalued())[alter1_id,alter2_id] + (*get_matrix_unvalued())[alter2_id,alter1_id]	
-					}
-				}	
+
+	// PERFORMANCE FIX (this unit): every mode below used to look up tie
+	// presence/weight via the DENSE (*get_matrix())/(*get_matrix_
+	// unvalued()) accessors inside its own innermost loop - forcing
+	// ensure_dense_built() to materialize the full N-by-N matrix even
+	// though neighbor ENUMERATION (alters = neighbors(i)) was already
+	// sparse. Not merely a one-time cost either: nwclustering.ado
+	// wasn't even calling this function at all until this same unit
+	// (see below) - it had its own, entirely separate, Stata-level
+	// reshape/merge pipeline instead, measured directly at 459
+	// SECONDS on a 10,000-node network (docs/PERFORMANCE_BENCHMARKS.md).
+	// Replaced every dense lookup with has_edge()/edge_weight() (the
+	// same safe "check has_edge() before reading edge_weight()"
+	// pattern nwevcent's own sparse migration already established),
+	// so this function no longer touches the dense matrix at all.
+	for ( i = 1 ; i <= get_nodes(); i++) {
+		if (mode == 0) {
+			// BUGFIX (caught by cscripts/test_nwtriads.do's directed-
+			// network case during this same unit's validation, not a
+			// pre-existing bug this unit introduced no change in
+			// output for undirected networks): an earlier draft of this
+			// sparse migration paired every two elements of union(out-
+			// neighbors(i), in-neighbors(i)) against each other,
+			// checking has_edge() in both directions. That over-counts
+			// for a DIRECTED network - e.g. two nodes that are both
+			// pure in-neighbors of i get paired even though neither one
+			// is reachable FROM i, which is not a valid directed wedge.
+			// nwclustering.ado's actual shipped (pre-existing, reshape/
+			// merge-based) implementation instead only ever pairs one
+			// IN-neighbor with one OUT-neighbor of i - the directed
+			// two-path a -> i -> b - and checks whether the direct
+			// shortcut a -> b closes it (the same in x out cross-
+			// product idiom calculate_brokerage() already uses above
+			// for its own directed two-path enumeration). For an
+			// undirected network neighbors_in()==neighbors() by
+			// construction, so this reduces to exactly the same count
+			// as the old union-based draft (every unordered alter pair
+			// {a,b} is visited as both (in=a,out=b) and (in=b,out=a),
+			// matching that draft's potential_triples+=2 and
+			// has_edge(a,b)+has_edge(b,a) exactly) - confirmed via
+			// direct hand and empirical cross-checks against the
+			// pre-existing reshape pipeline on both directed and
+			// undirected networks before trusting this.
+			innb = neighbors_in(i)
+			outnb = neighbors(i)
+			for (j = 1; j <= rows(innb); j++){
+				alter1_id = innb[j]
+				for (k = 1; k <= rows(outnb); k++){
+					alter2_id = outnb[k]
+					if (alter2_id == alter1_id) continue
+					potential_triples[i,1] = potential_triples[i,1] + 1
+					closed_triples[i,1] = closed_triples[i,1] + has_edge(alter1_id,alter2_id)
+				}
 			}
-		}		
-	}
-	
-	// arithmetic mean
-	if (mode == 1){
-		for ( i = 1 ; i <= get_nodes(); i++) {
-			// out-neighbors only (matches the original's asymmetric,
-			// out-row-only derivation for the weighted modes exactly -
-			// preserved as-is, not "fixed" to match mode 0's union)
-			alters = neighbors(i)
-			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
-			// neighbors() excludes i by construction. See mode 0's comment.
-			for (j = 1; j <= rows(alters); j++){
-				alter1_id = alters[j]
-				for (k = (j+1); k <= rows(alters); k++){
-					if (k <= rows(alters)) {
-						alter2_id = alters[k]	
-						potential_triples[i,1] = potential_triples[i,1] + (((*get_matrix())[i,alter1_id] :+ (*get_matrix())[i,alter2_id]):/2)
-						closed_triples[i,1] = closed_triples[i,1] + (((*get_matrix())[i,alter1_id] :+ (*get_matrix())[i,alter2_id]):/2) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
-					}
-				}	
+			continue
+		}
+
+		// valued modes: out-neighbors only (matches the original's
+		// asymmetric, out-row-only derivation for the weighted modes
+		// exactly) - only ever reached for undirected networks in
+		// practice, since nwclustering.ado itself refuses any
+		// weighted measure on a directed network.
+		alters = neighbors(i)
+		for (j = 1; j <= rows(alters); j++){
+			alter1_id = alters[j]
+			for (k = (j+1); k <= rows(alters); k++){
+				alter2_id = alters[k]
+				w1 = has_edge(i,alter1_id) ? edge_weight(i,alter1_id) : 0
+				w2 = has_edge(i,alter2_id) ? edge_weight(i,alter2_id) : 0
+				if (mode == 1) ptrip = (w1 + w2) / 2          // arithmetic mean
+				else if (mode == 2) ptrip = sqrt(w1 * w2)     // geometric mean
+				else if (mode == 3) ptrip = max((w1, w2))     // maximum
+				else ptrip = min((w1, w2))                    // minimum
+				closed_triples[i,1] = closed_triples[i,1] + ptrip :* has_edge(alter1_id,alter2_id)
+				potential_triples[i,1] = potential_triples[i,1] + ptrip
 			}
 		}
 	}
-	
-	// geometric mean
-	if (mode == 2){
-		for ( i = 1 ; i <= get_nodes(); i++) {
-			// out-neighbors only (matches the original's asymmetric,
-			// out-row-only derivation for the weighted modes exactly -
-			// preserved as-is, not "fixed" to match mode 0's union)
-			alters = neighbors(i)
-			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
-			// neighbors() excludes i by construction. See mode 0's comment.
-			for (j = 1; j <= rows(alters); j++){
-				alter1_id = alters[j]
-				for (k = (j+1); k <= rows(alters); k++){
-					if (k <= rows(alters)) {
-						alter2_id = alters[k]	
-						potential_triples[i,1] = potential_triples[i,1] + (sqrt((*get_matrix())[i,alter1_id] :* (*get_matrix())[i,alter2_id]))
-						closed_triples[i,1] = closed_triples[i,1] + (sqrt((*get_matrix())[i,alter1_id] :* (*get_matrix())[i,alter2_id])) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
-					}
-				}	
-			}
-		}
-	}
-	// maximum
-	if (mode == 3){
-		for ( i = 1 ; i <= get_nodes(); i++) {
-			// out-neighbors only (matches the original's asymmetric,
-			// out-row-only derivation for the weighted modes exactly -
-			// preserved as-is, not "fixed" to match mode 0's union)
-			alters = neighbors(i)
-			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
-			// neighbors() excludes i by construction. See mode 0's comment.
-			for (j = 1; j <= rows(alters); j++){
-				alter1_id = alters[j]
-				for (k = (j+1); k <= rows(alters); k++){
-					if (k <= rows(alters)) {
-						alter2_id = alters[k]	
-						potential_triples[i,1] = potential_triples[i,1] + (max(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id])))
-						closed_triples[i,1] = closed_triples[i,1] + (max(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id]))) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
-					}
-				}	
-			}
-		}
-	}
-	// minimum
-	if (mode == 4){
-		for ( i = 1 ; i <= get_nodes(); i++) {
-			// out-neighbors only (matches the original's asymmetric,
-			// out-row-only derivation for the weighted modes exactly -
-			// preserved as-is, not "fixed" to match mode 0's union)
-			alters = neighbors(i)
-			// BUGFIX: same self-inclusion issue as mode 0 above, same fix -
-			// neighbors() excludes i by construction. See mode 0's comment.
-			for (j = 1; j <= rows(alters); j++){
-				alter1_id = alters[j]
-				for (k = (j+1); k <= rows(alters); k++){
-					if (k <= rows(alters)) {
-						alter2_id = alters[k]	
-						potential_triples[i,1] = potential_triples[i,1] + (min(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id])))
-						closed_triples[i,1] = closed_triples[i,1] + (min(((*get_matrix())[i,alter1_id], (*get_matrix())[i,alter2_id]))) :* ((*get_matrix())[alter1_id,alter2_id] != 0)		
-					}
-				}	
-			}
-		}
-	}
-	
+
 	potential_triples = editvalue(potential_triples, 0, .)
 	cluster = J(get_nodes(),3,0)
 	cluster[,1] = (closed_triples:/potential_triples)
