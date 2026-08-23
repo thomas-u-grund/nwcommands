@@ -107,7 +107,7 @@ last certified : 23 Aug 2026
 * now-dead nwcommands.org host to this project's own new GitHub repository
 * (raw.githubusercontent.com), resolving a gap previously logged in
 * docs/CERTIFICATION.md's own Pending list ("nwcommands.org's own data host
-* is dead"). Points at the `develop` branch specifically (the actually
+* is dead"). Points at the "develop" branch specifically (the actually
 * current, complete branch - `master` was found to be a stale, diverged
 * legacy line during this same migration, NOT simply an older point on the
 * same history) - a user can still override via `nwwebuse set <path>` at

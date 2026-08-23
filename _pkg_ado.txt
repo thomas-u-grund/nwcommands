@@ -92,7 +92,6 @@ f nwsimilar.ado
 f nwsimindex.ado
 f nwsimmelian.ado
 f nwsmall.ado
-f nwsort.ado
 f nwspectral.ado
 f nwsubset.ado
 f nwsummarize.ado
@@ -113,13 +112,6 @@ f nwvalidate.ado
 f nwvalidvars.ado
 f nwvalue.ado
 f nwwebuse.ado
-f florentine.dta
-f gang.dta
-f glasgow.dta
-f klas12b.dta
 f scheme-s1network.scheme
 f scheme-s2network.scheme
 f scheme-s3network.scheme
-f kapmine.dat
-f madrid.dat
-f wiring.dat

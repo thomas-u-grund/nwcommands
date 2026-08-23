@@ -29,20 +29,20 @@ program nwinstall
 	
 	if "`help'" != "" {
 		capture ado uninstall "nwcommands-hlp"
-		net from "http://nwcommands.org"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
 		net install "nwcommands-hlp", all
 	}
 	
 	if "`ext'" != "" {
 		capture ado uninstall "nwcommands-ext"
-		net from "http://nwcommands.org"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
 		net install "nwcommands-ext", all
 	}
 	
 	
 	if "`dialog'" != "" {
 		capture ado uninstall "nwcommands-dlg"
-		net from "http://nwcommands.org"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
 		net install "nwcommands-dlg", all
 	}
 	

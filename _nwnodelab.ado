@@ -1,7 +1,7 @@
 *! Date        : 15sept2014
 *! Version     : 1.0
 *! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+*! Email	   : thomas.u.grund@gmail.com
 
 capture program drop _nwnodelab
 program _nwnodelab

@@ -12,13 +12,21 @@ program _nwdeploy
 	file write `deploy_ado' "v 3" _n
 	file write `deploy_ado' "d nwcommands-ado. Social Network Analysis Using Stata" _n
 	file write `deploy_ado' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write `deploy_ado' "d email: contact@nwcommands.org" _n
+	file write `deploy_ado' "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write `deploy_ado' "d Distribution-Date: `d'" _n
 	
 	local adofiles : dir "`c(pwd)'" files "*.ado"
 	local sthlpfiles : dir "`c(pwd)'" files "*.sthlp"
-	
+	// `: dir' returns files in filesystem order, not alphabetical - left
+	// that way for years despite nw_alphabetical.sthlp's own name/stated
+	// purpose (confirmed directly: a from-scratch _nwdeploy run, only
+	// possible for the first time after the quote-parsing fixes above,
+	// produced a genuinely non-alphabetical "alphabetical" list). Sorted
+	// explicitly via Mata rather than trusting directory-listing order.
+	mata: st_local("adofiles", invtokens(sort(tokens(st_local("adofiles"))', 1)'))
+	mata: st_local("sthlpfiles", invtokens(sort(tokens(st_local("sthlpfiles"))', 1)'))
+
 	// generate topical glossary help
 	tempname memhold
 	tempfile topics
@@ -176,7 +184,7 @@ program _nwdeploy
 	file write deploy_hlp "v 3" _n
 	file write deploy_hlp "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files" _n
 	file write deploy_hlp "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_hlp "d email: contact[at]nwcommands.org" _n
+	file write deploy_hlp "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write deploy_hlp "d Distribution-Date: `d'" _n
 	
@@ -201,7 +209,7 @@ program _nwdeploy
 	file write deploy_ext1 "v 3" _n
 	file write deploy_ext1 "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
 	file write deploy_ext1 "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_ext1 "d email: contact[at]nwcommands.org" _n
+	file write deploy_ext1 "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write deploy_ext1 "d Distribution-Date: `d'" _n
 	
@@ -218,7 +226,7 @@ program _nwdeploy
 	file write deploy_dlg "v 3" _n
 	file write deploy_dlg "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
 	file write deploy_dlg "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_dlg "d email: contact[at]nwcommands.org" _n
+	file write deploy_dlg "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write deploy_dlg "d Distribution-Date: `d'" _n
 	
@@ -249,11 +257,47 @@ program getcmddesc, rclass
 		file read `cmdsthlp' line
 		local found = 0
 		while (r(eof)==0 & `found' == 0) {
-			local j = strpos("`line'", "{hline 2}")
+			// BUGFIX: was strpos("`line'", ...)/substr("`cmddesc'",...) -
+			// plain double quotes around a macro whose VALUE is an
+			// arbitrary .sthlp source line, which routinely contains its
+			// own literal embedded double quotes (e.g. a di "..." line
+			// from the command's own doc header) - those embedded quotes
+			// prematurely closed the plain "..." literal, leaving a bare
+			// trailing token Stata then tried to interpret as a command
+			// name ("invalid name", r(198)) - confirmed directly via
+			// `set trace on` on the exact nwclustering.ado line that
+			// triggered it. Compound quotes handle embedded literal
+			// quotes correctly, same fix already used one line below
+			// for `line' itself.
+			local j = strpos(`"`line'"', "{hline 2}")
 			if (`j' >0) {
                 local cmddesc = substr(`"`line'"', `=`j' + 10', .)
-				local cmddesc = substr("`cmddesc'",1, `=length("`cmddesc'") - 1')
-				local found = 1		
+				// BUGFIX: was substr(`"`cmddesc'"',1,`=length(`"`cmddesc'"')-1')
+				// - a literal apostrophe anywhere in the command's own
+				// one-line description (e.g. nwmodularity.sthlp's
+				// "Newman's modularity") gets misread as the extended
+				// macro function's own closing quote when nested this
+				// way, dropping the second substr() argument entirely
+				// ("too few quotes" / "too many ')' or ']'" - confirmed
+				// directly via an isolated repro). Computing the length
+				// as its own separate local first avoids the hazard.
+				// BUGFIX: this stripped only the trailing "-1" character
+				// (just the closing brace of the source line's own
+				// "{p_end}" tag), leaving a dangling "{p_end" - but every
+				// call site (nw_topical.sthlp's/nw_alphabetical.sthlp's
+				// own generation, further below) unconditionally appends
+				// its own literal "{p_end}" after this returned cmddesc,
+				// so the actual output was the malformed
+				// "...{p_end{p_end}" - confirmed directly by running
+				// _nwdeploy end to end for the first time (only possible
+				// after the quote-parsing fixes above let it get this
+				// far) and inspecting the regenerated file. Every
+				// command's own {p2col:...}Description{p_end} synopsis
+				// line ends in the fixed 7-character "{p_end}" tag by
+				// convention throughout this package - strip all 7, not 1.
+				local cmddesclen = length(`"`cmddesc'"')
+				local cmddesc = substr(`"`cmddesc'"', 1, `cmddesclen' - length("{p_end}"))
+				local found = 1
             }
 			file read `cmdsthlp' line
 		}
@@ -285,14 +329,18 @@ program getcmdtopic, rclass
 				//local found 0
 				file read `cmdsthlp' line
                 gettoken topiclink cmdtopic : line, parse(":") 
-				local cmdtopic= substr(`"`cmdtopic'"', 2, `=length(`"`cmdtopic'"') - 2')
+				// Same apostrophe-in-nested-`=...' hazard as
+				// getcmddesc above - fixed the same way.
+				local cmdtopiclen = length(`"`cmdtopic'"')
+				local cmdtopic= substr(`"`cmdtopic'"', 2, `cmdtopiclen' - 2)
 				local topiclink= substr(`"`topiclink'"', 8,.)	
             }
 			local k = strpos(`"`line'"', "{marker top2}")
 			if (`k' >0) {
 				file read `cmdsthlp' line
                 gettoken topiclink2 cmdtopic2 : line, parse(":") 
-				local cmdtopic2= substr(`"`cmdtopic2'"', 2, `=length(`"`cmdtopic2'"') - 2')
+				local cmdtopic2len = length(`"`cmdtopic2'"')
+				local cmdtopic2= substr(`"`cmdtopic2'"', 2, `cmdtopic2len' - 2)
 				local topiclink2= substr(`"`topiclink2'"', 8,.)	
             }
 			file read `cmdsthlp' line
@@ -336,7 +384,7 @@ program _write_nwcommands
 "		*! Version     : `version'" _n ///
 "		*! Authors     : Thomas U. Grund " _n ///
 "		*! Contact     : thomas.u.grund@gmail.com" _n ///
-`"		 *! Web         : {browse "http://nwcommands.org"}"' _n ///
+`"		 *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}"' _n ///
 `"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"'
 	file close `nw'
 end

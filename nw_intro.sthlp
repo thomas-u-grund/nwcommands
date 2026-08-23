@@ -34,7 +34,7 @@
 This software introduces network analysis to Stata. Updates, tutorials and further information about e.g. workshops can be found at:
 
 {pmore}
-{browse "http://nwcommands.org"}
+{browse "https://github.com/thomas-u-grund/nwcommands"}
 
 {pstd}
 Network analyses investigate the relationships (arcs/edges) between e.g. individuals or organizations, such

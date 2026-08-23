@@ -173,7 +173,7 @@ counts ({opt esp()}/{opt dsp()}); the degree-sequence family ({opt degree()}/{op
 {opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
 {opt esp()}/{opt dsp()} also support directed networks via R ergm's own default directed
 shared-partner definition (OTP). Two-mode/bipartite terms are deliberately deprioritized as a
-later initiative (see the roadmap); `balance`/signed-network terms are blocked (signed networks
+later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
 are not a supported data type at all); curved parameters need a genuine MCMLE architecture
 change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
 not yet implemented - see the roadmap. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
