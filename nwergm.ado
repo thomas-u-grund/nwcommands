@@ -89,6 +89,9 @@
 {synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (OTP). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
 {synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
 {synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
+{synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
+{synopt:{opt sender}}One coefficient per node (except a base node) equal to that node's own out-degree; directed networks only{p_end}
+{synopt:{opt receiver}}One coefficient per node (except a base node) equal to that node's own in-degree; directed networks only{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -307,7 +310,7 @@ program nwergm, eclass
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
-		TRANSITIVETIES CYCLICALTIES ///
+		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -407,6 +410,10 @@ program nwergm, eclass
 	// same automatic OTP default as gwesp()/gwdsp()/gwnsp() above.
 	if ("`transitiveties'" != "" | "`cyclicalties'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:transitiveties}/{bf:cyclicalties} require a directed network; {bf:`netname'} is undirected."
+		error 198
+	}
+	if ("`sender'" != "" | "`receiver'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:sender}/{bf:receiver} require a directed network; {bf:`netname'} is undirected."
 		error 198
 	}
 
@@ -888,6 +895,37 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
 
+	// --- term-expansion wave 7 (harmonisation unit 91 continuation):
+	// sender()/receiver() (per-node out-/in-degree fixed effects, base=1
+	// omitted, matching R ergm's own default) - a thin convenience
+	// wrapper: the node's own identity (1..nodes) IS the "attribute",
+	// reusing the already-certified stat_nodeofactor()/stat_nodeifactor()
+	// with zero new Mata code.
+	if "`sender'" != "" {
+		tempname __td_send
+		mata: `__td_send' = ErgmTermData()
+		mata: `__td_send'.attr = (1::`nodes')
+		mata: `__td_send'.levels = (2::`nodes')
+		local __ergm_cnames ""
+		forvalues __k = 2/`nodes' {
+			local __ergm_cnames "`__ergm_cnames' sender`__k'"
+		}
+		mata: __nwergm_last_M.addterm("sender", `nodes'-1, &stat_nodeofactor(), &change_nodeofactor(), `__td_send', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_send'"
+	}
+	if "`receiver'" != "" {
+		tempname __td_recv
+		mata: `__td_recv' = ErgmTermData()
+		mata: `__td_recv'.attr = (1::`nodes')
+		mata: `__td_recv'.levels = (2::`nodes')
+		local __ergm_cnames ""
+		forvalues __k = 2/`nodes' {
+			local __ergm_cnames "`__ergm_cnames' receiver`__k'"
+		}
+		mata: __nwergm_last_M.addterm("receiver", `nodes'-1, &stat_nodeifactor(), &change_nodeifactor(), `__td_recv', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_recv'"
+	}
+
 	local __ergm_termidx = 0
 	foreach __ergm_v of local edgecov {
 		local ++__ergm_termidx
@@ -901,6 +939,26 @@ program nwergm, eclass
 		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"=="true")))
 		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
+	}
+
+	// --- hamming(netname): Hamming distance to a reference network,
+	// same nw_syntax()-based network-name resolution as edgecov() above,
+	// but a BINARY reference (get_matrix_mod(0,...), not (1,...) -
+	// hamming distance cares only about tie/no-tie agreement, not
+	// covariate weight).
+	local __ergm_termidx = 0
+	foreach __ergm_v of local hamming {
+		local ++__ergm_termidx
+		tempname __td_hm`__ergm_termidx'
+		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
+		nw_syntax `__ergm_v', max(1) other(hm`__ergm_termidx')
+		if `hm`__ergm_termidx'nodes' != `nodes' {
+			di "{err}hamming() network {bf:`__ergm_v'} has a different number of nodes than {bf:`netname'}."
+			error 198
+		}
+		mata: `__td_hm`__ergm_termidx''.edgecovmat = *(`hm`__ergm_termidx'netobj'->get_matrix_mod(0,("`directed'"=="true")))
+		mata: __nwergm_last_M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), `__td_hm`__ergm_termidx'', ("hamming_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_hm`__ergm_termidx''"
 	}
 
 	if "`gwesp'" != "" {
