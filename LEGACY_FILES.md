@@ -145,6 +145,11 @@ history) and pointing the affected tests at `nwwebuse florentine` instead (now g
 end to end - see the same certification entry), matching the convention every other test file in
 `cscripts/` already used.
 
+## Two more stray root-level files, found during the GitHub-public-release cleanup pass (2026-08-23)
+
+- `old/ado/lnwsub.do` (was `lnwsub.do`) - a v1-era draft of the Mata class architecture (`v1NWs`/`v1NWdef`/`v1NWsdef` structures), from the "Setup of development branch for v2.0" commit, predating the current, active `NWdef` class entirely. Not referenced by any live file.
+- `old/example_tabclass_output.do` (was `example_tabclass_output.do`) - defines `program difmh`, an unrelated stratified-analysis command with no connection to network analysis at all. Not referenced by any live file; almost certainly an accidental inclusion rather than package history worth keeping alongside the actual code, but archived rather than deleted per this document's own policy.
+
 ## Not archived (checked and ruled out as duplicates)
 
 - `_growmedian2.ado` — no sibling `_growmedian.ado` exists; just an oddly-named singleton helper, not a version duplicate.

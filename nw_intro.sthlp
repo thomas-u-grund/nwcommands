@@ -84,25 +84,28 @@ In total, the software supports up to 9999 networks in memory at once, regardles
 
 {pstd}
 Most of the package's own graph-traversal commands - {help nwcomponents}, {help nwdegree}, {help nwclustering},
-{help nwneighbor}, {help nwgeodesic}'s unweighted mode, and anything built on them - operate on a genuinely
-sparse internal representation. They do {bf:not} allocate memory proportional to the square of the node count,
-only to the number of actual ties, and have been benchmarked directly at 100,000 nodes / 1,000,000 ties (full
-connected-components analysis in well under 10 seconds; degree/neighbor lookups near-instant). Networks at this
-scale, or considerably beyond it, are practical for these commands specifically. See
-{browse "docs/SPARSE_BACKEND.md"} in the package's own repository for the full technical account and benchmark
-numbers.
+{help nwneighbor}, {help nwgeodesic}'s unweighted mode, {help nwevcent} (eigenvector centrality, migrated to
+sparse power iteration - it only ever needed the dominant eigenpair, not a full dense eigendecomposition), and
+anything built on them - operate on a genuinely sparse internal representation. They do {bf:not} allocate memory
+proportional to the square of the node count, only to the number of actual ties, and have been benchmarked
+directly at 100,000 nodes / 1,000,000 ties (full connected-components analysis in well under 10 seconds;
+degree/neighbor lookups near-instant). Networks at this scale, or considerably beyond it, are practical for
+these commands specifically. See {browse "docs/SPARSE_BACKEND.md"} in the package's own repository for the full
+technical account and benchmark numbers.
 
 {marker limits_dense}{...}
-{title:Commands that need the full adjacency matrix (older algorithms, weighted distances, eigenvector-based centrality)}
+{title:Commands that need the full adjacency matrix (older algorithms, weighted distances)}
 
 {pstd}
-A number of commands - most weighted-distance calculations, eigenvector-based centrality
-({help nwevcent}), and several older algorithms not yet migrated to the sparse representation - still need the
-network's complete N-by-N adjacency matrix in memory at once. This matrix is guarded at 20,000 nodes: attempting
-to build it above that size raises a clear, immediate error rather than silently exhausting memory (at 20,000
-nodes the matrix alone is already several gigabytes of numbers). In practice, comfortable, responsive use of
-these specific commands is closer to a few thousand nodes than to the 20,000-node hard ceiling - memory and
-running time both grow with the SQUARE of the node count for anything that touches this matrix directly.
+A number of commands - most weighted-distance calculations and several older algorithms not yet migrated to the
+sparse representation - still need the network's complete N-by-N adjacency matrix in memory at once. This matrix
+is guarded at 20,000 nodes: attempting to build it above that size raises a clear, immediate error rather than
+silently exhausting memory (at 20,000 nodes the matrix alone is already several gigabytes of numbers). In
+practice, comfortable, responsive use of these specific commands is closer to a few thousand nodes than to the
+20,000-node hard ceiling - memory and running time both grow with the SQUARE of the node count for anything that
+touches this matrix directly. ({help nwspectral}'s own Laplacian-spectrum analysis is a deliberate exception in
+this same category even though it is newer - it genuinely needs the full eigenspectrum, not just a dominant
+pair, so there is no sparse equivalent available the way there now is for {help nwevcent}.)
 
 {marker limits_stata}{...}
 {title:Loading a network as Stata variables}
