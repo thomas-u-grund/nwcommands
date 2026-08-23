@@ -2832,6 +2832,7 @@ class `NWdef' {
 	real scalar has_edge()
 	real scalar edge_weight()
 	real matrix edgelist()
+	real scalar check_issymmetric()
 
 	string scalar is_selfloop()
 	string scalar is_valued()
@@ -4966,6 +4967,34 @@ real matrix `NWdef'::edgelist(){
 		out[.,3] = cweight
 	}
 	return(out)
+}
+
+/*
+	Sparse-native replacement for nwissymmetric.ado's own dense
+	issymmetric(*get_matrix()) check (via nwtomata's full O(n^2)
+	materialization) - a network is symmetric iff, for every stored
+	directed edge (i,j,w), the reverse edge (j,i) also exists with the
+	identical weight. O(m) edges checked, each an O(degree) sparse
+	lookup (has_edge()/edge_weight() scan just j's own row), instead of
+	materializing and scanning a full dense n-by-n matrix - confirmed
+	as one of the `nwtomata'-dependent family flagged in
+	docs/PERFORMANCE_BENCHMARKS.md (harmonisation unit 103) as excluded
+	from the n=10,000 benchmark tier entirely. Short-circuits on the
+	first asymmetric edge found, so an obviously-asymmetric large
+	network returns almost immediately rather than paying for a full
+	scan.
+*/
+real scalar `NWdef'::check_issymmetric(){
+	real matrix el
+	real scalar k, m
+
+	el = edgelist()
+	m = rows(el)
+	for (k=1; k<=m; k++){
+		if (!has_edge(el[k,2], el[k,1])) return(0)
+		if (edge_weight(el[k,2], el[k,1]) != el[k,3]) return(0)
+	}
+	return(1)
 }
 
 void `NWdef'::permute(){
