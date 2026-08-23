@@ -27,12 +27,13 @@ set graphics off
 * file's own assertions below no longer need the "| _rc == 3000"
 * tolerance.
 *
-* (2) "nwwebuse florentine" depends on a dead external URL
+* (2) "nwwebuse florentine" used to depend on a dead external URL
 * (nwcommands.org) - one of the package's own long-established
-* baseline-failure causes, unrelated to nwplot itself. Replaced with
-* the equivalent local "nwuse florentine", which loads the identical
-* dataset from disk (same convention already used in
-* cscripts/test_nwdegree.do).
+* baseline-failure causes, unrelated to nwplot itself. That host is
+* fixed now (nwuse/nwwebuse reroute to this project's own GitHub repo -
+* see nwuse.ado/webnwuse.ado), so this uses the genuine "nwwebuse
+* florentine" call again, exercising the real, now-working path rather
+* than a local-file substitute.
 
 nwclear
 nwrandom 10, prob(.5)
@@ -100,15 +101,8 @@ forvalues i = 1/4 {
 * must default to one of its own network-oriented schemes (which give
 * p1/p1line different colors) instead of silently inheriting whatever
 * graph scheme happens to be ambient, unless scheme() is given
-* explicitly. Placed here, before the "nwuse florentine" call below -
-* that call depends on an external/dead URL (r(601), not wrapped in
-* capture), which aborts the entire remainder of this do-file the
-* moment "do test_nwplot.do" reaches it (confirmed directly: nothing
-* after that line - including the Plot A-G SVG-export block further
-* down - actually executes under a plain "do" invocation, only under
-* "capture noisily do", which this session's own regression sweeps do
-* not use). Anything meant to actually run under the established
-* sweep methodology belongs above this comment, not below it.
+* explicitly. Placed here, before the "nwwebuse florentine" call below,
+* which now works end to end (see the note above).
 nwclear
 nwrandom 8, prob(.3)
 nwplot
@@ -116,7 +110,7 @@ assert `"`r(scheme)'"' == `"s1network"'
 nwplot, scheme(s2network)
 assert `"`r(scheme)'"' == `"s2network"'
 
-nwuse florentine, nwclear
+nwwebuse florentine, nwclear
 
 nwplot flomarriage, color(seat, colorpalette(red yellow))
 assert _rc == 0

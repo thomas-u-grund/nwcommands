@@ -40,7 +40,7 @@ assert _degree[2] == 1
 assert _degree[3] == 1
 
 
-nwuse florentine, nwclear
+nwwebuse florentine, nwclear
 nwdegree flomarriage, isolates
 assert _isolate[12] == 1 
 

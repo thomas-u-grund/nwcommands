@@ -67,30 +67,55 @@ This load the Florentine dataset from the internet and appends it to the existin
 capture program drop nwuse
 program nwuse
 	syntax anything [, nwclear nwappend force *]
-	local webname = subinstr(`"`anything'"', ".dta",".nwdta",999)
-	
+	local basename = subinstr(`"`anything'"', ".nwdta","",999)
+	local basename = subinstr(`"`basename'"', ".dta","",999)
+
 	tempfile existing
 	capture save `existing'
-	
+	local have_existing = (_rc == 0)
+
 	`nwclear'
 	qui nwset
 	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
 		error 999
 	}
-	
+
 	qui if "`nwappend'" != "" {
 		capture qui nwcurrent
 		local current "`r(current)'"
 	}
-	
-	if strpos("`webname'", ".nwdta") > 0 {
-		use `webname'
+
+	// BUGFIX: this used to unconditionally force a ".nwdta" suffix onto
+	// every target (local or web), so any of this package's own example
+	// datasets that are plain .dta files rather than a genuine nwsave()
+	// restoration file (gang2/hpotter/institutions/klas12b/stockholm/
+	// usstates/example1 - see netexample.sthlp, which already advertises
+	// `webnwuse usstates`/`webnwuse klas12b`/etc. as the intended way to
+	// load them) could never be loaded via nwuse/webnwuse/nwwebuse at
+	// all - it always tried to fetch a nonexistent "<name>.nwdta" and
+	// crashed, well before ever reaching the confirm-variable check
+	// below that would have been the natural place to detect a plain
+	// dataset. Only florentine/gang/glasgow actually ship a .nwdta
+	// counterpart (confirmed against the data host's own listing).
+	// Fixed to try .nwdta first (the common, documented case: a network
+	// saved with nwsave), falling back to plain .dta - and, if loaded
+	// that way, skipping the network-restoration logic entirely rather
+	// than crashing on the missing _nw_* metadata columns.
+	capture use `"`basename'.nwdta"'
+	if _rc != 0 {
+		capture use `"`basename'.dta"'
+		if _rc != 0 {
+			if `have_existing' {
+				use `existing'
+			}
+			di "{err}could not load {bf:`basename'} as either a saved network ({bf:.nwdta}) or a plain dataset ({bf:.dta})"
+			error 601
+		}
+		di "{txt}(plain Stata dataset loaded - not a saved {help nwsave:network} file; build a network from it directly, e.g. with {help nwfromedge} or {help nwgenerate})"
+		exit
 	}
-	else {
-		use `webname'.nwdta
-	}
-	
+
 	confirm variable _nw_format _nw_nets _nw_netname _nw_size _nw_directed _nw_twomode _nw_selfloop _nw_title
 	// _nw_modes/_nw_mode1desc/_nw_mode2desc are a newer addition (mode
 	// membership was never actually saved before, despite the bare
@@ -116,7 +141,9 @@ program nwuse
 		di `"if "`r(exists)'" == "true" & "`force'" == "" "'
 		if "`r(exists)'" == "true" & "`force'" == "" {
 			noi di "{err}network {it:`r(tryname)'} already exists; use option {bf:force}"
-			use `existing'
+			if `have_existing' {
+				use `existing'
+			}
 			error 999
 		}
 	}
@@ -157,7 +184,16 @@ program nwuse
 		// newmode1desc/newmode2desc) too, though it happened to go
 		// unnoticed for those because "current" usually already matched
 		// the intended network by the time this specific line ran.
-		nwname `n', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("``v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
+		// BUGFIX: was "newvalued("``v'")" - a stray extra backtick left
+		// the literal text "`false"/"`true" (backtick included) being
+		// passed to newvalued() instead of the plain string, which
+		// nwname.ado's own option processing didn't recognize -
+		// confirmed directly via `set trace on`, the actual root cause
+		// of this command's own long-documented "error in loading"
+		// crash on every dataset that reaches this line (i.e. every
+		// genuine .nwdta restoration - previously undiagnosed beyond
+		// "some macro-quoting mismatch").
+		nwname `n', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
 		if "`d'"  == "false" {
 			nwsym `n'
 		}
