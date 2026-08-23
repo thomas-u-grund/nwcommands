@@ -1229,8 +1229,16 @@ program nwergm, eclass
 		// unaffected by this call. See unw_ergm.do's own "Native (C)
 		// MCMC backend" section and docs/ERGM_ARCHITECTURE.md for the
 		// full design.
-		mata: ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode')
+		// BUGFIX: ErgmNativeSetup() returns real scalar (1/0, whether the
+		// native backend ended up eligible) - calling it bare left Mata
+		// auto-displaying that return value as a stray, unexplained "1"
+		// (or "0") before anything else this command prints. The
+		// eligibility flag itself is read straight off
+		// __nwergm_last_M.native_enabled on the next line regardless, so
+		// the return value was never actually needed here at all.
+		mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode')
 		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled))
+		mata: mata drop __ergm_native_setup_rc
 
 		tempname __fit
 		mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
@@ -1458,6 +1466,18 @@ program nwergm_simulate
 		matrix `thetamat'[1,`__k'] = `: word `__k' of `theta''
 	}
 
+	// BUGFIX: used to render the simulated draw's dense adjacency matrix
+	// as a literal Stata matrix-expression string (ErgmMatToLiteral())
+	// and hand that to nwset's own mat() option, which hits Stata's own
+	// "too many tokens" command-line limit somewhere around 16 nodes
+	// (confirmed directly - see nwergm_estat.ado's identical fix for the
+	// full account) - `nwergm ..., simulate' was completely broken for
+	// any network that size or larger, not merely slow. Fixed the same
+	// way: pass the matrix as a bare Mata variable name instead of a
+	// literal expression string, which nwset's own mat() option already
+	// accepts directly (the same pattern nwrandom.ado's own generators
+	// already use) and has no size limit to hit.
+	tempname __ergm_simmat
 	forvalues __s = 1/`nsim' {
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
@@ -1477,16 +1497,16 @@ program nwergm_simulate
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
-		mata: st_local("__ergm_simexpr", ErgmMatToLiteral(__nwergm_last_G.to_dense()))
+		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 
 		local __ergm_simname = cond(`nsim'==1, "`generate'", "`generate'_`__s'")
 		capture nwdrop `__ergm_simname'
 		qui drop _all
 		qui set obs `nodes'
-		nwset, mat(`__ergm_simexpr') `=cond("`directed'"!="","directed","undirected")' name(`__ergm_simname')
+		nwset, mat(`__ergm_simmat') `=cond("`directed'"!="","directed","undirected")' name(`__ergm_simname')
 	}
 
-	mata: mata drop __nwergm_last_M __nwergm_last_G __gof_discard `__ergm_matatemps'
+	mata: mata drop __nwergm_last_M __nwergm_last_G __gof_discard `__ergm_simmat' `__ergm_matatemps'
 end
 
 /*

@@ -2733,7 +2733,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 		real scalar samplesize, real rowvector obs){
 
 	real matrix ties, out, newties, attrpad
-	real scalar n, directed, nties, p, nattr, nobs_needed, i, rngseed, nties_out
+	real scalar n, directed, nties, p, nattr, nobs_needed, i, rngseed, nties_out, __junk
 	string scalar origframe, argstr, cmd, outvarlist, attrvarlist
 	string rowvector outvarnames, attrvarnames
 
@@ -2752,8 +2752,28 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	st_framecurrent("__ergm_native")
 
 	st_addobs(nobs_needed)
-	st_addvar("double", "v1")
-	st_addvar("double", "v2")
+	// BUGFIX: st_addvar() returns the new variable's column index -
+	// calling it bare (uncaptured), as every line in this block used to,
+	// makes Mata auto-display that return value as an unrequested,
+	// unexplained integer, exactly like any other uncaptured top-level
+	// Mata expression (confirmed directly: a bare st_addvar() call
+	// prints its own return value just like a bare "1+1" would). This
+	// was invisible in this file's OWN certification runs (every
+	// existing cscripts/test_nwergm*.do wraps its own `nwergm'/`estat'
+	// calls in `qui', which suppresses it) but fully visible to any
+	// interactive user, exactly as reported: a plain
+	// "nwergm ..., ...gwesp(0.5)..." call surfaced eight bare integers
+	// (2 for v1/v2 here, plus this same bug's own nattr- and p-many
+	// repeats just below) before its results table, once per MCMC
+	// sample drawn (once per MCMLE iteration, plus once for the final
+	// diagnostic sample) - not a cosmetic quirk, a real, unintentional
+	// leak of internal bookkeeping into the user-visible log. The
+	// identical bug (unvalidated st_addvar() calls) already existed in
+	// calculate_betweenness_native() (unw_core.do) too, merely masked
+	// there by nwbetween.ado's own qui-wrapped call site - fixed there
+	// too, not just papered over here.
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
 
 	// Distinct attribute arrays needed across the model's own terms
 	// (harmonisation unit 91 follow-on) - each gets its own frame
@@ -2765,7 +2785,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	attrvarnames = J(1, nattr, "")
 	for (i=1; i<=nattr; i++) {
 		attrvarnames[i] = "a" + strofreal(i)
-		st_addvar("double", attrvarnames[i])
+		__junk = st_addvar("double", attrvarnames[i])
 		attrvarlist = attrvarlist + " " + attrvarnames[i]
 	}
 
@@ -2773,7 +2793,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	outvarnames = J(1, p, "")
 	for (i=1; i<=p; i++) {
 		outvarnames[i] = "o" + strofreal(i)
-		st_addvar("double", outvarnames[i])
+		__junk = st_addvar("double", outvarnames[i])
 		outvarlist = outvarlist + " " + outvarnames[i]
 	}
 

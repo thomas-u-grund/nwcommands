@@ -52,3 +52,36 @@ qui nwergm mynet3, edges
 nwclear
 capture noisily estat gof
 assert _rc == 498
+
+* --- real, user-reported regression guard: `estat gof' (and, separately,
+* `nwergm ..., simulate') used to render the simulated/observed dense
+* adjacency matrix as a literal Stata matrix-expression STRING
+* (ErgmMatToLiteral()) and hand it to nwset's own mat() option - which
+* works for a small network, but Stata's own command-line tokenizer
+* hits a hard "too many tokens" error (r(3000)) somewhere between 225
+* and 256 comma-separated matrix elements, confirmed by direct bisection
+* (a 15x15 literal parses; an otherwise-identical 16x16 one does not) -
+* meaning `estat gof' was completely broken, not merely slow, for ANY
+* network with roughly 16 or more nodes. Every other test in this file
+* uses a 5-node network specifically small enough to have never
+* triggered this - this one deliberately uses 18 nodes (comfortably
+* past the discovered ~16-node boundary) to guard against it
+* regressing. Fixed by passing the matrix as a bare Mata variable name
+* instead of a literal expression string (nwset's own mat() option
+* already accepts this form directly - the same pattern nwrandom.ado's
+* own generators use - and it has no size limit to hit, since the
+* matrix never passes through Stata's command-line tokenizer at all).
+nwclear
+set seed 999
+nwrandom 18, prob(.15) undirected name(biggofnet)
+qui nwergm biggofnet, edges mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(5)
+qui estat gof, nsim(10) seed(111)
+assert r(obs_meandeg) < .
+assert r(sim_meandeg) > 0 & r(sim_meandeg) < 18
+* also exercise `nwergm simulate's own identical fix, generating a new
+* 18-node network from scratch (past the same ~16-node boundary).
+nwclear
+qui nwergm simulate 18, edges theta(-2) generate(bigsim)
+assert _rc == 0
+nwsummarize bigsim
+assert r(nodes) == 18

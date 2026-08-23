@@ -200,14 +200,31 @@ program define nwergm_estat_gof, rclass
 	mata: `obsG' = ErgmGraph()
 	mata: `obsG'.init(`nodes', ("`directed'"=="true"))
 	mata: nwergm_estat_bridge_from_netobj(`netobj', `obsG', ("`directed'"=="true"))
-	mata: st_local("__gof_obsexpr", ErgmMatToLiteral(`obsG'.to_dense()))
+	// BUGFIX: used to render the dense adjacency matrix as a literal
+	// Stata matrix-expression STRING (ErgmMatToLiteral()) and hand that
+	// to nwset's own mat() option - which works for small networks, but
+	// Stata's own command-line parser hits a hard "too many tokens"
+	// error somewhere between 225 and 256 comma-separated matrix
+	// elements (confirmed directly: a 15x15 literal parses fine, a
+	// 16x16 one does not, on an otherwise identical command) - meaning
+	// `estat gof' was completely broken for any network with roughly
+	// 16+ nodes, not merely slow. Fixed by passing the matrix as a bare
+	// MATA VARIABLE NAME instead of a literal expression string -
+	// nwset's own mat() option already accepts this form directly
+	// (confirmed: nwrandom.ado's own `nwset, mat(`__nwnew')' call uses
+	// exactly this pattern), and since the matrix never has to pass
+	// through Stata's command-line tokenizer as a giant string at all,
+	// there is no size limit left to hit regardless of network size.
+	tempname __gof_obsmat
+	mata: `__gof_obsmat' = `obsG'.to_dense()
 	mata: mata drop `obsG'
 
 	preserve
 	qui drop _all
 	qui set obs `nodes'
 	capture nwdrop _nwergm_gofobs
-	qui nwset, mat(`__gof_obsexpr') `=cond("`edirected'"=="true","directed","undirected")' name(_nwergm_gofobs) nooutput
+	qui nwset, mat(`__gof_obsmat') `=cond("`edirected'"=="true","directed","undirected")' name(_nwergm_gofobs) nooutput
+	mata: mata drop `__gof_obsmat'
 	qui nwgeodesic _nwergm_gofobs, nwreplace
 	local obs_avgpath = r(avgpath)
 	// nwtriads.ado has a genuine, pre-existing bug (unrelated to nwergm,
@@ -246,17 +263,22 @@ program define nwergm_estat_gof, rclass
 	local __gof_path_ok = 0
 	local __gof_triad_ok = 0
 
+	// BUGFIX: see the observed-side fix above for the full explanation -
+	// a literal matrix-expression string hits Stata's own command-line
+	// "too many tokens" limit somewhere around 16 nodes; passing the
+	// matrix as a bare Mata variable name instead has no such limit.
+	tempname __gof_simmat
 	preserve
 	forvalues __s = 1/`nsim' {
 		local __gof_thisburnin = cond(`__s'==1, `gofburnin', 0)
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`bmat'"), `__gof_thisburnin', `gofinterval', 1, &ergm_propose_tnt())
 		mata: st_numscalar("__gof_deg", 2*__nwergm_last_G.nties/__nwergm_last_G.n)
-		mata: st_local("__gof_matexpr", ErgmMatToLiteral(__nwergm_last_G.to_dense()))
+		mata: `__gof_simmat' = __nwergm_last_G.to_dense()
 
 		qui drop _all
 		qui set obs `nodes'
 		capture nwdrop _nwergm_gofsim
-		qui nwset, mat(`__gof_matexpr') `=cond("`edirected'"=="true","directed","undirected")' name(_nwergm_gofsim) nooutput
+		qui nwset, mat(`__gof_simmat') `=cond("`edirected'"=="true","directed","undirected")' name(_nwergm_gofsim) nooutput
 
 		local __gof_nsim_ok = `__gof_nsim_ok' + 1
 		local __gof_sum_deg = `__gof_sum_deg' + __gof_deg
@@ -272,6 +294,7 @@ program define nwergm_estat_gof, rclass
 			local __gof_triad_ok = `__gof_triad_ok' + 1
 		}
 	}
+	capture mata: mata drop `__gof_simmat'
 	restore
 	capture nwdrop _nwergm_gofsim
 
