@@ -2833,6 +2833,8 @@ class `NWdef' {
 	real scalar edge_weight()
 	real matrix edgelist()
 	real scalar check_issymmetric()
+	real matrix calculate_burt()
+	real rowvector edge_weight_row()
 
 	string scalar is_selfloop()
 	string scalar is_valued()
@@ -4995,6 +4997,141 @@ real scalar `NWdef'::check_issymmetric(){
 		if (edge_weight(el[k,2], el[k,1]) != el[k,3]) return(0)
 	}
 	return(1)
+}
+
+/*
+	edge_weight_row(i): i's own out-edge weights as a plain row vector
+	(same values edge_weight(i,Ni[k]) would give for each of i's own
+	neighbors) - a small helper so calculate_burt() above can compute
+	outdeg[i] via a single sum() instead of its own loop.
+*/
+real rowvector `NWdef'::edge_weight_row(real scalar i){
+	real matrix Ni
+	real rowvector w
+	real scalar k
+
+	Ni = neighbors(i)
+	w = J(1, rows(Ni), 0)
+	for (k=1; k<=rows(Ni); k++) w[k] = edge_weight(i, Ni[k])
+	return(w)
+}
+
+/*
+	Sparse-native replacement for nwburt.ado's own dyadicredundancy()/
+	dyadicconstraint()/hierarchy() (file-scope Mata in nwburt.ado),
+	which compute Burt's (1992) effective size/efficiency/constraint/
+	hierarchy via two FULL n-by-n matrix products (net*net, p*p) after
+	materializing the whole network via nwtomata - O(n^3) regardless of
+	sparsity, confirmed as one of the `nwtomata'-dependent family
+	flagged in docs/PERFORMANCE_BENCHMARKS.md as excluded from the
+	n=10,000 benchmark tier. Both matrix products get immediately
+	element-wise multiplied by the (sparse) tie matrix itself right
+	afterward (dyadred/dyadcon are only ever nonzero where an actual
+	tie (i,j) exists - Burt's own constraint is defined per EXISTING
+	relationship, not for arbitrary pairs), so only the (i,j) entries
+	where a real tie exists are ever used - computed here directly via
+	a nested loop over each node's own OUT-neighborhood (the same
+	"local induced subgraph" idiom already established for
+	calculate_clustering()/calculate_brokerage() above), O(sum of
+	out-degree^2) instead of O(n^3): for a bounded-degree sparse graph
+	this is close to linear in node count, not cubic.
+
+	Returns an n x 4 matrix (effsize, efficiency, constraint,
+	hierarchy), matching nwburt.ado's own generate() column order
+	exactly. Does not compute the dyadic-level redundancy/constraint
+	NETWORKS nwburt's own dyadredundancy()/dyadconstraint() options can
+	optionally save - those remain on the original dense path (a
+	disclosed, deliberate scope limit: they are an opt-in, far less
+	commonly used feature, and building a new dyadic NETWORK output is
+	a different problem from summarizing it per node).
+*/
+real matrix `NWdef'::calculate_burt(){
+	real scalar n, i, j, k, q, outdeg_i, wij, wiq, wqj, net2ij, p2ij, pij, cij
+	real matrix Ni, outdeg, effsize, efficiency, constraint, hierarchy_out
+	real matrix dyadred_sum, dyadcon_sum, avgc, z, hh, mm
+
+	n = get_nodes()
+	outdeg = J(n,1,0)
+	for (i=1; i<=n; i++) outdeg[i,1] = sum(edge_weight_row(i))
+
+	dyadred_sum = J(n,1,0)
+	dyadcon_sum = J(n,1,0)
+	for (i=1; i<=n; i++){
+		Ni = neighbors(i)
+		outdeg_i = outdeg[i,1]
+		if (outdeg_i == 0 | rows(Ni) == 0) continue
+		for (j=1; j<=rows(Ni); j++){
+			wij = edge_weight(i, Ni[j])
+			net2ij = 0
+			p2ij = 0
+			for (q=1; q<=rows(Ni); q++){
+				if (Ni[q] == Ni[j]) continue
+				wiq = edge_weight(i, Ni[q])
+				if (has_edge(Ni[q], Ni[j])){
+					wqj = edge_weight(Ni[q], Ni[j])
+					net2ij = net2ij + wiq*wqj
+					if (outdeg[Ni[q],1] > 0) p2ij = p2ij + (wiq/outdeg_i)*(wqj/outdeg[Ni[q],1])
+				}
+			}
+			pij = wij/outdeg_i
+			cij = pij + p2ij
+			dyadred_sum[i,1] = dyadred_sum[i,1] + wij*(net2ij/outdeg_i)
+			dyadcon_sum[i,1] = dyadcon_sum[i,1] + wij*(cij^2)
+		}
+	}
+
+	effsize = outdeg - dyadred_sum
+	efficiency = effsize :/ outdeg
+	_editmissing(efficiency, 0)
+	constraint = dyadcon_sum
+
+	// hierarchy: identical vector-level formula to nwburt.ado's own
+	// file-scope hierarchy() function, operating on outdeg/constraint
+	// directly instead of rowsum()s of dense dc/net matrices - the
+	// two are the same quantities, just derived sparsely above.
+	avgc = constraint :/ outdeg
+	z = J(n,1,0)
+	for (i=1; i<=n; i++){
+		Ni = neighbors(i)
+		if (outdeg[i,1] == 0 | rows(Ni) == 0) continue
+		for (j=1; j<=rows(Ni); j++){
+			wij = edge_weight(i, Ni[j])
+			// recompute this (i,j)'s own dyadic constraint value (cij)
+			// the same way as above - kept as a second, independent
+			// pass for clarity matching the original's own separate
+			// dc-then-hierarchy(net,dc) two-step structure, at the
+			// (small, sparse) cost of repeating the inner O(degree)
+			// loop once more.
+			net2ij = 0
+			p2ij = 0
+			for (q=1; q<=rows(Ni); q++){
+				if (Ni[q] == Ni[j]) continue
+				wiq = edge_weight(i, Ni[q])
+				if (has_edge(Ni[q], Ni[j])){
+					wqj = edge_weight(Ni[q], Ni[j])
+					if (outdeg[Ni[q],1] > 0) p2ij = p2ij + (wiq/outdeg[i,1])*(wqj/outdeg[Ni[q],1])
+				}
+			}
+			pij = wij/outdeg[i,1]
+			cij = wij*((pij+p2ij)^2)
+			// matches the original's own "z = rowsum(net :* (dc:/avgc)
+			// :* log(dc:/avgc))" EXACTLY, including its own extra `net'
+			// factor beyond the one already inside dc itself (dc_ij =
+			// net_ij*(p_ij+p2_ij)^2) - for a binary network net_ij is
+			// idempotent under multiplication so this is invisible
+			// there, but a VALUED network's own net_ij^2 term is a real
+			// property of the already-shipped formula, not something to
+			// silently "fix" as part of a pure performance rewrite.
+			if (cij > 0 & avgc[i,1] > 0) z[i,1] = z[i,1] + wij*cij*(ln(cij/avgc[i,1]))/avgc[i,1]
+		}
+	}
+	hierarchy_out = z :/ (outdeg :* ln(outdeg))
+	_editmissing(hierarchy_out, 1)
+	mm = (outdeg :== 0)
+	_editvalue(mm, 1, .)
+	hierarchy_out = hierarchy_out :+ mm
+
+	return((effsize, efficiency, constraint, hierarchy_out))
 }
 
 void `NWdef'::permute(){
