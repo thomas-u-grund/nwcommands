@@ -20,7 +20,7 @@ Fixed with a genuine algorithmic rewrite (the Esfahanian & Hakimi 1984 refinemen
 
 **Net effect**: `nwkcomponents` on the same 100-node network: **66s → 0.025s (~2,640x)**. This is the number that would have appeared in this report as "nwkcomponents: unusable" had it not been caught and fixed during the benchmark run itself.
 
-**A residual gap remains**: even after the fix, `nwkcomponents` still uses a *dense* (2n)×(2n) matrix per max-flow query — fine at n≤1,000 (17.5s), but too slow to complete in a reasonable time at n=10,000 (excluded from that tier below). A fully sparse (adjacency-list) max-flow rewrite would close this gap; tracked as a Pending item in `docs/CERTIFICATION.md` rather than attempted under the same time pressure that found the original bug.
+**A residual gap remained**: even after the fix, `nwkcomponents` still used a *dense* (2n)×(2n) matrix per max-flow query — fine at n≤1,000 (17.5s), but did not complete at n=10,000. **Closed** in `docs/CERTIFICATION.md`'s harmonisation unit 108: a genuinely sparse (edge-list) max-flow, an edge-list-native rewrite of the recursive decomposition itself (it was re-deriving a dense submatrix at every recursion level), and a correctness-preserving early-exit (proven, not just tested, safe) together took n=10,000 from "does not complete, 9.5GB+ RAM and climbing" to a bounded **103.5 seconds**.
 
 ## Full results
 
@@ -28,7 +28,7 @@ Fixed with a genuine algorithmic rewrite (the Esfahanian & Hakimi 1984 refinemen
 |---|---|---:|---:|---:|---|
 | nwdegree | centrality | 0.005 | 0.018 | 0.822 | genuinely sparse, scales well |
 | nwbetween | centrality | 0.009 | 0.061 | 6.194 | native (C) backend on macOS |
-| nwcloseness | centrality | 0.167 | 1.330 | *excluded* | dense (`nwtomata`) — see below |
+| nwcloseness | centrality | 0.167 | 1.330 | 108 | wraps `nwgeodesic` (fixed in unit 106) + `nwtomata`; now completes (108s) but the redundant dense copy `nwtomata` adds is still an open, documented Pending item |
 | nwevcent | centrality | 0.199 | 2.704 | 27.517 | sparse power iteration (unit 97); scales sub-linearly with reps but iteration count grows with n |
 | nwkatz | centrality | 0.228 | 1.282 | *excluded* | dense (direct matrix-power operation, already documented as dense-by-necessity) |
 | nwbrokerage | centrality | 0.006 | 0.029 | 0.283 | scales well |
@@ -41,12 +41,12 @@ Fixed with a genuine algorithmic rewrite (the Esfahanian & Hakimi 1984 refinemen
 | nwtriads | structural | 0.325 | 7.077 | *excluded* | dense (`get_matrix_unvalued()`, triad-census matrix formula) |
 | nwissymmetric | structural | 0.002 | 0.002 | *excluded* | dense (`nwtomata`) |
 | nwsym | structural | 0.002 | 0.010 | 1.233 | scales well |
-| nwkcomponents | structural | 0.025 | 17.537 | *excluded* | fixed this unit (was 66s at n=100!) — residual dense max-flow gap remains, see above |
+| nwkcomponents | structural | 0.025 | 0.932-2.16 | 103.5 | fixed this unit (was 66s at n=100!); dense max-flow residual gap **closed** in harmonisation unit 108 — see above |
 | nwkcore | structural | 0.003 | 0.082 | 7.579 | scales adequately |
 | nwclique | cohesive | 0.006 | 1.785 | *not completed* | did not finish in a reasonable time at n=10,000. **Diagnosed** in `docs/CERTIFICATION.md`'s harmonisation unit 107: a search-tree blow-up (actual clique count stays ~170 from n=1,000-2,000), not a combinatorial-output blow-up. Added standard Bron-Kerbosch pivoting (~4x faster on denser graphs, verified correct via exact clique-set cross-checks) but this sparse (avg-degree-10) case needs a deeper sparse-index-list rewrite — still open, tracked as Pending. |
 | nwkplex | cohesive | 0.330 | *excluded* | *excluded* | k-plex enumeration count blows up combinatorially — inherent to the concept for k≥2, not an implementation bug |
-| nwcohesion | cohesive | 5.204 | *excluded* | *excluded* | recursive multi-level decomposition compounds the residual `nwkcomponents` gap above |
-| nwgeodesic | distance | 0.149 | 1.240 | *not completed* | did not finish in a reasonable time at n=10,000 — unexpected given the sparse-BFS migration's own 100k-node benchmark elsewhere; **flagged as an anomaly needing further investigation**, not diagnosed here (time constraints) |
+| nwcohesion | cohesive | 5.204 | *excluded* | *not tested* | recursive multi-level decomposition on top of `nwkcomponents` — the underlying max-flow/recursion gap it compounded is **closed** in harmonisation unit 108 (`nwkcomponents` itself: did not complete → 103.5s at n=10,000), but `nwcohesion`'s own n=10,000 tier was not separately re-benchmarked |
+| nwgeodesic | distance | 0.149 | 1.240 | 107 | **fixed** in harmonisation unit 106: a queue-concatenation antipattern in `bfs_hopdist_from()` (not a memory issue, confirmed by watching RSS stay flat) — now completes in 107s |
 | nwpath | distance | 0.018 | 1.231 | *not tested* | not reached at n=10,000 (time constraints) |
 | nwreach | distance | 0.167 | 1.289 | *not tested* | not reached at n=10,000 (time constraints) |
 | nwbridges | distance | 0.072 | 5.875 | *not tested* | not reached at n=10,000 (time constraints) |
@@ -98,7 +98,7 @@ Beyond the `vertex_connectivity()` fix, three commands stood out as unexpectedly
 ## Recommendations for the next optimization pass, in priority order
 
 1. ~~**`nwcoreperiphery`** — the single slowest completing command (255s at n=1,000); profile and root-cause before anything else.~~ **Done** (harmonisation unit 105): incremental fitness-update rewrite, ~2,700x faster at n=1,000, now completes at n=10,000 in 10.9s.
-2. **A fully sparse max-flow rewrite** for `vertex_connectivity()`/`min_vertex_cutset()`, closing the residual `nwkcomponents`/`nwcohesion` gap at n≥10,000.
+2. ~~**A fully sparse max-flow rewrite** for `vertex_connectivity()`/`min_vertex_cutset()`, closing the residual `nwkcomponents`/`nwcohesion` gap at n≥10,000.~~ **Done** (harmonisation unit 108): sparse max-flow + edge-list-native recursion + a proven-correct early-exit; n=10,000 now completes in 103.5s (was: did not complete).
 3. ~~**`nwclustering`** — slow without an obvious dense-matrix cause; worth its own profiling pass given how commonly this command is used.~~ **Done** (harmonisation unit 104): the command wasn't calling its own already-sparse Mata implementation at all; rewired, ~275x faster at n=10,000.
 4. **The `nwtomata`-dependent family** (`nwcloseness`, `nwsimilar`, `nwdissimilar`, `nwburt`, `nwconstraint`, `nwissymmetric`, `nwqap`) — a systematic sparse-migration pass across all of them at once, given they share one root cause.
 5. ~~**`nwgeodesic` at n=10,000** — did not complete in this study despite the underlying BFS distance family being proven sparse and fast at 100k+ nodes elsewhere (`docs/SPARSE_BACKEND.md`). This is a genuine anomaly worth its own dedicated investigation before assuming it's the same class of issue as the rest.~~ **Done** (harmonisation unit 106): a queue-concatenation antipattern in `bfs_hopdist_from()`, not a memory issue — confirmed directly by watching RSS stay flat while CPU stayed pegged. Fixed with a standard array-queue BFS; now completes in 107s (`nwcloseness`, which wraps it, in 108s).
