@@ -455,6 +455,48 @@ static double change_gwesp(graph_t *g, long i, long j, double decay) {
 #define TERMCODE_GWDEGREE       14
 #define TERMCODE_GWODEGREE      15
 #define TERMCODE_GWIDEGREE      16
+#define TERMCODE_DEGREE         17
+#define TERMCODE_ODEGREE        18
+#define TERMCODE_IDEGREE        19
+#define TERMCODE_CONCURRENT     20
+#define TERMCODE_KSTAR          21
+#define TERMCODE_OSTAR          22
+#define TERMCODE_ISTAR          23
+#define TERMCODE_DEGRANGE       24
+#define TERMCODE_ODEGRANGE      25
+#define TERMCODE_IDEGRANGE      26
+
+/* d choose k, direct port of _ergm_choose() in unw_ergm.do */
+static double ergm_choose(double d, double k) {
+	double out;
+	long kk = (long)k, m;
+	if (d < k) return 0.0;
+	if (kk == 0) return 1.0;
+	out = 1.0;
+	for (m = 0; m < kk; m++) out *= (d - (double)m);
+	for (m = 1; m <= kk; m++) out /= (double)m;
+	return out;
+}
+
+/* [from,to) range membership, direct port of _ergm_inrange() in
+   unw_ergm.do - `to >= 1e8' is the "no upper bound" sentinel
+   unw_ergm.do's own ErgmNativeSetup() substitutes for Mata's `.'
+   (missing) before marshalling, since `.' itself cannot survive a
+   plain strtok()/atof() round-trip through the args string. */
+static int in_range(double d, double from, double to) {
+	if (d < from) return 0;
+	if (to >= 1e8) return 1;
+	return d < to;
+}
+
+/* exact-degree-value threshold-crossing delta, direct port of
+   _ergm_degree_change() in unw_ergm.do */
+static double degree_change_at(double olddeg, double delta, double target) {
+	double c = 0.0;
+	if (olddeg == target) c -= 1.0;
+	if (olddeg + delta == target) c += 1.0;
+	return c;
+}
 
 /*
 	`delta' (+1 if the toggle ADDS the dyad, -1 if it REMOVES it) is
@@ -523,6 +565,52 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 		case TERMCODE_GWIDEGREE: {
 			double dj = (double)degree_in_of(g, j);
 			return gw_kernel(dj + delta, p1) - gw_kernel(dj, p1);
+		}
+		case TERMCODE_DEGREE: {
+			double di = (double)g->deg[i], dj = (double)g->deg[j];
+			return degree_change_at(di, delta, p1) + degree_change_at(dj, delta, p1);
+		}
+		case TERMCODE_ODEGREE: {
+			double di = (double)degree_out_of(g, i);
+			return degree_change_at(di, delta, p1);
+		}
+		case TERMCODE_IDEGREE: {
+			double dj = (double)degree_in_of(g, j);
+			return degree_change_at(dj, delta, p1);
+		}
+		case TERMCODE_CONCURRENT: {
+			double di = (double)g->deg[i], dj = (double)g->deg[j];
+			double c = (((di + delta) >= 2.0) - (di >= 2.0));
+			c += (((dj + delta) >= 2.0) - (dj >= 2.0));
+			return c;
+		}
+		case TERMCODE_KSTAR: {
+			double di = (double)g->deg[i], dj = (double)g->deg[j];
+			double c = (ergm_choose(di + delta, p1) - ergm_choose(di, p1));
+			c += (ergm_choose(dj + delta, p1) - ergm_choose(dj, p1));
+			return c;
+		}
+		case TERMCODE_OSTAR: {
+			double di = (double)degree_out_of(g, i);
+			return ergm_choose(di + delta, p1) - ergm_choose(di, p1);
+		}
+		case TERMCODE_ISTAR: {
+			double dj = (double)degree_in_of(g, j);
+			return ergm_choose(dj + delta, p1) - ergm_choose(dj, p1);
+		}
+		case TERMCODE_DEGRANGE: {
+			double di = (double)g->deg[i], dj = (double)g->deg[j];
+			double c = (double)(in_range(di + delta, p1, p2) - in_range(di, p1, p2));
+			c += (double)(in_range(dj + delta, p1, p2) - in_range(dj, p1, p2));
+			return c;
+		}
+		case TERMCODE_ODEGRANGE: {
+			double di = (double)degree_out_of(g, i);
+			return (double)(in_range(di + delta, p1, p2) - in_range(di, p1, p2));
+		}
+		case TERMCODE_IDEGRANGE: {
+			double dj = (double)degree_in_of(g, j);
+			return (double)(in_range(dj + delta, p1, p2) - in_range(dj, p1, p2));
 		}
 	}
 	return 0.0;
@@ -651,7 +739,13 @@ STDLL stata_call(int argc, char *argv[]) {
 		p1[i] = next_double();
 		p2[i] = next_double();
 		if (termcodes[i] == TERMCODE_GWESP) need_adj = 1;
-		if (termcodes[i] == TERMCODE_GWODEGREE || termcodes[i] == TERMCODE_GWIDEGREE) need_outin = 1;
+		switch (termcodes[i]) {
+			case TERMCODE_GWODEGREE: case TERMCODE_GWIDEGREE:
+			case TERMCODE_ODEGREE: case TERMCODE_IDEGREE:
+			case TERMCODE_OSTAR: case TERMCODE_ISTAR:
+			case TERMCODE_ODEGRANGE: case TERMCODE_IDEGRANGE:
+				need_outin = 1;
+		}
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	for (i = 0; i < nterms; i++) obs[i] = next_double();
