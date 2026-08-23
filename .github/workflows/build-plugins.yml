@@ -22,7 +22,14 @@ name: Build native plugins
 
 on:
   push:
-    branches: [main, master]
+    # BUGFIX: this used to be [main, master] only - this project's own
+    # actual active branch is `develop` (see README.md's own "Active
+    # development branch" note; `master` is a stale pre-modernization
+    # snapshot), so every push that would have triggered this workflow
+    # never did - confirmed directly (`gh run list` showed zero runs
+    # ever, despite native/*.c having changed across many commits on
+    # develop since this workflow was added).
+    branches: [develop, main, master]
     paths:
       - "native/**"
       - ".github/workflows/build-plugins.yml"
@@ -86,7 +93,7 @@ jobs:
 
   commit-binaries:
     needs: [macos, windows, linux]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
