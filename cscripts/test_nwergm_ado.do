@@ -222,10 +222,32 @@ qui nwergm unet7, edges dsp(1) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(5
 assert _rc == 0
 assert colsof(e(b)) == 2
 
-* --- directed/undirected mismatch guard for esp()/dsp() fires.
+* --- term-expansion wave 5 wiring (harmonisation unit 91 continuation):
+* gwesp()/gwdsp()/gwnsp()/esp()/dsp() now support DIRECTED networks too
+* via R ergm's own default directed shared-partner definition (OTP) -
+* nwergm.ado sets td.sptype="OTP" automatically whenever the network is
+* directed. This directly supersedes the old guard-rejection test that
+* used to live here (esp()/dsp() on a directed network used to error;
+* now it succeeds). Already brute-force certified at the Mata level
+* (against a brute-force common-neighbor scan AND ErgmCertifyChangeStat)
+* in cscripts/test_nwergm_termexpansion5.do.
 nwclear
-nwset, mat((0,1,0\0,0,1\1,0,0)) directed name(dnet7)
-capture noisily nwergm dnet7, edges esp(1)
-assert _rc != 0
-capture noisily nwergm dnet7, edges dsp(1)
-assert _rc != 0
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet7) labs(A,B,C,D,E)
+set seed 2008
+qui nwergm dnet7, edges gwesp(.5) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 2
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet8) labs(A,B,C,D,E)
+set seed 2009
+qui nwergm dnet8, edges gwdsp(.5) gwnsp(.5) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 3
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet9) labs(A,B,C,D,E)
+set seed 2010
+qui nwergm dnet9, edges esp(1) dsp(1) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 3

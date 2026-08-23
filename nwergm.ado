@@ -62,12 +62,12 @@
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
-{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected only{p_end}
-{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected only{p_end}
+{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (OTP shared-partner definition, R ergm's own default){p_end}
+{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (OTP){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
-{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected only. Satisfies gwdsp = gwesp + gwnsp{p_end}
+{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (OTP). Satisfies gwdsp = gwesp + gwnsp{p_end}
 {synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
 {synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
 {synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
@@ -85,8 +85,8 @@
 {synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
 {synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
-{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected only{p_end}
-{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected only. An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (OTP){p_end}
+{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (OTP). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -347,20 +347,17 @@ program nwergm, eclass
 		di "{err}options {bf:nodeicov()}/{bf:nodeocov()} require a directed network; {bf:`netname'} is undirected."
 		error 198
 	}
-	if "`gwesp'" != "" & "`directed'" == "true" {
-		di "{err}option {bf:gwesp()} (v1 scope) is undirected only; {bf:`netname'} is directed. See docs/ERGM_ROADMAP.md for the directed OTP/ITP/OSP/ISP variants."
-		error 198
-	}
-	if "`gwdsp'" != "" & "`directed'" == "true" {
-		di "{err}option {bf:gwdsp()} (v1 scope) is undirected only; {bf:`netname'} is directed."
-		error 198
-	}
+	// gwesp()/gwdsp()/gwnsp() now support directed networks too
+	// (harmonisation unit 91, term-expansion wave 5) via R ergm's own
+	// default directed shared-partner definition (OTP, "outgoing
+	// two-path": i->k->j) - no error here any more; `nwergm.ado' sets
+	// `td.sptype = "OTP"' automatically for these terms whenever
+	// `directed'=="true", leaving the undirected/UTP path (`td.sptype'
+	// left blank) completely untouched for undirected networks. Only
+	// OTP is implemented; ITP/OSP/ISP/RTP remain a documented follow-on
+	// in docs/ERGM_ROADMAP.md.
 	if ("`gwodegree'" != "" | "`gwidegree'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:gwdegree()} for an undirected network."
-		error 198
-	}
-	if "`gwnsp'" != "" & "`directed'" == "true" {
-		di "{err}option {bf:gwnsp()} (v1 scope) is undirected only; {bf:`netname'} is directed."
 		error 198
 	}
 	if "`degree'" != "" & "`directed'" == "true" {
@@ -403,10 +400,8 @@ program nwergm, eclass
 		di "{err}options {bf:odegrange()}/{bf:idegrange()} require a directed network; {bf:`netname'} is undirected. Use {bf:degrange()} for an undirected network."
 		error 198
 	}
-	if ("`esp'" != "" | "`dsp'" != "") & "`directed'" == "true" {
-		di "{err}options {bf:esp()}/{bf:dsp()} are undirected only (no directed shared-partner definition is implemented yet); {bf:`netname'} is directed."
-		error 198
-	}
+	// esp()/dsp() now support directed networks too (wave 5) via the
+	// same automatic OTP default as gwesp()/gwdsp()/gwnsp() above.
 
 	if `seed' != -1 {
 		set seed `seed'
@@ -834,14 +829,19 @@ program nwergm, eclass
 	}
 
 	// --- term-expansion wave 4 (harmonisation unit 91 continuation):
-	// esp(d)/dsp(d), fixed non-geometric shared-partner-count terms,
-	// undirected/UTP scope only (matching v1's existing gwesp/gwdsp -
-	// no directed common-neighbor definition exists yet).
+	// esp(d)/dsp(d), fixed non-geometric shared-partner-count terms.
+	// Wave 5 extended these (and gwesp/gwdsp/gwnsp below) to directed
+	// networks via R ergm's own default directed shared-partner
+	// definition (OTP) - `td.sptype' is set to "OTP" automatically
+	// whenever the network is directed, left blank (UTP) otherwise.
 	if "`esp'" != "" {
 		local __ergm_nd : word count `esp'
 		tempname __td_esp
 		mata: `__td_esp' = ErgmTermData()
 		mata: `__td_esp'.levels = strtoreal(tokens("`esp'"))'
+		if "`directed'" == "true" {
+			mata: `__td_esp'.sptype = "OTP"
+		}
 		local __ergm_cnames ""
 		foreach __ergm_dv of numlist `esp' {
 			local __ergm_cnames "`__ergm_cnames' esp`__ergm_dv'"
@@ -854,6 +854,9 @@ program nwergm, eclass
 		tempname __td_dsp
 		mata: `__td_dsp' = ErgmTermData()
 		mata: `__td_dsp'.levels = strtoreal(tokens("`dsp'"))'
+		if "`directed'" == "true" {
+			mata: `__td_dsp'.sptype = "OTP"
+		}
 		local __ergm_cnames ""
 		foreach __ergm_dv of numlist `dsp' {
 			local __ergm_cnames "`__ergm_cnames' dsp`__ergm_dv'"
@@ -882,6 +885,9 @@ program nwergm, eclass
 		tempname __td_gwesp
 		mata: `__td_gwesp' = ErgmTermData()
 		mata: `__td_gwesp'.decay = `gwesp'
+		if "`directed'" == "true" {
+			mata: `__td_gwesp'.sptype = "OTP"
+		}
 		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `__td_gwesp', ("gwesp_`gwesp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwesp'"
 		// ErgmGraph::enable_sp_cache() (Part XXV performance work,
@@ -916,6 +922,9 @@ program nwergm, eclass
 		tempname __td_gwdsp
 		mata: `__td_gwdsp' = ErgmTermData()
 		mata: `__td_gwdsp'.decay = `gwdsp'
+		if "`directed'" == "true" {
+			mata: `__td_gwdsp'.sptype = "OTP"
+		}
 		mata: __nwergm_last_M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), `__td_gwdsp', ("gwdsp_`gwdsp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdsp'"
 	}
@@ -924,6 +933,9 @@ program nwergm, eclass
 		tempname __td_gwnsp
 		mata: `__td_gwnsp' = ErgmTermData()
 		mata: `__td_gwnsp'.decay = `gwnsp'
+		if "`directed'" == "true" {
+			mata: `__td_gwnsp'.sptype = "OTP"
+		}
 		mata: __nwergm_last_M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), `__td_gwnsp', ("gwnsp_`gwnsp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwnsp'"
 	}
@@ -1209,10 +1221,9 @@ program nwergm_simulate
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require {bf:directed}. Use {bf:gwdegree()} for an undirected simulation."
 		error 198
 	}
-	if `gwesp' != 0 & "`directed'" != "" {
-		di "{err}option {bf:gwesp()} (v1 scope) is undirected only."
-		error 198
-	}
+	// gwesp() now supports directed simulation too (wave 5, matching the
+	// estimation path above) via R ergm's own default OTP directed
+	// shared-partner definition.
 	if "`proposal'" == "" local proposal "tnt"
 	_opts_oneof "uniform tnt" "proposal" "`proposal'" 198
 	if "`generate'" == "" local generate "ergmsim"
@@ -1243,6 +1254,9 @@ program nwergm_simulate
 		tempname td_gwesp
 		mata: `td_gwesp' = ErgmTermData()
 		mata: `td_gwesp'.decay = `gwesp'
+		if "`directed'" != "" {
+			mata: `td_gwesp'.sptype = "OTP"
+		}
 		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `td_gwesp', ("gwesp"))
 		local ntermtok "`ntermtok' gwesp"
 		local __ergm_matatemps "`__ergm_matatemps' `td_gwesp'"

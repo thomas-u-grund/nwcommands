@@ -90,6 +90,7 @@ class ErgmGraph {
 	void enable_sp_cache()
 	void sp_adjust()
 	real scalar shared_partners()
+	real scalar shared_partners_otp()
 }
 
 void ErgmGraph::init(real scalar n0, real scalar directed0){
@@ -334,6 +335,39 @@ real scalar ErgmGraph::shared_partners(real scalar a, real scalar b){
 }
 
 /*
+	Directed "outgoing two-path" (OTP) shared-partner count for the
+	ORDERED pair (i,j): #{k : i->k and k->j} - i.e. the number of nodes
+	k such that i-k-j forms a two-step directed path FROM i TO j
+	(harmonisation unit 91, term-expansion wave 5). This is R ergm's own
+	default shared-partner definition for directed networks (fresh-
+	checked against `R/InitErgmTerm.dgw_sp.R`'s own `type="OTP"`
+	default) - NOT symmetric in (i,j) the way the undirected
+	`shared_partners()' above is (SP_OTP(i,j) != SP_OTP(j,i) in
+	general), so it deliberately gets its own dedicated function rather
+	than trying to generalize the existing one in place. No incremental
+	cache (unlike `shared_partners()' above) - matches this session's
+	own "decide term by term through profiling" discipline (unit 82's
+	UTP cache was added only after evidence, not preemptively; the same
+	standard applies here until evidence says otherwise). ITP/OSP/ISP/
+	RTP (the other four directed shared-partner definitions R ergm
+	supports via the same `type=' argument) are NOT implemented yet -
+	see docs/ERGM_ROADMAP.md.
+*/
+real scalar ErgmGraph::shared_partners_otp(real scalar i, real scalar j){
+	real rowvector nb
+	real scalar k, m, cnt
+
+	nb = neighbors_out(i)
+	cnt = 0
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k==j) continue
+		if (has_edge(k,j)) cnt++
+	}
+	return(cnt)
+}
+
+/*
 	All current ties as an nties x 2 matrix of (i,j) pairs. Directed:
 	one row per arc. Undirected: one row per edge, canonicalized i<j.
 	O(nties) - a direct slice of the live edge array toggle() already
@@ -428,6 +462,7 @@ class ErgmTermData {
 	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
 	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
 	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic
+	string scalar sptype		// gwesp/gwdsp/gwnsp/esp/dsp: shared-partner definition on a DIRECTED network - "" (default) means the undirected/UTP definition (used as-is for undirected networks); "OTP" selects the directed outgoing-two-path definition (harmonisation unit 91, term-expansion wave 5). ITP/OSP/ISP/RTP not yet implemented - see docs/ERGM_ROADMAP.md.
 }
 
 /* ===================================================================
@@ -1318,6 +1353,7 @@ real rowvector stat_gwesp(class ErgmGraph scalar G, class ErgmTermData scalar td
 	real matrix ties
 	real scalar k, tot, p
 
+	if (td.sptype == "OTP") return(stat_gwesp_otp(G, td))
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
@@ -1330,6 +1366,7 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 	real scalar delta, pij, chg, k, m, pik, pjk
 	real rowvector nb
 
+	if (td.sptype == "OTP") return(change_gwesp_otp(G, i, j, td))
 	delta = G.has_edge(i,j) ? -1 : 1
 
 	pij = G.shared_partners(i,j)
@@ -1379,6 +1416,7 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 */
 real rowvector stat_gwdsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real scalar i, j, tot, p
+	if (td.sptype == "OTP") return(stat_gwdsp_otp(G, td))
 	tot = 0
 	for (i=1; i<=G.n-1; i++) {
 		for (j=i+1; j<=G.n; j++) {
@@ -1392,6 +1430,7 @@ real rowvector change_gwdsp(class ErgmGraph scalar G, real scalar i, real scalar
 	real scalar delta, chg, k, m, pk
 	real rowvector nb
 
+	if (td.sptype == "OTP") return(change_gwdsp_otp(G, i, j, td))
 	delta = G.has_edge(i,j) ? -1 : 1
 	chg = 0
 
@@ -1408,6 +1447,113 @@ real rowvector change_gwdsp(class ErgmGraph scalar G, real scalar i, real scalar
 		if (k==i) continue
 		pk = G.shared_partners(i,k)
 		chg = chg + (gw_kernel(pk+delta, td.decay) - gw_kernel(pk, td.decay))
+	}
+	return(chg)
+}
+
+/*
+	Directed OTP variants of GWESP/GWDSP (harmonisation unit 91,
+	term-expansion wave 5) - dispatched to from `stat_gwesp()'/
+	`change_gwesp()'/`stat_gwdsp()'/`change_gwdsp()' above whenever
+	`td.sptype == "OTP"' (set by `nwergm.ado' automatically whenever the
+	network is directed, matching R ergm's own default `type="OTP"' for
+	directed shared-partner terms - fresh-checked against
+	`R/InitErgmTerm.dgw_sp.R'). `gwnsp' needs NO separate OTP variant:
+	it is already a thin composition of gwdsp/gwesp (`stat_gwnsp() =
+	stat_gwdsp(G,td) - stat_gwesp(G,td)'), which will call the OTP
+	dispatch above automatically once `td.sptype' is set - the
+	composition itself is completely direction-agnostic.
+
+	SP_OTP(a,b) = #{k : a->k and k->b} (see `ErgmGraph::shared_partners_
+	otp()' above) is NOT symmetric in (a,b), so toggling arc i->j
+	affects two structurally DIFFERENT sets of other ordered pairs,
+	unlike the undirected case's single symmetric neighbor loop:
+	  (A) for every a with a->i (a is an IN-neighbor of i): i can serve
+	      as the "k" connecting a->i->j, so SP_OTP(a,j) changes by
+	      delta whenever arc i->j toggles.
+	  (B) for every b with j->b (b is an OUT-neighbor of j): j can serve
+	      as the "k" connecting i->j->b, so SP_OTP(i,b) changes by
+	      delta.
+	This is the same "own dyad term (esp only) + two adjustment loops"
+	shape as the undirected functions, just with `neighbors_in(i)'/
+	`neighbors_out(j)' replacing the undirected `neighbors_out(i)' used
+	symmetrically for both loops there, and GWDSP's own dyad-space
+	genuinely doubling in size (ALL n*(n-1) ORDERED pairs i != j, not
+	just the n*(n-1)/2 unordered ones - SP_OTP(i,j) != SP_OTP(j,i) in
+	general, so both directions must be enumerated separately).
+*/
+real rowvector stat_gwesp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot, p
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_otp(ties[k,1], ties[k,2])
+		tot = tot + gw_kernel(p, td.decay)
+	}
+	return(tot)
+}
+real rowvector change_gwesp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, pij, chg, a, b, m, paj, pib
+	real rowvector na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+
+	pij = G.shared_partners_otp(i,j)
+	chg = delta * gw_kernel(pij, td.decay)
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		if (!G.has_edge(a,j)) continue	// esp counts TIED (a,j) arcs only
+		paj = G.shared_partners_otp(a,j)
+		chg = chg + (gw_kernel(paj+delta, td.decay) - gw_kernel(paj, td.decay))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		if (!G.has_edge(i,b)) continue
+		pib = G.shared_partners_otp(i,b)
+		chg = chg + (gw_kernel(pib+delta, td.decay) - gw_kernel(pib, td.decay))
+	}
+	return(chg)
+}
+real rowvector stat_gwdsp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, tot, p
+
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			p = G.shared_partners_otp(i,j)
+			if (p > 0) tot = tot + gw_kernel(p, td.decay)
+		}
+	}
+	return(tot)
+}
+real rowvector change_gwdsp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, chg, a, b, m, paj, pib
+	real rowvector na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = 0
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		paj = G.shared_partners_otp(a,j)
+		chg = chg + (gw_kernel(paj+delta, td.decay) - gw_kernel(paj, td.decay))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		pib = G.shared_partners_otp(i,b)
+		chg = chg + (gw_kernel(pib+delta, td.decay) - gw_kernel(pib, td.decay))
 	}
 	return(chg)
 }
@@ -1448,6 +1594,7 @@ real rowvector stat_esp(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real scalar k, p
 	real rowvector tot
 
+	if (td.sptype == "OTP") return(stat_esp_otp(G, td))
 	ties = G.all_ties()
 	tot = J(1, rows(td.levels), 0)
 	for (k=1; k<=rows(ties); k++) {
@@ -1460,6 +1607,7 @@ real rowvector change_esp(class ErgmGraph scalar G, real scalar i, real scalar j
 	real scalar delta, pij, k, m, pik, pjk
 	real rowvector chg, nb
 
+	if (td.sptype == "OTP") return(change_esp_otp(G, i, j, td))
 	delta = G.has_edge(i,j) ? -1 : 1
 
 	pij = G.shared_partners(i,j)
@@ -1481,6 +1629,7 @@ real rowvector stat_dsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real scalar i, j, p
 	real rowvector tot
 
+	if (td.sptype == "OTP") return(stat_dsp_otp(G, td))
 	tot = J(1, rows(td.levels), 0)
 	for (i=1; i<=G.n-1; i++) {
 		for (j=i+1; j<=G.n; j++) {
@@ -1494,6 +1643,7 @@ real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j
 	real scalar delta, k, m, pk
 	real rowvector chg, nb
 
+	if (td.sptype == "OTP") return(change_dsp_otp(G, i, j, td))
 	delta = G.has_edge(i,j) ? -1 : 1
 	chg = J(1, rows(td.levels), 0)
 
@@ -1510,6 +1660,94 @@ real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j
 		if (k==i) continue
 		pk = G.shared_partners(i,k)
 		chg = chg + ((pk+delta :== td.levels') - (pk :== td.levels'))
+	}
+	return(chg)
+}
+
+/*
+	Directed OTP variants of esp(d)/dsp(d) (harmonisation unit 91,
+	term-expansion wave 5) - same kernel-substitution relationship to
+	`stat_gwesp_otp()'/`change_gwesp_otp()'/`stat_gwdsp_otp()'/
+	`change_gwdsp_otp()' above as wave 4's undirected `esp'/`dsp' have
+	to `gwesp'/`gwdsp': `gw_kernel(p,decay)' replaced by the exact-match
+	indicator rowvector `(p :== td.levels')`. `dsp_otp' intentionally
+	does NOT skip `p==0' dyads (a requested d could be exactly 0), same
+	disclosed fix as wave 4's undirected `stat_dsp()'.
+*/
+real rowvector stat_esp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, p
+	real rowvector tot
+
+	ties = G.all_ties()
+	tot = J(1, rows(td.levels), 0)
+	for (k=1; k<=rows(ties); k++) {
+		p = G.shared_partners_otp(ties[k,1], ties[k,2])
+		tot = tot + (p :== td.levels')
+	}
+	return(tot)
+}
+real rowvector change_esp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, pij, a, b, m, paj, pib
+	real rowvector chg, na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+
+	pij = G.shared_partners_otp(i,j)
+	chg = delta * (pij :== td.levels')
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		if (!G.has_edge(a,j)) continue
+		paj = G.shared_partners_otp(a,j)
+		chg = chg + ((paj+delta :== td.levels') - (paj :== td.levels'))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		if (!G.has_edge(i,b)) continue
+		pib = G.shared_partners_otp(i,b)
+		chg = chg + ((pib+delta :== td.levels') - (pib :== td.levels'))
+	}
+	return(chg)
+}
+real rowvector stat_dsp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, j, p
+	real rowvector tot
+
+	tot = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			p = G.shared_partners_otp(i,j)
+			tot = tot + (p :== td.levels')
+		}
+	}
+	return(tot)
+}
+real rowvector change_dsp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, a, b, m, paj, pib
+	real rowvector chg, na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = J(1, rows(td.levels), 0)
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		paj = G.shared_partners_otp(a,j)
+		chg = chg + ((paj+delta :== td.levels') - (paj :== td.levels'))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		pib = G.shared_partners_otp(i,b)
+		chg = chg + ((pib+delta :== td.levels') - (pib :== td.levels'))
 	}
 	return(chg)
 }
