@@ -61,10 +61,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      # BUGFIX: this used to hardcode two specific vcvarsall.bat paths
+      # (Enterprise/Community) and call them directly - neither exists
+      # on the actual windows-latest hosted runner ("the system cannot
+      # find the path specified" / "'cl' is not recognized", confirmed
+      # directly from this workflow's own first real run, unit 87's own
+      # authoring environment having had no Windows runner to verify
+      # against at all). ilammy/msvc-dev-cmd is the standard, widely-used
+      # GitHub Action for this exact problem - it locates whatever MSVC
+      # installation the runner actually has and sets up the environment
+      # for every subsequent step, rather than guessing a fixed path.
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: Build Windows plugins (cl /LD)
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
           mkdir lib\plugins\windows
           cd native
           cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
