@@ -826,6 +826,18 @@ Continuation of the same user-mandated "move all effects to C" relaxation, next 
 
 Full `cscripts/` ERGM sweep (both modes, 24 files): no regressions. Certified at **L2**.
 
+## Harmonisation phase, unit 92 (continued): native (C) backend wave 3 - the undirected shared-partner family
+
+Continuation of the same user-mandated "move all effects to C" relaxation.
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| `gwdsp`/`gwnsp`/`esp`/`dsp`/`triangle` (undirected/UTP only) | ✅ | ✅ | ✅ | ✅ | Reuses the EXISTING `adj[]`/`common_neighbors()` graph infrastructure `gwesp` already built (unit 83) - no new graph representation needed, only new change-statistic formulas, each a direct, hand-verified port of the corresponding Mata `change_*()` function. `change_gwdsp()` is `change_gwesp()`'s own two-neighbor-loop shape without its "must also be a tie" restriction or its own-dyad term (exactly mirroring why `stat_gwdsp()` is structurally simpler than `stat_gwesp()` despite costing more to compute from scratch - unit 88's own finding). `gwnsp` needed no separate C function at all - it dispatches as `change_gwdsp(...) - change_gwesp(...)` inline in `change_term()`'s own switch, the identical "thin composition, not a new traversal" property the Mata version has (unit 90). `esp(d)`/`dsp(d)` are `change_gwesp()`/`change_gwdsp()` with `gw_kernel()` (decay-weighted) replaced by a new `ind_kernel()` (exact-match indicator) - the same kernel-substitution relationship unit 91 wave 4 used in Mata. `triangle` turned out to need no traversal loop at all in C either, matching its own Mata simplicity: `change_triangle = delta * common_neighbors(i,j)`, a single call. `need_adj` (whether to allocate `adj[]` at all) now triggers on any of these five codes, not just `gwesp`. All gated on `tdt.sptype == ""` (undirected/UTP) exactly like `gwesp`, since `esp`/`dsp` (and, via composition, `gwnsp`) can be directed (OTP) in Mata since unit 91 wave 5 - native does not implement OTP for any shared-partner term yet (see the still-open row below). |
+| Permanent regression test, extended `cscripts/test_nwergm_native.do` (both modes) | ✅ | ✅ | ✅ | ✅ | Three new `test_equivalence()` calls: `gwesp+gwdsp+gwnsp` mixed in one model (exercises the `gwnsp` composition dispatch in native/ergm_mcmc.c itself, not just in Mata), `esp(0,1,2)+dsp(1)`, and plain `triangle` - all passing with exact or near-exact self-consistency. The eligibility test's own reject-probe changed again, for the same reason `nodecov` then `triangle` each stopped working as one: `triangle` is now native-eligible, so `ctriple` (still genuinely unported - directed, needs OTP) takes over that role. |
+| Still NOT native-eligible (documented follow-on) | ❌ (deliberate, disclosed scope limit) | n/a | n/a | ✅ | `edgecov`/`hamming` (need an n x n matrix marshalled across the boundary); `ctriple`/`transitiveties`/`cyclicalties` and every directed (OTP) shared-partner variant of `gwesp`/`gwdsp`/`gwnsp`/`esp`/`dsp` - all of these need a genuinely NEW directed-adjacency structure in C (in/out neighbor lists, mirroring Mata's `neighbors_out()`/`neighbors_in()` and `shared_partners_otp()`), not merely new formulas over the existing undirected `adj[]` - a materially bigger lift than any wave so far, comparable in scope to the original `gwesp` port itself. |
+
+Full `cscripts/` ERGM sweep (both modes, 24 files): no regressions. Certified at **L2**.
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |

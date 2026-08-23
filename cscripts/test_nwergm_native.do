@@ -115,13 +115,16 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
-	// triangle is NOT in the native term set (shared-partner family
-	// beyond gwesp itself remains a documented follow-on) - must still
-	// be rejected, now serving as the reject probe nodecov used to.
+	// ctriple is NOT in the native term set (it is directed-only and
+	// needs OTP shared-partner machinery, which native does not have -
+	// a documented follow-on) - must be rejected. `triangle` itself
+	// CANNOT serve as the reject probe any more (unit 92 wave 3 made it
+	// native-eligible) - this is the SAME substitution nodecov/triangle
+	// each underwent in turn as the native term set grew.
 	M = ErgmModel()
 	M.init()
 	td5 = ErgmTermData()
-	M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), td5, ("triangle"))
+	M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), td5, ("ctriple"))
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
 
@@ -595,5 +598,84 @@ void run_odegrange_idegrange_test(){
 		(-2.2, 0.4, 0.1, 0.1), 2000, 5, 2000, 6)
 }
 run_odegrange_idegrange_test()
+
+// --- undirected shared-partner family beyond gwesp (harmonisation
+//     unit 92, wave 3): gwdsp/gwnsp/esp/dsp/triangle. All reuse the
+//     EXISTING adj[]/common_neighbors() infrastructure gwesp already
+//     built - no new graph representation needed, only new change-
+//     statistic formulas (direct ports of their own Mata change_*()
+//     functions). Directed (OTP) variants and ctriple/transitiveties/
+//     cyclicalties remain a documented follow-on (need a genuinely new
+//     directed-adjacency structure in C, not yet built). ---
+
+// --- undirected: edges + gwesp + gwdsp + gwnsp (mixed - exercises the
+//     gwnsp = gwdsp - gwesp composition dispatch in native/ergm_mcmc.c
+//     too, not just in Mata) ---
+void run_gwdsp_gwnsp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdg, tdd, tdn
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.5
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), tdg, ("gwesp_0.5"))
+	tdd = ErgmTermData()
+	tdd.decay = 0.5
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), tdd, ("gwdsp_0.5"))
+	tdn = ErgmTermData()
+	tdn.decay = 0.5
+	M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), tdn, ("gwnsp_0.5"))
+
+	test_equivalence("undirected edges+gwesp+gwdsp+gwnsp (mixed)", n, 4, 0, M,
+		(-2.0, 0.2, 0.02, 0.02), 2000, 5, 2000, 6)
+}
+run_gwdsp_gwnsp_test()
+
+// --- undirected: edges + esp(0,1,2) + dsp(1) ---
+void run_esp_dsp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tde3, tdd1
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tde3 = ErgmTermData()
+	tde3.levels = (0\1\2)
+	M.addterm("esp", 3, &stat_esp(), &change_esp(), tde3, ("esp0","esp1","esp2"))
+	tdd1 = ErgmTermData()
+	tdd1.levels = (1)
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), tdd1, ("dsp1"))
+
+	test_equivalence("undirected edges+esp(0,1,2)+dsp(1)", n, 4, 0, M,
+		(-2.0, 0.05, 0.05, 0.05, 0.02), 2000, 5, 2000, 6)
+}
+run_esp_dsp_test()
+
+// --- undirected: edges + triangle ---
+void run_triangle_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdt
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdt = ErgmTermData()
+	M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), tdt, ("triangle"))
+
+	test_equivalence("undirected edges+triangle", n, 4, 0, M,
+		(-2.0, 0.05), 2000, 5, 2000, 6)
+}
+run_triangle_test()
 
 end

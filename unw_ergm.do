@@ -2644,6 +2644,43 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 				p2v[pos] = (tdt.levelpairs[k,2] >= . ? 1e9 : tdt.levelpairs[k,2])
 			}
 		}
+		else if (nm == "gwdsp") {
+			// undirected/UTP only, same reasoning as gwesp above - gwdsp
+			// has no `sptype' field of its own to check (unlike gwesp,
+			// its own OTP directed mode reuses the SAME td.sptype field -
+			// see unw_ergm.do's own stat_gwdsp() dispatch), so the check
+			// here is identical in spirit.
+			if (tdt.sptype != "") return(0)
+			pos++
+			termcodes[pos] = 27
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "gwnsp") {
+			if (tdt.sptype != "") return(0)
+			pos++
+			termcodes[pos] = 28
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "esp") {
+			if (tdt.sptype != "") return(0)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 29
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "dsp") {
+			if (tdt.sptype != "") return(0)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 30
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "triangle") {
+			pos++
+			termcodes[pos] = 31
+		}
 		else return(0)
 	}
 
