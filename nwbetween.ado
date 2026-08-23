@@ -91,6 +91,18 @@ generates one variable per network, named {it:varname_netname} (e.g. {it:_betwee
 	{cmd:. sum _between}
 
 
+{title:Performance}
+
+{pstd}
+The default (unweighted) mode of {cmd:nwbetween} transparently uses a compiled native (C)
+implementation of the same algorithm when one is available for the current platform (currently:
+macOS), falling back to an identical, fully-supported Mata implementation everywhere else -
+there is nothing to configure and no difference in the result, only in how fast it is computed.
+See {browse "docs/NATIVE_GRAPH_LIBRARIES.md"} in the package's own repository for the evidence
+behind this (a native run at 10,000 nodes was measured faster than the Mata implementation at
+just 1,000). {opt weighted} still always uses the Mata implementation.
+
+
 {title:Supported network types}
 
 {pstd}
@@ -172,10 +184,18 @@ program nwbetween
 		}
 
 		if "`weighted'" != "" {
+			// weighted (Dijkstra-based) betweenness has no native
+			// backend yet - a documented follow-on, see
+			// docs/NATIVE_GRAPH_LIBRARIES.md.
 			mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness_weighted(`alpha'))
 		}
 		else {
-			mata: st_store((1::`nodes'),"`netgenerate'", `netobj'->calculate_betweenness())
+			// NativeGraphAvailable() (unw_core.do) transparently falls
+			// back to the Mata implementation on any platform without a
+			// compiled nwgraph.plugin/nwgraph_unix.plugin (currently:
+			// everywhere except macOS) - see docs/NATIVE_GRAPH_LIBRARIES.md
+			// and native/nwgraph.c's own header for the full account.
+			mata: st_store((1::`nodes'),"`netgenerate'", NativeGraphAvailable() ? `netobj'->calculate_betweenness_native() : `netobj'->calculate_betweenness())
 		}
 
 		if "`standardize'" != "" {
