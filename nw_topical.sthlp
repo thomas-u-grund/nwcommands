@@ -52,7 +52,7 @@
 {p2col:    {bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:    {bf:{help nwtoedge }}}Convert network into edgelist{p_end}
 {p2col:    {bf:{help nwuse }}}Load Stata-format networks{p_end}
-{p2col:    {bf:{help webnwuse }}}Load network data over the web{p_end}
+{p2col:    {bf:{help nwwebuse }}}Load network data over the web{p_end}
 {marker generator}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}

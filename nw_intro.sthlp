@@ -182,7 +182,7 @@ The intution and usage of these network extensions is very similar to what one i
 {center:{c |} {help drop}         {c |} {help nwdrop}         {c |} Drop networks from memory     {c |}}
 {center:{c |} {help keep}         {c |} {help nwkeep}         {c |} Keep networks in memory       {c |}}
 {center:{c |} {help use}          {c |} {help nwuse}          {c |} Use network data              {c |}}
-{center:{c |} {help webuse}       {c |} {help webnwuse}       {c |} Use network data from internet{c |}}
+{center:{c |} {help webuse}       {c |} {help nwwebuse}       {c |} Use network data from internet{c |}}
 {center:{c |} {help save}         {c |} {help nwsave}         {c |} Save network data             {c |}}
 {center:{c |} {help generate}     {c |} {help nwgenerate}     {c |} Generate networs              {c |}}
 {center:{c |} {help egen}         {c |} {help nwgen}          {c |} Advanced network generation   {c |}}

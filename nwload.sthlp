@@ -65,7 +65,7 @@ reverts back and unconnects a network from a view on the dataset. To change valu
 For example, if one were to import/use a network with 16 nodes and drop all Stata variables, {bf:nwload} would create exactly
 16 variables and 16 cases.
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. drop _all}
 	{cmd:. nwload flomarriage}
 
@@ -91,7 +91,7 @@ of a network as Stata variables nor other information, but just creates the vari
 {pstd}
 For example, one can plot the Florentine marriage network and label the nodes accordingly with:
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwplot flomarriage, label(_nwnode)}
 
 {pstd}
@@ -116,7 +116,7 @@ been generated) as Stata variables.
 
 {pstd}
 Notice that {cmd:nwload} does not import or create a network, it simply creates Stata variables to represent a network. Only networks that 
-already do exist in Stata, i.e. have been set by {help nwset} or imported by {help nwimport} or {help nwuse} or {help webnwuse} or
+already do exist in Stata, i.e. have been set by {help nwset} or imported by {help nwimport} or {help nwuse} or {help nwwebuse} or
 created by a {help nw_topical##generator:network generator}, can be loaded as Stata variables. If two different networks use the
 same variable names, the Stata variables are overwritten.
 

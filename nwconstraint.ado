@@ -70,7 +70,7 @@ takes care of.
 
 {title:Examples}
 
-	{cmd:. webnwuse gang, nwclear}
+	{cmd:. nwwebuse gang, nwclear}
 	{cmd:. nwconstraint gang, name(gangconstraint)}
 	{cmd:. nwtomata gangconstraint, mat(C)}
 	{cmd:. nwtomata gang, mat(A)}

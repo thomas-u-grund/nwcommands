@@ -89,7 +89,7 @@ generates one variable per network, named {it:varname_netname} (e.g. {it:_betwee
 
 {title:Examples}
 
-	{cmd:. webnwuse gang, nwclear}
+	{cmd:. nwwebuse gang, nwclear}
 	{cmd:. nwbetween gang}
 	{cmd:. sum _between}
 

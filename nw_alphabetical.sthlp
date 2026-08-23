@@ -109,4 +109,4 @@
 {p2col:{bf:{help nwvalidvars }}}Validate Stata variables for network{p_end}
 {p2col:{bf:{help nwvalue }}}Returns entries form the adjaceny matrix of a network{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help webnwuse }}}Load network data over the web{p_end}
+{p2col:{bf:{help nwwebuse }}}Load network data over the web{p_end}

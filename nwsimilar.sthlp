@@ -116,7 +116,7 @@ Calculates the cross-product of the tie vectors of nodes {it:} and {it:j}
 
 {title:Example}
 
-{cmd:. webnwuse florentine}
+{cmd:. nwwebuse florentine}
 {cmd:. nwsimilar flomarriage}
 
 {cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}

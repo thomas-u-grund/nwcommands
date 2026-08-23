@@ -112,7 +112,7 @@ f nwutility.ado
 f nwvalidate.ado
 f nwvalidvars.ado
 f nwvalue.ado
-f webnwuse.ado
+f nwwebuse.ado
 f florentine.dta
 f gang.dta
 f glasgow.dta

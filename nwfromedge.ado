@@ -105,7 +105,7 @@ One can also transfrom any network that exists in memory into such an edgelist w
 {pstd}
 This loads a network dataset from the internet and transforms the network {it:glasgow1} into an edgelist.
 
-	{cmd:. webnwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwtoedge glasgow1}
 
 {pstd}
@@ -117,7 +117,7 @@ Afterwards, it can be loaded as a network object again:
 	
 {title:Also see}
 	
-	{help nwtoedge}, {help nwuse}, {help nwsave}, {help webnwuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
+	{help nwtoedge}, {help nwuse}, {help nwsave}, {help nwwebuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
 
 ***/
 
