@@ -43,7 +43,7 @@ Fixed with a genuine algorithmic rewrite (the Esfahanian & Hakimi 1984 refinemen
 | nwsym | structural | 0.002 | 0.010 | 1.233 | scales well |
 | nwkcomponents | structural | 0.025 | 17.537 | *excluded* | fixed this unit (was 66s at n=100!) — residual dense max-flow gap remains, see above |
 | nwkcore | structural | 0.003 | 0.082 | 7.579 | scales adequately |
-| nwclique | cohesive | 0.006 | 1.785 | *not completed* | did not finish in a reasonable time at n=10,000; not further diagnosed (time constraints) |
+| nwclique | cohesive | 0.006 | 1.785 | *not completed* | did not finish in a reasonable time at n=10,000. **Diagnosed** in `docs/CERTIFICATION.md`'s harmonisation unit 107: a search-tree blow-up (actual clique count stays ~170 from n=1,000-2,000), not a combinatorial-output blow-up. Added standard Bron-Kerbosch pivoting (~4x faster on denser graphs, verified correct via exact clique-set cross-checks) but this sparse (avg-degree-10) case needs a deeper sparse-index-list rewrite — still open, tracked as Pending. |
 | nwkplex | cohesive | 0.330 | *excluded* | *excluded* | k-plex enumeration count blows up combinatorially — inherent to the concept for k≥2, not an implementation bug |
 | nwcohesion | cohesive | 5.204 | *excluded* | *excluded* | recursive multi-level decomposition compounds the residual `nwkcomponents` gap above |
 | nwgeodesic | distance | 0.149 | 1.240 | *not completed* | did not finish in a reasonable time at n=10,000 — unexpected given the sparse-BFS migration's own 100k-node benchmark elsewhere; **flagged as an anomaly needing further investigation**, not diagnosed here (time constraints) |
