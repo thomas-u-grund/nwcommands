@@ -1996,9 +1996,11 @@ class ErgmModel {
 	// this file's own "Native (C) MCMC backend" section for the full
 	// design.
 	real scalar native_enabled
-	real rowvector native_termcodes
-	real rowvector native_decays
-	real colvector native_attr
+	real rowvector native_termcodes	// one entry per OUTPUT COLUMN (not per term instance - a multi-column term instance like nodefactor(3 levels) expands into 3 consecutive slots, one per level)
+	real rowvector native_attridx		// per-slot: 1-based index into native_attrmat's own columns (0 = no attribute needed)
+	real rowvector native_p1		// per-slot: generic scalar parameter #1 (decay for gw* terms; target level for nodefactor-family; low level for nodemix)
+	real rowvector native_p2		// per-slot: generic scalar parameter #2 (high level for nodemix only; unused - left 0 - by every other term)
+	real matrix native_attrmat		// one column per distinct attribute array actually needed across the model's own terms (native_attridx indexes into THIS, not into any one term's own td.attr)
 	real scalar native_proposal
 	real scalar native_lastaccept
 
@@ -2191,12 +2193,23 @@ mata:
    and the exact wire format. Summary of the design this Mata-side glue
    implements:
 
-   - Scope: exactly the four terms native/ergm_mcmc.c's change_term()
-     supports (edges, mutual, nodematch, gwesp) - ErgmNativeSetup() below
-     is the ONLY place that decides eligibility, by inspecting the
-     model's own term names, once per `nwergm` call (never inside the
-     MCMC loop). Any other term present -> native stays disabled and
-     ErgmMCMCSample()/ErgmMCMCSampleDiag() run their original,
+   - Scope: originally exactly four terms (edges, mutual, nodematch,
+     gwesp) - relaxed (harmonisation unit 91 follow-on, per explicit
+     user instruction: "relax the restriction... move all effects to
+     C") to also cover the full dyad-independent attribute/factor family
+     (nodecov/nodeicov/nodeocov/absdist/nodematch_diff/nodefactor/
+     nodeofactor/nodeifactor/sender/receiver/nodemix) and the GW-degree
+     family (gwdegree/gwodegree/gwidegree) - see native/ergm_mcmc.c's
+     own header and ErgmNativeSetup()'s own header comment below for the
+     full current list and what still is NOT covered (edgecov/hamming,
+     the degree-count family, the shared-partner family beyond gwesp
+     itself, and directed/OTP gwesp). ErgmNativeSetup() below is the
+     ONLY place that decides eligibility, by inspecting the model's own
+     term names, once per `nwergm` call (never inside the MCMC loop).
+     Any term outside the current native set anywhere in the model
+     disables native for the WHOLE model - a hard architectural
+     constraint, not a gap (see ErgmNativeSetup()'s own header) -
+     ErgmMCMCSample()/ErgmMCMCSampleDiag() then run their original,
      unmodified Mata code path exactly as before this unit.
    - The Mata/native boundary is crossed exactly once per
      ErgmMCMCSample()/ErgmMCMCSampleDiag() call (i.e. once per MCMLE
@@ -2319,42 +2332,244 @@ real scalar ErgmNativeAvailable(){
 	return value - it exists mainly so cscripts/test_nwergm_native.do can
 	assert eligibility computed as expected on known model shapes).
 */
+/*
+	Appends `v' as a new column of `A', handling the "A is still empty"
+	base case Mata's own `,' (horizontal join) operator cannot handle
+	directly (joining a 0x0 matrix to an n x 1 vector is a conformability
+	error, not a no-op) - used by ErgmNativeSetup() below to build up
+	`M.native_attrmat' one attribute-using term at a time without knowing
+	in advance how many distinct attribute arrays the model will need.
+*/
+real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
+	if (cols(A) == 0) return(v)
+	return((A, v))
+}
+
+/*
+	Decides, once per `nwergm` call (never inside the MCMC loop, per
+	this unit's own "term dispatch must be cheap" governing instruction),
+	whether the model M is eligible for the native backend, and if so
+	populates M's own native_* config fields that ErgmNativeSampleCore()
+	reads. Returns 1 if native will be used, 0 otherwise (nwergm.ado does
+	not need to inspect this return value - it exists mainly so
+	cscripts/test_nwergm_native.do can assert eligibility computed as
+	expected on known model shapes).
+
+	Native-eligible terms (harmonisation unit 91 follow-on, "move
+	everything reasonably portable to C" - relaxing this unit's own
+	original narrow scope per the user's explicit instruction): edges,
+	mutual, nodematch, gwesp (undirected/UTP only - see below),
+	nodecov/nodeicov/nodeocov/absdist, nodematch_diff/nodefactor/
+	nodeofactor/nodeifactor/sender/receiver, nodemix, gwdegree/
+	gwodegree/gwidegree. Each OUTPUT COLUMN of a multi-column term
+	instance (e.g. nodefactor's one column per level) is expanded into
+	its own native "slot" here - `native_termcodes'/`native_attridx'/
+	`native_p1'/`native_p2' are sized to `M.nparam()' (total output
+	columns), NOT `M.nterms' (term instances), unlike the original
+	four-term version of this function (which could get away with
+	nterms==nparam always, since every one of its four terms was
+	single-column - no longer true in general). Distinct attribute
+	arrays needed across the model's own terms are collected once into
+	`M.native_attrmat' (via `_ergm_mat_appendcol()' above) and referenced
+	by column index (`native_attridx', 1-based, 0 = none) rather than
+	duplicating a single shared array the way the original version did
+	(which only ever supported exactly one nodematch term's own attr).
+
+	STILL NOT native-eligible (any one such term anywhere in the model
+	disables native for the WHOLE model, falling back to the unmodified
+	Mata sampler - this is a hard architectural constraint, not a
+	todo-list gap: every term's change statistic must be evaluated on
+	EVERY proposal, so a per-toggle mix of "some terms in C, some in
+	Mata" would mean crossing the Mata/C boundary on every single
+	proposal, exactly the overhead the native boundary exists to
+	eliminate - see this file's own "Native (C) MCMC backend" header):
+	edgecov/hamming (need an n x n matrix marshalled across the
+	boundary - deferred, not yet built), the degree-count family
+	(degree/odegree/idegree/concurrent/degrange family/kstar family -
+	needs degree-threshold-crossing logic in C, not yet built), the
+	shared-partner family beyond gwesp itself (gwdsp/gwnsp/esp/dsp/
+	triangle/ctriple/transitiveties/cyclicalties), and directed (OTP)
+	gwesp specifically (see the explicit `tdt.sptype` check below - a
+	real, confirmed bug found while planning this unit: before this
+	fix, a directed gwesp model was WRONGLY reported native-eligible,
+	and the C plugin would have silently applied its undirected-only
+	shared-partner formula to a directed network, since neither this
+	function nor its caller ever checked `sptype` - directed gwesp did
+	not exist yet when the native backend was first built, unit 83, and
+	nothing updated this check when directed gwesp was added later,
+	unit 91 wave 5). Each of these remains a well-scoped, documented
+	follow-on (docs/ERGM_ROADMAP.md's own "Native backend" section) -
+	not attempted here to keep this wave's own scope controlled, exactly
+	the same discipline the Mata term-expansion waves used throughout.
+*/
 real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code){
-	real scalar t, code
+	real scalar t, k, pos, ncols, aidx, maxcols, maxattr
 	string scalar nm
-	real rowvector termcodes, decays
-	real colvector attr
+	real rowvector termcodes, attridxs, p1v, p2v
+	real matrix attrmat
 	class ErgmTermData scalar tdt
 
 	M.native_enabled = 0
 
 	if (!ErgmNativeAvailable()) return(0)
 
-	termcodes = J(1, M.nterms, 0)
-	decays = J(1, M.nterms, 0)
-	attr = J(0, 1, 0)
+	// must match native/ergm_mcmc.c's own MAXTERMS/MAXATTR exactly - a
+	// model exceeding either falls back to Mata rather than risking the
+	// C plugin's own hard-coded array bounds.
+	maxcols = 64
+	maxattr = 32
 
+	ncols = M.nparam()
+	if (ncols > maxcols) return(0)
+
+	termcodes = J(1, ncols, 0)
+	attridxs = J(1, ncols, 0)
+	p1v = J(1, ncols, 0)
+	p2v = J(1, ncols, 0)
+	attrmat = J(0, 0, .)
+
+	pos = 0
 	for (t=1; t<=M.nterms; t++) {
-		if (M.npar[t] != 1) return(0)
 		nm = M.names[t]
 		tdt = *M.td[t]
-		if (nm == "edges") code = 1
-		else if (nm == "mutual") code = 2
-		else if (substr(nm, 1, 9) == "nodematch") {
-			code = 3
-			attr = tdt.attr
+
+		if (nm == "edges") {
+			pos++
+			termcodes[pos] = 1
 		}
-		else if (substr(nm, 1, 5) == "gwesp") {
-			code = 4
-			decays[t] = tdt.decay
+		else if (nm == "mutual") {
+			pos++
+			termcodes[pos] = 2
+		}
+		else if (nm == "nodematch") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 3
+			attridxs[pos] = aidx
+		}
+		else if (nm == "gwesp") {
+			// Native gwesp only ever implemented the undirected/UTP
+			// shared-partner definition - the directed OTP mode (unit
+			// 91 wave 5) is NOT ported here yet (see this function's
+			// own header comment for the bug this guard fixes).
+			if (tdt.sptype != "") return(0)
+			pos++
+			termcodes[pos] = 4
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "nodecov") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 5
+			attridxs[pos] = aidx
+		}
+		else if (nm == "nodeicov") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 6
+			attridxs[pos] = aidx
+		}
+		else if (nm == "nodeocov") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 7
+			attridxs[pos] = aidx
+		}
+		else if (nm == "absdist") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 8
+			attridxs[pos] = aidx
+		}
+		else if (nm == "nodematch_diff") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 9
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "nodefactor") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 10
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "nodeofactor" | nm == "sender") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 11
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "nodeifactor" | nm == "receiver") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 12
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "nodemix") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 13
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = tdt.levelpairs[k,2]
+			}
+		}
+		else if (nm == "gwdegree") {
+			pos++
+			termcodes[pos] = 14
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "gwodegree") {
+			pos++
+			termcodes[pos] = 15
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "gwidegree") {
+			pos++
+			termcodes[pos] = 16
+			p1v[pos] = tdt.decay
 		}
 		else return(0)
-		termcodes[t] = code
 	}
 
 	M.native_termcodes = termcodes
-	M.native_decays = decays
-	M.native_attr = attr
+	M.native_attridx = attridxs
+	M.native_p1 = p1v
+	M.native_p2 = p2v
+	M.native_attrmat = attrmat
 	M.native_proposal = proposal_code
 	M.native_enabled = 1
 	return(1)
@@ -2374,17 +2589,17 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 		real rowvector theta, real scalar burnin, real scalar interval,
 		real scalar samplesize, real rowvector obs){
 
-	real matrix ties, out, newties
-	real scalar n, directed, nties, p, nobs_needed, i, rngseed, nties_out
-	string scalar origframe, argstr, cmd, outvarlist
-	string rowvector outvarnames
-	real colvector attrpad
+	real matrix ties, out, newties, attrpad
+	real scalar n, directed, nties, p, nattr, nobs_needed, i, rngseed, nties_out
+	string scalar origframe, argstr, cmd, outvarlist, attrvarlist
+	string rowvector outvarnames, attrvarnames
 
 	n = G.n
 	directed = G.directed
 	ties = G.all_ties()
 	nties = rows(ties)
 	p = cols(theta)
+	nattr = cols(M.native_attrmat)
 
 	nobs_needed = max((ergm_total_dyads(G), samplesize, n, 1))
 
@@ -2396,27 +2611,46 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	st_addobs(nobs_needed)
 	st_addvar("double", "v1")
 	st_addvar("double", "v2")
-	st_addvar("double", "v3")
+
+	// Distinct attribute arrays needed across the model's own terms
+	// (harmonisation unit 91 follow-on) - each gets its own frame
+	// variable, positioned right after v1/v2 and before the output
+	// columns; `native_attridx' (set by ErgmNativeSetup()) is a 1-based
+	// index into THESE columns, in the same order native_attrmat's own
+	// columns were built.
+	attrvarlist = ""
+	attrvarnames = J(1, nattr, "")
+	for (i=1; i<=nattr; i++) {
+		attrvarnames[i] = "a" + strofreal(i)
+		st_addvar("double", attrvarnames[i])
+		attrvarlist = attrvarlist + " " + attrvarnames[i]
+	}
+
 	outvarlist = ""
 	outvarnames = J(1, p, "")
 	for (i=1; i<=p; i++) {
-		outvarnames[i] = "v" + strofreal(3+i)
+		outvarnames[i] = "o" + strofreal(i)
 		st_addvar("double", outvarnames[i])
 		outvarlist = outvarlist + " " + outvarnames[i]
 	}
 
 	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
 
-	attrpad = M.native_attr
-	if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), 1, 0)
-	st_store((1::n), "v3", attrpad[1::n])
+	if (nattr > 0) {
+		attrpad = M.native_attrmat
+		if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), nattr, 0)
+		st_store((1::n), attrvarnames, attrpad[1::n, .])
+	}
 
 	rngseed = floor(runiform(1,1) * 2147483647)
 
 	argstr = strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
 		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
-		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(p)
-	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_decays[i])
+		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(p)
+	for (i=1; i<=p; i++) {
+		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+	}
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i])
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i])
 
@@ -2431,7 +2665,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// when the `plugin call' below cannot find the command.
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2 v3" + outvarlist + ", " + char(34) + argstr + char(34)
+	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + outvarlist + ", " + char(34) + argstr + char(34)
 	stata(cmd)
 
 	nties_out = st_numscalar("__ergm_native_nties_out")

@@ -1153,15 +1153,17 @@ program nwergm, eclass
 			local __ergm_propcode 1
 		}
 
-		// Native (C) MCMC backend eligibility (harmonisation unit 83) -
-		// decided ONCE here, before any MCMC runs, never inside
-		// ErgmMCMLE()'s own loop. Sets __nwergm_last_M.native_enabled;
-		// ErgmMCMCSample()/ErgmMCMCSampleDiag() (called internally by
-		// ErgmMCMLE() below) check that field themselves and fall back
-		// to the unmodified Mata sampler whenever it is 0 - a model
-		// using any term outside the native backend's own deliberately
-		// narrow scope (edges/mutual/nodematch/gwesp), or a platform
-		// with no compiled lib/plugins/ergm_mcmc.plugin, is completely
+		// Native (C) MCMC backend eligibility (harmonisation unit 83;
+		// scope relaxed considerably, unit 91 follow-on - see
+		// unw_ergm.do's own ErgmNativeSetup() header comment for the
+		// full current term list) - decided ONCE here, before any MCMC
+		// runs, never inside ErgmMCMLE()'s own loop. Sets
+		// __nwergm_last_M.native_enabled; ErgmMCMCSample()/
+		// ErgmMCMCSampleDiag() (called internally by ErgmMCMLE() below)
+		// check that field themselves and fall back to the unmodified
+		// Mata sampler whenever it is 0 - a model using any term outside
+		// the native backend's own current scope, or a platform with no
+		// compiled lib/plugins/ergm_mcmc.plugin, is completely
 		// unaffected by this call. See unw_ergm.do's own "Native (C)
 		// MCMC backend" section and docs/ERGM_ARCHITECTURE.md for the
 		// full design.

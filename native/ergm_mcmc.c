@@ -26,15 +26,30 @@
 	default (see docs/ERGM_ROADMAP.md's "Native backend" section for the
 	full decision record).
 
-	SCOPE (deliberately narrow - see docs/ERGM_ARCHITECTURE.md): supports
-	exactly the four terms already exercised by the R-vs-Stata benchmark
-	suite (edges, mutual, nodematch, gwesp), the two existing proposals
-	(uniform, TNT), directed and undirected graphs. Any model using a term
-	outside this set is NOT eligible for the native backend - the Mata
-	implementation (unw_ergm.do) remains the reference/fallback and is
-	unchanged; nwergm.ado decides per-model, per-call which backend to use
-	and both must be statistically indistinguishable (see
-	cscripts/test_nwergm_native.do).
+	SCOPE: originally exactly the four terms exercised by the R-vs-Stata
+	benchmark suite (edges, mutual, nodematch, gwesp). Relaxed
+	(harmonisation unit 91 follow-on, per explicit user instruction to
+	"move all effects to C" rather than have any term outside a narrow
+	set force the WHOLE model back onto the Mata sampler) to also cover
+	the full dyad-independent attribute/factor family - nodecov/
+	nodeicov/nodeocov/absdist/nodematch_diff/nodefactor/nodeofactor/
+	nodeifactor/sender/receiver/nodemix - and the GW-degree family -
+	gwdegree/gwodegree/gwidegree. See TERMCODE_* below for the complete
+	current list and unw_ergm.do's own ErgmNativeSetup() header comment
+	for exactly what is still NOT covered (edgecov/hamming - need an
+	n x n matrix marshalled across the boundary; the degree-COUNT family
+	degree/odegree/idegree/concurrent/degrange/kstar - needs threshold-
+	crossing logic not yet ported; the shared-partner family beyond
+	gwesp itself - gwdsp/gwnsp/esp/dsp/triangle/ctriple/transitiveties/
+	cyclicalties; and directed/OTP gwesp specifically) and why - each a
+	well-scoped, documented follow-on, not attempted here to keep this
+	wave's own scope controlled. The two existing proposals (uniform,
+	TNT), directed and undirected graphs, are unchanged. Any model using
+	a term outside the current native set is NOT eligible for the native
+	backend - the Mata implementation (unw_ergm.do) remains the
+	reference/fallback and is unchanged; nwergm.ado decides per-model,
+	per-call which backend to use and both must be statistically
+	indistinguishable (see cscripts/test_nwergm_native.do).
 
 	BOUNDARY: one plugin call per ErgmMCMCSample()/ErgmMCMCSampleDiag()
 	invocation - i.e., once per MCMLE iteration, not once per MCMC step
@@ -84,14 +99,32 @@
 	reproducibility (same seed -> same native result, every time) is
 	claimed or required.
 
-	TERM DISPATCH: a fixed small array of (termcode, decay) pairs, parsed
-	once at the top of stata_call() from the args string, indexed 0..
-	nterms-1 thereafter inside the hot loop via a plain switch() - no
-	string parsing, no per-step allocation, inside the loop itself (see
-	change_term() below). Adding a fifth native term means adding one
-	TERMCODE_* constant, one case in change_term(), and one code in
-	nwergm.ado's own native-eligibility check - the loop structure itself
-	does not change.
+	TERM DISPATCH: a fixed small array of per-OUTPUT-COLUMN slots
+	(termcode, attridx, p1, p2), parsed once at the top of stata_call()
+	from the args string, indexed 0..nterms-1 thereafter inside the hot
+	loop via a plain switch() - no string parsing, no per-step
+	allocation, inside the loop itself (see change_term() below). A
+	multi-column Mata term (e.g. nodefactor with 3 levels) occupies 3
+	CONSECUTIVE slots here, one per level, each carrying its own target
+	level value in `p1` - this is Mata-side ErgmNativeSetup()'s own
+	job to expand, not something this file needs to know about term
+	"instances" versus term "columns" at all. `attridx` (0 = none, else
+	1-based) selects which of the model's own distinct attribute arrays
+	(read once at the top of stata_call() into `attrs[]`, one frame
+	variable per array) a given slot needs - this is what lets several
+	DIFFERENT covariates (e.g. nodecov(age) and nodematch(sex) in the
+	same model) coexist without treating "the model's attribute array"
+	as a single global the way the original 4-term version of this file
+	did (nodematch was the only attribute consumer then, so one shared
+	array sufficed). `p1`/`p2` are two generic per-slot scalar
+	parameters - decay for the geometrically-weighted terms, a target
+	attribute level for the factor/match family, a level-PAIR (p1=lo,
+	p2=hi) for nodemix. Adding a new native term means adding one
+	TERMCODE_* constant, one case in change_term() (and possibly one
+	array in graph_t/toggle() if it needs new per-node bookkeeping, the
+	way `outdeg`/`indeg` were added for the GW-degree family below), and
+	one branch in unw_ergm.do's own ErgmNativeSetup() - the loop
+	structure itself does not change.
 */
 
 #include "stplugin.h"
@@ -298,10 +331,12 @@ typedef struct {
 	long n;
 	int directed;
 	int need_adj;      /* 1 iff a gwesp term is present (undirected only) */
+	int need_outin;    /* 1 iff outdeg/indeg were actually allocated (a gwodegree/gwidegree term is present) - toggle() must check THIS, not just `directed`, or it dereferences NULL on any other directed model */
 	dyadht_t ht;
 	long *elist_i, *elist_j; /* live edge list, parallel arrays */
 	long ecap, nties;
-	long *deg;               /* undirected: total degree; directed: out+in not tracked separately here since only needed for common-neighbor smaller-side heuristic on undirected graphs */
+	long *deg;               /* TOTAL degree (out+in for directed, plain degree for undirected) - already correct as-is: adding arc i->j increments deg[i] AND deg[j] by 1 each, which is exactly "i gained an out-arc" + "j gained an in-arc", i.e. total degree for both, directed or not. Used by common_neighbors()' smaller-side heuristic and GWDEGREE. */
+	long *outdeg, *indeg;    /* directed-only degree (harmonisation unit 91 follow-on, GWODEGREE/GWIDEGREE): meaningless/unused for undirected graphs, where degree_out_of()/degree_in_of() below both read `deg` instead */
 	adjlist_t *adj;          /* size n+1, 1-indexed; only if need_adj */
 } graph_t;
 
@@ -340,6 +375,7 @@ static int toggle(graph_t *g, long i, long j) {
 		{ long dummy; ht_del(&g->ht, key, &dummy); }
 		g->nties--;
 		g->deg[i]--; g->deg[j]--;
+		if (g->need_outin) { g->outdeg[i]--; g->indeg[j]--; }
 		if (g->need_adj && !g->directed) { adj_remove(&g->adj[i], j); adj_remove(&g->adj[j], i); }
 		return 0;
 	}
@@ -350,10 +386,14 @@ static int toggle(graph_t *g, long i, long j) {
 		ht_put(&g->ht, key, g->nties);
 		g->nties++;
 		g->deg[i]++; g->deg[j]++;
+		if (g->need_outin) { g->outdeg[i]++; g->indeg[j]++; }
 		if (g->need_adj && !g->directed) { adj_add(&g->adj[i], j); adj_add(&g->adj[j], i); }
 		return 1;
 	}
 }
+
+static long degree_out_of(graph_t *g, long i) { return g->directed ? g->outdeg[i] : g->deg[i]; }
+static long degree_in_of(graph_t *g, long i)  { return g->directed ? g->indeg[i]  : g->deg[i]; }
 
 /* number of common neighbors of i and j (undirected sense - the shared-
    partner count GWESP needs), via the smaller-degree side, exactly
@@ -399,23 +439,91 @@ static double change_gwesp(graph_t *g, long i, long j, double decay) {
    header comment)
    =================================================================== */
 
-#define TERMCODE_EDGES     1
-#define TERMCODE_MUTUAL    2
-#define TERMCODE_NODEMATCH 3
-#define TERMCODE_GWESP     4
+#define TERMCODE_EDGES          1
+#define TERMCODE_MUTUAL         2
+#define TERMCODE_NODEMATCH      3
+#define TERMCODE_GWESP          4
+#define TERMCODE_NODECOV        5
+#define TERMCODE_NODEICOV       6
+#define TERMCODE_NODEOCOV       7
+#define TERMCODE_ABSDIST        8
+#define TERMCODE_NODEMATCH_DIFF 9
+#define TERMCODE_NODEFACTOR     10
+#define TERMCODE_NODEOFACTOR    11  /* also used for sender (attr = node id) */
+#define TERMCODE_NODEIFACTOR    12  /* also used for receiver (attr = node id) */
+#define TERMCODE_NODEMIX        13
+#define TERMCODE_GWDEGREE       14
+#define TERMCODE_GWODEGREE      15
+#define TERMCODE_GWIDEGREE      16
 
-static double change_term(graph_t *g, int termcode, double decay, double *attr, long i, long j) {
+/*
+	`delta' (+1 if the toggle ADDS the dyad, -1 if it REMOVES it) is
+	computed ONCE per toggle by the caller (harmonisation unit 91
+	follow-on) and passed in here, rather than each applicable term
+	recomputing `has_edge(g,i,j)' independently the way the original
+	4-term version of this function did - a genuine, free redundant-
+	hash-lookup elimination once `nterms' can exceed a handful (as it
+	now can, with multi-column attribute/factor terms), not just a
+	refactor. `attr' is already resolved to the correct one of the
+	model's own (possibly several) distinct attribute arrays by the
+	caller (0 if this slot's own `attridx' was 0, i.e. no attribute
+	needed) - see this file's own header comment for why several
+	distinct arrays, not one shared one, are now needed. Every formula
+	below is a direct, term-by-term port of the corresponding
+	change_*() function in unw_ergm.do - see ErgmNativeSetup()'s own
+	header comment there for the exact Mata source each was checked
+	against before porting.
+*/
+static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double delta, long i, long j) {
 	switch (termcode) {
 		case TERMCODE_EDGES:
-			return has_edge(g, i, j) ? -1.0 : 1.0;
+			return delta;
 		case TERMCODE_MUTUAL:
 			if (!has_edge(g, j, i)) return 0.0;
-			return has_edge(g, i, j) ? -1.0 : 1.0;
+			return delta;
 		case TERMCODE_NODEMATCH:
-			if (attr[i] != attr[j]) return 0.0;
-			return has_edge(g, i, j) ? -1.0 : 1.0;
+			return (attr[i] == attr[j]) ? delta : 0.0;
 		case TERMCODE_GWESP:
-			return change_gwesp(g, i, j, decay);
+			return change_gwesp(g, i, j, p1);
+		case TERMCODE_NODECOV:
+			return delta * (attr[i] + attr[j]);
+		case TERMCODE_NODEICOV:
+			return delta * attr[j];
+		case TERMCODE_NODEOCOV:
+			return delta * attr[i];
+		case TERMCODE_ABSDIST:
+			return delta * fabs(attr[i] - attr[j]);
+		case TERMCODE_NODEMATCH_DIFF:
+			return (attr[i] == attr[j] && attr[i] == p1) ? delta : 0.0;
+		case TERMCODE_NODEFACTOR: {
+			double c = 0.0;
+			if (attr[i] == p1) c += delta;
+			if (attr[j] == p1) c += delta;
+			return c;
+		}
+		case TERMCODE_NODEOFACTOR:
+			return (attr[i] == p1) ? delta : 0.0;
+		case TERMCODE_NODEIFACTOR:
+			return (attr[j] == p1) ? delta : 0.0;
+		case TERMCODE_NODEMIX: {
+			double lo = (attr[i] < attr[j]) ? attr[i] : attr[j];
+			double hi = (attr[i] < attr[j]) ? attr[j] : attr[i];
+			return (lo == p1 && hi == p2) ? delta : 0.0;
+		}
+		case TERMCODE_GWDEGREE: {
+			double di = (double)g->deg[i], dj = (double)g->deg[j];
+			double chg = gw_kernel(di + delta, p1) - gw_kernel(di, p1);
+			chg += gw_kernel(dj + delta, p1) - gw_kernel(dj, p1);
+			return chg;
+		}
+		case TERMCODE_GWODEGREE: {
+			double di = (double)degree_out_of(g, i);
+			return gw_kernel(di + delta, p1) - gw_kernel(di, p1);
+		}
+		case TERMCODE_GWIDEGREE: {
+			double dj = (double)degree_in_of(g, j);
+			return gw_kernel(dj + delta, p1) - gw_kernel(dj, p1);
+		}
 	}
 	return 0.0;
 }
@@ -500,21 +608,26 @@ static long next_long(void) {
 	return (long)next_double();
 }
 
+#define MAXTERMS 64  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
+#define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
+
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long n, directed, nties_in, samplesize, burnin, interval, proposal_code, nterms, i, k;
+	long n, directed, nties_in, samplesize, burnin, interval, proposal_code, nattr, nterms, i, k;
 	unsigned long long rngseed;
-	int termcodes[16];
-	double decays[16];
-	double theta[16];
-	double obs[16];
-	double *attr = NULL;
+	int termcodes[MAXTERMS];
+	int attridx[MAXTERMS];
+	double p1[MAXTERMS], p2[MAXTERMS];
+	double theta[MAXTERMS];
+	double obs[MAXTERMS];
+	double *attrs[MAXATTR];
 	graph_t g;
 	rng_t rng;
 	double *cur;
 	long naccept = 0, ntried = 0;
 	long draw, step;
 	int need_adj = 0;
+	int need_outin = 0;
 
 	if (argc < 1) { SF_error("ergm_mcmc: missing argument string\n"); return(198); }
 
@@ -528,35 +641,50 @@ STDLL stata_call(int argc, char *argv[]) {
 	interval      = next_long();
 	proposal_code = next_long();
 	rngseed       = (unsigned long long)next_double();
+	nattr         = next_long();
 	nterms        = next_long();
-	if (nterms > 16) { SF_error("ergm_mcmc: too many terms\n"); free(argbuf); return(198); }
+	if (nterms > MAXTERMS) { SF_error("ergm_mcmc: too many terms\n"); free(argbuf); return(198); }
+	if (nattr > MAXATTR) { SF_error("ergm_mcmc: too many attribute arrays\n"); free(argbuf); return(198); }
 	for (i = 0; i < nterms; i++) {
 		termcodes[i] = (int)next_long();
-		decays[i] = next_double();
+		attridx[i] = (int)next_long();
+		p1[i] = next_double();
+		p2[i] = next_double();
 		if (termcodes[i] == TERMCODE_GWESP) need_adj = 1;
+		if (termcodes[i] == TERMCODE_GWODEGREE || termcodes[i] == TERMCODE_GWIDEGREE) need_outin = 1;
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	for (i = 0; i < nterms; i++) obs[i] = next_double();
 	free(argbuf);
 
 	/* --- build graph from dataset columns v1=ego v2=alter (rows
-	   1..nties_in), v3=attr (rows 1..n) --- */
+	   1..nties_in), then nattr attribute columns (rows 1..n, one per
+	   distinct attribute array the model's own terms need - see this
+	   file's own header comment) --- */
 	g.n = n;
 	g.directed = (int)directed;
 	g.need_adj = need_adj;
+	g.need_outin = need_outin && directed;
 	ht_alloc(&g.ht, ht_next_pow2(nties_in * 2 + 16));
 	g.elist_i = NULL; g.elist_j = NULL; g.ecap = 0; g.nties = 0;
 	g.deg = (long *)calloc((size_t)(n + 1), sizeof(long));
+	g.outdeg = NULL; g.indeg = NULL;
+	if (need_outin && directed) {
+		g.outdeg = (long *)calloc((size_t)(n + 1), sizeof(long));
+		g.indeg  = (long *)calloc((size_t)(n + 1), sizeof(long));
+	}
 	g.adj = NULL;
 	if (need_adj) {
 		g.adj = (adjlist_t *)malloc((size_t)(n + 1) * sizeof(adjlist_t));
 		for (i = 0; i <= n; i++) adj_init(&g.adj[i]);
 	}
-	attr = (double *)calloc((size_t)(n + 1), sizeof(double));
-	for (i = 1; i <= n; i++) {
-		ST_double v;
-		SF_vdata(3, i, &v);
-		attr[i] = SF_is_missing(v) ? 0.0 : v;
+	for (k = 0; k < nattr; k++) {
+		attrs[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
+		for (i = 1; i <= n; i++) {
+			ST_double v;
+			SF_vdata((int)(3 + k), i, &v);
+			attrs[k][i] = SF_is_missing(v) ? 0.0 : v;
+		}
 	}
 	for (i = 1; i <= nties_in; i++) {
 		ST_double vi, vj;
@@ -571,12 +699,14 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	for (step = 0; step < burnin; step++) {
 		long pi, pj;
-		double logratio, cutoff = 0.0;
-		double chg[16];
+		double logratio, cutoff = 0.0, delta;
+		double chg[MAXTERMS];
 		if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
 		else propose_uniform(&g, &rng, &pi, &pj, &logratio);
+		delta = has_edge(&g, pi, pj) ? -1.0 : 1.0;
 		for (k = 0; k < nterms; k++) {
-			chg[k] = change_term(&g, termcodes[k], decays[k], attr, pi, pj);
+			double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+			chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, pi, pj);
 			cutoff += theta[k] * chg[k];
 		}
 		cutoff += logratio;
@@ -589,12 +719,14 @@ STDLL stata_call(int argc, char *argv[]) {
 	for (draw = 0; draw < samplesize; draw++) {
 		for (step = 0; step < interval; step++) {
 			long pi, pj;
-			double logratio, cutoff = 0.0;
-			double chg[16];
+			double logratio, cutoff = 0.0, delta;
+			double chg[MAXTERMS];
 			if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
 			else propose_uniform(&g, &rng, &pi, &pj, &logratio);
+			delta = has_edge(&g, pi, pj) ? -1.0 : 1.0;
 			for (k = 0; k < nterms; k++) {
-				chg[k] = change_term(&g, termcodes[k], decays[k], attr, pi, pj);
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, pi, pj);
 				cutoff += theta[k] * chg[k];
 			}
 			cutoff += logratio;
@@ -605,7 +737,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				naccept++;
 			}
 		}
-		for (k = 0; k < nterms; k++) SF_vstore((int)(4 + k), draw + 1, cur[k]);
+		for (k = 0; k < nterms; k++) SF_vstore((int)(3 + nattr + k), draw + 1, cur[k]);
 	}
 
 	/* write back final edge list so the Mata caller can rebuild its own
@@ -621,8 +753,9 @@ STDLL stata_call(int argc, char *argv[]) {
 	SF_scal_save("__ergm_native_ntried", (ST_double)ntried);
 
 	free(cur);
-	free(attr);
+	for (k = 0; k < nattr; k++) free(attrs[k]);
 	free(g.deg);
+	free(g.outdeg); free(g.indeg);
 	ht_free(&g.ht);
 	free(g.elist_i); free(g.elist_j);
 	if (g.adj) {
