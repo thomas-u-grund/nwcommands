@@ -2355,13 +2355,27 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	cscripts/test_nwergm_native.do can assert eligibility computed as
 	expected on known model shapes).
 
-	Native-eligible terms (harmonisation unit 91 follow-on, "move
-	everything reasonably portable to C" - relaxing this unit's own
-	original narrow scope per the user's explicit instruction): edges,
-	mutual, nodematch, gwesp (undirected/UTP only - see below),
-	nodecov/nodeicov/nodeocov/absdist, nodematch_diff/nodefactor/
-	nodeofactor/nodeifactor/sender/receiver, nodemix, gwdegree/
-	gwodegree/gwidegree. Each OUTPUT COLUMN of a multi-column term
+	Native-eligible terms (harmonisation unit 92, "move everything
+	reasonably portable to C" - relaxing unit 83's own original narrow
+	scope per the user's explicit instruction): edges, mutual,
+	nodematch, gwesp (undirected/UTP only - see below), nodecov/
+	nodeicov/nodeocov/absdist, nodematch_diff/nodefactor/nodeofactor/
+	nodeifactor/sender/receiver, nodemix, gwdegree/gwodegree/gwidegree,
+	and (unit 92 continuation) the full degree-COUNT family - degree/
+	odegree/idegree/concurrent/kstar/ostar/istar/degrange/odegrange/
+	idegrange - which needed no new attribute-array plumbing at all,
+	only degree bookkeeping already added for gwodegree/gwidegree
+	(`outdeg'/`indeg') plus two small, direct C ports of Mata helper
+	functions (`_ergm_choose()' -> `ergm_choose()', `_ergm_inrange()' ->
+	`in_range()'). One marshalling wrinkle specific to this family:
+	`degrange()'/`odegrange()'/`idegrange()' allow an open-ended upper
+	bound (`to' = Mata's `.' missing value, matching R's own `to=+Inf'
+	default) - `.' itself cannot survive a plain `strtok()'/`atof()'
+	round-trip through the native args string, so it is replaced with a
+	large finite sentinel (1e9, comfortably above any real network's
+	degree range) before marshalling; `in_range()' in native/ergm_mcmc.c
+	treats `to >= 1e8' as "no upper bound", mirroring Mata's own `to >=
+	.' check exactly. Each OUTPUT COLUMN of a multi-column term
 	instance (e.g. nodefactor's one column per level) is expanded into
 	its own native "slot" here - `native_termcodes'/`native_attridx'/
 	`native_p1'/`native_p2' are sized to `M.nparam()' (total output
@@ -2384,10 +2398,8 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	proposal, exactly the overhead the native boundary exists to
 	eliminate - see this file's own "Native (C) MCMC backend" header):
 	edgecov/hamming (need an n x n matrix marshalled across the
-	boundary - deferred, not yet built), the degree-count family
-	(degree/odegree/idegree/concurrent/degrange family/kstar family -
-	needs degree-threshold-crossing logic in C, not yet built), the
-	shared-partner family beyond gwesp itself (gwdsp/gwnsp/esp/dsp/
+	boundary - deferred, not yet built), the shared-partner family
+	beyond gwesp itself (gwdsp/gwnsp/esp/dsp/
 	triangle/ctriple/transitiveties/cyclicalties), and directed (OTP)
 	gwesp specifically (see the explicit `tdt.sptype` check below - a
 	real, confirmed bug found while planning this unit: before this
@@ -2561,6 +2573,76 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 			pos++
 			termcodes[pos] = 16
 			p1v[pos] = tdt.decay
+		}
+		else if (nm == "degree") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 17
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "odegree") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 18
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "idegree") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 19
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "concurrent") {
+			pos++
+			termcodes[pos] = 20
+		}
+		else if (nm == "kstar") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 21
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "ostar") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 22
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "istar") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 23
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "degrange") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 24
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = (tdt.levelpairs[k,2] >= . ? 1e9 : tdt.levelpairs[k,2])
+			}
+		}
+		else if (nm == "odegrange") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 25
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = (tdt.levelpairs[k,2] >= . ? 1e9 : tdt.levelpairs[k,2])
+			}
+		}
+		else if (nm == "idegrange") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 26
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = (tdt.levelpairs[k,2] >= . ? 1e9 : tdt.levelpairs[k,2])
+			}
 		}
 		else return(0)
 	}

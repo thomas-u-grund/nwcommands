@@ -200,6 +200,18 @@ void test_equivalence(string scalar label, real scalar n, real scalar deg,
 	infl_mata = (1 :+ rho_mata) :/ (1 :- rho_mata)
 	infl_native = (1 :+ rho_native) :/ (1 :- rho_native)
 	se = sqrt((sd_mata:^2 :* infl_mata + sd_native:^2 :* infl_native) :/ samplesize)
+	// a genuinely SATURATED statistic (e.g. a degree-range term whose
+	// threshold every node satisfies in every single visited state, on
+	// both chains) has EXACTLY zero variance/se - a real, if unlikely,
+	// possibility for some (network, term, theta) combinations, not
+	// just a hypothetical: hit directly while authoring this suite's
+	// own odegrange/idegrange test with a saturated range. A strict
+	// `< tol_sd_mult*0' comparison fails even on an EXACT match (0 < 0
+	// is false), so floor `se' at a tiny epsilon - genuine disagreement
+	// on an otherwise-saturated statistic (which would mean a real
+	// native/Mata formula divergence) still fails clearly, since any
+	// real discrepancy there is astronomically larger than 1e-8.
+	se = se :+ 1e-8
 
 	printf("%s: mata_mean=", label)
 	for (k=1; k<=p; k++) printf("%9.4f ", mean_mata[k])
@@ -428,5 +440,160 @@ void run_gwoidegree_test(){
 		(-2.2, 0.4, 0.15, 0.15), 2000, 5, 2000, 6)
 }
 run_gwoidegree_test()
+
+// --- degree-count family (harmonisation unit 92 continuation): needed
+//     no new attribute-array plumbing, just the outdeg/indeg
+//     bookkeeping already added for gwodegree/gwidegree above plus two
+//     direct C ports (_ergm_choose()->ergm_choose(),
+//     _ergm_inrange()->in_range()). ---
+
+// --- undirected: edges + degree(2,3) + concurrent ---
+void run_degree_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdd, tdc
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdd = ErgmTermData()
+	tdd.levels = (2\3)
+	M.addterm("degree", 2, &stat_degree(), &change_degree(), tdd, ("deg2","deg3"))
+	tdc = ErgmTermData()
+	M.addterm("concurrent", 1, &stat_concurrent(), &change_concurrent(), tdc, ("concurrent"))
+
+	test_equivalence("undirected edges+degree(2,3)+concurrent", n, 4, 0, M,
+		(-2.0, 0.2, 0.1, 0.05), 2000, 5, 2000, 6)
+}
+run_degree_test()
+
+// --- directed: edges + mutual + odegree(2) + idegree(2) ---
+void run_odegree_idegree_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdo, tdi
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdo = ErgmTermData()
+	tdo.levels = (2)
+	M.addterm("odegree", 1, &stat_odegree(), &change_odegree(), tdo, ("odeg2"))
+	tdi = ErgmTermData()
+	tdi.levels = (2)
+	M.addterm("idegree", 1, &stat_idegree(), &change_idegree(), tdi, ("ideg2"))
+
+	test_equivalence("directed edges+mutual+odegree(2)+idegree(2)", n, 4, 1, M,
+		(-2.2, 0.4, 0.1, 0.1), 2000, 5, 2000, 6)
+}
+run_odegree_idegree_test()
+
+// --- undirected: edges + kstar(2,3) ---
+void run_kstar_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdk
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdk = ErgmTermData()
+	tdk.levels = (2\3)
+	M.addterm("kstar", 2, &stat_kstar(), &change_kstar(), tdk, ("k2","k3"))
+
+	test_equivalence("undirected edges+kstar(2,3)", n, 4, 0, M,
+		(-2.0, 0.05, -0.01), 2000, 5, 2000, 6)
+}
+run_kstar_test()
+
+// --- directed: edges + mutual + ostar(2) + istar(2) ---
+void run_ostar_istar_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdo, tdi
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdo = ErgmTermData()
+	tdo.levels = (2)
+	M.addterm("ostar", 1, &stat_ostar(), &change_ostar(), tdo, ("ostar2"))
+	tdi = ErgmTermData()
+	tdi.levels = (2)
+	M.addterm("istar", 1, &stat_istar(), &change_istar(), tdi, ("istar2"))
+
+	test_equivalence("directed edges+mutual+ostar(2)+istar(2)", n, 4, 1, M,
+		(-2.2, 0.4, 0.05, 0.05), 2000, 5, 2000, 6)
+}
+run_ostar_istar_test()
+
+// --- undirected: edges + degrange(0,2) (an open-ended upper bound,
+//     the "to=." sentinel-marshalling case) ---
+void run_degrange_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdr
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdr = ErgmTermData()
+	tdr.levelpairs = (0,2 \ 2,.)
+	M.addterm("degrange", 2, &stat_degrange(), &change_degrange(), tdr, ("dr1","dr2"))
+
+	test_equivalence("undirected edges+degrange(0,2 / 2,.)", n, 4, 0, M,
+		(-2.0, 0.1, 0.15), 2000, 5, 2000, 6)
+}
+run_degrange_test()
+
+// --- directed: edges + mutual + odegrange(0,1) + idegrange(0,1) - i.e.
+//     out-/in-ISOLATE counts, a genuinely variable statistic across the
+//     chain (deliberately NOT an open-ended-upper-bound range like
+//     (1,.): on this network/degree combination that range is SATURATED
+//     - every node has out-/in-degree >= 1 in EVERY visited state, a
+//     literally zero-variance statistic that breaks the SE-based
+//     tolerance check below with a strict 0 < 0 comparison, confirmed
+//     directly by an earlier version of this test hitting exactly that
+//     failure mode: mata_mean=native_mean=80.0000 (=n) with se=0.0000
+//     exactly - not a functional bug, a degenerate test-design choice,
+//     fixed by picking a range with real within-chain variability
+//     instead). ---
+void run_odegrange_idegrange_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdo, tdi
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdo = ErgmTermData()
+	tdo.levelpairs = (0,1)
+	M.addterm("odegrange", 1, &stat_odegrange(), &change_odegrange(), tdo, ("odr0"))
+	tdi = ErgmTermData()
+	tdi.levelpairs = (0,1)
+	M.addterm("idegrange", 1, &stat_idegrange(), &change_idegrange(), tdi, ("idr0"))
+
+	test_equivalence("directed edges+mutual+odegrange(0,1)+idegrange(0,1)", n, 4, 1, M,
+		(-2.2, 0.4, 0.1, 0.1), 2000, 5, 2000, 6)
+}
+run_odegrange_idegrange_test()
 
 end
