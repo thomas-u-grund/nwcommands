@@ -1752,6 +1752,121 @@ real rowvector change_dsp_otp(class ErgmGraph scalar G, real scalar i, real scal
 	return(chg)
 }
 
+/*
+	transitiveties/cyclicalties (harmonisation unit 91, term-expansion
+	wave 6, directed only) - fresh-checked against R ergm's own current
+	`R/InitErgmTerm.transitiveties.R` (a file search found these two are
+	NOT in the main `InitErgmTerm.R` dispatcher list any more - they get
+	their own dedicated file, easy to miss without checking): R's own
+	stated definitions are "the number of ties i->j such that there
+	exists a two-path from i to j" (transitiveties) and "...from j to i"
+	(cyclicalties). Both are threshold/existence indicators built
+	directly on the OTP shared-partner machinery wave 5 just added:
+
+	  transitiveties = sum over existing arcs (i,j) of I(SP_OTP(i,j)>=1)
+	  cyclicalties   = sum over existing arcs (i,j) of I(SP_OTP(j,i)>=1)
+	                   (SP_OTP(j,i) counts k with j->k and k->i - a
+	                   two-path from j back to i, which together with
+	                   the existing arc i->j closes a directed 3-cycle,
+	                   hence the name)
+
+	Change statistic for toggling arc (i,j), delta = has_edge(i,j)?-1:1:
+	the SAME two families of affected shared-partner counts as
+	`change_gwesp_otp()'/`change_gwdsp_otp()' above (SP_OTP(a,j) for a in
+	neighbors_in(i); SP_OTP(i,b) for b in neighbors_out(j)) - but now
+	each affected count only contributes to the sum through a THRESHOLD
+	CROSSING (0->1 or 1->0), and only when the AFFECTED ARC ITSELF
+	exists (both terms sum over existing arcs only), and — critically —
+	transitiveties/cyclicalties read that threshold off DIFFERENT
+	directed arcs than gwesp/gwdsp did, because each term uses a
+	different orientation of SP_OTP as its own per-arc statistic:
+	  - transitiveties needs SP_OTP(a,j) attributed to arc a->j itself
+	    (`has_edge(a,j)'), and SP_OTP(i,b) attributed to arc i->b itself
+	    (`has_edge(i,b)').
+	  - cyclicalties needs SP_OTP(a,j) attributed to the REVERSED arc
+	    j->a (`has_edge(j,a)', since cyclicalties(p,q) reads SP_OTP(q,p)
+	    - here q=a,p=j means the arc in question is (p,q)=(j,a)), and
+	    SP_OTP(i,b) attributed to the reversed arc b->i (`has_edge(b,i)').
+	Own-arc term for transitiveties uses SP_OTP(i,j) itself (unaffected
+	by toggling i-j, same reasoning as every shared-partner term above);
+	for cyclicalties it uses SP_OTP(j,i) (also unaffected - i-j does not
+	appear inside the SP_OTP(j,i) definition, since that function's own
+	internal `k==i'/`k==j' guards exclude i and j as candidate
+	intermediaries of their own endpoint pair).
+*/
+real rowvector stat_transitiveties(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (G.shared_partners_otp(ties[k,1], ties[k,2]) >= 1) tot++
+	}
+	return(tot)
+}
+real rowvector change_transitiveties(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, chg, a, b, m, olda, oldb
+	real rowvector na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = delta * (G.shared_partners_otp(i,j) >= 1)
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		if (!G.has_edge(a,j)) continue
+		olda = G.shared_partners_otp(a,j)
+		chg = chg + ((olda+delta>=1) - (olda>=1))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		if (!G.has_edge(i,b)) continue
+		oldb = G.shared_partners_otp(i,b)
+		chg = chg + ((oldb+delta>=1) - (oldb>=1))
+	}
+	return(chg)
+}
+real rowvector stat_cyclicalties(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (G.shared_partners_otp(ties[k,2], ties[k,1]) >= 1) tot++
+	}
+	return(tot)
+}
+real rowvector change_cyclicalties(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, chg, a, b, m, olda, oldb
+	real rowvector na, nb
+
+	delta = G.has_edge(i,j) ? -1 : 1
+	chg = delta * (G.shared_partners_otp(j,i) >= 1)
+
+	na = G.neighbors_in(i)
+	for (m=1; m<=cols(na); m++) {
+		a = na[m]
+		if (a==j) continue
+		if (!G.has_edge(j,a)) continue
+		olda = G.shared_partners_otp(a,j)
+		chg = chg + ((olda+delta>=1) - (olda>=1))
+	}
+	nb = G.neighbors_out(j)
+	for (m=1; m<=cols(nb); m++) {
+		b = nb[m]
+		if (b==i) continue
+		if (!G.has_edge(b,i)) continue
+		oldb = G.shared_partners_otp(i,b)
+		chg = chg + ((oldb+delta>=1) - (oldb>=1))
+	}
+	return(chg)
+}
+
 /* ===================================================================
    EXTENSION DEMONSTRATION - NOT part of the real v1 term registry.
 
