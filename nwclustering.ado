@@ -20,12 +20,34 @@ program nwclustering
 		local symnet_created = 1
 	}
 	
+	// Auto-detect from the network's own stored valued/unvalued state
+	// rather than always defaulting to "binary" regardless - matching
+	// the netmeasure auto-detection convention already established in
+	// nwcommunity.ado/nwconcor.ado/nwcoreperiphery.ado/nwmodularity.ado/
+	// nwspectral.ado. Previously, a valued network would silently get
+	// dichotomized (measure(binary)) unless the caller explicitly asked
+	// for a weighted formula - not wrong exactly (binary is a
+	// legitimate, still-available choice), but surprising: the same
+	// network's clustering coefficient would otherwise ignore tie
+	// strength entirely by default with no indication anything was
+	// being discarded.
+	// A weighted measure is only meaningful for an undirected network
+	// (see the "not defined for networks that are both weighted and
+	// directed" guard just below) - auto-defaulting to "arithmetic" for
+	// a directed+valued network would turn a previously-working call
+	// (silently dichotomized, matching the pre-existing default) into
+	// a hard error by default, which is a regression, not a fix.
 	if "`measure'" == "" {
-		local measure "binary"
+		if "`valued'" == "true" & "`directed'" != "true" {
+			local measure "arithmetic"
+		}
+		else {
+			local measure "binary"
+		}
 	}
-	
+
 	_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
-	
+
 	if "`is2mode'" == "true" {
 		di "{err}{pstd}Network is a two-mode network. Automatically, switched to command {bf:nw2clustering}."
 		nw2clustering `netname', measure(`measure') generate(`generate')
