@@ -51,7 +51,13 @@ program nwreplacemat
 		else {
 			nwdrop `netname', `netonly'
 			nwrandom `nodes', prob(1) name(`netname') vars(`vars') labs(`newmatlabs') `xvars'
-			nwreplacemat `netname', newmat(`newmat') `nosync' `xvars'
+			// `nosync' itself is never populated (Stata's own "no"-
+			// prefix syntax convention stores the literal string
+			// "nosync" in `sync' instead - see the check just above
+			// this block, which already gets this right) - so this
+			// recursive call previously never actually forwarded the
+			// caller's own nosync option. Fixed to forward `sync'.
+			nwreplacemat `netname', newmat(`newmat') `sync' `xvars'
 			// delete empty observations in Stata
 			nwcompressobs
 		}

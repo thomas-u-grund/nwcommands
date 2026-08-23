@@ -192,7 +192,18 @@ program nwbetween
 		capture drop `netgenerate'
 		generate `netgenerate' = .
 
-		if "`nosym'" == "" {
+		// Per Stata's own [P] syntax convention for a "no"-prefixed
+		// toggle: declaring `nosym' in the option list makes Stata
+		// define a local named after the STEM - `sym', not `nosym' -
+		// set to the literal string "nosym" when the caller passes
+		// the option, empty otherwise. `nosym' itself is never
+		// populated at all, so checking it here always evaluated
+		// true regardless of whether the option was passed, making
+		// `nosym' a silent no-op ever since it was added - confirmed
+		// directly against a minimal, isolated test program (see
+		// nwevcent.ado, which had the identical bug). Fixed to check
+		// `sym' instead.
+		if "`sym'" == "" {
 			nwsym `netname_temp', generate(`netname_temp'_symmetrized)
 			nw_syntax
 		}
@@ -221,7 +232,7 @@ program nwbetween
 			}
 		}
 
-		if "`nosym'" == "" {
+		if "`sym'" == "" {
 			nwdrop `oldnetname'_symmetrized
 			nwcurrent `oldnetname'
 		}
