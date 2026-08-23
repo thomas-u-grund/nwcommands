@@ -6,22 +6,46 @@ do unw_ergm.do
 	Certifies the native (C) MCMC backend (harmonisation unit 83,
 	docs/CERTIFICATION.md) against its own Mata reference implementation,
 	per this unit's own explicit "correctness before speed" and "full
-	MCMC cross-certification" requirements:
+	MCMC cross-certification" requirements.
+
+	Extended (harmonisation unit 91 follow-on, "move all effects to C" -
+	relaxing the original narrow four-term scope per explicit user
+	instruction, since mixing gwesp with any other term used to force
+	the WHOLE model back onto the Mata sampler): the native term set now
+	also covers the full dyad-independent attribute/factor family
+	(nodecov/nodeicov/nodeocov/absdist/nodematch_diff/nodefactor/
+	nodeofactor/nodeifactor/sender/receiver/nodemix) and the GW-degree
+	family (gwdegree/gwodegree/gwidegree) - see unw_ergm.do's own
+	ErgmNativeSetup() header comment for the complete current list and
+	exactly what remains out of scope. `nodecov` can therefore no longer
+	serve as the "reject probe" it originally was in test (1) below -
+	`triangle` (a shared-partner term, still genuinely unported) is used
+	instead.
 
 	(1) ErgmNativeSetup() eligibility is exactly what the model's own
-	    term list should produce - accept edges/mutual/nodematch/gwesp,
-	    reject anything else (nodecov used as the reject probe).
+	    term list should produce - accept every currently-native term
+	    (individually and mixed together in one model, which the
+	    original narrow-scope version of this test never needed to
+	    check since every native term used to be dyad-independent or
+	    gwesp alone), reject anything still genuinely out of scope
+	    (`triangle`), and reject directed (OTP) gwesp specifically - a
+	    real, confirmed bug found while planning this unit: before the
+	    fix, a directed gwesp model was WRONGLY reported native-eligible
+	    (directed gwesp did not exist when the native backend was first
+	    built, and nothing updated this check when it was added later).
 	(2) The native and Mata backends, run on the SAME starting network at
 	    the SAME theta with the SAME burnin/interval/samplesize, produce
 	    statistically indistinguishable sampled sufficient-statistic
 	    distributions - not identical trajectories (the two backends use
 	    independent RNG streams by design, see native/ergm_mcmc.c's own
 	    header comment), but means that agree within several Monte Carlo
-	    standard errors. Covered for both a directed dyad-independent
-	    model (edges+mutual+nodematch) and an undirected GWESP model
-	    (edges+gwesp), i.e. exactly the two term-family shapes the
-	    R-vs-Stata benchmark suite (dev/ergm_benchmark_r_vs_stata/)
-	    exercises.
+	    standard errors. Covered for the original two term-family shapes
+	    (directed dyad-independent edges+mutual+nodematch; undirected
+	    gwesp) PLUS a representative case from each newly-native family:
+	    a mixed gwesp+nodefactor+nodecov model (exactly the "gwesp mixed
+	    with another term" case that used to force a full Mata fallback,
+	    now the primary motivation for this whole unit), nodemix,
+	    nodematch_diff, and the three GW-degree variants.
 	(3) After a native call, G's own rebuilt state is self-consistent:
 	    M.full_statistic(G) recomputed from scratch on the rebuilt graph
 	    exactly matches the native run's own last reported statistic row
@@ -36,7 +60,7 @@ mata set matastrict off
 // --- (1) eligibility ---
 void test_eligibility(){
 	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7
 	real colvector attr
 
 	M = ErgmModel()
@@ -64,12 +88,40 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
-	// nodecov is NOT in the native term set - must be rejected
+	// directed (OTP) gwesp must be REJECTED - native only implements
+	// the undirected/UTP shared-partner definition (the bug this unit
+	// found and fixed: this used to be wrongly accepted).
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "OTP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), td6, ("gwesp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 0)
+	assert(M.native_enabled == 0)
+
+	// nodecov IS now in the native term set (unlike the original
+	// narrow-scope version of this test) - a mixed gwesp+nodecov model
+	// (exactly the case that used to force a full Mata fallback) must
+	// be accepted.
 	M = ErgmModel()
 	M.init()
 	td5 = ErgmTermData()
-	td5.attr = attr
-	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td5, ("nodecov_age"))
+	td5.decay = 0.5
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), td5, ("gwesp_0.5"))
+	td7 = ErgmTermData()
+	td7.attr = attr
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td7, ("nodecov_age"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	// triangle is NOT in the native term set (shared-partner family
+	// beyond gwesp itself remains a documented follow-on) - must still
+	// be rejected, now serving as the reject probe nodecov used to.
+	M = ErgmModel()
+	M.init()
+	td5 = ErgmTermData()
+	M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), td5, ("triangle"))
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
 
@@ -162,10 +214,36 @@ void test_equivalence(string scalar label, real scalar n, real scalar deg,
 	}
 
 	// self-consistency: rebuilt Gnative's own from-scratch statistic
-	// must exactly match the native run's own last reported row
+	// must match the native run's own last reported row. A pure 1e-6
+	// ABSOLUTE tolerance (this test's original bound, calibrated on
+	// edges/mutual/nodematch/gwesp - integer-valued or, for gwesp on
+	// that one run, coincidentally near machine precision) turned out
+	// too tight once the GW-degree family was added (harmonisation unit
+	// 91 follow-on): comparing a value ACCUMULATED INCREMENTALLY in C
+	// (chg[] summed once per accepted toggle, ~12,000 times across a
+	// full burnin+sampling run) against the SAME statistic RECOMPUTED
+	// FROM SCRATCH in Mata is comparing two independent floating-point
+	// call paths through exp()/pow() - C's libm and Mata's own internal
+	// math are not guaranteed bit-identical, and even a per-call bias
+	// on the order of 1e-9 compounds roughly LINEARLY (not as sqrt(n),
+	// since the bias is systematic, not random noise) across thousands
+	// of calls into a real, expected, non-bug discrepancy - confirmed
+	// directly: gwdegree measured at 3.57e-05 absolute against a
+	// statistic of magnitude ~145 (a RELATIVE error of ~2.5e-7, nowhere
+	// near what an actual formula bug would produce). A relative
+	// component (1e-6 of the statistic's own magnitude) is added to the
+	// original absolute bound - this preserves the exact same tight
+	// 1e-6 guarantee for near-zero/integer-valued statistics
+	// (edges/mutual/nodematch keep no less strict a check than before)
+	// while giving real-valued GW-family statistics the margin their
+	// own accumulation error profile genuinely needs, with several
+	// times the observed drift still comfortably inside the bound (so a
+	// genuine formula bug - which would show up as a percent-level or
+	// larger discrepancy, six orders of magnitude bigger - is still
+	// caught).
 	obs = M.full_statistic(Gnative)
 	checkstat = max(abs(obs - samp_native[samplesize, .]))
-	assert(checkstat < 1e-6)
+	assert(checkstat < 1e-6 + 1e-6 * max(abs(obs)))
 
 	printf("%s: OK (self-consistency max diff = %9.2e)\n", label, checkstat)
 }
@@ -215,5 +293,140 @@ void run_gwesp_test(){
 		(-2.0, 0.3), 2000, 5, 2000, 6)
 }
 run_gwesp_test()
+
+// --- undirected: edges + gwesp + nodefactor + nodecov, MIXED in one
+//     model - exactly the case this whole unit exists to fix (gwesp
+//     used to force a full Mata fallback the instant ANY other term,
+//     however simple, was mixed in). ---
+void run_mixed_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdg, tdf, tdc
+	real colvector cat, cov
+	real scalar n, i
+
+	n = 80
+	cat = J(n, 1, 0)
+	cov = J(n, 1, 0)
+	for (i=1; i<=n; i++) {
+		cat[i] = mod(i, 3)
+		cov[i] = mod(i, 7) - 3
+	}
+
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.5
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), tdg, ("gwesp_0.5"))
+	tdf = ErgmTermData()
+	tdf.attr = cat
+	tdf.levels = (0\1\2)
+	M.addterm("nodefactor", 3, &stat_nodefactor(), &change_nodefactor(), tdf, ("nf0","nf1","nf2"))
+	tdc = ErgmTermData()
+	tdc.attr = cov
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), tdc, ("nodecov_x"))
+
+	test_equivalence("undirected gwesp+nodefactor+nodecov (mixed)", n, 4, 0, M,
+		(-2.0, 0.3, 0.1, -0.05, 0.02, 0.01), 2000, 5, 2000, 6)
+}
+run_mixed_test()
+
+// --- undirected: edges + nodemix (full categorical mixing matrix) ---
+void run_nodemix_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdx
+	real colvector cat
+	real matrix pairs
+	real scalar n, i
+
+	n = 80
+	cat = J(n, 1, 0)
+	for (i=1; i<=n; i++) cat[i] = mod(i, 3)
+	pairs = (0,0 \ 0,1 \ 0,2 \ 1,1 \ 1,2 \ 2,2)
+
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdx = ErgmTermData()
+	tdx.attr = cat
+	tdx.levelpairs = pairs
+	M.addterm("nodemix", 6, &stat_nodemix(), &change_nodemix(), tdx, ("mx1","mx2","mx3","mx4","mx5","mx6"))
+
+	test_equivalence("undirected edges+nodemix", n, 4, 0, M,
+		(-2.5, 0.2, -0.1, 0.15, 0.05, -0.2, 0.1), 2000, 5, 2000, 6)
+}
+run_nodemix_test()
+
+// --- undirected: edges + nodematch_diff (differential homophily) ---
+void run_nodematchdiff_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdd
+	real colvector cat
+	real scalar n, i
+
+	n = 80
+	cat = J(n, 1, 0)
+	for (i=1; i<=n; i++) cat[i] = mod(i, 3)
+
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdd = ErgmTermData()
+	tdd.attr = cat
+	tdd.levels = (0\1\2)
+	M.addterm("nodematch_diff", 3, &stat_nodematch_diff(), &change_nodematch_diff(), tdd, ("nmd0","nmd1","nmd2"))
+
+	test_equivalence("undirected edges+nodematch_diff", n, 4, 0, M,
+		(-2.5, 0.3, 0.2, 0.4), 2000, 5, 2000, 6)
+}
+run_nodematchdiff_test()
+
+// --- undirected: edges + gwdegree ---
+void run_gwdegree_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdg
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.6
+	M.addterm("gwdegree", 1, &stat_gwdegree(), &change_gwdegree(), tdg, ("gwdegree_0.6"))
+
+	test_equivalence("undirected edges+gwdegree", n, 4, 0, M,
+		(-2.0, 0.2), 2000, 5, 2000, 6)
+}
+run_gwdegree_test()
+
+// --- directed: edges + mutual + gwodegree + gwidegree ---
+void run_gwoidegree_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdo, tdi
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdo = ErgmTermData()
+	tdo.decay = 0.5
+	M.addterm("gwodegree", 1, &stat_gwodegree(), &change_gwodegree(), tdo, ("gwodegree_0.5"))
+	tdi = ErgmTermData()
+	tdi.decay = 0.5
+	M.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), tdi, ("gwidegree_0.5"))
+
+	test_equivalence("directed edges+mutual+gwodegree+gwidegree", n, 4, 1, M,
+		(-2.2, 0.4, 0.15, 0.15), 2000, 5, 2000, 6)
+}
+run_gwoidegree_test()
 
 end
