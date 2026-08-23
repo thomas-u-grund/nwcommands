@@ -5,19 +5,31 @@ program nw2clustering
 	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string)]
 	
 	unw_defs
-	
-	if "`measure'" == "" {
-		local measure "binary"
-	}
-	_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
-	
+
 	if "`generate'" == "" {
 		local generate = "_clustering2_lev`level'"
 	}
-	
+
 	tempfile temp clustering edge_list ego_list alter_list
 	nw_syntax `netname'
 	nw_datasync `netname'
+
+	// Auto-detect from the network's own stored valued/unvalued state
+	// rather than always defaulting to "binary" regardless - matching
+	// the netmeasure auto-detection convention already established in
+	// nwcommunity.ado/nwconcor.ado/nwcoreperiphery.ado/nwmodularity.ado/
+	// nwspectral.ado (and nwclustering.ado's own identical fix). Moved
+	// below nw_syntax so `valued' is actually populated before this
+	// check runs - it wasn't, previously.
+	if "`measure'" == "" {
+		if "`valued'" == "true" {
+			local measure "arithmetic"
+		}
+		else {
+			local measure "binary"
+		}
+	}
+	_opts_oneof "binary arithmetic geometric maximum minimum" "measure" "`measure'" 6556
 
 	qui {
 	
