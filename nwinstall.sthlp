@@ -18,6 +18,9 @@
 {opt permanently}
 {opt remove }
 {opt help}
+{opt ado}
+{opt ext}
+{opt dialog}
 {opt usermenu}
 {opt menu(string)}
 {opt all}
@@ -31,6 +34,9 @@
 {synopt:{opt permanently}}install the menu/dialogs permanently on your Stata{p_end}
 {synopt:{opt remove}}remove the "Network Analysis" menu from your Stata{p_end}
 {synopt:{opt help}}download the help files{p_end}
+{synopt:{opt ado}}download the core command (.ado) files{p_end}
+{synopt:{opt ext}}download the extension files{p_end}
+{synopt:{opt dialog}}download the dialog boxes{p_end}
 {synopt:{opt usermenu}}update menu items for dialog-boxes{p_end}
 {synopt:{opth menu(string)}}install in this menu; default = "stUser"{p_end}
 {synopt:{opt all}}download the help files, dialog boxes, extensions and install them permanently{p_end}

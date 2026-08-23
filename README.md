@@ -33,15 +33,24 @@ variable budget unless you ask it to.
 
 ## Installation
 
-This package is not yet distributed via `net install` (see `docs/CERTIFICATION.md`'s own
-Pending items for why — the underlying `.pkg`-generation tooling has a known, unfixed bug).
-Until that's resolved, install by adding the repository to Stata's own `adopath`:
+```stata
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+. net install nwcommands-ado1
+. net install nwcommands-ado2
+. net install nwcommands-hlp1
+. net install nwcommands-hlp2
+```
+
+(`nwinstall, all` does this for you, plus the optional extension/dialog packages — see
+`help nwinstall`. Split into numbered parts because Stata's own `.pkg` format has a hard
+line-count limit this package's command/help-file count exceeds.)
+
+Or, to track the repository directly (recommended during active development — `net install`
+snapshots a point in time, an `adopath` addition always reflects the latest commit):
 
 ```stata
 . adopath + "/path/to/nwcommands"
 ```
-
-or, from the shell, clone it directly:
 
 ```sh
 git clone https://github.com/thomas-u-grund/nwcommands.git
