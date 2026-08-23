@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwexport  {hline 2} Export network as Pajek file}
+{p2col :nwexport  {hline 2} Export network as Pajek or Ucinet file}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -50,9 +50,9 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {pstd}
 This example loads the {help netexample:Florentine marriage data} and exports to both .DL and .NET format. 
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwexport flomarriage, type(ucinet)}
-	{cmd:. nwexport flomarriage, type(ucinet)}
+	{cmd:. nwexport flobusiness, type(pajek)}
 
  {title:See also}
  

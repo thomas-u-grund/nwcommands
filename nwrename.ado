@@ -1,7 +1,65 @@
-*! Date        : 13oct2015
-*! Version     : 2.0
-*! Author      : Thomas Grund, University College Dublin
-*! Email	   : thomas.u.grund@gmail.com
+/***
+{smcl}
+{* *! version 2.0 Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwrename {hline 2} Rename a network}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{pstd}
+Rename single network
+
+{p 8 16 2}
+{opt nwrename} {it:old_netname} {it:new_netname}
+
+
+{pstd}
+Rename multiple networks
+
+{p 8 16 2}
+{opt nwrename} ({it:old1 old2 ...}) ({it:new1 new2 ...})
+
+
+{marker description}{...}
+{title:Description}
+
+{pstd}
+{cmd:nwrename} changes the name of an existing network {it:old_netname} to
+{it:new_netname}; the content of the network remains unchanged.
+
+
+{marker examples}{...}
+{title:Examples}
+
+	{com}. nwwebuse florentine, nwclear
+
+	{res}{txt}(2 networks)
+	{hline 20}
+		{res}flobusiness
+		{res}flomarriage
+	
+	{com}. nwds
+	{res}{txt}{col 1}flobusiness{col 24}flomarriage
+
+	{com}. nwrename flobusiness business
+	{com}. nwrename flomarriage marriage{txt}
+
+	{com}. nwds
+	{res}{txt}{col 1}business{col 21}marriage
+
+
+{title:See also}
+
+	{help nwname}, {help rename}
+
+***/
 
 capture program drop nwrename
 program nwrename
@@ -21,7 +79,7 @@ program nwrename
 	local i = 1
 	foreach onenet in `oldnames' {
 		local newname : word `i' of `newnames'
-		nwname `onenet', newname(`newname')
+		nw_name `onenet', newname(`newname')
 		local i = `i' + 1
 	}
 end

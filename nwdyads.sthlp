@@ -1,7 +1,8 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 2.0.0  7jul2016}{...}
 {marker topic}
 {helpb nw_topical##information:[NW-2.4] Information}
+version 2.0.0
 
 {title:Title}
 
@@ -22,7 +23,7 @@
 Returns the dyad census of a network (or a list of networks). This is a way to characterize a network based on its dyads.
 
 {pstd}
-In directed network, each dyad (pair of nodes {it:i} and {it:j}) can be one of the following:
+In directed networks, each dyad (pair of nodes {it:i} and {it:j}) can be one of the following:
 
 {pmore}
 1) M: mutually connected: {it:M_ij = M_ji = 1}
@@ -51,7 +52,7 @@ The command also returns the reciprocity of the network.
 
 {title:Examples}
 	
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{com}. nwdyads flomarriage
 	{res}
 	{txt}    Dyad census: {res} flomarriage{txt}
@@ -60,7 +61,7 @@ The command also returns the reciprocity of the network.
 	{hline 11}{c +}{hline 11}
 	{res}{ralign 10:20}{col 20}{c |}{ralign 10:100}
 
-	{com}. webnwuse glasgow
+	{com}. nwwebuse glasgow
 	{com}. nwdyads glasgow3
 	{res}
 	{txt}    Dyad census: {res} glasgow3{txt}
@@ -85,3 +86,4 @@ The command also returns the reciprocity of the network.
 {title:See also}
 
 	{help nwtriads}
+

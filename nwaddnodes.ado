@@ -1,104 +1,73 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *!  15jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+
+{title:Title}
+
+{p2colset 9 20 22 2}{...}
+{p2col :nwaddnodes {hline 2} Add nodes to network}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwaddnodes} 
+[{it:{help netname}}], 
+{cmd:nodenames}({it:n1, n2, ...})
+[{opt generate}({it:{help newnetname}})]
+
+{synoptline}
+{p2colreset}{...}
+	
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt nodenames}({it:n1, n2, ...})}Node identifiers separated by comma{p_end}
+{synopt:{opt generate}({it:{help newnetname}})}Save as new network{p_end}
+	
+	
+{title:Description}
+
+{pstd}
+Add isolate nodes to an existing networks. By default, {help netname} is replaced, unless {bf:generate()} is specified. 
+
+
+{title:Examples}
+
+{pstd}
+This example adds three new nodes (isolates) to a random network with 5 nodes.
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 5, prob(.1)}
+	{cmd:. nwaddnodes, nodenames(Thomas Grund, Peter, Mathilde Turcotte)}
+
+***/
 
 capture program drop nwaddnodes
 program nwaddnodes
-	syntax [anything(name=netname)], newnodes(integer) [vars(string) labs(string) generate(string)]
-
-	_nwsyntax `netname', max(1)
+	syntax [anything(name=netname)], nodenames(string) [generate(string) xvars]
+	
+	nw_syntax `netname', max(1)
 	
 	if "`generate'" != "" {
 		nwduplicate `netname', name(`generate')
-		_nwsyntax `generate', max(1)
+		nw_syntax, max(1)
 	}
 	
-	if "`stub'" == "" {
-		local stub = "new"
-	}
-	
-	if ("`vars'" == "") {
-		// Generate temporary varlist and check for each variable if it already exists.
-		local vars = "" 	
-		local invalid = 0
-		forvalues i=1/`newnodes' {
-			local vars "`vars' `stub'`i'"
-			capture confirm variable `stub'`i'
-			if !_rc {
-				local invalid = `invalid' + 1
-			}
+	tokenize "`nodenames'", parse(",")
+	local onename `1'
+	while ("`onename'"!= ""){
+		if "`onename'" != "," {
+			mata: `netobj'->add_node("`onename'")
 		}
-		
-		// Finds valid Stata variable names to store network.
-		if `invalid' > 0 { 
-			local stub_add = 0
-			while `invalid' > 0 {
-				local vars = ""
-				local stub_add = `stub_add' + 1
-				local invalid = 0
-				forvalues i=1/`newnodes' {
-					local vars "`vars' `stub'`stub_add'_`i'"
-					capture confirm variable `stub'`stub_add'_`i'
-					if !_rc {
-						local invalid = `invalid' + 1
-					}
-				}
-			}
-		}
+		macro shift
+		local onename `1'
 	}
-	else {
-		preserve
-		drop _all
+
+
+	if "`xvars'" == "" {
 		nwload `netname'
-		foreach onevar in `vars'  {
-			capture confirm variable `onevar'
-			if (_rc == 0) {
-				di "{err}Node variable `onevar' already in use. Choose option vars() differently."
-				error 6070
-			}
-		}
-		local vars_count : word count `vars'
-		if (`vars_count' != `newnodes') {
-				di "{err}Wrong number of new variables in option vars()."
-				error 6070	
-		}
-		restore
 	}
-
-	local newnodes_orig + `newnodes'
-	local newnodes = `nodes' + `newnodes'
-	nwtomata `netname', mat(oldmat)
-	mata: newmat = J(`newnodes',`newnodes', 0)
-	mata: newmat[|1,1 \ `nodes',`nodes'|] = oldmat
-	
-	scalar onevars = "\$nw_`id'"
-	local oldvars `=onevars'
-	capture drop `oldvars'
-	
-	scalar onelabs = "\$nwlabs_`id'"
-	local oldlabs `=onelabs'
-	
-    //mata: mata drop nw_mata`id'
-	mata: nw_mata`id' = newmat
-	global nwsize_`id' = `newnodes'
-	global nw_`id' "`oldvars' `vars'" 
-	
-	local wc : word count `labs' 
-	local overlap : list labs & oldlabs
-	local oc : word count `overlap'
-	
-	if (`wc' == `newnodes_orig' & `oc' == 0) {
-		global nwlabs_`id' "`oldlabs' `labs'"
-	}
-	else {
-		global nwlabs_`id' "`oldlabs' `vars'"
-	}
-	nwload `netname'
-
-	mata: mata drop newmat
 end
-
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

@@ -17,16 +17,18 @@ nwset v*, name("mynet1")
 
 drop _all
 nwload
-assert `cDftNodepref'2[3] == 1
+assert v2[3] == 1
 
 gen z = _N - _n
 sort z
 nwload
-assert `cDftNodepref'2[3] == 1
+assert v2[3] == 1
 
+nwclear
 nwset, mat(J(6,6,2)) name("mynet2")
-mata: `nws'.pdefs[2]->edge[3,1]=999
-sort z
+nw_syntax
+mata: `netobj'->edge[3,1]=999
+
 nwload mynet2
 assert `cDftNodepref'1[3] == 999
 

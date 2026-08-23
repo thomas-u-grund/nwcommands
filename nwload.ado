@@ -1,15 +1,154 @@
-*! Date        : 23oct2015
-*! Version     : 2.0
-*! Author      : Thomas Grund, University College Dublin
-*! Email	   : thomas.u.grund@gmail.com
+/***
+{smcl}
+{* *! 11jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##utilities:[NW-2.7] Utilities}
+
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwload {hline 2} Load a network as Stata variables}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwload} 
+[{it:{help netname}}]
+[{cmd:,}
+{opth id(int)}
+{opt nocurrent}
+{opt labelonly}
+{opt force}]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt nocurrent}}Only load network as Stata variables, but do not make it the {it:current network}{p_end}
+{synopt:{opt labelonly}}Only load the node labels as Stata variable{p_end}
+{synopt:{opth generate(varname)}}Generate flag for nodes of the loaded network; default = {it:_nwinclude}{p_end}
+{synopt:{opt viewoff}}Unconnect view from network to dataset; default{p_end}
+{synopt:{opt viewon}}Establish view of network to dataset{p_end}
+{synopt:{opt force}}By default, matrix is not loaded for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
+		
+{title:Description}
+
+{pstd}
+Networks exist as objects in Mata. Once a networks have been imported, generated or set, one can interact with
+them by referring to their {help netname}, just as if one would interact with variables using their {help varname}. 
+
+{pstd}
+Networks have various meta-information, such as node labels (see
+{help nwname}). Each network also has information about a set of Stata variables that should be created to represent the network as Stata
+variables. {bf:nwset, detail} shows this information for all networks. 
+
+{pstd}
+The meta-data of a network (including the variables that should be used to load the network) can be changed with {help nwname}.
+
+{pstd}
+The command {bf:nwload} loads a network as Stata variables. By doing so, the command generates a set of Stata variables (the names 
+of these variables are stored in the meta-information for a network) and populates these variables with the adjaceny matrix 
+of the network.
+
+{pstd}
+An adjacency matrix is a simple representation of a network. The adjaceny matrix {it:M} of a network has the dimensions {it:nodes x nodes}. The 
+matrix cell {it:M_ij} = 0 when there is no tie between nodes {it:i} and {it:j}. In binary networks, {it:M_ij} = 1 when there is
+a network relationship between nodes {it:i} and {it:j}. However, networks can also be valued, i.e. {it:M_ij} > 1. Some 
+nwcommands support valued networks.
+
+{pstd}
+Loading a network as Stata variables can be useful if one wants to interact with (or look at) the network through the dataset. But notice 
+that changing one of the Stata variables does not change the underlying network, unless a view of the network to the dataset is established with
+the option {bf:viewon}. But be careful, establishing such a view can also lead to unintended changes of an underlying network. The option {bf:viewoff}
+reverts back and unconnects a network from a view on the dataset. To change values of the underlying network directly use {help nwreplace} instead. 
+
+{pstd}
+For example, if one were to import/use a network with 16 nodes and drop all Stata variables, {bf:nwload} would create exactly
+16 variables and 16 cases.
+
+	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. drop _all}
+	{cmd:. nwload flomarriage}
+
+{pstd}
+All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option {bf:viewon}; see above). With {bf:nwload} a network can always be brought back 
+as Stata variables. In case the variables already exist, they are overwritten. If one wants to permanently drop a network one needs to
+use {help nwdrop} or {help nwclear} (very similar to how one would drop or clear normal variables). 
+
+{pstd}
+{bf:nwload} not only loads the adjacency matrix as variables, but also generates (or overwrites) the variable {it:_nwnode}. This variable identifies nodes. When
+the network is two-mode (see {help nw2set:introduction to two-mode networks), the command also creates the variable {it:_nwmode}. Lastly, the command
+generates (or overwrites) the variable {it:_nwinclude} (unless option {opt:generate()} specifies another variable name. This variable indicates which nodes
+are part of the network that has been loaded. 
+
+{pstd}
+Nodes and node attributes are represented as observations in the dataset and are matched with the variable {it:_nwnode}. Whenever a nwcommand uses or produces
+node-level attributes it matches the nodes with the observations.
+
+{pstd}
+One can only load the node labels of a network as a Stata variable with the option {bf:labelsonly} (this does neither load the adjacency matrix
+of a network as Stata variables nor other information, but just creates the variable {it:_nwnode}).
+
+{pstd}
+For example, one can plot the Florentine marriage network and label the nodes accordingly with:
+
+	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwplot flomarriage, label(_nwnode)}
+
+{pstd}
+Furthermore, {bf:nwload} makes {help netname} the current network, unless option {bf:nocurrent} is specified. Many nwcommands (although
+they do something with a network) do not require a network name. In the cases where no {help netname} is specified, a nwcommand 
+automatically runs with the {help nwcurrent:current network}. For programming your own network commands with this feature see 
+{help nw_syntax}.
+
+{pstd}
+By default, all commands that generate a network (see {help nw_topical##generator:network generator}) also load the network as Stata variables. However, 
+these network generators almost always have the option {bf:xvars}, which does not invoke {bf:nwload} after creating a new network. This can be useful
+when one deals with many networks at the same time and reaches the limits of variables that can be handled in Stata.
+
+{pstd}
+For example this code generates 1000 random networks with 100 nodes each, but does not load the networks as Stata variables because {bf:xvars} is 
+specified. Afterwards, {bf:nwload} is used to load just one (the current network, here, the last random network that has been generated) as 
+Stata variables.
+
+	{cmd:. nwrandom 100, prob(.1) ntimes(1000) xvars}
+	{cmd:. nwload}
+
+{pstd}
+Notice that {cmd:nwload} does not import or create a network, it simply creates Stata variables to represent a network. Only networks that 
+already do exist in Stata, i.e. have been set by {help nwset} or imported by {help nwimport} or {help nwuse} or {help webnwuse} or
+created by a {help nw_topical##generator:network generator}, can be loaded as Stata variables. If two different networks use the
+same variable names, the Stata variables are overwritten.
+
+
+{title:See also}
+   
+   {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}
+
+***/
 
 capture program drop nwload
 program nwload
-	syntax [anything(name=netname)][, overwrite xvars labelonly force]
+	syntax [anything(name=netname)][, xvars overwrite labelonly force viewon viewoff nocurrent generate(string)]
 	unw_defs
 	nw_syntax `netname', max(1)
 	nwname `netname'
 
+	if "`xvars'" != "" {
+		nw_datasync `netname'
+		exit
+	}
+	
+	if "`generate'" == "" {
+		local generate "`nw_included'"
+	}
+	// maybe it is already a view
+	mata: st_numscalar("r(isview)", isview(*`netobj'->get_matrix()))
+	if (`r(isview)' == 1) {
+		di "{txt}Network is already a view."
+		exit
+	}
+	
 	if (`r(nodes)' > 1000 & "`force'"=="") {
 		local labelonly "labelonly"
 	}
@@ -26,19 +165,43 @@ program nwload
 		exit
 	}
 
+	// unconnect edge list from view to the dataset
+	if "`viewoff'" != "" {
+		nw_datasync `netname'
+		mata: `netobj'->set_edge(st_data((1::(`netobj'->get_nodes())), `netobj'->nodesvar))
+	}
+	
+	// maybe it is already a view
+	mata: st_numscalar("r(isview)", isview(*`netobj'->get_matrix()))
+	if (`r(isview)' == 1) {
+		nw_datasync `netname'
+		exit
+	}
+		
 	// drop the variables used for the current network
 	mata: `nws'.drop_current_nodesvar()
 	
 	// make network the current network
-	mata: `nws'.make_current_from_name("`netname'")
-	nw_datasync `netname', `overwrite'
+	if "`nocurrent'" == "" {
+		mata: `nws'.make_current_from_name("`netname'")
+	}
 	
-	if "`labelonly'" == "" {		
+	nw_datasync `netname', generate(`generate') `overwrite'
+	
+	if "`labelonly'" == "" {	
 		mata: `nws'.generate_current_nodesvar()
 		nw_syntax `netname'
-		mata: st_store((1::(`netobj'->get_nodes())),`netobj'->nodesvar,(`netobj'->get_matrix())) 
+		mata: st_store((1::(`netobj'->get_nodes())),`netobj'->nodesvar,(*`netobj'->get_matrix())) 
+
 		order `nw_nodename' 
+		
+		// connect edge matrix as view to dataset
+		if "`viewon'" != "" {
+			mata: st_view(`netobj'->edge, (1::(`netobj'->get_nodes())), `netobj'->nodesvar)
+			di "{txt}(Adjacency matrix is now view on dataset)" 
+		}
 	}
+	capture order  `nw_nodename' `nw_included'
 end
 
 capture mata: mata drop get_string_from_vector()
