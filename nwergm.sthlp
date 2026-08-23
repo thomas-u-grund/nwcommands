@@ -114,19 +114,28 @@ and used, during development only, to certify {cmd:nwergm}'s own independently-w
 implementation against real reference output; see {help nwergm##provenance:Provenance} below.
 
 {pstd}
-This is a deliberately small first release: a working extensible core (term registry,
-Metropolis-Hastings simulation with a genuine tie/no-tie proposal, maximum pseudolikelihood
-estimation, and Monte Carlo maximum likelihood estimation) with a small, carefully certified
-effect library, rather than an attempt at parity with Statnet's own much larger term/control
-surface. See {help nwergm##limitations:Limitations} below for exactly what is and is not
-supported, and the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension
-plan.
+{cmd:nwergm} started as a deliberately small first release (a working extensible core - term
+registry, Metropolis-Hastings simulation with a genuine tie/no-tie proposal, maximum
+pseudolikelihood estimation, and Monte Carlo maximum likelihood estimation - with a small,
+carefully certified effect library) and has since grown considerably closer to parity with
+Statnet's own term surface: the current effect library covers the full node-covariate family,
+dyadic covariates, the geometrically weighted family (including directed shared-partner
+support), fixed shared-partner counts, the complete degree-sequence family, and directed
+triad-closure terms - see {help nwergm##limitations:Limitations} below for the complete current
+list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
+(bipartite) ERGMs, curved/free-decay estimation, and constraints beyond the free binary dyad
+space remain roadmap items, each a genuine architectural addition rather than another term to
+add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
-(currently: {opt edges}, {opt nodematch()}, {opt nodecov()}, {opt nodeicov()},
-{opt nodeocov()}, {opt edgecov()}) and neither {opt mutual} nor any geometrically weighted term
-is present, maximum pseudolikelihood {it:is} the maximum likelihood estimate - {cmd:nwergm}
+(the node-covariate family - {opt edges}, {opt nodematch()}, {opt nodematchdiff()},
+{opt nodecov()}, {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
+{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver} - plus
+the dyadic-covariate terms {opt edgecov()}/{opt hamming()}) and no dyad-DEPENDENT term
+({opt mutual}, any geometrically weighted term, any degree-sequence term, {opt triangle},
+{opt ctriple}, {opt transitiveties}, {opt cyclicalties}, {opt esp()}, or {opt dsp()}) is
+present, maximum pseudolikelihood {it:is} the maximum likelihood estimate - {cmd:nwergm}
 detects this automatically and reports {opt method(mple)} results directly (labeled as such,
 not as full ERGM MLE) without ever running MCMC. Otherwise the default is
 {opt method(mcmle)}: pseudolikelihood is used only as the starting value for Monte Carlo maximum
