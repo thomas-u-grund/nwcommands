@@ -192,3 +192,40 @@ capture noisily nwergm dnet6, edges kstar(2)
 assert _rc != 0
 capture noisily nwergm dnet6, edges degrange(0)
 assert _rc != 0
+
+* --- term-expansion wave 4 wiring (harmonisation unit 91 continuation):
+* esp(d)/dsp(d), fixed non-geometric shared-partner-count terms
+* (undirected/UTP scope only, matching gwesp/gwdsp), threaded through
+* nwergm.ado's own option parsing - already brute-force certified at
+* the Mata level in cscripts/test_nwergm_termexpansion4.do.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet6) labs(A,B,C,D,E)
+set seed 2006
+qui nwergm unet6, edges esp(0 1 2) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 4
+
+* Deliberately a single, non-exhaustive dsp() value (not dsp(0 1 2)):
+* requesting every achievable shared-partner value on a tiny network
+* makes the dsp columns sum to an exact constant per row (a toggle
+* just moves shared-partner mass between bins, so an EXHAUSTIVE d-range
+* is perfectly collinear - the same modeling pitfall unit 90 fixed for
+* nodefactor()'s base level, but here it is on the MODELER to avoid by
+* not requesting an exhaustive range, matching R ergm's own convention
+* (dsp/esp do not auto-drop a level the way nodefactor()/nodeofactor()/
+* nodeifactor() do) - not a code bug, confirmed via direct inspection
+* of build_mple_data()'s own design matrix on this exact network.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet7) labs(A,B,C,D,E)
+set seed 2007
+qui nwergm unet7, edges dsp(1) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 2
+
+* --- directed/undirected mismatch guard for esp()/dsp() fires.
+nwclear
+nwset, mat((0,1,0\0,0,1\1,0,0)) directed name(dnet7)
+capture noisily nwergm dnet7, edges esp(1)
+assert _rc != 0
+capture noisily nwergm dnet7, edges dsp(1)
+assert _rc != 0

@@ -85,6 +85,8 @@
 {synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
 {synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
+{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected only{p_end}
+{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected only. An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -302,7 +304,7 @@ program nwergm, eclass
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
-		IDEGRANGE(string) IDEGRANGETO(string) ///
+		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -399,6 +401,10 @@ program nwergm, eclass
 	}
 	if ("`odegrange'" != "" | "`idegrange'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:odegrange()}/{bf:idegrange()} require a directed network; {bf:`netname'} is undirected. Use {bf:degrange()} for an undirected network."
+		error 198
+	}
+	if ("`esp'" != "" | "`dsp'" != "") & "`directed'" == "true" {
+		di "{err}options {bf:esp()}/{bf:dsp()} are undirected only (no directed shared-partner definition is implemented yet); {bf:`netname'} is directed."
 		error 198
 	}
 
@@ -827,6 +833,35 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_idr'"
 	}
 
+	// --- term-expansion wave 4 (harmonisation unit 91 continuation):
+	// esp(d)/dsp(d), fixed non-geometric shared-partner-count terms,
+	// undirected/UTP scope only (matching v1's existing gwesp/gwdsp -
+	// no directed common-neighbor definition exists yet).
+	if "`esp'" != "" {
+		local __ergm_nd : word count `esp'
+		tempname __td_esp
+		mata: `__td_esp' = ErgmTermData()
+		mata: `__td_esp'.levels = strtoreal(tokens("`esp'"))'
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `esp' {
+			local __ergm_cnames "`__ergm_cnames' esp`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("esp", `__ergm_nd', &stat_esp(), &change_esp(), `__td_esp', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_esp'"
+	}
+	if "`dsp'" != "" {
+		local __ergm_nd : word count `dsp'
+		tempname __td_dsp
+		mata: `__td_dsp' = ErgmTermData()
+		mata: `__td_dsp'.levels = strtoreal(tokens("`dsp'"))'
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `dsp' {
+			local __ergm_cnames "`__ergm_cnames' dsp`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("dsp", `__ergm_nd', &stat_dsp(), &change_dsp(), `__td_dsp', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_dsp'"
+	}
+
 	local __ergm_termidx = 0
 	foreach __ergm_v of local edgecov {
 		local ++__ergm_termidx
@@ -931,7 +966,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
