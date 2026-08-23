@@ -122,3 +122,73 @@ qui nwergm basenet4, edges gwesp(.5) mcmcburnin(1000) mcmcinterval(20) mcmcsampl
 assert _rc == 0
 assert `"`e(method)'"' == "mcmle"
 mata: assert(!missing(st_matrix("e(b)")))
+
+* --- term-expansion wave 3 wiring (harmonisation unit 91): nodefactor/
+* nodeofactor/nodeifactor/kstar/ostar/istar/degrange/odegrange/
+* idegrange threaded through nwergm.ado's own option parsing (already
+* brute-force certified at the Mata level in
+* cscripts/test_nwergm_termexpansion3.do - this just exercises the
+* .ado construction blocks that build ErgmTermData from Stata options).
+* This exact end-to-end .ado path caught a real, previously-undetected
+* bug: `mata: if (cond) stmt' used as a bare Stata-inline one-liner
+* (not inside a `mata\...\end' block) is not reliably parseable by
+* Mata's interactive reader, even for the most trivial case - it fails
+* with "unexpected end of line"/"<istmt> incomplete". This affected
+* nodefactor()'s own base-level-drop logic too (unit 90), latent and
+* undetected until this wiring test was written, since no .ado-level
+* wiring test previously exercised nodefactor() either. Fixed by
+* replacing the inline `if' at all three call sites with a single
+* assignment to the new, control-flow-free-at-the-call-site
+* `_ergm_drop_base_level()' Mata function (unw_ergm.do).
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet3) labs(A,B,C,D,E)
+gen byte grp = mod(_n,2)
+set seed 2001
+qui nwergm unet3, edges nodefactor(grp) kstar(2 3) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 4
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet4) labs(A,B,C,D,E)
+set seed 2002
+qui nwergm unet4, edges degrange(0 2) degrangeto(2 .) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 3
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet3) labs(A,B,C,D,E)
+gen byte grp2 = mod(_n,2)
+set seed 2003
+qui nwergm dnet3, edges nodeofactor(grp2) nodeifactor(grp2) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet4) labs(A,B,C,D,E)
+set seed 2004
+qui nwergm dnet4, edges ostar(2) istar(2) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 3
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet5) labs(A,B,C,D,E)
+set seed 2005
+qui nwergm dnet5, edges odegrange(0 1) odegrangeto(1 .) idegrange(0 1) idegrangeto(1 .) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(3)
+assert _rc == 0
+assert colsof(e(b)) == 5
+
+* --- directed/undirected mismatch guards for the wave-3 options fire.
+nwclear
+nwset, mat((0,1\1,0)) undirected name(unet5)
+capture noisily nwergm unet5, edges nodeofactor(id)
+assert _rc != 0
+capture noisily nwergm unet5, edges ostar(2)
+assert _rc != 0
+capture noisily nwergm unet5, edges odegrange(0)
+assert _rc != 0
+
+nwclear
+nwset, mat((0,1,0\0,0,1\1,0,0)) directed name(dnet6)
+capture noisily nwergm dnet6, edges kstar(2)
+assert _rc != 0
+capture noisily nwergm dnet6, edges degrange(0)
+assert _rc != 0
