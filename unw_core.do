@@ -5437,7 +5437,7 @@ real scalar NativeGraphAvailable(){
 */
 real matrix `NWdef'::calculate_betweenness_native(){
 	real matrix ties
-	real scalar n, nties, nobs_needed
+	real scalar n, nties, nobs_needed, __junk
 	string scalar origframe, argstr, cmd
 
 	real colvector Cb
@@ -5463,9 +5463,20 @@ real matrix `NWdef'::calculate_betweenness_native(){
 
 	nobs_needed = max((n, nties, 1))
 	st_addobs(nobs_needed)
-	st_addvar("double", "v1")
-	st_addvar("double", "v2")
-	st_addvar("double", "v3")
+	// BUGFIX: st_addvar() returns the new variable's column index - a
+	// bare (uncaptured) call makes Mata auto-display that return value
+	// as an unrequested integer, exactly like any other uncaptured
+	// top-level Mata expression. Masked here in ordinary use only
+	// because nwbetween.ado's own call site is inside a `qui foreach'
+	// block (confirmed directly: calling this method outside any qui
+	// context prints "1 2 3" before doing anything else) - the
+	// identical bug in unw_ergm.do's ErgmNativeSampleCore() was NOT
+	// masked (no qui wraps nwergm.ado's own MCMLE call site), which is
+	// what actually surfaced this for a user. Fixed here too, not just
+	// where it happened to be visible.
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
 
 	if (nties > 0) st_store((1::nties), ("v1","v2"), ties[.,(1,2)])
 
