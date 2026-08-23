@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :_nwnodeid {hline 2} Returns the nodeid of a node given its node label}
+{p2col :_nwnodeid {hline 2}}Returns the nodeid of a node given its node label{p_end}
 {p2colreset}{...}
 
 

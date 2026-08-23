@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 2.0.0  18aug2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nwcomponents {hline 2} Calculate network components / largest component}
+{p2col :nwcomponents {hline 2}}Calculate network components / largest component{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

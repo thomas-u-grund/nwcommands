@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 14 22 2}{...}
-{p2col :nwuse  {hline 2} Load Stata network dataset}
+{p2col :nwuse  {hline 2}}Load Stata network dataset{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

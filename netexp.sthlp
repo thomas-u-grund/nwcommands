@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :netexp {hline 2} Network expression and function}
+{p2col :netexp {hline 2}}Network expression and function{p_end}
 {p2colreset}{...}
 
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 8 18 22 2}{...}
-{p2col :nwlattice {hline 2} Generate a lattice network}
+{p2col :nwlattice {hline 2}}Generate a lattice network{p_end}
 {p2colreset}{...}
 
 

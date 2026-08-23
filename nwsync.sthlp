@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwsync {hline 2} Sync network with Stata variables}
+{p2col :nwsync {hline 2}}Sync network with Stata variables{p_end}
 {p2colreset}{...}
 
 

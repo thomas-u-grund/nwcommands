@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 2.0.0  22aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
 {title:Title}
 
 {p2colset 9 21 22 2}{...}
-{p2col :nwergm {hline 2} Exponential-family random graph model (ERGM) estimation{p_end}
+{p2col :nwergm {hline 2}}Exponential-family random graph model (ERGM) estimation{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

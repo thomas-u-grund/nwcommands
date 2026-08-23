@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwvalidate {hline 2} Validate network name}
+{p2col :nwvalidate {hline 2}}Validate network name{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

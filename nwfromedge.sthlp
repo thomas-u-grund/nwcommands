@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nwfromedge {hline 2} Imports network data from edgelist}
+{p2col :nwfromedge {hline 2}}Imports network data from edgelist{p_end}
 {p2colreset}{...}
 
 

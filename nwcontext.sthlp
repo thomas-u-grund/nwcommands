@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 2.0.0  10sept2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nwcontext {hline 2} Create a context variable}
+{p2col :nwcontext {hline 2}}Create a context variable{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

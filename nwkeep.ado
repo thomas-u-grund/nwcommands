@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwkeep {hline 2} Keep a network (or only certain nodes)}
+{p2col :nwkeep {hline 2}}Keep a network (or only certain nodes){p_end}
 {p2colreset}{...}
 
 {title:Syntax}

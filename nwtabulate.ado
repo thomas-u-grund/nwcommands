@@ -48,7 +48,7 @@ end
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} One-way table of dyads}
+{p2col :nwtabulate {hline 2}}One-way table of dyads{p_end}
 {p2colreset}{...}
 
 
@@ -133,7 +133,7 @@ end
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} Two-way table of two networks}
+{p2col :nwtabulate {hline 2}}Two-way table of two networks{p_end}
 {p2colreset}{...}
 
 
@@ -360,7 +360,7 @@ end
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} Two-way table of network and node attribute}
+{p2col :nwtabulate {hline 2}}Two-way table of network and node attribute{p_end}
 {p2colreset}{...}
 
 

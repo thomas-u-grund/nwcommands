@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nw2project {hline 2} One-mode projection of a two-mode network}
+{p2col :nw2project {hline 2}}One-mode projection of a two-mode network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

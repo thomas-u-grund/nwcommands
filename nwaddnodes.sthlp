@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwaddnodes {hline 2} Add nodes to network}
+{p2col :nwaddnodes {hline 2}}Add nodes to network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

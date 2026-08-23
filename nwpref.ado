@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwpref {hline 2} Generate a preferential-attachment network}
+{p2col :nwpref {hline 2}}Generate a preferential-attachment network{p_end}
 {p2colreset}{...}
 
 

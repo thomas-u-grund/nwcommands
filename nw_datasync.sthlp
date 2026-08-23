@@ -1,13 +1,13 @@
 {smcl}
 {* *! version 2.0.0  4jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.7] Utilities}
+{helpb nw_topical##utilities:[NW-2.7] Utilities}
 version 2.0.0
 
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nw_datasync {hline 2} Utility to sync current network with dataset}
+{p2col :nw_datasync {hline 2}}Utility to sync current network with dataset{p_end}
 {p2colreset}{...}
 
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwmovie {hline 2} Animate a sequence of networks}
+{p2col :nwmovie {hline 2}}Animate a sequence of networks{p_end}
 {p2colreset}{...}
 
 

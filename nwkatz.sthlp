@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwkatz {hline 2} Calculate a Katz-inspired distance-decay centrality}
+{p2col :nwkatz {hline 2}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2colreset}{...}
 
 

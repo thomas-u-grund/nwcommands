@@ -2,12 +2,12 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nwbalance {hline 2} Structural balance of a signed network}
+{p2col :nwbalance {hline 2}}Structural balance of a signed network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

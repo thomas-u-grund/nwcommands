@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :webnwuse {hline 2} Load network data over the web}
+{p2col :webnwuse {hline 2}}Load network data over the web{p_end}
 {p2colreset}{...}
 
 

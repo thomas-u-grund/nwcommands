@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwduplicate {hline 2} Duplicate a network}
+{p2col :nwduplicate {hline 2}}Duplicate a network{p_end}
 {p2colreset}{...}
 
 

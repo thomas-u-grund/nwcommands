@@ -5,7 +5,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtomatafast {hline 2} Return link to adjacency matrix of network}
+{p2col :nwtomatafast {hline 2}}Return link to adjacency matrix of network{p_end}
 {p2colreset}{...}
 
 

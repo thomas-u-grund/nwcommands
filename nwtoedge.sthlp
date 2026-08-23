@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtoedge {hline 2} Convert network to edgelist}
+{p2col :nwtoedge {hline 2}}Convert network to edgelist{p_end}
 {p2colreset}{...}
 
 

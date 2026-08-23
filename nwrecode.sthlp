@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nwrecode {hline 2} Recode network}
+{p2col :nwrecode {hline 2}}Recode network{p_end}
 {p2colreset}{...}
 
 

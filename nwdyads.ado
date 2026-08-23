@@ -8,7 +8,7 @@ version 2.0.0
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwdyads  {hline 2} Dyad census}
+{p2col :nwdyads  {hline 2}}Dyad census{p_end}
 {p2colreset}{...}
 
 

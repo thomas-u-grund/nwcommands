@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwdyadprob {hline 2} Generate a network based on tie probabilities}
+{p2col :nwdyadprob {hline 2}}Generate a network based on tie probabilities{p_end}
 {p2colreset}{...}
 
 

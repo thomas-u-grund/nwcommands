@@ -3,13 +3,13 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwsimilar {hline 2} Generate node similarities}
+{p2col :nwsimilar {hline 2}}Generate node similarities{p_end}
 {p2colreset}{...}
 
 

@@ -8,7 +8,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwsubset {hline 2} Subset the nodes of a network}
+{p2col :nwsubset {hline 2}}Subset the nodes of a network{p_end}
 {p2colreset}{...}
 
 

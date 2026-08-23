@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwutility  {hline 2} Calculate utility scores according to Jackson and Wollinsky (1996)}
+{p2col :nwutility  {hline 2}}Calculate utility scores according to Jackson and Wollinsky (1996){p_end}
 {p2colreset}{...}
 
 

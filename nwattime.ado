@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwattime {hline 2} Static graph view of a temporal network at a given time}
+{p2col :nwattime {hline 2}}Static graph view of a temporal network at a given time{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwinstall {hline 2} Install Stata menu/dialogs}
+{p2col :nwinstall {hline 2}}Install Stata menu/dialogs{p_end}
 {p2colreset}{...}
 
 

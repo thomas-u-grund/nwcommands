@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwcollapse {hline 2} Collapse a network}
+{p2col :nwcollapse {hline 2}}Collapse a network{p_end}
 {p2colreset}{...}
 
 

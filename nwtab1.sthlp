@@ -4,7 +4,7 @@
 {title:Title}
 
 {p2colset 9 20 23 2}{...}
-{p2col :nwtabulate {hline 2} One-way table of dyads}
+{p2col :nwtabulate {hline 2}}One-way table of dyads{p_end}
 {p2colreset}{...}
 
 

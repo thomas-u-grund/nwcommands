@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwset {hline 2} Declare data to be network data}
+{p2col :nwset {hline 2}}Declare data to be network data{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}

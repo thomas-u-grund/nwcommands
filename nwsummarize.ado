@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwsummarize {hline 2} Summarize a network}
+{p2col :nwsummarize {hline 2}}Summarize a network{p_end}
 {p2colreset}{...}
 
 

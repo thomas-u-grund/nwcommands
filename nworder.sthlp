@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nworder {hline 2} Reorder networks in dataset}
+{p2col :nworder {hline 2}}Reorder networks in dataset{p_end}
 {p2colreset}{...}
 
 

@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwexpand {hline 2} Expand variable to network}
+{p2col :nwexpand {hline 2}}Expand variable to network{p_end}
 {p2colreset}{...}
 
 

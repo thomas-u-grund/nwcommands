@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 22 22 2}{...}
-{p2col :nwreplacemat {hline 2} Replace network with Stata or Mata matrix}
+{p2col :nwreplacemat {hline 2}}Replace network with Stata or Mata matrix{p_end}
 {p2colreset}{...}
 
 

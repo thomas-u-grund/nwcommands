@@ -7,7 +7,7 @@
 {title:Title}
 
 {p2colset 9 14 22 2}{...}
-{p2col :nwsave  {hline 2} Save network data in file}
+{p2col :nwsave  {hline 2}}Save network data in file{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

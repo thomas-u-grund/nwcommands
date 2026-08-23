@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwdrop {hline 2} Drop networks or network nodes}
+{p2col :nwdrop {hline 2}}Drop networks or network nodes{p_end}
 {p2colreset}{...}
 
 {title:Syntax}

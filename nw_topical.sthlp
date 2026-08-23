@@ -18,7 +18,7 @@
 
 {help nw_topical##manipulation:{col 14}{bf:[NW-2.5]}{...}{col 31}{bf:Manipulation}}
 
-{help nw_topical##analysis:{col 14}{bf:[NW-2.6]}{...}{col 31}{bf:Analysis}}
+{help nw_topical##analysis:{col 14}{bf:[NW-2.6]}{...}{col 31}{bf:Analysis (7 subsections)}}
 
 {help nw_topical##utilities:{col 14}{bf:[NW-2.7]}{...}{col 31}{bf:Utilities}}
 
@@ -118,44 +118,90 @@
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Analysis}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
+
+{pstd}
+Analysis has grown into the package's own largest, most heterogeneous command family -
+subdivided below into [NW-2.6.1] through [NW-2.6.7] rather than one flat list, so a command's
+own breadcrumb link (at the top of its help file) now points at its specific subsection.
+{p_end}
+
+{marker analysis_centrality}{...}
+{phang}{bf:[NW-2.6.1] Centrality}{p_end}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help .!2045!nwqap }}}Multivariate QAP regression{p_end}
-{p2col:    {bf:{help .!2050!nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
-{p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:    {bf:{help nwcentrality }}}Node centrality measures{p_end}
-{p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
-{p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}
-{p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method{p_end}
-{p2col:    {bf:{help nwmodularity }}}Score a partition's modularity{p_end}
-{p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
-{p2col:    {bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
-{p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
-{p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
-{p2col:    {bf:{help nwcoreperiphery }}}Discrete core-periphery detection{p_end}
-{p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
-{p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
-{p2col:    {bf:{help nwego }}}Ego-network size and density{p_end}
-{p2col:    {bf:{help nwergm }}}Exponential Random Graph Model{p_end}
 {p2col:    {bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
-{p2col:    {bf:{help nwgen }}}Network extensions to generate{p_end}
-{p2col:    {bf:{help nwgenerate }}}{p_end}
-{p2col:    {bf:{help nwgeodesic }}}Calculate shortest paths between nodes{p_end}
-{p2col:    {bf:{help nwhierarchy }}}Hierrachical clustering of nodes{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
+{p2col:    {bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
+
+{marker analysis_cohesion}{...}
+{phang}{bf:[NW-2.6.2] Cohesion, Components & Subgroups}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
+{p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
+{p2col:    {bf:{help nwclustering }}}Clustering coefficient{p_end}
+{p2col:    {bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
+{p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
 {p2col:    {bf:{help nwkcomponents }}}Maximal k-component enumeration{p_end}
+{p2col:    {bf:{help nwkcore }}}k-core decomposition{p_end}
 {p2col:    {bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
 {p2col:    {bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
 {p2col:    {bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
+{p2col:    {bf:{help nwsimmelian }}}Calculate Simmelian ties{p_end}
+
+{marker analysis_community}{...}
+{phang}{bf:[NW-2.6.3] Community Detection}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method{p_end}
+{p2col:    {bf:{help nwmodularity }}}Score a partition's modularity{p_end}
+{p2col:    {bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
+
+{marker analysis_positions}{...}
+{phang}{bf:[NW-2.6.4] Positions, Roles & Equivalence}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwbalance }}}Structural balance of a signed network{p_end}
+{p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
+{p2col:    {bf:{help nwburt }}}Calculate Burt structural hole measures{p_end}
+{p2col:    {bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
+{p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
+{p2col:    {bf:{help nwcoreperiphery }}}Discrete core-periphery detection{p_end}
+{p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
+{p2col:    {bf:{help nwhierarchy }}}Hierarchical clustering of nodes{p_end}
+{p2col:    {bf:{help nwshared }}}Calculate number of shared neighbors between nodes{p_end}
+{p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
+{p2col:    {bf:{help nwsimindex }}}Common-neighbor similarity indices between all node pairs{p_end}
+
+{marker analysis_paths}{...}
+{phang}{bf:[NW-2.6.5] Paths, Reachability & Ego Networks}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
+{p2col:    {bf:{help nwego }}}Ego-network size and density{p_end}
+{p2col:    {bf:{help nwgeodesic }}}Calculate shortest paths between nodes{p_end}
 {p2col:    {bf:{help nwneighbor }}}Extract the network neighbors of a node{p_end}
 {p2col:    {bf:{help nwpath }}}Calculate paths between nodes{p_end}
-{p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwreach }}}Calculate reachability network{p_end}
-{p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
+
+{marker analysis_statmodels}{...}
+{phang}{bf:[NW-2.6.6] Statistical Estimation of Networks}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
+{p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
+{p2col:    {bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
+{p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwutility }}}Calculate utility scores according to Jackson and Wollinsky (1996){p_end}
-{p2col:    {bf:{help nwvalue }}}Returns entries form the adjaceny matrix of a network{p_end}
+
+{marker analysis_other}{...}
+{phang}{bf:[NW-2.6.7] Other Analysis Utilities}{p_end}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
+{p2col:    {bf:{help nwgen }}}Generate a new network from an expression{p_end}
+{p2col:    {bf:{help nwgenerate }}}Generate a new network from an expression ({help nwgen} front-end){p_end}
+{p2col:    {bf:{help nwgenvar }}}Network extensions to generate{p_end}
+{p2col:    {bf:{help nwnode }}}Check if a node exists in a network{p_end}
+{p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
+{p2col:    {bf:{help nwvalue }}}Return entries from the adjacency matrix of a network{p_end}
 {marker utilities}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
