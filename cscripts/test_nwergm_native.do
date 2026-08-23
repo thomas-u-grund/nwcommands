@@ -14,25 +14,27 @@ do unw_ergm.do
 	the WHOLE model back onto the Mata sampler): the native term set now
 	also covers the full dyad-independent attribute/factor family
 	(nodecov/nodeicov/nodeocov/absdist/nodematch_diff/nodefactor/
-	nodeofactor/nodeifactor/sender/receiver/nodemix) and the GW-degree
-	family (gwdegree/gwodegree/gwidegree) - see unw_ergm.do's own
+	nodeofactor/nodeifactor/sender/receiver/nodemix), the GW-degree
+	family (gwdegree/gwodegree/gwidegree), the full degree-COUNT family,
+	the undirected shared-partner family (gwdsp/gwnsp/esp/dsp/triangle),
+	and (unit 92 wave 4, this update) the full DIRECTED shared-partner
+	family - the OTP mode of gwesp/gwdsp/gwnsp/esp/dsp plus
+	ctriple/transitiveties/cyclicalties - see unw_ergm.do's own
 	ErgmNativeSetup() header comment for the complete current list and
-	exactly what remains out of scope. `nodecov` can therefore no longer
-	serve as the "reject probe" it originally was in test (1) below -
-	`triangle` (a shared-partner term, still genuinely unported) is used
-	instead.
+	exactly what remains out of scope. `triangle`/`ctriple`, both used
+	as the "reject probe" at various earlier points as the native term
+	set grew, are now BOTH native-eligible - `edgecov` (needs an n x n
+	matrix marshalled across the boundary, still genuinely unported) is
+	used instead.
 
 	(1) ErgmNativeSetup() eligibility is exactly what the model's own
 	    term list should produce - accept every currently-native term
 	    (individually and mixed together in one model, which the
 	    original narrow-scope version of this test never needed to
 	    check since every native term used to be dyad-independent or
-	    gwesp alone), reject anything still genuinely out of scope
-	    (`triangle`), and reject directed (OTP) gwesp specifically - a
-	    real, confirmed bug found while planning this unit: before the
-	    fix, a directed gwesp model was WRONGLY reported native-eligible
-	    (directed gwesp did not exist when the native backend was first
-	    built, and nothing updated this check when it was added later).
+	    gwesp alone), including directed (OTP) gwesp/gwdsp/gwnsp/esp/dsp
+	    and ctriple/transitiveties/cyclicalties (unit 92 wave 4), and
+	    reject anything still genuinely out of scope (`edgecov`).
 	(2) The native and Mata backends, run on the SAME starting network at
 	    the SAME theta with the SAME burnin/interval/samplesize, produce
 	    statistically indistinguishable sampled sufficient-statistic
@@ -88,17 +90,20 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
-	// directed (OTP) gwesp must be REJECTED - native only implements
-	// the undirected/UTP shared-partner definition (the bug this unit
-	// found and fixed: this used to be wrongly accepted).
+	// directed (OTP) gwesp is now ALSO native-eligible (unit 92 wave 4) -
+	// this used to be the "must be rejected" case that caught the
+	// wrongly-accepted bug this unit's earlier wave found and fixed;
+	// now that OTP has its own dedicated native termcode (32), it must
+	// be accepted, and cscripts/test_nwergm_native.do's equivalence
+	// suite below is what actually certifies the OTP formula itself.
 	M = ErgmModel()
 	M.init()
 	td6 = ErgmTermData()
 	td6.decay = 0.5
 	td6.sptype = "OTP"
 	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), td6, ("gwesp_0.5"))
-	assert(ErgmNativeSetup(M, 1) == 0)
-	assert(M.native_enabled == 0)
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
 
 	// nodecov IS now in the native term set (unlike the original
 	// narrow-scope version of this test) - a mixed gwesp+nodecov model
@@ -115,16 +120,19 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
-	// ctriple is NOT in the native term set (it is directed-only and
-	// needs OTP shared-partner machinery, which native does not have -
-	// a documented follow-on) - must be rejected. `triangle` itself
-	// CANNOT serve as the reject probe any more (unit 92 wave 3 made it
-	// native-eligible) - this is the SAME substitution nodecov/triangle
-	// each underwent in turn as the native term set grew.
+	// edgecov is NOT in the native term set (it needs an n x n dyadic
+	// covariate matrix marshalled across the boundary - a genuinely
+	// different wire-protocol shape from everything else native
+	// currently handles - a documented follow-on) - must be rejected.
+	// `triangle`/`ctriple` CANNOT serve as the reject probe any more
+	// (unit 92 waves 3/4 made them native-eligible) - this is the SAME
+	// substitution nodecov/triangle/ctriple each underwent in turn as
+	// the native term set grew.
 	M = ErgmModel()
 	M.init()
 	td5 = ErgmTermData()
-	M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), td5, ("ctriple"))
+	td5.edgecovmat = J(5,5,0)
+	M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), td5, ("edgecov"))
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
 
@@ -677,5 +685,135 @@ void run_triangle_test(){
 		(-2.0, 0.05), 2000, 5, 2000, 6)
 }
 run_triangle_test()
+
+// --- directed shared-partner family (harmonisation unit 92, wave 4):
+//     the OTP mode of gwesp/gwdsp/gwnsp/esp/dsp (`td.sptype = "OTP"',
+//     exactly how nwergm.ado sets it for a directed network) plus
+//     ctriple/transitiveties/cyclicalties, all backed by the new
+//     outadj[]/inadj[]/common_neighbors_otp() infrastructure in
+//     native/ergm_mcmc.c. ---
+
+// --- directed: edges + mutual + gwesp(OTP) ---
+void run_gwesp_otp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdg
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.5
+	tdg.sptype = "OTP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), tdg, ("gwesp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwesp(OTP)", n, 4, 1, M,
+		(-2.2, 0.4, 0.2), 2000, 5, 2000, 6)
+}
+run_gwesp_otp_test()
+
+// --- directed: edges + mutual + gwdsp(OTP) + gwnsp(OTP) (mixed -
+//     exercises the change_gwdsp_otp()-minus-change_gwesp_otp()
+//     composition dispatch for gwnsp's own OTP mode too) ---
+void run_gwdsp_gwnsp_otp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdd, tdn
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdd = ErgmTermData()
+	tdd.decay = 0.5
+	tdd.sptype = "OTP"
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), tdd, ("gwdsp_0.5"))
+	tdn = ErgmTermData()
+	tdn.decay = 0.5
+	tdn.sptype = "OTP"
+	M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), tdn, ("gwnsp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwdsp(OTP)+gwnsp(OTP) (mixed)", n, 4, 1, M,
+		(-2.2, 0.4, 0.02, 0.02), 2000, 5, 2000, 6)
+}
+run_gwdsp_gwnsp_otp_test()
+
+// --- directed: edges + mutual + esp(OTP)(0,1) + dsp(OTP)(1) ---
+void run_esp_dsp_otp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tde2, tdd1
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tde2 = ErgmTermData()
+	tde2.levels = (0\1)
+	tde2.sptype = "OTP"
+	M.addterm("esp", 2, &stat_esp(), &change_esp(), tde2, ("esp0","esp1"))
+	tdd1 = ErgmTermData()
+	tdd1.levels = (1)
+	tdd1.sptype = "OTP"
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), tdd1, ("dsp1"))
+
+	test_equivalence("directed edges+mutual+esp(OTP)(0,1)+dsp(OTP)(1)", n, 4, 1, M,
+		(-2.2, 0.4, 0.05, 0.05, 0.02), 2000, 5, 2000, 6)
+}
+run_esp_dsp_otp_test()
+
+// --- directed: edges + mutual + ctriple ---
+void run_ctriple_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdc
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdc = ErgmTermData()
+	M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), tdc, ("ctriple"))
+
+	test_equivalence("directed edges+mutual+ctriple", n, 4, 1, M,
+		(-2.2, 0.4, 0.05), 2000, 5, 2000, 6)
+}
+run_ctriple_test()
+
+// --- directed: edges + mutual + transitiveties + cyclicalties ---
+void run_transties_cycties_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdt, tdc
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdt = ErgmTermData()
+	M.addterm("transitiveties", 1, &stat_transitiveties(), &change_transitiveties(), tdt, ("transitiveties"))
+	tdc = ErgmTermData()
+	M.addterm("cyclicalties", 1, &stat_cyclicalties(), &change_cyclicalties(), tdc, ("cyclicalties"))
+
+	test_equivalence("directed edges+mutual+transitiveties+cyclicalties", n, 4, 1, M,
+		(-2.2, 0.4, 0.1, 0.1), 2000, 5, 2000, 6)
+}
+run_transties_cycties_test()
 
 end

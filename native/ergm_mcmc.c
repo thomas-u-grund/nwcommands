@@ -30,20 +30,28 @@
 	benchmark suite (edges, mutual, nodematch, gwesp). Relaxed
 	(harmonisation unit 91 follow-on, per explicit user instruction to
 	"move all effects to C" rather than have any term outside a narrow
-	set force the WHOLE model back onto the Mata sampler) to also cover
-	the full dyad-independent attribute/factor family - nodecov/
-	nodeicov/nodeocov/absdist/nodematch_diff/nodefactor/nodeofactor/
-	nodeifactor/sender/receiver/nodemix - and the GW-degree family -
-	gwdegree/gwodegree/gwidegree. See TERMCODE_* below for the complete
-	current list and unw_ergm.do's own ErgmNativeSetup() header comment
-	for exactly what is still NOT covered (edgecov/hamming - need an
-	n x n matrix marshalled across the boundary; the degree-COUNT family
-	degree/odegree/idegree/concurrent/degrange/kstar - needs threshold-
-	crossing logic not yet ported; the shared-partner family beyond
-	gwesp itself - gwdsp/gwnsp/esp/dsp/triangle/ctriple/transitiveties/
-	cyclicalties; and directed/OTP gwesp specifically) and why - each a
-	well-scoped, documented follow-on, not attempted here to keep this
-	wave's own scope controlled. The two existing proposals (uniform,
+	set force the WHOLE model back onto the Mata sampler) across four
+	subsequent waves (unit 92) to cover: the full dyad-independent
+	attribute/factor family - nodecov/nodeicov/nodeocov/absdist/
+	nodematch_diff/nodefactor/nodeofactor/nodeifactor/sender/receiver/
+	nodemix - and the GW-degree family - gwdegree/gwodegree/gwidegree
+	(wave 1); the full degree-COUNT family - degree/odegree/idegree/
+	concurrent/kstar/ostar/istar/degrange/odegrange/idegrange (wave 2);
+	the undirected shared-partner family beyond gwesp itself - gwdsp/
+	gwnsp/esp/dsp/triangle (wave 3); and (wave 4, this update) the full
+	DIRECTED shared-partner family - the OTP mode of gwesp/gwdsp/gwnsp/
+	esp/dsp plus ctriple/transitiveties/cyclicalties, backed by a new
+	pair of directed adjacency arrays (`outadj'/`inadj') and a
+	`common_neighbors_otp()' primitive alongside the undirected
+	`adj'/`common_neighbors()' wave 3 already built. See TERMCODE_*
+	below for the complete current list and unw_ergm.do's own
+	ErgmNativeSetup() header comment for exactly what is still NOT
+	covered (edgecov/hamming - need an n x n matrix marshalled across
+	the boundary, a genuinely different wire-protocol shape from
+	everything else here) and why - the one remaining well-scoped,
+	documented follow-on (docs/ERGM_ROADMAP.md's own "Native backend"
+	section), not attempted here to keep this wave's own scope
+	controlled. The two existing proposals (uniform,
 	TNT), directed and undirected graphs, are unchanged. Any model using
 	a term outside the current native set is NOT eligible for the native
 	backend - the Mata implementation (unw_ergm.do) remains the
@@ -332,12 +340,14 @@ typedef struct {
 	int directed;
 	int need_adj;      /* 1 iff a gwesp term is present (undirected only) */
 	int need_outin;    /* 1 iff outdeg/indeg were actually allocated (a gwodegree/gwidegree term is present) - toggle() must check THIS, not just `directed`, or it dereferences NULL on any other directed model */
+	int need_dirsp;    /* 1 iff outadj/inadj were actually allocated (harmonisation unit 92 wave 4: a directed OTP shared-partner term - gwesp/gwdsp/gwnsp/esp/dsp with sptype "OTP" - or ctriple/transitiveties/cyclicalties is present); toggle() must check THIS, not `directed`, same reasoning as need_outin above */
 	dyadht_t ht;
 	long *elist_i, *elist_j; /* live edge list, parallel arrays */
 	long ecap, nties;
 	long *deg;               /* TOTAL degree (out+in for directed, plain degree for undirected) - already correct as-is: adding arc i->j increments deg[i] AND deg[j] by 1 each, which is exactly "i gained an out-arc" + "j gained an in-arc", i.e. total degree for both, directed or not. Used by common_neighbors()' smaller-side heuristic and GWDEGREE. */
 	long *outdeg, *indeg;    /* directed-only degree (harmonisation unit 91 follow-on, GWODEGREE/GWIDEGREE): meaningless/unused for undirected graphs, where degree_out_of()/degree_in_of() below both read `deg` instead */
 	adjlist_t *adj;          /* size n+1, 1-indexed; only if need_adj */
+	adjlist_t *outadj, *inadj; /* size n+1, 1-indexed; only if need_dirsp - directed out-/in-neighbor lists (SP_OTP(a,b) != SP_OTP(b,a) in general, so unlike gwesp's undirected `adj[]` a single symmetric array cannot serve both directions - see common_neighbors_otp() below) */
 } graph_t;
 
 static long dyadkey(graph_t *g, long i, long j) {
@@ -377,6 +387,7 @@ static int toggle(graph_t *g, long i, long j) {
 		g->deg[i]--; g->deg[j]--;
 		if (g->need_outin) { g->outdeg[i]--; g->indeg[j]--; }
 		if (g->need_adj && !g->directed) { adj_remove(&g->adj[i], j); adj_remove(&g->adj[j], i); }
+		if (g->need_dirsp) { adj_remove(&g->outadj[i], j); adj_remove(&g->inadj[j], i); }
 		return 0;
 	}
 	else {
@@ -388,6 +399,7 @@ static int toggle(graph_t *g, long i, long j) {
 		g->deg[i]++; g->deg[j]++;
 		if (g->need_outin) { g->outdeg[i]++; g->indeg[j]++; }
 		if (g->need_adj && !g->directed) { adj_add(&g->adj[i], j); adj_add(&g->adj[j], i); }
+		if (g->need_dirsp) { adj_add(&g->outadj[i], j); adj_add(&g->inadj[j], i); }
 		return 1;
 	}
 }
@@ -413,6 +425,24 @@ static double gw_kernel(double d, double decay) {
 	return exp(decay) * (1.0 - pow(1.0 - exp(-decay), d));
 }
 
+/* SP_OTP(i,j) = #{k : i->k and k->j} - the directed "outgoing two-path"
+   shared-partner count (harmonisation unit 92 wave 4), a direct port of
+   ErgmGraph::shared_partners_otp() in unw_ergm.do. NOT symmetric in
+   (i,j) in general, unlike common_neighbors() above, so it walks only
+   i's own out-neighbors (via `outadj`, not the smaller-of-two-sides
+   heuristic common_neighbors() uses - there is no symmetric "smaller
+   side" here since the two arguments play genuinely different roles). */
+static long common_neighbors_otp(graph_t *g, long i, long j) {
+	adjlist_t *nb = &g->outadj[i];
+	long k, m, cnt = 0;
+	for (m = 0; m < nb->len; m++) {
+		k = nb->nb[m];
+		if (k == j) continue;
+		if (has_edge(g, k, j)) cnt++;
+	}
+	return cnt;
+}
+
 /* GWESP change statistic for toggling (i,j) - direct port of
    change_gwesp() in unw_ergm.do (undirected only) */
 static double change_gwesp(graph_t *g, long i, long j, double decay) {
@@ -430,6 +460,187 @@ static double change_gwesp(graph_t *g, long i, long j, double decay) {
 		chg += gw_kernel(pik + delta, decay) - gw_kernel(pik, decay);
 		pjk = (double)common_neighbors(g, j, k);
 		chg += gw_kernel(pjk + delta, decay) - gw_kernel(pjk, decay);
+	}
+	return chg;
+}
+
+/*
+	Directed OTP variants of the shared-partner family (harmonisation
+	unit 92 wave 4) - direct ports of change_gwesp_otp()/
+	change_gwdsp_otp()/change_esp_otp()/change_dsp_otp() in unw_ergm.do,
+	which see for the derivation of why toggling arc i->j affects
+	SP_OTP(a,j) for every IN-neighbor a of i and SP_OTP(i,b) for every
+	OUT-neighbor b of j (two structurally different adjustment loops,
+	unlike the undirected functions' single symmetric loop, since
+	SP_OTP is not symmetric).
+*/
+static double change_gwesp_otp(graph_t *g, long i, long j, double decay) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double pij = (double)common_neighbors_otp(g, i, j);
+	double chg = delta * gw_kernel(pij, decay);
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double paj;
+		if (a == j) continue;
+		if (!has_edge(g, a, j)) continue;
+		paj = (double)common_neighbors_otp(g, a, j);
+		chg += gw_kernel(paj + delta, decay) - gw_kernel(paj, decay);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double pib;
+		if (b == i) continue;
+		if (!has_edge(g, i, b)) continue;
+		pib = (double)common_neighbors_otp(g, i, b);
+		chg += gw_kernel(pib + delta, decay) - gw_kernel(pib, decay);
+	}
+	return chg;
+}
+
+/* GWDSP's own OTP mode - same two adjustment loops as
+   change_gwesp_otp() above, but (matching change_gwdsp()'s own
+   relationship to change_gwesp()) without the tie-check on the
+   adjusted dyad and without the own-dyad `pij` term. */
+static double change_gwdsp_otp(graph_t *g, long i, long j, double decay) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double chg = 0.0;
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double paj;
+		if (a == j) continue;
+		paj = (double)common_neighbors_otp(g, a, j);
+		chg += gw_kernel(paj + delta, decay) - gw_kernel(paj, decay);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double pib;
+		if (b == i) continue;
+		pib = (double)common_neighbors_otp(g, i, b);
+		chg += gw_kernel(pib + delta, decay) - gw_kernel(pib, decay);
+	}
+	return chg;
+}
+
+/* esp(d)'s own OTP mode - change_gwesp_otp()'s shape with `gw_kernel`
+   replaced by `ind_kernel` (defined below, forward-declared here since
+   the OTP family is ported ahead of the TERMCODE_* block that
+   introduces ind_kernel() for the undirected esp()/dsp() terms). */
+static double ind_kernel(double x, double d);
+static double change_esp_otp(graph_t *g, long i, long j, double d) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double pij = (double)common_neighbors_otp(g, i, j);
+	double chg = delta * ind_kernel(pij, d);
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double paj;
+		if (a == j) continue;
+		if (!has_edge(g, a, j)) continue;
+		paj = (double)common_neighbors_otp(g, a, j);
+		chg += ind_kernel(paj + delta, d) - ind_kernel(paj, d);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double pib;
+		if (b == i) continue;
+		if (!has_edge(g, i, b)) continue;
+		pib = (double)common_neighbors_otp(g, i, b);
+		chg += ind_kernel(pib + delta, d) - ind_kernel(pib, d);
+	}
+	return chg;
+}
+
+/* dsp(d)'s own OTP mode - change_gwdsp_otp()'s shape with `gw_kernel`
+   replaced by `ind_kernel`. */
+static double change_dsp_otp(graph_t *g, long i, long j, double d) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double chg = 0.0;
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double paj;
+		if (a == j) continue;
+		paj = (double)common_neighbors_otp(g, a, j);
+		chg += ind_kernel(paj + delta, d) - ind_kernel(paj, d);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double pib;
+		if (b == i) continue;
+		pib = (double)common_neighbors_otp(g, i, b);
+		chg += ind_kernel(pib + delta, d) - ind_kernel(pib, d);
+	}
+	return chg;
+}
+
+/*
+	transitiveties/cyclicalties (harmonisation unit 92 wave 4, directed
+	only) - direct ports of change_transitiveties()/change_cyclicalties()
+	in unw_ergm.do. Same two-adjustment-loop shape as the OTP family
+	above, but each affected SP_OTP count only contributes through a
+	0/1 THRESHOLD CROSSING (>=1), and (see unw_ergm.do's own header
+	comment for the full derivation) the two terms read the threshold
+	off DIFFERENT arcs: transitiveties uses has_edge(a,j)/has_edge(i,b)
+	(the same existence checks change_gwesp_otp() uses), cyclicalties
+	uses the REVERSED has_edge(j,a)/has_edge(b,i).
+*/
+static double change_transitiveties(graph_t *g, long i, long j) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double pij = (double)common_neighbors_otp(g, i, j);
+	double chg = delta * (pij >= 1.0 ? 1.0 : 0.0);
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double olda;
+		if (a == j) continue;
+		if (!has_edge(g, a, j)) continue;
+		olda = (double)common_neighbors_otp(g, a, j);
+		chg += ((olda + delta >= 1.0) ? 1.0 : 0.0) - ((olda >= 1.0) ? 1.0 : 0.0);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double oldb;
+		if (b == i) continue;
+		if (!has_edge(g, i, b)) continue;
+		oldb = (double)common_neighbors_otp(g, i, b);
+		chg += ((oldb + delta >= 1.0) ? 1.0 : 0.0) - ((oldb >= 1.0) ? 1.0 : 0.0);
+	}
+	return chg;
+}
+static double change_cyclicalties(graph_t *g, long i, long j) {
+	double delta = has_edge(g, i, j) ? -1.0 : 1.0;
+	double pji = (double)common_neighbors_otp(g, j, i);
+	double chg = delta * (pji >= 1.0 ? 1.0 : 0.0);
+	adjlist_t *na = &g->inadj[i];
+	adjlist_t *nb = &g->outadj[j];
+	long m;
+	for (m = 0; m < na->len; m++) {
+		long a = na->nb[m];
+		double olda;
+		if (a == j) continue;
+		if (!has_edge(g, j, a)) continue;
+		olda = (double)common_neighbors_otp(g, a, j);
+		chg += ((olda + delta >= 1.0) ? 1.0 : 0.0) - ((olda >= 1.0) ? 1.0 : 0.0);
+	}
+	for (m = 0; m < nb->len; m++) {
+		long b = nb->nb[m];
+		double oldb;
+		if (b == i) continue;
+		if (!has_edge(g, b, i)) continue;
+		oldb = (double)common_neighbors_otp(g, i, b);
+		chg += ((oldb + delta >= 1.0) ? 1.0 : 0.0) - ((oldb >= 1.0) ? 1.0 : 0.0);
 	}
 	return chg;
 }
@@ -470,6 +681,14 @@ static double change_gwesp(graph_t *g, long i, long j, double decay) {
 #define TERMCODE_ESP            29
 #define TERMCODE_DSP            30
 #define TERMCODE_TRIANGLE       31
+#define TERMCODE_GWESP_OTP      32  /* directed OTP mode of gwesp - harmonisation unit 92 wave 4 */
+#define TERMCODE_GWDSP_OTP      33
+#define TERMCODE_GWNSP_OTP      34  /* composition, no dedicated change_*() function - see change_term() */
+#define TERMCODE_ESP_OTP        35
+#define TERMCODE_DSP_OTP        36
+#define TERMCODE_CTRIPLE        37  /* composition of common_neighbors_otp(), no dedicated change_*() function */
+#define TERMCODE_TRANSITIVETIES 38
+#define TERMCODE_CYCLICALTIES   39
 
 /* exact-match indicator kernel, direct port of the `(x :== td.levels')`
    rowvector construction esp()/dsp() use in unw_ergm.do - here evaluated
@@ -715,6 +934,30 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			return change_dsp(g, i, j, p1);
 		case TERMCODE_TRIANGLE:
 			return delta * (double)common_neighbors(g, i, j);
+		case TERMCODE_GWESP_OTP:
+			return change_gwesp_otp(g, i, j, p1);
+		case TERMCODE_GWDSP_OTP:
+			return change_gwdsp_otp(g, i, j, p1);
+		case TERMCODE_GWNSP_OTP:
+			/* thin composition, matching stat_gwnsp()/change_gwnsp()'s
+			   own OTP dispatch in unw_ergm.do exactly (gwnsp = gwdsp -
+			   gwesp under either shared-partner definition) */
+			return change_gwdsp_otp(g, i, j, p1) - change_gwesp_otp(g, i, j, p1);
+		case TERMCODE_ESP_OTP:
+			return change_esp_otp(g, i, j, p1);
+		case TERMCODE_DSP_OTP:
+			return change_dsp_otp(g, i, j, p1);
+		case TERMCODE_CTRIPLE:
+			/* change_ctriple() in unw_ergm.do is
+			   `delta * _ergm_cyclic_partners(i,j)`, and
+			   _ergm_cyclic_partners(i,j) == shared_partners_otp(j,i)
+			   exactly (both count k with j->k and k->i) - no dedicated
+			   function needed, just the arguments swapped. */
+			return delta * (double)common_neighbors_otp(g, j, i);
+		case TERMCODE_TRANSITIVETIES:
+			return change_transitiveties(g, i, j);
+		case TERMCODE_CYCLICALTIES:
+			return change_cyclicalties(g, i, j);
 	}
 	return 0.0;
 }
@@ -819,6 +1062,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	long draw, step;
 	int need_adj = 0;
 	int need_outin = 0;
+	int need_dirsp = 0;
 
 	if (argc < 1) { SF_error("ergm_mcmc: missing argument string\n"); return(198); }
 
@@ -853,6 +1097,13 @@ STDLL stata_call(int argc, char *argv[]) {
 			case TERMCODE_ODEGRANGE: case TERMCODE_IDEGRANGE:
 				need_outin = 1;
 		}
+		switch (termcodes[i]) {
+			case TERMCODE_GWESP_OTP: case TERMCODE_GWDSP_OTP:
+			case TERMCODE_GWNSP_OTP: case TERMCODE_ESP_OTP:
+			case TERMCODE_DSP_OTP: case TERMCODE_CTRIPLE:
+			case TERMCODE_TRANSITIVETIES: case TERMCODE_CYCLICALTIES:
+				need_dirsp = 1;
+		}
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	for (i = 0; i < nterms; i++) obs[i] = next_double();
@@ -878,6 +1129,13 @@ STDLL stata_call(int argc, char *argv[]) {
 	if (need_adj) {
 		g.adj = (adjlist_t *)malloc((size_t)(n + 1) * sizeof(adjlist_t));
 		for (i = 0; i <= n; i++) adj_init(&g.adj[i]);
+	}
+	g.need_dirsp = need_dirsp;
+	g.outadj = NULL; g.inadj = NULL;
+	if (need_dirsp) {
+		g.outadj = (adjlist_t *)malloc((size_t)(n + 1) * sizeof(adjlist_t));
+		g.inadj  = (adjlist_t *)malloc((size_t)(n + 1) * sizeof(adjlist_t));
+		for (i = 0; i <= n; i++) { adj_init(&g.outadj[i]); adj_init(&g.inadj[i]); }
 	}
 	for (k = 0; k < nattr; k++) {
 		attrs[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
@@ -962,6 +1220,14 @@ STDLL stata_call(int argc, char *argv[]) {
 	if (g.adj) {
 		for (i = 0; i <= n; i++) free(g.adj[i].nb);
 		free(g.adj);
+	}
+	if (g.outadj) {
+		for (i = 0; i <= n; i++) free(g.outadj[i].nb);
+		free(g.outadj);
+	}
+	if (g.inadj) {
+		for (i = 0; i <= n; i++) free(g.inadj[i].nb);
+		free(g.inadj);
 	}
 
 	return(0);
