@@ -123,6 +123,6 @@ same variable names, the Stata variables are overwritten.
 
 {title:See also}
    
-   {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}
+   {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nw_intro##limits:feasible network sizes}
 
 last certified : 21 Aug 2026

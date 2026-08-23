@@ -364,7 +364,7 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}, {help nw_intro##limits:feasible network sizes}
 ***/
 
 capture program drop nwset	
