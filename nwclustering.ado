@@ -5,9 +5,9 @@ program nwclustering
 	version 9
 	syntax [anything(name=netname)][, measure(string) SYMmetrize GENerate(string)]
 	set more off
-	
+
 	unw_defs
-	
+
 	nw_syntax `netname', max(1)
 	nw_datasync `netname'
 	local original "`netname'"
@@ -19,7 +19,7 @@ program nwclustering
 		nw_syntax
 		local symnet_created = 1
 	}
-	
+
 	// Auto-detect from the network's own stored valued/unvalued state
 	// rather than always defaulting to "binary" regardless - matching
 	// the netmeasure auto-detection convention already established in
@@ -53,115 +53,68 @@ program nwclustering
 		nw2clustering `netname', measure(`measure') generate(`generate')
 		exit
 	}
-	
+
 	if ("`directed'" == "true" & "`measure'" != "binary") {
 		di "{err}{pstd}Clustering coefficient not defined for networks that are both weighted and directed."
 		di "{err}Either choose {bf:measure(binary)} or symmetrize the network."
 		exit
 	}
-	
+
 	if "`generate'" == "" {
 		local generate = "_clustering"
 	}
-	
+
 	capture drop `generate'
 	qui gen `generate' = .
-	
-	tempfile temp clustering edge_list adj_list
+
 	nw_syntax `netname'
 	nw_datasync `netname'
 
-	preserve
-	
-	qui {
-	nw_syntax `netname'
-	unw_defs
-	nwtoedge `netname', full
-	rename `nw_ego' ego
-	rename `nw_alter' alter
-	if "`netname'" != "value" {
-		rename `netname' value
+	// PERFORMANCE FIX (this unit): this command used to implement its own
+	// independent Stata-level pipeline here - nwtoedge, three separate
+	// reshape wide/long round-trips, and two merge m:m string-keyed joins -
+	// to enumerate every length-2 path in the graph via dataset operations.
+	// calculate_clustering() in unw_core.do already implements the exact
+	// same computation natively in Mata using sparse neighbor enumeration
+	// (has_edge()/edge_weight(), no dense N-by-N matrix), but nothing ever
+	// called it - confirmed empirically that this reshape/merge pipeline
+	// took 459 SECONDS on a 10,000-node network (docs/PERFORMANCE_
+	// BENCHMARKS.md), against a small fraction of a second for the Mata
+	// equivalent. Mode order below matches calculate_clustering()'s own
+	// documented convention exactly (0=binary/unvalued union-of-neighbors,
+	// 1=arithmetic, 2=geometric, 3=maximum, 4=minimum).
+	if "`measure'" == "binary" local __mode 0
+	else if "`measure'" == "arithmetic" local __mode 1
+	else if "`measure'" == "geometric" local __mode 2
+	else if "`measure'" == "maximum" local __mode 3
+	else local __mode 4
+
+	qui if _N < `nodes' {
+		set obs `nodes'
 	}
-	drop if value == 0 | value == .
-	drop if alter == ego
-    save `edge_list', replace
+	nw_syntax `netname'
 
-	use `edge_list', clear
-	order ego alter
-	rename alter alter_
-	rename value value_
-	bys ego: gen n = _n
-	reshape wide alter_ value_, i(ego) j(n)
-	save `adj_list', replace
+	tempname __nw_clust
+	mata: `__nw_clust' = `netobj'->calculate_clustering(`__mode')
+	mata: st_store((1::`nodes'), "`generate'", `__nw_clust'[.,1])
+	mata: st_numscalar("clust_global", sum(`__nw_clust'[.,2]) / sum(`__nw_clust'[.,3]))
+	mata: mata drop `__nw_clust'
 
-	use `edge_list', clear
-	rename value value0
-	rename ego ego0
-	rename alter ego
-	merge m:m ego using `adj_list', nogenerate
-	rename ego alter0
-	reshape long alter_ value_, i(ego0 alter0) j(id)
-	drop id
-	drop if alter_ == "" | alter_ == ego0
-	rename alter_ ego1
-	rename value_ value1
-	order ego0 value0 alter0 value1 ego1 
+	local cluster_global = clust_global
+	capture scalar drop clust_global
 
-	rename ego0 ego
-	merge m:m ego using `adj_list', nogenerate
-	rename ego ego0
-	reshape long alter_ value_, i(ego0 alter0 ego1) j(id)
-	drop id
-	drop if alter_ == ""
-	rename value_ value2
-	rename ego1 ego2
-	rename alter0 ego1
-	gen closed = (alter_ == ego2)
-	collapse (max) closed, by(ego0 ego1 ego2 value0 value1)
-	
-	gen binary = 1
-	gen arithmetic = (value0 + value1)/2
-	gen geometric = sqrt(value0 * value1)
-	gen minimum = min(value0, value1)
-	gen maximum = max(value0, value1)
-
-	drop if ego2 == ""
-	gen closed_value = closed * `measure'
-	sum closed_value
-	local closed_3paths = r(sum)
-	sum `measure'
-	local potential_3paths = r(sum)
-	
-	capture bys ego1: egen pot = total(`measure')
-	capture bys ego1: egen clo = total(closed_value)
-	capture bys ego1: keep if _n == 1
-	
-	gen `generate' = .
-	capture replace `generate' = clo / pot
-	
-	keep ego1 `generate'
-	rename ego1 `nw_nodename'
-	
-	drop if `nw_nodename' == ""
-	save `clustering'
-
-	sum `generate'
+	qui summarize `generate'
 	local C_avg = r(mean)
 
-	restore
-	capture drop `generate'
-	merge m:m `nw_nodename' using `clustering', nogenerate
-	
-	}
 	mata: st_rclear()
-	mata: st_numscalar("r(cluster_global)", `=`closed_3paths' / `potential_3paths'')
-	mata: st_global("r(measure)", "`measure'")	
+	mata: st_numscalar("r(cluster_global)", `cluster_global')
+	mata: st_global("r(measure)", "`measure'")
 	mata: st_numscalar("r(cluster_avg)", `C_avg')
-	
+
 	if "`symmetrize'" != "" {
 		local netname "`original'"
 	}
-	
+
 	noi di "{hline 40}"
 	noi di "{txt}  Network name: {res}`netname'"
 	if "`symmetrize'" != "" {
@@ -200,5 +153,4 @@ program nwclustering
 	}
 	_return restore rcluster
 end
-
 

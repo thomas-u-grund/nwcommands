@@ -89,7 +89,7 @@ Beyond the `vertex_connectivity()` fix, three commands stood out as unexpectedly
 
 - **`nwcoreperiphery`**: 0.175s (n=100) → 255s (n=1,000) — roughly a 1,450x slowdown for a 10x increase in n, consistent with an algorithm worse than O(n²) (an O(n³)-ish or iterative-refinement-with-many-passes pattern would fit). The single slowest *completing* command in this entire study. A strong candidate for the next profiling pass.
 - **`nwsimilar`**: 0.134s → 72.4s (~540x for 10x n). Uses `nwtomata`'s dense conversion internally (confirmed) — likely the same class of issue as `nwcloseness`/`nwkatz`/etc., just with additional O(n²)-or-worse work on top.
-- **`nwclustering`**: 0.351s → 6.5s → 459s. Notably, this does **not** use a dense-matrix accessor (confirmed via direct source inspection) — its slowdown has a different cause, not yet diagnosed. Worth investigating specifically since it's one of the package's more commonly-used commands.
+- **`nwclustering`**: 0.351s → 6.5s → 459s. Notably, this does **not** use a dense-matrix accessor (confirmed via direct source inspection) — its slowdown has a different cause. **Fixed** in `docs/CERTIFICATION.md`'s harmonisation unit 104: `nwclustering.ado` was never actually calling the already-built, already-sparse `calculate_clustering()` Mata function at all — it ran its own independent, much slower `reshape`/`merge`-based Stata pipeline instead. Rewired to call the Mata function directly (plus a genuine sparsification of that function's own remaining dense-accessor use); n=10,000 now runs in ~1.6-1.7 seconds (~275x).
 
 ## Commands using a dense N×N matrix (the common thread behind most N=10,000 exclusions)
 
@@ -99,7 +99,7 @@ Beyond the `vertex_connectivity()` fix, three commands stood out as unexpectedly
 
 1. **`nwcoreperiphery`** — the single slowest completing command (255s at n=1,000); profile and root-cause before anything else.
 2. **A fully sparse max-flow rewrite** for `vertex_connectivity()`/`min_vertex_cutset()`, closing the residual `nwkcomponents`/`nwcohesion` gap at n≥10,000.
-3. **`nwclustering`** — slow without an obvious dense-matrix cause; worth its own profiling pass given how commonly this command is used.
+3. ~~**`nwclustering`** — slow without an obvious dense-matrix cause; worth its own profiling pass given how commonly this command is used.~~ **Done** (harmonisation unit 104): the command wasn't calling its own already-sparse Mata implementation at all; rewired, ~275x faster at n=10,000.
 4. **The `nwtomata`-dependent family** (`nwcloseness`, `nwsimilar`, `nwdissimilar`, `nwburt`, `nwconstraint`, `nwissymmetric`, `nwqap`) — a systematic sparse-migration pass across all of them at once, given they share one root cause.
 5. **`nwgeodesic` at n=10,000** — did not complete in this study despite the underlying BFS distance family being proven sparse and fast at 100k+ nodes elsewhere (`docs/SPARSE_BACKEND.md`). This is a genuine anomaly worth its own dedicated investigation before assuming it's the same class of issue as the rest.
 6. Complete the N=10,000 tier for the ~20 commands not reached in this pass (time constraints, not confirmed problems) — `dev/benchmark_suite.do` is ready to extend.
