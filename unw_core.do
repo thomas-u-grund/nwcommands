@@ -1204,8 +1204,8 @@ real matrix KPlex(real matrix adj, real scalar k, real rowvector R, real rowvect
 	comment for what the capacities themselves represent.
 */
 real scalar bfs_augment(real matrix cap, real matrix flow, real scalar s, real scalar t, real rowvector parent){
-	real scalar N, u, v, qhead, qtail
-	real rowvector visited, queue
+	real scalar N, u, v, qhead, qtail, k, nc
+	real rowvector visited, queue, residual, candidates
 
 	N = rows(cap)
 	visited = J(1,N,0)
@@ -1216,18 +1216,35 @@ real scalar bfs_augment(real matrix cap, real matrix flow, real scalar s, real s
 	queue[1] = s
 	visited[s] = 1
 
+	// BUGFIX: used to scan every one of the N columns one at a time
+	// via an interpreted for(v=1..N) loop for EACH dequeued node - a
+	// dense O(N) row scan regardless of how sparse the residual graph
+	// actually is, and BFS can dequeue up to N nodes, so O(N^2) per
+	// call. Replaced with a single vectorized row-extraction +
+	// selectindex() per dequeued node - same result (which candidates
+	// qualify doesn't change), computed as one fast vectorized
+	// operation instead of N interpreted ones. The early-return-the-
+	// instant-t-is-found optimization the old per-cell loop had is
+	// replaced by an equivalent check once per dequeued node instead
+	// of once per candidate edge - still correct (some already-queued
+	// nodes may go unprocessed once t is found, exactly as before;
+	// which shortest augmenting path Edmonds-Karp happens to use
+	// doesn't affect max-flow correctness, only which path is picked
+	// when several of the same shortest length exist).
 	while (qhead <= qtail) {
 		u = queue[qhead]
 		qhead++
-		for (v=1; v<=N; v++) {
-			if (visited[v] == 0 & (cap[u,v] - flow[u,v]) > 0) {
-				visited[v] = 1
-				parent[v] = u
-				if (v == t) return(1)
-				qtail++
-				queue[qtail] = v
-			}
+		residual = cap[u,.] - flow[u,.]
+		candidates = selectindex((residual :> 0) :& (visited :== 0))
+		nc = cols(candidates)
+		for (k=1; k<=nc; k++) {
+			v = candidates[k]
+			visited[v] = 1
+			parent[v] = u
+			qtail++
+			queue[qtail] = v
 		}
+		if (visited[t] == 1) return(1)
 	}
 	return(0)
 }
@@ -1258,35 +1275,80 @@ real scalar bfs_augment(real matrix cap, real matrix flow, real scalar s, real s
 	connectivity between s and t.
 */
 real scalar maxflow_vertex_split(real matrix adj, real scalar s, real scalar t){
-	real scalar n, N, bignum, u, v, i, maxf, pathflow, pf
-	real matrix cap, flow
-	real rowvector parent
+	real scalar n, N, bignum
+	real matrix basecap
+	pointer(real matrix) scalar capptr
 
 	n = rows(adj)
 	N = 2 * n
 	bignum = n + 10
+	basecap = build_vertexsplit_basecap(adj, bignum)
+	capptr = &basecap
+	return(maxflow_vertex_split_shared(capptr, n, bignum, s, t))
+}
 
+/*
+	build_vertexsplit_basecap(adj, bignum): builds the vertex-split
+	capacity matrix's "default" state - every node's own v_in->v_out
+	split edge at capacity 1 (as if no particular (s,t) pair were
+	being queried yet) plus the full u_out->v_in block from `adj'.
+	maxflow_vertex_split_shared() below temporarily raises exactly two
+	cells (the query's own s and t) to `bignum' and restores them
+	afterward, so this base matrix can be built ONCE per
+	fast_min_cut_search() call and reused across all of its O(delta^2)
+	max-flow queries instead of rebuilt from `adj' every single time -
+	see maxflow_vertex_split_shared()'s own header comment for why
+	this matters.
+*/
+real matrix build_vertexsplit_basecap(real matrix adj, real scalar bignum){
+	real scalar n, N, i
+	real matrix cap, tempadj
+
+	n = rows(adj)
+	N = 2 * n
 	cap = J(N, N, 0)
 	for (i=1; i<=n; i++) {
-		if (i==s | i==t) cap[i, n+i] = bignum
-		else cap[i, n+i] = 1
+		cap[i, n+i] = 1
 	}
-	for (u=1; u<=n; u++) {
-		for (v=1; v<=n; v++) {
-			if (u != v & adj[u,v] != 0) {
-				cap[n+u, v] = bignum
-			}
-		}
-	}
+	tempadj = adj
+	_diag(tempadj, 0)
+	cap[(n+1)::N, 1::n] = (tempadj :!= 0) :* bignum
+	return(cap)
+}
+
+/*
+	maxflow_vertex_split_shared(capptr, n, bignum, s, t): the actual
+	max-flow computation, factored out of maxflow_vertex_split() so
+	fast_min_cut_search() can call it directly against a single shared
+	base capacity matrix (built once via build_vertexsplit_basecap())
+	instead of paying that matrix's own O(n^2) construction cost again
+	on every one of its O(delta^2) queries - this was, after the fix
+	one unit ago that replaced the interpreted double-loop construction
+	with a single vectorized assignment, still the dominant remaining
+	cost: the vectorized assignment is itself still O(n^2) work, and
+	was still being redone from scratch on every single call. Mutates
+	*capptr's two split-edge cells for this specific (s,t) query to
+	`bignum' and restores them to 1 before returning, so the shared
+	matrix is back to its default state for the next query regardless
+	of which (s,t) pair is queried next.
+*/
+real scalar maxflow_vertex_split_shared(pointer(real matrix) scalar capptr, real scalar n, real scalar bignum, real scalar s, real scalar t){
+	real scalar N, maxf, pathflow, pf, u, v
+	real matrix flow
+	real rowvector parent
+
+	N = 2 * n
+	(*capptr)[s, n+s] = bignum
+	(*capptr)[t, n+t] = bignum
 
 	flow = J(N, N, 0)
 	maxf = 0
-	while (bfs_augment(cap, flow, n+s, t, parent)) {
+	while (bfs_augment(*capptr, flow, n+s, t, parent)) {
 		pathflow = bignum
 		v = t
 		while (v != n+s) {
 			u = parent[v]
-			pf = cap[u,v] - flow[u,v]
+			pf = (*capptr)[u,v] - flow[u,v]
 			if (pf < pathflow) pathflow = pf
 			v = u
 		}
@@ -1299,55 +1361,141 @@ real scalar maxflow_vertex_split(real matrix adj, real scalar s, real scalar t){
 		}
 		maxf = maxf + pathflow
 	}
+
+	// restore the shared base matrix's default state (split capacity
+	// 1 for every node) so the next query, on whatever (s,t) it uses,
+	// sees the same base matrix build_vertexsplit_basecap() produced -
+	// not a stale bignum left over from this query's own s/t.
+	(*capptr)[s, n+s] = 1
+	(*capptr)[t, n+t] = 1
 	return(maxf)
+}
+
+/*
+	fast_min_cut_search(adj): finds the graph's global vertex
+	connectivity kappa(G) and a witness non-adjacent pair achieving it,
+	using the Esfahanian & Hakimi (1984) refinement of Even's algorithm
+	- O(delta^2) max-flow calls (delta = minimum degree), independent
+	of n, instead of the naive O(n^2) all-non-adjacent-pairs search
+	this package used until this harmonisation unit (see
+	docs/CERTIFICATION.md - found via a direct, measured performance
+	regression: nwkcomponents took 66 SECONDS on a mere 100-node/
+	avg-degree-10 random graph, ~4,450 max-flow calls for a case that
+	needs at most a few hundred). A huge win specifically for sparse
+	networks (delta << n), the overwhelmingly common case for this
+	package's own commands, and the ones this fix was found benchmarking
+	against.
+
+	By Menger's theorem, kappa(G) is the minimum, over every non-adjacent
+	pair, of the local vertex connectivity (min vertex set separating
+	them, i.e. maxflow_vertex_split()). Checking literally every pair is
+	always correct but wasteful; the Esfahanian-Hakimi theorem proves a
+	much smaller set of pairs is provably sufficient:
+	  (1) kappa(G) <= delta(G) always (removing all of any vertex's own
+	      neighbors isolates it) - an upper bound needing no max-flow
+	      call at all.
+	  (2) Let v0 be a vertex of minimum degree (delta neighbors). Check
+	      local connectivity from v0 to every vertex NOT adjacent to it
+	      - O(delta) calls (there are at most n-1-delta such vertices,
+	      but critically the ALGORITHM's own correctness bound is
+	      O(delta), not O(n) - see (3)).
+	  (3) Check local connectivity between every PAIR of v0's own
+	      delta neighbors that are not themselves adjacent - O(delta^2)
+	      calls. This step is NOT optional (Esfahanian & Hakimi's own
+	      proof): a minimum cut smaller than delta can exist entirely
+	      "around" v0's neighborhood without involving v0's own
+	      non-adjacency to anyone, and (2) alone would miss it.
+	  kappa(G) = min of (1), every value from (2), every value from (3).
+	A complete graph (delta = n-1) falls out correctly with zero max-flow
+	calls: v0 is adjacent to everyone (so (2)'s loop is empty) and every
+	pair of v0's n-1 neighbors is also adjacent to each other in a
+	complete graph (so (3)'s loop is empty too), leaving kappa = delta =
+	n-1 exactly as required - no separate base case needed.
+
+	Returns a 3-element row vector (kappa, best_s, best_t): best_s/
+	best_t is the non-adjacent pair whose max-flow computation actually
+	achieved the reported minimum (0,0 if the minimum was the plain
+	degree bound (1) itself, with no max-flow call ever needed to beat
+	it - including the complete-graph case above).
+*/
+real rowvector fast_min_cut_search(real matrix adj){
+	real scalar n, i, j, v0, delta, f, minflow, best_s, best_t, bignum
+	real rowvector degrees, neighbors_v0
+	real matrix basecap
+	pointer(real matrix) scalar capptr
+
+	n = rows(adj)
+	degrees = J(1, n, 0)
+	for (i=1; i<=n; i++) {
+		degrees[i] = sum(adj[i,.] :!= 0)
+	}
+	delta = min(degrees)
+	v0 = 1
+	for (i=1; i<=n; i++) {
+		if (degrees[i] == delta) {
+			v0 = i
+			i = n + 1
+		}
+	}
+
+	minflow = delta
+	best_s = 0
+	best_t = 0
+
+	// Built once and reused across every one of this function's own
+	// O(delta^2) max-flow queries below, instead of maxflow_vertex_
+	// split() rebuilding the same O(n^2) base matrix from `adj' on
+	// every single call - see maxflow_vertex_split_shared()'s own
+	// header comment for why this matters (the dominant remaining
+	// cost behind nwkcomponents still being slow at n=1000, even
+	// after every other fix in this same harmonisation unit).
+	bignum = n + 10
+	basecap = build_vertexsplit_basecap(adj, bignum)
+	capptr = &basecap
+
+	// (2) v0 to every vertex it is NOT adjacent to
+	for (i=1; i<=n; i++) {
+		if (i != v0 & adj[v0,i] == 0) {
+			f = maxflow_vertex_split_shared(capptr, n, bignum, v0, i)
+			if (f < minflow) {
+				minflow = f
+				best_s = v0
+				best_t = i
+			}
+		}
+	}
+
+	// (3) every non-adjacent pair among v0's own neighbors
+	neighbors_v0 = selectindex(adj[v0,.] :!= 0)
+	for (i=1; i<=cols(neighbors_v0); i++) {
+		for (j=i+1; j<=cols(neighbors_v0); j++) {
+			if (adj[neighbors_v0[i], neighbors_v0[j]] == 0) {
+				f = maxflow_vertex_split_shared(capptr, n, bignum, neighbors_v0[i], neighbors_v0[j])
+				if (f < minflow) {
+					minflow = f
+					best_s = neighbors_v0[i]
+					best_t = neighbors_v0[j]
+				}
+			}
+		}
+	}
+
+	return((minflow, best_s, best_t))
 }
 
 /*
 	vertex_connectivity(adj): the graph's overall vertex connectivity
 	kappa(G) - the minimum number of nodes whose removal disconnects
-	the graph or reduces it to a single node. By Menger's theorem,
-	kappa(G) equals the minimum, over every non-adjacent pair (s,t), of
-	the minimum vertex set separating them (maxflow_vertex_split(adj,
-	s, t)); a genuine brute-force over ALL non-adjacent pairs, O(n^2)
-	max-flow calls, rather than the smaller reference-vertex subset
-	Even's own more efficient algorithm restricts to - a deliberately
-	simpler, definitely-correct trade favoring hand-verifiability over
-	asymptotic optimality, matching this session's own established
-	precedent (see BronKerbosch()'s and is_valid_kplex()'s own header
-	comments) and appropriate at this package's target (moderate)
-	network scale. A complete graph (every pair adjacent - no
-	non-adjacent pair exists at all, so the Menger's-theorem loop above
-	would vacuously never run) is handled as its own base case:
-	kappa(K_n) = n-1 by definition (removing any n-1 of its n nodes
-	always leaves a single, trivially "connected" node; no smaller
-	vertex set can disconnect it since every remaining pair stays
-	tied). A graph that is already disconnected (a non-adjacent pair
-	exists with literally no path between them at all) has kappa(G)=0
-	by the same definition - maxflow_vertex_split() naturally returns 0
-	for such a pair (no augmenting path exists even before any node is
-	removed), so this falls out of the general loop with no special
-	case needed.
+	the graph or reduces it to a single node. See fast_min_cut_search()
+	above for the algorithm and why it replaced this package's earlier
+	O(n^2) brute-force search over every non-adjacent pair.
 */
 real scalar vertex_connectivity(real matrix adj){
-	real scalar n, s, t, minflow, f
-	real scalar any_nonadjacent
+	real rowvector result
 
-	n = rows(adj)
-	if (n <= 1) return(0)
-
-	any_nonadjacent = 0
-	minflow = n
-	for (s=1; s<=n; s++) {
-		for (t=s+1; t<=n; t++) {
-			if (adj[s,t] == 0) {
-				any_nonadjacent = 1
-				f = maxflow_vertex_split(adj, s, t)
-				if (f < minflow) minflow = f
-			}
-		}
-	}
-	if (any_nonadjacent == 0) return(n-1)
-	return(minflow)
+	if (rows(adj) <= 1) return(0)
+	result = fast_min_cut_search(adj)
+	return(result[1])
 }
 
 /*
@@ -1374,28 +1522,46 @@ real scalar vertex_connectivity(real matrix adj){
 	the recursion stops without needing to cut anything).
 */
 real rowvector min_vertex_cutset(real matrix adj){
-	real scalar n, N, bignum, s, t, u, v, i, minflow, f, best_s, best_t
+	real scalar n, N, bignum, u, v, i, minflow, best_s, best_t, v0, delta
 	real matrix cap, flow
-	real rowvector parent, visited, queue, cutset
+	real rowvector parent, visited, queue, cutset, search, degrees
 	real scalar qhead, qtail, pathflow, pf
 
 	n = rows(adj)
-	minflow = n
-	best_s = 0
-	best_t = 0
-	for (s=1; s<=n; s++) {
-		for (t=s+1; t<=n; t++) {
-			if (adj[s,t] == 0) {
-				f = maxflow_vertex_split(adj, s, t)
-				if (f < minflow) {
-					minflow = f
-					best_s = s
-					best_t = t
-				}
+	// BUGFIX: used to re-run its own O(n^2) all-non-adjacent-pairs
+	// search identical to vertex_connectivity()'s own former one -
+	// same fix, see fast_min_cut_search()'s own header comment.
+	search = fast_min_cut_search(adj)
+	minflow = search[1]
+	best_s = search[2]
+	best_t = search[3]
+
+	if (best_s == 0) {
+		// The minimum was the plain degree bound itself, with no
+		// max-flow call needed to beat it. minflow==0 is the
+		// "graph already disconnected" case handled below (not by
+		// this branch: kappa==0 with no non-adjacent pair at all is
+		// only possible for n<=1, already excluded by every caller).
+		// Otherwise, the minimum-degree vertex's own neighbor set is
+		// itself always a valid minimum cutset of size delta -
+		// removing it isolates that vertex (or reduces the graph to
+		// it alone), which is exactly what a vertex cut means here -
+		// no max-flow-based extraction needed to find it.
+		if (minflow == 0) return(J(1,0,0))
+		degrees = J(1, n, 0)
+		for (i=1; i<=n; i++) {
+			degrees[i] = sum(adj[i,.] :!= 0)
+		}
+		delta = min(degrees)
+		v0 = 1
+		for (i=1; i<=n; i++) {
+			if (degrees[i] == delta) {
+				v0 = i
+				i = n + 1
 			}
 		}
+		return(selectindex(adj[v0,.] :!= 0))
 	}
-	if (best_s == 0) return(J(1,0,0))
 
 	// re-run max-flow on the winning pair, keeping its final flow
 	N = 2*n
