@@ -7,15 +7,22 @@ program _nwdeploy
 	file open `versionlog' using versionlog.sh, replace write
 	
 	set more off
-	tempname deploy_ado
-	file open `deploy_ado' using nwcommands-ado.pkg, replace write
-	file write `deploy_ado' "v 3" _n
-	file write `deploy_ado' "d nwcommands-ado. Social Network Analysis Using Stata" _n
-	file write `deploy_ado' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write `deploy_ado' "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
-	file write `deploy_ado' "d Distribution-Date: `d'" _n
-	
+	// BUGFIX: a monolithic nwcommands-ado.pkg (117 f-lines, ~122 lines
+	// total with its own header) silently fails "net install" with
+	// "package file too long" - a real, previously-undiscovered Stata
+	// .pkg format limit, confirmed empirically via a binary search on a
+	// local install (103 total lines installs fine, 104 does not; this
+	// package's own actual header is 5 lines, so kept a generous 80-line
+	// safety margin below that rather than the exact measured boundary).
+	// Never surfaced before this harmonisation unit because the tool
+	// itself never ran to completion until now. Fixed by chunking into
+	// multiple numbered packages (nwcommands-ado1.pkg, -ado2.pkg, ...)
+	// - see nwdeploy_writepkgchunks below - rather than shipping a
+	// single package nobody could actually install.
+	nwdeploy_writepkgchunks, manifest(_pkg_ado.txt) base(nwcommands-ado) desc("nwcommands-ado. Social Network Analysis Using Stata") email(thomas.u.grund@gmail.com) date(`d')
+	local nadochunks = r(chunks)
+
 	local adofiles : dir "`c(pwd)'" files "*.ado"
 	local sthlpfiles : dir "`c(pwd)'" files "*.sthlp"
 	// `: dir' returns files in filesystem order, not alphabetical - left
@@ -139,72 +146,24 @@ program _nwdeploy
 			"{p2colset 5 32 34 2}" 
 	set more off
 	
-	file open _pkg_ado using _pkg_ado.txt, read
-	file read _pkg_ado _pkg_ado_line 
-	while "`_pkg_ado_line'" != "" {
-		file write `deploy_ado' "`_pkg_ado_line'" _n
-		file read _pkg_ado _pkg_ado_line 
-	}
-	file close _pkg_ado
-	
 	foreach file in `adofiles' {
-		
+
 		// add meta to dofiles
 		// di "ado: `file'"
 		//qui _addmeta_do `file', date(`d') author(`author') email(`email') version(`version') other(`other')
-	
-		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)') 
+
+		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)')
 		getcmddesc `cmdname'
-		//file write `deploy_ado' "f `file'" _n
-		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n		
+		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 	}
-	
+
 	file close `alphabetical'
-	
-	/*local dtafiles : dir "`c(pwd)'" files "*.dta"
-	foreach file in `dtafiles' {
-		file write `deploy_ado' "f `file'" _n
-	}
-	local netfiles : dir "`c(pwd)'" files "*.net"
-	foreach file in `netfiles' {
-		file write `deploy_ado' "f `file'" _n
-	}
-	local schemefiles : dir "`c(pwd)'" files "*.scheme"
-	foreach file in `schemefiles' {
-		file write `deploy_ado' "f `file'" _n
-	}
-	local dlfiles : dir "`c(pwd)'" files "*.dat"
-	foreach file in `dlfiles' {
-		file write `deploy_ado' "f `file'" _n
-	}*/
-	
-	file close `deploy_ado'
-	
-	file open deploy_hlp using nwcommands-hlp.pkg, replace write
-	file write deploy_hlp "v 3" _n
-	file write deploy_hlp "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files" _n
-	file write deploy_hlp "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_hlp "d email: thomas.u.grund@gmail.com" _n
-	local d = lower(subinstr(c(current_date)," ","",.))
-	file write deploy_hlp "d Distribution-Date: `d'" _n
-	
-	file open _pkg_hlp using _pkg_hlp.txt, read
-	file read _pkg_hlp _pkg_hlp_line 
-	while "`_pkg_hlp_line'" != "" {
-		file write deploy_hlp "`_pkg_hlp_line'" _n
-		file read _pkg_hlp _pkg_hlp_line 
-	}
-	file close _pkg_hlp
-	
-	/*
-	local hlpfiles : dir "`c(pwd)'" files "*.sthlp"
-	foreach file in `hlpfiles' {
-		file write deploy_hlp "f `file'" _n
-	}
-	*/
-	
-	file close deploy_hlp
-	
+
+	// Same "package file too long" fix as nwcommands-ado above -
+	// nwcommands-hlp.pkg (119 f-lines) is even larger.
+	nwdeploy_writepkgchunks, manifest(_pkg_hlp.txt) base(nwcommands-hlp) desc("nwcommands-hlp. Social Network Analysis Using Stata - Help Files") email(thomas.u.grund@gmail.com) date(`d')
+	local nhlpchunks = r(chunks)
+
 	file open deploy_ext1 using nwcommands-ext.pkg, replace write
 	file write deploy_ext1 "v 3" _n
 	file write deploy_ext1 "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
@@ -240,6 +199,63 @@ program _nwdeploy
 	}
 	file close deploy_dlg
 	file close `versionlog'
+
+	// stata.toc drives `net from'/`net install' discovery - generated
+	// here (rather than hand-maintained) so the chunk counts above
+	// always match what actually got written, even as the package
+	// grows past whatever chunk boundary is currently in force.
+	tempname toc
+	file open `toc' using stata.toc, replace write
+	file write `toc' "v 3" _n
+	file write `toc' "d nwcommands: Network Analysis for Stata" _n
+	forvalues i = 1/`nadochunks' {
+		file write `toc' _n "p nwcommands-ado`i'" _n "d nwcommands-ado. Social Network Analysis Using Stata (part `i' of `nadochunks')" _n
+	}
+	forvalues i = 1/`nhlpchunks' {
+		file write `toc' _n "p nwcommands-hlp`i'" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part `i' of `nhlpchunks')" _n
+	}
+	file write `toc' _n "p nwcommands-ext" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
+	file write `toc' _n "p nwcommands-dlg" _n "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
+	file close `toc'
+end
+
+capture program drop nwdeploy_writepkgchunks
+program nwdeploy_writepkgchunks, rclass
+	// Writes `manifest' (a flat file of "f filename" lines) out as one
+	// or more numbered .pkg files (`base'1.pkg, `base'2.pkg, ...),
+	// never exceeding `chunksize' f-lines per file - see the "package
+	// file too long" comment at this program's own call sites for why.
+	// Returns the number of chunks written (r(chunks)) so the caller
+	// can both loop over them and regenerate stata.toc to match.
+	syntax , manifest(string) base(string) desc(string) email(string) date(string) [chunksize(integer 80)]
+	tempname fh mh
+	file open `mh' using `manifest', read
+	file read `mh' line
+	local chunknum = 0
+	local linecount = `chunksize'
+	while "`line'" != "" {
+		if `linecount' >= `chunksize' {
+			if `chunknum' > 0 {
+				file close `fh'
+			}
+			local chunknum = `chunknum' + 1
+			file open `fh' using `base'`chunknum'.pkg, replace write
+			file write `fh' "v 3" _n
+			file write `fh' "d `desc' (part `chunknum')" _n
+			file write `fh' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
+			file write `fh' "d email: `email'" _n
+			file write `fh' "d Distribution-Date: `date'" _n
+			local linecount = 0
+		}
+		file write `fh' "`line'" _n
+		local linecount = `linecount' + 1
+		file read `mh' line
+	}
+	if `chunknum' > 0 {
+		file close `fh'
+	}
+	file close `mh'
+	return scalar chunks = `chunknum'
 end
 
 capture program drop getcmddesc

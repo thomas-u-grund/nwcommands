@@ -1,11 +1,17 @@
 v 3
 d nwcommands: Network Analysis for Stata
 
-p nwcommands-ado
-d nwcommands-ado. Social Network Analysis Using Stata
+p nwcommands-ado1
+d nwcommands-ado. Social Network Analysis Using Stata (part 1 of 2)
 
-p nwcommands-hlp
-d nwcommands-hlp. Social Network Analysis Using Stata - Help Files
+p nwcommands-ado2
+d nwcommands-ado. Social Network Analysis Using Stata (part 2 of 2)
+
+p nwcommands-hlp1
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1 of 2)
+
+p nwcommands-hlp2
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2 of 2)
 
 p nwcommands-ext
 d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1

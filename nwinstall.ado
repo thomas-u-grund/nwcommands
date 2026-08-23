@@ -1,6 +1,6 @@
 capture program drop nwinstall
 program nwinstall
-	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ext all path(string)]
+	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ado ext all path(string)]
 	
 	if "`usermenu'" != "" | "`downloadoff'" != "" {
 		window menu clear
@@ -27,19 +27,59 @@ program nwinstall
 		local permanently = "permanently"
 	}
 	
+	// Stata's own .pkg format has a hard, previously-undiscovered line
+	// limit ("package file too long" - confirmed empirically, see
+	// _nwdeploy.ado's own comment on nwdeploy_writepkgchunks) that this
+	// package's core command count and help-file count both exceed, so
+	// _nwdeploy.ado now ships each as several numbered packages
+	// (nwcommands-ado1.pkg, nwcommands-ado2.pkg, ...) instead of one.
+	// Installing them all means trying chunk numbers upward until one
+	// genuinely doesn't exist - `capture' turns that expected stop into
+	// a silent, clean loop exit rather than a surfaced error, matching
+	// how many chunks stata.toc happens to list right now without this
+	// command needing to hardcode that count.
+	if "`ado'" != "" | "`all'" != "" {
+		capture ado uninstall "nwcommands-ado"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		local i = 1
+		local keepgoing = 1
+		while `keepgoing' {
+			capture net install "nwcommands-ado`i'", all
+			if _rc != 0 {
+				local keepgoing = 0
+			}
+			local i = `i' + 1
+		}
+		// The loop's own natural exit is an EXPECTED, captured failure
+		// (chunk `i' genuinely doesn't exist) - without this, that
+		// leaves a misleading nonzero `_rc' standing even when every
+		// real chunk installed successfully (the same `_rc'-staleness
+		// bug class fixed elsewhere this session, e.g. nwsync.ado).
+		capture confirm number 1
+	}
+
 	if "`help'" != "" {
 		capture ado uninstall "nwcommands-hlp"
 		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
-		net install "nwcommands-hlp", all
+		local i = 1
+		local keepgoing = 1
+		while `keepgoing' {
+			capture net install "nwcommands-hlp`i'", all
+			if _rc != 0 {
+				local keepgoing = 0
+			}
+			local i = `i' + 1
+		}
+		capture confirm number 1
 	}
-	
+
 	if "`ext'" != "" {
 		capture ado uninstall "nwcommands-ext"
 		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
 		net install "nwcommands-ext", all
 	}
-	
-	
+
+
 	if "`dialog'" != "" {
 		capture ado uninstall "nwcommands-dlg"
 		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"

@@ -1,5 +1,5 @@
 v 3
-d nwcommands-ado. Social Network Analysis Using Stata
+d nwcommands-ado. Social Network Analysis Using Stata (part 1)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 23aug2026
@@ -83,40 +83,3 @@ f nwpermute.ado
 f nwplot.ado
 f nwplotmatrix.ado
 f nwpref.ado
-f nwqap.ado
-f nwrandom.ado
-f nwreach.ado
-f nwrecode.ado
-f nwrename.ado
-f nwreplace.ado
-f nwreplacemat.ado
-f nwring.ado
-f nwsave.ado
-f nwset.ado
-f nwsimilar.ado
-f nwsimindex.ado
-f nwsimmelian.ado
-f nwsmall.ado
-f nwspectral.ado
-f nwsubset.ado
-f nwsummarize.ado
-f nwsym.ado
-f nwsync.ado
-f nwtabulate.ado
-f nwtoedge.ado
-f nwtomata.ado
-f nwtomatafast.ado
-f nwtostata.ado
-f nwtranspose.ado
-f nwtriads.ado
-f nwturnover.ado
-f nwunab.ado
-f nwuse.ado
-f nwutility.ado
-f nwvalidate.ado
-f nwvalidvars.ado
-f nwvalue.ado
-f nwwebuse.ado
-f scheme-s1network.scheme
-f scheme-s2network.scheme
-f scheme-s3network.scheme
