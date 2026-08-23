@@ -743,6 +743,211 @@ real rowvector change_nodemix(class ErgmGraph scalar G, real scalar i, real scal
 	return(out)
 }
 
+/* ===================================================================
+   Term-expansion wave 2 (harmonisation unit 90, docs/CERTIFICATION.md -
+   phase D, continuation of unit 88): degree(d)/idegree(d)/odegree(d),
+   concurrent, triangle, ctriple, gwnsp. Fresh verification against R
+   ergm's own current source (R/InitErgmTerm.R, R/InitErgmTerm.dgw_sp.R)
+   informed every definition below, not memory alone - in particular:
+   R's own `degree(d)' takes `d' as a VECTOR (multiple simultaneous
+   degree-value statistics in one term instance, reusing the same
+   `td.levels' multi-parameter machinery unit 88 already built for
+   `nodematchdiff'/`nodefactor'), R's own `isolates' term appears to have
+   been REMOVED from current ergm in favor of `degree(0)' (confirmed by
+   its absence from the current term-listing file, not merely assumed -
+   `degree()' already subsumes it, so no separate isolates term is added
+   here), and `gwnsp' is confirmed to satisfy the exact identity
+   gwdsp = gwesp + gwnsp (both count shared-partner kernel sums over
+   disjoint dyad sets - tied dyads for gwesp, untied dyads for gwnsp -
+   that partition every dyad exactly once), letting it be implemented as
+   a thin composition of the two already-certified terms rather than a
+   third independent shared-partner traversal.
+   =================================================================== */
+
+/*
+	degree(d)/idegree(d)/odegree(d): one statistic per requested degree
+	value d[m] (`td.levels' holds the d-vector here, reusing the exact
+	same multi-parameter field `nodematchdiff'/`nodefactor' already use -
+	the field's own name is generic on purpose), each counting the number
+	of NODES whose (total/in/out) degree equals that value exactly.
+	Toggling (i,j) can move at most one node's degree away from some
+	d[m] and into some (possibly different) d[m'] per endpoint affected -
+	undirected `degree' touches BOTH endpoints (each endpoint's own total
+	degree changes by the same delta); directed `odegree'/`idegree' touch
+	only ONE endpoint each (only i's out-degree changes for `odegree';
+	only j's in-degree changes for `idegree'), matching arc semantics.
+*/
+real rowvector stat_degree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, idx
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		idx = _ergm_level_index(td.levels, G.degree_total(i))
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector _ergm_degree_change(real colvector levels, real scalar olddeg, real scalar delta){
+	real rowvector out
+	real scalar idx
+	out = J(1, rows(levels), 0)
+	idx = _ergm_level_index(levels, olddeg)
+	if (idx) out[idx] = out[idx] - 1
+	idx = _ergm_level_index(levels, olddeg + delta)
+	if (idx) out[idx] = out[idx] + 1
+	return(out)
+}
+real rowvector change_degree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta
+	delta = G.has_edge(i,j) ? -1 : 1
+	return(_ergm_degree_change(td.levels, G.degree_total(i), delta) + _ergm_degree_change(td.levels, G.degree_total(j), delta))
+}
+
+real rowvector stat_odegree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, idx
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		idx = _ergm_level_index(td.levels, G.degree_out(i))
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_odegree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta
+	delta = G.has_edge(i,j) ? -1 : 1
+	return(_ergm_degree_change(td.levels, G.degree_out(i), delta))
+}
+
+real rowvector stat_idegree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar i, idx
+	out = J(1, rows(td.levels), 0)
+	for (i=1; i<=G.n; i++) {
+		idx = _ergm_level_index(td.levels, G.degree_in(i))
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_idegree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta
+	delta = G.has_edge(i,j) ? -1 : 1
+	return(_ergm_degree_change(td.levels, G.degree_in(j), delta))
+}
+
+/*
+	Concurrent (R ergm's `concurrent'): number of nodes with (total)
+	degree >= 2, undirected. A single-statistic special case of the same
+	"has this node's degree crossed a threshold" reasoning `degree()'
+	above uses, kept as its own term (rather than requiring users to
+	spell out a range) purely for convenience, matching R's own
+	convention of shipping it as a named term despite the overlap with
+	`degrange(2,.)' (not itself implemented - `concurrent' is the
+	single, by far most commonly used instance of that family, per the
+	prioritized survey in docs/ERGM_ROADMAP.md).
+*/
+real rowvector stat_concurrent(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) if (G.degree_total(i) >= 2) tot++
+	return(tot)
+}
+real rowvector change_concurrent(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, di, dj, chg
+	delta = G.has_edge(i,j) ? -1 : 1
+	di = G.degree_total(i)
+	dj = G.degree_total(j)
+	chg = (((di+delta)>=2) - (di>=2)) + (((dj+delta)>=2) - (dj>=2))
+	return(chg)
+}
+
+/*
+	Triangle (undirected): number of triangles (unordered triples of
+	pairwise-tied nodes). Uses the identity triangle_count =
+	(1/3) * sum over TIED dyads (i,j) of shared_partners(i,j) - each
+	triangle {a,b,c} contributes exactly 1 to each of its own 3 edges'
+	own shared-partner count, so summing over edges counts every
+	triangle exactly 3 times. The CHANGE statistic is dramatically
+	simpler than GWESP's own (no neighbor-loop/kernel-reweighting term
+	at all): toggling (i,j) with p pre-existing shared partners creates
+	or destroys EXACTLY p triangles (one per shared partner k, since
+	{i,j,k} either becomes or stops being a triangle) - unlike GWESP,
+	there is no "kernel value shifts for k's own other triangles" term to
+	add, because the un-weighted count of "is k a shared partner of
+	(i,j)" doesn't change for OTHER dyads when (i,j) itself toggles (only
+	whether i-j is tied, not whether i/j are each other's neighbors,
+	changes) - the same reasoning gwesp's own decay-kernel version needs
+	the extra neighbor loop for precisely because the KERNEL's shape
+	means k's own shared-partner-count-of-OTHER-dyads term shifts too;
+	the unweighted "count" kernel's own marginal contribution per triangle
+	is exactly 1 regardless of context, so no such adjustment is needed.
+*/
+real rowvector stat_triangle(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + G.shared_partners(ties[k,1], ties[k,2])
+	return(tot/3)
+}
+real rowvector change_triangle(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta
+	delta = G.has_edge(i,j) ? -1 : 1
+	return(delta * G.shared_partners(i,j))
+}
+
+/*
+	Ctriple (R ergm's `ctriple', directed only): number of CYCLIC
+	triples - sets of arcs {(i->j),(j->k),(k->i)}. Same "sum over arcs,
+	divide by 3" structure as `triangle' above, but the "local count" for
+	arc (i,j) is the number of k such that j->k AND k->i BOTH already
+	hold (not a symmetric shared-partner count, since direction matters
+	for which two-path closes the cycle back to i). Toggling arc (i,j)
+	creates/destroys exactly that many cyclic triples.
+*/
+real scalar _ergm_cyclic_partners(class ErgmGraph scalar G, real scalar i, real scalar j){
+	real rowvector nb
+	real scalar m, k, cnt
+	nb = G.neighbors_out(j)
+	cnt = 0
+	for (m=1; m<=cols(nb); m++) {
+		k = nb[m]
+		if (k != i && G.has_edge(k,i)) cnt++
+	}
+	return(cnt)
+}
+real rowvector stat_ctriple(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + _ergm_cyclic_partners(G, ties[k,1], ties[k,2])
+	return(tot/3)
+}
+real rowvector change_ctriple(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta
+	delta = G.has_edge(i,j) ? -1 : 1
+	return(delta * _ergm_cyclic_partners(G, i, j))
+}
+
+/*
+	Gwnsp (geometrically weighted NONedgewise shared partners): satisfies
+	gwdsp = gwesp + gwnsp exactly (every dyad is either tied - counted by
+	gwesp - or untied - counted by gwnsp - so the two sums partition
+	gwdsp's own "every dyad" sum with no overlap or gap) - confirmed
+	directly against R ergm's own current source
+	(R/InitErgmTerm.dgw_sp.R) before relying on it. Implemented as a
+	thin composition of the two already-certified terms above rather
+	than a third independent shared-partner traversal - both must be
+	called with the SAME decay (`td.decay', shared).
+*/
+real rowvector stat_gwnsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(stat_gwdsp(G, td) - stat_gwesp(G, td))
+}
+real rowvector change_gwnsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(change_gwdsp(G, i, j, td) - change_gwesp(G, i, j, td))
+}
+
 /*
 	Shared weighting kernel used by both the GWESP and GW(o/i)degree
 	families (Hunter 2007): w(d) = exp(decay)*(1-(1-exp(-decay))^d),

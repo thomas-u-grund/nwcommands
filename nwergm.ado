@@ -28,9 +28,16 @@
 [{opth nodemix(varlist)}]
 [{opt gwesp(real)}]
 [{opt gwdsp(real)}]
+[{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
 [{opt gwodegree(real)}]
 [{opt gwidegree(real)}]
+[{opt degree(numlist)}]
+[{opt odegree(numlist)}]
+[{opt idegree(numlist)}]
+[{opt concurrent}]
+[{opt triangle}]
+[{opt ctriple}]
 [{opt method(mple|mcmle)}
 {opt mcmcburnin(int)}
 {opt mcmcinterval(int)}
@@ -53,13 +60,20 @@
 {synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
 {synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
-{synopt:{opth nodefactor(varlist)}}One coefficient per distinct level of each listed categorical attribute, each counting total degree among nodes at that level{p_end}
+{synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
+{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected only. Satisfies gwdsp = gwesp + gwnsp{p_end}
+{synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
+{synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
+{synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
+{synopt:{opt concurrent}}Count of nodes with (total) degree 2 or higher; undirected only{p_end}
+{synopt:{opt triangle}}Count of triangles (mutually tied triples); undirected only{p_end}
+{synopt:{opt ctriple}}Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only{p_end}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
@@ -272,7 +286,8 @@ program nwergm, eclass
 	syntax [anything(name=netname)] [, edges mutual ///
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
-		GWESP(string) GWDSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
+		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
+		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -325,6 +340,30 @@ program nwergm, eclass
 	}
 	if ("`gwodegree'" != "" | "`gwidegree'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:gwdegree()} for an undirected network."
+		error 198
+	}
+	if "`gwnsp'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:gwnsp()} (v1 scope) is undirected only; {bf:`netname'} is directed."
+		error 198
+	}
+	if "`degree'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:degree()} is undirected only; {bf:`netname'} is directed. Use {bf:odegree()}/{bf:idegree()} for a directed network."
+		error 198
+	}
+	if ("`odegree'" != "" | "`idegree'" != "") & "`directed'" != "true" {
+		di "{err}options {bf:odegree()}/{bf:idegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:degree()} for an undirected network."
+		error 198
+	}
+	if "`concurrent'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:concurrent} (v1 scope) is undirected only; {bf:`netname'} is directed."
+		error 198
+	}
+	if "`triangle'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:triangle} is undirected only; {bf:`netname'} is directed. Use {bf:ctriple} for a directed network."
+		error 198
+	}
+	if "`ctriple'" != "" & "`directed'" != "true" {
+		di "{err}option {bf:ctriple} requires a directed network; {bf:`netname'} is undirected. Use {bf:triangle} for an undirected network."
 		error 198
 	}
 
@@ -479,7 +518,23 @@ program nwergm, eclass
 		tempname __td_nf`__ergm_termidx'
 		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nf`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		// Omit the first (lowest-sorted) level by default, matching R
+		// ergm's own nodefactor(attr, base=1) convention (harmonisation
+		// unit 90, docs/CERTIFICATION.md) - fresh verification of R's
+		// current InitErgmTerm.R confirmed nodefactor sums, per level,
+		// "number of times a node with that attribute appears in an
+		// edge"; for an undirected network this equals 2*edges once ALL
+		// levels are summed, making the FULL-level parameterization
+		// exactly collinear with the already-present `edges' term (one
+		// level's own coefficient is unidentified) - precisely the
+		// redundancy R's own `base' convention exists to avoid. An
+		// earlier version of this term (unit 88) shipped without this
+		// omission; `stat_nodefactor()'/`change_nodefactor()' themselves
+		// needed NO change to fix this - both are already fully generic
+		// over whatever `td.levels' holds, so this is a pure `nwergm.ado'
+		// construction-time fix.
 		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
+		mata: if (rows(`__td_nf`__ergm_termidx''.levels) > 1) `__td_nf`__ergm_termidx''.levels = `__td_nf`__ergm_termidx''.levels[2::rows(`__td_nf`__ergm_termidx''.levels)]
 		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nf`__ergm_termidx''.levels)))
 		tempname __ergm_levvec2
 		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
@@ -513,6 +568,68 @@ program nwergm, eclass
 		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
 		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
+	// --- term-expansion wave 2 (harmonisation unit 90): degree(numlist)/
+	// odegree(numlist)/idegree(numlist), concurrent, triangle, ctriple -
+	// see unw_ergm.do's own header comment on these terms for the full
+	// statistical definitions and R-ergm cross-checks. All dyad-
+	// DEPENDENT (each depends on more than just its own two endpoints'
+	// attributes), so none of these are added to the MPLE-eligibility
+	// check below - matching mutual/every geometrically-weighted term.
+	if "`degree'" != "" {
+		tempname __td_deg
+		mata: `__td_deg' = ErgmTermData()
+		mata: `__td_deg'.levels = strtoreal(tokens("`degree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_deg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `degree' {
+			local __ergm_cnames "`__ergm_cnames' degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("degree", `__ergm_ndeg', &stat_degree(), &change_degree(), `__td_deg', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_deg'"
+	}
+	if "`odegree'" != "" {
+		tempname __td_odeg
+		mata: `__td_odeg' = ErgmTermData()
+		mata: `__td_odeg'.levels = strtoreal(tokens("`odegree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_odeg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `odegree' {
+			local __ergm_cnames "`__ergm_cnames' odegree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("odegree", `__ergm_ndeg', &stat_odegree(), &change_odegree(), `__td_odeg', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_odeg'"
+	}
+	if "`idegree'" != "" {
+		tempname __td_ideg
+		mata: `__td_ideg' = ErgmTermData()
+		mata: `__td_ideg'.levels = strtoreal(tokens("`idegree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_ideg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `idegree' {
+			local __ergm_cnames "`__ergm_cnames' idegree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("idegree", `__ergm_ndeg', &stat_idegree(), &change_idegree(), `__td_ideg', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ideg'"
+	}
+	if "`concurrent'" != "" {
+		tempname __td_conc
+		mata: `__td_conc' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("concurrent", 1, &stat_concurrent(), &change_concurrent(), `__td_conc', ("concurrent"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_conc'"
+	}
+	if "`triangle'" != "" {
+		tempname __td_tri
+		mata: `__td_tri' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), `__td_tri', ("triangle"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_tri'"
+	}
+	if "`ctriple'" != "" {
+		tempname __td_ctri
+		mata: `__td_ctri' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), `__td_ctri', ("ctriple"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ctri'"
 	}
 
 	local __ergm_termidx = 0
@@ -572,6 +689,14 @@ program nwergm, eclass
 		mata: __nwergm_last_M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), `__td_gwdsp', ("gwdsp_`gwdsp'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdsp'"
 	}
+	if "`gwnsp'" != "" {
+		confirm number `gwnsp'
+		tempname __td_gwnsp
+		mata: `__td_gwnsp' = ErgmTermData()
+		mata: `__td_gwnsp'.decay = `gwnsp'
+		mata: __nwergm_last_M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), `__td_gwnsp', ("gwnsp_`gwnsp'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwnsp'"
+	}
 	if "`gwdegree'" != "" {
 		confirm number `gwdegree'
 		tempname __td_gwdeg
@@ -599,10 +724,14 @@ program nwergm, eclass
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
 	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
-	// and every geometrically-weighted term, including gwdsp, are
-	// dyad-dependent - gwdsp no less than gwesp, since shared-partner
-	// counts are just as nonlocal for untied dyads as for tied ones).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="")
+	// and every geometrically-weighted term, including gwdsp/gwnsp, are
+	// dyad-dependent - gwdsp/gwnsp no less than gwesp, since shared-
+	// partner counts are just as nonlocal for untied dyads as for tied
+	// ones; degree()/odegree()/idegree()/concurrent/triangle/ctriple are
+	// ALSO dyad-dependent - unit 90 - since each depends on more than
+	// just its own two endpoints' attributes, via other nodes' degrees
+	// or shared third parties).
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
