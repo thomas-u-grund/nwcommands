@@ -18,11 +18,16 @@
 {cmd:,}
 {opt edges} [{opt mutual}]
 [{opth nodematch(varlist)}]
+[{opth nodematchdiff(varlist)}]
 [{opth nodecov(varlist)}]
 [{opth nodeicov(varlist)}]
 [{opth nodeocov(varlist)}]
 [{opth edgecov(netname)}]
+[{opth absdist(varlist)}]
+[{opth nodefactor(varlist)}]
+[{opth nodemix(varlist)}]
 [{opt gwesp(real)}]
+[{opt gwdsp(real)}]
 [{opt gwdegree(real)}]
 [{opt gwodegree(real)}]
 [{opt gwidegree(real)}]
@@ -41,12 +46,17 @@
 {synoptline}
 {synopt:{opt edges}}Include the {cmd:edges} term (density/intercept); required{p_end}
 {synopt:{opt mutual}}Reciprocated-tie count; directed networks only{p_end}
-{synopt:{opth nodematch(varlist)}}Homophily on each listed categorical node attribute (exact match){p_end}
+{synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable){p_end}
+{synopt:{opth nodematchdiff(varlist)}}Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attribute, rather than pooled across levels{p_end}
 {synopt:{opth nodecov(varlist)}}Continuous node covariate main effect (sum over tie endpoints){p_end}
 {synopt:{opth nodeicov(varlist)}}Directed receiver-covariate effect; directed networks only{p_end}
 {synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
 {synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
+{synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
+{synopt:{opth nodefactor(varlist)}}One coefficient per distinct level of each listed categorical attribute, each counting total degree among nodes at that level{p_end}
+{synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected only{p_end}
+{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected only{p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
@@ -260,8 +270,9 @@ program nwergm, eclass
 		exit
 	}
 	syntax [anything(name=netname)] [, edges mutual ///
-		NODEMATCH(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
-		EDGECOV(string) GWESP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
+		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
+		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
+		GWESP(string) GWDSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE ]
@@ -306,6 +317,10 @@ program nwergm, eclass
 	}
 	if "`gwesp'" != "" & "`directed'" == "true" {
 		di "{err}option {bf:gwesp()} (v1 scope) is undirected only; {bf:`netname'} is directed. See docs/ERGM_ROADMAP.md for the directed OTP/ITP/OSP/ISP variants."
+		error 198
+	}
+	if "`gwdsp'" != "" & "`directed'" == "true" {
+		di "{err}option {bf:gwdsp()} (v1 scope) is undirected only; {bf:`netname'} is directed."
 		error 198
 	}
 	if ("`gwodegree'" != "" | "`gwidegree'" != "") & "`directed'" != "true" {
@@ -422,6 +437,84 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_no`__ergm_termidx''"
 	}
 
+	// --- term-expansion wave 1 (harmonisation unit 88): absdist,
+	// nodematch(diff=TRUE) (a separate nodematchdiff() option, per this
+	// file's own header comment on why a suboption on nodematch() itself
+	// was not used), nodefactor, nodemix - see unw_ergm.do's own header
+	// comment on these four terms for the full statistical definitions.
+	local __ergm_termidx = 0
+	foreach __ergm_v of local absdist {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_ad`__ergm_termidx'
+		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_ad`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), `__td_ad`__ergm_termidx'', ("absdist_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ad`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodematchdiff {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nmd`__ergm_termidx'
+		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nmd`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nmd`__ergm_termidx''.levels = uniqrows(`__td_nmd`__ergm_termidx''.attr)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nmd`__ergm_termidx''.levels)))
+		tempname __ergm_levvec
+		mata: st_matrix("`__ergm_levvec'", `__td_nmd`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodematch_diff", `__ergm_nlev', &stat_nodematch_diff(), &change_nodematch_diff(), `__td_nmd`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nmd`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodefactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nf`__ergm_termidx'
+		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nf`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nf`__ergm_termidx''.levels)))
+		tempname __ergm_levvec2
+		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodefactor", `__ergm_nlev', &stat_nodefactor(), &change_nodefactor(), `__td_nf`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodemix {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_mx`__ergm_termidx'
+		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_mx`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __ergm_lv = uniqrows(`__td_mx`__ergm_termidx''.attr)
+		mata: __ergm_np = rows(__ergm_lv)
+		mata: __ergm_lp = J(0,2,0)
+		mata: for (__ergm_a=1; __ergm_a<=__ergm_np; __ergm_a++) for (__ergm_b=__ergm_a; __ergm_b<=__ergm_np; __ergm_b++) __ergm_lp = __ergm_lp \ (__ergm_lv[__ergm_a], __ergm_lv[__ergm_b])
+		mata: `__td_mx`__ergm_termidx''.levelpairs = __ergm_lp
+		mata: st_local("__ergm_nlp", strofreal(rows(__ergm_lp)))
+		tempname __ergm_lpmat
+		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlp' {
+			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]''"
+		}
+		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
+		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
 	local __ergm_termidx = 0
 	foreach __ergm_v of local edgecov {
 		local ++__ergm_termidx
@@ -471,6 +564,14 @@ program nwergm, eclass
 		// discipline this project used for the batch-means variance
 		// estimator (unit 80).
 	}
+	if "`gwdsp'" != "" {
+		confirm number `gwdsp'
+		tempname __td_gwdsp
+		mata: `__td_gwdsp' = ErgmTermData()
+		mata: `__td_gwdsp'.decay = `gwdsp'
+		mata: __nwergm_last_M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), `__td_gwdsp', ("gwdsp_`gwdsp'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdsp'"
+	}
 	if "`gwdegree'" != "" {
 		confirm number `gwdegree'
 		tempname __td_gwdeg
@@ -496,9 +597,12 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwid'"
 	}
 
-	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/edgecov
-	// are present (mutual and every gw term are dyad-dependent).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="")
+	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
+	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
+	// and every geometrically-weighted term, including gwdsp, are
+	// dyad-dependent - gwdsp no less than gwesp, since shared-partner
+	// counts are just as nonlocal for untied dyads as for tied ones).
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
