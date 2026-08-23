@@ -231,7 +231,8 @@ first place.
 
 {p 6 10 2}
 9. A literal pair of backtick characters used as markdown-style emphasis inside a {bf:.ado} file's
-comment (e.g. {bf:// see `replace` for details}) - anywhere in the file, doc header or program body
+comment (e.g. two backticks around a word, as inline code-style emphasis is sometimes written in
+other languages) - anywhere in the file, doc header or program body
 alike - crashes {bf:nw_helpwriter}'s line-copy loop with a genuine "too few quotes" parse error, since
 that loop macro-processes every line of the file unconditionally before deciding whether to write it.
 Use plain quotes for emphasis in comments instead of backticks.
