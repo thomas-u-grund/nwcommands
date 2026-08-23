@@ -1,21 +1,24 @@
-name: Build native ERGM plugins
+name: Build native plugins
 
 # Harmonisation unit 87 (phase C, cross-platform native builds -
-# docs/CERTIFICATION.md). No Windows/Linux toolchain or cross-compiler was
-# available in the environment this workflow was authored in, so those two
-# platforms' own plugin binaries are built here, on GitHub's own hosted
-# runners, rather than locally. macOS is rebuilt here too, purely as a
-# cross-check against the copy already committed via native/Makefile's own
-# `macos` target on a real Apple Silicon development machine.
+# docs/CERTIFICATION.md), extended in unit 95 to also build nwgraph.c
+# (docs/NATIVE_GRAPH_LIBRARIES.md's own native graph-algorithm kernel -
+# currently betweenness centrality). No Windows/Linux toolchain or
+# cross-compiler was available in the environment this workflow was
+# authored in, so those two platforms' own plugin binaries are built here,
+# on GitHub's own hosted runners, rather than locally. macOS is rebuilt
+# here too, purely as a cross-check against the copy already committed via
+# native/Makefile's own `macos` target (which builds every plugin, not
+# just one) on a real Apple Silicon development machine.
 #
 # On a push to the repository's default branch that touches native/, the
 # freshly-built plugins are committed back into lib/plugins/ (the exact
-# path unw_ergm.do's own ErgmNativePluginPath()/ErgmNativePluginFilename()
-# already look for) so the package ships pre-built binaries for all three
-# platforms - nwergm's own ErgmNativeAvailable() falls back to the pure
-# Mata backend gracefully wherever a given platform's binary is absent, so
-# this workflow failing or being skipped never breaks the package, only
-# leaves that platform unaccelerated.
+# paths unw_ergm.do's own ErgmNativePluginPath() and unw_core.do's own
+# NativeGraphPluginPath() already look for) so the package ships pre-built
+# binaries for all three platforms - both dispatchers fall back to their
+# own pure Mata implementation gracefully wherever a given platform's
+# binary is absent, so this workflow failing or being skipped never breaks
+# the package, only leaves that platform unaccelerated.
 
 on:
   push:
@@ -36,43 +39,50 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Build universal macOS plugin
+      - name: Build universal macOS plugins
         run: |
           cd native
           make macos
       - uses: actions/upload-artifact@v4
         with:
-          name: ergm_mcmc-macos
-          path: lib/plugins/macos/ergm_mcmc.plugin
+          name: plugins-macos
+          path: |
+            lib/plugins/macos/ergm_mcmc.plugin
+            lib/plugins/macos/nwgraph.plugin
 
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Windows plugin (cl /LD)
+      - name: Build Windows plugins (cl /LD)
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
           mkdir lib\plugins\windows
           cd native
           cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
+          cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph.plugin
       - uses: actions/upload-artifact@v4
         with:
-          name: ergm_mcmc-windows
-          path: lib/plugins/windows/ergm_mcmc.plugin
+          name: plugins-windows
+          path: |
+            lib/plugins/windows/ergm_mcmc.plugin
+            lib/plugins/windows/nwgraph.plugin
 
   linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Linux plugin
+      - name: Build Linux plugins
         run: |
           cd native
           make unix
       - uses: actions/upload-artifact@v4
         with:
-          name: ergm_mcmc-linux
-          path: lib/plugins/unix/ergm_mcmc_unix.plugin
+          name: plugins-linux
+          path: |
+            lib/plugins/unix/ergm_mcmc_unix.plugin
+            lib/plugins/unix/nwgraph_unix.plugin
 
   commit-binaries:
     needs: [macos, windows, linux]
@@ -82,20 +92,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ergm_mcmc-macos
+          name: plugins-macos
           path: lib/plugins/macos/
       - uses: actions/download-artifact@v4
         with:
-          name: ergm_mcmc-linux
+          name: plugins-linux
           path: lib/plugins/unix/
       - uses: actions/download-artifact@v4
         with:
-          name: ergm_mcmc-windows
+          name: plugins-windows
           path: lib/plugins/windows/
       - name: Commit rebuilt plugins
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add lib/plugins/
-          git diff --cached --quiet || git commit -m "ci: rebuild native ERGM plugins [skip ci]"
+          git diff --cached --quiet || git commit -m "ci: rebuild native plugins [skip ci]"
           git push

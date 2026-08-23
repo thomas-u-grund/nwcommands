@@ -1897,6 +1897,7 @@ class `NWdef' {
 	real scalar bfs_dist_excluding()
 	real matrix bfs_hopdist_from()
 	real matrix calculate_betweenness()
+	real matrix calculate_betweenness_native()
 	real matrix calculate_betweenness_weighted()
 	real matrix calculate_components()
 	real matrix calculate_lgc()
@@ -4368,6 +4369,128 @@ real matrix `NWdef'::calculate_betweenness(){
 		Cb = Cb :/ 2
 	}
 	return(Cb')
+}
+
+/*
+	Native (C) graph-algorithm plugin dispatcher (harmonisation unit 95,
+	docs/CERTIFICATION.md; feasibility background in
+	docs/NATIVE_GRAPH_LIBRARIES.md - the evidence-based conclusion there
+	is a bespoke C kernel for specific interpreter-overhead-bound
+	algorithms, not adoption of a third-party graph library; see
+	native/nwgraph.c's own header for the full account). Deliberately
+	mirrors unw_ergm.do's own ErgmNativeInstallDir()/
+	ErgmNativePluginSubdir()/ErgmNativePluginPath()/ErgmNativeAvailable()
+	pattern exactly (same platform-detection logic, same graceful-
+	fallback contract - never errors, only ever returns 0/"" when a
+	platform's own plugin binary is absent), generalized here to live in
+	unw_core.do (rather than duplicated per calling command) since more
+	than one future native graph kernel can share this single dispatcher
+	and the one shared `nwgraph.plugin`/`nwgraph_unix.plugin` binary -
+	unlike nwergm's own ErgmNative* functions, which only ever needed to
+	locate exactly one plugin name and were never generalized.
+*/
+string scalar NativeGraphInstallDir(){
+	string scalar full, dir, fn
+
+	full = findfile("nwset.ado")
+	if (full == "") return("")
+	pathsplit(full, dir, fn)
+	return(dir)
+}
+
+string scalar NativeGraphPluginSubdir(){
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("windows")
+	if (os == "Unix") return("unix")
+	return("macos")
+}
+
+string scalar NativeGraphPluginFilename(){
+	if (st_global("c(os)") == "Unix") return("nwgraph_unix.plugin")
+	return("nwgraph.plugin")
+}
+
+string scalar NativeGraphPluginPath(){
+	string scalar dir
+
+	dir = NativeGraphInstallDir()
+	if (dir == "") return("")
+	return(pathjoin(pathjoin(dir, "lib"),
+		pathjoin("plugins", pathjoin(NativeGraphPluginSubdir(), NativeGraphPluginFilename()))))
+}
+
+real scalar NativeGraphAvailable(){
+	string scalar p
+
+	p = NativeGraphPluginPath()
+	if (p == "") return(0)
+	return(fileexists(p))
+}
+
+/*
+	Native betweenness centrality (Brandes 2001, unweighted/dichotomized -
+	the same scope as calculate_betweenness() above; the weighted
+	Dijkstra-based mode remains Mata-only, a documented follow-on).
+	Marshals the tie list to native/nwgraph.c's own ALG_BETWEENNESS
+	kernel via a single `plugin call' (one call per invocation, not per
+	node/edge - the same boundary-crossing discipline nwergm's own native
+	backend uses) and reads back one betweenness score per node.
+	CALLER'S RESPONSIBILITY: check NativeGraphAvailable() first - this
+	function does not itself fall back to Mata, matching
+	calculate_betweenness_weighted()'s own "one function, one job"
+	convention; nwbetween.ado's own dispatch decides which to call.
+*/
+real matrix `NWdef'::calculate_betweenness_native(){
+	real matrix ties
+	real scalar n, nties, nobs_needed
+	string scalar origframe, argstr, cmd
+
+	real colvector Cb
+
+	n = get_nodes()
+	// edgelist() stores an undirected tie SYMMETRICALLY (both (i,j) and
+	// (j,i) rows already present - see its own header comment and
+	// docs/SPARSE_BACKEND.md) - native/nwgraph.c's own adjacency
+	// construction therefore never auto-adds a reverse edge itself (that
+	// would double it for undirected networks); `isdirect' below is
+	// passed through purely for the FINAL undirected-halving step,
+	// matching calculate_betweenness()'s own identical halving. Ties
+	// with weight <= 0 are excluded, matching calculate_betweenness()'s
+	// own `edge_weight(m,n)>0' filter on signed networks.
+	ties = edgelist()
+	if (rows(ties) > 0) ties = select(ties, ties[.,3] :> 0)
+	nties = rows(ties)
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+
+	nobs_needed = max((n, nties, 1))
+	st_addobs(nobs_needed)
+	st_addvar("double", "v1")
+	st_addvar("double", "v2")
+	st_addvar("double", "v3")
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties[.,(1,2)])
+
+	argstr = strofreal(1) + " " + strofreal(n) + " " + strofreal(isdirect) + " " + strofreal(nties)
+
+	// see ErgmNativeSampleCore()'s own identical comment (unw_ergm.do) on
+	// why redefining an already-loaded plugin-type program is left in
+	// place rather than dropped first.
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	cmd = "plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34)
+	stata(cmd)
+
+	Cb = st_data((1::n), "v3")
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+
+	return(Cb)
 }
 
 

@@ -90,6 +90,18 @@ generates one variable per network, named {it:varname_netname} (e.g. {it:_betwee
 	{cmd:. sum _between}
 
 
+{title:Performance}
+
+{pstd}
+The default (unweighted) mode of {cmd:nwbetween} transparently uses a compiled native (C)
+implementation of the same algorithm when one is available for the current platform (currently:
+macOS), falling back to an identical, fully-supported Mata implementation everywhere else -
+there is nothing to configure and no difference in the result, only in how fast it is computed.
+See {browse "docs/NATIVE_GRAPH_LIBRARIES.md"} in the package's own repository for the evidence
+behind this (a native run at 10,000 nodes was measured faster than the Mata implementation at
+just 1,000). {opt weighted} still always uses the Mata implementation.
+
+
 {title:Supported network types}
 
 {pstd}
