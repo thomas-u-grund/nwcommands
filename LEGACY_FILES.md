@@ -128,6 +128,23 @@ themselves the source of truth uploaded to nwcommands.org on release?) well enou
 finalizing the deletion doesn't break `nwinstall`'s own distribution mechanism - not established
 here, so left untouched rather than guessed at.
 
+## `old/data/` — stray root-level example-dataset duplicates (legacy format)
+
+Found while chasing a real bug during the harmonisation phase's `nwuse.ado` fix (2026-08-23):
+root-level `florentine.dta`/`gang.dta` are NOT copies of the active `data/florentine.dta`/
+`data/gang.dta` files (confirmed via `diff` - they genuinely differ), but an older, edgelist-plus-
+metadata legacy format (`_format`/`_nets`/`_name`/`_size`/... columns) tied to the deprecated
+`nwuse_old.ado`/`nwuse_old2.ado` mechanism already archived under `old/ado/`. Their presence at the
+repo root (outside `data/`, the actual, current example-dataset directory) was actively harmful,
+not just clutter: a bug fix that made `nwuse`'s local-file path fall back from `.nwdta` to `.dta`
+when no saved-network file exists (needed for several genuine plain-`.dta` example datasets - see
+`docs/CERTIFICATION.md`) started silently picking up this stray root `florentine.dta` instead of
+the intended `data/florentine.nwdta`, breaking `cscripts/test_nwplot.do`/`test_nwdegree.do`'s own
+bare `nwuse florentine` calls. Fixed by moving both files to `old/data/` (git mv, preserving
+history) and pointing the affected tests at `nwwebuse florentine` instead (now genuinely working
+end to end - see the same certification entry), matching the convention every other test file in
+`cscripts/` already used.
+
 ## Not archived (checked and ruled out as duplicates)
 
 - `_growmedian2.ado` — no sibling `_growmedian.ado` exists; just an oddly-named singleton helper, not a version duplicate.
