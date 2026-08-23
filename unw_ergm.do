@@ -2358,16 +2358,38 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	Native-eligible terms (harmonisation unit 92, "move everything
 	reasonably portable to C" - relaxing unit 83's own original narrow
 	scope per the user's explicit instruction): edges, mutual,
-	nodematch, gwesp (undirected/UTP only - see below), nodecov/
-	nodeicov/nodeocov/absdist, nodematch_diff/nodefactor/nodeofactor/
-	nodeifactor/sender/receiver, nodemix, gwdegree/gwodegree/gwidegree,
-	and (unit 92 continuation) the full degree-COUNT family - degree/
-	odegree/idegree/concurrent/kstar/ostar/istar/degrange/odegrange/
-	idegrange - which needed no new attribute-array plumbing at all,
-	only degree bookkeeping already added for gwodegree/gwidegree
-	(`outdeg'/`indeg') plus two small, direct C ports of Mata helper
-	functions (`_ergm_choose()' -> `ergm_choose()', `_ergm_inrange()' ->
-	`in_range()'). One marshalling wrinkle specific to this family:
+	nodematch, gwesp (both the undirected/UTP and directed/OTP
+	definitions - see wave 4 below), nodecov/nodeicov/nodeocov/absdist,
+	nodematch_diff/nodefactor/nodeofactor/nodeifactor/sender/receiver,
+	nodemix, gwdegree/gwodegree/gwidegree, the full degree-COUNT family
+	- degree/odegree/idegree/concurrent/kstar/ostar/istar/degrange/
+	odegrange/idegrange - which needed no new attribute-array plumbing
+	at all, only degree bookkeeping already added for gwodegree/
+	gwidegree (`outdeg'/`indeg') plus two small, direct C ports of Mata
+	helper functions (`_ergm_choose()' -> `ergm_choose()',
+	`_ergm_inrange()' -> `in_range()'), the undirected shared-partner
+	family beyond gwesp - gwdsp/gwnsp/esp/dsp/triangle - reusing gwesp's
+	own `adj[]'/`common_neighbors()' native infrastructure, and (unit 92
+	wave 4, this update) the full DIRECTED shared-partner family: the
+	OTP mode of gwesp/gwdsp/gwnsp/esp/dsp (dispatched by `tdt.sptype ==
+	"OTP"', exactly mirroring this file's own stat_gwesp()/change_gwesp()
+	etc. dispatch immediately above) plus ctriple/transitiveties/
+	cyclicalties (directed-only terms with no undirected counterpart at
+	all). All eight rest on a new `common_neighbors_otp()' primitive in
+	native/ergm_mcmc.c - a direct port of this file's own
+	`ErgmGraph::shared_partners_otp()' - backed by a NEW pair of
+	directed adjacency arrays (`outadj'/`inadj', allocated only when a
+	term needing them is present, exactly the same "pay only if used"
+	discipline `adj'/`outdeg'/`indeg' already follow) since SP_OTP(a,b)
+	!= SP_OTP(b,a) in general and so cannot reuse the undirected `adj[]'
+	array gwesp's own UTP mode maintains. `ctriple' needs no dedicated
+	native function at all (`change_ctriple()' in this file is exactly
+	`delta * shared_partners_otp(j,i)', ported as a one-line
+	`common_neighbors_otp(g,j,i)' call in native/ergm_mcmc.c's own
+	change_term()) and `gwnsp'\''s OTP mode needs no separate native
+	function either, for the same composition reason its UTP mode
+	doesn't (`change_gwdsp_otp() - change_gwesp_otp()', computed inline).
+	One marshalling wrinkle specific to the degree-COUNT family:
 	`degrange()'/`odegrange()'/`idegrange()' allow an open-ended upper
 	bound (`to' = Mata's `.' missing value, matching R's own `to=+Inf'
 	default) - `.' itself cannot survive a plain `strtok()'/`atof()'
@@ -2397,22 +2419,14 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	Mata" would mean crossing the Mata/C boundary on every single
 	proposal, exactly the overhead the native boundary exists to
 	eliminate - see this file's own "Native (C) MCMC backend" header):
-	edgecov/hamming (need an n x n matrix marshalled across the
-	boundary - deferred, not yet built), the shared-partner family
-	beyond gwesp itself (gwdsp/gwnsp/esp/dsp/
-	triangle/ctriple/transitiveties/cyclicalties), and directed (OTP)
-	gwesp specifically (see the explicit `tdt.sptype` check below - a
-	real, confirmed bug found while planning this unit: before this
-	fix, a directed gwesp model was WRONGLY reported native-eligible,
-	and the C plugin would have silently applied its undirected-only
-	shared-partner formula to a directed network, since neither this
-	function nor its caller ever checked `sptype` - directed gwesp did
-	not exist yet when the native backend was first built, unit 83, and
-	nothing updated this check when directed gwesp was added later,
-	unit 91 wave 5). Each of these remains a well-scoped, documented
-	follow-on (docs/ERGM_ROADMAP.md's own "Native backend" section) -
-	not attempted here to keep this wave's own scope controlled, exactly
-	the same discipline the Mata term-expansion waves used throughout.
+	edgecov/hamming, which need an n x n dyadic covariate matrix
+	marshalled across the boundary - a genuinely different wire-protocol
+	shape (a dense matrix, not a per-node attribute array) from
+	everything else this function handles, deferred as the one
+	remaining scoped follow-on (docs/ERGM_ROADMAP.md's own "Native
+	backend" section) rather than folded into this wave to keep it
+	controlled, exactly the same discipline the Mata term-expansion
+	waves used throughout.
 */
 real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code){
 	real scalar t, k, pos, ncols, aidx, maxcols, maxattr
@@ -2462,13 +2476,16 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 			attridxs[pos] = aidx
 		}
 		else if (nm == "gwesp") {
-			// Native gwesp only ever implemented the undirected/UTP
-			// shared-partner definition - the directed OTP mode (unit
-			// 91 wave 5) is NOT ported here yet (see this function's
-			// own header comment for the bug this guard fixes).
-			if (tdt.sptype != "") return(0)
+			// Unit 92 term-expansion wave 4: the directed OTP mode
+			// (unit 91 wave 5) is now also native - termcode 32, a
+			// direct port of change_gwesp_otp() in this file, backed
+			// by native/ergm_mcmc.c's own outadj/inadj directed
+			// adjacency arrays (allocated only when a term needing
+			// them - this family, ctriple, transitiveties, or
+			// cyclicalties - is present, same "pay only if used"
+			// discipline as need_adj/need_outin above).
 			pos++
-			termcodes[pos] = 4
+			termcodes[pos] = (tdt.sptype == "OTP" ? 32 : 4)
 			p1v[pos] = tdt.decay
 		}
 		else if (nm == "nodecov") {
@@ -2645,41 +2662,48 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 			}
 		}
 		else if (nm == "gwdsp") {
-			// undirected/UTP only, same reasoning as gwesp above - gwdsp
-			// has no `sptype' field of its own to check (unlike gwesp,
-			// its own OTP directed mode reuses the SAME td.sptype field -
-			// see unw_ergm.do's own stat_gwdsp() dispatch), so the check
-			// here is identical in spirit.
-			if (tdt.sptype != "") return(0)
+			// gwdsp has no `sptype' field of its own (unlike gwesp) -
+			// its own OTP directed mode reuses the SAME td.sptype field,
+			// see this file's own stat_gwdsp() dispatch - so the check
+			// here mirrors gwesp's above.
 			pos++
-			termcodes[pos] = 27
+			termcodes[pos] = (tdt.sptype == "OTP" ? 33 : 27)
 			p1v[pos] = tdt.decay
 		}
 		else if (nm == "gwnsp") {
-			if (tdt.sptype != "") return(0)
 			pos++
-			termcodes[pos] = 28
+			termcodes[pos] = (tdt.sptype == "OTP" ? 34 : 28)
 			p1v[pos] = tdt.decay
 		}
 		else if (nm == "esp") {
-			if (tdt.sptype != "") return(0)
 			for (k=1; k<=M.npar[t]; k++) {
 				pos++
-				termcodes[pos] = 29
+				termcodes[pos] = (tdt.sptype == "OTP" ? 35 : 29)
 				p1v[pos] = tdt.levels[k]
 			}
 		}
 		else if (nm == "dsp") {
-			if (tdt.sptype != "") return(0)
 			for (k=1; k<=M.npar[t]; k++) {
 				pos++
-				termcodes[pos] = 30
+				termcodes[pos] = (tdt.sptype == "OTP" ? 36 : 30)
 				p1v[pos] = tdt.levels[k]
 			}
 		}
 		else if (nm == "triangle") {
 			pos++
 			termcodes[pos] = 31
+		}
+		else if (nm == "ctriple") {
+			pos++
+			termcodes[pos] = 37
+		}
+		else if (nm == "transitiveties") {
+			pos++
+			termcodes[pos] = 38
+		}
+		else if (nm == "cyclicalties") {
+			pos++
+			termcodes[pos] = 39
 		}
 		else return(0)
 	}

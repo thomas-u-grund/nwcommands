@@ -208,13 +208,14 @@ every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodeco
 {opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); the
 entire degree-sequence family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
 {opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
-{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the UNDIRECTED shared-partner family
-({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}). NOT yet
-native (these models automatically and correctly use the Mata backend instead, with no error and
-no action needed): {opt edgecov()}/{opt hamming()}; directed-network {opt gwesp()}/{opt gwdsp()}/
-{opt gwnsp()}/{opt esp()}/{opt dsp()}; and {opt ctriple}/{opt transitiveties}/{opt cyclicalties}.
-This list only grows over time - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend"
-section for the current extension plan.
+{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the entire shared-partner family, both
+undirected and directed ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/
+{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In practice this means
+essentially every {cmd:nwergm} model now runs on the native backend. The one remaining exception
+(automatically and correctly using the Mata backend instead, with no error and no action needed):
+{opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix marshalled across the
+plugin boundary rather than the per-node values or scalar parameters every other term needs - see
+{browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the current status.
 
 {title:Postestimation}
 
