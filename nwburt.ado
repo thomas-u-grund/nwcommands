@@ -135,39 +135,68 @@ program nwburt, rclass
 		}
 	}
 
-	tempname onenet
-	nwtomata `netname', mat(`onenet')
-	// nwtomata returns the diagonal as missing (this codebase's standard
-	// no-self-loop convention). dyadicredundancy()/dyadicconstraint() below
-	// both compute matrix products (net*net, p*p) - a SINGLE missing entry
-	// anywhere in a real matrix multiplication poisons its entire
-	// dot-product sum to missing (verified directly: onenet*onenet on a
-	// missing-diagonal input returns an all-missing matrix), which
-	// _editmissing() then silently zeros, corrupting effsize/efficiency/
-	// constraint/hierarchy to trivial (no-redundancy) values on EVERY
-	// network. A true self-loop contributes nothing to a two-step-via-q
-	// path count either way, so 0 (the correct additive identity) is what
-	// belongs on the diagonal for this computation, not missing.
-	mata: _diag(`onenet', J(`nodes',1,0))
-
-	mata: dr = dyadicredundancy(`onenet')
-	mata: dc = dyadicconstraint(`onenet')
-
-	if "`dyadredundancy'" != "" {
-		capture nwdrop dyadredundancy
-		nwset, name(dyadredundancy) mat(dr)
-		nw_syntax `netname'
+	// PERFORMANCE FIX: dyadredundancy()/dyadconstraint() below both
+	// compute matrix products (net*net, p*p) after materializing the
+	// whole network via nwtomata - O(n^3) regardless of sparsity,
+	// confirmed as one of the nwtomata-dependent family excluded from
+	// the n=10,000 benchmark tier (docs/PERFORMANCE_BENCHMARKS.md).
+	// calculate_burt() (unw_core.do) computes the exact same four
+	// per-node summary measures directly from the sparse network, in
+	// O(sum of out-degree^2) instead - the common case (no
+	// dyadredundancy()/dyadconstraint() option, which asks for the
+	// full n-by-n dyadic NETWORKS themselves, not just the per-node
+	// summaries). Those two options remain on the original dense path
+	// unchanged - a disclosed, deliberate scope limit: they are a far
+	// less commonly used feature, and producing a new dyadic-level
+	// NETWORK output is a different problem from summarizing it per
+	// node.
+	if "`dyadredundancy'" == "" & "`dyadconstraint'" == "" {
+		tempname __burt
+		mata: `__burt' = `netobj'->calculate_burt()
+		mata: effsize = `__burt'[.,1]
+		mata: efficiency = `__burt'[.,2]
+		mata: constraint = `__burt'[.,3]
+		mata: h = `__burt'[.,4]
+		mata: mata drop `__burt'
 	}
-	if "`dyadconstraint'" != "" {
-		capture nwdrop dyadconstraint
-		nwset, name(dyadconstraint) mat(dc)
-		nw_syntax `netname'
-	}
+	else {
+		tempname onenet
+		nwtomata `netname', mat(`onenet')
+		// nwtomata returns the diagonal as missing (this codebase's
+		// standard no-self-loop convention). dyadicredundancy()/
+		// dyadicconstraint() below both compute matrix products
+		// (net*net, p*p) - a SINGLE missing entry anywhere in a real
+		// matrix multiplication poisons its entire dot-product sum to
+		// missing (verified directly: onenet*onenet on a missing-
+		// diagonal input returns an all-missing matrix), which
+		// _editmissing() then silently zeros, corrupting effsize/
+		// efficiency/constraint/hierarchy to trivial (no-redundancy)
+		// values on EVERY network. A true self-loop contributes
+		// nothing to a two-step-via-q path count either way, so 0 (the
+		// correct additive identity) is what belongs on the diagonal
+		// for this computation, not missing.
+		mata: _diag(`onenet', J(`nodes',1,0))
 
-	mata: effsize = rowsum(`onenet') - rowsum(dr)
-	mata: efficiency = effsize :/ rowsum(`onenet')
-	mata: constraint = rowsum(dc)
-	mata: h = hierarchy(`onenet', dc)
+		mata: dr = dyadicredundancy(`onenet')
+		mata: dc = dyadicconstraint(`onenet')
+
+		if "`dyadredundancy'" != "" {
+			capture nwdrop dyadredundancy
+			nwset, name(dyadredundancy) mat(dr)
+			nw_syntax `netname'
+		}
+		if "`dyadconstraint'" != "" {
+			capture nwdrop dyadconstraint
+			nwset, name(dyadconstraint) mat(dc)
+			nw_syntax `netname'
+		}
+
+		mata: effsize = rowsum(`onenet') - rowsum(dr)
+		mata: efficiency = effsize :/ rowsum(`onenet')
+		mata: constraint = rowsum(dc)
+		mata: h = hierarchy(`onenet', dc)
+		mata: mata drop dr dc
+	}
 
 	capture drop _effsize
 	capture drop _efficiency
@@ -183,7 +212,7 @@ program nwburt, rclass
 	mata: st_store((1::`nodes'), "_constraint", constraint)
 	mata: st_store((1::`nodes'), "_hierarchy", h)
 
-	mata: mata drop effsize efficiency constraint h dr dc
+	mata: mata drop effsize efficiency constraint h
 
 	return scalar nodes = `nodes'
 
