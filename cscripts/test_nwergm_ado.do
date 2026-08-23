@@ -293,3 +293,33 @@ capture noisily nwergm unet9, edges sender
 assert _rc != 0
 capture noisily nwergm unet9, edges receiver
 assert _rc != 0
+
+* --- e(native) (harmonisation unit 92): 1 for a native-eligible MCMLE
+* model, 0 for an MCMLE model outside the native backend's current
+* scope, unset (missing) for an MPLE-only fit (native/Mata dispatch
+* never runs at all for MPLE - documented as "method(mcmle) only").
+* Deliberately a genuinely ASYMMETRIC directed adjacency here, not the
+* package's usual symmetric hand-built network reused as directed
+* elsewhere in this file - a symmetric matrix loaded as directed makes
+* every dyad automatically "mutual", making mutual's own MPLE design
+* column EXACTLY collinear with edges' own (the same class of
+* collinearity unit 91 wave 4's own dsp() caveat documents) and
+* `_rmcoll`/`logit` fails with "no observations" (r(2000)) - confirmed
+* directly while first authoring this exact test.
+nwclear
+nwset, mat((0,1,1,0,0\0,0,1,0,0\1,0,0,1,0\0,0,0,0,1\0,0,0,0,0)) directed name(dnet12) labs(A,B,C,D,E)
+qui nwergm dnet12, edges mutual mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
+assert _rc == 0
+assert e(native) == 1
+
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet10) labs(A,B,C,D,E)
+nwset, mat((0,1,0,0,1\1,0,0,1,0\0,0,0,1,1\0,1,1,0,0\1,0,1,0,0)) undirected name(refnet10) labs(A,B,C,D,E)
+qui nwergm unet10, edges hamming(refnet10) method(mcmle) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
+assert _rc == 0
+assert e(native) == 0
+
+qui nwergm unet10, edges hamming(refnet10)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert missing(e(native))

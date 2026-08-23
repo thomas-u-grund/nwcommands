@@ -151,13 +151,62 @@ extension.{p_end}
 {p2colreset}{...}
 
 {pstd}
-The effect library covers {opt edges}, {opt mutual}, {opt nodematch()}, {opt nodecov()},
-{opt nodeicov()}/{opt nodeocov()}, {opt edgecov()}, and the geometrically weighted
-{opt gwesp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()} family with FIXED decay only
-(curved/free-decay estimation is a roadmap item). Constraints beyond the free binary dyad space
-and offsets are not yet implemented - see the roadmap. Basic MCMC diagnostics
-({help nwergm_estat:estat mcmcdiag}) and basic goodness of fit ({help nwergm_estat:estat gof})
-are both available; see {help nwergm_estat}.
+The effect library has grown considerably past its original small first-release set (see the
+{cmd:Syntax} block above for the complete, current option list) and now covers, in addition to
+{opt edges}/{opt mutual}: the node-covariate family ({opt nodematch()}, {opt nodematchdiff()},
+{opt nodecov()}, {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
+{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); dyadic
+covariates ({opt edgecov()}, {opt hamming()}); the geometrically weighted family
+({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()})
+with FIXED decay only (curved/free-decay estimation is a roadmap item); fixed shared-partner
+counts ({opt esp()}/{opt dsp()}); the degree-sequence family ({opt degree()}/{opt odegree()}/
+{opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
+{opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
+{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
+{opt esp()}/{opt dsp()} also support directed networks via R ergm's own default directed
+shared-partner definition (OTP). Two-mode/bipartite terms are deliberately deprioritized as a
+later initiative (see the roadmap); `balance`/signed-network terms are blocked (signed networks
+are not a supported data type at all); curved parameters need a genuine MCMLE architecture
+change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
+not yet implemented - see the roadmap. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
+and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; see
+{help nwergm_estat}.
+
+{marker native}{...}
+{title:Performance: the native (C) MCMC backend}
+
+{pstd}
+{cmd:nwergm} ships a fully independent Mata implementation of its entire estimator (term
+registry, MCMC sampler, MPLE, MCMLE) - this is always the reference implementation and is what
+runs for every model on every platform. For a growing subset of models, {cmd:nwergm} ALSO
+compiles the MCMC inner loop into a native Stata plugin (C) and uses that instead, entirely
+transparently: there is nothing to turn on, no option to set, and no difference in how results
+are interpreted. Whether a given run used the native backend or the Mata one is purely a
+performance detail, exposed only for curiosity via {bf:e(native)} after {opt method(mcmle)} -
+the two are certified to produce statistically indistinguishable results (independent random-
+number streams, so not bit-identical sample paths, but the same target distribution; see the
+package's own {cmd:cscripts/test_nwergm_native.do}).
+
+{pstd}
+The native backend requires a compiled plugin for the current platform (macOS is built and
+shipped; Windows/Linux build automatically via the package's own CI once available there) AND
+every term in the model to be one the native backend currently implements - a single term
+outside that set falls the WHOLE model back to the Mata sampler, since every term's own change
+statistic must be evaluated on every proposal (there is no way to run "some terms in C, some in
+Mata" without crossing the Mata/C boundary on every single MCMC step, which would defeat the
+entire purpose). As of this release the native-eligible set is: {opt edges}, {opt mutual},
+every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodecov()},
+{opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
+{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); the
+entire degree-sequence family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
+{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
+{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the UNDIRECTED shared-partner family
+({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}). NOT yet
+native (these models automatically and correctly use the Mata backend instead, with no error and
+no action needed): {opt edgecov()}/{opt hamming()}; directed-network {opt gwesp()}/{opt gwdsp()}/
+{opt gwnsp()}/{opt esp()}/{opt dsp()}; and {opt ctriple}/{opt transitiveties}/{opt cyclicalties}.
+This list only grows over time - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend"
+section for the current extension plan.
 
 {title:Postestimation}
 
@@ -188,6 +237,9 @@ estimation method. See {help nwergm_estat} for full details.
 					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
 					to reach an adequate effective sample size (method(mcmle) only)
 	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
+	  {bf:e(native)}		1 if the native (C) MCMC backend was used for this run's simulations,
+					0 if the Mata sampler ran instead (method(mcmle) only) - purely
+					informational, see {help nwergm##native:Performance} below
 
 	Macros
 	  {bf:e(cmd)}			{bf:nwergm}
@@ -1168,6 +1220,7 @@ program nwergm, eclass
 		// MCMC backend" section and docs/ERGM_ARCHITECTURE.md for the
 		// full design.
 		mata: ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode')
+		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled))
 
 		tempname __fit
 		mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
@@ -1218,6 +1271,20 @@ program nwergm, eclass
 		// floor; equal to `e(mcmc_interval)' whenever no growth was ever
 		// triggered (the ordinary case for small/well-mixing models).
 		ereturn scalar mcmc_interval_final = `__ergm_interval_final'
+		// 1 if this model's own term list was eligible for the native
+		// (C) MCMC backend and the compiled plugin was actually used for
+		// this run's own simulations; 0 if the Mata sampler ran instead
+		// (either because a term outside the native backend's current
+		// scope was present, or no compiled plugin exists for this
+		// platform) - see docs/ERGM_ARCHITECTURE.md's own "Native (C)
+		// MCMC backend" section for exactly which terms are covered
+		// today. Purely informational: both backends are certified
+		// statistically indistinguishable (cscripts/test_nwergm_native.do)
+		// and nothing about interpreting results differs based on this
+		// flag - it exists so a user curious about performance can see,
+		// without guessing, whether their own specific model got the
+		// native speedup.
+		ereturn scalar native = `__ergm_native_used'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws
