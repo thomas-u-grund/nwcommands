@@ -52,8 +52,10 @@ node, regardless of which mode it belongs to (mode membership itself is availabl
 
 {title:Examples}
 
-	{cmd:. nw2set (1 1 \ 1 0 \ 0 1), nwclear}
-	{cmd:. nw2degree}
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,1\1,0\0,1)}
+	{cmd:. nw2set, mat(net) name(mynet)}
+	{cmd:. nw2degree mynet}
 
 
 {title:References}
@@ -77,4 +79,4 @@ opposite convention of most other commands in this package.
 
 	{help nwdegree}, {help nw2set}, {help nw2project}, {help nw2clustering}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

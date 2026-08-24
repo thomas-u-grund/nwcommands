@@ -25,6 +25,7 @@
 {opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
 {opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
 {it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}
+{opt outputoff}
 ]
 
 {synoptset 25 tabbed}{...}
@@ -34,6 +35,7 @@
 {synopt:{opt generate}({it:{help varlist}})}Generate variables for degree, outdegree, indegree, isolate{p_end}
 {synopt:{opt replace}}Overwrite existing variables {it:varlist}{p_end}
 {synopt:{opt silent}}Surpress output{p_end}
+{synopt:{opt outputoff}}Reserved/internal - has no effect on a one-mode network's own output; use {opt silent} instead. Only meaningful when {help netname} turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to {help nw2degree}){p_end}
 {synopt:{opt isolates}}Generate variable for network isolates{p_end}
 {synopt:{opt standardize}}Divide degree or strength by N - 1{p_end}
 {synopt:{opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:indegree}{p_end}
@@ -144,4 +146,4 @@ The next example saves the out- and indegree centrality in the variables {it:myo
 {title:See also}
 
    {help nwbetween}, {help nwcloseness}, {help nwclustering}, {help nwevcent}, {help nwkatz} 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

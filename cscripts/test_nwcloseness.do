@@ -65,3 +65,37 @@ sum __row if _nwnode == "Y"
 assert reldif(_farness2[r(mean)], 2) < 1e-6
 assert reldif(_closeness2[r(mean)], 1) < 1e-6
 drop __row
+
+* moderate-severity pass, centrality group: nwcloseness had no replace
+* option and no "already exists" guard at all - always silently
+* clobbered its output variables. generate() silently fell back to the
+* hardcoded defaults unless it contained exactly 3 words.
+nwclear
+nwset, mat((0,1,1\1,0,0\1,0,0)) undirected labs(A,B,C) name(net3)
+gen _closeness = 999
+capture noisily nwcloseness net3
+assert _rc == 99
+assert _closeness[1] == 999
+nwcloseness net3, replace
+assert _rc == 0
+assert _closeness[1] != 999
+
+nwclear
+nwset, mat((0,1,1\1,0,0\1,0,0)) undirected labs(A,B,C) name(net4)
+capture noisily nwcloseness net4, generate(myclose)
+assert _rc == 198
+capture confirm variable myclose
+assert _rc != 0
+di "=== replace guard / generate() validation REGRESSION VERIFIED ==="
+
+* missing_test finding, centrality group: directed-network default
+* (symmetrized) vs nosym were never compared - locks in the fix already
+* in place (nosym is opt-OUT of the documented default symmetrization,
+* not a pure no-op).
+nwclear
+nwset, mat((0,1,1\0,0,0\0,0,0)) name(startest) directed labs(A,B,C)
+nwcloseness startest, generate(c1 f1 n1)
+assert reldif(c1[2], .6666667) < 1E-6
+nwcloseness startest, generate(c2 f2 n2) nosym replace
+assert missing(c2[2])
+di "=== directed default-vs-nosym REGRESSION VERIFIED ==="

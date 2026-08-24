@@ -157,3 +157,19 @@ assert _rc != 0
 nwdegree net1 net2, silent replace
 assert _rc == 0
 
+* missing_test finding, centrality group: 1- and 2-node networks were
+* never exercised - degenerate edge cases that surfaced real crashes
+* elsewhere in this same group (nwdropnodes, unit 6).
+nwclear
+nwset, mat((0)) name(single1) labs(A)
+capture noisily nwdegree single1, silent
+assert _rc == 0
+
+nwclear
+nwset, mat((0,1\1,0)) name(two1) undirected labs(A,B)
+capture noisily nwdegree two1, silent
+assert _rc == 0
+assert _degree[1] == 1
+assert _degree[2] == 1
+di "=== 1-node/2-node edge case REGRESSION VERIFIED ==="
+

@@ -53,8 +53,10 @@ node, regardless of which mode it belongs to (mode membership itself is availabl
 
 {title:Examples}
 
-	{cmd:. nw2set (1 1 \ 1 0 \ 0 1), nwclear}
-	{cmd:. nw2degree}
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,1\1,0\0,1)}
+	{cmd:. nw2set, mat(net) name(mynet)}
+	{cmd:. nw2degree mynet}
 
 
 {title:References}

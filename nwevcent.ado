@@ -110,7 +110,16 @@ program nwevcent
 	capture confirm variable `generate'
 	if _rc == 0 & "`replace'" == "" {
 		di "{err}Variable {it:`generate'} already exists. Use option {bf:replace}.{txt}"
-		exit
+		// BUGFIX: was a bare `exit' (no return code) - the message
+		// printed but the command returned rc=0 to its caller, so any
+		// script checking _rc after a failed nwevcent call incorrectly
+		// believed it succeeded, with the target variable silently kept
+		// at its stale old values. Error-code coherence: standardized
+		// onto 99 (this package's own standard "Stata variable already
+		// exists" code, nw_errorcodes.sthlp), matching nwdegree/
+		// nwbetween/nw2degree's own convention for the identical
+		// situation in this same group.
+		err 99
 	}
 	else {
 		capture generate `generate' = .
