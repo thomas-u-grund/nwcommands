@@ -37,12 +37,6 @@ which controls the display's own column width){p_end}
 the display (network names are shown the way {cmd:ds} shows variable names). With no {it:netlist}, every
 loaded network is listed. {bf:r(netlist)} always returns the exact list of network names shown.
 
-{pstd}
-{bf:Known limitation:} {opt not} is currently a no-op (tracked as an open bug, not a documented
-design choice) - passing it does not actually invert the selection; {bf:r(netlist)} and the display
-are identical whether or not {opt not} is specified.
-
-
 {title:Supported network types}
 
 {pstd}

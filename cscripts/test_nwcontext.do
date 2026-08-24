@@ -114,6 +114,15 @@ assert zmeanego[2] == 1.5
 assert zmeanego[3] == 2
 di "=== maxego/meanego REGRESSION VERIFIED ==="
 
-
-
-
+* moderate-severity pass, misc_analysis group: mat() was documented
+* (nwgen.sthlp's own context() shortcut) and had a fully-written but
+* dead code path (`if "`mat'" != "" { mata: `mat' = __context }`) -
+* the syntax line simply never declared the option, so passing it
+* always errored as unrecognized. Now a real option; must match the
+* generate()-based result exactly on the same call.
+nwcontext egonet, attribute(xe) generate(zmatcmp)
+assert _rc == 0
+nwcontext egonet, attribute(xe) mat(Mctx)
+assert _rc == 0
+mata: assert(max(abs(st_data(.,"zmatcmp") - Mctx)) < 1E-8)
+di "=== mat() OPTION REGRESSION VERIFIED ==="
