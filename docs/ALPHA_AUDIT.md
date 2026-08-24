@@ -53,7 +53,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 (critical fixes done, alpha unit 12) |
 | 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | 🔶 (critical fixes done, alpha unit 13) |
 | 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | 🔶 (critical fixes done, alpha unit 14) |
-| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 |
+| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 (critical fixes done, alpha unit 15) |
 | 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | 🔶 |
 | 16 | programming | nwcompressobs | 🔶 |
 

@@ -22,8 +22,8 @@
 {synoptset 16}{...}
 {synopthdr}
 {synoptline}
-{synopt :{opt last}}move {help netlist} to end of dataset; the default{p_end}
-{synopt :{opt first}}move {help netlist} to beginning of dataset{p_end}
+{synopt :{opt last}}move {help netlist} to end of dataset{p_end}
+{synopt :{opt first}}move {help netlist} to beginning of dataset; the default{p_end}
 {synopt :{opth b:efore(netname)}}move {help netlist} before {it:netname}{p_end}
 {synopt :{opth a:fter(netname)}}move {help netlist} after {it:netname}{p_end}
 {synopt :{opt alpha:betic}}alphabetize {help netlist} and move it to beginning of dataset{p_end}
@@ -38,9 +38,10 @@
 
 {pstd}
 {opt nworder} relocates {help netlist} to a position depending on
-which option you specify. If no option is specified, {cmd:order} relocates
-{it:netlist} to the end of the dataset in the order in which the
-variables are specified.
+which option you specify. If no option is specified, {cmd:nworder} relocates
+{it:netlist} to the {bf:beginning} of the dataset in the order in which the
+variables are specified - matching plain Stata's own {help order} command, which
+{cmd:nworder} is a thin wrapper around.
 
 {pstd}
 The command is useful when one wants to do bulk-operations with networks and when 
@@ -51,11 +52,11 @@ the network order matters (e.g. when making a movie out of _all networks, see {h
 {title:Options}
 
 {phang}
-{opt last} shifts {help netlist} to the end of the dataset.  This
-is the default.
+{opt last} shifts {help netlist} to the end of the dataset.
 
 {phang}
-{opt first} shifts {help netlist} to the beginning of the dataset. 
+{opt first} shifts {help netlist} to the beginning of the dataset.  This
+is the default.
 
 {phang}
 {opth before(netname)} shifts {varlist} before {it:netname}.

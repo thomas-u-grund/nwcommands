@@ -13,10 +13,9 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwload} 
+{cmdab: nwload}
 [{it:{help netname}}]
 [{cmd:,}
-{opth id(int)}
 {opt nocurrent}
 {opt labelonly}
 {opt force}]
