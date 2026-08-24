@@ -31,7 +31,7 @@ program nwcloseness
 	// `nosym' itself, always empty, before catching the error and
 	// fixing it to check `sym' instead, matching nwbetween's own
 	// working pattern exactly).
-	syntax [anything(name=netname)] [, GENerate(string) nosym *]
+	syntax [anything(name=netname)] [, GENerate(string) nosym replace *]
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
@@ -46,8 +46,18 @@ program nwcloseness
 	}
 	_nwsetobs `netname'
 	
+	// BUGFIX: generate() silently fell back to the hardcoded default
+	// names whenever it didn't contain exactly 3 words - a caller
+	// supplying 1 or 2 names (a plausible attempt to just rename the
+	// closeness variable) got no error and their requested name was
+	// never created. Now errors clearly instead of silently discarding
+	// it.
 	local gencount : word count `generate'
-	if (`gencount' != 3) {
+	if (`gencount' != 0 & `gencount' != 3) {
+		di "{err}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'."
+		error 198
+	}
+	if (`gencount' == 0) {
 		local generate = "_closeness _farness _nearness"
 	}
 	local generate_all ""
@@ -89,6 +99,21 @@ program nwcloseness
 		// that alignment (see e.g. nwdegree's netlist support).
 		tempvar included
 		nw_datasync `netname_temp', generate(`included')
+
+		// BUGFIX: nwcloseness had no `replace' option and no
+		// "already exists" guard at all, unlike every sibling command
+		// in this group (nwdegree/nwbetween/nwevcent/nwkatz/nw2degree
+		// all require explicit `replace' before overwriting an
+		// existing output variable) - it always silently clobbered
+		// _closeness/_farness/_nearness (or any generate() name) on
+		// every call, with no warning.
+		foreach c in `_closeness'`k' `_farness'`k' `_nearness'`k' {
+			capture confirm variable `c', exact
+			if _rc == 0 & "`replace'" == "" {
+				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace}"
+				err 99
+			}
+		}
 
 		qui capture drop `_closeness'`k'
 		qui gen `_closeness'`k' = .

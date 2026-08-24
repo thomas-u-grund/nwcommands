@@ -49,3 +49,11 @@ forvalues i = 1/5 {
 	assert reldif(ev_k5[`i'], ev_k5[1]) < 1E-6
 }
 assert ev_k5[1] > 0.4
+
+* moderate-severity pass, centrality group: the "already exists" guard
+* used a bare exit (no return code) - the message printed but rc stayed
+* 0, so a caller checking _rc after a failed call incorrectly believed
+* it succeeded.
+capture noisily nwevcent k5net, generate(ev_k5)
+assert _rc == 99
+di "=== error-code coherence REGRESSION VERIFIED ==="
