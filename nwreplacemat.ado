@@ -55,7 +55,20 @@ program nwreplacemat
 		}
 		else {
 			nwdrop `netname', `netonly'
-			nwrandom `nodes', prob(1) name(`netname') vars(`vars') labs(`newmatlabs') `xvars'
+			// BUGFIX: `nwrandom' has never had a `vars()' option (it
+			// generates its own default variable names) - this call
+			// only ever "worked" because `nwrandom''s own trailing `*'
+			// wildcard used to silently absorb and discard unrecognized
+			// options; once that dead wildcard was correctly removed
+			// (moderate-severity pass, generators_structural group unit)
+			// to make nwrandom reject genuinely misspelled options, this
+			// pre-existing call broke outright ("option vars() not
+			// allowed", r198) - a real, latent bug this uncovered, not a
+			// new one. Harmless to simply drop here: `nwrandom''s own
+			// ties (from `prob(1)') are immediately overwritten by the
+			// very next line's recursive `nwreplacemat' call regardless
+			// of what `nwrandom' names its variables.
+			nwrandom `nodes', prob(1) name(`netname') labs(`newmatlabs') `xvars'
 			// `nosync' itself is never populated (Stata's own "no"-
 			// prefix syntax convention stores the literal string
 			// "nosync" in `sync' instead - see the check just above

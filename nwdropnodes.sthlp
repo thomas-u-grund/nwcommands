@@ -12,31 +12,15 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwdropnodes} 
+{cmdab: nwdropnodes}
 [{it:{help netname}}],
-{opt nodes}({it:{help numlist:nodeid1...}})
 [
+{opt nodes}({it:{help numlist:nodeid1...}} {help nodeid:{it:or} nodelab1...})
+{opt keepmat}({it:matamatrix})
 {opt attributes}({it:{help varlist}})
 {opt generate}({it:{help newnetname}})
-{opt netonly}]
-
-{p 8 17 2}
-{cmdab: nwdropnodes} 
-[{it:{help netname}}],
-{opt nodes}({it:{help nodeid:nodelab1...}})
-[
-{opt attributes}({it:{help varlist}})
-{opt generate}({it:{help newnetname}})
-{opt netonly}]
-
-{p 8 17 2}
-{cmdab: nwdropnodes} 
-[{it:{help netname}}], 
-{opt keepmat(matamatrix)}
-[
-{opt attributes}({it:{help varlist}})
-{opt generate}({it:{help newnetname}})
-{opt netonly}]
+{opt netonly}
+{opt xvars}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -47,6 +31,12 @@
 {synopt:{opth attributes(varlist)}}Attribute variables that are included in the drop{p_end}
 {synopt:{opth generate(newnetname)}}Generates a new network and does not overwrite the original network{p_end}
 {synopt:{opt netonly}}Only drops the network, but keeps all Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+
+{pstd}
+{opt nodes()} and {opt keepmat()} are both technically optional (neither is enforced by {cmd:nwdropnodes}
+itself), but omitting both is a no-op - no node is dropped - rather than an error. Dropping every node
+of a network (leaving zero) is not supported and errors clearly.
 
 {synoptline}
 {p2colreset}{...}
@@ -97,6 +87,11 @@ command also drops the first three nodes:
 {cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwdrop flomarriage if _n <= 3}{p_end}
+
+{pstd}
+Note the opposite default polarity between the two interfaces: {help nwdrop} leaves Stata dataset
+rows alone unless {bf:clean} is specified, while {cmd:nwdropnodes} rebuilds the Stata dataset by
+default unless {bf:netonly} is specified.
 
 
 

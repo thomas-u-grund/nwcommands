@@ -76,7 +76,23 @@ program nwdropnodes
 			di "{txt}Warning: Mata matrix {bf:keepmat} has the wrong size; no nodes dropped."
 		}
 	}
-	
+
+	// BUGFIX: dropping every node of a network (or the only node of a
+	// single-node network) used to crash deep inside Mata - `select()'
+	// on an all-zero selector produces a degenerate, genuinely empty
+	// result that this file's own downstream matrix-building code was
+	// never designed to handle, surfacing as a raw "conformability
+	// error" (r3200) or "subscript invalid" (r3301) depending on the
+	// exact shape involved, rather than a clear, expected error. This
+	// package does not support a genuine 0-node network anywhere else
+	// either, so guarded here with a clean message instead of attempting
+	// to add that support just for this one command.
+	mata: st_numscalar("r(keepcount)", sum(`keepmat'))
+	if `r(keepcount)' == 0 {
+		di "{err}Cannot drop every node of a network - at least one node must remain."
+		error 198
+	}
+
 	foreach onevar in `vars' {
 		local i = `i' + 1
 		local onelab : word `i' of `labs'

@@ -35,3 +35,21 @@ capture noisily nwrestore
 assert _rc == 0
 assert tag[1] == "orig"
 di "=== canonical preserve/modify/restore REGRESSION VERIFIED ==="
+
+* moderate-severity pass, manipulation_subset group: a second nwpreserve
+* before an intervening nwrestore used to silently overwrite the first
+* snapshot with no warning, unlike Stata's own preserve ("already
+* preserved").
+nwclear
+nwrandom 3, prob(1) name(pnetA)
+nwpreserve
+assert _rc == 0
+nwclear
+nwrandom 5, prob(1) name(pnetB)
+capture noisily nwpreserve
+assert _rc == 621
+nwclear
+nwrestore
+nwsummarize
+assert r(nodes) == 3
+di "=== double-preserve guard REGRESSION VERIFIED ==="
