@@ -450,7 +450,18 @@ program nwdegree
 				mata: st_numscalar("r(dg_central)", sum(J(`nodes_temp',1,max(`outdegree')) :- `outdegree') / ((`nodes_temp' - 2) * (`nodes_temp' - 1)))
 				if "`silent'" == "" {
 					noi di
-					noi di "{txt}   Degree centralization:: {res}" + `=round(`r(dg_central)',0.001)'
+					// BUGFIX: was `noi di "..." + `=round(...)'' - string-
+					// concatenating a quoted display literal with a bare
+					// numeric expression via `+' is not valid `di' syntax
+					// once that expression evaluates to missing (a
+					// genuine division-by-zero for any N<=2 network,
+					// where centralization is undefined) - crashed with
+					// r(198) on the ordinary default display path for
+					// any 1- or 2-node undirected network. Split into the
+					// standard two-item `di "text" value' form used
+					// throughout the rest of this package, which
+					// displays missing as "." without erroring.
+					noi di "{txt}   Degree centralization:: {res}" `=round(`r(dg_central)',0.001)'
 				}
 			}
 			else {
@@ -458,8 +469,10 @@ program nwdegree
 				mata: st_numscalar("r(outdg_central)", sum(J(`nodes_temp',1,max(`outdegree')) :- `outdegree') / ((`nodes_temp' - 1) * (`nodes_temp' - 1)))
 				if "`silent'" == "" {
 					noi di
-					noi di "{txt}   Indegree centralization:: {res}" + `=round(`r(indg_central)',0.001)'
-					noi di "{txt}   Outdegree centralization:: {res}" + `=round(`r(outdg_central)',0.001)'
+					// BUGFIX: same fix as the undirected branch above -
+					// a 1-node directed network divides by zero here too.
+					noi di "{txt}   Indegree centralization:: {res}" `=round(`r(indg_central)',0.001)'
+					noi di "{txt}   Outdegree centralization:: {res}" `=round(`r(outdg_central)',0.001)'
 				}
 			}
 		}

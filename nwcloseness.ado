@@ -9,7 +9,32 @@
 capture program drop nwcloseness
 program nwcloseness
 	version 9
-	syntax [anything(name=netname)] [, GENerate(string) *]	
+	// BUGFIX: `nosym' used to fall through the trailing `*' catch-all
+	// straight into the internal nwgeodesic call - but nwgeodesic's own
+	// real toggle is opt-IN `sym' (default: never symmetrize), so
+	// forwarding `nosym' (a negation of an option that was never
+	// enabled to begin with) was a pure no-op - nwcloseness's default
+	// output and its own documented "nosym" opt-out were identical, and
+	// this package's own documented default ("the network is otherwise
+	// symmetrized... unless nosym is specified") never actually
+	// happened; true symmetrized results were only reachable via the
+	// entirely undocumented `sym' geodesic option.
+	//
+	// Declaring `nosym' in the syntax line makes Stata's own parser
+	// define a local named after the STEM - `sym', not `nosym' - set
+	// to the literal string "nosym" when the caller passes the option,
+	// empty otherwise (`nosym' itself is never populated at all) - the
+	// same convention nwbetween.ado's own identical symmetrize-by-
+	// default toggle already uses (see its own comment for the same
+	// finding). Confirmed directly with an isolated minimal repro
+	// before trusting this (an initial attempt here mistakenly checked
+	// `nosym' itself, always empty, before catching the error and
+	// fixing it to check `sym' instead, matching nwbetween's own
+	// working pattern exactly).
+	syntax [anything(name=netname)] [, GENerate(string) nosym *]
+	if "`sym'" == "" {
+		local symopt "sym"
+	}
 	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
 	// named the same as any of nw_syntax's other exports, so calling it
@@ -30,7 +55,7 @@ program nwcloseness
 	set more off
 	qui foreach netname_temp in `netname' {
 		preserve
-		qui nwgeodesic `netname_temp', name(_tempgeodesic) `options'
+		qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
 		nwname _tempgeodesic
 		nwtomata _tempgeodesic, mat(geodesic)
 		mata: st_numscalar("r(mindistance)", min(geodesic))
