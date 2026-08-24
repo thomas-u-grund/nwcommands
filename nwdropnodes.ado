@@ -104,6 +104,35 @@ program nwdropnodes
 		mata: st_rclear()
 	}
 		
+	// BUGFIX: attribute values used to be read via st_data() AFTER
+	// nwreplacemat (below) had already run - but nwreplacemat physically
+	// reorders the dataset's own rows to match the new, post-drop node
+	// order (confirmed directly: dropping node 2 of A/B/C/D moves the
+	// surviving rows to [A,C,D], with the dropped node B moved to the
+	// end) - it does not touch unrelated attached Stata variables like
+	// `attributes()' itself, so those rode along with whatever the
+	// underlying row-reordering mechanism did, landing in the NEW
+	// (post-drop) row order by the time they were read. `keepvector'
+	// (the select mask used to build subattr), by contrast, was built
+	// against the OLD (pre-drop) row order and never updated - so
+	// selecting an already-reordered attribute column with an
+	// old-order mask paired every surviving node with the WRONG
+	// neighbor's original value (confirmed: dropping node B from
+	// A-B-C-D left C holding D's original value and D holding the
+	// just-dropped B's own value, instead of each node keeping its own).
+	// Fixed by reading each attribute's values in the genuinely OLD
+	// (pre-drop, pre-reorder) row order - before nwreplacemat ever
+	// runs - so they are read at the same point in time `keepvector'
+	// itself was built against.
+	tempname attrstash
+	if "`attributes'" != "" {
+		local attri = 0
+		foreach attr of varlist `attributes' {
+			local attri = `attri' + 1
+			mata: `attrstash'`attri' = st_data((1,`nodes'), st_varindex("`attr'"))
+		}
+	}
+
 	// generate new matrix and replace network with this new matrix
 	tempname keepnet
 	tempname keepvector
@@ -116,14 +145,16 @@ program nwdropnodes
 
 	// deal with attributes that should be synced with the smaller network
 	if "`attributes'" != "" {
+		local attri = 0
 		foreach attr of varlist `attributes' {
-			mata: attr = st_data((1,`nodes'), st_varindex("`attr'"))
-			mata: subattr = select(attr, `keepvector'')
+			local attri = `attri' + 1
+			mata: subattr = select(`attrstash'`attri', `keepvector'')
 			mata: st_view(attrview=.,(1,sum(`keepvector')), "`attr'")
 			replace `attr' = .
 			mata: attrview[.,.] = subattr
+			mata: mata drop `attrstash'`attri'
 		}
-		mata: mata drop attr subattr
+		mata: mata drop subattr
 	}
 	mata: mata drop `keepnet' `keepvector'
 	mata: st_rclear()

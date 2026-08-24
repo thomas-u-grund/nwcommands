@@ -118,3 +118,24 @@ nwsummarize net5
 assert r(nodes) == 4
 nwsummarize net5_dropped
 assert r(nodes) == 3
+
+* --- alpha-audit regression: attributes() used to silently desync
+* attribute values from the surviving nodes on any size-changing drop -
+* nwreplacemat (called internally, just before this attribute-sync
+* block) physically reorders the dataset's own rows to match the new
+* node order, but the attribute values were read AFTER that reorder
+* using a select-mask built against the OLD (pre-reorder) row order,
+* pairing every surviving node with the wrong neighbor's original
+* value. Confirmed fixed for a single attribute, multiple attributes at
+* once, and via nwkeepnodes' own delegation to this same code path.
+nwclear
+nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) undirected labs(A,B,C,D) name(attnet)
+gen myattr = _n * 10
+nwdropnodes attnet, nodes(2) attributes(myattr)
+assert myattr[1] == 10
+assert myattr[2] == 30
+assert myattr[3] == 40
+assert _nwnode[1] == "A"
+assert _nwnode[2] == "C"
+assert _nwnode[3] == "D"
+di "=== attributes() desync REGRESSION VERIFIED ==="
