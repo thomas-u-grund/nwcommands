@@ -198,3 +198,23 @@ capture confirm variable _kcompnum1, exact
 assert _rc == 0
 capture confirm variable _kcompnum2, exact
 assert _rc == 0
+
+
+* --- alpha-audit regression: a single-node network used to crash with
+* an uncontrolled Mata conformability error (build_edgelist_csr_dense()'s
+* own nzidx-count bug: selectindex() on a genuinely empty match set -
+* guaranteed for a 1-node network, no off-diagonal entry can exist -
+* returns a 1x0 result, and rows() of that is 1, not 0, wrongly
+* dispatching into the mod()/floor() edge-derivation branch with a
+* 0-element operand). Fixed to use length() instead, which is robust to
+* the row/column shape ambiguity of an empty selectindex() result.
+* Reproduces for any k(), including the default k(2) and k(1).
+nwclear
+nwset, mat((0)) name(single1) undirected labs(A)
+nwkcomponents single1
+assert _rc == 0
+assert r(kcomponents) == 0
+
+nwkcomponents single1, k(1) replace
+assert _rc == 0
+assert r(kcomponents) == 0
