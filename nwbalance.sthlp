@@ -43,6 +43,17 @@ For each node, {cmd:nwbalance} generates the number of closed triads it belongs 
 those that are balanced, and the ratio of the two. Network-level counts and the overall balance
 ratio are returned in {help return:r()}.
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when
+{bf:either} direction has a tie; if both directions are tied (a mutual dyad), the value used for the
+balance product is whichever direction is checked first ({it:i->j} before {it:j->i}), which matters
+only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is
+used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is
+the command's whole purpose - see Description. Two-mode: not checked; structural balance is not a
+meaningful concept for a bipartite network's own inherently unclosable triads.
+
 {title:Stored results}
 
 	Scalars
@@ -79,4 +90,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 	{help nwtriads}, {help nwvalue}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

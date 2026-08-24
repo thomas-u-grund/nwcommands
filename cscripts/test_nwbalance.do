@@ -93,3 +93,64 @@ assert myB[1] == 1
 assert myBal[1] == 1
 assert myClo[1] == 1
 di "=== CUSTOM generate() NAMES VERIFIED ==="
+
+
+* --- alpha-audit regression: generate()'s 2nd/3rd word positions were
+* swapped relative to the documented namelist order (ratio, balanced
+* count, closed count) - a user-supplied 3-name generate() list put the
+* closed-triad count into the "balanced" variable and vice versa. The
+* symmetric triangle case above (balanced==closed==1) can't catch this;
+* need a network where the two counts genuinely differ.
+nwclear
+nwset, mat((0,1,1,-1\1,0,1,-1\1,1,0,1\-1,-1,1,0)) name(signednet) undirected labs(A,B,C,D)
+nwbalance signednet, generate(myB2 myBal2 myClo2)
+assert r(closed_triad) == 4
+assert r(balanced_triad) == 2
+assert myClo2[1] != myBal2[1]
+qui sum myBal2
+assert r(sum) == 2 * 3
+qui sum myClo2
+assert r(sum) == 4 * 3
+di "=== generate() WORD-POSITION REGRESSION VERIFIED ==="
+
+
+* --- alpha-audit regression: directed triad enumeration was broken -
+* silently missed obviously-closed triads in some structures (e.g. a
+* pure directed cycle), and produced non-integer counts in others (e.g.
+* a complete tournament), with no error either way. A pair of nodes now
+* counts as tied when EITHER direction has a tie, matching this
+* command's own documented convention.
+nwclear
+nwset, mat((0,1,0\0,0,1\1,0,0)) name(dircycle) directed labs(A,B,C)
+nwbalance dircycle
+assert r(closed_triad) == 1
+assert r(balanced_triad) == 1
+
+nwclear
+nwset, mat((0,1,1,1\0,0,1,1\0,0,0,1\0,0,0,0)) name(dirtourn) directed labs(A,B,C,D)
+nwbalance dirtourn
+assert r(closed_triad) == 4
+assert r(balanced_triad) == 4
+di "=== DIRECTED TRIAD ENUMERATION REGRESSION VERIFIED ==="
+
+
+* --- alpha-audit regression: a network with zero ties at all (single
+* isolated node, or a fully edgeless multi-node network) used to crash
+* with a raw internal Stata error ("n not found -- data already wide",
+* r(111)) instead of the graceful all-zero result the command already
+* provided for the related but distinct "has ties, but no closed
+* triads" case (the path-graph case above).
+nwclear
+nwset, mat((0)) name(singlenode) undirected labs(A)
+nwbalance singlenode
+assert _rc == 0
+assert r(closed_triad) == 0
+assert r(balanced_triad) == 0
+
+nwclear
+nwset, mat((0,0\0,0)) name(emptynet) undirected labs(A,B)
+nwbalance emptynet
+assert _rc == 0
+assert r(closed_triad) == 0
+assert r(balanced_triad) == 0
+di "=== ZERO-TIE NETWORK REGRESSION VERIFIED ==="

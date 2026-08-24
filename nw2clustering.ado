@@ -1,5 +1,101 @@
+/***
+{smcl}
+{* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
+{title:Title}
 
+{p2colset 9 21 22 2}{...}
+{p2col :nw2clustering {hline 2}}Clustering coefficient (transitivity) of a two-mode network{p_end}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nw2clustering}
+[{it:{help netname}}]
+[{cmd:,}
+{opt measure(string)}
+{opth level(int)}
+{opth generate(newvarname)}]
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt measure(binary|arithmetic|geometric|maximum|minimum)}}How to combine a 4-path's own
+four tie values; {it:binary} dichotomizes every tie to presence/absence first;
+{it:arithmetic}/{it:geometric}/{it:maximum}/{it:minimum} combine the four raw tie values via that
+function; default = {it:arithmetic} for a valued network, {it:binary} otherwise{p_end}
+{synopt:{opth level(int)}}Which mode (1 or 2) to compute clustering scores for; default = 1{p_end}
+{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each {opt level()}-mode
+node's own clustering coefficient; default = {it:_clustering2_lev}{it:level}{p_end}
+
+{p2colreset}{...}
+
+{title:Description}
+
+{pstd}
+{cmd:nw2clustering} calculates the two-mode (bipartite) analogue of the ordinary clustering
+coefficient (see {help nwclustering}) using the 4-path / 6-cycle definition of Opsahl (2013) and
+Robins & Alexander (2004): an ordinary triangle cannot exist in a two-mode network (a tie only ever
+connects the two different modes), so "closure" is instead measured on paths of length 4 - two
+{opt level()}-mode nodes connected via two distinct intermediate opposite-mode alters - and a path is
+{it:closed} when its two ends are ALSO both tied to some further common alter, forming a 6-cycle.
+This deliberately excludes shorter 4-cycles (reusing one of the same two alters) as a form of closure,
+matching the cited reference's own distinction between mere shared-affiliation redundancy and genuine
+triadic-style closure.
+
+{pstd}
+Only nodes of the requested {opt level()} receive a value; nodes of the other mode are left missing.
+A node with too few alters, or whose own connected component has fewer than 3 same-mode nodes, has no
+possible 4-path and its own coefficient is reported missing (not spuriously 0).
+
+{pstd}
+{help nwclustering} automatically switches to this command whenever it is called on a two-mode network,
+forwarding {opt measure()} and {opt generate()} (always at the default {opt level(1)} in that case) -
+call {cmd:nw2clustering} directly to choose {opt level(2)} or a non-default {opt measure()}.
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (the default {opt measure(binary)} case). Directed: not checked - a two-mode network's
+ties are treated as undirected. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|
+minimum)}, each combining the 4-path's own four tie values before testing closure. Signed: not
+checked; negative tie values are not validated or rejected. Two-mode: {bf:T3} - this command's entire
+purpose is two-mode clustering; calling it on a one-mode network raises a clear error.
+
+{title:Stored results}
+
+	Scalars
+	  {bf:r(C_avg)}		mean of the per-node clustering coefficients (the requested {opt level()} only)
+	  {bf:r(C_global)}	network-level global clustering coefficient (ratio of total closed to total
+	                        potential 4-paths)
+
+	Macros
+	  {bf:r(measure)}		the {opt measure()} actually used
+
+{title:Examples}
+
+	{cmd:. nwset ego alter, twomode name(bip)}
+	{cmd:. nw2clustering bip}
+	{cmd:. sum _clustering2_lev1}
+
+{title:References}
+
+{pstd}
+Opsahl, T. (2013). Triadic closure in two-mode networks: Redefining the global and local clustering
+coefficients. {it:Social Networks} 35(2), 159-167.
+
+{pstd}
+Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Network structure and
+distance in bipartite graphs. {it:Computational & Mathematical Organization Theory} 10(1), 69-94.
+
+{title:See also}
+
+	{help nwclustering}, {help nw2project}, {help nw2degree}
+
+***/
 capture program drop nw2clustering
 program nw2clustering
 	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string)]
@@ -13,6 +109,27 @@ program nw2clustering
 	tempfile temp clustering edge_list ego_list alter_list
 	nw_syntax `netname'
 	nw_datasync `netname'
+
+	// BUGFIX: level() accepted any integer with no validation at all -
+	// an out-of-range value (anything but 1 or 2) crashed several steps
+	// later with a cryptic raw Stata error ("variable n not found /
+	// Data are already wide") instead of a clear message, since the
+	// initial `_nwmode_ego == "level"' filter simply matched nothing.
+	if !inlist(`level', 1, 2) {
+		di "{err}level() must be 1 or 2"
+		error 198
+	}
+
+	// BUGFIX: calling nw2clustering directly on a one-mode network
+	// crashed with a cryptic internal error ("_nwmode_ego not found")
+	// rather than a clear message - nwclustering.ado's own auto-switch
+	// protects the common path (two-mode detected -> automatically
+	// calls nw2clustering), but nothing stopped a direct call on the
+	// wrong kind of network.
+	if "`is2mode'" != "true" {
+		di "{err}nw2clustering requires a two-mode network; see {help nwclustering} for one-mode networks."
+		error 198
+	}
 
 	// Auto-detect from the network's own stored valued/unvalued state
 	// rather than always defaulting to "binary" regardless - matching
@@ -36,7 +153,41 @@ program nw2clustering
 	preserve
 
 	nwtoedge `netname'
-	keep if `netname' != 0 & _nwmode_ego == "`level'"
+	// BUGFIX: `nwtoedge' only ever emits ONE row per pair (the classic
+	// "avoid double-listing an undirected tie" lower-triangle
+	// convention: for a pair (i,j), only the row with the higher raw
+	// node index as `ego' is emitted). For a two-mode network this
+	// means EVERY genuine cross-mode tie's `ego' side is whichever mode
+	// happens to occupy the higher index range - an accident of node
+	// creation order, not something tied to mode at all - so the
+	// `_nwmode_ego == "level"' filter below only ever finds real edges
+	// for ONE of the two levels; the other level's own filtered edge
+	// list is entirely empty (or, before the missing-value fix just
+	// below, entirely populated by meaningless same-mode "structural
+	// non-edge" rows that happen to share one mode value and so don't
+	// immediately crash the reshape steps downstream - which is exactly
+	// why this went undetected: it silently produced a plausible-
+	// looking but meaningless result for whichever level was NOT the
+	// lucky one, rather than erroring). Confirmed directly via a hand
+	// trace: on a 4+4-node bipartite network created mode-1-then-mode-2,
+	// `_nwmode_ego=="1"' matches zero real edges at all. Fixed by
+	// explicitly building BOTH directions of every real cross-mode tie
+	// (append a swapped-ego/alter mirror copy) before the level filter,
+	// so `_nwmode_ego == "level"' finds real edges for either level
+	// regardless of which mode nwtoedge happened to assign as `ego'.
+	keep if `netname' != 0 & `netname' != .
+	tempfile fwd
+	save `fwd'
+	rename `nw_ego' _nw2c_swap
+	rename `nw_alter' `nw_ego'
+	rename _nw2c_swap `nw_alter'
+	rename _nwmode_ego _nw2c_swap
+	rename _nwmode_alter _nwmode_ego
+	rename _nw2c_swap _nwmode_alter
+	append using `fwd'
+
+	keep if _nwmode_ego == "`level'"
+	drop _nwmode_ego _nwmode_alter
 	if "`measure'" == "binary" {
 		replace `netname' = (`netname' != 0)
 		local measure = "arithmetic"
@@ -85,7 +236,17 @@ program nw2clustering
 	// walks a growing ego0-alter0-ego1-alter1-ego2-alter2-ego3 4-path,
 	// one hop merged in at a time) - fixed at all of them, not just the
 	// one specific network structure that happened to crash first.
-	duplicates drop
+	// BUGFIX: `duplicates drop' (like `collapse' below) errors
+	// outright ("no observations", r(2000)) on a genuinely empty
+	// (0-row) dataset - a legitimate outcome at this point in the
+	// pipeline (e.g. a level whose own component of the network has
+	// fewer than 3 distinct same-mode nodes, so no 4-path/6-cycle can
+	// possibly exist), not an error condition. Guarded the same way
+	// throughout this file.
+	qui count
+	if r(N) > 0 {
+		duplicates drop
+	}
 	rename alter alter0
 	reshape long ego_ value_, i(ego0 alter0) j(id)
 	drop id
@@ -97,7 +258,10 @@ program nw2clustering
 	rename ego1 ego
 	merge m:m ego using `ego_list', nogenerate
 	// same redundant-broadcast-duplicate fix as the first merge above.
-	duplicates drop
+	qui count
+	if r(N) > 0 {
+		duplicates drop
+	}
 	reshape long alter_ value_, i(ego0 alter0 ego) j(id)
 	drop id
 	drop if alter_ == "" | alter_ == alter0
@@ -110,7 +274,10 @@ program nw2clustering
 	rename alter1 alter
 	merge m:m alter using `alter_list', nogenerate
 	// same redundant-broadcast-duplicate fix as the first merge above.
-	duplicates drop
+	qui count
+	if r(N) > 0 {
+		duplicates drop
+	}
 	reshape long ego_ value_, i(ego0 alter0 ego1 alter) j(id)
 	drop id 
 	drop if ego_ == "" | ego_ == ego1 | ego_ == ego0
@@ -133,7 +300,10 @@ program nw2clustering
 	merge m:m ego using `ego_list', nogenerate
 	drop if potential_4path == .
 	// same redundant-broadcast-duplicate fix as the first merge above.
-	duplicates drop
+	qui count
+	if r(N) > 0 {
+		duplicates drop
+	}
 	reshape long alter_ ,i(ego0 alter0 ego1 alter1 ego) j(alter)
 	drop if alter_ == alter0 | alter_ == alter1
 	rename ego ego2
@@ -145,7 +315,10 @@ program nw2clustering
 	merge m:m alter using `alter_list', nogenerate
 	drop if potential_4path == .
 	// same redundant-broadcast-duplicate fix as the first merge above.
-	duplicates drop
+	qui count
+	if r(N) > 0 {
+		duplicates drop
+	}
 	reshape long ego_, i(ego0 alter0 ego1 alter1 ego2 alter) j(ego)
 	drop if ego_ == ""
 	drop ego
@@ -154,7 +327,17 @@ program nw2clustering
 	order ego0 alter0 ego1 alter1 ego2 alter2 ego3
 	gen closed = (ego0 == ego3) 
 	keep ego0 value0 alter0 value1 ego1 value2 alter1 value3 ego2 arithmetic geometric maximum minimum closed
-	collapse (max) closed, by(ego0 value0 alter0 value1 ego1 value2 alter1 value3 ego2 arithmetic geometric maximum minimum)
+	// BUGFIX: `collapse' (like `duplicates drop' above) errors outright
+	// ("no observations", r(2000)) on a genuinely empty (0-row) dataset -
+	// a legitimate outcome here (no closed 4-paths found for this
+	// level), not an error condition. Skipping it when already empty is
+	// exactly equivalent to what it would have produced anyway (0 rows,
+	// same by()/closed columns, already ensured by the `keep' just
+	// above).
+	qui count
+	if r(N) > 0 {
+		collapse (max) closed, by(ego0 value0 alter0 value1 ego1 value2 alter1 value3 ego2 arithmetic geometric maximum minimum)
+	}
 
 	merge m:m  ego0 value0 alter0 value1 ego1 value2 alter1 value3 ego2 arithmetic geometric maximum minimum using `temp', nogenerate
 
@@ -162,10 +345,29 @@ program nw2clustering
 	sum closed_value
 	local closed_4paths = r(sum)
 
-	bys ego1: egen pot = total(`measure')
-	bys ego1: egen clo = total(closed_value)
-	bys ego1: keep if _n == 1
-	list _all
+	// BUGFIX: `egen ..., total()' (via its own internal `by ego1:'
+	// group loop) errors ("variable ... not found", r(111)) on a
+	// genuinely empty (0-row) dataset - the `by' loop body never runs
+	// for zero groups, so egen's own internal working variable is never
+	// created, and its final `rename' step fails outright. A completely
+	// empty result here is legitimate whenever this level has fewer
+	// than 3 distinct same-mode nodes anywhere in a single connected
+	// component of the network (the minimum needed for any 4-path to
+	// exist at all) - confirmed directly on a network built from two
+	// disjoint 4-cycles, each with only 2 same-mode nodes. `gen'
+	// (unlike `egen'/`bys') tolerates 0 rows fine, so build the
+	// (correctly empty) `pot'/`clo' columns directly rather than via
+	// `egen' when there is nothing to group.
+	qui count
+	if r(N) > 0 {
+		bys ego1: egen pot = total(`measure')
+		bys ego1: egen clo = total(closed_value)
+		bys ego1: keep if _n == 1
+	}
+	else {
+		gen pot = .
+		gen clo = .
+	}
 	gen `generate' = clo / pot
 	keep ego1 `generate'
 	rename ego1 _nwnode

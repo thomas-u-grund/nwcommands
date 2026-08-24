@@ -44,6 +44,17 @@ For each node, {cmd:nwbalance} generates the number of closed triads it belongs 
 those that are balanced, and the ratio of the two. Network-level counts and the overall balance
 ratio are returned in {help return:r()}.
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - a pair of nodes counts as tied for the purposes of triad closure when
+{bf:either} direction has a tie; if both directions are tied (a mutual dyad), the value used for the
+balance product is whichever direction is checked first ({it:i->j} before {it:j->i}), which matters
+only when the two directions carry different signs. Weighted: yes - only the sign of each tie value is
+used (see Description); magnitude does not affect the closed/balanced classification. Signed: this is
+the command's whole purpose - see Description. Two-mode: not checked; structural balance is not a
+meaningful concept for a bipartite network's own inherently unclosable triads.
+
 {title:Stored results}
 
 	Scalars
@@ -88,8 +99,14 @@ program nwbalance
 	syntax [anything(name=netname)] [, generate(string)]
 	set more off
 	
-	local closed : word 2 of `generate'
-	local balance : word 3 of `generate'
+	// BUGFIX: word 2/word 3 were swapped relative to both the .sthlp's
+	// own documented namelist order (ratio, balanced count, closed
+	// count) and the two locals' own hardcoded defaults just below
+	// (_baltriad is word 2's default, _clotriad is word 3's default) - a
+	// custom 3-name generate() list silently put the closed-triad count
+	// into the user's "balanced" variable and vice versa.
+	local balance : word 2 of `generate'
+	local closed : word 3 of `generate'
 	local B : word 1 of `generate'
 	if "`closed'" == "" {
 		local closed "_clotriad"
@@ -100,129 +117,59 @@ program nwbalance
 	if "`B'" == "" {
 		local B = "_balance"
 	}
-	
-	
+
+
 	unw_defs
 	nw_syntax `netname', max(1)
 	nw_datasync `netname'
 	local original "`netname'"
-	local directed "`directed'"
-	
-	tempfile temp clustering edge_list adj_list
+
+	// PERFORMANCE/CORRECTNESS FIX: this command used to implement its own
+	// independent Stata-level nwtoedge/reshape-wide/reshape-long x2/merge
+	// m:m x2 pipeline here to enumerate every closed triad. It was
+	// confirmed (alpha-audit critical finding) to be outright broken for
+	// directed networks - silently missing obviously-closed triads
+	// entirely in some structures (e.g. a directed 3-cycle) and producing
+	// non-integer triad counts in others (e.g. a complete tournament) -
+	// and separately crashed with a raw "n not found -- data already
+	// wide" error on any network with zero ties at all, since the empty
+	// edge list broke the reshape chain before the (already-present)
+	// zero-closed-triads guard could ever run. calculate_balance() in
+	// unw_core.do now implements the identical computation natively in
+	// Mata via sparse has_edge()/edge_weight() enumeration (one pass per
+	// unordered triple, i<j<k, visited exactly once) - correct for both
+	// directed and undirected networks by construction, and naturally
+	// returns an all-zero result for a zero-tie network with no special
+	// casing needed. See that function's own header comment for the
+	// documented directed-network "tied in some direction" convention.
+	capture drop `B'
+	capture drop `balance'
+	capture drop `closed'
+	qui gen `balance' = .
+	qui gen `closed' = .
+
+	qui if _N < `nodes' {
+		set obs `nodes'
+	}
 	nw_syntax `netname'
-	tempvar included
-	nw_datasync `netname', generate(`included')
-	// captured before preserve, for the zero-closed-triads guard
-	// below (a triangle-free network's node list can't be recovered
-	// from the empty reshape output that would otherwise feed the
-	// per-node collapse)
-	qui levelsof `nw_nodename' if `included', local(allnodes)
 
-	preserve
-	
-	qui {
-	nw_syntax `netname'
-	unw_defs
-	nwtoedge `netname', full
-	rename `nw_ego' ego
-	rename `nw_alter' alter
-	rename `netname' value
-	drop if value == 0 | value == .
-	drop if alter == ego
-    save `edge_list', replace
+	tempname __nw_bal
+	mata: `__nw_bal' = `netobj'->calculate_balance()
+	mata: st_store((1::`nodes'), ("`closed'","`balance'"), `__nw_bal')
+	mata: mata drop `__nw_bal'
 
-	use `edge_list', clear
-	order ego alter
-	rename alter alter_
-	rename value value_
-	bys ego: gen n = _n
-	reshape wide alter_ value_, i(ego) j(n)
-	save `adj_list', replace
+	qui gen `B' = `balance' / `closed'
 
-	use `edge_list', clear
-	rename value value0
-	rename ego ego0
-	rename alter ego
-	merge m:m ego using `adj_list', nogenerate
-	rename ego alter0
-	reshape long alter_ value_, i(ego0 alter0) j(id)
-	drop id
-	drop if alter_ == "" | alter_ == ego0
-	rename alter_ ego1
-	rename value_ value1
-	order ego0 value0 alter0 value1 ego1 
-
-	rename ego0 ego
-	merge m:m ego using `adj_list', nogenerate
-	rename ego ego0
-	reshape long alter_ value_, i(ego0 alter0 ego1) j(id)
-	drop id
-	drop if alter_ == ""
-	rename value_ value2
-	rename ego1 ego2
-	rename alter0 ego1
-	keep if (alter_ == ego2)
-
-	gen `balance' = ((value0 * value1 * value2) > 0)
-	gen `closed' = 1
-	gen `nw_nodename' = ego2
-
-	qui count
-	if r(N) == 0 {
-		// no closed triads anywhere in the network - collapse errors
-		// r(2000) "no observations" on a completely empty dataset,
-		// even though every node genuinely has 0 closed triads here
-		// (not an undefined/missing count). Build that all-zero
-		// per-node result directly instead of collapsing, using the
-		// node list captured before preserve.
-		// "clear" (bare) behaves like "clear all" in Stata - it would
-		// wipe Mata memory too, including this package's own
-		// singleton network-state object, corrupting every command
-		// called afterward for the rest of the session. "drop _all"
-		// clears the dataset only, leaving Mata state untouched.
-		drop _all
-		local nnodes : word count `allnodes'
-		qui set obs `nnodes'
-		gen `nw_nodename' = ""
-		local i = 0
-		foreach onenode of local allnodes {
-			local i = `i' + 1
-			qui replace `nw_nodename' = "`onenode'" in `i'
-		}
-		gen `balance' = 0
-		gen `closed' = 0
-	}
-	else {
-		collapse (sum) `balance' `closed', by(`nw_nodename')
-	}
-
-	tempfile bal
-
-	
-	if "`directed'" == "false" {
-		replace `balance' = `balance' / 2
-		replace `closed' = `closed' / 2
-	}
-	gen `B' = `balance' / `closed'
-	sum `closed' if `closed' != .
-	local r1 `=`r(sum)' / 3'
-	sum `balance' if `balance' != .
-	local r2 `=`r(sum)'/3'
+	qui sum `closed'
+	local r1 = r(sum) / 3
+	qui sum `balance'
+	local r2 = r(sum) / 3
 	mata: st_rclear()
 	mata: st_numscalar("r(closed_triad)", `r1')
 	mata: st_numscalar("r(balanced_triad)", `r2')
-	mata: st_numscalar("r(unbalanced_triad)",`=`r(closed_triad)' - `r(balanced_triad)'')
-	mata: st_numscalar("r(balance)", `=`r(balanced_triad)' / `r(closed_triad)'')
-	_return hold balanceresult
-	save `bal'
-	restore 
-	capture drop `balance'
-	capture drop `closed'
-	capture drop `B' 
-	merge m:n `nw_nodename' using `bal', nogenerate
-	}
-	_return restore balanceresult
-	
+	mata: st_numscalar("r(unbalanced_triad)", `=`r1' - `r2'')
+	mata: st_numscalar("r(balance)", `=`r2' / `r1'')
+
 	noi di "{hline 40}"
 	noi di "{txt}  Network name: {res}`netname'"
 	noi di "{hline 40}"

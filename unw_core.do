@@ -2930,6 +2930,7 @@ class `NWdef' {
 	real matrix calculate_components()
 	real matrix calculate_lgc()
 	real matrix calculate_clustering()
+	real matrix calculate_balance()
 	real scalar calculate_modularity()
 	real matrix detect_communities_louvain()
 	real matrix detect_communities_labelprop()
@@ -3581,6 +3582,70 @@ real matrix `NWdef'::calculate_clustering(real scalar mode) {
 	cluster[,2] = closed_triples
 	cluster[,3] = potential_triples
 	return(cluster)
+}
+
+/*
+	Structural balance (Cartwright & Harary 1956) of every closed triad.
+	Returns an n x 2 matrix: column 1 is the number of closed triads each
+	node belongs to, column 2 is the number of those that are balanced
+	(product of the 3 tie values is positive). Each unordered triple
+	{i,j,k} is visited exactly once (i<j<k), so network-level totals are
+	simply colsum()/3 (a closed triad increments exactly 3 nodes' own
+	counters by 1 each) - no per-direction doubling correction needed at
+	any level, unlike nwbalance.ado's own pre-fix Stata-level pipeline.
+
+	For an UNDIRECTED network a pair is tied exactly when has_edge(i,j)
+	holds (symmetric by construction, so has_edge(j,i) is identical).
+	For a DIRECTED network - not previously handled correctly at all (see
+	the alpha-audit's own critical finding: the prior Stata-level
+	nwtoedge/reshape/merge pipeline silently missed obviously-closed
+	directed triads entirely in some structures and produced non-integer
+	counts in others) - a pair is considered tied when EITHER direction
+	has a tie (has_edge(i,j) | has_edge(j,i)), matching the documented
+	"tied in some direction" convention nwbalance.ado's own doc header
+	now states explicitly. When a pair has ties in both directions (a
+	mutual dyad, possibly with different signs), the i->j direction's
+	value is used if present, else j->i's - an explicit, documented
+	tie-breaking convention, not an accident of enumeration order.
+
+	Replaces nwbalance.ado's entire pre-fix Stata-level enumeration
+	pipeline (nwtoedge/reshape wide+long x2/merge m:m x2) - also fixes,
+	as a direct side effect of no longer routing through that pipeline at
+	all, a separate crash on any network with zero ties (the reshape
+	chain fed a genuinely empty edge list and errored with a raw "n not
+	found -- data already wide", r(111), instead of the all-zero result
+	this function now returns naturally).
+*/
+real matrix `NWdef'::calculate_balance(){
+	real matrix result
+	real scalar n, i, j, k, tij, tjk, tik, vij, vjk, vik, bal
+
+	n = get_nodes()
+	result = J(n, 2, 0)
+
+	for (i = 1; i <= n-2; i++) {
+		for (j = i+1; j <= n-1; j++) {
+			tij = has_edge(i,j) | has_edge(j,i)
+			if (!tij) continue
+			vij = has_edge(i,j) ? edge_weight(i,j) : edge_weight(j,i)
+			for (k = j+1; k <= n; k++) {
+				tjk = has_edge(j,k) | has_edge(k,j)
+				if (!tjk) continue
+				tik = has_edge(i,k) | has_edge(k,i)
+				if (!tik) continue
+				vjk = has_edge(j,k) ? edge_weight(j,k) : edge_weight(k,j)
+				vik = has_edge(i,k) ? edge_weight(i,k) : edge_weight(k,i)
+				bal = ((vij * vjk * vik) > 0)
+				result[i,1] = result[i,1] + 1
+				result[j,1] = result[j,1] + 1
+				result[k,1] = result[k,1] + 1
+				result[i,2] = result[i,2] + bal
+				result[j,2] = result[j,2] + bal
+				result[k,2] = result[k,2] + bal
+			}
+		}
+	}
+	return(result)
 }
 
 real matrix `NWdef'::calculate_lgc(){

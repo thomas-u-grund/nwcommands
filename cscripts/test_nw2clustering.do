@@ -79,3 +79,95 @@ forvalues t = 1/8 {
 	mata: st_view(cv=., ., "_clustering2_lev1")
 	mata: assert(all((cv :>= 0 :& cv :<= 1) :| cv :== .))
 }
+
+
+* --- alpha-audit regression: level(2) crashed outright with a raw
+* reshape error ("variable _nwmode_alter not constant within ego",
+* r(9)). Root-caused to a much deeper pre-existing bug than that one
+* symptom suggested: nwtoedge emits only ONE row per pair (the higher-
+* raw-index node as `ego') - for a two-mode network this means every
+* genuine cross-mode tie's `ego' side is whichever mode happens to
+* occupy the higher index range, so the `_nwmode_ego == "level"' filter
+* only ever found real edges for ONE of the two levels; the other level
+* silently operated on zero real edges the whole time (masked, for
+* level(1) specifically, by missing-valued same-mode "structural
+* non-edge" rows that happened to share one mode value and so didn't
+* immediately crash - producing a plausible-looking but meaningless
+* result instead of an error). Fixed by explicitly building both
+* directions of every real cross-mode tie before the level filter, so
+* either level finds real edges regardless of which mode nwtoedge
+* happened to assign as `ego'. Verified here that level(1) and level(2)
+* produce genuinely different (non-identical), individually valid
+* per-node results on the same network - not just "doesn't crash".
+nwclear
+set seed 7
+clear
+set obs 25
+gen ego = ""
+gen alter = ""
+local r = 0
+forvalues i = 1/5 {
+	forvalues j = 1/5 {
+		local r = `r' + 1
+		if mod(`i'*7 + `j'*13, 10) < 6 {
+			replace ego = "a`i'" in `r'
+			replace alter = "b`j'" in `r'
+		}
+	}
+}
+drop if ego == ""
+nwset ego alter, twomode name(bipnet2) nooutput
+nw2clustering bipnet2, level(1) generate(lev1)
+assert _rc == 0
+nw2clustering bipnet2, level(2) generate(lev2)
+assert _rc == 0
+nwload
+mata: st_view(cv1=., ., "lev1")
+mata: st_view(cv2=., ., "lev2")
+mata: assert(all((cv1 :>= 0 :& cv1 :<= 1) :| cv1 :== .))
+mata: assert(all((cv2 :>= 0 :& cv2 :<= 1) :| cv2 :== .))
+* level(1) only populates mode-1 nodes (the first 5), level(2) only mode-2
+mata: assert(all(cv1[1::5] :< .) & all(cv1[6::10] :== .))
+mata: assert(all(cv2[6::10] :< .) & all(cv2[1::5] :== .))
+di "=== LEVEL(2) REGRESSION VERIFIED ==="
+
+
+* --- alpha-audit regression: level() validation and one-mode guard.
+* level() previously accepted any integer with no validation, crashing
+* several steps later with a cryptic raw error instead of a clear
+* message; calling nw2clustering directly on a one-mode network crashed
+* just as cryptically rather than erroring cleanly.
+capture noisily nw2clustering bipnet2, level(99)
+assert _rc != 0
+
+nwclear
+nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(onemode) undirected labs(A,B,C,D)
+capture noisily nw2clustering onemode
+assert _rc != 0
+di "=== level()/one-mode VALIDATION VERIFIED ==="
+
+
+* --- alpha-audit regression: a network too small/structurally
+* inadequate to contain any valid 4-path/6-cycle (here: two disjoint
+* 4-cycles, so each component has only 2 same-mode nodes - never the 3
+* distinct same-mode nodes a 4-path needs) used to crash with a raw
+* internal Stata error at one of several different points ("no
+* observations" r(2000) from `duplicates drop'/`collapse', or "variable
+* ... not found" r(111) from `egen ..., total()' - all genuinely empty-
+* dataset-intolerant Stata commands) instead of the graceful all-missing
+* result this scenario deserves (matching nwbalance's own established
+* "zero closed triads is not an error" convention elsewhere in this
+* package).
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(nopath) bipartite
+nw2clustering nopath, level(1) generate(lnp1)
+assert _rc == 0
+nwload
+mata: st_view(cv=., ., "lnp1")
+mata: assert(all(cv :== .))
+nw2clustering nopath, level(2) generate(lnp2)
+assert _rc == 0
+nwload
+mata: st_view(cv=., ., "lnp2")
+mata: assert(all(cv :== .))
+di "=== NO-VALID-4-PATH REGRESSION VERIFIED ==="

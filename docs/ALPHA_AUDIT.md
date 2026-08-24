@@ -50,7 +50,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | 🔶 (critical fixes done, alpha unit 9) |
 | 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | 🔶 (critical fixes done, alpha unit 10) |
 | 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | 🔶 (critical fixes done, alpha unit 11) |
-| 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 |
+| 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 (critical fixes done, alpha unit 12) |
 | 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | 🔶 |
 | 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | 🔶 |
 | 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 |

@@ -80,9 +80,11 @@ so {cmd:nwconcor} requires every node to have at least one tie; remove isolates 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwconcor flomarriage}
+	{cmd:. * pucci is an isolate in this network - CONCOR requires every node to have a tie}
+	{cmd:. nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)}
+	{cmd:. nwconcor flomarriage2}
 
-	{cmd:. nwconcor flomarriage, splits(2)}
+	{cmd:. nwconcor flomarriage2, splits(2) replace}
 
 
 {title:References}
@@ -167,8 +169,29 @@ program nwconcor, rclass
 
 		local val = ("`netmeasure'" == "valued")
 
+		// BUGFIX: `gen netgenerate = .' used to run here, BEFORE the
+		// calculate_concor() call below that can fail (e.g. the isolates
+		// check inside it) - so a failure left a stale, all-missing
+		// output variable behind, which then falsely tripped the
+		// "already exists; specify replace" collision guard above on any
+		// retry, masking the real, original error entirely (exactly what
+		// the alpha audit's own repro hit: the doc's own second example
+		// line reported a misleading "already exists" error instead of
+		// the real isolates problem the first line had already failed
+		// on). `capture drop' (clearing out only a genuinely stale
+		// variable from an unrelated earlier call) is still safe to run
+		// here unconditionally - it does not itself create anything -
+		// but the actual `gen' is deferred until after calculate_concor()
+		// has succeeded, so a failed call never leaves anything behind to
+		// block a retry. (`capture drop' is deliberately kept in its
+		// original position, before the calculate_concor() call below,
+		// rather than after it: _rc is not reset by ordinary successful
+		// commands in Stata, only by another capture or a genuine error -
+		// so moving it after would leave the harmless "variable not
+		// found" 111 from this drop as the last thing to touch _rc even
+		// on a fully successful call, corrupting _rc for any caller.)
 		capture drop `netgenerate'`k'
-		gen `netgenerate'`k' = .
+
 		mata: st_rclear()
 		qui if _N < `nodes' {
 			set obs `nodes'
@@ -180,6 +203,7 @@ program nwconcor, rclass
 		if _rc != 0 {
 			exit _rc
 		}
+		gen `netgenerate'`k' = .
 		mata: st_store((1::`nodes'),"`netgenerate'`k'", `__nw_concor')
 		mata: mata drop `__nw_concor'
 

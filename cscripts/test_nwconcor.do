@@ -147,3 +147,32 @@ capture noisily nwconcor net1, splits(0)
 assert _rc != 0
 capture noisily nwconcor net1, maxiter(0)
 assert _rc != 0
+
+
+* --- alpha-audit regression: a failed call (e.g. an isolate node, which
+* CONCOR rejects) used to leave a stale, all-missing output variable
+* behind - `gen netgenerate = .' ran BEFORE the call that could fail, so
+* a failure's own `exit' left the half-created variable in place. That
+* then falsely tripped the "already exists; specify replace" collision
+* guard on any retry, masking the real error entirely - exactly what the
+* package's own .sthlp worked example hit (its own second example line
+* reported the misleading "already exists" error instead of the real
+* isolates problem the first line had already failed on). Also
+* regression-tests that a fully successful call leaves _rc==0 (a related
+* bug introduced and caught during this same fix: capture drop's own
+* harmless "variable not found" return code must not leak out as the
+* command's final _rc on a successful run - Stata does not reset _rc on
+* ordinary successful commands, only on another capture or a real error).
+nwclear
+nwset, mat((0,1,0\1,0,0\0,0,0)) name(withiso) undirected labs(A,B,C)
+capture noisily nwconcor withiso
+assert _rc != 0
+capture confirm variable _concor, exact
+assert _rc != 0
+di "=== NO STALE VARIABLE AFTER A FAILED CALL, VERIFIED ==="
+
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(clean) undirected labs(A,B,C)
+nwconcor clean
+assert _rc == 0
+di "=== SUCCESSFUL CALL LEAVES _rc==0, VERIFIED ==="
