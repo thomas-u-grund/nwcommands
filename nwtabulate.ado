@@ -516,8 +516,16 @@ program nwtab3
 	mata: `__nwexternal' = sum(`__nwtable') - `__nwinternal'
 	mata: `__nwei_index' = (`__nwexternal' - `__nwinternal') / (`__nwexternal' + `__nwinternal')
 	
-	mata: st_global("r(netname1)", "`net1'")
-	mata: st_global("r(netname2)", "`net2'")
+	// BUGFIX: was `r(netname1)'/`r(netname2)' set from `net1'/`net2' -
+	// copy-pasted verbatim from nwtab2 (the network+network branch
+	// above), but this program (nwtab3, the network+attribute branch)
+	// has only one network and one attribute, and never defines `net1'/
+	// `net2' anywhere in its own scope - both always came back missing
+	// (.), silently, since `capture'-free `mata:' calls referencing an
+	// undefined local just interpolate an empty string rather than
+	// erroring. Replaced with this program's own actual identifiers.
+	mata: st_global("r(netname)", "`netname'")
+	mata: st_global("r(attribute)", "`attribute'")
 	mata: st_numscalar("r(EI_index)", floatround(`__nwei_index'))
 	mata: st_matrix("r(table)", `__nwtable')
 	mata: st_matrix("r(col)", `__nwcol')

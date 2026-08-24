@@ -48,3 +48,17 @@ assert mreldif( C_table , T_table ) < 1E-8
 _assert_streq `"`: rowfullnames C_table'"' `"r1 r2"'
 _assert_streq `"`: colfullnames C_table'"' `"c1 c2"'
 mat drop C_table T_table
+
+* moderate-severity pass, information_census group: r(netname1)/
+* r(netname2) were copy-pasted from nwtab2 (the network+network branch)
+* but nwtab3 (this, the network+attribute branch) never defines net1'/
+* net2' in its own scope - both always came back missing. Replaced with
+* this program's own r(netname)/r(attribute).
+nwclear
+nwrandom 5, prob(1) name(net1)
+nwreplace net1[1,2] = 0
+gen x = (_n > 2)
+nwtabulate net1, attribute(x)
+assert `"`r(netname)'"' == "net1"
+assert `"`r(attribute)'"' == "x"
+di "=== r(netname)/r(attribute) REGRESSION VERIFIED ==="

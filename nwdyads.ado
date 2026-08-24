@@ -83,7 +83,7 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 	Scalars:
 	  {bf:r(_100)}	mutual dyads
 	  {bf:r(_010)}	asymmetric dyads
-	  {bf:r(_000)}	null dyads
+	  {bf:r(_001)}	null dyads
 	  {bf:r(reciprocity)}	M / (M + A)
 	  
 	Macros:
@@ -134,4 +134,10 @@ program nwdyads
 		di "{txt}    Reciprocity: {res}`r(reciprocity)'"
 	}
 	mata: st_global("r(name)", "`netname'")
+	// Naming consistency (moderate-severity pass, information_census
+	// group): nwname uses `r(netname)' for the identical "which network
+	// is this result about" concept; nwdyads/nwtriads used `r(name)'
+	// only. Added as an alias rather than renaming, so existing callers
+	// of either name keep working.
+	mata: st_global("r(netname)", "`netname'")
 end

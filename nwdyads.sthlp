@@ -82,7 +82,7 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 	Scalars:
 	  {bf:r(_100)}	mutual dyads
 	  {bf:r(_010)}	asymmetric dyads
-	  {bf:r(_000)}	null dyads
+	  {bf:r(_001)}	null dyads
 	  {bf:r(reciprocity)}	M / (M + A)
 	  
 	Macros:
