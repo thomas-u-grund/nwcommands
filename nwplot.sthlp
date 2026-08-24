@@ -86,7 +86,8 @@
 {p2line}
 {p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
 {p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
-{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end} 
+{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
+{p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -106,6 +107,7 @@
 {p2col:{opt arcstyle}({it:{help nwplot##arcstyle:arcstyle}})}change the look of arcs (curved, straight){p_end}
 {p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 2{p_end}
 {p2col:{opth arcsplines(int)}}resolution for curved arcs{p_end}
+{p2col:{opt arrows}}force arrowheads on an otherwise-undirected network{p_end}
 {p2col:{opth arrowfactor(float)}}multiply arrowhead by a factor{p_end}
 {p2col:{opth arrowgap(float)}}control gap between arrowhead and node{p_end}
 {p2col:{opth arrowbarbfactor(float)}}control look of arrow{p_end}
@@ -137,6 +139,8 @@
 {marker layout_sub}{...}
 {p2line}
 {p2col:{opt lgc}}only plot largest component{p_end}
+{p2col:{opth components(int)}}control the number of components rendered{p_end}
+{p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
 {p2col:{opth iterations(int)}}only relevant for layout = mds; maximum number of iterations in the multidimensional scaling procedure, default = 1000{p_end}
 {p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
 {p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
@@ -395,5 +399,5 @@ in the package's own visualization roadmap rather than fixed here.
 {title:See also}
 		{help nwplotmatrix}
 
-last certified : 22 Aug 2026
+last certified : 25 Aug 2026
 

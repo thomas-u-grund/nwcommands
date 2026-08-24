@@ -4,10 +4,21 @@
 
 capture program drop nwmovie
 program nwmovie
-	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) *]
+	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) noopen *]
 	unw_defs
 
-	nw_syntax `netname', max(999) min(2)
+	// BUGFIX: calling nwmovie with only a single network (violating
+	// netlist's own documented/enforced minimum of 2) used to crash
+	// with a raw Mata "subscript invalid" error (r3301) instead of a
+	// clear message - min(2)'s own enforcement inside nw_syntax doesn't
+	// itself produce a clean error on violation, the same general class
+	// of nw_syntax-failure-isn't-clean bug fixed independently in
+	// several other commands this pass.
+	capture nw_syntax `netname', max(999) min(2)
+	if _rc != 0 {
+		di "{err}nwmovie requires at least 2 networks (or a misspelled network name)."
+		error 198
+	}
 
 	if "`fname'" == "" {
 		if c(os) == "Windows" {
@@ -485,7 +496,17 @@ program nwmovie
 			if "`edgecoloropt'" != "" {
 				local edgecomma ","
 			}
-			if "`edgesize'" != "" {
+			// BUGFIX: was `"`edgesize'" != ""' (singular) - `edgesize'
+			// is unconditionally cleared to "" during option
+			// preprocessing (whether or not the caller ever passed
+			// edgesize()/edgesizes()), so this branch never ran and
+			// per-frame edge-width interpolation was dead code; edges
+			// only ever snapped to the correct width at the start/end
+			// frame of each transition, rendering at nwplot's flat
+			// default width for every frame in between. The analogous
+			// `sizes'/`colors'/`symbols' checks above all correctly use
+			// their own plural, actually-populated locals.
+			if "`edgesizes'" != "" {
 				nwgenerate _frame_edgesize = round(`firstedgesize' - `steepness' * (`firstedgesize' - `secondedgesize'))
 				qui nwplot ``framenet'', ignorelgc `nx' symbol(``thirdsymb'', norescale `symbolopt')  color(``thirdcol'', norescale  `coloropt' ) size(`frame_size', norescale `sizeopt') edgesize(_frame_edgesize, legendoff) edgecolor(``thirdedgecol'' `edgecomma' `edgecoloropt') title("``thirdtitle''" `title_opt')  `options'
 			}
@@ -545,7 +566,21 @@ program nwmovie
 	
 	if c(os) == "MacOSX" {
 		shell export PATH="$PATH:`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";`shellcmd'
-		shell open "`fname'.gif" -a /Applications/Safari.app/ 
+		// BUGFIX: every successful call used to unconditionally shell
+		// out to open the resulting .gif in Safari, with no way to
+		// suppress it - a real problem in a scripted/batch context,
+		// where this pops open a new Safari window/tab as an
+		// uncontrollable side effect of simply calling the command.
+		// Added noopen. Per this pass's own established "no-prefix
+		// trap" (a declared option starting with "no" - here "no"+
+		// "open" - makes Stata's syntax parser create a toggle local
+		// named after the STEM, "open", not "noopen" itself; confirmed
+		// directly: typing "noopen" sets `open' to "noopen", typing
+		// "open" alone or omitting the option entirely leaves `open'
+		// empty) - checking `open', not `noopen', is correct here.
+		if "`open'" == "" {
+			shell open "`fname'.gif" -a /Applications/Safari.app/
+		}
 	}
 	
 	if c(os) == "Windows" {
