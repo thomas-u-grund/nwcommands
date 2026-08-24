@@ -143,6 +143,28 @@ nwfromedge ego alter value, name(zeronet)
 nw_syntax zeronet
 mata: assert(`netobj'->degree(3) == 0)
 
+* an explicit name() collision must error unless replace is given
+* (mirrors nwset.ado's own identical fix) - nwfromedge is a separate
+* creation path from nwset's own mat()/varlist forms (nwset's own
+* `edgelist' option dispatches here), with its own independent
+* nwvalidate-based collision handling that needed the same fix.
+* zeronet (3 nodes: 1,2,4) still exists from the block above.
+clear
+input ego alter
+1 2
+2 3
+3 4
+end
+capture nwfromedge ego alter, name(zeronet)
+assert _rc == 6099
+nwsummarize zeronet
+assert r(nodes) == 3
+
+nwfromedge ego alter, name(zeronet) replace
+assert _rc == 0
+nwsummarize zeronet
+assert r(nodes) == 4
+
 
 
 
