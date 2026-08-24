@@ -35,6 +35,12 @@
 Displays results from hierarchical clustering (see {help nwhierarchy} or {help cluster}) as wheel dendrogram.
 	
 		
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - visualizes an existing hierarchical-clustering result (from {help nwhierarchy}), not a network directly; whatever directed/valued/two-mode support {help nwhierarchy} itself has already determined the clustering this command displays.
+
 {title:Example}
 
 	{cmd:. nwwebuse florentine, nwclear}

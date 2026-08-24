@@ -67,6 +67,12 @@ probability 0.3 and tie weight 3 with probability 0.7.
 {txt}
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural attachment - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} - a Stata expression assigning each new tie's value, independent of the preferential-attachment mechanism itself (which is always driven by degree, not tie value). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:References}
 
 {pstd}

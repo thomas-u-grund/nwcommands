@@ -26,6 +26,12 @@ This can be useful, when you want to directly interact with the underlying adjac
 Caution is advised because the relevant meta-information is not updated when changing the adjacency matrix of a network. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a live pointer to the network's own internal matrix (not a copy), independent of any of these properties; changes made through it directly alter the network.
+
 {title:Example}
 
 	{cmd:. nwrandom 5, density(.2) name(net)}

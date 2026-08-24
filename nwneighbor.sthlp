@@ -47,6 +47,12 @@
 the neighborhood of a node {it:ego} consists of all nodes {it:j}, who receive a tie from node {it:ego}. Tie values are ignored.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: not applicable - returns which nodes are neighbors, not tie values. Signed: not applicable. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars
@@ -77,4 +83,4 @@ This shows that the "ginori" family has business relationships with the "barbado
 
    {help nwcontext}, {help nwgeodesic}, {help nwpath}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

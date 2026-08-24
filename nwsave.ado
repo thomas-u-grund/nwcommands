@@ -33,6 +33,12 @@ command saves data in its own file format {bf:.nwdta}. Network data saved in thi
 can be loaded with {help nwuse}. Notice that the command {help save} does not save
 network data.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves the full network object to disk exactly as stored, independent of any of these properties.
+
 {title:Examples}
         
 {pstd}

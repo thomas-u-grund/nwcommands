@@ -33,8 +33,14 @@
 {cmd:nwrestore} restores network data previously preserved (including all Stata variables).
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves/restores the full working state (every loaded network and its own directed/valued/two-mode status, plus the Stata dataset), independent of any of these properties.
+
 {title:Also see}
    
    {help restore}, {help preserve}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

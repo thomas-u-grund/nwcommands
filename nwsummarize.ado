@@ -41,6 +41,12 @@
  the current network.
 
  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: not checked.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine}

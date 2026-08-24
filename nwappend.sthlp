@@ -30,6 +30,12 @@ currently loaded network data ({it:master dataset}). If a {it:{help filename}} i
 extension, {cmd:.nwdta} is assumed.
 
 {marker description}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - appends node-level Stata data from another dataset, independent of any of these properties.
+
 {title:Remarks}
 
 {pstd}
@@ -47,4 +53,4 @@ with the same node attribute, the node attribute of the {it:using dataset} is us
 
         {help nwuse}, {help nwwebuse}, {help nwsave}, {help append}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

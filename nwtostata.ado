@@ -43,6 +43,13 @@ This is a low-level utility for programmers moving data between Mata and Stata d
 use of the package does not need it - see {help nwtomata}/{help nwload} for the normal way to bring
 a network's own data into Stata.
 
+{title:Supported network types}
+
+{pstd}
+Not applicable - {cmd:nwtostata} copies an arbitrary, already-existing Mata matrix into Stata
+variables and has no notion of a network or its properties; any directed/weighted/signed/two-mode
+handling happened whenever {it:matamatrix} was itself produced.
+
 {title:Examples}
 
 	{cmd:. mata: m = (1,2 \ 3,4 \ 5,6)}

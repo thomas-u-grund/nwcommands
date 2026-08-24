@@ -63,6 +63,12 @@ With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted 
 {it:p_k} stands for the probability to sample tie weight {it:k}. The probabilities {it:p1, p2..., pn}
 do not necessarily have to sum up to one; they are standardized.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} (a per-dyad tie-value expression, independent of {opt density()}'s own probability-of-placement role) - though {opt weights()} is currently only implemented for the {opt mat()}-based path, not the {opt density()}-based path (an explicit, honest error is raised if both are combined; see the command's own Description). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:Example}
 
 {pstd} 
@@ -154,4 +160,4 @@ The program requires some additional programs ({bf:gsample, moremata}) that it a
 
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

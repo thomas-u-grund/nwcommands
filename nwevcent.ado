@@ -52,11 +52,10 @@ network (there is nothing to weight by).
 Eigenvector centrality is only defined for connected networks.
 
 
-{title:Scope}
+{title:Supported network types}
 
 {pstd}
-Directed and undirected, valued and unvalued, one-mode only
-
+Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" {opt nosym} convention as {help nwcloseness}/{help nwkatz}), {opt nosym} available. Weighted: not by default - {opt weighted} switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: not applicable (one-mode only).
 
 {title:Examples}
 

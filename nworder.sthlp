@@ -49,6 +49,12 @@ the network order matters (e.g. when making a movie out of _all networks, see {h
 
 
 {marker options}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders which networks occupy which position in the dataset only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
 {title:Options}
 
 {phang}

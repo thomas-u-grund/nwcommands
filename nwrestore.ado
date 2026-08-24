@@ -31,6 +31,12 @@ The temporary file {cmd:nwrestore} reads from is deleted once restored, so a giv
 call can only be restored once - exactly like Stata's own {help preserve:preserve}/{help restore:restore}.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - restores the full working state saved by {help nwpreserve}, independent of any of these properties.
+
 {title:Also see}
 
    {help nwpreserve}, {help restore}, {help preserve}

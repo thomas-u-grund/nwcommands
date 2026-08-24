@@ -58,6 +58,12 @@ Already existing Stata variables {it:var1, var2, var3} are overwritten. In case,
 for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2}), the command generates the variables
 {it:var1_z, var2_z, var3_z} for each network. 
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {opt nosym} convention as {help nwkatz}/{help nwevcent}), {opt nosym} available. Weighted: inherited entirely from whatever {help nwgeodesic} options are passed through (this command has no {opt weighted}/{opt alpha()} of its own). Signed: not checked. Two-mode: not checked.
+
 {title:Examples}
 	
 	{cmd:. nwwebuse gang, nwclear}

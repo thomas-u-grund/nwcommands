@@ -37,6 +37,12 @@ directed tie from node {it:j} to node {it:i}. By default, {cmd:nwtranspose} repl
 can specify that it should create a new network instead with {bf:generate()}. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: not applicable - transposing a bipartite incidence structure would swap its two modes, which is exactly what {help nw2project} and the {help nw2toedge}/{help nw2fromedge} family are for instead.
+
 {title:Examples}
 
 	{com}. nwclear

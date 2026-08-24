@@ -138,6 +138,12 @@ For example, this generates a Mata matrix and sets a two-mode network with 6 nod
 	{cmd:. nw2set, mat(net) name(network)}
 
 
+
+{title:Supported network types}
+
+{pstd}
+Two-mode: **T1**, native - this command's entire purpose is declaring a two-mode (bipartite) network from a rectangular incidence matrix or a variable list. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
+
 {title:Remarks}
  
 {pstd}

@@ -114,6 +114,15 @@ one-hop convention above; {opth hop(int)} works with {bf:proportion()} too.
 dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.smoking)} and
 {cmd:nwaltergen exposure = mean(alter.smoking)} are equivalent.
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - {it:alter} means out-neighbors only, since exposure/influence follows
+tie direction (see above). Weighted: no - only structural adjacency (and, with {opt hop()},
+unweighted step distance) determines who counts as an alter; tie strength itself does not enter any
+statistic. Signed: not checked. Two-mode: no - {it:srcvar} is read per node under the one-mode
+{it:_nwnode} indexing convention, with no mode-specific handling.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
@@ -138,4 +147,4 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 
 	{help nwgen}, {help nwneighbor}, {help nwdegree}
 
-last certified : 22 Aug 2026
+last certified : 24 Aug 2026

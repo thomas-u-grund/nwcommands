@@ -33,6 +33,12 @@
 This command calculates for each connected pair of nodes (i,j) the number of nodes k that both i and j
 have as shared neighbors.  
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - shared-tie/exposure counting is a structural property, tie values are ignored (via {help nwsym}'s own binarizing {cmd:generate()} path). Directed: requires {opt undirected} to symmetrize first, else an explicit error. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Example}
 
 		{cmd:. nwwebuse florentine, nwclear}

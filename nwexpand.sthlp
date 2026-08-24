@@ -153,6 +153,12 @@ of a friendship tie did sport at wave1.
 	{cmd:. nwplot glasgow1, edgecolor(sender_sport1)}
 	
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: source attribute values can be binary or continuous - {opt mode()} selects the transform. Directed: not applicable - produces a new derived network from a node attribute, not from an existing network's own directed status. Weighted: yes, natively - every {opt mode()} choice (same/dist/absdist/distinv/absdistinv/sender/receiver) produces continuous-valued ties by construction. Signed: yes, {opt mode(dist)} in particular can produce negative values. Two-mode: not applicable - produces a one-mode network from node-level attribute comparisons.
+
 {title:See also}
 
 	{help nwcorrelate}

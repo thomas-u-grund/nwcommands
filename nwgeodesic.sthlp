@@ -89,6 +89,12 @@ In contrast, Opsahl et al. (2010) allows giving different weight to longer and s
 the formula above ignores tie weights.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - symmetrized by default (matching {help nwcloseness}/{help nwkatz}'s own identical convention), {opt sym}/{opt nosym} control it explicitly. Weighted: yes, via {opt alpha()} - tie strength is inverted into a path cost via the Opsahl et al. formulation (higher tie value = shorter effective distance), not used directly as distance. Signed: not checked. Two-mode: not checked.
+
 {title:References}
 
 {pstd}
@@ -167,4 +173,4 @@ variable; not reproduced above since it depends on live data.)
 
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

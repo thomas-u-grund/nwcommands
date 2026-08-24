@@ -17,6 +17,12 @@
 {p 8 32 2}
 {helpb nwtab3:nwtabulate twoway}{space 7}for two-way table of network and node attribute
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings,
+not tie values. Signed: not applicable. Two-mode: not checked.
+
 ***/
 
 capture program drop nwtabulate

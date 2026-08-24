@@ -41,6 +41,12 @@ option {bf:lgc} is specified, the command generates a new variable
 {it:_lgc} which stores information about membership to the largest component.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - component membership is a structural (weak-connectivity) property, tie values are ignored. Directed: yes - uses weak connectivity (ignores tie direction), matching the standard convention for "components" on a directed graph. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars
@@ -79,6 +85,4 @@ option {bf:lgc} is specified, the command generates a new variable
  {title:See also}
  
 	{help nwgen}, {help nwkcomponents}
-
-last certified : 21 Aug 2026
 

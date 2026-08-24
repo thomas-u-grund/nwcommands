@@ -32,6 +32,12 @@ command saves data in its own file format {bf:.nwdta}. Network data saved in thi
 can be loaded with {help nwuse}. Notice that the command {help save} does not save
 network data.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves the full network object to disk exactly as stored, independent of any of these properties.
+
 {title:Examples}
         
 {pstd}
@@ -50,4 +56,4 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 {title:See also}
 
         {help nwuse}, {help nwwebuse}, {help save}
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

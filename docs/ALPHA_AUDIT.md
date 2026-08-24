@@ -79,12 +79,15 @@ across all 16 groups are fixed and regression-tested. 133 moderate/minor finding
 group in the table above (🔶 = critical fixes done, moderate/minor still pending) - the moderate-severity
 pass is the natural next phase.
 
-## Later phases (not started)
+## Later phases
 
 - **Phase 2**: Dialog (`.dlg`) UI audit - 57 `.dlg` files + 3 `.idlg` includes, each checked against its
-  command's current option set.
-- **Phase 3**: Help-file network-type restructuring - complete the `docs/NETWORK_TYPE_MATRIX.md` audit for
-  the ~90 remaining commands.
+  command's current option set. Explicitly skipped for this release (user-requested).
+- **Phase 3**: Help-file network-type restructuring - ✅ done, see `docs/CERTIFICATION.md`'s "Phase 3"
+  entry. All 92 previously-undocumented commands (plus `nwaltergen`, found missing during the final
+  sweep) now have a "Supported network types" section; `docs/NETWORK_TYPE_MATRIX.md` and the new
+  `nw_networktypes.sthlp` shared topic capture the full picture. Per-command section consolidation
+  into a shared-link-only reference remains a deliberately separate, not-yet-started later step.
 - **Phase 4**: Cross-cutting consistency sweep once all 16 groups have individually reported - patterns
   that only become visible once every group's findings are in one place (e.g. a naming convention that's
   inconsistent *across* groups, not just within one).

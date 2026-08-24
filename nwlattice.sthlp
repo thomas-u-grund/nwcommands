@@ -44,6 +44,12 @@
 each node is connected to exactly four other nodes.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). Weighted: not applicable - no {opt weights()} option; generates a purely structural lattice. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:Examples}
 	
 	{cmd:. nwclear}

@@ -99,6 +99,12 @@ For example, these two commands produce the same plot.
 
 {marker project_stat}{...}
 {marker project_level}{...}
+
+{title:Supported network types}
+
+{pstd}
+Two-mode: **T1**, native - this command's entire purpose is building a two-mode network directly from an edge list (ego/alter columns drawn from two distinct node sets). Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked.
+
 {title:One-mode projection}
 
 {pstd}

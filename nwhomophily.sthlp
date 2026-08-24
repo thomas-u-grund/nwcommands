@@ -129,6 +129,12 @@ underlying sampler fails; scale the variable (e.g. to a 0-10 range) or use a sma
 coefficient for {bf:absdistinv}/{bf:distinv} in that case.
 
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). Weighted: not applicable - no {opt weights()} option; {opt density()} controls overall tie placement rate, not individual tie values. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:Remarks}
 
 {pstd}

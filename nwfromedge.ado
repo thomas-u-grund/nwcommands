@@ -100,6 +100,12 @@ can be overwritten with the options {opt undirected} and {opt directed}.
 One can also transfrom any network that exists in memory into such an edgelist with {help nwtoedge}.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: not this command's own purpose - see {help nw2fromedge} for the two-mode edge-list-import counterpart.
+
 {title:Examples}
 
 {pstd}

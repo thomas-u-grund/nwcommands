@@ -51,6 +51,12 @@ more than two.
 {pstd}
 The command saves all bridges as a new network {it:newnetname}.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - bridge status is a structural property, tie values are ignored. Directed: yes - {opt type()} distinguishes local/global bridges and arcs vs. edges. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:References}
 
 {pstd}

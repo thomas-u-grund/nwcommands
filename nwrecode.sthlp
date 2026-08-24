@@ -66,6 +66,12 @@ and the to-value parts of the specification.
 
 
 {marker options}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid case. Directed: yes. Weighted: yes, natively - this command's entire purpose is recoding tie values via a rule. Signed: yes, a recode rule can map negative values like any other. Two-mode: not checked.
+
 {title:Options}
 
 {dlgtab:Options}

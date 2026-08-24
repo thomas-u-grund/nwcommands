@@ -327,6 +327,12 @@ scope: no full temporal-network modelling subsystem (dynamic centrality, relatio
 temporal ERGMs) is implemented or attempted here.
 
 
+
+{title:Supported network types}
+
+{pstd}
+This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected.
+
 {title:Remarks}
 
 {pstd}

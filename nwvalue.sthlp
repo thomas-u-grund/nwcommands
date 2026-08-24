@@ -27,6 +27,12 @@ The command returns the scalar {it:r(value)} with the value of the tie between t
 nodes exists. It also returns the names of those nodes when ids are used. Either the option pair {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified.
 
 	  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is returned exactly as stored, respecting direction, never symmetrized. Weighted: yes, natively - returns the tie's own raw stored value. Signed: not checked; a negative value is returned as-is with no special handling. Two-mode: not checked, but not expected to need any - a direct single-cell lookup by node identity.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine}
@@ -38,3 +44,4 @@ nodes exists. It also returns the names of those nodes when ids are used. Either
 {title:See also}
    
    {help nwreplace}
+last certified : 24 Aug 2026

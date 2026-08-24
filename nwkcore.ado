@@ -48,6 +48,12 @@ treats directed networks for the same kind of undirected-sense structural questi
 {pstd}
 By default, {cmd:nwkcore} generates a new variable {it:_kcore} which stores each node's coreness.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - coreness is a structural property, tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (matching {help nwcomponents}'s own weak-connectivity convention and {help nwsimindex}'s identical choice), not symmetrized distances. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars

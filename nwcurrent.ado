@@ -46,6 +46,12 @@ The command also returns some information about the {it:current network}
 in the r() vector. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - reports or sets which network is the "current" one; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
 {title:Examples}
 
 	{com}. nwwebuse florentine

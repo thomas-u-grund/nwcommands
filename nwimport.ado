@@ -85,6 +85,15 @@ Can also be used to import networks from the internet:
 {phang}
 {cmd:. nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)}{p_end}
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
+{bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
+values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
+values are negative. Two-mode: yes, for the formats whose own file structure distinguishes row and
+column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the same way as any other
+{help nwset}-created network.
 
 {marker ucinet}{...}
 {title:Import Ucinet DL format}

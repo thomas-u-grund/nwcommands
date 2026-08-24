@@ -142,6 +142,12 @@ not as full ERGM MLE) without ever running MCMC. Otherwise the default is
 likelihood.
 
 {marker limitations}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: not checked - term availability for a genuinely bipartite network has not been independently verified.
+
 {title:Limitations (v1 scope)}
 
 {pstd}

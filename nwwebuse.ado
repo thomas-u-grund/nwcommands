@@ -66,6 +66,12 @@ to {it:https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data}
 
 
 {marker option}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - fetches and loads an example dataset exactly as published; the specific dataset fetched determines which of these properties the resulting network actually has, not this command itself.
+
 {title:Option}
 
 {phang}

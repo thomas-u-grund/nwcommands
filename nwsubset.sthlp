@@ -54,8 +54,13 @@ However, the last command does not copy the node labels of network {it:flomarria
 network expressions can be very complicated, no labels are copied. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: not checked.
+
 {title:See also}
 
 	{help nwgenerate}, {help nwduplicate}
 
-last certified : 21 Aug 2026

@@ -26,6 +26,12 @@ The command checks if node {it:nodename} exists in network {it:netname} and retu
 case it does not exist, it returns -1.
 
  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - a pure node-existence/lookup check; does not read tie values or depend on directed/valued/two-mode status.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine}
