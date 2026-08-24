@@ -54,8 +54,8 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | 🔶 (critical fixes done, alpha unit 13) |
 | 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | 🔶 (critical fixes done, alpha unit 14) |
 | 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 (critical fixes done, alpha unit 15) |
-| 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | 🔶 |
-| 16 | programming | nwcompressobs | 🔶 |
+| 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | 🔶 (critical fixes done, alpha unit 16) |
+| 16 | programming | nwcompressobs | 🔶 (1 minor finding only, no critical-fix unit needed) |
 
 118 commands total across 16 groups (every `nw*`-prefixed `.ado` file in the repo, excluding internal
 `nw_*` helpers and the `nwcentrality`/concept-page overview topics, which aren't real commands).
@@ -73,6 +73,11 @@ harmonisation unit before this pass: reproduce, root-cause, fix, validate agains
 applicable, full `cscripts/` regression sweep, document as a numbered unit in `docs/CERTIFICATION.md`,
 commit. Status column above tracks progress per group (🔶 = findings in from Phase 1, fixes not yet
 applied; ✅ = fixes applied and regression-clean for that group).
+
+**Critical-severity sweep complete** (alpha units 2-16, `docs/CERTIFICATION.md`): all 50 critical findings
+across all 16 groups are fixed and regression-tested. 133 moderate/minor findings remain, tracked per
+group in the table above (🔶 = critical fixes done, moderate/minor still pending) - the moderate-severity
+pass is the natural next phase.
 
 ## Later phases (not started)
 

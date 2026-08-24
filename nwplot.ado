@@ -1133,19 +1133,36 @@ program nwplot, rclass
 	if ("`layout'"!="nodexy"){
 		di "{text:Calculating node coordinates...}"
 	}
-	if ("`layout'"=="_layoutfunction") {
+	// BUGFIX: every layout below crashed outright on a single-node
+	// network with a different raw error (mds: "dimension exceeds
+	// #rows of dissimilarity matrix", r(498); circle/grid: a Mata
+	// conformability error; mdsclassical: "_outdegree not found",
+	// r(111)) - each layout algorithm needs at least 2 nodes to have
+	// anything meaningful to compute (a distance matrix, a circle
+	// arrangement, etc.), but none of them special-cased the trivial
+	// n=1 case, where the only sensible answer is simply "the one node
+	// goes somewhere". Placed at the center of this file's own
+	// established [0,~1.5] x [0,1] plotting coordinate range (see the
+	// nodexy rescale logic above) and every layout-specific computation
+	// below skipped entirely for this case, rather than trying to make
+	// each of the 7 different layout algorithms individually tolerate
+	// a degenerate 1-node input.
+	if (`nodes' == 1) {
+		mata: Coord = J(1,2,0.5)
+	}
+	if ("`layout'"=="_layoutfunction" & `nodes' > 1) {
 		gettoken _layoutfcn _layoutfcnopt: _layoutfunction, parse(",")
 		mata: Coord = `_layoutfcn'(M`_layoutfcnopt')
 	}
-	if ("`layout'"== "mds"){
+	if ("`layout'"== "mds" & `nodes' > 1){
 		mata: Coord = netplotmds(M, `iterations')
 	}
-	
-	if ("`layout'"=="frucht"){
+
+	if ("`layout'"=="frucht" & `nodes' > 1){
 		mata: Coord = fruchtrein(M, `iterations')
 	}
-		
-    qui if ("`layout'"=="mdsclassical"  ){
+
+    qui if ("`layout'"=="mdsclassical" & `nodes' > 1 ){
 		// Coordinates matrix to be populated
 		mata: Coord = J(`nodes', 2, 0)
 		mata: Coord[.,1] = J(`nodes', 1, 1.5) 
@@ -1343,16 +1360,16 @@ program nwplot, rclass
 	}
 	capture replace `label' = `_orig_label'
 	
-	if ("`layout'"=="circle"){
+	if ("`layout'"=="circle" & `nodes' > 1){
 		mata: Coord = circlelayout(rows(M))
 	}
-	if ("`layout'"=="grid"){
+	if ("`layout'"=="grid" & `nodes' > 1){
 		if "`layout_gridcols'" == "" {
 			local layout_gridcols = ceil(sqrt(`nodes'))
 		}
 		mata: Coord = gridlayout(rows(M), `layout_gridcols')
 	}
-	if ("`layout'"=="nodexy"){
+	if ("`layout'"=="nodexy" & `nodes' > 1){
 		mata: Coord = J(rows(M),2,0)
 		mata: Coord[.,1] = st_data((1,rows(M)),"`nodex'")
 		mata: Coord[.,2] = st_data((1,rows(M)),"`nodey'")
@@ -1628,28 +1645,43 @@ program nwplot, rclass
 	local pccmd "||"
 	local pccmdforeground ""
 
-	qui tab edgesize, matrow(valuerow)
-	local tempvalue_rows = rowsof(valuerow)
-	qui tab edgecolor, matrow(edgecolorrow)
-	local tempecol_rows = rowsof(edgecolorrow)
+	// BUGFIX: a network with zero ties at all (e.g. any single-node
+	// network - no off-diagonal pair can even exist) leaves `edgesize'/
+	// `edgecolor' entirely missing for every observation in this
+	// tie-level dataset - `tab' finds no categories to tabulate and
+	// does not create `matrow(valuerow)'/`matrow(edgecolorrow)' at all
+	// in that case (not merely empty matrices - the locals are left
+	// completely undefined), crashing the very next line ("valuerow
+	// not found", r(111)). There is nothing to draw on the edge side of
+	// the plot when there are no edges, so this whole block is skipped
+	// entirely rather than trying to make `tab' tolerate an all-missing
+	// input - `pccmd'/`pccmdforeground' simply stay at their own
+	// already-initialized "no edges" values ("||"/"").
+	qui count if edgesize < .
+	if r(N) > 0 {
+		qui tab edgesize, matrow(valuerow)
+		local tempvalue_rows = rowsof(valuerow)
+		qui tab edgecolor, matrow(edgecolorrow)
+		local tempecol_rows = rowsof(edgecolorrow)
 
-	forvalues tempecol_mat = 1/`tempecol_rows'{
-		local tempecol = edgecolorrow[`tempecol_mat',1]
-		_getcolorstyle, i(`tempecol') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
-		local temppattern = r(edgepattern)
-		local tempcolstyle = r(edgecol)
-		forvalues tempval_mat = 1/`tempvalue_rows'{
-			local tempval = valuerow[`tempval_mat',1]			
-			local tempval_line = (`tempval' / 2) * `edgefactor' / 2
-			local tempval_arrow = (`tempval' + 1) * `arrowfactor' 
-			local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
-			local tempecol_orig = `tempecol' - 1
-			local foregroundcheck : list tempecol_orig in edgeforeground
-			if `foregroundcheck' == 0 {
-				local pccmd `"`pccmd' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
-			}
-			else {
-				local pccmdforeground `"`pccmdforeground' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
+		forvalues tempecol_mat = 1/`tempecol_rows'{
+			local tempecol = edgecolorrow[`tempecol_mat',1]
+			_getcolorstyle, i(`tempecol') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
+			local temppattern = r(edgepattern)
+			local tempcolstyle = r(edgecol)
+			forvalues tempval_mat = 1/`tempvalue_rows'{
+				local tempval = valuerow[`tempval_mat',1]
+				local tempval_line = (`tempval' / 2) * `edgefactor' / 2
+				local tempval_arrow = (`tempval' + 1) * `arrowfactor'
+				local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
+				local tempecol_orig = `tempecol' - 1
+				local foregroundcheck : list tempecol_orig in edgeforeground
+				if `foregroundcheck' == 0 {
+					local pccmd `"`pccmd' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
+				}
+				else {
+					local pccmdforeground `"`pccmdforeground' (pcspike sy sx ey ex if value != 0 & edgesize == `tempval' & edgecolor == `tempecol', lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') || (`pc' sy sx ey ex if value != 0 & edgesize == `tempval'  & edgecolor == `tempecol' & arrow == 1,  lpattern(`temppattern') lwidth(`tempval_line') lcolor("`tempcolstyle'") mfcolor("`tempcolstyle'") mcolor("`tempcolstyle'") msize(`tempval_arrow') barbsize(`tempval_barb') `lineopt') ||"'
+				}
 			}
 		}
 	}
@@ -1982,13 +2014,24 @@ real matrix NumElist(matrix onenet){
 	from = select(c1,c3)
 	to = select(c2,c3)
 	res = J(rows(from),4,0)
-	res[.,1] = from
-	res[.,2] = to
-	res[.,3] = select(value, c3)
-	
-	for (i = 1; i <= rows(from); i++) {
-		res[i,4] = onenet[res[i,1], res[i,2]] != 0 & onenet[res[i,2], res[i,1]] != 0
-	} 
+	// BUGFIX: on a network with zero ties anywhere (e.g. a single-node
+	// network, where no off-diagonal pair can even exist), `from'/`to'
+	// are genuinely 0x0 empty matrices - but `res[.,1]' is a 0x1
+	// selection (0 rows still expects 1 column), and assigning a 0x0
+	// matrix into a 0x1 target is itself a Mata conformability error,
+	// even though both sides have zero elements. `res' is already the
+	// correct (empty) result in this case, so the assignment is both
+	// unnecessary and unsafe - skipped entirely when there is nothing
+	// to assign.
+	if (rows(from) > 0) {
+		res[.,1] = from
+		res[.,2] = to
+		res[.,3] = select(value, c3)
+
+		for (i = 1; i <= rows(from); i++) {
+			res[i,4] = onenet[res[i,1], res[i,2]] != 0 & onenet[res[i,2], res[i,1]] != 0
+		}
+	}
 	return(res)
 }
 end
