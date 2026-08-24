@@ -12,31 +12,24 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwkeepnodes} 
+{cmdab: nwkeepnodes}
 [{it:{help netname}}],
-{opt nodes}({it:{help numlist:nodeid1...}})
+{opt nodes}({it:{help numlist:nodeid1...}} {help nodeid:{it:or} nodelab1...})
 [
 {opt attributes}({it:{help varlist}})
 {opt generate}({it:{help newnetname}})
-{opt netonly}]
+{opt netonly}
+{opt xvars}]
 
 {p 8 17 2}
-{cmdab: nwkeepnodes} 
+{cmdab: nwkeepnodes}
 [{it:{help netname}}],
-{opt nodes}({it:{help nodeid:nodelab1...}})
+{opt keepmat}({it:matamatrix})
 [
 {opt attributes}({it:{help varlist}})
 {opt generate}({it:{help newnetname}})
-{opt netonly}]
-
-{p 8 17 2}
-{cmdab: nwkeepnodes} 
-[{it:{help netname}}], 
-{opt keepmat(matamatrix)}
-[
-{opt attributes}({it:{help varlist}})
-{opt generate}({it:{help newnetname}})
-{opt netonly}]
+{opt netonly}
+{opt xvars}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -47,6 +40,12 @@
 {synopt:{opth attributes(varlist)}}Attribute variables that are included in the drop{p_end}
 {synopt:{opth generate(newnetname)}}Generates a new network and does not overwrite the original network{p_end}
 {synopt:{opt netonly}}Only update the network, but keep the Stata variables as they were{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+
+{pstd}
+Exactly one of {opt nodes()} or {opt keepmat()} must be specified - omitting both errors clearly
+(unlike {help nwdropnodes}, where omitting both is a silent no-op, since "keep nothing" has no safe
+default the way "drop nothing" does).
 
 {synoptline}
 {p2colreset}{...}
@@ -71,7 +70,7 @@ Keep the first seven nodes of network {it:flomarriage} and save it as network {i
 {pmore}
 {cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
-{cmd:. nwkeep flomarriage, nodes(1/7) generate(flomarriage_reduced)}{p_end}
+{cmd:. nwkeepnodes flomarriage, nodes(1/7) generate(flomarriage_reduced)}{p_end}
 
 
 {pstd}
@@ -101,6 +100,11 @@ command also keeps the first seven nodes:
 {cmd:. nwwebuse florentine, nwclear}{p_end}
 {pmore}
 {cmd:. nwkeep flomarriage if _n <= 7}{p_end}
+
+{pstd}
+Note the opposite default polarity between the two interfaces: {help nwkeep} leaves Stata dataset
+rows alone unless {bf:clean} is specified, while {cmd:nwkeepnodes} rebuilds the Stata dataset by
+default unless {bf:netonly} is specified.
 
 
 

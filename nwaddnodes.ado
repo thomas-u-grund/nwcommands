@@ -16,16 +16,18 @@
 {cmdab: nwaddnodes} 
 [{it:{help netname}}], 
 {cmd:nodenames}({it:n1, n2, ...})
-[{opt generate}({it:{help newnetname}})]
+[{opt generate}({it:{help newnetname}})
+{opt xvars}]
 
 {synoptline}
 {p2colreset}{...}
-	
+
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt nodenames}({it:n1, n2, ...})}Node identifiers separated by comma{p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save as new network{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 	
 	
 {title:Description}

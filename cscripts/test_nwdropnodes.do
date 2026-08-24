@@ -139,3 +139,17 @@ assert _nwnode[1] == "A"
 assert _nwnode[2] == "C"
 assert _nwnode[3] == "D"
 di "=== attributes() desync REGRESSION VERIFIED ==="
+
+* moderate-severity pass, manipulation_subset group: dropping every node
+* of a network (or the only node of a single-node network) used to crash
+* with a raw Mata error (r3200/r3301) instead of a clear message.
+nwclear
+nwset, mat((0)) name(singled) labs(only1)
+capture noisily nwdropnodes singled, nodes(1)
+assert _rc == 198
+
+nwclear
+nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) undirected labs(A,B,C,D) name(allgone)
+capture noisily nwdropnodes allgone, nodes(1 2 3 4)
+assert _rc == 198
+di "=== drop-every-node REGRESSION VERIFIED ==="

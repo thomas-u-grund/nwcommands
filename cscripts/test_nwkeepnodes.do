@@ -65,3 +65,25 @@ assert `"`r(labs)'"' == `"A,C,D"'
 nwtomata dnet, mat(M3)
 mata: assert(sum(M3[1,.]) == 0)
 mata: assert(M3[2,3] == 1)
+
+* moderate-severity pass, manipulation_subset group: omitting both
+* nodes() and keepmat() entirely used to be silently interpreted as
+* "keep nothing", crashing deep inside nwdropnodes' own Mata code.
+nwclear
+nwwebuse florentine, nwclear
+capture noisily nwkeepnodes flomarriage
+assert _rc == 198
+
+* the group's own documented worked example (nodes(1/7) generate()) - a
+* separate, pre-existing bug this uncovered while verifying the fix
+* above: nwrandom has never had a vars() option, but nwreplacemat's own
+* size-changing path passed it one anyway, previously masked by
+* nwrandom's own dead trailing wildcard (removed in the
+* generators_structural group's own unit).
+nwclear
+nwwebuse florentine, nwclear
+nwkeepnodes flomarriage, nodes(1/7) generate(flomarriage_reduced)
+assert _rc == 0
+nwsummarize flomarriage_reduced
+assert r(nodes) == 7
+di "=== empty keep-list / documented example REGRESSION VERIFIED ==="
