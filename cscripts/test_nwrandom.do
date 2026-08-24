@@ -81,3 +81,11 @@ assert r(value) == 3
 nwvalue random_2[1,3]
 assert r(value) == 3
 di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: a trailing `*'
+* wildcard used to silently accept and discard any misspelled option
+* instead of erroring, unlike every sibling generator in this group.
+nwclear
+capture noisily nwrandom 5, prob(.5) thisoptiondoesnotexist(123)
+assert _rc == 198
+di "=== unknown-option rejection REGRESSION VERIFIED ==="

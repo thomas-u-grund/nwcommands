@@ -35,6 +35,7 @@
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
@@ -63,8 +64,14 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	
 	{cmd:. nwclear}
 	{cmd:. nwring 20, k(2) undirected}
-	
-	
+
+{title:Stored results}
+
+	{bf:nwring} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwsmall}

@@ -24,6 +24,7 @@
 {opth ntimes(int)}
 {opt name}({it:{help newnetname}})
 {opt labs}({it:lab1, lab2, ...})
+{opt selfloop}
 {opt xvars}]
 
 {synoptset 30 tabbed}{...}
@@ -38,7 +39,9 @@
 {synopt:{opth ntimes(int)}}number of random networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:random}{p_end}
 {synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
+{synopt:{opt selfloop}}allow self-loops (a node tied to itself) in the generated network; default = no self-loops{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 
 {title:Description}

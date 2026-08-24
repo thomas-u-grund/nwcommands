@@ -51,6 +51,7 @@
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 
 {title:Description}
@@ -111,7 +112,13 @@ In the second example, there are exactly three shortcuts.
 	{cmd:. nwsmall 30, k(2) shortcuts(3) undirected}
 	{cmd:. nwplot, layout(circle)}
 
-	
+{title:Stored results}
+
+	{bf:nwsmall} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}

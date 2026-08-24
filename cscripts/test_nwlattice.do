@@ -87,3 +87,51 @@ assert _rc == 0
 capture noisily nwlattice 1 1
 assert _rc == 0
 di "=== SINGLE-NODE LATTICE REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: xwrap/ywrap used
+* to produce structurally wrong (uneven-degree) topology whenever
+* cols != rows - the pre-existing tests here only ever used a square 3x3
+* lattice, where a rows/cols mixup inside both wrap blocks cannot show
+* up. "3 5" means cols=3, rows=5 (nwlattice's own first-arg=cols,
+* second-arg=rows convention - see nwlattice.sthlp). Expected degree
+* sums hand-derived from the lattice geometry directly (not copied from
+* the buggy implementation): xwrap only wraps the column dimension, so
+* only the 2 boundary rows (of 5) lose a vertical neighbor - 2*3 nodes
+* at degree 3, 3*3 nodes at degree 4, sum = 6*3+9*4 = 54. ywrap only
+* wraps the row dimension, so only the 2 boundary columns (of 3) lose a
+* horizontal neighbor - 2*5 nodes at degree 3, 1*5 nodes at degree 4,
+* sum = 10*3+5*4 = 50. Both together (a full torus) makes every node's
+* degree exactly 4 with no boundary at all.
+nwclear
+nwlattice 3 5, undirected xwrap
+nwdegree
+qui sum _degree
+assert r(min) == 3
+assert r(max) == 4
+assert r(sum) == 54
+
+nwclear
+nwlattice 3 5, undirected ywrap
+nwdegree
+qui sum _degree
+assert r(min) == 3
+assert r(max) == 4
+assert r(sum) == 50
+
+nwclear
+nwlattice 3 5, undirected xwrap ywrap
+nwdegree
+qui sum _degree
+assert r(min) == 4
+assert r(max) == 4
+di "=== NON-SQUARE xwrap/ywrap REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: r(netlist) parity
+* with nwrandom (the only sibling generator that already exposed it).
+nwclear
+nwlattice 3 3
+assert `"`r(netlist)'"' == `"lattice"'
+nwclear
+nwlattice 3 3, ntimes(3)
+assert `"`r(netlist)'"' == `"lattice_1 lattice_2 lattice_3"'
+di "=== r(netlist) REGRESSION VERIFIED ==="

@@ -25,6 +25,7 @@
 {opth ntimes(int)}
 {opt name}({it:{help newnetname}})
 {opt labs}({it:lab1, lab2, ...})
+{opt selfloop}
 {opt xvars}]
 
 {synoptset 30 tabbed}{...}
@@ -39,7 +40,9 @@
 {synopt:{opth ntimes(int)}}number of random networks to be generated; default = 1{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:random}{p_end}
 {synopt:{opt labs}({it:lab1, lab2, ...})}overwrite node labels{p_end}
+{synopt:{opt selfloop}}allow self-loops (a node tied to itself) in the generated network; default = no self-loops{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 
 {title:Description}
@@ -117,7 +120,13 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 
 capture program drop nwrandom
 program nwrandom
-	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) name(string) undirected xvars noreplace * ]
+	// Trailing `*' wildcard removed - it was never referenced (`options''
+	// does not appear anywhere in this file), so it only served to
+	// silently accept and discard any misspelled/unrecognized option
+	// instead of erroring, unlike every sibling generator in this group
+	// (nwpref/nwlattice/nwring/nwsmall), none of which have this
+	// wildcard and all of which correctly reject unknown options.
+	syntax anything(name=nodes), [weights(string) selfloop ntimes(integer 1) Census(numlist integer min=1 max=3) Density(string) Prob(string) labs(string) name(string) undirected xvars noreplace]
 	unw_defs
 	
 	// Generate valid network name and valid varlist

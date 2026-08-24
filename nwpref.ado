@@ -39,6 +39,7 @@
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
@@ -81,15 +82,21 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 
 
 {title:Examples}
-	
+
 	{cmd:. nwclear}
 	{cmd:. nwpref 20, undirected}
 	{cmd:. nwplot, layout(circle)}
-	
+
 	{cmd:. nwpref 20, prob(1) undirected}
 	{cmd:. nwplot, layout(circle)}
 
-	
+{title:Stored results}
+
+	{bf:nwpref} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
@@ -136,6 +143,8 @@ program nwpref
 
 	if `ntimes' != 1 {
 		di in smcl as txt "{p}"
+		qui nwset
+		local oldnetlist `r(nets)'
 		forvalues i = 1/`ntimes'{
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
@@ -146,6 +155,15 @@ program nwpref
 			// warning or error.
 			nwpref `nodes', m0(`m0') m(`m') prob(`prob') name(`name'_`i') stub(`stub') `xvars' `undirected' vars(`vars') labs(`labs') weights(`weights')
 		}
+		// Feature parity (moderate-severity pass, generators_structural
+		// group): only nwrandom exposed r(netlist) for its own ntimes()>1
+		// case; nwpref/nwlattice/nwring/nwsmall all share the identical
+		// convention but never returned it.
+		qui nwset
+		local newnetlist `r(nets)'
+		local netlist : list newnetlist - oldnetlist
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`netlist'")
 		exit
 	}
 	
@@ -176,6 +194,7 @@ program nwpref
 	// Found while restoring nwgenerate's own pref( shortcut, which
 	// depends on this working correctly to produce the network under
 	// the caller's chosen name at all.
+	mata: st_rclear()
 	nwset, mat(`__nwnew') name(`name') `undirected' labs(`labs')
 	if "`xvars'" == "" {
 		nwload, xvars
@@ -183,8 +202,8 @@ program nwpref
 	else {
 		nwload
 	}
-	
-	
+	mata: st_global("r(netlist)", "`name'")
+
 end
 
 /*

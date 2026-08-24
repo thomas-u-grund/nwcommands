@@ -38,6 +38,7 @@
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
@@ -80,15 +81,21 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 
 
 {title:Examples}
-	
+
 	{cmd:. nwclear}
 	{cmd:. nwpref 20, undirected}
 	{cmd:. nwplot, layout(circle)}
-	
+
 	{cmd:. nwpref 20, prob(1) undirected}
 	{cmd:. nwplot, layout(circle)}
 
-	
+{title:Stored results}
+
+	{bf:nwpref} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
