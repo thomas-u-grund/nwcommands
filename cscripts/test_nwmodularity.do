@@ -72,3 +72,16 @@ nwmodularity wbridge, group(truegrp) measure(valued)
 assert reldif(r(modularity), .467741935) < 1E-6
 nwmodularity wbridge, group(truegrp) measure(binary)
 assert reldif(r(modularity), .357142857) < 1E-6
+
+* moderate-severity pass, community_spectral group: nwmodularity had no
+* silent option at all, unlike its closest siblings nwcommunity/
+* nwspectral.
+capture noisily nwmodularity wbridge, group(truegrp) measure(binary) silent
+assert _rc == 0
+di "=== silent option REGRESSION VERIFIED ==="
+
+* moderate-severity pass, community_spectral group: resolution() had no
+* input validation - same fix as nwcommunity's own identical option.
+capture noisily nwmodularity wbridge, group(truegrp) resolution(-1) silent
+assert _rc == 198
+di "=== resolution() validation REGRESSION VERIFIED ==="

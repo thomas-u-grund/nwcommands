@@ -42,7 +42,7 @@
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt linkage}({it:{help cluster linkage:linkage}})}Clustering linkage method (e.g. {cmd:singlelinkage}, {cmd:averagelinkage}, {cmd:completelinkage}); default = {cmd:singlelinkage}{p_end}
 {synopt:{opth groups(int)}}Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable{p_end}
-{synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates; default = {it:_role}. Ignored unless {opth groups(int)} is specified{p_end}
+{synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates; default = {it:_role}. Ignored unless {opth groups(int)} is specified (alias: {opt generate()}, matching {help nwcommunity}/{help nwspectral}'s own naming in this same group){p_end}
 {synopt:{opt replace}}Replace an existing {opth equivgen(newvarname)} variable{p_end}
 
 {synoptset 15 tabbed}{...}
@@ -70,6 +70,14 @@
 structural dissimilarity (by default, computed the same way {help nwdissimilar} computes it - see
 that command's own {opt type()}/{opt context()} options, which {cmd:nwhierarchy} passes straight
 through) and returns a Stata {help cluster:cluster analysis} object built via {help clustermat}.
+
+{pstd}
+{opt dismat()}, {opt disnet()}, and {opt type()}/{opt context()} are three alternative ways to supply
+the pairwise dissimilarity {cmd:nwhierarchy} clusters on, not independent options - the single
+{cmd:syntax} statement accepts all of them together with no validation, so if more than one is given,
+only one is actually used: {opt dismat()} wins if specified at all; otherwise {opt disnet()} wins if
+specified; otherwise {opt type()}/{opt context()} (computed via {help nwdissimilar}) is used. The
+others are silently ignored, not combined or warned about - specify only one.
 
 {pstd}
 This is the clustering step of a three-stage {bf:role/position analysis} workflow: {help nwdissimilar}
@@ -148,7 +156,22 @@ program nwhierarchy, rclass
 	// consistency with the rest of the package and to keep the new
 	// groups()/equivgen() code below (added in this same unit) safe
 	// against ever needing one of those locals in the future.
-	syntax [anything(name=netname)] [, dismat(string) disnet(string) linkage(string) type(string) context(string) clear add GROUPS(int -1) EQUIVgen(string) replace * ]
+	syntax [anything(name=netname)] [, dismat(string) disnet(string) linkage(string) type(string) context(string) clear add GROUPS(int -1) EQUIVgen(string) generate(string) replace * ]
+	// Naming consistency (moderate-severity pass, community_spectral
+	// group): the rest of this group (nwcommunity/nwspectral) and the
+	// wider package convention both use `generate()' for "write a
+	// per-node partition-id variable" - this command's own help text
+	// even describes `equivgen()''s own output as mirroring
+	// nwcomponents' `generate()'-produced output shape exactly. Added
+	// `generate()' as a working alias, kept `equivgen()' for backward
+	// compatibility.
+	if "`equivgen'" != "" & "`generate'" != "" {
+		di "{err}Specify only one of {bf:equivgen()} or {bf:generate()} (they are the same option) - not both."
+		error 198
+	}
+	if "`generate'" != "" {
+		local equivgen "`generate'"
+	}
 	nw_syntax `netname'
 
 	if "`clear'" == "" & "`add'" == "" {
