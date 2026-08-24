@@ -268,3 +268,11 @@ replace divcat3 = 3 in 5
 nwaltergen divviaalter = diversity(alter.divcat3)
 nwgen divviagen2 = diversity(alter.divcat3)
 assert divviaalter == divviagen2
+
+* moderate-severity pass, paths_distance group: error-code coherence -
+* nwaltergen used 110 for its "variable already exists" guard, unlike
+* every sibling command in the group (99, this package's own standard
+* code for the identical situation).
+capture noisily nwaltergen divviaalter = diversity(alter.divcat3)
+assert _rc == 99
+di "=== error-code coherence REGRESSION VERIFIED ==="

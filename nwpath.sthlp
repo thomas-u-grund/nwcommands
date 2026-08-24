@@ -83,11 +83,14 @@ For example,
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwpath flobusiness, ego(medici) alter(peruzzi) generate(medici_peruzzi)}
 
-{pstd}	
-There are two shortest paths from node 9 to node 11, hence, the networks {it:shortest_1} and {it:shortest_2} are generated.
-One can now use one of these new networks to represent the edgecolor when plotting the original network. 
-	
-	{cmd:. nwplot flobusiness, edgecolor(shortest_1) scheme(s2network)}
+{pstd}
+There is exactly one shortest path between {it:medici} and {it:peruzzi}, so a single network,
+{it:medici_peruzzi_1}, is generated ({opt generate()} is a stub - one network per shortest path found,
+numbered {it:_1}, {it:_2}, ... - so a pair of nodes with multiple shortest paths would instead
+produce {it:medici_peruzzi_1}, {it:medici_peruzzi_2}, and so on).
+One can now use this new network to represent the edgecolor when plotting the original network.
+
+	{cmd:. nwplot flobusiness, edgecolor(medici_peruzzi_1) scheme(s2network)}
 
 
 {title:Examples}
@@ -127,4 +130,4 @@ One can now use one of these new networks to represent the edgecolor when plotti
 
    {help nwgeodesic}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

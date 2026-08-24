@@ -19,12 +19,14 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opth unconnected(int)}
-{opt nosym}
-{opt sympopt(options)}
+{opth alpha(real)}
+{opt sym}
+{opt symopt(options)}
 {opth name(string)}
 {opt nwreplace}
 {opth generate(newvarname)}
-{opt xvars}]
+{opt xvars}
+{opt force}]
 
 
 {synoptset 30 tabbed}{...}
@@ -33,10 +35,12 @@
 {synopt:{opth unconnected(int)}}Define the length of the path between two unconnected nodes{p_end}
 {synopt:{opth alpha(real)}}Deal with valued networks{p_end}
 {synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
+{synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; default = {it:_eccentricity}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise){p_end}
 
 
 {title:Description}
@@ -133,7 +137,7 @@ other 15 nodes. The next example, makes use of the option {bf:unconnected()} to 
 these non-existent paths a certain length. Here, the option {bf:unconnected(max)} assigns
 them the length 6.
 
-    {com}. nwgeodesic flomarriage, unconnected(max)
+    {com}. nwgeodesic flomarriage, unconnected(max) nwreplace
 
     {res}{hline 40}
     {txt}  Network name: {res}flomarriage

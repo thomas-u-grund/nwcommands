@@ -129,9 +129,9 @@ statistic. Signed: not checked. Two-mode: no - {it:srcvar} is read per node unde
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
-	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
+	{cmd:. nwaltergen priorseat = proportion(alter.seat==1)}
 	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
-	{cmd:. nwaltergen sectordiv = diversity(alter.sector)}
+	{cmd:. nwaltergen seatdiv = diversity(alter.seat)}
 
 
 {title:References}
@@ -221,7 +221,12 @@ program nwaltergen
 	capture confirm new variable `newvarname'
 	if _rc & "`replace'" == "" {
 		di as err "{err}Variable {bf:`newvarname'} already exists; specify {bf:replace}"
-		error 110
+		// Error-code coherence: was 110 - every sibling command in this
+		// group (nwgeodesic/nwpath/nwbridges/nwneighbor/nwego) uses 99
+		// for the identical "already exists" situation, matching this
+		// package's own standard use of 99 for "a Stata variable already
+		// exists" (see nw_errorcodes.sthlp).
+		error 99
 	}
 
 	nw_syntax `net'

@@ -128,9 +128,9 @@ statistic. Signed: not checked. Two-mode: no - {it:srcvar} is read per node unde
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
-	{cmd:. nwaltergen priorsector = proportion(alter.sector==3)}
+	{cmd:. nwaltergen priorseat = proportion(alter.seat==1)}
 	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
-	{cmd:. nwaltergen sectordiv = diversity(alter.sector)}
+	{cmd:. nwaltergen seatdiv = diversity(alter.seat)}
 
 
 {title:References}

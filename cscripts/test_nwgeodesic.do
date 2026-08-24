@@ -156,3 +156,20 @@ nwgeodesic mynet, xvars
 capture noisily nwgeodesic mynet, name(_geo2)
 assert _rc == 0
 di "=== unconditional eccvar-guard REGRESSION VERIFIED ==="
+
+* moderate-severity pass, paths_distance group: an ordinary, fully
+* successful call (no sym, no xvars) used to leave a stale nonzero _rc
+* (e.g. 3301) with nothing to do with the actual outcome - three
+* separate unconditional captures (an existence-check nwdrop, a
+* symmetrized-copy nwdrop, and _return drop on a first-ever-held name)
+* each swallowed their own expected-failure case with nothing afterward
+* to reset _rc.
+nwclear
+nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
+nwgeodesic mynet
+assert _rc == 0
+nwclear
+nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
+nwgeodesic mynet, sym
+assert _rc == 0
+di "=== stale _rc leak REGRESSION VERIFIED ==="

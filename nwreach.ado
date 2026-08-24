@@ -21,7 +21,8 @@
 [{cmd:,}
 {opt sym}
 {opth name(string)}
-{opt xvars}]
+{opt xvars}
+{opt nwreplace}]
 
 
 {synoptset 25 tabbed}{...}
@@ -30,6 +31,7 @@
 {synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
 {synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt nwreplace}}if a network named {it:newnetname} already exists, drop it and use this name anyway - required, not silent (see {help nwgeodesic} for the same convention){p_end}
 
 
 {title:Description}
@@ -78,16 +80,34 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 ***/
 capture program drop nwreach
 program nwreach
-	syntax [anything(name=reachnet)], [ name(string) vars(string) xvars sym ]
+	// `vars(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (a fully dead, undocumented
+	// no-op).
+	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace]
 	nw_syntax `reachnet', name(reachnet)
 	unw_defs
-	
+
 	if "`name'" == "" {
-		local name "`nwgen_reach'"	
+		local name "`nwgen_reach'"
 	}
-	
-	capture nwdrop `name'
-	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2')
+
+	// BUGFIX: this used to unconditionally `capture nwdrop `name'' with
+	// no existence check and no way to opt out at all - a real,
+	// undocumented data-loss risk (any pre-existing network happening to
+	// share this command's target name, default `_reach' or whatever
+	// name() specifies, was silently destroyed with zero warning).
+	// Unlike this, every sibling command in the group (nwgeodesic/
+	// nwpath/nwbridges) requires `nwreplace' before overwriting an
+	// existing target name - now matches that convention.
+	capture nw_syntax `name', other(_check)
+	if _rc == 0 & "`nwreplace'" == "" {
+		di "{err}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}."
+		error 99
+	}
+	if _rc == 0 {
+		nwdrop `name'
+	}
+	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') nwreplace
 	qui nwreplace `name' = 1 if `name' != (`missing2')
 	qui nwreplace `name' = 0 if `name' == (`missing2')
 	nw_syntax `name'
