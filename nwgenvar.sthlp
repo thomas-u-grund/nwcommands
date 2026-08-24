@@ -8,7 +8,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwgen {hline 2}}Network extensions to generate{p_end}
+{p2col :nwgenvar {hline 2}}Network extensions to generate{p_end}
 {p2colreset}{...}
 
 
@@ -16,13 +16,13 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmd:nwgen} {newvar} {cmd:=} {it:netfcn1}({it:arguments}) [{cmd:,} {it:options}]
+{cmd:nwgenvar} {newvar} {cmd:=} {it:netfcn1}({it:arguments}) [{cmd:,} {it:options}]
 
 {p 8 17 2}
-{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:netfcn2}({it:arguments}) [{cmd:,} {it:options}]
+{cmd:nwgenvar} {it:{help newnetname}} {cmd:=} {it:netfcn2}({it:arguments}) [{cmd:,} {it:options}]
 
 {p 8 17 2}
-{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{help if}] [{cmd:,} {it:options}]
+{cmd:nwgenvar} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{help if}] [{cmd:,} {it:options}]
 		
 {pstd}
 where the {it:options} are also {it:fcn} dependent. 
@@ -47,7 +47,7 @@ The command can be used to generate Stata variables with some function {it:netfc
 each node in a network. 
 
 {pstd}
-{cmd:nwgen} {newvar} {cmd:=} {it:netfcn1}({it:arguments}) [{cmd:,} {it:options}]
+{cmd:nwgenvar} {newvar} {cmd:=} {it:netfcn1}({it:arguments}) [{cmd:,} {it:options}]
 
 {pstd}
 {it:netfcn1} is one of:
@@ -115,6 +115,11 @@ each node in a network.
 The number of an observation {help _n} in {help newvar} corresponds to the {help nodeid}
 of a node in a network.
 
+{pstd}
+Unlike {help nwgen}, {cmd:nwgenvar} does {bf:not} support the {cmd:mean(alter.}{it:srcvar}{cmd:)}-style
+shortcut for summarizing an existing Stata variable's values among each node's network neighbors -
+use {help nwaltergen} directly for that, or use {cmd:nwgen} instead.
+
 
 {title:Generating networks}
 
@@ -123,10 +128,10 @@ The command can also be used to generate networks. There are two ways to do this
 
 
 {p 8 17 2}
-{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:netfcn2}({it:arguments}) [{cmd:,} {it:options}]
+{cmd:nwgenvar} {it:{help newnetname}} {cmd:=} {it:netfcn2}({it:arguments}) [{cmd:,} {it:options}]
 
 {p 8 17 2}
-{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{cmd:,} {it:options}]
+{cmd:nwgenvar} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{cmd:,} {it:options}]
 	
 {pstd}
 {it:netfcn2} is one of:
