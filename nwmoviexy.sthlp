@@ -1,4 +1,3 @@
-/***
 {smcl}
 {* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
 {marker topic}
@@ -43,9 +42,3 @@ reference, requirements (ImageMagick), and worked examples.
 
 	{help nwmovie}, {help nwplot}
 
-***/
-
-capture program drop nwmoviexy
-program nwmoviexy
-	nwmovie `0'
-end

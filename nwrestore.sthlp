@@ -1,4 +1,3 @@
-/***
 {smcl}
 {* *! 21dec2017 author: Thomas Grund}{...}
 {marker topic}
@@ -35,16 +34,3 @@ call can only be restored once - exactly like Stata's own {help preserve:preserv
 
    {help nwpreserve}, {help restore}, {help preserve}
 
-***/
-
-capture program drop nwrestore
-program nwrestore
-	unw_defs
-	capture confirm file `nw_tempfile'.nwdta
-	if _rc != 0 {
-		di "{err}Nothing to restore"
-		exit
-	}
-	nwuse `nw_tempfile', clear
-	erase `nw_tempfile'.nwdta
-end

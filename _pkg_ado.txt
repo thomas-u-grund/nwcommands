@@ -75,6 +75,7 @@ f nwlattice.ado
 f nwload.ado
 f nwmodularity.ado
 f nwmovie.ado
+f nwmoviexy.ado
 f nwname.ado
 f nwnclan.ado
 f nwnclique.ado
@@ -95,6 +96,7 @@ f nwrecode.ado
 f nwrename.ado
 f nwreplace.ado
 f nwreplacemat.ado
+f nwrestore.ado
 f nwring.ado
 f nwsave.ado
 f nwset.ado
