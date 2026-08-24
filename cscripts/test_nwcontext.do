@@ -91,5 +91,29 @@ nwcontext mynet, attribute(x) generate(z4) noweight replace
 assert z4[1] == 2.5
 
 
+* --- alpha-audit regression: stat(maxego) was a Mata syntax error on
+* every call (a stray trailing "4" character after `_diag(__contextNet,
+* 1)'), and stat(meanego) always failed with "variable not found"
+* (referenced the undeclared Mata locals `contextNet'/`attr' instead of
+* `__contextNet'/`__attr'). Hand-computed on a fresh 3-node network
+* (A->B,A->C undirected star, x=1,2,3): each node's own ego-inclusive
+* neighborhood (self + direct ties) is A={1,2,3}, B={1,2}, C={1,3}.
+nwclear
+nwset, mat((0,1,1\1,0,0\1,0,0)) name(egonet)
+gen xe = _n
+nwcontext egonet, attribute(xe) stat(maxego) generate(zmaxego)
+assert _rc == 0
+assert zmaxego[1] == 3
+assert zmaxego[2] == 2
+assert zmaxego[3] == 3
+
+nwcontext egonet, attribute(xe) stat(meanego) generate(zmeanego)
+assert _rc == 0
+assert zmeanego[1] == 2
+assert zmeanego[2] == 1.5
+assert zmeanego[3] == 2
+di "=== maxego/meanego REGRESSION VERIFIED ==="
+
+
 
 

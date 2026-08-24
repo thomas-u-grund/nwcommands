@@ -240,7 +240,11 @@ program nwcontext
 	
 	if ("`stat'" == "meanego"){
 		mata: _diag(__contextNet, 1)
-		mata: __context = (contextNet * attr) :/ (rowsum(__contextNet))
+		// BUGFIX: referenced the undeclared Mata variables `contextNet'/
+		// `attr' instead of `__contextNet'/`__attr' (the names actually
+		// populated earlier in this program, used by every other stat
+		// branch) - always failed with "variable not found", r(3499).
+		mata: __context = (__contextNet * __attr) :/ (rowsum(__contextNet))
 	}
 	
 	if ("`stat'" == "sd"){
@@ -268,7 +272,11 @@ program nwcontext
 	}
 	
 	if ("`stat'" == "maxego"){
-		mata: _diag(__contextNet, 1)4
+		// BUGFIX: a stray trailing "4" after the closing paren made this
+		// a Mata syntax error ("invalid syntax", r(3000)) on every call,
+		// unlike the four other identical `_diag(__contextNet, 1)' calls
+		// elsewhere in this file.
+		mata: _diag(__contextNet, 1)
 		mata: _editvalue(__contextNet,0,.)
 		mata: __context = rowmax(__contextNet :* __attr')
 	}
