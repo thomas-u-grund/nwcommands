@@ -35,3 +35,23 @@ capture nwmodularity dirnet, group(g)
 assert _rc != 0
 nwmodularity dirnet, group(g) symmetrize
 assert r(communities) == 3
+
+// PERFORMANCE/CORRECTNESS FIX: scoring a partition with enough
+// distinct groups used to crash outright ("too many values", r134,
+// or a matsize-driven r915 for a slightly smaller count) - `tab ...,
+// matrow() matcell()' and a later `matrix rownames = <huge token
+// list>' line both routed the group count through a Stata command-
+// line/matsize limit that a real network's own community structure
+// can easily exceed (confirmed directly: Louvain on a sparse
+// n=10,000 random graph genuinely finds 4,322 communities, not a
+// pathological case). 2,000 singleton groups (well past the smaller
+// end of that limit, confirmed directly) is enough to reproduce the
+// crash without needing a large random network in this test file.
+nwclear
+set seed 1
+nwrandom 2000, prob(.01) undirected name(manygroups)
+nwload
+gen g = _n
+nwmodularity manygroups, group(g)
+assert _rc == 0
+assert r(communities) == 2000
