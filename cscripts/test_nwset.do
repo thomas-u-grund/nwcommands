@@ -232,3 +232,38 @@ assert r(nodes) == 3
 nwclear
 capture nw_syntax nonexistent_network_xyz
 assert _rc == 482
+
+* mat() has always evaluated its own argument as a bare Mata
+* expression - a literal expression parses directly as an anonymous
+* Mata matrix constant regardless, and a bare MATA variable name works
+* too (Mata variables are themselves valid bare expressions), but a
+* bare NAME referring to an existing STATA matrix does not auto-import
+* into Mata (confirmed directly: "X not found", r(3499), before this
+* fix) - found while auditing the Pending list for other nwset.ado
+* gaps, not user-reported this time. Fixed by detecting an existing
+* Stata matrix name via `confirm matrix' and copying it into Mata
+* explicitly via st_matrix() first.
+nwclear
+matrix define X = (0,1,1\1,0,1\1,1,0)
+nwset, mat(X) name(netX)
+assert _rc == 0
+nwsummarize netX
+assert r(nodes) == 3
+nwtomata netX, mat(Xcheck)
+mata: assert(max(abs(Xcheck :- (0,1,1\1,0,1\1,1,0))) < 1e-8)
+
+* literal expression and bare Mata variable name must keep working
+* exactly as before (not broken by the new Stata-matrix-name path).
+nwclear
+nwset, mat((0,1\1,0)) name(netLit)
+assert _rc == 0
+nwsummarize netLit
+assert r(nodes) == 2
+
+nwclear
+mata: __nwset_test_var = (0,1,0\1,0,1\0,1,0)
+nwset, mat(__nwset_test_var) name(netMata)
+assert _rc == 0
+nwsummarize netMata
+assert r(nodes) == 3
+mata: mata drop __nwset_test_var

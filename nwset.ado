@@ -749,9 +749,33 @@ if "`overwrite'" != "" local replace "replace"
 		
 		// set network from mata matrix
 		if ("`mat'" != "") {
+			// mat() has always evaluated its own argument as a bare
+			// Mata expression - a literal expression like `(0,1\1,0)'
+			// parses directly as an anonymous Mata matrix constant
+			// regardless, but a bare NAME referring to an existing
+			// STATA matrix does not auto-import into Mata (Mata has no
+			// such convenience) - confirmed directly: `matrix define X
+			// = (0,1\1,0)' then `nwset, mat(X)' failed with "X not
+			// found" (r(3499)) before this fix. Every existing internal
+			// caller of `nwset, mat(...)' in this package happens to
+			// always pass either a literal expression or an existing
+			// MATA variable name (both already work, since Mata
+			// variables ARE directly usable as bare expressions) -
+			// only a genuine Stata matrix name was ever unsupported.
+			// Detected via `confirm matrix', then copied into Mata
+			// explicitly via `st_matrix()' first; a literal expression
+			// or Mata variable name fails `confirm matrix' harmlessly
+			// (it is not a valid/existing Stata matrix name) and falls
+			// through to the original, unchanged behavior.
+			capture confirm matrix `mat'
+			if _rc == 0 {
+				tempname __nwmatcopy
+				mata: `__nwmatcopy' = st_matrix("`mat'")
+				local mat "`__nwmatcopy'"
+			}
 			mata: mode1 = cols(`mat')
 			mata: st_local("mode1", strofreal(mode1))
-			mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")  
+			mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")
 			mata: `__modes' = J(cols(`__nwnew'), 1, 2)
 			mata: `__modes'[(1::mode1),1] = J(mode1, 1, 1)
 			mata: `__modes'=strofreal(`__modes')'
