@@ -21,7 +21,17 @@ program nw_syntax
 		capture nwunab _temp : `anything', max(`max') `min'
 		local networks_count : word count `_temp'
 		capture local lastnet : word `networks_count' of `_temp'
-		mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
+		// missing `capture' - when no network has ever been created
+		// this session (`nw' doesn't exist as a Mata object at all,
+		// not merely "0 networks registered"), this line raised a raw
+		// Mata "type mismatch: exp.exp: transmorphic found where
+		// struct expected" (r(3000)) instead of falling through to the
+		// clean "not found" error immediately below, since an
+		// uncaptured error aborts before the `if _rc != 0' check ever
+		// runs. Confirmed via a minimal repro independent of any other
+		// bug: `nwclear' then `nw_syntax somenetwork' in a single
+		// session reproduces this on its own.
+		capture mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
 	}
 	
 	if _rc != 0 {

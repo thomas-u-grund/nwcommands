@@ -369,7 +369,18 @@ an adjacency list or an edgelist represented by Stata variables.
 
 capture program drop nwset	
 program nwset
-syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
+syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite REPLACE bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
+// `overwrite' was declared here but never actually connected to any
+// check anywhere in this file (confirmed directly: it was the ONLY
+// occurrence of the word in the whole file) - a network name
+// collision has always silently auto-picked a different valid name
+// via nw_validate below and warned, regardless of whether `overwrite'
+// was given. `replace' is the real, now-wired option (matching this
+// package's own naming convention elsewhere, e.g. nwgenerate's
+// `replace'); `overwrite' is kept as a backward-compatible alias for
+// any existing caller already passing it (it did nothing before, so
+// no prior behavior is lost by finally giving it one).
+if "`overwrite'" != "" local replace "replace"
 
 	// twomode is a genuinely different declaration shape from
 	// bipartite, not a synonym for it - bipartite (long-established,
@@ -528,7 +539,7 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 			mata: `__tval2' = st_data(., "`ivend'")
 		}
 
-		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected'
+		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected' `replace'
 		nw_syntax `name'
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
@@ -566,33 +577,80 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 	}
 	set more off
 	unw_defs
-	
+
+	// `clear'/`nwclear' used to `exit' unconditionally, even when the
+	// same call also carried a creation request (a non-empty varlist -
+	// edgelist/twomode/bipartite/temporal forms - or mat()). That made
+	// e.g. "nwset ego alter, edgelist name(mini) nwclear" silently wipe
+	// the registry and return without ever creating "mini" - nwset
+	// itself reported no error, since from its own point of view it
+	// successfully executed the "clear" form; the failure only
+	// surfaced later, when something else referenced "mini" and hit
+	// the emptied registry (a confusing "type mismatch:
+	// exp.exp: transmorphic found where struct expected" instead of a
+	// clean "network not found"). The .sthlp only documents clear/
+	// nwclear as standalone forms, but nothing in the syntax line
+	// stopped a caller from combining one onto a creation call as a
+	// natural "clear anything old, then set this" shorthand. Now only
+	// exits early when clearing is the ONLY thing being requested;
+	// otherwise the clear happens as a side effect BEFORE the
+	// `nws_create()' step below (not after - `nwclear' itself drops
+	// the whole `nw' Mata registry object, so running it after
+	// `nws_create()' had already built a fresh one would immediately
+	// destroy it again) and execution falls through into the normal
+	// creation path. Combining `nwclear' with a varlist-based creation
+	// form (edgelist/twomode/temporal) is not made to work by this fix
+	// - `nwclear' wipes the Stata dataset those forms read their own
+	// source columns from, so the two are inherently in tension; that
+	// combination surfaces as an ordinary "variable not found"-style
+	// error now instead of a silent no-op, which is the actual bug
+	// this fixes. `mat()' is unaffected (its input is a Mata
+	// expression, not dataset columns) and works correctly combined
+	// with either `clear' or `nwclear'.
+	if "`clear'" != "" & "`varlist'`mat'" == "" {
+		// `nwdrop' has never accepted a `netonly' option (confirmed
+		// directly: `nwdrop.ado's own syntax line only declares
+		// `clean') - this call has always errored ("option netonly not
+		// allowed", r(198)), meaning `nwset, clear' was completely
+		// broken before this fix, not merely a corner case. Plain
+		// `nwdrop _all' already does exactly what `clear' is
+		// documented to do (drop all networks, leave the Stata dataset
+		// untouched) - confirmed directly - so `netonly' was pure
+		// vestigial cruft, not a missing feature to add.
+		nwdrop _all
+		exit
+	}
+	if "`nwclear'" != "" & "`varlist'`mat'" == "" {
+		nwclear
+		exit
+	}
+	if "`clear'" != "" {
+		// same fix as the standalone-form branch above (`netonly' was
+		// never a real nwdrop option).
+		nwdrop _all
+	}
+	if "`nwclear'" != "" {
+		nwclear
+	}
+
 	capture mata: `nw'
 	if (_rc != 0) {
 		if ("`varlist'" != "" | "`mat'" != ""){
 			mata: `nw' = nws_create()
 		}
 	}
-	
+
 	if "`edgelist'" != "" {
 		local labsfromvar ""
 	}
-	if "`clear'" != "" {
-		nwdrop _all, netonly
-		exit
-	}
-	if "`nwclear'" != "" {
-		nwclear
-		exit
-	}	
-	
+
 	local numnets = 0
 	mata: st_rclear()
 	local max_nodes = 0
 	local allnames ""
 	
 	qui if "`edgelist'" != "" {
-		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected'
+		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected' `replace'
 		exit
 	}
 	
@@ -624,16 +682,58 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite bi
 		tempname __nwnew
 		tempname __nwnodenames
 		tempname __modes
-		
+
+		// Captured BEFORE the "network" default below, so the
+		// collision check right after can tell an explicit name(foo)
+		// apart from an unspecified one - only an explicit, caller-
+		// chosen name is held to the create/replace convention used
+		// elsewhere in the package (nwgenerate's own `replace' guard);
+		// letting the anonymous "network"/"network_1"/... default keep
+		// auto-numbering on collision matches nwfromedge's own
+		// documented behavior for the same unspecified-name case and
+		// is not something the caller expressed any intent about.
+		local name_given = ("`name'" != "")
+
 		if "`name'" == "" {
 			local name "network"
 		}
-		
+
 		nw_validate `name'
 		if "`r(exists)'"=="true" {
-			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+			if "`replace'" != "" {
+				// keep the caller's own requested name and drop the
+				// existing network under it first, rather than
+				// switching to an auto-generated alternative name -
+				// this is the only place that name collision is
+				// actually decided, so this is the one place `replace'
+				// needs to hook in. nwdrop itself drops the whole `nw'
+				// Mata registry object once the last network is gone
+				// (confirmed directly in nwdrop.ado) - if the network
+				// being replaced was the only one registered, the
+				// creation path below would otherwise find no `nw' to
+				// register the replacement into, so it is rebuilt here
+				// exactly the same way the top of this program already
+				// does when `nw' does not yet exist at all.
+				nwdrop `name'
+				capture mata: `nw'
+				if (_rc != 0) mata: `nw' = nws_create()
+			}
+			else if `name_given' {
+				// An explicit name(foo) collision must not silently
+				// diverge to foo_1 - that left "foo" itself untouched
+				// while the caller's later references to "foo" kept
+				// hitting stale data, exactly the silent-destructive-
+				// operation trap the create/replace convention exists
+				// to prevent. Errors instead, matching nwgenerate's own
+				// message shape and error code for the same situation.
+				di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+				error 6099
+			}
+			else {
+				di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
+				local name = r(validname)
+			}
 		}
-		local name = r(validname)
 
 		// set network from varlist
 		if ("`varlist'" != "") {

@@ -123,8 +123,18 @@ Afterwards, it can be loaded as a network object again:
 
 capture program drop nwfromedge
 program nwfromedge
-	syntax varlist(min=2 max=3) [if] [, overwrite prefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected ]
+	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE prefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected ]
 	unw_defs
+	// NOTE: this file's own `overwrite' predates this option and controls
+	// nwload's own overwrite behavior further below (`qui nwload,
+	// `overwrite''), unrelated to network-name-collision - kept exactly
+	// as-is. `replace' is a NEW, separate option: whether an existing
+	// network under the requested name() should be replaced in place,
+	// mirroring nwset.ado's own now-fixed collision guard (name()
+	// colliding with an existing network used to always silently switch
+	// to an auto-generated alternative name via nwvalidate below,
+	// regardless of any option - confirmed directly, nothing in this
+	// file ever checked for that collision at all before now).
 	
 	// obtain variable names
 	local fromvar : word 1 of `varlist'
@@ -293,6 +303,13 @@ program nwfromedge
 	putmata __nwego = `fromvar'
 	putmata __nwalter = `tovar'
 
+	// Captured BEFORE the defaulting below - only an explicit, caller-
+	// chosen name() is held to the create/replace convention (mirrors
+	// nwset.ado's own identical fix); the anonymous "network"/`value''-
+	// derived default keeps auto-numbering on collision, matching this
+	// command's own documented behavior for the unspecified-name case.
+	local name_given = ("`name'" != "")
+
 	// Generate valid network name and valid varlist
 	if "`name'" == "" & "`value'" == ""{
 		local name "network"
@@ -302,7 +319,22 @@ program nwfromedge
 	}
 
 	nwvalidate `name'
-	local edgename = r(validname)
+	if "`r(exists)'" == "true" & `name_given' {
+		if "`replace'" != "" {
+			// keep the caller's own requested name, dropping the
+			// existing network under it first - same pattern as
+			// nwset.ado's own matrix-form guard.
+			nwdrop `name'
+			local edgename "`name'"
+		}
+		else {
+			di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
+			error 6099
+		}
+	}
+	else {
+		local edgename = r(validname)
+	}
 
 	// SPARSE-BACKEND MIGRATION: this used to build a dense N x N
 	// matrix via make_matrix() (a plain J(nodes,nodes,0) allocation,
