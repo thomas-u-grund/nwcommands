@@ -126,12 +126,12 @@ program nwsummarize
 		local add "indg_central outdg_central dg_central transitivity reciprocity"
 	}
 	tempname memhold
-	if "`save'" != "" {
+	if `"`save'"' != "" {
 		postfile `memhold' str20 name str10 directed id nodes minval maxval edges arcs density `add' using `"`save'"', replace
 	}
 	foreach onenet in `netname' {
 		nwinf `onenet', `mat' `matonly' `detail' `silent'
-		if "`save'" != "" {
+		if `"`save'"' != "" {
 			if "`r(directed)'" == "false" {
 				if "`detail'" == "" {
 					post `memhold' ("`r(name)'") ("`r(directed)'") (`r(id)') (`r(nodes)') (`r(minval)') (`r(maxval)') (`r(edges)') (.) (`r(density)')
@@ -151,7 +151,7 @@ program nwsummarize
 		}
 	}
 	
-	if "`save'" != "" {
+	if `"`save'"' != "" {
 		postclose `memhold'
 	}
 end
@@ -164,12 +164,22 @@ program nwinf
 	nw_syntax `netname', max(1)
 	local localdirected `directed'
 	
+	// BUGFIX: was `thisname' throughout - undefined anywhere in this
+	// file (confirmed via grep), so it was always empty, and each of
+	// these three calls silently fell back to operating on whichever
+	// network happened to be CURRENT rather than the actual requested
+	// target (`netname', captured by this program's own syntax line
+	// above) - reciprocity/transitivity/centralization came back
+	// silently wrong (matching the current network's own values, not
+	// the target's) whenever the target wasn't already current. Basic
+	// stats (nodes/arcs/density) were unaffected, since those don't go
+	// through this block.
 	if "`detail'" != "" {
-		qui nwdyads `thisname'
+		qui nwdyads `netname'
 		local reciprocity = `r(reciprocity)'
-		qui nwtriads `thisname'
+		qui nwtriads `netname'
 		local transitivity = `r(transitivity)'
-		qui nwdegree `thisname', silent
+		qui nwdegree `netname', silent
 		if ("`localdirected'"=="false"){
 			local central = `r(dg_central)'
 		}

@@ -1409,7 +1409,19 @@ Fourth fix batch from the Phase 1 alpha audit - the `paths_distance` group's 2 c
 | **Missing test coverage that let the above go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added targeted regression cases to all three commands' own test files: `nwpath` on valued directed/undirected networks (asserting the actual found path, not just `_rc==0`); `nwgeodesic`/`nwreach` each reproducing the exact "eccentricity variable already exists from an unrelated prior call" scenario. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
 
-208 findings remain across the other 13 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
+## Alpha pass, unit 6: `information_census` group critical fixes (`nwsummarize`, `nwname`)
+
+Fifth fix batch from the Phase 1 alpha audit - the `information_census` group's 3 critical findings (2 commands).
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **`nwsummarize`, `detail` silently computed reciprocity/transitivity/centralization from the CURRENT network, not the requested target** | ✅ (fixed) | ✅ | ✅ | n/a | The `detail` block's three internal calls (`nwdyads`/`nwtriads`/`nwdegree`) referenced an undefined local, `thisname` (confirmed via grep - never assigned anywhere in the file), instead of `netname` (this program's own actual syntax-captured target). Always empty, so each call silently fell back to the current network. Basic stats (nodes/arcs/density) were unaffected, since those don't route through this block. Fixed to reference `netname` directly. |
+| **`nwsummarize`, `save()` crashed (`var not found`, r111) on a quoted filename** | ✅ (fixed) | ✅ | ✅ | n/a | `save(string asis)` preserves any literal surrounding quotes inside the local (needed for the `postfile ... using` line, which already correctly used compound double-quotes) - but three other plain-string comparisons (`if "`save'" != ""`) broke once `save` contained embedded quote characters, which any quoted argument (the normal, defensive idiom for a tempfile or a path containing spaces) produces. Switched all three to the same compound-quote form the `postfile` line already used correctly. |
+| **`nwname`'s documented `id()` option was completely non-functional** | ✅ (fixed) | ✅ | ✅ | n/a | `nw_syntax.ado`'s own unprefixed `c_local id `r(id)'` side effect clobbered this program's own `id` local immediately after parsing, before the caller-supplied `id()` was ever consulted - `nwname, id(N)` always silently reported/acted on the *current* network regardless of `N` (unless `N` already happened to be the current network's own id). Confirmed as an ordering bug specific to `nw_name.ado`: its own sibling `nwcurrent.ado` avoids the identical trap by consuming its own `id` local *before* calling `nw_syntax` at all. Preserved the caller's `id()` into a separately-named local before the clobbering call, restored immediately after - a minimal, surgical fix given `nw_name.ado` is reused internally by many other commands throughout the package (full regression sweep run with extra care as a result). |
+| **Missing test coverage that let the above go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added targeted regression cases to both commands' own test files, each asserting the actual correct value (reciprocity of the *target* network, not the current one; `id()` resolving to the *requested* network) rather than only `_rc==0`. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated) - `nw_name.ado`'s central role in the package made this an especially important check; no ripple effects found. |
+
+205 findings remain across the other 12 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
 
 ## Pending (queued for implementation, not yet started)
 
