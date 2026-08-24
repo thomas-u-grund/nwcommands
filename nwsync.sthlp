@@ -13,10 +13,11 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwsync} 
+{cmdab: nwsync}
 [{it:{help netname}}]
 [{cmd:,}
-{opt label}]
+{opt label}
+{opt fromstata}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -55,7 +56,11 @@ Stata variables that represent the network.
 {p_end}
 
 {phang}
-{opt label} Sync the labels of the nodes with the Stata variable _nodelab
+{opt label} Run an additional {help nw_datasync} alignment pass (matching node identity against
+{bf:_nwnode}) before the normal variable sync below. There is no separate node-label concept or
+{bf:_nodelab} variable in this package - a node's name (see {help nwnoderename}) is its only label,
+and this option does not sync it; the name once documented here was inaccurate and has been
+corrected.
 {p_end}
 
 

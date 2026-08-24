@@ -13,7 +13,7 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwinstall} 
+{cmdab: nwinstall}
 [,
 {opt permanently}
 {opt remove }
@@ -22,6 +22,8 @@
 {opt ext}
 {opt dialog}
 {opt usermenu}
+{opt update}
+{opt downloadoff}
 {opt menu(string)}
 {opt all}
 {opth path(string)}]
@@ -38,6 +40,8 @@
 {synopt:{opt ext}}download the extension files{p_end}
 {synopt:{opt dialog}}download the dialog boxes{p_end}
 {synopt:{opt usermenu}}update menu items for dialog-boxes{p_end}
+{synopt:{opt update}}refresh the installed menu (an internal, self-recursive flag: re-invokes {cmd:nwinstall, help usermenu}){p_end}
+{synopt:{opt downloadoff}}rebuild the menu from what is already installed, without downloading anything (used internally by {bf:profile.do} integration; equivalent to {opt usermenu} for this purpose){p_end}
 {synopt:{opth menu(string)}}install in this menu; default = "stUser"{p_end}
 {synopt:{opt all}}download the help files, dialog boxes, extensions and install them permanently{p_end}
 {synopt:{opth path(string)}}directory where profile.do is installed; default: sysdir_stata{p_end}

@@ -34,7 +34,7 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 {title:Examples}
 
 	{cmd:. nwclear}
-	{cmd:. nwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwvalidate flobusiness}
 	{cmd:. return list}
 
@@ -44,4 +44,4 @@ Not applicable - a pure Stata-variable/network-name-collision check; does not re
 	{bf:r(exists)}		"true" when network name already exists, "false" otherwise
 	{bf:r(tryname)}		network name that is validated
 	{bf:r(validname)}	valid name in case the tryname already exists
-last certified : 24 Aug 2026
+last certified : 25 Aug 2026

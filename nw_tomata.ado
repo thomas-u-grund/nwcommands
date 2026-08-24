@@ -106,7 +106,20 @@ program nw_tomata
 version 9
 syntax [anything(name=netname)], [ mat(string) ]
 
-	nw_syntax `netname', max(1)
+	unw_defs
+	// BUGFIX: a misspelled/nonexistent network name crashed with a raw,
+	// low-level Mata "subscript invalid" error (r3301) instead of a
+	// clean message - the same nw_syntax-name-resolution class of bug
+	// already fixed independently in several other commands this pass
+	// (there is no single shared fix point, since nw_syntax's own
+	// failure is not routed through any shared validation helper).
+	// Fixing it here also fixes nwtomata.ado, which forwards straight
+	// to this shared helper.
+	capture nw_syntax `netname', max(1)
+	if _rc != 0 {
+		di "{err}Network `netname' not found."
+		error `errNWsNotFound'
+	}
 	mata: st_rclear()
 	mata: st_global("r(netname)","`netname'")
 	mata: st_global("r(netobj)", "`netobj'")
