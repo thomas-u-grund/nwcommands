@@ -39,7 +39,7 @@ By default, an existing network is replaced, unless option {opt generate(newnetn
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes. Weighted: yes - {opt generate()}'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes. Weighted: yes - {opt generate()}'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not supported - the row-grouping this command performs has no notion of mode, so it would freely collapse mode-1 and mode-2 nodes together; rejected explicitly with a clear error instead.
 
 {title:Examples}
 
@@ -76,8 +76,23 @@ program nwcollapse
 		local stat = "max"
 	}
 	nw_syntax `netname'
+	// BUGFIX: collapsing a two-mode network used to silently produce a
+	// result reported as an ordinary one-mode network (mode2 flipped
+	// from true to false, with no error, warning, or documented
+	// behavior) - the row-grouping logic below has no notion of mode at
+	// all, so it freely collapsed mode-1 and mode-2 nodes together.
+	// Rejected outright with a clear error instead, matching how
+	// commands elsewhere in the package that are not meaningful for
+	// two-mode networks refuse them explicitly (`errTwoModeUnsupported',
+	// 6088, unw_defs.ado - declared package-wide but, until now, never
+	// actually used anywhere).
+	if "`is2mode'" == "true" {
+		unw_defs
+		di "{err}Network {bf:`netname'} is two-mode; {bf:nwcollapse} does not support collapsing two-mode networks."
+		error `errTwoModeUnsupported'
+	}
 	local original `netname'
-	
+
 	if "`name'" == "" {
 		local name "`netname'_collapsed"
 	}

@@ -17,13 +17,21 @@
 [{it:{help netname}}]
 {cmd:,}
 {opt newmat}({it:matname})
-[{opt nosync}]
+[{opt nosync}
+{opt netonly}
+{opt xvars}
+{opt vars}({it:{help newvarlist}})
+{opt labs}({it:lab1 lab2 ...})]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt newmat}({it:matname})}name of a Stata or Mata matrix{p_end}
 {synopt:{opt nosync}}do not sync Stata variables; by default Stata variables are synced (see {help nwsync}){p_end}
+{synopt:{opt netonly}}only update the network, do not touch the Stata dataset at all{p_end}
+{synopt:{opt xvars}}also load the updated network as Stata variables (see {help nwload}){p_end}
+{synopt:{opt vars}({it:{help newvarlist}})}Stata variable names to use when {it:matname} requires resizing the network; default = auto-generated{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}new node labels to use when {it:matname} requires resizing the network; default = {bf:1}, {bf:2}, ... {p_end}
 
 {title:Description}
 

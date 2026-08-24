@@ -35,3 +35,14 @@ nwreplace mynet1 = mynet1 * x * 2
 nwvalue mynet1[2,3]
 assert         r(value) < 1.104e+34
 assert         r(value) > 1.102e+34
+
+* moderate-severity pass, manipulation_transform group: r(symmetric)/
+* r(valued) were computed but always wiped before nwreplace returned -
+* the program was never declared rclass, and its own final nwsync call
+* cleared the r()-results area first.
+nwclear
+nwset, mat((0,1\1,0)) name(rtest) undirected
+nwreplace rtest = 5
+assert r(symmetric) == 1
+assert r(valued) == 1
+di "=== r(symmetric)/r(valued) REGRESSION VERIFIED ==="

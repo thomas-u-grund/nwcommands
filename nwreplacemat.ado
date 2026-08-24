@@ -43,14 +43,28 @@ program nwreplacemat
 		local nodes = `matrows'
 		
 		if ("`netonly'" != "" | "`sync'" != "") {
-			mata: `newmat'
-			mata: nw_mata`id' = `newmat'
-			global nwsize_`id' = `matrows'
-			if "`vars'" != "" {
-				global nw_`id' "`vars'"
-			}
+			// BUGFIX: was writing only to legacy pre-2016 nw_mata`id'/
+			// nwsize_`id'/nw_`id'/nwlabs_`id' globals - the modern
+			// netobj/NWdef Mata class architecture never reads any of
+			// these, so a resize+netonly call raised no error but
+			// silently left the network object at its old dimensions
+			// and values (same class of bug already fixed for the
+			// same-size path below via set_edge(), and for
+			// set_directed() further down). set_edge() itself is
+			// size-agnostic (confirmed directly in unw_core.do - it just
+			// replaces the internal edge matrix wholesale, with no
+			// dimension check tied to a separately-stored node count),
+			// but get_nodes() derives the reported node count from
+			// cols(nodes) - the node-NAMES vector - not from the edge
+			// matrix's own dimensions, so set_nodenames() must be
+			// updated too or the object would report the OLD node count
+			// forever despite holding a differently-sized edge matrix.
+			mata: `netobj'->set_edge(`newmat')
 			if "`newmatlabs'" != "" {
-				global nwlabs_`id' "`newmatlabs'"
+				mata: `netobj'->set_nodenames(tokens(subinstr("`newmatlabs'", ",", " ", .)))
+			}
+			else {
+				mata: `netobj'->set_nodenames(strofreal((1::`matrows'))')
 			}
 		}
 		else {
@@ -93,6 +107,19 @@ program nwreplacemat
 			if "`sync'" == "" {
 				nwsync `netname'
 			}
+		}
+		// BUGFIX: `xvars' was accepted by syntax but never referenced
+		// anywhere in this same-size branch - requesting it never
+		// actually loaded the updated network as Stata variables,
+		// unlike the resize branch, which already forwards it (via
+		// nwrandom's own xvars handling). Calling bare `nwload', not
+		// `nwload, xvars' - nwload's OWN `xvars' flag confusingly means
+		// something else entirely (a lightweight `nw_datasync' sync,
+		// exiting immediately) - its DEFAULT (no-flag) path is what
+		// actually generates the Stata variables, confirmed directly
+		// against nwload.ado's own body.
+		if "`xvars'" != "" {
+			nwload `netname'
 		}
 	}
 

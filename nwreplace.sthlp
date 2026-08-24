@@ -215,8 +215,13 @@ All network expressions, network subsetting and network conditions can be combin
 	{bf:. gen attr= _n * 2}
 	{bf:. nwreplace first[(1::3),(1::3)]  = exp(second) * attr ifego _n >= 5 ifalter attr < 4 if third == 1}
 
+{title:Stored results}
+
+	Scalars
+	  {bf:r(symmetric)}	1 if the network's updated adjacency matrix is symmetric, 0 otherwise
+	  {bf:r(valued)}	1 if the network is valued, 0 otherwise
+
 {title:See also}
 
 	{help nwreplacemat}, {help nwsync}, {help nwload}
 
-last certified : 24 Aug 2026

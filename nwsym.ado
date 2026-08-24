@@ -27,6 +27,7 @@
 {synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
 {synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
+{synopt:{opt noreplace}}Do not symmetrize in place; requires {opt generate()} (errors otherwise, since there would be nothing else to do){p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}
@@ -120,10 +121,13 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 capture program drop nwsym
 program nwsym
 	version 9.0
-	syntax [anything(name=netname)][, check generate(string) vars(string) noreplace mode(string)]
+	// `vars(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (a fully dead,
+	// undocumented no-op; confirmed via a direct probe).
+	syntax [anything(name=netname)][, check generate(string) noreplace mode(string)]
 	nw_syntax `netname', max(1)
-	
-	
+
+
 	if "`check'" != "" {
 		tempname __is_symmetric
 		mata: st_numscalar("`__is_symmetric'", `netobj'->check_symmetry())
@@ -133,6 +137,7 @@ program nwsym
 		else {
 			mata: st_global("r(is_symmetric)", "false")
 		}
+		mata: st_global("r(name)", "`netname'")
 		di "{hline 50}"
 		di "{txt}   Network name: {res} `netname'"
 		di "{txt}   Directed: {res}`directed'"
@@ -140,11 +145,34 @@ program nwsym
 		exit
 	}
 
+	// BUGFIX: `noreplace' was accepted by syntax but never referenced
+	// anywhere in this file's body - a network was always symmetrized/
+	// replaced in place when generate() was not given, regardless of
+	// noreplace. Implemented its evidently-intended meaning: `noreplace'
+	// without `generate()' has no non-destructive target to write to,
+	// so it now errors clearly instead of silently doing the in-place
+	// replace it was supposed to refuse. Per Stata's own "no"-prefixed
+	// option convention, declaring a bare `noreplace' in `syntax'
+	// populates a local named after the STEM - `replace' (holding
+	// "noreplace" when passed, empty otherwise) - not `noreplace'
+	// itself, which is never populated at all (the exact same trap
+	// class fixed repeatedly elsewhere in this package - nwcloseness/
+	// nwkatz/nwevcent/nwbetween).
+	if "`replace'" != "" & "`generate'" == "" {
+		di "{err}Option {bf:noreplace} requires {bf:generate()} - there would otherwise be nothing else to do."
+		error 198
+	}
+
 	if "`mode'" == "" {
 		local mode = "max"
 	}
-	
-	nw_optsoneof "max min sum mean" "mode" "`mode'" 6555
+
+	// Consistency: was `nw_optsoneof' - the legacy, near-duplicate
+	// validator this package has otherwise fully migrated away from
+	// (23 other files, including this command's own sibling
+	// nw2project.ado, already use `_opts_oneof'; nwsym.ado was the last
+	// real caller of the old one).
+	_opts_oneof "max min sum mean" "mode" "`mode'" 6555
 
 	if ("`generate'" != ""){
 		nwduplicate `netname', name(`generate')

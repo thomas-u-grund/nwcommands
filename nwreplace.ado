@@ -216,6 +216,12 @@ All network expressions, network subsetting and network conditions can be combin
 	{bf:. gen attr= _n * 2}
 	{bf:. nwreplace first[(1::3),(1::3)]  = exp(second) * attr ifego _n >= 5 ifalter attr < 4 if third == 1}
 
+{title:Stored results}
+
+	Scalars
+	  {bf:r(symmetric)}	1 if the network's updated adjacency matrix is symmetric, 0 otherwise
+	  {bf:r(valued)}	1 if the network is valued, 0 otherwise
+
 {title:See also}
 
 	{help nwreplacemat}, {help nwsync}, {help nwload}
@@ -223,7 +229,7 @@ All network expressions, network subsetting and network conditions can be combin
 ***/
 
 capture program drop nwreplace
-program nwreplace
+program nwreplace, rclass
 	local arg =`"`0'"'
 	gettoken netname nonet: arg, parse("=")
 	local netname = trim("`netname'")
@@ -369,7 +375,24 @@ program nwreplace
 	if ("`valued'" == "false" & "`r(valued)'" == "false"){
 		nw_name `netname', newvalued(true)
 	}
+	// BUGFIX: r(symmetric)/r(valued) were computed via raw
+	// st_numscalar("r(...)", ...) but this program was never declared
+	// rclass, and its own final `nwsync' call (a separate ado
+	// invocation) clears the r()-results area before nwreplace itself
+	// returns - so these values were always wiped, never visible to a
+	// caller, despite being genuinely computed (not simply unused). Kept
+	// the existing internal computation (still needed for the
+	// directed/valued checks just above, before nwsync ever runs) but
+	// captured into plain locals first, then re-exposed via `return
+	// scalar' - which, unlike raw st_numscalar, survives whatever a
+	// nested command does internally, since Stata only finalizes an
+	// rclass program's own returned r()-results once the program itself
+	// actually exits.
+	local __symmetric = `r(symmetric)'
+	local __valued = `r(valued)'
 	nwsync `netname'
-	
+	return scalar symmetric = `__symmetric'
+	return scalar valued = `__valued'
+
 end
 
