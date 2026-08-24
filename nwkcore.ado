@@ -99,9 +99,17 @@ program nwkcore, rclass
 			local netgenerate = "_kcore"
 		}
 
-		capture confirm variable `netgenerate'
+		// BUGFIX: this used to check the bare stem `netgenerate' with no
+		// iteration suffix at all, so a netlist call with 2+ networks
+		// always false-errored on the second (and every later) network,
+		// even though its own target variable (`netgenerate'`k') was
+		// never actually created - checking the exact suffixed name
+		// matches every sibling command in this group (nwclique,
+		// nwkcomponents, nwkplex, nwnclan, nwnclique, nwcohesion,
+		// nwcomponents).
+		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
-			noi di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"
+			noi di "{err}Variable {bf:`netgenerate'`k'} already exists; specify {bf:replace}"
 			err 99
 		}
 

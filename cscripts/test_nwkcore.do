@@ -76,3 +76,22 @@ nwkcore, generate(dircore)
 assert dircore[1] == 2
 assert dircore[2] == 2
 assert dircore[3] == 2
+
+
+* --- alpha-audit regression: netlist support was broken - the
+* existing-variable collision guard checked the bare stem (`netgenerate')
+* with no iteration suffix at all, so a call with 2+ networks and no
+* replace() falsely errored on the second (and every later) network even
+* though its own target variable (`netgenerate'`k') was never actually
+* created. Matches the pattern every sibling command in this group
+* already uses (nwclique/nwkcomponents/nwkplex/nwnclan/nwnclique/
+* nwcohesion/nwcomponents).
+nwclear
+nwset, mat((0,1\1,0)) name(nA) undirected
+nwset, mat((0,1\1,0)) name(nB) undirected
+nwkcore nA nB
+assert _rc == 0
+capture confirm variable _kcore1, exact
+assert _rc == 0
+capture confirm variable _kcore2, exact
+assert _rc == 0

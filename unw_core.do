@@ -2362,7 +2362,18 @@ void build_edgelist_csr_dense(real matrix adj,
 	tempadj = adj
 	_diag(tempadj, 0)
 	nzidx = selectindex(vec(tempadj) :!= 0)
-	m = rows(nzidx)
+	// BUGFIX: selectindex() on a genuinely empty match set (e.g. a
+	// totally edgeless network, guaranteed for any n=1 network since no
+	// off-diagonal entry can exist) returns a 1x0 matrix, not the 0x1
+	// empty colvector its normal (m>0) column-preserving return shape
+	// would suggest - rows() of that degenerate 1x0 result is 1, not 0,
+	// so `m = rows(nzidx)' was wrongly true, dispatching into the
+	// mod()/floor() branch below with a 0-element operand and crashing
+	// with a Mata conformability error (confirmed directly via an
+	// isolated repro: rows()=1, cols()=0, length()=0, for a genuinely
+	// empty selectindex() result). length() is robust to this row/column
+	// shape ambiguity for an empty result and correctly returns 0.
+	m = length(nzidx)
 	if (m > 0) {
 		eu = mod(nzidx :- 1, n) :+ 1
 		ev = floor((nzidx :- 1) :/ n) :+ 1
