@@ -42,3 +42,21 @@ nwset
 assert `"`r(nets)'"' == `" network p_1"'
 
 assert         r(networks) == 2
+
+* --- alpha-audit regression: get_path() used to crash with a Mata
+* conformability error on ANY valued/weighted network - sum() of the
+* raw (weighted) adjacency row overcounted neighbors relative to
+* select()'s own correct nonzero-count, sizing the path-building matrix
+* wrong. Confirmed fixed on both directed and undirected valued
+* networks, including a genuine 2-hop path.
+nwclear
+nwset, mat((0,5,0\0,0,3\0,0,0)) name(valnet3) directed labs(A,B,C)
+nwpath valnet3, ego(A) alter(C)
+assert r(path_length) == 2
+assert r(paths) == 1
+
+nwclear
+nwset, mat((0,5\0,0)) name(valnet2) directed labs(A,B)
+capture noisily nwpath valnet2, ego(A) alter(B)
+assert _rc == 0
+di "=== valued-network path REGRESSION VERIFIED ==="

@@ -144,3 +144,15 @@ assert r(radius) == 1
 
 
 
+
+* --- alpha-audit regression: the eccentricity-variable collision guard
+* used to run unconditionally, even when xvars was never requested -
+* any call failed purely because SOME earlier call had once left the
+* (default-named) eccentricity variable lying around, regardless of
+* whether the current call ever touches it.
+nwclear
+nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
+nwgeodesic mynet, xvars
+capture noisily nwgeodesic mynet, name(_geo2)
+assert _rc == 0
+di "=== unconditional eccvar-guard REGRESSION VERIFIED ==="

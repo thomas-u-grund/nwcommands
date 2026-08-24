@@ -1396,7 +1396,20 @@ Third fix batch from the Phase 1 alpha audit - the `generators_derived` group's 
 | **Missing test coverage that let the above go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added targeted regression cases to all six commands' own test files, each asserting the actual fixed behavior (resulting edge weight, error code, node count, or non-negativity) rather than only `_rc==0`. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
 
-210 findings remain across the other 13 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
+## Alpha pass, unit 5: `paths_distance` group critical fixes (`nwpath`, `nwgeodesic`, `nwreach`)
+
+Fourth fix batch from the Phase 1 alpha audit - the `paths_distance` group's 2 critical findings (3 commands).
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **`nwpath` crashed (Mata conformability error) on every valued/weighted network** | ✅ (fixed) | ✅ | ✅ | n/a | `NWdef::get_path()` (`unw_core.do`) left the raw adjacency row - real tie *weights* on a valued network, not 0/1 indicators - unbinarized: `sum(reach_next)` then overcounted neighbors (a single weight-5 tie counted as 5) while `select(ids, reach_next)` correctly treated any nonzero entry as one neighbor regardless of magnitude - the two disagreed on how many neighbors there were, sizing the path-building matrix wrong and crashing on the following assignment. Binarized both occurrences of this computation to match the method's own documented "any nonzero tie is traversable" semantics - carefully handling missing entries (e.g. a blank diagonal) as "no tie" too, since Mata's relational operators treat missing as larger than any real value and a naive `:!= 0` alone would have silently reintroduced the identical counting mismatch. |
+| **Correctness** | ✅ | ✅ | n/a | n/a | Verified directly: a 2-node direct valued tie, a 3-node 2-hop directed valued path, and an undirected valued network all now complete without error: the 2-hop case's own found path is confirmed correct (`A => B => C`, length 2, exactly 1 path) - not just "no crash". A binary (0/1) network with identical topology is unaffected. |
+| **`nwgeodesic`'s eccentricity-variable collision guard ran even when `xvars` was never requested** | ✅ (fixed) | ✅ | ✅ | n/a | The guard (checking whether the target eccentricity variable already exists) ran unconditionally, but the variable is only ever actually *written* inside the `xvars`-gated block further down - so any call failed purely because some *earlier, unrelated* call had once left the (default-named) `_eccentricity` variable in the dataset, even when the current call never touches it. Guarded with the same `xvars` condition as the write itself. |
+| **`nwreach` silently failed (`r(99)`, zero diagnostic text) as a direct consequence of the above** | ✅ (fixed) | ✅ | ✅ | n/a | `nwreach.ado`'s own internal `nwgeodesic` call is wrapped in `qui` and never requests `xvars` at all - so the root-cause fix above (gating the guard on `xvars`) resolves this completely: that internal call now never trips the guard regardless of any pre-existing `_eccentricity` variable, confirmed via the exact audit repro. |
+| **Missing test coverage that let the above go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added targeted regression cases to all three commands' own test files: `nwpath` on valued directed/undirected networks (asserting the actual found path, not just `_rc==0`); `nwgeodesic`/`nwreach` each reproducing the exact "eccentricity variable already exists from an unrelated prior call" scenario. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
+
+208 findings remain across the other 13 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
 
 ## Pending (queued for implementation, not yet started)
 
