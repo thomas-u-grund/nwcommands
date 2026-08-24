@@ -350,3 +350,29 @@ local plotG_svg `"`tmpd'/nwplot_certG.svg"'
 nwplot, export(`"`plotG_svg'"') replace
 assert _rc == 0
 _assert_has_svg_tag `"`plotG_svg'"'
+
+
+* --- alpha-audit regression: a single-node network crashed under
+* every layout, each with a different raw error - mds (the default for
+* <50 nodes): "dimension exceeds #rows of dissimilarity matrix", r(498);
+* circle/grid: a Mata conformability error inside NumElist() (select()
+* on a network with zero possible ties returns a 0x0 matrix, but the
+* target slice it was being assigned into was 0x1 - conformability
+* error even though both sides have zero elements); mdsclassical:
+* "_outdegree not found", r(111) (a separate, deeper issue: `tab
+* edgesize'/`tab edgecolor' create no matrow() at all when the tie-
+* level dataset has zero non-missing ties, since there's nothing to
+* tabulate). Fixed by placing the single node directly (skipping every
+* layout-specific coordinate computation), fixing NumElist() to skip
+* its own now-genuinely-empty assignment, and skipping the edge-legend
+* tabulation entirely when there are no ties to tabulate.
+foreach lay in "" "circle" "grid" "mdsclassical" {
+	nwclear
+	nwset, mat((0)) name(onenode) undirected labs(A)
+	local layoutopt = cond(`"`lay'"' == "", "", "layout(`lay')")
+	local plotH_svg `"`tmpd'/nwplot_certH_`lay'.svg"'
+	nwplot onenode, `layoutopt' export(`"`plotH_svg'"') replace
+	assert _rc == 0
+	_assert_has_svg_tag `"`plotH_svg'"'
+}
+di "=== SINGLE-NODE NETWORK, ALL LAYOUTS, REGRESSION VERIFIED ==="
