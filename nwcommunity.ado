@@ -33,7 +33,7 @@
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before detecting communities (required for directed networks){p_end}
-{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)} regardless of algorithm; default = 1{p_end}
+{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects {bf:algorithm(louvain)}'s own search, though it always affects the reported {bf:r(modularity)} regardless of algorithm; default = 1{p_end}
 {synopt:{opt algorithm(louvain|labelprop)}}Community-detection algorithm; default = {it:louvain}{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before detecting communities (for reproducibility with {bf:algorithm(labelprop)}, which uses randomized sweep order and tie-breaking){p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -103,7 +103,7 @@ Binary: yes. Directed: requires {opt symmetrize} - community detection as implem
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwcommunity flomarriage}
-	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345)}
+	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345) replace}
 
 
 {title:References}
@@ -131,6 +131,19 @@ program nwcommunity, rclass
 	version 12
 	syntax [anything(name=netname)][, GENerate(string) replace measure(string) SYMmetrize resolution(real 1) algorithm(string) seed(int -1) silent]
 	set more off
+
+	// resolution() had no input validation at all - zero or negative
+	// values run without error but push the reported r(modularity) well
+	// outside modularity's own normal [-1,1] range (confirmed directly:
+	// resolution(-1) on a standard two-triangle bridge network yields
+	// r(modularity)=2). Reichardt-Bornholdt resolution is conventionally
+	// > 0; validated here rather than silently accepting a value that
+	// produces a result the package's own test suite elsewhere asserts
+	// should never occur.
+	if `resolution' <= 0 {
+		di "{err}Option {bf:resolution()} must be > 0."
+		error 198
+	}
 
 	local algorithm = lower("`algorithm'")
 	if "`algorithm'" == "" {

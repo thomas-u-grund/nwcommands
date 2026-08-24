@@ -84,7 +84,7 @@ should not be interpreted as meaningful when {bf:r(algebraic_connectivity)} is (
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwspectral flomarriage}
-	{cmd:. nwspectral flomarriage, bipartition}
+	{cmd:. nwspectral flomarriage, bipartition replace}
 
 {title:References}
 
@@ -115,4 +115,4 @@ component id does.
 
 	{help nwevcent}, {help nwcommunity}, {help nwcomponents}, {help nwkcomponents}
 
-last certified : 22 Aug 2026
+last certified : 24 Aug 2026

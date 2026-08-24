@@ -120,3 +120,19 @@ capture confirm variable _role
 assert _rc != 0
 assert r(groups) == .
 assert `"`r(rolevar)'"' == `""'
+
+* moderate-severity pass, community_spectral group: naming consistency -
+* the rest of this group (nwcommunity/nwspectral) and the wider package
+* convention use generate() for the identical "write a per-node
+* partition-id variable" role; nwhierarchy alone used equivgen(). Added
+* generate() as a working alias, kept equivgen() for backward
+* compatibility.
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net2) undirected labs(A,B,C,D)
+nwhierarchy net2, type(hamming) groups(2) generate(myrole)
+assert _rc == 0
+capture confirm variable myrole
+assert _rc == 0
+capture noisily nwhierarchy net2, type(hamming) groups(2) generate(a) equivgen(b)
+assert _rc == 198
+di "=== generate()/equivgen() alias REGRESSION VERIFIED ==="

@@ -148,3 +148,12 @@ assert reldif(r(modularity), .467741935) < 1E-6
 nwcommunity wbridge, measure(binary) generate(cbin) silent
 assert r(communities) == 2
 assert reldif(r(modularity), .357142857) < 1E-6
+
+* moderate-severity pass, community_spectral group: resolution() had no
+* input validation - zero/negative values pushed r(modularity) well
+* outside its own normal [-1,1] range (e.g. resolution(-1) yielded 2).
+capture noisily nwcommunity wbridge, resolution(-1) generate(rneg) silent
+assert _rc == 198
+capture noisily nwcommunity wbridge, resolution(0) generate(rzero) silent
+assert _rc == 198
+di "=== resolution() validation REGRESSION VERIFIED ==="

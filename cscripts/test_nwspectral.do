@@ -103,3 +103,13 @@ nwspectral wpath, measure(binary) generate(fbinary) silent
 local algconn_binary = r(algebraic_connectivity)
 assert reldif(`algconn_binary', 2 - sqrt(2)) < 1E-6
 assert reldif(`algconn_valued', `algconn_binary') > 1E-6
+
+* moderate-severity pass, community_spectral group: a single-node network
+* used to crash with a raw, uncaught Mata error (r3301) instead of a
+* clean, validated message - the Laplacian eigendecomposition of a 1x1
+* matrix has no second (Fiedler) eigenvalue.
+nwclear
+nwset, mat((0)) undirected labs(A) name(single2)
+capture noisily nwspectral single2
+assert _rc == 198
+di "=== single-node REGRESSION VERIFIED ==="

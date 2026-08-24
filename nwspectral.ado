@@ -85,7 +85,7 @@ should not be interpreted as meaningful when {bf:r(algebraic_connectivity)} is (
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwspectral flomarriage}
-	{cmd:. nwspectral flomarriage, bipartition}
+	{cmd:. nwspectral flomarriage, bipartition replace}
 
 {title:References}
 
@@ -155,6 +155,20 @@ program nwspectral, rclass
 			noi di "{err}Variable {bf:`signvar'} already exists; specify {bf:replace}"
 			err 99
 		}
+	}
+
+	// BUGFIX: a single-node network's Laplacian is a 1x1 matrix with
+	// only one eigenvalue, but this command's own algebraic-connectivity
+	// step below unconditionally indexes the SECOND eigenvalue
+	// (`__nw_EV'[1,2]', the Fiedler value) - crashing with a raw,
+	// uncaught Mata "subscript invalid" (r3301) instead of a clean,
+	// validated error. Sibling command nwhierarchy already handles the
+	// identical degenerate input cleanly (via clustermat's own "1x1
+	// matrix not allowed" error); nwspectral had no equivalent guard at
+	// all.
+	if `nodes' < 2 {
+		di "{err}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes."
+		error 198
 	}
 
 	mata: st_rclear()

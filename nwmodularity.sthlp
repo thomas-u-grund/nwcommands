@@ -18,7 +18,8 @@
 {opth group(varname)}
 [{opt measure(string)}
 {opt SYMmetrize}
-{opth resolution(real)}]
+{opth resolution(real)}
+{opt silent}]
 
 
 {synoptset 25 tabbed}{...}
@@ -27,7 +28,8 @@
 {synopt:{opth group(varname)}}Stata variable holding each node's community/group assignment{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before scoring (required for directed networks){p_end}
-{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); default = 1{p_end}
+{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 

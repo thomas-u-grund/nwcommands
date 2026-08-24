@@ -19,7 +19,8 @@
 {opth group(varname)}
 [{opt measure(string)}
 {opt SYMmetrize}
-{opth resolution(real)}]
+{opth resolution(real)}
+{opt silent}]
 
 
 {synoptset 25 tabbed}{...}
@@ -28,7 +29,8 @@
 {synopt:{opth group(varname)}}Stata variable holding each node's community/group assignment{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before scoring (required for directed networks){p_end}
-{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); default = 1{p_end}
+{synopt:{opth resolution(real)}}Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 
@@ -85,8 +87,16 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. {it:PNAS}
 capture program drop nwmodularity
 program nwmodularity, rclass
 	version 12
-	syntax [anything(name=netname)], GROUP(varname) [measure(string) SYMmetrize resolution(real 1)]
+	syntax [anything(name=netname)], GROUP(varname) [measure(string) SYMmetrize resolution(real 1) silent]
 	set more off
+
+	// resolution() had no input validation - same fix as nwcommunity's
+	// own identical option in this same group; see its own comment for
+	// the full reasoning.
+	if `resolution' <= 0 {
+		di "{err}Option {bf:resolution()} must be > 0."
+		error 198
+	}
 
 	nw_syntax `netname', max(9999)
 
@@ -167,11 +177,17 @@ program nwmodularity, rclass
 		return matrix comm_sizeid = comm_sizeid
 		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid __nwm_vals __nwm_sorted __nwm_info __nwm_stripe __nwm_i
 
-		noi di "{hline 40}"
-		noi di "{txt}  Network name: {res}`netname_temp'"
-		noi di "{txt}  Communities: {res}`lcomm'"
-		noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
-		noi di " "
+		// Consistency (moderate-severity pass, community_spectral group):
+		// nwmodularity had no `silent' option at all, unlike its closest
+		// sibling nwcommunity (same detect/score-and-print-a-summary
+		// family) and nwspectral, both of which already support it.
+		if "`silent'" == "" {
+			noi di "{hline 40}"
+			noi di "{txt}  Network name: {res}`netname_temp'"
+			noi di "{txt}  Communities: {res}`lcomm'"
+			noi di "{txt}  Modularity Q: {res}`=round(`lmod',0.001)'"
+			noi di " "
+		}
 		local k = `=`k' + 1'
 	}
 end
