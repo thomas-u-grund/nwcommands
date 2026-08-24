@@ -59,3 +59,24 @@ use `f', clear
 assert edges[1] == 2
 
 nwsummarize, mat
+
+* --- alpha-audit regression: nwsummarize's own detail block referenced
+* an undefined local (`thisname') instead of the real target `netname',
+* so reciprocity/transitivity/centralization silently came from
+* whichever network happened to be CURRENT, not the requested target.
+* Separately, save() crashed on a quoted filename (the normal/defensive
+* idiom for a tempfile or a path containing spaces) - only bare
+* unquoted paths worked.
+nwclear
+nwset, mat((0,1,0\0,0,1\1,0,0)) name(netFirst) directed labs(A,B,C)
+nwset, mat((1,1,1\1,1,1\1,1,1)) name(netSecond) directed selfloop labs(A,B,C)
+nwsummarize netFirst, detail
+assert r(reciprocity) == 0
+di "=== detail-block target-network REGRESSION VERIFIED ==="
+
+nwclear
+nwrandom 5, prob(.3) name(sA)
+tempfile out1
+capture noisily nwsummarize sA, save("`out1'")
+assert _rc == 0
+di "=== save() quoted-filename REGRESSION VERIFIED ==="

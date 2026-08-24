@@ -19,3 +19,16 @@ assert "`r(directed)'" == "false"
 
 
 
+
+* --- alpha-audit regression: id() was completely non-functional -
+* nw_syntax's own unprefixed c_local side effect clobbered this
+* program's own `id' local before it was ever consulted, so
+* `nwname, id(N)' always silently acted on the CURRENT network
+* regardless of N.
+nwclear
+nwrandom 4, prob(.3) name(idA)
+nwrandom 4, prob(.3) name(idB)
+nwname, id(1)
+assert r(netname) == "idA"
+assert r(id) == 1
+di "=== id() REGRESSION VERIFIED ==="

@@ -2,9 +2,22 @@ capture program drop nw_name
 program nw_name
 	version 9
 	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newvars(string) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) ]
-	
+
+	// BUGFIX: `id()' was completely non-functional - nw_syntax.ado's own
+	// unprefixed `c_local id `r(id)'' side effect immediately clobbered
+	// this program's own `id' local with whatever id nw_syntax resolved
+	// (the CURRENT network's id, since `netname' is blank in the
+	// id()-only call pattern) before the caller-supplied id() was ever
+	// consulted below - `nwname, id(N)' always silently acted on the
+	// current network regardless of N. Preserved into `optid' before the
+	// clobbering call, then restored immediately after, matching how
+	// nwcurrent.ado (the same group's own sibling command) avoids this
+	// exact trap by consuming its own `id' local BEFORE calling
+	// nw_syntax at all.
+	local optid `id'
 	nw_syntax `netname'
-	
+	local id `optid'
+
 	unw_defs
 	
 	mata: st_rclear()
