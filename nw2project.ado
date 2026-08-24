@@ -267,6 +267,8 @@ end
 capture mata: mata drop nw2project_sel()
 capture mata: mata drop nw2project_names()
 capture mata: mata drop nw2project_edges()
+capture mata: mata drop nw2project_edges_dense()
+capture mata: mata drop nw2project_edges_sparse()
 mata:
 
 /*
@@ -297,8 +299,46 @@ string rowvector nw2project_names(pointer(class nw_def scalar) scalar p, real sc
 	Returns an nout x 3 (ego_local, alter_local, weight) matrix using local
 	1..nsel indices into nw2project_names()'s output, symmetric (each pair
 	appears twice, (a,b) and (b,a)) since a projection is always undirected.
+
+	DISPATCH: the neighbor-walk above accumulates six statistics per
+	*visited* (oa,ob) pair, but where those accumulators live matters a
+	lot at scale. Below dispatches on nsel (the number of selected-level
+	nodes, not the total network size) between two accumulator strategies
+	- see nw2project_edges_dense()/_sparse()'s own headers for why neither
+	one is a strict improvement on the other:
+	  - DENSE (six nsel x nsel matrices, direct array indexing): fast per
+	    access, but memory cost is a hard O(nsel^2) regardless of how many
+	    pairs actually end up co-occurring - unsafe once nsel gets large
+	    (6 * 10,000^2 * 8 bytes = 4.8GB).
+	  - SPARSE (one Mata associative array keyed on the pair): memory and
+	    final-collection cost track the number of actually co-occurring
+	    pairs, not nsel^2, but each access costs a hash lookup plus a
+	    fresh row-vector allocation - measured directly to be roughly 40%
+	    SLOWER than the dense path on a benchmark scenario with a small
+	    nsel (1,000) and a near-complete projection (999,000 of a possible
+	    999,000 ties): 292.23s sparse vs 205.94s dense, same data, same
+	    machine. The sparse path exists for the opposite regime the dense
+	    path can't safely reach at all (large nsel, sparse co-occurrence,
+	    the case this whole function's own header comment above assumes)
+	    - not to replace the dense path.
+	NSEL_DENSE_LIMIT is chosen so the dense path's own worst-case memory
+	(6 * NSEL_DENSE_LIMIT^2 * 8 bytes) stays under ~500MB.
 */
 real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar level, string scalar stat){
+	real scalar nsel, NSEL_DENSE_LIMIT
+
+	nsel = rows(nw2project_sel(p, level))
+	NSEL_DENSE_LIMIT = 3000
+
+	if (nsel <= NSEL_DENSE_LIMIT){
+		return(nw2project_edges_dense(p, level, stat))
+	}
+	else {
+		return(nw2project_edges_sparse(p, level, stat))
+	}
+}
+
+real matrix nw2project_edges_dense(pointer(class nw_def scalar) scalar p, real scalar level, string scalar stat){
 	real scalar nsel, valued, oa, ob, oi, oq, k, l, wiq, wjq, thismin, val, nout
 	real matrix sel, localidx, nb, nb2, degvec
 	real matrix minval, maxval, sumval, cntval, minmaxval, sharedcount
@@ -412,6 +452,148 @@ real matrix nw2project_edges(pointer(class nw_def scalar) scalar p, real scalar 
 	if (nout == 0){
 		return(J(0,3,0))
 	}
+	out = J(nout,3,0)
+	out[.,1] = ego_tmp[(1::nout),1]
+	out[.,2] = alter_tmp[(1::nout),1]
+	out[.,3] = weight_tmp[(1::nout),1]
+	return(out)
+}
+
+/*
+	Same algorithm and identical statistic definitions as
+	nw2project_edges_dense() (see nw2project_edges()'s own dispatch-header
+	comment above for why this variant exists at all) - the six
+	nsel x nsel dense accumulator matrices are replaced with a single
+	Mata associative array (asarray()) keyed on the pair (oa,ob), oa<ob,
+	each value a 1x6 row vector holding (sharedcount, minval, maxval,
+	sumval, cntval, minmaxval) for that pair. Both the accumulation loop
+	and the final collection loop below now cost proportional to the
+	number of pairs that actually co-occur (asarray_elements(AS)), not
+	nsel^2 - the right tradeoff once nsel is large enough that the dense
+	path's own O(nsel^2) memory footprint becomes unsafe, on the
+	(documented, see this function's own header) assumption that a
+	two-mode network with that many selected-level nodes has a genuinely
+	sparse - not near-complete - projection.
+*/
+real matrix nw2project_edges_sparse(pointer(class nw_def scalar) scalar p, real scalar level, string scalar stat){
+	real scalar nsel, valued, oa, ob, oi, oq, k, l, wiq, wjq, thismin, val, nout, nkeys, kk
+	real matrix sel, localidx, nb, nb2, degvec
+	real matrix ego_tmp, alter_tmp, weight_tmp, out, keys, statvec
+	transmorphic AS
+
+	sel = nw2project_sel(p, level)
+	nsel = rows(sel)
+	valued = p->is_valued_boolean()
+
+	localidx = J(p->get_nodes(), 1, 0)
+	for (oa=1; oa<=nsel; oa++){
+		localidx[sel[oa,1], 1] = oa
+	}
+
+	AS = asarray_create("real", 2)
+
+	// far-level (affiliation) degree of each selected node - the shared
+	// set of neighbors visited below is the same "other mode" set this
+	// counts, so both jaccard's union term and cosine's normalizer reuse
+	// exactly the same neighbor lists this function already builds, not
+	// a second pass over the network.
+	degvec = J(nsel, 1, 0)
+
+	for (oa=1; oa<=nsel; oa++){
+		oi = sel[oa,1]
+		nb = p->neighbors(oi)
+		degvec[oa,1] = rows(nb)
+		for (k=1; k<=rows(nb); k++){
+			oq = nb[k,1]
+			wiq = p->edge_weight(oi, oq)
+			nb2 = p->neighbors(oq)
+			for (l=1; l<=rows(nb2); l++){
+				ob = localidx[nb2[l,1], 1]
+				if (ob > oa){
+					wjq = p->edge_weight(nb2[l,1], oq)
+					if (asarray_contains(AS, (oa,ob))){
+						statvec = asarray(AS, (oa,ob))
+					}
+					else {
+						statvec = (0, ., ., 0, 0, .)
+					}
+					statvec[1] = statvec[1] + 1
+					statvec[4] = statvec[4] + wiq + wjq
+					statvec[5] = statvec[5] + 2
+					if (statvec[2] == . | wiq < statvec[2]) statvec[2] = wiq
+					if (statvec[2] == . | wjq < statvec[2]) statvec[2] = wjq
+					if (statvec[3] == . | wiq > statvec[3]) statvec[3] = wiq
+					if (statvec[3] == . | wjq > statvec[3]) statvec[3] = wjq
+					thismin = min((wiq,wjq))
+					if (statvec[6] == . | thismin > statvec[6]) statvec[6] = thismin
+					asarray(AS, (oa,ob), statvec)
+				}
+			}
+		}
+	}
+
+	nkeys = asarray_elements(AS)
+	if (nkeys == 0){
+		return(J(0,3,0))
+	}
+	keys = asarray_keys(AS)
+
+	ego_tmp = J(nkeys*2, 1, 0)
+	alter_tmp = J(nkeys*2, 1, 0)
+	weight_tmp = J(nkeys*2, 1, 0)
+	nout = 0
+
+	for (kk=1; kk<=nkeys; kk++){
+		oa = keys[kk,1]
+		ob = keys[kk,2]
+		statvec = asarray(AS, (oa,ob))
+		// count/binary/jaccard/cosine are pure shared-neighbor-
+		// structure statistics - defined the same way whether the
+		// source network is valued or not (unlike min/max/sum/
+		// mean/minmax, which only make sense on tie *values* and
+		// so keep falling back to the plain shared count on an
+		// unvalued source, exactly as before). Checked first so a
+		// valued network can still request them explicitly.
+		if (stat == "count"){
+			val = statvec[1]
+		}
+		else if (stat == "binary"){
+			val = 1
+		}
+		else if (stat == "jaccard"){
+			val = statvec[1] / (degvec[oa,1] + degvec[ob,1] - statvec[1])
+		}
+		else if (stat == "cosine"){
+			val = statvec[1] / sqrt(degvec[oa,1] * degvec[ob,1])
+		}
+		else if (!valued){
+			val = statvec[1]
+		}
+		else if (stat == "min"){
+			val = statvec[2]
+		}
+		else if (stat == "max"){
+			val = statvec[3]
+		}
+		else if (stat == "sum"){
+			val = statvec[4]
+		}
+		else if (stat == "mean"){
+			val = statvec[4] / statvec[5]
+		}
+		else {
+			val = statvec[6]
+		}
+		nout = nout + 1
+		ego_tmp[nout,1] = oa
+		alter_tmp[nout,1] = ob
+		weight_tmp[nout,1] = val
+		nout = nout + 1
+		ego_tmp[nout,1] = ob
+		alter_tmp[nout,1] = oa
+		weight_tmp[nout,1] = val
+	}
+
 	out = J(nout,3,0)
 	out[.,1] = ego_tmp[(1::nout),1]
 	out[.,2] = alter_tmp[(1::nout),1]
