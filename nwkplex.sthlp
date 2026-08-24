@@ -77,7 +77,7 @@ variable, not a spurious 0.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwkplex flomarriage}
-	{cmd:. nwkplex flomarriage, k(3)}
+	{cmd:. nwkplex flomarriage, k(3) replace}
 
 
 {title:References}
@@ -114,4 +114,4 @@ specially guarded against here beyond this note.
 
 	{help nwclique}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

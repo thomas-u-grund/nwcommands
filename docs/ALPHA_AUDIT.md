@@ -48,7 +48,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 6 | manipulation_subset | nwaddnodes, nwdrop, nwdropnodes, nwkeep, nwkeepnodes, nwnoderename, nwpreserve, nwrestore | ✅ (moderate-severity pass, unit 6) |
 | 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | ✅ (moderate-severity pass, unit 7) |
 | 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | ✅ (moderate-severity pass, unit 8) |
-| 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | 🔶 (critical fixes done, alpha unit 10) |
+| 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | ✅ (moderate-severity pass, unit 9) |
 | 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | 🔶 (critical fixes done, alpha unit 11) |
 | 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 (critical fixes done, alpha unit 12) |
 | 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | 🔶 (critical fixes done, alpha unit 13) |

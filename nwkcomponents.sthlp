@@ -92,7 +92,7 @@ provides, not a reason to withhold the single-level version now.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwkcomponents flomarriage}
-	{cmd:. nwkcomponents flomarriage, k(3)}
+	{cmd:. nwkcomponents flomarriage, k(3) replace}
 
 
 {title:References}
@@ -132,4 +132,4 @@ SNA datasets, not recommended for very large or very dense networks.
 
 	{help nwcomponents}, {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcore}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

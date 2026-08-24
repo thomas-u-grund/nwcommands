@@ -73,7 +73,7 @@ variable, not a spurious 0.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwnclique flomarriage}
-	{cmd:. nwnclique flomarriage, n(3)}
+	{cmd:. nwnclique flomarriage, n(3) replace}
 
 
 {title:References}
@@ -107,4 +107,4 @@ for the moderate network sizes typical of SNA datasets, not specially guarded ag
 
 	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

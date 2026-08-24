@@ -95,3 +95,12 @@ capture confirm variable _kcore1, exact
 assert _rc == 0
 capture confirm variable _kcore2, exact
 assert _rc == 0
+
+* missing_test finding, cohesion_subgroups group: silent was never
+* exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwkcore tri, silent
+assert _rc == 0
+assert r(maxcore) == 2
+di "=== silent REGRESSION VERIFIED ==="

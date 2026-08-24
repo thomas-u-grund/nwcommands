@@ -218,3 +218,12 @@ assert r(kcomponents) == 0
 nwkcomponents single1, k(1) replace
 assert _rc == 0
 assert r(kcomponents) == 0
+
+* missing_test finding, cohesion_subgroups group: silent was never
+* exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwkcomponents tri, silent
+assert _rc == 0
+assert r(kcomponents) == 1
+di "=== silent REGRESSION VERIFIED ==="

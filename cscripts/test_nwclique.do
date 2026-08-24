@@ -118,3 +118,12 @@ nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4) undirected labs(A,B,C,D)
 capture noisily nwclique k4, minsize(0)
 assert _rc != 0
+
+* missing_test finding, cohesion_subgroups group: silent (suppresses
+* display but not the underlying computation) was never exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwclique tri, silent
+assert _rc == 0
+assert r(cliques) == 1
+di "=== silent REGRESSION VERIFIED ==="

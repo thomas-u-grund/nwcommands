@@ -82,6 +82,15 @@ assert _rc == 0
 capture confirm variable mynetlistcomp2, exact
 assert _rc == 0
 
+* moderate-severity pass, cohesion_subgroups group: nwcomponents was the
+* only command in this group without a silent option to suppress its
+* display output, unlike every one of its 7 siblings.
+nwclear
+nwset, mat((0,1\1,0)) name(nn) undirected
+capture noisily nwcomponents nn, silent
+assert _rc == 0
+di "=== silent option REGRESSION VERIFIED ==="
+
 
 
 
