@@ -16,8 +16,9 @@
 {cmdab: nwcomponents} 
 [{it:{help netlist}}]
 [, {opt lgc}
-{opth generate(newvarname)
-{opt replace}]
+{opth generate(newvarname)}
+{opt replace}
+{opt silent}]
 
 
 {synoptset 25 tabbed}{...}
@@ -26,6 +27,7 @@
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores information about components; default = {it:_component} or {it:_lgc}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 	
@@ -92,7 +94,7 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 capture program drop nwcomponents
 program nwcomponents, rclass
 	version 9
-	syntax [anything(name=netname)][, lgc GENerate(string) replace ]
+	syntax [anything(name=netname)][, lgc GENerate(string) replace silent]
 	set more off
 
 	nw_syntax `netname', max(9999)
@@ -166,11 +168,17 @@ program nwcomponents, rclass
 		return matrix comp_sizeid = comp_sizeid
 		mata: mata drop comp_number comp_share comp_id comp_size comp_sizeid
 
-		noi di "{hline 40}"
-		noi di "{txt}  Network name: {res}`netname_temp'"
-		noi di "{txt}  Components: {res}`lcomp'"
+		// Consistency (moderate-severity pass, cohesion_subgroups group):
+		// every sibling command in this group (nwclique/nwkcomponents/
+		// nwkcore/nwkplex/nwnclan/nwnclique/nwcohesion) already offers
+		// `silent' to suppress this same per-network display; nwcomponents
+		// was the only one that didn't.
+		if "`silent'" == "" {
+			noi di "{hline 40}"
+			noi di "{txt}  Network name: {res}`netname_temp'"
+			noi di "{txt}  Components: {res}`lcomp'"
+		}
 
-		
 		qui if "`lgc'" != "" {
 			tab `generate'`k', matcell(freqs) matrow(comps)
 			local freqs_max = 1
@@ -184,9 +192,11 @@ program nwcomponents, rclass
 			replace `generate'`k' = 0 if `generate'`k' != `comps_lgc' & `generate'`k' != .
 			replace `generate'`k' = 1 if `generate'`k' == `comps_lgc' & `generate'`k' != .	
 		}
-		noi tab `generate'`k'
-		noi di " "
-		noi di " "
+		if "`silent'" == "" {
+			noi tab `generate'`k'
+			noi di " "
+			noi di " "
+		}
 		local k = `=`k' + 1'
 		
 	}

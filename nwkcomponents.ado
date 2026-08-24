@@ -93,7 +93,7 @@ provides, not a reason to withhold the single-level version now.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwkcomponents flomarriage}
-	{cmd:. nwkcomponents flomarriage, k(3)}
+	{cmd:. nwkcomponents flomarriage, k(3) replace}
 
 
 {title:References}

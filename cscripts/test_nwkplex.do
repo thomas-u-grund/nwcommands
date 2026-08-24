@@ -177,3 +177,12 @@ nwkplex path5, k(3) minsize(4)
 assert _rc == 0
 assert r(kplexes) >= 1
 mata: assert(max(rowsum(st_matrix("r(kplex_matrix)"))) >= 4)
+
+* missing_test finding, cohesion_subgroups group: silent was never
+* exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwkplex tri, silent
+assert _rc == 0
+assert r(kplexes) == 1
+di "=== silent REGRESSION VERIFIED ==="

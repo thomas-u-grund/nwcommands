@@ -131,3 +131,12 @@ assert _rc == 0
 assert r(ncliques) == 1
 count if _ncliquenum == 6
 assert r(N) == 6
+
+* missing_test finding, cohesion_subgroups group: silent was never
+* exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwnclique tri, silent
+assert _rc == 0
+assert r(ncliques) == 1
+di "=== silent REGRESSION VERIFIED ==="

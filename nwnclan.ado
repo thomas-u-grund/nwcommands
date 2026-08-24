@@ -77,7 +77,7 @@ shape: a single per-node "largest maximal n-clan membership size" summary variab
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwnclan flomarriage}
-	{cmd:. nwnclan flomarriage, n(3)}
+	{cmd:. nwnclan flomarriage, n(3) replace}
 
 
 {title:References}

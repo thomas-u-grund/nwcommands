@@ -76,7 +76,7 @@ shape: a single per-node "largest maximal n-clan membership size" summary variab
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwnclan flomarriage}
-	{cmd:. nwnclan flomarriage, n(3)}
+	{cmd:. nwnclan flomarriage, n(3) replace}
 
 
 {title:References}
@@ -105,4 +105,4 @@ induced-subgraph diameter check - fine for the moderate network sizes typical of
 
 	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

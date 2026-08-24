@@ -153,3 +153,12 @@ capture noisily nwnclan k4, minsize(0)
 assert _rc != 0
 capture noisily nwnclan k4, n(0)
 assert _rc != 0
+
+* missing_test finding, cohesion_subgroups group: silent was never
+* exercised.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
+nwnclan tri, silent
+assert _rc == 0
+assert r(nclans) == 1
+di "=== silent REGRESSION VERIFIED ==="

@@ -74,7 +74,7 @@ variable, not a spurious 0.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwnclique flomarriage}
-	{cmd:. nwnclique flomarriage, n(3)}
+	{cmd:. nwnclique flomarriage, n(3) replace}
 
 
 {title:References}

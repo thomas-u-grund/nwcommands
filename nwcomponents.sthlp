@@ -15,8 +15,9 @@
 {cmdab: nwcomponents} 
 [{it:{help netlist}}]
 [, {opt lgc}
-{opth generate(newvarname)
-{opt replace}]
+{opth generate(newvarname)}
+{opt replace}
+{opt silent}]
 
 
 {synoptset 25 tabbed}{...}
@@ -25,6 +26,7 @@
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores information about components; default = {it:_component} or {it:_lgc}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 	
