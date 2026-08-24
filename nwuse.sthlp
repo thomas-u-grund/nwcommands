@@ -12,13 +12,15 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwuse} 
+{cmdab: nwuse}
 {it:{help filename}}
 [{cmd:,}
-{cmd:clear}]
+{cmd:nwclear}
+{cmd:nwappend}
+{opt force}]
 
 {p 8 17 2}
-{cmdab: nwwebuse} 
+{cmdab: nwwebuse}
 {it:{help netexample}}
 [{cmd:,}
 {cmd:nwclear}]
@@ -29,6 +31,7 @@
 {synoptline}
 {synopt:{opt nwclear}}clear memory before loading dataset{p_end}
 {synopt:{opt nwappend}}append to existing data{p_end}
+{synopt:{opt force}}when combined with {opt nwappend}, if the incoming data contains a network with the same name as one already in memory, auto-renumber the incoming network to a fresh name instead of erroring - unlike {opt replace} elsewhere in this group (e.g. {help nwset}), which overwrites the existing network in place under the same name, {opt force} leaves the existing network untouched{p_end}
 
         
 {title:Description}

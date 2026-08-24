@@ -32,9 +32,12 @@
 {synopt:{opth name(newnetname)}}name of the new network; default = {it:network}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
-{synopt:{opt undirected}}force the network to be undirected{p_end}
-{synopt:{opt directed}}force the network to be directed{p_end}
+{synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
+{synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
+{synopt:{opt prefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n}{p_end}
+{synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is about the {it:network}, not Stata variables{p_end}
 
 {p2colreset}{...}
 
@@ -256,7 +259,13 @@ program nwfromedge
 	collapse (mean) `_rawid', by(`_id')
 	sort `_rawid'
 
-	local prefix "n"
+	// `prefix' was previously overwritten unconditionally here, discarding
+	// whatever the caller's own prefix(string) option had set - a dead
+	// option (node labels were always n-prefixed regardless). Now only
+	// defaults to "n" when the caller left prefix() unspecified.
+	if "`prefix'" == "" {
+		local prefix "n"
+	}
 	if "`rawtype'" == "numeric" {
 		if "`labs'" == "" {
 			forvalues k = 1/ `=_N'{

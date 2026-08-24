@@ -40,7 +40,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 
 | # | Group | Commands | Status |
 |---|---|---|---|
-| 1 | import_export | nw2fromedge, nw2set, nw2toedge, nwappend, nwexport, nwfromedge, nwimport, nwsave, nwset, nwtoedge, nwuse, nwwebuse | 🔶 |
+| 1 | import_export | nw2fromedge, nw2set, nw2toedge, nwappend, nwexport, nwfromedge, nwimport, nwsave, nwset, nwtoedge, nwuse, nwwebuse | ✅ (moderate-severity pass, unit 1) |
 | 2 | generators_structural | nwrandom, nwpref, nwlattice, nwring, nwsmall, nwpermute, nwduplicate | 🔶 |
 | 3 | generators_derived | nwdyadprob, nwhomophily, nwexpand, nwdissimilar, nwsimilar, nwtranspose, nwsubset, nwshared | 🔶 |
 | 4 | paths_distance | nwgeodesic, nwpath, nwreach, nwbridges, nwneighbor, nwego, nwaltergen | 🔶 |
@@ -75,9 +75,11 @@ commit. Status column above tracks progress per group (🔶 = findings in from P
 applied; ✅ = fixes applied and regression-clean for that group).
 
 **Critical-severity sweep complete** (alpha units 2-16, `docs/CERTIFICATION.md`): all 50 critical findings
-across all 16 groups are fixed and regression-tested. 133 moderate/minor findings remain, tracked per
-group in the table above (🔶 = critical fixes done, moderate/minor still pending) - the moderate-severity
-pass is the natural next phase.
+across all 16 groups are fixed and regression-tested. 181 moderate/minor findings remain (83 moderate + 98
+minor - the "133" figure previously here was stale/incorrect), tracked per group in the table above (🔶 =
+critical fixes done, moderate/minor still pending; ✅ = moderate-severity pass also done for that group) -
+now in progress, group by group (moderate-severity pass unit 1 = `import_export`, see
+`docs/CERTIFICATION.md`).
 
 ## Later phases
 

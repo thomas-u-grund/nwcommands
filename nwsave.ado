@@ -13,16 +13,18 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwsave} 
+{cmdab: nwsave}
 {it:{help filename}}
 [{cmd:,}
-{cmd:replace}]
+{cmd:replace}
+{opt old}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{cmd: replace}}overwrite existing dataset{p_end}
+{synopt:{opt old}}save in a Stata-version-backward-compatible format (uses {help saveold} internally instead of {help save}){p_end}
 
 
 {title:Description}
@@ -60,19 +62,25 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 ***/
 capture program drop nwsave
 program nwsave
-	syntax anything [, old replace * format(string)]
+	// A former format(string) option was accepted by syntax but immediately
+	// discarded - `format' below is `.nwdta''s own single, fixed internal
+	// storage layout, not something a caller could ever meaningfully vary
+	// (any value, including nonsense, was silently accepted and ignored).
+	// Removed rather than wired up, since there is no second storage format
+	// implemented anywhere in this file to select between.
+	syntax anything [, old replace *]
 	local webname = subinstr(`"`anything'"', ".dta","",.)
 	local webname = subinstr(`"`webname'"', ".nwdta","",.)
 	unw_defs
 	nwload, labelonly
-	
+
 	tempfile existing
 	qui save `existing'
 	nw_syntax _all, max(99999)
 	local nets r(networks)
 
 	local format = "edgelist"
-	
+
 	
 	// save attributes first
 	qui foreach onenet in `netname' {

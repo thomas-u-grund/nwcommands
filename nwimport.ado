@@ -21,7 +21,9 @@
 {opt forcedirected}
 {opt forceundirected}
 {opt nwclear}
-{opt nwappend}]
+{opt clear}
+{opt nwappend}
+{opt xvars}]
 
 
 {synoptset 20 tabbed}{...}
@@ -31,7 +33,9 @@
 {synopt:{opt forcedirected}}force network to be directed{p_end}
 {synopt:{opt forceundirected}}force network to be undirected{p_end}
 {synopt:{opt nwclear}}clear all data and networks{p_end}
+{synopt:{opt clear}}same as {opt nwclear}{p_end}
 {synopt:{opt nwappend}}append to existing data{p_end}
+{synopt:{opt xvars}}also generate Stata variables for the imported network (see {help nwload}){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker import_type}{...}
@@ -284,6 +288,15 @@ program nwimport
 	local fname `"`anything'"'
 	if strpos(`"`anything'"',`"""') == 0 {
 		local fname  `""`fname'""'
+	}
+	// `clear' was previously accepted by syntax but never referenced here -
+	// a dead no-op that neither behaved like Stata's own `clear' nor
+	// satisfied the "data would be lost" guard immediately below the way
+	// `nwclear' does. Treated as a synonym for `nwclear', matching how
+	// several other import-family Stata commands accept `clear' as a
+	// general-purpose alias.
+	if "`clear'" != "" {
+		local nwclear "nwclear"
 	}
 	qui `nwclear'
 	qui nwset
@@ -946,6 +959,15 @@ program _nwimport_gml
 end
 
 
+// Unreachable: "gefx" is not in the _opts_oneof "import_type" allow-list
+// above (line ~352, "pajek matrix edgelist compressed gml ucinet"), was
+// never documented in this file's own {title:Syntax}, and has no test
+// coverage - so it can never be dispatched to and has never been verified
+// to actually work. Left in place (documented here) rather than either
+// wired up untested or deleted outright, matching the graphml precedent
+// just above (removed from the allow-list once found broken, not silently
+// left reachable) without assuming this one is equally broken - it has
+// simply never been exercised.
 capture program drop _nwimport_gefx
 program _nwimport_gefx
 	version 9

@@ -14,11 +14,18 @@
 {title:Syntax}
 
 {p 8 15 2}
-{cmdab:nwappend} {cmd:using} {it:{help filename}}
+{cmdab:nwappend} {cmd:using} {it:{help filename}} [{cmd:,} {opt force}]
 
 {pstd}
 You may enclose {it:filename} in double quotes and must do so if
 {it:filename} contains blanks or other special characters.
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt force}}if a network in {it:using dataset} has the same name as one already loaded, auto-renumber the incoming network to a fresh name instead of erroring (see {help:nwvalidate}) - leaves the existing network untouched, unlike {opt replace} elsewhere in this group (e.g. {help nwset}), which overwrites in place{p_end}
+{synoptline}
+{p2colreset}{...}
 
 
 {marker description}{...}
