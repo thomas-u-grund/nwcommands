@@ -40,25 +40,39 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 
 | # | Group | Commands | Status |
 |---|---|---|---|
-| 1 | import_export | nw2fromedge, nw2set, nw2toedge, nwappend, nwexport, nwfromedge, nwimport, nwsave, nwset, nwtoedge, nwuse, nwwebuse | ⬜ |
-| 2 | generators_structural | nwrandom, nwpref, nwlattice, nwring, nwsmall, nwpermute, nwduplicate | ⬜ |
-| 3 | generators_derived | nwdyadprob, nwhomophily, nwexpand, nwdissimilar, nwsimilar, nwtranspose, nwsubset, nwshared | ⬜ |
-| 4 | paths_distance | nwgeodesic, nwpath, nwreach, nwbridges, nwneighbor, nwego, nwaltergen | ⬜ |
-| 5 | information_census | nwcurrent, nwdyads, nwissymmetric, nwname, nwsummarize, nwtabulate, nwtriads | ⬜ |
-| 6 | manipulation_subset | nwaddnodes, nwdrop, nwdropnodes, nwkeep, nwkeepnodes, nwnoderename, nwpreserve, nwrestore | ⬜ |
-| 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | ⬜ |
-| 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | ⬜ |
-| 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | ⬜ |
-| 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | ⬜ |
-| 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | ⬜ |
-| 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | ⬜ |
-| 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | ⬜ |
-| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | ⬜ |
-| 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | ⬜ |
-| 16 | programming | nwcompressobs | ⬜ |
+| 1 | import_export | nw2fromedge, nw2set, nw2toedge, nwappend, nwexport, nwfromedge, nwimport, nwsave, nwset, nwtoedge, nwuse, nwwebuse | 🔶 |
+| 2 | generators_structural | nwrandom, nwpref, nwlattice, nwring, nwsmall, nwpermute, nwduplicate | 🔶 |
+| 3 | generators_derived | nwdyadprob, nwhomophily, nwexpand, nwdissimilar, nwsimilar, nwtranspose, nwsubset, nwshared | 🔶 |
+| 4 | paths_distance | nwgeodesic, nwpath, nwreach, nwbridges, nwneighbor, nwego, nwaltergen | 🔶 |
+| 5 | information_census | nwcurrent, nwdyads, nwissymmetric, nwname, nwsummarize, nwtabulate, nwtriads | 🔶 |
+| 6 | manipulation_subset | nwaddnodes, nwdrop, nwdropnodes, nwkeep, nwkeepnodes, nwnoderename, nwpreserve, nwrestore | 🔶 |
+| 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | 🔶 |
+| 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | 🔶 |
+| 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | 🔶 |
+| 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | 🔶 |
+| 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 |
+| 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | 🔶 |
+| 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | 🔶 |
+| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 |
+| 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | 🔶 |
+| 16 | programming | nwcompressobs | 🔶 |
 
 118 commands total across 16 groups (every `nw*`-prefixed `.ado` file in the repo, excluding internal
 `nw_*` helpers and the `nwcentrality`/concept-page overview topics, which aren't real commands).
+
+## Phase 1 results
+
+Completed via a 16-agent parallel workflow (one agent per group above, read-only - each actually ran
+every documented option against real test networks, not just read code). **231 findings**: 50 critical,
+83 moderate, 98 minor (85 bug, 64 help_mismatch, 37 consistency, 24 missing_test, 14 missing_doc, 7
+other). Raw findings: `/tmp/alpha_findings.json` (not committed - regenerable from the workflow journal
+if needed) and a filterable triage view was published as an Artifact for browsing.
+
+Now working through fixes group by group, critical severity first, using the same methodology as every
+harmonisation unit before this pass: reproduce, root-cause, fix, validate against original behavior where
+applicable, full `cscripts/` regression sweep, document as a numbered unit in `docs/CERTIFICATION.md`,
+commit. Status column above tracks progress per group (🔶 = findings in from Phase 1, fixes not yet
+applied; ✅ = fixes applied and regression-clean for that group).
 
 ## Later phases (not started)
 
