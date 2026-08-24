@@ -79,9 +79,11 @@ so {cmd:nwconcor} requires every node to have at least one tie; remove isolates 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwconcor flomarriage}
+	{cmd:. * pucci is an isolate in this network - CONCOR requires every node to have a tie}
+	{cmd:. nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)}
+	{cmd:. nwconcor flomarriage2}
 
-	{cmd:. nwconcor flomarriage, splits(2)}
+	{cmd:. nwconcor flomarriage2, splits(2) replace}
 
 
 {title:References}
@@ -109,4 +111,3 @@ error, not silently mishandled - see Description.
 
 	{help nwsimilar}, {help nwdissimilar}, {help nwhierarchy}, {help nwcommunity}
 
-last certified : 21 Aug 2026
