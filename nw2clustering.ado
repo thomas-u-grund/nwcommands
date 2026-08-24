@@ -65,6 +65,27 @@ program nw2clustering
 	rename value value0
 	rename ego ego0
 	merge m:m alter using `alter_list', nogenerate
+	// PERFORMANCE/CORRECTNESS FIX: this command has always crashed on
+	// any bipartite network with a reshape error ("variable ... does
+	// not uniquely identify the observations", r(9)), confirmed
+	// reproducible even on a tiny 4-node network - not an edge case.
+	// Root cause: an m:m merge against a per-key-unique `using' table
+	// (alter_list/ego_list are each keyed uniquely by construction, via
+	// their own earlier `reshape wide ... i(alter)/i(ego)') broadcasts
+	// the SAME using-side row to every master-side row sharing that
+	// key - so if the master side already has more than one row for a
+	// given key (a real possibility this far into a multi-hop path
+	// enumeration), those rows come out of the merge bit-for-bit
+	// identical, not just sharing the same key. Confirmed directly
+	// (`duplicates report' vs `duplicates report' restricted to the
+	// reshape's own i()-varlist gave identical counts) - these are
+	// pure redundant broadcast copies, not rows differing in some
+	// other column, so dropping the surplus is lossless. The identical
+	// pattern recurs at every merge+reshape step below (this function
+	// walks a growing ego0-alter0-ego1-alter1-ego2-alter2-ego3 4-path,
+	// one hop merged in at a time) - fixed at all of them, not just the
+	// one specific network structure that happened to crash first.
+	duplicates drop
 	rename alter alter0
 	reshape long ego_ value_, i(ego0 alter0) j(id)
 	drop id
@@ -75,6 +96,8 @@ program nw2clustering
 
 	rename ego1 ego
 	merge m:m ego using `ego_list', nogenerate
+	// same redundant-broadcast-duplicate fix as the first merge above.
+	duplicates drop
 	reshape long alter_ value_, i(ego0 alter0 ego) j(id)
 	drop id
 	drop if alter_ == "" | alter_ == alter0
@@ -86,6 +109,8 @@ program nw2clustering
 
 	rename alter1 alter
 	merge m:m alter using `alter_list', nogenerate
+	// same redundant-broadcast-duplicate fix as the first merge above.
+	duplicates drop
 	reshape long ego_ value_, i(ego0 alter0 ego1 alter) j(id)
 	drop id 
 	drop if ego_ == "" | ego_ == ego1 | ego_ == ego0
@@ -107,6 +132,8 @@ program nw2clustering
 	rename ego2 ego
 	merge m:m ego using `ego_list', nogenerate
 	drop if potential_4path == .
+	// same redundant-broadcast-duplicate fix as the first merge above.
+	duplicates drop
 	reshape long alter_ ,i(ego0 alter0 ego1 alter1 ego) j(alter)
 	drop if alter_ == alter0 | alter_ == alter1
 	rename ego ego2
@@ -117,6 +144,8 @@ program nw2clustering
 	rename alter2 alter
 	merge m:m alter using `alter_list', nogenerate
 	drop if potential_4path == .
+	// same redundant-broadcast-duplicate fix as the first merge above.
+	duplicates drop
 	reshape long ego_, i(ego0 alter0 ego1 alter1 ego2 alter) j(ego)
 	drop if ego_ == ""
 	drop ego
