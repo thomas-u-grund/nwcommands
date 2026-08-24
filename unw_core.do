@@ -4885,21 +4885,53 @@ real matrix `NWdef'::get_path(real scalar ego, real scalar alter, real scalar le
 		step = step + 1
 		for (z = 1; z<= rows(paths_sofar); z ++) {
 			id_next = paths_sofar[z, step]
+			// BUGFIX: reach_next used to be left as the raw adjacency
+			// row (real tie WEIGHTS on a valued network, not 0/1
+			// indicators). sum(reach_next) then overcounted (e.g. a
+			// single weight-5 tie counted as 5 neighbors) while
+			// select(ids, reach_next) below correctly treats any
+			// nonzero entry as "keep" regardless of its magnitude - the
+			// two disagreed on how many neighbors there were, sizing
+			// path_next by the wrong (weight-sum) count and crashing
+			// with a conformability error on the following assignment.
+			// Binarized to match this method's own documented "any
+			// nonzero tie is traversable" semantics and to agree with
+			// select()'s own counting. Confirmed as the cause of
+			// nwpath crashing on every valued/weighted network,
+			// directed or undirected, even a trivial 2-node tie.
+			// _editmissing() first (before binarizing), matching the
+			// second occurrence of this same computation below -
+			// binarizing a possibly-missing entry with plain `:!= 0'
+			// alone would treat missing as nonzero (Mata's relational
+			// operators treat missing as larger than any real value),
+			// silently reintroducing the identical counting mismatch
+			// this fix is for.
 			reach_next = ((*get_matrix())[id_next,])'
+			_editmissing(reach_next,0)
+			reach_next = (reach_next :!= 0)
 			if (reach_next[alter,1] != 0) {
 				found = 1
 			}
 			new_paths = new_paths + sum(reach_next)
 		}
-		
+
 		paths_new = J(new_paths, (step + 1),0)
 
 		temp = 1
 		if (rows(paths_new)> 0) {
 		  for (i = 1; i<= rows(paths_sofar); i ++) {
 			id_next = paths_sofar[i, step]
+			// BUGFIX: was `reach_next = ((*get_matrix())[id_next,])''
+			// (the raw, possibly-weighted, possibly-missing row) with
+			// _editmissing() run afterward - see the identical fix and
+			// its own comment above. Binarize the raw row (excluding
+			// both zero and missing as "no tie") directly rather than
+			// binarizing first and then running _editmissing() on an
+			// already-0/1 matrix, which would silently do nothing (no
+			// actual missing values left for it to find).
 			reach_next = ((*get_matrix())[id_next,])'
 			_editmissing(reach_next,0)
+			reach_next = (reach_next :!= 0)
 			reach_ids = select(ids, reach_next)
 			reach_num = sum(reach_next)
 			if (reach_num > 0){

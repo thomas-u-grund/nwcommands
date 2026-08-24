@@ -45,3 +45,16 @@ assert         r(missing_edges) == 4
 assert         r(selfloops)     == 0
 assert         r(nodes)         == 4
 assert         r(id)            == 3
+
+* --- alpha-audit regression: nwreach used to silently fail (r99, no
+* message) whenever the dataset already had a variable named
+* _eccentricity from a prior nwgeodesic ..., xvars call, because
+* nwgeodesic's own eccentricity-guard used to run even when xvars
+* wasn't requested (nwreach's own internal call never sets xvars) -
+* see nwgeodesic's own identical regression case for the root-cause fix.
+nwclear
+nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
+nwgeodesic mynet, xvars
+capture noisily nwreach mynet
+assert _rc == 0
+di "=== pre-existing eccvar REGRESSION VERIFIED ==="

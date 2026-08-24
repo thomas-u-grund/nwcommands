@@ -198,10 +198,22 @@ program nwgeodesic
 	// when both `replace' and `noreplace' are declared together - verified
 	// directly rather than assumed. Piggybacking on the existing, already-
 	// working nwreplace avoids the collision entirely.
-	capture confirm variable `eccvar'
-	if _rc == 0 & "`nwreplace'" == "" {
-		di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
-		err 99
+	// BUGFIX: this guard used to run unconditionally, even when `xvars'
+	// was never requested - but `eccvar' is only actually written
+	// further down, inside the `if "`xvars'" != ""' block. A call with
+	// no xvars at all (or even a genuinely unrelated call, e.g. a
+	// second nwgeodesic ... name(other) with no xvars) failed this
+	// check purely because SOME earlier call had once left `eccvar'
+	// (default "_eccentricity") lying around in the dataset, despite
+	// this call never touching it. nwreach.ado wraps its own internal
+	// nwgeodesic call in `qui', so this message never even reached the
+	// user - just a bare, uninformative r(99).
+	if "`xvars'" != "" {
+		capture confirm variable `eccvar'
+		if _rc == 0 & "`nwreplace'" == "" {
+			di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
+			err 99
+		}
 	}
 
 	if "`sym'" != "" {
