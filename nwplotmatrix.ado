@@ -135,7 +135,25 @@ program nwplotmatrix
 	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) ]
 	unw_defs
 	nw_syntax `netname'
-	
+
+	// BUGFIX: a single-node network used to crash deep inside this
+	// program with a generic, uninformative "invalid syntax" (r198) -
+	// first from an undefined local (`cbak', only ever assigned inside
+	// a now-empty `foreach' loop over color levels, itself now fixed
+	// separately below) and, once past that, a second, genuinely
+	// unrenderable case (a matrix plot has nothing meaningful to show
+	// for a single node/no possible ties) inside Stata's own `graph
+	// twoway' engine. Rather than chase that second, structural issue
+	// through a complex plotting pipeline, fail fast here with a clear
+	// message instead - matching the fix already applied to nwplot's
+	// own analogous single-node case in an earlier unit, which DOES
+	// still render (a node-layout plot can trivially place one dot,
+	// unlike a matrix plot of a 1x1 adjacency matrix).
+	if `nodes' <= 1 {
+		di "{err}nwplotmatrix requires a network with at least 2 nodes."
+		error 198
+	}
+
 	preserve
 	gettoken temp ylabel : ylabel, parse(",")
 	gettoken temp xlabel : xlabel, parse(",")
@@ -313,6 +331,15 @@ qui levelsof cb, local(clevels)
 
 local colorlist ""
 local ccc 1
+// BUGFIX: a single-node network (nothing to tabulate) leaves `clevels'
+// empty, so the `foreach' loop below - the only place that ever
+// assigns `cbak' - runs zero times, leaving `cbak' entirely undefined.
+// `local ncolleg = int(sqrt(`cbak')+1)' further down then expands to
+// the malformed `int(sqrt()+1)' and crashes with a generic "invalid
+// syntax" (r198). Defaulting `cbak' to 0 here is a no-op for every
+// non-empty `clevels' case (the loop always overwrites it from its own
+// final iteration) and gives a sensible ncolleg==1 for this edge case.
+local cbak = 0
 local size:list sizeof clevels
 local no_spec_cols: list sizeof color
 local new_size = int(`size'/`no_spec_cols'+0.999)

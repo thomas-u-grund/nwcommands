@@ -1,15 +1,47 @@
 capture program drop nwdendrogram
 program nwdendrogram
-	syntax [anything(name=clus)], [ factor(passthru) label(varname) * ]
-	
+	syntax [anything(name=clus)], [ factor(passthru) label(varname) lab * ]
+
+	// BUGFIX: unlike its siblings nwplot and nwplotmatrix, nwdendrogram
+	// only accepted label(varname) - it had no bare `lab' flag to reuse
+	// the network's own stored node-name labels, forcing the caller to
+	// pass the node-name variable manually even though `_nwnode' (this
+	// package's own default node-name variable, per nwload's own
+	// documented convention) is exactly what `lab' pulls in for the
+	// other two plotting commands in this group. nwdendrogram has no
+	// live network object to query a possibly-customized name from
+	// (unlike nwplot/nwplotmatrix, it works entirely off Stata's own
+	// native `cluster' results, with no nw_syntax/unw_defs call
+	// anywhere in this file) - so this always resolves to the
+	// conventional default name, not any customized one. Matches the
+	// sibling commands' own precedence exactly: `lab', when given,
+	// wins over an explicit label() rather than the other way around.
+	if "`lab'" != "" {
+		local label _nwnode
+	}
+
 	preserve
 	cluster query
 	if "`clus'" != "" {
-		/*local found : list clus & r(names)
+		// BUGFIX: this validation was dead code (commented out), so a
+		// nonexistent cluster name produced a confusing generic Stata
+		// error ("variable ..._hgt not found", r111) instead of this
+		// clear, purpose-written message. Two genuine bugs in the
+		// original commented-out code itself, found while restoring it
+		// (very possibly WHY it was disabled in the first place rather
+		// than fixed): (1) `{bf:clus}' is literal SMCL bold text
+		// ("clus"), not a macro substitution - needed `{bf:`clus'}' to
+		// actually show the name the caller passed; (2) `: list clus &
+		// r(names)' crashes outright with "invalid syntax" - the `:
+		// list A & B' extended macro function requires bare LOCAL MACRO
+		// NAMES as both operands, not an r()-result reference - fixed
+		// by copying r(names) into a local first.
+		local clusternames `r(names)'
+		local found : list clus & clusternames
 		if "`found'" == "" {
-			di "{err}Cluster name {bf:clus} not found."
-			exit
-		}*/
+			di "{err}Cluster name {bf:`clus'} not found."
+			error 111
+		}
 	}
 	else {
 		cluster query

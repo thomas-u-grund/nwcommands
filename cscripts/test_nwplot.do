@@ -376,3 +376,48 @@ foreach lay in "" "circle" "grid" "mdsclassical" {
 	_assert_has_svg_tag `"`plotH_svg'"'
 }
 di "=== SINGLE-NODE NETWORK, ALL LAYOUTS, REGRESSION VERIFIED ==="
+
+* moderate-severity pass, visualization group: the top-level sizebin()
+* option was dead code - size()'s own content is re-parsed via a
+* SECOND `syntax' call further down (for size(varname, sizebin(#))-
+* style calls), and that second call unconditionally reset `sizebin'
+* to its own default whenever size()'s own text didn't itself contain
+* a sizebin() sub-option, silently discarding whatever the caller
+* passed to the separate top-level option. Verified black-box via
+* exported SVG content: a coarser sizebin() must change the rendered
+* node-circle radii (fewer distinct sizes), producing genuinely
+* different SVG output for the same underlying data - confirmed this
+* actually changes the render, not just runs without erroring.
+nwclear
+nwwebuse florentine
+local svgfine `"`tmpd'/nwplot_sizebin_fine.svg"'
+local svgcoarse `"`tmpd'/nwplot_sizebin_coarse.svg"'
+nwplot flomarriage, size(wealth) sizebin(1) export(`"`svgfine'"') replace
+assert _rc == 0
+nwplot flomarriage, size(wealth) sizebin(50) export(`"`svgcoarse'"') replace
+assert _rc == 0
+_assert_has_svg_tag `"`svgfine'"'
+_assert_has_svg_tag `"`svgcoarse'"'
+assert fileread(`"`svgfine'"') != fileread(`"`svgcoarse'"')
+di "=== TOP-LEVEL sizebin() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, visualization group: layout(nodexy) without
+* also specifying nodexy(xvar yvar) used to crash with a raw Mata
+* st_data() "varlist required" error (r3598) instead of a clear
+* Stata-style message - `nodex'/`nodey' are only ever populated inside
+* nodexy()'s own parsing block, which layout(nodexy) alone doesn't
+* trigger.
+capture noisily nwplot flomarriage, layout(nodexy)
+assert _rc == 198
+
+* moderate-severity pass, visualization group: colorpalette() (as a
+* sub-option of color()) couldn't be abbreviated here, unlike the
+* same-named, same-purpose option in the sibling command nwplotmatrix
+* (declared "COlorpalette" there) - this declaration was plain
+* lowercase, which Stata's syntax parser never abbreviates. Confirms
+* both the full spelling and the "co" abbreviation now work.
+nwplot flomarriage, color(seat, colorpalette(red yellow))
+assert _rc == 0
+nwplot flomarriage, color(seat, co(red yellow))
+assert _rc == 0
+di "=== layout(nodexy) and colorpalette() abbreviation REGRESSIONS VERIFIED ==="

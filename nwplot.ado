@@ -87,7 +87,8 @@
 {p2line}
 {p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
 {p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
-{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end} 
+{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
+{p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -107,6 +108,7 @@
 {p2col:{opt arcstyle}({it:{help nwplot##arcstyle:arcstyle}})}change the look of arcs (curved, straight){p_end}
 {p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 2{p_end}
 {p2col:{opth arcsplines(int)}}resolution for curved arcs{p_end}
+{p2col:{opt arrows}}force arrowheads on an otherwise-undirected network{p_end}
 {p2col:{opth arrowfactor(float)}}multiply arrowhead by a factor{p_end}
 {p2col:{opth arrowgap(float)}}control gap between arrowhead and node{p_end}
 {p2col:{opth arrowbarbfactor(float)}}control look of arrow{p_end}
@@ -138,6 +140,8 @@
 {marker layout_sub}{...}
 {p2line}
 {p2col:{opt lgc}}only plot largest component{p_end}
+{p2col:{opth components(int)}}control the number of components rendered{p_end}
+{p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
 {p2col:{opth iterations(int)}}only relevant for layout = mds; maximum number of iterations in the multidimensional scaling procedure, default = 1000{p_end}
 {p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
 {p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
@@ -549,7 +553,18 @@ program nwplot, rclass
 	if "`sizebin'" == "" {
 		local sizebin = 1
 	}
-	
+	// BUGFIX: the top-level sizebin() option declared in this program's
+	// own main `syntax' line was dead code - `size()'s own content is
+	// re-parsed via a SECOND `syntax' call further down (which also
+	// declares its own sizebin(integer 1) sub-option, for
+	// `size(varname, sizebin(#))'-style calls), and that second call
+	// unconditionally resets `sizebin' to its own default whenever
+	// size()'s own text doesn't itself contain a sizebin() sub-option -
+	// silently discarding whatever the caller passed to the separate
+	// top-level option on every single call. Preserved here so it can
+	// be restored afterward when size() didn't specify its own.
+	local __sizebin_toplevel "`sizebin'"
+
 	if "`arrowbarbfactor'" == "" {
 		local arrowbarbfactor = 1
 	}
@@ -669,7 +684,13 @@ program nwplot, rclass
 	
 	if ("`color'" != ""){
 		local 0 = "`color'"
-		syntax [varlist(default=none max=1)] [, foreground(string) norescale forcekeys(string) legendoff colorpalette(string) mlcolor(string) mlwidth(string) *]
+		// BUGFIX: colorpalette() couldn't be abbreviated here (unlike
+		// the same-named, same-purpose option in the sibling command
+		// nwplotmatrix, which declares it "COlorpalette" - a minimum
+		// abbreviation of "co") because this declaration was plain
+		// lowercase, which Stata's syntax parser never abbreviates.
+		// Capitalized to match the sibling convention.
+		syntax [varlist(default=none max=1)] [, foreground(string) norescale forcekeys(string) legendoff COlorpalette(string) mlcolor(string) mlwidth(string) *]
 		
 		local mlcolor_color = "`mlcolor'"
 		local mlwidth_color = "`mlwidth'"
@@ -840,8 +861,15 @@ program nwplot, rclass
 		local symbollabels = ""
 	}
 	
+	local __size_raw "`size'"
 	local 0 = "`size'"
 	syntax [varlist(min=0 max=1 default=none)][, norescale legendoff forcekeys(string) sizebin(integer 1) mlcolor(string) mlwidth(string) *]
+	// see the BUGFIX comment above `__sizebin_toplevel' - only fall back
+	// to the top-level sizebin() value when size() itself didn't supply
+	// its own; a genuine size(var, sizebin(#)) sub-option must still win.
+	if !strpos(`"`__size_raw'"', "sizebin(") & "`__sizebin_toplevel'" != "1" {
+		local sizebin "`__sizebin_toplevel'"
+	}
 	local mlcolor_size = "`mlcolor'"
 	local mlwidth_size = "`mlwidth'"
 	if "`mlcolor_size'" == "" {
@@ -1370,6 +1398,15 @@ program nwplot, rclass
 		mata: Coord = gridlayout(rows(M), `layout_gridcols')
 	}
 	if ("`layout'"=="nodexy" & `nodes' > 1){
+		// BUGFIX: layout(nodexy) without also specifying nodexy(xvar
+		// yvar) used to crash with a raw Mata st_data() "varlist
+		// required" error (r3598) - `nodex'/`nodey' are only ever
+		// populated inside the nodexy() option's own parsing block
+		// above, which layout(nodexy) alone does not trigger.
+		if "`nodex'" == "" | "`nodey'" == "" {
+			di "{err}Option {bf:nodexy(xvar yvar)} is required with {bf:layout(nodexy)}."
+			error 198
+		}
 		mata: Coord = J(rows(M),2,0)
 		mata: Coord[.,1] = st_data((1,rows(M)),"`nodex'")
 		mata: Coord[.,2] = st_data((1,rows(M)),"`nodey'")

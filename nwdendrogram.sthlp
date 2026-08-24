@@ -20,8 +20,9 @@
 {synoptset 25}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
-{p2col:{opth factor(float)}}zoom in or out{p_end} 
-{p2col:{opth label(varname)}} label observations{p_end} 
+{p2col:{opth factor(float)}}zoom in or out{p_end}
+{p2col:{opt lab}}display node labels saved with the network ({bf:_nwnode}), the same convention {help nwplot} and {help nwplotmatrix} use; takes precedence over an explicit {opt label()} if both are given{p_end}
+{p2col:{opth label(varname)}} label observations{p_end}
 {p2col:{opt colorpalette}({it:colstyle1 ...})} overwrite colorpalette{p_end} 
 {p2col:{opt symbolpalette}({it:symbstyle1 ...})} overwrite symbolpalette{p_end} 
 {p2col:{opt obsopt}({help scatter##marker_options:marker_options})} send options to markers for observations{p_end} 
