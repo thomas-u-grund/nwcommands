@@ -45,7 +45,11 @@ have as shared neighbors.
 ***/
 capture program drop nwshared
 program nwshared
-	syntax [anything(name=netname)] [, name(string) nwreplace]
+	// BUGFIX: `undirected' is documented (syntax diagram + synoptset)
+	// and referenced in this program's own body below, but was never
+	// declared here - Stata rejected it outright as an unrecognized
+	// option, so the documented option could never actually be used.
+	syntax [anything(name=netname)] [, name(string) nwreplace undirected]
 	nw_syntax `netname'
 	
 	if "`name'" == "" {
@@ -68,7 +72,13 @@ program nwshared
 	
 	tempname symmetrized
 	if "`undirected'" != "" {
-		nwsym `netname', name(`symmetrized')
+		// BUGFIX: was `name(`symmetrized')' - nwsym.ado's own real
+		// option for its output network name is `generate()', not
+		// `name()' (confirmed against its own syntax line). This was
+		// unreachable until the `undirected' option itself was fixed
+		// above (previously rejected before ever getting this far), so
+		// it never actually ran until now.
+		nwsym `netname', generate(`symmetrized')
 		local netname `symmetrized'
 	}
 	

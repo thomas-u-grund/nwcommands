@@ -37,9 +37,9 @@
 {p2line}
 {p2col:{cmd: same}}{it:same(x_ij) = (varname[i] == varname[j])}{p_end}
 {p2col:{cmd: dist}}{it:dist(x_ij) = (varname[i] - varname[j])}{p_end}
-{p2col:{cmd: distinv}}{it:invdist(x_ij) = 1 / (varname[i] - varname[j])}{p_end}
+{p2col:{cmd: distinv}}{it:invdist(x_ij) = -(varname[i] - varname[j])}{p_end}
 {p2col:{cmd: absdist}}{it:dist(x_ij) = (|varname[i] - varname[j]|)}{p_end}
-{p2col:{cmd: absdistinv}}{it:invdist(x_ij) = 1 / (|varname[i] - varname[j]|)}{p_end}
+{p2col:{cmd: absdistinv}}{it:invdist(x_ij) = max(absdist) - (|varname[i] - varname[j]|)}{p_end}
 {p2col:{cmd: sender}}{it:sender(x_ij) = varname[i]}{p_end}
 {p2col:{cmd: receiver}}{it:receiver(x_ij) = varname[j]}{p_end}
 
@@ -55,7 +55,7 @@ The value {it:M_ij} of the adjacency matrix {it:M} of the new network is calcula
 and some function {it:expfcn} defined by {it:{help nwexpand##expand_mode:mode}}. By default, {it:mode = same}.
 
 {pstd}
-Valid modes are: {bf:same, dist, distinv, absdist, abdistinv, sender, receiver}
+Valid modes are: {bf:same, dist, distinv, absdist, absdistinv, sender, receiver}
 
 {pstd}
 The option {bf:network(}{help netname}{bf:)} applies the node labels of {it:netname} when expanding the variable. Often specifying this
@@ -149,7 +149,7 @@ The next example loads the {it:glasgow} dataset and colors ties differently depe
 of a friendship tie did sport at wave1.
 
 	{cmd:. nwwebuse glasgow, nwclear}
-	{cmd:. nwexpand sport1, mode(sender) network(glasgow)}
+	{cmd:. nwexpand sport1, mode(sender) network(glasgow1)}
 	{cmd:. nwplot glasgow1, edgecolor(sender_sport1)}
 	
 
@@ -157,4 +157,4 @@ of a friendship tie did sport at wave1.
 
 	{help nwcorrelate}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

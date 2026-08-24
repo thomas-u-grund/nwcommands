@@ -69,12 +69,33 @@ can specify that it should create a new network instead with {bf:generate()}.
 capture program drop nwtranspose
 program nwtranspose 
 	version 9
-	syntax [anything(name=netname)], [ generate(string)]
+	syntax [anything(name=netname)], [ generate(string) replace]
 
 	nw_syntax `netname', max(1)
 	local netobj1 `netobj'
 
 	if ("`generate'" != ""){
+		// BUGFIX: nwduplicate's own collision guard silently
+		// auto-renames the DUPLICATE to `generate'_1 on a name
+		// collision (leaving it as an orphaned, never-used stray
+		// network), but this line still operated on the literal
+		// string `generate' regardless - so `nw_syntax `generate''
+		// below resolved to the ORIGINAL, pre-existing network of
+		// that name (not the fresh duplicate), and the transpose then
+		// silently overwrote ITS edge matrix in place. Fixed with the
+		// same explicit "error unless replace" collision guard
+		// nwsubset.ado's own generate()/name() option already uses,
+		// rather than relying on nwduplicate's own silent auto-rename
+		// (which nwduplicate itself doesn't even report back to the
+		// caller - there is no way to recover the actual name used).
+		capture nw_syntax `generate', other(_check)
+		if _rc == 0 {
+			if "`replace'" == "" {
+				di "{err}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}."
+				error 6099
+			}
+			nwdrop `generate'
+		}
 		nwduplicate `netname', name(`generate')
 		local netname `generate'
 	}

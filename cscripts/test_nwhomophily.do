@@ -130,3 +130,17 @@ assert __same2 > __diff2
 assert __diffn2 > __samen2
 assert __same2 > __samen2
 assert __diffn2 > __diff2
+
+* --- alpha-audit regression: nwhomophily.sthlp's own worked example
+* for mode(absdistinv) on a continuous variable used to fail even after
+* fixing the mode-name typo, due to nwexpand's own absdistinv negation
+* bug (see test_nwexpand.do's own regression) cascading into extreme
+* sampling weight skew. Confirmed fixed at the doc's own (now properly
+* scaled) example values.
+nwclear
+set obs 20
+gen gender = (_n > 10) + 2
+gen income = runiform()*10
+capture noisily nwhomophily gender income, density(0.05) homophily(-2 0.5) mode(same absdistinv)
+assert _rc == 0
+di "=== mode(absdistinv) worked example REGRESSION VERIFIED ==="

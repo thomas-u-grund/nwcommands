@@ -113,13 +113,20 @@ All three new networks can be displayed in comparison:
 	{cmd:. graph combine g1.gph g2.gph g3.gph}
 
 {pstd}
-Notice that when {it:nwhomophily} is used together with {it:z} variables in {help varlist}, the option 
+Notice that when {it:nwhomophily} is used together with {it:z} variables in {help varlist}, the option
 {bf:homophily()} also needs to have {it:z} entries. The next example also shows how the command works with
 non-categorical variables. After generating a categorical variable {it:gender} and a metric variable {it:income},
 this would generate a homophily network where ties are less likely to exist between individuals with the same gender
-(effect size = -5) and more likely to exist between individuals who have similar (not the same) income (effect size = 3).
+(effect size = -2) and more likely to exist between individuals who have similar (not the same) income (effect size = 0.5).
 
-	{cmd:. nwhomophily gender income, density(0.05) homophily(-5 3) mode(same abdsdist)}
+	{cmd:. nwhomophily gender income, density(0.05) homophily(-2 0.5) mode(same absdistinv)}
+
+{pstd}
+{bf:mode(absdistinv)}'s own weight scales with the raw magnitude of the underlying variable (unlike
+{bf:mode(same)}'s bounded 0/1 indicator) - a large {it:homophily()} coefficient combined with a
+large-magnitude variable (e.g. income in the thousands) can produce weights skewed enough that the
+underlying sampler fails; scale the variable (e.g. to a 0-10 range) or use a smaller {it:homophily()}
+coefficient for {bf:absdistinv}/{bf:distinv} in that case.
 
 	
 {title:Remarks}
