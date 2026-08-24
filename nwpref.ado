@@ -103,8 +103,28 @@ program nwpref
 	local directed = ("`undirected'" == "")
 
 	// Generate valid network name and valid varlist
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision ("pref", "pref_1", ...) rather than
+	// require replace() - unlike an explicit, caller-chosen name(), which
+	// nwset.ado's own guard (harmonisation unit 116) now correctly holds
+	// to the create/replace convention. Since this default "pref" is
+	// itself passed to nwset as an explicit name() below, nwset can no
+	// longer tell it apart from a genuine user-chosen one and started
+	// raising an uncaught r(6099) on a second bare `nwpref N' call in the
+	// same session (confirmed via a direct probe - the identical bug
+	// found and fixed in nwrandom.ado/nwqap.ado's own predict(), see
+	// their own harmonisation unit 126). Resolved the same way: only
+	// when the caller did NOT supply name() (preserving the strict,
+	// correct error for a genuine explicit collision), pre-resolve the
+	// actual (possibly auto-incremented) target name via nwvalidate
+	// before nwset ever sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "pref"
+	}
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 
 	if `ntimes' != 1 {

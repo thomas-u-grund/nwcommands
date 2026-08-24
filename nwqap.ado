@@ -451,15 +451,31 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// predict(): reshape the dyad-level fitted values captured earlier
 	// back into an n x n matrix (transformOutOfLong() - the exact inverse
 	// of transformIntoLong()'s own column-major convention) and materialize
-	// them as a new network via nwset, which already handles a name
-	// collision the same non-destructive way every other network-creating
-	// command in this package does (auto-renames with a warning, unless
-	// the name is free). The diagonal is forced to a clean 0 rather than
-	// left holding whatever Stata's own predict returned for the
-	// diagonal's fully-missing predictors (always missing, since every
+	// them as a new network via nwset. The diagonal is forced to a clean 0
+	// rather than left holding whatever Stata's own predict returned for
+	// the diagonal's fully-missing predictors (always missing, since every
 	// network/attribute IV column has its own diagonal set missing before
 	// estimation - see the `_diag(onenet, ...)' calls above).
+	//
+	// BUGFIX: `predict()' is a derived-output slot (like nwpermute's own
+	// generate(), not the caller's primary network identity the way
+	// nwset's/nwgenerate's own name() is) - repeating the same predict()
+	// name across calls is expected to auto-rename, not error (see
+	// cscripts/test_nwqap.do's own explicit collision-handling case). This
+	// used to work because nwset's own name() collision auto-renamed
+	// unconditionally; once nwset.ado's own guard was tightened
+	// (harmonisation unit 116: an explicit name() collision now errors
+	// unless replace is given, since name() there IS the caller's primary
+	// network identity) an explicit predict(`predict') collision started
+	// raising an uncaught r(6099) instead of the auto-rename this option
+	// has always been documented to do. Resolved the same way as
+	// nwuse.ado's own identical `nwappend, force' case: pre-resolve the
+	// actual (possibly auto-incremented) target name via nwvalidate before
+	// calling nwset, so nwset is only ever asked to create under a name
+	// already confirmed free.
 	if "`predict'" != "" {
+		nwvalidate `predict'
+		local predict = r(validname)
 		mata: fitted_mat = transformOutOfLong(fitted_long, `nodes')
 		mata: _diag(fitted_mat, J(`nodes', 1, 0))
 		if "`directed'" == "true" {
