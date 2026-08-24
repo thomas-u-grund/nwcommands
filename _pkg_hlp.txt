@@ -17,6 +17,7 @@ f nw_start.sthlp
 f nw_topical.sthlp
 f nwaddnodes.sthlp
 f nwaltergen.sthlp
+f nwassortativity.sthlp
 f nwattime.sthlp
 f nwbalance.sthlp
 f nwbetween.sthlp

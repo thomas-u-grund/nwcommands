@@ -40,6 +40,7 @@
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:{bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
 {p2col:{bf:{help nwappend }}}Append network dataset{p_end}
+{p2col:{bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}
 {p2col:{bf:{help nwattime }}}Static graph view of a temporal network at a given time{p_end}
 {p2col:{bf:{help nwbalance }}}Structural balance of a signed network{p_end}
 {p2col:{bf:{help nwbetween }}}Calculate betweenness centrality{p_end}
