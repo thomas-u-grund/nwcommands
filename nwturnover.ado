@@ -98,7 +98,7 @@ checked. Two-mode: not checked - operates on each network's own square adjacency
 capture program drop nwturnover
 program nwturnover, rclass
 	version 12
-	syntax anything(name=netnames) [, GENerate(string) replace silent]
+	syntax anything(name=netnames) [, GENerate(string) REPlace silent]
 	set more off
 
 	nw_syntax `netnames', max(2) min(2)

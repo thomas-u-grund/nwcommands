@@ -38,12 +38,6 @@ which controls the display's own column width){p_end}
 the display (network names are shown the way {cmd:ds} shows variable names). With no {it:netlist}, every
 loaded network is listed. {bf:r(netlist)} always returns the exact list of network names shown.
 
-{pstd}
-{bf:Known limitation:} {opt not} is currently a no-op (tracked as an open bug, not a documented
-design choice) - passing it does not actually invert the selection; {bf:r(netlist)} and the display
-are identical whether or not {opt not} is specified.
-
-
 {title:Supported network types}
 
 {pstd}
@@ -76,7 +70,26 @@ program nwds, rclass
 	 }
 	 
 	 nw_syntax `netname', max(`nw_max')
-	 
+
+	 // BUGFIX: the original code checked `not' - but that local is
+	 // ALWAYS empty, a variant of this pass's own established
+	 // "no-prefix trap": Stata's syntax parser sees the option name
+	 // "not" itself as "no"+"t" and silently creates a toggle local
+	 // named after the STEM ("t"), not "not" - confirmed directly
+	 // (typing "not" sets `t' to "not"; typing "t" alone, or omitting
+	 // the option entirely, leaves `t' empty). So `not' is never
+	 // populated at all, regardless of what the caller types - fixed by
+	 // checking `t' instead. Once correctly detected, inverts `netname'
+	 // against the full set of currently loaded networks (the same
+	 // "qui nwset" + "r(nets)" + list-subtraction idiom nwsmall.ado
+	 // already uses for an analogous before/after set difference),
+	 // before the (unrelated) alpha-sort step below.
+	 if "`t'" != "" {
+		qui nwset
+		local __nwds_allnets `r(nets)'
+		local netname : list __nwds_allnets - netname
+	 }
+
 	 if "`alpha'" != "" {
 		local netname : list sort netname
 	 }

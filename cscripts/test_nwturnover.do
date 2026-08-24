@@ -97,3 +97,12 @@ capture noisily nwturnover w1 w2, generate(mystab)
 assert _rc != 0
 nwturnover w1 w2, generate(mystab) replace
 assert _rc == 0
+
+* moderate-severity pass, misc_analysis group: replace was declared
+* plain lowercase (no abbreviation allowed) while sibling nwcontext.ado
+* declares the identically-purposed option as REPlace (abbreviable to
+* "rep") - the same option behaved inconsistently across two commands
+* in the same functional group. Now abbreviable here too.
+nwturnover w1 w2, generate(mystab) rep
+assert _rc == 0
+di "=== replace abbreviation REGRESSION VERIFIED ==="
