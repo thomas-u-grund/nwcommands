@@ -383,9 +383,9 @@ program nwergm, eclass
 		error 198
 	}
 	if "`proposal'" == "" local proposal "tnt"
-	_opts_oneof "uniform tnt" "proposal" "`proposal'" 198
+	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`method'" != "" {
-		_opts_oneof "mple mcmle" "method" "`method'" 198
+		_opts_oneof "mple mcmle" "method" "`method'" 6556
 	}
 
 	nw_syntax `netname', max(1)
@@ -1393,7 +1393,7 @@ program nwergm_simulate
 	// estimation path above) via R ergm's own default OTP directed
 	// shared-partner definition.
 	if "`proposal'" == "" local proposal "tnt"
-	_opts_oneof "uniform tnt" "proposal" "`proposal'" 198
+	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`generate'" == "" local generate "ergmsim"
 	if `seed' != -1 {
 		set seed `seed'

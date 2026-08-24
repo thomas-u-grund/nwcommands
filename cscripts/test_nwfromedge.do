@@ -156,7 +156,7 @@ input ego alter
 3 4
 end
 capture nwfromedge ego alter, name(zeronet)
-assert _rc == 6099
+assert _rc == 483  // errNWsExists - consolidated from the old ad-hoc 6099 during the error-code coherence pass
 nwsummarize zeronet
 assert r(nodes) == 3
 

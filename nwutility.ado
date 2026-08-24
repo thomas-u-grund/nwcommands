@@ -1,6 +1,7 @@
 capture program drop nwutility
 program nwutility
 	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) *]
+	unw_defs
 	nw_syntax `netname', max(1)
 	// _nwsyntax (now nw_syntax directly, since _nwsyntax never
 	// re-exports the node count) gives the main network's node
@@ -17,6 +18,10 @@ program nwutility
 	local netnodes `nodes'
 
 	if `benefit' > 1 | `benefit' < 0 {
+		// A numeric option out of its valid range - a genuinely
+		// different situation from the network-size-mismatch checks
+		// below, kept as its own distinct code rather than folded into
+		// `errNWsSizeMismatch'.
 		di "{err}{bf:benefit} needs to be in the range between 0 and 1."
 		error 60044
 	}
@@ -24,8 +29,13 @@ program nwutility
 	if "`intrvalue'" != "" {
 		nw_syntax `intrvalue', max(1)
 		if `nodes' != `netnodes' {
+			// Error-code coherence pass: `errNWsSizeMismatch' (6056,
+			// unw_defs.ado) already names this exact situation for
+			// several sibling commands - consolidated onto it instead
+			// of this file's own separate, undocumented `60033' (used
+			// here and in the identical intrcost() check just below).
 			di "{err}network {bf:`intrvalue'} of wrong size"
-			error 60033
+			error `errNWsSizeMismatch'
 		}
 		nwtomata `intrvalue', mat(checkedvalue)
 	}
@@ -37,7 +47,7 @@ program nwutility
 		nw_syntax `intrcost', max(1)
 		if `nodes' != `netnodes' {
 			di "{err}network {bf:`intrcost'} of wrong size"
-			error 60033
+			error `errNWsSizeMismatch'
 		}
 		// this line used to pull the matrix from intrvalue instead
 		// of intrcost - a real, separate copy-paste bug: intrcost's

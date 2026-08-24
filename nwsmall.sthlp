@@ -86,7 +86,8 @@ probability 0.3 and tie weight 3 with probability 0.7.
 {title:References}
 
 {pstd}
-Watts, D. J.; Strogatz, S. H. (1998). "Collective dynamics of 'small-world' networks". Nature 393 (6684): 440–442
+Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' networks. {it:Nature}
+393(6684), 440-442.
 
 
 {title:Examples}
@@ -108,6 +109,4 @@ In the second example, there are exactly three shortcuts.
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
-
-last certified : 21 Aug 2026
 

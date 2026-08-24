@@ -14,6 +14,7 @@ program nwreplacemat
 	// network's labels, not whatever the caller passed. Captured into
 	// a differently-named local first so it survives.
 	local newmatlabs "`labs'"
+	unw_defs
 	nw_syntax `netname', max(1)
 
 	capture mat list `newmat'
@@ -28,8 +29,12 @@ program nwreplacemat
 
 	// newmat is invalid (not N x X matrix)
 	if (`matrows' != `matcols'){
+		// `errMatrixShape' (6082, unw_defs.ado) - this is the original
+		// source of this convention; nwdyadprob.ado's own identical
+		// check now also uses it, having previously drifted onto an
+		// unrelated code.
 		di "{err}input matrix has invalid dimensions"
-		error 6082
+		error `errMatrixShape'
 	}
 	
 	// newmat is of different size than the network

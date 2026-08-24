@@ -2,11 +2,34 @@ capture program drop unw_defs
 program unw_defs
 	
 	//error codes
-	c_local 	errNWsCreate	480
-	c_local 	errNodeDupName	481
-	c_local 	errNWsNotFound	482
-	c_local 	errNWsExists	483
-	c_local 	errDenseTooLarge	484
+	//
+	// This package's own documented error-code registry (see also
+	// nw_errorcodes.sthlp for the user-facing version of this same
+	// table). Every one of these is a RECURRING situation shared by
+	// multiple commands - use the matching code (by name if this
+	// program is already called in scope, otherwise the literal
+	// number) rather than inventing a new one-off code for a situation
+	// this table already covers. A command-specific validation that
+	// genuinely doesn't fit any of these may still use its own code,
+	// but should not silently reuse one of these numbers for a
+	// different meaning.
+	c_local 	errNWsCreate	480	// network creation failed
+	c_local 	errNodeDupName	481	// duplicate node name
+	c_local 	errNWsNotFound	482	// network not found
+	c_local 	errNWsExists	483	// network already exists; specify replace (or an equivalent override option)
+	c_local 	errDenseTooLarge	484	// network too large for dense-matrix materialization
+	c_local 	errOptValue	6556	// an option's value is not one of its documented allowed set (the _opts_oneof.ado convention)
+	c_local 	errNWsSizeMismatch	6056	// two networks required to be the same size are not
+	c_local 	errNWsDataLoss	999	// loading would discard unsaved data in memory; specify nwclear or nwappend
+	c_local 	errTwoModeUnsupported	6088	// this command/option does not support two-mode networks
+	c_local 	errNetexpMalformed	6077	// a netexp expression is empty or has unmatched parentheses
+	c_local 	errMatrixShape	6082	// a user-supplied Mata/Stata matrix has the wrong shape (not square, wrong dimensions, etc.)
+	c_local 	errFormatUnsupported	6705	// an unsupported file/data format was requested or detected
+	// Stata's own reserved codes are used as-is (not reinvented) for
+	// their standard meanings package-wide: 99 = a STATA VARIABLE
+	// already exists, specify replace (distinct from errNWsExists
+	// above, which is about a NETWORK); 198 = invalid syntax / a
+	// required option or option combination was not satisfied.
 
 	// maximum node count for on-demand dense-matrix materialization
 	// (get_matrix() et al.) of a network built sparse-natively; see

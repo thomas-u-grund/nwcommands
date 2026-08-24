@@ -130,7 +130,7 @@ program nwcommunity, rclass
 	if "`algorithm'" == "" {
 		local algorithm "louvain"
 	}
-	_opts_oneof "louvain labelprop" "algorithm" "`algorithm'" 6558
+	_opts_oneof "louvain labelprop" "algorithm" "`algorithm'" 6556
 
 	if `seed' != -1 {
 		set seed `seed'

@@ -104,7 +104,7 @@ program nwneighbor
 		local mode = "outgoing"
 	}
 
-	_opts_oneof "incoming outgoing either" "mode" "`mode'" 6810
+	_opts_oneof "incoming outgoing either" "mode" "`mode'" 6556
 	
 	// Sparse-accessor rewrite: the prior dense-matrix "incoming" line had a
 	// stray unbalanced paren (a genuine, latent syntax-error bug - that

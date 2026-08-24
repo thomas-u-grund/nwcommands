@@ -55,7 +55,8 @@ The command saves all bridges as a new network {it:newnetname}.
 {title:References}
 
 {pstd}
-Burt, R. S. 1992. Structural Holes: The social structure of competition. Cambridge: Harvard University Press.
+Burt, R. S. (1992). {it:Structural Holes: The Social Structure of Competition}. Cambridge: Harvard
+University Press.
 
 {title:See also}
 
@@ -73,7 +74,7 @@ program nwbridges
 	if "`type'" == "" {
 		local type "global"
 	}
-	_opts_oneof "local global distance" "type" "`type'" 6555
+	_opts_oneof "local global distance" "type" "`type'" 6556
 	
 	if "`generate'" == "" {
 		local generate "_bridges"

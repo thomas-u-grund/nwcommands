@@ -67,7 +67,7 @@ program nwexport
 	syntax [anything(name=netname)], type(string) [FName(string asis) replace]	
 	
 	nw_syntax `netname', max(1)
-	_opts_oneof "pajek ucinet" "type" "`type'" 6810
+	_opts_oneof "pajek ucinet" "type" "`type'" 6556
 	
 	if `"`fname'"' == "" {
 		local fname = "`netname'"

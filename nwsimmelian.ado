@@ -41,7 +41,8 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 {title:References}
 
 {pstd}
-Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. Research in the Sociology of Organizations, (16), 183-210.
+Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. {it:Research
+in the Sociology of Organizations} (16), 183-210.
 
 {title:Example}
 
@@ -56,6 +57,7 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 capture program drop nwsimmelian
 program nwsimmelian
 	syntax [anything(name=netname)] [, name(string) nwreplace]
+	unw_defs
 	nw_syntax `netname'
 	
 	if "`name'" == "" {
@@ -68,13 +70,15 @@ program nwsimmelian
 		// so Stata prints ITS OWN generic canned text for that alongside
 		// this command's own custom message, confusingly implying an
 		// actual crash rather than a deliberate name-collision guard.
-		// r(6099) is this package's own established convention for
-		// exactly this situation (see nwset.ado's/nwfromedge.ado's own
-		// identical guard, harmonisation unit 116) - reused here instead,
-		// matching the identical fix in nwshared.ado (harmonisation unit
-		// 129).
+		// Error-code coherence pass: this situation ("network already
+		// exists") is exactly what `errNWsExists' (483, unw_defs.ado)
+		// already names and documents - several sibling commands
+		// (nwset/nwfromedge/nwshared/nwtranspose/nwgenerate/nwuse) had
+		// independently drifted onto an undocumented ad-hoc `6099'
+		// instead of this already-established constant; all now
+		// consolidated onto `errNWsExists'.
 		noi di "{err}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}."
-		error 6099
+		error `errNWsExists'
 	}
 	capture nwdrop `name'
 

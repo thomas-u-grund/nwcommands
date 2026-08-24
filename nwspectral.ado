@@ -135,7 +135,7 @@ program nwspectral, rclass
 			local netmeasure "binary"
 		}
 	}
-	_opts_oneof "binary valued" "measure" "`netmeasure'" 6559
+	_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 	local val = ("`netmeasure'" == "valued")
 
 	local netgenerate "`generate'"

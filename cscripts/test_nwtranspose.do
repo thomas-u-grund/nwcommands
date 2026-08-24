@@ -33,7 +33,7 @@ nwclear
 nwset, mat((0,1\0,0)) name(net1)
 nwset, mat((1,0\0,1)) name(net2)
 capture noisily nwtranspose net1, generate(net2)
-assert _rc == 6099
+assert _rc == 483  // errNWsExists - consolidated from the old ad-hoc 6099 during the error-code coherence pass
 nwvalue net2[2,1]
 assert r(value) == 0
 nwtranspose net1, generate(net2) replace

@@ -50,6 +50,7 @@ program nwshared
 	// declared here - Stata rejected it outright as an unrecognized
 	// option, so the documented option could never actually be used.
 	syntax [anything(name=netname)] [, name(string) nwreplace undirected]
+	unw_defs
 	nw_syntax `netname'
 	
 	if "`name'" == "" {
@@ -62,11 +63,11 @@ program nwshared
 		// so Stata prints ITS OWN generic canned text for that alongside
 		// this command's own custom message, confusingly implying an
 		// actual crash rather than a deliberate name-collision guard.
-		// r(6099) is this package's own established convention for
-		// exactly this situation (see nwset.ado's/nwfromedge.ado's own
-		// identical guard, harmonisation unit 116) - reused here instead.
+		// Error-code coherence pass: consolidated onto `errNWsExists'
+		// (483, unw_defs.ado) - see nwsimmelian.ado's own identical fix
+		// for the full history of this convention's drift.
 		noi di "{err}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}."
-		error 6099
+		error `errNWsExists'
 	}
 	capture nwdrop `name'
 	

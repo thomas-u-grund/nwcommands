@@ -108,13 +108,15 @@ checked.
 {title:References}
 
 {pstd}
-Borgatti, S. 1997. Structural Holes: Unpacking Burt's Redundancy Measures. Connections 20(1): 35-38.
+Borgatti, S. (1997). Structural holes: Unpacking Burt's redundancy measures. {it:Connections} 20(1),
+35-38.
 
 {pstd}
-Burt, R. S. 1992. Structural Holes: The social structure of competition. Cambridge: Harvard University Press.
+Burt, R. S. (1992). {it:Structural Holes: The Social Structure of Competition}. Cambridge: Harvard
+University Press.
 
 {title:See also}
 
 	{help nwconstraint}, {help nwbridges}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026
