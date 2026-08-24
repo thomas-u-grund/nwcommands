@@ -198,7 +198,14 @@ program nwcommunity, rclass
 			mata: `__nw_comm' = `netobj'->detect_communities_louvain(`val', `resolution')
 		}
 		mata: st_store((1::`nodes'),"`netgenerate'`k'", `__nw_comm')
-		mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_comm', `resolution'))
+		// BUGFIX: `val' (already computed above from measure()) used to
+		// never be forwarded, so calculate_modularity() always scored on
+		// the network's raw valued weights regardless of what measure()
+		// requested - measure(binary) was a complete no-op, silently
+		// corrupting the reported r(modularity) for the community
+		// partition detect_communities_louvain()/labelprop() actually
+		// searched for under measure(binary).
+		mata: st_numscalar("modularity", `netobj'->calculate_modularity(`__nw_comm', `val', `resolution'))
 		mata: mata drop `__nw_comm'
 
 		// PERFORMANCE/CORRECTNESS FIX: `tab ..., matrow() matcell()'
