@@ -21,16 +21,20 @@
 {opt network}({it:{help netname}})
 {opth nodes(int)}
 {opt name}({it:{help newnetname}})
-{opt xvars}]
+{opt xvars}
+{opt labs}({it:lab1 lab2 ...})
+{opt replace}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}mode used to expand variable; default = {it:same}{p_end}
 {synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
-{synopt:{opth nodes(int)}}size of new network{p_end}
+{synopt:{opth nodes(int)}}size of new network; default = {help _N} - an explicit {opt nodes(1)} for a genuine 1-node network is honored, distinct from leaving {opt nodes()} unspecified{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker expand_mode}{...}
@@ -167,7 +171,14 @@ Binary: source attribute values can be binary or continuous - {opt mode()} selec
 ***/
 capture program drop nwexpand	
 program nwexpand
-	syntax varlist(min=1 max=1) [if],[ mode(string) network(string) nodes(integer 1) xvars name(string) labs(string) noreplace]
+	// BUGFIX: `noreplace' was accepted by syntax but never referenced
+	// anywhere in this file's body - a complete no-op - while the actual
+	// collision error raised further below (via the `nwset' call this
+	// delegates to) told the caller to "Specify option replace", an
+	// option nwexpand itself never exposed at all, so that instruction
+	// was impossible to follow. Replaced `noreplace' with a real,
+	// working `replace', forwarded to the underlying `nwset' call.
+	syntax varlist(min=1 max=1) [if],[ mode(string) network(string) nodes(integer 0) xvars name(string) labs(string) replace]
 	
 	unw_defs
 	
@@ -203,7 +214,13 @@ program nwexpand
 	
 	_opts_oneof "same dist absdist distinv absdistinv sender receiver" "mode" "`mode'" 6556
 	
-	if `nodes' == 1 {
+	// BUGFIX: `nodes(integer 1)''s own default value was also 1, so an
+	// explicit `nodes(1)' (a genuine, deliberate request for a 1-node
+	// network) was indistinguishable from "nodes() not specified at
+	// all" - both silently expanded to use every observation instead.
+	// Changed the not-given sentinel to 0 (never a legal node count),
+	// so `nodes(1)' is now honored exactly as requested.
+	if `nodes' == 0 {
 		local nodes = `=_N'
 	}
 	if (`nodes' > `=_N' | `=_N' == 0) {
@@ -292,7 +309,7 @@ program nwexpand
 		mata: st_sstore((1::rows(expnet)),"`nw_nodename'", `z')
 
 	}
-	nwset, mat(expnet) name(`name') labs(`labs') `undirected'
+	nwset, mat(expnet) name(`name') labs(`labs') `undirected' `replace'
 	if "`xvars'" == "" {
 		nwload, xvars
 	}

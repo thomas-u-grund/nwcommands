@@ -1,7 +1,14 @@
 
 capture program drop nwhomophily
 program def nwhomophily
-	syntax varlist(min=1), homophily(string) density(real) [mode(string) nodes(string) name(string) stub(string) xvars undirected]
+	// `stub(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (generated Stata variables
+	// always used the package's own default naming regardless of any
+	// stub() value), and the underlying nwdyadprob call this delegates to
+	// has no stub()-equivalent option of its own to forward it to either -
+	// wiring up a real implementation would mean extending nwdyadprob
+	// too, out of scope for a moderate-severity doc/dead-option fix.
+	syntax varlist(min=1), homophily(string) density(real) [mode(string) nodes(string) name(string) xvars undirected]
 	
 	local vc = wordcount("`varlist'")
 	local hc = wordcount("`homophily'")

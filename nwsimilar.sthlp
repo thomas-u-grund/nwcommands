@@ -19,7 +19,8 @@
 {cmdab: nwsimilar} 
 [{it:{help netname}}]
 {cmd:,}
-[{opt mode}({it:{help nwsimilar##context:type}})
+[{opt type}({it:{help nwsimilar##type:type}})
+{opt context}({it:{help nwsimilar##context:context}})
 {opt name}({it:{help newnetname}})
 {opt xvars}]
 
@@ -27,7 +28,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt type}({it:{help nwsimilar##type:type}})}Type of similarity between two nodes; default = pearson{p_end}
-{synopt:{opt mode}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both{p_end}
+{synopt:{opt context}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both (alias: {opt mode()}, kept for backward compatibility - {help nwdissimilar}, this command's own sibling, uses {opt context()} for the identical concept){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new similarity network; default = {it:_similar}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 

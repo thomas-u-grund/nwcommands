@@ -21,9 +21,8 @@
 [{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})
 {opth nodes(integer)}
 {opth name(string)}
-{opth stub(string)}
 {opt xvars}
-{opt undirected}
+{opt undirected}]
 
 
 {synoptset 25 tabbed}{...}
@@ -34,7 +33,6 @@
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})}mode used to generate probabilities for ties{p_end}
 {synopt:{opth nodes(integer)}}number of nodes; if not specified the number of valid cases of {it:{help varname}} is used{p_end}
 {synopt:{opth name(newnetname)}}name of the new random network{p_end}
-{synopt:{opth stub(string)}}stub used for variable names{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
@@ -58,10 +56,12 @@ on variables in {help varlist} (see {help nwexpand}). By default,
 value on a variable.
 
 {pstd}
-Another way to calculate {it:w_ij} would be using {bf: mode(absdiffinv)}
+Another way to calculate {it:w_ij} would be using {bf: mode(absdistinv)}
 
 {pmore}
-{it:w_ij = abs(1 /(var[i] - var[j]))}
+{it:w_ij = max(absdist) - abs(var[i] - var[j])} - a bounded inverse-distance transform (closer pairs
+score higher), not a literal {it:1/|diff|} reciprocal, deliberately avoiding the numerical blowup a
+true reciprocal would cause for near-equal values (see the caveat below)
 
 {pstd}
 For more information on how {it:w_ij} is calculated based on {bf:mode()} see {help nwexpand}.

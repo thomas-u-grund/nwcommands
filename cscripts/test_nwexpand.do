@@ -81,3 +81,28 @@ mata: st_numscalar("__minval", min(select(vec(*__p->get_matrix()), vec(*__p->get
 assert __minval >= 0
 mata: mata drop __p
 di "=== absdistinv non-negativity REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_derived group: nodes(1) (a genuine,
+* explicit request for a 1-node network) was indistinguishable from
+* nodes() left unspecified - both silently expanded to _N observations.
+nwclear
+set obs 10
+gen z = 1
+nwexpand z, nodes(1) name(onenode)
+nwsummarize onenode
+assert r(nodes) == 1
+di "=== explicit nodes(1) REGRESSION VERIFIED ==="
+
+* moderate-severity pass: `noreplace' was a dead option and the actual
+* collision error told the caller to "specify option replace", which
+* nwexpand never exposed at all - replaced with a real, working replace.
+nwclear
+set obs 10
+gen w = 1
+nwexpand w, name(dupnet)
+assert _rc == 0
+capture noisily nwexpand w, name(dupnet)
+assert _rc == 483
+nwexpand w, name(dupnet) replace
+assert _rc == 0
+di "=== replace REGRESSION VERIFIED ==="

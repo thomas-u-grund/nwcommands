@@ -18,12 +18,15 @@
 {cmdab: nwtranspose} 
 [{it:{help netname}}]
 [{cmd:,}
-{cmd:generate}({it:{help newnetname}})]
+{cmd:generate}({it:{help newnetname}})
+{opt name}({it:{help newnetname}})
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network{p_end}
+{synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network (alias: {opt name()}, matching the rest of this group){p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway{p_end}
 
 {synoptline}
 {p2colreset}{...}

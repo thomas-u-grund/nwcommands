@@ -18,13 +18,14 @@
 [{cmd:,}
 {opth name(newnetname)}
 {opt undirected}
-{opt nwreplace}]
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}Save as new network; default {it:_shared}{p_end}
-{synopt:{opt undirected}}Treat all ties as undirected for calculation{it:_shared}{p_end}
+{synopt:{opt undirected}}Treat all ties as undirected for calculation{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (alias: {opt nwreplace}, kept for backward compatibility - most sibling generators in this package instead spell this {opt replace}){p_end}
 
 {title:Description}
 

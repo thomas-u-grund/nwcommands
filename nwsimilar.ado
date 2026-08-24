@@ -1,12 +1,26 @@
 capture program drop nwsimilar
 program nwsimilar
-	syntax [anything(name=netname)] [, type(string) name(string) mode(string) xvars]
+	syntax [anything(name=netname)] [, type(string) name(string) mode(string) context(string) xvars]
 	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
 	// named the same as any of nw_syntax's other exports, so calling it
 	// directly is a safe, direct simplification.
 	nw_syntax `netname'
-	
+
+	// Naming consistency (moderate-severity pass, generators_derived
+	// group): nwdissimilar (this command's own direct sibling/
+	// counterpart) uses `context()' for the identical incoming/outgoing/
+	// both selector; this command used `mode()' instead. Added
+	// `context()' as the primary name, keeping `mode()' working as a
+	// backward-compatible alias rather than renaming outright - either
+	// specifying both is an error (ambiguous which one wins).
+	if "`mode'" != "" & "`context'" != "" {
+		di "{err}Specify only one of {bf:mode()} or {bf:context()} (they are the same option) - not both."
+		error 198
+	}
+	if "`context'" != "" {
+		local mode "`context'"
+	}
 	if "`mode'" == "" {
 		local mode = "both"
 	}

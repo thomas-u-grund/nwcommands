@@ -20,16 +20,20 @@
 {opt network}({it:{help netname}})
 {opth nodes(int)}
 {opt name}({it:{help newnetname}})
-{opt xvars}]
+{opt xvars}
+{opt labs}({it:lab1 lab2 ...})
+{opt replace}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}mode used to expand variable; default = {it:same}{p_end}
 {synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
-{synopt:{opth nodes(int)}}size of new network{p_end}
+{synopt:{opth nodes(int)}}size of new network; default = {help _N} - an explicit {opt nodes(1)} for a genuine 1-node network is honored, distinct from leaving {opt nodes()} unspecified{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker expand_mode}{...}

@@ -77,22 +77,30 @@ program nwsubset
 	
 	nw_syntax `netname', max(1)
 	local original `netname'
-	
+
+	// BUGFIX (moderate-severity pass, generators_derived group):
+	// nwsubset's own DEFAULT name (`netname'_sub, when name() is not
+	// given at all) used to hard-error on collision instead of
+	// auto-incrementing the way every sibling in this group
+	// (nwdyadprob/nwhomophily/nwexpand/nwdissimilar/nwsimilar) does for
+	// their own default names - inconsistent within the same group.
+	// Resolved the same way as those siblings: only when the caller did
+	// NOT supply name(), pre-resolve the actual (possibly
+	// auto-incremented) target name via nwvalidate up front; an
+	// explicit, caller-chosen name() still requires `replace' on a
+	// genuine collision, now enforced by nwduplicate itself (see its own
+	// moderate-severity-pass fix) rather than by a second, redundant
+	// check duplicated here.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "`netname'_sub"
 	}
-	
-	if "`replace'" != "" {
-		capture nwdrop `name'
-	}
-	
-	capture nw_syntax `name'
-	if _rc == 0 {
-		di "{err}Network {bf:`name'} already exists. Use option {bf:replace} or specify {bf:name()}."
-		error `errNWsExists'
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 
-	nwduplicate `netname', name(`name')
+	nwduplicate `netname', name(`name') `replace'
 	// BUGFIX: was unconditional - when no `if' condition is given (the
 	// documented "simply generates a duplicate" behavior), `if' is
 	// empty, so this became the literal, invalid `nwdrop `name' if ( ==

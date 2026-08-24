@@ -93,3 +93,15 @@ nwsimilar dnet, type(hamming) mode(incoming) name(_sin)
 assert _rc == 0
 nwsimilar dnet, type(hamming) mode(outgoing) name(_sout)
 assert _rc == 0
+
+* moderate-severity pass, generators_derived group: nwsimilar used
+* `mode()' where its own sibling nwdissimilar uses `context()' for the
+* identical concept - added context() as a working alias, kept mode()
+* for backward compatibility, error if both are given at once.
+nwclear
+nwset, mat((0,1,0,1\0,0,1,0\0,0,0,1\1,0,0,0)) name(dnet2) directed labs(A,B,C,D)
+nwsimilar dnet2, type(hamming) context(incoming) name(_scontext)
+assert _rc == 0
+capture noisily nwsimilar dnet2, type(hamming) mode(incoming) context(outgoing) name(_sboth)
+assert _rc == 198
+di "=== context()/mode() alias REGRESSION VERIFIED ==="

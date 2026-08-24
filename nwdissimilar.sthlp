@@ -22,7 +22,9 @@
 [{opt type}({it:{help nwdissimilar##type:type}})
 {opt context}({it:{help nwdissimilar##context:context}})
 {opt name}({it:{help newnetname}})
-{opt xvars}]
+{opt xvars}
+{opt labs}({it:lab1 lab2 ...})
+{opt vars}({it:{help newvarlist}})]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -31,6 +33,8 @@
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new dissimilarity network; default = {it:_dissimilar}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels; default = the source network's own labels{p_end}
+{synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -116,7 +120,7 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes {it:i} and {it:
 from these alters.
 
 {pmore}
-{it:D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)
+{it:D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)}
 
 
 
