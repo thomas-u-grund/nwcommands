@@ -1,5 +1,13 @@
 capture program drop nwcompressobs
 program nwcompressobs
+	// BUGFIX: this program had no `syntax' line at all, so any options
+	// or arguments a caller typed after the command name were silently
+	// ignored instead of raising "invalid syntax"/"option not allowed",
+	// and the command still returned rc==0. This program takes no
+	// arguments or options at all (confirmed via both of its own real
+	// callers, nwdropnodes.ado/nwreplacemat.ado, which both invoke it
+	// bare) - a plain `syntax' with no clause rejects anything else.
+	syntax
 	tempvar allmissing
 	tempvar temp
 	

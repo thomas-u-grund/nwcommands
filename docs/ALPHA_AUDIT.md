@@ -55,7 +55,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | ✅ (moderate-severity pass, unit 13) |
 | 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | ✅ (moderate-severity pass, unit 14) |
 | 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | ✅ (moderate-severity pass, unit 15) |
-| 16 | programming | nwcompressobs | 🔶 (1 minor finding only, no critical-fix unit needed) |
+| 16 | programming | nwcompressobs | ✅ (moderate-severity pass, unit 16) |
 
 118 commands total across 16 groups (every `nw*`-prefixed `.ado` file in the repo, excluding internal
 `nw_*` helpers and the `nwcentrality`/concept-page overview topics, which aren't real commands).
