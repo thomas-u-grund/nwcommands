@@ -105,6 +105,11 @@ is a ratio to a sum of outgoing tie weights, only meaningful when all non-negati
 checked.
 
 
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwburt flobusiness}
+
 {title:References}
 
 {pstd}

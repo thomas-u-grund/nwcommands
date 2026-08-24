@@ -17,7 +17,8 @@
 [{cmd:,}
 {opt measure(string)}
 {opth level(int)}
-{opth generate(newvarname)}]
+{opth generate(newvarname)}
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -29,6 +30,7 @@ function; default = {it:arithmetic} for a valued network, {it:binary} otherwise{
 {synopt:{opth level(int)}}Which mode (1 or 2) to compute clustering scores for; default = 1{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each {opt level()}-mode
 node's own clustering coefficient; default = {it:_clustering2_lev}{it:level}{p_end}
+{synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 
 {p2colreset}{...}
 

@@ -171,3 +171,20 @@ nwload
 mata: st_view(cv=., ., "lnp2")
 mata: assert(all(cv :== .))
 di "=== NO-VALID-4-PATH REGRESSION VERIFIED ==="
+
+* moderate-severity pass, positions_equivalence group: nw2clustering had
+* no collision guard at all - worse than a silent overwrite, confirmed
+* directly: it returned rc==0 (claiming success) but left the
+* pre-existing variable's values completely unchanged, computing
+* nothing (root cause: `merge ..., nogenerate' silently discards a
+* same-named using column with no error).
+nwclear
+nw2set, mat((1,1,0,0\1,1,1,0\0,1,1,1\0,0,1,1\1,0,0,1)) name(bignet)
+gen _clustering2_lev1 = 999
+capture noisily nw2clustering bignet
+assert _rc == 99
+assert _clustering2_lev1[1] == 999
+nw2clustering bignet, replace
+assert _rc == 0
+assert _clustering2_lev1[1] != 999
+di "=== replace guard REGRESSION VERIFIED ==="

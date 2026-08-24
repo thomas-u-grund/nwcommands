@@ -17,7 +17,9 @@
 [{cmd:,}
 {opt measure(string)}
 {opt SYMmetrize}
-{opth generate(newvarname)}]
+{opth generate(newvarname)}
+{opt replace}
+{opt silent}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -31,6 +33,8 @@ otherwise{p_end}
 weighted {opt measure()} on a directed network - see Supported network types below){p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own
 clustering coefficient; default = {it:_clustering}{p_end}
+{synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 

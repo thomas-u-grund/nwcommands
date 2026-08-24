@@ -38,21 +38,21 @@ assert `"`r(measure)'"' == `"binary"'
 assert reldif( r(cluster_avg)     , .5416666679084301 ) <  1E-8
 assert reldif( r(cluster_global)  , .3333333333333333 ) <  1E-8
 
-nwclustering, measure(geometric)
+nwclustering, measure(geometric) replace
 
 assert `"`r(measure)'"' == `"geometric"'
 
 assert reldif( r(cluster_avg)     , .5663523003458977 ) <  1E-8
 assert reldif( r(cluster_global)  , .4361302099462925 ) <  1E-8
 
-nwclustering, measure(minimum)
+nwclustering, measure(minimum) replace
 
 assert `"`r(measure)'"' == `"minimum"'
 
 assert reldif( r(cluster_avg)     , .5909090936183929 ) <  1E-8
 assert reldif( r(cluster_global)  , .5                ) <  1E-8
 
-nwclustering, measure(maximum)
+nwclustering, measure(maximum) replace
 assert `"`r(measure)'"' == `"maximum"'
 
 assert reldif( r(cluster_avg)     , .5454545468091965 ) <  1E-8
@@ -87,3 +87,17 @@ nwset, mat((0,1,1\1,0,1\1,1,0)) directed labs(A,B,C)
 nwclustering, symmetrize generate(myclust2)
 assert _rc == 0
 assert myclust2[1] == 1
+
+* moderate-severity pass, positions_equivalence group: nwclustering had
+* no collision guard at all, unlike every sibling with a generate()
+* option - always silently clobbered a pre-existing variable.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) undirected labs(A,B,C) name(cnet)
+gen _clustering = 999
+capture noisily nwclustering cnet
+assert _rc == 99
+assert _clustering[1] == 999
+nwclustering cnet, replace
+assert _rc == 0
+assert _clustering[1] != 999
+di "=== replace guard REGRESSION VERIFIED ==="

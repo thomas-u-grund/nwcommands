@@ -87,3 +87,17 @@ nwset, mat((0,0,0\0,0,0\0,0,0)) name(emptynet) undirected labs(A,B,C)
 nwburt emptynet, silent
 di "empty net effsize[1]=" _effsize[1] " (expect 0, no ties)"
 di "=== EMPTY NETWORK CASE: RAN WITHOUT ERROR ==="
+
+* drive-by fix, positions_equivalence group (found while writing this
+* command's own Examples section): several capture'd probes (the
+* collision-guard confirm-variable loop, the capture drop calls) each
+* leave a stale, harmless nonzero _rc on the ordinary no-collision case,
+* and neither return scalar nor sum refresh it - an entirely successful
+* nwburt call could leak a stale nonzero _rc to its own caller.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) undirected labs(A,B,C) name(freshnet)
+nwburt freshnet
+assert _rc == 0
+nwburt freshnet, silent replace
+assert _rc == 0
+di "=== stale _rc leak REGRESSION VERIFIED ==="
