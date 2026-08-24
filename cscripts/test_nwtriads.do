@@ -74,6 +74,18 @@ assert r(_201) == 5
 assert r(_210) == 0
 assert r(_300) == 0
 
+* zero-tie network: previously crashed outright ("n not found - data
+* already wide", r(111), found while building nwergm's estat gof,
+* harmonisation unit 76) - traced to nwtomata/edgelist-reshape
+* plumbing calculate_triadcensus() no longer depends on at all after
+* being rewritten (harmonisation unit 114). C(3,3)=1 triad total, all
+* null.
+nwclear
+nwset, mat((0,0,0\0,0,0\0,0,0)) undirected name(emptynet) nooutput
+nwtriads emptynet
+assert r(_003) == 1
+assert r(_102) == 0 & r(_201) == 0 & r(_300) == 0
+
 
 
 
