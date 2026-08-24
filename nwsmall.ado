@@ -162,7 +162,15 @@ program nwsmall
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
 			}
-			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') stub(`stub') `xvars' `undirected'
+			// BUGFIX: was `stub(`stub')' - nwsmall's own syntax line
+			// never declares a `stub' option at all, so this stray
+			// token made EVERY ntimes()>1 call crash with r(198)
+			// "option stub() not allowed" - identical root cause to
+			// nwring.ado's own bug. Also forwards `weights' now, which
+			// this recursive call never did (ntimes()>1 always came
+			// back unweighted regardless of weights() - see
+			// nwrandom.ado's/nwpref.ado's own identical fix).
+			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') weights(`weights') `xvars' `undirected'
 		}
 		exit
 	}

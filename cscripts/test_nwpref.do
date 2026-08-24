@@ -66,3 +66,15 @@ nwpref 15, m0(2) m(2) name(myprefnet)
 assert _rc == 0
 nwname myprefnet
 assert _rc == 0
+
+* --- alpha-audit regression: ntimes()>1's recursive self-call never
+* forwarded weights() - every generated network silently came back
+* unweighted (plain 0/1) regardless of the requested weights().
+nwclear
+set seed 42
+nwpref 10, ntimes(2) weights(0,0,1)
+nwsummarize pref_1
+assert r(maxval) == 3
+nwsummarize pref_2
+assert r(maxval) == 3
+di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="

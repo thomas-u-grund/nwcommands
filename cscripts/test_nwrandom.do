@@ -69,3 +69,15 @@ assert         r(id)            == 1
 
 
 
+
+* --- alpha-audit regression: ntimes()>1's recursive self-call never
+* forwarded weights() - every generated network silently came back
+* unweighted (plain 0/1) regardless of the requested weights().
+nwclear
+set seed 42
+nwrandom 10, prob(1) ntimes(2) weights(0,0,1)
+nwvalue random_1[1,3]
+assert r(value) == 3
+nwvalue random_2[1,3]
+assert r(value) == 3
+di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="

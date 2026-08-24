@@ -76,3 +76,14 @@ nwlattice 3 3, undirected ntimes(2)
 nwset
 assert `"`r(nets)'"' == `" lattice_1 lattice_2"'
 assert         r(networks) == 2
+
+* --- alpha-audit regression: a single-node lattice used to crash
+* (r3301, subscript invalid) - an unconditional hardcoded patch line
+* (newmat[2,1]=1, fixing a boundary case in the left-neighbor formula
+* for i>=2) indexed past a 1x1 matrix's own bounds when nodes==1.
+nwclear
+capture noisily nwlattice 1
+assert _rc == 0
+capture noisily nwlattice 1 1
+assert _rc == 0
+di "=== SINGLE-NODE LATTICE REGRESSION VERIFIED ==="
