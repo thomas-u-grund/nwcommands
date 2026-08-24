@@ -96,7 +96,7 @@ program nwinstall
 		capture ado uninstall "nwcommands-ado"
 		capture ado uninstall "nwcommands-hlp"
 		capture ado uninstall "nwcommands-ext"
-		local permanently "permanently'"
+		local permanently "permanently"
 	}
 	else {
 		qui nwinstall_menu, menu("`menu'")

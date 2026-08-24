@@ -18,7 +18,14 @@ program nwunab, rclass
 		noi gen `n' = .
 	}
 	unab unabnets : `netlist', `max' `min'
-	local numnets : word count "`unablist'"
+	// BUGFIX: was `word count "`unablist'"' - `unablist' is never
+	// populated by anything in this program (a typo for `unabnets',
+	// the local `unab' actually fills), so the quoted expression always
+	// expanded to the two-character literal string `""' regardless of
+	// how many networks matched - which `word count' itself counts as
+	// exactly one word, making r(networks) always 1 no matter how many
+	// networks were actually found (confirmed directly).
+	local numnets : word count `unabnets'
 	return local networks `numnets'
 	return local netlist "`unabnets'" 
 	c_local `macro_name' "`unabnets'"

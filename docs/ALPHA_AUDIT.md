@@ -53,7 +53,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | ✅ (moderate-severity pass, unit 11) |
 | 12 | stat_models | nwcorrelate, nwcug, nwergm, nwergm_estat, nwqap, nwutility, nwmixing | ✅ (moderate-severity pass, unit 12) |
 | 13 | misc_analysis | nwcontext, nwgen, nwgenerate, nwgenvar, nwnode, nwturnover, nwvalue, nwds | ✅ (moderate-severity pass, unit 13) |
-| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | 🔶 (critical fixes done, alpha unit 15) |
+| 14 | utilities_state | nwclear, nworder, nwsync, nwtomata, nwtomatafast, nwtostata, nwunab, nwvalidate, nwinstall, nwload | ✅ (moderate-severity pass, unit 14) |
 | 15 | visualization | nwdendrogram, nwmovie, nwmoviexy, nwplot, nwplotmatrix | 🔶 (critical fixes done, alpha unit 16) |
 | 16 | programming | nwcompressobs | 🔶 (1 minor finding only, no critical-fix unit needed) |
 

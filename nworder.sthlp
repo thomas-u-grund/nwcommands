@@ -88,25 +88,25 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 {title:Examples}
 
 {pstd}Setup{p_end}
-{phang2}{cmd:. webuse hpotter}
-
-{pstd}Describe the dataset{p_end}
-{phang2}{cmd:. nwds}
-
-{pstd}Move {cmd:hpbook5} and {cmd:hpbook4} to the beginning of the dataset{p_end}
-{phang2}{cmd:. nworder hpbook5 hpbook4}
+{phang2}{cmd:. nwwebuse florentine}
 
 {pstd}Describe the networks{p_end}
 {phang2}{cmd:. nwds}
 
-{pstd}Make {cmd:hpboo3} be the last network in the dataset{p_end}
-{phang2}{cmd:. nworder hpbook3, last}
+{pstd}Move {cmd:flobusiness} to the beginning of the dataset{p_end}
+{phang2}{cmd:. nworder flobusiness}
 
-{pstd}Describe the dataset{p_end}
-{phang2}{cmd:. nds}
+{pstd}Describe the networks{p_end}
+{phang2}{cmd:. nwds}
+
+{pstd}Make {cmd:flobusiness} the last network in the dataset{p_end}
+{phang2}{cmd:. nworder flobusiness, last}
+
+{pstd}Describe the networks{p_end}
+{phang2}{cmd:. nwds}
 
 {pstd}Alphabetize the networks{p_end}
-{phang2}{cmd:. nworder _all, alphabetic}
+{phang2}{cmd:. nworder flomarriage flobusiness, alphabetic}
 
 {pstd}Describe the networks{p_end}
 {phang2}{cmd:. nwds}{p_end}
