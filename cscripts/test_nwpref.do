@@ -78,3 +78,13 @@ assert r(maxval) == 3
 nwsummarize pref_2
 assert r(maxval) == 3
 di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: r(netlist) parity
+* with nwrandom (the only sibling generator that already exposed it).
+nwclear
+nwpref 10
+assert `"`r(netlist)'"' == `"pref"'
+nwclear
+nwpref 10, ntimes(3)
+assert `"`r(netlist)'"' == `"pref_1 pref_2 pref_3"'
+di "=== r(netlist) REGRESSION VERIFIED ==="

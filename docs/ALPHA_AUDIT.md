@@ -41,7 +41,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | # | Group | Commands | Status |
 |---|---|---|---|
 | 1 | import_export | nw2fromedge, nw2set, nw2toedge, nwappend, nwexport, nwfromedge, nwimport, nwsave, nwset, nwtoedge, nwuse, nwwebuse | ✅ (moderate-severity pass, unit 1) |
-| 2 | generators_structural | nwrandom, nwpref, nwlattice, nwring, nwsmall, nwpermute, nwduplicate | 🔶 |
+| 2 | generators_structural | nwrandom, nwpref, nwlattice, nwring, nwsmall, nwpermute, nwduplicate | ✅ (moderate-severity pass, unit 2) |
 | 3 | generators_derived | nwdyadprob, nwhomophily, nwexpand, nwdissimilar, nwsimilar, nwtranspose, nwsubset, nwshared | 🔶 |
 | 4 | paths_distance | nwgeodesic, nwpath, nwreach, nwbridges, nwneighbor, nwego, nwaltergen | 🔶 |
 | 5 | information_census | nwcurrent, nwdyads, nwissymmetric, nwname, nwsummarize, nwtabulate, nwtriads | 🔶 |

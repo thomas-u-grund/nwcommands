@@ -56,3 +56,13 @@ assert r(maxval) == 3
 nwsummarize small_2
 assert r(maxval) == 3
 di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: r(netlist) parity
+* with nwrandom (the only sibling generator that already exposed it).
+nwclear
+nwsmall 10, k(2) prob(.1)
+assert `"`r(netlist)'"' == `"small"'
+nwclear
+nwsmall 10, k(2) prob(.1) ntimes(3)
+assert `"`r(netlist)'"' == `"small_1 small_2 small_3"'
+di "=== r(netlist) REGRESSION VERIFIED ==="

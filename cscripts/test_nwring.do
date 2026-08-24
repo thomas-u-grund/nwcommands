@@ -73,3 +73,13 @@ assert r(maxval) == 3
 nwsummarize ring_2
 assert r(maxval) == 3
 di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_structural group: r(netlist) parity
+* with nwrandom (the only sibling generator that already exposed it).
+nwclear
+nwring 10, k(2)
+assert `"`r(netlist)'"' == `"ring"'
+nwclear
+nwring 10, k(2) ntimes(3)
+assert `"`r(netlist)'"' == `"ring_1 ring_2 ring_3"'
+di "=== r(netlist) REGRESSION VERIFIED ==="

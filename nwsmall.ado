@@ -52,6 +52,7 @@
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 
 {title:Description}
@@ -112,7 +113,13 @@ In the second example, there are exactly three shortcuts.
 	{cmd:. nwsmall 30, k(2) shortcuts(3) undirected}
 	{cmd:. nwplot, layout(circle)}
 
-	
+{title:Stored results}
+
+	{bf:nwsmall} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
@@ -165,6 +172,8 @@ program nwsmall
 	
 	if `ntimes' != 1 {
 		di in smcl as txt "{p}"
+		qui nwset
+		local oldnetlist `r(nets)'
 		forvalues i = 1/`ntimes'{
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
@@ -179,6 +188,15 @@ program nwsmall
 			// nwrandom.ado's/nwpref.ado's own identical fix).
 			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') weights(`weights') `xvars' `undirected'
 		}
+		// Feature parity (moderate-severity pass, generators_structural
+		// group): only nwrandom exposed r(netlist) for its own ntimes()>1
+		// case; nwpref/nwlattice/nwring/nwsmall all share the identical
+		// convention but never returned it.
+		qui nwset
+		local newnetlist `r(nets)'
+		local netlist : list newnetlist - oldnetlist
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`netlist'")
 		exit
 	}
 	
@@ -210,14 +228,15 @@ program nwsmall
 		capture mata: `__nwnew' = `__nwnew' :* `w'
 	}
 	
-	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected' 
+	mata: st_rclear()
+	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
 	if "`xvars'" == "" {
 		nwload, xvars
 	}
 	else {
 		nwload
 	}
-	mata: st_rclear()
+	mata: st_global("r(netlist)", "`name'")
 end
 
 capture mata: mata drop smallworldsk()

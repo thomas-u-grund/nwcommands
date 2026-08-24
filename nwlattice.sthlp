@@ -13,8 +13,8 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwlattice} 
-{it: {help int:rows cols}}
+{cmdab: nwlattice}
+{it: {help int:cols rows}}
 {cmd:,}
 [{opt undirected}
 {opt xwrap}
@@ -27,8 +27,8 @@
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{it:{help int:rows}}}number of rows in lattice{p_end}
-{synopt:{it:{help int:cols}}}number of columns in lattice{p_end}
+{synopt:{it:{help int:cols}}}number of columns in lattice; first positional argument{p_end}
+{synopt:{it:{help int:rows}}}number of rows in lattice; default = 1 if omitted{p_end}
 {synopt:{opt xwrap}}wrap horizontally{p_end}
 {synopt:{opt ywrap}}wrap vertically{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
@@ -36,6 +36,7 @@
 {synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
@@ -58,9 +59,15 @@ Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). W
 	
 	{cmd:. nwclear}
 	{cmd:. nwlattice 4 4, xwrap ywrap}
-	{cmd:. nwplot, layout(grid) label(_nodeid)}	
-	
-	
+	{cmd:. nwplot, layout(grid) label(_nodeid)}
+
+{title:Stored results}
+
+	{bf:nwlattice} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwring}, {help nwsmall}

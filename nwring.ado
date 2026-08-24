@@ -36,6 +36,7 @@
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
@@ -64,8 +65,14 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 	
 	{cmd:. nwclear}
 	{cmd:. nwring 20, k(2) undirected}
-	
-	
+
+{title:Stored results}
+
+	{bf:nwring} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwsmall}
@@ -74,7 +81,16 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {
 
 capture program drop nwring
 program nwring
-	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) prob(real 0) undirected noreplace xvars]
+	// `prob(real 0)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (confirmed: density on a
+	// prob()-specified call was identical to the same call with no
+	// prob() at all), so it had zero effect regardless of value. Unlike
+	// nwsmall's own prob() (a substantially different rewiring
+	// algorithm, `smallworldprob()' in unw_core.do), wiring up a real
+	// rewiring feature here would be new functionality, not a bug fix -
+	// out of scope for this pass; see nwsmall for the small-world
+	// variant if that behavior is wanted.
+	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) undirected noreplace xvars]
 
 	// BUGFIX: an unspecified name() has always been documented/expected
 	// to auto-rename on collision ("ring", "ring_1", ...) rather than
@@ -94,6 +110,8 @@ program nwring
 
 	if `ntimes' != 1 {
 		di in smcl as txt "{p}"
+		qui nwset
+		local oldnetlist `r(nets)'
 		forvalues i = 1/`ntimes'{
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
@@ -110,6 +128,15 @@ program nwring
 			// own identical fix).
 			nwring `nodes', k(`k') name(`name'_`i') weights(`weights') `xvars' `undirected'
 		}
+		// Feature parity (moderate-severity pass, generators_structural
+		// group): only nwrandom exposed r(netlist) for its own ntimes()>1
+		// case; nwpref/nwlattice/nwring/nwsmall all share the identical
+		// convention but never returned it.
+		qui nwset
+		local newnetlist `r(nets)'
+		local netlist : list newnetlist - oldnetlist
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`netlist'")
 		exit
 	}
 	
@@ -128,13 +155,15 @@ program nwring
 		}
 		capture mata: `__nwnew' = `__nwnew' :* `w'
 	}
-	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected' 
+	mata: st_rclear()
+	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
 	if "`xvars'" == "" {
 		nwload, xvars
 	}
 	else {
 		nwload
 	}
+	mata: st_global("r(netlist)", "`name'")
 
 end
 

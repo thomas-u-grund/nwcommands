@@ -13,16 +13,18 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwduplicate} 
+{cmdab: nwduplicate}
 [{it:{help netname}}]
 [,
-{opt name}({it:{help newnetname}})]
+{opt name}({it:{help newnetname}})
+{opt replace}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
 
 
 {title:Description}
