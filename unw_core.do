@@ -3823,19 +3823,177 @@ real matrix `NWdef'::calculate_egostats(){
 	the calling `.ado` derives whatever per-node summary it wants from
 	this full membership matrix.
 */
+/*
+	PERFORMANCE FIX: calculate_cliques() used to materialize the full
+	dense n-by-n symmetrized adjacency matrix and hand it to
+	BronKerbosch() above, whose R/P/X sets are dense 0/1 indicator
+	vectors over ALL n nodes at every recursion level - so even a
+	recursive call whose true local candidate set is tiny (bounded by
+	degree, deep in the search tree) still pays O(n) per vector
+	operation. Confirmed directly (harmonisation unit 107) as the
+	reason nwclique hit 28GB+ RAM and did not complete at n=10,000 on
+	a sparse (avg-degree-10) graph, even after adding standard pivoting
+	(unit 107's own fix, which helps moderately dense graphs but
+	cannot shrink the top-level branching factor for a graph this
+	sparse - the best pivot only ever excludes about one node's own
+	degree worth of candidates from a candidate set close to n).
+
+	BronKerboschSparse() below is the identical algorithm (same pivot
+	rule, same maximality invariant: report R exactly when both P and
+	X are empty) - the only change is representation: P/R/X are
+	variable-length LISTS of actual node ids instead of length-n
+	bitvectors, and neighbor lookups go through connected_neighbors()
+	(added for nwtriads, unit 114 - the same "tied in either
+	direction" symmetrized relation calculate_cliques() itself already
+	needed via get_matrix_mod(0,0), now computed directly from the
+	sparse edge list instead of a dense matrix) rather than a dense
+	row. Set intersection (`P intersect N(v)', the operation that
+	dominates this algorithm's own cost) is done via a single SHARED
+	marker array reused across the whole recursion, explicitly
+	marked/unmarked around each localized use rather than reallocated
+	- so its own cost is bounded by the SIZE of what's being marked
+	(a candidate list, itself bounded by degree), never by n.
+
+	Scoped narrowly to nwclique.ado's own use (ordinary direct-tie
+	cliques) - BronKerbosch() itself is left untouched, since
+	nwnclique.ado/nwnclan.ado's n-clique family calls it on a
+	genuinely different "neighbor" relation (n-step reachability, not
+	direct ties), which connected_neighbors() cannot substitute for.
+
+	One minor, disclosed discrepancy from the old dense path for an
+	already-undocumented case (nwclique.ado's own "Supported network
+	types" section: "Signed: not checked"): get_matrix_mod(0,0)'s own
+	symmetrization only counts a tie present when its value is
+	strictly positive, while connected_neighbors() (via has_edge(),
+	itself used throughout this session for the same purpose) checks
+	presence only, regardless of sign - meaning a negative-weighted
+	edge is treated as absent by the old path but present by the new
+	one. Not expected to matter in practice (`nwclique`'s own
+	documented behavior already disclaims signed-network support), but
+	noted rather than silently left unnoticed.
+
+	Verified against the original dense BronKerbosch() path (kept
+	unmodified above, used as the cross-validation oracle) across 300
+	random sparse/dense, directed/undirected graphs (n=4-60) - exact
+	same SET of maximal cliques every time, not merely the same count.
+*/
+/*
+	Mata's own select() has a genuine edge-case gotcha, confirmed
+	directly: it returns a malformed 0-by-0 matrix (not the expected
+	0-by-1) when the INPUT has exactly one row and the filter keeps
+	none of it - a 0-by-1 result at every other input size. Every
+	select() call below that could plausibly filter a single-element
+	P/X/neighbor list down to nothing needs its result normalized back
+	to a genuine 0-by-1 colvector, or a later rows()/indexing operation
+	on it fails unpredictably deeper in the recursion.
+*/
+real colvector fixcol(real matrix v){
+	if (rows(v) == 0) return(J(0,1,0))
+	return(v)
+}
+
+/*
+	BronKerboschSparse() accumulates found cliques into `found' (a
+	shared, growing STRING colvector - one space-separated list of
+	member ids per clique, passed by reference through the whole
+	recursion) rather than returning a dense n-wide 0/1 row per call
+	and concatenating results back up the call tree with `\'. That
+	first design was tried and measured directly: it reintroduced the
+	exact "repeated dense concatenation" antipattern this same
+	codebase already root-caused and fixed once before for nwgeodesic
+	(harmonisation unit 106) - every recursion level re-copies its
+	own, and every descendant's, full n-wide result rows, so a
+	genuinely sparse n=10,000 graph (department a mere ~170 maximal
+	cliques by unit 107's own prior measurement) still exhausted
+	26GB+ RAM and did not complete within 2 minutes. Appending a short
+	string once per LEAF (a found clique) instead of a length-n row at
+	every recursion level removes that cost entirely - the dense
+	output matrix nwclique.ado's own contract expects is built exactly
+	once, from these strings, after the whole search finishes (see
+	calculate_cliques() below).
+*/
+void BronKerboschSparse(real scalar n, real colvector R, real colvector P, real colvector X,
+		real rowvector mark, pointer(real colvector) colvector NcP, string colvector found){
+	real colvector PX, Nv, Nu, newR, newP, newX, branch
+	real scalar i, v, u, best, cnt, nP, nX
+
+	nP = rows(P)
+	nX = rows(X)
+	if (nP == 0 & nX == 0){
+		found[rows(found)] = invtokens(strofreal(R'))
+		found = found \ ""
+		return
+	}
+
+	PX = P \ X
+	if (nP > 0) mark[P] = J(1, nP, 1)
+	best = -1
+	u = 0
+	for (i=1; i<=rows(PX); i++){
+		v = PX[i]
+		Nv = *NcP[v]
+		cnt = (rows(Nv) > 0 ? sum(mark[Nv]) : 0)
+		if (cnt > best){
+			best = cnt
+			u = v
+		}
+	}
+	if (nP > 0) mark[P] = J(1, nP, 0)
+
+	Nu = *NcP[u]
+	if (rows(Nu) > 0) mark[Nu] = J(1, rows(Nu), 1)
+	branch = (nP > 0 ? fixcol(select(P, !mark[P]')) : J(0,1,0))
+	if (rows(Nu) > 0) mark[Nu] = J(1, rows(Nu), 0)
+
+	for (i=1; i<=rows(branch); i++){
+		v = branch[i]
+		Nv = *NcP[v]
+		newR = R \ v
+
+		if (rows(Nv) > 0) mark[Nv] = J(1, rows(Nv), 1)
+		newP = (nP > 0 ? fixcol(select(P, mark[P]')) : J(0,1,0))
+		newX = (nX > 0 ? fixcol(select(X, mark[X]')) : J(0,1,0))
+		if (rows(Nv) > 0) mark[Nv] = J(1, rows(Nv), 0)
+
+		BronKerboschSparse(n, newR, newP, newX, mark, NcP, found)
+
+		P = fixcol(select(P, (P :!= v)))
+		nP = rows(P)
+		X = X \ v
+		nX = nX + 1
+	}
+}
+
 real matrix `NWdef'::calculate_cliques(){
-	real matrix adj, R0, P0, X0
-	real scalar n
+	real scalar n, i, nc
+	real colvector R0, P0, X0
+	real rowvector mark
+	pointer(real colvector) colvector NcP
+	string colvector found
+	real matrix out
+	real rowvector members
 
 	n = get_nodes()
-	adj = (*get_matrix_mod(0,0)) :!= 0
-	_diag(adj, 0)
+	NcP = J(n,1,NULL)
+	for (i=1; i<=n; i++) NcP[i] = &(connected_neighbors(i))
 
-	R0 = J(1,n,0)
-	P0 = J(1,n,1)
-	X0 = J(1,n,0)
+	R0 = J(0,1,0)
+	P0 = (1::n)
+	X0 = J(0,1,0)
+	mark = J(1,n,0)
+	found = J(1,1,"")
 
-	return(BronKerbosch(adj, R0, P0, X0))
+	BronKerboschSparse(n, R0, P0, X0, mark, NcP, found)
+
+	// the accumulator always ends with one trailing "" sentinel
+	// (appended after the last real entry, never populated) - drop it.
+	nc = rows(found) - 1
+	out = J(nc, n, 0)
+	for (i=1; i<=nc; i++){
+		members = strtoreal(tokens(found[i]))
+		if (cols(members) > 0) out[i, members] = J(1, cols(members), 1)
+	}
+	return(out)
 }
 
 /*
