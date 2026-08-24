@@ -12,14 +12,30 @@ program nwmixing
 		gen `att' = `attribute'
 	}
 	mata: `attmat' = st_data((1,`nodes'), "`att'")
-	
-	local attrlab : value label `attribute'
-	
+
+	// A string attribute() must go through the already-encoded numeric
+	// copy (`att') rather than the raw string variable, since Stata's
+	// own `tab ..., matcol() matrow()' (used further down to build the
+	// mixing table) does not allow those options on a string variable
+	// - confirmed directly (r198, "option matcol() not allowed").
+	// Numeric attributes keep using the original variable name (nicer
+	// `x_ego'/`x_alter' column names, matching this command's own
+	// pre-existing convention) rather than switching to a temp name
+	// unconditionally. `attrlab' correspondingly needs to be `egosrc''s
+	// own value label (auto-created by `encode' above for the string
+	// case) - a numeric `attribute' has no reason to share a label name
+	// with `att''s auto-generated one otherwise.
+	capture confirm string variable `attribute'
+	local egosrc = cond(_rc == 0, "`att'", "`attribute'")
+	local attrlab : value label `egosrc'
+
 	preserve
-	nwtoedge `netname', egovars(`attribute') altervars(`attribute')
-	capture label val `attribute'_nwego `attrlab'
-	capture label val `attribute'_nwalter `attrlab'
-	
+	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc')
+	local egoname "`egosrc'_ego"
+	local altername "`egosrc'_alter"
+	capture label val `egoname' `attrlab'
+	capture label val `altername' `attrlab'
+
 	di
 	local ident = max(length("`netname'"), length("`attribute'")) + 20
 	di "{txt}   Network:  {res}`netname'{txt}{col `ident'}Directed: {res}`directed'{txt}"
@@ -31,10 +47,10 @@ program nwmixing
 		di"{txt}       The table shows two entries for each edge."
 	}
 	tempname tableres tablecol tablerow
-	tab `attribute'_nwego `attribute'_nwalter if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
-	
+	tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
+
 	if "`plot'" != "" {
-		tabplot `attribute'_nwego `attribute'_nwalter if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
+		tabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -62,7 +78,7 @@ program nwmixing
 	
 	qui if `permutations' > 1  {
 	
-		mata: `EI_qap' = rep_EIvar(`permutations', `netobj'->get_matrix(), `attmat')
+		mata: `EI_qap' = rep_EIvar(`permutations', *`netobj'->get_matrix(), `attmat')
 		if `EI_index' > 0 {
 			mata: `out' = sum(`EI_qap' :>= `EI_index')
 		}
@@ -105,10 +121,7 @@ mata:
 real matrix rep_EIvar(real scalar reps, real matrix net1, real matrix attr){
 	real scalar nsize, total, EI, i
 	real matrix intern, extern, same, attrMat, attrMatTr, permutationVec, perm_net
-	
-	net1
-	attr
-	
+
 	nsize = cols(net1)
 	attrMat = J(nsize, nsize,1) :* attr
 	attrMatTr = attrMat'
