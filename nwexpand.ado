@@ -38,9 +38,9 @@
 {p2line}
 {p2col:{cmd: same}}{it:same(x_ij) = (varname[i] == varname[j])}{p_end}
 {p2col:{cmd: dist}}{it:dist(x_ij) = (varname[i] - varname[j])}{p_end}
-{p2col:{cmd: distinv}}{it:invdist(x_ij) = 1 / (varname[i] - varname[j])}{p_end}
+{p2col:{cmd: distinv}}{it:invdist(x_ij) = -(varname[i] - varname[j])}{p_end}
 {p2col:{cmd: absdist}}{it:dist(x_ij) = (|varname[i] - varname[j]|)}{p_end}
-{p2col:{cmd: absdistinv}}{it:invdist(x_ij) = 1 / (|varname[i] - varname[j]|)}{p_end}
+{p2col:{cmd: absdistinv}}{it:invdist(x_ij) = max(absdist) - (|varname[i] - varname[j]|)}{p_end}
 {p2col:{cmd: sender}}{it:sender(x_ij) = varname[i]}{p_end}
 {p2col:{cmd: receiver}}{it:receiver(x_ij) = varname[j]}{p_end}
 
@@ -56,7 +56,7 @@ The value {it:M_ij} of the adjacency matrix {it:M} of the new network is calcula
 and some function {it:expfcn} defined by {it:{help nwexpand##expand_mode:mode}}. By default, {it:mode = same}.
 
 {pstd}
-Valid modes are: {bf:same, dist, distinv, absdist, abdistinv, sender, receiver}
+Valid modes are: {bf:same, dist, distinv, absdist, absdistinv, sender, receiver}
 
 {pstd}
 The option {bf:network(}{help netname}{bf:)} applies the node labels of {it:netname} when expanding the variable. Often specifying this
@@ -150,7 +150,7 @@ The next example loads the {it:glasgow} dataset and colors ties differently depe
 of a friendship tie did sport at wave1.
 
 	{cmd:. nwwebuse glasgow, nwclear}
-	{cmd:. nwexpand sport1, mode(sender) network(glasgow)}
+	{cmd:. nwexpand sport1, mode(sender) network(glasgow1)}
 	{cmd:. nwplot glasgow1, edgecolor(sender_sport1)}
 	
 
@@ -166,6 +166,19 @@ program nwexpand
 	unw_defs
 	
 	if "`network'" != "" {
+		// BUGFIX: an unrecognized network() used to fall through to a
+		// raw, uninformative Mata "subscript invalid" crash somewhere
+		// downstream rather than a clean, immediate error - confirmed
+		// directly via this .sthlp's own worked example, which passed
+		// "glasgow" (nwwebuse's own multi-network dataset actually
+		// creates glasgow1/glasgow2/glasgow3, never a network literally
+		// named "glasgow" - the .sthlp's own example has been corrected
+		// to use glasgow1).
+		capture nw_syntax `network', other(_check) max(1)
+		if _rc != 0 {
+			di "{err}Network {bf:`network'} not found."
+			error `errNWsNotFound'
+		}
 		nw_syntax `network', max(1)
 		qui nwsummarize `netname'
 		local labs "`r(labs)'"
@@ -239,7 +252,19 @@ program nwexpand
 	if("`mode'" == "absdistinv") {
 		mata: expnet = distMat(attr)
 		mata: expnet = ((expnet:<0) :* (expnet :* -2)) + expnet
-		mata: expnet = J(`nodes',`nodes',-max(expnet)) - expnet
+		// BUGFIX: was `J(`nodes',`nodes',-max(expnet)) - expnet' - the
+		// stray negative sign on `max(expnet)' made every resulting
+		// value negative (max_dist=4 on x=1..5 gave -5..-8, not the
+		// intended "closer pairs score higher" inverse-distance
+		// transform). This is a bounded max-minus-distance inversion,
+		// not a literal 1/|diff| reciprocal (nwhomophily.sthlp's own
+		// prose used to describe it as one, since fixed) - deliberately
+		// NOT switched to a true reciprocal, which would reintroduce
+		// the very blowup-for-near-equal-values problem this bounded
+		// transform avoids (confirmed as the actual cause of a
+		// downstream nwhomophily crash - see its own CERTIFICATION.md
+		// entry).
+		mata: expnet = J(`nodes',`nodes',max(expnet)) - expnet
 		local undirected "undirected"
 	}
 	if "`mode'" == "same" {

@@ -49,3 +49,22 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 9
 assert         r(id)            == 2
 
+
+* --- alpha-audit regression: no-if call (documented "simply generates
+* a duplicate") used to crash (r198); an if-condition matching zero
+* nodes used to crash with an uncontrolled Mata error (r3300) instead
+* of a clean message. Both fixed.
+nwclear
+nwrandom 5, prob(.5) name(dupbase)
+capture noisily nwsubset dupbase, name(dupfull)
+assert _rc == 0
+nwset
+assert r(networks) == 2
+
+nwclear
+nwrandom 5, prob(.5) name(zeronet)
+capture noisily nwsubset zeronet if _n>100, name(subzero)
+assert _rc == 198
+nwset
+assert r(networks) == 1
+di "=== no-if / zero-node REGRESSION VERIFIED ==="

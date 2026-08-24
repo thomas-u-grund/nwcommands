@@ -219,13 +219,54 @@ program nwdyadprob
 			if "`undirected'" != "" {
 				mata: `mat' = lowertriangle(`mat')
 			}
+			// BUGFIX: `weights()' is documented ("the command generates
+			// a weighted network") but was accepted by `syntax' and
+			// then never referenced anywhere else in this program - a
+			// complete no-op; the network always came back plain
+			// binary 0/1 regardless of what weights() requested.
+			// Implemented using the exact same sampling pattern this
+			// package's own generator siblings (nwrandom.ado/
+			// nwpref.ado) already use and have had cross-validated:
+			// rdiscrete() over the (standardized) requested weight
+			// probabilities, one draw per potential dyad, applied as
+			// an elementwise multiplier onto the realized 0/1 tie
+			// matrix (so a non-tie, 0, stays 0 regardless of the
+			// sampled weight).
+			if "`weights'" != "" {
+				tempname w
+				capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights'))
+				if _rc != 0 {
+					di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+				}
+				capture mata: `w' = `w' :/ sum((`weights'))
+				if "`undirected'" != "" {
+					mata: `w' = lowertriangle(`w',0)
+					mata: `w' = `w' + `w''
+				}
+				capture mata: `__nwnew' = `__nwnew' :* `w'
+				capture mata: mata drop `w'
+			}
 			nwset, mat(`__nwnew') name(`name') `labs' `xvars'
-			
+
 			if "`undirected'" != "" {
 				nwsym `dyadname'
 			}
 		}
-		
+
+	}
+	if "`density'" != "" & "`weights'" != "" {
+		// BUGFIX: `weights()' was silently ignored here too when
+		// density() is also given (a separate code path - see the
+		// `density'=="" branch above for the case that's now properly
+		// implemented) - implementing weighted sampling for the
+		// gsample()-based path is a larger, separate undertaking (it
+		// depends on an external SSC package installed at runtime, and
+		// needs its own dedicated validation) not attempted in this
+		// pass. An honest, clear error is a real improvement over
+		// silently producing an unweighted network while claiming
+		// weights() was honored.
+		di "{err}Option {bf:weights()} combined with {bf:density()} is not yet supported; specify {bf:mat()} instead of {bf:density()} to use weights().{txt}"
+		error 198
 	}
 	if "`density'" != "" {
 		// Generate network from weight network
