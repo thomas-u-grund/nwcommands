@@ -1296,6 +1296,21 @@ Unit 125's own regression sweep flagged 3 of its 4 failures (`test_nwappend`, `t
 | **Broader scope, deliberately not attempted here**: a `grep 'local name "'` sweep found the identical pattern (unaudited) in roughly 17 more commands - see the "Network-overwrite-by-default policy" Pending row above for the full list | n/a | n/a | n/a | ✅ | None of these has an actual reproducing failure the way these four did; each needs its own case-by-case check before applying the same fix (a command's own default name could, in principle, legitimately want the strict policy instead - not observed in this package yet, but not ruled out either). Recorded as a scoped Pending item rather than blanket-patched. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass. The one remaining failure (`test_nwimport`) is the already-documented dead external UCINET-host fetch, unrelated to any of these four files. |
 
+## Harmonisation phase, unit 127: `nwpath`/`nwreach` - a single ego/alter query was computing the full all-pairs distance matrix
+
+The refreshed `dev/benchmark_suite.do` run (unit 125/126's own follow-on) surfaced three commands clustered at nearly the same cost: `nwpath` (106.8s), `nwgeodesic` (106.6s), `nwreach` (111.6s) at n=10,000 - despite `nwpath`'s own benchmark call being a single ego/alter shortest-path *query* (`nwpath bignet, ego(n1) alter(n2)`), not an all-pairs computation the way `nwgeodesic` genuinely is.
+
+`nwreach.ado` turned out to be a thin wrapper that literally calls `nwgeodesic` internally (confirmed by reading the `.ado` directly) - its cost is `nwgeodesic`'s cost plus a cheap `nwreplace` pass, not a separate bug. `nwgeodesic`'s own ~106s is the expected, inherent cost of computing a genuine full n x n all-pairs shortest-path matrix at n=10,000 via n independent BFS runs (previously the subject of a different, already-fixed antipattern - a prior unit's own comment in `bfs_hopdist_from()` documents fixing a quadratic-frontier-rebuild bug there) - not re-investigated further here, since it is doing the work it is documented to do.
+
+`nwpath`, however, had a genuine, unrelated bug: `get_path()` (`unw_core.do`) opened with `calculate_distances(1, "brute")[ego, alter]` purely to check whether `ego`/`alter` are connected at all - computing the **entire** all-pairs distance matrix (n separate BFS runs, O(n·(V+E))) to read back a single cell.
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **Fix: replace the full-APSP reachability pre-check with a single BFS from `ego`** | ✅ | ✅ | ✅ | ✅ | `bfs_hopdist_from(ego)[alter, 1]` - the exact same primitive `calculate_distances_bfs()` itself already calls once per row internally, just called directly for the one row actually needed - replaces `calculate_distances(1, "brute")[ego, alter]`. O(V+E) instead of O(n·(V+E)); the rest of `get_path()` (the shortest-path enumeration loop itself) is untouched. |
+| **Correctness** | ✅ | ✅ | ✅ | ✅ | The two expressions are provably the same value by construction (`calculate_distances_bfs()`'s row `i` is defined as `bfs_hopdist_from(i)'`) - confirmed directly anyway, not just argued: 30 randomized networks (varying size/density, including disconnected ones to exercise the "unreachable" branch specifically, the only branch this change touches) compare `bfs_hopdist_from(ego)[alter,1]` against `calculate_distances(1,"brute")[ego,alter]` for every `(ego, alter)` pair in each network - exact match (including the missing/unreachable case) in all cases. Existing `cscripts/test_nwpath.do` (which already covers the unreachable case) passes unmodified. |
+| **Measured net effect** | ✅ | ✅ | n/a | n/a | `nwpath bignet, ego(n1) alter(n2)` at n=10,000: 106.79s → **0.524s**, a ~204x speedup. `nwreach`/`nwgeodesic` themselves are unaffected (neither calls `get_path()`) - their own cost is the genuine, documented cost of a full all-pairs computation, not addressed by this unit. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |
