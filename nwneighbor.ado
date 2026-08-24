@@ -56,10 +56,14 @@ Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: 
 
 {title:Stored results}
 
+	Macros
+	  {bf:r(ego)}		name of ego (a string, not a nodeid)
+	  {bf:r(oneneighbor)}	one randomly selected neighbor's name; empty if ego has no neighbors
+
 	Scalars
-	  {bf:r(ego)}		nodeid of ego
-	  {bf:r(oneneighbor)}	one randomly selected neighbor
-	
+	  {bf:r(egoid)}		nodeid of ego
+	  {bf:r(num_neighbors)}	number of neighbors ego has
+
 	Matrices
 	  {bf:r(neighbors)} 	reshuffled list of all neighbors
 
@@ -140,11 +144,29 @@ program nwneighbor
 		mata: st_store((1::`nodes'), "`generate'", _select')
 	}
 	mata: st_rclear()
-	capture mata: neighbor=jumble(neighbors)[1]
 	capture mata: st_global("r(ego)", "`ego'")
 	capture mata: st_numscalar("r(egoid)", `egoid')
-	capture mata: st_global("r(oneneighbor)", jumble(neighbors)[1])
+	// BUGFIX: was `jumble(neighbors)[1]' - `neighbors' is a 2-row
+	// (name-row, id-row) x N-col matrix; `jumble()' shuffles MATRIX
+	// ROWS, not columns, so on a matrix with more than one neighbor this
+	// only ever randomized whether the name-row or the id-row came
+	// first, then linear-indexed (column-major) to whatever landed in
+	// position (1,1) - i.e., always "the first neighbor", and a coin
+	// flip on whether that returned its name or its numeric id. It
+	// happened to look like it worked for exactly one neighbor (name and
+	// id both describe "the only neighbor"), but never actually selected
+	// AMONG multiple neighbors at all. Fixed to genuinely pick a random
+	// COLUMN (one whole neighbor, name+id together), then take that
+	// neighbor's own name (row 1).
+	mata: st_numscalar("__nwneighbor_n", cols(neighbors))
+	if `=__nwneighbor_n' > 0 {
+		capture mata: st_global("r(oneneighbor)", neighbors[1, runiformint(1,1,1,`=__nwneighbor_n')])
+	}
+	else {
+		mata: st_global("r(oneneighbor)", "")
+	}
 	mata: st_numscalar("r(num_neighbors)", cols(neighbors))
+	scalar drop __nwneighbor_n
 
 	di ""
 	di "{hline 40}"

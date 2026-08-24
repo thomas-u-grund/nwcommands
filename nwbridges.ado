@@ -16,12 +16,12 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwbridges} 
+{cmdab: nwbridges}
 [{it:{help netname}}]
 [{cmd:,}
-{opth generate(newnetname)}
+{opth name(newnetname)}
 {opt type}({it:{help nwbridges##bridge_type:type}})
-{opt nwreplace}
+{opt nwreplace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -58,6 +58,20 @@ The command saves all bridges as a new network {it:newnetname}.
 {pstd}
 Binary: yes (only) - bridge status is a structural property, tie values are ignored. Directed: yes - {opt type()} distinguishes local/global bridges and arcs vs. edges. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
+{title:Stored results}
+
+	Macros
+	  {bf:r(name)}		name of the source network
+	  {bf:r(directed)}	whether the source network is directed ({bf:true}/{bf:false})
+	  {bf:r(bridges)}	number of bridges found
+	  {bf:r(bridges_type)}	the {opt type()} used ({bf:global}/{bf:local}/{bf:distance})
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwbridges flobusiness}
+	{cmd:. nwbridges flobusiness, type(local) nwreplace}
+
 {title:References}
 
 {pstd}
@@ -72,7 +86,12 @@ University Press.
 
 capture program drop nwbridges
 program nwbridges
-	syntax [anything(name=netname)] [, nwreplace name(string) type(string) distance]
+	// A bare `distance' flag was declared here alongside `type(string)',
+	// but never referenced anywhere in this file's body (confirmed via
+	// grep) - `type(distance)' (one of the three real `type()' values,
+	// see `_opts_oneof' below) already covers this, making the bare flag
+	// a confusing, fully dead duplicate. Removed.
+	syntax [anything(name=netname)] [, nwreplace name(string) type(string)]
 	nw_syntax `netname'
 	local oldname `netname'
 	local olddirected `netname'

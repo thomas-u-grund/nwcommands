@@ -20,12 +20,14 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opth unconnected(int)}
-{opt nosym}
-{opt sympopt(options)}
+{opth alpha(real)}
+{opt sym}
+{opt symopt(options)}
 {opth name(string)}
 {opt nwreplace}
 {opth generate(newvarname)}
-{opt xvars}]
+{opt xvars}
+{opt force}]
 
 
 {synoptset 30 tabbed}{...}
@@ -34,10 +36,12 @@
 {synopt:{opth unconnected(int)}}Define the length of the path between two unconnected nodes{p_end}
 {synopt:{opth alpha(real)}}Deal with valued networks{p_end}
 {synopt:{opt sym}}Calculate distances from symmetrized network{p_end}
+{synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; default = {it:_eccentricity}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise){p_end}
 
 
 {title:Description}
@@ -134,7 +138,7 @@ other 15 nodes. The next example, makes use of the option {bf:unconnected()} to 
 these non-existent paths a certain length. Here, the option {bf:unconnected(max)} assigns
 them the length 6.
 
-    {com}. nwgeodesic flomarriage, unconnected(max)
+    {com}. nwgeodesic flomarriage, unconnected(max) nwreplace
 
     {res}{hline 40}
     {txt}  Network name: {res}flomarriage
@@ -229,11 +233,20 @@ program nwgeodesic
 		local symmetrized "true"
 	}
 	capture nw_syntax `name', other(_check)
-	if _rc == 0 & "`nwreplace'" == "" {
+	local name_exists = (_rc == 0)
+	if `name_exists' & "`nwreplace'" == "" {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
 		error 99
 	}
-	capture nwdrop `name'
+	// BUGFIX: was an unconditional `capture nwdrop `name'' - in the
+	// ordinary case (no pre-existing network under this name), this
+	// drop failed every time and left a stale, leaked `_rc' - the same
+	// trailing-capture class fixed just below and in nwshared.ado this
+	// same pass. `name_exists' above already knows whether there is
+	// anything to drop.
+	if `name_exists' {
+		capture nwdrop `name'
+	}
 	nwduplicate `netname', name(`name')
 	nw_syntax `name'
 	
@@ -356,11 +369,37 @@ program nwgeodesic
 
 	capture _return drop _geo
 	_return hold _geo
-	capture nwdrop `symnet'
-	
+	// BUGFIX: was an unconditional `capture nwdrop `symnet'' - `symnet'
+	// is only ever actually created as a real network when `sym' was
+	// given (see above); otherwise this drop failed every time (nothing
+	// to drop), and whenever `xvars' was ALSO not given (nothing else
+	// afterward to touch `_rc'), the swallowed `capture' failure became
+	// this command's own final, leaked `_rc' on an otherwise entirely
+	// successful call - the same trailing-capture leak class fixed in
+	// nwshared.ado this same pass. Only drop it when it was genuinely
+	// created.
+	if "`symmetrized'" != "" {
+		capture nwdrop `symnet'
+	}
+
+
 	if "`xvars'" != "" {
 		nwload `name'
 	}
+	// The two conditional-capture fixes above close the two known
+	// stale-`_rc'-leak sources, but `capture _return drop _geo' further
+	// above (an expected no-op the very first time this runs in a
+	// session, since nothing was previously held under "_geo") is a
+	// third, harder-to-guard one - and `_return hold'/`_return restore'
+	// (both unconditional, including the one on the very next line) do
+	// NOT refresh `_rc' themselves (same "quietly-prefixed/inherently
+	// silent commands don't touch _rc" class documented in
+	// nwbrokerage.ado's own header comment). Resetting explicitly here,
+	// on a variable guaranteed to exist by this point, forces a clean,
+	// deterministic `_rc==0' regardless of any upstream harmless
+	// capture-swallowed failure - the same idiom nwaltergen.ado/
+	// nwbrokerage.ado already use for the identical situation.
+	capture confirm variable `nw_nodename', exact
 	_return restore _geo
 end
 

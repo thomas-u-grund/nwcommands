@@ -55,10 +55,14 @@ Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: 
 
 {title:Stored results}
 
+	Macros
+	  {bf:r(ego)}		name of ego (a string, not a nodeid)
+	  {bf:r(oneneighbor)}	one randomly selected neighbor's name; empty if ego has no neighbors
+
 	Scalars
-	  {bf:r(ego)}		nodeid of ego
-	  {bf:r(oneneighbor)}	one randomly selected neighbor
-	
+	  {bf:r(egoid)}		nodeid of ego
+	  {bf:r(num_neighbors)}	number of neighbors ego has
+
 	Matrices
 	  {bf:r(neighbors)} 	reshuffled list of all neighbors
 

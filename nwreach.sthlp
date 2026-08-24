@@ -20,7 +20,8 @@
 [{cmd:,}
 {opt sym}
 {opth name(string)}
-{opt xvars}]
+{opt xvars}
+{opt nwreplace}]
 
 
 {synoptset 25 tabbed}{...}
@@ -29,6 +30,7 @@
 {synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
 {synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt nwreplace}}if a network named {it:newnetname} already exists, drop it and use this name anyway - required, not silent (see {help nwgeodesic} for the same convention){p_end}
 
 
 {title:Description}

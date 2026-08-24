@@ -84,11 +84,14 @@ For example,
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwpath flobusiness, ego(medici) alter(peruzzi) generate(medici_peruzzi)}
 
-{pstd}	
-There are two shortest paths from node 9 to node 11, hence, the networks {it:shortest_1} and {it:shortest_2} are generated.
-One can now use one of these new networks to represent the edgecolor when plotting the original network. 
-	
-	{cmd:. nwplot flobusiness, edgecolor(shortest_1) scheme(s2network)}
+{pstd}
+There is exactly one shortest path between {it:medici} and {it:peruzzi}, so a single network,
+{it:medici_peruzzi_1}, is generated ({opt generate()} is a stub - one network per shortest path found,
+numbered {it:_1}, {it:_2}, ... - so a pair of nodes with multiple shortest paths would instead
+produce {it:medici_peruzzi_1}, {it:medici_peruzzi_2}, and so on).
+One can now use this new network to represent the edgecolor when plotting the original network.
+
+	{cmd:. nwplot flobusiness, edgecolor(medici_peruzzi_1) scheme(s2network)}
 
 
 {title:Examples}
@@ -132,7 +135,15 @@ One can now use one of these new networks to represent the edgecolor when plotti
 capture program drop nwpath
 program nwpath
 	version 9
-	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string)  name(string) ]
+	// `name(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (a fully dead,
+	// undocumented no-op; confirmed via grep). The real option for
+	// naming this command's output network(s) is `generate()' - a stub
+	// prefix, since one call can produce multiple path networks, so
+	// `name()' could not simply have aliased it (a single fixed name
+	// doesn't fit a multi-network stub the way it does for other
+	// commands in this group).
+	syntax [anything(name=netname)],  [nwreplace ego(string) alter(string) egoid(integer 0) alterid(integer 0) sym generate(string) ]
 	
 	if "`sym'" != "" & "`generate'" != "" {
 		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."

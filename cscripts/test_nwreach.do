@@ -58,3 +58,19 @@ nwgeodesic mynet, xvars
 capture noisily nwreach mynet
 assert _rc == 0
 di "=== pre-existing eccvar REGRESSION VERIFIED ==="
+
+* moderate-severity pass, paths_distance group: nwreach used to silently
+* overwrite/destroy any pre-existing network under its target name with
+* zero warning - unlike every sibling command in the group, which
+* requires nwreplace before overwriting.
+nwclear
+nwset, mat((0,1,0\1,0,0\0,0,0)) name(net1) undirected labs(A,B,C)
+nwduplicate net1, name(_reach)
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(net2) undirected labs(X,Y,Z)
+capture noisily nwreach net2
+assert _rc == 99
+nwsummarize _reach
+assert r(nodes) == 3
+nwreach net2, nwreplace
+assert _rc == 0
+di "=== silent-overwrite REGRESSION VERIFIED ==="

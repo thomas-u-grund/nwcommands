@@ -97,6 +97,33 @@ assert inc[1] == 1
 assert inc[2] == 1
 assert inc[3] == 0
 
+* moderate-severity pass, paths_distance group: r(oneneighbor) was
+* deterministically never a genuine random pick among multiple
+* neighbors - jumble() shuffles MATRIX ROWS (name-row vs id-row), not
+* which neighbor is selected, so it only ever returned "the first
+* neighbor", with a coin-flip on whether that was its name or its id.
+nwwebuse florentine, nwclear
+local sawbarbadori = 0
+local sawmedici = 0
+forvalues i = 1/30 {
+	nwneighbor flobusiness, ego(ginori)
+	assert `"`r(oneneighbor)'"' == "barbadori" | `"`r(oneneighbor)'"' == "medici"
+	if `"`r(oneneighbor)'"' == "barbadori" local sawbarbadori = 1
+	if `"`r(oneneighbor)'"' == "medici" local sawmedici = 1
+}
+assert `sawbarbadori' == 1
+assert `sawmedici' == 1
+
+nwset, mat((0,1,0\0,0,0\0,0,0)) name(onenbnet) directed labs(A,B,C)
+nwneighbor onenbnet, ego(A)
+assert `"`r(oneneighbor)'"' == "B"
+
+nwset, mat((0,0,0\0,0,0\0,0,0)) name(isonet) directed labs(A,B,C)
+nwneighbor isonet, ego(A)
+assert `"`r(oneneighbor)'"' == ""
+assert r(num_neighbors) == 0
+di "=== r(oneneighbor) REGRESSION VERIFIED ==="
+
 
 
 
