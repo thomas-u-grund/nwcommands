@@ -20,7 +20,9 @@
 {opt forcedirected}
 {opt forceundirected}
 {opt nwclear}
-{opt nwappend}]
+{opt clear}
+{opt nwappend}
+{opt xvars}]
 
 
 {synoptset 20 tabbed}{...}
@@ -30,7 +32,9 @@
 {synopt:{opt forcedirected}}force network to be directed{p_end}
 {synopt:{opt forceundirected}}force network to be undirected{p_end}
 {synopt:{opt nwclear}}clear all data and networks{p_end}
+{synopt:{opt clear}}same as {opt nwclear}{p_end}
 {synopt:{opt nwappend}}append to existing data{p_end}
+{synopt:{opt xvars}}also generate Stata variables for the imported network (see {help nwload}){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker import_type}{...}

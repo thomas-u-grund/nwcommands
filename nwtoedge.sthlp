@@ -33,6 +33,11 @@
 {synopt:{opth comparevars(varlist)}}Add an ego/alter comparison column for each variable (e.g. {it:same}, {it:dist}){p_end}
 {synopt:{opt comparemode}({it:{help nwexpand##expand_mode:mode}})}Comparison used for {opt comparevars()}; default = {it:same}{p_end}
 {synopt:{opt compress}}Compress edgelist{p_end}
+{synopt:{opt full}}List both {it:(i,j)} and {it:(j,i)} for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a {help netlist} is directed{p_end}
+{synopt:{opt upper}}List only one entry per undirected dyad (the default; see {opt full} above) - has no effect and is suppressed with a warning on a directed network{p_end}
+{synopt:{opt numeric}}Return every possible node pair (a full node x node grid), not just actual ties; only allowed with a single network{p_end}
+{synopt:{opt ignore2mode}}Treat a two-mode network like a one-mode one - suppress the mode indicator that would otherwise be added to {opt egovars()}/{opt altervars()} automatically{p_end}
+{synopt:{opt isolates0}}reserved; not currently implemented{p_end}
 
 {p2colreset}{...}
 

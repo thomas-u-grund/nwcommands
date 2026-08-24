@@ -96,6 +96,31 @@ nw2set, mat(J(6,4,1)) name(mynet)
 nw2toedge
 assert _N == 24
 
+* moderate-severity pass, import_export group: upper/full/ignore2mode/
+* numeric had no regression coverage at all before this. numeric's own
+* "only one network" constraint was previously print-only (no `error'
+* call, see nwtoedge.ado's own fix comment) - this is the regression
+* guard for that fix specifically.
+nwclear
+nwset, mat((0,1,1\1,0,0\0,0,0)) name(undirnet)
+nwtoedge undirnet, upper
+assert _rc == 0
+nwclear
+nwset, mat((0,1,1\1,0,0\0,0,0)) name(undirnet)
+nwtoedge undirnet, full
+assert _rc == 0
+
+nwclear
+nw2set, mat(J(6,4,1)) name(mynet)
+nwtoedge, ignore2mode
+assert _rc == 0
+
+nwclear
+nwset, mat((0,1\0,0)) name(a)
+nwset, mat((0,1\0,0)) name(b)
+capture nwtoedge _all, numeric
+assert _rc == 198
+
 
 * --- comparevars()/comparemode(): ego/alter comparison columns
 * (harmonisation unit 63, the Stage 5 "ego/alter comparison variables"

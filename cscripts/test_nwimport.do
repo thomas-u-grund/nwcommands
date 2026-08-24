@@ -89,6 +89,27 @@ assert "`__hn1'" == "thomas"
 mata: mata drop __p2
 di "=== type(matrix), header-row auto-detection SELF-CONTAINED REGRESSION VERIFIED ==="
 
+* type(edgelist) and type(compressed), self-contained (no external host
+* needed) - moderate-severity pass, import_export group: neither of these
+* two import_type variants had any regression coverage at all before this
+* (only ucinet/pajek/matrix were exercised), using this package's own
+* long-standing local example fixtures under data/.
+nwclear
+nwimport "data/edgelist_example.txt", type(edgelist) name(edgetest)
+assert _rc == 0
+nwname
+assert `"`r(netname)'"' == `"edgetest"'
+assert         r(nodes) == 4
+di "=== type(edgelist) SELF-CONTAINED REGRESSION VERIFIED ==="
+
+nwclear
+nwimport "data/compressed_example.txt", type(compressed) name(comptest)
+assert _rc == 0
+nwname
+assert `"`r(netname)'"' == `"comptest"'
+assert         r(nodes) == 4
+di "=== type(compressed) SELF-CONTAINED REGRESSION VERIFIED ==="
+
 nwclear
 
 nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)

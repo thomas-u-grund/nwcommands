@@ -33,6 +33,9 @@
 {synopt:{opt labs}({it:lab1 lab2...})}new node labels that are used for the network{p_end}
 {synopt:{opth rownames(varname)}}names of nodes on level 2{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt vars(namelist)}}Stata variable names to store the network as (one per node, level 1 then level 2); default = auto-generated{p_end}
+{synopt:{opt clear}}drop all existing networks (but not the Stata dataset) before declaring this one{p_end}
+{synopt:{opt nwclear}}same as {opt clear}{p_end}
 
 
 {title:Description}
@@ -184,9 +187,19 @@ collapses the network to use only nodes from either level 1 or level 2.
 
 capture program drop nw2set
 program nw2set
-	syntax [varlist (default=none)][, edgelist name(string) rownames(varname) vars(string) xvars labs(string) *]
+	syntax [varlist (default=none)][, edgelist name(string) rownames(varname) vars(string) xvars labs(string) clear nwclear *]
 	set more off
 
+	// `clear'/`nwclear' were previously wildcard-swallowed into `options' rather
+	// than declared directly, so these checks always tested an undefined local
+	// and neither ever ran - the option was silently accepted and did nothing at
+	// all, in both the edgelist and varlist branches below. Declared explicitly
+	// now and handled once, here, as a side effect before dispatch - mirroring
+	// nwset.ado's own established clear/nwclear-before-creation convention (see
+	// its own comment at the equivalent point) rather than forwarding through
+	// `options' to nwset, which would have silently dropped it entirely on the
+	// edgelist branch (nw2fromedge/nwfromedge accept a differently-named
+	// `noclear' option, not `clear'/`nwclear').
 	if "`clear'" != "" {
 		nwdrop _all, netonly
 	}
@@ -196,13 +209,13 @@ program nw2set
 	if "`generate'" == "" {
 		local generate = "_modeid"
 	}
-	
+
 	if "`edgelist'" != "" {
-		nw2fromedge `varlist', `xvars' name(`name') 
+		nw2fromedge `varlist', `xvars' name(`name')
 		exit
 	}
 	else {
-		nwset `varlist', `options' bipartite `xvars' labsfromvar(`rownames') name(`name') labs(`labs')
+		nwset `varlist', `options' bipartite `xvars' labsfromvar(`rownames') name(`name') labs(`labs') vars(`vars')
 		capture drop `varlist'
 		capture drop `rownames'
 		nw_syntax

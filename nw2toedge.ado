@@ -29,6 +29,11 @@
 {synopt:{opth altervars(varlist)}}Keep attributes of receiving nodes {p_end}
 {synopt:{opth ego(newvarname)}}Sender of ties; default = {it:_ego}{p_end}
 {synopt:{opth alter(newvarname)}}Receiver of ties; default = {it:_alter}{p_end}
+{synopt:{opt compress}}Drop rows with no tie in any listed network, keeping only actual ties{p_end}
+{synopt:{opt full}}List both {it:(i,j)} and {it:(j,i)} for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a {help netlist} is directed{p_end}
+{synopt:{opt upper}}List only one entry per undirected dyad (the default; see {opt full} above) - has no effect and is suppressed with a warning on a directed network{p_end}
+{synopt:{opt ignore2mode}}Treat the two-mode network like a one-mode one - suppress the auto-generated {it:_nwmode_ego}/{it:_nwmode_alter} mode-indicator variables{p_end}
+{synopt:{opt isolates0}}reserved; not currently implemented{p_end}
 
 {p2colreset}{...}
 

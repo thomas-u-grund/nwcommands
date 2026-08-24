@@ -12,16 +12,18 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwsave} 
+{cmdab: nwsave}
 {it:{help filename}}
 [{cmd:,}
-{cmd:replace}]
+{cmd:replace}
+{opt old}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{cmd: replace}}overwrite existing dataset{p_end}
+{synopt:{opt old}}save in a Stata-version-backward-compatible format (uses {help saveold} internally instead of {help save}){p_end}
 
 
 {title:Description}

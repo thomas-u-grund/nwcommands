@@ -131,7 +131,19 @@ last certified : 23 Aug 2026
 
 capture program drop nwwebuse
 program nwwebuse
-	syntax anything [, * nwclear old]
+	// The former `old' option dispatched to a command literally named
+	// `nwuse_old' - never a real Stata idiom the way `save'/`saveold' is
+	// (contrast nwsave.ado's own `old' option) - which was archived to
+	// old/ado/ as a confirmed dead-on-arrival duplicate during an earlier
+	// harmonisation cleanup, so `old' has raised a hard "command not
+	// found" on every use since. Its underlying legacy metadata format
+	// (bare _format/_nets/... Stata variables) predates even the plain-
+	// .dta fallback nwuse.ado already handles natively today (see that
+	// file's own _nw_format/_nw_nets/... convention), and no such
+	// old-format dataset remains hosted at $nwwebpath - removed outright
+	// rather than reviving a triply-obsolete path with no current use
+	// case.
+	syntax anything [, * nwclear]
 
 	`nwclear'
 	capture drop _running
@@ -163,15 +175,12 @@ program nwwebuse
 
 	local path = "\$nwwebpath"
 	local thispath = "`path'"
-	if "`old'" != "" {
-		local old "_old"
-	}
 	local webname = subinstr("`anything'", ".dta","",99)
 	if substr("`webname'",1,4) == "http" {
-		nwuse`old' `webname', `options'
+		nwuse `webname', `options'
 	}
 	else {
-		nwuse`old' `thispath'/`webname', `options'
+		nwuse `thispath'/`webname', `options'
 	}
 	// Several of this package's own example datasets are plain .dta
 	// files, not a saved nwsave() network (see nwuse.ado's own comment)
