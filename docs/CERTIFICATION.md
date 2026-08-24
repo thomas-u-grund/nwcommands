@@ -1433,7 +1433,18 @@ Sixth fix batch from the Phase 1 alpha audit - the `manipulation_subset` group's
 | **Missing test coverage that let the above go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added targeted regression cases to both commands' own test files, asserting the actual correct attribute values against actual node identity (not just `_rc==0`), and the canonical no-intervening-`nwclear` preserve/restore workflow. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
 
-203 findings remain across the other 12 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
+## Alpha pass, unit 8: `manipulation_transform` group critical fix (`nwrecode`)
+
+Seventh fix batch from the Phase 1 alpha audit - the `manipulation_transform` group's 1 critical finding, the same collision-corruption bug class as unit 4's `nwtranspose` fix, found independently in a sibling command.
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **`nwrecode`'s `generate()`/`prefix()` silently corrupted an unrelated, pre-existing network of the same target name** | ✅ (fixed) | ✅ | ✅ | n/a | Identical root cause to unit 4's `nwtranspose` bug: `nwduplicate`'s own collision guard silently auto-renames the *duplicate* on collision, but this code kept calling `nwreplacemat` on the literal requested name regardless - so an unrelated pre-existing network of that name got silently resized and overwritten with the recoded result, while the actual recoded duplicate sat un-recoded under the auto-renamed orphan name. Fixed the same way: resolve the actual (possibly auto-incremented) target name via `nwvalidate` *before* calling `nwduplicate`, for both the `generate()` and `prefix()` code paths, so `nwreplacemat` always operates on the exact network `nwduplicate` actually just created. |
+| **Correctness** | ✅ | ✅ | n/a | n/a | Verified directly on the audit's own repro (both `generate()` and `prefix()` forms): the unrelated pre-existing network is left completely untouched, and the correctly-recoded result now lands under `nwduplicate`'s own auto-incremented name (`..._1`) with the recode rule (`1/2=1, 3/max=2`) actually applied - not the original raw values. |
+| **Missing test coverage that let this go undetected** | ✅ (fixed) | ✅ | ✅ | n/a | Added a regression case to `cscripts/test_nwrecode.do` reproducing the exact collision scenario and asserting both halves: the unrelated network's own values are unchanged, and the actual recoded network's values are correct. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (145 files) re-run: 144/145 pass (the one remaining failure is the already-documented dead external `nwimport` UCINET-host fetch, unrelated). |
+
+202 findings remain across the other 11 groups (`docs/ALPHA_AUDIT.md` tracks progress); continuing critical-severity-first.
 
 ## Pending (queued for implementation, not yet started)
 

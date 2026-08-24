@@ -56,3 +56,23 @@ mata: assert(Morig[1,2] == 1)
 nwtomata net2recoded, mat(Mnew)
 mata: assert(Mnew[1,2] == 10)
 mata: assert(Mnew[2,3] == 20)
+
+* --- alpha-audit regression: generate()/prefix() used to silently
+* corrupt an unrelated, pre-existing network of the same target name
+* (nwduplicate's own silent auto-rename on collision was never
+* accounted for - nwreplacemat kept operating on the literal requested
+* name, which still resolved to the pre-existing network). Confirmed
+* fixed: the unrelated network is untouched, and the actual recoded
+* result lands under nwduplicate's own auto-incremented name.
+nwclear
+nwset, mat((0,1,2,0\1,0,3,0\2,3,0,4\0,0,4,0)) name(reccoll1) undirected labs(A,B,C,D)
+nwset, mat((0,1\1,0)) name(reccoll2)
+nwrecode reccoll1(1/2=1)(3/max=2), generate(reccoll2)
+nwtomata reccoll2, mat(Munrelated)
+mata: assert(Munrelated[2,1] == 1)
+mata: assert(rows(Munrelated) == 2)
+nwtomata reccoll2_1, mat(Mrecoded)
+mata: assert(Mrecoded[2,1] == 1)
+mata: assert(Mrecoded[3,1] == 1)
+mata: assert(Mrecoded[4,3] == 2)
+di "=== generate() collision REGRESSION VERIFIED ==="
