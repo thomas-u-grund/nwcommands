@@ -49,11 +49,11 @@
 {marker type}{...}
 {p2col:{it:type}}{p_end}
 {p2line}
-{p2col:{cmd: pearson}}Calculate Pearson correlation for tie vectors of two nodes{p_end}
+{p2col:{cmd: euclidean}}Calculate Euclidean distance between the tie vectors of two nodes{p_end}
+{p2col:{cmd: manhatten}}Calculate Manhatten distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: hamming}}Calculate Hamming distance between the tie vectors of two nodes{p_end}
 {p2col:{cmd: jaccard}}Calculate Jaccard distance between the tie vectors of two nodes{p_end}
-{p2col:{cmd: matches}}Calculate percentage of matches in tie vectors of two nodes{p_end}
-{p2col:{cmd: crossproduct}}Calculate the cross-product of the tie vectors of two nodes{p_end}
+{p2col:{cmd: nonmatches}}Calculate percentage of non-matches in tie vectors of two nodes{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker context}{...}

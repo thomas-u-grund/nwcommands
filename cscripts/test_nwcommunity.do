@@ -130,3 +130,21 @@ nwrandom 2000, prob(.001) undirected name(bignet2k)
 nwcommunity bignet2k, generate(_bc) replace silent
 assert _rc == 0
 assert r(communities) > 500
+
+
+* --- alpha-audit regression: measure(binary|valued) is forwarded to
+* the community search itself correctly, but the reported r(modularity)
+* used to be a no-op (calculate_modularity() hardcoded valued=1
+* regardless of measure()) - same root cause and same reference network
+* as nwmodularity's own identical regression (test_nwmodularity.do).
+* On this network, community structure (the 2 triangles) is identical
+* under either measure, so both partitions have 2 communities - but the
+* reported Q values must genuinely differ between them.
+nwclear
+nwset, mat((0,5,5,0,0,0\5,0,5,0,0,0\5,5,0,1,0,0\0,0,1,0,5,5\0,0,0,5,0,5\0,0,0,5,5,0)) undirected labs(A,B,C,D,E,F) name(wbridge)
+nwcommunity wbridge, measure(valued) generate(cval) silent
+assert r(communities) == 2
+assert reldif(r(modularity), .467741935) < 1E-6
+nwcommunity wbridge, measure(binary) generate(cbin) silent
+assert r(communities) == 2
+assert reldif(r(modularity), .357142857) < 1E-6

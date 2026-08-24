@@ -55,3 +55,20 @@ gen g = _n
 nwmodularity manygroups, group(g)
 assert _rc == 0
 assert r(communities) == 2000
+
+
+* --- alpha-audit regression: measure(binary|valued) was a complete
+* no-op - calculate_modularity() in unw_core.do hardcoded valued=1
+* regardless of what the caller requested, so measure(binary) silently
+* scored the raw weighted network instead. Hand-computed on a 6-node
+* two-triangle-plus-bridge network with strong (5) intra-triangle ties
+* and one weak (1) bridge tie: dichotomizing to binary changes Q from
+* .467741935 to .357142857 - these must now genuinely differ.
+nwclear
+nwset, mat((0,5,5,0,0,0\5,0,5,0,0,0\5,5,0,1,0,0\0,0,1,0,5,5\0,0,0,5,0,5\0,0,0,5,5,0)) undirected labs(A,B,C,D,E,F) name(wbridge)
+gen truegrp = 1 in 1/3
+replace truegrp = 2 in 4/6
+nwmodularity wbridge, group(truegrp) measure(valued)
+assert reldif(r(modularity), .467741935) < 1E-6
+nwmodularity wbridge, group(truegrp) measure(binary)
+assert reldif(r(modularity), .357142857) < 1E-6

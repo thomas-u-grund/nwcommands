@@ -3600,12 +3600,22 @@ real matrix `NWdef'::calculate_lgc(){
 /*
 	Newman modularity Q of a given partition (1-indexed community membership vector)
 */
-real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar resolution){
+real scalar `NWdef'::calculate_modularity(real matrix membership, | real scalar valued, real scalar resolution){
 	real matrix w
-	real scalar res
+	real scalar val, res
 
-	res = (args() == 2 ? resolution : 1)
-	w = *get_matrix_mod(1,0)
+	// BUGFIX: `valued' used to be hardcoded to 1 (get_matrix_mod(1,0)),
+	// so measure(binary) was a complete no-op - Q was always computed on
+	// the network's raw valued weights regardless of what the caller
+	// (nwmodularity.ado/nwcommunity.ado) requested, silently corrupting
+	// the reported r(modularity) whenever measure(binary) was requested
+	// on a genuinely weighted network. Now mirrors the identical
+	// `| real scalar valued' pattern already used correctly by this
+	// class's own detect_communities_louvain()/detect_communities_
+	// labelprop() just below.
+	val = (args() >= 2 ? valued : 1)
+	res = (args() == 3 ? resolution : 1)
+	w = *get_matrix_mod(val,0)
 	_diag(w, 0)
 	return(Modularity(w, membership, res))
 }
