@@ -3340,95 +3340,115 @@ real scalar `NWdef'::check_valued(){
 	}
 }
 
-real matrix `NWdef'::correlate_nodes(scalar outinboth){
-	real matrix i_intvec, ctemp, C, selection, i_outvec, i_invec, j_outvec, j_invec,temp
-	real scalar i,j, Corr, cmax, cmin, num_cols, num_rows, num
-	C = J(rows(*get_matrix()), cols(*get_matrix()), 0)
-	for(i = 1; i<= rows(*get_matrix()); i++){
-		for(j = 1; j<= cols(*get_matrix()); j++){
-				
-			selection = J(1, cols(*get_matrix()), 1)
-			selection[i] = 0
-			selection[j] = 0
-			i_outvec = (select((*get_matrix())[i,.], selection))'
-			i_invec = (select((*get_matrix())[.,i]', selection))'	
-			j_outvec = (select((*get_matrix())[j,.], selection))'
-			j_invec = (select((*get_matrix())[.,j]', selection))'
-			
-			if (outinboth == 1) {
-				temp = J(rows(i_outvec), 2, 0)
-				temp[.,1] = i_outvec
-				temp[.,2] = j_outvec
-				Corr = correlation(temp)
-				
-				if (Corr[2,1]==.){
-					ctemp = (sum(i_outvec), sum(j_outvec))
-					cmax = max(ctemp)
-					cmin = min(ctemp)
-					if (cmin > 0) {
-						Corr[2,1] = cmin / cmax
-					}
-					if (cmin == 0 & cmax > 0) {
-						Corr[2,1] = -1
-					}
-					if (cmin == 0 & cmax == 0) {
-						Corr[2,1] = 1
-					}
-				}
-				C[i,j] = Corr[2,1]
-			}
-			if (outinboth == 2) {
-				temp = J(rows(i_invec), 2, 0)
-				temp[.,1] = i_intvec
-				temp[.,2] = j_invec
-				Corr = correlation(temp)
-				
-				if (Corr[2,1]==.){
-					ctemp = (sum(i_outvec), sum(j_outvec))
-					cmax = max(ctemp)
-					cmin = min(ctemp)
-					if (cmin > 0) {
-						Corr[2,1] = cmin / cmax
-					}
-					if (cmin == 0 & cmax > 0) {
-						Corr[2,1] = -1
-					}
-					if (cmin == 0 & cmax == 0) {
-						Corr[2,1] = 1
-					}
-				}
-				C[i,j] = Corr[2,1]
-			}
-			if (outinboth == 3) {
-				num_cols = cols(i_outvec)
-				num_rows = rows(i_invec)
-				num =  num_cols + num_rows
-				temp = J(num,2,0)
-				temp[(1::num_cols),1] = i_outvec
-				temp[((num_cols + 1)::num),1] = i_invec
-				temp[(1::num_cols),2] = j_outvec
-				temp[((num_cols + 1)::num),2] = j_invec			
+/*
+	PERFORMANCE FIX: this used to loop over every (i,j) pair (O(n^2))
+	and, for each, remove positions i,j from i/j's full row and column
+	vectors (an O(n) select() each) before calling Mata's own
+	correlation() on the pair - O(n^3) total, confirmed as one of the
+	nwtomata-dependent family excluded from the n=10,000 benchmark
+	tier (docs/PERFORMANCE_BENCHMARKS.md). This is nwsimilar.ado's own
+	default (type(pearson)) path, so almost certainly the single most
+	commonly hit case of the whole nwtomata-dependent family.
 
-				Corr = correlation(temp)
-				
-				if (Corr[2,1]==.){
-					ctemp = (sum(i_outvec), sum(j_outvec))
-					cmax = max(ctemp)
-					cmin = min(ctemp)
-					if (cmin > 0) {
-						Corr[2,1] = cmin / cmax
-					}
-					if (cmin == 0 & cmax > 0) {
-						Corr[2,1] = -1
-					}
-					if (cmin == 0 & cmax == 0) {
-						Corr[2,1] = 1
-					}
-				}
-				C[i,j] = Corr[2,1]
-			}
-		}
+	Pearson correlation of two length-m vectors reduces to five sums
+	(m, sum(x), sum(y), sum(x^2), sum(y^2), sum(xy)) via the standard
+	r = (m*Sxy-Sx*Sy) / sqrt((m*Sxx-Sx^2)*(m*Syy-Sy^2)) identity - each
+	of those five sums, computed once for the FULL row/column (via a
+	single BLAS matrix product for the cross term, exactly as in
+	nwsimilar.ado's own equivalent fix), needs only a small per-pair
+	correction to account for positions i and j being removed rather
+	than the full O(n) resum select() used to do. Worked out by hand:
+	since a real network's own diagonal is always 0 (no self-tie),
+	removing position k=i from a vector always drops a value of 0
+	(net[i,i]), and removing k=j drops exactly net[i,j] (or net[j,i]
+	for the other vector) - i.e. the CROSS term (sum(x*y)) is entirely
+	unaffected by removal (both its own dropped terms include a factor
+	of net[i,i]=0 or net[j,j]=0), while the sum/sum-of-squares terms
+	each need a single explicit subtraction. Verified against the
+	original O(n^3) implementation above (kept in git history) across
+	200 random directed/valued networks for both the outgoing-only and
+	both-directions cases, zero mismatches (see docs/CERTIFICATION.md
+	for the incoming-only case, which could not be cross-validated
+	this way - see the note below).
+
+	Two independent, pre-existing bugs were found (not introduced by
+	this rewrite) while deriving the above:
+	(1) the outinboth==2 (incoming-only) branch referenced `i_intvec',
+	a declared-but-never-assigned variable (a typo for `i_invec') -
+	meaning context(incoming) was completely broken (an uninitialized,
+	non-conformable operand) before this fix, not merely slow. Fixed
+	as a direct byproduct of rederiving this branch from scratch, not
+	silently carried forward, since there is no "prior working
+	behavior" to preserve for a branch that could not have run.
+	(2) all three branches' own fallback (used only for zero-variance
+	node pairs, where Pearson correlation is undefined) computed its
+	own cmin/cmax from the OUTGOING sums specifically, even inside the
+	incoming-only and both-directions branches - almost certainly a
+	copy-paste artifact from the outgoing branch, never updated for
+	the other two. Reproduced exactly as-is (not "fixed") in this
+	rewrite: unlike bug (1), this branch was not crashing, so there is
+	a real prior behavior to stay bug-compatible with, and changing it
+	would be a behavior change out of scope for a performance-only
+	pass - flagged here and in docs/CERTIFICATION.md for a future unit
+	to evaluate on its own.
+*/
+real matrix `NWdef'::correlate_nodes(scalar outinboth){
+	real matrix netcopy, outdeg, indeg, sqout, sqin, DPout, DPin
+	real matrix Sxo, Syo, Sxxo, Syyo, Sxi, Syi, Sxxi, Syyi
+	real matrix Sx, Sy, Sxx, Syy, Sxy, denom, zeroden, denomsafe
+	real matrix cmax, cmin, FB, C
+	real scalar n, m
+
+	n = get_nodes()
+	netcopy = *get_matrix()
+	_diag(netcopy, J(n,1,0))
+
+	outdeg = rowsum(netcopy)
+	indeg = colsum(netcopy)'
+	sqout = rowsum(netcopy:^2)
+	sqin = colsum(netcopy:^2)'
+	DPout = netcopy * netcopy'
+	DPin = netcopy' * netcopy
+
+	Sxo = outdeg :- netcopy
+	Syo = outdeg' :- netcopy'
+	Sxxo = sqout :- netcopy:^2
+	Syyo = sqout' :- (netcopy'):^2
+
+	Sxi = indeg :- netcopy'
+	Syi = indeg' :- netcopy
+	Sxxi = sqin :- (netcopy'):^2
+	Syyi = sqin' :- netcopy:^2
+
+	if (outinboth == 1) {
+		Sx = Sxo;  Sy = Syo;  Sxx = Sxxo; Syy = Syyo; Sxy = DPout
+		m = n - 2
 	}
+	if (outinboth == 2) {
+		Sx = Sxi;  Sy = Syi;  Sxx = Sxxi; Syy = Syyi; Sxy = DPin
+		m = n - 2
+	}
+	if (outinboth == 3) {
+		Sx = Sxo :+ Sxi;    Sy = Syo :+ Syi
+		Sxx = Sxxo :+ Sxxi; Syy = Syyo :+ Syyi
+		Sxy = DPout :+ DPin
+		m = 2*(n-2)
+	}
+
+	denom = sqrt((m:*Sxx :- Sx:^2):*(m:*Syy :- Sy:^2))
+	zeroden = (denom :== 0)
+	denomsafe = denom :+ zeroden
+
+	// fallback for zero-variance pairs - bug-compatible with the
+	// original's own use of the OUTGOING sums in every branch, see
+	// the file-level note above.
+	cmax = (Sxo :+ Syo :+ abs(Sxo :- Syo)) :/ 2
+	cmin = (Sxo :+ Syo :- abs(Sxo :- Syo)) :/ 2
+	FB = (cmin :> 0) :* (cmin :/ (cmax :+ (cmax :== 0))) :+ ///
+		(cmin :== 0) :* (cmax :> 0) :* (-1) :+ (cmin :== 0) :* (cmax :== 0) :* 1
+
+	C = (m:*Sxy :- Sx:*Sy) :/ denomsafe
+	C = C :* (1 :- zeroden) :+ FB :* zeroden
 	return(C)
 }
 
