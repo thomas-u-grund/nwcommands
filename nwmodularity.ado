@@ -127,10 +127,20 @@ program nwmodularity, rclass
 		local lcomm = communities
 		local lmod = modularity
 
-		qui tab `group', matrow(comm_id) matcell(comm_size)
-		mata: comm_id = st_matrix("comm_id")
-		mata: comm_number = rows(comm_id)
-		mata: comm_size = st_matrix("comm_size")
+		// same fix as nwcommunity.ado's own identical bug: `tab ...,
+		// matrow() matcell()' crashes ("too many values", r134) once
+		// there are enough distinct groups, and the later `matrix
+		// rownames = `rowlabs'' has the same class of failure one
+		// level down (a long enough command-line token list blows
+		// Stata's own matsize-driven limit, r915) - both replaced with
+		// Mata-native equivalents with no such ceiling. See
+		// nwcommunity.ado's own identical fix for the full detail.
+		mata: __nwm_vals = st_data((1::`nodes'), "`group'")
+		mata: __nwm_sorted = sort(__nwm_vals, 1)
+		mata: __nwm_info = panelsetup(__nwm_sorted, 1)
+		mata: comm_number = rows(__nwm_info)
+		mata: comm_id = __nwm_sorted[__nwm_info[.,1]]
+		mata: comm_size = __nwm_info[.,2] :- __nwm_info[.,1] :+ 1
 		mata: comm_share = comm_size :/ (sum(comm_size))
 		mata: comm_sizeid = J(comm_number, 3, 0)
 		mata: comm_sizeid[.,1] = comm_size
@@ -141,13 +151,11 @@ program nwmodularity, rclass
 		mata: st_numscalar("commnum", comm_number)
 		matrix colnames comm_sizeid = size compid share
 
-		local rowlabs ""
-		forvalues i = 1/`=commnum'{
-			local rowlabs "`rowlabs' comm`i'"
-		}
-		matrix rownames comm_sizeid = `rowlabs'
+		mata: __nwm_stripe = J(comm_number, 2, "")
+		mata: for (__nwm_i=1; __nwm_i<=comm_number; __nwm_i++) __nwm_stripe[__nwm_i,2] = "comm" + strofreal(__nwm_i)
+		mata: st_matrixrowstripe("comm_sizeid", __nwm_stripe)
 		return matrix comm_sizeid = comm_sizeid
-		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid
+		mata: mata drop comm_number comm_share comm_id comm_size comm_sizeid __nwm_vals __nwm_sorted __nwm_info __nwm_stripe __nwm_i
 
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname_temp'"

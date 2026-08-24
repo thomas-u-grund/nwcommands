@@ -112,3 +112,21 @@ capture nwcommunity dirnet2, algorithm(labelprop)
 assert _rc != 0
 nwcommunity dirnet2, algorithm(labelprop) symmetrize seed(1)
 assert r(communities) >= 1
+
+* PERFORMANCE/CORRECTNESS FIX: `tab ..., matrow() matcell()' (used to
+* build r(comm_sizeid)) crashes outright ("too many values", r134, or
+* a matsize-driven r915 for a slightly smaller count) once a network
+* has enough distinct communities - confirmed directly: Louvain on a
+* sparse n=10,000 random graph genuinely finds 4,322 communities, not
+* a pathological case (large sparse graphs commonly lack strong
+* community structure). The later `matrix rownames = <huge token
+* list>' line has the same class of failure one level down. A sparse
+* 2,000-node random network (well past the smaller end of that limit,
+* confirmed directly) reliably produces well over 1,000 communities
+* here, without needing a slower n=10,000 network in this test file.
+nwclear
+set seed 1
+nwrandom 2000, prob(.001) undirected name(bignet2k)
+nwcommunity bignet2k, generate(_bc) replace silent
+assert _rc == 0
+assert r(communities) > 500
