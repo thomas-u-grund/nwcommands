@@ -190,6 +190,12 @@ program nwtriads
 	_return restore `r'
 	
 	mata: st_global("r(name)", "`netname'")
+	// Naming consistency (moderate-severity pass, information_census
+	// group): nwname uses `r(netname)' for the identical "which network
+	// is this result about" concept; nwdyads/nwtriads used `r(name)'
+	// only. Added as an alias rather than renaming, so existing callers
+	// of either name keep working.
+	mata: st_global("r(netname)", "`netname'")
 	mata: st_numscalar("r(transitivity)", `transitivity')
 
 	

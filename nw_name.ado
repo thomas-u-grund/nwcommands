@@ -1,7 +1,11 @@
 capture program drop nw_name
 program nw_name
 	version 9
-	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newvars(string) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) ]
+	// `newvars(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (a fully dead,
+	// undocumented no-op; confirmed via grep across the whole package -
+	// nothing ever passed it either).
+	syntax [anything(name=netname)], [id(string) new2mode(string) newvalued(string) newselfloop(string) newlabsfromvar(varname) newtitle(string) newcaption(string) newname(string) newdirected(string) newmodes(string) newmode1desc(string) newmode2desc(string) newprovenance(string) ]
 
 	// BUGFIX: `id()' was completely non-functional - nw_syntax.ado's own
 	// unprefixed `c_local id `r(id)'' side effect immediately clobbered
@@ -114,6 +118,12 @@ program nw_name
 
 	mata: st_numscalar("r(id)", `id')
 	mata: st_global("r(netname)", nw.nws.pdefs[`id']->get_name())
+	// Naming consistency (moderate-severity pass, information_census
+	// group): nwdyads/nwtriads use `r(name)' for the identical "which
+	// network is this result about" concept; nwname used `r(netname)'
+	// only. Added as an alias rather than renaming, so existing callers
+	// of either name keep working.
+	mata: st_global("r(name)", nw.nws.pdefs[`id']->get_name())
 	mata: st_global("r(vars)", nw.nws.pdefs[`id']->get_nodesvar_string())
 	mata: st_numscalar("r(nodes)", nw.nws.pdefs[`id']->get_nodes())
 	mata: st_global("r(mode2)", nw.nws.pdefs[`id']->is_2mode())

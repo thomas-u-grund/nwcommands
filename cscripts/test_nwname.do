@@ -32,3 +32,15 @@ nwname, id(1)
 assert r(netname) == "idA"
 assert r(id) == 1
 di "=== id() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, information_census group: newvars(string) was a
+* fully dead option (removed); newcaption()/newprovenance() are real,
+* working options that had zero documentation and zero test coverage
+* before this.
+nwclear
+nwrandom 5, prob(.3) name(nX)
+nwname nX, newcaption("cap text") newprovenance("prov text")
+nwname nX
+assert `"`r(caption)'"' == "cap text"
+assert `"`r(provenance)'"' == "prov text"
+di "=== newcaption()/newprovenance() REGRESSION VERIFIED ==="
