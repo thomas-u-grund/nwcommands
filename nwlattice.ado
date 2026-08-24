@@ -70,7 +70,20 @@ program nwlattice
 		
 		if ((mod(`=`right'-1', `cols') != 0) & `right' <= `nodes') mata: newmat[`i', `right'] = 1
 		if ((mod(`left', `cols') != 0) & `left' > 1) mata: newmat[`i', `left'] = 1
-		mata: newmat[2,1]=1
+		// BUGFIX: was unconditional - a targeted patch for the left-
+		// neighbor condition above excluding node 2's own tie back to
+		// node 1 (`left' > 1' skips `left'==1, i.e. i==2), executed on
+		// every outer-loop iteration regardless of matrix size. For a
+		// single-node lattice (`nodes'==1) there is no node 2 at all,
+		// so indexing [2,1] into the 1x1 `newmat' crashed ("subscript
+		// invalid", r3301). Guarded rather than reformulating the
+		// left-neighbor condition itself, to avoid any risk of changing
+		// behavior for the nodes>=2 case this line already handles
+		// (specifically the cols()==1 lattice, where changing the
+		// general condition instead could alter which ties get created
+		// - not attempted here without the same cross-validation rigor
+		// a correctness-affecting formula change would need).
+		if (`nodes' >= 2) mata: newmat[2,1]=1
 		if (`up' > 0) mata: newmat[`i', `up'] = 1 
 		if (`down' > 0 & `down' <= `nodes') mata: newmat[`i', `down'] = 1
 		

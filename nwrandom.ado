@@ -147,7 +147,11 @@ program nwrandom
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
 			}
-			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') `selfloop' `xvars' `undirected' labs(`labs')
+			// BUGFIX: this recursive call never forwarded `weights' -
+			// every ntimes()>1 call silently came back as a plain
+			// unweighted 0/1 network regardless of weights(), no
+			// warning or error.
+			nwrandom `nodes', census(`census') name(`name'_`i') density(`density') prob(`prob') weights(`weights') `selfloop' `xvars' `undirected' labs(`labs')
 		}
 		qui nwset
 		local newnetlist `r(nets)'

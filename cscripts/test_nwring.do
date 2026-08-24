@@ -59,3 +59,17 @@ assert         r(N)     == 20
 
 
 
+
+* --- alpha-audit regression: ntimes()>1 used to crash unconditionally
+* (a stray, undeclared stub() option in the recursive self-call, r198)
+* and, separately, silently dropped weights() even once that crash was
+* fixed. Both confirmed fixed directly.
+nwclear
+set seed 42
+nwring 10, k(2) ntimes(2) weights(0,0,1)
+assert _rc == 0
+nwsummarize ring_1
+assert r(maxval) == 3
+nwsummarize ring_2
+assert r(maxval) == 3
+di "=== ntimes()>1 + weights() REGRESSION VERIFIED ==="

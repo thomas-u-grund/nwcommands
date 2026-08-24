@@ -133,7 +133,11 @@ program nwpref
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
 			}
-			nwpref `nodes', m0(`m0') m(`m') prob(`prob') name(`name'_`i') stub(`stub') `xvars' `undirected' vars(`vars') labs(`labs')
+			// BUGFIX: this recursive call never forwarded `weights' -
+			// every ntimes()>1 call silently came back as a plain
+			// unweighted 0/1 network regardless of weights(), no
+			// warning or error.
+			nwpref `nodes', m0(`m0') m(`m') prob(`prob') name(`name'_`i') stub(`stub') `xvars' `undirected' vars(`vars') labs(`labs') weights(`weights')
 		}
 		exit
 	}

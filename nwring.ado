@@ -92,7 +92,17 @@ program nwring
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
 			}
-			nwring `nodes', k(`k') name(`name'_`i') stub(`stub') `xvars' `undirected'
+			// BUGFIX: was `stub(`stub')' - nwring's own syntax line
+			// never declares a `stub' option at all (unlike sibling
+			// nwlattice/nwpref, which do), so this stray token made
+			// EVERY ntimes()>1 call crash with r(198) "option stub()
+			// not allowed" - the documented multi-network-generation
+			// feature was completely broken. Also forwards `weights'
+			// now, which this recursive call never did (a separate,
+			// silent bug: ntimes()>1 always came back unweighted
+			// regardless of weights() - see nwrandom.ado's/nwpref.ado's
+			// own identical fix).
+			nwring `nodes', k(`k') name(`name'_`i') weights(`weights') `xvars' `undirected'
 		}
 		exit
 	}
