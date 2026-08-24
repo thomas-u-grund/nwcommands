@@ -230,3 +230,12 @@ nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(qapiv) undi
 capture noisily nwqap qapdv qapiv, permutations(2)
 assert _rc != 0
 di "=== SILENT-CRASH-ON-UNFITTABLE-REAL-DATA REGRESSION VERIFIED ==="
+
+* moderate-severity pass, stat_models group: a misspelled/nonexistent
+* network name used to crash with a raw Mata error (r3301) instead of a
+* clean message.
+nwclear
+nwrandom 5, prob(.5) name(realnetqap)
+capture noisily nwqap typobogus
+assert _rc == 482
+di "=== misspelled network name REGRESSION VERIFIED ==="

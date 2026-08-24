@@ -82,3 +82,13 @@ assert _rc == 0
 capture confirm file "`mixsave'"
 assert _rc == 0
 di "=== save() OPTION REGRESSION VERIFIED ==="
+
+* moderate-severity pass, stat_models group: a misspelled/nonexistent
+* network name used to crash with a raw Stata error ("variable not
+* found") instead of a clean message.
+nwclear
+nwrandom 5, prob(.5) name(realnetmix)
+gen grpmix = _n
+capture noisily nwmixing typobogus, attribute(grpmix)
+assert _rc == 482
+di "=== misspelled network name REGRESSION VERIFIED ==="

@@ -323,3 +323,19 @@ qui nwergm unet10, edges hamming(refnet10)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert missing(e(native))
+
+* moderate-severity pass, stat_models group: a fully edgeless (zero-tie)
+* network's MPLE fit - an outcome that never varies - used to crash
+* with a bare, uncaptured "r(2000);" and NO explanatory text at all,
+* unlike this command's otherwise consistently friendly "{err}..."
+* validation messages. Also confirms the caller's own dataset survives
+* untouched (the fix must `restore' before raising the error, not
+* after - the same ordering bug already fixed once in nwrename.ado).
+nwclear
+nwset, mat((0,0,0,0\0,0,0,0\0,0,0,0\0,0,0,0)) undirected labs(A,B,C,D) name(edgeless)
+gen mydata = 1
+capture noisily nwergm edgeless, edges
+assert _rc == 2000
+assert _N == 4
+assert mydata[1] == 1
+di "=== edgeless-network MPLE-crash REGRESSION VERIFIED ==="

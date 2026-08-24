@@ -137,3 +137,12 @@ nwset, mat((0)) name(singlenetcug) undirected
 capture noisily nwcug singlenetcug, stat(nwcomponents ##net##, replace) rname(components) reps(10)
 assert _rc != 0
 di "=== SINGLE-NODE DENSITY-CONDITIONED HANG REGRESSION VERIFIED ==="
+
+* moderate-severity pass, stat_models group: a misspelled/nonexistent
+* network name used to crash with a raw Mata error (r3301) instead of a
+* clean message.
+nwclear
+nwrandom 5, prob(.5) name(realnetcug)
+capture noisily nwcug typobogus, stat(nwcomponents ##net##, replace) rname(x) reps(2)
+assert _rc == 482
+di "=== misspelled network name REGRESSION VERIFIED ==="

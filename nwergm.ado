@@ -23,21 +23,39 @@
 [{opth nodeicov(varlist)}]
 [{opth nodeocov(varlist)}]
 [{opth edgecov(netname)}]
+[{opth hamming(netname)}]
 [{opth absdist(varlist)}]
 [{opth nodefactor(varlist)}]
+[{opth nodeofactor(varlist)}]
+[{opth nodeifactor(varlist)}]
 [{opth nodemix(varlist)}]
+[{opt sender}]
+[{opt receiver}]
 [{opt gwesp(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
 [{opt gwodegree(real)}]
 [{opt gwidegree(real)}]
+[{opt esp(numlist)}]
+[{opt dsp(numlist)}]
 [{opt degree(numlist)}]
 [{opt odegree(numlist)}]
 [{opt idegree(numlist)}]
+[{opt kstar(numlist)}]
+[{opt ostar(numlist)}]
+[{opt istar(numlist)}]
+[{opt degrange(numlist)}
+{opt degrangeto(numlist)}]
+[{opt odegrange(numlist)}
+{opt odegrangeto(numlist)}]
+[{opt idegrange(numlist)}
+{opt idegrangeto(numlist)}]
 [{opt concurrent}]
 [{opt triangle}]
 [{opt ctriple}]
+[{opt transitiveties}]
+[{opt cyclicalties}]
 [{opt method(mple|mcmle)}
 {opt mcmcburnin(int)}
 {opt mcmcinterval(int)}
@@ -1173,7 +1191,22 @@ program nwergm, eclass
 	qui gen double __ergm_y = .
 	mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), `__nw_D')
 
-	qui logit __ergm_y `__ergm_xlist', noconstant
+	// BUGFIX: a fully edgeless (zero-tie) network - an MPLE fit where the
+	// outcome never varies - used to crash completely silently (only
+	// "r(2000);", no explanatory text at all) from this bare, uncaptured
+	// `logit' call, unlike this command's otherwise consistently
+	// friendly "{err}...{txt}" validation messages for every other
+	// rejected input. `restore' still needs to run regardless of
+	// failure, or a caught error here would leave the caller's own
+	// dataset in the modified, mid-preserve state (the same class of
+	// bug already fixed once in nwrename.ado this same pass).
+	capture qui logit __ergm_y `__ergm_xlist', noconstant
+	if _rc != 0 {
+		local __ergm_mple_rc = _rc
+		restore
+		di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
+		error `__ergm_mple_rc'
+	}
 	tempname __b_mple __V_mple
 	matrix `__b_mple' = e(b)
 	matrix `__V_mple' = e(V)

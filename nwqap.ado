@@ -227,7 +227,17 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	}
 	
 	local net = word("`formula'", 1)
-	nw_syntax `net', max(1)
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Mata error ("subscript invalid", r3301) from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message.
+	unw_defs
+	capture nw_syntax `net', max(1)
+	if _rc != 0 {
+		di "{err}Network {bf:`net'} not found."
+		error `errNWsNotFound'
+	}
 	nwtomata `net', mat(dvnet)
 
 	// Binary-outcome regression commands (logit is this command's own

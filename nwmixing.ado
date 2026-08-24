@@ -121,7 +121,17 @@ program nwmixing
 	// tie counts) - a real feature addition, not a bug fix, and out of
 	// scope for this pass.
 	syntax [anything(name=netname)] , attribute(varname) [eiplot eiplotoptions(string) plot plotoptions(string) permutations(integer 100) save(string) * ]
-	nw_syntax `netname', max(1)
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Stata error ("variable not found") from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message.
+	unw_defs
+	capture nw_syntax `netname', max(1)
+	if _rc != 0 {
+		di "{err}Network {bf:`netname'} not found."
+		error `errNWsNotFound'
+	}
 	// BUGFIX: this stored the STRING "0" or "1" (both non-empty), not a
 	// genuine boolean - so the later `if "`undirected''" != ""' display
 	// guard was unconditionally true regardless of the network's actual
