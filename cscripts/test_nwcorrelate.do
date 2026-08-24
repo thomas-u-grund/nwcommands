@@ -110,6 +110,25 @@ nwtomatafast _cboth
 mata: Cboth = `r(mata)'
 mata: assert(max(Cboth) <= 1 + 1e-8 & min(Cboth) >= -1 - 1e-8)
 
+* moderate-severity pass, stat_models group: a misspelled/nonexistent
+* network name used to crash with a raw Mata error (r3301) instead of a
+* clean message.
+nwclear
+nwrandom 5, prob(.5) name(realnetcorr)
+capture noisily nwcorrelate typobogus typobogus
+assert _rc == 482
+di "=== misspelled network name REGRESSION VERIFIED ==="
+
+* an undefined observed correlation (zero-variance network) used to
+* crash the QAP permutation branch with a confusing, low-level Mata
+* syntax error ("unexpected end of line <istmt> incomplete", r3000).
+nwclear
+nwrandom 5, prob(1) name(constnet)
+gen distinctattr = _n
+capture noisily nwcorrelate constnet, attribute(distinctattr) permutations(10)
+assert _rc == 198
+di "=== undefined correlation REGRESSION VERIFIED ==="
+
 
 
 

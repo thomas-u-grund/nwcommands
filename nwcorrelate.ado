@@ -294,10 +294,20 @@ of Anthropological Research} 33, 452-473.
 capture program drop nwcorrelate
 program nwcorrelate
 	syntax [anything] [, attribute(string) * ]
-	
-//(string) attribute(string) name(string) permutations(integer 100) save(string) ] 
-	
-	nw_syntax `anything', min(1) max(2)
+
+//(string) attribute(string) name(string) permutations(integer 100) save(string) ]
+
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Mata error ("subscript invalid", r3301) from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message.
+	unw_defs
+	capture nw_syntax `anything', min(1) max(2)
+	if _rc != 0 {
+		di "{err}One or more of the specified networks could not be found."
+		error `errNWsNotFound'
+	}
 
 	if "`attribute'"!= "" {
 		local netname : word 1 of `netname'
@@ -366,7 +376,16 @@ unw_defs
 		local mode = "same"
 	}
 	
-	nw_syntax `netnames', max(2) min(1)
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Mata error ("subscript invalid", r3301) from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message - a very plausible everyday typo.
+	capture nw_syntax `netnames', max(2) min(1)
+	if _rc != 0 {
+		di "{err}One or more of the specified networks could not be found."
+		error `errNWsNotFound'
+	}
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
 	
@@ -408,6 +427,19 @@ unw_defs
 	// Calculate correlation of two networks.
 	mata: st_numscalar("r(corr)",correlate_nets((*`netobj1'->get_matrix()), (*`netobj2'->get_matrix()))	)
 	local corr `r(corr)'
+	// BUGFIX: an undefined observed correlation (e.g. one of the two
+	// networks/attribute-expanded networks has zero variance - exactly
+	// the case this command's own .sthlp already warns about for the
+	// default mode(same) on a continuous/all-distinct attribute) used
+	// to crash the permutation branch several lines below with a
+	// confusing, low-level Mata syntax error ("unexpected end of line
+	// <istmt> incomplete", r3000) - `corr' ends up genuinely empty
+	// (not even a "." missing token), so `if `corr' > 0' expands to an
+	// operand-less comparison. Caught here with a clear message instead.
+	if "`corr'" == "" | "`corr'" == "." {
+		di "{err}Correlation is undefined (one of the two networks has zero variance); cannot run a QAP permutation test."
+		error 198
+	}
 	
 	// Calculate correlations of network2 with permutations of network1
 	if (`permutations' > 1) {

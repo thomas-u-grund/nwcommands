@@ -143,3 +143,10 @@ assert _benefit[1] == 0 & _cost[1] == 0 & _util[1] == 0
 assert _benefit[2] == 0 & _cost[2] == 0 & _util[2] == 0
 assert _benefit[3] == 0 & _cost[3] == 0 & _util[3] == 0
 di "=== DISCONNECTED/EDGELESS NETWORK REGRESSION VERIFIED ==="
+
+* moderate-severity pass, stat_models group: a misspelled/nonexistent
+* network name used to crash with a raw Mata error (r3301) instead of a
+* clean message.
+capture noisily nwutility typobogus
+assert _rc == 482
+di "=== misspelled network name REGRESSION VERIFIED ==="

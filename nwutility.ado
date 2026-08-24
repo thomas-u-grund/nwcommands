@@ -2,7 +2,16 @@ capture program drop nwutility
 program nwutility
 	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) *]
 	unw_defs
-	nw_syntax `netname', max(1)
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Mata error ("subscript invalid", r3301) from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message.
+	capture nw_syntax `netname', max(1)
+	if _rc != 0 {
+		di "{err}Network {bf:`netname'} not found."
+		error `errNWsNotFound'
+	}
 	// _nwsyntax (now nw_syntax directly, since _nwsyntax never
 	// re-exports the node count) gives the main network's node
 	// count, but the intrvalue()/intrcost() branches below call

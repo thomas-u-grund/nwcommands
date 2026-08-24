@@ -133,7 +133,17 @@ program nwcug, rclass
 		set seed `seed'
 	}
 
-	nw_syntax `netname'
+	// Consistency (moderate-severity pass, stat_models group): a
+	// misspelled/nonexistent network name used to crash with a raw,
+	// low-level Mata error ("subscript invalid", r3301) from inside
+	// `nw_syntax' itself, instead of this package's usual clean
+	// "{err}...{txt}" message.
+	unw_defs
+	capture nw_syntax `netname'
+	if _rc != 0 {
+		di "{err}Network {bf:`netname'} not found."
+		error `errNWsNotFound'
+	}
 	local origname "`netname'"
 
 	if "`condition'" == "census" & "`directed'" != "true" {
