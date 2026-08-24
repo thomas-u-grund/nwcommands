@@ -68,3 +68,27 @@ assert _rc == 198
 nwset
 assert r(networks) == 1
 di "=== no-if / zero-node REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_derived group: nwsubset's own
+* DEFAULT name (netname_sub, when name() is unspecified) used to
+* hard-error on collision instead of auto-incrementing like every
+* sibling in this group; an explicit, caller-chosen name() still
+* requires replace on a genuine collision (now enforced by nwduplicate).
+nwclear
+nwrandom 6, prob(.5) name(mynet)
+nwsubset mynet if _n<=4
+assert _rc == 0
+nwsubset mynet if _n<=3
+assert _rc == 0
+nwset
+assert `"`r(nets)'"' == `" mynet mynet_sub mynet_sub_1"'
+
+nwclear
+nwrandom 6, prob(.5) name(mynet2)
+nwsubset mynet2 if _n<=4, name(fixedname)
+assert _rc == 0
+capture noisily nwsubset mynet2 if _n<=3, name(fixedname)
+assert _rc == 483
+nwsubset mynet2 if _n<=3, name(fixedname) replace
+assert _rc == 0
+di "=== default-name auto-increment / explicit-name collision REGRESSION VERIFIED ==="

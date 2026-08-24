@@ -22,7 +22,8 @@
 {opt weights(p1, p2,...)}
 {opth name(netname)}
 {opt xvars}
-{opt undirected}]
+{opt undirected}
+{opt labs}({it:lab1 lab2 ...})]
 
 
 {synoptset 20 tabbed}{...}
@@ -34,6 +35,7 @@
 {synopt:{opth name(netname)}}name of the new random network{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 
 
 {title:Description}
@@ -188,7 +190,27 @@ program nwdyadprob
 	if "`mat'" == "" {
 		local mat = "`m'"
 	}
-	
+	else {
+		// BUGFIX: a caller-supplied mat() used to be referenced directly
+		// by its raw text everywhere below, including two in-place
+		// mutation attempts (`mat' = lowertriangle(`mat')' further down,
+		// and `mat' = transformIntoProbs(...)' above when combined with
+		// weightnet). That only works when mat() is an actual, existing
+		// Mata variable NAME - it crashes ("invalid lval", r3000) the
+		// moment mat() is instead a literal expression (e.g.
+		// mat(J(5,5,.5)), exactly as shown working in this command's own
+		// .sthlp examples) combined with `undirected'. Copying into a
+		// private tempname up front - the same pattern already used just
+		// above for the "mat() unspecified" case - makes every later
+		// reference (read or write) operate on a real, assignable
+		// variable regardless of what kind of Mata argument the caller
+		// passed.
+		tempname __matcopy
+		mata: `__matcopy' = (`mat')
+		local mat = "`__matcopy'"
+	}
+
+
 	// Install gsample if needed
 	capture which gsample
 	if _rc != 0 {

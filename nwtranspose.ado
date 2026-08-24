@@ -19,12 +19,15 @@
 {cmdab: nwtranspose} 
 [{it:{help netname}}]
 [{cmd:,}
-{cmd:generate}({it:{help newnetname}})]
+{cmd:generate}({it:{help newnetname}})
+{opt name}({it:{help newnetname}})
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network{p_end}
+{synopt:{opt generate}({it:{help newnetname}})}Save transpose as new network (alias: {opt name()}, matching the rest of this group){p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -73,9 +76,22 @@ Binary: yes. Directed: yes - this command's entire purpose is transposing a netw
 ***/
 
 capture program drop nwtranspose
-program nwtranspose 
+program nwtranspose
 	version 9
-	syntax [anything(name=netname)], [ generate(string) replace]
+	// Naming consistency (moderate-severity pass, generators_derived
+	// group): every other command in this group (nwdyadprob/
+	// nwhomophily/nwexpand/nwdissimilar/nwsimilar/nwsubset/nwshared)
+	// uses `name()' to name a new output network; nwtranspose alone used
+	// `generate()'. Added `name()' as a working alias, kept `generate()'
+	// for backward compatibility.
+	syntax [anything(name=netname)], [ generate(string) name(string) replace]
+	if "`generate'" != "" & "`name'" != "" {
+		di "{err}Specify only one of {bf:generate()} or {bf:name()} (they are the same option) - not both."
+		error 198
+	}
+	if "`name'" != "" {
+		local generate "`name'"
+	}
 	unw_defs
 
 	nw_syntax `netname', max(1)

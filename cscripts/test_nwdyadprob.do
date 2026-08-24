@@ -42,3 +42,13 @@ nwset, mat(J(8,8,5)) name(wbase)
 capture noisily nwdyadprob wbase, weights(0.01 0.99) density(0.3) name(w2)
 assert _rc == 198
 di "=== weights() REGRESSION VERIFIED ==="
+
+* moderate-severity pass, generators_derived group: mat() as a literal
+* Mata expression (not an existing variable name) combined with
+* undirected used to crash ("invalid lval", r3000) - the code tried to
+* mutate mat()'s own raw text in place via lowertriangle(), which only
+* works when it names a real, assignable Mata variable.
+nwclear
+capture noisily nwdyadprob, mat(J(5,5,.5)) name(undirtest) undirected xvars
+assert _rc == 0
+di "=== mat() literal expression + undirected REGRESSION VERIFIED ==="

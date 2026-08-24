@@ -21,7 +21,8 @@
 {opt weights(p1, p2,...)}
 {opth name(netname)}
 {opt xvars}
-{opt undirected}]
+{opt undirected}
+{opt labs}({it:lab1 lab2 ...})]
 
 
 {synoptset 20 tabbed}{...}
@@ -33,6 +34,7 @@
 {synopt:{opth name(netname)}}name of the new random network{p_end}
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt undirected}}generate undirected network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 
 
 {title:Description}
