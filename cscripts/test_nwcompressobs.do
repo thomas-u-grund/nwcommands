@@ -67,3 +67,13 @@ assert lab[1] == "A"
 assert lab[2] == "C"
 assert val[1] == 1
 assert val[2] == 3
+
+* moderate-severity pass, programming group: nwcompressobs had no
+* `syntax' line at all, so any options or arguments typed after the
+* command name were silently ignored instead of raising an error, and
+* the command still returned rc==0.
+capture noisily nwcompressobs, bogus
+assert _rc != 0
+capture noisily nwcompressobs bogusarg
+assert _rc != 0
+di "=== nwcompressobs syntax REGRESSION VERIFIED ==="

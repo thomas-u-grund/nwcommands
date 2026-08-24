@@ -1868,6 +1868,26 @@ Fifteenth unit of the moderate-severity pass; 14 of the 181 findings.
 | **New test file: `cscripts/test_nwmoviexy.do`** | ✅ (fixed) | ✅ | ✅ | n/a | Did not exist. As a pure 1-line alias for `nwmovie` (confirmed by reading it) the risk surface is minimal, but certifies the alias actually forwards correctly and that `nodexys()` produces a real, valid Animated GIF end to end - not just that the call doesn't error. |
 | Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (156 files, +3 new this unit) re-run: 152/156 pass. The same 4 pre-existing, unrelated failures already logged in unit 12's own Pending entry recur unchanged; none of unit 15's touched files are implicated. |
 
+## Moderate-severity pass, unit 16: `programming` group (`nwcompressobs`)
+
+Sixteenth and final unit of the moderate-severity pass; 1 of the 181 findings.
+
+| Feature | Implemented | Tested | Certified | Documented | Notes |
+|---|---|---|---|---|---|
+| **`nwcompressobs.ado` had no `syntax` line at all**, so any options or arguments typed after the command name were silently ignored instead of raising "invalid syntax"/"option not allowed", and the command still returned `rc==0` | ✅ (fixed) | ✅ | ✅ | n/a | This program takes no arguments or options at all - confirmed via both of its own real callers (`nwdropnodes.ado`, `nwreplacemat.ado`), which both invoke it bare with nothing after the command name. Added a plain `syntax` line with no clause, which rejects anything else while leaving the bare call working exactly as before (confirmed directly: still `rc==0` on a normal call, now `rc!=0` for a bogus option or argument). `nwcompressobs.sthlp` already correctly documented "no options" - no doc change needed. |
+| Scoped regression sweep | ✅ | ✅ | ✅ | n/a | Full `cscripts/` suite (156 files) re-run: 152/156 pass. The same 4 pre-existing, unrelated failures already logged in unit 12's own Pending entry recur unchanged; `nwcompressobs` is not implicated. |
+
+## Moderate-severity pass: complete (all 16 units)
+
+All 181 findings catalogued by the original Phase-1 alpha audit (`/tmp/alpha_findings.json`, moderate/minor severity) have now been addressed - fixed, or confirmed stale (already resolved by an earlier phase of this same session) - across all 16 command groups in `docs/ALPHA_AUDIT.md`'s own table, each as its own committed unit (units 1-16 above). Every unit followed the same methodology: pull that group's findings, verify each empirically via a throwaway probe before trusting its own description, fix conservatively (prefer aliasing/documenting over inventing new behavior; add options rather than rename existing ones), add or extend regression coverage, run the full `cscripts/` suite as a checkpoint, and document explicitly - including genuinely stale findings (never silently skipped or re-done) and any new bugs found incidentally along the way (several units' own drive-by fixes: stale-`_rc` leaks, misspelled-network-name crashes in commands outside that unit's own catalogued scope, etc.).
+
+Two items surfaced during the pass remain deliberately open, both already logged in the Pending table below rather than fixed in-place, since both fall outside whichever unit happened to surface them:
+
+- **A possibly-real, unconfirmed `nwreplace`/undirected-network bracket-syntax issue** (found incidentally in unit 14, while writing `test_nwtomatafast.do`) - needs its own dedicated investigation by whoever next touches `nwreplace`/`manipulation_transform`.
+- **4 pre-existing, unrelated `cscripts/` test failures** (`test_nwbalance`, `test_nwergm_mple_scale`, `test_nwimport`, `test_sparse_index` - first surfaced at unit 12's own checkpoint and reconfirmed unchanged at every subsequent unit's checkpoint through unit 16) - a dead external URL, an apparent `nwrandom` option-naming question (`directed` vs. its own real `undirected` toggle), and an `nwreplace` matrix-indexing syntax error, none of which are caused by anything touched during this pass.
+
+Everything else the pass touched is fixed and regression-tested, or was confirmed already fixed by an earlier phase of this session and needed no further action.
+
 ## Pending (queued for implementation, not yet started)
 
 | Feature | Priority (see ROADMAP.md) | Est. effort |
