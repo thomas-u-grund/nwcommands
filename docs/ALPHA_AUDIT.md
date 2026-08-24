@@ -47,7 +47,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 5 | information_census | nwcurrent, nwdyads, nwissymmetric, nwname, nwsummarize, nwtabulate, nwtriads | 🔶 |
 | 6 | manipulation_subset | nwaddnodes, nwdrop, nwdropnodes, nwkeep, nwkeepnodes, nwnoderename, nwpreserve, nwrestore | 🔶 |
 | 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | 🔶 |
-| 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | 🔶 |
+| 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | 🔶 (critical fixes done, alpha unit 9) |
 | 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | 🔶 |
 | 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | 🔶 |
 | 11 | positions_equivalence | nwassortativity, nwbalance, nwbrokerage, nwburt, nwconcor, nwconstraint, nwcoreperiphery, nwsimindex, nwclustering, nw2clustering | 🔶 |

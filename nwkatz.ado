@@ -103,7 +103,24 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. Psychometrik
 capture program drop nwkatz
 program nwkatz
 	version 9
-	syntax [anything(name=netname)] , [ alpha(real 1)  GENerate(string) replace *]
+	// BUGFIX: this .sthlp explicitly documents "the network is
+	// otherwise symmetrized for the underlying distance calculation
+	// unless geodesic_options specifies nosym" and unconditionally
+	// printed "Network has been symmetrized for calculation." on every
+	// call - but neither `nosym' nor `sym' was ever declared here, so
+	// `nosym' (forwarded via the trailing `*' catch-all) reached the
+	// internal nwgeodesic call as a no-op (nwgeodesic's own real
+	// toggle is opt-IN `sym', already off by default) and the sthlp's
+	// own claimed default behavior never actually happened - the
+	// printed message was simply false. Declaring `nosym' here makes
+	// Stata's own parser define a local named after the STEM - `sym',
+	// not `nosym' - set to "nosym" when passed, empty otherwise (the
+	// same convention nwbetween.ado's/nwcloseness.ado's own identical
+	// symmetrize-by-default toggle already uses).
+	syntax [anything(name=netname)] , [ alpha(real 1)  GENerate(string) replace nosym *]
+	if "`sym'" == "" {
+		local symopt "sym"
+	}
 
 	nw_syntax `netname', max(1)
 	local origdirected "`directed'"
@@ -159,7 +176,7 @@ program nwkatz
 	// active. This scratch network is dropped again a few lines below
 	// regardless, so always allowing nwgeodesic to overwrite it here is
 	// safe.
-	qui nwgeodesic `netname', name(`geo') nwreplace `options'
+	qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
 	nw_syntax `geo'
 	// nwreplace's own expression parser (nw_expnetexp.ado) treats its
 	// input as plain Stata-style arithmetic text and translates it into
