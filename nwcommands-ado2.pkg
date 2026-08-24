@@ -11,6 +11,7 @@ f nwrecode.ado
 f nwrename.ado
 f nwreplace.ado
 f nwreplacemat.ado
+f nwrestore.ado
 f nwring.ado
 f nwsave.ado
 f nwset.ado

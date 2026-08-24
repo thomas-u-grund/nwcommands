@@ -80,6 +80,7 @@ f nwlattice.ado
 f nwload.ado
 f nwmodularity.ado
 f nwmovie.ado
+f nwmoviexy.ado
 f nwname.ado
 f nwnclan.ado
 f nwnclique.ado

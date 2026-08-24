@@ -80,6 +80,7 @@ f nwlattice.sthlp
 f nwload.sthlp
 f nwmodularity.sthlp
 f nwmovie.sthlp
+f nwmoviexy.sthlp
 f nwname.sthlp
 f nwnclan.sthlp
 f nwnclique.sthlp
@@ -100,6 +101,7 @@ f nwrecode.sthlp
 f nwrename.sthlp
 f nwreplace.sthlp
 f nwreplacemat.sthlp
+f nwrestore.sthlp
 f nwring.sthlp
 f nwsave.sthlp
 f nwset.sthlp
