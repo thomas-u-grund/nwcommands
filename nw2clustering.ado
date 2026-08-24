@@ -18,7 +18,8 @@
 [{cmd:,}
 {opt measure(string)}
 {opth level(int)}
-{opth generate(newvarname)}]
+{opth generate(newvarname)}
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -30,6 +31,7 @@ function; default = {it:arithmetic} for a valued network, {it:binary} otherwise{
 {synopt:{opth level(int)}}Which mode (1 or 2) to compute clustering scores for; default = 1{p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each {opt level()}-mode
 node's own clustering coefficient; default = {it:_clustering2_lev}{it:level}{p_end}
+{synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 
 {p2colreset}{...}
 
@@ -98,14 +100,32 @@ distance in bipartite graphs. {it:Computational & Mathematical Organization Theo
 ***/
 capture program drop nw2clustering
 program nw2clustering
-	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string)]
-	
+	syntax [anything(name=netname)][, measure(string) level(int 1) GENerate(string) replace]
+
 	unw_defs
 
 	if "`generate'" == "" {
 		local generate = "_clustering2_lev`level'"
 	}
 
+	// BUGFIX (moderate-severity pass, positions_equivalence group): no
+	// collision guard existed at all - worse than a silent overwrite,
+	// confirmed directly: when `generate' already existed, the command
+	// still returned rc==0 (claiming success) but left the pre-existing
+	// variable's values completely UNCHANGED, computing nothing. Root
+	// cause is downstream (`merge m:m ..., nogenerate' silently keeps
+	// the master's own version and discards the using dataset's
+	// same-named column whenever both share a variable name, with no
+	// error), but the fix belongs here: check up front, before any of
+	// the expensive computation below ever runs, matching the
+	// `replace'-required convention every sibling command with a
+	// generate() option (nwclustering/nwconcor/nwcoreperiphery/nwburt/
+	// nwbrokerage) already uses.
+	capture confirm variable `generate', exact
+	if _rc == 0 & "`replace'" == "" {
+		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
+		err 99
+	}
 	tempfile temp clustering edge_list ego_list alter_list
 	nw_syntax `netname'
 	nw_datasync `netname'
@@ -377,13 +397,32 @@ program nw2clustering
 	local C_avg = r(mean)
 	
 	restore
+	// `merge' silently keeps the master's own version and discards the
+	// using dataset's values whenever both share a non-key variable name
+	// (see the guard above) - so an explicit `replace' call still needs
+	// the stale variable dropped here first, or the freshly-computed
+	// `clustering' results would be discarded exactly the same way.
+	capture drop `generate'
 	merge m:m `nw_nodename' using `clustering', nogenerate
 	}
 	
 	mata: st_rclear()
 	mata: st_numscalar("r(C_global)", `=`closed_4paths' / `potential_4paths'')
-	mata: st_global("r(measure)", "`measure'")	
+	mata: st_global("r(measure)", "`measure'")
 	mata: st_numscalar("r(C_avg)", `C_avg')
+	// Two separate `capture'd probes earlier in this program (the
+	// collision-guard `confirm variable' at the top, and the pre-merge
+	// `drop' further up) each leave their own stale, harmless nonzero
+	// _rc on the ordinary case where there is nothing to find/drop -
+	// and nothing in between them touches _rc again (`mata:'/`local'/
+	// `sum' do not), so whichever ran last would otherwise leak out as
+	// this command's own final, misleading return code. Reset
+	// explicitly as the last step, matching this package's own
+	// established idiom for exactly this situation (see nwaltergen.ado's/
+	// nwbrokerage.ado's own header comments) - placed here, after every
+	// other `capture' in this program, rather than right after either
+	// individual probe, so it cannot itself be re-dirtied by a later one.
+	capture confirm number 1
 end
 
 

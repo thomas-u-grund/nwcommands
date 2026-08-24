@@ -106,6 +106,11 @@ is a ratio to a sum of outgoing tie weights, only meaningful when all non-negati
 checked.
 
 
+{title:Examples}
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwburt flobusiness}
+
 {title:References}
 
 {pstd}
@@ -225,6 +230,18 @@ program nwburt, rclass
 		di "{txt}    Burt structural hole measures"
 		sum _effsize _efficiency _constraint _hierarchy
 	}
+	// Drive-by fix (found while writing this command's own Examples
+	// section, moderate-severity pass): several `capture'd probes above
+	// (the per-variable collision-guard `confirm variable' loop, and the
+	// four `capture drop' calls) each fail harmlessly on the ordinary,
+	// no-collision case - and neither `return scalar' nor `sum' actually
+	// refresh `_rc' the way a plain, un-quietly-prefixed command
+	// normally would, so an entirely successful `nwburt' call could
+	// still leak a stale nonzero `_rc' to its own caller (confirmed
+	// directly: a fresh call returned `_rc==111'). Reset explicitly as
+	// the last step, matching this package's own established idiom for
+	// exactly this situation.
+	capture confirm number 1
 end
 
 capture mata: mata drop dyadicredundancy()

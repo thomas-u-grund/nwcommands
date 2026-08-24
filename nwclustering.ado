@@ -18,7 +18,9 @@
 [{cmd:,}
 {opt measure(string)}
 {opt SYMmetrize}
-{opth generate(newvarname)}]
+{opth generate(newvarname)}
+{opt replace}
+{opt silent}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -32,6 +34,8 @@ otherwise{p_end}
 weighted {opt measure()} on a directed network - see Supported network types below){p_end}
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own
 clustering coefficient; default = {it:_clustering}{p_end}
+{synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
+{synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
 
@@ -99,7 +103,7 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 capture program drop nwclustering
 program nwclustering
 	version 9
-	syntax [anything(name=netname)][, measure(string) SYMmetrize GENerate(string)]
+	syntax [anything(name=netname)][, measure(string) SYMmetrize GENerate(string) replace silent]
 	set more off
 
 	unw_defs
@@ -164,6 +168,17 @@ program nwclustering
 		local generate = "_clustering"
 	}
 
+	// Consistency (moderate-severity pass, positions_equivalence group):
+	// every sibling command with a generate() option (nwconcor/
+	// nwcoreperiphery/nwburt/nwbrokerage) already requires an explicit
+	// replace before overwriting an existing variable; nwclustering had
+	// no such guard at all and silently clobbered any pre-existing
+	// variable of the target name.
+	capture confirm variable `generate', exact
+	if _rc == 0 & "`replace'" == "" {
+		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
+		err 99
+	}
 	capture drop `generate'
 	qui gen `generate' = .
 
@@ -215,17 +230,24 @@ program nwclustering
 		local netname "`original'"
 	}
 
-	noi di "{hline 40}"
-	noi di "{txt}  Network name: {res}`netname'"
+	// Consistency: nwconcor/nwcoreperiphery/nwburt/nwbrokerage/nwsimindex
+	// all already offer `silent' to suppress this same display block;
+	// nwclustering had no such option at all.
+	if "`silent'" == "" {
+		noi di "{hline 40}"
+		noi di "{txt}  Network name: {res}`netname'"
+		if "`symmetrize'" != "" {
+			noi di "{txt}  Symmetrized: {res}true"
+		}
+		noi di "{hline 40}"
+		noi di "{txt}    Measure: {res}`measure'"
+		noi di "{txt}    Average clustering coefficient: {res}`=round(`r(cluster_avg)',0.001)'"
+		noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
+		noi di " "
+	}
 	if "`symmetrize'" != "" {
-		noi di "{txt}  Symmetrized: {res}true"
 		mata: st_global("r(symmetrized)", "false")
 	}
-	noi di "{hline 40}"
-	noi di "{txt}    Measure: {res}`measure'"
-	noi di "{txt}    Average clustering coefficient: {res}`=round(`r(cluster_avg)',0.001)'"
-	noi di "{txt}    Global clustering coefficient: {res}`=round(`r(cluster_global)',0.001)'"
-	noi di " "
 	_return hold rcluster
 	// BUGFIX: `symnet' is only ever actually created (tempname just
 	// reserves a name, it doesn't create anything) when `symmetrize' was
