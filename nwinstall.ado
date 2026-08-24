@@ -108,8 +108,24 @@ program nwinstall
 			capture findfile "profile.do", path("`path'")
 			local existingProfile "`r(fn)'"
 			if _rc == 0 {
-				file open `fh1' using "`r(fn)'", read 
-				file open `fh2' using "`path'\profile_temp.do", write replace
+				file open `fh1' using "`r(fn)'", read
+				// BUGFIX: was "`path'\profile_temp.do" - a literal
+				// backslash is not a path separator on Mac/Linux, so
+				// this actually opened a file named "<path's own last
+				// component>\profile_temp.do" in path's PARENT
+				// directory, not "profile_temp.do" inside path itself.
+				// Combined with the erase below (unconditional) and the
+				// MacOSX branch's own mv sourcing from the wrong
+				// location entirely (c(sysdir_stata), never touched by
+				// this file open), the net effect on Mac (and, since no
+				// Unix branch existed at all, presumably Linux) was
+				// silent, permanent data loss: the original profile.do
+				// was deleted and no replacement was ever written in its
+				// place, with rc=0 throughout. Fixed to a forward slash,
+				// which works correctly on every platform including
+				// Windows (Stata's own file-open path handling accepts
+				// forward slashes there too).
+				file open `fh2' using "`path'/profile_temp.do", write replace
 				file read `fh1' line
 				while r(eof) == 0 {
 					if "`line'" != "nwinstall, usermenu" {
@@ -120,8 +136,20 @@ program nwinstall
 				file close `fh1'
 				file close `fh2'
 				erase `existingProfile'
-				if c(os) == "MacOSX" {
-					shell export PATH="$PATH:`:environ PATH':`c(pwd)':`path':`c(adopath)':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";mv `c(sysdir_stata)'profile_temp.do `existingProfile'
+				if c(os) == "MacOSX" | c(os) == "Unix" {
+					// BUGFIX: sourced from `c(sysdir_stata)' - a
+					// completely different location than where fh2 was
+					// actually written just above (`path') - so this mv
+					// always failed ("No such file or directory",
+					// visible in the log but not surfaced as a Stata
+					// error since `shell' does not propagate the
+					// underlying command's own exit code to `_rc').
+					// Fixed to source from `path', matching the file
+					// open above. Also now covers plain "Unix" (Linux),
+					// not just "MacOSX" - previously c(os) values other
+					// than "MacOSX"/"Windows" silently did nothing after
+					// the erase, an equally destructive gap.
+					shell export PATH="$PATH:`:environ PATH':`c(pwd)':`path':`c(adopath)':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";mv `path'/profile_temp.do `existingProfile'
 				}
 				if c(os) == "Windows" {
 					di "shell rename `path'/profile_temp.do `existingProfile'"
