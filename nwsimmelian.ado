@@ -63,8 +63,18 @@ program nwsimmelian
 	}
 	nwvalidate `name'
 	if "`r(exists)'" == "true" & "`nwreplace'" == "" {
+		// BUGFIX: was `error 3000' - a bare Stata error code with its
+		// own, unrelated built-in meaning ("Mata compile-time error"),
+		// so Stata prints ITS OWN generic canned text for that alongside
+		// this command's own custom message, confusingly implying an
+		// actual crash rather than a deliberate name-collision guard.
+		// r(6099) is this package's own established convention for
+		// exactly this situation (see nwset.ado's/nwfromedge.ado's own
+		// identical guard, harmonisation unit 116) - reused here instead,
+		// matching the identical fix in nwshared.ado (harmonisation unit
+		// 129).
 		noi di "{err}No, network {bf:`name'} already exists; use differentname or option {bf:nwreplace}."
-		error 3000
+		error 6099
 	}
 	capture nwdrop `name'
 
