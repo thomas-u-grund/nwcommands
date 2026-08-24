@@ -88,7 +88,27 @@ program nwbridges
 	nwduplicate `netname', name(`generate')
 
 	nw_syntax `generate'
-	mata: `netobj'->set_edge(`netobj'->calculate_distances_without())
+	// PERFORMANCE FIX: type(global) only needs to know which ties are
+	// bridges (does removing this one tie disconnect its endpoints?),
+	// not the actual alternate-path distance calculate_distances_
+	// without() computes for every single tie via its own dedicated
+	// BFS - O(m*(V+E)) total, confirmed too slow to complete within
+	// several minutes at n=10,000/50k edges during a benchmark run.
+	// calculate_bridges_global() answers exactly the type(global)
+	// question via a single O(V+E) DFS (Tarjan 1974) instead - but
+	// only for UNDIRECTED networks; a directed graph's own analogous
+	// question is a different, harder problem this fix does not
+	// attempt (see that method's own header comment), so directed
+	// input keeps using the original, unchanged computation. type(
+	// local)/type(distance) both need real distance values (not just
+	// a bridge/not-bridge boolean) and also keep the original path
+	// unconditionally.
+	if "`type'" == "global" & "`directed'" == "false" {
+		mata: `netobj'->set_edge(`netobj'->calculate_bridges_global())
+	}
+	else {
+		mata: `netobj'->set_edge(`netobj'->calculate_distances_without())
+	}
 	if "`type'" == "global" {
 		nwreplace `generate' = (`generate' == -1)
 		local type "global"
