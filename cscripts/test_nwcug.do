@@ -124,3 +124,16 @@ nwname, newname(twoclique2)
 nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(500) seed(20260821) condition(density)
 assert r(mean_null) == 1
 assert r(sd_null) == 0
+
+
+* --- alpha-audit regression: a 1-node network has 0 possible dyads, so
+* its own density is undefined (missing) - previously passed straight
+* through to nwrandom's density() option, which never terminates when
+* asked to hit a missing target density. Confirmed hanging indefinitely
+* (100% CPU, no error, no timeout) before this fix; must now error
+* immediately and cleanly instead.
+nwclear
+nwset, mat((0)) name(singlenetcug) undirected
+capture noisily nwcug singlenetcug, stat(nwcomponents ##net##, replace) rname(components) reps(10)
+assert _rc != 0
+di "=== SINGLE-NODE DENSITY-CONDITIONED HANG REGRESSION VERIFIED ==="

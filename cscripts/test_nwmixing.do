@@ -60,3 +60,25 @@ nwload
 nwmixing net4, attribute(w) permutations(50)
 assert _rc == 0
 assert r(EI_index) != .
+
+
+* --- alpha-audit regression: save() was referenced in dead code (an
+* undeclared `save' local, only ever populated by the trailing `*'
+* catch-all - which is applied to the underlying `tab' call, not to
+* `save' - so passing save(filename) actually failed with "option
+* save() not allowed", r198, rather than saving anything). Now a real,
+* declared option.
+nwclear
+nwset, mat((0,1,1,0\1,0,0,1\1,0,0,1\0,1,1,0)) name(net5) undirected
+gen v = mod(_n,2)
+nwload
+tempfile mixsave
+nwmixing net5, attribute(v) permutations(20) save(`mixsave')
+assert _rc == 0
+* a tempfile's own generated name already ends in a numeric ".NNNNNN"
+* suffix, which Stata's `save' command treats as an existing extension
+* and does not append ".dta" on top of - the saved file is at the
+* literal `mixsave' path, not `mixsave'.dta (confirmed directly).
+capture confirm file "`mixsave'"
+assert _rc == 0
+di "=== save() OPTION REGRESSION VERIFIED ==="

@@ -213,3 +213,20 @@ nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
 assert _rc == 0
 capture nw_syntax wdvfitted_1, other(_check)
 assert _rc == 0
+
+
+* --- alpha-audit regression: when the FINAL, non-permuted, real-data
+* regression itself cannot be fit (e.g. perfect prediction/separation),
+* nwqap used to abort completely silently - only a bare "r(2000);"
+* printed, no diagnostic text at all, since that specific call was
+* never captured and (without detail) ran quietly, suppressing even
+* Stata's own native error text. This is distinct from the existing
+* degenerate-PERMUTATION-draw retry logic above, which only guards the
+* permutation loop, not this final real-data fit. Must now fail with a
+* real, nonzero, catchable _rc and an actual printed message.
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(qapdv) undirected labs(A,B,C,D,E)
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(qapiv) undirected labs(A,B,C,D,E)
+capture noisily nwqap qapdv qapiv, permutations(2)
+assert _rc != 0
+di "=== SILENT-CRASH-ON-UNFITTABLE-REAL-DATA REGRESSION VERIFIED ==="

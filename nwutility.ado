@@ -110,9 +110,22 @@ real matrix distance_distribution(real matrix dist) {
 	
 	dd = J(nodes, maxdist, 0)
 	
+	// BUGFIX: `dist[i,j] > 0' was TRUE for a missing (unreachable) pair
+	// too - Mata's relational operators treat missing as larger than
+	// any real value - so every genuinely unreachable pair on a
+	// disconnected network was wrongly counted as reachable. Worse,
+	// `dd[i,dist[i,j]]' then used that missing VALUE directly as a
+	// column index, which Mata silently interprets as the `.'
+	// (all-columns) selector form rather than erroring, incrementing
+	// EVERY distance bucket in row i instead of one - confirmed
+	// directly to produce wrong (but plausible-looking) _benefit/_cost/
+	// _util values on any disconnected network, and an uncontrolled
+	// Mata conformability error on a fully edgeless one (every pair
+	// unreachable, so `dd[i,.]' fires on every iteration against a
+	// 0-column `dd'). Fixed by excluding missing distances explicitly.
 	for(i = 1; i<= nodes; i++){
 		for(j = 1; j <= nodes; j++){
-		    if (dist[i,j] > 0) {
+		    if (dist[i,j] < . & dist[i,j] > 0) {
 				dd[i,dist[i,j]] = dd[i,dist[i,j]] + 1
 			}
 		}
@@ -130,7 +143,19 @@ real matrix util_simple(real matrix dd, real scalar b, real scalar c) {
 	for (i = 1;i<= cols(dd); i ++){
 		benefit_cost[,1] = benefit_cost[,1] :+ (dd[,i] * b^i)
 	}
-	benefit_cost[,2] = dd[,1] :* c
+	// BUGFIX: `dd[,1]' crashed with an uncontrolled "subscript invalid"
+	// (r3301) on a fully edgeless network - `dd' is legitimately 0
+	// columns wide there (no node is at any positive distance from any
+	// other, so distance_distribution() never has a bucket to
+	// tabulate), and column 1 of a 0-column matrix does not exist.
+	// Every node's cost (a function of its distance-1/direct-neighbor
+	// count) is correctly 0 in that case - the same value `dd[,1]'
+	// would have given had column 1 existed but every entry in it were
+	// 0, which is exactly what an edgeless network's distance-1 count
+	// always is.
+	if (cols(dd) > 0) {
+		benefit_cost[,2] = dd[,1] :* c
+	}
 	benefit_cost[,3] = benefit_cost[,1] - benefit_cost[,2]
 	return(benefit_cost)
 }
@@ -149,7 +174,13 @@ real matrix util_weighted(real matrix net, real matrix geonet, real matrix w, re
 			// separately below via diagonal(w); the self term (w's
 			// own possibly-missing diagonal, via b^0=1) was silently
 			// corrupting every row's sum with a missing value.
-			if (geonet[i,j] > 0) {
+			// BUGFIX: same missing-treated-as->0 bug as
+			// distance_distribution() above - an unreachable pair's
+			// missing geodesic distance wrongly satisfied `> 0',
+			// feeding a missing exponent into `b^(geonet[i,j])' and
+			// poisoning that node's entire benefit sum to missing on
+			// any disconnected network.
+			if (geonet[i,j] < . & geonet[i,j] > 0) {
 				benefit_cost[i,1] = benefit_cost[i,1] + (w[i,j] * b^(geonet[i,j]))
 			}
 		}
