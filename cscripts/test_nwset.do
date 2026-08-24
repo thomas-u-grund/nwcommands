@@ -13,7 +13,7 @@ set more off
 nwclear
 nwset, mat(J(4,4,2)) name("second")
 capture nwset, mat(J(6,6,2)) name("second")
-assert _rc == 6099
+assert _rc == 483  // errNWsExists - consolidated from the old ad-hoc 6099 during the error-code coherence pass
 nwset
 assert `"`r(nets)'"' == `" second"'
 assert         r(networks) == 1
@@ -167,7 +167,7 @@ assert r(nodes) == 3
 nwclear
 nwset, mat((0,1\1,0)) name(foo)
 capture nwset, mat((0,1,1\1,0,1\1,1,0)) name(foo)
-assert _rc == 6099
+assert _rc == 483  // errNWsExists - consolidated from the old ad-hoc 6099 during the error-code coherence pass
 nwsummarize foo
 assert r(nodes) == 2
 nwset, detail

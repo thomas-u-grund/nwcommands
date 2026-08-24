@@ -5,6 +5,7 @@
 capture program drop nwmovie
 program nwmovie
 	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) *]
+	unw_defs
 
 	nw_syntax `netname', max(999) min(2)
 
@@ -160,8 +161,12 @@ program nwmovie
 		}
 		else {
 			if `sizeCheck' != `othernodes' {
+				// Error-code coherence pass: `errNWsSizeMismatch' (6056,
+				// unw_defs.ado) already names this exact situation for
+				// several sibling commands - consolidated onto it
+				// instead of this file's own off-by-one `6055'.
 				noi di "{err}Networks need to be of the same size"
-				error 6055
+				error `errNWsSizeMismatch'
 			}
 		}
 	}

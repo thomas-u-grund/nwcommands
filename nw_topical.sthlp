@@ -218,6 +218,7 @@
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
+{p2col:    {bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:    {bf:{help nw_tomata }}}Return adjacency matrix of network{p_end}
 {p2col:    {bf:{help nw_unab }}}Unabbreviate network list{p_end}
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}

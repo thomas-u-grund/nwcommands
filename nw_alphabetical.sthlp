@@ -17,7 +17,7 @@
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help animate }}}Animate graphs{p_end}
-{p2col:{bf:{help nw2clustering }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
 {p2col:{bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
 {p2col:{bf:{help nw2fromedge }}}Import two-mode network data from edgelist{p_end}
 {p2col:{bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
@@ -27,6 +27,7 @@
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help nw_deployfile }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:{bf:{help nw_evalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
@@ -96,10 +97,10 @@
 {p2col:{bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
-{p2col:{bf:{help nwmixing }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
 {p2col:{bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
 {p2col:{bf:{help nwmovie }}}Animate a sequence of networks{p_end}
-{p2col:{bf:{help nwmoviexy }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
 {p2col:{bf:{help nwname }}}Obtain and change meta-information of a network{p_end}
 {p2col:{bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
 {p2col:{bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
@@ -120,7 +121,7 @@
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace network{p_end}
 {p2col:{bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
-{p2col:{bf:{help nwrestore }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:{bf:{help nwsave }}}Save network data in file{p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
@@ -138,7 +139,7 @@
 {p2col:{bf:{help nwtoedge }}}Convert network to edgelist{p_end}
 {p2col:{bf:{help nwtomata }}}Return adjacency matrix of network{p_end}
 {p2col:{bf:{help nwtomatafast }}}Return link to adjacency matrix of network{p_end}
-{p2col:{bf:{help nwtostata }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nwtostata }}}Copy a Mata matrix into Stata variables{p_end}
 {p2col:{bf:{help nwtranspose }}}Transpose a network{p_end}
 {p2col:{bf:{help nwtriads }}}Triad census of the network{p_end}
 {p2col:{bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}

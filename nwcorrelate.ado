@@ -244,11 +244,12 @@ friendship ties. Notice that the previous command is equivalent to:
 {title:References}
 
 {pstd}
-Granovetter, M. (1973). The strength of weak ties. American Journal of Sociology, 78, 6, 1360-1380.
+Granovetter, M. (1973). The strength of weak ties. {it:American Journal of Sociology} 78(6),
+1360-1380.
 
 {pstd}
-Zachary, W. (1977). An information flow model for conflict and fission in
-small groups. Journal of Anthropological Research, 33, 452-473.
+Zachary, W. (1977). An information flow model for conflict and fission in small groups. {it:Journal
+of Anthropological Research} 33, 452-473.
 
 
 {title:Stored results}
@@ -353,6 +354,7 @@ end
 capture program drop nwcorrelate_nets	
 program nwcorrelate_nets
 syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) *]
+unw_defs
 	
 	if "`mode'" == "" {
 		local mode = "same"
@@ -380,8 +382,13 @@ syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mo
 	local netobj2 `netobj'
 	
 	if `netnodes1' != `netnodes2' {
+		// Error-code coherence pass: `errNWsSizeMismatch' (6056,
+		// unw_defs.ado) already names this exact situation for several
+		// sibling commands (nwplot/nwqap/nwturnover) - consolidated
+		// onto it instead of this file's own separate, undocumented
+		// `100'.
 		di "{err}Networks of different size.{txt}"
-		error 100
+		error `errNWsSizeMismatch'
 	}
 	
 	

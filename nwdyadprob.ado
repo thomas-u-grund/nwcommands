@@ -213,8 +213,14 @@ program nwdyadprob
 			mata: st_numscalar("r(matrows)", rows(`mat'))
 			mata: st_numscalar("r(matcols)", cols(`mat'))
 			if (`r(matrows)' != `r(matcols)') {
+				// Error-code coherence pass: a malformed input matrix
+				// shape, not a "network already exists" collision (the
+				// `6099' this line had drifted onto by coincidence) -
+				// `errMatrixShape' (6082, unw_defs.ado) already names
+				// this exact situation for nwreplacemat.ado's own
+				// identical check.
 				di "{err}Mata matrix `mat' not square.{txt}"
-				error 6099
+				error `errMatrixShape'
 			}
 			if "`undirected'" != "" {
 				mata: `mat' = lowertriangle(`mat')

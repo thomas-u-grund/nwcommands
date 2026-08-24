@@ -40,7 +40,8 @@ The concept of a Simmelian tie is related to that of a clique; each pair of node
 {title:References}
 
 {pstd}
-Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. Research in the Sociology of Organizations, (16), 183-210.
+Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. {it:Research
+in the Sociology of Organizations} (16), 183-210.
 
 {title:Example}
 
@@ -51,3 +52,4 @@ Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organiza
 {title:See also}
 	{help nwshared}
 	
+last certified : 24 Aug 2026

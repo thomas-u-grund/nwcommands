@@ -1,6 +1,7 @@
 capture program drop nw_expnetexp
 program nw_expnetexp
 	syntax [anything] [, nodes(string) print force]
+	unw_defs
 	local mynodes = "`nodes'"
 	local nnodes = "`nodes'"
 	local netexp = `"`anything'"'
@@ -90,8 +91,15 @@ program nw_expnetexp
 				local nnodes `nodes'
 			}
 			else if "`nodes'" != "`nnodes'" & "`force'" == "" {
+				// Error-code coherence pass: was the bare Stata code `1'
+				// (reserved for low-level system conditions, not a
+				// domain validation failure - confusingly implies a
+				// crash rather than a deliberate size-mismatch guard).
+				// `errNWsSizeMismatch' (6056, unw_defs.ado) already
+				// names this exact situation for several sibling
+				// commands.
 				di "{err}Networks of different size"
-				error 1
+				error `errNWsSizeMismatch'
 			}
 			
 			// word is Stata _n or _N

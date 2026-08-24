@@ -175,7 +175,7 @@ program nwcontext
 		local stat = "mean"
 	}
 	
-	_opts_oneof "mean max min sum sd meanego maxego minego sumego sdego" "stat" "`stat'" 6810
+	_opts_oneof "mean max min sum sd meanego maxego minego sumego sdego" "stat" "`stat'" 6556
 	if "`mode'" == "" {
 		local mode = "outgoing"
 	}
@@ -185,7 +185,7 @@ program nwcontext
 	// "both" and normalized to it immediately below, so the rest of this
 	// command's logic (which checks the literal string "both") needs no
 	// further changes and "both" keeps working exactly as before.
-	_opts_oneof "incoming outgoing both either" "mode" "`mode'" 6810
+	_opts_oneof "incoming outgoing both either" "mode" "`mode'" 6556
 	if "`mode'" == "either" {
 		local mode "both"
 	}

@@ -243,11 +243,12 @@ friendship ties. Notice that the previous command is equivalent to:
 {title:References}
 
 {pstd}
-Granovetter, M. (1973). The strength of weak ties. American Journal of Sociology, 78, 6, 1360-1380.
+Granovetter, M. (1973). The strength of weak ties. {it:American Journal of Sociology} 78(6),
+1360-1380.
 
 {pstd}
-Zachary, W. (1977). An information flow model for conflict and fission in
-small groups. Journal of Anthropological Research, 33, 452-473.
+Zachary, W. (1977). An information flow model for conflict and fission in small groups. {it:Journal
+of Anthropological Research} 33, 452-473.
 
 
 {title:Stored results}
@@ -281,4 +282,4 @@ small groups. Journal of Anthropological Research, 33, 452-473.
 
 	{help nwtabulate}, {help nwexpand}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

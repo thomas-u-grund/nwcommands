@@ -70,6 +70,7 @@ capture program drop nwtranspose
 program nwtranspose 
 	version 9
 	syntax [anything(name=netname)], [ generate(string) replace]
+	unw_defs
 
 	nw_syntax `netname', max(1)
 	local netobj1 `netobj'
@@ -91,8 +92,12 @@ program nwtranspose
 		capture nw_syntax `generate', other(_check)
 		if _rc == 0 {
 			if "`replace'" == "" {
+				// Error-code coherence pass: consolidated onto
+				// `errNWsExists' (483, unw_defs.ado) - see
+				// nwsimmelian.ado's own fix for the history of this
+				// convention's drift onto an undocumented `6099'.
 				di "{err}Network {bf:`generate'} already exists. Use option {bf:replace} or specify a different {bf:generate()}."
-				error 6099
+				error `errNWsExists'
 			}
 			nwdrop `generate'
 		}

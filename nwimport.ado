@@ -617,6 +617,7 @@ capture program drop _nwimport_ucinet
 program _nwimport_ucinet
 	version 9
 	syntax [anything][, name(string) clear nwclear]
+	unw_defs
 
 		`clear'
 		`nwclear'
@@ -660,7 +661,7 @@ program _nwimport_ucinet
 			}
 			if ("`mode'" == "data" &  strpos("fullmatrix edgelist1", "`data_format'") == 0) {
 				noi di "{err}format {bf:`data_format'} not supported"
-				error 6705
+				error `errFormatUnsupported'
 			}
 			
 			if "`mode'" == "data" & "`data_format'" == "fullmatrix" {
@@ -1355,8 +1356,9 @@ program _nwimpdl_lowerhalf
 end
 
 capture program drop _nwimpdl
-program _nwimpdl 
+program _nwimpdl
 	syntax anything, [ netlistonly ]
+	unw_defs
 
 	local nodes = ""
 	local nets = "1"
@@ -1385,8 +1387,13 @@ program _nwimpdl
 
 	// check for .dl format
 	if "`firstword'" != "dl" {
+		// Error-code coherence pass: an unsupported/unrecognized file
+		// format, not a "network already exists" collision (the `6099'
+		// this line had drifted onto by coincidence) - `errFormatUnsupported'
+		// (6705, unw_defs.ado) already names this exact situation for
+		// this same file's own "format not supported" check elsewhere.
 		noi di "{err}No valid {bf:.dl} file"
-		error 6099
+		error `errFormatUnsupported'
 	}
 	
 	set more off

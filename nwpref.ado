@@ -70,7 +70,8 @@ probability 0.3 and tie weight 3 with probability 0.7.
 {title:References}
 
 {pstd}
-Barabasi, A-L.; Albert, R. (1999) "Emergence of scaling in random networks". Science 286 (54439): 509-512. 
+Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:Science} 286(54439),
+509-512.
 
 
 {title:Examples}

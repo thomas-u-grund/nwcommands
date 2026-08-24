@@ -118,7 +118,7 @@ program nwcug, rclass
 	if "`condition'" == "" {
 		local condition "density"
 	}
-	_opts_oneof "density census" "condition" "`condition'" 6557
+	_opts_oneof "density census" "condition" "`condition'" 6556
 
 	if `seed' != -1 {
 		set seed `seed'

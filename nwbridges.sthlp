@@ -54,10 +54,11 @@ The command saves all bridges as a new network {it:newnetname}.
 {title:References}
 
 {pstd}
-Burt, R. S. 1992. Structural Holes: The social structure of competition. Cambridge: Harvard University Press.
+Burt, R. S. (1992). {it:Structural Holes: The Social Structure of Competition}. Cambridge: Harvard
+University Press.
 
 {title:See also}
 
 	{help nwburt}, {help nwpath}
 
-last certified : 22 Aug 2026
+last certified : 24 Aug 2026

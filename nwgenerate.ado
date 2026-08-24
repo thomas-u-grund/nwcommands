@@ -168,8 +168,11 @@ program nwgenerate
 	capture nw_syntax `newnetname'
 
 	if _rc == 0 & (strpos("`options'", "replace")==0){
+		// Error-code coherence pass: consolidated onto `errNWsExists'
+		// (483, unw_defs.ado) - see nwsimmelian.ado's own fix for the
+		// history of this convention's drift onto an undocumented `6099'.
 		di "{err}Network {bf:`newnetname'} already exists. Change {it:netname} or specify option {bf:replace}.{txt}"
-		error 6099
+		error `errNWsExists'
 	}
 	else {
 		capture nwdrop `newnetname'
@@ -195,8 +198,13 @@ program nwgenerate
 		local netexp : subinstr local netexp "=" " "
 		capture nw_name `newnetname'
 		if _rc == 0 & (strpos("`options'", "replace")==0){
+			// Error-code coherence pass: the identical "already exists,
+			// specify replace" situation as the guard just above (and
+			// several sibling commands) - consolidated onto
+			// `errNWsExists' (483, unw_defs.ado) instead of its own
+			// separate, undocumented `6004'.
 			di "{err}network {it:`netname'} already defined"
-			error 6004
+			error `errNWsExists'
 		}
 	
 		// replace the network if it exists already

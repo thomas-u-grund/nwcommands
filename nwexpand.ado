@@ -195,7 +195,7 @@ program nwexpand
 		local mode = "same"
 	}
 	
-	_opts_oneof "same dist absdist distinv absdistinv sender receiver" "mode" "`mode'" 6555
+	_opts_oneof "same dist absdist distinv absdistinv sender receiver" "mode" "`mode'" 6556
 	
 	if `nodes' == 1 {
 		local nodes = `=_N'

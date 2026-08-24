@@ -725,9 +725,13 @@ if "`overwrite'" != "" local replace "replace"
 				// hitting stale data, exactly the silent-destructive-
 				// operation trap the create/replace convention exists
 				// to prevent. Errors instead, matching nwgenerate's own
-				// message shape and error code for the same situation.
+				// message shape for the same situation.
+				// Error-code coherence pass: consolidated onto
+				// `errNWsExists' (483, unw_defs.ado) - see
+				// nwsimmelian.ado's own fix for the history of this
+				// convention's drift onto an undocumented `6099'.
 				di "{err}Network `name' already exists. Specify option {bf:replace} to overwrite it."
-				error 6099
+				error `errNWsExists'
 			}
 			else {
 				di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."

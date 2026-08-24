@@ -67,6 +67,7 @@ This load the Florentine dataset from the internet and appends it to the existin
 capture program drop nwuse
 program nwuse
 	syntax anything [, nwclear nwappend force *]
+	unw_defs
 	local basename = subinstr(`"`anything'"', ".nwdta","",999)
 	local basename = subinstr(`"`basename'"', ".dta","",999)
 
@@ -138,13 +139,18 @@ program nwuse
 	// check if network names already exist
 	qui forvalues i = 1/`nets' {
 		nwvalidate `=_nw_netname[`i']'
-		di `"if "`r(exists)'" == "true" & "`force'" == "" "'
 		if "`r(exists)'" == "true" & "`force'" == "" {
 			noi di "{err}network {it:`r(tryname)'} already exists; use option {bf:force}"
 			if `have_existing' {
 				use `existing'
 			}
-			error 999
+			// Error-code coherence pass: this is the same "already
+			// exists" situation `errNWsExists' (483, unw_defs.ado)
+			// already names, not the "data in memory would be lost"
+			// situation the OTHER `error 999' calls in this file use -
+			// consolidated onto `errNWsExists' instead of reusing that
+			// unrelated code by coincidence.
+			error `errNWsExists'
 		}
 	}
 	

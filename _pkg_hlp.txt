@@ -13,6 +13,7 @@ f nw2project.sthlp
 f nw2set.sthlp
 f nw2toedge.sthlp
 f nw_alphabetical.sthlp
+f nw_errorcodes.sthlp
 f nw_intro.sthlp
 f nw_programming.sthlp
 f nw_start.sthlp

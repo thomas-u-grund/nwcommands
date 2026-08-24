@@ -84,7 +84,7 @@ values are not validated or rejected. Two-mode: not checked.
 {title:References}
 
 {pstd}
-Katz, L. (1953). A New Status Index Derived from Sociometric Index. Psychometrika, 39-43.
+Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychometrika}, 39-43.
 
 
 {title:Examples}
@@ -98,4 +98,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. Psychometrik
 
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026
