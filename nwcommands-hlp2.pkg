@@ -8,6 +8,7 @@ f nwpermute.sthlp
 f nwplot.sthlp
 f nwplotmatrix.sthlp
 f nwpref.sthlp
+f nwpreserve.sthlp
 f nwqap.sthlp
 f nwrandom.sthlp
 f nwreach.sthlp
@@ -18,6 +19,7 @@ f nwreplacemat.sthlp
 f nwring.sthlp
 f nwsave.sthlp
 f nwset.sthlp
+f nwshared.sthlp
 f nwsimilar.sthlp
 f nwsimindex.sthlp
 f nwsimmelian.sthlp

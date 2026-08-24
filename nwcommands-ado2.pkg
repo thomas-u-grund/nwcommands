@@ -3,6 +3,7 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 2)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 23aug2026
+f nwpreserve.ado
 f nwqap.ado
 f nwrandom.ado
 f nwreach.ado
@@ -13,6 +14,7 @@ f nwreplacemat.ado
 f nwring.ado
 f nwsave.ado
 f nwset.ado
+f nwshared.ado
 f nwsimilar.ado
 f nwsimindex.ado
 f nwsimmelian.ado

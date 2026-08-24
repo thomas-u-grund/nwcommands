@@ -15,6 +15,8 @@ f nodeid.sthlp
 f nw2degree.sthlp
 f nw2fromedge.sthlp
 f nw2project.sthlp
+f nw2set.sthlp
+f nw2toedge.sthlp
 f nw_alphabetical.sthlp
 f nw_intro.sthlp
 f nw_programming.sthlp
@@ -22,10 +24,12 @@ f nw_start.sthlp
 f nw_topical.sthlp
 f nwaddnodes.sthlp
 f nwaltergen.sthlp
+f nwappend.sthlp
 f nwassortativity.sthlp
 f nwattime.sthlp
 f nwbalance.sthlp
 f nwbetween.sthlp
+f nwbridges.sthlp
 f nwbrokerage.sthlp
 f nwburt.sthlp
 f nwcentrality.sthlp
@@ -47,6 +51,7 @@ f nwcorrelate.sthlp
 f nwcug.sthlp
 f nwcurrent.sthlp
 f nwdegree.sthlp
+f nwdendrogram.sthlp
 f nwdissimilar.sthlp
 f nwdrop.sthlp
 f nwdropnodes.sthlp
@@ -63,6 +68,7 @@ f nwexport.sthlp
 f nwfromedge.sthlp
 f nwgen.sthlp
 f nwgenerate.sthlp
+f nwgenvar.sthlp
 f nwgeodesic.sthlp
 f nwhierarchy.sthlp
 f nwhomophily.sthlp
@@ -83,4 +89,6 @@ f nwname.sthlp
 f nwnclan.sthlp
 f nwnclique.sthlp
 f nwneighbor.sthlp
+f nwnode.sthlp
+f nwnoderename.sthlp
 f nworder.sthlp
