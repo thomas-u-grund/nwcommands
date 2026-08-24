@@ -136,6 +136,18 @@ program nwcug, rclass
 	mata: st_numscalar("obsdensity", `netobj'->get_density())
 	local obsdensity = obsdensity
 
+	// BUGFIX: a 1-node network has 0 possible dyads, so its own density
+	// is undefined (missing) - previously passed straight through to
+	// nwrandom's own density() option, which never terminates when
+	// asked to hit a missing target density (confirmed directly: hangs
+	// indefinitely at 100% CPU, no error, no timeout). Only relevant to
+	// the default condition(density) path - condition(census) doesn't
+	// use obsdensity at all.
+	if "`condition'" != "census" & `nodes' < 2 {
+		di "{err}nwcug needs at least 2 nodes for a condition(density) draw (network `origname' has `nodes')."
+		error 198
+	}
+
 	if "`condition'" == "census" {
 		qui nwdyads `origname'
 		local obsmutual = r(_100)

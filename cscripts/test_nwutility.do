@@ -100,3 +100,46 @@ nwset, mat((0,2,3,0\2,0,1,0\3,1,0,4\0,0,4,0)) name(valnet2) undirected labs(A,B,
 nwutility net1, intrvalue(valnet2)
 assert _benefit[1] == .
 assert _util[1] == .
+
+
+* --- alpha-audit regression: on a disconnected network, unreachable
+* pairs are stored as MISSING geodesic distances - `dist[i,j] > 0' is
+* TRUE for missing (Mata treats it as larger than any real value), so
+* every unreachable pair was wrongly counted as reachable, and the
+* missing VALUE itself was then used directly as a column index, which
+* Mata silently interprets as the `.' (all-columns) selector instead of
+* erroring - incrementing every distance bucket instead of one. Each
+* node here (two disjoint dyads) has exactly 1 real neighbor at
+* distance 1; the bug previously reported benefit=3/cost=3/util=0 for
+* every node instead.
+nwclear
+nwset, mat((0,1,0,0\1,0,0,0\0,0,0,1\0,0,1,0)) name(disconnnet) undirected
+nwutility disconnnet
+assert _benefit[1] == 1 & _cost[1] == 1 & _util[1] == 0
+assert _benefit[2] == 1 & _cost[2] == 1 & _util[2] == 0
+assert _benefit[3] == 1 & _cost[3] == 1 & _util[3] == 0
+assert _benefit[4] == 1 & _cost[4] == 1 & _util[4] == 0
+
+* same bug, weighted (intrvalue()/intrcost()) path: previously poisoned
+* every node's result to missing instead of a wrong number.
+nwclear
+nwset, mat((0,1,0,0\1,0,0,0\0,0,0,1\0,0,1,0)) name(disconnnet2) undirected
+nwset, mat((5,2,3,0\2,6,1,0\3,1,7,4\0,0,4,8)) name(valnet3) undirected selfloop
+nwset, mat((0,1,0,0\1,0,0,0\0,0,0,1\0,0,1,0)) name(costnet3) undirected
+nwutility disconnnet2, intrvalue(valnet3) intrcost(costnet3)
+assert _benefit[1] == 7  & _cost[1] == 1 & _util[1] == 6
+assert _benefit[2] == 8  & _cost[2] == 1 & _util[2] == 7
+assert _benefit[3] == 11 & _cost[3] == 1 & _util[3] == 10
+assert _benefit[4] == 12 & _cost[4] == 1 & _util[4] == 11
+
+* fully edgeless network: previously crashed outright ("subscript
+* invalid"/conformability error) instead of the trivially-correct
+* all-zero result (no ties anywhere, so benefit/cost/util are all 0).
+nwclear
+nwset, mat((0,0,0\0,0,0\0,0,0)) name(emptynet) undirected
+nwutility emptynet
+assert _rc == 0
+assert _benefit[1] == 0 & _cost[1] == 0 & _util[1] == 0
+assert _benefit[2] == 0 & _cost[2] == 0 & _util[2] == 0
+assert _benefit[3] == 0 & _cost[3] == 0 & _util[3] == 0
+di "=== DISCONNECTED/EDGELESS NETWORK REGRESSION VERIFIED ==="

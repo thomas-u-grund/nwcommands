@@ -360,11 +360,25 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	
 	// Run regression with original data.
 	qui replace `net' = `net'_original
+	// BUGFIX: this call was never captured (and, without `detail', ran
+	// `quietly' too - suppressing even Stata's own native error text),
+	// so if the REAL (non-permuted) data can't be fit by `type' (e.g.
+	// perfect prediction/separation - a real possibility on a small or
+	// highly structured network, unlike the permutation loop above,
+	// which already retries a degenerate permutation draw rather than
+	// failing outright), nwqap aborted completely silently after
+	// already spending the full `permutations' budget - only a bare
+	// "r(2000);" printed, no diagnostic text at all. Captured and given
+	// a clear message instead.
 	if "`detail'" != "" {
-		`type' `formula'
+		capture noisily `type' `formula'
 	}
 	else {
-		quietly `type' `formula'
+		capture quietly `type' `formula'
+	}
+	if _rc != 0 {
+		di "{err}The observed-data model could not be fit ({bf:`type' `formula'} failed, error `=_rc') - this can happen with perfect prediction/separation, a fully degenerate dependent network, or a misspecified model. Try {bf:detail} to see the underlying regression command's own error text."
+		error _rc
 	}
 	mat reg_results = e(b)
 
