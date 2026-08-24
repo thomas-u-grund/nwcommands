@@ -26,6 +26,7 @@
 {synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
 {synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
+{synopt:{opt noreplace}}Do not symmetrize in place; requires {opt generate()} (errors otherwise, since there would be nothing else to do){p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}

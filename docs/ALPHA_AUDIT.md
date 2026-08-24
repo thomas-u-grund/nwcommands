@@ -46,7 +46,7 @@ Each group below is one audit unit. Status: ⬜ not started · 🔶 in progress 
 | 4 | paths_distance | nwgeodesic, nwpath, nwreach, nwbridges, nwneighbor, nwego, nwaltergen | ✅ (moderate-severity pass, unit 4) |
 | 5 | information_census | nwcurrent, nwdyads, nwissymmetric, nwname, nwsummarize, nwtabulate, nwtriads | ✅ (moderate-severity pass, unit 5) |
 | 6 | manipulation_subset | nwaddnodes, nwdrop, nwdropnodes, nwkeep, nwkeepnodes, nwnoderename, nwpreserve, nwrestore | ✅ (moderate-severity pass, unit 6) |
-| 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | 🔶 |
+| 7 | manipulation_transform | nw2project, nwattime, nwcollapse, nwrecode, nwrename, nwreplace, nwreplacemat, nwsym | ✅ (moderate-severity pass, unit 7) |
 | 8 | centrality | nw2degree, nwbetween, nwcloseness, nwdegree, nwevcent, nwkatz | 🔶 (critical fixes done, alpha unit 9) |
 | 9 | cohesion_subgroups | nwclique, nwcomponents, nwkcomponents, nwkcore, nwkplex, nwnclan, nwnclique, nwsimmelian, nwcohesion | 🔶 (critical fixes done, alpha unit 10) |
 | 10 | community_spectral | nwcommunity, nwmodularity, nwspectral, nwhierarchy | 🔶 (critical fixes done, alpha unit 11) |

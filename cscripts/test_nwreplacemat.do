@@ -93,3 +93,28 @@ mata: assert(M2[3,1] == 1)
 * the "erorr" typo that used to make this guard itself invalid Stata
 capture nwreplacemat net1, newmat((1,2,3\4,5,6))
 assert _rc == 6082
+
+* moderate-severity pass, manipulation_transform group: netonly was
+* completely non-functional when the new matrix required resizing - no
+* error, but the network object was left at its old dimensions/values
+* (wrote only to legacy globals the modern netobj/NWdef architecture
+* never reads).
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) name(netonlytest2) undirected labs(A,B,C)
+mata: mm = (0,1\1,0)
+mata: st_matrix("mm", mm)
+nwreplacemat netonlytest2, newmat(mm) netonly labs(X,Y)
+nwname netonlytest2
+assert r(nodes) == 2
+assert `"`r(labs)'"' == `"X,Y"'
+di "=== netonly resize REGRESSION VERIFIED ==="
+
+* xvars had no effect on the common same-size (no-resize) code path.
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) name(xvarstest2) undirected labs(A,B,C)
+mata: mm2 = (0,2,3\2,0,4\3,4,0)
+mata: st_matrix("mm2", mm2)
+nwreplacemat xvarstest2, newmat(mm2) xvars
+capture confirm variable A
+assert _rc == 0
+di "=== xvars same-size REGRESSION VERIFIED ==="

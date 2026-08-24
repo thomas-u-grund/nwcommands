@@ -76,3 +76,17 @@ mata: assert(Mrecoded[2,1] == 1)
 mata: assert(Mrecoded[3,1] == 1)
 mata: assert(Mrecoded[4,3] == 2)
 di "=== generate() collision REGRESSION VERIFIED ==="
+
+* moderate-severity pass, manipulation_transform group: prefix()'s own
+* collision case, specifically (as opposed to generate()'s, already
+* covered above) - same underlying nwvalidate-before-nwduplicate
+* pattern, different code path.
+nwclear
+nwset, mat((0,1\1,0)) name(net3)
+nwset, mat((0,1\1,0)) name(recoded_net3)
+nwrecode net3(1=5), prefix(recoded_)
+nwtomata recoded_net3, mat(Munrel2)
+mata: assert(Munrel2[1,2] == 1)
+nwtomata recoded_net3_1, mat(Mrec2)
+mata: assert(Mrec2[1,2] == 5)
+di "=== prefix() collision REGRESSION VERIFIED ==="

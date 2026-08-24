@@ -122,3 +122,24 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 8
 assert         r(id)            == 2
 
+* moderate-severity pass, manipulation_transform group: collapsing a
+* two-mode network used to silently produce a result reported as an
+* ordinary one-mode network (mode2 flipped from true to false), with no
+* error or warning. Now rejected outright.
+nwclear
+set obs 4
+gen ego="Peter"
+gen alter="LiU"
+replace ego="Thomas" in 2
+replace alter="LiU" in 2
+replace ego="Peter" in 3
+replace alter="Oxford" in 3
+replace ego="Thomas" in 4
+replace alter="Oxford" in 4
+nw2fromedge ego alter, name(twomodenet)
+nwload twomodenet
+gen grp = mod(_n,2)
+capture noisily nwcollapse (max) twomodenet, by(grp)
+assert _rc == 6088
+di "=== two-mode rejection REGRESSION VERIFIED ==="
+

@@ -102,3 +102,18 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 3
 assert         r(id)            == 1
 
+* moderate-severity pass, manipulation_transform group: noreplace was a
+* dead option - a network was always symmetrized/replaced in place when
+* generate() was not given, regardless of noreplace. Implemented:
+* noreplace without generate() now errors clearly.
+nwclear
+nwset, mat((1,2,0\4,0,0\1,0,0)) name(noreplacetest)
+capture noisily nwsym noreplacetest, noreplace mode(max)
+assert _rc == 198
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest")]->get_matrix())[1,2] == 2)
+nwsym noreplacetest, noreplace generate(noreplacetest_g) mode(max)
+assert _rc == 0
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest")]->get_matrix())[1,2] == 2)
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest_g")]->get_matrix())[1,2] == 4)
+di "=== noreplace REGRESSION VERIFIED ==="
+
