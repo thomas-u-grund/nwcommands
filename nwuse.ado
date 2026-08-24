@@ -166,7 +166,35 @@ program nwuse
 		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
 		if `has_provenance' local prov = _nw_provenance[`i']
 		keep if _nw_match_`n'_nw_ego == 1
-		nwfromedge _nw_ego _nw_alter `n', name("`n'")
+		// BUGFIX: this used to pass `n' (the raw, saved network name)
+		// straight through as an explicit name() to nwfromedge - fine
+		// as long as `n' is guaranteed not to collide, which used to be
+		// true whenever execution reaches here (a hard collision on any
+		// network name aborts this whole command earlier, at the
+		// "already exists; use option force" check above, unless
+		// `force' was given). Once nwfromedge.ado's own name()
+		// collision guard was tightened (harmonisation unit 116: an
+		// explicit name() collision now errors unless replace is also
+		// given, rather than silently auto-incrementing) that stopped
+		// being true for the one case this command's own `force' option
+		// exists to support: `nwappend ..., force' deliberately allows
+		// loading a network whose name already exists in memory,
+		// auto-renumbering it (see cscripts/test_nwappend.do's own
+		// "mynet1_1" case) rather than either erroring or replacing the
+		// existing one - nwfromedge's new guard doesn't know that's
+		// wanted and errors (6099) instead. Resolved here instead of by
+		// passing replace (which would destroy the existing network
+		// under that name, not what `force' means for nwappend):
+		// nwvalidate's own r(validname) already implements exactly the
+		// "same name if free, else auto-incremented" logic wanted -
+		// resolving it BEFORE calling nwfromedge means nwfromedge is
+		// only ever asked to create under a name confirmed not to
+		// collide, so its own guard is never triggered. `ncreate' (not
+		// `n') is used for every reference to the newly created network
+		// for the remainder of this loop iteration, below.
+		nwvalidate `n'
+		local ncreate = r(validname)
+		nwfromedge _nw_ego _nw_alter `n', name("`ncreate'")
 		// BUGFIX: `_nw_netname' is a LOCAL-macro reference to a local
 		// literally named "_nw_netname", which is never defined
 		// anywhere in this loop - `_nw_netname' is the STATA VARIABLE
@@ -193,9 +221,9 @@ program nwuse
 		// crash on every dataset that reaches this line (i.e. every
 		// genuine .nwdta restoration - previously undiagnosed beyond
 		// "some macro-quoting mismatch").
-		nwname `n', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
+		nwname `ncreate', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
 		if "`d'"  == "false" {
-			nwsym `n'
+			nwsym `ncreate'
 		}
 		restore
 	}

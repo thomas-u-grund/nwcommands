@@ -115,8 +115,28 @@ program nwrandom
 	unw_defs
 	
 	// Generate valid network name and valid varlist
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision ("random", "random_1", ...) rather than
+	// require replace() - unlike an explicit, caller-chosen name(), which
+	// nwset.ado's own guard (harmonisation unit 116) now correctly holds
+	// to the create/replace convention. Since this default "random" is
+	// itself passed to nwset as an explicit name() below, nwset can no
+	// longer tell it apart from a genuine user-chosen one and started
+	// raising an uncaught r(6099) on a second bare `nwrandom N, prob(P)'
+	// call in the same session (confirmed via a direct probe; also the
+	// root cause of cscripts/test_nwplot_multinet_regression.do's own
+	// failure). Resolved the same way as nwuse.ado's/nwqap.ado's own
+	// identical cases: only when the caller did NOT supply name()
+	// (preserving the strict, correct error for a genuine explicit
+	// collision), pre-resolve the actual (possibly auto-incremented)
+	// target name via nwvalidate before nwset ever sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "random"
+	}
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 
 	if `ntimes' != 1 {
