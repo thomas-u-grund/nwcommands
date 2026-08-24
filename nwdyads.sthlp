@@ -50,6 +50,12 @@ The command also returns the reciprocity of the network.
 {pmore}
 {it:reciprocity = M / (M + A)}
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Examples}
 	
 	{cmd:. nwwebuse florentine}
@@ -87,3 +93,4 @@ The command also returns the reciprocity of the network.
 
 	{help nwtriads}
 
+last certified : 24 Aug 2026

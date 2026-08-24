@@ -62,8 +62,14 @@ For two-mode networks (see {help nw2set:introduction to two-mode networks}) the 
 generates the two variables {it:_nwmode_ego} and {it:_nwmode_alter}. They indicate in the edgelist format
 the mode to which a node belongs.
   
+
+{title:Supported network types}
+
+{pstd}
+Two-mode: **T1**, native - this command's entire purpose is converting a two-mode network to an edge list. Binary: yes. Directed: not applicable. Weighted: yes, tie values are carried into the edge list. Signed: not checked.
+
 {title:See also}
 	
 	{help nw2fromedge}, {help nwtoedge}, {help nwsave}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

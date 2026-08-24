@@ -38,6 +38,12 @@ For example, if Adam has a strong tie to Betty, and both Adam and Betty share a 
 {pstd}
 The concept of a Simmelian tie is related to that of a clique; each pair of nodes (individuals) in a clique has a Simmelian tie between them. Thus a simmelian tie can be defined as a basic tie in a clique, or a co-clique relationship (between individuals who belong to a specific clique).
 		
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - uses {cmd:get_matrix_unvalued()} throughout; a weak tie and a strong tie in an otherwise-identical closed triad are both flagged as Simmelian identically, despite this command's own documentation describing the concept in "strong tie" language (a known doc/implementation gap, not yet resolved - see the alpha audit's own finding). Directed: yes - reciprocity is checked directly (a tie must be mutual to participate at all), matching the concept's own directed-advice-network origin (Krackhardt 1999); on an undirected network reciprocity is automatically satisfied by every existing tie. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:References}
 
 {pstd}

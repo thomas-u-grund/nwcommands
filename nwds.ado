@@ -43,6 +43,12 @@ loaded network is listed. {bf:r(netlist)} always returns the exact list of netwo
 design choice) - passing it does not actually invert the selection; {bf:r(netlist)} and the display
 are identical whether or not {opt not} is specified.
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - a pure network-listing utility (in the style of Stata's own {help ds}); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
 {title:Stored results}
 
 	Macros

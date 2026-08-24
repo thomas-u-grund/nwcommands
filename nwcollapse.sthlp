@@ -34,6 +34,12 @@ By default, an existing network is replaced, unless option {opt generate(newnetn
 
 
 {marker examples}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes - {opt generate()}'s own collapse function operates on whatever tie values are present. Signed: not checked. Two-mode: not checked.
+
 {title:Examples}
 
 {pstd}
@@ -48,4 +54,4 @@ This collapses the first and the second node of a random network. The collapsed 
 {title:See also}
 
 	{help collapse}
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

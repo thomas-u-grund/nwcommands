@@ -32,6 +32,12 @@ command that, among other things, also unabbreviates network lists; see
 
 
 {marker options}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves/expands a network name list only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
 {title:Options}
 
 {phang}{cmd:min(}{it:#}{cmd:)} specifies the minimum number of networks

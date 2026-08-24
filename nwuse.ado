@@ -40,6 +40,12 @@ is specified without an extension, {bf:.nwdta} is assumed. If your {it:filename}
 it in double quotes.
 
      
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a network exactly as it was saved, independent of any of these properties.
+
 {title:Examples}
         
 {pstd}

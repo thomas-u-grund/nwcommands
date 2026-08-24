@@ -121,6 +121,12 @@ created by a {help nw_topical##generator:network generator}, can be loaded as St
 same variable names, the Stata variables are overwritten.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads the network's own stored data into Stata variables exactly as stored, independent of any of these properties.
+
 {title:See also}
    
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nw_intro##limits:feasible network sizes}

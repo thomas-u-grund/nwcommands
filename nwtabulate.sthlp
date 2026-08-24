@@ -16,6 +16,12 @@
 {p 8 32 2}
 {helpb nwtab3:nwtabulate twoway}{space 7}for two-way table of network and node attribute
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/attribute crossings,
+not tie values. Signed: not applicable. Two-mode: not checked.
+
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}
 
@@ -273,4 +279,4 @@ has a seat in the civic council and the other one does not.
 {pstd}
 	{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

@@ -42,6 +42,12 @@ network (that lives in Mata).
 {pstd}
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - syncs node labels/dataset state only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
 {title:Options}
 
 {phang}

@@ -79,6 +79,15 @@ a statistic at least as large as observed (evidence the observed value is unusua
 {bf:lower} is the proportion at least as small (unusually {it:low}); {bf:both} (the default) reports
 both, plus a two-sided p-value ({bf:r(p)}, twice the smaller one-sided p-value, capped at 1).
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes (required for {opt condition(census)}). Weighted: depends entirely on
+{bf:stat()} - {cmd:nwcug} itself only draws random comparison networks and calls whatever command
+{bf:stat()} names, so it inherits that command's own support. Signed: same as weighted, depends on
+{bf:stat()}. Two-mode: no - {help nwrandom}'s density/census conditioning used to draw comparison
+networks does not support two-mode networks.
+
 {title:Stored results}
 
 	Scalars
@@ -100,4 +109,4 @@ indices. {it:Social Networks} 21(3), 239-267.
 
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
-last certified : 22 Aug 2026
+last certified : 24 Aug 2026

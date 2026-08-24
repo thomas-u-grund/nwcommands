@@ -85,6 +85,12 @@ By default, directed networks are generated, option {bf:undirected} generates un
 The command can also be used to generate both complete ({bf:prob(1)}) and empty networks ({bf:prob(0)}). 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} - a Stata expression assigning each placed tie's value, independent of the placement mechanism itself ({opt density()}/{opt prob()}/{opt census()}). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:Examples}
 	
 	{cmd:. nwclear}
@@ -106,4 +112,4 @@ The command can also be used to generate both complete ({bf:prob(1)}) and empty 
 
 	{help nwsmall}, {help nwpref}, {help nwpref}, {help nwlattice}, {help nwring}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

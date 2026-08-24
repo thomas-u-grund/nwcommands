@@ -82,6 +82,12 @@ prevent. {bf:algorithm(louvain)}'s own fixed sweep order has no comparable bias,
 is driven by an actual modularity-gain comparison, not a plain vote count, so it was left
 unchanged.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: requires {opt symmetrize} - community detection as implemented here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise (affects both which partition is searched for and the reported {bf:r(modularity)}). Signed: not checked. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars

@@ -44,6 +44,12 @@ a perfectly symmetric matrix to a directed network, one can use:
 {pstd}
  to overwrite the automatic setting afterwards. 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: not checked.
+
 {title:Examples}
 
 {pstd}

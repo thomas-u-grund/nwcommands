@@ -37,6 +37,12 @@ One can also replace tie values in networks by 1) loading a network as Stata var
 One can also change the entire adjaceny matrix of a network with an existing Mata matrix using {help nwreplacemat}.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - a replaced value is written to the exact (ego,alter) cell addressed, respecting direction. Weighted: yes, natively - this command's entire purpose is writing arbitrary tie values via an expression. Signed: yes, any value including negative can be assigned. Two-mode: not checked, but not expected to need any - a direct cell/subset write by node identity.
+
 {title:Assign values}
 
 {pstd}
@@ -213,4 +219,4 @@ All network expressions, network subsetting and network conditions can be combin
 
 	{help nwreplacemat}, {help nwsync}, {help nwload}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

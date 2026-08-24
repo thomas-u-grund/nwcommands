@@ -42,6 +42,12 @@ Drops a network or a list of networks. The command is the network version of {he
 It can also be used with {help if} or {help in}. Then it only drops certain nodes from a network. This updates the
 Stata variable {bf:_nwinclude}, which indicates if a node is included in a network.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation (drops whole networks, or nodes via `if`/`in`), existing ties and their values are untouched for whatever remains. Two-mode: mode assignments are preserved for surviving nodes.
+
 {title:Examples}
 
 {pstd}

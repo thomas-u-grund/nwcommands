@@ -48,6 +48,12 @@
 {cmd:nwname} obtains and changes the meta-information of a network.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them.
+
 {title:Examples}
 
 {pstd}

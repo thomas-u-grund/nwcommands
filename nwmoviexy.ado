@@ -39,6 +39,12 @@ by name continue to work.
 New code should call {help nwmovie:nwmovie} directly - see its own help file for the complete option
 reference, requirements (ImageMagick), and worked examples.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - a direct alias for {help nwmovie}; see that command's own identical classification.
+
 {title:See also}
 
 	{help nwmovie}, {help nwplot}

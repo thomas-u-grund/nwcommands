@@ -51,6 +51,12 @@ all nwcommands (and their functions) can be executed via dialog boxes. Notice, h
 advanced functions are only available through Stata syntax (see {help nwcommands}).
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - installs/manages this package's own Stata menu, dialogs, and update mechanism; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
 {title:Example}
 
 {pstd}

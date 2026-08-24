@@ -62,6 +62,12 @@ the underlying formula is undefined - most notably {bf:cosine} between two isola
 mirrors how {help nwgeodesic} reports an undefined diameter/radius rather than silently coercing an
 undefined value to 0.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention {help nwkcore} uses). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars
@@ -90,4 +96,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Netw
 
 	{help nwsimilar}, {help nw2project}, {help nwkcore}, {help nwburt}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

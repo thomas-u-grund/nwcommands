@@ -18,6 +18,12 @@ The following postestimation commands are available after {helpb nwergm}:
 {p2col: {cmd:estat gof}}Basic simulation-based goodness of fit{p_end}
 {p2colreset}{...}
 
+{title:Supported network types}
+
+{pstd}
+Not applicable - these postestimation tools operate on the fitted model and its own MCMC/simulation
+output left behind by {help nwergm}, not on a network directly; see that command's own classification.
+
 {title:estat mcmcdiag}
 
 {pstd}

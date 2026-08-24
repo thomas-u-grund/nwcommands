@@ -46,6 +46,12 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {it:netname.net} (Pajek).
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - exports the network to Pajek/UCINET format largely as stored; consult the target format's own documentation for what it can represent.
+
 {title:Examples}
 
 {pstd}

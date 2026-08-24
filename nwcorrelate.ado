@@ -83,6 +83,12 @@ coefficient is calculated again and again. Based on this distribution a {it:p-va
 interval is calculated. A plot is displayed and additional information is returned in the return vector. 
 
 {marker nodes}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt context(incoming|outgoing|both)} for the node-correlation mode. Weighted: yes, natively - uses raw tie values throughout, no dichotomize option. Signed: not checked. Two-mode: not checked.
+
 {title:Nodes of one network}
 
 {pstd}

@@ -39,6 +39,12 @@ A network expression is very similar to normal expressions in Stata.
 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable to {cmd:nwgenvar} itself - a dispatcher/shortcut layer over {help nwgenerate}; the actual directed/valued/two-mode support depends entirely on whichever underlying {it:netfcn1}/{it:netfcn2} shortcut or network expression is invoked - see that function's own help topic.
+
 {title:Generating variables from networks}
 
 {pstd}

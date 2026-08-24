@@ -141,6 +141,14 @@ naturally reduce to one value per node: {bf:addnodes(} (mutates a network's own 
 {help nwaddnodes}), {bf:subset(} (produces a new network, not a variable - see {help nwsubset}), and
 {bf:collapse(} (see {help nwcollapse}). Each raises a clear, immediate error rather than silently
 doing nothing.
+
+{title:Supported network types}
+
+{pstd}
+Not applicable to {cmd:nwgenerate} itself - the underlying dispatcher {help nwgen}/{help nwgenvar}
+both delegate to; the actual directed/valued/two-mode support depends entirely on whichever
+underlying {it:netfcn}/network expression is invoked - see that function's own help topic.
+
 ***/
 
 capture program drop nwgenerate

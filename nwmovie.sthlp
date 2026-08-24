@@ -126,6 +126,12 @@ Notice that the normal, time-invariant options from {help nwplot} can be used as
 	{cmd:. nwmovie klas12b_wave1 klas12b_wave1, color(sex)}
 
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - animates whichever networks are given exactly as {help nwplot} would render each one; does not itself impose any additional network-type restriction beyond what {help nwplot} already has.
+
 {title:See also}
 
 	{help nwplot}

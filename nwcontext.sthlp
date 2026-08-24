@@ -102,6 +102,12 @@ Sometimes, however, one might want to calculate statistics including the attribu
 {pmore}
 {it:newvarname}[i] = {it:stat}({it:varname}[j]), for all {it:j} with {it:y_ij} > 0 or j == i
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt mode(outgoing|incoming|both|either)}. Weighted: yes by default (neighbor attribute values weighted by tie strength); {opt noweight} treats all ties as binary. Signed: not checked. Two-mode: not checked.
+
 {title:Scope}
 {pstd}
 Directed and undirected, weighted and unweighted, one-mode and two-mode.
@@ -162,4 +168,4 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
 
    {help nwneighbor}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

@@ -51,6 +51,12 @@ Advanced programmers who might want to directly interact with the adjacency matr
 and not with a copy of it, see {help nw_programming##modernprogramming:advanced network programming}. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a plain copy of the raw adjacency matrix exactly as stored, independent of any of these properties.
+
 {title:Example}
 
 	{cmd:. nwrandom 5, density(.2) name(net)}

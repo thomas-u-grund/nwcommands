@@ -35,6 +35,12 @@ Rename multiple networks
 
 
 {marker examples}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames the network object only; its content, including directed/valued/two-mode status, is completely unchanged.
+
 {title:Examples}
 
 	{com}. nwwebuse florentine, nwclear
@@ -58,4 +64,4 @@ Rename multiple networks
 
 	{help nwname}, {help rename}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

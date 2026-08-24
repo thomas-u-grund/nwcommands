@@ -33,6 +33,12 @@ For example, {help nwimport} automatically checks if a network (e.g. Ucinet full
 imports the network as undirected.
  
  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: not checked.
+
 {title:Examples}
 
 	{cmd:. nwwebuse florentine}

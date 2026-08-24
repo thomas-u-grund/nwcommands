@@ -84,6 +84,12 @@ probability 0.3 and tie weight 3 with probability 0.7.
 	{cmd}. nwsmall 20, k(2) prob(.2) weights(0.0, 0.3, 0.7)
 {txt}
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()}, independent of the small-world rewiring mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:References}
 
 {pstd}

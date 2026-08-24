@@ -30,7 +30,15 @@
 {title:Description}
 
 {pstd}
-Add isolate nodes to an existing networks. By default, {help netname} is replaced, unless {bf:generate()} is specified. 
+Add isolate nodes to an existing networks. By default, {help netname} is replaced, unless {bf:generate()} is specified.
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation, existing
+ties and their values are untouched. Two-mode: runs without error, but does not offer a way to
+choose which mode the new (isolate) nodes belong to - not recommended for two-mode networks until
+that is clarified/documented.
 
 
 {title:Examples}
@@ -42,4 +50,4 @@ This example adds three new nodes (isolates) to a random network with 5 nodes.
 	{cmd:. nwrandom 5, prob(.1)}
 	{cmd:. nwaddnodes, nodenames(Thomas Grund, Peter, Mathilde Turcotte)}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

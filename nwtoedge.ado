@@ -150,6 +150,12 @@ directions, so the signed comparison is preserved correctly for both.
 	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(same)}
 	{cmd:. nwtoedge glasgow1, comparevars(sport1) comparemode(dist)}
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see {help nw2toedge} for the two-mode-specific counterpart, though this command's own {opt egovars()}/{opt altervars()} two-mode handling is used internally by several other commands directly on a two-mode network too.
+
 {title:See also}
 	
 	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}

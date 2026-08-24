@@ -47,6 +47,12 @@ under a random network with the same degree sequence. Values near 0 indicate the
 than chance; higher (positive) values indicate a grouping that captures real community structure.
 Scoring a single, all-nodes-in-one-group partition always gives {it:Q} = 0, for any network.
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: requires {opt symmetrize} - modularity as computed here is not defined for a directed network. Weighted: yes, via {opt measure(binary|valued)}; default = {it:valued} for a valued network, {it:binary} otherwise. Signed: not checked. Two-mode: not checked.
+
 {title:Stored results}
 
 	Scalars

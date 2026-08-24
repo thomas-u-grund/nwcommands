@@ -29,6 +29,12 @@ node with name {it:old_nwnode} is found in {it:netname}, it is replaced with
 
 
 {marker examples}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames a single node's own label only; ties, tie values, and mode assignment are completely unchanged.
+
 {title:Examples}
 
 	{com}. nwclear
@@ -62,3 +68,4 @@ node with name {it:old_nwnode} is found in {it:netname}, it is replaced with
 
 	{help nwrename}, {help nwname}
 
+last certified : 24 Aug 2026

@@ -26,6 +26,12 @@ the command makes a suggestion for an alternative name. Normally,
 the command returns {it:netname_1}. If that also exists, the commands returns {it:netname_2}.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - a pure Stata-variable/network-name-collision check; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
 {title:Examples}
 
 	{cmd:. nwclear}

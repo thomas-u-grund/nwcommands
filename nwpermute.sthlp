@@ -80,6 +80,12 @@ such a permutation is desired to recalculate network statistics (and derive stan
 these statistics) while keeping the overall structure of the network constant (see more {help nwqap}, {help nwcorrelate}).	
 	
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties under the random relabeling (a pure permutation of the existing adjacency matrix). Signed: yes, values including negative are preserved. Two-mode: not checked.
+
 {title:Example}
 
 {pstd}
@@ -94,4 +100,4 @@ these statistics) while keeping the overall structure of the network constant (s
 
 	{help nwqap}, {help nwcorrelate}
 
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

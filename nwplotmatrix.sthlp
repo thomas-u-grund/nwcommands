@@ -118,7 +118,14 @@ All normal {help connect_options:options for lines} can be applied as well.
 
 	{cmd:. nwplotmatrix flomarriage, group(seat, lcolor(green))}	
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike {help nwplot}'s node-link layout, which needs {opt arrows} to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: not checked.
+
 {title:See also}
 
 	{help nwplot}
 
+last certified : 24 Aug 2026

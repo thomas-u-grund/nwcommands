@@ -35,7 +35,13 @@ with networks. For more information see {help nwdrop}.
 	{cmd:. nwdrop _all}
 	
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - clears all networks and Stata variables from memory unconditionally, independent of any network's own properties.
+
 {title:See also}
 
   {help nwdrop}, {help clear}
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026

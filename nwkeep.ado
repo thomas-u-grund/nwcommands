@@ -44,6 +44,12 @@ It can also be used together with {help if} or {help in}. In this case, the comm
 and keeps only certain nodes of a network. 
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation (keeps whole networks, or nodes via `if`/`in`), existing ties and their values are untouched for whatever remains. Two-mode: mode assignments are preserved for surviving nodes.
+
 {title:Examples}
 
 {pstd}

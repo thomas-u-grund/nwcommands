@@ -47,6 +47,12 @@
 {cmd:nwname} obtains and changes the meta-information of a network.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Not applicable in the usual sense - this command reports and *sets* a network's own directed/valued/two-mode/self-loop status and other metadata directly; it is the mechanism by which those properties are themselves declared, not something whose behavior varies by them.
+
 {title:Examples}
 
 {pstd}
@@ -65,4 +71,4 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
  {title:See also}
  
 	{help nwsummarize}, {help nwset}, {help nwload}
-last certified : 21 Aug 2026
+last certified : 24 Aug 2026
