@@ -163,6 +163,7 @@
 {col 8}{hline 3}{c RT}       {it:] Positions, Roles & }{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}
 {p2col:    {bf:{help nwbalance }}}Structural balance of a signed network{p_end}
 {p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:    {bf:{help nwburt }}}Calculate Burt structural hole measures{p_end}

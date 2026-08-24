@@ -2838,6 +2838,7 @@ class `NWdef' {
 	real matrix calculate_constraint_dyadic()
 	real scalar dyadstate()
 	real matrix connected_neighbors()
+	real matrix calculate_assortativity_pairs()
 
 	string scalar is_selfloop()
 	string scalar is_valued()
@@ -7016,6 +7017,44 @@ real scalar `NWdef'::dyadstate(real scalar a, real scalar b){
 real matrix `NWdef'::connected_neighbors(real scalar i){
 	if (!isdirect) return(neighbors(i))
 	return(uniqrows(neighbors(i) \ neighbors_in(i)))
+}
+
+/*
+	calculate_assortativity_pairs(attr): builds the symmetrized,
+	edge-doubled (attr[i], attr[j]) pair list Newman's (2002)
+	assortativity coefficient needs - every tied pair {i,j} (in either
+	direction, via connected_neighbors(), matching this package's own
+	established convention for measures with no natural directed
+	generalization - the same reasoning `nwclustering`/`nwclique`
+	already apply) contributes both (attr[i],attr[j]) and
+	(attr[j],attr[i]) rows, so the Pearson correlation of the two
+	columns (computed by the caller, nwassortativity.ado, via Mata's
+	own `correlation()') is exactly Newman's r regardless of edge
+	traversal order. `attr' is any per-node numeric vector - the
+	caller passes each node's own connected-degree for the (default)
+	degree-assortativity case, or an arbitrary node attribute
+	otherwise; this method itself is agnostic to which.
+*/
+real matrix `NWdef'::calculate_assortativity_pairs(real colvector attr){
+	real scalar n, i, k, m, cnt
+	real colvector Nci
+	real matrix pairs
+
+	n = get_nodes()
+	m = 0
+	for (i=1; i<=n; i++) m = m + rows(connected_neighbors(i))
+
+	pairs = J(m, 2, .)
+	cnt = 0
+	for (i=1; i<=n; i++){
+		Nci = connected_neighbors(i)
+		for (k=1; k<=rows(Nci); k++){
+			cnt++
+			pairs[cnt,1] = attr[i]
+			pairs[cnt,2] = attr[Nci[k]]
+		}
+	}
+	return(pairs)
 }
 
 /*
