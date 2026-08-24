@@ -140,8 +140,20 @@ program nwsmall
 	}
 	local directed = ("`undirected'" == "")
 
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision ("small", "small_1", ...) rather than
+	// require replace() - see nwrandom.ado's/nwpref.ado's own identical
+	// fix (harmonisation unit 126/129) for the full root cause. Resolved
+	// the same way: only when the caller did NOT supply name(),
+	// pre-resolve the actual (possibly auto-incremented) target name via
+	// nwvalidate before nwset ever sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "small"
+	}
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 	
 	if `ntimes' != 1 {

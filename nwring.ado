@@ -70,8 +70,20 @@ capture program drop nwring
 program nwring
 	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) prob(real 0) undirected noreplace xvars]
 
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision ("ring", "ring_1", ...) rather than
+	// require replace() - see nwrandom.ado's/nwpref.ado's own identical
+	// fix (harmonisation unit 126/129) for the full root cause. Resolved
+	// the same way: only when the caller did NOT supply name(),
+	// pre-resolve the actual (possibly auto-incremented) target name via
+	// nwvalidate before nwset ever sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "ring"
+	}
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 
 	if `ntimes' != 1 {
