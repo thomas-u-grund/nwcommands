@@ -49,17 +49,15 @@
 		{p_end}
 {p2col:{cmd: gml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/gml-format/":GML file format}
 	{p_end}
-{p2col:{cmd: graphml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/graphml-format/":GraphML file format}
-		{p_end}
-		
+
 
 {synoptset 20 tabbed}{...}
 {marker type_sub}{...}
 {p2col:{it:type_sub}}Description{p_end}
 {p2line}
-{p2col:{cmd: rownames}}matrix: first row in matrix contains variable names
+{p2col:{cmd: rownames}}matrix: the file's first {it:column} holds each row's node name as text (no header row) - see {help nwimport##matrix:Import raw adjacency matrix}'s own row-labeled example
 		{p_end}
-{p2col:{cmd: colnames}}matrix: first column in matrix contains variable names
+{p2col:{cmd: colnames}}matrix: {it:not needed} when the file's first {it:row} already holds node names as text - that shape is recognized automatically without any {it:type_sub} at all
 		{p_end}
 {p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
 		{p_end}		
@@ -80,7 +78,6 @@ The following network formats are supported:
 {pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
 {pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
 {pmore}{help nwimport##gml:- GML}{p_end}
-{pmore}{help nwimport##graphml:- GraphML}{p_end}
 
 {pstd}
 Can also be used to import networks from the internet:
@@ -199,8 +196,22 @@ and/or column names can be included as well. This import option can be used to l
 	0,1,0,0
 
 {pstd}
-Notice that the command recognises when variable names are given in the first row. However, variable names in the
-first column are not automatically recognized. One can make this explicit with the option {bf:type(matrix, rownames colnames)}.
+Notice that the command recognises when node names are given in the first row (Example 2 above) - {bf:type(matrix)}
+with no suboptions already produces the correct 4-node network from that file, since the header row becomes each
+node's own variable name and {cmd:nwimport} labels nodes from variable names by default; {bf:rownames}/{bf:colnames}
+are {it:not} needed for this shape and should be omitted here.
+
+{pstd}
+{bf:rownames}/{bf:colnames} are for the opposite shape instead: a raw matrix with node names given as an explicit
+first {it:column} of text (no header row at all), e.g.
+
+	thomas,0,1,1,0
+	peter,1,0,0,0
+	susan,0,0,0,1
+	kim,0,1,0,0
+
+{pstd}
+which requires {bf:type(matrix, rownames)} to read that first column as node labels rather than data.
 
 {pstd}
 Furthermore, the raw dataset can also contain additional attributes. When there are more variables than cases, all remaining
@@ -307,7 +318,16 @@ program nwimport
 		
 	local 0 `type'
 	syntax anything(name=import_type) [, *] 
-	_opts_oneof "pajek matrix edgelist compressed gml graphml ucinet" "import_type" "`import_type'" 6556
+	// BUGFIX: "graphml" was accepted here and documented in nwimport.sthlp
+	// as a supported type(), but _nwimport_graphml (called below) was
+	// never actually implemented anywhere in this file - every graphml
+	// import failed with a generic, uninformative "loading networks...
+	// failed" (the real cause, "command _nwimport_graphml is
+	// unrecognized", was silently swallowed by the outer capture).
+	// Removed from the allowed-type list and from the .sthlp until a
+	// real implementation exists, rather than continuing to advertise a
+	// type that cannot work.
+	_opts_oneof "pajek matrix edgelist compressed gml ucinet" "import_type" "`import_type'" 6556
 	
 	local options `"`options_original'"'
 
@@ -325,9 +345,6 @@ program nwimport
 	}
 	if "`import_type'" == "gml" {
 		capture _nwimport_gml `fname', `options'
-	}
-	if "`import_type'" == "graphml" {
-		capture _nwimport_graphml `fname', `options'
 	}
 	if "`import_type'" == "ucinet" {
 		 capture _nwimpdl `fname'
@@ -738,7 +755,6 @@ program _nwimport_matrix
 	
 	if "`rownames'" != "" {
 		local firstrow = "firstrow"
-		local varnames = "names"
 	}
 
 	local excelfile = strpos(`"`anything'"', ".xls")
@@ -767,18 +783,23 @@ program _nwimport_matrix
 				local insheet_opt = `", delimiter("`use_delimiter'") clear"'
 			}
 	
-			insheet using `anything' `insheet_opt' `varnames'
-			if `c(k)' == 1 {
-				split v1, parse(" ")
-				drop v1
-				foreach v of varlist _all {
-					if `v'[1] == "" {
-						drop `v'
-					}
-				}
-				destring _all, replace
-			}
-			
+			// BUGFIX: this used to unconditionally treat c(k)==1 as "wrong
+			// delimiter, recover by splitting on whitespace" - but that
+			// space-split is ALSO exactly what pot_delimiters' own later
+			// " " entry already tries, correctly, as its own dedicated
+			// delimiter candidate. Applying it as a blanket "rescue" after
+			// every wrong guess (not just when space genuinely IS the
+			// delimiter) meant a wrong guess (e.g. trying "tab" against a
+			// comma-delimited file, tried first regardless of the file's
+			// real delimiter) could spuriously report success='`c(k)' != 1'
+			// merely because the misparsed single column happened to
+			// contain any whitespace at all (e.g. a trailing ", attribute
+			// name" column, or any attribute value with a space in it) -
+			// silently continuing with a garbled 1-2-column dataset instead
+			// of correctly moving on to try the real delimiter next. Left
+			// as a plain, honest c(k)==1 check; the loop's own explicit
+			// " " candidate already covers genuinely space-delimited files.
+			insheet using `anything' `insheet_opt'
 			if (`c(k)' == 1){
 				local success = 0
 			}
@@ -788,18 +809,7 @@ program _nwimport_matrix
 		}
 		if "`delimiter'" != "" {
 			local insheet_opt = ", clear"
-			insheet using `anything' `insheet_opt' `varnames' delimiter("`delimiter'")
-			if `c(k)' == 1 {
-				split v1, parse(" ")
-				drop v1
-				foreach v of varlist _all {
-					if `v'[1] == "" {
-						drop `v'
-					}
-				}
-				destring _all, replace
-			}
-			
+			insheet using `anything' `insheet_opt' delimiter("`delimiter'")
 			if (`c(k)' == 1){
 				local success = 0
 			}

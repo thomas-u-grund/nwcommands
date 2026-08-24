@@ -183,6 +183,17 @@ program nw2toedge
 	foreach net in `nets' {
 		capture drop if `net' == `missing2'
 	}
-    qui keep if `nw_mode'`ego' != `nw_mode'`alter'
+	// BUGFIX: this used to run unconditionally, but the `nw_mode'`ego'/
+	// `nw_mode'`alter' variables it references only exist when the
+	// two-mode block above (line ~94) actually ran - which it
+	// deliberately skips when `ignore2mode' is given, since the whole
+	// point of that option is to bypass 2-mode-specific handling. Any
+	// two-mode network combined with `ignore2mode' crashed ("variable
+	// not found") as a result - a completely ordinary, easily-triggered
+	// combination. Guarded with the same condition as the block that
+	// actually creates those variables.
+	if "`is2mode'" == "true" & "`ignore2mode'" == "" {
+		qui keep if `nw_mode'`ego' != `nw_mode'`alter'
+	}
 
-end	
+end
