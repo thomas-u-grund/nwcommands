@@ -64,10 +64,15 @@ Not applicable - installs/manages this package's own Stata menu, dialogs, and up
 {title:Example}
 
 {pstd}
-I recommend you run this first after you installed the package "nwcommands-ado". It installs all help files and dialog boxes.
+New to nwcommands? The full install is two commands:
 
+	{cmd:. net install nwcommands}{p_end}
 	{cmd:. nwinstall, all}
-	
+
+{pstd}
+The first command installs just {cmd:nwinstall} itself and the landing help topics (see {help nwcommands}); the second downloads
+everything else - the core commands, all help files, and the dialog boxes - and installs them permanently.
+
 
 {pstd}
 This installs a menu for the nwcommands:

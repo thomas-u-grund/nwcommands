@@ -27,12 +27,10 @@
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help nw_deployfile }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:{bf:{help nw_evalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_networktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:{bf:{help nw_optsoneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
@@ -52,7 +50,7 @@
 {p2col:{bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:{bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:{bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
-{p2col:{bf:{help nwclustering }}}{p_end}
+{p2col:{bf:{help nwclustering }}}Clustering coefficient (transitivity) of a network{p_end}
 {p2col:{bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
 {p2col:{bf:{help nwcollapse }}}Collapse a network{p_end}
 {p2col:{bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
@@ -70,7 +68,7 @@
 {p2col:{bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:{bf:{help nwdrop }}}Drop networks or network nodes{p_end}
 {p2col:{bf:{help nwdropnodes }}}Drop nodes from a network{p_end}
-{p2col:{bf:{help nwds }}}{p_end}
+{p2col:{bf:{help nwds }}}List loaded networks, in the style of Stata's own {help ds}{p_end}
 {p2col:{bf:{help nwduplicate }}}Duplicate a network{p_end}
 {p2col:{bf:{help nwdyadprob }}}Generate a network based on tie probabilities{p_end}
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}

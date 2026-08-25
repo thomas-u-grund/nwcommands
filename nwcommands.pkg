@@ -1,0 +1,10 @@
+v 3
+d nwcommands. Start here - installs nwinstall and the landing help topics; run nwinstall, all next
+d Thomas U. Grund, University College Dublin, www.grund.co.uk
+d email: thomas.u.grund@gmail.com
+d Distribution-Date: 25aug2026
+f nwinstall.ado
+f nwinstall.sthlp
+f nwcommands.sthlp
+f nw_intro.sthlp
+f nw_start.sthlp

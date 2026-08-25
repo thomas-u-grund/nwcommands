@@ -164,6 +164,36 @@ program _nwdeploy
 	nwdeploy_writepkgchunks, manifest(_pkg_hlp.txt) base(nwcommands-hlp) desc("nwcommands-hlp. Social Network Analysis Using Stata - Help Files") email(thomas.u.grund@gmail.com) date(`d')
 	local nhlpchunks = r(chunks)
 
+	// Tiny, permanent bootstrap package: a brand-new user has no way to
+	// know they need to type an internal chunk name like
+	// "nwcommands-ado1" as their very first command - there was no
+	// plain "nwcommands" package at all. This one is deliberately
+	// small and hand-curated (not chunked from the full ado/hlp
+	// manifests) so it always fits Stata's own package-file line limit
+	// trivially and its name never needs to change as the real ado/hlp
+	// chunk count grows. Contains just enough to bootstrap the rest:
+	// nwinstall.ado itself (no Mata dependency - confirmed directly,
+	// zero `mata:' calls in the file - so the compiled .mlib is not
+	// needed here) plus the landing/orientation help topics, so `help
+	// nwcommands' works immediately even before `nwinstall, all' pulls
+	// in everything else. The intended flow is exactly two commands:
+	// `net install nwcommands' then `nwinstall, all'.
+	file open deploy_boot using nwcommands.pkg, replace write
+	file write deploy_boot "v 3" _n
+	file write deploy_boot "d nwcommands. Start here - installs nwinstall and the landing help topics; run nwinstall, all next" _n
+	file write deploy_boot "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
+	file write deploy_boot "d email: thomas.u.grund@gmail.com" _n
+	file write deploy_boot "d Distribution-Date: `d'" _n
+
+	file open _pkg_boot1 using _pkg_boot.txt, read
+	file read _pkg_boot1 _pkg_boot1_line
+	while "`_pkg_boot1_line'" != "" {
+		file write deploy_boot "`_pkg_boot1_line'" _n
+		file read _pkg_boot1 _pkg_boot1_line
+	}
+	file close _pkg_boot1
+	file close deploy_boot
+
 	file open deploy_ext1 using nwcommands-ext.pkg, replace write
 	file write deploy_ext1 "v 3" _n
 	file write deploy_ext1 "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
@@ -208,6 +238,7 @@ program _nwdeploy
 	file open `toc' using stata.toc, replace write
 	file write `toc' "v 3" _n
 	file write `toc' "d nwcommands: Network Analysis for Stata" _n
+	file write `toc' _n "p nwcommands" _n "d nwcommands. Start here - net install this first, then run nwinstall, all" _n
 	forvalues i = 1/`nadochunks' {
 		file write `toc' _n "p nwcommands-ado`i'" _n "d nwcommands-ado. Social Network Analysis Using Stata (part `i' of `nadochunks')" _n
 	}
@@ -378,9 +409,14 @@ program _write_nwcommands
 	set more off
 	tempname nw
 	file open `nw' using nwcommands.sthlp, replace write
-	file write `nw' "{smcl}" _n ///	
+	file write `nw' "{smcl}" _n ///
 "{* *! version 1.0.0  3sept2014}{...}" _n ///
-"" _n ///		
+"" _n ///
+"{pstd}" _n ///
+"New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else" _n ///
+"(core commands, help files, dialog boxes) - see {help nwinstall}." _n ///
+"{p_end}" _n ///
+"" _n ///
 "{col 14}Section{col 31}Description" _n ///
 "{col 14}{hline 46}" _n ///
 "{help nw_intro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///

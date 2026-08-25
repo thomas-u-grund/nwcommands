@@ -1,6 +1,9 @@
 v 3
 d nwcommands: Network Analysis for Stata
 
+p nwcommands
+d nwcommands. Start here - net install this first, then run nwinstall, all
+
 p nwcommands-ado1
 d nwcommands-ado. Social Network Analysis Using Stata (part 1 of 2)
 
