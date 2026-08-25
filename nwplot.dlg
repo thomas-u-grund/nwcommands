@@ -360,9 +360,9 @@ BEGIN
 		}
 		put ")"
 	}
-	require main.vr_nodex
-	require main.vr_nodey
 	if main.cb_layout.iseq("nodexy") {
+		require main.vr_nodex
+		require main.vr_nodey
 		put " nodexy(" main.vr_nodex " " main.vr_nodey ")"
 	}
 END
