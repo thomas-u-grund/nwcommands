@@ -82,19 +82,14 @@ there is nothing to configure, and results are identical either way:
 
 - **A sparse-native Mata graph representation** for the core structural commands (components,
   degree, clustering, neighbor traversal, unweighted distances) — proven at 100,000 nodes /
-  1,000,000 edges with no external dependencies. See `docs/SPARSE_BACKEND.md`.
+  1,000,000 edges with no external dependencies.
 - **Compiled native (C) kernels** (Stata plugins, source in `native/`) for the specific
   operations where Stata's own Mata interpreter is the actual bottleneck, not the algorithm:
-  `nwergm`'s own MCMC sampler (`docs/ERGM_ARCHITECTURE.md`) and betweenness centrality
-  (`docs/NATIVE_GRAPH_LIBRARIES.md`, which also documents the licence-audited investigation
-  into adopting a third-party graph library instead — igraph/NetworKit/GraphBLAS/LEMON/Boost
-  Graph Library/SNAP were all surveyed — and why a small, bespoke kernel won out on the
-  evidence). Falls back to an equivalent, fully-supported pure-Mata implementation on any
-  platform without a compiled plugin for it.
+  `nwergm`'s own MCMC sampler and betweenness centrality. Falls back to an equivalent,
+  fully-supported pure-Mata implementation on any platform without a compiled plugin for it.
 
-`help nw_intro` (section "Limitations and feasible network sizes") is the practical, evidence-
-based summary of what to expect at various network sizes; the two documents above are the full
-technical accounts.
+`help nw_intro` (section "Limitations and feasible network sizes") is the practical,
+evidence-based summary of what to expect at various network sizes.
 
 ## Development
 
@@ -104,9 +99,6 @@ technical accounts.
 - `native/` — C sources for the two native plugins (`ergm_mcmc.c`, `nwgraph.c`) and their own
   `Makefile`; `.github/workflows/build-plugins.yml` builds and commits all three platforms'
   binaries on push.
-- `docs/` — architecture and certification records, including `docs/CERTIFICATION.md`, a
-  detailed, chronological log of every feature added, bug found, and decision made across this
-  project's own modernization effort, and `docs/ROADMAP.md` for what's still open.
 - `dev/` — benchmark scripts (including R-vs-Stata comparisons for `nwergm`) and other
   development-only utilities not part of the shipped package.
 

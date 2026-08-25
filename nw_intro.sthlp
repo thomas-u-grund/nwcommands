@@ -90,8 +90,7 @@ anything built on them - operate on a genuinely sparse internal representation. 
 proportional to the square of the node count, only to the number of actual ties, and have been benchmarked
 directly at 100,000 nodes / 1,000,000 ties (full connected-components analysis in well under 10 seconds;
 degree/neighbor lookups near-instant). Networks at this scale, or considerably beyond it, are practical for
-these commands specifically. See {browse "docs/SPARSE_BACKEND.md"} in the package's own repository for the full
-technical account and benchmark numbers.
+these commands specifically.
 
 {marker limits_dense}{...}
 {title:Commands that need the full adjacency matrix (older algorithms, weighted distances)}

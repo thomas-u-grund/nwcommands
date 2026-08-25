@@ -63,10 +63,8 @@ for commands with no network-type-dependent behavior at all (e.g. purely structu
 A small set of commands - the ones most central to network analysis, where getting the weighted/
 directed/signed handling exactly right matters most - have been independently re-derived from
 source code (not just summarized from their own help text), each backed by a quoted line of code
-and, where relevant, a documented bug found and fixed along the way. That fuller table, its
-classification key ({bf:W1}-{bf:W5} for weighted support, {bf:T1}-{bf:T5} for two-mode support),
-and the full per-command sweep this page summarizes live in {bf:docs/NETWORK_TYPE_MATRIX.md} in the
-package's own source repository (not installed alongside the help files themselves).
+and, where relevant, a documented bug found and fixed along the way, using a classification key
+of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support.
 
 {title:See also}
 

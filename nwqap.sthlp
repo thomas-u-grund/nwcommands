@@ -168,7 +168,7 @@ continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd
 explicitly when this combination is detected, rather than leaving it silent. Independent networks
 and variables are not affected - their values enter the regression directly, weighted or not.
 Signed: not checked. Two-mode: not checked. A full weighted-QAP alternative (rather than a warning)
-remains on the roadmap as a larger follow-on (see {browse "docs/CERTIFICATION.md":CERTIFICATION.md}).
+remains on the roadmap as a larger follow-on.
 
 
 {title:Stored results}

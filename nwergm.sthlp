@@ -143,7 +143,7 @@ triad-closure terms - see {help nwergm##limitations:Limitations} below for the c
 list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
 (bipartite) ERGMs, curved/free-decay estimation, and constraints beyond the free binary dyad
 space remain roadmap items, each a genuine architectural addition rather than another term to
-add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
+add.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
@@ -238,8 +238,7 @@ undirected and directed ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{
 essentially every {cmd:nwergm} model now runs on the native backend. The one remaining exception
 (automatically and correctly using the Mata backend instead, with no error and no action needed):
 {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix marshalled across the
-plugin boundary rather than the per-node values or scalar parameters every other term needs - see
-{browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the current status.
+plugin boundary rather than the per-node values or scalar parameters every other term needs.
 
 {title:Postestimation}
 
@@ -326,10 +325,9 @@ Geyer, C.J., Thompson, E.A. (1992). Constrained Monte Carlo Maximum Likelihood f
 Data. {it:Journal of the Royal Statistical Society, Series B}, 54(3), 657-699. (MCMLE)
 
 {pstd}
-{cmd:nwergm} is an independent, native reimplementation and is not affiliated with or endorsed
-by the Statnet project. See {browse "docs/ERGM_PROVENANCE.md"} for the full licensing and
-provenance account, and {browse "docs/ERGM_STATNET_STUDY.md"} for the architecture study this
-implementation is based on.
+{cmd:nwergm} is an independent, native, from-scratch reimplementation - not a derivative of
+Statnet's own (GPL-licensed) {cmd:ergm} package - and is not affiliated with or endorsed by the
+Statnet project.
 
 {title:Simulation}
 
@@ -359,8 +357,8 @@ ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to si
 existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
 takes, but v1's simulate interface deliberately only supports the terms that need no external
 covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
-nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation (see
-{browse "docs/ERGM_ROADMAP.md"}). {opt theta()} supplies one coefficient per requested term, IN
+nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation.
+{opt theta()} supplies one coefficient per requested term, IN
 THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
 present, then any gw* terms in the order written) - there is no per-term coefficient
 sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
