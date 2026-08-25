@@ -1,6 +1,6 @@
 capture program drop nwinstall
 program nwinstall
-	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ado ext all path(string)]
+	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string)]
 	
 	if "`usermenu'" != "" | "`downloadoff'" != "" {
 		window menu clear
@@ -26,7 +26,43 @@ program nwinstall
 		local dialog = "dialog"
 		local permanently = "permanently"
 	}
-	
+
+	// Offline install path (see nw_offline.sthlp): for machines that
+	// cannot reach GitHub or cannot write anywhere but their own
+	// PERSONAL ado directory. Copies files directly from an already-
+	// obtained full nwcommands source folder (`from()', default: the
+	// current directory) into a local ado directory (`dest()', default:
+	// c(sysdir_personal) - already on Stata's default adopath, so
+	// nothing further needs to be set for the default case) instead of
+	// running `net install' against the GitHub repo.
+	if "`localcopy'" != "" {
+		if "`from'" == "" {
+			local from "`c(pwd)'"
+		}
+		if "`dest'" == "" {
+			local dest : sysdir PERSONAL
+		}
+		capture mkdir "`dest'"
+		if "`ado'" != "" | "`all'" != "" {
+			nwinstall_copymanifest, manifest("_pkg_ado.txt") from("`from'") dest("`dest'")
+		}
+		if "`help'" != "" | "`all'" != "" {
+			nwinstall_copymanifest, manifest("_pkg_hlp.txt") from("`from'") dest("`dest'")
+		}
+		if "`ext'" != "" | "`all'" != "" {
+			nwinstall_copymanifest, manifest("_pkg_ext.txt") from("`from'") dest("`dest'")
+		}
+		if "`dialog'" != "" | "`all'" != "" {
+			nwinstall_copydialogs, from("`from'") dest("`dest'")
+		}
+		di as result _n "Copied nwcommands files from `from' into `dest'."
+		if `"`dest'"' != `"`: sysdir PERSONAL'"' {
+			di as result "This is not your PERSONAL ado directory - add it to your ado path in every session, e.g. with:"
+			di as text `"    adopath ++ "`dest'""'
+			di as text "(add that same line to your profile.do to make it permanent - see {help nw_offline} for the exact steps)."
+		}
+	}
+
 	// Stata's own .pkg format has a hard, previously-undiscovered line
 	// limit ("package file too long" - confirmed empirically, see
 	// _nwdeploy.ado's own comment on nwdeploy_writepkgchunks) that this
@@ -38,9 +74,9 @@ program nwinstall
 	// a silent, clean loop exit rather than a surfaced error, matching
 	// how many chunks stata.toc happens to list right now without this
 	// command needing to hardcode that count.
-	if "`ado'" != "" | "`all'" != "" {
+	if ("`ado'" != "" | "`all'" != "") & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ado"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -58,9 +94,9 @@ program nwinstall
 		capture confirm number 1
 	}
 
-	if "`help'" != "" {
+	if "`help'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-hlp"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -73,17 +109,32 @@ program nwinstall
 		capture confirm number 1
 	}
 
-	if "`ext'" != "" {
+	if "`ext'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ext"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		net install "nwcommands-ext", all
 	}
 
 
-	if "`dialog'" != "" {
+	if "`dialog'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-dlg"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
-		net install "nwcommands-dlg", all
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+		// BUGFIX: was a single `net install "nwcommands-dlg", all' -
+		// the dialog rebuild grew the .dlg count past Stata's
+		// per-package line limit (see _nwdeploy.ado's own comment on
+		// nwdeploy_writepkgchunks), so nwcommands-dlg.pkg is now
+		// shipped chunked (nwcommands-dlg1.pkg, -dlg2.pkg, ...) just
+		// like -ado/-hlp already were; this loop matches those.
+		local i = 1
+		local keepgoing = 1
+		while `keepgoing' {
+			capture net install "nwcommands-dlg`i'", all
+			if _rc != 0 {
+				local keepgoing = 0
+			}
+			local i = `i' + 1
+		}
+		capture confirm number 1
 	}
 	
 	
@@ -347,5 +398,55 @@ program nwinstall_menu
 end
 
 
+capture program drop nwinstall_copymanifest
+program nwinstall_copymanifest
+	// Copies every file listed in one of this package's own _pkg_*.txt
+	// manifests (the same manifests _nwdeploy.ado reads to build the
+	// GitHub .pkg files - see that file) from a local source folder
+	// into a local destination ado directory. Files listed under a
+	// subdirectory (currently only "lib/lnwcommands.mlib") are
+	// flattened into `dest' directly, matching how a real net-installed
+	// package ends up as one flat directory - Mata's own library
+	// search just needs the .mlib to be somewhere on the ado path, not
+	// specifically under a "lib" subfolder.
+	syntax , manifest(string) from(string) dest(string)
+	capture confirm file "`from'/`manifest'"
+	if _rc != 0 {
+		di as error "manifest not found: `from'/`manifest' - is `from' a full nwcommands source checkout?"
+		exit 601
+	}
+	tempname fh
+	file open `fh' using "`from'/`manifest'", read
+	file read `fh' line
+	while r(eof) == 0 {
+		if substr(`"`line'"', 1, 2) == "f " {
+			local relfile = substr(`"`line'"', 3, .)
+			local basefile = subinstr("`relfile'", "lib/", "", .)
+			capture copy "`from'/`relfile'" "`dest'/`basefile'", replace
+		}
+		file read `fh' line
+	}
+	file close `fh'
+end
+
+
+capture program drop nwinstall_copydialogs
+program nwinstall_copydialogs
+	// Dialog boxes have no fixed manifest (_nwdeploy.ado globs *.dlg/
+	// *.idlg fresh at package-build time - see its own comment on why),
+	// so this does the same glob directly against the source folder.
+	syntax , from(string) dest(string)
+	local dlgfiles : dir "`from'" files "*.dlg"
+	foreach f of local dlgfiles {
+		capture copy "`from'/`f'" "`dest'/`f'", replace
+	}
+	local idlgfiles : dir "`from'" files "*.idlg"
+	foreach f of local idlgfiles {
+		capture copy "`from'/`f'" "`dest'/`f'", replace
+	}
+end
+
+
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+*! v2.1.0 __ added LOCALcopy/from()/dest() offline install path
