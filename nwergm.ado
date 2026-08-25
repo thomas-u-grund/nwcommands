@@ -428,7 +428,7 @@ program nwergm, eclass
 	}
 	if "`valued'" == "true" {
 		di "{err}nwergm estimates binary ERGMs only; {bf:`netname'} is valued/weighted."
-		di "{err}nwergm never silently dichotomizes tie values or drops signs. Valued ERGMs are a separate, larger future initiative (see docs/ERGM_ROADMAP.md)."
+		di "{err}nwergm never silently dichotomizes tie values or drops signs. Valued ERGMs are a separate, larger future initiative."
 		error 198
 	}
 	if "`mutual'" != "" & "`directed'" != "true" {
