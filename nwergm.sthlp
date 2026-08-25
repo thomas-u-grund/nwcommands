@@ -340,10 +340,7 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 {it:nodes}
 {cmd:,}
 {opt edges} [{opt mutual}]
-[{opt gwesp(real)}]
-[{opt gwdegree(real)}]
-[{opt gwodegree(real)}]
-[{opt gwidegree(real)}]
+[{it:{help nwergm##simulate_terms:term options}}]
 {opt theta(numlist)}
 [{opt directed}
 {opt nsim(int)}
@@ -358,15 +355,57 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
 itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
 ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
-existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
-takes, but v1's simulate interface deliberately only supports the terms that need no external
-covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
-nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation.
-{opt theta()} supplies one coefficient per requested term, IN
-THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
-present, then any gw* terms in the order written) - there is no per-term coefficient
-sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
-estimation path uses rather than a parallel implementation.
+existing network is required or read).
+
+{marker simulate_terms}{...}
+{pstd}
+As of this release, {cmd:nwergm simulate} supports the full {cmd:nwergm} term library - every
+term option listed in the {cmd:nwergm} {bf:Syntax} section above - not just the geometrically
+weighted family. Each family sources its data the same way it does during estimation:
+
+{p2colset 9 32 34 2}{...}
+{p2col:{it:no external data}}{opt mutual}, {opt concurrent}, {opt triangle}, {opt ctriple},
+{opt transitiveties}, {opt cyclicalties}, {opt degree(numlist)}, {opt odegree(numlist)},
+{opt idegree(numlist)}, {opt kstar(numlist)}, {opt ostar(numlist)}, {opt istar(numlist)},
+{opt degrange(numlist)}/{opt degrangeto(numlist)} (and the {opt o}-/{opt i}- directed
+analogues), {opt esp(numlist)}, {opt dsp(numlist)}, and the full geometrically weighted family
+({opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt gwdegree}/{opt gwodegree}/{opt gwidegree}, all
+{it:real}, decay value only){p_end}
+{p2col:{it:node covariate}}{opt nodematch(varname)}, {opt nodematchdiff(varname)},
+{opt nodecov(varname)}, {opt nodeicov(varname)}, {opt nodeocov(varname)}, {opt absdist(varname)},
+{opt nodefactor(varname)}, {opt nodeofactor(varname)}, {opt nodeifactor(varname)},
+{opt nodemix(varname)}, {opt sender}, {opt receiver} - read via {cmd:st_data()} from
+{it:the currently active Stata dataset}, exactly as estimation reads them from whatever dataset
+is loaded alongside the network being fit. The active dataset must already have {it:nodes}
+observations with the named variable populated before calling {cmd:simulate} (e.g.
+{cmd:set obs 20} + {cmd:gen mygroup = ...}); {opt sender}/{opt receiver} need no real
+covariate at all, since their own "attribute" is just each node's own index.{p_end}
+{p2col:{it:dyadic covariate}}{opt edgecov(netname)}, {opt hamming(netname)} - read from
+{it:netname}, an already-{help nwset:set}/loaded reference network of the same size as
+{it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
+
+{pstd}
+{opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence
+{cmd:nwergm}'s own estimation path itself always processes terms in (edges, mutual, then every
+node-covariate family, then the structural/numlist family, then {opt sender}/{opt receiver},
+then the dyadic-covariate family, then the geometrically weighted family - regardless of the
+order the options happen to be typed on the command line, since Stata's own option parsing does
+not preserve that order to begin with). A term that expands into several coefficients (e.g.
+{opt nodefactor()} with $k$ categories, or {opt degree(2 3 4)}) consumes that many consecutive
+entries from {opt theta()}, in the same left-to-right order its own levels/values are listed.
+There is no per-term coefficient sub-option, by design, so this exactly reuses the same
+term-construction code {cmd:nwergm}'s own estimation path uses rather than a parallel
+implementation.
+
+{pstd}
+{bf:The resulting simulated network's own dataset does not carry the caller's covariate
+variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
+the active dataset with just that network's own bare node/edge structure - any covariate
+variable read during term construction is captured once, in Mata, before that replacement
+happens, and is not itself part of the simulated result. Regenerate it afterward (by node
+index, since simulated node identity is always {cmd:1}..{it:nodes} in the caller's original row
+order) if a postestimation step - e.g. checking the resulting network's own mixing pattern -
+needs it alongside the simulated network.
 
 {pstd}
 {opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,

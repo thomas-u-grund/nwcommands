@@ -339,10 +339,7 @@ implementation is based on.
 {it:nodes}
 {cmd:,}
 {opt edges} [{opt mutual}]
-[{opt gwesp(real)}]
-[{opt gwdegree(real)}]
-[{opt gwodegree(real)}]
-[{opt gwidegree(real)}]
+[{it:{help nwergm##simulate_terms:term options}}]
 {opt theta(numlist)}
 [{opt directed}
 {opt nsim(int)}
@@ -357,15 +354,57 @@ implementation is based on.
 coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
 itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
 ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
-existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
-takes, but v1's simulate interface deliberately only supports the terms that need no external
-covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
-nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation (see
-{browse "docs/ERGM_ROADMAP.md"}). {opt theta()} supplies one coefficient per requested term, IN
-THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
-present, then any gw* terms in the order written) - there is no per-term coefficient
-sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
-estimation path uses rather than a parallel implementation.
+existing network is required or read).
+
+{marker simulate_terms}{...}
+{pstd}
+As of this release, {cmd:nwergm simulate} supports the full {cmd:nwergm} term library - every
+term option listed in the {cmd:nwergm} {bf:Syntax} section above - not just the geometrically
+weighted family. Each family sources its data the same way it does during estimation:
+
+{p2colset 9 32 34 2}{...}
+{p2col:{it:no external data}}{opt mutual}, {opt concurrent}, {opt triangle}, {opt ctriple},
+{opt transitiveties}, {opt cyclicalties}, {opt degree(numlist)}, {opt odegree(numlist)},
+{opt idegree(numlist)}, {opt kstar(numlist)}, {opt ostar(numlist)}, {opt istar(numlist)},
+{opt degrange(numlist)}/{opt degrangeto(numlist)} (and the {opt o}-/{opt i}- directed
+analogues), {opt esp(numlist)}, {opt dsp(numlist)}, and the full geometrically weighted family
+({opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt gwdegree}/{opt gwodegree}/{opt gwidegree}, all
+{it:real}, decay value only){p_end}
+{p2col:{it:node covariate}}{opt nodematch(varname)}, {opt nodematchdiff(varname)},
+{opt nodecov(varname)}, {opt nodeicov(varname)}, {opt nodeocov(varname)}, {opt absdist(varname)},
+{opt nodefactor(varname)}, {opt nodeofactor(varname)}, {opt nodeifactor(varname)},
+{opt nodemix(varname)}, {opt sender}, {opt receiver} - read via {cmd:st_data()} from
+{it:the currently active Stata dataset}, exactly as estimation reads them from whatever dataset
+is loaded alongside the network being fit. The active dataset must already have {it:nodes}
+observations with the named variable populated before calling {cmd:simulate} (e.g.
+{cmd:set obs 20} + {cmd:gen mygroup = ...}); {opt sender}/{opt receiver} need no real
+covariate at all, since their own "attribute" is just each node's own index.{p_end}
+{p2col:{it:dyadic covariate}}{opt edgecov(netname)}, {opt hamming(netname)} - read from
+{it:netname}, an already-{help nwset:set}/loaded reference network of the same size as
+{it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
+
+{pstd}
+{opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence
+{cmd:nwergm}'s own estimation path itself always processes terms in (edges, mutual, then every
+node-covariate family, then the structural/numlist family, then {opt sender}/{opt receiver},
+then the dyadic-covariate family, then the geometrically weighted family - regardless of the
+order the options happen to be typed on the command line, since Stata's own option parsing does
+not preserve that order to begin with). A term that expands into several coefficients (e.g.
+{opt nodefactor()} with $k$ categories, or {opt degree(2 3 4)}) consumes that many consecutive
+entries from {opt theta()}, in the same left-to-right order its own levels/values are listed.
+There is no per-term coefficient sub-option, by design, so this exactly reuses the same
+term-construction code {cmd:nwergm}'s own estimation path uses rather than a parallel
+implementation.
+
+{pstd}
+{bf:The resulting simulated network's own dataset does not carry the caller's covariate
+variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
+the active dataset with just that network's own bare node/edge structure - any covariate
+variable read during term construction is captured once, in Mata, before that replacement
+happens, and is not itself part of the simulated result. Regenerate it afterward (by node
+index, since simulated node identity is always {cmd:1}..{it:nodes} in the caller's original row
+order) if a postestimation step - e.g. checking the resulting network's own mixing pattern -
+needs it alongside the simulated network.
 
 {pstd}
 {opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,
@@ -1407,7 +1446,15 @@ capture program drop nwergm_simulate
 program nwergm_simulate
 	version 14
 	syntax anything(name=nodes) , edges [mutual ///
-		GWESP(real 0) GWDEGREE(real 0) GWODEGREE(real 0) GWIDEGREE(real 0) ///
+		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
+		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
+		GWESP(real 0) GWDSP(real 0) GWNSP(real 0) GWDEGREE(real 0) GWODEGREE(real 0) GWIDEGREE(real 0) ///
+		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
+		NODEIFACTOR(string) NODEOFACTOR(string) ///
+		KSTAR(string) ISTAR(string) OSTAR(string) ///
+		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
+		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
+		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
 		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) ]
 
@@ -1428,9 +1475,61 @@ program nwergm_simulate
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require {bf:directed}. Use {bf:gwdegree()} for an undirected simulation."
 		error 198
 	}
-	// gwesp() now supports directed simulation too (wave 5, matching the
-	// estimation path above) via R ergm's own default OTP directed
-	// shared-partner definition.
+	// gwesp()/gwdsp()/gwnsp() support directed simulation too (matching
+	// the estimation path above) via R ergm's own default OTP directed
+	// shared-partner definition - no directedness restriction on these.
+	if ("`nodeicov'" != "" | "`nodeocov'" != "") & "`directed'" == "" {
+		di "{err}options {bf:nodeicov()}/{bf:nodeocov()} require {bf:directed}."
+		error 198
+	}
+	if "`degree'" != "" & "`directed'" != "" {
+		di "{err}option {bf:degree()} is undirected only. Use {bf:odegree()}/{bf:idegree()} for a directed simulation."
+		error 198
+	}
+	if ("`odegree'" != "" | "`idegree'" != "") & "`directed'" == "" {
+		di "{err}options {bf:odegree()}/{bf:idegree()} require {bf:directed}. Use {bf:degree()} for an undirected simulation."
+		error 198
+	}
+	if "`concurrent'" != "" & "`directed'" != "" {
+		di "{err}option {bf:concurrent} (v1 scope) is undirected only."
+		error 198
+	}
+	if "`triangle'" != "" & "`directed'" != "" {
+		di "{err}option {bf:triangle} is undirected only. Use {bf:ctriple} for a directed simulation."
+		error 198
+	}
+	if "`ctriple'" != "" & "`directed'" == "" {
+		di "{err}option {bf:ctriple} requires {bf:directed}. Use {bf:triangle} for an undirected simulation."
+		error 198
+	}
+	if ("`nodeifactor'" != "" | "`nodeofactor'" != "") & "`directed'" == "" {
+		di "{err}options {bf:nodeifactor()}/{bf:nodeofactor()} require {bf:directed}. Use {bf:nodefactor()} for an undirected simulation."
+		error 198
+	}
+	if "`kstar'" != "" & "`directed'" != "" {
+		di "{err}option {bf:kstar()} is undirected only. Use {bf:ostar()}/{bf:istar()} for a directed simulation."
+		error 198
+	}
+	if ("`ostar'" != "" | "`istar'" != "") & "`directed'" == "" {
+		di "{err}options {bf:ostar()}/{bf:istar()} require {bf:directed}. Use {bf:kstar()} for an undirected simulation."
+		error 198
+	}
+	if "`degrange'" != "" & "`directed'" != "" {
+		di "{err}option {bf:degrange()} is undirected only. Use {bf:odegrange()}/{bf:idegrange()} for a directed simulation."
+		error 198
+	}
+	if ("`odegrange'" != "" | "`idegrange'" != "") & "`directed'" == "" {
+		di "{err}options {bf:odegrange()}/{bf:idegrange()} require {bf:directed}. Use {bf:degrange()} for an undirected simulation."
+		error 198
+	}
+	if ("`transitiveties'" != "" | "`cyclicalties'" != "") & "`directed'" == "" {
+		di "{err}options {bf:transitiveties}/{bf:cyclicalties} require {bf:directed}."
+		error 198
+	}
+	if ("`sender'" != "" | "`receiver'" != "") & "`directed'" == "" {
+		di "{err}options {bf:sender}/{bf:receiver} require {bf:directed}."
+		error 198
+	}
 	if "`proposal'" == "" local proposal "tnt"
 	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`generate'" == "" local generate "ergmsim"
@@ -1457,6 +1556,479 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' mutual"
 		local __ergm_matatemps "`__ergm_matatemps' `td_mutual'"
 	}
+
+	// --- node-covariate terms (ported from the estimation path above):
+	// read directly via st_data(1::nodes, "varname") from the ACTIVE
+	// Stata dataset, exactly as estimation itself does - a network
+	// object is not involved at all in this read, so nothing about
+	// simulation-vs-estimation changes it. The caller needs `nodes'
+	// observations with the named variable(s) already loaded (e.g.
+	// `set obs 20' + `gen mygroup = ...' before calling simulate) -
+	// documented in nwergm.sthlp's own Simulation section.
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodematch {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nm`__ergm_termidx'
+		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm`__ergm_termidx'', ("nodematch_`__ergm_v'"))
+		local ntermtok "`ntermtok' nodematch_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nm`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodecov {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nc`__ergm_termidx'
+		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nc`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
+		local ntermtok "`ntermtok' nodecov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nc`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeicov {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_ni`__ergm_termidx'
+		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_ni`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
+		local ntermtok "`ntermtok' nodeicov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ni`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeocov {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_no`__ergm_termidx'
+		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_no`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
+		local ntermtok "`ntermtok' nodeocov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_no`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local absdist {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_ad`__ergm_termidx'
+		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_ad`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), `__td_ad`__ergm_termidx'', ("absdist_`__ergm_v'"))
+		local ntermtok "`ntermtok' absdist_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ad`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodematchdiff {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nmd`__ergm_termidx'
+		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nmd`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nmd`__ergm_termidx''.levels = uniqrows(`__td_nmd`__ergm_termidx''.attr)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nmd`__ergm_termidx''.levels)))
+		tempname __ergm_levvec
+		mata: st_matrix("`__ergm_levvec'", `__td_nmd`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodematch_diff", `__ergm_nlev', &stat_nodematch_diff(), &change_nodematch_diff(), `__td_nmd`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nmd`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodefactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nf`__ergm_termidx'
+		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nf`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
+		mata: `__td_nf`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nf`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nf`__ergm_termidx''.levels)))
+		tempname __ergm_levvec2
+		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodefactor", `__ergm_nlev', &stat_nodefactor(), &change_nodefactor(), `__td_nf`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodemix {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_mx`__ergm_termidx'
+		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_mx`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __ergm_lv = uniqrows(`__td_mx`__ergm_termidx''.attr)
+		mata: __ergm_np = rows(__ergm_lv)
+		mata: __ergm_lp = J(0,2,0)
+		mata: for (__ergm_a=1; __ergm_a<=__ergm_np; __ergm_a++) for (__ergm_b=__ergm_a; __ergm_b<=__ergm_np; __ergm_b++) __ergm_lp = __ergm_lp \ (__ergm_lv[__ergm_a], __ergm_lv[__ergm_b])
+		mata: `__td_mx`__ergm_termidx''.levelpairs = __ergm_lp
+		mata: st_local("__ergm_nlp", strofreal(rows(__ergm_lp)))
+		tempname __ergm_lpmat
+		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlp' {
+			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]''"
+		}
+		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
+		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
+	// --- structural terms with no covariate data at all: numlist-
+	// parameterized (degree()/odegree()/idegree()/kstar()/ostar()/
+	// istar()/degrange()/odegrange()/idegrange()/esp()/dsp()) or plain
+	// flags (concurrent/triangle/ctriple/transitiveties/cyclicalties) -
+	// ported verbatim from the estimation path, which needs nothing
+	// beyond the term's own parameters either.
+	if "`degree'" != "" {
+		tempname __td_deg
+		mata: `__td_deg' = ErgmTermData()
+		mata: `__td_deg'.levels = strtoreal(tokens("`degree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_deg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `degree' {
+			local __ergm_cnames "`__ergm_cnames' degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("degree", `__ergm_ndeg', &stat_degree(), &change_degree(), `__td_deg', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_deg'"
+	}
+	if "`odegree'" != "" {
+		tempname __td_odeg
+		mata: `__td_odeg' = ErgmTermData()
+		mata: `__td_odeg'.levels = strtoreal(tokens("`odegree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_odeg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `odegree' {
+			local __ergm_cnames "`__ergm_cnames' odegree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("odegree", `__ergm_ndeg', &stat_odegree(), &change_odegree(), `__td_odeg', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_odeg'"
+	}
+	if "`idegree'" != "" {
+		tempname __td_ideg
+		mata: `__td_ideg' = ErgmTermData()
+		mata: `__td_ideg'.levels = strtoreal(tokens("`idegree'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_ideg'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `idegree' {
+			local __ergm_cnames "`__ergm_cnames' idegree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("idegree", `__ergm_ndeg', &stat_idegree(), &change_idegree(), `__td_ideg', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ideg'"
+	}
+	if "`concurrent'" != "" {
+		tempname __td_conc
+		mata: `__td_conc' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("concurrent", 1, &stat_concurrent(), &change_concurrent(), `__td_conc', ("concurrent"))
+		local ntermtok "`ntermtok' concurrent"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_conc'"
+	}
+	if "`triangle'" != "" {
+		tempname __td_tri
+		mata: `__td_tri' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), `__td_tri', ("triangle"))
+		local ntermtok "`ntermtok' triangle"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_tri'"
+	}
+	if "`ctriple'" != "" {
+		tempname __td_ctri
+		mata: `__td_ctri' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), `__td_ctri', ("ctriple"))
+		local ntermtok "`ntermtok' ctriple"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ctri'"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeofactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nof`__ergm_termidx'
+		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nof`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nof`__ergm_termidx''.levels = uniqrows(`__td_nof`__ergm_termidx''.attr)
+		mata: `__td_nof`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nof`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nof`__ergm_termidx''.levels)))
+		tempname __ergm_levvec3
+		mata: st_matrix("`__ergm_levvec3'", `__td_nof`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodeofactor", `__ergm_nlev', &stat_nodeofactor(), &change_nodeofactor(), `__td_nof`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nof`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local nodeifactor {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_nif`__ergm_termidx'
+		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_nif`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_nif`__ergm_termidx''.levels = uniqrows(`__td_nif`__ergm_termidx''.attr)
+		mata: `__td_nif`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nif`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nif`__ergm_termidx''.levels)))
+		tempname __ergm_levvec4
+		mata: st_matrix("`__ergm_levvec4'", `__td_nif`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']''"
+		}
+		mata: __nwergm_last_M.addterm("nodeifactor", `__ergm_nlev', &stat_nodeifactor(), &change_nodeifactor(), `__td_nif`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_nif`__ergm_termidx''"
+	}
+
+	if "`kstar'" != "" {
+		tempname __td_kstar
+		mata: `__td_kstar' = ErgmTermData()
+		mata: `__td_kstar'.levels = strtoreal(tokens("`kstar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_kstar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `kstar' {
+			local __ergm_cnames "`__ergm_cnames' kstar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("kstar", `__ergm_nk', &stat_kstar(), &change_kstar(), `__td_kstar', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_kstar'"
+	}
+	if "`ostar'" != "" {
+		tempname __td_ostar
+		mata: `__td_ostar' = ErgmTermData()
+		mata: `__td_ostar'.levels = strtoreal(tokens("`ostar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_ostar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `ostar' {
+			local __ergm_cnames "`__ergm_cnames' ostar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("ostar", `__ergm_nk', &stat_ostar(), &change_ostar(), `__td_ostar', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ostar'"
+	}
+	if "`istar'" != "" {
+		tempname __td_istar
+		mata: `__td_istar' = ErgmTermData()
+		mata: `__td_istar'.levels = strtoreal(tokens("`istar'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_istar'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `istar' {
+			local __ergm_cnames "`__ergm_cnames' istar_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("istar", `__ergm_nk', &stat_istar(), &change_istar(), `__td_istar', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_istar'"
+	}
+
+	if "`degrange'" != "" {
+		local __ergm_ndr : word count `degrange'
+		if "`degrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`degrangeto'"
+			local __ergm_ndto : word count `degrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}degrange() and degrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_dr
+		mata: `__td_dr' = ErgmTermData()
+		mata: `__td_dr'.levelpairs = strtoreal(tokens("`degrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' degrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("degrange", `__ergm_ndr', &stat_degrange(), &change_degrange(), `__td_dr', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_dr'"
+	}
+	if "`odegrange'" != "" {
+		local __ergm_ndr : word count `odegrange'
+		if "`odegrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`odegrangeto'"
+			local __ergm_ndto : word count `odegrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}odegrange() and odegrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_odr
+		mata: `__td_odr' = ErgmTermData()
+		mata: `__td_odr'.levelpairs = strtoreal(tokens("`odegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' odegrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("odegrange", `__ergm_ndr', &stat_odegrange(), &change_odegrange(), `__td_odr', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_odr'"
+	}
+	if "`idegrange'" != "" {
+		local __ergm_ndr : word count `idegrange'
+		if "`idegrangeto'" == "" {
+			local __ergm_dto ""
+			forvalues __k = 1/`__ergm_ndr' {
+				local __ergm_dto "`__ergm_dto' ."
+			}
+		}
+		else {
+			local __ergm_dto "`idegrangeto'"
+			local __ergm_ndto : word count `idegrangeto'
+			if `__ergm_ndto' != `__ergm_ndr' {
+				di "{err}idegrange() and idegrangeto() must supply the same number of values."
+				error 198
+			}
+		}
+		tempname __td_idr
+		mata: `__td_idr' = ErgmTermData()
+		mata: `__td_idr'.levelpairs = strtoreal(tokens("`idegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_ndr' {
+			local __ergm_cnames "`__ergm_cnames' idegrange_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("idegrange", `__ergm_ndr', &stat_idegrange(), &change_idegrange(), `__td_idr', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_idr'"
+	}
+
+	if "`esp'" != "" {
+		local __ergm_nd : word count `esp'
+		tempname __td_esp
+		mata: `__td_esp' = ErgmTermData()
+		mata: `__td_esp'.levels = strtoreal(tokens("`esp'"))'
+		if "`directed'" != "" {
+			mata: `__td_esp'.sptype = "OTP"
+		}
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `esp' {
+			local __ergm_cnames "`__ergm_cnames' esp`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("esp", `__ergm_nd', &stat_esp(), &change_esp(), `__td_esp', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_esp'"
+	}
+	if "`dsp'" != "" {
+		local __ergm_nd : word count `dsp'
+		tempname __td_dsp2
+		mata: `__td_dsp2' = ErgmTermData()
+		mata: `__td_dsp2'.levels = strtoreal(tokens("`dsp'"))'
+		if "`directed'" != "" {
+			mata: `__td_dsp2'.sptype = "OTP"
+		}
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `dsp' {
+			local __ergm_cnames "`__ergm_cnames' dsp`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("dsp", `__ergm_nd', &stat_dsp(), &change_dsp(), `__td_dsp2', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_dsp2'"
+	}
+
+	if "`transitiveties'" != "" {
+		tempname __td_tt
+		mata: `__td_tt' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("transitiveties", 1, &stat_transitiveties(), &change_transitiveties(), `__td_tt', ("transitiveties"))
+		local ntermtok "`ntermtok' transitiveties"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_tt'"
+	}
+	if "`cyclicalties'" != "" {
+		tempname __td_ct
+		mata: `__td_ct' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("cyclicalties", 1, &stat_cyclicalties(), &change_cyclicalties(), `__td_ct', ("cyclicalties"))
+		local ntermtok "`ntermtok' cyclicalties"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
+	}
+
+	// sender()/receiver(): per-node out-/in-degree fixed effects, base=1
+	// omitted - the node's own identity (1..nodes) IS the "attribute",
+	// reusing stat_nodeofactor()/stat_nodeifactor() with no new Mata code,
+	// exactly as the estimation path does.
+	if "`sender'" != "" {
+		tempname __td_send
+		mata: `__td_send' = ErgmTermData()
+		mata: `__td_send'.attr = (1::`nodes')
+		mata: `__td_send'.levels = (2::`nodes')
+		local __ergm_cnames ""
+		forvalues __k = 2/`nodes' {
+			local __ergm_cnames "`__ergm_cnames' sender`__k'"
+		}
+		mata: __nwergm_last_M.addterm("sender", `nodes'-1, &stat_nodeofactor(), &change_nodeofactor(), `__td_send', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_send'"
+	}
+	if "`receiver'" != "" {
+		tempname __td_recv
+		mata: `__td_recv' = ErgmTermData()
+		mata: `__td_recv'.attr = (1::`nodes')
+		mata: `__td_recv'.levels = (2::`nodes')
+		local __ergm_cnames ""
+		forvalues __k = 2/`nodes' {
+			local __ergm_cnames "`__ergm_cnames' receiver`__k'"
+		}
+		mata: __nwergm_last_M.addterm("receiver", `nodes'-1, &stat_nodeifactor(), &change_nodeifactor(), `__td_recv', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_recv'"
+	}
+
+	// --- dyadic-covariate terms: edgecov()/hamming() reference ANOTHER
+	// already-loaded network (not a plain variable) - resolved via
+	// nw_syntax exactly as the estimation path does, just checked
+	// against the `nodes' argument instead of an observed netname's own
+	// size (simulate has no observed network to compare against).
+	local __ergm_termidx = 0
+	foreach __ergm_v of local edgecov {
+		local ++__ergm_termidx
+		tempname __td_ec`__ergm_termidx'
+		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
+		nw_syntax `__ergm_v', max(1) other(ec`__ergm_termidx')
+		if `ec`__ergm_termidx'nodes' != `nodes' {
+			di "{err}edgecov() network {bf:`__ergm_v'} has a different number of nodes than requested ({bf:`nodes'})."
+			error 198
+		}
+		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"!="")))
+		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
+		local ntermtok "`ntermtok' edgecov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local hamming {
+		local ++__ergm_termidx
+		tempname __td_hm`__ergm_termidx'
+		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
+		nw_syntax `__ergm_v', max(1) other(hm`__ergm_termidx')
+		if `hm`__ergm_termidx'nodes' != `nodes' {
+			di "{err}hamming() network {bf:`__ergm_v'} has a different number of nodes than requested ({bf:`nodes'})."
+			error 198
+		}
+		mata: `__td_hm`__ergm_termidx''.edgecovmat = *(`hm`__ergm_termidx'netobj'->get_matrix_mod(0,("`directed'"!="")))
+		mata: __nwergm_last_M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), `__td_hm`__ergm_termidx'', ("hamming_`__ergm_v'"))
+		local ntermtok "`ntermtok' hamming_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_hm`__ergm_termidx''"
+	}
+
 	if `gwesp' != 0 {
 		tempname td_gwesp
 		mata: `td_gwesp' = ErgmTermData()
@@ -1467,6 +2039,28 @@ program nwergm_simulate
 		mata: __nwergm_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), `td_gwesp', ("gwesp"))
 		local ntermtok "`ntermtok' gwesp"
 		local __ergm_matatemps "`__ergm_matatemps' `td_gwesp'"
+	}
+	if `gwdsp' != 0 {
+		tempname td_gwdsp
+		mata: `td_gwdsp' = ErgmTermData()
+		mata: `td_gwdsp'.decay = `gwdsp'
+		if "`directed'" != "" {
+			mata: `td_gwdsp'.sptype = "OTP"
+		}
+		mata: __nwergm_last_M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), `td_gwdsp', ("gwdsp"))
+		local ntermtok "`ntermtok' gwdsp"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwdsp'"
+	}
+	if `gwnsp' != 0 {
+		tempname td_gwnsp
+		mata: `td_gwnsp' = ErgmTermData()
+		mata: `td_gwnsp'.decay = `gwnsp'
+		if "`directed'" != "" {
+			mata: `td_gwnsp'.sptype = "OTP"
+		}
+		mata: __nwergm_last_M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), `td_gwnsp', ("gwnsp"))
+		local ntermtok "`ntermtok' gwnsp"
+		local __ergm_matatemps "`__ergm_matatemps' `td_gwnsp'"
 	}
 	if `gwdegree' != 0 {
 		tempname td_gwdeg
