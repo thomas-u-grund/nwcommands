@@ -2,7 +2,16 @@ capture program drop _nwdialog
 program _nwdialog
 	syntax anything(name=dialogname)
     qui nwset
-	local netlist = "`r(names)'"
+	// BUGFIX: was `r(names)' - nwset's own bare call returns the
+	// loaded-network list as `r(nets)', not `r(names)' (confirmed
+	// directly: `qui nwset' / `return list' shows only `r(nets)' and
+	// `r(networks)', no `r(names)' at all) - this local was always
+	// empty, so every dialog's network dropdown only ever got the
+	// single blank placeholder entry pushed below, never any actual
+	// network name. A pre-existing bug affecting every dialog in the
+	// package, not introduced by this pass - found while live-testing
+	// the rebuilt dialogs.
+	local netlist = "`r(nets)'"
 	if "`netlist'" != "" {
 		.`dialogname'_dlg.netlist.Arrdropall
 	}
@@ -17,7 +26,8 @@ capture program drop _nwdialog_append
 program _nwdialog_append
 	syntax anything(name=dialogname)
     qui nwset
-	local netlist = "`r(names)'"
+	// BUGFIX: same `r(names)' -> `r(nets)' fix as _nwdialog above.
+	local netlist = "`r(nets)'"
 	if "`netlist'" != "" {
 		.`dialogname'_dlg.netlist_append.Arrdropall
 	}
