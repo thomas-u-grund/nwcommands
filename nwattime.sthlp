@@ -77,8 +77,8 @@ existed in wave 2:
 Binary: yes. Directed: preserved from the source network. Weighted: preserved from the source network's
 own tie values (the slice selects which ties are active, it does not change their values). Signed: not
 checked. Two-mode: not yet supported as a source (see {help nwset}'s own note that {bf:time()}/
-{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/{bf:bipartite} - tracked
-in docs/ROADMAP.md as a composability item for a later pass).
+{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/{bf:bipartite} - a
+composability item for a later pass).
 
 
 {title:See also}
