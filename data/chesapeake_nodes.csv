@@ -1,0 +1,40 @@
+"name","ECO","Biomass"
+"phytoplankton",1,3480
+"bacteria in suspended poc",1,79
+"bacteria in sediment poc",1,600
+"benthic diatoms",1,177.25
+"free bacteria",1,390.5
+"heterotrophic microflagel",1,39
+"ciliates",1,148.75
+"zooplankton",1,197.5
+"ctenophores",1,19.25
+"sea nettle",1,1.750007
+"other suspension feeders",1,363.75
+"mya arenaria",1,110
+"oysters",1,1100
+"other polychaetes",1,1186.5
+"nereis",1,113.25
+"macoma spp.",1,1890.25
+"meiofauna",1,337.5
+"crustacean deposit feeder",1,228
+"blue crab",1,275
+"fish larvae",1,0.1000075
+"alewife & blue herring",1,1.15
+"bay anchovy",1,72.75
+"menhaden",1,31.525
+"shad",1,0.450005
+"croaker",1,0.9500025
+"hogchoker",1,9
+"spot",1,35
+"white perch",1,25.475
+"catfish",1,22.375
+"bluefish",1,2.250002
+"weakfish",1,6.300002
+"summer flounder",1,4.425002
+"striped bass",1,4.400002
+"dissolved organic carbon",2,21857.5
+"suspended particulate org",2,7631
+"sediment particulate orga",2,305000
+"Input",3,0
+"Output",4,0
+"Respiration",5,0
