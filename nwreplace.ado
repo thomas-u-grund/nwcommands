@@ -369,27 +369,31 @@ program nwreplace, rclass
 	nw_syntax `netname'
 	mata: st_numscalar("r(symmetric)", `netobj'->check_symmetry())
 	mata: st_numscalar("r(valued)", `netobj'->check_valued())
-	if ("`directed'"=="false" & `r(symmetric)'==0) {
+	// BUGFIX: captured into plain locals IMMEDIATELY after the two
+	// `mata: st_numscalar("r(...)", ...)' calls above, before either
+	// `if' block below can run `nw_name' - a separate ado invocation
+	// that, like any command, replaces r() with its own results the
+	// moment it runs. The previous ordering read `r(symmetric)'/
+	// `r(valued)' AFTER these `if' blocks, so whenever the
+	// newdirected(false)/newvalued(true) correction actually fired
+	// (network content and RNG-state dependent - confirmed via a live
+	// repro: `nwcorrelate ..., permutations(100)' followed by
+	// `nwrandom ... undirected' occasionally produces a matrix that
+	// isn't perfectly symmetric, triggering the correction), `nw_name'
+	// had already wiped r(), leaving `` `r(symmetric)' `` empty and
+	// `local __symmetric = `r(symmetric)'' a bare `local x = ' -
+	// Stata's own generic "invalid syntax" (r(198)), not a message
+	// this package ever wrote. Found while preparing this package's own
+	// Stata Journal submission (the article's generate/replace example
+	// hit this directly).
+	local __symmetric = `r(symmetric)'
+	local __valued = `r(valued)'
+	if ("`directed'"=="false" & `__symmetric'==0) {
 		nw_name `netname', newdirected(false)
 	}
 	if ("`valued'" == "false" & "`r(valued)'" == "false"){
 		nw_name `netname', newvalued(true)
 	}
-	// BUGFIX: r(symmetric)/r(valued) were computed via raw
-	// st_numscalar("r(...)", ...) but this program was never declared
-	// rclass, and its own final `nwsync' call (a separate ado
-	// invocation) clears the r()-results area before nwreplace itself
-	// returns - so these values were always wiped, never visible to a
-	// caller, despite being genuinely computed (not simply unused). Kept
-	// the existing internal computation (still needed for the
-	// directed/valued checks just above, before nwsync ever runs) but
-	// captured into plain locals first, then re-exposed via `return
-	// scalar' - which, unlike raw st_numscalar, survives whatever a
-	// nested command does internally, since Stata only finalizes an
-	// rclass program's own returned r()-results once the program itself
-	// actually exits.
-	local __symmetric = `r(symmetric)'
-	local __valued = `r(valued)'
 	nwsync `netname'
 	return scalar symmetric = `__symmetric'
 	return scalar valued = `__valued'
