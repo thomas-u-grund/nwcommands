@@ -27,7 +27,8 @@ program nwinstall
 		local permanently = "permanently"
 	}
 
-	// Offline install path (see nw_offline.sthlp): for machines that
+	// Offline install path (see the "Computers without internet access
+	// or admin rights" section of nwinstall.sthlp): for machines that
 	// cannot reach GitHub or cannot write anywhere but their own
 	// PERSONAL ado directory. Copies files directly from an already-
 	// obtained full nwcommands source folder (`from()', default: the
@@ -59,7 +60,7 @@ program nwinstall
 		if `"`dest'"' != `"`: sysdir PERSONAL'"' {
 			di as result "This is not your PERSONAL ado directory - add it to your ado path in every session, e.g. with:"
 			di as text `"    adopath ++ "`dest'""'
-			di as text "(add that same line to your profile.do to make it permanent - see {help nw_offline} for the exact steps)."
+			di as text "(add that same line to your profile.do to make it permanent - see {help nwinstall##offline:help nwinstall} for the exact steps)."
 		}
 	}
 
