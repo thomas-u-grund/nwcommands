@@ -1,77 +1,28 @@
-
-VERSION 11.0
+VERSION 10
+INCLUDE _std_small
 SYNCHRONOUS_ONLY
-INCLUDE _std_medium
-DEFINE _dlght 300
-INCLUDE header
-
 HELP hlp1, view("help nworder")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
-
+POSITION 10 10 550 114
 
 SCRIPT PREINIT
 BEGIN
 	program initialize
 END
 
-SCRIPT POSTINIT_PROGRAM
+DIALOG main, title("nworder - Reorder networks in dataset")
 BEGIN
-        if __MESSAGE {
-                call main.vl_vars.setvalue class __MESSAGE.value
-        }
-END
-
-DIALOG main, label("nworder - Reorder networks in dataset")              ///
-        tabtitle("Main")
-BEGIN
-  TEXT tx_vars          _lft    _top    _iwd    .,                      ///
-        label("Networks to reorder:")
-  COMBOBOX vl_vars       @       _ss     _iwd    .,                      ///
-        label("Networks to reorder") dropdown nomem append contents(netlist)
-  GROUPBOX gb_action    @       _ls     _iwd    _ht14,                  ///
-        label("New position")
-  RADIO rb_first        _ilft   _mls    _ibwd   ., first                ///
-        onclickon(program alpha_sequential_ck)                          ///
-        onclickoff(program alpha_sequential_ck)                         ///
-        option(first)                                                   ///
-        label("Place networks to reorder at the beginning of the dataset")
-  RADIO rb_last         @       _ss     @       .,                      ///
-        onclickon(program alpha_sequential_ck)                          ///
-        onclickoff(program alpha_sequential_ck)                         ///
-        option(last) nomemory                                           ///
-        label("Place networks to reorder at the end of the network")
-  RADIO rb_before       _ilft   _ss     _ibwd   .,                      ///
-        onclickon(program main_before_ck)                               ///
-        onclickoff(program main_before_ck)                              ///
-        label("Place networks to reorder before specified network")
-  COMBOBOX vn_before     _indent2 _ss    _vnwd   .,                      ///
-        option(before)  dropdown contents(netlist)  nomem                            ///
-        label("Place networks to reorder before specified network")
-  RADIO rb_after        _ilft   _mls    _ibwd   ., last                 ///
-        onclickon(program main_after_ck)                                ///
-        onclickoff(program main_after_ck)                               ///
-        label("Place networks to reorder after specified network")
-  COMBOBOX vn_after      _indent2 _ss    _vnwd   .,                      ///
-        option(after)  dropdown contents(netlist) nomem     					      ///
-        label("Place networks to reorder after specified network")
-  CHECKBOX ck_alpha     _lft    +45     _ibwd   .,                      ///
-        onclickon(program alpha_sequential_ck)                          ///
-        onclickoff(program alpha_sequential_ck)                         ///
-        option(alphabetic)                                              ///
-        label("Sort networks alphabetically")
-  CHECKBOX ck_sequential @      _ms     @       .,                      ///
-        onclickon(program alpha_sequential_ck)                          ///
-        onclickoff(program alpha_sequential_ck)                         ///
-        option(sequential)                                              ///
-        label("Alphabetize netlist keeping numbers sequential")
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
 END
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
-
 
 PROGRAM initialize
 BEGIN
@@ -79,81 +30,8 @@ BEGIN
 	stata hidden immediate
 END
 
-PROGRAM main_before_ck
-BEGIN
-        call program alpha_sequential_ck
-        if main.rb_before {
-                call main.vn_before.enable
-        }
-        else {
-                call main.vn_before.disable
-        }
-END
-
-PROGRAM main_after_ck
-BEGIN
-        call program alpha_sequential_ck
-        if main.rb_after {
-                call main.vn_after.enable
-        }
-        else {
-                call main.vn_after.disable
-        }
-END
-
-PROGRAM alpha_sequential_ck
-BEGIN
-        if (!main.ck_alpha | !main.ck_sequential) {
-                call main.tx_vars.setlabel "Variables to reorder:"
-        }
-        if (main.ck_alpha) {
-                call main.tx_vars.setlabel "Variables to reorder:  (leave empty for all
->  variables)"
-                call main.ck_sequential.disable 
-        }
-        if (!main.ck_alpha) {
-                call main.ck_sequential.enable
-        }
-        if (main.ck_sequential) {
-                call main.tx_vars.setlabel "Variables to reorder:  (leave empty for all
->  variables)"
-                call main.ck_alpha.disable
-        }
-        if (!main.ck_sequential) {
-                call main.ck_alpha.enable
-        }
-END
-
 PROGRAM command
 BEGIN
-        put "nworder "
-        if (main.ck_alpha | main.ck_sequential) {
-                varlist [main.vl_vars]
-                if (main.vl_vars.iseq("")) {
-                        put "_all"      
-                }
-        }
-        else {
-                varlist main.vl_vars
-        }
-
-        beginoptions
-                if main.rb_before {
-                        require main.vl_vars
-                        //require main.vn_before
-                        optionarg main.vn_before
-                }
-                if main.rb_after {
-                        require main.vl_vars
-                        //require main.vn_after
-                        optionarg main.vn_after
-                }
-                option main.rb_first
-                option main.rb_last
-                option main.ck_sequential
-                option main.ck_alpha
-        endoptions
+	put "nworder " main.cb_net
+	stata
 END
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

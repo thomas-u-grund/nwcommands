@@ -1,21 +1,161 @@
+/***
+{smcl}
+{* *! version 2.0.0  17may2019 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##information:[NW-2.4] Information}
+
+{title:Title}
+
+{p2colset 9 20 22 2}{...}
+{p2col :nwsummarize {hline 2}}Summarize a network{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwsummarize} 
+[{it:{help netlist}}]
+[,
+{opt mat}
+{opt matonly}
+{opt detail}
+{opth save(filename)}
+{opt silent}
+]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt mat}}Display adjacency matrix of the network{p_end}
+{synopt:{opt matonly}}Only display adjacency matrix of the network{p_end}
+{synopt:{opt detail}}Calculate additional network measures, e.g. centralization, transitivity{p_end}
+{synopt:{opth save(filename)}}Save network measures in file{p_end}
+{synopt:{opt silent}}Compute and return results without displaying anything{p_end}
+{synoptline}
+{p2colreset}{...}
+
+{title:Description}
+
+{pstd}
+{cmd:nwsummarize} calculates and displays a variety of network summary statistics. 
+ If no netlist is specified, summary statistics are calculated for 
+ the current network.
+
+ 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect tie values where applicable. Signed: not checked. Two-mode: not checked.
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine}
+	{cmd}. nwsummarize flomarriage
+	{res}{hline 50}
+	{txt}   Network name: {res} flomarriage
+	{txt}   Network id: {res} 2
+	{txt}   Nodes: {res}16
+	{txt}   Directed: {res}false
+	{txt}   Valued: {res} false
+	{txt}   Two-mode: {res}false
+	{txt}   Selfloop: {res}false
+	{txt}   Edges: {res}20
+	{txt}   Minimum value: {res} 0
+	{txt}   Maximum value: {res} 1
+	{txt}   Density: {res} .1666666666666667
+
+
+	{com}. nwclear
+	. nwrandom 5, prob(.2) name(mynet)
+	. nwsummarize mynet, mat
+	{res}{hline 50}
+	{txt}   Network name: {res} mynet
+	{txt}   Network id: {res} 1
+	{txt}   Nodes: {res}5
+	{txt}   Directed: {res}true
+	{txt}   Valued: {res} false
+	{txt}   Two-mode: {res}false
+	{txt}   Selfloop: {res}false
+	{txt}   Arcs: {res}5
+	{txt}   Minimum value: {res} 0
+	{txt}   Maximum value: {res} 1
+	{txt}   Density: {res} .25
+
+             {txt}1   2   3   4   5
+          {c TLC}{hline 21}{c TRC}
+	1 {c |}  {res}0   0   0   0   1{txt}  {c |}
+	2 {c |}  {res}0   0   0   0   0{txt}  {c |}
+	3 {c |}  {res}0   0   0   0   1{txt}  {c |}
+	4 {c |}  {res}0   0   0   0   0{txt}  {c |}
+	5 {c |}  {res}1   1   0   1   0{txt}  {c |}
+          {c BLC}{hline 21}{c BRC}
+
+	
+{title:Stored results}
+
+	{bf:nwsummarize} stores the following in {bf:r()}:
+	
+	Scalars
+	  {bf:r(id)}		internal ID of the network
+	  {bf:r(nodes)}		number of nodes in the network
+	  {bf:r(minval)}	minimum of tie values
+	  {bf:r(maxval)}	maximum of tie values
+	  {bf:r(edges)}		number of edges (undirected network)
+	  {bf:r(arcs)}		number of arcs (directed network)
+	  {bf:r(edges_sum)}	sum of edge values (undirected network)
+	  {bf:r(arcs_value)}	sum of arc values (directed network)
+	  {bf:r(density)}	network density
+	  {bf:r(reciprocity)}	network reciprocity
+	  {bf:r(transitivity)}	network transitivity
+	  {bf:r(missing_edges)}	number of missing (undefined) dyads
+	  {bf:r(selfloops)}	number of self-loops
+	  {bf:r(nodes1)}	number of mode-1 nodes (two-mode networks only)
+	  {bf:r(nodes2)}	number of mode-2 nodes (two-mode networks only)
+
+	Macros
+	  {bf:r(directed)}	if network is directed or not (undirected)
+	  {bf:r(valued)}	if network is declared as valued or not
+	  {bf:r(mode2)}		if network two-mode or not
+	  {bf:r(name)}		name of the network (alias: {bf:r(netname)})
+	  {bf:r(labs)}		comma-separated node labels
+	  {bf:r(vars)}		Stata variable names used to represent the network
+	  {bf:r(selfloop)}	if the network permits self-loops
+	  {bf:r(provenance)}	provenance/source note, if set (see {help nwname})
+	  {bf:r(temporal)}	if the network is temporal
+	  {bf:r(temporaltype)}	temporal storage type, if {bf:r(temporal)} is true
+	  {bf:r(mode1_desc)}	description of mode 1 (two-mode networks only)
+	  {bf:r(mode2_desc)}	description of mode 2 (two-mode networks only)
+
+	{pstd}
+	The full set above is inherited unchanged from the internal {help nwname} call this command
+	makes on your behalf - see {help nwname}'s own {bf:Stored results} section for the authoritative,
+	complete list (this command does not add or remove any of it).
+
+{title:See also}
+
+	{help nwname}, {help nwdyads}, {help nwtriads}
+***/
+
 capture program drop nwsummarize
 program nwsummarize
 	version 9
-	syntax [anything(name=netname)][, mat matonly detail save(string asis) ]
+	syntax [anything(name=netname)][, mat matonly detail save(string asis) silent ]
 	set more off
-	_nwsyntax `netname', max(9999)
+	nw_syntax `netname', max(100000)
 
 	
 	if "`detail'" != "" {
-		local add "indgcentral outdgcentral dgcentral transitivity reciprocity"
+		local add "indg_central outdg_central dg_central transitivity reciprocity"
 	}
 	tempname memhold
-	if "`save'" != "" {
+	if `"`save'"' != "" {
 		postfile `memhold' str20 name str10 directed id nodes minval maxval edges arcs density `add' using `"`save'"', replace
 	}
 	foreach onenet in `netname' {
-		nwinf `onenet', `mat' `matonly' `detail'
-		if "`save'" != "" {
+		nwinf `onenet', `mat' `matonly' `detail' `silent'
+		if `"`save'"' != "" {
 			if "`r(directed)'" == "false" {
 				if "`detail'" == "" {
 					post `memhold' ("`r(name)'") ("`r(directed)'") (`r(id)') (`r(nodes)') (`r(minval)') (`r(maxval)') (`r(edges)') (.) (`r(density)')
@@ -35,7 +175,7 @@ program nwsummarize
 		}
 	}
 	
-	if "`save'" != "" {
+	if `"`save'"' != "" {
 		postclose `memhold'
 	}
 end
@@ -44,58 +184,26 @@ end
 capture program drop nwinf
 program nwinf
 	version 9
-	syntax [anything(name=netname)], [id(string) mat matonly detail]
+	syntax [anything(name=netname)], [id(string) mat matonly detail silent]
+	nw_syntax `netname', max(1)
+	local localdirected `directed'
 	
-	if ("$nwtotal" == "" | "$nwtotal" == "0"){
-		exit
-	}
-	
-	if ("`netname'" == "" & "`id'" == ""){
-		local id = 1
-	}
-		
-	if "`id'" == "" {
-		local id = -1
-		forvalues i = 1/$nwtotal {
-			scalar onename = "\$nwname_`i'"
-			local localname = onename
-			if "`localname'" == "`netname'" {
-				local id = `i'
-			}
-		}
-	}
-	else {
-		scalar onename = "\$nwname_`id'"
-		local thisname = onename
-		if (`id' < 1 | `id' > $nwtotal) {
-			di "{err}Index out of bounds."
-			error 234
-		}
-	}
-
-
-
-	if ("`id'" == "-1") {
-		di "{err}Network {res}`netname'{err} not found."
-		exit
-	}
-	
-	scalar onename = "\$nwname_`id'"
-	local thisname = onename
-	scalar onedirected = "\$nwdirected_`id'"
-	local localdirected = onedirected
-	scalar onesize = "\$nwsize_`id'"
-	local localsize = onesize
-
-	mata: minval = min(nw_mata`id')
-	mata: maxval = max(nw_mata`id')
-	
+	// BUGFIX: was `thisname' throughout - undefined anywhere in this
+	// file (confirmed via grep), so it was always empty, and each of
+	// these three calls silently fell back to operating on whichever
+	// network happened to be CURRENT rather than the actual requested
+	// target (`netname', captured by this program's own syntax line
+	// above) - reciprocity/transitivity/centralization came back
+	// silently wrong (matching the current network's own values, not
+	// the target's) whenever the target wasn't already current. Basic
+	// stats (nodes/arcs/density) were unaffected, since those don't go
+	// through this block.
 	if "`detail'" != "" {
-		qui nwdyads `thisname'
+		qui nwdyads `netname'
 		local reciprocity = `r(reciprocity)'
-		qui nwtriads `thisname'
+		qui nwtriads `netname'
 		local transitivity = `r(transitivity)'
-		qui nwdegree `thisname', outputoff
+		qui nwdegree `netname', silent
 		if ("`localdirected'"=="false"){
 			local central = `r(dg_central)'
 		}
@@ -103,53 +211,63 @@ program nwinf
 			local incentral = `r(indg_central)'
 			local outcentral = `r(outdg_central)'
 		}
-		qui nwbetween `thisname', outputoff
-		local bwcentral = `r(bw_central)'
 	}
 	
 	mata: st_rclear()
-	mata: st_numscalar("r(id)", `id')
-	mata: st_global("r(name)", "`thisname'")
-	mata: st_global("r(directed)", "`localdirected'")
-	mata: st_numscalar("r(nodes)", `localsize')
-	mata: st_numscalar("r(minval)", minval)
-	mata: st_numscalar("r(maxval)", maxval)	
-	mata: nw_binary = nw_mata`id' :/ nw_mata`id'
-	mata: _diag(nw_binary, J(rows(nw_binary),1,0))
+	
+	nw_name `netname'
+	
+	mata: st_global("r(name)", "`netname'")
+	mata: st_global("r(netname)", "`netname'")
+	mata: st_numscalar("r(minval)", `netobj'->get_minimum())
+	mata: st_numscalar("r(maxval)", `netobj'->get_maximum())
+	mata: st_global("r(mode2)", `netobj'->is_2mode())
+	mata: st_global("r(valued)", `netobj'->is_valued())
 	
 	if (r(directed)=="false"){
-		mata: edgecount = sum(nw_binary) / 2
-		mata: edgecountvalue = sum(nw_mata`id') / 2
-		mata: st_numscalar("r(edges)", edgecount)
-		mata: st_numscalar("r(edges_sum)", edgecountvalue)
+		mata: st_numscalar("r(edges)", `netobj'->get_edges_count())
+		mata: st_numscalar("r(edges_sum)", `netobj'->get_edges_sum())
 		mata: st_numscalar("r(dg_central)", `central')
 	}
 	else {
-		mata: arccount = sum(nw_binary) 
-		mata: arccountvalue = sum(nw_mata`id')
-		mata: st_numscalar("r(arcs)", arccount)
-		mata: st_numscalar("r(arcs_value)", arccountvalue)
+		mata: st_numscalar("r(arcs)", `netobj'->get_arcs_count())
+		mata: st_numscalar("r(arcs_value)", `netobj'->get_arcs_sum())
 		mata: st_numscalar("r(indg_central)", `incentral')
 		mata: st_numscalar("r(outdg_central)", `outcentral')
 	}
-	mata: st_numscalar("r(bw_central)", `bwcentral')
-	mata: st_numscalar("r(density)", (sum(nw_binary) / (`localsize' * (`localsize' - 1))))
+	mata: st_numscalar("r(density)", `netobj'->get_density())
 	mata: st_numscalar("r(transitivity)", `transitivity')
 	mata: st_numscalar("r(reciprocity)", `reciprocity')
+	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())	
+		
+	if "`r(mode2)'" == "true" {
+		mata: st_numscalar("r(nodes1)", `netobj'->get_nodes_mode1())
+		mata: st_numscalar("r(nodes2)", `netobj'->get_nodes_mode2())
+		mata: st_global("r(mode1_desc)", `netobj'->get_description_mode1())
+		mata: st_global("r(mode2_desc)", `netobj'->get_description_mode2())
+	}
+	mata: st_global("r(provenance)", `netobj'->get_provenance())
+	mata: st_global("r(temporal)", `netobj'->is_temporal())
+	if "`r(temporal)'" == "true" {
+		mata: st_global("r(temporaltype)", `netobj'->get_temporal_type())
+	}
 
-	
-	mata: mata drop nw_binary
-	capture mata: mata drop edgecount
-	capture mata: mata drop arccount
-	capture mata: mata drop edgecountvalue
-	capture mata: mata drop arccountvalue
-
-	if "`matonly'" == "" {
+	if "`matonly'" == "" & "`silent'" == "" {
 		di "{hline 50}"
 		di "{txt}   Network name: {res} `r(name)'"
 		di "{txt}   Network id: {res} `r(id)'"
 		di "{txt}   Directed: {res}`r(directed)'"
+		di "{txt}   Valued: {res}`r(valued)'"
+		di "{txt}   Two-mode: {res}`r(mode2)'"
 		di "{txt}   Nodes: {res}`r(nodes)'"
+		if "`r(mode2)'" == "true" {
+			di "{txt}      Level 1: {res}`r(nodes1)' {txt}(`r(mode1_desc)')" 
+			di "{txt}      Level 2: {res}`r(nodes2)' {txt}(`r(mode2_desc)')"
+		}
+		di "{txt}   Selfloop: {res}`r(selfloop)'"
+		if ("`r(selfloop)'" == "true") {
+			di "{txt}    Number of selfloops: {res}`r(selfloops)'"
+		}
 		if (r(directed) == "false"){
 			di "{txt}   Edges: {res}`r(edges)'"
 		}
@@ -159,11 +277,17 @@ program nwinf
 		di "{txt}   Minimum value: {res} `r(minval)'"
 		di "{txt}   Maximum value: {res} `r(maxval)'"	
 		di "{txt}   Density: {res} `r(density)'"
-		
+		di "{txt}   Temporal: {res}`r(temporal)'"
+		if "`r(temporal)'" == "true" {
+			di "{txt}      Temporal type: {res}`r(temporaltype)'"
+		}
+		if `"`r(provenance)'"' != "" {
+			di "{txt}   Provenance: {res} `r(provenance)'"
+		}
+
 		if "`detail'" != "" {
 			di "{txt}   Reciprocity: {res} `r(reciprocity)'"
 			di "{txt}   Transitivity: {res} `r(transitivity)'"
-			di "{txt}   Betweenness centralization: {res} `r(bw_central)'"
 			if (r(directed) == "false"){
 				di "{txt}   Degree centralization: {res}`r(dg_central)'"
 			}
@@ -175,8 +299,6 @@ program nwinf
 	}
 	
 	if "`mat'`matonly'" !=""{
-		mata: nw_mata`id'
+		mata: *`netobj'->get_matrix()
 	}
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

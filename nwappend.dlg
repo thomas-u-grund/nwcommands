@@ -1,0 +1,43 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwappend")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 142
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwappend - Append network dataset")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 48, label("Options")
+  TEXT tx_cx_force 20 54 260 ., label("if a network in  has the same name as one already loaded, auto-renumber the inco")
+  CHECKBOX cx_force 290 54 190 ., label("force") option(force)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwappend"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwappend " main.cb_net
+	beginoptions
+		option main.cx_force
+	endoptions
+	stata
+END

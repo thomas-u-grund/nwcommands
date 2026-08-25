@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwcentrality  {hline 2} Node centrality measures}
+{p2col :nwcentrality  {hline 2}}Node centrality measures{p_end}
 {p2colreset}{...}
 
 

@@ -3,13 +3,13 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwdissimilar {hline 2} Generate node dissimilarities}
+{p2col :nwdissimilar {hline 2}}Generate node dissimilarities{p_end}
 {p2colreset}{...}
 
 
@@ -22,7 +22,9 @@
 [{opt type}({it:{help nwdissimilar##type:type}})
 {opt context}({it:{help nwdissimilar##context:context}})
 {opt name}({it:{help newnetname}})
-{opt xvars}]
+{opt xvars}
+{opt labs}({it:lab1 lab2 ...})
+{opt vars}({it:{help newvarlist}})]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -30,7 +32,9 @@
 {synopt:{opt type}({it:{help nwdissimilar##type:type}})}Type of dissimilarity between two nodes; default = euclidean{p_end}
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new dissimilarity network; default = {it:_dissimilar}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels; default = the source network's own labels{p_end}
+{synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -116,18 +120,37 @@ Simply gives the percentage of dyads (tie or non-tie) that nodes {it:i} and {it:
 from these alters.
 
 {pmore}
-{it:D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)
+{it:D_ij = 1 - (sum(i_outvec :== j_outvec) + sum(i_invec :== j_invec)) / 2 * (n - 1)}
 
 
 
 {title:Example}
 
-{cmd:. webnwuse florentine}
+{cmd:. nwwebuse florentine}
 {cmd:. nwdissimilar flomarriage}
 
 {cmd:. nwdissimilar flomarriage, type(hamming) context(outgoing)}
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes ({bf:context()} lets you restrict the comparison to incoming or
+outgoing ties only, which only matters for a directed network - an undirected network's
+in-ties and out-ties are identical, so all three {bf:context()} values agree). Weighted:
+{bf:euclidean}/{bf:manhatten} use tie weights directly in their distance formula (a genuinely
+weighted-aware comparison); {bf:hamming}/{bf:jaccard}/{bf:nonmatches} binarize each tie
+({it:present vs. absent}) before comparing, so tie strength does not affect these three - not
+checked for automatic behavior beyond this, choose {bf:type()} to match whether tie strength
+should matter. Signed: not checked - a negative tie weight participates in {bf:euclidean}/
+{bf:manhatten}'s arithmetic like any other value, and in the binarizing types' {cmd: != 0} test
+like any nonzero value, but no dedicated signed-network semantics exist. Two-mode: not
+supported - operates on the network's own square adjacency matrix; a genuinely two-mode
+(non-square, disjoint node-set) input is not checked and not expected to behave sensibly.
+The dissimilarity network itself always carries a genuine (non-missing) diagonal of 0 (a node
+is never dissimilar from itself) and inherits its source network's own node labels by default,
+so it can be compared directly against the source network node-for-node.
+
 {title:See also}
 
-	{help nwsimilar}, {help nwcorrelate}
+	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}

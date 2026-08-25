@@ -8,7 +8,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwsubset {hline 2} Subset a network}
+{p2col :nwsubset {hline 2}}Subset the nodes of a network{p_end}
 {p2colreset}{...}
 
 
@@ -20,7 +20,6 @@
 [{it:{help if}}]
 [,
 {opt name}({it:{help newnetname}})
-{opt xvars}
 {opt replace}]
 
 
@@ -28,33 +27,40 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
-{synopt:{opt xvars}}do not generate/overwrite Stata variables{p_end}
 {synopt:{opt replace}}replace existing network{p_end}
 
 
 {title:Description}
 
 {pstd}
-{cmd:nwsubset} simply subsets an existing network {it:netname}. By default, the subset network is called {it:netname_sub}. When
-no {help if} condition is specified, the command simply generates a duplicate of a network.
+{cmd:nwsubset} simply subsets an existing network {it:netname}. By default, the subset network is called {it:netname_sub}. It
+consists of all the nodes of the original network {it:netname} for which the {bf:if} condition
+is true. When no {help if} condition is specified, the command simply generates a duplicate.
 
 {pstd}
-For example:
+For example, this generates a new network from the {bf:flomarriage} network that consists of only
+the nodes with {bf:wealth > 50}.
 
-	{bf:. webnwuse gang, nwclear}
-	{bf:. nwsubset gang if _n < 10}
-
-{pstd}
-This generates a new network called {it:gang_sub}. Notice that something similar could be achieved with {help nwgen}:
-
-	{bf:. webnwuse gang, nwclear}
-	{bf:. nwgen gang_sub = gang if _n < 10}	
+	{bf:. nwwebuse florentine, nwclear}
+	{bf:. nwsubset flomarriage if wealth > 50}
 
 {pstd}
-However, the last command does not copy the node labels of network {it:gang}. This is because the {help if} condition in {help nwgen} applies to a whole {help netexp:network expression}. Because
+By default, this generates a new network called {it:flomarriage_sub}. Notice that something similar could be achieved with {help nwgen}:
+
+	{bf:. nwgen flo_sub = flomarriage if wealth > 50}	
+
+{pstd}
+However, the last command does not copy the node labels of network {it:flomarriage}. This is because the {help if} condition in {help nwgen} applies to a whole {help netexp:network expression}. Because
 network expressions can be very complicated, no labels are copied. 
 
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extracted subset. Signed: yes, values including negative are preserved. Two-mode: not checked.
 
 {title:See also}
 
 	{help nwgenerate}, {help nwduplicate}
+

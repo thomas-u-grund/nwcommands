@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 22 22 2}{...}
-{p2col :nwreplacemat {hline 2} Replace network with Stata or Mata matrix}
+{p2col :nwreplacemat {hline 2}}Replace network with Stata or Mata matrix{p_end}
 {p2colreset}{...}
 
 
@@ -17,13 +17,21 @@
 [{it:{help netname}}]
 {cmd:,}
 {opt newmat}({it:matname})
-[{opt nosync}]
+[{opt nosync}
+{opt netonly}
+{opt xvars}
+{opt vars}({it:{help newvarlist}})
+{opt labs}({it:lab1 lab2 ...})]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt newmat}({it:matname})}name of a Stata or Mata matrix{p_end}
 {synopt:{opt nosync}}do not sync Stata variables; by default Stata variables are synced (see {help nwsync}){p_end}
+{synopt:{opt netonly}}only update the network, do not touch the Stata dataset at all{p_end}
+{synopt:{opt xvars}}also load the updated network as Stata variables (see {help nwload}){p_end}
+{synopt:{opt vars}({it:{help newvarlist}})}Stata variable names to use when {it:matname} requires resizing the network; default = auto-generated{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}new node labels to use when {it:matname} requires resizing the network; default = {bf:1}, {bf:2}, ... {p_end}
 
 {title:Description}
 
@@ -43,6 +51,12 @@ a perfectly symmetric matrix to a directed network, one can use:
 
 {pstd}
  to overwrite the automatic setting afterwards. 
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is writing an arbitrary matrix in as the network's own adjacency matrix, whatever directed/symmetric shape it has. Weighted: yes, natively. Signed: yes, any value including negative can be written in. Two-mode: not checked.
 
 {title:Examples}
 

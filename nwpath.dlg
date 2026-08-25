@@ -1,54 +1,43 @@
 VERSION 10
-
 INCLUDE _std_small
 SYNCHRONOUS_ONLY
-HELP hlp1, view("help nwgeodesic")
-OK ok1,	label("OK")
-CANCEL	can1, label("Cancel")
-SUBMIT	sub1, label("Submit")
-RESET	res1
-POSITION 10 10 400 250
+HELP hlp1, view("help nwpath")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 310
 
 SCRIPT PREINIT
 BEGIN
-	create BOOLEAN isLoading
-	isLoading.settrue
 	program initialize
 END
 
-SCRIPT POSTINIT
+DIALOG main, title("nwpath - Calculate paths between nodes")
 BEGIN
-	.isLoading.setfalse
-	program getLabels
-END
-
-DIALOG main, title("nwgeodesic - Shortest paths")
-BEGIN
-	TEXT     tx_var	20	20	100	.,	label("Network:") 		
-	COMBOBOX cb_var	80	20	150	., dropdown contents(netlist) nomem onselchange(program getLabels)
-	TEXT tx_ego 50 50 100 ., label("Ego")
-	LISTBOX cb_egolab 20 70 100 ., contents(lablist) label("Ego") nomem
-	TEXT tx_alter 170 50 100 ., label("Alter")
-	LISTBOX cb_alterlab 140 70 100 ., contents(lablist) label("Alter") nomem
-	RADIO rb_shortest 260 70 100 ., label("Shortest path") first onclickon(main.sp_length.hide)
-	RADIO rb_length 260 90 100 ., label("Path of length") last onclickon(main.sp_length.show)
-	SPINNER sp_length 280 110 50 ., label("Length") default(1) option(length)
-	CHECKBOX cx_new 20 200 110 ., label("Save as network:") onclickon(main.ed_new.show) onclickoff(main.ed_new.hide)
-	EDIT ed_new 140 200 100 ., default("_path") nomem option(generate)
-	CHECKBOX cx_sym 20 180 250 ., label("Calculate paths on symmetrized network") option(sym)
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite networks with")
+  CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
+  TEXT tx_ed_ego 20 82 260 ., label("Name of start node")
+  EDIT ed_ego 290 82 190 ., nomem option(ego)
+  TEXT tx_ed_alter 20 110 260 ., label("Name of destination node")
+  EDIT ed_alter 290 110 190 ., nomem option(alter)
+  TEXT tx_sp_egoid 20 138 260 ., label("Nodeid of start node")
+  SPINNER sp_egoid 290 138 70 ., default(0) max(999999) min(-999999) nomem option(egoid)
+  TEXT tx_sp_alterid 20 166 260 ., label("Nodeid of destination node")
+  SPINNER sp_alterid 290 166 70 ., default(0) max(999999) min(-999999) nomem option(alterid)
+  TEXT tx_cx_sym 20 194 260 ., label("Symmetrize network for calculation")
+  CHECKBOX cx_sym 290 194 190 ., label("sym") option(sym)
+  TEXT tx_cb_generate 20 222 260 ., label("Save paths as networks beginning with")
+  COMBOBOX cb_generate 290 222 190 ., dropdown contents(netlist) nomem option(generate)
 END
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
-
-LIST lablist
-BEGIN
-	// left empty
-END
-
 
 PROGRAM initialize
 BEGIN
@@ -56,46 +45,17 @@ BEGIN
 	stata hidden immediate
 END
 
-SCRIPT test
-BEGIN
-	//program updateLablist
-	//script main.cb_egolab.repopulate
-END
-
-PROGRAM getLabels
-BEGIN
-	if main.cb_var & ! isLoading {
-		put "_nwdialog_lablist nwpath " main.cb_var
-		stata hidden 
-	}
-END
-
-SCRIPT generateOn 
-BEGIN
-	main.tx_new.show
-	main.ed_new.show
-END
-
-SCRIPT generateOff
-BEGIN
-	main.tx_new.hide
-	main.ed_new.hide
-END
-
-
 PROGRAM command
 BEGIN
-	put "nwpath " main.cb_var 
-	require main.cb_egolab
-	require main.cb_alterlab
+	put "nwpath " main.cb_net
 	beginoptions
-		put " ego(" main.cb_egolab ")"
-		put " alter(" main.cb_alterlab ")"
+		option main.cx_nwreplace
+		optionarg main.ed_ego
+		optionarg main.ed_alter
+		optionarg main.sp_egoid
+		optionarg main.sp_alterid
 		option main.cx_sym
-		optionarg main.sp_length
-		optionarg main.ed_new
+		optionarg main.cb_generate
 	endoptions
 	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

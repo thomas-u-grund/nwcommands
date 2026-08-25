@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.1  3sept2014 author: Thomas Grund}{...}
+{* *! 5jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nwfromedge {hline 2} Imports network data from edgelist}
+{p2col :nwfromedge {hline 2}}Imports network data from edgelist{p_end}
 {p2colreset}{...}
 
 
@@ -21,23 +21,22 @@
 [{cmd:,}
 {opth name(newnetname)}
 {opt xvars}
-{opth vars(newvarlist)}
 {opt labs}({it:lab1 lab2 ...})
 {opt undirected}
-{opt directed}
-{opt keeporiginal}]
+{opt directed}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth name(newnetname)}}name of the new network; default = {it:network}{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
-{synopt:{opth vars(newvarlist)}}overwrite Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
-{synopt:{opt undirected}}force the network to be undirected{p_end}
-{synopt:{opt directed}}force the network to be directed{p_end}
-{synopt:{opt keeporiginal}}keeps original id of nodes{p_end}
+{synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
+{synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
+{synopt:{opt prefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n}{p_end}
+{synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is about the {it:network}, not Stata variables{p_end}
 
 {p2colreset}{...}
 
@@ -81,7 +80,7 @@ The following command declares such data as network data:
 					
 {pstd}
 This automatically generates the relevant meta-information for the network and makes it available for other programs under the {help netname} {it:mynet}. In case no {bf:name()}
-is specified, the command tries to come up with a suitable name for the new network. By default, it tries {it:network}, however, when a network with this name already exists, it comes
+is specified, the command tries to come up with a suitable name for the new network. By default, it tries {it:network}, however, if a network with this name already exists, it comes
 up with an alternative name {it:network_1} and so on (see {help nwvalidate}).
 
 {pstd}
@@ -103,12 +102,18 @@ can be overwritten with the options {opt undirected} and {opt directed}.
 One can also transfrom any network that exists in memory into such an edgelist with {help nwtoedge}.
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: not this command's own purpose - see {help nw2fromedge} for the two-mode edge-list-import counterpart.
+
 {title:Examples}
 
 {pstd}
 This loads a network dataset from the internet and transforms the network {it:glasgow1} into an edgelist.
 
-	{cmd:. webnwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwtoedge glasgow1}
 
 {pstd}
@@ -120,4 +125,5 @@ Afterwards, it can be loaded as a network object again:
 	
 {title:Also see}
 	
-	{help nwtoedge}, {help nwuse}, {help nwsave}, {help webnwuse}, {help nwset}, {help nwimport}
+	{help nwtoedge}, {help nwuse}, {help nwsave}, {help nwwebuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
+

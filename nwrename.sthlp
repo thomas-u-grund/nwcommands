@@ -1,26 +1,26 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 2.0 Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwrename {hline 2} Rename network}
+{p2col :nwrename {hline 2}}Rename a network{p_end}
 {p2colreset}{...}
 
 
 {title:Syntax}
 
 {pstd}
-Rename a single network
+Rename single network
 
 {p 8 16 2}
 {opt nwrename} {it:old_netname} {it:new_netname}
 
 
 {pstd}
-Rename groups networks
+Rename multiple networks
 
 {p 8 16 2}
 {opt nwrename} ({it:old1 old2 ...}) ({it:new1 new2 ...})
@@ -35,11 +35,16 @@ Rename groups networks
 
 
 {marker examples}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames the network object only; its content, including directed/valued/two-mode status, is completely unchanged.
+
 {title:Examples}
 
-	{com}. webnwuse florentine, nwclear
+	{com}. nwwebuse florentine, nwclear
 
-	{txt}{it:Loading successful}
 	{res}{txt}(2 networks)
 	{hline 20}
 		{res}flobusiness
@@ -59,4 +64,4 @@ Rename groups networks
 
 	{help nwname}, {help rename}
 
-
+last certified : 24 Aug 2026

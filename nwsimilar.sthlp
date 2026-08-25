@@ -3,13 +3,13 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
 
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwsimilar {hline 2} Generate node similarities}
+{p2col :nwsimilar {hline 2}}Generate node similarities{p_end}
 {p2colreset}{...}
 
 
@@ -19,7 +19,8 @@
 {cmdab: nwsimilar} 
 [{it:{help netname}}]
 {cmd:,}
-[{opt mode}({it:{help nwsimilar##context:type}})
+[{opt type}({it:{help nwsimilar##type:type}})
+{opt context}({it:{help nwsimilar##context:context}})
 {opt name}({it:{help newnetname}})
 {opt xvars}]
 
@@ -27,9 +28,9 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt type}({it:{help nwsimilar##type:type}})}Type of similarity between two nodes; default = pearson{p_end}
-{synopt:{opt mode}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both{p_end}
+{synopt:{opt context}({it:{help nwsimilar##context:context}})}Context definition for similarity calculation; default = both (alias: {opt mode()}, kept for backward compatibility - {help nwdissimilar}, this command's own sibling, uses {opt context()} for the identical concept){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new similarity network; default = {it:_similar}{p_end}
-{synopt:{opt xvars}}Do not generate Stata variables{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 
 {synoptset 15 tabbed}{...}
 {marker type}{...}
@@ -116,12 +117,24 @@ Calculates the cross-product of the tie vectors of nodes {it:} and {it:j}
 
 {title:Example}
 
-{cmd:. webnwuse florentine}
+{cmd:. nwwebuse florentine}
 {cmd:. nwsimilar flomarriage}
 
 {cmd:. nwsimilar flomarriage, type(hamming) mode(outgoing)}
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes ({bf:mode()} lets you restrict the comparison to incoming or
+outgoing ties only). Weighted: {bf:pearson} (via {help nwcorrelate}) and {bf:crossproduct} use
+tie weights directly; {bf:hamming}/{bf:jaccard}/{bf:matches} binarize each tie before comparing,
+so tie strength does not affect these three. Signed: not checked. Two-mode: not supported -
+operates on the network's own square adjacency matrix. The similarity network itself always
+carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits
+its source network's own node labels, so it can be compared directly against the source network
+node-for-node.
+
 {title:See also}
 
-	{help nwdissimilar}, {help nwcorrelate}
+	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}

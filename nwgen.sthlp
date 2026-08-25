@@ -3,12 +3,12 @@
 {marker topic}
 {helpb nw_topical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwgen {hline 2} Network extensions to generate}
+{p2col :nwgen {hline 2}}Network extensions to generate{p_end}
 {p2colreset}{...}
 
 
@@ -38,6 +38,12 @@ networks with some function {bf:{it:netfnc2}}, 3) produce networks with an expre
 A network expression is very similar to normal expressions in Stata. 
 
 
+
+
+{title:Supported network types}
+
+{pstd}
+Not applicable to {cmd:nwgen} itself - a dispatcher/shortcut layer over {help nwgenerate} (and, for {cmd:mean(alter.}{it:srcvar}{cmd:)}-style expressions, {help nwaltergen}); the actual directed/valued/two-mode support depends entirely on whichever underlying {it:netfcn1}/{it:netfcn2} shortcut or network expression is invoked - see that function's own help topic.
 
 {title:Generating variables from networks}
 
@@ -116,6 +122,16 @@ The number of an observation {help _n} in {help newvar} corresponds to the {help
 of a node in a network.
 
 
+{title:Generating variables from alter/neighbor attributes}
+
+{pstd}
+{cmd:nwgen} {it:newvar} {cmd:=} {it:stat}{cmd:(alter.}{it:srcvar}{cmd:)} generates a variable summarizing
+an existing Stata variable's values among each node's network neighbors (alters) - e.g.
+{cmd:nwgen exposure = mean(alter.smoking)}. {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max},
+{bf:sd}, {bf:count}. This is a thin shortcut for {help nwaltergen}, which documents the full syntax,
+options, and missing-value/directed-network conventions.
+
+
 {title:Generating networks}
 
 {pstd}
@@ -186,6 +202,6 @@ The command can also be used to generate networks. There are two ways to do this
 {p_end}
 {pmore2}Generate a small-world network (see {help nwsmall}).
 
-{phang2}{opth transpose(netname)} [, {opt xvars}] 
+{phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).

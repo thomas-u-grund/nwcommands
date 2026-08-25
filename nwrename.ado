@@ -1,3 +1,72 @@
+/***
+{smcl}
+{* *! version 2.0 Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwrename {hline 2}}Rename a network{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{pstd}
+Rename single network
+
+{p 8 16 2}
+{opt nwrename} {it:old_netname} {it:new_netname}
+
+
+{pstd}
+Rename multiple networks
+
+{p 8 16 2}
+{opt nwrename} ({it:old1 old2 ...}) ({it:new1 new2 ...})
+
+
+{marker description}{...}
+{title:Description}
+
+{pstd}
+{cmd:nwrename} changes the name of an existing network {it:old_netname} to
+{it:new_netname}; the content of the network remains unchanged.
+
+
+{marker examples}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames the network object only; its content, including directed/valued/two-mode status, is completely unchanged.
+
+{title:Examples}
+
+	{com}. nwwebuse florentine, nwclear
+
+	{res}{txt}(2 networks)
+	{hline 20}
+		{res}flobusiness
+		{res}flomarriage
+	
+	{com}. nwds
+	{res}{txt}{col 1}flobusiness{col 24}flomarriage
+
+	{com}. nwrename flobusiness business
+	{com}. nwrename flomarriage marriage{txt}
+
+	{com}. nwds
+	{res}{txt}{col 1}business{col 21}marriage
+
+
+{title:See also}
+
+	{help nwname}, {help rename}
+
+***/
+
 capture program drop nwrename
 program nwrename
 	
@@ -5,21 +74,36 @@ program nwrename
 	
 	preserve
 	drop _all
-	_nwsyntax _all, max(9999)
+	nw_syntax _all, max(9999)
 	foreach onenet in `netname' {
 		gen `onenet' = .
 	}
-	rename `renameCmd', r
+	// BUGFIX: renaming to an already-existing network name used to
+	// surface Stata's own raw built-in rename error (r110, phrased
+	// entirely in terms of "variable ... already existing variable"),
+	// confusing for a network-level operation - unlike the rest of this
+	// group, which phrases collisions in terms of networks. The dummy
+	// variables generated just above (one per currently-registered
+	// network) are exactly what collides, so a captured rename attempt
+	// plus a network-specific message on failure gives a clear error
+	// without needing to separately re-parse Stata's own old/new rename
+	// syntax (supports both "old new" and "(old1 old2) (new1 new2)"
+	// forms) just to pre-check collisions by hand.
+	capture noisily rename `renameCmd', r
+	if _rc != 0 {
+		local renamerc = _rc
+		restore
+		di "{err}Cannot rename: the target name already exists as a network. Specify a different name."
+		error `renamerc'
+	}
 	local oldnames "`r(oldnames)'"
 	local newnames "`r(newnames)'"
 	restore
 	local i = 1
 	foreach onenet in `oldnames' {
 		local newname : word `i' of `newnames'
-		nwname `onenet', newname(`newname')
+		nw_name `onenet', newname(`newname')
 		local i = `i' + 1
 	}
 end
 
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

@@ -1,0 +1,32 @@
+# Derived/regenerable test artifacts (regenerated from cscripts/ automatically)
+lib/cscripts_prod/
+lib/*.log
+*.log
+
+# Editor/OS
+.DS_Store
+
+# GitHub migration (2026-08-23): excluded from the public repo per an
+# explicit decision, not an oversight - see docs/CERTIFICATION.md's
+# migration-unit entry and the migration notes in docs/ROADMAP.md.
+# StataBook/: the author's own book manuscript (LaTeX source, PDFs,
+# figures) - not referenced by any live .ado command, and possibly under
+# an active publisher agreement, so kept out of the public repo by
+# default rather than assumed clear to publish.
+StataBook/
+# TODO/: personal working notes (a .docx to-do list plus its own Word
+# lock/temp file), not project documentation.
+TODO/
+# A stale, fully-redundant historical snapshot (a 2022 zip of an old
+# project state, with __MACOSX resource-fork junk from how it was
+# created) - everything genuinely current is already tracked directly;
+# this duplicate only adds repository bloat.
+deprecated/nwcommands_2016.zip
+# Vendored third-party JS libraries (d3.js, sigma.js) kept from an old,
+# no-longer-referenced visualization experiment - confirmed via grep that
+# no live .ado command reads from old/js/ - dead weight, not project code.
+old/js/
+
+.Rhistory
+*.swp
+.swp

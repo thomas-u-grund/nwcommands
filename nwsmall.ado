@@ -1,6 +1,146 @@
+/***
+{smcl}
+{* *! version 2.0.0, 1dec2016: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##generator:[NW-2.3] Generators}
+
+{title:Title}
+
+{p2colset 9 16 22 2}{...}
+{p2col :nwsmall {hline 2}}Generate a small-world network{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwsmall} 
+{it:{help int:nodes}}
+{cmd:,}
+{opth k(int)} 
+{opth prob(float)} 
+[{opt weights(p1, p2,...)}
+{opt undirected}
+{opth ntimes(int)}
+{opt name}({it:{help newnetname}})
+{opt labs}({it:lab1 lab2 ...})
+{opt xvars}]
+
+{p 8 17 2}
+{cmdab: nwsmall} 
+{it:{help int:nodes}}
+{cmd:,}
+{opth k(int)} 
+{opt shortcuts(integer)} 
+[{opt weights(p1, p2,...)}
+{opt undirected}
+{opth ntimes(int)}
+{opt name}({it:{help newnetname}})
+{opt labs}({it:lab1 lab2 ...})
+{opt xvars}]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{it:{help int:nodes}}}number of nodes{p_end}
+{synopt:{opth k(int)}}number of neighhbors on ring-lattice on each side{p_end}
+{synopt:{opth prob(float)}}probability for a tie to rewire{p_end}
+{synopt:{opth shortcuts(int)}}exact number of ties to rewire{p_end}
+{synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
+{synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
+{synopt:{opth ntimes(int)}}number of small-world networks to be generated; default = 1{p_end}
+{synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
+
+
+{title:Description}
+
+{pstd}
+{cmd:nwsmall} generates a (un-)directed, (un-)weighted small-world network using the original Watts-Strogatz model (see Watts and Strogatz 1998). The algorithm starts
+with a ring-lattice where each node has {it:k} neighbors on each side. Next, the ties of the ring-lattice 
+are rewired in one of two ways:
+
+{pstd}
+1) When option {bf:prob()} is specified, each tie of the ring-lattice has a certain probability to get rewired. All non-existent ties
+are valid as rewirings (including the ones produced through previous rewirings).
+
+{pstd}
+2) When option {bf:shortcuts()} is specified, an exact number of ties of the ring-lattice gets rewired. In this algorithm, only ties 
+that had not been in the original ring-lattice are valid rewirings. 
+
+{pstd}
+Either option {bf:prob()} or {bf:shortcuts()} needs to be specified.
+
+{pstd}
+With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
+{it:p_k} stands for the probability to sample tie weight {it:k}. The probabilities {it:p1, p2..., pn}
+do not necessarily have to sum up to one; they are standardized. For example, the following
+produces a small-world network with 20 nodes. Furthermore,
+each one of these sampled ties gets assigned a tie weight because of option {bf:weights()}. In this case,
+{bf:weights(0.0, 0.3,0.7)} indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with
+probability 0.3 and tie weight 3 with probability 0.7. 
+
+	{cmd}. nwsmall 20, k(2) prob(.2) weights(0.0, 0.3, 0.7)
+{txt}
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()}, independent of the small-world rewiring mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
+
+{title:References}
+
+{pstd}
+Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' networks. {it:Nature}
+393(6684), 440-442.
+
+
+{title:Examples}
+	
+{pstd}
+In the first example, each tie on the ring-lattice has a probability to get rewired.
+
+	{cmd:. nwclear}
+	{cmd:. nwsmall 20, k(2) prob(.2)}
+	{cmd:. nwplot, layout(circle)}
+
+{pstd}
+In the second example, there are exactly three shortcuts.
+
+	{cmd:. nwsmall 30, k(2) shortcuts(3) undirected}
+	{cmd:. nwplot, layout(circle)}
+
+{title:Stored results}
+
+	{bf:nwsmall} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
+{title:See also}
+
+	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwring}
+
+***/
 capture program drop nwsmall
 program nwsmall
-	syntax anything(name=nodes), k(integer) [ ntimes(integer 1) vars(string) stub(string) name(string) prob(string) shortcuts(string) undirected noreplace xvars]
+	// BUGFIX: `name(string)' was missing from this syntax line entirely
+	// - the body below already references `` `name' `` (defaulting to
+	// the hardcoded "small" when empty), but with no way to declare it
+	// on the command line at all, that local could never actually be
+	// set by a caller: every single nwsmall call silently ignored any
+	// name() a caller tried to pass and produced a network hardcoded to
+	// "small" every time (a second call without a different name(),
+	// wanted or not, would collide). Found while restoring nwgenerate's
+	// own small( shortcut, which failed outright with "option name()
+	// not allowed" the moment it tried to pass one - not a new bug,
+	// this file's own body already assumed the option existed. Added
+	// here to match its own sibling nwring.ado, which already declares
+	// name(string) correctly.
+	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) prob(string) shortcuts(string) undirected noreplace xvars]
 	
 	if "`prob'" != "" {
 		if (`prob' > 1) | (`prob' < 0){
@@ -13,38 +153,50 @@ program nwsmall
 		}
 	}
 	local directed = ("`undirected'" == "")
-	
-	// Check if this is the first network in this Stata session
-	if "$nwtotal" == "" {
-		global nwtotal = 0
-	}
 
-	// Generate valid network name and valid varlist
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision ("small", "small_1", ...) rather than
+	// require replace() - see nwrandom.ado's/nwpref.ado's own identical
+	// fix (harmonisation unit 126/129) for the full root cause. Resolved
+	// the same way: only when the caller did NOT supply name(),
+	// pre-resolve the actual (possibly auto-incremented) target name via
+	// nwvalidate before nwset ever sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
 		local name "small"
 	}
-	if "`stub'" == "" {
-		local stub "net"
-	}
-	nwvalidate `name'
-	local smallname = r(validname)
-	local varscount : word count `vars'
-	if (`varscount' != `nodes'){
-		nwvalidvars `nodes', stub(`stub')
-		local smallvars "$validvars"
-	}
-	else {
-		local smallvars "`vars'"
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
 	
 	if `ntimes' != 1 {
 		di in smcl as txt "{p}"
+		qui nwset
+		local oldnetlist `r(nets)'
 		forvalues i = 1/`ntimes'{
 			if mod(`i', 25) == 0 {
 				di in smcl as txt "...`i'"
 			}
-			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') stub(`stub') `xvars' `undirected'
+			// BUGFIX: was `stub(`stub')' - nwsmall's own syntax line
+			// never declares a `stub' option at all, so this stray
+			// token made EVERY ntimes()>1 call crash with r(198)
+			// "option stub() not allowed" - identical root cause to
+			// nwring.ado's own bug. Also forwards `weights' now, which
+			// this recursive call never did (ntimes()>1 always came
+			// back unweighted regardless of weights() - see
+			// nwrandom.ado's/nwpref.ado's own identical fix).
+			nwsmall `nodes', k(`k') name(`name'_`i') shortcuts(`shortcuts') prob(`prob') weights(`weights') `xvars' `undirected'
 		}
+		// Feature parity (moderate-severity pass, generators_structural
+		// group): only nwrandom exposed r(netlist) for its own ntimes()>1
+		// case; nwpref/nwlattice/nwring/nwsmall all share the identical
+		// convention but never returned it.
+		qui nwset
+		local newnetlist `r(nets)'
+		local netlist : list newnetlist - oldnetlist
+		mata: st_rclear()
+		mata: st_global("r(netlist)", "`netlist'")
 		exit
 	}
 	
@@ -54,16 +206,37 @@ program nwsmall
 		exit
 	}
 	
+	tempname __nwnew
 	if "`prob'" != "" {
-		mata: newmat = smallworldprob(`nodes', `k', `prob', `directed')
+		mata: `__nwnew' = smallworldprob(`nodes', `k', `prob', `directed')
 	}
 	if "`shortcuts'" != "" {
-		mata: newmat = smallworldsk(`nodes', `k', `shortcuts', `directed')
+		mata: `__nwnew' = smallworldsk(`nodes', `k', `shortcuts', `directed')
 	}
-	nwset, mat(newmat) vars(`smallvars') name(`smallname') `undirected' 
-
-	nwload `smallname', `xvars' 
-
+	
+	if "`weights'" != "" {
+		tempname w
+		capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
+		if _rc != 0 {
+			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+		}
+		capture mata: `w' = `w' :/ sum((`weights'))
+		if "`undirected'" != "" {
+			mata: `w' = lowertriangle(`w',0)
+			mata: `w' = `w' + `w''
+		}
+		capture mata: `__nwnew' = `__nwnew' :* `w'
+	}
+	
+	mata: st_rclear()
+	nwset, mat(`__nwnew') labs(`labs') name(`name') `undirected'
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
+	mata: st_global("r(netlist)", "`name'")
 end
 
 capture mata: mata drop smallworldsk()
@@ -72,6 +245,9 @@ capture mata: mata drop insideBand()
 
 mata: 
 real matrix smallworldsk(nodes, k, shortcuts, directed){
+	real matrix net, rewires, blub, blub2
+	real scalar rows, i, j, y, alreadyRewired, rx_old, ry_old, wrongPick, ry,sign
+	
 	// generate ring lattice
 	net = J(nodes, nodes, 0)
 	rows = (1::nodes)
@@ -149,6 +325,8 @@ real matrix smallworldsk(nodes, k, shortcuts, directed){
 }
 
 real scalar insideBand(nodes, k, ego, alter) {
+	real scalar inside
+	
 	inside = 0
 	
 	if (((ego - alter) <= k) & (ego >= alter)) {
@@ -173,7 +351,8 @@ real scalar insideBand(nodes, k, ego, alter) {
 } 
 
 real matrix smallworldprob(nodes, k, prob, directed) {
-
+	real matrix net
+	real scalar rows, i, y, j, ego, alter, wrongPick, alter_new
 	// generate ring lattice
 	net = J(nodes, nodes, 0)
 	rows = (1::nodes)
@@ -257,6 +436,3 @@ real matrix smallworldprob(nodes, k, prob, directed) {
 }
 end
 
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

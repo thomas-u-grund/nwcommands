@@ -1,0 +1,52 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwevcent")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 226
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwevcent - Calculate eigenvector centrality")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 132, label("Options")
+  TEXT tx_cx_nosym 20 54 260 ., label("do not symmetrize network before calculation")
+  CHECKBOX cx_nosym 290 54 190 ., label("nosym") option(nosym)
+  TEXT tx_cx_weighted 20 82 260 ., label("calculate on tie values instead of dichotomizing a valued network")
+  CHECKBOX cx_weighted 290 82 190 ., label("weighted") option(weighted)
+  TEXT tx_vr_generate 20 110 260 ., label("variable name for eigenvector centrality scores; default:")
+  VARNAME vr_generate 290 110 190 ., nomem option(generate)
+  TEXT tx_cx_replace 20 138 260 ., label("replace existing  variable")
+  CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwevcent"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwevcent " main.cb_net
+	beginoptions
+		option main.cx_nosym
+		option main.cx_weighted
+		optionarg main.vr_generate
+		option main.cx_replace
+	endoptions
+	stata
+END

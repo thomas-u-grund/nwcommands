@@ -1,0 +1,52 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwvalue")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 226
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwvalue - Returns a tie value")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 132, label("Options")
+  TEXT tx_sp_egoid 20 54 260 ., label("Egoid")
+  SPINNER sp_egoid 290 54 70 ., default(0) max(999999) min(-999999) nomem option(egoid)
+  TEXT tx_sp_alterid 20 82 260 ., label("Alterid")
+  SPINNER sp_alterid 290 82 70 ., default(0) max(999999) min(-999999) nomem option(alterid)
+  TEXT tx_ed_ego 20 110 260 ., label("Ego")
+  EDIT ed_ego 290 110 190 ., nomem option(ego)
+  TEXT tx_ed_alter 20 138 260 ., label("Alter")
+  EDIT ed_alter 290 138 190 ., nomem option(alter)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwvalue"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwvalue " main.cb_net
+	beginoptions
+		optionarg main.sp_egoid
+		optionarg main.sp_alterid
+		optionarg main.ed_ego
+		optionarg main.ed_alter
+	endoptions
+	stata
+END

@@ -1,121 +1,486 @@
-*! Date        : 12oct2014
-*! Version     : 1.0.1
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *!  4jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
+
+{title:Title}
+
+{p2colset 9 17 22 2}{...}
+{p2col :nwdegree {hline 2}}Degree centrality and distribution{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwdegree} 
+[{it:{help netname}}]
+[{cmd:,}
+{opth alpha(real)}
+{opt generate}({it:{help varlist:varlist}})
+{opt replace}
+{opt silent}
+{opt isolates}
+{opt standardize}
+{opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
+{opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})
+{it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}
+{opt outputoff}
+]
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt alpha}}Tuning parameter for valued networks; default = 0{p_end}
+{synopt:{opt generate}({it:{help varlist}})}Generate variables for degree, outdegree, indegree, isolate{p_end}
+{synopt:{opt replace}}Overwrite existing variables {it:varlist}{p_end}
+{synopt:{opt silent}}Surpress output{p_end}
+{synopt:{opt outputoff}}Reserved/internal - has no effect on a one-mode network's own output; use {opt silent} instead. Only meaningful when {help netname} turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to {help nw2degree}){p_end}
+{synopt:{opt isolates}}Generate variable for network isolates{p_end}
+{synopt:{opt standardize}}Divide degree or strength by N - 1{p_end}
+{synopt:{opt in}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:indegree}{p_end}
+{synopt:{opt out}({it:{help tabulate_oneway##tabulate1_options:tabulate_opt}})}Options for tabulating {it:outdegree}{p_end}
+{synopt:{it:{help tabulate_oneway##tabulate1_options:tabulate_opt}}}Options for tabulating {it:degree}{p_end}
+{synoptline}
+{p2colreset}{...}
+
+
+{title:Description}
+
+{pstd}
+{cmd:nwdegree} calculates the generalized degree centrality of the nodes as outlined in Opsahl et al (2010) for the (un-)weighted, (un-directed) networks in {help netlist} . By default, the command generates the Stata variables {it:_degree} 
+for an undirected network. When the network is directed the command generates by default {it:_outdegree} and {it:_indegree} unless something else is specified in {opt generate()}. It also tabulates the newly generated variables.
+
+{pstd}
+Following Opsahl et al. (2010) the degree centrality C_i of node i is defined as:
+
+{pmore}
+{it:C_i = k_i * ( s_i / k_i ) ^ alpha}
+
+{pstd}
+where {it:k_i} is the number of ties that node {it:i} is involved in (regardless of tie values) and {it:s_i} is the sum of the tie values of these ties. When {it:alpha = 0} (default), this generalized
+degree centrality gives the number of ties that a node has. When {it:alpha = 1}, it gives the node strength, i.e. the sum of the tie values that a node is involved in. For unvalued networks the
+value of {it:alpha} does not matter. 
+
+{pstd}
+Option {bf:isolates} generates the variable {it:_isolate} that indicates if a node is an isolate (not connected to any
+other node).
+
+{pstd}
+Option {bf:standardize} divides the centrality scores by N - 1, where N = number of nodes in a network.
+
+{pstd}
+{cmd:nwdegree} accepts a {help netlist} (e.g. {bf:nwdegree glasgow1 glasgow2}), calculating degree
+centrality independently for each network in the list. When more than one network is given, the
+default output variable names get the network's own name appended (e.g. {it:_degree_glasgow1},
+{it:_degree_glasgow2}, or {it:_indegree_glasgow1}/{it:_outdegree_glasgow1} for a directed network);
+a single-network call is unaffected and keeps the plain default names ({it:_degree}, or
+{it:_indegree}/{it:_outdegree}) exactly as before. Explicit {opt generate()} names are suffixed the
+same way when more than one network is processed. {bf:r()} results (e.g. {bf:r(dg_central)}) reflect
+whichever network was processed last, matching this package's convention for other {help netlist}
+commands.
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - generates separate {it:_indegree}/{it:_outdegree} (or {it:_instrength}/
+{it:_outstrength} for a valued network) automatically. Weighted: {bf:W1}, native - the Opsahl et al.
+(2010) generalized degree formula above is the command's default and only formulation, controlled
+by {opt alpha()}; weight meaning is tie strength, used directly (not a distance). Signed: not
+checked. Two-mode: not checked.
+
+
+{title:References}
+
+{pstd}
+Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted networks: Generalizing degree and shortest paths. {it:Social Networks} 32 (3), 245-251.
+
+
+{title:Examples}
+
+{pstd}This is the example used in Opsahl et al. (2010, Table 1):
+
+	{com}. nwclear
+	{com}. nwset, mat((.,4,4,0,0,0\
+		4,.,2,1,1,0\
+		4,2,.,0,0,0\
+		0,1,0,.,0,0\
+		0,1,0,0,.,7\
+		0,0,0,0,7,.)) undirected labs(A, B, C, D, E, F)
+{res}
+	{com}. qui nwdegree, alpha(0)
+	. qui nwdegree, alpha(0) generate(deg0)
+	. qui nwdegree, alpha(.5) generate(deg0_5)
+	. qui nwdegree, alpha(1) generate(deg1)
+	. qui nwdegree, alpha(1.5) generate(deg1_5)
+
+	. list deg*
+{txt}
+     {c TLC}{hline 6}{c -}{hline 11}{c -}{hline 6}{c -}{hline 11}{c TRC}
+     {c |} {res}deg0      deg0_5   deg1      deg1_5 {txt}{c |}
+     {c LT}{hline 6}{c -}{hline 11}{c -}{hline 6}{c -}{hline 11}{c RT}
+  1. {c |} {res}   2           4      8          16 {txt}{c |}
+  2. {c |} {res}   4   5.6568542      8   11.313708 {txt}{c |}
+  3. {c |} {res}   2   3.4641016      6   10.392304 {txt}{c |}
+  4. {c |} {res}   1           1      1           1 {txt}{c |}
+  5. {c |} {res}   2           4      8          16 {txt}{c |}
+     {c LT}{hline 6}{c -}{hline 11}{c -}{hline 6}{c -}{hline 11}{c RT}
+  6. {c |} {res}   1   2.6457512      7    18.52026 {txt}{c |}
+     {c BLC}{hline 6}{c -}{hline 11}{c -}{hline 6}{c -}{hline 11}{c BRC}
+
+	
+{pstd}
+In the following example, the degree distributions for in- and outdegree are saved in Stata matrices {it:matindeg} and {it:matoutdeg}:
+
+	{cmd:. nwwebuse glasgow}
+	{cmd:. nwdegree glasgow1, in(matcell(matindeg)) out(matcell(matoutdeg))}
+	{cmd:. mat list matindeg}
+	
+{pstd}
+The next example saves the out- and indegree centrality in the variables {it:myout} and {it:myin} and the information about isolates in {it:myisolate}.
+
+	{cmd:. nwdegree glasgow1, generate(myout myin mysiolate) isolates}
+	
+	
+{title:See also}
+
+   {help nwbetween}, {help nwcloseness}, {help nwclustering}, {help nwevcent}, {help nwkatz} 
+***/
 
 capture program drop nwdegree
 program nwdegree
 	version 9
-	syntax [anything(name=netname)],[ standardize isolates valued GENerate(string) in(string) outputoff out(string) *]
-	_nwsyntax `netname', max(9999)
-	_nwsetobs
-	
+	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(real 0.0) GENerate(string) in(string) outputoff out(string) *]
 	set more off
-	if `networks' > 1 {
-		local k = 1
-		local more = "`networks'"
-	}
-		
-	foreach netname_temp in `netname' {
-		_nwsyntax `netname_temp'
+
+	// This command's own doc has always described netlist (multi-network)
+	// behavior ("In case degree centrality is calculated for z networks
+	// at the same time... the command generates the variables
+	// _outdegree_z and _indegree_z for each network"), but the code
+	// never actually implemented it: "nw_syntax ..., max(1)" capped the
+	// argument to exactly one network, and what looked like the start of
+	// a loop ("if networks > 1 { local k = 1 ... }") never actually
+	// wrapped anything - the rest of the body ran once unconditionally
+	// and referenced an undefined netname_temp local throughout. This
+	// is exactly the "netname vs netlist" example NWCOMMANDS_COMMAND_
+	// STYLE.md itself cites as the model case for genuine netlist
+	// support (independent per-network degree calculation has obvious,
+	// useful semantics), so this was finished rather than just
+	// documented as unsupported. Single-network calls (still the common
+	// case) are unaffected: default output variable names have no
+	// suffix, exactly as before.
+	nw_syntax `netname', max(9999)
+	// The "networks" local gets clobbered by the inner nw_syntax call
+	// below (which re-parses one network at a time and resets it to 1
+	// each iteration) - capture the true total here, before the loop
+	// starts, matching the convention already used elsewhere in this
+	// package (e.g.
+	// nwcomponents/nwcommunity check the "networks" local before
+	// entering their own loops, not inside them).
+	local totalnetworks = `networks'
+
+	qui foreach netname_temp in `netname' {
+		nw_syntax `netname_temp'
+
+		// Plain degree has no meaningful definition on a two-mode
+		// network's own square-matrix sense (every node's "neighbors"
+		// are structurally confined to the opposite mode already, and
+		// the natural normalisation differs by mode) - nwdegree used
+		// to just silently compute it anyway, on whatever the raw
+		// bipartite adjacency happened to contain, producing a
+		// plausible-looking but meaningless number with no warning at
+		// all (confirmed empirically before this fix - a real,
+		// previously-undiscovered instance of exactly the "Category A"
+		// silent-wrong-result gap this initiative's own audit was
+		// looking for). Redirects to nw2degree instead, the same
+		// already-established, already-tested pattern nwclustering.ado
+		// uses for its own identical situation - not a warning about
+		// anything wrong with the data, so styled as an ordinary
+		// {txt} note rather than {err} (nwclustering's own version of
+		// this message uses {err}, arguably inconsistent with "don't
+		// call normal expected behaviour a warning"; not changed here
+		// to avoid an unrelated, out-of-scope edit to that file).
+		// nw2degree's own option set (generate()/replace/silent) is
+		// smaller than nwdegree's one-mode-specific one
+		// (alpha()/isolates/standardize/in()/out()/outputoff, none of
+		// which have a bipartite equivalent) - forwarding only what
+		// applies and naming explicitly, not silently, whatever was
+		// requested but doesn't carry over.
+		if "`is2mode'" == "true" {
+			local ignored_opts ""
+			if "`alpha'" != "0" local ignored_opts "`ignored_opts' alpha()"
+			if "`isolates'" != "" local ignored_opts "`ignored_opts' isolates"
+			if "`standardize'" != "" local ignored_opts "`ignored_opts' standardize"
+			if "`in'" != "" local ignored_opts "`ignored_opts' in()"
+			if "`out'" != "" local ignored_opts "`ignored_opts' out()"
+			if "`outputoff'" != "" local ignored_opts "`ignored_opts' outputoff"
+			noi di "{txt}note: `netname_temp' is a two-mode network - using {bf:nw2degree} instead."
+			if "`ignored_opts'" != "" {
+				noi di "{txt}      the following option(s) have no bipartite equivalent and were ignored:{bf:`ignored_opts'}"
+			}
+			noi nw2degree `netname_temp', generate(`generate') `replace' `silent'
+			continue
+		}
+
+		tempvar included
+		nw_datasync `netname_temp', generate(`included')
 		local nodes_temp `nodes'
-		
-		local directed `directed'
-		nwtomata `netname_temp', mat(degreeNet)
-	
-		if "`valued'" == "" {
-			mata: degreeNet = degreeNet :/ degreeNet
-			mata: _editmissing(degreeNet,0)
+
+		tempname outdegree
+		tempname indegree
+
+		mata: `outdegree' = `netobj'->get_outdegree(`alpha')
+		mata: `indegree' = `netobj'->get_indegree(`alpha')
+
+		// BUGFIX (real, severe, silently-wrong-output bug - confirmed
+		// empirically before fixing, not assumed): the default (no
+		// explicit generate()) directed-network word order below used
+		// to be "_indegree _outdegree" (indegree word 1, outdegree word
+		// 2), but the extraction further down has always read word 1
+		// into the `_outdegree' local and word 2 into `_indegree' - the
+		// documented convention (see this file's own doc header: "the
+		// next example saves the out- and indegree centrality in the
+		// variables myout and myin", i.e. out=word1, in=word2). That
+		// mismatch meant every default `nwdegree' call on a directed
+		// network silently stored OUTdegree values into the variable
+		// literally named "_indegree", and INdegree values into the one
+		// named "_outdegree" - confirmed directly on a 4-node star
+		// network (A -> B,C,D): node A (true outdegree 3, indegree 0)
+		// came back with _indegree==3, _outdegree==0. The centralization
+		// r()-results were unaffected (computed straight from the
+		// underlying Mata vectors, never routed through these Stata
+		// variable names at all) - only the generated dataset variables
+		// were wrong. Same swap existed for the valued
+		// _instrength/_outstrength pair. Fixed by reordering both to
+		// out-then-in, matching the extraction and the documented
+		// convention, instead of changing the extraction to match the
+		// (undocumented, inconsistent) construction order.
+		//
+		// Separately fixed: "isolates" without an explicit generate()
+		// used to completely REPLACE netgenerate with the single word
+		// "_isolates", discarding the degree-name assignment entirely -
+		// on a directed network this left `_indegree' empty and
+		// `_outdegree' aliased to "_isolates", so "capture generate
+		// `_indegree' = ." silently no-ops (empty target name) and
+		// the very next "mata: st_store(..., "`_indegree'", ...)" (not
+		// wrapped in capture) crashed hard passing st_store() an empty
+		// variable-name string - this is the crash already flagged in
+		// docs/CERTIFICATION.md's Pending table. Fixed by APPENDING
+		// "_isolates" to the normal degree-name list instead of
+		// replacing it, so isolates can always be computed FROM
+		// properly-named degree variables exactly as the later isolates
+		// block already assumes.
+		local netgenerate "`generate'"
+		if ("`netgenerate'" == "") {
+			if ("`directed'" == "true") {
+				if "`valued'" == "true" {
+					local netgenerate "_outstrength _instrength"
+				}
+				else {
+					local netgenerate "_outdegree _indegree"
+				}
+			}
+			else {
+				if "`valued'" == "true" {
+					local netgenerate "_strength"
+				}
+				else {
+					local netgenerate "_degree"
+				}
+			}
 		}
-	
-		mata: outdegree = rowsum(degreeNet) 
-		mata: indegree =  (colsum(degreeNet))'
-	
-	
-		local _degree : word 1 of `generate'
-		local _outdegree : word 1 of `generate'
-		local _indegree : word 2 of `generate'
-		local z : word count `generate'
-		local _isolate : word 2 of `generate'
-		if "`directed'" == "true" {
-			local _isolate : word 3 of `generate'
+		// Give isolates its own word slot whenever the (default or
+		// user-supplied) netgenerate doesn't already have enough words
+		// for one - 2 slots for directed (out, in) + isolate = 3;
+		// 1 slot for undirected (degree) + isolate = 2. Covers not just
+		// the empty-generate() case above but also a caller who
+		// supplies generate() with fewer names than the full set (e.g.
+		// this file's own doc/test: "generate(myisolate) isolates" on
+		// an undirected network - 1 word given, needs 2) - previously
+		// that single given name got aliased to BOTH the ordinary
+		// degree slot and the isolate slot (whichever word-position
+		// rule was in play), so the real degree values written first
+		// were silently overwritten by the isolates 0/1 indicator right
+		// after, and the degree computation was lost entirely. Adding a
+		// distinct name here instead means the caller's own word(s)
+		// keep meaning whatever they already meant (degree names, read
+		// left to right) and isolate always gets a genuine, separate
+		// variable - never silently a degree variable in disguise.
+		if "`isolates'" != "" {
+			local ngwords : word count `netgenerate'
+			if ("`directed'" == "true") {
+				if `ngwords' < 3 {
+					local netgenerate "`netgenerate' _isolates"
+				}
+			}
+			else {
+				if `ngwords' < 2 {
+					local netgenerate "`netgenerate' _isolates"
+				}
+			}
 		}
-		
-		if "`_degree'" == "" {
-			local _degree = cond("`valued'"=="", "_degree", "_strength") 
+		// Multi-network output naming, per NWCOMMANDS_COMMAND_STYLE.md's
+		// established convention (basevar_<netname> suffix): only
+		// applied when more than one network is actually being
+		// processed, so a single-network call's output names are
+		// unchanged from before this fix.
+		if `totalnetworks' > 1 {
+			local suffixed ""
+			foreach onevar of local netgenerate {
+				local suffixed "`suffixed' `onevar'_`netname_temp'"
+			}
+			local netgenerate "`suffixed'"
 		}
-	
-		if (`z' < 2){
-			local _outdegree "_out`_degree'"
-			local _indegree "_in`_degree'"
+
+		local _degree : word 1 of `netgenerate'
+		local _indegree : word 2 of `netgenerate'
+		local _outdegree : word 1 of `netgenerate'
+		// BUGFIX: `_isolate' always read word 1 (the degree/outdegree
+		// name itself), regardless of how many degree-name words
+		// actually precede the isolate name - correct only by accident
+		// for the narrow "isolates with no other output requested"
+		// case. Broken for the doc's own worked example
+		// ("generate(myout myin mysiolate) isolates" - a directed
+		// network - documented as saving out/in-degree in myout/myin,
+		// so the isolate name "mysiolate" is word 3, not word 1): with
+		// the old code, `_isolate' would have resolved to "myout" (the
+		// OUTdegree name), so "capture generate `_isolate' = ." would
+		// silently no-op (myout already exists as a real degree
+		// variable) and the isolates block's own "replace `_isolate' =
+		// ..." would then silently OVERWRITE the user's real outdegree
+		// centrality values in "myout" with a 0/1 isolate indicator,
+		// while "mysiolate" itself was never created at all - a genuine
+		// silent-data-corruption bug, not just the directed-network
+		// crash already flagged in docs/CERTIFICATION.md's Pending
+		// table. Fixed by taking the isolate name from the word
+		// position immediately after however many degree-name words
+		// actually precede it (2 for directed - out then in - 1 for
+		// undirected), matching how netgenerate is now actually built
+		// above.
+		if ("`directed'" == "true") {
+			local _isolate : word 3 of `netgenerate'
 		}
-				
-		if "`_isolate'" == "" {
-			local _isolate "_isolate"
+		else {
+			local _isolate : word 2 of `netgenerate'
 		}
-	
-		capture drop `_degree'`k'
-		capture drop `_outdegree'`k'
-		capture drop `_indegree'`k'
-		
-		if "`outputoff'" == "" {
-		
+
+		// BUGFIX: this whole per-network body runs inside the outer
+		// "qui foreach netname_temp in `netname' { ... }" loop above, so
+		// a plain "di" here was silently swallowed by that enclosing
+		// qui - the user got nothing but a bare, unexplained r(99), with
+		// no indication of which variable already existed or why (the
+		// exact complaint this was found while diagnosing: nwplot's own
+		// internal degree/isolates computation, elsewhere, left stale
+		// _outdegree/_indegree/_isolates variables behind after a
+		// compound "capture drop A B C D" silently failed in its
+		// entirety - see nwplot.ado's own fix - and the next call to
+		// generate those same names hit this guard with no visible
+		// explanation at all). "noi" makes this diagnostic actually
+		// reach the user, matching how every other user-facing message
+		// in this same command body is already marked.
+		//
+		// Also fixed a separate, adjacent typo found in the same line:
+		// this loop referenced `_isolates' (plural) which is never
+		// defined anywhere - `_isolate' (singular, set two lines above)
+		// is the real local - so the isolates target variable's own
+		// existence was never actually checked here at all, silently
+		// falling through to a bare "capture generate" later instead of
+		// this guard's own clear error message.
+		foreach c in `_degree' `_indegree' `_outdegree' `_isolate' {
+			capture confirm variable `c', exact
+			if _rc == 0 & "`replace'" == "" {
+				noi di "{err}Variable {bf:`c'} already exists; use {bf:replace} or {bf:generate()}"
+				err 99
+			}
+			capture drop `c'
+		}
+
 		if ("`directed'" == "false"){
-			nwtostata, mat(outdegree) gen(`_degree'`k')
+			capture generate `_degree' = .
+			mata: st_store((1,`nodes_temp'), "`_degree'", `outdegree')
 		}
 		else {
-			nwtostata, mat(outdegree) gen(`_outdegree'`k')
-			nwtostata, mat(indegree) gen(`_indegree'`k')
+			capture generate `_outdegree' = .
+			capture generate `_indegree' = .
+			mata: st_store((1,`nodes_temp'), "`_outdegree'", `outdegree')
+			mata: st_store((1,`nodes_temp'), "`_indegree'", `indegree')
 		}
+
 		if "`standardize'" != "" {
-			capture replace `_degree'`k' = `_degree'`k' / (`nodes_temp' - 1)
-			capture replace `_outdegree'`k' = `_outdegree'`k' / (`nodes_temp' - 1)
-			capture replace `_inŒdegree'`k' = `_indegree'`k' / (`nodes_temp' - 1)
+			capture replace `_degree' = `_degree' / (`nodes_temp' - 1)
+			capture replace `_outdegree' = `_outdegree' / (`nodes_temp' - 1)
+			capture replace `_indegree' = `_indegree' / (`nodes_temp' - 1)
 		}
-		
-		qui if "`isolates'" != "" {
-			capture drop `_isolate'`k'
-			if ("`directed'" == "true"){
-				gen `_isolate'`k' = (`_outdegree'`k' == 0) * (`_indegree'`k'==0)
+
+		if "`isolates'" != "" {
+			capture generate `_isolate' = .
+			sum `_isolate'
+			if "`directed'" == "true" {
+				replace `_isolate' = (`_outdegree' == 0) * (`_indegree'==0) if `included' == 1
 			}
-			else{
-				gen `_isolate'`k' = (`_degree'`k' == 0)
+			else {
+				replace `_isolate' = (`_degree' == 0)  if `included' == 1
 			}
-			replace `_isolate'`k' = . if _n > `nodes_temp'
 		}
-	
-		
-		di "{hline 40}"
-		di "{txt}  Network name: {res}`netname'"
-		di "{hline 40}"
-		di "{txt}    Degree distribution"
-		if "`directed'" == "true"{
-			tab `_indegree'`k', `in'
-			tab `_outdegree'`k', `out'
+
+		if "`silent'" == "" {
+			noi di "{hline 40}"
+			noi di "{txt}  Network name: {res}`netname_temp'"
+			noi di "{hline 40}"
+			if "`isolates'" == "" {
+				noi di "{txt}    Degree distribution"
+				if "`directed'" == "true"{
+					noi tab `_indegree' if `included' == 1, `in'
+					noi tab `_outdegree' if `included' == 1, `out'
+				}
+				else {
+					noi tab `_degree' if `included' == 1, `options'
+				}
+			}
+			else {
+				noi di "{txt}    Isolates"
+				noi tab `_isolate' if `included' == 1, `in'
+			}
 		}
-		else {
-			tab `_degree'`k', `options'
+
+		mata: st_rclear()
+
+		if "`isolates'" == "" {
+			if ("`directed'" == "false") {
+				mata: st_numscalar("r(dg_central)", sum(J(`nodes_temp',1,max(`outdegree')) :- `outdegree') / ((`nodes_temp' - 2) * (`nodes_temp' - 1)))
+				if "`silent'" == "" {
+					noi di
+					// BUGFIX: was `noi di "..." + `=round(...)'' - string-
+					// concatenating a quoted display literal with a bare
+					// numeric expression via `+' is not valid `di' syntax
+					// once that expression evaluates to missing (a
+					// genuine division-by-zero for any N<=2 network,
+					// where centralization is undefined) - crashed with
+					// r(198) on the ordinary default display path for
+					// any 1- or 2-node undirected network. Split into the
+					// standard two-item `di "text" value' form used
+					// throughout the rest of this package, which
+					// displays missing as "." without erroring.
+					noi di "{txt}   Degree centralization:: {res}" `=round(`r(dg_central)',0.001)'
+				}
+			}
+			else {
+				mata: st_numscalar("r(indg_central)", sum(J(`nodes_temp',1,max(`indegree')) :- `indegree') / ((`nodes_temp' - 1) * (`nodes_temp' - 1)))
+				mata: st_numscalar("r(outdg_central)", sum(J(`nodes_temp',1,max(`outdegree')) :- `outdegree') / ((`nodes_temp' - 1) * (`nodes_temp' - 1)))
+				if "`silent'" == "" {
+					noi di
+					// BUGFIX: same fix as the undirected branch above -
+					// a 1-node directed network divides by zero here too.
+					noi di "{txt}   Indegree centralization:: {res}" `=round(`r(indg_central)',0.001)'
+					noi di "{txt}   Outdegree centralization:: {res}" `=round(`r(outdg_central)',0.001)'
+				}
+			}
 		}
-		if "`more'" != "" & "`k'" != "`more'" {
-			local k = `k' + 1
-		}
-		
-		}
-		
-		if ("`directed'" == "false") {
-			mata: st_numscalar("r(dg_central)", sum(J(`nodes_temp',1,max(outdegree)) :- outdegree) / ((`nodes_temp' - 2) * (`nodes_temp' - 1)))
-			di 
-			di "{txt}   Degree centralization:: {res}`r(dg_central)'"
-		}
-		else {
-			mata: st_numscalar("r(indg_central)", sum(J(`nodes_temp',1,max(indegree)) :- indegree) / ((`nodes_temp' - 1) * (`nodes_temp' - 1))) 
-			mata: st_numscalar("r(outdg_central)", sum(J(`nodes_temp',1,max(outdegree)) :- outdegree) / ((`nodes_temp' - 1) * (`nodes_temp' - 1)))
-			di 
-			di "{txt}   Indegree centralization:: {res}`r(indg_central)'"
-			di "{txt}   Outdegree centralization:: {res}`r(outdg_central)'"
-		}
-		mata: mata drop outdegree indegree degreeNet
+		capture drop `included'
+		mata: mata drop `outdegree' `indegree'
 	}
-end	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+
+end
+

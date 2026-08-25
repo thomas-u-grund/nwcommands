@@ -1,0 +1,61 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwqap")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 310
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwqap - Multivariate QAP regression")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
+  CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
+  TEXT tx_ed_type 20 82 260 ., label("regression command to be used for dyad dataset; default =")
+  EDIT ed_type 290 82 190 ., nomem option(type)
+  TEXT tx_ed_typeoptions 20 110 260 ., label("options to be passed on to the regression command")
+  EDIT ed_typeoptions 290 110 190 ., nomem option(typeoptions)
+  TEXT tx_ed_mode 20 138 260 ., label("modes for expanding variables to networks")
+  EDIT ed_mode 290 138 190 ., nomem option(mode)
+  TEXT tx_sp_permutations 20 166 260 ., label("number of QAP permutations; default = 500")
+  SPINNER sp_permutations 290 166 70 ., default(500) max(999999) min(-999999) nomem option(permutations)
+  TEXT tx_ed_save 20 194 260 ., label("save coefficients from permutations in file")
+  EDIT ed_save 290 194 190 ., nomem option(save)
+  TEXT tx_cb_predict 20 222 260 ., label("store the fitted dyad-level values (from 's own default prediction, e.g. Pr(y=1)")
+  COMBOBOX cb_predict 290 222 190 ., dropdown contents(netlist) nomem option(predict)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwqap"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwqap " main.cb_net
+	beginoptions
+		option main.cx_detail
+		optionarg main.ed_type
+		optionarg main.ed_typeoptions
+		optionarg main.ed_mode
+		optionarg main.sp_permutations
+		optionarg main.ed_save
+		optionarg main.cb_predict
+	endoptions
+	stata
+END

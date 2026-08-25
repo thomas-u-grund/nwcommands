@@ -1,149 +1,162 @@
-*! Date        : 3sept2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.1  13may2019 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##import:[NW-2.2] Import/Export}
 
+{title:Title}
+
+{p2colset 9 14 22 2}{...}
+{p2col :nwsave  {hline 2}}Save network data in file{p_end}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwsave}
+{it:{help filename}}
+[{cmd:,}
+{cmd:replace}
+{opt old}]
+
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{cmd: replace}}overwrite existing dataset{p_end}
+{synopt:{opt old}}save in a Stata-version-backward-compatible format (uses {help saveold} internally instead of {help save}){p_end}
+
+
+{title:Description}
+
+{pstd}
+{bf:nwsave} saves all networks (and Stata variables) currently in memory on disk. Since version 2.1 the
+command saves data in its own file format {bf:.nwdta}. Network data saved in this way
+can be loaded with {help nwuse}. Notice that the command {help save} does not save
+network data.
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves the full network object to disk exactly as stored, independent of any of these properties.
+
+{title:Examples}
+        
+{pstd}
+This example creates 5 new random networks and {help nwsave:saves} them as {it:mynets}. A new dataset called {it:mynets.nwdta} is created in the working directory.
+
+        {cmd:. nwclear}
+        {cmd:. nwrandom 20, ntimes(5) prob(.2)}
+        {cmd:. nwsave mynets}
+
+{pstd}
+After this, one can easily load these 5 networks in a new Stata session just as if one would load a normal Stata dataset. 
+
+        {cmd:. nwuse mynets}
+        
+
+{title:See also}
+
+        {help nwuse}, {help nwwebuse}, {help save}
+***/
 capture program drop nwsave
 program nwsave
-	syntax anything [, old * format(string)]
-	local webname = subinstr("`anything'", ".dta","",.)
+	// A former format(string) option was accepted by syntax but immediately
+	// discarded - `format' below is `.nwdta''s own single, fixed internal
+	// storage layout, not something a caller could ever meaningfully vary
+	// (any value, including nonsense, was silently accepted and ignored).
+	// Removed rather than wired up, since there is no second storage format
+	// implemented anywhere in this file to select between.
+	syntax anything [, old replace *]
+	local webname = subinstr(`"`anything'"', ".dta","",.)
+	local webname = subinstr(`"`webname'"', ".nwdta","",.)
+	unw_defs
+	nwload, labelonly
 
-	_nwsyntax _all, max(99999)
-	local nets : word count `netname'
+	tempfile existing
+	qui save `existing'
+	nw_syntax _all, max(99999)
+	local nets r(networks)
+
+	local format = "edgelist"
 
 	
-	if "`format'" == "" {
-		local format = "edgelist"
-	}
-	if (`=`nodes_all' + 20' > c(max_k_theory)){
-		local format = "edgelist" 
-	}
-	
-	_opts_oneof "matrix edgelist" "format" "`format'" 6556
-		
-	preserve	
-	 qui {
-	
-	local nodes = 0
-	local i = 1
-
-	tempfile attributes
-	capture rename _modeid modeid
-	capture drop _*
-	gen _running = _n
-	foreach onenet in `netname' {
-		nwname `onenet'
-		local varstodelete "`r(vars)'"
-		foreach onevar in `varstodelete' {
-			capture drop `onevar'
-			capture drop _nodelab
-			capture drop _nodevar
-			capture drop _nodeid
-		}
-	}
-	save`old' `attributes', replace
-	
-	if "`format'" == "edgelist" {
-		clear
-		gen _fromid = .
-		gen _toid = .
-		tempfile edgelist_all
-		save `edgelist_all'
-		foreach onenet in `netname' {
-			tempfile edgelist_`onenet'
-			nwtoedge `onenet'
-			rename `onenet' _`onenet'
-			save `edgelist_`onenet'', replace
-			merge m:m _fromid _toid using `edgelist_all', nogenerate
-			save `edgelist_all', replace
-		}
-	}
-	if "`format'" == "matrix" {
-		local vars_required = 30
-		foreach onenet in `netname' {
-			nwname `onenet'
-			local vars_required = `vars_required' + `r(nodes)' + 5
-		}
-		if c(max_k_theory) < `vars_required' {
-			noi di "{err}You need to increase the maximum number of variables to `vars_required' with {bf:set maxvar `vars_required'}.{txt}"
-			exit
-		}
-		clear
-		local i = 1
-		foreach onenet in `netname' {
-			nwname `onenet'
-			local vars "`r(vars)'"
-			nwload `onenet'
-			capture drop _nodelab _nodevar _nodeid
-			local j = 1
-			foreach v of varlist `vars' {
-				rename `v' _net`i'_`j'
-				local j = `j' + 1
-			}
-			local i = `i' + 1
-		}
-	}
-
-	gen _format = "" 
-	gen _nets = . 
-	gen _name = ""
-	gen _size = .
-	gen _directed = ""
-	gen _edgelabs = ""
-
-	local i = 1
-	local n = _N
-	if `n' < `nets'{
-		set obs `nets'
-	}
-	foreach onenet in `netname' {
-		nwname `onenet'
-		replace _name = "`r(name)'" in `i'
-		local nodes = `r(nodes)'
-		replace _size = `nodes' in `i'
-		replace _directed = "`r(directed)'" in `i'
-		replace _edgelabs = `"`r(edgelabs)'"' in `i'
+	// save attributes first
+	qui foreach onenet in `netname' {
 		nwload `onenet', labelonly
-		rename _nodelab _newlabel`i'
-		rename _nodevar _newvar`i'
-		local i = `i' + 1
+	}
+	capture drop _nwinclude
+	tempfile attributes
+	qui gen _nw_running = _n
+	qui save`old' `attributes', replace
+	
+	// obtain edgelists for each network together with entries to which network entry belongs
+	nw_syntax _all, max(99999)
+	qui foreach onenet in `netname' {
+		nwload `onenet', labelonly
+		gen _nw_match_`onenet' = 1 if _nwinclude == 1
 	}
 	
+	qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress
+	qui gen _nw_running = _n
+	tempfile edgelist
+	qui save`old' `edgelist', replace
+
+	clear
+	qui nwset
+    qui set obs `r(networks)'
+	qui {
+	 gen _nw_format = "" 
+	 gen _nw_nets = . 
+	 gen _nw_netname = ""
+	 gen _nw_size = .
+	 gen _nw_directed = ""
+	 gen _nw_twomode = ""
+	 gen _nw_selfloops = ""
+	 gen _nw_title = ""
+	 gen _nw_valued = ""
+	 // was missing entirely: r(mode2) above only ever saved the bare
+	 // is-two-mode yes/no flag, never the actual per-node mode
+	 // partition - nwtoedge's own edgelist export (below, ignore2mode)
+	 // discards mode information by design, so nothing captured it at
+	 // all, and every saved-and-reloaded two-mode network silently
+	 // lost its real mode membership (confirmed via a direct
+	 // round-trip probe before this fix - see get_modes_labeled_string()'s
+	 // own header comment in unw_core.do for the full explanation).
+	 gen _nw_modes = ""
+	 gen _nw_mode1desc = ""
+	 gen _nw_mode2desc = ""
+	 gen _nw_provenance = ""
+    }
 	local i = 1
-	foreach onenet in `netname' {
-		rename _newlabel`i' _nodelab`i'
-		rename _newvar`i' _nodevar`i'
-		gen _runningnumber = _n
-		tostring _runningnumber, replace
-		replace _nodevar`i' = "_net`i'_" + _runningnumber
-		drop _runningnumber
+	
+	qui foreach onenet in `netname' {
+		nwname `onenet'
+		replace _nw_netname = "`onenet'" in `i'
+		local nodes = `r(nodes)'
+		replace _nw_format = "edgelist" in `i'
+		replace _nw_size = `nodes' in `i'
+		replace _nw_directed = "`r(directed)'" in `i'
+		replace _nw_selfloop = "`r(selfloop)'" in `i' 
+		replace _nw_twomode = "`r(mode2)'" in `i'
+		replace _nw_valued = "`r(valued)'" in `i'
+		replace _nw_title = "`r(title)'" in `i'
+		replace _nw_modes = `"`r(modes)'"' in `i'
+		replace _nw_mode1desc = `"`r(mode1desc)'"' in `i'
+		replace _nw_mode2desc = `"`r(mode2desc)'"' in `i'
+		replace _nw_provenance = `"`r(provenance)'"' in `i'
 		local i = `i' + 1
-	}	
-	
-	if "`format'" == "matrix" {
-		replace _format = "matrix" in 1
-		
 	}
+	qui replace _nw_nets = `=`i'-1' in 1
+	qui gen _nw_running = _n
+	tempfile metadata
+	qui save`old' `metadata', replace
 	
-	if "`format'" == "edgelist" {
-		replace _format = "edgelist" in 1
-		
-	}
+	qui merge 1:1 _nw_running using `attributes', nogenerate
+	qui merge 1:1 _nw_running using `edgelist', nogenerate
 	
-	replace _nets = `nets' in 1
-	order _format _nets _name _size _directed _edgelabs _nodevar* _nodelab*
-	gen _running = _n
-	qui merge m:m _running using `attributes', nogenerate
-	drop _running
-	
-	}
-	save`old' `webname'.dta, `options'
-	restore
+	qui save`old' `webname'.nwdta, replace `options'
+	use `existing', clear
 end
 
-
-
-	
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

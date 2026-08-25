@@ -61,7 +61,7 @@ END
 DIALOG main, tabtitle("Networks")
 BEGIN
   TEXT     tx_var	10	10	100	., label("Networks:") 		
-  COMBOBOX cb_var	+60	@	340	., nomem dropdown append contents(netlist) 
+  COMBOBOX cb_var	+60	@	340	., nomem dropdown contents(netlist)
   GROUPBOX gb_lb 210 50 270 130, label("Node labels:") 
   RADIO  rb_nolabel 230  70 220 ., first  label("No labels") onclickon("script labelsHide")
   RADIO  rb_addnet  @ +20   @ ., middle label("Add labels saved with network")  onclickon("script labelsShowProp")
@@ -98,6 +98,7 @@ BEGIN
 	SPINNER sp_delay 180 140 60 ., label("Delay") option(delay) default(10) nomem
 	CHECKBOX cx_eps 70 170 200 . , label("Use EPS") option(eps) nomem
 	CHECKBOX cx_keepfile 70 190 200 ., label("Keep frame files") option(keepfiles) nomem
+	CHECKBOX cx_noopen 70 210 260 ., label("Do not auto-open the result (macOS)") option(noopen) nomem
 END
 
 
@@ -362,6 +363,7 @@ BEGIN
 		optionarg movie.sp_delay
 		option movie.cx_eps
 		option movie.cx_keepfile
+		option movie.cx_noopen
 		
 		optionarg switch.cb_swnet
 		optionarg switch.cb_swcol
@@ -402,9 +404,9 @@ BEGIN
 		}
 		put ")"
 	}
-	require main.vr_nodex
-	require main.vr_nodey
 	if main.cb_layout.iseq("nodexy") {
+		require main.vr_nodex
+		require main.vr_nodey
 		put " nodexy(" main.vr_nodex " " main.vr_nodey ")"
 	}
 END

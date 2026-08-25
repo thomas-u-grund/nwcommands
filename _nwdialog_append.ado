@@ -2,7 +2,17 @@ capture program drop _nwdialog_append
 program _nwdialog_append
 	syntax anything(name=dialogname)
     qui nwset
-	local netlist = "`r(names)'"
+	// BUGFIX: was `r(names)' - nwset's own bare call returns the
+	// loaded-network list as `r(nets)', not `r(names)' (confirmed
+	// directly via `qui nwset' / `return list') - this local was
+	// always empty, so this program never actually appended anything.
+	// A pre-existing bug affecting every dialog using it, not
+	// introduced by this pass - found while live-testing the rebuilt
+	// dialogs. This file's own copy (not the identically-named one
+	// also defined inside _nwdialog.ado) is the one Stata's ado
+	// lookup actually finds for `_nwdialog_append', since its
+	// filename matches the program name.
+	local netlist = "`r(nets)'"
 	local netlist_rev ""
 	local c : word count `netlist'
 	forvalues i = 1 / `c' {

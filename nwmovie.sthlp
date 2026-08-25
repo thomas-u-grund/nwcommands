@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwmovie {hline 2} Animate a sequence of networks}
+{p2col :nwmovie {hline 2}}Animate a sequence of networks{p_end}
 {p2colreset}{...}
 
 
@@ -45,6 +45,11 @@
 {synopt:{opth imagick(string)}}alternative installation path for ImageMagick{p_end}
 {synopt:{opt eps}}export network plots as .EPS and not as .PNG; requires GhostScript installation{p_end}
 {synopt:{opt keepfiles}}keep the .PNG or .EPS files for each frame in the working directory{p_end}
+{synopt:{opth width(int)}}width of each frame in pixels; default = 750{p_end}
+{synopt:{opth height(int)}}height of each frame in pixels; default = 500{p_end}
+{synopt:{opt noopen}}(macOS only) do not automatically open the resulting .gif in Safari when the movie finishes rendering{p_end}
+{synopt:{opth z(int)}}zoom/scale factor; default = 1{p_end}
+{synopt:{opth nodexys(varlist)}}use variables to force coordinates of nodes: one x/y variable PAIR per time point, listed consecutively ({it:x1 y1 x2 y2 ...}){p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -72,12 +77,18 @@
 {marker node_options}{...}
 {p2line}
 {p2col:{opt titles}({it:tit1}|{it:tit2}|...)}one title per time point{p_end}
+{p2col:{opt title}({it:string})}same as {opt titles()}, but time-invariant - applies the same title to every time point{p_end}
 {p2col:{opt labels}({it:{help varlist}})}labels of the nodes; one variable per time point{p_end}
 {synopt:{opt sizes}({it:{help varlist}} [,{it:{help nwplot##node_sub:node_sub}}])}sizes of the nodes; one variable per time point{p_end}
+{synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}same as {opt sizes()}, but time-invariant - applies the same size variable to every time point{p_end}
 {p2col:{opt colors}({it:{help varlist}} [,{it:{help nwplot##node_sub:node_sub}}])}colors of the nodes; one variable per time point{p_end}
+{p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}same as {opt colors()}, but time-invariant - applies the same color variable to every time point{p_end}
 {p2col:{opt symbols}({it:{help varlist}} [,{it:{help nwplot##node_sub:node_sub}}])}symbols of the nodes; one variable per time point{p_end}
+{p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}same as {opt symbols()}, but time-invariant - applies the same symbol variable to every time point{p_end}
 {p2col:{opt edgesizes}({it:{help netlist}})}use edge values of other networks to change width of edges; networks needs to have the right dimensions; one network per time point{p_end}
+{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}same as {opt edgesizes()}, but time-invariant - applies the same edge-size network to every time point{p_end}
 {p2col:{opt edgecolors}({it:{help netlist}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other networks to change color of edges; networks needs to have the right dimensions; one network per time point{p_end}
+{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}same as {opt edgecolors()}, but time-invariant - applies the same edge-color network to every time point{p_end}
 	
 	
 {title:Requirements}
@@ -112,7 +123,7 @@ to have as many variables as there are networks you want to animate.
 Because nodes and networks at different points can vary, all node- and edge-level
 options are automatically invoked with the option {bf:norescale}.
 
-	{cmd:. webnwuse klas12b}, nwclear
+	{cmd:. nwwebuse klas12b}, nwclear
 	{cmd:. nwmovie _all}
 
 {pstd}
@@ -125,11 +136,13 @@ Notice that the normal, time-invariant options from {help nwplot} can be used as
 	
 	{cmd:. nwmovie klas12b_wave1 klas12b_wave1, color(sex)}
 
-{pstd}
-When the command cannot find ImageMagick, try and install ImageMagick manually, locate the convert.exe (Windows)
-or convert executible (OSX) and your computer and note the path, e.g. "/users/opt/ImageMagick/bin". You can
-manually specify this path in the {bf:imagick()} option.
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - animates whichever networks are given exactly as {help nwplot} would render each one; does not itself impose any additional network-type restriction beyond what {help nwplot} already has.
+
 {title:See also}
 
 	{help nwplot}

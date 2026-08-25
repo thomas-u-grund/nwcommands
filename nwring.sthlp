@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwring {hline 2} Generate a ring-lattice network}
+{p2col :nwring {hline 2}}Generate a ring-lattice network{p_end}
 {p2colreset}{...}
 
 
@@ -17,9 +17,10 @@
 {it:{help int:nodes}}
 {cmd:,}
 {opth k(int)} 
-[{opt undirected}
+[{opt weights(p1, p2,...)}
+{opt undirected}
 {opth name(newnetname)}
-{opt vars}({it:{help newvarlist}})
+{opt labs}({it:lab1 lab2 ...})
 {opt xvars}
 {opth ntimes(int)}]
 
@@ -28,26 +29,51 @@
 {synoptline}
 {synopt:{it:{help in:nodes}}}number of nodes{p_end}
 {synopt:{opth k(int)}}number of neighhbors on ring-lattice on each side{p_end}
+{synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
 {synopt:{opt undirected}}generate an undirected network; default = directed{p_end}
 {synopt:{opth name(newnetname)}}name of the new network{p_end}
-{synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of networks to be generated; default = 1{p_end}
+{synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
 
 {title:Description}
 
 {pstd}
-{cmd:nwring} generates a directed ring-lattice network. Each node is connected to {it:k} 
+{cmd:nwring} generates a (un-)directed, (un-)weighted ring-lattice network. Each node is connected to {it:k} 
 nodes on each side. Basically, each node has 2 * {it:k} neighbors in a ring structure.
 
+{pstd}
+With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
+{it:p_k} stands for the probability to sample tie weight {it:k}. The probabilities {it:p1, p2..., pn}
+do not necessarily have to sum up to one; they are standardized. For example, the following
+produces a ring-lattice network with 20 nodes, where each node is connected to two neighbors on each side. Furthermore,
+each one of these sampled ties gets assigned a tie weight because of option {bf:weights()}. In this case,
+{bf:weights(0.0, 0.3,0.7)} indicates that tie weight 1 should be sampled with probability 0.0, tie weight 2 with
+probability 0.3 and tie weight 3 with probability 0.7. 
+
+	{cmd:. nwring 20, k(2) weights(0.0,0.3,0.7)}
+	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()}, independent of the ring/shortcut placement mechanism itself. Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
 
 {title:Examples}
 	
 	{cmd:. nwclear}
 	{cmd:. nwring 20, k(2) undirected}
-	{cmd:. nwplot, arcbend(.5)}
-	
-	
+
+{title:Stored results}
+
+	{bf:nwring} stores the following in {bf:r()}:
+
+	Macros
+	  {bf:r(netlist)}	list of new networks
+
 {title:See also}
 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwsmall}
+
+last certified : 24 Aug 2026

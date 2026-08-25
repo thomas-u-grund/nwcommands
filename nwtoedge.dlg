@@ -1,53 +1,52 @@
-/*
-  tabulate2
-
-*!  VERSION 1.1.2  23jan2013
-
-*/
-
-VERSION 10.0
+VERSION 10
+INCLUDE _std_small
 SYNCHRONOUS_ONLY
-INCLUDE _std_medium
-INCLUDE _ht350
-INCLUDE header
-
 HELP hlp1, view("help nwtoedge")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
+POSITION 10 10 1060 282
 
 SCRIPT PREINIT
 BEGIN
-		program initialize
+	program initialize
 END
 
-DIALOG main, title("nwtoedge - Transform network to edgelist")
+DIALOG main, title("nwtoedge - Convert network to edgelist")
 BEGIN
-	TEXT tx_net 50 20 170 ., label("Networks:") 
-	COMBOBOX cb_net 50 40 300 ., label("Networks") nomem contents(netlist) dropdown append
-	
-	TEXT tx_from 50 60 250 ., label("From variables (optional):")
-	VARLIST vn_from 50 80 300 ., label("fromvars") nomem option(fromvars)
-	
-	TEXT tx_to 50 100 250 ., label("To variables (optional):")
-	VARLIST vn_to 50 120 300 ., label("tovars") nomem optio(tovars)
-	
-	TEXT tx_fromid 50 160 80 ., label("From (optional)")
-	EDIT ed_fromid 50 180 100 ., label("From") nomem option(fromid)
-	TEXT tx_toid 170 160 80 ., label("To (optional)")
-	EDIT ed_toid 170 180 100 ., label("To") nomem	option(toid)
-	TEXT tx_valueid 290 160 120 ., label("Value (optional)")
-	EDIT ed_valueid 290 180 100 ., label("Value") nomem option(link)
-
-	GROUPBOX gb_ties 50 230 340 60, label("Create arc/edge")
-	RADIO rb_auto 70 250 100 ., label("automatic") first
-	RADIO rb_undir 160 250 110 ., label("force undirected") middle option(forceundirected)
-	RADIO rb_direct 280 250 100 ., label("force directed") last option(forcedirected)
-
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  TEXT tx_cx_isolates0 20 54 260 ., label("reserved; not currently implemented")
+  CHECKBOX cx_isolates0 290 54 190 ., label("isolates0") option(isolates0)
+  TEXT tx_cx_compress 20 82 260 ., label("Compress edgelist")
+  CHECKBOX cx_compress 290 82 190 ., label("compress") option(compress)
+  TEXT tx_cx_upper 20 110 260 ., label("List only one entry per undirected dyad (the default; see  above) - has no effec")
+  CHECKBOX cx_upper 290 110 190 ., label("upper") option(upper)
+  TEXT tx_vl_egovars 20 138 260 ., label("Keep attributes of sending nodes")
+  VARLIST vl_egovars 290 138 190 ., nomem option(egovars)
+  TEXT tx_vl_altervars 20 166 260 ., label("Keep attributes of receiving nodes")
+  VARLIST vl_altervars 290 166 190 ., nomem option(altervars)
+  TEXT tx_cx_numeric 20 194 260 ., label("Return every possible node pair (a full node x node grid), not just actual ties;")
+  CHECKBOX cx_numeric 290 194 190 ., label("numeric") option(numeric)
+  TEXT tx_ed_ego 530 54 260 ., label("Sender of ties; default =")
+  EDIT ed_ego 800 54 190 ., nomem option(ego)
+  TEXT tx_ed_alter 530 82 260 ., label("Receiver of ties; default =")
+  EDIT ed_alter 800 82 190 ., nomem option(alter)
+  TEXT tx_cx_full 530 110 260 ., label("List both  and  for an undirected network's dyads, rather than only one entry pe")
+  CHECKBOX cx_full 800 110 190 ., label("full") option(full)
+  TEXT tx_cx_ignore2mode 530 138 260 ., label("Treat a two-mode network like a one-mode one - suppress the mode indicator that ")
+  CHECKBOX cx_ignore2mode 800 138 190 ., label("ignore2mode") option(ignore2mode)
+  TEXT tx_vl_comparevars 530 166 260 ., label("Add an ego/alter comparison column for each variable (e.g. , )")
+  VARLIST vl_comparevars 800 166 190 ., nomem option(comparevars)
+  TEXT tx_ed_comparemode 530 194 260 ., label("Comparison used for ; default =")
+  EDIT ed_comparemode 800 194 190 ., nomem option(comparemode)
 END
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
 
 PROGRAM initialize
@@ -58,17 +57,20 @@ END
 
 PROGRAM command
 BEGIN
-	put "nwtoedge " main.cb_net 
+	put "nwtoedge " main.cb_net
 	beginoptions
-		option main.rb_undir
-		option main.rb_direct
-		optionarg main.ed_fromid
-		optionarg main.ed_toid
-		optionarg main.ed_valueid
-		optionarg main.vn_from 
-		optionarg main.vn_to
+		option main.cx_isolates0
+		option main.cx_compress
+		option main.cx_upper
+		optionarg main.vl_egovars
+		optionarg main.vl_altervars
+		option main.cx_numeric
+		optionarg main.ed_ego
+		optionarg main.ed_alter
+		option main.cx_full
+		option main.cx_ignore2mode
+		optionarg main.vl_comparevars
+		optionarg main.ed_comparemode
 	endoptions
 	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

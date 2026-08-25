@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :netexp {hline 2} Network expression and function}
+{p2col :netexp {hline 2}}Network expression and function{p_end}
 {p2colreset}{...}
 
 
@@ -31,7 +31,7 @@ Network expressions accept {help netname:netnames}, {help varname:varnames} and 
 from Stata or Mata. Here, the network expression consists of the simple network {it:flomarriage} and is assigned
 it to {it:mynet1}.
 
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwgen mynet1 = flomarriage}
 	
 {pstd}
@@ -62,7 +62,7 @@ Network expressions can also be used in {help if} conditions (see e.g. {help nwr
 network expression is again evaluated on an element-by-element basis and operations are only performed
 for the dyads for which the expression is true. For example:
 
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwgen overlap2 = flobusiness}
 	{cmd:. nwreplace overlap2 = flomarriage if flobusiness == 1}
 	

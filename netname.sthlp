@@ -25,7 +25,7 @@ characters may be
 
 {pstd}
 When we use the term netname, we usually mean an existing netname -- a
-network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a {it: {help nwgenerator}}. The alternative would be a
+network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a network generator (see {help nw_topical##generator:[NW-1.2] Generators}). The alternative would be a
 {it:{help newnetname}}.
 
 {pstd} 

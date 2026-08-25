@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwhomophily {hline 2} Generate a homophily network}
+{p2col :nwhomophily {hline 2}}Generate a homophily network{p_end}
 {p2colreset}{...}
 
 
@@ -21,9 +21,8 @@
 [{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})
 {opth nodes(integer)}
 {opth name(string)}
-{opth stub(string)}
 {opt xvars}
-{opt undirected}
+{opt undirected}]
 
 
 {synoptset 25 tabbed}{...}
@@ -34,8 +33,7 @@
 {synopt:{opt mode}({it:{help nwexpand##expand_mode:expand_mode}})}mode used to generate probabilities for ties{p_end}
 {synopt:{opth nodes(integer)}}number of nodes; if not specified the number of valid cases of {it:{help varname}} is used{p_end}
 {synopt:{opth name(newnetname)}}name of the new random network{p_end}
-{synopt:{opth stub(string)}}stub used for variable names{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
 
 
 {title:Description}
@@ -58,10 +56,12 @@ on variables in {help varlist} (see {help nwexpand}). By default,
 value on a variable.
 
 {pstd}
-Another way to calculate {it:w_ij} would be using {bf: mode(absdiffinv)}
+Another way to calculate {it:w_ij} would be using {bf: mode(absdistinv)}
 
 {pmore}
-{it:w_ij = abs(1 /(var[i] - var[j]))}
+{it:w_ij = max(absdist) - abs(var[i] - var[j])} - a bounded inverse-distance transform (closer pairs
+score higher), not a literal {it:1/|diff|} reciprocal, deliberately avoiding the numerical blowup a
+true reciprocal would cause for near-equal values (see the caveat below)
 
 {pstd}
 For more information on how {it:w_ij} is calculated based on {bf:mode()} see {help nwexpand}.
@@ -113,15 +113,28 @@ All three new networks can be displayed in comparison:
 	{cmd:. graph combine g1.gph g2.gph g3.gph}
 
 {pstd}
-Notice that when {it:nwhomophily} is used together with {it:z} variables in {help varlist}, the option 
+Notice that when {it:nwhomophily} is used together with {it:z} variables in {help varlist}, the option
 {bf:homophily()} also needs to have {it:z} entries. The next example also shows how the command works with
 non-categorical variables. After generating a categorical variable {it:gender} and a metric variable {it:income},
 this would generate a homophily network where ties are less likely to exist between individuals with the same gender
-(effect size = -5) and more likely to exist between individuals who have similar (not the same) income (effect size = 3).
+(effect size = -2) and more likely to exist between individuals who have similar (not the same) income (effect size = 0.5).
 
-	{cmd:. nwhomophily gender income, density(0.05) homophily(-5 3) mode(same abdsdist)}
+	{cmd:. nwhomophily gender income, density(0.05) homophily(-2 0.5) mode(same absdistinv)}
+
+{pstd}
+{bf:mode(absdistinv)}'s own weight scales with the raw magnitude of the underlying variable (unlike
+{bf:mode(same)}'s bounded 0/1 indicator) - a large {it:homophily()} coefficient combined with a
+large-magnitude variable (e.g. income in the thousands) can produce weights skewed enough that the
+underlying sampler fails; scale the variable (e.g. to a 0-10 range) or use a smaller {it:homophily()}
+coefficient for {bf:absdistinv}/{bf:distinv} in that case.
 
 	
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). Weighted: not applicable - no {opt weights()} option; {opt density()} controls overall tie placement rate, not individual tie values. Signed: not applicable. Two-mode: not applicable - this generator always produces a one-mode network.
+
 {title:Remarks}
 
 {pstd}

@@ -1,37 +1,119 @@
+/***
+{smcl}
+{* *! 15jul2016 Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##generator:[NW-2.3] Generators}
+{marker top2}
+{helpb nw_topical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+
+{title:Title}
+
+{p2colset 9 17 22 2}{...}
+{p2col :nwreach {hline 2}}Calculate reachability network{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwreach} 
+[{it:{help netname}}]
+[{cmd:,}
+{opt sym}
+{opth name(string)}
+{opt xvars}
+{opt nwreplace}]
+
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt sym}}Symmetrize network before calculation of reachability{p_end}
+{synopt:{opth name(newnetname)}}Name of the new network; default = {it:reach}{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt nwreplace}}if a network named {it:newnetname} already exists, drop it and use this name anyway - required, not silent (see {help nwgeodesic} for the same convention){p_end}
+
+
+{title:Description}
+
+{pstd}
+{cmd:nwreach} calculates the reachability network. The dyads {it:x_ij} in the reachibility network take
+value 1 when there is at least one path between {it:nodes i} and {it:j} in the original network {help netname}, and
+0 if there is no such path. 
+
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - reachability is a structural yes/no property; {help nwgeodesic}'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as {help nwgeodesic}), {opt sym} available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
+{title:Examples}
+	
+	{com}. nwclear
+	. nwrandom 10, prob(.1)
+	{com}. nwreach random, sym
+	{com}. nwsummarize _reach, matonly
+
+	1    2    3    4    5    6    7    8    9   10
+     {c TLC}{hline 51}{c TRC}
+   1 {c |}  {res} 0                                             {txt}  {c |}
+   2 {c |}  {res} 1    0                                        {txt}  {c |}
+   3 {c |}  {res} 1    1    0                                   {txt}  {c |}
+   4 {c |}  {res} 1    1    1    0                              {txt}  {c |}
+   5 {c |}  {res} 1    1    1    1    0                         {txt}  {c |}
+   6 {c |}  {res} 1    1    1    1    1    0                    {txt}  {c |}
+   7 {c |}  {res} 1    1    1    1    1    1    0               {txt}  {c |}
+   8 {c |}  {res} 0    0    0    0    0    0    0    0          {txt}  {c |}
+   9 {c |}  {res} 1    1    1    1    1    1    1    0    0     {txt}  {c |}
+  10 {c |}  {res} 1    1    1    1    1    1    1    0    1    0{txt}  {c |}
+     {c BLC}{hline 51}{c BRC}{txt}
+	 
+{pstd}
+In this example, there is basically one isolate node (node 8) who is unconnected from everybody else.
+	
+	
+{title:See also}
+
+	{help nwgeodesic}, {help nwpath}
+
+***/
 capture program drop nwreach
 program nwreach
-	syntax [anything(name=reachnet)], [ name(string) vars(string) xvars nosym noreplace]
-	_nwsyntax `reachnet', name(reachnet)
+	// `vars(string)' removed - it was accepted by syntax but never
+	// referenced anywhere in this file's body (a fully dead, undocumented
+	// no-op).
+	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace]
+	nw_syntax `reachnet', name(reachnet)
+	unw_defs
 
-	// Generate valid name and vars
 	if "`name'" == "" {
-		local name "reach"
-	}
-	if "`stub'" == "" {
-		local stub "_reach"
+		local name "`nwgen_reach'"
 	}
 
-	if "`replace'" != "noreplace" {
-		capture nwdrop reach
+	// BUGFIX: this used to unconditionally `capture nwdrop `name'' with
+	// no existence check and no way to opt out at all - a real,
+	// undocumented data-loss risk (any pre-existing network happening to
+	// share this command's target name, default `_reach' or whatever
+	// name() specifies, was silently destroyed with zero warning).
+	// Unlike this, every sibling command in the group (nwgeodesic/
+	// nwpath/nwbridges) requires `nwreplace' before overwriting an
+	// existing target name - now matches that convention.
+	capture nw_syntax `name', other(_check)
+	if _rc == 0 & "`nwreplace'" == "" {
+		di "{err}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}."
+		error 99
 	}
-
-	nwvalidate `name'
-	local reachname = r(validname)
-	local varscount : word count `vars'
-	if (`varscount' != `nodes'){
-		nwvalidvars `nodes', stub(`stub')
-		local reachvars "$validvars"
+	if _rc == 0 {
+		nwdrop `name'
 	}
-	else {
-		local reachvars "`vars'"
-	}	
+	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') nwreplace
+	qui nwreplace `name' = 1 if `name' != (`missing2')
+	qui nwreplace `name' = 0 if `name' == (`missing2')
+	nw_syntax `name'
+	mata: `netobj'->set_valued(0)
 	
-	qui nwgeodesic `reachnet', name(`reachname') vars(`reachvars') unconnected(0) `xvars' `sym'
-	qui nwreplace `reachname' = 1 if `reachname' > 0
-	qui nwreplace `reachname' = 0 if `reachname' <= 0
-	if "`sym'" != "" {
-		qui nwname `reachname', newdirected(true)
+	if "`xvars'" != "" {
+		nwload `name'
 	}
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

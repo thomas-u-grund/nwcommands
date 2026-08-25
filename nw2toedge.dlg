@@ -1,0 +1,67 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nw2toedge")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 366
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nw2toedge - Convert two-mode network to edgelist")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 272, label("Options")
+  TEXT tx_cx_isolates0 20 54 260 ., label("reserved; not currently implemented")
+  CHECKBOX cx_isolates0 290 54 190 ., label("isolates0") option(isolates0)
+  TEXT tx_cx_compress 20 82 260 ., label("Drop rows with no tie in any listed network, keeping only actual ties")
+  CHECKBOX cx_compress 290 82 190 ., label("compress") option(compress)
+  TEXT tx_cx_upper 20 110 260 ., label("List only one entry per undirected dyad (the default; see  above) - has no effec")
+  CHECKBOX cx_upper 290 110 190 ., label("upper") option(upper)
+  TEXT tx_vl_egovars 20 138 260 ., label("Keep attributes of sending nodes")
+  VARLIST vl_egovars 290 138 190 ., nomem option(egovars)
+  TEXT tx_vl_altervars 20 166 260 ., label("Keep attributes of receiving nodes")
+  VARLIST vl_altervars 290 166 190 ., nomem option(altervars)
+  TEXT tx_ed_ego 20 194 260 ., label("Sender of ties; default =")
+  EDIT ed_ego 290 194 190 ., nomem option(ego)
+  TEXT tx_ed_alter 20 222 260 ., label("Receiver of ties; default =")
+  EDIT ed_alter 290 222 190 ., nomem option(alter)
+  TEXT tx_cx_full 20 250 260 ., label("List both  and  for an undirected network's dyads, rather than only one entry pe")
+  CHECKBOX cx_full 290 250 190 ., label("full") option(full)
+  TEXT tx_cx_ignore2mode 20 278 260 ., label("Treat the two-mode network like a one-mode one - suppress the auto-generated / m")
+  CHECKBOX cx_ignore2mode 290 278 190 ., label("ignore2mode") option(ignore2mode)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nw2toedge"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nw2toedge " main.cb_net
+	beginoptions
+		option main.cx_isolates0
+		option main.cx_compress
+		option main.cx_upper
+		optionarg main.vl_egovars
+		optionarg main.vl_altervars
+		optionarg main.ed_ego
+		optionarg main.ed_alter
+		option main.cx_full
+		option main.cx_ignore2mode
+	endoptions
+	stata
+END

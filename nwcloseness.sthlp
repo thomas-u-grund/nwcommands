@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwcloseness {hline 2} Calculate closeness centrality}
+{p2col :nwcloseness {hline 2}}Calculate closeness centrality{p_end}
 {p2colreset}{...}
 
 
@@ -18,16 +18,18 @@
 [{cmd:,}
 {opth unconnected(int)}
 {opt generate}({it:{help varname:var1 var2 var3}})
-{opt nosym}]
+{opt nosym}
+{opt replace}]
 
 
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opth unconnected(int)}}defines the length of the (non-existent) path between two unconnected nodes{p_end}
-{synopt:{opt generate}({it:{help varname:var1 var2 var3}})}variables names to save closeness, farness and nearness scores; default: 
-{it:var1 = _closeness, var2 = _farness, var3 = _nearness}{p_end}
+{synopt:{opt generate}({it:{help varname:var1 var2 var3}})}variables names to save closeness, farness and nearness scores; default:
+{it:var1 = _closeness, var2 = _farness, var3 = _nearness} - must be exactly 3 names, or omitted entirely{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
+{synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
 
 
 {title:Description}
@@ -54,17 +56,26 @@ option {bf:unconnected()} is specified. Any integer value can be choosen; {bf:un
 paths a length based on the longest shortest path length observed in the network (plus one) (see {help nwgeodesic}).	
 
 {pstd}
-Already existing Stata variables {it:var1, var2, var3} are overwritten. In case, closeness centrality is calculated
+Existing Stata variables {it:var1, var2, var3} require option {bf:replace} to be overwritten. In case, closeness centrality is calculated
 for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2}), the command generates the variables
-{it:var1_z, var2_z, var3_z} for each network. 
-	
+{it:var1_z, var2_z, var3_z} for each network.
+
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {opt nosym} convention as {help nwkatz}/{help nwevcent}), {opt nosym} available. Weighted: inherited entirely from whatever {help nwgeodesic} options are passed through (this command has no {opt weighted}/{opt alpha()} of its own). Signed: not checked. Two-mode: not checked.
+
 {title:Examples}
 	
-	{cmd:. webnwuse gang, nwclear}
-	{cmd:. nwclosenss gang}
+	{cmd:. nwwebuse gang, nwclear}
+	{cmd:. nwcloseness gang}
 	{cmd:. sum _closeness _farness _nearness}
-	
-	
+
+
 {title:See also}
 
 	{help nwgeodesic}, {help nwpath}, {help nwgeodesic}, {help nwbetween}, {help nwdegree}, {help nwevcent}, {help nwkatz}
+
+last certified : 24 Aug 2026
