@@ -104,3 +104,16 @@ capture graph describe gof
 assert _rc == 0
 graph drop gof
 di "=== estat gof, plot REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression: a disconnected OBSERVED network's own -1
+* "disconnected" sentinel (nwgeodesic's own convention) was displayed
+* literally ("-1.0000") in the Avg. geodesic row instead of "n/a" -
+* the simulated side already had this guard, the observed side did
+* not. r(obs_avgpath) itself must still be the raw -1 (nwgeodesic's own
+* convention, for any calling code that checks it programmatically) -
+* only the DISPLAYED text changes.
+nwwebuse florentine, nwclear
+qui nwergm flobusiness, edges gwesp(.5) nodematch(seat)
+qui estat gof, seed(42) nsim(5)
+assert r(obs_avgpath) == -1
+di "=== disconnected-observed-network gof display REGRESSION VERIFIED ==="
