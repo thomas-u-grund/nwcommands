@@ -1,0 +1,56 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwmodularity")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 254
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwmodularity - Score an existing node partition using Newman's modularity")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  TEXT tx_vr_group 20 54 260 ., label("Stata variable holding each node's community/group assignment")
+  VARNAME vr_group 290 54 190 ., nomem option(group)
+  TEXT tx_ed_measure 20 82 260 ., label("Whether to use tie values () or only presence/absence of ties (); default =  for")
+  EDIT ed_measure 290 82 190 ., nomem option(measure)
+  TEXT tx_cx_symmetrize 20 110 260 ., label("Symmetrize a directed network before scoring (required for directed networks)")
+  CHECKBOX cx_symmetrize 290 110 190 ., label("symmetrize") option(symmetrize)
+  TEXT tx_ed_resolution 20 138 260 ., label("Resolution parameter (Reichardt-Bornholdt); must be > 0; default = 1")
+  EDIT ed_resolution 290 138 100 ., numonly nomem option(resolution)
+  TEXT tx_cx_silent 20 166 260 ., label("Suppress display of results")
+  CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwmodularity"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	require main.vr_group
+	put "nwmodularity " main.cb_net
+	beginoptions
+		optionarg main.vr_group
+		optionarg main.ed_measure
+		option main.cx_symmetrize
+		optionarg main.ed_resolution
+		option main.cx_silent
+	endoptions
+	stata
+END

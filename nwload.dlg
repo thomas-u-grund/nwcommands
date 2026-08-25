@@ -1,36 +1,44 @@
-
-VERSION 10.0
-SYNCHRONOUS_ONLY
+VERSION 10
 INCLUDE _std_small
-INCLUDE _ht350
-INCLUDE header
-
+SYNCHRONOUS_ONLY
 HELP hlp1, view("help nwload")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
+POSITION 10 10 550 338
 
 SCRIPT PREINIT
 BEGIN
-		program initialize
+	program initialize
 END
 
-
-DIALOG main, title("nwload - Load Stata variables")
+DIALOG main, title("nwload - Load a network as Stata variables")
 BEGIN
-	
-	TEXT tx_net 50 40 140 ., label("Network:") 
-	COMBOBOX cb_net 50 60 250 ., dropdownlist label("Network") contents(netlist) nomem
-	
-	CHECKBOX cx_nocur 50 90 350 ., label("Do not make network the current network") option(nocurrent)
-	CHECKBOX cx_force 50 120 350 ., label("Force Stata variables for network with > 1000 nodes") option(force)
-	CHECKBOX cx_lab 50 150 350 ., label("Only labels") option(labelonly)
-
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 244, label("Options")
+  TEXT tx_cx_xvars 20 54 260 ., label("Run only a lightweight  sync and exit immediately - does NOT itself")
+  CHECKBOX cx_xvars 290 54 190 ., label("xvars") option(xvars)
+  TEXT tx_cx_overwrite 20 82 260 ., label("Forwarded to 's own  option; only used for advanced programming")
+  CHECKBOX cx_overwrite 290 82 190 ., label("overwrite") option(overwrite)
+  TEXT tx_cx_labelonly 20 110 260 ., label("Only load the node labels as Stata variable")
+  CHECKBOX cx_labelonly 290 110 190 ., label("labelonly") option(labelonly)
+  TEXT tx_cx_force 20 138 260 ., label("By default, matrix is not loaded for networks with more than 1000 nodes unless  ")
+  CHECKBOX cx_force 290 138 190 ., label("force") option(force)
+  TEXT tx_cx_viewon 20 166 260 ., label("Establish view of network to dataset")
+  CHECKBOX cx_viewon 290 166 190 ., label("viewon") option(viewon)
+  TEXT tx_cx_viewoff 20 194 260 ., label("Unconnect view from network to dataset; default")
+  CHECKBOX cx_viewoff 290 194 190 ., label("viewoff") option(viewoff)
+  TEXT tx_cx_nocurrent 20 222 260 ., label("Only load network as Stata variables, but do not make it the")
+  CHECKBOX cx_nocurrent 290 222 190 ., label("nocurrent") option(nocurrent)
+  TEXT tx_ed_generate 20 250 260 ., label("Generate flag for nodes of the loaded network; default =")
+  EDIT ed_generate 290 250 190 ., nomem option(generate)
 END
-
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
 
 PROGRAM initialize
@@ -43,11 +51,14 @@ PROGRAM command
 BEGIN
 	put "nwload " main.cb_net
 	beginoptions
-		option main.cx_nocur
+		option main.cx_xvars
+		option main.cx_overwrite
+		option main.cx_labelonly
 		option main.cx_force
-		option main.cx_lab		
+		option main.cx_viewon
+		option main.cx_viewoff
+		option main.cx_nocurrent
+		optionarg main.ed_generate
 	endoptions
 	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

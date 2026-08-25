@@ -1,0 +1,41 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwreplace")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 520 142
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwreplace - Replace network values")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network (with optional [i,j] or expression):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 480 58, label("Details")
+  TEXT tx_ed_free 20 54 260 ., label("Replace with (e.g. '= 99', '[2,3] = 99', '= othernet'):")
+  EDIT ed_free 290 54 190 ., nomem
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwreplace"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	require main.ed_free
+	put "nwreplace " main.cb_net " " main.ed_free
+	stata
+END

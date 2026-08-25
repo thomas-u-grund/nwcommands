@@ -98,6 +98,7 @@ BEGIN
 	SPINNER sp_delay 180 140 60 ., label("Delay") option(delay) default(10) nomem
 	CHECKBOX cx_eps 70 170 200 . , label("Use EPS") option(eps) nomem
 	CHECKBOX cx_keepfile 70 190 200 ., label("Keep frame files") option(keepfiles) nomem
+	CHECKBOX cx_noopen 70 210 260 ., label("Do not auto-open the result (macOS)") option(noopen) nomem
 END
 
 
@@ -362,6 +363,7 @@ BEGIN
 		optionarg movie.sp_delay
 		option movie.cx_eps
 		option movie.cx_keepfile
+		option movie.cx_noopen
 		
 		optionarg switch.cb_swnet
 		optionarg switch.cb_swcol

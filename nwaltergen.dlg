@@ -1,0 +1,40 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwaltergen")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 164
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwaltergen - Generate a variable from alter/neighbor attributes")
+BEGIN
+  GROUPBOX gb_opt 10 10 520 104, label("Options")
+  TEXT tx_ed_net 20 20 260 ., label("Network to use; default = the current network")
+  EDIT ed_net 290 20 190 ., nomem option(net)
+  TEXT tx_cx_replace 20 48 260 ., label("Replace existing variable")
+  CHECKBOX cx_replace 290 48 190 ., label("replace") option(replace)
+  TEXT tx_sp_hop 20 76 260 ., label("Aggregate over nodes exactly this many (unweighted) steps away, instead of direc")
+  SPINNER sp_hop 290 76 70 ., default(1) max(999999) min(-999999) nomem option(hop)
+END
+
+PROGRAM initialize
+BEGIN
+END
+
+PROGRAM command
+BEGIN
+	put "nwaltergen"
+	beginoptions
+		optionarg main.ed_net
+		option main.cx_replace
+		optionarg main.sp_hop
+	endoptions
+	stata
+END

@@ -1,57 +1,30 @@
-VERSION 11.0
-
+VERSION 10
+INCLUDE _std_small
 SYNCHRONOUS_ONLY
-INCLUDE _std_medium
-INCLUDE header
 HELP hlp1, view("help nwdrop")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
+POSITION 10 10 550 142
 
 SCRIPT PREINIT
 BEGIN
 	program initialize
 END
 
-DIALOG main, label("nwdrop/nwkeep - Drop or keep networks/nodes") tabtitle("Main")
+DIALOG main, title("nwdrop - Drop networks or network nodes")
 BEGIN
-	GROUPBOX gb_main 20 20 370 70, label("")
-	RADIO rb_drop 30 40 200 ., nomem label("Drop networks") first onclickon(script detailsOff)
-	RADIO rb_keep 30 60 200 ., nomem label("Keep networks") middle onclickon(script detailsOff)
-	RADIO rb_dropnodes 170 40 200 ., nomem label("Drop nodes") middle onclickon(script detailsOn)
-	RADIO rb_keepnodes 170 60 200 ., nomem label("Keep nodes") last onclickon(script detailsOn)
-	TEXT tx_net1 30 100 200 200, label("Selected networks:")
-	COMBOBOX cb_net 30 120 270  ., nomem dropdown  label("cbNet") contents(netlist) append
-	TEXT  tx_if	50 150 200 ., label("If: (expression)")
-    EXP   ex_if	140 150 230 ., label("Create...")
-	TEXT  tx_att	50 180 200 ., label("Attributes:")
-	VARLIST vr_att 140 180 230 ., nomem label("Attributes") 
-	CHECKBOX cx_netonly 140 210 200 ., label("Leave Stata variables untouched")
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 48, label("Options")
+  TEXT tx_cx_clean 20 54 260 ., label("Drop node observations")
+  CHECKBOX cx_clean 290 54 190 ., label("clean") option(clean)
 END
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
-END
-
-LIST netlist_append
-BEGIN
-	// left empty
-END
-
-SCRIPT detailsOff
-BEGIN
-	main.tx_if.hide
-	main.ex_if.hide
-	main.vr_att.hide
-	main.tx_att.hide
-END
-
-SCRIPT detailsOn
-BEGIN
-	main.tx_if.show
-	main.ex_if.show
-	main.vr_att.show
-	main.tx_att.show
+	// populated at runtime by _nwdialog.ado
 END
 
 PROGRAM initialize
@@ -62,34 +35,9 @@ END
 
 PROGRAM command
 BEGIN
-	if main.rb_dropnodes {
-		put " nwdrop " main.cb_net
-		require main.ex_if
-	}
-	if main.rb_drop {
-		put " nwdrop " main.cb_net
-	}
-	if main.rb_keepnodes {
-		put " nwkeep " main.cb_net
-		require main.ex_if
-	}
-	if main.rb_keep {
-		put " nwkeep " main.cb_net
-	}
-	if main.ex_if {
-		ifexp main.ex_if
-	}
-	if main.vr_att | main.cx_netonly {
-		put ", " 
-		if main.vr_att {
-			put "attributes(" main.vr_att ") "
-		}
-		if main.cx_netonly {
-			put "netonly"
-		}
-	}
+	put "nwdrop " main.cb_net
+	beginoptions
+		option main.cx_clean
+	endoptions
+	stata
 END
-
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

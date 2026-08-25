@@ -1,0 +1,41 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwtostata")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 164
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwtostata - Copy a Mata matrix into Stata variables")
+BEGIN
+  GROUPBOX gb_opt 10 10 520 104, label("Options")
+  TEXT tx_ed_mat 20 20 260 ., label("name of the Mata matrix to copy into Stata variables")
+  EDIT ed_mat 290 20 190 ., nomem option(mat)
+  TEXT tx_ed_gen 20 48 260 ., label("one new Stata variable name per column of")
+  EDIT ed_gen 290 48 190 ., nomem option(gen)
+  TEXT tx_ed_stub 20 76 260 ., label("generate columns as , , ... instead of naming")
+  EDIT ed_stub 290 76 190 ., nomem option(stub)
+END
+
+PROGRAM initialize
+BEGIN
+END
+
+PROGRAM command
+BEGIN
+	require main.ed_mat
+	put "nwtostata"
+	beginoptions
+		optionarg main.ed_mat
+		optionarg main.ed_gen
+		optionarg main.ed_stub
+	endoptions
+	stata
+END

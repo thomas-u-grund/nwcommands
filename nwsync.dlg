@@ -1,34 +1,32 @@
-
-VERSION 10.0
-SYNCHRONOUS_ONLY
+VERSION 10
 INCLUDE _std_small
-INCLUDE _ht350
-INCLUDE header
-
+SYNCHRONOUS_ONLY
 HELP hlp1, view("help nwsync")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
+POSITION 10 10 550 170
 
 SCRIPT PREINIT
 BEGIN
-		program initialize
+	program initialize
 END
 
-
-DIALOG main, title("nwsync - Sync Network With Variables")
+DIALOG main, title("nwsync - Sync network with Stata variables")
 BEGIN
-	
-	TEXT tx_net 50 40 140 ., label("Network:") 
-	COMBOBOX cb_net 50 60 250 ., dropdownlist label("Network") contents(netlist) nomem
-	CHECKBOX cx_from 50 90 350 ., label("Synchronize from Stata variables") option(fromstata) nomem
-	CHECKBOX cx_lab 50 120 350 ., label("Synchronize node labels") option(label) nomem
-
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_cx_label 20 54 260 ., label("Sync the node labels")
+  CHECKBOX cx_label 290 54 190 ., label("label") option(label)
+  TEXT tx_cx_fromstata 20 82 260 ., label("Change the direction of the sync")
+  CHECKBOX cx_fromstata 290 82 190 ., label("fromstata") option(fromstata)
 END
-
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
 
 PROGRAM initialize
@@ -41,10 +39,8 @@ PROGRAM command
 BEGIN
 	put "nwsync " main.cb_net
 	beginoptions
-		option main.cx_from
-		option main.cx_lab		
+		option main.cx_label
+		option main.cx_fromstata
 	endoptions
 	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
