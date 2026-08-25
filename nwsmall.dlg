@@ -26,8 +26,8 @@ BEGIN
   SPINNER sp_ntimes 290 110 70 ., default(1) max(999999) min(-999999) nomem option(ntimes)
   TEXT tx_ed_labs 20 138 260 ., label("overwrite node labels")
   EDIT ed_labs 290 138 190 ., nomem option(labs)
-  TEXT tx_ed_name 20 166 260 ., label("name of the new network")
-  EDIT ed_name 290 166 190 ., nomem option(name)
+  TEXT tx_cb_name 20 166 260 ., label("name of the new network")
+  COMBOBOX cb_name 290 166 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_ed_prob 530 54 260 ., label("probability for a tie to rewire")
   EDIT ed_prob 800 54 190 ., nomem option(prob)
   TEXT tx_ed_shortcuts 530 82 260 ., label("exact number of ties to rewire")
@@ -60,7 +60,7 @@ BEGIN
 		optionarg main.ed_weights
 		optionarg main.sp_ntimes
 		optionarg main.ed_labs
-		optionarg main.ed_name
+		optionarg main.cb_name
 		optionarg main.ed_prob
 		optionarg main.ed_shortcuts
 		option main.cx_undirected

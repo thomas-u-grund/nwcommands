@@ -30,8 +30,8 @@ BEGIN
   SPINNER sp_permutations 290 166 70 ., default(500) max(999999) min(-999999) nomem option(permutations)
   TEXT tx_ed_save 20 194 260 ., label("save coefficients from permutations in file")
   EDIT ed_save 290 194 190 ., nomem option(save)
-  TEXT tx_ed_predict 20 222 260 ., label("store the fitted dyad-level values (from 's own default prediction, e.g. Pr(y=1)")
-  EDIT ed_predict 290 222 190 ., nomem option(predict)
+  TEXT tx_cb_predict 20 222 260 ., label("store the fitted dyad-level values (from 's own default prediction, e.g. Pr(y=1)")
+  COMBOBOX cb_predict 290 222 190 ., dropdown contents(netlist) nomem option(predict)
 END
 
 LIST netlist
@@ -55,7 +55,7 @@ BEGIN
 		optionarg main.ed_mode
 		optionarg main.sp_permutations
 		optionarg main.ed_save
-		optionarg main.ed_predict
+		optionarg main.cb_predict
 	endoptions
 	stata
 END

@@ -26,10 +26,10 @@ BEGIN
   SPINNER sp_reps 290 110 70 ., default(1000) max(999999) min(-999999) nomem option(reps)
   TEXT tx_sp_seed 20 138 260 ., label("Set the random-number seed before drawing (for reproducibility)")
   SPINNER sp_seed 290 138 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
-  TEXT tx_ed_tail 20 166 260 ., label("Which tail(s) to report a p-value for; default =")
-  EDIT ed_tail 290 166 190 ., nomem option(tail)
-  TEXT tx_ed_condition 20 194 260 ., label("Null model to condition random draws on; default =")
-  EDIT ed_condition 290 194 190 ., nomem option(condition)
+  TEXT tx_cb_tail 20 166 260 ., label("Which tail(s) to report a p-value for; default =")
+  COMBOBOX cb_tail 290 166 190 ., dropdownlist contents(list_tail) nomem option(tail)
+  TEXT tx_cb_condition 20 194 260 ., label("Null model to condition random draws on; default =")
+  COMBOBOX cb_condition 290 194 190 ., dropdownlist contents(list_condition) nomem option(condition)
   TEXT tx_cx_silent 20 222 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 222 190 ., label("silent") option(silent)
 END
@@ -37,6 +37,19 @@ END
 LIST netlist
 BEGIN
 	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_tail
+BEGIN
+	both
+	upper
+	lower
+END
+
+LIST list_condition
+BEGIN
+	density
+	census
 END
 
 PROGRAM initialize
@@ -55,8 +68,8 @@ BEGIN
 		optionarg main.ed_rname
 		optionarg main.sp_reps
 		optionarg main.sp_seed
-		optionarg main.ed_tail
-		optionarg main.ed_condition
+		optionarg main.cb_tail
+		optionarg main.cb_condition
 		option main.cx_silent
 	endoptions
 	stata

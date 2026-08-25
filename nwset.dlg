@@ -52,10 +52,10 @@ BEGIN
   CHECKBOX cx_nooutput 800 82 190 ., label("nooutput") option(nooutput)
   TEXT tx_cx_edgelist 530 110 260 ., label("Declare data in edgelist format")
   CHECKBOX cx_edgelist 800 110 190 ., label("edgelist") option(edgelist)
-  TEXT tx_ed_name 530 138 260 ., label("Name of the new network; default =")
-  EDIT ed_name 800 138 190 ., nomem option(name)
-  TEXT tx_ed_labsfromvar 530 166 260 ., label("Use information in varname as node labels")
-  EDIT ed_labsfromvar 800 166 190 ., nomem option(labsfromvar)
+  TEXT tx_cb_name 530 138 260 ., label("Name of the new network; default =")
+  COMBOBOX cb_name 800 138 190 ., dropdown contents(netlist) nomem option(name)
+  TEXT tx_vr_labsfromvar 530 166 260 ., label("Use information in varname as node labels")
+  VARNAME vr_labsfromvar 800 166 190 ., nomem option(labsfromvar)
   TEXT tx_ed_edgelabs 530 194 260 ., label("Edgelabs")
   EDIT ed_edgelabs 800 194 190 ., nomem option(edgelabs)
   TEXT tx_cx_detail 530 222 260 ., label("Detail")
@@ -74,8 +74,15 @@ BEGIN
   VARNAME vr_eventtime 800 390 190 ., nomem option(eventtime)
 END
 
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
 PROGRAM initialize
 BEGIN
+	put "_nwdialog nwset"
+	stata hidden immediate
 END
 
 PROGRAM command
@@ -99,8 +106,8 @@ BEGIN
 		option main.cx_nwclear
 		option main.cx_nooutput
 		option main.cx_edgelist
-		optionarg main.ed_name
-		optionarg main.ed_labsfromvar
+		optionarg main.cb_name
+		optionarg main.vr_labsfromvar
 		optionarg main.ed_edgelabs
 		option main.cx_detail
 		optionarg main.ed_mat
