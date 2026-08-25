@@ -81,7 +81,7 @@ program nwinstall
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
-			capture net install "nwcommands-ado`i'", all
+			capture net install "nwcommands-ado`i'", all replace
 			if _rc != 0 {
 				local keepgoing = 0
 			}
@@ -101,7 +101,7 @@ program nwinstall
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
-			capture net install "nwcommands-hlp`i'", all
+			capture net install "nwcommands-hlp`i'", all replace
 			if _rc != 0 {
 				local keepgoing = 0
 			}
@@ -113,7 +113,7 @@ program nwinstall
 	if "`ext'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ext"
 		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
-		net install "nwcommands-ext", all
+		net install "nwcommands-ext", all replace
 	}
 
 
@@ -129,7 +129,7 @@ program nwinstall
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
-			capture net install "nwcommands-dlg`i'", all
+			capture net install "nwcommands-dlg`i'", all replace
 			if _rc != 0 {
 				local keepgoing = 0
 			}
