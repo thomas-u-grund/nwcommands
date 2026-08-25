@@ -85,3 +85,22 @@ qui nwergm simulate 18, edges theta(-2) generate(bigsim)
 assert _rc == 0
 nwsummarize bigsim
 assert r(nodes) == 18
+
+* --- estat gof, plot: degree-distribution and geodesic-distance-
+* distribution panels, boxplot-style with the observed network overlaid
+* (Statnet plot.gof()'s own analogue). `set graphics off' exercises the
+* full computation (including the Mata BFS-based ergm_gof_geodist() and
+* ergm_gof_degdist() helpers, and their differing category-count
+* conventions - degree has a numeric "+" overflow bucket, geodesic has
+* a distinct "NR"/not-reached bucket, one fewer category for the same
+* maxval - a real shape mismatch caught only by actually running this,
+* not by reading the code) without popping up a GUI window.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,0,0,0\0,0,0,1,0\0,0,0,0,1\1,0,0,0,0)) directed name(toynet)
+qui nwergm toynet, edges mutual method(mcmle) seed(777)
+set graphics off
+qui estat gof, seed(777) nsim(10) plot
+capture graph describe gof
+assert _rc == 0
+graph drop gof
+di "=== estat gof, plot REGRESSION VERIFIED ==="
