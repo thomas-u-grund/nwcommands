@@ -139,7 +139,7 @@ pseudolikelihood estimation, and Monte Carlo maximum likelihood estimation - wit
 carefully certified effect library) and has since grown considerably closer to parity with
 Statnet's own term surface: the current effect library covers the full node-covariate family,
 dyadic covariates, the geometrically weighted family (including directed shared-partner
-support), fixed shared-partner counts, the complete degree-sequence family, and directed
+support), fixed shared-partner counts, the complete degree-distribution family, and directed
 triad-closure terms - see {help nwergm##limitations:Limitations} below for the complete current
 list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
 (bipartite) ERGMs, curved/free-decay estimation, and constraints beyond the free binary dyad
@@ -152,7 +152,7 @@ add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised e
 {opt nodecov()}, {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
 {opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver} - plus
 the dyadic-covariate terms {opt edgecov()}/{opt hamming()}) and no dyad-DEPENDENT term
-({opt mutual}, any geometrically weighted term, any degree-sequence term, {opt triangle},
+({opt mutual}, any geometrically weighted term, any degree-distribution term, {opt triangle},
 {opt ctriple}, {opt transitiveties}, {opt cyclicalties}, {opt esp()}, or {opt dsp()}) is
 present, maximum pseudolikelihood {it:is} the maximum likelihood estimate - {cmd:nwergm}
 detects this automatically and reports {opt method(mple)} results directly (labeled as such,
@@ -192,7 +192,7 @@ The effect library has grown considerably past its original small first-release 
 covariates ({opt edgecov()}, {opt hamming()}); the geometrically weighted family
 ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()})
 with FIXED decay only (curved/free-decay estimation is a roadmap item); fixed shared-partner
-counts ({opt esp()}/{opt dsp()}); the degree-sequence family ({opt degree()}/{opt odegree()}/
+counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}/{opt odegree()}/
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
 {opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
@@ -231,7 +231,7 @@ entire purpose). As of this release the native-eligible set is: {opt edges}, {op
 every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodecov()},
 {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
 {opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); the
-entire degree-sequence family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
+entire degree-distribution family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
 {opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
 {opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the entire shared-partner family, both
 undirected and directed ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/
