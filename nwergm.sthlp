@@ -252,7 +252,10 @@ simulation.
 {help nwergm_estat:estat gof} reports a basic simulation-based goodness-of-fit comparison
 (mean degree, average geodesic distance, complete-triad count) between the fitted model's own
 simulated networks and the network {cmd:nwergm} was fitted on - available after either
-estimation method. See {help nwergm_estat} for full details.
+estimation method. Both {cmd:estat mcmcdiag} and {cmd:estat gof} accept a {opt plot} option,
+producing trace/density and degree/geodesic-distribution diagnostic plots respectively -
+Statnet's own {cmd:mcmc.diagnostics()}/{cmd:plot(gof())} analogues. See {help nwergm_estat} for
+full details.
 
 {title:Stored results}
 
