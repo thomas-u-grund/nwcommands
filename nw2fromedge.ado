@@ -57,7 +57,7 @@ inside sets there are no connections.
 An edgelist is a set of two (or three in the case of a valued network) variables representing
 relations. Nodes are identified by entries in the cells.  For example, the data
 
-	{com}. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/institutions.dta", clear
+	{com}. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/institutions.dta", clear
 	{com}. list _all
 	{txt}
 		{c TLC}{hline 10}{c -}{hline 11}{c -}{hline 7}{c TRC}
