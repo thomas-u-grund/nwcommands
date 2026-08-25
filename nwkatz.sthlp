@@ -64,8 +64,7 @@ shortest one. This command's existing formula and stored results are unchanged f
 (preserving backwards compatibility for anyone already relying on this specific distance-decay
 measure) - this note exists so the choice of formula, and its relationship to the cited reference,
 is explicit rather than implied by the command name and citation alone. A genuine walk-counting
-Katz centrality implementation remains a documented gap (see {browse "docs/ROADMAP.md":the project
-roadmap}).
+Katz centrality implementation remains a documented gap on the project roadmap.
 
 
 {title:Supported network types}
