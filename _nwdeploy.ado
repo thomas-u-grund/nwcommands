@@ -211,23 +211,32 @@ program _nwdeploy
 	file close _pkg_ext1
 	file close deploy_ext1
 	
-	file open deploy_dlg using nwcommands-dlg.pkg, replace write
-	file write deploy_dlg "v 3" _n
-	file write deploy_dlg "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
-	file write deploy_dlg "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_dlg "d email: thomas.u.grund@gmail.com" _n
-	local d = lower(subinstr(c(current_date)," ","",.))
-	file write deploy_dlg "d Distribution-Date: `d'" _n
-	
+	// BUGFIX: same "package file too long" limit as nwcommands-ado/-hlp
+	// above, just discovered later - the dialog rebuild grew the .dlg
+	// count from ~60 to 122+, pushing a single nwcommands-dlg.pkg past
+	// Stata's per-package line limit (confirmed empirically: a real
+	// `net install "nwcommands-dlg", all' now fails with "package file
+	// too long" / r(640), which a genuine colleague-install test caught
+	// - see nwinstall.ado's own dialog-install loop, updated to match).
+	// Chunked via the same nwdeploy_writepkgchunks helper as ado/hlp,
+	// via a temp manifest file since dlg/idlg have no _pkg_dlg.txt of
+	// their own (built by globbing, same as the old single-file code
+	// this replaces did).
+	tempfile _pkg_dlg_tmp
+	tempname dlgmanifest
+	file open `dlgmanifest' using "`_pkg_dlg_tmp'", replace write
 	local dlgfiles : dir "`c(pwd)'" files "*.dlg"
 	foreach file in `dlgfiles' {
-		file write deploy_dlg "f `file'" _n
+		file write `dlgmanifest' "f `file'" _n
 	}
 	local idlgfiles : dir "`c(pwd)'" files "*.idlg"
 	foreach file in `idlgfiles' {
-		file write deploy_dlg "f `file'" _n
+		file write `dlgmanifest' "f `file'" _n
 	}
-	file close deploy_dlg
+	file close `dlgmanifest'
+	nwdeploy_writepkgchunks, manifest(`"`_pkg_dlg_tmp'"') base(nwcommands-dlg) desc("nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes") email(thomas.u.grund@gmail.com) date(`d')
+	local ndlgchunks = r(chunks)
+	capture erase nwcommands-dlg.pkg
 	file close `versionlog'
 
 	// stata.toc drives `net from'/`net install' discovery - generated
@@ -246,7 +255,9 @@ program _nwdeploy
 		file write `toc' _n "p nwcommands-hlp`i'" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part `i' of `nhlpchunks')" _n
 	}
 	file write `toc' _n "p nwcommands-ext" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
-	file write `toc' _n "p nwcommands-dlg" _n "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
+	forvalues i = 1/`ndlgchunks' {
+		file write `toc' _n "p nwcommands-dlg`i'" _n "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part `i' of `ndlgchunks')" _n
+	}
 	file close `toc'
 end
 
