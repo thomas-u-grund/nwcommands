@@ -1,0 +1,178 @@
+"from","to","weight"
+"Input","phytoplankton",522650
+"Input","benthic diatoms",77803
+"Input","dissolved organic carbon",103188
+"Input","suspended particulate org",185150.4
+"zooplankton","Output",18720.24
+"mya arenaria","Output",533.105
+"oysters","Output",3133.66
+"blue crab","Output",1325.157
+"fish larvae","Output",0.9376155
+"alewife & blue herring","Output",4.063023
+"bay anchovy","Output",96.18159
+"menhaden","Output",7.683911
+"shad","Output",0.9376006
+"croaker","Output",1.334343
+"hogchoker","Output",12.21177
+"spot","Output",55.79011
+"white perch","Output",19.47793
+"catfish","Output",28.52167
+"bluefish","Output",2.362459
+"weakfish","Output",8.336424
+"summer flounder","Output",4.237582
+"striped bass","Output",4.616097
+"phytoplankton","Respiration",239556.2
+"bacteria in suspended poc","Respiration",15419.45
+"bacteria in sediment poc","Respiration",277306.4
+"benthic diatoms","Respiration",27832
+"free bacteria","Respiration",84148.43
+"heterotrophic microflagel","Respiration",45766.63
+"ciliates","Respiration",37288.1
+"zooplankton","Respiration",40631.3
+"ctenophores","Respiration",6698.692
+"sea nettle","Respiration",1119.406
+"other suspension feeders","Respiration",3455.933
+"mya arenaria","Respiration",1930.28
+"oysters","Respiration",3243.631
+"other polychaetes","Respiration",19939.52
+"nereis","Respiration",1400.185
+"macoma spp.","Respiration",24477.17
+"meiofauna","Respiration",21384.03
+"crustacean deposit feeder","Respiration",7624.739
+"blue crab","Respiration",4297.852
+"fish larvae","Respiration",0.6251083
+"alewife & blue herring","Respiration",8.751126
+"bay anchovy","Respiration",761.7415
+"menhaden","Respiration",226.883
+"shad","Respiration",1.66696
+"croaker","Respiration",2.585299
+"hogchoker","Respiration",26.81465
+"spot","Respiration",129.3927
+"white perch","Respiration",41.00617
+"catfish","Respiration",58.79467
+"bluefish","Respiration",4.906655
+"weakfish","Respiration",31.57422
+"summer flounder","Respiration",8.475175
+"striped bass","Respiration",10.15542
+"phytoplankton","ciliates",33671.45
+"phytoplankton","zooplankton",39440.67
+"phytoplankton","other suspension feeders",4458.031
+"phytoplankton","mya arenaria",2415.342
+"phytoplankton","oysters",4687.355
+"phytoplankton","bay anchovy",294.0877
+"phytoplankton","menhaden",22.08312
+"phytoplankton","dissolved organic carbon",78834.63
+"phytoplankton","suspended particulate org",119270.1
+"bacteria in suspended poc","ciliates",1443.316
+"bacteria in suspended poc","zooplankton",1131.006
+"bacteria in suspended poc","ctenophores",124.1849
+"bacteria in suspended poc","other suspension feeders",158.464
+"bacteria in suspended poc","mya arenaria",71.02142
+"bacteria in suspended poc","oysters",109.919
+"bacteria in suspended poc","bay anchovy",13.34218
+"bacteria in suspended poc","menhaden",5.131606
+"bacteria in suspended poc","suspended particulate org",4179.18
+"bacteria in suspended poc","sediment particulate orga",9915.289
+"bacteria in sediment poc","other polychaetes",134896.3
+"bacteria in sediment poc","nereis",21021.1
+"bacteria in sediment poc","macoma spp.",48089.09
+"bacteria in sediment poc","meiofauna",30162.74
+"bacteria in sediment poc","crustacean deposit feeder",11805.24
+"bacteria in sediment poc","sediment particulate orga",100313.7
+"benthic diatoms","meiofauna",18086
+"benthic diatoms","sediment particulate orga",31885
+"free bacteria","heterotrophic microflagel",91011.12
+"free bacteria","suspended particulate org",6862.686
+"heterotrophic microflagel","ciliates",32454.66
+"heterotrophic microflagel","suspended particulate org",12789.83
+"ciliates","zooplankton",7850.837
+"ciliates","ctenophores",3571.585
+"ciliates","other suspension feeders",301.3558
+"ciliates","mya arenaria",162.1086
+"ciliates","oysters",315.904
+"ciliates","suspended particulate org",40009.65
+"zooplankton","ctenophores",7165.512
+"zooplankton","sea nettle",1207.448
+"zooplankton","fish larvae",5.104828
+"zooplankton","alewife & blue herring",26.7743
+"zooplankton","bay anchovy",1598.124
+"zooplankton","menhaden",258.5752
+"zooplankton","shad",5.417368
+"zooplankton","suspended particulate org",22905.05
+"ctenophores","sea nettle",572.5732
+"ctenophores","suspended particulate org",6386.473
+"ctenophores","sediment particulate orga",608.8777
+"sea nettle","suspended particulate org",465.0319
+"sea nettle","sediment particulate orga",195.5839
+"other suspension feeders","blue crab",556.1747
+"other suspension feeders","sediment particulate orga",3570.683
+"mya arenaria","blue crab",225.1819
+"mya arenaria","hogchoker",9.426217
+"mya arenaria","sediment particulate orga",1407.648
+"oysters","sediment particulate orga",1594.061
+"other polychaetes","croaker",6.004372
+"other polychaetes","hogchoker",49.20249
+"other polychaetes","spot",261.8573
+"other polychaetes","white perch",63.37948
+"other polychaetes","catfish",127.4261
+"other polychaetes","sediment particulate orga",114449.2
+"nereis","blue crab",293.5468
+"nereis","croaker",1.751274
+"nereis","hogchoker",11.67516
+"nereis","spot",80.89216
+"nereis","white perch",49.20245
+"nereis","catfish",18.84704
+"nereis","sediment particulate orga",19165.02
+"macoma spp.","blue crab",3784.45
+"macoma spp.","spot",45.86706
+"macoma spp.","sediment particulate orga",19782.05
+"meiofauna","sediment particulate orga",26864.76
+"crustacean deposit feeder","blue crab",806.4227
+"crustacean deposit feeder","croaker",0.2501829
+"crustacean deposit feeder","hogchoker",11.6752
+"crustacean deposit feeder","spot",1.667886
+"crustacean deposit feeder","catfish",35.94294
+"crustacean deposit feeder","summer flounder",0.7505485
+"crustacean deposit feeder","sediment particulate orga",3323.846
+"blue crab","blue crab",249.7562
+"blue crab","striped bass",2.045784
+"blue crab","sediment particulate orga",1458.474
+"fish larvae","sediment particulate orga",3.542103
+"alewife & blue herring","striped bass",0.2083602
+"alewife & blue herring","sediment particulate orga",13.75177
+"bay anchovy","spot",15.10978
+"bay anchovy","white perch",15.21399
+"bay anchovy","bluefish",2.813546
+"bay anchovy","weakfish",95.24374
+"bay anchovy","summer flounder",12.81727
+"bay anchovy","striped bass",17.92333
+"bay anchovy","sediment particulate orga",1204.615
+"menhaden","bluefish",2.699752
+"menhaden","summer flounder",8.306931
+"menhaden","striped bass",11.00668
+"menhaden","sediment particulate orga",137.9989
+"shad","sediment particulate orga",2.812802
+"croaker","sediment particulate orga",4.086427
+"hogchoker","sediment particulate orga",42.95469
+"spot","bluefish",8.570167
+"spot","sediment particulate orga",211.6495
+"white perch","sediment particulate orga",67.31846
+"catfish","sediment particulate orga",94.90544
+"bluefish","sediment particulate orga",6.814786
+"weakfish","summer flounder",4.480828
+"weakfish","sediment particulate orga",50.85218
+"summer flounder","sediment particulate orga",13.64295
+"striped bass","sediment particulate orga",16.41279
+"dissolved organic carbon","free bacteria",182022.2
+"suspended particulate org","bacteria in suspended poc",32570.3
+"suspended particulate org","ciliates",21930.12
+"suspended particulate org","zooplankton",44101.02
+"suspended particulate org","ctenophores",3405.334
+"suspended particulate org","other suspension feeders",2664.946
+"suspended particulate org","mya arenaria",1457.171
+"suspended particulate org","oysters",2858.202
+"suspended particulate org","bay anchovy",316.107
+"suspended particulate org","menhaden",108.7901
+"suspended particulate org","sediment particulate orga",288606.4
+"sediment particulate orga","bacteria in sediment poc",623594.4
+"sediment particulate orga","blue crab",1417.696

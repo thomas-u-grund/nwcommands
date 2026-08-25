@@ -6,6 +6,8 @@
 	that "GWESP is where the computational architecture really gets
 	tested."
 */
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_core.do"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_ergm.do"
 run "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/nwergm.ado"

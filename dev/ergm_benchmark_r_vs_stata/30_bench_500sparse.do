@@ -5,6 +5,8 @@
 	since it exercises common_neighbors()/change_gwesp() (shared-
 	partner machinery) at real scale, not just edges/mutual.
 */
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_core.do"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_ergm.do"
 run "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/nwergm.ado"

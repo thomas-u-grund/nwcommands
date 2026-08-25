@@ -1,0 +1,51 @@
+"IATA","Name","City","Lat","Lon","degree"
+"ATL","Hartsfield Jackson Atlanta International Airport","Atlanta",33.6367,-84.428101,1496
+"ORD","Chicago O'Hare International Airport","Chicago",41.9786,-87.9048,752
+"DFW","Dallas Fort Worth International Airport","Dallas-Fort Worth",32.896801,-97.038002,657
+"DEN","Denver International Airport","Denver",39.861698150635,-104.672996521,653
+"LAX","Los Angeles International Airport","Los Angeles",33.94250107,-118.4079971,606
+"CLT","Charlotte Douglas International Airport","Charlotte",35.2140007019043,-80.9430999755859,477
+"PHX","Phoenix Sky Harbor International Airport","Phoenix",33.4342994689941,-112.012001037598,441
+"PHL","Philadelphia International Airport","Philadelphia",39.871898651123,-75.241096496582,412
+"LAS","McCarran International Airport","Las Vegas",36.08010101,-115.1520004,404
+"MSP","Minneapolis-St Paul International/Wold-Chamberlain Airport","Minneapolis",44.882,-93.221802,380
+"DCA","Ronald Reagan Washington National Airport","Washington",38.8521,-77.037697,364
+"MCO","Orlando International Airport","Orlando",28.4293994903564,-81.3089981079102,343
+"DTW","Detroit Metropolitan Wayne County Airport","Detroit",42.2123985290527,-83.353401184082,340
+"JFK","John F Kennedy International Airport","New York",40.63980103,-73.77890015,327
+"SEA","Seattle Tacoma International Airport","Seattle",47.449001,-122.308998,310
+"SFO","San Francisco International Airport","San Francisco",37.6189994812012,-122.375,298
+"BOS","General Edward Lawrence Logan International Airport","Boston",42.36429977,-71.00520325,289
+"IAH","George Bush Intercontinental Houston Airport","Houston",29.9843997955322,-95.3414001464844,287
+"LGA","La Guardia Airport","New York",40.77719879,-73.87259674,282
+"BWI","Baltimore/Washington International Thurgood Marshall Airport","Baltimore",39.1754,-76.668297,261
+"SLC","Salt Lake City International Airport","Salt Lake City",40.7883987426758,-111.977996826172,256
+"MDW","Chicago Midway International Airport","Chicago",41.785999,-87.752403,255
+"TPA","Tampa International Airport","Tampa",27.9755001068115,-82.533203125,253
+"MSY","Louis Armstrong New Orleans International Airport","New Orleans",29.9934005737305,-90.2580032348633,244
+"MIA","Miami International Airport","Miami",25.7931995391846,-80.2906036376953,242
+"FLL","Fort Lauderdale Hollywood International Airport","Fort Lauderdale",26.072599,-80.152702,226
+"EWR","Newark Liberty International Airport","Newark",40.6925010681152,-74.168701171875,225
+"IAD","Washington Dulles International Airport","Washington",38.94449997,-77.45580292,214
+"PDX","Portland International Airport","Portland",45.58869934,-122.5979996,212
+"STL","St Louis Lambert International Airport","St. Louis",38.748697,-90.370003,209
+"SAN","San Diego International Airport","San Diego",32.7336006165,-117.190002441,207
+"BNA","Nashville International Airport","Nashville",36.1245002746582,-86.6781997680664,162
+"MCI","Kansas City International Airport","Kansas City",39.2976,-94.713898,155
+"AUS","Austin Bergstrom International Airport","Austin",30.1944999694824,-97.6698989868164,153
+"CLE","Cleveland Hopkins International Airport","Cleveland",41.4117012024,-81.8498001099,151
+"RDU","Raleigh Durham International Airport","Raleigh-durham",35.8776016235352,-78.7874984741211,149
+"HOU","William P Hobby Airport","Houston",29.64539909,-95.27890015,147
+"CVG","Cincinnati Northern Kentucky International Airport","Cincinnati",39.0488014221,-84.6678009033,135
+"PIT","Pittsburgh International Airport","Pittsburgh",40.49150085,-80.23290253,134
+"IND","Indianapolis International Airport","Indianapolis",39.7173,-86.294403,130
+"HNL","Daniel K Inouye International Airport","Honolulu",21.32062,-157.924228,123
+"CMH","John Glenn Columbus International Airport","Columbus",39.998001,-82.891899,122
+"MKE","General Mitchell International Airport","Milwaukee",42.9472007751465,-87.896598815918,121
+"RSW","Southwest Florida International Airport","Fort Myers",26.5361995697021,-81.7552032470703,120
+"ANC","Ted Stevens Anchorage International Airport","Anchorage",61.1744003295898,-149.996002197266,118
+"SAT","San Antonio International Airport","San Antonio",29.5337009429932,-98.4698028564453,113
+"MEM","Memphis International Airport","Memphis",35.0424003601074,-89.9766998291016,112
+"OAK","Metropolitan Oakland International Airport","Oakland",37.721298,-122.221001,107
+"SJC","Norman Y. Mineta San Jose International Airport","San Jose",37.362598,-121.929001,104
+"SMF","Sacramento International Airport","Sacramento",38.6954002380371,-121.591003417969,102
