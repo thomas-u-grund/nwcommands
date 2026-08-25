@@ -1,0 +1,19 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwclear")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+POSITION 10 10 400 120
+
+DIALOG main, title("nwclear - Clear all networks and variables from memory")
+BEGIN
+  TEXT tx_note 20 20 360 40, label("Clear all networks and variables from memory. Takes no arguments - click OK/Submit to run.")
+END
+
+PROGRAM command
+BEGIN
+	put "nwclear"
+	stata
+END

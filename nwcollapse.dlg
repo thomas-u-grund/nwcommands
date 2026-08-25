@@ -1,0 +1,46 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwcollapse")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 170
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwcollapse - Collapse a network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_ed_generate 20 54 260 ., label("Generate")
+  EDIT ed_generate 290 54 190 ., nomem option(generate)
+  TEXT tx_vr_by 20 82 260 ., label("By")
+  VARNAME vr_by 290 82 190 ., nomem option(by)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwcollapse"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwcollapse " main.cb_net
+	beginoptions
+		optionarg main.ed_generate
+		optionarg main.vr_by
+	endoptions
+	stata
+END

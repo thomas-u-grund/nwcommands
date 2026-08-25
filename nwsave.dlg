@@ -1,42 +1,46 @@
 VERSION 10
-
 INCLUDE _std_small
 SYNCHRONOUS_ONLY
 HELP hlp1, view("help nwsave")
-OK ok1,	label("OK")
-CANCEL	can1, label("Cancel")
-SUBMIT	sub1, label("Submit")
-RESET	res1
-POSITION 10 10 400 200
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 170
 
 SCRIPT PREINIT
 BEGIN
 	program initialize
 END
 
-DIALOG main, title("nwsave - Save Network Data")
+DIALOG main, title("nwsave - Save network data in file")
 BEGIN
-  FILE  fi_save	50	50	280	.,	save label("Save as")
-  RADIO rb_matrix 50 100 200 ., label("Save networks as matrix") first
-  RADIO rb_edge 50 80 200 ., label("Save networks as edgelist") last
-  CHECKBOX cx_replace 50 130 200 ., label("Overwrite exiting file") option(replace) nomem
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_cx_old 20 54 260 ., label("save in a Stata-version-backward-compatible format (uses  internally instead of ")
+  CHECKBOX cx_old 290 54 190 ., label("old") option(old)
+  TEXT tx_cx_replace 20 82 260 ., label("overwrite existing dataset")
+  CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
 END
 
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwsave"
+	stata hidden immediate
+END
 
 PROGRAM command
 BEGIN
-	require main.fi_save
-	put "nwsave " main.fi_save
+	put "nwsave " main.cb_net
 	beginoptions
-		if main.rb_matrix {
-			put " format(matrix)"
-		}
-		if main.rb_edge {
-			put " format(edgelist)"
-		}
+		option main.cx_old
 		option main.cx_replace
 	endoptions
 	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

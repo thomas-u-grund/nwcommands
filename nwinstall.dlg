@@ -1,0 +1,67 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwinstall")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 1060 248
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwinstall - Install Stata menu/dialogs")
+BEGIN
+  GROUPBOX gb_opt 10 10 1030 188, label("Options")
+  TEXT tx_cx_update 20 20 260 ., label("refresh the installed menu (an internal, self-recursive flag: re-invokes )")
+  CHECKBOX cx_update 290 20 190 ., label("update") option(update)
+  TEXT tx_ed_menu 20 48 260 ., label("install in this menu; default = 'stUser'")
+  EDIT ed_menu 290 48 190 ., nomem option(menu)
+  TEXT tx_cx_usermenu 20 76 260 ., label("update menu items for dialog-boxes")
+  CHECKBOX cx_usermenu 290 76 190 ., label("usermenu") option(usermenu)
+  TEXT tx_cx_permanently 20 104 260 ., label("install the menu/dialogs permanently on your Stata")
+  CHECKBOX cx_permanently 290 104 190 ., label("permanently") option(permanently)
+  TEXT tx_cx_dialog 20 132 260 ., label("download the dialog boxes")
+  CHECKBOX cx_dialog 290 132 190 ., label("dialog") option(dialog)
+  TEXT tx_cx_remove 20 160 260 ., label("remove the 'Network Analysis' menu from your Stata")
+  CHECKBOX cx_remove 290 160 190 ., label("remove") option(remove)
+  TEXT tx_cx_downloadoff 530 20 260 ., label("rebuild the menu from what is already installed, without downloading anything (u")
+  CHECKBOX cx_downloadoff 800 20 190 ., label("downloadoff") option(downloadoff)
+  TEXT tx_cx_help 530 48 260 ., label("download the help files")
+  CHECKBOX cx_help 800 48 190 ., label("help") option(help)
+  TEXT tx_cx_ado 530 76 260 ., label("download the core command (.ado) files")
+  CHECKBOX cx_ado 800 76 190 ., label("ado") option(ado)
+  TEXT tx_cx_ext 530 104 260 ., label("download the extension files")
+  CHECKBOX cx_ext 800 104 190 ., label("ext") option(ext)
+  TEXT tx_cx_all 530 132 260 ., label("download the help files, dialog boxes, extensions and install them permanently")
+  CHECKBOX cx_all 800 132 190 ., label("all") option(all)
+  TEXT tx_ed_path 530 160 260 ., label("directory where profile.do is installed; default: sysdir_stata")
+  EDIT ed_path 800 160 190 ., nomem option(path)
+END
+
+PROGRAM initialize
+BEGIN
+END
+
+PROGRAM command
+BEGIN
+	put "nwinstall"
+	beginoptions
+		option main.cx_update
+		optionarg main.ed_menu
+		option main.cx_usermenu
+		option main.cx_permanently
+		option main.cx_dialog
+		option main.cx_remove
+		option main.cx_downloadoff
+		option main.cx_help
+		option main.cx_ado
+		option main.cx_ext
+		option main.cx_all
+		optionarg main.ed_path
+	endoptions
+	stata
+END

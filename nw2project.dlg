@@ -1,0 +1,56 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nw2project")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 254
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nw2project - One-mode projection of a two-mode network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 160, label("Options")
+  TEXT tx_sp_project 20 54 260 ., label("Mode/level to collapse to")
+  SPINNER sp_project 290 54 70 ., default(0) max(999999) min(-999999) nomem option(project)
+  TEXT tx_ed_name 20 82 260 ., label("Name of the new one-mode network; default =")
+  EDIT ed_name 290 82 190 ., nomem option(name)
+  TEXT tx_ed_stat 20 110 260 ., label("How to combine tie values (or, for the last 4, how to score shared-neighbor stru")
+  EDIT ed_stat 290 110 190 ., nomem option(stat)
+  TEXT tx_cx_xvars 20 138 260 ., label("Generate Stata variables for the new network")
+  CHECKBOX cx_xvars 290 138 190 ., label("xvars") option(xvars)
+  TEXT tx_cx_replace 20 166 260 ., label("Replace an existing network of the same name")
+  CHECKBOX cx_replace 290 166 190 ., label("replace") option(replace)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nw2project"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	require main.sp_project
+	put "nw2project " main.cb_net
+	beginoptions
+		optionarg main.sp_project
+		optionarg main.ed_name
+		optionarg main.ed_stat
+		option main.cx_xvars
+		option main.cx_replace
+	endoptions
+	stata
+END
