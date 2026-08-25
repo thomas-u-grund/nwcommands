@@ -104,4 +104,5 @@ evidence-based summary of what to expect at various network sizes.
 
 ## License
 
-All rights reserved — see `LICENSE`. Contact thomas.u.grund@gmail.com to license this software.
+Free to install and use, including for commercial research — see `LICENSE`. Redistribution,
+modification, and commercial licensing require permission; contact thomas.u.grund@gmail.com.
