@@ -338,7 +338,7 @@ program define nwergm_estat_gof, rclass
 	}
 	di as txt "{hline 18}{c BT}{hline 14}{hline 14}"
 	di
-	di as txt "Note: this is a BASIC goodness-of-fit check (Part XX) - a large, systematic gap between the Observed and Simulated columns on any row is evidence against the fitted model; rough agreement is evidence for it, not proof. Only " `__gof_path_ok' " of " `nsim' " draws contributed to the geodesic average (excluded draws were disconnected) and " `__gof_triad_ok' " of " `nsim' " to the triad-census average (excluded draws hit a known, unrelated nwtriads.ado limitation on zero-tie networks - see docs/CERTIFICATION.md)."
+	di as txt "Note: this is a BASIC goodness-of-fit check - a large, systematic gap between the Observed and Simulated columns on any row is evidence against the fitted model; rough agreement is evidence for it, not proof. Only " `__gof_path_ok' " of " `nsim' " draws contributed to the geodesic average (excluded draws were disconnected) and " `__gof_triad_ok' " of " `nsim' " to the triad-census average (excluded draws hit a known, unrelated nwtriads.ado limitation on zero-tie networks)."
 
 	return scalar sim_meandeg = `sim_meandeg'
 	return scalar sim_avgpath = `sim_avgpath'
