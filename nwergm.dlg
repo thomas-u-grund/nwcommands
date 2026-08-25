@@ -51,17 +51,17 @@ BEGIN
   CHECKBOX cx_receiver 380 154 300 ., label("receiver: One coefficient per node (except a base node) equal to that node's own") option(receiver)
   TEXT tx_hdr_1_180 380 180 340 ., label("-- Geometrically weighted --")
   CHECKBOX cx_gwesp 380 202 170 ., label("gwesp")
-  EDIT ed_gwesp 555 202 155 ., nomem
+  EDIT ed_gwesp 555 202 155 ., default("0.5") numonly nomem
   CHECKBOX cx_gwdsp 380 228 170 ., label("gwdsp")
-  EDIT ed_gwdsp 555 228 155 ., nomem
+  EDIT ed_gwdsp 555 228 155 ., default("0.5") numonly nomem
   CHECKBOX cx_gwnsp 380 254 170 ., label("gwnsp")
-  EDIT ed_gwnsp 555 254 155 ., nomem
+  EDIT ed_gwnsp 555 254 155 ., default("0.5") numonly nomem
   CHECKBOX cx_gwdegree 380 280 170 ., label("gwdegree")
-  EDIT ed_gwdegree 555 280 155 ., nomem
+  EDIT ed_gwdegree 555 280 155 ., default("0.5") numonly nomem
   CHECKBOX cx_gwodegree 380 306 170 ., label("gwodegree")
-  EDIT ed_gwodegree 555 306 155 ., nomem
+  EDIT ed_gwodegree 555 306 155 ., default("0.5") numonly nomem
   CHECKBOX cx_gwidegree 380 332 170 ., label("gwidegree")
-  EDIT ed_gwidegree 555 332 155 ., nomem
+  EDIT ed_gwidegree 555 332 155 ., default("0.5") numonly nomem
   TEXT tx_hdr_1_358 380 358 340 ., label("-- Fixed shared-partner counts --")
   CHECKBOX cx_esp 380 380 170 ., label("esp")
   EDIT ed_esp 555 380 155 ., nomem
@@ -142,9 +142,9 @@ END
 
 PROGRAM command
 BEGIN
-	require main.cx_edges
-	put "nwergm " main.cb_net ", edges"
+	put "nwergm " main.cb_net
 	beginoptions
+		option main.cx_edges
 		option main.cx_mutual
 		if main.cx_nodematch {
 			require main.ed_nodematch
