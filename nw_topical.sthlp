@@ -277,6 +277,7 @@
 {p2col:{bf:{help _nwdeploy }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwdialog_clusters }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
