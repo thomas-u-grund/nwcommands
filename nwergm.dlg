@@ -147,102 +147,134 @@ BEGIN
 	beginoptions
 		option main.cx_mutual
 		if main.cx_nodematch {
+			require main.ed_nodematch
 			put " nodematch(" main.ed_nodematch ")"
 		}
 		if main.cx_nodematchdiff {
+			require main.ed_nodematchdiff
 			put " nodematchdiff(" main.ed_nodematchdiff ")"
 		}
 		if main.cx_nodecov {
+			require main.ed_nodecov
 			put " nodecov(" main.ed_nodecov ")"
 		}
 		if main.cx_nodeicov {
+			require main.ed_nodeicov
 			put " nodeicov(" main.ed_nodeicov ")"
 		}
 		if main.cx_nodeocov {
+			require main.ed_nodeocov
 			put " nodeocov(" main.ed_nodeocov ")"
 		}
 		if main.cx_edgecov {
+			require main.ed_edgecov
 			put " edgecov(" main.ed_edgecov ")"
 		}
 		if main.cx_absdist {
+			require main.ed_absdist
 			put " absdist(" main.ed_absdist ")"
 		}
 		if main.cx_hamming {
+			require main.ed_hamming
 			put " hamming(" main.ed_hamming ")"
 		}
 		if main.cx_nodefactor {
+			require main.ed_nodefactor
 			put " nodefactor(" main.ed_nodefactor ")"
 		}
 		if main.cx_nodeofactor {
+			require main.ed_nodeofactor
 			put " nodeofactor(" main.ed_nodeofactor ")"
 		}
 		if main.cx_nodeifactor {
+			require main.ed_nodeifactor
 			put " nodeifactor(" main.ed_nodeifactor ")"
 		}
 		if main.cx_nodemix {
+			require main.ed_nodemix
 			put " nodemix(" main.ed_nodemix ")"
 		}
 		option main.cx_sender
 		option main.cx_receiver
 		if main.cx_gwesp {
+			require main.ed_gwesp
 			put " gwesp(" main.ed_gwesp ")"
 		}
 		if main.cx_gwdsp {
+			require main.ed_gwdsp
 			put " gwdsp(" main.ed_gwdsp ")"
 		}
 		if main.cx_gwnsp {
+			require main.ed_gwnsp
 			put " gwnsp(" main.ed_gwnsp ")"
 		}
 		if main.cx_gwdegree {
+			require main.ed_gwdegree
 			put " gwdegree(" main.ed_gwdegree ")"
 		}
 		if main.cx_gwodegree {
+			require main.ed_gwodegree
 			put " gwodegree(" main.ed_gwodegree ")"
 		}
 		if main.cx_gwidegree {
+			require main.ed_gwidegree
 			put " gwidegree(" main.ed_gwidegree ")"
 		}
 		if main.cx_esp {
+			require main.ed_esp
 			put " esp(" main.ed_esp ")"
 		}
 		if main.cx_dsp {
+			require main.ed_dsp
 			put " dsp(" main.ed_dsp ")"
 		}
 		if main.cx_degree {
+			require main.ed_degree
 			put " degree(" main.ed_degree ")"
 		}
 		if main.cx_odegree {
+			require main.ed_odegree
 			put " odegree(" main.ed_odegree ")"
 		}
 		if main.cx_idegree {
+			require main.ed_idegree
 			put " idegree(" main.ed_idegree ")"
 		}
 		option main.cx_concurrent
 		if main.cx_kstar {
+			require main.ed_kstar
 			put " kstar(" main.ed_kstar ")"
 		}
 		if main.cx_ostar {
+			require main.ed_ostar
 			put " ostar(" main.ed_ostar ")"
 		}
 		if main.cx_istar {
+			require main.ed_istar
 			put " istar(" main.ed_istar ")"
 		}
 		if main.cx_degrange {
+			require main.ed_degrange
 			put " degrange(" main.ed_degrange ")"
 		}
 		if main.cx_degrangeto {
+			require main.ed_degrangeto
 			put " degrangeto(" main.ed_degrangeto ")"
 		}
 		if main.cx_odegrange {
+			require main.ed_odegrange
 			put " odegrange(" main.ed_odegrange ")"
 		}
 		if main.cx_odegrangeto {
+			require main.ed_odegrangeto
 			put " odegrangeto(" main.ed_odegrangeto ")"
 		}
 		if main.cx_idegrange {
+			require main.ed_idegrange
 			put " idegrange(" main.ed_idegrange ")"
 		}
 		if main.cx_idegrangeto {
+			require main.ed_idegrangeto
 			put " idegrangeto(" main.ed_idegrangeto ")"
 		}
 		option main.cx_triangle
