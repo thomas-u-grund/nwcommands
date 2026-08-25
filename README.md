@@ -25,6 +25,9 @@ data commands.
   library, and an optional native (C) MCMC backend for performance (see
   `docs/ERGM_ARCHITECTURE.md`).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
+- **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
+  "Network Analysis" menu after `nwinstall, permanently` (or `db <command>` directly) — for
+  users who prefer point-and-click to typing syntax.
 
 Every command works alongside ordinary Stata variables — a network can be loaded as Stata
 variables when you want to (`nwload`, or the `xvars` option many generators accept), but this
@@ -34,16 +37,21 @@ variable budget unless you ask it to.
 ## Installation
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
-. net install nwcommands-ado1
-. net install nwcommands-ado2
-. net install nwcommands-hlp1
-. net install nwcommands-hlp2
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net install nwcommands
+. nwinstall, all
 ```
 
-(`nwinstall, all` does this for you, plus the optional extension/dialog packages — see
-`help nwinstall`. Split into numbered parts because Stata's own `.pkg` format has a hard
-line-count limit this package's command/help-file count exceeds.)
+The first two lines install just `nwinstall` itself and the landing help topics; `nwinstall,
+all` then downloads everything else — every command, all help files, and all ~120 dialog
+boxes — and installs them permanently. Add `nwinstall, permanently` to also add a "Network
+Analysis" menu to Stata's own User menu, so every command is reachable through a dialog box,
+not just the command line. See `help nwinstall` for the full option reference.
+
+**No internet access or admin rights?** `nwinstall, localcopy` installs by copying files
+directly from an nwcommands folder you already have (zip, USB drive, shared network drive) into
+your own PERSONAL ado directory — no download, no admin rights needed. See the "Computers
+without internet access or admin rights" section of `help nwinstall`.
 
 Or, to track the repository directly (recommended during active development — `net install`
 snapshots a point in time, an `adopath` addition always reflects the latest commit):
@@ -63,9 +71,9 @@ out (one flat directory Stata's own `adopath` can point at directly) rather than
 index; `help nw_intro` covers general concepts, conventions, and — importantly — realistic
 guidance on what network sizes are actually feasible for which commands.
 
-**Active development branch**: `develop`. `master` is a stale, pre-modernization snapshot
-(the last commit on it predates most of what's described below) — point at `develop` until a
-release branch is cut.
+**Branches**: `master` is the current, tested release — install/point at this by default.
+`develop` is where active work happens and is merged into `master` once a batch of changes is
+regression-tested; day to day the two are kept in sync.
 
 ## Performance
 
