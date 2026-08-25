@@ -26,13 +26,16 @@ output left behind by {help nwergm}, not on a network directly; see that command
 
 {title:estat mcmcdiag}
 
+{p 8 17 2}
+{cmd:estat mcmcdiag} {opt [, PLOT NAME(string)]}
+
 {pstd}
-{cmd:estat mcmcdiag} reports basic diagnostics (Part XIX of the governing {cmd:nwergm} design
-brief) for the final MCMC simulation {cmd:nwergm} ran at its converged (or last-tried)
-coefficient vector: per-statistic mean, standard deviation, lag-1 autocorrelation, and an
-AR(1)-based effective sample size, plus the overall Metropolis-Hastings acceptance rate and
-{cmd:nwergm}'s own MCMLE convergence-test result. Available only after {opt method(mcmle)} -
-a pure MPLE fit involves no MCMC simulation at all, so there is nothing to diagnose.
+{cmd:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation {cmd:nwergm} ran
+at its converged (or last-tried) coefficient vector: per-statistic mean, standard deviation,
+lag-1 autocorrelation, and an AR(1)-based effective sample size, plus the overall
+Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE convergence-test result.
+Available only after {opt method(mcmle)} - a pure MPLE fit involves no MCMC simulation at all,
+so there is nothing to diagnose.
 
 {pstd}
 {bf:This command never claims a fit converged merely because estimation stopped.} A satisfied
@@ -40,17 +43,27 @@ convergence test is reported as exactly that - a necessary check that passed, no
 global convergence - and low ESS, low acceptance rate, or high autocorrelation are signs worth
 investigating even when {cmd:e(converged)} is 1.
 
+{pstd}
+{opt plot} additionally draws a trace plot and a kernel density plot for each model statistic
+in the final MCMC sample - the same pair of diagnostic plots R's {cmd:mcmc.diagnostics()}
+produces, combined here into a single figure (one row per statistic) via {help graph combine}.
+A trace plot that drifts or shows long runs at one level, rather than a stationary-looking
+"fuzzy caterpillar", indicates poor mixing even when the numeric diagnostics above look
+acceptable. {opt name()} sets the combined graph's name; default {cmd:mcmcdiag}.
+
 {title:estat gof}
 
+{p 8 17 2}
+{cmd:estat gof} {opt [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50) PLOT MAXDEG(integer 15) MAXDIST(integer 6) NAME(string)]}
+
 {pstd}
-{cmd:estat gof} {opt [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50)]}
-compares the fitted model's own simulated networks against the network {cmd:nwergm} was fitted
-on, on three dimensions computed via this package's own existing commands rather than
-duplicating their algorithms: mean degree (arithmetic), average geodesic distance
-({helpb nwgeodesic}), and the count of complete (3-edge) triads ({helpb nwtriads}). {opt nsim()}
-simulated networks are drawn by continuing the Markov chain from wherever {cmd:nwergm}'s own
-fit left it (for {opt method(mcmle)}) or from the observed network itself (for
-{opt method(mple)}, which never runs MCMC during estimation), recording one snapshot every
+{cmd:estat gof} compares the fitted model's own simulated networks against the network
+{cmd:nwergm} was fitted on, on three dimensions computed via this package's own existing
+commands rather than duplicating their algorithms: mean degree (arithmetic), average geodesic
+distance ({helpb nwgeodesic}), and the count of complete (3-edge) triads ({helpb nwtriads}).
+{opt nsim()} simulated networks are drawn by continuing the Markov chain from wherever
+{cmd:nwergm}'s own fit left it (for {opt method(mcmle)}) or from the observed network itself
+(for {opt method(mple)}, which never runs MCMC during estimation), recording one snapshot every
 {opt gofinterval()} steps.
 
 {pstd}
@@ -59,6 +72,20 @@ Simulated columns on any row is evidence against the fitted model; rough agreeme
 for it, not proof. A simulated network that happens to be disconnected or edgeless does not
 contribute to the geodesic/triad-census averages respectively (reported in the output) rather
 than being treated as an error.
+
+{pstd}
+{opt plot} additionally draws the full degree distribution and the full geodesic-distance
+distribution - not just their means - across the {opt nsim()} simulated draws, each as its own
+panel: a whisker (minimum-maximum), a box (interquartile range), and a median marker summarize
+the simulated draws at each value, with the observed network's own proportion overlaid as a
+connected line. This is the same comparison Statnet's {cmd:plot(gof())} draws (via R's
+{cmd:boxplot()} rather than these {cmd:graph twoway} primitives), restricted to the two
+dimensions {cmd:estat gof} already computes a mean for - it does not add an edgewise
+shared-partner panel, the third dimension Statnet's own default GOF plot includes.
+{opt maxdeg()} caps the degree axis (values above it are pooled into a single "{it:maxdeg}+"
+category); {opt maxdist()} similarly caps the geodesic-distance axis (unreached pairs, including
+disconnected ones, are pooled into their own "NR" - not reached - category, matching Statnet's
+own convention). {opt name()} sets the combined graph's name; default {cmd:gof}.
 
 {title:Stored results}
 
@@ -182,7 +209,21 @@ program define nwergm_estat_mcmcdiag, rclass
 				title("`nm': trace", size(small)) ///
 				xtitle("MCMC draw") ytitle("") ///
 				legend(off) nodraw
-			qui twoway kdensity mcmcv`k', ///
+			// ERGM sufficient statistics (edge counts, shared-partner
+			// counts, ...) are integer-valued and often take few
+			// distinct values over an MCMC run on a small network -
+			// `kdensity's own default (Silverman-rule) bandwidth is
+			// tuned for continuous data and visibly under-smooths
+			// this kind of sparse/discrete support, producing a
+			// spurious multi-modal "wiggle" that has nothing to do
+			// with the actual sampling distribution. Widened by a
+			// fixed multiplier on top of Stata's own default rather
+			// than a from-scratch bandwidth rule - good enough to
+			// suppress the artifact without materially oversmoothing
+			// a genuinely continuous statistic's own density.
+			qui kdensity mcmcv`k', nograph
+			local __bw = 3 * r(bwidth)
+			qui twoway kdensity mcmcv`k', bwidth(`__bw') ///
 				name(`de`k'', replace) ///
 				title("`nm': density", size(small)) ///
 				xtitle("`nm'") ytitle("") ///
@@ -383,11 +424,18 @@ program define nwergm_estat_gof, rclass
 	di as txt %-18s "Statistic" "{c |}" %13s "Observed" %13s "Simulated"
 	di as txt "{hline 18}{c +}{hline 14}{hline 14}"
 	di as txt %-18s "Mean degree" "{c |}" as res %13.4f `obs_meandeg' %13.4f `sim_meandeg'
+	// BUGFIX: the observed side's own -1 "disconnected" sentinel
+	// (nwgeodesic's own convention - see the `capture' guard around the
+	// SIMULATED side just above, which already treats it as "n/a") was
+	// never checked here, so a disconnected OBSERVED network (e.g. the
+	// Florentine marriage network's own well-known isolate) displayed a
+	// literal, confusing "-1.0000" instead of "n/a".
+	local __obs_avgpath_disp = cond(`obs_avgpath' == -1, "n/a", string(`obs_avgpath', "%13.4f"))
 	if `sim_avgpath' < . {
-		di as txt %-18s "Avg. geodesic" "{c |}" as res %13.4f `obs_avgpath' %13.4f `sim_avgpath'
+		di as txt %-18s "Avg. geodesic" "{c |}" as res %13s "`__obs_avgpath_disp'" %13.4f `sim_avgpath'
 	}
 	else {
-		di as txt %-18s "Avg. geodesic" "{c |}" as res %13.4f `obs_avgpath' %13s "n/a"
+		di as txt %-18s "Avg. geodesic" "{c |}" as res %13s "`__obs_avgpath_disp'" %13s "n/a"
 	}
 	if `sim_triad300' < . {
 		di as txt %-18s "Complete triads" "{c |}" as res %13.4f `obs_triad300' %13.4f `sim_triad300'
