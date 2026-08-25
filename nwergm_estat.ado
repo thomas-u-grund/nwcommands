@@ -105,7 +105,7 @@ end
 
 capture program drop nwergm_estat_mcmcdiag
 program define nwergm_estat_mcmcdiag, rclass
-	syntax [, *]
+	syntax [, PLOT NAME(string)]
 
 	if `"`e(cmd)'"' != "nwergm" {
 		di as err "last nwergm estimates not found"
@@ -156,12 +156,56 @@ program define nwergm_estat_mcmcdiag, rclass
 
 	return scalar acceptrate = e(mcmc_acceptrate)
 
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "mcmcdiag"
+		}
+		tempvar drawidx
+		tempname sampmat
+		matrix `sampmat' = e(mcmcsample)
+		preserve
+		qui drop _all
+		// e(b)'s own column names ("gwesp_.5" for a term like
+		// gwesp(.5)) are not legal Stata variable names (a period is
+		// not a legal variable-name character), so loaded as plain,
+		// sequentially named mcmcv1/mcmcv2/... variables instead; the
+		// real term name is used only in plot titles/axis labels,
+		// where it is just text, never a variable reference.
+		qui svmat double `sampmat', names(mcmcv)
+		qui gen `drawidx' = _n
+		local __combine_list ""
+		forvalues k = 1/`p' {
+			local nm : word `k' of `names'
+			tempname tr`k' de`k'
+			qui twoway line mcmcv`k' `drawidx', ///
+				name(`tr`k'', replace) ///
+				title("`nm': trace", size(small)) ///
+				xtitle("MCMC draw") ytitle("") ///
+				legend(off) nodraw
+			qui twoway kdensity mcmcv`k', ///
+				name(`de`k'', replace) ///
+				title("`nm': density", size(small)) ///
+				xtitle("`nm'") ytitle("") ///
+				legend(off) nodraw
+			local __combine_list `"`__combine_list' `tr`k'' `de`k''"'
+		}
+		graph combine `__combine_list', cols(2) ///
+			title("MCMC diagnostics: trace and density per statistic", size(medium)) ///
+			name(`name', replace)
+		foreach __g of local __combine_list {
+			capture graph drop `__g'
+		}
+		restore
+		di as txt "(plot saved as {bf:`name'}; each row is one model statistic's MCMC trace and density from the final simulation)"
+	}
+
 	mata: mata drop `samp'
 end
 
 capture program drop nwergm_estat_gof
 program define nwergm_estat_gof, rclass
-	syntax [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50)]
+	syntax [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50) ///
+		PLOT MAXDEG(integer 15) MAXDIST(integer 6) NAME(string)]
 
 	if `"`e(cmd)'"' != "nwergm" {
 		di as err "last nwergm estimates not found"
@@ -225,6 +269,12 @@ program define nwergm_estat_gof, rclass
 	mata: `__gof_obsmat' = `obsG'.to_dense()
 	mata: mata drop `obsG'
 
+	if "`plot'" != "" {
+		tempname obsdeg obsgeo
+		mata: `obsdeg' = ergm_gof_degdist(`__gof_obsmat', `maxdeg')
+		mata: `obsgeo' = ergm_gof_geodist(`__gof_obsmat', `maxdist')
+	}
+
 	preserve
 	qui drop _all
 	qui set obs `nodes'
@@ -274,12 +324,21 @@ program define nwergm_estat_gof, rclass
 	// "too many tokens" limit somewhere around 16 nodes; passing the
 	// matrix as a bare Mata variable name instead has no such limit.
 	tempname __gof_simmat
+	if "`plot'" != "" {
+		tempname simdegacc simgeoacc
+		mata: `simdegacc' = J(0, `maxdeg'+2, .)
+		mata: `simgeoacc' = J(0, `maxdist'+1, .)
+	}
 	preserve
 	forvalues __s = 1/`nsim' {
 		local __gof_thisburnin = cond(`__s'==1, `gofburnin', 0)
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`bmat'"), `__gof_thisburnin', `gofinterval', 1, &ergm_propose_tnt())
 		mata: st_numscalar("__gof_deg", 2*__nwergm_last_G.nties/__nwergm_last_G.n)
 		mata: `__gof_simmat' = __nwergm_last_G.to_dense()
+		if "`plot'" != "" {
+			mata: `simdegacc' = `simdegacc' \ ergm_gof_degdist(`__gof_simmat', `maxdeg')
+			mata: `simgeoacc' = `simgeoacc' \ ergm_gof_geodist(`__gof_simmat', `maxdist')
+		}
 
 		qui drop _all
 		qui set obs `nodes'
@@ -347,7 +406,83 @@ program define nwergm_estat_gof, rclass
 	return scalar obs_avgpath = `obs_avgpath'
 	return scalar obs_triad300 = `obs_triad300'
 
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "gof"
+		}
+		tempname degsumm geosumm
+		mata: `degsumm' = ergm_gof_summary5(`simdegacc')
+		mata: `geosumm' = ergm_gof_summary5(`simgeoacc')
+
+		tempname panel1 panel2
+		nwergm_estat_gofplot `obsdeg' `degsumm' "Degree" "`panel1'" 0 `=`maxdeg'+2' "`maxdeg'+"
+		nwergm_estat_gofplot `obsgeo' `geosumm' "Geodesic distance" "`panel2'" 1 `=`maxdist'+1' "NR"
+		graph combine `panel1' `panel2', cols(2) ///
+			title("Goodness of fit: observed vs. `nsim' simulated draws", size(medium)) ///
+			name(`name', replace)
+		capture graph drop `panel1'
+		capture graph drop `panel2'
+		di as txt "(plot saved as {bf:`name'}; whiskers/box/median summarize the `nsim' simulated draws at each value, the connected line is the observed network - the same comparison as the summary table above, shown across the full distribution rather than one summary number)"
+	}
+
+	// BUGFIX: a bare `capture' as the program's own LAST executed line
+	// leaves its (usually nonzero - the temp network is often already
+	// gone by this point) _rc standing as the ambient _rc once the
+	// program returns, even though every substantive step above
+	// succeeded - the same _rc-staleness class fixed elsewhere in this
+	// package (e.g. nwsync.ado, nw2project.ado). A harmless `local'
+	// assignment always succeeds, resetting _rc to 0 before returning.
 	capture nwdrop _nwergm_gofsim
+	local __nwergm_gof_donothing = 0
+end
+
+// Renders one GOF panel (degree or geodesic distance): whisker (min-max),
+// box (interquartile range), median marker, and the observed proportion
+// as a connected line, one x-value per integer startval..startval+ncat-2
+// plus a final overflow category ("cap+" for degree, "NR" - not reached -
+// for geodesic distance, ncat/startval differ between the two since
+// ergm_gof_degdist()/ergm_gof_geodist() use different category counts
+// for the same maxval, per their own header comments) - Statnet's own
+// plot.gof() draws the identical three-layer comparison, just via R's
+// boxplot() instead of these `twoway' primitives (Stata's `graph box'
+// cannot be overlaid with an arbitrary observed-value line the way
+// `twoway' elements can via `||').
+capture program drop nwergm_estat_gofplot
+program define nwergm_estat_gofplot
+	args obsvec summvec xlabel graphname startval ncat lastlabel
+
+	preserve
+	qui drop _all
+	// Direct st_addvar()/st_store() rather than svmat, whose default
+	// column-naming convention (matrix-name plain vs. matrix-name+index)
+	// differs depending on whether the source matrix has one column or
+	// several - exactly the ambiguity that broke the first attempt at
+	// estat mcmcdiag's own plot support. Explicit names throughout here
+	// avoids relying on that convention at all.
+	mata: st_addobs(`ncat' - st_nobs())
+	mata: st_store(., st_addvar("double", "observed"), `obsvec'')
+	mata: st_store(., st_addvar("double", "ymin"), `summvec'[.,1])
+	mata: st_store(., st_addvar("double", "yp25"), `summvec'[.,2])
+	mata: st_store(., st_addvar("double", "ymedian"), `summvec'[.,3])
+	mata: st_store(., st_addvar("double", "yp75"), `summvec'[.,4])
+	mata: st_store(., st_addvar("double", "ymax"), `summvec'[.,5])
+	qui gen xval = `startval' + _n - 1
+
+	local xlabopt ""
+	local __lastval = `startval' + `ncat' - 1
+	forvalues i = `startval'/`=`__lastval'-1' {
+		local xlabopt `"`xlabopt' `i' "`i'""'
+	}
+	local xlabopt `"`xlabopt' `__lastval' "`lastlabel'""'
+
+	twoway (rcap ymin ymax xval, lcolor(gs10)) ///
+		(rbar yp25 yp75 xval, barwidth(0.5) fcolor(gs14) lcolor(gs8)) ///
+		(scatter ymedian xval, mcolor(black) msymbol(diamond)) ///
+		(connected observed xval, lcolor(red) mcolor(red) msymbol(O)), ///
+		xlabel(`xlabopt', angle(45) labsize(vsmall)) ///
+		xtitle("`xlabel'") ytitle("Proportion") ///
+		title("`xlabel'", size(small)) legend(off) nodraw name(`graphname', replace)
+	restore
 end
 
 /*
@@ -383,5 +518,99 @@ void nwergm_estat_bridge_from_netobj(pointer(class nw_def scalar) scalar netobj,
 			G.toggle(i, nb[k])
 		}
 	}
+}
+end
+
+// GOF-plot support (estat gof, plot): full degree and geodesic-distance
+// DISTRIBUTIONS, not just the summary means the plain (non-plot) table
+// above reports - the Statnet plot.gof() analogue. Computed directly in
+// Mata from the same dense adjacency matrix already built for both the
+// observed and each simulated draw, rather than round-tripping each
+// draw through nwset/nwgeodesic/nwtriads again (as the summary-table
+// code above does for a single mean) - nsim() draws x a full BFS each
+// would otherwise mean nsim() more nw_def object creations per plot,
+// pure overhead for a plot that only ever needed the raw distances.
+capture mata: mata drop ergm_gof_degdist()
+capture mata: mata drop ergm_gof_geodist()
+mata:
+real rowvector ergm_gof_degdist(real matrix M, real scalar maxdeg) {
+	real scalar n, i, d
+	real colvector deg
+	real rowvector counts
+
+	n = rows(M)
+	deg = rowsum(M)
+	counts = J(1, maxdeg+2, 0)
+	for (i=1; i<=n; i++) {
+		d = deg[i]
+		if (d > maxdeg) d = maxdeg + 1
+		counts[d+1] = counts[d+1] + 1
+	}
+	return(counts / n)
+}
+
+real rowvector ergm_gof_geodist(real matrix M, real scalar maxdist) {
+	// Unweighted BFS from every node on the 0/1 adjacency matrix M
+	// (symmetric for undirected). counts[1..maxdist] = proportion of
+	// ordered pairs i!=j at that exact distance; counts[maxdist+1] =
+	// unreached (including disconnected) pairs - the "NR" category
+	// Statnet's own gof plot shows as its own final bar.
+	real scalar n, s, i, j, d, npairs
+	real colvector dist, frontier, newfrontier
+	real rowvector counts
+
+	n = rows(M)
+	counts = J(1, maxdist+1, 0)
+	for (s=1; s<=n; s++) {
+		dist = J(n,1,.)
+		dist[s] = 0
+		frontier = s
+		d = 0
+		while (length(frontier) > 0 & d < maxdist) {
+			d++
+			newfrontier = J(0,1,0)
+			for (i=1; i<=length(frontier); i++) {
+				for (j=1; j<=n; j++) {
+					if (M[frontier[i],j] & dist[j]==.) {
+						dist[j] = d
+						newfrontier = newfrontier \ j
+					}
+				}
+			}
+			frontier = newfrontier
+		}
+		for (j=1; j<=n; j++) {
+			if (j==s) continue
+			if (dist[j]==.) counts[maxdist+1] = counts[maxdist+1] + 1
+			else counts[dist[j]] = counts[dist[j]] + 1
+		}
+	}
+	npairs = n*(n-1)
+	if (npairs > 0) counts = counts / npairs
+	return(counts)
+}
+
+// Per-column (min, p25, median, p75, max) across simulated draws, via a
+// plain nearest-rank method on the sorted column - not a claim to match
+// any particular textbook quantile convention exactly (R's boxplot() and
+// Stata's own `summarize, detail' each use their own), just enough to
+// draw a representative box/whisker range for a visual GOF comparison.
+real matrix ergm_gof_summary5(real matrix draws) {
+	real scalar ncol, nrow, k, i
+	real colvector col
+	real matrix out
+
+	nrow = rows(draws)
+	ncol = cols(draws)
+	out = J(ncol, 5, .)
+	for (k=1; k<=ncol; k++) {
+		col = sort(draws[.,k], 1)
+		out[k,1] = col[1]
+		out[k,2] = col[ceil(0.25*nrow)]
+		out[k,3] = col[ceil(0.50*nrow)]
+		out[k,4] = col[ceil(0.75*nrow)]
+		out[k,5] = col[nrow]
+	}
+	return(out)
 }
 end
