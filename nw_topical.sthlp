@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.0 23aug2026}{...}
+{* *! version 2.0 25aug2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} 
 {hline 2} Topical list of network commands
@@ -117,6 +117,7 @@
 {p2col:    {bf:{help nwrename }}}Rename a network{p_end}
 {p2col:    {bf:{help nwreplace }}}Replace network{p_end}
 {p2col:    {bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
+{p2col:    {bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:    {bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:    {bf:{help nwsym }}}Symmetrize network{p_end}
 {p2col:    {bf:{help nwtranspose }}}Transpose a network{p_end}
@@ -163,15 +164,18 @@
 {col 8}{hline 3}{c RT}       {it:] Positions, Roles & }{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
 {p2col:    {bf:{help nwassortativity }}}Newman's assortativity coefficient{p_end}
 {p2col:    {bf:{help nwbalance }}}Structural balance of a signed network{p_end}
 {p2col:    {bf:{help nwbrokerage }}}Gould-Fernandez brokerage roles{p_end}
 {p2col:    {bf:{help nwburt }}}Calculate Burt structural hole measures{p_end}
+{p2col:    {bf:{help nwclustering }}}Clustering coefficient (transitivity) of a network{p_end}
 {p2col:    {bf:{help nwconcor }}}CONCOR structural-equivalence blockmodel{p_end}
 {p2col:    {bf:{help nwconstraint }}}Calculate Burt's constraint{p_end}
 {p2col:    {bf:{help nwcoreperiphery }}}Discrete core-periphery detection{p_end}
 {p2col:    {bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:    {bf:{help nwhierarchy }}}Hierarchical clustering of nodes (role/position analysis){p_end}
+{p2col:    {bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
 {p2col:    {bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsimindex }}}Common-neighbor similarity indices between all node pairs{p_end}
@@ -230,9 +234,17 @@
 {p2col:    {bf:{help nwsync }}}Sync network with Stata variables{p_end}
 {p2col:    {bf:{help nwtomata }}}Return adjacency matrix of network{p_end}
 {p2col:    {bf:{help nwtomatafast }}}Return link to adjacency matrix of network{p_end}
+{p2col:    {bf:{help nwtostata }}}Copy a Mata matrix into Stata variables{p_end}
 {p2col:    {bf:{help nwunab }}}Unabbreviate network list{p_end}
 {p2col:    {bf:{help nwvalidate }}}Validate network name{p_end}
 {p2col:    {bf:{help nwvalidvars }}}Validate Stata variables for network{p_end}
+{marker analysis_utility}{...}
+
+{col 8}   {c TLC}{hline 24}{c TRC}
+{col 8}{hline 3}{c RT}       {it:Utility Commands}{col 36}{c LT}{hline}
+{col 8}   {c BLC}{hline 24}{c BRC}
+{p2colset 12 35 36 2}
+{p2col:    {bf:{help nwds }}}List loaded networks, in the style of Stata's own {help ds}{p_end}
 {marker visualization}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
@@ -241,6 +253,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
 {p2col:    {bf:{help nwmovie }}}Animate a sequence of networks{p_end}
+{p2col:    {bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
 {p2col:    {bf:{help nwplot }}}Plot a network{p_end}
 {p2col:    {bf:{help nwplotmatrix }}}Plot a network as sociomatrix{p_end}
 {marker programming}{...}
@@ -268,7 +281,6 @@
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw2clustering }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_clear }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_deployfile }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
@@ -280,9 +292,5 @@
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_validate }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nwmixing }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nwmoviexy }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nwrestore }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nwtostata }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}

@@ -31,7 +31,7 @@ command comes up with a new suggestion for naming variables. This command is mos
 {title:Supported network types}
 
 {pstd}
-Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collision-free `stub`{it:N} variable-name pattern for a given node count); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values at all.
+Not applicable - a pure Stata-variable-name bookkeeping utility (finds a collision-free {cmd:stub}{it:N} variable-name pattern for a given node count); does not read or depend on any network's own content, directed/valued/two-mode status, or tie values at all.
 
 {title:Examples}
 
