@@ -44,7 +44,7 @@ investigating even when {cmd:e(converged)} is 1.
 
 {pstd}
 {opt plot} additionally draws a trace plot and a kernel density plot for each model statistic
-in the final MCMC sample - the same pair of diagnostic plots R's {cmd:mcmc.diagnostics()}
+in the final MCMC sample - an analogous pair of diagnostic plots to R's {cmd:mcmc.diagnostics()}
 produces, combined here into a single figure (one row per statistic) via {help graph combine}.
 A trace plot that drifts or shows long runs at one level, rather than a stationary-looking
 "fuzzy caterpillar", indicates poor mixing even when the numeric diagnostics above look
@@ -73,18 +73,32 @@ contribute to the geodesic/triad-census averages respectively (reported in the o
 than being treated as an error.
 
 {pstd}
+{bf:The default {opt nsim(50)} can be too small to trust on its own.} Each simulated draw is
+{opt gofinterval()} Metropolis-Hastings steps apart, not an independent redraw, so a
+statistic with substantial autocorrelation in the underlying chain (visible via
+{help nwergm_estat##mcmcdiag:estat mcmcdiag}'s own Autocorr/ESS columns) can show real
+run-to-run swings in the Simulated column at {opt nsim(50)} that have nothing to do with model
+fit - confirmed directly: refitting the same model at different seeds moved the simulated mean
+degree from noticeably below the observed value to noticeably above it, purely from Monte Carlo
+noise, before settling down once {opt nsim()} was increased into the hundreds. If the final MCMC
+sample's own autocorrelation is high, increase {opt nsim()} (and consider {opt gofinterval()})
+before treating a single {cmd:estat gof} run's Simulated column as a stable estimate.
+
+{pstd}
 {opt plot} additionally draws the full degree distribution and the full geodesic-distance
 distribution - not just their means - across the {opt nsim()} simulated draws, each as its own
 panel: a whisker (minimum-maximum), a box (interquartile range), and a median marker summarize
 the simulated draws at each value, with the observed network's own proportion overlaid as a
-connected line. This is the same comparison Statnet's {cmd:plot(gof())} draws (via R's
-{cmd:boxplot()} rather than these {cmd:graph twoway} primitives), restricted to the two
-dimensions {cmd:estat gof} already computes a mean for - it does not add an edgewise
-shared-partner panel, the third dimension Statnet's own default GOF plot includes.
-{opt maxdeg()} caps the degree axis (values above it are pooled into a single "{it:maxdeg}+"
-category); {opt maxdist()} similarly caps the geodesic-distance axis (unreached pairs, including
-disconnected ones, are pooled into their own "NR" - not reached - category, matching Statnet's
-own convention). {opt name()} sets the combined graph's name; default {cmd:gof}.
+connected line (dashed, triangle markers - distinguished from the median by shape and line
+pattern rather than color, so the figure stays legible printed in black and white). This is an
+analogous comparison to Statnet's {cmd:plot(gof())} (via R's {cmd:boxplot()} rather than these
+{cmd:graph twoway} primitives), restricted to the two dimensions {cmd:estat gof} already
+computes a mean for - it does not add an edgewise shared-partner panel, the third dimension
+Statnet's own default GOF plot includes. {opt maxdeg()} caps the degree axis (values above it
+are pooled into a single "{it:maxdeg}+" category); {opt maxdist()} similarly caps the
+geodesic-distance axis (unreached pairs, including disconnected ones, are pooled into their own
+"NR" - not reached - category, matching Statnet's own convention). {opt name()} sets the
+combined graph's name; default {cmd:gof}.
 
 {title:Stored results}
 
