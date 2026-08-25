@@ -320,8 +320,8 @@ the ties active at a given timepoint, usable with any {bf:nw*} command exactly l
 
 {pstd}
 {bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
-{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
-docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
+{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network), not yet
+supported. This is deliberate groundwork only, per the package's own stated
 scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
 temporal ERGMs) is implemented or attempted here.
 
