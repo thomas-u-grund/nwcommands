@@ -104,4 +104,4 @@ technical accounts.
 
 ## License
 
-MIT — see `LICENSE`.
+All rights reserved — see `LICENSE`. Contact thomas.u.grund@gmail.com to license this software.
