@@ -47,3 +47,16 @@ estimates store m1
 estimates restore m1
 qui estat mcmcdiag
 assert r(acceptrate) > 0 & r(acceptrate) <= 1
+
+* --- estat mcmcdiag, plot: trace + density per statistic, combined into
+* one figure (R mcmc.diagnostics()'s own analogue). `set graphics off'
+* (the same convention test_nwplot.do uses) still exercises the full
+* twoway/graph combine code path without popping up a GUI window during
+* a batch test run; not a pixel-level regression test, just confirms the
+* plot machinery runs clean end to end and leaves a real graph behind.
+set graphics off
+qui estat mcmcdiag, plot
+capture graph describe mcmcdiag
+assert _rc == 0
+graph drop mcmcdiag
+di "=== estat mcmcdiag, plot REGRESSION VERIFIED ==="
