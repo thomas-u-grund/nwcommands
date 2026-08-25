@@ -46,7 +46,7 @@ END
 DIALOG main, tabtitle("Network")
 BEGIN
   TEXT     tx_var	10	10	100	., label("Network:") 		
-  COMBOBOX cb_var	+60	@	240	., dropdownlist contents(netlist) 
+  COMBOBOX cb_var	+60	@	240	., dropdown contents(netlist) nomem
   GROUPBOX gb_lb 210 50 270 130, label("Node labels:") 
   RADIO  rb_nolabel 230  70 220 ., first  label("No labels") onclickon("script labelsHide")
   RADIO  rb_addnet  @ +20   @ ., middle label("Add labels saved with network")  onclickon("script labelsShowProp")
