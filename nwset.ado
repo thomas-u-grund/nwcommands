@@ -414,7 +414,7 @@ if "`overwrite'" != "" local replace "replace"
 	}
 	if "`twomode'" != "" {
 		if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
-			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands (see docs/ROADMAP.md)."
+			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands."
 			error 198
 		}
 		if "`varlist'" == "" {
@@ -452,7 +452,7 @@ if "`overwrite'" != "" local replace "replace"
 			error 198
 		}
 		if "`twomode'" != "" | "`bipartite'" != "" {
-			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands (see docs/ROADMAP.md)."
+			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands."
 			error 198
 		}
 		if "`varlist'" == "" {
