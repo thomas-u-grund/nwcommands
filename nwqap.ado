@@ -287,7 +287,23 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			confirm variable `entry'
 			// Make network out of IV.
 			tokenize `mode'
-			nwexpand `entry', name(_tempexpand) mode("``t''") nodes(`nodes')
+			// BUGFIX: without network(`net'), nwexpand falls back to its
+			// own default node names ("n1".."nK"), which do not match
+			// `net''s own node names (e.g. "g1".."g54") already loaded in
+			// the active dataset. nwexpand's own internal nwload(,xvars)
+			// call then tries to sync the active dataset to this
+			// mismatched-node-name network via nw_datasync's merge -
+			// which, on a 0% name match, appends every node as an
+			// unmatched observation instead of merging in place, silently
+			// doubling the dataset and leaving every OTHER variable
+			// (including a second IV's own attribute column, if this
+			// formula has more than one) reading back as entirely
+			// missing on the next attempt. Passing network(`net') makes
+			// nwexpand reuse `net''s own real node names, so the merge is
+			// a genuine one-to-one match instead of a wholesale miss -
+			// confirmed directly: two nwexpand calls in the same session
+			// only corrupt each other's data when network() is omitted.
+			nwexpand `entry', name(_tempexpand) mode("``t''") nodes(`nodes') network(`net')
 			nwtomata _tempexpand, mat(onenet)
 			mata: _diag(onenet, J(rows(onenet), 1, .))
 			mata: temp = transformIntoLong(onenet)

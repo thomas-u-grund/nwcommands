@@ -16,6 +16,9 @@
         {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "sysdescribe usstates.dta":describe}
         {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "sysdescribe klas12b.dta":describe}
         {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "sysdescribe hpotter.dta":describe}
+        {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "sysdescribe macaque.nwdta":describe}
+        {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "sysdescribe chesapeake.nwdta":describe}
+        {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "sysdescribe usair.nwdta":describe}
 		 
 {hline}
 
@@ -293,5 +296,82 @@ Goele Bossaert and Nadine Meidert have coded the support ties between 64 charact
 {bf:Reference}
 
 {pmore}
-Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal of Applied Sciences, Vol. 3 No. 2, pp. 174-185. 
+Goele Bossaert and Nadine Meidert (2013). 'We are only as strong as we are united, as weak as we are divided'. A dynamic analysis of the peer support networks in the Harry Potter books. Open Journal of Applied Sciences, Vol. 3 No. 2, pp. 174-185.
 http://dx.doi.org/10.4236/ojapps.2013.32024
+
+
+
+{marker macaque}
+{title:Macaque cortical network data}
+
+{pstd}
+{bf:Networks:} {it:macaque}{p_end}
+{pstd}
+{bf:Vertex attributes:} none - vertex names are the cortical area labels themselves (V1, V2, MT, FEF, and so on).
+
+{pstd}
+This is a directed network of 45 visuotactile areas of the macaque cerebral cortex, with a tie from
+area {it:i} to area {it:j} whenever a projection from {it:i} to {it:j} is documented in the neuroanatomical
+literature. Not a social network: included as a worked example of a real, published, non-social
+directed network of comparable size to this package's other bundled examples.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Negyessy, L., Nepusz, T., Kocsis, L., and Bazso, F. (2006). Prediction of the main cortical areas and connections involved in the tactile function of the visual cortex by network analysis. European Journal of Neuroscience, 23(7), 1919-1930.
+
+
+
+{marker chesapeake}
+{title:Chesapeake Bay food web data}
+
+{pstd}
+{bf:Networks:} {it:chesapeake} (directed, valued - tie value is carbon flux){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:ECO} and {it:Biomass}{p_end}
+
+{pstd}
+This is a food web of the Chesapeake Bay mesohaline ecosystem: 39 compartments (mostly species,
+plus a handful of bookkeeping compartments - Input, Output, Respiration, and two organic-carbon
+pools), with a directed, valued tie from compartment {it:i} to compartment {it:j} whenever carbon
+flows from {it:i} to {it:j}. {it:ECO} codes the compartment type (1 = living organism, 2 = nonliving
+organic pool, 3 = Input, 4 = Output, 5 = Respiration); {it:Biomass} is each compartment's standing
+biomass. A handful of species names are truncated at 25 characters in the original source data
+(e.g. "heterotrophic microflagel"), inherited as-is from that source rather than silently
+guessed at. Not a social network: included as a worked example of a real, published food web of
+comparable size to this package's other bundled examples.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Baird, D. and Ulanowicz, R.E. (1989). The seasonal dynamics of the Chesapeake Bay ecosystem. Ecological Monographs, 59, 329-364.
+
+
+
+{marker usair}
+{title:US airports data}
+
+{pstd}
+{bf:Networks:} {it:usair}{p_end}
+{pstd}
+{bf:Vertex attributes:} {it:Name, City, Lat, Lon, degree}{p_end}
+
+{pstd}
+This is a directed network of the 50 busiest US airports (by direct-route degree) and the direct
+routes between them, built from OpenFlights' airport and route databases. A tie from airport
+{it:i} to airport {it:j} means at least one airline flew a direct, no-stop route from {it:i} to
+{it:j} at the time OpenFlights' route data was current. Restricted to the top 50 airports by
+degree, not the full set of several hundred US airports OpenFlights covers, to keep this network
+at a size comparable to this package's other example networks - {it:degree} itself records each
+airport's own direct-route degree in the {it:full}, unrestricted US network, not just within this
+50-airport subset, so it will not generally match {help nwdegree:nwdegree}'s own count computed
+on {it:usair} as loaded. Not a social network: included as a worked example of a real,
+non-social, directed transportation network.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.

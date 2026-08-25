@@ -86,15 +86,15 @@ The following command declares such data as two-mode network data:
 	{cmd:. nw2fromedge person institution, name(mynet)}
 					
 {pstd}
-Besides setting the network, this also creates a new variable {it:_mode}, which has the value 1 for persons (Peter, Tim,
+Besides setting the network, this also creates a new variable {it:_nwmode}, which has the value 1 for persons (Peter, Tim,
 Thomas, Michael, Mathilde) and value 2 for institutions (LiU, UdeM, Oxford, ETH, Groningen).
 
 {pstd}
 When plotting a two-mode network, nodes are automatically colored accoriding to the mode they belong to, unless specified otherwise.
-For example, these two commands produce the same plot. 
+For example, these two commands produce the same plot.
 
 	{cmd:. nwplot mynet}
-	{cmd:. nwplot mynet, color(_mode)}
+	{cmd:. nwplot mynet, color(_nwmode)}
 
 {marker project_stat}{...}
 {marker project_level}{...}
