@@ -46,3 +46,24 @@ nwreplace rtest = 5
 assert r(symmetric) == 1
 assert r(valued) == 1
 di "=== r(symmetric)/r(valued) REGRESSION VERIFIED ==="
+
+* Found while preparing this package's own Stata Journal submission
+* (the article's generate/replace example hit this directly, via
+* `nwcorrelate ..., permutations(100)' followed by `nwrandom ...
+* undirected' occasionally producing a not-quite-symmetric matrix): the
+* fix above only captured r(symmetric)/r(valued) into locals - it never
+* exercised the branch where the correction actually FIRES (`nw_name
+* ..., newdirected(false)'), which is itself a separate ado call that
+* wipes r() the moment it runs. Only a bracket-replace that makes an
+* undirected network's matrix genuinely asymmetric (one cell, not its
+* mirror) triggers that branch; replacing the whole matrix at once
+* (rtest above) never does, since nw_syntax's own symmetrization keeps
+* it symmetric throughout.
+nwclear
+nwset, mat((0,1\1,0)) name(rtest2) undirected
+nwreplace rtest2[1,2] = 0
+assert r(symmetric) == 0
+assert r(valued) == 0
+nwsummarize rtest2
+assert r(directed) == "false"
+di "=== nw_name-clobbers-r() REGRESSION VERIFIED ==="
