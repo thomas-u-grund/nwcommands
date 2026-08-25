@@ -98,12 +98,13 @@ program schemeinfo
 		}
 		forvalues i = 1 / `=`ncolors'+1' {
 			local mycol = `"`.__SCHEME.color.p`=`i'-1''"'
+			if `i' == 1 {
 				local mycol = "`.__SCHEME.color.p1'"
 			}
-			replace scol = "`mycol'" in `i' 
+			replace scol = "`mycol'" in `i'
 			local cmd `cmd' (scatter x cy if _n == `i' , msymbol(S) mcolor("`mycol'") msize(`msize') mlcolor(black)) (scatter x cy if _n == `i' , msymbol(none) mlabcolor(black black) mlabgap(4 1) mlabel(scol))
 		}
-		forvalues i = 1/ `=max(`=`nlcolors'+1',`=`nlptterns'+1')'  {
+		forvalues i = 1/ `=max(`=`nlcolors'+1',`=`nlpatterns'+1')'  {
 			local mylcol = "`.__SCHEME.color.p`=`i'-1'line'"
 			local mylpat = "`.__SCHEME.pattern.p`=`i'-1'line'"
 			if `i' == 1 {

@@ -101,7 +101,8 @@ program nw_datasync
 
 	mata: `nodename' = (`netobj'->get_nodenames())'
 	mata: st_numscalar("r(nodes)", `netobj'->get_nodes())
-	
+	local __nwds_nodes = r(nodes)
+
 	if "`overwrite'" != "" {
 		capture drop `nw_nodename'
 		qui getmata `nw_nodename' = `nodename', force replace
@@ -155,8 +156,59 @@ program nw_datasync
 	restore
 	
 	capture confirm variable `nw_nodename'
-	qui if (_rc != 0) {
-		gen str40 `nw_nodename' = ""
+	local __nwds_var_exists = (_rc == 0)
+	local __nwds_all_blank = 1
+	if `__nwds_var_exists' {
+		qui count if `nw_nodename' != ""
+		if r(N) > 0 {
+			local __nwds_all_blank = 0
+		}
+	}
+	// BUGFIX: this used to unconditionally create `_nwnode' as blank
+	// strings whenever the variable didn't already exist, then merge it
+	// (below) against the network's own real node names ("n1", "n2", ...
+	// for a freshly built network with no explicit labs()) - a blank
+	// string can never match a real name, so the merge was a guaranteed,
+	// deterministic 0% match: every one of the network's own nodes came
+	// back "using only" and got APPENDED as new rows, while every one of
+	// the caller's original rows came back "master only" and was KEPT
+	// rather than dropped (by original design, so a genuinely different,
+	// already-synced network's own data isn't silently discarded when
+	// switching between two named networks that coexist in one session)
+	// - together silently DOUBLING the active dataset's row count on the
+	// very first sync of any newly built network, with every one of the
+	// caller's own plain variables (any attribute they had loaded)
+	// missing on the network's own real rows.
+	//
+	// Checking "does the variable exist" alone is not enough to detect
+	// this case: `create_by_name()' (unw_core.do) itself already adds
+	// `_nwnode' via a bare st_addvar() - present, but entirely blank -
+	// the moment ANY new network is created, before this program ever
+	// runs, so `capture confirm variable' alone always finds it already
+	// there. Checking whether it actually holds any real (non-blank)
+	// value catches both that case and the original "doesn't exist at
+	// all" one.
+	//
+	// Confirmed directly: nwset's own bare mat() path, nwrandom, nwpref,
+	// and nwlattice (any command that creates a new, default-named
+	// network) all reproduced this on the very first call in a session
+	// that already had unrelated attribute data loaded. This exact
+	// "no real `_nwnode' yet" case is precisely the one where there is
+	// no PRIOR network's data to preserve at all - the dataset has never
+	// been synced to any network before - so when the row count already
+	// matches this network's own node count, attach the real node names
+	// directly, by position, instead of leaving a placeholder guaranteed
+	// to force a spurious append. Row counts that DON'T match are
+	// genuinely ambiguous (which existing rows correspond to which
+	// nodes?) and keep the original placeholder-then-merge behavior
+	// unchanged.
+	if (`__nwds_all_blank') {
+		if (`=_N' == `__nwds_nodes' & `=_N' > 0) {
+			qui getmata `nw_nodename' = `nodename', force replace
+		}
+		else if (!`__nwds_var_exists') {
+			qui gen str40 `nw_nodename' = ""
+		}
 	}
 
 	tempvar current

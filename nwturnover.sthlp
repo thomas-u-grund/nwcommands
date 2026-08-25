@@ -59,6 +59,13 @@ directed or both undirected) - comparing a directed network to an undirected one
 of different size, is rejected explicitly rather than silently doing something arithmetically
 possible but conceptually meaningless.
 
+{pstd}
+For an {bf:undirected} pair of networks, {bf:r(stable)}, {bf:r(formed)}, and {bf:r(dissolved)}
+each count both {it:(i,j)} and {it:(j,i)} for the same tie, so all three are exactly double the
+number of actual undirected ties involved (the same convention {help nwmixing} uses for its own
+mixing table). {bf:r(jaccard)} and {bf:r(persistence)} are unaffected, since the doubling cancels
+in both ratios.
+
 {title:Stored results}
 
 	Scalars
