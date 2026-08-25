@@ -5,6 +5,8 @@
 	CSVs for R to read identically, fits via nwergm with default control
 	settings, times the whole call.
 */
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_core.do"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_ergm.do"
 run "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/nwergm.ado"
@@ -13,7 +15,7 @@ local ddir "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/dev/ergm_benchmark_
 
 set seed 20260823
 nwclear
-nwrandom 100, prob(0.03) directed name(bench100dir)
+nwrandom 100, prob(0.03) name(bench100dir)
 gen grp = ceil(3*runiform())
 
 nw_syntax bench100dir, max(1)

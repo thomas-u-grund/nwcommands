@@ -7,6 +7,8 @@
 	benchmark. Times the WHOLE nwergm call (MPLE starting value + full
 	MCMLE outer loop) with Stata's own timer.
 */
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_core.do"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_ergm.do"
 run "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/nwergm.ado"

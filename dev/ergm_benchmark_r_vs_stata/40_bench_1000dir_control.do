@@ -18,6 +18,8 @@
 	`st_store()`-ing it straight into a 3-variable long dataset - never
 	creating a wide, many-column intermediate at all.
 */
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_core.do"
 do "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/unw_ergm.do"
 run "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/nwergm.ado"
@@ -26,7 +28,7 @@ local ddir "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/dev/ergm_benchmark_
 
 set seed 20260826
 nwclear
-nwrandom 1000, prob(0.006) directed name(bench1000)
+nwrandom 1000, prob(0.006) name(bench1000)
 gen grp = ceil(3*runiform())
 outsheet grp using "`ddir'/attr1000.csv", comma nonames replace
 
