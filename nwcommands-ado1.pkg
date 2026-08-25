@@ -7,6 +7,7 @@ f _extract_valuelabels.ado
 f _nwdeploy.ado
 f _nwdialog.ado
 f _nwdialog_append.ado
+f _nwdialog_clusters.ado
 f _nwdialog_lablist.ado
 f _nwevalnetexp.ado
 f _nwnodeid.ado
@@ -82,4 +83,3 @@ f nwmodularity.ado
 f nwmovie.ado
 f nwmoviexy.ado
 f nwname.ado
-f nwnclan.ado
