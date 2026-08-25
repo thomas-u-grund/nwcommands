@@ -1,0 +1,47 @@
+v 3
+d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part 2)
+d Thomas U. Grund, University College Dublin, www.grund.co.uk
+d email: thomas.u.grund@gmail.com
+d Distribution-Date: 25aug2026
+f nwaltergen.dlg
+f nwmixing.dlg
+f nwburt.dlg
+f nwpreserve.dlg
+f nwbetween.dlg
+f nwrecode.dlg
+f nwtoedge.dlg
+f nwload.dlg
+f nwcommunity.dlg
+f nwrestore.dlg
+f nwduplicate.dlg
+f nwaddnodes.dlg
+f nwcoreperiphery.dlg
+f nwappend.dlg
+f nwrandom.dlg
+f nwtomata.dlg
+f nwcurrent.dlg
+f nwqap.dlg
+f nwpath.dlg
+f nwspectral.dlg
+f nwturnover.dlg
+f nwnclique.dlg
+f nwvalidate.dlg
+f nwsmall.dlg
+f nwbrokerage.dlg
+f nw2fromedge.dlg
+f nwfromedge.dlg
+f nwtomatafast.dlg
+f nwego.dlg
+f nwclique.dlg
+f nwdyadprob.dlg
+f nwgeodesic.dlg
+f nwkplex.dlg
+f nwdyads.dlg
+f nwconstraint.dlg
+f nwkeepnodes.dlg
+f nwergm.dlg
+f nwcomponents.dlg
+f nwplotmatrix.dlg
+f nw_nodes_size.dlg
+f nwsimmelian.dlg
+f header.idlg
