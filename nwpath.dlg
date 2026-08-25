@@ -30,8 +30,8 @@ BEGIN
   SPINNER sp_alterid 290 166 70 ., default(0) max(999999) min(-999999) nomem option(alterid)
   TEXT tx_cx_sym 20 194 260 ., label("Symmetrize network for calculation")
   CHECKBOX cx_sym 290 194 190 ., label("sym") option(sym)
-  TEXT tx_ed_generate 20 222 260 ., label("Save paths as networks beginning with")
-  EDIT ed_generate 290 222 190 ., nomem option(generate)
+  TEXT tx_cb_generate 20 222 260 ., label("Save paths as networks beginning with")
+  COMBOBOX cb_generate 290 222 190 ., dropdown contents(netlist) nomem option(generate)
 END
 
 LIST netlist
@@ -55,7 +55,7 @@ BEGIN
 		optionarg main.sp_egoid
 		optionarg main.sp_alterid
 		option main.cx_sym
-		optionarg main.ed_generate
+		optionarg main.cb_generate
 	endoptions
 	stata
 END

@@ -18,10 +18,10 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_ed_generate 20 54 260 ., label("Save transpose as new network (alias: , matching the rest of this group)")
-  EDIT ed_generate 290 54 190 ., nomem option(generate)
-  TEXT tx_ed_name 20 82 260 ., label("Name")
-  EDIT ed_name 290 82 190 ., nomem option(name)
+  TEXT tx_cb_generate 20 54 260 ., label("Save transpose as new network (alias: , matching the rest of this group)")
+  COMBOBOX cb_generate 290 54 190 ., dropdown contents(netlist) nomem option(generate)
+  TEXT tx_cb_name 20 82 260 ., label("Name")
+  COMBOBOX cb_name 290 82 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_cx_replace 20 110 260 ., label("if a network named  already exists, drop it and use this name anyway")
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
 END
@@ -41,8 +41,8 @@ PROGRAM command
 BEGIN
 	put "nwtranspose " main.cb_net
 	beginoptions
-		optionarg main.ed_generate
-		optionarg main.ed_name
+		optionarg main.cb_generate
+		optionarg main.cb_name
 		option main.cx_replace
 	endoptions
 	stata

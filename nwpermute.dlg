@@ -22,8 +22,8 @@ BEGIN
   CHECKBOX cx_xvars 290 54 190 ., label("xvars") option(xvars)
   TEXT tx_cx_replace 20 82 260 ., label("Replace existing network with permutation")
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)
-  TEXT tx_ed_generate 20 110 260 ., label("Save permutation as new network")
-  EDIT ed_generate 290 110 190 ., nomem option(generate)
+  TEXT tx_cb_generate 20 110 260 ., label("Save permutation as new network")
+  COMBOBOX cb_generate 290 110 190 ., dropdown contents(netlist) nomem option(generate)
 END
 
 LIST netlist
@@ -43,7 +43,7 @@ BEGIN
 	beginoptions
 		option main.cx_xvars
 		option main.cx_replace
-		optionarg main.ed_generate
+		optionarg main.cb_generate
 	endoptions
 	stata
 END

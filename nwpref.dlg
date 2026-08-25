@@ -28,8 +28,8 @@ BEGIN
   EDIT ed_vars 290 138 190 ., nomem option(vars)
   TEXT tx_ed_stub 20 166 260 ., label("Stub")
   EDIT ed_stub 290 166 190 ., nomem option(stub)
-  TEXT tx_ed_name 20 194 260 ., label("name of the new network")
-  EDIT ed_name 290 194 190 ., nomem option(name)
+  TEXT tx_cb_name 20 194 260 ., label("name of the new network")
+  COMBOBOX cb_name 290 194 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_sp_m0 530 54 260 ., label("number of connected nodes at start; default = 2")
   SPINNER sp_m0 800 54 70 ., default(2) max(999999) min(-999999) nomem option(m0)
   TEXT tx_sp_m 530 82 260 ., label("number of connections each new node forms; default = 2")
@@ -64,7 +64,7 @@ BEGIN
 		optionarg main.sp_ntimes
 		optionarg main.ed_vars
 		optionarg main.ed_stub
-		optionarg main.ed_name
+		optionarg main.cb_name
 		optionarg main.sp_m0
 		optionarg main.sp_m
 		optionarg main.ed_prob

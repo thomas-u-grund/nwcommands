@@ -28,8 +28,8 @@ BEGIN
   CHECKBOX cx_symmetrize 290 138 190 ., label("symmetrize") option(symmetrize)
   TEXT tx_ed_resolution 20 166 260 ., label("Resolution parameter (Reichardt-Bornholdt); must be > 0; only affects 's own sea")
   EDIT ed_resolution 290 166 100 ., numonly nomem option(resolution)
-  TEXT tx_ed_algorithm 20 194 260 ., label("Community-detection algorithm; default =")
-  EDIT ed_algorithm 290 194 190 ., nomem option(algorithm)
+  TEXT tx_cb_algorithm 20 194 260 ., label("Community-detection algorithm; default =")
+  COMBOBOX cb_algorithm 290 194 190 ., dropdownlist contents(list_algorithm) nomem option(algorithm)
   TEXT tx_sp_seed 20 222 260 ., label("Set the random-number seed before detecting communities (for reproducibility wit")
   SPINNER sp_seed 290 222 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
   TEXT tx_cx_silent 20 250 260 ., label("Suppress display of results")
@@ -39,6 +39,12 @@ END
 LIST netlist
 BEGIN
 	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_algorithm
+BEGIN
+	louvain
+	labelprop
 END
 
 PROGRAM initialize
@@ -56,7 +62,7 @@ BEGIN
 		optionarg main.ed_measure
 		option main.cx_symmetrize
 		optionarg main.ed_resolution
-		optionarg main.ed_algorithm
+		optionarg main.cb_algorithm
 		optionarg main.sp_seed
 		option main.cx_silent
 	endoptions

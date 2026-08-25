@@ -22,10 +22,10 @@ BEGIN
   EDIT ed_benefit 290 54 100 ., numonly nomem option(benefit)
   TEXT tx_ed_cost 20 82 260 ., label("cost of connection; default = 1")
   EDIT ed_cost 290 82 100 ., numonly nomem option(cost)
-  TEXT tx_ed_intrvalue 20 110 260 ., label("intrinsic value w_ij a node i gives to a connection with node j; default = 1 for")
-  EDIT ed_intrvalue 290 110 190 ., nomem option(intrvalue)
-  TEXT tx_ed_intrcost 20 138 260 ., label("per-dyad cost y_ij, replacing the constant  for direct connections; default =  f")
-  EDIT ed_intrcost 290 138 190 ., nomem option(intrcost)
+  TEXT tx_cb_intrvalue 20 110 260 ., label("intrinsic value w_ij a node i gives to a connection with node j; default = 1 for")
+  COMBOBOX cb_intrvalue 290 110 190 ., dropdown contents(netlist) nomem option(intrvalue)
+  TEXT tx_cb_intrcost 20 138 260 ., label("per-dyad cost y_ij, replacing the constant  for direct connections; default =  f")
+  COMBOBOX cb_intrcost 290 138 190 ., dropdown contents(netlist) nomem option(intrcost)
 END
 
 LIST netlist
@@ -45,8 +45,8 @@ BEGIN
 	beginoptions
 		optionarg main.ed_benefit
 		optionarg main.ed_cost
-		optionarg main.ed_intrvalue
-		optionarg main.ed_intrcost
+		optionarg main.cb_intrvalue
+		optionarg main.cb_intrcost
 	endoptions
 	stata
 END

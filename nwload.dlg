@@ -32,8 +32,8 @@ BEGIN
   CHECKBOX cx_viewoff 290 194 190 ., label("viewoff") option(viewoff)
   TEXT tx_cx_nocurrent 20 222 260 ., label("Only load network as Stata variables, but do not make it the")
   CHECKBOX cx_nocurrent 290 222 190 ., label("nocurrent") option(nocurrent)
-  TEXT tx_ed_generate 20 250 260 ., label("Generate flag for nodes of the loaded network; default =")
-  EDIT ed_generate 290 250 190 ., nomem option(generate)
+  TEXT tx_vr_generate 20 250 260 ., label("Generate flag for nodes of the loaded network; default =")
+  VARNAME vr_generate 290 250 190 ., nomem option(generate)
 END
 
 LIST netlist
@@ -58,7 +58,7 @@ BEGIN
 		option main.cx_viewon
 		option main.cx_viewoff
 		option main.cx_nocurrent
-		optionarg main.ed_generate
+		optionarg main.vr_generate
 	endoptions
 	stata
 END

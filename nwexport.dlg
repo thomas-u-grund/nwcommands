@@ -18,8 +18,8 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
-  TEXT tx_ed_type 20 54 260 ., label("Type")
-  EDIT ed_type 290 54 190 ., nomem option(type)
+  TEXT tx_cb_type 20 54 260 ., label("Type")
+  COMBOBOX cb_type 290 54 190 ., dropdownlist contents(list_type) nomem option(type)
   TEXT tx_ed_fname 20 82 260 ., label("filename of the exported network: default =")
   EDIT ed_fname 290 82 190 ., nomem option(fname)
   TEXT tx_cx_replace 20 110 260 ., label("overwrite exported file")
@@ -31,6 +31,12 @@ BEGIN
 	// populated at runtime by _nwdialog.ado
 END
 
+LIST list_type
+BEGIN
+	pajek
+	ucinet
+END
+
 PROGRAM initialize
 BEGIN
 	put "_nwdialog nwexport"
@@ -39,10 +45,10 @@ END
 
 PROGRAM command
 BEGIN
-	require main.ed_type
+	require main.cb_type
 	put "nwexport " main.cb_net
 	beginoptions
-		optionarg main.ed_type
+		optionarg main.cb_type
 		optionarg main.ed_fname
 		option main.cx_replace
 	endoptions

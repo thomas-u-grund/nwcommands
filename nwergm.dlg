@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 814
+POSITION 10 10 1120 738
 
 SCRIPT PREINIT
 BEGIN
@@ -15,112 +15,123 @@ END
 
 DIALOG main, title("nwergm - Exponential-family random graph model (ERGM) estimation")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
+  TEXT tx_net 20 20 260 ., label("Network:")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 1030 720, label("Options")
-  TEXT tx_cx_edges 20 54 260 ., label("Include the  term (density/intercept); required")
-  CHECKBOX cx_edges 290 54 190 ., label("edges") option(edges)
-  TEXT tx_cx_mutual 20 82 260 ., label("Reciprocated-tie count; directed networks only")
-  CHECKBOX cx_mutual 290 82 190 ., label("mutual") option(mutual)
-  TEXT tx_ed_nodematch 20 110 260 ., label("Pooled homophily on each listed categorical node attribute (exact match, one coe")
-  EDIT ed_nodematch 290 110 190 ., nomem option(nodematch)
-  TEXT tx_ed_nodematchdif 20 138 260 ., label("Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attrib")
-  EDIT ed_nodematchdif 290 138 190 ., nomem option(nodematchdiff)
-  TEXT tx_ed_nodecov 20 166 260 ., label("Continuous node covariate main effect (sum over tie endpoints)")
-  EDIT ed_nodecov 290 166 190 ., nomem option(nodecov)
-  TEXT tx_ed_nodeicov 20 194 260 ., label("Directed receiver-covariate effect; directed networks only")
-  EDIT ed_nodeicov 290 194 190 ., nomem option(nodeicov)
-  TEXT tx_ed_nodeocov 20 222 260 ., label("Directed sender-covariate effect; directed networks only")
-  EDIT ed_nodeocov 290 222 190 ., nomem option(nodeocov)
-  TEXT tx_ed_edgecov 20 250 260 ., label("Dyadic covariate effect, taken from an already-loaded network's own tie values")
-  EDIT ed_edgecov 290 250 190 ., nomem option(edgecov)
-  TEXT tx_ed_absdist 20 278 260 ., label("Absolute-difference effect on a continuous node covariate: sum over ties of |x_i")
-  EDIT ed_absdist 290 278 190 ., nomem option(absdist)
-  TEXT tx_ed_nodefactor 20 306 260 ., label("One coefficient per NON-BASE distinct level of each listed categorical attribute")
-  EDIT ed_nodefactor 290 306 190 ., nomem option(nodefactor)
-  TEXT tx_ed_nodemix 20 334 260 ., label("Full categorical mixing matrix: one coefficient per distinct unordered pair of l")
-  EDIT ed_nodemix 290 334 190 ., nomem option(nodemix)
-  TEXT tx_ed_gwesp 20 362 260 ., label("Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) o")
-  EDIT ed_gwesp 290 362 190 ., nomem option(gwesp)
-  TEXT tx_ed_gwdsp 20 390 260 ., label("Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) o")
-  EDIT ed_gwdsp 290 390 190 ., nomem option(gwdsp)
-  TEXT tx_ed_gwnsp 20 418 260 ., label("Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; u")
-  EDIT ed_gwnsp 290 418 190 ., nomem option(gwnsp)
-  TEXT tx_ed_gwdegree 20 446 260 ., label("Geometrically weighted degree, fixed decay")
-  EDIT ed_gwdegree 290 446 190 ., nomem option(gwdegree)
-  TEXT tx_ed_gwodegree 20 474 260 ., label("Geometrically weighted out-degree, fixed decay; directed networks only")
-  EDIT ed_gwodegree 290 474 190 ., nomem option(gwodegree)
-  TEXT tx_ed_gwidegree 20 502 260 ., label("Geometrically weighted in-degree, fixed decay; directed networks only")
-  EDIT ed_gwidegree 290 502 190 ., nomem option(gwidegree)
-  TEXT tx_ed_degree 20 530 260 ., label("One coefficient per listed degree value: count of nodes with that exact (total) ")
-  EDIT ed_degree 290 530 190 ., nomem option(degree)
-  TEXT tx_ed_odegree 20 558 260 ., label("One coefficient per listed value: count of nodes with that exact out-degree; dir")
-  EDIT ed_odegree 290 558 190 ., nomem option(odegree)
-  TEXT tx_ed_idegree 20 586 260 ., label("One coefficient per listed value: count of nodes with that exact in-degree; dire")
-  EDIT ed_idegree 290 586 190 ., nomem option(idegree)
-  TEXT tx_cx_concurrent 20 614 260 ., label("Count of nodes with (total) degree 2 or higher; undirected only")
-  CHECKBOX cx_concurrent 290 614 190 ., label("concurrent") option(concurrent)
-  TEXT tx_cx_triangle 20 642 260 ., label("Count of triangles (mutually tied triples); undirected only")
-  CHECKBOX cx_triangle 290 642 190 ., label("triangle") option(triangle)
-  TEXT tx_cx_ctriple 20 670 260 ., label("Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only")
-  CHECKBOX cx_ctriple 290 670 190 ., label("ctriple") option(ctriple)
-  TEXT tx_ed_nodeifactor 20 698 260 ., label("Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, ")
-  EDIT ed_nodeifactor 290 698 190 ., nomem option(nodeifactor)
-  TEXT tx_ed_nodeofactor 20 726 260 ., label("Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, ")
-  EDIT ed_nodeofactor 290 726 190 ., nomem option(nodeofactor)
-  TEXT tx_ed_kstar 530 54 260 ., label("One coefficient per listed k value: count of k-stars ((total) degree choose k, s")
-  EDIT ed_kstar 800 54 190 ., nomem option(kstar)
-  TEXT tx_ed_istar 530 82 260 ., label("One coefficient per listed k value: count of in-k-stars; directed networks only")
-  EDIT ed_istar 800 82 190 ., nomem option(istar)
-  TEXT tx_ed_ostar 530 110 260 ., label("One coefficient per listed k value: count of out-k-stars; directed networks only")
-  EDIT ed_ostar 800 110 190 ., nomem option(ostar)
-  TEXT tx_ed_degrange 530 138 260 ., label("Semi-open-interval degree count: one coefficient per FROM value in this numlist,")
-  EDIT ed_degrange 800 138 190 ., nomem option(degrange)
-  TEXT tx_ed_degrangeto 530 166 260 ., label("TO values pairing with , same order/length; omit for an open-ended upper bound")
-  EDIT ed_degrangeto 800 166 190 ., nomem option(degrangeto)
-  TEXT tx_ed_odegrange 530 194 260 ., label("Semi-open-interval OUT-degree count, paired with ; directed networks only")
-  EDIT ed_odegrange 800 194 190 ., nomem option(odegrange)
-  TEXT tx_ed_odegrangeto 530 222 260 ., label("TO values pairing with")
-  EDIT ed_odegrangeto 800 222 190 ., nomem option(odegrangeto)
-  TEXT tx_ed_idegrange 530 250 260 ., label("Semi-open-interval IN-degree count, paired with ; directed networks only")
-  EDIT ed_idegrange 800 250 190 ., nomem option(idegrange)
-  TEXT tx_ed_idegrangeto 530 278 260 ., label("TO values pairing with")
-  EDIT ed_idegrangeto 800 278 190 ., nomem option(idegrangeto)
-  TEXT tx_ed_esp 530 306 260 ., label("One coefficient per listed d value: count of TIED dyads with exactly d shared pa")
-  EDIT ed_esp 800 306 190 ., nomem option(esp)
-  TEXT tx_ed_dsp 530 334 260 ., label("One coefficient per listed d value: count of ALL dyads (tied or not) with exactl")
-  EDIT ed_dsp 800 334 190 ., nomem option(dsp)
-  TEXT tx_cx_transitiveti 530 362 260 ., label("Count of TIED arcs i->j for which there also exists a two-path i->k->j (an exist")
-  CHECKBOX cx_transitiveti 800 362 190 ., label("transitiveties") option(transitiveties)
-  TEXT tx_cx_cyclicalties 530 390 260 ., label("Count of TIED arcs i->j for which there also exists a return two-path j->k->i, c")
-  CHECKBOX cx_cyclicalties 800 390 190 ., label("cyclicalties") option(cyclicalties)
-  TEXT tx_ed_hamming 530 418 260 ., label("Hamming distance to a reference network: count of dyads whose tie state disagree")
-  EDIT ed_hamming 800 418 190 ., nomem option(hamming)
-  TEXT tx_cx_sender 530 446 260 ., label("One coefficient per node (except a base node) equal to that node's own out-degre")
-  CHECKBOX cx_sender 800 446 190 ., label("sender") option(sender)
-  TEXT tx_cx_receiver 530 474 260 ., label("One coefficient per node (except a base node) equal to that node's own in-degree")
-  CHECKBOX cx_receiver 800 474 190 ., label("receiver") option(receiver)
-  TEXT tx_ed_method 530 502 260 ., label("Estimation method; default  unless the model is dyad-independent, in which case ")
-  EDIT ed_method 800 502 190 ., nomem option(method)
-  TEXT tx_sp_mcmcburnin 530 530 260 ., label("MCMC burn-in steps per simulation; default 3,000")
-  SPINNER sp_mcmcburnin 800 530 70 ., default(3000) max(999999) min(-999999) nomem option(mcmcburnin)
-  TEXT tx_sp_mcmcinterval 530 558 260 ., label("MCMC steps between recorded draws; default 50")
-  SPINNER sp_mcmcinterval 800 558 70 ., default(50) max(999999) min(-999999) nomem option(mcmcinterval)
-  TEXT tx_sp_mcmcsamplesi 530 586 260 ., label("Number of recorded MCMC draws per simulation; default 3,000")
-  SPINNER sp_mcmcsamplesi 800 586 70 ., default(3000) max(999999) min(-999999) nomem option(mcmcsamplesize)
-  TEXT tx_sp_mcmleiterati 530 614 260 ., label("Maximum MCMLE outer iterations; default 20")
-  SPINNER sp_mcmleiterati 800 614 70 ., default(20) max(999999) min(-999999) nomem option(mcmleiterations)
-  TEXT tx_ed_proposal 530 642 260 ., label("Metropolis-Hastings proposal; default")
-  EDIT ed_proposal 800 642 190 ., nomem option(proposal)
-  TEXT tx_sp_seed 530 670 260 ., label("Set the random-number seed before simulating (for reproducibility)")
-  SPINNER sp_seed 800 670 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
-  TEXT tx_cx_verbose 530 698 260 ., label("Show MPLE/MCMLE iteration detail")
-  CHECKBOX cx_verbose 800 698 190 ., label("verbose") option(verbose)
+  TEXT tx_core 20 54 460 ., label("Core (edges is required):")
+  CHECKBOX cx_edges 30 76 200 ., label("edges - density/intercept term") option(edges)
+  CHECKBOX cx_mutual 30 100 300 ., label("mutual - reciprocated-tie count (directed only)") option(mutual)
+  TEXT tx_terms 20 130 300 ., label("Model terms (tick to include; fill in a value if needed):")
+  TEXT tx_hdr_0_154 20 154 340 ., label("-- Dyadic covariates --")
+  CHECKBOX cx_nodematch 20 176 170 ., label("nodematch")
+  VARLIST ed_nodematch 195 176 155 ., nomem
+  CHECKBOX cx_nodematchdiff 20 202 170 ., label("nodematchdiff")
+  VARLIST ed_nodematchdiff 195 202 155 ., nomem
+  CHECKBOX cx_nodecov 20 228 170 ., label("nodecov")
+  VARLIST ed_nodecov 195 228 155 ., nomem
+  CHECKBOX cx_nodeicov 20 254 170 ., label("nodeicov")
+  VARLIST ed_nodeicov 195 254 155 ., nomem
+  CHECKBOX cx_nodeocov 20 280 170 ., label("nodeocov")
+  VARLIST ed_nodeocov 195 280 155 ., nomem
+  CHECKBOX cx_edgecov 20 306 170 ., label("edgecov")
+  COMBOBOX ed_edgecov 195 306 155 ., dropdown contents(netlist) nomem
+  CHECKBOX cx_absdist 20 332 170 ., label("absdist")
+  VARLIST ed_absdist 195 332 155 ., nomem
+  CHECKBOX cx_hamming 20 358 170 ., label("hamming")
+  COMBOBOX ed_hamming 195 358 155 ., dropdown contents(netlist) nomem
+  TEXT tx_hdr_0_384 20 384 340 ., label("-- Factor / mix / sender-receiver --")
+  CHECKBOX cx_nodefactor 20 406 170 ., label("nodefactor")
+  VARLIST ed_nodefactor 195 406 155 ., nomem
+  CHECKBOX cx_nodeofactor 20 432 170 ., label("nodeofactor")
+  VARLIST ed_nodeofactor 195 432 155 ., nomem
+  CHECKBOX cx_nodeifactor 20 458 170 ., label("nodeifactor")
+  VARLIST ed_nodeifactor 195 458 155 ., nomem
+  CHECKBOX cx_nodemix 20 484 170 ., label("nodemix")
+  VARLIST ed_nodemix 195 484 155 ., nomem
+  CHECKBOX cx_sender 20 510 300 ., label("sender: One coefficient per node (except a base node) equal to that node's own") option(sender)
+  CHECKBOX cx_receiver 380 154 300 ., label("receiver: One coefficient per node (except a base node) equal to that node's own") option(receiver)
+  TEXT tx_hdr_1_180 380 180 340 ., label("-- Geometrically weighted --")
+  CHECKBOX cx_gwesp 380 202 170 ., label("gwesp")
+  EDIT ed_gwesp 555 202 155 ., nomem
+  CHECKBOX cx_gwdsp 380 228 170 ., label("gwdsp")
+  EDIT ed_gwdsp 555 228 155 ., nomem
+  CHECKBOX cx_gwnsp 380 254 170 ., label("gwnsp")
+  EDIT ed_gwnsp 555 254 155 ., nomem
+  CHECKBOX cx_gwdegree 380 280 170 ., label("gwdegree")
+  EDIT ed_gwdegree 555 280 155 ., nomem
+  CHECKBOX cx_gwodegree 380 306 170 ., label("gwodegree")
+  EDIT ed_gwodegree 555 306 155 ., nomem
+  CHECKBOX cx_gwidegree 380 332 170 ., label("gwidegree")
+  EDIT ed_gwidegree 555 332 155 ., nomem
+  TEXT tx_hdr_1_358 380 358 340 ., label("-- Fixed shared-partner counts --")
+  CHECKBOX cx_esp 380 380 170 ., label("esp")
+  EDIT ed_esp 555 380 155 ., nomem
+  CHECKBOX cx_dsp 380 406 170 ., label("dsp")
+  EDIT ed_dsp 555 406 155 ., nomem
+  TEXT tx_hdr_1_432 380 432 340 ., label("-- Degree sequence --")
+  CHECKBOX cx_degree 380 454 170 ., label("degree")
+  EDIT ed_degree 555 454 155 ., nomem
+  CHECKBOX cx_odegree 380 480 170 ., label("odegree")
+  EDIT ed_odegree 555 480 155 ., nomem
+  CHECKBOX cx_idegree 380 506 170 ., label("idegree")
+  EDIT ed_idegree 555 506 155 ., nomem
+  CHECKBOX cx_concurrent 740 154 300 ., label("concurrent: Count of nodes with (total) degree 2 or higher; undirected only") option(concurrent)
+  CHECKBOX cx_kstar 740 180 170 ., label("kstar")
+  EDIT ed_kstar 915 180 155 ., nomem
+  CHECKBOX cx_ostar 740 206 170 ., label("ostar")
+  EDIT ed_ostar 915 206 155 ., nomem
+  CHECKBOX cx_istar 740 232 170 ., label("istar")
+  EDIT ed_istar 915 232 155 ., nomem
+  CHECKBOX cx_degrange 740 258 170 ., label("degrange")
+  EDIT ed_degrange 915 258 155 ., nomem
+  CHECKBOX cx_degrangeto 740 284 170 ., label("degrangeto")
+  EDIT ed_degrangeto 915 284 155 ., nomem
+  CHECKBOX cx_odegrange 740 310 170 ., label("odegrange")
+  EDIT ed_odegrange 915 310 155 ., nomem
+  CHECKBOX cx_odegrangeto 740 336 170 ., label("odegrangeto")
+  EDIT ed_odegrangeto 915 336 155 ., nomem
+  CHECKBOX cx_idegrange 740 362 170 ., label("idegrange")
+  EDIT ed_idegrange 915 362 155 ., nomem
+  CHECKBOX cx_idegrangeto 740 388 170 ., label("idegrangeto")
+  EDIT ed_idegrangeto 915 388 155 ., nomem
+  TEXT tx_hdr_2_414 740 414 340 ., label("-- Triad closure (directed) --")
+  CHECKBOX cx_triangle 740 436 300 ., label("triangle: Count of triangles (mutually tied triples); undirected only") option(triangle)
+  CHECKBOX cx_ctriple 740 462 300 ., label("ctriple: Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only") option(ctriple)
+  CHECKBOX cx_transitiveties 740 488 300 ., label("transitiveties: Count of TIED arcs i->j for which there also exists a two-path i->k->j") option(transitiveties)
+  CHECKBOX cx_cyclicalties 740 514 300 ., label("cyclicalties: Count of TIED arcs i->j for which there also exists a return two-path ") option(cyclicalties)
+  TEXT tx_est 20 550 300 ., label("Estimation settings:")
+  TEXT tx_lbl_method 20 574 170 ., label("Estimation method; default  unless the m")
+  COMBOBOX cb_method 195 574 155 ., dropdownlist contents(list_method) nomem option(method)
+  TEXT tx_lbl_mcmcburnin 380 574 170 ., label("MCMC burn-in steps per simulation; defau")
+  SPINNER sp_mcmcburnin 555 574 70 ., default(3000) max(999999) min(-999999) nomem option(mcmcburnin)
+  TEXT tx_lbl_mcmcinterval 20 600 170 ., label("MCMC steps between recorded draws; defau")
+  SPINNER sp_mcmcinterval 195 600 70 ., default(50) max(999999) min(-999999) nomem option(mcmcinterval)
+  TEXT tx_lbl_mcmcsamplesize 380 600 170 ., label("Number of recorded MCMC draws per simula")
+  SPINNER sp_mcmcsamplesize 555 600 70 ., default(3000) max(999999) min(-999999) nomem option(mcmcsamplesize)
+  TEXT tx_lbl_mcmleiterations 20 626 170 ., label("Maximum MCMLE outer iterations; default ")
+  SPINNER sp_mcmleiterations 195 626 70 ., default(20) max(999999) min(-999999) nomem option(mcmleiterations)
+  TEXT tx_lbl_proposal 380 626 170 ., label("Metropolis-Hastings proposal; default")
+  COMBOBOX cb_proposal 555 626 155 ., dropdownlist contents(list_proposal) nomem option(proposal)
+  TEXT tx_lbl_seed 20 652 170 ., label("Set the random-number seed before simula")
+  SPINNER sp_seed 195 652 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
+  TEXT tx_lbl_verbose 380 652 170 ., label("Show MPLE/MCMLE iteration detail")
+  CHECKBOX cx_verbose 555 652 120 ., label("verbose") option(verbose)
 END
 
 LIST netlist
 BEGIN
 	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_method
+BEGIN
+	mple
+	mcmle
+END
+
+LIST list_proposal
+BEGIN
+	uniform
+	tnt
 END
 
 PROGRAM initialize
@@ -131,55 +142,119 @@ END
 
 PROGRAM command
 BEGIN
-	put "nwergm " main.cb_net
+	require main.cx_edges
+	put "nwergm " main.cb_net ", edges"
 	beginoptions
-		option main.cx_edges
 		option main.cx_mutual
-		optionarg main.ed_nodematch
-		optionarg main.ed_nodematchdif
-		optionarg main.ed_nodecov
-		optionarg main.ed_nodeicov
-		optionarg main.ed_nodeocov
-		optionarg main.ed_edgecov
-		optionarg main.ed_absdist
-		optionarg main.ed_nodefactor
-		optionarg main.ed_nodemix
-		optionarg main.ed_gwesp
-		optionarg main.ed_gwdsp
-		optionarg main.ed_gwnsp
-		optionarg main.ed_gwdegree
-		optionarg main.ed_gwodegree
-		optionarg main.ed_gwidegree
-		optionarg main.ed_degree
-		optionarg main.ed_odegree
-		optionarg main.ed_idegree
-		option main.cx_concurrent
-		option main.cx_triangle
-		option main.cx_ctriple
-		optionarg main.ed_nodeifactor
-		optionarg main.ed_nodeofactor
-		optionarg main.ed_kstar
-		optionarg main.ed_istar
-		optionarg main.ed_ostar
-		optionarg main.ed_degrange
-		optionarg main.ed_degrangeto
-		optionarg main.ed_odegrange
-		optionarg main.ed_odegrangeto
-		optionarg main.ed_idegrange
-		optionarg main.ed_idegrangeto
-		optionarg main.ed_esp
-		optionarg main.ed_dsp
-		option main.cx_transitiveti
-		option main.cx_cyclicalties
-		optionarg main.ed_hamming
+		if main.cx_nodematch {
+			put " nodematch(" main.ed_nodematch ")"
+		}
+		if main.cx_nodematchdiff {
+			put " nodematchdiff(" main.ed_nodematchdiff ")"
+		}
+		if main.cx_nodecov {
+			put " nodecov(" main.ed_nodecov ")"
+		}
+		if main.cx_nodeicov {
+			put " nodeicov(" main.ed_nodeicov ")"
+		}
+		if main.cx_nodeocov {
+			put " nodeocov(" main.ed_nodeocov ")"
+		}
+		if main.cx_edgecov {
+			put " edgecov(" main.ed_edgecov ")"
+		}
+		if main.cx_absdist {
+			put " absdist(" main.ed_absdist ")"
+		}
+		if main.cx_hamming {
+			put " hamming(" main.ed_hamming ")"
+		}
+		if main.cx_nodefactor {
+			put " nodefactor(" main.ed_nodefactor ")"
+		}
+		if main.cx_nodeofactor {
+			put " nodeofactor(" main.ed_nodeofactor ")"
+		}
+		if main.cx_nodeifactor {
+			put " nodeifactor(" main.ed_nodeifactor ")"
+		}
+		if main.cx_nodemix {
+			put " nodemix(" main.ed_nodemix ")"
+		}
 		option main.cx_sender
 		option main.cx_receiver
-		optionarg main.ed_method
+		if main.cx_gwesp {
+			put " gwesp(" main.ed_gwesp ")"
+		}
+		if main.cx_gwdsp {
+			put " gwdsp(" main.ed_gwdsp ")"
+		}
+		if main.cx_gwnsp {
+			put " gwnsp(" main.ed_gwnsp ")"
+		}
+		if main.cx_gwdegree {
+			put " gwdegree(" main.ed_gwdegree ")"
+		}
+		if main.cx_gwodegree {
+			put " gwodegree(" main.ed_gwodegree ")"
+		}
+		if main.cx_gwidegree {
+			put " gwidegree(" main.ed_gwidegree ")"
+		}
+		if main.cx_esp {
+			put " esp(" main.ed_esp ")"
+		}
+		if main.cx_dsp {
+			put " dsp(" main.ed_dsp ")"
+		}
+		if main.cx_degree {
+			put " degree(" main.ed_degree ")"
+		}
+		if main.cx_odegree {
+			put " odegree(" main.ed_odegree ")"
+		}
+		if main.cx_idegree {
+			put " idegree(" main.ed_idegree ")"
+		}
+		option main.cx_concurrent
+		if main.cx_kstar {
+			put " kstar(" main.ed_kstar ")"
+		}
+		if main.cx_ostar {
+			put " ostar(" main.ed_ostar ")"
+		}
+		if main.cx_istar {
+			put " istar(" main.ed_istar ")"
+		}
+		if main.cx_degrange {
+			put " degrange(" main.ed_degrange ")"
+		}
+		if main.cx_degrangeto {
+			put " degrangeto(" main.ed_degrangeto ")"
+		}
+		if main.cx_odegrange {
+			put " odegrange(" main.ed_odegrange ")"
+		}
+		if main.cx_odegrangeto {
+			put " odegrangeto(" main.ed_odegrangeto ")"
+		}
+		if main.cx_idegrange {
+			put " idegrange(" main.ed_idegrange ")"
+		}
+		if main.cx_idegrangeto {
+			put " idegrangeto(" main.ed_idegrangeto ")"
+		}
+		option main.cx_triangle
+		option main.cx_ctriple
+		option main.cx_transitiveties
+		option main.cx_cyclicalties
+		optionarg main.cb_method
 		optionarg main.sp_mcmcburnin
 		optionarg main.sp_mcmcinterval
-		optionarg main.sp_mcmcsamplesi
-		optionarg main.sp_mcmleiterati
-		optionarg main.ed_proposal
+		optionarg main.sp_mcmcsamplesize
+		optionarg main.sp_mcmleiterations
+		optionarg main.cb_proposal
 		optionarg main.sp_seed
 		option main.cx_verbose
 	endoptions

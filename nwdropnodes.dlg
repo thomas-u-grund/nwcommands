@@ -24,12 +24,12 @@ BEGIN
   EDIT ed_nodes 290 82 190 ., nomem option(nodes)
   TEXT tx_ed_keepmat 20 110 260 ., label("Mata  x 1 matrix; 0 = drop, 1 = keep")
   EDIT ed_keepmat 290 110 190 ., nomem option(keepmat)
-  TEXT tx_ed_attributes 20 138 260 ., label("Attribute variables that are included in the drop")
-  EDIT ed_attributes 290 138 190 ., nomem option(attributes)
+  TEXT tx_vl_attributes 20 138 260 ., label("Attribute variables that are included in the drop")
+  VARLIST vl_attributes 290 138 190 ., nomem option(attributes)
   TEXT tx_cx_netonly 20 166 260 ., label("Only drops the network, but keeps all Stata variables")
   CHECKBOX cx_netonly 290 166 190 ., label("netonly") option(netonly)
-  TEXT tx_ed_generate 20 194 260 ., label("Generates a new network and does not overwrite the original network")
-  EDIT ed_generate 290 194 190 ., nomem option(generate)
+  TEXT tx_cb_generate 20 194 260 ., label("Generates a new network and does not overwrite the original network")
+  COMBOBOX cb_generate 290 194 190 ., dropdown contents(netlist) nomem option(generate)
 END
 
 LIST netlist
@@ -50,9 +50,9 @@ BEGIN
 		option main.cx_xvars
 		optionarg main.ed_nodes
 		optionarg main.ed_keepmat
-		optionarg main.ed_attributes
+		optionarg main.vl_attributes
 		option main.cx_netonly
-		optionarg main.ed_generate
+		optionarg main.cb_generate
 	endoptions
 	stata
 END

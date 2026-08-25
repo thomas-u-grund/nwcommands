@@ -32,8 +32,8 @@ BEGIN
   EDIT ed_prob 290 194 190 ., nomem option(prob)
   TEXT tx_ed_labs 530 54 260 ., label("overwrite node labels")
   EDIT ed_labs 800 54 190 ., nomem option(labs)
-  TEXT tx_ed_name 530 82 260 ., label("name of the new random network; default =")
-  EDIT ed_name 800 82 190 ., nomem option(name)
+  TEXT tx_cb_name 530 82 260 ., label("name of the new random network; default =")
+  COMBOBOX cb_name 800 82 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_cx_undirected 530 110 260 ., label("generate an undirected network; default = directed")
   CHECKBOX cx_undirected 800 110 190 ., label("undirected") option(undirected)
   TEXT tx_cx_xvars 530 138 260 ., label("generate Stata variables for the network")
@@ -64,7 +64,7 @@ BEGIN
 		optionarg main.ed_density
 		optionarg main.ed_prob
 		optionarg main.ed_labs
-		optionarg main.ed_name
+		optionarg main.cb_name
 		option main.cx_undirected
 		option main.cx_xvars
 		option main.cx_noreplace

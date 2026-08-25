@@ -28,8 +28,8 @@ BEGIN
   CHECKBOX cx_noclear 290 138 190 ., label("noclear") option(noclear)
   TEXT tx_cx_xvars 20 166 260 ., label("generate Stata variables for the network")
   CHECKBOX cx_xvars 290 166 190 ., label("xvars") option(xvars)
-  TEXT tx_ed_name 20 194 260 ., label("name of the new network; default =")
-  EDIT ed_name 290 194 190 ., nomem option(name)
+  TEXT tx_cb_name 20 194 260 ., label("name of the new network; default =")
+  COMBOBOX cb_name 290 194 190 ., dropdown contents(netlist) nomem option(name)
   TEXT tx_ed_labs 530 54 260 ., label("overwrite node labels")
   EDIT ed_labs 800 54 190 ., nomem option(labs)
   TEXT tx_cx_directed 530 82 260 ., label("force the network to be directed (alias: )")
@@ -42,8 +42,15 @@ BEGIN
   CHECKBOX cx_forceundirec 800 166 190 ., label("forceundirected") option(forceundirected)
 END
 
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
 PROGRAM initialize
 BEGIN
+	put "_nwdialog nwfromedge"
+	stata hidden immediate
 END
 
 PROGRAM command
@@ -55,7 +62,7 @@ BEGIN
 		optionarg main.ed_prefix
 		option main.cx_noclear
 		option main.cx_xvars
-		optionarg main.ed_name
+		optionarg main.cb_name
 		optionarg main.ed_labs
 		option main.cx_directed
 		option main.cx_undirected

@@ -28,8 +28,8 @@ BEGIN
   CHECKBOX cx_isolates 290 138 190 ., label("isolates") option(isolates)
   TEXT tx_ed_alpha 20 166 260 ., label("Tuning parameter for valued networks; default = 0")
   EDIT ed_alpha 290 166 100 ., numonly nomem option(alpha)
-  TEXT tx_ed_generate 20 194 260 ., label("Generate variables for degree, outdegree, indegree, isolate")
-  EDIT ed_generate 290 194 190 ., nomem option(generate)
+  TEXT tx_vl_generate 20 194 260 ., label("Generate variables for degree, outdegree, indegree, isolate")
+  VARLIST vl_generate 290 194 190 ., nomem option(generate)
   TEXT tx_ed_in 20 222 260 ., label("Options for tabulating")
   EDIT ed_in 290 222 190 ., nomem option(in)
   TEXT tx_cx_outputoff 20 250 260 ., label("Reserved/internal - has no effect on a one-mode network's own output; use  inste")
@@ -58,7 +58,7 @@ BEGIN
 		option main.cx_silent
 		option main.cx_isolates
 		optionarg main.ed_alpha
-		optionarg main.ed_generate
+		optionarg main.vl_generate
 		optionarg main.ed_in
 		option main.cx_outputoff
 		optionarg main.ed_out
