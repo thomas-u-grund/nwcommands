@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwdendrogram - Plot a wheel dendrogram")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Cluster name (from nwhierarchy; blank = most recent):")
+  COMBOBOX cb_cluster 290 20 190 ., dropdown contents(clusterlist) nomem
   GROUPBOX gb_opt 10 44 520 104, label("Options")
   TEXT tx_ed_factor 20 54 260 ., label("zoom in or out")
   EDIT ed_factor 290 54 190 ., nomem option(factor)
@@ -26,20 +26,20 @@ BEGIN
   CHECKBOX cx_lab 290 110 190 ., label("lab") option(lab)
 END
 
-LIST netlist
+LIST clusterlist
 BEGIN
-	// populated at runtime by _nwdialog.ado
+	// populated at runtime by _nwdialog_clusters.ado
 END
 
 PROGRAM initialize
 BEGIN
-	put "_nwdialog nwdendrogram"
+	put "_nwdialog_clusters nwdendrogram"
 	stata hidden immediate
 END
 
 PROGRAM command
 BEGIN
-	put "nwdendrogram " main.cb_net
+	put "nwdendrogram " main.cb_cluster
 	beginoptions
 		optionarg main.ed_factor
 		optionarg main.vr_label
