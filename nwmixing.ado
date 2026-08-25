@@ -216,14 +216,24 @@ program nwmixing
 	qui if `permutations' > 1  {
 	
 		mata: `EI_qap' = rep_EIvar(`permutations', *`netobj'->get_matrix(), `attmat')
-		if `EI_index' > 0 {
-			mata: `out' = sum(`EI_qap' :>= `EI_index')
-		}
-		else {
-			mata: `out' = sum(`EI_qap' :<= `EI_index')	
-		}
-		mata: `pvalue' = `out' / `permutations'
-		mata: mata drop `out'
+		// BUGFIX: the one-sided direction used to be chosen from the SIGN
+		// of the OBSERVED E-I index itself (`EI_index' > 0), not from
+		// where the observed value actually falls relative to the null
+		// distribution's own center - wrong whenever that center isn't
+		// near zero, which happens for any attribute with meaningfully
+		// unequal group sizes (a larger group mechanically produces more
+		// same-group dyads than a naive 50/50 split assumes, so the QAP
+		// null itself skews positive). Confirmed directly on a real case:
+		// unequal Birthplace groups gave a null mean around +0.41, so an
+		// observed E-I of +0.05 - four SDs below that null mean, i.e.
+		// strong evidence of homophily - was being compared against the
+		// wrong (>=) tail and reported as p~=0.93 instead of p~=0.
+		// Replaced with a standard, direction-agnostic two-sided
+		// permutation p-value (twice the smaller tail, capped at 1),
+		// which needs no assumption about which side of the null the
+		// observed value should fall on.
+		mata: `pvalue' = 2 * min((sum(`EI_qap' :>= `EI_index'), sum(`EI_qap' :<= `EI_index'))) / `permutations'
+		mata: `pvalue' = min((`pvalue', 1))
 		
 		drop _all
 		getmata EI_simulated = `EI_qap'
@@ -264,6 +274,19 @@ real matrix rep_EIvar(real scalar reps, real matrix net1, real matrix attr){
 	attrMatTr = attrMat'
 	same = (attrMat:== attrMatTr)
 	net1 = (net1:!=0)
+	// BUGFIX: the network's own diagonal is missing (no self-ties), not
+	// 0, and Mata's `:!=0' treats missing as not-equal-to-zero - so
+	// before this fix, every one of the `nsize' diagonal cells silently
+	// counted as a tie, and since attr[i]==attr[i] always, every one of
+	// them counted as an INTERNAL tie too. That inflated both the
+	// simulated total and internal counts by the same fixed `nsize'
+	// amount on every single permutation draw, systematically biasing
+	// the whole null distribution - confirmed directly: this dropped a
+	// real network's simulated internal-tie count from 180 to the
+	// correct 126 (63 real internal ties, each counted twice for an
+	// undirected network - exactly matching this command's own printed
+	// mixing table).
+	_diag(net1, 0)
 	
 	total = J(reps, 1, sum(net1))
 	intern = J(reps, 1, 0)
