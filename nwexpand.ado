@@ -1,49 +1,258 @@
+/***
+{smcl}
+{* *! version 2.0.0  26aug2016}{...}
+{marker topic}
+{helpb nw_topical##generator:[NW-2.3] Generators}
+
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwexpand {hline 2}}Expand variable to network{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwexpand} 
+{it:{help varname}} [{it:{help if}}]
+{cmd:,}
+[{opt mode}({it:{help nwexpand##expand_mode:mode}})
+{opt network}({it:{help netname}})
+{opth nodes(int)}
+{opt name}({it:{help newnetname}})
+{opt xvars}
+{opt labs}({it:lab1 lab2 ...})
+{opt replace}]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt mode}({it:{help nwexpand##expand_mode:mode}})}mode used to expand variable; default = {it:same}{p_end}
+{synopt:{opt network}({it:{help netname}})}apply node labels of {it:netname}{p_end}
+{synopt:{opth nodes(int)}}size of new network; default = {help _N} - an explicit {opt nodes(1)} for a genuine 1-node network is honored, distinct from leaving {opt nodes()} unspecified{p_end}
+{synopt:{opt name}({it:{help newnetname}})}name of the new random network; default = {it:{help nwexpand##expand_mode:mode}_varname}{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
+{synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
+
+{synoptset 20 tabbed}{...}
+{marker expand_mode}{...}
+{p2col:{it:mode}}{p_end}
+{p2line}
+{p2col:{cmd: same}}{it:same(x_ij) = (varname[i] == varname[j])}{p_end}
+{p2col:{cmd: dist}}{it:dist(x_ij) = (varname[i] - varname[j])}{p_end}
+{p2col:{cmd: distinv}}{it:invdist(x_ij) = -(varname[i] - varname[j])}{p_end}
+{p2col:{cmd: absdist}}{it:dist(x_ij) = (|varname[i] - varname[j]|)}{p_end}
+{p2col:{cmd: absdistinv}}{it:invdist(x_ij) = max(absdist) - (|varname[i] - varname[j]|)}{p_end}
+{p2col:{cmd: sender}}{it:sender(x_ij) = varname[i]}{p_end}
+{p2col:{cmd: receiver}}{it:receiver(x_ij) = varname[j]}{p_end}
+
+
+{title:Description}
+
+{pstd}
+This command generates a new network by expanding an existing variable. When option {bf:nodes()} is unspecified, the 
+command generates a network with {help _N} nodes. 
+ 
+{pstd}
+The value {it:M_ij} of the adjacency matrix {it:M} of the new network is calculated from the values {help varname}{bf:[i]}, {help varname}{bf:[j]}
+and some function {it:expfcn} defined by {it:{help nwexpand##expand_mode:mode}}. By default, {it:mode = same}.
+
+{pstd}
+Valid modes are: {bf:same, dist, distinv, absdist, absdistinv, sender, receiver}
+
+{pstd}
+The option {bf:network(}{help netname}{bf:)} applies the node labels of {it:netname} when expanding the variable. Often specifying this
+option is needed.
+
+{pstd} 
+An example demonstrates how this works. First, we generate a small dataset with 6 observations and the new variable {it: gender}. This new variable
+takes the value 0 for observations 1-3 and the value 1 for observations 4-6.
+
+	{cmd:. nwclear}
+	{cmd:. set obs 6}
+	{cmd:. gen gender = (_n > 3)}
+	{cmd:. list gender}
+     
+	   {c TLC}{hline 8}{c TRC}
+	   {c |} {res}gender {txt}{c |}
+	   {c LT}{hline 8}{c RT}
+	1. {c |} {res}     0 {txt}{c |}
+	2. {c |} {res}     0 {txt}{c |}
+	3. {c |} {res}     0 {txt}{c |}
+	4. {c |} {res}     1 {txt}{c |}
+	5. {c |} {res}     1 {txt}{c |}
+	   {c LT}{hline 8}{c RT}
+	6. {c |} {res}     1 {txt}{c |}
+	   {c BLC}{hline 8}{c BRC}
+
+
+{pstd}
+Next, we use {it:nwexpand} to generate a new network from this variable. This generate a new network called {it:same_gender}.
+
+	{cmd:. nwexpand gender}	   
+
+	
+{pstd}
+By looking closer at the adjacency matrix {it:M} of this new network we see how the default {it:exp_fcn = same} generated the entries {it:M_ij} as:
+
+{pmore}
+{it:M_ij = (varname[i] == varname[j])}.
+	
+	{com}. nwsummarize same_gender, matonly
+
+	     1   2   3   4   5   6
+	  {c TLC}{hline 25}{c TRC}
+	1 {c |}  {res}0                    {txt}  {c |}
+	2 {c |}  {res}1   0                {txt}  {c |}
+	3 {c |}  {res}1   1   0            {txt}  {c |}
+	4 {c |}  {res}0   0   0   0        {txt}  {c |}
+	5 {c |}  {res}0   0   0   1   0    {txt}  {c |}
+	6 {c |}  {res}0   0   0   1   1   0{txt}  {c |}
+          {c BLC}{hline 25}{c BRC}
+	
+	
+{pstd}
+Alternatively, let us select another mode to illustrate the difference. This command generates a new network called {it:dist_gender} with 
+the following adjacency matrix:
+
+{pmore}
+{it:M_ij = (varname[i] - varname[j])}.
+
+	{cmd:. nwexpand gender, mode(dist)}
+	{cmd:. nwsummarize dist_gender, matonly}
+
+
+	     {txt} 1    2    3    4    5    6
+	  {c TLC}{hline 31}{c TRC}
+	1 {c |}  {res} 0    0    0   -1   -1   -1{txt}  {c |}
+	2 {c |}  {res} 0    0    0   -1   -1   -1{txt}  {c |}
+	3 {c |}  {res} 0    0    0   -1   -1   -1{txt}  {c |}
+	4 {c |}  {res} 1    1    1    0    0    0{txt}  {c |}
+	5 {c |}  {res} 1    1    1    0    0    0{txt}  {c |}
+	6 {c |}  {res} 1    1    1    0    0    0{txt}  {c |}
+          {c BLC}{hline 31}{c BRC}
+
+	
+{pstd}
+Generally, creating networks like this can be extremely useful for many purposes. For example, one can use it to plot 
+the edgecolors of ties differently when two nodes have the same value on some attribute. This example 
+loads the {it:gang} network and plots the color of ties in such a way that it shows if two gang members
+(who co-offend with each other) were either 1) both in prison before or 2) both not in prison before.
+
+	{cmd:. nwwebuse gang, nwclear}
+	{cmd:. nwexpand Prison, network(gang)}
+	{cmd:. nwplot gang, edgecolor(same_Prison)}
+
+{pstd}
+Notice how here the we need to specify the option {bf:network(gang)}. Otherwise, {bf:nwepxand} does not know that the labels
+of the gang network should be applied and it would consequently treat it is a completeley different network.	
+	
+{pstd}
+The next example loads the {it:glasgow} dataset and colors ties differently depending on whether the sender
+of a friendship tie did sport at wave1.
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwexpand sport1, mode(sender) network(glasgow1)}
+	{cmd:. nwplot glasgow1, edgecolor(sender_sport1)}
+	
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: source attribute values can be binary or continuous - {opt mode()} selects the transform. Directed: not applicable - produces a new derived network from a node attribute, not from an existing network's own directed status. Weighted: yes, natively - every {opt mode()} choice (same/dist/absdist/distinv/absdistinv/sender/receiver) produces continuous-valued ties by construction. Signed: yes, {opt mode(dist)} in particular can produce negative values. Two-mode: not applicable - produces a one-mode network from node-level attribute comparisons.
+
+{title:See also}
+
+	{help nwcorrelate}
+
+***/
 capture program drop nwexpand	
 program nwexpand
-	syntax varlist(min=1 max=1) [if],[ stub(string) mode(string) vars(string) nodes(integer 0) xvars name(string) noreplace]
+	// BUGFIX: `noreplace' was accepted by syntax but never referenced
+	// anywhere in this file's body - a complete no-op - while the actual
+	// collision error raised further below (via the `nwset' call this
+	// delegates to) told the caller to "Specify option replace", an
+	// option nwexpand itself never exposed at all, so that instruction
+	// was impossible to follow. Replaced `noreplace' with a real,
+	// working `replace', forwarded to the underlying `nwset' call.
+	syntax varlist(min=1 max=1) [if],[ mode(string) network(string) nodes(integer 0) xvars name(string) labs(string) replace]
 	
-	preserve
+	unw_defs
+	
+	if "`network'" != "" {
+		// BUGFIX: an unrecognized network() used to fall through to a
+		// raw, uninformative Mata "subscript invalid" crash somewhere
+		// downstream rather than a clean, immediate error - confirmed
+		// directly via this .sthlp's own worked example, which passed
+		// "glasgow" (nwwebuse's own multi-network dataset actually
+		// creates glasgow1/glasgow2/glasgow3, never a network literally
+		// named "glasgow" - the .sthlp's own example has been corrected
+		// to use glasgow1).
+		capture nw_syntax `network', other(_check) max(1)
+		if _rc != 0 {
+			di "{err}Network {bf:`network'} not found."
+			error `errNWsNotFound'
+		}
+		nw_syntax `network', max(1)
+		qui nwsummarize `netname'
+		local labs "`r(labs)'"
+	}
+	
 	if "`if'" != "" {
 		qui keep `if'
 	}
 	
-	// check if this is the first network in this Stata session
-	if "$nwtotal" == "" {
-		global nwtotal = 0
-	}
+	local varname `varlist'
+	
 	// get important parameters
 	if ("`mode'" == ""){
 		local mode = "same"
 	}
 	
+	_opts_oneof "same dist absdist distinv absdistinv sender receiver" "mode" "`mode'" 6556
 	
-	_opts_oneof "same dist absdist distinv abdistinv sender receiver" "mode" "`mode'" 6555
-
-	if `nodes' == 0{
-		qui sum `varlist'
-		local nodes = r(N)
-		if (`nodes'==0){
-			error 6200
-		}
+	// BUGFIX: `nodes(integer 1)''s own default value was also 1, so an
+	// explicit `nodes(1)' (a genuine, deliberate request for a 1-node
+	// network) was indistinguishable from "nodes() not specified at
+	// all" - both silently expanded to use every observation instead.
+	// Changed the not-given sentinel to 0 (never a legal node count),
+	// so `nodes(1)' is now honored exactly as requested.
+	if `nodes' == 0 {
+		local nodes = `=_N'
 	}
-	
-	if `nodes' > `=_N' {
+	if (`nodes' > `=_N' | `=_N' == 0) {
 		di "{err}Not enough observations for variable {bf:`varlist'}."
 		error 6200
 	}
+	
+	capture confirm numeric variable `varlist'
+	if _rc != 0 {
+		tempvar varnum
+		encode `varlist', generate(`varnum')
+		local varlist `varnum'
+	}
 		
 	// generate valid network name and valid varlist
+	// BUGFIX: an unspecified name() has always been documented/expected
+	// to auto-rename on collision (`mode'_`varname'', `mode'_`varname'_1,
+	// ...) rather than require replace() - see nwrandom.ado's/
+	// nwpref.ado's own identical fix (harmonisation unit 126/129/130)
+	// for the full root cause. Resolved the same way: only when the
+	// caller did NOT supply name(), pre-resolve the actual (possibly
+	// auto-incremented) target name via nwvalidate before nwset ever
+	// sees it.
+	local name_was_given = ("`name'" != "")
 	if "`name'" == "" {
-		local name "`mode'_`varlist'"
+		local name "`mode'_`varname'"
 	}
-	if "`stub'" == "" {
-		local stub "`mode'"
+	if !`name_was_given' {
+		nwvalidate `name'
+		local name = r(validname)
 	}
-	nwvalidate `name'
-	local expandname = r(validname)
-	nwvalidvars `nodes', stub("`stub'")
-	local expandvars "$validvars"
-		
+
 	// generate network
 	mata: attr = st_data((1::`nodes'),"`varlist'")
 	if "`mode'" == "" {
@@ -51,6 +260,7 @@ program nwexpand
 		local mode = "same"
 	}
 	if( "`mode'" == "dist"){
+		mata: distMat(attr)
 		mata: expnet = distMat(attr)
 	}
 	if ("`mode'" == "distinv"){
@@ -65,7 +275,19 @@ program nwexpand
 	if("`mode'" == "absdistinv") {
 		mata: expnet = distMat(attr)
 		mata: expnet = ((expnet:<0) :* (expnet :* -2)) + expnet
-		mata: expnet = J(`nodes',`nodes',-max(expnet)) - expnet
+		// BUGFIX: was `J(`nodes',`nodes',-max(expnet)) - expnet' - the
+		// stray negative sign on `max(expnet)' made every resulting
+		// value negative (max_dist=4 on x=1..5 gave -5..-8, not the
+		// intended "closer pairs score higher" inverse-distance
+		// transform). This is a bounded max-minus-distance inversion,
+		// not a literal 1/|diff| reciprocal (nwhomophily.sthlp's own
+		// prose used to describe it as one, since fixed) - deliberately
+		// NOT switched to a true reciprocal, which would reintroduce
+		// the very blowup-for-near-equal-values problem this bounded
+		// transform avoids (confirmed as the actual cause of a
+		// downstream nwhomophily crash - see its own CERTIFICATION.md
+		// entry).
+		mata: expnet = J(`nodes',`nodes',max(expnet)) - expnet
 		local undirected "undirected"
 	}
 	if "`mode'" == "same" {
@@ -78,14 +300,25 @@ program nwexpand
 	if "`mode'" == "receiver" {
 		mata: expnet = receiverMat(attr)		
 	}
-	nwset, mat(expnet) name(`expandname)') vars(`expandvars') `undirected'
-	
-	if "`xvars'" == "" {
-		nwload `expandname'
+
+    capture confirm variable `nw_nodename'
+	if _rc != 0 {
+		gen `nw_nodename' = "          "
+		tempname z
+		mata: `z' = (J(rows(expnet),1,"`cDftNodepref'") + strofreal((1::rows(expnet))))
+		mata: st_sstore((1::rows(expnet)),"`nw_nodename'", `z')
+
 	}
+	nwset, mat(expnet) name(`name') labs(`labs') `undirected' `replace'
+	if "`xvars'" == "" {
+		nwload, xvars
+	}
+	else {
+		nwload
+	}
+	
 	capture mata: mata drop expnet 
 	capture mata: mata drop attr
-	restore
 end
 	
 capture mata mata drop distMat()
@@ -95,12 +328,18 @@ capture mata mata drop receiverMat()
 
 mata:	
 real matrix senderMat(real matrix attr){
+	real scalar nsize
+	real matrix temp, rowMat
+	
 	nsize = rows(attr)
 	temp = attr :* I(nsize)
 	rowMat = temp * J(nsize,nsize,1)
 	return(rowMat)
 }
 real matrix receiverMat(real matrix attr){
+	real scalar nsize
+	real matrix temp, rowMat, colMat
+	
 	nsize = rows(attr)
 	temp = attr :* I(nsize)
 	rowMat = temp * J(nsize,nsize,1)
@@ -108,6 +347,9 @@ real matrix receiverMat(real matrix attr){
 	return(colMat)
 }
 real matrix distMat(real matrix attr){
+	real scalar nsize
+	real matrix temp, rowMat, colMat, distMat
+	
 	nsize = rows(attr)
 	temp = attr :* I(nsize)
 	rowMat = temp * J(nsize,nsize,1)
@@ -116,6 +358,9 @@ real matrix distMat(real matrix attr){
 	return(distMat)
 }
 real matrix simMat(real matrix attr){
+	real scalar nsize
+	real matrix temp, rowMat, colMat, distMat, simMat
+	
 	nsize = rows(attr)
 	temp = attr :* I(nsize)
 	rowMat = temp * J(nsize,nsize,1)
@@ -125,5 +370,3 @@ real matrix simMat(real matrix attr){
 	return(simMat)
 }
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

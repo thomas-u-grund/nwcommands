@@ -1,0 +1,46 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwnode")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 170
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwnode - Checks if node exists in a network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_ed_ego 20 54 260 ., label("Look up the node by name")
+  EDIT ed_ego 290 54 190 ., nomem option(ego)
+  TEXT tx_ed_egoid 20 82 260 ., label("Look up the node by id")
+  EDIT ed_egoid 290 82 190 ., nomem option(egoid)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwnode"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwnode " main.cb_net
+	beginoptions
+		optionarg main.ed_ego
+		optionarg main.ed_egoid
+	endoptions
+	stata
+END

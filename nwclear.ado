@@ -1,28 +1,57 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0.0  18Aug2016}{...}
+{marker topic}
+{helpb nw_topical##utilities:[NW-2.7] Utilities}
+
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwclear {hline 2}}Clear all networks and variables from memory{p_end}
+{p2colreset}{...}
+
+
+{marker syntax}{...}
+{title:Syntax}
+
+{p 8 13 2}{cmd:nwclear}
+
+
+{title:Description}
+
+{pstd}
+Clears all networks and variables from memory. This is the network extension of {help clear}. One can also just drop
+some or all networks using {help nwdrop}.
+
+{pstd}
+This example loads network data and clears everything afterwards.
+
+	{cmd:. nwwebuse glasgow}
+	{cmd:. nwclear}
+
+{pstd}	
+Alternatively, one can also just drop networks. This does not delete the Stata variables that are not associated 
+with networks. For more information see {help nwdrop}. 
+
+	{cmd:. nwdrop _all}
+	
+
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - clears all networks and Stata variables from memory unconditionally, independent of any network's own properties.
+
+{title:See also}
+
+  {help nwdrop}, {help clear}
+***/
 
 capture program drop nwclear
 program nwclear
 	clear
-	// clear all mata networks
-	if "$nwtotal" != "" { 
-		forvalues i = 1/$nwtotal {
-			capture mata: mata drop nw_mata`i'
-		}
-	}
-	capture macro drop nw*
-	capture macro drop validvars
-	
-	// clear file handlers
-	capture file close expfile
-	capture file close sessfile
-	capture file close importfile
-	
-	capture return clear
-	capture mata: st_rclear()
+	unw_defs
+	capture mata: mata drop `nw'
+	mata: st_rclear()
 end
 
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

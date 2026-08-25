@@ -1,12 +1,12 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 {marker topic}
-{helpb nw_topical##analysis:[NW-2.6] Analysis}
+{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwqap  {hline 2} Multivariate QAP regression}
+{p2col :nwqap  {hline 2}}Multivariate QAP regression{p_end}
 {p2colreset}{...}
 
 
@@ -23,6 +23,7 @@
 {opt typeoptions(regoptions)}
 {opt detail}
 {opt save}({it:{help filename}})
+{opth predict(newnetname)}
 
 
 
@@ -35,13 +36,14 @@
 {synopt:{opt typeoptions(regoptions)}}options to be passed on to the regression command{p_end}
 {synopt:{opt detail}}display details of regression results{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
+{synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 
 
 {title:Description}
 
 {pstd}
 MR-QAP is a multiple regression procedure used to assess the impact of independent variables 
-upon a dependent variable. In standard regression techniques, the typical “unit of analysis” 
+upon a dependent variable. In standard regression techniques, the typical "unit of analysis" 
 is an individual observation. In MR-QAP analysis, the unit of analysis is a dyad, a pair of individuals 
 who may or may not have some sort of relation connecting them to one another.
 
@@ -73,10 +75,22 @@ regression one can use probit regression with option {it:asis}:
 The raw output of this dyad-level regression is displayed with option {bf:detail}.
 
 {pstd}
+{opth predict(newnetname)} stores {bf:type()}'s own fitted dyad-level values - whatever statistic
+that regression command's own default {help predict} reports (predicted probability for
+{bf:logit}/{bf:probit}/{bf:cloglog}, the fitted linear mean for {bf:regress}, etc.) - as a new
+valued network, e.g. for comparing predicted tie probabilities against the observed network as a
+goodness-of-fit check. Captured from the one real (non-permuted), observed-data regression this
+command already runs internally to obtain {bf:type()}'s own coefficients - not from any of the
+{opth permutations(int)} null-model draws. The diagonal (excluded from estimation, like every
+self-tie in this command's dyadic reshaping) is set to 0 in the resulting network. A name collision
+with an existing network is handled the same non-destructive way every other network-creating
+command in this package handles it (auto-renamed with a warning, unless {it:newnetname} is free).
+
+{pstd}
 Once a dataset is assembled and a regression is carried out, the resulting coefficients indicate 
 the direction of the effect of independent variables upon the dependent variable. However, calculating 
 the standard error of these coefficients has been shown to lead to biased results when autocorrelation 
-exists – which occurs, for instance, when interpersonal relations determine individual behavior 
+exists - which occurs, for instance, when interpersonal relations determine individual behavior 
 (Krackhardt 1988). 
 
 {pstd}
@@ -100,16 +114,17 @@ of coefficients, {cmd:nwqap} calculates adjusted p-values and saves them in {it:
 Grund, T. and Densley, J. (2012). "Ethnic Heterogeneity in the Activity and Structure of a Black Street Gang." European Journal of Criminology, Vol. 9, Issue 3, pp. 388-406.
 
 {pmore}
-Krackhardt, David. (1987). “QAP Partialling as a Test of Spuriousness.” Social Networks 9: 171-186.
+Krackhardt, David. (1987). "QAP Partialling as a Test of Spuriousness." Social Networks 9: 171-186.
 
 {pmore}
-Krackhardt, David. (1988). “Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data.” Social Networks 10: 359-381.
+Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data." Social Networks 10: 359-381.
 
 
 {title:Examples}
 	
-	{cmd:. webnwuse glasgow}
+	{cmd:. nwwebuse glasgow}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
+	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}
 
 
 	{txt}Multiple Regression Quadratic Assignment Procedure
@@ -136,14 +151,57 @@ when they already were friends at time1 (glasgow1). Furthermore two individuals 
 time1 (smoke1). There is no effect for both having scored the same on sport1. 
 
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, and undirected networks are not collapsed to unique dyads - both
+{it:(i,j)} and {it:(j,i)} appear as separate observations in the dyad-level dataset (for an
+undirected network they carry the same value, so this does not bias point estimates, but it does
+mean the reported "Number of obs" and any raw regression standard errors reflect double-counted
+dyads; QAP's own permutation-based p-values, not these raw standard errors, are what {cmd:nwqap}
+actually reports). Weighted: {bf:W3}, explicit binary-only for the dependent network under the
+default (and any other binary-outcome) {opt type()} - {help logit}, {help probit}, {help cloglog},
+and {help scobit} all treat any nonzero value as a positive outcome (this is those commands' own
+documented behavior, not something {cmd:nwqap} does intentionally) - so a valued/weighted
+dependent network's tie strength is silently discarded by the chosen regression command unless a
+continuous-outcome {opt type()} (e.g. {opt type(regress)}) is used instead; {cmd:nwqap} now warns
+explicitly when this combination is detected, rather than leaving it silent. Independent networks
+and variables are not affected - their values enter the regression directly, weighted or not.
+Signed: not checked. Two-mode: not checked. A full weighted-QAP alternative (rather than a warning)
+remains on the roadmap as a larger follow-on (see {browse "docs/CERTIFICATION.md":CERTIFICATION.md}).
+
+
 {title:Stored results}
 
+{pstd}
+{cmd:nwqap} is an {bf:eclass} command: results are posted with {help ereturn:ereturn}, so
+{help estimates store}, {help estimates table}, and other standard postestimation commands
+that only need {it:e(b)}/{it:e(V)} (e.g. {help test}, {help lincom}) work as usual. {it:e(V)}
+is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a
+classical OLS/logit covariance matrix - dyadic network data violates the independent-
+observations assumption those classical formulas require, which is the entire reason QAP
+permutation testing exists in the first place. A native postestimation {help predict} does not
+work after {cmd:nwqap} returns (see {help nwqap##independentvariables:Description} above for why -
+the dyad-level dataset {bf:type()} actually fits is a transient internal detail, not the current
+dataset once {cmd:nwqap} exits); use {opth predict(newnetname)} instead to capture fitted dyad-level
+values directly, at the one point internally where they are genuinely meaningful.
+
+	Scalars
+	  {bf:e(N)}		number of dyad-level observations
+	  {bf:e(permutations)}	number of QAP permutations
+
+	Macros
+	  {bf:e(cmd)}		{bf:nwqap}
+	  {bf:e(title)}		title of estimation
+	  {bf:e(depvar)}	name of dependent network
+	  {bf:e(qap_regcmd)}	regression command used ({bf:type()})
+
 	Matrices
-	  {bf:e(pvalues)}	matrix with QAP p-values
-	
+	  {bf:e(b)}		coefficient vector
+	  {bf:e(V)}		diagonal matrix of QAP-permutation coefficient variances
+	  {bf:e(pvalues)}	matrix with QAP p-values, in the same column order as {bf:e(b)}
+
 {title:See also}
 
 	{help nwergm}, {help nwpermute}
-
-
 

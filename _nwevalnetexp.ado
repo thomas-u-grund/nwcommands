@@ -67,10 +67,10 @@ program _nwevalnetexp
 								
 				// add identifier of new temporary network
 				if (strpos("`gencmd'",",") != 0){
-					local gencmd "`gencmd' name(`_tempnet') xvars noreplace"
+					local gencmd "`gencmd' name(`_tempnet') noreplace"
 				}
 				else {
-					local gencmd "`gencmd', name(`_tempnet') xvars noreplace"
+					local gencmd "`gencmd', name(`_tempnet') noreplace"
 				}
 				
 				// check that a valididty of nw-generator and execute it 				local generator = word("`gencmd'", 1)

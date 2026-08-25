@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwcompressobs {hline 2} Compresses observations in Stata}
+{p2col :nwcompressobs {hline 2}}Compresses observations in Stata{p_end}
 {p2colreset}{...}
 
 
@@ -21,6 +21,12 @@
 Comresses the observations in Stata. Deletes all unnecessary cases that are not needed
 to represent the largest network. When the dataset also contains an attribute variable with non-missing
 data, these cases are not deleted.
+
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - trims trailing empty (all-missing) Stata observations from the dataset; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
 
 {title:Examples}
 

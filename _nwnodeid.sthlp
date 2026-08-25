@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :_nwnodeid {hline 2} Returns the nodeid of a node given its node label}
+{p2col :_nwnodeid {hline 2}}Returns the nodeid of a node given its node label{p_end}
 {p2colreset}{...}
 
 
@@ -15,15 +15,15 @@
 {p 8 17 2}
 {cmdab: _nwnodeid} 
 [{it:{help netname}}],
-{opt nodelab}({help nodelab})
+{opt nodelab}({help nodeid:nodelab})
 [{opt detail}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nodelab}({help nodelab})}nodelab of network node i{p_end}
-{synopt:{opt detail}}displays the {help nodeid} and {help nodelab} of node i{p_end}
+{synopt:{opt nodelab}({help nodeid:nodelab})}nodelab of network node i{p_end}
+{synopt:{opt detail}}displays the {help nodeid} and {help nodeid:nodelab} of node i{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -46,7 +46,7 @@ in the return vector. When no node with the specified label is found in network 
 
 {title:Examples}
 
-   {cmd:. webnwuse florentine}
+   {cmd:. nwwebuse florentine}
    {cmd:. _nwnodeid flomarriage, nodelab(medici)}
    
 		{txt}Network: {res}flomarriage

@@ -1,0 +1,43 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwcurrent")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 142
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwcurrent - Report and set current network")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 48, label("Options")
+  TEXT tx_ed_id 20 54 260 ., label("Originl network ID of the the network that should be made the current network")
+  EDIT ed_id 290 54 190 ., nomem option(id)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwcurrent"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwcurrent " main.cb_net
+	beginoptions
+		optionarg main.ed_id
+	endoptions
+	stata
+END

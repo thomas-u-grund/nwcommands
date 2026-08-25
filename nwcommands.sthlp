@@ -1,6 +1,11 @@
 {smcl}
 {* *! version 1.0.0  3sept2014}{...}
 
+{pstd}
+New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
+(core commands, help files, dialog boxes) - see {help nwinstall}.
+{p_end}
+
 {col 14}Section{col 31}Description
 {col 14}{hline 46}
 {help nw_intro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}
@@ -16,9 +21,9 @@
 {help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}
 
 
-               *! Date        : 10 Dec 2015
-               *! Version     : 1.6.3
+               *! Date        : 25 Aug 2026
+               *! Version     : 2.0
                *! Authors     : Thomas U. Grund 
                *! Contact     : thomas.u.grund@gmail.com
-               *! Web         : {browse "http://nwcommands.org"}
+               *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}
                *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}

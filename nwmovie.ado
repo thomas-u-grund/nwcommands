@@ -1,13 +1,25 @@
 *! Date        : 11feb2015
 *! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+*! Email	   : thomas.u.grund@gmail.com
 
 capture program drop nwmovie
 program nwmovie
-	syntax anything(name=netname), [z(integer 1) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) *]
+	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) noopen *]
+	unw_defs
 
-	_nwsyntax `netname', max(999) min(2)
-	
+	// BUGFIX: calling nwmovie with only a single network (violating
+	// netlist's own documented/enforced minimum of 2) used to crash
+	// with a raw Mata "subscript invalid" error (r3301) instead of a
+	// clear message - min(2)'s own enforcement inside nw_syntax doesn't
+	// itself produce a clean error on violation, the same general class
+	// of nw_syntax-failure-isn't-clean bug fixed independently in
+	// several other commands this pass.
+	capture nw_syntax `netname', max(999) min(2)
+	if _rc != 0 {
+		di "{err}nwmovie requires at least 2 networks (or a misspelled network name)."
+		error 198
+	}
+
 	if "`fname'" == "" {
 		if c(os) == "Windows" {
 			local fname "`c(pwd)'\movie"
@@ -122,58 +134,95 @@ program nwmovie
 
 
 	if c(os) == "MacOSX" {
-		if "`imagick'"== "" {
-			nwmovie_install_osx
-			local impath2 = "`r(impath)'"
-		}
+		nwmovie_install_osx
+		local impath = "`r(impath)'"
 	}
 	
 	if c(os) == "Windows" {
-		if "`imagick'" == "" {
-			nwmovie_install_win
-			local impath2 = "`r(impath)'"
-		}
+		nwmovie_install_win
+		local impath = "`r(impath)'"
 	}
 	
-	if "`imagick'" != "" {
-		local impath2 = "`imagick'"
-		di "{txt}ImageMagick path: `impath2'"
-	}
-	
+
 	// make movie
-	_nwsyntax `netname', max(999) min(2)
+	nw_syntax `netname', max(999) min(2)
 	local all_nets "`netname'"
-	
+
+	// _nwsyntax_other referenced two legacy globals ($nwtotal,
+	// nw_mata`id') that no longer exist in the current NWsdef-based
+	// storage architecture - every call unconditionally crashed with
+	// "invalid syntax" (forvalues i = 1/$nwtotal, $nwtotal empty),
+	// confirmed directly via probe before this fix, meaning nwmovie
+	// could never actually complete a single call. Replaced with
+	// nw_syntax (other() to avoid clobbering this program's own
+	// same-named locals), which already handles empty/current-network
+	// resolution the modern way. _nwsyntax_other's own self-loop-removal
+	// side effect (also unconditionally broken, same nw_mata`id'
+	// reference) is dropped rather than reimplemented blind - nwmovie
+	// has no test coverage and needs ImageMagick to run end to end in
+	// any environment, so a from-scratch reimplementation of a
+	// side-effect that was already silently dead code could not be
+	// verified here; tracked as a separate, documented follow-up rather
+	// than risking new, equally-unverifiable behaviour in the same fix.
 	local sizeCheck = 0
 	qui foreach onenet in `all_nets' {
-		_nwsyntax_other `onenet'
+		nw_syntax `onenet', other(other)
 		if `sizeCheck' == 0 {
 			local sizeCheck = `othernodes'
 		}
 		else {
 			if `sizeCheck' != `othernodes' {
+				// Error-code coherence pass: `errNWsSizeMismatch' (6056,
+				// unw_defs.ado) already names this exact situation for
+				// several sibling commands - consolidated onto it
+				// instead of this file's own off-by-one `6055'.
 				noi di "{err}Networks need to be of the same size"
-				error 6055
+				error `errNWsSizeMismatch'
 			}
 		}
 	}
-	_nwsyntax `all_nets', max(999) min(2)
+	nw_syntax `all_nets', max(999) min(2)
 	local k : word count `netname'
-	
+
 	// check and clean networks as edgecolor and edgesize
 	local 0 `edgesizes'
 	syntax [anything(name=edgesizes)], [*]
 	local edgesizeopt `options'
-	_nwsyntax_other `edgesizes', exactly(`networks') nocurrent
-	local edgesize_check "`othernetname'"
-	
+	nw_syntax `edgesizes', other(other) max(9999)
+	// _nwsyntax_other's own exactly() option padded a short netlist by
+	// repeating its last element (e.g. one edgesize network specified,
+	// applied to all movie frames) - replicated directly since nw_syntax
+	// has no equivalent option of its own.
+	local edgesize_check ""
+	local last ""
+	forvalues i = 1/`networks' {
+		local next : word `i' of `othernetname'
+		if "`next'" != "" {
+			local last "`next'"
+		}
+		else {
+			local next "`last'"
+		}
+		local edgesize_check "`edgesize_check' `next'"
+	}
+
 	local 0 `edgecolors'
 	syntax [anything(name=edgecolors)], [*]
 	local edgecoloropt `options'
-	local othernetname = ""
-	_nwsyntax_other `edgecolors', exactly(`networks') nocurrent
-	local edgecolor_check "`othernetname'"
-	
+	nw_syntax `edgecolors', other(other) max(9999)
+	local edgecolor_check ""
+	local last ""
+	forvalues i = 1/`networks' {
+		local next : word `i' of `othernetname'
+		if "`next'" != "" {
+			local last "`next'"
+		}
+		else {
+			local next "`last'"
+		}
+		local edgecolor_check "`edgecolor_check' `next'"
+	}
+
 	capture drop _c1_* 
 	capture drop _c2_*
 	capture drop _frame_*
@@ -319,10 +368,22 @@ program nwmovie
 		local second : word `next' of `netname'
 		local expnum = `i' * 100
 		local st = string(`z',"%05.0f")
+		local xx1 : word `=(`i' - 1) * 2 + 1 ' of `nodexys'
+		local yy1 : word `=(`i' - 1) * 2 + 2 ' of `nodexys'
+		local nxy1 = "`xx1' `yy1'"
+		local xx2 : word `=(`next' - 1) * 2 + 1 ' of `nodexys'
+		local yy2 : word `=(`next' - 1) * 2 + 2 ' of `nodexys'
+		local nxy2 = "`xx2' `yy2'"
+		if "`nxy1'" != "" {
+			local nxy1 " nodexy(`nxy1') "
+		}
+		if "`nxy2'" != "" {
+			local nxy2 " nodexy(`nxy2') "
+		}			
 		
 		noi di "{txt}Processing network {bf:`first'}"
 		if `i' == 1 {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1' `options'
+			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1' `options'
 			capture graph export `"`c(pwd)'/first`st'.`pic'"', replace `picopt'
 			if _rc != 0 {
 				noi di "{err}No writing right for working directory. Try changing the working directory.{txt}"
@@ -330,12 +391,12 @@ program nwmovie
 			}
 		}
 		else {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1'  `options'	
+			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1'  `options'	
 			qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
 		}
 		local st = string(`z',"%05.0f")
 		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
-		qui nwplot `second', ignorelgc generate(_c2_x _c2_y) `sizecmd2' `symbolcmd2'  `colorcmd2' `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'	
+		qui nwplot `second', ignorelgc generate(_c2_x _c2_y) `nxy2' `sizecmd2' `symbolcmd2'  `colorcmd2' `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'	
 		local expnum = (`z' + `frames' + 2)
 		local st = string(`expnum',"%05.0f")
 		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
@@ -435,7 +496,17 @@ program nwmovie
 			if "`edgecoloropt'" != "" {
 				local edgecomma ","
 			}
-			if "`edgesize'" != "" {
+			// BUGFIX: was `"`edgesize'" != ""' (singular) - `edgesize'
+			// is unconditionally cleared to "" during option
+			// preprocessing (whether or not the caller ever passed
+			// edgesize()/edgesizes()), so this branch never ran and
+			// per-frame edge-width interpolation was dead code; edges
+			// only ever snapped to the correct width at the start/end
+			// frame of each transition, rendering at nwplot's flat
+			// default width for every frame in between. The analogous
+			// `sizes'/`colors'/`symbols' checks above all correctly use
+			// their own plural, actually-populated locals.
+			if "`edgesizes'" != "" {
 				nwgenerate _frame_edgesize = round(`firstedgesize' - `steepness' * (`firstedgesize' - `secondedgesize'))
 				qui nwplot ``framenet'', ignorelgc `nx' symbol(``thirdsymb'', norescale `symbolopt')  color(``thirdcol'', norescale  `coloropt' ) size(`frame_size', norescale `sizeopt') edgesize(_frame_edgesize, legendoff) edgecolor(``thirdedgecol'' `edgecomma' `edgecoloropt') title("``thirdtitle''" `title_opt')  `options'
 			}
@@ -490,15 +561,31 @@ program nwmovie
 
 
 	local lastdelay = `delay' * `frames'
+	local shellcmd `""`impath'/convert" -delay `delay' -loop 0 "`c(pwd)'/first*.`pic'" "`c(pwd)'/frame*.`pic'" -delay `lastdelay' "`c(pwd)'/last*.`pic'" "`fname'.gif""'
+
 	
 	if c(os) == "MacOSX" {
-		local shellcmd `""`impath2'/convert" -delay `delay' -loop 0 "`c(pwd)'/first*.`pic'" "`c(pwd)'/frame*.`pic'" -delay `lastdelay' "`c(pwd)'/last*.`pic'" "`fname'.gif""'
-		shell export PATH="$PATH:`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`impath2'/";`shellcmd'
-		shell open "`fname'.gif" -a /Applications/Safari.app/ 
+		shell export PATH="$PATH:`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";`shellcmd'
+		// BUGFIX: every successful call used to unconditionally shell
+		// out to open the resulting .gif in Safari, with no way to
+		// suppress it - a real problem in a scripted/batch context,
+		// where this pops open a new Safari window/tab as an
+		// uncontrollable side effect of simply calling the command.
+		// Added noopen. Per this pass's own established "no-prefix
+		// trap" (a declared option starting with "no" - here "no"+
+		// "open" - makes Stata's syntax parser create a toggle local
+		// named after the STEM, "open", not "noopen" itself; confirmed
+		// directly: typing "noopen" sets `open' to "noopen", typing
+		// "open" alone or omitting the option entirely leaves `open'
+		// empty) - checking `open', not `noopen', is correct here.
+		if "`open'" == "" {
+			shell open "`fname'.gif" -a /Applications/Safari.app/
+		}
 	}
 	
 	if c(os) == "Windows" {
-		shell "`impath2'\convert.exe" -delay 10 -loop 0 "`c(pwd)'\first*.png" "`c(pwd)'\frame*.png" -delay 20 "`c(pwd)'\last*.png" "`fname'.gif"
+		nwmovie_install_win
+		shell "`r(impath)'\convert.exe" -delay 10 -loop 0 "`c(pwd)'\first*.png" "`c(pwd)'\frame*.png" -delay 20 "`c(pwd)'\last*.png" "`fname'.gif"
 		shell explorer.exe "`fname'.gif"
 	}
 	
@@ -541,9 +628,6 @@ program nwmovie_install_win
 		di `"{err}Please install {browse "`imurl'":ImageMagick from here first} or specify option {bf:imagick()}."'
 		error 
 	}
-	else{
-		di "{txt}ImageMagick found: `impath'"
-	}
 	mata: st_global("r(impath)", "`impath'")
 end
 
@@ -568,9 +652,6 @@ program nwmovie_install_osx
 		di "{err}ImageMagick not found."
 		di `"{err}Please install {browse "`imurl'": ImageMagick from here first} or specify option {bf:imagick()}."'
 		error 6999
-	}
-	else {
-		di "{txt}ImageMagick found: `impath'"
 	}
 	
 	/*
@@ -621,3 +702,10 @@ program nwmovie_install_osx
 	
 	mata: st_global("r(impath)", "`impath'")
 end
+
+
+		
+		
+	
+*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
+*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

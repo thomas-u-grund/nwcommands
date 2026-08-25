@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwimport  {hline 2} Import network}
+{p2col :nwimport  {hline 2}}Import network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -20,19 +20,21 @@
 {opt forcedirected}
 {opt forceundirected}
 {opt nwclear}
-{opt clear}]
+{opt clear}
+{opt nwappend}
+{opt xvars}]
 
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt nwclear}}clear all networks and variables{p_end}
-{synopt:{opt clear}}clear variables{p_end}
 {synopt:{opth name(newnetname)}}name of the imported network; default = {it:filename}{p_end}
 {synopt:{opt forcedirected}}force network to be directed{p_end}
 {synopt:{opt forceundirected}}force network to be undirected{p_end}
 {synopt:{opt nwclear}}clear all data and networks{p_end}
-{synopt:{opt clear}}clear all data, but keep networks{p_end}
+{synopt:{opt clear}}same as {opt nwclear}{p_end}
+{synopt:{opt nwappend}}append to existing data{p_end}
+{synopt:{opt xvars}}also generate Stata variables for the imported network (see {help nwload}){p_end}
 
 {synoptset 20 tabbed}{...}
 {marker import_type}{...}
@@ -50,17 +52,15 @@
 		{p_end}
 {p2col:{cmd: gml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/gml-format/":GML file format}
 	{p_end}
-{p2col:{cmd: graphml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/graphml-format/":GraphML file format}
-		{p_end}
-		
+
 
 {synoptset 20 tabbed}{...}
 {marker type_sub}{...}
 {p2col:{it:type_sub}}Description{p_end}
 {p2line}
-{p2col:{cmd: rownames}}matrix: first row in matrix contains variable names
+{p2col:{cmd: rownames}}matrix: the file's first {it:column} holds each row's node name as text (no header row) - see {help nwimport##matrix:Import raw adjacency matrix}'s own row-labeled example
 		{p_end}
-{p2col:{cmd: colnames}}matrix: first column in matrix contains variable names
+{p2col:{cmd: colnames}}matrix: {it:not needed} when the file's first {it:row} already holds node names as text - that shape is recognized automatically without any {it:type_sub} at all
 		{p_end}
 {p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
 		{p_end}		
@@ -81,7 +81,6 @@ The following network formats are supported:
 {pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
 {pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
 {pmore}{help nwimport##gml:- GML}{p_end}
-{pmore}{help nwimport##graphml:- GraphML}{p_end}
 
 {pstd}
 Can also be used to import networks from the internet:
@@ -89,6 +88,15 @@ Can also be used to import networks from the internet:
 {phang}
 {cmd:. nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)}{p_end}
 
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
+{bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
+values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
+values are negative. Two-mode: yes, for the formats whose own file structure distinguishes row and
+column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the same way as any other
+{help nwset}-created network.
 
 {marker ucinet}{...}
 {title:Import Ucinet DL format}
@@ -200,8 +208,22 @@ and/or column names can be included as well. This import option can be used to l
 	0,1,0,0
 
 {pstd}
-Notice that the command recognises when variable names are given in the first row. However, variable names in the
-first column are not automatically recognized. One can make this explicit with the option {bf:type(matrix, rownames colnames)}.
+Notice that the command recognises when node names are given in the first row (Example 2 above) - {bf:type(matrix)}
+with no suboptions already produces the correct 4-node network from that file, since the header row becomes each
+node's own variable name and {cmd:nwimport} labels nodes from variable names by default; {bf:rownames}/{bf:colnames}
+are {it:not} needed for this shape and should be omitted here.
+
+{pstd}
+{bf:rownames}/{bf:colnames} are for the opposite shape instead: a raw matrix with node names given as an explicit
+first {it:column} of text (no header row at all), e.g.
+
+	thomas,0,1,1,0
+	peter,1,0,0,0
+	susan,0,0,0,1
+	kim,0,1,0,0
+
+{pstd}
+which requires {bf:type(matrix, rownames)} to read that first column as node labels rather than data.
 
 {pstd}
 Furthermore, the raw dataset can also contain additional attributes. When there are more variables than cases, all remaining
@@ -256,3 +278,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 	thomas,susan
 	susan
 	geoff,john,michael
+

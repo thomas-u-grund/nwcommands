@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.4  20nov2014 author: Thomas Grund}{...}
+{* *! version 4jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nw2set {hline 2} Declare data to be two-mode network data}
+{p2col :nw2set {hline 2}}Declare data to be two-mode network data{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}
@@ -27,12 +27,14 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}name of variable identifying two-mode membership; default = {it:_modeid}{p_end}
 {synopt:{opt edgelist}}declare data in edgelist format{p_end}
 {synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:network}{p_end}
 {synopt:{opt labs}({it:lab1 lab2...})}new node labels that are used for the network{p_end}
 {synopt:{opth rownames(varname)}}names of nodes on level 2{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt vars(namelist)}}Stata variable names to store the network as (one per node, level 1 then level 2); default = auto-generated{p_end}
+{synopt:{opt clear}}drop all existing networks (but not the Stata dataset) before declaring this one{p_end}
+{synopt:{opt nwclear}}same as {opt clear}{p_end}
 
 
 {title:Description}
@@ -63,13 +65,12 @@ inside sets there are no connections.
 {pstd}
 Setting two-mode networks is very similar to setting normal networks with {help nwset}. With M nodes
 on level 1 and N nodes on level 2, the command internally generates a (M+N) x (M+N) matrix, which stores
-the network data. Furthermore, it generates a variable {it:_modeid}, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim,
+the network data. Furthermore, it generates a variable {it:_mode}, which has the value 1 for nodes on level 1 (e.g. persons: Peter, Tim,
 Thomas, Michael, Mathilde) and value 2 for nodes on level 2 (e.g institutions: LiU, UCD, Oxford, ETH).
 
-{pstd}
-After setting a network "mynet", one can plot this two-mode network and color the two levels differently:
-
-	{cmd:. nwplot mynet, color(_modeid)}
+{pstd} 
+When a network is set as two-mode, this meta-information is stored with the network. Other 
+nwcommands automatically recognize that the network is two-mode and deal with it accordingly (e.g. {help nwplot}).
 
 {pstd}
 There are three ways to explicitly declare data to be two-mode network data:
@@ -83,18 +84,18 @@ Declare the variables in {help varlist} to represent the adjacency matrix of the
 node on level 1 (e.g. organisations). Each row in the dataset stands for a node on level 2 (e.g. persons).
 
 {pstd}
-In this dummy example, we create 5 observations and 3 new variables v1-v3. After that we set a two-mode network from this data. This
+In this dummy example we create 5 observations and 3 new variables v1-v3. After that we set a two-mode network from this data. This
 creates an empty network with 5 nodes on level 1 and 3 nodes on level 2.
 
 	{cmd:. nwclear}
 	{cmd:. set obs 5}
 	{cmd:. forvalues i = 1/3} {
-	{cmd:     gen v`i' = 0}
+	{cmd:     gen v = 0}
 	{cmd:  }}
-	{cmd:. nwset v*}
+	{cmd:. nw2set v*}
 
 {pstd}
-By default, the nodes on level 2 are named after the variables v1, v2 and v3. If option {bf:rownames(varname)} is
+By default, the nodes on level 1 are named after the variables v1, v2 and v3. If option {bf:rownames(varname)} is
 specified, the nodes on level 2 are named afther the values found in variable {bf:varname}. 
 	
 {pstd}
@@ -116,7 +117,7 @@ relations. Nodes are identified by entries in the cells.  For example, imagine t
                  {c BLC}{hline 18}{c -}{c BRC}
 
 {pstd}			
-We can declare the data as two-mode network like this:
+We can declare this data as a two-mode network like this:
 	
 	{cmd:. nw2set fromid toid, egdelist}
 	
@@ -128,7 +129,7 @@ on level 2 (LiU, UCD).
 {bf:{ul:2. Declare adjacency matrix from Mata matrix}}
 
 {pstd}
-Set a network from a {it:M x N} Mata matrix that holds the adjacency matrix of the new network with M nodes on level 1 and N nodes on level
+Set a network from a {it:M x N} Mata matrix that holds the adjacency matrix of the new network with N nodes on level 1 and M nodes on level
 2. The option {bf:mat()} is specified with the name of an existing Mata matrix.
 
 {pstd}
@@ -136,8 +137,14 @@ For example, this generates a Mata matrix and sets a two-mode network with 6 nod
 
 	{cmd:. nwclear}
 	{cmd:. mata: net = (0,1\1,0\1,1\1,1)}
-	{cmd:. nwset, mat(net) name(network)}
+	{cmd:. nw2set, mat(net) name(network)}
 
+
+
+{title:Supported network types}
+
+{pstd}
+Two-mode: **T1**, native - this command's entire purpose is declaring a two-mode (bipartite) network from a rectangular incidence matrix or a variable list. Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, tie values are accepted and stored as-is. Signed: not checked.
 
 {title:Remarks}
  
@@ -145,17 +152,12 @@ For example, this generates a Mata matrix and sets a two-mode network with 6 nod
 By default, two-mode networks are undirected. 
 
 {pstd}
-Although not really needed, networks can be represented with Stata variables (see {help nwload}). For this purpose, each network
-holds some meta-information about which Stata variables should be created when a network is loaded in such a way. This meta-information
-can be set wit option {bf:vars()}. When specified, it needs to have as many entries as there are nodes in the network. When not specified, 
-the program automatically makes a suggestion for variable names (see {help nwvalidvars}). 
-
-{pstd}
-Many network generators allow the option {bf:xvars}, 
-which essentially only produces a network object, but does not load a network as Stata variables (see {help nwload}). It can be
-useful to surpress loading the adjacency matrix of a network in Stata when one deals with many or large networks. All commands
-that require a {help netname} still work, even when all Stata variables are dropped, e.g.{bf: drop _all}. This also means that one 
-can still deal with larger networks even when using {bf:Small Stata}.
+By default, network generators (including {cmd:nw2set} itself) only produce a network object - they do NOT load a network as Stata
+variables (see {help nwload}). Many network generators allow the option {bf:xvars}, which ADDITIONALLY loads the new network as Stata
+variables right away (equivalent to following the generator with a separate {help nwload} call). Leaving {bf:xvars} unspecified keeps
+Stata's own variable budget free when one deals with many or large networks - all commands that require a {help netname} still work
+even when no Stata variables for that network exist at all, or after {bf: drop _all}. This also means that one can still deal with
+larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
@@ -169,10 +171,15 @@ optional. In case no network is given, all nwcommands generally refer to the cur
 
 {pstd}
 Programmers can use {bf:nw2set} to write their own import routines  (see also {help nwimport}) for different network
-file formats that are not natively supported by the {bf:nwcommands}.All you need to do is transform your data either in
+file formats that are not natively supported by the nwcommands. All you need to do is transform your data either in
 an adjacency list or an edgelist represented by Stata variables. 
+
+{pstd}
+From a two-mode network one can also produce a one-mode projection (see {help nw2project}). This basically,
+collapses the network to use only nodes from either level 1 or level 2.
 
 {title:See also}
 
-	{help nwset}, {help nw2fromedge}, {help nwload}
+	{help nwset}, {help nw2fromedge}, {help nwload}, {help nw2project}
 
+last certified : 24 Aug 2026

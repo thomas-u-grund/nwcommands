@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nworder {hline 2} Reorder networks in dataset}
+{p2col :nworder {hline 2}}Reorder networks in dataset{p_end}
 {p2colreset}{...}
 
 
@@ -22,8 +22,8 @@
 {synoptset 16}{...}
 {synopthdr}
 {synoptline}
-{synopt :{opt last}}move {help netlist} to end of dataset; the default{p_end}
-{synopt :{opt first}}move {help netlist} to beginning of dataset{p_end}
+{synopt :{opt last}}move {help netlist} to end of dataset{p_end}
+{synopt :{opt first}}move {help netlist} to beginning of dataset; the default{p_end}
 {synopt :{opth b:efore(netname)}}move {help netlist} before {it:netname}{p_end}
 {synopt :{opth a:fter(netname)}}move {help netlist} after {it:netname}{p_end}
 {synopt :{opt alpha:betic}}alphabetize {help netlist} and move it to beginning of dataset{p_end}
@@ -38,9 +38,10 @@
 
 {pstd}
 {opt nworder} relocates {help netlist} to a position depending on
-which option you specify. If no option is specified, {cmd:order} relocates
-{it:netlist} to the end of the dataset in the order in which the
-variables are specified.
+which option you specify. If no option is specified, {cmd:nworder} relocates
+{it:netlist} to the {bf:beginning} of the dataset in the order in which the
+variables are specified - matching plain Stata's own {help order} command, which
+{cmd:nworder} is a thin wrapper around.
 
 {pstd}
 The command is useful when one wants to do bulk-operations with networks and when 
@@ -48,14 +49,20 @@ the network order matters (e.g. when making a movie out of _all networks, see {h
 
 
 {marker options}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders which networks occupy which position in the dataset only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
 {title:Options}
 
 {phang}
-{opt last} shifts {help netlist} to the end of the dataset.  This
-is the default.
+{opt last} shifts {help netlist} to the end of the dataset.
 
 {phang}
-{opt first} shifts {help netlist} to the beginning of the dataset. 
+{opt first} shifts {help netlist} to the beginning of the dataset.  This
+is the default.
 
 {phang}
 {opth before(netname)} shifts {varlist} before {it:netname}.
@@ -81,25 +88,25 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 {title:Examples}
 
 {pstd}Setup{p_end}
-{phang2}{cmd:. webuse hpotter}
-
-{pstd}Describe the dataset{p_end}
-{phang2}{cmd:. nwds}
-
-{pstd}Move {cmd:hpbook5} and {cmd:hpbook4} to the beginning of the dataset{p_end}
-{phang2}{cmd:. nworder hpbook5 hpbook4}
+{phang2}{cmd:. nwwebuse florentine}
 
 {pstd}Describe the networks{p_end}
 {phang2}{cmd:. nwds}
 
-{pstd}Make {cmd:hpboo3} be the last network in the dataset{p_end}
-{phang2}{cmd:. nworder hpbook3, last}
+{pstd}Move {cmd:flobusiness} to the beginning of the dataset{p_end}
+{phang2}{cmd:. nworder flobusiness}
 
-{pstd}Describe the dataset{p_end}
-{phang2}{cmd:. nds}
+{pstd}Describe the networks{p_end}
+{phang2}{cmd:. nwds}
+
+{pstd}Make {cmd:flobusiness} the last network in the dataset{p_end}
+{phang2}{cmd:. nworder flobusiness, last}
+
+{pstd}Describe the networks{p_end}
+{phang2}{cmd:. nwds}
 
 {pstd}Alphabetize the networks{p_end}
-{phang2}{cmd:. nworder _all, alphabetic}
+{phang2}{cmd:. nworder flomarriage flobusiness, alphabetic}
 
 {pstd}Describe the networks{p_end}
 {phang2}{cmd:. nwds}{p_end}
@@ -107,4 +114,4 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 
 {title:See also}
 
-	{help nwds}, {help nwsort}, {help order}, {help netlist}
+	{help nwds}, {help order}, {help netlist}

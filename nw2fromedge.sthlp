@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.1  3sept2014 author: Thomas Grund}{...}
+{* *! version 4jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :nw2fromedge {hline 2} Import two-mode network data from edgelist}
+{p2col :nw2fromedge {hline 2}}Import two-mode network data from edgelist{p_end}
 {p2colreset}{...}
 
 
@@ -19,19 +19,8 @@
 [{it:{help varname:tievalue}}]
 [{it:{help if}}]
 [{cmd:,}
-{opth generate(newvarname)}
-{opt project}({it:{help nw2fromedge##project_level:project_level}})
-{opt stat}({it:{help nw2fromedge##project_stat:project_stat}})
 {it:{help nwfromedge:nwfromedge_options}}
 ]
-
-{synoptset 30 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opth generate(newvarname)}}name of variable identifying two-mode membership; default = {it:_modeid}{p_end}
-{synopt:{opt project}({it:{help nw2fromedge##project_level:project_level}})}make one-mode projection to either level {bf:1} or level {bf:2} {p_end}
-{synopt:{opt stat}({it:{help nw2fromedge##project_stat:project_stat}})}logic for dealing with tie values in one-mode projection{p_end}
-
 
 {p2colreset}{...}
 
@@ -67,7 +56,7 @@ inside sets there are no connections.
 An edgelist is a set of two (or three in the case of a valued network) variables representing
 relations. Nodes are identified by entries in the cells.  For example, the data
 
-	{com}. use "http://nwcommands.org/data/institutions.dta", clear
+	{com}. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/institutions.dta", clear
 	{com}. list _all
 	{txt}
 		{c TLC}{hline 10}{c -}{hline 11}{c -}{hline 7}{c TRC}
@@ -97,30 +86,38 @@ The following command declares such data as two-mode network data:
 	{cmd:. nw2fromedge person institution, name(mynet)}
 					
 {pstd}
-Essentially, this does exactly the same as {help nwfromedge}, but also generates a variable {it:_modeid}, which has the value 1 for persons (Peter, Tim,
+Besides setting the network, this also creates a new variable {it:_mode}, which has the value 1 for persons (Peter, Tim,
 Thomas, Michael, Mathilde) and value 2 for institutions (LiU, UdeM, Oxford, ETH, Groningen).
 
 {pstd}
-For example, one can plot this two-mode network and color the two levels differently:
+When plotting a two-mode network, nodes are automatically colored accoriding to the mode they belong to, unless specified otherwise.
+For example, these two commands produce the same plot. 
 
-	{cmd:. nwplot mynet, color(_modeid)}
+	{cmd:. nwplot mynet}
+	{cmd:. nwplot mynet, color(_mode)}
 
 {marker project_stat}{...}
 {marker project_level}{...}
+
+{title:Supported network types}
+
+{pstd}
+Two-mode: **T1**, native - this command's entire purpose is building a two-mode network directly from an edge list (ego/alter columns drawn from two distinct node sets). Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked.
+
 {title:One-mode projection}
 
 {pstd}
-Sometimes one wants to collapse a two-mode network to a one-mode network. This is called a one-mode projection. Such a projection is a simplification of the network to nodes
+Sometimes one wants to collapse a two-mode network to a one-mode network (see {help nw2project}). This is called a one-mode projection. Such a projection is a simplification of the network to nodes
 of one level only. For example, in our example one can either collapse to the level of persons or to the level of institutions. The level to which one wants to collapse is
 specified in option {bf:project()}. 
 
 {pstd}
 For example, this loads the data above as a one-mode projection on level 1 (persons):
 
-	{cmd: nw2fromedge person institution, project(1)}
+	{cmd: nw2project mynet, project(1) name(myproject1)}
 
 {pstd}
-It generates a network with five unique actors (Peter, Tim, Thomas, Michael and Mathilde). By default, a one-mode projection
+This generates a network {it:myproject1} with five unique actors (Peter, Tim, Thomas, Michael and Mathilde). By default, a one-mode projection
 on one level generates ties between nodes (on this level) when they have at least one network neighbor on the 
 other level in common. In our case, projecting to the level of persons creates ties between persons when they share
 at least one institution. By default, such a one-mode projection is a valued network, where the
@@ -194,12 +191,9 @@ longest time that Peter and Thomas were at the same institution. This is the def
 {pmore}
 Peter - Thomas  - 5 years
  
-
-{pstd}	
-In contrast, the next command generates a one-mode projection on level 2 (institutions). 
-	
-	{cmd: nw2fromedge person institution, project(2)}	
 	
 {title:Also see}
 	
-	{help nwfromedge}
+	{help nwfromedge}, {help nw2project}, {help nw2set}
+
+last certified : 24 Aug 2026

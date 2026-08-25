@@ -1,74 +1,32 @@
-
-VERSION 10.0
+VERSION 10
+INCLUDE _std_small
 SYNCHRONOUS_ONLY
-INCLUDE _std_medium
-INCLUDE _ht350
-INCLUDE header
-
 HELP hlp1, view("help nwds")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
 RESET res1
-
-DEFINE exin    +70
-DEFINE exina   +80
-DEFINE exwd     50
-DEFINE exwda   195
-
+POSITION 10 10 550 170
 
 SCRIPT PREINIT
 BEGIN
-		program initialize
+	program initialize
 END
 
-DIALOG main, label("nwds - List networks")     ///
-                tabtitle("Main")
+DIALOG main, title("nwds - List loaded networks, in the style of Stata's own")
 BEGIN
-  TEXT     tx_desc2          _lft      _top      _iwd      .,           ///
-                label("Networks: (leave empty for all)")
-  COMBOBOX  vl_var            @         _ss       @         .,           ///
-                label("Networks") nomem  dropdown append contents(netlist)
-  TEXT     tx_examples       @         _ms       @         .,           ///
-                label("Examples:")
-  TEXT     tx_examp1         exin      @         exwd      .,           ///
-                right label("yr*")
-  DEFINE holdx @x
-  TEXT     tx_examp1a        exina     @         exwda     .,           ///
-                label(`"all networks starting with "yr""')
-  TEXT     tx_examp2         holdx     _vss      exwd      .,           ///
-                right label("xyz-abc")
-  TEXT     tx_examp2a        exina     @         exwda     .,           ///
-                label("all networks between xyz and abc")
-
-  GROUPBOX gb_not            _lft      _ls       _iwd      50,
-  CHECKBOX    rb_not            +20         _ss       @         .,           ///
-                option(not)               ///                                                 ///
-                label("List networks not included above")
-
-  GROUPBOX gb_options        _lft      _xls      _iwd      _ht11,       ///
-                label("Options")
-  CHECKBOX ck_alpha          _ilft     _ss       _cwd1     .,           ///
-                option(alpha)                                           ///
-                label("List networks in alphabetical order")
-DEFINE   holdx @x
-  SPINNER  sp_varwidth       @         _ls       _spwd     .,           ///
-                label("Display width for network names")               ///
-                min(5) max(32) default(literal 12)                      ///
-                option(varwidth)
-  TEXT     tx_varwidth       _spsep    @         _sprb     .,           ///
-                label("Display width for network names")
-  SPINNER  sp_skip           holdx     _ls       _spwd     .,           ///
-                label("Gap between networks")                          ///
-                min(1) max(10) default(literal 2)                       ///
-                option(skip)
-  TEXT     tx_skip           _spsep    @         _sprb     .,           ///
-                label("Gap between networks")
-
-				END
-
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 76, label("Options")
+  TEXT tx_cx_alpha 20 54 260 ., label("List network names in alphabetical order (the default is creation order)")
+  CHECKBOX cx_alpha 290 54 190 ., label("alpha") option(alpha)
+  TEXT tx_cx_not 20 82 260 ., label("Invert the selection - list every  loaded network instead of the ones")
+  CHECKBOX cx_not 290 82 190 ., label("not") option(not)
+END
 
 LIST netlist
 BEGIN
-	// intentionally empty
-	// this list will be populated by _nwdialog.ado
+	// populated at runtime by _nwdialog.ado
 END
 
 PROGRAM initialize
@@ -77,33 +35,12 @@ BEGIN
 	stata hidden immediate
 END
 
-
-SCRIPT main_nodetail
-BEGIN
-        main.sp_varwidth.enable
-        main.tx_varwidth.enable
-        main.sp_skip.enable
-        main.tx_skip.enable
-END
-
-SCRIPT main_detail
-BEGIN
-        main.sp_varwidth.disable
-        main.tx_varwidth.disable
-        main.sp_skip.disable
-        main.tx_skip.disable
-END
-
-
 PROGRAM command
 BEGIN
-        put "nwds " main.vl_var
-        beginoptions
-                option main.rb_not
-                option main.ck_alpha
-                optionarg /hidedefault main.sp_varwidth
-                optionarg /hidedefault main.sp_skip
-        endoptions
+	put "nwds " main.cb_net
+	beginoptions
+		option main.cx_alpha
+		option main.cx_not
+	endoptions
+	stata
 END
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

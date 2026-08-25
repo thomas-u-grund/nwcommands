@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *! version 2.0  23aug2014 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##utilities:[NW-2.7] Utilities}
 
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwvalidate {hline 2} Validate network name}
+{p2col :nwvalidate {hline 2}}Validate network name{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -15,7 +15,6 @@
 {cmdab: nwvalidate} 
 {it:{help netname}}
 
-{synoptline}
 {p2colreset}{...}
 	
 {title:Description}
@@ -23,13 +22,19 @@
 {pstd}
 Checks if a network {it:{help netname}} already exists. In case it does, 
 the command makes a suggestion for an alternative name. Normally, 
-the command returns {it:netname_1}.
+the command returns {it:netname_1}. If that also exists, the commands returns {it:netname_2}.
 
+
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - a pure Stata-variable/network-name-collision check; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
 
 {title:Examples}
 
 	{cmd:. nwclear}
-	{cmd:. nwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{cmd:. nwvalidate flobusiness}
 	{cmd:. return list}
 
@@ -39,8 +44,4 @@ the command returns {it:netname_1}.
 	{bf:r(exists)}		"true" when network name already exists, "false" otherwise
 	{bf:r(tryname)}		network name that is validated
 	{bf:r(validname)}	valid name in case the tryname already exists
- 
- 
-{title:Also see}
-
-   {help nwvalidvars}
+last certified : 25 Aug 2026

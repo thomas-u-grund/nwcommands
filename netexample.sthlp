@@ -6,16 +6,16 @@
 
 {title:Example networks}
 
-{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on the nwcommands.org server.
+{pstd}The datasets listed are in {help nwsave##fileformat:Stata network file-format} and hosted on this package's own GitHub repository.
 {p_end}
 {hline}
 
-        {help netexample##gang:gang}{col 29}{stata "webnwuse gang":use} | {stata "sysdescribe gang.dta":describe}
-        {help netexample##glasgow:glasgow}{col 29}{stata "webnwuse glasgow":use} | {stata "sysdescribe glasgow.dta":describe}
-        {help netexample##florentine:florentine}{col 29}{stata "webnwuse florentine":use} | {stata "sysdescribe florentine.dta":describe}
-        {help netexample##usstates:usstates}{col 29}{stata "webnwuse usstates":use} | {stata "sysdescribe usstates.dta":describe}
-        {help netexample##klas12b:klas12b}{col 29}{stata "webnwuse klas12b":use} | {stata "sysdescribe klas12b.dta":describe}
-        {help netexample##hpotter:hpotter}{col 29}{stata "webnwuse hpotter":use} | {stata "sysdescribe hpotter.dta":describe}
+        {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "sysdescribe gang.dta":describe}
+        {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "sysdescribe glasgow.dta":describe}
+        {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "sysdescribe florentine.dta":describe}
+        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "sysdescribe usstates.dta":describe}
+        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "sysdescribe klas12b.dta":describe}
+        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "sysdescribe hpotter.dta":describe}
 		 
 {hline}
 

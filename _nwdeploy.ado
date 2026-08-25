@@ -2,61 +2,43 @@ capture program drop _nwdeploy
 program _nwdeploy
 	syntax , version(string) [author(string) email(string) other(string)]
 
-	di "Version_deploy: `version'"
-	set more off
-	tempname nw
-	//di "Writing... nwcommands.sthlp"
-	file open `nw' using nwcommands.sthlp, replace write
-	file write `nw' "{smcl}" _n ///	
-"{* *! version 1.0.0  3sept2014}{...}" _n ///
-"" _n ///		
-"{col 14}Section{col 31}Description" _n ///
-"{col 14}{hline 46}" _n ///
-"{help nw_intro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///
-"" _n ///
-"{help nw_topical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}" _n ///
-"" _n ///
-"{help nw_alphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}" _n ///
-"" _n ///
-"{help nw_start:{col 14}{bf:[NW-4]}{...}{col 31}{bf:Getting started}}" _n ///
-"" _n ///
-"{help nw_programming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}" _n ///
-"" _n ///
-"{help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}" _n ///
-"" _n ///
-"" _n ///
-"		*! Date        : `c(current_date)'" _n ///
-"		*! Version     : `version'" _n ///
-"		*! Authors     : Thomas U. Grund " _n ///
-"		*! Contact     : thomas.u.grund@gmail.com" _n ///
-`"		 *! Web         : {browse "http://nwcommands.org"}"' _n ///
-`"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"'
-	file close `nw'
-	
-	//tempname versionlog
-	//file open `versionlog' using versionlog.sh, replace write
+	_write_nwcommands, version(`version')
+	tempname versionlog
+	file open `versionlog' using versionlog.sh, replace write
 	
 	set more off
-	tempname deploy_ado
-	file open `deploy_ado' using nwcommands-ado.pkg, replace write
-	file write `deploy_ado' "v 3" _n
-	file write `deploy_ado' "d nwcommands-ado. Social Network Analysis Using Stata" _n
-	file write `deploy_ado' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write `deploy_ado' "d email: contact@nwcommands.org" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
-	file write `deploy_ado' "d Distribution-Date: `d'" _n
-	
+	// BUGFIX: a monolithic nwcommands-ado.pkg (117 f-lines, ~122 lines
+	// total with its own header) silently fails "net install" with
+	// "package file too long" - a real, previously-undiscovered Stata
+	// .pkg format limit, confirmed empirically via a binary search on a
+	// local install (103 total lines installs fine, 104 does not; this
+	// package's own actual header is 5 lines, so kept a generous 80-line
+	// safety margin below that rather than the exact measured boundary).
+	// Never surfaced before this harmonisation unit because the tool
+	// itself never ran to completion until now. Fixed by chunking into
+	// multiple numbered packages (nwcommands-ado1.pkg, -ado2.pkg, ...)
+	// - see nwdeploy_writepkgchunks below - rather than shipping a
+	// single package nobody could actually install.
+	nwdeploy_writepkgchunks, manifest(_pkg_ado.txt) base(nwcommands-ado) desc("nwcommands-ado. Social Network Analysis Using Stata") email(thomas.u.grund@gmail.com) date(`d')
+	local nadochunks = r(chunks)
+
 	local adofiles : dir "`c(pwd)'" files "*.ado"
 	local sthlpfiles : dir "`c(pwd)'" files "*.sthlp"
-	
+	// `: dir' returns files in filesystem order, not alphabetical - left
+	// that way for years despite nw_alphabetical.sthlp's own name/stated
+	// purpose (confirmed directly: a from-scratch _nwdeploy run, only
+	// possible for the first time after the quote-parsing fixes above,
+	// produced a genuinely non-alphabetical "alphabetical" list). Sorted
+	// explicitly via Mata rather than trusting directory-listing order.
+	mata: st_local("adofiles", invtokens(sort(tokens(st_local("adofiles"))', 1)'))
+	mata: st_local("sthlpfiles", invtokens(sort(tokens(st_local("sthlpfiles"))', 1)'))
+
 	// generate topical glossary help
 	tempname memhold
 	tempfile topics
 	postfile `memhold' str30 cmdname str40 link str30 topic using `topics'
-	set more off
-	//di "Collecting topic categories..."
 	foreach file in `sthlpfiles' {
-		if (strpos("`file'", "!") == 0){
 		// add sthlp meta info
 		//di "sthlp: `file'"
 		//qui _addmeta_hlp `file', date(`d') version(`version')
@@ -69,17 +51,16 @@ program _nwdeploy
 		if "`r(cmdtopic2)'" != "" {
 			post `memhold' ("`cmdname'") ("`r(topiclink2)'") ("`r(cmdtopic2)'")
 		}
-		}
 	}	
 	postclose `memhold'
 
 	preserve
-	use `topics', clear	
+	use `topics', clear
+
 	sort topic cmdname
 	
 	tempname topical
 	file open `topical' using nw_topical.sthlp, replace write
-	//di "Writing... help files"
 	file write `topical' "{smcl}" _n ///	
 			"{* *! version `version' `d'}{...}"  _n ///
 		    "{phang}" _n ///
@@ -147,7 +128,7 @@ program _nwdeploy
 		if "`r(cmddesc)'" == "{err}no help file yet{txt}" {
 			file write `topical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n	
 		}
-		//file write `versionlog' `"echo "*! v`version' __ `c(current_date)' __ `c(current_time)'" >> `file'"'  _n
+		file write `versionlog' `"echo "*! v`version' __ `c(current_date)' __ `c(current_time)'" >> `file'"'  _n
 	}
 	
 	file close `topical'
@@ -165,78 +146,59 @@ program _nwdeploy
 			"{p2colset 5 32 34 2}" 
 	set more off
 	
-	file open _pkg_ado using _pkg_ado.txt, read
-	file read _pkg_ado _pkg_ado_line 
-	while "`_pkg_ado_line'" != "" {
-		file write `deploy_ado' "`_pkg_ado_line'" _n
-		file read _pkg_ado _pkg_ado_line 
-	}
-	file close _pkg_ado
-	
 	foreach file in `adofiles' {
-		
+
 		// add meta to dofiles
 		// di "ado: `file'"
 		//qui _addmeta_do `file', date(`d') author(`author') email(`email') version(`version') other(`other')
-	
-		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)') 
+
+		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)')
 		getcmddesc `cmdname'
-		//file write `deploy_ado' "f `file'" _n
-		//di "`file'"
-		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n		
+		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 	}
-	
+
 	file close `alphabetical'
-	
-	/*local dtafiles : dir "`c(pwd)'" files "*.dta"
-	foreach file in `dtafiles' {
-		file write `deploy_ado' "f `file'" _n
+
+	// Same "package file too long" fix as nwcommands-ado above -
+	// nwcommands-hlp.pkg (119 f-lines) is even larger.
+	nwdeploy_writepkgchunks, manifest(_pkg_hlp.txt) base(nwcommands-hlp) desc("nwcommands-hlp. Social Network Analysis Using Stata - Help Files") email(thomas.u.grund@gmail.com) date(`d')
+	local nhlpchunks = r(chunks)
+
+	// Tiny, permanent bootstrap package: a brand-new user has no way to
+	// know they need to type an internal chunk name like
+	// "nwcommands-ado1" as their very first command - there was no
+	// plain "nwcommands" package at all. This one is deliberately
+	// small and hand-curated (not chunked from the full ado/hlp
+	// manifests) so it always fits Stata's own package-file line limit
+	// trivially and its name never needs to change as the real ado/hlp
+	// chunk count grows. Contains just enough to bootstrap the rest:
+	// nwinstall.ado itself (no Mata dependency - confirmed directly,
+	// zero `mata:' calls in the file - so the compiled .mlib is not
+	// needed here) plus the landing/orientation help topics, so `help
+	// nwcommands' works immediately even before `nwinstall, all' pulls
+	// in everything else. The intended flow is exactly two commands:
+	// `net install nwcommands' then `nwinstall, all'.
+	file open deploy_boot using nwcommands.pkg, replace write
+	file write deploy_boot "v 3" _n
+	file write deploy_boot "d nwcommands. Start here - installs nwinstall and the landing help topics; run nwinstall, all next" _n
+	file write deploy_boot "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
+	file write deploy_boot "d email: thomas.u.grund@gmail.com" _n
+	file write deploy_boot "d Distribution-Date: `d'" _n
+
+	file open _pkg_boot1 using _pkg_boot.txt, read
+	file read _pkg_boot1 _pkg_boot1_line
+	while "`_pkg_boot1_line'" != "" {
+		file write deploy_boot "`_pkg_boot1_line'" _n
+		file read _pkg_boot1 _pkg_boot1_line
 	}
-	local netfiles : dir "`c(pwd)'" files "*.net"
-	foreach file in `netfiles' {
-		file write `deploy_ado' "f `file'" _n
-	}
-	local schemefiles : dir "`c(pwd)'" files "*.scheme"
-	foreach file in `schemefiles' {
-		file write `deploy_ado' "f `file'" _n
-	}
-	local dlfiles : dir "`c(pwd)'" files "*.dat"
-	foreach file in `dlfiles' {
-		file write `deploy_ado' "f `file'" _n
-	}*/
-	
-	file close `deploy_ado'
-	
-	file open deploy_hlp using nwcommands-hlp.pkg, replace write
-	file write deploy_hlp "v 3" _n
-	file write deploy_hlp "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files" _n
-	file write deploy_hlp "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_hlp "d email: contact[at]nwcommands.org" _n
-	local d = lower(subinstr(c(current_date)," ","",.))
-	file write deploy_hlp "d Distribution-Date: `d'" _n
-	
-	file open _pkg_hlp using _pkg_hlp.txt, read
-	file read _pkg_hlp _pkg_hlp_line 
-	while "`_pkg_hlp_line'" != "" {
-		file write deploy_hlp "`_pkg_hlp_line'" _n
-		file read _pkg_hlp _pkg_hlp_line 
-	}
-	file close _pkg_hlp
-	
-	/*
-	local hlpfiles : dir "`c(pwd)'" files "*.sthlp"
-	foreach file in `hlpfiles' {
-		file write deploy_hlp "f `file'" _n
-	}
-	*/
-	
-	file close deploy_hlp
-	
+	file close _pkg_boot1
+	file close deploy_boot
+
 	file open deploy_ext1 using nwcommands-ext.pkg, replace write
 	file write deploy_ext1 "v 3" _n
 	file write deploy_ext1 "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
 	file write deploy_ext1 "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_ext1 "d email: contact[at]nwcommands.org" _n
+	file write deploy_ext1 "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write deploy_ext1 "d Distribution-Date: `d'" _n
 	
@@ -253,7 +215,7 @@ program _nwdeploy
 	file write deploy_dlg "v 3" _n
 	file write deploy_dlg "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
 	file write deploy_dlg "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
-	file write deploy_dlg "d email: contact[at]nwcommands.org" _n
+	file write deploy_dlg "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
 	file write deploy_dlg "d Distribution-Date: `d'" _n
 	
@@ -266,7 +228,65 @@ program _nwdeploy
 		file write deploy_dlg "f `file'" _n
 	}
 	file close deploy_dlg
-	//file close `versionlog'
+	file close `versionlog'
+
+	// stata.toc drives `net from'/`net install' discovery - generated
+	// here (rather than hand-maintained) so the chunk counts above
+	// always match what actually got written, even as the package
+	// grows past whatever chunk boundary is currently in force.
+	tempname toc
+	file open `toc' using stata.toc, replace write
+	file write `toc' "v 3" _n
+	file write `toc' "d nwcommands: Network Analysis for Stata" _n
+	file write `toc' _n "p nwcommands" _n "d nwcommands. Start here - net install this first, then run nwinstall, all" _n
+	forvalues i = 1/`nadochunks' {
+		file write `toc' _n "p nwcommands-ado`i'" _n "d nwcommands-ado. Social Network Analysis Using Stata (part `i' of `nadochunks')" _n
+	}
+	forvalues i = 1/`nhlpchunks' {
+		file write `toc' _n "p nwcommands-hlp`i'" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part `i' of `nhlpchunks')" _n
+	}
+	file write `toc' _n "p nwcommands-ext" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
+	file write `toc' _n "p nwcommands-dlg" _n "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes" _n
+	file close `toc'
+end
+
+capture program drop nwdeploy_writepkgchunks
+program nwdeploy_writepkgchunks, rclass
+	// Writes `manifest' (a flat file of "f filename" lines) out as one
+	// or more numbered .pkg files (`base'1.pkg, `base'2.pkg, ...),
+	// never exceeding `chunksize' f-lines per file - see the "package
+	// file too long" comment at this program's own call sites for why.
+	// Returns the number of chunks written (r(chunks)) so the caller
+	// can both loop over them and regenerate stata.toc to match.
+	syntax , manifest(string) base(string) desc(string) email(string) date(string) [chunksize(integer 80)]
+	tempname fh mh
+	file open `mh' using `manifest', read
+	file read `mh' line
+	local chunknum = 0
+	local linecount = `chunksize'
+	while "`line'" != "" {
+		if `linecount' >= `chunksize' {
+			if `chunknum' > 0 {
+				file close `fh'
+			}
+			local chunknum = `chunknum' + 1
+			file open `fh' using `base'`chunknum'.pkg, replace write
+			file write `fh' "v 3" _n
+			file write `fh' "d `desc' (part `chunknum')" _n
+			file write `fh' "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
+			file write `fh' "d email: `email'" _n
+			file write `fh' "d Distribution-Date: `date'" _n
+			local linecount = 0
+		}
+		file write `fh' "`line'" _n
+		local linecount = `linecount' + 1
+		file read `mh' line
+	}
+	if `chunknum' > 0 {
+		file close `fh'
+	}
+	file close `mh'
+	return scalar chunks = `chunknum'
 end
 
 capture program drop getcmddesc
@@ -284,11 +304,47 @@ program getcmddesc, rclass
 		file read `cmdsthlp' line
 		local found = 0
 		while (r(eof)==0 & `found' == 0) {
-			local j = strpos("`line'", "{hline 2}")
+			// BUGFIX: was strpos("`line'", ...)/substr("`cmddesc'",...) -
+			// plain double quotes around a macro whose VALUE is an
+			// arbitrary .sthlp source line, which routinely contains its
+			// own literal embedded double quotes (e.g. a di "..." line
+			// from the command's own doc header) - those embedded quotes
+			// prematurely closed the plain "..." literal, leaving a bare
+			// trailing token Stata then tried to interpret as a command
+			// name ("invalid name", r(198)) - confirmed directly via
+			// `set trace on` on the exact nwclustering.ado line that
+			// triggered it. Compound quotes handle embedded literal
+			// quotes correctly, same fix already used one line below
+			// for `line' itself.
+			local j = strpos(`"`line'"', "{hline 2}")
 			if (`j' >0) {
                 local cmddesc = substr(`"`line'"', `=`j' + 10', .)
-				local cmddesc = substr("`cmddesc'",1, `=length("`cmddesc'") - 1')
-				local found = 1		
+				// BUGFIX: was substr(`"`cmddesc'"',1,`=length(`"`cmddesc'"')-1')
+				// - a literal apostrophe anywhere in the command's own
+				// one-line description (e.g. nwmodularity.sthlp's
+				// "Newman's modularity") gets misread as the extended
+				// macro function's own closing quote when nested this
+				// way, dropping the second substr() argument entirely
+				// ("too few quotes" / "too many ')' or ']'" - confirmed
+				// directly via an isolated repro). Computing the length
+				// as its own separate local first avoids the hazard.
+				// BUGFIX: this stripped only the trailing "-1" character
+				// (just the closing brace of the source line's own
+				// "{p_end}" tag), leaving a dangling "{p_end" - but every
+				// call site (nw_topical.sthlp's/nw_alphabetical.sthlp's
+				// own generation, further below) unconditionally appends
+				// its own literal "{p_end}" after this returned cmddesc,
+				// so the actual output was the malformed
+				// "...{p_end{p_end}" - confirmed directly by running
+				// _nwdeploy end to end for the first time (only possible
+				// after the quote-parsing fixes above let it get this
+				// far) and inspecting the regenerated file. Every
+				// command's own {p2col:...}Description{p_end} synopsis
+				// line ends in the fixed 7-character "{p_end}" tag by
+				// convention throughout this package - strip all 7, not 1.
+				local cmddesclen = length(`"`cmddesc'"')
+				local cmddesc = substr(`"`cmddesc'"', 1, `cmddesclen' - length("{p_end}"))
+				local found = 1
             }
 			file read `cmdsthlp' line
 		}
@@ -299,7 +355,7 @@ end
 
 capture program drop getcmdtopic
 program getcmdtopic, rclass
-	syntax anything(name=cmd) [, version(string)]
+	syntax anything(name=cmd)
 	capture findfile `cmd'.sthlp
 	if _rc != 0 {
 		return local cmdtopic = "Uncategorized"
@@ -320,14 +376,18 @@ program getcmdtopic, rclass
 				//local found 0
 				file read `cmdsthlp' line
                 gettoken topiclink cmdtopic : line, parse(":") 
-				local cmdtopic= substr(`"`cmdtopic'"', 2, `=length(`"`cmdtopic'"') - 2')
+				// Same apostrophe-in-nested-`=...' hazard as
+				// getcmddesc above - fixed the same way.
+				local cmdtopiclen = length(`"`cmdtopic'"')
+				local cmdtopic= substr(`"`cmdtopic'"', 2, `cmdtopiclen' - 2)
 				local topiclink= substr(`"`topiclink'"', 8,.)	
             }
 			local k = strpos(`"`line'"', "{marker top2}")
 			if (`k' >0) {
 				file read `cmdsthlp' line
                 gettoken topiclink2 cmdtopic2 : line, parse(":") 
-				local cmdtopic2= substr(`"`cmdtopic2'"', 2, `=length(`"`cmdtopic2'"') - 2')
+				local cmdtopic2len = length(`"`cmdtopic2'"')
+				local cmdtopic2= substr(`"`cmdtopic2'"', 2, `cmdtopic2len' - 2)
 				local topiclink2= substr(`"`topiclink2'"', 8,.)	
             }
 			file read `cmdsthlp' line
@@ -341,6 +401,44 @@ program getcmdtopic, rclass
 	}
 	file close `cmdsthlp'
 	//shell sh versionlog.sh
+end
+
+capture program drop _write_nwcommands
+program _write_nwcommands
+	syntax , version(string)
+	set more off
+	tempname nw
+	file open `nw' using nwcommands.sthlp, replace write
+	file write `nw' "{smcl}" _n ///
+"{* *! version 1.0.0  3sept2014}{...}" _n ///
+"" _n ///
+"{pstd}" _n ///
+"New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else" _n ///
+"(core commands, help files, dialog boxes) - see {help nwinstall}." _n ///
+"{p_end}" _n ///
+"" _n ///
+"{col 14}Section{col 31}Description" _n ///
+"{col 14}{hline 46}" _n ///
+"{help nw_intro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///
+"" _n ///
+"{help nw_topical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}" _n ///
+"" _n ///
+"{help nw_alphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}" _n ///
+"" _n ///
+"{help nw_start:{col 14}{bf:[NW-4]}{...}{col 31}{bf:Getting started}}" _n ///
+"" _n ///
+"{help nw_programming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}" _n ///
+"" _n ///
+"{help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}" _n ///
+"" _n ///
+"" _n ///
+"		*! Date        : `c(current_date)'" _n ///
+"		*! Version     : `version'" _n ///
+"		*! Authors     : Thomas U. Grund " _n ///
+"		*! Contact     : thomas.u.grund@gmail.com" _n ///
+`"		 *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}"' _n ///
+`"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"'
+	file close `nw'
 end
 
 /*

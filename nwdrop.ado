@@ -1,99 +1,139 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! 11jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwdrop {hline 2}}Drop networks or network nodes{p_end}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwdrop} 
+[{it:{help netlist}}]
+
+{p 8 17 2}
+{cmdab: nwdrop} 
+[{it:{help netname}}]
+{ifin}
+[{cmd:,}
+{opt clean}]
+
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt clean}}Drop node observations{p_end}
+
+{synoptline}
+{p2colreset}{...}
+
+	
+{title:Description}
+
+{pstd}
+Drops a network or a list of networks. The command is the network version of {help drop} and mirrors {help nwkeep}.
+
+{pstd}
+It can also be used with {help if} or {help in}. Then it only drops certain nodes from a network. This updates the
+Stata variable {bf:_nwinclude}, which indicates if a node is included in a network.
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural operation (drops whole networks, or nodes via `if`/`in`), existing ties and their values are untouched for whatever remains. Two-mode: mode assignments are preserved for surviving nodes.
+
+{title:Examples}
+
+{pstd}
+The following command loads data from the internet and drops one network.
+
+	{cmd}. nwwebuse florentine
+	{com}. nwds
+	{res}{txt}{col 1}flobusiness   {col 20}flomarriage
+
+	{com}. nwdrop flobusiness
+	{com}. nwds
+	{res}{txt}{col 1}flomarriage
+
+{pstd}
+The next command drops the first three nodes of network {it:flomarriage}.
+	
+	{cmd:. nwdrop flomarriage if _n <= 3}
+
+{pstd}
+This drops every node from the network {it:flomarriage} where the variable {it:seat} != 1.
+
+	{cmd:. nwdrop flomarriage if seat != 1}
+	
+	{pstd}
+This drops the node with the name "medici" from the {it:flomarriage} network.
+
+	{cmd:. nwdrop flomarriage if _nwnode == "medici"}
+
+{pstd}
+Whenever a command allows a {help netlist}, networks can be abbreviated. For example,
+
+	{cmd:. nwdrop fl*}
+	{cmd:. nwdrop _all}
+		
+
+{title:Remarks}
+
+{pstd}
+By default, all dropped nodes remain in the dataset, i.e. they are only excluded from the network. With option
+{bf:clean}, dropped nodes are removed from the Stata dataset as well. Notice that for example the node
+"medici" in the Florentine dataset is a node in both the marriage and the business network. Hence, the option {bf:clean}
+would remove this node and all node attributes. In the example above, the node "medici" would be removed from the {bf:flomarriage}
+network, but not from the {bf:flobusiness} network. But with the option {bf:clean} all node attributes would be deleted as well (although the node "medici" remains in the {bf:flobusiness}
+network). 
+
+{title:Also see}
+   
+   {help nwdropnodes}, {help nwclear}, {help nwkeep}, {help nwkeepnodes}
+
+***/
 
 capture program drop nwdrop
 program nwdrop
 	version 9
-	syntax [anything(name=netname)] [if/] [in/], [netonly ATTRibutes(varlist) reverseif]
-	_nwsyntax `netname', max(9999)
+	syntax [anything(name=netname)] [if] [in], [clean]
+	unw_defs
+	nw_syntax `netname', max(9999)
 
-	local nets `networks'
-	local z = 0
-    qui foreach dropnet in `netname' {
-		nwload `dropnet', labelonly
-		nwname `dropnet'
-		local id = r(id)
-		local nodes = r(nodes)
-		local z = `z' + 1
-		
-		// only drop nodes 
-		qui if ("`if'" != "" | "`in'" != ""){
-
-			tempvar keepnode
-			gen `keepnode' = 1
-		    if "`if'" != "" {
-				replace `keepnode' = 0 if `if'
-				tab `keepnode'
-				//if ("`reverseif'"!= ""){
-				//	recode `keepnode' (0=1) (1=0)
-				//}
-			}
-			if "`in'" != "" {
-				replace `keepnode' = 0 in `in'
-			}
-		
-			mata: keepnode = st_data((1,`nodes'), st_varindex("`keepnode'"))
-			
-			if (`z' != `nets') {
-			 nwdropnodes `dropnet', keepmat(keepnode) `netonly'
-			}
-			else {
-				 nwdropnodes `dropnet', keepmat(keepnode) `netonly' attributes(`attributes')
-			}
-			mata: mata drop keepnode
+	if `"`if'"' == "" & `"`in'"' == "" {
+		foreach netname_temp in `netname' {
+			mata: `nws'.drop("`netname_temp'")
 		}
-		
-		// drop the whole network
-		else {
-			// delete Stata variables if needed
-			scalar onenw = "\$nw_`id'"
-			if "`netonly'" == "" {
-				capture confirm variable `=onenw'
-				if _rc == 0 {
-					qui drop `=onenw'
-				}
-				capture drop _label	
-				capture drop _nodelab
-				capture drop _nodevar
-				capture drop _nodeid
-			}
-	
-			// update all Stata/Mata macros
-			local k 	= $nwtotal - 1
-			forvalues j = `id'/`k' {
-				local next = `j' + 1
-				nwname, id(`next')
-				global nwname_`j' = r(name)
-				global nwsize_`j' = r(nodes)
-				global nwdirected_`j' = r(directed)			
-				global nwlabs_`j' = r(labs)
-				
-				scalar movenw = "\$nw_`next'"
-				global nw_`j' `=movenw'
-				
-				mata: mata drop nw_mata`j'
-				mata: nw_mata`j' = nw_mata`next'
-			}
-			
-			// clean-up
-			macro drop nw_$nwtotal
-			macro drop nwsize_$nwtotal
-			macro drop nwname_$nwtotal
-			macro drop nwdirected_$nwtotal
-			macro drop nwlabs_$nwtotal
-			macro drop nwedgelabs_$nwtotal
-			mata: mata drop nw_mata$nwtotal
-			global nwtotal `=$nwtotal - 1'
-			global nwtotal_mata = `=$nwtotal_mata - 1'
+		qui nwset
+		if r(networks) == 0 {
+			capture mata: mata drop `nw'
 		}
 	}
-	nwcompressobs
+	else {
+		nw_syntax `netname', max(1)
+		local n `nodes'
+		nw_datasync `netname'
+		
+		tempvar ifcond temp
+		tempname drop
+		qui gen `ifcond' = 1 `if' `in'
+		qui gen `temp' = `ifcond' * `nw_included'
+		mata: `drop' = (st_data((1::`nodes'),"`ifcond'"))'
+		mata: _editmissing(`drop', 0)
+		mata: `netobj'->drop_nodes(`drop')
+		mata: mata drop `drop'
+		if "`clean'" != "" {
+			capture drop if `temp' == 1
+		}
+		nw_datasync `netname'
+	}
 	mata: st_rclear()
 end
-	
-	
-	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+
+

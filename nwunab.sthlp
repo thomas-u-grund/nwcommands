@@ -4,7 +4,7 @@
 {helpb nw_topical##utilities:[NW-2.7] Utilities}
 
 {p2colset 9 15 19 2}{...}
-{p2col :{cmd:nwunab} {hline 2} Unabbreviate network list}
+{p2col :{cmd:nwunab} {hline 2}}Unabbreviate network list{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}
@@ -26,12 +26,18 @@ and unabbreviates a {help netlist:netlist} of existing networks,
 placing the results in the local macro {it:lmacname}.  {cmd:nwunab} is a
 low-level parsing command and works in exactly the same way as {help unab}.  One can
 also use {help nwds} to unabbreviate network lists. The 
-{help _nwsyntax} command is a high-level parsing
+{help nw_syntax} command is a high-level parsing
 command that, among other things, also unabbreviates network lists; see
-{help _nwsyntax}. 
+{help nw_syntax}.
 
 
 {marker options}{...}
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves/expands a network name list only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
 {title:Options}
 
 {phang}{cmd:min(}{it:#}{cmd:)} specifies the minimum number of networks
@@ -44,7 +50,7 @@ allowed. The system maximum is 9999.
 {marker examples}{...}
 {title:Examples}
 
-	{cmd:. webnwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwunab nets : glasg*}
 	{cmd:. di `nets'}
 	     {txt}glasgow1 glasgow2 glasgow3
@@ -52,4 +58,4 @@ allowed. The system maximum is 9999.
 
 {title:See also}
 
-	{help unab}, {help nwds}, {help _nwsyntax}
+	{help unab}, {help nwds}, {help nw_syntax}

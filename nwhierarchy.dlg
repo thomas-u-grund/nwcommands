@@ -1,0 +1,89 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwhierarchy")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 1060 282
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwhierarchy - Hierarchical clustering of nodes (role/position analysis)")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 1030 188, label("Options")
+  TEXT tx_ed_dismat 20 54 260 ., label("Dismat")
+  EDIT ed_dismat 290 54 190 ., nomem option(dismat)
+  TEXT tx_cb_disnet 20 82 260 ., label("Disnet")
+  COMBOBOX cb_disnet 290 82 190 ., dropdown contents(netlist) nomem option(disnet)
+  TEXT tx_ed_linkage 20 110 260 ., label("Clustering linkage method (e.g. , , ); default =")
+  EDIT ed_linkage 290 110 190 ., nomem option(linkage)
+  TEXT tx_cb_type 20 138 260 ., label("Type of dissimilarity between two nodes; default = euclidean")
+  COMBOBOX cb_type 290 138 190 ., dropdownlist contents(list_type) nomem option(type)
+  TEXT tx_cb_context 20 166 260 ., label("Context definition for dissimilarity calculation; default = both")
+  COMBOBOX cb_context 290 166 190 ., dropdownlist contents(list_context) nomem option(context)
+  TEXT tx_cx_clear 20 194 260 ., label("Clear")
+  CHECKBOX cx_clear 290 194 190 ., label("clear") option(clear)
+  TEXT tx_cx_add 530 54 260 ., label("Add")
+  CHECKBOX cx_add 800 54 190 ., label("add") option(add)
+  TEXT tx_sp_groups 530 82 260 ., label("Cut the resulting dendrogram into this many role/position equivalence classes, g")
+  SPINNER sp_groups 800 82 70 ., default(-1) max(999999) min(-999999) nomem option(groups)
+  TEXT tx_ed_equivgen 530 110 260 ., label("Name of the variable  generates; default = . Ignored unless  is specified (alias")
+  EDIT ed_equivgen 800 110 190 ., nomem option(equivgen)
+  TEXT tx_ed_generate 530 138 260 ., label("Generate")
+  EDIT ed_generate 800 138 190 ., nomem option(generate)
+  TEXT tx_cx_replace 530 166 260 ., label("Replace an existing  variable")
+  CHECKBOX cx_replace 800 166 190 ., label("replace") option(replace)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_type
+BEGIN
+	euclidean
+	manhatten
+	hamming
+	jaccard
+	nonmatches
+END
+
+LIST list_context
+BEGIN
+	both
+	incoming
+	outgoing
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwhierarchy"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwhierarchy " main.cb_net
+	beginoptions
+		optionarg main.ed_dismat
+		optionarg main.cb_disnet
+		optionarg main.ed_linkage
+		optionarg main.cb_type
+		optionarg main.cb_context
+		option main.cx_clear
+		option main.cx_add
+		optionarg main.sp_groups
+		optionarg main.ed_equivgen
+		optionarg main.ed_generate
+		option main.cx_replace
+	endoptions
+	stata
+END

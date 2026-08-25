@@ -1,70 +1,102 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 15jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
-capture program drop nwvalue	
+{title:Title}
+
+{p2colset 9 18 22 2}{...}
+{p2col :nwvalue {hline 2}}Returns a tie value{p_end}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwvalue} 
+[{it:{help netname}}][,
+{opt ego}({it:nodename})
+{opt alter}({it:nodename})
+{opth egoid(integer)}
+{opth alterid(integer)}]
+
+
+{title:Description}
+
+{pstd}
+The command returns the scalar {it:r(value)} with the value of the tie between the nodes {it:ego} and {it:alter} if those
+nodes exists. It also returns the names of those nodes when ids are used. Either the option pair {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified.
+
+	  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is returned exactly as stored, respecting direction, never symmetrized. Weighted: yes, natively - returns the tie's own raw stored value. Signed: not checked; a negative value is returned as-is with no special handling. Two-mode: not checked, but not expected to need any - a direct single-cell lookup by node identity.
+
+{title:Examples}
+
+	{cmd:. nwwebuse florentine}
+	{cmd:. nwvalue flobusiness, ego("medici") alter("pazzi")}
+	{cmd:. nwvalue flobusiness, egoid(2) alterid(9)}
+	{cmd:. return list}
+
+
+{title:See also}
+   
+   {help nwreplace}
+***/
+
+capture program drop nwvalue
 program nwvalue
-	local netname ="`0'"
+	syntax [anything(name=netname)] [,egoid(integer 0) alterid(integer 0) ego(string) alter(string)]
 
-	// a specific entries are given
-	local ego = strpos("`netname'","[") 
-	local alter = strpos("`netname'","]") 
-	local sep = strpos("`netname'",",")
-	local subset = substr("`netname'",`ego',.)
-	
-	if (`ego' != 0) {
-		local e1 = `ego' + 1
-		local e2 = `sep' - `ego' - 1
-		local a1 =  `sep' + 1
-		local a2 = `alter' - `sep' - 1
-		local n1 = `ego' - 1
-		local egoid = substr("`netname'", `e1', `e2')
-		local alterid = substr("`netname'", `a1', `a2')
-		local netname = substr("`netname'", 1, `n1')
+	// support netname[egoid,alterid] shorthand, equivalent to egoid()/alterid()
+	local bracketpos = strpos("`netname'","[")
+	if (`bracketpos' != 0) {
+		local closepos = strpos("`netname'","]")
+		local sep = strpos("`netname'",",")
+		local egoid = real(trim(substr("`netname'", `bracketpos' + 1, `sep' - `bracketpos' - 1)))
+		local alterid = real(trim(substr("`netname'", `sep' + 1, `closepos' - `sep' - 1)))
+		local netname = substr("`netname'", 1, `bracketpos' - 1)
 	}
-	
-	nwtomatafast `netname'
-	mata: onenet = `r(mata)'
-	//nwtomata `netname', mat(onenet)
-	capture mata: onenet`subset'
-	if _rc != 0 {
-		di "{err}{it:nwsubset} {bf:`subset'} invalid"
-		error 6400
-	}
-	
+
 	mata: st_rclear()
-	if (`ego'!= 0) {
-		/*
-		if "`exp'" != "" {
-			local exp : subinstr local exp "=" ""
-			mata: onenet[`egoid',`alterid'] = J(rows(onenet[`egoid',`alterid']), cols(onenet[`egoid',`alterid']), `=`exp'')
-		}
-		*/
-		mata: subnet = onenet[`egoid',`alterid']
-		mata: st_numscalar("r(rows)", rows(subnet))
-		mata: st_numscalar("r(cols)", cols(subnet))
 
-		if (`r(rows)' == 1 & `r(cols)' == 1) {
-			mata: st_rclear()
-			mata: st_numscalar("r(ego)", `egoid')
-			mata: st_numscalar("r(alter)", `alterid')
-			mata: subnet[1,1]
-			mata: st_numscalar("r(value)", subnet[1,1])
+	if (!(("`ego'" != "" & "`alter'" != "" ) | (`egoid' != 0 & `alterid' != 0))){
+		di "{err}Either options {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified."
+		error 3000
+	}
+	nw_syntax `netname', max(1)
+	if `"`ego'"' != "" {
+		if `"`alter'"' != "" {
+			// check that ego and alter are valid
+			mata: st_numscalar("r(ego_valid)", `netobj'->has_node(`"`ego'"'))
+			mata: st_numscalar("r(alter_valid)", `netobj'->has_node(`"`alter'"'))
+			
+			if `r(ego_valid)' != 1 {
+				di "{err}node {it:`ego'} does not exist in network {bf:`netname'}"
+				error 3000
+			}
+			if `r(alter_valid)' != 1 {
+				di "{err}node {it:`alter'} does not exist in network {it:`netname'}"
+				error 3000
+			}
+			
+			capture mata: st_numscalar("r(ego_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`ego'")'))
+			capture mata: st_numscalar("r(alter_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`alter'")'))
+			capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`r(ego_id)', `r(alter_id)'])
+			capture mata: st_global("r(ego)", "`ego'")
+			capture mata: st_global("r(alter)", "`alter'")	
 		}
-		else {
-			mata: st_matrix("r(values)", subnet)
-			mata: subnet
-		}	
 	}
-	else {
-		mata: subnet = onenet
-		mata: subnet
-		mata: st_numscalar("r(rows)", rows(subnet))
-		mata: st_numscalar("r(cols)", cols(subnet))
-		mata: st_matrix("r(values)", subnet)
+	if `egoid' != 0 & `alterid' != 0 & `egoid' <= `nodes' & `alterid' <= `nodes' {
+			capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`egoid', `alterid'])
+			capture mata: st_numscalar("r(ego_id)", `egoid')
+			capture mata: st_numscalar("r(alter_id)", `alterid')
+			capture mata: st_global("r(ego)", `netobj'->get_nodenames()[`r(ego_id)'])
+			capture mata: st_global("r(alter)", `netobj'->get_nodenames()[`r(alter_id)'])	
 	}
-	capture mata: mata drop subnet
+	di "`r(value)'"
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+

@@ -1,0 +1,130 @@
+name: Build native plugins
+
+# Harmonisation unit 87 (phase C, cross-platform native builds -
+# docs/CERTIFICATION.md), extended in unit 95 to also build nwgraph.c
+# (docs/NATIVE_GRAPH_LIBRARIES.md's own native graph-algorithm kernel -
+# currently betweenness centrality). No Windows/Linux toolchain or
+# cross-compiler was available in the environment this workflow was
+# authored in, so those two platforms' own plugin binaries are built here,
+# on GitHub's own hosted runners, rather than locally. macOS is rebuilt
+# here too, purely as a cross-check against the copy already committed via
+# native/Makefile's own `macos` target (which builds every plugin, not
+# just one) on a real Apple Silicon development machine.
+#
+# On a push to the repository's default branch that touches native/, the
+# freshly-built plugins are committed back into lib/plugins/ (the exact
+# paths unw_ergm.do's own ErgmNativePluginPath() and unw_core.do's own
+# NativeGraphPluginPath() already look for) so the package ships pre-built
+# binaries for all three platforms - both dispatchers fall back to their
+# own pure Mata implementation gracefully wherever a given platform's
+# binary is absent, so this workflow failing or being skipped never breaks
+# the package, only leaves that platform unaccelerated.
+
+on:
+  push:
+    # BUGFIX: this used to be [main, master] only - this project's own
+    # actual active branch is `develop` (see README.md's own "Active
+    # development branch" note; `master` is a stale pre-modernization
+    # snapshot), so every push that would have triggered this workflow
+    # never did - confirmed directly (`gh run list` showed zero runs
+    # ever, despite native/*.c having changed across many commits on
+    # develop since this workflow was added).
+    branches: [develop, main, master]
+    paths:
+      - "native/**"
+      - ".github/workflows/build-plugins.yml"
+  pull_request:
+    paths:
+      - "native/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal macOS plugins
+        run: |
+          cd native
+          make macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugins-macos
+          path: |
+            lib/plugins/macos/ergm_mcmc.plugin
+            lib/plugins/macos/nwgraph.plugin
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # BUGFIX: this used to hardcode two specific vcvarsall.bat paths
+      # (Enterprise/Community) and call them directly - neither exists
+      # on the actual windows-latest hosted runner ("the system cannot
+      # find the path specified" / "'cl' is not recognized", confirmed
+      # directly from this workflow's own first real run, unit 87's own
+      # authoring environment having had no Windows runner to verify
+      # against at all). ilammy/msvc-dev-cmd is the standard, widely-used
+      # GitHub Action for this exact problem - it locates whatever MSVC
+      # installation the runner actually has and sets up the environment
+      # for every subsequent step, rather than guessing a fixed path.
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Build Windows plugins (cl /LD)
+        shell: cmd
+        run: |
+          mkdir lib\plugins\windows
+          cd native
+          cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
+          cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph.plugin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugins-windows
+          path: |
+            lib/plugins/windows/ergm_mcmc.plugin
+            lib/plugins/windows/nwgraph.plugin
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Linux plugins
+        run: |
+          cd native
+          make unix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugins-linux
+          path: |
+            lib/plugins/unix/ergm_mcmc_unix.plugin
+            lib/plugins/unix/nwgraph_unix.plugin
+
+  commit-binaries:
+    needs: [macos, windows, linux]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugins-macos
+          path: lib/plugins/macos/
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugins-linux
+          path: lib/plugins/unix/
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugins-windows
+          path: lib/plugins/windows/
+      - name: Commit rebuilt plugins
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/plugins/
+          git diff --cached --quiet || git commit -m "ci: rebuild native plugins [skip ci]"
+          git push

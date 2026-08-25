@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 15 22 2}{...}
-{p2col :nwdendrogram {hline 2} Plot a wheel dendrogram}
+{p2col :nwdendrogram {hline 2}}Plot a wheel dendrogram{p_end}
 {p2colreset}{...}
 
 
@@ -20,8 +20,9 @@
 {synoptset 25}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
-{p2col:{opth factor(float)}}zoom in or out{p_end} 
-{p2col:{opth label(varname)}} label observations{p_end} 
+{p2col:{opth factor(float)}}zoom in or out{p_end}
+{p2col:{opt lab}}display node labels saved with the network ({bf:_nwnode}), the same convention {help nwplot} and {help nwplotmatrix} use; takes precedence over an explicit {opt label()} if both are given{p_end}
+{p2col:{opth label(varname)}} label observations{p_end}
 {p2col:{opt colorpalette}({it:colstyle1 ...})} overwrite colorpalette{p_end} 
 {p2col:{opt symbolpalette}({it:symbstyle1 ...})} overwrite symbolpalette{p_end} 
 {p2col:{opt obsopt}({help scatter##marker_options:marker_options})} send options to markers for observations{p_end} 
@@ -35,9 +36,15 @@
 Displays results from hierarchical clustering (see {help nwhierarchy} or {help cluster}) as wheel dendrogram.
 	
 		
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - visualizes an existing hierarchical-clustering result (from {help nwhierarchy}), not a network directly; whatever directed/valued/two-mode support {help nwhierarchy} itself has already determined the clustering this command displays.
+
 {title:Example}
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwhierarchy flomarriage}
 	{cmd:. nwdendrogram _clus_1}
 

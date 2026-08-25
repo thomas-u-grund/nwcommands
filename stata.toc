@@ -1,7 +1,23 @@
-v 1.1.4
-d nwcommands Social Network Analysis Using Stata
-d Program by Thomas Grund, Linkoping University, IAS 
-p nwcommands-ado Social Network Analysis Using Stata - Core
-p nwcommands-hlp Social Network Analysis Using Stata - Help Files
-p nwcommands-dlg Social Network Analysis Using Stata - Dialogs
-p nwcommands-ext Social Network Analysis Using Stata - Extensions
+v 3
+d nwcommands: Network Analysis for Stata
+
+p nwcommands
+d nwcommands. Start here - net install this first, then run nwinstall, all
+
+p nwcommands-ado1
+d nwcommands-ado. Social Network Analysis Using Stata (part 1 of 2)
+
+p nwcommands-ado2
+d nwcommands-ado. Social Network Analysis Using Stata (part 2 of 2)
+
+p nwcommands-hlp1
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1 of 2)
+
+p nwcommands-hlp2
+d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2 of 2)
+
+p nwcommands-ext
+d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1
+
+p nwcommands-dlg
+d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes

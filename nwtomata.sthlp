@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwtomata {hline 2} Return adjacency matrix of network}
+{p2col :nwtomata {hline 2}}Return adjacency matrix of network{p_end}
 {p2colreset}{...}
 
 
@@ -48,8 +48,14 @@ The adjacency matrix of a network can also be displayed with:
 	
 {pstd}
 Advanced programmers who might want to directly interact with the adjacency matrix of a network 
-and not with a copy of it, see {help nwinternal:advanced network programming}. 
+and not with a copy of it, see {help nw_programming##modernprogramming:advanced network programming}. 
 
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns a plain copy of the raw adjacency matrix exactly as stored, independent of any of these properties.
 
 {title:Example}
 

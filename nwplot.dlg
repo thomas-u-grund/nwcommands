@@ -46,7 +46,7 @@ END
 DIALOG main, tabtitle("Network")
 BEGIN
   TEXT     tx_var	10	10	100	., label("Network:") 		
-  COMBOBOX cb_var	+60	@	240	., dropdownlist contents(netlist) 
+  COMBOBOX cb_var	+60	@	240	., dropdown contents(netlist) nomem
   GROUPBOX gb_lb 210 50 270 130, label("Node labels:") 
   RADIO  rb_nolabel 230  70 220 ., first  label("No labels") onclickon("script labelsHide")
   RADIO  rb_addnet  @ +20   @ ., middle label("Add labels saved with network")  onclickon("script labelsShowProp")
@@ -152,6 +152,14 @@ BEGIN
   SPINNER sp_barb2 370 210 35 ., label("barb2") default(0) nomemory 
 END
  
+DIALOG export, tabtitle("Export")
+BEGIN
+  GROUPBOX gb_export 10 5 420 90, label("Export graph to file")
+  TEXT tx_export 30 25 100 ., label("Filename:")
+  FILE fi_export 30 45 300 ., label("Export") filter("SVG|*.svg|PDF|*.pdf|PNG|*.png|EPS|*.eps|TIF|*.tif|All files|*.*") save option(export) nomem
+  CHECKBOX cx_replace 30 70 250 ., label("Replace file if it already exists") option(replace) nomem
+END
+
 INCLUDE ifin
 INCLUDE gr_titles
 INCLUDE gr_legend
@@ -172,6 +180,7 @@ BEGIN
 	circle
 	grid
 	nodexy
+	frucht
 END
 
 LIST layoutstyle_actions
@@ -182,6 +191,7 @@ BEGIN
 	script layoutsub_off
 	script layoutsub_grid
 	script layoutsub_nodexy
+	script layoutsub_mds
 END
 
 SCRIPT layoutsub_off
@@ -312,10 +322,11 @@ BEGIN
 		put " " /program edges_outputFactor
 		put " " /program edges_outputStyle
 		put " " /program edges_outputArrow
+		put " " /program export_output
 		put " " /program gr_titles_output
 		put " " /program gr_legend_output
 		put " " /program gr_overall_output
-	endoptions	
+	endoptions
 	//script resetOptions
 	stata
 END
@@ -349,9 +360,9 @@ BEGIN
 		}
 		put ")"
 	}
-	require main.vr_nodex
-	require main.vr_nodey
 	if main.cb_layout.iseq("nodexy") {
+		require main.vr_nodex
+		require main.vr_nodey
 		put " nodexy(" main.vr_nodex " " main.vr_nodey ")"
 	}
 END
@@ -380,6 +391,14 @@ BEGIN
 	}
 	if edges.sp_splines.isneq(10) {
 		put " arcsplines(" edges.sp_splines ")"
+	}
+END
+
+PROGRAM export_output
+BEGIN
+	optionarg export.fi_export
+	if export.fi_export.isneq("") {
+		optionarg export.cx_replace
 	}
 END
 

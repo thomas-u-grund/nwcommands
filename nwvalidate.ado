@@ -1,69 +1,111 @@
-*! Date        : 17 Dec 2013
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 2.0  23aug2014 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##utilities:[NW-2.7] Utilities}
+
+{title:Title}
+
+{p2colset 9 20 22 2}{...}
+{p2col :nwvalidate {hline 2}}Validate network name{p_end}
+{p2colreset}{...}
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwvalidate} 
+{it:{help netname}}
+
+{p2colreset}{...}
+	
+{title:Description}
+
+{pstd}
+Checks if a network {it:{help netname}} already exists. In case it does, 
+the command makes a suggestion for an alternative name. Normally, 
+the command returns {it:netname_1}. If that also exists, the commands returns {it:netname_2}.
+
+
+
+{title:Supported network types}
+
+{pstd}
+Not applicable - a pure Stata-variable/network-name-collision check; does not read or depend on any network's own content, directed/valued/two-mode status, or tie values.
+
+{title:Examples}
+
+	{cmd:. nwclear}
+	{cmd:. nwwebuse florentine}
+	{cmd:. nwvalidate flobusiness}
+	{cmd:. return list}
+
+	
+{title:Stored results}
+
+	{bf:r(exists)}		"true" when network name already exists, "false" otherwise
+	{bf:r(tryname)}		network name that is validated
+	{bf:r(validname)}	valid name in case the tryname already exists
+***/
 
 capture program drop nwvalidate
 program nwvalidate
 	syntax anything(name=netname) [, self(string) ]
-	
+	unw_defs
+
+	// BUGFIX: `anything' does not strip the surrounding quote characters
+	// from a space-containing quoted argument the way Stata's own
+	// option-value `string' type does (there is no positional-argument
+	// equivalent of `string' to switch to instead - `namelist'/
+	// `varlist' both reject this input outright with "invalid syntax",
+	// confirmed directly) - the literal quote characters ended up
+	// embedded in `netname', which then broke the
+	// `strtoname("`netname'",1)' expression's own quoting further down
+	// (re-embedding an already-quote-containing macro inside another
+	// pair of literal double quotes), silently producing empty
+	// r(tryname)/r(validname) with rc==0 rather than erroring or
+	// sanitizing the space. Fixed by stripping any literal double-quote
+	// characters via the `subinstr local' extended macro function
+	// (which operates on the macro's own content directly, unlike a
+	// plain string re-substitution, so it cannot itself trip the same
+	// quoting collision) before `strtoname()' - which then sanitizes
+	// the now-bare embedded space exactly like any other invalid
+	// character - ever sees the value.
+	local netname : subinstr local netname `"""' "", all
 	local netname = strtoname("`netname'",1)
 	local valid = "false"
-	
+
 	local prefix = ""
 	local p = 1
 
-	// no network exists yet
-	if ("$nwtotal" == ""){
-		local checkname = "`netname'"
-		local valid = "true"
-	}
-	
 	mata: st_global("r(tryname)", "`netname'")
-	
-	// at least one other network exists already
-	while ("`valid'" == "false") {
-		local valid = "true"
-		local checkname = "`netname'`prefix'"
 
-		if ("`checkname'" == "$nwname") {
-			local valid = "false"
-			if "`storageonly'" != "" {
-				local valid = "true"
-			}
-		}
-	
-		if ("$nwtotal" != ""){
-			local k = 1
-			if ("`storageonly'" != "") {
-				local k = 2
-			}
-			forvalues i = `k'/$nwtotal {
-				scalar onename = "\$nwname_`i'"
-				local localname `=onename'
-				if ("`checkname'" == "`localname'" & "`self'" != "`checkname'") {
-					local valid = "false"
-				}
-			}
-		}
-		
-		if "`valid'" == "false" {
-			local prefix = "_`p'"
-			local p = `p' + 1
-		}
+	// BUGFIX: `self' was accepted by syntax but never referenced
+	// anywhere in the program body - passing it (with any value) had
+	// zero effect. `get_valid_name()' (the underlying Mata collision
+	// check) has no built-in way to exclude a name from its own search,
+	// so the one case `self' can meaningfully fix without touching that
+	// shared Mata method - re-validating a network against ITS OWN
+	// current name, which should never count as a collision against
+	// itself - is handled directly here: if `netname' (once sanitized)
+	// is exactly `self' (also sanitized, for a consistent comparison),
+	// short-circuit to "no collision" before ever calling
+	// `get_valid_name()'.
+	if "`self'" != "" & "`netname'" == strtoname("`self'",1) {
+		mata: st_global("r(validname)", "`netname'")
+		mata: st_global("r(exists)", "false")
+		exit
 	}
-	
-	global validname = "`checkname'"
-	mata: st_global("r(validname)", "`checkname'")
-	macro drop validname
-	
+
+	capture mata: st_global("r(validname)", `nws'.get_valid_name("`netname'"))
+	if _rc != 0 {
+		mata: st_global("r(validname)","`netname'")
+	}
+
 	if r(tryname) != r(validname) {
 		mata: st_global("r(exists)", "true")
 	}
 	else {
 		mata: st_global("r(exists)", "false")
 	}
-	
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+

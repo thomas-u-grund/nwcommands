@@ -1,108 +1,184 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! version 1.0.1  17may2012 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+
+{title:Title}
+
+{p2colset 9 20 22 2}{...}
+{p2col :nwneighbor {hline 2}}Extract the network neighbors of a node{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwneighbor} 
+[{it:{help netname}}],
+{opt ego(nodename)}
+[{opt mode}({it:{help nwneighbor##context:context}})
+{opth generate(newvarname)}
+{opt replace}]
+
+
+{synoptset 30 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt mode}({it:{help nwneighbor##context:context}})}Defines the network neighborhood of node {it:ego}; default = {it:outgoing}{p_end}
+{synopt:{opth generate(newvarname)}}Save information about network neighbors in variable.{p_end}
+{synopt:{opt replace}}Overwrite variable {it:newvarname}.{p_end}
+		
+{synoptset 15 tabbed}{...}
+{marker context}{...}
+{p2col:{it:context}}{p_end}
+{p2line}
+{p2col:{cmd: outgoing}}network neighbors of node {it:ego} are all nodes {it:j} who receive a tie from {it:ego}; default
+		{p_end}
+{p2col:{cmd: incoming}}network neighbors of node {it:ego} are all nodes {it:j} who send a tie to {it:ego}
+		{p_end}
+{p2col:{cmd: either}}network neighbors of node {it:ego} are all nodes {it:j} who either send a tie to {it:ego} or receive a tie from {it:ego}
+		{p_end}
+
+		
+{title:Description}
+
+{pstd}
+{cmd: nwneighbor} returns the network neighbors of {it:nodename} specified in {bf:ego()}. The network neighborhood of a node is defined in {opt mode()}. By default,
+the neighborhood of a node {it:ego} consists of all nodes {it:j}, who receive a tie from node {it:ego}. Tie values are ignored.
+
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes, via {opt mode(incoming|outgoing|either)}. Weighted: not applicable - returns which nodes are neighbors, not tie values. Signed: not applicable. Two-mode: not checked.
+
+{title:Stored results}
+
+	Macros
+	  {bf:r(ego)}		name of ego (a string, not a nodeid)
+	  {bf:r(oneneighbor)}	one randomly selected neighbor's name; empty if ego has no neighbors
+
+	Scalars
+	  {bf:r(egoid)}		nodeid of ego
+	  {bf:r(num_neighbors)}	number of neighbors ego has
+
+	Matrices
+	  {bf:r(neighbors)} 	reshuffled list of all neighbors
+
+
+{title:Examples}
+
+	{com}. nwwebuse florentine, nwclear
+	{com}. nwneighbor flobusiness, ego(ginori)
+
+	{hline 40}
+	{txt}  Network: {res}flobusiness
+	{hline 40}
+	{txt}    Ego        : {res}ginori	
+	{txt}    Neighbors  : {res}{res}barbadori{txt} , {res}medici{txt}
+	{hline 40}
+
+{pstd}
+This shows that the "ginori" family has business relationships with the "barbadori" and the "medici". 
+	   
+
+{title:Also see}
+
+   {help nwcontext}, {help nwgeodesic}, {help nwpath}
+
+***/
 
 capture program drop nwneighbor
 program nwneighbor
-	syntax [anything(name=netname)], [ ego(string)  mode(string)]
-	_nwsyntax `netname', max(1)
+	syntax [anything(name=netname)], ego(string) [ mode(string) generate(string) replace]
+	nw_syntax `netname', max(1)
+	nw_datasync `netname'
 	nwname `netname'
-	
-	if "`alter'" == "" & "`ego'" == "" {
-		di "{err}Either alter() or ego() needs to be specified."
-		exit
+
+	capture confirm variable `generate'
+	if _rc == 0 & "`replace'" == "" {
+		di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
+		err 99
 	}
-	
-	local labs "`r(labs)'"
-	local uselab = 0
-	local ego_out = "`ego'"
-	
-	capture confirm integer number `ego'
-	if _rc != 0 {
-		local uselab = 1
+	qui nwnode `netname', ego(`ego')
+	local egoid `r(nodeid)'
+	local ego `r(nodename)'
+	if `egoid' == -1 {
+		di "{err}Node {bf:`ego'} does not exist in network {bf:`netname'}"
+		err 99
 	}
-	
-	_nwnodeid `netname', nodelab(`ego')
-	local ego = r(nodeid)
-	_nwnodelab `netname', nodeid(`ego')
-	local ego_lab = r(nodelab)
-	
+
 	if "`mode'" == "" {
 		local mode = "outgoing"
 	}
-	_opts_oneof "incoming outgoing both" "mode" "`mode'" 6810
-	
-	nwtomata `netname', mat(onenet)
-	_nwsyntax `netname', max(1)
-	
-	mata: vecin=onenet[.,`ego']
-	mata: vecout=onenet[`ego',.]
-	if "`mode'" == "incoming" {
-		mata: vec = vecin
-	}
-	if "`mode'" == "outgoing" {
-		mata: vec = vecout'
-	}
-	if "`mode'" == "both" {
-		mata: vec = vecout' + vecin
-	}
-	mata: vec = vec :/ vec
-	mata: _editmissing(vec,0)
-	
-	mata: neighbors=.
-	mata: neighbor=.
-	
-	mata: ids = (1::`nodes')
-	mata: sel = (vec :!= 0)
-	mata: neighbors = select(ids, sel)
 
-	mata: st_rclear()
-	capture mata: neighbor=jumble(neighbors)[1]
-	capture mata: st_numscalar("r(ego)", `ego')
-	capture mata: st_numscalar("r(oneneighbor)", neighbor)
-	capture mata: st_matrix("r(neighbors)", neighbors)
+	_opts_oneof "incoming outgoing either" "mode" "`mode'" 6556
 	
+	// Sparse-accessor rewrite: the prior dense-matrix "incoming" line had a
+	// stray unbalanced paren (a genuine, latent syntax-error bug - that
+	// mode could never have actually run). neighbors()/neighbors_in() are
+	// the same sparse CSR/CSC accessors already used by calculate_kcore()
+	// etc.; nzmask's own !=0 & !=. edge convention (build_sparse_index())
+	// matches the dense comparison this replaces exactly, so results are
+	// identical, not just equivalent.
+	if "`mode'" == "outgoing" {
+		mata: __nb = `netobj'->neighbors(`egoid')
+	}
+	if "`mode'" == "incoming" {
+		mata: __nb = `netobj'->neighbors_in(`egoid')
+	}
+	if "`mode'" == "either"{
+		mata: __nb = uniqrows(`netobj'->neighbors(`egoid') \ `netobj'->neighbors_in(`egoid'))
+	}
+	mata: _select = J(1, `nodes', 0)
+	mata: _select[__nb'] = J(1, rows(__nb), 1)
+	mata: neighbors = select((`netobj'->get_nodenames() \ strofreal(1::`netobj'->get_nodes())'), _select)
+	mata: mata drop __nb
+
+	capture confirm variable `generate'
+	if (_rc != 0 | "`replace'" != "") & "`generate'" != "" {
+		capture drop `generate'
+		gen `generate' =.
+		mata: st_store((1::`nodes'), "`generate'", _select')
+	}
+	mata: st_rclear()
+	capture mata: st_global("r(ego)", "`ego'")
+	capture mata: st_numscalar("r(egoid)", `egoid')
+	// BUGFIX: was `jumble(neighbors)[1]' - `neighbors' is a 2-row
+	// (name-row, id-row) x N-col matrix; `jumble()' shuffles MATRIX
+	// ROWS, not columns, so on a matrix with more than one neighbor this
+	// only ever randomized whether the name-row or the id-row came
+	// first, then linear-indexed (column-major) to whatever landed in
+	// position (1,1) - i.e., always "the first neighbor", and a coin
+	// flip on whether that returned its name or its numeric id. It
+	// happened to look like it worked for exactly one neighbor (name and
+	// id both describe "the only neighbor"), but never actually selected
+	// AMONG multiple neighbors at all. Fixed to genuinely pick a random
+	// COLUMN (one whole neighbor, name+id together), then take that
+	// neighbor's own name (row 1).
+	mata: st_numscalar("__nwneighbor_n", cols(neighbors))
+	if `=__nwneighbor_n' > 0 {
+		capture mata: st_global("r(oneneighbor)", neighbors[1, runiformint(1,1,1,`=__nwneighbor_n')])
+	}
+	else {
+		mata: st_global("r(oneneighbor)", "")
+	}
+	mata: st_numscalar("r(num_neighbors)", cols(neighbors))
+	scalar drop __nwneighbor_n
+
 	di ""
 	di "{hline 40}"
 	di "{txt}  Network: {res}`netname'"
 	di "{hline 40}"
-	di "{txt}    Ego        : {res}`ego_out'"
+	di "{txt}    Ego        :   {res}`ego' (`r(egoid)')"
 	di "{txt}    Neighbors  : {res}" _continue
-	
-	matrix temp_mat = r(neighbors)
-	local temp_rows = rowsof(temp_mat)
-	if temp_mat[1,1] == . {
-		local temp_rows = 0
-	}
-	
-	local neighbors_list1 ""
-	local neighbors_list2 ""
-	forvalues j = 1/`temp_rows' {
-		local temp =  temp_mat[`j',1]
-		local onelab : word `temp' of `labs'
-		local neighbors_list1 "`neighbors_list1' `temp'"
-		local neighbors_list2 "`neighbors_list2' `onelab'"
-		if `uselab' == 1{
-			di "{res}`onelab'" _continue
-		}
-		else {
-			di "{res}`temp'" _continue
-		}
-		if `j' < `temp_rows' {
-			di "{txt} , " _continue
-		}
-	}
-	mata: st_global("r(neighbors_list1)", "`neighbors_list1'")
-	mata: st_global("r(neighbors_list2)", "`neighbors_list2'")
 	di ""
-	
+	mata: neighbors'
+	mata: st_matrix("r(neighbors)", strtoreal(neighbors'[.,2]))
+	di ""
 	di "{hline 40}"
-
-	
-	mata: mata drop vec vecin vecout onenet neighbors neighbor ids sel
+	capture mata: mata drop neighbors
 end
 
-
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23

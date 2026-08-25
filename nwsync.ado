@@ -1,62 +1,137 @@
-*! Date        : 24aug2014
-*! Version     : 1.0
-*! Author      : Thomas Grund, Linköping University
-*! Email	   : contact@nwcommands.org
+/***
+{smcl}
+{* *! 14jul2016 author: Thomas Grund}{...}
+{marker topic}
+{helpb nw_topical##utilities:[NW-2.7] Utilities}
+
+{title:Title}
+
+{p2colset 9 15 22 2}{...}
+{p2col :nwsync {hline 2}}Sync network with Stata variables{p_end}
+{p2colreset}{...}
+
+
+{title:Syntax}
+
+{p 8 17 2}
+{cmdab: nwsync}
+[{it:{help netname}}]
+[{cmd:,}
+{opt label}
+{opt fromstata}]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt label}}Sync the node labels{p_end}
+{synopt:{opt fromstata}}Change the direction of the sync{p_end}
+{synoptline}
+{p2colreset}{...}
+
+
+{title:Description}
+
+{pstd}
+Networks ultimately exist as Mata objects. However, one can also load them
+as Stata variables that represent the adjacency matrix of a network 
+(see {help nwload}). Normally, when a network is changed through another {help nwcommands:nwcommand} the 
+Stata variables (if they exist) are automatically synced. But one can also invoke such 
+a sync explicitly. Furthermore, {help nwsync} can be used to sync the other way around, i.e.
+one can change the values of the Stata variables that represent the network and sync the 
+network (that lives in Mata).   
+ 
+{pstd}
+
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - syncs node labels/dataset state only; does not read or depend on any network's own directed/valued/two-mode status or tie values.
+
+{title:Options}
+
+{phang}
+{opt fromstata} Change the direction of the sync, i.e. the network is updated based on the
+Stata variables that represent the network.
+{p_end}
+
+{phang}
+{opt label} Run an additional {help nw_datasync} alignment pass (matching node identity against
+{bf:_nwnode}) before the normal variable sync below. There is no separate node-label concept or
+{bf:_nodelab} variable in this package - a node's name (see {help nwnoderename}) is its only label,
+and this option does not sync it; the name once documented here was inaccurate and has been
+corrected.
+{p_end}
+
+
+{title:Remarks}
+
+{pstd}
+One can use {help nwload} and {help nwsync: nwsync, fromstata} to replace tie values in a network. For example,
+	
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwload flomarriage}
+	{cmd:. replace acciaiuoli = 99 in 2}
+	{cmd:. nwsync flomarriage, fromstata}	
+
+{pstd}
+However, the preferred method to change the same tie value would be using {help nwreplace} instead:
+ 	
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwreplace flomarriage[2,1] = 99 }
+
+	
+{title:See also}
+
+	{help nwload}, {help nwreplace}, {help nwname}
+
+***/
 
 capture program drop nwsync
 program def nwsync
 	version 9
-	syntax [anything(name=netname)],[fromstata label]
+	syntax [anything(name=netname)],[ label fromstata]
 	
-	_nwsyntax `netname', max(9999)
-
-	nwname `netname'
-	local id = r(id)
-	local nodes = r(nodes)
-	scalar onevars = "\$nw_`id'"
-	local vars `=onevars'
-	local labs "`r(labs)'"
-
+	nw_syntax `netname', max(1)
 	if "`label'" != "" {
-		if "`fromstata'" != "" {
-			capture confirm variable _nodelab
-			if _rc == 0 {
-				nwname `netname', newlabsfromvar(_nodelab)
-			}
+		nw_datasync `netname'
+	}
+	
+	mata: st_global("r(vars)", `netobj'->get_nodesvar_string())
+	capture confirm variable `r(vars)'
+	// BUGFIX: used to branch on `_rc' directly with no `else' clause -
+	// on the (very common) path where a network has no Stata-variable
+	// sync to do at all (never `nwload'ed), the failed `capture confirm
+	// variable' above is completely expected/harmless, but its nonzero
+	// `_rc' was left standing as this program's own return code with
+	// nothing to reset it - any caller checking `_rc' right after
+	// calling nwsync (nwsym does exactly this internally, and nwuse.ado
+	// checks it one level further out) saw a spurious failure despite
+	// nwsync having done its job correctly. Captured into a local
+	// first so the branch no longer depends on `_rc''s own value, and
+	// an explicit `exit 0' at the end marks genuine, full success -
+	// safe because any real failure in `nwload'/`drop'/`set_edge' below
+	// would already have interrupted execution before reaching it.
+	local hasvars = (_rc == 0)
+	if `hasvars' {
+		if "`fromstata'" == "" {
+			drop `r(vars)'
+			nwload `netname'
 		}
 		else {
-			foreach lab in `labs' {
-				qui replace _nodelab = `"`lab'"' in `j'
-				local j = `j' + 1
-			}
+			mata: `netobj'->set_edge(st_data((1::`nodes'), "`r(vars)'"))
 		}
 	}
-	capture confirm variable `vars'
-	qui if (_rc == 0){
-		// sync from Stata to network
-		if "`fromstata'" != "" {
-			mata: _syncmat = st_data((1::`nodes'),"`vars'")
-			nwreplacemat `netname', newmat(_syncmat) nosync
-			mata: mata drop _syncmat
-		}
-		// sync from network to Stata
-		else {
-			nwtomata `netname', mat(_syncmat)
-			local stataObs = _N
-			if (`stataObs' < `nodes'){
-				set obs `nodes'
-			}
-			local i = 1
-			foreach var in `vars' {
-				tempvar onecol
-				gen `onecol' = .
-				mata: st_store((1,`nodes'), tokens("`onecol'"), _syncmat[.,`i']) 
-				replace `var' = `onecol'
-				local i = `i' + 1
-			}
-			mata: mata drop _syncmat
-		}
-	}
+	// A bare, uncaptured successful command does NOT reset `_rc' back
+	// to 0 in Stata (confirmed directly: a plain `summarize'/`confirm'/
+	// `mata:' call leaves a prior nonzero `_rc' from an earlier failed
+	// `capture' completely untouched) - only `capture' itself explicitly
+	// sets `_rc' to its wrapped command's own result, success or not.
+	// `exit 0' alone does not do this either (also confirmed directly)
+	// - it is not a special "clear _rc" signal, just an ordinary
+	// successful exit that leaves whatever `_rc' already was standing.
+	// This harmless, always-succeeding `capture' is the actual fix.
+	capture confirm number 1
 end
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+

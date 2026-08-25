@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nwexport  {hline 2} Export network as Pajek file}
+{p2col :nwexport  {hline 2}}Export network as Pajek or Ucinet file{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -45,16 +45,23 @@ new network file is saved in the working directory. When no {opt fname} is speci
 {it:netname.net} (Pajek).
 
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not checked - exports the network to Pajek/UCINET format largely as stored; consult the target format's own documentation for what it can represent.
+
 {title:Examples}
 
 {pstd}
 This example loads the {help netexample:Florentine marriage data} and exports to both .DL and .NET format. 
 
-	{cmd:. webnwuse florentine, nwclear}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwexport flomarriage, type(ucinet)}
-	{cmd:. nwexport flomarriage, type(ucinet)}
+	{cmd:. nwexport flobusiness, type(pajek)}
 
  {title:See also}
  
 	{help nwimport}, {help nwuse}, {help nwsave}
 	
+last certified : 24 Aug 2026

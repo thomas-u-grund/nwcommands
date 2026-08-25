@@ -1,0 +1,56 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwbridges")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 198
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwbridges - Calculate bridges")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 104, label("Options")
+  TEXT tx_cx_nwreplace 20 54 260 ., label("Overwrite network .")
+  CHECKBOX cx_nwreplace 290 54 190 ., label("nwreplace") option(nwreplace)
+  TEXT tx_cb_name 20 82 260 ., label("Save bridges as network; default = .")
+  COMBOBOX cb_name 290 82 190 ., dropdown contents(netlist) nomem option(name)
+  TEXT tx_cb_type 20 110 260 ., label("Type of bridge; default =")
+  COMBOBOX cb_type 290 110 190 ., dropdownlist contents(list_type) nomem option(type)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_type
+BEGIN
+	global
+	local
+	distance
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwbridges"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwbridges " main.cb_net
+	beginoptions
+		option main.cx_nwreplace
+		optionarg main.cb_name
+		optionarg main.cb_type
+	endoptions
+	stata
+END

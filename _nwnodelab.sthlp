@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 19 22 2}{...}
-{p2col :_nwnodelab {hline 2} Returns the nodelab of a node given its nodeid}
+{p2col :_nwnodelab {hline 2}}Returns the nodelab of a node given its nodeid{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -22,7 +22,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth nodeid(nodeid)}}nodeid of network node i{p_end}
-{synopt:{opt detail}}displays the {help nodeid} and {help nodelab} of node i{p_end}
+{synopt:{opt detail}}displays the {help nodeid} and {help nodeid:nodelab} of node i{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -47,7 +47,7 @@ This command is mostly used for programming with networks.
 	  
 {title:Examples}
 
-   {cmd:. webnwuse florentine}
+   {cmd:. nwwebuse florentine}
    {cmd:. _nwnodelab flomarriage, nodeid(9)}
    
 		{txt}Network: {res}flomarriage

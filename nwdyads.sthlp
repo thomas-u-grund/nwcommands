@@ -1,12 +1,13 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 2.0.0  7jul2016}{...}
 {marker topic}
 {helpb nw_topical##information:[NW-2.4] Information}
+version 2.0.0
 
 {title:Title}
 
 {p2colset 9 16 22 2}{...}
-{p2col :nwdyads  {hline 2} Dyad census}
+{p2col :nwdyads  {hline 2}}Dyad census{p_end}
 {p2colreset}{...}
 
 
@@ -22,7 +23,7 @@
 Returns the dyad census of a network (or a list of networks). This is a way to characterize a network based on its dyads.
 
 {pstd}
-In directed network, each dyad (pair of nodes {it:i} and {it:j}) can be one of the following:
+In directed networks, each dyad (pair of nodes {it:i} and {it:j}) can be one of the following:
 
 {pmore}
 1) M: mutually connected: {it:M_ij = M_ji = 1}
@@ -49,9 +50,15 @@ The command also returns the reciprocity of the network.
 {pmore}
 {it:reciprocity = M / (M + A)}
 
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a presence/absence classification. Directed: yes - a directed network gets the full M/A/N census; an undirected network collapses to M/N only (every tie is definitionally mutual). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+
 {title:Examples}
 	
-	{cmd:. webnwuse florentine}
+	{cmd:. nwwebuse florentine}
 	{com}. nwdyads flomarriage
 	{res}
 	{txt}    Dyad census: {res} flomarriage{txt}
@@ -60,7 +67,7 @@ The command also returns the reciprocity of the network.
 	{hline 11}{c +}{hline 11}
 	{res}{ralign 10:20}{col 20}{c |}{ralign 10:100}
 
-	{com}. webnwuse glasgow
+	{com}. nwwebuse glasgow
 	{com}. nwdyads glasgow3
 	{res}
 	{txt}    Dyad census: {res} glasgow3{txt}
@@ -75,7 +82,7 @@ The command also returns the reciprocity of the network.
 	Scalars:
 	  {bf:r(_100)}	mutual dyads
 	  {bf:r(_010)}	asymmetric dyads
-	  {bf:r(_000)}	null dyads
+	  {bf:r(_001)}	null dyads
 	  {bf:r(reciprocity)}	M / (M + A)
 	  
 	Macros:
@@ -85,3 +92,5 @@ The command also returns the reciprocity of the network.
 {title:See also}
 
 	{help nwtriads}
+
+last certified : 24 Aug 2026

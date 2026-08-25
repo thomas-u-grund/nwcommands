@@ -1,0 +1,43 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwvalidate")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 550 142
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwvalidate - Validate network name")
+BEGIN
+  TEXT tx_net 20 20 260 ., label("Network(s):")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 48, label("Options")
+  TEXT tx_ed_self 20 54 260 ., label("Self")
+  EDIT ed_self 290 54 190 ., nomem option(self)
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwvalidate"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	put "nwvalidate " main.cb_net
+	beginoptions
+		optionarg main.ed_self
+	endoptions
+	stata
+END

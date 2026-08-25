@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
+{* *! 12jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 
 {p2colset 9 14 22 2}{...}
-{p2col :nwsym  {hline 2} Symmetrize network}
+{p2col :nwsym  {hline 2}}Symmetrize network{p_end}
 {p2colreset}{...}
 
 {title:Syntax}
@@ -16,26 +16,26 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opt mode}({it:{help nwsym##mode:mode}})
-{opth name(newntename)}
-{opth vars(newvarlist)}
+{opt check}
+{opth generate(newntename)}
 {opt noreplace}]
 
-{synoptset 20 tabbed}{...}
+{synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt mode}({it:{help nwsym##mode:mode}})}logic for creating an undirected tie{p_end}
-{synopt:{opt name}({it:{help newnetname}})}name of the new symmetrized network; default = {it:_sym_netname}{p_end}
-{synopt:{opt vars}({it:{help newvarlist}})}new variables that are used for the network{p_end}
-{synopt:{opt noreplace}}creates a new network instead of changing the existing one{p_end}
+{synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
+{synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
+{synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
+{synopt:{opt noreplace}}Do not symmetrize in place; requires {opt generate()} (errors otherwise, since there would be nothing else to do){p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}
 {marker mode}{...}
 {p2col:{it:mode}}Description{p_end}
 {p2line}
-{p2col:{cmd: max}}maximum of tie values (i,j) and (j,i); default
+{p2col:{cmd: max}}Maximum of tie values (i,j) and (j,i); default
 		{p_end}
-{p2col:{cmd: min}}minimum of tie values (i,j) and (j,i)
+{p2col:{cmd: min}}Minimum of tie values (i,j) and (j,i)
 		{p_end}
 
 {synoptline}
@@ -44,12 +44,12 @@
 {title:Description}
 
 {pstd}
-Symmetrizes a network, i.e. it transforms a directed network in an undirected
-network. The logic for this transformation is defined in {bf:mode()}. 
+Symmetrizes a network and changes the meta-information of a network, i.e. it transforms a directed network in an undirected
+network. The logic for this transformation is defined by {bf:mode()}. 
 
 {pstd}
-By default {bf:mode(max)}, an undirected tie is formed when there is either a tie from node {it:i} to node {it:j} or
-a tie from node {it:j} to node {it:i}. 
+By default, an undirected tie is formed when there is either a tie from node {it:i} to node {it:j} or
+a tie from node {it:j} to node {it:i}; {bf:mode(max)}. 
 
 {pmore}
 {it:M_ij = max( M_ij, M_ji )}
@@ -63,23 +63,56 @@ node {it:j} and a tie from node {it:j} to node {it:i}.
 
 {pstd}
 When not specified otherwise, the network {help netname} is replaced with the symmetrized network. Option
-{bf:noreplace} generates a new network instead.
+In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname}.
 
 {pstd}
 Option {bf:check} tests if the underlying adjacency matrix of the network is symmetric (but does not 
 symmetrize the network). Notice that this is 
-indepdendent of any meta-information saved together withe the network (see {help nwname}). 
+independent of any meta-information saved together with the network (see {help nwname}). Hence, a network can be set as directed, but still be
+symmetric. In contrast, all undirected networks are by default also symmetric.
 
+{pstd}
+The logic for valued networks works in exactly the same way. 
+
+
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is converting a directed network to an undirected one (or checking whether it already is). Weighted: yes - {opt mode()} controls how the two directions' tie values are combined (e.g. max/min/sum) when they differ. Signed: not checked. Two-mode: not applicable - a bipartite network's own cross-mode structure has no "direction" to symmetrize in the first place.
 
 {title:Examples}
 
-	{cmd:. nwuse glasgow, nwclear}
+{pstd}
+This loads the Glasgow data and symmetrizes the network {it:glasgow1}. After that the originally directed network has become undirected.
+
+	{cmd:. nwwebuse glasgow, nwclear}
+	{cmd:. nwsym glasgow1}
+	
 	{cmd:. nwsym glasgow1, check}
+	{res}{hline 50}
+	{txt}   Network name: {res} glasgow1
+	{txt}   Directed: {res}false
+	{txt}   Symmetric: {res}true{txt}
 
 	
-{title:Stores results}
+{pstd}
+This example only checks for symmetry, but does not change anything. Notice that by default {bf:nwrandom} produces a directed network. However,
+a complete network (produced with {opt prob(1))}, where everybody is connected with everybody else, is also symmetric.
+	
+	{com}. nwrandom 10, prob(1)
+	{com}. nwsym, check
+	{res}{hline 50}
+	{txt}   Network name: {res} network
+	{txt}   Directed: {res}true
+	{txt}   Symmetric: {res}true{txt}
+
+	
+{title:Stored results}
 
 	Macros:
 	  {bf:r(is_symmetric)}	"true" or "false"
 	  {bf:r(name)}		name of the network
 	 
+
+last certified : 24 Aug 2026

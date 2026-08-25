@@ -1,21 +1,11 @@
 v 3
 d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
-d email: contact[at]nwcommands.org
-d Distribution-Date: 10dec2015
+d email: thomas.u.grund@gmail.com
+d Distribution-Date: 25aug2026
 f nwdissimilar.ado
 f nwdissimilar.sthlp
 f nwhierarchy.ado
 f nwhierarchy.sthlp
 f nwdendrogram.ado
 f nwdendrogram.sthlp
-f nw2set.ado
-f nw2set.sthlp
-f nwburt.ado
-f nwburt.sthlp
-f nwbridge.ado
-f nwbridge.sthlp
-f nwsimmelian.ado
-f nwsimmelian.sthlp
-f nw2project.ado
-f nw2project.sthlp

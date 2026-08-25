@@ -6,7 +6,7 @@
 {title:Title}
 
 {p2colset 9 20 22 2}{...}
-{p2col :nwissyemmtric {hline 2} Check if network is symmetric}
+{p2col :nwissymmetric {hline 2}}Check if network is symmetric{p_end}
 {p2colreset}{...}
 
 
@@ -33,14 +33,25 @@ For example, {help nwimport} automatically checks if a network (e.g. Ucinet full
 imports the network as undirected.
  
  
+
+{title:Supported network types}
+
+{pstd}
+Binary: yes. Directed: yes - this command's entire purpose is checking whether a directed network's matrix happens to be symmetric. Weighted: yes, checks exact value symmetry, not just tie presence. Signed: yes, a negative value is compared like any other. Two-mode: not checked.
+
 {title:Examples}
 
-	{cmd:. webnwuse florentine}
-	{cmd:. nwissymmetric flomarrige}
+	{cmd:. nwwebuse florentine}
+	{cmd:. nwissymmetric flomarriage}
 	{cmd:. return list}
-	
+
 	{txt}scalars:
 		r(issymmetric) = {res}1{txt}
+
+{pstd}
+Note: {bf:r(issymmetric)} is a plain numeric 0/1 scalar - unlike the {bf:true}/{bf:false} string
+macros most other boolean-flag results in this group use (e.g. {help nwname}'s {bf:r(directed)}),
+since it is a computed test result rather than a stored network property.
 
 
 {title:See also}

@@ -1,12 +1,12 @@
 {smcl}
-{* *! version 1.0.4  20nov2014 author: Thomas Grund}{...}
+{* *! 6jul2016 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
 {p2colset 9 17 23 2}{...}
-{p2col :nwset {hline 2} Declare data to be network data}
+{p2col :nwset {hline 2}}Declare data to be network data{p_end}
 {p2colreset}{...}
 
 {marker syntax}{...}
@@ -22,6 +22,27 @@
 ,
 {opt mat}({it:matamatrix})
 [ {it:options} ]
+
+{pstd}Declare a two-mode network from an edgelist of two id variables (see {help nwset##twomode:below})
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:mode1id}} {it:{help varname:mode2id}} [{it:{help varname:tievalue}}] {cmd:,} {opt twomode} [ {it:options} ]
+
+{pstd}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:below})
+
+{p 8 15 2}
+{cmd:nwset} [{it:{help varlist}}] {cmd:,} {opt bipartite} [{opt mat}({it:matamatrix})] [ {it:options} ]
+
+{pstd}Declare a temporal network from an edgelist (see {help nwset##temporal:below})
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt time(varname)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} [{it:{help varname:tievalue}}] {cmd:,} {opt interval(startvar endvar)} [ {it:options} ]
+
+{p 8 15 2}
+{cmd:nwset} {it:{help varname:fromid}} {it:{help varname:toid}} {cmd:,} {opt eventtime(varname)} [ {it:options} ]
 
 
 {pstd}Display currently existing networks
@@ -52,29 +73,33 @@
 {synopthdr}
 {synoptline}
 
-{synopt:{opt edgelist}}declare data in edgelist format{p_end}
-{synopt:{opt directed}}force network to be directed{p_end}
-{synopt:{opt undirected}}force network to be undirected{p_end}
-{synopt:{opt name}({it:{help newnetname}})}name of the new network; default = {it:network}{p_end}
-{synopt:{opt labs}({it:lab1 lab2...})}new node labels that are used for the network{p_end}
-{synopt:{opth labsfromvar(varname)}}new node labels that are used for the network{p_end}
-{synopt:{opt vars}({it:var1 var2...})}new variables that are used for the network{p_end}
-{synopt:{opt xvars}}do not generate Stata variables{p_end}
-{synopt:{opt keeporiginal}}generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opt edgelist}}Declare data in edgelist format{p_end}
+{synopt:{opt bipartite}}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:Declare a two-mode network} below){p_end}
+{synopt:{opt twomode}}Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see {help nwset##twomode:Declare a two-mode network} below){p_end}
+{synopt:{opt directed}}Force network to be directed{p_end}
+{synopt:{opt undirected}}Force network to be undirected{p_end}
+{synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
+{synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
+{synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
+{synopt:{opt xvars}}Generate Stata variables for the network{p_end}
+{synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
+{synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
 
 
 {title:Description}
 
 {pstd}
 This command declares data to be network data (it is very similar to {help xtset} or {help stset}). When networks are 
-{help nwimport:imported} or {help nwuse:used} or loaded from the {help webnwuse:internet} or created from
+{help nwimport:imported} or {help nwuse:used} or loaded from the {help nwwebuse:internet} or created from
 an {help nwfromedge:edgelist} or created by any other {help nw_topical##generator:network generator}, {bf:nwset} is automatically
 invoked. But one can also explicitly declare data to be network data. 
 
 {pstd}
-Networks ultimately exist as objects in Stata. Once a network is declared one can interact with it by referring
-to its {help netname}. In practice, this works just as if one would refer to a {help varname} in other commands.
-The command sets a new network by assigning it an adjacency matrix. It can also be used to assign various meta-information
+Networks ultimately exist as objects in Mata. Once a network is declared one can interact with it from Stata by referring
+to its {help netname}. In practice, this works just as if one would refer to a {help varname} in other commands. The
+command sets a new network by assigning it an adjacency matrix. It can also be used to assign various meta-information
 to the network.
 
 {pstd}
@@ -83,6 +108,8 @@ has the dimensions {it:nodes} x {it:nodes}. The matrix cell {it:M_ij} = 0 when t
 and {it:j}. In binary networks, {it:M_ij} = 1 when there is a network relationship between nodes {it:i} and {it:j}.
 However, networks can also be valued, i.e. {it:M_ij} > 1; in undirected networks {it:M_ij = M_ji}.
 
+{pstd}
+The command automatically recognizes if the network is unvalued (only has values 0, 1 or missing) or valued.
 
 {pstd}
 There are three ways to explicitly declare data to be network data:
@@ -107,7 +134,7 @@ are no ties).
 
 	{cmd:. nwclear}
 	{cmd:. forvalues i = 1/5} {
-	{cmd:     gen v`i' = 0}
+	{cmd:     gen v = 0}
 	{cmd:  }}
 	{cmd:. nwset v*}
 
@@ -168,9 +195,9 @@ The following command declares such data as network data and gives the new netwo
 
 	{cmd:. nwset fromid toid value, name(mynet) edgelist}
 
-	
+
 {pstd}
-{bf:{ul:2. Declare adjacency matrix from Mata matrix}}
+{bf:{ul:3. Declare adjacency matrix from Mata matrix}}
 
 {pstd}
 Set a network from a {it:nodes x nodes} Mata matrix that holds the adjacency matrix of the new network. The option
@@ -206,10 +233,107 @@ Now a network called {it:network} exists and we can interact with it. For exampl
 	3 {c |}  {res}1   1   0   0{txt}  {c |}
 	4 {c |}  {res}1   1   1   0{txt}  {c |}
           {c BLC}{hline 17}{c BRC}
- 
- 
+
+
+{marker twomode}{...}
+{pstd}
+{bf:{ul:4. Declare a two-mode network}}
+
+{pstd}
+A two-mode (bipartite) network has two distinct sets of nodes ("modes"), with ties running only
+{it:between} the two sets, never within either one - e.g. people and the organisations they belong
+to. Two-mode status is stored directly on the network object itself (queryable via
+{help nwsummarize} or {help nwname}'s own {bf:r(mode2)}/{bf:r(nodes1)}/{bf:r(nodes2)} results), the
+same as directed/valued/selfloop status - there are two ways to declare one, matching the two input
+shapes {bf:nwset} already supports for one-mode networks:
+
+{pstd}
+{bf:twomode} - from an edgelist of two (or three, for a valued network) id variables, one row per
+tie, directly analogous to {bf:edgelist} above. This is generally the more natural form when the
+data already looks like a list of affiliations:
+
+	{cmd:. nwclear}
+	{cmd:. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/institutions.dta", clear}
+	{cmd:. nwset person institution, twomode name(mynet)}
+
+{pstd}
+This also automatically sets each mode's own human-readable description from the variable names
+used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)} in
+{help nwname}/{help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
+holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
+full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
+{bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
+edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare
+{help varlist} alone, so combining them is rejected as an explicit error rather than guessed at.
+
+{pstd}
+{bf:bipartite} - from a Mata matrix, or from a {help varlist} interpreted as a {it:wide} affiliation
+matrix (each named variable is one mode-1 node, each observation is one mode-2 node) - the two-mode
+analogue of the plain adjacency-matrix forms in sections 1 and 3 above:
+
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,1,0\1,0,1\0,1,1)}
+	{cmd:. nwset, mat(net) bipartite name(mynet)}
+
+{pstd}
+Here {bf:net} is a 3 (mode 1) x 3 (mode 2) matrix - {bf:bipartite} tells {bf:nwset} the matrix's own
+columns are mode-1 nodes and its rows are mode-2 nodes, rather than treating it as an ordinary square
+one-mode adjacency matrix.
+
+{pstd}
+Ordinary {bf:nw*} commands inspect a network's own two-mode status and behave accordingly rather
+than requiring a separate command family for bipartite data - see each command's own help file for
+whether it has a native bipartite definition, works on the raw bipartite structure directly, requires
+an explicit projection (see {help nw2project} - {bf:nwset} and the rest of the package never project
+automatically), or does not support two-mode data at all.
+
+
+{marker temporal}{...}
+{bf:{ul:5. Declare a temporal network}}
+
+{pstd}
+Time belongs to edges/ties, not to a separate network copy per timepoint. An edgelist can carry a
+temporal dimension via exactly one of three options - {bf:time()}, {bf:interval()}, or
+{bf:eventtime()} - matching three distinct semantics that are never conflated:
+
+{p 8 12 2}{bf:time({it:timevar})}{p_end}
+{p 12 12 2}{bf:snapshot} semantics: each row's own {it:timevar} value is the single instant that tie
+was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
+carrying its own recorded time{p_end}
+{p 8 12 2}{bf:interval({it:startvar endvar})}{p_end}
+{p 12 12 2}{bf:interval} semantics: each row is active for {it:startvar} <= {it:t} < {it:endvar} - a
+missing {it:endvar} means the tie is still ongoing (open-ended){p_end}
+{p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
+{p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
+tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
+ordinary graph{p_end}
+
+{pstd}
+For example, this declares a snapshot network from three waves of ties:
+
+	{cmd:. nwset ego alter, time(wave) name(mynet)}
+
+{pstd}
+A temporal network is otherwise a completely ordinary {bf:nwset}-declared network - {help nwsummarize}
+shows its temporal metadata, and {help nwattime} produces an ordinary static network containing only
+the ties active at a given timepoint, usable with any {bf:nw*} command exactly like any other network.
+
+{pstd}
+{bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
+{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
+docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
+scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
+temporal ERGMs) is implemented or attempted here.
+
+
+
+{title:Supported network types}
+
+{pstd}
+This command is the primary mechanism by which a network's own binary/directed/weighted/signed/two-mode status is declared in the first place ({opt directed}/{opt undirected}, {opt valued}/{opt unvalued}, {opt bipartite}/{opt twomode}), rather than a command whose own behavior varies by a pre-existing network's type. Signed values (negative ties) are accepted and stored as-is, not validated or rejected.
+
 {title:Remarks}
- 
+
 {pstd}
 The command {bf:nwset} or {bf:nwset, detail} without a {help varlist} or {bf:mat()} option, give a list of all
 networks that do currently exist in memory. A similar overview is provided by {help nwds} (which is very similar to {help ds}).
@@ -218,14 +342,15 @@ networks that do currently exist in memory. A similar overview is provided by {h
 Although not really needed, networks can be represented with Stata variables (see {help nwload}). For this purpose, each network
 holds some meta-information about which Stata variables should be created when a network is loaded in such a way. This meta-information
 can be set wit option {bf:vars()}. When specified, it needs to have as many entries as there are nodes in the network. When not specified, 
-the program automatically makes a suggestion for variable names (see {help nwvalidvars}). 
+the program automatically makes a suggestion for variable names. 
 
 {pstd}
-Many network generators allow the option {bf:xvars}, 
-which essentially only produces a network object, but does not load a network as Stata variables (see {help nwload}). It can be
-useful to surpress loading the adjacency matrix of a network in Stata when one deals with many or large networks. All commands
-that require a {help netname} still work, even when all Stata variables are dropped, e.g.{bf: drop _all}. This also means that one 
-can still deal with larger networks even when using {bf:Small Stata}.
+By default, network generators (including {cmd:nwset} itself) only produce a network object - they do NOT load a network as Stata
+variables (see {help nwload}). Many network generators allow the option {bf:xvars}, which ADDITIONALLY loads the new network as Stata
+variables right away (equivalent to following the generator with a separate {help nwload} call). Leaving {bf:xvars} unspecified keeps
+Stata's own variable budget free when one deals with many or large networks - all commands that require a {help netname} still work
+even when no Stata variables for that network exist at all, or after {bf: drop _all}. This also means that one can still deal with
+larger networks even when using {bf:Small Stata}.
 
 {pstd}
 Each node in a network also has a node label. This is a unique name for each node. This meta-information can be set with
@@ -244,4 +369,4 @@ an adjacency list or an edgelist represented by Stata variables.
 
 {title:See also}
 
-	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwvalidvars}, {help nwsummarize}
+	{help nodeid}, {help nwname}, {help nwds}, {help nwload}, {help nwvalidate}, {help nwsummarize}, {help nw2fromedge}, {help nw2project}, {help nwattime}, {help nw_intro##limits:feasible network sizes}

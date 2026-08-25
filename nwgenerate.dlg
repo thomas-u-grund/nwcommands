@@ -1,0 +1,35 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwgenerate")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 520 136
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+DIALOG main, title("nwgenerate - Generate a new network or variable from an expression")
+BEGIN
+  GROUPBOX gb_opt 10 10 480 86, label("Details")
+  TEXT tx_ed_new 20 20 260 ., label("New network/variable name:")
+  EDIT ed_new 290 20 190 ., nomem
+  TEXT tx_ed_expr 20 48 260 ., label("Expression (e.g. '2 * mynet1'):")
+  EDIT ed_expr 290 48 190 ., nomem
+END
+
+PROGRAM initialize
+BEGIN
+END
+
+PROGRAM command
+BEGIN
+	require main.ed_new
+	require main.ed_expr
+	put "nwgenerate " main.ed_new " = " main.ed_expr
+	stata
+END
