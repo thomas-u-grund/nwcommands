@@ -247,8 +247,20 @@ program nwcug, rclass
 		qui drop _all
 		mata: st_addobs(`reps')
 		mata: st_store(., st_addvar("double", "nwcug_null"), nwcug_nullvals)
-		twoway histogram nwcug_null, fcolor(gs14) lcolor(gs8) ///
-			xline(`obsval', lcolor(black) lpattern(dash)) ///
+		// The reference line is drawn as its own foreground plot layer
+		// (a two-point vertical segment on a hidden, fixed-0/1 second
+		// y-axis) rather than via xline() - xline()/yline() are
+		// rendered as part of the axis background, so a solid
+		// fcolor()-filled histogram bar draws OVER it wherever the
+		// two overlap, leaving the dashed line visibly broken. A
+		// same-scale twoway plot listed after the histogram always
+		// draws on top; the hidden axis(2), fixed to range(0 1),
+		// makes the segment span the full panel height regardless of
+		// the histogram's own (data-dependent) density scale.
+		twoway (histogram nwcug_null, fcolor(gs14) lcolor(gs8)) ///
+			(scatteri 0 `obsval' 1 `obsval', recast(line) ///
+				lcolor(black) lwidth(thick) lpattern(dash) yaxis(2)), ///
+			yscale(off axis(2) range(0 1)) ///
 			title("CUG test: `rname'", size(medium)) ///
 			xtitle("`rname' (`reps' condition(`condition') draws)") ytitle("Density") ///
 			legend(off) name(`name', replace)

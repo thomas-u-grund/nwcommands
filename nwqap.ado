@@ -456,21 +456,57 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// Grayscale by design, matching every other plot this package
 	// produces (Stata Journal figures must stay legible in black and
 	// white).
+	// BUGFIX: panel titles used the raw `entry' loop token (a literal
+	// word from the typed formula() - the dependent variable's own
+	// name, or a bare nodal-attribute name like "smoke1") rather than
+	// the actual fitted coefficient name it corresponds to. The
+	// dependent-variable token's own iteration (`entry'=="`net'")
+	// computes results for the CONSTANT (reg_results[1,`vars'], the
+	// last column) - correct data, but a panel titled "glasgow2" for
+	// what is really the model's own constant is misleading, not
+	// merely stylistic; likewise a bare nodal attribute like "smoke1"
+	// is fit as "same_smoke1" (mode()'s own dyadic expansion) and
+	// should say so.
+	//
+	// `reg_results' (== e(b) from the internal `type' `formula'' call,
+	// captured above) is NOT a source for these names - its columns
+	// are named after the literal formula() tokens (e.g. plain
+	// "smoke1"), since that is what was actually regressed; the
+	// "same_"/mode()-prefixed display name is cosmetic, applied only
+	// to the matrices `nwqap' hands back to the user afterwards
+	// (`ivnames', built from `prefix' below). `prefix' itself is
+	// already fully built by this point (populated token-by-token in
+	// the formula-processing loop above, one token per formula()
+	// word including `net' itself in first position) and is exactly
+	// what the results table two hundred lines down uses for the same
+	// purpose (``k'' there, after `tokenize "`prefix'"') - reused here
+	// via `: word' instead, since tokenizing `prefix' this early would
+	// clobber the positional locals this loop and the rest of the
+	// program still rely on.
 	local __combine_list ""
 	local k = 1
 	qui foreach entry in `formula' {
 		if ("`entry'" == "`net'") {
 			local orig_result = reg_results[1,`vars']
+			local __coefname "_cons"
 		}
 		else {
 			local orig_result = reg_results[1,`k']
+			local __coefname : word `=`k'+1' of `prefix'
 		}
 
 		if "`plot'" != "" {
 			tempname __g
-			twoway histogram `entry', fcolor(gs14) lcolor(gs8) ///
-				xline(`orig_result', lcolor(black) lpattern(dash)) ///
-				title("`entry'", size(small)) ///
+			// See nwcug.ado's own plot block for why the reference
+			// line is a foreground plot layer (hidden fixed-0/1
+			// second y-axis) rather than xline() - xline() draws
+			// behind the histogram's solid fcolor() bars, hiding the
+			// line wherever a bar covers it.
+			twoway (histogram `entry', fcolor(gs14) lcolor(gs8)) ///
+				(scatteri 0 `orig_result' 1 `orig_result', recast(line) ///
+					lcolor(black) lwidth(thick) lpattern(dash) yaxis(2)), ///
+				yscale(off axis(2) range(0 1)) ///
+				title("`__coefname'", size(small)) ///
 				xtitle("") ytitle("") ///
 				legend(off) nodraw name(`__g', replace)
 			local __combine_list `"`__combine_list' `__g'"'
