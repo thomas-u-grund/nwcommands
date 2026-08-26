@@ -2918,6 +2918,7 @@ class `NWdef' {
 	real matrix calculate_triadcensus()
 	real matrix calculate_distances()
 	real matrix calculate_distances_bfs()
+	real matrix calculate_distances_bfs_native()
 	real matrix calculate_distances_dijkstra()
 	real matrix calculate_distances_without()
 	real matrix calculate_bridges_global()
@@ -5875,6 +5876,14 @@ real matrix `NWdef'::calculate_distances_dijkstra(real scalar alpha){
 
 real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 	if (alg == "brute"){
+		// Native dispatch (docs/NATIVE_GRAPH_LIBRARIES.md follow-on):
+		// falls back to the pure-Mata calculate_distances_bfs() whenever
+		// no compiled plugin binary exists for the running platform,
+		// the same graceful-degradation convention nwbetween.ado's own
+		// dispatch already uses for calculate_betweenness_native().
+		if (NativeGraphAvailable()){
+			return(calculate_distances_bfs_native())
+		}
 		return(calculate_distances_bfs())
 	}
 	else {
@@ -6203,6 +6212,65 @@ real matrix `NWdef'::calculate_betweenness_native(){
 	stata("capture frame drop __nwgraph_native")
 
 	return(Cb)
+}
+
+/*
+	Native single-source-BFS-per-call all-pairs unweighted distance
+	matrix - the compiled counterpart to bfs_hopdist_from()/
+	calculate_distances_bfs() above. Unlike calculate_betweenness_native()
+	(one plugin call handles all n sources internally, since betweenness
+	aggregates across them into a single O(n) output), an all-pairs
+	DISTANCE matrix is a genuine O(n^2) result, and the classic Stata
+	Plugin Interface has no channel to hand one back directly - only the
+	current dataset's own rows/columns via SF_vdata/SF_vstore. Rather
+	than pre-expand a working frame to n^2 rows (real overhead of its
+	own, and unbounded as n grows), this calls the plugin once PER
+	SOURCE NODE, each call doing one compiled O(n+m) BFS traversal and
+	returning one O(n) column - the exact same shape
+	calculate_betweenness_native() already uses successfully, just
+	looped n times here instead of internally once. The edge list and
+	temporary frame are built once, outside the loop; only the `source'
+	argument and the resulting column change per call.
+	CALLER'S RESPONSIBILITY: check NativeGraphAvailable() first, same
+	convention as calculate_betweenness_native().
+*/
+real matrix `NWdef'::calculate_distances_bfs_native(){
+	real matrix ties, D
+	real scalar n, nties, nobs_needed, __junk, i
+	string scalar origframe, argstr, cmd
+
+	n = get_nodes()
+	ties = edgelist()
+	if (rows(ties) > 0) ties = select(ties, ties[.,3] :> 0)
+	nties = rows(ties)
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+
+	nobs_needed = max((n, nties, 1))
+	st_addobs(nobs_needed)
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties[.,(1,2)])
+
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+
+	D = J(n, n, .)
+	for (i = 1; i <= n; i++){
+		argstr = strofreal(2) + " " + strofreal(n) + " " + strofreal(isdirect) + " " + strofreal(nties) + " " + strofreal(i)
+		cmd = "plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34)
+		stata(cmd)
+		D[i,.] = st_data((1::n), "v3")'
+	}
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+
+	return(D)
 }
 
 
