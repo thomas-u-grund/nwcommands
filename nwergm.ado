@@ -39,7 +39,7 @@
 [{opt gwidegree(real)}]
 [{opt esp(numlist)}]
 [{opt dsp(numlist)}]
-[{opt type(OTP|ITP|OSP|ISP)}]
+[{opt type(OTP|ITP|OSP|ISP|RTP)}]
 [{opt degree(numlist)}]
 [{opt odegree(numlist)}]
 [{opt idegree(numlist)}]
@@ -106,7 +106,7 @@
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
 {synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (see {opt type()}). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
-{synopt:{opt type(OTP|ITP|OSP|ISP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the four definitions){p_end}
+{synopt:{opt type(OTP|ITP|OSP|ISP|RTP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the five definitions){p_end}
 {synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
 {synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
 {synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
@@ -198,7 +198,7 @@ counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
 {opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
-{opt esp()}/{opt dsp()} also support directed networks via any of FOUR directed shared-partner
+{opt esp()}/{opt dsp()} also support directed networks via any of FIVE directed shared-partner
 definitions, selected with {opt type()} (default {bf:OTP}, R ergm's own default) and applied
 uniformly to every one of these five terms present in the same model:
 
@@ -207,11 +207,11 @@ uniformly to every one of these five terms present in the same model:
 {p2col:{bf:ITP}}incoming two-path, i<-k<-j{p_end}
 {p2col:{bf:OSP}}outgoing shared partner, i->k<-j (i and j share an out-neighbor k){p_end}
 {p2col:{bf:ISP}}incoming shared partner, i<-k->j (i and j share an in-neighbor k){p_end}
+{p2col:{bf:RTP}}reciprocated two-path, i<->k<->j (k is a shared partner only through a mutual tie on each leg){p_end}
 {p2colreset}
 
 {pstd}
-R ergm's own fifth type, {bf:RTP} (reciprocated two-path), is not implemented - a documented
-roadmap item, not folded into one of the four above. Two-mode/bipartite terms are deliberately
+All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/bipartite terms are deliberately
 deprioritized as a
 later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
 are not a supported data type at all); curved parameters need a genuine MCMLE architecture
@@ -249,13 +249,14 @@ every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodeco
 entire degree-distribution family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
 {opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
 {opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the entire shared-partner family, both
-undirected and directed ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/
-{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In practice this means
-essentially every {cmd:nwergm} model now runs on the native backend. The one remaining exception
-(automatically and correctly using the Mata backend instead, with no error and no action needed):
-{opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix marshalled across the
-plugin boundary rather than the per-node values or scalar parameters every other term needs - see
-{browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the current status.
+undirected and directed, EVERY {opt type()} included ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
+{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In
+practice this means essentially every {cmd:nwergm} model now runs on the native backend. The one
+remaining exception (automatically and correctly using the Mata backend instead, with no error and
+no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix
+marshalled across the plugin boundary rather than the per-node values or scalar parameters every
+other term needs - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the
+current status.
 
 {title:Postestimation}
 
@@ -355,7 +356,7 @@ implementation is based on.
 {cmd:,}
 {opt edges} [{opt mutual}]
 [{it:{help nwergm##simulate_terms:term options}}]
-[{opt type(OTP|ITP|OSP|ISP)}]
+[{opt type(OTP|ITP|OSP|ISP|RTP)}]
 {opt theta(numlist)}
 [{opt directed}
 {opt nsim(int)}
@@ -400,10 +401,10 @@ covariate at all, since their own "attribute" is just each node's own index.{p_e
 {it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
 
 {pstd}
-{opt type()} selects which of the four directed shared-partner definitions (default {bf:OTP}) any
+{opt type()} selects which of the five directed shared-partner definitions (default {bf:OTP}) any
 {opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt esp()}/{opt dsp()} term simulates under, with {opt directed}
 - exactly the same option, with the same meaning, as {cmd:nwergm}'s own estimation path; see that
-command's own {bf:Remarks} section for the four definitions.
+command's own {bf:Remarks} section for the five definitions.
 
 {pstd}
 {opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence
@@ -476,7 +477,7 @@ program nwergm, eclass
 	local __ergm_type_explicit = ("`type'" != "")
 	local type = upper("`type'")
 	if "`type'" == "" local type "OTP"
-	_opts_oneof "OTP ITP OSP ISP" "type" "`type'" 6556
+	_opts_oneof "OTP ITP OSP ISP RTP" "type" "`type'" 6556
 
 	nw_syntax `netname', max(1)
 
@@ -506,27 +507,26 @@ program nwergm, eclass
 		error 198
 	}
 	// gwesp()/gwdsp()/gwnsp()/esp()/dsp() now support directed networks
-	// too (harmonisation unit 91) via one of four directed shared-
+	// too (harmonisation unit 91) via one of five directed shared-
 	// partner definitions - OTP ("outgoing two-path", i->k->j, R ergm's
 	// own default), ITP ("incoming two-path", i<-k<-j), OSP ("outgoing
-	// shared partner", i->k<-j), or ISP ("incoming shared partner",
-	// i<-k->j) - selected by the shared `type()' option and applied
-	// uniformly to every one of these five terms present in the same
-	// model (a per-term `type=' the way R ergm's own arglist allows is
-	// not offered - nwergm's own option-string convention for these
-	// terms is already just a bare decay/numlist, not a nested
-	// sub-syntax, and one shared-partner definition per model covers
-	// the realistic use case without that added parsing complexity).
-	// `nwergm.ado' sets `td.sptype' to the resolved `type' automatically
-	// for these terms whenever `directed'=="true", leaving the
-	// undirected/UTP path (`td.sptype' left blank) completely untouched
-	// for undirected networks - matching R ergm's own documented
-	// override ("if and only if the network is undirected, the UTP
-	// routine is used ... irrespective of the user's selection"). RTP
-	// (reciprocated two-path) is the one directed type R ergm offers
-	// that nwergm does not - a documented follow-on in
-	// docs/ERGM_ROADMAP.md, not silently folded into one of the four
-	// implemented here.
+	// shared partner", i->k<-j), ISP ("incoming shared partner",
+	// i<-k->j), or RTP ("reciprocated two-path", i<->k<->j - a shared
+	// partner only through a mutual tie on each leg) - selected by the
+	// shared `type()' option and applied uniformly to every one of these
+	// five terms present in the same model (a per-term `type=' the way R
+	// ergm's own arglist allows is not offered - nwergm's own
+	// option-string convention for these terms is already just a bare
+	// decay/numlist, not a nested sub-syntax, and one shared-partner
+	// definition per model covers the realistic use case without that
+	// added parsing complexity). `nwergm.ado' sets `td.sptype' to the
+	// resolved `type' automatically for these terms whenever
+	// `directed'=="true", leaving the undirected/UTP path (`td.sptype'
+	// left blank) completely untouched for undirected networks -
+	// matching R ergm's own documented override ("if and only if the
+	// network is undirected, the UTP routine is used ... irrespective of
+	// the user's selection"). All five directed types R ergm itself
+	// offers are now implemented - none remain outstanding.
 	if `__ergm_type_explicit' & "`directed'" != "true" {
 		di "{err}note: option {bf:type()} only affects directed networks; {bf:`netname'} is undirected, so the undirected shared-partner definition is used regardless."
 	}
@@ -1529,7 +1529,7 @@ program nwergm_simulate
 	local __ergm_type_explicit = ("`type'" != "")
 	local type = upper("`type'")
 	if "`type'" == "" local type "OTP"
-	_opts_oneof "OTP ITP OSP ISP" "type" "`type'" 6556
+	_opts_oneof "OTP ITP OSP ISP RTP" "type" "`type'" 6556
 	if `__ergm_type_explicit' & "`directed'" == "" {
 		di "{err}note: option {bf:type()} only affects directed simulation; without {bf:directed}, the undirected shared-partner definition is used regardless."
 	}
