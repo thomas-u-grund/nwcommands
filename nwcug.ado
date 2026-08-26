@@ -115,7 +115,7 @@ indices. {it:Social Networks} 21(3), 239-267.
 capture program drop nwcug
 program nwcug, rclass
 	version 12
-	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent]
+	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string)]
 
 	local tail = lower("`tail'")
 	if "`tail'" == "" {
@@ -173,6 +173,25 @@ program nwcug, rclass
 		local obsasym = r(_010)
 	}
 
+	// BUGFIX: stat() is documented as "any nw* command plus whatever
+	// options it needs", and many such commands legitimately resize or
+	// otherwise modify the ACTIVE dataset as part of their own ordinary
+	// generate()-style behavior (e.g. nwcomponents ..., replace syncs
+	// the current dataset to the network's own node count) - entirely
+	// correct when that command is called directly by a user, but not
+	// when nwcug is silently running it, up to `reps'+1 times, against
+	// whatever dataset the CALLER happened to have active. Neither the
+	// observed-value evaluation just below nor the reps loop further
+	// down was ever protected, so a caller's own dataset (row count,
+	// variables) could be silently resized/altered by nwcug and never
+	// restored - confirmed directly: a 3-observation dataset with a
+	// hand-added variable came back as a 5-observation dataset (the
+	// network's own node count) after an ordinary nwcug call, no plot
+	// involved. `obsval' below and `nwcug_nullvals' (Mata, unaffected
+	// by dataset state) both survive `restore' safely, since restore
+	// only reverts the dataset itself, never Stata locals or Mata
+	// state - so wrapping the whole evaluation region is safe.
+	preserve
 	local obscmd = subinstr("`stat'", "##net##", "`origname'", .)
 	qui `obscmd'
 	// r(anything-undefined) silently evaluates to missing rather than
@@ -205,11 +224,38 @@ program nwcug, rclass
 		mata: nwcug_nullvals[`i'] = `v'
 	}
 	capture nwdrop `base'
+	restore
 
 	mata: st_numscalar("meannull", mean(nwcug_nullvals))
 	mata: st_numscalar("sdnull", sqrt(variance(nwcug_nullvals)))
 	mata: st_numscalar("pgreater", mean(nwcug_nullvals :>= `obsval'))
 	mata: st_numscalar("pless", mean(nwcug_nullvals :<= `obsval'))
+
+	// plot(): a histogram of the `reps' null draws with a dashed
+	// reference line at the observed statistic - the same comparison
+	// R's sna::plot.cug.test() draws, via this package's own established
+	// preserve/rebuild-a-plotting-dataset/restore convention (matching
+	// nwergm_estat's mcmcdiag/gof plot helpers) rather than a Statnet-
+	// style S3 plot method, since nwcug has no such object to attach one
+	// to. Grayscale by design (Stata Journal figures must stay legible
+	// in black and white), same discipline as nwergm_estat's own plots.
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "cug"
+		}
+		preserve
+		qui drop _all
+		mata: st_addobs(`reps')
+		mata: st_store(., st_addvar("double", "nwcug_null"), nwcug_nullvals)
+		twoway histogram nwcug_null, fcolor(gs14) lcolor(gs8) ///
+			xline(`obsval', lcolor(black) lpattern(dash)) ///
+			title("CUG test: `rname'", size(medium)) ///
+			xtitle("`rname' (`reps' condition(`condition') draws)") ytitle("Density") ///
+			legend(off) name(`name', replace)
+		restore
+		di as txt "(plot saved as {bf:`name'}; histogram of the `reps' null draws under condition(`condition'), dashed line marks the observed value)"
+	}
+
 	mata: mata drop nwcug_nullvals
 
 	local ptwo = min(2*min(pgreater,pless), 1)

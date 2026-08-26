@@ -38,6 +38,7 @@
 [{opt gwidegree(real)}]
 [{opt esp(numlist)}]
 [{opt dsp(numlist)}]
+[{opt type(OTP|ITP|OSP|ISP)}]
 [{opt degree(numlist)}]
 [{opt odegree(numlist)}]
 [{opt idegree(numlist)}]
@@ -79,12 +80,12 @@
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
-{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (OTP shared-partner definition, R ergm's own default){p_end}
-{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (OTP){p_end}
+{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
+{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
-{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (OTP). Satisfies gwdsp = gwesp + gwnsp{p_end}
+{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}). Satisfies gwdsp = gwesp + gwnsp{p_end}
 {synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
 {synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
 {synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
@@ -102,8 +103,9 @@
 {synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
 {synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
-{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (OTP){p_end}
-{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (OTP). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (see {opt type()}){p_end}
+{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (see {opt type()}). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt type(OTP|ITP|OSP|ISP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the four definitions){p_end}
 {synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
 {synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
 {synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
@@ -195,8 +197,21 @@ counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
 {opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
-{opt esp()}/{opt dsp()} also support directed networks via R ergm's own default directed
-shared-partner definition (OTP). Two-mode/bipartite terms are deliberately deprioritized as a
+{opt esp()}/{opt dsp()} also support directed networks via any of FOUR directed shared-partner
+definitions, selected with {opt type()} (default {bf:OTP}, R ergm's own default) and applied
+uniformly to every one of these five terms present in the same model:
+
+{p2colset 9 22 24 2}
+{p2col:{bf:OTP}}outgoing two-path, i->k->j (the default){p_end}
+{p2col:{bf:ITP}}incoming two-path, i<-k<-j{p_end}
+{p2col:{bf:OSP}}outgoing shared partner, i->k<-j (i and j share an out-neighbor k){p_end}
+{p2col:{bf:ISP}}incoming shared partner, i<-k->j (i and j share an in-neighbor k){p_end}
+{p2colreset}
+
+{pstd}
+R ergm's own fifth type, {bf:RTP} (reciprocated two-path), is not implemented - a documented
+roadmap item, not folded into one of the four above. Two-mode/bipartite terms are deliberately
+deprioritized as a
 later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
 are not a supported data type at all); curved parameters need a genuine MCMLE architecture
 change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
@@ -341,6 +356,7 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 {cmd:,}
 {opt edges} [{opt mutual}]
 [{it:{help nwergm##simulate_terms:term options}}]
+[{opt type(OTP|ITP|OSP|ISP)}]
 {opt theta(numlist)}
 [{opt directed}
 {opt nsim(int)}
@@ -383,6 +399,12 @@ covariate at all, since their own "attribute" is just each node's own index.{p_e
 {p2col:{it:dyadic covariate}}{opt edgecov(netname)}, {opt hamming(netname)} - read from
 {it:netname}, an already-{help nwset:set}/loaded reference network of the same size as
 {it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
+
+{pstd}
+{opt type()} selects which of the four directed shared-partner definitions (default {bf:OTP}) any
+{opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt esp()}/{opt dsp()} term simulates under, with {opt directed}
+- exactly the same option, with the same meaning, as {cmd:nwergm}'s own estimation path; see that
+command's own {bf:Remarks} section for the four definitions.
 
 {pstd}
 {opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence

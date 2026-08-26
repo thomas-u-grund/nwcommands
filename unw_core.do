@@ -3776,7 +3776,16 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 
 /*
 	Gould-Fernandez (1989) brokerage roles: for every directed two-path
-	a -> b -> c (a != c) through each node b, classifies the role b plays
+	a -> b -> c (a != c) through each node b, WHERE a HAS NO DIRECT TIE
+	TO c (a cannot already reach c without going through b - the whole
+	point of "brokerage" is that b mediates something a and c can't
+	already do directly; fresh-checked against the real `statnet/sna` C
+	source, `src/gli.c`'s own `brokerage_R()`: it only classifies a
+	two-path when `!snaIsAdjacent(i,k,net,0)`, i.e. only when the
+	SOURCE has no existing directed tie to the DESTINATION - counting
+	a-b-c triangles where a->c ALSO already exists would silently
+	inflate every role count, especially coordinator, on any network
+	with real transitivity/clustering), classifies the role b plays
 	using the group membership of a, b and c:
 	  1. coordinator    - g(a)=g(b)=g(c)              (broker within own group)
 	  2. gatekeeper      - g(a)!=g(b), g(b)=g(c)        (lets outside info into own group)
@@ -3788,9 +3797,10 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 	use) rather than a dense adjacency matrix, so this scales the same way
 	those do. For an undirected network neighbors_in() already falls back
 	to neighbors() (see its own definition above), so a and c are drawn
-	from the same neighbor set - the definition degrades gracefully rather
-	than needing a separate undirected-specific formula. Returns an n x 5
-	matrix of per-node role counts, in the column order listed above.
+	from the same neighbor set, and has_edge(a,c) is symmetric anyway -
+	the definition degrades gracefully rather than needing a separate
+	undirected-specific formula. Returns an n x 5 matrix of per-node role
+	counts, in the column order listed above.
 */
 real matrix `NWdef'::calculate_brokerage(real matrix group){
 	real matrix result, innb, outnb
@@ -3810,6 +3820,7 @@ real matrix `NWdef'::calculate_brokerage(real matrix group){
 			for (j=1; j<=rows(outnb); j++){
 				c = outnb[j,1]
 				if (c == b | c == a) continue
+				if (has_edge(a, c)) continue
 				gc = group[c,1]
 				if (ga==gb & gb==gc){
 					result[b,1] = result[b,1] + 1

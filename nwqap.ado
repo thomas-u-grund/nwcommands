@@ -210,7 +210,7 @@ values directly, at the one point internally where they are genuinely meaningful
 
 capture program drop nwqap
 program nwqap, eclass
-syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) ]
+syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) ]
     set more off
 
 	mata: st_rclear()
@@ -443,6 +443,20 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// than either fabricating an invalid classical one or leaving
 	// postestimation commands like `test'/`lincom' unusable.
 	matrix permvar = J(1, `vars', .)
+	// plot(): one histogram-plus-reference-line panel per coefficient,
+	// each built the SAME way R's sna::plot.qaptest() draws a single
+	// coefficient's own permutation null - a dashed line at the
+	// observed (real-data) coefficient against a histogram of its
+	// `permutations' QAP-permutation draws (the `entry' variable
+	// already loaded into the active dataset by `use `results'' above).
+	// Built INSIDE this same loop (not a second pass over `formula')
+	// since `orig_result' is already computed here for the p-value
+	// calculation immediately below - reusing it rather than
+	// recomputing the same `entry'-to-column mapping a second time.
+	// Grayscale by design, matching every other plot this package
+	// produces (Stata Journal figures must stay legible in black and
+	// white).
+	local __combine_list ""
 	local k = 1
 	qui foreach entry in `formula' {
 		if ("`entry'" == "`net'") {
@@ -450,6 +464,16 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		}
 		else {
 			local orig_result = reg_results[1,`k']
+		}
+
+		if "`plot'" != "" {
+			tempname __g
+			twoway histogram `entry', fcolor(gs14) lcolor(gs8) ///
+				xline(`orig_result', lcolor(black) lpattern(dash)) ///
+				title("`entry'", size(small)) ///
+				xtitle("") ytitle("") ///
+				legend(off) nodraw name(`__g', replace)
+			local __combine_list `"`__combine_list' `__g'"'
 		}
 
 		local novariation = "false"
@@ -486,7 +510,21 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			local k = `k' + 1
 		}
 	}
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "qap"
+		}
+		graph combine `__combine_list', cols(2) ///
+			title("QAP permutation null distributions", size(medium)) ///
+			name(`name', replace)
+		foreach __g of local __combine_list {
+			capture graph drop `__g'
+		}
+	}
 	restore
+	if "`plot'" != "" {
+		di as txt "(plot saved as {bf:`name'}; each panel is one coefficient's histogram of `permutations' QAP-permutation draws, dashed line marks the observed coefficient)"
+	}
 
 	// predict(): reshape the dyad-level fitted values captured earlier
 	// back into an n x n matrix (transformOutOfLong() - the exact inverse

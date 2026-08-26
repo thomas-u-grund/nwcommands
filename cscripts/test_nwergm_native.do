@@ -136,6 +136,41 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
 
+	// term-expansion wave 8 (ITP/OSP/ISP directed shared-partner types):
+	// these have NO native implementation - only OTP (termcode 32/33/34/
+	// 35/36) and blank/UTP (termcode 4/27/28/29/30) are dispatched in
+	// ErgmNativeSetup(), so a gwesp/gwdsp/gwnsp/esp/dsp term carrying one
+	// of the three new sptype values must fall back to Mata for the
+	// WHOLE model - never silently misroute into the wrong (undirected/
+	// UTP) native codepath, which is exactly what would happen without
+	// this function's own explicit early bailout.
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "ITP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), td6, ("gwesp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 0)
+	assert(M.native_enabled == 0)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "OSP"
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), td6, ("gwdsp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 0)
+	assert(M.native_enabled == 0)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.levels = (1)
+	td6.sptype = "ISP"
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), td6, ("dsp1"))
+	assert(ErgmNativeSetup(M, 1) == 0)
+	assert(M.native_enabled == 0)
+
 	printf("test_eligibility: OK\n")
 }
 test_eligibility()

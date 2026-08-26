@@ -21,7 +21,9 @@
 {opt seed(int)}
 {opt tail(both|upper|lower)}
 {opt condition(density|census)}
-{opt silent}]
+{opt silent}
+{opt plot}
+{opt name(string)}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -33,6 +35,8 @@
 {synopt:{opt tail(both|upper|lower)}}Which tail(s) to report a p-value for; default = {it:both}{p_end}
 {synopt:{opt condition(density|census)}}Null model to condition random draws on; default = {it:density}{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
+{synopt:{opt plot}}Draw a histogram of the {bf:reps()} null draws, with a dashed reference line at the observed statistic (the same comparison R's {bf:sna::plot.cug.test()} draws){p_end}
+{synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:cug}{p_end}
 
 {p2colreset}{...}
 
@@ -78,6 +82,13 @@ tied or not.
 a statistic at least as large as observed (evidence the observed value is unusually {it:high});
 {bf:lower} is the proportion at least as small (unusually {it:low}); {bf:both} (the default) reports
 both, plus a two-sided p-value ({bf:r(p)}, twice the smaller one-sided p-value, capped at 1).
+
+{pstd}
+{opt plot} draws a histogram of the {bf:reps()} null draws with a dashed vertical line at the
+observed statistic - the standard visual check for a CUG test (is the observed value out in the
+tail of the null distribution, or comfortably inside it?), the same comparison R's {bf:sna}
+package's {bf:plot.cug.test()} draws for its own {bf:cug.test()}. Grayscale by design, matching
+every other plot this package produces.
 
 {title:Supported network types}
 

@@ -132,6 +132,45 @@ assert _rc == 0
 capture confirm variable _broker_coordinator2, exact
 assert _rc == 0
 
+* --- regression: a two-path a->b->c must NOT be counted when a already
+* has a direct tie to c - Gould-Fernandez brokerage requires a genuine
+* structural hole for b to fill; if a can already reach c directly,
+* there is nothing on that specific path for b to broker. Bug found and
+* fixed while cross-checking calculate_brokerage() against the real
+* `statnet/sna` C source (src/gli.c's own brokerage_R(), which only
+* classifies a two-path when `!snaIsAdjacent(a,c,...,0)` - "does a
+* already send an edge to c"): the original implementation here counted
+* every a->b->c two-path unconditionally, silently inflating every
+* role's count (especially coordinator) on any network with real
+* transitivity. The two test networks above happen to have no direct
+* a-c ties at all among their classified two-paths, so neither one
+* exercised this - isolated here in a minimal 4-node network with all
+* nodes in one group (so classification itself is not in question,
+* only whether the excluded pair is dropped).
+*
+* Node "brk" (node 3) has one in-neighbor "a1" (node 1) and two
+* out-neighbors "c1" (node 2, no direct a1->c1 tie - must count) and
+* "c2" (node 4, WITH a direct a1->c2 tie - must be excluded).
+nwclear
+mata:
+M2 = J(4,4,0)
+M2[1,3] = 1	// a1 -> brk
+M2[3,2] = 1	// brk -> c1
+M2[3,4] = 1	// brk -> c2
+M2[1,4] = 1	// a1 -> c2 directly - the a1-brk-c2 two-path must be excluded
+st_matrix("M2", M2)
+end
+nwset, mat(M2) name(brknet) directed labs(a1,c1,brk,c2)
+gen grp3 = 1
+nwbrokerage brknet, group(grp3)
+assert _rc == 0
+assert r(pairs) == 1
+assert _broker_coordinator[3] == 1
+assert _broker_gatekeeper[3] == 0
+assert _broker_representative[3] == 0
+assert _broker_consultant[3] == 0
+assert _broker_liaison[3] == 0
+
 * --- undirected networks: incoming and outgoing ties are identical, so
 * a and c both range over the same neighbor set - must run cleanly, no
 * special option needed (unlike nwcommunity's own explicit symmetrize

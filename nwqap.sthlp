@@ -24,6 +24,8 @@
 {opt detail}
 {opt save}({it:{help filename}})
 {opth predict(newnetname)}
+{opt plot}
+{opt name(string)}
 
 
 
@@ -37,6 +39,8 @@
 {synopt:{opt detail}}display details of regression results{p_end}
 {synopt:{opt save}({it:{help filename}})}save coefficients from permutations in file{p_end}
 {synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
+{synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
+{synopt:{opt name(string)}}Name for the combined graph created by {opt plot}; default = {bf:qap}{p_end}
 
 
 {title:Description}
@@ -106,6 +110,14 @@ is repeated 500 times. The number of permutations can be changed with the option
 The coefficients of all these permutations are saved with {opth save(filename)}. Based one the distribution
 of coefficients, {cmd:nwqap} calculates adjusted p-values and saves them in {it:e(pvalues)}.
 
+{pstd}
+{opt plot} draws this same permutation distribution visually: one histogram panel per coefficient
+(the constant included), each with a dashed vertical line at that coefficient's real, unpermuted
+value against a histogram of its own {opt permutations()} null draws - the standard visual check
+for a QAP test (is the real coefficient out in the tail of what pure permutation produces, or
+comfortably inside it?), the same comparison R's {bf:sna} package's {bf:plot.qaptest()} draws for a
+single coefficient, generalized here to every coefficient in the regression at once. Grayscale by
+design, matching every other plot this package produces.
 
 {pstd}
 {it:References}
