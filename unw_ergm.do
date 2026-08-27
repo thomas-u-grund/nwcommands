@@ -3253,6 +3253,10 @@ string rowvector ErgmModel::theta_coefnames(){
 				out[tpos] = "gwdegree_weight"
 				out[tpos+1] = "gwdegree_decay"
 			}
+			else if (names[t] == "dsp") {
+				out[tpos] = "gwdsp_weight"
+				out[tpos+1] = "gwdsp_decay"
+			}
 			else {
 				out[tpos] = "gwesp_weight"
 				out[tpos+1] = "gwesp_decay"
