@@ -221,3 +221,56 @@ di "=== project_eta_to_theta() exactly recovers the true theta when its target e
 assert stationarity_C_max < 1e-8
 assert proj_C_edges_diff < 1e-12
 di "=== project_eta_to_theta() satisfies the GLS stationarity condition under noise and a non-identity weight matrix (and still passes the ordinary block through exactly) ==="
+
+* --- ErgmMCMLE() curved-model MECHANICAL wiring (harmonisation unit
+* 138): NOT a "converges reliably" claim - direct testing on two real
+* networks found the underlying MCMC chain can be driven into a
+* degenerate (0% acceptance) state even with the backtracking fix
+* above, a genuinely deeper outer-loop step-length problem not yet
+* solved (see docs/CERTIFICATION.md unit 138 and docs/ERGM_ROADMAP.md
+* for the full account) - nwergm.ado deliberately does NOT expose
+* method(mcmle) for gwespfree() models as a result. This checks only
+* that the plumbing itself is mechanically correct and does not crash:
+* ErgmMCMLE()'s own per-iteration eta->theta snap-back populates
+* fit.coef_theta at the right dimension (ntheta(), not nparam()),
+* fit.coef stays at the full eta dimension throughout, and calling it
+* on a genuine curved model does not error - real, valuable coverage
+* distinct from (and honestly scoped below) a statistical-reliability
+* claim.
+mata:
+mata set matastrict off
+
+gm = ErgmGraph()
+gm.init(5, 0)
+gm.toggle(1,2)
+gm.toggle(1,3)
+gm.toggle(2,3)
+gm.toggle(3,4)
+gm.toggle(4,5)
+
+tdm = ErgmTermData()
+maxdm = 3
+tdm.levels = (1..maxdm)'
+Mm = ErgmModel()
+Mm.init()
+Mm.addterm("edges", 1, &stat_edges(), &change_edges(), ErgmTermData(), ("edges"))
+Mm.addterm("esp", maxdm, &stat_esp(), &change_esp(), tdm, J(1,maxdm,"x"))
+Mm.mark_curved()
+
+theta_c0_m = (0, 0, 0.7)
+eta0_m = Mm.theta_to_eta(theta_c0_m)
+st_numscalar("mcmle_ntheta", Mm.ntheta())
+st_numscalar("mcmle_nparam", Mm.nparam())
+
+fit_m = ErgmMCMLE(Mm, gm, eta0_m, 2, 50, 5, 50, &ergm_propose_uniform(), 0, theta_c0_m)
+st_numscalar("mcmle_coef_theta_len", cols(fit_m.coef_theta))
+st_numscalar("mcmle_coef_len", cols(fit_m.coef))
+st_numscalar("mcmle_ran_ok", 1)
+end
+
+assert mcmle_ntheta == 3
+assert mcmle_nparam == 4
+assert mcmle_coef_theta_len == 3
+assert mcmle_coef_len == 4
+assert mcmle_ran_ok == 1
+di "=== ErgmMCMLE() curved-model plumbing is mechanically correct (right dimensions, no crash) - a scoping note, not a statistical-reliability claim ==="
