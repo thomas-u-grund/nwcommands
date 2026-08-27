@@ -35,6 +35,8 @@
 [{opt gwespfree(real)}]
 [{opt gwdegreefree(real)}]
 [{opt gwdspfree(real)}]
+[{opt gwodegreefree(real)}]
+[{opt gwidegreefree(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
@@ -89,6 +91,8 @@
 {synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or another curved term{p_end}
 {synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or another curved term{p_end}
 {synopt:{opt gwdspfree(real)}}Geometrically weighted dyadwise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdsp_weight}/{bf:gwdsp_decay} in place of a single {opt gwdsp()} coefficient. Cannot be combined with {opt gwdsp()}, {opt dsp()}, or another curved term{p_end}
+{synopt:{opt gwodegreefree(real)}}Geometrically weighted out-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwodegree_weight}/{bf:gwodegree_decay} in place of a single {opt gwodegree()} coefficient. Cannot be combined with {opt gwodegree()}, {opt odegree()}, or another curved term{p_end}
+{synopt:{opt gwidegreefree(real)}}Geometrically weighted in-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwidegree_weight}/{bf:gwidegree_decay} in place of a single {opt gwidegree()} coefficient. Cannot be combined with {opt gwidegree()}, {opt idegree()}, or another curved term{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
@@ -462,7 +466,7 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
-		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) ///
+		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
@@ -512,6 +516,16 @@ program nwergm, eclass
 		di "{err}option {bf:mutual} requires a directed network; {bf:`netname'} is undirected."
 		error 198
 	}
+	// v1 scope: at most one curved term per model (harmonisation unit
+	// 141 - refactored from unit 140's own pairwise "cannot combine
+	// with X" checks, which stopped scaling once a 5th curved option
+	// (gwodegreefree()/gwidegreefree(), this unit) would have needed
+	// 10 pairwise checks total instead of one count). Computed ONCE,
+	// before any of the five options' own validation blocks below, so
+	// each block can just check `` `__ergm_ncurved' > 1 `` instead of
+	// naming every other curved option individually.
+	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="")
+
 	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
 	// (free-decay) gwesp - the first user-facing curved term. Dyad-
 	// dependent like any other gwesp-family term, so method() auto-
@@ -526,6 +540,10 @@ program nwergm, eclass
 		}
 		if "`esp'" != "" {
 			di "{err}options {bf:esp()} and {bf:gwespfree()} cannot both be specified - gwespfree() already spans every achievable shared-partner count, so combining it with an explicit esp() subset would be redundant/collinear."
+			error 198
+		}
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwespfree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
 			error 198
 		}
 		if "`directed'" == "true" {
@@ -572,8 +590,8 @@ program nwergm, eclass
 			di "{err}options {bf:gwdegree()} and {bf:gwdegreefree()} cannot both be specified - a gwdegree term is either fixed-decay or curved (free-decay), not both."
 			error 198
 		}
-		if "`gwespfree'" != "" {
-			di "{err}options {bf:gwespfree()} and {bf:gwdegreefree()} cannot both be specified - v1 scope supports at most one curved term per model."
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwdegreefree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
 			error 198
 		}
 		if "`degree'" != "" {
@@ -610,8 +628,8 @@ program nwergm, eclass
 			di "{err}options {bf:gwdsp()} and {bf:gwdspfree()} cannot both be specified - a gwdsp term is either fixed-decay or curved (free-decay), not both."
 			error 198
 		}
-		if "`gwespfree'" != "" | "`gwdegreefree'" != "" {
-			di "{err}option {bf:gwdspfree()} cannot be combined with {bf:gwespfree()} or {bf:gwdegreefree()} - v1 scope supports at most one curved term per model."
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwdspfree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
 			error 198
 		}
 		if "`dsp'" != "" {
@@ -628,6 +646,72 @@ program nwergm, eclass
 		}
 		if "`method'" != "" & "`method'" != "mple" {
 			di "{err}option {bf:gwdspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
+	}
+	// gwodegreefree()/gwidegreefree() (harmonisation unit 141): the
+	// first DIRECTED curved terms - every curved option so far
+	// (gwespfree/gwdegreefree/gwdspfree) has been undirected-only, but
+	// stat_odegree()/change_odegree()/stat_idegree()/change_idegree()
+	// already exist (unit 90's own degree-count family) and the whole
+	// curved-MPLE pipeline (ErgmCurvedMPLEFit, theta_to_eta, the
+	// Jacobian) never actually assumed undirected-ness anywhere - it
+	// operates purely on eta-space design-matrix columns, agnostic to
+	// what network-level property they came from. Registered under
+	// "odegree"/"idegree" respectively; d ranges 1..(nodes-1) (an
+	// out-/in-degree is bounded by the number of OTHER nodes, same
+	// bound as total degree).
+	if "`gwodegreefree'" != "" {
+		if "`gwodegree'" != "" {
+			di "{err}options {bf:gwodegree()} and {bf:gwodegreefree()} cannot both be specified - a gwodegree term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwodegreefree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
+			error 198
+		}
+		if "`odegree'" != "" {
+			di "{err}options {bf:odegree()} and {bf:gwodegreefree()} cannot both be specified - gwodegreefree() already spans every achievable out-degree value, so combining it with an explicit odegree() subset would be redundant/collinear."
+			error 198
+		}
+		if "`directed'" != "true" {
+			di "{err}option {bf:gwodegreefree()} requires a directed network; {bf:`netname'} is undirected. Use {bf:gwdegreefree()} for an undirected network."
+			error 198
+		}
+		if `nodes' < 2 {
+			di "{err}option {bf:gwodegreefree()} needs at least 2 nodes."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwodegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
+	}
+	if "`gwidegreefree'" != "" {
+		if "`gwidegree'" != "" {
+			di "{err}options {bf:gwidegree()} and {bf:gwidegreefree()} cannot both be specified - a gwidegree term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwidegreefree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
+			error 198
+		}
+		if "`idegree'" != "" {
+			di "{err}options {bf:idegree()} and {bf:gwidegreefree()} cannot both be specified - gwidegreefree() already spans every achievable in-degree value, so combining it with an explicit idegree() subset would be redundant/collinear."
+			error 198
+		}
+		if "`directed'" != "true" {
+			di "{err}option {bf:gwidegreefree()} requires a directed network; {bf:`netname'} is undirected. Use {bf:gwdegreefree()} for an undirected network."
+			error 198
+		}
+		if `nodes' < 2 {
+			di "{err}option {bf:gwidegreefree()} needs at least 2 nodes."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwidegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
 			error 198
 		}
 		local method "mple"
@@ -1455,6 +1539,38 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdspfree'"
 	}
+	// gwodegreefree()/gwidegreefree() (harmonisation unit 141): mirror
+	// the other curved options' own exact pattern, registered under
+	// "odegree"/"idegree" (reusing stat_odegree()/change_odegree() and
+	// stat_idegree()/change_idegree() directly).
+	if "`gwodegreefree'" != "" {
+		confirm number `gwodegreefree'
+		local __ergm_curved_maxd = `nodes' - 1
+		tempname __td_gwodegreefree
+		mata: `__td_gwodegreefree' = ErgmTermData()
+		mata: `__td_gwodegreefree'.levels = (1..`__ergm_curved_maxd')'
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwodegreefree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("odegree", `__ergm_curved_maxd', &stat_odegree(), &change_odegree(), `__td_gwodegreefree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwodegreefree'"
+	}
+	if "`gwidegreefree'" != "" {
+		confirm number `gwidegreefree'
+		local __ergm_curved_maxd = `nodes' - 1
+		tempname __td_gwidegreefree
+		mata: `__td_gwidegreefree' = ErgmTermData()
+		mata: `__td_gwidegreefree'.levels = (1..`__ergm_curved_maxd')'
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwidegreefree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("idegree", `__ergm_curved_maxd', &stat_idegree(), &change_idegree(), `__td_gwidegreefree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwidegreefree'"
+	}
 
 	// Unified curved-model flag/starting-value (harmonisation unit
 	// 139): v1 scope allows at most one curved term per model (the
@@ -1464,10 +1580,12 @@ program nwergm, eclass
 	// curved-path branch (MPLE fit, e(curved), MCMLE gating) check ONE
 	// flag instead of repeating "gwespfree() OR gwdegreefree()"
 	// everywhere.
-	local __ergm_curved = ("`gwespfree'" != "" | "`gwdegreefree'" != "" | "`gwdspfree'" != "")
+	local __ergm_curved = `__ergm_ncurved'
 	if "`gwespfree'" != "" local __ergm_curved_start "`gwespfree'"
 	else if "`gwdegreefree'" != "" local __ergm_curved_start "`gwdegreefree'"
-	else local __ergm_curved_start "`gwdspfree'"
+	else if "`gwdspfree'" != "" local __ergm_curved_start "`gwdspfree'"
+	else if "`gwodegreefree'" != "" local __ergm_curved_start "`gwodegreefree'"
+	else local __ergm_curved_start "`gwidegreefree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
 	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
@@ -1483,7 +1601,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
