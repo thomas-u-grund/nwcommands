@@ -608,3 +608,65 @@ assert _rc == 198
 capture noisily nwergm curvedgwdspnet, edges gwdegreefree(0.7) gwdspfree(0.7)
 assert _rc == 198
 di "=== gwdspfree() error paths (combined with gwdsp()/dsp()/gwespfree()/gwdegreefree()) all verified ==="
+
+* --- gwodegreefree()/gwidegreefree() (harmonisation unit 141): the
+* first DIRECTED curved terms, reusing stat_odegree()/change_odegree()
+* and stat_idegree()/change_idegree() directly. Certified against
+* REAL independent R ergm(net ~ edges + gwodegree/gwidegree(0.7,
+* fixed=FALSE), estimate="MPLE") fits (ergm 4.12.0) on a random
+* 15-node directed network - both well-identified on the first
+* attempt, no separate network-hunting needed (unlike gwesp/gwdegree
+* earlier in this same file).
+nwclear
+nwset, mat((0,0,1,0,1,1,0,1,0,0,1,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,1,0,0,1 \ ///
+1,0,0,0,0,0,0,0,0,0,1,0,1,0,0 \ ///
+0,0,0,0,0,0,1,0,0,0,0,0,0,0,0 \ ///
+0,0,0,0,0,1,0,0,0,0,0,1,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,1,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,1,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,1,0,1 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 \ ///
+1,0,0,0,0,0,0,0,1,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,0,1,0,0,0,0,0,0,0,0,0,0,0,1 \ ///
+0,0,0,0,1,0,0,0,0,0,1,0,0,0,1 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,1,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,1,0,0)) directed name(curvedgwodegreenet)
+
+qui nwergm curvedgwodegreenet, edges gwodegreefree(0.7)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwodegree(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=-2.10539653504 gwodegree=1.25844151033 gwodegree.decay=0.03366907151
+assert reldif(_b[edges], -2.10539653504) < 1e-2
+assert reldif(_b[gwodegree_weight], 1.25844151033) < 1e-2
+assert reldif(_b[gwodegree_decay], 0.03366907151) < 1e-2
+di "=== curved gwodegree MPLE fit matches an independent R ergm fit ==="
+
+qui nwergm curvedgwodegreenet, edges gwidegreefree(0.7)
+assert _rc == 0
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwidegree(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=-1.4969743157 gwidegree=-0.8228829163 gwidegree.decay=0.9472255024
+assert reldif(_b[edges], -1.4969743157) < 1e-2
+assert reldif(_b[gwidegree_weight], -0.8228829163) < 1e-2
+assert reldif(_b[gwidegree_decay], 0.9472255024) < 1e-2
+di "=== curved gwidegree MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- error paths: undirected rejection, mutual exclusivity. No
+* nwclear here - curvedgwodegreenet (set up above) is reused below,
+* alongside this new undirnet3.
+nwset, mat((0,1,0\1,0,1\0,1,0)) undirected name(undirnet3)
+capture noisily nwergm undirnet3, edges gwodegreefree(0.7)
+assert _rc == 198
+capture noisily nwergm undirnet3, edges gwidegreefree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwodegreenet, edges gwodegreefree(0.7) gwidegreefree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwodegreenet, edges gwespfree(0.7) gwodegreefree(0.7)
+assert _rc == 198
+di "=== gwodegreefree()/gwidegreefree() error paths (undirected rejection, mutual exclusivity) all verified ==="
