@@ -34,6 +34,7 @@
 [{opt gwesp(real)}]
 [{opt gwespfree(real)}]
 [{opt gwdegreefree(real)}]
+[{opt gwdspfree(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
@@ -85,8 +86,9 @@
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
-{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or {opt gwdegreefree()}{p_end}
-{synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or {opt gwespfree()}{p_end}
+{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or another curved term{p_end}
+{synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or another curved term{p_end}
+{synopt:{opt gwdspfree(real)}}Geometrically weighted dyadwise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdsp_weight}/{bf:gwdsp_decay} in place of a single {opt gwdsp()} coefficient. Cannot be combined with {opt gwdsp()}, {opt dsp()}, or another curved term{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
@@ -460,7 +462,7 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
-		GWESPFREE(string) GWDEGREEFREE(string) ///
+		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
@@ -588,6 +590,44 @@ program nwergm, eclass
 		}
 		if "`method'" != "" & "`method'" != "mple" {
 			di "{err}option {bf:gwdegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
+	}
+	// gwdspfree() (harmonisation unit 140): curved (free-decay)
+	// gwdsp, mirroring gwespfree()'s/gwdegreefree()'s own exact
+	// pattern - reuses the already-certified stat_dsp()/change_dsp()
+	// machinery directly. Unlike gwesp's own d=1..(nodes-2) range,
+	// gwdsp examines shared partners over EVERY dyad (tied or not),
+	// but the achievable shared-partner COUNT for any one dyad is
+	// still bounded by nodes-2 (every other node is a candidate
+	// shared partner) - same maxd formula as gwespfree(), different
+	// underlying dyad universe. method(mple) only, same reasoning as
+	// the other two curved options. Undirected v1 scope only, matching
+	// gwdsp() itself.
+	if "`gwdspfree'" != "" {
+		if "`gwdsp'" != "" {
+			di "{err}options {bf:gwdsp()} and {bf:gwdspfree()} cannot both be specified - a gwdsp term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if "`gwespfree'" != "" | "`gwdegreefree'" != "" {
+			di "{err}option {bf:gwdspfree()} cannot be combined with {bf:gwespfree()} or {bf:gwdegreefree()} - v1 scope supports at most one curved term per model."
+			error 198
+		}
+		if "`dsp'" != "" {
+			di "{err}options {bf:dsp()} and {bf:gwdspfree()} cannot both be specified - gwdspfree() already spans every achievable shared-partner count, so combining it with an explicit dsp() subset would be redundant/collinear."
+			error 198
+		}
+		if "`directed'" == "true" {
+			di "{err}option {bf:gwdspfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwdsp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
+			error 198
+		}
+		if `nodes' < 3 {
+			di "{err}option {bf:gwdspfree()} needs at least 3 nodes (gwdsp itself needs a real shared-partner count to be achievable)."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwdspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
 			error 198
 		}
 		local method "mple"
@@ -1398,6 +1438,23 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdegreefree'"
 	}
+	// gwdspfree() (harmonisation unit 140): mirrors the other two
+	// curved options' own exact pattern, registered under "dsp"
+	// (reusing stat_dsp()/change_dsp() directly).
+	if "`gwdspfree'" != "" {
+		confirm number `gwdspfree'
+		local __ergm_curved_maxd = `nodes' - 2
+		tempname __td_gwdspfree
+		mata: `__td_gwdspfree' = ErgmTermData()
+		mata: `__td_gwdspfree'.levels = (1..`__ergm_curved_maxd')'
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwdspfree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("dsp", `__ergm_curved_maxd', &stat_dsp(), &change_dsp(), `__td_gwdspfree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdspfree'"
+	}
 
 	// Unified curved-model flag/starting-value (harmonisation unit
 	// 139): v1 scope allows at most one curved term per model (the
@@ -1407,9 +1464,10 @@ program nwergm, eclass
 	// curved-path branch (MPLE fit, e(curved), MCMLE gating) check ONE
 	// flag instead of repeating "gwespfree() OR gwdegreefree()"
 	// everywhere.
-	local __ergm_curved = ("`gwespfree'" != "" | "`gwdegreefree'" != "")
+	local __ergm_curved = ("`gwespfree'" != "" | "`gwdegreefree'" != "" | "`gwdspfree'" != "")
 	if "`gwespfree'" != "" local __ergm_curved_start "`gwespfree'"
-	else local __ergm_curved_start "`gwdegreefree'"
+	else if "`gwdegreefree'" != "" local __ergm_curved_start "`gwdegreefree'"
+	else local __ergm_curved_start "`gwdspfree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
 	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
@@ -1425,7 +1483,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}

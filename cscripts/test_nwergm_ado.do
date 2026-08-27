@@ -560,3 +560,51 @@ assert _rc == 198
 capture noisily nwergm curvedgwdegreenet, edges gwespfree(0.7) gwdegreefree(0.7)
 assert _rc == 198
 di "=== gwdegreefree() error paths (combined with gwdegree()/degree()/gwespfree()) all verified ==="
+
+* --- gwdspfree() (harmonisation unit 140): extends curved MPLE from
+* gwesp/gwdegree to gwdsp, reusing stat_dsp()/change_dsp() directly.
+* Certified against a REAL independent R ergm(net ~ edges +
+* gwdsp(0.7, fixed=FALSE), estimate="MPLE") fit (ergm 4.12.0) - this
+* one landed well-identified on the SAME clique-heavy 15-node network
+* gwespfree() itself uses (unlike gwesp/gwdegree, no separate
+* network-hunting needed this time).
+nwclear
+nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
+1,0,1,1,1,1,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,1,1,0,1,0,0,1,0,0,0,0,0 \ ///
+1,1,1,0,1,0,0,0,1,0,0,0,0,0,0 \ ///
+1,1,1,1,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,1,1,1,1,0,0,1,0,0 \ ///
+0,0,1,0,0,1,0,0,0,1,0,0,0,1,0 \ ///
+0,0,0,0,0,1,0,0,1,0,0,0,0,0,1 \ ///
+0,0,0,1,0,1,0,1,0,1,1,0,0,0,0 \ ///
+0,0,1,0,0,1,1,0,1,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,1,0,0,1,1,1,1 \ ///
+0,0,0,0,0,0,0,0,0,0,1,0,1,0,1 \ ///
+0,0,0,0,0,1,0,0,0,0,1,1,0,0,1 \ ///
+0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedgwdspnet)
+
+qui nwergm curvedgwdspnet, edges gwdspfree(0.7)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwdsp(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=4.2563394667 gwdsp=-0.8569971371 gwdsp.decay=1.3420561410
+assert reldif(_b[edges], 4.2563394667) < 1e-2
+assert reldif(_b[gwdsp_weight], -0.8569971371) < 1e-2
+assert reldif(_b[gwdsp_decay], 1.3420561410) < 1e-2
+di "=== curved gwdsp MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- error paths: mutual exclusivity with gwdsp()/dsp()/other curved
+* terms.
+capture noisily nwergm curvedgwdspnet, edges gwdsp(0.5) gwdspfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwdspnet, edges dsp(1 2) gwdspfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwdspnet, edges gwespfree(0.7) gwdspfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwdspnet, edges gwdegreefree(0.7) gwdspfree(0.7)
+assert _rc == 198
+di "=== gwdspfree() error paths (combined with gwdsp()/dsp()/gwespfree()/gwdegreefree()) all verified ==="
