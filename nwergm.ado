@@ -32,6 +32,7 @@
 [{opt sender}]
 [{opt receiver}]
 [{opt gwesp(real)}]
+[{opt gwespfree(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
@@ -83,6 +84,7 @@
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
+{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()} or {opt esp()}{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
@@ -456,6 +458,7 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
+		GWESPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
@@ -504,6 +507,33 @@ program nwergm, eclass
 	if "`mutual'" != "" & "`directed'" != "true" {
 		di "{err}option {bf:mutual} requires a directed network; {bf:`netname'} is undirected."
 		error 198
+	}
+	// gwespfree() (harmonisation unit 136): curved (free-decay) gwesp,
+	// the first user-facing curved term - MPLE only for now (see the
+	// method(mple) requirement below; MCMLE wiring is separate, not yet
+	// done work). Undirected v1 scope only, matching gwesp() itself.
+	if "`gwespfree'" != "" {
+		if "`gwesp'" != "" {
+			di "{err}options {bf:gwesp()} and {bf:gwespfree()} cannot both be specified - a gwesp term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if "`esp'" != "" {
+			di "{err}options {bf:esp()} and {bf:gwespfree()} cannot both be specified - gwespfree() already spans every achievable shared-partner count, so combining it with an explicit esp() subset would be redundant/collinear."
+			error 198
+		}
+		if "`directed'" == "true" {
+			di "{err}option {bf:gwespfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwesp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
+			error 198
+		}
+		if `nodes' < 3 {
+			di "{err}option {bf:gwespfree()} needs at least 3 nodes (gwesp itself needs a real shared-partner count to be achievable)."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwespfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is not yet implemented (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
 	}
 	if ("`nodeicov'" != "" | "`nodeocov'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:nodeicov()}/{bf:nodeocov()} require a directed network; {bf:`netname'} is undirected."
@@ -1252,6 +1282,41 @@ program nwergm, eclass
 		mata: __nwergm_last_M.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), `__td_gwid', ("gwidegree_`gwidegree'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwid'"
 	}
+	// gwespfree() (harmonisation unit 136): registered as a curved
+	// `esp' term spanning EVERY achievable shared-partner count
+	// 1..(nodes-2) - reusing the already-certified stat_esp()/
+	// change_esp() machinery directly, not new statistic/change code
+	// (curved-ness is an estimation-side property, not a per-term one -
+	// see unw_ergm.do's own ErgmModel::curved comment). Deliberately
+	// registered LAST (after every other term) so its own 2 theta
+	// columns are always the final 2 in theta-space regardless of what
+	// else is in the model - the MPLE code below relies on this to
+	// build a starting theta without needing a general "find this
+	// term's own theta position" accessor.
+	if "`gwespfree'" != "" {
+		confirm number `gwespfree'
+		local __ergm_curved_maxd = `nodes' - 2
+		tempname __td_gwespfree
+		mata: `__td_gwespfree' = ErgmTermData()
+		mata: `__td_gwespfree'.levels = (1..`__ergm_curved_maxd')'
+		// addterm()'s own cnames must have length npar (here
+		// __ergm_curved_maxd, the ETA-space dimension - one name per
+		// achievable shared-partner count) - NOT the 2-dimensional
+		// THETA-space this term is ultimately reported in. These names
+		// are internal/intermediate only (never shown to the user - the
+		// MPLE code below replaces the whole coefficient vector with
+		// the 2 theta-space names "gwesp_weight"/"gwesp_decay" before
+		// ereturn post), given a distinct "gwespfree_" prefix so they
+		// cannot collide with an ordinary esp() term's own "espN" names
+		// in any diagnostic that displays them before that replacement.
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwespfree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("esp", `__ergm_curved_maxd', &stat_esp(), &change_esp(), `__td_gwespfree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwespfree'"
+	}
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
 	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
@@ -1267,7 +1332,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1299,52 +1364,89 @@ program nwergm, eclass
 	tempname __ergm_coefnames
 	mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.coefnames))
 
-	local __ergm_xlist ""
-	forvalues __k = 1/`__ergm_p' {
-		local __ergm_xlist "`__ergm_xlist' __ergm_x`__k'"
-	}
-
-	preserve
-	qui drop _all
-	qui set obs `__ergm_nrows'
-	foreach __v of local __ergm_xlist {
-		qui gen double `__v' = .
-	}
-	qui gen double __ergm_y = .
-	mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), `__nw_D')
-
-	// BUGFIX: a fully edgeless (zero-tie) network - an MPLE fit where the
-	// outcome never varies - used to crash completely silently (only
-	// "r(2000);", no explanatory text at all) from this bare, uncaptured
-	// `logit' call, unlike this command's otherwise consistently
-	// friendly "{err}...{txt}" validation messages for every other
-	// rejected input. `restore' still needs to run regardless of
-	// failure, or a caught error here would leave the caller's own
-	// dataset in the modified, mid-preserve state (the same class of
-	// bug already fixed once in nwrename.ado this same pass).
-	capture qui logit __ergm_y `__ergm_xlist', noconstant
-	if _rc != 0 {
-		local __ergm_mple_rc = _rc
-		restore
-		di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
-		error `__ergm_mple_rc'
-	}
 	tempname __b_mple __V_mple
-	matrix `__b_mple' = e(b)
-	matrix `__V_mple' = e(V)
-	restore
+	// Curved gwesp (harmonisation unit 136): fit directly in THETA-space
+	// via ErgmCurvedMPLEFit() (unw_ergm.do) - Newton-Raphson/Fisher
+	// scoring on the SAME pseudolikelihood the ordinary closed-form
+	// `logit' call below maximizes, chain-ruled through the certified
+	// theta_to_eta()/theta_to_eta_jacobian() (units 133-134). This
+	// replaces `logit' entirely for a curved model (fits every
+	// coefficient, ordinary and curved, jointly in one loop) rather
+	// than running `logit' and then transforming its result - a first
+	// version of this feature did exactly that (fit the unconstrained
+	// eta MLE via `logit', then project down to theta), and direct
+	// testing against R on a well-identified 15-node network found it
+	// landing at a materially different, wrong-signed local point -
+	// see ErgmCurvedMPLEFit()'s own header comment for the full
+	// account of why directly optimizing the true objective is the
+	// correct fix, not a patch on the old approach. `gwespfree''s own
+	// weight/decay theta columns are always the LAST 2 (registered
+	// last, by construction - see its own addterm() call above), so a
+	// starting theta of (0-vector, weight0=0, decay0=`gwespfree') is
+	// built directly rather than needing a general "find this term's
+	// own theta position" accessor.
+	if "`gwespfree'" != "" {
+		tempname __ergm_curvedconv
+		mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `gwespfree')
+		mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
+		mata: mata drop __ergm_theta_start
+		mata: st_local("__ergm_curved_converged", strofreal(st_matrix("`__ergm_curvedconv'")[1,1]))
+		mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.theta_coefnames()))
+		if `__ergm_curved_converged' == 0 {
+			di "{err}note: the curved gwesp MPLE fit did not converge within 100 Newton-Raphson iterations - treat these results with caution."
+		}
+	}
+	else {
+		local __ergm_xlist ""
+		forvalues __k = 1/`__ergm_p' {
+			local __ergm_xlist "`__ergm_xlist' __ergm_x`__k'"
+		}
+
+		preserve
+		qui drop _all
+		qui set obs `__ergm_nrows'
+		foreach __v of local __ergm_xlist {
+			qui gen double `__v' = .
+		}
+		qui gen double __ergm_y = .
+		mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), `__nw_D')
+
+		// BUGFIX: a fully edgeless (zero-tie) network - an MPLE fit
+		// where the outcome never varies - used to crash completely
+		// silently (only "r(2000);", no explanatory text at all) from
+		// this bare, uncaptured `logit' call, unlike this command's
+		// otherwise consistently friendly "{err}...{txt}" validation
+		// messages for every other rejected input. `restore' still
+		// needs to run regardless of failure, or a caught error here
+		// would leave the caller's own dataset in the modified,
+		// mid-preserve state (the same class of bug already fixed once
+		// in nwrename.ado this same pass).
+		capture qui logit __ergm_y `__ergm_xlist', noconstant
+		if _rc != 0 {
+			local __ergm_mple_rc = _rc
+			restore
+			di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
+			error `__ergm_mple_rc'
+		}
+		matrix `__b_mple' = e(b)
+		matrix `__V_mple' = e(V)
+		restore
+	}
 
 	if "`method'" == "mple" {
-		// logit's own e(b)/e(V) carry an equation-name stripe (the
+		// logit's own e(b)/e(V) (non-curved path only - the curved
+		// path's own ErgmCurvedMPLEFit() posts plain, unstriped
+		// matrices directly) carry an equation-name stripe (the
 		// depvar's own name, e.g. "__ergm_y:__ergm_x1") - blanked
 		// explicitly before assigning fresh colnames/rownames, or a
 		// stale/mismatched stripe between b and V makes `ereturn post`
 		// fail with a "name conflict" (r(507)) - the exact same bug
 		// class already found and fixed once in nwqap.ado (see its own
-		// header comment).
-		matrix coleq `__b_mple' = _
-		matrix coleq `__V_mple' = _
-		matrix roweq `__V_mple' = _
+		// header comment). Harmless no-op on the curved path's own
+		// already-unstriped matrices.
+		capture matrix coleq `__b_mple' = _
+		capture matrix coleq `__V_mple' = _
+		capture matrix roweq `__V_mple' = _
 		matrix colnames `__b_mple' = `__ergm_coefnames'
 		matrix rownames `__V_mple' = `__ergm_coefnames'
 		matrix colnames `__V_mple' = `__ergm_coefnames'
@@ -1359,8 +1461,12 @@ program nwergm, eclass
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
+		ereturn scalar curved = ("`gwespfree'" != "")
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
+		if "`gwespfree'" != "" {
+			di "{txt}Note: {bf:gwesp_decay} is an ESTIMATED (curved) decay parameter, fit via Newton-Raphson directly on the pseudolikelihood in theta-space - not expected to be bit-identical to R ergm's own BFGS-based curved MPLE (a different exact optimization path to the same objective), but should agree closely on a well-identified model."
+		}
 	}
 	else {
 		tempname __theta0
