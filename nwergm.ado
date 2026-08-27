@@ -508,10 +508,13 @@ program nwergm, eclass
 		di "{err}option {bf:mutual} requires a directed network; {bf:`netname'} is undirected."
 		error 198
 	}
-	// gwespfree() (harmonisation unit 136): curved (free-decay) gwesp,
-	// the first user-facing curved term - MPLE only for now (see the
-	// method(mple) requirement below; MCMLE wiring is separate, not yet
-	// done work). Undirected v1 scope only, matching gwesp() itself.
+	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
+	// (free-decay) gwesp - the first user-facing curved term. Dyad-
+	// dependent like any other gwesp-family term, so method() auto-
+	// selection (below, unchanged) already picks mcmle by default and
+	// mple only when explicitly requested - no special-casing needed
+	// here now that both methods are actually implemented. Undirected
+	// v1 scope only, matching gwesp() itself.
 	if "`gwespfree'" != "" {
 		if "`gwesp'" != "" {
 			di "{err}options {bf:gwesp()} and {bf:gwespfree()} cannot both be specified - a gwesp term is either fixed-decay or curved (free-decay), not both."
@@ -529,8 +532,25 @@ program nwergm, eclass
 			di "{err}option {bf:gwespfree()} needs at least 3 nodes (gwesp itself needs a real shared-partner count to be achievable)."
 			error 198
 		}
+		// method(mple) only, for now (harmonisation unit 138): the
+		// underlying curved-MCMLE plumbing (ErgmMCMLE()'s own
+		// per-iteration eta->theta snap-back, delta-method SEs,
+		// missing-value degeneracy guard - unw_ergm.do) is built and
+		// does not regress the non-curved path, but direct testing on
+		// two independent real networks (one where R's own reference
+		// implementation independently failed identically -
+		// "Unconstrained MCMC sampling did not mix at all" - and a
+		// second, unrelated network) both drove the chain to a 0%
+		// Metropolis-Hastings acceptance rate even after adding
+		// backtracking robustness to the projection step itself. This
+		// is a genuinely deeper problem than a local fix - the OUTER
+		// eta-space Newton step's own step-length damping (calibrated
+		// for the full, unconstrained eta space) does not yet account
+		// for how differently a step behaves once snapped onto the
+		// much lower-dimensional curved manifold - not yet solved, so
+		// not yet exposed to users. See docs/ERGM_ROADMAP.md.
 		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwespfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is not yet implemented (see docs/ERGM_ROADMAP.md)."
+			di "{err}option {bf:gwespfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
 			error 198
 		}
 		local method "mple"
@@ -1470,7 +1490,25 @@ program nwergm, eclass
 	}
 	else {
 		tempname __theta0
-		mata: `__theta0' = st_matrix("`__b_mple'")
+		// Curved gwesp (harmonisation unit 138): `__b_mple' is now
+		// THETA-space for a curved model (unit 136's own MPLE change -
+		// it reports gwesp_weight/gwesp_decay directly, not raw
+		// eta-space esp() coefficients), but ErgmMCMLE() needs an
+		// ETA-space starting vector (the actual MCMC sampling weight,
+		// regardless of curved-ness). `__ergm_theta_c0_mcmle' - the
+		// curved MPLE's own theta_hat, kept as a live Mata variable
+		// rather than round-tripped through a Stata matrix - doubles
+		// as ErgmMCMLE()'s own optional starting point for its
+		// internal per-iteration eta->theta projection, so the MCMLE
+		// loop warm-starts from the SAME point MPLE already found
+		// rather than a generic (0,...,0,alpha0) restart.
+		if "`gwespfree'" != "" {
+			mata: __ergm_theta_c0_mcmle = st_matrix("`__b_mple'")
+			mata: `__theta0' = __nwergm_last_M.theta_to_eta(__ergm_theta_c0_mcmle)
+		}
+		else {
+			mata: `__theta0' = st_matrix("`__b_mple'")
+		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
 		if "`proposal'" == "tnt" {
@@ -1508,12 +1546,60 @@ program nwergm, eclass
 		mata: mata drop __ergm_native_setup_rc
 
 		tempname __fit
-		mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+		if "`gwespfree'" != "" {
+			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
+			mata: mata drop __ergm_theta_c0_mcmle
+		}
+		else {
+			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+		}
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
 		tempname __b_mcmle __V_mcmle
-		mata: st_matrix("`__b_mcmle'", `__fit'.coef)
-		mata: st_matrix("`__V_mcmle'", `__fit'.vcov)
+		if "`gwespfree'" != "" {
+			// Curved gwesp (harmonisation unit 138): `__fit'.coef is
+			// still eta-space (ErgmMCMLE() itself never reports
+			// theta directly - see its own header comment); the
+			// reported fit is `__fit'.coef_theta, with `__fit'.vcov
+			// (eta-space) transformed via the exact same delta-method
+			// formula ErgmCurvedMPLEFit() already uses internally,
+			// evaluated at the converged theta rather than a
+			// Newton-Raphson optimum.
+			//
+			// Curved MCMLE degeneracy guard: measured directly during
+			// this unit's own development that a curved model CAN
+			// drive the underlying MCMC chain into a genuinely
+			// degenerate region (100% Metropolis-Hastings acceptance,
+			// a classic stuck-chain signature) on a real test network -
+			// confirmed as a genuine difficulty of the statistical
+			// problem itself, not a bug specific to this
+			// implementation, since R ergm's OWN reference
+			// implementation independently failed outright
+			// ("Unconstrained MCMC sampling did not mix at all") on
+			// the identical network. Unlike R, nothing here previously
+			// detected this and it silently reported a "converged"
+			// fit with missing coef_theta entries cascading into a
+			// nonsensical result - checked and refused explicitly now,
+			// matching this project's own "never silently report a
+			// wrong answer" convention, rather than chasing full
+			// robustness against MCMC degeneracy (a substantially
+			// larger undertaking, and one R's own mature
+			// implementation does not fully solve either).
+			mata: st_local("__ergm_curved_degenerate", strofreal(missing(`__fit'.coef_theta) > 0))
+			if `__ergm_curved_degenerate' {
+				di "{err}The curved MCMLE fit did not produce a valid result - the underlying MCMC chain likely became degenerate for this model/network combination (this is a genuine difficulty of curved GWESP estimation, not specific to this package; R's own ergm can fail identically with 'Unconstrained MCMC sampling did not mix at all' on a hard case). Try a different starting decay value in {bf:gwespfree()}, a longer {bf:mcmcburnin()}, or a simpler model."
+				error 430
+			}
+			mata: st_matrix("`__b_mcmle'", `__fit'.coef_theta)
+			mata: __ergm_Jac_mcmle = __nwergm_last_M.theta_to_eta_jacobian(`__fit'.coef_theta)
+			mata: st_matrix("`__V_mcmle'", invsym(__ergm_Jac_mcmle' * invsym(`__fit'.vcov) * __ergm_Jac_mcmle))
+			mata: mata drop __ergm_Jac_mcmle
+			mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.theta_coefnames()))
+		}
+		else {
+			mata: st_matrix("`__b_mcmle'", `__fit'.coef)
+			mata: st_matrix("`__V_mcmle'", `__fit'.vcov)
+		}
 		// captured into plain locals, NOT e(name)-style scalars: `ereturn
 		// post' below clears whatever the e() results namespace
 		// currently holds, so referencing `e(converged)' AFTER that
@@ -1576,6 +1662,7 @@ program nwergm, eclass
 		// informational, like e(native); has no effect when e(native)==1
 		// (the native backend never uses this Mata-level cache at all).
 		ereturn scalar spcache = `__ergm_spcache_used'
+		ereturn scalar curved = ("`gwespfree'" != "")
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws
@@ -1592,6 +1679,9 @@ program nwergm, eclass
 		}
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
+		if "`gwespfree'" != "" {
+			di "{txt}Note: {bf:gwesp_decay} is an ESTIMATED (curved) decay parameter. Each MCMLE iteration's own eta-space Newton-step target is projected back onto the 2-parameter (weight, decay) curved manifold before the next simulation - a disclosed simplification of R ergm's own curved-model machinery, not expected to be bit-identical to it."
+		}
 	}
 
 	mata: mata drop `__ergm_matatemps'

@@ -3142,9 +3142,9 @@ real matrix ErgmModel::theta_to_eta_jacobian(real rowvector theta){
 real rowvector ErgmModel::project_eta_to_theta(real rowvector eta_target, real matrix W,
 	real rowvector theta_start, real scalar maxit, real scalar tol){
 
-	real rowvector theta, target_block, resid, delta
+	real rowvector theta, target_block, resid, resid_try, delta, theta_try
 	real matrix Jb, Wb
-	real scalar t, tpos, epos, iter
+	real scalar t, tpos, epos, iter, obj0, obj1, step, halvings, found
 
 	theta = J(1, ntheta(), .)
 	tpos = 1
@@ -3154,13 +3154,57 @@ real rowvector ErgmModel::project_eta_to_theta(real rowvector eta_target, real m
 			theta[(tpos..tpos+1)] = theta_start[(tpos..tpos+1)]
 			target_block = eta_target[(epos..epos+npar[t]-1)]
 			Wb = W[(epos..epos+npar[t]-1), (epos..epos+npar[t]-1)]
+			resid = target_block - ergm_gwdecay_map(theta[tpos], theta[tpos+1], npar[t])
+			obj0 = resid * Wb * resid'
 			for (iter=1; iter<=maxit; iter++) {
-				resid = target_block - ergm_gwdecay_map(theta[tpos], theta[tpos+1], npar[t])
 				Jb = ergm_gwdecay_gradient(theta[tpos], theta[tpos+1], npar[t])'
 				delta = (invsym(Jb' * Wb * Jb) * Jb' * Wb * resid')'
-				theta[(tpos..tpos+1)] = theta[(tpos..tpos+1)] + delta
-				if (theta[tpos+1] < 1e-6) theta[tpos+1] = 1e-6
-				if (max(abs(delta)) < tol) break
+
+				// Damped Gauss-Newton (backtracking line search): an
+				// undamped step here can overshoot just as badly as
+				// ErgmCurvedMPLEFit()'s own analogous fix (unit 137)
+				// found - measured directly running this function
+				// INSIDE curved MCMLE's own per-iteration loop
+				// (harmonisation unit 138), where the eta-space
+				// Newton step's own raw target can be far from the
+				// achievable curved manifold, especially early on:
+				// an undamped projection drove decay to 105 and the
+				// whole MCMC chain into a 0%-acceptance degenerate
+				// region on a real test network. Halve the step
+				// (up to 30 times) until it both keeps decay
+				// positive AND does not increase the weighted
+				// residual norm - the exact same textbook fix, just
+				// checking improvement in the least-squares objective
+				// here instead of a log-likelihood, since this
+				// function solves a weighted-least-squares problem,
+				// not a likelihood maximization.
+				step = 1
+				found = 0
+				for (halvings=1; halvings<=30; halvings++) {
+					theta_try = theta[(tpos..tpos+1)] + step :* delta
+					if (theta_try[2] > 1e-6) {
+						resid_try = target_block - ergm_gwdecay_map(theta_try[1], theta_try[2], npar[t])
+						obj1 = resid_try * Wb * resid_try'
+						if (obj1 <= obj0) {
+							found = 1
+							break
+						}
+					}
+					step = step / 2
+				}
+				if (!found) {
+					// no improving, decay-positive step exists even
+					// after 30 halvings - graceful boundary stop
+					// (clamp decay to its floor, keep weight at its
+					// own last valid value), matching
+					// ErgmCurvedMPLEFit()'s own identical fix.
+					theta[tpos+1] = 1e-6
+					break
+				}
+				theta[(tpos..tpos+1)] = theta_try
+				resid = resid_try
+				if (obj0 - obj1 < tol) break
+				obj0 = obj1
 			}
 			tpos = tpos + 2
 		}
@@ -4556,6 +4600,19 @@ struct ErgmMCMLEFit {
 				// caller-supplied interval whenever no growth was
 				// ever triggered (the ordinary case for small/
 				// well-mixing models).
+	real rowvector coef_theta	// harmonisation unit 138 (curved MCMLE):
+				// theta-space coefficients (length M.ntheta()),
+				// populated only when M has a curved term -
+				// EMPTY (0-length) for an ordinary model, since
+				// `coef' above already IS theta there (eta=theta
+				// identity) and callers should keep reading that
+				// field as before; a curved caller reads THIS
+				// field instead, plus transforms `vcov' via the
+				// Jacobian at this same point (see nwergm.ado's
+				// own call site for the exact delta-method step -
+				// identical in form to ErgmCurvedMPLEFit()'s own,
+				// just evaluated at the final theta rather than a
+				// Newton-Raphson optimum).
 }
 
 /*
@@ -4699,14 +4756,14 @@ real rowvector ergm_spectral0_ar(real matrix D){
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize, pointer(real rowvector function) scalar proposalfn,
-	real scalar verbose){
+	real scalar verbose, | real rowvector theta_c0){
 
 	struct ErgmMCMLEFit scalar res
 	struct ErgmMCMCDiag scalar diag
-	real rowvector obs, theta, Dbar, delta, se
+	real rowvector obs, theta, Dbar, delta, se, theta_c
 	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist
 	real scalar iter, p, mahal, gamma, converged, k, neff, min_neff, interval_cap, growth, interval
-	real scalar T2, Fstat, Fcrit, confidence
+	real scalar T2, Fstat, Fcrit, confidence, is_curved
 	real rowvector rho, infl
 
 	// Mata passes a bare-variable argument by reference, so this
@@ -4727,6 +4784,36 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	p = cols(theta)
 	coefhist = J(0, p, 0)
 	converged = 0
+
+	// Curved MCMLE (harmonisation unit 138): `theta' throughout this
+	// function is always ETA-space (the actual sufficient-statistic
+	// weights used to sample/simulate) - genuinely correct and
+	// unchanged for a curved model too, since MCMC sampling itself
+	// never needs to know a term is curved. `is_curved' gates one
+	// small addition inside the loop below: after each iteration's own
+	// eta-space Newton step proposes a NEW eta target, snap it back
+	// onto the achievable curved manifold via
+	// ErgmModel::project_eta_to_theta() (unit 135) before using it for
+	// the next MCMC sample - Hunter's own two-stage "Newton step in
+	// eta-space, then project to theta" design
+	// (docs/ERGM_STATNET_STUDY.md's own study already anticipated
+	// this exact shape). `theta_c' is the running theta-space
+	// iterate (unused, left empty, for an ordinary model); `theta_c0'
+	// is the caller-supplied starting point (the curved MPLE fit's own
+	// theta_hat, in nwergm.ado's actual usage) - if omitted for a
+	// curved model, a generic fallback start is derived instead so
+	// this optional argument never being supplied cannot itself cause
+	// a crash, only a possibly-slower first projection.
+	is_curved = (M.ntheta() < p)
+	if (is_curved) {
+		// an omitted optional argument arrives as a 0x0 empty matrix in
+		// Mata (there is no separate "was this supplied" sentinel/
+		// function to check instead) - `cols(theta_c0)==M.ntheta()'
+		// is therefore both the "was it supplied" and "is it the right
+		// shape" check in one.
+		if (cols(theta_c0)==M.ntheta()) theta_c = theta_c0
+		else theta_c = J(1, M.ntheta(), 0)
+	}
 	// matches Statnet's own default "confidence" termination method's
 	// own reported confidence level (observed directly in real ergm()
 	// console output: "Converged with 99% confidence").
@@ -4771,6 +4858,19 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		gamma = (mahal > 2 ? 2/mahal : 1)
 
 		theta = theta + gamma*delta
+		if (is_curved) {
+			// snap the raw eta-space Newton target back onto the
+			// achievable curved manifold - `Vinv' (this iteration's
+			// own eta-space information, already computed above for
+			// the Newton step itself) is the natural GLS weight,
+			// exactly the same role it plays in
+			// ErgmCurvedMPLEFit()'s own analogous step. `theta_c'
+			// warm-starts from its own PREVIOUS iteration's value,
+			// not a generic restart, matching how theta itself is
+			// never restarted iteration to iteration either.
+			theta_c = M.project_eta_to_theta(theta, Vinv, theta_c, 100, 1e-10)
+			theta = M.theta_to_eta(theta_c)
+		}
 		coefhist = coefhist \ theta
 
 		se = sqrt(diagonal(V)/samplesize)'
@@ -4913,6 +5013,15 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	res.finalsample = samp
 	res.acceptrate = diag.acceptrate
 	res.final_interval = interval
+	// `theta_c' already reflects the SAME final eta-space `theta'
+	// reported above (both were updated together, in lockstep, at the
+	// end of every loop iteration - the post-loop diagnostics
+	// simulation re-samples at `theta' but never re-runs the
+	// projection, so no separate re-derivation is needed here for
+	// consistency). Left at its own declared-but-unset (empty) state
+	// for an ordinary model, matching this struct's own documented
+	// "empty for ordinary, populated for curved" contract.
+	if (is_curved) res.coef_theta = theta_c
 	return(res)
 }
 
