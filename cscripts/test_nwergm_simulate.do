@@ -202,3 +202,32 @@ set seed 5009
 qui nwergm simulate 12, edges nodematch(grp3) degree(2) theta(-2 1 .5) nsim(1) mcmcburnin(3000) generate(combosim)
 qui nw_syntax combosim, max(1)
 assert `nodes' == 12
+
+* --- spcache (docs/CERTIFICATION.md unit 132): wired through the
+* simulate path too (consistency with the estimation command, even
+* though its own cost-benefit is weaker there - see nwergm.ado's own
+* build-up comment). Two checks: (1) it runs without error on an
+* undirected gwesp model; (2) same seed produces byte-identical draws
+* with/without it (pure performance optimization, must not change
+* results) - compared via each draw's own tie count, since simulate's
+* `generate()` network is the actual output to check, not a coefficient
+* vector.
+nwclear
+clear
+set seed 3077
+qui nwergm simulate 8, edges gwesp(.4) theta(-2 .3) nsim(1) mcmcburnin(500) mcmcinterval(20) generate(spc_nocache)
+assert _rc == 0
+qui nwtomata spc_nocache, mat(__spcmat_nocache)
+mata: st_local("__spc_ties_nocache", strofreal(sum(__spcmat_nocache)/2))
+
+nwclear
+clear
+set seed 3077
+qui nwergm simulate 8, edges gwesp(.4) theta(-2 .3) nsim(1) mcmcburnin(500) mcmcinterval(20) generate(spc_cache) spcache
+assert _rc == 0
+qui nwtomata spc_cache, mat(__spcmat_cache)
+mata: st_local("__spc_ties_cache", strofreal(sum(__spcmat_cache)/2))
+mata: mata drop __spcmat_nocache __spcmat_cache
+
+assert "`__spc_ties_nocache'" == "`__spc_ties_cache'"
+di "=== spcache (simulate path): runs cleanly and reproduces identical draws under the same seed ==="

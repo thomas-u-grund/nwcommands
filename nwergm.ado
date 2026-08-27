@@ -64,7 +64,8 @@
 {opt mcmleiterations(int)}
 {opt proposal(uniform|tnt)}
 {opt seed(int)}
-{opt verbose}]
+{opt verbose}
+{opt spcache}]
 
 
 {synoptset 25 tabbed}{...}
@@ -120,6 +121,7 @@
 {synopt:{opt proposal(uniform|tnt)}}Metropolis-Hastings proposal; default {it:tnt}{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt verbose}}Show MPLE/MCMLE iteration detail{p_end}
+{synopt:{opt spcache}}Enable the incremental shared-partner cache for {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple} on an undirected network; OFF by default because direct benchmarking found it a net LOSS below roughly average degree 30-40 (the common case) and a net win only above that - enable only for denser undirected networks; no effect on a directed network or without any of those terms{p_end}
 
 {p2colreset}{...}
 
@@ -364,7 +366,8 @@ implementation is based on.
 {opt mcmcinterval(int)}
 {opt proposal(uniform|tnt)}
 {opt seed(int)}
-{opt generate(string)}]
+{opt generate(string)}
+{opt spcache}]
 
 {pstd}
 {cmd:nwergm simulate} draws one or more networks from a fully-specified ERGM (fixed
@@ -462,7 +465,7 @@ program nwergm, eclass
 		TYPE(string) ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
-		PROPOSAL(string) SEED(integer -1) VERBOSE ]
+		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE ]
 	set more off
 
 	if "`edges'" == "" {
@@ -635,6 +638,40 @@ program nwergm, eclass
 	// correct observed density and its own reported "Observed" column
 	// didn't match the true network by hand-inspection.
 	mata: st_local("__ergm_obsties", strofreal(__nwergm_last_G.nties))
+
+	// --- spcache (Part XXV performance work, docs/CERTIFICATION.md unit
+	// 82/132): the incremental shared-partner cache exists and is fully
+	// certified, but is NOT auto-enabled by default - unit 82's own
+	// direct A/B benchmarking found it a NET LOSS below roughly degree
+	// 30-40 (the realistic case for most fitted sparse models, where
+	// TNT's high acceptance rate makes the cache's own per-toggle
+	// maintenance cost dominate its O(1) lookup savings). This is the
+	// disclosed, deliberate opt-in the roadmap called for: the user, who
+	// knows their own network's density, decides. Only the undirected
+	// shared-partner definition (`shared_partners()') is cached - the
+	// directed OTP/ITP/OSP/ISP/RTP paths use their own dedicated,
+	// uncached primitives (see their own header comments), so the option
+	// has no effect on a directed network. Applies to BOTH MPLE and
+	// MCMLE fits (build_mple_data() toggles the same __nwergm_last_G
+	// singleton the MCMC sampler uses, so MPLE's own design-matrix
+	// construction benefits identically), even though only the MCMLE
+	// branch below surfaces e(spcache) - matching e(native)'s own
+	// existing MPLE-vs-MCMLE asymmetry (assert missing(e(native)) for
+	// MPLE fits, cscripts/test_nwergm_ado.do).
+	local __ergm_spcache_relevant = ("`gwesp'"!="" | "`gwdsp'"!="" | "`gwnsp'"!="" | "`esp'"!="" | "`dsp'"!="" | "`triangle'"!="" | "`ctriple'"!="")
+	local __ergm_spcache_used = 0
+	if "`spcache'" != "" {
+		if "`directed'" == "true" {
+			di "{err}note: option {bf:spcache} has no effect on a directed network; the incremental shared-partner cache only implements the undirected shared-partner definition."
+		}
+		else if !`__ergm_spcache_relevant' {
+			di "{err}note: option {bf:spcache} has no effect without gwesp()/gwdsp()/gwnsp()/esp()/dsp()/triangle/ctriple; none of those terms was requested."
+		}
+		else {
+			mata: __nwergm_last_G.enable_sp_cache()
+			local __ergm_spcache_used = 1
+		}
+	}
 
 	// --- build the model: one addterm() call per requested term.
 	capture mata: mata drop __nwergm_last_M
@@ -1427,6 +1464,12 @@ program nwergm, eclass
 		// without guessing, whether their own specific model got the
 		// native speedup.
 		ereturn scalar native = `__ergm_native_used'
+		// 1 if the Mata incremental shared-partner cache (spcache option,
+		// off by default - see this call's own build-up comment above)
+		// was actually enabled for this fit, 0 otherwise. Purely
+		// informational, like e(native); has no effect when e(native)==1
+		// (the native backend never uses this Mata-level cache at all).
+		ereturn scalar spcache = `__ergm_spcache_used'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws
@@ -1503,7 +1546,7 @@ program nwergm_simulate
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
 		TYPE(string) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
-		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) ]
+		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
 
 	confirm integer number `nodes'
 	if `nodes' < 2 {
@@ -2157,6 +2200,25 @@ program nwergm_simulate
 		matrix `thetamat'[1,`__k'] = `: word `__k' of `theta''
 	}
 
+	// spcache: same option/cache as the main nwergm program (see its own
+	// build-up comment), computed ONCE here rather than per-draw below.
+	// Note the cost-benefit here is even less favorable than in
+	// estimation: each simulated draw gets a FRESH ErgmGraph (see the
+	// loop below), so the cache's O(sum deg^2) build cost is paid nsim
+	// times over, against only `mcmcburnin' toggles of benefit per draw
+	// (not an entire MCMLE run's worth) - offered for consistency with
+	// the estimation command, not because it is expected to help here.
+	local __ergm_spcache_relevant = (`gwesp'!=0 | `gwdsp'!=0 | `gwnsp'!=0 | "`esp'"!="" | "`dsp'"!="" | "`triangle'"!="" | "`ctriple'"!="")
+	if "`spcache'" != "" {
+		if "`directed'" != "" {
+			di "{err}note: option {bf:spcache} has no effect on a directed simulation; the incremental shared-partner cache only implements the undirected shared-partner definition."
+		}
+		else if !`__ergm_spcache_relevant' {
+			di "{err}note: option {bf:spcache} has no effect without gwesp()/gwdsp()/gwnsp()/esp()/dsp()/triangle/ctriple; none of those terms was requested."
+		}
+	}
+	local __ergm_spcache_used = ("`spcache'"!="" & "`directed'"=="" & `__ergm_spcache_relevant')
+
 	// BUGFIX: used to render the simulated draw's dense adjacency matrix
 	// as a literal Stata matrix-expression string (ErgmMatToLiteral())
 	// and hand that to nwset's own mat() option, which hits Stata's own
@@ -2173,10 +2235,13 @@ program nwergm_simulate
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
 		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
-		// enable_sp_cache() deliberately NOT called here either - see the
-		// main nwergm program's own gwesp block for the full, measured
-		// account of why (net loss at the low degree realistic sparse
-		// networks have; only a net win above roughly degree 30-40).
+		// enable_sp_cache() only when the user explicitly opted in via
+		// spcache (see this program's own build-up comment above for why
+		// it is off by default and why simulate's own cost-benefit is
+		// even less favorable than estimation's).
+		if `__ergm_spcache_used' {
+			mata: __nwergm_last_G.enable_sp_cache()
+		}
 		// ErgmNativeSetup() is likewise deliberately NOT called on this
 		// path (harmonisation unit 83): this loop calls ErgmMCMCSample()
 		// once PER SIMULATED NETWORK with samplesize=1, so `nsim' native

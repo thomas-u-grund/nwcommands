@@ -339,3 +339,54 @@ assert _rc == 2000
 assert _N == 4
 assert mydata[1] == 1
 di "=== edgeless-network MPLE-crash REGRESSION VERIFIED ==="
+
+* --- spcache (docs/CERTIFICATION.md unit 132): the incremental
+* shared-partner cache is a pure performance optimization - enabling it
+* must never change a fit's numeric result. Reuses unet10/refnet10 from
+* the e(native)==0 case just above (edges+hamming forces the Mata
+* fallback path, since hamming is the one term family not yet ported to
+* the native backend - see nwergm.ado's own spcache build-up comment -
+* so this actually exercises ErgmGraph::shared_partners()'s cached vs.
+* uncached branches, unlike a native-eligible model where the Mata cache
+* would never be consulted at all).
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet10b) labs(A,B,C,D,E)
+nwset, mat((0,1,0,0,1\1,0,0,1,0\0,0,0,1,1\0,1,1,0,0\1,0,1,0,0)) undirected name(refnet10b) labs(A,B,C,D,E)
+
+set seed 2024
+qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
+assert _rc == 0
+assert e(native) == 0
+assert e(spcache) == 0
+tempname __b_nocache
+matrix `__b_nocache' = e(b)
+
+set seed 2024
+qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2) spcache
+assert _rc == 0
+assert e(native) == 0
+assert e(spcache) == 1
+tempname __b_cache
+matrix `__b_cache' = e(b)
+
+mata: assert(max(abs(st_matrix("`__b_nocache'") - st_matrix("`__b_cache'"))) == 0)
+di "=== spcache: identical seed produces byte-identical coefficients with/without the cache ==="
+
+* spcache is a no-op (with an explanatory note, not silence) on a
+* directed network - the cache only implements the undirected
+* shared-partner definition. (dnet7/dnet12 are not reused from earlier
+* in this file - intervening nwclear calls already dropped them.)
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,0,0,1\0,0,0,1,0)) directed name(dnet7b) labs(A,B,C,D,E)
+qui nwergm dnet7b, edges gwesp(.5) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2) spcache
+assert _rc == 0
+assert e(spcache) == 0
+
+* spcache is a no-op (with an explanatory note) when no term that could
+* use it was requested.
+nwclear
+nwset, mat((0,1,1,0,0\0,0,1,0,0\1,0,0,1,0\0,0,0,0,1\0,0,0,0,0)) directed name(dnet12b) labs(A,B,C,D,E)
+qui nwergm dnet12b, edges mutual mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2) spcache
+assert _rc == 0
+assert e(spcache) == 0
+di "=== spcache: no-op paths (directed, no relevant term) verified; simulate wiring certified separately in cscripts/test_nwergm_simulate.do ==="
