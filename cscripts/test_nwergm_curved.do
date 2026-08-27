@@ -167,3 +167,57 @@ assert jacB_edges_row_diff < 1e-12
 assert jacB_curved_block_diff < 1e-9
 assert jacB_offblock_diff < 1e-12
 di "=== ErgmModel correctly assembles a mixed (ordinary + curved) model's theta<->eta map and block-diagonal Jacobian ==="
+
+* --- ErgmModel::project_eta_to_theta() (harmonisation unit 135): the
+* Gauss-Newton projection step curved MPLE/MCMLE will both reduce to.
+* Three checks, reusing Mb/thetaB/etaB from the assembly test above
+* (same Mata session, mata set matastrict off).
+
+mata:
+mata set matastrict off
+
+// check 1: an all-ORDINARY model's own projection is an exact
+// pass-through regardless of W/theta_start/maxit - no iteration ever
+// runs for a non-curved block.
+proj_A = Ma.project_eta_to_theta(thetaA, I(2), J(1,2,0), 1, 1e-10)
+st_numscalar("proj_A_diff", max(abs(proj_A - thetaA)))
+
+// check 2: EXACT recovery when the target is exactly reachable (i.e.
+// eta_target = theta_to_eta(true_theta) with no noise at all) -
+// starting from a DELIBERATELY different guess, with an arbitrary
+// (identity) weight matrix - since the target is exactly on the
+// curved manifold, ANY positive-definite weight matrix should drive
+// the residual to exactly zero, recovering true_theta itself, not
+// merely some other point that happens to weight the same.
+theta_start_B = (0, 0.3, 0.5)
+proj_B = Mb.project_eta_to_theta(etaB, I(5), theta_start_B, 50, 1e-12)
+st_numscalar("proj_B_diff", max(abs(proj_B - thetaB)))
+
+// check 3: GLS stationarity (first-order condition) under a target
+// that does NOT exactly lie on the curved manifold (real noise added)
+// and a genuinely non-identity weight matrix (different weights per
+// eta column) - there is no independently-known "right answer" here,
+// so this checks INTERNAL consistency of the optimizer's own stopping
+// point instead: at convergence, the weighted gradient of the
+// objective w.r.t. the curved block's own theta, J' W (target-map(theta)),
+// must be ~0 (the textbook GLS/weighted-least-squares normal equation).
+noisy_target = etaB + (0, 0.05, -0.03, 0.04, -0.02)
+Wdiag = diag((1, 2, 5, 3, 1))
+proj_C = Mb.project_eta_to_theta(noisy_target, Wdiag, theta_start_B, 200, 1e-14)
+resid_C = noisy_target[(2..5)] - ergm_gwdecay_map(proj_C[2], proj_C[3], 4)
+Jb_C = ergm_gwdecay_gradient(proj_C[2], proj_C[3], 4)'
+Wb_C = Wdiag[(2..5),(2..5)]
+stationarity_C = Jb_C' * Wb_C * resid_C'
+st_numscalar("stationarity_C_max", max(abs(stationarity_C)))
+st_numscalar("proj_C_edges_diff", abs(proj_C[1] - noisy_target[1]))
+end
+
+assert proj_A_diff < 1e-12
+di "=== project_eta_to_theta() is an exact pass-through for an all-ordinary model ==="
+
+assert proj_B_diff < 1e-6
+di "=== project_eta_to_theta() exactly recovers the true theta when its target eta is exactly reachable, from a different starting point ==="
+
+assert stationarity_C_max < 1e-8
+assert proj_C_edges_diff < 1e-12
+di "=== project_eta_to_theta() satisfies the GLS stationarity condition under noise and a non-identity weight matrix (and still passes the ordinary block through exactly) ==="

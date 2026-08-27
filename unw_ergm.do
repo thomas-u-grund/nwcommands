@@ -2964,6 +2964,7 @@ class ErgmModel {
 	real scalar ntheta()
 	real rowvector theta_to_eta()
 	real matrix theta_to_eta_jacobian()
+	real rowvector project_eta_to_theta()
 	real rowvector full_statistic()
 	real rowvector full_change()
 	real rowvector change_toward_one()
@@ -3103,6 +3104,72 @@ real matrix ErgmModel::theta_to_eta_jacobian(real rowvector theta){
 		epos = epos + npar[t]
 	}
 	return(Jac)
+}
+
+/*
+	Given a target point in eta-space (`eta_target', length nparam())
+	and a weight matrix `W' (nparam() x nparam() - typically an inverse
+	covariance, e.g. from a preceding closed-form logit fit's own
+	cov.unscaled, or from an MCMLE iteration's own sample covariance)
+	and a starting theta (length ntheta()), finds the theta minimizing
+	the weighted sum of squares (eta_target - theta_to_eta(theta))' W
+	(eta_target - theta_to_eta(theta)) - the shared core numerical step
+	BOTH curved MPLE (later work: an initial value from an unconstrained
+	logit fit) and curved MCMLE (later work: projecting each iteration's
+	own eta-space Newton-step target back onto the smaller theta space)
+	will reduce to; built once here so both can call the same certified
+	routine rather than each reimplementing it.
+
+	DECOUPLES EXACTLY by term, not merely as a convenient approximation:
+	an ORDINARY term's own theta_to_eta() is the identity, so its block
+	of the objective can always be driven to EXACTLY ZERO by setting
+	that block of theta to that block of eta_target, regardless of what
+	the curved block's own theta is chosen to be - i.e. the ordinary
+	blocks never trade off against the curved block in the joint
+	objective (completing the square in the ordinary block's own theta
+	always has a zero-residual solution available, independent of the
+	curved block), so minimizing the FULL joint weighted objective is
+	identical to minimizing each term's own block independently. Each
+	curved term's own 2-parameter block is solved by Gauss-Newton using
+	the exact analytic Jacobian from theta_to_eta_jacobian() (no numeric
+	differencing, no external optimizer needed for a 2-parameter
+	problem with a closed-form derivative already in hand) - projecting
+	`alpha' back to a small positive value if a step would drive it
+	non-positive (`ergm_gwdecay_map'/`_gradient' are only defined for
+	alpha>0, matching R ergm's own `ergm_GWDECAY$minpar` constraint).
+*/
+real rowvector ErgmModel::project_eta_to_theta(real rowvector eta_target, real matrix W,
+	real rowvector theta_start, real scalar maxit, real scalar tol){
+
+	real rowvector theta, target_block, resid, delta
+	real matrix Jb, Wb
+	real scalar t, tpos, epos, iter
+
+	theta = J(1, ntheta(), .)
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			theta[(tpos..tpos+1)] = theta_start[(tpos..tpos+1)]
+			target_block = eta_target[(epos..epos+npar[t]-1)]
+			Wb = W[(epos..epos+npar[t]-1), (epos..epos+npar[t]-1)]
+			for (iter=1; iter<=maxit; iter++) {
+				resid = target_block - ergm_gwdecay_map(theta[tpos], theta[tpos+1], npar[t])
+				Jb = ergm_gwdecay_gradient(theta[tpos], theta[tpos+1], npar[t])'
+				delta = (invsym(Jb' * Wb * Jb) * Jb' * Wb * resid')'
+				theta[(tpos..tpos+1)] = theta[(tpos..tpos+1)] + delta
+				if (theta[tpos+1] < 1e-6) theta[tpos+1] = 1e-6
+				if (max(abs(delta)) < tol) break
+			}
+			tpos = tpos + 2
+		}
+		else {
+			theta[(tpos..tpos+npar[t]-1)] = eta_target[(epos..epos+npar[t]-1)]
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(theta)
 }
 
 real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
