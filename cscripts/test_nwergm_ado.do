@@ -506,3 +506,57 @@ assert colsof(e(b)) == 4
 mata: assert(!missing(st_matrix("e(b)")))
 assert _b[gwesp_decay] < 1e-4
 di "=== gwespfree() combined with another dyad-dependent term (triangle) runs to completion, does not produce missing coefficients, and correctly hits the decay floor on this genuinely near-degenerate model ==="
+
+* --- gwdegreefree() (harmonisation unit 139): extends the SAME curved-
+* MPLE machinery from gwesp to gwdegree - reuses ErgmCurvedMPLEFit()
+* and ErgmModel::theta_coefnames() unchanged, only the underlying
+* statistic/change function family differs (stat_degree()/
+* change_degree(), registered under name "degree" so
+* theta_coefnames() picks the right "gwdegree_weight"/"gwdegree_decay"
+* display names rather than defaulting to the gwesp pair). Certified
+* against a REAL independent R ergm(net ~ edges + gwdegree(0.7,
+* fixed=FALSE), estimate="MPLE") fit (ergm 4.12.0) on a deliberately
+* hub-and-spoke 15-node network (chosen for real degree variation,
+* mirroring gwespfree()'s own need for a deliberately-structured
+* network rather than a random draw - a first random Erdos-Renyi-style
+* attempt on the SAME clique-heavy network gwespfree() itself uses was
+* independently flagged nonidentifiable by R, matching that unit's own
+* documented pattern exactly).
+nwclear
+nwset, mat((0,1,0,0,0,0,0,1,1,0,1,0,0,1,0 \ ///
+1,0,0,0,1,1,0,1,0,0,0,0,0,0,1 \ ///
+0,0,0,0,0,1,0,1,0,0,0,1,1,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,0,0,1,0,0,0,0,0,1 \ ///
+0,1,1,0,0,0,0,0,1,0,0,0,1,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+1,1,1,1,0,0,0,0,0,0,0,0,0,0,0 \ ///
+1,0,0,0,1,1,0,0,0,0,0,1,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+1,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,0,1,0,0,0,0,0,1,0,0,0,0,0,0 \ ///
+0,0,1,0,0,1,0,0,0,0,0,0,0,0,0 \ ///
+1,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,0,1,0,0,0,0,0,0,0,0,0,0)) undirected name(curvedgwdegreenet)
+
+qui nwergm curvedgwdegreenet, edges gwdegreefree(0.7)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwdegree(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=-0.7219873636 gwdegree=-1.4449411293 gwdegree.decay=0.6204714141
+assert reldif(_b[edges], -0.7219873636) < 1e-2
+assert reldif(_b[gwdegree_weight], -1.4449411293) < 1e-2
+assert reldif(_b[gwdegree_decay], 0.6204714141) < 1e-2
+di "=== curved gwdegree MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- error paths: mutual exclusivity with gwdegree()/degree() and
+* with gwespfree() itself (v1 scope: at most one curved term).
+capture noisily nwergm curvedgwdegreenet, edges gwdegree(0.5) gwdegreefree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwdegreenet, edges degree(1 2) gwdegreefree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwdegreenet, edges gwespfree(0.7) gwdegreefree(0.7)
+assert _rc == 198
+di "=== gwdegreefree() error paths (combined with gwdegree()/degree()/gwespfree()) all verified ==="
