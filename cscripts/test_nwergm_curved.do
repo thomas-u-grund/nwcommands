@@ -91,3 +91,79 @@ di "=== curved-decay map/gradient (case 2: theta_w=-1.5, alpha=0.4) match R's er
 
 assert gwesp_identity_diff < 1e-9
 di "=== curved-decay map at a fixed alpha reproduces v1's own fixed-decay stat_gwesp() via the esp(k) decomposition ==="
+
+* --- ErgmModel-level theta<->eta assembly (harmonisation unit 134):
+* generalizes the single-term map/gradient above to a full, possibly-
+* mixed model via ErgmModel::theta_to_eta()/theta_to_eta_jacobian().
+* NOT yet consumed by MPLE/MCMLE/nwergm.ado - this certifies the
+* assembly mechanics themselves in isolation.
+
+mata:
+mata set matastrict off
+
+// case A: a model with NO curved terms (edges + nodecov, both
+// ordinary) - ntheta() must equal nparam() exactly, theta_to_eta()
+// must be the identity, theta_to_eta_jacobian() must be the identity
+// matrix. This is the "curved-parameter support changes nothing for
+// an ordinary model" regression guard - the single most important
+// property for a feature being added on top of already-shipped,
+// already-certified estimation code.
+Ma = ErgmModel()
+Ma.init()
+Ma.addterm("edges", 1, &stat_edges(), &change_edges(), ErgmTermData(), ("edges"))
+Ma.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), ErgmTermData(), ("nodecov_age"))
+
+thetaA = (1.2, -0.4)
+st_numscalar("ntheta_eq_nparam_A", (Ma.ntheta() == Ma.nparam()))
+st_numscalar("theta_to_eta_identity_diff", max(abs(Ma.theta_to_eta(thetaA) - thetaA)))
+JacA = Ma.theta_to_eta_jacobian(thetaA)
+st_numscalar("jacobian_identity_diff", max(abs(JacA - I(2))))
+
+// case B: a MIXED model - edges (ordinary, 1 theta/eta) + a curved
+// term with npar=4 (standing in for a curved gwesp with maxd=4, using
+// the actual esp() statistic/change functions - the real term this
+// will wire to later, not a placeholder). ntheta() must be 1+2=3
+// (edges' own 1, plus the curved term's fixed 2), NOT 1+4=5.
+Mb = ErgmModel()
+Mb.init()
+Mb.addterm("edges", 1, &stat_edges(), &change_edges(), ErgmTermData(), ("edges"))
+tdb = ErgmTermData()
+tdb.levels = (1\2\3\4)
+Mb.addterm("esp", 4, &stat_esp(), &change_esp(), tdb, ("esp_1","esp_2","esp_3","esp_4"))
+Mb.mark_curved()
+
+st_numscalar("ntheta_B", Mb.ntheta())
+st_numscalar("nparam_B", Mb.nparam())
+
+// theta = (edges_coef, curved_weight, curved_alpha) = (1.5, 0.8, 1.3) -
+// SAME (weight, alpha) as unit 133's own certified case 1, so the
+// curved block of eta/Jacobian below must match those exact reference
+// values, not just "some" plausible-looking numbers.
+thetaB = (1.5, 0.8, 1.3)
+etaB = Mb.theta_to_eta(thetaB)
+JacB = Mb.theta_to_eta_jacobian(thetaB)
+
+ref_eta_curved_block = (0.80000000000000, 1.38197456557279, 1.80534255928984, 2.11332931456596)
+st_numscalar("etaB_edges_diff", abs(etaB[1] - 1.5))
+st_numscalar("etaB_curved_block_diff", max(abs(etaB[(2..5)] - ref_eta_curved_block)))
+
+ref_grad_curved_block = (1, 1.72746820696599, 2.256678199112296, 2.641661643207456 \ ///
+                          0, 0.21802543442721, 0.535238578138696, 0.881382293461455)
+st_numscalar("jacB_edges_row_diff", max(abs(JacB[1,.] - (1,0,0))))
+st_numscalar("jacB_curved_block_diff", max(abs(JacB[(2..5),(2..3)] - ref_grad_curved_block')))
+st_numscalar("jacB_offblock_diff", max(abs(JacB[(2..5),1])) + max(abs(JacB[1,(2..3)])))
+end
+
+assert ntheta_eq_nparam_A == 1
+assert theta_to_eta_identity_diff < 1e-12
+assert jacobian_identity_diff < 1e-12
+di "=== ErgmModel curved assembly is a strict no-op for an all-ordinary model (identity map, identity Jacobian) ==="
+
+assert ntheta_B == 3
+assert nparam_B == 5
+assert etaB_edges_diff < 1e-12
+assert etaB_curved_block_diff < 1e-9
+assert jacB_edges_row_diff < 1e-12
+assert jacB_curved_block_diff < 1e-9
+assert jacB_offblock_diff < 1e-12
+di "=== ErgmModel correctly assembles a mixed (ordinary + curved) model's theta<->eta map and block-diagonal Jacobian ==="
