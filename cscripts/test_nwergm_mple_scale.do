@@ -32,7 +32,7 @@ do unw_ergm.do
 
 set seed 20260827
 nwclear
-nwrandom 200, prob(0.05) directed name(scaletest)
+nwrandom 200, prob(0.05) name(scaletest)
 gen grp = ceil(3*runiform())
 
 timer clear 1

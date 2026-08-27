@@ -91,10 +91,10 @@ Besides setting the network, this also creates a new variable {it:_nwmode}, whic
 Thomas, Michael, Mathilde) and value 2 for institutions (LiU, UdeM, Oxford, ETH, Groningen).
 
 {pstd}
-When plotting a two-mode network, nodes are automatically colored accoriding to the mode they belong to, unless specified otherwise.
-For example, these two commands produce the same plot.
+{help nwplot} has no bipartite-specific logic of its own, so nodes are {bf:not} colored by mode
+automatically; pass the {it:_nwmode} variable this command creates to {opt color()} (or
+{opt symbol()}) explicitly to tell the two node sets apart at a glance:
 
-	{cmd:. nwplot mynet}
 	{cmd:. nwplot mynet, color(_nwmode)}
 
 {marker project_stat}{...}

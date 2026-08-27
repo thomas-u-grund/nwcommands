@@ -36,14 +36,35 @@
 	constraints this package does not otherwise have) for a handful of
 	functions this file implements directly in a few hundred lines.
 
-	SCOPE (this unit): betweenness centrality only (Brandes 2001,
+	SCOPE (this unit): betweenness centrality (Brandes 2001,
 	unweighted/dichotomized case - the DEFAULT nwbetween() mode, matching
 	its own default `calculate_betweenness()` in unw_core.do exactly).
-	The weighted (Dijkstra-based) mode remains Mata-only, a documented,
-	scoped follow-on (see docs/ERGM_ROADMAP.md's own "Native graph
-	kernels" section) - not attempted here to keep this wave's own scope
-	controlled, the same discipline nwergm's own term-expansion waves
-	used throughout. Additional algorithm codes (k-core peeling,
+
+	SCOPE (follow-on unit): single-source unweighted BFS distances
+	(ALG_BFS_DISTANCES), called once per source node from Mata
+	(calculate_distances_bfs_native() in unw_core.do) rather than once
+	for the whole all-pairs matrix - the classic Stata Plugin Interface
+	has no channel to hand back an O(n^2) result directly, only the
+	current dataset's own rows/columns, so an O(n) score-per-node column
+	returned once per call (exactly betweenness's own existing shape,
+	looped n times Mata-side) sidesteps that limit entirely rather than
+	pre-expanding a working frame to n^2 rows. Feeds
+	`calculate_distances()`'s own "brute" (unweighted) branch, which in
+	turn feeds nwgeodesic (directly), nwbridges, nwpath, and
+	nwcloseness/nwreach (both via nwgeodesic) - see
+	NativeGraphAvailable()'s own dispatch in unw_core.do for the
+	graceful pure-Mata fallback wherever no plugin binary is available
+	for the running platform.
+
+	The weighted (Dijkstra-based) distance mode remains Mata-only, a
+	documented, scoped follow-on of its own (see docs/ERGM_ROADMAP.md's
+	own "Native graph kernels" section) - not attempted here to keep
+	this wave's own scope controlled, the same discipline nwergm's own
+	term-expansion waves used throughout: a naive linear-scan extract-min
+	(no built-in Mata priority queue) is already the identified
+	bottleneck there, and porting that faithfully to C needs its own
+	dedicated pass, not a rushed addition alongside this unit's own
+	unweighted-BFS scope. Additional algorithm codes (k-core peeling,
 	Louvain community detection - the other two candidates
 	NATIVE_GRAPH_LIBRARIES.md's own profiling section flags as similarly
 	interpreter-bound) can be added to this same plugin file later,
@@ -76,6 +97,7 @@
 #include <string.h>
 
 #define ALG_BETWEENNESS 1
+#define ALG_BFS_DISTANCES 2
 
 /* ===================================================================
    Betweenness centrality (Brandes 2001), unweighted/dichotomized.
@@ -192,6 +214,83 @@ cleanup:
 }
 
 /* ===================================================================
+   Single-source unweighted (hop-count) BFS distances - the compiled
+   counterpart to unw_core.do's own `bfs_hopdist_from()'. Called once
+   PER SOURCE NODE from Mata (calculate_distances_bfs_native() below),
+   not once for the whole all-pairs matrix: the classic Stata Plugin
+   Interface has no channel to hand back an O(n^2) result directly (only
+   the current dataset's own rows/columns, via SF_vdata/SF_vstore), so
+   an all-pairs kernel would need either a pre-expanded n^2-row working
+   frame (real overhead of its own, before the algorithm even starts) or
+   this design instead: each call does one O(n+m) traversal and returns
+   one O(n) column, exactly the same shape betweenness_unweighted()
+   above already uses successfully, called n times by the Mata-side
+   loop. The CSR build (O(n+m)) is repeated on every call rather than
+   cached across calls, since a plugin invocation has no state that
+   survives between them - a real, accepted cost, small next to the
+   O(n+m) traversal itself and tiny next to Mata's own per-operation
+   interpreter overhead this whole native path exists to avoid.
+   =================================================================== */
+
+static int bfs_distances_from(long n, long *ei, long *ej, long nties, long source) {
+	long i, k;
+	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
+	long *queue = NULL, *dist = NULL;
+	int rc = 0;
+
+	deg = (long *)calloc((size_t)(n + 1), sizeof(long));
+	for (i = 0; i < nties; i++) deg[ei[i]]++;
+	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr[1] = 0;
+	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
+	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
+	colidx = (long *)malloc((size_t)(rowptr[n + 1] > 0 ? rowptr[n + 1] : 1) * sizeof(long));
+	for (i = 0; i < nties; i++) colidx[cursor[ei[i]]++] = ej[i];
+	free(cursor); cursor = NULL;
+	free(deg); deg = NULL;
+
+	dist = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	queue = (long *)malloc((size_t)n * sizeof(long));
+	if (!dist || !queue) { rc = 909; goto cleanup; }
+
+	for (i = 1; i <= n; i++) dist[i] = -1;
+	dist[source] = 0;
+	{
+		long qh = 0, qt = 0;
+		queue[qt++] = source;
+		while (qh < qt) {
+			long v = queue[qh++];
+			for (k = rowptr[v]; k < rowptr[v + 1]; k++) {
+				long w = colidx[k];
+				if (dist[w] < 0) {
+					dist[w] = dist[v] + 1;
+					queue[qt++] = w;
+				}
+			}
+		}
+	}
+
+	/* Matches bfs_hopdist_from()'s own convention exactly: the source
+	   itself is left MISSING on return (Brute_dist()'s original
+	   "_editvalue(dist,0,.)" behavior, which calculate_distances_bfs()
+	   relies on), and any node BFS never reached also comes back
+	   missing rather than a sentinel like -1 that could be mistaken for
+	   a real distance. */
+	for (i = 1; i <= n; i++) {
+		if (i == source || dist[i] < 0) SF_vstore(3, i, SV_missval);
+		else SF_vstore(3, i, (double)dist[i]);
+	}
+
+cleanup:
+	free(dist);
+	free(queue);
+	free(rowptr);
+	free(colidx);
+	return rc;
+}
+
+/* ===================================================================
    Plugin entry point
    =================================================================== */
 
@@ -201,7 +300,7 @@ static long next_long(void) {
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long algcode, n, directed, nties, i;
+	long algcode, n, directed, nties, source, i;
 	long *ei = NULL, *ej = NULL;
 	int rc = 0;
 
@@ -213,6 +312,9 @@ STDLL stata_call(int argc, char *argv[]) {
 	n        = next_long();
 	directed = next_long();
 	nties    = next_long();
+	/* ALG_BFS_DISTANCES carries one further argument (source), read
+	   before freeing argbuf - strtok() state lives inside it. */
+	source   = (algcode == ALG_BFS_DISTANCES) ? next_long() : 0;
 	free(argbuf);
 
 	if (nties > 0) {
@@ -228,6 +330,9 @@ STDLL stata_call(int argc, char *argv[]) {
 	switch (algcode) {
 		case ALG_BETWEENNESS:
 			rc = betweenness_unweighted(n, (int)directed, ei, ej, nties);
+			break;
+		case ALG_BFS_DISTANCES:
+			rc = bfs_distances_from(n, ei, ej, nties, source);
 			break;
 		default:
 			SF_error("nwgraph: unknown algorithm code\n");

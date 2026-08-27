@@ -239,3 +239,21 @@ nwrandom 5, prob(.5) name(realnetqap)
 capture noisily nwqap typobogus
 assert _rc == 482
 di "=== misspelled network name REGRESSION VERIFIED ==="
+
+* --- plot(): one histogram-plus-reference-line panel per coefficient,
+* without disturbing the caller's own dataset (nwqap already
+* preserve/restores around its own permutation dataset; a fresh
+* variable "canary" confirms that survives plot()'s own additional
+* graph-building work on top of it intact).
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1plot) undirected labs(A,B,C,D,E)
+nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdvplot) undirected labs(A,B,C,D,E)
+clear
+set obs 4
+gen canary = _n
+nwqap wdvplot iv1plot, permutations(20) type(regress) plot name(qapplottest)
+assert _rc == 0
+assert _N == 4
+assert canary[1]==1 & canary[2]==2 & canary[3]==3 & canary[4]==4
+capture graph drop qapplottest
+di "=== nwqap plot() OK ==="

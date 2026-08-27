@@ -2918,6 +2918,7 @@ class `NWdef' {
 	real matrix calculate_triadcensus()
 	real matrix calculate_distances()
 	real matrix calculate_distances_bfs()
+	real matrix calculate_distances_bfs_native()
 	real matrix calculate_distances_dijkstra()
 	real matrix calculate_distances_without()
 	real matrix calculate_bridges_global()
@@ -3775,7 +3776,16 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 
 /*
 	Gould-Fernandez (1989) brokerage roles: for every directed two-path
-	a -> b -> c (a != c) through each node b, classifies the role b plays
+	a -> b -> c (a != c) through each node b, WHERE a HAS NO DIRECT TIE
+	TO c (a cannot already reach c without going through b - the whole
+	point of "brokerage" is that b mediates something a and c can't
+	already do directly; fresh-checked against the real `statnet/sna` C
+	source, `src/gli.c`'s own `brokerage_R()`: it only classifies a
+	two-path when `!snaIsAdjacent(i,k,net,0)`, i.e. only when the
+	SOURCE has no existing directed tie to the DESTINATION - counting
+	a-b-c triangles where a->c ALSO already exists would silently
+	inflate every role count, especially coordinator, on any network
+	with real transitivity/clustering), classifies the role b plays
 	using the group membership of a, b and c:
 	  1. coordinator    - g(a)=g(b)=g(c)              (broker within own group)
 	  2. gatekeeper      - g(a)!=g(b), g(b)=g(c)        (lets outside info into own group)
@@ -3787,9 +3797,10 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 	use) rather than a dense adjacency matrix, so this scales the same way
 	those do. For an undirected network neighbors_in() already falls back
 	to neighbors() (see its own definition above), so a and c are drawn
-	from the same neighbor set - the definition degrades gracefully rather
-	than needing a separate undirected-specific formula. Returns an n x 5
-	matrix of per-node role counts, in the column order listed above.
+	from the same neighbor set, and has_edge(a,c) is symmetric anyway -
+	the definition degrades gracefully rather than needing a separate
+	undirected-specific formula. Returns an n x 5 matrix of per-node role
+	counts, in the column order listed above.
 */
 real matrix `NWdef'::calculate_brokerage(real matrix group){
 	real matrix result, innb, outnb
@@ -3809,6 +3820,7 @@ real matrix `NWdef'::calculate_brokerage(real matrix group){
 			for (j=1; j<=rows(outnb); j++){
 				c = outnb[j,1]
 				if (c == b | c == a) continue
+				if (has_edge(a, c)) continue
 				gc = group[c,1]
 				if (ga==gb & gb==gc){
 					result[b,1] = result[b,1] + 1
@@ -5875,6 +5887,14 @@ real matrix `NWdef'::calculate_distances_dijkstra(real scalar alpha){
 
 real matrix `NWdef'::calculate_distances(real scalar alpha, string scalar alg){
 	if (alg == "brute"){
+		// Native dispatch (docs/NATIVE_GRAPH_LIBRARIES.md follow-on):
+		// falls back to the pure-Mata calculate_distances_bfs() whenever
+		// no compiled plugin binary exists for the running platform,
+		// the same graceful-degradation convention nwbetween.ado's own
+		// dispatch already uses for calculate_betweenness_native().
+		if (NativeGraphAvailable()){
+			return(calculate_distances_bfs_native())
+		}
 		return(calculate_distances_bfs())
 	}
 	else {
@@ -6203,6 +6223,65 @@ real matrix `NWdef'::calculate_betweenness_native(){
 	stata("capture frame drop __nwgraph_native")
 
 	return(Cb)
+}
+
+/*
+	Native single-source-BFS-per-call all-pairs unweighted distance
+	matrix - the compiled counterpart to bfs_hopdist_from()/
+	calculate_distances_bfs() above. Unlike calculate_betweenness_native()
+	(one plugin call handles all n sources internally, since betweenness
+	aggregates across them into a single O(n) output), an all-pairs
+	DISTANCE matrix is a genuine O(n^2) result, and the classic Stata
+	Plugin Interface has no channel to hand one back directly - only the
+	current dataset's own rows/columns via SF_vdata/SF_vstore. Rather
+	than pre-expand a working frame to n^2 rows (real overhead of its
+	own, and unbounded as n grows), this calls the plugin once PER
+	SOURCE NODE, each call doing one compiled O(n+m) BFS traversal and
+	returning one O(n) column - the exact same shape
+	calculate_betweenness_native() already uses successfully, just
+	looped n times here instead of internally once. The edge list and
+	temporary frame are built once, outside the loop; only the `source'
+	argument and the resulting column change per call.
+	CALLER'S RESPONSIBILITY: check NativeGraphAvailable() first, same
+	convention as calculate_betweenness_native().
+*/
+real matrix `NWdef'::calculate_distances_bfs_native(){
+	real matrix ties, D
+	real scalar n, nties, nobs_needed, __junk, i
+	string scalar origframe, argstr, cmd
+
+	n = get_nodes()
+	ties = edgelist()
+	if (rows(ties) > 0) ties = select(ties, ties[.,3] :> 0)
+	nties = rows(ties)
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+
+	nobs_needed = max((n, nties, 1))
+	st_addobs(nobs_needed)
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties[.,(1,2)])
+
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+
+	D = J(n, n, .)
+	for (i = 1; i <= n; i++){
+		argstr = strofreal(2) + " " + strofreal(n) + " " + strofreal(isdirect) + " " + strofreal(nties) + " " + strofreal(i)
+		cmd = "plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34)
+		stata(cmd)
+		D[i,.] = st_data((1::n), "v3")'
+	}
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+
+	return(D)
 }
 
 

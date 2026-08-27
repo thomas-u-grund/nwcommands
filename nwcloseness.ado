@@ -67,12 +67,24 @@ program nwcloseness
 		preserve
 		qui nwgeodesic `netname_temp', name(_tempgeodesic) `symopt' `options'
 		nwname _tempgeodesic
-		nwtomata _tempgeodesic, mat(geodesic)
-		mata: st_numscalar("r(mindistance)", min(geodesic))
-		mata: far = rowsum(geodesic)
-		
+		// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
+		// full n x n matrix into a second, separately-named Mata matrix
+		// (confirmed via direct source inspection of nw_tomata.ado:
+		// `mat' = (*`netobj'->get_matrix())`, an unavoidable full copy for
+		// a NAMED handle) purely so that copy can immediately be handed to
+		// min()/rowsum() and discarded - both of those are read-only
+		// reductions that work identically on a dereferenced pointer
+		// directly, with no copy needed at all. Same accessor
+		// (`netobj'->get_matrix()) as nwtomata used internally, same
+		// values, only the redundant intermediate copy is removed -
+		// verified byte-identical against the prior nwtomata-based version
+		// in cscripts/test_nwcloseness.do.
+		nw_syntax _tempgeodesic
+		mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
+		mata: far = rowsum(*`netobj'->get_matrix())
+
 		if `r(mindistance)' < 0 {
-			mata: far = J(rows(geodesic), 1, .)
+			mata: far = J(`nodes', 1, .)
 			noi di "{txt}Warning: network {bf:`netname_temp'} not connected; specify {bf:unconnected()} to obtain results.
 			nwdrop _tempgeodesic
 			exit
@@ -128,7 +140,7 @@ program nwcloseness
 	
 		local generate_all "`generate_all' `_closeness'`k' `_farness'`k' `_nearness'`k'"
 		capture drop `included'
-		mata: mata drop closeness far nearness geodesic
+		mata: mata drop closeness far nearness
 		
 		local k = `k' + 1	
 	}

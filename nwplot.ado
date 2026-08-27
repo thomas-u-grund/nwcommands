@@ -1711,6 +1711,32 @@ program nwplot, rclass
 				local tempval_line = (`tempval' / 2) * `edgefactor' / 2
 				local tempval_arrow = (`tempval' + 1) * `arrowfactor'
 				local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
+				// BUGFIX: this formula assumes edgesize() ties are on a
+				// small scale (tie counts, small integer weights) -
+				// `edgesize()' passes the network's raw tie VALUES
+				// through untouched (unlike node size, which does go
+				// through a sizebin()-based rescale), so a genuinely
+				// large-magnitude valued network (e.g. a food web's
+				// carbon-flux weights running into the hundreds of
+				// thousands) fed lwidth()/msize()/barbsize() an equally
+				// enormous number. Stata's own twoway enforces a hard
+				// ceiling on lwidth (1.0e+04) and errors "gm_linewidth
+				// must be between 0.000 and 1.0e+04" once it's crossed;
+				// other builds/graphics backends were reported to spend
+				// a very long time instead of erroring at all - either
+				// way, this is a genuine defect in this command, not a
+				// caller error, since nothing in edgesize()'s own docs
+				// warns that raw large-magnitude values need
+				// pre-scaling. Clamped to a generous but sane visual
+				// maximum rather than actually rescaling edgesize()'s
+				// own display range (a larger redesign, matching how
+				// node size's sizebin() option already works, deferred
+				// as a separate enhancement) - confirmed this clamp
+				// changes nothing for the small-magnitude values every
+				// existing example/test already uses.
+				local tempval_line = min(`tempval_line', 20)
+				local tempval_arrow = min(`tempval_arrow', 20)
+				local tempval_barb = min(`tempval_barb', 20)
 				local tempecol_orig = `tempecol' - 1
 				local foregroundcheck : list tempecol_orig in edgeforeground
 				if `foregroundcheck' == 0 {

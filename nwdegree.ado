@@ -273,6 +273,26 @@ program nwdegree
 		// properly-named degree variables exactly as the later isolates
 		// block already assumes.
 		local netgenerate "`generate'"
+		// BUGFIX: an explicit generate() on a DIRECTED network needs at
+		// least 2 names (outdegree, indegree); a caller supplying just 1
+		// (e.g. generate(mydeg), a plausible attempt to just rename the
+		// degree variable the way it would work on an undirected
+		// network) got no error here. `word 2 of netgenerate' then
+		// evaluated to empty, "capture generate <empty> = ." silently
+		// no-op'd, and the very next, uncaptured "mata: st_store(...,
+		// "`_indegree'", ...)" crashed hard passing st_store() an empty
+		// variable-name string (r(3500)) - the same failure class as the
+		// isolates-word-count bugs fixed above, from a different
+		// trigger. Matches nwcloseness.ado's own established pattern:
+		// validate the word count up front and error clearly instead of
+		// silently mis-assigning or crashing downstream.
+		if ("`netgenerate'" != "" & "`directed'" == "true") {
+			local __nwdeg_gencount : word count `netgenerate'
+			if (`__nwdeg_gencount' < 2) {
+				noi di "{err}Option {bf:generate()} needs at least 2 names (outdegree, indegree) for a directed network; got `__nwdeg_gencount'."
+				error 198
+			}
+		}
 		if ("`netgenerate'" == "") {
 			if ("`directed'" == "true") {
 				if "`valued'" == "true" {

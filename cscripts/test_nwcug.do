@@ -146,3 +146,21 @@ nwrandom 5, prob(.5) name(realnetcug)
 capture noisily nwcug typobogus, stat(nwcomponents ##net##, replace) rname(x) reps(2)
 assert _rc == 482
 di "=== misspelled network name REGRESSION VERIFIED ==="
+
+* --- plot(): draws a histogram of the null draws with a reference line
+* at the observed value, without disturbing the caller's own dataset
+* (reuses the twoclique network from the top of this script; a fresh
+* variable "canary" confirms the active dataset survives plot()'s own
+* internal preserve/restore intact).
+nwclear
+nwset, mat(A)
+nwname, newname(twoclique2)
+clear
+set obs 3
+gen canary = _n
+nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(50) seed(1) plot name(cugplottest)
+assert _rc == 0
+assert _N == 3
+assert canary[1] == 1 & canary[2] == 2 & canary[3] == 3
+capture graph drop cugplottest
+di "=== nwcug plot() OK ==="

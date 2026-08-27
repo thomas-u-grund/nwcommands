@@ -38,6 +38,7 @@
 [{opt gwidegree(real)}]
 [{opt esp(numlist)}]
 [{opt dsp(numlist)}]
+[{opt type(OTP|ITP|OSP|ISP|RTP)}]
 [{opt degree(numlist)}]
 [{opt odegree(numlist)}]
 [{opt idegree(numlist)}]
@@ -79,12 +80,12 @@
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
-{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (OTP shared-partner definition, R ergm's own default){p_end}
-{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (OTP){p_end}
+{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
+{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
-{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (OTP). Satisfies gwdsp = gwesp + gwnsp{p_end}
+{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}). Satisfies gwdsp = gwesp + gwnsp{p_end}
 {synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
 {synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
 {synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
@@ -102,8 +103,9 @@
 {synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
 {synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
-{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (OTP){p_end}
-{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (OTP). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (see {opt type()}){p_end}
+{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (see {opt type()}). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
+{synopt:{opt type(OTP|ITP|OSP|ISP|RTP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the five definitions){p_end}
 {synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
 {synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
 {synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
@@ -195,8 +197,21 @@ counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
 {opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
-{opt esp()}/{opt dsp()} also support directed networks via R ergm's own default directed
-shared-partner definition (OTP). Two-mode/bipartite terms are deliberately deprioritized as a
+{opt esp()}/{opt dsp()} also support directed networks via any of FIVE directed shared-partner
+definitions, selected with {opt type()} (default {bf:OTP}, R ergm's own default) and applied
+uniformly to every one of these five terms present in the same model:
+
+{p2colset 9 22 24 2}
+{p2col:{bf:OTP}}outgoing two-path, i->k->j (the default){p_end}
+{p2col:{bf:ITP}}incoming two-path, i<-k<-j{p_end}
+{p2col:{bf:OSP}}outgoing shared partner, i->k<-j (i and j share an out-neighbor k){p_end}
+{p2col:{bf:ISP}}incoming shared partner, i<-k->j (i and j share an in-neighbor k){p_end}
+{p2col:{bf:RTP}}reciprocated two-path, i<->k<->j (k is a shared partner only through a mutual tie on each leg){p_end}
+{p2colreset}
+
+{pstd}
+All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/bipartite terms are deliberately
+deprioritized as a
 later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
 are not a supported data type at all); curved parameters need a genuine MCMLE architecture
 change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
@@ -233,12 +248,13 @@ every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodeco
 entire degree-distribution family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
 {opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
 {opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the entire shared-partner family, both
-undirected and directed ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/
-{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In practice this means
-essentially every {cmd:nwergm} model now runs on the native backend. The one remaining exception
-(automatically and correctly using the Mata backend instead, with no error and no action needed):
-{opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix marshalled across the
-plugin boundary rather than the per-node values or scalar parameters every other term needs.
+undirected and directed, EVERY {opt type()} included ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
+{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In
+practice this means essentially every {cmd:nwergm} model now runs on the native backend. The one
+remaining exception (automatically and correctly using the Mata backend instead, with no error and
+no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix
+marshalled across the plugin boundary rather than the per-node values or scalar parameters every
+other term needs.
 
 {title:Postestimation}
 
@@ -340,10 +356,8 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 {it:nodes}
 {cmd:,}
 {opt edges} [{opt mutual}]
-[{opt gwesp(real)}]
-[{opt gwdegree(real)}]
-[{opt gwodegree(real)}]
-[{opt gwidegree(real)}]
+[{it:{help nwergm##simulate_terms:term options}}]
+[{opt type(OTP|ITP|OSP|ISP|RTP)}]
 {opt theta(numlist)}
 [{opt directed}
 {opt nsim(int)}
@@ -358,15 +372,63 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
 itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
 ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
-existing network is required or read); the term options are the SAME ones {cmd:nwergm} itself
-takes, but v1's simulate interface deliberately only supports the terms that need no external
-covariate data ({opt edges}, {opt mutual}, and the geometrically weighted family) - nodematch()/
-nodecov()/nodeicov()/nodeocov()/edgecov() are not yet supported for simulation.
-{opt theta()} supplies one coefficient per requested term, IN
-THE SAME ORDER the term options are listed on the command line (edges first, then mutual if
-present, then any gw* terms in the order written) - there is no per-term coefficient
-sub-option, by design, so this exactly reuses the same term-construction code {cmd:nwergm}'s own
-estimation path uses rather than a parallel implementation.
+existing network is required or read).
+
+{marker simulate_terms}{...}
+{pstd}
+As of this release, {cmd:nwergm simulate} supports the full {cmd:nwergm} term library - every
+term option listed in the {cmd:nwergm} {bf:Syntax} section above - not just the geometrically
+weighted family. Each family sources its data the same way it does during estimation:
+
+{p2colset 9 32 34 2}{...}
+{p2col:{it:no external data}}{opt mutual}, {opt concurrent}, {opt triangle}, {opt ctriple},
+{opt transitiveties}, {opt cyclicalties}, {opt degree(numlist)}, {opt odegree(numlist)},
+{opt idegree(numlist)}, {opt kstar(numlist)}, {opt ostar(numlist)}, {opt istar(numlist)},
+{opt degrange(numlist)}/{opt degrangeto(numlist)} (and the {opt o}-/{opt i}- directed
+analogues), {opt esp(numlist)}, {opt dsp(numlist)}, and the full geometrically weighted family
+({opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt gwdegree}/{opt gwodegree}/{opt gwidegree}, all
+{it:real}, decay value only){p_end}
+{p2col:{it:node covariate}}{opt nodematch(varname)}, {opt nodematchdiff(varname)},
+{opt nodecov(varname)}, {opt nodeicov(varname)}, {opt nodeocov(varname)}, {opt absdist(varname)},
+{opt nodefactor(varname)}, {opt nodeofactor(varname)}, {opt nodeifactor(varname)},
+{opt nodemix(varname)}, {opt sender}, {opt receiver} - read via {cmd:st_data()} from
+{it:the currently active Stata dataset}, exactly as estimation reads them from whatever dataset
+is loaded alongside the network being fit. The active dataset must already have {it:nodes}
+observations with the named variable populated before calling {cmd:simulate} (e.g.
+{cmd:set obs 20} + {cmd:gen mygroup = ...}); {opt sender}/{opt receiver} need no real
+covariate at all, since their own "attribute" is just each node's own index.{p_end}
+{p2col:{it:dyadic covariate}}{opt edgecov(netname)}, {opt hamming(netname)} - read from
+{it:netname}, an already-{help nwset:set}/loaded reference network of the same size as
+{it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
+
+{pstd}
+{opt type()} selects which of the five directed shared-partner definitions (default {bf:OTP}) any
+{opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt esp()}/{opt dsp()} term simulates under, with {opt directed}
+- exactly the same option, with the same meaning, as {cmd:nwergm}'s own estimation path; see that
+command's own {bf:Remarks} section for the five definitions.
+
+{pstd}
+{opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence
+{cmd:nwergm}'s own estimation path itself always processes terms in (edges, mutual, then every
+node-covariate family, then the structural/numlist family, then {opt sender}/{opt receiver},
+then the dyadic-covariate family, then the geometrically weighted family - regardless of the
+order the options happen to be typed on the command line, since Stata's own option parsing does
+not preserve that order to begin with). A term that expands into several coefficients (e.g.
+{opt nodefactor()} with $k$ categories, or {opt degree(2 3 4)}) consumes that many consecutive
+entries from {opt theta()}, in the same left-to-right order its own levels/values are listed.
+There is no per-term coefficient sub-option, by design, so this exactly reuses the same
+term-construction code {cmd:nwergm}'s own estimation path uses rather than a parallel
+implementation.
+
+{pstd}
+{bf:The resulting simulated network's own dataset does not carry the caller's covariate
+variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
+the active dataset with just that network's own bare node/edge structure - any covariate
+variable read during term construction is captured once, in Mata, before that replacement
+happens, and is not itself part of the simulated result. Regenerate it afterward (by node
+index, since simulated node identity is always {cmd:1}..{it:nodes} in the caller's original row
+order) if a postestimation step - e.g. checking the resulting network's own mixing pattern -
+needs it alongside the simulated network.
 
 {pstd}
 {opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,

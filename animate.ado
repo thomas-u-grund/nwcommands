@@ -14,7 +14,7 @@ program animate
 	else {
 		local dloop = 0
 	}
-	if c(os) == "MaxOSX" {
+	if c(os) == "MacOSX" {
 		local download = "http://cactuslab.com/imagemagick/assets/ImageMagick-6.8.7-2.pkg.zip"
 	}
 	if c(os) == "Windows" {
@@ -69,7 +69,7 @@ program animate
 		di "`shellcmd'"
 	}
 	if "`keepeps'" == "" {
-		if c(os) == "MaxOSX" {
+		if c(os) == "MacOSX" {
 			shell rm `epslist'
 		}
 		else {

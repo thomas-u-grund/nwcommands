@@ -17,15 +17,17 @@ do unw_ergm.do
 	nodeofactor/nodeifactor/sender/receiver/nodemix), the GW-degree
 	family (gwdegree/gwodegree/gwidegree), the full degree-COUNT family,
 	the undirected shared-partner family (gwdsp/gwnsp/esp/dsp/triangle),
-	and (unit 92 wave 4, this update) the full DIRECTED shared-partner
-	family - the OTP mode of gwesp/gwdsp/gwnsp/esp/dsp plus
-	ctriple/transitiveties/cyclicalties - see unw_ergm.do's own
+	the full DIRECTED shared-partner family under R ergm's OTP default
+	(unit 92 wave 4) - gwesp/gwdsp/gwnsp/esp/dsp plus
+	ctriple/transitiveties/cyclicalties - and (this update) the
+	remaining four directed shared-partner definitions, ITP/OSP/ISP/RTP,
+	for gwesp/gwdsp/gwnsp/esp/dsp - see unw_ergm.do's own
 	ErgmNativeSetup() header comment for the complete current list and
 	exactly what remains out of scope. `triangle`/`ctriple`, both used
 	as the "reject probe" at various earlier points as the native term
-	set grew, are now BOTH native-eligible - `edgecov` (needs an n x n
-	matrix marshalled across the boundary, still genuinely unported) is
-	used instead.
+	set grew, are now BOTH native-eligible, as is every directed
+	shared-partner type - `edgecov` (needs an n x n matrix marshalled
+	across the boundary, still genuinely unported) is used instead.
 
 	(1) ErgmNativeSetup() eligibility is exactly what the model's own
 	    term list should produce - accept every currently-native term
@@ -135,6 +137,50 @@ void test_eligibility(){
 	M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), td5, ("edgecov"))
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
+
+	// term-expansion waves 8-9 (ITP/OSP/ISP/RTP directed shared-partner
+	// types): all four now have their own dedicated native termcodes
+	// (40-59, via ErgmNativeSPCode()) alongside OTP (32-36) and
+	// blank/UTP (4/27-30) - a gwesp/gwdsp/gwnsp/esp/dsp term carrying
+	// any of these five sptype values must be ACCEPTED (this used to be
+	// the "must reject" bailout-probe case when only OTP was native;
+	// now that every directed type has a dedicated termcode, rejecting
+	// any of them would be the bug).
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "ITP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), td6, ("gwesp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "OSP"
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), td6, ("gwdsp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.levels = (1)
+	td6.sptype = "ISP"
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), td6, ("dsp1"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	td6.sptype = "RTP"
+	M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), td6, ("gwnsp_0.5"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
 
 	printf("test_eligibility: OK\n")
 }
@@ -815,5 +861,175 @@ void run_transties_cycties_test(){
 		(-2.2, 0.4, 0.1, 0.1), 2000, 5, 2000, 6)
 }
 run_transties_cycties_test()
+
+// --- ITP/OSP/ISP/RTP native expansion (this update): the four
+//     remaining directed shared-partner definitions, backed by
+//     common_neighbors_itp()/_osp()/_isp()/_rtp() and their own
+//     change_*_TYPE() functions in native/ergm_mcmc.c, all reusing
+//     wave 4's own outadj[]/inadj[] - no new graph-level state. One
+//     representative equivalence case per type, each mixing the
+//     shared-partner term with edges+mutual exactly like the OTP cases
+//     above, plus one esp/dsp case (RTP only, as the newest and
+//     structurally most different of the four - its own htedge gate is
+//     the part most likely to silently diverge between the Mata and
+//     native ports if either were transcribed wrong). ---
+
+// --- directed: edges + mutual + gwesp(ITP) ---
+void run_gwesp_itp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdg
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.5
+	tdg.sptype = "ITP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), tdg, ("gwesp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwesp(ITP)", n, 4, 1, M,
+		(-2.2, 0.4, 0.2), 2000, 5, 2000, 6)
+}
+run_gwesp_itp_test()
+
+// --- directed: edges + mutual + gwdsp(OSP) + gwnsp(OSP) (mixed) ---
+void run_gwdsp_gwnsp_osp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdd, tdn
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdd = ErgmTermData()
+	tdd.decay = 0.5
+	tdd.sptype = "OSP"
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), tdd, ("gwdsp_0.5"))
+	tdn = ErgmTermData()
+	tdn.decay = 0.5
+	tdn.sptype = "OSP"
+	M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), tdn, ("gwnsp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwdsp(OSP)+gwnsp(OSP) (mixed)", n, 4, 1, M,
+		(-2.2, 0.4, 0.02, 0.02), 2000, 5, 2000, 6)
+}
+run_gwdsp_gwnsp_osp_test()
+
+// --- directed: edges + mutual + esp(ISP)(0,1) + dsp(ISP)(1) ---
+void run_esp_dsp_isp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tde2, tdd1
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tde2 = ErgmTermData()
+	tde2.levels = (0\1)
+	tde2.sptype = "ISP"
+	M.addterm("esp", 2, &stat_esp(), &change_esp(), tde2, ("esp0","esp1"))
+	tdd1 = ErgmTermData()
+	tdd1.levels = (1)
+	tdd1.sptype = "ISP"
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), tdd1, ("dsp1"))
+
+	test_equivalence("directed edges+mutual+esp(ISP)(0,1)+dsp(ISP)(1)", n, 4, 1, M,
+		(-2.2, 0.4, 0.05, 0.05, 0.02), 2000, 5, 2000, 6)
+}
+run_esp_dsp_isp_test()
+
+// --- directed: edges + mutual + gwesp(RTP) - RTP's own htedge gate
+//     (toggling i->j only affects other dyads when j->i already
+//     exists) is the part most likely to silently diverge between the
+//     Mata and native ports, so this is the single most important
+//     equivalence case in this whole added block. ---
+void run_gwesp_rtp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdg
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdg = ErgmTermData()
+	tdg.decay = 0.5
+	tdg.sptype = "RTP"
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_gwesp(), tdg, ("gwesp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwesp(RTP)", n, 4, 1, M,
+		(-2.2, 0.4, 0.2), 2000, 5, 2000, 6)
+}
+run_gwesp_rtp_test()
+
+// --- directed: edges + mutual + gwdsp(RTP) + gwnsp(RTP) (mixed) ---
+void run_gwdsp_gwnsp_rtp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdd, tdn
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdd = ErgmTermData()
+	tdd.decay = 0.5
+	tdd.sptype = "RTP"
+	M.addterm("gwdsp", 1, &stat_gwdsp(), &change_gwdsp(), tdd, ("gwdsp_0.5"))
+	tdn = ErgmTermData()
+	tdn.decay = 0.5
+	tdn.sptype = "RTP"
+	M.addterm("gwnsp", 1, &stat_gwnsp(), &change_gwnsp(), tdn, ("gwnsp_0.5"))
+
+	test_equivalence("directed edges+mutual+gwdsp(RTP)+gwnsp(RTP) (mixed)", n, 4, 1, M,
+		(-2.2, 0.4, 0.02, 0.02), 2000, 5, 2000, 6)
+}
+run_gwdsp_gwnsp_rtp_test()
+
+// --- directed: edges + mutual + esp(RTP)(0,1) + dsp(RTP)(1) ---
+void run_esp_dsp_rtp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tde2, tdd1
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tde2 = ErgmTermData()
+	tde2.levels = (0\1)
+	tde2.sptype = "RTP"
+	M.addterm("esp", 2, &stat_esp(), &change_esp(), tde2, ("esp0","esp1"))
+	tdd1 = ErgmTermData()
+	tdd1.levels = (1)
+	tdd1.sptype = "RTP"
+	M.addterm("dsp", 1, &stat_dsp(), &change_dsp(), tdd1, ("dsp1"))
+
+	test_equivalence("directed edges+mutual+esp(RTP)(0,1)+dsp(RTP)(1)", n, 4, 1, M,
+		(-2.2, 0.4, 0.05, 0.05, 0.02), 2000, 5, 2000, 6)
+}
+run_esp_dsp_rtp_test()
 
 end

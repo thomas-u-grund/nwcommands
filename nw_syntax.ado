@@ -33,8 +33,40 @@ program nw_syntax
 		// session reproduces this on its own.
 		capture mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
 	}
-	
-	if _rc != 0 {
+
+	// BUGFIX: first_index_match() returns a plain 0 (not a Mata error) for
+	// "not found", so `capture' above never triggers and `_rc' stays 0
+	// even when the requested network doesn't exist - as long as at
+	// least one OTHER network is currently loaded (with none loaded at
+	// all, `nws'.names itself doesn't exist yet as a Mata object, which
+	// DOES throw and IS caught, per the fix directly above this one). The
+	// `if _rc != 0' check below then fell through with r(id)==0, and the
+	// very next line's `pdefs[0]' array access crashed with a raw,
+	// uninformative "subscript invalid" (r(3301)) instead of this
+	// command's own clean "not found" message - confirmed directly:
+	// loading one real network, then referencing an unrelated bogus name
+	// (nwcurrent/nwds/nwdrop/nwsummarize and likely others, all of which
+	// resolve their network name through this same shared utility)
+	// crashed raw rather than erroring cleanly.
+	//
+	// Checked via nested `if' blocks, not one compound `_rc != 0 |
+	// r(id) == 0' expression: when the mata call itself failed (caught by
+	// `capture' above), r(id) can be entirely undefined from this call -
+	// a bare `r(id)'' in that state expands to nothing, and splicing that
+	// into a compound boolean expression (`|'/`&' do not short-circuit in
+	// Stata; both sides are textually substituted before evaluation)
+	// produced a malformed "==0 invalid name" syntax error instead of
+	// ever reaching this command's own clean message.
+	local __nwsyntax_ok = 0
+	if _rc == 0 {
+		capture confirm number `r(id)'
+		if _rc == 0 {
+			if `r(id)' > 0 {
+				local __nwsyntax_ok = 1
+			}
+		}
+	}
+	if `__nwsyntax_ok' == 0 {
 		di "{err}Network {bf:`anything'} not found"
 	    error `errNWsNotFound'
 	}

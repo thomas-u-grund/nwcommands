@@ -210,7 +210,7 @@ values directly, at the one point internally where they are genuinely meaningful
 
 capture program drop nwqap
 program nwqap, eclass
-syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) ]
+syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode(string) PERMutations(integer 500) save(string) predict(string) plot name(string) ]
     set more off
 
 	mata: st_rclear()
@@ -443,13 +443,73 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	// than either fabricating an invalid classical one or leaving
 	// postestimation commands like `test'/`lincom' unusable.
 	matrix permvar = J(1, `vars', .)
+	// plot(): one histogram-plus-reference-line panel per coefficient,
+	// each built the SAME way R's sna::plot.qaptest() draws a single
+	// coefficient's own permutation null - a dashed line at the
+	// observed (real-data) coefficient against a histogram of its
+	// `permutations' QAP-permutation draws (the `entry' variable
+	// already loaded into the active dataset by `use `results'' above).
+	// Built INSIDE this same loop (not a second pass over `formula')
+	// since `orig_result' is already computed here for the p-value
+	// calculation immediately below - reusing it rather than
+	// recomputing the same `entry'-to-column mapping a second time.
+	// Grayscale by design, matching every other plot this package
+	// produces (Stata Journal figures must stay legible in black and
+	// white).
+	// BUGFIX: panel titles used the raw `entry' loop token (a literal
+	// word from the typed formula() - the dependent variable's own
+	// name, or a bare nodal-attribute name like "smoke1") rather than
+	// the actual fitted coefficient name it corresponds to. The
+	// dependent-variable token's own iteration (`entry'=="`net'")
+	// computes results for the CONSTANT (reg_results[1,`vars'], the
+	// last column) - correct data, but a panel titled "glasgow2" for
+	// what is really the model's own constant is misleading, not
+	// merely stylistic; likewise a bare nodal attribute like "smoke1"
+	// is fit as "same_smoke1" (mode()'s own dyadic expansion) and
+	// should say so.
+	//
+	// `reg_results' (== e(b) from the internal `type' `formula'' call,
+	// captured above) is NOT a source for these names - its columns
+	// are named after the literal formula() tokens (e.g. plain
+	// "smoke1"), since that is what was actually regressed; the
+	// "same_"/mode()-prefixed display name is cosmetic, applied only
+	// to the matrices `nwqap' hands back to the user afterwards
+	// (`ivnames', built from `prefix' below). `prefix' itself is
+	// already fully built by this point (populated token-by-token in
+	// the formula-processing loop above, one token per formula()
+	// word including `net' itself in first position) and is exactly
+	// what the results table two hundred lines down uses for the same
+	// purpose (``k'' there, after `tokenize "`prefix'"') - reused here
+	// via `: word' instead, since tokenizing `prefix' this early would
+	// clobber the positional locals this loop and the rest of the
+	// program still rely on.
+	local __combine_list ""
 	local k = 1
 	qui foreach entry in `formula' {
 		if ("`entry'" == "`net'") {
 			local orig_result = reg_results[1,`vars']
+			local __coefname "_cons"
 		}
 		else {
 			local orig_result = reg_results[1,`k']
+			local __coefname : word `=`k'+1' of `prefix'
+		}
+
+		if "`plot'" != "" {
+			tempname __g
+			// See nwcug.ado's own plot block for why the reference
+			// line is a foreground plot layer (hidden fixed-0/1
+			// second y-axis) rather than xline() - xline() draws
+			// behind the histogram's solid fcolor() bars, hiding the
+			// line wherever a bar covers it.
+			twoway (histogram `entry', fcolor(gs14) lcolor(gs8)) ///
+				(scatteri 0 `orig_result' 1 `orig_result', recast(line) ///
+					lcolor(black) lwidth(thick) lpattern(dash) yaxis(2)), ///
+				yscale(off axis(2) range(0 1)) ///
+				title("`__coefname'", size(small)) ///
+				xtitle("") ytitle("") ///
+				legend(off) nodraw name(`__g', replace)
+			local __combine_list `"`__combine_list' `__g'"'
 		}
 
 		local novariation = "false"
@@ -486,7 +546,21 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			local k = `k' + 1
 		}
 	}
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "qap"
+		}
+		graph combine `__combine_list', cols(2) ///
+			title("QAP permutation null distributions", size(medium)) ///
+			name(`name', replace)
+		foreach __g of local __combine_list {
+			capture graph drop `__g'
+		}
+	}
 	restore
+	if "`plot'" != "" {
+		di as txt "(plot saved as {bf:`name'}; each panel is one coefficient's histogram of `permutations' QAP-permutation draws, dashed line marks the observed coefficient)"
+	}
 
 	// predict(): reshape the dyad-level fitted values captured earlier
 	// back into an n x n matrix (transformOutOfLong() - the exact inverse
