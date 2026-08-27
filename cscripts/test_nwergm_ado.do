@@ -390,3 +390,72 @@ qui nwergm dnet12b, edges mutual mcmcburnin(300) mcmcinterval(20) mcmcsamplesize
 assert _rc == 0
 assert e(spcache) == 0
 di "=== spcache: no-op paths (directed, no relevant term) verified; simulate wiring certified separately in cscripts/test_nwergm_simulate.do ==="
+
+* --- gwespfree() (harmonisation unit 136): the first user-facing
+* consumer of the curved-parameter numerics built in units 133-135.
+* MPLE only for now (curved MCMLE is a separate, not-yet-done item).
+* Fits directly in theta-space via ErgmCurvedMPLEFit()'s own damped
+* Newton-Raphson (unw_ergm.do) - certified here against a REAL
+* independent R `ergm(net ~ edges + gwesp(0.7, fixed=FALSE),
+* estimate="MPLE")' fit (ergm 4.12.0) on a deliberately clique-heavy
+* 15-node network, chosen specifically because a random Erdos-Renyi
+* network at several sizes (5, 12, 14, 20 nodes, all independently
+* tried during this unit's own development) left decay essentially
+* unidentified in BOTH R and nwergm alike (both landing near the
+* decay=0 boundary, a genuine property of curved GWESP on sparse/small
+* networks that R's own documentation already warns about, not a bug
+* in either implementation) - this network's own dense, overlapping
+* triangle structure gives decay real, checkable identification
+* instead. Reasonably generous but still meaningful tolerances (1e-2),
+* since this is a different exact optimization path (damped
+* Newton-Raphson vs R's own BFGS) converging to the same MLE, not a
+* bit-identical reproduction.
+nwclear
+nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
+1,0,1,1,1,1,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,1,1,0,1,0,0,1,0,0,0,0,0 \ ///
+1,1,1,0,1,0,0,0,1,0,0,0,0,0,0 \ ///
+1,1,1,1,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,1,1,1,1,0,0,1,0,0 \ ///
+0,0,1,0,0,1,0,0,0,1,0,0,0,1,0 \ ///
+0,0,0,0,0,1,0,0,1,0,0,0,0,0,1 \ ///
+0,0,0,1,0,1,0,1,0,1,1,0,0,0,0 \ ///
+0,0,1,0,0,1,1,0,1,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,1,0,0,1,1,1,1 \ ///
+0,0,0,0,0,0,0,0,0,0,1,0,1,0,1 \ ///
+0,0,0,0,0,1,0,0,0,0,1,1,0,0,1 \ ///
+0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedgwespnet)
+
+qui nwergm curvedgwespnet, edges gwespfree(0.7)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=-1.7644740226 gwesp=0.2686248283 gwesp.decay=4.1538188381
+assert reldif(_b[edges], -1.7644740226) < 1e-2
+assert reldif(_b[gwesp_weight], 0.2686248283) < 1e-2
+assert reldif(_b[gwesp_decay], 4.1538188381) < 1e-2
+di "=== curved gwesp MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- error paths: gwesp()/esp() cannot combine with gwespfree();
+* directed networks and networks under 3 nodes are rejected;
+* method(mcmle) is rejected (curved MCMLE not yet implemented).
+capture noisily nwergm curvedgwespnet, edges gwesp(0.5) gwespfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwespnet, edges esp(1 2) gwespfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwespnet, edges gwespfree(0.7) method(mcmle)
+assert _rc == 198
+
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) directed name(tinydirnet)
+capture noisily nwergm tinydirnet, edges gwespfree(0.7)
+assert _rc == 198
+
+nwclear
+nwset, mat((0,1\1,0)) undirected name(tinynet2)
+capture noisily nwergm tinynet2, edges gwespfree(0.7)
+assert _rc == 198
+di "=== gwespfree() error paths (combined with gwesp()/esp(), directed, too few nodes, method(mcmle)) all verified ==="

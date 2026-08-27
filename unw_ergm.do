@@ -2965,6 +2965,7 @@ class ErgmModel {
 	real rowvector theta_to_eta()
 	real matrix theta_to_eta_jacobian()
 	real rowvector project_eta_to_theta()
+	string rowvector theta_coefnames()
 	real rowvector full_statistic()
 	real rowvector full_change()
 	real rowvector change_toward_one()
@@ -3172,6 +3173,41 @@ real rowvector ErgmModel::project_eta_to_theta(real rowvector eta_target, real m
 	return(theta)
 }
 
+/*
+	Theta-space coefficient names (length ntheta()): an ordinary term's
+	own eta-space names unchanged (theta IS eta there), a curved term's
+	own npar[t] internal eta-space names (e.g. "gwespfree_1".."_maxd" -
+	never shown to the user) replaced by exactly 2 fixed display names,
+	"gwesp_weight"/"gwesp_decay". Hardcoding that specific pair is a
+	deliberate v1 simplification, not a general curved-term-naming
+	scheme - matching this same file's own existing "not a fully
+	independent per-term thing" convention for v1-scope simplifications
+	(e.g. type() applying uniformly to every shared-partner term in a
+	model rather than per-term) - v1 supports at most one curved term
+	per model, and it is always this same weight/decay pair.
+*/
+string rowvector ErgmModel::theta_coefnames(){
+	string rowvector out
+	real scalar t, tpos, epos
+
+	out = J(1, ntheta(), "")
+	tpos = 1
+	epos = 1
+	for (t=1; t<=nterms; t++) {
+		if (curved[t]) {
+			out[tpos] = "gwesp_weight"
+			out[tpos+1] = "gwesp_decay"
+			tpos = tpos + 2
+		}
+		else {
+			out[(tpos..tpos+npar[t]-1)] = coefnames[(epos..epos+npar[t]-1)]
+			tpos = tpos + npar[t]
+		}
+		epos = epos + npar[t]
+	}
+	return(out)
+}
+
 real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
 	real rowvector out, part
 	real scalar t, pos, k
@@ -3202,6 +3238,159 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 		}
 	}
 	return(out)
+}
+
+/*
+	Curved MPLE fit (harmonisation unit 136, revised - the first
+	user-facing consumer of units 133-135's own certified theta<->eta
+	numerics). Directly maximizes the SAME pseudolikelihood an ordinary
+	(non-curved) MPLE fit's closed-form `logit' call already maximizes,
+	logit P(Y_ij=1) = eta' * ChangeStat_ij, eta = theta_to_eta(theta) -
+	via Newton-Raphson/Fisher scoring IN THETA-SPACE, using the exact
+	analytic Jacobian (unit 134) via the chain rule, rather than a
+	two-stage "fit the unconstrained eta MLE, then project it down to
+	theta" heuristic (this function's own FIRST implementation, unit
+	136's original version - reverted after direct testing against R on
+	a well-identified 15-node network found it landing at a materially
+	different, WRONG-SIGNED local point: weight -0.24 vs R's own +0.27,
+	with a wildly unstable variance on decay, 6e5, despite the
+	underlying projection numerics themselves being independently
+	certified correct in unit 135 - the two-stage heuristic's own
+	target, an already-fit UNCONSTRAINED eta MLE, turns out to not
+	reliably sit close enough to the true curved MLE for a single
+	Gauss-Newton step from a generic start to recover it, since the
+	curved pseudolikelihood surface is genuinely non-convex/multi-modal
+	in theta, per the same identifiability the Hunter and Handcock 2006
+	curved-exponential-family framework this term class is built on
+	already documents). Directly optimizing the TRUE objective in
+	theta-space throughout is the textbook-correct fix, not a
+	robustness patch on the old approach - every ordinary (non-curved)
+	term is fit exactly as before (theta=eta identity collapses this to
+	the same Newton-Raphson an ordinary GLM/logit fit already performs
+	internally), so this one function now replaces the closed-form
+	`logit' call ENTIRELY whenever any curved term is present, fitting
+	every coefficient (ordinary and curved) jointly in one loop -
+	`project_eta_to_theta()' (unit 135) remains in place, unused by
+	MPLE now, since curved MCMLE (separate, not yet built) will still
+	need it for its own eta-space Newton-step-then-project design, a
+	genuinely different problem (projecting a a Monte Carlo estimating
+	equation's own target, not directly maximizing a closed-form
+	likelihood).
+
+	Standard Fisher scoring for a binomial GLM with a nonlinear
+	(curved) link from theta to the linear predictor's own coefficient
+	vector: at each iterate, p = invlogit(X*eta(theta)'), gradient in
+	eta-space = X'(y-p), Fisher information in eta-space = X' diag(p(1-p)) X
+	(the ordinary logistic-regression information matrix `logit' itself
+	computes internally) - chain-ruled into theta-space via this
+	iterate's own Jacobian J: gradient_theta = J'*gradient_eta,
+	information_theta = J' * information_eta * J (the standard
+	Gauss-Newton/Fisher-scoring approximation, ignoring eta(theta)'s own
+	second derivative - the same approximation the delta method itself
+	always makes, not a new one introduced here). `p(1-p) :* X` avoids
+	ever materializing the full ndyads x ndyads diagonal weight matrix
+	the textbook formula writes (the same large-matrix-avoidance
+	principle already documented at this file's own build_mple_data()
+	call site in nwergm.ado, harmonisation unit 81).
+*/
+void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
+	real rowvector theta_start, real scalar maxit, real scalar tol,
+	string scalar theta_matname, string scalar V_theta_matname,
+	string scalar converged_matname){
+
+	real matrix X, Jac, I_eta, I_theta
+	real colvector y, p, xb, w
+	real rowvector theta, theta_try, eta, g_eta, g_theta, delta
+	real scalar iter, converged, ncol, ll0, ll1, step, halvings, alpha_pos
+
+	ncol = cols(D) - 1
+	X = D[., (1..ncol)]
+	y = D[., ncol+1]
+
+	// v1 scope: at most one curved term, always registered LAST, its
+	// own 2 theta columns (weight, decay) therefore always the final
+	// 2 - `decay' is specifically the very last column. Both the alpha-
+	// positivity clamp and the "large jump" backtracking trigger below
+	// rely on knowing this position; a future multi-curved-term
+	// extension would need a real "which theta columns are decay
+	// parameters" accessor instead of this hardcoded last-column
+	// assumption (documented as a v1 simplification elsewhere in this
+	// file, e.g. ErgmModel::theta_coefnames()).
+	alpha_pos = cols(theta_start)
+
+	theta = theta_start
+	ll0 = ergm_curved_loglik(M, X, y, theta)
+	converged = 0
+	for (iter=1; iter<=maxit; iter++) {
+		eta = M.theta_to_eta(theta)
+		xb = X * eta'
+		p = invlogit(xb)
+		g_eta = (X' * (y - p))'
+		Jac = M.theta_to_eta_jacobian(theta)
+		g_theta = g_eta * Jac
+		w = p :* (1 :- p)
+		I_eta = X' * (w :* X)
+		I_theta = Jac' * I_eta * Jac
+		delta = (invsym(I_theta) * g_theta')'
+
+		// Damped Newton-Raphson (backtracking line search): a full,
+		// undamped step can catastrophically overshoot on this term's
+		// own genuinely non-convex pseudolikelihood surface (measured
+		// directly during this unit's own development: a full step
+		// drove decay to -92 on a real 15-node test network, cascading
+		// to missing values everywhere downstream once decay left its
+		// required positive domain) - halve the step (up to 20 times)
+		// until it both keeps decay positive AND does not decrease the
+		// log-pseudolikelihood, the standard, textbook fix for exactly
+		// this failure mode (and part of why quasi-Newton methods like
+		// R ergm's own BFGS are more robust than plain Newton-Raphson
+		// in the first place - they effectively do this automatically).
+		step = 1
+		for (halvings=1; halvings<=20; halvings++) {
+			theta_try = theta + step :* delta
+			if (theta_try[alpha_pos] > 1e-6) {
+				ll1 = ergm_curved_loglik(M, X, y, theta_try)
+				if (ll1 >= ll0) break
+			}
+			step = step / 2
+		}
+		theta = theta_try
+		ll0 = ll1
+		if (max(abs(step :* delta)) < tol) {
+			converged = 1
+			break
+		}
+	}
+	// final Fisher information (recomputed at the converged theta, not
+	// reused from the last iteration's own pre-update value) for the
+	// reported covariance - the same "evaluate at the estimate, not the
+	// penultimate iterate" convention `logit' itself follows.
+	eta = M.theta_to_eta(theta)
+	xb = X * eta'
+	p = invlogit(xb)
+	w = p :* (1 :- p)
+	I_eta = X' * (w :* X)
+	Jac = M.theta_to_eta_jacobian(theta)
+	I_theta = Jac' * I_eta * Jac
+
+	st_matrix(theta_matname, theta)
+	st_matrix(V_theta_matname, invsym(I_theta))
+	st_matrix(converged_matname, (converged))
+}
+
+/*
+	Binomial log-pseudolikelihood at a given theta - sum over dyads of
+	y*log(p) + (1-y)*log(1-p), p = invlogit(X * theta_to_eta(theta)').
+	Used by ErgmCurvedMPLEFit()'s own backtracking line search above to
+	decide whether a candidate Newton step actually improves the fit.
+*/
+real scalar ergm_curved_loglik(class ErgmModel scalar M, real matrix X,
+	real colvector y, real rowvector theta){
+
+	real colvector p
+
+	p = invlogit(X * M.theta_to_eta(theta)')
+	return(sum(y :* ln(p) :+ (1 :- y) :* ln(1 :- p)))
 }
 
 /* ===================================================================
