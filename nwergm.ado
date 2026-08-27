@@ -33,6 +33,7 @@
 [{opt receiver}]
 [{opt gwesp(real)}]
 [{opt gwespfree(real)}]
+[{opt gwdegreefree(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
@@ -84,7 +85,8 @@
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
-{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()} or {opt esp()}{p_end}
+{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or {opt gwdegreefree()}{p_end}
+{synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or {opt gwespfree()}{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
@@ -458,7 +460,7 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
-		GWESPFREE(string) ///
+		GWESPFREE(string) GWDEGREEFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
@@ -551,6 +553,41 @@ program nwergm, eclass
 		// not yet exposed to users. See docs/ERGM_ROADMAP.md.
 		if "`method'" != "" & "`method'" != "mple" {
 			di "{err}option {bf:gwespfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
+	}
+	// gwdegreefree() (harmonisation unit 139): curved (free-decay)
+	// gwdegree, mirroring gwespfree()'s own exact pattern - reuses the
+	// already-certified stat_degree()/change_degree() machinery
+	// (degree(d)=0 always contributes exactly zero to the geometric
+	// sum by construction, gw_kernel(0,alpha)=exp(alpha)*(1-1)=0
+	// regardless of alpha, so d=1..(nodes-1) already covers every
+	// value that can matter). method(mple) only, same reasoning as
+	// gwespfree(). Undirected v1 scope only, matching gwdegree() itself.
+	if "`gwdegreefree'" != "" {
+		if "`gwdegree'" != "" {
+			di "{err}options {bf:gwdegree()} and {bf:gwdegreefree()} cannot both be specified - a gwdegree term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if "`gwespfree'" != "" {
+			di "{err}options {bf:gwespfree()} and {bf:gwdegreefree()} cannot both be specified - v1 scope supports at most one curved term per model."
+			error 198
+		}
+		if "`degree'" != "" {
+			di "{err}options {bf:degree()} and {bf:gwdegreefree()} cannot both be specified - gwdegreefree() already spans every achievable degree value, so combining it with an explicit degree() subset would be redundant/collinear."
+			error 198
+		}
+		if "`directed'" == "true" {
+			di "{err}option {bf:gwdegreefree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwodegree()}/{bf:gwidegree()} for a directed fixed-decay model - curved directed models are not yet supported."
+			error 198
+		}
+		if `nodes' < 2 {
+			di "{err}option {bf:gwdegreefree()} needs at least 2 nodes."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwdegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
 			error 198
 		}
 		local method "mple"
@@ -1337,6 +1374,42 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwespfree'"
 	}
+	// gwdegreefree() (harmonisation unit 139): mirrors gwespfree()'s
+	// own exact pattern, registered under "degree" (reusing
+	// stat_degree()/change_degree() directly) spanning every
+	// achievable degree value 1..(nodes-1) - d=0 is safe to omit
+	// entirely, since gw_kernel(0,alpha)=exp(alpha)*(1-1)=0 for any
+	// alpha, so it can never contribute to the geometric sum. Also
+	// registered LAST (after gwespfree(), which the mutual-exclusivity
+	// check above guarantees cannot coexist with this one anyway), for
+	// the same "always the final 2 theta columns" reason gwespfree()
+	// documents at its own registration site.
+	if "`gwdegreefree'" != "" {
+		confirm number `gwdegreefree'
+		local __ergm_curved_maxd = `nodes' - 1
+		tempname __td_gwdegreefree
+		mata: `__td_gwdegreefree' = ErgmTermData()
+		mata: `__td_gwdegreefree'.levels = (1..`__ergm_curved_maxd')'
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwdegreefree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("degree", `__ergm_curved_maxd', &stat_degree(), &change_degree(), `__td_gwdegreefree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdegreefree'"
+	}
+
+	// Unified curved-model flag/starting-value (harmonisation unit
+	// 139): v1 scope allows at most one curved term per model (the
+	// mutual-exclusivity checks above enforce this), so exactly one of
+	// `gwespfree'/`gwdegreefree' can be non-empty at this point -
+	// `__ergm_curved' and `__ergm_curved_start' let every downstream
+	// curved-path branch (MPLE fit, e(curved), MCMLE gating) check ONE
+	// flag instead of repeating "gwespfree() OR gwdegreefree()"
+	// everywhere.
+	local __ergm_curved = ("`gwespfree'" != "" | "`gwdegreefree'" != "")
+	if "`gwespfree'" != "" local __ergm_curved_start "`gwespfree'"
+	else local __ergm_curved_start "`gwdegreefree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
 	// edgecov/absdist/nodematchdiff/nodefactor/nodemix are present (mutual
@@ -1352,7 +1425,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1399,21 +1472,23 @@ program nwergm, eclass
 	// landing at a materially different, wrong-signed local point -
 	// see ErgmCurvedMPLEFit()'s own header comment for the full
 	// account of why directly optimizing the true objective is the
-	// correct fix, not a patch on the old approach. `gwespfree''s own
+	// correct fix, not a patch on the old approach. Whichever curved
+	// term is present (harmonisation unit 139 generalized this from
+	// gwespfree() alone to gwespfree()/gwdegreefree()), its own
 	// weight/decay theta columns are always the LAST 2 (registered
 	// last, by construction - see its own addterm() call above), so a
-	// starting theta of (0-vector, weight0=0, decay0=`gwespfree') is
-	// built directly rather than needing a general "find this term's
+	// starting theta of (0-vector, weight0=0, decay0=`__ergm_curved_start')
+	// is built directly rather than needing a general "find this term's
 	// own theta position" accessor.
-	if "`gwespfree'" != "" {
+	if `__ergm_curved' {
 		tempname __ergm_curvedconv
-		mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `gwespfree')
+		mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `__ergm_curved_start')
 		mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
 		mata: mata drop __ergm_theta_start
 		mata: st_local("__ergm_curved_converged", strofreal(st_matrix("`__ergm_curvedconv'")[1,1]))
 		mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.theta_coefnames()))
 		if `__ergm_curved_converged' == 0 {
-			di "{err}note: the curved gwesp MPLE fit did not converge within 100 Newton-Raphson iterations - treat these results with caution."
+			di "{err}note: the curved MPLE fit did not converge within 100 Newton-Raphson iterations - treat these results with caution."
 		}
 	}
 	else {
@@ -1481,11 +1556,11 @@ program nwergm, eclass
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
-		ereturn scalar curved = ("`gwespfree'" != "")
+		ereturn scalar curved = `__ergm_curved'
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
-		if "`gwespfree'" != "" {
-			di "{txt}Note: {bf:gwesp_decay} is an ESTIMATED (curved) decay parameter, fit via Newton-Raphson directly on the pseudolikelihood in theta-space - not expected to be bit-identical to R ergm's own BFGS-based curved MPLE (a different exact optimization path to the same objective), but should agree closely on a well-identified model."
+		if `__ergm_curved' {
+			di "{txt}Note: {bf:decay} is an ESTIMATED (curved) parameter here, fit via Newton-Raphson directly on the pseudolikelihood in theta-space - not expected to be bit-identical to R ergm's own BFGS-based curved MPLE (a different exact optimization path to the same objective), but should agree closely on a well-identified model."
 		}
 	}
 	else {
@@ -1502,7 +1577,7 @@ program nwergm, eclass
 		// internal per-iteration eta->theta projection, so the MCMLE
 		// loop warm-starts from the SAME point MPLE already found
 		// rather than a generic (0,...,0,alpha0) restart.
-		if "`gwespfree'" != "" {
+		if `__ergm_curved' {
 			mata: __ergm_theta_c0_mcmle = st_matrix("`__b_mple'")
 			mata: `__theta0' = __nwergm_last_M.theta_to_eta(__ergm_theta_c0_mcmle)
 		}
@@ -1546,7 +1621,7 @@ program nwergm, eclass
 		mata: mata drop __ergm_native_setup_rc
 
 		tempname __fit
-		if "`gwespfree'" != "" {
+		if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
 			mata: mata drop __ergm_theta_c0_mcmle
 		}
@@ -1556,7 +1631,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
 		tempname __b_mcmle __V_mcmle
-		if "`gwespfree'" != "" {
+		if `__ergm_curved' {
 			// Curved gwesp (harmonisation unit 138): `__fit'.coef is
 			// still eta-space (ErgmMCMLE() itself never reports
 			// theta directly - see its own header comment); the
@@ -1587,7 +1662,7 @@ program nwergm, eclass
 			// implementation does not fully solve either).
 			mata: st_local("__ergm_curved_degenerate", strofreal(missing(`__fit'.coef_theta) > 0))
 			if `__ergm_curved_degenerate' {
-				di "{err}The curved MCMLE fit did not produce a valid result - the underlying MCMC chain likely became degenerate for this model/network combination (this is a genuine difficulty of curved GWESP estimation, not specific to this package; R's own ergm can fail identically with 'Unconstrained MCMC sampling did not mix at all' on a hard case). Try a different starting decay value in {bf:gwespfree()}, a longer {bf:mcmcburnin()}, or a simpler model."
+				di "{err}The curved MCMLE fit did not produce a valid result - the underlying MCMC chain likely became degenerate for this model/network combination (this is a genuine difficulty of curved-decay estimation in general, not specific to this package; R's own ergm can fail identically with 'Unconstrained MCMC sampling did not mix at all' on a hard case). Try a different starting decay value, a longer {bf:mcmcburnin()}, or a simpler model."
 				error 430
 			}
 			mata: st_matrix("`__b_mcmle'", `__fit'.coef_theta)
@@ -1662,7 +1737,7 @@ program nwergm, eclass
 		// informational, like e(native); has no effect when e(native)==1
 		// (the native backend never uses this Mata-level cache at all).
 		ereturn scalar spcache = `__ergm_spcache_used'
-		ereturn scalar curved = ("`gwespfree'" != "")
+		ereturn scalar curved = `__ergm_curved'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
 		// the final simulation's own sufficient-statistic draws
@@ -1679,8 +1754,8 @@ program nwergm, eclass
 		}
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
-		if "`gwespfree'" != "" {
-			di "{txt}Note: {bf:gwesp_decay} is an ESTIMATED (curved) decay parameter. Each MCMLE iteration's own eta-space Newton-step target is projected back onto the 2-parameter (weight, decay) curved manifold before the next simulation - a disclosed simplification of R ergm's own curved-model machinery, not expected to be bit-identical to it."
+		if `__ergm_curved' {
+			di "{txt}Note: {bf:decay} is an ESTIMATED (curved) parameter here. Each MCMLE iteration's own eta-space Newton-step target is projected back onto the 2-parameter (weight, decay) curved manifold before the next simulation - a disclosed simplification of R ergm's own curved-model machinery, not expected to be bit-identical to it."
 		}
 	}
 

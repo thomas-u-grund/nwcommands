@@ -3239,8 +3239,24 @@ string rowvector ErgmModel::theta_coefnames(){
 	epos = 1
 	for (t=1; t<=nterms; t++) {
 		if (curved[t]) {
-			out[tpos] = "gwesp_weight"
-			out[tpos+1] = "gwesp_decay"
+			// names[t] is the underlying statistic family the curved
+			// term was registered under (harmonisation unit 139: "esp"
+			// for gwespfree(), "degree" for gwdegreefree() - each
+			// reusing that family's own already-certified statistic/
+			// change functions directly, exactly as their own
+			// addterm() call sites do) - used here only to pick the
+			// right pair of DISPLAY names; v1 still supports at most
+			// one curved term per model (nwergm.ado's own mutual-
+			// exclusivity checks enforce this), so no per-model
+			// disambiguation beyond this lookup is needed.
+			if (names[t] == "degree") {
+				out[tpos] = "gwdegree_weight"
+				out[tpos+1] = "gwdegree_decay"
+			}
+			else {
+				out[tpos] = "gwesp_weight"
+				out[tpos+1] = "gwesp_decay"
+			}
 			tpos = tpos + 2
 		}
 		else {
