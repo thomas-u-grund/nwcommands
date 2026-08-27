@@ -1493,6 +1493,114 @@ real rowvector change_gwidegree(class ErgmGraph scalar G, real scalar i, real sc
 	return(gw_kernel(dj+delta, td.decay) - gw_kernel(dj, td.decay))
 }
 
+/* ===================================================================
+   Curved-parameter support (harmonisation unit 133, first slice):
+   the theta -> eta map and its Jacobian for the geometrically weighted
+   decay family, shared by every GW term (gwesp/gwdsp/gwnsp/gwdegree/
+   gwodegree/gwidegree) when the decay itself is estimated rather than
+   fixed. v1's own fixed-decay GW terms collapse the whole weighted sum
+   into ONE canonical (eta-space) statistic per term, computed directly
+   by stat_gwesp()/change_gwesp() etc. below - a curved (free-decay)
+   term instead needs the FULL vector of per-count statistics (e.g.
+   esp(1), esp(2), ..., esp(n-2) for gwesp), each with its own eta
+   value, related to the term's two THETA parameters (an overall
+   weight, and the decay itself) via this nonlinear map. This is a
+   deliberately standalone, independently certifiable first slice -
+   NOT YET wired into ErgmTermData/ErgmModel/MPLE/MCMLE (a curved model
+   cannot be requested through nwergm.ado yet); that wiring is later
+   work once this piece is certified on its own.
+
+   Clean-room reimplementation from the published Hunter (2007)
+   geometrically-weighted construction, cross-checked numerically
+   (not copied) against the installed R `ergm' package's own internal
+   `ergm:::ergm_GWDECAY' object (ergm 4.13.0, confirmed via direct
+   inspection, harmonisation unit 133) - see
+   cscripts/test_nwergm_curved.do for the exact transcribed reference
+   values. That inspection resolved a real ambiguity left open in
+   docs/ERGM_STATNET_STUDY.md's own earlier transcription (which was
+   unsure whether ergm_GWDECAY's second free parameter is the decay
+   alpha itself or log(alpha)): confirmed directly, by matching
+   ergm_GWDECAY$map() against the closed-form GWESP weighted-sum
+   formula to machine precision, that it is alpha itself, matching
+   this project's own existing fixed-decay `td.decay' convention
+   exactly (no extra log/exp reparameterization needed when a term
+   transitions from fixed to curved).
+
+   eta_i(theta_w, alpha) = theta_w * exp(alpha) * (1 - (1-exp(-alpha))^i),
+   i = 1..n - i.e. theta_w is the usual GW term's own overall
+   coefficient, exactly as reported today for a FIXED-decay term, and
+   fixing alpha at a caller-chosen value collapses this whole vector
+   back into a scalar multiple of v1's own single combined eta
+   statistic (confirmed as an identity below, not merely plausible).
+   =================================================================== */
+
+/*
+	Numerically stable log(1-exp(-a)) for a>0 (the standard two-branch
+	form: expm1() avoids the catastrophic cancellation of computing
+	1-exp(-a) directly when a is small and exp(-a) is close to 1;
+	log1p() avoids a similar loss computing log(1-x) directly when x
+	is close to 0, i.e. when a is large and exp(-a) is already small -
+	both expm1()/log1p() confirmed as genuine Mata built-ins, not
+	polyfilled, harmonisation unit 133). a<=0 is a caller error (alpha
+	must be positive - ergm_GWDECAY's own minpar enforces alpha>=0)
+	and returns missing rather than silently producing a wrong value.
+*/
+real scalar ergm_log1mexp(real scalar a){
+	if (a <= 0) return(.)
+	if (a <= ln(2)) return(ln(-expm1(-a)))
+	return(log1p(-exp(-a)))
+}
+
+/*
+	theta -> eta map for the GW decay family: theta_w (overall weight,
+	unconstrained) and alpha (decay, must be >0) -> an n-vector of
+	canonical (eta-space) statistics, one per achievable shared-
+	partner/degree count 1..n. Certified against R's own
+	ergm:::ergm_GWDECAY$map() - see cscripts/test_nwergm_curved.do.
+*/
+real rowvector ergm_gwdecay_map(real scalar theta_w, real scalar alpha, real scalar n){
+	real scalar a, k
+	real rowvector eta
+
+	// a = log(1-exp(-alpha)), always < 0 for alpha>0 - deliberately a
+	// SINGLE call on alpha itself, then reused (times k) inside the
+	// per-k log1mexp call below. Collapsing this into one direct
+	// ergm_log1mexp(alpha*k) call per k is WRONG - that computes
+	// exp(alpha)*(1-exp(-alpha*k)), not the required
+	// exp(alpha)*(1-(1-exp(-alpha))^k) - caught only by tracing R's own
+	// two-step `a <- log1mexp(x[2])` / `log1mexp(-a*i)' structure
+	// literally rather than assuming a single substitution would do.
+	a = ergm_log1mexp(alpha)
+	eta = J(1, n, .)
+	for (k=1; k<=n; k++) eta[k] = theta_w * exp(alpha + ergm_log1mexp(-a * k))
+	return(eta)
+}
+
+/*
+	Jacobian of ergm_gwdecay_map() above: a 2 x n matrix, row 1 =
+	d(eta_i)/d(theta_w), row 2 = d(eta_i)/d(alpha). Certified against
+	R's own ergm:::ergm_GWDECAY$gradient() - see
+	cscripts/test_nwergm_curved.do. Used later (curved MCMLE) both to
+	project an eta-space Newton step back onto the 2-parameter theta
+	space and, via the delta method, to transform eta's own sandwich
+	covariance into a theta-space one.
+*/
+real matrix ergm_gwdecay_gradient(real scalar theta_w, real scalar alpha, real scalar n){
+	real scalar a, k
+	real rowvector w, d_alpha
+
+	a = ergm_log1mexp(alpha)
+	w = J(1, n, .)
+	for (k=1; k<=n; k++) w[k] = exp(alpha + ergm_log1mexp(-a * k))
+	d_alpha = J(1, n, .)
+	// exp(a*(k-1)) = (1-exp(-alpha))^(k-1) since exp(a) = 1-exp(-alpha)
+	// by construction (a = log of exactly that quantity) - matches the
+	// analytic derivative of eta_k = exp(alpha)*(1-(1-exp(-alpha))^k)
+	// w.r.t. alpha term-for-term with R's own gradient() source.
+	for (k=1; k<=n; k++) d_alpha[k] = theta_w * (w[k] - k * exp(a * (k-1)))
+	return(w \ d_alpha)
+}
+
 /*
 	Geometrically weighted edgewise shared partners (GWESP; Hunter
 	2007). Undirected only in v1 (directed OTP/ITP/OSP/ISP variants -
