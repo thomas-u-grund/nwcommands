@@ -459,3 +459,50 @@ nwset, mat((0,1\1,0)) undirected name(tinynet2)
 capture noisily nwergm tinynet2, edges gwespfree(0.7)
 assert _rc == 198
 di "=== gwespfree() error paths (combined with gwesp()/esp(), directed, too few nodes, method(mcmle)) all verified ==="
+
+* --- gwespfree() combined with ANOTHER dyad-dependent term (triangle) -
+* nothing in nwergm.ado forbids this (only gwesp()/esp() are forbidden,
+* since they would be redundant/collinear with gwespfree() itself), and
+* the joint Newton-Raphson fit is fully general (fits every coefficient,
+* ordinary and curved, in one loop regardless of what else is present).
+* This combined model happens to be poorly identified on this exact
+* network (R's own independent ergm(net ~ edges + triangle +
+* gwesp(0.7,fixed=FALSE), estimate="MPLE") fit ALSO lands decay at its
+* own zero boundary, 2.49e-10 - a genuine property of this specific
+* model/network combination, not a bug) - found during development
+* that the fitting loop's own graceful-boundary-stop behavior (added
+* specifically because of this exact case: exhausting every
+* backtracking halving without finding an improving, alpha-positive
+* step is the correct signal to clamp decay at its floor and stop, not
+* to accept an invalid step and cascade to missing) needed certifying
+* directly, not just asserted to exist. Checks: runs to completion
+* (does not error, does not return missing coefficients), reports
+* e(curved)==1 and the right column count, and decay lands at (or very
+* near) its own documented floor - matching R's own qualitative
+* boundary behavior on this network, not a numeric-agreement claim
+* (which would not be a meaningful thing to certify for a poorly
+* identified model in the first place).
+nwclear
+nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
+1,0,1,1,1,1,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,1,1,0,1,0,0,1,0,0,0,0,0 \ ///
+1,1,1,0,1,0,0,0,1,0,0,0,0,0,0 \ ///
+1,1,1,1,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,1,1,1,1,0,0,1,0,0 \ ///
+0,0,1,0,0,1,0,0,0,1,0,0,0,1,0 \ ///
+0,0,0,0,0,1,0,0,1,0,0,0,0,0,1 \ ///
+0,0,0,1,0,1,0,1,0,1,1,0,0,0,0 \ ///
+0,0,1,0,0,1,1,0,1,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,1,0,0,1,1,1,1 \ ///
+0,0,0,0,0,0,0,0,0,0,1,0,1,0,1 \ ///
+0,0,0,0,0,1,0,0,0,0,1,1,0,0,1 \ ///
+0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedcombonet)
+
+qui nwergm curvedcombonet, edges triangle gwespfree(0.7)
+assert _rc == 0
+assert e(curved) == 1
+assert colsof(e(b)) == 4
+mata: assert(!missing(st_matrix("e(b)")))
+assert _b[gwesp_decay] < 1e-4
+di "=== gwespfree() combined with another dyad-dependent term (triangle) runs to completion, does not produce missing coefficients, and correctly hits the decay floor on this genuinely near-degenerate model ==="

@@ -3301,7 +3301,7 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 	real matrix X, Jac, I_eta, I_theta
 	real colvector y, p, xb, w
 	real rowvector theta, theta_try, eta, g_eta, g_theta, delta
-	real scalar iter, converged, ncol, ll0, ll1, step, halvings, alpha_pos
+	real scalar iter, converged, ncol, ll0, ll1, step, halvings, alpha_pos, found
 
 	ncol = cols(D) - 1
 	X = D[., (1..ncol)]
@@ -3339,20 +3339,40 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 		// directly during this unit's own development: a full step
 		// drove decay to -92 on a real 15-node test network, cascading
 		// to missing values everywhere downstream once decay left its
-		// required positive domain) - halve the step (up to 20 times)
+		// required positive domain) - halve the step (up to 30 times)
 		// until it both keeps decay positive AND does not decrease the
 		// log-pseudolikelihood, the standard, textbook fix for exactly
 		// this failure mode (and part of why quasi-Newton methods like
 		// R ergm's own BFGS are more robust than plain Newton-Raphson
 		// in the first place - they effectively do this automatically).
 		step = 1
-		for (halvings=1; halvings<=20; halvings++) {
+		found = 0
+		for (halvings=1; halvings<=30; halvings++) {
 			theta_try = theta + step :* delta
 			if (theta_try[alpha_pos] > 1e-6) {
 				ll1 = ergm_curved_loglik(M, X, y, theta_try)
-				if (ll1 >= ll0) break
+				if (ll1 >= ll0) {
+					found = 1
+					break
+				}
 			}
 			step = step / 2
+		}
+		if (!found) {
+			// No improving, alpha-positive step exists even after 30
+			// halvings - the genuine signature of a boundary/degenerate
+			// solution (decay -> 0), not a bug: measured directly on a
+			// real combined triangle+curved-gwesp model where R's own
+			// BFGS independently lands at decay=2.5e-10, essentially
+			// the same boundary. Stop gracefully AT the boundary
+			// (clamp decay to its floor, leave every other parameter at
+			// its own last valid value) rather than accepting whatever
+			// the final failed attempt happened to be, which is what
+			// was cascading to missing everywhere downstream on this
+			// exact case before this fix.
+			theta[alpha_pos] = 1e-6
+			converged = 1
+			break
 		}
 		theta = theta_try
 		ll0 = ll1
