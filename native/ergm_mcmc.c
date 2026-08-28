@@ -144,6 +144,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 /* ===================================================================
    xorshift128+ RNG
@@ -428,6 +429,126 @@ static long common_neighbors(graph_t *g, long i, long j) {
 
 static double gw_kernel(double d, double decay) {
 	return exp(decay) * (1.0 - pow(1.0 - exp(-decay), d));
+}
+
+/* ===================================================================
+   Curved-MPLE fit, entirely native (harmonisation unit 146,
+   docs/CERTIFICATION.md). Direct C ports of unw_ergm.do's own
+   ergm_log1mexp()/ergm_gwdecay_map()/ergm_gwdecay_gradient() - see
+   those functions' own header comments in unw_ergm.do for the full
+   derivation/R-cross-certification account; this is a line-for-line
+   transcription, not a re-derivation, to minimize the chance of a
+   silent divergence between the Mata reference (still the certification
+   oracle, unchanged) and this native path.
+   =================================================================== */
+static double ergm_log1mexp_c(double a) {
+	if (a <= 0.0) return NAN;
+	if (a <= log(2.0)) return log(-expm1(-a));
+	return log1p(-exp(-a));
+}
+
+/* eta = theta_w * exp(alpha + log1mexp(-a*k)), a = log1mexp(alpha),
+   k = 1..ncurved - see ergm_gwdecay_map()'s own header comment in
+   unw_ergm.do for why this two-step structure (not a single
+   log1mexp(alpha*k) call) is required. */
+static void gwdecay_map(double theta_w, double alpha, long ncurved, double *eta_out) {
+	double a = ergm_log1mexp_c(alpha);
+	long k;
+	for (k = 1; k <= ncurved; k++) {
+		eta_out[k-1] = theta_w * exp(alpha + ergm_log1mexp_c(-a * (double)k));
+	}
+}
+
+/* d(eta_k)/d(theta_w) into dw_out, d(eta_k)/d(alpha) into dalpha_out -
+   see ergm_gwdecay_gradient()'s own header comment in unw_ergm.do. */
+static void gwdecay_gradient(double theta_w, double alpha, long ncurved, double *dw_out, double *dalpha_out) {
+	double a = ergm_log1mexp_c(alpha);
+	long k;
+	for (k = 1; k <= ncurved; k++) {
+		double w = exp(alpha + ergm_log1mexp_c(-a * (double)k));
+		dw_out[k-1] = w;
+		dalpha_out[k-1] = theta_w * (w - (double)k * exp(a * ((double)k - 1.0)));
+	}
+}
+
+/* Symmetric generalized inverse of A (p x p, row-major, overwritten
+   with the result) via Gauss-Jordan elimination with partial pivoting
+   - p is always small here (ntheta: a handful of ordinary terms plus
+   2 for the curved block), so this plain, textbook approach (no need
+   for a general-purpose BLAS/LAPACK dependency this project has never
+   otherwise needed) is both sufficient and easy to certify directly
+   against Mata's own invsym().
+
+   BUGFIX (harmonisation unit 146, found benchmarking the real ecoli2
+   network): the first cut of this function (and a solve_linear()
+   sibling used for the per-iteration Newton delta) hard-failed on a
+   singular pivot, unlike Mata's invsym() - which NEVER fails, instead
+   giving a linearly-dependent direction a zero row/column in the
+   result (a genuine generalized inverse). The curved gwesp decay->0
+   boundary genuinely drives the Fisher information singular (not a
+   numerical-precision artifact - R's own independent BFGS lands at
+   the same boundary on real data, per ErgmCurvedMPLEFit()'s own
+   header comment in unw_ergm.do), so on ecoli2 this was hit almost
+   immediately and silently fell the whole fit back to Mata every
+   time - completely defeating this unit's own optimization, though
+   never producing a wrong answer (the graceful native-then-Mata-
+   fallback design meant correctness was never at risk, only speed).
+   invsym()'s exact contract is reproduced here (zero the pivot's row
+   AND column post-hoc, so no partial-elimination leakage into other
+   rows survives) and is now used for BOTH the per-iteration delta and
+   the final covariance, matching ErgmCurvedMPLEFit()'s own identical
+   use of invsym() for both. Always returns 0 (kept as an int return
+   for minimal caller disruption; no caller needs to branch on it any
+   more). */
+static int invert_matrix(double *A, long p) {
+	double *aug = (double *)malloc((size_t)(p*2*p) * sizeof(double));
+	int *is_singular = (int *)calloc((size_t)p, sizeof(int));
+	long i, j, k, piv;
+	double scale = 0.0;
+	for (i = 0; i < p; i++) {
+		for (j = 0; j < p; j++) aug[i*(2*p)+j] = A[i*p+j];
+		for (j = 0; j < p; j++) aug[i*(2*p)+p+j] = (i == j) ? 1.0 : 0.0;
+		if (fabs(A[i*p+i]) > scale) scale = fabs(A[i*p+i]);
+	}
+	if (scale <= 0.0) scale = 1.0;
+	{
+		double tol = scale * 1e-10;
+		for (k = 0; k < p; k++) {
+			double maxval = fabs(aug[k*(2*p)+k]);
+			piv = k;
+			for (i = k+1; i < p; i++) {
+				if (fabs(aug[i*(2*p)+k]) > maxval) { maxval = fabs(aug[i*(2*p)+k]); piv = i; }
+			}
+			if (maxval < tol) {
+				is_singular[k] = 1;
+				for (j = 0; j < 2*p; j++) aug[k*(2*p)+j] = 0.0;
+				continue;
+			}
+			if (piv != k) {
+				for (j = 0; j < 2*p; j++) { double t = aug[k*(2*p)+j]; aug[k*(2*p)+j] = aug[piv*(2*p)+j]; aug[piv*(2*p)+j] = t; }
+			}
+			{
+				double d = aug[k*(2*p)+k];
+				for (j = 0; j < 2*p; j++) aug[k*(2*p)+j] /= d;
+			}
+			for (i = 0; i < p; i++) {
+				if (i == k) continue;
+				double f = aug[i*(2*p)+k];
+				if (f == 0.0) continue;
+				for (j = 0; j < 2*p; j++) aug[i*(2*p)+j] -= f * aug[k*(2*p)+j];
+			}
+		}
+	}
+	for (i = 0; i < p; i++)
+		for (j = 0; j < p; j++) A[i*p+j] = aug[i*(2*p)+p+j];
+	for (k = 0; k < p; k++) {
+		if (is_singular[k]) {
+			for (j = 0; j < p; j++) { A[k*p+j] = 0.0; A[j*p+k] = 0.0; }
+		}
+	}
+	free(aug);
+	free(is_singular);
+	return 0;
 }
 
 /* SP_OTP(i,j) = #{k : i->k and k->j} - the directed "outgoing two-path"
@@ -1535,9 +1656,260 @@ static long next_long(void) {
 #define MAXTERMS 64  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
 #define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
 
+/* eta = theta_to_eta(theta): the first (nterms-ncurved) eta slots equal
+   the corresponding theta values one-for-one (an ordinary term IS its
+   own eta - ErgmModel::theta_to_eta()'s own "else" branch in
+   unw_ergm.do); the final `ncurved' slots are gwdecay_map()'s own
+   output from theta's own final 2 values (weight, decay) - the
+   registered-last invariant this whole native extension leans on (see
+   this file's own header comment above the mode-field parsing). */
+static void theta_to_eta_c(const double *theta, long ntheta, long nterms, long ncurved, double *eta_out) {
+	long nord = nterms - ncurved;
+	long i;
+	for (i = 0; i < nord; i++) eta_out[i] = theta[i];
+	if (ncurved > 0) gwdecay_map(theta[ntheta-2], theta[ntheta-1], ncurved, eta_out + nord);
+}
+
+/* Log-pseudolikelihood at a given theta - sum over dyads of
+   y*log(p)+(1-y)*log(1-p), p=invlogit(X*eta') - direct port of
+   ergm_curved_loglik() in unw_ergm.do, used by the backtracking line
+   search below exactly as it is there. */
+static double curved_loglik_c(const double *X, const double *y, long ndyads, long nterms,
+		long ntheta, long ncurved, const double *theta) {
+	double eta[MAXTERMS];
+	double ll = 0.0;
+	long i, k;
+	theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
+	for (i = 0; i < ndyads; i++) {
+		double xb = 0.0, p;
+		const double *xi = X + (size_t)i * (size_t)nterms;
+		for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
+		p = 1.0 / (1.0 + exp(-xb));
+		if (p < 1e-300) p = 1e-300;
+		if (p > 1.0 - 1e-300) p = 1.0 - 1e-300;
+		ll += y[i] * log(p) + (1.0 - y[i]) * log(1.0 - p);
+	}
+	return ll;
+}
+
+/* Direct C port of ErgmCurvedMPLEFit() in unw_ergm.do - damped
+   Newton-Raphson on the pseudolikelihood in theta-space, chain-ruled
+   through theta_to_eta_c()'s own Jacobian, with the identical
+   backtracking line search (halve the step up to 30 times, both to
+   keep the decay parameter positive AND to not decrease the log-
+   pseudolikelihood) and graceful boundary-stop (clamp decay to 1e-6
+   and report converged=1 rather than propagate a degenerate estimate)
+   the Mata reference already has certified, real-network evidence for
+   (docs/CERTIFICATION.md units 136-141) - see that function's own
+   header comment for the full account of why each piece is there.
+   `maxit'/`tol' match the ONLY values nwergm.ado's own call site ever
+   actually passes (100, 1e-10) - hardcoded here rather than threaded
+   through the wire protocol as two more fields, since no caller has
+   ever varied them. Returns 0 on success (theta_out/V_out populated),
+   -1 if the final information matrix is singular (V_out left
+   undefined in that case - a real but exceedingly unlikely failure
+   mode on a well-posed problem that already survived 100 Newton
+   iterations without it). */
+static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long nterms,
+		long ncurved, double curved_decay_start,
+		double *theta_out, double *V_out, long *converged_out) {
+	long ntheta = (nterms - ncurved) + 2;
+	long decay_pos = ntheta - 1;
+	long maxit = 100;
+	double tol = 1e-10;
+	double theta[MAXTERMS], theta_try[MAXTERMS];
+	double eta[MAXTERMS];
+	double g_eta[MAXTERMS], g_theta[MAXTERMS];
+	double delta[MAXTERMS];
+	double *I_eta, *I_theta, *Jac;
+	double ll0, ll1;
+	long iter, i, j, k, halvings, found, converged;
+	double step, maxabs;
+
+	for (i = 0; i < ntheta - 2; i++) theta[i] = 0.0;
+	theta[ntheta-2] = 0.0;
+	theta[ntheta-1] = curved_decay_start;
+
+	I_eta = (double *)malloc((size_t)nterms * (size_t)nterms * sizeof(double));
+	I_theta = (double *)malloc((size_t)ntheta * (size_t)ntheta * sizeof(double));
+	Jac = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
+
+	ll0 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta);
+	converged = 0;
+
+	for (iter = 1; iter <= maxit; iter++) {
+		double dw[MAXTERMS], dalpha[MAXTERMS];
+		long nord = nterms - ncurved;
+
+		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
+
+		/* Jacobian: nterms x ntheta, row-major. Ordinary block =
+		   identity (d eta_i/d theta_i = 1); curved block = gwdecay_
+		   gradient()'s own 2 x ncurved output, transposed. */
+		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
+		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
+		if (ncurved > 0) {
+			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
+			for (k = 0; k < ncurved; k++) {
+				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
+				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
+			}
+		}
+
+		for (i = 0; i < nterms; i++) g_eta[i] = 0.0;
+		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
+		for (i = 0; i < ndyads; i++) {
+			const double *xi = X + (size_t)i * (size_t)nterms;
+			double xb = 0.0, p, w;
+			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
+			p = 1.0 / (1.0 + exp(-xb));
+			w = p * (1.0 - p);
+			for (k = 0; k < nterms; k++) g_eta[k] += xi[k] * (y[i] - p);
+			for (j = 0; j < nterms; j++) {
+				double wxj = w * xi[j];
+				if (wxj == 0.0) continue;
+				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
+			}
+		}
+		/* I_eta is symmetric - only the upper triangle was accumulated
+		   above (halves the inner work); mirror it before use. */
+		for (j = 0; j < nterms; j++)
+			for (k = j+1; k < nterms; k++)
+				I_eta[k*nterms+j] = I_eta[j*nterms+k];
+
+		/* g_theta = g_eta * Jac  [1 x ntheta] */
+		for (k = 0; k < ntheta; k++) {
+			g_theta[k] = 0.0;
+			for (i = 0; i < nterms; i++) g_theta[k] += g_eta[i] * Jac[i*ntheta+k];
+		}
+		/* I_theta = Jac' * I_eta * Jac  [ntheta x ntheta] - via the
+		   nterms x ntheta intermediate M = I_eta * Jac, then
+		   Jac' * M, avoiding ever materializing a second nterms x
+		   nterms temporary. */
+		{
+			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
+			for (i = 0; i < nterms; i++) {
+				for (k = 0; k < ntheta; k++) {
+					double s = 0.0;
+					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
+					M[i*ntheta+k] = s;
+				}
+			}
+			for (i = 0; i < ntheta; i++) {
+				for (k = 0; k < ntheta; k++) {
+					double s = 0.0;
+					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
+					I_theta[i*ntheta+k] = s;
+				}
+			}
+			free(M);
+		}
+
+		/* delta = invsym(I_theta) * g_theta' - a generalized-inverse
+		   solve, not solve_linear()'s old hard-failing Gauss-Jordan
+		   solve, exactly matching ErgmCurvedMPLEFit()'s own
+		   invsym()-based delta in unw_ergm.do (see invert_matrix()'s
+		   own header comment for why this is required, not optional,
+		   on the curved gwesp decay->0 boundary). */
+		invert_matrix(I_theta, ntheta);
+		for (i = 0; i < ntheta; i++) {
+			double s = 0.0;
+			for (j = 0; j < ntheta; j++) s += I_theta[i*ntheta+j] * g_theta[j];
+			delta[i] = s;
+		}
+
+		step = 1.0;
+		found = 0;
+		for (halvings = 1; halvings <= 30; halvings++) {
+			for (i = 0; i < ntheta; i++) theta_try[i] = theta[i] + step * delta[i];
+			if (theta_try[decay_pos] > 1e-6) {
+				ll1 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta_try);
+				if (ll1 >= ll0) { found = 1; break; }
+			}
+			step = step / 2.0;
+		}
+		if (!found) {
+			theta[decay_pos] = 1e-6;
+			converged = 1;
+			break;
+		}
+		for (i = 0; i < ntheta; i++) theta[i] = theta_try[i];
+		ll0 = ll1;
+		maxabs = 0.0;
+		for (i = 0; i < ntheta; i++) {
+			double d = fabs(step * delta[i]);
+			if (d > maxabs) maxabs = d;
+		}
+		if (maxabs < tol) { converged = 1; break; }
+	}
+
+	/* Final Fisher information at the converged (or last-tried) theta -
+	   recomputed fresh, not reused from the last iteration's own
+	   pre-update value, matching ErgmCurvedMPLEFit()'s own identical
+	   convention in unw_ergm.do. */
+	{
+		long nord = nterms - ncurved;
+		double dw[MAXTERMS], dalpha[MAXTERMS];
+		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
+		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
+		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
+		if (ncurved > 0) {
+			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
+			for (k = 0; k < ncurved; k++) {
+				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
+				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
+			}
+		}
+		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
+		for (i = 0; i < ndyads; i++) {
+			const double *xi = X + (size_t)i * (size_t)nterms;
+			double xb = 0.0, p, w;
+			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
+			p = 1.0 / (1.0 + exp(-xb));
+			w = p * (1.0 - p);
+			for (j = 0; j < nterms; j++) {
+				double wxj = w * xi[j];
+				if (wxj == 0.0) continue;
+				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
+			}
+		}
+		for (j = 0; j < nterms; j++)
+			for (k = j+1; k < nterms; k++)
+				I_eta[k*nterms+j] = I_eta[j*nterms+k];
+		{
+			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
+			for (i = 0; i < nterms; i++) {
+				for (k = 0; k < ntheta; k++) {
+					double s = 0.0;
+					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
+					M[i*ntheta+k] = s;
+				}
+			}
+			for (i = 0; i < ntheta; i++) {
+				for (k = 0; k < ntheta; k++) {
+					double s = 0.0;
+					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
+					I_theta[i*ntheta+k] = s;
+				}
+			}
+			free(M);
+		}
+	}
+
+	for (i = 0; i < ntheta; i++) theta_out[i] = theta[i];
+	invert_matrix(I_theta, ntheta);
+	for (i = 0; i < ntheta * ntheta; i++) V_out[i] = I_theta[i];
+	*converged_out = converged;
+
+	free(I_eta); free(I_theta); free(Jac);
+	return 0;
+}
+
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
 	long mode, n, directed, nties_in, samplesize, burnin, interval, proposal_code, nattr, nterms, i, k;
+	long ncurved;
+	double curved_decay_start;
 	unsigned long long rngseed;
 	int termcodes[MAXTERMS];
 	int attridx[MAXTERMS];
@@ -1622,6 +1994,22 @@ STDLL stata_call(int argc, char *argv[]) {
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	for (i = 0; i < nterms; i++) obs[i] = next_double();
+	/* mode=2 only (harmonisation unit 146): how many of the LAST
+	   `nterms' eta-space slots belong to the curved term's own per-
+	   count block, and that block's own starting decay value - always
+	   parsed, unused placeholders (0, 0) on every other mode, matching
+	   this file's own established "keep the wire format uniform, branch
+	   only on what a mode DOES with the fields, not on how many fields
+	   it reads" convention already used for mode=1's own unused theta/
+	   obs. Registering the curved term LAST (nwergm.ado's own, already-
+	   documented invariant - "its own 2 theta columns are always the
+	   final 2") is what makes a single trailing count sufficient: slots
+	   0..(nterms-ncurved-1) are ordinary (theta IS eta, one column
+	   each), the final `ncurved' slots are the curved block (mapped via
+	   ergm_gwdecay_map()/_gradient() below, 2 theta values - weight,
+	   decay - for the whole block). */
+	ncurved = (long)next_double();
+	curved_decay_start = next_double();
 	free(argbuf);
 
 	/* --- build graph from dataset columns v1=ego v2=alter (rows
@@ -1705,6 +2093,92 @@ STDLL stata_call(int argc, char *argv[]) {
 			}
 		}
 		SF_scal_save("__ergm_native_ndyads_out", (ST_double)(pos - 1));
+
+		for (k = 0; k < nattr; k++) free(attrs[k]);
+		free(g.deg);
+		free(g.outdeg); free(g.indeg);
+		ht_free(&g.ht);
+		free(g.elist_i); free(g.elist_j);
+		if (g.adj) {
+			for (i = 0; i <= n; i++) free(g.adj[i].nb);
+			free(g.adj);
+		}
+		if (g.outadj) {
+			for (i = 0; i <= n; i++) free(g.outadj[i].nb);
+			free(g.outadj);
+		}
+		if (g.inadj) {
+			for (i = 0; i <= n; i++) free(g.inadj[i].nb);
+			free(g.inadj);
+		}
+		return(0);
+	}
+
+	if (mode == 2) {
+		/* Curved MPLE, entirely native (harmonisation unit 146): build
+		   the SAME design matrix mode=1 builds (identical per-dyad
+		   loop, identical column values), but keep it in memory as a
+		   plain C array instead of writing it to the frame, then run
+		   curved_mple_fit_c() (this file's own direct port of
+		   ErgmCurvedMPLEFit()) on it directly - crossing the Mata/
+		   native boundary exactly once for the WHOLE curved fit, per
+		   this file's own governing "never once per proposal, never
+		   once per iteration" boundary-crossing discipline (this
+		   file's own header comment). Small, model-scale results
+		   (theta, the covariance matrix, a converged flag) cross back
+		   via SF_scal_save() - the dyad-scale design matrix itself
+		   never needs to leave this call at all. */
+		long ndyads = directed ? n * (n - 1) : n * (n - 1) / 2;
+		long ntheta = (nterms - ncurved) + 2;
+		double *X, *Y;
+		double theta_out[MAXTERMS], V_out[MAXTERMS*MAXTERMS];
+		long converged_out = 0;
+		long pos = 0;
+		int fit_rc;
+
+		X = (double *)malloc((size_t)ndyads * (size_t)nterms * sizeof(double));
+		Y = (double *)malloc((size_t)ndyads * sizeof(double));
+		for (i = 1; i <= n; i++) {
+			long j;
+			for (j = 1; j <= n; j++) {
+				double delta, tied;
+				double *xrow;
+				if (i == j) continue;
+				if (!directed && j < i) continue;
+				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
+				delta = tied ? -1.0 : 1.0;
+				xrow = X + (size_t)pos * (size_t)nterms;
+				for (k = 0; k < nterms; k++) {
+					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, i, j);
+					xrow[k] = tied ? -chg : chg;
+				}
+				Y[pos] = tied;
+				pos++;
+			}
+		}
+
+		fit_rc = curved_mple_fit_c(X, Y, ndyads, nterms, ncurved, curved_decay_start,
+			theta_out, V_out, &converged_out);
+		free(X); free(Y);
+
+		if (fit_rc == 0) {
+			char name[64];
+			for (i = 0; i < ntheta; i++) {
+				snprintf(name, sizeof(name), "__ergm_native_curved_theta%ld", i + 1);
+				SF_scal_save(name, (ST_double)theta_out[i]);
+			}
+			for (i = 0; i < ntheta * ntheta; i++) {
+				snprintf(name, sizeof(name), "__ergm_native_curved_V%ld", i + 1);
+				SF_scal_save(name, (ST_double)V_out[i]);
+			}
+			SF_scal_save("__ergm_native_curved_ntheta_out", (ST_double)ntheta);
+			SF_scal_save("__ergm_native_curved_converged", (ST_double)converged_out);
+			SF_scal_save("__ergm_native_curved_rc", (ST_double)0);
+		}
+		else {
+			SF_scal_save("__ergm_native_curved_rc", (ST_double)fit_rc);
+		}
 
 		for (k = 0; k < nattr; k++) free(attrs[k]);
 		free(g.deg);

@@ -31,6 +31,11 @@
 [{opt sender}]
 [{opt receiver}]
 [{opt gwesp(real)}]
+[{opt gwespfree(real)}]
+[{opt gwdegreefree(real)}]
+[{opt gwdspfree(real)}]
+[{opt gwodegreefree(real)}]
+[{opt gwidegreefree(real)}]
 [{opt gwdsp(real)}]
 [{opt gwnsp(real)}]
 [{opt gwdegree(real)}]
@@ -63,7 +68,8 @@
 {opt mcmleiterations(int)}
 {opt proposal(uniform|tnt)}
 {opt seed(int)}
-{opt verbose}]
+{opt verbose}
+{opt spcache}]
 
 
 {synoptset 25 tabbed}{...}
@@ -81,6 +87,11 @@
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
+{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or another curved term{p_end}
+{synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or another curved term{p_end}
+{synopt:{opt gwdspfree(real)}}Geometrically weighted dyadwise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdsp_weight}/{bf:gwdsp_decay} in place of a single {opt gwdsp()} coefficient. Cannot be combined with {opt gwdsp()}, {opt dsp()}, or another curved term{p_end}
+{synopt:{opt gwodegreefree(real)}}Geometrically weighted out-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwodegree_weight}/{bf:gwodegree_decay} in place of a single {opt gwodegree()} coefficient. Cannot be combined with {opt gwodegree()}, {opt odegree()}, or another curved term{p_end}
+{synopt:{opt gwidegreefree(real)}}Geometrically weighted in-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwidegree_weight}/{bf:gwidegree_decay} in place of a single {opt gwidegree()} coefficient. Cannot be combined with {opt gwidegree()}, {opt idegree()}, or another curved term{p_end}
 {synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
@@ -119,6 +130,7 @@
 {synopt:{opt proposal(uniform|tnt)}}Metropolis-Hastings proposal; default {it:tnt}{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt verbose}}Show MPLE/MCMLE iteration detail{p_end}
+{synopt:{opt spcache}}Enable the incremental shared-partner cache for {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple} on an undirected network; OFF by default because direct benchmarking found it a net LOSS below roughly average degree 30-40 (the common case) and a net win only above that - enable only for denser undirected networks; no effect on a directed network or without any of those terms{p_end}
 
 {p2colreset}{...}
 
@@ -143,9 +155,12 @@ dyadic covariates, the geometrically weighted family (including directed shared-
 support), fixed shared-partner counts, the complete degree-distribution family, and directed
 triad-closure terms - see {help nwergm##limitations:Limitations} below for the complete current
 list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
-(bipartite) ERGMs, curved/free-decay estimation, and constraints beyond the free binary dyad
-space remain roadmap items, each a genuine architectural addition rather than another term to
-add.
+(bipartite) ERGMs, curved/free-decay estimation under {opt method(mcmle)}, and constraints
+beyond the free binary dyad space remain roadmap items, each a genuine architectural addition
+rather than another term to add - curved/free-decay estimation under {opt method(mple)} IS
+already supported (see {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
+{opt gwodegreefree()}/{opt gwidegreefree()} in the {cmd:Syntax} block above). See the package's
+own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
@@ -192,7 +207,10 @@ The effect library has grown considerably past its original small first-release 
 {opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); dyadic
 covariates ({opt edgecov()}, {opt hamming()}); the geometrically weighted family
 ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()})
-with FIXED decay only (curved/free-decay estimation is a roadmap item); fixed shared-partner
+with FIXED decay only (a curved/free-decay counterpart is available for each of these five
+terms via {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
+{opt gwidegreefree()}, {opt method(mple)} only for now - curved {opt method(mcmle)} remains a
+roadmap item); fixed shared-partner
 counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}/{opt odegree()}/
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
@@ -213,8 +231,10 @@ uniformly to every one of these five terms present in the same model:
 All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/bipartite terms are deliberately
 deprioritized as a
 later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
-are not a supported data type at all); curved parameters need a genuine MCMLE architecture
-change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
+are not a supported data type at all); curved MCMLE estimation needs a genuine MCMLE
+architecture change, not a term-only addition (curved MPLE is already supported - see
+{opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
+{opt gwidegreefree()} above). Constraints beyond the free binary dyad space and offsets are
 not yet implemented - see the roadmap. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
 and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; see
 {help nwergm_estat}.
@@ -226,13 +246,16 @@ and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; se
 {cmd:nwergm} ships a fully independent Mata implementation of its entire estimator (term
 registry, MCMC sampler, MPLE, MCMLE) - this is always the reference implementation and is what
 runs for every model on every platform. For a growing subset of models, {cmd:nwergm} ALSO
-compiles the MCMC inner loop into a native Stata plugin (C) and uses that instead, entirely
+compiles the MCMC inner loop (for {opt method(mcmle)}) or the MPLE design-matrix build (for
+{opt method(mple)}) into a native Stata plugin (C) and uses that instead, entirely
 transparently: there is nothing to turn on, no option to set, and no difference in how results
 are interpreted. Whether a given run used the native backend or the Mata one is purely a
-performance detail, exposed only for curiosity via {bf:e(native)} after {opt method(mcmle)} -
-the two are certified to produce statistically indistinguishable results (independent random-
-number streams, so not bit-identical sample paths, but the same target distribution; see the
-package's own {cmd:cscripts/test_nwergm_native.do}).
+performance detail, exposed only for curiosity via {bf:e(native)} after EITHER method - the two
+are certified to produce statistically indistinguishable results for {opt method(mcmle)}
+(independent random-number streams, so not bit-identical sample paths, but the same target
+distribution; see the package's own {cmd:cscripts/test_nwergm_native.do}) and a bit-identical
+design matrix for {opt method(mple)} (deterministic given a fixed graph, so native and Mata
+agree exactly, not merely statistically).
 
 {pstd}
 The native backend requires a compiled plugin for the current platform (macOS is built and
@@ -254,7 +277,21 @@ practice this means essentially every {cmd:nwergm} model now runs on the native 
 remaining exception (automatically and correctly using the Mata backend instead, with no error and
 no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix
 marshalled across the plugin boundary rather than the per-node values or scalar parameters every
-other term needs.
+other term needs - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the
+current status.
+
+{pstd}
+For a curved term ({opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
+{opt gwodegreefree()}/{opt gwidegreefree()}), the native backend additionally fits the
+Newton-Raphson optimization itself in C (not just the MPLE design-matrix build), when eligible -
+still exposed only via {bf:e(native)}, since a curved fit and its own design-matrix build always
+share the same native-or-Mata routing. On a genuine boundary solution (the estimated decay
+collapsing toward 0, a real, if uncommon, outcome documented under {opt gwespfree()} above), the
+native fit uses the same generalized-inverse handling of a singular final Fisher information
+matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back to Mata - measured
+directly on a real published transcriptional-regulation network (Salgado et al. 2001; Shen-Orr
+et al. 2002), where this narrowed the gap to R ergm's own curved MPLE from roughly 4x to roughly
+2x. See the package's own SJ article (paper/main.tex) for the full benchmark.
 
 {title:Postestimation}
 
@@ -268,10 +305,7 @@ simulation.
 {help nwergm_estat:estat gof} reports a basic simulation-based goodness-of-fit comparison
 (mean degree, average geodesic distance, complete-triad count) between the fitted model's own
 simulated networks and the network {cmd:nwergm} was fitted on - available after either
-estimation method. Both {cmd:estat mcmcdiag} and {cmd:estat gof} accept a {opt plot} option,
-producing trace/density and degree/geodesic-distribution diagnostic plots respectively -
-Statnet's own {cmd:mcmc.diagnostics()}/{cmd:plot(gof())} analogues. See {help nwergm_estat} for
-full details.
+estimation method. See {help nwergm_estat} for full details.
 
 {title:Stored results}
 
@@ -288,9 +322,10 @@ full details.
 					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
 					to reach an adequate effective sample size (method(mcmle) only)
 	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
-	  {bf:e(native)}		1 if the native (C) MCMC backend was used for this run's simulations,
-					0 if the Mata sampler ran instead (method(mcmle) only) - purely
-					informational, see {help nwergm##native:Performance} below
+	  {bf:e(native)}		1 if the native (C) backend was used for this run (the MCMC sampler
+					for method(mcmle); the MPLE design-matrix build for method(mple)),
+					0 if the Mata implementation ran instead - purely informational,
+					see {help nwergm##native:Performance} below
 
 	Macros
 	  {bf:e(cmd)}			{bf:nwergm}
@@ -344,10 +379,10 @@ Geyer, C.J., Thompson, E.A. (1992). Constrained Monte Carlo Maximum Likelihood f
 Data. {it:Journal of the Royal Statistical Society, Series B}, 54(3), 657-699. (MCMLE)
 
 {pstd}
-{cmd:nwergm} is an independent implementation of published ERGM algorithms in Stata and Mata; no
-Statnet source code is incorporated into {cmd:nwergm}. Statnet's own {cmd:ergm} package was used
-as an external architectural reference during development and for the numerical validation
-described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet project.
+{cmd:nwergm} is an independent, native reimplementation and is not affiliated with or endorsed
+by the Statnet project. See {browse "docs/ERGM_PROVENANCE.md"} for the full licensing and
+provenance account, and {browse "docs/ERGM_STATNET_STUDY.md"} for the architecture study this
+implementation is based on.
 
 {title:Simulation}
 
@@ -365,7 +400,8 @@ described above. {cmd:nwergm} is not affiliated with or endorsed by the Statnet 
 {opt mcmcinterval(int)}
 {opt proposal(uniform|tnt)}
 {opt seed(int)}
-{opt generate(string)}]
+{opt generate(string)}
+{opt spcache}]
 
 {pstd}
 {cmd:nwergm simulate} draws one or more networks from a fully-specified ERGM (fixed
