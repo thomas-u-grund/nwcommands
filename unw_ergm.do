@@ -4781,6 +4781,172 @@ real rowvector ergm_spectral0_ar(real matrix D){
 	return(out)
 }
 
+/*
+	Harmonisation unit 144: formal MCMC convergence diagnostics - the
+	Geweke (1992) z-score and the Heidelberger-Welch (1983) stationarity/
+	halfwidth test, the two `coda`-package tests behind R ergm's own
+	`mcmc.diagnostics()`. Ported directly from `coda`'s real current
+	source (`coda::geweke.diag`/`coda::heidel.diag`/`coda:::pcramer`,
+	coda 0.19.4.1, fetched and read directly from a local R install, not
+	from memory) rather than re-derived from a textbook description -
+	`ergm_spec0_scalar()` below reuses this file's own already-certified
+	AR(p) Yule-Walker spectral-density-at-0 estimator (`ergm_ar_yw_infl()`,
+	unit 86) for exactly the role `coda::spectrum0.ar()` plays in both
+	real functions, rather than a second, independent implementation.
+
+	Heidelberger-Welch's own stationarity test needs `pcramer()`, the
+	Cramer-von-Mises CDF, which `coda` itself evaluates via a modified
+	Bessel function of the second kind at a NON-integer order (1/4) -
+	genuinely nontrivial numerically (no closed form, and the standard
+	reflection-formula route via ordinary Bessel I functions loses
+	precision to catastrophic cancellation at the statistic's own typical
+	range), with no existing infrastructure anywhere in this package.
+	Rather than build and separately certify a general Bessel-K routine
+	for a single narrow use, the test is instead evaluated the classical
+	way (Schruben 1982; this is how Heidelberger-Welch's OWN original
+	paper and most pre-`coda` implementations present it): compare the
+	Cramer-von-Mises test statistic directly against a FIXED critical
+	value at a chosen significance level, rather than compute a
+	continuous p-value. `pcramer()` is still the source of truth for
+	those critical values - each one below was solved for directly via
+	`uniroot()` ON coda's own real `pcramer()` (i.e. "the q such that
+	pcramer(q) = 1-pvalue"), not recalled from a table:
+		pvalue=0.10 -> 0.3473049202 (pcramer check 0.9000000000)
+		pvalue=0.05 -> 0.4613612936 (pcramer check 0.9500000000)
+		pvalue=0.025 -> 0.5806146822 (pcramer check 0.9750000000)
+		pvalue=0.01 -> 0.7434593138 (pcramer check 0.9900000000)
+	This makes the resulting pass/fail decision EXACTLY equivalent to
+	coda's own `pcramer(I) < 1-pvalue` test at each of these four
+	standard levels (pcramer is a monotonic CDF, so comparing the
+	statistic to its own inverse at the target level is identical to
+	comparing the CDF value to the level directly) - `nwergm_estat.ado`'s
+	own `pvalue()` option is restricted to these four values for exactly
+	this reason, not an arbitrary continuous threshold.
+*/
+real scalar ergm_spec0_scalar(real colvector xcentered){
+	real scalar n, pmax, gamma0
+
+	n = rows(xcentered)
+	pmax = floor(min((n-1, 10*log10(n))))
+	if (pmax > 50) pmax = 50
+	if (pmax < 1) pmax = 1
+	gamma0 = variance(xcentered) * (n-1) / n
+	return(ergm_ar_yw_infl(xcentered, pmax) * gamma0)
+}
+
+// Geweke (1992) z-score: compares the mean of the first `frac1' of the
+// chain against the mean of the last `frac2' (coda's own defaults,
+// 0.1/0.5, are the only ones exposed here - matching R ergm's own
+// mcmc.diagnostics() call, which never varies them either), each mean's
+// own sampling variance corrected for autocorrelation via
+// ergm_spec0_scalar()/niter. z ~ N(0,1) under H0 (both segments share
+// the same mean, i.e. the chain has converged); |z| large rejects it.
+// Index arithmetic matches coda::geweke.diag's own ceiling/floor
+// convention exactly (verified directly against real coda 0.19.4.1 -
+// see cscripts/test_nwergm_mcmcdiag.do).
+real rowvector ergm_geweke_z(real matrix samp){
+	real scalar n, ncol, k, idx1end, idx2start, m1, m2, v1, v2
+	real matrix seg1, seg2
+	real rowvector out
+
+	n = rows(samp)
+	ncol = cols(samp)
+	idx1end = ceil(1 + 0.1*(n-1))
+	idx2start = floor(n - 0.5*(n-1))
+	seg1 = samp[1::idx1end, .]
+	seg2 = samp[idx2start::n, .]
+
+	out = J(1, ncol, .)
+	for (k=1; k<=ncol; k++) {
+		m1 = mean(seg1[.,k])
+		m2 = mean(seg2[.,k])
+		v1 = ergm_spec0_scalar(seg1[.,k] :- m1) / rows(seg1)
+		v2 = ergm_spec0_scalar(seg2[.,k] :- m2) / rows(seg2)
+		out[k] = (m1 - m2) / sqrt(v1 + v2)
+	}
+	return(out)
+}
+
+// Heidelberger-Welch (1983) stationarity + halfwidth test, ported from
+// coda::heidel.diag - see this section's own header comment for the
+// pcramer()/critical-value substitution. `critval' is the caller-
+// resolved Cramer-von-Mises critical value for the requested pvalue()
+// (nwergm_estat.ado's own job, from the fixed 4-level table above);
+// `eps' is coda's own halfwidth relative-tolerance parameter (default
+// 0.1, exposed as-is). Returns one row per column of `samp':
+//   col 1: stest      (1 = stationarity test passed, 0 = failed)
+//   col 2: start      (1-based iteration the passing window began at;
+//                       missing if stest failed)
+//   col 3: teststat   (the retained window's own Cramer-von-Mises I -
+//                       coda's own continuous p-value replaced by this
+//                       raw statistic, per the header comment above)
+//   col 4: htest      (1 = halfwidth test passed, 0 = failed, missing
+//                       if stest itself failed - coda's own convention)
+//   col 5: mean       (retained window's own mean)
+//   col 6: halfwidth  (retained window's own 95% CI halfwidth)
+real matrix ergm_heidel_diag(real matrix samp, real scalar critval, real scalar eps){
+	real scalar n, ncol, j, i, nstart, s, nn, ybar, I, converged, S0, S0ci, halfwidth, passed_hw, half_start, step, cur
+	real colvector col, Ytrim, B, Bsq, svec
+	real matrix out
+
+	n = rows(samp)
+	ncol = cols(samp)
+	out = J(ncol, 6, .)
+
+	// coda's own start.vec = seq(from=1, to=n/2, by=n/10) - ten
+	// candidate trim points, each an increasingly aggressive discard of
+	// the chain's own early portion, tried in order until one passes.
+	step = n/10
+	svec = J(0,1,0)
+	cur = 1
+	while (cur <= n/2 + 1e-9) {
+		svec = svec \ ceil(cur)
+		cur = cur + step
+	}
+
+	for (j=1; j<=ncol; j++) {
+		col = samp[.,j]
+		half_start = ceil(n/2)
+		S0 = ergm_spec0_scalar(col[half_start::n] :- mean(col[half_start::n]))
+
+		converged = 0
+		I = .
+		nstart = .
+		Ytrim = col
+		for (i=1; i<=rows(svec); i++) {
+			s = svec[i]
+			if (s < 1) s = 1
+			if (s > n) continue
+			Ytrim = col[s::n]
+			nn = rows(Ytrim)
+			ybar = mean(Ytrim)
+			B = runningsum(Ytrim) :- ybar*(1::nn)
+			Bsq = (B:*B) :/ (nn * S0)
+			I = sum(Bsq)/nn
+			nstart = s
+			if (I < . & I < critval) {
+				converged = 1
+				break
+			}
+		}
+
+		S0ci = ergm_spec0_scalar(Ytrim :- mean(Ytrim))
+		ybar = mean(Ytrim)
+		halfwidth = 1.96 * sqrt(S0ci / rows(Ytrim))
+		passed_hw = (halfwidth < .) & (abs(halfwidth/ybar) <= eps)
+
+		out[j,1] = converged
+		out[j,3] = I
+		if (converged) {
+			out[j,2] = nstart
+			out[j,4] = passed_hw
+			out[j,5] = ybar
+			out[j,6] = halfwidth
+		}
+	}
+	return(out)
+}
+
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize, pointer(real rowvector function) scalar proposalfn,
