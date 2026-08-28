@@ -235,6 +235,51 @@ real scalar ErgmGraph::degree_total(real scalar i){
 }
 
 /*
+	Harmonisation unit 145: the safe, data-driven per-count-basis upper
+	bound the curved-MPLE registration sites in nwergm.ado use in place
+	of the theoretical worst case (`nodes-2`/`nodes-1`) - see
+	ErgmCurvedMPLEFit()'s own header comment (below) for why the
+	registered basis width matters so much for curved-MPLE performance,
+	and docs/CERTIFICATION.md unit 145 for the real-network profiling
+	that motivated this (a 418-node network's own true maximum
+	edgewise-shared-partner value was 10, not the 416 the unconditional
+	`nodes-2` bound registered).
+
+	`mode' selects which degree notion bounds the caller's own curved
+	term: `"total"' for the shared-partner-count family (gwespfree()/
+	gwdspfree() - a toggled or hypothetically-toggled dyad's own
+	shared-partner count is |N(i) intersect N(j)|, never exceeding
+	min(deg(i),deg(j)), so the network's own overall MAXIMUM total
+	degree is a safe - if not perfectly tight - upper bound across every
+	dyad); `"out"'/`"in"' for the directed degree-count family
+	(gwodegreefree()/gwidegreefree() - a single dyad toggle changes
+	exactly one node's own out-/in-degree by +-1, so the highest
+	reachable value across every dyad's own change statistic is that
+	network's own current maximum out-/in-degree, PLUS ONE for the
+	toggle-on case, added by the caller, not here - matching
+	gwdegreefree()'s own undirected "total" case, which needs the same
+	+1 treatment at its own call site). Always O(n) - one pass over
+	every node's own already-materialized degree - not the true tightest
+	possible bound (that would need an O(sum deg^2) common-neighbor scan
+	for the shared-partner family specifically), a deliberate, safe,
+	cheap-to-certify simplification: NEVER too tight (so never wrong),
+	simply not always the smallest correct answer.
+*/
+real scalar ergm_graph_maxdegree(class ErgmGraph scalar G, string scalar mode){
+	real scalar n, i, best, d
+
+	n = G.n
+	best = 0
+	for (i=1; i<=n; i++) {
+		if (mode == "out") d = G.degree_out(i)
+		else if (mode == "in") d = G.degree_in(i)
+		else d = G.degree_total(i)
+		if (d > best) best = d
+	}
+	return(best)
+}
+
+/*
 	Number of nodes k that are neighbors of BOTH i and j (undirected
 	sense: k s.t. has_edge(i,k) and has_edge(j,k)) - the "shared
 	partner" count GWESP needs. Iterates whichever of i/j has the

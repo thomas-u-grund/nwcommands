@@ -1476,7 +1476,21 @@ program nwergm, eclass
 	// term's own theta position" accessor.
 	if "`gwespfree'" != "" {
 		confirm number `gwespfree'
-		local __ergm_curved_maxd = `nodes' - 2
+		// Harmonisation unit 145: `nodes-2' is the theoretical worst
+		// case (every dyad, on a maximally clustered network, shares
+		// partners with every other node) - real networks fall far
+		// short of it, and the curved-MPLE Newton-Raphson loop's own
+		// cost scales with the SQUARE of this per-count basis width
+		// (docs/CERTIFICATION.md unit 145's own profiling: a 418-node
+		// real network registered 416 columns for a true maximum
+		// edgewise-shared-partner value of 10). No dyad's own
+		// shared-partner count can exceed the network's own current
+		// maximum total degree (a shared partner of dyad (i,j) is a
+		// common neighbor, bounded by min(deg(i),deg(j))) - a safe,
+		// O(n), always-correct-if-not-always-tightest bound
+		// (ergm_graph_maxdegree(), unw_ergm.do).
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwespfree
 		mata: `__td_gwespfree' = ErgmTermData()
 		mata: `__td_gwespfree'.levels = (1..`__ergm_curved_maxd')'
@@ -1510,7 +1524,15 @@ program nwergm, eclass
 	// documents at its own registration site.
 	if "`gwdegreefree'" != "" {
 		confirm number `gwdegreefree'
-		local __ergm_curved_maxd = `nodes' - 1
+		// Harmonisation unit 145: same rationale as gwespfree()'s own
+		// registration site above - a single dyad toggle changes
+		// exactly one node's own degree by +-1, so no dyad's change
+		// statistic can ever touch a degree value above the network's
+		// own current maximum degree PLUS ONE (the toggle-on case) -
+		// tighter than the theoretical `nodes-1' worst case on any real
+		// network that is not itself nearly complete.
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
 		tempname __td_gwdegreefree
 		mata: `__td_gwdegreefree' = ErgmTermData()
 		mata: `__td_gwdegreefree'.levels = (1..`__ergm_curved_maxd')'
@@ -1527,7 +1549,12 @@ program nwergm, eclass
 	// (reusing stat_dsp()/change_dsp() directly).
 	if "`gwdspfree'" != "" {
 		confirm number `gwdspfree'
-		local __ergm_curved_maxd = `nodes' - 2
+		// Harmonisation unit 145: same shared-partner-count bound as
+		// gwespfree()'s own registration site above (DSP is the
+		// identical common-neighbor concept, evaluated over every dyad
+		// rather than only tied ones).
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwdspfree
 		mata: `__td_gwdspfree' = ErgmTermData()
 		mata: `__td_gwdspfree'.levels = (1..`__ergm_curved_maxd')'
@@ -1545,7 +1572,12 @@ program nwergm, eclass
 	// stat_idegree()/change_idegree() directly).
 	if "`gwodegreefree'" != "" {
 		confirm number `gwodegreefree'
-		local __ergm_curved_maxd = `nodes' - 1
+		// Harmonisation unit 145: same rationale as gwdegreefree()'s
+		// own registration site above, bounded by out-degree (the
+		// direction this term's own change statistic actually touches)
+		// rather than total degree.
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "out")))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
 		tempname __td_gwodegreefree
 		mata: `__td_gwodegreefree' = ErgmTermData()
 		mata: `__td_gwodegreefree'.levels = (1..`__ergm_curved_maxd')'
@@ -1559,7 +1591,9 @@ program nwergm, eclass
 	}
 	if "`gwidegreefree'" != "" {
 		confirm number `gwidegreefree'
-		local __ergm_curved_maxd = `nodes' - 1
+		// Harmonisation unit 145: same rationale, bounded by in-degree.
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "in")))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
 		tempname __td_gwidegreefree
 		mata: `__td_gwidegreefree' = ErgmTermData()
 		mata: `__td_gwidegreefree'.levels = (1..`__ergm_curved_maxd')'
