@@ -231,3 +231,163 @@ mata: mata drop __spcmat_nocache __spcmat_cache
 
 assert "`__spc_ties_nocache'" == "`__spc_ties_cache'"
 di "=== spcache (simulate path): runs cleanly and reproduces identical draws under the same seed ==="
+
+* =====================================================================
+* Harmonisation unit 142: closing a real test-coverage gap left by the
+* full term-library-parity extension above (shipped separately, commit
+* 6d34c04 "nwergm simulate: full term-library parity with estimation" -
+* that commit's own message reports "all ~30 term options individually
+* smoke-tested end to end", but only a handful of them (nodematch,
+* degree, sender/receiver, edgecov, plus the combo/spcache cases above)
+* were ever captured as a PERMANENT regression test in this file; the
+* rest were a one-off, uncommitted smoke test, so a future regression in
+* any of them would go undetected). Every option below is exercised for
+* the first time in this file: nodecov()/nodeicov()/nodeocov()/
+* absdist()/hamming() (covariate/dyadic families beyond nodematch()/
+* edgecov()), nodematchdiff()/nodefactor()/nodemix()/nodeofactor()/
+* nodeifactor() (multi-coefficient node-covariate families - also
+* exercises theta() ordering across several such terms in one call),
+* concurrent/triangle/ctriple/transitiveties/cyclicalties (structural
+* flags), odegree()/idegree()/kstar()/ostar()/istar()/degrange()/
+* odegrange()/idegrange()/esp()/dsp() (numlist-parameterized structural
+* terms), gwdsp()/gwnsp()/gwdegree()/gwodegree()/gwidegree() (the
+* remaining geometrically weighted family members - gwesp() alone was
+* covered above), and type() (directed shared-partner definition
+* selection, previously untested on the simulate path entirely).
+* =====================================================================
+
+* --- undirected node/dyadic covariates: nodecov(), absdist(), hamming().
+nwclear
+clear
+set obs 8
+gen x = _n
+set seed 6001
+qui nwrandom 8, prob(.3) undirected name(refnet3)
+set seed 6002
+qui nwergm simulate 8, edges nodecov(x) absdist(x) hamming(refnet3) theta(-2 .1 .1 .2) nsim(1) mcmcburnin(3000) generate(covsim1)
+qui nw_syntax covsim1, max(1)
+assert `nodes' == 8
+assert "`directed'" == "false"
+
+* --- directed node covariates: nodeicov(), nodeocov().
+nwclear
+clear
+set obs 8
+gen x = _n
+set seed 6003
+qui nwergm simulate 8, edges nodeicov(x) nodeocov(x) directed theta(-2 .1 .1) nsim(1) mcmcburnin(3000) generate(covsim2)
+qui nw_syntax covsim2, max(1)
+assert `nodes' == 8
+assert "`directed'" == "true"
+
+* --- multi-coefficient node-covariate families combined in one call:
+* nodematchdiff() (2 coefficients, one per level of `grp'),
+* nodefactor() (1 coefficient, base level dropped), nodemix() (3
+* coefficients, one per unordered level pair) - exercises theta()
+* ordering across several multi-coefficient terms at once, not just a
+* single-coefficient term after a multi-coefficient one (the combosim
+* case above only combined single-coefficient terms).
+nwclear
+clear
+set obs 10
+gen grp = mod(_n,2)
+set seed 6004
+qui nwergm simulate 10, edges nodematchdiff(grp) nodefactor(grp) nodemix(grp) ///
+	theta(-1.5 .5 -.5 .3 .1 .2 .1) nsim(1) mcmcburnin(3000) generate(covsim3)
+qui nw_syntax covsim3, max(1)
+assert `nodes' == 10
+assert "`directed'" == "false"
+
+* --- directed analogues: nodeofactor()/nodeifactor().
+nwclear
+clear
+set obs 10
+gen grp = mod(_n,2)
+set seed 6005
+qui nwergm simulate 10, edges nodeofactor(grp) nodeifactor(grp) directed ///
+	theta(-1.5 .3 .3) nsim(1) mcmcburnin(3000) generate(covsim4)
+qui nw_syntax covsim4, max(1)
+assert `nodes' == 10
+assert "`directed'" == "true"
+
+* --- undirected structural flags/numlist terms: concurrent, triangle,
+* kstar(), degrange(), esp(), dsp().
+nwclear
+set seed 6006
+qui nwergm simulate 10, edges concurrent triangle kstar(2) degrange(2) esp(1) dsp(1) ///
+	theta(-1.5 .3 .1 .1 .1 .1 .1) nsim(1) mcmcburnin(3000) generate(strucsim1)
+qui nw_syntax strucsim1, max(1)
+assert `nodes' == 10
+assert "`directed'" == "false"
+
+* --- directed structural flags/numlist terms: ctriple, transitiveties,
+* cyclicalties, odegree(), idegree(), ostar(), istar(), odegrange(),
+* idegrange().
+nwclear
+set seed 6007
+qui nwergm simulate 8, edges ctriple transitiveties cyclicalties odegree(2) idegree(2) ///
+	ostar(2) istar(2) odegrange(2) idegrange(2) directed ///
+	theta(-1.5 .1 .1 .1 .3 .3 .1 .1 .3 .3) nsim(1) mcmcburnin(3000) generate(strucsim2)
+qui nw_syntax strucsim2, max(1)
+assert `nodes' == 8
+assert "`directed'" == "true"
+
+* --- remaining geometrically weighted family: gwdsp(), gwnsp(),
+* gwdegree() (undirected); gwodegree()/gwidegree() (directed) - gwesp()
+* itself is already covered by the two gwsim/dgwsim cases above.
+nwclear
+set seed 6008
+qui nwergm simulate 8, edges gwdsp(.4) gwnsp(.3) gwdegree(.5) theta(-1.5 .2 .2 .3) ///
+	nsim(1) mcmcburnin(3000) generate(gwrest1)
+qui nw_syntax gwrest1, max(1)
+assert `nodes' == 8
+assert "`directed'" == "false"
+
+nwclear
+set seed 6009
+qui nwergm simulate 8, edges gwodegree(.4) gwidegree(.3) directed theta(-1.5 .3 .3) ///
+	nsim(1) mcmcburnin(3000) generate(gwrest2)
+qui nw_syntax gwrest2, max(1)
+assert `nodes' == 8
+assert "`directed'" == "true"
+
+* --- type(): selects among the five directed shared-partner definitions
+* for gwesp()/gwdsp()/gwnsp()/esp()/dsp() - only ever exercised on the
+* estimation path (cscripts/test_nwergm_ado.do) before this. Confirms
+* each of the four non-default types is accepted end to end on the
+* simulate path too, and that the resulting draw differs from the OTP
+* default under the same seed/theta (a genuine correctness signal that
+* type() actually changes which shared-partner definition the sampler
+* evaluates, not silently ignored - OTP and ITP are literal transposes
+* of each other's own two-path direction, so a run with real triadic
+* structure should not coincidentally land on an identical draw).
+nwclear
+set seed 6010
+qui nwergm simulate 8, edges gwesp(.6) directed theta(-1.2 .5) nsim(1) mcmcburnin(3000) generate(typesim_otp)
+qui nwtomata typesim_otp, mat(__typemat_otp)
+
+local __ergm_type_diff_found = 0
+foreach __ergm_ty in ITP OSP ISP RTP {
+	nwclear
+	set seed 6010
+	qui nwergm simulate 8, edges gwesp(.6) directed type(`__ergm_ty') theta(-1.2 .5) nsim(1) mcmcburnin(3000) generate(typesim_`__ergm_ty')
+	qui nw_syntax typesim_`__ergm_ty', max(1)
+	assert `nodes' == 8
+	assert "`directed'" == "true"
+	qui nwtomata typesim_`__ergm_ty', mat(__typemat_`__ergm_ty')
+	mata: st_local("__typediff", strofreal(max(abs(__typemat_otp - __typemat_`__ergm_ty'))))
+	if `__typediff' > 0 local __ergm_type_diff_found = 1
+	mata: mata drop __typemat_`__ergm_ty'
+}
+mata: mata drop __typemat_otp
+* At least one of the four non-default types must produce a genuinely
+* different draw from the OTP default under the identical seed/theta -
+* a real signal that `type()' is actually reaching the sampler's own
+* change-statistic evaluation, not silently ignored (each type's own
+* gwesp change function evaluates a structurally different shared-
+* partner count, so identical RNG draws under every single type would
+* indicate `type()' was never wired through at all).
+assert `__ergm_type_diff_found' == 1
+di "=== type() accepted, and produces genuinely different draws (not just accepted syntax) under OTP/ITP/OSP/ISP/RTP on the simulate path ==="
+
+di "=== nwergm simulate: full-term-library regression coverage complete (harmonisation unit 142) ==="
