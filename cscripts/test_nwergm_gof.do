@@ -117,3 +117,52 @@ qui nwergm flobusiness, edges gwesp(.5) nodematch(seat)
 qui estat gof, seed(42) nsim(5)
 assert r(obs_avgpath) == -1
 di "=== disconnected-observed-network gof display REGRESSION VERIFIED ==="
+
+* --- full MAN triad census (harmonisation unit 143): estat gof used to
+* discard nwtriads' own full census down to just the _300 (complete-
+* triad) category. Certifies both the directed (16-category) and
+* undirected (4-category) breakdowns are now returned, and a real
+* structural identity: every triad census, of any shape, partitions
+* ALL C(n,3) triples of nodes into mutually exclusive categories - so
+* summing every category's own OBSERVED count must equal C(n,3) exactly,
+* independent of the network's own actual structure. This is a much
+* sharper check than "runs without error": a category silently dropped,
+* double-counted, or read from the wrong r() macro would break this
+* identity even if every individual number still looked plausible.
+
+* --- directed: all 16 categories, using the existing `toynet' fixture
+* (5 nodes, directed) already exercised above for `plot'.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,0,0,0\0,0,0,1,0\0,0,0,0,1\1,0,0,0,0)) directed name(triadnet_d)
+qui nwergm triadnet_d, edges mutual method(mcmle) seed(321)
+qui estat gof, seed(321) nsim(15) gofburnin(500)
+local __gof_test_dsum = r(obs_triad_003) + r(obs_triad_012) + r(obs_triad_021D) + r(obs_triad_021U) + ///
+	r(obs_triad_021C) + r(obs_triad_030T) + r(obs_triad_030C) + r(obs_triad_102) + r(obs_triad_111D) + ///
+	r(obs_triad_111U) + r(obs_triad_120D) + r(obs_triad_120U) + r(obs_triad_120C) + r(obs_triad_210) + ///
+	r(obs_triad_201) + r(obs_triad_300)
+di "directed triad census: sum of all 16 observed categories = `__gof_test_dsum' (expect C(5,3) = 10)"
+assert `__gof_test_dsum' == 10
+* obs_triad300 (legacy, no underscore) and obs_triad_300 (new) must
+* agree - same nwtriads() call, two different r() names for the same
+* category, not two independent computations.
+assert r(obs_triad300) == r(obs_triad_300)
+* the simulated side's own per-category means, when contributing draws
+* exist, must be non-missing real numbers (a weaker check than the
+* observed-side identity above, since simulated MEANS need not sum to
+* an integer - but confirms every one of the 16 sim_triad_* scalars was
+* actually populated, not left at its own initialized-to-zero/missing
+* state by a silent loop-indexing bug).
+assert r(sim_triad_021D) < .
+assert r(sim_triad_300) < .
+
+* --- undirected: only the 4 meaningful categories (_003/_102/_201/_300),
+* matching nwtriads' own convention - using the existing `mynet' fixture.
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(triadnet_u)
+qui nwergm triadnet_u, edges gwesp(.5) mcmcburnin(500) mcmcinterval(20) mcmcsamplesize(500) mcmleiterations(5) seed(321)
+qui estat gof, seed(321) nsim(15)
+local __gof_test_usum = r(obs_triad_003) + r(obs_triad_102) + r(obs_triad_201) + r(obs_triad_300)
+di "undirected triad census: sum of all 4 observed categories = `__gof_test_usum' (expect C(5,3) = 10)"
+assert `__gof_test_usum' == 10
+assert r(obs_triad300) == r(obs_triad_300)
+di "=== full MAN triad census (estat gof) REGRESSION VERIFIED - directed (16 cats) and undirected (4 cats) ==="

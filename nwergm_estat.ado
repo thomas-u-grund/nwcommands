@@ -60,11 +60,24 @@ acceptable. {opt name()} sets the combined graph's name; default {cmd:mcmcdiag}.
 {cmd:estat gof} compares the fitted model's own simulated networks against the network
 {cmd:nwergm} was fitted on, on three dimensions computed via this package's own existing
 commands rather than duplicating their algorithms: mean degree (arithmetic), average geodesic
-distance ({helpb nwgeodesic}), and the count of complete (3-edge) triads ({helpb nwtriads}).
+distance ({helpb nwgeodesic}), and the full MAN triad census ({helpb nwtriads}).
 {opt nsim()} simulated networks are drawn by continuing the Markov chain from wherever
 {cmd:nwergm}'s own fit left it (for {opt method(mcmle)}) or from the observed network itself
 (for {opt method(mple)}, which never runs MCMC during estimation), recording one snapshot every
 {opt gofinterval()} steps.
+
+{pstd}
+{bf:Triad census.} The summary table's own "Complete triads" row is joined by a full breakdown,
+one row per MAN triad type, exactly matching {helpb nwtriads}'s own category set for the
+network's directedness: on a {bf:directed} network, all 16 types ({bf:003}, {bf:012}, {bf:021D},
+{bf:021U}, {bf:021C}, {bf:030T}, {bf:030C}, {bf:102}, {bf:111D}, {bf:111U}, {bf:120D}, {bf:120U},
+{bf:120C}, {bf:210}, {bf:201}, {bf:300}); on an {bf:undirected} network, only the four types a
+0/1/2/3-tie triad can actually be ({bf:003}, {bf:102}, {bf:201}, {bf:300} - the remaining 12
+directed-only types are structurally forced to 0 and omitted, matching {cmd:nwtriads}'s own
+convention). Each row is an observed COUNT vs. a simulated MEAN COUNT (not a proportion), summed
+in {cmd:nwtriads}'s own MAN classification directly - the same simulated draws and the same
+disconnected/zero-tie-network defenses ({opt capture} around each draw's own {cmd:nwtriads} call)
+already used for the plain "Complete triads" row above it.
 
 {pstd}
 {bf:This is a BASIC check, not a formal test.} A large, systematic gap between the Observed and
@@ -119,6 +132,9 @@ combined graph's name; default {cmd:gof}.
 	  {bf:r(sim_avgpath)}		simulated average geodesic distance (missing if every draw was disconnected)
 	  {bf:r(obs_triad300)}		observed complete-triad count
 	  {bf:r(sim_triad300)}		simulated complete-triad count, averaged over contributing draws
+	  {bf:r(obs_triad{it:XXX})}	observed count for MAN triad type {it:XXX} (one per {helpb nwtriads} category
+	                    for the network's directedness - e.g. {bf:r(obs_triad_021D)}, {bf:r(obs_triad_300)})
+	  {bf:r(sim_triad{it:XXX})}	simulated mean count for MAN triad type {it:XXX}, averaged over contributing draws
 
 {title:See also}
 
@@ -346,12 +362,31 @@ program define nwergm_estat_gof, rclass
 	// empty/near-empty draw is a real possibility during MCMC) rather
 	// than fixed, since it is out of this subsystem's own scope; see
 	// docs/CERTIFICATION.md's Pending list for the full disclosure.
+	// Full MAN triad census (harmonisation unit 143): nwtriads already
+	// computes every category in one call - the census was previously
+	// discarded down to its own single _300 (complete-triad) category.
+	// `__gof_triadcats' matches nwtriads.ado's own directed-vs-undirected
+	// convention exactly (its own header note: on an undirected network
+	// 12 of the 16 categories are structurally forced to 0, so only
+	// _003/_102/_201/_300 are meaningful there).
+	if "`edirected'" == "true" {
+		local __gof_triadcats "_003 _012 _021D _021U _021C _030T _030C _102 _111D _111U _120D _120U _120C _210 _201 _300"
+	}
+	else {
+		local __gof_triadcats "_003 _102 _201 _300"
+	}
 	capture qui nwtriads _nwergm_gofobs
 	if _rc == 0 {
 		local obs_triad300 = r(_300)
+		foreach __gof_tc of local __gof_triadcats {
+			local obs_triad`__gof_tc' = r(`__gof_tc')
+		}
 	}
 	else {
 		local obs_triad300 = .
+		foreach __gof_tc of local __gof_triadcats {
+			local obs_triad`__gof_tc' = .
+		}
 	}
 	capture nwdrop _nwergm_gofobs
 	restore
@@ -373,6 +408,9 @@ program define nwergm_estat_gof, rclass
 	local __gof_sum_triad = 0
 	local __gof_path_ok = 0
 	local __gof_triad_ok = 0
+	foreach __gof_tc of local __gof_triadcats {
+		local __gof_sum_triad`__gof_tc' = 0
+	}
 
 	// BUGFIX: see the observed-side fix above for the full explanation -
 	// a literal matrix-expression string hits Stata's own command-line
@@ -412,6 +450,9 @@ program define nwergm_estat_gof, rclass
 		if _rc == 0 {
 			local __gof_sum_triad = `__gof_sum_triad' + r(_300)
 			local __gof_triad_ok = `__gof_triad_ok' + 1
+			foreach __gof_tc of local __gof_triadcats {
+				local __gof_sum_triad`__gof_tc' = `__gof_sum_triad`__gof_tc'' + r(`__gof_tc')
+			}
 		}
 	}
 	capture mata: mata drop `__gof_simmat'
@@ -430,6 +471,14 @@ program define nwergm_estat_gof, rclass
 	}
 	else {
 		local sim_triad300 = .
+	}
+	foreach __gof_tc of local __gof_triadcats {
+		if `__gof_triad_ok' > 0 {
+			local sim_triad`__gof_tc' = `__gof_sum_triad`__gof_tc'' / `__gof_triad_ok'
+		}
+		else {
+			local sim_triad`__gof_tc' = .
+		}
 	}
 
 	di
@@ -459,6 +508,31 @@ program define nwergm_estat_gof, rclass
 	}
 	di as txt "{hline 18}{c BT}{hline 14}{hline 14}"
 	di
+
+	// Full MAN triad census (harmonisation unit 143): the compact table
+	// above only ever showed the _300 (complete-triad) category; nwtriads
+	// already computes every category applicable to the network's
+	// directedness in the SAME call, so surfacing the rest costs nothing
+	// extra to compute - only to print and return. Directed networks get
+	// the real payoff here (16 genuinely distinct configurations, not
+	// just "how many closed triangles"); undirected networks get the 4
+	// categories nwtriads itself treats as meaningful there.
+	di as txt "Triad census (nwtriads MAN classification):"
+	di as txt "{hline 18}{c TT}{hline 14}{hline 14}"
+	di as txt %-18s "Type" "{c |}" %13s "Observed" %13s "Simulated"
+	di as txt "{hline 18}{c +}{hline 14}{hline 14}"
+	foreach __gof_tc of local __gof_triadcats {
+		local __gof_tclabel = subinstr("`__gof_tc'", "_", "", .)
+		if `sim_triad`__gof_tc'' < . {
+			di as txt %-18s "`__gof_tclabel'" "{c |}" as res %13.4f `obs_triad`__gof_tc'' %13.4f `sim_triad`__gof_tc''
+		}
+		else {
+			di as txt %-18s "`__gof_tclabel'" "{c |}" as res %13.4f `obs_triad`__gof_tc'' %13s "n/a"
+		}
+	}
+	di as txt "{hline 18}{c BT}{hline 14}{hline 14}"
+	di
+
 	di as txt "Note: this is a BASIC goodness-of-fit check - a large, systematic gap between the Observed and Simulated columns on any row is evidence against the fitted model; rough agreement is evidence for it, not proof. Only " `__gof_path_ok' " of " `nsim' " draws contributed to the geodesic average (excluded draws were disconnected) and " `__gof_triad_ok' " of " `nsim' " to the triad-census average (excluded draws hit a known, unrelated nwtriads.ado limitation on zero-tie networks)."
 
 	return scalar sim_meandeg = `sim_meandeg'
@@ -467,6 +541,10 @@ program define nwergm_estat_gof, rclass
 	return scalar obs_meandeg = `obs_meandeg'
 	return scalar obs_avgpath = `obs_avgpath'
 	return scalar obs_triad300 = `obs_triad300'
+	foreach __gof_tc of local __gof_triadcats {
+		return scalar obs_triad`__gof_tc' = `obs_triad`__gof_tc''
+		return scalar sim_triad`__gof_tc' = `sim_triad`__gof_tc''
+	}
 
 	if "`plot'" != "" {
 		if "`name'" == "" {
