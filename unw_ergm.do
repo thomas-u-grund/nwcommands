@@ -280,6 +280,70 @@ real scalar ergm_graph_maxdegree(class ErgmGraph scalar G, string scalar mode){
 }
 
 /*
+	The TRUE tightest per-count-basis bound for the shared-partner
+	curved-term family (gwespfree()/gwdspfree()) - the real maximum
+	edgewise-shared-partner value over any dyad in the network, not the
+	cheaper, structurally-safe-but-looser max_degree bound
+	ergm_graph_maxdegree() above provides (harmonisation unit 145's own
+	first pass). Computed via the IDENTICAL O(sum_i deg_i^2) algorithm
+	`ErgmGraph::enable_sp_cache()' already uses and this codebase already
+	certified there (for each node, every unordered pair of its own
+	neighbors shares that node as one common neighbor) - deliberately
+	NOT calling enable_sp_cache() itself, since that mutates the graph's
+	own persistent cache state (`sp_counts'/`sp_cache_enabled') for
+	later toggle-time maintenance, a real side effect this function has
+	no business causing at term-registration time; this is a one-time,
+	read-only snapshot maximum via a local, transient counter instead.
+	On `ecoli2' (harmonisation unit 145's own real-network motivation)
+	this returns 10, against ergm_graph_maxdegree()'s own 72 - a real,
+	further 7.2x reduction in the registered per-count basis width, and
+	up to that squared in the Newton-Raphson loop's own dominant
+	O(ncol^2) Fisher-information step.
+
+	CALLERS MUST ADD 1 to this function's own return value before using
+	it as a basis width, exactly as ergm_graph_maxdegree()'s own callers
+	already do for the degree-count family - a first version of this
+	function's caller omitted that +1 and broke a real certification
+	network (`estimates post: matrix has missing values' on the 15-node
+	network test_nwergm_ado.do uses to certify gwespfree() against R),
+	root-caused after reverting: THIS function correctly returns the
+	network's own CURRENT true maximum common-neighbor count, but a
+	single dyad's own toggle can raise a DIFFERENT, already-adjacent
+	dyad's shared-partner count by exactly one (toggling i-j on adds j
+	as a new common neighbor to every dyad (i,k) where k is already a
+	neighbor of j, and vice versa) - the same "+1 for what one toggle
+	can reach beyond the network's own current state" property
+	ergm_graph_maxdegree()'s own callers already account for, this
+	function's own callers must too.
+*/
+real scalar ergm_graph_max_shared_partners(class ErgmGraph scalar G){
+	real scalar n, i, j1, j2, m, best, cur
+	real rowvector nb
+	transmorphic scalar counts_aa
+
+	n = G.n
+	best = 0
+	counts_aa = asarray_create("real", 2)
+	for (i=1; i<=n; i++) {
+		nb = G.neighbors_out(i)
+		m = cols(nb)
+		for (j1=1; j1<=m-1; j1++) {
+			for (j2=j1+1; j2<=m; j2++) {
+				if (asarray_contains(counts_aa, (min((nb[j1],nb[j2])), max((nb[j1],nb[j2]))))) {
+					cur = asarray(counts_aa, (min((nb[j1],nb[j2])), max((nb[j1],nb[j2])))) + 1
+				}
+				else {
+					cur = 1
+				}
+				asarray(counts_aa, (min((nb[j1],nb[j2])), max((nb[j1],nb[j2]))), cur)
+				if (cur > best) best = cur
+			}
+		}
+	}
+	return(best)
+}
+
+/*
 	Number of nodes k that are neighbors of BOTH i and j (undirected
 	sense: k s.t. has_edge(i,k) and has_edge(j,k)) - the "shared
 	partner" count GWESP needs. Iterates whichever of i/j has the
