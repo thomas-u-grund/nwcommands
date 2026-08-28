@@ -4339,7 +4339,10 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 
 	rngseed = floor(runiform(1,1) * 2147483647)
 
-	argstr = strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
+	// mode=0: run the MCMC burnin+sampling loop (native/ergm_mcmc.c's
+	// own original, unchanged behavior) - see this file's own
+	// ErgmNativeBuildMPLEData() for mode=1 (harmonisation unit 145).
+	argstr = "0 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
 		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
 		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(p)
 	for (i=1; i<=p; i++) {
@@ -4375,6 +4378,117 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 
 	G.init(n, directed)
 	for (i=1; i<=rows(newties); i++) G.toggle(newties[i,1], newties[i,2])
+
+	return(out)
+}
+
+/*
+	Harmonisation unit 145: the native-backend counterpart to
+	ErgmModel::build_mple_data() - builds the SAME (ndyads x (p+1))
+	design matrix (p change_toward_one() columns, one observed-tie
+	response column), one pass over every dyad, but inside the compiled
+	C plugin (native/ergm_mcmc.c, mode=1) instead of a Mata-interpreted
+	double loop. Motivated directly by profiling on the SJ article's own
+	real `ecoli2' benchmark network: with the per-count design-matrix
+	width already brought down to its true tightest bound (this same
+	unit's own earlier passes), build_mple_data()'s own per-dyad Mata
+	loop - 87153 dyads, each a function-pointer call plus vector
+	allocation - became the dominant remaining cost (~88% of the total
+	curved-MPLE wall time), the same class of "Mata's own per-call
+	interpreter overhead, not an algorithmic property" finding that
+	originally motivated the native MCMC backend itself (unit 83's own
+	header comment, native/ergm_mcmc.c).
+
+	Callers MUST check ErgmNativeSetup()'s own return value first (it
+	populates M.native_termcodes/attridx/p1/p2/attrmat as a side effect,
+	the same as it already does for the MCMC path) - this function does
+	not re-derive eligibility itself, exactly mirroring
+	ErgmNativeSampleCore()'s own contract just above. Crucially,
+	ErgmNativeSetup()'s own existing per-level expansion loops (`for
+	(k=1; k<=M.npar[t]; k++) { pos++; termcodes[pos] = ...ESP...;
+	p1v[pos] = tdt.levels[k] }' for "esp"/"dsp", the identical pattern
+	for "degree"/"odegree"/"idegree") already handle a CURVED term's own
+	multi-level eta-space expansion with ZERO changes needed here or
+	there - a curved term is registered under the SAME plain term name
+	("esp" for gwespfree(), etc.) with MULTIPLE `levels', exactly like
+	the ordinary numlist-parameterized esp(2 3 4) option already native-
+	eligible before this unit; ErgmNativeSetup() has never needed to
+	know "curved" is a concept at all, and still doesn't.
+*/
+real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph scalar G){
+	real matrix ties, out, attrpad
+	real scalar n, directed, nties, p, nattr, ndyads, nobs_needed, i, __junk
+	string scalar origframe, argstr, cmd, outvarlist, attrvarlist, respvar
+	string rowvector outvarnames, attrvarnames
+
+	n = G.n
+	directed = G.directed
+	ties = G.all_ties()
+	nties = rows(ties)
+	p = cols(M.native_termcodes)
+	nattr = cols(M.native_attrmat)
+	ndyads = ergm_total_dyads(G)
+	nobs_needed = max((ndyads, n, 1))
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __ergm_native")
+	stata("frame create __ergm_native")
+	st_framecurrent("__ergm_native")
+
+	st_addobs(nobs_needed)
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+
+	attrvarlist = ""
+	attrvarnames = J(1, nattr, "")
+	for (i=1; i<=nattr; i++) {
+		attrvarnames[i] = "a" + strofreal(i)
+		__junk = st_addvar("double", attrvarnames[i])
+		attrvarlist = attrvarlist + " " + attrvarnames[i]
+	}
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+
+	if (nattr > 0) {
+		attrpad = M.native_attrmat
+		if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), nattr, 0)
+		st_store((1::n), attrvarnames, attrpad[1::n, .])
+	}
+
+	outvarlist = ""
+	outvarnames = J(1, p, "")
+	for (i=1; i<=p; i++) {
+		outvarnames[i] = "o" + strofreal(i)
+		__junk = st_addvar("double", outvarnames[i])
+		outvarlist = outvarlist + " " + outvarnames[i]
+	}
+	respvar = "resp"
+	__junk = st_addvar("double", respvar)
+
+	// mode=1, then the SAME field order/count ErgmNativeSampleCore()'s
+	// own argstr uses (samplesize/burnin/interval/proposal_code/rngseed/
+	// theta/obs are all unused on the mode=1 path in native/ergm_mcmc.c -
+	// sent as harmless placeholder zeros rather than a second, divergent
+	// wire format the C-side parser would need its own branch to read).
+	argstr = "1 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(p)
+	for (i=1; i<=p; i++) {
+		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+	}
+	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
+	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
+
+	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
+
+	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + outvarlist + " " + respvar + ", " +
+		char(34) + argstr + char(34)
+	stata(cmd)
+
+	out = st_data((1::ndyads), (outvarnames, respvar))
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __ergm_native")
 
 	return(out)
 }

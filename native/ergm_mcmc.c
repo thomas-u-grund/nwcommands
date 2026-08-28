@@ -1537,7 +1537,7 @@ static long next_long(void) {
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long n, directed, nties_in, samplesize, burnin, interval, proposal_code, nattr, nterms, i, k;
+	long mode, n, directed, nties_in, samplesize, burnin, interval, proposal_code, nattr, nterms, i, k;
 	unsigned long long rngseed;
 	int termcodes[MAXTERMS];
 	int attridx[MAXTERMS];
@@ -1558,7 +1558,20 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	argbuf = (char *)malloc(strlen(argv[0]) + 1);
 	strcpy(argbuf, argv[0]);
-	n             = (long)atof(strtok(argbuf, " \t"));
+	/* mode: 0 = run the MCMC burnin+sampling loop (original, unchanged
+	   behavior below); 1 = build the MPLE design matrix instead - one
+	   pass over every dyad, writing each slot's own change_toward_one()
+	   value plus the observed tie indicator, no MCMC at all (harmonisation
+	   unit 145, docs/CERTIFICATION.md - the same "build_mple_data()" role
+	   ErgmModel::build_mple_data() plays in unw_ergm.do, natively). Every
+	   OTHER field below is parsed identically in both modes (the parser
+	   itself never branches on mode) so the two modes cannot silently
+	   drift apart in how they read the wire - mode 1 simply does not use
+	   samplesize/burnin/interval/proposal_code/rngseed/theta/obs, which
+	   the Mata-side caller still sends as harmless placeholder zeros
+	   rather than requiring a second, divergent argstr format. */
+	mode          = (long)atof(strtok(argbuf, " \t"));
+	n             = next_long();
 	directed      = next_long();
 	nties_in      = next_long();
 	samplesize    = next_long();
@@ -1652,6 +1665,65 @@ STDLL stata_call(int argc, char *argv[]) {
 		SF_vdata(1, i, &vi);
 		SF_vdata(2, i, &vj);
 		toggle(&g, (long)vi, (long)vj);
+	}
+
+	if (mode == 1) {
+		/* Build the MPLE design matrix: one pass over every dyad (same
+		   ordering ErgmModel::build_mple_data() uses in unw_ergm.do -
+		   i=1..n, j=1..n, skip i==j, skip j<i for undirected - not that
+		   row order matters for fitting a logit design, but matching it
+		   keeps a direct row-by-row Mata-vs-native comparison possible
+		   during certification), writing each slot's own
+		   change_toward_one() value (the change statistic as if setting
+		   Y_ij=1, regardless of the dyad's own current state - the exact
+		   mirror-negation ErgmModel::change_toward_one() applies in Mata)
+		   plus the observed tie indicator as the response column, laid
+		   out immediately after the nterms change-statistic columns (at
+		   frame column 3+nattr+nterms - one more variable than the MCMC
+		   mode's own `plugin call' passes, see unw_ergm.do's
+		   ErgmNativeBuildMPLEData()). No MCMC, no RNG, no theta/obs use
+		   at all - burnin/interval/samplesize/proposal_code/rngseed are
+		   simply unused placeholders on this path. */
+		long pos = 1;
+		long respcol = 3 + nattr + nterms;
+		for (i = 1; i <= n; i++) {
+			long j;
+			for (j = 1; j <= n; j++) {
+				double delta, tied;
+				if (i == j) continue;
+				if (!directed && j < i) continue;
+				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
+				delta = tied ? -1.0 : 1.0;
+				for (k = 0; k < nterms; k++) {
+					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, i, j);
+					double chg_toward_one = tied ? -chg : chg;
+					SF_vstore((int)(3 + nattr + k), pos, chg_toward_one);
+				}
+				SF_vstore((int)respcol, pos, tied);
+				pos++;
+			}
+		}
+		SF_scal_save("__ergm_native_ndyads_out", (ST_double)(pos - 1));
+
+		for (k = 0; k < nattr; k++) free(attrs[k]);
+		free(g.deg);
+		free(g.outdeg); free(g.indeg);
+		ht_free(&g.ht);
+		free(g.elist_i); free(g.elist_j);
+		if (g.adj) {
+			for (i = 0; i <= n; i++) free(g.adj[i].nb);
+			free(g.adj);
+		}
+		if (g.outadj) {
+			for (i = 0; i <= n; i++) free(g.outadj[i].nb);
+			free(g.outadj);
+		}
+		if (g.inadj) {
+			for (i = 0; i <= n; i++) free(g.inadj[i].nb);
+			free(g.inadj);
+		}
+		return(0);
 	}
 
 	rng_seed(&rng, rngseed);

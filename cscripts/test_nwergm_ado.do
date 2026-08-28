@@ -296,8 +296,12 @@ assert _rc != 0
 
 * --- e(native) (harmonisation unit 92): 1 for a native-eligible MCMLE
 * model, 0 for an MCMLE model outside the native backend's current
-* scope, unset (missing) for an MPLE-only fit (native/Mata dispatch
-* never runs at all for MPLE - documented as "method(mcmle) only").
+* scope. Harmonisation unit 145 extended native routing to the MPLE
+* design-matrix build too (ErgmNativeBuildMPLEData()) - e(native) is
+* now ALWAYS set after an MPLE fit as well (1 if native was used to
+* build the design matrix, 0 if the model's own terms fell outside
+* native's coverage and Mata's build_mple_data() ran instead), not left
+* missing as it was before that unit.
 * Deliberately a genuinely ASYMMETRIC directed adjacency here, not the
 * package's usual symmetric hand-built network reused as directed
 * elsewhere in this file - a symmetric matrix loaded as directed makes
@@ -322,7 +326,30 @@ assert e(native) == 0
 qui nwergm unet10, edges hamming(refnet10)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
-assert missing(e(native))
+// hamming() needs an n x n matrix marshalled across the plugin
+// boundary - the one remaining gap native/ergm_mcmc.c's own header
+// comment documents - so this specific model falls back to Mata's
+// build_mple_data() even though it's an MPLE fit (unit 145).
+assert e(native) == 0
+
+* --- e(native) == 1 for an MPLE fit whose own terms ARE all native-
+* eligible (harmonisation unit 145): the design matrix itself is built
+* natively, bit-identical to Mata's own build_mple_data() (certified
+* directly - max(abs(D_native - D_mata)) == 0 on a real network, not
+* merely "close enough" the way a stochastic MCMC comparison must be,
+* since MPLE from a fixed design matrix is entirely deterministic).
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet11) labs(A,B,C,D,E)
+gen sex11 = .
+replace sex11 = 1 in 1
+replace sex11 = 1 in 2
+replace sex11 = 2 in 3
+replace sex11 = 2 in 4
+replace sex11 = 1 in 5
+qui nwergm unet11, edges nodematch(sex11) method(mple)
+assert _rc == 0
+assert e(native) == 1
+di "=== e(native) correctly reflects native-vs-Mata routing on the MPLE path (unit 145) ==="
 
 * moderate-severity pass, stat_models group: a fully edgeless (zero-tie)
 * network's MPLE fit - an outcome that never varies - used to crash
