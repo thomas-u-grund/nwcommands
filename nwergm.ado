@@ -1483,13 +1483,15 @@ program nwergm, eclass
 		// cost scales with the SQUARE of this per-count basis width
 		// (docs/CERTIFICATION.md unit 145's own profiling: a 418-node
 		// real network registered 416 columns for a true maximum
-		// edgewise-shared-partner value of 10). No dyad's own
-		// shared-partner count can exceed the network's own current
-		// maximum total degree (a shared partner of dyad (i,j) is a
-		// common neighbor, bounded by min(deg(i),deg(j))) - a safe,
-		// O(n), always-correct-if-not-always-tightest bound
-		// (ergm_graph_maxdegree(), unw_ergm.do).
-		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
+		// edgewise-shared-partner value of 10). Registered at the TRUE
+		// maximum reachable edgewise-shared-partner value across every
+		// dyad's own change statistic (ergm_graph_max_shared_partners(),
+		// unw_ergm.do, PLUS ONE - see that function's own header comment
+		// for why the +1 is required: a single dyad's toggle can raise
+		// a DIFFERENT, already-adjacent dyad's own shared-partner count
+		// by one, not just the toggled dyad's own value, so the network's
+		// current true maximum alone is not itself always reachable-safe).
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwespfree
 		mata: `__td_gwespfree' = ErgmTermData()
@@ -1549,11 +1551,12 @@ program nwergm, eclass
 	// (reusing stat_dsp()/change_dsp() directly).
 	if "`gwdspfree'" != "" {
 		confirm number `gwdspfree'
-		// Harmonisation unit 145: same shared-partner-count bound as
-		// gwespfree()'s own registration site above (DSP is the
-		// identical common-neighbor concept, evaluated over every dyad
-		// rather than only tied ones).
-		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
+		// Harmonisation unit 145: same TRUE shared-partner-count bound
+		// (plus one - see ergm_graph_max_shared_partners()'s own header
+		// comment) as gwespfree()'s own registration site above (DSP is
+		// the identical common-neighbor concept, evaluated over every
+		// dyad rather than only tied ones).
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwdspfree
 		mata: `__td_gwdspfree' = ErgmTermData()
