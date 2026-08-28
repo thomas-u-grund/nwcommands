@@ -230,19 +230,49 @@ program nwtoedge
 	}
 
 	// Handle attributes of nodes
+	//
+	// BUGFIX: `fromfile'/`tofile' used to be built from every row of the
+	// active dataset, not just the rows that are actually live nodes of
+	// the network(s) just synced above. The shared dataset can carry
+	// leftover rows for a node no longer in `net' - most commonly right
+	// after nwdropnodes ..., generate() (which, by design, drops nodes
+	// from the network object without touching unrelated Stata rows
+	// unless attributes() is also given - see nwdropnodes.ado's own
+	// header note). Those leftover rows never match any `_ego'/`_alter'
+	// value get_edgelist() produced, so the merge m:n below (unmatched
+	// "using" observations are appended as new rows by default) silently
+	// added one phantom edgelist row per leftover node per egovars()/
+	// altervars() call - all five of _ego/_alter/net/from_*/to_* missing
+	// except the leftover node's own real attribute values. Confirmed
+	// directly: 48-node network (50-node usair with 2 nodes dropped via
+	// nwdropnodes ..., generate()), egovars(Lon Lat) altervars(Lon Lat)
+	// produced 2,308 rows instead of the correct 2,304 (48x48), the 4
+	// extra rows holding the two dropped nodes' own coordinates with
+	// _ego/_alter/tie value all missing.
+	//
+	// `_nwinclude' (this program's own `nw_included' local) is exactly
+	// the flag `nw_datasync' just generated for this purpose - 1 for a
+	// row that is a genuine current node of the network(s) just synced,
+	// 0 for a leftover row from some other network sharing the same
+	// dataset (nw_datasync.ado's own header documents this convention).
+	// Filtering on it here is a no-op whenever every row already is a
+	// live node (the ordinary case), so this changes nothing for any
+	// network that was never node-dropped.
 	qui if "`egovars'" != "" {
 		preserve
+		keep if `nw_included' == 1
 		tempfile fromfile
-		keep `nw_nodename' `egovars' 
+		keep `nw_nodename' `egovars'
 		foreach var of varlist `egovars' {
 			rename `var' `var'`ego'
 		}
 		save `fromfile'
 		restore
 	}
-	
+
 	qui if "`altervars'" != "" {
 		preserve
+		keep if `nw_included' == 1
 		tempfile tofile
 		keep `nw_nodename' `altervars'
 		foreach var of varlist `altervars' {
