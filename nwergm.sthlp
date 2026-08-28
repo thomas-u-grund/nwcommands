@@ -146,21 +146,20 @@ and used, during development only, to certify {cmd:nwergm}'s own independently-w
 implementation against real reference output; see {help nwergm##provenance:Provenance} below.
 
 {pstd}
-{cmd:nwergm} started as a deliberately small first release (a working extensible core - term
-registry, Metropolis-Hastings simulation with a genuine tie/no-tie proposal, maximum
-pseudolikelihood estimation, and Monte Carlo maximum likelihood estimation - with a small,
-carefully certified effect library) and has since grown considerably closer to parity with
-Statnet's own term surface: the current effect library covers the full node-covariate family,
-dyadic covariates, the geometrically weighted family (including directed shared-partner
-support), fixed shared-partner counts, the complete degree-distribution family, and directed
-triad-closure terms - see {help nwergm##limitations:Limitations} below for the complete current
-list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
-(bipartite) ERGMs, curved/free-decay estimation under {opt method(mcmle)}, and constraints
-beyond the free binary dyad space remain roadmap items, each a genuine architectural addition
-rather than another term to add - curved/free-decay estimation under {opt method(mple)} IS
-already supported (see {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
-{opt gwodegreefree()}/{opt gwidegreefree()} in the {cmd:Syntax} block above). See the package's
-own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
+{cmd:nwergm} implements a substantial, independently-certified core of Statnet's own {cmd:ergm}
+term surface and estimation machinery: a term registry, Metropolis-Hastings simulation with a
+genuine tie/no-tie proposal, maximum pseudolikelihood estimation, and Monte Carlo maximum
+likelihood estimation, backed by an effect library covering the full node-covariate family,
+dyadic covariates, the geometrically weighted family (including directed shared-partner support
+and curved/free-decay estimation under {opt method(mple)}), fixed shared-partner counts, the
+complete degree-distribution family, and directed triad-closure terms - see
+{help nwergm##limitations:Limitations} below for the complete current list. What still sets
+{cmd:nwergm} apart from full parity is scope, not term count: two-mode (bipartite) ERGMs, curved/
+free-decay estimation under {opt method(mcmle)} (curved MPLE is already supported - see
+{opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
+{opt gwidegreefree()} in the {cmd:Syntax} block above), and constraints beyond the free binary
+dyad space remain roadmap items, each a genuine architectural addition rather than another term
+to add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
@@ -476,3 +475,4 @@ matching {cmd:nwergm}'s own control conventions rather than continuing one long 
 
 	{help nwqap}, {help nwrandom}, {help nwcug}, {help nw_intro##limits:feasible network sizes}
 
+***/
