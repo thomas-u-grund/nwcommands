@@ -186,4 +186,34 @@ foreach v in x_ego x_alter same_x {
 	assert _rc == 0
 }
 
+* --- regression: egovars()/altervars() after nwdropnodes ..., generate()
+* used to leak phantom rows for the dropped nodes. nwdropnodes leaves
+* unrelated Stata rows untouched by design unless attributes() is also
+* given (see nwdropnodes.ado's own header note and its test file's
+* "shared dataset" comment) - so the dataset can legitimately hold more
+* rows than the shrunk network has nodes. fromfile/tofile used to be
+* built from every one of those rows regardless, and the leftover
+* dropped-node rows, never matching any real _ego/_alter value, got
+* appended as new all-missing-except-attributes rows by the plain
+* merge m:n below (Stata's default unmatched-"using" behavior) - one
+* phantom row per dropped node per egovars()/altervars() call. Fixed by
+* filtering fromfile/tofile on `_nwinclude' (nw_datasync's own node-
+* membership flag, already computed earlier in this same command) before
+* the merge. 5-node undirected network, drop 2 nodes (B, D): the
+* resulting 3-node undirected network's edgelist (upper triangle plus
+* diagonal, the default for an undirected network without `full') must
+* be exactly 3*4/2 = 6 rows, none of them referencing B or D, none of
+* them missing.
+nwclear
+nwset, mat((0,1,0,0,1\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\1,0,0,1,0)) name(dropnet) undirected labs(A,B,C,D,E)
+gen myx = _n * 10
+nwdropnodes dropnet, nodes(B D) generate(dropnet_small)
+nwtoedge dropnet_small, egovars(myx) altervars(myx)
+assert _N == 6
+count if missing(_ego) | missing(_alter)
+assert r(N) == 0
+count if inlist(_ego, "B", "D") | inlist(_alter, "B", "D")
+assert r(N) == 0
+di "=== nwtoedge/nwdropnodes phantom-row REGRESSION VERIFIED ==="
+
 
