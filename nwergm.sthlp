@@ -290,12 +290,20 @@ matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back t
 
 {pstd}
 Concretely, on direct head-to-head benchmarks against R's own {cmd:ergm} 4.12.0 (default
-settings on both sides, median of repeated runs): a 30-node directed {opt edges}+{opt mutual}
-model runs at roughly 1.1x R's own time; a 100-node directed
-{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 1.0x; a 100-node undirected
-{opt edges}+{opt gwesp()} model at roughly 1.3x; a 500-node sparse undirected
-{opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 1.7x; and a 1000-node directed
-{opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.5x - FASTER than R. On a real
+settings on both sides, median of 5 repeated runs): a 30-node directed {opt edges}+{opt mutual}
+model runs at roughly 1.15x R's own time; a 100-node directed
+{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 0.62x - FASTER than R; a 100-node
+undirected {opt edges}+{opt gwesp()} model at roughly 1.0x (essential parity); a 500-node sparse
+undirected {opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 0.9x - FASTER than R;
+a 1000-node directed {opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.6x -
+FASTER than R; and a 1000-node sparse undirected {opt edges}+{opt gwesp()}+{opt gwnsp()} model
+combining two shared-partner-family terms at once at roughly 1.0x (essential parity, median of
+3 runs each side). Mixing {opt gwesp()} with other term families continues to run at, or close
+to, parity too: a 1000-node sparse undirected {opt edges}+{opt gwesp()}+{opt nodefactor()}+
+{opt nodecov()} model at roughly 1.5x, and a 2000-node sparse directed model combining
+{opt mutual}+{opt nodematch()}+four degree-family terms at roughly 1.8x. Every one of these
+head-to-head figures sits within R's own "near parity" range (0.6x-1.8x); none is in
+double-digit-multiple territory. On a real
 published network (the {it:E. coli} transcriptional-regulation network of Salgado et al. 2001
 and Shen-Orr et al. 2002, 418 nodes, 519 edges, distributed with R's own {cmd:ergm} package as
 {cmd:data(ecoli)}), median of five runs each side: a fixed-decay
@@ -460,7 +468,7 @@ node-covariate family, then the structural/numlist family, then {opt sender}/{op
 then the dyadic-covariate family, then the geometrically weighted family - regardless of the
 order the options happen to be typed on the command line, since Stata's own option parsing does
 not preserve that order to begin with). A term that expands into several coefficients (e.g.
-{opt nodefactor()} with $k$ categories, or {opt degree(2 3 4)}) consumes that many consecutive
+{opt nodefactor()} with $ categories, or {opt degree(2 3 4)}) consumes that many consecutive
 entries from {opt theta()}, in the same left-to-right order its own levels/values are listed.
 There is no per-term coefficient sub-option, by design, so this exactly reuses the same
 term-construction code {cmd:nwergm}'s own estimation path uses rather than a parallel

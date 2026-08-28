@@ -48,32 +48,52 @@ mata:
    Mutates G in place (via G.toggle()) if a real alternative is drawn.
    Returns the chosen j (1..n), or 0 if "no change" was drawn - callers
    that don't need this (e.g. SaomSimulateInterval) can discard it.
+
+   `present' (harmonisation unit 33, composition change - "joiners and
+   leavers", Huisman and Snijders 2003; see docs/SAOM_ROADMAP.md's own
+   unit-33 entry for the full method/scope account) is an OPTIONAL
+   trailing n x 1 real colvector, 1/0 per actor - when supplied, an
+   ABSENT actor (present[j]==0) is never offered as an alternative j
+   (excluded from the choice set entirely, exactly as if it did not
+   exist for this ministep - matching real RSiena's own joiners/
+   leavers construction: an absent actor cannot be tied TO during its
+   own absence). Omitting `present' entirely (every pre-existing call
+   site) is IDENTICAL to passing an all-ones vector - a true no-op,
+   zero behavior change for any caller not yet updated for composition
+   change. Does NOT restrict which actor i itself may be i - callers
+   own that restriction (SaomSimulateInterval's own actor-draw step,
+   for the SAME reason: presence gates the RATE/opportunity, decided at
+   the caller level).
    =================================================================== */
 real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
-	real rowvector theta, real scalar i) {
+	real rowvector theta, real scalar i, | real colvector present) {
 
-	real scalar n, j, k, maxu, denom, draw, cum, choice
+	real scalar n, j, k, maxu, denom, draw, cum, choice, haspresent
 	real rowvector u
 	real rowvector chg
 
 	n = G.n
+	haspresent = (args() == 5)
 	u = J(1, n, 0)		// u[j] for j!=i; u[i] itself unused (self-toggle undefined)
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
+		if (haspresent) if (present[j] == 0) continue
 		chg = M.full_change(G, i, j)
 		u[j] = theta * chg'
 	}
 
-	// numerically stable softmax over {u[1..n excl. i], 0 for "stay"}
+	// numerically stable softmax over {u[1..n excl. i, excl. absent], 0 for "stay"}
 	maxu = 0	// "stay"'s own utility, always included as a candidate max
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
+		if (haspresent) if (present[j] == 0) continue
 		if (u[j] > maxu) maxu = u[j]
 	}
 
 	denom = exp(0 - maxu)	// "stay"'s own exp term
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
+		if (haspresent) if (present[j] == 0) continue
 		denom = denom + exp(u[j] - maxu)
 	}
 
@@ -85,6 +105,7 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	choice = 0
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
+		if (haspresent) if (present[j] == 0) continue
 		cum = cum + exp(u[j] - maxu)
 		choice = j	// last alternative enumerated so far - fallback if draw==denom exactly (floating-point edge case)
 		if (draw <= cum) break
@@ -107,23 +128,181 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 
    Mutates G in place. Returns the number of ministeps executed (used
    for rate re-estimation by the caller).
+
+   `present' (harmonisation unit 33, composition change - same optional,
+   backward-compatible convention as SaomMinistep()'s own identical
+   parameter, see its own header comment for the full account): when
+   supplied, restricts BOTH which actor gets to act (drawn uniformly
+   from PRESENT actors only, not 1..n) AND the pooled rate (scaled by
+   the PRESENT actor count, not G.n - real RSiena's own joiners/leavers
+   construction: absent actors get no activation opportunities at all,
+   so they cannot contribute to the pooled rate either), and is passed
+   through to SaomMinistep() unchanged so an absent actor is also never
+   offered as a tie-target alternative. Omitting `present' is IDENTICAL
+   to every actor being present - a true no-op for every pre-existing
+   call site.
    =================================================================== */
 real scalar SaomSimulateInterval(class ErgmGraph scalar G, class ErgmModel scalar M,
-	real rowvector theta, real scalar rate) {
+	real rowvector theta, real scalar rate, | real colvector present) {
 
-	real scalar t, steps, i, picked
+	real scalar t, steps, i, picked, haspresent, npresent
+	real colvector presentIdx
+
+	haspresent = (args() == 5)
+	if (haspresent) {
+		presentIdx = selectindex(present)
+		npresent = length(presentIdx)
+	}
+	else npresent = G.n
 
 	t = 0
 	steps = 0
 	while (t < 1) {
-		t = t - ln(runiform(1,1)) / (G.n * rate)
+		t = t - ln(runiform(1,1)) / (npresent * rate)
 		if (t < 1) {
-			i = ceil(runiform(1,1) * G.n)
-			picked = SaomMinistep(G, M, theta, i)
+			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
+			else i = ceil(runiform(1,1) * G.n)
+			if (haspresent) picked = SaomMinistep(G, M, theta, i, present)
+			else picked = SaomMinistep(G, M, theta, i)
 			steps = steps + 1
 		}
 	}
 	return(steps)
+}
+
+/* ===================================================================
+   SaomSimulateConditionalTime: harmonisation unit 27 (rate parameter
+   refinement). Real RSiena's own DEFAULT estimation method for a
+   SINGLE dependent variable (a plain network-only SAOM - not
+   co-evolution, see below) is CONDITIONAL, not unconditional -
+   verified directly from source, not assumed:
+   `R/initializeFRAN.r`'s own `x$cconditional <- !x$maxlike &&
+   (length(depvarnames) == 1)` (Method-of-Moments AND exactly one
+   dependent variable -> conditional by default), confirmed live via
+   `trace()` on the installed RSiena package itself (not just reading
+   source): `phase2.1' genuinely never sees a rate row in its own
+   `z$theta'/`z$pp' for a real 2-effect (density+reciprocity) fit on
+   RSiena's own s50 data (`z$pp=2', `z$posj=(FALSE,FALSE)') - directly
+   reproducing and confirming an EARLIER live trace this same
+   conclusion was already independently drawn from (unit 8's own
+   record above) - the rate row is REMOVED from the joint
+   theta/Jacobian vector entirely (`R/initializeFRAN.r`'s own
+   `z$theta <- z$theta[-z$condvar]'), not merely fixed or left at its
+   starting value.
+
+   Under conditional estimation, real RSiena does not run each
+   simulated ministep interval for a FIXED unit time [0,1) the way
+   `SaomSimulateInterval()' above does - it runs UNTIL the CURRENT
+   simulated network's own DISTANCE FROM THE STARTING NETWORK reaches a
+   fixed target (the observed Hamming distance between waves), at a
+   REFERENCE per-actor rate (verified = 1: `R/terminateFRAN.r`'s own
+   `z$rate <- colMeans(z$ntim)' applies NO further scaling to the
+   elapsed time `ntim' recorded during this conditional run - see the
+   algebraic derivation below for why that pins the reference rate at
+   exactly 1). Confirmed directly from the real C++ source, not
+   assumed: `EpochSimulation::runEpoch()`'s own stopping check is
+   `this->lpConditioningVariable->simulatedDistance() >=
+   this->ltargetChange', where `targetChange' is set, via
+   `siena07setup.cpp`'s own `setupModelOptions()`, from
+   `initializeFRAN.r`'s own `attr(f, "change") <-
+   sapply(f, function(xx) as.integer(attr(xx$depvars[[z$condname]],
+   "distance")))' - and that `"distance"' attribute is computed in
+   `sienaDataCreate.r` as `sum(mydiff != 0)' where `mydiff = wave2 -
+   wave1' - the exact same raw Hamming-distance definition
+   `SaomCountDiffering()' (below) already computes, confirming the
+   TARGET count itself matches exactly.
+
+   **A real, disclosed numerical finding, kept in the record**: an
+   initial implementation of this function tracked a naive MONOTONIC
+   counter of accepted toggles (matching `SaomCountDiffering()`'s own
+   "accepted changes" moment used elsewhere in this file) and stopping
+   once that counter reached the target - this reproduced RSiena's own
+   real s50 rate value only very roughly (own test: ~2.5 vs RSiena's
+   own real ~5.5, off by more than 2x, confirmed to scale PERFECTLY
+   LINEARLY with the target count when re-tested at 1x/1.5x/2x that
+   target - ruling out an off-by-a-constant-factor bug and pointing
+   instead at the STOPPING CONDITION itself being wrong). Root-caused
+   directly against `EpochSimulation.cpp`'s own real source (not
+   guessed): `simulatedDistance()` is NOT a monotonic accepted-change
+   counter - it is the CURRENT network's own live Hamming distance from
+   the STARTING network, which DECREASES whenever an accepted toggle
+   happens to revert a dyad back to its own starting value (not merely
+   "no progress" - active regression), a real, easy-to-miss subtlety a
+   naive counter cannot represent. Fixed by tracking this SIGNED
+   distance explicitly (`simDist' below, incremented when a toggled
+   dyad newly DIFFERS from `Gstart', decremented when it newly MATCHES
+   `Gstart' again) - re-tested directly against the real RSiena s50
+   reference after the fix (see docs/SAOM_ROADMAP.md's own unit-27
+   entry for the exact before/after numbers).
+
+   Algebraic derivation of the reference rate (still valid under the
+   corrected, signed-distance stopping rule, since it depends only on
+   linearity in the target count, confirmed empirically above): for a
+   homogeneous rate-c Poisson ministep process, the expected elapsed
+   time to reach a fixed target K (by whichever stopping RULE actually
+   defines "reaching K") is `K/(n*c*effectiveRate(theta))' for some
+   theta-dependent constant `effectiveRate' capturing how fast
+   simulatedDistance grows per unit time; the TRUE per-[0,1]-period
+   rate R satisfies the SAME relationship over one real period, giving
+   `R = c * E[elapsed time]' - collapsing to `R = E[elapsed time]'
+   exactly when c=1, matching `z$rate <- colMeans(z$ntim)`'s own lack
+   of a multiplier. The AVERAGE elapsed time across many independent
+   conditional runs, at the FINAL fitted theta, is therefore itself a
+   genuine, real-RSiena-verified estimator of the refined rate - not a
+   heuristic.
+
+   `SaomEstimateRM()'/`SaomEstimateRMMulti()' below use this AFTER
+   phase 3 (once theta is finalized) purely to REFINE the reported
+   rate value - phases 1/2/3's own THETA estimation stay fully
+   UNCONDITIONAL, unchanged from the already-certified/cross-validated
+   construction (unit 7's own s50 cross-check already found
+   unconditional eval-parameter estimates within ~1-2% of RSiena's own
+   real, conditionally-estimated ones - switching phases 1-3 to full
+   conditional simulation would be a substantially larger, higher-risk
+   redesign for a fidelity gain this package's own existing evidence
+   suggests is small; see docs/SAOM_ROADMAP.md's own unit-27 entry for
+   the full disclosed scope decision). Reuses `SaomMinistep()'
+   unmodified (the same certified unit-1 sampler every other plain
+   simulator here already reuses), just replacing the STOPPING
+   CONDITION (`t<1' -> `nchanges<targetChanges').
+
+   Co-evolution's own rate parameters are DELIBERATELY NOT refined
+   this way: real RSiena's own `x$cconditional' default requires
+   EXACTLY ONE dependent variable (`length(depvarnames)==1') - a
+   co-evolution model has TWO (network + behavior), so real RSiena
+   itself falls back to UNCONDITIONAL estimation there by default,
+   the SAME closed-form-starting-value convention `SaomEstimateRMCoev()'/
+   `SaomEstimateRMCoevMulti()' already use - refining THEIR rates this
+   way would NOT be matching real RSiena's own default behavior, it
+   would be inventing a different one.
+   =================================================================== */
+real scalar SaomSimulateConditionalTime(class ErgmGraph scalar G, class ErgmGraph scalar Gstart,
+	class ErgmModel scalar M, real rowvector theta, real scalar targetChange) {
+
+	real scalar t, simDist, i, picked
+
+	t = 0
+	simDist = 0
+	while (simDist < targetChange) {
+		t = t - ln(runiform(1,1)) / G.n		// reference rate = 1 (verified, see this function's own header comment)
+		i = ceil(runiform(1,1) * G.n)
+		picked = SaomMinistep(G, M, theta, i)
+		if (picked != 0) {
+			// EpochSimulation::runEpoch()'s own stopping check compares
+			// `simulatedDistance()' - CURRENT distance from the STARTING
+			// network - against the target, NOT a monotonic count of
+			// accepted toggles (a real, easy-to-miss subtlety: a toggle
+			// that reverts a dyad back to its OWN starting value REDUCES
+			// simulatedDistance, it does not count as "more progress" the
+			// way a naive accepted-change counter would) - confirmed
+			// directly from source, not assumed (see this function's own
+			// header comment for the account, including the real,
+			// disclosed numerical finding this correction was based on).
+			if (G.has_edge(i, picked) == Gstart.has_edge(i, picked)) simDist = simDist - 1
+			else simDist = simDist + 1
+		}
+	}
+	return(t)
 }
 
 /* ===================================================================
@@ -155,12 +334,13 @@ struct SaomScoredResult {
 }
 
 struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate) {
+	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present) {
 
 	struct SaomScoredResult scalar res
 	real matrix chgmat
 	real rowvector u, ebar, chosen_chg
-	real scalar t, n, p, i, j, k, maxu, denom, draw, cum, choice
+	real scalar t, n, p, i, j, k, maxu, denom, draw, cum, choice, haspresent, npresent
+	real colvector presentIdx
 
 	n = G.n
 	p = M.nparam()
@@ -168,17 +348,30 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 	res.steps = 0
 	res.nchanges = 0
 
+	// harmonisation unit 33 (composition change) - same optional,
+	// backward-compatible convention as SaomMinistep()/
+	// SaomSimulateInterval()'s own identical parameter; see
+	// SaomSimulateInterval()'s own header comment for the full account.
+	haspresent = (args() == 5)
+	if (haspresent) {
+		presentIdx = selectindex(present)
+		npresent = length(presentIdx)
+	}
+	else npresent = n
+
 	t = 0
 	while (t < 1) {
-		t = t - ln(runiform(1,1)) / (n * rate)
+		t = t - ln(runiform(1,1)) / (npresent * rate)
 		if (t < 1) {
-			i = ceil(runiform(1,1) * n)
+			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
+			else i = ceil(runiform(1,1) * n)
 
 			chgmat = J(n, p, 0)
 			u = J(1, n, 0)
 			maxu = 0
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
+				if (haspresent) if (present[j] == 0) continue
 				chgmat[j,.] = M.full_change(G, i, j)
 				u[j] = theta * chgmat[j,.]'
 				if (u[j] > maxu) maxu = u[j]
@@ -187,12 +380,14 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			denom = exp(0 - maxu)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
+				if (haspresent) if (present[j] == 0) continue
 				denom = denom + exp(u[j] - maxu)
 			}
 
 			ebar = J(1, p, 0)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
+				if (haspresent) if (present[j] == 0) continue
 				ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
 			}
 
@@ -203,6 +398,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			if (draw > cum) {
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
+					if (haspresent) if (present[j] == 0) continue
 					cum = cum + exp(u[j] - maxu)
 					choice = j
 					if (draw <= cum) break
@@ -241,19 +437,33 @@ struct SaomCountedResult {
 }
 
 struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scalar G,
-	class ErgmModel scalar M, real rowvector theta, real scalar rate) {
+	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present) {
 
 	struct SaomCountedResult scalar res
-	real scalar t, i, picked
+	real scalar t, i, picked, haspresent, npresent
+	real colvector presentIdx
+
+	// harmonisation unit 33 (composition change) - same optional,
+	// backward-compatible convention as SaomSimulateInterval()'s own
+	// identical parameter; see its own header comment for the full
+	// account.
+	haspresent = (args() == 5)
+	if (haspresent) {
+		presentIdx = selectindex(present)
+		npresent = length(presentIdx)
+	}
+	else npresent = G.n
 
 	res.steps = 0
 	res.nchanges = 0
 	t = 0
 	while (t < 1) {
-		t = t - ln(runiform(1,1)) / (G.n * rate)
+		t = t - ln(runiform(1,1)) / (npresent * rate)
 		if (t < 1) {
-			i = ceil(runiform(1,1) * G.n)
-			picked = SaomMinistep(G, M, theta, i)
+			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
+			else i = ceil(runiform(1,1) * G.n)
+			if (haspresent) picked = SaomMinistep(G, M, theta, i, present)
+			else picked = SaomMinistep(G, M, theta, i)
 			if (picked != 0) res.nchanges = res.nchanges + 1
 			res.steps = res.steps + 1
 		}
@@ -762,6 +972,54 @@ real rowvector stat_saom_balance(class ErgmGraph scalar G, class ErgmTermData sc
 	return(tot)
 }
 
+/* ===================================================================
+   SaomCheckThetaBound: harmonisation unit 29 - real RSiena's own
+   thetaBound safeguard, verified directly from source
+   (`R/phase2.r`'s own per-ITERATION check, executed immediately after
+   EVERY Robbins-Monro update step - `if (max(abs(z$theta[!z$fixed])) >
+   z$thetaBound) { ... stop("thetaBound should be set higher.") }` in
+   batch/non-interactive mode; `R/initializeFRAN.r`'s own
+   `if(is.null(z$thetaBound)) z$thetaBound <- 50` gives the default
+   this port reuses exactly).
+
+   A real, disclosed gap this codebase had until now: NO estimator here
+   previously had ANY such check, for ANY effect (confirmed by direct
+   grep - zero prior matches for "thetaBound" anywhere in this file).
+   Surfaced by harmonisation unit 28's own confirmed finding: a genuine
+   identification failure (a saturation ridge in a co-evolution
+   behavior effect's own joint parameter space, root-caused via a
+   direct response-surface sweep, not assumed - see
+   docs/SAOM_ROADMAP.md's own unit-28 entry for the full account) could
+   previously run theta to +-100 or more before eventually crashing
+   downstream with an opaque Mata conformability/missing-value error
+   eventually. This does NOT fix any underlying identification problem
+   - neither does real RSiena's own identical check - it only turns a
+   silent, confusing runaway into an explicit, immediately diagnosable
+   stop the moment it happens, exactly matching real RSiena's own
+   behavior (`stop()` in batch mode) rather than continuing until some
+   LATER, unrelated-looking failure. Called at the SAME point in EVERY
+   phase-2 Robbins-Monro loop this file has (SaomEstimateRM()/
+   SaomEstimateRMMulti()/SaomEstimateRMCoev()/SaomEstimateRMCoevMulti()) -
+   immediately after `theta`'s own per-iteration update, before the
+   next iteration's own simulation call, matching RSiena's own exact
+   placement.
+
+   Deliberately self-contained (errprintf()/exit() directly, NOT a call
+   to unw_core.do's own error_handle()) - unw_core.do is not always
+   sourced alongside unw_saom.do (e.g. cscripts/test_nwsaom_mata.do's
+   own header only does "do unw_ergm.do" then "do unw_saom.do", never
+   "do unw_core.do" - confirmed the hard way: an earlier version of
+   this function called error_handle() directly and broke that whole
+   test suite with "error_handle() not found", a real regression caught
+   by running it, not assumed safe).
+   =================================================================== */
+void SaomCheckThetaBound(real rowvector theta, real scalar thetaBound) {
+	if (max(abs(theta)) > thetaBound) {
+		errprintf("SAOM estimation diverged during phase 2: a coefficient's own magnitude exceeded thetaBound (" + strofreal(thetaBound) + ") after a Robbins-Monro update step - matching real RSiena's own safeguard (R/phase2.r), which halts under the identical condition rather than let an update run away. This usually signals a genuine identification problem for this specific model/data combination (a real, diagnosed example - a co-evolution behavior effect's own joint parameter direction turning out to be an unidentified saturation ridge - is documented in docs/SAOM_ROADMAP.md's own harmonisation unit 28 entry), not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
+		exit(498)
+	}
+}
+
 real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar n, b0, val
 
@@ -831,17 +1089,30 @@ struct SaomNativeConfig {
 	real matrix attrmat		// one column per term instance that needs an attribute array (harmonisation unit 10: NOT deduplicated across terms sharing the same underlying variable - simple over maximally compact, matches MAXATTR's own generous cap)
 }
 
+/* Co-evolution's own native-config counterpart (harmonisation unit 26)
+   - declared here for the same forward-reference reason as
+   SaomNativeConfig above (SaomEstimateRMCoev()/SaomEstimateRMCoevMulti()
+   use it as a variable TYPE before SaomBehaviorNativeSetup() itself is
+   defined). No attrmat/attridx/p1 - none of linear/quadratic/avalt/
+   avsim take a per-term attribute array, unlike some network terms. */
+struct SaomBehaviorNativeConfig {
+	real scalar eligible
+	real rowvector termcodes	// one per term instance in Mbeh, in Mbeh's own order
+}
+
 /* ===================================================================
    SaomFit: result of SaomEstimateRM.
    =================================================================== */
 struct SaomFit {
 	real rowvector theta		// final estimated coefficients (length M.nparam())
 	real rowvector tratio		// phase-3 convergence t-ratio per eval parameter
-	real scalar rate		// jointly-estimated rate parameter (harmonisation unit 8) - ONLY populated by SaomEstimateRM() (exactly-two-wave path)
+	real scalar rate		// rate parameter - closed-form starting value UNLESS refined (harmonisation unit 27 - see below), ONLY populated by SaomEstimateRM() (exactly-two-wave path)
 	real scalar rate_tratio		// phase-3 convergence t-ratio for the rate parameter's own moment - ONLY populated by SaomEstimateRM()
+	real scalar rate_se		// harmonisation unit 27 - genuine standard error of the REFINED rate estimate (SaomSimulateConditionalTime()'s own K3-replicate mean, real RSiena's own conditional-estimation construction) - 0 whenever refinement was not run (should not happen for SaomEstimateRM's own network-only path, always run there)
 	real matrix theta_path		// phase-2 subphase-end eval-theta history (nsub x nparam), for diagnostics
 	real rowvector rates		// harmonisation unit 17 - ONE rate per inter-wave period, ONLY populated by SaomEstimateRMMulti() (2+ wave path); real RSiena's own convention confirmed by direct 3-wave cross-check (see docs/SAOM_ROADMAP.md) - theta is POOLED/shared across periods, rate is period-specific
 	real rowvector rate_tratios	// harmonisation unit 17 - phase-3 convergence t-ratio per period's own rate moment, ONLY populated by SaomEstimateRMMulti()
+	real rowvector rate_ses		// harmonisation unit 27 - one refined-rate standard error per period, ONLY populated by SaomEstimateRMMulti()
 	real matrix V			// harmonisation unit 18 - p x p covariance matrix for theta (eval parameters only, matching real RSiena's own Method-of-Moments scope - rate excluded, see this unit's own header comment), populated by BOTH SaomEstimateRM() and SaomEstimateRMMulti()
 }
 
@@ -920,18 +1191,28 @@ struct SaomFit {
    wave1-2, both computed independently and compared to 6 significant
    figures) - not a guess, a confirmed match to the real formula.
    RSiena's own FINAL fitted rate (5.4725) is somewhat higher than this
-   starting value (~14% - a real, further RM-driven refinement this unit
-   did not chase down, given the two rejected attempts above already
-   spent considerable budget establishing what does NOT work); shipping
-   the verified closed form is a strictly better, safer choice than
-   either rejected iterative scheme, both of which landed FURTHER from
-   the true value than this simple formula does. Tracked as a smaller,
-   disclosed remaining gap in docs/SAOM_ROADMAP.md.
+   starting value (~14%); shipping the verified closed form here is a
+   strictly better, safer choice than either rejected iterative scheme
+   above, both of which landed FURTHER from the true value than this
+   simple formula does - `ratecur` (this variable) is used as-is
+   throughout phases 1-3 as the FIXED simulation rate, exactly as
+   before.
+
+   **Status update, harmonisation unit 27**: the ~14% starting-value
+   gap above is now CLOSED for `fit.rate` itself (the value actually
+   reported/returned) - see `SaomSimulateConditionalTime()`'s own
+   header comment further below for the real mechanism this closes it
+   with (real RSiena's own CONDITIONAL-estimation construction,
+   verified directly from source and confirmed live against the
+   installed RSiena package). `ratecur` (this comment's own variable)
+   remains the FIXED rate used to drive phases 1-3's own THETA
+   estimation, unchanged - only the FINAL reported `fit.rate` (computed
+   after phase 3, once theta is settled) is refined.
    =================================================================== */
 struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	class ErgmGraph scalar Gobs_end, class ErgmModel scalar M,
 	real rowvector theta0, real scalar rate0,
-	real scalar K0, real scalar K3, real scalar firstg) {
+	real scalar K0, real scalar K3, real scalar firstg, | real colvector present) {
 
 	struct SaomFit scalar fit
 	struct SaomNativeConfig scalar cfg
@@ -942,15 +1223,40 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	real rowvector thav, fchange, changestep
 	real matrix Zdev, Zsco, Ddev, Dsco, Dhat, temp, Dinv, msf, sfinvcov, Zphase3
 	real matrix Zsco3, Ddev3, Dsco3, Dhat3, Dinv3	// harmonisation unit 18
-	real scalar p, k, use_native, targetRate, ratecur, nch
+	real scalar p, k, use_native, targetRate, ratecur, nch, haspresent, npresent
 	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
 	real rowvector n2minimum, n2maximum
 	real matrix theta_hist
-	real colvector rate_hist
+	real colvector rate_hist, condTimes
 
 	p = M.nparam()
 	target = M.full_statistic(Gobs_end)
 	targetRate = SaomCountDiffering(Gobs_start, Gobs_end)
+
+	// --- harmonisation unit 33 (composition change - "joiners and
+	// leavers"): `present' (n x 1, 1/0 per actor) is OPTIONAL and
+	// backward-compatible - omitting it entirely (every pre-existing
+	// caller) is IDENTICAL to every actor being present. When supplied:
+	// (a) `npresent' replaces Gobs_start.n in the rate formula below -
+	// only present actors get activation opportunities, so they are
+	// what the rate scales by (matching the same principle
+	// SaomSimulateInterval()'s own `present' parameter already applies
+	// to the SIMULATION side); (b) the native backend is force-disabled
+	// (`use_native=0' unconditionally) - it has no composition-change
+	// support yet, a disclosed, scoped-out follow-up (see
+	// docs/SAOM_ROADMAP.md's own unit-33 entry) - every phase below
+	// therefore always takes its own Mata-fallback branch when
+	// composition change is active, matching this package's own
+	// established "ship correct-and-slow first" precedent; (c) the
+	// post-hoc conditional rate-refinement loop (units 27/30) is
+	// SKIPPED entirely - real RSiena's own manual states composition
+	// change forces unconditional estimation (Section 7.12.1), and the
+	// conditional-simulation construction that loop relies on
+	// (SaomSimulateConditionalTime()) has no presence-restriction
+	// support either.
+	haspresent = (args() == 9)
+	if (haspresent) npresent = length(selectindex(present))
+	else npresent = Gobs_start.n
 
 	// --- Rate: RSiena's own verified closed-form starting-value formula
 	// (effects.r's networkRateEffects() caller; see this function's own
@@ -962,13 +1268,13 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	// still accepted as a parameter (nwsaom.ado's own rate0() option)
 	// but no longer used - kept in the signature to avoid an unrelated
 	// wave of call-site churn; superseded entirely by this formula.
-	ratecur = Gobs_start.n * (0.2 + 2*targetRate) / (Gobs_start.n*(Gobs_start.n-1) + 1)
+	ratecur = npresent * (0.2 + 2*targetRate) / (npresent*(npresent-1) + 1)
 
 	// --- native (C) backend dispatch, decided ONCE per model, never
 	// inside a loop - see docs/SAOM_ARCHITECTURE.md's "Native backend"
-	// section.
+	// section. Force-disabled under composition change (see above).
 	cfg = SaomNativeSetup(M)
-	use_native = cfg.eligible & SaomNativeAvailable()
+	use_native = cfg.eligible & SaomNativeAvailable() & !haspresent
 
 	// --- Phase 1: real Jacobian via the score-function derivative
 	// estimator (RSiena's own derivativeFromScoresAndDeviations(),
@@ -1002,7 +1308,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 		else {
 			Gwork = ErgmGraph()
 			SaomCopyGraph(Gobs_start, Gwork)
-			sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur)
+			if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur, present)
+			else sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur)
 			Zdev[k,.] = M.full_statistic(Gwork) - target
 			Zsco[k,.] = sres.score
 		}
@@ -1062,7 +1369,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 			else {
 				Gwork = ErgmGraph()
 				SaomCopyGraph(Gobs_start, Gwork)
-				cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur)
+				if (haspresent) cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur, present)
+				else cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur)
 				dev = M.full_statistic(Gwork) - target
 			}
 
@@ -1093,6 +1401,7 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 			theta = (thav / thavn) - fchange
 			thav = thav + theta
 			thavn = thavn + 1
+			SaomCheckThetaBound(theta, 50)		// harmonisation unit 29 - see that function's own header comment
 
 			if (nit >= 2) {
 				ac = J(1, p, -1)
@@ -1140,7 +1449,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 		else {
 			Gwork = ErgmGraph()
 			SaomCopyGraph(Gobs_start, Gwork)
-			sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate)
+			if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate, present)
+			else sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate)
 			Zphase3[k, .] = M.full_statistic(Gwork) - target
 			Zsco3[k, .] = sres.score
 			nch = sres.nchanges
@@ -1179,6 +1489,56 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	Dhat3 = (Ddev3' * Dsco3) / K3
 	Dinv3 = luinv(Dhat3)
 	fit.V = Dinv3 * variance(Zphase3) * Dinv3'
+
+	// --- harmonisation unit 27: rate refinement, real RSiena's own
+	// CONDITIONAL-estimation construction (verified directly from
+	// source - see SaomSimulateConditionalTime()'s own header comment
+	// for the full account) - K3 independent conditional runs AT THE
+	// FINAL FITTED theta, each simulated (at reference rate 1) until
+	// `targetRate' accepted changes occur; the refined rate is the mean
+	// elapsed time across those K3 runs, its own SE the usual mean's
+	// own SE. Native-dispatched when available (harmonisation unit 30,
+	// SaomSimulateCondTimeNative() - see its own header comment:
+	// a direct RSiena benchmark found THIS loop alone accounted for
+	// essentially the entire ~22x gap network-only fits had vs. real
+	// RSiena, the one thing in this estimator that had never been
+	// ported native before now), falling back to the pure-Mata
+	// SaomSimulateConditionalTime() reference otherwise - same
+	// `use_native' gate phases 1-3 above already use.
+	// harmonisation unit 33: composition change forces UNCONDITIONAL
+	// estimation (real RSiena's own manual, Section 7.12.1) - the
+	// conditional-simulation construction this refinement loop relies
+	// on (SaomSimulateConditionalTime()) has no presence-restriction
+	// support, so it is skipped entirely here, leaving `fit.rate' at
+	// its closed-form starting value (`ratecur', already set above)
+	// unrefined - matching co-evolution's own identical fallback
+	// (a different reason, same resulting convention: `fit.rate_se'
+	// stays 0, signalling "not refined" exactly as co-evolution fits
+	// already do for their own rate).
+	if (!haspresent) {
+		condTimes = J(K3, 1, 0)
+		for (k=1; k<=K3; k++) {
+			if (use_native) {
+				condTimes[k] = SaomSimulateCondTimeNative(Gobs_start, Gobs_start, M, cfg, fit.theta, targetRate)
+			}
+			else {
+				Gwork = ErgmGraph()
+				SaomCopyGraph(Gobs_start, Gwork)
+				condTimes[k] = SaomSimulateConditionalTime(Gwork, Gobs_start, M, fit.theta, targetRate)
+			}
+		}
+		if (use_native) SaomNativeCleanupFrame()
+		fit.rate = mean(condTimes)
+		// real RSiena's own reported rate "Standard Error" (terminateFRAN.r's
+		// own `z$vrate <- apply(z$ntim, 2, sd)') is the RAW standard
+		// deviation of the per-replicate elapsed-time draws, NOT a standard
+		// error of the MEAN (not divided by sqrt(K3)) - confirmed by direct
+		// comparison against a live RSiena trace's own printed report
+		// (docs/SAOM_ROADMAP.md's own unit-27 entry has the exact numbers) -
+		// matched here exactly, not the more conventional sqrt(var/K3).
+		fit.rate_se = sqrt(variance(condTimes))
+	}
+	else fit.rate_se = 0
 
 	// harmonisation unit 12: drop the persistent __saom_native frame
 	// here, once, rather than SaomSimulateIntervalNative() dropping and
@@ -1234,7 +1594,7 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
    =================================================================== */
 struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M, real rowvector theta0, real scalar K0, real scalar K3,
-	real scalar firstg) {
+	real scalar firstg, | real matrix presentMat) {
 
 	struct SaomFit scalar fit
 	struct SaomNativeConfig scalar cfg
@@ -1245,14 +1605,33 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	real matrix Zsco3, Ddev3, Dsco3, Dhat3, Dinv3	// harmonisation unit 18
 	real rowvector theta, dev, devp, prevdev, prod0, prod1, ac, stdcap
 	real rowvector thav, fchange, changestep, ratecur, targetRate
-	real scalar p, k, pd, nwaves, nperiods, use_native, nch
+	real scalar p, k, pd, nwaves, nperiods, use_native, nch, haspresent
 	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
-	real rowvector n2minimum, n2maximum
-	real matrix theta_hist
+	real rowvector n2minimum, n2maximum, npresentPd
+	real matrix theta_hist, presentPd
+	real colvector condTimes
 
 	nwaves = cols(Gwaves)
 	nperiods = nwaves - 1
 	p = M.nparam()
+
+	// harmonisation unit 33 (composition change): `presentMat' is n x
+	// nwaves (one column per WAVE, matching behavior()'s own "one
+	// variable per wave" convention), OPTIONAL and backward-compatible
+	// (same convention as SaomEstimateRM()'s own identical parameter -
+	// see its own header comment for the full account). Actor i is
+	// present during period pd (between wave pd and wave pd+1) iff
+	// present at BOTH endpoint waves (this package's own whole-period-
+	// only scope decision, docs/SAOM_ROADMAP.md's unit-33 entry) -
+	// `presentPd' (n x nperiods) derives this ONCE, up front, via
+	// elementwise multiplication (equivalent to AND for 0/1 indicators).
+	haspresent = (args() == 7)
+	if (haspresent) {
+		presentPd = J(rows(presentMat), nperiods, 0)
+		for (pd=1; pd<=nperiods; pd++) presentPd[.,pd] = presentMat[.,pd] :* presentMat[.,pd+1]
+		npresentPd = J(1, nperiods, 0)
+		for (pd=1; pd<=nperiods; pd++) npresentPd[pd] = length(selectindex(presentPd[.,pd]))
+	}
 
 	target = J(nperiods, p, 0)
 	targetRate = J(1, nperiods, 0)
@@ -1266,12 +1645,15 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 		// own header comment derives - applied per period, using that
 		// period's own start-wave n (fixed actor set across waves per
 		// v1 scope, so identical n every period, but computed faithfully
-		// per period rather than assumed).
-		ratecur[pd] = Gp.n * (0.2 + 2*targetRate[pd]) / (Gp.n*(Gp.n-1) + 1)
+		// per period rather than assumed) - or, under composition
+		// change, that period's own PRESENT actor count instead (same
+		// principle as SaomEstimateRM()'s own identical adjustment).
+		if (haspresent) ratecur[pd] = npresentPd[pd] * (0.2 + 2*targetRate[pd]) / (npresentPd[pd]*(npresentPd[pd]-1) + 1)
+		else ratecur[pd] = Gp.n * (0.2 + 2*targetRate[pd]) / (Gp.n*(Gp.n-1) + 1)
 	}
 
 	cfg = SaomNativeSetup(M)
-	use_native = cfg.eligible & SaomNativeAvailable()
+	use_native = cfg.eligible & SaomNativeAvailable() & !haspresent
 
 	// --- Phase 1: pooled Jacobian - SUM the per-period deviation/score
 	// across periods before building Dhat, otherwise identical to
@@ -1291,7 +1673,8 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 			else {
 				Gwork = ErgmGraph()
 				SaomCopyGraph(Gp, Gwork)
-				sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur[pd])
+				if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur[pd], presentPd[.,pd])
+				else sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur[pd])
 				dev = dev + (M.full_statistic(Gwork) - target[pd,.])
 				devp = devp + sres.score
 			}
@@ -1354,7 +1737,8 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 				else {
 					Gwork = ErgmGraph()
 					SaomCopyGraph(Gp, Gwork)
-					cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur[pd])
+					if (haspresent) cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur[pd], presentPd[.,pd])
+					else cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur[pd])
 					dev = dev + (M.full_statistic(Gwork) - target[pd,.])
 				}
 			}
@@ -1375,6 +1759,7 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 			theta = (thav / thavn) - fchange
 			thav = thav + theta
 			thavn = thavn + 1
+			SaomCheckThetaBound(theta, 50)		// harmonisation unit 29 - see that function's own header comment
 
 			if (nit >= 2) {
 				ac = J(1, p, -1)
@@ -1419,7 +1804,8 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 			else {
 				Gwork = ErgmGraph()
 				SaomCopyGraph(Gp, Gwork)
-				sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rates[pd])
+				if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rates[pd], presentPd[.,pd])
+				else sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rates[pd])
 				dev = dev + (M.full_statistic(Gwork) - target[pd,.])
 				devp = devp + sres.score
 				nch = sres.nchanges
@@ -1450,6 +1836,1428 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	// natural, principled generalization of the same construction,
 	// consistent with how the point estimate itself already pools
 	// across periods (this function's own header comment).
+	Ddev3 = Zphase3 :- mean(Zphase3)
+	Dsco3 = Zsco3 :- mean(Zsco3)
+	Dhat3 = (Ddev3' * Dsco3) / K3
+	Dinv3 = luinv(Dhat3)
+	fit.V = Dinv3 * variance(Zphase3) * Dinv3'
+
+	// --- harmonisation unit 27: rate refinement, per period - same
+	// real-RSiena-verified conditional-simulation construction as
+	// SaomEstimateRM()'s own identical block (see
+	// SaomSimulateConditionalTime()'s own header comment for the full
+	// account), applied independently to EACH period (own starting
+	// wave, own targetRate[pd]), matching how the network side already
+	// tracks rate per-period (unit 17). Native-dispatched when available
+	// (harmonisation unit 30 - see SaomEstimateRM()'s own identical
+	// block for the full account of why).
+	// harmonisation unit 33: composition change forces UNCONDITIONAL
+	// estimation - see SaomEstimateRM()'s own identical block for the
+	// full account. `fit.rates' stays at its closed-form value (set
+	// before phase 3 above) when skipped; `fit.rate_ses' is set to all
+	// zeros, matching the "not refined" signal SaomEstimateRM() already
+	// uses.
+	if (!haspresent) {
+		fit.rates = J(1, nperiods, 0)
+		fit.rate_ses = J(1, nperiods, 0)
+		for (pd=1; pd<=nperiods; pd++) {
+			Gp = *Gwaves[pd]
+			condTimes = J(K3, 1, 0)
+			for (k=1; k<=K3; k++) {
+				if (use_native) {
+					condTimes[k] = SaomSimulateCondTimeNative(Gp, Gp, M, cfg, fit.theta, targetRate[pd])
+				}
+				else {
+					Gwork = ErgmGraph()
+					SaomCopyGraph(Gp, Gwork)
+					condTimes[k] = SaomSimulateConditionalTime(Gwork, Gp, M, fit.theta, targetRate[pd])
+				}
+			}
+			fit.rates[pd] = mean(condTimes)
+			fit.rate_ses[pd] = sqrt(variance(condTimes))
+		}
+	}
+	else fit.rate_ses = J(1, nperiods, 0)
+
+	if (use_native) SaomNativeCleanupFrame()
+
+	return(fit)
+}
+
+/* ===================================================================
+   Co-evolution (harmonisation unit 26, docs/SAOM_ROADMAP.md "Co-evolution
+   (network + behavior)" - DESIGN section has the full source-verification
+   account). This section adds a SECOND kind of dependent variable - a
+   bounded integer-valued actor attribute ("behavior") that evolves
+   ALONGSIDE the network between the same observed waves - so that
+   selection (network effects depending on the behavior, already
+   implemented: simcov()/nodeicov()/nodeocov()) and influence (behavior
+   effects depending on the network) can be estimated JOINTLY in one
+   model, the gap this codebase's own docs/book chapter explicitly
+   disclosed as not yet implemented.
+
+   SaomBehavior: the behavior-side analogue of ErgmGraph - owns the
+   actor-level current values (mutated in place by ministeps, exactly
+   like ErgmGraph.toggle() mutates edges) plus the fixed, observed-data-
+   derived constants (min/max/range/overallMean) every behavior effect
+   below needs. `values' uses real (not integer) storage for uniformity
+   with every other Mata numeric array in this codebase, but every value
+   a ministep ever writes is a whole number by construction (initial
+   integer values, changed only by +1/-1/0).
+   =================================================================== */
+class SaomBehavior {
+	real scalar n
+	real colvector values		// current, mutated in place by SaomBehaviorMinistep()
+	real scalar minval
+	real scalar maxval
+	real scalar range		// maxval - minval, RSiena's own "range" (observed, not simulated)
+	real scalar overallMean	// mean of every OBSERVED wave's own values, pooled - fixed for the whole model, matching RSiena's own BehaviorLongitudinalData::overallMean()
+	real scalar simMean		// RSiena's own data-derived "similarityMean" constant (avsim only) - see saom_similarity_mean() below; defaults to 0 (harmless for every OTHER effect, which never reads this field)
+
+	void init()
+	real scalar value()
+	void setvalue()
+	real scalar centeredValue()
+	void setsimmean()
+}
+
+void SaomBehavior::init(real colvector initvals, real scalar minv, real scalar maxv, real scalar mean0, | real scalar simmean0){
+	n = rows(initvals)
+	values = initvals
+	minval = minv
+	maxval = maxv
+	range = maxv - minv
+	overallMean = mean0
+	simMean = (args()==5 ? simmean0 : 0)
+}
+
+void SaomBehavior::setsimmean(real scalar sm){
+	simMean = sm
+}
+
+real scalar SaomBehavior::value(real scalar i){
+	return(values[i])
+}
+
+void SaomBehavior::setvalue(real scalar i, real scalar v){
+	values[i] = v
+}
+
+real scalar SaomBehavior::centeredValue(real scalar i){
+	return(values[i] - overallMean)
+}
+
+/*
+   Behavior effects (v1 scope: linear shape, quadratic shape, avAlt -
+   see docs/SAOM_ROADMAP.md's own unit-26 DESIGN section for exactly
+   which RSiena source file/formula each is verified against, and which
+   are explicitly deferred - avSim, endowment/creation functions). Every
+   stat/change function takes (Beh, G) uniformly, even though linear/
+   quadratic never touch G - avAlt needs it, and a uniform signature
+   lets SaomBehaviorModel below dispatch through one function-pointer
+   type regardless of which specific effect is wired in, matching
+   ErgmModel's own established "uniform signature across genuinely
+   different terms" convention.
+*/
+
+/*
+   Linear shape (RSiena's own LinearShapeEffect.cpp) - the behavior-side
+   analogue of `outdegree': REQUIRED in every co-evolution model, same
+   "baseline, always-included" role. Ministep delta for actor i changing
+   by `diff' (in {-1,0,1}) is exactly `diff' (calculateChangeContribution()
+   returns the raw difference, unmodified). Global/observed statistic is
+   the UNCENTERED sum of every actor's own current value
+   (egoStatistic() returns currentValues[ego] directly, no centering).
+*/
+real rowvector stat_saom_linear(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+	return(sum(Beh.values))
+}
+real scalar change_saom_linear(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+	return(diff)
+}
+
+/*
+   Quadratic shape (RSiena's own QuadraticShapeEffect.cpp) - captures
+   whether actors' own behavior tends toward the extremes of its
+   observed range (positive coefficient) or the middle (negative). A
+   real, easy-to-miss subtlety caught only by reading the actual C++
+   source, not the SIENA manual, and kept exactly as RSiena has it
+   rather than "corrected" toward internal consistency (see this file's
+   own unit-26 DESIGN account for why): the MINISTEP delta uses the
+   CENTERED value (`2*centeredValue(i) + diff) * diff' - the exact
+   algebraic delta of `(centeredValue(i)+diff)^2 - centeredValue(i)^2'),
+   but the GLOBAL/observed statistic (egoStatistic() in the real source)
+   sums the RAW, UNCENTERED `value_i^2' - two genuinely different scales
+   for the same effect, both needed, matching RSiena's own real numbers
+   being this codebase's own certification standard throughout.
+*/
+real rowvector stat_saom_quadratic(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+	return(sum(Beh.values :* Beh.values))
+}
+real scalar change_saom_quadratic(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+	return((2*Beh.centeredValue(i) + diff) * diff)
+}
+
+/*
+   Average alter ("avAlt", RSiena's own AverageAlterEffect.cpp,
+   divide=TRUE/alterPopularity=FALSE construction - the canonical
+   INFLUENCE effect): s_i(x) = value_i * avg_{j in N_out(i)}(value_j), 0
+   if i has no out-ties (confirmed from source: both the ministep delta
+   and egoStatistic() guard on outDegree(i)>0, no fallback term). A
+   positive coefficient means actors' own behavior moves toward their
+   network neighbors' own average behavior - the influence side of
+   co-evolution, the reason this whole unit exists. Ministep delta for
+   actor i changing by `diff': `diff * avg_{j in N_out(i)}(value_j)' -
+   PURELY linear in diff (no diff^2 term, unlike quadratic shape),
+   because only i's own value changes during this ministep, never the
+   alters' own (confirmed algebraically from the source: `contribution =
+   difference * totalAlterValue(actor)', no self-interaction term).
+*/
+real rowvector stat_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+	real scalar i, tot, m
+	real rowvector nb
+
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		if (cols(nb) == 0) continue
+		tot = tot + Beh.value(i) * mean(Beh.values[nb'])
+	}
+	return(tot)
+}
+real scalar change_saom_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+	real rowvector nb
+
+	nb = G.neighbors_out(i)
+	if (cols(nb) == 0) return(0)
+	return(diff * mean(Beh.values[nb']))
+}
+
+/*
+   Average similarity ("avSim", RSiena's own SimilarityEffect.cpp,
+   average=TRUE/alterPopularity=FALSE/egoPopularity=FALSE/hi=TRUE/
+   lo=TRUE construction - confirmed directly from the real C++ source
+   AND from EffectFactory.cpp's own `effectName == "avSim"' branch,
+   `new SimilarityEffect(pEffectInfo, true, false, false, true, true)',
+   not guessed from the SIENA manual): a SECOND, alternative influence
+   parameterization to `avalt' above - instead of pulling an actor's own
+   value toward its neighbors' own AVERAGE VALUE, `avsim' pulls it
+   toward maximizing its own AVERAGE SIMILARITY to neighbors
+   (sim(a,b) = 1 - |a-b|/range), net of a DATA-DERIVED "similarityMean"
+   centering constant (RSiena's own `b0'-style constant, exactly the
+   same role `balance''s own `balanceMean' plays on the network side -
+   see `saom_similarity_mean()' below).
+
+   `calculateChangeContribution()' (the ministep delta), re-derived
+   algebraically from source for the exactly-two `diff' values a
+   behavior ministep ever proposes (RSiena's own `numberAlterHigher(i)'/
+   `numberAlterLower(i)'/`numberAlterEqual(i)' count out-neighbors with
+   CURRENT value strictly greater/less/equal to actor i's own CURRENT
+   value - confirmed from `NetworkDependentBehaviorEffect::
+   preprocessEgo()'): for `diff'=+1, `totalChange' =
+   `numberAlterHigher-numberAlterEqual-numberAlterLower' =
+   `2*numberAlterHigher-outDegree(i)' (since the three counts sum to
+   `outDegree(i)'); for `diff'=-1, `totalChange' =
+   `2*numberAlterLower(i)-outDegree(i)' by the same algebra. Both are
+   then divided by `range*outDegree(i)' (the `average=TRUE' branch) -
+   `similarityMean' does NOT enter the ministep delta at all (only the
+   GLOBAL statistic below is centered - confirmed directly from source:
+   the centering `if' block in `calculateChangeContribution()' is
+   INSIDE the `else' of `if (this->laverage)', so it is skipped whenever
+   `average=TRUE', exactly `avsim''s own case).
+
+   `egoStatistic()' (the global/observed statistic), for actor i with
+   `outDegree(i)>0': `avg_{j in N_out(i)}(sim(value_i,value_j)) -
+   similarityMean' - re-derived directly from the accumulator logic
+   (`statistic = totalCount - sum(|diff_j|)/range', which is exactly
+   `sum_j sim(value_i,value_j)' since `totalCount=outDegree(i)' here,
+   then centered by `-outDegree(i)*similarityMean' and averaged by
+   `/outDegree(i)'). 0 for an actor with no out-ties (confirmed: the
+   real source's own `outDegree(ego)==0' short-circuit leaves
+   `statistic' at its initial value 0, matching `avalt''s own identical
+   convention above).
+*/
+real rowvector stat_saom_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+	real scalar i, tot, od, vego, sumabs, k
+	real rowvector nb
+
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		od = cols(nb)
+		if (od == 0) continue
+		vego = Beh.value(i)
+		sumabs = 0
+		for (k=1; k<=od; k++) sumabs = sumabs + abs(Beh.value(nb[k]) - vego)
+		tot = tot + (1 - (sumabs/Beh.range)/od - Beh.simMean)
+	}
+	return(tot)
+}
+real scalar change_saom_avsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+	real rowvector nb
+	real scalar od, vego, nhigh, nlow, k
+
+	if (diff == 0) return(0)
+	nb = G.neighbors_out(i)
+	od = cols(nb)
+	if (od == 0) return(0)
+	vego = Beh.value(i)
+	nhigh = 0
+	nlow = 0
+	for (k=1; k<=od; k++) {
+		if (Beh.value(nb[k]) > vego) nhigh++
+		else if (Beh.value(nb[k]) < vego) nlow++
+	}
+	if (diff > 0) return((2*nhigh - od) / (Beh.range * od))
+	else return((2*nlow - od) / (Beh.range * od))
+}
+
+/*
+   `saom_similarity_mean()': the data-derived `similarityMean' constant
+   `avsim' needs (see above) - verified directly against the R-side
+   `rangeAndSimilarity()' (`R/sienaDataCreate.r'), which is what
+   actually computes it (the C++ side only ever reads a pre-computed
+   value off the data object, `BehaviorLongitudinalData::
+   similarityMean()' - confirmed by grepping `siena07internals.cpp',
+   there is no C++-side computation to re-derive here). Pooled EXACTLY
+   like `saom_balance_mean()' above: every PERIOD-BASE wave (i.e. every
+   observed wave except the very last - confirmed from
+   `rangeAndSimilarity(tmpmat[, -ncol(tmpmat)], rr)''s own column
+   slice), every ORDERED pair of distinct actors within that wave,
+   averaged as `sim(a,b) = 1-|a-b|/range' over the whole pooled set (sum
+   of numerators over sum of counts, not an average of per-wave means -
+   same summed-pooling convention as `balanceMean'/theta/the Jacobian
+   throughout this codebase). A real, easy-to-miss quirk kept faithfully
+   (verified directly from `rangeAndSimilarity()''s own `zeroOrNA(var(...))'
+   branch, NOT invented): if every pooled base-wave value is IDENTICAL
+   (zero variance), `simMean' is defined as exactly 0 - NOT the 1 the
+   general formula would otherwise give when every pairwise difference
+   is 0 (`1-0/range=1'). This only matters for a degenerate,
+   already-unusable dataset (a behavior with no variation at all cannot
+   identify ANY behavior effect), but is kept exactly as RSiena has it
+   per this whole package's own certification standard.
+*/
+real scalar saom_similarity_mean(pointer(real colvector) rowvector Behwaves, real scalar range){
+	real scalar nwaves, nbase, n, w, i, j, simTotal, simCnt
+	real colvector v, allbase
+
+	nwaves = cols(Behwaves)
+	nbase = nwaves - 1
+	if (nbase < 1) return(0)
+
+	allbase = *Behwaves[1]
+	for (w=2; w<=nbase; w++) allbase = allbase \ *Behwaves[w]
+	if (variance(allbase) <= 0) return(0)
+
+	simTotal = 0
+	simCnt = 0
+	for (w=1; w<=nbase; w++) {
+		v = *Behwaves[w]
+		n = rows(v)
+		for (i=1; i<=n; i++) {
+			for (j=1; j<=n; j++) {
+				if (j == i) continue
+				simTotal = simTotal + (1 - abs(v[i]-v[j])/range)
+				simCnt++
+			}
+		}
+	}
+	return(simCnt==0 ? 0 : simTotal/simCnt)
+}
+
+/* ===================================================================
+   SaomBehaviorModel: the behavior-side analogue of ErgmModel - a
+   minimal term registry (no curved-parameter support, no native-backend
+   plumbing, no MPLE - none of those apply to a v1 behavior model),
+   mirroring ErgmModel's own addterm()/nparam()/full_statistic()/
+   full_change() pattern exactly for the parts that DO carry over.
+   =================================================================== */
+class SaomBehaviorModel {
+	real scalar nterms
+	string rowvector names
+	pointer rowvector statfn	// pointer(real rowvector function(SaomBehavior, ErgmGraph)) scalar
+	pointer rowvector chgfn	// pointer(real scalar function(SaomBehavior, ErgmGraph, real scalar, real scalar)) scalar
+	string rowvector coefnames	// one per term (every v1 behavior effect is single-parameter)
+	real scalar simMean		// avsim's own data-derived constant, computed ONCE by nwsaom.ado (saom_similarity_mean()) and stored here - mirrors ErgmTermData's own td.decay convention for balance's data-derived mean; 0 (harmless) whenever avsim is not in the model
+	real rowvector fntype		// harmonisation unit 28 - one per term: 0=eval (default, every existing v1 effect), 1=endowment, 2=creation - see full_change()'s own header comment for the direction-gating this drives
+
+	void init()
+	void addterm()
+	real scalar nparam()
+	real rowvector full_statistic()
+	real rowvector full_change()
+	void setsimmean()
+}
+
+void SaomBehaviorModel::init(){
+	nterms = 0
+	names = J(1, 0, "")
+	statfn = J(1, 0, NULL)
+	chgfn = J(1, 0, NULL)
+	coefnames = J(1, 0, "")
+	simMean = 0
+	fntype = J(1, 0, 0)
+}
+
+void SaomBehaviorModel::setsimmean(real scalar sm){
+	simMean = sm
+}
+
+void SaomBehaviorModel::addterm(string scalar name,
+	pointer(real rowvector function) scalar sfn,
+	pointer(real scalar function) scalar cfn,
+	string scalar cname, | real scalar ftype){
+
+	nterms++
+	names = (names, name)
+	statfn = (statfn, sfn)
+	chgfn = (chgfn, cfn)
+	coefnames = (coefnames, cname)
+	fntype = (fntype, (args()==5 ? ftype : 0))
+}
+
+real scalar SaomBehaviorModel::nparam(){
+	return(nterms)
+}
+
+real rowvector SaomBehaviorModel::full_statistic(class SaomBehavior scalar Beh, class ErgmGraph scalar G){
+	real rowvector out
+	real scalar t
+
+	out = J(1, nterms, 0)
+	for (t=1; t<=nterms; t++) out[t] = (*statfn[t])(Beh, G)[1]
+	return(out)
+}
+
+/* full_change(): harmonisation unit 28 - endowment/creation direction
+   gating, verified directly against real RSiena source
+   (NetworkVariable.cpp's own calculateTieFlipContributions(): "The
+   endowment effects have non-zero contributions on tie withdrawals
+   only" / "The tie creation effects have non-zero contributions on tie
+   creation only" - the behavior-side analogue,
+   BehaviorVariable::totalEndowmentContribution(), gates identically on
+   `difference' sign). An endowment-type term (fntype=1) contributes
+   ONLY when `diff' is a DOWN move (diff<0); a creation-type term
+   (fntype=2) contributes ONLY when `diff' is an UP move (diff>0); an
+   eval-type term (fntype=0, every existing v1 effect) is unaffected,
+   contributing at every diff exactly as before. Reuses each term's own
+   ALREADY-CERTIFIED eval change_saom_X() function directly for the
+   gated formula (verified for `linear' specifically: RSiena's own
+   `egoEndowmentStatistic()'/`egoStatistic()' pair for
+   LinearShapeEffect.cpp uses the SAME raw `difference' formula in both
+   the eval and endowment/creation cases, just restricted to one sign -
+   see docs/SAOM_ROADMAP.md's own unit-28 entry for the full
+   derivation) - NOT a generic claim true of every possible effect,
+   which is exactly why v1 scope is `linear' only (see nwsaom.ado's own
+   validation). */
+real rowvector SaomBehaviorModel::full_change(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff){
+	real rowvector out
+	real scalar t
+
+	out = J(1, nterms, 0)
+	for (t=1; t<=nterms; t++) {
+		if (fntype[t] == 1 & diff >= 0) continue
+		if (fntype[t] == 2 & diff <= 0) continue
+		out[t] = (*chgfn[t])(Beh, G, i, diff)
+	}
+	return(out)
+}
+
+/* SaomBehaviorPatchEndowCreation(): harmonisation unit 28 - replaces
+   the endowment/creation-type slots of an ALREADY-COMPUTED joint
+   (network+behavior) statistic vector with their own REAL target,
+   computed directly from a (starting values, current/final values)
+   pair rather than via `full_statistic()' (which only ever evaluates a
+   SINGLE behavior snapshot, the right contract for every eval-type
+   term but not for endowment/creation - see NetworkEffect.cpp's own
+   `statistic(pSummationTieNetwork)' - X=initial/Y=lost-ties-network for
+   endowment, X=initial/Y=gained-ties-network for creation - the
+   behavior-side analogue this function ports, restricted to `linear'
+   per this unit's own v1 scope: RSiena's own `LinearShapeEffect::
+   egoEndowmentStatistic()' sums the raw signed difference over actors
+   whose value DECREASED - `sum(d :* (d:<0))' below is exactly that,
+   re-derived in this codebase's own (end-start) sign convention;
+   creation is the exact mirror, RSiena's own
+   `creationStatistic()' trick of summing over GAINED changes instead
+   of lost ones). Used identically for the OBSERVED target (startvals=
+   Behobs_start_values, currentvals=Behobs_end_values) and for EVERY
+   simulated replicate's own deviation (startvals=Behobs_start_values,
+   currentvals=Behwork.values - Behwork always starts each replicate
+   from Behobs_start_values by construction, matching the SAME
+   (initial, current) pairing real RSiena's own construction uses). */
+real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbeh, real rowvector stat,
+	real scalar pNet, real colvector startvals, real colvector currentvals){
+
+	real scalar t
+	real colvector d
+
+	d = currentvals - startvals
+	for (t=1; t<=Mbeh.nterms; t++) {
+		if (Mbeh.fntype[t] == 1) stat[pNet+t] = sum(d :* (d :< 0))
+		else if (Mbeh.fntype[t] == 2) stat[pNet+t] = sum(d :* (d :> 0))
+	}
+	return(stat)
+}
+
+/* ===================================================================
+   SaomBehaviorMinistep: one actor's own behavior ministep - exactly
+   THREE alternatives (down/stay/up, clamped at the observed min/max
+   range), confirmed directly from RSiena's own BehaviorVariable.cpp
+   (`this->lprobabilities = new double[3]', `nextIntWithProbabilities(3,
+   ...)'), NOT up to n-1 alternatives the way a network ministep has -
+   the same multinomial-logit/softmax construction Chapter 22's own
+   McFadden formula documents (docs/SAOM_ROADMAP.md's own DESIGN
+   section), now over 3 alternatives instead of n. Mutates Beh in place
+   via Beh.setvalue() if a real change is drawn. Returns the chosen
+   diff (-1, 0, or +1).
+   =================================================================== */
+real scalar SaomBehaviorMinistep(class SaomBehavior scalar Beh, class ErgmGraph scalar G,
+	class SaomBehaviorModel scalar Mbeh, real rowvector theta, real scalar i) {
+
+	real scalar cur, uDown, uUp, maxu, denom, draw, diff
+	real rowvector chg
+
+	cur = Beh.value(i)
+
+	uDown = .
+	if (cur > Beh.minval) {
+		chg = Mbeh.full_change(Beh, G, i, -1)
+		uDown = theta * chg'
+	}
+	uUp = .
+	if (cur < Beh.maxval) {
+		chg = Mbeh.full_change(Beh, G, i, 1)
+		uUp = theta * chg'
+	}
+
+	// numerically stable softmax over {uDown (if valid), 0 for "stay", uUp (if valid)}
+	maxu = 0
+	if (uDown != . & uDown > maxu) maxu = uDown
+	if (uUp != . & uUp > maxu) maxu = uUp
+
+	denom = exp(0 - maxu)
+	if (uDown != .) denom = denom + exp(uDown - maxu)
+	if (uUp != .) denom = denom + exp(uUp - maxu)
+
+	draw = runiform(1,1) * denom
+	diff = 0
+	if (uDown != .) {
+		if (draw <= exp(uDown - maxu)) {
+			diff = -1
+			Beh.setvalue(i, cur - 1)
+			return(diff)
+		}
+		draw = draw - exp(uDown - maxu)
+	}
+	if (draw <= exp(0 - maxu)) {
+		return(0)	// "stay" drawn
+	}
+	// only uUp's own share remains
+	diff = 1
+	Beh.setvalue(i, cur + 1)
+	return(diff)
+}
+
+/* ===================================================================
+   Joint (network + behavior) simulation and estimation - the rest of
+   harmonisation unit 26. Shipped Mata-only first (matching gwesp/
+   transties/balance's own precedent, unit 22/23/25: ship
+   correct-and-slow first, port to C only once certified) - a native
+   (C) port now also exists (SaomSimulateIntervalCoevNative(),
+   further below), used automatically whenever every term on BOTH
+   sides has native coverage; SaomSimulateIntervalCoevScored() below
+   remains the certified reference/fallback, always available. Mirrors
+   RSiena's own multi-variable race directly (confirmed from
+   `EpochSimulation.cpp`'s own `chooseVariable()`/`drawTimeIncrement()`,
+   docs/SAOM_ROADMAP.md's own unit-26 DESIGN section): ONE pooled
+   exponential waiting time drawn from the GRAND total rate (network's
+   own total rate + behavior's own total rate), then the acting
+   VARIABLE is chosen with probability proportional to its own share of
+   the grand total, then an actor uniformly within that variable
+   (constant, actor-homogeneous rate - matching the network side's own
+   existing v1 scope), then that variable's own ministep runs.
+   =================================================================== */
+
+/*
+   Behavior rate: no dedicated closed-form formula exists in RSiena's
+   own R source the way `networkRateEffects()` has one for the network
+   (confirmed by direct search - no `behaviorRateEffects` function
+   exists); real RSiena's own logic lives in `getBehaviorStartingVals()`
+   (R/sienaDataCreate.r). v1 disclosed simplification (see
+   docs/SAOM_ROADMAP.md's own unit-26 DESIGN section): use that
+   function's own general (non-binary) branch core formula uniformly -
+   `max(var(wave-to-wave differences), 0.1 + mean(|differences|))` -
+   for both binary and multi-level behavior variables, skipping
+   RSiena's own separate binary-specific logistic formula and its own
+   `tendency` starting-value refinement (which only affects
+   Robbins-Monro's own starting point for the linear-shape coefficient,
+   not correctness).
+*/
+real scalar SaomBehaviorRateStart(real colvector startvals, real colvector endvals) {
+	real colvector d
+
+	d = endvals - startvals
+	return(max((variance(d), 0.1 + mean(abs(d)))))
+}
+
+/* ===================================================================
+   SaomSimulateIntervalCoev: plain (non-scored) joint interval
+   simulator - the co-evolution analogue of SaomSimulateInterval(),
+   directly reusing the already-certified SaomMinistep()/
+   SaomBehaviorMinistep() unmodified (unlike the scored version below,
+   which must duplicate their internals to also expose the
+   softmax-weighted expected-change vector). Mutates G and Beh in
+   place. Used wherever a FITTED co-evolution model needs simulating
+   forward (postestimation GOF, etc.) - estimation itself uses the
+   scored version below.
+   =================================================================== */
+struct SaomCoevResult {
+	real scalar steps
+	real scalar nchangesNet
+	real scalar nchangesBeh
+}
+
+struct SaomCoevResult scalar SaomSimulateIntervalCoev(
+	class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
+	real scalar rateNet, real scalar rateBeh) {
+
+	struct SaomCoevResult scalar res
+	real scalar t, i, picked, totalRateNet, totalRateBeh, grandRate, draw
+
+	res.steps = 0
+	res.nchangesNet = 0
+	res.nchangesBeh = 0
+	totalRateNet = G.n * rateNet
+	totalRateBeh = Beh.n * rateBeh
+	grandRate = totalRateNet + totalRateBeh
+
+	t = 0
+	while (t < 1) {
+		t = t - ln(runiform(1,1)) / grandRate
+		if (t < 1) {
+			draw = runiform(1,1) * grandRate
+			if (draw <= totalRateNet) {
+				i = ceil(runiform(1,1) * G.n)
+				picked = SaomMinistep(G, M, thetaNet, i)
+				if (picked != 0) res.nchangesNet = res.nchangesNet + 1
+			}
+			else {
+				i = ceil(runiform(1,1) * Beh.n)
+				picked = SaomBehaviorMinistep(Beh, G, Mbeh, thetaBeh, i)
+				if (picked != 0) res.nchangesBeh = res.nchangesBeh + 1
+			}
+			res.steps = res.steps + 1
+		}
+	}
+	return(res)
+}
+
+/* ===================================================================
+   SaomSimulateIntervalCoevScored: the SCORED joint interval simulator
+   Robbins-Monro estimation needs (phases 1 and 3 - see
+   SaomEstimateRMCoev() below), the co-evolution analogue of
+   SaomSimulateIntervalScored(). Deliberately a PARALLEL implementation
+   duplicating SaomMinistep()'s/SaomBehaviorMinistep()'s own internals
+   (not a call-through), same rationale as
+   SaomSimulateIntervalScored()'s own header comment: it needs the
+   softmax-weighted EXPECTED change vector (`ebar') alongside the
+   CHOSEN alternative's own change vector at every ministep, which the
+   plain ministep functions don't expose.
+
+   Score-function identity, generalized to two competing variables
+   (verified algebraically, not assumed - see docs/SAOM_ROADMAP.md's
+   own unit-26 DESIGN section): at any given ministep, only ONE
+   variable acts (chosen via the constant, theta-independent rate
+   race), and that variable's own choice probability depends ONLY on
+   its OWN theta (via its own evaluation function) - the OTHER
+   variable's theta contributes exactly ZERO to this specific
+   ministep's own score, since neither the rate-based variable
+   selection nor the acting variable's own softmax depends on it. So
+   the joint score is simply the concatenation of "network score
+   contribution when network acts, zero otherwise" and "behavior score
+   contribution when behavior acts, zero otherwise", accumulated
+   ministep by ministep exactly as SaomSimulateIntervalScored() already
+   does for the network-only case.
+   =================================================================== */
+struct SaomCoevScoredResult {
+	real scalar steps
+	real scalar nchangesNet
+	real scalar nchangesBeh
+	real rowvector scoreNet
+	real rowvector scoreBeh
+	real rowvector stat		// harmonisation unit 31 - ONLY populated by SaomSimulateIntervalCoevNative() (the native path finally gets the SAME unit-14 optimization SaomSimulateIntervalNative() already had); SaomSimulateIntervalCoevScored() (the Mata path) leaves it empty, matching res.stat's own established convention on the network-only side
+	real rowvector statBeh		// harmonisation unit 31 - behavior-side counterpart to `stat' above, same convention
+}
+
+struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
+	class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
+	real scalar rateNet, real scalar rateBeh, | real colvector present) {
+
+	struct SaomCoevScoredResult scalar res
+	real matrix chgmat
+	real rowvector u, ebar, chosen_chg, chgDown, chgUp
+	real scalar t, n, pNet, pBeh, i, j, maxu, denom, draw, draw2, cum, choice, haspresent, npresent
+	real scalar totalRateNet, totalRateBeh, grandRate, cur, uDown, uUp, diff
+	real colvector presentIdx
+
+	n = G.n
+	pNet = M.nparam()
+	pBeh = Mbeh.nparam()
+	res.scoreNet = J(1, pNet, 0)
+	res.scoreBeh = J(1, pBeh, 0)
+	res.steps = 0
+	res.nchangesNet = 0
+	res.nchangesBeh = 0
+
+	// harmonisation unit 33 (composition change) - same optional,
+	// backward-compatible convention as every other simulator's own
+	// identical parameter (see SaomSimulateInterval()'s own header
+	// comment for the full account). A SINGLE `present' vector gates
+	// BOTH variables - network and behavior share the same actor set in
+	// co-evolution, so one presence mask suffices for which actor gets
+	// ANY kind of ministep opportunity, and (network only) which actors
+	// are eligible tie-target alternatives.
+	haspresent = (args() == 9)
+	if (haspresent) {
+		presentIdx = selectindex(present)
+		npresent = length(presentIdx)
+	}
+	else npresent = n
+
+	totalRateNet = npresent * rateNet
+	totalRateBeh = npresent * rateBeh
+	grandRate = totalRateNet + totalRateBeh
+
+	t = 0
+	while (t < 1) {
+		t = t - ln(runiform(1,1)) / grandRate
+		if (t < 1) {
+			draw = runiform(1,1) * grandRate
+			if (draw <= totalRateNet) {
+				// --- network ministep, scored (SaomSimulateIntervalScored()'s own inner logic, unmodified) ---
+				if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
+				else i = ceil(runiform(1,1) * n)
+				chgmat = J(n, pNet, 0)
+				u = J(1, n, 0)
+				maxu = 0
+				for (j=1; j<=n; j++) {
+					if (j == i) continue
+					if (haspresent) if (present[j] == 0) continue
+					chgmat[j,.] = M.full_change(G, i, j)
+					u[j] = thetaNet * chgmat[j,.]'
+					if (u[j] > maxu) maxu = u[j]
+				}
+				denom = exp(0 - maxu)
+				for (j=1; j<=n; j++) {
+					if (j == i) continue
+					if (haspresent) if (present[j] == 0) continue
+					denom = denom + exp(u[j] - maxu)
+				}
+				ebar = J(1, pNet, 0)
+				for (j=1; j<=n; j++) {
+					if (j == i) continue
+					if (haspresent) if (present[j] == 0) continue
+					ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
+				}
+				draw2 = runiform(1,1) * denom
+				cum = exp(0 - maxu)
+				choice = 0
+				chosen_chg = J(1, pNet, 0)
+				if (draw2 > cum) {
+					for (j=1; j<=n; j++) {
+						if (j == i) continue
+						if (haspresent) if (present[j] == 0) continue
+						cum = cum + exp(u[j] - maxu)
+						choice = j
+						if (draw2 <= cum) break
+					}
+					chosen_chg = chgmat[choice, .]
+				}
+				res.scoreNet = res.scoreNet + (chosen_chg - ebar)
+				if (choice != 0) {
+					G.toggle(i, choice)
+					res.nchangesNet = res.nchangesNet + 1
+				}
+			}
+			else {
+				// --- behavior ministep, scored (SaomBehaviorMinistep()'s own 3-alternative logic, extended to track ebar/chosen_chg) ---
+				if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
+				else i = ceil(runiform(1,1) * Beh.n)
+				cur = Beh.value(i)
+
+				uDown = .
+				chgDown = J(1, pBeh, 0)
+				if (cur > Beh.minval) {
+					chgDown = Mbeh.full_change(Beh, G, i, -1)
+					uDown = thetaBeh * chgDown'
+				}
+				uUp = .
+				chgUp = J(1, pBeh, 0)
+				if (cur < Beh.maxval) {
+					chgUp = Mbeh.full_change(Beh, G, i, 1)
+					uUp = thetaBeh * chgUp'
+				}
+
+				maxu = 0
+				if (uDown != . & uDown > maxu) maxu = uDown
+				if (uUp != . & uUp > maxu) maxu = uUp
+
+				denom = exp(0 - maxu)
+				if (uDown != .) denom = denom + exp(uDown - maxu)
+				if (uUp != .) denom = denom + exp(uUp - maxu)
+
+				ebar = J(1, pBeh, 0)
+				if (uDown != .) ebar = ebar + (exp(uDown-maxu)/denom) * chgDown
+				if (uUp != .) ebar = ebar + (exp(uUp-maxu)/denom) * chgUp
+				// "stay"'s own change vector is the zero vector - contributes nothing to ebar
+
+				draw2 = runiform(1,1) * denom
+				diff = 0
+				chosen_chg = J(1, pBeh, 0)
+				if (uDown != . & draw2 <= exp(uDown - maxu)) {
+					diff = -1
+					chosen_chg = chgDown
+					Beh.setvalue(i, cur - 1)
+				}
+				else {
+					if (uDown != .) draw2 = draw2 - exp(uDown - maxu)
+					if (draw2 <= exp(0 - maxu)) {
+						diff = 0
+					}
+					else {
+						diff = 1
+						chosen_chg = chgUp
+						Beh.setvalue(i, cur + 1)
+					}
+				}
+				res.scoreBeh = res.scoreBeh + (chosen_chg - ebar)
+				if (diff != 0) res.nchangesBeh = res.nchangesBeh + 1
+			}
+			res.steps = res.steps + 1
+		}
+	}
+	return(res)
+}
+
+/* ===================================================================
+   SaomEstimateRMCoev: joint Method of Moments / Robbins-Monro
+   estimation across network + behavior - the co-evolution analogue of
+   SaomEstimateRM(), mirroring its exact three-phase structure (phase 1
+   Jacobian via the score-function derivative estimator, phase 2
+   multi-subphase Robbins-Monro with RSiena's own nsub=4/firstg=0.2/
+   reduceg=0.5/n2minimum-n2maximum schedule, phase 3 sandwich
+   covariance) over the JOINT (pNet+pBeh)-dimensional parameter/
+   statistic space, rather than reinventing the estimator. Native (C)
+   dispatch available (SaomSimulateIntervalCoevNative() below),
+   used automatically whenever every network AND behavior term in the
+   model has native coverage - falls back to the pure-Mata
+   SaomSimulateIntervalCoevScored() otherwise, never a silent partial
+   native run.
+
+   Two waves only (v1 scope, matching SaomEstimateRM's own exactly-
+   two-wave scope before waves() chaining generalized it, unit 17 -
+   chaining a co-evolution model across 3+ waves is a further,
+   not-yet-scoped extension). Two SEPARATE, FIXED rate parameters (one
+   per variable, each its own verified closed-form starting value -
+   network's own formula unchanged, behavior's own via
+   SaomBehaviorRateStart() above), matching how the network side's own
+   rate is fixed-not-refined throughout phases 1-3 already.
+   =================================================================== */
+struct SaomCoevFit {
+	real rowvector thetaNet
+	real rowvector thetaBeh
+	real scalar rateNet
+	real scalar rateBeh
+	real rowvector tratioNet
+	real rowvector tratioBeh
+	real scalar rateNetTratio
+	real scalar rateBehTratio
+	real matrix V		// joint (pNet+pBeh) x (pNet+pBeh) covariance
+}
+
+struct SaomCoevFit scalar SaomEstimateRMCoev(
+	class ErgmGraph scalar Gobs_start, class ErgmGraph scalar Gobs_end, class ErgmModel scalar M,
+	real colvector Behobs_start_values, real colvector Behobs_end_values,
+	real scalar behminval, real scalar behmaxval, class SaomBehaviorModel scalar Mbeh,
+	real rowvector theta0Net, real rowvector theta0Beh,
+	real scalar K0, real scalar K3, real scalar firstg, | real colvector present) {
+
+	struct SaomCoevFit scalar fit
+	struct SaomCoevScoredResult scalar sres
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+	class ErgmGraph scalar Gwork
+	class SaomBehavior scalar Behwork, Behend
+	real rowvector target, theta0, theta, dev, prevdev, prod0, prod1, ac, stdcap, simstat
+	real rowvector thav, fchange, changestep, thetaNet, thetaBeh
+	real matrix Zdev, Zsco, Ddev, Dsco, Dhat, temp, Dinv, msf, sfinvcov, Zphase3, Zsco3
+	real matrix Ddev3, Dsco3, Dhat3, Dinv3, theta_hist
+	real scalar pNet, pBeh, p, k, targetRateNet, targetRateBeh, ratecurNet, ratecurBeh
+	real scalar overallMean, simMean, nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor, use_native
+	real scalar haspresent, npresent
+	real rowvector n2minimum, n2maximum
+	real colvector rateNetHist, rateBehHist
+
+	pNet = M.nparam()
+	pBeh = Mbeh.nparam()
+	p = pNet + pBeh
+
+	// harmonisation unit 33 (composition change) - same optional,
+	// backward-compatible convention as SaomEstimateRM()'s own identical
+	// parameter (see its own header comment for the full account). A
+	// SINGLE `present' vector gates both variables, exactly like
+	// SaomSimulateIntervalCoevScored()'s own identical parameter.
+	haspresent = (args() == 14)
+	if (haspresent) npresent = length(selectindex(present))
+	else npresent = Gobs_start.n
+
+	// native (C) dispatch (harmonisation unit 26 - see
+	// SaomSimulateIntervalCoevNative()'s own header comment):
+	// eligible only if EVERY network term AND every behavior term has
+	// native coverage - a mixed model with even one unsupported term on
+	// either side falls back to the pure-Mata path entirely, never a
+	// silent partial native run (matches SaomNativeSetup()'s own
+	// established "all or nothing" contract). Force-disabled under
+	// composition change (harmonisation unit 33 - no native support yet,
+	// a disclosed, scoped-out follow-up).
+	cfg = SaomNativeSetup(M)
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	use_native = cfg.eligible & cfgBeh.eligible & SaomNativeAvailable() & !haspresent
+
+	overallMean = mean((Behobs_start_values \ Behobs_end_values))
+	// avsim's own data-derived `similarityMean' constant (harmless 0 for
+	// every other behavior effect) - computed ONCE by nwsaom.ado itself
+	// (saom_similarity_mean()) and stored on Mbeh, mirroring exactly how
+	// `balance''s own data-derived mean is stored per-term in an
+	// ErgmTermData `td.decay' and simply READ here, not recomputed.
+	simMean = Mbeh.simMean
+
+	Behend = SaomBehavior()
+	Behend.init(Behobs_end_values, behminval, behmaxval, overallMean, simMean)
+	target = (M.full_statistic(Gobs_end), Mbeh.full_statistic(Behend, Gobs_end))
+	// harmonisation unit 28: endowment/creation-type behavior terms get
+	// their own REAL target here, overwriting the full_statistic()-based
+	// placeholder above (see SaomBehaviorPatchEndowCreation()'s own
+	// header comment) - a no-op whenever no such term is in the model.
+	target = SaomBehaviorPatchEndowCreation(Mbeh, target, pNet, Behobs_start_values, Behobs_end_values)
+
+	targetRateNet = SaomCountDiffering(Gobs_start, Gobs_end)
+	targetRateBeh = sum(abs(Behobs_end_values - Behobs_start_values))
+
+	ratecurNet = npresent * (0.2 + 2*targetRateNet) / (npresent*(npresent-1) + 1)
+	ratecurBeh = SaomBehaviorRateStart(Behobs_start_values, Behobs_end_values)
+
+	theta0 = (theta0Net, theta0Beh)
+
+	// --- Phase 1: joint Jacobian, same Cov(deviation,score)/diagonalize
+	// construction as SaomEstimateRM()'s own phase 1, now over the full
+	// (pNet+pBeh)-dimensional joint space.
+	Zdev = J(K0, p, 0)
+	Zsco = J(K0, p, 0)
+	for (k=1; k<=K0; k++) {
+		Behwork = SaomBehavior()
+		Behwork.init(Behobs_start_values, behminval, behmaxval, overallMean, simMean)
+
+		if (use_native) {
+			// harmonisation unit 32 (performance pass, same rationale as
+			// unit 15's identical fix on the network-only side): no
+			// SaomCopyGraph() needed here - `rebuild_g=0' means G is
+			// never mutated, so Gobs_start itself can be passed directly.
+			sres = SaomSimulateIntervalCoevNative(Gobs_start, M, cfg, theta0Net, Behwork, Mbeh, cfgBeh, theta0Beh, ratecurNet, ratecurBeh, 0)
+			simstat = (sres.stat, sres.statBeh)
+		}
+		else {
+			Gwork = ErgmGraph()
+			SaomCopyGraph(Gobs_start, Gwork)
+			if (haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, theta0Net, Behwork, Mbeh, theta0Beh, ratecurNet, ratecurBeh, present)
+			else sres = SaomSimulateIntervalCoevScored(Gwork, M, theta0Net, Behwork, Mbeh, theta0Beh, ratecurNet, ratecurBeh)
+			simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+		}
+		simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, Behobs_start_values, Behwork.values)
+		Zdev[k,.] = simstat - target
+		Zsco[k,.] = (sres.scoreNet, sres.scoreBeh)
+	}
+	Ddev = Zdev :- mean(Zdev)
+	Dsco = Zsco :- mean(Zsco)
+	Dhat = (Ddev' * Dsco) / K0
+	temp = 0.8 * Dhat + 0.2 * diag(diagonal(Dhat))
+	Dinv = luinv(temp)
+
+	msf = variance(Zdev)
+	sfinvcov = invsym(msf + 0.0001 * I(p))
+	stdcap = J(1, p, 1)
+	for (k=1; k<=p; k++) {
+		stdcap[k] = 1 / sqrt(max((Dinv[k,.] * msf * Dinv[k,.]', 0)))
+		if (stdcap[k] > 1) stdcap[k] = 1
+	}
+
+	// --- Phase 2: joint Robbins-Monro, identical subphase schedule to
+	// SaomEstimateRM()'s own phase 2, over the joint parameter vector.
+	nsub = 4
+	reduceg = 0.5
+	gain = firstg
+	n2min0 = max((5, 7 + p))
+	n2minimum = J(1, nsub, 0)
+	n2maximum = J(1, nsub, 0)
+	n2minimum[1] = trunc(n2min0 * 2.52)
+	n2maximum[1] = n2minimum[1] + 200
+	for (k=2; k<=nsub; k++) {
+		n2minimum[k] = trunc(n2minimum[k-1] * 2.52)
+		n2maximum[k] = n2minimum[k] + 200
+	}
+
+	theta = theta0
+	theta_hist = J(nsub, p, 0)
+
+	for (subphase=1; subphase<=nsub; subphase++) {
+		thav = theta
+		thavn = 1
+		prod0 = J(1, p, 0)
+		prod1 = J(1, p, 0)
+		prevdev = J(1, p, 0)
+		nit = 0
+		maxacor = 1
+
+		while (1) {
+			nit = nit + 1
+			Behwork = SaomBehavior()
+			Behwork.init(Behobs_start_values, behminval, behmaxval, overallMean, simMean)
+
+			thetaNet = theta[1..pNet]
+			thetaBeh = theta[(pNet+1)..p]
+			if (use_native) {
+				// harmonisation unit 32 - see phase 1's own identical
+				// comment above.
+				sres = SaomSimulateIntervalCoevNative(Gobs_start, M, cfg, thetaNet, Behwork, Mbeh, cfgBeh, thetaBeh, ratecurNet, ratecurBeh, 0)
+				simstat = (sres.stat, sres.statBeh)
+			}
+			else {
+				Gwork = ErgmGraph()
+				SaomCopyGraph(Gobs_start, Gwork)
+				if (haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, ratecurNet, ratecurBeh, present)
+				else sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, ratecurNet, ratecurBeh)
+				simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+			}
+			simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, Behobs_start_values, Behwork.values)
+			dev = simstat - target
+
+			if (mod(nit,2) == 1) prevdev = dev
+			else {
+				prod0 = prod0 + dev:^2
+				prod1 = prod1 + dev:*prevdev
+			}
+
+			maxRatio = sqrt((dev * sfinvcov * dev') / p)
+			if (maxRatio > 5 & maxRatio > 0) dev = 5 * dev / maxRatio
+
+			if (nit == 1) changestep = dev
+			else changestep = changestep + dev
+			fchange = gain * ((changestep * Dinv') :* stdcap)
+
+			theta = (thav / thavn) - fchange
+			thav = thav + theta
+			thavn = thavn + 1
+			SaomCheckThetaBound(theta, 50)		// harmonisation unit 29 - see that function's own header comment
+
+			if (nit >= 2) {
+				ac = J(1, p, -1)
+				for (k=1; k<=p; k++) {
+					if (prod0[k] > 1e-12) ac[k] = prod1[k] / prod0[k]
+				}
+				maxacor = max(ac)
+			}
+
+			if (nit >= n2maximum[subphase]) break
+			if (nit >= n2minimum[subphase] & maxacor < 1e-10) break
+		}
+
+		theta = thav / thavn
+		theta_hist[subphase, .] = theta
+		gain = gain * reduceg
+	}
+
+	fit.thetaNet = theta[1..pNet]
+	fit.thetaBeh = theta[(pNet+1)..p]
+	fit.rateNet = ratecurNet
+	fit.rateBeh = ratecurBeh
+
+	// --- Phase 3: joint sandwich covariance, identical construction to
+	// SaomEstimateRM()'s own phase 3, over the joint space - plus
+	// SEPARATE rate t-ratio diagnostics for each variable's own rate
+	// (network's own nchanges vs targetRateNet, behavior's own
+	// nchanges vs targetRateBeh - two independent moment checks, not a
+	// joint one, matching how each variable's own rate is a separate,
+	// independently-targeted parameter).
+	Zphase3 = J(K3, p, 0)
+	Zsco3 = J(K3, p, 0)
+	rateNetHist = J(K3, 1, 0)
+	rateBehHist = J(K3, 1, 0)
+	for (k=1; k<=K3; k++) {
+		Behwork = SaomBehavior()
+		Behwork.init(Behobs_start_values, behminval, behmaxval, overallMean, simMean)
+
+		if (use_native) {
+			// harmonisation unit 32 - see phase 1's own identical
+			// comment above.
+			sres = SaomSimulateIntervalCoevNative(Gobs_start, M, cfg, fit.thetaNet, Behwork, Mbeh, cfgBeh, fit.thetaBeh, ratecurNet, ratecurBeh, 0)
+			simstat = (sres.stat, sres.statBeh)
+		}
+		else {
+			Gwork = ErgmGraph()
+			SaomCopyGraph(Gobs_start, Gwork)
+			if (haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, fit.thetaNet, Behwork, Mbeh, fit.thetaBeh, ratecurNet, ratecurBeh, present)
+			else sres = SaomSimulateIntervalCoevScored(Gwork, M, fit.thetaNet, Behwork, Mbeh, fit.thetaBeh, ratecurNet, ratecurBeh)
+			simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+		}
+		simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, Behobs_start_values, Behwork.values)
+		Zphase3[k, .] = simstat - target
+		Zsco3[k, .] = (sres.scoreNet, sres.scoreBeh)
+		rateNetHist[k] = sres.nchangesNet - targetRateNet
+		rateBehHist[k] = sres.nchangesBeh - targetRateBeh
+	}
+
+	fit.tratioNet = J(1, pNet, 0)
+	for (k=1; k<=pNet; k++) {
+		if (K3 > 1 & variance(Zphase3[.,k]) > 1e-10) {
+			fit.tratioNet[k] = mean(Zphase3[.,k]) / sqrt(variance(Zphase3[.,k]) / K3)
+		}
+	}
+	fit.tratioBeh = J(1, pBeh, 0)
+	for (k=1; k<=pBeh; k++) {
+		if (K3 > 1 & variance(Zphase3[.,pNet+k]) > 1e-10) {
+			fit.tratioBeh[k] = mean(Zphase3[.,pNet+k]) / sqrt(variance(Zphase3[.,pNet+k]) / K3)
+		}
+	}
+	fit.rateNetTratio = 0
+	if (K3 > 1 & variance(rateNetHist) > 1e-10) {
+		fit.rateNetTratio = mean(rateNetHist) / sqrt(variance(rateNetHist) / K3)
+	}
+	fit.rateBehTratio = 0
+	if (K3 > 1 & variance(rateBehHist) > 1e-10) {
+		fit.rateBehTratio = mean(rateBehHist) / sqrt(variance(rateBehHist) / K3)
+	}
+
+	Ddev3 = Zphase3 :- mean(Zphase3)
+	Dsco3 = Zsco3 :- mean(Zsco3)
+	Dhat3 = (Ddev3' * Dsco3) / K3
+	Dinv3 = luinv(Dhat3)
+	fit.V = Dinv3 * variance(Zphase3) * Dinv3'
+
+	if (use_native) SaomNativeCleanupFrame()
+
+	return(fit)
+}
+
+/* ===================================================================
+   SaomEstimateRMCoevMulti: co-evolution across 3+ waves (harmonisation
+   unit 26, "N-wave co-evolution" per explicit user direction - "extend
+   it to N waves"). Generalizes SaomEstimateRMCoev() (kept completely
+   UNTOUCHED above, zero regression risk to the already-certified
+   two-wave path) to `nwaves' >= 2 waves / `nperiods' = nwaves-1 periods,
+   the EXACT same relationship SaomEstimateRMMulti() already established
+   for the network-only case (unit 17) - mirrored here, not reinvented:
+   theta (BOTH network and behavior) is POOLED/shared across every
+   period by summing per-period deviations/scores before the Jacobian/
+   Robbins-Monro update (same convention this whole codebase already
+   uses for theta pooling, GOF's own join=TRUE, and the two-wave
+   SaomEstimateRMCoev's own network+behavior concatenation), while EACH
+   variable's own rate stays PER-PERIOD (network rate per period,
+   matching unit 17's own `fit.rates'; behavior rate per period,
+   genuinely new here) - four separate per-period rate series in total,
+   not two.
+
+   Native (C) dispatch (harmonisation unit 26 native port) available
+   exactly like SaomEstimateRMCoev()'s own two-wave case - see
+   SaomSimulateIntervalCoevNative()'s own header comment.
+   =================================================================== */
+struct SaomCoevMultiFit {
+	real rowvector thetaNet
+	real rowvector thetaBeh
+	real rowvector ratesNet		// 1 x nperiods
+	real rowvector ratesBeh		// 1 x nperiods
+	real rowvector tratioNet
+	real rowvector tratioBeh
+	real rowvector rateNetTratios		// 1 x nperiods
+	real rowvector rateBehTratios		// 1 x nperiods
+	real matrix V
+}
+
+struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
+	pointer(class ErgmGraph scalar) rowvector Gwaves,
+	class ErgmModel scalar M,
+	pointer(real colvector) rowvector Behwaves, real scalar behminval, real scalar behmaxval,
+	class SaomBehaviorModel scalar Mbeh,
+	real rowvector theta0Net, real rowvector theta0Beh,
+	real scalar K0, real scalar K3, real scalar firstg) {
+
+	struct SaomCoevMultiFit scalar fit
+	struct SaomCoevScoredResult scalar sres
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+	class ErgmGraph scalar Gwork, Gp, Gpend
+	class SaomBehavior scalar Behwork, Behpend
+	real matrix target, Zdev, Zsco, Ddev, Dsco, Dhat, temp, Dinv, msf, sfinvcov, Zphase3, Zsco3
+	real matrix Ddev3, Dsco3, Dhat3, Dinv3, theta_hist, rateNetHist, rateBehHist
+	real rowvector theta, theta0, dev, prevdev, prod0, prod1, ac, stdcap, simstat
+	real rowvector thav, fchange, changestep, thetaNet, thetaBeh
+	real rowvector ratesNet, ratesBeh, targetRateNet, targetRateBeh
+	real scalar pNet, pBeh, p, k, pd, nwaves, nperiods, overallMean, simMean, nch, use_native
+	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
+	real rowvector n2minimum, n2maximum
+	real colvector allbehvals
+
+	nwaves = cols(Gwaves)
+	nperiods = nwaves - 1
+	pNet = M.nparam()
+	pBeh = Mbeh.nparam()
+	p = pNet + pBeh
+
+	// native (C) dispatch - see SaomEstimateRMCoev()'s own identical
+	// comment above (this function mirrors that one's dispatch exactly,
+	// just re-checked here since it is a separate function).
+	cfg = SaomNativeSetup(M)
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	use_native = cfg.eligible & cfgBeh.eligible & SaomNativeAvailable()
+
+	// overallMean pools EVERY wave's own behavior values (not just the
+	// two endpoints of one period) - matching real RSiena's own
+	// BehaviorLongitudinalData::overallMean() scope, and the two-wave
+	// SaomEstimateRMCoev()'s own identical convention generalized to N
+	// waves.
+	allbehvals = *Behwaves[1]
+	for (pd=2; pd<=nwaves; pd++) allbehvals = allbehvals \ *Behwaves[pd]
+	overallMean = mean(allbehvals)
+	// avsim's own data-derived `similarityMean' constant - read off Mbeh,
+	// where nwsaom.ado already computed and stored it once (see
+	// SaomEstimateRMCoev()'s own identical comment above).
+	simMean = Mbeh.simMean
+
+	target = J(nperiods, p, 0)
+	targetRateNet = J(1, nperiods, 0)
+	targetRateBeh = J(1, nperiods, 0)
+	ratesNet = J(1, nperiods, 0)
+	ratesBeh = J(1, nperiods, 0)
+	for (pd=1; pd<=nperiods; pd++) {
+		Gp = *Gwaves[pd]
+		Gpend = *Gwaves[pd+1]
+		Behpend = SaomBehavior()
+		Behpend.init(*Behwaves[pd+1], behminval, behmaxval, overallMean, simMean)
+		target[pd,.] = (M.full_statistic(Gpend), Mbeh.full_statistic(Behpend, Gpend))
+		// harmonisation unit 28 - see SaomEstimateRMCoev()'s own identical
+		// comment above; this period's own starting wave is *Behwaves[pd].
+		target[pd,.] = SaomBehaviorPatchEndowCreation(Mbeh, target[pd,.], pNet, *Behwaves[pd], *Behwaves[pd+1])
+
+		targetRateNet[pd] = SaomCountDiffering(Gp, Gpend)
+		targetRateBeh[pd] = sum(abs(*Behwaves[pd+1] - *Behwaves[pd]))
+
+		ratesNet[pd] = Gp.n * (0.2 + 2*targetRateNet[pd]) / (Gp.n*(Gp.n-1) + 1)
+		ratesBeh[pd] = SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1])
+	}
+
+	theta0 = (theta0Net, theta0Beh)
+
+	// --- Phase 1: pooled joint Jacobian - SUM the per-period joint
+	// (network+behavior) deviation/score across periods, otherwise
+	// identical to SaomEstimateRMCoev()'s own phase 1.
+	Zdev = J(K0, p, 0)
+	Zsco = J(K0, p, 0)
+	for (k=1; k<=K0; k++) {
+		dev = J(1, p, 0)
+		prevdev = J(1, p, 0)		// score accumulator (reusing prevdev to avoid a second p-length temp before phase 2 needs it for its own purpose)
+		for (pd=1; pd<=nperiods; pd++) {
+			Gp = *Gwaves[pd]
+			Behwork = SaomBehavior()
+			Behwork.init(*Behwaves[pd], behminval, behmaxval, overallMean, simMean)
+			if (use_native) {
+				// harmonisation unit 32 - see SaomEstimateRMCoev()'s own
+				// phase 1 identical comment.
+				sres = SaomSimulateIntervalCoevNative(Gp, M, cfg, theta0Net, Behwork, Mbeh, cfgBeh, theta0Beh, ratesNet[pd], ratesBeh[pd], 0)
+				simstat = (sres.stat, sres.statBeh)
+			}
+			else {
+				Gwork = ErgmGraph()
+				SaomCopyGraph(Gp, Gwork)
+				sres = SaomSimulateIntervalCoevScored(Gwork, M, theta0Net, Behwork, Mbeh, theta0Beh, ratesNet[pd], ratesBeh[pd])
+				simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+			}
+			simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, *Behwaves[pd], Behwork.values)
+			dev = dev + (simstat - target[pd,.])
+			prevdev = prevdev + (sres.scoreNet, sres.scoreBeh)
+		}
+		Zdev[k,.] = dev
+		Zsco[k,.] = prevdev
+	}
+	Ddev = Zdev :- mean(Zdev)
+	Dsco = Zsco :- mean(Zsco)
+	Dhat = (Ddev' * Dsco) / K0
+	temp = 0.8 * Dhat + 0.2 * diag(diagonal(Dhat))
+	Dinv = luinv(temp)
+
+	msf = variance(Zdev)
+	sfinvcov = invsym(msf + 0.0001 * I(p))
+	stdcap = J(1, p, 1)
+	for (k=1; k<=p; k++) {
+		stdcap[k] = 1 / sqrt(max((Dinv[k,.] * msf * Dinv[k,.]', 0)))
+		if (stdcap[k] > 1) stdcap[k] = 1
+	}
+
+	// --- Phase 2: pooled joint multi-subphase Robbins-Monro - identical
+	// schedule/truncation/double-averaging/autocorrelation logic to
+	// SaomEstimateRMCoev()'s own phase 2, summing `dev' across periods
+	// each iteration.
+	nsub = 4
+	reduceg = 0.5
+	gain = firstg
+	n2min0 = max((5, 7 + p))
+	n2minimum = J(1, nsub, 0)
+	n2maximum = J(1, nsub, 0)
+	n2minimum[1] = trunc(n2min0 * 2.52)
+	n2maximum[1] = n2minimum[1] + 200
+	for (k=2; k<=nsub; k++) {
+		n2minimum[k] = trunc(n2minimum[k-1] * 2.52)
+		n2maximum[k] = n2minimum[k] + 200
+	}
+
+	theta = theta0
+	theta_hist = J(nsub, p, 0)
+
+	for (subphase=1; subphase<=nsub; subphase++) {
+		thav = theta
+		thavn = 1
+		prod0 = J(1, p, 0)
+		prod1 = J(1, p, 0)
+		prevdev = J(1, p, 0)
+		nit = 0
+		maxacor = 1
+
+		while (1) {
+			nit = nit + 1
+			thetaNet = theta[1..pNet]
+			thetaBeh = theta[(pNet+1)..p]
+			dev = J(1, p, 0)
+			for (pd=1; pd<=nperiods; pd++) {
+				Gp = *Gwaves[pd]
+				Behwork = SaomBehavior()
+				Behwork.init(*Behwaves[pd], behminval, behmaxval, overallMean, simMean)
+				if (use_native) {
+					// harmonisation unit 32 - see SaomEstimateRMCoev()'s
+					// own phase 1 identical comment.
+					sres = SaomSimulateIntervalCoevNative(Gp, M, cfg, thetaNet, Behwork, Mbeh, cfgBeh, thetaBeh, ratesNet[pd], ratesBeh[pd], 0)
+					simstat = (sres.stat, sres.statBeh)
+				}
+				else {
+					Gwork = ErgmGraph()
+					SaomCopyGraph(Gp, Gwork)
+					sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, ratesNet[pd], ratesBeh[pd])
+					simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+				}
+				simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, *Behwaves[pd], Behwork.values)
+				dev = dev + (simstat - target[pd,.])
+			}
+
+			if (mod(nit,2) == 1) prevdev = dev
+			else {
+				prod0 = prod0 + dev:^2
+				prod1 = prod1 + dev:*prevdev
+			}
+
+			maxRatio = sqrt((dev * sfinvcov * dev') / p)
+			if (maxRatio > 5 & maxRatio > 0) dev = 5 * dev / maxRatio
+
+			if (nit == 1) changestep = dev
+			else changestep = changestep + dev
+			fchange = gain * ((changestep * Dinv') :* stdcap)
+
+			theta = (thav / thavn) - fchange
+			thav = thav + theta
+			thavn = thavn + 1
+			SaomCheckThetaBound(theta, 50)		// harmonisation unit 29 - see that function's own header comment
+
+			if (nit >= 2) {
+				ac = J(1, p, -1)
+				for (k=1; k<=p; k++) {
+					if (prod0[k] > 1e-12) ac[k] = prod1[k] / prod0[k]
+				}
+				maxacor = max(ac)
+			}
+
+			if (nit >= n2maximum[subphase]) break
+			if (nit >= n2minimum[subphase] & maxacor < 1e-10) break
+		}
+
+		theta = thav / thavn
+		theta_hist[subphase, .] = theta
+		gain = gain * reduceg
+	}
+
+	fit.thetaNet = theta[1..pNet]
+	fit.thetaBeh = theta[(pNet+1)..p]
+	fit.ratesNet = ratesNet
+	fit.ratesBeh = ratesBeh
+
+	// --- Phase 3: pooled joint sandwich covariance, PLUS per-period,
+	// per-variable rate diagnostics (rateNetHist/rateBehHist are each
+	// K3 x nperiods, one column per period's own accepted-change
+	// moment - the co-evolution analogue of SaomEstimateRMMulti()'s own
+	// single rate_hist, now doubled since there are two variables).
+	Zphase3 = J(K3, p, 0)
+	Zsco3 = J(K3, p, 0)
+	rateNetHist = J(K3, nperiods, 0)
+	rateBehHist = J(K3, nperiods, 0)
+	for (k=1; k<=K3; k++) {
+		dev = J(1, p, 0)
+		prevdev = J(1, p, 0)
+		for (pd=1; pd<=nperiods; pd++) {
+			Gp = *Gwaves[pd]
+			Behwork = SaomBehavior()
+			Behwork.init(*Behwaves[pd], behminval, behmaxval, overallMean, simMean)
+			if (use_native) {
+				// harmonisation unit 32 - see SaomEstimateRMCoev()'s own
+				// phase 1 identical comment.
+				sres = SaomSimulateIntervalCoevNative(Gp, M, cfg, fit.thetaNet, Behwork, Mbeh, cfgBeh, fit.thetaBeh, ratesNet[pd], ratesBeh[pd], 0)
+				simstat = (sres.stat, sres.statBeh)
+			}
+			else {
+				Gwork = ErgmGraph()
+				SaomCopyGraph(Gp, Gwork)
+				sres = SaomSimulateIntervalCoevScored(Gwork, M, fit.thetaNet, Behwork, Mbeh, fit.thetaBeh, ratesNet[pd], ratesBeh[pd])
+				simstat = (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, Gwork))
+			}
+			simstat = SaomBehaviorPatchEndowCreation(Mbeh, simstat, pNet, *Behwaves[pd], Behwork.values)
+			dev = dev + (simstat - target[pd,.])
+			prevdev = prevdev + (sres.scoreNet, sres.scoreBeh)
+			rateNetHist[k,pd] = sres.nchangesNet - targetRateNet[pd]
+			rateBehHist[k,pd] = sres.nchangesBeh - targetRateBeh[pd]
+		}
+		Zphase3[k, .] = dev
+		Zsco3[k, .] = prevdev
+	}
+
+	fit.tratioNet = J(1, pNet, 0)
+	for (k=1; k<=pNet; k++) {
+		if (K3 > 1 & variance(Zphase3[.,k]) > 1e-10) {
+			fit.tratioNet[k] = mean(Zphase3[.,k]) / sqrt(variance(Zphase3[.,k]) / K3)
+		}
+	}
+	fit.tratioBeh = J(1, pBeh, 0)
+	for (k=1; k<=pBeh; k++) {
+		if (K3 > 1 & variance(Zphase3[.,pNet+k]) > 1e-10) {
+			fit.tratioBeh[k] = mean(Zphase3[.,pNet+k]) / sqrt(variance(Zphase3[.,pNet+k]) / K3)
+		}
+	}
+	fit.rateNetTratios = J(1, nperiods, 0)
+	fit.rateBehTratios = J(1, nperiods, 0)
+	for (pd=1; pd<=nperiods; pd++) {
+		if (K3 > 1 & variance(rateNetHist[.,pd]) > 1e-10) {
+			fit.rateNetTratios[pd] = mean(rateNetHist[.,pd]) / sqrt(variance(rateNetHist[.,pd]) / K3)
+		}
+		if (K3 > 1 & variance(rateBehHist[.,pd]) > 1e-10) {
+			fit.rateBehTratios[pd] = mean(rateBehHist[.,pd]) / sqrt(variance(rateBehHist[.,pd]) / K3)
+		}
+	}
+
 	Ddev3 = Zphase3 :- mean(Zphase3)
 	Dsco3 = Zsco3 :- mean(Zsco3)
 	Dhat3 = (Ddev3' * Dsco3) / K3
@@ -1613,6 +3421,42 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	return(cfg)
 }
 
+/* Behavior-side counterpart to SaomNativeSetup() (harmonisation unit
+   26) - ALL four v1 behavior effects (linear/quadratic/avalt/avsim)
+   have native coverage from the start (native/saom_sim.c's own
+   TERMCODE_BEH_* dispatch), unlike the network side's own gradual
+   13-of-many rollout, since there are only ever four of them.
+
+   Harmonisation unit 28: endowment/creation-type terms (fntype!=0,
+   SaomBehaviorModel::full_change()'s own header comment) are NOT
+   natively covered - the C plugin's own saom_beh_change_term()
+   dispatch has no concept of direction-gating by type, so a term with
+   fntype!=0 unconditionally flips cfg.eligible=0 regardless of its own
+   NAME already being recognized, forcing the fully-certified Mata
+   fallback for the WHOLE model (never a silent partial/wrong native
+   run that would ignore the gating). */
+struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehaviorModel scalar Mbeh){
+	struct SaomBehaviorNativeConfig scalar cfg
+	real scalar t
+	string scalar nm
+
+	cfg.termcodes = J(1, Mbeh.nterms, 0)
+	cfg.eligible = 1
+	for (t=1; t<=Mbeh.nterms; t++) {
+		nm = Mbeh.names[t]
+		if (Mbeh.fntype[t] != 0) {
+			cfg.eligible = 0
+			continue
+		}
+		if (nm == "linear") cfg.termcodes[t] = 101
+		else if (nm == "quadratic") cfg.termcodes[t] = 102
+		else if (nm == "avalt") cfg.termcodes[t] = 103
+		else if (nm == "avsim") cfg.termcodes[t] = 104
+		else cfg.eligible = 0
+	}
+	return(cfg)
+}
+
 /*
    Native counterpart to SaomSimulateIntervalCounted() - same contract
    (mutates G in place to the simulated end-of-interval network, returns
@@ -1711,6 +3555,8 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	}
 	for (i=1; i<=M.nterms; i++) argstr = argstr + " " + strofreal(theta[i])
 	argstr = argstr + " " + strofreal(want_score)		// harmonisation unit 16 - trailing field, see native/saom_sim.c's own stata_call() parsing
+	argstr = argstr + " 0"		// harmonisation unit 26: nbehterms=0 - the network-only wire-protocol footprint is now "no further fields at all"; see SaomSimulateIntervalCoevNative() below for the co-evolution counterpart that supplies real behavior fields here
+	argstr = argstr + " 0 0"		// harmonisation unit 30: condmode=0/targetChange=0 - fixed-interval mode, unchanged behavior; see SaomSimulateCondTimeNative() below for the conditional-mode counterpart
 
 	// see ErgmNativeSampleCore()'s own header comment for why `capture`
 	// here is correct (an already-defined plugin program cannot be
@@ -1766,6 +3612,238 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 		G.init(n, 1)
 		for (i=1; i<=rows(newties); i++) G.toggle(newties[i,1], newties[i,2])
 	}
+
+	st_framecurrent(origframe)
+
+	return(res)
+}
+
+/* ===================================================================
+   SaomSimulateCondTimeNative: native (C) counterpart to
+   SaomSimulateConditionalTime() above - harmonisation unit 30
+   (performance pass), per explicit user direction after a real,
+   measured finding: a direct RSiena benchmark (dev/
+   saom_rsiena_benchmark.R/.do) found SaomEstimateRM()'s own network-
+   only path ~22x slower than real RSiena on s50 data, and a targeted
+   profiling pass (isolating harmonisation unit 27's own post-phase-3
+   refinement loop and timing it alone, both against the full fit's own
+   total time) found that loop alone accounted for essentially ALL of
+   it - K3=1000 pure-Mata SaomSimulateConditionalTime() replicates,
+   the one thing in this whole estimator that had never been ported
+   native (every phase 1/2/3 call already dispatches to
+   SaomSimulateIntervalNative() when available). This function is a
+   direct structural port: same frame/argstr contract as
+   SaomSimulateIntervalNative() (reused verbatim below, not
+   reinvented), but simpler - no attributes/behavior/score needed for
+   this refinement loop's own purpose (only the elapsed continuous TIME
+   matters), `rate' is ALWAYS passed as 1 (the verified reference rate,
+   see SaomSimulateConditionalTime()'s own header comment for why), and
+   `condmode=1'/`targetChange' select native/saom_sim.c's own
+   "CONDITIONAL MODE" stopping rule (see that file's own header
+   comment) instead of the fixed-interval one every other native call
+   site uses. Statistically certified against SaomSimulateConditionalTime()
+   (the reference/fallback/oracle, unchanged) exactly like every other
+   native/Mata pair in this file - see cscripts/test_nwsaom_native.do.
+   =================================================================== */
+real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph scalar Gstart,
+	class ErgmModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar targetChange) {
+
+	real matrix ties
+	real scalar n, nties, nattr, i, rngseed, neededrows, neededvars, __junk, condtime
+	string scalar origframe, argstr, cmd, attrvarlist
+	string rowvector attrvarnames
+
+	n = G.n
+	ties = Gstart.all_ties()
+	nties = rows(ties)
+	nattr = cols(cfg.attrmat)
+
+	neededrows = max((n, nties, n*(n-1), 1))
+	neededvars = 2 + nattr
+
+	origframe = st_framecurrent()
+	stata("capture frame create __saom_native")
+	st_framecurrent("__saom_native")
+
+	if (st_nvar() > 0 & st_nvar() != neededvars) {
+		st_framecurrent(origframe)
+		stata("frame drop __saom_native")
+		stata("frame create __saom_native")
+		st_framecurrent("__saom_native")
+	}
+
+	attrvarlist = ""
+	attrvarnames = J(1, nattr, "")
+	for (i=1; i<=nattr; i++) attrvarnames[i] = "a" + strofreal(i)
+
+	if (st_nvar() == 0) {
+		__junk = st_addvar("double", "v1")
+		__junk = st_addvar("double", "v2")
+		for (i=1; i<=nattr; i++) __junk = st_addvar("double", attrvarnames[i])
+	}
+	for (i=1; i<=nattr; i++) attrvarlist = attrvarlist + " " + attrvarnames[i]
+
+	if (st_nobs() < neededrows) st_addobs(neededrows - st_nobs())
+
+	for (i=1; i<=nattr; i++) st_store((1::n), attrvarnames[i], cfg.attrmat[1::n, i])
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+
+	rngseed = floor(runiform(1,1) * 2147483647)
+
+	// rate=1 (the verified reference rate, NOT a fitted value),
+	// want_score=0, nbehterms=0, condmode=1 - see this function's own
+	// header comment.
+	argstr = strofreal(n) + " " + strofreal(G.directed) + " " + strofreal(nties) + " " +
+		strofreal(1) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(M.nterms)
+	for (i=1; i<=M.nterms; i++) {
+		argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i])
+	}
+	for (i=1; i<=M.nterms; i++) argstr = argstr + " " + strofreal(theta[i])
+	argstr = argstr + " 0"		// want_score=0
+	argstr = argstr + " 0"		// nbehterms=0
+	argstr = argstr + " 1 " + strofreal(targetChange)		// condmode=1, targetChange
+
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+
+	cmd = "plugin call saomnativesim v1 v2" + attrvarlist + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+
+	condtime = st_numscalar("__saom_native_condtime")
+
+	st_framecurrent(origframe)
+
+	return(condtime)
+}
+
+/*
+   Native counterpart to SaomSimulateIntervalCoevScored() (harmonisation
+   unit 26) - same wire-protocol/frame contract as
+   SaomSimulateIntervalNative() above (v1/v2 edge-list columns,
+   attribute columns, dedicated __saom_native frame - see that
+   function's own header comment), extended with ONE further column
+   (behavior values, right after the last attribute column) and the
+   trailing "nbehterms [behtermcode]*nbehterms [thetaBeh]*nbehterms
+   rateBeh behminval behmaxval behSimMean behOverallMean" wire fields
+   native/saom_sim.c's own stata_call() parses after `want_score' -
+   ALWAYS want_score=1 here (unlike the network-only function's own
+   optional flag), since every phase of SaomEstimateRMCoev()/
+   SaomEstimateRMCoevMulti() needs both scoreNet and scoreBeh. Callers
+   MUST check BOTH cfg.eligible (network terms) AND cfgBeh.eligible
+   (behavior terms) first - this function does not re-derive either.
+
+   `res.stat'/`res.statBeh' (harmonisation unit 31, per explicit user
+   direction "yes, look into it" after co-evolution's own ~3.2x-slower-
+   than-RSiena gap was profiled and root-caused to EXACTLY this: every
+   phase-1/2/3 iteration was paying a full, pure-Mata M.full_statistic()
+   + Mbeh.full_statistic() re-derivation on top of the already-fast
+   native ministep simulation - the SAME cost class unit 14 already
+   eliminated for the network-only path, just never extended here when
+   co-evolution was built). native/saom_sim.c's own stata_call()
+   ALREADY computed and wrote back both `__saom_native_stat%d' and
+   `__saom_native_statbeh%d' unconditionally (harmonisation unit 14/26
+   - verified directly by reading that file, not assumed) - this was
+   purely a Mata-side gap, nothing needed on the C side at all. `G'/
+   `Beh' are the SAME final graph/behavior-values written back either
+   way; `rebuild_g' (new parameter, same explicit caller-controlled
+   convention as SaomSimulateIntervalNative()'s own identical flag,
+   harmonisation unit 15) skips the edge-list-toggle reconstruction
+   loop entirely when the caller only needs `res.stat'/`res.statBeh'
+   (every current SaomEstimateRMCoev()/SaomEstimateRMCoevMulti() call
+   site) - `Beh.values' is always written back regardless (needed by
+   every caller, a separate, already-cheap st_data() read, not the
+   toggle loop this flag controls).
+*/
+struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
+	class ErgmGraph scalar G, class ErgmModel scalar M, struct SaomNativeConfig scalar cfg, real rowvector theta,
+	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, struct SaomBehaviorNativeConfig scalar cfgBeh,
+	real rowvector thetaBeh, real scalar rateNet, real scalar rateBeh, real scalar rebuild_g){
+
+	struct SaomCoevScoredResult scalar res
+	real matrix ties, newties
+	real scalar n, nties, nattr, i, rngseed, nties_out, __junk, neededrows, neededvars, pBeh
+	string scalar origframe, argstr, cmd, attrvarlist, behvarname
+
+	n = G.n
+	ties = G.all_ties()
+	nties = rows(ties)
+	nattr = cols(cfg.attrmat)
+	pBeh = Mbeh.nparam()
+
+	neededrows = max((n, nties, n*(n-1), 1))
+	neededvars = 3 + nattr		// v1, v2, behavior column, + attributes (one more than SaomSimulateIntervalNative()'s own neededvars - see this function's own header comment)
+
+	origframe = st_framecurrent()
+	stata("capture frame create __saom_native")
+	st_framecurrent("__saom_native")
+
+	if (st_nvar() > 0 & st_nvar() != neededvars) {
+		st_framecurrent(origframe)
+		stata("frame drop __saom_native")
+		stata("frame create __saom_native")
+		st_framecurrent("__saom_native")
+	}
+
+	attrvarlist = ""
+	if (st_nvar() == 0) {
+		__junk = st_addvar("double", "v1")
+		__junk = st_addvar("double", "v2")
+		for (i=1; i<=nattr; i++) __junk = st_addvar("double", "a" + strofreal(i))
+		__junk = st_addvar("double", "vbeh")
+	}
+	for (i=1; i<=nattr; i++) attrvarlist = attrvarlist + " a" + strofreal(i)
+	behvarname = "vbeh"
+
+	if (st_nobs() < neededrows) st_addobs(neededrows - st_nobs())
+
+	for (i=1; i<=nattr; i++) st_store((1::n), "a" + strofreal(i), cfg.attrmat[1::n, i])
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+	st_store((1::n), behvarname, Beh.values)
+
+	rngseed = floor(runiform(1,1) * 2147483647)
+
+	argstr = strofreal(n) + " " + strofreal(G.directed) + " " + strofreal(nties) + " " +
+		strofreal(rateNet) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(M.nterms)
+	for (i=1; i<=M.nterms; i++) {
+		argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i])
+	}
+	for (i=1; i<=M.nterms; i++) argstr = argstr + " " + strofreal(theta[i])
+	argstr = argstr + " 1"		// want_score - always 1, see this function's own header comment
+	argstr = argstr + " " + strofreal(pBeh)
+	for (i=1; i<=pBeh; i++) argstr = argstr + " " + strofreal(cfgBeh.termcodes[i])
+	for (i=1; i<=pBeh; i++) argstr = argstr + " " + strofreal(thetaBeh[i])
+	argstr = argstr + " " + strofreal(rateBeh) + " " + strofreal(Beh.minval) + " " + strofreal(Beh.maxval) +
+		" " + strofreal(Beh.simMean) + " " + strofreal(Beh.overallMean)
+	argstr = argstr + " 0 0"		// harmonisation unit 30: condmode=0/targetChange=0 - conditional mode is network-only, never used on the co-evolution path (real RSiena's own conditional-estimation default requires exactly one dependent variable - see SaomSimulateConditionalTime()'s own header comment)
+
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+
+	cmd = "plugin call saomnativesim v1 v2" + attrvarlist + " " + behvarname + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+
+	nties_out = st_numscalar("__saom_native_nties_out")
+	res.steps = st_numscalar("__saom_native_steps")
+	res.nchangesNet = st_numscalar("__saom_native_nchanges")
+	res.nchangesBeh = st_numscalar("__saom_native_nchangesbeh")
+
+	res.scoreNet = J(1, M.nterms, 0)
+	for (i=1; i<=M.nterms; i++) res.scoreNet[i] = st_numscalar("__saom_native_score" + strofreal(i))
+	res.scoreBeh = J(1, pBeh, 0)
+	for (i=1; i<=pBeh; i++) res.scoreBeh[i] = st_numscalar("__saom_native_scorebeh" + strofreal(i))
+
+	// harmonisation unit 31 - see this function's own header comment.
+	res.stat = J(1, M.nterms, 0)
+	for (i=1; i<=M.nterms; i++) res.stat[i] = st_numscalar("__saom_native_stat" + strofreal(i))
+	res.statBeh = J(1, pBeh, 0)
+	for (i=1; i<=pBeh; i++) res.statBeh[i] = st_numscalar("__saom_native_statbeh" + strofreal(i))
+
+	if (rebuild_g) {
+		if (nties_out > 0) newties = st_data((1::nties_out), ("v1","v2"))
+		else newties = J(0, 2, 0)
+		G.init(n, 1)
+		for (i=1; i<=rows(newties); i++) G.toggle(newties[i,1], newties[i,2])
+	}
+
+	Beh.values = st_data((1::n), behvarname)
 
 	st_framecurrent(origframe)
 

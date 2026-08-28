@@ -1,4 +1,4 @@
-*! version 0.1.0 28aug2026 nwcommands: stochastic actor-oriented model (SAOM) estimation, v1
+*! version 0.3.0 28aug2026 nwcommands: stochastic actor-oriented model (SAOM) estimation, v1 (+ harmonisation unit 26 co-evolution, N-wave, avsim, native backend)
 /*
 	nwsaom.ado -- user-facing layer for SAOM (Snijders-style stochastic
 	actor-oriented model) estimation between two observed network waves.
@@ -65,6 +65,7 @@ program nwsaom, eclass
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP CYCLE3 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
 		GWESP(string) TRANSTIES BALANCE ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
+		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC AVALT AVSIM BEHTHETA0(string) ///
 		RATE0(real 1) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) ]
 	set more off
@@ -154,6 +155,59 @@ program nwsaom, eclass
 	}
 	if "`outdegree'" == "" {
 		di "{err}option {bf:outdegree} is required - every nwsaom v1 model includes an outdegree (density) effect, matching nwergm's own edges-required convention."
+		error 198
+	}
+
+	// --- behavior(): harmonisation unit 26 (co-evolution), N-wave
+	// support added per explicit user direction ("extend it to N
+	// waves") - works with EITHER wave1()/wave2() (dispatches to
+	// SaomEstimateRMCoev()) OR waves() (dispatches to
+	// SaomEstimateRMCoevMulti(), mirroring SaomEstimateRMMulti()'s own
+	// established "chain periods, pool theta, keep rate per-period"
+	// pattern - now for BOTH variables, unit 26's own DESIGN section,
+	// docs/SAOM_ROADMAP.md). One Stata variable per wave, same "one
+	// name per wave" convention as waves() itself - ONE behavior
+	// variable only (v1 scope; multiple co-evolving behaviors remain
+	// out of scope).
+	local __nwsaom_coev = 0
+	if "`behavior'" != "" {
+		local __nwsaom_nbeh : word count `behavior'
+		if `__nwsaom_nbeh' != `__nwsaom_nwaves' {
+			di "{err}{bf:behavior()} must supply exactly `__nwsaom_nwaves' variable name(s), one per wave, in the same temporal order."
+			error 198
+		}
+		// harmonisation unit 28 ("endowment/creation functions"):
+		// linearendow+linearcreation together are a valid, RSiena-native
+		// ALTERNATIVE baseline to plain linear (RSiena's own manual, "the
+		// model specifications of ... (creation & endowment) are
+		// equivalent" to evaluation alone, up to reparametrization -
+		// docs/SAOM_ROADMAP.md's own unit-28 entry has the full citation).
+		// Combining `linear' with either is refused (all three roles for
+		// one effect together is exactly collinear - RSiena's own manual:
+		// "never in all three, because this leads to collinearity"), and
+		// linearendow/linearcreation must be given TOGETHER (this port's
+		// certified infrastructure covers only the paired case, not a
+		// single non-evaluation role alone).
+		if "`linear'" != "" & ("`linearendow'" != "" | "`linearcreation'" != "") {
+			di "{err}specify either {bf:linear} (a single evaluation-only baseline) or {bf:linearendow}+{bf:linearcreation} together (harmonisation unit 28) - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
+			error 198
+		}
+		if ("`linearendow'" != "" & "`linearcreation'" == "") | ("`linearendow'" == "" & "`linearcreation'" != "") {
+			di "{err}{bf:linearendow} and {bf:linearcreation} must be specified together - this port does not (yet) support a single non-evaluation role alone. Use plain {bf:linear} instead if you only want the evaluation-only baseline."
+			error 198
+		}
+		if "`linear'" == "" & "`linearendow'" == "" {
+			di "{err}every co-evolution model requires a baseline linear shape effect: either {bf:linear}, or {bf:linearendow}+{bf:linearcreation} together (harmonisation unit 28) - matching {bf:outdegree}'s own required-baseline convention on the network side."
+			error 198
+		}
+		if "`linearendow'" != "" & "`quadratic'" != "" {
+			di "{err}{bf:quadratic} cannot currently be combined with {bf:linearendow}/{bf:linearcreation} - only the plain {bf:linear}+{bf:quadratic} baseline combination is supported."
+			error 198
+		}
+		local __nwsaom_coev = 1
+	}
+	else if "`linear'" != "" | "`linearendow'" != "" | "`linearcreation'" != "" | "`quadratic'" != "" | "`avalt'" != "" | "`avsim'" != "" {
+		di "{err}{bf:linear}/{bf:linearendow}/{bf:linearcreation}/{bf:quadratic}/{bf:avalt}/{bf:avsim} are behavior effects and require {bf:behavior()} to be specified."
 		error 198
 	}
 
@@ -454,6 +508,125 @@ program nwsaom, eclass
 
 	mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
 
+	// --- behavior model: harmonisation unit 26. `linear'/`quadratic'/
+	// `avalt' independently verified against real RSiena source
+	// (LinearShapeEffect.cpp/QuadraticShapeEffect.cpp/
+	// AverageAlterEffect.cpp - docs/SAOM_ROADMAP.md's own unit-26
+	// DESIGN section has the full account) and certified via ego-level
+	// brute-force recomputation (cscripts/test_nwsaom_mata.do's own
+	// unit 26). Coefficient names prefixed `beh_' at the OUTPUT-NAMING
+	// level only (SaomBehaviorModel's own coefnames stay plain
+	// "linear"/"quadratic"/"avalt", matching unw_saom.do's own
+	// established convention) - per explicit user requirement, the
+	// coefficient table must show which effects belong to the behavior
+	// side clearly, not just append them indistinguishably after the
+	// network effects.
+	local __nwsaom_pbeh = 0
+	if `__nwsaom_coev' {
+		capture mata: mata drop __nwsaom_last_Mbeh
+		mata: __nwsaom_last_Mbeh = SaomBehaviorModel()
+		mata: __nwsaom_last_Mbeh.init()
+
+		local __nwsaom_endowcreation = 0
+		local __nwsaom_effbeh ""
+		if "`linearendow'" != "" {
+			// harmonisation unit 28 (endowment/creation functions):
+			// SHIPPED, protected by SaomCheckThetaBound() (harmonisation
+			// unit 29, unw_saom.do) - real RSiena's own manual (fetched
+			// and read directly, not from memory) documents this exact
+			// combination as an inherent WEAK-IDENTIFICATION property,
+			// not a defect: "if a given effect is similarly strong for
+			// the creation and maintenance of ties the statistical power
+			// will decrease by this split" and "this would lead to large
+			// standard errors" - the same manual's own advice is to
+			// START without creation/endowment and add them only "if
+			// there is enough data". A ground-truth recovery test
+			// (docs/SAOM_ROADMAP.md's own unit-28/unit-29 entries) found
+			// that even a MODEST true theta pair can, on a given finite
+			// dataset, push the Robbins-Monro update into a genuinely
+			// ill-conditioned direction (a near-singular phase-1 Jacobian
+			// along the theta_endow/theta_creation "sum" direction) -
+			// exactly the scenario real RSiena's own thetaBound safeguard
+			// exists to catch (its own R/phase2.r checks the identical
+			// condition at the identical point, `cat()`/`stop()`ping the
+			// same way) - confirmed directly against RSiena's own R
+			// source, not assumed. If this model specification hits that
+			// error, real RSiena would very plausibly hit it too on the
+			// same data; the fix is the same one RSiena's manual
+			// recommends: drop back to plain `linear', or supply better
+			// starting values via `behtheta0()'.
+			mata: __nwsaom_last_Mbeh.addterm("linear_endow", &stat_saom_linear(), &change_saom_linear(), "beh_linear_endow", 1)
+			mata: __nwsaom_last_Mbeh.addterm("linear_creation", &stat_saom_linear(), &change_saom_linear(), "beh_linear_creation", 2)
+			local __nwsaom_effbeh "linearendow linearcreation"
+			local __nwsaom_endowcreation = 1
+		}
+		else if "`quadratic'" != "" {
+			mata: __nwsaom_last_Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
+			mata: __nwsaom_last_Mbeh.addterm("quadratic", &stat_saom_quadratic(), &change_saom_quadratic(), "beh_quadratic")
+			local __nwsaom_effbeh "linear quadratic"
+		}
+		else {
+			mata: __nwsaom_last_Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
+			local __nwsaom_effbeh "linear"
+		}
+		if "`avalt'" != "" {
+			mata: __nwsaom_last_Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "beh_avalt")
+			local __nwsaom_effbeh "`__nwsaom_effbeh' avalt"
+		}
+		if "`avsim'" != "" {
+			mata: __nwsaom_last_Mbeh.addterm("avsim", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim")
+			local __nwsaom_effbeh "`__nwsaom_effbeh' avsim"
+		}
+		local __nwsaom_efflist "`__nwsaom_efflist' [behavior: `__nwsaom_effbeh']"
+
+		// --- behavior data: one Stata variable per wave, read from
+		// whatever dataset is current at call time (same convention
+		// nodeicov()/simcov() etc. already use). Built per-wave, one
+		// Mata colvector each, exactly mirroring __nwsaom_last_G`__w''s
+		// own "one persistent Mata object per wave" convention above -
+		// min/max/overallMean pool across EVERY wave (not just the
+		// first/last), matching real RSiena's own BehaviorLongitudinalData
+		// scope: a single set of constants for the whole variable,
+		// computed once, not period-specific. `__nwsaom_beh_startvals'/
+		// `__nwsaom_beh_endvals' (wave 1's own / the LAST wave's own
+		// values) are kept as their own names too - still exactly what
+		// the two-wave SaomEstimateRMCoev() path needs, unchanged.
+		capture mata: mata drop __nwsaom_beh_minval __nwsaom_beh_maxval __nwsaom_beh_startvals __nwsaom_beh_endvals __nwsaom_last_Behwaves
+		mata: __nwsaom_beh_minval = .
+		mata: __nwsaom_beh_maxval = .
+		forvalues __w = 1/`__nwsaom_nwaves' {
+			local __wbeh : word `__w' of `behavior'
+			confirm variable `__wbeh'
+			capture mata: mata drop __nwsaom_beh_w`__w'
+			mata: __nwsaom_beh_w`__w' = st_data(1::`nodes', "`__wbeh'")
+			mata: __nwsaom_beh_minval = (__nwsaom_beh_minval==. ? min(__nwsaom_beh_w`__w') : min((__nwsaom_beh_minval, min(__nwsaom_beh_w`__w'))))
+			mata: __nwsaom_beh_maxval = (__nwsaom_beh_maxval==. ? max(__nwsaom_beh_w`__w') : max((__nwsaom_beh_maxval, max(__nwsaom_beh_w`__w'))))
+		}
+		mata: __nwsaom_beh_startvals = __nwsaom_beh_w1
+		mata: __nwsaom_beh_endvals = __nwsaom_beh_w`__nwsaom_nwaves'
+
+		local __nwsaom_behptrlist ""
+		forvalues __w = 1/`__nwsaom_nwaves' {
+			if `__w' == 1 local __nwsaom_behptrlist "&__nwsaom_beh_w1"
+			else local __nwsaom_behptrlist "`__nwsaom_behptrlist', &__nwsaom_beh_w`__w'"
+		}
+		mata: __nwsaom_last_Behwaves = (`__nwsaom_behptrlist')
+
+		// avsim's own data-derived "similarityMean" constant - computed
+		// ONCE here (saom_similarity_mean(), unw_saom.do) and stored on
+		// the persisted Mbeh, mirroring balance's own td.decay
+		// convention (unit 25): the estimator reads it off Mbeh rather
+		// than recomputing it, and estat gof (nwsaom_estat.ado) reuses
+		// the SAME persisted value for its own post-fit simulations,
+		// exactly as balance's own mean already is. Harmless (never
+		// read) whenever avsim was not requested.
+		if "`avsim'" != "" {
+			mata: __nwsaom_last_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_last_Behwaves, __nwsaom_beh_maxval - __nwsaom_beh_minval))
+		}
+
+		mata: st_local("__nwsaom_pbeh", strofreal(__nwsaom_last_Mbeh.nparam()))
+	}
+
 	capture mata: mata drop __nwsaom_theta0
 	if "`theta0'" == "" {
 		mata: __nwsaom_theta0 = J(1, `__nwsaom_p', 0)
@@ -467,8 +640,62 @@ program nwsaom, eclass
 		mata: __nwsaom_theta0 = strtoreal(tokens("`theta0'"))
 	}
 
+	// --- behtheta0(): same size-checked-starting-value convention as
+	// theta0() above, but for the behavior side (harmonisation unit
+	// 26) - kept as a SEPARATE option rather than folding into theta0()
+	// itself, since the two sides are genuinely different parameter
+	// blocks (fit jointly, but each with its own effect list/ordering).
+	// NAMED `behtheta0', not the more obvious `theta0beh' - a real,
+	// independently-discovered Stata `syntax' command limitation
+	// (confirmed via a minimal isolated repro, not assumed): an option
+	// name that is a PREFIX of another `(string)'-type option's name
+	// (here `theta0' is a prefix of `theta0beh') is never recognized by
+	// `syntax', regardless of declaration order - `option theta0beh()
+	// not allowed' even when passed in full. This option was silently
+	// broken since it was introduced (harmonisation unit 26) because no
+	// test ever exercised it (cscripts/test_nwsaom_ado.do had zero
+	// mentions of it before this fix) - found only while building the
+	// harmonisation-unit-28 real-RSiena cross-check (dev/
+	// saom_rsiena_crosscheck_endow.do), which needed to warm-start from
+	// RSiena's own fitted values.
+	capture mata: mata drop __nwsaom_theta0beh
+	if `__nwsaom_coev' {
+		if "`behtheta0'" == "" {
+			mata: __nwsaom_theta0beh = J(1, `__nwsaom_pbeh', 0)
+		}
+		else {
+			local __nwsaom_ntbeh : word count `behtheta0'
+			if `__nwsaom_ntbeh' != `__nwsaom_pbeh' {
+				di "{err}behtheta0() must supply exactly `__nwsaom_pbeh' starting value(s) - one per requested behavior effect, in the order: `__nwsaom_effbeh'."
+				error 198
+			}
+			mata: __nwsaom_theta0beh = strtoreal(tokens("`behtheta0'"))
+		}
+	}
+
 	capture mata: mata drop __nwsaom_fit
-	if `__nwsaom_multi' {
+	if `__nwsaom_coev' & `__nwsaom_multi' {
+		// harmonisation unit 26 ("extend it to N waves"): joint
+		// network+behavior Method of Moments / Robbins-Monro, chained
+		// across every period - see SaomEstimateRMCoevMulti()'s own
+		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
+		// unit-26 entry for the full account.
+		capture mata: mata drop __nwsaom_fit_coevmulti
+		mata: __nwsaom_fit_coevmulti = SaomEstimateRMCoevMulti(__nwsaom_last_Gwaves, __nwsaom_last_M, ///
+			__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
+			__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg')
+	}
+	else if `__nwsaom_coev' {
+		// harmonisation unit 26: joint network+behavior Method of
+		// Moments / Robbins-Monro - see SaomEstimateRMCoev()'s own
+		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
+		// unit-26 entry for the full three-phase account.
+		capture mata: mata drop __nwsaom_fit_coev
+		mata: __nwsaom_fit_coev = SaomEstimateRMCoev(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_last_M, ///
+			__nwsaom_beh_startvals, __nwsaom_beh_endvals, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
+			__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg')
+	}
+	else if `__nwsaom_multi' {
 		// harmonisation unit 17: theta is POOLED/shared across every
 		// period, rate is period-specific - see SaomEstimateRMMulti()'s
 		// own header comment (unw_saom.do) for the real-RSiena
@@ -481,12 +708,25 @@ program nwsaom, eclass
 			__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg')
 	}
 
-	mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames))
-
 	tempname b tratio V
-	mata: st_matrix("`b'", __nwsaom_fit.theta)
-	mata: st_matrix("`tratio'", __nwsaom_fit.tratio)
-	mata: st_matrix("`V'", __nwsaom_fit.V)
+	if `__nwsaom_coev' & `__nwsaom_multi' {
+		mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames) + " " + invtokens(__nwsaom_last_Mbeh.coefnames))
+		mata: st_matrix("`b'", (__nwsaom_fit_coevmulti.thetaNet, __nwsaom_fit_coevmulti.thetaBeh))
+		mata: st_matrix("`tratio'", (__nwsaom_fit_coevmulti.tratioNet, __nwsaom_fit_coevmulti.tratioBeh))
+		mata: st_matrix("`V'", __nwsaom_fit_coevmulti.V)
+	}
+	else if `__nwsaom_coev' {
+		mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames) + " " + invtokens(__nwsaom_last_Mbeh.coefnames))
+		mata: st_matrix("`b'", (__nwsaom_fit_coev.thetaNet, __nwsaom_fit_coev.thetaBeh))
+		mata: st_matrix("`tratio'", (__nwsaom_fit_coev.tratioNet, __nwsaom_fit_coev.tratioBeh))
+		mata: st_matrix("`V'", __nwsaom_fit_coev.V)
+	}
+	else {
+		mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames))
+		mata: st_matrix("`b'", __nwsaom_fit.theta)
+		mata: st_matrix("`tratio'", __nwsaom_fit.tratio)
+		mata: st_matrix("`V'", __nwsaom_fit.V)
+	}
 	matrix colnames `b' = `__nwsaom_coefnames'
 	matrix colnames `tratio' = `__nwsaom_coefnames'
 	matrix rownames `tratio' = tratio
@@ -521,8 +761,109 @@ program nwsaom, eclass
 	ereturn scalar nodes = `nodes'
 	ereturn scalar nwaves = `__nwsaom_nwaves'
 	ereturn matrix tratio = `tratio'
+	ereturn scalar has_behavior = `__nwsaom_coev'
+	ereturn scalar p_net = `__nwsaom_p'
 
-	if `__nwsaom_multi' {
+	if `__nwsaom_coev' & `__nwsaom_multi' {
+		// harmonisation unit 26 ("extend it to N waves"): FOUR separate
+		// rate series (network/behavior, each per-period) - the
+		// coev+multi analogue of unit 17's own e(rates)/e(rate_tratios)
+		// matrices, doubled since there are two dependent variables now.
+		tempname ratesnet ratetrnet ratesbeh ratetrbeh
+		mata: st_matrix("`ratesnet'", __nwsaom_fit_coevmulti.ratesNet)
+		mata: st_matrix("`ratetrnet'", __nwsaom_fit_coevmulti.rateNetTratios)
+		mata: st_matrix("`ratesbeh'", __nwsaom_fit_coevmulti.ratesBeh)
+		mata: st_matrix("`ratetrbeh'", __nwsaom_fit_coevmulti.rateBehTratios)
+		local __nwsaom_periodnames ""
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
+		}
+		matrix colnames `ratesnet' = `__nwsaom_periodnames'
+		matrix colnames `ratetrnet' = `__nwsaom_periodnames'
+		matrix colnames `ratesbeh' = `__nwsaom_periodnames'
+		matrix colnames `ratetrbeh' = `__nwsaom_periodnames'
+		matrix rownames `ratesnet' = rate
+		matrix rownames `ratetrnet' = rate_tratio
+		matrix rownames `ratesbeh' = rate_beh
+		matrix rownames `ratetrbeh' = rate_beh_tratio
+		ereturn local waves "`__nwsaom_wavelist'"
+		ereturn local behavior "`behavior'"
+
+		di as text "{hline}"
+		di as text "SAOM co-evolution (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
+		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
+		di as text "Behavior: " as result "`behavior'"
+		di as text "{hline}"
+		ereturn display
+		di as text "Rate parameters (one per inter-wave period):"
+		matlist `ratesnet', format(%9.4f)
+		matlist `ratesbeh', format(%9.4f)
+
+		ereturn matrix rates = `ratesnet'
+		ereturn matrix rate_tratios = `ratetrnet'
+		ereturn matrix rates_beh = `ratesbeh'
+		ereturn matrix rate_beh_tratios = `ratetrbeh'
+		di as text "note: coefficients prefixed {bf:beh_} belong to the behavior's own evaluation function" ///
+			" (influence/shape effects); unprefixed coefficients belong to the network's own evaluation" ///
+			" function (selection/structural effects) - both estimated JOINTLY, pooled across every period," ///
+			" via a single Method-of-Moments fit (harmonisation unit 26, docs/SAOM_ROADMAP.md)."
+		di as text "note: e(rates)/e(rates_beh) hold ONE value per inter-wave period for EACH variable (real" ///
+			" RSiena's own convention for 3+ wave models, unit 17, now doubled across both variables); both" ///
+			" rate parameters are each RSiena's own verified closed-form starting-value formula, not yet" ///
+			" refined via simulation - expect their own t-ratios far from zero, not a convergence failure."
+		if `__nwsaom_endowcreation' {
+			di as text "note: {bf:beh_linear_endow}/{bf:beh_linear_creation} split a single effect into its" ///
+				" downward/upward roles (harmonisation unit 28) - real RSiena's own manual documents this as an" ///
+				" inherently weakly-identified split ('this would lead to large standard errors' unless there is" ///
+				" enough data), not a defect; if estimation instead stops with a thetaBound error, that is the" ///
+				" same safeguard real RSiena itself uses for this exact scenario - try plain {bf:linear}, or" ///
+				" supply better starting values via {bf:behtheta0()}."
+		}
+	}
+	else if `__nwsaom_coev' {
+		// harmonisation unit 26: TWO separate rate parameters, one per
+		// dependent variable - matching how each variable's own rate is
+		// independently targeted (docs/SAOM_ROADMAP.md's own unit-26
+		// entry). Both surfaced clearly (not just the network's own
+		// e(rate), per explicit user requirement), and the coefficient
+		// table already shows both variables' effects distinctly via
+		// the `beh_' prefix set when the behavior model was built above.
+		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit_coev.rateNet))
+		mata: st_local("__nwsaom_ratetr", strofreal(__nwsaom_fit_coev.rateNetTratio))
+		mata: st_local("__nwsaom_ratebeh", strofreal(__nwsaom_fit_coev.rateBeh))
+		mata: st_local("__nwsaom_ratebehtr", strofreal(__nwsaom_fit_coev.rateBehTratio))
+		ereturn scalar rate = `__nwsaom_rate'
+		ereturn scalar rate_tratio = `__nwsaom_ratetr'
+		ereturn scalar rate_beh = `__nwsaom_ratebeh'
+		ereturn scalar rate_beh_tratio = `__nwsaom_ratebehtr'
+		ereturn local wave1 "`wave1'"
+		ereturn local wave2 "`wave2'"
+		ereturn local behavior "`behavior'"
+
+		di as text "{hline}"
+		di as text "SAOM co-evolution (Method of Moments), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
+		di as text "Actors: " as result `nodes' _col(40) as text "Network rate: " as result %6.3f `__nwsaom_rate'
+		di as text "Behavior: " as result "`behavior'" _col(40) as text "Behavior rate: " as result %6.3f `__nwsaom_ratebeh'
+		di as text "{hline}"
+		ereturn display
+		di as text "note: coefficients prefixed {bf:beh_} belong to the behavior's own evaluation function" ///
+			" (influence/shape effects); unprefixed coefficients belong to the network's own evaluation" ///
+			" function (selection/structural effects) - both estimated JOINTLY via a single Method-of-Moments" ///
+			" fit, not two separate models (harmonisation unit 26, docs/SAOM_ROADMAP.md)."
+		di as text "note: the network and behavior rate parameters are each RSiena's own verified closed-form" ///
+			" starting-value formula, not yet refined via simulation the way the effects above are - so both" ///
+			" rate t-ratios reflect that known, disclosed gap, not a Robbins-Monro convergence failure; expect" ///
+			" them far from zero."
+		if `__nwsaom_endowcreation' {
+			di as text "note: {bf:beh_linear_endow}/{bf:beh_linear_creation} split a single effect into its" ///
+				" downward/upward roles (harmonisation unit 28) - real RSiena's own manual documents this as an" ///
+				" inherently weakly-identified split ('this would lead to large standard errors' unless there is" ///
+				" enough data), not a defect; if estimation instead stops with a thetaBound error, that is the" ///
+				" same safeguard real RSiena itself uses for this exact scenario - try plain {bf:linear}, or" ///
+				" supply better starting values via {bf:behtheta0()}."
+		}
+	}
+	else if `__nwsaom_multi' {
 		// harmonisation unit 17: multi-wave models report e(rates)/
 		// e(rate_tratios) as 1 x nperiods MATRICES (one column per
 		// inter-wave period) instead of the scalar e(rate)/e(rate_tratio)
@@ -530,17 +871,20 @@ program nwsaom, eclass
 		// than one rate value here, matching real RSiena's own
 		// per-period rate reporting (verified directly, see
 		// SaomEstimateRMMulti()'s own header comment).
-		tempname rates ratetr
+		tempname rates ratetr ratese
 		mata: st_matrix("`rates'", __nwsaom_fit.rates)
 		mata: st_matrix("`ratetr'", __nwsaom_fit.rate_tratios)
+		mata: st_matrix("`ratese'", __nwsaom_fit.rate_ses)
 		local __nwsaom_periodnames ""
 		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
 			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
 		}
 		matrix colnames `rates' = `__nwsaom_periodnames'
 		matrix colnames `ratetr' = `__nwsaom_periodnames'
+		matrix colnames `ratese' = `__nwsaom_periodnames'
 		matrix rownames `rates' = rate
 		matrix rownames `ratetr' = rate_tratio
+		matrix rownames `ratese' = rate_se
 
 		di as text "{hline}"
 		di as text "SAOM (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
@@ -549,31 +893,41 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (one per inter-wave period):"
 		matlist `rates', format(%9.4f)
+		di as text "Rate standard errors (harmonisation unit 27 - real RSiena's own reported convention," ///
+			" raw SD not SE-of-mean):"
+		matlist `ratese', format(%9.4f)
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
+		ereturn matrix rates_se = `ratese'
 		di as text "note: e(rates)/e(rate_tratios) hold ONE value per inter-wave period (real RSiena's own" ///
 			" convention for 3+ wave models, verified directly against a real RSiena fit - see" ///
 			" docs/SAOM_ROADMAP.md's own harmonisation unit 17 entry); theta is POOLED across every" ///
-			" period, matching real RSiena's own multi-period Method-of-Moments formulation."
+			" period, matching real RSiena's own multi-period Method-of-Moments formulation. e(rates) is" ///
+			" now REFINED (harmonisation unit 27, real RSiena's own conditional-estimation construction)," ///
+			" not the closed-form starting value."
 	}
 	else {
 		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit.rate))
 		mata: st_local("__nwsaom_ratetr", strofreal(__nwsaom_fit.rate_tratio))
+		mata: st_local("__nwsaom_ratese", strofreal(__nwsaom_fit.rate_se))
 		ereturn scalar rate = `__nwsaom_rate'
 		ereturn scalar rate_tratio = `__nwsaom_ratetr'
+		ereturn scalar rate_se = `__nwsaom_ratese'
 		ereturn local wave1 "`wave1'"
 		ereturn local wave2 "`wave2'"
 
 		di as text "{hline}"
 		di as text "SAOM (Method of Moments), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
-		di as text "Actors: " as result `nodes' _col(40) as text "Estimated rate: " as result %6.3f `__nwsaom_rate'
+		di as text "Actors: " as result `nodes' _col(40) as text "Estimated rate: " as result %6.3f `__nwsaom_rate' as text " (" as result %5.3f `__nwsaom_ratese' as text ")"
 		di as text "{hline}"
 		ereturn display
-		di as text "note: the rate parameter (harmonisation unit 8) is RSiena's own verified closed-form" ///
-			" starting-value formula, not yet refined via simulation the way the effects above are - so" ///
-			" e(rate_tratio) reflects that known gap (disclosed ~14% vs. real RSiena on its own reference" ///
-			" dataset), not an RM convergence failure; expect it far from zero."
+		di as text "note: the rate parameter (harmonisation unit 27) is refined via real RSiena's own" ///
+			" CONDITIONAL-estimation construction, verified directly against RSiena's own real source and" ///
+			" cross-checked live against the installed RSiena package (docs/SAOM_ROADMAP.md) - the" ///
+			" parenthetical alongside e(rate) is e(rate_se), matching real RSiena's own reported rate" ///
+			" standard error exactly (the raw SD of the conditional-simulation's own per-replicate elapsed" ///
+			" time, not divided by sqrt(k3) - RSiena's own convention, not the usual SE-of-the-mean)."
 	}
 	di as text "note: e(tratio) holds phase-3 convergence t-ratios for the effects above (RSiena convention:" ///
 		" |t| well under 1 indicates good convergence) - a SEPARATE diagnostic from the Std. Err./z/P>|z|" ///

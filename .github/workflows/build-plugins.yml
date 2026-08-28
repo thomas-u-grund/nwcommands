@@ -50,12 +50,18 @@ jobs:
         run: |
           cd native
           make macos
+      - name: Build nwedit_viewer (chromeless interactive-view launcher)
+        run: |
+          mkdir -p lib/plugins/macos
+          clang++ -fobjc-arc -O2 -framework Cocoa -framework WebKit \
+            -o lib/plugins/macos/nwedit_viewer native/nwedit_viewer.mm
       - uses: actions/upload-artifact@v4
         with:
           name: plugins-macos
           path: |
             lib/plugins/macos/ergm_mcmc.plugin
             lib/plugins/macos/nwgraph.plugin
+            lib/plugins/macos/nwedit_viewer
 
   windows:
     runs-on: windows-latest
@@ -81,11 +87,27 @@ jobs:
           cd native
           cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
           cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph.plugin
+      - name: Fetch WebView2 SDK + WIL headers (nwedit_viewer dependency)
+        shell: cmd
+        run: |
+          nuget install Microsoft.Web.WebView2 -Version 1.0.2592.51 -OutputDirectory packages
+          nuget install Microsoft.Windows.ImplementationLibrary -Version 1.0.240122.1 -OutputDirectory packages
+      - name: Build nwedit_viewer (chromeless interactive-view launcher)
+        shell: cmd
+        run: |
+          cl /EHsc /DUNICODE /D_UNICODE ^
+            /I packages\Microsoft.Web.WebView2.1.0.2592.51\build\native\include ^
+            /I packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\include ^
+            native\nwedit_viewer_win.cpp ^
+            /link /LIBPATH:packages\Microsoft.Web.WebView2.1.0.2592.51\build\native\x64 ^
+            WebView2LoaderStatic.lib shlwapi.lib user32.lib ole32.lib ^
+            /Fe:lib\plugins\windows\nwedit_viewer.exe
       - uses: actions/upload-artifact@v4
         with:
           name: plugins-windows
           path: |
             lib/plugins/windows/ergm_mcmc.plugin
+            lib/plugins/windows/nwedit_viewer.exe
             lib/plugins/windows/nwgraph.plugin
 
   linux:
@@ -96,12 +118,22 @@ jobs:
         run: |
           cd native
           make unix
+      - name: Install WebKitGTK dev headers (nwedit_viewer dependency)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: Build nwedit_viewer (chromeless interactive-view launcher)
+        run: |
+          mkdir -p lib/plugins/unix
+          gcc -O2 native/nwedit_viewer_linux.c -o lib/plugins/unix/nwedit_viewer \
+            $(pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.1)
       - uses: actions/upload-artifact@v4
         with:
           name: plugins-linux
           path: |
             lib/plugins/unix/ergm_mcmc_unix.plugin
             lib/plugins/unix/nwgraph_unix.plugin
+            lib/plugins/unix/nwedit_viewer
 
   commit-binaries:
     needs: [macos, windows, linux]

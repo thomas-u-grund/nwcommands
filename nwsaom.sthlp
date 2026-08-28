@@ -36,6 +36,14 @@
 [{opth altx(varname)}]
 [{opth samex(varname)}]
 [{opth simx(varname)}]
+[{opth behavior(varlist)}
+{opt linear}
+{it:or}
+{opt linearendow} {opt linearcreation}
+{opt quadratic}
+{opt avalt}
+{opt avsim}
+{opt behtheta0(numlist)}]
 [{opt rate0(real)}
 {opt theta0(numlist)}
 {opt k0(int)}
@@ -69,6 +77,14 @@
 {synopt:{opth altx(varname)}}RSiena naming alias for {opt nodeicov()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth samex(varname)}}RSiena naming alias for {opt nodematch()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth simx(varname)}}RSiena naming alias for {opt simcov()} - identical effect, coefficient label follows this spelling{p_end}
+{synopt:{opth behavior(varlist)}}Co-evolution (harmonisation unit 26): one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom##coev:Co-evolution} below{p_end}
+{synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
+{synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). See {help nwsaom##endowcreation:Endowment/creation functions} below{p_end}
+{synopt:{opt linearcreation}}Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to {opt linearendow}; must be given together with it{p_end}
+{synopt:{opt quadratic}}Behavior quadratic shape effect; requires {opt behavior()}, not combinable with {opt linearendow}/{opt linearcreation}{p_end}
+{synopt:{opt avalt}}Behavior "average alter" influence effect - own value moves toward network neighbors' own average value; requires {opt behavior()}{p_end}
+{synopt:{opt avsim}}Behavior "average similarity" influence effect - own value moves to maximize average similarity to network neighbors' own values, net of a data-derived centering constant; requires {opt behavior()}{p_end}
+{synopt:{opt behtheta0(numlist)}}Starting values for the behavior-side eval-parameter vector, one per requested behavior effect in the order {opt linear} (or {opt linearendow}/{opt linearcreation})/{opt quadratic}/{opt avalt}/{opt avsim} appear above; default all zero{p_end}
 {synopt:{opt rate0(real)}}Accepted for backward compatibility only - {bf:no longer used}; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see {bf:Remarks} below){p_end}
 {synopt:{opt theta0(numlist)}}Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero{p_end}
 {synopt:{opt k0(int)}}Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50{p_end}
@@ -96,7 +112,7 @@
 {synoptline}
 {synopt:{opt nsim(int)}}Number of fresh post-fit simulated replicates forming the reference distribution; default 50, minimum 5{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
-{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}; default all three{p_end}
+{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}; default all three network statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself requires a co-evolution fit){p_end}
 {synopt:{opt maxdeg(int)}}Highest EXACT out-/in-degree category before the ("maxdeg+") overflow bin; default 15{p_end}
 {synopt:{opt maxdist(int)}}Highest EXACT geodesic-distance category before the ("NR", not reached) overflow bin; default 6{p_end}
 {synopt:{opt twotailed}}Report a two-tailed p-value instead of the one-tailed default (RSiena's own {cmd:twoTailed=FALSE} default: reject for a SMALL p only, i.e. the observed network is an outlier relative to what the fitted model simulates){p_end}
@@ -149,6 +165,33 @@ reuse assumption was shipped, caught, and corrected during this package's own de
 in that section's own account rather than silently erased, matching this whole package's
 disclosure standard.
 
+{title:Performance}
+
+{pstd}
+{cmd:nwsaom} has a native (C) simulation backend, used automatically whenever the fitted model's
+effects all have native coverage (no option needed to opt in - see {bf:Estimation} below and, for
+co-evolution, the note at the end of {help nwsaom##coev:Co-evolution} below). A direct, reproducible
+wall-clock comparison against a real, installed RSiena (version 1.6.6, R 4.6.0) - identical data,
+identical model, single run each, scripts and full methodology in {browse "dev/saom_rsiena_benchmark.R"}
+and {browse "dev/saom_rsiena_benchmark.do"} - on RSiena's own standard s50 tutorial dataset (50
+students, friendship network + alcohol-use behavior, waves 1-2):
+
+{p2colset 9 13 15 2}{...}
+{p2col: o}outdegree + reciprocity: RSiena 0.96s, {cmd:nwsaom} 0.94s{p_end}
+{p2col: o}+ behavior(alcohol), linear + quadratic: RSiena 1.18s, {cmd:nwsaom} 0.63s{p_end}
+{p2colreset}{...}
+
+{pstd}
+For the network-only model {cmd:nwsaom} is at parity with real RSiena; for the co-evolution model
+it is genuinely faster. This did not happen by accident: an earlier round of this same benchmark
+found {cmd:nwsaom} roughly 22x slower (network-only) and 3.2x slower (co-evolution) than real
+RSiena, and both gaps were profiled and closed - not by approximating the method more coarsely, but
+by finding and eliminating real, avoidable overhead (a rate-refinement loop that had never been
+ported to the native backend, and a co-evolution code path that was silently redoing, in slow
+interpreted Mata, statistic computations the native backend had already computed in C). See
+{browse "docs/SAOM_ROADMAP.md"}'s own harmonisation-unit-30/31/32 entries for the full, measured
+account of each fix.
+
 {title:Supported network types}
 
 {pstd}
@@ -169,9 +212,11 @@ rejected with an explicit error - never silently coerced.{p_end}
 between waves) is not supported.{p_end}
 {p2col: o}Missing tie data between waves is not supported (RSiena's own missing-data machinery,
 including its own effect on the "balanceMean" constant under {opt balance}, is not implemented).{p_end}
-{p2col: o}Behavior co-evolution (a second, non-network dependent variable changing alongside the
-network) is a separate, out-of-scope initiative - only network-side (structural/covariate) effects
-are implemented.{p_end}
+{p2col: o}Behavior co-evolution ({opt behavior()}, harmonisation unit 26) supports exactly ONE
+co-evolving behavior variable. The linear shape effect can be split into endowment/creation roles
+({opt linearendow}/{opt linearcreation}, harmonisation unit 28); no other behavior effect has this
+split yet, and network-side endowment/creation is not implemented - see
+{help nwsaom##coev:Co-evolution} below.{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -258,6 +303,130 @@ max-minus-min. A disclosed simplification: this omits RSiena's own {cmd:similari
 constant - a pure re-parameterization against the always-present {opt outdegree} term, not a
 correctness gap.
 
+{marker coev}{...}
+{title:Co-evolution (network + behavior)}
+
+{pstd}
+{opt behavior(varlist)} adds a SECOND dependent variable - a bounded-integer "behavior" (an actor
+attribute, e.g. an ordinal opinion or a count) that evolves ALONGSIDE the network between the same
+observed waves, with its own rate function and its own evaluation function, estimated JOINTLY with
+the network side via a single Method-of-Moments fit. This is what lets a fitted model separate
+SELECTION (network effects that depend on the behavior - {opt simcov()}/{opt nodeicov()}/
+{opt nodeocov()} above) from INFLUENCE (behavior effects that depend on the network, below) in the
+SAME model. Verified directly against RSiena's own real source
+({cmd:src/model/EpochSimulation.cpp}, {cmd:src/model/variables/BehaviorVariable.cpp}): at each
+ministep opportunity, ONE pooled exponential waiting time is drawn from the grand total rate
+(summed across BOTH variables' own total rates), which variable gets to act is chosen proportional
+to its own share of that total, then an actor is chosen uniformly within that variable - the same
+continuous-time construction the network side alone already uses (see {bf:Estimation} above),
+generalized to a race between two competing Poisson processes. A behavior ministep has exactly
+THREE alternatives (change by -1, 0, or +1, clamped at the observed min/max range), chosen via the
+same multinomial-logit construction as a network ministep, now over 3 alternatives instead of n.
+
+{pstd}
+{bf:linear} (RSiena's own {cmd:LinearShapeEffect}) is the behavior-side analogue of {opt outdegree}
+- {bf:required} whenever {opt behavior()} is specified. Ministep delta = the raw change (\xb11);
+global/observed statistic = the raw sum of every actor's own current value.
+
+{pstd}
+{bf:quadratic} (RSiena's own {cmd:QuadraticShapeEffect}) - a genuine, easy-to-miss subtlety caught
+by reading the actual RSiena source, not the manual, and kept exactly as RSiena has it rather than
+"fixed" toward internal consistency (matching real RSiena's own numbers is this package's own
+certification standard throughout): the MINISTEP delta uses the CENTERED value
+({cmd:(2*(value-mean)+diff)*diff}), but the GLOBAL/observed statistic sums the RAW, uncentered
+value squared - two genuinely different scales for the same effect, both needed.
+
+{pstd}
+{bf:avalt} (RSiena's own "avAlt", {cmd:AverageAlterEffect}) is the canonical INFLUENCE effect: an
+activated actor's own behavior value is pulled toward the average current value of that actor's own
+network neighbors (ministep delta = {cmd:diff * average-neighbor-value}, 0 for an actor with no
+out-ties). {bf:A genuine, disclosed small-sample finding from certifying the joint estimator}: at a
+small toy scale (a handful of actors, on the order of RSiena's own smallest worked examples),
+{opt avalt} specifically can make the joint Robbins-Monro fit genuinely diverge - not a bug, but a
+real small-sample identification problem (too few behavior-ministep opportunities for
+Robbins-Monro to stay stable against this effect's own self-reinforcing nonlinearity: a stronger
+pull produces a more deterministic ministep, which produces an even stronger apparent pull).
+Confirmed directly (the phase-1 Jacobian is well-conditioned and the simulator is unbiased AT the
+true generating theta - ruling out a formula bug) and resolved simply by using a network with more
+actors/behavior activity; see {browse "docs/SAOM_ROADMAP.md"}'s own unit-26 entry for the full
+account.
+
+{pstd}
+{bf:avsim} (RSiena's own "avSim", verified directly against {cmd:SimilarityEffect.cpp} - the
+{cmd:average=TRUE, hi=TRUE, lo=TRUE} construction {cmd:EffectFactory.cpp} itself dispatches
+{cmd:"avSim"} to) is a SECOND, alternative influence parameterization to {opt avalt}: instead of
+pulling an actor's own value toward its neighbors' own AVERAGE VALUE, {opt avsim} pulls it toward
+maximizing its own AVERAGE SIMILARITY to neighbors (sim(a,b) = 1 - |a-b|/range), net of a
+DATA-DERIVED "similarityMean" centering constant - RSiena's own {it:b0}-style constant, playing
+exactly the same role {opt balance}'s own {it:balanceMean} does on the network side: computed
+automatically from the observed behavior data (every PERIOD-BASE wave, i.e. every wave except the
+very last, pooled by summation over every ordered actor pair - the identical pooling convention
+{opt balance}'s own constant already uses), never user-supplied. A real, disclosed quirk verified
+directly from RSiena's own R-side {cmd:rangeAndSimilarity()} source (not invented): this constant
+is defined as exactly 0 whenever the pooled data has zero variance, rather than the 1 the general
+formula would otherwise give.
+
+{marker endowcreation}{...}
+{pstd}
+{bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}, harmonisation unit 28):
+real RSiena models network/behavior change via three possible "roles" for any effect - evaluation
+(the default, direction-blind), creation (contributes only when the value INCREASES), and endowment
+(contributes only when it DECREASES) - and its own manual states that using an effect in all THREE
+roles together is exactly collinear ("never in all three... this leads to collinearity"). {cmd:nwsaom}
+lets the behavior-side {bf:linear} effect be split this way: {opt linearendow} and {opt linearcreation}
+must be specified TOGETHER, replacing plain {opt linear} (not combinable with it). {bf:This split is
+genuinely, and expectedly, weakly identified} - real RSiena's own manual says so explicitly
+("Separating the contribution of an effect into two functions requires more of the data... this
+would lead to large standard errors") and its own live diagnostics confirm it on real data (a
+direct cross-check against real RSiena on RSiena's own s50+alcohol tutorial dataset produced
+RSiena's own {cmd:"Standard errors not reliable"}/{cmd:"Covariance matrix not positive definite"}
+warnings for this exact model). Because of this, an {cmd:nwsaom} fit using
+{opt linearendow}/{opt linearcreation} can legitimately stop with an error reporting that
+{bf:thetaBound} (a coefficient's own magnitude exceeding 50 during estimation) was exceeded -
+this is {cmd:nwsaom}'s own port of real RSiena's IDENTICAL safeguard for the identical situation
+(its own {cmd:R/phase2.r} checks the same condition, at the same point, with the same default
+bound), not a bug: if it happens, try plain {opt linear} instead, or supply better starting values
+via {opt behtheta0()}. See {browse "docs/SAOM_ROADMAP.md"}'s own harmonisation-unit-28/29 entries
+for the full account, including the real-RSiena cross-check that motivated shipping this rather
+than withholding it.
+
+{pstd}
+{opt behtheta0()} sets starting values for the behavior-side eval-parameter vector (parallel to
+{opt theta0()} for the network side); the behavior rate's own starting value is computed
+automatically from the observed behavior data via RSiena's own closed-form formula for the general
+(non-binary) case, mirroring how the network rate's own starting value is computed (see
+{bf:Estimation} below) - a disclosed simplification that skips RSiena's own separate binary-behavior
+logistic formula.
+
+{pstd}
+{opt behavior()} works with EITHER {opt wave1()}/{opt wave2()} (exactly two waves) OR
+{opt waves()} (three or more, chaining {it:nwaves}{cmd:-1} periods exactly as the network-only case
+does - see {bf:Estimation} below); it needs exactly one behavior variable name per wave, in the same
+temporal order. The coefficient table shows both variables' own effects in ONE table, network
+coefficients unprefixed and every behavior coefficient prefixed {cmd:beh_} (e.g. {cmd:beh_linear},
+{cmd:beh_avalt}) so the two evaluation functions stay visually distinct while being reported as the
+single joint fit they actually are. Two separate rate parameters are reported throughout - see
+{bf:Stored results} below - and {cmd:estat gof} gains a fourth default auxiliary statistic,
+{bf:behavior} (RSiena's own {cmd:BehaviorDistribution}: the exact bounded-value distribution of
+behavior values, no overflow category since every value is already clamped to
+{cmd:[min,max]} by construction), automatically added to the default {opt stats()} list.
+
+{pstd}
+Co-evolution has the same native (C) speed backend as the network-only case (see {bf:Performance}
+above), used automatically - no option needed to opt in - whenever every network AND every behavior
+term in the model has native coverage; a fit combining even one not-yet-natively-ported term on
+either side transparently falls back to the fully-certified, always-available Mata engine for the
+WHOLE fit, never a silent partial native run. {bf:linearendow}/{bf:linearcreation} (below) are one
+such case: they always run on the Mata engine, not the native backend, so a fit using them will be
+noticeably slower than the {bf:Performance} section's own benchmark numbers, which are for
+evaluation-function-only models.
+
+{pstd}
+{bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): endowment/creation
+for any behavior effect OTHER than {bf:linear} ({opt quadratic}/{opt avalt}/{opt avsim} - not yet
+attempted); network-side endowment/creation (not yet attempted); more than one co-evolving behavior
+variable.
+
 {title:Estimation}
 
 {pstd}
@@ -276,15 +445,25 @@ good convergence).
 
 {pstd}
 {bf:The rate parameter} (the per-period intensity governing how often actors are activated to
-ministep) is computed from the observed data via RSiena's own verified closed-form starting-value
-formula (nactors x (0.2 + 2 x observed-tie-change-count) / (valid dyad count + 1)) - confirmed to
-reproduce RSiena's own printed starting value exactly on a real reference dataset. {bf:This is a
-disclosed, real gap, not silently glossed over}: real RSiena refines this starting value further
-via its own Robbins-Monro machinery (on RSiena's own reference dataset, its final fitted rate runs
-roughly 14% higher than this closed-form starting value); {cmd:nwsaom} does not currently perform
-that refinement, so {opt rate0()} is accepted but no longer used, and e(rate_tratio) should be
-expected far from zero - this is a known limitation of the rate parameter specifically, not a
-Robbins-Monro convergence failure of the eval-parameter estimates reported alongside it.
+ministep) is estimated via real RSiena's own verified CONDITIONAL-estimation construction
+(harmonisation unit 27), confirmed directly from RSiena's own real source and cross-checked live
+against the installed RSiena package: a closed-form formula gives a starting value, then {opt k3()}
+independent replicate simulations - each run not for a fixed time interval but UNTIL the simulated
+network's own distance from the observed starting wave reaches the observed target (the same
+Hamming distance between waves used elsewhere) - are averaged to give the refined estimate
+{cmd:e(rate)}, with {cmd:e(rate_se)} (shown alongside it, in parentheses, matching real RSiena's own
+printed convention) the raw standard deviation of those replicate draws (RSiena's own convention,
+not divided by {opt k3()}'s own square root). Verified on RSiena's own real reference dataset:
+{cmd:e(rate)} matches RSiena's own real fitted rate to within 0.1%, {cmd:e(rate_se)} to within 5%
+(see {browse "docs/SAOM_ROADMAP.md"}'s own harmonisation-unit-27 entry for the full account,
+including a real bug found and fixed during development - kept in the record, not silently
+corrected). {opt rate0()} is still accepted for backward compatibility but not used - the starting
+value is always computed from the data. {bf:A real, disclosed scope limit}: this refinement is not
+performed for co-evolution fits ({opt behavior()}) - matching real RSiena's own actual default
+behavior, not an oversight: RSiena's own conditional-estimation default requires exactly ONE
+dependent variable, and a co-evolution model has two (network and behavior), so real RSiena itself
+falls back to the SAME closed-form starting-value convention {cmd:nwsaom}'s own co-evolution rates
+already use.
 
 {pstd}
 {opt waves(namelist)} chains three or more waves into ONE pooled fit: the eval-parameter vector
@@ -329,8 +508,13 @@ RSiena's own convention exactly.
 		  {bf:e(N)}			number of actors (= e(nodes))
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
-		  {bf:e(rate)}			estimated rate parameter (wave1()/wave2() path only)
-		  {bf:e(rate_tratio)}		rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see {bf:Estimation} above)
+		  {bf:e(rate)}			estimated network rate parameter (wave1()/wave2() path only) - REFINED (harmonisation unit 27) for a plain network-only fit; the closed-form STARTING value only for a co-evolution fit (real RSiena's own default behavior for 2+ dependent variables - see {bf:Estimation} above)
+		  {bf:e(rate_tratio)}		network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see {bf:Estimation} above)
+		  {bf:e(rate_se)}		standard error of the REFINED e(rate) (harmonisation unit 27; plain network-only fits only - not set for a co-evolution fit, whose e(rate) is not refined)
+		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
+		  {bf:e(p_net)}			number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed {cmd:beh_})
+		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only) - closed-form starting value, not refined (see {bf:Estimation} above)
+		  {bf:e(rate_beh_tratio)}	behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
 
 		Macros
 		  {bf:e(cmd)}			{bf:nwsaom}
@@ -338,14 +522,18 @@ RSiena's own convention exactly.
 		  {bf:e(waves)}			list of wave network names, in temporal order
 		  {bf:e(wave1)}			first wave name (wave1()/wave2() path only)
 		  {bf:e(wave2)}			second wave name (wave1()/wave2() path only)
+		  {bf:e(behavior)}		list of behavior variable names, one per wave, in temporal order (co-evolution fits only)
 		  {bf:e(estat_cmd)}		{bf:nwsaom_estat} (postestimation dispatch)
 
 		Matrices
-		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate)
+		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 		  {bf:e(V)}			variance-covariance matrix (eval parameters only)
 		  {bf:e(tratio)}		1 x nparam phase-3 convergence t-ratios, one per eval-parameter coefficient
-		  {bf:e(rates)}			1 x (nwaves-1) per-period estimated rate parameters (waves() path only)
-		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period rate convergence t-ratios (waves() path only)
+		  {bf:e(rates)}			1 x (nwaves-1) per-period estimated network rate parameters (waves() path only) - REFINED (harmonisation unit 27) for a plain network-only fit; closed-form STARTING values only for a co-evolution fit
+		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
+		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of the REFINED e(rates) (harmonisation unit 27; plain network-only fits only)
+		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
+		  {bf:e(rate_beh_tratios)}	1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}, one pair per requested statistic (default
@@ -363,6 +551,15 @@ RSiena's own convention exactly.
 		{cmd:. estat gof}
 
 		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree transties balance}
+
+		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear avalt}
+		{cmd:. estat gof}
+
+		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avalt}
+
+		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avsim}
+
+		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linearendow linearcreation}
 
 {title:References}
 

@@ -94,11 +94,14 @@ f nwqap.ado
 f nwrandom.ado
 f nwreach.ado
 f nwrecode.ado
+f nwrem.ado
 f nwrename.ado
 f nwreplace.ado
 f nwreplacemat.ado
 f nwrestore.ado
 f nwring.ado
+f nwsaom.ado
+f nwsaom_estat.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado

@@ -118,11 +118,13 @@
 {p2col:{bf:{help nwrandom }}}Generate a random network{p_end}
 {p2col:{bf:{help nwreach }}}Calculate reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode network{p_end}
+{p2col:{bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace network{p_end}
 {p2col:{bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
 {p2col:{bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
+{p2col:{bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves{p_end}
 {p2col:{bf:{help nwsave }}}Save network data in file{p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}

@@ -291,12 +291,13 @@ matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back t
 
 {pstd}
 Concretely, on direct head-to-head benchmarks against R's own {cmd:ergm} 4.12.0 (default
-settings on both sides, median of repeated runs): a 30-node directed {opt edges}+{opt mutual}
-model runs at roughly 1.1x R's own time; a 100-node directed
-{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 1.0x; a 100-node undirected
-{opt edges}+{opt gwesp()} model at roughly 1.3x; a 500-node sparse undirected
-{opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 1.7x; and a 1000-node directed
-{opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.5x - FASTER than R. On a real
+settings on both sides, median of 5 repeated runs): a 30-node directed {opt edges}+{opt mutual}
+model runs at roughly 1.15x R's own time; a 100-node directed
+{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 0.62x - FASTER than R; a 100-node
+undirected {opt edges}+{opt gwesp()} model at roughly 1.0x (essential parity); a 500-node sparse
+undirected {opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 0.9x - FASTER than R;
+and a 1000-node directed {opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.6x -
+FASTER than R. On a real
 published network (the {it:E. coli} transcriptional-regulation network of Salgado et al. 2001
 and Shen-Orr et al. 2002, 418 nodes, 519 edges, distributed with R's own {cmd:ergm} package as
 {cmd:data(ecoli)}), median of five runs each side: a fixed-decay

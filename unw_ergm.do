@@ -1823,19 +1823,42 @@ real rowvector change_gwesp(class ErgmGraph scalar G, real scalar i, real scalar
 	simpler than GWESP's despite the statistic itself being more expensive
 	to compute from scratch.
 */
+/*
+	Harmonisation unit 151 (performance): the O(n^2) full-dyad enumeration
+	this function used to do directly (see the still-accurate cost
+	discussion in the comment block above this function) is genuine
+	ALGORITHMIC cost, but it does not need to be paid via n^2 direct
+	dyad lookups - `stat_gwdsp(G)' is exactly the telescoping sum of
+	`change_gwdsp()' evaluated in the "add" direction over every tie of
+	G, replayed from an empty graph of the same size (an empty graph has
+	zero shared partners on every dyad, so the sum of first differences
+	equals the final value exactly, regardless of insertion order - the
+	same identity a change statistic exists to compute). This turns the
+	cost from O(n^2) into O(nties * avg per-tie cost), which is a real
+	asymptotic win on any genuinely sparse network - confirmed directly
+	(dev/ergm_benchmark_r_vs_stata's own benchmark-8 network, n=1000,
+	nties=1526: 3.50s -> 0.09s for one call, bit-identical to 1e-9
+	relative difference) - and delegates the OTP/ITP/OSP/ISP/RTP
+	direction entirely to `change_gwdsp()`'s own existing `td.sptype'
+	dispatch, so the five formerly-separate `stat_gwdsp_otp/itp/osp/
+	isp/rtp()' full-enumeration functions below are no longer called
+	from here (each was independently re-verified equivalent to this
+	replacement before being retired - cscripts/test_nwergm_native.do).
+*/
 real rowvector stat_gwdsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-	if (td.sptype == "OTP") return(stat_gwdsp_otp(G, td))
-	if (td.sptype == "ITP") return(stat_gwdsp_itp(G, td))
-	if (td.sptype == "OSP") return(stat_gwdsp_osp(G, td))
-	if (td.sptype == "ISP") return(stat_gwdsp_isp(G, td))
-	if (td.sptype == "RTP") return(stat_gwdsp_rtp(G, td))
+	class ErgmGraph scalar G2
+	real matrix ties
+	real scalar k, nties
+	real rowvector tot
+
+	ties = G.all_ties()
+	nties = rows(ties)
+	G2 = ErgmGraph()
+	G2.init(G.n, G.directed)
 	tot = 0
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners(i,j)
-			if (p > 0) tot = tot + gw_kernel(p, td.decay)
-		}
+	for (k=1; k<=nties; k++) {
+		tot = tot + change_gwdsp(G2, ties[k,1], ties[k,2], td)
+		G2.toggle(ties[k,1], ties[k,2])
 	}
 	return(tot)
 }
@@ -1938,19 +1961,6 @@ real rowvector change_gwesp_otp(class ErgmGraph scalar G, real scalar i, real sc
 	}
 	return(chg)
 }
-real rowvector stat_gwdsp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-
-	tot = 0
-	for (i=1; i<=G.n; i++) {
-		for (j=1; j<=G.n; j++) {
-			if (i==j) continue
-			p = G.shared_partners_otp(i,j)
-			if (p > 0) tot = tot + gw_kernel(p, td.decay)
-		}
-	}
-	return(tot)
-}
 real rowvector change_gwdsp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, chg, a, b, m, paj, pib
 	real rowvector na, nb
@@ -2012,9 +2022,12 @@ real rowvector change_gwdsp_otp(class ErgmGraph scalar G, real scalar i, real sc
 	while GWDSP's own statistic - like OTP/ITP's - counts BOTH ordered
 	instances (i,q) and (q,i) (confirmed against the real C source's own
 	`all_calcs2`/`gw_calc2` macros, which apply this exact `*2`
-	specifically to OSP/ISP/RTP and nowhere else); `stat_gwdsp_osp()'/
-	`stat_gwdsp_isp()' below mirror this by iterating unordered pairs once
-	and doubling, rather than OTP/ITP's doubled ordered-pair enumeration.
+	specifically to OSP/ISP/RTP and nowhere else) - the direct-enumeration
+	`stat_gwdsp()' (harmonisation unit 151) no longer materializes this
+	unordered-pairs-doubled loop itself (it now sums `change_gwdsp_osp()'/
+	`change_gwdsp_isp()' incrementally instead - see that function's own
+	header comment), but the `*2' convention documented here is exactly
+	what makes that telescoping sum land on the same total.
 */
 real rowvector stat_gwesp_itp(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real matrix ties
@@ -2195,19 +2208,6 @@ real rowvector change_gwesp_rtp(class ErgmGraph scalar G, real scalar i, real sc
 	}
 	return(chg)
 }
-real rowvector stat_gwdsp_itp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-
-	tot = 0
-	for (i=1; i<=G.n; i++) {
-		for (j=1; j<=G.n; j++) {
-			if (i==j) continue
-			p = G.shared_partners_itp(i,j)
-			if (p > 0) tot = tot + gw_kernel(p, td.decay)
-		}
-	}
-	return(tot)
-}
 real rowvector change_gwdsp_itp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, chg, k, m, pjk, pki
 	real rowvector na, nb
@@ -2231,18 +2231,6 @@ real rowvector change_gwdsp_itp(class ErgmGraph scalar G, real scalar i, real sc
 	}
 	return(chg)
 }
-real rowvector stat_gwdsp_osp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-
-	tot = 0
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_osp(i,j)
-			if (p > 0) tot = tot + 2*gw_kernel(p, td.decay)
-		}
-	}
-	return(tot)
-}
 real rowvector change_gwdsp_osp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, chg, q, m, pq
 	real rowvector nb
@@ -2258,18 +2246,6 @@ real rowvector change_gwdsp_osp(class ErgmGraph scalar G, real scalar i, real sc
 		chg = chg + 2*(gw_kernel(pq+delta, td.decay) - gw_kernel(pq, td.decay))
 	}
 	return(chg)
-}
-real rowvector stat_gwdsp_isp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-
-	tot = 0
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_isp(i,j)
-			if (p > 0) tot = tot + 2*gw_kernel(p, td.decay)
-		}
-	}
-	return(tot)
 }
 real rowvector change_gwdsp_isp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, chg, p, m, pp
@@ -2295,26 +2271,14 @@ real rowvector change_gwdsp_isp(class ErgmGraph scalar G, real scalar i, real sc
 	unordered pair is always in-scope) - but the SAME `has_edge(j,i)'
 	gate applies (no mutual-tie-graph edge changes, hence nothing to
 	update, unless the reverse arc already exists), and the SAME TWO
-	families of affected dyads apply, each contributing via the `*2'
-	convention `stat_gwdsp_osp()'/`stat_gwdsp_isp()' already established
+	families of affected dyads apply, each contributing via the same `*2'
+	convention `change_gwdsp_osp()'/`change_gwdsp_isp()' already establish
 	above for enumerating each unordered pair once - confirmed against
 	`dspRTP_change''s own `htedge' guard and its `L2kh'/`L2th' loop pair
 	(this file's own single `mutual_neighbors(j)' loop below already
 	covers both of `dspRTP_change''s per-direction loops the same way
 	`change_gwdsp_osp()' collapses OSP's own two C loops into one).
 */
-real rowvector stat_gwdsp_rtp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, tot, p
-
-	tot = 0
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_rtp(i,j)
-			if (p > 0) tot = tot + 2*gw_kernel(p, td.decay)
-		}
-	}
-	return(tot)
-}
 real rowvector change_gwdsp_rtp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, chg, k, m, pk
 	real rowvector nb
@@ -2416,22 +2380,47 @@ real rowvector change_esp(class ErgmGraph scalar G, real scalar i, real scalar j
 	}
 	return(chg)
 }
+/*
+	Harmonisation unit 151 (performance): same telescoping-sum identity
+	as `stat_gwdsp()' just above - see that function's own header
+	comment for the full account. `dsp(d)' is exact-match rather than
+	geometrically-weighted, but the identity is unchanged: `change_dsp()'
+	already computes the correct per-level first difference for every
+	`td.sptype', so replaying every tie from an empty graph and summing
+	still telescopes to the exact same vector `stat_dsp_otp/itp/osp/isp/
+	rtp()' used to compute directly, at O(nties) instead of O(n^2)/
+	O(n(n-1)) cost - WITH ONE CORRECTION `gwdsp()' does not need:
+	`dsp(d)`'s level==0 bucket counts dyads with EXACTLY ZERO shared
+	partners, and an EMPTY graph has every dyad at zero shared partners
+	- so the telescoping baseline `stat_dsp(empty)' is NOT the all-zero
+	vector `J(1,rows(td.levels),0)' this loop starts from, it is the
+	TOTAL dyad count, in the level==0 position specifically (every
+	other level, and gwdsp's own smooth `gw_kernel(0,decay)==0' kernel,
+	DO start from zero validly - confirmed exact, not merely close to
+	zero, from `gw_kernel()`'s own closed form). Caught by a direct
+	cross-check against the five old `stat_dsp_otp/itp/osp/isp/rtp()'
+	functions below before they were retired (a real bug, not a
+	hypothetical one - see docs/CERTIFICATION.md unit 151 for the full
+	account), added back explicitly here rather than silently relying
+	on level 0 never being requested.
+*/
 real rowvector stat_dsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
+	class ErgmGraph scalar G2
+	real matrix ties
+	real scalar k, nties, ndyads
 	real rowvector tot
 
-	if (td.sptype == "OTP") return(stat_dsp_otp(G, td))
-	if (td.sptype == "ITP") return(stat_dsp_itp(G, td))
-	if (td.sptype == "OSP") return(stat_dsp_osp(G, td))
-	if (td.sptype == "ISP") return(stat_dsp_isp(G, td))
-	if (td.sptype == "RTP") return(stat_dsp_rtp(G, td))
+	ties = G.all_ties()
+	nties = rows(ties)
+	G2 = ErgmGraph()
+	G2.init(G.n, G.directed)
 	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners(i,j)
-			tot = tot + (p :== td.levels')
-		}
+	for (k=1; k<=nties; k++) {
+		tot = tot + change_dsp(G2, ties[k,1], ties[k,2], td)
+		G2.toggle(ties[k,1], ties[k,2])
 	}
+	ndyads = G.directed ? G.n*(G.n-1) : G.n*(G.n-1)/2
+	tot = tot + ndyads * (td.levels' :== 0)
 	return(tot)
 }
 real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
@@ -2466,8 +2455,8 @@ real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j
 /*
 	Directed OTP variants of esp(d)/dsp(d) (harmonisation unit 91,
 	term-expansion wave 5) - same kernel-substitution relationship to
-	`stat_gwesp_otp()'/`change_gwesp_otp()'/`stat_gwdsp_otp()'/
-	`change_gwdsp_otp()' above as wave 4's undirected `esp'/`dsp' have
+	`stat_gwesp_otp()'/`change_gwesp_otp()'/`change_gwdsp_otp()' above
+	as wave 4's undirected `esp'/`dsp' have
 	to `gwesp'/`gwdsp': `gw_kernel(p,decay)' replaced by the exact-match
 	indicator rowvector `(p :== td.levels')`. `dsp_otp' intentionally
 	does NOT skip `p==0' dyads (a requested d could be exactly 0), same
@@ -2512,20 +2501,6 @@ real rowvector change_esp_otp(class ErgmGraph scalar G, real scalar i, real scal
 		chg = chg + ((pib+delta :== td.levels') - (pib :== td.levels'))
 	}
 	return(chg)
-}
-real rowvector stat_dsp_otp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
-	real rowvector tot
-
-	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n; i++) {
-		for (j=1; j<=G.n; j++) {
-			if (i==j) continue
-			p = G.shared_partners_otp(i,j)
-			tot = tot + (p :== td.levels')
-		}
-	}
-	return(tot)
 }
 real rowvector change_dsp_otp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, a, b, m, paj, pib
@@ -2714,20 +2689,6 @@ real rowvector change_esp_rtp(class ErgmGraph scalar G, real scalar i, real scal
 	}
 	return(chg)
 }
-real rowvector stat_dsp_itp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
-	real rowvector tot
-
-	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n; i++) {
-		for (j=1; j<=G.n; j++) {
-			if (i==j) continue
-			p = G.shared_partners_itp(i,j)
-			tot = tot + (p :== td.levels')
-		}
-	}
-	return(tot)
-}
 real rowvector change_dsp_itp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, k, m, pjk, pki
 	real rowvector chg, na, nb
@@ -2751,19 +2712,6 @@ real rowvector change_dsp_itp(class ErgmGraph scalar G, real scalar i, real scal
 	}
 	return(chg)
 }
-real rowvector stat_dsp_osp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
-	real rowvector tot
-
-	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_osp(i,j)
-			tot = tot + 2*(p :== td.levels')
-		}
-	}
-	return(tot)
-}
 real rowvector change_dsp_osp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, q, m, pq
 	real rowvector chg, nb
@@ -2779,19 +2727,6 @@ real rowvector change_dsp_osp(class ErgmGraph scalar G, real scalar i, real scal
 		chg = chg + 2*((pq+delta :== td.levels') - (pq :== td.levels'))
 	}
 	return(chg)
-}
-real rowvector stat_dsp_isp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
-	real rowvector tot
-
-	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_isp(i,j)
-			tot = tot + 2*(p :== td.levels')
-		}
-	}
-	return(tot)
 }
 real rowvector change_dsp_isp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, p, m, pp
@@ -2812,24 +2747,11 @@ real rowvector change_dsp_isp(class ErgmGraph scalar G, real scalar i, real scal
 
 /*
 	Directed RTP variant of dsp(d) - same kernel-substitution relationship
-	to `stat_gwdsp_rtp()'/`change_gwdsp_rtp()' above as every other dsp(d)
+	to `change_gwdsp_rtp()' above as every other dsp(d)
 	variant has to its gwdsp counterpart; the `has_edge(j,i)' gate, the
 	two mutual-neighbor families, and the `*2' unordered-pair convention
 	all carry over unchanged.
 */
-real rowvector stat_dsp_rtp(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	real scalar i, j, p
-	real rowvector tot
-
-	tot = J(1, rows(td.levels), 0)
-	for (i=1; i<=G.n-1; i++) {
-		for (j=i+1; j<=G.n; j++) {
-			p = G.shared_partners_rtp(i,j)
-			tot = tot + 2*(p :== td.levels')
-		}
-	}
-	return(tot)
-}
 real rowvector change_dsp_rtp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta, k, m, pk
 	real rowvector chg, nb

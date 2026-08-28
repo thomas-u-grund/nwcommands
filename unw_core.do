@@ -6151,6 +6151,51 @@ real scalar NativeGraphAvailable(){
 }
 
 /*
+	Locates the platform-specific nwedit_viewer binary - a standalone
+	native GUI executable, not a Stata plugin (no SPI/callback into Stata
+	needed, just "open a chromeless window showing this local HTML file"),
+	built by .github/workflows/build-plugins.yml alongside the SPI-based
+	plugins and shipped in the same lib/plugins/{macos,unix,windows}/
+	directories for consistency, even though it isn't itself a plugin.
+	nwplot.ado's `interactive` option uses this as its preferred launch
+	path (via `winexec`, which is non-blocking on Windows/Mac/Unix(GUI)),
+	falling back to `view browse` when NweditViewerAvailable() is false -
+	same "return 0, never error, caller decides what to do" contract as
+	NativeGraphAvailable() above, reusing NativeGraphInstallDir() directly
+	rather than a third copy of the same install-dir lookup.
+*/
+string scalar NweditViewerSubdir(){
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("windows")
+	if (os == "Unix") return("unix")
+	return("macos")
+}
+
+string scalar NweditViewerFilename(){
+	if (st_global("c(os)") == "Windows") return("nwedit_viewer.exe")
+	return("nwedit_viewer")
+}
+
+string scalar NweditViewerPath(){
+	string scalar dir
+
+	dir = NativeGraphInstallDir()
+	if (dir == "") return("")
+	return(pathjoin(pathjoin(dir, "lib"),
+		pathjoin("plugins", pathjoin(NweditViewerSubdir(), NweditViewerFilename()))))
+}
+
+real scalar NweditViewerAvailable(){
+	string scalar p
+
+	p = NweditViewerPath()
+	if (p == "") return(0)
+	return(fileexists(p))
+}
+
+/*
 	Native betweenness centrality (Brandes 2001, unweighted/dichotomized -
 	the same scope as calculate_betweenness() above; the weighted
 	Dijkstra-based mode remains Mata-only, a documented follow-on).

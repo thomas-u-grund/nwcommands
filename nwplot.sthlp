@@ -132,6 +132,13 @@
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
+{p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
+	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
+	to also capture the resulting coordinates{p_end}
+{p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
+	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
+{p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
+	view back in before plotting; optional companion to {opt importcoords()}{p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -226,7 +233,28 @@ instead of re-deriving a fresh, unrelated layout for each one:
 	{cmd:. nwplot wave2, nodexy(x1 y1)}
 
 {pstd}
-Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or 
+{opt interactive} opens the plot in a browser alongside the usual static plot: drag nodes to
+reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
+shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
+already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
+factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back
+with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
+{opt nodexy()} above) and {opt edgeimport()}:
+
+	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
+	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
+	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+{opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
+{opt interactive} view they came from (row order is how nwplot matches an edit back to a node/tie,
+the same way {opt nodexy()}/{opt label()} already do) - re-export from {opt interactive} rather
+than reusing an old CSV after the network or an {help if}/{help in} restriction changes. Node size
+is not yet individually editable in the interactive view; the size-factor slider maps onto
+{opt nodefactor()} instead.
+
+{pstd}
+Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or
 asymmetrically connected (see {help nwdyads}). By default, asymmetrically connected dyads are represented as a straight line, whereas
 mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as 
 curved lines.
@@ -398,6 +426,4 @@ in the package's own visualization roadmap rather than fixed here.
 
 {title:See also}
 		{help nwplotmatrix}
-
-last certified : 25 Aug 2026
 

@@ -438,6 +438,260 @@ void saom_test_native_score_equiv(real scalar n, real colvector attr, real scala
 	printf("native score equivalence PASS: native's own want_score=1 path (phase 1's own Jacobian estimator) agrees with SaomSimulateIntervalScored() within Monte Carlo tolerance, both deviation and score\n")
 }
 
+/* -------------------------------------------------------------------
+   Co-evolution (harmonisation unit 26 native port) - same eligibility-
+   gating + statistical-equivalence discipline as the network-only
+   tests above, now for SaomSimulateIntervalCoevNative() vs. its own
+   certified Mata reference SaomSimulateIntervalCoevScored(): every
+   network AND every behavior term must be natively covered for
+   cfg.eligible & cfgBeh.eligible, and an unrecognized behavior term
+   name must correctly flip cfgBeh.eligible back to 0.
+   ------------------------------------------------------------------- */
+void saom_test_coev_native_elig(real colvector attr) {
+	class ErgmModel scalar M
+	class SaomBehaviorModel scalar Mbeh
+	class ErgmTermData scalar td4
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+
+	M = ErgmModel()
+	saom_native_build_model(M, attr)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "beh_avalt")
+	Mbeh.addterm("avsim", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim")
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	assert(cfgBeh.eligible == 1)
+
+	Mbeh.addterm("aFutureBehEffectNotPorted", &stat_saom_linear(), &change_saom_linear(), "futurebeh")
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	assert(cfgBeh.eligible == 0)
+
+	printf("coev native eligibility PASS: 3-behavior-term model eligible, +unrecognized-term model correctly falls back\n")
+}
+
+void saom_test_coev_native_equiv(real scalar n, real colvector attr, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class SaomBehavior scalar Beh0, Behwork
+	class SaomBehaviorModel scalar Mbeh
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+	struct SaomCoevScoredResult scalar sres
+	real rowvector thetaNet, thetaBeh
+	real matrix Zdev_m, Zsco_m, ZdevBeh_m, ZscoBeh_m, Zdev_n, Zsco_n, ZdevBeh_n, ZscoBeh_n
+	real scalar r, k, pNet, pBeh, i, j, nedges0, rateNet, rateBeh, simMean, maxstatdiff, maxstatbehdiff
+	real colvector startvals
+	real rowvector mdev_m, mdev_n, msco_m, msco_n, mdevb_m, mdevb_n, mscob_m, mscob_n
+	real rowvector zdev, zsco, zdevb, zscob
+
+	M = ErgmModel()
+	saom_native_build_model(M, attr)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "beh_avalt")
+	Mbeh.addterm("avsim", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim")
+	// a genuinely nonzero simMean, matching this package's own
+	// avsim_certify test convention (unit 26 quirk-check discipline -
+	// exercises the centering constant's own wire-protocol plumbing,
+	// not just a harmless default 0)
+	simMean = 0.25
+	Mbeh.setsimmean(simMean)
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	assert(cfgBeh.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(864213)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	startvals = ceil(runiform(n,1)*5)
+
+	thetaNet = (-1.2, 1.0, 0.7)
+	thetaBeh = (0.15, 0.4, 0.3)
+	rateNet = 3
+	rateBeh = 2
+	pNet = M.nparam()
+	pBeh = Mbeh.nparam()
+
+	Zdev_m = J(nruns, pNet, 0)
+	Zsco_m = J(nruns, pNet, 0)
+	ZdevBeh_m = J(nruns, pBeh, 0)
+	ZscoBeh_m = J(nruns, pBeh, 0)
+	rseed(112233)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		Behwork = SaomBehavior()
+		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
+		sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh)
+		Zdev_m[r,.] = M.full_statistic(Gwork)
+		Zsco_m[r,.] = sres.scoreNet
+		ZdevBeh_m[r,.] = Mbeh.full_statistic(Behwork, Gwork)
+		ZscoBeh_m[r,.] = sres.scoreBeh
+	}
+
+	Zdev_n = J(nruns, pNet, 0)
+	Zsco_n = J(nruns, pNet, 0)
+	ZdevBeh_n = J(nruns, pBeh, 0)
+	ZscoBeh_n = J(nruns, pBeh, 0)
+	// harmonisation unit 31: `rebuild_g=1' here (unlike every
+	// SaomEstimateRMCoev()/SaomEstimateRMCoevMulti() call site, which
+	// now passes 0) - THIS test's own oracle comparison needs Gwork
+	// rebuilt to call M.full_statistic()/Mbeh.full_statistic() on it
+	// independently, as its own cross-check target for `sres.stat'/
+	// `sres.statBeh' below (an EXACT match assertion, stronger than the
+	// distributional z-test - both are computed from the IDENTICAL
+	// final graph state, so they must agree exactly, not just
+	// statistically).
+	maxstatdiff = 0
+	maxstatbehdiff = 0
+	rseed(445566)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		Behwork = SaomBehavior()
+		Behwork.init(startvals, 1, 5, mean(startvals), simMean)
+		sres = SaomSimulateIntervalCoevNative(Gwork, M, cfg, thetaNet, Behwork, Mbeh, cfgBeh, thetaBeh, rateNet, rateBeh, 1)
+		Zdev_n[r,.] = M.full_statistic(Gwork)
+		Zsco_n[r,.] = sres.scoreNet
+		ZdevBeh_n[r,.] = Mbeh.full_statistic(Behwork, Gwork)
+		ZscoBeh_n[r,.] = sres.scoreBeh
+		maxstatdiff = max((maxstatdiff, max(abs(sres.stat - Zdev_n[r,.]))))
+		maxstatbehdiff = max((maxstatbehdiff, max(abs(sres.statBeh - ZdevBeh_n[r,.]))))
+	}
+
+	mdev_m = mean(Zdev_m); mdev_n = mean(Zdev_n)
+	msco_m = mean(Zsco_m); msco_n = mean(Zsco_n)
+	mdevb_m = mean(ZdevBeh_m); mdevb_n = mean(ZdevBeh_n)
+	mscob_m = mean(ZscoBeh_m); mscob_n = mean(ZscoBeh_n)
+	zdev = J(1,pNet,0); zsco = J(1,pNet,0)
+	for (k=1; k<=pNet; k++) {
+		zdev[k] = (mdev_m[k]-mdev_n[k]) / sqrt(variance(Zdev_m[.,k])/nruns + variance(Zdev_n[.,k])/nruns)
+		zsco[k] = (msco_m[k]-msco_n[k]) / sqrt(variance(Zsco_m[.,k])/nruns + variance(Zsco_n[.,k])/nruns)
+	}
+	zdevb = J(1,pBeh,0); zscob = J(1,pBeh,0)
+	for (k=1; k<=pBeh; k++) {
+		zdevb[k] = (mdevb_m[k]-mdevb_n[k]) / sqrt(variance(ZdevBeh_m[.,k])/nruns + variance(ZdevBeh_n[.,k])/nruns)
+		zscob[k] = (mscob_m[k]-mscob_n[k]) / sqrt(variance(ZscoBeh_m[.,k])/nruns + variance(ZscoBeh_n[.,k])/nruns)
+	}
+
+	printf("coev native equivalence (network, %g terms, %g runs):\n", pNet, nruns)
+	for (k=1; k<=pNet; k++) {
+		printf("  %s: dev Mata %8.3f native %8.3f z=%6.3f | score Mata %8.3f native %8.3f z=%6.3f\n", ///
+			M.coefnames[k], mdev_m[k], mdev_n[k], zdev[k], msco_m[k], msco_n[k], zsco[k])
+	}
+	printf("coev native equivalence (behavior, %g terms, %g runs):\n", pBeh, nruns)
+	for (k=1; k<=pBeh; k++) {
+		printf("  %s: dev Mata %8.3f native %8.3f z=%6.3f | score Mata %8.3f native %8.3f z=%6.3f\n", ///
+			Mbeh.coefnames[k], mdevb_m[k], mdevb_n[k], zdevb[k], mscob_m[k], mscob_n[k], zscob[k])
+	}
+	for (k=1; k<=pNet; k++) {
+		assert(abs(zdev[k]) < 4)
+		assert(abs(zsco[k]) < 4)
+	}
+	for (k=1; k<=pBeh; k++) {
+		assert(abs(zdevb[k]) < 4)
+		assert(abs(zscob[k]) < 4)
+	}
+
+	printf("coev native equivalence PASS: SaomSimulateIntervalCoevNative() (network+behavior, incl. avsim's own simMean wire field) agrees with SaomSimulateIntervalCoevScored() within Monte Carlo tolerance, deviation and score, both sides\n")
+
+	// harmonisation unit 31: `sres.stat'/`sres.statBeh' (the new
+	// native-returned statistic vectors) must EXACTLY match
+	// M.full_statistic()/Mbeh.full_statistic() computed independently
+	// on the SAME rebuilt Gwork/Behwork - both derived from the
+	// identical final graph state, so floating-point-level agreement is
+	// the right bar here, not a Monte Carlo z-test.
+	printf("coev native stat/statBeh exact-match: max|diff| net=%9.2e beh=%9.2e\n", maxstatdiff, maxstatbehdiff)
+	assert(maxstatdiff < 1e-8)
+	assert(maxstatbehdiff < 1e-8)
+	printf("coev native stat/statBeh PASS: SaomSimulateIntervalCoevNative()'s own res.stat/res.statBeh (harmonisation unit 31) exactly match M.full_statistic()/Mbeh.full_statistic() on the identical final graph state\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 30 (performance pass): statistical equivalence
+   for SaomSimulateCondTimeNative() (native/saom_sim.c's own new
+   "CONDITIONAL MODE") against SaomSimulateConditionalTime() (the
+   pure-Mata reference, harmonisation unit 27) - same two-sample z-test
+   methodology as saom_test_native_equivalence() above, but comparing
+   the ELAPSED TIME distribution (the one thing this refinement loop
+   actually needs) rather than an end-of-interval statistic vector.
+   ------------------------------------------------------------------- */
+void saom_test_native_condtime_equiv(real scalar n, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real colvector tMata, tNative
+	real scalar r, k, i, j, nedges0, target, mmata, mnative, semata, senative, zstat
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(864213)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.12 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	theta = (-1.5, 1.0)
+	target = 20
+
+	tMata = J(nruns, 1, 0)
+	rseed(24681)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		tMata[r] = SaomSimulateConditionalTime(Gwork, G0, M, theta, target)
+	}
+
+	tNative = J(nruns, 1, 0)
+	rseed(97531)
+	for (r=1; r<=nruns; r++) {
+		tNative[r] = SaomSimulateCondTimeNative(G0, G0, M, cfg, theta, target)
+	}
+
+	mmata = mean(tMata)
+	mnative = mean(tNative)
+	semata = sqrt(variance(tMata) / nruns)
+	senative = sqrt(variance(tNative) / nruns)
+	zstat = (mmata - mnative) / sqrt(semata^2 + senative^2)
+
+	printf("native condtime equivalence: Mata mean %8.4f, native mean %8.4f, z=%6.3f\n", mmata, mnative, zstat)
+
+	// |z| < 4, same generous-but-genuine bar as saom_test_native_equivalence()
+	// above (see its own comment for the rationale).
+	assert(abs(zstat) < 4)
+
+	printf("native condtime equivalence PASS: SaomSimulateCondTimeNative() agrees with SaomSimulateConditionalTime() within Monte Carlo tolerance (elapsed-time distribution)\n")
+}
+
 end
 
 mata:
@@ -458,5 +712,10 @@ saom_test_native_equiv_ext(n, attr, attr2, 150)
 saom_test_native_stat_match(n, attr, attr2, 100)
 
 saom_test_native_score_equiv(n, attr, 150)
+
+saom_test_coev_native_elig(attr)
+saom_test_coev_native_equiv(n, attr, 150)
+
+saom_test_native_condtime_equiv(n, 150)
 
 end

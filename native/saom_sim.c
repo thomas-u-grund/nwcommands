@@ -47,7 +47,13 @@
 	0 and unused for every other term - same "keep the wire format
 	uniform, branch only on what a term DOES with the field" convention
 	native/ergm_mcmc.c's own header documents for its own mode-dependent
-	fields). Frame: v1/v2 = starting edge list (rows 1..nties_in) on
+	fields). ALWAYS terminated by two further trailing fields, `condmode
+	targetChange` (harmonisation unit 30 - see below), appended AFTER
+	the entire behavior-fields block (even on every existing network-
+	only/co-evolution call site, which now simply appends " 0 0" -
+	same "known-length trailer, not a variable-position insert"
+	convention this unit's own header comment on `nbehterms=0` already
+	documents). Frame: v1/v2 = starting edge list (rows 1..nties_in) on
 	input, FINAL simulated edge list on output (same "caller rebuilds
 	its own graph object from the written-back edge list" contract as
 	ergm_mcmc.c); v(3..3+nattr-1) = attribute columns (rows 1..n,
@@ -81,6 +87,44 @@
 	SaomSimulateInterval() (the reference/fallback/oracle - unchanged,
 	always available), not trajectory-level identity. See
 	cscripts/test_nwsaom_native.do.
+
+	CONDITIONAL MODE (harmonisation unit 30 - performance pass, per
+	explicit user direction after a real, measured finding: a direct
+	RSiena benchmark, dev/saom_rsiena_benchmark.R/.do, found
+	SaomEstimateRM()'s own network-only path ~22x slower than real
+	RSiena on s50 data, and profiling isolated the ENTIRE cost to
+	harmonisation unit 27's own post-phase-3 rate-refinement loop -
+	K3=1000 pure-Mata SaomSimulateConditionalTime() replicates, the
+	ONE thing in that whole estimator that had never been ported
+	native). `condmode=1` switches the SAME ministep sampler above from
+	"run until t reaches a fixed interval length" to "run until the
+	CURRENT network's signed Hamming distance from its OWN STARTING
+	state reaches `targetChange`" - a direct C port of
+	SaomSimulateConditionalTime() (unw_saom.do), which that Mata
+	function's own header comment derives/verifies against RSiena's
+	real C++ source (`EpochSimulation::runEpoch()`'s own
+	`simulatedDistance()` stopping check) in full; read that comment
+	for the derivation, not repeated here. `horig` below is a snapshot
+	of the STARTING dyad membership (built once, right after the
+	initial edge list loads, before any ministep mutates `g`) purely so
+	each accepted toggle can tell whether it moved a dyad AWAY from or
+	BACK TO its own starting value - the same signed-distance
+	distinction that Mata function's own header comment documents as a
+	real, easy-to-miss subtlety (a naive monotonic accepted-change
+	counter is NOT equivalent and was already tried and rejected there).
+	Reference rate is always 1 in this mode (the caller MUST pass
+	`rate=1`, not a fitted value - see that Mata function's own header
+	comment for why exactly 1 is the correct reference rate), and this
+	mode is NEVER combined with behavior terms (`nbehterms` must be 0 -
+	real RSiena's own conditional-estimation default itself only
+	applies to a SINGLE dependent variable, never co-evolution - see
+	that Mata function's own header comment's final paragraph) or with
+	`want_score` (the refinement loop needs only the elapsed TIME, saved
+	back as the new `__saom_native_condtime` scalar, never a Jacobian).
+	Every existing field this plugin already parses (nterms, theta,
+	want_score, nbehterms, ...) is untouched and still means exactly
+	what it always has - `condmode`/`targetChange` are two BRAND NEW
+	trailing fields, not a repurposing of anything.
 */
 
 #include "stplugin.h"
@@ -91,6 +135,7 @@
 
 #define MAXTERMS 16
 #define MAXATTR 8
+#define MAXBEHTERMS 8
 
 #define TERMCODE_OUTDEGREE 1
 #define TERMCODE_RECIPROCITY 2
@@ -105,6 +150,19 @@
 #define TERMCODE_TRANSTRIP 11
 #define TERMCODE_CYCLE3 12
 #define TERMCODE_SIMCOV 13
+
+/* Behavior (co-evolution, harmonisation unit 26) term codes - a
+   SEPARATE numbering range (101+, not 14+) so the wire protocol's own
+   network-term and behavior-term fields can never be confused with one
+   another even if a caller mixes up an argument position; direct C
+   ports of unw_saom.do's own stat_saom_linear/quadratic/avalt/avsim -
+   change_saom_avalt/change_saom_avsim's own out-neighbor iteration
+   reuses this file's own `outadj' (already built for TRANSTRIP/CYCLE3),
+   so `need_adj' below is also set whenever AVALT or AVSIM is active. */
+#define TERMCODE_BEH_LINEAR 101
+#define TERMCODE_BEH_QUADRATIC 102
+#define TERMCODE_BEH_AVALT 103
+#define TERMCODE_BEH_AVSIM 104
 
 /* ===================================================================
    xorshift128+ RNG - independent reimplementation, same construction
@@ -608,6 +666,89 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 }
 
 /* ===================================================================
+   Behavior (co-evolution) term dispatch - direct C ports of
+   unw_saom.do's own stat_saom_linear/quadratic/avalt/avsim and
+   change_saom_linear/quadratic/avalt/avsim, each independently
+   verified against real RSiena source there (see that file's own
+   header comments for the term-by-term derivation/verification
+   account - not re-derived here, this is a mechanical port). `behval'
+   is the current behavior-value array (index 1..n, mutated by the
+   ministep loop below exactly like Mata's SaomBehavior.values); `simMean'
+   is avsim's own data-derived centering constant (0, harmless, for
+   every other term); `range' = behmaxval-behminval.
+   =================================================================== */
+static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean) {
+	long i, k, od;
+	double tot = 0.0, vego, sumabs;
+	switch (termcode) {
+		case TERMCODE_BEH_LINEAR:					// stat_saom_linear(): sum(values)
+			for (i = 1; i <= g->n; i++) tot += behval[i];
+			return tot;
+		case TERMCODE_BEH_QUADRATIC:					// stat_saom_quadratic(): sum(values^2), RAW/uncentered
+			for (i = 1; i <= g->n; i++) tot += behval[i] * behval[i];
+			return tot;
+		case TERMCODE_BEH_AVALT:					// stat_saom_avalt(): sum_i value_i * avg_{j in N_out(i)}(value_j)
+			for (i = 1; i <= g->n; i++) {
+				od = g->outadj[i].len;
+				if (od == 0) continue;
+				double s = 0.0;
+				for (k = 0; k < od; k++) s += behval[g->outadj[i].nb[k]];
+				tot += behval[i] * (s / (double)od);
+			}
+			return tot;
+		case TERMCODE_BEH_AVSIM:					// stat_saom_avsim(): sum_i [avg_j sim(value_i,value_j) - simMean], 0 for no out-ties
+			for (i = 1; i <= g->n; i++) {
+				od = g->outadj[i].len;
+				if (od == 0) continue;
+				vego = behval[i];
+				sumabs = 0.0;
+				for (k = 0; k < od; k++) sumabs += fabs(behval[g->outadj[i].nb[k]] - vego);
+				tot += 1.0 - (sumabs / range) / (double)od - simMean;
+			}
+			return tot;
+	}
+	return 0.0;
+}
+
+/* `overallMean' (quadratic's own ministep centering) and `range'/
+   `simMean' (avsim) are the same model-level constants
+   saom_beh_stat_term() above takes - see unw_saom.do's own
+   change_saom_quadratic()/change_saom_avsim() for the derivation each
+   branch below is a direct, mechanical port of. */
+static double saom_beh_change_term(graph_t *g, double *behval, int termcode, double overallMean, double range,
+	long i, double diff) {
+	long od, k, nhigh, nlow;
+	double vego;
+	switch (termcode) {
+		case TERMCODE_BEH_LINEAR:
+			return diff;
+		case TERMCODE_BEH_QUADRATIC:
+			return (2.0 * (behval[i] - overallMean) + diff) * diff;
+		case TERMCODE_BEH_AVALT: {
+			od = g->outadj[i].len;
+			if (od == 0) return 0.0;
+			double s = 0.0;
+			for (k = 0; k < od; k++) s += behval[g->outadj[i].nb[k]];
+			return diff * (s / (double)od);
+		}
+		case TERMCODE_BEH_AVSIM: {
+			od = g->outadj[i].len;
+			if (od == 0 || diff == 0.0) return 0.0;
+			vego = behval[i];
+			nhigh = 0; nlow = 0;
+			for (k = 0; k < od; k++) {
+				double vj = behval[g->outadj[i].nb[k]];
+				if (vj > vego) nhigh++;
+				else if (vj < vego) nlow++;
+			}
+			if (diff > 0) return (2.0 * (double)nhigh - (double)od) / (range * (double)od);
+			return (2.0 * (double)nlow - (double)od) / (range * (double)od);
+		}
+	}
+	return 0.0;
+}
+
+/* ===================================================================
    Plugin entry point
    =================================================================== */
 
@@ -634,6 +775,25 @@ STDLL stata_call(int argc, char *argv[]) {
 	rng_t rng;
 	double t, steps, nchanges;
 	int need_adj, need_transtrip, need_cycle3;
+	// --- co-evolution (harmonisation unit 26) fields - ALL trailing,
+	// after `want_score' - `nbehterms=0' (no further behavior fields at
+	// all) is the ENTIRE wire-protocol footprint on every existing
+	// network-only caller, which now simply appends " 0" - see
+	// SaomSimulateIntervalNative()'s own header comment in unw_saom.do.
+	long nbehterms;
+	int behtermcodes[MAXBEHTERMS];
+	double thetaBeh[MAXBEHTERMS];
+	double rateBeh, behminval, behmaxval, behrange, behSimMean, behOverallMean;
+	double *behval = NULL;
+	double nchangesBeh;
+	int need_behadj;
+	// --- conditional mode (harmonisation unit 30) - see this file's
+	// own header comment's "CONDITIONAL MODE" section for the full
+	// account. `horig'/`simDist' only touched when condmode!=0.
+	long condmode;
+	double targetChange;
+	dyadht_t horig;
+	long simDist;
 	(void)tok_saveptr;
 
 	if (argc < 1) { SF_error("saom_sim: missing argument string\n"); return(198); }
@@ -662,9 +822,32 @@ STDLL stata_call(int argc, char *argv[]) {
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	want_score = next_long();		// harmonisation unit 16 - see saom_stat_term()'s own sibling, the score accumulator in the ministep loop below
+
+	nbehterms = next_long();
+	if (nbehterms > MAXBEHTERMS) { SF_error("saom_sim: too many behavior terms\n"); free(argbuf); return(198); }
+	need_behadj = 0;
+	for (i = 0; i < nbehterms; i++) {
+		behtermcodes[i] = (int)next_long();
+		if (behtermcodes[i] == TERMCODE_BEH_AVALT || behtermcodes[i] == TERMCODE_BEH_AVSIM) need_behadj = 1;
+	}
+	for (i = 0; i < nbehterms; i++) thetaBeh[i] = next_double();
+	if (nbehterms > 0) {
+		rateBeh = next_double();
+		behminval = next_double();
+		behmaxval = next_double();
+		behSimMean = next_double();
+		behOverallMean = next_double();
+		behrange = behmaxval - behminval;
+	}
+	else {
+		rateBeh = 0.0; behminval = 0.0; behmaxval = 0.0; behrange = 1.0; behSimMean = 0.0; behOverallMean = 0.0;
+	}
+	condmode = next_long();
+	targetChange = next_double();
 	free(argbuf);
 
 	if (!directed) { SF_error("saom_sim: directed networks only\n"); return(198); }
+	if (need_behadj) need_adj = 1;		// avalt/avsim need outadj exactly like transtrip/cycle3 do
 
 	/* --- build starting graph from dataset columns v1=ego v2=alter
 	   (rows 1..nties_in), then nattr attribute columns (rows 1..n) --- */
@@ -694,6 +877,32 @@ STDLL stata_call(int argc, char *argv[]) {
 		SF_vdata(1, i, &vi);
 		SF_vdata(2, i, &vj);
 		toggle(&g, (long)vi, (long)vj);
+	}
+
+	simDist = 0;
+	if (condmode) {
+		// snapshot the STARTING dyad membership BEFORE any ministep
+		// mutates `g' - see this file's own "CONDITIONAL MODE" header
+		// comment for why signed distance-from-start needs this rather
+		// than a monotonic accepted-change counter. `dyadkey()' only
+		// reads g->n (shared, unaffected by which hashtable it indexes
+		// into), so reusing it against `horig' here is safe.
+		ht_alloc(&horig, ht_next_pow2(nties_in * 2 + 16));
+		for (i = 0; i < g.nties; i++) {
+			ht_put(&horig, dyadkey(&g, g.elist_i[i], g.elist_j[i]), 1);
+		}
+	}
+
+	if (nbehterms > 0) {
+		// behavior values live in the column right after the last
+		// attribute column (3+nattr) - see SaomSimulateIntervalCoevNative()'s
+		// own header comment in unw_saom.do for the variable-list contract.
+		behval = (double *)calloc((size_t)(n + 1), sizeof(double));
+		for (i = 1; i <= n; i++) {
+			ST_double v;
+			SF_vdata((int)(3 + nattr), i, &v);
+			behval[i] = v;
+		}
 	}
 
 	/* --- simulate one full interval: pooled waiting time
@@ -749,67 +958,156 @@ STDLL stata_call(int argc, char *argv[]) {
 		   what a model/call actually uses" convention in this file. */
 		double *chgstore = want_score ? (double *)malloc((size_t)(n + 1) * (size_t)nterms * sizeof(double)) : NULL;
 		double *score = want_score ? (double *)calloc((size_t)nterms, sizeof(double)) : NULL;
-		while (t < 1.0) {
-			t -= log(rng_unif(&rng)) / ((double)n * rate);
-			if (t < 1.0) {
-				long actor = 1 + (long)(rng_unif(&rng) * (double)n);
-				long j, choice;
-				double maxu = 0.0, stayterm, denom, draw, cum;
+		double *scoreBeh = (want_score && nbehterms > 0) ? (double *)calloc((size_t)nbehterms, sizeof(double)) : NULL;
+		// grand rate = network's own total rate + behavior's own total
+		// rate (0 when nbehterms==0, so grandRate==n*rate exactly - the
+		// existing network-only draw, unchanged) - direct C port of the
+		// multi-variable race SaomSimulateIntervalCoevScored() (unw_saom.do)
+		// already implements: ONE pooled exponential waiting time from the
+		// GRAND total, which VARIABLE acts chosen proportional to its own
+		// share, then an actor uniform within that variable.
+		double grandRate = (double)n * rate + (double)n * rateBeh;
+		nchangesBeh = 0.0;
+		while (condmode ? (simDist < targetChange) : (t < 1.0)) {
+			t -= log(rng_unif(&rng)) / grandRate;
+			if (condmode || t < 1.0) {
+				int actNet = (nbehterms == 0) || (rng_unif(&rng) * grandRate <= (double)n * rate);
+				if (actNet) {
+					long actor = 1 + (long)(rng_unif(&rng) * (double)n);
+					long j, choice;
+					double maxu = 0.0, stayterm, denom, draw, cum;
 
-				if (need_transtrip) {
-					memset(tt_arr, 0, (size_t)(n + 1) * sizeof(double));
-					batch_otp_plus_osp(&g, actor, tt_arr);
-				}
-				if (need_cycle3) {
-					memset(c3_arr, 0, (size_t)(n + 1) * sizeof(double));
-					batch_otp_reverse(&g, actor, c3_arr);
-				}
-
-				for (j = 1; j <= n; j++) {
-					if (j == actor) continue;
-					int ij_exists = has_edge(&g, actor, j);
-					double uj = 0.0;
-					for (k = 0; k < nterms; k++) {
-						double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-						double cv = saom_change_term(&g, termcodes[k], a, p1[k], actor, j, ij_exists, tt_arr, c3_arr);
-						if (want_score) chgstore[j * nterms + k] = cv;
-						uj += theta[k] * cv;
+					if (need_transtrip) {
+						memset(tt_arr, 0, (size_t)(n + 1) * sizeof(double));
+						batch_otp_plus_osp(&g, actor, tt_arr);
 					}
-					u[j] = uj;
-					if (uj > maxu) maxu = uj;
-				}
+					if (need_cycle3) {
+						memset(c3_arr, 0, (size_t)(n + 1) * sizeof(double));
+						batch_otp_reverse(&g, actor, c3_arr);
+					}
 
-				stayterm = exp(0.0 - maxu);
-				denom = stayterm;
-				for (j = 1; j <= n; j++) {
-					if (j == actor) continue;
-					ev[j] = exp(u[j] - maxu);
-					denom += ev[j];
-				}
-
-				draw = rng_unif(&rng) * denom;
-				cum = stayterm;
-				choice = 0;
-				if (draw > cum) {
 					for (j = 1; j <= n; j++) {
 						if (j == actor) continue;
-						cum += ev[j];
-						choice = j;
-						if (draw <= cum) break;
+						int ij_exists = has_edge(&g, actor, j);
+						double uj = 0.0;
+						for (k = 0; k < nterms; k++) {
+							double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+							double cv = saom_change_term(&g, termcodes[k], a, p1[k], actor, j, ij_exists, tt_arr, c3_arr);
+							if (want_score) chgstore[j * nterms + k] = cv;
+							uj += theta[k] * cv;
+						}
+						u[j] = uj;
+						if (uj > maxu) maxu = uj;
 					}
-				}
-				if (want_score) {
-					for (k = 0; k < nterms; k++) {
-						double ebar_k = 0.0, chosen_k;
+
+					stayterm = exp(0.0 - maxu);
+					denom = stayterm;
+					for (j = 1; j <= n; j++) {
+						if (j == actor) continue;
+						ev[j] = exp(u[j] - maxu);
+						denom += ev[j];
+					}
+
+					draw = rng_unif(&rng) * denom;
+					cum = stayterm;
+					choice = 0;
+					if (draw > cum) {
 						for (j = 1; j <= n; j++) {
 							if (j == actor) continue;
-							ebar_k += (ev[j] / denom) * chgstore[j * nterms + k];
+							cum += ev[j];
+							choice = j;
+							if (draw <= cum) break;
 						}
-						chosen_k = (choice != 0) ? chgstore[choice * nterms + k] : 0.0;
-						score[k] += chosen_k - ebar_k;
+					}
+					if (want_score) {
+						for (k = 0; k < nterms; k++) {
+							double ebar_k = 0.0, chosen_k;
+							for (j = 1; j <= n; j++) {
+								if (j == actor) continue;
+								ebar_k += (ev[j] / denom) * chgstore[j * nterms + k];
+							}
+							chosen_k = (choice != 0) ? chgstore[choice * nterms + k] : 0.0;
+							score[k] += chosen_k - ebar_k;
+						}
+					}
+					if (choice != 0) {
+						toggle(&g, actor, choice);
+						nchanges += 1.0;
+						if (condmode) {
+							// signed distance-from-start: DECREASES when this
+							// toggle reverts the dyad back to its OWN starting
+							// value, INCREASES when it newly differs - see this
+							// file's own "CONDITIONAL MODE" header comment.
+							long origval;
+							int newstate = has_edge(&g, actor, choice);
+							int origstate = ht_get(&horig, dyadkey(&g, actor, choice), &origval);
+							if (newstate == origstate) simDist -= 1; else simDist += 1;
+						}
 					}
 				}
-				if (choice != 0) { toggle(&g, actor, choice); nchanges += 1.0; }
+				else {
+					// --- behavior ministep: exactly 3 alternatives
+					// (down/stay/up, clamped to [behminval,behmaxval]) -
+					// direct C port of SaomBehaviorMinistep()'s own
+					// numerically-stable softmax (unw_saom.do), extended
+					// with the SAME ebar/chosen_chg score accumulation
+					// the network branch above already uses.
+					long actor = 1 + (long)(rng_unif(&rng) * (double)n);
+					double cur = behval[actor];
+					double chgDown[MAXBEHTERMS], chgUp[MAXBEHTERMS];
+					double uDown = 0.0, uUp = 0.0, maxu2 = 0.0, denom2, draw2, diff;
+					int hasDown = (cur > behminval), hasUp = (cur < behmaxval);
+
+					if (hasDown) {
+						uDown = 0.0;
+						for (k = 0; k < nbehterms; k++) {
+							chgDown[k] = saom_beh_change_term(&g, behval, behtermcodes[k], behOverallMean, behrange, actor, -1.0);
+							uDown += thetaBeh[k] * chgDown[k];
+						}
+						if (uDown > maxu2) maxu2 = uDown;
+					}
+					if (hasUp) {
+						uUp = 0.0;
+						for (k = 0; k < nbehterms; k++) {
+							chgUp[k] = saom_beh_change_term(&g, behval, behtermcodes[k], behOverallMean, behrange, actor, 1.0);
+							uUp += thetaBeh[k] * chgUp[k];
+						}
+						if (uUp > maxu2) maxu2 = uUp;
+					}
+
+					denom2 = exp(0.0 - maxu2);
+					if (hasDown) denom2 += exp(uDown - maxu2);
+					if (hasUp) denom2 += exp(uUp - maxu2);
+
+					if (want_score) {
+						for (k = 0; k < nbehterms; k++) {
+							double ebar_k = 0.0;
+							if (hasDown) ebar_k += (exp(uDown - maxu2) / denom2) * chgDown[k];
+							if (hasUp) ebar_k += (exp(uUp - maxu2) / denom2) * chgUp[k];
+							scoreBeh[k] -= ebar_k;		// chosen contribution added below once diff is known
+						}
+					}
+
+					draw2 = rng_unif(&rng) * denom2;
+					diff = 0.0;
+					if (hasDown && draw2 <= exp(uDown - maxu2)) {
+						diff = -1.0;
+						behval[actor] = cur - 1.0;
+						if (want_score) for (k = 0; k < nbehterms; k++) scoreBeh[k] += chgDown[k];
+					}
+					else {
+						if (hasDown) draw2 -= exp(uDown - maxu2);
+						if (draw2 <= exp(0.0 - maxu2)) {
+							diff = 0.0;		// "stay" - chosen change vector is the zero vector, nothing further to add
+						}
+						else {
+							diff = 1.0;
+							behval[actor] = cur + 1.0;
+							if (want_score) for (k = 0; k < nbehterms; k++) scoreBeh[k] += chgUp[k];
+						}
+					}
+					if (diff != 0.0) nchangesBeh += 1.0;
+				}
 				steps += 1.0;
 			}
 		}
@@ -819,6 +1117,13 @@ STDLL stata_call(int argc, char *argv[]) {
 				sprintf(scorename, "__saom_native_score%ld", k + 1);
 				SF_scal_save(scorename, score[k]);
 			}
+			if (nbehterms > 0) {
+				for (k = 0; k < nbehterms; k++) {
+					char scorename[40];
+					sprintf(scorename, "__saom_native_scorebeh%ld", k + 1);
+					SF_scal_save(scorename, scoreBeh[k]);
+				}
+			}
 		}
 		free(u);
 		free(ev);
@@ -826,6 +1131,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		free(c3_arr);
 		free(chgstore);
 		free(score);
+		free(scoreBeh);
 	}
 
 	/* --- write back final edge list; the Mata caller still rebuilds its
@@ -846,12 +1152,31 @@ STDLL stata_call(int argc, char *argv[]) {
 	SF_scal_save("__saom_native_nties_out", (ST_double)g.nties);
 	SF_scal_save("__saom_native_steps", (ST_double)steps);
 	SF_scal_save("__saom_native_nchanges", (ST_double)nchanges);
+	SF_scal_save("__saom_native_condtime", (ST_double)t);		// harmonisation unit 30 - only meaningful when condmode!=0, always saved (uniform wire contract)
+	if (condmode) ht_free(&horig);
 	for (k = 0; k < nterms; k++) {
 		char statname[40];
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 		sprintf(statname, "__saom_native_stat%ld", k + 1);
 		SF_scal_save(statname, saom_stat_term(&g, termcodes[k], a, p1[k]));
 	}
+
+	// --- co-evolution (harmonisation unit 26): write back the final
+	// behavior-value column and its own scalars, mirroring the network
+	// side's identical contract exactly (final state written back, plus
+	// nchanges/per-term statistic computed once on that same final
+	// state) - see SaomSimulateIntervalCoevNative()'s own header comment
+	// in unw_saom.do for the caller-side read-back.
+	if (nbehterms > 0) {
+		for (i = 1; i <= n; i++) SF_vstore((int)(3 + nattr), i, (ST_double)behval[i]);
+		SF_scal_save("__saom_native_nchangesbeh", (ST_double)nchangesBeh);
+		for (k = 0; k < nbehterms; k++) {
+			char statname[40];
+			sprintf(statname, "__saom_native_statbeh%ld", k + 1);
+			SF_scal_save(statname, saom_beh_stat_term(&g, behval, behtermcodes[k], behrange, behSimMean));
+		}
+	}
+	free(behval);
 
 	for (k = 0; k < nattr; k++) free(attrs[k]);
 	ht_free(&g.ht);

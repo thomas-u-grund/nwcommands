@@ -133,6 +133,13 @@
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
+{p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
+	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
+	to also capture the resulting coordinates{p_end}
+{p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
+	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
+{p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
+	view back in before plotting; optional companion to {opt importcoords()}{p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -227,7 +234,28 @@ instead of re-deriving a fresh, unrelated layout for each one:
 	{cmd:. nwplot wave2, nodexy(x1 y1)}
 
 {pstd}
-Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or 
+{opt interactive} opens the plot in a browser alongside the usual static plot: drag nodes to
+reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
+shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
+already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
+factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back
+with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
+{opt nodexy()} above) and {opt edgeimport()}:
+
+	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
+	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
+	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+{opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
+{opt interactive} view they came from (row order is how nwplot matches an edit back to a node/tie,
+the same way {opt nodexy()}/{opt label()} already do) - re-export from {opt interactive} rather
+than reusing an old CSV after the network or an {help if}/{help in} restriction changes. Node size
+is not yet individually editable in the interactive view; the size-factor slider maps onto
+{opt nodefactor()} instead.
+
+{pstd}
+Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or
 asymmetrically connected (see {help nwdyads}). By default, asymmetrically connected dyads are represented as a straight line, whereas
 mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as 
 curved lines.
@@ -409,7 +437,15 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) * ]
+	// interactive/importcoords()/edgeimport() must ALSO be declared here
+	// (not just in the real parse at line ~449) even though this parse is
+	// otherwise a throwaway used only to extract layout() for re-parsing
+	// below - this pass's own catchall `options' becomes `twowayopt',
+	// which gets spliced verbatim into the final `graph twoway ...' call;
+	// confirmed directly that omitting them here made `interactive' leak
+	// into `twowayopt' and crash the final plot with "option interactive
+	// not allowed" straight from `graph twoway' itself.
 	local twowayopt `"`options'"'
 
 	nw_datasync `netname'
@@ -446,7 +482,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -466,6 +502,14 @@ program nwplot, rclass
 	// remembered to pass scheme() explicitly.
 	if "`scheme'" == "" {
 		local scheme "s1network"
+	}
+
+	// importcoords() merges its x/y columns straight into nodexy()'s own
+	// variables (see the merge right after the nodexy() block below), so
+	// it has nothing to merge into without nodexy() also being given.
+	if "`importcoords'" != "" & "`nodexy'" == "" {
+		di "{err}Option {bf:importcoords()} requires {bf:nodexy(xvar yvar)} - it merges the imported x/y coordinates into those variables before they are read as the plot's layout."
+		error 198
 	}
 
 	nw_syntax `netname', max(1)
@@ -534,7 +578,41 @@ program nwplot, rclass
 		local netname "__temp_if"
 	}
 	nw_syntax `netname', max(1)
-	
+
+	// interactive/importcoords() companion (nwedit_template.html). The
+	// node-edit CSV importcoords() reads back is validated and captured
+	// into Mata here -- before nodefactor()/edgefactor() get their
+	// defaults below and before the NODE ATTRIBUTES preserve block (which
+	// computes ncolor/nsymbol) further down. Mata objects created here
+	// survive every later preserve/restore in this program exactly like
+	// ncolor/nsize/nlabel already do (same idiom, not a new one).
+	if "`importcoords'" != "" {
+		preserve
+		import delimited "`importcoords'", clear varnames(1) case(preserve)
+		if _N != `nodes' {
+			di "{err}importcoords() file `importcoords' has `=_N' rows but network `netname' has `nodes' nodes; re-export from the interactive view, or check if/in - importcoords() must be run against a network of the same size as the interactive export it came from."
+			error 6056
+		}
+		capture assert node_row == _n
+		if _rc {
+			di "{err}importcoords() file `importcoords' is not in row order (node_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
+			error 6056
+		}
+		// color_group/shape_group columns are exported for possible future
+		// diagnostic use but not consumed here - the actual join is by
+		// physical row order against THIS call's own freshly-computed
+		// ncolor/nsymbol (see _nwedit_buildgroupmap calls below), matching
+		// how nodexy()/label() already key off row order with no separate
+		// node-ID concept anywhere else in this file.
+		mata: _nwedit_x = st_data(., "x")
+		mata: _nwedit_y = st_data(., "y")
+		mata: _nwedit_color = st_sdata(., "color")
+		mata: _nwedit_shape = st_sdata(., "shape")
+		local _nwedit_nodefactor = nodefactor[1]
+		local _nwedit_edgefactor = edgefactor[1]
+		restore
+	}
+
 	qui if "`lab'" != ""{
 		local label "`nw_nodename'"
 	}
@@ -570,6 +648,15 @@ program nwplot, rclass
 	}
 	local arrowbarbfactor = `arrowbarbfactor' * 0.7
 	
+	// explicit nodefactor()/edgefactor() always wins if given; otherwise
+	// fall back to the interactive view's own size/width-factor sliders
+	// when importcoords()/edgeimport() supplied one - same "sub-option's
+	// own value wins, else fall back to the top-level default" precedence
+	// this file already uses for sizebin() (see the __sizebin_toplevel
+	// comment above).
+	if "`nodefactor'" == "" & "`_nwedit_nodefactor'" != "" {
+		local nodefactor = `_nwedit_nodefactor'
+	}
 	if "`nodefactor'" == "" {
 		local nodefactor = 1
 	}
@@ -577,7 +664,10 @@ program nwplot, rclass
 	/*if `nodes' > 20 {
 		local nodefactor = `nodefactor' / 1.5
 	}*/
-	
+
+	if "`edgefactor'" == "" & "`_nwedit_edgefactor'" != "" {
+		local edgefactor = `_nwedit_edgefactor'
+	}
 	if "`edgefactor'" == "" {
 		local edgefactor = 1
 	}
@@ -739,6 +829,7 @@ program nwplot, rclass
 					_getvaluelabel `varlist', key(`ckey')
 					local key_label : label (`varlist') `i'
 					local colorlabels `"`colorlabels' label(`i' "`r(key_label)'")"'
+					local _nwedit_colorlabel_`i' "`r(key_label)'"
 				}
 			}
 		}
@@ -747,13 +838,14 @@ program nwplot, rclass
 			if "`forcekeys'" == "" {
 				qui tab `varlist' if _n <= `nodes', matrow(colorkeysmap)
 				forvalues i = 1/`r(r)' {
-				
-				
+
+
 					local ckey = colorkeysmap[`i', 1]
 					local colorkeys "`colorkeys' `ckey'"
 					local colororder "`colororder' `i'"
 					_getvaluelabel `varlist', key(`ckey')
 					local colorlabels `"`colorlabels' label(`i' "`r(key_label)'")"'
+					local _nwedit_colorlabel_`ckey' "`r(key_label)'"
 				}
 			}
 		}
@@ -762,7 +854,10 @@ program nwplot, rclass
 		mata: ncolor = J(`nodes',1,1)
 		local colorkeys = ""
 	}
-	if "`colorkeys_legendoff'" == ""{			
+	if "`importcoords'" != "" {
+		_nwedit_buildgroupmap, groupvec(ncolor) valuevec(_nwedit_color) prefix(_nwedit_colormap)
+	}
+	if "`colorkeys_legendoff'" == ""{
 		local keysused : word count `colorkeys'
 	}
 	else {
@@ -829,6 +924,7 @@ program nwplot, rclass
 					local symbolorder "`symbolorder' `j'"
 					_getvaluelabel `varlist', key(`skey')
 					local symbollabels `"`symbollabels' label(`j' "`r(key_label)'")"'
+					local _nwedit_symbollabel_`i' "`r(key_label)'"
 				}
 			}
 		}
@@ -843,6 +939,7 @@ program nwplot, rclass
 					local symbolorder "`symbolorder' `j'"
 					_getvaluelabel `varlist', key(`skey')
 					local symbollabels `"`symbollabels' label(`j' "`r(key_label)'")"'
+					local _nwedit_symbollabel_`skey' "`r(key_label)'"
 				}
 			}
 		}
@@ -850,7 +947,10 @@ program nwplot, rclass
 	else {
 		mata: nsymbol = J(`nodes',1,1)
 	}
-	
+	if "`importcoords'" != "" {
+		_nwedit_buildgroupmap, groupvec(nsymbol) valuevec(_nwedit_shape) prefix(_nwedit_shapemap)
+	}
+
 	local keysused_symbol : word count `symbolkeys'
 	if "`symbolkeys_legendoff'" == "" & "`symbol'" != ""{
 		local keysused = `keysused' + `keysused_symbol'
@@ -1092,6 +1192,7 @@ program nwplot, rclass
 			local edgecolorlabel_temp : word `i' of `edgecolorkeys'
 			local edgecolororder "`edgecolororder' `=`keysused' + `i''"
 			local edgecolorlabels `"`edgecolorlabels' label(`=`keysused' + `i'' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'")"'
+			local _nwedit_edgecolorlabel_`edgecolorlabel_temp' "`edgecolor_original' = `=`edgecolorlabel_temp'-1'"
 		}
 		local keysused = `keysused' + `keysused_edgecolor'
 	}
@@ -1110,15 +1211,24 @@ program nwplot, rclass
 		local layout = "nodexy"
 		local nodex = word("`nodexy'", 1)
 		local nodey = word("`nodexy'", 2)
-		
+
 		/*
 		foreach nvar of varlist `nodex' `nodey' {
 			qui sum `nvar'
 			if (r(min) < 0 | r(max) >= 2) {
 				di "{err}Node coordinates not between 0 and 1.5 Option {it:layout(mds)} selected instead."
-				local layout = "mds"		
+				local layout = "mds"
 			}
 		}*/
+
+		// importcoords() overrides nodexy()'s own variables with the
+		// interactively dragged positions -- same "manual override beats
+		// computed default" pattern nwplot already uses for nodexy()
+		// itself overriding a computed Coord.
+		if "`importcoords'" != "" {
+			mata: st_store((1::rows(_nwedit_x)), "`nodex'", _nwedit_x)
+			mata: st_store((1::rows(_nwedit_y)), "`nodey'", _nwedit_y)
+		}
 	}
 	
 	/*
@@ -1413,11 +1523,34 @@ program nwplot, rclass
 	}
 	
 	
-	// Obtain tie coordinates 
+	// Obtain tie coordinates
 	mata: TC = getTieCoordinates(Coord,nsize,NumElist(plotmat), edgecolormat, edgesizemat, `nodefactor', `doarrows', `arrowgap')
 	mata: st_numscalar("r(TC)", rows(TC))
 	local minObs = max(`r(TC)', `nodes')
-	
+	local _nwedit_ties = `r(TC)'
+
+	// edgeimport() companion to importcoords() (see nwedit_template.html) -
+	// the edge-edit CSV is validated/captured here, once the tie count is
+	// finally known (edges have no group/row concept before getTieCoordinates
+	// runs, unlike nodes) and before the plotting dataset below stores the
+	// real per-tie edgecolor values.
+	if "`edgeimport'" != "" {
+		preserve
+		import delimited "`edgeimport'", clear varnames(1) case(preserve)
+		if _N != `_nwedit_ties' {
+			di "{err}edgeimport() file `edgeimport' has `=_N' rows but network `netname' has `_nwedit_ties' ties; re-export from the interactive view, or check if/in - edgeimport() must be run against a network of the same size as the interactive export it came from."
+			error 6056
+		}
+		capture assert edge_row == _n
+		if _rc {
+			di "{err}edgeimport() file `edgeimport' is not in row order (edge_row must read 1, 2, 3, ... in order) - re-export from the interactive view rather than hand-editing the file."
+			error 6056
+		}
+		mata: _nwedit_edgecolor = st_sdata(., "color")
+		mata: _nwedit_edgestyle = st_sdata(., "style")
+		restore
+	}
+
 	// Prepare temporary Stata dataset for plotting
 	preserve
 	qui drop _all
@@ -1441,6 +1574,11 @@ program nwplot, rclass
 	mata: st_numscalar("r(ties)", rows(TC))
 	if `r(ties)' > 0 {
 		mata: st_store((1::rows(TC)),("sx","sy","ex","ey","value","recip","edgecolor", "edgesize"),TC[.,.])
+		if "`edgeimport'" != "" {
+			mata: _nwedit_edgecolorvec = st_data((1::rows(TC)), "edgecolor")
+			_nwedit_buildgroupmap, groupvec(_nwedit_edgecolorvec) valuevec(_nwedit_edgecolor) prefix(_nwedit_edgecolormap)
+			_nwedit_buildgroupmap, groupvec(_nwedit_edgecolorvec) valuevec(_nwedit_edgestyle) prefix(_nwedit_edgestylemap)
+		}
 	}
 	
 	qui gen straight =  1 - recip
@@ -1479,7 +1617,163 @@ program nwplot, rclass
 	
 	qui tab nsize, matrow(nsizerow)	
 	local sizs = rowsof(nsizerow)
-	
+
+	if "`interactive'" != "" {
+		di "{text:Preparing interactive view...}"
+
+		mata: st_local("_nwedit_pkgdir", NativeGraphInstallDir())
+		local _nwedit_template = "`_nwedit_pkgdir'/nwedit_template.html"
+		local _nwedit_vendorjs = "`_nwedit_pkgdir'/lib/vendor/cytoscape.min.js"
+		capture confirm file "`_nwedit_template'"
+		if _rc {
+			di "{err}nwedit_template.html not found at `_nwedit_template'; reinstall the package, or omit {bf:interactive}."
+			error 601
+		}
+		capture confirm file "`_nwedit_vendorjs'"
+		if _rc {
+			di "{err}Vendored cytoscape.min.js not found at `_nwedit_vendorjs'; reinstall the package, or omit {bf:interactive}."
+			error 601
+		}
+
+		// Resolve concrete node colors for the browser -- _getcolorstyle's
+		// own col_fill is a scheme-relative token ("scheme p1") whenever no
+		// explicit colorpalette() was given, which Stata's own graph
+		// renderer resolves internally at draw time but a browser cannot.
+		// Every group needing resolution (not already covered by an
+		// importcoords() override) is collected first and resolved in ONE
+		// batched draw+export+parse pass (_nwedit_resolvecolorstylebatch)
+		// rather than one throwaway graph per group - see that program's
+		// own header comment for why (one-graph-per-group visibly flashed
+		// Stata's real graph window repeatedly in an interactive session).
+		local _nwedit_colorpending_n = 0
+		local _nwedit_colorplots ""
+		forvalues _nwedit_ci = 1/`ncols' {
+			local _nwedit_cg = ncolorrow[`_nwedit_ci', 1]
+			if "`importcoords'" != "" & "`_nwedit_colormap_`_nwedit_cg''" != "" {
+				local _nwedit_htmlcolor_`_nwedit_cg' "`_nwedit_colormap_`_nwedit_cg''"
+			}
+			else {
+				_getcolorstyle, i(`_nwedit_cg') j(1) colorpalette(`colorpalette') symbolpalette(`symbolpalette') scheme(`scheme') mlcolor(`mlcolor_color') mlwidth(`mlwidth_color')
+				local _nwedit_colorpending_n = `_nwedit_colorpending_n' + 1
+				local _nwedit_colorplots `"`_nwedit_colorplots' (scatter _nwedit_y _nwedit_x if _n==`_nwedit_colorpending_n', mcolor("`r(col_fill)'") msymbol(O) msize(large))"'
+				local _nwedit_colorpendinggroup`_nwedit_colorpending_n' = `_nwedit_cg'
+			}
+		}
+		if `_nwedit_colorpending_n' > 0 {
+			_nwedit_resolvecolorstylebatch, n(`_nwedit_colorpending_n') scheme(`scheme') plots(`"`_nwedit_colorplots'"')
+			forvalues _nwedit_k = 1/`_nwedit_colorpending_n' {
+				local _nwedit_htmlcolor_`_nwedit_colorpendinggroup`_nwedit_k'' "`_nwedit_batchrgb`_nwedit_k''"
+			}
+		}
+
+		// Shape: map to the 4 shapes the interactive canvas supports;
+		// unresolved scheme-relative tokens (never vary by group in any
+		// nwcommands-shipped scheme, verified while building this feature)
+		// and anything else fall back to circle, the same default Stata
+		// itself uses for an unstyled marker.
+		forvalues _nwedit_si = 1/`symbs' {
+			local _nwedit_sg = nsymbolrow[`_nwedit_si', 1]
+			if "`importcoords'" != "" & "`_nwedit_shapemap_`_nwedit_sg''" != "" {
+				local _nwedit_htmlshape_`_nwedit_sg' "`_nwedit_shapemap_`_nwedit_sg''"
+			}
+			else {
+				_getcolorstyle, i(0) j(`_nwedit_sg') colorpalette(`colorpalette') symbolpalette(`symbolpalette') scheme(`scheme') mlcolor(`mlcolor_symbol') mlwidth(`mlwidth_symbol')
+				local _nwedit_symtok = r(symbol)
+				local _nwedit_shp "circle"
+				if inlist("`_nwedit_symtok'", "S", "square", "smsquare") local _nwedit_shp "square"
+				if inlist("`_nwedit_symtok'", "T", "triangle", "smtriangle") local _nwedit_shp "triangle"
+				if inlist("`_nwedit_symtok'", "D", "diamond", "smdiamond") local _nwedit_shp "diamond"
+				local _nwedit_htmlshape_`_nwedit_sg' "`_nwedit_shp'"
+			}
+		}
+
+		// Edge colors/styles -- same resolution, only if there are ties.
+		// Edge line pattern always defaults to solid on initial display
+		// (no nwcommands-shipped scheme varies it by group either,
+		// verified the same way) unless edgeimport() overrides it.
+		if `_nwedit_ties' > 0 {
+			qui tab edgecolor, matrow(_nwedit_ecrowmat)
+			local _nwedit_ecn = rowsof(_nwedit_ecrowmat)
+			local _nwedit_ecpending_n = 0
+			local _nwedit_ecplots ""
+			forvalues _nwedit_eci = 1/`_nwedit_ecn' {
+				local _nwedit_ecg = _nwedit_ecrowmat[`_nwedit_eci', 1]
+				if "`edgeimport'" != "" & "`_nwedit_edgecolormap_`_nwedit_ecg''" != "" {
+					local _nwedit_htmledgecolor_`_nwedit_ecg' "`_nwedit_edgecolormap_`_nwedit_ecg''"
+				}
+				else {
+					_getcolorstyle, i(`_nwedit_ecg') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
+					local _nwedit_ecpending_n = `_nwedit_ecpending_n' + 1
+					local _nwedit_ecplots `"`_nwedit_ecplots' (pcspike _nwedit_y _nwedit_x1 _nwedit_y _nwedit_x2 if _n==`_nwedit_ecpending_n', lcolor("`r(edgecol)'") lwidth(thick))"'
+					local _nwedit_ecpendinggroup`_nwedit_ecpending_n' = `_nwedit_ecg'
+				}
+				if "`edgeimport'" != "" & "`_nwedit_edgestylemap_`_nwedit_ecg''" != "" {
+					local _nwedit_htmledgestyle_`_nwedit_ecg' "`_nwedit_edgestylemap_`_nwedit_ecg''"
+				}
+				else {
+					local _nwedit_htmledgestyle_`_nwedit_ecg' "solid"
+				}
+			}
+			if `_nwedit_ecpending_n' > 0 {
+				_nwedit_resolvecolorstylebatch, n(`_nwedit_ecpending_n') scheme(`scheme') plots(`"`_nwedit_ecplots'"') mode(line)
+				forvalues _nwedit_k = 1/`_nwedit_ecpending_n' {
+					local _nwedit_htmledgecolor_`_nwedit_ecpendinggroup`_nwedit_k'' "`_nwedit_batchrgb`_nwedit_k''"
+				}
+			}
+		}
+
+		// NOT tempfile: Stata auto-erases a program-scoped tempfile the
+		// moment the creating PROGRAM returns (documented behavior), which
+		// here would mean the file could vanish before view browse's
+		// non-blocking, asynchronously-launched browser has actually
+		// finished reading it - confirmed directly (file existed at every
+		// checkpoint inside this program's own execution, including right
+		// before `restore', but was already gone by the time the caller's
+		// next command ran). Built manually instead, in the OS temp dir,
+		// so its lifetime isn't tied to this program's own scope.
+		local _nwedit_out = "`c(tmpdir)'" + "nwedit_" + subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .) + "_" + strofreal(int(runiform()*1000000)) + ".html"
+		capture erase "`_nwedit_out'"
+		local _nwedit_isdirected = ("`directed'" == "true")
+		// The on-canvas legend should only appear when nwplot's own real
+		// static plot would show one too -- i.e. keysused>0 territory
+		// (nwplot.ado:1932's own legend(off) gate) -- plus a single-entry
+		// legend conveys nothing, so require more than one distinct group,
+		// not just "the option was passed" (colorkeys/symbolkeys/
+		// edgecolorkeys are already "" whenever the corresponding option
+		// was never given a real varlist, or legendoff was set - see the
+		// dummy-variable/legendoff handling right after each section's own
+		// _getvaluelabel loop above).
+		local _nwedit_colorkeys_n : word count `colorkeys'
+		local _nwedit_symbolkeys_n : word count `symbolkeys'
+		local _nwedit_edgecolorkeys_n : word count `edgecolorkeys'
+		local _nwedit_hasnodelegend = (`_nwedit_colorkeys_n' > 1 | `_nwedit_symbolkeys_n' > 1)
+		local _nwedit_hasedgelegend = (`_nwedit_edgecolorkeys_n' > 1)
+		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend')
+
+		di "{text:Opening interactive view...}"
+		// `view browse` is the reliable default - confirmed working
+		// directly. A chromeless native viewer (nwedit_viewer, built by
+		// .github/workflows/build-plugins.yml) exists and was tried here
+		// via `winexec` (the right command in principle: shell.sthlp
+		// confirms shell/! BLOCK Stata until the child exits, which would
+		// freeze the whole editing session, while winexec is documented
+		// non-blocking and available on Windows/Mac/Unix(GUI)) - but
+		// winexec does not actually launch this binary on macOS at all,
+		// silently (`_rc` stays 0, so the naive "fall back to view
+		// browse if winexec errors" logic never triggers), confirmed
+		// directly by the user testing winexec against this exact binary
+		// standalone. Root cause unconfirmed (possibly Gatekeeper
+		// silently blocking an unsigned/unnotarized binary the way it
+		// would a first Finder double-click, possibly something about
+		// Stata's own sandboxing of child-process launches on macOS) -
+		// not something fixable by changing the binary's location or
+		// this launch call alone, so not attempted as the default until
+		// genuinely understood and fixed. The dispatcher/binary/CI build
+		// stay in place for that future fix; nothing here currently calls
+		// NweditViewerAvailable()/NweditViewerPath().
+		view browse "`_nwedit_out'"
+	}
+
 	// Prepare ghost plots for legend
 	tempvar ghost1 ghost2
 	local ghostcmd ""
@@ -1562,7 +1856,11 @@ program nwplot, rclass
 				local tempcolstyle_fill = r(col_fill)
 				local tempcolstyle_line = r(col_line)
 				local tempwidth_line = r(line_width)
-				local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("scheme p0")  mfcolor("`tempcolstyle_fill'") mlwidth("`tempwidth_line'") mlcolor("`tempcolstyle_line'")   msize(2) `scatteropt') "'            		
+				if "`importcoords'" != "" & "`_nwedit_colormap_`i''" != "" {
+					local tempcolstyle_fill "`_nwedit_colormap_`i''"
+					local tempcolstyle_line "`_nwedit_colormap_`i''"
+				}
+				local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("scheme p0")  mfcolor("`tempcolstyle_fill'") mlwidth("`tempwidth_line'") mlcolor("`tempcolstyle_line'")   msize(2) `scatteropt') "'
 			}
 		}
 	}
@@ -1579,7 +1877,10 @@ program nwplot, rclass
 				local tempsymbol = r(symbol)
 				local tempcolstyle_line = r(col_line)
 				local tempwidth_line = r(line_width)
-				local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("`tempsymbol'") mlwidth("`tempwidth_line'") mfcolor("scheme background") mlcolor("`tempcolstyle_line'") msize(2) `scatteropt') "'            		
+				if "`importcoords'" != "" & "`_nwedit_shapemap_`j''" != "" {
+					local tempsymbol "`_nwedit_shapemap_`j''"
+				}
+				local ghostcmd `"`ghostcmd' || (scatter `ghost1' `ghost2' if `ghost1' !=.,  msymbol("`tempsymbol'") mlwidth("`tempwidth_line'") mfcolor("scheme background") mlcolor("`tempcolstyle_line'") msize(2) `scatteropt') "'
 			}
 		}
 	}
@@ -1624,7 +1925,14 @@ program nwplot, rclass
 			_getcolorstyle, i(`=`eckey'') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
 			local temppattern = r(edgepattern)
 			local tempcolstyle = r(edgecol)
-			local tempval_arrow = 3 * `arrowfactor' 
+			local _nwedit_eckey_val = `eckey'
+			if "`edgeimport'" != "" & "`_nwedit_edgecolormap_`_nwedit_eckey_val''" != "" {
+				local tempcolstyle "`_nwedit_edgecolormap_`_nwedit_eckey_val''"
+			}
+			if "`edgeimport'" != "" & "`_nwedit_edgestylemap_`_nwedit_eckey_val''" != "" {
+				local temppattern "`_nwedit_edgestylemap_`_nwedit_eckey_val''"
+			}
+			local tempval_arrow = 3 * `arrowfactor'
 			local tempval_barb = `tempval_arrow' * `arrowbarbfactor'
 			local ghostcmd `"`ghostcmd' || (pcspike `ghost1' `ghost2' `ghost2' `ghost1' if `ghost1' !=., lpattern(`"`temppattern'"') lwidth(1) lcolor(`"`tempcolstyle'"') mcolor(`"`tempcolstyle'"')  `lineopt') ||"'
 		}
@@ -1663,6 +1971,13 @@ program nwplot, rclass
 				local tempcolstyle_line = r(col_line)
 				local tempsymbol = r(symbol)
 				local tempwidth_line = r(line_width)
+				if "`importcoords'" != "" & "`_nwedit_colormap_`tempcol''" != "" {
+					local tempcolstyle_fill "`_nwedit_colormap_`tempcol''"
+					local tempcolstyle_line "`_nwedit_colormap_`tempcol''"
+				}
+				if "`importcoords'" != "" & "`_nwedit_shapemap_`tempsymb''" != "" {
+					local tempsymbol "`_nwedit_shapemap_`tempsymb''"
+				}
 				if "`label'" != "" {
 					local scatterlabel "mlabel(nlabel)"
 				}
@@ -1706,6 +2021,12 @@ program nwplot, rclass
 			_getcolorstyle, i(`tempecol') edgecolorpalette(`edgecolorpalette') edgepatternpalette(`edgepatternpalette') scheme(`scheme')
 			local temppattern = r(edgepattern)
 			local tempcolstyle = r(edgecol)
+			if "`edgeimport'" != "" & "`_nwedit_edgecolormap_`tempecol''" != "" {
+				local tempcolstyle "`_nwedit_edgecolormap_`tempecol''"
+			}
+			if "`edgeimport'" != "" & "`_nwedit_edgestylemap_`tempecol''" != "" {
+				local temppattern "`_nwedit_edgestylemap_`tempecol''"
+			}
 			forvalues tempval_mat = 1/`tempvalue_rows'{
 				local tempval = valuerow[`tempval_mat',1]
 				local tempval_line = (`tempval' / 2) * `edgefactor' / 2
@@ -1788,6 +2109,8 @@ program nwplot, rclass
 	// scheme() was given explicitly (see its own default assignment
 	// above)
 	return local scheme "`scheme'"
+	return local interactive "`_nwedit_out'"
+	return local importcoords "`importcoords'"
 
 	restore
 
@@ -1976,6 +2299,356 @@ end
 /*************************************
 *	Obtain color for plotting
 *************************************/
+// interactive/importcoords()/edgeimport() companion helpers (nwedit_
+// template.html). Builds one local macro per distinct value in Mata
+// group-index vector `groupvec' (ncolor/nsymbol/edgecolor), named
+// "<prefix>_<idx>", holding the corresponding row's value from Mata
+// string vector `valuevec' -- c_local'd into the CALLING program's scope
+// (same c_local convention unw_defs.ado already uses for its own
+// constant-like locals). Any single representative row sharing a group
+// index is used, since a legend edit in the browser is always applied to
+// every node/edge sharing a group at once (buildLegend/applyLegendEdit in
+// nwedit_template.html), so every row sharing a group already carries an
+// identical override value.
+capture program drop _nwedit_buildgroupmap
+program def _nwedit_buildgroupmap
+	syntax, groupvec(string) valuevec(string) prefix(string)
+	mata: _nwedit_distinct = uniqrows(`groupvec')
+	mata: st_numscalar("_nwedit_ngroups", rows(_nwedit_distinct))
+	local ngroups = _nwedit_ngroups
+	forvalues gi = 1/`ngroups' {
+		mata: st_local("_nwedit_g", strofreal(_nwedit_distinct[`gi',1]))
+		mata: st_local("_nwedit_repidx", strofreal(selectindex(`groupvec':==_nwedit_distinct[`gi',1])[1]))
+		mata: st_local("_nwedit_val", `valuevec'[`_nwedit_repidx',1])
+		c_local `prefix'_`_nwedit_g' `"`_nwedit_val'"'
+	}
+	mata: mata drop _nwedit_distinct
+	scalar drop _nwedit_ngroups
+end
+
+// Resolves N arbitrary Stata colorstyle tokens (e.g. "scheme p1", a literal
+// color name, a literal "r g b" triplet, ...) to literal "r g b" (0-255)
+// triplets, by asking Stata's own graphics engine to actually draw and
+// export them, then reading the RGB straight out of the resulting EPS
+// (plain-text PostScript -- colors appear as "/Ssrgb {r g b} def"
+// immediately before each marker's own draw ops). This is the only
+// reliable way to resolve a scheme-relative token like "scheme p1" for ANY
+// active scheme (including custom user schemes) without hand-parsing
+// .scheme/.style files, which only works for schemes already known about.
+//
+// Batched into ONE combined draw+export+parse call for however many tokens
+// are needed, rather than one throwaway graph per token (the original,
+// simpler design) - one-graph-per-token visibly flashed Stata's real graph
+// window once per distinct color/edgecolor group, in rapid succession,
+// ahead of the real plot (confirmed directly: invisible in batch-mode
+// testing, since there's no GUI graph window there at all; reported by the
+// user as "several windows opening and closing quickly" once tested from a
+// real interactive session). `nodraw` looked like the fix but broke graph
+// export outright in batch mode ("could not find Graph window", r(693)) -
+// nodraw apparently skips creating a renderable surface at all when
+// there's no display, not just the on-screen show step, so it isn't a
+// viable fix either alone or combined with an explicit name(). Batching
+// sidesteps the conflict entirely: still one real (displayed) draw, but
+// only ONE flash total regardless of how many tokens are being resolved,
+// and it still works headless.
+//
+// Caller contract: stage the N input tokens into _nwedit_batchtok1..
+// _nwedit_batchtok<n> before calling (matches this file's own
+// _nwedit_buildgroupmap/_nwedit_colormap_<idx> indirect-local convention);
+// resolved values come back the same way, in _nwedit_batchrgb1..
+// _nwedit_batchrgb<n>, c_local'd into the caller's own scope.
+capture program drop _nwedit_resolvecolorstylebatch
+program def _nwedit_resolvecolorstylebatch
+	// mode(marker) [default]: resolves node-fill tokens ("scheme p<n>")
+	// via mcolor() on a scatter marker, parsing /Ssrgb {r g b} def + a
+	// following "Scc" (Stata's circle-marker draw op) out of the EPS.
+	//
+	// mode(line): resolves edge-line tokens ("scheme p<n>line") via
+	// lcolor() on an actual line segment (pcspike), parsing /Slrgb
+	// {r g b} def + a following "Sln" (Stata's straight-line draw op)
+	// instead. This split is NOT cosmetic - confirmed directly that
+	// mcolor() does not correctly resolve "p<n>line" tokens at all (it
+	// silently falls back to some other, wrong color - observed
+	// concretely as edges coming out in the SAME red as node fill colors
+	// whenever mode(marker) was used for edge tokens too, the earlier
+	// version's actual bug). "p<n>line" is a line-context scheme
+	// reference; it only resolves correctly when asked for in a
+	// genuinely line-drawing context, matching how nwplot's own real
+	// edge rendering already asks for it via lcolor(), never mcolor().
+	// plots(): the FULLY-ASSEMBLED twoway subcommand string, built by the
+	// CALLER (referencing whichever of _nwedit_x/_nwedit_y or _nwedit_x1/
+	// _nwedit_x2/_nwedit_y this program generates below, per mode) - NOT
+	// built from tokens staged into caller-side locals for this program
+	// to read back internally, which was this program's own original
+	// design and is fundamentally broken: a called ado program cannot see
+	// its CALLER's local macros at all (confirmed directly - even a
+	// single bare `_nwedit_batchtok1' reference, no indirection, no
+	// nested quoting, came back completely empty inside this program).
+	// That silently fed empty/invalid color specs to mcolor()/lcolor(),
+	// which Stata quietly falls back to a POSITIONAL default color for
+	// (matching "p<n>" by the marker's own sequence position) - a fallback
+	// that happens to coincide with the correct answer for ordinary
+	// sequential node-group resolution (indistinguishable from working),
+	// but diverges for anything else, which is exactly how the edge-color
+	// version of this same bug first surfaced (p1line's positional
+	// fallback is p1's own red, not p1line's real gray). Building the
+	// command text in the caller instead sidesteps the whole problem -
+	// r(col_fill)/r(edgecol) are ordinary return values, not a cross-
+	// program local reference, so there's no scope boundary to cross.
+	syntax, n(int) scheme(string) plots(string) [mode(string)]
+	if "`mode'" == "" local mode "marker"
+
+	tempfile _nwedit_eps
+	preserve
+	qui drop _all
+	qui set obs `n'
+	qui set scheme `scheme'
+	if "`mode'" == "line" {
+		qui gen _nwedit_x1 = (_n - 1) * 3
+		qui gen _nwedit_x2 = (_n - 1) * 3 + 2
+		qui gen _nwedit_y = 1
+	}
+	else {
+		qui gen _nwedit_x = _n
+		qui gen _nwedit_y = 1
+	}
+	qui twoway `plots', legend(off) xlabel(none) ylabel(none) xtitle("") ytitle("")
+	qui graph export "`_nwedit_eps'", replace as(eps)
+	restore
+
+	if "`mode'" == "line" {
+		local _nwedit_defpat "/Slrgb {"
+		local _nwedit_drawop "Sln"
+	}
+	else {
+		local _nwedit_defpat "/Ssrgb {"
+		local _nwedit_drawop "Scc"
+	}
+
+	tempname _nwedit_epsfh
+	file open `_nwedit_epsfh' using "`_nwedit_eps'", read
+	local _nwedit_current ""
+	local _nwedit_idx = 0
+	local _nwedit_recorded = 1
+	file read `_nwedit_epsfh' _nwedit_line
+	while r(eof) == 0 {
+		if strpos(`"`_nwedit_line'"', "`_nwedit_defpat'") > 0 {
+			local _nwedit_start = strpos(`"`_nwedit_line'"', "{") + 1
+			local _nwedit_close = strpos(`"`_nwedit_line'"', "}")
+			local _nwedit_current = substr(`"`_nwedit_line'"', `_nwedit_start', `_nwedit_close' - `_nwedit_start')
+			// NOT every color redefinition corresponds to one of this
+			// program's own markers/lines - the EPS also carries
+			// incidental ones (e.g. a white background-related color-
+			// state set) that never get consumed by any following draw
+			// op at all. Counting a "new element" here unconditionally
+			// (this program's own prior version) silently ate an index
+			// slot for such a phantom entry, shifting every real element
+			// after it by one and dropping the last one's color entirely
+			// (confirmed directly). Only mark a color "pending" here; the
+			// index itself only advances where it's actually consumed,
+			// below.
+			local _nwedit_recorded = 0
+		}
+		// substr(...)!="/" excludes the "/Scc {"/"/Sln {"-style PROCEDURE
+		// DEFINITION line (PostScript boilerplate, appears once near the
+		// top of every EPS this program exports) from matching this check
+		// - it contains the draw-op name as a substring same as a real
+		// draw call does. Real draw calls look like "1568 11757 318 0 1
+		// Scc " or "17171 12808 17171 12808 Sln" - numbers first, never a
+		// leading "/".
+		if strpos(`"`_nwedit_line'"', "`_nwedit_drawop'") > 0 & substr(`"`_nwedit_line'"', 1, 1) != "/" & `_nwedit_recorded' == 0 & "`_nwedit_current'" != "" {
+			// mode(marker): each marker draws 2 Scc calls (fill+stroke)
+			// off the SAME Ssrgb def; `_nwedit_recorded' (reset only on a
+			// fresh color def, not after each draw op) takes just the
+			// first of the pair. mode(line) draws exactly one Sln per
+			// segment, so this guard is a no-op there but harmless.
+			local _nwedit_idx = `_nwedit_idx' + 1
+			local _nwedit_r : word 1 of `_nwedit_current'
+			local _nwedit_g : word 2 of `_nwedit_current'
+			local _nwedit_b : word 3 of `_nwedit_current'
+			local _nwedit_r = round(`_nwedit_r' * 255)
+			local _nwedit_g = round(`_nwedit_g' * 255)
+			local _nwedit_b = round(`_nwedit_b' * 255)
+			c_local _nwedit_batchrgb`_nwedit_idx' "`_nwedit_r' `_nwedit_g' `_nwedit_b'"
+			local _nwedit_recorded = 1
+		}
+		file read `_nwedit_epsfh' _nwedit_line
+	}
+	file close `_nwedit_epsfh'
+end
+
+// Builds the interactive HTML page's inline node/edge data and assembles
+// the final self-contained file. Done entirely in Mata, and specifically
+// via fread()/fwrite() (byte-count based) rather than any line-oriented
+// text function (Stata's own `file read`, or Mata's line-oriented fget()):
+// confirmed directly, while building this feature, that cytoscape.min.js
+// contains lines up to ~229,000 characters, and BOTH `file read` (aborts
+// with "invalid syntax") and fget() (silently truncates at 32,768 chars,
+// corrupting the file with no error at all) fail on lines that long.
+// nsize/ncolor/nsymbol/nlabel/edgecolor read here are the same plotting-
+// dataset variables the real twoway graph is built from a few lines below
+// (st_store'd in by this same program a little earlier) - this renders
+// what nwplot actually resolved, it does not recompute anything.
+capture mata: mata drop _nwedit_buildinteractivehtml()
+mata:
+void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
+		string scalar outpath, real scalar nn, real scalar nties,
+		real scalar doarrows, real scalar htmlnodefactor, real scalar isdirected,
+		real scalar hasnodelegend, real scalar hasedgelegend)
+{
+	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv
+	string colvector nlabelv
+	real matrix topology
+	string scalar json, tpl, vjs, chunk, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl
+	real scalar i, cg, sg, ecg, fromidx, toidx, sizepx, nemitted
+	transmorphic fh
+	// plotmat is created by ordinary top-level `mata: plotmat = ...` code
+	// earlier in this same program (nw_tomata.ado's own assignment, called
+	// from nwplot.ado's "Get network data" section) -- a compiled function
+	// body does not automatically see a variable from that enclosing
+	// interactive scope the way another top-level `mata:` block would;
+	// it must be declared `external` here, or it resolves to an empty,
+	// never-assigned local of the same name (confirmed directly: omitting
+	// this crashed NumElist() with a conformability error, since it was
+	// being handed a 0x0 matrix).
+	external real matrix plotmat
+
+	q = char(34)
+
+	nxv = st_data((1::nn), "nx")
+	nyv = st_data((1::nn), "ny")
+	nsizev = st_data((1::nn), "nsize")
+	ncolorv = st_data((1::nn), "ncolor")
+	nsymbolv = st_data((1::nn), "nsymbol")
+	nlabelv = st_sdata((1::nn), "nlabel")
+
+	json = "{" +
+		q+"has_node_legend"+q+":"+(hasnodelegend==1 ? "true" : "false")+"," +
+		q+"has_edge_legend"+q+":"+(hasedgelegend==1 ? "true" : "false")+"," +
+		q + "nodes" + q + ":["
+	for (i=1; i<=nn; i++) {
+		cg = ncolorv[i]
+		sg = nsymbolv[i]
+		colorstr = st_local("_nwedit_htmlcolor_" + strofreal(cg))
+		shapestr = st_local("_nwedit_htmlshape_" + strofreal(sg))
+		// real Stata legend text (colorlabels'/symbollabels' own
+		// _getvaluelabel-resolved strings, captured into these locals
+		// alongside nwplot's own legend construction) when the network has
+		// a real color()/symbol() grouping variable; falls back to a plain
+		// "Group N" when there isn't one (matching the case where nwplot's
+		// own static plot shows no legend either, e.g. the default
+		// single-dummy-group network).
+		grouplbl = st_local("_nwedit_colorlabel_" + strofreal(cg))
+		if (grouplbl == "") grouplbl = "Group " + strofreal(cg)
+		grouplbl = subinstr(subinstr(grouplbl, char(92), ""), q, "")
+		shapelbl = st_local("_nwedit_symbollabel_" + strofreal(sg))
+		if (shapelbl == "") shapelbl = "Group " + strofreal(sg)
+		shapelbl = subinstr(subinstr(shapelbl, char(92), ""), q, "")
+		lbl = subinstr(subinstr(nlabelv[i], char(92), ""), q, "")
+		// nsize*htmlnodefactor*2 mirrors the real plot's own tempsiz_node
+		// formula (nwplot.ado's node-draw loop) exactly, giving a value
+		// already on the same relative scale nwplot itself renders with;
+		// *7 brings that into a comfortable CSS-pixel range for cytoscape
+		// (empirically tuned against the default no-size()-option case:
+		// nsize=80, nodefactor defaults to 1/50, giving ~22px -- an earlier
+		// *4 gave ~13px, reported as visibly too small once actually
+		// viewed in a real browser rather than just checked numerically).
+		sizepx = nsizev[i] * htmlnodefactor * 2 * 7
+		json = json + "{" +
+			q+"id"+q+":"+q+"n"+strofreal(i)+q+"," +
+			q+"label"+q+":"+q+lbl+q+"," +
+			q+"group"+q+":"+q+"grp"+strofreal(cg)+q+"," +
+			q+"group_label"+q+":"+q+grouplbl+q+"," +
+			q+"shape_label"+q+":"+q+shapelbl+q+"," +
+			q+"color"+q+":"+q+colorstr+q+"," +
+			q+"shape"+q+":"+q+shapestr+q+"," +
+			q+"size"+q+":"+strofreal(sizepx)+"," +
+			q+"color_group"+q+":"+strofreal(cg)+"," +
+			q+"shape_group"+q+":"+strofreal(sg)+"," +
+			q+"x"+q+":"+strofreal((nxv[i]/100 - 0.05)/0.9)+"," +
+			q+"y"+q+":"+strofreal((nyv[i]/100 - 0.05)/0.9) +
+			"}"
+		if (i < nn) json = json + ","
+	}
+	json = json + "]," + q+"edges"+q+":["
+
+	if (nties > 0) {
+		edgecolorv = st_data((1::nties), "edgecolor")
+		recipv = st_data((1::nties), "recip")
+		topology = NumElist(plotmat)
+		nemitted = 0
+		for (i=1; i<=nties; i++) {
+			ecg = edgecolorv[i]
+			fromidx = topology[i,1]
+			toidx = topology[i,2]
+			// plotmat is symmetric for an undirected network (there's no
+			// "direction" to store asymmetrically), so NumElist finds BOTH
+			// (i,j) and (j,i) for every undirected tie and marks both
+			// recip=1 (since onenet[i,j]!=0 & onenet[j,i]!=0 is trivially
+			// true whenever the matrix is symmetric) - confirmed directly:
+			// a 10-node undirected test network exported 26 edges for 13
+			// real ties, every single one flagged recip=true, rendering as
+			// two overlapping curved arcs per tie. nwplot's own REAL static
+			// plot has an explicit guard for exactly this (nwplot.ado:740:
+			// arcstyle forced to "straight" whenever directed=="false",
+			// regardless of the recip flag) - undirected ties never
+			// curve, and the resulting doubled straight lines are
+			// invisible on top of each other. Cytoscape has no equivalent
+			// free pass for doubled edges, so here they're skipped
+			// outright (fromidx>toidx half of each undirected pair) rather
+			// than drawn twice and merely left uncurved.
+			if (isdirected == 0 & fromidx > toidx) continue
+			colorstr = st_local("_nwedit_htmledgecolor_" + strofreal(ecg))
+			shapestr = st_local("_nwedit_htmledgestyle_" + strofreal(ecg))
+			edgegrouplbl = st_local("_nwedit_edgecolorlabel_" + strofreal(ecg))
+			if (edgegrouplbl == "") edgegrouplbl = "Group " + strofreal(ecg)
+			edgegrouplbl = subinstr(subinstr(edgegrouplbl, char(92), ""), q, "")
+			nemitted = nemitted + 1
+			if (nemitted > 1) json = json + ","
+			json = json + "{" +
+				q+"id"+q+":"+q+"e"+strofreal(nemitted)+q+"," +
+				q+"source"+q+":"+q+"n"+strofreal(fromidx)+q+"," +
+				q+"target"+q+":"+q+"n"+strofreal(toidx)+q+"," +
+				q+"edgegroup"+q+":"+q+"grp"+strofreal(ecg)+q+"," +
+				q+"edgegroup_label"+q+":"+q+edgegrouplbl+q+"," +
+				q+"color"+q+":"+q+colorstr+q+"," +
+				q+"style"+q+":"+q+shapestr+q+"," +
+				q+"width"+q+":3," +
+				q+"arrow"+q+":"+(doarrows==1 ? "true" : "false")+"," +
+				q+"recip"+q+":"+((isdirected==1 & recipv[i]==1) ? "true" : "false")+"," +
+				q+"edgecolor_group"+q+":"+strofreal(ecg) +
+				"}"
+		}
+	}
+	json = json + "]}"
+
+	tpl = ""
+	fh = fopen(tplpath, "r")
+	chunk = fread(fh, 1000000)
+	while (chunk != J(0,0,"")) {
+		tpl = tpl + chunk
+		chunk = fread(fh, 1000000)
+	}
+	fclose(fh)
+
+	vjs = ""
+	fh = fopen(jspath, "r")
+	chunk = fread(fh, 1000000)
+	while (chunk != J(0,0,"")) {
+		vjs = vjs + chunk
+		chunk = fread(fh, 1000000)
+	}
+	fclose(fh)
+
+	tpl = subinstr(tpl, "__NWEDIT_CYTOSCAPE__", vjs)
+	tpl = subinstr(tpl, "__NWEDIT_DATA__", json)
+
+	fh = fopen(outpath, "w")
+	fwrite(fh, tpl)
+	fclose(fh)
+}
+end
+
 capture program drop _getcolorstyle
 program def _getcolorstyle
 	syntax [, i(string) j(string) mlcolor(string) mlwidth(string) colorpalette(string) symbolpalette(string) edgecolorpalette(string) edgepatternpalette(string) scheme(string)]
