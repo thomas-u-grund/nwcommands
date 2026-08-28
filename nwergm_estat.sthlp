@@ -26,21 +26,43 @@ output left behind by {help nwergm}, not on a network directly; see that command
 {title:estat mcmcdiag}
 
 {p 8 17 2}
-{cmd:estat mcmcdiag} {opt [, PLOT NAME(string)]}
+{cmd:estat mcmcdiag} {opt [, PLOT NAME(string) PVALUE(real 0.05) EPS(real 0.1)]}
 
 {pstd}
-{cmd:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation {cmd:nwergm} ran
+{cmd:estat mcmcdiag} reports diagnostics for the final MCMC simulation {cmd:nwergm} ran
 at its converged (or last-tried) coefficient vector: per-statistic mean, standard deviation,
-lag-1 autocorrelation, and an AR(1)-based effective sample size, plus the overall
-Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE convergence-test result.
-Available only after {opt method(mcmle)} - a pure MPLE fit involves no MCMC simulation at all,
-so there is nothing to diagnose.
+lag-1 autocorrelation, and an AR(1)-based effective sample size; the Geweke (1992) z-score and
+the Heidelberger-Welch (1983) stationarity/halfwidth test (the two formal convergence hypothesis
+tests behind R {cmd:ergm}'s own {cmd:mcmc.diagnostics()}, via its {cmd:coda} package
+dependency); plus the overall Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE
+convergence-test result. Available only after {opt method(mcmle)} - a pure MPLE fit involves no
+MCMC simulation at all, so there is nothing to diagnose.
 
 {pstd}
 {bf:This command never claims a fit converged merely because estimation stopped.} A satisfied
 convergence test is reported as exactly that - a necessary check that passed, not a proof of
-global convergence - and low ESS, low acceptance rate, or high autocorrelation are signs worth
-investigating even when {cmd:e(converged)} is 1.
+global convergence - and low ESS, low acceptance rate, high autocorrelation, a large Geweke
+{bf:z}, or a failed Heidelberger-Welch stationarity test are all signs worth investigating even
+when {cmd:e(converged)} is 1.
+
+{pstd}
+{bf:Geweke's diagnostic} compares the mean of the first 10% of the retained sample against the
+mean of the last 50%, each corrected for autocorrelation via the same AR(p) spectral-density
+estimator {cmd:nwergm}'s own final variance estimate uses. {bf:|z| > 1.96} (flagged with a
+{bf:*}) rejects convergence of that parameter's own chain at the 5% level.
+
+{pstd}
+{bf:The Heidelberger-Welch test} first checks STATIONARITY: whether a Cramer-von-Mises test on
+the chain's own cumulative-sum path passes once an increasing initial fraction (up to 50%) is
+discarded - {bf:Start} reports the first retained iteration once it does; {bf:FAILED} means no
+discard fraction achieved it. {opt pvalue()} sets the significance level and must be one of
+{bf:0.10}, {bf:0.05} (the default), {bf:0.025}, or {bf:0.01} - the test is evaluated against a
+fixed table of Cramer-von-Mises critical values at these four levels (each solved directly from
+the real {cmd:coda} package's own {cmd:pcramer()} CDF, not approximated), rather than a
+continuously computed p-value; see {cmd:unw_ergm.do}'s own header comment above
+{cmd:ergm_heidel_diag()} for why. Only once stationarity passes does the HALFWIDTH test run: the
+retained portion's own 95% CI halfwidth must be within {opt eps()} (default 10%) of its own
+mean - a separate, stricter precision check.
 
 {pstd}
 {opt plot} additionally draws a trace plot and a kernel density plot for each model statistic
@@ -59,11 +81,24 @@ acceptable. {opt name()} sets the combined graph's name; default {cmd:mcmcdiag}.
 {cmd:estat gof} compares the fitted model's own simulated networks against the network
 {cmd:nwergm} was fitted on, on three dimensions computed via this package's own existing
 commands rather than duplicating their algorithms: mean degree (arithmetic), average geodesic
-distance ({helpb nwgeodesic}), and the count of complete (3-edge) triads ({helpb nwtriads}).
+distance ({helpb nwgeodesic}), and the full MAN triad census ({helpb nwtriads}).
 {opt nsim()} simulated networks are drawn by continuing the Markov chain from wherever
 {cmd:nwergm}'s own fit left it (for {opt method(mcmle)}) or from the observed network itself
 (for {opt method(mple)}, which never runs MCMC during estimation), recording one snapshot every
 {opt gofinterval()} steps.
+
+{pstd}
+{bf:Triad census.} The summary table's own "Complete triads" row is joined by a full breakdown,
+one row per MAN triad type, exactly matching {helpb nwtriads}'s own category set for the
+network's directedness: on a {bf:directed} network, all 16 types ({bf:003}, {bf:012}, {bf:021D},
+{bf:021U}, {bf:021C}, {bf:030T}, {bf:030C}, {bf:102}, {bf:111D}, {bf:111U}, {bf:120D}, {bf:120U},
+{bf:120C}, {bf:210}, {bf:201}, {bf:300}); on an {bf:undirected} network, only the four types a
+0/1/2/3-tie triad can actually be ({bf:003}, {bf:102}, {bf:201}, {bf:300} - the remaining 12
+directed-only types are structurally forced to 0 and omitted, matching {cmd:nwtriads}'s own
+convention). Each row is an observed COUNT vs. a simulated MEAN COUNT (not a proportion), summed
+in {cmd:nwtriads}'s own MAN classification directly - the same simulated draws and the same
+disconnected/zero-tie-network defenses ({opt capture} around each draw's own {cmd:nwtriads} call)
+already used for the plain "Complete triads" row above it.
 
 {pstd}
 {bf:This is a BASIC check, not a formal test.} A large, systematic gap between the Observed and
@@ -108,6 +143,16 @@ combined graph's name; default {cmd:gof}.
 	Scalars
 	  {bf:r(acceptrate)}		Metropolis-Hastings acceptance rate over the final simulation
 
+	Matrices
+	  {bf:r(geweke)}		1 x {it:p} row vector of Geweke z-scores, one per model term (same
+	                    column order as {bf:e(b)})
+	  {bf:r(heidel)}		{it:p} x 6 matrix, one row per model term, columns
+	                    {bf:stest} (1/0, stationarity test passed), {bf:start} (first retained
+	                    iteration, missing if {bf:stest}=0), {bf:teststat} (the retained window's
+	                    own Cramer-von-Mises statistic), {bf:htest} (1/0, halfwidth test passed,
+	                    missing if {bf:stest}=0), {bf:mean} and {bf:halfwidth} of the retained
+	                    window (both missing if {bf:stest}=0)
+
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}:
 
@@ -118,6 +163,9 @@ combined graph's name; default {cmd:gof}.
 	  {bf:r(sim_avgpath)}		simulated average geodesic distance (missing if every draw was disconnected)
 	  {bf:r(obs_triad300)}		observed complete-triad count
 	  {bf:r(sim_triad300)}		simulated complete-triad count, averaged over contributing draws
+	  {bf:r(obs_triad{it:XXX})}	observed count for MAN triad type {it:XXX} (one per {helpb nwtriads} category
+	                    for the network's directedness - e.g. {bf:r(obs_triad_021D)}, {bf:r(obs_triad_300)})
+	  {bf:r(sim_triad{it:XXX})}	simulated mean count for MAN triad type {it:XXX}, averaged over contributing draws
 
 {title:See also}
 

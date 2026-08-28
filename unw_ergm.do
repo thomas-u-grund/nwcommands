@@ -4493,6 +4493,132 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	return(out)
 }
 
+/*
+	Harmonisation unit 146: curved MPLE, entirely native - builds the
+	design matrix AND runs the damped Newton-Raphson fit inside a
+	SINGLE plugin call (mode=2, native/ergm_mcmc.c), rather than
+	building natively (mode=1, ErgmNativeBuildMPLEData() above) and
+	then fitting in Mata (ErgmCurvedMPLEFit()) - motivated by direct
+	profiling showing the Newton-Raphson loop itself, not the (already-
+	native, already fast) design-matrix build, is the dominant
+	remaining cost once the per-count basis width is already small
+	(docs/CERTIFICATION.md unit 146). `ncurved' is derived directly from
+	M's own structure (the LAST registered term instance's own `npar',
+	when `curved[nterms]' is set) rather than passed by the caller -
+	the same "registered last" invariant every other curved-MPLE code
+	path in this file already relies on.
+
+	Returns 1 on success (theta_matname/V_matname/converged_matname
+	posted, exactly matching ErgmCurvedMPLEFit()'s own three-matrix
+	output contract so callers can use either interchangeably), 0 if
+	native itself reports failure (a singular final information matrix -
+	a genuine, if rare, possible outcome on a real, possibly near-
+	unidentified curved fit) - callers MUST fall back to
+	ErgmCurvedMPLEFit() on the Mata-built design matrix in that case,
+	exactly the same "no model ever left broken, only unaccelerated"
+	discipline every other native-eligibility check in this file
+	follows.
+*/
+real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph scalar G,
+		real scalar curved_decay_start, string scalar theta_matname,
+		string scalar V_matname, string scalar converged_matname){
+
+	real matrix ties, attrpad, theta_out, V_out
+	real scalar n, directed, nties, p, nattr, nobs_needed, i, j, __junk, ncurved, ntheta, rc
+	string scalar origframe, argstr, cmd, attrvarlist
+	string rowvector attrvarnames
+
+	n = G.n
+	directed = G.directed
+	ties = G.all_ties()
+	nties = rows(ties)
+	p = cols(M.native_termcodes)
+	nattr = cols(M.native_attrmat)
+	// BUGFIX (caught by the very first smoke test): sized to `n' alone,
+	// forgetting that v1/v2 need `nties' rows too - st_store() on the
+	// edge list then threw "argument out of range" the moment a network
+	// had more ties than nodes (the norm, not the exception). Matches
+	// ErgmNativeBuildMPLEData()'s own sizing convention (max over every
+	// row count this call actually stores into), just without `ndyads'
+	// in the mix, since this function never writes per-dyad output.
+	nobs_needed = max((nties, n, 1))
+	ncurved = M.curved[M.nterms] ? M.npar[M.nterms] : 0
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __ergm_native")
+	stata("frame create __ergm_native")
+	st_framecurrent("__ergm_native")
+
+	st_addobs(nobs_needed)
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+
+	attrvarlist = ""
+	attrvarnames = J(1, nattr, "")
+	for (i=1; i<=nattr; i++) {
+		attrvarnames[i] = "a" + strofreal(i)
+		__junk = st_addvar("double", attrvarnames[i])
+		attrvarlist = attrvarlist + " " + attrvarnames[i]
+	}
+
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+
+	if (nattr > 0) {
+		attrpad = M.native_attrmat
+		if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), nattr, 0)
+		st_store((1::n), attrvarnames, attrpad[1::n, .])
+	}
+
+	// mode=2, then the SAME field order ErgmNativeBuildMPLEData()'s own
+	// argstr uses through the term-slot list, plus two new trailing
+	// fields this mode alone consumes (ncurved, curved_decay_start) -
+	// see native/ergm_mcmc.c's own header comment on the mode field for
+	// why these two are always present but only meaningful here.
+	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(p)
+	for (i=1; i<=p; i++) {
+		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+	}
+	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
+	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
+	argstr = argstr + " " + strofreal(ncurved) + " " + strofreal(curved_decay_start)
+
+	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
+
+	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+
+	st_framecurrent(origframe)
+	stata("capture frame drop __ergm_native")
+
+	rc = st_numscalar("__ergm_native_curved_rc")
+	if (rc != 0) return(0)
+
+	ntheta = st_numscalar("__ergm_native_curved_ntheta_out")
+	theta_out = J(1, ntheta, .)
+	for (i=1; i<=ntheta; i++) theta_out[i] = st_numscalar("__ergm_native_curved_theta" + strofreal(i))
+	// V was written row-major (C convention) as a flat sequence - read
+	// back via explicit (row,col) indices rather than a single linear
+	// subscript, since Mata's own single-subscript addressing is
+	// column-major and would silently transpose an ntheta>1 matrix
+	// otherwise (V is symmetric here in theory, but relying on that to
+	// paper over a row/column mismatch would be exactly the kind of
+	// silent-but-wrong bug this project's own certification discipline
+	// exists to catch before it ships).
+	V_out = J(ntheta, ntheta, .)
+	for (i=1; i<=ntheta; i++) {
+		for (j=1; j<=ntheta; j++) {
+			V_out[i,j] = st_numscalar("__ergm_native_curved_V" + strofreal((i-1)*ntheta+j))
+		}
+	}
+
+	st_matrix(theta_matname, theta_out)
+	st_matrix(V_matname, V_out)
+	st_matrix(converged_matname, st_numscalar("__ergm_native_curved_converged"))
+	return(1)
+}
+
 /* ===================================================================
    MCMC engine: Metropolis-Hastings simulation over binary graph space
    (Part X of the governing task brief). A proposal is a plain Mata

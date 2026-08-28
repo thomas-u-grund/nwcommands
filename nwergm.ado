@@ -156,9 +156,12 @@ dyadic covariates, the geometrically weighted family (including directed shared-
 support), fixed shared-partner counts, the complete degree-distribution family, and directed
 triad-closure terms - see {help nwergm##limitations:Limitations} below for the complete current
 list. What still sets {cmd:nwergm} apart from full parity is scope, not term count: two-mode
-(bipartite) ERGMs, curved/free-decay estimation, and constraints beyond the free binary dyad
-space remain roadmap items, each a genuine architectural addition rather than another term to
-add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
+(bipartite) ERGMs, curved/free-decay estimation under {opt method(mcmle)}, and constraints
+beyond the free binary dyad space remain roadmap items, each a genuine architectural addition
+rather than another term to add - curved/free-decay estimation under {opt method(mple)} IS
+already supported (see {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
+{opt gwodegreefree()}/{opt gwidegreefree()} in the {cmd:Syntax} block above). See the package's
+own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
@@ -205,7 +208,10 @@ The effect library has grown considerably past its original small first-release 
 {opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); dyadic
 covariates ({opt edgecov()}, {opt hamming()}); the geometrically weighted family
 ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()})
-with FIXED decay only (curved/free-decay estimation is a roadmap item); fixed shared-partner
+with FIXED decay only (a curved/free-decay counterpart is available for each of these five
+terms via {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
+{opt gwidegreefree()}, {opt method(mple)} only for now - curved {opt method(mcmle)} remains a
+roadmap item); fixed shared-partner
 counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}/{opt odegree()}/
 {opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
 {opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
@@ -226,8 +232,10 @@ uniformly to every one of these five terms present in the same model:
 All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/bipartite terms are deliberately
 deprioritized as a
 later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
-are not a supported data type at all); curved parameters need a genuine MCMLE architecture
-change, not a term-only addition. Constraints beyond the free binary dyad space and offsets are
+are not a supported data type at all); curved MCMLE estimation needs a genuine MCMLE
+architecture change, not a term-only addition (curved MPLE is already supported - see
+{opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
+{opt gwidegreefree()} above). Constraints beyond the free binary dyad space and offsets are
 not yet implemented - see the roadmap. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
 and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; see
 {help nwergm_estat}.
@@ -272,6 +280,19 @@ no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic 
 marshalled across the plugin boundary rather than the per-node values or scalar parameters every
 other term needs - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the
 current status.
+
+{pstd}
+For a curved term ({opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
+{opt gwodegreefree()}/{opt gwidegreefree()}), the native backend additionally fits the
+Newton-Raphson optimization itself in C (not just the MPLE design-matrix build), when eligible -
+still exposed only via {bf:e(native)}, since a curved fit and its own design-matrix build always
+share the same native-or-Mata routing. On a genuine boundary solution (the estimated decay
+collapsing toward 0, a real, if uncommon, outcome documented under {opt gwespfree()} above), the
+native fit uses the same generalized-inverse handling of a singular final Fisher information
+matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back to Mata - measured
+directly on a real published transcriptional-regulation network (Salgado et al. 2001; Shen-Orr
+et al. 2002), where this narrowed the gap to R ergm's own curved MPLE from roughly 4x to roughly
+2x. See the package's own SJ article (paper/main.tex) for the full benchmark.
 
 {title:Postestimation}
 
@@ -1733,9 +1754,24 @@ program nwergm, eclass
 	// own theta position" accessor.
 	if `__ergm_curved' {
 		tempname __ergm_curvedconv
-		mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `__ergm_curved_start')
-		mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
-		mata: mata drop __ergm_theta_start
+		// Harmonisation unit 146: try the curved fit entirely natively
+		// first (design-matrix build AND Newton-Raphson, one plugin
+		// call) when eligible - `ErgmNativeCurvedMPLEFit()' returns 0
+		// (rather than erroring) on the one real failure mode it can
+		// hit (a singular final information matrix), in which case
+		// falling back to the Mata `ErgmCurvedMPLEFit()' on the
+		// already-built `__nw_D' below is both correct and cheap (no
+		// re-fetching of anything, `__nw_D' was already built above
+		// regardless of which path fits it).
+		local __ergm_curved_native_used = 0
+		if `__ergm_mple_native_used' {
+			mata: st_local("__ergm_curved_native_used", strofreal(ErgmNativeCurvedMPLEFit(__nwergm_last_M, __nwergm_last_G, `__ergm_curved_start', "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")))
+		}
+		if !`__ergm_curved_native_used' {
+			mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `__ergm_curved_start')
+			mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
+			mata: mata drop __ergm_theta_start
+		}
 		mata: st_local("__ergm_curved_converged", strofreal(st_matrix("`__ergm_curvedconv'")[1,1]))
 		mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.theta_coefnames()))
 		if `__ergm_curved_converged' == 0 {
