@@ -160,7 +160,7 @@ free-decay estimation under {opt method(mcmle)} (curved MPLE is already supporte
 {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
 {opt gwidegreefree()} in the {cmd:Syntax} block above), and constraints beyond the free binary
 dyad space remain roadmap items, each a genuine architectural addition rather than another term
-to add. See the package's own {browse "docs/ERGM_ROADMAP.md"} for the prioritised extension plan.
+to add.
 
 {pstd}
 {opt method()} selects the estimation method. If every requested term is dyad-independent
@@ -277,8 +277,7 @@ practice this means essentially every {cmd:nwergm} model now runs on the native 
 remaining exception (automatically and correctly using the Mata backend instead, with no error and
 no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix
 marshalled across the plugin boundary rather than the per-node values or scalar parameters every
-other term needs - see {browse "docs/ERGM_ROADMAP.md"}'s own "Native backend" section for the
-current status.
+other term needs.
 
 {pstd}
 For a curved term ({opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
@@ -288,10 +287,22 @@ still exposed only via {bf:e(native)}, since a curved fit and its own design-mat
 share the same native-or-Mata routing. On a genuine boundary solution (the estimated decay
 collapsing toward 0, a real, if uncommon, outcome documented under {opt gwespfree()} above), the
 native fit uses the same generalized-inverse handling of a singular final Fisher information
-matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back to Mata - measured
-directly on a real published transcriptional-regulation network (Salgado et al. 2001; Shen-Orr
-et al. 2002), where this narrowed the gap to R ergm's own curved MPLE from roughly 4x to roughly
-2x. See the package's own SJ article (paper/main.tex) for the full benchmark.
+matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back to Mata.
+
+{pstd}
+Concretely, on direct head-to-head benchmarks against R's own {cmd:ergm} 4.12.0 (default
+settings on both sides, median of repeated runs): a 30-node directed {opt edges}+{opt mutual}
+model runs at roughly 1.1x R's own time; a 100-node directed
+{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 1.0x; a 100-node undirected
+{opt edges}+{opt gwesp()} model at roughly 1.3x; a 500-node sparse undirected
+{opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 1.7x; and a 1000-node directed
+{opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.5x - FASTER than R. On a real
+published network (the {it:E. coli} transcriptional-regulation network of Salgado et al. 2001
+and Shen-Orr et al. 2002, 418 nodes, 519 edges, distributed with R's own {cmd:ergm} package as
+{cmd:data(ecoli)}), median of five runs each side: a fixed-decay
+{opt edges}+{opt gwesp(.25)} model ({opt method(mcmle)}) runs at roughly 1.2x R's own time, and
+its curved, freely-estimated counterpart {opt edges}+{opt gwespfree(.25)}
+({opt method(mple)}) at roughly 2.1x.
 
 {title:Postestimation}
 
