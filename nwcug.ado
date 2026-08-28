@@ -208,16 +208,44 @@ program nwcug, rclass
 		local drawopt ""
 	}
 
+	// BUGFIX: each draw below used to get nwrandom's own generic
+	// auto-generated node names ("n1", "n2", ...) rather than
+	// `origname''s own real ones ("g1", "g2", ... for `gang', say).
+	// nw_datasync() matches dataset rows to network nodes BY NAME (its
+	// own documented contract - see nw_datasync.ado's own header), so a
+	// differently-named draw never matched any existing row and instead
+	// got `nodes' entirely NEW rows appended to the dataset, with every
+	// pre-existing node-attribute variable (e.g. a `nodematch()'-style
+	// covariate) missing on all of them - silently, not as an error.
+	// Confirmed directly: any stat() template depending on a node
+	// attribute (nwmixing's own E-I index, tested directly) returned
+	// r(rname) missing on every single draw, which `mean()'/`variance()'
+	// then silently propagated to the WHOLE null distribution (both
+	// reported as missing) while the tail-probability comparisons
+	// (`nwcug_nullvals :>= obsval'/`:<= obsval') still "worked" - Mata
+	// treats missing as larger than any real number, so every missing
+	// draw silently counted as "greater than observed" and never as
+	// "less than", producing a confident-looking but meaningless p-value
+	// rather than an error. Fixed by giving every draw `origname''s own
+	// real node names via `labs()' - nwrandom already supports this
+	// option, so nw_datasync's existing name-matching then reuses
+	// `origname''s own existing rows (attributes and all) for each draw
+	// instead of appending new, attribute-less ones. Harmless for a
+	// stat() that does not depend on names/attributes at all (density,
+	// a raw statistic count, ...): only the labels controlling row reuse
+	// change, never the drawn graph's own structure.
+	mata: st_local("origlabs", invtokens(`netobj'->get_nodenames(), ","))
+
 	mata: nwcug_nullvals = J(`reps', 1, .)
 	local base "_nwcug_draw"
 	local drawcmd = subinstr("`stat'", "##net##", "`base'", .)
 	forvalues i = 1/`reps' {
 		capture nwdrop `base'
 		if "`condition'" == "census" {
-			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base')
+			qui nwrandom `nodes', census(`obsmutual' `obsasym') name(`base') labs(`origlabs')
 		}
 		else {
-			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt'
+			qui nwrandom `nodes', density(`obsdensity') name(`base') `drawopt' labs(`origlabs')
 		}
 		qui `drawcmd'
 		local v = r(`rname')
@@ -225,6 +253,20 @@ program nwcug, rclass
 	}
 	capture nwdrop `base'
 	restore
+
+	// Defense in depth alongside the `labs()' fix above: if stat() still
+	// returns a missing r(`rname') on some draw for a reason unrelated
+	// to node-name/attribute matching (a caller's own stat() genuinely
+	// failing sometimes, say), catch it here rather than let it silently
+	// corrupt mean_null/sd_null (Mata's mean()/variance() propagate a
+	// single missing to the WHOLE result) and skew the tail-probability
+	// comparisons (missing sorts as larger than any real number, so an
+	// uncaught missing draw would silently count as "greater than
+	// observed" and never "less than").
+	mata: st_numscalar("nmiss", missing(nwcug_nullvals))
+	if nmiss > 0 {
+		di "{err}stat() returned a missing r(`rname') on `=nmiss' of `reps' draws - results below are unreliable; check that stat()'s own statistic is defined for every network `condition'-conditioned random draws can produce."
+	}
 
 	mata: st_numscalar("meannull", mean(nwcug_nullvals))
 	mata: st_numscalar("sdnull", sqrt(variance(nwcug_nullvals)))
