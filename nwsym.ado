@@ -13,13 +13,13 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwsym} 
+{cmdab: nwsym}
 [{it:{help netname}}]
 [{cmd:,}
 {opt mode}({it:{help nwsym##mode:mode}})
 {opt check}
 {opth generate(newntename)}
-{opt noreplace}]
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -27,7 +27,7 @@
 {synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
 {synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
-{synopt:{opt noreplace}}Do not symmetrize in place; requires {opt generate()} (errors otherwise, since there would be nothing else to do){p_end}
+{synopt:{opt replace}}Symmetrize in place (the default when neither {opt replace} nor {opt generate()} is given - this option exists to state that choice explicitly rather than to change behavior). Cannot be combined with {opt generate()}{p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}
@@ -63,8 +63,8 @@ node {it:j} and a tie from node {it:j} to node {it:i}.
 {it:M_ij = min( M_ij, M_ji )}
 
 {pstd}
-When not specified otherwise, the network {help netname} is replaced with the symmetrized network. Option
-In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname}.
+When not specified otherwise, the network {help netname} is replaced with the symmetrized network (equivalently, {opt replace} can be given explicitly to state this).
+In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname} instead, and the original network is left untouched. {opt replace} and {opt generate()} are mutually exclusive.
 
 {pstd}
 Option {bf:check} tests if the underlying adjacency matrix of the network is symmetric (but does not 
@@ -114,7 +114,11 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 	Macros:
 	  {bf:r(is_symmetric)}	"true" or "false"
 	  {bf:r(name)}		name of the network
-	 
+
+
+{title:See also}
+
+	{help nwsymmetrize} (an exact alias for this command)
 
 ***/
 
@@ -124,7 +128,7 @@ program nwsym
 	// `vars(string)' removed - it was accepted by syntax but never
 	// referenced anywhere in this file's body (a fully dead,
 	// undocumented no-op; confirmed via a direct probe).
-	syntax [anything(name=netname)][, check generate(string) noreplace mode(string)]
+	syntax [anything(name=netname)][, check generate(string) replace mode(string)]
 	nw_syntax `netname', max(1)
 
 
@@ -145,21 +149,23 @@ program nwsym
 		exit
 	}
 
-	// BUGFIX: `noreplace' was accepted by syntax but never referenced
-	// anywhere in this file's body - a network was always symmetrized/
-	// replaced in place when generate() was not given, regardless of
-	// noreplace. Implemented its evidently-intended meaning: `noreplace'
-	// without `generate()' has no non-destructive target to write to,
-	// so it now errors clearly instead of silently doing the in-place
-	// replace it was supposed to refuse. Per Stata's own "no"-prefixed
-	// option convention, declaring a bare `noreplace' in `syntax'
-	// populates a local named after the STEM - `replace' (holding
-	// "noreplace" when passed, empty otherwise) - not `noreplace'
-	// itself, which is never populated at all (the exact same trap
-	// class fixed repeatedly elsewhere in this package - nwcloseness/
-	// nwkatz/nwevcent/nwbetween).
-	if "`replace'" != "" & "`generate'" == "" {
-		di "{err}Option {bf:noreplace} requires {bf:generate()} - there would otherwise be nothing else to do."
+	// HARMONISATION: `noreplace' (a "no"-prefixed option whose local was
+	// always named `replace' per Stata's own stem convention, holding
+	// "noreplace" when passed) is replaced by a plain `replace' option -
+	// stated explicitly for the in-place case, matching the package's
+	// standard positive-flag convention (see NWCOMMANDS_COMMAND_STYLE.md
+	// "Output creation"), rather than the double-negative "noreplace
+	// without generate() errors" it used to be. Deliberately NOT declared
+	// alongside a separate `noreplace' option in the same `syntax' line:
+	// this package already found (see nwgeodesic.ado / docs/
+	// CERTIFICATION.md) that declaring a plain `replace' option next to
+	// an existing `noreplace' option in the same `syntax' line causes
+	// Stata's parser to silently fail to populate `replace' at all - so
+	// `noreplace' is dropped entirely rather than kept alongside `replace'.
+	// `replace' and `generate()' are mutually exclusive - they request
+	// opposite outcomes (mutate the original vs. leave it untouched).
+	if "`replace'" != "" & "`generate'" != "" {
+		di "{err}Options {bf:replace} and {bf:generate()} cannot be combined - {bf:replace} symmetrizes {help netname:netname} in place, {bf:generate()} leaves it untouched and saves the result under a new name instead."
 		error 198
 	}
 

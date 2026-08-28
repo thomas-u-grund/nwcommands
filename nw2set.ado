@@ -181,7 +181,7 @@ collapses the network to use only nodes from either level 1 or level 2.
 
 {title:See also}
 
-	{help nwset}, {help nw2fromedge}, {help nwload}, {help nw2project}
+	{help nwset} (whose own {opt twomode}/{opt bipartite} options can also declare a two-mode network directly), {help nw2fromedge}, {help nwload}, {help nw2project} ({help nwproject})
 
 ***/
 

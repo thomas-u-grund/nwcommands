@@ -195,7 +195,7 @@ Peter - Thomas  - 5 years
 	
 {title:Also see}
 	
-	{help nwfromedge}, {help nw2project}, {help nw2set}
+	{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}
 
 ***/
 

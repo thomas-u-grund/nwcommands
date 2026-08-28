@@ -9,10 +9,14 @@ lib/*.log
 # GitHub migration (2026-08-23): excluded from the public repo per an
 # explicit decision, not an oversight - see docs/CERTIFICATION.md's
 # migration-unit entry and the migration notes in docs/ROADMAP.md.
-# StataBook/: the author's own book manuscript (LaTeX source, PDFs,
-# figures) - not referenced by any live .ado command, and possibly under
-# an active publisher agreement, so kept out of the public repo by
-# default rather than assumed clear to publish.
+# StataBook/: a defunct, superseded draft of the author's book manuscript
+# (LaTeX source, PDFs, figures) - confirmed page-count-identical to
+# snapshots from 2015 and 2022 found elsewhere on disk, i.e. abandoned
+# long before this session, not something broken by it. The current
+# manuscript lives in book/ instead. Archived under deprecated/StataBook/
+# rather than deleted outright; not referenced by any live .ado command,
+# and possibly under an active publisher agreement, so kept out of the
+# public repo by default rather than assumed clear to publish.
 StataBook/
 # TODO/: personal working notes (a .docx to-do list plus its own Word
 # lock/temp file), not project documentation.

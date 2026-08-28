@@ -228,7 +228,13 @@ program nwgeodesic
 
 	if "`sym'" != "" {
 		di "{txt}Geodesics calculated on the symmetrized network."
-		nwsym `netname', generate(`symnet') `symopt' noreplace
+		// `noreplace' dropped from this call: nwsym.ado's harmonisation
+		// pass removed that option (see its own header comment) in favor
+		// of a plain `replace', which cannot be combined with generate()
+		// - so it would now error here. It was already redundant with
+		// generate() (already given on this same call) determining the
+		// in-place-vs-copy outcome on its own.
+		nwsym `netname', generate(`symnet') `symopt'
 		nw_syntax `symnet', max(1)
 		local symmetrized "true"
 	}

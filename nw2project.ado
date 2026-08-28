@@ -133,7 +133,7 @@ operation - the canonical, correct way to project in this package.
 
 {title:See also}
 
-	{help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}
+	{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}
 
 ***/
 

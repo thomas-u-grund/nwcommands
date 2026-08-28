@@ -64,6 +64,18 @@ rules are left unchanged, unless an {it:otherwise} rule is specified.
 maximum for each dyad value in {help netlist} and may be used in both the from-value
 and the to-value parts of the specification.
 
+{pstd}
+{bf:Common recipe: dichotomizing at a single cutoff.} A frequent special case is turning a
+valued network binary at one threshold - values at or above the cutoff become 1, everything
+else becomes 0:
+
+	{cmd:. nwrecode trade (100/max=1) (min/max=0)}
+
+For exactly this case, {help nwdichotomize} is a thin, more directly discoverable wrapper around
+the same rule shown above: {cmd:nwdichotomize trade, threshold(100)}. Reach for {cmd:nwrecode}
+directly whenever you need something {help nwdichotomize} does not offer - multiple bands, an
+{it:otherwise} rule, or {opt missing}/{opt nonmissing} handling.
+
 
 {marker options}{...}
 
@@ -136,5 +148,5 @@ to 2, and store the results in {cmd:nx2}{p_end}
 
 {title:See also}
 
-	{help nwreplace}, {help recode}
+	{help nwreplace}, {help recode}, {help nwdichotomize} (a thin wrapper around this command for the common single-cutoff case)
 

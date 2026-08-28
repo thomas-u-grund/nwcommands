@@ -24,7 +24,8 @@
 {opt xvars}
 {opt labs}({it:lab1 lab2 ...})
 {opt undirected}
-{opt directed}]
+{opt directed}
+{opt twomode}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -34,9 +35,10 @@
 {synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
 {synopt:{opt undirected}}force the network to be undirected (alias: {opt forceundirected}){p_end}
 {synopt:{opt directed}}force the network to be directed (alias: {opt forcedirected}){p_end}
+{synopt:{opt twomode}}declare a two-mode (bipartite) network instead - {it:fromid}/{it:toid} are the mode-1/mode-2 id variables, not a directed ego/alter pair. An exact alias for {help nw2fromedge}, forwarding {opt name()}/{opt xvars} only; cannot be combined with {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. See {help nw2fromedge} for the full two-mode-specific behavior (same-label disambiguation, mode assignment, {opt project()}){p_end}
 {synopt:{opt noclear}}do not clear existing dataset{p_end}
 {synopt:{opt replace}}if a network named {it:newnetname} already exists, drop it and use this name anyway (see {help nwset} for the same convention){p_end}
-{synopt:{opt prefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n}{p_end}
+{synopt:{opt labprefix}({it:string})}prefix used for auto-generated node labels when {help id:fromid}/{help id:toid} are numeric and {opt labs()} is not specified; default = {bf:n} - named {opt labprefix()}, not {opt prefix()}, to avoid colliding with {help nwrecode}'s unrelated {opt prefix()} (which prefixes new {it:network} names, not node labels){p_end}
 {synopt:{opt overwrite}}forwarded to {help nwload} governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to {opt replace} above, which is about the {it:network}, not Stata variables{p_end}
 
 {p2colreset}{...}
@@ -107,7 +109,7 @@ One can also transfrom any network that exists in memory into such an edgelist w
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: not this command's own purpose - see {help nw2fromedge} for the two-mode edge-list-import counterpart.
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior).
 
 {title:Examples}
 
@@ -132,7 +134,32 @@ Afterwards, it can be loaded as a network object again:
 
 capture program drop nwfromedge
 program nwfromedge
-	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE prefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected ]
+	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode]
+
+	// HARMONISATION: `twomode' makes the existing, separate `nw2fromedge'
+	// command reachable directly from `nwfromedge' too - mirroring
+	// exactly how `nwset's own `twomode' option is implemented (see
+	// nwset.ado's own header comment at its `twomode' branch): a
+	// two-mode edgelist declaration is already `nw2fromedge's own job,
+	// with real, non-trivial logic (same-label disambiguation between
+	// the two node sets, mode assignment by which edgelist column a
+	// label actually came from) that is deliberately NOT duplicated
+	// here a second time. Forwards only `name()'/`xvars', matching
+	// nwset.ado's own forwarding scope exactly (not a wider, unproven
+	// surface) - `directed'/`undirected'/`forcedirected'/
+	// `forceundirected' make no sense for an inherently undirected
+	// two-mode network and are rejected explicitly rather than silently
+	// ignored. Must run before `unw_defs' below, which sets up
+	// one-mode-specific state this branch never needs.
+	if "`twomode'" != "" {
+		if "`directed'" != "" | "`undirected'" != "" | "`forcedirected'" != "" | "`forceundirected'" != "" {
+			di "{err}option {bf:twomode} declares an inherently undirected two-mode network - it cannot be combined with {bf:directed}/{bf:undirected}/{bf:forcedirected}/{bf:forceundirected}."
+			error 198
+		}
+		nw2fromedge `varlist' `if', name(`name') `xvars'
+		exit
+	}
+
 	unw_defs
 	// NOTE: this file's own `overwrite' predates this option and controls
 	// nwload's own overwrite behavior further below (`qui nwload,
@@ -259,17 +286,19 @@ program nwfromedge
 	collapse (mean) `_rawid', by(`_id')
 	sort `_rawid'
 
-	// `prefix' was previously overwritten unconditionally here, discarding
-	// whatever the caller's own prefix(string) option had set - a dead
-	// option (node labels were always n-prefixed regardless). Now only
-	// defaults to "n" when the caller left prefix() unspecified.
-	if "`prefix'" == "" {
-		local prefix "n"
+	// `labprefix' (renamed from `prefix' during harmonisation, to avoid
+	// colliding with nwrecode's unrelated network-naming `prefix()') was
+	// previously overwritten unconditionally here, discarding whatever
+	// the caller's own option had set - a dead option (node labels were
+	// always n-prefixed regardless). Now only defaults to "n" when the
+	// caller left labprefix() unspecified.
+	if "`labprefix'" == "" {
+		local labprefix "n"
 	}
 	if "`rawtype'" == "numeric" {
 		if "`labs'" == "" {
 			forvalues k = 1/ `=_N'{
-				local labs "`labs' `prefix'`=`_rawid'[`k']',"
+				local labs "`labs' `labprefix'`=`_rawid'[`k']',"
 			}
 		}
 	}

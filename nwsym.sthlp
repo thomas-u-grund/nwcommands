@@ -12,13 +12,13 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwsym} 
+{cmdab: nwsym}
 [{it:{help netname}}]
 [{cmd:,}
 {opt mode}({it:{help nwsym##mode:mode}})
 {opt check}
 {opth generate(newntename)}
-{opt noreplace}]
+{opt replace}]
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
@@ -26,7 +26,7 @@
 {synopt:{opt mode}({it:{help nwsym##mode:mode}})}Logic for creating an undirected tie{p_end}
 {synopt:{opt check}}Check if network is symmetric (regardless of whether is declared as directed or undirected){p_end}
 {synopt:{opt generate}({it:{help newnetname}})}Save symmetrization as new network{p_end}
-{synopt:{opt noreplace}}Do not symmetrize in place; requires {opt generate()} (errors otherwise, since there would be nothing else to do){p_end}
+{synopt:{opt replace}}Symmetrize in place (the default when neither {opt replace} nor {opt generate()} is given - this option exists to state that choice explicitly rather than to change behavior). Cannot be combined with {opt generate()}{p_end}
 
 {p2colreset}{...}
 {synoptset 20 tabbed}{...}
@@ -62,8 +62,8 @@ node {it:j} and a tie from node {it:j} to node {it:i}.
 {it:M_ij = min( M_ij, M_ji )}
 
 {pstd}
-When not specified otherwise, the network {help netname} is replaced with the symmetrized network. Option
-In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname}.
+When not specified otherwise, the network {help netname} is replaced with the symmetrized network (equivalently, {opt replace} can be given explicitly to state this).
+In case {opt generate()} is specified the new symmetrized network is saved as {help netname:newnetname} instead, and the original network is left untouched. {opt replace} and {opt generate()} are mutually exclusive.
 
 {pstd}
 Option {bf:check} tests if the underlying adjacency matrix of the network is symmetric (but does not 
@@ -113,6 +113,10 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 	Macros:
 	  {bf:r(is_symmetric)}	"true" or "false"
 	  {bf:r(name)}		name of the network
-	 
 
-last certified : 24 Aug 2026
+
+{title:See also}
+
+	{help nwsymmetrize} (an exact alias for this command)
+
+last certified : 28 Aug 2026

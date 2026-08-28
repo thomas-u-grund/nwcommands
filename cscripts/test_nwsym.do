@@ -102,18 +102,40 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 3
 assert         r(id)            == 1
 
-* moderate-severity pass, manipulation_transform group: noreplace was a
-* dead option - a network was always symmetrized/replaced in place when
-* generate() was not given, regardless of noreplace. Implemented:
-* noreplace without generate() now errors clearly.
+* harmonisation pass: `noreplace' replaced by a plain `replace' (cannot be
+* declared alongside `noreplace' in the same syntax line - Stata's parser
+* silently fails to populate `replace' when both are present, see
+* nwsym.ado's own header comment and docs/CERTIFICATION.md). `replace' is
+* an explicit, no-behavior-change synonym for the existing default
+* (in-place symmetrization); it errors when combined with generate(),
+* since the two request opposite outcomes.
 nwclear
-nwset, mat((1,2,0\4,0,0\1,0,0)) name(noreplacetest)
-capture noisily nwsym noreplacetest, noreplace mode(max)
+nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
+capture noisily nwsym replacetest, replace generate(x) mode(max)
 assert _rc == 198
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest")]->get_matrix())[1,2] == 2)
-nwsym noreplacetest, noreplace generate(noreplacetest_g) mode(max)
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
+
+* `replace' alone: in-place, identical to the bare-call default.
+nwclear
+nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
+nwsym replacetest, replace mode(max)
 assert _rc == 0
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest")]->get_matrix())[1,2] == 2)
-mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("noreplacetest_g")]->get_matrix())[1,2] == 4)
-di "=== noreplace REGRESSION VERIFIED ==="
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
+
+* bare call (no replace, no generate()) still symmetrizes in place -
+* unchanged default, since ~8 other commands call nwsym bare internally.
+nwclear
+nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
+nwsym replacetest, mode(max)
+assert _rc == 0
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 4)
+
+* generate() alone: unchanged, original untouched, new copy created.
+nwclear
+nwset, mat((1,2,0\4,0,0\1,0,0)) name(replacetest)
+nwsym replacetest, generate(replacetest_g) mode(max)
+assert _rc == 0
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1,2] == 2)
+mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest_g")]->get_matrix())[1,2] == 4)
+di "=== replace/generate() REGRESSION VERIFIED ==="
 

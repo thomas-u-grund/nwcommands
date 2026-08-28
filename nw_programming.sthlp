@@ -75,15 +75,15 @@ Let us write another simple program which takes an existing network as an argume
 
 	{com}capture program drop myinverse
 	program myinverse
-		syntax [anything(name=netname)] , [ generate(string)]
+		syntax [anything(name=netname)] , [ name(string)]
 
 		nw_syntax `netname'
 		nwtomata `netname', mat(net)
 
-		local generate = cond("`generate'"=="", "_myinverse", "`generate'")
+		local name = cond("`name'"=="", "_myinverse", "`name'")
 
 		mata: inverse = (net :== 0)
-		nwset, mat(inverse) name("`generate'")
+		nwset, mat(inverse) name("`name'")
 		mata: mata drop net inverse
 	end{txt}
 
@@ -94,10 +94,18 @@ as Mata matrix {it:net}. The line {bf:mata: inverse = (net :== 0)} simply invert
 Afterwards, all we have to do is {help nwset} a new network using the option {bf:mat()}.
 
 {pstd}
+Notice this program's own public option is {bf:name()}, not {bf:generate()} - unlike {it:myindegree}
+above, {it:myinverse} always produces exactly one new network as its core, unavoidable job (there is
+no "in place" version of inverting a network to fall back to), matching how {help nwset}/{help nw2project}
+name the network they create. {bf:generate()} is reserved elsewhere in the package for a new Stata
+{it:variable} (as in {it:myindegree} above), or for opting into a copy when a command's default
+behavior is to modify something in place instead (see {help nwsym}, {help nwrecode}).
+
+{pstd}
 Now we can generate the network {it:flomarriage_inverse} as the inverse of {it:flomarriage} like this:
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. myinverse flormarriage, name(flomarriage_inverse)}
+	{cmd:. myinverse flomarriage, name(flomarriage_inverse)}
 	
 
 {marker modernprogramming}{...}

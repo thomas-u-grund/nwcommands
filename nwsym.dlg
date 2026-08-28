@@ -22,8 +22,8 @@ BEGIN
   CHECKBOX cx_check 290 54 190 ., label("check") option(check)
   TEXT tx_ed_generate 20 82 260 ., label("Save symmetrization as new network")
   EDIT ed_generate 290 82 190 ., nomem option(generate)
-  TEXT tx_cx_noreplace 20 110 260 ., label("Do not symmetrize in place; requires  (errors otherwise, since there would be no")
-  CHECKBOX cx_noreplace 290 110 190 ., label("noreplace") option(noreplace)
+  TEXT tx_cx_replace 20 110 260 ., label("Symmetrize in place (the default; states it explicitly, cannot combine with generate)")
+  CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
   TEXT tx_cb_mode 20 138 260 ., label("Logic for creating an undirected tie")
   COMBOBOX cb_mode 290 138 190 ., dropdownlist contents(list_mode) nomem option(mode)
 END
@@ -51,7 +51,7 @@ BEGIN
 	beginoptions
 		option main.cx_check
 		optionarg main.ed_generate
-		option main.cx_noreplace
+		option main.cx_replace
 		optionarg main.cb_mode
 	endoptions
 	stata

@@ -165,6 +165,57 @@ assert _rc == 0
 nwsummarize zeronet
 assert r(nodes) == 4
 
+* labprefix() (renamed from prefix() during harmonisation, to avoid
+* colliding with nwrecode's unrelated network-naming prefix()): default
+* auto-generated numeric node labels are "n"-prefixed; labprefix()
+* overrides that prefix when labs() is not given.
+clear
+input ego alter
+1 2
+2 3
+end
+nwfromedge ego alter, name(labpreftest)
+nwsummarize labpreftest
+assert `"`r(labs)'"' == `"n1,n2,n3"'
+
+clear
+input ego alter
+1 2
+2 3
+end
+nwfromedge ego alter, name(labpreftest2) labprefix(p)
+nwsummarize labpreftest2
+assert `"`r(labs)'"' == `"p1,p2,p3"'
+
+* twomode (harmonisation phase): an exact alias for nw2fromedge, added so
+* two-mode edgelist import is reachable from nwfromedge directly, mirroring
+* nwset.ado's own twomode option (which also forwards to nw2fromedge).
+* Confirms it produces byte-identical results to calling nw2fromedge
+* directly, on nw2fromedge's own first certified worked example.
+nwclear
+set obs 2
+gen x = 1
+gen y = 1
+replace y = 2 in 2
+nwfromedge x y, twomode name(viatwomode)
+nwsummarize viatwomode
+assert `"`r(mode2)'"'    == `"true"'
+assert `"`r(labs)'"'     == `"n1,n2,n3"'
+assert `"`r(valued)'"'   == `"false"'
+assert `"`r(directed)'"' == `"false"'
+assert         r(nodes)         == 3
+assert         r(edges)         == 2
+
+* directed/undirected/forcedirected/forceundirected are rejected when
+* combined with twomode - a two-mode network is inherently undirected.
+nwclear
+set obs 2
+gen x = 1
+gen y = 1
+replace y = 2 in 2
+capture noisily nwfromedge x y, twomode directed name(bad)
+assert _rc == 198
+
 
 
 

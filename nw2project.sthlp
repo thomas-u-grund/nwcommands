@@ -132,6 +132,6 @@ operation - the canonical, correct way to project in this package.
 
 {title:See also}
 
-	{help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}
+	{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}
 
-last certified : 21 Aug 2026
+last certified : 28 Aug 2026

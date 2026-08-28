@@ -348,7 +348,7 @@ program nwtoedge
 	qui foreach net in `nets' {
 		capture drop if `net' == `missing2'
 	}
-	
+
 	if "`numeric'" != "" {
 		if `morethanone' != 0 {
 			// Was print-only (di "{err}...") with no `error' call, so
