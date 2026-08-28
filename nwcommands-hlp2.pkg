@@ -2,7 +2,7 @@ v 3
 d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 25aug2026
+d Distribution-Date: 28aug2026
 f nwlattice.sthlp
 f nwload.sthlp
 f nwmodularity.sthlp
@@ -21,6 +21,7 @@ f nwplot.sthlp
 f nwplotmatrix.sthlp
 f nwpref.sthlp
 f nwpreserve.sthlp
+f nwproject.sthlp
 f nwqap.sthlp
 f nwrandom.sthlp
 f nwreach.sthlp
@@ -30,6 +31,7 @@ f nwreplace.sthlp
 f nwreplacemat.sthlp
 f nwrestore.sthlp
 f nwring.sthlp
+f nwsaom.sthlp
 f nwsave.sthlp
 f nwset.sthlp
 f nwshared.sthlp
@@ -41,6 +43,7 @@ f nwspectral.sthlp
 f nwsubset.sthlp
 f nwsummarize.sthlp
 f nwsym.sthlp
+f nwsymmetrize.sthlp
 f nwsync.sthlp
 f nwtab1.sthlp
 f nwtab2.sthlp

@@ -1,0 +1,462 @@
+cscript
+
+do unw_ergm.do
+do unw_saom.do
+
+* Certifies the native (C) SAOM backend (native/saom_sim.c, harmonisation
+* unit 6, docs/SAOM_ROADMAP.md "Native (C) backend") against its own Mata
+* reference implementation (SaomSimulateInterval(), already certified in
+* cscripts/test_nwsaom_mata.do). Like nwergm's own native MCMC backend
+* (cscripts/test_nwergm_native.do), this is a STOCHASTIC simulator, so the
+* certification standard is statistical equivalence of simulated
+* end-of-interval statistic distributions across many independent runs at
+* a FIXED theta - not trajectory-level identity (native and Mata use
+* independent RNG streams by design, see native/saom_sim.c's own header).
+
+mata:
+mata set matastrict off
+
+void saom_native_build_model(class ErgmModel M, real colvector attr) {
+	class ErgmTermData scalar td1, td2, td3
+
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td3 = ErgmTermData()
+	td3.attr = attr
+	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
+}
+
+/* -------------------------------------------------------------------
+   Eligibility gating: the native-eligible three-term model must report
+   eligible=1; adding ANY other term (here: indegpopularity, a unit-3
+   effect this wave's native kernel does not implement) must flip it
+   back to 0 - confirms SaomEstimateRM() would correctly fall back to
+   the pure-Mata path for such a model, never silently using an
+   incomplete/wrong native computation for a term it cannot handle.
+   ------------------------------------------------------------------- */
+void saom_test_native_eligibility(real scalar n, real colvector attr) {
+	class ErgmModel scalar M
+	class ErgmTermData scalar td4
+	struct SaomNativeConfig scalar cfg
+
+	M = ErgmModel()
+	saom_native_build_model(M, attr)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+
+	// harmonisation unit 10 extended native coverage to ALL 13 terms
+	// unw_saom.do currently implements (see native/saom_sim.c's own
+	// header) - so every REAL effect is now eligible; this check
+	// instead confirms the fallback mechanism itself still works
+	// correctly for a genuinely unrecognized (synthetic, future) term
+	// name, using indegpopularity's own already-certified stat/change
+	// functions just as a stand-in payload under a fake name.
+	td4 = ErgmTermData()
+	M.addterm("aFutureEffectNotYetPortedToNative", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td4, ("futureeffect"))
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 0)
+
+	printf("native eligibility PASS: 3-term model eligible, +unrecognized-term model correctly falls back\n")
+}
+
+/* -------------------------------------------------------------------
+   Statistical equivalence: many independent Mata-backend runs vs. many
+   independent native-backend runs, same starting graph/theta/rate,
+   compared via a standard two-sample z-test on each statistic's own
+   mean (independent draws, no MCMC autocorrelation to correct for -
+   each SaomSimulateInterval()/SaomSimulateIntervalNative() call is
+   already one fully independent simulated interval).
+   ------------------------------------------------------------------- */
+void saom_test_native_equivalence(real scalar n, real colvector attr, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real matrix Zmata, Znative
+	real scalar r, k, steps, p, i, j, nedges0
+	real rowvector mmata, mnative, semata, senative, zstat
+	struct SaomCountedResult scalar cres
+
+	M = ErgmModel()
+	saom_native_build_model(M, attr)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(555111)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	theta = (-1.2, 1.0, 0.7)
+	p = M.nparam()
+
+	Zmata = J(nruns, p, 0)
+	rseed(24681)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		steps = SaomSimulateInterval(Gwork, M, theta, 3)
+		Zmata[r,.] = M.full_statistic(Gwork)
+	}
+
+	Znative = J(nruns, p, 0)
+	rseed(97531)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 3, 1, 0)
+		Znative[r,.] = M.full_statistic(Gwork)
+	}
+
+	mmata = mean(Zmata)
+	mnative = mean(Znative)
+	semata = J(1,p,0)
+	senative = J(1,p,0)
+	zstat = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		semata[k] = sqrt(variance(Zmata[.,k]) / nruns)
+		senative[k] = sqrt(variance(Znative[.,k]) / nruns)
+		zstat[k] = (mmata[k] - mnative[k]) / sqrt(semata[k]^2 + senative[k]^2)
+	}
+
+	printf("native equivalence: Mata means   %8.3f %8.3f %8.3f\n", mmata[1], mmata[2], mmata[3])
+	printf("native equivalence: native means %8.3f %8.3f %8.3f\n", mnative[1], mnative[2], mnative[3])
+	printf("native equivalence: z-stats      %8.3f %8.3f %8.3f\n", zstat[1], zstat[2], zstat[3])
+
+	// |z| < 4 across three independent comparisons is a generous but
+	// genuine two-sample equivalence bar (far looser than a single 5%
+	// test's own 1.96 threshold, deliberately - this is a smoke-level
+	// cross-certification given nruns is modest for wall-clock reasons,
+	// not a tight-power formal equivalence trial).
+	assert(abs(zstat[1]) < 4)
+	assert(abs(zstat[2]) < 4)
+	assert(abs(zstat[3]) < 4)
+
+	printf("native equivalence PASS: native and Mata backends agree within Monte Carlo tolerance\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 10: statistical equivalence for the FULL extended
+   native term set (nodecov family, indegpopularity/outactivity/
+   outpopularity/inactivity, transtrip/cycle3, simcov - 9 terms beyond
+   the original 3), all in ONE model, using TWO distinct covariate
+   arrays (exercises the multi-attribute-column wire-protocol
+   generalization this unit added, not just a single shared column) and
+   exercising the new adjacency-list/OTP/OSP machinery (transtrip/
+   cycle3) end to end. Same two-sample z-test methodology as above.
+   ------------------------------------------------------------------- */
+void saom_test_native_equiv_ext(real scalar n, real colvector attr1, real colvector attr2, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real matrix Zmata, Znative
+	real scalar r, k, p, i, j, nedges0, rng
+	real rowvector mmata, mnative, semata, senative, zstat
+	struct SaomCountedResult scalar cres
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	td2.attr = attr1
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td2, ("nodecov"))
+	td3 = ErgmTermData()
+	M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td3, ("indegpopularity"))
+	td4 = ErgmTermData()
+	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td4, ("outactivity"))
+	td5 = ErgmTermData()
+	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td5, ("outpopularity"))
+	td6 = ErgmTermData()
+	M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td6, ("inactivity"))
+	td7 = ErgmTermData()
+	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td7, ("transtrip"))
+	td8 = ErgmTermData()
+	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td8, ("cycle3"))
+	td9 = ErgmTermData()
+	rng = max(attr2) - min(attr2)
+	td9.attr = attr2
+	td9.decay = rng
+	M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td9, ("simcov"))
+
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(246810)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	p = M.nparam()
+	theta = J(1, p, 0.15)
+	theta[1] = -0.4	// outdegree: mildly negative, keeps density reasonable
+
+	Zmata = J(nruns, p, 0)
+	rseed(11223)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		cres = SaomSimulateIntervalCounted(Gwork, M, theta, 10)
+		Zmata[r,.] = M.full_statistic(Gwork)
+	}
+
+	Znative = J(nruns, p, 0)
+	rseed(33445)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 10, 1, 0)
+		Znative[r,.] = M.full_statistic(Gwork)
+	}
+
+	mmata = mean(Zmata)
+	mnative = mean(Znative)
+	semata = J(1,p,0)
+	senative = J(1,p,0)
+	zstat = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		semata[k] = sqrt(variance(Zmata[.,k]) / nruns)
+		senative[k] = sqrt(variance(Znative[.,k]) / nruns)
+		zstat[k] = (mmata[k] - mnative[k]) / sqrt(semata[k]^2 + senative[k]^2)
+	}
+
+	printf("native equivalence (extended, %g terms):\n", p)
+	for (k=1; k<=p; k++) {
+		printf("  %s: Mata %10.3f  native %10.3f  z=%7.3f\n", M.coefnames[k], mmata[k], mnative[k], zstat[k])
+	}
+	for (k=1; k<=p; k++) assert(abs(zstat[k]) < 4)
+
+	printf("native equivalence (extended) PASS: all %g newly-natively-covered terms agree within Monte Carlo tolerance\n", p)
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 14: certifies that the native plugin's own
+   directly-returned statistic vector (SaomSimulateIntervalNative()'s
+   res.stat, native/saom_sim.c's own saom_stat_term()) EXACTLY matches
+   M.full_statistic() applied to the SAME final graph the same call
+   mutated G into - not a Monte Carlo/statistical-equivalence bar like
+   the suites above (those compare DISTRIBUTIONS across independent
+   runs), but a direct per-run numerical check, since both sides are
+   computing the identical mathematical quantity on the identical
+   realized network. All 13 currently-implemented terms in ONE model
+   (unlike saom_test_native_equiv_ext's 9, this one also covers
+   outdegree/reciprocity/nodematch - the original 3-term set - since
+   unit 14's own C port is new code for every term, not just the
+   unit-10 extension). A tight (not bit-identical) tolerance allows for
+   floating-point summation-ORDER differences between the two
+   independent implementations (C iterates the edge list/node array in
+   a different order than Mata's own loops) - genuine agreement, not a
+   loosened bar.
+   ------------------------------------------------------------------- */
+void saom_test_native_stat_match(real scalar n, real colvector attr1, real colvector attr2, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, td8, td9, td10, td11, td12, td13
+	struct SaomNativeConfig scalar cfg
+	struct SaomCountedResult scalar cres
+	real rowvector theta, statvec, maxerr
+	real scalar r, k, i, j, nedges0, rng, p
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td3 = ErgmTermData()
+	td3.attr = attr1
+	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("nodematch"))
+	td4 = ErgmTermData()
+	td4.attr = attr1
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td4, ("nodecov"))
+	td5 = ErgmTermData()
+	td5.attr = attr2
+	M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td5, ("nodeicov"))
+	td6 = ErgmTermData()
+	td6.attr = attr2
+	M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td6, ("nodeocov"))
+	td7 = ErgmTermData()
+	M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td7, ("indegpopularity"))
+	td8 = ErgmTermData()
+	M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td8, ("outactivity"))
+	td9 = ErgmTermData()
+	M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), td9, ("outpopularity"))
+	td10 = ErgmTermData()
+	M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td10, ("inactivity"))
+	td11 = ErgmTermData()
+	M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td11, ("transtrip"))
+	td12 = ErgmTermData()
+	M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td12, ("cycle3"))
+	td13 = ErgmTermData()
+	rng = max(attr2) - min(attr2)
+	td13.attr = attr2
+	td13.decay = rng
+	M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td13, ("simcov"))
+
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(556677)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	p = M.nparam()
+	theta = J(1, p, 0.1)
+	theta[1] = -0.5
+
+	maxerr = J(1, p, 0)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
+		statvec = M.full_statistic(Gwork)
+		for (k=1; k<=p; k++) {
+			if (abs(cres.stat[k] - statvec[k]) > maxerr[k]) maxerr[k] = abs(cres.stat[k] - statvec[k])
+		}
+	}
+
+	printf("native stat-matches-full (%g terms, %g runs): max abs error per term:\n", p, nruns)
+	for (k=1; k<=p; k++) printf("  %s: %10.2e\n", M.coefnames[k], maxerr[k])
+	for (k=1; k<=p; k++) assert(maxerr[k] < 1e-6)
+
+	printf("native stat-matches-full PASS: native's own directly-returned statistic vector exactly matches M.full_statistic() on the same final graph, every term, every run\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 16: certifies the native SCORE-vector path
+   (SaomSimulateIntervalNative()'s own want_score=1 mode,
+   native/saom_sim.c's score accumulator) against SaomSimulateInterval
+   Scored() (the Mata reference phase 1 has always used). UNLIKE
+   saom_test_native_stat_match above, this CANNOT be a bit-identical/
+   same-final-graph comparison - the score vector is a stochastic,
+   PATH-dependent quantity (it depends on which alternative was chosen
+   at every ministep along the way, not just the final tie set), and
+   native/Mata use independent RNG streams by design (this file's own
+   header). So this uses the SAME statistical-equivalence methodology as
+   saom_test_native_equivalence()/saom_test_native_equiv_ext() above -
+   many independent replicates per backend, two-sample z-test on each
+   parameter's own mean deviation AND mean score.
+   ------------------------------------------------------------------- */
+void saom_test_native_score_equiv(real scalar n, real colvector attr, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	struct SaomNativeConfig scalar cfg
+	struct SaomCountedResult scalar cres
+	struct SaomScoredResult scalar sres
+	real rowvector theta, target
+	real matrix Zdev_mata, Zsco_mata, Zdev_native, Zsco_native
+	real scalar r, k, p, i, j, nedges0
+	real rowvector mdev_m, mdev_n, msco_m, msco_n, sedev_m, sedev_n, sesco_m, sesco_n, zdev, zsco
+
+	M = ErgmModel()
+	saom_native_build_model(M, attr)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+
+	rseed(998877)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	theta = (-1.2, 1.0, 0.7)
+	p = M.nparam()
+	target = J(1, p, 0)		// deviation is just the statistic itself here (target=0), fine for an equivalence check on the mean
+
+	Zdev_mata = J(nruns, p, 0)
+	Zsco_mata = J(nruns, p, 0)
+	rseed(112233)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		sres = SaomSimulateIntervalScored(Gwork, M, theta, 3)
+		Zdev_mata[r,.] = M.full_statistic(Gwork) - target
+		Zsco_mata[r,.] = sres.score
+	}
+
+	Zdev_native = J(nruns, p, 0)
+	Zsco_native = J(nruns, p, 0)
+	rseed(445566)
+	for (r=1; r<=nruns; r++) {
+		cres = SaomSimulateIntervalNative(G0, M, cfg, theta, 3, 0, 1)
+		Zdev_native[r,.] = cres.stat - target
+		Zsco_native[r,.] = cres.score
+	}
+
+	mdev_m = mean(Zdev_mata); mdev_n = mean(Zdev_native)
+	msco_m = mean(Zsco_mata); msco_n = mean(Zsco_native)
+	sedev_m = J(1,p,0); sedev_n = J(1,p,0); sesco_m = J(1,p,0); sesco_n = J(1,p,0)
+	zdev = J(1,p,0); zsco = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		sedev_m[k] = sqrt(variance(Zdev_mata[.,k]) / nruns)
+		sedev_n[k] = sqrt(variance(Zdev_native[.,k]) / nruns)
+		zdev[k] = (mdev_m[k] - mdev_n[k]) / sqrt(sedev_m[k]^2 + sedev_n[k]^2)
+		sesco_m[k] = sqrt(variance(Zsco_mata[.,k]) / nruns)
+		sesco_n[k] = sqrt(variance(Zsco_native[.,k]) / nruns)
+		zsco[k] = (msco_m[k] - msco_n[k]) / sqrt(sesco_m[k]^2 + sesco_n[k]^2)
+	}
+
+	printf("native score equivalence (%g terms, %g runs):\n", p, nruns)
+	for (k=1; k<=p; k++) {
+		printf("  %s: dev Mata %8.3f native %8.3f z=%6.3f | score Mata %8.3f native %8.3f z=%6.3f\n", ///
+			M.coefnames[k], mdev_m[k], mdev_n[k], zdev[k], msco_m[k], msco_n[k], zsco[k])
+	}
+	for (k=1; k<=p; k++) {
+		assert(abs(zdev[k]) < 4)
+		assert(abs(zsco[k]) < 4)
+	}
+
+	printf("native score equivalence PASS: native's own want_score=1 path (phase 1's own Jacobian estimator) agrees with SaomSimulateIntervalScored() within Monte Carlo tolerance, both deviation and score\n")
+}
+
+end
+
+mata:
+mata set matastrict off
+
+n = 18
+rseed(13571113)
+attr = J(n,1,0)
+for (k=1; k<=n; k++) attr[k] = mod(k,3)
+
+saom_test_native_eligibility(n, attr)
+saom_test_native_equivalence(n, attr, 150)
+
+attr2 = J(n,1,0)
+for (k=1; k<=n; k++) attr2[k] = mod(k*7,5)
+saom_test_native_equiv_ext(n, attr, attr2, 150)
+
+saom_test_native_stat_match(n, attr, attr2, 100)
+
+saom_test_native_score_equiv(n, attr, 150)
+
+end

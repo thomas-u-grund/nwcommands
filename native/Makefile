@@ -8,6 +8,13 @@
 #                     background in ../docs/NATIVE_GRAPH_LIBRARIES.md).
 #                     Currently: betweenness centrality. See nwgraph.c's
 #                     own header for scope and the evidence behind it.
+#   - saom_sim.c     nwsaom (SAOM) ministep/interval simulation kernel -
+#                     see ../docs/SAOM_ROADMAP.md/ARCHITECTURE.md and
+#                     saom_sim.c's own header. A separate initiative from
+#                     nwergm/nwgraph above (see SAOM_ROADMAP.md's own
+#                     coordination note) - added here as a third
+#                     independent plugin target, touching neither of the
+#                     other two targets below.
 #
 # Output layout: ../lib/plugins/<platform>/<name>*.plugin - one
 # subdirectory per platform (harmonisation unit 87), not a single shared
@@ -35,7 +42,7 @@
 #     documented macOS plugin build recipe at stata.com/plugins/) ---
 #
 #   make macos              (builds every plugin)
-#   make macos-ergm_mcmc     make macos-nwgraph     (build just one)
+#   make macos-ergm_mcmc     make macos-nwgraph     make macos-saom_sim     (build just one)
 #
 # --- Windows (built automatically by CI - see ../.github/workflows/
 #     build-plugins.yml - once this repo lives on GitHub; NOT built or
@@ -47,13 +54,15 @@
 #        /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
 #     cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c ^
 #        /Fe:..\lib\plugins\windows\nwgraph.plugin
+#     cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c ^
+#        /Fe:..\lib\plugins\windows\saom_sim.plugin
 #
 # --- Linux (built automatically by CI, same reason as Windows above -
 #     no Linux toolchain/cross-compiler or Docker was available in the
 #     environment this unit was authored in) ---
 #
 #   make unix                (builds every plugin)
-#   make unix-ergm_mcmc        make unix-nwgraph      (build just one)
+#   make unix-ergm_mcmc        make unix-nwgraph      make unix-saom_sim      (build just one)
 #
 #   (Stata expects a Unix plugin named "<progname>_unix.plugin"
 #   specifically - unlike the Mac ".plugin" and Windows ".dll"/".plugin"
@@ -63,9 +72,9 @@
 CC = clang
 CFLAGS = -O2 -Wall -Ispi
 
-.PHONY: macos unix clean macos-ergm_mcmc macos-nwgraph unix-ergm_mcmc unix-nwgraph
+.PHONY: macos unix clean macos-ergm_mcmc macos-nwgraph macos-saom_sim unix-ergm_mcmc unix-nwgraph unix-saom_sim
 
-macos: macos-ergm_mcmc macos-nwgraph
+macos: macos-ergm_mcmc macos-nwgraph macos-saom_sim
 
 macos-ergm_mcmc:
 	mkdir -p ../lib/plugins/macos
@@ -91,11 +100,23 @@ macos-nwgraph:
 	@echo "Built ../lib/plugins/macos/nwgraph.plugin"
 	@file ../lib/plugins/macos/nwgraph.plugin
 
+macos-saom_sim:
+	mkdir -p ../lib/plugins/macos
+	$(CC) -bundle -o saom_sim.x86_64 saom_sim.c spi/stplugin.c \
+		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
+	$(CC) -bundle -o saom_sim.arm64 saom_sim.c spi/stplugin.c \
+		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
+	lipo -create -output ../lib/plugins/macos/saom_sim.plugin saom_sim.x86_64 saom_sim.arm64
+	codesign -s - ../lib/plugins/macos/saom_sim.plugin
+	rm -f saom_sim.x86_64 saom_sim.arm64
+	@echo "Built ../lib/plugins/macos/saom_sim.plugin"
+	@file ../lib/plugins/macos/saom_sim.plugin
+
 # Run only on an actual Linux host (or Linux CI runner) - `gcc -shared`
 # targeting OPUNIX is meaningless cross-compiled from macOS without a
 # genuine Linux sysroot/toolchain, which this development environment did
 # not have.
-unix: unix-ergm_mcmc unix-nwgraph
+unix: unix-ergm_mcmc unix-nwgraph unix-saom_sim
 
 unix-ergm_mcmc:
 	mkdir -p ../lib/plugins/unix
@@ -111,7 +132,15 @@ unix-nwgraph:
 	@echo "Built ../lib/plugins/unix/nwgraph_unix.plugin"
 	@file ../lib/plugins/unix/nwgraph_unix.plugin
 
+unix-saom_sim:
+	mkdir -p ../lib/plugins/unix
+	gcc -shared -fPIC -DSYSTEM=OPUNIX $(CFLAGS) -o ../lib/plugins/unix/saom_sim_unix.plugin \
+		saom_sim.c spi/stplugin.c -ldl
+	@echo "Built ../lib/plugins/unix/saom_sim_unix.plugin"
+	@file ../lib/plugins/unix/saom_sim_unix.plugin
+
 clean:
-	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 nwgraph.x86_64 nwgraph.arm64 \
+	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 nwgraph.x86_64 nwgraph.arm64 saom_sim.x86_64 saom_sim.arm64 \
 		../lib/plugins/macos/ergm_mcmc.plugin ../lib/plugins/unix/ergm_mcmc_unix.plugin \
-		../lib/plugins/macos/nwgraph.plugin ../lib/plugins/unix/nwgraph_unix.plugin
+		../lib/plugins/macos/nwgraph.plugin ../lib/plugins/unix/nwgraph_unix.plugin \
+		../lib/plugins/macos/saom_sim.plugin ../lib/plugins/unix/saom_sim_unix.plugin
