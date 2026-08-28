@@ -239,13 +239,16 @@ and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; se
 {cmd:nwergm} ships a fully independent Mata implementation of its entire estimator (term
 registry, MCMC sampler, MPLE, MCMLE) - this is always the reference implementation and is what
 runs for every model on every platform. For a growing subset of models, {cmd:nwergm} ALSO
-compiles the MCMC inner loop into a native Stata plugin (C) and uses that instead, entirely
+compiles the MCMC inner loop (for {opt method(mcmle)}) or the MPLE design-matrix build (for
+{opt method(mple)}) into a native Stata plugin (C) and uses that instead, entirely
 transparently: there is nothing to turn on, no option to set, and no difference in how results
 are interpreted. Whether a given run used the native backend or the Mata one is purely a
-performance detail, exposed only for curiosity via {bf:e(native)} after {opt method(mcmle)} -
-the two are certified to produce statistically indistinguishable results (independent random-
-number streams, so not bit-identical sample paths, but the same target distribution; see the
-package's own {cmd:cscripts/test_nwergm_native.do}).
+performance detail, exposed only for curiosity via {bf:e(native)} after EITHER method - the two
+are certified to produce statistically indistinguishable results for {opt method(mcmle)}
+(independent random-number streams, so not bit-identical sample paths, but the same target
+distribution; see the package's own {cmd:cscripts/test_nwergm_native.do}) and a bit-identical
+design matrix for {opt method(mple)} (deterministic given a fixed graph, so native and Mata
+agree exactly, not merely statistically).
 
 {pstd}
 The native backend requires a compiled plugin for the current platform (macOS is built and
@@ -299,9 +302,10 @@ estimation method. See {help nwergm_estat} for full details.
 					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
 					to reach an adequate effective sample size (method(mcmle) only)
 	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
-	  {bf:e(native)}		1 if the native (C) MCMC backend was used for this run's simulations,
-					0 if the Mata sampler ran instead (method(mcmle) only) - purely
-					informational, see {help nwergm##native:Performance} below
+	  {bf:e(native)}		1 if the native (C) backend was used for this run (the MCMC sampler
+					for method(mcmle); the MPLE design-matrix build for method(mple)),
+					0 if the Mata implementation ran instead - purely informational,
+					see {help nwergm##native:Performance} below
 
 	Macros
 	  {bf:e(cmd)}			{bf:nwergm}
@@ -865,10 +869,15 @@ program nwergm, eclass
 	// has no effect on a directed network. Applies to BOTH MPLE and
 	// MCMLE fits (build_mple_data() toggles the same __nwergm_last_G
 	// singleton the MCMC sampler uses, so MPLE's own design-matrix
-	// construction benefits identically), even though only the MCMLE
-	// branch below surfaces e(spcache) - matching e(native)'s own
-	// existing MPLE-vs-MCMLE asymmetry (assert missing(e(native)) for
-	// MPLE fits, cscripts/test_nwergm_ado.do).
+	// construction benefits identically) - this spcache option itself is
+	// still surfaced only on the MCMLE branch below (e(spcache)), a
+	// genuinely narrower thing than e(native): spcache only ever helps
+	// the Mata build_mple_data() path (native's own MPLE build,
+	// harmonisation unit 145, does not use or need the Mata-level
+	// shared-partner cache at all, since it never calls
+	// common_neighbors()/shared_partners() from Mata in the first
+	// place), so an MPLE fit that routes through native has nothing for
+	// e(spcache) to report regardless.
 	local __ergm_spcache_relevant = ("`gwesp'"!="" | "`gwdsp'"!="" | "`gwnsp'"!="" | "`esp'"!="" | "`dsp'"!="" | "`triangle'"!="" | "`ctriple'"!="")
 	local __ergm_spcache_used = 0
 	if "`spcache'" != "" {
@@ -1662,7 +1671,36 @@ program nwergm, eclass
 	// benchmark suite's own large-network control case
 	// (docs/CERTIFICATION.md harmonisation unit 81).
 	tempname __nw_D
-	mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
+	// Harmonisation unit 145: route the design-matrix build through the
+	// native (C) backend when eligible, exactly the same "is this whole
+	// model's own term set inside the native plugin's coverage"
+	// eligibility check the MCMLE path below already uses
+	// (ErgmNativeSetup() - side-effects populate __nwergm_last_M's own
+	// native_termcodes/attridx/p1/p2/attrmat, then ErgmNativeBuildMPLEData()
+	// reads them straight off, exactly mirroring ErgmNativeSampleCore()'s
+	// own contract). The `2' argument is a proposal code MPLE never
+	// uses (no MCMC runs on this path at all) - passed only because
+	// ErgmNativeSetup()'s own signature requires one. Falls back to the
+	// original Mata build_mple_data() call unchanged whenever native is
+	// unavailable or this model's own terms fall outside its coverage
+	// (e.g. edgecov()/hamming(), or more parameters than the plugin's own
+	// hard-coded MAXTERMS/MAXATTR bounds) - no model is ever left broken,
+	// only unaccelerated, matching every other native-eligibility check
+	// in this file.
+	// BUGFIX pattern already established at this file's own MCMLE call
+	// site below: ErgmNativeSetup()'s own return value, called bare,
+	// would auto-display as a stray unexplained integer - read
+	// eligibility off __nwergm_last_M.native_enabled (the side effect
+	// it sets) via st_local() instead, never the bare Mata return.
+	mata: __ergm_mple_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, 2)
+	mata: st_local("__ergm_mple_native_used", strofreal(__nwergm_last_M.native_enabled))
+	mata: mata drop __ergm_mple_native_setup_rc
+	if `__ergm_mple_native_used' {
+		mata: `__nw_D' = ErgmNativeBuildMPLEData(__nwergm_last_M, __nwergm_last_G)
+	}
+	else {
+		mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
+	}
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
 	mata: st_local("__ergm_nrows", strofreal(rows(`__nw_D')))
 	mata: st_local("__ergm_p", strofreal(cols(`__nw_D')-1))
@@ -1770,6 +1808,12 @@ program nwergm, eclass
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
 		ereturn scalar curved = `__ergm_curved'
+		// Harmonisation unit 145: report whether the design-matrix build
+		// itself used the native backend, mirroring e(native) on the
+		// MCMLE branch below - previously only ever set there, leaving
+		// an MPLE fit's own e(native) undefined even when native routing
+		// was actually used for it.
+		ereturn scalar native = `__ergm_mple_native_used'
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
 		if `__ergm_curved' {
