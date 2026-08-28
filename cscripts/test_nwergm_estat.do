@@ -60,3 +60,116 @@ capture graph describe mcmcdiag
 assert _rc == 0
 graph drop mcmcdiag
 di "=== estat mcmcdiag, plot REGRESSION VERIFIED ==="
+
+* =====================================================================
+* Harmonisation unit 144: formal MCMC convergence diagnostics (Geweke
+* 1992 / Heidelberger-Welch 1983), the two `coda`-package tests behind R
+* ergm's own `mcmc.diagnostics()`. `ergm_geweke_z()`/`ergm_heidel_diag()`
+* (unw_ergm.do) were ALREADY certified once this unit, directly against
+* real `coda` 0.19.4.1 output (fetched and read from a local R install,
+* not recalled from memory) on two synthetic reference series - see
+* docs/CERTIFICATION.md unit 144 for that full numeric comparison. What
+* follows is the PERMANENT regression test: (1) through the real
+* `estat mcmcdiag` command end to end on an actual nwergm fit, checking
+* the returned matrices are well-formed and internally consistent
+* (rather than re-deriving specific numbers a real MCMLE fit's own RNG
+* trajectory cannot reproduce deterministically call to call); (2) a
+* direct Mata-level check that the underlying functions correctly
+* DISTINGUISH a converged chain from a deliberately non-converged one,
+* using Mata's own reproducible rseed()/runiform() rather than
+* attempting to bit-match R's own RNG stream (not practical, and not
+* the actual contract these diagnostics need to satisfy - what matters
+* is that a real problem gets flagged and a healthy chain does not).
+* =====================================================================
+
+* --- estat mcmcdiag returns r(geweke) (1 x p) and r(heidel) (p x 6),
+* well-formed and internally consistent: every Geweke z is finite; every
+* Heidelberger-Welch row's own stest/start/htest/mean/halfwidth columns
+* obey the documented missing-value contract (stest=0 implies the other
+* five are NOT all populated the same way stest=1 requires - specifically
+* start/htest/mean/halfwidth must be missing when stest=0, exactly
+* mirroring coda::heidel.diag's own convention). A fresh, unqualified
+* `estat mcmcdiag` call right before reading r() - not relying on the
+* `plot` test's own leftover results just above, since `graph describe`/
+* `graph drop` (both r-class) run in between and would silently clobber
+* r(geweke)/r(heidel) with their own unrelated r()-results first.
+qui estat mcmcdiag
+mata: assert(!missing(st_matrix("r(geweke)")))
+mata: __ergm_hd = st_matrix("r(heidel)")
+mata: assert(rows(__ergm_hd) == cols(st_matrix("e(b)")))
+mata: assert(cols(__ergm_hd) == 6)
+mata: assert(all(__ergm_hd[.,1] :== 0 :| __ergm_hd[.,1] :== 1))
+mata:
+for (__ergm_i=1; __ergm_i<=rows(__ergm_hd); __ergm_i++) {
+	if (__ergm_hd[__ergm_i,1]==0) {
+		assert(missing(__ergm_hd[__ergm_i,2]))
+		assert(missing(__ergm_hd[__ergm_i,4]))
+		assert(missing(__ergm_hd[__ergm_i,5]))
+		assert(missing(__ergm_hd[__ergm_i,6]))
+	}
+	else {
+		assert(!missing(__ergm_hd[__ergm_i,2]))
+		assert(!missing(__ergm_hd[__ergm_i,5]))
+		assert(!missing(__ergm_hd[__ergm_i,6]))
+	}
+}
+end
+mata: mata drop __ergm_hd __ergm_i
+di "=== estat mcmcdiag: r(geweke)/r(heidel) well-formed and internally consistent ==="
+
+* --- pvalue() restricted to the 4-level Cramer-von-Mises critical-value
+* table (unw_ergm.do's own header comment on ergm_heidel_diag() explains
+* why a continuous p-value is not offered) - anything else must error
+* informatively, not silently fall back to a wrong/default critical value.
+* The three VALID cases are confirmed via r(geweke)'s own content, not
+* `_rc' - confirmed directly (isolated probes, harmonisation unit 144)
+* that `_rc' is genuinely NOT reset by trivial commands (`local', `di')
+* in this Stata version, only by commands that explicitly set it, so a
+* stale nonzero `_rc' left by an EARLIER internal `capture' inside
+* `estat mcmcdiag' (of which it has several, e.g. around `graph drop' in
+* its own `plot' block) can persist through a later, fully successful
+* call - `_rc' is simply not a reliable success signal for this command;
+* r()-content is.
+capture noisily estat mcmcdiag, pvalue(0.5)
+assert _rc == 198
+qui estat mcmcdiag, pvalue(0.10)
+mata: assert(!missing(st_matrix("r(geweke)")))
+qui estat mcmcdiag, pvalue(0.025)
+mata: assert(!missing(st_matrix("r(geweke)")))
+qui estat mcmcdiag, pvalue(0.01)
+mata: assert(!missing(st_matrix("r(geweke)")))
+di "=== estat mcmcdiag, pvalue(): 4-level table enforced ==="
+
+* --- direct Mata-level certification: ergm_geweke_z()/ergm_heidel_diag()
+* must correctly distinguish a converged (stationary, no trend) chain
+* from a deliberately non-converged (trending) one - the actual
+* statistical contract both tests exist to enforce. Built via Mata's own
+* rseed()/runiform() for full reproducibility (no external RNG/file
+* dependency), not a claim to reproduce R's own specific RNG stream -
+* see docs/CERTIFICATION.md unit 144 for the separate, one-time exact
+* numeric comparison against real coda output that already happened.
+mata: rseed(4242)
+mata: __ergm_n = 2000
+mata: __ergm_noise = rnormal(__ergm_n, 1, 0, 1)
+mata: __ergm_conv = J(__ergm_n, 1, 0)
+mata: __ergm_conv[1] = __ergm_noise[1]
+mata: for (__ergm_t=2; __ergm_t<=__ergm_n; __ergm_t++) __ergm_conv[__ergm_t] = 0.6*__ergm_conv[__ergm_t-1] + __ergm_noise[__ergm_t]
+mata: __ergm_conv = __ergm_conv :+ 3
+mata: __ergm_drift = __ergm_conv :+ (0::(__ergm_n-1)) :* (5/(__ergm_n-1))
+mata: __ergm_gz_conv = ergm_geweke_z(__ergm_conv)
+mata: __ergm_gz_drift = ergm_geweke_z(__ergm_drift)
+mata: st_local("__ergm_gzc", strofreal(abs(__ergm_gz_conv[1,1])))
+mata: st_local("__ergm_gzd", strofreal(abs(__ergm_gz_drift[1,1])))
+di "converged-series |geweke z| = `__ergm_gzc' (expect small); trending-series |geweke z| = `__ergm_gzd' (expect large)"
+assert `__ergm_gzc' < 3
+assert `__ergm_gzd' > 10
+
+mata: __ergm_hd_conv = ergm_heidel_diag(__ergm_conv, 0.4613612936, 0.1)
+mata: __ergm_hd_drift = ergm_heidel_diag(__ergm_drift, 0.4613612936, 0.1)
+mata: st_local("__ergm_stest_conv", strofreal(__ergm_hd_conv[1,1]))
+mata: st_local("__ergm_stest_drift", strofreal(__ergm_hd_drift[1,1]))
+di "converged-series heidel stest = `__ergm_stest_conv' (expect 1); trending-series heidel stest = `__ergm_stest_drift' (expect 0)"
+assert `__ergm_stest_conv' == 1
+assert `__ergm_stest_drift' == 0
+mata: mata drop __ergm_n __ergm_noise __ergm_conv __ergm_drift __ergm_t __ergm_gz_conv __ergm_gz_drift __ergm_hd_conv __ergm_hd_drift
+di "=== ergm_geweke_z()/ergm_heidel_diag(): correctly distinguish converged from non-converged chains ==="

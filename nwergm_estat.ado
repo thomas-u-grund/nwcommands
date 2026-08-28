@@ -27,21 +27,43 @@ output left behind by {help nwergm}, not on a network directly; see that command
 {title:estat mcmcdiag}
 
 {p 8 17 2}
-{cmd:estat mcmcdiag} {opt [, PLOT NAME(string)]}
+{cmd:estat mcmcdiag} {opt [, PLOT NAME(string) PVALUE(real 0.05) EPS(real 0.1)]}
 
 {pstd}
-{cmd:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation {cmd:nwergm} ran
+{cmd:estat mcmcdiag} reports diagnostics for the final MCMC simulation {cmd:nwergm} ran
 at its converged (or last-tried) coefficient vector: per-statistic mean, standard deviation,
-lag-1 autocorrelation, and an AR(1)-based effective sample size, plus the overall
-Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE convergence-test result.
-Available only after {opt method(mcmle)} - a pure MPLE fit involves no MCMC simulation at all,
-so there is nothing to diagnose.
+lag-1 autocorrelation, and an AR(1)-based effective sample size; the Geweke (1992) z-score and
+the Heidelberger-Welch (1983) stationarity/halfwidth test (the two formal convergence hypothesis
+tests behind R {cmd:ergm}'s own {cmd:mcmc.diagnostics()}, via its {cmd:coda} package
+dependency); plus the overall Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE
+convergence-test result. Available only after {opt method(mcmle)} - a pure MPLE fit involves no
+MCMC simulation at all, so there is nothing to diagnose.
 
 {pstd}
 {bf:This command never claims a fit converged merely because estimation stopped.} A satisfied
 convergence test is reported as exactly that - a necessary check that passed, not a proof of
-global convergence - and low ESS, low acceptance rate, or high autocorrelation are signs worth
-investigating even when {cmd:e(converged)} is 1.
+global convergence - and low ESS, low acceptance rate, high autocorrelation, a large Geweke
+{bf:z}, or a failed Heidelberger-Welch stationarity test are all signs worth investigating even
+when {cmd:e(converged)} is 1.
+
+{pstd}
+{bf:Geweke's diagnostic} compares the mean of the first 10% of the retained sample against the
+mean of the last 50%, each corrected for autocorrelation via the same AR(p) spectral-density
+estimator {cmd:nwergm}'s own final variance estimate uses. {bf:|z| > 1.96} (flagged with a
+{bf:*}) rejects convergence of that parameter's own chain at the 5% level.
+
+{pstd}
+{bf:The Heidelberger-Welch test} first checks STATIONARITY: whether a Cramer-von-Mises test on
+the chain's own cumulative-sum path passes once an increasing initial fraction (up to 50%) is
+discarded - {bf:Start} reports the first retained iteration once it does; {bf:FAILED} means no
+discard fraction achieved it. {opt pvalue()} sets the significance level and must be one of
+{bf:0.10}, {bf:0.05} (the default), {bf:0.025}, or {bf:0.01} - the test is evaluated against a
+fixed table of Cramer-von-Mises critical values at these four levels (each solved directly from
+the real {cmd:coda} package's own {cmd:pcramer()} CDF, not approximated), rather than a
+continuously computed p-value; see {cmd:unw_ergm.do}'s own header comment above
+{cmd:ergm_heidel_diag()} for why. Only once stationarity passes does the HALFWIDTH test run: the
+retained portion's own 95% CI halfwidth must be within {opt eps()} (default 10%) of its own
+mean - a separate, stricter precision check.
 
 {pstd}
 {opt plot} additionally draws a trace plot and a kernel density plot for each model statistic
@@ -122,6 +144,16 @@ combined graph's name; default {cmd:gof}.
 	Scalars
 	  {bf:r(acceptrate)}		Metropolis-Hastings acceptance rate over the final simulation
 
+	Matrices
+	  {bf:r(geweke)}		1 x {it:p} row vector of Geweke z-scores, one per model term (same
+	                    column order as {bf:e(b)})
+	  {bf:r(heidel)}		{it:p} x 6 matrix, one row per model term, columns
+	                    {bf:stest} (1/0, stationarity test passed), {bf:start} (first retained
+	                    iteration, missing if {bf:stest}=0), {bf:teststat} (the retained window's
+	                    own Cramer-von-Mises statistic), {bf:htest} (1/0, halfwidth test passed,
+	                    missing if {bf:stest}=0), {bf:mean} and {bf:halfwidth} of the retained
+	                    window (both missing if {bf:stest}=0)
+
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}:
 
@@ -162,7 +194,7 @@ end
 
 capture program drop nwergm_estat_mcmcdiag
 program define nwergm_estat_mcmcdiag, rclass
-	syntax [, PLOT NAME(string)]
+	syntax [, PLOT NAME(string) PVALUE(real 0.05) EPS(real 0.1)]
 
 	if `"`e(cmd)'"' != "nwergm" {
 		di as err "last nwergm estimates not found"
@@ -171,6 +203,21 @@ program define nwergm_estat_mcmcdiag, rclass
 	if `"`e(method)'"' != "mcmle" {
 		di as err "{bf:estat mcmcdiag} is only available after {bf:method(mcmle)} - MPLE fits involve no MCMC simulation."
 		exit 498
+	}
+
+	// Heidelberger-Welch's own critical value, resolved from the fixed
+	// 4-level table this file's own header comment (above
+	// ergm_heidel_diag() in unw_ergm.do) derives directly from coda's
+	// real pcramer() via uniroot() - see that comment for why this is
+	// exactly equivalent to coda::heidel.diag's own continuous p-value
+	// test at each of these four standard levels, not an approximation.
+	if `pvalue' == 0.10 local __ergm_hwcrit = 0.3473049202
+	else if `pvalue' == 0.05 local __ergm_hwcrit = 0.4613612936
+	else if `pvalue' == 0.025 local __ergm_hwcrit = 0.5806146822
+	else if `pvalue' == 0.01 local __ergm_hwcrit = 0.7434593138
+	else {
+		di as err "{bf:pvalue()} must be one of 0.10, 0.05, 0.025, or 0.01 - the Heidelberger-Welch stationarity test is evaluated against a fixed table of Cramer-von-Mises critical values (see unw_ergm.do's own header comment on ergm_heidel_diag() for why), not a continuously computed p-value."
+		exit 198
 	}
 
 	tempname bmat
@@ -202,6 +249,63 @@ program define nwergm_estat_mcmcdiag, rclass
 	}
 	di as txt "{hline 16}{c BT}{hline 11}{hline 11}{hline 12}{hline 9}"
 	di
+
+	// Formal convergence diagnostics (harmonisation unit 144): the two
+	// coda-package tests behind R ergm's own mcmc.diagnostics() - see
+	// unw_ergm.do's own header comment above ergm_geweke_z()/
+	// ergm_heidel_diag() for the full port account (ported directly from
+	// coda's real current source, cross-certified against real coda
+	// output on synthetic reference series - cscripts/test_nwergm_mcmcdiag.do).
+	tempname __gew __hd
+	mata: st_matrix("`__gew'", ergm_geweke_z(`samp'))
+	mata: st_matrix("`__hd'", ergm_heidel_diag(`samp', `__ergm_hwcrit', `eps'))
+	tempname __gew_m __hd_m
+	mata: `__gew_m' = st_matrix("`__gew'")
+	mata: `__hd_m' = st_matrix("`__hd'")
+
+	di as txt "Geweke diagnostic (first 10% vs. last 50% of the retained sample):"
+	di as txt "{hline 16}{c TT}{hline 11}{hline 11}"
+	di as txt %-16s "Statistic" "{c |}" %10s "z" %10s "p-value"
+	di as txt "{hline 16}{c +}{hline 11}{hline 11}"
+	forvalues k = 1/`p' {
+		local nm : word `k' of `names'
+		mata: st_local("__ergm_gz", strofreal(`__gew_m'[1,`k']))
+		mata: st_local("__ergm_gp", strofreal(2*(1-normal(abs(`__gew_m'[1,`k'])))))
+		if abs(`__ergm_gz') > 1.96 {
+			di as txt %-16s "`nm'" "{c |}" as err %10.3f `__ergm_gz' %10.4f `__ergm_gp' "  *"
+		}
+		else {
+			di as txt %-16s "`nm'" "{c |}" as res %10.3f `__ergm_gz' %10.4f `__ergm_gp'
+		}
+	}
+	di as txt "{hline 16}{c BT}{hline 11}{hline 11}"
+	di as txt "Note: |z| > 1.96 (flagged {bf:*}) rejects convergence of that parameter's own chain at the 5% level (Geweke 1992) - a large systematic difference between the retained sample's own early and late portions, not proof either way for a borderline z."
+	di
+
+	di as txt "Heidelberger-Welch stationarity + halfwidth test (pvalue=`pvalue', eps=`eps'):"
+	di as txt "{hline 16}{c TT}{hline 12}{hline 10}{hline 12}{hline 11}"
+	di as txt %-16s "Statistic" "{c |}" %11s "Stationary" %9s "Start" %11s "Halfwidth" %10s "HW test"
+	di as txt "{hline 16}{c +}{hline 12}{hline 10}{hline 12}{hline 11}"
+	forvalues k = 1/`p' {
+		local nm : word `k' of `names'
+		mata: st_local("__ergm_hstest", strofreal(`__hd_m'[`k',1]))
+		if `__ergm_hstest' == 1 {
+			mata: st_local("__ergm_hstart", strofreal(`__hd_m'[`k',2]))
+			mata: st_local("__ergm_hhw", strofreal(`__hd_m'[`k',6]))
+			mata: st_local("__ergm_hhtest", strofreal(`__hd_m'[`k',4]))
+			local __ergm_httext = cond(`__ergm_hhtest'==1, "passed", "failed")
+			di as txt %-16s "`nm'" "{c |}" as res %11s "passed" %9.0f `__ergm_hstart' %11.4f `__ergm_hhw' %10s "`__ergm_httext'"
+		}
+		else {
+			di as txt %-16s "`nm'" "{c |}" as err %11s "FAILED" %9s "-" %11s "n/a" %10s "n/a"
+		}
+	}
+	di as txt "{hline 16}{c BT}{hline 12}{hline 10}{hline 12}{hline 11}"
+	di as txt "Note: {bf:Stationary} = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), discarding an increasing initial fraction (up to 50%) until it does - {bf:Start} is the first retained iteration once it passes, {bf:FAILED} means no discard fraction achieved stationarity. {bf:HW test} additionally requires the retained portion's own 95% CI halfwidth to be within {bf:eps()} (default 10%) of its own mean - a separate, stricter precision check, only meaningful once stationarity itself has passed."
+	di
+
+	return matrix geweke = `__gew'
+	return matrix heidel = `__hd'
 
 	if e(converged) == 1 {
 		di as txt "MCMLE's own convergence test was satisfied after " %3.0f e(mcmle_iterations) " iteration(s)."
@@ -271,6 +375,23 @@ program define nwergm_estat_mcmcdiag, rclass
 	}
 
 	mata: mata drop `samp'
+	// NOTE (harmonisation unit 144, investigated then corrected): `_rc'
+	// left standing after this command returns may be nonzero even on a
+	// fully successful run - confirmed directly via isolated probes that
+	// `_rc' is genuinely NOT reset by ordinary trivial commands (`local',
+	// `di') in this Stata version, only by commands that explicitly set
+	// it; a stale nonzero `_rc' from an earlier internal `capture' (of
+	// which this program, like nwergm_estat_gof above it, has several -
+	// e.g. around `graph drop' inside the `plot' block) simply persists
+	// through every subsequent trivial statement, `mata:'-prefixed or
+	// not. An initial attempt to "fix" this with a trailing harmless
+	// `local' assignment (mirroring nwergm_estat_gof's own established
+	// pattern) was itself based on the same false premise and DOES NOT
+	// actually reset `_rc' either - removed rather than left in as a
+	// non-functional cargo-cult fix. The correct takeaway, applied in
+	// cscripts/test_nwergm_estat.do: never treat `_rc' as a success
+	// signal after a command like this one that runs internal
+	// `capture's - check the command's own r()-results instead.
 end
 
 capture program drop nwergm_estat_gof
