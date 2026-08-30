@@ -1,286 +1,3 @@
-/***
-{smcl}
-{* *! version 1.0.6  23aug2014 author: Thomas Grund}{...}
-{marker topic}
-{helpb nw_topical##import:[NW-2.2] Import/Export}
-
-{title:Title}
-
-{p2colset 9 18 22 2}{...}
-{p2col :nwimport  {hline 2}}Import network{p_end}
-{p2colreset}{...}
-
-{title:Syntax}
-
-{p 8 17 2}
-{cmdab: nwimport} 
-{it:{help filename}}
-, 
-{opt type}({it:{help nwimport##import_type:import_type}}[, {it:{help nwimport##type_sub:type_sub}}])
-[{opth name(newnetname)}
-{opt forcedirected}
-{opt forceundirected}
-{opt nwclear}
-{opt clear}
-{opt nwappend}
-{opt xvars}]
-
-
-{synoptset 20 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opth name(newnetname)}}name of the imported network; default = {it:filename}{p_end}
-{synopt:{opt forcedirected}}force network to be directed{p_end}
-{synopt:{opt forceundirected}}force network to be undirected{p_end}
-{synopt:{opt nwclear}}clear all data and networks{p_end}
-{synopt:{opt clear}}same as {opt nwclear}{p_end}
-{synopt:{opt nwappend}}append to existing data{p_end}
-{synopt:{opt xvars}}also generate Stata variables for the imported network (see {help nwload}){p_end}
-
-{synoptset 20 tabbed}{...}
-{marker import_type}{...}
-{p2col:{it:import_type}}Description{p_end}
-{p2line}
-{p2col:{cmd: pajek}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":Pajek NET file format}
-		{p_end}
-{p2col:{cmd: ucinet}}network is given in {help nwimport##ucinet:Ucinet file format}
-		{p_end}
-{p2col:{cmd: matrix}}network is given as an {help nwimport##matrix:adjacency matrix} (e.g. Excel, txt)
-		{p_end}
-{p2col:{cmd: edgelist}}network is given as an {help nwimport##edgelist:edgelist} (e.g. Excel, txt)
-		{p_end}
-{p2col:{cmd: compressed}}network is given as a {help nwimport##compressed:compressed edgelist} (e.g. txt, CSV)
-		{p_end}
-{p2col:{cmd: gml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/gml-format/":GML file format}
-	{p_end}
-
-
-{synoptset 20 tabbed}{...}
-{marker type_sub}{...}
-{p2col:{it:type_sub}}Description{p_end}
-{p2line}
-{p2col:{cmd: rownames}}matrix: the file's first {it:column} holds each row's node name as text (no header row) - see {help nwimport##matrix:Import raw adjacency matrix}'s own row-labeled example
-		{p_end}
-{p2col:{cmd: colnames}}matrix: {it:not needed} when the file's first {it:row} already holds node names as text - that shape is recognized automatically without any {it:type_sub} at all
-		{p_end}
-{p2col:{opth delimiter(string)}}matrix: specify delimiter in matrix explicitly
-		{p_end}		
-{p2col:{opt keeporiginal}}edgelist, compressed: keeps original nodeid's of nodes
-		{p_end}			
-		
-{title:Description}
-
-{pstd}
-Imports networks from popular network file formats. The command automatically recognizes whether networks are directed or undirected. However, options
-{bf:forcedirected} and {bf:forceundirected} can be used to override automatic detection.
-
-The following network formats are supported:
-
-{pmore}{help nwimport##ucinet:- Ucinet}{p_end}
-{pmore}{help nwimport##pajek:- Pajek}{p_end}
-{pmore}{help nwimport##matrix:- Raw adjacency matrix}{p_end}
-{pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
-{pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
-{pmore}{help nwimport##gml:- GML}{p_end}
-
-{pstd}
-Can also be used to import networks from the internet:
-
-{phang}
-{cmd:. nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)}{p_end}
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Directed: yes - automatically detected from the source file unless overridden with
-{bf:forcedirected}/{bf:forceundirected}. Weighted: yes, where the source format itself carries tie
-values (e.g. Ucinet/Pajek matrices, weighted edgelists). Signed: yes, if the source file's own
-values are negative. Two-mode: yes, for the formats whose own file structure distinguishes row and
-column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the same way as any other
-{help nwset}-created network.
-
-{marker ucinet}{...}
-{title:Import Ucinet DL format}
-
-{pstd}
-{cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
-multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
-networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
-or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
-
-{phang}
-{bf:Example 1:}{p_end}
-	dl n=4 format=fullmatrix
-	data:	
-	0 1 1 0	
-	1 0 1 1
-	1 1 0 0
-	0 1 0 0 
-
-{phang}
-{bf:Example 2:}{p_end}
-	dl n = 4, nm = 2
-	labels:
-	GroupA,GroupB,GroupC,GroupD
-	matrix labels:
-	Marriage,Business
-	data:
-	0 1 0 1
-	1 0 0 0
-	0 0 1 0
-	1 0 0 1
-
-	0 1 1 1
-	1 0 0 0
-	1 0 0 1
-	1 0 1 0
-	
-{phang}
-{bf:Example 3:}{p_end}
-	dl n = 4
-	format = lowerhalf
-	labels:
-	Sanders,Skvoretz
-	S.Smith,T.Smith
-	data:
-	2
-	1 2
-	1 1 2
-	0 1 0 2
-	
-{phang}
-{bf:Example 4:}{p_end}
-	DL n=5
-	format = edgelist1
-	labels:
-	george, sally, jim, billy, jane
-	data:
-	1 2
-	1 3
-	2 3
-	3 1
-	4 3
-
-{phang}
-{bf:Example 5:}{p_end}
-	DL n=5
-	format = edgelist1
-	labels embedded:
-	data:
-	george sally
-	george jim
-	sally jim
-	billy george
-	jane jim
-
-	
-{marker pajek}{...}
-{title:Import Pajek .net format}
-
-{pstd}
-{cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}. It also supports
-multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
-networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
-or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
-
-
-
-{marker matrix}{...}
-{title:Import raw adjacency matrix}
-
-{pstd}
-This imports networks that are in raw matrix format. Data can be saved as .txt, .xls or anything else. As delimiters "tab" "," ";" and " " are allowed. Furthermore, row
-and/or column names can be included as well. This import option can be used to load networks from e.g. Excel. When data has already been opened/entered to Stata,
-{help nwset} declares data as network data.
-
-{phang}
-{bf:Example 1:}{p_end}
-	0 1 1 0
-	1 0 0 0
-	0 0 0 1
-	0 1 0 0
-
-{phang}
-{bf:Example 2:}{p_end}
-	thomas,peter,susan,kim
-	0,1,1,0
-	1,0,0,0
-	0,0,0,1
-	0,1,0,0
-
-{pstd}
-Notice that the command recognises when node names are given in the first row (Example 2 above) - {bf:type(matrix)}
-with no suboptions already produces the correct 4-node network from that file, since the header row becomes each
-node's own variable name and {cmd:nwimport} labels nodes from variable names by default; {bf:rownames}/{bf:colnames}
-are {it:not} needed for this shape and should be omitted here.
-
-{pstd}
-{bf:rownames}/{bf:colnames} are for the opposite shape instead: a raw matrix with node names given as an explicit
-first {it:column} of text (no header row at all), e.g.
-
-	thomas,0,1,1,0
-	peter,1,0,0,0
-	susan,0,0,0,1
-	kim,0,1,0,0
-
-{pstd}
-which requires {bf:type(matrix, rownames)} to read that first column as node labels rather than data.
-
-{pstd}
-Furthermore, the raw dataset can also contain additional attributes. When there are more variables than cases, all remaining
-variables are treated as attributes. 
-
-{phang}
-{bf:Example 2:}{p_end}
-	thomas,peter,susan,kim, sex
-	0,1,1,0, male
-	1,0,0,0, male
-	0,0,0,1, female
-	0,1,0,0, male
-	
-{marker edgelist}{...}
-{title:Import raw edgelist}
-
-{pstd}
-This imports networks in {help nwfromedge##edgelist:raw edgelist format}. Data can already be in Stata-dta format. Otherwise, delimiters "tab" "," ";" and " " are allowed. When two columns are given
-a non-valued network is loaded, when three columns are given a valued network is loaded. In case edgelist data has already been entered/opened
-in Stata, {help nwfromedge} generates a network. Node labels can be embedded in the edgelist.
-
-{phang}
-{bf:Example 1:}{p_end}
-	1 2
-	1 4
-	2 4
-	4 3
-
-{phang}
-{bf:Example 2:}{p_end}
-	peter,thomas,1
-	thomas,susan,4
-	susan,thomas3
-	geoff,john,2
-
-{marker compressed}{...}
-{title:Import compressed edgelist}
-
-{pstd}
-This imports networks in compressed edgelist format. As delimiter "," is allowed. 
-
-{phang}
-{bf:Example 1:}{p_end}
-	AS,MI,NY,TX
-	TX,CA
-	IL,AL,SD
-	AL,MI,CA,NY
-
-{phang}
-{bf:Example 2:}{p_end}
-	peter,thomas,mathilde,tim
-	thomas,susan
-	susan
-	geoff,john,michael
-
-***/
 capture program drop nwimport
 program nwimport
 	syntax anything, type(string) [ name(string) clear nwclear nwappend xvars forcedirected forceundirected *]
@@ -912,8 +629,22 @@ program _nwimport_gml
 
 		local mode ""
 		file read importfile line
-		// read line
-		while `"`line'"' != "" {
+		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked "GML/
+		// GraphML import fixture confidence" gap): this used to loop
+		// `while `"`line'"' != ""' - treating ANY blank line, anywhere
+		// in the file, as end-of-file, not just a genuine EOF. Real GML
+		// files commonly have blank lines for readability (confirmed
+		// directly against a real, externally-sourced fixture -
+		// networkx's own GML test data - which has one inside its first
+		// `edge [...]' block; this parser silently stopped there,
+		// reading only a fragment of the first edge and none of the
+		// rest of the file, with no error). A programmatically-generated
+		// exporter (this package's own included) never happens to emit
+		// a blank line, which is exactly why this was invisible to
+		// every round-trip (export-then-reimport) test that existed
+		// before this pass. Fixed using `file read''s own documented
+		// `r(eof)' indicator instead of inferring EOF from line content.
+		while r(eof) == 0 {
 			tokenize `"`line'"'
 			local i = 1
 			// read all elements
@@ -926,7 +657,20 @@ program _nwimport_gml
 				if "``i''" == "label" & "`mode'" == "node" {
 					local mode_sub = "node_label"
 					local nextlab `"``=`i'+1''"'
-					local labs `"`labs' "`nextlab'""'
+					// get_nodenames_from_string() (unw_core.do) tokenizes
+					// `labs' on COMMA, not whitespace, so multi-word GML
+					// labels (e.g. "Node 1") survive intact without needing
+					// quoting - matching the comma-delimited, unquoted
+					// convention already used by every other importer that
+					// builds `labs' (e.g. the pajek path just above). The
+					// previous space-separated, double-quoted-per-label
+					// form produced a `labs' value like ` "Node 1" "Node 2"'
+					// which broke nwfromedge's own `if "`labs'" == ""'
+					// emptiness check (a real, distinct "type mismatch"
+					// bug, not just cosmetic) as soon as it was actually
+					// exercised against a real (non-self-generated) GML
+					// fixture with labels.
+					local labs `"`labs'`nextlab',"'
 				}
 				if "``i''" == "source" & "`mode'" == "edge" {
 					local mode_sub = "edge_source"

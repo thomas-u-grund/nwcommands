@@ -173,3 +173,33 @@ assert `__ergm_stest_conv' == 1
 assert `__ergm_stest_drift' == 0
 mata: mata drop __ergm_n __ergm_noise __ergm_conv __ergm_drift __ergm_t __ergm_gz_conv __ergm_gz_drift __ergm_hd_conv __ergm_hd_drift
 di "=== ergm_geweke_z()/ergm_heidel_diag(): correctly distinguish converged from non-converged chains ==="
+
+* =====================================================================
+* Harmonisation unit 154: nomcmcsample - opts out of posting
+* e(mcmcsample) at all, the single slowest step of a fit with a large
+* mcmcsamplesize() (a genuine Stata matrix-engine cost at bulk-data
+* scale, directly profiled - over 30 seconds at 100,000 rows,
+* REGARDLESS of destination matrix name, ruling out any e()-specific
+* overhead - not something restructuring estat mcmcdiag's own
+* consumption could help with, since reading an already-posted matrix
+* back is fast at any size; see nwergm.ado's own build-up comment at
+* the e(mcmcsample) posting site for the full account, including the
+* correction to docs/ERGM_ROADMAP.md's own earlier guess about where
+* the fix would need to live). Run LAST in this file, after every
+* other test, so it does not disturb the e(mcmcsample)-bearing active
+* fit earlier tests in this file depend on. Coefficients/SEs are
+* completely unaffected (a pure MCMLE point/vcov result, computed
+* before the final-sample posting either way); estat mcmcdiag then
+* fails with a clear, specific error (not the generic "MPLE path"
+* r(498) the very first test in this file exercises for a different
+* reason, and not a raw "matrix not found" crash).
+* =====================================================================
+
+set seed 999
+qui nwergm mydirnet, edges mutual mcmcburnin(1000) mcmcinterval(20) mcmcsamplesize(1000) mcmleiterations(15) nomcmcsample
+capture confirm matrix e(mcmcsample)
+assert _rc != 0
+assert e(mcmc_samplesize) == 1000
+capture noisily estat mcmcdiag
+assert _rc == 498
+di "=== nomcmcsample: e(mcmcsample) correctly skipped, estat mcmcdiag fails informatively, coefficients unaffected ==="

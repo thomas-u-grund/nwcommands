@@ -25,18 +25,19 @@ Not applicable - {cmd:estat gof} operates on the fitted model and the wave data 
 {title:estat gof}
 
 {p 8 17 2}
-{cmd:estat gof} {opt [, NSIM(int) SEED(int) STATS(namelist) MAXDEG(int) MAXDIST(int) TWOTAILED NAME(string)]}
+{cmd:estat gof} {opt [, NSIM(int) SEED(int) STATS(namelist) MAXDEG(int) MAXDIST(int) TWOTAILED NAME(string) JOIN(off)]}
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
 {synopt:{opt nsim(int)}}Number of fresh post-fit simulated replicates forming the reference distribution; default 50, minimum 5{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
-{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}; default all three network statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself requires a co-evolution fit){p_end}
+{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:triad}, {bf:behavior}; default the three network distribution statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself requires a co-evolution fit; {bf:triad} is never added by default, request it explicitly){p_end}
 {synopt:{opt maxdeg(int)}}Highest EXACT out-/in-degree category before the ("maxdeg+") overflow bin; default 15{p_end}
 {synopt:{opt maxdist(int)}}Highest EXACT geodesic-distance category before the ("NR", not reached) overflow bin; default 6{p_end}
 {synopt:{opt twotailed}}Report a two-tailed p-value instead of the one-tailed default (RSiena's own {cmd:twoTailed=FALSE} default: reject for a SMALL p only, i.e. the observed network is an outlier relative to what the fitted model simulates){p_end}
-{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {cmd:{it:name}_outdegree}, {cmd:{it:name}_indegree}, {cmd:{it:name}_geodesic}, and {cmd:{it:name}_behavior} for a co-evolution fit's fourth statistic){p_end}
+{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {cmd:{it:name}_outdegree}, {cmd:{it:name}_indegree}, {cmd:{it:name}_geodesic}, {cmd:{it:name}_triad}, and {cmd:{it:name}_behavior} for a co-evolution fit's fourth statistic; with {opt join(off)} each period gets its own graph instead, e.g. {cmd:{it:name}_outdegree_p1}/{cmd:{it:name}_outdegree_p2}){p_end}
+{synopt:{opt join(off)}}Run a SEPARATE Mahalanobis test (and violin) per wave-period instead of the default pooled/summed one - real RSiena's own {cmd:join=FALSE} (non-default); omit for the default pooled behavior ({cmd:join=TRUE}){p_end}
 {synoptline}
 
 {pstd}
@@ -70,11 +71,21 @@ not change the statistical construction (the Mahalanobis test is agnostic to how
 draws were generated, only that they are genuine, independent draws at the fitted parameters).
 
 {pstd}
-{bf:Pooling across periods.} With three or more waves, each auxiliary statistic's own vector is
-POOLED (summed) across every period before the single test is run - real RSiena's own
+{bf:Pooling across periods.} With three or more waves, each auxiliary statistic's own vector is by
+default POOLED (summed) across every period before a single test is run - real RSiena's own
 {cmd:join=TRUE} default, matching {cmd:nwsaom}'s own established summation-pooling convention for
-the rate/eval parameters themselves. A separate test per period ({cmd:join=FALSE}) is real
-RSiena's own non-default option and is not implemented here.
+the rate/eval parameters themselves. {opt join(off)} switches to real RSiena's own non-default
+{cmd:join=FALSE}: a completely SEPARATE test (and violin) per wave-period, replacing the pooled
+report entirely for that call rather than adding to it.
+
+{pstd}
+{bf:Triad census.} {opt stats(triad)} adds the full 16-category MAN triad census (real RSiena's
+own {cmd:TriadCensus()}), reusing {helpb nwtriads}'s own census machinery on a temporary network
+built from each simulated/observed wave. Unlike the three distribution statistics above, the triad
+census reports RAW counts, not proportions - verified directly against real RSiena's own R source,
+matching it exactly (not merely "similar in spirit"). {cmd:nwsaom}'s own networks are always
+directed, so all 16 categories are always reported (no undirected-network special case, unlike
+{helpb nwergm}'s own triad-census report).
 
 {pstd}
 {bf:Co-evolution fits} (a {opt behavior()} model) add a fourth default auxiliary statistic,
@@ -98,7 +109,9 @@ title, matching RSiena's own {cmd:xlabel = paste("p:", round(x$p,3))} convention
 
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}, one pair per requested statistic (default
-{bf:outdegree}/{bf:indegree}/{bf:geodesic}, plus {bf:behavior} for a co-evolution fit):
+{bf:outdegree}/{bf:indegree}/{bf:geodesic}, plus {bf:behavior} for a co-evolution fit; {bf:triad}
+only if requested via {opt stats()}). With {opt join(off)}, each period gets its own pair instead,
+suffixed {cmd:_p{it:#}} (e.g. {cmd:r(p_outdegree_p1)}, {cmd:r(p_outdegree_p2)}):
 
 		Scalars
 		  {bf:r(p_{it:stat})}		empirical Mahalanobis-distance test p-value for that statistic
@@ -114,6 +127,10 @@ title, matching RSiena's own {cmd:xlabel = paste("p:", round(x$p,3))} convention
 		{cmd:. estat gof, nsim(200) stats(outdegree geodesic) maxdeg(10)}
 
 		{cmd:. estat gof, twotailed name(mygof)}
+
+		{cmd:. estat gof, stats(outdegree triad) nsim(200)}
+
+		{cmd:. estat gof, join(off)}
 
 {title:References}
 

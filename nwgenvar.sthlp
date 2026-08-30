@@ -35,10 +35,22 @@ These are network extensions to {help generate}. The command is very similar to 
 and allows producing either variables or networks. There are basically three ways to use
 this commands: 1) produce Stata variables with some function {bf:{it:netfcn1}}, 2) produce 
 networks with some function {bf:{it:netfnc2}}, 3) produce networks with an expression {bf:{it:netexp}}. 
-A network expression is very similar to normal expressions in Stata. 
+A network expression is very similar to normal expressions in Stata.
 
+{title:Examples}
 
+{pstd}
+Generate a per-node variable with a network function:
 
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwgenvar mydeg = degree(flomarriage)}
+	{cmd:. list mydeg in 1/5}
+
+{pstd}
+Generate a new network with a network function:
+
+	{cmd:. nwgenvar newnet = random(10), prob(.3)}
+	{cmd:. nwsummarize newnet}
 
 {title:Supported network types}
 

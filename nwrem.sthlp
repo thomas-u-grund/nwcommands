@@ -85,14 +85,19 @@ step. It requires {it:netname} to already be declared as an {bf:event}-type temp
 {bf:Speed}: on direct head-to-head wall-clock benchmarks against R's own {cmd:relevent::rem.dyad()}
 1.2-1 (identical data, identical effect set, {cmd:ordinal=TRUE}, {cmd:fit.method="MLE"} on the R
 side; {cmd:nwrem}'s own pure-Mata engine on this side - {bf:no native C backend yet}): a 2-effect
-model ({bf:nodsnd}+{bf:nidrec}, 30 actors, 2000 events) runs in 0.78s vs. R's 1.54s - roughly 2x
-faster; the full 8-effect degree+inertia model on the identical data runs in 8.36s vs. R's
-107.75s - roughly {bf:13x faster}. The gap widens on the larger model because R's own
-{cmd:optim(BFGS)} has no equivalent to {cmd:nwrem}'s own retry-based optimizer (see the note on
-precision below) for escaping the degree-effect family's collinearity ridge, so a single R fit can
-spend most of its own time on failed convergence attempts that {cmd:nwrem} sidesteps cheaply. See
-{cmd:dev/rem_benchmark.R}/{cmd:.do} and {cmd:dev/rem_benchmark_multi.R}/{cmd:.do} in the package's
-own source for the exact scripts.
+model ({bf:nodsnd}+{bf:nidrec}, 30 actors, 2000 events) runs consistently around 0.8s vs. R's
+1.54s - roughly 2x faster, with little run-to-run variation. The full 8-effect degree+inertia
+model on the identical data is faster than R on {bf:every} repeated trial measured, but with real
+variation run to run - 9.2s to 48.6s across thirteen repeated fits (two independent benchmark
+sessions), median around 39s, against R's own single measured 107.75s: roughly {bf:2.5-3x faster}
+typically, up to {bf:12x} when the optimizer's first attempt happens to converge directly. The
+variation itself is a disclosed, understood property, not noise to average away: this particular
+8-effect model sits on the degree-effect family's own collinearity ridge (see the note on
+precision below), so {cmd:nwrem}'s own retry-based optimizer sometimes needs only one attempt and
+sometimes several before converging - R's own single {cmd:optim(BFGS)} call has no equivalent
+retry strategy for the same ridge, which is why {cmd:nwrem} still wins on every trial despite its
+own variation. See {cmd:dev/rem_benchmark.R}/{cmd:.do} and
+{cmd:dev/rem_benchmark_multi.R}/{cmd:.do} in the package's own source for the exact scripts.
 
 {pstd}
 {cmd:nwrem} fits any combination of the 14 effects above (at least one required). There is

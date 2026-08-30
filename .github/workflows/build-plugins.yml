@@ -3,7 +3,12 @@ name: Build native plugins
 # Harmonisation unit 87 (phase C, cross-platform native builds -
 # docs/CERTIFICATION.md), extended in unit 95 to also build nwgraph.c
 # (docs/NATIVE_GRAPH_LIBRARIES.md's own native graph-algorithm kernel -
-# currently betweenness centrality). No Windows/Linux toolchain or
+# currently betweenness centrality), and again (2026-08-29) to also build
+# saom_sim.c (nwsaom's own native ministep-simulation kernel) - it was
+# already a dependency of native/Makefile's own `macos`/`unix` targets,
+# so macOS/Linux were silently already BUILDING it and just never
+# uploading/committing it; Windows never even compiled it. No Windows/Linux
+# toolchain or
 # cross-compiler was available in the environment this workflow was
 # authored in, so those two platforms' own plugin binaries are built here,
 # on GitHub's own hosted runners, rather than locally. macOS is rebuilt
@@ -61,6 +66,7 @@ jobs:
           path: |
             lib/plugins/macos/ergm_mcmc.plugin
             lib/plugins/macos/nwgraph.plugin
+            lib/plugins/macos/saom_sim.plugin
             lib/plugins/macos/nwedit_viewer
 
   windows:
@@ -87,6 +93,7 @@ jobs:
           cd native
           cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
           cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph.plugin
+          cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c /Fe:..\lib\plugins\windows\saom_sim.plugin
       - name: Fetch WebView2 SDK + WIL headers (nwedit_viewer dependency)
         shell: cmd
         run: |
@@ -109,6 +116,7 @@ jobs:
             lib/plugins/windows/ergm_mcmc.plugin
             lib/plugins/windows/nwedit_viewer.exe
             lib/plugins/windows/nwgraph.plugin
+            lib/plugins/windows/saom_sim.plugin
 
   linux:
     runs-on: ubuntu-latest
@@ -133,6 +141,7 @@ jobs:
           path: |
             lib/plugins/unix/ergm_mcmc_unix.plugin
             lib/plugins/unix/nwgraph_unix.plugin
+            lib/plugins/unix/saom_sim_unix.plugin
             lib/plugins/unix/nwedit_viewer
 
   commit-binaries:

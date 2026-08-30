@@ -7636,22 +7636,46 @@ void `NWdef'::connect_edge(real scalar i, real rowvector rj) {
 }
 
 /*
-	Add a node
+	Add a node. `mode' is an OPTIONAL trailing argument (harmonisation
+	unit 158) - a genuinely isolate node being added to a TWO-MODE
+	network needs its own mode recorded, or it silently defaults to
+	mode "1" regardless of the caller's intent (confirmed as a real,
+	previously-documented gap: nwaddnodes.ado's own help header stated
+	"does not offer a way to choose which mode the new (isolate) nodes
+	belong to - not recommended for two-mode networks until that is
+	clarified/documented"). Declared WITHOUT `scalar' - Mata forbids
+	`| class T scalar' as an optional argument, but a plain `string
+	scalar' IS a legal optional Mata argument type (that restriction is
+	specific to CLASS scalars, confirmed directly during the bipartite
+	ERGM work, docs/CERTIFICATION.md unit 155) - an omitted `mode'
+	arrives as an empty string "", handled below by falling back to the
+	pre-existing "1" default, so every existing 1-argument call site
+	(this method's own prior signature) keeps working unchanged.
 */
-void `NWdef'::add_node(string scalar s) {
+void `NWdef'::add_node(string scalar s, | string scalar mode) {
 	real scalar idx, size
 	idx = first_index_match(nodes, s)
 	if(idx > 0) {
 		error_handle("`vlNWdef': node name already exists.",
 			`errNodeDupName')
 	}
+	// If the caller is requesting a specific mode for the new node,
+	// force `modes' to its own lazy-initialized size FIRST (one entry
+	// per EXISTING node, get_modes()'s own "1" default) before
+	// appending - otherwise, on a network whose `modes' has never yet
+	// been read (cols(modes)==0, the ordinary un-initialized state for
+	// a freshly-built two-mode network), the requested mode would be
+	// silently discarded below (the `cols(modes) > 0' guard would skip
+	// recording it entirely) until some LATER get_modes() call lazily
+	// initialized the WHOLE array to "1", including this node,
+	// clobbering the caller's own explicit request.
+	if (mode != "" & cols(modes) == 0) get_modes()
 	// General validation-stage finding (see docs/CERTIFICATION.md): this
-	// method's only live caller is nwaddnodes.ado, already documented as
-	// broken for an unrelated reason (see CERTIFICATION.md's own Pending
-	// row) - but it read/wrote `edge' directly with no dense guard,
-	// unlike every other dense-touching method in this class, and would
-	// have silently concatenated onto an empty/wrong-sized matrix for a
-	// sparse-natively-built network regardless of that unrelated bug.
+	// method's only live caller is nwaddnodes.ado - but it read/wrote
+	// `edge' directly with no dense guard, unlike every other
+	// dense-touching method in this class, and would have silently
+	// concatenated onto an empty/wrong-sized matrix for a
+	// sparse-natively-built network regardless.
 	ensure_dense_built()
 	size = cols(nodes)
 	nodes = (nodes, s)
@@ -7671,9 +7695,11 @@ void `NWdef'::add_node(string scalar s) {
 	// silently papering over the undersized array - once nwaddnodes
 	// stopped auto-loading by default (the xvars-consistency unit), the
 	// latent bug in add_node() itself finally surfaced. New nodes default
-	// to mode "1", the same single-mode default get_modes() itself uses.
+	// to mode "1" when `mode' is omitted (empty string) - the same
+	// single-mode default get_modes() itself uses - otherwise the
+	// caller's own requested mode is recorded verbatim.
 	if (cols(modes) > 0) {
-		modes = (modes, "1")
+		modes = (modes, (mode=="" ? "1" : mode))
 	}
 }
 
@@ -8192,8 +8218,199 @@ class `NWsder' {
 */
 class `NWs' scalar nws_create()
 {
-	class `NWs'  scalar a 
-	
+	class `NWs'  scalar a
+
 	return(a)
+}
+end
+
+/* -------------------------------------------------------------------- */
+/*
+	Shared network-layout primitives (distance/circlelayout/kklayout).
+
+	Canonical home for these three: they are used by nwplot.ado's own
+	layout dispatch (mds/mdsclassical/kk/etc.) AND by nwmovie.ado's
+	per-wave transitioning layout, which needs to call kklayout()
+	directly from a different .ado file. A Mata function defined inline
+	inside one .ado file's own mata: block is not reliably callable from
+	a different .ado file's own Mata code, even after the defining file
+	has been auto-loaded via a real command call earlier in the same
+	session - confirmed directly. This package's own reliable mechanism
+	for cross-file-shared Mata code (e.g. the NWdef class above) is
+	compiling it from unw_core.do/unw_ergm.do/unw_saom.do/unw_rem.do into
+	lib/lnwcommands.mlib via lib/build.do, so these three live here
+	instead of in nwplot.ado.
+*/
+
+//Calculates the distance matrix in a discrete graph
+//Distances between unconnecte nodes are indicated by "0"
+capture mata: mata drop distance()
+mata:
+real matrix function distance(real matrix Net, | real scalar MaxDist)
+{
+	real scalar 	maxdist, ready,counter, maxcounter
+	real matrix 	N1,Dist,Ntemp
+
+	if (args()==2)
+		maxcounter = MaxDist
+	else
+		maxcounter = rows(Net)-1
+
+	// Undirected network
+	Net = (Net + Net') :/ (Net + Net')
+	_editmissing(Net, 0)
+
+	N1 = Net
+	Dist = Net	//Distance 1 matrix
+	counter = 1
+	ready = 0
+	while (ready==0 & counter<maxcounter) {
+		counter = counter + 1
+		N1=(N1*Net)
+		Ntemp = (Dist:==0):*(N1:>0):*counter
+		if (sum(Ntemp)==0) ready = 1
+		Dist = Dist:+Ntemp
+	}
+	//Dist = (Dist:==0):* (runiform(rows(Dist), cols(Dist))) :+ Dist
+	maxdist = max(Dist)
+	Dist = (Dist:==0):* (maxdist + 1) :+ Dist
+	_diag(Dist, 0)
+	return(Dist)
+}
+end
+
+capture mata: mata drop circlelayout()
+mata:
+real matrix function circlelayout(real scalar N)
+{
+	real colvector 	V
+	real matrix 	Coord
+	real scalar 	xmax, ymax, CoordMax1, CoordMax2
+
+	xmax = 100
+	ymax = 100
+	V= (1::N)
+	Coord=J(N,2,.)
+
+	Coord[.,1] = 0.5*xmax :+ 0.5:*xmax:*cos(V[.]:*(2*pi()/N))
+	Coord[.,2] = 0.5*ymax :+ 0.5:*ymax:*sin(V[.]:*(2*pi()/N))
+
+	CoordMax1 = max(Coord[.,1])
+	CoordMax2 = max(Coord[.,2])
+	Coord[.,1] = (((Coord[.,1] :/ CoordMax1)))
+	Coord[.,2] = (((Coord[.,2] :/ CoordMax2)))
+	Coord[.,1] = Coord[.,1] :+0.25
+	return(Coord)
+}
+end
+
+// Kamada-Kawai layout (layout(kk)), implemented via stress majorization
+// (the Guttman transform / SMACOF update) rather than the original 1989
+// paper's own Newton-Raphson local optimizer: both minimize the exact
+// same energy function (sum over all pairs i,j of w_ij*(|Xi-Xj|-Dij)^2,
+// w_ij = 1/Dij^2, Dij = graph-theoretic shortest-path distance) - this
+// is the same "spring layout with graph-distance targets" family as
+// nwplot.ado's own `frucht' layout, but using shortest-path distances as
+// ideal spring lengths. Reuses `distance()' (above) for graph-theoretic
+// shortest paths.
+capture mata: mata drop kklayout()
+mata:
+real matrix function kklayout(real matrix M, real scalar Iter, | real matrix Start)
+{
+	real matrix D, W, Pos, delta
+	real scalar V, i, j, t, wsum, dij, maxX, minX, maxY, minY, num_isol, k
+	real rowvector numer, nonisolates
+
+	V = rows(M)
+	D = distance(M)
+	_diag(D, 0)
+
+	// w_ij = 1/Dij^2, the standard Kamada-Kawai weighting (pairs that
+	// should be far apart in the layout get proportionally less pull
+	// toward their exact target distance than close pairs do)
+	W = J(V, V, 0)
+	for (i=1; i<=V; i++) {
+		for (j=1; j<=V; j++) {
+			if (i != j) W[i,j] = 1 / (D[i,j]^2)
+		}
+	}
+
+	// `Start' (optional) warm-starts the iteration from a caller-given
+	// configuration instead of a random jittered circle - used by
+	// nwmovie's own per-wave layout mode, which feeds each wave's own
+	// final positions in as the next wave's starting point, so
+	// consecutive waves relax into nearby layouts (a real, visible
+	// transition) rather than each wave's own layout being computed
+	// completely independently (a plausible-looking but structurally
+	// unrelated re-randomization every wave, since stress majorization
+	// - like any local optimizer - generally converges to a DIFFERENT
+	// local optimum from a different, unrelated starting point, even
+	// for the identical or a very similar network). Same row/column
+	// shape as `M' required; anything else (including the default,
+	// omitted case) falls back to the same jittered-circle start every
+	// other caller already gets.
+	if (args() == 3 & rows(Start) == V & cols(Start) == 2) {
+		Pos = Start
+	}
+	else {
+		// same jittered-circle starting configuration convention as
+		// netplotmds() above, not an arbitrary independent choice
+		Pos = jumble(circlelayout(V))
+	}
+
+	// Gauss-Seidel stress majorization: each node i is moved directly to
+	// its own closed-form optimum given every OTHER node's CURRENT
+	// position, using already-updated positions within the same sweep
+	// (converges faster than a Jacobi sweep that only uses last
+	// iteration's positions throughout)
+	for (t=1; t<=Iter; t++) {
+		for (i=1; i<=V; i++) {
+			numer = J(1,2,0)
+			wsum = 0
+			for (j=1; j<=V; j++) {
+				if (j != i) {
+					delta = Pos[i,.] - Pos[j,.]
+					dij = sqrt(delta*delta')
+					if (dij < 1e-8) {
+						// two nodes landed on the exact same point -
+						// nudge apart with a tiny random direction so
+						// the update below has a defined direction to
+						// move along, instead of dividing by zero
+						delta = (runiform(1,2):-0.5):*1e-6
+						dij = sqrt(delta*delta')
+					}
+					numer = numer :+ W[i,j] :* (Pos[j,.] :+ D[i,j] :* (delta :/ dij))
+					wsum = wsum + W[i,j]
+				}
+			}
+			Pos[i,.] = numer :/ wsum
+		}
+	}
+
+	// rescale into this file's own established [~0.25,1.25] x [0,1]
+	// plotting box, isolates pushed into their own column at x=1.5 -
+	// the exact same isolate-aware convention netplotmds() uses (see
+	// its own header comment), reused verbatim rather than reinvented
+	nonisolates = ((rowsum(M) :+ colsum(M)') :!= 0)
+
+	maxX = max(select(Pos[.,1], nonisolates))
+	minX = min(select(Pos[.,1], nonisolates))
+	maxY = max(select(Pos[.,2], nonisolates))
+	minY = min(select(Pos[.,2], nonisolates))
+
+	Pos[,1] = (nonisolates :*(Pos[,1]:-minX) :* (1 / (maxX-minX)) :+ 0.25) :+ ((nonisolates:==0) :* Pos[,1])
+	Pos[,2] = (nonisolates :*(Pos[,2]:-minY) :* (1 / (maxY-minY))) :+ ((nonisolates:==0):*Pos[,2])
+
+	num_isol = sum(nonisolates:==0)
+	k = 1
+	for (i=1; i<=V; i++) {
+		if (nonisolates[i] == 0) {
+			Pos[i,1] = 1.5
+			Pos[i,2] = (k / num_isol)
+			k = k + 1
+		}
+	}
+
+	return(Pos)
 }
 end

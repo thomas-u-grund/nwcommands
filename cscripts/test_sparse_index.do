@@ -224,7 +224,7 @@ assert r(deg1) == 2
 */
 nwclear
 set obs 20
-nwrandom 20, density(1) name(densenet) directed
+nwrandom 20, density(1) name(densenet)
 mata:
 p = nw.nws.pdefs[nw.nws.get_index_of("densenet")]
 el = p->edgelist()

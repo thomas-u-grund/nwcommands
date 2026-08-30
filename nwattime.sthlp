@@ -62,6 +62,15 @@ range of timestamps is done (not yet supported){p_end}
 For example, a network declared with {cmd:nwset ego alter, time(wave)} can be sliced to the ties that
 existed in wave 2:
 
+	{cmd:. clear}
+	{cmd:. input ego alter wave}
+	{txt}1 2 1
+	2 3 1
+	1 3 2
+	2 3 2
+	3 4 3
+	{cmd:. end}
+	{cmd:. nwset ego alter, time(wave) name(mynet)}
 	{cmd:. nwattime mynet, at(2) name(wave2)}
 
 {title:Stored results}

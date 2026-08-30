@@ -75,8 +75,83 @@ class ErgmGraph {
 					// sp_cache_enabled: canonical (a,b) -> current
 					// shared-partner count. Sparse - pairs with a
 					// count of 0 are simply absent, never stored.
+	real scalar bipartite		// 0 (default, one-mode) or 1 - set once via
+					// set_bipartite(), never touched by init()
+					// itself, mirroring sp_cache_enabled's own
+					// "opt-in, called once after init" contract.
+	real colvector mode		// n x 1, 1/2 per node - only meaningful when
+					// bipartite==1. Deliberately NOT the R/Statnet
+					// convention of "mode-1 nodes are a contiguous
+					// 1..bipartite prefix" - every other part of
+					// this package (nodecov/nodematch/edgecov/...)
+					// already assumes node index i is exactly
+					// nwset's own row/label order with no
+					// reordering anywhere, so this field is a
+					// general, non-contiguous per-node label
+					// instead (see docs/ERGM_ROADMAP.md's own
+					// bipartite-terms planning note for the full
+					// reasoning).
+	real colvector mode1nodes	// cached node indices with mode==1, built
+	real colvector mode2nodes	// once by set_bipartite() - every bipartite
+					// dyad-space computation (proposal, MPLE
+					// design matrix, brute-force certification)
+					// works off these two lists, never re-scans
+					// `mode` itself.
+	real scalar has_dyadmask	// 0 (default) or 1 - set once via
+					// set_dyadmask() (constraints, first piece -
+					// docs/ERGM_ROADMAP.md's "Constraints beyond
+					// v1's free binary dyad space" row), mirroring
+					// bipartite/sp_cache_enabled's own "opt-in flag,
+					// never touched by init() again" contract.
+					// Read ONLY by the proposal layer
+					// (ergm_propose_uniform_masked(),
+					// ErgmNativeSetup()'s own native-ineligibility
+					// check) - full_statistic()/MPLE's own design-
+					// matrix build never consult it, deliberately:
+					// a "fixed" dyad still contributes its true
+					// observed state to every term's sufficient
+					// statistic, only the MCMC proposal is barred
+					// from ever touching it.
+	real matrix freedyadmat		// n x n boolean (1 = eligible/free, 0 =
+					// fixed at its current observed value);
+					// only meaningful when has_dyadmask==1.
+	real scalar nfreedyads		// total FREE dyad count over the canonical
+					// dyad space (bipartite/directed/undirected,
+					// same walk _ergm_count_free_onemode()/
+					// _ergm_count_free_bipartite() use) - a
+					// constant, computed once by set_dyadmask()
+					// (dyad ELIGIBILITY never changes mid-fit,
+					// only which free dyads are currently tied
+					// does) - ergm_propose_tnt_masked()'s own D.
+	real matrix freeelist		// live list of CURRENTLY TIED dyads that
+					// are ALSO free, same (i,j)-canonical/
+					// O(1)-amortized-append/O(1)-swap-removal
+					// contract as elist above, restricted to
+					// the free subspace - only meaningful when
+					// has_dyadmask==1, maintained by
+					// set_dyadmask() (initial population from
+					// the observed network) and toggle() (kept
+					// current thereafter, gated on
+					// freedyadmat[.] so a toggle on a fixed
+					// dyad - never proposed during masked MCMC,
+					// but not assumed impossible - cannot
+					// corrupt it). ergm_propose_tnt_masked()'s
+					// own "pick a random existing FREE tie"
+					// branch needs this: G.elist also holds
+					// FIXED ties, which must never be proposed
+					// for removal.
+	pointer scalar freeedgepos	// asarray("real",2): canonical (i,j) -> row
+					// index (1..nfreeties) in freeelist, for
+					// O(1) removal - the freeelist analogue of
+					// edgepos above.
+	real scalar nfreeties		// current count of live rows in freeelist
+					// (<=nties always, since every free tie is
+					// also a tie) - ergm_propose_tnt_masked()'s
+					// own E.
 
 	void init()
+	void set_bipartite()
+	void set_dyadmask()
 	real scalar has_edge()
 	void toggle()
 	real rowvector neighbors_out()
@@ -110,6 +185,10 @@ void ErgmGraph::init(real scalar n0, real scalar directed0){
 	elist = J(8, 2, 0)
 	edgepos = &(asarray_create("real", 2))
 	sp_cache_enabled = 0
+	bipartite = 0
+	has_dyadmask = 0
+	nfreedyads = 0
+	nfreeties = 0
 
 	adjout = J(1, n, NULL)
 	for (i=1; i<=n; i++) adjout[i] = &(asarray_create("real", 1))
@@ -122,6 +201,157 @@ void ErgmGraph::init(real scalar n0, real scalar directed0){
 		adjin = adjout	// undirected: a tie is stored symmetrically in both
 				// endpoints' own adjout, so "in" and "out" coincide -
 				// aliasing avoids a second, redundant set of arrays.
+	}
+}
+
+/*
+	Opt-in bipartite marking (harmonisation unit 155 - see
+	docs/ERGM_ROADMAP.md's own bipartite-terms plan), called once
+	right after init(), mirroring enable_sp_cache()'s own contract.
+	Deliberately does NOT reorder nodes or touch `directed` - a
+	bipartite network is always undirected (nwergm.ado's own caller
+	enforces this before ever reaching here, matching a real hard
+	limit in R ergm itself, not a v1 simplification) - this method
+	only records which of the two modes each existing node index
+	belongs to. `modevec' is a real colvector, one entry per node,
+	each either 1 or 2 - the exact numeric form nwergm.ado builds from
+	NWdef::get_modes()'s own "1"/"2" string vector. Every downstream
+	bipartite dyad-space computation (ergm_total_dyads(),
+	ergm_propose_uniform(), ErgmModel::build_mple_data(),
+	ErgmCertifyChangeStat()) reads mode1nodes/mode2nodes, built once
+	here via selectindex(), never modevec directly.
+*/
+void ErgmGraph::set_bipartite(real colvector modevec){
+	bipartite = 1
+	mode = modevec
+	// BUGFIX (harmonisation unit 155): selectindex() PRESERVES its
+	// input's own orientation (a colvector argument returns a
+	// colvector of indices, not a rowvector) - confirmed directly via
+	// a standalone Mata repro, since this is easy to get backwards.
+	// The original code here transposed the (already-correct) colvector
+	// result, silently turning mode1nodes/mode2nodes into ROW vectors;
+	// every caller's own rows(G.mode1nodes)/rows(G.mode2nodes) (the
+	// mode-1/mode-2 node COUNT) then read as 1 regardless of the true
+	// node counts, collapsing ergm_total_dyads()'s own bipartite branch
+	// to always report 1 total dyad - caught via a real end-to-end
+	// smoke test on an actual bipartite network (6x4 nodes), not by
+	// inspection.
+	mode1nodes = selectindex(modevec :== 1)
+	mode2nodes = selectindex(modevec :== 2)
+}
+
+/*
+	Opt-in dyad-eligibility mask (constraints, first piece -
+	docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary dyad
+	space" row - R ergm's own `constraints=~fixallbut(free)`), called
+	once right after init()/set_bipartite(), mirroring their own
+	"opt-in flag, never touched again by init()" contract. `freemat' is
+	a dense n x n binary matrix (1 = this dyad may be toggled by the MCMC
+	proposal; 0 = permanently fixed at its current/observed value) - the
+	SAME dense-matrix shape edgecov()/hamming() already use for a
+	dyadic-covariate argument (nwergm.ado builds it identically, via
+	get_matrix_mod(0,...) on a second network whose own ties mark the
+	free dyads), reused here as a boolean mask rather than a covariate
+	weight.
+
+	Deliberately does nothing beyond recording the mask - it does NOT
+	touch any of `netname''s own current ties. Fixed dyads keep
+	contributing their true observed state to every term's sufficient
+	statistic for the rest of this fit (ErgmModel::full_statistic()/MPLE
+	design-matrix construction never consult has_dyadmask/freedyadmat at
+	all); only ergm_propose_uniform_masked() (and ErgmNativeSetup()'s own
+	native-ineligibility check, since the native backend has no wire-
+	protocol field for this yet - a disclosed v1 follow-on) ever reads
+	these two fields. Errors out on an all-fixed mask (zero free dyads) -
+	a degenerate constraint no MCMC proposal could ever satisfy - rather
+	than let ergm_propose_uniform_masked()'s own rejection loop spin
+	forever.
+*/
+/*
+	blockdiag(attr) (constraints, second piece - docs/ERGM_ROADMAP.md's
+	"Constraints beyond v1's free binary dyad space" row): R ergm's own
+	`constraints=~blockdiag(attr)` - "Only dyads (i,j) for which
+	attr(i)==attr(j) can have edges" (R ergm's own real Rd doc,
+	blockdiag-ergmConstraint, fetched fresh via tools::Rd_db("ergm"), not
+	guessed). This is nothing more than a DIFFERENT way to build the exact
+	same dense n x n eligibility mask set_dyadmask() already consumes for
+	freedyads() - a dyad is free iff its two endpoints share the same
+	attribute value, full stop, no new proposal/native machinery needed.
+	Builds the n x n outer-product expansion of `attr' against itself via
+	explicit matrix multiplication (`attr * J(1,n,1)' broadcasts attr
+	across columns, `J(n,1,1) * attr'' broadcasts it across rows), THEN
+	compares elementwise - NOT `attr :== attr'' directly, which looks
+	like it should work (an n x 1 colvector against its own 1 x n
+	transpose, one dimension matching per axis) but does not: confirmed
+	directly (empirically, not from documentation alone) that Mata's
+	colon operators require an EXACT dimension match or a genuine 1x1
+	scalar operand on one side - they do NOT perform outer-product-style
+	broadcasting between an n x 1 and a 1 x n operand the way e.g. numpy
+	does (`J(3,1,1) :+ J(1,3,1)' itself throws the identical conformability
+	error, isolating this as a general colon-operator property, not
+	something specific to `:=='' or to this one call). The diagonal comes
+	out `true' too (attr[i]==attr[i] always), but that is never consulted
+	by anything downstream (no dyad ever has i==j).
+*/
+real matrix _ergm_blockdiag_mask(real colvector attr){
+	real scalar n
+	n = rows(attr)
+	return((attr * J(1,n,1)) :== (J(n,1,1) * attr'))
+}
+
+void ErgmGraph::set_dyadmask(real matrix freemat){
+	real scalar i, j, a, b
+	real matrix obs
+
+	has_dyadmask = 1
+	freedyadmat = freemat
+	if (sum(freemat) == 0) {
+		errprintf("freedyads()/blockdiag(): the given dyad-eligibility mask leaves no free dyad at all (freedyads(): an all-untied network; blockdiag(): every node in its own singleton block) - every dyad would be fixed, leaving no dyad for the MCMC proposal to ever toggle.\n")
+		exit(error(198))
+	}
+
+	// nfreedyads: total free-dyad count over the SAME canonical dyad-space
+	// walk _ergm_count_free_onemode()/_ergm_count_free_bipartite() already
+	// use for build_mple_data()'s own preallocation - inlined here rather
+	// than called (those two are free functions taking G as a parameter;
+	// a method has no "self" handle to pass itself as one) rather than
+	// duplicated logic drifting from theirs, since both walks are the
+	// exact same canonical-dyad enumeration this file already establishes
+	// elsewhere (ergm_total_dyads(), all_ties(), build_mple_data()).
+	nfreedyads = 0
+	if (bipartite) {
+		for (a=1; a<=rows(mode1nodes); a++) {
+			for (b=1; b<=rows(mode2nodes); b++) {
+				if (freedyadmat[mode1nodes[a], mode2nodes[b]]) nfreedyads++
+			}
+		}
+	}
+	else {
+		for (i=1; i<=n; i++) {
+			for (j=1; j<=n; j++) {
+				if (i==j) continue
+				if (!directed && j<i) continue
+				if (freedyadmat[i,j]) nfreedyads++
+			}
+		}
+	}
+
+	// Live free-tie list (ergm_propose_tnt_masked()'s own "pick a random
+	// existing FREE tie" branch) - populated from the network's CURRENT
+	// ties, which at this point are exactly the OBSERVED ties (this
+	// method is always called immediately after the graph is built from
+	// the observed network, before any MCMC toggle ever runs).
+	freeelist = J(8, 2, 0)
+	freeedgepos = &(asarray_create("real", 2))
+	nfreeties = 0
+	obs = all_ties()
+	for (i=1; i<=rows(obs); i++) {
+		if (freedyadmat[obs[i,1], obs[i,2]]) {
+			nfreeties++
+			if (nfreeties > rows(freeelist)) freeelist = freeelist \ J(rows(freeelist), 2, 0)
+			freeelist[nfreeties, .] = obs[i, .]
+			asarray(*freeedgepos, (obs[i,1], obs[i,2]), nfreeties)
+		}
 	}
 }
 
@@ -171,6 +401,25 @@ void ErgmGraph::toggle(real scalar i, real scalar j){
 		}
 		asarray_remove(*edgepos, (ci,cj))
 		nties = nties - 1
+		// freedyads() follow-on (masked TNT, docs/ERGM_ROADMAP.md's
+		// "Constraints beyond v1's free binary dyad space" row): mirror
+		// the SAME O(1) swap-removal into freeelist/freeedgepos, but
+		// ONLY for a free dyad - gated on has_dyadmask (a single cheap
+		// flag check, mirroring sp_cache_enabled's own "pay nothing when
+		// unused" contract) and freedyadmat[ci,cj] (masked MCMC only
+		// ever toggles free dyads, but this method has no way to assume
+		// that of every caller - e.g. a future code path calling
+		// toggle() directly on a fixed dyad must never corrupt this
+		// list, so the check stays explicit rather than assumed).
+		if (has_dyadmask) if (freedyadmat[ci,cj]) {
+			k = asarray(*freeedgepos, (ci,cj))
+			if (k != nfreeties) {
+				freeelist[k, .] = freeelist[nfreeties, .]
+				asarray(*freeedgepos, (freeelist[k,1], freeelist[k,2]), k)
+			}
+			asarray_remove(*freeedgepos, (ci,cj))
+			nfreeties = nfreeties - 1
+		}
 	}
 	else {
 		asarray(*adjout[i], j, 1)
@@ -192,6 +441,12 @@ void ErgmGraph::toggle(real scalar i, real scalar j){
 		if (nties > rows(elist)) elist = elist \ J(rows(elist), 2, 0)
 		elist[nties, .] = (ci, cj)
 		asarray(*edgepos, (ci,cj), nties)
+		if (has_dyadmask) if (freedyadmat[ci,cj]) {
+			nfreeties = nfreeties + 1
+			if (nfreeties > rows(freeelist)) freeelist = freeelist \ J(rows(freeelist), 2, 0)
+			freeelist[nfreeties, .] = (ci, cj)
+			asarray(*freeedgepos, (ci,cj), nfreeties)
+		}
 	}
 
 	// Adding tie (i,j) makes j a NEW shared-partner contributor for
@@ -701,6 +956,7 @@ class ErgmTermData {
 	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
 	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic
 	string scalar sptype		// gwesp/gwdsp/gwnsp/esp/dsp: shared-partner definition on a DIRECTED network - "" (default) means the undirected/UTP definition (used as-is for undirected networks); one of "OTP"/"ITP"/"OSP"/"ISP"/"RTP" selects the corresponding directed definition (harmonisation unit 91 wave 5 added OTP; a later wave added ITP/OSP/ISP; RTP (reciprocated two-path) added last - all five of R ergm's own directed shared-partner types are now implemented).
+	pointer(class ErgmGraph scalar) scalar xnet	// nwsaom multiplex's crprod (unw_saom.do): a LIVE pointer to the OTHER co-evolving network's own current ErgmGraph, re-pointed by SaomEstimateRMCoevNetNet()/SaomSimulateIntervalCoevNetNet() every time a fresh working copy of that other network is created (a fresh G1work/G2work per Robbins-Monro replicate) - addterm() stores &td0 (a POINTER into the caller's own td0 storage, not a copy), so mutating td.xnet through that same pointer from inside the estimator is visible to the registered term instance immediately, no re-registration needed. NULL/unused by every other term (nwergm never sets or reads it).
 }
 
 /* ===================================================================
@@ -1100,6 +1356,134 @@ real rowvector change_nodemix(class ErgmGraph scalar G, real scalar i, real scal
 }
 
 /* ===================================================================
+   Bipartite (two-mode) Stage 2 terms (harmonisation unit 156,
+   docs/ERGM_ROADMAP.md/docs/CERTIFICATION.md): the first bipartite-
+   family terms beyond `edges' (Stage 1, unit 155). Definitions taken
+   directly from R ergm 4.12.0's own current Rd docs (`b1cov`, `b2cov`,
+   `b1factor`, `b2factor` - `tools::Rd_db("ergm")`), not guessed from the
+   term names:
+     b1cov(attr):    "the total value of attr(i) for all edges (i,j)",
+                      i the mode-1 endpoint - a mode-restricted nodecov.
+     b2cov(attr):    the same, with j (mode-2) the restricted endpoint.
+     b1factor(attr): "the number of times a node with that attribute in
+                      the first mode... appears in an edge" - a mode-
+                      restricted nodefactor (one coefficient per level,
+                      credit only to the mode-1 endpoint's own level,
+                      never both endpoints the way plain nodefactor
+                      does).
+     b2factor(attr): the same, restricted to the mode-2 endpoint.
+   All four are genuinely dyad-independent (each tie's own contribution
+   depends only on that tie's two endpoints), so all are MPLE-eligible
+   immediately - no MCMLE/native work needed for this stage.
+
+   Critical correctness point, worth stating explicitly: a bipartite
+   dyad (i,j) passed to a change() function is NOT guaranteed to have
+   the mode-1 endpoint in position i. Every CALLER internal to this
+   package's own bipartite dyad-space code (build_mple_data(),
+   ErgmCertifyChangeStat(), ergm_propose_uniform()) does happen to pass
+   mode-1 first (iterating mode1nodes x mode2nodes) - but G.all_ties()
+   (used by every stat_*() function below) canonicalizes ties by RAW
+   NUMERIC node index (i<j), not by mode (see its own header comment:
+   "Undirected: one row per edge, canonicalized i<j"), and this
+   package's own deliberate "no node reordering" architecture decision
+   (unw_ergm.do's set_bipartite() header) means mode-1 node indices are
+   not guaranteed smaller than mode-2 ones. Every function below
+   therefore checks G.mode[.] explicitly to find the mode-1 (or mode-2)
+   endpoint, rather than assuming positional order - the one new pitfall
+   Stage 1's own edges-only term never had to face (a tie count needs no
+   endpoint distinction at all).
+   =================================================================== */
+real rowvector stat_b1cov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot, a, b
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		a = ties[k,1]; b = ties[k,2]
+		tot = tot + (G.mode[a]==1 ? td.attr[a] : td.attr[b])
+	}
+	return(tot)
+}
+real rowvector change_b1cov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar v
+	v = (G.mode[i]==1 ? td.attr[i] : td.attr[j])
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+real rowvector stat_b2cov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot, a, b
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		a = ties[k,1]; b = ties[k,2]
+		tot = tot + (G.mode[a]==2 ? td.attr[a] : td.attr[b])
+	}
+	return(tot)
+}
+real rowvector change_b2cov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar v
+	v = (G.mode[i]==2 ? td.attr[i] : td.attr[j])
+	return(G.has_edge(i,j) ? -v : v)
+}
+
+real rowvector stat_b1factor(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx, a, b, node1
+
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		a = ties[k,1]; b = ties[k,2]
+		node1 = (G.mode[a]==1 ? a : b)
+		idx = _ergm_level_index(td.levels, td.attr[node1])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_b1factor(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, idx, node1
+
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	node1 = (G.mode[i]==1 ? i : j)
+	idx = _ergm_level_index(td.levels, td.attr[node1])
+	if (idx) out[idx] = out[idx] + delta
+	return(out)
+}
+
+real rowvector stat_b2factor(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx, a, b, node2
+
+	out = J(1, rows(td.levels), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		a = ties[k,1]; b = ties[k,2]
+		node2 = (G.mode[a]==2 ? a : b)
+		idx = _ergm_level_index(td.levels, td.attr[node2])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_b2factor(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, idx, node2
+
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	node2 = (G.mode[i]==2 ? i : j)
+	idx = _ergm_level_index(td.levels, td.attr[node2])
+	if (idx) out[idx] = out[idx] + delta
+	return(out)
+}
+
+/* ===================================================================
    Term-expansion wave 2 (harmonisation unit 90, docs/CERTIFICATION.md -
    phase D, continuation of unit 88): degree(d)/idegree(d)/odegree(d),
    concurrent, triangle, ctriple, gwnsp. Fresh verification against R
@@ -1454,6 +1838,284 @@ real rowvector change_istar(class ErgmGraph scalar G, real scalar i, real scalar
 		out[m] = _ergm_choose(dj+delta,kk) - _ergm_choose(dj,kk)
 	}
 	return(out)
+}
+
+/* ===================================================================
+   Bipartite (two-mode) Stage 3 terms (harmonisation unit 157,
+   docs/ERGM_ROADMAP.md/docs/CERTIFICATION.md): the dyad-DEPENDENT
+   bipartite family, mode-restricted analogues of the degree() and
+   kstar() families just above (reusing their own already-certified
+   `_ergm_level_index()'/`_ergm_degree_change()'/`_ergm_choose()'
+   helpers directly, unchanged). Definitions taken from R ergm 4.12.0's
+   own current Rd docs (`tools::Rd_db("ergm")`, `b1degree`, `b1star`),
+   not guessed:
+     b1degree(d): "the ith such statistic equals the number of nodes of
+                   degree d[i] in the FIRST MODE of a bipartite
+                   network" - a mode-restricted degree(d).
+     b2degree(d): the mode-2 mirror.
+     b1star(k):   "the ith such statistic counts the number of distinct
+                   k[i]-stars whose center node is in the FIRST MODE" -
+                   a mode-restricted kstar(k). R's own note "b1star(1)
+                   is equal to b2star(1) and to edges" is a real,
+                   checkable identity (used directly in this unit's own
+                   certification below, not just quoted).
+     b2star(k):   the mode-2 mirror.
+   Unlike Stage 2 (dyad-independent, MPLE-eligible), these are genuinely
+   dyad-DEPENDENT - a k-star statistic depends on the FULL degree
+   sequence, not just the toggled dyad's own two endpoints' attributes -
+   so `method(mcmle)' is required, exactly like plain `degree()'/
+   `kstar()' already are, and these are the first bipartite terms to
+   exercise the Stage-1 bipartite MCMC proposal
+   (ergm_propose_uniform()/ergm_propose_tnt()) for real, not merely
+   MPLE's own closed-form/enumerated dyad space.
+
+   Change-statistic derivation: toggling a bipartite dyad (i,j) always
+   has EXACTLY ONE mode-1 endpoint and one mode-2 endpoint (Stage 1's
+   own dyad-space guarantee - no same-mode dyad is ever toggled). A
+   mode-restricted degree/star statistic's own value at a node depends
+   ONLY on that node's own degree - never on its neighbor's - so
+   b1degree()/b1star() react to the MODE-1 endpoint's own degree change
+   alone (never the mode-2 endpoint's, unlike plain degree()/kstar(),
+   which react to BOTH endpoints since every one-mode node is itself
+   eligible to be counted). This is the exact same `G.mode[.]'-based
+   endpoint-detection discipline Stage 2's own b1cov()/b1factor() used,
+   for the identical underlying reason (a bipartite dyad's mode-1
+   endpoint is not guaranteed to arrive in position `i' - see their own
+   header comment above).
+   =================================================================== */
+real rowvector stat_b1degree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar a, idx
+	out = J(1, rows(td.levels), 0)
+	for (a=1; a<=rows(G.mode1nodes); a++) {
+		idx = _ergm_level_index(td.levels, G.degree_total(G.mode1nodes[a]))
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_b1degree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node1
+	delta = G.has_edge(i,j) ? -1 : 1
+	node1 = (G.mode[i]==1 ? i : j)
+	return(_ergm_degree_change(td.levels, G.degree_total(node1), delta))
+}
+
+real rowvector stat_b2degree(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar a, idx
+	out = J(1, rows(td.levels), 0)
+	for (a=1; a<=rows(G.mode2nodes); a++) {
+		idx = _ergm_level_index(td.levels, G.degree_total(G.mode2nodes[a]))
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_b2degree(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node2
+	delta = G.has_edge(i,j) ? -1 : 1
+	node2 = (G.mode[i]==2 ? i : j)
+	return(_ergm_degree_change(td.levels, G.degree_total(node2), delta))
+}
+
+real rowvector stat_b1star(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar a, m
+	out = J(1, rows(td.levels), 0)
+	for (a=1; a<=rows(G.mode1nodes); a++) {
+		for (m=1; m<=rows(td.levels); m++) out[m] = out[m] + _ergm_choose(G.degree_total(G.mode1nodes[a]), td.levels[m])
+	}
+	return(out)
+}
+real rowvector change_b1star(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, node1, d1, m, kk
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	node1 = (G.mode[i]==1 ? i : j)
+	d1 = G.degree_total(node1)
+	for (m=1; m<=rows(td.levels); m++) {
+		kk = td.levels[m]
+		out[m] = _ergm_choose(d1+delta,kk) - _ergm_choose(d1,kk)
+	}
+	return(out)
+}
+
+real rowvector stat_b2star(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar a, m
+	out = J(1, rows(td.levels), 0)
+	for (a=1; a<=rows(G.mode2nodes); a++) {
+		for (m=1; m<=rows(td.levels); m++) out[m] = out[m] + _ergm_choose(G.degree_total(G.mode2nodes[a]), td.levels[m])
+	}
+	return(out)
+}
+real rowvector change_b2star(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar delta, node2, d2, m, kk
+	out = J(1, rows(td.levels), 0)
+	delta = G.has_edge(i,j) ? -1 : 1
+	node2 = (G.mode[i]==2 ? i : j)
+	d2 = G.degree_total(node2)
+	for (m=1; m<=rows(td.levels); m++) {
+		kk = td.levels[m]
+		out[m] = _ergm_choose(d2+delta,kk) - _ergm_choose(d2,kk)
+	}
+	return(out)
+}
+
+/* ===================================================================
+   Bipartite Stage 4 terms (harmonisation unit 162): b1nodematch/
+   b2nodematch and the fixed-decay GW-bipartite-degree family
+   (bgwdegree1/bgwdegree2), the two term families the roadmap had left
+   as "natural follow-ons" after Stages 1-3. Both were flagged there as
+   NOT mechanical extensions of the existing pattern - confirmed true:
+   R ergm's own real Rd docs (`tools::Rd_db("ergm")`,
+   `b1nodematch-ergmTerm-*`/`b2nodematch-ergmTerm-*`, a term introduced
+   by Bomiriya et al. 2023) describe a genuinely different statistic
+   from plain mode-restricted `nodematch` - a same-attribute TWO-STAR
+   count, not a same-attribute TIE count. Every formula below was
+   independently DERIVED first, then VALIDATED against real installed R
+   ergm 4.12.0 output on a hand-built 7-node bipartite network (4
+   mode-1, 3 mode-2 nodes) BEFORE being trusted, per this project's own
+   standing "always test against R outcomes" discipline - not taken on
+   faith from the Rd prose alone, which is genuinely ambiguous about the
+   exact default-parameter formula (its own `alpha=1, beta=1` default
+   arguments read as if both discount mechanisms apply simultaneously,
+   which is not what `summary()` actually computes).
+
+   b1nodematch(attr) DEFAULT-PARAMETER SCOPE ONLY (diff=FALSE, no
+   alpha()/beta()/byb2attr()/levels() - those are real R ergm arguments
+   this port does not yet expose; a disclosed, deliberate scope
+   decision given this term's genuine complexity, not an oversight):
+   for every mode-2 node k, and every value `a' its mode-1 neighbors'
+   `attr' takes, contributes C(count_a(k), 2) - equivalently, for every
+   unordered PAIR of same-attribute mode-1 nodes, the number of mode-2
+   nodes tied to both. Confirmed against real R: base network -> 3;
+   removing tie (1,5) -> 2 (delta -1); adding (4,5) or (2,7) -> 3
+   unchanged (delta 0) - all three match this derivation exactly, not
+   approximately. b2nodematch(attr) is the exact mode-1/mode-2 mirror
+   (also independently re-confirmed against R, base network -> 2 with a
+   differently-assigned mode-2 attribute).
+
+   Change statistic: toggling (i,j) can only change the ONE mode-2 (or
+   mode-1, for b2nodematch) node's own same-attribute-pair count - the
+   count contributed by every OTHER mode-2 node is untouched, since only
+   node2's own neighbor SET changed. The delta equals +-1 times the
+   number of node2's OTHER current neighbors (excluding node1 itself,
+   which matters specifically for the tie-removal direction, where
+   node1 is currently one of them) sharing node1's own attribute value -
+   an O(degree) local computation, not a full-graph rescan, the same
+   complexity class every other change statistic in this file already
+   has.
+   =================================================================== */
+real scalar _ergm_bnodematch_partner_count(class ErgmGraph scalar G, real scalar node1, real scalar node2, class ErgmTermData scalar td){
+	real rowvector nbrs
+	real scalar m, cnt, a1
+	a1 = td.attr[node1]
+	if (a1 >= .) return(0)
+	cnt = 0
+	nbrs = G.neighbors_out(node2)
+	for (m=1; m<=cols(nbrs); m++) {
+		if (nbrs[m] == node1) continue
+		if (td.attr[nbrs[m]] == a1) cnt++
+	}
+	return(cnt)
+}
+real rowvector stat_b1nodematch(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector nbrs
+	real scalar b, m, c, tot, a1, a2
+	tot = 0
+	for (b=1; b<=rows(G.mode2nodes); b++) {
+		nbrs = G.neighbors_out(G.mode2nodes[b])
+		for (m=1; m<=cols(nbrs)-1; m++) {
+			a1 = td.attr[nbrs[m]]
+			if (a1 >= .) continue
+			for (c=m+1; c<=cols(nbrs); c++) {
+				a2 = td.attr[nbrs[c]]
+				if (a1 == a2) tot++
+			}
+		}
+	}
+	return(tot)
+}
+real rowvector change_b1nodematch(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node1, node2
+	delta = G.has_edge(i,j) ? -1 : 1
+	node1 = (G.mode[i]==1 ? i : j)
+	node2 = (G.mode[i]==1 ? j : i)
+	return(delta * _ergm_bnodematch_partner_count(G, node1, node2, td))
+}
+
+real rowvector stat_b2nodematch(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector nbrs
+	real scalar a, m, c, tot, a1, a2
+	tot = 0
+	for (a=1; a<=rows(G.mode1nodes); a++) {
+		nbrs = G.neighbors_out(G.mode1nodes[a])
+		for (m=1; m<=cols(nbrs)-1; m++) {
+			a1 = td.attr[nbrs[m]]
+			if (a1 >= .) continue
+			for (c=m+1; c<=cols(nbrs); c++) {
+				a2 = td.attr[nbrs[c]]
+				if (a1 == a2) tot++
+			}
+		}
+	}
+	return(tot)
+}
+real rowvector change_b2nodematch(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node1, node2
+	delta = G.has_edge(i,j) ? -1 : 1
+	node2 = (G.mode[i]==2 ? i : j)
+	node1 = (G.mode[i]==2 ? j : i)
+	return(delta * _ergm_bnodematch_partner_count(G, node2, node1, td))
+}
+
+/*
+	bgwdegree1(decay)/bgwdegree2(decay): FIXED-decay only (v1 scope,
+	matching plain gwdegree()'s own "curved/free decay is a roadmap
+	item" scope note above - R ergm's own gwb1degree()/gwb2degree()
+	default to fixed=FALSE/curved, exactly like plain gwdegree() started
+	fixed-only before gwdegreefree() was added later as a separate,
+	later unit; the same incremental path applies here, left for a
+	future unit rather than this one). Direct mode-restriction of the
+	already-certified stat_gwdegree()/change_gwdegree() (reusing the
+	identical gw_kernel() and the identical two-line structure) exactly
+	the way b1degree()/change_b1degree() mode-restrict plain degree() -
+	only ONE endpoint (mode-1, or mode-2) is ever affected by a toggle,
+	unlike plain gwdegree's own both-endpoints reaction, since a
+	bipartite dyad's OTHER endpoint is definitionally the other mode and
+	never itself eligible to be counted in a mode-restricted sum.
+	Confirmed against real R ergm (gwb1degree(0.7,fixed=TRUE)/
+	gwb2degree(0.5,fixed=TRUE) on the same 7-node test network) to exact
+	floating-point agreement, not merely close.
+*/
+real rowvector stat_bgwdegree1(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar a, tot
+	tot = 0
+	for (a=1; a<=rows(G.mode1nodes); a++) tot = tot + gw_kernel(G.degree_total(G.mode1nodes[a]), td.decay)
+	return(tot)
+}
+real rowvector change_bgwdegree1(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node1, d1
+	delta = G.has_edge(i,j) ? -1 : 1
+	node1 = (G.mode[i]==1 ? i : j)
+	d1 = G.degree_total(node1)
+	return(gw_kernel(d1+delta, td.decay) - gw_kernel(d1, td.decay))
+}
+
+real rowvector stat_bgwdegree2(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar a, tot
+	tot = 0
+	for (a=1; a<=rows(G.mode2nodes); a++) tot = tot + gw_kernel(G.degree_total(G.mode2nodes[a]), td.decay)
+	return(tot)
+}
+real rowvector change_bgwdegree2(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar delta, node2, d2
+	delta = G.has_edge(i,j) ? -1 : 1
+	node2 = (G.mode[i]==2 ? i : j)
+	d2 = G.degree_total(node2)
+	return(gw_kernel(d2+delta, td.decay) - gw_kernel(d2, td.decay))
 }
 
 /*
@@ -2453,6 +3115,43 @@ real rowvector change_dsp(class ErgmGraph scalar G, real scalar i, real scalar j
 }
 
 /*
+	nsp(d) (nonedgewise shared partners, exact-count per-level vector -
+	harmonisation unit 152, built specifically to let `gwnspfree()' reuse
+	the same curved-decomposition pattern `gwespfree()'/`gwdspfree()'
+	already use, the one piece `gwnsp' itself was missing: `stat_gwnsp()'
+	above is a THIN COMPOSITION (`stat_gwdsp() - stat_gwesp()'), with no
+	standalone per-count statistic of its own to hand the curved eta-space
+	machinery (`ergm_gwdecay_map()' needs a `sum_k eta_k * count_k'
+	decomposition, not a single combined scalar).
+	`nsp(d) = dsp(d) - esp(d)' is a DEFINITIONAL TAUTOLOGY, not merely an
+	identity that happens to hold for the geometrically-weighted
+	combination: `dsp(d)' counts every dyad (tied or not) with exactly d
+	shared partners; `esp(d)' counts only the TIED subset of that same
+	set; `nsp(d)', the untied complement, is what remains - true level by
+	level independently, since a dyad is either tied or not, with no
+	third case and no double-counting. The scalar `gwnsp = gwdsp - gwesp'
+	relationship this file's own `stat_gwnsp()' already relies on
+	(confirmed against R ergm's own current source before that unit
+	shipped) is the special case of summing this same per-level identity
+	against the GW kernel's own weights - this function is the more
+	general, weight-free version underneath it, not a new derivation.
+	`change_nsp()' follows automatically by linearity of the first
+	difference (`Delta(dsp-esp) = Delta(dsp) - Delta(esp)') - both
+	`change_dsp()'/`change_esp()' are already independently certified, so
+	no new per-toggle reasoning is needed, only composition, exactly
+	mirroring `change_gwnsp()`'s own existing pattern one level down.
+	Inherits every `td.sptype' (OTP/ITP/OSP/ISP/RTP) dispatch for free,
+	since `stat_dsp()'/`stat_esp()'/`change_dsp()'/`change_esp()' already
+	handle it internally.
+*/
+real rowvector stat_nsp(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(stat_dsp(G, td) - stat_esp(G, td))
+}
+real rowvector change_nsp(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(change_dsp(G, i, j, td) - change_esp(G, i, j, td))
+}
+
+/*
 	Directed OTP variants of esp(d)/dsp(d) (harmonisation unit 91,
 	term-expansion wave 5) - same kernel-substitution relationship to
 	`stat_gwesp_otp()'/`change_gwesp_otp()'/`change_gwdsp_otp()' above
@@ -2972,8 +3671,14 @@ class ErgmModel {
 	real rowvector native_p1		// per-slot: generic scalar parameter #1 (decay for gw* terms; target level for nodefactor-family; low level for nodemix)
 	real rowvector native_p2		// per-slot: generic scalar parameter #2 (high level for nodemix only; unused - left 0 - by every other term)
 	real matrix native_attrmat		// one column per distinct attribute array actually needed across the model's own terms (native_attridx indexes into THIS, not into any one term's own td.attr)
+	real rowvector native_covidx		// per-slot: 1-based index into native_covmatstack's own n-column BLOCKS (0 = no dyadic covariate matrix needed) - edgecov()/hamming() only; every other term leaves this 0, mirroring native_attridx's own "0 = unused" convention
+	real matrix native_covmatstack		// distinct dense n x n dyadic covariate matrices needed across the model's own terms, horizontally concatenated as n-column blocks (block k = columns ((k-1)*n+1)..(k*n)) - a genuinely different shape from native_attrmat's own one-column-per-array convention (a dyadic covariate is one value per DYAD, not per node), so it cannot reuse that mechanism; native_covidx's block index times n tells the wire-protocol callers which columns to slice out and send as their own new dataset variables (see ErgmNativeSampleCore()'s own header comment on this)
 	real scalar native_proposal
 	real scalar native_lastaccept
+	real scalar native_enabled_sample	// harmonisation unit 168 (freedyads() masked TNT native port): native_enabled itself stays FORCED TO 0 for a masked model (ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() have no mask awareness at all - MPLE keeps using its own already-correct Mata free-dyad-only path), but MCMC SAMPLING now has a real native masked proposal - this SEPARATE flag gates ONLY the two ErgmMCMCSample()/ErgmMCMCSampleDiag() call sites. For an UNMASKED model this is always set equal to native_enabled (byte-identical old behavior, single shared flag in practice) - the split only ever does anything for a masked model.
+	real matrix native_maskmat		// G.freedyadmat, copied here only when native_enabled_sample==1 for a masked model - ErgmNativeSampleCore()'s own wire-protocol payload for the new dense n x n mask field, mirroring native_covmatstack's own "stash on M, read back by the wire-building function" contract
+
+	real scalar fixed_density		// R ergm's own `constraints=~edges` (nwergm's `fixdensity` option): 0 (default, explicitly set by ErgmNativeSetup(), which runs for every model) or 1 - when 1, ErgmMCMCSample()/ErgmMCMCSampleDiag() dispatch to ErgmMCMCSampleSwap()/ErgmMCMCSampleDiagSwap() instead of their own ordinary single-toggle loop; not a dyad-eligibility mask like has_dyadmask above (that restricts WHICH dyads may be proposed; this changes the PROPOSAL SHAPE itself to a tie/non-tie swap that holds the total tie count invariant) - see those functions' own header comments. Native (C) port not attempted (v1 Mata-only, matching this option's own initial scope) - set alongside native_enabled/native_enabled_sample being forced to 0 for a fixed-density model in nwergm.ado.
 
 	// Curved-parameter support (harmonisation unit 134, second slice -
 	// generalizes unit 133's own single-term theta->eta map/gradient to
@@ -3012,6 +3717,8 @@ void ErgmModel::init(){
 	td = J(1, 0, NULL)
 	coefnames = J(1, 0, "")
 	native_enabled = 0
+	native_enabled_sample = 0
+	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
 	curved = J(1, 0, .)
 }
 
@@ -3288,6 +3995,10 @@ string rowvector ErgmModel::theta_coefnames(){
 				out[tpos] = "gwdsp_weight"
 				out[tpos+1] = "gwdsp_decay"
 			}
+			else if (names[t] == "nsp") {
+				out[tpos] = "gwnsp_weight"
+				out[tpos+1] = "gwnsp_decay"
+			}
 			else if (names[t] == "odegree") {
 				out[tpos] = "gwodegree_weight"
 				out[tpos+1] = "gwodegree_decay"
@@ -3527,10 +4238,33 @@ real scalar ergm_curved_loglik(class ErgmModel scalar M, real matrix X,
    estimation code is ever trusted to consume that term's change().
    =================================================================== */
 real scalar ErgmCertifyChangeStat(class ErgmModel scalar M, class ErgmGraph scalar G){
-	real scalar i, j, maxdiff
+	real scalar i, j, maxdiff, a, b
 	real rowvector s0, s1, chg, diff
 
 	maxdiff = 0
+
+	// harmonisation unit 155 (bipartite support): restrict the
+	// brute-force toggle sweep to cross-mode dyads only - the same
+	// dyad space build_mple_data()/the proposals above are restricted
+	// to. Toggling a same-mode pair here would be testing a change
+	// statistic on a dyad no real proposal or MPLE row ever visits.
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) {
+			for (b=1; b<=rows(G.mode2nodes); b++) {
+				i = G.mode1nodes[a]
+				j = G.mode2nodes[b]
+				s0 = M.full_statistic(G)
+				chg = M.full_change(G, i, j)
+				G.toggle(i,j)
+				s1 = M.full_statistic(G)
+				G.toggle(i,j)	// restore
+				diff = abs((s1 - s0) - chg)
+				if (max(diff) > maxdiff) maxdiff = max(diff)
+			}
+		}
+		return(maxdiff)
+	}
+
 	for (i=1; i<=G.n; i++) {
 		for (j=1; j<=G.n; j++) {
 			if (i==j) continue
@@ -3594,11 +4328,58 @@ real rowvector ErgmModel::change_toward_one(class ErgmGraph scalar G, real scala
 */
 real matrix ErgmModel::build_mple_data(class ErgmGraph scalar G){
 	real matrix out
-	real scalar i, j, ndyads, pos, p
+	real scalar i, j, ndyads, pos, p, a, b, masked
 
 	p = nparam()
+	masked = G.has_dyadmask
+
+	// freedyads() (constraints, first piece - docs/ERGM_ROADMAP.md's
+	// "Constraints beyond v1's free binary dyad space" row): a FIXED
+	// dyad's own likelihood contribution is a constant given theta under
+	// R ergm's own `constraints=~fixallbut(free)' (its tie state can
+	// never differ from its observed value, so it drops entirely out of
+	// the pseudolikelihood's dependence on theta) - confirmed directly
+	// against real, installed R ergm 4.12.0 (`estimate="MPLE"' under
+	// `fixallbut()' on a hand-built 6-node/15-dyad network with a 5-dyad
+	// free mask reproduced R's OWN reported coefficient, -0.4054651,
+	// EXACTLY logit(2/5) - the free-dyads-ONLY closed form - not
+	// logit(8/15) (0.1335314, the unconstrained full-network density).
+	// This means MPLE must skip fixed dyads' rows entirely, unlike
+	// ErgmModel::full_statistic() (used as MCMLE's own OBSERVED target,
+	// deliberately unmasked - see that method's own comment) - a fixed
+	// dyad still contributes its true observed value to the FULL
+	// network's sufficient statistic that a constrained MCMLE fit is
+	// solving to match, it just never appears as its own row in the
+	// per-dyad pseudolikelihood design matrix.
+
+	// harmonisation unit 155 (bipartite support, docs/ERGM_ROADMAP.md):
+	// a bipartite model's own valid dyad space is ONLY cross-mode pairs
+	// (mode1nodes x mode2nodes), never the full n(n-1)/2 undirected
+	// space - iterating the ordinary loop below would silently include
+	// same-mode pairs no toggle/proposal ever visits, corrupting the
+	// pseudolikelihood with rows for dyads that can never actually be
+	// tied.
+	if (G.bipartite) {
+		if (masked) ndyads = _ergm_count_free_bipartite(G)
+		else ndyads = rows(G.mode1nodes) * rows(G.mode2nodes)
+		out = J(ndyads, p+1, 0)
+		pos = 1
+		for (a=1; a<=rows(G.mode1nodes); a++) {
+			for (b=1; b<=rows(G.mode2nodes); b++) {
+				i = G.mode1nodes[a]
+				j = G.mode2nodes[b]
+				if (masked) if (!G.freedyadmat[i,j]) continue
+				out[pos, (1..p)] = change_toward_one(G, i, j)
+				out[pos, p+1] = G.has_edge(i,j)
+				pos++
+			}
+		}
+		return(out)
+	}
+
 	if (G.directed) ndyads = G.n * (G.n - 1)
 	else ndyads = G.n * (G.n - 1) / 2
+	if (masked) ndyads = _ergm_count_free_onemode(G)
 
 	out = J(ndyads, p+1, 0)
 	pos = 1
@@ -3606,12 +4387,42 @@ real matrix ErgmModel::build_mple_data(class ErgmGraph scalar G){
 		for (j=1; j<=G.n; j++) {
 			if (i==j) continue
 			if (!G.directed && j<i) continue
+			if (masked) if (!G.freedyadmat[i,j]) continue
 			out[pos, (1..p)] = change_toward_one(G, i, j)
 			out[pos, p+1] = G.has_edge(i,j)
 			pos++
 		}
 	}
 	return(out)
+}
+
+// Free-dyad counters for build_mple_data()'s own preallocation above -
+// split out rather than inlined so the exact same canonical dyad-space
+// walk (one-mode vs bipartite) is never duplicated/risking drift between
+// a counting pass and the real data-filling pass.
+real scalar _ergm_count_free_onemode(class ErgmGraph scalar G){
+	real scalar i, j, cnt
+	cnt = 0
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed && j<i) continue
+			if (G.freedyadmat[i,j]) cnt++
+		}
+	}
+	return(cnt)
+}
+real scalar _ergm_count_free_bipartite(class ErgmGraph scalar G){
+	real scalar a, b, i, j, cnt
+	cnt = 0
+	for (a=1; a<=rows(G.mode1nodes); a++) {
+		for (b=1; b<=rows(G.mode2nodes); b++) {
+			i = G.mode1nodes[a]
+			j = G.mode2nodes[b]
+			if (G.freedyadmat[i,j]) cnt++
+		}
+	}
+	return(cnt)
 }
 
 end
@@ -3635,15 +4446,23 @@ mata:
      family (gwdegree/gwodegree/gwidegree) - see native/ergm_mcmc.c's
      own header and ErgmNativeSetup()'s own header comment below for the
      full current list and what still is NOT covered (edgecov/hamming,
-     the degree-count family, the shared-partner family beyond gwesp
-     itself, and directed/OTP gwesp). ErgmNativeSetup() below is the
-     ONLY place that decides eligibility, by inspecting the model's own
-     term names, once per `nwergm` call (never inside the MCMC loop).
-     Any term outside the current native set anywhere in the model
-     disables native for the WHOLE model - a hard architectural
-     constraint, not a gap (see ErgmNativeSetup()'s own header) -
-     ErgmMCMCSample()/ErgmMCMCSampleDiag() then run their original,
-     unmodified Mata code path exactly as before this unit.
+     the shared-partner family beyond gwesp itself, and directed/OTP
+     gwesp - both since relaxed too, see native/ergm_mcmc.c's own
+     header). ErgmNativeSetup() below is the ONLY place that decides
+     eligibility, by inspecting the model's own term names, once per
+     `nwergm` call (never inside the MCMC loop). Any term outside the
+     current native set anywhere in the model disables native for the
+     WHOLE model - a hard architectural constraint, not a gap (see
+     ErgmNativeSetup()'s own header) - ErgmMCMCSample()/
+     ErgmMCMCSampleDiag() then run their original, unmodified Mata code
+     path exactly as before this unit. Harmonisation unit 159 extended
+     eligibility to BIPARTITE (two-mode) models too - graph TYPE is no
+     longer a blanket disqualifier, only individual term names are (a
+     bipartite model using only native-eligible bipartite terms - edges/
+     b1cov/b2cov/b1factor/b2factor/b1degree/b2degree/b1star/b2star - now
+     runs natively; see native/ergm_mcmc.c's own header for the real,
+     measured speedup this unlocked, ~20x, bringing the R-comparison
+     ratio from ~39x down to ~1.9x).
    - The Mata/native boundary is crossed exactly once per
      ErgmMCMCSample()/ErgmMCMCSampleDiag() call (i.e. once per MCMLE
      iteration), never once per proposal - the entire burnin+sampling
@@ -3857,6 +4676,20 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	equivalence for all four is certified in
 	cscripts/test_nwergm_native.do.
 
+	BIPARTITE (two-mode) terms (harmonisation unit 159, termcodes 60-67):
+	b1cov/b2cov/b1factor/b2factor (dyad-independent, units 156) and
+	b1degree/b2degree/b1star/b2star (dyad-dependent, unit 157) - direct
+	ports of this file's own already-certified change_b1cov()/etc.
+	functions above. Native/ergm_mcmc.c's own graph_t/total_dyads()/
+	propose_uniform() gained real bipartite dyad-space awareness as part
+	of this same unit (previously a bipartite model was ALWAYS Mata-only
+	regardless of term names, since the native proposal/dyad-space logic
+	had none) - see that file's own header for the full account and the
+	real, measured speedup (~20x, cutting the R-comparison ratio from
+	~39x to ~1.9x, dev/ergm_benchmark_bipartite/). Native-vs-Mata
+	equivalence (MCMC sampling AND the mode=1 MPLE design-matrix build)
+	certified in cscripts/test_nwergm_bipartite.do.
+
 	STILL NOT native-eligible (any one such term anywhere in the model
 	disables native for the WHOLE model, falling back to the unmodified
 	Mata sampler - this is a hard architectural constraint, not a
@@ -3882,22 +4715,75 @@ real scalar ErgmNativeSPCode(string scalar sptype, real scalar utp, real scalar 
 	if (sptype == "RTP") return(rtp)
 	return(utp)
 }
-real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code){
-	real scalar t, k, pos, ncols, aidx, maxcols, maxattr
+real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code, | class ErgmGraph G){
+	real scalar t, k, pos, ncols, aidx, cidx, maxcols, maxattr, maxcovmat, masked
 	string scalar nm
-	real rowvector termcodes, attridxs, p1v, p2v
-	real matrix attrmat
+	real rowvector termcodes, attridxs, p1v, p2v, covidxs
+	real matrix attrmat, covmatstack
 	class ErgmTermData scalar tdt
 
 	M.native_enabled = 0
+	M.native_enabled_sample = 0
+	M.fixed_density = 0		// explicit default for EVERY model (an uninitialized Mata class real scalar reads as missing, which is nonzero/"true" in an `if()` - nwergm.ado overrides this to 1, after this call returns, only for a fixdensity model)
 
 	if (!ErgmNativeAvailable()) return(0)
+
+	// freedyads() masked TNT native port (harmonisation unit 168):
+	// masking no longer forces a whole-model Mata bailout here - it
+	// only forces M.native_enabled itself to 0 at this function's own
+	// tail below (MPLE/curved-MPLE still have no mask awareness at all,
+	// a disclosed, narrower follow-on than before, not silently
+	// ignored), while `masked' below drives the SEPARATE
+	// native_enabled_sample flag that gates MCMC SAMPLING specifically.
+	// Every term in the model is still checked for ordinary native
+	// eligibility exactly as an unmasked model would be - masking is a
+	// proposal/dyad-space concern, not a term-computation one, so it
+	// changes nothing about which terms this loop accepts.
+	// `rows(G)>0': G is optional (Mata forbids `| class T scalar'
+	// outright), an omitted G arrives as a genuine 0 x 0 instance whose
+	// own fields must never be read. nested `if', NOT `&': Mata's `&' is
+	// NOT short-circuiting (both operands are always evaluated,
+	// confirmed directly via a standalone repro - `rows(G) > 0 &
+	// G.has_dyadmask' throws "nonclass found where class required" the
+	// moment G is omitted, since G.has_dyadmask is evaluated regardless
+	// of the left operand's own value). A real bug caught before it
+	// ever shipped, not by inspection - kept exactly as it was found,
+	// just no longer paired with an early return.
+	masked = 0
+	if (rows(G) > 0) {
+		if (G.has_dyadmask) masked = 1
+	}
+
+	// harmonisation unit 155 (bipartite support): bipartite models were
+	// ALWAYS Mata-only through unit 157 (native/ergm_mcmc.c's own
+	// proposal/dyad-space logic had no bipartite awareness at all, so a
+	// bipartite model routed to native would have silently sampled from
+	// the FULL one-mode dyad space - visiting same-mode dyads no
+	// bipartite proposal is ever supposed to touch). Harmonisation unit
+	// 159 gives native/ergm_mcmc.c real bipartite dyad-space awareness
+	// (its own `total_dyads()'/`propose_uniform()' now branch on
+	// `g->bipartite', a direct C port of this file's own
+	// `ergm_total_dyads()'/`ergm_propose_uniform()' bipartite branches)
+	// PLUS native termcodes 60-67 for the eight bipartite terms
+	// (b1cov/b2cov/b1factor/b2factor/b1degree/b2degree/b1star/b2star) -
+	// so bipartite eligibility is now decided the SAME way one-mode
+	// eligibility already is, term-by-term in the dispatch loop below,
+	// not rejected up front by graph type. `G' is an OPTIONAL trailing
+	// argument declared WITHOUT `scalar' (Mata forbids `| class T
+	// scalar' outright - confirmed empirically; `| class T' is the only
+	// legal form, and an omitted `G' arrives as a genuine 0 x 0 class
+	// instance) - `ErgmNativeSampleCore()'/`ErgmNativeBuildMPLEData()'
+	// both already receive G directly as their own required argument
+	// (unlike this function), so they read `G.bipartite'/`G.mode'
+	// straight off it to build the wire's own bipartite fields - no
+	// need to stash bipartite state on M here at all.
 
 	// must match native/ergm_mcmc.c's own MAXTERMS/MAXATTR exactly - a
 	// model exceeding either falls back to Mata rather than risking the
 	// C plugin's own hard-coded array bounds.
 	maxcols = 64
 	maxattr = 32
+	maxcovmat = 8
 
 	ncols = M.nparam()
 	if (ncols > maxcols) return(0)
@@ -3906,7 +4792,9 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 	attridxs = J(1, ncols, 0)
 	p1v = J(1, ncols, 0)
 	p2v = J(1, ncols, 0)
+	covidxs = J(1, ncols, 0)
 	attrmat = J(0, 0, .)
+	covmatstack = J(0, 0, .)
 
 	pos = 0
 	for (t=1; t<=M.nterms; t++) {
@@ -4159,6 +5047,114 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 			pos++
 			termcodes[pos] = 39
 		}
+		// harmonisation unit 159: bipartite terms (units 156/157),
+		// termcodes 60-67 - b1cov/b2cov mirror nodecov's own single-
+		// column attrmat pattern exactly; b1factor/b2factor mirror
+		// nodefactor's own multi-column pattern; b1degree/b2degree
+		// mirror degree's own multi-column (no attrmat) pattern;
+		// b1star/b2star mirror kstar's own. native/ergm_mcmc.c reads
+		// each dyad's own mode via a dedicated `mode[]' array (not one
+		// more attrmat column - mode is graph TOPOLOGY the proposal/
+		// dyad-space logic also needs, not a per-term covariate), so
+		// unlike every attribute-consuming branch above, these do not
+		// touch `attrmat'/`attridxs' at all.
+		else if (nm == "b1cov") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 60
+			attridxs[pos] = aidx
+		}
+		else if (nm == "b2cov") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 61
+			attridxs[pos] = aidx
+		}
+		else if (nm == "b1factor") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 62
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "b2factor") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 63
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "b1degree") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 64
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "b2degree") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 65
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "b1star") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 66
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		else if (nm == "b2star") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 67
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		// harmonisation unit 160: edgecov/hamming, the last remaining
+		// gap in the native migration - both need a dense n x n dyadic
+		// covariate matrix (`tdt.edgecovmat'), a genuinely different
+		// shape from every attribute-consuming branch above (one value
+		// per DYAD, not per node), so they get their own dedicated
+		// "covmat" wire mechanism (native_covidx/native_covmatstack)
+		// rather than reusing native_attridx/native_attrmat. Each
+		// distinct edgecovmat is appended as its own n-column BLOCK
+		// (not a single column, unlike attrmat) - covidxs[pos] records
+		// the 1-based BLOCK index, and the wire-protocol callers
+		// (ErgmNativeSampleCore()/ErgmNativeBuildMPLEData()/
+		// ErgmNativeCurvedMPLEFit()) slice out columns
+		// ((covidxs[pos]-1)*n+1)..(covidxs[pos]*n) to send as n new
+		// dataset variables, mirroring how the mode[] array already
+		// crosses the wire as its own dedicated column block (unit 159).
+		else if (nm == "edgecov") {
+			if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+			covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+			cidx = cols(covmatstack) / cols(tdt.edgecovmat)
+			pos++
+			termcodes[pos] = 68
+			covidxs[pos] = cidx
+		}
+		else if (nm == "hamming") {
+			if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+			covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+			cidx = cols(covmatstack) / cols(tdt.edgecovmat)
+			pos++
+			termcodes[pos] = 69
+			covidxs[pos] = cidx
+		}
 		else return(0)
 	}
 
@@ -4167,8 +5163,30 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code)
 	M.native_p1 = p1v
 	M.native_p2 = p2v
 	M.native_attrmat = attrmat
+	M.native_covidx = covidxs
+	M.native_covmatstack = covmatstack
 	M.native_proposal = proposal_code
-	M.native_enabled = 1
+
+	// harmonisation unit 168: every term passed the SAME eligibility
+	// check either way (masking never rejected anything above) - a
+	// masked model still forces native_enabled itself to 0 (MPLE/
+	// curved-MPLE have no mask awareness - they simply never get called
+	// when native_enabled is 0, falling through to their own
+	// already-correct Mata free-dyad-only paths), but now also sets the
+	// SEPARATE native_enabled_sample flag the two ErgmMCMCSample()/
+	// ErgmMCMCSampleDiag() call sites check, plus native_maskmat, the
+	// mask ErgmNativeSampleCore() sends across the wire. An unmasked
+	// model gets native_enabled_sample==native_enabled always - the
+	// split is a genuine no-op for every model that isn't masked.
+	if (masked) {
+		M.native_enabled = 0
+		M.native_enabled_sample = 1
+		M.native_maskmat = G.freedyadmat
+	}
+	else {
+		M.native_enabled = 1
+		M.native_enabled_sample = 1
+	}
 	return(1)
 }
 
@@ -4187,16 +5205,23 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 		real scalar samplesize, real rowvector obs){
 
 	real matrix ties, out, newties, attrpad
-	real scalar n, directed, nties, p, nattr, nobs_needed, i, rngseed, nties_out, __junk
-	string scalar origframe, argstr, cmd, outvarlist, attrvarlist
-	string rowvector outvarnames, attrvarnames
+	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, k, rngseed, nties_out, __junk
+	real scalar bipartite, hasmask
+	real colvector modevec
+	string scalar origframe, argstr, cmd, outvarlist, attrvarlist, modevarlist, covmatvarlist, maskvarlist
+
+	string rowvector outvarnames, attrvarnames, covmatvarnames, maskvarnames
 
 	n = G.n
 	directed = G.directed
+	bipartite = G.bipartite
+	modevec = bipartite ? G.mode : J(0,1,0)
 	ties = G.all_ties()
 	nties = rows(ties)
 	p = cols(theta)
 	nattr = cols(M.native_attrmat)
+	hasmask = rows(M.native_maskmat) > 0 ? 1 : 0
+	ncovmat = n > 0 ? cols(M.native_covmatstack) / n : 0
 
 	nobs_needed = max((ergm_total_dyads(G), samplesize, n, 1))
 
@@ -4229,18 +5254,72 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	__junk = st_addvar("double", "v1")
 	__junk = st_addvar("double", "v2")
 
+	// harmonisation unit 159: the per-node MODE array crosses the wire
+	// as its own dedicated frame variable ("m"), positioned right after
+	// v1/v2 and BEFORE the attribute columns - unlike attrmat's own
+	// per-TERM covariate arrays, `mode' is graph TOPOLOGY the native
+	// plugin's own proposal/dyad-space logic needs regardless of which
+	// terms are present, so it is not folded into the generic attrmat
+	// mechanism. Only created/stored when `bipartite' - a one-mode
+	// model's own wire format is completely unchanged from before this
+	// unit (byte-identical argstr/dataset shape), so no existing
+	// one-mode native certification could regress.
+	modevarlist = ""
+	if (bipartite) {
+		__junk = st_addvar("double", "m")
+		modevarlist = " m"
+		st_store((1::n), "m", modevec[1::n])
+	}
+
 	// Distinct attribute arrays needed across the model's own terms
 	// (harmonisation unit 91 follow-on) - each gets its own frame
-	// variable, positioned right after v1/v2 and before the output
-	// columns; `native_attridx' (set by ErgmNativeSetup()) is a 1-based
-	// index into THESE columns, in the same order native_attrmat's own
-	// columns were built.
+	// variable, positioned right after v1/v2 (and the mode column, if
+	// any) and before the output columns; `native_attridx' (set by
+	// ErgmNativeSetup()) is a 1-based index into THESE columns, in the
+	// same order native_attrmat's own columns were built.
 	attrvarlist = ""
 	attrvarnames = J(1, nattr, "")
 	for (i=1; i<=nattr; i++) {
 		attrvarnames[i] = "a" + strofreal(i)
 		__junk = st_addvar("double", attrvarnames[i])
 		attrvarlist = attrvarlist + " " + attrvarnames[i]
+	}
+
+	// harmonisation unit 160 (edgecov/hamming native port): each distinct
+	// dense n x n dyadic covariate matrix crosses the wire as its own
+	// BLOCK of n dataset variables (one per matrix COLUMN, n rows each) -
+	// positioned right after the attribute columns and before the output
+	// columns, mirroring `mode[]''s own "dedicated column block, not
+	// folded into attrmat" precedent (unit 159) since a dyadic covariate
+	// is a genuinely different shape (one value per dyad) from a per-node
+	// attribute array.
+	covmatvarlist = ""
+	covmatvarnames = J(1, ncovmat * n, "")
+	for (k=1; k<=ncovmat; k++) {
+		for (i=1; i<=n; i++) {
+			covmatvarnames[(k-1)*n + i] = "cm" + strofreal(k) + "_" + strofreal(i)
+			__junk = st_addvar("double", covmatvarnames[(k-1)*n + i])
+			covmatvarlist = covmatvarlist + " " + covmatvarnames[(k-1)*n + i]
+		}
+	}
+
+	// harmonisation unit 168 (freedyads() masked TNT native port): the
+	// dyad-eligibility mask crosses the wire exactly like a covmat block
+	// (its own dense n x n shape, 0/1 instead of a continuous weight) -
+	// its own dedicated block of n columns, positioned right after the
+	// covmat block and before the output columns, present only when
+	// hasmask (this is the only one of the three wire-format callers
+	// that ever sends hasmask=1 - ErgmNativeBuildMPLEData()/
+	// ErgmNativeCurvedMPLEFit() always send 0, see their own header
+	// comments on why masking stays their own Mata-only concern).
+	maskvarlist = ""
+	maskvarnames = J(1, hasmask * n, "")
+	if (hasmask) {
+		for (i=1; i<=n; i++) {
+			maskvarnames[i] = "fm_" + strofreal(i)
+			__junk = st_addvar("double", maskvarnames[i])
+			maskvarlist = maskvarlist + " " + maskvarnames[i]
+		}
 	}
 
 	outvarlist = ""
@@ -4259,17 +5338,38 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 		st_store((1::n), attrvarnames, attrpad[1::n, .])
 	}
 
+	if (ncovmat > 0) st_store((1::n), covmatvarnames, M.native_covmatstack)
+	if (hasmask) st_store((1::n), maskvarnames, M.native_maskmat)
+
 	rngseed = floor(runiform(1,1) * 2147483647)
 
 	// mode=0: run the MCMC burnin+sampling loop (native/ergm_mcmc.c's
 	// own original, unchanged behavior) - see this file's own
 	// ErgmNativeBuildMPLEData() for mode=1 (harmonisation unit 145).
-	argstr = "0 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
+	// `bipartite' is a new field inserted right after `directed'
+	// (harmonisation unit 159) - every field after it shifts position
+	// relative to the pre-unit-159 wire format, so native/ergm_mcmc.c's
+	// own parser was updated in lockstep, not left to infer the new
+	// field's presence from anything else. `ncovmat' (unit 160) is
+	// likewise inserted right after `nattr' in ALL THREE wire-format
+	// callers (this one, ErgmNativeBuildMPLEData(),
+	// ErgmNativeCurvedMPLEFit()) and the C-side parser, in lockstep -
+	// unit 92's own field-count-desync bug (a new field added by only
+	// one caller silently shifted every later field) is the exact
+	// failure mode this ordering discipline exists to avoid.
+	// hasmask (unit 168) inserted right after ncovmat, before p - the
+	// SAME "all three callers, in lockstep" discipline unit 160's own
+	// ncovmat field required, since native/ergm_mcmc.c's single shared
+	// header parser reads this exact field for EVERY mode (this
+	// function is the only one that ever sends 1; see
+	// ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() below, which
+	// each send a literal 0 at the same position).
+	argstr = "0 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite) + " " + strofreal(nties) + " " +
 		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
-		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(p)
+		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(ncovmat) + " " + strofreal(hasmask) + " " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i])
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i])
@@ -4285,7 +5385,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// when the `plugin call' below cannot find the command.
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + outvarlist + ", " + char(34) + argstr + char(34)
+	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + maskvarlist + outvarlist + ", " + char(34) + argstr + char(34)
 	stata(cmd)
 
 	nties_out = st_numscalar("__ergm_native_nties_out")
@@ -4299,6 +5399,14 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	stata("capture frame drop __ergm_native")
 
 	G.init(n, directed)
+	// G.init() unconditionally resets `bipartite'=0 (never touched by
+	// init() otherwise, per its own header comment) - since G is being
+	// fully rebuilt from the native run's own returned edge list, its
+	// bipartite state has to be explicitly restored here or every
+	// downstream caller (ErgmMCMLE()'s own next outer iteration,
+	// estat gof, ...) would silently see a "one-mode" graph after the
+	// very first native-backend bipartite call.
+	if (bipartite) G.set_bipartite(modevec)
 	for (i=1; i<=rows(newties); i++) G.toggle(newties[i,1], newties[i,2])
 
 	return(out)
@@ -4339,16 +5447,21 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 */
 real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph scalar G){
 	real matrix ties, out, attrpad
-	real scalar n, directed, nties, p, nattr, ndyads, nobs_needed, i, __junk
-	string scalar origframe, argstr, cmd, outvarlist, attrvarlist, respvar
-	string rowvector outvarnames, attrvarnames
+	real scalar n, directed, nties, p, nattr, ncovmat, ndyads, nobs_needed, i, k, __junk
+	real scalar bipartite
+	real colvector modevec
+	string scalar origframe, argstr, cmd, outvarlist, attrvarlist, respvar, modevarlist, covmatvarlist
+	string rowvector outvarnames, attrvarnames, covmatvarnames
 
 	n = G.n
 	directed = G.directed
+	bipartite = G.bipartite
+	modevec = bipartite ? G.mode : J(0,1,0)
 	ties = G.all_ties()
 	nties = rows(ties)
 	p = cols(M.native_termcodes)
 	nattr = cols(M.native_attrmat)
+	ncovmat = n > 0 ? cols(M.native_covmatstack) / n : 0
 	ndyads = ergm_total_dyads(G)
 	nobs_needed = max((ndyads, n, 1))
 
@@ -4361,12 +5474,34 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	__junk = st_addvar("double", "v1")
 	__junk = st_addvar("double", "v2")
 
+	// harmonisation unit 159 - see ErgmNativeSampleCore()'s own identical
+	// comment on why `mode' is its own dedicated wire column, not folded
+	// into attrmat.
+	modevarlist = ""
+	if (bipartite) {
+		__junk = st_addvar("double", "m")
+		modevarlist = " m"
+		st_store((1::n), "m", modevec[1::n])
+	}
+
 	attrvarlist = ""
 	attrvarnames = J(1, nattr, "")
 	for (i=1; i<=nattr; i++) {
 		attrvarnames[i] = "a" + strofreal(i)
 		__junk = st_addvar("double", attrvarnames[i])
 		attrvarlist = attrvarlist + " " + attrvarnames[i]
+	}
+
+	// harmonisation unit 160 - see ErgmNativeSampleCore()'s own identical
+	// comment on the covmat wire mechanism.
+	covmatvarlist = ""
+	covmatvarnames = J(1, ncovmat * n, "")
+	for (k=1; k<=ncovmat; k++) {
+		for (i=1; i<=n; i++) {
+			covmatvarnames[(k-1)*n + i] = "cm" + strofreal(k) + "_" + strofreal(i)
+			__junk = st_addvar("double", covmatvarnames[(k-1)*n + i])
+			covmatvarlist = covmatvarlist + " " + covmatvarnames[(k-1)*n + i]
+		}
 	}
 
 	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
@@ -4376,6 +5511,8 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 		if (rows(attrpad) < n) attrpad = attrpad \ J(n - rows(attrpad), nattr, 0)
 		st_store((1::n), attrvarnames, attrpad[1::n, .])
 	}
+
+	if (ncovmat > 0) st_store((1::n), covmatvarnames, M.native_covmatstack)
 
 	outvarlist = ""
 	outvarnames = J(1, p, "")
@@ -4392,18 +5529,23 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	// theta/obs are all unused on the mode=1 path in native/ergm_mcmc.c -
 	// sent as harmless placeholder zeros rather than a second, divergent
 	// wire format the C-side parser would need its own branch to read).
-	argstr = "1 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
-		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(p)
+	// hasmask (unit 168): always 0 here - MPLE has no mask awareness at
+	// all, ErgmNativeSetup() forces M.native_enabled (which gates
+	// whether this function is even called) to 0 for a masked model, so
+	// this path never runs for one; the literal 0 below only keeps the
+	// shared header's OWN field count aligned with ErgmNativeSampleCore()'s.
+	argstr = "1 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite) + " " + strofreal(nties) + " " +
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + outvarlist + " " + respvar + ", " +
+	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + outvarlist + " " + respvar + ", " +
 		char(34) + argstr + char(34)
 	stata(cmd)
 
@@ -4446,9 +5588,9 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 		string scalar V_matname, string scalar converged_matname){
 
 	real matrix ties, attrpad, theta_out, V_out
-	real scalar n, directed, nties, p, nattr, nobs_needed, i, j, __junk, ncurved, ntheta, rc
-	string scalar origframe, argstr, cmd, attrvarlist
-	string rowvector attrvarnames
+	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, j, k, __junk, ncurved, ntheta, rc
+	string scalar origframe, argstr, cmd, attrvarlist, covmatvarlist
+	string rowvector attrvarnames, covmatvarnames
 
 	n = G.n
 	directed = G.directed
@@ -4456,6 +5598,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	nties = rows(ties)
 	p = cols(M.native_termcodes)
 	nattr = cols(M.native_attrmat)
+	ncovmat = n > 0 ? cols(M.native_covmatstack) / n : 0
 	// BUGFIX (caught by the very first smoke test): sized to `n' alone,
 	// forgetting that v1/v2 need `nties' rows too - st_store() on the
 	// edge list then threw "argument out of range" the moment a network
@@ -4483,6 +5626,23 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 		attrvarlist = attrvarlist + " " + attrvarnames[i]
 	}
 
+	// harmonisation unit 160 - see ErgmNativeSampleCore()'s own identical
+	// comment on the covmat wire mechanism. A curved term is never
+	// edgecov/hamming itself, but a MIXED model (e.g. edges + gwespfree()
+	// + edgecov()) still needs this path to speak the same wire shape as
+	// the other two modes, since ErgmNativeSetup() populates
+	// native_covidx/native_covmatstack once, model-wide, for all three
+	// callers alike.
+	covmatvarlist = ""
+	covmatvarnames = J(1, ncovmat * n, "")
+	for (k=1; k<=ncovmat; k++) {
+		for (i=1; i<=n; i++) {
+			covmatvarnames[(k-1)*n + i] = "cm" + strofreal(k) + "_" + strofreal(i)
+			__junk = st_addvar("double", covmatvarnames[(k-1)*n + i])
+			covmatvarlist = covmatvarlist + " " + covmatvarnames[(k-1)*n + i]
+		}
+	}
+
 	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
 
 	if (nattr > 0) {
@@ -4491,16 +5651,30 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 		st_store((1::n), attrvarnames, attrpad[1::n, .])
 	}
 
+	if (ncovmat > 0) st_store((1::n), covmatvarnames, M.native_covmatstack)
+
 	// mode=2, then the SAME field order ErgmNativeBuildMPLEData()'s own
 	// argstr uses through the term-slot list, plus two new trailing
 	// fields this mode alone consumes (ncurved, curved_decay_start) -
 	// see native/ergm_mcmc.c's own header comment on the mode field for
 	// why these two are always present but only meaningful here.
-	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(nties) + " " +
-		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(p)
+	// `bipartite' (harmonisation unit 159) is always sent as the literal
+	// 0 here, never a real value read off G - curved MPLE has no
+	// bipartite-eligible term (Stage 2/3's own bipartite terms are
+	// dyad-independent/dyad-dependent counts, never curved), so this
+	// mode never legitimately runs on a bipartite model; still parsed
+	// on the C side either way, since mode=2 shares mode=0/1's own
+	// single uniform wire header format field-for-field.
+	// hasmask (unit 168): always 0 here, same reasoning as
+	// ErgmNativeBuildMPLEData()'s own identical comment - curved MPLE
+	// has no mask awareness either, and never runs when native_enabled
+	// is 0 anyway; kept only for the shared header's own field-count
+	// alignment across all three callers.
+	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " 0 " + strofreal(nties) + " " +
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i])
+			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
@@ -4508,7 +5682,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + ", " + char(34) + argstr + char(34)
+	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + covmatvarlist + ", " + char(34) + argstr + char(34)
 	stata(cmd)
 
 	st_framecurrent(origframe)
@@ -4561,6 +5735,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
    =================================================================== */
 
 real scalar ergm_total_dyads(class ErgmGraph scalar G){
+	if (G.bipartite) return(rows(G.mode1nodes) * rows(G.mode2nodes))
 	if (G.directed) return(G.n * (G.n - 1))
 	return(G.n * (G.n - 1) / 2)
 }
@@ -4575,7 +5750,21 @@ real rowvector ergm_propose_uniform(class ErgmGraph scalar G){
 	real scalar i, j, pick, row, col
 
 	pick = ceil(runiform(1,1) * ergm_total_dyads(G))
-	if (G.directed) {
+	if (G.bipartite) {
+		// linear index -> (i,j) over the rectangular mode1 x mode2
+		// cross-mode dyad space - the exact same closed-form
+		// unranking style the directed branch below already uses,
+		// just over a rectangular (n1 x n2) space instead of a
+		// square-minus-diagonal (n x (n-1)) one, since every
+		// mode1/mode2 pair is a valid, distinct dyad with no
+		// diagonal to exclude (a node is never its own dyad partner
+		// here, since the two lists are disjoint by construction).
+		row = ceil(pick / rows(G.mode2nodes))
+		col = mod(pick - 1, rows(G.mode2nodes)) + 1
+		i = G.mode1nodes[row]
+		j = G.mode2nodes[col]
+	}
+	else if (G.directed) {
 		// linear index -> (i,j), i != j, over the n x (n-1) directed dyad space
 		row = ceil(pick / (G.n - 1))
 		col = mod(pick - 1, G.n - 1) + 1
@@ -4593,6 +5782,50 @@ real rowvector ergm_propose_uniform(class ErgmGraph scalar G){
 		j = i + pick
 	}
 	return((i, j, 0))
+}
+
+/*
+	Masked uniform-random-dyad proposal (constraints, first piece -
+	docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary dyad
+	space" row - R ergm's own `constraints=~fixallbut(free)`): identical
+	to ergm_propose_uniform() above, restricted to dyads G.freedyadmat
+	marks eligible. Implemented as plain rejection sampling over the
+	already-correct unmasked proposal, not a from-scratch closed-form
+	unranking over the free-dyad subset - draws a candidate dyad from
+	the FULL space via ergm_propose_uniform() and re-draws whenever it
+	lands on a fixed dyad. This is standard-correct (rejection sampling
+	from a uniform superset, conditioned on membership, is itself exactly
+	uniform over the accepted subset) and stays STILL symmetric/O(1)-ish
+	in expectation for any mask that is not pathologically sparse -
+	set_dyadmask() already rejects the one truly degenerate case (zero
+	free dyads) at setup time, before any MCMC ever runs, so this loop
+	is only ever a genuine possibility-of-progress search, never an
+	unconditional infinite spin; the `tries' cap below is a defensive
+	backstop for an extremely (but not impossibly) sparse mask, not the
+	expected path.
+
+	A masked TNT variant (ergm_propose_tnt_masked(), below) now also
+	exists (docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary
+	dyad space" row) - nwergm.ado's own proposal() dispatch picks between
+	this function and that one purely on `freedyads()' presence, not
+	`proposal()' itself, so this remains the ONLY masked proposal when
+	`proposal(uniform)' is explicitly requested (or defaulted to on a
+	network too small/dense for TNT to matter).
+*/
+real rowvector ergm_propose_uniform_masked(class ErgmGraph scalar G){
+	real rowvector uprop
+	real scalar tries
+
+	tries = 0
+	do {
+		uprop = ergm_propose_uniform(G)
+		tries++
+		if (tries > 1000000) {
+			errprintf("freedyads(): could not find a free dyad to propose after 1,000,000 draws - the mask may be far too sparse relative to the total dyad space.\n")
+			exit(error(499))
+		}
+	} while (!G.freedyadmat[uprop[1], uprop[2]])
+	return(uprop)
 }
 
 /*
@@ -4662,6 +5895,140 @@ real rowvector ergm_propose_tnt(class ErgmGraph scalar G){
 }
 
 /*
+	Masked TNT proposal (freedyads() follow-on - docs/ERGM_ROADMAP.md's
+	"Constraints beyond v1's free binary dyad space" row): the SAME
+	construction as ergm_propose_tnt() above, with every population count
+	restricted to the free-dyad subspace. TNT's own derivation (Morris,
+	Handcock & Hunter 2008) never assumes anything about WHICH specific
+	dyads are eligible, only how many there are and how many are
+	currently tied - running it on the free-dyad-only subspace (a
+	well-defined, fixed-size state space, since dyad eligibility never
+	changes mid-fit, only which free dyads are tied does) is
+	mathematically identical to running ordinary TNT on a smaller graph
+	whose only dyads are the free ones. So the log-ratio FORMULAS are
+	byte-for-byte identical to ergm_propose_tnt()'s own; only the D/E
+	they are computed from change:
+	  - D (total dyad count)        -> G.nfreedyads (free dyads only)
+	  - E (current tie count)       -> G.nfreeties (free AND currently
+	                                   tied only - a fixed dyad's own tie
+	                                   state, even if tied, can never be
+	                                   proposed for removal, so it must
+	                                   never count toward E)
+	  - "pick a random existing tie" -> draws from G.freeelist (live free
+	                                    ties only), never G.elist (which
+	                                    also holds fixed ties - drawing
+	                                    from there could propose removing
+	                                    a fixed dyad, violating the
+	                                    constraint outright)
+	  - "pick a random dyad"         -> ergm_propose_uniform_masked(G)
+	                                    (already-certified rejection
+	                                    sampling over the free subspace),
+	                                    not duplicated here.
+	A fully-free mask (every dyad eligible) makes nfreedyads==Dtot and
+	nfreeties==nties exactly, so this collapses to being statistically
+	identical to the unmasked ergm_propose_tnt() - the certification test
+	for this function confirms exactly that, proving the substitution
+	introduces no bias of its own.
+*/
+real rowvector ergm_propose_tnt_masked(class ErgmGraph scalar G){
+	real scalar Dtot, E, P, Q, DP, DO, i, j, logratio, pickedge, erow
+	real rowvector uprop
+
+	Dtot = G.nfreedyads
+	E = G.nfreeties
+	P = 0.5
+	Q = 0.5
+	DP = P * Dtot
+	DO = DP / Q
+
+	pickedge = 0
+	if (runiform(1,1) < P & E > 0) pickedge = 1
+
+	if (pickedge) {
+		erow = ceil(runiform(1,1)*E)
+		i = G.freeelist[erow, 1]
+		j = G.freeelist[erow, 2]
+	}
+	else {
+		uprop = ergm_propose_uniform_masked(G)
+		i = uprop[1]
+		j = uprop[2]
+	}
+
+	if (G.has_edge(i,j)) {
+		logratio = (E==1) ? -ln(DP+Q) : ln(E :/ (DO+E))
+	}
+	else {
+		logratio = (E==0) ? ln(DP+Q) : ln(1 + DO :/ (E+1))
+	}
+	return((i, j, logratio))
+}
+
+/*
+	Fixed-density ("constraints=~edges" in R ergm) tie-swap proposal -
+	NOT a filtered/masked single-toggle proposal like
+	ergm_propose_uniform_masked()/ergm_propose_tnt_masked() above (those
+	restrict WHICH single dyad may be proposed; this proposes TWO dyads
+	at once, one tie removed and one non-tie added, so the total tie
+	count is invariant by construction on every accepted move). Verified
+	directly against R ergm's own real C source (`MH_ConstantEdges`,
+	`src/MHproposals.c`, fetched fresh from the real CRAN 4.12.0 source
+	tarball): "select edge at random; select non-edge at random" - no
+	Hastings-ratio correction is applied there (no `MHp->logratio` set),
+	which is correct BY CONSTRUCTION here too: the reverse move (the
+	just-added tie picked as the "edge" half, the just-removed dyad
+	picked as the "non-edge" half) is proposed with EXACTLY the same
+	probability, since the tied/untied POPULATION SIZES themselves never
+	change under this constraint (one removed, one added, every step) -
+	a genuinely symmetric proposal, logratio=0 unconditionally, same as
+	the plain (unmasked) uniform proposal's own symmetric case.
+
+	Returns (tail_remove, head_remove, tail_add, head_add) - the CALLER
+	(ErgmMCMCSampleSwap()/ErgmMCMCSampleDiagSwap() below), not this
+	function, is responsible for toggling both dyads and evaluating
+	their SUMMED change statistic, since that needs G's own intermediate
+	(one-toggle-applied) state for a dyad-DEPENDENT term to see the
+	correct post-first-toggle graph when evaluating the second dyad's
+	own change - a single self-contained proposal function has no
+	natural place to do that (see ErgmMCMCSampleSwap()'s own header for
+	the exact telescoping argument this relies on).
+
+	The "pick a uniform non-edge" half is done via straightforward
+	rejection sampling on top of the already-existing
+	ergm_propose_uniform() (propose any dyad, retry if it happens to
+	already be tied) rather than a dedicated live non-tie list (unlike
+	real ergm's own DyadGenRandNonedge(), which likely maintains one) -
+	a disclosed simplification: fine for any network that is not
+	extremely dense (few remaining non-ties to hit by chance), matching
+	this option's own initial v1 scope (no native port, Mata-only).
+*/
+real rowvector ergm_propose_swap(class ErgmGraph scalar G){
+	real scalar pick, i, j
+	real rowvector cand
+
+	if (G.nties == 0 | G.nties == ergm_total_dyads(G)) {
+		// No valid swap exists at either boundary (nothing to remove, or
+		// nothing to add) - cannot happen for a real fixed-density fit
+		// starting from an observed network with at least one tie and at
+		// least one non-tie, but guarded explicitly (same errprintf()+
+		// exit(error()) idiom freedyads()/blockdiag() already use above)
+		// rather than looping forever below.
+		errprintf("fixdensity: network has no ties, or is complete - no valid tie/non-tie swap exists.\n")
+		exit(error(498))
+	}
+
+	pick = ceil(runiform(1,1) * G.nties)
+
+	do {
+		cand = ergm_propose_uniform(G)
+		i = cand[1]
+		j = cand[2]
+	} while (G.has_edge(i,j))
+
+	return((G.elist[pick,1], G.elist[pick,2], i, j))
+}
+
+/*
 	Metropolis-Hastings simulation. `proposalfn' has the fixed
 	`ergm_propose_*' signature above. Mutates G in place (its final
 	state is the last accepted network in the chain - callers that need
@@ -4675,6 +6042,87 @@ real rowvector ergm_propose_tnt(class ErgmGraph scalar G){
    (docs/ERGM_STATNET_STUDY.md Appendix B §5) and letting a caller
    compare them directly against the observed network's own statistic.
 */
+
+/*
+	Fixed-density counterpart to ErgmMCMCSample() above - identical
+	contract (mutates G in place, returns statistic LEVELS), but every
+	step evaluates and accepts/rejects a COMPOUND (tie-removed,
+	non-tie-added) move as one atomic unit, via ergm_propose_swap()
+	above, rather than ErgmMCMCSample()'s own single-dyad toggle.
+
+	Correctness of summing two change statistics via one intermediate
+	toggle (not two independent full_change() calls on the UNCHANGED
+	graph, which would be wrong for any dyad-DEPENDENT term): change
+	statistics telescope by construction - full_change(G,t1,h1) is
+	exactly stat(G after toggling (t1,h1)) - stat(G); tentatively
+	applying that toggle and THEN calling full_change(G',t2,h2) on the
+	once-toggled graph G' gives exactly stat(G'') - stat(G'), where G''
+	has BOTH toggles applied. Summing the two therefore gives exactly
+	stat(G'') - stat(G), the true joint change - the identical
+	telescoping property `stat_gwdsp()'/`stat_dsp()' already exploit
+	elsewhere in this file (replaying observed ties one at a time via
+	their own change functions), just used here for a two-step
+	tentative-then-maybe-undo proposal instead of a from-scratch replay.
+	On rejection, the tentative first toggle is undone (G.toggle() is
+	its own inverse - toggling the same dyad twice returns it to its
+	original state), leaving G byte-identical to before this proposal
+	was evaluated.
+
+	Native (C) port not attempted (v1 Mata-only, matching this
+	constraint's own initial scope) - M.fixed_density forces
+	native_enabled/native_enabled_sample to 0 in nwergm.ado, so this
+	function is always reached via the ordinary (non-native) path.
+*/
+real matrix ErgmMCMCSampleSwap(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta, real scalar burnin, real scalar interval,
+	real scalar samplesize){
+
+	real rowvector cur, prop, chg1, chg2, chgtot
+	real scalar step, draw, t1, h1, t2, h2, cutoff
+	real matrix out
+
+	cur = M.full_statistic(G)
+	out = J(samplesize, cols(cur), 0)
+
+	for (step=1; step<=burnin; step++) {
+		prop = ergm_propose_swap(G)
+		t1 = prop[1]; h1 = prop[2]; t2 = prop[3]; h2 = prop[4]
+		chg1 = M.full_change(G, t1, h1)
+		G.toggle(t1, h1)
+		chg2 = M.full_change(G, t2, h2)
+		chgtot = chg1 + chg2
+		cutoff = theta * chgtot'
+		if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+			G.toggle(t2, h2)
+			cur = cur + chgtot
+		}
+		else {
+			G.toggle(t1, h1)
+		}
+	}
+
+	for (draw=1; draw<=samplesize; draw++) {
+		for (step=1; step<=interval; step++) {
+			prop = ergm_propose_swap(G)
+			t1 = prop[1]; h1 = prop[2]; t2 = prop[3]; h2 = prop[4]
+			chg1 = M.full_change(G, t1, h1)
+			G.toggle(t1, h1)
+			chg2 = M.full_change(G, t2, h2)
+			chgtot = chg1 + chg2
+			cutoff = theta * chgtot'
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(t2, h2)
+				cur = cur + chgtot
+			}
+			else {
+				G.toggle(t1, h1)
+			}
+		}
+		out[draw, .] = cur
+	}
+	return(out)
+}
+
 real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta, real scalar burnin, real scalar interval,
 	real scalar samplesize, pointer(real rowvector function) scalar proposalfn){
@@ -4684,6 +6132,20 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real matrix out
 
 	cur = M.full_statistic(G)
+
+	// Fixed-density dispatch (M.fixed_density, set in nwergm.ado only for
+	// a `fixdensity' model - explicitly 0 for every other model via
+	// ErgmNativeSetup(), which always runs before this function is ever
+	// called, so this branch is unreachable/always-false for the
+	// ordinary case, leaving everything below completely unchanged).
+	// Checked BEFORE the native branch below since a fixed-density model
+	// always has native_enabled_sample forced to 0 anyway (no native
+	// port for this constraint - see ErgmMCMCSampleSwap()'s own header),
+	// but checking first here documents that ordering explicitly rather
+	// than relying on it silently.
+	if (M.fixed_density) {
+		return(ErgmMCMCSampleSwap(M, G, theta, burnin, interval, samplesize))
+	}
 
 	// Native backend fast path (harmonisation unit 83) - see this file's
 	// own "Native (C) MCMC backend" section above. M.native_enabled is
@@ -4695,7 +6157,7 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	// unused in the native branch, since the plugin implements its own
 	// proposal/toggle loop natively (crossing the Mata/native boundary
 	// once for this whole call, not once per proposal).
-	if (M.native_enabled) {
+	if (M.native_enabled_sample) {
 		return(ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur))
 	}
 
@@ -4751,6 +6213,68 @@ struct ErgmMCMCDiag {
 	real scalar acceptrate
 }
 
+/*
+	Fixed-density counterpart to ErgmMCMCSampleDiag() below - identical
+	relationship ErgmMCMCSampleSwap() has to ErgmMCMCSample() (see its
+	own header for the telescoping-change-statistic correctness
+	argument), plus the same acceptance-rate tally ErgmMCMCSampleDiag()
+	itself adds over ErgmMCMCSample().
+*/
+struct ErgmMCMCDiag scalar ErgmMCMCSampleDiagSwap(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta, real scalar burnin, real scalar interval,
+	real scalar samplesize){
+
+	struct ErgmMCMCDiag scalar res
+	real rowvector cur, prop, chg1, chg2, chgtot
+	real scalar step, draw, t1, h1, t2, h2, cutoff, naccept, ntried
+
+	cur = M.full_statistic(G)
+	res.sample = J(samplesize, cols(cur), 0)
+
+	for (step=1; step<=burnin; step++) {
+		prop = ergm_propose_swap(G)
+		t1 = prop[1]; h1 = prop[2]; t2 = prop[3]; h2 = prop[4]
+		chg1 = M.full_change(G, t1, h1)
+		G.toggle(t1, h1)
+		chg2 = M.full_change(G, t2, h2)
+		chgtot = chg1 + chg2
+		cutoff = theta * chgtot'
+		if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+			G.toggle(t2, h2)
+			cur = cur + chgtot
+		}
+		else {
+			G.toggle(t1, h1)
+		}
+	}
+
+	naccept = 0
+	ntried = 0
+	for (draw=1; draw<=samplesize; draw++) {
+		for (step=1; step<=interval; step++) {
+			prop = ergm_propose_swap(G)
+			t1 = prop[1]; h1 = prop[2]; t2 = prop[3]; h2 = prop[4]
+			chg1 = M.full_change(G, t1, h1)
+			G.toggle(t1, h1)
+			chg2 = M.full_change(G, t2, h2)
+			chgtot = chg1 + chg2
+			cutoff = theta * chgtot'
+			ntried++
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(t2, h2)
+				cur = cur + chgtot
+				naccept++
+			}
+			else {
+				G.toggle(t1, h1)
+			}
+		}
+		res.sample[draw, .] = cur
+	}
+	res.acceptrate = naccept / ntried
+	return(res)
+}
+
 struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta, real scalar burnin, real scalar interval,
 	real scalar samplesize, pointer(real rowvector function) scalar proposalfn){
@@ -4761,13 +6285,19 @@ struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class Er
 
 	cur = M.full_statistic(G)
 
+	// Fixed-density dispatch - see ErgmMCMCSample()'s own identical
+	// branch for the full rationale.
+	if (M.fixed_density) {
+		return(ErgmMCMCSampleDiagSwap(M, G, theta, burnin, interval, samplesize))
+	}
+
 	// Native backend fast path - see ErgmMCMCSample()'s own identical
 	// branch just above for the full rationale; the acceptance rate
 	// ErgmNativeSampleCore() tallies internally is picked up from
 	// M.native_lastaccept here since this function's own return type
 	// (unlike ErgmMCMCSample()'s bare matrix) has a natural place to put
 	// it.
-	if (M.native_enabled) {
+	if (M.native_enabled_sample) {
 		res.sample = ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur)
 		res.acceptrate = M.native_lastaccept
 		return(res)
@@ -4912,6 +6442,20 @@ struct ErgmMCMLEFit {
 				// identical in form to ErgmCurvedMPLEFit()'s own,
 				// just evaluated at the final theta rather than a
 				// Newton-Raphson optimum).
+	real matrix coefhist_theta	// harmonisation unit 162: the THETA-space
+				// analogue of `coefhist' above (which is always
+				// eta-space, even for a curved model) - one row
+				// per MCMLE iteration, populated only when M has
+				// a curved term (0 x M.ntheta() otherwise). Unit
+				// 152's own disclosed next step ("log the
+				// theta-space trajectory itself across iterations
+				// to check whether it is monotonically drifting
+				//... versus genuinely oscillating") had never
+				// actually been built until this unit - purely
+				// additive instrumentation, gated behind the same
+				// `is_curved' flag as everything else curved-
+				// specific in this function, so it cannot affect
+				// any non-curved model's behavior at all.
 }
 
 /*
@@ -5225,11 +6769,13 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 
 	struct ErgmMCMLEFit scalar res
 	struct ErgmMCMCDiag scalar diag
-	real rowvector obs, theta, Dbar, delta, se, theta_c
-	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist
+	real rowvector obs, theta, Dbar, delta, se, theta_c, delta_theta
+	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist, coefhist_theta, Jac, JtVinvJ
 	real scalar iter, p, mahal, gamma, converged, k, neff, min_neff, interval_cap, growth, interval
-	real scalar T2, Fstat, Fcrit, confidence, is_curved
+	real scalar T2, Fstat, Fcrit, confidence, is_curved, mahal_theta
 	real rowvector rho, infl
+	real rowvector eta_full_target, r0, r1, theta_try, theta_c_try
+	real scalar obj0_bt, obj1_bt, bt
 
 	// Mata passes a bare-variable argument by reference, so this
 	// function's own adaptive-interval growth (below) reassigning its
@@ -5248,6 +6794,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	theta = theta0
 	p = cols(theta)
 	coefhist = J(0, p, 0)
+	coefhist_theta = J(0, M.ntheta(), 0)
 	converged = 0
 
 	// Curved MCMLE (harmonisation unit 138): `theta' throughout this
@@ -5319,22 +6866,106 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		Vinv = invsym(V)
 		delta = -Dbar * Vinv
 
-		mahal = sqrt(delta * V * delta')
-		gamma = (mahal > 2 ? 2/mahal : 1)
+		if (is_curved) {
+			// Damp the OUTER Newton step using the THETA-SPACE
+			// Jacobian's own conditioning, not the raw eta-space V -
+			// unit 138's own documented next step
+			// (docs/CERTIFICATION.md), tried here for the first time.
+			// The eta-space-only `mahal'/`gamma' rule below (the
+			// `else' branch) is calibrated for the FULL unconstrained
+			// eta space; once a curved term is present, only a much
+			// lower-dimensional MANIFOLD of eta points is actually
+			// achievable, and a step that looks modest by the raw
+			// eta-space rule can require an implausibly large jump
+			// once projected onto that manifold - unit 138's own
+			// disclosed failure (decay drifting to 105+, 0% MCMC
+			// acceptance) even after the projection step itself
+			// separately gained its own backtracking safeguard.
+			// Local linearization at the CURRENT `theta_c' (the
+			// previous iteration's own theta-space point, or the
+			// caller-supplied/fallback start on the first iteration):
+			// `Jac' (nparam() x ntheta()) is the exact same analytic
+			// Jacobian `project_eta_to_theta()' itself uses below,
+			// mapping a small theta-space move to its own local
+			// eta-space effect. Solving the weighted least-squares
+			// "which theta-space step best explains the raw eta-space
+			// Newton direction delta" - using the SAME `Vinv' metric
+			// already in hand, the natural GLS weight - gives
+			// `delta_theta'; its own size in the resulting
+			// Gauss-Newton theta-space metric (`Jac'' Vinv Jac', the
+			// same normal-equations matrix `project_eta_to_theta()'
+			// itself inverts per curved block) is what actually
+			// determines how large a jump the curved manifold would
+			// be asked to make - capped by the SAME threshold (2) the
+			// existing eta-space rule already uses, but applied to the
+			// THETA-space step size, so an implausible jump is capped
+			// BEFORE it ever reaches the projection, not after.
+			// TRUST-REGION BACKTRACKING (harmonisation unit 162): the
+			// Mahalanobis-2 cap below uses a LOCAL LINEARIZATION (Jac,
+			// taken at the CURRENT theta_c) to bound the theta-space step
+			// size - but the true theta->eta map (via the GW kernel) is
+			// highly nonlinear in decay, and its own decay-derivative can
+			// SATURATE (flatten toward 0) well before a "Mahalanobis-2"
+			// linear step would suggest, so a step that looks modest
+			// under the linear approximation can massively overshoot in
+			// the true nonlinear space and land somewhere the estimating
+			// equations can no longer see any local improvement at all -
+			// permanently stuck from that point on, not oscillating or
+			// slowly drifting. Directly measured on this project's own
+			// curvedgwespnet certification network: decay jumped from its
+			// MPLE start (4.15) to 66.7 in EXACTLY ONE outer iteration
+			// under the unit-152 damping alone, then stayed bit-identical
+			// at 66.7 for 19 further iterations - a genuinely different,
+			// more specific mechanism than unit 152's own "gradual drift"
+			// framing suggested, found by finally building the theta-space
+			// trajectory logging that unit itself called for but never
+			// implemented (this unit's own `coefhist_theta' addition).
+			// Fix: verify the step actually improves the TRUE (not
+			// linearized) weighted eta-space objective - measured via a
+			// real, un-linearized round trip through
+			// `project_eta_to_theta()'/`theta_to_eta()' - before accepting
+			// it; halve gamma and retry if not, exactly the same
+			// backtracking discipline `project_eta_to_theta()''s own inner
+			// loop and `ErgmCurvedMPLEFit()' already both use elsewhere in
+			// this same file, just applied one level up, to the outer
+			// step itself.
+			Jac = M.theta_to_eta_jacobian(theta_c)
+			JtVinvJ = Jac' * Vinv * Jac
+			delta_theta = (invsym(JtVinvJ) * Jac' * Vinv * delta')'
+			mahal_theta = sqrt(delta_theta * JtVinvJ * delta_theta')
+			gamma = (mahal_theta > 2 ? 2/mahal_theta : 1)
+
+			eta_full_target = theta + delta	// the UNDAMPED eta-space Newton target - what the step is trying to approach, regardless of how much of it gets taken
+			r0 = eta_full_target - M.theta_to_eta(theta_c)
+			obj0_bt = r0 * Vinv * r0'
+			for (bt=1; bt<=20; bt++) {
+				theta_try = theta + gamma*delta
+				theta_c_try = M.project_eta_to_theta(theta_try, Vinv, theta_c, 100, 1e-10)
+				r1 = eta_full_target - M.theta_to_eta(theta_c_try)
+				obj1_bt = r1 * Vinv * r1'
+				if (obj1_bt <= obj0_bt) break
+				gamma = gamma / 2
+			}
+		}
+		else {
+			mahal = sqrt(delta * V * delta')
+			gamma = (mahal > 2 ? 2/mahal : 1)
+		}
 
 		theta = theta + gamma*delta
 		if (is_curved) {
-			// snap the raw eta-space Newton target back onto the
-			// achievable curved manifold - `Vinv' (this iteration's
-			// own eta-space information, already computed above for
-			// the Newton step itself) is the natural GLS weight,
-			// exactly the same role it plays in
+			// snap the (now backtracked-safe) eta-space Newton target
+			// back onto the achievable curved manifold - `Vinv' (this
+			// iteration's own eta-space information, already computed
+			// above for the Newton step itself) is the natural GLS
+			// weight, exactly the same role it plays in
 			// ErgmCurvedMPLEFit()'s own analogous step. `theta_c'
-			// warm-starts from its own PREVIOUS iteration's value,
-			// not a generic restart, matching how theta itself is
-			// never restarted iteration to iteration either.
+			// warm-starts from its own PREVIOUS iteration's value, not a
+			// generic restart, matching how theta itself is never
+			// restarted iteration to iteration either.
 			theta_c = M.project_eta_to_theta(theta, Vinv, theta_c, 100, 1e-10)
 			theta = M.theta_to_eta(theta_c)
+			coefhist_theta = coefhist_theta \ theta_c
 		}
 		coefhist = coefhist \ theta
 
@@ -5487,6 +7118,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// for an ordinary model, matching this struct's own documented
 	// "empty for ordinary, populated for curved" contract.
 	if (is_curved) res.coef_theta = theta_c
+	res.coefhist_theta = coefhist_theta
 	return(res)
 }
 

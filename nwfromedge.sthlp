@@ -108,7 +108,7 @@ One can also transfrom any network that exists in memory into such an edgelist w
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior).
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior). A node with zero ties (an isolate) is never created from any edgelist import - use {help nwaddnodes} afterward to add any isolates the source data could not represent.
 
 {title:Examples}
 

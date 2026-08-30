@@ -25,6 +25,18 @@ These codes are also available as named local macros from {cmd:unw_defs.ado} (us
 this package's own commands) - e.g. {cmd:`}{cmd:errNWsNotFound}{cmd:'} instead of the bare number
 {bf:482}.
 
+{title:Examples}
+
+{pstd}
+Catch a package-specific error code programmatically:
+
+	{cmd:. nwclear}
+	{cmd:. capture nwname doesnotexist}
+	{cmd:. display _rc}
+	{cmd:. if _rc == 482 {c -(}}
+	{cmd:.     display "network not found"}
+	{cmd:. {c )-}}
+
 {title:Package-specific codes}
 
 {synoptset 8 tabbed}{...}

@@ -1,434 +1,3 @@
-/***
-{smcl}
-{* *! version 2.0.0  2april2014}{...}
-{marker topic}
-{helpb nw_topical##visualization:[NW-2.8] Visualization}
-
-{title:Title}
-
-{p2colset 9 15 22 2}{...}
-{p2col :nwplot {hline 2}}Plot a network{p_end}
-{p2colreset}{...}
-
-
-{title:Syntax}
-
-{p 8 17 2}
-{cmdab: nwplot}
-[{it:{help netname}}] 
-[{it:{help if}}]
-[{cmd:,} {it:{help nwplot##node_options:node_options}}
-{it:{help nwplot##label_options:label_options}}
-{it:{help nwplot##edge_options:edge_options}}
-{it:{help nwplot##arrow_options:arrow_options}}
-{it:{help nwplot##layout_options:layout_options}}
-{it:{help nwplot##other_options:other_options}}
-{it:{help nwplot##export_options:export_options}}
-{it:{help twoway_options}}]
-	
-{synoptset 20}{...}
-{p2col:{it:options}}Description{p_end}
-{p2line}
-{p2col:{it:{help nwplot##node_options:node_options}}}change look of
-       nodes (color, size, symbol, etc.){p_end}
-{p2col:{it:{help nwplot##label_options:label_options}}}display and change look of
-       node labels{p_end}
-{p2col:{it:{help nwplot##edge_options:edge_options}}}change look of 
-       edges (color, size, pattern, etc.){p_end}
-{p2col:{it:{help nwplot##arrow_options:arrow_options}}}change look of
-       arrows{p_end}
-{p2col:{it:{help nwplot##layout_options:layout_options}}}change the layout,
-	use existing coordinates, export coordinates{p_end}
-{p2col:{it:{help nwplot##other_options:other_options}}}other network plot options
-		{p_end}
-{p2col:{it:{help nwplot##export_options:export_options}}}export the plot directly
-	to a vector (SVG/PDF/EPS) or raster (PNG/TIF/...) file{p_end}
-{p2col:{it:{help twoway_options}}}normal twoway options for the whole plot
-		{p_end}
-	
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:node_options}}Description{p_end}
-{marker node_options}{...}
-{p2line}
-{synopt:{opt size}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}size of the nodes{p_end}
-{p2col:{opt color}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}color of the nodes{p_end}
-{p2col:{opt symbol}({it:{help varname}} [,{it:{help nwplot##node_sub:node_sub}}])}symbol of the nodes{p_end}
-{p2col:{opth nodefactor(float)}}multiply all node sizes by a factor{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:node_sub}}Description{p_end}
-{marker node_sub}{...}
-{p2line}
-{p2col:{opt norescale}}no automatic rescale{p_end}
-{p2col:{opt legendoff}}no legend for this attribute{p_end}
-{p2col:{opt forcekeys}({it:{help int}}...)}list of keys to be used in the legend{p_end}
-{p2col:{opt colorpalette}({it:{help colorstyle}}...)}list with colorstyles; change colorpalette{p_end}
-{p2col:{opt symbolpalette}({it:{help symbolstyle}}...)}list with symbolstyles; change symbolpalette{p_end}
-{p2col:{opth foreground(int...)}}values to be plotted in the foreground{p_end}
-{p2col:{opth sizebin(int)}}finetune size of nodes{p_end}
-{p2col:{opth mlcolor(colorstyle)}}lcolor of nodes{p_end}
-{p2col:{opth mlwidth(linewidthstyle)}}lwidth of nodes{p_end}
-{p2col:{opth nodeclash(real)}}separate overlaped node in mdsclassical{p_end}
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:label_options}}Description{p_end}
-{marker label_options}{...}
-{p2line}
-{p2col:{opt lab}}display node labels saved with network{p_end}
-{p2col:{opth label(varname)}}display node labels from variable{p_end}
-{synopt:{opt labelopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look of node labels (e.g. size, color){p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:edge_options}}Description{p_end}
-{marker edge_options}{...}
-{p2line}
-{p2col:{opt edgesize}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change width of edges; network needs to have the right dimensions{p_end}
-{p2col:{opt edgecolor}({it:{help netname}} [,{it:{help nwplot##edge_sub:edge_sub}}])}use edge values of other network to change color of edges; network needs to have the right dimensions{p_end}
-{p2col:{opth edgefactor(float)}}multiply all edge sizes by a factor{p_end}
-{p2col:{opth edgeforeground(int...)}}top-level counterpart to the {opt foreground()} sub-option of {opt edgecolor()}/{opt edgesize()} - values to be plotted in the foreground{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:edgesub_sub}}Description{p_end}
-{marker edge_sub}{...}
-{p2line}
-{p2col:{opt legendoff}}no legend for this attribute{p_end}
-{p2col:{opt forcekeys}({it:{help int}}...)}list of keys to be used in the legend{p_end}
-{p2col:{opt edgecolorpalette}({it:{help colorstyle}}...)}list with colorstyles; change edgecolorpalette{p_end}
-{p2col:{opt edgepatternpalette}({it:{help linepatternstyle:pattern}}...)}list with linestyles; the same network as in edgecolor is used to display different line patterns{p_end}
-{p2col:{opth foreground(int...)}}values to be plotted in the foreground{p_end}
-	
-{synoptset 35 tabbed}{...}
-{p2col:{it:arrow_options}}Description{p_end}
-{marker arrow_options}{...}
-{p2line}
-{p2col:{opt arcstyle}({it:{help nwplot##arcstyle:arcstyle}})}change the look of arcs (curved, straight){p_end}
-{p2col:{opth arcbend(float)}}control the degree of bend for curved arcs; default = 2{p_end}
-{p2col:{opth arcsplines(int)}}resolution for curved arcs{p_end}
-{p2col:{opt arrows}}force arrowheads on an otherwise-undirected network{p_end}
-{p2col:{opth arrowfactor(float)}}multiply arrowhead by a factor{p_end}
-{p2col:{opth arrowgap(float)}}control gap between arrowhead and node{p_end}
-{p2col:{opth arrowbarbfactor(float)}}control look of arrow{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{marker arcstyle}{...}
-{p2col:{it:arcstyle}}{p_end}
-{p2line}
-{p2col:{cmd: automatic}}plots arcs as curved lines, but only when they are reciprocated; default
-		{p_end}
-{p2col:{cmd: curved}}plots all arcs as curved lines
-		{p_end}
-{p2col:{cmd: straight}}plots all arcs as straight lines
-		{p_end}
-
-		
-{synoptset 35 tabbed}{...}
-{p2col:{it:layout_options}}Description{p_end}
-{marker layout_options}{...}
-{p2line}
-{p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
-{p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
-{p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
-{p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
-	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
-	to also capture the resulting coordinates{p_end}
-{p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
-	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
-{p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
-	view back in before plotting; optional companion to {opt importcoords()}{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:layout_sub}}Description{p_end}
-{marker layout_sub}{...}
-{p2line}
-{p2col:{opt lgc}}only plot largest component{p_end}
-{p2col:{opth components(int)}}control the number of components rendered{p_end}
-{p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
-{p2col:{opth iterations(int)}}only relevant for layout = mds; maximum number of iterations in the multidimensional scaling procedure, default = 1000{p_end}
-{p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
-{p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{marker layoutstyle}{...}
-{p2col:{it:layoutstyle}}{p_end}
-{p2line}
-{p2col:{cmd: mds}}modern multidimensional scaling; default when nodes < 50{p_end}
-{p2col:{cmd: mdsclassical}}classical multidimensional scaling; default when nodes > 50{p_end}
-{p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout
-		{p_end}
-{p2col:{cmd: circle}}circle layout
-		{p_end}
-{p2col:{cmd: grid}}grid layout
-		{p_end}
-{p2col:{cmd: nodexy}}use coordinates given in {opt nodexy()}; only needed to send options.
-		{p_end}
-{p2col:{cmd: _layoutfunction}}advanced user-written layout function (see {help nwplot##layoutfunction:here}).
-		{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:other_options}}Description{p_end}
-{marker other_options}{...}
-{p2line}
-{p2col:{opth aspectratio(float)}}height/width ratio{p_end}
-{p2col:{opt lineopt}({it:{help line:options}})}send options directly to all line plots used to display arcs{p_end}
-{p2col:{opt scatteropt}({it:{help scatter:options}})}send options directly to all scatter plots used to display nodes {p_end}
-{p2col:{opt legendopt}({it:{help legend_options:options}})}send options directly to the legend{p_end}
-
-
-{synoptset 35 tabbed}{...}
-{p2col:{it:export_options}}Description{p_end}
-{marker export_options}{...}
-{p2line}
-{p2col:{opt export}({it:filename})}export the plot directly to {it:filename}; the format
-	(SVG/PDF/EPS/PNG/TIF/...) is inferred from the file extension, exactly as it would be by a
-	manual {help graph export} call afterward{p_end}
-{p2col:{opt replace}}overwrite {it:filename} if it already exists{p_end}
-{p2col:{opt exportopt}({it:{help graph export:export_options}})}pass additional options
-	straight through to the underlying {help graph export} call (e.g. {cmd:width()}/{cmd:height()}
-	for raster-format resolution){p_end}
-
-
-{title:Description}
-
-{pstd}
-This command plots a network. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it 
-is compatible with {bf:schemes()} and accepts all {help twoway_options}.
-
-{pstd}
-This example generates a random network and plots it. Because no {help netname} is given, the command refers to the
-{help nwcurrent:current network}.
-
-	{cmd:. nwclear}
-	{cmd:. nwrandom 20, prob(.2)}
-	{cmd:. nwplot}
-
-{pstd}
-One can change the layout where nodes should be plotted:
-	
-	{cmd:. nwplot, layout(mds)}
-	{cmd:. nwplot, layout(circle)}
-	{cmd:. nwplot, layout(grid)}
-	{cmd:. nwplot, layout(grid, columns(20))}
-
-{pstd}
-Or obtain coordinates from layout and plot with coordinates. The option {bf:nodexy} can be used to write your
-own network layout functions, return coordinates and plot a network with these coordinates. Because
-{opt generate()} and {opt nodexy()} are a matched pair - one exports the node coordinates a layout produced,
-the other forces a later plot to reuse them - this is also how to plot several different networks (e.g. the same
-set of people observed at several waves) at identical node positions, so the reader can compare panels directly
-instead of re-deriving a fresh, unrelated layout for each one:
-
-	{cmd:. nwplot, gen(xcoord ycoord)}
-	{cmd:. replace xcoord = .2 if _n < 5}
-	{cmd:. nwplot, nodexy(xcoord ycoord)}
-
-	{cmd:. * fixed coordinates across two waves of the same network}
-	{cmd:. nwplot wave1, generate(x1 y1)}
-	{cmd:. nwplot wave2, nodexy(x1 y1)}
-
-{pstd}
-{opt interactive} opens the plot in a browser alongside the usual static plot: drag nodes to
-reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
-shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
-already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
-factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back
-with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
-{opt nodexy()} above) and {opt edgeimport()}:
-
-	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
-	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
-	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
-
-{pstd}
-{opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
-{opt interactive} view they came from (row order is how nwplot matches an edit back to a node/tie,
-the same way {opt nodexy()}/{opt label()} already do) - re-export from {opt interactive} rather
-than reusing an old CSV after the network or an {help if}/{help in} restriction changes. Node size
-is not yet individually editable in the interactive view; the size-factor slider maps onto
-{opt nodefactor()} instead.
-
-{pstd}
-Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or
-asymmetrically connected (see {help nwdyads}). By default, asymmetrically connected dyads are represented as a straight line, whereas
-mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as 
-curved lines.
-
-	{cmd:. nwplot, arcstyle(automatic)}
-	{cmd:. nwplot, arcstyle(straight)}
-	{cmd:. nwplot, arcstyle(curved)}
-	{cmd:. nwplot, arcbend(0.3) arcsplines(20)} 
-
-{pstd}
-Almost all elements in a network plot can be easily made bigger or smaller using factors:
-
-	{cmd:. nwplot, nodefactor(2)}
-	{cmd:. nwplot, edgefactor(2)} 
-	{cmd:. nwplot, arrowfactor(4)}
-	{cmd:. nwplot, arrowbarbfactor(.2)}
-{phang2}	
-	{cmd:. nwplot, nodefactor(2) edgefactor(4) arrowfactor(2) arrowbarbfactor(.2)}{p_end}
-
-{pstd}
-Colors, symbols and size of nodes can be changed accoring to a {help varname}. Furthermore, the palettes used for display
-can be changed as well. 
-
-	{cmd:. nwwebuse glasgow, nwclear}
-	{cmd:. nwplot glasgow1, color(smoke1)}
-	{cmd:. nwplot, color(smoke1, colorpalette(red yellow cyan))}
- 
-	{cmd:. nwplot glasgow1, symbol(sport1)}
-	{cmd:. nwplot glasgow1, symbol(sport1, symbolpalette(T S))}
-
-	{cmd:. nwplot glasgow1, size(alcohol1)}
-	{cmd:. nwplot, size(alcohol1, forcekeys1(1 5 10 20))}
- 
-	{cmd:. nwplot glasgow1, size(alcohol1) color(smoke1) symbol(sport1)}
-
-{pstd}
-nwcommands ships three schemes purpose-built for network plots - s1network,
-s2network, and s3network - each giving node fill and edge line colors that
-are visually distinct by default (an ordinary Stata scheme such as the
-default {bf:stcolor} typically does not, since a single data series'
-marker and connecting line usually should match - reasonable for an
-ordinary statistical graph, not for a network plot). {cmd:nwplot} defaults
-to {bf:s1network} unless {opt scheme()} is specified explicitly.
-
-	{cmd:. nwplot, scheme(s1network)}
-	{cmd:. nwplot, scheme(s2network)}
-	{cmd:. nwplot, scheme(s2mono)}
-{phang2}
-	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(s1network)}{p_end}
-{phang2}	
-	{cmd:. nwplot, size(alcohol3) color(smoke3) symbol(sport3) scheme(economist)}{p_end}
-	{cmd:. set scheme s2network}
-
-{pstd}
-This example calculates the shortest path between two nodes (medici and peruzzi) and uses this path
-to color the edges of the original network and change the size of the edges on this path. 
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwpath flomarriage, ego(medici) alter(peruzzi) generate(sp)}
-{phang2}	
-	{cmd:. nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5)}
-	
-{pstd}
-Another example that changes the size and color of edges.
-
-	{cmd:. nwwebuse gang, nwclear}
-	{cmd:. nwplot}
-	{cmd:. nwplot gang, edgesize(gang)} 
-	{cmd:. nwgenerate blood = (gang==4)}
-	{cmd:. nwplot blood}
-	{cmd:. nwplot gang, edgesize(gang) edgecolor(blood)}
-
-{pstd}
-This is how to control the legend of the plot. All options that can be used for twoway legends are valid.{p_end}
-	{phang2}
-	{cmd:. nwplot gang, size(Arrests, forcekeys(5 10 20)) legendopt(on pos(3) cols(1))}
-
-{pstd}
-Because nwplot uses twoway plots one can  use all general twoway options to e.g. control the title of a plot.
-
-{phang2}
-{cmd:. nwwebuse florentine, nwclear}{p_end}
-{phang2}
-{cmd:. nwplot flomarriage, edgecolor(flobusiness) title("Florentine Marriages", color(red) size(huge))}
-{p_end}
-
-{pstd}
-Here, the nodes are plotted with the node labels saved with the network:
-	
-	{cmd:. nwplot flobusiness, lab}
-	
-{pstd}
-More generally, one can use any {it:varname} as node labels. The next example, does the same as the previous command, 
-but shows how one could use node labels stored elsewhere:
-
-	{cmd:. nwplot flobusiness, label(wealth)}
-
-{pstd}
-The look and feel of node labels is changed with labelopt():
-
-	{cmd:. nwplot flobusiness, label(wealth) labelopt(mlabsize(huge) mlabcolor(red))}
-	
-{pstd}
-The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these
-underlying scatter plots. Here, the color and symbol of nodes is overwritten.
-
-	{cmd:. nwplot flomarriage, scatteropt(mfcolor(green) msymbol(D))}
-	{cmd:. nwplot flomarriage, lineopt(lwidth(10) lcolor(green))}
-	
-
-{pstd}
-The next example shows how to only plot the largest component of the network.	
-
-	{cmd:. nwwebuse glasgow, nwclear}
-	{cmd:. nwcomponents glasgow1, lgc generate(large)}
-	{cmd:. nwplot glasgow1 if large == 1}
-	
-{pstd}
-Alternative to display the largest component only:
-
-	{cmd:. nwwebuse glasgow, nwclear}
-	{cmd:. nwplot glasgow1, layout(,lgc)}
-
-{pstd}
-{bf:Publication-quality vector export.} {opt export()} saves the plot directly to a file, inferring the
-format from the extension - exactly what a manual {help graph export} call afterward would do, since
-{cmd:nwplot} produces an ordinary Stata graph and never replaces or bypasses it. SVG and PDF are both
-scalable vector formats: the plot stays crisp at any zoom level or print size, and both open cleanly in
-standard vector-graphics editors (e.g. Adobe Illustrator, Inkscape) for further touch-up - node/edge/label
-elements remain separate, editable objects rather than a fixed-resolution image.
-
-	{cmd:. nwplot flomarriage, export("flomarriage.svg")}
-	{cmd:. nwplot flomarriage, export("flomarriage.pdf") replace}
-
-{pstd}
-Raster formats (PNG, TIF, ...) are also supported the same way; {opt exportopt()} passes options straight
-through to the underlying {help graph export} call, most commonly {cmd:width()}/{cmd:height()} to control
-resolution:
-
-	{cmd:. nwplot flomarriage, export("flomarriage.png") exportopt(width(2000))}
-
-{pstd}
-The graph itself is unaffected by {opt export()} - it remains the normal, currently active Stata graph
-afterward, so the Graph Editor, {stata graph save}, and a second {help graph export} in a different format
-all continue to work exactly as they would without {opt export()}.
-
-{title:Stored results}
-
-{pstd}
-{cmd:nwplot} is {cmd:rclass}.
-
-	Macros:
-	  {bf:r(export)}	filename actually passed to {opt export()}, if specified
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes. Weighted: yes (via {opt edgesize()}/{opt edgecolor()} - see the shortest-path example above).
-Directed: yes - this is the command's native case; arrows are drawn automatically, and reciprocated (mutual)
-dyads are curved apart from their asymmetric counterparts by default ({opt arcstyle(automatic)}) so both
-directions of a tie remain visible rather than overlapping. Undirected: yes, the default. Two-mode: the
-command plots a two-mode network's nodes and ties correctly (it has no bipartite-specific logic, but a
-bipartite network's ties are simply a subset of the same one-mode adjacency structure every other network
-uses) - the two modes are not visually distinguished automatically, though; pass the network's own
-{cmd:get_modes()}-derived mode variable to {opt color()} or {opt symbol()} to tell them apart at a glance
-(e.g. {cmd:nw2degree}'s own output, or any variable holding "1"/"2" per node). Self-loops: not rendered -
-a self-loop currently has no visible effect on the plot (a zero-length tie), a known limitation recorded
-in the package's own visualization roadmap rather than fixed here.
-
-{title:See also}
-		{help nwplotmatrix}
-
-***/
 capture program drop nwplot
 program nwplot, rclass
 	version 9.0
@@ -437,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -482,7 +51,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 100) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) NOOpen * ]
 
 	// Default node fill color and edge line color are both resolved as
 	// "scheme p<n>" / "scheme p<n>line" further down (_getcolorstyle) -
@@ -694,22 +263,25 @@ program nwplot, rclass
 	
 	local gridcols = ceil(sqrt(`nodes'))
 	local 0 = "`layout'"
-	syntax [anything][, nodeclash(string) lgc norescale iterations(integer 1000) columns(integer `gridcols') ]
+	syntax [anything][, nodeclash(string) lgc norescale iterations(integer 1000) columns(integer `gridcols') vertical ]
 	
 	if("`anything'"=="") {
-		if `nodes' < 50 {
-			local anything "mds"
-		}
-		else {
-			local anything "mdsclassical"
-		}
+		// kk (Kamada-Kawai) is the default layout - previously mds
+		// (<50 nodes) or mdsclassical (>=50), chosen by node count.
+		// kk's own cost scales with both node count and iterations()
+		// (see layout(kk)'s own dispatch below for the adaptive
+		// iteration-count scaling this relies on to stay fast on large
+		// networks), so it no longer needs a node-count-based default
+		// layout CHOICE the way mds/mdsclassical did.
+		local anything "kk"
 	}
 	
 	local layout_norescale "`rescale'"
 	local layout_gridcols = "`columns'"
 	local layout_components = "`components'"
+	local layout_bipartite_vertical "`vertical'"
 	local layout = "`anything'"
-	_opts_oneof "mds mdsclassical frucht grid circle nodexy _layoutfunction" "layout" "`layout'" 6556
+	_opts_oneof "mds mdsclassical frucht kk hierarchy bipartite grid circle nodexy _layoutfunction" "layout" "`layout'" 6556
 
 
 	// Check matsize (because mds requires STATA matrix)
@@ -977,6 +549,12 @@ program nwplot, rclass
 	}
 	
 	local size "`varlist'"
+	// Stashed under its own name because `varlist' itself gets clobbered by
+	// every subsequent `syntax' call in this program (color/symbol/edgecolor/
+	// edgesize each reuse it) -- the interactive-view size-legend build,
+	// much further down, needs the real variable name for its labels and
+	// can't rely on `varlist' still holding it by then.
+	local _nwedit_sizevarname "`varlist'"
 	// Size of nodes
 	if ("`size'" != ""){
 		local nodefactor = `nodefactor' / 2
@@ -990,12 +568,33 @@ program nwplot, rclass
 		}	
 		capture drop __size
 		gen __size = `varlist'
+		// `_nwedit_sizekeys_rawnsize': the interactive canvas's own legend
+		// (built much further down, in the `interactive' block) needs a
+		// px-comparable magnitude for exactly the `sizekeys' values (2
+		// representative points, e.g. min/max - the SAME count and values
+		// the real static plot's own size legend shows) - NOT one entry
+		// per distinct value actually in the data (an earlier version of
+		// this fix used `nsizerow' for that instead, which is wrong: for a
+		// continuous size() variable, nsizerow can have a dozen-plus
+		// distinct rendered sizes, one per near-unique data value, while
+		// nwplot's real legend has always shown just the representative
+		// range). Deliberately NOT reusing `sizekeys_size' below for this -
+		// that local is scaled for Stata's own msize() graph-legend units
+		// (nodefactor baked in here, before its final /20 two lines below),
+		// not comparable to the interactive canvas's CSS-px scale, which
+		// the mata HTML builder derives from the RAW (pre-nodefactor)
+		// magnitude of `nsize' via its own htmlnodefactor multiply. Mirrors
+		// each branch's own per-node raw-magnitude formula immediately
+		// below, evaluated at each sizekey instead of at each node's own
+		// data value.
+		local _nwedit_sizekeys_rawnsize ""
 		if "`rescale'" == "" {
 			local sizekeys_size ""
 			if (`r(min)' != `r(max)') {
 				qui replace __size = 1000 + 3000 * (`varlist') / (`r(max)')
 				foreach szkey in `sizekeys' {
 					local sizekeys_size_temp `= 1000 + 3000 * (`szkey' / (`r(max)'))'
+					local _nwedit_sizekeys_rawnsize "`_nwedit_sizekeys_rawnsize' `sizekeys_size_temp'"
 					local sizekeys_size_temp = `sizekeys_size_temp' * `nodefactor' * 2/20
 					local sizekeys_size "`sizekeys_size' `sizekeys_size_temp'"
 				}
@@ -1004,6 +603,7 @@ program nwplot, rclass
 				qui replace __size = 1500
 				local szkey = 1500
 				local sizekeys "`r(min)'"
+				local _nwedit_sizekeys_rawnsize "1000"
 				local sizekeys_size_temp = 1000
 				local sizekeys_size_temp = `sizekeys_size_temp' * `nodefactor' * 2/20
 				local sizekeys_size "`sizekeys_size' `sizekeys_size_temp'"
@@ -1014,6 +614,7 @@ program nwplot, rclass
 			local sizekeys_size ""
 			foreach szkey in `sizekeys' {
 				local sizekeys_size "`sizekeys_size' `= 0.04 * `szkey''"
+				local _nwedit_sizekeys_rawnsize "`_nwedit_sizekeys_rawnsize' `= 40 * `szkey''"
 			}
 			mata: nsize = st_data((1,`nodes'),st_varindex("__size"))
 			mata: nsize = nsize :*40
@@ -1300,6 +901,60 @@ program nwplot, rclass
 		mata: Coord = fruchtrein(M, `iterations')
 	}
 
+	if ("`layout'"=="kk" & `nodes' > 1){
+		// `kk' is now the default layout (previously mds/mdsclassical,
+		// chosen by node count) - but its own cost is quadratic in
+		// nodes AND linear in iterations() (confirmed by direct timing:
+		// 1.1s at 50 nodes, 11.8s at 200, 72s at 500, all at the plain
+		// 1000-iteration default - already too slow by the time a
+		// network reaches a few hundred nodes to keep as a silent
+		// default). When the caller has not overridden iterations()
+		// (still sitting at its own unmodified 1000 default), scale it
+		// down as node count grows so a default `nwplot` call stays
+		// around ~8 seconds regardless of network size, rather than
+		// silently taking minutes on a large network - full quality
+		// (1000 iterations) is kept for networks up to a few hundred
+		// nodes, where it was already fast. An explicit
+		// `iterations()' from the caller always overrides this.
+		local kk_iter = `iterations'
+		if `iterations' == 1000 {
+			local kk_iter = min(1000, max(10, floor(28000000 / (`nodes'^2))))
+		}
+		mata: Coord = kklayout(M, `kk_iter')
+	}
+
+	if ("`layout'"=="hierarchy" & `nodes' > 1){
+		// unlike every other layout() branch here, this one needs the
+		// RAW, direction-preserving adjacency - `M' just above (line
+		// ~1101) is `(plotmat + plotmat''):/(plotmat + plotmat'')', a
+		// deliberately symmetrized 0/1 matrix every other layout uses
+		// (frucht/mds/kk are all direction-agnostic by design), which
+		// would silently discard the very edge-direction information
+		// this layering algorithm depends on - confirmed directly via a
+		// hand-built 5-node DAG that came out with sources and sinks in
+		// the wrong order before this fix. `plotmat' itself (from
+		// nwtomata just above) only has a missing diagonal, never
+		// missing off-diagonal cells (confirmed directly) - cleared to
+		// 0 here rather than left missing, since a Mata `!=0' comparison
+		// on a missing value would otherwise evaluate as true.
+		mata: Mdir = plotmat
+		mata: _editmissing(Mdir, 0)
+		mata: Coord = sugiyamalayout(Mdir, `iterations')
+		mata: mata drop Mdir
+	}
+
+	if ("`layout'"=="bipartite" & `nodes' > 1){
+		if "`is2mode'" != "true" {
+			di "{err}Option {bf:layout(bipartite)} requires a two-mode network; network `netname' is not two-mode."
+			error 198
+		}
+		mata: Mdir2 = plotmat
+		mata: _editmissing(Mdir2, 0)
+		mata: modevec = `netobj'->get_modes()
+		mata: Coord = bipartitelayout(Mdir2, modevec, `=("`layout_bipartite_vertical'"!="")')
+		mata: mata drop Mdir2 modevec
+	}
+
     qui if ("`layout'"=="mdsclassical" & `nodes' > 1 ){
 		// Coordinates matrix to be populated
 		mata: Coord = J(`nodes', 2, 0)
@@ -1460,12 +1115,12 @@ program nwplot, rclass
 			nwduplicate `netname', name(`netname'_comp`i')
 			capture drop _id
 			gen _id = _n
-			
+
 			nwdrop `netname'_comp`i' if `_component' != comp_freqid[`i', 2]
 			nwtomata `netname'_comp`i', mat(compmat)
 			// Original id's of selected nodes
 			mata: original_id = st_data((1::rows(compmat)), "_id")
-			
+
 			// Calculate mds coordinates of network i
 			mata: compM = (compmat :+ compmat') :/ (compmat :+ compmat')
 			mata: _editmissing(compM,0)
@@ -1491,10 +1146,41 @@ program nwplot, rclass
 			
 			// Assign adjusted coordinates to original network
 			mata: Coord[original_id,.] = Coord_comp
-			mata: mata drop original_id 
+			mata: mata drop original_id
 			nwdrop `netname'_comp`i'
 		}
-		capture drop _id 
+
+		// REAL BUG FOUND AND FIXED: every node's own coordinate starts
+		// at the SAME uniform default, `(1.5, 0)' (set near the top of
+		// this block), and only nodes belonging to one of the
+		// `components' DISPLAYED components (the loop just above) ever
+		// get that default overwritten. Any component that did not
+		// make the "top `components'" cut - true singleton isolates,
+		// but also any small multi-node component once there are more
+		// than 5 non-trivial components total, since display is capped
+		// at 5 - is silently left at the identical default and renders
+		// as one overlapping blob at a single point, not spread apart
+		// the way netplotmds()/kklayout() already correctly spread
+		// their own isolates. Confirmed directly on `nwwebuse glasgow'
+		// + `nwplot glasgow1' (50 nodes, the mdsclassical default
+		// layout threshold, 8 real components but only 5 displayed):
+		// all 11 nodes belonging to the 3 undisplayed components came
+		// back at the exact same coordinate. Fixed by spreading every
+		// left-out node's own y along that same x=1.5 column, matching
+		// the k/num_isol convention netplotmds()/kklayout() already use
+		// for their own isolates.
+		mata: __mdsc_dispcomp = comp_freqid[(1::`components'), 2]
+		mata: __mdsc_allcomp = st_data(., "`_component'")
+		mata: __mdsc_isdisp = J(rows(__mdsc_allcomp), 1, 0)
+		mata: for (__mdsc_k=1; __mdsc_k<=rows(__mdsc_dispcomp); __mdsc_k++) __mdsc_isdisp = __mdsc_isdisp :| (__mdsc_allcomp :== __mdsc_dispcomp[__mdsc_k])
+		mata: __mdsc_leftidx = selectindex(__mdsc_isdisp :== 0)
+		mata: st_numscalar("r(mdsc_nleft)", rows(__mdsc_leftidx))
+		if `r(mdsc_nleft)' > 0 {
+			mata: Coord[__mdsc_leftidx, 2] = (1::rows(__mdsc_leftidx)) :/ rows(__mdsc_leftidx)
+		}
+		mata: mata drop __mdsc_dispcomp __mdsc_allcomp __mdsc_isdisp __mdsc_leftidx __mdsc_k
+
+		capture drop _id
 	}
 	capture replace `label' = `_orig_label'
 	
@@ -1748,30 +1434,86 @@ program nwplot, rclass
 		local _nwedit_edgecolorkeys_n : word count `edgecolorkeys'
 		local _nwedit_hasnodelegend = (`_nwedit_colorkeys_n' > 1 | `_nwedit_symbolkeys_n' > 1)
 		local _nwedit_hasedgelegend = (`_nwedit_edgecolorkeys_n' > 1)
-		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend')
 
-		di "{text:Opening interactive view...}"
-		// `view browse` is the reliable default - confirmed working
-		// directly. A chromeless native viewer (nwedit_viewer, built by
-		// .github/workflows/build-plugins.yml) exists and was tried here
-		// via `winexec` (the right command in principle: shell.sthlp
-		// confirms shell/! BLOCK Stata until the child exits, which would
-		// freeze the whole editing session, while winexec is documented
-		// non-blocking and available on Windows/Mac/Unix(GUI)) - but
-		// winexec does not actually launch this binary on macOS at all,
-		// silently (`_rc` stays 0, so the naive "fall back to view
-		// browse if winexec errors" logic never triggers), confirmed
-		// directly by the user testing winexec against this exact binary
-		// standalone. Root cause unconfirmed (possibly Gatekeeper
-		// silently blocking an unsigned/unnotarized binary the way it
-		// would a first Finder double-click, possibly something about
-		// Stata's own sandboxing of child-process launches on macOS) -
-		// not something fixable by changing the binary's location or
-		// this launch call alone, so not attempted as the default until
-		// genuinely understood and fixed. The dispatcher/binary/CI build
-		// stay in place for that future fix; nothing here currently calls
-		// NweditViewerAvailable()/NweditViewerPath().
-		view browse "`_nwedit_out'"
+		// Node SIZE legend entries -- same discrete-legend idea as color/
+		// shape/edgecolor above, but keyed positionally rather than by a
+		// _getcolorstyle group id: `nsizerow' (from `qui tab nsize' earlier
+		// in this program) gives the distinct SCALED node-size values
+		// actually present in the rendered data, in the exact same units
+		// as the per-node nsizev the mata function below reads -- reusing
+		// it directly guarantees legend swatch sizes are pixel-consistent
+		// with the real rendered nodes, with no unit-conversion risk
+		// (unlike `sizekeys_size', which is baked for Stata's own msize()
+		// graph-legend units and isn't comparable to the interactive
+		// canvas's CSS-px scale). Labels are matched by ascending position
+		// against nwplot's own already-computed `sizekeys' (the same
+		// values feeding the real static plot's own size legend) - correct
+		// for the common size()-with-no-sizebin()-collapsing case; falls
+		// back to a generic "Size N" label (matching the existing color/
+		// shape fallback style) whenever the counts don't line up
+		// (sizebin() collapsing multiple sizekeys into fewer bins, or
+		// forcekeys() specifying a different count). Deliberately kept
+		// separate from `_nwedit_hasnodelegend' above (color/shape only,
+		// unaffected by size variation) rather than folded in - the two
+		// legends are independent dimensions on the real static plot too,
+		// and merging them would make the on-canvas legend show a spurious
+		// single-entry color/shape row whenever only size varies.
+		// Exactly `sizekeys' entries (2 representative points by default -
+		// min/max of the size() variable - or as many as forcekeys()
+		// specifies): the same small representative set the real static
+		// plot's own size legend shows, NOT one entry per distinct value
+		// actually rendered (see the long comment above where
+		// `_nwedit_sizekeys_rawnsize' is built, next to `sizekeys_size',
+		// for why an earlier version of this fix got that wrong - it used
+		// `nsizerow', which for a continuous size() variable can have a
+		// dozen-plus distinct rendered sizes, one per near-unique data
+		// value). `sizekeys' is already "" whenever no size legend should
+		// show (sizekeys_legendoff set, or size() not given - the same
+		// gate nwplot's own static-plot legend loop uses), so its word
+		// count alone is the correct display gate.
+		local _nwedit_sizelegend_n : word count `sizekeys'
+		local _nwedit_hassizelegend = (`_nwedit_sizelegend_n' > 0)
+		forvalues _nwedit_szi = 1/`_nwedit_sizelegend_n' {
+			local _nwedit_szraw : word `_nwedit_szi' of `_nwedit_sizekeys_rawnsize'
+			local _nwedit_sizelegend_px_`_nwedit_szi' = `_nwedit_szraw' * `nodefactor' * 2 * 7
+			local _nwedit_szkeyval : word `_nwedit_szi' of `sizekeys'
+			if "`_nwedit_sizevarname'" != "" {
+				local _nwedit_sizelegend_label_`_nwedit_szi' "`_nwedit_sizevarname' = `_nwedit_szkeyval'"
+			}
+			else {
+				local _nwedit_sizelegend_label_`_nwedit_szi' "Size `_nwedit_szi'"
+			}
+		}
+
+		mata: _nwedit_buildinteractivehtml("`_nwedit_template'", "`_nwedit_vendorjs'", "`_nwedit_out'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+
+		// movieexport(): nwmovie's own hook into this same resolved-color/
+		// shape/position JSON, reusing every line of the resolution work
+		// just above (batched color/shape/edgecolor lookups) instead of
+		// duplicating it - nwmovie calls `nwplot <one network>, interactive
+		// noopen movieexport(path)` once per network in its own sequence
+		// and reads the plain JSON back, rather than nwmovie re-deriving
+		// concrete hex colors/shapes from scratch. Writes the SAME json
+		// string _nwedit_buildinteractivehtml() just embedded into the
+		// full HTML page, as a standalone .json file - no template/
+		// vendored-JS overhead, since nwmovie assembles its own page.
+		if "`movieexport'" != "" {
+			mata: _nwedit_writejson("`movieexport'", `nodes', `_nwedit_ties', `doarrows', `nodefactor', `_nwedit_isdirected', `_nwedit_hasnodelegend', `_nwedit_hasedgelegend', `_nwedit_hassizelegend', `_nwedit_sizelegend_n')
+		}
+
+		if "`noopen'" == "" {
+			di "{text:Opening interactive view...}"
+			// Launch logic (chromeless native viewer via `winexec`, falling
+			// back to `view browse`) now lives in nw_openviewer.ado - shared
+			// with nwmovie's own Cytoscape-based movie player, which needs
+			// the identical launch path including the macOS winexec
+			// space-in-path staging fix (see nw_openviewer.ado's own header
+			// comment for the full account). noopen (new, added alongside
+			// movieexport()) lets nwmovie resolve one network's own
+			// styling/positions without a viewer window popping open for
+			// every single network in its own sequence.
+			nw_openviewer "`_nwedit_out'"
+		}
 	}
 
 	// Prepare ghost plots for legend
@@ -2071,7 +1813,26 @@ program nwplot, rclass
 	}
 	
 	local pmargin = `nodefactor' * 3
-	local graphcmd `"twoway `ghostcmd' `pccmd' `scattercmd' `pccmdforeground' `scattercmdforeground' , ylabel(, nogrid) yscale(off range(0 100)) xscale(off range(0 150)) graphregion(color("scheme plotregion")) plotregion(color("scheme plotregion") margin(`pmargin' `pmargin' `pmargin' `pmargin')) aspectratio(`aspectratio') `legendcmd' `schemetwoway' `twowayopt'"' 
+
+	// interactive already opened its own browser/native-viewer window
+	// above (well before this point - see the `interactive' block around
+	// line 1650) from data prepared independently of this static plot, so
+	// the two are not coupled: suppressing this one changes nothing about
+	// the interactive view. We still draw it (not `nodraw' - see
+	// _nwedit_resolvecolorstylebatch's own header comment for why that
+	// option is unreliable in this codebase, breaking `graph export' with
+	// r(693) in a headless/batch session), just under a fixed name so we
+	// can immediately `graph close' it afterward - `graph close' only
+	// hides the window, it does not drop the graph, so export()/graph
+	// save/the Graph Editor via `graph display' all still work exactly as
+	// documented above, and a user-supplied name() (rare, but possible
+	// via a passthrough twoway_option) is respected instead of overridden.
+	local _nwedit_autoname = 0
+	if "`interactive'" != "" & strpos(`"`twowayopt'"', "name(") == 0 {
+		local twowayopt `"`twowayopt' name(_nwplot_interactive, replace)"'
+		local _nwedit_autoname = 1
+	}
+	local graphcmd `"twoway `ghostcmd' `pccmd' `scattercmd' `pccmdforeground' `scattercmdforeground' , ylabel(, nogrid) yscale(off range(0 100)) xscale(off range(0 150)) graphregion(color("scheme plotregion")) plotregion(color("scheme plotregion") margin(`pmargin' `pmargin' `pmargin' `pmargin')) aspectratio(`aspectratio') `legendcmd' `schemetwoway' `twowayopt'"'
 
 	di "{text:Plotting network...}"
 	//di `"`graphcmd'"'
@@ -2103,6 +1864,16 @@ program nwplot, rclass
 		di "{text:Exporting graph to `export'...}"
 		graph export "`export'", `replace' `exportopt'
 		return local export "`export'"
+	}
+
+	// Suppress the static plot's own window once interactive is in play -
+	// after export() above (if any), so export() still had a displayed
+	// graph to work from. `capture': closing is best-effort, mirroring
+	// every other `capture' around window/viewer handling in the
+	// `interactive' block above - a failure here (e.g. no window server
+	// at all in a genuinely headless run) should never abort the command.
+	if `_nwedit_autoname' {
+		capture graph close _nwplot_interactive
 	}
 
 	// the scheme actually used to render this plot - "s1network" unless
@@ -2412,8 +2183,18 @@ program def _nwedit_resolvecolorstylebatch
 		qui gen _nwedit_x = _n
 		qui gen _nwedit_y = 1
 	}
-	qui twoway `plots', legend(off) xlabel(none) ylabel(none) xtitle("") ytitle("")
+	// name()'d and closed immediately below rather than left under Stata's
+	// default graph name - before nwplot's own main plot was given its own
+	// distinct name (_nwplot_interactive, see the `interactive' block),
+	// that main plot happened to reuse/overwrite this same default-named
+	// graph, so this throwaway one was never actually seen on its own.
+	// Once the main plot got its own name, this one was left orphaned as a
+	// separate, empty-looking leftover window - a real regression this
+	// program introduced for anyone using {opt interactive}, since every
+	// resolved color/edgecolor group runs through here.
+	qui twoway `plots', legend(off) xlabel(none) ylabel(none) xtitle("") ytitle("") name(_nwedit_colorresolve, replace)
 	qui graph export "`_nwedit_eps'", replace as(eps)
+	capture graph close _nwedit_colorresolve
 	restore
 
 	if "`mode'" == "line" {
@@ -2489,19 +2270,28 @@ end
 // dataset variables the real twoway graph is built from a few lines below
 // (st_store'd in by this same program a little earlier) - this renders
 // what nwplot actually resolved, it does not recompute anything.
+capture mata: mata drop _nwedit_buildjson()
+capture mata: mata drop _nwedit_slurpfile()
 capture mata: mata drop _nwedit_buildinteractivehtml()
+capture mata: mata drop _nwedit_writejson()
 mata:
-void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
-		string scalar outpath, real scalar nn, real scalar nties,
+// Split out of what used to be _nwedit_buildinteractivehtml()'s own body
+// (harmonisation: nwmovie's own real-world-data movie player, see
+// nw_openviewer.ado's header for the sibling refactor) - this half does
+// only the resolved-node/edge JSON construction, with no template/
+// vendored-JS/file-output concern at all, so nwmovie's movieexport()
+// path (_nwedit_writejson() below) can reuse it directly without paying
+// for or depending on the interactive HTML page's own assembly.
+string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		real scalar doarrows, real scalar htmlnodefactor, real scalar isdirected,
-		real scalar hasnodelegend, real scalar hasedgelegend)
+		real scalar hasnodelegend, real scalar hasedgelegend,
+		real scalar hassizelegend, real scalar sizelegendn)
 {
 	real colvector nxv, nyv, nsizev, ncolorv, nsymbolv, edgecolorv, recipv
 	string colvector nlabelv
 	real matrix topology
-	string scalar json, tpl, vjs, chunk, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl
+	string scalar json, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl, sizelbl
 	real scalar i, cg, sg, ecg, fromidx, toidx, sizepx, nemitted
-	transmorphic fh
 	// plotmat is created by ordinary top-level `mata: plotmat = ...` code
 	// earlier in this same program (nw_tomata.ado's own assignment, called
 	// from nwplot.ado's "Get network data" section) -- a compiled function
@@ -2525,6 +2315,21 @@ void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
 	json = "{" +
 		q+"has_node_legend"+q+":"+(hasnodelegend==1 ? "true" : "false")+"," +
 		q+"has_edge_legend"+q+":"+(hasedgelegend==1 ? "true" : "false")+"," +
+		q+"has_size_legend"+q+":"+(hassizelegend==1 ? "true" : "false")+"," +
+		q+"size_legend"+q+":["
+	// Independent of the per-node loop below -- a fixed, small list of
+	// {label, size_px} entries built from the `_nwedit_sizelegend_*' locals
+	// nwplot.ado stashed just before this call (nsizerow-derived, so
+	// already in the same CSS-px scale `sizepx' below computes per node).
+	for (i=1; i<=sizelegendn; i++) {
+		sizelbl = subinstr(subinstr(st_local("_nwedit_sizelegend_label_" + strofreal(i)), char(92), ""), q, "")
+		json = json + "{" +
+			q+"label"+q+":"+q+sizelbl+q+"," +
+			q+"size_px"+q+":"+strofreal(strtoreal(st_local("_nwedit_sizelegend_px_" + strofreal(i)))) +
+			"}"
+		if (i < sizelegendn) json = json + ","
+	}
+	json = json + "]," +
 		q + "nodes" + q + ":["
 	for (i=1; i<=nn; i++) {
 		cg = ncolorv[i]
@@ -2621,30 +2426,69 @@ void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
 		}
 	}
 	json = json + "]}"
+	return(json)
+}
 
-	tpl = ""
-	fh = fopen(tplpath, "r")
+// Byte-based slurp (fread(), not fget()/`file read') - required for
+// cytoscape.min.js, whose minified lines run up to ~229,000 characters;
+// both Stata's own `file read' and Mata's line-oriented fget() fail on
+// lines that long (the latter silently truncates at 32,768 chars, with
+// no error at all). Shared by both wrappers below.
+string scalar _nwedit_slurpfile(string scalar path)
+{
+	string scalar s, chunk
+	transmorphic fh
+
+	s = ""
+	fh = fopen(path, "r")
 	chunk = fread(fh, 1000000)
 	while (chunk != J(0,0,"")) {
-		tpl = tpl + chunk
+		s = s + chunk
 		chunk = fread(fh, 1000000)
 	}
 	fclose(fh)
+	return(s)
+}
 
-	vjs = ""
-	fh = fopen(jspath, "r")
-	chunk = fread(fh, 1000000)
-	while (chunk != J(0,0,"")) {
-		vjs = vjs + chunk
-		chunk = fread(fh, 1000000)
-	}
-	fclose(fh)
+void _nwedit_buildinteractivehtml(string scalar tplpath, string scalar jspath,
+		string scalar outpath, real scalar nn, real scalar nties,
+		real scalar doarrows, real scalar htmlnodefactor, real scalar isdirected,
+		real scalar hasnodelegend, real scalar hasedgelegend,
+		real scalar hassizelegend, real scalar sizelegendn)
+{
+	string scalar json, tpl, vjs
+	transmorphic fh
+
+	json = _nwedit_buildjson(nn, nties, doarrows, htmlnodefactor, isdirected,
+		hasnodelegend, hasedgelegend, hassizelegend, sizelegendn)
+	tpl = _nwedit_slurpfile(tplpath)
+	vjs = _nwedit_slurpfile(jspath)
 
 	tpl = subinstr(tpl, "__NWEDIT_CYTOSCAPE__", vjs)
 	tpl = subinstr(tpl, "__NWEDIT_DATA__", json)
 
 	fh = fopen(outpath, "w")
 	fwrite(fh, tpl)
+	fclose(fh)
+}
+
+// nwmovie's own hook (movieexport() option, added alongside noopen) -
+// writes just the resolved node/edge JSON _nwedit_buildjson() produces,
+// with none of the template/vendored-JS/full-HTML-page overhead above;
+// nwmovie calls `nwplot <net>, interactive noopen movieexport(path)` once
+// per network in its own sequence and reads this file back directly.
+void _nwedit_writejson(string scalar outpath, real scalar nn, real scalar nties,
+		real scalar doarrows, real scalar htmlnodefactor, real scalar isdirected,
+		real scalar hasnodelegend, real scalar hasedgelegend,
+		real scalar hassizelegend, real scalar sizelegendn)
+{
+	string scalar json
+	transmorphic fh
+
+	json = _nwedit_buildjson(nn, nties, doarrows, htmlnodefactor, isdirected,
+		hasnodelegend, hasedgelegend, hassizelegend, sizelegendn)
+	fh = fopen(outpath, "w")
+	fwrite(fh, json)
 	fclose(fh)
 }
 end
@@ -3016,67 +2860,11 @@ real matrix function netplotmds(real matrix G, real scalar MaxIt)
 end
 
 
-//Calculates the distance matrix in a discrete graph
-//Distances between unconnecte nodes are indicated by "0"
-capture mata: mata drop distance()
-mata:
-real matrix function distance(real matrix Net, | real scalar MaxDist)
-{
-	real scalar 	maxdist, ready,counter, maxcounter
-	real matrix 	N1,Dist,Ntemp
-	
-	if (args()==2) 
-		maxcounter = MaxDist
-	else 
-		maxcounter = rows(Net)-1
-	
-	// Undirected network
-	Net = (Net + Net') :/ (Net + Net')
-	_editmissing(Net, 0)
-	
-	N1 = Net
-	Dist = Net	//Distance 1 matrix
-	counter = 1
-	ready = 0
-	while (ready==0 & counter<maxcounter) {
-		counter = counter + 1
-		N1=(N1*Net)
-		Ntemp = (Dist:==0):*(N1:>0):*counter
-		if (sum(Ntemp)==0) ready = 1
-		Dist = Dist:+Ntemp
-	}
-	//Dist = (Dist:==0):* (runiform(rows(Dist), cols(Dist))) :+ Dist 
-	maxdist = max(Dist)
-	Dist = (Dist:==0):* (maxdist + 1) :+ Dist
-	_diag(Dist, 0)
-	return(Dist)
-}
-end
-
-capture mata: mata drop circlelayout()
-mata:
-real matrix function circlelayout(real scalar N)
-{
-	real colvector 	V
-	real matrix 	Coord
-	real scalar 	xmax, ymax, CoordMax1, CoordMax2
-
-	xmax = 100
-	ymax = 100
-	V= (1::N)
-	Coord=J(N,2,.)
-
-	Coord[.,1] = 0.5*xmax :+ 0.5:*xmax:*cos(V[.]:*(2*pi()/N))	
-	Coord[.,2] = 0.5*ymax :+ 0.5:*ymax:*sin(V[.]:*(2*pi()/N))
-
-	CoordMax1 = max(Coord[.,1])
-	CoordMax2 = max(Coord[.,2])
-	Coord[.,1] = (((Coord[.,1] :/ CoordMax1)))
-	Coord[.,2] = (((Coord[.,2] :/ CoordMax2)))
-	Coord[.,1] = Coord[.,1] :+0.25
-	return(Coord)
-}
-end
+// distance() and circlelayout() now live in unw_core.do, compiled into
+// lib/lnwcommands.mlib - moved there so nwmovie.ado's own per-wave
+// transitioning layout can reach kklayout() (which depends on both)
+// reliably from a different .ado file. Calls below resolve against
+// those shared definitions.
 
 capture mata: mata drop gridlayout()
 mata:
@@ -3164,4 +2952,316 @@ real matrix function fruchtrein(real matrix M, real scalar Iter)
 return(Pos)
 }
 
+end
+
+// Kamada-Kawai layout (layout(kk)): kklayout() itself, and its
+// distance()/circlelayout() dependencies, now live in unw_core.do,
+// compiled into lib/lnwcommands.mlib - moved there so nwmovie.ado's own
+// per-wave transitioning layout can call kklayout() directly (with its
+// optional warm-start `Start' argument) from a different .ado file. A
+// Mata function defined inline inside one .ado file's own mata: block
+// is not reliably callable from a different .ado file's own Mata code,
+// even after the defining file has been auto-loaded via a real command
+// call earlier in the same session - confirmed directly, and this is
+// this package's own established fix for that (see NWdef and friends).
+
+// Sugiyama-style hierarchical/layered layout (layout(hierarchy)),
+// intended for directed, roughly DAG-shaped networks (organizational
+// charts, citation/dependency graphs, event sequences). Three standard
+// Sugiyama phases: (1) layer assignment via longest-path-from-sources
+// ranking, with a documented cycle-tolerant fallback for networks that
+// are not actually acyclic (this package does not require callers to
+// pre-check acyclicity - true DAGs get an exact longest-path layering,
+// networks with cycles get a deterministic, non-crashing "peel the
+// current minimum-indegree node(s)" approximation instead of an error
+// or an infinite loop); (2) a small fixed number of barycenter sweeps
+// to reduce edge crossings within each layer; (3) evenly-spaced
+// coordinates by final within-layer order and layer number. For an
+// UNDIRECTED network (M symmetric), every active node's in-degree
+// equals its own degree, so phase (1) has no true zero-indegree source
+// to start from and immediately falls back to plain minimum-degree
+// peeling order throughout - still a deterministic, valid, non-crashing
+// coordinate assignment, just not a meaningful top-down hierarchy since
+// undirected ties carry no hierarchy signal to layer by; this layout is
+// only meaningful for directed input, matching how `frucht'/`kk' above
+// are likewise agnostic to directedness without claiming to need it.
+capture mata: mata drop sugiyamalayout()
+mata:
+real matrix function sugiyamalayout(real matrix M, real scalar Iter)
+{
+	real matrix Pos, sortmat
+	real colvector active, indeg, remaining, ready, layer, xrank
+	real scalar V, i, j, frontier, minindeg, sweeps, s, L, maxlayer, cnt, r, num_isol, k, bsum, bcnt
+
+	V = rows(M)
+	active = ((rowsum(M) :+ colsum(M)') :!= 0)
+
+	// --- phase 1: layer assignment ---
+	indeg = colsum(M)'
+	remaining = active
+	layer = J(V,1,-1)
+	frontier = 0
+
+	while (sum(remaining) > 0) {
+		ready = remaining :& (indeg :== 0)
+		if (sum(ready) == 0) {
+			// no true source remains (a cycle, or an undirected
+			// component) - force progress by peeling whichever
+			// remaining node(s) currently have the smallest indegree,
+			// same idea as a min-indegree feedback-arc-set heuristic
+			minindeg = min(select(indeg, remaining))
+			ready = remaining :& (indeg :== minindeg)
+		}
+		for (i=1; i<=V; i++) {
+			if (ready[i]) layer[i] = frontier
+		}
+		for (i=1; i<=V; i++) {
+			if (ready[i]) {
+				for (j=1; j<=V; j++) {
+					if (M[i,j] != 0 & remaining[j] == 1) indeg[j] = indeg[j] - 1
+				}
+			}
+		}
+		remaining = remaining :& (ready :== 0)
+		frontier = frontier + 1
+	}
+	maxlayer = max(layer)
+	if (maxlayer < 0) maxlayer = 0
+
+	// initial within-layer order = plain node index order
+	xrank = J(V,1,0)
+	for (L=0; L<=maxlayer; L++) {
+		cnt = 0
+		for (i=1; i<=V; i++) {
+			if (active[i] & layer[i]==L) {
+				cnt = cnt + 1
+				xrank[i] = cnt
+			}
+		}
+	}
+
+	// --- phase 2: barycenter crossing-reduction sweeps ---
+	// a fixed small number of alternating downward/upward passes - this
+	// heuristic converges (or starts cycling) within a handful of
+	// sweeps regardless of network size, so unlike the stress-
+	// majorization/force-directed layouts above, this one does not
+	// scale its own work with iterations()
+	sweeps = 8
+	for (s=1; s<=sweeps; s++) {
+		if (mod(s,2) == 1) {
+			for (L=1; L<=maxlayer; L++) {
+				cnt = 0
+				for (i=1; i<=V; i++) if (active[i] & layer[i]==L) cnt++
+				if (cnt > 1) {
+					sortmat = J(cnt,2,0)
+					r = 0
+					for (i=1; i<=V; i++) {
+						if (active[i] & layer[i]==L) {
+							r++
+							sortmat[r,1] = i
+							bsum = 0
+							bcnt = 0
+							for (j=1; j<=V; j++) {
+								if (active[j] & layer[j]==L-1 & (M[j,i]!=0 | M[i,j]!=0)) {
+									bsum = bsum + xrank[j]
+									bcnt = bcnt + 1
+								}
+							}
+							if (bcnt > 0) sortmat[r,2] = bsum/bcnt
+							else sortmat[r,2] = xrank[i]
+						}
+					}
+					sortmat = sort(sortmat, 2)
+					for (r=1; r<=cnt; r++) xrank[sortmat[r,1]] = r
+				}
+			}
+		}
+		else {
+			for (L=maxlayer-1; L>=0; L--) {
+				cnt = 0
+				for (i=1; i<=V; i++) if (active[i] & layer[i]==L) cnt++
+				if (cnt > 1) {
+					sortmat = J(cnt,2,0)
+					r = 0
+					for (i=1; i<=V; i++) {
+						if (active[i] & layer[i]==L) {
+							r++
+							sortmat[r,1] = i
+							bsum = 0
+							bcnt = 0
+							for (j=1; j<=V; j++) {
+								if (active[j] & layer[j]==L+1 & (M[j,i]!=0 | M[i,j]!=0)) {
+									bsum = bsum + xrank[j]
+									bcnt = bcnt + 1
+								}
+							}
+							if (bcnt > 0) sortmat[r,2] = bsum/bcnt
+							else sortmat[r,2] = xrank[i]
+						}
+					}
+					sortmat = sort(sortmat, 2)
+					for (r=1; r<=cnt; r++) xrank[sortmat[r,1]] = r
+				}
+			}
+		}
+	}
+
+	// --- phase 3: coordinates - top layer at y=1, bottom at y=0,
+	// evenly spaced x within [0.25,1.25] by final within-layer order,
+	// same established plotting-box convention as kklayout()/
+	// netplotmds() above ---
+	Pos = J(V,2,0.5)
+	for (i=1; i<=V; i++) {
+		if (active[i]) {
+			cnt = 0
+			for (j=1; j<=V; j++) if (active[j] & layer[j]==layer[i]) cnt++
+			if (cnt > 1) Pos[i,1] = 0.25 + ((xrank[i]-1)/(cnt-1))
+			else Pos[i,1] = 0.75
+			if (maxlayer > 0) Pos[i,2] = 1 - (layer[i]/maxlayer)
+			else Pos[i,2] = 0.5
+		}
+	}
+
+	// isolates -> own column at x=1.5, same convention as kklayout()/netplotmds()
+	num_isol = sum(active:==0)
+	k = 1
+	for (i=1; i<=V; i++) {
+		if (active[i] == 0) {
+			Pos[i,1] = 1.5
+			Pos[i,2] = (k / num_isol)
+			k = k + 1
+		}
+	}
+
+	return(Pos)
+}
+end
+
+// Dedicated two-mode (bipartite) layout (layout(bipartite)): the two
+// modes placed in two parallel bands - two rows by default (mode "1"
+// along y=1, mode "2" along y=0), or two columns with `vertical' (mode
+// "1" along x=0.25, mode "2" along x=1.25) - with nodes ordered within
+// each band via a small number of barycenter sweeps (same crossing-
+// reduction idea as sugiyamalayout() above, simplified to exactly two
+// bands instead of an arbitrary number of layers). Unlike every other
+// layout function in this file, this one does NOT push isolates into
+// their own x=1.5 column - an isolated node in a two-mode network still
+// has a real, meaningful mode membership, and folding it into its own
+// mode's band (rather than a generic third column) is the whole point
+// of a mode-aware layout.
+capture mata: mata drop bipartitelayout()
+mata:
+real matrix function bipartitelayout(real matrix M, string rowvector modevec, real scalar vertical)
+{
+	real matrix Pos, sortmat
+	real colvector mode1, mode2, xrank
+	real scalar V, i, j, cnt1, cnt2, r, cnt, bsum, bcnt, s
+
+	V = rows(M)
+	mode1 = J(V,1,0)
+	mode2 = J(V,1,0)
+	for (i=1; i<=V; i++) {
+		if (modevec[i] == "1") mode1[i] = 1
+		else mode2[i] = 1
+	}
+
+	// initial within-band order = plain node index order
+	xrank = J(V,1,0)
+	cnt = 0
+	for (i=1; i<=V; i++) {
+		if (mode1[i]) {
+			cnt = cnt + 1
+			xrank[i] = cnt
+		}
+	}
+	cnt1 = cnt
+	cnt = 0
+	for (i=1; i<=V; i++) {
+		if (mode2[i]) {
+			cnt = cnt + 1
+			xrank[i] = cnt
+		}
+	}
+	cnt2 = cnt
+
+	// alternating barycenter sweeps - only two bands exist, so a couple
+	// of passes is enough to settle (no benefit from more, same
+	// reasoning as sugiyamalayout()'s own fixed sweep count)
+	for (s=1; s<=2; s++) {
+		if (cnt1 > 1) {
+			sortmat = J(cnt1,2,0)
+			r = 0
+			for (i=1; i<=V; i++) {
+				if (mode1[i]) {
+					r = r + 1
+					sortmat[r,1] = i
+					bsum = 0
+					bcnt = 0
+					for (j=1; j<=V; j++) {
+						if (mode2[j] & (M[i,j]!=0 | M[j,i]!=0)) {
+							bsum = bsum + xrank[j]
+							bcnt = bcnt + 1
+						}
+					}
+					if (bcnt > 0) sortmat[r,2] = bsum/bcnt
+					else sortmat[r,2] = xrank[i]
+				}
+			}
+			sortmat = sort(sortmat, 2)
+			for (r=1; r<=cnt1; r++) xrank[sortmat[r,1]] = r
+		}
+		if (cnt2 > 1) {
+			sortmat = J(cnt2,2,0)
+			r = 0
+			for (i=1; i<=V; i++) {
+				if (mode2[i]) {
+					r = r + 1
+					sortmat[r,1] = i
+					bsum = 0
+					bcnt = 0
+					for (j=1; j<=V; j++) {
+						if (mode1[j] & (M[i,j]!=0 | M[j,i]!=0)) {
+							bsum = bsum + xrank[j]
+							bcnt = bcnt + 1
+						}
+					}
+					if (bcnt > 0) sortmat[r,2] = bsum/bcnt
+					else sortmat[r,2] = xrank[i]
+				}
+			}
+			sortmat = sort(sortmat, 2)
+			for (r=1; r<=cnt2; r++) xrank[sortmat[r,1]] = r
+		}
+	}
+
+	Pos = J(V,2,0.5)
+	for (i=1; i<=V; i++) {
+		if (mode1[i]) {
+			if (vertical) {
+				Pos[i,1] = 0.25
+				if (cnt1 > 1) Pos[i,2] = (xrank[i]-1)/(cnt1-1)
+				else Pos[i,2] = 0.5
+			}
+			else {
+				Pos[i,2] = 1
+				if (cnt1 > 1) Pos[i,1] = 0.25 + ((xrank[i]-1)/(cnt1-1))
+				else Pos[i,1] = 0.75
+			}
+		}
+		else {
+			if (vertical) {
+				Pos[i,1] = 1.25
+				if (cnt2 > 1) Pos[i,2] = (xrank[i]-1)/(cnt2-1)
+				else Pos[i,2] = 0.5
+			}
+			else {
+				Pos[i,2] = 0
+				if (cnt2 > 1) Pos[i,1] = 0.25 + ((xrank[i]-1)/(cnt2-1))
+				else Pos[i,1] = 0.75
+			}
+		}
+	}
+
+	return(Pos)
+}
 end

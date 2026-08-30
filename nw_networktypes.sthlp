@@ -57,6 +57,14 @@ redirect to a {cmd:nw2*} counterpart, or not apply). "Not applicable" is used, n
 for commands with no network-type-dependent behavior at all (e.g. purely structural commands like
 {help nwrename}).
 
+{title:Examples}
+
+{pstd}
+{help nwsummarize} reports a loaded network's own classification along these same dimensions:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwsummarize flomarriage}
+
 {title:Source-verified classifications}
 
 {pstd}

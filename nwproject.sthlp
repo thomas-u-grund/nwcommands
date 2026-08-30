@@ -35,6 +35,17 @@ unnecessary naming inconsistency with the rest of the "transformation grammar" f
 {cmd:nw2} prefix. {help nw2project} itself is unaffected and remains fully supported - see its own
 help file for the complete option reference, the {opt stat()} formulas, and worked examples.
 
+{title:Examples}
+
+{pstd}
+Build a small two-mode network (3 people x 2 events) and project it onto mode 1 (people):
+
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,0 \ 1,1 \ 0,1)}
+	{cmd:. nw2set, mat(net) name(attendance)}
+	{cmd:. nwproject attendance, project(1) name(people_net)}
+	{cmd:. nwsummarize people_net, matonly}
+
 {title:Supported network types}
 
 {pstd}

@@ -141,6 +141,22 @@ naturally reduce to one value per node: {bf:addnodes(} (mutates a network's own 
 {bf:collapse(} (see {help nwcollapse}). Each raises a clear, immediate error rather than silently
 doing nothing.
 
+{title:Examples}
+
+{pstd}
+Generate a new network with a network function:
+
+	{cmd:. nwclear}
+	{cmd:. nwgenerate newnet = random(10), prob(.3)}
+	{cmd:. nwsummarize newnet}
+
+{pstd}
+Generate a per-node variable, one value per node, from an existing network:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwgenerate mydeg = degree(flomarriage)}
+	{cmd:. list mydeg in 1/5}
+
 {title:Supported network types}
 
 {pstd}

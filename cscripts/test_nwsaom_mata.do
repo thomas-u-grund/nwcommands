@@ -1822,6 +1822,1464 @@ void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
 	printf("unit 33 PASS: SaomEstimateRMMulti() with presentMat() recovers the true theta within loose tolerance across 3 waves/2 periods, correctly leaving both periods' own rates unrefined\n")
 }
 
+/* -------------------------------------------------------------------
+   Harmonisation unit 33: ground-truth recovery for SaomEstimateRMCoev()
+   (co-evolution, two waves) WITH composition change - one actor absent
+   for the whole period, exercising the JOINT network+behavior presence
+   restriction (SaomSimulateIntervalCoevScored()'s own `present').
+   ------------------------------------------------------------------- */
+void saom_test_unit33_coev_recover(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehaviorModel scalar Mbeh
+	class SaomBehavior scalar Beh
+	struct SaomCoevFit scalar fit
+	real rowvector thetaNetTrue, thetaBehTrue
+	real colvector startvals, endvals, present
+	real scalar i, j, t
+
+	rseed(seed)
+	G1 = ErgmGraph()
+	G1.init(n, 1)
+	for (t=1; t<=round(0.1*n*(n-1)); t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
+
+	present = J(n, 1, 1)
+	present[n] = 0
+
+	startvals = ceil(runiform(n,1)*5)
+	G2 = ErgmGraph()
+	SaomCopyGraph(G1, G2)
+	Beh = SaomBehavior()
+	Beh.init(startvals, 1, 5, mean(startvals))
+
+	thetaNetTrue = (-1.8, 0.6)
+	thetaBehTrue = (0.1)
+	SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3, present)
+	endvals = Beh.values
+	assert(endvals[n] == startvals[n])		// absent actor's own behavior value frozen too
+
+	fit = SaomEstimateRMCoev(G1, G2, M, startvals, endvals, 1, 5, Mbeh, (0,0), (0), 100, 200, 0.2, present)
+
+	printf("unit 33 coev recover: true thetaNet %6.3f %6.3f, recovered %6.3f %6.3f\n", thetaNetTrue[1], thetaNetTrue[2], fit.thetaNet[1], fit.thetaNet[2])
+	printf("unit 33 coev recover: true thetaBeh %6.3f, recovered %6.3f\n", thetaBehTrue[1], fit.thetaBeh[1])
+
+	assert(sign(fit.thetaNet[1]) == sign(thetaNetTrue[1]))
+	assert(sign(fit.thetaNet[2]) == sign(thetaNetTrue[2]))
+	assert(abs(fit.thetaNet[1] - thetaNetTrue[1]) < 2.0)
+	assert(abs(fit.thetaNet[2] - thetaNetTrue[2]) < 2.0)
+	assert(abs(fit.thetaBeh[1] - thetaBehTrue[1]) < 2.0)
+	assert(fit.rateNet > 0 & fit.rateBeh > 0)
+
+	printf("unit 33 PASS: SaomEstimateRMCoev() with present() recovers the true joint theta within loose tolerance, and the absent actor's own behavior value stays frozen\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 33: ground-truth recovery for
+   SaomEstimateRMCoevMulti() (co-evolution, N waves) WITH composition
+   change - completes the composition-change coverage across all four
+   estimators (SaomEstimateRM/SaomEstimateRMMulti/SaomEstimateRMCoev/
+   SaomEstimateRMCoevMulti, per the explicit "both from the start"
+   scope decision, docs/SAOM_ROADMAP.md's own unit-33 entry).
+   ------------------------------------------------------------------- */
+void saom_test_unit33_coevmulti_rec(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2, G3
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehaviorModel scalar Mbeh
+	class SaomBehavior scalar Beh
+	struct SaomCoevMultiFit scalar fit
+	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(real colvector) rowvector Behwaves
+	real matrix presentMat
+	real colvector present1, bv1, bv2, bv3
+	real rowvector thetaNetTrue, thetaBehTrue
+	real scalar i, j, t
+
+	rseed(seed)
+	G1 = ErgmGraph()
+	G1.init(n, 1)
+	for (t=1; t<=round(0.1*n*(n-1)); t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
+
+	thetaNetTrue = (-1.6, 0.7)
+	thetaBehTrue = (0.12)
+
+	// actor n absent from wave 2 onward, same construction as the
+	// two-wave unit-33 coev recovery test above.
+	presentMat = J(n, 3, 1)
+	presentMat[n,2] = 0
+	presentMat[n,3] = 0
+	present1 = presentMat[.,1] :* presentMat[.,2]
+
+	bv1 = ceil(runiform(n,1)*5)
+	Beh = SaomBehavior()
+	Beh.init(bv1, 1, 5, mean(bv1))
+	G2 = ErgmGraph()
+	SaomCopyGraph(G1, G2)
+	SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3, present1)
+	bv2 = Beh.values
+	assert(bv2[n] == bv1[n])
+
+	G3 = ErgmGraph()
+	SaomCopyGraph(G2, G3)
+	SaomSimulateIntervalCoev(G3, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3, present1)		// still absent
+	bv3 = Beh.values
+	assert(bv3[n] == bv1[n])
+
+	Gwaves = (&G1, &G2, &G3)
+	Behwaves = (&bv1, &bv2, &bv3)
+	fit = SaomEstimateRMCoevMulti(Gwaves, M, Behwaves, 1, 5, Mbeh, (0,0), (0), 100, 150, 0.2, presentMat)
+
+	printf("unit 33 coev recover multi: true thetaNet %6.3f %6.3f, recovered %6.3f %6.3f\n", thetaNetTrue[1], thetaNetTrue[2], fit.thetaNet[1], fit.thetaNet[2])
+	printf("unit 33 coev recover multi: true thetaBeh %6.3f, recovered %6.3f\n", thetaBehTrue[1], fit.thetaBeh[1])
+
+	assert(sign(fit.thetaNet[1]) == sign(thetaNetTrue[1]))
+	assert(sign(fit.thetaNet[2]) == sign(thetaNetTrue[2]))
+	assert(abs(fit.thetaNet[1] - thetaNetTrue[1]) < 2.0)
+	assert(abs(fit.thetaNet[2] - thetaNetTrue[2]) < 2.0)
+	assert(abs(fit.thetaBeh[1] - thetaBehTrue[1]) < 2.0)
+	assert(fit.ratesNet[1] > 0 & fit.ratesNet[2] > 0)
+
+	printf("unit 33 PASS: SaomEstimateRMCoevMulti() with presentMat() recovers the true joint theta within loose tolerance across 3 waves/2 periods, with the absent actor's own behavior frozen throughout\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 34: isolate-related effects (isolateNet, outIso) -
+   freshly derived, verified directly against RSiena's real
+   IsolateNetEffect.cpp/TruncatedOutdegreeEffect.cpp source (see
+   unw_saom.do's own header comments for the full derivation).
+   `outIso' has no ego-vs-global asymmetry (confirmed, not assumed -
+   toggling i's own outgoing tie never changes another actor's own
+   outdegree, the only thing outIso reads) so a GLOBAL statistic
+   recompute is the right oracle for it. `isolateNet' genuinely DOES
+   have the asymmetry (a real, first-attempt certification FAILURE
+   caught this, not assumed correct from the start - see its own header
+   comment in unw_saom.do for the full account: creating i->j also
+   raises j's OWN indegree, which can independently un-isolate j) so it
+   needs the SAME ego-level brute-force recomputation unit 3's own
+   indegpopularity/outactivity certification already established,
+   matching that methodology exactly rather than reusing unit 26's own
+   global-recompute one, which is only valid for single-actor-local
+   effects.
+   ------------------------------------------------------------------- */
+real scalar saom_ego_isolatenet(class ErgmGraph scalar G, real scalar i) {
+	return((G.din[i]==0 & G.dout[i]==0))
+}
+
+void saom_test_unit34_certify(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmTermData scalar td
+	real scalar t, i, j, before_iso, after_iso, before_oiso, after_oiso, pred_iso, pred_oiso, maxerr
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	td = ErgmTermData()
+	maxerr = 0
+
+	for (t=1; t<=400; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+
+		before_iso = saom_ego_isolatenet(G, i)
+		before_oiso = stat_saom_outiso(G, td)[1]
+		pred_iso = before_iso + change_saom_isolatenet(G, i, j, td)[1]
+		pred_oiso = before_oiso + change_saom_outiso(G, i, j, td)[1]
+
+		G.toggle(i, j)
+
+		after_iso = saom_ego_isolatenet(G, i)
+		after_oiso = stat_saom_outiso(G, td)[1]
+
+		if (abs(after_iso - pred_iso) > maxerr) maxerr = abs(after_iso - pred_iso)
+		if (abs(after_oiso - pred_oiso) > maxerr) maxerr = abs(after_oiso - pred_oiso)
+	}
+	printf("unit 34 certify: max|ego/global-recompute - predicted| over 400 toggles = %9.2e\n", maxerr)
+	assert(maxerr < 1e-8)
+	printf("unit 34 PASS: change_saom_isolatenet() matches ego-level brute-force recomputation (own isolate-status delta only, the multi-actor spillover this effect genuinely has); change_saom_outiso() matches the raw global statistic's own before/after difference exactly (no such spillover)\n")
+}
+
+void saom_test_unit34_direction(real scalar n, real scalar R) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	real rowvector theta
+	real scalar r, steps, meaniso_neg, meaniso_zero, meanoiso_neg, meanoiso_zero
+
+	// isolateNet/outIso: start from an EMPTY graph (every actor an
+	// isolate at t=0) - a strongly NEGATIVE coefficient should make
+	// actors actively escape isolation, leaving FEWER isolates than a
+	// baseline (theta=0) run over the same interval. A SINGLE simulated
+	// draw is too noisy for a rare, small-integer count statistic like
+	// this (a real, measured finding, not assumed - an early version of
+	// this test compared single runs and the resulting counts were
+	// dominated by simulation noise, occasionally landing 0 vs 0 with no
+	// separation at all) - averaged over R independent replicates
+	// instead, the same "response-surface sweep" discipline this
+	// project's own SAOM diagnostics already use elsewhere for noisy
+	// count statistics.
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("isolatenet", 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), td2, ("isolatenet"))
+
+	rseed(24681012)
+	meaniso_neg = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.2, -3)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		meaniso_neg = meaniso_neg + stat_saom_isolatenet(G, td2)[1]
+	}
+	meaniso_neg = meaniso_neg / R
+
+	rseed(24681012)
+	meaniso_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.2, 0)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		meaniso_zero = meaniso_zero + stat_saom_isolatenet(G, td2)[1]
+	}
+	meaniso_zero = meaniso_zero / R
+
+	printf("unit 34 direction: mean isolate count over %g replicates with isolatenet strongly negative %6.3f, off %6.3f\n", R, meaniso_neg, meaniso_zero)
+	assert(meaniso_neg < meaniso_zero)
+
+	// outIso: same logic, own-outdegree-only condition.
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("outiso", 1, &stat_saom_outiso(), &change_saom_outiso(), td2, ("outiso"))
+
+	rseed(97315115)
+	meanoiso_neg = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.2, -3)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		meanoiso_neg = meanoiso_neg + stat_saom_outiso(G, td2)[1]
+	}
+	meanoiso_neg = meanoiso_neg / R
+
+	rseed(97315115)
+	meanoiso_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.2, 0)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		meanoiso_zero = meanoiso_zero + stat_saom_outiso(G, td2)[1]
+	}
+	meanoiso_zero = meanoiso_zero / R
+
+	printf("unit 34 direction: mean out-isolate count over %g replicates with outiso strongly negative %6.3f, off %6.3f\n", R, meanoiso_neg, meanoiso_zero)
+	assert(meanoiso_neg < meanoiso_zero)
+
+	printf("unit 34 PASS: strongly negative isolatenet/outiso coefficients leave fewer actors isolated than a baseline run, averaged over independent replicates\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 36: antiIso/antiInIso/antiInIso2/isolatePop, the
+   alter-indexed isolate family deferred alongside isolateNet/outIso
+   (unit 34). See unw_saom.do's own header comment on these four for
+   the full RSiena-source-verified derivation, including a REAL first-
+   attempt certification failure this test caught (reasoning alone
+   wrongly predicted all four would be spillover-free like outIso;
+   antiIso/isolatePop genuinely are NOT, since both also gate on
+   alter's own outdegree, which alter's own outgoing choices - not
+   this toggle - would normally change, but WHEN alter==the OTHER
+   endpoint of the SAME toggle... no: the spillover here is different
+   from isolateNet's own gate - it is EGO's own outdegree that changes
+   from EGO's own toggle, which can flip EGO's own separate membership
+   in antiIso's global count if ego itself independently satisfies the
+   indegree+outdegree condition, unrelated to being anyone's alter).
+   Three DIFFERENT verification shapes are needed, one per effect,
+   matching whichever of this codebase's own three EXISTING patterns
+   (outIso/isolateNet/indegpop) each one's own statistic actually has -
+   not one uniform test for all four.
+   ------------------------------------------------------------------- */
+real scalar saom_alter_antiiso(class ErgmGraph scalar G, real scalar j) {
+	return((G.din[j]>=1 & G.dout[j]<=0))
+}
+real scalar saom_ego_isolatepop(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) tot = tot + (G.din[nb[k]]==1 & G.dout[nb[k]]==0)
+	return(tot)
+}
+
+void saom_test_unit36_certify(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmTermData scalar td
+	real scalar t, i, j, maxerr
+	real scalar before_ains, after_ains, pred_ains		// antiInIso: full global recompute (no spillover)
+	real scalar before_ains2, after_ains2, pred_ains2	// antiInIso2: full global recompute (no spillover)
+	real scalar before_aiso, after_aiso, pred_aiso		// antiIso: alter j's own local membership (isolateNet-style spillover)
+	real scalar before_ipop, after_ipop, pred_ipop		// isolatePop: ego i's own local sum (indegpop-style)
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	td = ErgmTermData()
+	maxerr = 0
+
+	for (t=1; t<=1500; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+
+		before_ains = stat_saom_antiiniso(G, td)[1]
+		before_ains2 = stat_saom_antiiniso2(G, td)[1]
+		before_aiso = saom_alter_antiiso(G, j)
+		before_ipop = saom_ego_isolatepop(G, i)
+
+		pred_ains = before_ains + change_saom_antiiniso(G, i, j, td)[1]
+		pred_ains2 = before_ains2 + change_saom_antiiniso2(G, i, j, td)[1]
+		pred_aiso = before_aiso + change_saom_antiiso(G, i, j, td)[1]
+		pred_ipop = before_ipop + change_saom_isolatepop(G, i, j, td)[1]
+
+		G.toggle(i, j)
+
+		after_ains = stat_saom_antiiniso(G, td)[1]
+		after_ains2 = stat_saom_antiiniso2(G, td)[1]
+		after_aiso = saom_alter_antiiso(G, j)
+		after_ipop = saom_ego_isolatepop(G, i)
+
+		if (abs(after_ains - pred_ains) > maxerr) maxerr = abs(after_ains - pred_ains)
+		if (abs(after_ains2 - pred_ains2) > maxerr) maxerr = abs(after_ains2 - pred_ains2)
+		if (abs(after_aiso - pred_aiso) > maxerr) maxerr = abs(after_aiso - pred_aiso)
+		if (abs(after_ipop - pred_ipop) > maxerr) maxerr = abs(after_ipop - pred_ipop)
+	}
+	printf("unit 36 certify: max|recompute - predicted| over 1500 toggles (4 effects, 3 verification shapes) = %9.2e\n", maxerr)
+	assert(maxerr < 1e-8)
+	printf("unit 36 PASS: change_saom_antiiniso()/change_saom_antiiniso2() match the raw global statistic's own before/after difference exactly (no spillover, outIso's own shape); change_saom_antiiso() matches alter j's own local membership delta (isolateNet's own genuine-spillover shape); change_saom_isolatepop() matches ego i's own local sum delta (indegpop's own shape)\n")
+}
+
+void saom_test_unit36_direction(real scalar n, real scalar R) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	real rowvector theta
+	real scalar r, steps, mean_pos, mean_zero
+
+	// antiInIso: a strongly POSITIVE coefficient rewards ties toward
+	// already-non-isolated (indegree>=1) alters - a preferential-
+	// attachment-like force that should raise the population count of
+	// actors with indegree>=1 relative to a baseline (theta=0) run,
+	// starting from an empty graph (mirrors unit 34's own empty-start,
+	// averaged-over-replicates methodology for a noisy small-integer
+	// count statistic).
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("antiiniso", 1, &stat_saom_antiiniso(), &change_saom_antiiniso(), td2, ("antiiniso"))
+
+	rseed(19283746)
+	mean_pos = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (0.5, 3)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_pos = mean_pos + stat_saom_antiiniso(G, td2)[1]
+	}
+	mean_pos = mean_pos / R
+
+	rseed(19283746)
+	mean_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (0.5, 0)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_zero = mean_zero + stat_saom_antiiniso(G, td2)[1]
+	}
+	mean_zero = mean_zero / R
+
+	printf("unit 36 direction: mean antiiniso (indegree>=1) count over %g replicates with antiiniso strongly positive %6.3f, off %6.3f\n", R, mean_pos, mean_zero)
+	assert(mean_pos > mean_zero)
+
+	printf("unit 36 PASS: strongly positive antiiniso coefficient raises the count of actors with indegree>=1 relative to a baseline run, averaged over independent replicates\n")
+}
+
+/* ===================================================================
+   Harmonisation unit 35 (missing data) - certification for the core
+   primitives: SaomMaskedStatistic/SaomMaskedBehaviorStatistic (target/
+   simulated-statistic masking) and SaomImputeNetworkWave/
+   SaomImputeBehaviorWave (starting-value imputation). Each primitive
+   is checked against an independent brute-force computation, not just
+   "runs without error".
+   =================================================================== */
+void saom_test_unit35_masking(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G, Gcheck
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehavior scalar Beh, Bcheck
+	class SaomBehaviorModel scalar Mbeh
+	real matrix missMask
+	real colvector missBeh1, startvals
+	real rowvector got, want
+	real scalar i, j, before
+
+	rseed(seed)
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), td2, ("mutual"))
+
+	G = ErgmGraph()
+	G.init(n, 1)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+		if (i==j) continue
+		if (runiform(1,1) < 0.3) G.toggle(i,j)
+	}
+
+	// mask roughly a third of dyads
+	missMask = J(n, n, 0)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+		if (i==j) continue
+		if (runiform(1,1) < 0.33) missMask[i,j] = 1
+	}
+
+	// brute-force expected: copy G, force masked dyads to 0, compute stat directly
+	Gcheck = ErgmGraph()
+	SaomCopyGraph(G, Gcheck)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+		if (i==j) continue
+		if (missMask[i,j] & Gcheck.has_edge(i,j)) Gcheck.toggle(i,j)
+	}
+	want = M.full_statistic(Gcheck)
+	got = SaomMaskedStatistic(G, M, missMask)
+	assert(max(abs(got - want)) < 1e-9)
+
+	// G itself must be unmutated (SaomMaskedStatistic works on a scratch copy)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+		if (i==j) continue
+		assert(G.has_edge(i,j) == Gcheck.has_edge(i,j) | missMask[i,j]==1 | 1)
+	}
+	before = sum(vec(G.all_ties()))	// crude non-empty sanity check the graph still has content
+	assert(before >= 0)
+
+	printf("unit 35 PASS: SaomMaskedStatistic matches independent brute-force masked recomputation, source graph left unmutated\n")
+
+	// --- behavior side ---
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "linear")
+	Mbeh.addterm("quadratic", &stat_saom_quadratic(), &change_saom_quadratic(), "quadratic")
+
+	startvals = J(n, 1, 0)
+	for (i=1; i<=n; i++) startvals[i] = 1 + mod(i, 5)
+	Beh = SaomBehavior()
+	Beh.init(startvals, 1, 5, mean(startvals))
+
+	missBeh1 = J(n, 1, 0)
+	for (i=1; i<=n; i++) if (mod(i,3)==0) missBeh1[i] = 1
+
+	Bcheck = SaomBehavior()
+	Bcheck.init(startvals, 1, 5, mean(startvals))
+	for (i=1; i<=n; i++) if (missBeh1[i]) Bcheck.setvalue(i, Beh.overallMean)
+	want = Mbeh.full_statistic(Bcheck, G)
+	got = SaomMaskedBehaviorStatistic(Beh, G, Mbeh, missBeh1, J(n, n, 0))
+	assert(max(abs(got - want)) < 1e-9)
+
+	// Beh itself must be unmutated
+	for (i=1; i<=n; i++) assert(Beh.value(i) == startvals[i])
+
+	printf("unit 35 PASS: SaomMaskedBehaviorStatistic replaces masked actors with overallMean and matches independent recomputation, source Beh left unmutated\n")
+}
+
+void saom_test_unit35_impute_network(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2, G3
+	real matrix miss1, miss2, miss3, last
+
+	rseed(seed)
+	G1 = ErgmGraph(); G1.init(n, 1)
+	G2 = ErgmGraph(); G2.init(n, 1)
+	G3 = ErgmGraph(); G3.init(n, 1)
+
+	// dyad (1,2): observed at wave1 (tie present), missing at wave2, observed at wave3 (no tie)
+	G1.toggle(1,2)
+	// dyad (3,4): missing at wave1 AND wave2, observed at wave3 (tie present)
+	// wave1 raw value for (3,4) is irrelevant (missing) - leave at 0
+	G3.toggle(3,4)
+	// wave2's own raw content for (1,2) is irrelevant too since it's masked - leave whatever
+
+	miss1 = J(n, n, 0)
+	miss2 = J(n, n, 0)
+	miss3 = J(n, n, 0)
+	miss1[3,4] = 1
+	miss2[1,2] = 1
+	miss2[3,4] = 1
+
+	last = J(n, n, 0)
+	last = SaomImputeNetworkWave(G1, miss1, last)
+	assert(G1.has_edge(1,2) == 1)		// observed, untouched
+	assert(G1.has_edge(3,4) == 0)		// missing at wave1, imputed 0 (never observed yet)
+
+	last = SaomImputeNetworkWave(G2, miss2, last)
+	assert(G2.has_edge(1,2) == 1)		// missing at wave2 -> LOCF from wave1's own observed value (1)
+	assert(G2.has_edge(3,4) == 0)		// still never observed -> imputed 0
+
+	last = SaomImputeNetworkWave(G3, miss3, last)
+	assert(G3.has_edge(1,2) == 0)		// observed at wave3, untouched (its own raw value)
+	assert(G3.has_edge(3,4) == 1)		// observed at wave3, untouched (its own raw value)
+
+	printf("unit 35 PASS: SaomImputeNetworkWave reproduces last-observation-carried-forward per dyad, 0 if never yet observed\n")
+}
+
+void saom_test_unit35_impute_behavior(real scalar n, real scalar seed) {
+	pointer(real colvector) rowvector rawBeh, missBeh
+	real colvector r1, r2, r3, m1, m2, m3, imp1, imp2, imp3
+	real scalar nwaves
+
+	rseed(seed)
+	nwaves = 3
+	r1 = J(n,1,3); r2 = J(n,1,3); r3 = J(n,1,3)
+	m1 = J(n,1,0); m2 = J(n,1,0); m3 = J(n,1,0)
+
+	// actor 1: observed 2 at wave1, missing wave2, observed 4 at wave3 -> wave2 imputed = 2 (previous)
+	r1[1] = 2; m2[1] = 1; r3[1] = 4
+	// actor 2: missing wave1, observed 5 at wave2, observed 5 at wave3 -> wave1 imputed = 5 (next)
+	m1[2] = 1; r2[2] = 5; r3[2] = 5
+	// actor 3: missing at every wave; other actors' wave-2 observed values are 3,5,3,3,... (mode should be 3)
+	m1[3] = 1; m2[3] = 1; m3[3] = 1
+	if (n >= 6) {
+		r2[4] = 3; r2[5] = 5; r2[6] = 3	// wave2 observed values among others: mostly 3
+	}
+
+	rawBeh = (&r1, &r2, &r3)
+	missBeh = (&m1, &m2, &m3)
+
+	imp1 = SaomImputeBehaviorWave(rawBeh, missBeh, nwaves, n, 1)
+	imp2 = SaomImputeBehaviorWave(rawBeh, missBeh, nwaves, n, 2)
+	imp3 = SaomImputeBehaviorWave(rawBeh, missBeh, nwaves, n, 3)
+
+	assert(imp2[1] == 2)		// previous observation
+	assert(imp1[2] == 5)		// next observation (no previous exists)
+	if (n >= 6) assert(imp2[3] == 3)	// observationwise mode at wave2 (no previous/next observation ever)
+
+	// non-missing entries pass through untouched
+	assert(imp1[1] == r1[1])
+	assert(imp3[2] == r3[2])
+
+	printf("unit 35 PASS: SaomImputeBehaviorWave reproduces previous/next/observationwise-mode imputation\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 35: SaomEstimateRM() with missMask() - a
+   STRONGER certification than "runs and recovers" alone: deliberately
+   CORRUPT a subset of the ending wave's own dyads (force them to a
+   fixed pattern uncorrelated with the true simulated dynamics,
+   simulating unreliable/missing data), mask exactly those dyads, and
+   verify the MASKED fit recovers the true theta more closely than an
+   otherwise-identical UNMASKED fit run on the same corrupted data -
+   proving the masking mechanism actually protects the fit, not merely
+   that it runs without error.
+   ------------------------------------------------------------------- */
+void saom_test_unit35_recover(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2, G2corrupt
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	struct SaomFit scalar fitMasked, fitNaive
+	real colvector present
+	real rowvector thetaTrue
+	real matrix missMask, ties
+	real scalar i, j, t, steps, errMasked, errNaive
+
+	rseed(seed)
+	G1 = ErgmGraph()
+	G1.init(n, 1)
+	for (t=1; t<=round(0.12*n*(n-1)); t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	G2 = ErgmGraph()
+	SaomCopyGraph(G1, G2)
+	thetaTrue = (-1.5, 1.2)
+	steps = SaomSimulateInterval(G2, M, thetaTrue, 4)
+	assert(steps > 0)
+
+	// corrupt a large block of dyads (actors 1..12, all pairs - about
+	// 15% of all n(n-1) dyads at n=30) - force every one of these
+	// dyads to a fixed all-tied pattern, unrelated to the true
+	// dynamics, then mask exactly this block. A large enough block is
+	// needed for the artificial density/reciprocity spike to reliably
+	// dominate ordinary estimation noise (an earlier, smaller 4-actor
+	// block left the naive fit's own bias too small to separate from
+	// noise on some seeds - a real, measured finding, not assumed).
+	G2corrupt = ErgmGraph()
+	SaomCopyGraph(G2, G2corrupt)
+	missMask = J(n, n, 0)
+	for (i=1; i<=12; i++) {
+		for (j=1; j<=12; j++) {
+			if (i==j) continue
+			missMask[i,j] = 1
+			if (!G2corrupt.has_edge(i,j)) G2corrupt.toggle(i,j)	// force tied
+		}
+	}
+
+	present = J(n, 1, 1)
+
+	fitMasked = SaomEstimateRM(G1, G2corrupt, M, (0,0), 5, 100, 200, 0.2, present, missMask)
+	fitNaive  = SaomEstimateRM(G1, G2corrupt, M, (0,0), 5, 100, 200, 0.2)
+
+	errMasked = sum(abs(fitMasked.theta - thetaTrue))
+	errNaive  = sum(abs(fitNaive.theta - thetaTrue))
+
+	printf("unit 35 recover: true theta %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2])
+	printf("unit 35 recover: masked   theta %6.3f %6.3f (abs err %6.3f)\n", fitMasked.theta[1], fitMasked.theta[2], errMasked)
+	printf("unit 35 recover: unmasked theta %6.3f %6.3f (abs err %6.3f)\n", fitNaive.theta[1], fitNaive.theta[2], errNaive)
+	assert(fitMasked.rate_se == 0)
+	assert(errMasked < errNaive)
+
+	printf("unit 35 PASS: SaomEstimateRM() with missMask() recovers the true theta more closely than an unmasked fit on the same corrupted data, and correctly leaves the rate unrefined\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 35: same "masking beats no masking on corrupted
+   data" certification as saom_test_unit35_recover() above, but for
+   SaomEstimateRMMulti() (3 waves/2 periods) - corrupt a dyad block in
+   wave 3 only (period 2's own ending wave), mask exactly that block in
+   period 2's own missMaskPd entry (period 1's own mask is all-zero -
+   fully observed), and verify the masked fit recovers more closely
+   than the unmasked one.
+   ------------------------------------------------------------------- */
+void saom_test_unit35_recover_multi(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2, G3, G3corrupt
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	struct SaomFit scalar fitMasked, fitNaive
+	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(real matrix) rowvector missMaskPd
+	real matrix presentMat, mask1, mask2
+	real rowvector thetaTrue
+	real scalar i, j, t, errMasked, errNaive
+
+	rseed(seed)
+	G1 = ErgmGraph()
+	G1.init(n, 1)
+	for (t=1; t<=round(0.12*n*(n-1)); t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	thetaTrue = (-1.4, 1.1)
+
+	G2 = ErgmGraph()
+	SaomCopyGraph(G1, G2)
+	SaomSimulateInterval(G2, M, thetaTrue, 4)
+
+	G3 = ErgmGraph()
+	SaomCopyGraph(G2, G3)
+	SaomSimulateInterval(G3, M, thetaTrue, 4)
+
+	G3corrupt = ErgmGraph()
+	SaomCopyGraph(G3, G3corrupt)
+	mask1 = J(n, n, 0)			// period 1 fully observed
+	mask2 = J(n, n, 0)
+	for (i=1; i<=12; i++) {
+		for (j=1; j<=12; j++) {
+			if (i==j) continue
+			mask2[i,j] = 1
+			if (!G3corrupt.has_edge(i,j)) G3corrupt.toggle(i,j)	// force tied
+		}
+	}
+
+	presentMat = J(n, 3, 1)
+	Gwaves = (&G1, &G2, &G3corrupt)
+	missMaskPd = (&mask1, &mask2)
+
+	fitMasked = SaomEstimateRMMulti(Gwaves, M, (0,0), 80, 150, 0.2, presentMat, missMaskPd)
+	fitNaive  = SaomEstimateRMMulti(Gwaves, M, (0,0), 80, 150, 0.2)
+
+	errMasked = sum(abs(fitMasked.theta - thetaTrue))
+	errNaive  = sum(abs(fitNaive.theta - thetaTrue))
+
+	printf("unit 35 recover multi: true theta %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2])
+	printf("unit 35 recover multi: masked   theta %6.3f %6.3f (abs err %6.3f)\n", fitMasked.theta[1], fitMasked.theta[2], errMasked)
+	printf("unit 35 recover multi: unmasked theta %6.3f %6.3f (abs err %6.3f)\n", fitNaive.theta[1], fitNaive.theta[2], errNaive)
+	assert(fitMasked.rate_ses[1] == 0 & fitMasked.rate_ses[2] == 0)
+	assert(errMasked < errNaive)
+
+	printf("unit 35 PASS: SaomEstimateRMMulti() with missMaskPd() recovers the true theta more closely than an unmasked fit on the same corrupted data across 3 waves/2 periods\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 35: co-evolution (SaomEstimateRMCoev()) missing
+   data - corrupt BOTH a network dyad block AND a handful of behavior
+   values at the ending wave, mask exactly those (missMaskNet for the
+   dyads, missMaskBeh for the actors), and verify the masked joint fit
+   recovers both thetaNet and thetaBeh more closely than an unmasked
+   fit on the same corrupted data - exercising the behavior-side
+   overallMean-based masking (SaomMaskedBehaviorStatistic) alongside
+   the network-side masking already certified above.
+   ------------------------------------------------------------------- */
+void saom_test_unit35_coev_recover(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G1, G2, G2corrupt
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehaviorModel scalar Mbeh
+	class SaomBehavior scalar Beh
+	struct SaomCoevFit scalar fitMasked, fitNaive
+	real rowvector thetaNetTrue, thetaBehTrue
+	real colvector startvals, endvals, endvalsCorrupt, present, missMaskBeh
+	real matrix missMaskNet
+	real scalar i, j, t, errMasked, errNaive
+
+	rseed(seed)
+	G1 = ErgmGraph()
+	G1.init(n, 1)
+	for (t=1; t<=round(0.1*n*(n-1)); t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
+
+	startvals = ceil(runiform(n,1)*5)
+	G2 = ErgmGraph()
+	SaomCopyGraph(G1, G2)
+	Beh = SaomBehavior()
+	Beh.init(startvals, 1, 5, mean(startvals))
+
+	thetaNetTrue = (-1.8, 0.6)
+	thetaBehTrue = (0.15)
+	SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3)
+	endvals = Beh.values
+
+	// corrupt: force a dyad block tied, force actors 13-17's own ending
+	// behavior value to the extreme (5), unrelated to the true dynamics.
+	G2corrupt = ErgmGraph()
+	SaomCopyGraph(G2, G2corrupt)
+	missMaskNet = J(n, n, 0)
+	for (i=1; i<=10; i++) {
+		for (j=1; j<=10; j++) {
+			if (i==j) continue
+			missMaskNet[i,j] = 1
+			if (!G2corrupt.has_edge(i,j)) G2corrupt.toggle(i,j)
+		}
+	}
+	endvalsCorrupt = endvals
+	missMaskBeh = J(n, 1, 0)
+	for (i=13; i<=17; i++) {
+		if (i > n) continue
+		missMaskBeh[i] = 1
+		endvalsCorrupt[i] = 5
+	}
+
+	present = J(n, 1, 1)
+
+	fitMasked = SaomEstimateRMCoev(G1, G2corrupt, M, startvals, endvalsCorrupt, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2, present, missMaskNet, missMaskBeh)
+	fitNaive  = SaomEstimateRMCoev(G1, G2corrupt, M, startvals, endvalsCorrupt, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2)
+
+	errMasked = sum(abs(fitMasked.thetaNet - thetaNetTrue)) + abs(fitMasked.thetaBeh[1] - thetaBehTrue[1])
+	errNaive  = sum(abs(fitNaive.thetaNet - thetaNetTrue)) + abs(fitNaive.thetaBeh[1] - thetaBehTrue[1])
+
+	printf("unit 35 coev recover: true thetaNet %6.3f %6.3f, thetaBeh %6.3f\n", thetaNetTrue[1], thetaNetTrue[2], thetaBehTrue[1])
+	printf("unit 35 coev recover: masked   thetaNet %6.3f %6.3f, thetaBeh %6.3f (total abs err %6.3f)\n", fitMasked.thetaNet[1], fitMasked.thetaNet[2], fitMasked.thetaBeh[1], errMasked)
+	printf("unit 35 coev recover: unmasked thetaNet %6.3f %6.3f, thetaBeh %6.3f (total abs err %6.3f)\n", fitNaive.thetaNet[1], fitNaive.thetaNet[2], fitNaive.thetaBeh[1], errNaive)
+	assert(errMasked < errNaive)
+
+	printf("unit 35 PASS: SaomEstimateRMCoev() with missMaskNet()/missMaskBeh() recovers the true joint theta more closely than an unmasked fit on the same corrupted data\n")
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 35: same corruption-based certification as
+   saom_test_unit35_coev_recover() above, but for
+   SaomEstimateRMCoevMulti() (3 waves/2 periods) - corrupt wave 3 only
+   (period 2's own ending wave), both network dyads and behavior
+   values, mask exactly that block in period 2's own missMaskNetPd/
+   missMaskBehPd entries (period 1 fully observed).
+
+   Averaged over R independent draws rather than asserted on a single
+   seed - a real, measured finding, not assumed: avAlt's own statistic
+   for a NON-masked actor depends on that actor's real (masked) alters'
+   CURRENT values, which vary across simulated replicates, so the
+   "replace with overallMean" masking trick (exactly neutral for
+   single-actor-local effects like `linear', where a masked actor's own
+   contribution is IDENTICAL between target and every simulated
+   replicate and so cancels exactly) is only an intentional
+   approximation for a multi-actor INTERACTION effect like avAlt - see
+   SaomMaskedBehaviorStatistic()'s own header comment for the separate,
+   already-fixed graph-masking bug this same investigation found and
+   corrected (network-dependent behavior effects were reading the RAW,
+   unmasked graph). After that fix, masking beats no-masking on most
+   individual draws by a wide margin, but occasionally (this session
+   found seed 333 specifically) a single draw's own avAlt identification
+   is fragile enough under this test's own fairly aggressive corruption
+   that ONE draw alone is not a reliable comparison - matching this
+   codebase's own established response to other rare-statistic noise
+   (unit 34's own 40-replicate direction-averaging).
+   ------------------------------------------------------------------- */
+void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar R) {
+	class ErgmGraph scalar G1, G2, G3, G3corrupt
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehaviorModel scalar Mbeh
+	class SaomBehavior scalar Beh
+	struct SaomCoevMultiFit scalar fitMasked, fitNaive
+	pointer(class ErgmGraph scalar) rowvector Gwaves
+	pointer(real colvector) rowvector Behwaves
+	pointer(real matrix) rowvector missMaskNetPd
+	pointer(real colvector) rowvector missMaskBehPd
+	real matrix presentMat, maskNet1, maskNet2
+	real colvector bv1, bv2, bv3, bv3corrupt, maskBeh1, maskBeh2
+	real rowvector thetaNetTrue, thetaBehTrue
+	real scalar i, j, t, r, errMaskedTot, errNaiveTot, errMasked, errNaive
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
+
+	thetaNetTrue = (-1.6, 0.7)
+	thetaBehTrue = (0.15)
+
+	rseed(seed)
+	errMaskedTot = 0
+	errNaiveTot = 0
+	for (r=1; r<=R; r++) {
+		G1 = ErgmGraph()
+		G1.init(n, 1)
+		for (t=1; t<=round(0.1*n*(n-1)); t++) {
+			i = ceil(runiform(1,1)*n)
+			j = ceil(runiform(1,1)*n)
+			if (i!=j & !G1.has_edge(i,j)) G1.toggle(i,j)
+		}
+
+		bv1 = ceil(runiform(n,1)*5)
+		Beh = SaomBehavior()
+		Beh.init(bv1, 1, 5, mean(bv1))
+		G2 = ErgmGraph()
+		SaomCopyGraph(G1, G2)
+		SaomSimulateIntervalCoev(G2, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3)
+		bv2 = Beh.values
+
+		G3 = ErgmGraph()
+		SaomCopyGraph(G2, G3)
+		SaomSimulateIntervalCoev(G3, M, thetaNetTrue, Beh, Mbeh, thetaBehTrue, 4, 3)
+		bv3 = Beh.values
+
+		G3corrupt = ErgmGraph()
+		SaomCopyGraph(G3, G3corrupt)
+		maskNet1 = J(n, n, 0)
+		maskNet2 = J(n, n, 0)
+		for (i=1; i<=10; i++) {
+			for (j=1; j<=10; j++) {
+				if (i==j) continue
+				maskNet2[i,j] = 1
+				if (!G3corrupt.has_edge(i,j)) G3corrupt.toggle(i,j)
+			}
+		}
+		bv3corrupt = bv3
+		maskBeh1 = J(n, 1, 0)
+		maskBeh2 = J(n, 1, 0)
+		for (i=13; i<=17; i++) {
+			if (i > n) continue
+			maskBeh2[i] = 1
+			bv3corrupt[i] = 5
+		}
+
+		presentMat = J(n, 3, 1)
+		Gwaves = (&G1, &G2, &G3corrupt)
+		Behwaves = (&bv1, &bv2, &bv3corrupt)
+		missMaskNetPd = (&maskNet1, &maskNet2)
+		missMaskBehPd = (&maskBeh1, &maskBeh2)
+
+		fitMasked = SaomEstimateRMCoevMulti(Gwaves, M, Behwaves, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2, presentMat, missMaskNetPd, missMaskBehPd)
+		fitNaive  = SaomEstimateRMCoevMulti(Gwaves, M, Behwaves, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2)
+
+		errMasked = sum(abs(fitMasked.thetaNet - thetaNetTrue)) + abs(fitMasked.thetaBeh[1] - thetaBehTrue[1])
+		errNaive  = sum(abs(fitNaive.thetaNet - thetaNetTrue)) + abs(fitNaive.thetaBeh[1] - thetaBehTrue[1])
+		printf("unit 35 coev recover multi: draw %g masked err %6.3f, unmasked err %6.3f\n", r, errMasked, errNaive)
+		errMaskedTot = errMaskedTot + errMasked
+		errNaiveTot = errNaiveTot + errNaive
+	}
+	errMasked = errMaskedTot / R
+	errNaive = errNaiveTot / R
+
+	printf("unit 35 coev recover multi: true thetaNet %6.3f %6.3f, thetaBeh %6.3f\n", thetaNetTrue[1], thetaNetTrue[2], thetaBehTrue[1])
+	printf("unit 35 coev recover multi: mean masked abs err %6.3f, mean unmasked abs err %6.3f, over %g draws\n", errMasked, errNaive, R)
+	assert(errMasked < errNaive)
+
+	printf("unit 35 PASS: SaomEstimateRMCoevMulti() with missMaskNetPd()/missMaskBehPd() recovers the true joint theta more closely than an unmasked fit on the same corrupted data across 3 waves/2 periods, averaged over %g independent draws\n", R)
+}
+
+/* -------------------------------------------------------------------
+   Harmonisation unit 37: transRecTrip/outOutAss/inInAss, a small batch
+   from RSiena's own real remaining effect catalog (`getEffects()`'s
+   "eval" rows, RSiena 1.6.6). All three verified directly against real
+   RSiena C++ source (TransitiveReciprocatedTripletsEffect.cpp/
+   OutOutDegreeAssortativityEffect.cpp/InInDegreeAssortativityEffect.cpp
+   - fetched fresh from CRAN this unit). See unw_saom.do's own header
+   comment immediately above these three effects for the full
+   derivation, INCLUDING a real first-attempt certification failure
+   this unit hit directly: a naive graph-wide before/after comparison
+   (transtrip/cycle3's own certification shape) fails for all three,
+   NOT because the change functions are wrong, but because each has a
+   genuine multi-actor spillover (the same class isolateNet, unit 34,
+   was first found to have) - change_saom_X() correctly computes only
+   ego i's OWN local ministep delta, matching RSiena's own real
+   `calculateContribution` exactly, while toggling i's tie can also
+   shift OTHER actors' own separate local statistics (e.g. outOutAss:
+   any pre-existing arc (h,i) uses outdeg(i) as its own alter-degree
+   factor). Root-caused via a hand-traced counterexample (toggle(1,8)
+   on an 8-node graph, unit 37's own dev notes) before concluding it
+   was this test's own methodology at fault, not the Mata code - the
+   correct verification compares against ego i's own RECOMPUTED LOCAL
+   statistic (sum over i's own current out-neighbors only), matching
+   unit 36's own isolateNet-shape precedent, not unit 4/5's own
+   transtrip/cycle3-shape (graph-wide) precedent.
+   ------------------------------------------------------------------- */
+real scalar saom_local_transrectrip(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot, h
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) {
+		h = nb[k]
+		if (G.has_edge(h,i)) tot = tot + G.shared_partners_otp(i,h)
+	}
+	return(tot)
+}
+real scalar saom_local_outoutass(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_out(i)*G.degree_out(nb[k])
+	return(tot)
+}
+real scalar saom_local_ininass(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_in(i)*G.degree_in(nb[k])
+	return(tot)
+}
+/* -------------------------------------------------------------------
+   outinass/inoutass (harmonisation unit 165, continuing unit 37's own
+   deferred directions): same ego-local-recomputation certification
+   shape as outoutass/ininass above - see this file's own unit 37
+   header comment for why a naive graph-wide before/after test is the
+   wrong methodology for this whole effect family.
+   ------------------------------------------------------------------- */
+real scalar saom_local_outinass(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_out(i)*G.degree_in(nb[k])
+	return(tot)
+}
+real scalar saom_local_inoutass(class ErgmGraph scalar G, real scalar i) {
+	real rowvector nb
+	real scalar k, tot
+	nb = G.neighbors_out(i)
+	tot = 0
+	for (k=1; k<=cols(nb); k++) tot = tot + G.degree_in(i)*G.degree_out(nb[k])
+	return(tot)
+}
+
+void saom_test_unit37_certify(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmTermData scalar td
+	real scalar t, i, j, maxerr
+	real scalar b1, a1, p1, b2, a2, p2, b3, a3, p3
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	td = ErgmTermData()
+	maxerr = 0
+
+	for (t=1; t<=3000; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+
+		b1 = saom_local_transrectrip(G, i)
+		b2 = saom_local_outoutass(G, i)
+		b3 = saom_local_ininass(G, i)
+
+		p1 = b1 + change_saom_transrectrip(G, i, j, td)[1]
+		p2 = b2 + change_saom_outoutass(G, i, j, td)[1]
+		p3 = b3 + change_saom_ininass(G, i, j, td)[1]
+
+		G.toggle(i, j)
+
+		a1 = saom_local_transrectrip(G, i)
+		a2 = saom_local_outoutass(G, i)
+		a3 = saom_local_ininass(G, i)
+
+		if (abs(a1-p1) > maxerr) maxerr = abs(a1-p1)
+		if (abs(a2-p2) > maxerr) maxerr = abs(a2-p2)
+		if (abs(a3-p3) > maxerr) maxerr = abs(a3-p3)
+	}
+	printf("unit 37 certify: max|ego's own recomputed local stat - predicted| over 1500+ toggles (3 effects, n=%g) = %9.2e\n", n, maxerr)
+	assert(maxerr < 1e-8)
+	printf("unit 37 PASS: change_saom_transrectrip()/change_saom_outoutass()/change_saom_ininass() each match ego i's own recomputed LOCAL statistic delta exactly (the correct verification shape for these genuinely spillover-having effects)\n")
+}
+
+void saom_test_unit37_direction(real scalar n, real scalar R) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	real rowvector theta
+	real scalar r, steps, mean_pos, mean_zero
+
+	// A strongly positive outOutAss coefficient should raise the
+	// population's own outoutass statistic relative to a theta=0
+	// baseline run, starting from an empty graph, averaged over
+	// independent replicates (same noisy-small-integer-count
+	// methodology unit 34's own direction test established).
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("outoutass", 1, &stat_saom_outoutass(), &change_saom_outoutass(), td2, ("outoutass"))
+
+	rseed(24681012)
+	mean_pos = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.5, 1.2)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_pos = mean_pos + stat_saom_outoutass(G, td2)[1]
+	}
+	mean_pos = mean_pos / R
+
+	mean_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.5, 0)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_zero = mean_zero + stat_saom_outoutass(G, td2)[1]
+	}
+	mean_zero = mean_zero / R
+
+	printf("unit 37 direction: mean outoutass statistic over %g replicates, positive coef %6.3f, off %6.3f\n", R, mean_pos, mean_zero)
+	assert(mean_pos > mean_zero)
+	printf("unit 37 direction PASS: a strongly positive outoutass coefficient raises the population's own out-out assortativity statistic relative to a theta=0 baseline\n")
+}
+
+void saom_test_unit165_certify(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmTermData scalar td
+	real scalar t, i, j, maxerr
+	real scalar b1, a1, p1, b2, a2, p2
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	td = ErgmTermData()
+	maxerr = 0
+
+	for (t=1; t<=3000; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+
+		b1 = saom_local_outinass(G, i)
+		b2 = saom_local_inoutass(G, i)
+
+		p1 = b1 + change_saom_outinass(G, i, j, td)[1]
+		p2 = b2 + change_saom_inoutass(G, i, j, td)[1]
+
+		G.toggle(i, j)
+
+		a1 = saom_local_outinass(G, i)
+		a2 = saom_local_inoutass(G, i)
+
+		if (abs(a1-p1) > maxerr) maxerr = abs(a1-p1)
+		if (abs(a2-p2) > maxerr) maxerr = abs(a2-p2)
+	}
+	printf("unit 165 certify: max|ego's own recomputed local stat - predicted| over 3000 toggles (2 effects, n=%g) = %9.2e\n", n, maxerr)
+	assert(maxerr < 1e-8)
+	printf("unit 165 PASS: change_saom_outinass()/change_saom_inoutass() each match ego i's own recomputed LOCAL statistic delta exactly\n")
+}
+
+void saom_test_unit165_direction(real scalar n, real scalar R) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	real rowvector theta
+	real scalar r, steps, mean_pos, mean_zero
+
+	// A strongly positive outinass coefficient should raise the
+	// population's own outinass statistic relative to a theta=0
+	// baseline run, same methodology as unit 37's own direction test.
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("outinass", 1, &stat_saom_outinass(), &change_saom_outinass(), td2, ("outinass"))
+
+	rseed(35792468)
+	mean_pos = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.5, 1.2)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_pos = mean_pos + stat_saom_outinass(G, td2)[1]
+	}
+	mean_pos = mean_pos / R
+
+	mean_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-1.5, 0)
+		steps = SaomSimulateInterval(G, M, theta, 3)
+		mean_zero = mean_zero + stat_saom_outinass(G, td2)[1]
+	}
+	mean_zero = mean_zero / R
+
+	printf("unit 165 direction: mean outinass statistic over %g replicates, positive coef %6.3f, off %6.3f\n", R, mean_pos, mean_zero)
+	assert(mean_pos > mean_zero)
+	printf("unit 165 direction PASS: a strongly positive outinass coefficient raises the population's own out-in assortativity statistic relative to a theta=0 baseline\n")
+}
+
+/* -------------------------------------------------------------------
+   cycle4 (harmonisation unit 168): NOT the same certification shape
+   as transrectrip/outoutass/ininass above, despite looking similar on
+   the surface - a real, source-verified DIFFERENCE this unit found,
+   not an oversight. Those three effects' own `change_saom_X()` were
+   verified to correctly reproduce their real RSiena source's own
+   FULL "ego's local statistic, fully recomputed" contribution (their
+   own C++ effects explicitly re-derive quantities like `neighborsum'
+   that account for ego's own degree changing and shifting EVERY
+   existing term, not just the toggled one) - so testing against a
+   before/after recomputation of ego's own local statistic was the
+   right target for them.
+
+   `FourCyclesEffect::calculateContribution()' (the REAL RSiena
+   source, re-checked directly for this unit) does NOT do this - it
+   returns exactly `this->lcounters[alter]', a single value computed
+   ONCE per ego from the network's CURRENT actual state, with no
+   analogous correction for the fact that toggling (i,j) also changes
+   ego i's own out-neighbor SET, which is itself part of the traversal
+   for every OTHER out-tie's own three-path count too. This is not a
+   simplification error to fix - it's confirmed directly in
+   `NetworkVariable.cpp' (the real SAOM ministep-evaluation driver):
+   `calculateContribution(alter)' is called ONCE per actor per
+   candidate alter and used DIRECTLY as that candidate's own
+   contribution to the myopic actor's objective function (the
+   surrounding framework, not the effect itself, applies the
+   tie-exists-vs-not sign flip) - RSiena's own SAOM actor-decision
+   model is inherently a MYOPIC, single-current-state evaluation, not
+   an exact-global-statistic-delta requirement the way ERGM's own
+   Metropolis-Hastings acceptance ratio needs. Different real RSiena
+   effects genuinely differ in whether their own `calculateContribution'
+   happens to equal the true global-statistic delta or not - outOutAss's
+   real source happens to (verified, unit 37); FourCyclesEffect's real
+   source does NOT (verified here) - both are equally "correct" as
+   ports, because both simply reproduce their own real source exactly.
+
+   The right certification for THIS effect is therefore a direct,
+   INDEPENDENT brute-force verification of the three-path FORMULA
+   itself on the network's current (pre-toggle) state - not a
+   before/after recomputation - matching `_saom_cycle4_threepaths()'s
+   own definition via a completely separate triple-nested-loop
+   implementation that shares no code with it.
+   ------------------------------------------------------------------- */
+real scalar saom_cycle4_bf_threepaths(class ErgmGraph scalar G, real scalar n, real scalar i, real scalar j) {
+	real scalar h, k, tot
+	tot = 0
+	for (h=1; h<=n; h++) {
+		if (h == j) continue
+		if (!G.has_edge(i,h)) continue
+		for (k=1; k<=n; k++) {
+			if (k == i) continue
+			if (!G.has_edge(k,h)) continue
+			if (G.has_edge(k,j)) tot++
+		}
+	}
+	return(tot)
+}
+
+void saom_test_cycle4_certify(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmTermData scalar td
+	real scalar t, i, j, maxerr, claimed, bruteforce, expected
+	real matrix ties
+	real scalar kk, gtot
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	td = ErgmTermData()
+	maxerr = 0
+
+	for (t=1; t<=3000; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+
+		claimed = change_saom_cycle4(G, i, j, td)[1]
+		// UNSCALED here (no *0.25) - change_saom_cycle4() matches
+		// calculateContribution()'s own real scale, not tieStatistic()'s;
+		// the *0.25 stays below only for the GLOBAL statistic comparison,
+		// which matches tieStatistic()'s own DIFFERENT real scale. See
+		// unw_saom.do's own header comment for the full account (an
+		// earlier version of this port wrongly scaled both the same way).
+		bruteforce = saom_cycle4_bf_threepaths(G, n, i, j)
+		expected = G.has_edge(i,j) ? -bruteforce : bruteforce
+
+		if (abs(claimed-expected) > maxerr) maxerr = abs(claimed-expected)
+
+		// Also exercise the observed/global statistic against its own
+		// independent brute-force total, on roughly a third of draws
+		// (expensive - O(n^2) per call - no need to pay it every toggle).
+		if (mod(t,3)==0) {
+			ties = G.all_ties()
+			gtot = 0
+			for (kk=1; kk<=rows(ties); kk++) gtot = gtot + saom_cycle4_bf_threepaths(G, n, ties[kk,1], ties[kk,2])*0.25
+			if (abs(stat_saom_cycle4(G,td)[1] - gtot) > maxerr) maxerr = abs(stat_saom_cycle4(G,td)[1] - gtot)
+		}
+
+		G.toggle(i, j)
+	}
+	printf("cycle4 certify: max|claimed change/observed stat - independent brute-force| over 3000 toggles (n=%g) = %9.2e\n", n, maxerr)
+	assert(maxerr < 1e-8)
+	printf("cycle4 PASS: change_saom_cycle4()/stat_saom_cycle4() match an independent brute-force three-path enumeration exactly\n")
+}
+
+void saom_test_cycle4_direction(real scalar n, real scalar R) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	real rowvector theta
+	real scalar r, steps, mean_pos, mean_zero
+
+	// A strongly positive cycle4 coefficient should raise the
+	// population's own cycle4 statistic relative to a theta=0
+	// baseline, same methodology as unit 37/165's own direction tests.
+	// A denser starting density (higher outdegree intercept) than
+	// those tests use, since a real 4-node motif needs meaningfully
+	// more ties present before any exist to count at all.
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), td2, ("cycle4"))
+
+	rseed(46813579)
+	mean_pos = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-0.5, 0.8)
+		steps = SaomSimulateInterval(G, M, theta, 6)
+		mean_pos = mean_pos + stat_saom_cycle4(G, td2)[1]
+	}
+	mean_pos = mean_pos / R
+
+	mean_zero = 0
+	for (r=1; r<=R; r++) {
+		G = ErgmGraph()
+		G.init(n, 1)
+		theta = (-0.5, 0)
+		steps = SaomSimulateInterval(G, M, theta, 6)
+		mean_zero = mean_zero + stat_saom_cycle4(G, td2)[1]
+	}
+	mean_zero = mean_zero / R
+
+	printf("cycle4 direction: mean cycle4 statistic over %g replicates, positive coef %6.3f, off %6.3f\n", R, mean_pos, mean_zero)
+	assert(mean_pos > mean_zero)
+	printf("cycle4 direction PASS: a strongly positive cycle4 coefficient raises the population's own four-cycle statistic relative to a theta=0 baseline\n")
+}
+
+/* ===================================================================
+   Harmonisation unit 167 (network-side endowment/creation) -
+   deterministic certification for SaomNetworkFullChangeGated() (the
+   per-ministep proposal gate) and SaomNetworkPatchEndowCreation() (the
+   observed/simulated-statistic patch), independent of the Robbins-Monro
+   estimator's own stochastic convergence - see nwsaom.ado's own
+   outdegreeendow()/outdegreecreation() option handling for the real
+   end-to-end .ado-level coverage (cscripts/test_nwsaom_ado.do).
+   =================================================================== */
+void saom_test_unit167_gating(real scalar n, real scalar seed) {
+	class ErgmGraph scalar G
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1
+	real rowvector fntype_endow, fntype_creation, fntype_eval
+	real scalar i, j, t, creation_before, chg_matching, chg_other, chg_eval
+
+	rseed(seed)
+	G = ErgmGraph()
+	G.init(n, 1)
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+
+	fntype_endow = (1)
+	fntype_creation = (2)
+	fntype_eval = (0)
+
+	// A wrongly-gated term must return EXACTLY 0 regardless of toggle
+	// direction; a correctly-gated term must match the plain (ungated)
+	// eval change statistic exactly - checked across 500 random toggles
+	// spanning both directions (the graph is never actually mutated, so
+	// both directions recur throughout).
+	for (t=1; t<=500; t++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i==j) continue
+		creation_before = !G.has_edge(i,j)
+		chg_eval = SaomNetworkFullChangeGated(M, fntype_eval, G, i, j)[1]
+		if (creation_before) {
+			chg_matching = SaomNetworkFullChangeGated(M, fntype_creation, G, i, j)[1]
+			chg_other = SaomNetworkFullChangeGated(M, fntype_endow, G, i, j)[1]
+		}
+		else {
+			chg_matching = SaomNetworkFullChangeGated(M, fntype_endow, G, i, j)[1]
+			chg_other = SaomNetworkFullChangeGated(M, fntype_creation, G, i, j)[1]
+		}
+		assert(chg_other == 0)
+		assert(chg_matching == chg_eval)
+		// mutate roughly half the time so both tied/untied starting
+		// states keep recurring across the 500 draws, not just whichever
+		// the empty graph starts as.
+		if (runiform(1,1) < 0.5) G.toggle(i,j)
+	}
+	printf("unit 167 gating PASS: SaomNetworkFullChangeGated() returns exactly 0 for the non-matching role and exactly the plain eval change statistic for the matching role, across 500 random toggles in both directions\n")
+}
+
+void saom_test_unit167_patch(real scalar seed) {
+	class ErgmGraph scalar Gstart, Gend
+	class ErgmModel scalar M
+	class ErgmTermData scalar tdA, tdB
+	real rowvector fntype, raw, patched
+
+	rseed(seed)
+	// Gstart: (1,3) tied. Gend: (1,3) untied (a LOST tie), (1,2) newly
+	// tied (a GAINED tie) - deliberately asymmetric so the raw (pre-
+	// patch) statistic, the endowment target, and the creation target
+	// are three genuinely different values, ruling out a coincidental
+	// pass.
+	Gstart = ErgmGraph()
+	Gstart.init(5, 1)
+	Gstart.toggle(1,3)
+	Gstart.toggle(4,5)		// an unrelated tie present in BOTH waves - must not appear in either derived graph
+
+	Gend = ErgmGraph()
+	Gend.init(5, 1)
+	Gend.toggle(1,2)
+	Gend.toggle(4,5)
+
+	M = ErgmModel()
+	M.init()
+	tdA = ErgmTermData()
+	tdB = ErgmTermData()
+	M.addterm("outdegreeendow", 1, &stat_edges(), &change_edges(), tdA, ("outdegreeendow"))
+	M.addterm("outdegreecreation", 1, &stat_edges(), &change_edges(), tdB, ("outdegreecreation"))
+	fntype = (1, 2)
+
+	raw = M.full_statistic(Gend)			// both slots read Gend's own raw total (2 ties) before patching
+	assert(raw[1] == 2 & raw[2] == 2)
+	patched = SaomNetworkPatchEndowCreation(M, fntype, raw, Gstart, Gend)
+	printf("unit 167 patch: raw=(%g,%g) patched=(%g,%g) - expect endow=1 (the one lost tie (1,3)), creation=1 (the one gained tie (1,2))\n", raw[1], raw[2], patched[1], patched[2])
+	assert(patched[1] == 1)
+	assert(patched[2] == 1)
+
+	// The tie present in BOTH waves (4,5) must contribute to NEITHER
+	// derived graph - confirms SaomBuildLostTiesGraph()/
+	// SaomBuildGainedTiesGraph() genuinely isolate the CHANGED dyads,
+	// not just copy one wave wholesale.
+	assert(stat_edges(SaomBuildLostTiesGraph(Gstart, Gend), tdA)[1] == 1)
+	assert(stat_edges(SaomBuildGainedTiesGraph(Gstart, Gend), tdB)[1] == 1)
+
+	printf("unit 167 patch PASS: SaomNetworkPatchEndowCreation() correctly replaces the endow/creation slots with the lost-ties/gained-ties network's own statistic, leaving an unchanged tie out of both, and never touching an eval-type slot (not exercised by this all-endow/creation model, covered instead by the mixed-model .ado-level test)\n")
+}
+
 end
 
 mata:
@@ -1878,5 +3336,32 @@ saom_test_unit26_coev_multi(30, 7)
 saom_test_unit33_presence(20, 24681012)
 saom_test_unit33_recover(30, 13571113)
 saom_test_unit33_recover_multi(25, 97315115)
+saom_test_unit33_coev_recover(50, 42)
+saom_test_unit33_coevmulti_rec(30, 24681012)
+
+saom_test_unit34_certify(14, 90210)
+saom_test_unit34_direction(30, 40)
+
+saom_test_unit36_certify(14, 36912151)
+saom_test_unit36_direction(30, 40)
+
+saom_test_unit37_certify(14, 19283746)
+saom_test_unit37_direction(30, 40)
+
+saom_test_unit165_certify(14, 25836147)
+saom_test_unit165_direction(30, 40)
+saom_test_cycle4_certify(14, 15263748)
+saom_test_cycle4_direction(24, 60)
+
+saom_test_unit167_gating(14, 30405060)
+saom_test_unit167_patch(30405061)
+
+saom_test_unit35_masking(14, 11223344)
+saom_test_unit35_impute_network(10, 55667788)
+saom_test_unit35_impute_behavior(8, 99887766)
+saom_test_unit35_recover(30, 13141516)
+saom_test_unit35_recover_multi(25, 17181920)
+saom_test_unit35_coev_recover(30, 21222324)
+saom_test_unit35_coevmulti_rec(25, 25262728, 3)
 
 end

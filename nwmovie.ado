@@ -1,711 +1,583 @@
-*! Date        : 11feb2015
-*! Author      : Thomas Grund, Linkoping University
-*! Email	   : thomas.u.grund@gmail.com
+*! nwmovie v2 - Cytoscape.js-based interactive/animated network movie
+*! player, replacing the ImageMagick/graph-export pipeline entirely (see
+*! docs/CERTIFICATION.md's own harmonisation-unit entry for the full
+*! rationale and the real, measured tradeoffs against the old command).
+*!
+*! Two input modes, auto-detected from `netname':
+*!   - PANEL mode: 2+ already-built networks of the same size, in
+*!     sequence (nwmovie net1 net2 net3 ...) - the old command's own
+*!     input convention, unchanged.
+*!   - EVENT mode: exactly ONE network built via nwset's own eventtime()
+*!     option (an event-type temporal network - the SAME input nwrem
+*!     already consumes, see {help nwrem}) - NEW. Node positions stay
+*!     fixed (one layout, computed once over the union of every
+*!     sender/receiver pair that ever occurs); the movie replays real
+*!     event time as a scrubbable timeline of ties appearing and, if
+*!     window() is given, decaying.
+*!
+*! Both modes reuse nwplot's own color/shape/position resolution
+*! pipeline (nwplot.ado's new movieexport() option, added alongside this
+*! command) rather than re-deriving concrete hex colors from scratch -
+*! one call to `nwplot <network>, interactive noopen movieexport(path)`
+*! per panel network (or once, on a temp cumulative network, in event
+*! mode), reading the resulting JSON back directly. The Cytoscape.js
+*! player itself (play/pause/scrub/speed, keyframe diffing with real
+*! .animate() transitions, GIF export via vendored gif.js) lives in
+*! nwmovie_template.html, opened via the same chromeless native viewer
+*! nwplot's own interactive option uses (nw_openviewer.ado).
 
 capture program drop nwmovie
 program nwmovie
-	syntax anything(name=netname), [z(integer 1) nodexys(varlist) title(string) edgecolor(string) edgesize(string) size(string) symbol(string) color(string) switchtitle(string) switchnetwork(string) switchcolor(string) switchsymbol(string) switchedgecolor(string) imagick(string) eps keepfiles width(integer 750) height(integer 500) fname(string) explosion(integer 5) labels(string) titles(string) delay(string) sizes(string) colors(string) symbols(varlist) edgecolors(string) edgesizes(string) frames(integer 10) noopen *]
+	// edgecolor()/edgesize() are {help netname}s (a network whose own tie
+	// values supply per-edge color/width - see {help nwplot}'s identical
+	// edgecolor(string)/edgesize(string)), NOT Stata variables like
+	// color()/symbol()/size() - BUGFIX: this line previously declared
+	// them `varname', which made even the pre-existing singular
+	// edgecolor()/edgesize() options fail outright ("Network <x> not
+	// found") on any real use - confirmed directly, never caught before
+	// because neither had test coverage.
+	syntax anything(name=netname), [layout(string) duration(integer 800) easing(string) window(string) speed(real 1) fname(string) noopen color(varname) symbol(varname) size(varname) edgecolor(string) edgesize(string) label(varname) colors(varlist) symbols(varlist) sizes(varlist) edgecolors(string) edgesizes(string) titles(string asis) colorpalette(string) edgecolorpalette(string) symbolpalette(string) scheme(string) iterations(integer 500) fixedlayout]
 	unw_defs
 
-	// BUGFIX: calling nwmovie with only a single network (violating
-	// netlist's own documented/enforced minimum of 2) used to crash
-	// with a raw Mata "subscript invalid" error (r3301) instead of a
-	// clear message - min(2)'s own enforcement inside nw_syntax doesn't
-	// itself produce a clean error on violation, the same general class
-	// of nw_syntax-failure-isn't-clean bug fixed independently in
-	// several other commands this pass.
-	capture nw_syntax `netname', max(999) min(2)
-	if _rc != 0 {
-		di "{err}nwmovie requires at least 2 networks (or a misspelled network name)."
-		error 198
+	mata: st_local("_nwmv_pkgdir", NativeGraphInstallDir())
+	local _nwmv_template = "`_nwmv_pkgdir'/nwmovie_template.html"
+	local _nwmv_cytoscape = "`_nwmv_pkgdir'/lib/vendor/cytoscape.min.js"
+	local _nwmv_gifjs = "`_nwmv_pkgdir'/lib/vendor/gif.js"
+	local _nwmv_gifworker = "`_nwmv_pkgdir'/lib/vendor/gif.worker.js"
+	foreach _nwmv_f in _nwmv_template _nwmv_cytoscape _nwmv_gifjs _nwmv_gifworker {
+		capture confirm file "``_nwmv_f''"
+		if _rc {
+			di as error "required file not found: ``_nwmv_f''; reinstall the package."
+			error 601
+		}
 	}
 
-	if "`fname'" == "" {
-		if c(os) == "Windows" {
-			local fname "`c(pwd)'\movie"
-		}
-		if c(os) == "MacOSX" {
-			local fname "`c(pwd)'/movie"
+	// ------------------------------------------------------------------
+	// Mode detection: exactly one network name AND it is event-type
+	// temporal => event mode; otherwise (2+ names) => panel mode, same
+	// same-size requirement the old ImageMagick-era command already
+	// enforced (errNWsSizeMismatch, unw_defs.ado).
+	// ------------------------------------------------------------------
+	local nwords : word count `netname'
+	local mode ""
+	if `nwords' == 1 {
+		capture nw_syntax `netname', max(1)
+		if _rc == 0 {
+			if "`istemporal'" == "true" & "`temporaltype'" == "event" local mode "event"
 		}
 	}
-	
-	local old_options `options'
-	if "`color'" != "" {
-		gettoken color1 colorpt1 : color, parse(",")
-		if "`color1'" == "," {
-			local color1 ""
-			local coloropt1 ", `coloropt1'"
+	if "`mode'" == "" {
+		capture nw_syntax `netname', max(999) min(2)
+		if _rc != 0 {
+			di as error "nwmovie requires either ONE event-type temporal network (built via {help nwset}'s {bf:eventtime()} option) or AT LEAST 2 panel networks of the same size, in sequence."
+			error 198
 		}
-		local colors ""
-		forvalues i = 1/`networks' {
-			local colors "`colors' `color1'"
-		}
-		local colors "`colors', `coloropt1'"
-	}
-	
-	if "`symbol'" != "" {
-		gettoken symbol1 symbolopt1 : symbol, parse(",")
-		if "`symbol1'" == "," {
-			local symbol1 ""
-			local symbolopt1 ", `symbolopt1'"
-		}
-		local symbols ""
-		forvalues i = 1/`networks' {
-			local symbols "`symbols' `symbol1'"
-		}
-		local symbols "`symbols', `symbolopt1'"
-	}
-
-	if "`size'" != "" {
-		gettoken size1 sizeopt1 : size, parse(",")
-		if "`size1'" == "," {
-			local size1 ""
-			local sizeopt1 ", `sizeopt1'"
-		}
-		local size ""
-		forvalues i = 1/`networks' {
-			local sizes "`sizes' `size1'"
-		}
-		local sizes "`sizes', `sizeopt1'"
-	}
-	
-	if "`edgesize'" != "" {
-		gettoken edgesize1 edgesizeopt1 : edgesize, parse(",")
-		if "`edgesize1'" == "," {
-			local edgesize1 ""
-			local edgesize1 ", `edgesize1'"
-		}
-		local edgesize ""
-		forvalues i = 1/`networks' {
-			local edgesizes "`edgesizes' `edgesize1'"
-		}
-		local edgesizes "`edgesizes', `edgesizeopt1'"
-	}
-	
-	if "`edgecolor'" != "" {
-		gettoken edgecolor1 edgecoloropt1 : edgecolor, parse(",")
-		if "`edgecolor1'" == "," {
-			local edgecolor1 ""
-			local edgecolor1 ", `edgecolor1'"
-		}
-		local edgecolor ""
-		forvalues i = 1/`networks' {
-			local edgecolors "`edgecolors' `edgecolor1'"
-		}
-		local edgecolors "`edgecolors', `edgecoloropt1'"
-	}	
-	
-	if "`title'" != "" {
-		local titles "`title'"
-	}
-	
-	if "`switchnetwork'" == "" {
-		local switchnetwork = "half"
-	}
-	if "`switchedgecolor'" == "" {
-		local switchedgecolor = "half"
-	}	
-	if "`switchcolor'" == "" {
-		local switchcolor= "half"
-	}
-	if "`switchsymbol'" == "" {
-		local switchsymbol = "half"
-	}	
-	if "`switchtitle'" == "" {
-		local switchtitle = "half"
-	}
-	// rule out layout_sub_options
-	if "`layout'" != "" {
-		gettoken layout l1: layout, parse(",")
-	}
-	_opts_oneof "start end half" "switchnetwork" "`switchnetwork'" 6556
-	_opts_oneof "start end half" "switchcolor" "`switchcolor'" 6556
-	_opts_oneof "start end half" "switchsymbol" "`switchsymbol'" 6556
-	_opts_oneof "start end half" "switchtitle" "`switchtitle'" 6556		
-	_opts_oneof "start end half" "switchedgecolor" "`switchedgecolor'" 6556
-
-	local pic = "png"
-	local picopt = "width(`width') height(`height')"
-		
-	if "`eps'" != "" {
-		local pic = "eps"
-		local picopt = "mag(200)"
-	}
-
-
-	if c(os) == "MacOSX" {
-		nwmovie_install_osx
-		local impath = "`r(impath)'"
-	}
-	
-	if c(os) == "Windows" {
-		nwmovie_install_win
-		local impath = "`r(impath)'"
-	}
-	
-
-	// make movie
-	nw_syntax `netname', max(999) min(2)
-	local all_nets "`netname'"
-
-	// _nwsyntax_other referenced two legacy globals ($nwtotal,
-	// nw_mata`id') that no longer exist in the current NWsdef-based
-	// storage architecture - every call unconditionally crashed with
-	// "invalid syntax" (forvalues i = 1/$nwtotal, $nwtotal empty),
-	// confirmed directly via probe before this fix, meaning nwmovie
-	// could never actually complete a single call. Replaced with
-	// nw_syntax (other() to avoid clobbering this program's own
-	// same-named locals), which already handles empty/current-network
-	// resolution the modern way. _nwsyntax_other's own self-loop-removal
-	// side effect (also unconditionally broken, same nw_mata`id'
-	// reference) is dropped rather than reimplemented blind - nwmovie
-	// has no test coverage and needs ImageMagick to run end to end in
-	// any environment, so a from-scratch reimplementation of a
-	// side-effect that was already silently dead code could not be
-	// verified here; tracked as a separate, documented follow-up rather
-	// than risking new, equally-unverifiable behaviour in the same fix.
-	local sizeCheck = 0
-	qui foreach onenet in `all_nets' {
-		nw_syntax `onenet', other(other)
-		if `sizeCheck' == 0 {
-			local sizeCheck = `othernodes'
-		}
-		else {
-			if `sizeCheck' != `othernodes' {
-				// Error-code coherence pass: `errNWsSizeMismatch' (6056,
-				// unw_defs.ado) already names this exact situation for
-				// several sibling commands - consolidated onto it
-				// instead of this file's own off-by-one `6055'.
-				noi di "{err}Networks need to be of the same size"
+		local mode "panel"
+		local sizecheck = 0
+		foreach _nwmv_onenet in `netname' {
+			nw_syntax `_nwmv_onenet', other(other)
+			if `sizecheck' == 0 {
+				local sizecheck = `othernodes'
+			}
+			else if `sizecheck' != `othernodes' {
+				di as error "nwmovie's panel networks must all have the same number of nodes; `_nwmv_onenet' has `othernodes', expected `sizecheck'."
 				error `errNWsSizeMismatch'
 			}
 		}
 	}
-	nw_syntax `all_nets', max(999) min(2)
-	local k : word count `netname'
 
-	// check and clean networks as edgecolor and edgesize
-	local 0 `edgesizes'
-	syntax [anything(name=edgesizes)], [*]
-	local edgesizeopt `options'
-	nw_syntax `edgesizes', other(other) max(9999)
-	// _nwsyntax_other's own exactly() option padded a short netlist by
-	// repeating its last element (e.g. one edgesize network specified,
-	// applied to all movie frames) - replicated directly since nw_syntax
-	// has no equivalent option of its own.
-	local edgesize_check ""
-	local last ""
-	forvalues i = 1/`networks' {
-		local next : word `i' of `othernetname'
-		if "`next'" != "" {
-			local last "`next'"
-		}
-		else {
-			local next "`last'"
-		}
-		local edgesize_check "`edgesize_check' `next'"
-	}
-
-	local 0 `edgecolors'
-	syntax [anything(name=edgecolors)], [*]
-	local edgecoloropt `options'
-	nw_syntax `edgecolors', other(other) max(9999)
-	local edgecolor_check ""
-	local last ""
-	forvalues i = 1/`networks' {
-		local next : word `i' of `othernetname'
-		if "`next'" != "" {
-			local last "`next'"
-		}
-		else {
-			local next "`last'"
-		}
-		local edgecolor_check "`edgecolor_check' `next'"
-	}
-
-	capture drop _c1_* 
-	capture drop _c2_*
-	capture drop _frame_*
-
-	set more off
-	local applysize = 0
-	
-	if ("`sizes'" != ""){
-		local 0 `sizes'
-		syntax [varlist(default=none)], [*]
-		local sizes `varlist'
-		local sizeopt "`options' legendoff"	
-		local s : word count `sizes'
-		/*if `s' != `k' {
-			di "{err}Option {bf:sizes()} needs to have as many variables as networks to be plotted"
-		}*/
-	}
-	if ("`colors'" != ""){
-		local 0 `colors'
-		syntax [varlist(default=none)], [*]
-		local colors `varlist'
-		local coloropt `options'	
-		local s : word count `colors'
-		/*if `s' != `k' {
-			di "{err}Option {bf:colors()} needs to have as many variables as networks to be plotted"
-		}*/
-		
-		local color_uniquevalues ""
-		foreach color_time in `colors' {
-			tempvar temp
-			capture encode `color_time', gen(`temp')
-			if _rc == 0 {
-				di "{err}{it:nwmovie} requries variable {bf:`color_time} to be numeric."
-				error 6750
-			}
-			qui tab `color_time', matrow(color_tab)
-			forvalues i = 1/`r(r)' {
-				local onecolor = color_tab[`i',1]
-				if (strpos("`color_uniquevalues'","`onecolor'") == 0){
-					local color_uniquevalues = "`color_uniquevalues' `onecolor'"
-				}
-			}
-		}
-	}
-		
-	if ("`symbols'" != ""){
-		local 0 `symbols'
-		syntax [varlist(default=none)], [*]
-		local symbols `varlist'
-		local symbolopt `options'
-		local s : word count `symbols'
-		/*if `s' != `k' {
-			di "{err}option {bf:symbols()} needs to have as many variables as networks to be plotted"
-		}*/
-		local symbol_uniquevalues ""
-		foreach symbol_time in `symbols' {
-			tempvar temp
-			capture encode `symbol_time', gen(`temp')
-			if _rc == 0 {
-				di "{err}{it:nwmovie} requries variable {bf:`symbol_time} to be numeric."
-				error 6750
-			}
-			qui tab `symbol_time', matrow(symbol_tab)
-			forvalues i = 1/`r(r)' {
-				local onesymbol = symbol_tab[`i',1]
-				if (strpos("`symbol_uniquevalues'","`onesymbol'") == 0){
-					local symbol_uniquevalues = "`symbol_uniquevalues' `onesymbol'"
-				}
-			}
-		}
-	}
-	
-	local options `old_options'
-	
-	local k = `k' - 1
-	if "`delay'" == "" {
-		local delay = 10
-	}
-	if `explosion' < 1 {
-		local explosion = 1
-	}
-	
 	if "`fname'" == "" {
 		local fname "movie"
 	}
-	
-	local kplus = `k' + 1
-	
-	// Prepare titles
-	gettoken title_text title_opt : titles, parse(",")  quotes
-	forvalues i = 1/`kplus' {
-		gettoken title_next title_text : title_text, parse("|") 
-		local title_text = substr(`"`title_text'"',2,.)
-		local title_`i' = "`title_next'"
+	if "`easing'" == "" {
+		local easing "ease-in-out-cubic"
 	}
 
-	// Prepare frames
-	forvalues i = 1/`k' {		
-		local next = `i' + 1
-		if ("`titles'" != ""){
-			local firsttitle_pos = `i'
-			local secondtitle_pos = `i' + 1
-			local firsttitle `title_`firsttitle_pos''
-			local secondtitle `title_`secondtitle_pos''
-			local titlecmd1 `"title("`firsttitle'" `title_opt') "'
-			local titlecmd2 `"title("`secondtitle'" `title_opt') "'
-		}
-		if ("`sizes'" != ""){
-			local firstsize: word `i' of `sizes'
-			local secondsize: word `next' of `sizes'
-			local sizecmd1 `"size(`firstsize', norescale `sizeopt')"'
-			local sizecmd2 `"size(`secondsize', norescale `sizeopt')"'
-			local sizecmd3 `"size(`frame_size', norescale `sizeopt')"'
-		}
-		if ("`colors'" != ""){
-			local firstcol: word `i' of `colors'
-			local secondcol: word `next' of `colors'
-			local colorcmd1 `"color(`firstcol', norescale `coloropt' )"' //forcekeys(`color_uniquevalues')
-			local colorcmd2 `"color(`secondcol', norescale  `coloropt' )"'
-		}
-		if ("`symbols'" != ""){
-			local firstsymb: word `i' of `symbols'
-			local secondsymb: word `next' of `symbols'
-			local symbolcmd1 `"symbol(`firstsymb', norescale  `symbolopt')"' //forcekeys(`symbol_uniquevalues')
-			local symbolcmd2 `"symbol(`secondsymb', norescale  `symbolopt')"'
-		}
-		if ("`edgesizes'" != "")  {
-			local firstedgesize : word `i' of `edgesize_check'
-			local secondedgesize : word `next' of `edgesize_check'
-			local edgesizecmd1 `"edgesize(`firstedgesize', legendoff)"'
-			local edgesizecmd2 `"edgesize(`secondedgesize', legendoff)"'
-			local edgesizecmd3 `"edgesize(_frame_edgesize, legendoff)"'
-		}
+	local _nwmv_colorpalette ""
+	if "`colorpalette'" != "" local _nwmv_colorpalette "colorpalette(`colorpalette')"
+	local _nwmv_edgecolorpalette ""
+	if "`edgecolorpalette'" != "" local _nwmv_edgecolorpalette "edgecolorpalette(`edgecolorpalette')"
+	local _nwmv_symbolpalette ""
+	if "`symbolpalette'" != "" local _nwmv_symbolpalette "symbolpalette(`symbolpalette')"
+	local _nwmv_scheme ""
+	if "`scheme'" != "" local _nwmv_scheme "scheme(`scheme')"
+	local _nwmv_color ""
+	if "`color'" != "" local _nwmv_color "color(`color')"
+	local _nwmv_symbol ""
+	if "`symbol'" != "" local _nwmv_symbol "symbol(`symbol')"
+	local _nwmv_size ""
+	if "`size'" != "" local _nwmv_size "size(`size')"
+	local _nwmv_edgecolor ""
+	if "`edgecolor'" != "" local _nwmv_edgecolor "edgecolor(`edgecolor')"
+	local _nwmv_edgesize ""
+	if "`edgesize'" != "" local _nwmv_edgesize "edgesize(`edgesize')"
+	local _nwmv_label ""
+	if "`label'" != "" local _nwmv_label "label(`label')"
+	local _nwmv_layout ""
+	if "`layout'" != "" local _nwmv_layout "layout(`layout')"
 
-		if ("`edgecolors'" != "" | "`edgecoloropt'" != "")  {
-			local firstedgecol : word `i' of `edgecolor_check'
-			local secondedgecol : word `next' of `edgecolor_check'
-			local edgecolorcmd1 `"edgecolor(`firstedgecol', `edgecoloropt')"'
-			local edgecolorcmd2 `"edgecolor(`secondedgecol', `edgecoloropt')"'
+	// Per-wave styling: colors()/symbols()/sizes()/edgecolors()/
+	// edgesizes() each take one variable PER NETWORK (in the same order
+	// as `netname'), unlike their singular color()/symbol()/etc.
+	// counterparts above which broadcast ONE variable to every wave -
+	// panel mode only (event mode has a single, static node layout, not
+	// a sequence of waves to vary styling across). color/size are
+	// genuinely tweened wave-to-wave by nwmovie_template.html's own
+	// Cytoscape.js .animate() (numeric/color style properties are
+	// natively interpolable there); shape stays a hard switch at the
+	// start of each transition - not a simplification but a real
+	// constraint documented in that file's own animateToFrame(): asking
+	// Cytoscape to interpolate `shape' was the actual trigger for a
+	// renderer crash chased through nwmovie's original development.
+	local _nwmv_perwave_opts colors symbols sizes edgecolors edgesizes
+	local _nwmv_perwave_singular color symbol size edgecolor edgesize
+	local _nwmv_j = 0
+	foreach _nwmv_po of local _nwmv_perwave_opts {
+		local _nwmv_j = `_nwmv_j' + 1
+		local _nwmv_so : word `_nwmv_j' of `_nwmv_perwave_singular'
+		local _nwmv_list_`_nwmv_po' ""
+		if "``_nwmv_po''" != "" {
+			if "``_nwmv_so''" != "" {
+				di as error "specify only one of {bf:`_nwmv_so'()} or {bf:`_nwmv_po'()}."
+				error 198
+			}
+			if "`mode'" != "panel" {
+				di as error "{bf:`_nwmv_po'()} (one variable per wave) is panel-mode only; use {bf:`_nwmv_so'()} in event mode."
+				error 198
+			}
+			local _nwmv_pocount : word count ``_nwmv_po''
+			if `_nwmv_pocount' != `nwords' {
+				di as error "{bf:`_nwmv_po'()} must list exactly `nwords' variable(s), one per network, in the same order as `netname'."
+				error 198
+			}
+			local _nwmv_list_`_nwmv_po' "``_nwmv_po''"
 		}
+	}
 
-		local first : word `i' of `netname'
-		local second : word `next' of `netname'
-		local expnum = `i' * 100
-		local st = string(`z',"%05.0f")
-		local xx1 : word `=(`i' - 1) * 2 + 1 ' of `nodexys'
-		local yy1 : word `=(`i' - 1) * 2 + 2 ' of `nodexys'
-		local nxy1 = "`xx1' `yy1'"
-		local xx2 : word `=(`next' - 1) * 2 + 1 ' of `nodexys'
-		local yy2 : word `=(`next' - 1) * 2 + 2 ' of `nodexys'
-		local nxy2 = "`xx2' `yy2'"
-		if "`nxy1'" != "" {
-			local nxy1 " nodexy(`nxy1') "
-		}
-		if "`nxy2'" != "" {
-			local nxy2 " nodexy(`nxy2') "
-		}			
-		
-		noi di "{txt}Processing network {bf:`first'}"
-		if `i' == 1 {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1' `options'
-			capture graph export `"`c(pwd)'/first`st'.`pic'"', replace `picopt'
-			if _rc != 0 {
-				noi di "{err}No writing right for working directory. Try changing the working directory.{txt}"
-				exit
+	// titles() overrides the movie's own displayed wave title (see the
+	// panel-mode block below, right before _nwmovie_assemblepanel(), for
+	// how the DEFAULT title is resolved when titles() is not given) -
+	// count-validated there too, once `_nwmv_k' exists; only the
+	// panel-mode-only check happens this early, matching the other
+	// per-wave options' own validation order above.
+	if `"`titles'"' != "" & "`mode'" != "panel" {
+		di as error "{bf:titles()} (one title per wave) is panel-mode only."
+		error 198
+	}
+
+	tempname _nwmv_json
+	tempfile _nwmv_jsonstub
+	local _nwmv_jsondir = "`c(tmpdir)'"
+
+	if "`mode'" == "panel" {
+		local _nwmv_first : word 1 of `netname'
+		nw_syntax `_nwmv_first', other(other)
+		local _nwmv_directed = ("`otherdirected'" == "true")
+		local _nwmv_k : word count `netname'
+
+		// The movie's own displayed wave title (toolbar text + the
+		// draggable/resizable on-canvas overlay in nwmovie_template.html,
+		// baked into GIF exports too) - built ENTIRELY in Mata rather than
+		// round-tripped through a Stata macro, since a title may contain
+		// spaces and Mata's own tokens() (used both for titles()'s own
+		// double-quoted list and to hand this off to
+		// _nwmovie_assemblepanel() below) already parses that compound-
+		// quoted convention correctly with no extra Stata-side quote
+		// handling to get wrong.
+		if `"`titles'"' != "" {
+			mata: _nwmv_labelvec = tokens(`"`titles'"')
+			mata: st_local("_nwmv_titlecount", strofreal(cols(_nwmv_labelvec)))
+			if `_nwmv_titlecount' != `_nwmv_k' {
+				di as error "titles() must list exactly `_nwmv_k' double-quoted title(s), one per network, in the same order as `netname'."
+				error 198
 			}
 		}
 		else {
-			qui nwplot `first', ignorelgc generate(_c1_x _c1_y) `nxy1' `sizecmd1' `symbolcmd1' `colorcmd1'  `edgesizecmd1' `edgecolorcmd1' `titlecmd1'  `options'	
-			qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
+			// default: each wave's own get_label() - set via {help
+			// nwname}'s newtitle(), a network's real display title,
+			// distinct from its bare Stata object name - if one was ever
+			// given; falls back to the bare network name (this command's
+			// only behavior before titles() existed) when a wave was
+			// never given a title of its own.
+			mata: _nwmv_labelvec = J(1, `_nwmv_k', "")
+			local _nwmv_li = 0
+			foreach _nwmv_onenet3 of local netname {
+				local _nwmv_li = `_nwmv_li' + 1
+				nw_syntax `_nwmv_onenet3', other(other3)
+				mata: _nwmv_labelvec[1,`_nwmv_li'] = (strlen(`other3netobj'->get_label()) > 0 ? `other3netobj'->get_label() : "`_nwmv_onenet3'")
+			}
 		}
-		local st = string(`z',"%05.0f")
-		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
-		qui nwplot `second', ignorelgc generate(_c2_x _c2_y) `nxy2' `sizecmd2' `symbolcmd2'  `colorcmd2' `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'	
-		local expnum = (`z' + `frames' + 2)
-		local st = string(`expnum',"%05.0f")
-		qui graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
-		local z = `z' + 2
 
-		forvalues j = 1/`frames' {			
-	
-			// Network switch
-			if "`switchnetwork'" == "start" {
-				local framenet "second"
-			}
-			if "`switchnetwork'" == "end" {
-				local framenet "first"
-			}
-			if "`switchnetwork'" == "half" {
-				local framenet "second"
-				if `j' <= `frames'/2 {
-					local framenet "first"	
-				}
-			}
+		// Per-wave TRANSITIONING layout is now the default: each wave
+		// gets its own layout, computed with layout(kk)'s own optional
+		// warm start (see kklayout()'s own header comment in
+		// nwplot.ado) fed forward from the PREVIOUS wave's own final
+		// positions, so consecutive waves relax into nearby layouts -
+		// a real, visible transition - rather than reusing one single,
+		// static layout for the whole movie (the original, and only,
+		// behavior before this). `fixedlayout' restores that original
+		// one-fixed-layout-for-every-wave behavior. A per-wave
+		// transition is a `layout(kk)'-specific idea - kk's own stress-
+		// majorization iteration is what actually has a "warm start"
+		// concept to relax from; mds/mdsclassical/circle/grid/etc. have
+		// no equivalent, so an explicit non-kk `layout()' here falls
+		// back to `fixedlayout''s own single-shared-layout behavior
+		// instead of silently ignoring the request.
+		local _nwmv_transition = ("`fixedlayout'" == "" & ("`layout'" == "" | "`layout'" == "kk"))
 
-			// Color switch
-			if "`switchcolor'" == "start" {
-				local thirdcol "secondcol"
-			}
-			if "`switchcolor'" == "end" {
-				local thirdcol "firstcol"
-			}
-			if "`switchcolor'" == "half" {
-				local thirdcol secondcol
-				if `j' <= `frames'/2 {
-					local thirdcol "firstcol"	
-				}
-			}
-
-			// Symbol switch
-			if "`switchsymbol'" == "start" {
-				local thirdsymb "secondsymb"
-			}
-			if "`switchsymbol'" == "end" {
-				local thirdsymb "firstsymb"
-			}
-			if "`switchsymbol'" == "half" {
-				local thirdsymb secondsymb
-				if `j' <= `frames'/2 {
-					local thirdsymb "firstsymb"	
-				}
-			}
-
-			// Edgecolor switch
-			if "`switchedgecolor'" == "start" {
-				local thirdedgecol "secondedgecol"
-			}
-			if "`switchedgecolor'" == "end" {
-				local thirdedgecol "firstedgecol"
-			}
-			if "`switchedgecolor'" == "half" {
-				local thirdedgecol "secondedgecol"
-				if `j' <= `frames'/2 {
-					local thirdedgecol "firstedgecol"	
-				}
-			}
-			
-			// Title switch
-			if "`switchtitle'" == "start" {
-				local thirdtitle "secondtitle"
-			}
-			if "`switchtitle'" == "end" {
-				local thirdtitle "firsttitle"
-			}
-			if "`switchtitle'" == "half" {
-				local thirdtitle "secondtitle"
-				if `j' <= `frames'/2 {
-					local thirdtitle "firsttitle"	
-				}
-			}
-					
-			if (mod(`j',5) == 0) noi display "   ...frame `j'/`frames'"
-			local st = string(`z',"%05.0f")
-			local f = `frames' + 1
-			local steepness = `j' / `f'
-			if "`explosion'" != "" {
-				local steepness =  log( 1 + (`j'/`f' * `explosion')) / log(`explosion' + 1)
-			}
-			gen _frame_x = _c1_x - `steepness' * (_c1_x - _c2_x) 
-			gen _frame_y = _c1_y - `steepness' * (_c1_y - _c2_y)
-			
-			local nx = "nodexy(_frame_x _frame_y)"
-			if "`nodexy'" != "" {
-				local nx = ""
-			}
-			if "`sizes'" != "" {
-				tempvar frame_size
-				qui gen `frame_size' = `firstsize' - `steepness' * (`firstsize' - `secondsize')
-			}
-			
-			if "`edgecoloropt'" != "" {
-				local edgecomma ","
-			}
-			// BUGFIX: was `"`edgesize'" != ""' (singular) - `edgesize'
-			// is unconditionally cleared to "" during option
-			// preprocessing (whether or not the caller ever passed
-			// edgesize()/edgesizes()), so this branch never ran and
-			// per-frame edge-width interpolation was dead code; edges
-			// only ever snapped to the correct width at the start/end
-			// frame of each transition, rendering at nwplot's flat
-			// default width for every frame in between. The analogous
-			// `sizes'/`colors'/`symbols' checks above all correctly use
-			// their own plural, actually-populated locals.
-			if "`edgesizes'" != "" {
-				nwgenerate _frame_edgesize = round(`firstedgesize' - `steepness' * (`firstedgesize' - `secondedgesize'))
-				qui nwplot ``framenet'', ignorelgc `nx' symbol(``thirdsymb'', norescale `symbolopt')  color(``thirdcol'', norescale  `coloropt' ) size(`frame_size', norescale `sizeopt') edgesize(_frame_edgesize, legendoff) edgecolor(``thirdedgecol'' `edgecomma' `edgecoloropt') title("``thirdtitle''" `title_opt')  `options'
-			}
-			else {
-				qui nwplot ``framenet'', ignorelgc `nx'  symbol(``thirdsymb'', norescale  `symbolopt') color(``thirdcol'', norescale  `coloropt' )  size(`frame_size', norescale  `sizeopt') edgecolor(``thirdedgecol'' `edgecomma' `edgecoloropt') title("``thirdtitle''" `title_opt')  `options'
-			}
-			
-			/*
-			if ("`size'" != "" | "`edgesize'" != ""){
-				if "`edgesize'" != "" {
-					nwgenerate _frame_edgesize = round(`firstedgesize' - `steepness' * (`firstedgesize' - `secondedgesize'))
-				}
-				if "`size'" != "" {
-					tempvar frame_size
-					qui gen `frame_size' = `firstsize' - `steepness' * (`firstsize' - `secondsize')
-					qui nwplot ``framenet'', `nx'  `symbolcmd3'  `colorcmd3' size(`frame_size', norescale `sizeopt') `edgesizecmd3' `edgecolorcmd3' title("``thirdtitle''" `title_opt')  `options'
-				}
-				else {
-					qui nwplot ``framenet'', `nx'  `symbolcmd3' `colorcmd3' `edgesizecmd3' `edgecolorcmd3' title("``thirdtitle''" `title_opt')  `options'
-				}
-			}
-			else{
-				qui nwplot ``framenet'', `nx'  `symbolcmd3' `colorcmd3'  `edgecolorcmd3' title("``thirdtitle''" `title_opt')  `options' 
-			}*/
-			capture nwdrop _frame_edgesize
-			capture graph export `"`c(pwd)'/frame`st'.`pic'"', replace `picopt'
-			capture drop _frame_x _frame_y 
-			capture drop `frame_size' `frame_edgesize'
-			local z = `z' + 1
-			
-			
-		}
-		local i = `i' + 1
-		if (`i'<=`k'){
-			capture drop _c1_* _c2_*
-		}
-	}
-	
-	// get last frame to pause for some time before re-looping
-	local st = string(`z',"%05.0f")
-	if "`nodexy'" == "" {
-		local nx "nodexy(_c2_x _c2_y)"
-	}
-	qui nwplot `second', ignorelgc `nx'  `sizecmd2' `symbolcmd2' `colorcmd2'  `edgesizecmd2' `edgecolorcmd2' `titlecmd2' `options'
-	capture drop _c1_* _c2_*
-	qui graph export `"`c(pwd)'/last`st'.`pic'"', replace `picopt'	
-	
-	di "Processing network {bf:`second'}"
-	graph drop _all
-	
-	di "Rendering movie (please wait)..."
-
-
-	local lastdelay = `delay' * `frames'
-	local shellcmd `""`impath'/convert" -delay `delay' -loop 0 "`c(pwd)'/first*.`pic'" "`c(pwd)'/frame*.`pic'" -delay `lastdelay' "`c(pwd)'/last*.`pic'" "`fname'.gif""'
-
-	
-	if c(os) == "MacOSX" {
-		shell export PATH="$PATH:`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";`shellcmd'
-		// BUGFIX: every successful call used to unconditionally shell
-		// out to open the resulting .gif in Safari, with no way to
-		// suppress it - a real problem in a scripted/batch context,
-		// where this pops open a new Safari window/tab as an
-		// uncontrollable side effect of simply calling the command.
-		// Added noopen. Per this pass's own established "no-prefix
-		// trap" (a declared option starting with "no" - here "no"+
-		// "open" - makes Stata's syntax parser create a toggle local
-		// named after the STEM, "open", not "noopen" itself; confirmed
-		// directly: typing "noopen" sets `open' to "noopen", typing
-		// "open" alone or omitting the option entirely leaves `open'
-		// empty) - checking `open', not `noopen', is correct here.
-		if "`open'" == "" {
-			shell open "`fname'.gif" -a /Applications/Safari.app/
-		}
-	}
-	
-	if c(os) == "Windows" {
-		nwmovie_install_win
-		shell "`r(impath)'\convert.exe" -delay 10 -loop 0 "`c(pwd)'\first*.png" "`c(pwd)'\frame*.png" -delay 20 "`c(pwd)'\last*.png" "`fname'.gif"
-		shell explorer.exe "`fname'.gif"
-	}
-	
-	if "`keepfiles'" == "" {
-		if c(os) == "Windows" {
-			shell del frame*.*
-			shell del last*.*
-			shell del first*.*
+		if !`_nwmv_transition' {
+			// One fixed layout, computed on the FIRST network only,
+			// reused for every keyframe via nodexy() - node identity
+			// stays visually trackable across the whole movie, at the
+			// cost of never showing the layout itself moving/settling
+			// differently wave to wave. Node order must therefore match
+			// across panel networks (the same convention panel-data
+			// network analysis already assumes elsewhere in this
+			// package, e.g. nwsaom's own wave1()/wave2()).
+			tempvar _nwmv_x _nwmv_y
+			qui nwplot `_nwmv_first', ignorelgc `_nwmv_layout' iterations(`iterations') generate(`_nwmv_x' `_nwmv_y') noopen
+			capture graph close _nwplot_interactive
+			graph drop _all
 		}
 		else {
-			shell rm first*.*
-			shell rm frame*.*
-			shell rm last*.*
+			// Chain of per-wave kk layouts. Wave 1's own layout is
+			// still computed through the normal `nwplot ..., generate()'
+			// path (not a direct kklayout() call) since it is the SAME
+			// computation either way (layout(kk) is the package
+			// default) and this keeps wave 1's own resolution logic in
+			// one place. Waves 2+ below call kklayout() directly -
+			// safe to do because kklayout() (and distance()/
+			// circlelayout()) now live in unw_core.do, compiled into
+			// lib/lnwcommands.mlib, this package's own reliable
+			// mechanism for Mata code shared across .ado files (a
+			// function defined inline inside an ordinary .ado file's
+			// own mata: block, like nwplot.ado's old copy, is NOT
+			// reliably callable from a different .ado file's Mata
+			// code - confirmed directly - which is why these moved.
+			tempvar _nwmv_x1 _nwmv_y1
+			qui nwplot `_nwmv_first', ignorelgc iterations(`iterations') generate(`_nwmv_x1' `_nwmv_y1') noopen
+			capture graph close _nwplot_interactive
+			graph drop _all
+			mata: _nwmv_prevpos = (st_data(., "`_nwmv_x1'"), st_data(., "`_nwmv_y1'"))
 		}
-	}
-end
 
-capture program drop nwmovie_install_win
-program nwmovie_install_win
+		local _nwmv_i = 0
+		local _nwmv_keyframes ""
+		foreach _nwmv_net in `netname' {
+			local _nwmv_i = `_nwmv_i' + 1
 
-	// check for ImageMagick
-	local p : environ PATH
-	tokenize `"`p'"', parse(";")
-	local impath = ""
-	while "`1'" != "" & "`impath'" == "" {
-		capture findfile convert.exe, path("`1'")
-		if _rc == 0 {
-			local impath = "`1'"
-			local imlow = lower("`impath'")
-			local st = strpos("`imlow'", "windows")
-			if (`st' != 0 & "`impath'" != ""){
-				local impath = ""
+			// wave-specific styling overrides: fall back to the
+			// broadcast singular option (already resolved above) when
+			// the caller didn't give the corresponding plural one.
+			local _nwmv_wave_color "`_nwmv_color'"
+			if `"`_nwmv_list_colors'"' != "" {
+				local _nwmv_thisvar : word `_nwmv_i' of `_nwmv_list_colors'
+				local _nwmv_wave_color "color(`_nwmv_thisvar')"
 			}
-		}
-		macro shift
-	}	
-	if "`impath'" == "" {
-		local imurl = "http://www.imagemagick.org/script/binary-releases.php#windows"
-		di "{err}ImageMagick not found."
-		di `"{err}Please install {browse "`imurl'":ImageMagick from here first} or specify option {bf:imagick()}."'
-		error 
-	}
-	mata: st_global("r(impath)", "`impath'")
-end
-
-capture program drop nwmovie_install_osx
-program nwmovie_install_osx
-	
-	// check for ImageMagick
-	local p = "`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/bin:/opt/ImageMagick/bin/:/opt/ImageMagick"
-	tokenize `"`p'"', parse(":")
-	local impath = ""
-	while "`1'" != "" & "`impath'" == "" {
-		capture findfile convert, path("`1'")
-		if _rc == 0 {
-			local impath = "`1'"
-		}
-		macro shift
-	}	
-	
-	
-	if "`impath'" == "" {
-		local imurl = "http://cactuslab.com/imagemagick/"
-		di "{err}ImageMagick not found."
-		di `"{err}Please install {browse "`imurl'": ImageMagick from here first} or specify option {bf:imagick()}."'
-		error 6999
-	}
-	
-	/*
-	if "`impath'" == "" {
-		set more off
-		tempname nwmovie_sh
-		capture findfile nwmovie.command
-		if _rc != 0 {
-			file open `nwmovie_sh' using nwmovie.command, write
-			file write `nwmovie_sh' "if which brew >/dev/null; then" _n
-			file write `nwmovie_sh' `"echo "Homebrew found""' _n
-			file write `nwmovie_sh' "	else " _n
-			file write `nwmovie_sh' "	/bin/mkdir /usr/local " _n
-			file write `nwmovie_sh' "	curl -L https://github.com/Homebrew/homebrew/tarball/master  | tar xz --strip 1 -C /usr/local" _n
-			file write `nwmovie_sh' "fi" _n
-			file write `nwmovie_sh' "if which convert >/dev/null; then" _n
-			file write `nwmovie_sh' `"	echo "ImageMagic found""' _n
-			file write `nwmovie_sh' "else" _n
-			file write `nwmovie_sh' "	brew install ImageMagick" _n
-			file write `nwmovie_sh' "fi" _n
-			file write `nwmovie_sh' "if which gs >/dev/null; then" _n
-			file write `nwmovie_sh' `"	echo "Ghostscript found""' _n
-			file write `nwmovie_sh' "else"_n
-			file write `nwmovie_sh' "	brew install ghostscript" _n
-			file write `nwmovie_sh' "fi" _n
-			file write `nwmovie_sh' "exit"
-			file close `nwmovie_sh'
-		}
-		shell chmod u+x nwmovie.command
-		shell open /Applications/Utilities/Terminal.app/ nwmovie.command
-		
-		local p = "`:environ PATH':/usr/local/bin:/usr/bin:/opt/local/bin:/bin:"
-		tokenize `"`p'"', parse(":")
-		local impath = ""
-		while "`1'" != "" & "`impath'" == "" {
-			capture findfile convert, path("`1'")
-			if _rc == 0 {
-				local impath = "`1'"
+			local _nwmv_wave_symbol "`_nwmv_symbol'"
+			if `"`_nwmv_list_symbols'"' != "" {
+				local _nwmv_thisvar : word `_nwmv_i' of `_nwmv_list_symbols'
+				local _nwmv_wave_symbol "symbol(`_nwmv_thisvar')"
 			}
-			macro shift
+			local _nwmv_wave_size "`_nwmv_size'"
+			if `"`_nwmv_list_sizes'"' != "" {
+				local _nwmv_thisvar : word `_nwmv_i' of `_nwmv_list_sizes'
+				local _nwmv_wave_size "size(`_nwmv_thisvar')"
+			}
+			local _nwmv_wave_edgecolor "`_nwmv_edgecolor'"
+			if `"`_nwmv_list_edgecolors'"' != "" {
+				local _nwmv_thisvar : word `_nwmv_i' of `_nwmv_list_edgecolors'
+				local _nwmv_wave_edgecolor "edgecolor(`_nwmv_thisvar')"
+			}
+			local _nwmv_wave_edgesize "`_nwmv_edgesize'"
+			if `"`_nwmv_list_edgesizes'"' != "" {
+				local _nwmv_thisvar : word `_nwmv_i' of `_nwmv_list_edgesizes'
+				local _nwmv_wave_edgesize "edgesize(`_nwmv_thisvar')"
+			}
+
+			if `_nwmv_transition' & `_nwmv_i' == 1 {
+				local _nwmv_x "`_nwmv_x1'"
+				local _nwmv_y "`_nwmv_y1'"
+			}
+			else if `_nwmv_transition' {
+				tempvar _nwmv_x _nwmv_y
+				tempname _nwmv_wavemat
+				// nwtomata's own mat() option creates a bare MATA variable
+				// under this literal name (confirmed directly in
+				// cscripts/test_nwtomata.do - consumers reference it as
+				// `mat' itself, e.g. `mata: assert(M[2,1]==1)', never via
+				// st_matrix()); it is NOT pushed into Stata's own matrix
+				// store, so st_matrix() on it reads back an empty 0x0
+				// matrix instead - referencing it directly here instead.
+				nwtomata `_nwmv_net', mat(`_nwmv_wavemat')
+				mata: _nwmv_waveM = `_nwmv_wavemat'
+				mata: _nwmv_waveM = (_nwmv_waveM :+ _nwmv_waveM') :/ (_nwmv_waveM :+ _nwmv_waveM')
+				mata: _editmissing(_nwmv_waveM, 0)
+				// kklayout() lives in unw_core.do (compiled into
+				// lib/lnwcommands.mlib), so it is directly callable here
+				// with no Stata-matrix round trip needed.
+				mata: _nwmv_prevpos = kklayout(_nwmv_waveM, `iterations', _nwmv_prevpos)
+				qui gen `_nwmv_x' = .
+				qui gen `_nwmv_y' = .
+				mata: st_store((1::rows(_nwmv_prevpos)), ("`_nwmv_x'","`_nwmv_y'"), _nwmv_prevpos)
+				mata: mata drop _nwmv_waveM
+			}
+
+			local _nwmv_out "`_nwmv_jsondir'nwmovie_kf`_nwmv_i'_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+			// fopen(path,"w") errors (602) if the path already exists,
+			// unlike a plain overwrite - matching nwplot.ado's own
+			// defensive `capture erase` before its identical interactive-
+			// html fopen(,"w") call, needed here too since a bare
+			// runiform() draw is not guaranteed unique across two Stata
+			// batch invocations started within the same clock second (the
+			// actual collision observed while building this: two
+			// sequential smoke-test runs landed on the identical seed).
+			capture erase "`_nwmv_out'"
+			noi di "{txt}Resolving network {bf:`_nwmv_net'} (`_nwmv_i'/`_nwmv_k')..."
+			qui nwplot `_nwmv_net', ignorelgc interactive noopen movieexport("`_nwmv_out'") nodexy(`_nwmv_x' `_nwmv_y') `_nwmv_wave_color' `_nwmv_wave_symbol' `_nwmv_wave_size' `_nwmv_wave_edgecolor' `_nwmv_wave_edgesize' `_nwmv_label' `_nwmv_colorpalette' `_nwmv_edgecolorpalette' `_nwmv_symbolpalette' `_nwmv_scheme'
+			capture confirm file "`_nwmv_out'"
+			if _rc {
+				di as error "nwmovie: failed to resolve network `_nwmv_net' via nwplot."
+				error 601
+			}
+			local _nwmv_keyframes "`_nwmv_keyframes' `_nwmv_out'"
 		}
+		capture mata: mata drop _nwmv_prevpos
+
+		mata: _nwmovie_assemblepanel("`_nwmv_keyframes'", _nwmv_labelvec, `duration', "`easing'", `_nwmv_directed', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`fname'.html")
+		mata: mata drop _nwmv_labelvec
 	}
 	else {
-		di ""
-		di "{txt}Checking third party software:"
-		di "{txt}...ImageMagick found"
-	} */
-	
-	mata: st_global("r(impath)", "`impath'")
+		// Event mode: nodes are static; the temp "cumulative" network
+		// (union of every sender/receiver pair that ever occurs) exists
+		// ONLY to get nwplot's own layout/color/shape resolution for a
+		// stable initial view - built via mat()/labs() in the EXACT
+		// get_nodenames() order so its own node indices line up 1:1
+		// with the eventlist's own sender/receiver indices, with no
+		// remapping needed.
+		mata: st_local("_nwmv_nodes", strofreal(`netobj'->get_nodes()))
+		tempname _nwmv_evlist
+		// get_eventlist() makes no ordering guarantee of its own (same
+		// finding nwrem's own RemState::init() already documents, in
+		// unw_rem.do) - sort ascending by event time here, since the
+		// browser-side timeline player (nwmovie_template.html's seekTo())
+		// assumes chronological order, exactly like RemState does.
+		mata: `_nwmv_evlist' = *(`netobj'->get_eventlist())
+		mata: `_nwmv_evlist' = `_nwmv_evlist'[order(`_nwmv_evlist'[.,3], 1), .]
+		mata: st_numscalar("_nwmv_nev", rows(`_nwmv_evlist'))
+		local _nwmv_nev = _nwmv_nev
+		scalar drop _nwmv_nev
+		if `_nwmv_nev' < 1 {
+			di as error "nwmovie: `netname' has no events."
+			error 2001
+		}
+
+		// `i' here is a plain Mata script variable, not a Stata local -
+		// no backtick-quoting (unlike every other `_nwmv_*' reference in
+		// this program, which ARE Stata locals): a `_nwmv_i'' backtick
+		// reference here would be substituted by STATA's macro processor
+		// (to an empty string, since no such local exists in this
+		// branch) before Mata ever saw it, turning the loop bounds into
+		// garbage - confirmed directly, this exact mistake produced a
+		// bare "expression invalid" r(3000) with no further detail.
+		tempname _nwmv_cumM
+		mata: `_nwmv_cumM' = J(`_nwmv_nodes', `_nwmv_nodes', 0)
+		mata: for (i=1; i<=rows(`_nwmv_evlist'); i++) `_nwmv_cumM'[`_nwmv_evlist'[i,1], `_nwmv_evlist'[i,2]] = 1
+		// get_nodenames() already returns a row vector (confirmed
+		// directly - the surrounding assumption elsewhere in this
+		// package is not always consistent about this), so no
+		// transpose here.
+		mata: st_local("_nwmv_labs", invtokens(`netobj'->get_nodenames()))
+
+		// NOT nwclear before this nwset - nwclear destroys every named
+		// network in memory (unw_defs's own `nw' Mata object, package-
+		// wide, not dataset-scoped - confirmed directly in nwclear.ado),
+		// which would take the caller's own original event network down
+		// with it (this program is still holding a live pointer into it,
+		// `netobj', from the mode-detection nw_syntax call above). A
+		// brand-new nwset ..., name() call needs no clearing first -
+		// multiple named networks already coexist fine without it
+		// elsewhere in this package (e.g. dev/saom_rsiena_benchmark.do's
+		// own back-to-back nwset ..., name(wave1)/name(wave2) calls).
+		preserve
+		mata: st_matrix("_nwmv_cumM_st", `_nwmv_cumM')
+		nwset, mat(_nwmv_cumM_st) directed name(_nwmv_cumnet) labs(`_nwmv_labs')
+		matrix drop _nwmv_cumM_st
+
+		local _nwmv_out "`_nwmv_jsondir'nwmovie_evnodes_`=subinstr(subinstr("`c(current_time)'", ":", "", .), " ", "", .)'_`=strofreal(int(runiform()*1000000))'.json"
+		capture erase "`_nwmv_out'"
+		qui nwplot _nwmv_cumnet, ignorelgc `_nwmv_layout' iterations(`iterations') interactive noopen movieexport("`_nwmv_out'") `_nwmv_color' `_nwmv_symbol' `_nwmv_size' `_nwmv_colorpalette' `_nwmv_symbolpalette' `_nwmv_scheme' `_nwmv_label'
+		capture nwdrop _nwmv_cumnet
+		restore
+		capture confirm file "`_nwmv_out'"
+		if _rc {
+			di as error "nwmovie: failed to resolve `netname''s node layout via nwplot."
+			error 601
+		}
+
+		local _nwmv_windowval "."
+		if "`window'" != "" {
+			capture confirm number `window'
+			if _rc {
+				di as error "window() must be a number, in the same units as {help nwset}'s {bf:eventtime()} variable."
+				error 198
+			}
+			local _nwmv_windowval "`window'"
+		}
+
+		mata: _nwmovie_assembleevent("`_nwmv_out'", `_nwmv_evlist', `speed', `_nwmv_windowval', "`_nwmv_template'", "`_nwmv_cytoscape'", "`_nwmv_gifjs'", "`_nwmv_gifworker'", "`fname'.html")
+		mata: mata drop `_nwmv_evlist' `_nwmv_cumM'
+	}
+
+	di "{txt}Wrote {bf:`fname'.html}"
+	if "`noopen'" == "" {
+		nw_openviewer "`c(pwd)'/`fname'.html"
+	}
 end
 
+// -----------------------------------------------------------------------
+// Mata assembly: splices each per-network resolved-JSON blob
+// (_nwedit_buildjson()'s own output, via nwplot's movieexport()) into one
+// combined MOVIE_DATA object for nwmovie_template.html, using pure string
+// concatenation - no JSON parser needed on the Mata side at all, since
+// the only consumer of these files is the browser's own JS engine
+// (`const MOVIE_DATA = __NWMOVIE_DATA__;` is a JS literal assignment, not
+// JSON.parse()) and every producer/consumer pair here is code in this
+// same package. Each per-network blob keeps its own "nodes"/"edges"
+// arrays verbatim (already exactly the shape nwmovie_template.html
+// expects for one keyframe) - only a "label" field is prepended.
+// -----------------------------------------------------------------------
+capture mata: mata drop _nwmovie_slurpfile()
+capture mata: mata drop _nwmovie_writehtml()
+capture mata: mata drop _nwmovie_assemblepanel()
+capture mata: mata drop _nwmovie_assembleevent()
+mata:
+// A private copy of nwplot.ado's own _nwedit_slurpfile(), not a call to
+// it directly - confirmed empirically (not assumed) that a Mata
+// function defined in one .ado file's own mata: block is NOT reliably
+// callable from a different .ado file's Mata code when both are loaded
+// the NORMAL way (auto-loaded by Stata's own command dispatch): a
+// standalone probe showed nwplot.ado's _nwedit_slurpfile() genuinely
+// missing from Mata's function table immediately after a successful,
+// error-free `nwplot ..., movieexport()' call from a fresh session (it
+// IS visible when nwplot.ado is instead loaded via an explicit `run'/
+// `do', which is why this gap never surfaced during this feature's own
+// earlier scratch testing - those scripts all used `run'). Duplicating
+// this one small, stable utility is simpler and more robust than
+// depending on cross-.ado Mata linkage that does not actually hold
+// under real, ordinary command usage.
+string scalar _nwmovie_slurpfile(string scalar path)
+{
+	string scalar s, chunk
+	transmorphic fh
 
-		
-		
-	
-*! v1.5.0 __ 17 Sep 2015 __ 13:09:53
-*! v1.5.1 __ 17 Sep 2015 __ 14:54:23
+	s = ""
+	fh = fopen(path, "r")
+	chunk = fread(fh, 1000000)
+	while (chunk != J(0,0,"")) {
+		s = s + chunk
+		chunk = fread(fh, 1000000)
+	}
+	fclose(fh)
+	return(s)
+}
+
+void _nwmovie_writehtml(string scalar data, string scalar tplpath,
+		string scalar cytopath, string scalar gifjspath, string scalar gifworkerpath,
+		string scalar outpath)
+{
+	string scalar tpl, vjs, gifjs, gifworkersrc, gifworkerb64
+	transmorphic fh
+
+	tpl = _nwmovie_slurpfile(tplpath)
+	vjs = _nwmovie_slurpfile(cytopath)
+	gifjs = _nwmovie_slurpfile(gifjspath)
+	gifworkersrc = _nwmovie_slurpfile(gifworkerpath)
+	gifworkerb64 = base64encode(gifworkersrc)
+
+	tpl = subinstr(tpl, "__NWMOVIE_CYTOSCAPE__", vjs)
+	tpl = subinstr(tpl, "__NWMOVIE_GIFJS__", gifjs)
+	tpl = subinstr(tpl, "__NWMOVIE_GIFWORKER__", "atob(" + char(34) + gifworkerb64 + char(34) + ")")
+	tpl = subinstr(tpl, "__NWMOVIE_DATA__", data)
+
+	// fopen(,"w") errors (602) if outpath already exists, unlike a plain
+	// overwrite - unlike the randomly-named intermediate JSON files
+	// above, `outpath' here is the user's own fixed fname().html, which
+	// is EXPECTED to already exist on a re-run (that is the whole point
+	// of re-running nwmovie with the same fname()).
+	if (fileexists(outpath)) unlink(outpath)
+	fh = fopen(outpath, "w")
+	fwrite(fh, tpl)
+	fclose(fh)
+}
+
+void _nwmovie_assemblepanel(string scalar jsonfiles, string rowvector labels,
+		real scalar duration, string scalar easing, real scalar isdirected,
+		string scalar tplpath, string scalar cytopath, string scalar gifjspath,
+		string scalar gifworkerpath, string scalar outpath)
+{
+	string rowvector files
+	string scalar q, data, blob, one
+	real scalar i
+
+	q = char(34)
+	files = tokens(jsonfiles)
+	data = "{"+q+"mode"+q+":"+q+"panel"+q+","+
+		q+"directed"+q+":"+(isdirected==1 ? "true" : "false")+","+
+		q+"duration"+q+":"+strofreal(duration)+","+
+		q+"easing"+q+":"+q+easing+q+","+q+"keyframes"+q+":["
+	for (i=1; i<=cols(files); i++) {
+		blob = _nwmovie_slurpfile(files[i])
+		// blob is "{...}" (a full JSON object) - splice a label field in
+		// right after the opening brace.
+		one = "{"+q+"label"+q+":"+q+labels[i]+q+"," + substr(blob, 2, strlen(blob)-1)
+		data = data + one
+		if (i < cols(files)) data = data + ","
+	}
+	data = data + "]}"
+
+	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, outpath)
+}
+
+void _nwmovie_assembleevent(string scalar nodejsonfile, real matrix evlist,
+		real scalar speed, real scalar window,
+		string scalar tplpath, string scalar cytopath, string scalar gifjspath,
+		string scalar gifworkerpath, string scalar outpath)
+{
+	string scalar q, data, blob, windowstr
+	real scalar i
+
+	q = char(34)
+	// The resolved-cumulative-network blob is embedded WHOLE (as its own
+	// "_nodesource" field, read by nwmovie_template.html as
+	// MOVIE_DATA._nodesource.nodes) rather than string-surgered apart in
+	// Mata to pull out just its "nodes" array - a first attempt at that
+	// surgery (locating "nodes":[ / ],"edges" by strpos()+substr()) was
+	// genuinely broken (off-by-one at both ends, confirmed directly:
+	// produced a doubled leading "[[" and a missing closing "]"), and
+	// splicing the whole object is exactly the same, already-proven
+	// pattern _nwmovie_assemblepanel() already uses for each keyframe -
+	// no parser needed on the Mata side either way.
+	blob = _nwmovie_slurpfile(nodejsonfile)
+
+	windowstr = (window == . ? "null" : strofreal(window))
+
+	data = "{"+q+"mode"+q+":"+q+"event"+q+","+
+		q+"directed"+q+":true,"+
+		q+"speed"+q+":"+strofreal(speed)+","+
+		q+"window"+q+":"+windowstr+","+
+		q+"tmin"+q+":"+strofreal(min(evlist[.,3]))+","+
+		q+"tmax"+q+":"+strofreal(max(evlist[.,3]))+","+
+		q+"_nodesource"+q+":"+blob+","+
+		q+"events"+q+":["
+	for (i=1; i<=rows(evlist); i++) {
+		data = data + "{"+q+"sender"+q+":"+q+"n"+strofreal(evlist[i,1])+q+","+
+			q+"receiver"+q+":"+q+"n"+strofreal(evlist[i,2])+q+","+
+			q+"t"+q+":"+strofreal(evlist[i,3])+"}"
+		if (i < rows(evlist)) data = data + ","
+	}
+	data = data + "]}"
+
+	_nwmovie_writehtml(data, tplpath, cytopath, gifjspath, gifworkerpath, outpath)
+}
+end

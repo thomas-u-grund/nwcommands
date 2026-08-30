@@ -21,22 +21,26 @@ do unw_ergm.do
 	(unit 92 wave 4) - gwesp/gwdsp/gwnsp/esp/dsp plus
 	ctriple/transitiveties/cyclicalties - and (this update) the
 	remaining four directed shared-partner definitions, ITP/OSP/ISP/RTP,
-	for gwesp/gwdsp/gwnsp/esp/dsp - see unw_ergm.do's own
-	ErgmNativeSetup() header comment for the complete current list and
-	exactly what remains out of scope. `triangle`/`ctriple`, both used
-	as the "reject probe" at various earlier points as the native term
-	set grew, are now BOTH native-eligible, as is every directed
-	shared-partner type - `edgecov` (needs an n x n matrix marshalled
-	across the boundary, still genuinely unported) is used instead.
+	for gwesp/gwdsp/gwnsp/esp/dsp, and (harmonisation unit 160) the
+	dyadic-covariate family `edgecov`/`hamming` - see unw_ergm.do's own
+	ErgmNativeSetup() header comment for the complete current list.
+	`triangle`/`ctriple`/`edgecov`, each used as the "reject probe" at
+	various earlier points as the native term set grew, are now ALL
+	native-eligible - every term this package implements is. The only
+	remaining fallback reason is exceeding the native backend's own
+	fixed capacity limits (maxcols/maxattr/maxcovmat), used as this
+	test's own reject probe instead (see the MAXCOVMAT-overflow case
+	below).
 
 	(1) ErgmNativeSetup() eligibility is exactly what the model's own
 	    term list should produce - accept every currently-native term
 	    (individually and mixed together in one model, which the
 	    original narrow-scope version of this test never needed to
 	    check since every native term used to be dyad-independent or
-	    gwesp alone), including directed (OTP) gwesp/gwdsp/gwnsp/esp/dsp
-	    and ctriple/transitiveties/cyclicalties (unit 92 wave 4), and
-	    reject anything still genuinely out of scope (`edgecov`).
+	    gwesp alone), including directed (OTP) gwesp/gwdsp/gwnsp/esp/dsp,
+	    ctriple/transitiveties/cyclicalties (unit 92 wave 4), and
+	    edgecov/hamming (unit 160); and reject a model that exceeds the
+	    native backend's own fixed capacity limits.
 	(2) The native and Mata backends, run on the SAME starting network at
 	    the SAME theta with the SAME burnin/interval/samplesize, produce
 	    statistically indistinguishable sampled sufficient-statistic
@@ -64,8 +68,9 @@ mata set matastrict off
 // --- (1) eligibility ---
 void test_eligibility(){
 	class ErgmModel scalar M
-	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6, td7, tdmany
 	real colvector attr
+	real scalar i
 
 	M = ErgmModel()
 	M.init()
@@ -122,19 +127,66 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
-	// edgecov is NOT in the native term set (it needs an n x n dyadic
-	// covariate matrix marshalled across the boundary - a genuinely
-	// different wire-protocol shape from everything else native
-	// currently handles - a documented follow-on) - must be rejected.
-	// `triangle`/`ctriple` CANNOT serve as the reject probe any more
-	// (unit 92 waves 3/4 made them native-eligible) - this is the SAME
-	// substitution nodecov/triangle/ctriple each underwent in turn as
-	// the native term set grew.
+	// harmonisation unit 160: edgecov/hamming are now native-eligible too
+	// (the last remaining gap in the "move all effects to C" migration -
+	// see unw_ergm.do's own ErgmNativeSetup() header comment) - must be
+	// ACCEPTED, individually and mixed with an ordinary attribute term,
+	// and must populate the new covmat wire fields correctly.
 	M = ErgmModel()
 	M.init()
 	td5 = ErgmTermData()
-	td5.edgecovmat = J(5,5,0)
+	td5.edgecovmat = J(5,5,0.3)
 	M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), td5, ("edgecov"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+	assert(cols(M.native_covmatstack) == 5)
+	assert(M.native_covidx[1] == 1)
+
+	M = ErgmModel()
+	M.init()
+	td5 = ErgmTermData()
+	td5.edgecovmat = (0,1,0,1,0) \ (1,0,1,0,1) \ (0,1,0,1,0) \ (1,0,1,0,1) \ (0,1,0,1,0)
+	M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), td5, ("hamming"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	// mixed model: edgecov + hamming + an ordinary attribute term in the
+	// SAME model - two DISTINCT covmat blocks must be registered (not
+	// collapsed into one), each with its own 1-based covidx, alongside
+	// nodecov's own ordinary attrmat slot - exercises native_covidx/
+	// native_attridx staying independently correct when both mechanisms
+	// are in play together.
+	M = ErgmModel()
+	M.init()
+	td5 = ErgmTermData()
+	td5.edgecovmat = J(5,5,0.3)
+	M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), td5, ("edgecov"))
+	td6 = ErgmTermData()
+	td6.edgecovmat = (0,1,0,1,0) \ (1,0,1,0,1) \ (0,1,0,1,0) \ (1,0,1,0,1) \ (0,1,0,1,0)
+	M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), td6, ("hamming"))
+	td7 = ErgmTermData()
+	td7.attr = attr
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td7, ("nodecov_age"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+	assert(cols(M.native_covmatstack) == 10)
+	assert(M.native_covidx[1] == 1)
+	assert(M.native_covidx[2] == 2)
+	assert(M.native_covidx[3] == 0)
+	assert(M.native_attridx[3] == 1)
+
+	// exceeding native's own fixed MAXCOVMAT capacity (8, native/
+	// ergm_mcmc.c) must still fall back to Mata gracefully, exactly like
+	// exceeding maxattr/maxcols already does elsewhere in this file -
+	// the only genuine remaining fallback reason now that every term is
+	// individually native-eligible.
+	M = ErgmModel()
+	M.init()
+	for (i=1; i<=9; i++) {
+		tdmany = ErgmTermData()
+		tdmany.edgecovmat = J(5,5,0.1*i)
+		M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), tdmany, ("edgecov"+strofreal(i)))
+	}
 	assert(ErgmNativeSetup(M, 1) == 0)
 	assert(M.native_enabled == 0)
 
@@ -1031,5 +1083,57 @@ void run_esp_dsp_rtp_test(){
 		(-2.2, 0.4, 0.05, 0.05, 0.02), 2000, 5, 2000, 6)
 }
 run_esp_dsp_rtp_test()
+
+// --- harmonisation unit 160: edgecov/hamming, the last remaining gap
+//     in the native migration, ported to native/ergm_mcmc.c via a new
+//     dedicated "covmat" wire mechanism (native_covidx/
+//     native_covmatstack on ErgmModel) since a dense n x n dyadic
+//     covariate matrix is a genuinely different shape from every
+//     per-node attribute array native already handles. Mixed with
+//     mutual (dyad-dependent) and nodecov (an ordinary attrmat-based
+//     term) in one model - exercises native_covidx and native_attridx
+//     staying independently correct side by side, and edgecov's own
+//     TWO distinct reference matrices (edgecov's continuous covariate,
+//     hamming's separate 0/1 reference) getting two separate covmat
+//     blocks rather than being collapsed into one.
+void run_edgecov_hamming_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdm, tdec, tdhm, tdn
+	real scalar n, i, j
+	real matrix covmat, refmat
+	real colvector attr
+
+	n = 80
+	covmat = J(n, n, 0)
+	refmat = J(n, n, 0)
+	for (i=1; i<=n; i++) {
+		for (j=1; j<=n; j++) {
+			if (i==j) continue
+			covmat[i,j] = mod(i+j, 3)
+			refmat[i,j] = mod(i+j, 2)
+		}
+	}
+	attr = mod((1::n), 4)
+
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdm = ErgmTermData()
+	M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), tdm, ("mutual"))
+	tdec = ErgmTermData()
+	tdec.edgecovmat = covmat
+	M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), tdec, ("edgecov"))
+	tdhm = ErgmTermData()
+	tdhm.edgecovmat = refmat
+	M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), tdhm, ("hamming"))
+	tdn = ErgmTermData()
+	tdn.attr = attr
+	M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), tdn, ("nodecov"))
+
+	test_equivalence("directed edges+mutual+edgecov+hamming+nodecov (mixed, unit 160)", n, 4, 1, M,
+		(-2.5, 0.4, 0.05, 0.02, 0.01), 2000, 5, 2000, 6)
+}
+run_edgecov_hamming_test()
 
 end

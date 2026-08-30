@@ -267,6 +267,14 @@ edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart
 {help varlist} alone, so combining them is rejected as an explicit error rather than guessed at.
 
 {pstd}
+Like any edgelist-based declaration ({bf:edgelist} above included), {bf:twomode} can only ever
+create nodes that actually appear in the edgelist - a node with zero ties (an isolate) is never
+created, silently, since an edgelist has no way to record it in the first place. Use
+{help nwaddnodes}'s own {bf:mode()} option afterward to add any isolates the source data itself
+could not represent (required, not optional, on a two-mode network - it never silently assumes
+which of the two modes an added isolate belongs to).
+
+{pstd}
 {bf:bipartite} - from a Mata matrix, or from a {help varlist} interpreted as a {it:wide} affiliation
 matrix (each named variable is one mode-1 node, each observation is one mode-2 node) - the two-mode
 analogue of the plain adjacency-matrix forms in sections 1 and 3 above:

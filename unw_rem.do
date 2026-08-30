@@ -599,29 +599,54 @@ void RemFitMulti(real matrix eventmat, real scalar n, real rowvector activevec,
 	if (nparams == 0) _error("nwrem: at least one effect must be selected.")
 
 	// Performance fix (found via direct profiling, docs/REM_ROADMAP.md's
-	// own "optimizer performance" entry): a single likelihood/gradient
-	// evaluation is essentially free (<1ms), so the multi-minute
-	// slowdown observed when fitting several correlated degree effects
-	// together was never about per-call cost - it was FAILING BFGS
-	// attempts each burning 30-200+ internal iterations (several
-	// seconds each) before finally giving up. Two changes address
-	// this directly: (1) a hard iteration cap per attempt, so a
-	// genuinely bad starting point fails in well under a second
-	// instead of grinding for iterations that were never going to
+	// own "optimizer performance" entry): the multi-minute slowdown
+	// observed when fitting several correlated degree effects together
+	// was never about per-call cost at the SCALE this fix was originally
+	// tuned on (n=8) - it was FAILING BFGS attempts each burning
+	// 30-200+ internal iterations before finally giving up. Two changes
+	// addressed this: (1) a hard iteration cap per attempt, so a
+	// genuinely bad starting point fails in a bounded number of
+	// iterations instead of grinding for ones that were never going to
 	// converge; (2) small, FIXED-magnitude random perturbations
 	// (previously scaled up to +-0.8 per dimension by the final
 	// attempt) rather than escalating ones - large simultaneous
-	// perturbations across 8 correlated parameters push the log-rate
-	// matrix into numerically extreme territory that plausibly caused
-	// some of the "flat region" failures directly, independent of the
-	// iteration-count problem. More attempts (12, not 8) are cheap
-	// now that each one fails fast when it is going to fail at all.
+	// perturbations across several correlated parameters push the
+	// log-rate matrix into numerically extreme territory that plausibly
+	// caused some of the "flat region" failures directly, independent
+	// of the iteration-count problem.
+	//
+	// CORRECTED, found via real repeated-run wall-clock benchmarking at
+	// a LARGER scale than the original fix was tuned on (n=30, 2000
+	// events, 8 degree/inertia effects together, dev/rem_benchmark_multi.do):
+	// the original comment's own claim that a single likelihood/gradient
+	// evaluation is "essentially free (<1ms)" is WRONG at this scale -
+	// directly profiled at ~97.5ms per evaluation on this exact dataset,
+	// two orders of magnitude higher than assumed. That single wrong
+	// number invalidated the original cap's own reasoning: a "cheap,
+	// fails-fast" 40-iteration attempt actually costs ~4 seconds here,
+	// not a fraction of one, so a bad-luck run exhausting many attempts
+	// (worse still, tripling `nstarts` in an EARLIER version of this
+	// fix, since more expensive attempts is not the same improvement as
+	// more cheap ones) could still run for minutes. The corrected
+	// values below are chosen from what this same profiling run showed
+	// directly: a SUCCESSFUL attempt converges in roughly 11-15
+	// iterations, so `maxiter=20` gives real convergence a comfortable
+	// margin while capping a truly failing attempt's own cost near two
+	// seconds, not four; `nstarts=16` (matching the ORIGINAL n=8-scale
+	// tuning, not the since-reverted 48) keeps the worst-case BFGS+NR
+	// cost bounded near a minute even if every single attempt fails,
+	// which the Nelder-Mead fallback below's own tightened cap then
+	// backstops. Reusing the SAME already-tuned magnitude schedule
+	// (0.15 to 2.4 across the 16 attempts) rather than extending to
+	// LARGER untested perturbations - a larger magnitude range is
+	// exactly what this fix's own first paragraph already found can
+	// cause more "flat region" failures directly, not fewer.
 	real scalar maxiter, nstarts
-	maxiter = 40
+	maxiter = 20
 	nstarts = 16
 	starts = J(nstarts, nparams, 0)
 	for (attempt=1; attempt<=nstarts; attempt++) {
-		starts[attempt,.] = (runiform(1,nparams) :- 0.5) :* (0.15 * attempt)
+		starts[attempt,.] = (runiform(1,nparams) :- 0.5) :* (0.15 * (mod(attempt-1, 16) + 1))
 	}
 
 	ok = 0
@@ -694,10 +719,18 @@ void RemFitMulti(real matrix eventmat, real scalar n, real rowvector activevec,
 		// along a flat direction. Confirmed directly: repeated real
 		// 8-effect benchmark runs on identical data (dev/rem_benchmark_multi.do)
 		// varied from ~8s to over 100s run to run - the slow runs were
-		// falling through to this exact uncapped NM stage. A generous
-		// but FINITE cap bounds worst-case runtime; if even 2000
-		// iterations do not converge, `optimize()` raises a clear Mata
-		// "convergence not achieved" error rather than running
+		// falling through to this exact uncapped NM stage, each
+		// iteration costing real time at this dataset's own scale
+		// (n=30, 2000 events: ~97.5ms per likelihood/gradient
+		// evaluation, directly profiled - the BFGS/NR fix above's own
+		// updated comment has the full account of why the ORIGINAL
+		// "essentially free" assumption this whole file's performance
+		// tuning rested on was wrong at this scale). A cap of 300
+		// iterations (~30 seconds worst case at this per-iteration
+		// cost, comfortably more than any successful convergence this
+		// package's own testing has ever needed) bounds worst-case
+		// runtime; if it is not enough, `optimize()` raises a clear
+		// Mata "convergence not achieved" error rather than running
 		// indefinitely - a bounded, legible failure is a better outcome
 		// for a real caller than an unbounded slow success.
 		S_opt = optimize_init()
@@ -714,7 +747,7 @@ void RemFitMulti(real matrix eventmat, real scalar n, real rowvector activevec,
 		optimize_init_which(S_opt, "max")
 		optimize_init_tracelevel(S_opt, "none")
 		optimize_init_conv_warning(S_opt, "off")
-		optimize_init_conv_maxiter(S_opt, 2000)
+		optimize_init_conv_maxiter(S_opt, 300)
 		theta_hat = optimize(S_opt)
 	}
 	V = optimize_result_V_oim(S_opt)

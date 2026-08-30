@@ -1,169 +1,3 @@
-/***
-{smcl}
-{* *! version 2.0.0  1dec2016: Thomas Grund}{...}
-{marker topic}
-{helpb nw_topical##generator:[NW-2.3] Generators}
-
-{title:Title}
-
-{p2colset 9 20 22 2}{...}
-{p2col :nwdyadprob {hline 2}}Generate a network based on tie probabilities{p_end}
-{p2colreset}{...}
-
-
-{title:Syntax}
-
-{p 8 17 2}
-{cmdab: nwdyadprob} 
-[{it:{help netname}}]
-[{cmd:,}
-{opt mat(matamatrix)}
-{opth density(float)}
-{opt weights(p1, p2,...)}
-{opth name(netname)}
-{opt xvars}
-{opt undirected}
-{opt labs}({it:lab1 lab2 ...})]
-
-
-{synoptset 20 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opt mat}({it:matrix})}Stata or Mata matrix with tie probabilities{p_end}
-{synopt:{opth density(float)}}density of the new network{p_end}
-{synopt:{opt weights(p1, p2,...)}}probabilities p_k for tie weights k{p_end}
-{synopt:{opth name(netname)}}name of the new random network{p_end}
-{synopt:{opt xvars}}generate Stata variables for the network{p_end}
-{synopt:{opt undirected}}generate undirected network{p_end}
-{synopt:{opt labs}({it:lab1 lab2 ...})}overwrite node labels{p_end}
-
-
-{title:Description}
-
-{pstd}
-{cmd:nwdyadprob} generates a (un-)directed random network where each tie {it:x_ij} has the 
-probability {it:p_ij} to exist. The values for {it:p_ij} are derived either 1) from the edge values
-in network {help netname} and the {it:density} (if given) or 2) from a Stata/Mata matrix specified in {bf:mat()}. The command can be used to create
-all sorts of networks.
-
-{pstd}
-Let {it:e_ij} be the edge values of network {help netname}. 
-
-{pstd}
-Then, the probability for a tie {it:x_ij} to exist in the newly created network is {it:p_ij}:
-
-{pmore}
-{it:p_ij = ((e_ij) / sum(e_kl)) * density * 100}
-
-{pstd}
-When no {bf:density()} is given, the probability is simply:
-
-{pmore}
-{it:p_ij = e_ij}
-
-{pstd}
-With option {bf:weights(}{it:p1, p2,...}{bf:)} the command generates a weighted network. Here,
-{it:p_k} stands for the probability to sample tie weight {it:k}. The probabilities {it:p1, p2..., pn}
-do not necessarily have to sum up to one; they are standardized.
-
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only structural tie placement - see Weighted). Directed: yes, via {opt undirected} (default is directed). Weighted: yes, via {opt weights()} (a per-dyad tie-value expression, independent of {opt density()}'s own probability-of-placement role) - though {opt weights()} is currently only implemented for the {opt mat()}-based path, not the {opt density()}-based path (an explicit, honest error is raised if both are combined; see the command's own Description). Signed: not checked. Two-mode: not applicable - this generator always produces a one-mode network.
-
-{title:Example}
-
-{pstd} 
-The following example generates a network where ties are more likely to exist between nodes 
-with similar {it:gender} and different {it:race}.
-
-{pstd}
-First, we generate two variables {it:gender} and {it:race}. 
-	
-	{cmd:. nwclear}
-	{cmd:. set obs 10}
-	{cmd:. gen gender = (_n > 5) + 2}
-	{cmd:. gen race = int(0.5 + uniform())}
-
-{pstd}
-Next, we generate two expanded networks for each of the two variables (see {help nwexpand}). Basically, 
-we generate for each variable a matrix {it:M} where {it:M_ij} = 1 when nodes {it:i} and {it:j} have the same
-score on an attribute. And these matrices {it:M} are used to generate new networks.
-
-	{cmd:. nwexpand gender}
-	{cmd:. nwexpand race}
-	
-{pstd}
-This creates the following networks.
-
-	{com}. nwset
-	{res}{txt}(2 networks)
-	{hline 20}
-		{res}same_gender
-		{res}same_race{txt}
-
-{pstd}
-Having a closer look at the new network {it:same_gender}, shows the network that {help nwexpand} created.		
-	
-	{com}. nwsummarize same_gender, matonly
-
-	       1    2    3    4    5    6    7    8    9   10
-	   {c TLC}{hline 51}{c TRC}
-	 1 {c |}  {res} 0                                             {txt}  {c |}
-	 2 {c |}  {res} 1    0                                        {txt}  {c |}
-	 3 {c |}  {res} 1    1    0                                   {txt}  {c |}
-	 4 {c |}  {res} 1    1    1    0                              {txt}  {c |}
-	 5 {c |}  {res} 1    1    1    1    0                         {txt}  {c |}
-	 6 {c |}  {res} 0    0    0    0    0    0                    {txt}  {c |}
-	 7 {c |}  {res} 0    0    0    0    0    1    0               {txt}  {c |}
-	 8 {c |}  {res} 0    0    0    0    0    1    1    0          {txt}  {c |}
-	 9 {c |}  {res} 0    0    0    0    0    1    1    1    0     {txt}  {c |}
-	10 {c |}  {res} 0    0    0    0    0    1    1    1    1    0{txt}  {c |}
-	   {c BLC}{hline 51}{c BRC}
-	 
-{pstd}
-In the next step, we generate a network {it:dyadweight} on the basis of {it:same_gender} and
-{it:same_race}.
-
-{pstd}
-As an example, we want that in the final network 1) ties between nodes with the same gender 
-are overrepresented and 2) ties between nodes with the same race are underrepresented. This generates
-tie probabilitities according to this request.  
-	
-	{cmd:. nwgen dyadweight = exp(5 * same_gender) * exp((-5) * same_race)}
-
-{pstd}
-Check out the tie values created in this way:
-
-	{cmd:. nwsummarize dyadweight, matonly}
-	
-{pstd}
-Finally, we create a new network based on tie probabilities defined in network {it:dyadweight}.
-
-	{cmd:. nwdyadprob dyadweight, density(0.1)}
-	
-{pstd}
-The result can be nicely plotted in the following way:
-
-	{cmd:. nwplot, color(gender) layout(circle) title("gender, homophily = exp(5)")}
-	{cmd:. graph save g4, replace}
-	{cmd:. nwplot, color(race) layout(circle) title("race, homophily = exp(-5)")}
-	{cmd:. graph save g5, replace}
-	{cmd:. graph combine g4.gph g5.gph }
-
-
-{title:Remarks}
-
-{pstd}
-The program requires some additional programs ({bf:gsample, moremata}) that it automatically installs from the internet. 
-
-
-{title:See also}
-
-	{help nwhomophily}, {help nwgen}, {help nwexpand}
-
-***/
 capture program drop nwdyadprob
 program nwdyadprob
 	syntax [anything(name=weightnet)],  [ weights(string) density(string) mat(string) name(string) labs(passthru) xvars undirected]
@@ -326,7 +160,53 @@ program nwdyadprob
 		}
 		qui drop if `nw_ego' == `nw_alter'
 		gsample `ties' [aweight=_tempdyad], generate(link) wor
-		qui nwfromedge `nw_ego' `nw_alter' link, name(`name') `labs' `xvars'
+		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked
+		// nwhomophily investigation - "homophily(2) and homophily(-2)
+		// produce identical output"): this used to hand the selected
+		// dyads (`link'==1) to `nwfromedge `nw_ego' `nw_alter' link,
+		// name(...)' to build the final network - but `nw_ego'/`nw_alter'
+		// here are plain NUMERIC node identifiers (this branch's own
+		// `_tempdyad' network was built with no explicit labs(), so
+		// nwtoedge's own output carries bare numeric labels), and
+		// nwfromedge's own node-ordering assigns each DISTINCT label a
+		// position by STRING sort, not numeric sort - confirmed directly
+		// (a 20-node network came back node-ordered "n1 n10 n11 ... n19
+		// n2 n20 n3 ..."). The weighted sampling above (gsample) was
+		// ALSO independently confirmed correct on its own terms (the
+		// selected dyads' own mean weight is several times the
+		// unselected dyads' mean, exactly as intended) - the bug was
+		// entirely in this final reconstruction step silently scrambling
+		// which node ends up at which position, decoupling the result
+		// from the caller's own original attribute data (nwhomophily's
+		// `grp' variable, in observation order) even though the
+		// underlying tie-selection mechanism worked correctly the whole
+		// time. Fixed by reconstructing the result as a plain matrix
+		// directly (Mata `M[ego,alter]=1' per selected row, undirected
+		// mirrored) and `nwset, mat()' - matching this SAME program's
+		// own already-correct sibling branch just above (the
+		// `"`density'"==""' / `mat()'-only path), which already builds
+		// its own result this way rather than through nwfromedge, for
+		// exactly this reason.
+		tempname __densemat
+		mata: `__densemat' = J(`nodes', `nodes', 0)
+		// `_tempdyad' (just above, `nwset, mat(`mat') name(_tempdyad)'
+		// with no explicit labs()) gets nwset's own default node labels
+		// - confirmed directly this is "n" + position (e.g. "n1".."n20"
+		// for a 20-node network), never bare numeric strings - so the
+		// leading "n" is stripped before strtoreal() converts the
+		// remainder back to the position it always encodes.
+		mata: __nwdp_ego = strtoreal(substr(st_sdata(., "`nw_ego'"), 2, .))
+		mata: __nwdp_alt = strtoreal(substr(st_sdata(., "`nw_alter'"), 2, .))
+		mata: __nwdp_link = st_data(., "link")
+		mata: __nwdp_sel = selectindex(__nwdp_link :== 1)
+		mata: for (__nwdp_i=1; __nwdp_i<=rows(__nwdp_sel); __nwdp_i++) `__densemat'[__nwdp_ego[__nwdp_sel[__nwdp_i]], __nwdp_alt[__nwdp_sel[__nwdp_i]]] = 1
+		if "`undirected'" != "" {
+			mata: `__densemat' = `__densemat' :+ `__densemat''
+			mata: `__densemat' = (`__densemat' :> 0)
+		}
+		mata: mata drop __nwdp_ego __nwdp_alt __nwdp_link __nwdp_sel __nwdp_i
+		nwset, mat(`__densemat') name(`name') `labs' `xvars'
+		mata: mata drop `__densemat'
 		nwdrop _tempdyad
 		restore
 	}

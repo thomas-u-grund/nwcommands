@@ -29,7 +29,18 @@ reports "Nothing to restore" and does nothing further.
 The temporary file {cmd:nwrestore} reads from is deleted once restored, so a given {help nwpreserve:nwpreserve}
 call can only be restored once - exactly like Stata's own {help preserve:preserve}/{help restore:restore}.
 
+{title:Examples}
 
+{pstd}
+Preserve a network, drop it, then restore it:
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 5, prob(.4) name(mynet)}
+	{cmd:. nwpreserve}
+	{cmd:. nwdrop mynet}
+	{cmd:. nwset}
+	{cmd:. nwrestore}
+	{cmd:. nwset}
 
 {title:Supported network types}
 

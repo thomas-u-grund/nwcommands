@@ -1,494 +1,3 @@
-/***
-{smcl}
-{* *! version 2.0.0  22aug2026 author: Thomas Grund}{...}
-{marker topic}
-{helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
-
-{title:Title}
-
-{p2colset 9 21 22 2}{...}
-{p2col :nwergm {hline 2}}Exponential-family random graph model (ERGM) estimation{p_end}
-{p2colreset}{...}
-
-{title:Syntax}
-
-{p 8 17 2}
-{cmdab: nwergm}
-[{it:{help netname}}]
-{cmd:,}
-{opt edges} [{opt mutual}]
-[{opth nodematch(varlist)}]
-[{opth nodematchdiff(varlist)}]
-[{opth nodecov(varlist)}]
-[{opth nodeicov(varlist)}]
-[{opth nodeocov(varlist)}]
-[{opth edgecov(netname)}]
-[{opth hamming(netname)}]
-[{opth absdist(varlist)}]
-[{opth nodefactor(varlist)}]
-[{opth nodeofactor(varlist)}]
-[{opth nodeifactor(varlist)}]
-[{opth nodemix(varlist)}]
-[{opt sender}]
-[{opt receiver}]
-[{opt gwesp(real)}]
-[{opt gwespfree(real)}]
-[{opt gwdegreefree(real)}]
-[{opt gwdspfree(real)}]
-[{opt gwodegreefree(real)}]
-[{opt gwidegreefree(real)}]
-[{opt gwdsp(real)}]
-[{opt gwnsp(real)}]
-[{opt gwdegree(real)}]
-[{opt gwodegree(real)}]
-[{opt gwidegree(real)}]
-[{opt esp(numlist)}]
-[{opt dsp(numlist)}]
-[{opt type(OTP|ITP|OSP|ISP|RTP)}]
-[{opt degree(numlist)}]
-[{opt odegree(numlist)}]
-[{opt idegree(numlist)}]
-[{opt kstar(numlist)}]
-[{opt ostar(numlist)}]
-[{opt istar(numlist)}]
-[{opt degrange(numlist)}
-{opt degrangeto(numlist)}]
-[{opt odegrange(numlist)}
-{opt odegrangeto(numlist)}]
-[{opt idegrange(numlist)}
-{opt idegrangeto(numlist)}]
-[{opt concurrent}]
-[{opt triangle}]
-[{opt ctriple}]
-[{opt transitiveties}]
-[{opt cyclicalties}]
-[{opt method(mple|mcmle)}
-{opt mcmcburnin(int)}
-{opt mcmcinterval(int)}
-{opt mcmcsamplesize(int)}
-{opt mcmleiterations(int)}
-{opt proposal(uniform|tnt)}
-{opt seed(int)}
-{opt verbose}
-{opt spcache}]
-
-
-{synoptset 25 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opt edges}}Include the {cmd:edges} term (density/intercept); required{p_end}
-{synopt:{opt mutual}}Reciprocated-tie count; directed networks only{p_end}
-{synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable){p_end}
-{synopt:{opth nodematchdiff(varlist)}}Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attribute, rather than pooled across levels{p_end}
-{synopt:{opth nodecov(varlist)}}Continuous node covariate main effect (sum over tie endpoints){p_end}
-{synopt:{opth nodeicov(varlist)}}Directed receiver-covariate effect; directed networks only{p_end}
-{synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
-{synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
-{synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
-{synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
-{synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
-{synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
-{synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or another curved term{p_end}
-{synopt:{opt gwdegreefree(real)}}Geometrically weighted degree with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdegree_weight}/{bf:gwdegree_decay} in place of a single {opt gwdegree()} coefficient. Cannot be combined with {opt gwdegree()}, {opt degree()}, or another curved term{p_end}
-{synopt:{opt gwdspfree(real)}}Geometrically weighted dyadwise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwdsp_weight}/{bf:gwdsp_decay} in place of a single {opt gwdsp()} coefficient. Cannot be combined with {opt gwdsp()}, {opt dsp()}, or another curved term{p_end}
-{synopt:{opt gwodegreefree(real)}}Geometrically weighted out-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwodegree_weight}/{bf:gwodegree_decay} in place of a single {opt gwodegree()} coefficient. Cannot be combined with {opt gwodegree()}, {opt odegree()}, or another curved term{p_end}
-{synopt:{opt gwidegreefree(real)}}Geometrically weighted in-degree with an ESTIMATED (curved) decay parameter, directed networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now - reports {bf:gwidegree_weight}/{bf:gwidegree_decay} in place of a single {opt gwidegree()} coefficient. Cannot be combined with {opt gwidegree()}, {opt idegree()}, or another curved term{p_end}
-{synopt:{opt gwdsp(real)}}Geometrically weighted dyadwise shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}){p_end}
-{synopt:{opt gwdegree(real)}}Geometrically weighted degree, fixed decay{p_end}
-{synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
-{synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
-{synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}). Satisfies gwdsp = gwesp + gwnsp{p_end}
-{synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
-{synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
-{synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
-{synopt:{opt concurrent}}Count of nodes with (total) degree 2 or higher; undirected only{p_end}
-{synopt:{opt triangle}}Count of triangles (mutually tied triples); undirected only{p_end}
-{synopt:{opt ctriple}}Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only{p_end}
-{synopt:{opth nodeofactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting OUT-degree among nodes at that level; directed networks only{p_end}
-{synopt:{opth nodeifactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting IN-degree among nodes at that level; directed networks only{p_end}
-{synopt:{opt kstar(numlist)}}One coefficient per listed k value: count of k-stars ((total) degree choose k, summed over nodes); undirected only{p_end}
-{synopt:{opt ostar(numlist)}}One coefficient per listed k value: count of out-k-stars; directed networks only{p_end}
-{synopt:{opt istar(numlist)}}One coefficient per listed k value: count of in-k-stars; directed networks only{p_end}
-{synopt:{opt degrange(numlist)}}Semi-open-interval degree count: one coefficient per FROM value in this numlist, counting nodes with (total) degree in [from,to); pair with {opt degrangeto()}; undirected only{p_end}
-{synopt:{opt degrangeto(numlist)}}TO values pairing with {opt degrange()}, same order/length; omit for an open-ended upper bound{p_end}
-{synopt:{opt odegrange(numlist)}}Semi-open-interval OUT-degree count, paired with {opt odegrangeto()}; directed networks only{p_end}
-{synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
-{synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
-{synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
-{synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (see {opt type()}){p_end}
-{synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (see {opt type()}). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
-{synopt:{opt type(OTP|ITP|OSP|ISP|RTP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the five definitions){p_end}
-{synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
-{synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
-{synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
-{synopt:{opt sender}}One coefficient per node (except a base node) equal to that node's own out-degree; directed networks only{p_end}
-{synopt:{opt receiver}}One coefficient per node (except a base node) equal to that node's own in-degree; directed networks only{p_end}
-{synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
-{synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
-{synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
-{synopt:{opt mcmcsamplesize(int)}}Number of recorded MCMC draws per simulation; default 3,000{p_end}
-{synopt:{opt mcmleiterations(int)}}Maximum MCMLE outer iterations; default 20{p_end}
-{synopt:{opt proposal(uniform|tnt)}}Metropolis-Hastings proposal; default {it:tnt}{p_end}
-{synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
-{synopt:{opt verbose}}Show MPLE/MCMLE iteration detail{p_end}
-{synopt:{opt spcache}}Enable the incremental shared-partner cache for {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple} on an undirected network; OFF by default because direct benchmarking found it a net LOSS below roughly average degree 30-40 (the common case) and a net win only above that - enable only for denser undirected networks; no effect on a directed network or without any of those terms{p_end}
-
-{p2colreset}{...}
-
-{title:Description}
-
-{pstd}
-{cmd:nwergm} fits an exponential-family random graph model (ERGM) to the network(s) in
-{help netname} (default: the currently set network) using a fully native Stata/Mata
-implementation - no R or other external statistical software is called at any point, at
-estimation time or otherwise. Statnet's mature {cmd:ergm} R package was studied in detail as a
-behavioural and architectural reference during development (see {browse "https://cran.r-project.org/package=ergm":statnet.org})
-and used, during development only, to certify {cmd:nwergm}'s own independently-written
-implementation against real reference output; see {help nwergm##provenance:Provenance} below.
-
-{pstd}
-{cmd:nwergm} implements a substantial, independently-certified core of Statnet's own {cmd:ergm}
-term surface and estimation machinery: a term registry, Metropolis-Hastings simulation with a
-genuine tie/no-tie proposal, maximum pseudolikelihood estimation, and Monte Carlo maximum
-likelihood estimation, backed by an effect library covering the full node-covariate family,
-dyadic covariates, the geometrically weighted family (including directed shared-partner support
-and curved/free-decay estimation under {opt method(mple)}), fixed shared-partner counts, the
-complete degree-distribution family, and directed triad-closure terms - see
-{help nwergm##limitations:Limitations} below for the complete current list. What still sets
-{cmd:nwergm} apart from full parity is scope, not term count: two-mode (bipartite) ERGMs, curved/
-free-decay estimation under {opt method(mcmle)} (curved MPLE is already supported - see
-{opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
-{opt gwidegreefree()} in the {cmd:Syntax} block above), and constraints beyond the free binary
-dyad space remain roadmap items, each a genuine architectural addition rather than another term
-to add.
-
-{pstd}
-{opt method()} selects the estimation method. If every requested term is dyad-independent
-(the node-covariate family - {opt edges}, {opt nodematch()}, {opt nodematchdiff()},
-{opt nodecov()}, {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
-{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver} - plus
-the dyadic-covariate terms {opt edgecov()}/{opt hamming()}) and no dyad-DEPENDENT term
-({opt mutual}, any geometrically weighted term, any degree-distribution term, {opt triangle},
-{opt ctriple}, {opt transitiveties}, {opt cyclicalties}, {opt esp()}, or {opt dsp()}) is
-present, maximum pseudolikelihood {it:is} the maximum likelihood estimate - {cmd:nwergm}
-detects this automatically and reports {opt method(mple)} results directly (labeled as such,
-not as full ERGM MLE) without ever running MCMC. Otherwise the default is
-{opt method(mcmle)}: pseudolikelihood is used only as the starting value for Monte Carlo maximum
-likelihood.
-
-{marker limitations}{...}
-
-{title:Supported network types}
-
-{pstd}
-Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: not checked - term availability for a genuinely bipartite network has not been independently verified.
-
-{title:Limitations (v1 scope)}
-
-{pstd}
-{cmd:nwergm} estimates {bf:binary, static, one-mode} ERGMs only:
-
-{p2colset 9 13 15 2}{...}
-{p2col: o}Two-mode (bipartite) networks are rejected with an explicit error - never silently
-projected to one mode.{p_end}
-{p2col: o}Temporal networks (snapshot/interval/event metadata) are rejected with an explicit
-error - never silently collapsed to a single static slice.{p_end}
-{p2col: o}Valued/weighted or signed networks are rejected with an explicit error - never
-silently dichotomized or stripped of sign. Valued ERGMs are a materially different statistical
-framework (Krivitsky 2012) and are tracked as a separate future initiative, not a small
-extension.{p_end}
-{p2colreset}{...}
-
-{pstd}
-The effect library has grown considerably past its original small first-release set (see the
-{cmd:Syntax} block above for the complete, current option list) and now covers, in addition to
-{opt edges}/{opt mutual}: the node-covariate family ({opt nodematch()}, {opt nodematchdiff()},
-{opt nodecov()}, {opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
-{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); dyadic
-covariates ({opt edgecov()}, {opt hamming()}); the geometrically weighted family
-({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()})
-with FIXED decay only (a curved/free-decay counterpart is available for each of these five
-terms via {opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
-{opt gwidegreefree()}, {opt method(mple)} only for now - curved {opt method(mcmle)} remains a
-roadmap item); fixed shared-partner
-counts ({opt esp()}/{opt dsp()}); the degree-distribution family ({opt degree()}/{opt odegree()}/
-{opt idegree()}/{opt concurrent}/{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/
-{opt odegrange()}/{opt idegrange()}); and directed triad-closure terms ({opt triangle}/
-{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
-{opt esp()}/{opt dsp()} also support directed networks via any of FIVE directed shared-partner
-definitions, selected with {opt type()} (default {bf:OTP}, R ergm's own default) and applied
-uniformly to every one of these five terms present in the same model:
-
-{p2colset 9 22 24 2}
-{p2col:{bf:OTP}}outgoing two-path, i->k->j (the default){p_end}
-{p2col:{bf:ITP}}incoming two-path, i<-k<-j{p_end}
-{p2col:{bf:OSP}}outgoing shared partner, i->k<-j (i and j share an out-neighbor k){p_end}
-{p2col:{bf:ISP}}incoming shared partner, i<-k->j (i and j share an in-neighbor k){p_end}
-{p2col:{bf:RTP}}reciprocated two-path, i<->k<->j (k is a shared partner only through a mutual tie on each leg){p_end}
-{p2colreset}
-
-{pstd}
-All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/bipartite terms are deliberately
-deprioritized as a
-later initiative (see the roadmap); {cmd:balance}/signed-network terms are blocked (signed networks
-are not a supported data type at all); curved MCMLE estimation needs a genuine MCMLE
-architecture change, not a term-only addition (curved MPLE is already supported - see
-{opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/{opt gwodegreefree()}/
-{opt gwidegreefree()} above). Constraints beyond the free binary dyad space and offsets are
-not yet implemented - see the roadmap. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
-and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; see
-{help nwergm_estat}.
-
-{marker native}{...}
-{title:Performance: the native (C) MCMC backend}
-
-{pstd}
-{cmd:nwergm} ships a fully independent Mata implementation of its entire estimator (term
-registry, MCMC sampler, MPLE, MCMLE) - this is always the reference implementation and is what
-runs for every model on every platform. For a growing subset of models, {cmd:nwergm} ALSO
-compiles the MCMC inner loop (for {opt method(mcmle)}) or the MPLE design-matrix build (for
-{opt method(mple)}) into a native Stata plugin (C) and uses that instead, entirely
-transparently: there is nothing to turn on, no option to set, and no difference in how results
-are interpreted. Whether a given run used the native backend or the Mata one is purely a
-performance detail, exposed only for curiosity via {bf:e(native)} after EITHER method - the two
-are certified to produce statistically indistinguishable results for {opt method(mcmle)}
-(independent random-number streams, so not bit-identical sample paths, but the same target
-distribution; see the package's own {cmd:cscripts/test_nwergm_native.do}) and a bit-identical
-design matrix for {opt method(mple)} (deterministic given a fixed graph, so native and Mata
-agree exactly, not merely statistically).
-
-{pstd}
-The native backend requires a compiled plugin for the current platform (macOS is built and
-shipped; Windows/Linux build automatically via the package's own CI once available there) AND
-every term in the model to be one the native backend currently implements - a single term
-outside that set falls the WHOLE model back to the Mata sampler, since every term's own change
-statistic must be evaluated on every proposal (there is no way to run "some terms in C, some in
-Mata" without crossing the Mata/C boundary on every single MCMC step, which would defeat the
-entire purpose). As of this release the native-eligible set is: {opt edges}, {opt mutual},
-every node-covariate term ({opt nodematch()}, {opt nodematchdiff()}, {opt nodecov()},
-{opt nodeicov()}/{opt nodeocov()}, {opt absdist()}, {opt nodefactor()},
-{opt nodeofactor()}/{opt nodeifactor()}, {opt nodemix()}, {opt sender}, {opt receiver}); the
-entire degree-distribution family ({opt degree()}/{opt odegree()}/{opt idegree()}/{opt concurrent}/
-{opt kstar()}/{opt ostar()}/{opt istar()}/{opt degrange()}/{opt odegrange()}/{opt idegrange()}/
-{opt gwdegree()}/{opt gwodegree()}/{opt gwidegree()}); and the entire shared-partner family, both
-undirected and directed, EVERY {opt type()} included ({opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
-{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple}/{opt transitiveties}/{opt cyclicalties}). In
-practice this means essentially every {cmd:nwergm} model now runs on the native backend. The one
-remaining exception (automatically and correctly using the Mata backend instead, with no error and
-no action needed): {opt edgecov()}/{opt hamming()}, which need an entire dyadic covariate matrix
-marshalled across the plugin boundary rather than the per-node values or scalar parameters every
-other term needs.
-
-{pstd}
-For a curved term ({opt gwespfree()}/{opt gwdegreefree()}/{opt gwdspfree()}/
-{opt gwodegreefree()}/{opt gwidegreefree()}), the native backend additionally fits the
-Newton-Raphson optimization itself in C (not just the MPLE design-matrix build), when eligible -
-still exposed only via {bf:e(native)}, since a curved fit and its own design-matrix build always
-share the same native-or-Mata routing. On a genuine boundary solution (the estimated decay
-collapsing toward 0, a real, if uncommon, outcome documented under {opt gwespfree()} above), the
-native fit uses the same generalized-inverse handling of a singular final Fisher information
-matrix that Mata's own {cmd:invsym()}-based fit uses, rather than falling back to Mata.
-
-{pstd}
-Concretely, on direct head-to-head benchmarks against R's own {cmd:ergm} 4.12.0 (default
-settings on both sides, median of 5 repeated runs): a 30-node directed {opt edges}+{opt mutual}
-model runs at roughly 1.15x R's own time; a 100-node directed
-{opt edges}+{opt mutual}+{opt nodematch()} model at roughly 0.62x - FASTER than R; a 100-node
-undirected {opt edges}+{opt gwesp()} model at roughly 1.0x (essential parity); a 500-node sparse
-undirected {opt edges}+{opt nodematch()}+{opt gwesp()} model at roughly 0.9x - FASTER than R;
-and a 1000-node directed {opt edges}+{opt mutual}+{opt nodematch()} control at roughly 0.6x -
-FASTER than R. On a real
-published network (the {it:E. coli} transcriptional-regulation network of Salgado et al. 2001
-and Shen-Orr et al. 2002, 418 nodes, 519 edges, distributed with R's own {cmd:ergm} package as
-{cmd:data(ecoli)}), median of five runs each side: a fixed-decay
-{opt edges}+{opt gwesp(.25)} model ({opt method(mcmle)}) runs at roughly 1.2x R's own time, and
-its curved, freely-estimated counterpart {opt edges}+{opt gwespfree(.25)}
-({opt method(mple)}) at roughly 2.1x.
-
-{title:Postestimation}
-
-{pstd}
-{help nwergm_estat:estat mcmcdiag} reports basic diagnostics for the final MCMC simulation
-(mean/SD/autocorrelation/effective sample size per statistic, plus the overall acceptance rate)
-after {opt method(mcmle)}. Not available after a pure MPLE fit, which involves no MCMC
-simulation.
-
-{pstd}
-{help nwergm_estat:estat gof} reports a basic simulation-based goodness-of-fit comparison
-(mean degree, average geodesic distance, complete-triad count) between the fitted model's own
-simulated networks and the network {cmd:nwergm} was fitted on - available after either
-estimation method. See {help nwergm_estat} for full details.
-
-{title:Stored results}
-
-	Scalars
-	  {bf:e(N)}			number of dyads
-	  {bf:e(nodes)}			number of nodes
-	  {bf:e(ties)}			number of observed ties
-	  {bf:e(converged)}		1 if MCMLE's own convergence test was satisfied (method(mcmle) only)
-	  {bf:e(mcmle_iterations)}	number of MCMLE outer iterations run (method(mcmle) only)
-	  {bf:e(mcmc_acceptrate)}	Metropolis-Hastings acceptance rate, final simulation (method(mcmle) only)
-	  {bf:e(mcmc_burnin)}		MCMC burn-in steps used (method(mcmle) only)
-	  {bf:e(mcmc_interval)}		MCMC thinning interval requested (method(mcmle) only)
-	  {bf:e(mcmc_interval_final)}	MCMC thinning interval actually used for the last iteration - may
-					exceed e(mcmc_interval) if the adaptive-interval mechanism grew it
-					to reach an adequate effective sample size (method(mcmle) only)
-	  {bf:e(mcmc_samplesize)}	MCMC recorded-draw count used (method(mcmle) only)
-	  {bf:e(native)}		1 if the native (C) backend was used for this run (the MCMC sampler
-					for method(mcmle); the MPLE design-matrix build for method(mple)),
-					0 if the Mata implementation ran instead - purely informational,
-					see {help nwergm##native:Performance} below
-
-	Macros
-	  {bf:e(cmd)}			{bf:nwergm}
-	  {bf:e(title)}			title of estimation
-	  {bf:e(depvar)}		name of the estimated network
-	  {bf:e(method)}		{bf:mple} or {bf:mcmle}
-	  {bf:e(directed)}		{bf:true}/{bf:false}
-	  {bf:e(proposal)}		Metropolis-Hastings proposal used (method(mcmle) only)
-	  {bf:e(estat_cmd)}		{bf:nwergm_estat} (postestimation dispatch)
-
-	Matrices
-	  {bf:e(b)}			coefficient vector
-	  {bf:e(V)}			variance-covariance matrix
-	  {bf:e(mcmcsample)}		final simulation's sufficient-statistic draws, samplesize x nparam (method(mcmle) only)
-
-{title:Examples}
-
-	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwergm flomarriage, edges}
-	{cmd:. nwergm flomarriage, edges nodecov(wealth)}
-	{cmd:. nwergm flomarriage, edges gwesp(.5)}
-
-{marker provenance}{...}
-{title:References}
-
-{pstd}
-Hunter, D.R., Handcock, M.S., Butts, C.T., Goodreau, S.M., Morris, M. (2008). ergm: A Package to
-Fit, Simulate and Diagnose Exponential-Family Models for Networks. {it:Journal of Statistical
-Software}, 24(3), 1-29.
-
-{pstd}
-Hunter, D.R., Handcock, M.S. (2006). Inference in curved exponential family models for networks.
-{it:Journal of Computational and Graphical Statistics}, 15(3), 565-583. (MPLE)
-
-{pstd}
-Hunter, D.R. (2007). Curved exponential family models for social networks. {it:Social Networks},
-29(2), 216-230. (GWESP/GWDEGREE)
-
-{pstd}
-Morris, M., Handcock, M.S., Hunter, D.R. (2008). Specification of Exponential-Family Random
-Graph Models: Terms and Computational Aspects. {it:Journal of Statistical Software}, 24(4),
-1-24. (TNT proposal)
-
-{pstd}
-Hummel, R.M., Hunter, D.R., Handcock, M.S. (2012). Improving Simulation-Based Algorithms for
-Fitting ERGMs. {it:Journal of Computational and Graphical Statistics}, 21(4), 920-939. (MCMLE
-step length)
-
-{pstd}
-Geyer, C.J., Thompson, E.A. (1992). Constrained Monte Carlo Maximum Likelihood for Dependent
-Data. {it:Journal of the Royal Statistical Society, Series B}, 54(3), 657-699. (MCMLE)
-
-{pstd}
-{cmd:nwergm} is an independent, native reimplementation and is not affiliated with or endorsed
-by the Statnet project. See {browse "docs/ERGM_PROVENANCE.md"} for the full licensing and
-provenance account, and {browse "docs/ERGM_STATNET_STUDY.md"} for the architecture study this
-implementation is based on.
-
-{title:Simulation}
-
-{p 8 17 2}
-{cmdab: nwergm} {cmd:simulate}
-{it:nodes}
-{cmd:,}
-{opt edges} [{opt mutual}]
-[{it:{help nwergm##simulate_terms:term options}}]
-[{opt type(OTP|ITP|OSP|ISP|RTP)}]
-{opt theta(numlist)}
-[{opt directed}
-{opt nsim(int)}
-{opt mcmcburnin(int)}
-{opt mcmcinterval(int)}
-{opt proposal(uniform|tnt)}
-{opt seed(int)}
-{opt generate(string)}
-{opt spcache}]
-
-{pstd}
-{cmd:nwergm simulate} draws one or more networks from a fully-specified ERGM (fixed
-coefficients, not estimated) via the same native Metropolis-Hastings sampler {cmd:nwergm}
-itself uses for estimation - matching the {browse "https://cran.r-project.org/package=ergm":Statnet
-ergm} package's own {cmd:simulate.ergm}. {it:nodes} is the number of nodes to simulate on (no
-existing network is required or read).
-
-{marker simulate_terms}{...}
-{pstd}
-As of this release, {cmd:nwergm simulate} supports the full {cmd:nwergm} term library - every
-term option listed in the {cmd:nwergm} {bf:Syntax} section above - not just the geometrically
-weighted family. Each family sources its data the same way it does during estimation:
-
-{p2colset 9 32 34 2}{...}
-{p2col:{it:no external data}}{opt mutual}, {opt concurrent}, {opt triangle}, {opt ctriple},
-{opt transitiveties}, {opt cyclicalties}, {opt degree(numlist)}, {opt odegree(numlist)},
-{opt idegree(numlist)}, {opt kstar(numlist)}, {opt ostar(numlist)}, {opt istar(numlist)},
-{opt degrange(numlist)}/{opt degrangeto(numlist)} (and the {opt o}-/{opt i}- directed
-analogues), {opt esp(numlist)}, {opt dsp(numlist)}, and the full geometrically weighted family
-({opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt gwdegree}/{opt gwodegree}/{opt gwidegree}, all
-{it:real}, decay value only){p_end}
-{p2col:{it:node covariate}}{opt nodematch(varname)}, {opt nodematchdiff(varname)},
-{opt nodecov(varname)}, {opt nodeicov(varname)}, {opt nodeocov(varname)}, {opt absdist(varname)},
-{opt nodefactor(varname)}, {opt nodeofactor(varname)}, {opt nodeifactor(varname)},
-{opt nodemix(varname)}, {opt sender}, {opt receiver} - read via {cmd:st_data()} from
-{it:the currently active Stata dataset}, exactly as estimation reads them from whatever dataset
-is loaded alongside the network being fit. The active dataset must already have {it:nodes}
-observations with the named variable populated before calling {cmd:simulate} (e.g.
-{cmd:set obs 20} + {cmd:gen mygroup = ...}); {opt sender}/{opt receiver} need no real
-covariate at all, since their own "attribute" is just each node's own index.{p_end}
-{p2col:{it:dyadic covariate}}{opt edgecov(netname)}, {opt hamming(netname)} - read from
-{it:netname}, an already-{help nwset:set}/loaded reference network of the same size as
-{it:nodes}, exactly as estimation reads a dyadic covariate from a second network object.{p_end}
-
-{pstd}
-{opt type()} selects which of the five directed shared-partner definitions (default {bf:OTP}) any
-{opt gwesp}/{opt gwdsp}/{opt gwnsp}/{opt esp()}/{opt dsp()} term simulates under, with {opt directed}
-- exactly the same option, with the same meaning, as {cmd:nwergm}'s own estimation path; see that
-command's own {bf:Remarks} section for the five definitions.
-
-{pstd}
-{opt theta()} supplies one coefficient per resulting model term, in the SAME fixed sequence
-{cmd:nwergm}'s own estimation path itself always processes terms in (edges, mutual, then every
-node-covariate family, then the structural/numlist family, then {opt sender}/{opt receiver},
-then the dyadic-covariate family, then the geometrically weighted family - regardless of the
-order the options happen to be typed on the command line, since Stata's own option parsing does
-not preserve that order to begin with). A term that expands into several coefficients (e.g.
-{opt nodefactor()} with $k$ categories, or {opt degree(2 3 4)}) consumes that many consecutive
-entries from {opt theta()}, in the same left-to-right order its own levels/values are listed.
-There is no per-term coefficient sub-option, by design, so this exactly reuses the same
-term-construction code {cmd:nwergm}'s own estimation path uses rather than a parallel
-implementation.
-
-{pstd}
-{bf:The resulting simulated network's own dataset does not carry the caller's covariate
-variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
-the active dataset with just that network's own bare node/edge structure - any covariate
-variable read during term construction is captured once, in Mata, before that replacement
-happens, and is not itself part of the simulated result. Regenerate it afterward (by node
-index, since simulated node identity is always {cmd:1}..{it:nodes} in the caller's original row
-order) if a postestimation step - e.g. checking the resulting network's own mixing pattern -
-needs it alongside the simulated network.
-
-{pstd}
-{opt nsim(int)} (default 1) draws that many independent networks (a fresh burn-in for each,
-matching {cmd:nwergm}'s own control conventions rather than continuing one long chain), named
-{opt generate()}{cmd:_1}, {opt generate()}{cmd:_2}, ... when {opt nsim()}{cmd: > 1} (default stub
-{cmd:ergmsim}), or plain {opt generate()} (default {cmd:ergmsim}) when {opt nsim(1)}.
-
-{title:See also}
-
-	{help nwqap}, {help nwrandom}, {help nwcug}, {help nw_intro##limits:feasible network sizes}
-
-***/
 
 capture program drop nwergm
 program nwergm, eclass
@@ -502,23 +11,63 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
-		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) ///
+		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) GWNSPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
 		NODEIFACTOR(string) NODEOFACTOR(string) ///
 		KSTAR(string) ISTAR(string) OSTAR(string) ///
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
-		TYPE(string) ///
+		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
+		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
+		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
+		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
-		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE ]
+		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ]
 	set more off
 
 	if "`edges'" == "" {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
 		error 198
 	}
+	// fixdensity (constraints, third piece - see docs/ERGM_ROADMAP.md's
+	// "Constraints beyond v1's free binary dyad space" row): R ergm's
+	// own `constraints=~edges'. Unlike freedyads()/blockdiag() (which
+	// restrict WHICH single dyad the ordinary proposal may touch),
+	// this holds the total tie COUNT invariant via a compound tie/
+	// non-tie swap move (ergm_propose_swap()/ErgmMCMCSampleSwap(),
+	// unw_ergm.do) - a genuinely different proposal shape, not a masked
+	// variant of the existing one, so it cannot be combined with
+	// freedyads()/blockdiag() in v1 (each is its own self-contained
+	// dyad-space restriction). `edges' itself becomes uninformative
+	// under this constraint (its statistic never changes across the
+	// whole chain, so it carries zero information about theta) -
+	// mimicking real R ergm's own observed behavior here (confirmed
+	// directly: R fits `edges' anyway and reports its coefficient fixed
+	// at exactly 0 with a "will be ignored" warning) is not attempted
+	// via this project's own still-incomplete general isfixed-through-
+	// MCMLE machinery (docs/ERGM_ROADMAP.md's own disclosed gap) -
+	// instead, `edges' is simply never registered as an estimated term
+	// for a fixdensity model (the user must still type `edges' per the
+	// check just above, for a consistent model-specification syntax,
+	// but at least one OTHER term is required, checked below).
+	if "`fixdensity'" != "" {
+		if "`freedyads'" != "" | "`blockdiag'" != "" {
+			di "{err}fixdensity cannot currently be combined with freedyads()/blockdiag() - v1 supports one dyad-space constraint at a time."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mcmle" {
+			di "{err}fixdensity requires {bf:method(mcmle)} - a fixed-density fit cannot be a plain MPLE (that never runs MCMC at all, so there is no proposal for the constraint to restrict)."
+			error 198
+		}
+		local method "mcmle"
+	}
+	// freedyads() now has a masked TNT variant too (ergm_propose_tnt_masked(),
+	// docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary dyad
+	// space" row) - freedyads() alone no longer needs its own special
+	// default, `proposal()' defaults to `tnt' exactly as it does without
+	// freedyads().
 	if "`proposal'" == "" local proposal "tnt"
 	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`method'" != "" {
@@ -533,10 +82,73 @@ program nwergm, eclass
 
 	// --- network-type validation (Part IV/XXII/XXIII/XXIV): reject,
 	// never silently reinterpret.
-	if "`is2mode'" == "true" {
-		di "{err}nwergm does not yet support two-mode (bipartite) networks; {bf:`netname'} is two-mode."
-		di "{err}Native bipartite ERGM terms are a roadmap item - nwergm never silently projects a two-mode network to one mode."
+	//
+	// Bipartite (two-mode) support (harmonisation unit 155 Stage 1 +
+	// unit 156 Stage 2, per
+	// /Users/tgrund/.claude/plans/dreamy-popping-deer.md): R's own ergm
+	// package requires bipartite networks to be undirected
+	// (docs/ERGM_STATNET_STUDY.md:401) - a real modeling constraint (a
+	// directed two-mode dyad space has no standard ERGM treatment in
+	// the reference implementation this package studies), not a v1
+	// simplification - so directed+two-mode is rejected unconditionally
+	// below, not merely "not yet implemented". v1's own bipartite term
+	// scope is `edges' plus the dyad-independent bcov1()/bcov2()/
+	// bfactor1()/bfactor2() family (Stage 2 - Stata option names for R
+	// ergm's own b1cov()/b2cov()/b1factor()/b2factor() terms; the digit
+	// had to move to the END of the option name because Stata's own
+	// `syntax' command rejects any option name with a digit followed by
+	// a letter - confirmed directly: a literal `B1COV(string)' syntax
+	// declaration fails with "option b1cov() not allowed" at the FIRST
+	// call, a genuine Stata-language constraint discovered empirically
+	// mid-implementation, not a design choice. Every internal name that
+	// is NOT a Stata option identifier - the Mata function names
+	// (stat_b1cov()/change_b1cov()/etc.), the term registry's own name
+	// string ("b1cov" passed to addterm()), and the fitted coefficient's
+	// own display name ("b1cov_<var>") - is NOT subject to this
+	// constraint and keeps R's own exact naming, so a fitted model's
+	// coefficient table still reads `b1cov_age' etc., matching what an
+	// R ergm user would recognize; only the four OPTION names a caller
+	// types on the nwergm command line differ.), plus the dyad-
+	// DEPENDENT bdegree1()/bdegree2()/bstar1()/bstar2() family (Stage 3,
+	// unit 157 - same digit-at-the-end option-name rename, for the same
+	// Stata `syntax' reason, as R's own b1degree()/b2degree()/
+	// b1star()/b2star()). Every ONE-MODE-ONLY term (mutual/triangle/
+	// gwesp/nodematch/nodecov/degree/kstar/etc.) is rejected explicitly
+	// so a bipartite model never silently gets a one-mode term's change
+	// statistic applied to a rectangular dyad space it was never
+	// derived for.
+	if "`is2mode'" == "true" & "`directed'" == "true" {
+		di "{err}nwergm does not support directed two-mode (bipartite) networks; {bf:`netname'} is directed and two-mode."
+		di "{err}Bipartite ERGMs are undirected only, matching the reference implementation this package studies (R's ergm package) - there is no standard directed two-mode dyad-space treatment to fall back to."
 		error 198
+	}
+	if "`is2mode'" == "true" {
+		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + ("`gwesp'"!="") + ("`gwdsp'"!="") + ("`gwnsp'"!="") + ("`gwdegree'"!="") + ("`gwodegree'"!="") + ("`gwidegree'"!="") + ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
+		if `__ergm_b2mode_otherterm' > 0 {
+			di "{err}nwergm's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; {bf:`netname'} is two-mode and this model requests at least one other (one-mode-only) term."
+			di "{err}nwergm never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
+			error 198
+		}
+	}
+	else {
+		// bcov1()/bcov2()/bfactor1()/bfactor2()/bdegree1()/bdegree2()/
+		// bstar1()/bstar2()/bnodematch1()/bnodematch2()/bgwdegree1()/
+		// bgwdegree2() (R ergm's own b1cov()/b2cov()/b1factor()/
+		// b2factor()/b1degree()/b2degree()/b1star()/b2star()/
+		// b1nodematch()/b2nodematch()/gwb1degree()/gwb2degree()) are
+		// bipartite-only by their own real R ergm definition (confirmed
+		// directly from R's own current Rd docs before implementing,
+		// not guessed: b1cov's own description literally states "This
+		// term may only be used with bipartite networks", and
+		// b1degree()/b1star()/b1nodematch()/gwb1degree() likewise) -
+		// rejected on a one-mode network with the same "reject, never
+		// silently reinterpret" discipline `mutual' (directed-only)
+		// already uses below.
+		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'`bgwdegree1'`bgwdegree2'" != "" {
+			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require a two-mode (bipartite) network; {bf:`netname'} is one-mode."
+			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode network's own analogous effect."
+			error 198
+		}
 	}
 	if "`istemporal'" == "true" {
 		di "{err}nwergm estimates static ERGMs only; {bf:`netname'} carries temporal metadata."
@@ -560,7 +172,7 @@ program nwergm, eclass
 	// before any of the five options' own validation blocks below, so
 	// each block can just check `` `__ergm_ncurved' > 1 `` instead of
 	// naming every other curved option individually.
-	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="")
+	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="")
 
 	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
 	// (free-decay) gwesp - the first user-facing curved term. Dyad-
@@ -682,6 +294,47 @@ program nwergm, eclass
 		}
 		if "`method'" != "" & "`method'" != "mple" {
 			di "{err}option {bf:gwdspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
+			error 198
+		}
+		local method "mple"
+	}
+	// gwnspfree() (harmonisation unit 152): curved (free-decay) gwnsp -
+	// the last of the five fixed-decay GW terms this package implements
+	// to gain a curved counterpart (gwespfree/gwdegreefree/gwdspfree/
+	// gwodegreefree/gwidegreefree already done). Deferred out of the
+	// original units 136-141 mechanical-reuse pass because gwnsp itself
+	// (unlike gwesp/gwdsp/gwdegree/gwodegree/gwidegree) has no
+	// standalone per-count statistic of its own - stat_gwnsp() is a
+	// thin composition (stat_gwdsp() - stat_gwesp()) with nothing to
+	// hand the curved eta-space machinery directly. This unit added the
+	// missing piece, stat_nsp()/change_nsp() (unw_ergm.do), built the
+	// same way: nsp(d) = dsp(d) - esp(d), a definitional tautology (a
+	// dyad with d shared partners is either tied - esp's own domain -
+	// or untied - nsp's own domain - never both, never neither),
+	// certified against an independent direct-enumeration oracle before
+	// use. Same maxd formula as gwdspfree() (nsp, like dsp, is defined
+	// over EVERY dyad, tied or not, but the achievable per-dyad count is
+	// still bounded by nodes-2). method(mple) only, undirected v1 scope,
+	// same reasoning as every other curved option.
+	if "`gwnspfree'" != "" {
+		if "`gwnsp'" != "" {
+			di "{err}options {bf:gwnsp()} and {bf:gwnspfree()} cannot both be specified - a gwnsp term is either fixed-decay or curved (free-decay), not both."
+			error 198
+		}
+		if `__ergm_ncurved' > 1 {
+			di "{err}option {bf:gwnspfree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
+			error 198
+		}
+		if "`directed'" == "true" {
+			di "{err}option {bf:gwnspfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwnsp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
+			error 198
+		}
+		if `nodes' < 3 {
+			di "{err}option {bf:gwnspfree()} needs at least 3 nodes (gwnsp itself needs a real shared-partner count to be achievable)."
+			error 198
+		}
+		if "`method'" != "" & "`method'" != "mple" {
+			di "{err}option {bf:gwnspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
 			error 198
 		}
 		local method "mple"
@@ -873,6 +526,68 @@ program nwergm, eclass
 	mata: __nwergm_last_G = ErgmGraph()
 	mata: __nwergm_last_G.init(`nodes', ("`directed'"=="true"))
 	mata: ergm_bridge_from_netobj(`netobj', __nwergm_last_G, ("`directed'"=="true"))
+	// harmonisation unit 155 (bipartite Stage 1): set_bipartite() is
+	// called AFTER ergm_bridge_from_netobj() (order does not matter for
+	// correctness - set_bipartite() only touches the new mode fields,
+	// never G.elist/G.edgepos - but matches enable_sp_cache()'s own
+	// established "opt-in flag set right after the graph is populated"
+	// placement below). get_modes() returns a string rowvector of
+	// "1"/"2" keyed by NWdef's own node index - the SAME index
+	// ergm_bridge_from_netobj() just used via netobj->neighbors(i), so
+	// no reordering is needed or performed (this package's own
+	// deliberate no-reordering convention - see the approved plan's own
+	// "Key architecture decision" section).
+	if "`is2mode'" == "true" {
+		mata: __nwergm_last_G.set_bipartite(strtoreal(`netobj'->get_modes())')
+	}
+	// freedyads(netname) (constraints, first piece - see
+	// docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary dyad
+	// space" row): R ergm's own `constraints=~fixallbut(free)` - `free'
+	// is a SECOND network whose own ties mark which dyads of `netname'
+	// are eligible to vary during MCMC; every dyad NOT tied in `free' is
+	// held fixed at its OBSERVED value in `netname' for the rest of this
+	// fit. Deliberately only touches __nwergm_last_G (the proposal-time
+	// object) via set_dyadmask() below - never __nwergm_last_M or its
+	// own full_statistic()/MPLE design-matrix machinery, which must keep
+	// reading the network's real observed ties regardless of the mask
+	// (a fixed dyad still contributes its true observed state to every
+	// term's sufficient statistic; only the MCMC PROPOSAL is restricted
+	// from ever touching it) - this is the whole point of "fixed", not
+	// "deleted". Same nw_syntax()-based resolution as edgecov()/hamming()
+	// above, reusing get_matrix_mod(0,...) as hamming() does (a binary
+	// tie-presence matrix is exactly a boolean eligibility mask).
+	if "`freedyads'" != "" {
+		local __ergm_fd_n : word count `freedyads'
+		if `__ergm_fd_n' > 1 {
+			di "{err}freedyads() takes exactly one network (got `__ergm_fd_n': `freedyads'')."
+			error 198
+		}
+		nw_syntax `freedyads', max(1) other(fd)
+		if `fdnodes' != `nodes' {
+			di "{err}freedyads() network {bf:`freedyads'} has a different number of nodes than {bf:`netname'}."
+			error 198
+		}
+		mata: __nwergm_last_G.set_dyadmask(*(`fdnetobj'->get_matrix_mod(0,("`directed'"=="true"))))
+	}
+	// blockdiag(varname) (constraints, second piece - see
+	// docs/ERGM_ROADMAP.md's "Constraints beyond v1's free binary dyad
+	// space" row): R ergm's own `constraints=~blockdiag(attr)` - `varname'
+	// is a categorical node attribute; only same-block dyads (equal
+	// varname value) are eligible to vary during MCMC. Builds its own
+	// eligibility mask (_ergm_blockdiag_mask()) and feeds it through the
+	// EXACT SAME set_dyadmask()/masked-proposal/native machinery
+	// freedyads() already uses - not a parallel constraint mechanism.
+	// v1 supports one dyad-eligibility constraint at a time (matching
+	// freedyads()'s own initial narrow scope) rather than an arbitrary
+	// intersection of several.
+	if "`blockdiag'" != "" {
+		if "`freedyads'" != "" {
+			di "{err}blockdiag() cannot currently be combined with freedyads() - v1 supports one dyad-eligibility constraint at a time."
+			error 198
+		}
+		confirm variable `blockdiag'
+		mata: __nwergm_last_G.set_dyadmask(_ergm_blockdiag_mask(st_data(1::`nodes', "`blockdiag'")))
+	}
 	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
 	// .nties mutates throughout MCMLE's own simulation (it IS the live
 	// MCMC state, not a frozen copy of the observed network - see its
@@ -930,10 +645,17 @@ program nwergm, eclass
 	mata: __nwergm_last_M = ErgmModel()
 	mata: __nwergm_last_M.init()
 
-	tempname __td_edges
-	mata: `__td_edges' = ErgmTermData()
-	mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
-	local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
+	// fixdensity: `edges' is never registered as an estimated term (see
+	// this option's own validation-block comment above for why) - the
+	// user still typed `edges' (required, checked above) for a
+	// consistent model-specification syntax, it just contributes
+	// nothing to the fitted parameter vector.
+	if "`fixdensity'" == "" {
+		tempname __td_edges
+		mata: `__td_edges' = ErgmTermData()
+		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
+	}
 
 	if "`mutual'" != "" {
 		tempname __td_mutual
@@ -1015,7 +737,7 @@ program nwergm, eclass
 		mata: st_matrix("`__ergm_levvec'", `__td_nmd`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodematch_diff", `__ergm_nlev', &stat_nodematch_diff(), &change_nodematch_diff(), `__td_nmd`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nmd`__ergm_termidx''"
@@ -1050,7 +772,7 @@ program nwergm, eclass
 		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodefactor", `__ergm_nlev', &stat_nodefactor(), &change_nodefactor(), `__td_nf`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
@@ -1073,11 +795,214 @@ program nwergm, eclass
 		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlp' {
-			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]''"
+			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]'"
 		}
 		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
 		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
+	// --- bipartite (two-mode) Stage 2 terms (harmonisation unit 156):
+	// bcov1()/bcov2() (R ergm's own b1cov()/b2cov(), renamed as Stata
+	// options only - see the network-type validation block above for
+	// why) mirror nodecov()'s own exact registration pattern (one
+	// coefficient per requested variable, dyad-independent);
+	// bfactor1()/bfactor2() (R's b1factor()/b2factor()) mirror
+	// nodefactor()'s own exact pattern (one coefficient per non-base
+	// level, `_ergm_drop_base_level()' - see nodefactor()'s own header
+	// comment above for why the base level is dropped: the full-level
+	// parameterization is exactly collinear with `edges'). The
+	// network-type validation above already guarantees these four are
+	// only ever registered when `is2mode'=="true". Every internal name
+	// below (the `addterm()' registry name, the fitted coefficient's
+	// own display name) intentionally keeps R's exact "b1cov"/"b2cov"/
+	// "b1factor"/"b2factor" spelling - only the OPTION name differs.
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bcov1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1c`__ergm_termidx'
+		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b1cov", 1, &stat_b1cov(), &change_b1cov(), `__td_b1c`__ergm_termidx'', ("b1cov_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1c`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bcov2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2c`__ergm_termidx'
+		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b2cov", 1, &stat_b2cov(), &change_b2cov(), `__td_b2c`__ergm_termidx'', ("b2cov_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2c`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bfactor1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1f`__ergm_termidx'
+		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		// BUGFIX (harmonisation unit 156, caught via a real end-to-end
+		// smoke test, not by inspection): the level set must be built
+		// from the MODE-1 nodes' own attribute values only, never the
+		// full node vector `nodefactor()' correctly uses (every node
+		// contributes to plain nodefactor's own credit, but only
+		// mode-1 nodes ever contribute to b1factor's). The covariate is
+		// typically left missing (.) for the OTHER mode's nodes (it has
+		// no meaning there) - reading the full vector via uniqrows()
+		// picked up "." itself as a spurious extra "level" (Mata sorts
+		// missing after every real value), producing a bogus
+		// `b1factor_<var>_.' coefficient column no real dyad could ever
+		// activate. Confirmed directly: a bipartite smoke test with
+		// `grp' defined only on the 6 mode-1 nodes (missing on the 4
+		// mode-2 nodes) produced levels (1, 2, .) instead of (1, 2).
+		mata: `__td_b1f`__ergm_termidx''.levels = uniqrows(`__td_b1f`__ergm_termidx''.attr[__nwergm_last_G.mode1nodes])
+		mata: `__td_b1f`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_b1f`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_b1f`__ergm_termidx''.levels)))
+		tempname __ergm_levvec_b1f
+		mata: st_matrix("`__ergm_levvec_b1f'", `__td_b1f`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' b1factor_`__ergm_v'_`=`__ergm_levvec_b1f'[1,`__k']'"
+		}
+		mata: __nwergm_last_M.addterm("b1factor", `__ergm_nlev', &stat_b1factor(), &change_b1factor(), `__td_b1f`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1f`__ergm_termidx''"
+	}
+
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bfactor2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2f`__ergm_termidx'
+		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		// BUGFIX: mode-2 mirror of b1factor()'s own fix above - see its
+		// comment for the full account.
+		mata: `__td_b2f`__ergm_termidx''.levels = uniqrows(`__td_b2f`__ergm_termidx''.attr[__nwergm_last_G.mode2nodes])
+		mata: `__td_b2f`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_b2f`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_b2f`__ergm_termidx''.levels)))
+		tempname __ergm_levvec_b2f
+		mata: st_matrix("`__ergm_levvec_b2f'", `__td_b2f`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' b2factor_`__ergm_v'_`=`__ergm_levvec_b2f'[1,`__k']'"
+		}
+		mata: __nwergm_last_M.addterm("b2factor", `__ergm_nlev', &stat_b2factor(), &change_b2factor(), `__td_b2f`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2f`__ergm_termidx''"
+	}
+
+	// --- bipartite (two-mode) Stage 3 terms (harmonisation unit 157):
+	// bdegree1()/bdegree2()/bstar1()/bstar2() (R ergm's own b1degree()/
+	// b2degree()/b1star()/b2star(), Stata-option-name-renamed for the
+	// same reason as Stage 2's own bcov1()/etc. - see the network-type
+	// validation block above) mirror degree()'s/kstar()'s own exact
+	// registration pattern (`strtoreal(tokens(...))'' for the numlist).
+	// Dyad-DEPENDENT (see unw_ergm.do's own header comment on this
+	// family) - deliberately NOT added to the `__ergm_dind' MPLE-
+	// eligibility check below (mirrors how plain degree()/kstar() are
+	// excluded from it too), so a bipartite model using any of these
+	// four correctly defaults to method(mcmle), exercising the Stage-1
+	// bipartite MCMC proposal for real.
+	if "`bdegree1'" != "" {
+		tempname __td_bd1
+		mata: `__td_bd1' = ErgmTermData()
+		mata: `__td_bd1'.levels = strtoreal(tokens("`bdegree1'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd1'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `bdegree1' {
+			local __ergm_cnames "`__ergm_cnames' b1degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("b1degree", `__ergm_ndeg', &stat_b1degree(), &change_b1degree(), `__td_bd1', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bd1'"
+	}
+	if "`bdegree2'" != "" {
+		tempname __td_bd2
+		mata: `__td_bd2' = ErgmTermData()
+		mata: `__td_bd2'.levels = strtoreal(tokens("`bdegree2'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd2'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `bdegree2' {
+			local __ergm_cnames "`__ergm_cnames' b2degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("b2degree", `__ergm_ndeg', &stat_b2degree(), &change_b2degree(), `__td_bd2', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bd2'"
+	}
+	if "`bstar1'" != "" {
+		tempname __td_bs1
+		mata: `__td_bs1' = ErgmTermData()
+		mata: `__td_bs1'.levels = strtoreal(tokens("`bstar1'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs1'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `bstar1' {
+			local __ergm_cnames "`__ergm_cnames' b1star_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("b1star", `__ergm_nk', &stat_b1star(), &change_b1star(), `__td_bs1', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bs1'"
+	}
+	if "`bstar2'" != "" {
+		tempname __td_bs2
+		mata: `__td_bs2' = ErgmTermData()
+		mata: `__td_bs2'.levels = strtoreal(tokens("`bstar2'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs2'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `bstar2' {
+			local __ergm_cnames "`__ergm_cnames' b2star_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("b2star", `__ergm_nk', &stat_b2star(), &change_b2star(), `__td_bs2', tokens("`__ergm_cnames'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bs2'"
+	}
+
+	// --- bipartite (two-mode) Stage 4 terms (harmonisation unit 162):
+	// bnodematch1()/bnodematch2() (R ergm's own b1nodematch()/
+	// b2nodematch(), default-parameter scope only - no diff()/alpha()/
+	// beta()/byb2attr()/byb1attr(), a disclosed scope decision, see
+	// unw_ergm.do's own header comment on these terms for the full
+	// account and the real-R-output validation this derivation was
+	// checked against) and bgwdegree1()/bgwdegree2() (R's own
+	// gwb1degree()/gwb2degree(), FIXED-decay only - same v1 scope note
+	// as plain gwdegree() above). Both families are genuinely dyad-
+	// DEPENDENT (a same-attribute two-star count, or a GW-weighted
+	// degree sum, both react to more than just the toggled dyad's own
+	// two endpoints - see unw_ergm.do), so neither is added to the
+	// MPLE-eligibility check below, matching plain kstar()/gwdegree()'s
+	// own treatment exactly.
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bnodematch1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1nm`__ergm_termidx'
+		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), `__td_b1nm`__ergm_termidx'', ("b1nodematch_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1nm`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bnodematch2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2nm`__ergm_termidx'
+		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), `__td_b2nm`__ergm_termidx'', ("b2nodematch_`__ergm_v'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
+	}
+	if "`bgwdegree1'" != "" {
+		tempname __td_bgwd1
+		mata: `__td_bgwd1' = ErgmTermData()
+		mata: `__td_bgwd1'.decay = `bgwdegree1'
+		mata: __nwergm_last_M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), `__td_bgwd1', ("bgwdegree1_`bgwdegree1'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
+	}
+	if "`bgwdegree2'" != "" {
+		tempname __td_bgwd2
+		mata: `__td_bgwd2' = ErgmTermData()
+		mata: `__td_bgwd2'.decay = `bgwdegree2'
+		mata: __nwergm_last_M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), `__td_bgwd2', ("bgwdegree2_`bgwdegree2'"))
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd2'"
 	}
 
 	// --- term-expansion wave 2 (harmonisation unit 90): degree(numlist)/
@@ -1161,7 +1086,7 @@ program nwergm, eclass
 		mata: st_matrix("`__ergm_levvec3'", `__td_nof`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodeofactor", `__ergm_nlev', &stat_nodeofactor(), &change_nodeofactor(), `__td_nof`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nof`__ergm_termidx''"
@@ -1180,7 +1105,7 @@ program nwergm, eclass
 		mata: st_matrix("`__ergm_levvec4'", `__td_nif`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodeifactor", `__ergm_nlev', &stat_nodeifactor(), &change_nodeifactor(), `__td_nif`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nif`__ergm_termidx''"
@@ -1610,6 +1535,28 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdspfree'"
 	}
+	// gwnspfree() (harmonisation unit 152): mirrors gwdspfree()'s own
+	// exact pattern, registered under "nsp" (reusing the new
+	// stat_nsp()/change_nsp() - nsp(d) = dsp(d) - esp(d), unw_ergm.do).
+	if "`gwnspfree'" != "" {
+		confirm number `gwnspfree'
+		// same TRUE shared-partner-count bound (plus one) as
+		// gwdspfree()'s own registration site - nsp, like dsp, is
+		// defined over every dyad (tied or not), so the same bound
+		// applies.
+		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
+		tempname __td_gwnspfree
+		mata: `__td_gwnspfree' = ErgmTermData()
+		mata: `__td_gwnspfree'.levels = (1..`__ergm_curved_maxd')'
+		local __ergm_curved_cnames ""
+		forvalues __k = 1/`__ergm_curved_maxd' {
+			local __ergm_curved_cnames "`__ergm_curved_cnames' gwnspfree_`__k'"
+		}
+		mata: __nwergm_last_M.addterm("nsp", `__ergm_curved_maxd', &stat_nsp(), &change_nsp(), `__td_gwnspfree', tokens("`__ergm_curved_cnames'"))
+		mata: __nwergm_last_M.mark_curved()
+		local __ergm_matatemps "`__ergm_matatemps' `__td_gwnspfree'"
+	}
 	// gwodegreefree()/gwidegreefree() (harmonisation unit 141): mirror
 	// the other curved options' own exact pattern, registered under
 	// "odegree"/"idegree" (reusing stat_odegree()/change_odegree() and
@@ -1650,6 +1597,16 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwidegreefree'"
 	}
 
+	// fixdensity dropped `edges' as an estimated term above - a model
+	// needs at least one other term to actually estimate anything.
+	if "`fixdensity'" != "" {
+		mata: st_local("__ergm_nterms_check", strofreal(__nwergm_last_M.nterms))
+		if `__ergm_nterms_check' == 0 {
+			di "{err}fixdensity requires at least one term besides {bf:edges} (which is dropped, not estimated, under this constraint - see {bf:Remarks})."
+			error 198
+		}
+	}
+
 	// Unified curved-model flag/starting-value (harmonisation unit
 	// 139): v1 scope allows at most one curved term per model (the
 	// mutual-exclusivity checks above enforce this), so exactly one of
@@ -1662,6 +1619,7 @@ program nwergm, eclass
 	if "`gwespfree'" != "" local __ergm_curved_start "`gwespfree'"
 	else if "`gwdegreefree'" != "" local __ergm_curved_start "`gwdegreefree'"
 	else if "`gwdspfree'" != "" local __ergm_curved_start "`gwdspfree'"
+	else if "`gwnspfree'" != "" local __ergm_curved_start "`gwnspfree'"
 	else if "`gwodegreefree'" != "" local __ergm_curved_start "`gwodegreefree'"
 	else local __ergm_curved_start "`gwidegreefree'"
 
@@ -1679,7 +1637,7 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1724,9 +1682,21 @@ program nwergm, eclass
 	// would auto-display as a stray unexplained integer - read
 	// eligibility off __nwergm_last_M.native_enabled (the side effect
 	// it sets) via st_local() instead, never the bare Mata return.
-	mata: __ergm_mple_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, 2)
+	// nonative (harmonisation unit 160): an explicit escape hatch to force
+	// the Mata backend even on an otherwise native-eligible model - added
+	// because unit 160 made edgecov()/hamming() (the last remaining
+	// non-native term family) native-eligible too, which left NO way for
+	// a user (or this package's own certification suite, e.g. the
+	// spcache-purity test in cscripts/test_nwergm_ado.do) to deliberately
+	// exercise the Mata code path on a real fit anymore. `ErgmNativeSetup()'
+	// is simply never called when set, so `__nwergm_last_M.native_enabled'
+	// stays at its own default 0 - identical in effect to every other
+	// "native unavailable" case already handled below.
+	if "`nonative'" == "" {
+		mata: __ergm_mple_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
+		mata: mata drop __ergm_mple_native_setup_rc
+	}
 	mata: st_local("__ergm_mple_native_used", strofreal(__nwergm_last_M.native_enabled))
-	mata: mata drop __ergm_mple_native_setup_rc
 	if `__ergm_mple_native_used' {
 		mata: `__nw_D' = ErgmNativeBuildMPLEData(__nwergm_last_M, __nwergm_last_G)
 	}
@@ -1890,7 +1860,41 @@ program nwergm, eclass
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
-		if "`proposal'" == "tnt" {
+		// freedyads() now has a masked TNT variant too
+		// (ergm_propose_tnt_masked() - docs/ERGM_ROADMAP.md's
+		// "Constraints beyond v1's free binary dyad space" row) - picks
+		// the masked form of whichever proposal() was actually
+		// requested/defaulted to, rather than forcing uniform.
+		// BUGFIX (blockdiag() addition): this must also fire for a
+		// blockdiag()-only model (has_dyadmask==1 exactly the same way
+		// freedyads() sets it, via the SAME set_dyadmask() call) - an
+		// `if "`freedyads''!=""' check alone would silently pick the
+		// UNMASKED proposal for a blockdiag()-only model, completely
+		// ignoring the constraint during MCMC despite G.has_dyadmask
+		// being correctly set. Caught before shipping, not after.
+		if "`freedyads'" != "" | "`blockdiag'" != "" {
+			// BUGFIX (harmonisation unit 168): __ergm_propcode was
+			// hardcoded to 1 (uniform) on this branch regardless of
+			// which masked proposal was actually picked just above -
+			// harmless before this unit (a masked model was ALWAYS
+			// Mata-only, and the Mata fallback path uses `__ergm_propfn'
+			// directly, never this code), but M.native_proposal (which
+			// this code DOES feed, via ErgmNativeSetup()'s own
+			// proposal_code argument) is now read by the native masked
+			// TNT port's own wire-protocol argstr - left wrong, every
+			// masked+tnt native call would have silently told the C
+			// plugin to run uniform instead. Caught reading this code
+			// while wiring up that port, before it ever shipped.
+			if "`proposal'" == "tnt" {
+				local __ergm_propfn "&ergm_propose_tnt_masked()"
+				local __ergm_propcode 2
+			}
+			else {
+				local __ergm_propfn "&ergm_propose_uniform_masked()"
+				local __ergm_propcode 1
+			}
+		}
+		else if "`proposal'" == "tnt" {
 			local __ergm_propfn "&ergm_propose_tnt()"
 			local __ergm_propcode 2
 		}
@@ -1920,9 +1924,34 @@ program nwergm, eclass
 		// eligibility flag itself is read straight off
 		// __nwergm_last_M.native_enabled on the next line regardless, so
 		// the return value was never actually needed here at all.
-		mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode')
-		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled))
-		mata: mata drop __ergm_native_setup_rc
+		// nonative (unit 160): see the identical MPLE-path comment above -
+		// skips ErgmNativeSetup() entirely, leaving native_enabled at its
+		// own default 0.
+		if "`nonative'" == "" {
+			mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode', __nwergm_last_G)
+			mata: mata drop __ergm_native_setup_rc
+		}
+		// fixdensity: force native off unconditionally (no native port
+		// for this constraint - see ErgmMCMCSampleSwap()'s own header in
+		// unw_ergm.do) regardless of whether ErgmNativeSetup() ran above
+		// or was skipped via nonative - this is the single place that
+		// sets M.fixed_density=1, guaranteed to run before ErgmMCMLE()
+		// is ever called below.
+		if "`fixdensity'" != "" {
+			mata: __nwergm_last_M.fixed_density = 1
+			mata: __nwergm_last_M.native_enabled = 0
+			mata: __nwergm_last_M.native_enabled_sample = 0
+		}
+		// native_enabled_sample (unit 168), not native_enabled: for a
+		// freedyads()-masked model native_enabled itself is forced to 0
+		// (MPLE has no mask awareness), but MCMC sampling - all of
+		// what an MCMLE fit's own e(native) diagnostic is actually
+		// describing here - now genuinely can and does run natively.
+		// Reporting native_enabled would misleadingly show e(native)==0
+		// for a masked fit whose sampling loop ran on the C plugin the
+		// whole time. For an unmasked model the two fields are always
+		// equal, so this is a no-op change there.
+		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled_sample))
 
 		tempname __fit
 		if `__ergm_curved' {
@@ -2050,7 +2079,37 @@ program nwergm, eclass
 		// (nwergm_estat.ado). Columns are unnamed (no natural row/column
 		// stripe applies to a raw draw-by-draw sample); `estat mcmcdiag'
 		// pulls coefficient names from e(b) instead.
-		mata: st_matrix("e(mcmcsample)", `__fit'.finalsample)
+		//
+		// PERFORMANCE NOTE, `nomcmcsample' (harmonisation unit 154):
+		// docs/ERGM_ROADMAP.md's own unit-81 entry flagged this as a
+		// "related, lower-priority risk" and guessed the fix would need
+		// "reworking estat mcmcdiag's own matrix-based consumption of
+		// e(mcmcsample)" - directly profiled before acting on that
+		// guess, and it was WRONG in an important way: `estat mcmcdiag'`'s
+		// own READ of e(mcmcsample) (`= st_matrix(...)`, Mata reading FROM
+		// a Stata matrix) is fast regardless of size (0.004s at
+		// 100,000x15). The entire cost lives here, in THIS bulk WRITE
+		// (`st_matrix("name", data)`, Mata writing INTO a Stata matrix) -
+		// confirmed by direct timing to be slow (34s+ at 100,000x15)
+		// REGARDLESS of the destination name (a plain local matrix name
+		// costs exactly the same as writing to "e(mcmcsample)" directly,
+		// ruling out any e()-specific overhead) - a genuine architectural
+		// property of Stata's own matrix engine at bulk-data scale (the
+		// same class of cost unit 81 found for the MPLE design matrix),
+		// not a `nwergm`-specific inefficiency and not fixable by
+		// restructuring the READ side at all. Since e(mcmcsample) is
+		// documented, public API (unlike unit 81's own purely-internal
+		// MPLE design matrix, which never needed to exist as a genuine
+		// Stata matrix at all), this write cannot be avoided when a
+		// caller actually wants the sample - but a caller who only wants
+		// the coefficient table, and does not intend to call `estat
+		// mcmcdiag' or inspect e(mcmcsample) directly, can now skip
+		// paying it via `nomcmcsample'. Default (posting it) is
+		// unchanged, so this is purely additive - no existing model or
+		// test loses e(mcmcsample) unless it opts out.
+		if "`nomcmcsample'" == "" {
+			mata: st_matrix("e(mcmcsample)", `__fit'.finalsample)
+		}
 
 		if `__ergm_converged' == 0 {
 			di "{err}Warning: MCMLE did NOT satisfy its own convergence test after `__ergm_niter' iterations."
@@ -2309,7 +2368,7 @@ program nwergm_simulate
 		mata: st_matrix("`__ergm_levvec'", `__td_nmd`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodematch_diff", `__ergm_nlev', &stat_nodematch_diff(), &change_nodematch_diff(), `__td_nmd`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local ntermtok "`ntermtok' `__ergm_cnames'"
@@ -2329,7 +2388,7 @@ program nwergm_simulate
 		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodefactor", `__ergm_nlev', &stat_nodefactor(), &change_nodefactor(), `__td_nf`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local ntermtok "`ntermtok' `__ergm_cnames'"
@@ -2352,7 +2411,7 @@ program nwergm_simulate
 		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlp' {
-			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]''"
+			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]'"
 		}
 		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local ntermtok "`ntermtok' `__ergm_cnames'"
@@ -2441,7 +2500,7 @@ program nwergm_simulate
 		mata: st_matrix("`__ergm_levvec3'", `__td_nof`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodeofactor", `__ergm_nlev', &stat_nodeofactor(), &change_nodeofactor(), `__td_nof`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local ntermtok "`ntermtok' `__ergm_cnames'"
@@ -2461,7 +2520,7 @@ program nwergm_simulate
 		mata: st_matrix("`__ergm_levvec4'", `__td_nif`__ergm_termidx''.levels')
 		local __ergm_cnames ""
 		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']''"
+			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']'"
 		}
 		mata: __nwergm_last_M.addterm("nodeifactor", `__ergm_nlev', &stat_nodeifactor(), &change_nodeifactor(), `__td_nif`__ergm_termidx'', tokens("`__ergm_cnames'"))
 		local ntermtok "`ntermtok' `__ergm_cnames'"

@@ -257,3 +257,43 @@ assert _N == 4
 assert canary[1]==1 & canary[2]==2 & canary[3]==3 & canary[4]==4
 capture graph drop qapplottest
 di "=== nwqap plot() OK ==="
+
+
+* --- qapspp: double semi-partialling (harmonisation unit 165,
+* docs/ROADMAP.md's own tracked "QAPSPP as a second inference mode"
+* gap). Real checks, not just "runs without error": (1) qapspp must
+* NEVER change the model's own point estimates (e(b)) - it only changes
+* how each coefficient's own p-value/variance is derived; (2) with a
+* single independent variable there is nothing to partial out, so a
+* bivariate regression's own slope is invariant to demeaning - qapspp's
+* own coefficient must exactly match plain QAP's, not merely be close;
+* (3) every returned p-value must be a real, bounded [0,1] probability,
+* not a stray missing/out-of-range value, across a genuine 2-IV model.
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1spp) undirected labs(A,B,C,D,E)
+nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdvspp) undirected labs(A,B,C,D,E)
+
+set seed 100
+nwqap wdvspp iv1spp, permutations(100) type(regress)
+mat b_plain_1iv = e(b)
+
+set seed 100
+nwqap wdvspp iv1spp, permutations(100) type(regress) qapspp
+mat b_dsp_1iv = e(b)
+mata: assert(mreldif(st_matrix("b_plain_1iv"), st_matrix("b_dsp_1iv")) < 1e-6)
+di "=== qapspp: point estimates unchanged (single-IV) REGRESSION VERIFIED ==="
+
+nwclear
+nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1spp2) undirected labs(A,B,C,D,E)
+nwset, mat((0,0,1,0,1\0,0,0,1,0\1,0,0,1,0\0,1,1,0,1\1,0,0,1,0)) name(iv2spp2) undirected labs(A,B,C,D,E)
+nwset, mat((0,3,1,2,0\3,0,2,0,1\1,2,0,1,2\2,0,1,0,0\0,1,2,0,0)) name(wdvspp2) undirected labs(A,B,C,D,E)
+
+nwqap wdvspp2 iv1spp2 iv2spp2, permutations(100) type(regress) qapspp
+mat b_dsp_2iv = e(b)
+mat p_dsp_2iv = e(pvalues)
+mata: assert(all(st_matrix("p_dsp_2iv") :>= 0 :& st_matrix("p_dsp_2iv") :<= 1))
+
+nwqap wdvspp2 iv1spp2 iv2spp2, permutations(20) type(regress)
+mat b_plain_2iv = e(b)
+mata: assert(mreldif(st_matrix("b_dsp_2iv"), st_matrix("b_plain_2iv")) < 1e-6)
+di "=== qapspp: point estimates unchanged + valid p-values (multi-IV) REGRESSION VERIFIED ==="

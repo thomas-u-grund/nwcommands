@@ -135,6 +135,18 @@ geodesic-distance axis (unreached pairs, including disconnected ones, are pooled
 "NR" - not reached - category, matching Statnet's own convention). {opt name()} sets the
 combined graph's name; default {cmd:gof}.
 
+{title:Examples}
+
+{pstd}
+Fit a dyad-dependent {help nwergm} model ({opt method(mcmle)} runs automatically whenever any
+dyad-dependent term like {opt gwesp()} is present), then check MCMC diagnostics and basic
+goodness of fit:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwergm flomarriage, edges gwesp(.5)}
+	{cmd:. estat mcmcdiag}
+	{cmd:. estat gof, nsim(50)}
+
 {title:Stored results}
 
 {pstd}
