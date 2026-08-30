@@ -49,7 +49,30 @@
 	their already-certified Mata counterparts in unw_ergm.do, reusing
 	wave 4's own `outadj'/`inadj' arrays (no new graph-level state
 	needed - RTP's reciprocated-tie check is just `has_edge()' in both
-	directions on the same two arrays). See TERMCODE_* below for the
+	directions on the same two arrays); and (harmonisation unit 159)
+	BIPARTITE (two-mode) support - a real graph struct extension, not
+	just eight more termcodes: `bipartite'/`mode'/`n1'/`n2'/
+	`mode1nodes'/`mode2nodes' fields added to graph_t, `total_dyads()'/
+	`propose_uniform()' each gained a bipartite branch (direct C ports
+	of `ergm_total_dyads()'/`ergm_propose_uniform()''s own bipartite
+	branches in unw_ergm.do, unit 155 - `propose_tnt()' needed NO change
+	at all, since it already delegates to both), and mode=1's own MPLE
+	dyad-enumeration loop gained a bipartite branch (mirrors
+	`ErgmModel::build_mple_data()''s own). Bipartite models were
+	Mata-only through unit 157 (this file had no bipartite dyad-space
+	awareness at all - routing one to native would have silently
+	sampled the FULL one-mode dyad space); measured directly (not
+	assumed) at ~38.9x slower than R before this unit, ~1.9x after -
+	dev/ergm_benchmark_bipartite/, docs/CERTIFICATION.md unit 159. The
+	eight new termcodes (60-67, TERMCODE_B1COV..TERMCODE_B2STAR) are
+	direct ports of unw_ergm.do's own bipartite change_*() functions
+	(units 156/157) - see change_term()'s own comment on these for why
+	each checks `g->mode[i]' explicitly rather than assuming the
+	mode-1 endpoint arrives in position `i'. The per-node MODE array
+	crosses the Mata/native boundary as its own dedicated dataset
+	column (immediately after v1/v2, before the attribute columns) -
+	see stata_call()'s own header comment on `attrcol_base'. See
+	TERMCODE_* below for the
 	complete current list and unw_ergm.do's own ErgmNativeSetup() header
 	comment for exactly what is still NOT covered (edgecov/hamming - need
 	an n x n matrix marshalled across the boundary, a genuinely different
@@ -347,6 +370,10 @@ typedef struct {
 	int need_adj;      /* 1 iff a gwesp term is present (undirected only) */
 	int need_outin;    /* 1 iff outdeg/indeg were actually allocated (a gwodegree/gwidegree term is present) - toggle() must check THIS, not just `directed`, or it dereferences NULL on any other directed model */
 	int need_dirsp;    /* 1 iff outadj/inadj were actually allocated (harmonisation unit 92 wave 4: a directed OTP shared-partner term - gwesp/gwdsp/gwnsp/esp/dsp with sptype "OTP" - or ctriple/transitiveties/cyclicalties is present); toggle() must check THIS, not `directed`, same reasoning as need_outin above */
+	int bipartite;     /* harmonisation unit 159: 1 iff this is a bipartite (two-mode) graph - a direct C port of ErgmGraph's own `bipartite` field in unw_ergm.do */
+	long *mode;              /* size n+1, 1-indexed; mode[i] is 1 or 2 - only meaningful when bipartite. NOT freed/reallocated by toggle() - set once at graph-build time, like `deg` is sized once, never per-node-added-later (this plugin never adds nodes after construction). */
+	long n1, n2;             /* count of mode-1 / mode-2 nodes - only meaningful when bipartite */
+	long *mode1nodes, *mode2nodes; /* size n1 / n2, 1-indexed node ids with that mode, built once from `mode[]` - direct C port of ErgmGraph's own mode1nodes/mode2nodes colvectors */
 	dyadht_t ht;
 	long *elist_i, *elist_j; /* live edge list, parallel arrays */
 	long ecap, nties;
@@ -354,6 +381,25 @@ typedef struct {
 	long *outdeg, *indeg;    /* directed-only degree (harmonisation unit 91 follow-on, GWODEGREE/GWIDEGREE): meaningless/unused for undirected graphs, where degree_out_of()/degree_in_of() below both read `deg` instead */
 	adjlist_t *adj;          /* size n+1, 1-indexed; only if need_adj */
 	adjlist_t *outadj, *inadj; /* size n+1, 1-indexed; only if need_dirsp - directed out-/in-neighbor lists (SP_OTP(a,b) != SP_OTP(b,a) in general, so unlike gwesp's undirected `adj[]` a single symmetric array cannot serve both directions - see common_neighbors_otp() below) */
+	/* harmonisation unit 168 (freedyads() masked TNT native port): a
+	   direct C port of ErgmGraph's own has_dyadmask/freedyadmat/
+	   freeelist/freeedgepos/nfreedyads/nfreeties (unw_ergm.do). `mask`
+	   is dyadkey()-indexed (size (n+1)*(n+1), same key space as `ht`),
+	   not the raw column-major layout the wire sends it in - built once
+	   at graph-construction time from the raw parsed block, then never
+	   touched again, so every later mask_free() lookup is a single
+	   array read. `free_pos` is the free-tie analogue of `ht`'s own
+	   position-lookup role for `elist_i`/`elist_j`: since a dyad's mask
+	   status never changes mid-run (only its tie state does), a plain
+	   dyadkey()-indexed array (not a second hashtable) is a correct and
+	   much simpler O(1) position lookup, at the same O(n^2) memory cost
+	   `mask` itself already pays - no new asymptotic cost class. */
+	int has_mask;
+	int *mask;               /* size (n+1)*(n+1), dyadkey()-indexed, 1 iff that dyad is free to vary */
+	long *free_pos;          /* size (n+1)*(n+1), dyadkey()-indexed; position in free_elist_i/j (0-based), or -1 if not a current free tie */
+	long *free_elist_i, *free_elist_j; /* live list of CURRENTLY TIED free dyads only - the elist_i/elist_j analogue restricted to the free subspace */
+	long free_ecap, n_free_ties;
+	double n_free_dyads;     /* total free-dyad count over the canonical dyad space - computed once at graph-build time, mirrors ergm_propose_tnt_masked()'s own G.nfreedyads */
 } graph_t;
 
 static long dyadkey(graph_t *g, long i, long j) {
@@ -367,12 +413,28 @@ static int has_edge(graph_t *g, long i, long j) {
 	return ht_get(&g->ht, dyadkey(g, i, j), &val);
 }
 
+/* harmonisation unit 168: g->mask is only ever allocated when
+   g->has_mask - callers must check has_mask first (mirrored by every
+   call site below, same discipline need_adj/need_outin/need_dirsp
+   already use for their own optional arrays). */
+static int mask_free(graph_t *g, long i, long j) {
+	return g->mask[dyadkey(g, i, j)] != 0;
+}
+
 static void elist_ensure(graph_t *g, long need) {
 	if (need <= g->ecap) return;
 	g->ecap = g->ecap ? g->ecap * 2 : 8;
 	if (g->ecap < need) g->ecap = need;
 	g->elist_i = (long *)realloc(g->elist_i, (size_t)g->ecap * sizeof(long));
 	g->elist_j = (long *)realloc(g->elist_j, (size_t)g->ecap * sizeof(long));
+}
+
+static void free_elist_ensure(graph_t *g, long need) {
+	if (need <= g->free_ecap) return;
+	g->free_ecap = g->free_ecap ? g->free_ecap * 2 : 8;
+	if (g->free_ecap < need) g->free_ecap = need;
+	g->free_elist_i = (long *)realloc(g->free_elist_i, (size_t)g->free_ecap * sizeof(long));
+	g->free_elist_j = (long *)realloc(g->free_elist_j, (size_t)g->free_ecap * sizeof(long));
 }
 
 /* toggles dyad (i,j); returns 1 if the tie was ADDED, 0 if REMOVED */
@@ -394,6 +456,17 @@ static int toggle(graph_t *g, long i, long j) {
 		if (g->need_outin) { g->outdeg[i]--; g->indeg[j]--; }
 		if (g->need_adj && !g->directed) { adj_remove(&g->adj[i], j); adj_remove(&g->adj[j], i); }
 		if (g->need_dirsp) { adj_remove(&g->outadj[i], j); adj_remove(&g->inadj[j], i); }
+		if (g->has_mask && mask_free(g, i, j)) {
+			long fpos = g->free_pos[key];
+			long lastpos = g->n_free_ties - 1;
+			if (fpos != lastpos) {
+				long li = g->free_elist_i[lastpos], lj = g->free_elist_j[lastpos];
+				g->free_elist_i[fpos] = li; g->free_elist_j[fpos] = lj;
+				g->free_pos[dyadkey(g, li, lj)] = fpos;
+			}
+			g->free_pos[key] = -1;
+			g->n_free_ties--;
+		}
 		return 0;
 	}
 	else {
@@ -406,6 +479,13 @@ static int toggle(graph_t *g, long i, long j) {
 		if (g->need_outin) { g->outdeg[i]++; g->indeg[j]++; }
 		if (g->need_adj && !g->directed) { adj_add(&g->adj[i], j); adj_add(&g->adj[j], i); }
 		if (g->need_dirsp) { adj_add(&g->outadj[i], j); adj_add(&g->inadj[j], i); }
+		if (g->has_mask && mask_free(g, i, j)) {
+			free_elist_ensure(g, g->n_free_ties + 1);
+			g->free_elist_i[g->n_free_ties] = i;
+			g->free_elist_j[g->n_free_ties] = j;
+			g->free_pos[key] = g->n_free_ties;
+			g->n_free_ties++;
+		}
 		return 1;
 	}
 }
@@ -1260,6 +1340,31 @@ static double change_cyclicalties(graph_t *g, long i, long j) {
 #define TERMCODE_GWNSP_RTP      57
 #define TERMCODE_ESP_RTP        58
 #define TERMCODE_DSP_RTP        59
+/* harmonisation unit 159: bipartite (two-mode) terms - direct ports of
+   stat_b1cov()/change_b1cov()/etc. in unw_ergm.do (units 156/157). Only
+   ever registered on a graph with `bipartite`=1 - unw_ergm.do's own
+   ErgmNativeSetup() never emits these codes for a one-mode model, since
+   the b1cov()/b1factor()/b1degree()/b1star() Stata options themselves
+   are rejected outright on a one-mode network before ErgmNativeSetup()
+   ever runs (nwergm.ado's own network-type validation). */
+#define TERMCODE_B1COV          60
+#define TERMCODE_B2COV          61
+#define TERMCODE_B1FACTOR       62
+#define TERMCODE_B2FACTOR       63
+#define TERMCODE_B1DEGREE       64
+#define TERMCODE_B2DEGREE       65
+#define TERMCODE_B1STAR         66
+#define TERMCODE_B2STAR         67
+
+/* harmonisation unit 160: edgecov/hamming - direct ports of
+   change_edgecov()/change_hamming() in unw_ergm.do, the last remaining
+   gap in the native migration. Both need a dense n x n dyadic covariate
+   matrix, a genuinely different shape from every attribute array above
+   (one value per DYAD, not per node) - see stata_call()'s own header
+   comment on the `covmat'/`covidx' wire fields for how this crosses the
+   Mata/native boundary. */
+#define TERMCODE_EDGECOV        68
+#define TERMCODE_HAMMING        69
 
 /* exact-match indicator kernel, direct port of the `(x :== td.levels')`
    rowvector construction esp()/dsp() use in unw_ergm.do - here evaluated
@@ -1397,7 +1502,7 @@ static double degree_change_at(double olddeg, double delta, double target) {
 	header comment there for the exact Mata source each was checked
 	against before porting.
 */
-static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double delta, long i, long j) {
+static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
 	switch (termcode) {
 		case TERMCODE_EDGES:
 			return delta;
@@ -1569,6 +1674,70 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			return change_esp_rtp(g, i, j, p1);
 		case TERMCODE_DSP_RTP:
 			return change_dsp_rtp(g, i, j, p1);
+		/* harmonisation unit 159: bipartite terms - direct ports of
+		   change_b1cov()/change_b2cov()/change_b1factor()/
+		   change_b2factor()/change_b1degree()/change_b2degree()/
+		   change_b1star()/change_b2star() in unw_ergm.do. Every
+		   bipartite dyad (i,j) reaching this function has EXACTLY one
+		   mode-1 and one mode-2 endpoint (the graph's own bipartite
+		   dyad-space guarantee, enforced by propose_uniform()/
+		   propose_tnt() below and by mode=1's own dyad-enumeration
+		   loop in stata_call()) - but `i' is NOT guaranteed to be the
+		   mode-1 one (the live edge list canonicalizes by raw numeric
+		   node index, not by mode - the identical pitfall unw_ergm.do's
+		   own "bipartite Stage 2 terms" header comment documents), so
+		   every case below checks `g->mode[i]' explicitly rather than
+		   assuming positional order. */
+		case TERMCODE_B1COV:
+			return delta * ((g->mode[i] == 1) ? attr[i] : attr[j]);
+		case TERMCODE_B2COV:
+			return delta * ((g->mode[i] == 2) ? attr[i] : attr[j]);
+		case TERMCODE_B1FACTOR:
+			return ((g->mode[i] == 1 ? attr[i] : attr[j]) == p1) ? delta : 0.0;
+		case TERMCODE_B2FACTOR:
+			return ((g->mode[i] == 2 ? attr[i] : attr[j]) == p1) ? delta : 0.0;
+		case TERMCODE_B1DEGREE: {
+			long node1 = (g->mode[i] == 1) ? i : j;
+			double d1 = (double)g->deg[node1];
+			return degree_change_at(d1, delta, p1);
+		}
+		case TERMCODE_B2DEGREE: {
+			long node2 = (g->mode[i] == 2) ? i : j;
+			double d2 = (double)g->deg[node2];
+			return degree_change_at(d2, delta, p1);
+		}
+		case TERMCODE_B1STAR: {
+			long node1 = (g->mode[i] == 1) ? i : j;
+			double d1 = (double)g->deg[node1];
+			return ergm_choose(d1 + delta, p1) - ergm_choose(d1, p1);
+		}
+		case TERMCODE_B2STAR: {
+			long node2 = (g->mode[i] == 2) ? i : j;
+			double d2 = (double)g->deg[node2];
+			return ergm_choose(d2 + delta, p1) - ergm_choose(d2, p1);
+		}
+		/* harmonisation unit 160: direct ports of change_edgecov()/
+		   change_hamming() in unw_ergm.do. `cm' is the flattened n x n
+		   dyadic covariate matrix this term instance was registered
+		   with (stata_call()'s own covmats[covidx[k]-1], column-major:
+		   cm[(col-1)*n+(row-1)] == Mata's edgecovmat[row,col]), so
+		   cm[(j-1)*n+(i-1)] is exactly edgecovmat[i,j]. change_edgecov
+		   is genuinely delta-scaled (delta already encodes the toggle
+		   direction, has_edge?-1:+1, matching Mata's own
+		   `has_edge(i,j) ? -v : v'); change_hamming is NOT a delta
+		   scaling of anything (a mismatch-agreement flip, +1/-1
+		   depending on whether the CURRENT tie state already agrees
+		   with the reference, matching Mata's own
+		   `has_edge(i,j)==edgecovmat[i,j] ? 1 : -1' exactly) - ported
+		   as its own direct boolean comparison rather than forced into
+		   the delta-scaling shape every other case here uses. */
+		case TERMCODE_EDGECOV:
+			return delta * cm[(j-1)*n + (i-1)];
+		case TERMCODE_HAMMING: {
+			double ref = cm[(j-1)*n + (i-1)];
+			double tied = has_edge(g, i, j) ? 1.0 : 0.0;
+			return (tied == ref) ? 1.0 : -1.0;
+		}
 	}
 	return 0.0;
 }
@@ -1583,6 +1752,7 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 
 static double total_dyads(graph_t *g) {
 	double n = (double)g->n;
+	if (g->bipartite) return (double)g->n1 * (double)g->n2;
 	return g->directed ? n * (n - 1.0) : n * (n - 1.0) / 2.0;
 }
 
@@ -1590,7 +1760,17 @@ static void propose_uniform(graph_t *g, rng_t *rng, long *pi, long *pj, double *
 	double Dtot = total_dyads(g);
 	long pick = 1 + (long)(rng_unif(rng) * Dtot);
 	long i, j, row, col;
-	if (g->directed) {
+	if (g->bipartite) {
+		/* linear index -> (i,j) over the rectangular mode1 x mode2
+		   cross-mode dyad space - direct C port of
+		   ergm_propose_uniform()'s own bipartite branch in
+		   unw_ergm.do. */
+		row = (pick - 1) / g->n2 + 1;
+		col = (pick - 1) % g->n2 + 1;
+		i = g->mode1nodes[row];
+		j = g->mode2nodes[col];
+	}
+	else if (g->directed) {
 		row = (pick - 1) / (g->n - 1) + 1;
 		col = (pick - 1) % (g->n - 1) + 1;
 		i = row;
@@ -1631,6 +1811,59 @@ static void propose_tnt(graph_t *g, rng_t *rng, long *pi, long *pj, double *logr
 	*pi = i; *pj = j;
 }
 
+/* Masked proposals (harmonisation unit 168, freedyads() native port) -
+   direct C ports of ergm_propose_uniform_masked()/ergm_propose_tnt_masked()
+   in unw_ergm.do; see that file's own header comments for the derivation
+   (every population count TNT's Hastings-ratio math depends on restricted
+   to the free-dyad subspace; the log-ratio FORMULAS themselves are
+   byte-for-byte identical to the unmasked versions above). Return 0 on
+   success, nonzero if propose_uniform_masked's own rejection loop could
+   not find a free dyad after MASK_MAX_TRIES draws (mirrors Mata's own
+   "the mask may be far too sparse" backstop - not the expected path on
+   any reasonably-specified mask; on this exhaust-the-retry-cap failure
+   the caller reports a fatal error and returns immediately without
+   unwinding every graph allocation first, the same trade-off this file's
+   own pre-graph-construction fatal-argument-error paths already make). */
+#define MASK_MAX_TRIES 1000000
+
+static int propose_uniform_masked(graph_t *g, rng_t *rng, long *pi, long *pj, double *logratio) {
+	long tries;
+	for (tries = 0; tries < MASK_MAX_TRIES; tries++) {
+		long i, j;
+		propose_uniform(g, rng, &i, &j, logratio);
+		if (mask_free(g, i, j)) { *pi = i; *pj = j; return 0; }
+	}
+	return 1;
+}
+
+static int propose_tnt_masked(graph_t *g, rng_t *rng, long *pi, long *pj, double *logratio) {
+	double Dtot = g->n_free_dyads;
+	double E = (double)g->n_free_ties;
+	double P = 0.5, Q = 0.5;
+	double DP = P * Dtot;
+	double DO = DP / Q;
+	long i, j;
+
+	if (rng_unif(rng) < P && g->n_free_ties > 0) {
+		long erow = rng_below(rng, g->n_free_ties);
+		i = g->free_elist_i[erow];
+		j = g->free_elist_j[erow];
+	}
+	else {
+		double lr;
+		if (propose_uniform_masked(g, rng, &i, &j, &lr)) return 1;
+	}
+
+	if (has_edge(g, i, j)) {
+		*logratio = (E == 1) ? -log(DP + Q) : log(E / (DO + E));
+	}
+	else {
+		*logratio = (E == 0) ? log(DP + Q) : log(1.0 + DO / (E + 1.0));
+	}
+	*pi = i; *pj = j;
+	return 0;
+}
+
 /* ===================================================================
    Small string-token reader over the single args string Stata hands
    the plugin in argv[0] (empirically confirmed NOT pre-tokenized by
@@ -1655,6 +1888,7 @@ static long next_long(void) {
 
 #define MAXTERMS 64  /* must match unw_ergm.do's own ErgmNativeSetup() maxcols */
 #define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
+#define MAXCOVMAT 8  /* must match unw_ergm.do's own ErgmNativeSetup() maxcovmat (harmonisation unit 160) - distinct dense n x n edgecov()/hamming() matrices are far heavier per slot (n^2 doubles, not n) than an attribute array, so this cap is deliberately much smaller than MAXATTR */
 
 /* eta = theta_to_eta(theta): the first (nterms-ncurved) eta slots equal
    the corresponding theta values one-for-one (an ordinary term IS its
@@ -1907,16 +2141,19 @@ static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long mode, n, directed, nties_in, samplesize, burnin, interval, proposal_code, nattr, nterms, i, k;
+	long mode, n, directed, bipartite, nties_in, samplesize, burnin, interval, proposal_code, nattr, ncovmat, hasmask, nterms, i, k;
+	long attrcol_base, covmatcol_base, maskcol_base, outcol_base;
 	long ncurved;
 	double curved_decay_start;
 	unsigned long long rngseed;
 	int termcodes[MAXTERMS];
 	int attridx[MAXTERMS];
+	int covidx[MAXTERMS];
 	double p1[MAXTERMS], p2[MAXTERMS];
 	double theta[MAXTERMS];
 	double obs[MAXTERMS];
 	double *attrs[MAXATTR];
+	double *covmats[MAXCOVMAT];
 	graph_t g;
 	rng_t rng;
 	double *cur;
@@ -1945,6 +2182,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	mode          = (long)atof(strtok(argbuf, " \t"));
 	n             = next_long();
 	directed      = next_long();
+	bipartite     = next_long();
 	nties_in      = next_long();
 	samplesize    = next_long();
 	burnin        = next_long();
@@ -1952,14 +2190,25 @@ STDLL stata_call(int argc, char *argv[]) {
 	proposal_code = next_long();
 	rngseed       = (unsigned long long)next_double();
 	nattr         = next_long();
+	ncovmat       = next_long();
+	/* hasmask (harmonisation unit 168): inserted right after ncovmat, in
+	   ALL THREE Mata-side wire-format callers - unw_ergm.do's own
+	   ErgmNativeSampleCore() is the only one that ever sends 1;
+	   ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() always send a
+	   literal 0 at this exact position, keeping this shared header's
+	   own field count aligned across every mode, the same discipline
+	   `ncovmat' itself required when IT was added (unit 160). */
+	hasmask       = next_long();
 	nterms        = next_long();
 	if (nterms > MAXTERMS) { SF_error("ergm_mcmc: too many terms\n"); free(argbuf); return(198); }
 	if (nattr > MAXATTR) { SF_error("ergm_mcmc: too many attribute arrays\n"); free(argbuf); return(198); }
+	if (ncovmat > MAXCOVMAT) { SF_error("ergm_mcmc: too many dyadic covariate matrices\n"); free(argbuf); return(198); }
 	for (i = 0; i < nterms; i++) {
 		termcodes[i] = (int)next_long();
 		attridx[i] = (int)next_long();
 		p1[i] = next_double();
 		p2[i] = next_double();
+		covidx[i] = (int)next_long();
 		switch (termcodes[i]) {
 			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
 			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
@@ -2013,11 +2262,38 @@ STDLL stata_call(int argc, char *argv[]) {
 	free(argbuf);
 
 	/* --- build graph from dataset columns v1=ego v2=alter (rows
-	   1..nties_in), then nattr attribute columns (rows 1..n, one per
+	   1..nties_in), then [m, if bipartite] (rows 1..n, harmonisation
+	   unit 159), then nattr attribute columns (rows 1..n, one per
 	   distinct attribute array the model's own terms need - see this
 	   file's own header comment) --- */
 	g.n = n;
 	g.directed = (int)directed;
+	g.bipartite = (int)bipartite;
+	g.mode = NULL; g.mode1nodes = NULL; g.mode2nodes = NULL; g.n1 = 0; g.n2 = 0;
+	/* attribute columns start right after v1/v2 (column 3), shifted one
+	   further (column 4) when a mode column is present - every other
+	   attrs[]-column reference in this file already goes through this
+	   variable rather than a hardcoded `3', so this is the only place
+	   the shift needs to be applied. */
+	attrcol_base = bipartite ? 4 : 3;
+	if (bipartite) {
+		g.mode = (long *)calloc((size_t)(n + 1), sizeof(long));
+		for (i = 1; i <= n; i++) {
+			ST_double v;
+			SF_vdata(3, i, &v);
+			g.mode[i] = (long)v;
+			if (g.mode[i] == 1) g.n1++; else g.n2++;
+		}
+		g.mode1nodes = (long *)malloc((size_t)(g.n1 + 1) * sizeof(long));
+		g.mode2nodes = (long *)malloc((size_t)(g.n2 + 1) * sizeof(long));
+		{
+			long a = 0, b = 0;
+			for (i = 1; i <= n; i++) {
+				if (g.mode[i] == 1) g.mode1nodes[++a] = i;
+				else g.mode2nodes[++b] = i;
+			}
+		}
+	}
 	g.need_adj = need_adj;
 	g.need_outin = need_outin && directed;
 	ht_alloc(&g.ht, ht_next_pow2(nties_in * 2 + 16));
@@ -2044,9 +2320,92 @@ STDLL stata_call(int argc, char *argv[]) {
 		attrs[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
 		for (i = 1; i <= n; i++) {
 			ST_double v;
-			SF_vdata((int)(3 + k), i, &v);
+			SF_vdata((int)(attrcol_base + k), i, &v);
 			attrs[k][i] = SF_is_missing(v) ? 0.0 : v;
 		}
+	}
+	/* harmonisation unit 160: each distinct dense n x n dyadic covariate
+	   matrix (edgecov()/hamming()) crosses the wire as its own BLOCK of n
+	   dataset columns immediately after the nattr attribute columns (see
+	   unw_ergm.do's own ErgmNativeSampleCore()/etc. header comment on the
+	   covmat mechanism) - column (covmatcol_base + k*n + c) holds the
+	   k-th matrix's own column c (Stata row r == that matrix's row r), so
+	   flattening column-major (covmats[k][(c-1)*n+(r-1)]) reproduces
+	   Mata's edgecovmat[r,c] exactly, read back the same way in
+	   change_term()'s own TERMCODE_EDGECOV/TERMCODE_HAMMING cases. This
+	   inserts covmatcol_base..covmatcol_base+ncovmat*n-1 BEFORE every
+	   existing output-column reference in this function - `outcol_base'
+	   (not the old hardcoded `attrcol_base+nattr' expression) is used at
+	   every one of those sites below so none of them silently shift. */
+	covmatcol_base = attrcol_base + nattr;
+	maskcol_base = covmatcol_base + ncovmat * n;
+	outcol_base = maskcol_base + (hasmask ? n : 0);
+	for (k = 0; k < ncovmat; k++) {
+		long c, r;
+		covmats[k] = (double *)calloc((size_t)n * (size_t)n, sizeof(double));
+		for (c = 1; c <= n; c++) {
+			for (r = 1; r <= n; r++) {
+				ST_double v;
+				SF_vdata((int)(covmatcol_base + k*n + c - 1), r, &v);
+				covmats[k][(c-1)*n + (r-1)] = SF_is_missing(v) ? 0.0 : v;
+			}
+		}
+	}
+	/* harmonisation unit 168 (freedyads() masked TNT native port): the
+	   dyad-eligibility mask block (present only when hasmask), one
+	   column per dataset column, same column-major layout as a covmat
+	   block above - built into g.mask/g.free_pos (both dyadkey()-indexed,
+	   NOT this raw column-major layout - see graph_t's own field comment)
+	   and g.n_free_dyads BEFORE the initial observed-edge toggle() loop
+	   just below, since toggle() itself reads g.has_mask/g.mask/
+	   g.free_pos unconditionally once has_mask is set. g.n_free_dyads is
+	   computed here via the SAME canonical dyad-space walk
+	   ErgmModel::build_mple_data()'s own free-dyad preallocation counters
+	   use in unw_ergm.do (i<j for undirected, i!=j for directed, mode1 x
+	   mode2 for bipartite) - a direct, independent count over the raw
+	   mask data, not inferred from anything else. */
+	g.has_mask = (int)hasmask;
+	g.mask = NULL; g.free_pos = NULL;
+	g.free_elist_i = NULL; g.free_elist_j = NULL; g.free_ecap = 0; g.n_free_ties = 0;
+	g.n_free_dyads = 0.0;
+	if (hasmask) {
+		long dsize = (n + 1) * (n + 1);
+		double *maskraw = (double *)calloc((size_t)n * (size_t)n, sizeof(double));
+		long ii, jj;
+		for (jj = 1; jj <= n; jj++) {
+			for (ii = 1; ii <= n; ii++) {
+				ST_double v;
+				SF_vdata((int)(maskcol_base + jj - 1), ii, &v);
+				maskraw[(jj-1)*n + (ii-1)] = SF_is_missing(v) ? 0.0 : v;
+			}
+		}
+		g.mask = (int *)calloc((size_t)dsize, sizeof(int));
+		g.free_pos = (long *)malloc((size_t)dsize * sizeof(long));
+		for (i = 0; i < dsize; i++) g.free_pos[i] = -1;
+		if (g.bipartite) {
+			for (ii = 1; ii <= g.n1; ii++) {
+				for (jj = 1; jj <= g.n2; jj++) {
+					long i2 = g.mode1nodes[ii], j2 = g.mode2nodes[jj];
+					if (maskraw[(j2-1)*n + (i2-1)] != 0.0) {
+						g.mask[dyadkey(&g, i2, j2)] = 1;
+						g.n_free_dyads += 1.0;
+					}
+				}
+			}
+		}
+		else {
+			for (ii = 1; ii <= n; ii++) {
+				long jstart = directed ? 1 : ii + 1;
+				for (jj = jstart; jj <= n; jj++) {
+					if (jj == ii) continue;
+					if (maskraw[(jj-1)*n + (ii-1)] != 0.0) {
+						g.mask[dyadkey(&g, ii, jj)] = 1;
+						g.n_free_dyads += 1.0;
+					}
+				}
+			}
+		}
+		free(maskraw);
 	}
 	for (i = 1; i <= nties_in; i++) {
 		ST_double vi, vj;
@@ -2058,35 +2417,48 @@ STDLL stata_call(int argc, char *argv[]) {
 	if (mode == 1) {
 		/* Build the MPLE design matrix: one pass over every dyad (same
 		   ordering ErgmModel::build_mple_data() uses in unw_ergm.do -
-		   i=1..n, j=1..n, skip i==j, skip j<i for undirected - not that
-		   row order matters for fitting a logit design, but matching it
-		   keeps a direct row-by-row Mata-vs-native comparison possible
-		   during certification), writing each slot's own
-		   change_toward_one() value (the change statistic as if setting
-		   Y_ij=1, regardless of the dyad's own current state - the exact
-		   mirror-negation ErgmModel::change_toward_one() applies in Mata)
-		   plus the observed tie indicator as the response column, laid
-		   out immediately after the nterms change-statistic columns (at
-		   frame column 3+nattr+nterms - one more variable than the MCMC
-		   mode's own `plugin call' passes, see unw_ergm.do's
-		   ErgmNativeBuildMPLEData()). No MCMC, no RNG, no theta/obs use
-		   at all - burnin/interval/samplesize/proposal_code/rngseed are
-		   simply unused placeholders on this path. */
+		   i=1..n, j=1..n, skip i==j, skip j<i for undirected; for a
+		   bipartite graph (harmonisation unit 159), i ranges over
+		   mode1nodes and j over mode2nodes instead, the SAME restricted
+		   dyad-space loop ErgmModel::build_mple_data()'s own bipartite
+		   branch uses in unw_ergm.do - not that row order matters for
+		   fitting a logit design, but matching it keeps a direct
+		   row-by-row Mata-vs-native comparison possible during
+		   certification), writing each slot's own change_toward_one()
+		   value (the change statistic as if setting Y_ij=1, regardless
+		   of the dyad's own current state - the exact mirror-negation
+		   ErgmModel::change_toward_one() applies in Mata) plus the
+		   observed tie indicator as the response column, laid out
+		   immediately after the nterms change-statistic columns (at
+		   frame column outcol_base+nterms, i.e. attrcol_base+nattr+
+		   ncovmat*n+nterms once unit 160's own covmat column block is
+		   accounted for - one more variable
+		   than the MCMC mode's own `plugin call' passes, see
+		   unw_ergm.do's ErgmNativeBuildMPLEData()). No MCMC, no RNG, no
+		   theta/obs use at all - burnin/interval/samplesize/
+		   proposal_code/rngseed are simply unused placeholders on this
+		   path. */
 		long pos = 1;
-		long respcol = 3 + nattr + nterms;
-		for (i = 1; i <= n; i++) {
-			long j;
-			for (j = 1; j <= n; j++) {
+		long respcol = outcol_base + nterms;
+		long ii, jj;
+		for (ii = 1; ii <= (g.bipartite ? g.n1 : n); ii++) {
+			long jend = g.bipartite ? g.n2 : n;
+			for (jj = 1; jj <= jend; jj++) {
 				double delta, tied;
-				if (i == j) continue;
-				if (!directed && j < i) continue;
-				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
+				long i2 = g.bipartite ? g.mode1nodes[ii] : ii;
+				long j2 = g.bipartite ? g.mode2nodes[jj] : jj;
+				if (!g.bipartite) {
+					if (i2 == j2) continue;
+					if (!directed && j2 < i2) continue;
+				}
+				tied = has_edge(&g, i2, j2) ? 1.0 : 0.0;
 				delta = tied ? -1.0 : 1.0;
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, i, j);
+					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i2, j2);
 					double chg_toward_one = tied ? -chg : chg;
-					SF_vstore((int)(3 + nattr + k), pos, chg_toward_one);
+					SF_vstore((int)(outcol_base + k), pos, chg_toward_one);
 				}
 				SF_vstore((int)respcol, pos, tied);
 				pos++;
@@ -2095,10 +2467,13 @@ STDLL stata_call(int argc, char *argv[]) {
 		SF_scal_save("__ergm_native_ndyads_out", (ST_double)(pos - 1));
 
 		for (k = 0; k < nattr; k++) free(attrs[k]);
+		for (k = 0; k < ncovmat; k++) free(covmats[k]);
+		free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
 		free(g.deg);
 		free(g.outdeg); free(g.indeg);
 		ht_free(&g.ht);
 		free(g.elist_i); free(g.elist_j);
+	free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
 		if (g.adj) {
 			for (i = 0; i <= n; i++) free(g.adj[i].nb);
 			free(g.adj);
@@ -2150,7 +2525,8 @@ STDLL stata_call(int argc, char *argv[]) {
 				xrow = X + (size_t)pos * (size_t)nterms;
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, i, j);
+					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i, j);
 					xrow[k] = tied ? -chg : chg;
 				}
 				Y[pos] = tied;
@@ -2181,10 +2557,13 @@ STDLL stata_call(int argc, char *argv[]) {
 		}
 
 		for (k = 0; k < nattr; k++) free(attrs[k]);
+		for (k = 0; k < ncovmat; k++) free(covmats[k]);
+		free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
 		free(g.deg);
 		free(g.outdeg); free(g.indeg);
 		ht_free(&g.ht);
 		free(g.elist_i); free(g.elist_j);
+	free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
 		if (g.adj) {
 			for (i = 0; i <= n; i++) free(g.adj[i].nb);
 			free(g.adj);
@@ -2208,12 +2587,19 @@ STDLL stata_call(int argc, char *argv[]) {
 		long pi, pj;
 		double logratio, cutoff = 0.0, delta;
 		double chg[MAXTERMS];
-		if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
+		int propfail = 0;
+		if (g.has_mask) {
+			if (proposal_code == 2) propfail = propose_tnt_masked(&g, &rng, &pi, &pj, &logratio);
+			else propfail = propose_uniform_masked(&g, &rng, &pi, &pj, &logratio);
+			if (propfail) { SF_error("ergm_mcmc: freedyads() mask has no free dyad to propose after 1,000,000 draws\n"); return(198); }
+		}
+		else if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
 		else propose_uniform(&g, &rng, &pi, &pj, &logratio);
 		delta = has_edge(&g, pi, pj) ? -1.0 : 1.0;
 		for (k = 0; k < nterms; k++) {
 			double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-			chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, pi, pj);
+			double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+			chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 			cutoff += theta[k] * chg[k];
 		}
 		cutoff += logratio;
@@ -2228,12 +2614,19 @@ STDLL stata_call(int argc, char *argv[]) {
 			long pi, pj;
 			double logratio, cutoff = 0.0, delta;
 			double chg[MAXTERMS];
-			if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
+			int propfail = 0;
+			if (g.has_mask) {
+				if (proposal_code == 2) propfail = propose_tnt_masked(&g, &rng, &pi, &pj, &logratio);
+				else propfail = propose_uniform_masked(&g, &rng, &pi, &pj, &logratio);
+				if (propfail) { SF_error("ergm_mcmc: freedyads() mask has no free dyad to propose after 1,000,000 draws\n"); return(198); }
+			}
+			else if (proposal_code == 2) propose_tnt(&g, &rng, &pi, &pj, &logratio);
 			else propose_uniform(&g, &rng, &pi, &pj, &logratio);
 			delta = has_edge(&g, pi, pj) ? -1.0 : 1.0;
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-				chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, delta, pi, pj);
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 				cutoff += theta[k] * chg[k];
 			}
 			cutoff += logratio;
@@ -2244,7 +2637,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				naccept++;
 			}
 		}
-		for (k = 0; k < nterms; k++) SF_vstore((int)(3 + nattr + k), draw + 1, cur[k]);
+		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), draw + 1, cur[k]);
 	}
 
 	/* write back final edge list so the Mata caller can rebuild its own
@@ -2261,10 +2654,13 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	free(cur);
 	for (k = 0; k < nattr; k++) free(attrs[k]);
+	for (k = 0; k < ncovmat; k++) free(covmats[k]);
+	free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
 	free(g.deg);
 	free(g.outdeg); free(g.indeg);
 	ht_free(&g.ht);
 	free(g.elist_i); free(g.elist_j);
+	free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
 	if (g.adj) {
 		for (i = 0; i <= n; i++) free(g.adj[i].nb);
 		free(g.adj);

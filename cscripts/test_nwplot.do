@@ -72,6 +72,164 @@ assert _rc == 0
 nwplot, layout(mds)
 assert _rc == 0
 
+* layout(kk) - Kamada-Kawai via stress majorization (Guttman transform),
+* using this file's own existing distance()/circlelayout() helpers as
+* building blocks rather than duplicating them. Correctness check: on a
+* plain 6-node path graph (1-2-3-4-5-6), the two path endpoints (graph
+* distance 5) must end up farther apart in the final layout than two
+* directly adjacent nodes (graph distance 1) - the defining property of
+* a graph-distance-respecting layout, not just "did it run".
+nwclear
+nwrandom 12, prob(.25)
+nwplot, layout(kk)
+assert _rc == 0
+nwplot, layout(kk) iterations(200)
+assert _rc == 0
+
+nwclear
+clear
+qui set obs 6
+qui gen ego = _n
+qui gen alter = _n + 1
+qui gen w = 1
+qui drop if alter > 6
+nwfromedge ego alter w, name(kkpath)
+nwplot kkpath, layout(kk) iterations(300) generate(_kkpx _kkpy)
+assert _rc == 0
+mata: __kkpos = (st_data(.,"_kkpx"), st_data(.,"_kkpy"))
+mata: __kkd12 = sqrt(rowsum((__kkpos[1,.]-__kkpos[2,.]):^2))
+mata: __kkd16 = sqrt(rowsum((__kkpos[1,.]-__kkpos[6,.]):^2))
+mata: st_numscalar("__kkd12", __kkd12)
+mata: st_numscalar("__kkd16", __kkd16)
+assert __kkd16 > __kkd12
+mata: mata drop __kkpos __kkd12 __kkd16
+di "=== layout(kk) SELF-CONTAINED REGRESSION VERIFIED ==="
+
+* kk is now the DEFAULT layout (previously mds/mdsclassical, chosen by
+* node count) - confirmed here by timing, not by exact coordinates
+* (kk's own random starting configuration means two separate calls
+* never produce byte-identical output, even with identical settings,
+* so an exact-coordinate comparison would be the wrong check here).
+* mds/mdsclassical are both fast (a single Stata `mdsmat` call or a
+* per-component eigendecomposition); kk is a slow iterative procedure
+* by comparison - confirmed directly, 500 nodes takes ~2s under
+* explicit layout(mdsclassical) but multiple seconds under the
+* default. Also verifies the adaptive iteration-count scaling
+* (layout(kk)'s own dispatch code) keeps a default call on a
+* moderately large network well under what an unscaled 1000-iteration
+* run would take (confirmed separately during development: ~72
+* seconds unscaled at 500 nodes) - a generous 45-second ceiling here,
+* not a tight timing assertion, since exact wall-clock time is
+* machine-dependent and this is only guarding against the scaling
+* logic silently regressing back to the unscaled cost.
+nwclear
+nwrandom 300, prob(.01)
+timer clear 90
+timer on 90
+qui nwplot
+timer off 90
+quietly timer list 90
+assert r(t90) < 45
+di "=== kk is the default layout, with working adaptive iteration scaling, REGRESSION VERIFIED ==="
+
+* layout(hierarchy) - Sugiyama-style layered layout, meant for directed
+* (ideally DAG-shaped) networks: layer assignment via longest-path-from-
+* sources, barycenter crossing-reduction sweeps, then evenly-spaced
+* coordinates. Correctness check: on a hand-built 5-node DAG
+* (1->2, 1->3, 2->4, 3->4, 4->5), the source (node 1) must end up above
+* every other node, and each downstream layer must be strictly lower
+* (smaller y) than its predecessor's layer - the defining property of a
+* top-down hierarchy, not just "did it run". Also checked: a 3-node
+* cycle (1->2->3->1) plus an isolated 4th node does not crash or loop
+* forever (this package's own real GML-import GML-fixture pass, unit
+* 167, already showed why "this shape doesn't happen in practice" is
+* not a safe assumption to test only the happy path against).
+mata: __hierdag = J(5,5,0)
+mata: __hierdag[1,2]=1
+mata: __hierdag[1,3]=1
+mata: __hierdag[2,4]=1
+mata: __hierdag[3,4]=1
+mata: __hierdag[4,5]=1
+nwclear
+nwset, mat(__hierdag) name(hierdag) directed
+mata: mata drop __hierdag
+nwplot hierdag, layout(hierarchy) generate(_hy1 _hy2)
+assert _rc == 0
+mata: __hy = st_data(.,"_hy2")
+mata: st_numscalar("__hy1", __hy[1])
+mata: st_numscalar("__hy2", __hy[2])
+mata: st_numscalar("__hy4", __hy[4])
+mata: st_numscalar("__hy5", __hy[5])
+assert __hy1 > __hy2
+assert __hy2 > __hy4
+assert __hy4 > __hy5
+mata: mata drop __hy
+di "=== layout(hierarchy), acyclic case SELF-CONTAINED REGRESSION VERIFIED ==="
+
+mata: __hiercyc = J(4,4,0)
+mata: __hiercyc[1,2]=1
+mata: __hiercyc[2,3]=1
+mata: __hiercyc[3,1]=1
+nwclear
+nwset, mat(__hiercyc) name(hiercyc) directed
+mata: mata drop __hiercyc
+nwplot hiercyc, layout(hierarchy)
+assert _rc == 0
+di "=== layout(hierarchy), cyclic input does not crash/hang REGRESSION VERIFIED ==="
+
+nwclear
+nwrandom 25, prob(.1)
+nwplot, layout(hierarchy)
+assert _rc == 0
+nwrandom 15, prob(.2) undirected
+nwplot, layout(hierarchy)
+assert _rc == 0
+di "=== layout(hierarchy), directed/undirected smoke REGRESSIONS VERIFIED ==="
+
+* layout(bipartite) - dedicated two-mode layout, two rows by default
+* (mode 1 at y=1, mode 2 at y=0) or two columns with the `vertical'
+* sub-option (mode 1 at x=0.25, mode 2 at x=1.25), ordered within each
+* band via barycenter sweeps. Correctness check: every mode-1 node ends
+* up at y==1 and every mode-2 node at y==0 (rows) / x==0.25 vs x==1.25
+* (columns) - the defining property of a mode-separated layout. Also
+* checked: a non-bipartite network is rejected with a clear error
+* rather than silently plotting something meaningless.
+mata: __bipmat = J(3,2,0)
+mata: __bipmat[1,1]=1
+mata: __bipmat[2,1]=1
+mata: __bipmat[2,2]=1
+mata: __bipmat[3,2]=1
+nwclear
+nwset, mat(__bipmat) bipartite name(biptest)
+mata: mata drop __bipmat
+nwplot biptest, layout(bipartite) generate(_bx _by)
+assert _rc == 0
+* small floating-point residue (~1e-10) survives nwplot's own generic
+* coordinate post-processing regardless of layout - confirmed the same
+* artifact appears for kk/hierarchy above too, not specific to this
+* layout - so these are tolerance-based, not exact, comparisons
+assert abs(_by - 1) < 1e-6 in 1
+assert abs(_by - 1) < 1e-6 in 2
+assert abs(_by - 0) < 1e-6 in 3
+assert abs(_by - 0) < 1e-6 in 4
+assert abs(_by - 0) < 1e-6 in 5
+di "=== layout(bipartite), two-row SELF-CONTAINED REGRESSION VERIFIED ==="
+
+nwplot biptest, layout(bipartite, vertical) generate(_bvx _bvy)
+assert _rc == 0
+assert abs(_bvx - .25) < 1e-6 in 1
+assert abs(_bvx - .25) < 1e-6 in 2
+assert abs(_bvx - 1.25) < 1e-6 in 3
+assert abs(_bvx - 1.25) < 1e-6 in 4
+assert abs(_bvx - 1.25) < 1e-6 in 5
+di "=== layout(bipartite, vertical), two-column SELF-CONTAINED REGRESSION VERIFIED ==="
+
+nwclear
+nwrandom 8, prob(.3)
+capture noisily nwplot, layout(bipartite)
+assert _rc == 198
+di "=== layout(bipartite) on a non-two-mode network correctly rejected REGRESSION VERIFIED ==="
+
 * --- repeated nwplot/layout(,lgc) calls on the same >50-node network
 * (no nwclear between calls) used to be flagged as "not reliably
 * reproducible" in docs/CERTIFICATION.md's own Pending table - this

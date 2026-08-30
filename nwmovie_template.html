@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>nwmovie</title>
+<script>
+__NWMOVIE_CYTOSCAPE__
+</script>
+<script>
+__NWMOVIE_GIFJS__
+</script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, Helvetica, Arial, sans-serif; background: #fff; }
+  #toolbar { position: absolute; top: 0; left: 0; right: 0; height: 58px; background: #f4f4f6; border-bottom: 1px solid #d5d5da; display: flex; align-items: center; padding: 0 12px; gap: 10px; box-sizing: border-box; }
+  #toolbar button { padding: 6px 12px; border: 1px solid #b8b8c0; border-radius: 5px; background: #fff; cursor: pointer; font-size: 13px; }
+  #toolbar button:hover { background: #eee; }
+  #toolbar button:disabled { opacity: 0.5; cursor: default; }
+  #scrub { flex: 1; }
+  #label { min-width: 120px; font-size: 13px; color: #333; }
+  #timeReadout { min-width: 90px; font-size: 12px; color: #666; text-align: right; }
+  #speedSlider { width: 90px; }
+  #speedReadout { font-size: 12px; color: #666; min-width: 34px; }
+  #loopLabel { font-size: 13px; color: #333; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  #cy { position: absolute; top: 58px; left: 0; right: 0; bottom: 0; }
+  #gifStatus { font-size: 12px; color: #666; min-width: 110px; }
+  /* On-canvas time/wave readout - same draggable-handle + native CSS
+     `resize: both' pattern as nwedit_template.html's own #plotLegend (see
+     its own header comment), so this movie's own current wave/time is
+     "part of the plot" the same way that legend is, not just toolbar
+     chrome - and, like that legend, gets baked into exported frames (see
+     the GIF-export click handler below) rather than only ever showing up
+     in the live interactive view. */
+  #movieLabelBox {
+    position: absolute; bottom: 16px; left: 16px;
+    min-width: 90px; min-height: 30px;
+    max-width: 90%; max-height: 60%;
+    background: rgba(255,255,255,0.95); border: 1px solid #999; border-radius: 3px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.25); font-size: 13px; z-index: 50;
+    resize: both; overflow: auto; box-sizing: border-box;
+  }
+  #movieLabelHandle {
+    background: #eee; border-bottom: 1px solid #ccc; padding: 3px 8px;
+    cursor: move; font-weight: bold; font-size: 11px; color: #444; user-select: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  }
+  #movieLabelClose {
+    cursor: pointer; font-weight: bold; color: #888; padding: 0 2px; line-height: 1;
+  }
+  #movieLabelClose:hover { color: #c33; }
+  #movieLabelBody { padding: 6px 10px; white-space: nowrap; color: #222; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="btnPlay">&#9654; Play</button>
+  <span id="label">-</span>
+  <input type="range" id="scrub" min="0" max="1000" value="0" step="1">
+  <span id="timeReadout"></span>
+  <label id="loopLabel"><input type="checkbox" id="loopChk"> Loop</label>
+  <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
+  <span id="speedReadout">1.0x</span>
+  <button id="btnGif">Export GIF</button>
+  <span id="gifStatus"></span>
+</div>
+<div id="cy"></div>
+<div id="movieLabelBox">
+  <div id="movieLabelHandle"><span>⠿</span><span id="movieLabelClose" title="Remove this box">&times;</span></div>
+  <div id="movieLabelBody"></div>
+</div>
+
+<script>
+const MOVIE_DATA = __NWMOVIE_DATA__;
+const GIF_WORKER_SRC = __NWMOVIE_GIFWORKER__;
+
+// Same native-save-bridge contract as nwedit_template.html (nwplot's own
+// interactive view): a bare WKWebView has no working download for a
+// download-attribute anchor click, so nwedit_viewer.mm registers a
+// window.webkit.messageHandlers.nwedit script handler that shows a real
+// NSSavePanel instead. Reused verbatim here for GIF export.
+const hasNativeSave = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nwedit);
+
+function downloadBase64(base64, filename, mime) {
+  if (hasNativeSave) {
+    window.webkit.messageHandlers.nwedit.postMessage({ filename, dataBase64: base64 });
+    return;
+  }
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const isEvent = MOVIE_DATA.mode === 'event';
+
+// nwplot's own per-network resolved JSON (movieexport()) ids each edge
+// by a plain per-network positional counter ("e1","e2",...) - NOT a
+// stable per-dyad identity. Across two different networks the same id
+// can (and, on real data, regularly does) refer to two entirely
+// different node pairs. This diffing player needs the SAME dyad to keep
+// the SAME id across keyframes (that's how it recognizes "this edge
+// persists, just restyle it" vs. "this is new"), so ids are rewritten
+// here, once, from each edge's own source/target - confirmed directly
+// while building this: without this rewrite, a stale Cytoscape edge
+// element could end up "restyled" while still bound to its original,
+// now-wrong source/target (immutable once added), corrupting the
+// renderer's own parallel-edge geometry (a "reading 'intersectLine'"
+// crash mid-animation).
+if (!isEvent) {
+  MOVIE_DATA.keyframes.forEach(kf => {
+    kf.edges.forEach(e => {
+      e.id = MOVIE_DATA.directed ? ('e_' + e.source + '_' + e.target)
+        : ('e_' + [e.source, e.target].sort().join('_'));
+    });
+  });
+}
+
+// Same conversion nwedit_template.html's own single-snapshot view already
+// uses (nwplot's own movieexport()/interactive JSON always resolves a
+// color to a plain "R G B" string, never CSS - a browser needs a real CSS
+// color, so this happens at use time here rather than baking a second
+// color encoding into the exported JSON).
+function rgbStringToHex(rgb) {
+  const [r, g, b] = rgb.trim().split(/\s+/).map(Number);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+// Same mapping nwedit_template.html's own STATA_TO_CY_SHAPE uses -
+// nwplot's own resolved shape names (circle/square/triangle/diamond,
+// _getcolorstyle's own 4-shape canvas mapping) aren't all valid
+// Cytoscape.js shape names ("circle" isn't one - Cytoscape's own
+// circle-equivalent is "ellipse").
+const STATA_TO_CY_SHAPE = { circle: 'ellipse', square: 'rectangle', triangle: 'triangle', diamond: 'diamond' };
+
+function nodeStyleFor(n) {
+  return { 'background-color': rgbStringToHex(n.color), width: n.size, height: n.size, shape: STATA_TO_CY_SHAPE[n.shape] || 'ellipse' };
+}
+function edgeStyleFor(e) {
+  const c = rgbStringToHex(e.color);
+  return { 'line-color': c, 'target-arrow-color': c, width: e.width };
+}
+
+// Manual width/color tweening for edges (animateToFrame() below), used
+// instead of Cytoscape's own .animate() - edges there are always fully
+// removed and re-added fresh every transition (see animateToFrame()'s
+// own header comment: keeping one edge element alive across more than
+// one style/topology change is what actually crashed the renderer
+// during this feature's original development), so a persisting edge's
+// "animation" is this file driving its .style() by hand, once per
+// frame, over a plain requestAnimationFrame loop - never calling
+// .animate() on an edge at all, and never touching topology again once
+// a transition's edges have been (re)added.
+function lerpNum(a, b, t) { return a + (b - a) * t; }
+function lerpHexColor(hex0, hex1, t) {
+  const c0 = hex0.match(/\w\w/g).map(x => parseInt(x, 16));
+  const c1 = hex1.match(/\w\w/g).map(x => parseInt(x, 16));
+  return '#' + c0.map((v, i) => Math.round(lerpNum(v, c1[i], t)).toString(16).padStart(2, '0')).join('');
+}
+
+const initialNodes = isEvent ? MOVIE_DATA._nodesource.nodes : MOVIE_DATA.keyframes[0].nodes;
+const cy = cytoscape({
+  container: document.getElementById('cy'),
+  elements: {
+    // REAL BUG FOUND AND FIXED: nwplot.ado's own coordinates are
+    // normalized to roughly [0,1.5] x [0,1] (its own established
+    // plotting-box convention), not pixels - nwedit_template.html (the
+    // interactive single-network viewer this movie player was built
+    // alongside) already scales by 1000 for exactly this reason (see
+    // its own "position: { x: n.x * 1000, y: n.y * 1000 }"). This file
+    // never applied that same scale anywhere it sets a node's position
+    // - every node ended up crammed into a 1.5x1 PIXEL rectangle,
+    // indistinguishable from a single overlapping point at normal
+    // zoom - confirmed directly via a headless-Chromium screenshot
+    // showing exactly one dot where 50 real, individually-spread-out
+    // nodes should have rendered. Fixed here and at every other place
+    // in this file that sets a node's `x`/`y` (the two `ele.position`
+    // calls and the cross-fade interpolation below).
+    nodes: initialNodes.map(n => ({ data: { id: n.id, label: n.label }, position: { x: n.x * 1000, y: n.y * 1000 } })),
+    edges: isEvent ? [] : MOVIE_DATA.keyframes[0].edges.map(e => ({ data: { id: e.id, source: e.source, target: e.target } }))
+  },
+  style: [
+    { selector: 'node', style: { label: 'data(label)', 'font-size': 9, color: '#222', 'text-valign': 'bottom', 'text-margin-y': 3 } },
+    // straight, not bezier: bezier's parallel-edge control-point
+    // recalculation (findEdgeControlPoints) can throw ("reading
+    // 'intersectLine'") when it runs mid-tween while a node's position
+    // is actively being animated - confirmed directly while building
+    // this (panel-mode playback crashed reliably on the 2nd+ transition
+    // until this changed). straight edges use no such control-point
+    // math and are the more natural choice for a live-animated player
+    // regardless.
+    { selector: 'edge', style: Object.assign({ 'curve-style': 'straight', opacity: 1 },
+        MOVIE_DATA.directed ? { 'target-arrow-shape': 'triangle', 'arrow-scale': 0.8 } : {}) }
+  ],
+  layout: { name: 'preset' },
+  wheelSensitivity: 0.25,
+  minZoom: 0.1,
+  maxZoom: 6
+});
+initialNodes.forEach(n => cy.getElementById(n.id).style(nodeStyleFor(n)));
+if (!isEvent) MOVIE_DATA.keyframes[0].edges.forEach(e => cy.getElementById(e.id).style(edgeStyleFor(e)));
+cy.fit(undefined, 30);
+
+const labelEl = document.getElementById('label');
+const scrubEl = document.getElementById('scrub');
+const timeEl = document.getElementById('timeReadout');
+const playBtn = document.getElementById('btnPlay');
+const speedSlider = document.getElementById('speedSlider');
+const speedReadout = document.getElementById('speedReadout');
+const loopChk = document.getElementById('loopChk');
+let playing = false;
+
+speedSlider.addEventListener('input', () => {
+  speedReadout.textContent = parseFloat(speedSlider.value).toFixed(1) + 'x';
+});
+
+// On-canvas time/wave readout box - draggable via #movieLabelHandle,
+// resizable via native CSS `resize: both' on #movieLabelBox, same
+// pattern as nwedit_template.html's own #plotLegend (see that file's own
+// header comment on buildPlotLegend()/enableLegendDrag()/
+// enableLegendResize() for the full rationale, mirrored here rather than
+// reinvented). updateOverlay() below keeps this box's own text in sync
+// with the toolbar's #label/#timeReadout everywhere those are set live;
+// the GIF-export click handler separately bakes it into exported frames
+// (mirroring nwedit_template.html's own exportPng(), which does the same
+// for #plotLegend against a static PNG rather than a frame sequence).
+const movieLabelBody = document.getElementById('movieLabelBody');
+// Set once the box's own close button ("x") is clicked - the box is
+// removed for the rest of this page's life (no way to bring it back
+// short of reloading the movie), and GIF export stops baking it into
+// exported frames from that point on, matching what a removed overlay
+// visually implies.
+let movieLabelRemoved = false;
+document.getElementById('movieLabelClose').addEventListener('click', () => {
+  movieLabelRemoved = true;
+  document.getElementById('movieLabelBox').style.display = 'none';
+});
+function updateOverlay(labelText, timeText) {
+  labelEl.textContent = labelText;
+  timeEl.textContent = timeText;
+  if (!movieLabelRemoved) movieLabelBody.textContent = timeText ? (labelText + '   ' + timeText) : labelText;
+}
+
+function enableMovieLabelDrag() {
+  const box = document.getElementById('movieLabelBox');
+  const handle = document.getElementById('movieLabelHandle');
+  let dragging = false, offX = 0, offY = 0;
+  handle.addEventListener('mousedown', e => {
+    if (e.target.id === 'movieLabelClose') return; // let the close button's own click handle it
+    const rect = box.getBoundingClientRect();
+    box.style.left = rect.left + 'px';
+    box.style.top = rect.top + 'px';
+    box.style.bottom = 'auto';
+    dragging = true;
+    offX = e.clientX - box.offsetLeft;
+    offY = e.clientY - box.offsetTop;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    box.style.left = (e.clientX - offX) + 'px';
+    box.style.top = (e.clientY - offY) + 'px';
+  });
+  document.addEventListener('mouseup', () => { dragging = false; });
+}
+// Native CSS `resize: both' only changes the box's own dimensions - text
+// stays a fixed pixel size unless scaled explicitly, same issue
+// applyLegendScale() in nwedit_template.html already solves the same way
+// (ResizeObserver reports box width, font-size scales proportionally).
+// movieLabelScale only ever changes from a manual box resize
+// (ResizeObserver below) - updateOverlay() above never touches font-size,
+// only textContent, so the box's own font stays the same size across
+// every wave regardless of how long each wave's own title/counter text
+// happens to be; only dragging the resize handle changes it.
+let movieLabelScale = 1;
+let movieLabelBaseWidth = null;
+function applyMovieLabelScale(width) {
+  if (movieLabelBaseWidth === null) movieLabelBaseWidth = width;
+  movieLabelScale = Math.min(4, Math.max(0.6, width / movieLabelBaseWidth));
+  movieLabelBody.style.fontSize = (13 * movieLabelScale) + 'px';
+}
+function enableMovieLabelResize() {
+  const box = document.getElementById('movieLabelBox');
+  if (!window.ResizeObserver) return;
+  const ro = new ResizeObserver(entries => {
+    for (const entry of entries) applyMovieLabelScale(entry.contentRect.width);
+  });
+  ro.observe(box);
+}
+enableMovieLabelDrag();
+enableMovieLabelResize();
+
+// Renders the SAME overlay content (background box + text) onto an
+// export canvas at the box's current on-screen position/size, scaled
+// into that canvas's own pixel space - the frame-sequence counterpart of
+// nwedit_template.html's own drawShapeOnCanvas()-family/exportPng(),
+// which does the identical box-position-to-canvas-pixel mapping for a
+// single static PNG rather than every frame of a GIF.
+function drawMovieLabelOnCanvas(ctx, text, x, y, w, h, scale) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = '#222';
+  ctx.font = (13 * movieLabelScale * scale) + 'px -apple-system, Helvetica, Arial, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x + 10 * scale, y + h / 2);
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------
+// Panel mode: a small, fixed list of keyframes (one per network passed to
+// nwmovie). Same node id set/order in every keyframe (nwmovie enforces
+// equal-size networks, matching the old ImageMagick-era command's own
+// requirement) - edges are matched across keyframes by a stable id
+// (e_<source>_<target>, or the canonicalized min/max form for an
+// undirected network) so a tie that persists across two consecutive
+// networks is recognized as "the same edge, restyle it" rather than
+// "remove one, add another" (which would flicker instead of transition).
+// ---------------------------------------------------------------------
+if (!isEvent) {
+  const nkf = MOVIE_DATA.keyframes.length;
+  scrubEl.max = String(nkf - 1);
+  let curFrame = 0;
+
+  function applyFrameInstant(idx) {
+    const kf = MOVIE_DATA.keyframes[idx];
+    cy.batch(() => {
+      kf.nodes.forEach(n => {
+        const ele = cy.getElementById(n.id);
+        ele.position({ x: n.x * 1000, y: n.y * 1000 });
+        ele.style(nodeStyleFor(n));
+      });
+      // Full wipe-and-rebuild, matching animateToFrame()'s own edge
+      // handling (see its comment) - the same edge element surviving
+      // across more than one style/topology change is the one thing
+      // every crash reproduced during this feature's development had in
+      // common, so scrubbing avoids it identically rather than relying
+      // on a code path that only happened not to trigger it in testing.
+      cy.edges().remove();
+      kf.edges.forEach(e => {
+        cy.add({ group: 'edges', data: { id: e.id, source: e.source, target: e.target }, style: edgeStyleFor(e) });
+      });
+    });
+    curFrame = idx;
+    updateOverlay(kf.label || ('Frame ' + (idx + 1) + '/' + nkf), (idx + 1) + ' / ' + nkf);
+    scrubEl.value = String(idx);
+  }
+
+  function animateToFrame(idx, duration) {
+    return new Promise(resolve => {
+      const prevKf = MOVIE_DATA.keyframes[curFrame];
+      const kf = MOVIE_DATA.keyframes[idx];
+      const edgeIds = new Set(kf.edges.map(e => e.id));
+      const easing = MOVIE_DATA.easing || 'ease-in-out-cubic';
+      let pending = 0;
+
+      // Two phases, not one: node positions animate first; edge add/
+      // remove/restyle is applied as a single batched, instant step only
+      // AFTER every node has finished moving. Animating node position and
+      // edge opacity in the SAME tick (the first version of this
+      // function did) crashed Cytoscape's own internal renderer
+      // ("reading 'intersectLine'", inside findEdgeControlPoints) as
+      // soon as a node's degree increased across a transition (two new
+      // edges sharing an endpoint mid-tween) - confirmed directly while
+      // building this, reproducible every time on the wave2->wave3
+      // transition of a real 3-wave test movie. This trades away an edge
+      // fade-in for correctness; edges now pop in right after their
+      // endpoints settle, which reads fine in practice.
+      // Wipe every edge and re-add the target keyframe's edges fresh,
+      // rather than diffing (restyling survivors, adding/removing the
+      // rest) - the diffing version, even deferred a tick past the
+      // triggering animation's own `complete' callback, still crashed
+      // Cytoscape's internal renderer the same way (findEdgeControlPoints
+      // reading a property off undefined). A full rebuild never asks the
+      // renderer to recompute geometry for an edge object that has lived
+      // through more than one style/topology change, which is the one
+      // thing every crashing scenario during this feature's development
+      // had in common.
+      // Persisting edges (same id in both the previous and target
+      // keyframe) get width/color TWEENED, not snapped: re-added at
+      // their OLD style, then walked to the target style by hand over a
+      // plain requestAnimationFrame loop (see lerpNum()/lerpHexColor()'s
+      // own header comment for why this isn't Cytoscape's .animate()).
+      // A brand-new edge (no previous style to come from) is just added
+      // at its final style directly, same as before - this only adds a
+      // transition for edges that already existed and are changing
+      // width/color, matching what was actually asked for.
+      const prevEdgeById = new Map(prevKf.edges.map(e => [e.id, e]));
+      const applyEdges = () => {
+        const tweens = [];
+        cy.batch(() => {
+          cy.edges().remove();
+          kf.edges.forEach(e => {
+            const toStyle = edgeStyleFor(e);
+            const fromEdge = prevEdgeById.get(e.id);
+            const fromStyle = fromEdge ? edgeStyleFor(fromEdge) : toStyle;
+            const ele = cy.add({ group: 'edges', data: { id: e.id, source: e.source, target: e.target }, style: fromStyle });
+            if (fromEdge && (fromStyle.width !== toStyle.width || fromStyle['line-color'] !== toStyle['line-color'])) {
+              tweens.push({ ele, from: fromStyle, to: toStyle });
+            }
+          });
+        });
+        if (tweens.length === 0) { resolve(); return; }
+        const start = performance.now();
+        const step = (now) => {
+          const t = Math.min(1, (now - start) / duration);
+          cy.batch(() => {
+            tweens.forEach(({ ele, from, to }) => {
+              const c = lerpHexColor(from['line-color'], to['line-color'], t);
+              ele.style({ 'line-color': c, 'target-arrow-color': c, width: lerpNum(from.width, to.width, t) });
+            });
+          });
+          if (t < 1) requestAnimationFrame(step); else resolve();
+        };
+        requestAnimationFrame(step);
+      };
+      // setTimeout, not a direct call: `complete' fires from INSIDE
+      // Cytoscape's own animation/render tick, and cy.batch() alone
+      // (called synchronously from there) still crashed the renderer
+      // ("reading 'intersectLine'", findEdgeControlPoints) - a
+      // reentrant graph mutation from mid-render. Deferring one tick so
+      // cy.add()/.remove() run only after that render pass has fully
+      // finished.
+      const donePosition = () => { pending--; if (pending <= 0) setTimeout(applyEdges, 0); };
+
+      kf.nodes.forEach(n => {
+        const ele = cy.getElementById(n.id);
+        pending++;
+        // shape is discrete (circle/square/triangle/diamond), not a
+        // continuously tweenable property the way color/width/position
+        // are - applied instantly, outside the animated style object,
+        // not because it visibly needs to NOT transition, but because
+        // asking Cytoscape's own .animate() to interpolate it turned out
+        // to be the actual trigger for the "reading 'intersectLine'"
+        // renderer crash chased through this feature's whole
+        // development (reproduced identically whether edges were
+        // diffed or fully rebuilt - the one thing left in common was
+        // this node-style animation including `shape').
+        ele.style('shape', nodeStyleFor(n).shape);
+        const { shape, ...animStyle } = nodeStyleFor(n);
+        ele.animate({ position: { x: n.x * 1000, y: n.y * 1000 }, style: animStyle }, { duration, easing, complete: donePosition });
+      });
+      if (pending === 0) applyEdges();
+      curFrame = idx;
+      updateOverlay(kf.label || ('Frame ' + (idx + 1) + '/' + nkf), (idx + 1) + ' / ' + nkf);
+      scrubEl.value = String(idx);
+    });
+  }
+
+  async function play() {
+    playing = true;
+    playBtn.textContent = '⏸ Pause';
+    if (curFrame >= nkf - 1) { applyFrameInstant(0); await new Promise(r => setTimeout(r, 150)); }
+    while (playing) {
+      if (curFrame >= nkf - 1) {
+        if (!loopChk.checked) break;
+        applyFrameInstant(0);
+        await new Promise(r => setTimeout(r, 150));
+        if (!playing) break;
+        continue;
+      }
+      const speed = parseFloat(speedSlider.value) || 1;
+      await animateToFrame(curFrame + 1, (MOVIE_DATA.duration || 800) / speed);
+      if (!playing) break;
+    }
+    playing = false;
+    playBtn.textContent = '▶ Play';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { playing = false; playBtn.textContent = '▶ Play'; }
+    else { play(); }
+  });
+  scrubEl.addEventListener('input', () => {
+    playing = false;
+    playBtn.textContent = '▶ Play';
+    applyFrameInstant(parseInt(scrubEl.value, 10));
+  });
+
+  applyFrameInstant(0);
+
+  window.__nwmovieCaptureFrames = async function (frameDelayMs) {
+    const frames = [];
+    const speed = parseFloat(speedSlider.value) || 1;
+    const totalMs = ((nkf - 1) * (MOVIE_DATA.duration || 800)) / speed;
+    const n = Math.max(1, Math.round(totalMs / frameDelayMs));
+    for (let i = 0; i <= n; i++) {
+      const tGlobal = (i / n) * (nkf - 1);
+      const k0 = Math.min(nkf - 2, Math.floor(tGlobal));
+      const frac = tGlobal - k0;
+      const a = MOVIE_DATA.keyframes[k0], b = MOVIE_DATA.keyframes[k0 + 1];
+      // matches updateOverlay()'s own convention (label + frame counter);
+      // shape switches at the same frac<0.5 midpoint as node style just
+      // below, so which wave's own label is shown lines up with which
+      // wave's own shapes are currently on screen.
+      const activeKf = frac < 0.5 ? k0 : k0 + 1;
+      const frameText = (MOVIE_DATA.keyframes[activeKf].label || ('Frame ' + (activeKf + 1))) + '   ' + (activeKf + 1) + ' / ' + nkf;
+      const edgeIds = new Set([...a.edges, ...b.edges].map(e => e.id));
+      // matches the live-playback path's own treatment (animateToFrame()
+      // above): color/size are continuously blended between a's and b's
+      // resolved style, shape is a discrete switch at the midpoint - kept
+      // consistent here so an exported GIF looks the same as watching it
+      // live, not a cruder approximation of it.
+      const aEdgeById = new Map(a.edges.map(e => [e.id, e]));
+      const bEdgeById = new Map(b.edges.map(e => [e.id, e]));
+      cy.batch(() => {
+        cy.edges().forEach(e => { if (!edgeIds.has(e.id())) e.remove(); });
+        a.nodes.forEach((n0, idx) => {
+          const n1 = b.nodes[idx];
+          const ele = cy.getElementById(n0.id);
+          ele.position({ x: (n0.x + (n1.x - n0.x) * frac) * 1000, y: (n0.y + (n1.y - n0.y) * frac) * 1000 });
+          const s0 = nodeStyleFor(n0), s1 = nodeStyleFor(n1);
+          ele.style({
+            'background-color': lerpHexColor(s0['background-color'], s1['background-color'], frac),
+            width: lerpNum(s0.width, s1.width, frac),
+            height: lerpNum(s0.height, s1.height, frac),
+            shape: frac < 0.5 ? s0.shape : s1.shape
+          });
+        });
+        edgeIds.forEach(id => {
+          const ea = aEdgeById.get(id), eb = bEdgeById.get(id);
+          let ele = cy.getElementById(id);
+          if (ea && eb) {
+            const s0 = edgeStyleFor(ea), s1 = edgeStyleFor(eb);
+            if (ele.empty()) ele = cy.add({ group: 'edges', data: { id, source: eb.source, target: eb.target } });
+            const c = lerpHexColor(s0['line-color'], s1['line-color'], frac);
+            ele.style({ 'line-color': c, 'target-arrow-color': c, width: lerpNum(s0.width, s1.width, frac), opacity: 1 });
+          } else if (ea) {
+            if (ele.empty()) ele = cy.add({ group: 'edges', data: { id, source: ea.source, target: ea.target } });
+            ele.style(Object.assign({}, edgeStyleFor(ea), { opacity: 1 - frac }));
+          } else {
+            if (ele.empty()) ele = cy.add({ group: 'edges', data: { id, source: eb.source, target: eb.target } });
+            ele.style(Object.assign({}, edgeStyleFor(eb), { opacity: frac }));
+          }
+        });
+      });
+      await new Promise(r => requestAnimationFrame(r));
+      frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: frameText });
+    }
+    applyFrameInstant(curFrame);
+    return frames;
+  };
+}
+
+// ---------------------------------------------------------------------
+// Event mode: a single event-type temporal network (nwset's own
+// eventtime() option - see nwrem's identical input convention). Node
+// positions are static (one layout computed once, over the union of all
+// sender/receiver pairs that ever occur); the movie is a scrubbable
+// timeline over real event time, replaying ties as pulses that persist
+// for window() time units (or permanently, if window() was omitted) then
+// decay. State at any time t is recomputed from scratch on every seek -
+// simple and exactly reproducible from a scrub, rather than depending on
+// incremental diffing that could drift.
+// ---------------------------------------------------------------------
+if (isEvent) {
+  const events = MOVIE_DATA.events;
+  const tmin = MOVIE_DATA.tmin, tmax = MOVIE_DATA.tmax;
+  const win = MOVIE_DATA.window; // number or null (null = no decay, permanent accumulation)
+  scrubEl.min = String(tmin);
+  scrubEl.max = String(tmax);
+  scrubEl.step = String((tmax - tmin) / 2000 || 1);
+  let clock = tmin;
+  let prevActive = new Set();
+
+  function edgeIdFor(s, r) {
+    if (MOVIE_DATA.directed) return 'ev_' + s + '_' + r;
+    return 'ev_' + (s < r ? s + '_' + r : r + '_' + s);
+  }
+
+  function seekTo(t, flash) {
+    const raw = new Map();
+    for (const ev of events) {
+      if (ev.t > t) break;
+      raw.set(edgeIdFor(ev.sender, ev.receiver), { s: ev.sender, r: ev.receiver, last: ev.t });
+    }
+    // Decay filtering happens BEFORE the cy.edges() removal check below,
+    // not after (an earlier version applied it in the same pass that
+    // decided what to remove from cy - `active.delete(id)' there
+    // dropped a decayed dyad from the JS map but the matching Cytoscape
+    // edge element was never actually removed from the canvas, since
+    // that removal check had already run against the PRE-decay map;
+    // confirmed directly, edges accumulated on screen forever past
+    // their own window()). `active' here is the final, already-decay-
+    // filtered set - removal/add/style all read from it, nothing else.
+    const active = new Map();
+    raw.forEach((info, id) => {
+      if (win != null && (t - info.last) > win) return;
+      active.set(id, info);
+    });
+    const newIds = [];
+    cy.batch(() => {
+      cy.edges().forEach(e => { if (!active.has(e.id())) e.remove(); });
+      active.forEach((info, id) => {
+        const opacity = win != null ? Math.max(0.15, 1 - (t - info.last) / win) : 1;
+        let ele = cy.getElementById(id);
+        if (ele.empty()) {
+          ele = cy.add({ group: 'edges', data: { id, source: info.s, target: info.r } });
+          newIds.push(id);
+        }
+        ele.style(Object.assign({ 'line-color': '#d64545', 'target-arrow-color': '#d64545', width: 2 }, { opacity }));
+      });
+    });
+    if (flash) {
+      newIds.forEach(id => {
+        const ele = cy.getElementById(id);
+        if (ele.empty()) return;
+        ele.animate({ style: { width: 5 } }, { duration: 120, complete: () => ele.animate({ style: { width: 2 } }, { duration: 250 }) });
+      });
+    }
+    prevActive = new Set(active.keys());
+    clock = t;
+    scrubEl.value = String(t);
+    updateOverlay(active.size + ' active tie' + (active.size === 1 ? '' : 's'), t.toFixed(2) + ' / ' + tmax.toFixed(2));
+  }
+
+  let lastReal = null;
+  function tick(now) {
+    if (!playing) { lastReal = null; return; }
+    if (lastReal == null) lastReal = now;
+    const dtReal = (now - lastReal) / 1000;
+    lastReal = now;
+    const speed = parseFloat(speedSlider.value) || 1;
+    let t = clock + dtReal * speed;
+    if (t >= tmax) {
+      if (loopChk.checked) { t = tmin; }
+      else { t = tmax; playing = false; playBtn.textContent = '▶ Play'; }
+    }
+    seekTo(t, true);
+    if (playing) requestAnimationFrame(tick);
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (playing) { playing = false; playBtn.textContent = '▶ Play'; return; }
+    if (clock >= tmax) seekTo(tmin, false);
+    playing = true;
+    playBtn.textContent = '⏸ Pause';
+    lastReal = null;
+    requestAnimationFrame(tick);
+  });
+  scrubEl.addEventListener('input', () => {
+    playing = false;
+    playBtn.textContent = '▶ Play';
+    seekTo(parseFloat(scrubEl.value), false);
+  });
+
+  seekTo(tmin, false);
+
+  window.__nwmovieCaptureFrames = async function (frameDelayMs) {
+    const frames = [];
+    const speed = parseFloat(speedSlider.value) || 1;
+    const totalMs = ((tmax - tmin) / speed) * 1000;
+    const n = Math.max(1, Math.round(totalMs / frameDelayMs));
+    for (let i = 0; i <= n; i++) {
+      const t = tmin + (i / n) * (tmax - tmin);
+      seekTo(t, false);
+      await new Promise(r => requestAnimationFrame(r));
+      // seekTo() above already called updateOverlay(), so labelEl/timeEl
+      // already hold exactly this frame's own text.
+      frames.push({ blob: cy.png({ output: 'blob', full: false, bg: '#ffffff', scale: 1 }), text: labelEl.textContent + '   ' + timeEl.textContent });
+    }
+    seekTo(clock, false);
+    return frames;
+  };
+}
+
+// ---------------------------------------------------------------------
+// GIF export (point 1 of the scoping discussion: a downloadable movie
+// file stays available, not just the live interactive view). Frames are
+// computed by direct, instantaneous state application (never by sampling
+// a live/animated playback), so the export is deterministic and cannot
+// race the renderer - the same __nwmovieCaptureFrames() array feeds
+// both branches above and this. gif.js's own worker script is inlined as
+// a JS source string at build time (GIF_WORKER_SRC) and turned into a
+// Blob URL here rather than shipped as a second file, matching this
+// template's own "fully self-contained, no relative-file dependency"
+// convention (the same reason cytoscape.min.js is inlined rather than
+// loaded via <script src>).
+// ---------------------------------------------------------------------
+document.getElementById('btnGif').addEventListener('click', async () => {
+  playing = false;
+  playBtn.textContent = '▶ Play';
+  const btn = document.getElementById('btnGif');
+  const status = document.getElementById('gifStatus');
+  btn.disabled = true;
+  status.textContent = 'Rendering frames...';
+  try {
+    const workerUrl = URL.createObjectURL(new Blob([GIF_WORKER_SRC], { type: 'application/javascript' }));
+    const cyRect = document.getElementById('cy').getBoundingClientRect();
+    const labelRect = document.getElementById('movieLabelBox').getBoundingClientRect();
+    // gif.js's own default is repeat:0 (loop forever) regardless of this
+    // page's own Loop checkbox - explicit here so an exported GIF only
+    // loops when Loop is actually checked at export time (repeat:-1 is
+    // gif.js's/the GIF89a NETSCAPE2.0 extension's own convention for
+    // "play once, no loop"; 0 is "loop forever" - there is no "loop
+    // exactly once more" middle option this checkbox could mean instead).
+    const gif = new GIF({ workers: 2, quality: 10, workerScript: workerUrl, repeat: loopChk.checked ? 0 : -1, width: Math.round(cyRect.width), height: Math.round(cyRect.height) });
+    const frames = await window.__nwmovieCaptureFrames(90);
+    // Bakes the on-canvas time/wave readout into every exported frame, at
+    // its own current on-screen position/size - same box-to-canvas-pixel
+    // mapping nwedit_template.html's own exportPng() uses for #plotLegend
+    // against a single static PNG (see its own header comment), applied
+    // here once per GIF frame instead. Capture frames are always taken at
+    // scale:1 (both __nwmovieCaptureFrames() implementations above), so
+    // the mapping is a direct 1:1 pixel offset, no extra scale factor.
+    const lx = labelRect.left - cyRect.left;
+    const ly = labelRect.top - cyRect.top;
+    const lw = labelRect.width;
+    const lh = labelRect.height;
+    const showLabel = !movieLabelRemoved && (lx + lw > 0 && ly + lh > 0 && lx < cyRect.width && ly < cyRect.height);
+    for (let i = 0; i < frames.length; i++) {
+      status.textContent = 'Encoding frame ' + (i + 1) + '/' + frames.length;
+      const img = await new Promise(resolve => {
+        const im = new Image();
+        im.onload = () => resolve(im);
+        im.src = URL.createObjectURL(frames[i].blob);
+      });
+      if (!showLabel) {
+        gif.addFrame(img, { delay: 90 });
+        continue;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      drawMovieLabelOnCanvas(ctx, frames[i].text, lx, ly, lw, lh, 1);
+      gif.addFrame(canvas, { delay: 90 });
+    }
+    status.textContent = 'Encoding GIF...';
+    gif.on('finished', blob => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.slice(reader.result.indexOf(',') + 1);
+        downloadBase64(base64, 'nwmovie_export.gif', 'image/gif');
+        status.textContent = 'Done.';
+        btn.disabled = false;
+      };
+      reader.readAsDataURL(blob);
+    });
+    gif.render();
+  } catch (err) {
+    status.textContent = 'Failed: ' + err.message;
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

@@ -67,6 +67,16 @@ and the advanced statistical analysis of networks.
 Furthermore, one can easily extend the network capabilities of Stata and write
 own {help nw_programming:network programs}.
 
+{pstd}
+A minimal example - load a real network and compute degree centrality:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwdegree flomarriage, generate(deg)}
+	{cmd:. list deg in 1/5}
+
+{pstd}
+See {help nw_start} for a full, hands-on walkthrough.
+
 
 {marker limits}{...}
 {title:Limitations and feasible network sizes}

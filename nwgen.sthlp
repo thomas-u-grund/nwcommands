@@ -205,3 +205,24 @@ The command can also be used to generate networks. There are two ways to do this
 {phang2}{opth transpose(netname)}
 {p_end}
 {pmore2}Transpose a network (see {help nwtranspose}).
+
+{title:Examples}
+
+{pstd}
+Generate a per-node variable with a network function:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwgen mydeg = degree(flomarriage)}
+	{cmd:. list mydeg in 1/5}
+
+{pstd}
+Generate a new network with a network function:
+
+	{cmd:. nwgen newnet = random(10), prob(.3)}
+	{cmd:. nwsummarize newnet}
+
+{pstd}
+Generate a new network with a network expression:
+
+	{cmd:. nwgen bus_marr = flomarriage * flobusiness}
+	{cmd:. nwsummarize bus_marr, matonly}

@@ -48,4 +48,14 @@ sorting of the observations on the variable {bf:_nwnode} does not correspond to 
 to switch syncing off. But keep in mind that then it is up to you to make sure that observations correspond to nodes in the network. In this case, the first observation in the
 dataset is matched with the first node in the network and so on.
 
+{title:Examples}
+
+{pstd}
+Generate a variable indicating which dataset observations correspond to nodes in the current network:
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 5, prob(.4) name(mynet)}
+	{cmd:. nw_datasync mynet, generate(innet)}
+	{cmd:. list innet}
+
 last certified : 22 Aug 2026

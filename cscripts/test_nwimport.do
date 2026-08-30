@@ -110,6 +110,98 @@ assert `"`r(netname)'"' == `"comptest"'
 assert         r(nodes) == 4
 di "=== type(compressed) SELF-CONTAINED REGRESSION VERIFIED ==="
 
+tempfile gmlfix
+qui {
+	file open gmlh using `"`gmlfix'"', write text replace
+	file write gmlh `"Creator "me""' _n
+	file write gmlh `"Version "xx""' _n
+	file write gmlh "graph [" _n
+	file write gmlh `" comment "This is a sample graph""' _n
+	file write gmlh " directed 1" _n
+	file write gmlh " IsPlanar 1" _n
+	file write gmlh " pos  [ x 0 y 1 ]" _n
+	file write gmlh " node [" _n
+	file write gmlh "   id 1" _n
+	file write gmlh `"   label "Node 1""' _n
+	file write gmlh "   pos [ x 1 y 1 ]" _n
+	file write gmlh " ]" _n
+	file write gmlh " node [" _n
+	file write gmlh "    id 2" _n
+	file write gmlh "    pos [ x 1 y 2 ]" _n
+	file write gmlh `"    label "Node 2""' _n
+	file write gmlh "    ]" _n
+	file write gmlh "  node [" _n
+	file write gmlh "    id 3" _n
+	file write gmlh `"    label "Node 3""' _n
+	file write gmlh "    pos [ x 1 y 3 ]" _n
+	file write gmlh "  ]" _n
+	file write gmlh "  edge [" _n
+	file write gmlh "    source 1" _n
+	file write gmlh "    target 2" _n
+	file write gmlh `"    label "Edge from node 1 to node 2""' _n
+	file write gmlh `"    color [line "blue" thickness 3]"' _n
+	file write gmlh "" _n
+	file write gmlh "  ]" _n
+	file write gmlh "  edge [" _n
+	file write gmlh "    source 2" _n
+	file write gmlh "    target 3" _n
+	file write gmlh `"    label "Edge from node 2 to node 3""' _n
+	file write gmlh "  ]" _n
+	file write gmlh "  edge [" _n
+	file write gmlh "    source 3" _n
+	file write gmlh "    target 1" _n
+	file write gmlh `"    label "Edge from node 3 to node 1""' _n
+	file write gmlh "  ]" _n
+	file write gmlh "]" _n
+	file close gmlh
+}
+nwclear
+
+* type(gml), self-contained (no external host needed) - real bug, real
+* fixture: this exact GML content is networkx's own test_gml.py
+* `simple_data' fixture (not this package's self-generated exporter
+* output, which never happened to exercise either bug below). Two real
+* bugs found and fixed here:
+*  (1) _nwimport_gml's own `while `"`line'"' != ""' loop condition
+*      treated ANY blank line as end-of-file - this fixture has one
+*      inside its first `edge [...]' block, which silently truncated
+*      parsing to a fragment of the first edge with no error. Fixed to
+*      `while r(eof) == 0'.
+*  (2) even after (1), import still failed with a generic "Loading
+*      networks... failed" (r(6750)) wrapper error. Root cause: multi-
+*      word GML node labels (e.g. "Node 1") were being accumulated into
+*      `labs' as space-separated, individually double-quoted tokens
+*      (` "Node 1" "Node 2"'), but get_nodenames_from_string()
+*      (unw_core.do) tokenizes `labs' on COMMA, not whitespace or
+*      quotes - every OTHER importer already used the comma-delimited,
+*      unquoted convention. The embedded quotes then broke nwfromedge's
+*      own `if "`labs'" == ""' emptiness check with a genuine "type
+*      mismatch" (r(109)), traced via `set trace on' since the outer
+*      `capture' swallowed the real error. Fixed to match the
+*      comma-delimited convention: `local labs `"`labs'`nextlab',"''.
+nwimport `"`gmlfix'"', type(gml) name(gmltest) nwclear clear
+assert _rc == 0
+nw_syntax gmltest
+assert `nodes' == 3
+assert "`directed'" == "true"
+mata: __pg = nw.nws.pdefs[nw.nws.get_index_of("gmltest")]
+mata: st_local("__gn1", __pg->get_nodenames()[1,1])
+mata: st_local("__gn2", __pg->get_nodenames()[1,2])
+mata: st_local("__gn3", __pg->get_nodenames()[1,3])
+assert "`__gn1'" == "Node 1"
+assert "`__gn2'" == "Node 2"
+assert "`__gn3'" == "Node 3"
+mata: st_numscalar("__ge12", __pg->edge_weight(1,2))
+mata: st_numscalar("__ge23", __pg->edge_weight(2,3))
+mata: st_numscalar("__ge31", __pg->edge_weight(3,1))
+mata: st_numscalar("__ge21", __pg->edge_weight(2,1))
+assert __ge12 == 1
+assert __ge23 == 1
+assert __ge31 == 1
+assert __ge21 == 0
+mata: mata drop __pg
+di "=== type(gml), real externally-sourced fixture (blank line + multi-word labels) SELF-CONTAINED REGRESSION VERIFIED ==="
+
 nwclear
 
 nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)
@@ -166,8 +258,4 @@ assert `"`r(directed)'"' == `"true"'
 nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", nwclear type(ucinet) name(blabla2) forceundirected
 nwname
 assert `"`r(directed)'"' == `"false"'
-
-
-
-
 

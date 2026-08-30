@@ -98,3 +98,63 @@ assert _rc == 0
 * passthrough is real, not just silently swallowed)
 capture nwkatz dirnet2, alpha(0.5) generate(dkatz3) bogusoption123
 assert _rc != 0
+
+
+* --- walks: genuine literature-canonical (Katz 1953/Bonacich)
+* walk-counting centrality, x = (I - alpha*A)^-1 * 1. K3 (triangle),
+* alpha = 0.9/rho with rho=2 (K3's own largest eigenvalue) -> alpha =
+* 0.45; hand-solvable by symmetry (all 3 nodes equivalent): x = 1 +
+* 2*0.45*x => x = 1/(1-0.9) = 10 for every node.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(k3walks) undirected labs(A,B,C)
+nwkatz k3walks, walks generate(katzw)
+assert reldif(katzw[1], 10) < 1E-6
+assert reldif(katzw[2], 10) < 1E-6
+assert reldif(katzw[3], 10) < 1E-6
+di "=== walks: K3 hand-derived value REGRESSION VERIFIED ==="
+
+* explicit, valid alpha
+nwkatz k3walks, walks alpha(0.1) generate(katzw2) replace
+assert _rc == 0
+
+* alpha at/beyond the stability bound (|alpha|*rho >= 1) must error
+* cleanly, not return a nonsensical/diverging result
+capture nwkatz k3walks, walks alpha(0.5) generate(katzw3) replace
+assert _rc == 198
+capture nwkatz k3walks, walks alpha(-0.5) generate(katzw3) replace
+assert _rc == 198
+
+* directed: a 3-cycle A->B->C->A is symmetric under rotation, so
+* in-Katz and out-Katz coincide even though the network itself is
+* directed and asymmetric - a real discriminating check that in/out
+* are computed from A and A' respectively, not accidentally swapped or
+* both from the same matrix.
+nwclear
+nwset, mat((0,1,0\0,0,1\1,0,0)) name(cyc3walks) directed labs(A,B,C)
+nwkatz cyc3walks, walks generate(katzd)
+assert reldif(katzd_in[1], katzd_out[1]) < 1E-6
+assert reldif(katzd_in[1], 10) < 1E-6
+
+* a directed network that is NOT rotation-symmetric: in/out must
+* genuinely differ (a real, not merely nonzero, check that the two are
+* computed from different matrices - A for out, A' for in).
+nwclear
+nwset, mat((0,1,1\0,0,0\0,0,0)) name(startest) directed labs(A,B,C)
+nwkatz startest, walks alpha(0.1) generate(katzstar)
+assert katzstar_out[1] != katzstar_in[1]
+assert reldif(katzstar_out[1], 1.2) < 1E-6 // A: 1 + 0.1*(1+1) = 1.2
+assert reldif(katzstar_in[2], 1.1) < 1E-6  // B: 1 + 0.1*1 = 1.1 (in from A)
+assert reldif(katzstar_out[2], 1) < 1E-6   // B has no outgoing ties
+
+* the pre-existing distance-decay formula, called on a network of the
+* SAME shape walks was just exercised against, is unaffected by walks
+* being available at all - matches this file's own earlier starnet/
+* dirnet3 hand-derived checks, which remain unmodified and still pass.
+* (k3walks itself is gone by this point - nwclear'd by the intervening
+* startest block above - rebuilt fresh here rather than reordering the
+* rest of this file around it.)
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(k3walks2) undirected labs(A,B,C)
+nwkatz k3walks2, generate(katzolddefault)
+assert reldif(katzolddefault[1], 2) < 1E-6 // K3, alpha=1 default: 2 neighbors at dist 1
+di "=== walks REGRESSION VERIFIED ==="

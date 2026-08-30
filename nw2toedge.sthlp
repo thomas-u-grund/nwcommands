@@ -70,6 +70,17 @@ filters the edgelist down to cross-mode pairs only (dropping any same-mode/self 
 dense representation may otherwise still enumerate) - this is the one behavioral difference between the
 two commands; see {help nwtoedge}'s own help file if you specifically need the unfiltered enumeration.
 
+{title:Examples}
+
+{pstd}
+Build a small two-mode network (3 people x 2 events) and convert it to an edgelist:
+
+	{cmd:. nwclear}
+	{cmd:. mata: net = (1,0 \ 1,1 \ 0,1)}
+	{cmd:. nw2set, mat(net) name(attendance)}
+	{cmd:. nw2toedge attendance}
+	{cmd:. list}
+
 {title:Supported network types}
 
 {pstd}

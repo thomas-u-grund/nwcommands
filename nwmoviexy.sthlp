@@ -38,6 +38,15 @@ by name continue to work.
 New code should call {help nwmovie:nwmovie} directly - see its own help file for the complete option
 reference, requirements (ImageMagick), and worked examples.
 
+{title:Examples}
+
+{pstd}
+Animate two waves of a network (accepts exactly the same arguments as {help nwmovie}):
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 6, prob(.3) name(wave1)}
+	{cmd:. nwrandom 6, prob(.3) name(wave2)}
+	{cmd:. nwmoviexy wave1 wave2, duration(400)}
 
 {title:Supported network types}
 

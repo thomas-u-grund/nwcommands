@@ -10,6 +10,15 @@
 {p2colreset}{...}
 
 
+{title:Examples}
+
+{pstd}
+Each measure below is computed by its own dedicated command - for example, degree centrality:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwdegree flomarriage, generate(deg)}
+	{cmd:. list deg in 1/5}
+
     See
 
 {p 8 32 2}
@@ -22,7 +31,7 @@
 {helpb nwevcent:Eigenvector centrality}
 
 {p 8 32 2}
-{helpb nwkatz:Closeness centrality}
+{helpb nwcloseness:Closeness centrality}
 
 {p 8 32 2}
 {helpb nwkatz:Katz centrality}

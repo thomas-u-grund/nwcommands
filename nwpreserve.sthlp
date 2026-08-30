@@ -32,7 +32,18 @@
 {pstd}
 {cmd:nwrestore} restores network data previously preserved (including all Stata variables).
 
+{title:Examples}
 
+{pstd}
+Preserve a network, drop it, then restore it:
+
+	{cmd:. nwclear}
+	{cmd:. nwrandom 5, prob(.4) name(mynet)}
+	{cmd:. nwpreserve}
+	{cmd:. nwdrop mynet}
+	{cmd:. nwset}
+	{cmd:. nwrestore}
+	{cmd:. nwset}
 
 {title:Supported network types}
 

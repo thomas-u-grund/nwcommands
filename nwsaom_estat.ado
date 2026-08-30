@@ -1,10 +1,20 @@
-*! version 0.2.0 28aug2026 nwcommands: post-estimation for nwsaom (harmonisation unit 21, RSiena-faithful GOF)
+*! version 0.3.1 28aug2026 nwcommands: post-estimation for nwsaom (harmonisation units 21+26, RSiena-faithful GOF + co-evolution, N-wave)
 /*
 	nwsaom_estat.ado -- post-estimation commands for nwsaom (SAOM/
 	Method-of-Moments). v1: `estat gof` only.
 
-	See docs/SAOM_ROADMAP.md ("GOF (estat gof)") and
-	docs/SAOM_ARCHITECTURE.md for the design account.
+	See docs/SAOM_ROADMAP.md ("GOF (estat gof)" and "Co-evolution
+	(network + behavior)") and docs/SAOM_ARCHITECTURE.md for the design
+	account.
+
+	HARMONISATION UNIT 26 (co-evolution) added a fourth default auxiliary
+	statistic, `behavior` (RSiena's own `BehaviorDistribution`), whenever
+	the last `nwsaom` fit in memory used `behavior()` - see the roadmap's
+	own unit-26 entry for the full account, including a real Stata
+	`tempname`-recycling bug found and fixed while wiring this in (every
+	Mata-persistent object in this file now uses an explicit, namespaced
+	name - `__nwsaom_gof_densemat` etc. - rather than `tempname`, which is
+	only safe for objects that never outlive the ISSUING program).
 
 	HARMONISATION UNIT 21 - COMPLETE REBUILD, replacing units 19-20's own
 	Statnet/`nwergm'-style GOF (mean degree/avg geodesic/triad-census
@@ -26,10 +36,16 @@
 	   distribution, in-degree distribution, geodesic distance
 	   distribution - `OutdegreeDistribution`/`IndegreeDistribution`/
 	   `GeodesicDistribution` in real RSiena). This file's own v1 scope
-	   matches that trio exactly (`stats()` option, default "outdegree
-	   indegree geodesic") - triad census (RSiena's own `TriadCensus`)
-	   deferred, not v1, to keep this rebuild focused (a disclosed scope
-	   decision, not silently dropped).
+	   matched that trio exactly (`stats()` option, default "outdegree
+	   indegree geodesic"). **Harmonisation unit 162 added a fifth
+	   `stats()` value, `triad`** - RSiena's own `TriadCensus`, the full
+	   16-category MAN census, reusing `nwtriads`' real census machinery
+	   (see `nwsaom_gof_triadvec` below) exactly the way `nwergm_estat.ado`
+	   already does for its own (differently-structured) GOF report. A
+	   genuine, disclosed difference from the other three auxiliary
+	   statistics: `TriadCensus` returns RAW counts, not proportions -
+	   verified directly against the installed RSiena package's own R
+	   source rather than assumed by analogy to the other three.
 
 	2. A REAL HYPOTHESIS TEST (Mahalanobis distance, Lospinoso & Snijders
 	   2019), not just an eyeball comparison - verified EXACTLY from
@@ -62,8 +78,16 @@
 	   already uses for theta/the Jacobian (harmonisation units 17-18,
 	   SaomEstimateRMMulti() - unw_saom.do) - genuinely consistent with
 	   an already-established design choice, not a new one invented for
-	   GOF. `join=FALSE' (a separate test per period) is real RSiena's
-	   own non-default option, not implemented here (v1 scope decision).
+	   GOF. **Harmonisation unit 162 implemented `join=FALSE` too**, as
+	   the Stata-idiomatic `join(off)` option - a SEPARATE MHD test (and
+	   violin) per wave-period, REPLACING the pooled test entirely rather
+	   than adding to it (matching real RSiena's own semantics: `join` is
+	   a single toggle, not two independent reports). The pooled
+	   (default) computation path is untouched by this addition - the
+	   per-period vectors are accumulated ALONGSIDE the existing pooled
+	   ones during the very same simulation loop (no extra simulation
+	   work), and the reporting loop below simply branches on which set
+	   of vectors to feed the (unmodified) MHD test with.
 
 	4. THE PLOT: a VIOLIN (kernel density shape) per category, not a
 	   plain box-and-whisker - real RSiena's own `panel.violin()` +
@@ -112,7 +136,20 @@ end
 capture program drop nwsaom_estat_gof
 program define nwsaom_estat_gof, rclass
 	syntax [, NSIM(integer 50) SEED(integer -1) STATS(string) MAXDEG(integer 15) ///
-		MAXDIST(integer 6) TWOTAILED NAME(string)]
+		MAXDIST(integer 6) TWOTAILED NAME(string) JOIN(string)]
+
+	// harmonisation unit 162: real RSiena's own `join=FALSE' (sienaGOF()'s
+	// non-default option) - a SEPARATE MHD test per wave-period instead of
+	// pooling (summing) the auxiliary statistic across periods first. Only
+	// two states exist, so a plain string toggle (empty = default
+	// join=TRUE/pooled, "off" = join=FALSE/per-period) rather than a
+	// numlist/onoff-typed option - matches this codebase's own existing
+	// idiom for similar binary "off" switches (e.g. `nonative').
+	if !inlist("`join'", "", "off") {
+		di as err "join() only accepts {bf:off} (v1 scope - omit join() entirely for the default pooled/join=TRUE behavior)."
+		exit 198
+	}
+	local __gof_join = ("`join'" != "off")
 
 	if `"`e(cmd)'"' != "nwsaom" {
 		di as err "last nwsaom estimates not found"
@@ -131,10 +168,25 @@ program define nwsaom_estat_gof, rclass
 		exit 198
 	}
 
-	if "`stats'" == "" local stats "outdegree indegree geodesic"
+	// --- harmonisation unit 26: co-evolution models default to a FOURTH
+	// auxiliary statistic, `behavior' (RSiena's own BehaviorDistribution),
+	// alongside the existing network trio - per explicit user requirement,
+	// a co-evolution model's own GOF check must cover more than just
+	// network structure. e(has_behavior) is ALWAYS present (0 or 1) for
+	// any nwsaom fit, old or new, so this check is safe regardless of
+	// which model produced the estimates in memory.
+	local __gof_coev = e(has_behavior)
+	if "`stats'" == "" {
+		if `__gof_coev' local stats "outdegree indegree geodesic behavior"
+		else local stats "outdegree indegree geodesic"
+	}
 	foreach __gof_s of local stats {
-		if !inlist("`__gof_s'", "outdegree", "indegree", "geodesic") {
-			di as err "stats() only supports {bf:outdegree}, {bf:indegree}, {bf:geodesic} (v1 scope - see docs/SAOM_ROADMAP.md; got `__gof_s')."
+		if !inlist("`__gof_s'", "outdegree", "indegree", "geodesic", "behavior", "triad") {
+			di as err "stats() only supports {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}, {bf:triad} (v1 scope - see docs/SAOM_ROADMAP.md; got `__gof_s')."
+			exit 198
+		}
+		if "`__gof_s'" == "behavior" & !`__gof_coev' {
+			di as err "stats(behavior) requires a co-evolution fit (nwsaom's own {bf:behavior()} option) - the last nwsaom estimates in memory have no behavior variable."
 			exit 198
 		}
 	}
@@ -162,41 +214,154 @@ program define nwsaom_estat_gof, rclass
 	else {
 		local __gof_rate1 = e(rate)
 	}
+	// harmonisation unit 26: co-evolution's own SEPARATE behavior rate,
+	// per-period just like the network rate above ("extend it to N
+	// waves" - e(rates_beh), a 1 x nperiods matrix, for the waves()
+	// path; e(rate_beh), a scalar, for the exactly-two-wave path).
+	capture confirm matrix e(rates_beh)
+	if _rc == 0 {
+		tempname __gof_ratesbehmat
+		matrix `__gof_ratesbehmat' = e(rates_beh)
+		forvalues __pd = 1/`nperiods' {
+			local __gof_ratebeh`__pd' = `__gof_ratesbehmat'[1,`__pd']
+		}
+	}
+	else {
+		local __gof_ratebeh1 = e(rate_beh)
+	}
 
 	capture mata: mata drop __nwsaom_gof_cfg
-	mata: __nwsaom_gof_cfg = SaomNativeSetup(__nwsaom_last_M)
-	mata: st_numscalar("__nwsaom_gof_native", __nwsaom_gof_cfg.eligible & SaomNativeAvailable())
-	local __gof_usenative = __nwsaom_gof_native
+	if `__gof_coev' {
+		// harmonisation unit 26: co-evolution is Mata-only in v1 (no
+		// native port yet, docs/SAOM_ROADMAP.md's own unit-26 entry) -
+		// SaomNativeSetup() only knows about the NETWORK model and would
+		// silently ignore the co-evolving behavior's own influence on
+		// the network if used here, so it is not even attempted.
+		local __gof_usenative = 0
+		local __nwsaom_gof_pnet = e(p_net)
+	}
+	else {
+		mata: __nwsaom_gof_cfg = SaomNativeSetup(__nwsaom_last_M)
+		mata: st_numscalar("__nwsaom_gof_native", __nwsaom_gof_cfg.eligible & SaomNativeAvailable())
+		local __gof_usenative = __nwsaom_gof_native
+	}
 
 	// --- observed auxiliary-statistic vectors, POOLED (summed) across
 	// every period - real RSiena's own `join=TRUE' default (this file's
 	// own header comment), the same pooling convention
-	// SaomEstimateRMMulti() already uses for theta/the Jacobian.
+	// SaomEstimateRMMulti() already uses for theta/the Jacobian. Behavior
+	// (unit 26, N-wave extension) is now pooled the SAME way: each
+	// period `pd' contributes its own ENDING wave's behavior
+	// distribution, via __nwsaom_last_Behwaves[pd+1] (the pointer array
+	// nwsaom.ado itself builds over all N waves) - not the old
+	// two-wave-only hardcoded __nwsaom_beh_endvals.
 	foreach __gof_s of local stats {
 		if "`__gof_s'" == "geodesic" local __gof_k`__gof_s' = `maxdist' + 1
+		else if "`__gof_s'" == "behavior" {
+			mata: st_local("__gof_kbehavior", strofreal(__nwsaom_beh_maxval - __nwsaom_beh_minval + 1))
+		}
+		else if "`__gof_s'" == "triad" local __gof_k`__gof_s' = 16
 		else local __gof_k`__gof_s' = `maxdeg' + 2
 		mata: __nwsaom_gof_obs_`__gof_s' = J(1, `__gof_k`__gof_s'', 0)
+		// join(off): also need each period's own UN-pooled vector kept
+		// separately (see the accumulation loop below) - initialized here
+		// alongside the pooled accumulator so both stay in lockstep.
+		if !`__gof_join' {
+			forvalues __pd = 1/`nperiods' {
+				mata: __nwsaom_gof_obsP`__pd'_`__gof_s' = J(1, `__gof_k`__gof_s'', 0)
+			}
+		}
 	}
 	forvalues __pd = 1/`nperiods' {
 		local __pdend = `__pd' + 1
-		tempname __gof_obsmat
-		mata: `__gof_obsmat' = __nwsaom_last_G`__pdend'.to_dense()
-		foreach __gof_s of local stats {
-			if "`__gof_s'" == "outdegree" mata: __nwsaom_gof_obs_outdegree = __nwsaom_gof_obs_outdegree + saom_gof_degdist(`__gof_obsmat', `maxdeg')
-			if "`__gof_s'" == "indegree" mata: __nwsaom_gof_obs_indegree = __nwsaom_gof_obs_indegree + saom_gof_indegdist(`__gof_obsmat', `maxdeg')
-			if "`__gof_s'" == "geodesic" mata: __nwsaom_gof_obs_geodesic = __nwsaom_gof_obs_geodesic + saom_gof_geodist(`__gof_obsmat', `maxdist')
+		if `__gof_coev' & strpos(" `stats' ", " behavior ") {
+			mata: __nwsaom_gof_thisval = saom_gof_behdist(*__nwsaom_last_Behwaves[`__pdend'], __nwsaom_beh_minval, __nwsaom_beh_maxval)
+			mata: __nwsaom_gof_obs_behavior = __nwsaom_gof_obs_behavior + __nwsaom_gof_thisval
+			if !`__gof_join' mata: __nwsaom_gof_obsP`__pd'_behavior = __nwsaom_gof_thisval
 		}
-		mata: mata drop `__gof_obsmat'
+		// NOT `tempname' here (real, found-the-hard-way bug, harmonisation
+		// unit 26): a Stata `tempname' string is only guaranteed unique
+		// for the ISSUING PROGRAM's own lifetime - once that program
+		// returns, Stata's own allocator is free to reissue the SAME
+		// underlying name to a LATER, unrelated tempname() call. Every
+		// `__td_*' object nwsaom.ado itself builds via `tempname' (e.g.
+		// `__td_recip') is a MATA variable meant to persist indefinitely
+		// (referenced by pointer from __nwsaom_last_M's own `td' array,
+		// unw_ergm.do), entirely outside Stata's own tempname lifecycle -
+		// if a LATER `tempname' call in THIS program happens to be
+		// reissued that same string and then does `mata: `name' = ...',
+		// it silently overwrites the SAME Mata variable `td' still
+		// points to, corrupting the model out from under it (confirmed:
+		// this manifested as "[6,6] found where scalar required" inside
+		// change_mutual() - a real ErgmTermData variable had been
+		// clobbered with a to_dense() 6x6 matrix by exactly this
+		// mechanism). Explicit, namespaced Mata names side-step the
+		// entire Stata-tempname-recycling risk.
+		mata: __nwsaom_gof_densemat = __nwsaom_last_G`__pdend'.to_dense()
+		foreach __gof_s of local stats {
+			if "`__gof_s'" == "outdegree" {
+				mata: __nwsaom_gof_thisval = saom_gof_degdist(__nwsaom_gof_densemat, `maxdeg')
+				mata: __nwsaom_gof_obs_outdegree = __nwsaom_gof_obs_outdegree + __nwsaom_gof_thisval
+				if !`__gof_join' mata: __nwsaom_gof_obsP`__pd'_outdegree = __nwsaom_gof_thisval
+			}
+			if "`__gof_s'" == "indegree" {
+				mata: __nwsaom_gof_thisval = saom_gof_indegdist(__nwsaom_gof_densemat, `maxdeg')
+				mata: __nwsaom_gof_obs_indegree = __nwsaom_gof_obs_indegree + __nwsaom_gof_thisval
+				if !`__gof_join' mata: __nwsaom_gof_obsP`__pd'_indegree = __nwsaom_gof_thisval
+			}
+			if "`__gof_s'" == "geodesic" {
+				mata: __nwsaom_gof_thisval = saom_gof_geodist(__nwsaom_gof_densemat, `maxdist')
+				mata: __nwsaom_gof_obs_geodesic = __nwsaom_gof_obs_geodesic + __nwsaom_gof_thisval
+				if !`__gof_join' mata: __nwsaom_gof_obsP`__pd'_geodesic = __nwsaom_gof_thisval
+			}
+			// harmonisation unit 162: full 16-category MAN triad census,
+			// RSiena's own TriadCensus() auxiliary statistic - see
+			// nwsaom_gof_triadvec's own header comment below for why this
+			// needs a real temporary NWdef network (nwtriads' own real
+			// census machinery), not a pure-Mata function like the three
+			// distributions above.
+			if "`__gof_s'" == "triad" {
+				nwsaom_gof_triadvec __nwsaom_gof_densemat __nwsaom_gof_thisval
+				mata: __nwsaom_gof_obs_triad = __nwsaom_gof_obs_triad + __nwsaom_gof_thisval
+				if !`__gof_join' mata: __nwsaom_gof_obsP`__pd'_triad = __nwsaom_gof_thisval
+			}
+		}
+		mata: mata drop __nwsaom_gof_densemat
 	}
+	capture mata: mata drop __nwsaom_gof_thisval
 
 	// --- simulated auxiliary-statistic matrices (nsim x k per stat) -
 	// each ROW is one FULL replicate: one fresh simulated draw PER
 	// PERIOD (never chained across periods or draws, matching
 	// SaomEstimateRM()/SaomEstimateRMMulti()'s own simulation contract),
 	// summed across periods into a single pooled vector for that
-	// replicate - matches the observed side's own identical pooling.
+	// replicate - matches the observed side's own identical pooling. For
+	// a co-evolution fit, EVERY replicate simulates network and behavior
+	// JOINTLY (SaomSimulateIntervalCoev(), unw_saom.do) regardless of
+	// which stats() were actually requested - the fitted coefficients
+	// were estimated jointly, so a network-only simulation would not be
+	// faithful to the fitted model even when only network statistics are
+	// being checked.
 	foreach __gof_s of local stats {
 		mata: __nwsaom_gof_sim_`__gof_s' = J(`nsim', `__gof_k`__gof_s'', 0)
+		if !`__gof_join' {
+			forvalues __pd = 1/`nperiods' {
+				mata: __nwsaom_gof_simP`__pd'_`__gof_s' = J(`nsim', `__gof_k`__gof_s'', 0)
+			}
+		}
+	}
+	// harmonisation unit 26, N-wave extension: the behavior overallMean
+	// used by SaomBehavior.init() is pooled across ALL N waves - the
+	// same pooling SaomEstimateRMCoevMulti() itself uses (unw_saom.do)
+	// for the very same field - not just the two endpoint waves.
+	if `__gof_coev' {
+		mata: __nwsaom_gof_allbehvals = *__nwsaom_last_Behwaves[1]
+		forvalues __w = 2/`nwaves' {
+			mata: __nwsaom_gof_allbehvals = __nwsaom_gof_allbehvals \ *__nwsaom_last_Behwaves[`__w']
+		}
+		mata: st_numscalar("__nwsaom_gof_behmean", mean(__nwsaom_gof_allbehvals))
+		local __gof_behoverallmean = __nwsaom_gof_behmean
+		mata: mata drop __nwsaom_gof_allbehvals
 	}
 	forvalues __s = 1/`nsim' {
 		foreach __gof_s of local stats {
@@ -205,34 +370,79 @@ program define nwsaom_estat_gof, rclass
 		forvalues __pd = 1/`nperiods' {
 			mata: __nwsaom_gof_Gwork = ErgmGraph()
 			mata: SaomCopyGraph(__nwsaom_last_G`__pd', __nwsaom_gof_Gwork)
-			if `__gof_usenative' {
+			if `__gof_coev' {
+				// N-wave extension: seed THIS period's own simulation from
+				// THIS period's own starting wave
+				// (__nwsaom_last_Behwaves[__pd]), not always wave 1, and
+				// use THIS period's own behavior rate, not a single shared
+				// scalar.
+				// avsim's own data-derived similarityMean constant
+				// (harmless 0 whenever avsim was not in the fitted
+				// model) - reused from the persisted __nwsaom_last_Mbeh,
+				// exactly as nwsaom.ado itself already computed it once
+				// at fit time, not recomputed here.
+				mata: __nwsaom_gof_Behwork = SaomBehavior()
+				mata: __nwsaom_gof_Behwork.init(*__nwsaom_last_Behwaves[`__pd'], __nwsaom_beh_minval, __nwsaom_beh_maxval, `__gof_behoverallmean', __nwsaom_last_Mbeh.simMean)
+				mata: __nwsaom_gof_coevres = SaomSimulateIntervalCoev(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'")[1,1..`__nwsaom_gof_pnet'], ///
+					__nwsaom_gof_Behwork, __nwsaom_last_Mbeh, st_matrix("`bmat'")[1,(`__nwsaom_gof_pnet'+1)..cols(st_matrix("`bmat'"))], `__gof_rate`__pd'', `__gof_ratebeh`__pd'')
+				if strpos(" `stats' ", " behavior ") {
+					mata: __nwsaom_gof_thisval = saom_gof_behdist(__nwsaom_gof_Behwork.values, __nwsaom_beh_minval, __nwsaom_beh_maxval)
+					mata: __nwsaom_gof_row_behavior = __nwsaom_gof_row_behavior + __nwsaom_gof_thisval
+					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_behavior[`__s',.] = __nwsaom_gof_thisval
+				}
+			}
+			else if `__gof_usenative' {
 				mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0)
 			}
 			else {
 				mata: __nwsaom_gof_cres = SaomSimulateIntervalCounted(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'"), `__gof_rate`__pd'')
 			}
-			tempname __gof_simmat
-			mata: `__gof_simmat' = __nwsaom_gof_Gwork.to_dense()
+			// see the observed-side block above (harmonisation unit 26)
+			// for why this is an explicit Mata name, not `tempname'.
+			mata: __nwsaom_gof_densemat = __nwsaom_gof_Gwork.to_dense()
 			foreach __gof_s of local stats {
-				if "`__gof_s'" == "outdegree" mata: __nwsaom_gof_row_outdegree = __nwsaom_gof_row_outdegree + saom_gof_degdist(`__gof_simmat', `maxdeg')
-				if "`__gof_s'" == "indegree" mata: __nwsaom_gof_row_indegree = __nwsaom_gof_row_indegree + saom_gof_indegdist(`__gof_simmat', `maxdeg')
-				if "`__gof_s'" == "geodesic" mata: __nwsaom_gof_row_geodesic = __nwsaom_gof_row_geodesic + saom_gof_geodist(`__gof_simmat', `maxdist')
+				if "`__gof_s'" == "outdegree" {
+					mata: __nwsaom_gof_thisval = saom_gof_degdist(__nwsaom_gof_densemat, `maxdeg')
+					mata: __nwsaom_gof_row_outdegree = __nwsaom_gof_row_outdegree + __nwsaom_gof_thisval
+					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_outdegree[`__s',.] = __nwsaom_gof_thisval
+				}
+				if "`__gof_s'" == "indegree" {
+					mata: __nwsaom_gof_thisval = saom_gof_indegdist(__nwsaom_gof_densemat, `maxdeg')
+					mata: __nwsaom_gof_row_indegree = __nwsaom_gof_row_indegree + __nwsaom_gof_thisval
+					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_indegree[`__s',.] = __nwsaom_gof_thisval
+				}
+				if "`__gof_s'" == "geodesic" {
+					mata: __nwsaom_gof_thisval = saom_gof_geodist(__nwsaom_gof_densemat, `maxdist')
+					mata: __nwsaom_gof_row_geodesic = __nwsaom_gof_row_geodesic + __nwsaom_gof_thisval
+					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_geodesic[`__s',.] = __nwsaom_gof_thisval
+				}
+				if "`__gof_s'" == "triad" {
+					nwsaom_gof_triadvec __nwsaom_gof_densemat __nwsaom_gof_thisval
+					mata: __nwsaom_gof_row_triad = __nwsaom_gof_row_triad + __nwsaom_gof_thisval
+					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_triad[`__s',.] = __nwsaom_gof_thisval
+				}
 			}
-			mata: mata drop `__gof_simmat'
+			mata: mata drop __nwsaom_gof_densemat
 		}
 		foreach __gof_s of local stats {
 			mata: __nwsaom_gof_sim_`__gof_s'[`__s',.] = __nwsaom_gof_row_`__gof_s'
 		}
 	}
-	mata: mata drop __nwsaom_gof_Gwork __nwsaom_gof_cres
+	capture mata: mata drop __nwsaom_gof_Gwork __nwsaom_gof_cres __nwsaom_gof_Behwork __nwsaom_gof_coevres __nwsaom_gof_thisval
 
 	// --- the Mahalanobis test + violin plot, per auxiliary statistic.
 	local __gof_twotailed = ("`twotailed'" != "")
 	di
 	di as txt "Goodness of fit (nwsaom), Mahalanobis-distance test (Lospinoso & Snijders 2019, real RSiena's own sienaGOF() construction), " `nsim' " simulated repl. at the fitted coefficients"
-	if `nperiods' > 1 di as txt "(pooled across all " `nperiods' " periods by summation - real RSiena's own join=TRUE default)"
+	if `__gof_join' {
+		if `nperiods' > 1 di as txt "(pooled across all " `nperiods' " periods by summation - real RSiena's own join=TRUE default)"
+	}
+	else {
+		di as txt "(join(off): a SEPARATE test per period - real RSiena's own join=FALSE, replacing the pooled test entirely)"
+	}
 	di as txt "{hline 60}"
 	foreach __gof_s of local stats {
+	  if `__gof_join' {
 		mata: st_numscalar("__nwsaom_gof_p", .)
 		mata: st_numscalar("__nwsaom_gof_obsmhd", .)
 		mata: saom_gof_mhdtest(__nwsaom_gof_sim_`__gof_s', __nwsaom_gof_obs_`__gof_s', `__gof_twotailed', "__nwsaom_gof_p", "__nwsaom_gof_obsmhd")
@@ -244,11 +454,36 @@ program define nwsaom_estat_gof, rclass
 			as txt cond(`__gof_pval' < 0.05, " (evidence AGAINST fit)", " (no evidence against fit)")
 
 		local __gof_thisname = cond("`name'"=="", "gof_`__gof_s'", "`name'_`__gof_s'")
+		local __gof_behminval = 0
+		if "`__gof_s'" == "behavior" mata: st_local("__gof_behminval", strofreal(__nwsaom_beh_minval))
 		nwsaom_estat_gofviolin __nwsaom_gof_sim_`__gof_s' __nwsaom_gof_obs_`__gof_s' ///
-			"`__gof_label' distribution" "`__gof_thisname'" `__gof_k`__gof_s'' `__gof_pval' "`__gof_s'" `maxdeg' `maxdist'
+			"`__gof_label' distribution" "`__gof_thisname'" `__gof_k`__gof_s'' `__gof_pval' "`__gof_s'" `maxdeg' `maxdist' `__gof_behminval'
 
 		return scalar p_`__gof_s' = `__gof_pval'
 		return scalar mhd_`__gof_s' = `__gof_mhd'
+	  }
+	  else {
+		forvalues __pd = 1/`nperiods' {
+			mata: st_numscalar("__nwsaom_gof_p", .)
+			mata: st_numscalar("__nwsaom_gof_obsmhd", .)
+			mata: saom_gof_mhdtest(__nwsaom_gof_simP`__pd'_`__gof_s', __nwsaom_gof_obsP`__pd'_`__gof_s', `__gof_twotailed', "__nwsaom_gof_p", "__nwsaom_gof_obsmhd")
+			local __gof_pval = __nwsaom_gof_p
+			local __gof_mhd = __nwsaom_gof_obsmhd
+
+			local __gof_label = proper("`__gof_s'") + " (period `__pd')"
+			di as txt %-24s "`__gof_label'" "{c |}" as res " Mahalanobis dist. = " %8.3f `__gof_mhd' as txt "   p = " as res %6.3f `__gof_pval' ///
+				as txt cond(`__gof_pval' < 0.05, " (evidence AGAINST fit)", " (no evidence against fit)")
+
+			local __gof_thisname = cond("`name'"=="", "gof_`__gof_s'_p`__pd'", "`name'_`__gof_s'_p`__pd'")
+			local __gof_behminval = 0
+			if "`__gof_s'" == "behavior" mata: st_local("__gof_behminval", strofreal(__nwsaom_beh_minval))
+			nwsaom_estat_gofviolin __nwsaom_gof_simP`__pd'_`__gof_s' __nwsaom_gof_obsP`__pd'_`__gof_s' ///
+				"`__gof_label' distribution" "`__gof_thisname'" `__gof_k`__gof_s'' `__gof_pval' "`__gof_s'" `maxdeg' `maxdist' `__gof_behminval'
+
+			return scalar p_`__gof_s'_p`__pd' = `__gof_pval'
+			return scalar mhd_`__gof_s'_p`__pd' = `__gof_mhd'
+		}
+	  }
 	}
 	di as txt "{hline 60}"
 	di as txt "Note: p < 0.05 (RSiena convention) is evidence AGAINST the fitted model on that auxiliary statistic - the observed network is then an outlier relative to what the fitted model actually simulates. One-tailed by default (twotailed not requested); each violin's own x-axis title shows its p-value, matching real RSiena's plot.sienaGOF() convention exactly."
@@ -256,8 +491,83 @@ program define nwsaom_estat_gof, rclass
 	capture mata: mata drop __nwsaom_gof_cfg
 	foreach __gof_s of local stats {
 		capture mata: mata drop __nwsaom_gof_obs_`__gof_s' __nwsaom_gof_sim_`__gof_s' __nwsaom_gof_row_`__gof_s'
+		if !`__gof_join' {
+			forvalues __pd = 1/`nperiods' {
+				capture mata: mata drop __nwsaom_gof_obsP`__pd'_`__gof_s' __nwsaom_gof_simP`__pd'_`__gof_s'
+			}
+		}
 	}
-	local __nwsaom_gof_donothing = 0
+	// BUGFIX: a bare (uncaptured) trivial `local' does NOT reset a stale
+	// nonzero _rc left by an earlier failed internal `capture' above (of
+	// which this program has several, e.g. around the mata drops just
+	// above and nwtriads/nwgeodesic calls elsewhere in this file) -
+	// confirmed by direct empirical test (see nwergm_estat.ado's own
+	// identical, now-fixed bug for the full account). Only a command
+	// wrapped in `capture' itself resets _rc, since `capture' explicitly
+	// manages it as part of its own contract; an uncaptured command,
+	// however trivial or substantive, does not touch a pre-existing
+	// stale value at all.
+	capture qui local __nwsaom_gof_donothing = 0
+end
+
+// Full 16-category MAN triad census (harmonisation unit 162), matching
+// real RSiena's own TriadCensus() auxiliary statistic EXACTLY: RAW
+// counts, NOT normalized to proportions the way outdegree/indegree/
+// geodesic above are - verified directly against the installed RSiena
+// package's own R source (`get("TriadCensus", envir=asNamespace("RSiena"))`):
+// `tc[1] <- 1/6*N*(N-1)*(N-2) - sum(tc[2:16])`, i.e. the "003" (empty
+// triad) count is derived by subtraction from the total triad count,
+// with every category left as a plain count - a genuine, disclosed
+// difference from this file's other three auxiliary statistics, not an
+// oversight (matches this whole effort's own standing instruction: when
+// in doubt, mimic what R/RSiena actually does). SAOM networks are always
+// directed (docs/SAOM_ROADMAP.md: "SAOM's own ministep formulation is
+// inherently directed" - undirected relations remain unimplemented, and
+// nwsaom's own e()-space never stores a directedness flag at all, unlike
+// nwergm), so this always requests the full 16-category census, matching
+// RSiena's own unconditional `levls = 1:16` default - no undirected-
+// network special case is needed here the way nwergm_estat.ado's own
+// analogous triad-census code needs one (nwergm supports both
+// directednesses).
+//
+// Reuses nwtriads' own real MAN-census machinery via a temporary NWdef
+// network materialized from the dense adjacency matrix - the SAME
+// preserve/nwset/nwtriads/nwdrop idiom nwergm_estat.ado's own triad-
+// census code already established (including its own documented,
+// pre-existing nwtriads zero-tie crash defense, wrapped in `capture'
+// here too since a near-empty simulated draw is a real possibility).
+// Category order matches nwtriads.ado's own r(_XXX) scalar set exactly
+// (and nwergm_estat.ado's own identical `__gof_triadcats' ordering) -
+// nwsaom_estat_gofviolin's own triad x-axis labels below MUST stay in
+// this same order.
+capture program drop nwsaom_gof_triadvec
+program define nwsaom_gof_triadvec
+	args matname outname
+
+	preserve
+	qui drop _all
+	mata: st_numscalar("__nwsaom_gof_triadn", rows(`matname'))
+	qui set obs `=__nwsaom_gof_triadn'
+	capture nwdrop __nwsaom_gof_triadtmp
+	qui nwset, mat(`matname') directed name(__nwsaom_gof_triadtmp) nooutput
+	capture qui nwtriads __nwsaom_gof_triadtmp
+	if _rc == 0 {
+		// st_numscalar("r(...)") - NOT a bare `r(_003)` call, which is
+		// Stata's own r()-result syntax and not valid inside a Mata
+		// expression at all (caught immediately: "_003 not found", r(3499),
+		// the first time this ran).
+		mata: `outname' = (st_numscalar("r(_003)"), st_numscalar("r(_012)"), st_numscalar("r(_021D)"), st_numscalar("r(_021U)"), st_numscalar("r(_021C)"), st_numscalar("r(_030T)"), st_numscalar("r(_030C)"), st_numscalar("r(_102)"), st_numscalar("r(_111D)"), st_numscalar("r(_111U)"), st_numscalar("r(_120D)"), st_numscalar("r(_120U)"), st_numscalar("r(_120C)"), st_numscalar("r(_210)"), st_numscalar("r(_201)"), st_numscalar("r(_300)"))
+	}
+	else {
+		mata: `outname' = J(1,16,0)
+	}
+	capture nwdrop __nwsaom_gof_triadtmp
+	restore
+	// same _rc-staleness class as nwsaom_estat_gof's own fix above -
+	// `restore' does not reset a stale _rc left by the `capture nwdrop'
+	// just above it if that happened to fail, so callers of this helper
+	// could otherwise inherit a leaked, unrelated stale _rc.
+	capture qui local __nwsaom_triadvec_donothing = 0
 end
 
 // ===========================================================================
@@ -353,6 +663,29 @@ real rowvector saom_gof_geodist(real matrix M, real scalar maxdist) {
 	return(counts)
 }
 
+// Behavior-value distribution (harmonisation unit 26, co-evolution) -
+// RSiena's own BehaviorDistribution() auxiliary statistic, confirmed
+// present in the installed RSiena's own live namespace (unlike
+// GeodesicDistribution - unit 21's own disclosure). counts[k] =
+// proportion of actors whose current value equals minval+k-1, for
+// k=1..(maxval-minval+1) - no overflow category needed, unlike the
+// degree distributions above: every value a behavior ministep can ever
+// produce is already clamped to [minval,maxval] by construction
+// (SaomBehaviorMinistep()'s own range guard, unw_saom.do).
+real rowvector saom_gof_behdist(real colvector vals, real scalar minval, real scalar maxval) {
+	real scalar n, i, k, ncat
+	real rowvector counts
+
+	n = rows(vals)
+	ncat = maxval - minval + 1
+	counts = J(1, ncat, 0)
+	for (i=1; i<=n; i++) {
+		k = vals[i] - minval + 1
+		counts[k] = counts[k] + 1
+	}
+	return(counts / n)
+}
+
 // Mahalanobis-distance goodness-of-fit test - a DIRECT, faithful port of
 // real RSiena's own applyTest() closure inside sienaGOF() (verified line by
 // line against the installed package's own R source, see this file's own
@@ -401,7 +734,7 @@ end
 // shown as the x-axis title, matching RSiena's own `xlab = paste("p:", ...)'.
 capture program drop nwsaom_estat_gofviolin
 program define nwsaom_estat_gofviolin
-	args simmat obsvec title graphname ncat pval statkind maxdeg maxdist
+	args simmat obsvec title graphname ncat pval statkind maxdeg maxdist behminval
 
 	preserve
 	qui drop _all
@@ -479,13 +812,36 @@ program define nwsaom_estat_gofviolin
 	mata: mata drop `__gv_summ'
 
 	local __gv_xtitle = `"p: `pval'"'
-	local __gv_lastlabel = cond("`statkind'"=="geodesic", "NR", "`maxdeg'+")
 	local __gv_xlabopt ""
-	forvalues __c = 1/`=`ncat'-1' {
-		local __gv_thislab = cond("`statkind'"=="geodesic", "`__c'", "`=`__c'-1'")
-		local __gv_xlabopt `"`__gv_xlabopt' `__c' "`__gv_thislab'""'
+	if "`statkind'" == "behavior" {
+		// harmonisation unit 26: every category is an EXACT, bounded
+		// behavior value (minval..maxval) - no overflow/"NR" category
+		// at all, unlike the network distributions below (every
+		// simulated/observed value is clamped to [minval,maxval] by
+		// SaomBehaviorMinistep()'s own construction, unw_saom.do).
+		forvalues __c = 1/`ncat' {
+			local __gv_thislab = `behminval' + `__c' - 1
+			local __gv_xlabopt `"`__gv_xlabopt' `__c' "`__gv_thislab'""'
+		}
 	}
-	local __gv_xlabopt `"`__gv_xlabopt' `ncat' "`__gv_lastlabel'""'
+	else if "`statkind'" == "triad" {
+		// Order MUST match nwsaom_gof_triadvec's own output vector order
+		// exactly (both above).
+		local __gv_triadlabs "003 012 021D 021U 021C 030T 030C 102 111D 111U 120D 120U 120C 210 201 300"
+		local __gv_c = 0
+		foreach __gv_lab of local __gv_triadlabs {
+			local __gv_c = `__gv_c' + 1
+			local __gv_xlabopt `"`__gv_xlabopt' `__gv_c' "`__gv_lab'""'
+		}
+	}
+	else {
+		local __gv_lastlabel = cond("`statkind'"=="geodesic", "NR", "`maxdeg'+")
+		forvalues __c = 1/`=`ncat'-1' {
+			local __gv_thislab = cond("`statkind'"=="geodesic", "`__c'", "`=`__c'-1'")
+			local __gv_xlabopt `"`__gv_xlabopt' `__c' "`__gv_thislab'""'
+		}
+		local __gv_xlabopt `"`__gv_xlabopt' `ncat' "`__gv_lastlabel'""'
+	}
 
 	// Category on the X-axis (matching real RSiena's own `scales$x$labels
 	// = key' convention), statistic value on the Y-axis. Only the violin

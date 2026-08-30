@@ -132,6 +132,20 @@
 {p2col:{cmd: layout}([{it:{help nwplot##layoutstyle:layoutstyle}}] [,{it:{help nwplot##layout_sub:layout_sub}}])}change the overall layout/arrangement of nodes{p_end}
 {p2col:{opt nodexy}({it:{help varname:xvar} {help varname:yvar}})}use variables to force coordinates of nodes{p_end}
 {p2col:{opt generate}({it:{help newvarname:newxvar} {help newvarname:newyvar}})}export coordinates of nodes{p_end}
+{p2col:{opt interactive}}open the plot in an interactive browser view (drag nodes, edit the color/shape
+	legend, adjust size/width factors) alongside the usual static plot; requires {opt generate()}
+	to also capture the resulting coordinates{p_end}
+{p2col:{opt importcoords}({it:filename})}merge node position/color/shape edits saved from an
+	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
+{p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
+	view back in before plotting; optional companion to {opt importcoords()}{p_end}
+{p2col:{opt movieexport}({it:filename})}with {opt interactive}: also write the resolved node/edge
+	color/shape/position data as plain JSON to {it:filename}, with no HTML page or viewer window -
+	{help nwmovie} uses this internally, once per network in its own sequence, rather than
+	re-deriving concrete colors from scratch{p_end}
+{p2col:{opt noopen}}with {opt interactive}: build the interactive view but do not open a viewer
+	window for it (used together with {opt movieexport()} - {help nwmovie} does not want a viewer
+	window popping open for every network in its own sequence){p_end}
 
 
 {synoptset 35 tabbed}{...}
@@ -141,19 +155,23 @@
 {p2col:{opt lgc}}only plot largest component{p_end}
 {p2col:{opth components(int)}}control the number of components rendered{p_end}
 {p2col:{opt ignorelgc}}used internally by {help nwmovie}{p_end}
-{p2col:{opth iterations(int)}}only relevant for layout = mds; maximum number of iterations in the multidimensional scaling procedure, default = 1000{p_end}
+{p2col:{opth iterations(int)}}only relevant for layout = mds/frucht/kk; maximum number of iterations in the underlying iterative procedure, default = 1000{p_end}
 {p2col:{opth columns(int)}}only relevant for layout = grid; number of columns to be plotted in grid layout {p_end}
 {p2col:{opt norescale}}only relevant for layout = nodexy; do not rescale coordinates{p_end}
+{p2col:{opt vertical}}only relevant for layout = bipartite; arrange the two modes as two columns instead of the default two rows{p_end}
 
 
 {synoptset 35 tabbed}{...}
 {marker layoutstyle}{...}
 {p2col:{it:layoutstyle}}{p_end}
 {p2line}
-{p2col:{cmd: mds}}modern multidimensional scaling; default when nodes < 50{p_end}
-{p2col:{cmd: mdsclassical}}classical multidimensional scaling; default when nodes > 50{p_end}
+{p2col:{cmd: mds}}modern multidimensional scaling{p_end}
+{p2col:{cmd: mdsclassical}}classical multidimensional scaling{p_end}
 {p2col:{cmd: frucht}}Fruchterman-Reingold force-directed layout
 		{p_end}
+{p2col:{cmd: kk}}Kamada-Kawai layout (stress majorization using graph-theoretic shortest-path distances as ideal spring lengths - unlike {cmd:frucht}, pairs of nodes far apart in the network end up proportionally far apart in the plot, not just directly-tied pairs pulled together); the default layout. Its own cost grows with both node count and {opt iterations()} - confirmed directly: 1.1 seconds at 50 nodes, 72 seconds at 500 nodes at a plain 1000-iteration count - so whenever {opt iterations()} is left at its own default, the actual iteration count used is scaled down as node count grows (full 1000 iterations up to a few hundred nodes, tapering toward a 10-iteration floor on very large networks) to keep a default {cmd:nwplot} call around 8-10 seconds regardless of network size. Give an explicit {opt iterations()} to override this scaling{p_end}
+{p2col:{cmd: hierarchy}}Sugiyama-style layered/hierarchical layout - assigns nodes to top-down layers by longest path from sources and orders each layer to reduce edge crossings; meant for directed, roughly acyclic networks (org charts, dependency/citation graphs, event sequences). An undirected network, or one with cycles, still plots (no error, no crash) but degrades to a less meaningful ordering, since there is no edge direction to layer by{p_end}
+{p2col:{cmd: bipartite}}dedicated two-mode layout - the two modes placed in two parallel rows (or two columns with the {opt vertical} sub-option), ordered to reduce crossings between them; requires a two-mode network (see {help nwset##twomode:nwset}'s {opt bipartite}/{opt twomode}){p_end}
 {p2col:{cmd: circle}}circle layout
 		{p_end}
 {p2col:{cmd: grid}}grid layout
@@ -208,6 +226,10 @@ One can change the layout where nodes should be plotted:
 	{cmd:. nwplot, layout(circle)}
 	{cmd:. nwplot, layout(grid)}
 	{cmd:. nwplot, layout(grid, columns(20))}
+	{cmd:. nwplot, layout(kk)}
+	{cmd:. nwplot, layout(hierarchy)}
+	{cmd:. nwplot, layout(bipartite)}
+	{cmd:. nwplot, layout(bipartite, vertical)}
 
 {pstd}
 Or obtain coordinates from layout and plot with coordinates. The option {bf:nodexy} can be used to write your
@@ -226,7 +248,28 @@ instead of re-deriving a fresh, unrelated layout for each one:
 	{cmd:. nwplot wave2, nodexy(x1 y1)}
 
 {pstd}
-Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or 
+{opt interactive} opens the plot in a browser alongside the usual static plot: drag nodes to
+reposition them, edit the color/shape legend (an edit applies to every node sharing that color/
+shape key, not just one node - the same discrete legend model {cmd:color()}/{cmd:symbol()}
+already use), edit the edge color/pattern legend the same way, and adjust node-size/edge-width
+factors with two sliders. Two buttons in the browser save the edits as CSV files; feed them back
+with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as {opt generate()}/
+{opt nodexy()} above) and {opt edgeimport()}:
+
+	{cmd:. nwplot flomarriage, generate(x y) color(wealth) interactive}
+	{cmd:. * drag nodes / edit the legend in the browser, then save both CSVs, then:}
+	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
+
+{pstd}
+{opt importcoords()}/{opt edgeimport()} must be run against the same network, same size, as the
+{opt interactive} view they came from (row order is how nwplot matches an edit back to a node/tie,
+the same way {opt nodexy()}/{opt label()} already do) - re-export from {opt interactive} rather
+than reusing an old CSV after the network or an {help if}/{help in} restriction changes. Node size
+is not yet individually editable in the interactive view; the size-factor slider maps onto
+{opt nodefactor()} instead.
+
+{pstd}
+Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or
 asymmetrically connected (see {help nwdyads}). By default, asymmetrically connected dyads are represented as a straight line, whereas
 mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as 
 curved lines.
@@ -398,6 +441,4 @@ in the package's own visualization roadmap rather than fixed here.
 
 {title:See also}
 		{help nwplotmatrix}
-
-last certified : 25 Aug 2026
 

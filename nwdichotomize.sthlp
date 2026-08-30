@@ -60,8 +60,12 @@ two-mode data.
 {title:Examples}
 
 {pstd}
-Dichotomize a valued trade network at 100, in place:
+Build a small valued trade network (export values between three countries), then dichotomize it at
+100, in place:
 
+	{cmd:. clear}
+	{cmd:. mata: M = (0,150,40 \ 90,0,220 \ 60,30,0)}
+	{cmd:. nwset, mat(M) name(trade) directed labs(A,B,C)}
 	{cmd:. nwdichotomize trade, threshold(100)}
 
 {pstd}

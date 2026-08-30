@@ -72,29 +72,37 @@ nwhomophily att, homophily(.8) density(.3) xvars
 capture confirm variable n1
 assert _rc == 0
 
-* RE-VERIFIED (harmonisation unit): a prior investigation (see this
-* file's own git history / docs/CERTIFICATION.md) reported that
-* homophily(2) and homophily(-2) produced byte-identical output
-* networks under the same seed, and left the statistical effect
-* uncertified as a result. Re-investigated end to end with a corrected
-* verification methodology and found the effect genuinely works
-* correctly - the earlier finding is not reproducible. The likely
-* explanation: this package's own get_nodenames() (and therefore
-* nwtomata's own matrix row/column order) is sorted LEXICOGRAPHICALLY
-* by node label ("n1","n10","n11",...,"n19","n2","n20","n3",...), NOT
-* by numeric/creation order - confirmed directly. A same-group/
-* different-group comparison built assuming row i corresponds to the
-* i-th CREATED node (rather than mapping each row's own label back to
-* its real attribute value first) silently compares the wrong pairs of
-* nodes and can produce an apparently null or even inverted result
-* that has nothing to do with the actual tie-formation mechanism - a
-* plausible, easy-to-fall-into trap for exactly this kind of test (this
-* session's own first attempt at re-verifying this fell into the
-* identical trap before the row-order property was noticed and
-* corrected for). Once nodes are mapped back to their attribute value
-* via their own label (not assumed row position), homophily(2) and
-* homophily(-2) produce clearly, oppositely, and strongly directioned
-* networks, as expected.
+* FULLY ROOT-CAUSED AND FIXED (harmonisation unit 166): a prior
+* investigation (see this file's own git history / docs/
+* CERTIFICATION.md) reported that homophily(2) and homophily(-2)
+* produced byte-identical/statistically indistinguishable output
+* networks under the same seed. That investigation traced the symptom
+* to get_nodenames()/nwtomata's own row order being sorted
+* LEXICOGRAPHICALLY by node label ("n1","n10","n11",...,"n19","n2",
+* "n20","n3",...), not numeric/creation order, and concluded the
+* command itself "genuinely works correctly" once a same-group/
+* different-group comparison maps each row back to its real attribute
+* value BY LABEL rather than assuming row i is the i-th created node.
+* That conclusion was real but incomplete: it explains why a
+* label-correct COMPARISON can recover the true effect, but never asked
+* WHY the returned network's own node order is scrambled relative to
+* the caller's own observation order in the first place - which is
+* itself a real, separate, and more consequential bug than "a test
+* needs to be careful". Traced to its actual source: `nwdyadprob's` own
+* density()-conditioned code path (which `nwhomophily` always uses)
+* built its final network via `nwfromedge ego alter link, ...` - and
+* nwfromedge's own node-ordering assigns each distinct label a position
+* by STRING sort, not the numeric value that label encodes. Fixed at
+* the source (nwdyadprob.ado): the final network is now reconstructed
+* as a plain matrix directly (matching this same file's other,
+* already-correct `mat()`-only branch), so a `nwhomophily` caller's Nth
+* observation is now genuinely the network's own Nth node - the
+* standard "node i = observation i" convention this package relies on
+* everywhere else - not something a caller must independently rediscover
+* and correct for via get_nodenames() every time. The label-based
+* comparison below still passes (it did before the fix too, and still
+* does) - the NEW, more direct check right after it is what actually
+* guards against this specific bug recurring.
 nwclear
 clear
 set obs 20
@@ -130,6 +138,21 @@ assert __same2 > __diff2
 assert __diffn2 > __samen2
 assert __same2 > __samen2
 assert __diffn2 > __diff2
+di "=== homophily(2)/homophily(-2) oppositely-directioned effect REGRESSION VERIFIED ==="
+
+* --- the actual, direct guard for the bug described above: `hom2''s own
+* node order (captured as `__nl' right after it was built, above -
+* `hom2' itself is gone by this later point in the file, `nwclear'd
+* before `homneg2' was built) must match the caller's own observation
+* order (node i's own label decodes to position i), not a
+* lexicographically-scrambled one - this is the real, previously-broken
+* property, independent of whether a label-aware comparison can still
+* recover the right statistical effect despite it.
+mata: __posok = 1
+mata: for(__i=1; __i<=20; __i++) __posok = __posok & (strtoreal(substr(__nl[__i], 2, .)) == __i)
+mata: st_numscalar("__posok", __posok)
+assert __posok == 1
+di "=== nwhomophily: returned network's node order matches caller's own observation order REGRESSION VERIFIED ==="
 
 * --- alpha-audit regression: nwhomophily.sthlp's own worked example
 * for mode(absdistinv) on a continuous variable used to fail even after

@@ -1,65 +1,71 @@
+*! nw_helpwriter: stamps a command's already-existing, separately-maintained
+*! `.sthlp' file with a "last certified : DATE" trailer once its own
+*! cscripts/test_<cmd>.do suite passes - the successor to this file's own
+*! former behavior of first OVERWRITING the .sthlp from a `/*** {smcl} ...
+*! ***/' comment block embedded at the top of `<cmd>.ado', which this
+*! package no longer maintains (help files are authored and edited
+*! directly as their own standalone .sthlp files - the embedded copies had
+*! already drifted out of sync with real edits in practice, e.g.
+*! nwergm.ado's own embedded copy vs. the real, actively-maintained
+*! nwergm.sthlp differed by dozens of lines - and running the old
+*! extract-and-overwrite step would have silently discarded every direct
+*! .sthlp edit made since the embedded copy was last touched). See
+*! nw_deployfile.ado's own git history for the sibling tool this same
+*! change retires outright (unused elsewhere in this package, same
+*! extract-and-overwrite mechanism, no callers to update).
 capture program drop nw_helpwriter
 program nw_helpwriter
 	syntax [anything(name=cmd)]
-	file open helpwriter using "`cmd'.sthlp", write replace
-	file open helpreader using `cmd'.ado, read
-	local flag = 1
 
-	// The copy loop below macro-processes every line of the .ado file
-	// via compound double quotes (doc header or program body alike -
-	// see the note further down), so a line anywhere in the file that
-	// happens to contain a backtick-quote pattern the macro processor
-	// misreads can abort mid-copy with a "too few quotes" error. Left
-	// uncaught, that also leaked both open file handles, so a single
-	// bad .ado file broke every command processed afterward in the
-	// same session with a cascading "file already open" error -
-	// confirmed the hard way while running a batch certification pass
-	// across ~50 commands, where nwimport.ado's genuine program-body
-	// content (not a doc-comment typo) triggers this and silently
-	// took the rest of the batch down with it. Wrapped in capture so
-	// one bad file is isolated and both handles are always released,
-	// without changing anything about the successful-copy path. The
-	// underlying macro-processing fragility itself is not fixed here
-	// (see docs/CERTIFICATION.md's Pending table) - correctly
-	// escaping arbitrary source lines is a larger, separate, riskier
-	// change than isolating this specific failure mode.
-	capture noisily {
-		file read helpreader line
-		while r(eof)==0 {
-			di `"`line'"'
-			if `"`line'"' == "/***" {
-				local flag = 1
-				file read helpreader line
-			}
-			if `"`line'"' == "***/" {
-				local flag = 0
-			}
-			if (`flag' == 1){
-				file write helpwriter `"`line'"' _newline
-			}
-			file read helpreader line
-		}
+	capture confirm file "`cmd'.sthlp"
+	if _rc {
+		di as error "nw_helpwriter: `cmd'.sthlp not found. Help files are maintained directly now, not generated from `cmd'.ado - create `cmd'.sthlp by hand first, then re-run this to certify it."
+		exit 601
 	}
-	local copyrc = _rc
 
-	// A bare -do- leaves Stata's ambient _rc reading whatever the test
-	// file's OWN last-executed command set it to - which is frequently a
-	// deliberately-triggered error code from a "capture badcmd" +
-	// "assert _rc != 0" check near the end of the file, since a
-	// successful assert does not itself reset _rc back to 0. That
-	// false-negative silently skipped writing "last certified" for a
-	// fully-passing test - confirmed via an isolated repro before fixing.
-	// "capture noisily do" instead reports whether the do-file itself
-	// completed without an UNCAUGHT error (the only thing this check
-	// should care about), while "noisily" keeps the test's own output
-	// visible exactly as before.
-	if `copyrc' == 0 {
-		capture noisily do cscripts/test_`cmd'.do
-		if _rc == 0 {
-			file write helpwriter "last certified : `c(current_date)'" _newline
-		}
+	capture noisily do cscripts/test_`cmd'.do
+	if _rc == 0 {
+		mata: _nw_helpwriter_stampcertified("`cmd'.sthlp", c("current_date"))
 	}
-	capture file close helpwriter
-	capture file close helpreader
-	
+end
+
+// Rewrites `fn' with any existing trailing "last certified : ..." line(s)
+// removed, then appends one fresh stamp - so re-running certification
+// refreshes the stamp in place instead of stacking a new one under every
+// old one.
+capture mata: mata drop _nw_helpwriter_stampcertified()
+mata:
+void function _nw_helpwriter_stampcertified(string scalar fn, string scalar cdate)
+{
+	string scalar line
+	string rowvector lines
+	real scalar fh, n
+
+	fh = fopen(fn, "r")
+	lines = J(1,0,"")
+	line = fget(fh)
+	while (line != J(0,0,"")) {
+		lines = lines, line
+		line = fget(fh)
+	}
+	fclose(fh)
+
+	n = cols(lines)
+	while (n > 0 & strpos(lines[n], "last certified :") == 1) {
+		n = n - 1
+	}
+	if (n > 0) lines = lines[1..n]
+	else lines = J(1,0,"")
+
+	// Mata's fopen(fn,"w") errors ("file already exists") rather than
+	// truncating an existing file the way Stata's own "write replace"
+	// does - unlink() first so re-stamping an already-stamped file works
+	unlink(fn)
+	fh = fopen(fn, "w")
+	for (n=1; n<=cols(lines); n++) {
+		fput(fh, lines[n])
+	}
+	fput(fh, "last certified : " + cdate)
+	fclose(fh)
+}
 end

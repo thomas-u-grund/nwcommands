@@ -74,9 +74,22 @@ assert `"`e(proposal)'"' == "uniform"
 * valued is exercised directly below), and the term/network-type
 * mismatches (mutual/nodeicov/nodeocov require directed; gwesp/
 * gwodegree/gwidegree have their own directedness requirements).
+* two-mode (bipartite): harmonisation unit 155 Stage 1 replaced the old
+* blanket rejection with real (if narrow, edges-only) support - see
+* cscripts/test_nwergm_bipartite.do for the dedicated mechanics-level
+* certification of this. Kept here only as the .ado-level regression
+* guard: edges-only now succeeds (closed-form check: 3x3 affiliation
+* matrix, 5 ties / 9 cross-mode dyads, logit(5/9) = ln(5/4)), while any
+* other term is still explicitly rejected (no bipartite-family term
+* exists yet beyond edges).
 nwclear
 nw2set, mat((0,1,0\1,0,1\0,1,1)) name(twomode)
-capture noisily nwergm twomode, edges
+qui nwergm twomode, edges
+assert _rc == 0
+assert e(nodes) == 6
+assert e(ties) == 5
+assert reldif(_b[edges], ln(5/4)) < 1e-6
+capture noisily nwergm twomode, edges triangle
 assert _rc != 0
 
 nwclear
@@ -319,18 +332,26 @@ assert e(native) == 1
 nwclear
 nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet10) labs(A,B,C,D,E)
 nwset, mat((0,1,0,0,1\1,0,0,1,0\0,0,0,1,1\0,1,1,0,0\1,0,1,0,0)) undirected name(refnet10) labs(A,B,C,D,E)
+// harmonisation unit 160 made edgecov()/hamming() native-eligible too
+// (the last remaining gap in the "move all effects to C" migration) -
+// this used to be the "0" demonstration case (hamming forced Mata);
+// now every term is native-eligible, `nonative' is the only way left
+// to deliberately force the Mata backend on a real fit.
 qui nwergm unet10, edges hamming(refnet10) method(mcmle) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
 assert _rc == 0
+assert e(native) == 1
+
+qui nwergm unet10, edges hamming(refnet10) nonative method(mcmle) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
+assert _rc == 0
 assert e(native) == 0
+di "=== nonative correctly forces the Mata backend even on a native-eligible model (unit 160) ==="
 
 qui nwergm unet10, edges hamming(refnet10)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
-// hamming() needs an n x n matrix marshalled across the plugin
-// boundary - the one remaining gap native/ergm_mcmc.c's own header
-// comment documents - so this specific model falls back to Mata's
-// build_mple_data() even though it's an MPLE fit (unit 145).
-assert e(native) == 0
+// hamming() is native-eligible as of unit 160 (see above) - the design
+// matrix itself is now built natively on this MPLE path too.
+assert e(native) == 1
 
 * --- e(native) == 1 for an MPLE fit whose own terms ARE all native-
 * eligible (harmonisation unit 145): the design matrix itself is built
@@ -369,19 +390,20 @@ di "=== edgeless-network MPLE-crash REGRESSION VERIFIED ==="
 
 * --- spcache (docs/CERTIFICATION.md unit 132): the incremental
 * shared-partner cache is a pure performance optimization - enabling it
-* must never change a fit's numeric result. Reuses unet10/refnet10 from
-* the e(native)==0 case just above (edges+hamming forces the Mata
-* fallback path, since hamming is the one term family not yet ported to
-* the native backend - see nwergm.ado's own spcache build-up comment -
-* so this actually exercises ErgmGraph::shared_partners()'s cached vs.
-* uncached branches, unlike a native-eligible model where the Mata cache
-* would never be consulted at all).
+* must never change a fit's numeric result. Reuses unet10/refnet10;
+* used to rely on edges+hamming forcing the Mata fallback path on its
+* own (hamming was the one term family not yet ported to the native
+* backend) to exercise ErgmGraph::shared_partners()'s cached vs.
+* uncached branches - harmonisation unit 160 made hamming native-
+* eligible too, so `nonative' now does that forcing explicitly instead
+* (every term is native-eligible as of that unit, so there is no longer
+* a term that forces Mata on its own).
 nwclear
 nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) undirected name(unet10b) labs(A,B,C,D,E)
 nwset, mat((0,1,0,0,1\1,0,0,1,0\0,0,0,1,1\0,1,1,0,0\1,0,1,0,0)) undirected name(refnet10b) labs(A,B,C,D,E)
 
 set seed 2024
-qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
+qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) nonative mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2)
 assert _rc == 0
 assert e(native) == 0
 assert e(spcache) == 0
@@ -389,7 +411,7 @@ tempname __b_nocache
 matrix `__b_nocache' = e(b)
 
 set seed 2024
-qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2) spcache
+qui nwergm unet10b, edges gwesp(.3) hamming(refnet10b) nonative mcmcburnin(300) mcmcinterval(20) mcmcsamplesize(300) mcmleiterations(2) spcache
 assert _rc == 0
 assert e(native) == 0
 assert e(spcache) == 1
@@ -635,6 +657,71 @@ assert _rc == 198
 capture noisily nwergm curvedgwdspnet, edges gwdegreefree(0.7) gwdspfree(0.7)
 assert _rc == 198
 di "=== gwdspfree() error paths (combined with gwdsp()/dsp()/gwespfree()/gwdegreefree()) all verified ==="
+
+* --- gwnspfree() (harmonisation unit 152): the last of the five
+* fixed-decay GW terms to gain a curved counterpart, deferred out of
+* units 136-141's own mechanical-reuse pass because gwnsp itself has no
+* standalone per-count statistic to reuse - stat_gwnsp() was only ever
+* a thin composition (stat_gwdsp()-stat_gwesp()). This unit added
+* stat_nsp()/change_nsp() (nsp(d)=dsp(d)-esp(d), a definitional
+* tautology - a dyad with d shared partners is either tied, esp's own
+* domain, or untied, nsp's own domain, never both/neither - certified
+* against an independent direct-enumeration oracle in unw_ergm.do's own
+* development before use here). Certified against a REAL independent R
+* ergm(net ~ edges + gwnsp(0.7, fixed=FALSE), estimate="MPLE") fit
+* (ergm 4.12.0) - NEITHER the gwespfree()/gwdspfree() clique-heavy
+* network NOR a hub-and-spoke network NOR plain random networks at two
+* different sizes gave real decay identification for gwnsp specifically
+* (R itself independently flagged the clique-heavy network's own fit
+* "nonidentifiable"; the others all landed decay at its own ~0
+* boundary) - a genuine, disclosed property of this specific curved
+* term, not a bug, matching gwesp's/gwdegree's own precedent that some
+* structures leave a given curved term's decay unidentified in BOTH
+* implementations alike. A network with two OVERLAPPING dense clusters
+* (sharing several nodes) gives real shared-partner-count VARIATION
+* specifically among UNTIED dyads - the population gwnsp's own decay
+* needs to see spread in - and was well-identified on the first such
+* attempt.
+nwclear
+nwset, mat((0,0,0,1,0,0,1,0,0,0,0,0,0,0,0 \ ///
+0,0,1,1,0,0,1,1,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,1,0,1,0,0,0,0,0,1,0 \ ///
+1,1,0,0,1,1,0,0,0,0,0,0,0,0,0 \ ///
+0,0,0,1,0,1,0,0,0,0,0,0,0,0,0 \ ///
+0,0,1,1,1,0,1,0,1,0,1,0,1,0,0 \ ///
+1,1,0,0,0,1,0,1,0,1,1,1,1,0,0 \ ///
+0,1,1,0,0,0,1,0,1,1,0,1,1,0,0 \ ///
+0,0,0,0,0,1,0,1,0,1,1,1,0,0,0 \ ///
+0,0,0,0,0,0,1,1,1,0,0,1,1,0,0 \ ///
+0,0,0,0,0,1,1,0,1,0,0,1,1,0,0 \ ///
+0,0,0,0,0,0,1,1,1,1,1,0,1,0,0 \ ///
+0,0,0,0,0,1,1,1,0,1,1,1,0,0,0 \ ///
+0,0,1,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)) undirected name(curvedgwnspnet)
+
+qui nwergm curvedgwnspnet, edges gwnspfree(0.7)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwnsp(0.7, fixed=FALSE), estimate="MPLE"):
+* edges=0.06503318563 gwnsp=-0.42084251863 gwnsp.decay=0.81839862293
+assert reldif(_b[edges], 0.06503318563) < 1e-2
+assert reldif(_b[gwnsp_weight], -0.42084251863) < 1e-2
+assert reldif(_b[gwnsp_decay], 0.81839862293) < 1e-2
+di "=== curved gwnsp MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- error paths: mutual exclusivity with gwnsp()/other curved terms.
+* No standalone nsp() option exists (unlike esp()/dsp()), so unlike the
+* other four curved terms there is no third "combined with the plain
+* per-count option" case to check here.
+capture noisily nwergm curvedgwnspnet, edges gwnsp(0.5) gwnspfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwnspnet, edges gwespfree(0.7) gwnspfree(0.7)
+assert _rc == 198
+capture noisily nwergm curvedgwnspnet, edges gwdspfree(0.7) gwnspfree(0.7)
+assert _rc == 198
+di "=== gwnspfree() error paths (combined with gwnsp()/gwespfree()/gwdspfree()) all verified ==="
 
 * --- gwodegreefree()/gwidegreefree() (harmonisation unit 141): the
 * first DIRECTED curved terms, reusing stat_odegree()/change_odegree()
