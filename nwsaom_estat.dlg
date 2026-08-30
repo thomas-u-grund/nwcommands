@@ -1,0 +1,72 @@
+VERSION 10
+INCLUDE _std_small
+SYNCHRONOUS_ONLY
+HELP hlp1, view("help nwsaom_estat")
+OK ok1, label("OK")
+CANCEL can1, label("Cancel")
+SUBMIT sub1, label("Submit")
+RESET res1
+POSITION 10 10 760 470
+
+DIALOG main, title("nwsaom postestimation - estat gof (RSiena-style goodness of fit)")
+BEGIN
+  TEXT tx_note 20 20 720 30, label("Operates on the nwsaom fit currently in memory - no network is selected here.")
+  GROUPBOX gb_stats 20 56 340 190, label("Auxiliary statistics (stats()); default outdegree/indegree/geodesic")
+  CHECKBOX cx_stat_outdegree 36 80 280 ., label("outdegree - out-degree distribution")
+  CHECKBOX cx_stat_indegree 36 106 280 ., label("indegree - in-degree distribution")
+  CHECKBOX cx_stat_geodesic 36 132 280 ., label("geodesic - geodesic-distance distribution")
+  CHECKBOX cx_stat_triad 36 158 280 ., label("triad - full 16-category MAN triad census")
+  CHECKBOX cx_stat_behavior 36 184 280 ., label("behavior - co-evolution fits only, added automatically")
+  TEXT tx_stats_note 36 210 300 30, label("Leave all unchecked for the default trio.")
+  GROUPBOX gb_settings 380 56 360 190, label("Simulation settings")
+  TEXT tx_nsim 392 80 140 ., label("nsim() - replicates")
+  SPINNER sp_nsim 545 80 70 ., default(50) min(5) max(999999) nomem option(nsim)
+  TEXT tx_seed 392 108 140 ., label("seed()")
+  SPINNER sp_seed 545 108 70 ., default(-1) min(-999999) max(999999) nomem option(seed)
+  TEXT tx_maxdeg 392 136 140 ., label("maxdeg() - degree cap")
+  SPINNER sp_maxdeg 545 136 70 ., default(15) min(1) max(999999) nomem option(maxdeg)
+  TEXT tx_maxdist 392 164 140 ., label("maxdist() - geodesic cap")
+  SPINNER sp_maxdist 545 164 70 ., default(6) min(1) max(999999) nomem option(maxdist)
+  TEXT tx_name 392 192 140 ., label("name() - graph name stub")
+  EDIT ed_name 545 192 145 ., nomem option(name)
+  GROUPBOX gb_test 20 254 720 100, label("Test options")
+  CHECKBOX cx_twotailed 36 278 340 ., label("twotailed - two-tailed test (default one-tailed)") option(twotailed)
+  CHECKBOX cx_joinoff 36 304 340 ., label("join(off) - separate test per wave-period (default pooled)")
+  TEXT tx_footer 36 330 660 20, label("estat gof reads the fit left behind by nwsaom; see help nwsaom_estat for full details.")
+END
+
+PROGRAM command
+BEGIN
+	put "estat gof"
+	beginoptions
+		optionarg main.sp_nsim
+		optionarg main.sp_seed
+		optionarg main.sp_maxdeg
+		optionarg main.sp_maxdist
+		optionarg main.ed_name
+		option main.cx_twotailed
+	endoptions
+	if main.cx_stat_outdegree | main.cx_stat_indegree | main.cx_stat_geodesic | main.cx_stat_triad | main.cx_stat_behavior {
+		put " stats("
+		if main.cx_stat_outdegree {
+			put "outdegree "
+		}
+		if main.cx_stat_indegree {
+			put "indegree "
+		}
+		if main.cx_stat_geodesic {
+			put "geodesic "
+		}
+		if main.cx_stat_triad {
+			put "triad "
+		}
+		if main.cx_stat_behavior {
+			put "behavior "
+		}
+		put ")"
+	}
+	if main.cx_joinoff {
+		put " join(off)"
+	}
+	stata
+END
