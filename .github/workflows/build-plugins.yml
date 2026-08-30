@@ -107,7 +107,7 @@ jobs:
             /I packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\include ^
             native\nwedit_viewer_win.cpp ^
             /link /LIBPATH:packages\Microsoft.Web.WebView2.1.0.2592.51\build\native\x64 ^
-            WebView2LoaderStatic.lib shlwapi.lib user32.lib ole32.lib ^
+            WebView2LoaderStatic.lib shlwapi.lib user32.lib ole32.lib shell32.lib advapi32.lib ^
             /Fe:lib\plugins\windows\nwedit_viewer.exe
       - uses: actions/upload-artifact@v4
         with:
