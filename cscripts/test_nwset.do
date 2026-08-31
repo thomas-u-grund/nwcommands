@@ -267,3 +267,90 @@ assert _rc == 0
 nwsummarize netMata
 assert r(nodes) == 3
 mata: mata drop __nwset_test_var
+
+* --- two-mode + temporal composability (two-mode/temporal architecture
+* initiative): `twomode' combined with `time()'/`interval()'/
+* `eventtime()' in the same nwset call - previously an unconditional,
+* explicit error ("not yet supported... use nwattime once composability
+* lands"). A real bug found while building this (not caught by
+* inspection): nw2fromedge's own internal nwfromedge delegation
+* REPLACES the current dataset, so the mode-1/mode-2/time variables no
+* longer exist in the calling dataset by the time this code tried to
+* read them back - confirmed directly ("person not found" on the first
+* end-to-end trial). Fixed by capturing every row-level value into Mata
+* BEFORE calling nw2fromedge, replicating its own two collision-
+* handling rules (numeric-range offset; string-overlap "m1_"/"m2_"
+* prefix) on that captured copy.
+nwclear
+clear
+input str10 person str10 org time
+"A" "X" 1
+"B" "X" 1
+"A" "Y" 2
+"C" "Y" 2
+end
+nwset person org, twomode time(time) name(tm1)
+nw_syntax tm1
+mata: st_numscalar("__tm1_is2mode", `netobj'->is_2mode_boolean())
+mata: st_numscalar("__tm1_istemporal", `netobj'->is_temporal_boolean())
+assert __tm1_is2mode == 1
+assert __tm1_istemporal == 1
+scalar drop __tm1_is2mode __tm1_istemporal
+
+* numeric ids on both modes with OVERLAPPING ranges - exercises
+* nw2fromedge's own numeric-offset collision handling; confirms label
+* resolution correctly follows the offset values (4 distinct nodes,
+* not 3 - "id 1" of each mode must not collide).
+nwclear
+clear
+input person org time
+1 1 5
+2 1 5
+1 2 6
+end
+nwset person org, twomode time(time) name(tm2)
+nw_syntax tm2
+mata: st_numscalar("__tm2_nodes", `netobj'->get_nodes())
+assert __tm2_nodes == 4
+scalar drop __tm2_nodes
+
+* eventtime() two-mode.
+nwclear
+clear
+input str10 person str10 org evt
+"A" "X" 100
+"B" "X" 105
+"A" "Y" 110
+end
+nwset person org, twomode eventtime(evt) name(tm3)
+nw_syntax tm3
+mata: st_numscalar("__tm3_istemporal", `netobj'->is_temporal_boolean())
+assert __tm3_istemporal == 1
+scalar drop __tm3_istemporal
+
+* bipartite + temporal remains explicitly, cleanly unsupported (its own
+* wide-affiliation-matrix shape has no natural per-row time value) -
+* deliberately NOT composable, unlike twomode above.
+nwclear
+clear
+input x1 x2
+1 0
+0 1
+end
+capture nwset x1 x2, bipartite time(x1) name(tmbad)
+assert _rc == 198
+
+* plain twomode (no temporal option) is completely unchanged.
+nwclear
+clear
+input str10 person str10 org
+"A" "X"
+"B" "X"
+end
+nwset person org, twomode name(tmplain)
+nw_syntax tmplain
+mata: st_numscalar("__tmplain_istemporal", `netobj'->is_temporal_boolean())
+assert __tmplain_istemporal == 0
+scalar drop __tmplain_istemporal
+
+di "=== nwset twomode + temporal composability REGRESSION VERIFIED ==="

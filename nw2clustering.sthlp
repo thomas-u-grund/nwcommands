@@ -61,8 +61,7 @@ call {cmd:nw2clustering} directly to choose {opt level(2)} or a non-default {opt
 
 {pstd}
 Binary: yes (the default {opt measure(binary)} case). Directed: not checked - a two-mode network's
-ties are treated as undirected. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|
-minimum)}, each combining the 4-path's own four tie values before testing closure. Signed: not
+ties are treated as undirected. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the 4-path's own four tie values before testing closure. Signed: not
 checked; negative tie values are not validated or rejected. Two-mode: {bf:T3} - this command's entire
 purpose is two-mode clustering; calling it on a one-mode network raises a clear error.
 

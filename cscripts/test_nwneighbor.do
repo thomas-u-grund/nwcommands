@@ -124,6 +124,60 @@ assert `"`r(oneneighbor)'"' == ""
 assert r(num_neighbors) == 0
 di "=== r(oneneighbor) REGRESSION VERIFIED ==="
 
+* --- subnet(): induced ego-network extraction as a genuine new named
+* network (NWdef::copy_subgraph_into(), unw_core.do) - roadmap item
+* "nwneighbor - sparse migration + add induced-subgraph output".
+nwclear
+nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(subw1) labs(A,B,C,D,E)
+nwneighbor subw1, ego(C) mode(either) subnet(subC)
+assert r(num_neighbors) == 3
+qui nwsummarize subC, matonly
+assert r(nodes) == 4
+* the induced subgraph is w1's own true induced structure on {A,B,C,D}:
+* A-C tied, A-D not (A and D were never tied in the original network).
+nw_syntax subC
+mata: st_numscalar("__t_ac", (*`netobj'->get_matrix())[1,3])
+mata: st_numscalar("__t_ad", (*`netobj'->get_matrix())[1,4])
+assert __t_ac == 1
+assert __t_ad == 0
+scalar drop __t_ac __t_ad
+
+* the ORIGINAL network (subw1) is left completely untouched - confirmed
+* directly, not assumed, since copy_subgraph_into()'s own source
+* network is only ever READ from (get_matrix_copy()/get_nodenames()),
+* never mutated.
+qui nwsummarize subw1, matonly
+assert r(nodes) == 5
+
+* an isolate ego's own induced subgraph is just itself, alone - no crash
+* on the cols(k)==0-neighbors edge case.
+nwclear
+nwset, mat((0,0,0\0,0,0\0,0,0)) name(subiso) directed labs(A,B,C)
+nwneighbor subiso, ego(A) subnet(subA)
+qui nwsummarize subA, matonly
+assert r(nodes) == 1
+
+* collision without subreplace errors cleanly; subreplace overwrites.
+capture nwneighbor subiso, ego(B) subnet(subA)
+assert _rc == 99
+nwneighbor subiso, ego(B) subnet(subA) subreplace
+qui nwsummarize subA, matonly
+assert r(nodes) == 1
+
+* the CALLING program's own r()/netname state is unaffected by the
+* subnet()-creation detour - a real bug found and fixed while building
+* this (nw_syntax() sets `netname' as a side effect of resolving the
+* NEW subnet network, silently redirecting every later line in
+* nwneighbor.ado onto it unless explicitly restored via a SEPARATE
+* saved local, not `netname' itself).
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(subw2) labs(A,B,C)
+nwneighbor subw2, ego(A) mode(either) subnet(subA2)
+assert r(num_neighbors) == 2
+assert `"`r(ego)'"' == "A"
+
+di "=== nwneighbor subnet() (induced-subgraph output) REGRESSION VERIFIED ==="
+
 
 
 

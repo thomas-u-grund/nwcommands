@@ -1,7 +1,7 @@
 
 capture program drop nwneighbor
 program nwneighbor
-	syntax [anything(name=netname)], ego(string) [ mode(string) generate(string) replace]
+	syntax [anything(name=netname)], ego(string) [ mode(string) generate(string) replace SUBnet(string) subreplace]
 	nw_syntax `netname', max(1)
 	nw_datasync `netname'
 	nwname `netname'
@@ -46,6 +46,66 @@ program nwneighbor
 	mata: neighbors = select((`netobj'->get_nodenames() \ strofreal(1::`netobj'->get_nodes())'), _select)
 	mata: mata drop __nb
 
+	// subnet(): induced ego-network extraction (ego + its own neighbors,
+	// and the ties among them) as a genuine new named network - built on
+	// NWdef::copy_subgraph_into() (unw_core.do), the same
+	// extract_subgraph() construction nwcohesion's own Moody-White
+	// hierarchy already uses internally, here made user-visible for the
+	// first time (that pointer was previously only ever used for a
+	// throwaway, never-registered internal recursion step). Deliberately
+	// placed HERE, before the r()-posting section below - `nw_validate'/
+	// `nwdrop'/`nw_syntax' each set their OWN r() results as an
+	// unavoidable side effect of running, which would otherwise silently
+	// clobber nwneighbor's own r(egoid)/r(num_neighbors)/r(neighbors)/
+	// r(oneneighbor) before the caller ever sees them (confirmed
+	// directly: an earlier version of this block ran AFTER that section
+	// and a caller's own `r(num_neighbors)' read back whatever `nw_syntax'
+	// itself had most recently set instead). `keep_nodes()' (called
+	// inside `copy_subgraph_into()') takes a 0/1 INDICATOR vector aligned
+	// to every node, not a list of node indices - confirmed directly from
+	// its own real source (`if (cols(k) == cols(nodes))', silently a
+	// no-op otherwise - an earlier version passed a short index list here
+	// and the subnet silently came back as a full, unpruned copy of the
+	// original network instead of erroring). `_select' (already built
+	// above, marking neighbors) already has exactly this shape - COPIED
+	// (not mutated in place: `_select' is also read later for
+	// `generate()''s own neighbor-only variable, and must not silently
+	// gain ego's own position too) with ego's own position added in.
+	if "`subnet'" != "" {
+		mata: __nwneighbor_sel = _select
+		mata: __nwneighbor_sel[`egoid'] = 1
+		nw_validate `subnet'
+		if "`r(exists)'" == "true" {
+			if "`subreplace'" == "" {
+				di "{err}Network {bf:`subnet'} already exists; use {bf:subreplace}"
+				capture mata: mata drop neighbors
+				err 99
+			}
+			capture nwdrop `subnet'
+		}
+		// `nw_syntax' sets `netname' itself too, via its own `c_local
+		// netname' (nw_syntax.ado) - a real, easy-to-miss side effect
+		// (confirmed directly: an earlier version restored via `nw_syntax
+		// `netname'' AFTER calling `nw_syntax `subnet'', but by then
+		// `netname' had ALREADY been silently overwritten to `subnet''s
+		// own value by that same call, so the "restore" call actually
+		// re-ran `nw_syntax `subnet'' a second time instead of restoring
+		// anything - every remaining line in this program, including the
+		// display header, silently kept operating on the new subnet
+		// network). Fixed by saving the original name into its own local
+		// FIRST, never relying on `netname' surviving the subnet call.
+		local __nwneighbor_origname `netname'
+		tempname __nwneighbor_src
+		mata: `__nwneighbor_src' = `netobj'
+		mata: nw.nws.add("`subnet'")
+		nw_syntax `subnet'
+		mata: `__nwneighbor_src'->copy_subgraph_into(`netobj', __nwneighbor_sel)
+		mata: `netobj'->set_name("`subnet'")
+		mata: mata drop `__nwneighbor_src' __nwneighbor_sel
+		local __nwneighbor_subnetmsg "Induced subgraph saved as network `subnet'"
+		nw_syntax `__nwneighbor_origname', max(1)
+	}
+
 	capture confirm variable `generate'
 	if (_rc != 0 | "`replace'" != "") & "`generate'" != "" {
 		capture drop `generate'
@@ -88,6 +148,11 @@ program nwneighbor
 	mata: st_matrix("r(neighbors)", strtoreal(neighbors'[.,2]))
 	di ""
 	di "{hline 40}"
+	if `"`__nwneighbor_subnetmsg'"' != "" {
+		di "{txt}    `__nwneighbor_subnetmsg'"
+		di "{hline 40}"
+	}
+
 	capture mata: mata drop neighbors
 end
 

@@ -259,7 +259,7 @@ data already looks like a list of affiliations:
 {pstd}
 This also automatically sets each mode's own human-readable description from the variable names
 used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)} in
-{help nwname}/{help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
+{help nwname}, {help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
 holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
 full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
 {bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
@@ -327,11 +327,18 @@ shows its temporal metadata, and {help nwattime} produces an ordinary static net
 the ties active at a given timepoint, usable with any {bf:nw*} command exactly like any other network.
 
 {pstd}
-{bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
-{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
-docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
-scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
-temporal ERGMs) is implemented or attempted here.
+{bf:time()}/{bf:interval()}/{bf:eventtime()} CAN be combined with {bf:twomode} in the same call - a
+two-mode temporal network, declared exactly like an ordinary {bf:twomode} edgelist with a temporal
+option added:
+
+	{cmd:. nwset person organisation, twomode time(wave) name(mynet)}
+
+{pstd}
+{bf:bipartite}'s own wide-affiliation-matrix shape (one variable per mode-1 node, one row per mode-2
+node) has no natural per-row time value to attach, so it remains explicitly unsupported with any
+temporal option - use {bf:twomode}'s edgelist shape instead. This is deliberate groundwork only, per
+the package's own stated scope: no full temporal-network modelling subsystem (dynamic centrality,
+relational-event models, temporal ERGMs) is implemented or attempted here.
 
 
 

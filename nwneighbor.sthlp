@@ -18,7 +18,9 @@
 {opt ego(nodename)}
 [{opt mode}({it:{help nwneighbor##context:context}})
 {opth generate(newvarname)}
-{opt replace}]
+{opt replace}
+{opth subnet(newnetname)}
+{opt subreplace}]
 
 
 {synoptset 30 tabbed}{...}
@@ -27,6 +29,8 @@
 {synopt:{opt mode}({it:{help nwneighbor##context:context}})}Defines the network neighborhood of node {it:ego}; default = {it:outgoing}{p_end}
 {synopt:{opth generate(newvarname)}}Save information about network neighbors in variable.{p_end}
 {synopt:{opt replace}}Overwrite variable {it:newvarname}.{p_end}
+{synopt:{opth subnet(newnetname)}}Save the induced subgraph on {it:ego} plus its own neighbors (and every tie among them) as a new network{p_end}
+{synopt:{opt subreplace}}Overwrite network {it:newnetname} if it already exists{p_end}
 		
 {synoptset 15 tabbed}{...}
 {marker context}{...}
@@ -45,6 +49,9 @@
 {pstd}
 {cmd: nwneighbor} returns the network neighbors of {it:nodename} specified in {bf:ego()}. The network neighborhood of a node is defined in {opt mode()}. By default,
 the neighborhood of a node {it:ego} consists of all nodes {it:j}, who receive a tie from node {it:ego}. Tie values are ignored.
+
+{pstd}
+{opth subnet(newnetname)} additionally saves the INDUCED SUBGRAPH on {it:ego} plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among them (not just ego's own ties) - as {it:newnetname}. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute aggregate, which {help nwaltergen}/{help nwego} already compute directly without needing one). The original network is left untouched; {it:newnetname} inherits its directedness/valued/self-loop/two-mode status.
 
 
 

@@ -92,6 +92,7 @@
 {p2col:    {bf:{help nwcurrent }}}Report and set current network{p_end}
 {p2col:    {bf:{help nwdyads }}}Dyad census{p_end}
 {p2col:    {bf:{help nwissymmetric }}}Check if network is symmetric{p_end}
+{p2col:    {bf:{help nwmotifs }}}4-node undirected motif/graphlet census{p_end}
 {p2col:    {bf:{help nwname }}}Obtain and change meta-information of a network{p_end}
 {p2col:    {bf:{help nwsummarize }}}Summarize a network{p_end}
 {p2col:    {bf:{help nwtabulate }}}One-way table of dyads{p_end}

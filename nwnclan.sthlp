@@ -38,8 +38,7 @@
 {pstd}
 {cmd:nwnclan} enumerates every maximal n-clan (Mokken 1979) in the network(s) in {help netlist} - an
 {help nwnclique:n-clique} (see that command for the base concept and {opth n(int)}) that additionally
-requires every pair of its own members to be reachable from one another {it:while staying inside the
-group}, within {opth n(int)} steps. An ordinary n-clique only guarantees each pair's shortest path in
+requires every pair of its own members to be reachable from one another {it:while staying inside the group}, within {opth n(int)} steps. An ordinary n-clique only guarantees each pair's shortest path in
 the {it:whole} network is within {opth n(int)} - that path may run through a node that is not itself
 one of the n-clique's own members, a known limitation of the plain n-clique concept (Alba 1973).
 n-clans fix exactly that: every member must be able to reach every other member using only paths that
@@ -85,8 +84,7 @@ shape: a single per-node "largest maximal n-clan membership size" summary variab
 Mokken, R.J. (1979). Cliques, clubs and clans. {it:Quality and Quantity} 13(2), 161-173.
 
 {pstd}
-Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical
-Sociology} 3(1), 113-126.
+Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
 
 {pstd}
 Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge

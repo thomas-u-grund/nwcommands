@@ -39,10 +39,6 @@ if "`overwrite'" != "" local replace "replace"
 		error 198
 	}
 	if "`twomode'" != "" {
-		if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
-			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands."
-			error 198
-		}
 		if "`varlist'" == "" {
 			di "{err}option {bf:twomode} requires exactly two (or three, for a valued network) variables: the mode-1 id, the mode-2 id, and optionally a tie value."
 			error 198
@@ -55,11 +51,161 @@ if "`overwrite'" != "" local replace "replace"
 		if "`name'" == "" {
 			local name "network"
 		}
-		// nwset's own syntax line takes no [if] qualifier at all (see
-		// above) - a bare "if ..." after the comma would already have
-		// been rejected by the "syntax" command itself, before this
-		// code ever runs, so none is threaded through here.
-		nw2fromedge `varlist', name(`name') `xvars' `keeporiginal'
+
+		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
+		if `ntemporal_opts' > 1 {
+			di "{err}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event)."
+			error 198
+		}
+
+		if `ntemporal_opts' == 0 {
+			// nwset's own syntax line takes no [if] qualifier at all (see
+			// above) - a bare "if ..." after the comma would already have
+			// been rejected by the "syntax" command itself, before this
+			// code ever runs, so none is threaded through here.
+			nw2fromedge `varlist', name(`name') `xvars' `keeporiginal'
+			exit
+		}
+
+		// Two-mode + temporal composability (two-mode/temporal
+		// architecture initiative, closing the item this file's own
+		// "Composability with twomode/bipartite is intentionally NOT
+		// attempted" comment below originally left open). nw2fromedge
+		// itself does two things beyond a plain nwfromedge call that
+		// matter here, both confirmed directly by reading its own source
+		// (not assumed): (1) if both mode-1/mode-2 id variables are
+		// numeric with OVERLAPPING ranges, it permanently offsets the
+		// mode-2 variable so "id 3" in each mode maps to a genuinely
+		// distinct node; (2) if both are string with an overlapping
+		// VALUE actually used by both modes, it permanently prefixes
+		// them "m1_"/"m2_". A REAL bug found while building this (not
+		// just theorized): nw2fromedge's own internal nwfromedge call
+		// REPLACES the current dataset with the network's own internal
+		// representation, so the mode-1/mode-2/time variables no longer
+		// exist in the calling dataset once nw2fromedge returns -
+		// confirmed directly ("person not found" on the very first end-
+		// to-end trial run, not caught by inspection). Fixed by
+		// capturing every row-level value needed here into Mata BEFORE
+		// calling nw2fromedge at all, replicating its own two collision-
+		// handling rules on this captured copy (mirrored, not shared
+		// code - matches this file's own general style elsewhere) so the
+		// labels built here still exactly match what nw2fromedge's own
+		// (now-vanished) internal nwfromedge call actually used.
+		local mode1id : word 1 of `varlist'
+		local mode2id : word 2 of `varlist'
+		local ivstart ""
+		local ivend ""
+		if "`time'" != "" {
+			confirm numeric variable `time'
+		}
+		if "`eventtime'" != "" {
+			confirm numeric variable `eventtime'
+		}
+		if "`interval'" != "" {
+			local ivstart : word 1 of `interval'
+			local ivend : word 2 of `interval'
+			confirm numeric variable `ivstart' `ivend'
+		}
+
+		capture confirm numeric variable `mode1id'
+		local mode1numeric = (_rc == 0)
+		capture confirm numeric variable `mode2id'
+		local mode2numeric = (_rc == 0)
+		tempvar tm_lab1 tm_lab2
+		if `mode1numeric' & `mode2numeric' {
+			// mirrors nw2fromedge.ado's own numeric-overlap offset
+			// exactly: if mode-2's own minimum falls within mode-1's own
+			// range, shift mode-2 up by mode-1's own max so the two id
+			// spaces cannot collide.
+			tempvar mode2adj
+			qui gen `mode2adj' = `mode2id'
+			qui sum `mode1id'
+			local __g1max = r(max)
+			qui sum `mode2id'
+			local __g2min = r(min)
+			if (`__g1max' >= `__g2min') {
+				qui replace `mode2adj' = `mode2adj' + `__g1max'
+			}
+			qui gen `tm_lab1' = "n" + strofreal(`mode1id')
+			qui gen `tm_lab2' = "n" + strofreal(`mode2adj')
+		}
+		else if `mode1numeric' & !`mode2numeric' {
+			qui gen `tm_lab1' = strofreal(`mode1id')
+			qui gen `tm_lab2' = trim(`mode2id')
+		}
+		else if !`mode1numeric' & `mode2numeric' {
+			qui gen `tm_lab1' = trim(`mode1id')
+			qui gen `tm_lab2' = strofreal(`mode2id')
+		}
+		else {
+			// mirrors nw2fromedge.ado's own string-overlap check exactly:
+			// if the SAME string value is actually used by both modes,
+			// prefix both with "m1_"/"m2_" to disambiguate.
+			tempvar __tm_id
+			tempfile __tm_g1 __tm_g2
+			preserve
+			keep `mode1id'
+			rename `mode1id' `__tm_id'
+			save `__tm_g1'
+			restore
+			preserve
+			keep `mode2id'
+			rename `mode2id' `__tm_id'
+			qui merge m:n `__tm_id' using `__tm_g1'
+			qui sum _merge
+			local __tm_needprefix = (r(max) == 3)
+			restore
+			if `__tm_needprefix' {
+				qui gen `tm_lab1' = "m1_" + trim(`mode1id')
+				qui gen `tm_lab2' = "m2_" + trim(`mode2id')
+			}
+			else {
+				qui gen `tm_lab1' = trim(`mode1id')
+				qui gen `tm_lab2' = trim(`mode2id')
+			}
+		}
+
+		tempname tm_lab1m tm_lab2m tm_tval tm_tval2
+		mata: `tm_lab1m' = st_sdata(., "`tm_lab1'")
+		mata: `tm_lab2m' = st_sdata(., "`tm_lab2'")
+		mata: `tm_tval2' = J(0,1,.)
+		if "`time'" != "" {
+			mata: `tm_tval' = st_data(., "`time'")
+		}
+		if "`eventtime'" != "" {
+			mata: `tm_tval' = st_data(., "`eventtime'")
+		}
+		if "`interval'" != "" {
+			mata: `tm_tval' = st_data(., "`ivstart'")
+			mata: `tm_tval2' = st_data(., "`ivend'")
+		}
+
+		// Every row-level value needed below is now safely captured in
+		// Mata, independent of whatever nw2fromedge does to the current
+		// dataset - safe to call it (and let it replace the dataset)
+		// now.
+		qui nw2fromedge `varlist', name(`name') `xvars' `keeporiginal'
+		nw_syntax `name'
+		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
+
+		if "`time'" != "" {
+			mata: `netobj'->set_edge_time(build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval', `symmetric'))
+			mata: `netobj'->set_temporal_type("snapshot")
+			mata: `netobj'->set_timevar("`time'")
+		}
+		else if "`eventtime'" != "" {
+			mata: `netobj'->set_eventlist(build_eventlist(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval'))
+			mata: `netobj'->set_temporal_type("event")
+			mata: `netobj'->set_eventtimevar("`eventtime'")
+		}
+		else {
+			mata: `netobj'->set_edge_interval(build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval', `symmetric'), build_edge_value_matrix(`netobj'->get_nodenames(), `tm_lab1m', `tm_lab2m', `tm_tval2', `symmetric'))
+			mata: `netobj'->set_temporal_type("interval")
+			mata: `netobj'->set_startvar("`ivstart'")
+			mata: `netobj'->set_endvar("`ivend'")
+		}
+		mata: `netobj'->set_temporal(1)
+		mata: mata drop `tm_lab1m' `tm_lab2m' `tm_tval' `tm_tval2'
 		exit
 	}
 	// Temporal metadata declaration (two-mode/temporal architecture
@@ -68,17 +214,24 @@ if "`overwrite'" != "" local replace "replace"
 	// semantics per the user's own specification, storing per-edge
 	// time value(s) alongside the ordinary edgelist topology rather
 	// than pretending a network has no temporal dimension at all.
-	// Composability with twomode/bipartite is intentionally NOT
-	// attempted in this pass (tracked in docs/ROADMAP.md) - errors
-	// clearly below rather than silently doing something wrong.
+	// Composability with `twomode' is now supported (see that option's
+	// own branch above, which handles the temporal case itself and
+	// always `exit's - this point in the file is only ever reached when
+	// `twomode' is empty). `bipartite' composability is NOT attempted
+	// (tracked in docs/ROADMAP.md) - its own wide-affiliation-matrix
+	// input shape (one variable per mode-1 node, one row per mode-2
+	// node) has no natural per-row time value to attach the way an
+	// edgelist-shaped input (twomode's own shape, and this one-mode
+	// branch's own) does - errors clearly below rather than silently
+	// doing something wrong.
 	if "`time'" != "" | "`interval'" != "" | "`eventtime'" != "" {
 		local ntemporal_opts = ("`time'" != "") + ("`interval'" != "") + ("`eventtime'" != "")
 		if `ntemporal_opts' > 1 {
 			di "{err}options {bf:time}, {bf:interval}, and {bf:eventtime} are mutually exclusive - a network has exactly one temporal semantics (snapshot, interval, or event)."
 			error 198
 		}
-		if "`twomode'" != "" | "`bipartite'" != "" {
-			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:twomode}/{bf:bipartite} in the same call is not yet supported - declare the two-mode network first, then use {help nwattime} once composability lands."
+		if "`bipartite'" != "" {
+			di "{err}combining temporal declaration ({bf:time}/{bf:interval}/{bf:eventtime}) with {bf:bipartite} is not supported - {bf:bipartite}'s own wide-affiliation-matrix shape has no per-row time value to attach. Use {bf:twomode} instead (an edgelist shape: mode-1 id, mode-2 id, optional value) - two-mode + temporal composability is supported there."
 			error 198
 		}
 		if "`varlist'" == "" {

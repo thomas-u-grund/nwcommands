@@ -27,8 +27,7 @@
 {synopt :{opth b:efore(netname)}}move {help netlist} before {it:netname}{p_end}
 {synopt :{opth a:fter(netname)}}move {help netlist} after {it:netname}{p_end}
 {synopt :{opt alpha:betic}}alphabetize {help netlist} and move it to beginning of dataset{p_end}
-{synopt :{opt seq:uential}}alphabetize {help netlist} keeping numbers sequential and move it to beginning of dataset{p_end
-> }
+{synopt :{opt seq:uential}}alphabetize {help netlist} keeping numbers sequential and move it to beginning of dataset{p_end}
 {synoptline}
 {p2colreset}{...}
 
