@@ -3594,11 +3594,19 @@ real matrix `NWdef'::correlate_nodes(scalar outinboth){
 	zeroden = (denom :== 0)
 	denomsafe = denom :+ zeroden
 
-	// fallback for zero-variance pairs - bug-compatible with the
-	// original's own use of the OUTGOING sums in every branch, see
-	// the file-level note above.
-	cmax = (Sxo :+ Syo :+ abs(Sxo :- Syo)) :/ 2
-	cmin = (Sxo :+ Syo :- abs(Sxo :- Syo)) :/ 2
+	// BUGFIX (flagged in the file-level note above for a future unit to
+	// evaluate; now fixed): this fallback (for zero-variance node
+	// pairs, where Pearson correlation is undefined) used to compute
+	// cmax/cmin from the OUTGOING sums (Sxo/Syo) unconditionally, even
+	// inside the incoming-only (outinboth==2) and both-directions
+	// (outinboth==3) branches - a copy-paste artifact from the
+	// outgoing branch, never updated for the other two. `Sx'/`Sy' are
+	// already the branch-correct sums assigned just above (identical
+	// to Sxo/Syo for outinboth==1, so this is a no-op for that branch -
+	// the single most commonly hit case, per this file's own note -
+	// and a real fix only for the other two, previously-wrong cases).
+	cmax = (Sx :+ Sy :+ abs(Sx :- Sy)) :/ 2
+	cmin = (Sx :+ Sy :- abs(Sx :- Sy)) :/ 2
 	FB = (cmin :> 0) :* (cmin :/ (cmax :+ (cmax :== 0))) :+ ///
 		(cmin :== 0) :* (cmax :> 0) :* (-1) :+ (cmin :== 0) :* (cmax :== 0) :* 1
 

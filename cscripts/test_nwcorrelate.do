@@ -129,6 +129,32 @@ capture noisily nwcorrelate constnet, attribute(distinctattr) permutations(10)
 assert _rc == 198
 di "=== undefined correlation REGRESSION VERIFIED ==="
 
+* --- BUGFIX regression: correlate_nodes()'s own zero-variance fallback
+* (used only when Pearson correlation is undefined - both nodes' own
+* tie vectors are constant among the OTHER nodes) used to compute its
+* cmin/cmax exclusively from the OUTGOING sums, even inside the
+* incoming-only (context(incoming)) and both-directions
+* (context(both)) branches - a copy-paste artifact from the outgoing
+* branch, previously flagged but deliberately left as-is pending its
+* own dedicated investigation (docs/CERTIFICATION.md). Certified by
+* hand: A/B/C all tie into D (a "sink"), D ties only to A. For the
+* (A,D) pair under context(incoming), A's own incoming vector
+* (excluding A,D, i.e. ties from B,C into A) is (0,0) - constant, sum
+* 0; D's own incoming vector (ties from B,C into D) is (1,1) -
+* constant, sum 2. cmin=min(0,2)=0, cmax=max(0,2)=2, so the fallback
+* rule (cmin==0 & cmax>0 -> -1) gives -1 - the correct, direction-
+* consistent answer. The old, outgoing-sums-based code instead
+* compared A's and D's OUTGOING sums for this pair and returned +1 -
+* the opposite sign, confirmed via a direct side-by-side replica of
+* both formulas before this fix was written.
+nwclear
+nwset, mat((0,0,0,1\0,0,0,1\0,0,0,1\1,0,0,0)) directed name(sinktest) labs(A,B,C,D)
+nw_syntax sinktest
+mata: st_matrix("Cin", `netobj'->correlate_nodes(2))
+mata: st_numscalar("__c_ad", Cin[1,4])
+assert __c_ad == -1
+di "=== correlate_nodes() zero-variance fallback direction-consistency REGRESSION VERIFIED ==="
+
 
 
 
