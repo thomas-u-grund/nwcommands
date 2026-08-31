@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 520 136
+POSITION 10 10 520 192
 
 SCRIPT PREINIT
 BEGIN
@@ -15,11 +15,15 @@ END
 
 DIALOG main, title("nwgenerate - Generate a new network or variable from an expression")
 BEGIN
-  GROUPBOX gb_opt 10 10 480 86, label("Details")
+  GROUPBOX gb_opt 10 10 480 142, label("Details")
   TEXT tx_ed_new 20 20 260 ., label("New network/variable name:")
   EDIT ed_new 290 20 190 ., nomem
   TEXT tx_ed_expr 20 48 260 ., label("Expression (e.g. '2 * mynet1'):")
   EDIT ed_expr 290 48 190 ., nomem
+  TEXT tx_cx_replace 20 76 260 ., label("overwrite an existing network/variable of the same name")
+  CHECKBOX cx_replace 290 76 190 ., label("replace") option(replace)
+  TEXT tx_cx_xvars 20 104 260 ., label("also generate Stata variables for the resulting network")
+  CHECKBOX cx_xvars 290 104 190 ., label("xvars") option(xvars)
 END
 
 PROGRAM initialize
@@ -31,5 +35,9 @@ BEGIN
 	require main.ed_new
 	require main.ed_expr
 	put "nwgenerate " main.ed_new " = " main.ed_expr
+	beginoptions
+		option main.cx_replace
+		option main.cx_xvars
+	endoptions
 	stata
 END

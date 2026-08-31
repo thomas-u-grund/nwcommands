@@ -158,6 +158,15 @@ BEGIN
   TEXT tx_export 30 25 100 ., label("Filename:")
   FILE fi_export 30 45 300 ., label("Export") filter("SVG|*.svg|PDF|*.pdf|PNG|*.png|EPS|*.eps|TIF|*.tif|All files|*.*") save option(export) nomem
   CHECKBOX cx_replace 30 70 250 ., label("Replace file if it already exists") option(replace) nomem
+  GROUPBOX gb_scheme 10 105 420 130, label("Color schemes")
+  TEXT tx_colorpalette 30 125 100 ., label("Node color palette:")
+  EDIT ed_colorpalette 140 125 200 ., nomem option(colorpalette)
+  TEXT tx_symbolpalette 30 150 100 ., label("Node symbol palette:")
+  EDIT ed_symbolpalette 140 150 200 ., nomem option(symbolpalette)
+  TEXT tx_edgecolorpalette 30 175 100 ., label("Edge color palette:")
+  EDIT ed_edgecolorpalette 140 175 200 ., nomem option(edgecolorpalette)
+  TEXT tx_scheme 30 200 100 ., label("Overall scheme:")
+  EDIT ed_scheme 140 200 200 ., nomem option(scheme)
 END
 
 INCLUDE ifin
@@ -323,6 +332,10 @@ BEGIN
 		put " " /program edges_outputStyle
 		put " " /program edges_outputArrow
 		put " " /program export_output
+		optionarg export.ed_colorpalette
+		optionarg export.ed_symbolpalette
+		optionarg export.ed_edgecolorpalette
+		optionarg export.ed_scheme
 		put " " /program gr_titles_output
 		put " " /program gr_legend_output
 		put " " /program gr_overall_output

@@ -41,6 +41,7 @@
 {synopt:{opth predict(newnetname)}}store the fitted dyad-level values (from {bf:type()}'s own default prediction, e.g. Pr(y=1) for {bf:logit}/{bf:probit}, the fitted mean for {bf:regress}) as a new valued network{p_end}
 {synopt:{opt plot}}Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own {opt permutations()} null draws - the same comparison R's {bf:sna::plot.qaptest()} draws, generalized to every coefficient in the regression{p_end}
 {synopt:{opt name(string)}}Name for the combined graph created by {opt plot}; default = {bf:qap}{p_end}
+{synopt:{opt qapspp}}Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see {help nwqap##qapspp:qapspp} below{p_end}
 
 
 {title:Description}
@@ -132,8 +133,34 @@ Krackhardt, David. (1987). "QAP Partialling as a Test of Spuriousness." Social N
 Krackhardt, David. (1988). "Predicting with Networks: Nonparametric Multiple Regression Analysis of Dyadic Data." Social Networks 10: 359-381.
 
 
+{marker qapspp}{...}
+{title:qapspp - double semi-partialling}
+
+{pstd}
+Plain MR-QAP's own standard permutation test (the default, no {opt qapspp}) permutes the WHOLE
+dependent network at once and refits the FULL model on every permuted draw - a valid test that a
+variable has SOME association with the outcome, but not a valid test that it has an association
+{it:net of the other independent variables}, since permuting the whole network scrambles every
+variable's own relationship to it simultaneously, not just the one being tested. This is exactly
+the "QAP partialling" problem Krackhardt (1987) originally identified.
+
+{pstd}
+{opt qapspp} instead uses double semi-partialling (Dekker, Krackhardt & Snijders 2007, "Sensitivity
+of MRQAP Tests to Collinearity and Autocorrelation Conditions", {it:Psychometrika} 72(4)): for each
+independent variable {it:k} in turn, both the dependent network AND {it:x_k} itself are first
+residualized (via ordinary OLS) against every OTHER independent variable in the model, and the
+permutation test is then run on those two RESIDUALIZED dyad vectors instead of the raw ones. This
+isolates {it:x_k}'s own unique association with the outcome from the other regressors' influence,
+giving a p-value that is much less sensitive to collinearity among the independent networks than
+the plain permutation test - the specific failure mode Dekker, Krackhardt & Snijders' own
+simulation study documents. Applied independently to every independent-variable coefficient
+(the constant's own p-value is left as the plain single-permutation result, since double
+semi-partialling is not defined for an intercept). Semi-partialling itself is always a real OLS
+fit, regardless of which {opt type()} the main model itself used - Dekker, Krackhardt & Snijders'
+own procedure is defined this way for any regression type.
+
 {title:Examples}
-	
+
 	{cmd:. nwwebuse glasgow}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1}
 	{cmd:. nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)}

@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 114
+POSITION 10 10 550 170
 
 SCRIPT PREINIT
 BEGIN
@@ -17,6 +17,11 @@ DIALOG main, title("nwtriads - Triad census of the network")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  GROUPBOX gb_opt 10 44 520 104, label("Options")
+  TEXT tx_cx_plot 20 54 260 ., label("draw a bar chart of the 16 MAN-category counts")
+  CHECKBOX cx_plot 290 54 190 ., label("plot") option(plot)
+  TEXT tx_ed_name 20 82 260 ., label("name for the graph created by plot; default = triads")
+  EDIT ed_name 290 82 190 ., nomem option(name)
 END
 
 LIST netlist
@@ -33,5 +38,9 @@ END
 PROGRAM command
 BEGIN
 	put "nwtriads " main.cb_net
+	beginoptions
+		option main.cx_plot
+		optionarg main.ed_name
+	endoptions
 	stata
 END

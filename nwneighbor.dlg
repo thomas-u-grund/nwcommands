@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 226
+POSITION 10 10 550 282
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwneighbor - Extract the network neighbors of a node")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 132, label("Options")
+  GROUPBOX gb_opt 10 44 520 188, label("Options")
   TEXT tx_ed_ego 20 54 260 ., label("Ego")
   EDIT ed_ego 290 54 190 ., nomem option(ego)
   TEXT tx_cb_mode 20 82 260 ., label("Defines the network neighborhood of node ; default =")
@@ -26,6 +26,10 @@ BEGIN
   EDIT ed_generate 290 110 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 138 260 ., label("Overwrite variable .")
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
+  TEXT tx_ed_subnet 20 166 260 ., label("extract ego's neighborhood as a new registered network of this name")
+  EDIT ed_subnet 290 166 190 ., nomem option(subnet)
+  TEXT tx_cx_subreplace 20 194 260 ., label("overwrite an existing network of that name")
+  CHECKBOX cx_subreplace 290 194 190 ., label("subreplace") option(subreplace)
 END
 
 LIST netlist
@@ -55,6 +59,8 @@ BEGIN
 		optionarg main.cb_mode
 		optionarg main.ed_generate
 		option main.cx_replace
+		optionarg main.ed_subnet
+		option main.cx_subreplace
 	endoptions
 	stata
 END
