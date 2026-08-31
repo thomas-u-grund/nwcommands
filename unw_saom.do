@@ -1588,6 +1588,89 @@ real rowvector change_saom_transmedtrip(class ErgmGraph scalar G, real scalar i,
 }
 
 /*
+   in3Plus (RSiena real effect, `EffectFactory.cpp': "in3Plus" -> new
+   AntiIsolateEffect(pEffectInfo, false, 3) - the SAME class already
+   certified for antiInIso (minDegree=1)/antiInIso2 (minDegree=2) above,
+   just with the threshold raised to 3: alter-indexed, counts actors with
+   indegree>=3, spillover-free (matches antiInIso2's own exact shape -
+   the change function only fires when the TOGGLED alter's own indegree
+   crosses the threshold, never touching any third actor's own count).
+*/
+real rowvector stat_saom_in3plus(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar i, tot
+
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + (G.din[i]>=3)
+	return(tot)
+}
+real rowvector change_saom_in3plus(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d, tied, cond
+
+	d = G.din[j]
+	tied = G.has_edge(i,j)
+	cond = tied ? (d==3) : (d==2)
+	return(cond ? (tied ? -1 : 1) : 0)
+}
+
+/*
+   reciAct/reciPop (RSiena real effects "reciAct"/"reciPop") - INVESTIGATED,
+   NOT SHIPPED (unlike in3Plus above, which the same investigation
+   confirmed correct, maxerr=0e+00). Both formulas below were transcribed
+   faithfully from the real RecipdegreeActivityEffect.cpp/
+   RecipdegreePopularityEffect.cpp `calculateContribution()' source
+   (default/non-sqrt parameterization, not guessed), but certification
+   against the "ego's own recomputed local statistic before/after the
+   toggle equals before + predicted delta" property - the SAME
+   methodology that already certifies every other myopic-actor effect in
+   this file (indegpopularity/outactivity/outoutass/etc.) - failed with a
+   large, consistent (not noise-sized: 15-40 vs an expected ~0) discrepancy
+   on both a 10- and a 16-node network, 3000 toggles each. This suggests
+   RSiena's own `calculateContribution()' for these two specific effects
+   may represent an ABSOLUTE per-alternative multinomial-logit score
+   rather than an incremental delta of a "local statistic" the way most
+   other effects in this codebase's own convention already do - a genuine
+   semantic difference this investigation did not have time to fully
+   resolve, not a transcription error (the C++ formulas below are ported
+   verbatim). Kept here as plain comments (not live Mata code, and not
+   registered in nwsaom.ado's own term dispatch) so a future attempt has
+   the real, source-verified starting formulas on record rather than
+   having to re-derive them from scratch:
+
+   stat_saom_reciact(G, td): global/observed statistic - sum over ties
+   (ego,alter) of ego's own reciprocal degree (mutual-tie count) = sum
+   over nodes of outdegree(node)*reciprocalDegree(node) (confirmed from
+   `tieStatistic()': contributes reciprocalDegree(ego) once per tie).
+       tot = 0
+       for (i=1; i<=G.n; i++) tot = tot + G.degree_out(i)*cols(G.mutual_neighbors(i))
+       return(tot)
+
+   change_saom_reciact(G, i, j, td): ministep delta, ported verbatim from
+   `calculateContribution()' - i=ego, j=candidate alter.
+       rdegree = cols(G.mutual_neighbors(i))
+       if (G.has_edge(j,i)) {
+           rdegree = rdegree + G.degree_out(i)
+           if (G.has_edge(i,j)) rdegree--
+           else rdegree++
+       }
+       return(rdegree)
+
+   stat_saom_recipop(G, td): global/observed statistic - sum over ties
+   (ego,alter) of alter's own reciprocal degree (confirmed from
+   `tieStatistic()': returns reciprocalDegree(alter) as-is) = sum over
+   nodes of indegree(node)*reciprocalDegree(node).
+       tot = 0
+       for (i=1; i<=G.n; i++) tot = tot + G.din[i]*cols(G.mutual_neighbors(i))
+       return(tot)
+
+   change_saom_recipop(G, i, j, td): ministep delta, ported verbatim -
+   alter j's own current reciprocal degree, +1 if i already ties to j
+   (creating this candidate tie would make the pair mutual).
+       degree = cols(G.mutual_neighbors(j))
+       if (G.has_edge(i,j)) degree++
+       return(degree)
+*/
+
+/*
    3-cycles (harmonisation unit 5 - RSiena's "cycle3"): s_i(x) = sum_j
    sum_h x_ij * x_jh * x_hi - the number of directed 3-cycles i->j->h->i
    actor i participates in as the cycle's own start/end point. Genuinely
@@ -2141,7 +2224,7 @@ real rowvector stat_saom_balance(class ErgmGraph scalar G, class ErgmTermData sc
    =================================================================== */
 void SaomCheckThetaBound(real rowvector theta, real scalar thetaBound) {
 	if (max(abs(theta)) > thetaBound) {
-		errprintf("SAOM estimation diverged during phase 2: a coefficient's own magnitude exceeded thetaBound (" + strofreal(thetaBound) + ") after a Robbins-Monro update step - matching real RSiena's own safeguard (R/phase2.r), which halts under the identical condition rather than let an update run away. This usually signals a genuine identification problem for this specific model/data combination (a real, diagnosed example - a co-evolution behavior effect's own joint parameter direction turning out to be an unidentified saturation ridge - is documented in docs/SAOM_ROADMAP.md's own harmonisation unit 28 entry), not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
+		errprintf("SAOM estimation diverged during phase 2: a coefficient's own magnitude exceeded thetaBound (" + strofreal(thetaBound) + ") after a Robbins-Monro update step - matching real RSiena's own safeguard (R/phase2.r), which halts under the identical condition rather than let an update run away. This usually signals a genuine identification problem for this specific model/data combination (a real, diagnosed example: a co-evolution behavior effect's own joint parameter direction turning out to be an unidentified saturation ridge), not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
 		exit(498)
 	}
 }
@@ -2165,7 +2248,7 @@ void SaomCheckThetaBound(real rowvector theta, real scalar thetaBound) {
    =================================================================== */
 void SaomCheckCovarianceFinite(real matrix V) {
 	if (hasmissing(V)) {
-		errprintf("SAOM estimation's own phase-3 covariance matrix (e(V)) contains missing values - the phase-3 Jacobian was too close to singular to invert reliably. This is a further symptom of the SAME kind of weak identification thetaBound (harmonisation unit 29) exists to catch - theta itself stayed within thetaBound's own limit, but the separate phase-3 covariance computation still broke down, which usually signals a genuine identification problem for this specific model/data combination, not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
+		errprintf("SAOM estimation's own phase-3 covariance matrix (e(V)) contains missing values - the phase-3 Jacobian was too close to singular to invert reliably. This is a further symptom of the SAME kind of weak identification thetaBound exists to catch - theta itself stayed within thetaBound's own limit, but the separate phase-3 covariance computation still broke down, which usually signals a genuine identification problem for this specific model/data combination, not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
 		exit(505)
 	}
 }
@@ -2180,6 +2263,285 @@ real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real
 		+ (G.has_edge(j,i) ? 1 : 0) ///
 		- 2*(G.degree_out(i) - (G.has_edge(i,j) ? 1 : 0))
 	return(G.has_edge(i,j) ? -val : val)
+}
+
+/* ===================================================================
+   Interaction effects (RSiena's includeInteraction()): a two-way
+   product term between two ALREADY-REGISTERED "dyadic" (tie-summed)
+   network effects. Direct port of RSiena's real NetworkInteractionEffect
+   (confirmed from RSiena/src/model/effects/NetworkInteractionEffect.cpp,
+   cached at /private/tmp/rsiena_src/RSiena/): calculateContribution() =
+   product of the two components' own calculateContribution();
+   tieStatistic() = product of the two components' own tieStatistic() -
+   a GENUINELY DIFFERENT formula for any component with ministep
+   neighbor-spillover (transties/outoutass/ininass/outinass/inoutass/
+   cycle4/balance - confirmed from RSiena's own real
+   NetworkEffect::egoStatistic()/tieStatistic() vs
+   calculateContribution() split, RSiena/src/model/effects/
+   NetworkEffect.cpp), identical to it for every other (spillover-free)
+   effect. The native/saom_sim.c port (TERMCODE_INTERACT2) mirrors this
+   Mata implementation exactly - see that termcode's own #define comment
+   and its saom_tie_stat()/saom_eval_change() header comments for the
+   parallel account.
+
+   Wire-protocol note: unw_ergm.do's own ErgmModel::addterm()/
+   ErgmModel::full_change()/full_statistic() dispatch every term through
+   a UNIFORM (G,[i,j,]td) signature with no access to the surrounding
+   model M - so an interaction term cannot reach its own two component
+   effects' chgfn/statfn pointers or td objects through that generic
+   path (and unw_ergm.do is READ ONLY for this initiative - see this
+   file's own header comment). Instead, EVERYTHING an interaction needs
+   is packed into its OWN td at registration time (nwsaom.ado), reusing
+   three existing ErgmTermData fields no SAOM main-effect term needs for
+   anything else: td.sptype holds "nameA|nameB" (both component names,
+   split on "|"); td.levels holds (decayA \ decayB) (2x1 - only
+   gwesp/simcov/balance ever read a decay); td.attr holds (attrA \ attrB)
+   stacked into ONE 2*n x 1 colvector (rows 1..n = component A's own
+   attribute array, or a harmless all-zero placeholder if component A
+   doesn't use one; rows n+1..2n = component B's) - n is always
+   G.n, so unpacking needs no extra bookkeeping. This is a
+   self-contained, purely-additive convention entirely on nwsaom's own
+   side, touching no unw_ergm.do field's existing meaning for any other
+   term.
+   =================================================================== */
+
+/* _saom_tiestat: tieStatistic(ego,alter) for a SINGLE component
+   effect, named `nm' - a literal copy of that effect's own tie-loop
+   summand in its stat_saom_X()/stat_X() function above (not
+   re-derived), i.e. exactly what that function sums over G.all_ties()
+   already. Restricted to the "dyadic" termcode subset that has a
+   well-defined tieStatistic() at all - nwsaom.ado's own interact()
+   eligibility check rejects every node-level/"ego effect" name
+   (indegpopularity, outactivity, outpopularity, inactivity, isolatenet,
+   outiso, antiiniso, antiiniso2, inplus3) before an interaction naming
+   one of them can ever reach here. */
+real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
+	real colvector a, real scalar decay, real scalar ego, real scalar alter){
+
+	real scalar nterm, b0, D
+
+	if (nm == "outdegree") return(1)
+	if (nm == "reciprocity") return(G.has_edge(alter, ego) ? 1 : 0)
+	if (nm == "nodematch") return(a[ego] == a[alter] ? 1 : 0)
+	if (nm == "nodecov") return(a[ego] + a[alter])
+	if (nm == "nodeicov") return(a[alter])
+	if (nm == "nodeocov") return(a[ego])
+	if (nm == "transtrip" | nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
+	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego))
+	if (nm == "simcov") return(1 - abs(a[ego] - a[alter]) / decay)
+	if (nm == "transrectrip") return(G.has_edge(alter, ego) ? G.shared_partners_otp(ego, alter) : 0)
+	if (nm == "outoutass") return(G.degree_out(ego) * G.degree_out(alter))
+	if (nm == "ininass") return(G.degree_in(ego) * G.degree_in(alter))
+	if (nm == "outinass") return(G.degree_out(ego) * G.degree_in(alter))
+	if (nm == "inoutass") return(G.degree_in(ego) * G.degree_out(alter))
+	if (nm == "cycle4") return(0.25 * _saom_cycle4_threepaths(G, ego, alter))
+	if (nm == "gwesp") return(gw_kernel(G.shared_partners_otp(ego, alter), decay))
+	if (nm == "transties") return(G.shared_partners_otp(ego, alter) >= 1 ? 1 : 0)
+	if (nm == "balance") {
+		nterm = G.n - 2
+		b0 = decay
+		D = (G.degree_out(ego) - 1) + (G.degree_out(alter) - (G.has_edge(alter, ego) ? 1 : 0)) - 2 * G.shared_partners_osp(ego, alter)
+		return(nterm * b0 - D)
+	}
+	return(0)		// node-level/"ego effect" name - rejected upstream, never reached in practice
+}
+
+/* _saom_tiechange: calculateContribution(alter), the ministep CHANGE
+   contribution for a single component effect `nm' - a literal copy of
+   that effect's own change_saom_X()/change_X() Mata function above (not
+   re-derived), including the neighbor-spillover loops those seven
+   termcodes (transties/outoutass/ininass/outinass/inoutass/cycle4/
+   balance) genuinely have and _saom_tiestat() above deliberately does
+   NOT (see this section's own header comment for why these are two
+   different functions, per RSiena's own real source). */
+real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
+	real colvector a, real scalar decay, real scalar i, real scalar j){
+
+	real scalar tied, delta, chg, egodeg, alterdeg, ldegree, neighborsum, oldb, b0, n, val, k, h
+	real rowvector nb
+
+	tied = G.has_edge(i, j)
+
+	if (nm == "outdegree") return(tied ? -1 : 1)
+	if (nm == "reciprocity") {
+		if (!G.has_edge(j, i)) return(0)
+		return(tied ? -1 : 1)
+	}
+	if (nm == "nodematch") {
+		if (a[i] != a[j]) return(0)
+		return(tied ? -1 : 1)
+	}
+	if (nm == "nodecov") {
+		delta = a[i] + a[j]
+		return(tied ? -delta : delta)
+	}
+	if (nm == "nodeicov") return(tied ? -a[j] : a[j])
+	if (nm == "nodeocov") return(tied ? -a[i] : a[i])
+	if (nm == "transtrip") {
+		delta = G.shared_partners_otp(i, j) + G.shared_partners_osp(i, j)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "transmedtrip") {
+		delta = G.shared_partners_isp(i, j)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "cycle3") {
+		delta = G.shared_partners_otp(j, i)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "simcov") {
+		delta = 1 - abs(a[i] - a[j]) / decay
+		return(tied ? -delta : delta)
+	}
+	if (nm == "transrectrip") {
+		delta = G.has_edge(j, i) ? G.shared_partners_otp(i, j) : 0
+		nb = G.neighbors_out(i)
+		for (k=1; k<=cols(nb); k++) {
+			h = nb[k]
+			if (h == j) continue
+			if (G.has_edge(h, i) & G.has_edge(j, h)) delta++
+		}
+		return(tied ? -delta : delta)
+	}
+	if (nm == "outoutass") {
+		ldegree = G.degree_out(i)
+		alterdeg = G.degree_out(j)
+		nb = G.neighbors_out(i)
+		neighborsum = 0
+		for (k=1; k<=cols(nb); k++) neighborsum = neighborsum + G.degree_out(nb[k])
+		if (tied) return(-((neighborsum - alterdeg) + ldegree*alterdeg))
+		return(neighborsum + (ldegree+1)*alterdeg)
+	}
+	if (nm == "ininass") {
+		egodeg = G.degree_in(i)
+		alterdeg = G.degree_in(j)
+		delta = egodeg * (tied ? alterdeg : alterdeg + 1)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "outinass") {
+		ldegree = G.degree_out(i)
+		alterdeg = G.degree_in(j)
+		nb = G.neighbors_out(i)
+		neighborsum = 0
+		for (k=1; k<=cols(nb); k++) neighborsum = neighborsum + G.degree_in(nb[k])
+		if (tied) return(-((neighborsum - alterdeg) + ldegree*alterdeg))
+		return(neighborsum + (ldegree+1)*(alterdeg+1))
+	}
+	if (nm == "inoutass") {
+		egodeg = G.degree_in(i)
+		alterdeg = G.degree_out(j)
+		delta = egodeg * alterdeg
+		return(tied ? -delta : delta)
+	}
+	if (nm == "cycle4") {			// UNSCALED (no *0.25) - matches change_saom_cycle4()/RSiena's own real FourCyclesEffect::calculateContribution() exactly (unlike this SAME effect's own tieStatistic(), which _saom_tiestat() above DOES scale by 0.25 - a real, previously-caught asymmetry, see native/saom_sim.c's own TERMCODE_CYCLE4 comment)
+		delta = _saom_cycle4_threepaths(G, i, j)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "gwesp") {
+		delta = gw_kernel(G.shared_partners_otp(i, j), decay)
+		return(tied ? -delta : delta)
+	}
+	if (nm == "transties") {
+		delta = tied ? -1 : 1
+		chg = delta * (G.shared_partners_otp(i, j) >= 1)
+		nb = G.neighbors_out(j)
+		for (k=1; k<=cols(nb); k++) {
+			b0 = nb[k]
+			if (b0 == i) continue
+			if (!G.has_edge(i, b0)) continue
+			oldb = G.shared_partners_otp(i, b0)
+			chg = chg + ((oldb+delta>=1) - (oldb>=1))
+		}
+		return(chg)
+	}
+	if (nm == "balance") {
+		n = G.n
+		b0 = decay
+		val = (n-2)*b0 - G.degree_out(j) ///
+			+ 2*G.shared_partners_osp(i,j) + 2*G.shared_partners_otp(i,j) ///
+			+ (G.has_edge(j,i) ? 1 : 0) ///
+			- 2*(G.degree_out(i) - (tied ? 1 : 0))
+		return(tied ? -val : val)
+	}
+	return(0)		// node-level/"ego effect" name - rejected upstream, never reached in practice
+}
+
+/* SaomBuildInteractTd(): nwsaom.ado's own registration-time helper -
+   looks up the two named component effects among M's ALREADY-ADDED
+   terms (by name; both must already be registered as their own
+   main-effect terms, giving a clear error otherwise rather than ever
+   guessing) and packs tdout per stat_saom_interact()'s/
+   change_saom_interact()'s own header comment: td.sptype =
+   "nameA|nameB", td.levels = (decayA \ decayB), td.attr = (attrA \ attrB)
+   stacked into 2*n rows (a zero-filled placeholder for whichever
+   component, if either, does not use an attribute array - every
+   eligible name has rows(attr) EITHER 0 (unused) or exactly n, so this
+   check is unambiguous). `n' is the caller's own actor count (not
+   re-derived from G, since this runs at REGISTRATION time, before any
+   per-model G object need be in scope here). */
+void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
+	string scalar nameA, string scalar nameB, class ErgmTermData scalar tdout){
+
+	real scalar subA, subB, si
+	class ErgmTermData scalar tdA, tdB
+
+	subA = 0
+	subB = 0
+	for (si=1; si<=M.nterms; si++) {
+		if (M.names[si] == nameA & subA == 0) subA = si
+		if (M.names[si] == nameB & subB == 0) subB = si
+	}
+	if (subA == 0) {
+		errprintf("nwsaom: interact() names '" + nameA + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
+		exit(error(198))
+	}
+	if (subB == 0) {
+		errprintf("nwsaom: interact() names '" + nameB + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
+		exit(error(198))
+	}
+	tdA = *M.td[subA]
+	tdB = *M.td[subB]
+	tdout.sptype = nameA + "|" + nameB
+	tdout.levels = (tdA.decay \ tdB.decay)
+	tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \ (rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)))
+}
+
+/* stat_saom_interact()/change_saom_interact(): the TERMCODE_INTERACT2
+   registration pair (nwsaom.ado's own addterm() call), unpacking td's
+   own "nameA|nameB" (td.sptype), (decayA \ decayB) (td.levels), and
+   stacked (attrA \ attrB) (td.attr, 2*G.n rows) - see this section's own
+   header comment for why this packing exists. */
+real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	string rowvector nms
+	real matrix ties
+	real scalar n, k, tot
+	real colvector aA, aB
+
+	nms = tokens(td.sptype, "|")
+	n = G.n
+	aA = td.attr[1::n]
+	aB = td.attr[(n+1)::(2*n)]
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2]) *
+			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2])
+	}
+	return(tot)
+}
+real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	string rowvector nms
+	real scalar n
+	real colvector aA, aB
+	real scalar cvA, cvB
+
+	nms = tokens(td.sptype, "|")
+	n = G.n
+	aA = td.attr[1::n]
+	aB = td.attr[(n+1)::(2*n)]
+	cvA = _saom_tiechange(G, nms[1], aA, td.levels[1], i, j)
+	cvB = _saom_tiechange(G, nms[3], aB, td.levels[2], i, j)
+	return(cvA * cvB)
 }
 
 /* ===================================================================
@@ -6397,8 +6759,9 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr
+	real scalar t, nextattr, subA, subB, si
 	string scalar nm
+	string rowvector nms
 
 	cfg.termcodes = J(1, M.nterms, 0)
 	cfg.attridx = J(1, M.nterms, 0)
@@ -6462,6 +6825,51 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		else if (nm == "inoutass") cfg.termcodes[t] = 20
 		else if (nm == "cycle4") cfg.termcodes[t] = 21
 		else if (nm == "transmedtrip") cfg.termcodes[t] = 23
+		else if (nm == "antiiniso") cfg.termcodes[t] = 24
+		else if (nm == "antiiniso2") cfg.termcodes[t] = 25
+		else if (nm == "in3plus") cfg.termcodes[t] = 29
+		else if (nm == "gwesp") {
+			cfg.termcodes[t] = 26
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.decay
+		}
+		else if (nm == "transties") cfg.termcodes[t] = 27
+		else if (nm == "balance") {
+			cfg.termcodes[t] = 28
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.decay
+		}
+		else if (nm == "interact") {
+			// TERMCODE_INTERACT2 (native/saom_sim.c's own #define comment
+			// has the full design account): attridx/p1 are REPURPOSED here
+			// to carry the two component effects' own 1-based TERM-INSTANCE
+			// indices (into this SAME model's own termcodes[]/attridx[]/p1[]
+			// arrays), not an attrmat column index/decay value - resolved by
+			// NAME (td.sptype's own "nameA|nameB", see
+			// stat_saom_interact()'s own header comment) against every
+			// OTHER already-registered term in this model. Requires both
+			// component names to already be registered as their own
+			// main-effect terms BEFORE the interaction term itself -
+			// enforced at the Stata/Mata layer (nwsaom.ado always adds an
+			// interact()'s own two components first) - eligible=0 (falls
+			// back to the fully-certified Mata path) if either name cannot
+			// be found, rather than ever guessing.
+			tdt = *M.td[t]
+			nms = tokens(tdt.sptype, "|")
+			subA = 0
+			subB = 0
+			for (si=1; si<=M.nterms; si++) {
+				if (si == t) continue
+				if (M.names[si] == nms[1] & subA == 0) subA = si
+				if (M.names[si] == nms[3] & subB == 0) subB = si
+			}
+			if (subA == 0 | subB == 0) cfg.eligible = 0
+			else {
+				cfg.termcodes[t] = 30
+				cfg.attridx[t] = subA
+				cfg.p1[t] = subB
+			}
+		}
 		else cfg.eligible = 0
 	}
 	return(cfg)

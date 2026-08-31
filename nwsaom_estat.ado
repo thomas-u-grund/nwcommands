@@ -127,8 +127,12 @@ program define nwsaom_estat, rclass
 		// values once it exits.
 		return add
 	}
+	else if "`subcmd'" == "mems" {
+		nwsaom_estat_mems `rest'
+		return add
+	}
 	else {
-		di as err "estat `subcmd' not allowed after nwsaom - only {bf:gof} is currently supported (see docs/SAOM_ROADMAP.md for planned extensions)."
+		di as err "estat `subcmd' not allowed after nwsaom - only {bf:gof} and {bf:mems} are currently supported."
 		exit 321
 	}
 end
@@ -182,7 +186,7 @@ program define nwsaom_estat_gof, rclass
 	}
 	foreach __gof_s of local stats {
 		if !inlist("`__gof_s'", "outdegree", "indegree", "geodesic", "behavior", "triad") {
-			di as err "stats() only supports {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}, {bf:triad} (v1 scope - see docs/SAOM_ROADMAP.md; got `__gof_s')."
+			di as err "stats() only supports {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}, {bf:triad} (v1 scope; got `__gof_s')."
 			exit 198
 		}
 		if "`__gof_s'" == "behavior" & !`__gof_coev' {
@@ -862,4 +866,317 @@ program define nwsaom_estat_gofviolin
 	restore
 
 	di as txt "(plot saved as {bf:`graphname'}; violin = simulated distribution's own shape, thin black bar = interquartile range, dashed gray lines = 95% envelope, red = observed)"
+end
+
+// ===========================================================================
+// estat mems (MEMs, Duxbury's netmediate package): "Micro Effects on Macro
+// Structure" - a mediation-style sensitivity analysis asking "how much does
+// a chosen MICRO-level effect (one of this model's own coefficients) change
+// a MACRO-level network summary the user supplies?", scoped and derived
+// against the real installed `netmediate' R package's own source (not
+// guessed - `deparse(body(netmediate:::MEMS_saom))` and
+// `deparse(args(netmediate::MEMS))`, both read directly). Real algorithm:
+//   1. Draw `nsim' theta vectors from MASS::mvrnorm(mu=e(b), Sigma=e(V),
+//      empirical=TRUE) - "empirical=TRUE" is not an ordinary MVN draw, it
+//      is an EXACT-MOMENT-MATCHING construction (confirmed from MASS's own
+//      real source, `deparse(MASS::mvrnorm)`): the nsim draws' OWN sample
+//      mean/covariance equal e(b)/e(V) EXACTLY (up to floating point), not
+//      merely asymptotically as nsim -> infinity. MASS's own real
+//      construction whitens via an SVD; `saom_mems_draw_theta()' below
+//      achieves the IDENTICAL statistical guarantee (exact sample
+//      mean/covariance) via a Cholesky-based whitening instead - a
+//      different but equally valid route to the same property (which
+//      orthogonal transform is used has no bearing on the validity of the
+//      resulting Monte Carlo estimate), disclosed here since it is not a
+//      bit-for-bit RNG-path replication (impossible anyway - Mata's RNG
+//      stream is unrelated to R's).
+//   2. For each of `interval()' (default 0 1, matching netmediate's own
+//      default exactly), scale ONLY the named `effect()' coefficient in
+//      each theta draw by that interval value (0 = as if the effect did
+//      not operate at all; 1 = its actual fitted strength), then simulate
+//      ONE fresh network forward from the model's own OBSERVED wave1 under
+//      that scaled theta (reusing the exact same
+//      SaomSimulateIntervalNative()/SaomSimulateIntervalCounted() machinery
+//      `estat gof' already uses for its own post-hoc simulations - same
+//      "restart fresh from the observed starting wave" convention, no
+//      chaining).
+//   3. Apply the user's own `macro()' Stata program (one macro-level
+//      network summary, e.g. density/centralization/segregation - the
+//      user's own choice, matching netmediate's own `macro_function'
+//      argument) to each simulated network.
+//   4. Report the paired difference (macro at interval=1 minus macro at
+//      interval=0, pooled across every draw and consecutive interval pair
+//      when interval() has more than 2 values, matching real
+//      `netmediate:::MEMS_saom''s own `mean(diff_data, na.rm=TRUE)' over
+//      the WHOLE matrix): mean ("MEMS" estimate), SD, a 95% PERCENTILE
+//      interval (R's own default `quantile()' algorithm - type 7, linear
+//      interpolation on the sorted sample - `saom_mems_quantile()' below),
+//      a Monte Carlo p-value (the literal real formula: the proportion of
+//      draws whose SIGN is opposite the overall mean effect - NOT doubled,
+//      confirmed from source, a specific convention not the usual
+//      two-sided count), and "Prop. Change in M" (mean of
+//      diff/macro-at-interval-1, excluding non-finite ratios - confirmed
+//      from source that ONLY the point estimate is reported for this row,
+//      no SE/CI/p-value, matching netmediate's own summary matrix, which
+//      leaves those cells as NA).
+//
+// v1 scope, disclosed: exactly-two-wave (`wave1()'/`wave2()'), network-only
+// fits - co-evolution (`behavior()'), multi-wave (`waves()'), `symmetric',
+// and multiplex are all rejected with a clear message rather than silently
+// mishandled (each adds real complexity in real RSiena's own MEMS
+// construction too - e.g. a genuine multi-period forward simulation chained
+// through each period's own simulated, not observed, end state - not
+// chased here). The VanderWeele E-value sensitivity bound (netmediate's own
+// `sensitivity_ev' argument, default TRUE there) is NOT implemented - a
+// disclosed, deliberately narrower v1 (real netmediate's own bootstrap
+// implementation of it has what looks like a genuine copy-paste bug,
+// `CI_upper_boot <- E_fun(CI_lower_boot)' reusing the LOWER bound twice -
+// not something to faithfully reproduce, and correctly reimplementing it
+// was not this pass's own priority). No common-random-numbers pairing
+// between a draw's own interval=0/interval=1 simulations either (each
+// simulation call draws its own fresh randomness) - only the THETA draw
+// itself is shared across a row's own interval values, matching what the
+// real source's own `theta2 <- theta; theta2[,idx] <- theta2[,idx]*interval'
+// construction guarantees and no more.
+// ===========================================================================
+
+capture program drop nwsaom_estat_mems
+program define nwsaom_estat_mems, rclass
+	syntax , EFFECT(string) MACRO(string) [NSIM(integer 500) SEED(integer -1) INTERVAL(numlist sort) NODOTS]
+
+	if `"`e(cmd)'"' != "nwsaom" {
+		di as err "last nwsaom estimates not found"
+		exit 301
+	}
+	capture mata: __nwsaom_last_M.nparam()
+	if _rc {
+		di as err "no fitted nwsaom model available for simulation - re-run nwsaom before estat mems."
+		exit 498
+	}
+	if e(has_behavior) {
+		di as err "estat mems does not yet support co-evolution ({bf:behavior()}) fits - v1 scope, network-only (see this file's own header comment on why)."
+		exit 498
+	}
+	capture confirm matrix e(rates)
+	if _rc == 0 {
+		di as err "estat mems does not yet support multi-wave ({bf:waves()}) fits - v1 scope, exactly two waves ({bf:wave1()}/{bf:wave2()})."
+		exit 498
+	}
+	capture confirm scalar e(rate)
+	if _rc {
+		di as err "estat mems requires an ordinary two-wave network-only nwsaom fit (no {bf:symmetric}, multiplex, or other v1-excluded combination)."
+		exit 498
+	}
+
+	if "`interval'" == "" local interval "0 1"
+	local __mems_nint : word count `interval'
+	if `__mems_nint' < 2 {
+		di as err "interval() needs at least two values (default: 0 1)."
+		exit 198
+	}
+	if `nsim' < 20 {
+		di as err "nsim() must be at least 20 - MEMs needs a genuine Monte Carlo reference distribution, not a handful of draws."
+		exit 198
+	}
+
+	if `seed' != -1 set seed `seed'
+
+	tempname bmat Vmat
+	matrix `bmat' = e(b)
+	matrix `Vmat' = e(V)
+	local __mems_names : colnames `bmat'
+	local __mems_effpos : list posof "`effect'" in __mems_names
+	if `__mems_effpos' == 0 {
+		di as err "effect(`effect') is not one of this fitted model's own coefficients. Available: `__mems_names'"
+		exit 198
+	}
+
+	local __mems_rate = e(rate)
+
+	// Validate macro() with a real trial call (on the observed starting
+	// network) BEFORE burning time on nsim simulations - there is no
+	// reliable way to check "is this a defined Stata program" without
+	// actually calling it (Stata's own `which'/`confirm' only recognize
+	// built-ins and ado-files ON DISK, confirmed directly - a real, easy
+	// mistake: an EARLIER version of this check used `capture which
+	// `macro'', which ALWAYS failed for a plain in-session `program
+	// define'd macro(), caught only by an actual end-to-end test, not by
+	// inspection). This also catches a macro() that exists but has the
+	// wrong calling convention (no r(stat), wrong argument count) up
+	// front, with a clear message, rather than nsim calls deep into a
+	// long-running loop.
+	mata: __nwsaom_mems_trialmat = __nwsaom_last_G1.to_dense()
+	capture nwsaom_mems_callmacro __nwsaom_mems_trialmat "`macro'"
+	if _rc {
+		di as err "macro(`macro') failed on a trial call using the observed starting network (rc=`=_rc'). `macro' must be a defined Stata program taking ONE argument (a network name) and returning its own macro-level statistic in r(stat) - e.g. a program that runs args netname, then nwsummarize on that network name with the matonly option, then return scalar stat = r(density)."
+		mata: mata drop __nwsaom_mems_trialmat
+		exit 498
+	}
+	mata: mata drop __nwsaom_mems_trialmat
+
+	mata: st_matrix("__mems_theta", saom_mems_draw_theta(st_matrix("`bmat'"), st_matrix("`Vmat'"), `nsim'))
+
+	capture mata: mata drop __nwsaom_mems_cfg
+	mata: __nwsaom_mems_cfg = SaomNativeSetup(__nwsaom_last_M)
+	mata: st_numscalar("__nwsaom_mems_native", __nwsaom_mems_cfg.eligible & SaomNativeAvailable())
+	local __mems_usenative = __nwsaom_mems_native
+
+	mata: __nwsaom_mems_outdata = J(`nsim', `__mems_nint', .)
+
+	local __mems_i = 0
+	foreach __mems_ival of local interval {
+		local ++__mems_i
+		if "`nodots'" == "" di as text "interval `__mems_ival': " _continue
+		forvalues __mems_s = 1/`nsim' {
+			mata: __nwsaom_mems_theta_s = st_matrix("__mems_theta")[`__mems_s',.]
+			mata: __nwsaom_mems_theta_s[1,`__mems_effpos'] = __nwsaom_mems_theta_s[1,`__mems_effpos'] * (`__mems_ival')
+			mata: __nwsaom_mems_Gwork = ErgmGraph()
+			mata: SaomCopyGraph(__nwsaom_last_G1, __nwsaom_mems_Gwork)
+			if `__mems_usenative' {
+				mata: SaomSimulateIntervalNative(__nwsaom_mems_Gwork, __nwsaom_last_M, __nwsaom_mems_cfg, __nwsaom_mems_theta_s, `__mems_rate', 1, 0)
+			}
+			else {
+				mata: SaomSimulateIntervalCounted(__nwsaom_mems_Gwork, __nwsaom_last_M, __nwsaom_mems_theta_s, `__mems_rate')
+			}
+			mata: __nwsaom_mems_densemat = __nwsaom_mems_Gwork.to_dense()
+			nwsaom_mems_callmacro __nwsaom_mems_densemat "`macro'"
+			mata: __nwsaom_mems_outdata[`__mems_s',`__mems_i'] = `r(stat)'
+			mata: mata drop __nwsaom_mems_densemat __nwsaom_mems_Gwork __nwsaom_mems_theta_s
+			if "`nodots'" == "" & mod(`__mems_s',50)==0 di as text "." _continue
+		}
+		if "`nodots'" == "" di ""
+	}
+
+	tempname __mems_resmat
+	mata: st_matrix("`__mems_resmat'", saom_mems_report(__nwsaom_mems_outdata, `__mems_nint'))
+	local __mems_est = `__mems_resmat'[1,1]
+	local __mems_sd = `__mems_resmat'[1,2]
+	local __mems_lo = `__mems_resmat'[1,3]
+	local __mems_hi = `__mems_resmat'[1,4]
+	local __mems_pval = `__mems_resmat'[1,5]
+	local __mems_prop = `__mems_resmat'[1,6]
+
+	di as text "{hline}"
+	di as text "MEMs (Micro Effects on Macro Structure) - Duxbury, via " as result "`macro'"
+	di as text "Micro process: " as result "`effect'" as text "  Interval: " as result "`interval'" as text "  nsim: " as result `nsim'
+	di as text "{hline}"
+	di as text "{col 1}{c |}{col 15}Estimate{col 27}Std. Dev.{col 40}[95% CI]{col 62}MC p-val"
+	di as text "{hline}"
+	di as text "MEMS{col 15}{res}" %8.4f `__mems_est' as text "{col 27}{res}" %8.4f `__mems_sd' as text "{col 40}{res}" %8.4f `__mems_lo' as text " , " %8.4f `__mems_hi' as text "{col 62}{res}" %6.4f `__mems_pval'
+	di as text "Prop. Change in M{col 40}{res}" %8.4f `__mems_prop'
+	di as text "{hline}"
+	di as text "(MEMS = mean difference in {bf:`macro'} between interval=`=word("`interval'",`__mems_nint')' and interval=`=word("`interval'",1)'; Prop. Change in M = that difference as a proportion of the interval=`=word("`interval'",`__mems_nint')' value; MC p-val = proportion of draws with the opposite sign - a real, disclosed simplification vs real netmediate/RSiena: independent simulation randomness per draw, no common-random-numbers pairing, and the VanderWeele E-value sensitivity bound is not yet implemented)"
+
+	return scalar mems = `__mems_est'
+	return scalar mems_sd = `__mems_sd'
+	return scalar mems_lb = `__mems_lo'
+	return scalar mems_ub = `__mems_hi'
+	return scalar mems_p = `__mems_pval'
+	return scalar propchange = `__mems_prop'
+	return local effect "`effect'"
+	return local macro "`macro'"
+
+	capture mata: mata drop __nwsaom_mems_cfg __nwsaom_mems_outdata
+	capture qui local __nwsaom_mems_donothing = 0
+end
+
+/* nwsaom_mems_callmacro: builds a real, temporary NWdef network from a dense
+   Mata adjacency matrix and calls the user's own `macro' program on it,
+   returning its own r(stat) - the exact same "dense matrix -> temporary
+   nwset network -> read back r()" round trip nwsaom_gof_triadvec() already
+   established above for calling nwtriads per simulated replicate. */
+capture program drop nwsaom_mems_callmacro
+program define nwsaom_mems_callmacro, rclass
+	args matname macroname
+
+	preserve
+	qui drop _all
+	mata: st_numscalar("__nwsaom_mems_n", rows(`matname'))
+	qui set obs `=__nwsaom_mems_n'
+	capture nwdrop __nwsaom_mems_tmpnet
+	qui nwset, mat(`matname') directed name(__nwsaom_mems_tmpnet) nooutput
+	`macroname' __nwsaom_mems_tmpnet
+	return scalar stat = r(stat)
+	capture nwdrop __nwsaom_mems_tmpnet
+	restore
+	// same _rc-staleness class as nwsaom_estat_gof's/nwsaom_gof_triadvec's
+	// own fix - `restore' does not reset a stale _rc left by a failed
+	// `capture nwdrop' just above it.
+	capture qui local __nwsaom_mems_donothing = 0
+end
+
+// ===========================================================================
+// Mata helpers for estat mems (see that program's own header comment for
+// the full derivation/source-verification account).
+// ===========================================================================
+mata:
+
+/* saom_mems_draw_theta(): nsim draws from an "empirical" (exact
+   sample-moment-matching) MVN(b, V) - see this section's own header
+   comment for the real MASS::mvrnorm(empirical=TRUE) derivation and why
+   this Cholesky-based route achieves the identical statistical guarantee
+   via a different (but equally valid) internal transform. */
+real matrix saom_mems_draw_theta(real rowvector b, real matrix V, real scalar nsim) {
+	real matrix Z, Zc, S, L, A, Zw, Lv
+
+	Z = rnormal(nsim, cols(b), 0, 1)
+	Zc = Z :- J(nsim, 1, 1) * mean(Z)			// exact column mean 0
+	S = cross(Zc, Zc) / (nsim - 1)				// Zc's own (near-identity) sample covariance
+	L = cholesky(S)						// S = L*L'
+	A = luinv(L')
+	Zw = Zc * A						// Zw'Zw/(nsim-1) == I(cols(b)) EXACTLY
+	Lv = cholesky(V)					// V = Lv*Lv'
+	return(J(nsim, 1, 1) * b + Zw * Lv')			// sample mean == b, sample covariance == V EXACTLY
+}
+
+/* saom_mems_quantile(): R's own default `quantile()' algorithm (type 7,
+   linear interpolation on the sorted sample) - matches
+   `quantile(diff_data, 0.025)'/`quantile(diff_data, 0.975)' in real
+   netmediate's own source exactly. */
+real scalar saom_mems_quantile(real colvector x, real scalar p) {
+	real colvector xs
+	real scalar n, h, lo, hi
+
+	xs = sort(x, 1)
+	n = length(xs)
+	h = (n - 1) * p + 1
+	lo = floor(h)
+	hi = ceil(h)
+	if (lo < 1) lo = 1
+	if (hi > n) hi = n
+	return(xs[lo] + (h - lo) * (xs[hi] - xs[lo]))
+}
+
+/* saom_mems_report(): the real netmediate:::MEMS_saom() summary-matrix
+   construction (see this section's own header comment) - pools every
+   consecutive interval-pair difference (matching `diff_data' there, and
+   its own whole-matrix `mean()'/`sd()'/`quantile()' calls) rather than
+   assuming interval() has exactly 2 values, though that IS the default and
+   by far the common case. Returns (est, sd, lo, hi, pval, propest) as a
+   plain rowvector - no Mata globals (this codebase's own established
+   discipline, see e.g. unw_ergm.do's own "avoids needing genuine Mata
+   'global' variables" comment) - the calling .ado program reads it back
+   via a single `st_matrix()' round trip. */
+real rowvector saom_mems_report(real matrix outdata, real scalar nint) {
+	real matrix diffdata, propdata
+	real colvector pooled, pooledprop
+	real scalar est, sd, lo, hi, pval, propest
+
+	diffdata = outdata[., 2::nint] - outdata[., 1::(nint - 1)]
+	pooled = vec(diffdata)
+
+	est = mean(pooled)
+	sd = sqrt(variance(pooled))
+	lo = saom_mems_quantile(pooled, 0.025)
+	hi = saom_mems_quantile(pooled, 0.975)
+	if (est < 0) pval = sum(pooled :> 0) / length(pooled)
+	else pval = sum(pooled :< 0) / length(pooled)
+
+	propdata = diffdata :/ outdata[., 2::nint]
+	pooledprop = vec(propdata)
+	pooledprop = select(pooledprop, pooledprop :< .)		// drop non-finite (division by an exact-0 macro value)
+	propest = mean(pooledprop)
+
+	return((est, sd, lo, hi, pval, propest))
+}
 end

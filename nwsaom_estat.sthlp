@@ -14,6 +14,7 @@ The following postestimation command is available after {helpb nwsaom}:
 
 {p2colset 9 22 23 2}{...}
 {p2col: {cmd:estat gof}}RSiena-style goodness-of-fit test and violin plot{p_end}
+{p2col: {cmd:estat mems}}Micro Effects on Macro Structure (Duxbury) mediation-style sensitivity analysis{p_end}
 {p2colreset}{...}
 
 {title:Supported network types}
@@ -25,7 +26,7 @@ Not applicable - {cmd:estat gof} operates on the fitted model and the wave data 
 {title:estat gof}
 
 {p 8 17 2}
-{cmd:estat gof} {opt [, NSIM(int) SEED(int) STATS(namelist) MAXDEG(int) MAXDIST(int) TWOTAILED NAME(string) JOIN(off)]}
+{cmd:estat gof} [{cmd:,} {opt nsim(int)} {opt seed(int)} {opt stats(namelist)} {opt maxdeg(int)} {opt maxdist(int)} {opt twotailed} {opt name(string)} {opt join(off)}]
 
 {synoptset 20 tabbed}{...}
 {synopthdr}
@@ -105,6 +106,65 @@ red connected line - reproducing real RSiena's own {cmd:plot.sienaGOF()} panel l
 Stata's own graphics primitives allow, with the test's own p-value shown as the plot's x-axis
 title, matching RSiena's own {cmd:xlabel = paste("p:", round(x$p,3))} convention exactly.
 
+{title:estat mems}
+
+{p 8 17 2}
+{cmd:estat mems, } {opt effect(string)} {opt macro(string)} [{opt nsim(int)} {opt seed(int)} {opt interval(numlist)} {opt nodots}]
+
+{synoptset 20 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt effect(string)}}Which fitted coefficient is the "micro process" under test - must be one of this fit's own {help nwsaom##estimation:e(b)} column names{p_end}
+{synopt:{opt macro(string)}}Name of a Stata program computing ONE macro-level network summary - takes a single argument (a network name) and must {cmd:return scalar stat} - your own choice of statistic (density, centralization, segregation, ...), matching real {cmd:netmediate}'s own user-supplied {cmd:macro_function}{p_end}
+{synopt:{opt nsim(int)}}Number of Monte Carlo theta draws; default 500 (matching real {cmd:netmediate}'s own default), minimum 20{p_end}
+{synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
+{synopt:{opt interval(numlist)}}Multipliers applied to {opt effect()}'s own coefficient, in order; default {bf:0 1} (real {cmd:netmediate}'s own default: "as if the effect did not operate at all" vs "at its actual fitted strength"){p_end}
+{synopt:{opt nodots}}Suppress the per-interval progress dots{p_end}
+{synoptline}
+
+{pstd}
+{cmd:estat mems} is a direct port of Scott Duxbury's real {cmd:netmediate} R package
+({cmd:MEMS()}/{cmd:netmediate:::MEMS_saom()}, fetched and read directly from the installed
+package's own source, not guessed) - "Micro Effects on Macro Structure", a mediation-style
+sensitivity analysis asking how much a chosen MICRO-level effect (one of this model's own
+coefficients) changes a MACRO-level network summary the user supplies. {cmd:MEMS()} is real
+{cmd:netmediate}'s own SAOM-specific function - the package's separate {cmd:AMME()} function
+targets cross-sectional (ERGM-style) models instead and is NOT what this command implements.
+
+{pstd}
+The real algorithm: draw {opt nsim()} coefficient vectors from an "empirical" multivariate normal
+with mean {cmd:e(b)} and covariance {cmd:e(V)} - confirmed from {cmd:MASS::mvrnorm}'s own real
+source that {cmd:empirical=TRUE} is an EXACT sample-moment-matching construction (the drawn
+sample's OWN mean/covariance equal {cmd:e(b)}/{cmd:e(V)} exactly, not merely asymptotically);
+{cmd:estat mems} achieves the identical statistical guarantee via a Cholesky-based whitening
+transform rather than {cmd:MASS}'s own SVD-based one - a different but equally valid route to the
+same property, not a bit-for-bit RNG-path replication (impossible regardless, since Mata's own RNG
+stream is unrelated to R's). For each value in {opt interval()} (default {bf:0 1}), every draw's
+own {opt effect()} coefficient is scaled by that value and a fresh network is simulated forward
+from the fitted model's OBSERVED starting wave; {opt macro()} is applied to each simulated network.
+The paired difference (macro at the last interval value minus macro at the first, pooled across
+every draw and consecutive interval pair when {opt interval()} has more than two values, matching
+real {cmd:netmediate}'s own whole-matrix pooling) gives the "MEMS" estimate, its Monte Carlo SD, a
+95% percentile interval (R's own default {cmd:quantile()} algorithm), and a Monte Carlo p-value
+(the real, specific convention: the proportion of draws whose sign is OPPOSITE the overall mean
+effect - not doubled). "Prop. Change in M" reports that same difference as a proportion of the
+macro value at the LAST interval - real {cmd:netmediate}'s own summary table reports only a point
+estimate for this row, no SE/CI/p-value, and this command matches that exactly.
+
+{pstd}
+{bf:v1 scope, disclosed}: exactly-two-wave ({opt wave1()}/{opt wave2()}), network-only fits -
+co-evolution ({opt behavior()}), multi-wave ({opt waves()}), {opt symmetric}, and multiplex fits
+are all rejected with a clear message (each adds real complexity in real {cmd:netmediate}'s own
+construction too, e.g. a genuine multi-period forward simulation chained through each period's own
+SIMULATED, not observed, end state - not chased here). The VanderWeele E-value sensitivity bound
+({cmd:netmediate}'s own {cmd:sensitivity_ev} argument) is not implemented - real
+{cmd:netmediate}'s own bootstrap implementation of it has what looks like a genuine copy-paste bug
+(reusing its own lower confidence bound for the upper one too), not something worth faithfully
+reproducing, and a corrected reimplementation was not this pass's own priority. No
+common-random-numbers pairing between a draw's own interval simulations either - only the THETA
+draw itself is shared across a row's own interval values, each simulation call draws its own fresh
+randomness.
+
 {title:Stored results}
 
 {pstd}
@@ -116,6 +176,20 @@ suffixed {cmd:_p{it:#}} (e.g. {cmd:r(p_outdegree_p1)}, {cmd:r(p_outdegree_p2)}):
 		Scalars
 		  {bf:r(p_{it:stat})}		empirical Mahalanobis-distance test p-value for that statistic
 		  {bf:r(mhd_{it:stat})}		observed vector's own Mahalanobis distance from the simulated mean
+
+{pstd}
+{cmd:estat mems} stores the following in {cmd:r()}:
+
+		Scalars
+		  {bf:r(mems)}			MEMS point estimate (mean paired difference in the macro statistic)
+		  {bf:r(mems_sd)}		Monte Carlo standard deviation of the paired difference
+		  {bf:r(mems_lb)}/{bf:r(mems_ub)}	95% percentile interval
+		  {bf:r(mems_p)}		Monte Carlo p-value
+		  {bf:r(propchange)}		"Prop. Change in M" point estimate
+
+		Macros
+		  {bf:r(effect)}		the {opt effect()} requested
+		  {bf:r(macro)}			the {opt macro()} program name requested
 
 {title:Examples}
 
@@ -132,6 +206,13 @@ suffixed {cmd:_p{it:#}} (e.g. {cmd:r(p_outdegree_p1)}, {cmd:r(p_outdegree_p2)}):
 
 		{cmd:. estat gof, join(off)}
 
+		{cmd:. program myDensity, rclass}
+		{cmd:.     args netname}
+		{cmd:.     nwsummarize `netname', matonly}
+		{cmd:.     return scalar stat = r(density)}
+		{cmd:. end}
+		{cmd:. estat mems, effect(reciprocity) macro(myDensity) nsim(500) seed(42)}
+
 {title:References}
 
 {pstd}
@@ -140,6 +221,13 @@ Lospinoso, J., Snijders, T.A.B. (2019). Goodness of fit for stochastic actor-ori
 
 {pstd}
 Ripley, R.M., Snijders, T.A.B., Boda, Z., Voros, A., Preciado, P. (2024). Manual for RSiena.
+
+{pstd}
+Duxbury, S.W. (2023). Micro Effects on Macro Structure. {it:Sociological Methodology}. DOI:
+10.1177/00811750231209040.
+
+{pstd}
+Duxbury, S.W., Zhao, X. {cmd:netmediate}: Micro-Macro Analysis for Social Networks (R package).
 
 {title:See also}
 

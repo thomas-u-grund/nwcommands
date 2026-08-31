@@ -173,9 +173,9 @@ program nwsaom, eclass
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
-		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 ISOLATEPOP ///
+		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
-		GWESP(string) TRANSTIES BALANCE ///
+		GWESP(string) TRANSTIES BALANCE INTERACT(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHTHETA0(string) ///
@@ -274,7 +274,7 @@ program nwsaom, eclass
 	// established on the behavior side) - satisfies the same required-
 	// baseline network effect either way.
 	if "`outdegree'" == "" & "`outdegreeendow'" == "" {
-		di "{err}option {bf:outdegree} (or {bf:outdegreeendow}+{bf:outdegreecreation}, harmonisation unit 167) is required - every nwsaom v1 model includes an outdegree (density) effect, matching nwergm's own edges-required convention."
+		di "{err}option {bf:outdegree} (or {bf:outdegreeendow}+{bf:outdegreecreation}) is required - every nwsaom v1 model includes an outdegree (density) effect, matching nwergm's own edges-required convention."
 		error 198
 	}
 
@@ -309,7 +309,7 @@ program nwsaom, eclass
 		// certified infrastructure covers only the paired case, not a
 		// single non-evaluation role alone).
 		if "`linear'" != "" & ("`linearendow'" != "" | "`linearcreation'" != "") {
-			di "{err}specify either {bf:linear} (a single evaluation-only baseline) or {bf:linearendow}+{bf:linearcreation} together (harmonisation unit 28) - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
+			di "{err}specify either {bf:linear} (a single evaluation-only baseline) or {bf:linearendow}+{bf:linearcreation} together - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
 			error 198
 		}
 		if ("`linearendow'" != "" & "`linearcreation'" == "") | ("`linearendow'" == "" & "`linearcreation'" != "") {
@@ -317,7 +317,7 @@ program nwsaom, eclass
 			error 198
 		}
 		if "`linear'" == "" & "`linearendow'" == "" {
-			di "{err}every co-evolution model requires a baseline linear shape effect: either {bf:linear}, or {bf:linearendow}+{bf:linearcreation} together (harmonisation unit 28) - matching {bf:outdegree}'s own required-baseline convention on the network side."
+			di "{err}every co-evolution model requires a baseline linear shape effect: either {bf:linear}, or {bf:linearendow}+{bf:linearcreation} together - matching {bf:outdegree}'s own required-baseline convention on the network side."
 			error 198
 		}
 		// harmonisation unit 166: quadratic/avalt/avsim endowment/creation
@@ -337,7 +337,7 @@ program nwsaom, eclass
 			local __nwsaom_ec_c = "``__nwsaom_ec_eff'creation'"
 			local __nwsaom_ec_plain = "``__nwsaom_ec_eff''"
 			if "`__nwsaom_ec_plain'" != "" & ("`__nwsaom_ec_e'" != "" | "`__nwsaom_ec_c'" != "") {
-				di "{err}specify either {bf:`__nwsaom_ec_eff'} (evaluation-only) or {bf:`__nwsaom_ec_eff'endow}+{bf:`__nwsaom_ec_eff'creation} together (harmonisation unit 166) - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
+				di "{err}specify either {bf:`__nwsaom_ec_eff'} (evaluation-only) or {bf:`__nwsaom_ec_eff'endow}+{bf:`__nwsaom_ec_eff'creation} together - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
 				error 198
 			}
 			if ("`__nwsaom_ec_e'" != "" & "`__nwsaom_ec_c'" == "") | ("`__nwsaom_ec_e'" == "" & "`__nwsaom_ec_c'" != "") {
@@ -373,12 +373,12 @@ program nwsaom, eclass
 			error 198
 		}
 		if "`w`__w'directed'" != "true" {
-			di "{err}nwsaom requires directed networks - SAOM's ministep formulation is inherently directed (an actor controls only its own outgoing ties). See docs/SAOM_ROADMAP.md for why undirected relations are out of v1 scope."
+			di "{err}nwsaom requires a network stored as directed - SAOM's own ministep formulation is inherently directed (an actor controls only its own outgoing ties). To model a genuinely symmetric/undirected relation, store the data as directed (each tie coded both ways) and use the {bf:symmetric} option, which adds a mutual-consent ministep on top of that same directed storage."
 			error 198
 		}
 		if `__w' == 1 local nodes = `w1nodes'
 		else if `w`__w'nodes' != `nodes' {
-			di "{err}every wave must have the same number of nodes - nwsaom always uses a FIXED, common actor set across every wave; an actor not present at every wave still needs a row in each wave's own network, marked absent via {bf:present()} (harmonisation unit 33), not omitted from the network itself."
+			di "{err}every wave must have the same number of nodes - nwsaom always uses a FIXED, common actor set across every wave; an actor not present at every wave still needs a row in each wave's own network, marked absent via {bf:present()}, not omitted from the network itself."
 			error 198
 		}
 	}
@@ -467,7 +467,7 @@ program nwsaom, eclass
 		local __nwsaom_nec_c = "``__nwsaom_nec_eff'creation'"
 		local __nwsaom_nec_plain = "``__nwsaom_nec_eff''"
 		if "`__nwsaom_nec_plain'" != "" & ("`__nwsaom_nec_e'" != "" | "`__nwsaom_nec_c'" != "") {
-			di "{err}specify either {bf:`__nwsaom_nec_eff'} (evaluation-only) or {bf:`__nwsaom_nec_eff'endow}+{bf:`__nwsaom_nec_eff'creation} together (harmonisation unit 167) - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
+			di "{err}specify either {bf:`__nwsaom_nec_eff'} (evaluation-only) or {bf:`__nwsaom_nec_eff'endow}+{bf:`__nwsaom_nec_eff'creation} together - not both; using an effect in all three roles (evaluation, creation, endowment) is exactly collinear."
 			error 198
 		}
 		if ("`__nwsaom_nec_e'" != "" & "`__nwsaom_nec_c'" == "") | ("`__nwsaom_nec_e'" == "" & "`__nwsaom_nec_c'" != "") {
@@ -940,6 +940,25 @@ program nwsaom, eclass
 		mata: __nwsaom_last_M.addterm("antiiniso2", 1, &stat_saom_antiiniso2(), &change_saom_antiiniso2(), `__td_ains2', ("antiiniso2"))
 		local __nwsaom_efflist "`__nwsaom_efflist' antiiniso2"
 	}
+	// in3plus (RSiena's real "in3Plus" - EffectFactory.cpp dispatches it to
+	// the SAME AntiIsolateEffect class as antiInIso/antiInIso2, just with
+	// minDegree=3 - see unw_saom.do's own header comment). Exposed as the
+	// `inplus3' OPTION (digit moved to the end) rather than `in3plus'
+	// because Stata's own `syntax' command silently rejects any option
+	// name with a digit followed by more letters (confirmed directly:
+	// `syntax [, IN3PLUS]' makes "option in3plus not allowed" fire even
+	// on an exact, non-abbreviated match - a real, general `syntax'
+	// limitation, not specific to this term) - every OTHER identifier
+	// (the Mata function names, the addterm() term-name string, and the
+	// resulting coefficient's own row name/label) stays "in3plus"
+	// unchanged, since Mata identifiers and matrix row names are not
+	// subject to this restriction.
+	if "`inplus3'" != "" {
+		tempname __td_in3p
+		mata: `__td_in3p' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("in3plus", 1, &stat_saom_in3plus(), &change_saom_in3plus(), `__td_in3p', ("in3plus"))
+		local __nwsaom_efflist "`__nwsaom_efflist' in3plus"
+	}
 	if "`isolatepop'" != "" {
 		tempname __td_ipop
 		mata: `__td_ipop' = ErgmTermData()
@@ -1017,6 +1036,14 @@ program nwsaom, eclass
 		mata: __nwsaom_last_M.addterm("transmedtrip", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), `__td_tmt', ("transmedtrip"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transmedtrip"
 	}
+	// reciact/recipop (RSiena's real "reciAct"/"reciPop") were investigated
+	// and NOT shipped - see unw_saom.do's own header comment (right after
+	// in3plus above) for the full account: both formulas are transcribed
+	// verbatim from real RSiena C++ source, but failed this project's own
+	// standard local-recompute certification, suggesting a semantic
+	// difference in what calculateContribution() represents for these two
+	// effects specifically - left as a documented starting point, not
+	// registered here.
 	if "`cycle3'" != "" {
 		tempname __td_c3
 		mata: `__td_c3' = ErgmTermData()
@@ -1151,6 +1178,66 @@ program nwsaom, eclass
 		mata: `__td_sc'.decay = max(`__td_sc'.attr) - min(`__td_sc'.attr)
 		mata: __nwsaom_last_M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), `__td_sc', ("`__nwsaom_simlab'_`simcov'"))
 		local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_simlab'(`simcov')"
+	}
+
+	// --- interact(): two-way interaction effects (RSiena's own
+	// includeInteraction()) between two effects ALREADY added above as
+	// their own main-effect terms - see unw_saom.do's own
+	// "Interaction effects" header comment (right after
+	// change_saom_balance()) for the full design/derivation account
+	// (direct port of RSiena's real NetworkInteractionEffect, confirmed
+	// from RSiena/src/model/effects/NetworkInteractionEffect.cpp).
+	// Syntax mirrors Stata's own factor-variable `#' for a familiar,
+	// multiple-pairs-in-one-option shape: interact(effect1#effect2
+	// [effect3#effect4 ...]). Restricted to the "dyadic" (tie-summed)
+	// effect subset that has a well-defined tieStatistic() at all - the
+	// node-level/nonlinear-in-degree effects (indegpopularity,
+	// outactivity, outpopularity, inactivity, isolatenet, outiso,
+	// antiiso, antiiniso, antiiniso2, inplus3 - RSiena's own "ego
+	// effects") are rejected here with a clear message, matching
+	// TERMCODE_INTERACT2's own #define comment in native/saom_sim.c.
+	// egox()/altx()/samex()/simx() (RSiena's own aliases, this file's
+	// own top-of-program section) are accepted here too, resolved to
+	// their canonical Statnet-style name before lookup - the interacting
+	// effect must already appear in the model under THAT canonical name
+	// (SaomBuildInteractTd()'s own name-based lookup against
+	// __nwsaom_last_M, unw_saom.do), regardless of which spelling
+	// originally added it. Three-way interactions (RSiena's optional
+	// third effect) and behavior-behavior/network-behavior interactions
+	// are a disclosed, not-yet-built follow-up (docs/SAOM_ROADMAP.md).
+	if "`interact'" != "" {
+		local __nwsaom_ixok "outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance"
+		local __nwsaom_ixn = 0
+		foreach __nwsaom_ixpair of local interact {
+			local __nwsaom_ixwords = subinstr("`__nwsaom_ixpair'", "#", " ", .)
+			local __nwsaom_ixnw : word count `__nwsaom_ixwords'
+			if `__nwsaom_ixnw' != 2 {
+				di "{err}interact() expects effect1#effect2 pairs (two-way interactions only in this version); got: `__nwsaom_ixpair'"
+				error 198
+			}
+			local __nwsaom_ixa : word 1 of `__nwsaom_ixwords'
+			local __nwsaom_ixb : word 2 of `__nwsaom_ixwords'
+			if "`__nwsaom_ixa'" == "samex" local __nwsaom_ixa "nodematch"
+			if "`__nwsaom_ixa'" == "simx" local __nwsaom_ixa "simcov"
+			if "`__nwsaom_ixa'" == "altx" local __nwsaom_ixa "nodeicov"
+			if "`__nwsaom_ixa'" == "egox" local __nwsaom_ixa "nodeocov"
+			if "`__nwsaom_ixb'" == "samex" local __nwsaom_ixb "nodematch"
+			if "`__nwsaom_ixb'" == "simx" local __nwsaom_ixb "simcov"
+			if "`__nwsaom_ixb'" == "altx" local __nwsaom_ixb "nodeicov"
+			if "`__nwsaom_ixb'" == "egox" local __nwsaom_ixb "nodeocov"
+			local __nwsaom_ixposa : list posof "`__nwsaom_ixa'" in __nwsaom_ixok
+			local __nwsaom_ixposb : list posof "`__nwsaom_ixb'" in __nwsaom_ixok
+			if `__nwsaom_ixposa' == 0 | `__nwsaom_ixposb' == 0 {
+				di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'"
+				error 198
+			}
+			local __nwsaom_ixn = `__nwsaom_ixn' + 1
+			tempname __td_ix`__nwsaom_ixn'
+			mata: `__td_ix`__nwsaom_ixn'' = ErgmTermData()
+			mata: SaomBuildInteractTd(__nwsaom_last_M, `nodes', "`__nwsaom_ixa'", "`__nwsaom_ixb'", `__td_ix`__nwsaom_ixn'')
+			mata: __nwsaom_last_M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), `__td_ix`__nwsaom_ixn'', ("interact_`__nwsaom_ixa'_`__nwsaom_ixb'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' interact(`__nwsaom_ixa'#`__nwsaom_ixb')"
+		}
 	}
 
 	mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
@@ -1738,23 +1825,6 @@ program nwsaom, eclass
 		ereturn matrix rate_tratios = `ratetrnet'
 		ereturn matrix rates_beh = `ratesbeh'
 		ereturn matrix rate_beh_tratios = `ratetrbeh'
-		di as text "note: coefficients prefixed {bf:beh_} belong to the behavior's own evaluation function" ///
-			" (influence/shape effects); unprefixed coefficients belong to the network's own evaluation" ///
-			" function (selection/structural effects) - both estimated JOINTLY, pooled across every period," ///
-			" via a single Method-of-Moments fit (harmonisation unit 26, docs/SAOM_ROADMAP.md)."
-		di as text "note: e(rates)/e(rates_beh) hold ONE value per inter-wave period for EACH variable (real" ///
-			" RSiena's own convention for 3+ wave models, unit 17, now doubled across both variables); both" ///
-			" rate parameters are each RSiena's own verified closed-form starting-value formula, not yet" ///
-			" refined via simulation - expect their own t-ratios far from zero, not a convergence failure."
-		if `__nwsaom_endowcreation' {
-			di as text "note: a {bf:_endow}/{bf:_creation}-suffixed pair (harmonisation units 28/166:" ///
-				" {bf:linear}/{bf:quadratic}/{bf:avalt}/{bf:avsim}) splits a single effect into its" ///
-				" downward/upward roles - real RSiena's own manual documents this as an" ///
-				" inherently weakly-identified split ('this would lead to large standard errors' unless there is" ///
-				" enough data), not a defect; if estimation instead stops with a thetaBound error, that is the" ///
-				" same safeguard real RSiena itself uses for this exact scenario - try the plain (unsplit)" ///
-				" effect instead, or supply better starting values via {bf:behtheta0()}."
-		}
 	}
 	else if `__nwsaom_coev' {
 		// harmonisation unit 26: TWO separate rate parameters, one per
@@ -1782,23 +1852,6 @@ program nwsaom, eclass
 		di as text "Behavior: " as result "`behavior'" _col(40) as text "Behavior rate: " as result %6.3f `__nwsaom_ratebeh'
 		di as text "{hline}"
 		ereturn display
-		di as text "note: coefficients prefixed {bf:beh_} belong to the behavior's own evaluation function" ///
-			" (influence/shape effects); unprefixed coefficients belong to the network's own evaluation" ///
-			" function (selection/structural effects) - both estimated JOINTLY via a single Method-of-Moments" ///
-			" fit, not two separate models (harmonisation unit 26, docs/SAOM_ROADMAP.md)."
-		di as text "note: the network and behavior rate parameters are each RSiena's own verified closed-form" ///
-			" starting-value formula, not yet refined via simulation the way the effects above are - so both" ///
-			" rate t-ratios reflect that known, disclosed gap, not a Robbins-Monro convergence failure; expect" ///
-			" them far from zero."
-		if `__nwsaom_endowcreation' {
-			di as text "note: a {bf:_endow}/{bf:_creation}-suffixed pair (harmonisation units 28/166:" ///
-				" {bf:linear}/{bf:quadratic}/{bf:avalt}/{bf:avsim}) splits a single effect into its" ///
-				" downward/upward roles - real RSiena's own manual documents this as an" ///
-				" inherently weakly-identified split ('this would lead to large standard errors' unless there is" ///
-				" enough data), not a defect; if estimation instead stops with a thetaBound error, that is the" ///
-				" same safeguard real RSiena itself uses for this exact scenario - try the plain (unsplit)" ///
-				" effect instead, or supply better starting values via {bf:behtheta0()}."
-		}
 	}
 	else if `__nwsaom_multi' {
 		// harmonisation unit 17: multi-wave models report e(rates)/
@@ -1830,19 +1883,12 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (one per inter-wave period):"
 		matlist `rates', format(%9.4f)
-		di as text "Rate standard errors (harmonisation unit 27 - real RSiena's own reported convention," ///
-			" raw SD not SE-of-mean):"
+		di as text "Rate standard errors (real RSiena's own reported convention, raw SD not SE-of-mean):"
 		matlist `ratese', format(%9.4f)
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
 		ereturn matrix rates_se = `ratese'
-		di as text "note: e(rates)/e(rate_tratios) hold ONE value per inter-wave period (real RSiena's own" ///
-			" convention for 3+ wave models, verified directly against a real RSiena fit - see" ///
-			" docs/SAOM_ROADMAP.md's own harmonisation unit 17 entry); theta is POOLED across every" ///
-			" period, matching real RSiena's own multi-period Method-of-Moments formulation. e(rates) is" ///
-			" now REFINED (harmonisation unit 27, real RSiena's own conditional-estimation construction)," ///
-			" not the closed-form starting value."
 	}
 	else {
 		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit.rate))
@@ -1874,17 +1920,7 @@ program nwsaom, eclass
 			if `__nwsaom_ratecoef_fx' di as text " - left at its starting value; the data did not identify it reliably (e(ratecoef_fixed)==1)"
 			else di ""
 		}
-		di as text "note: the rate parameter (harmonisation unit 27) is refined via real RSiena's own" ///
-			" CONDITIONAL-estimation construction, verified directly against RSiena's own real source and" ///
-			" cross-checked live against the installed RSiena package (docs/SAOM_ROADMAP.md) - the" ///
-			" parenthetical alongside e(rate) is e(rate_se), matching real RSiena's own reported rate" ///
-			" standard error exactly (the raw SD of the conditional-simulation's own per-replicate elapsed" ///
-			" time, not divided by sqrt(k3) - RSiena's own convention, not the usual SE-of-the-mean)."
 	}
-	di as text "note: e(tratio) holds phase-3 convergence t-ratios for the effects above (RSiena convention:" ///
-		" |t| well under 1 indicates good convergence) - a SEPARATE diagnostic from the Std. Err./z/P>|z|" ///
-		" columns just displayed above, which come from e(V) (harmonisation unit 18, real RSiena's own" ///
-		" sandwich-formula covariance matrix - see docs/SAOM_ROADMAP.md)."
 end
 
 /* ===================================================================
@@ -2002,5 +2038,4 @@ program define nwsaom_multiplex, eclass
 	di as text "{hline}"
 	ereturn display
 	di as text "note: net1's own opportunity rate = " %6.3f e(rate1) ", net2's own = " %6.3f e(rate2) "."
-	if !`wantcrprod' & !`wantcrprodb' di as text "note: cross-network effects available via crprod()/crprodb() - see docs/SAOM_ROADMAP.md."
 end
