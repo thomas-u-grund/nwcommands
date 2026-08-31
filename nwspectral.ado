@@ -94,7 +94,7 @@ program nwspectral, rclass
 		noi di "{hline 40}"
 		noi di "{txt}  Network name: {res}`netname'"
 		noi di "{txt}  Connected components: {res}`lcomponents'"
-		noi di "{txt}  Algebraic connectivity: {res}`=round(`lalgconn',0.0001)'"
+		noi di "{txt}  Algebraic connectivity: {res}`=round(`lalgconn',0.001)'"
 		noi sum `netgenerate'
 		noi di " "
 	}

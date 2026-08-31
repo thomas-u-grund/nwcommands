@@ -13,8 +13,18 @@
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nwtriads} 
+{cmdab: nwtriads}
 [{help netname}]
+[{cmd:,}
+{opt plot}
+{opt name(string)}]
+
+{synoptset 25 tabbed}{...}
+{synopthdr}
+{synoptline}
+{synopt:{opt plot}}Draw a bar chart of the 16 MAN-category counts{p_end}
+{synopt:{opt name(string)}}Name for the graph created by {opt plot}; default = {bf:triads}{p_end}
+{p2colreset}{...}
 
 {title:Description}
 
@@ -46,6 +56,13 @@ in a directed network can be one of the following:
  This is the so called MAN notation. As in {help nwdyads} it characterized a triad
  by the number of 1) mutual dyads, 2) asymmetric dyads and 3) null dyads. For example,
  MAN = 102 means that there is one mutual dyad and two null dyads.
+
+{pstd}
+{opt plot} draws a bar chart of the 16 category counts, in the same fixed MAN order the
+text table above already uses (not sorted by count), via this package's own established
+preserve/rebuild-a-plotting-dataset/restore convention - the same one {help nwcug}'s own
+{opt plot} option uses for its null-distribution histogram. Grayscale by design, matching
+every other plot this package produces.
 
 
 {title:Supported network types}

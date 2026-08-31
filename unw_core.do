@@ -1137,6 +1137,116 @@ real matrix CorePeriphery(real matrix net, real scalar maxiter){
 }
 
 /*
+	nw_faction_fitness(): the "factions" analog of nw_cp_fitness() above -
+	correlation between the observed tie matrix and the IDEAL factions
+	pattern (1 if two nodes share the SAME group, 0 otherwise - unlike
+	core-periphery's own "at least one endpoint is core" OR pattern, this
+	is an equality test between two nodes' own group labels). `groups' is
+	an n x 1 column of group labels 1..K; `idx' is the same precomputed
+	off-diagonal mask CorePeriphery() itself uses (identical role, kept
+	as a separate copy - see this file's own general style of not
+	sharing tiny helper bodies across genuinely different algorithms).
+*/
+real scalar nw_faction_fitness(real matrix net, real matrix groups, real matrix idx){
+	real matrix pattern, avec, pvec
+	real scalar n
+
+	n = rows(net)
+	pattern = (groups * J(1,n,1)) :== (J(n,1,1) * groups')
+	avec = vec(net)[idx,1]
+	pvec = vec(pattern)[idx,1]
+	return(correlation((avec,pvec))[1,2])
+}
+
+/*
+	Factions (UCINET's own classical technique): partition nodes into a
+	SPECIFIED number `K' of groups to maximize the correlation between
+	the observed network and the ideal "everyone in the same group is
+	tied, everyone in different groups is not" block pattern - the
+	assortative-block-model sibling of CorePeriphery() above, same
+	general "greedy local search from a real-property seed" shape
+	Louvain/CorePeriphery both already use in this file, generalized
+	from a fixed 2-group (core/periphery) partition to an
+	arbitrary-K-group one.
+
+	Seeded by sorting nodes by degree (descending) and assigning them to
+	groups round-robin - spreads high- and low-degree nodes evenly
+	across every group as a starting point, rather than an arbitrary
+	block split, mirroring CorePeriphery()'s own "seed from a real
+	network property, not arbitrarily" precedent. Repeatedly tries
+	moving each node (fixed 1..n order, for reproducibility - the same
+	convention Louvain/CorePeriphery both already establish) to every
+	OTHER group, keeping whichever single move (including "no move")
+	most improves the fitness, until a full sweep produces no
+	improvement or `maxiter' sweeps are reached.
+
+	Deliberately NOT given CorePeriphery()'s own later O(n) incremental-
+	fitness-update optimization (that file's own header comment on why:
+	a real, separate performance pass, done only after the 2-group
+	version was already correct and shipped) - a real, disclosed v1
+	scope choice, not an oversight: each candidate move here recomputes
+	the full O(n^2) fitness correlation directly via
+	nw_faction_fitness(), exactly like CorePeriphery()'s own original,
+	pre-optimization version did. Fine for the moderate network sizes
+	typical of SNA datasets; a future pass could re-derive the same
+	incremental-sufficient-statistics trick for the K-group equality
+	pattern if a large-network use case needs it.
+*/
+real matrix Factions(real matrix net, real scalar K, real scalar maxiter){
+	real matrix mask, idx, groups, deg, byDeg
+	real scalar n, sweep, moved, i, g, orig, bestg, bestfit, fit1
+
+	n = rows(net)
+	if (max(net) <= 0){
+		errprintf("Factions detection requires at least one tie in the network.\n")
+		exit(error(6556))
+	}
+	if (K < 2 | K > n){
+		errprintf("Factions requires groups() to be between 2 and the number of nodes.\n")
+		exit(error(6556))
+	}
+
+	mask = J(n,n,1)
+	_diag(mask, 0)
+	idx = selectindex(vec(mask))
+
+	deg = rowsum(net) :+ colsum(net)'
+	byDeg = sort((( 1::n), deg), -2)		// column 1 = node index, sorted by descending degree (column 2)
+	groups = J(n,1,.)
+	for (i=1; i<=n; i++) {
+		groups[byDeg[i,1],1] = mod(i-1, K) + 1
+	}
+
+	sweep = 0
+	moved = 1
+	while (moved & sweep < maxiter){
+		moved = 0
+		sweep++
+		for (i=1; i<=n; i++){
+			orig = groups[i,1]
+			bestg = orig
+			bestfit = nw_faction_fitness(net, groups, idx)
+			for (g=1; g<=K; g++){
+				if (g == orig) continue
+				groups[i,1] = g
+				fit1 = nw_faction_fitness(net, groups, idx)
+				groups[i,1] = orig
+				if (fit1 > bestfit + 1e-12){
+					bestfit = fit1
+					bestg = g
+				}
+			}
+			if (bestg != orig){
+				groups[i,1] = bestg
+				moved = 1
+			}
+		}
+	}
+
+	return(groups \ nw_faction_fitness(net, groups, idx))
+}
+
+/*
 	Bron-Kerbosch (1973) maximal clique enumeration, without pivoting -
 	the classic, textbook recursive algorithm: R is the clique built so
 	far, P is the set of candidates that could still extend it (every
@@ -2937,6 +3047,12 @@ class `NWdef' {
 	real matrix detect_communities_labelprop()
 	real matrix calculate_concor()
 	real matrix calculate_coreperiphery()
+	real matrix calculate_factions()
+	real matrix calculate_maxflow()
+	real matrix calculate_bipartite_matching()
+	real matrix calculate_pagerank()
+	real matrix calculate_randomwalk_hitting()
+	real matrix calculate_motif4()
 	real matrix calculate_brokerage()
 	real matrix calculate_2mode_degree()
 	real matrix calculate_egostats()
@@ -2951,6 +3067,7 @@ class `NWdef' {
 	real matrix calculate_cohesion_hierarchy()
 	real matrix calculate_laplacian()
 	real matrix calculate_kcore()
+	real matrix calculate_lambda()
 	real matrix calculate_alterstat()
 	real matrix calculate_alterstat_hop()
 	real matrix calculate_similarity_index()
@@ -2997,6 +3114,7 @@ class `NWdef' {
 	void keep_nodes()
 	void drop_nodes()
 	pointer(class `NWdef' scalar) scalar extract_subgraph()
+	void copy_subgraph_into()
 	void permute()
 	void clean_matrix_2mode()
 	`BOOL' rename_nodename()
@@ -3775,6 +3893,25 @@ real matrix `NWdef'::calculate_coreperiphery(| real scalar valued, real scalar m
 }
 
 /*
+	Factions (UCINET's own classical technique) - see Factions()'s own
+	header comment above for the full algorithm account. Undirected only
+	(get_matrix_mod(val, 0) symmetrizes), matching CorePeriphery()'s own
+	identical choice - the classical assortative-block-model definition
+	does not distinguish in-ties from out-ties either.
+*/
+real matrix `NWdef'::calculate_factions(real scalar k, | real scalar valued, real scalar maxiter){
+	real matrix w
+	real scalar val, iter
+
+	val = (args() >= 2 ? valued : 1)
+	iter = (args() == 3 ? maxiter : 100)
+	w = *get_matrix_mod(val, 0)
+	_diag(w, 0)
+
+	return(Factions(w, k, iter))
+}
+
+/*
 	Gould-Fernandez (1989) brokerage roles: for every directed two-path
 	a -> b -> c (a != c) through each node b, WHERE a HAS NO DIRECT TIE
 	TO c (a cannot already reach c without going through b - the whole
@@ -4502,6 +4639,483 @@ real matrix `NWdef'::calculate_kcore(){
 	}
 
 	return(core)
+}
+
+/*
+	calculate_lambda(): the n x n edge ("line") connectivity matrix -
+	lambda_ij, the maximum number of edge-disjoint paths between every
+	pair of nodes (equivalently, by Menger's theorem's edge version, the
+	size of the smallest edge cut separating them). This is Borgatti,
+	Everett & Shirey's (1990) own foundation for "lambda sets" (LS sets,
+	Social Networks 13(4)) - a maximal subset S is a lambda set when
+	every pair inside S has HIGHER edge connectivity than either member
+	has with any node outside S. lambda_ii is left at 0 (undefined self-
+	comparison, matching this file's own convention elsewhere, e.g.
+	calculate_betweenness()'s own diagonal).
+
+	Always undirected and binary (`get_matrix_mod(0,0)`, the exact same
+	symmetrize+binarize call calculate_cliques() already uses) - edge
+	connectivity in the classical cohesive-subgroup sense has no
+	standard directed/valued generalization, matching every other
+	command in this family (nwclique/nwkplex/nwnclique/nwkcomponents all
+	make the identical choice).
+
+	Computed via bfs_augment()'s own generic Edmonds-Karp augmenting-path
+	loop, run DIRECTLY against the symmetrized adjacency matrix with NO
+	node-splitting reduction - unlike vertex_connectivity() above, edge
+	connectivity needs none: the standard, textbook-established reduction
+	for undirected max-flow (CLRS 26.1) is to treat each undirected edge
+	as two independent-capacity-1 directed arcs and run ordinary directed
+	max-flow, which is exactly what an already-symmetrized 0/1 adjacency
+	matrix used as `cap` here already represents - no other change
+	needed. Since every capacity is exactly 1, every augmenting path
+	found carries exactly 1 unit of flow, so the number of augmenting
+	paths found IS the max-flow value directly (no separate bottleneck
+	computation needed).
+
+	O(n^2) pairwise max-flow calls - the same established scope limit as
+	vertex_connectivity()'s own dense pairwise callers
+	(nwkcomponents/nwcohesion) for a moderate network size, not the
+	sparse edge-list optimization those two later needed for very large
+	networks (harmonisation unit 108) - not attempted here, matching this
+	command's own initial v1 scope.
+*/
+real matrix `NWdef'::calculate_lambda(){
+	real matrix adj, lambda, flow
+	real scalar n, s, t, v, u, maxf
+	real rowvector parent
+
+	n = get_nodes()
+	adj = *get_matrix_mod(0, 0)
+	lambda = J(n, n, 0)
+
+	for (s = 1; s <= n; s++) {
+		for (t = s+1; t <= n; t++) {
+			flow = J(n, n, 0)
+			maxf = 0
+			while (bfs_augment(adj, flow, s, t, parent)) {
+				v = t
+				while (v != s) {
+					u = parent[v]
+					flow[u,v] = flow[u,v] + 1
+					flow[v,u] = flow[v,u] - 1
+					v = u
+				}
+				maxf++
+			}
+			lambda[s,t] = maxf
+			lambda[t,s] = maxf
+		}
+	}
+	return(lambda)
+}
+
+/*
+	calculate_maxflow(): max-flow value and minimum cut between a given
+	source `s' and sink `t', via the SAME generic Edmonds-Karp
+	bfs_augment() every other flow-based primitive in this file already
+	uses (calculate_lambda()'s own pairwise edge connectivity,
+	vertex_connectivity()'s own node-split reduction) - unlike
+	calculate_lambda() (always undirected, since edge connectivity in
+	the classical cohesive-subgroup literature has no directed
+	generalization), this respects the network's own directedness
+	directly, since a flow network is inherently a directed concept (a
+	valued tie's own capacity only flows the direction it points).
+	`valued' lets tie VALUES be used as capacities instead of a uniform
+	1 per tie (the default) - matching `get_matrix_mod()''s own
+	valued/unvalued convention exactly.
+
+	Returns an (n+2) x 1 column: rows 1..n = 1 if node i is on the
+	SOURCE side of the minimum cut (reachable from `s' in the final
+	residual graph after max-flow converges - the standard max-flow/
+	min-cut theorem construction) else 0; row n+1 = the max-flow value;
+	row n+2 = the number of edges actually crossing the cut (source-side
+	to sink-side) - the cut EDGES themselves are exactly every existing
+	edge (i,j) with side[i]=1 and side[j]=0, cheap for the calling .ado
+	to re-derive from the ordinary edge matrix plus this side vector, so
+	are not returned as a separate structure here.
+*/
+real matrix `NWdef'::calculate_maxflow(real scalar s, real scalar t, | real scalar valued){
+	real matrix cap, flow
+	real scalar n, val, maxf, v, u, bottleneck, ncut, i, j, qhead, qtail
+	real rowvector parent
+	real colvector side, queue
+
+	val = (args() >= 3 ? valued : 0)
+	n = get_nodes()
+	if (s < 1 | s > n | t < 1 | t > n | s == t) {
+		errprintf("nwmaxflow: source and sink must be distinct, valid node indices.\n")
+		exit(error(6556))
+	}
+	cap = *get_matrix_mod(val, 1)
+	_diag(cap, 0)
+	_editmissing(cap, 0)
+
+	flow = J(n,n,0)
+	maxf = 0
+	while (bfs_augment(cap, flow, s, t, parent)) {
+		bottleneck = .
+		v = t
+		while (v != s) {
+			u = parent[v]
+			if (bottleneck == . | cap[u,v]-flow[u,v] < bottleneck) bottleneck = cap[u,v]-flow[u,v]
+			v = u
+		}
+		v = t
+		while (v != s) {
+			u = parent[v]
+			flow[u,v] = flow[u,v] + bottleneck
+			flow[v,u] = flow[v,u] - bottleneck
+			v = u
+		}
+		maxf = maxf + bottleneck
+	}
+
+	// A small, self-contained reachability BFS on the final residual
+	// graph, finding the min cut's own source side - deliberately NOT
+	// reusing bfs_augment() here (that function indexes visited[t]
+	// directly, assuming a real 1..n sink to check against; there is no
+	// safe sentinel "no target" value to pass it that would not itself
+	// be an out-of-range index).
+	side = J(n,1,0)
+	side[s] = 1
+	queue = J(n,1,0)
+	qhead = 1
+	qtail = 1
+	queue[1] = s
+	while (qhead <= qtail) {
+		u = queue[qhead]
+		qhead++
+		for (v=1; v<=n; v++) {
+			if (side[v] == 0 & (cap[u,v]-flow[u,v]) > 0) {
+				side[v] = 1
+				qtail++
+				queue[qtail] = v
+			}
+		}
+	}
+
+	ncut = 0
+	for (i=1; i<=n; i++) {
+		if (side[i] == 0) continue
+		for (j=1; j<=n; j++) {
+			if (side[j] == 1) continue
+			if (cap[i,j] > 0) ncut++
+		}
+	}
+
+	return(side \ maxf \ ncut)
+}
+
+/*
+	calculate_bipartite_matching(): maximum-cardinality bipartite
+	matching, via the standard reduction to max-flow (Hopcroft & Karp
+	1973's own underlying flow-theoretic characterization, though this
+	is the simpler repeated-augmenting-path form, not their own
+	sqrt(V)-phase speedup): add a virtual source with a capacity-1 arc
+	to every mode-1 node, a virtual sink with a capacity-1 arc from
+	every mode-2 node, capacity 1 on every existing tie, then max-flow
+	from source to sink - every unit of flow is exactly one matched
+	pair, and the classical integrality theorem for unit-capacity
+	networks guarantees an OPTIMAL (maximum-cardinality) integral flow
+	exists and is found by ordinary Edmonds-Karp. Requires a two-mode
+	network (`is2mode' - `modes' already distinguishes the two sides,
+	no separate bipartition-detection step needed the way a general
+	graph matching problem would require).
+
+	Returns an n x 1 column: for a mode-1 node, its matched mode-2
+	partner's own node index (or 0 if unmatched); for a mode-2 node, 0
+	always (the calling .ado reads the match off the mode-1 side only,
+	matching the same "one side owns the report" convention
+	nw2project()'s own mode-1/mode-2 asymmetry already establishes).
+*/
+real matrix `NWdef'::calculate_bipartite_matching(){
+	real matrix adj, cap
+	real scalar n, N, src, snk, m, i, j, maxf, v, u, bottleneck
+	real rowvector parent
+	string rowvector modes
+	real colvector match
+
+	if (is_2mode_boolean() == 0) {
+		errprintf("nwmatching requires a two-mode network (see nwset's own twomode option or nw2set).\n")
+		exit(error(6556))
+	}
+	n = get_nodes()
+	modes = get_modes()		// 1 x n STRING rowvector, values "1"/"2"
+	adj = *get_matrix_mod(0, 1)
+	_diag(adj, 0)
+	_editmissing(adj, 0)
+
+	// virtual source = n+1, virtual sink = n+2
+	src = n+1
+	snk = n+2
+	N = n+2
+	cap = J(N, N, 0)
+	for (i=1; i<=n; i++) {
+		if (modes[1,i] == "1") cap[src,i] = 1
+		else cap[i,snk] = 1
+		for (j=1; j<=n; j++) {
+			if (modes[1,i]=="1" & modes[1,j]=="2" & adj[i,j] > 0) cap[i,j] = 1
+		}
+	}
+
+	m = J(N,N,0)
+	maxf = 0
+	while (bfs_augment(cap, m, src, snk, parent)) {
+		bottleneck = .
+		v = snk
+		while (v != src) {
+			u = parent[v]
+			if (bottleneck == . | cap[u,v]-m[u,v] < bottleneck) bottleneck = cap[u,v]-m[u,v]
+			v = u
+		}
+		v = snk
+		while (v != src) {
+			u = parent[v]
+			m[u,v] = m[u,v] + bottleneck
+			m[v,u] = m[v,u] - bottleneck
+			v = u
+		}
+		maxf = maxf + bottleneck
+	}
+
+	match = J(n,1,0)
+	for (i=1; i<=n; i++) {
+		if (modes[1,i] != "1") continue
+		for (j=1; j<=n; j++) {
+			if (modes[1,j]=="2" & m[i,j] > 0) {
+				match[i] = j
+			}
+		}
+	}
+	return(match)
+}
+
+/*
+	calculate_pagerank(): Page & Brin's (1998) own random-walk-based
+	centrality - the stationary distribution of a "random surfer" who,
+	at each step, follows a uniformly-random OUT-tie from the current
+	node with probability `damping', or jumps to a uniformly-random node
+	anywhere in the network with probability (1-damping). Genuinely
+	different from {help nwevcent} (this package's own existing
+	eigenvector centrality): PageRank is defined for DIRECTED networks
+	directly (no symmetrization), has no scale ambiguity (the damping
+	term guarantees a unique, well-defined stationary distribution even
+	on a network eigenvector centrality would reject as not strongly
+	connected), and explicitly handles "dangling nodes" (zero out-degree
+	- a random surfer there cannot follow any tie, so real PageRank
+	redistributes that node's own rank mass uniformly across every node
+	in the network, not just its own non-existent out-neighbors -
+	Page & Brin's own original paper's own explicit fix, not an
+	approximation).
+
+	Computed via power iteration on the sparse "in-neighbor" structure
+	directly (each iteration is O(n+m): for every node, walk its own
+	in-neighbors' contributions via degree(i)'s own out-degree
+	convention - `degree()' is genuinely the OUT-degree for a directed
+	network, confirmed directly from its own real source, the forward
+	CSR's own row-length), rather than materializing any dense n x n
+	matrix - the same "stay sparse" discipline `calculate_kcore()`/
+	`calculate_lambda()`'s own primitives already follow. Undirected
+	networks work identically (`neighbors()`/`degree()` already fall
+	back to the symmetric case on their own).
+
+	`damping' defaults to 0.85 (Page & Brin's own original, still the
+	universal default in every other implementation). Returns an n x 1
+	column of PageRank scores summing to 1 (a genuine probability
+	distribution), not renormalized to any other convention.
+*/
+real matrix `NWdef'::calculate_pagerank(| real scalar damping, real scalar maxiter, real scalar tol){
+	real scalar n, d, mi, tolv, iter, i, k, danglingmass, diff, outd
+	real colvector r, rnew, outdeg
+	real matrix nb
+
+	d = (args() >= 1 ? damping : 0.85)
+	mi = (args() >= 2 ? maxiter : 1000)
+	tolv = (args() >= 3 ? tol : 1e-10)
+
+	n = get_nodes()
+	if (n == 0) return(J(0,1,0))
+
+	outdeg = J(n,1,0)
+	for (i=1; i<=n; i++) outdeg[i] = degree(i)
+
+	r = J(n,1,1/n)
+	for (iter=1; iter<=mi; iter++){
+		danglingmass = sum(select(r, outdeg :== 0))
+		rnew = J(n,1,(1-d)/n + d*danglingmass/n)
+		for (i=1; i<=n; i++){
+			outd = outdeg[i]
+			if (outd == 0) continue
+			nb = neighbors(i)
+			for (k=1; k<=rows(nb); k++){
+				rnew[nb[k]] = rnew[nb[k]] + d*r[i]/outd
+			}
+		}
+		diff = max(abs(rnew - r))
+		r = rnew
+		if (diff < tolv) break
+	}
+	return(r)
+}
+
+/*
+	calculate_randomwalk_hitting(): mean hitting time from every node to
+	a given target `t' - the expected number of steps a simple random
+	walk (at each step, move to a uniformly-random NEIGHBOR of the
+	current node) starting at node i takes to first reach `t'. A
+	classical, well-defined random-walk characterization of a network's
+	own structure (closely related to effective resistance/commute time
+	in the electrical-network analogy of a graph), genuinely different
+	from PageRank above (a stationary DISTRIBUTION over all nodes at
+	once) or from ordinary geodesic distance (an unweighted random walk
+	routinely takes many more steps than the shortest path, especially
+	through a low-degree "bottleneck" node - the whole reason hitting
+	time is its own separate, informative quantity).
+
+	Solved exactly via the standard linear system this quantity
+	satisfies (not simulated): for i != t, h(i) = 1 + sum over i's own
+	neighbors k of h(k)/degree(i); h(t) = 0. Rearranged to
+	(I - P)*h = 1 with row t of both sides replaced by the h(t)=0
+	constraint, and solved directly via `lusolve()' - the same "solve
+	directly, do not simulate" discipline `nwkatz`'s own walk-counting
+	Katz centrality (`lusolve(I(n) - alpha*A, ...)`) already established
+	for an analogous exact-linear-system random-walk quantity. Requires
+	an undirected, connected network (a directed random walk's own
+	hitting time is a well-defined but materially different quantity -
+	not attempted here; an unreachable node in a disconnected undirected
+	network has no finite hitting time by definition, reported as
+	missing rather than guessed).
+*/
+real matrix `NWdef'::calculate_randomwalk_hitting(real scalar t){
+	real matrix A, P, M, rhs, h
+	real scalar n, i, d
+	real colvector deg
+
+	n = get_nodes()
+	if (t < 1 | t > n) {
+		errprintf("nwrandomwalk: target node index out of range.\n")
+		exit(error(6556))
+	}
+	A = *get_matrix_mod(0, 0)
+	_diag(A, 0)
+	deg = rowsum(A)
+	if (min(deg) == 0) {
+		errprintf("nwrandomwalk: every node must have at least one tie (an isolate has no well-defined hitting time) - remove isolates first.\n")
+		exit(error(6556))
+	}
+
+	P = J(n,n,0)
+	for (i=1; i<=n; i++) P[i,.] = A[i,.] :/ deg[i]
+
+	M = I(n) - P
+	rhs = J(n,1,1)
+	M[t,.] = J(1,n,0)
+	M[t,t] = 1
+	rhs[t] = 0
+
+	h = lusolve(M, rhs)
+	return(h)
+}
+
+
+/*
+	calculate_motif4(): the exhaustive census of every 4-node induced
+	subgraph's own isomorphism class - the "motifs beyond triads"
+	extension of nwtriads' own 3-node MAN census, restricted to
+	undirected/binary structure (the classical motif literature's own
+	original scope - Milo et al 2002's own directed 4-node census has
+	218 distinct isomorphism classes, not attempted here; networks are
+	treated as undirected, matching nwrandomwalk's own precedent for a
+	structural quantity that does not currently have a directed variant).
+
+	For n=4 specifically, (edge count, sorted degree sequence) is a
+	COMPLETE invariant - i.e. it uniquely determines the isomorphism
+	class among all graphs on 4 vertices (verified by hand for every one
+	of the 11 non-isomorphic 4-vertex graphs; this stops being a complete
+	invariant for larger n, e.g. n=5, where some non-isomorphic graphs
+	share both - not an issue here since the census is fixed at n=4), so
+	classification needs no general graph-isomorphism check.
+
+	Reports the 6 CONNECTED shapes the motif literature actually calls
+	"motifs" (path, star, cycle, paw, diamond, k4) plus one residual
+	"disconnected" bucket for the other 5 isomorphism classes (empty,
+	single edge, two shapes at 2 edges, and triangle+isolate at 3 edges -
+	none of these is a meaningful connected structural pattern), so the 7
+	counts sum to exactly C(n,4) - the same "every case exhaustively
+	accounted for" property nwtriads' own 16-category census already has,
+	certifiable the same way (sum across all 7 counts == total possible
+	4-node combinations).
+
+	O(n^4) (every 4-node combination is enumerated explicitly, matching
+	nwtriads' own O(n^3) triad census one dimension up) - fine for the
+	moderate network sizes typical of SNA datasets, not specially guarded
+	against here, matching the same disclosed limitation nwclique's own
+	maximal-clique enumeration and nwfactions' own combinatorial search
+	already carry.
+
+	Returns a 1 x 7 row vector, in column order: path, star, cycle, paw,
+	diamond, k4, disconnected.
+*/
+real matrix `NWdef'::calculate_motif4(){
+	real matrix A
+	real scalar n, i, j, k, l, a,b,c,d,f,g, e, d1,d2,d3,d4
+	real rowvector counts, ds
+
+	n = get_nodes()
+	if (n < 4) {
+		errprintf("nwmotifs requires at least 4 nodes.\n")
+		exit(error(6556))
+	}
+	A = *get_matrix_mod(0, 0)
+	_diag(A, 0)
+	_editmissing(A, 0)
+
+	counts = J(1,7,0)
+	for (i=1; i<=n-3; i++) {
+		for (j=i+1; j<=n-2; j++) {
+			for (k=j+1; k<=n-1; k++) {
+				for (l=k+1; l<=n; l++) {
+					a = (A[i,j] != 0)
+					b = (A[i,k] != 0)
+					c = (A[i,l] != 0)
+					d = (A[j,k] != 0)
+					f = (A[j,l] != 0)
+					g = (A[k,l] != 0)
+					e = a+b+c+d+f+g
+
+					d1 = a+b+c
+					d2 = a+d+f
+					d3 = b+d+g
+					d4 = c+f+g
+					ds = sort((d1,d2,d3,d4)', 1)'
+
+					if (e==3 & ds[1]==1 & ds[2]==1 & ds[3]==2 & ds[4]==2) {
+						counts[1] = counts[1] + 1                        // path P4: degrees 1,1,2,2
+					}
+					else if (e==3 & ds[1]==1 & ds[2]==1 & ds[3]==1 & ds[4]==3) {
+						counts[2] = counts[2] + 1                        // star K1,3: 1,1,1,3
+					}
+					else if (e==4 & ds[1]==2 & ds[2]==2 & ds[3]==2 & ds[4]==2) {
+						counts[3] = counts[3] + 1                        // cycle C4: 2,2,2,2
+					}
+					else if (e==4 & ds[1]==1 & ds[2]==2 & ds[3]==2 & ds[4]==3) {
+						counts[4] = counts[4] + 1                        // paw: 1,2,2,3
+					}
+					else if (e==5) {
+						counts[5] = counts[5] + 1                        // diamond (K4 minus one edge): only 5-edge class
+					}
+					else if (e==6) {
+						counts[6] = counts[6] + 1                        // K4: only 6-edge class
+					}
+					else {
+						counts[7] = counts[7] + 1                        // disconnected/sparse residual (0,1,2 edges, or triangle+isolate at 3 edges)
+					}
+				}
+			}
+		}
+	}
+	return(counts)
 }
 
 
@@ -5285,6 +5899,17 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	n = get_nodes()
 	isdirect = directed
 
+	// BUGFIX: none of this method's three callers (nwfromedge.ado,
+	// nw2project.ado, nwattime.ado) ever set `isselfloop' BEFORE calling
+	// this method - nwfromedge.ado calls set_selfloop(0) only AFTER
+	// (see its own comment there, now stale), and the other two never
+	// call it at all - so `isselfloop' was still at Mata's missing-
+	// scalar default here, not a clean 0/1. Defaulting it to this
+	// class's own documented "no self-loops unless explicitly
+	// requested" policy (matching nwset.ado's own mat()-path default)
+	// makes the filter below actually fire regardless of call order.
+	if (isselfloop == .) isselfloop = 0
+
 	// A stored weight of exactly 0 means "no tie" everywhere else in
 	// this class (every dense `edge' matrix is J(n,n,0)-initialized, so
 	// an unset cell already reads as 0, and get_arcs_count()/
@@ -5298,8 +5923,30 @@ void `NWdef'::set_edge_from_triplets(real matrix ego, real matrix alter, real ma
 	// nwcomponents' own regression test: a value-0 edgelist row was
 	// silently keeping an otherwise-isolated node connected until this
 	// filter was added).
+	//
+	// BUGFIX: a self-loop (ego==alter) row survived this filter
+	// untouched even when isselfloop==0 - unlike the dense edge-matrix
+	// path (set_selfloop()/ensure_dense_built() both blank the diagonal
+	// via `_diag(e,.)' when isselfloop==0), this sparse-native
+	// construction path had NO equivalent exclusion, so a raw self-loop
+	// row present in a real imported dataset's own edge list (e.g. an
+	// actor rating/tying themselves in the source data) got baked
+	// permanently into colidx/rowptr - has_edge()/neighbors() then
+	// reported a phantom self-tie for that node FOREVER (surviving even
+	// though get_matrix()/get_matrix_mod() correctly hid it once
+	// materialized, since THAT path's own diagonal-blank runs fresh
+	// every time from the clean, self-loop-filtered dense reconstruction
+	// - the two representations silently disagreed). Found via a real
+	// `nwwebuse glasgow' network: calculate_triadcensus() returned
+	// fractional counts (e.g. 14.667 instead of an integer) for the
+	// triad categories built on connected_neighbors(), because Pass B's
+	// hub/neighbor enumeration treated a node as tied to itself,
+	// corrupting its own canonicalization logic - traced by comparing
+	// has_edge(i,i) (true, wrongly) against the dense matrix's own
+	// diagonal (correctly 0) and confirming a forced invalidate_sparse()
+	// + rebuild fixed it, before finding the actual root cause here.
 	if (rows(ego) > 0){
-		keep = selectindex(weight :!= 0)
+		keep = selectindex((weight :!= 0) :& (isselfloop :== 1 :| ego :!= alter))
 		ego = ego[keep,1]
 		alter = alter[keep,1]
 		weight = weight[keep,1]
@@ -6685,6 +7332,40 @@ pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
 	sub->keep_nodes(k)
 
 	return(sub)
+}
+
+/*
+	copy_subgraph_into(): the SAME induced-subgraph construction as
+	extract_subgraph() above, but writes into an ALREADY-REGISTERED
+	`NWdef' instance (`dst') instead of allocating and returning a fresh,
+	unregistered one - for a caller that needs the induced subgraph to
+	become a genuine, user-visible named network in the `nw.nws' store
+	(e.g. nwneighbor's own `subnet()' option), matching nw2project.ado's
+	own established "nw.nws.add(name), nw_syntax name, populate netobj
+	directly" registration pattern rather than trying to splice a
+	standalone extract_subgraph() pointer into that registry after the
+	fact (unsupported/unverified). Deliberately NOT implemented by having
+	extract_subgraph() call this (or vice versa) to share code - the two
+	are already each other's full method body, kept as two independent,
+	small, directly-readable copies rather than one delegating awkwardly
+	through pointer indirection for a handful of set_X() calls.
+*/
+void `NWdef'::copy_subgraph_into(pointer(class `NWdef' scalar) scalar dst, rowvector k){
+	ensure_dense_built()
+	dst->set_selfloop(is_selfloop_boolean())
+	dst->set_directed(is_directed_boolean())
+	dst->set_valued(is_valued_boolean())
+	dst->set_2mode(is_2mode_boolean())
+	dst->set_edge(get_matrix_copy())
+	dst->set_nodenames(get_nodenames())
+	if (is_2mode_boolean() == 1){
+		dst->set_modes(get_modes())
+	}
+	dst->set_nodesvar(get_nodesvar())
+	dst->set_label(get_label())
+	dst->set_caption(get_caption())
+
+	dst->keep_nodes(k)
 }
 
 real scalar `NWdef'::is_selfloop_boolean(){

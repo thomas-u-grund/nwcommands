@@ -2,8 +2,8 @@
 capture program drop nwtriads
 program nwtriads
 	version 9
-	syntax [anything(name=netname)]
-	
+	syntax [anything(name=netname)] [, PLOT NAME(string)]
+
 	nw_syntax `netname', max(1)
 	local onedirected = "`directed'"
 
@@ -105,8 +105,56 @@ program nwtriads
 	di "{txt}{ralign 10:111U}{col 12}{c |}{ralign 10:201}{col 24}{c |}{ralign 10:210}{col 36}{c |}{ralign 10:300}{col 48}{c |}"
 	di "{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}"
 	di "{res}{ralign 10:`r(_111U)'}{col 12}{c |}{ralign 10:`r(_201)'}{col 24}{c |}{ralign 10:`r(_210)'}{col 36}{c |}{ralign 10:`r(_300)'}{col 48}{c |}"
-	di 
-	di "{txt}     Transitivity: {res}`r(transitivity)'"
+	di
+	di "{txt}     Transitivity: {res}`=round(`r(transitivity)',0.001)'"
+
+	// plot(): a bar chart of the 16 MAN-category counts, via this
+	// package's own established preserve/rebuild-a-plotting-dataset/
+	// restore convention (matching nwcug's own plot() for its null
+	// distribution). Category order is fixed to the same conventional
+	// MAN ordering the text table above already uses, not sorted by
+	// count - achieved via a value-labeled numeric code, since
+	// `graph bar's own over() sorts a plain string variable
+	// alphabetically. Grayscale by design (Stata Journal figures must
+	// stay legible in black and white), same discipline as nwcug's own
+	// plot()/nwergm_estat's mcmcdiag/gof plots.
+	if "`plot'" != "" {
+		if "`name'" == "" {
+			local name "triads"
+		}
+		preserve
+		qui drop _all
+		qui set obs 16
+		qui gen long catcode = _n
+		label define __nwtriads_catlbl 1 "003" 2 "012" 3 "021D" 4 "021U" ///
+			5 "021C" 6 "030T" 7 "030C" 8 "102" 9 "111D" 10 "111U" ///
+			11 "120D" 12 "120U" 13 "120C" 14 "201" 15 "210" 16 "300", replace
+		label values catcode __nwtriads_catlbl
+		qui gen double count = .
+		qui replace count = `r(_003)' if catcode==1
+		qui replace count = `r(_012)' if catcode==2
+		qui replace count = `r(_021D)' if catcode==3
+		qui replace count = `r(_021U)' if catcode==4
+		qui replace count = `r(_021C)' if catcode==5
+		qui replace count = `r(_030T)' if catcode==6
+		qui replace count = `r(_030C)' if catcode==7
+		qui replace count = `r(_102)' if catcode==8
+		qui replace count = `r(_111D)' if catcode==9
+		qui replace count = `r(_111U)' if catcode==10
+		qui replace count = `r(_120D)' if catcode==11
+		qui replace count = `r(_120U)' if catcode==12
+		qui replace count = `r(_120C)' if catcode==13
+		qui replace count = `r(_201)' if catcode==14
+		qui replace count = `r(_210)' if catcode==15
+		qui replace count = `r(_300)' if catcode==16
+		graph bar (asis) count, over(catcode, label(angle(45))) ///
+			ytitle("Count") ///
+			title("Triad census: `netname'", size(medium)) ///
+			bar(1, fcolor(gs12) lcolor(gs6)) ///
+			legend(off) name(`name', replace)
+		restore
+		di as txt "(plot saved as {bf:`name'}; triad-category counts for `netname')"
+	}
 end
 	
 

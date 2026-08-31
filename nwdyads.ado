@@ -22,7 +22,7 @@ program nwdyads
 		di "{hline 11}{c +}{hline 11}{c +}{hline 11}"
 		di "{res}{ralign 10:`r(_100)'}{col 12}{c |}{ralign 10:`r(_010)'}{col 24}{c |}{ralign 10:`r(_001)'}"
 		di " "
-		di "{txt}    Reciprocity: {res}`r(reciprocity)'"
+		di "{txt}    Reciprocity: {res}`=round(`r(reciprocity)',0.001)'"
 	}
 	
 	// Display dyad census for undirected network
@@ -34,7 +34,7 @@ program nwdyads
 		di "{hline 11}{c +}{hline 11}"
 		di "{res}{ralign 10:`r(_100)'}{col 12}{c |}{ralign 10:`r(_001)'}"
 		di " "
-		di "{txt}    Reciprocity: {res}`r(reciprocity)'"
+		di "{txt}    Reciprocity: {res}`=round(`r(reciprocity)',0.001)'"
 	}
 	mata: st_global("r(name)", "`netname'")
 	// Naming consistency (moderate-severity pass, information_census

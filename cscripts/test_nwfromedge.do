@@ -216,6 +216,52 @@ replace y = 2 in 2
 capture noisily nwfromedge x y, twomode directed name(bad)
 assert _rc == 198
 
+* --- BUGFIX regression: a self-loop row (ego==alter) in the SOURCE edge
+* list used to survive permanently into the sparse CSR structure
+* (set_edge_from_triplets(), unw_core.do), even though this network's
+* own declared selfloop policy is false (the default) - unlike the
+* DENSE edge-matrix path (set_selfloop()/ensure_dense_built() both
+* blank the diagonal via `_diag(e,.)' when isselfloop==0), the newer
+* sparse-native construction path had no equivalent exclusion, so
+* has_edge(i,i)/neighbors(i) wrongly reported a phantom self-tie for
+* that node FOREVER, while get_matrix()/get_matrix_mod() correctly hid
+* it once materialized fresh from the dense reconstruction - the two
+* representations silently disagreed. Found via a real `nwwebuse
+* glasgow' network (which has a genuine self-loop row in its own raw
+* edge list): calculate_triadcensus() returned fractional triad counts
+* (e.g. 14.667 instead of an integer) because Pass B's hub/neighbor
+* enumeration treated a node as tied to itself, corrupting its own
+* canonicalization logic - nwclustering's transitivity was silently
+* wrong too (.798 instead of the correct .479), since it also relies on
+* the sparse-native neighbor accessors. Fixed by defaulting
+* `isselfloop' to 0 when still missing at construction time (none of
+* this method's three callers - nwfromedge/nw2project/nwattime - ever
+* set it beforehand) and filtering ego==alter rows out alongside the
+* existing zero-weight filter.
+nwclear
+clear
+set obs 3
+gen x = "P"
+gen y = "Q"
+replace x = "Q" in 2
+replace y = "R" in 2
+replace x = "S" in 3
+replace y = "S" in 3
+nwfromedge x y, name(selfloopedge)
+nwsummarize selfloopedge
+assert r(arcs) == 2
+assert r(selfloops) == 0
+nw_syntax selfloopedge
+mata:
+__any_selfloop = 0
+for (__i=1; __i<=`nodes'; __i++) {
+	if (`netobj'->has_edge(__i,__i)) __any_selfloop = 1
+}
+st_numscalar("any_selfloop", __any_selfloop)
+end
+assert any_selfloop == 0
+di "=== nwfromedge: self-loop row correctly excluded from sparse structure REGRESSION VERIFIED ==="
+
 
 
 

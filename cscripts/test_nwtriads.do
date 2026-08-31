@@ -86,6 +86,25 @@ nwtriads emptynet
 assert r(_003) == 1
 assert r(_102) == 0 & r(_201) == 0 & r(_300) == 0
 
+* --- plot(): a bar chart of the 16 MAN-category counts, via this
+* package's own established preserve/rebuild-a-plotting-dataset/restore
+* convention (matching nwcug's own plot() for its null distribution).
+* Certified for exactly what nwcug's own plot() test already certifies:
+* it runs cleanly and does not disturb the caller's own active dataset
+* (a "canary" variable survives plot()'s own internal preserve/restore
+* intact) - not re-testing graph rendering itself.
+nwclear
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(triplot)
+clear
+set obs 3
+gen canary = _n
+nwtriads triplot, plot name(nwtriadsplottest)
+assert _rc == 0
+assert _N == 3
+assert canary[1] == 1 & canary[2] == 2 & canary[3] == 3
+capture graph drop nwtriadsplottest
+di "=== nwtriads plot() OK ==="
+
 
 
 

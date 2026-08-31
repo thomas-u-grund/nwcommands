@@ -171,7 +171,7 @@ program nwgeodesic
 		di "{txt}    Symmetrized : {res}(already undirected)"
 	}
 	if "`valued'" == "true" {
-		di "{txt}    ALpha : {res}`r(alpha)'"
+		di "{txt}    ALpha : {res}`=round(`r(alpha)',0.001)'"
 	}
 	di "    {hline 36}"
 	di "{txt}    Paths: {res}`r(numpaths)'"
@@ -182,9 +182,9 @@ program nwgeodesic
 	}
 	
 	if `r(unconnected)' == 0 | "`unconnected'" != "" {
-		di "{txt}    Average shortest path length: {res} `r(avgpath)'"
-		di "{txt}    Diameter: {res} `r(diameter)'"
-		di "{txt}    Radius: {res} `r(radius)'"
+		di "{txt}    Average shortest path length: {res} `=round(`r(avgpath)',0.001)'"
+		di "{txt}    Diameter: {res} `=round(`r(diameter)',0.001)'"
+		di "{txt}    Radius: {res} `=round(`r(radius)',0.001)'"
 	}
 	else {
 		di "{txt}    Average shortest path length: {res} (not defined)"
