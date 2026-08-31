@@ -135,9 +135,9 @@ program nwinf
 		if (r(directed) == "true"){
 			di "{txt}   Arcs: {res}`r(arcs)'"
 		}
-		di "{txt}   Minimum value: {res} `r(minval)'"
-		di "{txt}   Maximum value: {res} `r(maxval)'"	
-		di "{txt}   Density: {res} `r(density)'"
+		di "{txt}   Minimum value: {res} `=round(`r(minval)',0.001)'"
+		di "{txt}   Maximum value: {res} `=round(`r(maxval)',0.001)'"
+		di "{txt}   Density: {res} `=round(`r(density)',0.001)'"
 		di "{txt}   Temporal: {res}`r(temporal)'"
 		if "`r(temporal)'" == "true" {
 			di "{txt}      Temporal type: {res}`r(temporaltype)'"
@@ -147,14 +147,14 @@ program nwinf
 		}
 
 		if "`detail'" != "" {
-			di "{txt}   Reciprocity: {res} `r(reciprocity)'"
-			di "{txt}   Transitivity: {res} `r(transitivity)'"
+			di "{txt}   Reciprocity: {res} `=round(`r(reciprocity)',0.001)'"
+			di "{txt}   Transitivity: {res} `=round(`r(transitivity)',0.001)'"
 			if (r(directed) == "false"){
-				di "{txt}   Degree centralization: {res}`r(dg_central)'"
+				di "{txt}   Degree centralization: {res}`=round(`r(dg_central)',0.001)'"
 			}
 			if (r(directed) == "true"){
-				di "{txt}   Indegree centralization:: {res}`r(indg_central)'"
-				di "{txt}   Outdegree centralization:: {res}`r(outdg_central)'"
+				di "{txt}   Indegree centralization:: {res}`=round(`r(indg_central)',0.001)'"
+				di "{txt}   Outdegree centralization:: {res}`=round(`r(outdg_central)',0.001)'"
 			}
 		}
 	}

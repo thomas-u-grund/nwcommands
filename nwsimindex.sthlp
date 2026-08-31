@@ -86,8 +86,7 @@ Binary: yes (only) - similarity is computed from binary neighbor-set overlap; ti
 {title:References}
 
 {pstd}
-Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social networks. {it:Journal
-of the American Society for Information Science and Technology} 58(7), 1019-1031.
+Liben-Nowell, D., Kleinberg, J. (2007). The link-prediction problem for social networks. {it:Journal of the American Society for Information Science and Technology} 58(7), 1019-1031.
 
 {pstd}
 Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. {it:Social Networks} 25(3), 211-230.

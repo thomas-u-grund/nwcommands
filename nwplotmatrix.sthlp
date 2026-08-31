@@ -39,7 +39,7 @@
 {p2col:{it:label_options}}Description{p_end}
 {marker label_options}{...}
 {p2line}
-{p2col:{opt lab}display node labels{p_end}
+{p2col:{opt lab}}display node labels{p_end}
 {p2col:{opth label(varname)}}display axis labels from variable{p_end}
 {synopt:{opt labelopt}({it:{help scatter##marker_label_options:marker_label_options}})}options for look of axis labels (e.g. size, color){p_end}
 

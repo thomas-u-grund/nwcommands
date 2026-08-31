@@ -83,8 +83,7 @@ Luce, R.D. (1950). Connectivity and generalized cliques in sociometric group str
 {it:Psychometrika} 15(2), 169-190.
 
 {pstd}
-Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical
-Sociology} 3(1), 113-126.
+Alba, R.D. (1973). A graph-theoretic definition of a sociometric clique. {it:Journal of Mathematical Sociology} 3(1), 113-126.
 
 {pstd}
 Wasserman, S., Faust, K. (1994). {it:Social Network Analysis: Methods and Applications}. Cambridge

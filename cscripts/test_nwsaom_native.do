@@ -1437,6 +1437,187 @@ void saom_test_native_cycle4_equiv(real scalar n, real scalar nruns) {
 	printf("native cycle4 equivalence PASS: native and Mata backends agree within Monte Carlo tolerance\n")
 }
 
+/* -------------------------------------------------------------------
+   Native port of the 5 previously Mata-only effects (antiiniso/
+   antiiniso2/gwesp/transties/balance) - closes the last gap blocking
+   `symmetric' from using them (that option requires 100% native
+   coverage). One combined model (outdegree + all 5), same
+   two-sample z-test methodology as every other equivalence test in
+   this file. gwesp's decay and balance's balanceMean (b0) both cross
+   the wire via the same per-term p1 slot simcov's own range already
+   uses - no new wire-protocol field needed.
+   ------------------------------------------------------------------- */
+void saom_test_native_5effects_equiv(real scalar n, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real matrix Zmata, Znative
+	real scalar r, k, p, i, j, nedges0, b0
+	real rowvector mmata, mnative, semata, senative, zstat
+	pointer(class ErgmGraph scalar) rowvector Gbases
+
+	rseed(31415926)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.22 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	Gbases = (&G0)
+	b0 = saom_balance_mean(Gbases)
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("antiiniso", 1, &stat_saom_antiiniso(), &change_saom_antiiniso(), td2, ("antiiniso"))
+	td3 = ErgmTermData()
+	M.addterm("antiiniso2", 1, &stat_saom_antiiniso2(), &change_saom_antiiniso2(), td3, ("antiiniso2"))
+	td4 = ErgmTermData()
+	td4.decay = 0.6
+	M.addterm("gwesp", 1, &stat_gwesp(), &change_saom_gwesp(), td4, ("gwesp"))
+	td5 = ErgmTermData()
+	M.addterm("transties", 1, &stat_transitiveties(), &change_saom_transties(), td5, ("transties"))
+	td6 = ErgmTermData()
+	td6.decay = b0
+	M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), td6, ("balance"))
+
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+	assert(cfg.termcodes[2] == 24)
+	assert(cfg.termcodes[3] == 25)
+	assert(cfg.termcodes[4] == 26)
+	assert(cfg.termcodes[5] == 27)
+	assert(cfg.termcodes[6] == 28)
+	assert(cfg.p1[4] == 0.6)
+	assert(cfg.p1[6] == b0)
+
+	theta = (-1.0, 0.3, 0.2, 0.4, 0.3, 0.2)
+	p = M.nparam()
+
+	Zmata = J(nruns, p, 0)
+	rseed(271828183)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateInterval(Gwork, M, theta, 4)
+		Zmata[r,.] = M.full_statistic(Gwork)
+	}
+
+	Znative = J(nruns, p, 0)
+	rseed(161803399)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
+		Znative[r,.] = M.full_statistic(Gwork)
+	}
+
+	mmata = mean(Zmata)
+	mnative = mean(Znative)
+	semata = J(1,p,0)
+	senative = J(1,p,0)
+	zstat = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		semata[k] = sqrt(variance(Zmata[.,k]) / nruns)
+		senative[k] = sqrt(variance(Znative[.,k]) / nruns)
+		zstat[k] = (mmata[k] - mnative[k]) / sqrt(semata[k]^2 + senative[k]^2)
+	}
+
+	printf("native 5effects equivalence: Mata means   %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n", mmata[1], mmata[2], mmata[3], mmata[4], mmata[5], mmata[6])
+	printf("native 5effects equivalence: native means %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n", mnative[1], mnative[2], mnative[3], mnative[4], mnative[5], mnative[6])
+	printf("native 5effects equivalence: z-stats      %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n", zstat[1], zstat[2], zstat[3], zstat[4], zstat[5], zstat[6])
+	for (k=1; k<=p; k++) assert(abs(zstat[k]) < 4)
+
+	printf("native 5effects equivalence PASS: native and Mata backends agree within Monte Carlo tolerance\n")
+}
+
+/* -------------------------------------------------------------------
+   Native port of in3plus (RSiena's real "in3Plus", EffectFactory.cpp's
+   own AntiIsolateEffect(minDegree=3) dispatch - see unw_saom.do's own
+   header comment right after change_saom_in3plus() for the full
+   source-verified account, including why the two sibling effects
+   reciAct/reciPop investigated in the same pass were NOT shipped).
+   Same one-term-plus-outdegree, two-sample z-test shape as
+   saom_test_native_5effects_equiv() above. ------------------------- */
+void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real matrix Zmata, Znative
+	real scalar r, k, p, i, j, nedges0
+	real rowvector mmata, mnative, semata, senative, zstat
+
+	rseed(24681012)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.22 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("in3plus", 1, &stat_saom_in3plus(), &change_saom_in3plus(), td2, ("in3plus"))
+
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(SaomNativeAvailable() == 1)
+	assert(cfg.termcodes[2] == 29)
+
+	theta = (-1.0, 0.3)
+	p = M.nparam()
+
+	Zmata = J(nruns, p, 0)
+	rseed(555666777)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateInterval(Gwork, M, theta, 4)
+		Zmata[r,.] = M.full_statistic(Gwork)
+	}
+
+	Znative = J(nruns, p, 0)
+	rseed(888999000)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
+		Znative[r,.] = M.full_statistic(Gwork)
+	}
+
+	mmata = mean(Zmata)
+	mnative = mean(Znative)
+	semata = J(1,p,0)
+	senative = J(1,p,0)
+	zstat = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		semata[k] = sqrt(variance(Zmata[.,k]) / nruns)
+		senative[k] = sqrt(variance(Znative[.,k]) / nruns)
+		zstat[k] = (mmata[k] - mnative[k]) / sqrt(semata[k]^2 + senative[k]^2)
+	}
+
+	printf("native in3plus equivalence: Mata means   %8.3f %8.3f\n", mmata[1], mmata[2])
+	printf("native in3plus equivalence: native means %8.3f %8.3f\n", mnative[1], mnative[2])
+	printf("native in3plus equivalence: z-stats      %8.3f %8.3f\n", zstat[1], zstat[2])
+	for (k=1; k<=p; k++) assert(abs(zstat[k]) < 4)
+
+	printf("native in3plus equivalence PASS: native and Mata backends agree within Monte Carlo tolerance\n")
+}
+
 end
 
 mata:
@@ -1475,5 +1656,9 @@ saom_test_native_unit37_equiv(n, 150)
 
 saom_test_native_unit165_equiv(n, 150)
 saom_test_native_cycle4_equiv(n, 150)
+
+saom_test_native_5effects_equiv(n, 150)
+
+saom_test_native_in3plus_equiv(n, 150)
 
 end

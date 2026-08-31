@@ -1834,7 +1834,7 @@ program nwergm, eclass
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
 		if `__ergm_curved' {
-			di "{txt}Note: {bf:decay} is an ESTIMATED (curved) parameter here, fit via Newton-Raphson directly on the pseudolikelihood in theta-space - not expected to be bit-identical to R ergm's own BFGS-based curved MPLE (a different exact optimization path to the same objective), but should agree closely on a well-identified model."
+			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own BFGS-based fit)"
 		}
 	}
 	else {
@@ -2118,7 +2118,7 @@ program nwergm, eclass
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
 		if `__ergm_curved' {
-			di "{txt}Note: {bf:decay} is an ESTIMATED (curved) parameter here. Each MCMLE iteration's own eta-space Newton-step target is projected back onto the 2-parameter (weight, decay) curved manifold before the next simulation - a disclosed simplification of R ergm's own curved-model machinery, not expected to be bit-identical to it."
+			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own curved-model machinery)"
 		}
 	}
 

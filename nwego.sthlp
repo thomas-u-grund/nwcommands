@@ -46,8 +46,7 @@ undirected network; for a directed network it is the count of {it:distinct} node
 direction, not the sum of in- and out-degree, which could double-count a reciprocated tie).
 
 {pstd}
-{bf:Ego-network density} is the proportion of possible ties actually present {it:among the alters
-themselves} - ego itself is excluded, the standard convention for reporting how interconnected an
+{bf:Ego-network density} is the proportion of possible ties actually present {it:among the alters themselves} - ego itself is excluded, the standard convention for reporting how interconnected an
 ego's contacts are with each other, independent of their (by definition, complete) ties to ego. For
 a directed network, ordered alter-alter pairs are counted (an alter set of size {it:k} has
 {it:k(k-1)} possible ties); for an undirected network, unordered pairs are counted ({it:k(k-1)/2}

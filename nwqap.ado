@@ -441,10 +441,10 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 	di "{txt}{hline `=`max_l' + 3'}{c TT}{hline 25}"
 	di "{col 2}{ralign `=`max_l'+1':`net'}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 11'}Coef.{col `=`max_l' + 20'}P-value"
 	di "{hline `=`max_l' + 3'}{c +}{hline 25}"
-	local constant = round(reg_results[1,`=`vars''], 0.000001)
-	
+	local constant = round(reg_results[1,`=`vars''], 0.001)
+
 	forvalues k=2/`vars'{
-		local coeff = `=round(float(reg_results[1,`=`k'-1']), 0.000001)'
+		local coeff = `=round(float(reg_results[1,`=`k'-1']), 0.001)'
 		local pvalue = `=round(float(pvalues[1,`=`k'-1']),0.001)'
 		di as text "{txt}{col 2}{ralign `=`max_l'+1':``k''}{col `=`max_l' + 4'}{c |}{col `=`max_l' + 5'}{ralign 11:{res}`coeff'}{col `=`max_l' + 20'}{ralign 5:`pvalue'}"
 	}

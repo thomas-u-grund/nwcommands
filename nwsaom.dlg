@@ -1,0 +1,419 @@
+VERSION 10
+
+
+SYNCHRONOUS_ONLY
+INCLUDE _std_mlarge
+DEFINE _dlgwd 940
+DEFINE _dlght 480
+INCLUDE header
+
+HELP hlp1, view("help nwsaom")
+RESET res1
+
+SCRIPT PREINIT
+BEGIN
+	program initialize
+END
+
+SCRIPT POSTINIT
+BEGIN
+	behavior.tx_symmetric_note.hide
+END
+
+DIALOG waves, tabtitle("Waves & baseline")
+BEGIN
+  TEXT tx_wave1 20 10 120 ., label("wave1()")
+  COMBOBOX cb_wave1 145 10 160 ., dropdown contents(netlist) nomem
+  TEXT tx_wave2 490 10 120 ., label("wave2()")
+  COMBOBOX cb_wave2 615 10 160 ., dropdown contents(netlist) nomem
+  TEXT tx_waves 20 38 300 ., label("OR waves() - 3+ networks, space-separated:")
+  EDIT ed_waves 330 38 445 ., nomem
+  TEXT tx_baseline 20 68 500 ., label("Baseline (outdegree required unless split into endow+creation):")
+  CHECKBOX cx_outdegree 30 90 130 ., label("outdegree") option(outdegree)
+  CHECKBOX cx_outdegreeendow 165 90 150 ., label("outdegreeendow") option(outdegreeendow)
+  CHECKBOX cx_outdegreecreation 320 90 160 ., label("outdegreecreation") option(outdegreecreation)
+  CHECKBOX cx_reciprocity 30 116 130 ., label("reciprocity") option(reciprocity)
+  CHECKBOX cx_reciprocityendow 165 116 150 ., label("reciprocityendow") option(reciprocityendow)
+  CHECKBOX cx_reciprocitycreation 320 116 160 ., label("reciprocitycreation") option(reciprocitycreation)
+  TEXT tx_hdr_l_150 20 150 400 ., label("-- Node covariates (RSiena aliases: egox/altx/samex/simx) --")
+  TEXT tx_nodematch 20 172 90 ., label("nodematch")
+  VARNAME vr_nodematch 195 172 155 ., nomem
+  TEXT tx_nodecov 20 198 90 ., label("nodecov")
+  VARNAME vr_nodecov 195 198 155 ., nomem
+  TEXT tx_nodeicov 20 224 90 ., label("nodeicov")
+  VARNAME vr_nodeicov 195 224 155 ., nomem
+  TEXT tx_nodeocov 20 250 90 ., label("nodeocov")
+  VARNAME vr_nodeocov 195 250 155 ., nomem
+  TEXT tx_simcov 20 276 90 ., label("simcov")
+  VARNAME vr_simcov 195 276 155 ., nomem
+  TEXT tx_hdr_r_150 490 150 400 ., label("-- Rate function --")
+  TEXT tx_ratecov 490 172 90 ., label("ratecov")
+  VARNAME vr_ratecov 665 172 155 ., nomem
+  TEXT tx_ratecovcoef 490 198 90 ., label("ratecovcoef")
+  EDIT ed_ratecovcoef 665 198 155 ., nomem
+  TEXT tx_hdr_r_230 490 230 400 ., label("-- Undirected networks --")
+  CHECKBOX cx_symmetric 500 252 150 ., label("symmetric") option(symmetric) onclickon(script symmetricOn) onclickoff(script symmetricOff)
+  TEXT tx_symtype 660 252 70 ., label("symtype()")
+  COMBOBOX cb_symtype 735 252 130 ., dropdownlist contents(list_symtype) nomem option(symtype)
+END
+
+DIALOG structural, tabtitle("Structural effects")
+BEGIN
+  TEXT tx_hdr_l_10 20 10 400 ., label("-- Degree-based --")
+  CHECKBOX cx_indegpopularity 20 34 400 ., label("indegpopularity") option(indegpopularity)
+  CHECKBOX cx_outactivity 20 60 400 ., label("outactivity") option(outactivity)
+  CHECKBOX cx_outpopularity 20 86 400 ., label("outpopularity") option(outpopularity)
+  CHECKBOX cx_inactivity 20 112 400 ., label("inactivity") option(inactivity)
+  TEXT tx_hdr_l_140 20 140 400 ., label("-- Triadic closure --")
+  CHECKBOX cx_transtrip 20 164 400 ., label("transtrip") option(transtrip)
+  CHECKBOX cx_transmedtrip 20 190 400 ., label("transmedtrip") option(transmedtrip)
+  CHECKBOX cx_transties 20 216 400 ., label("transties") option(transties)
+  CHECKBOX cx_transrectrip 20 242 400 ., label("transrectrip") option(transrectrip)
+  CHECKBOX cx_cycle3 20 268 400 ., label("cycle3") option(cycle3)
+  CHECKBOX cx_cycle4 20 294 400 ., label("cycle4") option(cycle4)
+  CHECKBOX cx_gwesp 20 320 170 ., label("gwesp")
+  EDIT ed_gwesp 195 320 155 ., default("0.5") numonly nomem
+  TEXT tx_hdr_r_10 490 10 400 ., label("-- Isolates and balance --")
+  CHECKBOX cx_isolatenet 490 34 400 ., label("isolatenet") option(isolatenet)
+  CHECKBOX cx_outiso 490 60 400 ., label("outiso") option(outiso)
+  CHECKBOX cx_antiiso 490 86 400 ., label("antiiso") option(antiiso)
+  CHECKBOX cx_antiiniso 490 112 400 ., label("antiiniso") option(antiiniso)
+  CHECKBOX cx_antiiniso2 490 138 400 ., label("antiiniso2") option(antiiniso2)
+  CHECKBOX cx_inplus3 490 164 400 ., label("inplus3 - RSiena's in3Plus (indegree>=3)") option(inplus3)
+  CHECKBOX cx_isolatepop 490 190 400 ., label("isolatepop") option(isolatepop)
+  CHECKBOX cx_balance 490 216 400 ., label("balance") option(balance)
+  TEXT tx_hdr_r_244 490 244 400 ., label("-- Degree assortativity --")
+  CHECKBOX cx_outoutass 490 268 400 ., label("outoutass") option(outoutass)
+  CHECKBOX cx_ininass 490 294 400 ., label("ininass") option(ininass)
+  CHECKBOX cx_outinass 490 320 400 ., label("outinass") option(outinass)
+  CHECKBOX cx_inoutass 490 346 400 ., label("inoutass") option(inoutass)
+END
+
+DIALOG behavior, tabtitle("Behavior")
+BEGIN
+  TEXT tx_symmetric_note 20 10 700 40, label("Co-evolution (behavior()) is not combinable with symmetric - uncheck symmetric on the Waves & baseline tab to use this tab.")
+  TEXT tx_behavior 20 10 300 ., label("behavior() - one variable per wave:")
+  VARLIST vl_behavior 330 10 445 ., nomem
+  TEXT tx_hdr_10_42 20 42 700 ., label("-- Behavior co-evolution effects --")
+  CHECKBOX cx_linear 20 66 220 ., label("linear (required baseline)") option(linear)
+  CHECKBOX cx_linearendow 20 92 220 ., label("linearendow") option(linearendow)
+  CHECKBOX cx_linearcreation 20 118 220 ., label("linearcreation") option(linearcreation)
+  CHECKBOX cx_quadratic 20 144 220 ., label("quadratic") option(quadratic)
+  CHECKBOX cx_quadraticendow 20 170 220 ., label("quadraticendow") option(quadraticendow)
+  CHECKBOX cx_quadraticcreation 20 196 220 ., label("quadraticcreation") option(quadraticcreation)
+  CHECKBOX cx_avalt 490 66 220 ., label("avalt") option(avalt)
+  CHECKBOX cx_avaltendow 490 92 220 ., label("avaltendow") option(avaltendow)
+  CHECKBOX cx_avaltcreation 490 118 220 ., label("avaltcreation") option(avaltcreation)
+  CHECKBOX cx_avsim 490 144 220 ., label("avsim") option(avsim)
+  CHECKBOX cx_avsimendow 490 170 220 ., label("avsimendow") option(avsimendow)
+  CHECKBOX cx_avsimcreation 490 196 220 ., label("avsimcreation") option(avsimcreation)
+  TEXT tx_behtheta0 20 230 100 ., label("behtheta0()")
+  EDIT ed_behtheta0 195 230 300 ., nomem
+END
+
+DIALOG special, tabtitle("Special cases")
+BEGIN
+  TEXT tx_hdr_10 20 10 700 ., label("-- Composition change / missing data --")
+  TEXT tx_present 20 34 100 ., label("present()")
+  VARLIST vl_present 195 34 300 ., nomem
+  TEXT tx_missnet 20 60 100 ., label("missnet()")
+  EDIT ed_missnet 195 60 300 ., nomem
+  TEXT tx_missbeh 20 86 100 ., label("missbeh()")
+  VARLIST vl_missbeh 195 86 300 ., nomem
+  TEXT tx_hdr_120 20 120 700 ., label("-- Interaction effects --")
+  TEXT tx_interact_note1 20 144 850 ., label("interact(effect1#effect2 ...) - two-way interactions between dyadic effects only, space-separated pairs.")
+  TEXT tx_interact_note2 20 164 850 ., label("Eligible: outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance.")
+  EDIT ed_interact 20 186 700 ., nomem
+END
+
+DIALOG estimation, tabtitle("Estimation")
+BEGIN
+  TEXT tx_theta0 20 10 100 ., label("theta0()")
+  EDIT ed_theta0 195 10 155 ., nomem
+  TEXT tx_rate0 490 10 130 ., label("rate0() - accepted, unused")
+  EDIT ed_rate0 665 10 70 ., nomem
+  TEXT tx_k0 20 42 100 ., label("k0() - Phase 1 reps")
+  SPINNER sp_k0 195 42 70 ., default(50) min(1) max(999999) nomem option(k0)
+  TEXT tx_k3 490 42 130 ., label("k3() - Phase 3 reps")
+  SPINNER sp_k3 665 42 70 ., default(1000) min(1) max(999999) nomem option(k3)
+  TEXT tx_firstg 20 74 100 ., label("firstg()")
+  EDIT ed_firstg 195 74 155 ., default("0.2") nomem
+  TEXT tx_seed 490 74 130 ., label("seed()")
+  SPINNER sp_seed 665 74 70 ., default(-1) min(-999999) max(999999) nomem option(seed)
+END
+
+DIALOG multiplex, tabtitle("Multiplex")
+BEGIN
+  CHECKBOX cx_multiplex 20 10 850 ., label("Enable multiplex mode (nwsaom multiplex) - uses ONLY the fields on this tab instead of every other tab")
+  TEXT tx_netawave1 20 42 110 ., label("netawave1()")
+  COMBOBOX cb_netawave1 145 42 160 ., dropdown contents(netlist) nomem
+  TEXT tx_netawave2 490 42 110 ., label("netawave2()")
+  COMBOBOX cb_netawave2 615 42 160 ., dropdown contents(netlist) nomem
+  TEXT tx_netbwave1 20 68 110 ., label("netbwave1()")
+  COMBOBOX cb_netbwave1 145 68 160 ., dropdown contents(netlist) nomem
+  TEXT tx_netbwave2 490 68 110 ., label("netbwave2()")
+  COMBOBOX cb_netbwave2 615 68 160 ., dropdown contents(netlist) nomem
+  CHECKBOX cx_crprod 20 100 120 ., label("crprod") option(crprod)
+  CHECKBOX cx_crprodb 150 100 120 ., label("crprodb") option(crprodb)
+  TEXT tx_theta01 490 100 90 ., label("theta01()")
+  EDIT ed_theta01 585 100 190 ., nomem
+  TEXT tx_mxk0 20 132 130 ., label("k0() (default 30)")
+  SPINNER sp_mxk0 195 132 70 ., default(30) min(1) max(999999) nomem option(k0)
+  TEXT tx_mxk3 490 132 130 ., label("k3() (default 200)")
+  SPINNER sp_mxk3 665 132 70 ., default(200) min(1) max(999999) nomem option(k3)
+  TEXT tx_theta02 20 164 90 ., label("theta02()")
+  EDIT ed_theta02 115 164 270 ., nomem
+  TEXT tx_mxfirstg 490 164 90 ., label("firstg()")
+  EDIT ed_mxfirstg 585 164 150 ., default("0.2") nomem
+  TEXT tx_mxseed 20 196 90 ., label("seed()")
+  SPINNER sp_mxseed 115 196 70 ., default(-1) min(-999999) max(999999) nomem option(seed)
+END
+
+SCRIPT symmetricOn
+BEGIN
+	waves.tx_waves.hide
+	waves.ed_waves.hide
+	waves.cx_reciprocity.hide
+	waves.cx_outdegreeendow.hide
+	waves.cx_outdegreecreation.hide
+	waves.cx_reciprocityendow.hide
+	waves.cx_reciprocitycreation.hide
+	structural.cx_cycle3.hide
+	structural.cx_transtrip.hide
+	structural.cx_transrectrip.hide
+	structural.cx_inactivity.hide
+	structural.cx_outpopularity.hide
+	structural.cx_ininass.hide
+	structural.cx_inoutass.hide
+	structural.cx_outoutass.hide
+	structural.cx_antiiso.hide
+	structural.cx_isolatepop.hide
+	behavior.tx_behavior.hide
+	behavior.vl_behavior.hide
+	behavior.tx_hdr_10_42.hide
+	behavior.cx_linear.hide
+	behavior.cx_linearendow.hide
+	behavior.cx_linearcreation.hide
+	behavior.cx_quadratic.hide
+	behavior.cx_quadraticendow.hide
+	behavior.cx_quadraticcreation.hide
+	behavior.cx_avalt.hide
+	behavior.cx_avaltendow.hide
+	behavior.cx_avaltcreation.hide
+	behavior.cx_avsim.hide
+	behavior.cx_avsimendow.hide
+	behavior.cx_avsimcreation.hide
+	behavior.tx_behtheta0.hide
+	behavior.ed_behtheta0.hide
+	behavior.tx_symmetric_note.show
+END
+
+SCRIPT symmetricOff
+BEGIN
+	waves.tx_waves.show
+	waves.ed_waves.show
+	waves.cx_reciprocity.show
+	waves.cx_outdegreeendow.show
+	waves.cx_outdegreecreation.show
+	waves.cx_reciprocityendow.show
+	waves.cx_reciprocitycreation.show
+	structural.cx_cycle3.show
+	structural.cx_transtrip.show
+	structural.cx_transrectrip.show
+	structural.cx_inactivity.show
+	structural.cx_outpopularity.show
+	structural.cx_ininass.show
+	structural.cx_inoutass.show
+	structural.cx_outoutass.show
+	structural.cx_antiiso.show
+	structural.cx_isolatepop.show
+	behavior.tx_behavior.show
+	behavior.vl_behavior.show
+	behavior.tx_hdr_10_42.show
+	behavior.cx_linear.show
+	behavior.cx_linearendow.show
+	behavior.cx_linearcreation.show
+	behavior.cx_quadratic.show
+	behavior.cx_quadraticendow.show
+	behavior.cx_quadraticcreation.show
+	behavior.cx_avalt.show
+	behavior.cx_avaltendow.show
+	behavior.cx_avaltcreation.show
+	behavior.cx_avsim.show
+	behavior.cx_avsimendow.show
+	behavior.cx_avsimcreation.show
+	behavior.tx_behtheta0.show
+	behavior.ed_behtheta0.show
+	behavior.tx_symmetric_note.hide
+END
+
+LIST netlist
+BEGIN
+	// populated at runtime by _nwdialog.ado
+END
+
+LIST list_symtype
+BEGIN
+	joint
+	force
+	agree
+END
+
+PROGRAM initialize
+BEGIN
+	put "_nwdialog nwsaom"
+	stata hidden immediate
+END
+
+PROGRAM command
+BEGIN
+	if multiplex.cx_multiplex.iseq(1) {
+		put "nwsaom multiplex"
+		beginoptions
+			require multiplex.cb_netawave1
+			put " netawave1(" multiplex.cb_netawave1 ")"
+			require multiplex.cb_netawave2
+			put " netawave2(" multiplex.cb_netawave2 ")"
+			require multiplex.cb_netbwave1
+			put " netbwave1(" multiplex.cb_netbwave1 ")"
+			require multiplex.cb_netbwave2
+			put " netbwave2(" multiplex.cb_netbwave2 ")"
+			option multiplex.cx_crprod
+			option multiplex.cx_crprodb
+			if multiplex.ed_theta01.isneq("") {
+				put " theta01(" multiplex.ed_theta01 ")"
+			}
+			if multiplex.ed_theta02.isneq("") {
+				put " theta02(" multiplex.ed_theta02 ")"
+			}
+			optionarg multiplex.sp_mxk0
+			optionarg multiplex.sp_mxk3
+			if multiplex.ed_mxfirstg.isneq("0.2") {
+				put " firstg(" multiplex.ed_mxfirstg ")"
+			}
+			optionarg multiplex.sp_mxseed
+		endoptions
+	}
+	if multiplex.cx_multiplex.iseq(0) {
+		put "nwsaom"
+		beginoptions
+			if waves.cb_wave1.isneq("") {
+				put " wave1(" waves.cb_wave1 ")"
+			}
+			if waves.cb_wave2.isneq("") {
+				put " wave2(" waves.cb_wave2 ")"
+			}
+			if waves.cx_symmetric.iseq(0) {
+				if waves.ed_waves.isneq("") {
+					put " waves(" waves.ed_waves ")"
+				}
+			}
+			option waves.cx_outdegree
+			if waves.cx_symmetric.iseq(0) {
+				option waves.cx_outdegreeendow
+				option waves.cx_outdegreecreation
+				option waves.cx_reciprocity
+				option waves.cx_reciprocityendow
+				option waves.cx_reciprocitycreation
+			}
+			if waves.vr_nodematch.isneq("") {
+				put " nodematch(" waves.vr_nodematch ")"
+			}
+			if waves.vr_nodecov.isneq("") {
+				put " nodecov(" waves.vr_nodecov ")"
+			}
+			if waves.vr_nodeicov.isneq("") {
+				put " nodeicov(" waves.vr_nodeicov ")"
+			}
+			if waves.vr_nodeocov.isneq("") {
+				put " nodeocov(" waves.vr_nodeocov ")"
+			}
+			if waves.vr_simcov.isneq("") {
+				put " simcov(" waves.vr_simcov ")"
+			}
+			if waves.vr_ratecov.isneq("") {
+				put " ratecov(" waves.vr_ratecov ")"
+			}
+			if waves.ed_ratecovcoef.isneq("") {
+				put " ratecovcoef(" waves.ed_ratecovcoef ")"
+			}
+			option waves.cx_symmetric
+			if waves.cx_symmetric {
+				optionarg waves.cb_symtype
+			}
+			option structural.cx_indegpopularity
+			option structural.cx_outactivity
+			option structural.cx_transmedtrip
+			option structural.cx_transties
+			option structural.cx_cycle4
+			if structural.cx_gwesp {
+				require structural.ed_gwesp
+				put " gwesp(" structural.ed_gwesp ")"
+			}
+			option structural.cx_isolatenet
+			option structural.cx_outiso
+			option structural.cx_antiiniso
+			option structural.cx_antiiniso2
+			option structural.cx_inplus3
+			option structural.cx_balance
+			option structural.cx_outinass
+			if waves.cx_symmetric.iseq(0) {
+				option structural.cx_outpopularity
+				option structural.cx_inactivity
+				option structural.cx_transtrip
+				option structural.cx_transrectrip
+				option structural.cx_cycle3
+				option structural.cx_antiiso
+				option structural.cx_isolatepop
+				option structural.cx_outoutass
+				option structural.cx_ininass
+				option structural.cx_inoutass
+			}
+			if waves.cx_symmetric.iseq(0) {
+				if behavior.vl_behavior.isneq("") {
+					put " behavior(" behavior.vl_behavior ")"
+				}
+				option behavior.cx_linear
+				option behavior.cx_linearendow
+				option behavior.cx_linearcreation
+				option behavior.cx_quadratic
+				option behavior.cx_quadraticendow
+				option behavior.cx_quadraticcreation
+				option behavior.cx_avalt
+				option behavior.cx_avaltendow
+				option behavior.cx_avaltcreation
+				option behavior.cx_avsim
+				option behavior.cx_avsimendow
+				option behavior.cx_avsimcreation
+				if behavior.ed_behtheta0.isneq("") {
+					put " behtheta0(" behavior.ed_behtheta0 ")"
+				}
+			}
+			if special.vl_present.isneq("") {
+				put " present(" special.vl_present ")"
+			}
+			if special.ed_missnet.isneq("") {
+				put " missnet(" special.ed_missnet ")"
+			}
+			if special.vl_missbeh.isneq("") {
+				put " missbeh(" special.vl_missbeh ")"
+			}
+			if special.ed_interact.isneq("") {
+				put " interact(" special.ed_interact ")"
+			}
+			if estimation.ed_theta0.isneq("") {
+				put " theta0(" estimation.ed_theta0 ")"
+			}
+			optionarg estimation.sp_k0
+			optionarg estimation.sp_k3
+			if estimation.ed_firstg.isneq("0.2") {
+				put " firstg(" estimation.ed_firstg ")"
+			}
+			optionarg estimation.sp_seed
+			if estimation.ed_rate0.isneq("") {
+				put " rate0(" estimation.ed_rate0 ")"
+			}
+		endoptions
+	}
+	stata
+END

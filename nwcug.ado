@@ -4,6 +4,20 @@ program nwcug, rclass
 	version 12
 	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string)]
 
+	// BUGFIX: reps() was never validated - reps(0) silently "succeeded"
+	// with a meaningless result (mean_null/sd_null missing, but p(two-
+	// sided) reported as a concrete-looking 1, not obviously an error to
+	// a user skimming the output), and any negative reps() crashed with
+	// a raw Mata "argument out of range" the instant nwcug_nullvals =
+	// J(reps,1,.) tried to allocate a negative-length vector. Confirmed
+	// directly via an adversarial-input probe. A meaningful null
+	// distribution needs at least 2 draws (1 alone gives sd_null
+	// undefined too), so that is the floor enforced here.
+	if `reps' < 2 {
+		di "{err}reps() must be at least 2 (a null distribution needs more than one draw); got `reps'."
+		error 198
+	}
+
 	local tail = lower("`tail'")
 	if "`tail'" == "" {
 		local tail "both"
@@ -218,17 +232,17 @@ program nwcug, rclass
 		di "{hline 40}"
 		di "{txt}  Network: {res}`origname'"
 		di "{txt}  Statistic: {res}`stat'/r(`rname')"
-		di "{txt}  Observed: {res}`obsval'"
-		di "{txt}  Null mean (sd): {res}`=meannull' (`=sdnull')"
+		di "{txt}  Observed: {res}`=round(`obsval',0.001)'"
+		di "{txt}  Null mean (sd): {res}`=round(meannull,0.001)' (`=round(sdnull,0.001)')"
 		di "{txt}  Reps: {res}`reps'"
 		if "`tail'" == "upper" | "`tail'" == "both" {
-			di "{txt}  p (upper tail): {res}`=pgreater'"
+			di "{txt}  p (upper tail): {res}`=round(pgreater,0.001)'"
 		}
 		if "`tail'" == "lower" | "`tail'" == "both" {
-			di "{txt}  p (lower tail): {res}`=pless'"
+			di "{txt}  p (lower tail): {res}`=round(pless,0.001)'"
 		}
 		if "`tail'" == "both" {
-			di "{txt}  p (two-sided): {res}`ptwo'"
+			di "{txt}  p (two-sided): {res}`=round(`ptwo',0.001)'"
 		}
 		di "{hline 40}"
 	}

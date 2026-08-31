@@ -15,80 +15,41 @@
 {cmdab: nwergm}
 [{it:{help netname}}]
 {cmd:,}
-{opt edges} [{opt mutual}]
-[{opth nodematch(varlist)}]
-[{opth nodematchdiff(varlist)}]
-[{opth nodecov(varlist)}]
-[{opth nodeicov(varlist)}]
-[{opth nodeocov(varlist)}]
-[{opth edgecov(netname)}]
-[{opth hamming(netname)}]
-[{opth absdist(varlist)}]
-[{opth nodefactor(varlist)}]
-[{opth nodeofactor(varlist)}]
-[{opth nodeifactor(varlist)}]
-[{opth nodemix(varlist)}]
-[{opth bcov1(varlist)}]
-[{opth bcov2(varlist)}]
-[{opth bfactor1(varlist)}]
-[{opth bfactor2(varlist)}]
-[{opt bdegree1(numlist)}]
-[{opt bdegree2(numlist)}]
-[{opt bstar1(numlist)}]
-[{opt bstar2(numlist)}]
-[{opt sender}]
-[{opt receiver}]
-[{opt gwesp(real)}]
-[{opt gwespfree(real)}]
-[{opt gwdegreefree(real)}]
-[{opt gwdspfree(real)}]
-[{opt gwodegreefree(real)}]
-[{opt gwidegreefree(real)}]
-[{opt gwnspfree(real)}]
-[{opt gwdsp(real)}]
-[{opt gwnsp(real)}]
-[{opt gwdegree(real)}]
-[{opt gwodegree(real)}]
-[{opt gwidegree(real)}]
-[{opt esp(numlist)}]
-[{opt dsp(numlist)}]
-[{opt type(OTP|ITP|OSP|ISP|RTP)}]
-[{opt degree(numlist)}]
-[{opt odegree(numlist)}]
-[{opt idegree(numlist)}]
-[{opt kstar(numlist)}]
-[{opt ostar(numlist)}]
-[{opt istar(numlist)}]
-[{opt degrange(numlist)}
-{opt degrangeto(numlist)}]
-[{opt odegrange(numlist)}
-{opt odegrangeto(numlist)}]
-[{opt idegrange(numlist)}
-{opt idegrangeto(numlist)}]
-[{opt concurrent}]
-[{opt triangle}]
-[{opt ctriple}]
-[{opt transitiveties}]
-[{opt cyclicalties}]
-[{opt method(mple|mcmle)}
-{opt mcmcburnin(int)}
-{opt mcmcinterval(int)}
-{opt mcmcsamplesize(int)}
-{opt mcmleiterations(int)}
-{opt proposal(uniform|tnt)}
-{opth freedyads(netname)}
-{opth blockdiag(varname)}
-{opt seed(int)}
-{opt verbose}
-{opt spcache}
-{opt nomcmcsample}]
+{opt edges}
+[{it:{help nwergm##covariate_effects:covariate_effects}}
+{it:{help nwergm##bipartite_effects:bipartite_effects}}
+{it:{help nwergm##gw_effects:gw_effects}}
+{it:{help nwergm##degree_effects:degree_effects}}
+{it:{help nwergm##triad_effects:triad_effects}}
+{it:{help nwergm##directed_covariate_effects:directed_covariate_effects}}
+{it:{help nwergm##star_range_effects:star_range_effects}}
+{it:{help nwergm##sharedpartner_effects:sharedpartner_effects}}
+{it:{help nwergm##triad_effects_directed:triad_effects_directed}}
+{it:{help nwergm##nodelevel_effects:nodelevel_effects}}
+{it:{help nwergm##estimation_control:estimation_control}}]
 
+{synoptset 26}{...}
+{p2col:{it:options}}Description{p_end}
+{p2line}
+{p2col:{it:{help nwergm##covariate_effects:covariate_effects}}}node and dyadic covariate main effects ({opt mutual}, {opt nodematch()}, {opt nodecov()}, {opt edgecov()}, {opt nodefactor()}, {opt nodemix()}, etc.){p_end}
+{p2col:{it:{help nwergm##bipartite_effects:bipartite_effects}}}two-mode (bipartite) network terms{p_end}
+{p2col:{it:{help nwergm##gw_effects:gw_effects}}}geometrically weighted shared-partner/degree terms, fixed and curved decay{p_end}
+{p2col:{it:{help nwergm##degree_effects:degree_effects}}}degree-distribution terms{p_end}
+{p2col:{it:{help nwergm##triad_effects:triad_effects}}}undirected triad-closure terms ({opt triangle}, {opt ctriple}){p_end}
+{p2col:{it:{help nwergm##directed_covariate_effects:directed_covariate_effects}}}directed-only covariate factor terms{p_end}
+{p2col:{it:{help nwergm##star_range_effects:star_range_effects}}}k-star and semi-open degree-range terms{p_end}
+{p2col:{it:{help nwergm##sharedpartner_effects:sharedpartner_effects}}}fixed (non-geometric) shared-partner count terms, and the directed shared-partner {opt type()} selector{p_end}
+{p2col:{it:{help nwergm##triad_effects_directed:triad_effects_directed}}}directed triad-closure existence-indicator terms{p_end}
+{p2col:{it:{help nwergm##nodelevel_effects:nodelevel_effects}}}dyadic-covariate and per-node fixed-effect terms{p_end}
+{p2col:{it:{help nwergm##estimation_control:estimation_control}}}estimation method, MCMC tuning, constraints, and output control{p_end}
 
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
 {syntab:Required}
 {synopt:{opt edges}}Include the {cmd:edges} term (density/intercept); required{p_end}
+
+{marker covariate_effects}{...}
 {syntab:Node and dyadic covariate effects}
 {synopt:{opt mutual}}Reciprocated-tie count; directed networks only{p_end}
 {synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable){p_end}
@@ -100,6 +61,8 @@
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
 {synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
+
+{marker bipartite_effects}{...}
 {syntab:Two-mode (bipartite) effects}
 {synopt:{opth bcov1(varlist)}}Bipartite (two-mode) networks only: the {cmd:b1cov()} term from R's own {cmd:ergm} package (renamed to {cmd:bcov1()} because Stata's {cmd:syntax} command rejects an option name with a digit followed by a letter, e.g. {cmd:b1cov}) - continuous node covariate main effect for the MODE-1 endpoint only (sum, over ties, of the mode-1 endpoint's own covariate value; the mode-2 endpoint's value is never added). Reported coefficient name keeps R's own {cmd:b1cov_}{it:varname} spelling{p_end}
 {synopt:{opth bcov2(varlist)}}Bipartite networks only: the {cmd:b2cov()} term - the {opt bcov1()} mirror for the MODE-2 endpoint. Reported coefficient name: {cmd:b2cov_}{it:varname}{p_end}
@@ -109,6 +72,12 @@
 {synopt:{opt bdegree2(numlist)}}Bipartite networks only: the {cmd:b2degree()} term - the {opt bdegree1()} mirror for the MODE-2 endpoint{p_end}
 {synopt:{opt bstar1(numlist)}}Bipartite networks only: the {cmd:b1star()} term - one coefficient per listed k, counting the number of distinct k-stars centered on a MODE-1 node (C(degree,k) summed over mode-1 nodes only). Dyad-DEPENDENT (needs {opt method(mcmle)}). Note: {opt bstar1(1)} equals {opt bstar2(1)} equals {opt edges} (R ergm's own documented identity). Reported coefficient name: {cmd:b1star_}{it:k}{p_end}
 {synopt:{opt bstar2(numlist)}}Bipartite networks only: the {cmd:b2star()} term - the {opt bstar1()} mirror for the MODE-2 endpoint{p_end}
+{synopt:{opth bnodematch1(varlist)}}Bipartite networks only: the {cmd:b1nodematch()} term - pooled homophily (default-parameter scope: no {cmd:diff()}/{cmd:alpha()}/{cmd:beta()}/{cmd:byb2attr()}) on each listed categorical attribute, counting only ties whose MODE-1 endpoint carries the matching level. Dyad-DEPENDENT (needs {opt method(mcmle)}), unlike {opt bcov1()}/{opt bfactor1()}. Reported coefficient name: {cmd:b1nodematch_}{it:varname}{p_end}
+{synopt:{opth bnodematch2(varlist)}}Bipartite networks only: the {cmd:b2nodematch()} term - the {opt bnodematch1()} mirror for the MODE-2 endpoint. Reported coefficient name: {cmd:b2nodematch_}{it:varname}{p_end}
+{synopt:{opt bgwdegree1(real)}}Bipartite networks only: the {cmd:gwb1degree()} term - geometrically weighted degree, fixed decay, counting only MODE-1 nodes' own degree. Dyad-DEPENDENT (needs {opt method(mcmle)}); no curved (estimated-decay) counterpart yet, unlike plain {opt gwdegree()}/{opt gwdegreefree()}. Reported coefficient name: {cmd:bgwdegree1_}{it:decay}{p_end}
+{synopt:{opt bgwdegree2(real)}}Bipartite networks only: the {cmd:gwb2degree()} term - the {opt bgwdegree1()} mirror for the MODE-2 endpoint. Reported coefficient name: {cmd:bgwdegree2_}{it:decay}{p_end}
+
+{marker gw_effects}{...}
 {syntab:Geometrically weighted effects}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners, fixed decay; undirected (UTP) or directed (shared-partner definition set by {opt type()}, default OTP){p_end}
 {synopt:{opt gwespfree(real)}}Geometrically weighted edgewise shared partners with an ESTIMATED (curved) decay parameter, undirected networks only; the argument is only a starting value for decay, not a fixed value. {bf:method(mple)} only for now (curved MCMLE is not yet implemented) - reports {bf:gwesp_weight}/{bf:gwesp_decay} in place of a single {opt gwesp()} coefficient. Cannot be combined with {opt gwesp()}, {opt esp()}, or another curved term{p_end}
@@ -122,17 +91,25 @@
 {synopt:{opt gwodegree(real)}}Geometrically weighted out-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwidegree(real)}}Geometrically weighted in-degree, fixed decay; directed networks only{p_end}
 {synopt:{opt gwnsp(real)}}Geometrically weighted NONedgewise (untied-dyad) shared partners, fixed decay; undirected (UTP) or directed (see {opt type()}). Satisfies gwdsp = gwesp + gwnsp{p_end}
+
+{marker degree_effects}{...}
 {syntab:Degree-distribution effects}
 {synopt:{opt degree(numlist)}}One coefficient per listed degree value: count of nodes with that exact (total) degree; undirected only{p_end}
 {synopt:{opt odegree(numlist)}}One coefficient per listed value: count of nodes with that exact out-degree; directed networks only{p_end}
 {synopt:{opt idegree(numlist)}}One coefficient per listed value: count of nodes with that exact in-degree; directed networks only{p_end}
 {synopt:{opt concurrent}}Count of nodes with (total) degree 2 or higher; undirected only{p_end}
+
+{marker triad_effects}{...}
 {syntab:Triad-closure effects}
 {synopt:{opt triangle}}Count of triangles (mutually tied triples); undirected only{p_end}
 {synopt:{opt ctriple}}Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only{p_end}
+
+{marker directed_covariate_effects}{...}
 {syntab:Directed covariate effects}
 {synopt:{opth nodeofactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting OUT-degree among nodes at that level; directed networks only{p_end}
 {synopt:{opth nodeifactor(varlist)}}Directed analogue of nodefactor(): one coefficient per NON-BASE distinct level, each counting IN-degree among nodes at that level; directed networks only{p_end}
+
+{marker star_range_effects}{...}
 {syntab:Star and degree-range effects}
 {synopt:{opt kstar(numlist)}}One coefficient per listed k value: count of k-stars ((total) degree choose k, summed over nodes); undirected only{p_end}
 {synopt:{opt ostar(numlist)}}One coefficient per listed k value: count of out-k-stars; directed networks only{p_end}
@@ -143,17 +120,25 @@
 {synopt:{opt odegrangeto(numlist)}}TO values pairing with {opt odegrange()}{p_end}
 {synopt:{opt idegrange(numlist)}}Semi-open-interval IN-degree count, paired with {opt idegrangeto()}; directed networks only{p_end}
 {synopt:{opt idegrangeto(numlist)}}TO values pairing with {opt idegrange()}{p_end}
+
+{marker sharedpartner_effects}{...}
 {syntab:Shared-partner count effects}
 {synopt:{opt esp(numlist)}}One coefficient per listed d value: count of TIED dyads with exactly d shared partners (fixed, non-geometric alternative to {opt gwesp()}); undirected (UTP) or directed (see {opt type()}){p_end}
 {synopt:{opt dsp(numlist)}}One coefficient per listed d value: count of ALL dyads (tied or not) with exactly d shared partners (fixed, non-geometric alternative to {opt gwdsp()}); undirected (UTP) or directed (see {opt type()}). An EXHAUSTIVE d-range (covering every shared-partner value a toggle can produce) is exactly collinear across its own columns - list a subset, not every achievable value{p_end}
 {synopt:{opt type(OTP|ITP|OSP|ISP|RTP)}}Shared-partner definition used by every {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()} term in the model, on a DIRECTED network only (default {bf:OTP}; silently ignored, matching R ergm's own behaviour, when {bf:netname} is undirected - see the {bf:Remarks} section below for the five definitions){p_end}
+
+{marker triad_effects_directed}{...}
 {syntab:Triad-closure effects (directed)}
 {synopt:{opt transitiveties}}Count of TIED arcs i->j for which there also exists a two-path i->k->j (an existence/threshold indicator, not a count - contrast with {opt gwesp()}/{opt esp()}); directed networks only{p_end}
 {synopt:{opt cyclicalties}}Count of TIED arcs i->j for which there also exists a return two-path j->k->i, closing a directed 3-cycle; directed networks only{p_end}
+
+{marker nodelevel_effects}{...}
 {syntab:Dyadic covariate and node-level effects}
 {synopt:{opth hamming(netname)}}Hamming distance to a reference network: count of dyads whose tie state disagrees with the same network's{p_end}
 {synopt:{opt sender}}One coefficient per node (except a base node) equal to that node's own out-degree; directed networks only{p_end}
 {synopt:{opt receiver}}One coefficient per node (except a base node) equal to that node's own in-degree; directed networks only{p_end}
+
+{marker estimation_control}{...}
 {syntab:Estimation control}
 {synopt:{opt method(mple|mcmle)}}Estimation method; default {it:mcmle} unless the model is dyad-independent, in which case MPLE already is the MLE{p_end}
 {synopt:{opt mcmcburnin(int)}}MCMC burn-in steps per simulation; default 3,000{p_end}
@@ -166,6 +151,8 @@
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt verbose}}Show MPLE/MCMLE iteration detail{p_end}
 {synopt:{opt spcache}}Enable the incremental shared-partner cache for {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/{opt esp()}/{opt dsp()}/{opt triangle}/{opt ctriple} on an undirected network; OFF by default because direct benchmarking found it a net LOSS below roughly average degree 30-40 (the common case) and a net win only above that - enable only for denser undirected networks; no effect on a directed network or without any of those terms{p_end}
+{synopt:{opt fixdensity}}Hold the total tie count fixed during MCMC (R ergm's own {cmd:constraints=~edges}), via a compound tie/non-tie swap proposal rather than the ordinary single-dyad toggle; native (C)-accelerated when otherwise eligible. Requires {opt method(mcmle)} and at least one term besides {opt edges} (which is dropped, not estimated, under this constraint - see {bf:Remarks}). Cannot currently be combined with {opt freedyads()}/{opt blockdiag()} - v1 supports one dyad-space constraint at a time{p_end}
+{synopt:{opt nonative}}Force the pure-Mata backend even on an otherwise native-eligible model - an explicit escape hatch for testing or direct comparison against the native (C) backend; not needed for ordinary use, since {cmd:nwergm} already picks the native backend automatically whenever a model qualifies{p_end}
 {synopt:{opt nomcmcsample}}Skip posting {bf:e(mcmcsample)} ({bf:method(mcmle)} only). Populating this matrix from Mata is the single slowest step for a fit with a large {opt mcmcsamplesize()} - a genuine Stata matrix-engine cost at bulk-data scale (confirmed by direct timing: over 30 seconds at 100,000 rows), not something {help nwergm_estat:estat mcmcdiag}'s own consumption of it can be blamed for or sped up (reading the already-posted matrix back is fast regardless of size - the cost is entirely in creating it in the first place). Specify {opt nomcmcsample} when fitting with an unusually large {opt mcmcsamplesize()} and you do not need {cmd:estat mcmcdiag} or to inspect the raw sample directly - the coefficient table, standard errors, and every other stored result are completely unaffected{p_end}
 
 {p2colreset}{...}
@@ -216,7 +203,7 @@ likelihood.
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - a narrow term family so far ({opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}); see Limitations below.
+Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - a narrow term family so far ({opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}, {opt bnodematch1()}/{opt bnodematch2()}, {opt bgwdegree1()}/{opt bgwdegree2()}); see Limitations below.
 
 {title:Limitations (v1 scope)}
 
@@ -226,10 +213,13 @@ Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation mo
 {p2colset 9 13 15 2}{...}
 {p2col: o}Two-mode (bipartite) networks are supported for a narrow term family:
 {opt edges}; the dyad-independent {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}
-family (R ergm's own {cmd:b1cov()}/{cmd:b2cov()}/{cmd:b1factor()}/{cmd:b2factor()} terms); and the
+family (R ergm's own {cmd:b1cov()}/{cmd:b2cov()}/{cmd:b1factor()}/{cmd:b2factor()} terms); the
 dyad-dependent {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()} family (R's own
-{cmd:b1degree()}/{cmd:b2degree()}/{cmd:b1star()}/{cmd:b2star()} terms, needs {opt method(mcmle)}).
-All eight are renamed as Stata OPTIONS only, because Stata's {cmd:syntax} command rejects an
+{cmd:b1degree()}/{cmd:b2degree()}/{cmd:b1star()}/{cmd:b2star()} terms, needs {opt method(mcmle)});
+and the also dyad-dependent {opt bnodematch1()}/{opt bnodematch2()} (R's own {cmd:b1nodematch()}/
+{cmd:b2nodematch()}, default-parameter scope only) and {opt bgwdegree1()}/{opt bgwdegree2()} (R's
+own {cmd:gwb1degree()}/{cmd:gwb2degree()}, fixed decay only) families. All twelve are renamed as
+Stata OPTIONS only, because Stata's {cmd:syntax} command rejects an
 option name with a digit followed by a letter; the reported coefficient names keep R's own
 {cmd:b1cov_}{it:var}/{cmd:b1degree_}{it:d} spelling. Directed two-mode networks and every
 one-mode-only term ({opt mutual}, {opt triangle}, {opt gwesp()}, {opt nodecov()}, {opt degree()},
@@ -244,8 +234,8 @@ extension.{p_end}
 {p2col: o}{opt freedyads()} and {opt blockdiag()} restrict which dyads the MCMC proposal may ever
 toggle - every other dyad is held fixed at its observed value for the rest of the fit (matching
 R ergm's own {cmd:constraints=~fixallbut()} and {cmd:constraints=~blockdiag()} respectively).
-Fixed density, degree constraints, and egocentric constraints are still roadmap items, not yet
-supported. Both {opt proposal(uniform)} and {opt proposal(tnt)} have a masked variant (masked
+Degree and egocentric constraints are still roadmap items, not yet supported. Both
+{opt proposal(uniform)} and {opt proposal(tnt)} have a masked variant (masked
 TNT restricts every population count - total dyads, current tie count, the "pick a random
 existing tie" draw - to the free-dyad subspace only; a fully-free mask is statistically identical
 to the ordinary unmasked proposal, confirmed by certification), so a constrained fit gets the
@@ -257,6 +247,14 @@ own likelihood contribution is a theta-independent constant, so it drops entirel
 pseudolikelihood - confirmed directly: logit of the FREE-dyads-only density, not the full
 network's own density) - see {browse "dev/freedyads_crosscheck.R"}. Only one of
 {opt freedyads()}/{opt blockdiag()} may be given at a time.{p_end}
+{p2col: o}{opt fixdensity} is a third, mutually exclusive dyad-space constraint: rather than
+restricting WHICH dyads may vary (as {opt freedyads()}/{opt blockdiag()} do), it holds the total
+tie COUNT itself invariant via a compound tie/non-tie swap proposal (R ergm's own
+{cmd:constraints=~edges}), so cannot currently be combined with either. Requires
+{opt method(mcmle)} (a fixed-density fit is never a plain MPLE, since MPLE never runs MCMC at all)
+and at least one term besides {opt edges}; {opt edges} itself is simply never registered as an
+estimated term under this constraint, rather than fit and reported as a theta-independent
+constant the way R ergm itself displays it.{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -279,7 +277,10 @@ only, the mode-restricted covariate family ({opt bcov1()}/{opt bcov2()}/{opt bfa
 {opt bfactor2()} - R ergm's own {cmd:b1cov()}/{cmd:b2cov()}/{cmd:b1factor()}/{cmd:b2factor()}
 terms) and the mode-restricted degree/star family ({opt bdegree1()}/{opt bdegree2()}/
 {opt bstar1()}/{opt bstar2()} - R's own {cmd:b1degree()}/{cmd:b2degree()}/{cmd:b1star()}/
-{cmd:b2star()} terms). {opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
+{cmd:b2star()} terms) and the mode-restricted homophily/geometrically-weighted-degree family
+({opt bnodematch1()}/{opt bnodematch2()}/{opt bgwdegree1()}/{opt bgwdegree2()} - R's own
+{cmd:b1nodematch()}/{cmd:b2nodematch()}/{cmd:gwb1degree()}/{cmd:gwb2degree()} terms).
+{opt gwesp()}/{opt gwdsp()}/{opt gwnsp()}/
 {opt esp()}/{opt dsp()} also support directed networks via any of FIVE directed shared-partner
 definitions, selected with {opt type()} (default {bf:OTP}, R ergm's own default) and applied
 uniformly to every one of these five terms present in the same model:
@@ -294,13 +295,13 @@ uniformly to every one of these five terms present in the same model:
 
 {pstd}
 All five directed shared-partner definitions R ergm itself offers are implemented. Two-mode/
-bipartite support currently covers a narrow term family only (see {help nwergm##limitations:Supported
-network types} above); {cmd:balance}/signed-network terms are blocked (signed networks are not a
+bipartite support currently covers a narrow term family only (see {help nwergm##limitations:Supported network types} above); {cmd:balance}/signed-network terms are blocked (signed networks are not a
 supported data type at all); curved MCMLE estimation needs a genuine MCMLE architecture change,
 not a term-only addition (curved MPLE is already supported - see {opt gwespfree()}/
 {opt gwdegreefree()}/{opt gwdspfree()}/{opt gwnspfree()}/{opt gwodegreefree()}/
-{opt gwidegreefree()} above). Constraints beyond the free binary dyad space and offsets are not
-yet implemented. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
+{opt gwidegreefree()} above). {opt freedyads()}, {opt blockdiag()}, and {opt fixdensity} cover the
+dyad-space and tie-count constraints implemented so far; degree constraints, egocentric
+constraints, and offsets are not yet implemented. Basic MCMC diagnostics ({help nwergm_estat:estat mcmcdiag})
 and basic goodness of fit ({help nwergm_estat:estat gof}) are both available; see
 {help nwergm_estat}.
 
@@ -320,7 +321,9 @@ are certified to produce statistically indistinguishable results for {opt method
 (independent random-number streams, so not bit-identical sample paths, but the same target
 distribution; see the package's own {cmd:cscripts/test_nwergm_native.do}) and a bit-identical
 design matrix for {opt method(mple)} (deterministic given a fixed graph, so native and Mata
-agree exactly, not merely statistically).
+agree exactly, not merely statistically). {opt nonative} forces the Mata backend deliberately
+even on an otherwise native-eligible model, for testing or direct comparison; ordinary use never
+needs it, since eligibility is otherwise detected and used automatically.
 
 {pstd}
 The native backend requires a compiled plugin for the current platform (macOS is built and
@@ -430,8 +433,7 @@ estimation method. See {help nwergm_estat} for full details.
 
 {pstd}
 Hunter, D.R., Handcock, M.S., Butts, C.T., Goodreau, S.M., Morris, M. (2008). ergm: A Package to
-Fit, Simulate and Diagnose Exponential-Family Models for Networks. {it:Journal of Statistical
-Software}, 24(3), 1-29.
+Fit, Simulate and Diagnose Exponential-Family Models for Networks. {it:Journal of Statistical Software}, 24(3), 1-29.
 
 {pstd}
 Hunter, D.R., Handcock, M.S. (2006). Inference in curved exponential family models for networks.
@@ -532,8 +534,7 @@ term-construction code {cmd:nwergm}'s own estimation path uses rather than a par
 implementation.
 
 {pstd}
-{bf:The resulting simulated network's own dataset does not carry the caller's covariate
-variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
+{bf:The resulting simulated network's own dataset does not carry the caller's covariate variable(s) forward.} Each simulated draw is built via a fresh {cmd:nwset} call that replaces
 the active dataset with just that network's own bare node/edge structure - any covariate
 variable read during term construction is captured once, in Mata, before that replacement
 happens, and is not itself part of the simulated result. Regenerate it afterward (by node

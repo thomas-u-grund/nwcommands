@@ -30,8 +30,7 @@
 {pstd}
 Simmelian ties are concerned with more than just the strength of the relationship (see Krackhardt 1998). The original concept looks at the number of
 strong, reciprocated ties within a group: for a simmelian tie to exist, there must be three (a triad) or more of reciprocal strong ties in a group,
-viewed as even stronger than a regular strong tie. {bf:This command implements the reciprocated-triad structure only - it does not apply any tie-strength/value
-threshold} (see {bf:Supported network types} below); a weak reciprocated tie in a closed triad is flagged identically to a strong one.
+viewed as even stronger than a regular strong tie. {bf:This command implements the reciprocated-triad structure only - it does not apply any tie-strength/value threshold} (see {bf:Supported network types} below); a weak reciprocated tie in a closed triad is flagged identically to a strong one.
 
 {pstd}
 For example, if Adam has a (reciprocated) tie to Betty, and both Adam and Betty share a (reciprocated) tie to Charles, this three-way tie would be a simmelian one.
@@ -48,8 +47,7 @@ Binary: yes (only) - uses {cmd:get_matrix_unvalued()} throughout; a weak tie and
 {title:References}
 
 {pstd}
-Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. {it:Research
-in the Sociology of Organizations} (16), 183-210.
+Krackhardt, D. (1999). The ties that torture: Simmelian tie analysis in organizations. {it:Research in the Sociology of Organizations} (16), 183-210.
 
 {title:Examples}
 

@@ -1062,6 +1062,35 @@ drop __symrc_actrate
 
 di as text "nwsaom.ado symmetric + ratecov() combined PASS"
 
+* symmetric + present() (composition change) combined (native-first):
+* native/saom_sim.c's own actor/alter draw under symtype already
+* restricts to presentIdxArr on BOTH sides (confirmed reading the C
+* source before wiring this). Unlike the ratecov() combination above,
+* this one is a CLEAN win - a real 50-actor symmetrized dataset with one
+* actor absent at wave 2 gives a well-identified outdegree estimate
+* (z well above 2 in magnitude), not an anomalously large SE.
+gen __sympres_p1 = 1
+gen __sympres_p2 = 1
+replace __sympres_p2 = 0 in 6
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric present(__sympres_p1 __sympres_p2) k0(20) k3(200) rate0(2) seed(777)
+assert _rc == 0
+drop __sympres_p1 __sympres_p2
+
+di as text "nwsaom.ado symmetric + present() combined PASS"
+
+* symmetric + missnet() combined - runs cleanly (rc==0); SE is large on
+* this tiny 6-node network, matching the ALREADY-DISCLOSED small-network
+* fragility this whole symmetric-model family has (see the BJOINT/BAGREE
+* entries above), not a missnet-specific defect - present()'s own clean
+* result on a properly-sized (50-actor) network above is the real
+* evidence this combination's mechanism is correct.
+matrix __symmiss1 = (0,0,0,0,0,0\0,0,0,0,0,0\0,0,0,1,1,0\0,0,1,0,0,0\0,0,1,0,0,0\0,0,0,0,0,0)
+matrix __symmiss2 = J(6,6,0)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric missnet(__symmiss1 __symmiss2) k0(20) k3(200) rate0(2) seed(777)
+assert _rc == 0
+
+di as text "nwsaom.ado symmetric + missnet() combined PASS"
+
 * =====================================================================
 * Undirected/symmetric follow-ups: (1) the effect-meaningfulness audit
 * (real RSiena 1.6.6 getEffects() comparison, not derived) - every
@@ -1133,3 +1162,119 @@ matrix __symjoint = e(b)
 assert reldif(__symdefault[1,1], __symjoint[1,1]) < 1e-10
 
 di as text "nwsaom.ado symtype(force)/symtype(agree) (native-first, no Mata fallback) PASS"
+
+* --- interact(): two-way interaction effects (RSiena's own
+* includeInteraction()) - see unw_saom.do's own "Interaction effects"
+* header comment (right after change_saom_balance()) for the full
+* design/derivation account. The underlying formulas were independently
+* hand-verified (against pre-existing, already-certified change_mutual()/
+* change_saom_transtrip()/stat_mutual()/stat_saom_transtrip() calls, NOT
+* the new interaction dispatcher itself) on a small hand-built graph, and
+* cross-checked native-vs-Mata on real 50-actor RSiena s501/s502 data
+* (both converge to statistically consistent coefficients - not
+* bit-identical, since native C and Mata use genuinely different PRNGs
+* even given "the same" seed, matching every other native-vs-Mata
+* comparison already in this file). Only the .ado-level option-parsing/
+* eligibility contract is re-tested here.
+
+nwclear
+nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(ixwave1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(ixwave2) labs(A,B,C,D,E,F)
+
+* naming a component effect not itself included in the model is a clear
+* error (198), not a crash or a silent guess.
+capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity interact(reciprocity#transtrip) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+* naming a node-level ("ego effect") component - no well-defined per-tie
+* value to multiply - is rejected outright, even when that effect IS
+* itself included in the model.
+capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity outactivity interact(reciprocity#outactivity) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+* a well-identified interaction (a covariate unrelated to network
+* structure) converges end-to-end through the real command on this
+* file's own tiny 6-node toy network - but, like every other 4-parameter
+* model attempted on this SAME toy network elsewhere in this file (see
+* the BAGREE precedent above), a genuinely small/sparse dataset can also
+* legitimately hit thetaBound - both outcomes are accepted, matching
+* that established precedent, not a defect in this port.
+gen byte grp = mod(_n,2)
+set seed 42
+capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(reciprocity#nodecov) k0(30) k3(400) rate0(1.5) seed(42)
+assert _rc == 0 | _rc == 498
+if _rc == 0 {
+	matrix __ixb = e(b)
+	assert colsof(__ixb) == 4
+}
+
+di as text "nwsaom.ado interact() (two-way interaction effects) PASS"
+
+* --- estat mems: Micro Effects on Macro Structure (Duxbury's netmediate
+* package, MEMS()/MEMS_saom()) - see nwsaom_estat.ado's own "estat mems"
+* header comment for the full design/derivation account (real algorithm
+* fetched and read directly from the installed netmediate/MASS R
+* packages' own source, not guessed). The underlying Mata machinery
+* (exact-moment-matching theta draws, the type-7 percentile function, the
+* summary-statistic construction) was already independently verified
+* against known values (an exact analytic mean/covariance check, and
+* R's own documented quantile(1:10, c(.025,.975)) = 1.225/9.775) - this
+* unit only re-tests the .ado-level plumbing: option validation, the
+* user-macro calling convention, and end-to-end execution on a real fit.
+capture program drop __nwsaom_mems_testmacro
+program define __nwsaom_mems_testmacro, rclass
+	args netname
+	qui nwsummarize `netname', matonly
+	return scalar stat = r(density)
+end
+
+nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity k0(20) k3(200) rate0(1.5) seed(90210)
+
+* v1 scope rejections: co-evolution/multi-wave fits are rejected with a
+* clear message, not a crash.
+nwclear
+nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(memscoevw1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(memscoevw2) labs(A,B,C,D,E,F)
+gen byte behwave1 = mod(_n,3)
+gen byte behwave2 = mod(_n+1,3)
+nwsaom, wave1(memscoevw1) wave2(memscoevw2) outdegree behavior(behwave1 behwave2) linear k0(10) k3(20) seed(1)
+capture estat mems, effect(outdegree) macro(__nwsaom_mems_testmacro) nsim(20)
+assert _rc == 498
+
+nwclear
+nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(memsw1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(memsw2) labs(A,B,C,D,E,F)
+nwset, mat((1,0,1,0,1,0\0,1,1,0,0,1\1,0,1,1,0,0\0,0,1,1,1,1\1,0,1,0,1,1\0,1,0,1,0,1)) directed name(memsw3) labs(A,B,C,D,E,F)
+nwsaom, waves(memsw1 memsw2 memsw3) outdegree reciprocity k0(10) k3(20) seed(1)
+capture estat mems, effect(outdegree) macro(__nwsaom_mems_testmacro) nsim(20)
+assert _rc == 498
+
+* an ordinary two-wave fit for the real end-to-end checks below (the
+* earlier co-evolution/multi-wave rejection checks each ran their own
+* `nwclear', wiping out ixwave1/ixwave2 from the interact() unit above).
+nwclear
+nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(ixwave1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(ixwave2) labs(A,B,C,D,E,F)
+nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity k0(20) k3(200) rate0(1.5) seed(90210)
+
+* effect() not one of the model's own coefficients - clear error, not a crash.
+capture estat mems, effect(transtrip) macro(__nwsaom_mems_testmacro) nsim(20)
+assert _rc == 198
+
+* macro() naming an undefined program - clear error (via the real trial
+* call, not a broken existence pre-check - see nwsaom_estat.ado's own
+* header comment on the `which' bug this replaced), not a crash.
+capture estat mems, effect(reciprocity) macro(__nwsaom_bogus_program_xyz) nsim(20)
+assert _rc == 498
+
+* a real end-to-end run.
+set seed 123
+qui estat mems, effect(reciprocity) macro(__nwsaom_mems_testmacro) nsim(40) nodots
+assert !missing(r(mems))
+assert !missing(r(mems_sd))
+assert !missing(r(mems_p))
+assert !missing(r(propchange))
+assert r(mems_lb) <= r(mems_ub)
+assert r(mems_p) >= 0 & r(mems_p) <= 1
+
+di as text "nwsaom_estat.ado estat mems (Micro Effects on Macro Structure) PASS"

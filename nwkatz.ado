@@ -241,9 +241,9 @@ program nwkatz
 		di "{txt}	Network has been symmetrized for calculation.{txt}"
 	}
 	di "{hline 40}"
-	di "{txt}	Alpha: {res}`alpha'"
+	di "{txt}	Alpha: {res}`=round(`alpha',0.001)'"
 	if "`walks'" != "" {
-		di "{txt}	Spectral radius (rho): {res}`rho'"
+		di "{txt}	Spectral radius (rho): {res}`=round(`rho',0.001)'"
 	}
 
 	sum `generate_all'

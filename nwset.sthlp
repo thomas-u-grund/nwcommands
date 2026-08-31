@@ -76,13 +76,27 @@
 {synopt:{opt edgelist}}Declare data in edgelist format{p_end}
 {synopt:{opt bipartite}}Declare a two-mode network from a Mata matrix or a wide affiliation-matrix {help varlist} (see {help nwset##twomode:Declare a two-mode network} below){p_end}
 {synopt:{opt twomode}}Declare a two-mode network from an edgelist of two (or three, for a valued network) id variables (see {help nwset##twomode:Declare a two-mode network} below){p_end}
+{synopt:{opth mat(matamatrix)}}Declare a network directly from an existing Mata matrix (or a literal matrix expression) instead of {help varlist}/an edgelist{p_end}
 {synopt:{opt directed}}Force network to be directed{p_end}
 {synopt:{opt undirected}}Force network to be undirected{p_end}
+{synopt:{opt valued}}Force network to be treated as valued (tie strength, not just presence/absence){p_end}
+{synopt:{opt unvalued}}Force network to be treated as unvalued (binary){p_end}
+{synopt:{opt selfloop}}Allow self-loops (a tie from a node to itself); by default the diagonal is always blanked{p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new network; default = {it:network}{p_end}
+{synopt:{opt replace}}Overwrite an existing network of the same name instead of auto-picking a different valid name with a warning{p_end}
+{synopt:{opt overwrite}}Backward-compatible alias for {opt replace}{p_end}
+{synopt:{opth nodenames(string)}}Set the network's own node identifiers directly (a Mata expression evaluating to a string or numeric vector), independent of {opt labs()}{p_end}
 {synopt:{opt labs}({it:lab1, lab2,...})}Node labels{p_end}
 {synopt:{opth labsfromvar(varname)}}Use information in varname as node labels{p_end}
+{synopt:{opth vars(varlist)}}Save network node identifiers/labels from these existing Stata variables instead of generating new ones (the inverse of {opt xvars}); must have as many entries as there are nodes{p_end}
+{synopt:{opth biprownames(varname)}}{opt bipartite} only: use this variable's own values as mode-1 row names instead of the default sequential numbering{p_end}
+{synopt:{opth edgelabs(string)}}Edgelist declarations only: labels for the two (or three) id variables themselves, used in messages/output{p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt keeporiginal}}Generate variable {it:_nodeoriginal} with original node id's (when setting from an edgelist){p_end}
+{synopt:{opt detail}}Display more detail (node/edge counts, directedness, etc.) about existing networks when {cmd:nwset} is called with no arguments{p_end}
+{synopt:{opt nooutput}}Suppress the summary display normally printed after declaring a network{p_end}
+{synopt:{opt clear}}Clear all networks (but keep Stata variables){p_end}
+{synopt:{opt nwclear}}Synonym for {opt clear}{p_end}
 {synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
@@ -259,7 +273,7 @@ data already looks like a list of affiliations:
 {pstd}
 This also automatically sets each mode's own human-readable description from the variable names
 used ({it:person}/{it:institution} here - see {bf:r(mode1desc)}/{bf:r(mode2desc)} in
-{help nwname}/{help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
+{help nwname}, {help nwsummarize}), and (if {bf:xvars} is given) generates a {it:_mode} variable
 holding each node's own mode ("1" for persons, "2" for institutions - see {help nw2fromedge} for the
 full option set this delegates to internally, including {bf:name()}/{bf:xvars}/{bf:keeporiginal}).
 {bf:twomode} cannot be combined with {bf:bipartite} - they declare two different input shapes (an
@@ -327,11 +341,18 @@ shows its temporal metadata, and {help nwattime} produces an ordinary static net
 the ties active at a given timepoint, usable with any {bf:nw*} command exactly like any other network.
 
 {pstd}
-{bf:time()}/{bf:interval()}/{bf:eventtime()} cannot currently be combined with {bf:twomode}/
-{bf:bipartite} in the same call - a genuine composability gap (a two-mode temporal network) tracked in
-docs/ROADMAP.md, not yet supported. This is deliberate groundwork only, per the package's own stated
-scope: no full temporal-network modelling subsystem (dynamic centrality, relational-event models,
-temporal ERGMs) is implemented or attempted here.
+{bf:time()}/{bf:interval()}/{bf:eventtime()} CAN be combined with {bf:twomode} in the same call - a
+two-mode temporal network, declared exactly like an ordinary {bf:twomode} edgelist with a temporal
+option added:
+
+	{cmd:. nwset person organisation, twomode time(wave) name(mynet)}
+
+{pstd}
+{bf:bipartite}'s own wide-affiliation-matrix shape (one variable per mode-1 node, one row per mode-2
+node) has no natural per-row time value to attach, so it remains explicitly unsupported with any
+temporal option - use {bf:twomode}'s edgelist shape instead. This is deliberate groundwork only, per
+the package's own stated scope: no full temporal-network modelling subsystem (dynamic centrality,
+relational-event models, temporal ERGMs) is implemented or attempted here.
 
 
 

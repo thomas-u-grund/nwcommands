@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1060 248
+POSITION 10 10 1060 276
 
 SCRIPT PREINIT
 BEGIN
@@ -15,7 +15,7 @@ END
 
 DIALOG main, title("nwinstall - Install Stata menu/dialogs")
 BEGIN
-  GROUPBOX gb_opt 10 10 1030 188, label("Options")
+  GROUPBOX gb_opt 10 10 1030 216, label("Options")
   TEXT tx_cx_update 20 20 260 ., label("refresh the installed menu (an internal, self-recursive flag: re-invokes )")
   CHECKBOX cx_update 290 20 190 ., label("update") option(update)
   TEXT tx_ed_menu 20 48 260 ., label("install in this menu; default = 'stUser'")
@@ -40,6 +40,12 @@ BEGIN
   CHECKBOX cx_all 800 132 190 ., label("all") option(all)
   TEXT tx_ed_path 530 160 260 ., label("directory where profile.do is installed; default: sysdir_stata")
   EDIT ed_path 800 160 190 ., nomem option(path)
+  TEXT tx_cx_localcopy 20 188 260 ., label("install by copying from an existing local nwcommands folder instead of downloading")
+  CHECKBOX cx_localcopy 290 188 190 ., label("localcopy") option(localcopy)
+  TEXT tx_ed_from 530 188 260 ., label("with localcopy: local folder to copy files from; default = current directory")
+  EDIT ed_from 800 188 190 ., nomem option(from)
+  TEXT tx_ed_dest 20 216 260 ., label("with localcopy: local ado directory to copy files into; default = your PERSONAL ado directory")
+  EDIT ed_dest 290 216 190 ., nomem option(dest)
 END
 
 PROGRAM initialize
@@ -62,6 +68,9 @@ BEGIN
 		option main.cx_ext
 		option main.cx_all
 		optionarg main.ed_path
+		option main.cx_localcopy
+		optionarg main.ed_from
+		optionarg main.ed_dest
 	endoptions
 	stata
 END

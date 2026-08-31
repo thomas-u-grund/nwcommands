@@ -138,8 +138,7 @@ This generates a dataset with one variable for each network, {it:glasgow1} and {
 {opth comparevars(varlist)} adds an ego/alter {it:comparison} column for each listed variable,
 alongside (not instead of) whatever {opt egovars()}/{opt altervars()} already add - e.g. "do ego
 and alter share the same value" or "how far apart are their values", rather than just the two raw
-values side by side. {opt comparemode()} picks which comparison (any {help nwexpand##expand_mode:
-nwexpand mode} - {bf:same} (the default), {bf:dist}, {bf:absdist}, {bf:distinv}, {bf:absdistinv},
+values side by side. {opt comparemode()} picks which comparison (any {help nwexpand##expand_mode:nwexpand mode} - {bf:same} (the default), {bf:dist}, {bf:absdist}, {bf:distinv}, {bf:absdistinv},
 {bf:sender}, {bf:receiver}) applies to every variable in {opt comparevars()}; each variable is
 internally expanded via {help nwexpand} itself (so the exact same, already-certified comparison
 logic is used, not a reimplementation) and the resulting column is named {it:mode_varname} -

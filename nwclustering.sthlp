@@ -67,8 +67,7 @@ Binary: yes (the default {opt measure(binary)} case). Directed: yes for {opt mea
 (each node's own potential triples are formed from one in-neighbor paired with one out-neighbor,
 matching the directed two-path a -> i -> b convention used elsewhere in this package); a weighted
 {opt measure()} is not defined for a directed network - either choose {opt measure(binary)} or
-{opt symmetrize} the network first. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|
-minimum)}, each combining the two tie values of a potential triple's own pair of ties before testing
+{opt symmetrize} the network first. Weighted: yes, via {opt measure(arithmetic|geometric|maximum|minimum)}, each combining the two tie values of a potential triple's own pair of ties before testing
 closure; undirected networks only (see above). Signed: not checked; negative tie values are not
 validated or rejected. Two-mode: automatically delegated to {help nw2clustering} (see Description).
 

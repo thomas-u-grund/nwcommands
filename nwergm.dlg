@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 1120 738
+POSITION 10 10 1480 738
 
 SCRIPT PREINIT
 BEGIN
@@ -98,6 +98,45 @@ BEGIN
   CHECKBOX cx_ctriple 740 462 300 ., label("ctriple: Count of cyclic triples ((i->j),(j->k),(k->i)); directed networks only") option(ctriple)
   CHECKBOX cx_transitiveties 740 488 300 ., label("transitiveties: Count of TIED arcs i->j for which there also exists a two-path i->k->j") option(transitiveties)
   CHECKBOX cx_cyclicalties 740 514 300 ., label("cyclicalties: Count of TIED arcs i->j for which there also exists a return two-path ") option(cyclicalties)
+  TEXT tx_hdr_3_154 1100 154 340 ., label("-- Two-mode (bipartite) --")
+  CHECKBOX cx_bcov1 1100 176 170 ., label("bcov1")
+  VARLIST ed_bcov1 1275 176 155 ., nomem
+  CHECKBOX cx_bcov2 1100 202 170 ., label("bcov2")
+  VARLIST ed_bcov2 1275 202 155 ., nomem
+  CHECKBOX cx_bfactor1 1100 228 170 ., label("bfactor1")
+  VARLIST ed_bfactor1 1275 228 155 ., nomem
+  CHECKBOX cx_bfactor2 1100 254 170 ., label("bfactor2")
+  VARLIST ed_bfactor2 1275 254 155 ., nomem
+  CHECKBOX cx_bdegree1 1100 280 170 ., label("bdegree1")
+  EDIT ed_bdegree1 1275 280 155 ., nomem
+  CHECKBOX cx_bdegree2 1100 306 170 ., label("bdegree2")
+  EDIT ed_bdegree2 1275 306 155 ., nomem
+  CHECKBOX cx_bstar1 1100 332 170 ., label("bstar1")
+  EDIT ed_bstar1 1275 332 155 ., nomem
+  CHECKBOX cx_bstar2 1100 358 170 ., label("bstar2")
+  EDIT ed_bstar2 1275 358 155 ., nomem
+  TEXT tx_hdr_3_384 1100 384 340 ., label("-- Curved (estimated decay) --")
+  CHECKBOX cx_gwespfree 1100 406 170 ., label("gwespfree")
+  EDIT ed_gwespfree 1275 406 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_gwdspfree 1100 432 170 ., label("gwdspfree")
+  EDIT ed_gwdspfree 1275 432 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_gwnspfree 1100 458 170 ., label("gwnspfree")
+  EDIT ed_gwnspfree 1275 458 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_gwdegreefree 1100 484 170 ., label("gwdegreefree")
+  EDIT ed_gwdegreefree 1275 484 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_gwodegreefree 1100 510 170 ., label("gwodegreefree")
+  EDIT ed_gwodegreefree 1275 510 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_gwidegreefree 1100 536 170 ., label("gwidegreefree")
+  EDIT ed_gwidegreefree 1275 536 155 ., default("0.5") numonly nomem
+  TEXT tx_hdr_3_562 1100 562 340 ., label("-- More bipartite --")
+  CHECKBOX cx_bnodematch1 1100 584 170 ., label("bnodematch1")
+  VARLIST ed_bnodematch1 1275 584 155 ., nomem
+  CHECKBOX cx_bnodematch2 1100 610 170 ., label("bnodematch2")
+  VARLIST ed_bnodematch2 1275 610 155 ., nomem
+  CHECKBOX cx_bgwdegree1 1100 636 170 ., label("bgwdegree1")
+  EDIT ed_bgwdegree1 1275 636 155 ., default("0.5") numonly nomem
+  CHECKBOX cx_bgwdegree2 1100 662 170 ., label("bgwdegree2")
+  EDIT ed_bgwdegree2 1275 662 155 ., default("0.5") numonly nomem
   TEXT tx_est 20 550 300 ., label("Estimation settings:")
   TEXT tx_lbl_method 20 574 170 ., label("Estimation method; default  unless the m")
   COMBOBOX cb_method 195 574 155 ., dropdownlist contents(list_method) nomem option(method)
@@ -115,6 +154,16 @@ BEGIN
   SPINNER sp_seed 195 652 70 ., default(-1) max(999999) min(-999999) nomem option(seed)
   TEXT tx_lbl_verbose 380 652 170 ., label("Show MPLE/MCMLE iteration detail")
   CHECKBOX cx_verbose 555 652 120 ., label("verbose") option(verbose)
+  TEXT tx_lbl_type 740 574 170 ., label("Directed shared-partner definition (type)")
+  COMBOBOX cb_type 915 574 155 ., dropdownlist contents(list_type) nomem option(type)
+  CHECKBOX cx_freedyads 740 600 170 ., label("freedyads")
+  COMBOBOX ed_freedyads 915 600 155 ., dropdown contents(netlist) nomem
+  CHECKBOX cx_blockdiag 740 626 170 ., label("blockdiag")
+  VARNAME ed_blockdiag 915 626 155 ., nomem
+  CHECKBOX cx_spcache 740 652 170 ., label("spcache") option(spcache)
+  CHECKBOX cx_nomcmcsample 915 652 175 ., label("nomcmcsample") option(nomcmcsample)
+  CHECKBOX cx_fixdensity 740 678 170 ., label("fixdensity") option(fixdensity)
+  CHECKBOX cx_nonative 915 678 175 ., label("nonative") option(nonative)
 END
 
 LIST netlist
@@ -132,6 +181,15 @@ LIST list_proposal
 BEGIN
 	uniform
 	tnt
+END
+
+LIST list_type
+BEGIN
+	OTP
+	ITP
+	OSP
+	ISP
+	RTP
 END
 
 PROGRAM initialize
@@ -240,6 +298,78 @@ BEGIN
 			require main.ed_idegree
 			put " idegree(" main.ed_idegree ")"
 		}
+		if main.cx_gwespfree {
+			require main.ed_gwespfree
+			put " gwespfree(" main.ed_gwespfree ")"
+		}
+		if main.cx_gwdspfree {
+			require main.ed_gwdspfree
+			put " gwdspfree(" main.ed_gwdspfree ")"
+		}
+		if main.cx_gwnspfree {
+			require main.ed_gwnspfree
+			put " gwnspfree(" main.ed_gwnspfree ")"
+		}
+		if main.cx_gwdegreefree {
+			require main.ed_gwdegreefree
+			put " gwdegreefree(" main.ed_gwdegreefree ")"
+		}
+		if main.cx_gwodegreefree {
+			require main.ed_gwodegreefree
+			put " gwodegreefree(" main.ed_gwodegreefree ")"
+		}
+		if main.cx_gwidegreefree {
+			require main.ed_gwidegreefree
+			put " gwidegreefree(" main.ed_gwidegreefree ")"
+		}
+		if main.cx_bcov1 {
+			require main.ed_bcov1
+			put " bcov1(" main.ed_bcov1 ")"
+		}
+		if main.cx_bcov2 {
+			require main.ed_bcov2
+			put " bcov2(" main.ed_bcov2 ")"
+		}
+		if main.cx_bfactor1 {
+			require main.ed_bfactor1
+			put " bfactor1(" main.ed_bfactor1 ")"
+		}
+		if main.cx_bfactor2 {
+			require main.ed_bfactor2
+			put " bfactor2(" main.ed_bfactor2 ")"
+		}
+		if main.cx_bdegree1 {
+			require main.ed_bdegree1
+			put " bdegree1(" main.ed_bdegree1 ")"
+		}
+		if main.cx_bdegree2 {
+			require main.ed_bdegree2
+			put " bdegree2(" main.ed_bdegree2 ")"
+		}
+		if main.cx_bstar1 {
+			require main.ed_bstar1
+			put " bstar1(" main.ed_bstar1 ")"
+		}
+		if main.cx_bstar2 {
+			require main.ed_bstar2
+			put " bstar2(" main.ed_bstar2 ")"
+		}
+		if main.cx_bnodematch1 {
+			require main.ed_bnodematch1
+			put " bnodematch1(" main.ed_bnodematch1 ")"
+		}
+		if main.cx_bnodematch2 {
+			require main.ed_bnodematch2
+			put " bnodematch2(" main.ed_bnodematch2 ")"
+		}
+		if main.cx_bgwdegree1 {
+			require main.ed_bgwdegree1
+			put " bgwdegree1(" main.ed_bgwdegree1 ")"
+		}
+		if main.cx_bgwdegree2 {
+			require main.ed_bgwdegree2
+			put " bgwdegree2(" main.ed_bgwdegree2 ")"
+		}
 		option main.cx_concurrent
 		if main.cx_kstar {
 			require main.ed_kstar
@@ -289,6 +419,19 @@ BEGIN
 		optionarg main.cb_proposal
 		optionarg main.sp_seed
 		option main.cx_verbose
+		optionarg main.cb_type
+		if main.cx_freedyads {
+			require main.ed_freedyads
+			put " freedyads(" main.ed_freedyads ")"
+		}
+		if main.cx_blockdiag {
+			require main.ed_blockdiag
+			put " blockdiag(" main.ed_blockdiag ")"
+		}
+		option main.cx_spcache
+		option main.cx_nomcmcsample
+		option main.cx_fixdensity
+		option main.cx_nonative
 	endoptions
 	stata
 END

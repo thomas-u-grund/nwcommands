@@ -90,8 +90,7 @@ so {cmd:nwconcor} requires every node to have at least one tie; remove isolates 
 
 {pstd}
 Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering relational data with
-applications to social network analysis and comparison with multidimensional scaling. {it:Journal of
-Mathematical Psychology} 12(3), 328-383.
+applications to social network analysis and comparison with multidimensional scaling. {it:Journal of Mathematical Psychology} 12(3), 328-383.
 
 
 {title:Supported network types}

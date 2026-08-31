@@ -43,6 +43,9 @@ One can also change the entire adjaceny matrix of a network with an existing Mat
 {pstd}
 Binary: yes. Directed: yes - a replaced value is written to the exact (ego,alter) cell addressed, respecting direction. Weighted: yes, natively - this command's entire purpose is writing arbitrary tie values via an expression. Signed: yes, any value including negative can be assigned. Two-mode: not checked, but not expected to need any - a direct cell/subset write by node identity.
 
+{pstd}
+{bf:Undirected networks - important}: a bracket write such as {bf:nwreplace mynet[2,1] = 55} addresses EXACTLY the (2,1) cell - it does NOT also write the mirror (1,2) cell, even though {it:mynet} is declared undirected. Writing only one side of a pair can leave the network's own stored matrix genuinely asymmetric while it still reports {bf:directed: false} (this is deliberate - {help nwreplace} never forces symmetry on your behalf, the same way {help nwreplacemat}'s own underlying {bf:set_edge()} never does either). If you want a symmetric edit, write both cells explicitly ({bf:nwreplace mynet[2,1] = 55} then {bf:nwreplace mynet[1,2] = 55}), or use {help nwreplacemat}/{help nwsym} to replace or symmetrize the whole matrix at once. Most analysis commands read an undirected network through an accessor that symmetrizes on the fly (taking the max of both directions) and so never notice a one-sided asymmetry left this way - but any command working directly off the network's own stored ties (rather than through that accessor) will see the asymmetry exactly as written.
+
 {title:Assign values}
 
 {pstd}

@@ -126,8 +126,7 @@ natively supported by either mode. Two-mode: not checked.
 {title:References}
 
 {pstd}
-Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical
-Sociology} 25, 163-177.
+Brandes, U. (2001). A faster algorithm for betweenness centrality. {it:Journal of Mathematical Sociology} 25, 163-177.
 
 {pstd}
 Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted networks:

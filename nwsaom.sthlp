@@ -19,53 +19,28 @@
 {opt waves(namelist)}
 {opt outdegree} [{opt reciprocity}]
 {it:or} {opt outdegreeendow} {opt outdegreecreation} [{opt reciprocity} {it:or} {opt reciprocityendow} {opt reciprocitycreation}]
-[{opth nodematch(varname)}]
-[{opth nodecov(varname)}]
-[{opth nodeicov(varname)}]
-[{opth nodeocov(varname)}]
-[{opt indegpopularity}]
-[{opt outpopularity}]
-[{opt outactivity}]
-[{opt inactivity}]
-[{opt transtrip}] [{opt transmedtrip}]
-[{opt cycle3}]
-[{opt cycle4}]
-[{opt transties}]
-[{opt balance}]
-[{opt isolatenet}]
-[{opt outiso}]
-[{opt antiiso}]
-[{opt antiiniso}]
-[{opt antiiniso2}]
-[{opt isolatepop}]
-[{opt transrectrip}]
-[{opt outoutass}]
-[{opt ininass}]
-[{opt outinass}]
-[{opt inoutass}]
-[{opt gwesp(real)}]
-[{opth simcov(varname)}]
-[{opth egox(varname)}]
-[{opth altx(varname)}]
-[{opth samex(varname)}]
-[{opth simx(varname)}]
-[{opth behavior(varlist)}
-{opt linear}
-{it:or}
-{opt linearendow} {opt linearcreation}
-{opt quadratic} {it:or} {opt quadraticendow} {opt quadraticcreation}
-{opt avalt} {it:or} {opt avaltendow} {opt avaltcreation}
-{opt avsim} {it:or} {opt avsimendow} {opt avsimcreation}
-{opt behtheta0(numlist)}]
-[{opth present(varlist)}]
-[{opt missnet(matlist)}
-{opt missbeh(varlist)}]
-[{opt rate0(real)}
-{opt theta0(numlist)}
-{opt k0(int)}
-{opt k3(int)}
-{opt firstg(real)}
-{opt seed(int)}]
+[{it:{help nwsaom##covariate_options:covariate_options}}
+{it:{help nwsaom##structural_options:structural_options}}
+{it:{help nwsaom##interaction_options:interaction_options}}
+{it:{help nwsaom##alias_options:alias_options}}
+{it:{help nwsaom##coev_options:coev_options}}
+{it:{help nwsaom##compchange_options:compchange_options}}
+{it:{help nwsaom##ratecov_options:ratecov_options}}
+{it:{help nwsaom##symmetric_options:symmetric_options}}
+{it:{help nwsaom##control_options:control_options}}]
+
+{synoptset 20}{...}
+{p2col:{it:options}}Description{p_end}
+{p2line}
+{p2col:{it:{help nwsaom##covariate_options:covariate_options}}}node covariate main effects ({opt nodematch()}, {opt nodecov()}, {opt nodeicov()}, {opt nodeocov()}){p_end}
+{p2col:{it:{help nwsaom##structural_options:structural_options}}}structural network effects (popularity, activity, triadic closure, isolates, assortativity, {opt gwesp()}){p_end}
+{p2col:{it:{help nwsaom##interaction_options:interaction_options}}}two-way interaction effects between two already-included effects ({opt interact()}){p_end}
+{p2col:{it:{help nwsaom##alias_options:alias_options}}}RSiena-spelling aliases for the covariate effects above ({opt simcov()}/{opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}){p_end}
+{p2col:{it:{help nwsaom##coev_options:coev_options}}}behavior co-evolution: a second, jointly-evolving dependent variable and its own effects{p_end}
+{p2col:{it:{help nwsaom##compchange_options:compchange_options}}}composition change (joiners/leavers) and missing tie/behavior data{p_end}
+{p2col:{it:{help nwsaom##ratecov_options:ratecov_options}}}covariate-dependent opportunity rate{p_end}
+{p2col:{it:{help nwsaom##symmetric_options:symmetric_options}}}undirected/symmetric relations{p_end}
+{p2col:{it:{help nwsaom##control_options:control_options}}}estimation method, starting values, replicate counts, and the random seed{p_end}
 
 {synoptset 22 tabbed}{...}
 {synopthdr}
@@ -74,6 +49,7 @@
 {synopt:{opt wave1(netname)}}First observed wave; requires {opt wave2()}, exactly two waves. Not combinable with {opt waves()}{p_end}
 {synopt:{opt wave2(netname)}}Second (ending) observed wave; requires {opt wave1()}{p_end}
 {synopt:{opt waves(namelist)}}Two or more observed waves, in temporal order (e.g. {cmd:waves(w1 w2 w3)}) - chains {it:namelist}{cmd:-1} inter-wave periods into one pooled fit. Not combinable with {opt wave1()}/{opt wave2()}{p_end}
+
 {syntab:Baseline network effects}
 {synopt:{opt outdegree}}Outdegree (density) effect, evaluation-function role; {bf:required} in every model UNLESS {opt outdegreeendow}/{opt outdegreecreation} are given instead{p_end}
 {synopt:{opt outdegreeendow}}Outdegree effect, ENDOWMENT (tie-withdrawal) role - splits outdegree's own contribution so it fires only on ties that are REMOVED between waves; must be given together with {opt outdegreecreation}, and not combined with plain {opt outdegree} (all three roles together are exactly collinear). Satisfies the same required-baseline role plain {opt outdegree} does. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}. See {help nwsaom##endowcreation:Endowment/creation functions} below{p_end}
@@ -81,11 +57,15 @@
 {synopt:{opt reciprocity}}Reciprocated-tie effect, evaluation-function role{p_end}
 {synopt:{opt reciprocityendow}}Reciprocity effect, ENDOWMENT role - same mechanism/rules as {opt outdegreeendow}, applied to reciprocity instead; independent of whichever baseline role ({opt outdegree} or {opt outdegreeendow}/{opt outdegreecreation}) is in use. Note: on data where a mutual tie is essentially never lost in BOTH directions at once, this effect's own observed target can be exactly zero, leaving it unidentified (a genuine data property, not a bug) - see {help nwsaom##endowcreation:Endowment/creation functions} below{p_end}
 {synopt:{opt reciprocitycreation}}Reciprocity effect, CREATION role - the mirror of {opt reciprocityendow}; must be given together with it{p_end}
+
+{marker covariate_options}{...}
 {syntab:Node covariate effects}
 {synopt:{opth nodematch(varname)}}Homophily on a categorical node attribute (exact match); ONE variable per model - RSiena alias {opt samex()}{p_end}
 {synopt:{opth nodecov(varname)}}Continuous covariate main effect (sum over sender's and receiver's own values); ONE variable per model{p_end}
 {synopt:{opth nodeicov(varname)}}Alter (receiver) covariate effect - RSiena's own "altX"; ONE variable per model - RSiena alias {opt altx()}{p_end}
 {synopt:{opth nodeocov(varname)}}Ego (sender) covariate effect - RSiena's own "egoX"; ONE variable per model - RSiena alias {opt egox()}{p_end}
+
+{marker structural_options}{...}
 {syntab:Structural network effects}
 {synopt:{opt indegpopularity}}Indegree popularity, sqrt-transformed ("preferential attachment" toward already-popular alters){p_end}
 {synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed{p_end}
@@ -103,6 +83,7 @@
 {synopt:{opt antiiso}}Counts actors with indegree>=1 AND outdegree=0, a "pure receiver" (RSiena's own "anti isolates"); no parameter{p_end}
 {synopt:{opt antiiniso}}Counts actors with indegree>=1, the complement of an in-isolate (RSiena's own "anti in-isolates"); no parameter{p_end}
 {synopt:{opt antiiniso2}}Counts actors with indegree>=2 (RSiena's own "anti in-near-isolates"); no parameter{p_end}
+{synopt:{opt inplus3}}Counts actors with indegree>=3 (RSiena's own "in3Plus", same effect family as {opt antiiniso}/{opt antiiniso2} with a higher threshold); no parameter{p_end}
 {synopt:{opt isolatepop}}For each actor, counts its own ties to alters with indegree exactly 1 and outdegree 0 (RSiena's own "isolate - popularity"); no parameter{p_end}
 {synopt:{opt transrectrip}}Like {opt transtrip}, but only counting two-paths i->j->h whose final leg j->h is itself reciprocated (RSiena's own "transitive reciprocated triplets"); no parameter{p_end}
 {synopt:{opt outoutass}}Actors with high outdegree preferentially tie to other high-outdegree actors, default/non-sqrt parameterization only (RSiena's own "out-out degree assortativity"); no parameter{p_end}
@@ -110,12 +91,20 @@
 {synopt:{opt outinass}}Actors with high outdegree preferentially tie to actors with high indegree, default/non-sqrt parameterization only (RSiena's own "out-in degree assortativity"); no parameter{p_end}
 {synopt:{opt inoutass}}Actors with high indegree preferentially tie to actors with high outdegree, default/non-sqrt parameterization only (RSiena's own "in-out degree assortativity"); no parameter{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners (OTP-directed), fixed decay - argument is the DIRECT decay value (Statnet's own {opt gwesp(decay=)} scale), NOT RSiena's own "parameter" (RSiena's own value is 100x this one - RSiena {cmd:gwespFF(69)} = {opt gwesp(.69)} here){p_end}
+
+{marker interaction_options}{...}
+{syntab:Interaction effects}
+{synopt:{opt interact(effect1#effect2 [effect3#effect4 ...])}}Two-way interaction (RSiena's own {cmd:includeInteraction()}) between two effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the two components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected. Three-way interactions and behavior interactions are not yet supported. See {help nwsaom##interaction:Interaction effects} below{p_end}
+
+{marker alias_options}{...}
 {syntab:RSiena naming aliases}
 {synopt:{opth simcov(varname)}}Covariate similarity effect; ONE variable per model - RSiena alias {opt simx()}{p_end}
 {synopt:{opth egox(varname)}}RSiena naming alias for {opt nodeocov()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth altx(varname)}}RSiena naming alias for {opt nodeicov()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth samex(varname)}}RSiena naming alias for {opt nodematch()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth simx(varname)}}RSiena naming alias for {opt simcov()} - identical effect, coefficient label follows this spelling{p_end}
+
+{marker coev_options}{...}
 {syntab:Behavior co-evolution effects}
 {synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom##coev:Co-evolution} below{p_end}
 {synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
@@ -128,16 +117,24 @@
 {synopt:{opt avsim}}Behavior "average similarity" influence effect - own value moves to maximize average similarity to network neighbors' own values, net of a data-derived centering constant; requires {opt behavior()}{p_end}
 {synopt:{opt avsimendow} {opt avsimcreation}}{opt avsim} split into its ENDOWMENT/CREATION roles - same mechanism/rules as {opt linearendow}/{opt linearcreation}{p_end}
 {synopt:{opt behtheta0(numlist)}}Starting values for the behavior-side eval-parameter vector, one per requested behavior effect in the order {opt linear} (or {opt linearendow}/{opt linearcreation})/{opt quadratic}/{opt avalt}/{opt avsim} appear above; default all zero{p_end}
+
+{marker compchange_options}{...}
 {syntab:Composition change and missing data}
 {synopt:{opth present(varlist)}}Composition change ("joiners and leavers"): one 0/1 variable per wave, same "one variable per wave" convention as {opt behavior()}, marking which actors are present at each wave. Optional - omitting it means every actor is present the whole time. See {help nwsaom##compchange:Composition change} below{p_end}
 {synopt:{opt missnet(matlist)}}Missing tie data: one 0/1 n x n MATRIX name per wave, marking which dyads are missing at that wave. Optional - omitting it means every dyad is fully observed. See {help nwsaom##missingdata:Missing data} below{p_end}
 {synopt:{opth missbeh(varlist)}}Missing behavior data: one 0/1 variable per wave, same "one variable per wave" convention as {opt present()}, marking which actors' behavior value is missing at that wave. Requires {opt behavior()}. Optional - omitting it means every actor's value is fully observed. See {help nwsaom##missingdata:Missing data} below{p_end}
+
+{marker ratecov_options}{...}
 {syntab:Covariate-dependent rate}
 {synopt:{opth ratecov(varname)}}Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp({bf:ratecovcoef}*{it:varname}[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, {opt missnet()}, or {opt symmetric}. See {bf:Remarks} below{p_end}
 {synopt:{opt ratecovcoef(real)}}Starting value for {opt ratecov()}'s own jointly-estimated coefficient (default 0){p_end}
+
+{marker symmetric_options}{...}
 {syntab:Undirected/symmetric relations}
-{synopt:{opt symmetric}}Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see {bf:Remarks} below for the full list. v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no {opt behavior()}), and not yet combinable with {opt present()}, {opt missnet()}, or {opt ratecov()}{p_end}
+{synopt:{opt symmetric}}Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see {bf:Remarks} below for the full list. v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no {opt behavior()}); combinable with {opt present()}, {opt missnet()}, and {opt ratecov()} (see {bf:Remarks}){p_end}
 {synopt:{opt symtype(string)}}Which mutual-consent rule {opt symmetric} uses: {bf:joint} (default) accepts a change when the sum of both actors' own preferences is favorable; {bf:force} lets the initiating actor alone decide, ignoring the other actor's own preference; {bf:agree} requires both actors to independently agree when creating a tie, or either one to want it gone when removing one. Requires {opt symmetric}{p_end}
+
+{marker control_options}{...}
 {syntab:Estimation control}
 {synopt:{opt rate0(real)}}Accepted for backward compatibility only - {bf:no longer used}; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see {bf:Remarks} below){p_end}
 {synopt:{opt theta0(numlist)}}Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero{p_end}
@@ -203,8 +200,7 @@ Moments via Robbins-Monro stochastic approximation (RSiena's own default estimat
 not maximum likelihood.
 
 {pstd}
-{bf:A genuine, hard-won methodological lesson from this implementation's own development,
-worth stating explicitly here}: several of RSiena's own effects (e.g. {opt gwesp()}) compute their
+{bf:A genuine, hard-won methodological lesson from this implementation's own development, worth stating explicitly here}: several of RSiena's own effects (e.g. {opt gwesp()}) compute their
 observed/global statistic in a way that is IDENTICAL to the corresponding ERGM statistic, which
 made it tempting to also reuse an ERGM package's own change-statistic (ministep) formula for the
 same effect - this is WRONG in general. RSiena's own ministep formula for a given effect is
@@ -213,8 +209,7 @@ several effects is a genuinely SMALLER quantity than the effect's own full ERGM 
 (which legitimately captures the toggle's effect on every actor's own statistic, appropriate for
 an ERGM's single-actor-free global model but not for an SAOM ministep). Every effect below was
 independently re-derived and verified against RSiena's own real ministep-contribution source
-code, not assumed from its global-statistic formula alone; see {help nwsaom##effects:Effect
-library} below for the account, term by term, including one case ({opt gwesp()}) where an initial
+code, not assumed from its global-statistic formula alone; see {help nwsaom##effects:Effect library} below for the account, term by term, including one case ({opt gwesp()}) where an initial
 reuse assumption was shipped, caught, and corrected during this package's own development - kept
 in that section's own account rather than silently erased, matching this whole package's
 disclosure standard.
@@ -315,7 +310,7 @@ already exists, rather than {opt transtrip}'s own weighted count of every such t
 directly against RSiena's real {cmd:TransitiveTiesEffect.cpp} - its OWN dedicated ministep-
 contribution class (not a "Generic effect" wrapper, see {opt gwesp()} below), so its own ministep
 formula genuinely is the exact myopic-actor-restricted gradient of a well-defined local statistic;
-certified via brute-force recomputation, not merely assumed.
+certified via brute-force recomputation, not merely assumed. Natively ported.
 
 {pstd}
 {bf:balance} (RSiena's own structural balance) has NO user-supplied parameter: RSiena's own
@@ -326,7 +321,9 @@ estimation time, pooled across every inter-wave PERIOD'S OWN starting wave by su
 numerators/denominators separately and dividing once (RSiena's own {cmd:calcBalmean()} pooling
 convention exactly, not an average of per-period ratios). Like {opt transties}, {opt balance} has
 its own dedicated RSiena ministep class, and was independently verified against RSiena's real
-{cmd:BalanceEffect.cpp} source before implementation.
+{cmd:BalanceEffect.cpp} source before implementation. Natively ported (the data-derived
+balanceMean constant crosses to the native backend as an ordinary per-term parameter, computed
+once before simulation starts).
 
 {pstd}
 {bf:isolatenet} (RSiena's own "network-isolate") and {bf:outiso} (RSiena's own "out-isolate") both
@@ -342,25 +339,28 @@ not a separate dedicated class); unlike {opt isolatenet}, {opt outiso} has no su
 an actor's own outgoing tie never affects another actor's own outdegree).
 
 {pstd}
-{bf:antiiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:isolatepop} are RSiena's own alter-indexed isolate
-family - each actor's own ministep contribution depends on the ALTER's degree, not ego's own (like
-{opt indegpopularity}), verified against RSiena's real {cmd:AntiIsolateEffect.cpp}/
-{cmd:IsolatePopEffect.cpp} source. {opt antiiniso}/{opt antiiniso2} are genuinely spillover-free
-(match the exact global before/after difference on any toggle, {opt outiso}'s own shape).
+{bf:antiiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:inplus3}/{bf:isolatepop} are RSiena's own
+alter-indexed isolate family - each actor's own ministep contribution depends on the ALTER's degree,
+not ego's own (like {opt indegpopularity}), verified against RSiena's real
+{cmd:AntiIsolateEffect.cpp}/{cmd:IsolatePopEffect.cpp} source. {opt inplus3} is RSiena's real
+"in3Plus" (its own {cmd:EffectFactory.cpp} dispatches it to the SAME {cmd:AntiIsolateEffect} class
+as {opt antiiniso}/{opt antiiniso2}, just with a threshold of 3 instead of 1/2) - exposed as
+{opt inplus3} rather than the RSiena-matching spelling because Stata's own {cmd:syntax} command
+does not accept an option name with a digit followed by more letters; the coefficient itself is
+still labeled {cmd:in3plus}. {opt antiiniso}/{opt antiiniso2}/{opt inplus3} are genuinely
+spillover-free (match the exact global before/after difference on any toggle, {opt outiso}'s own
+shape) and natively ported; {opt antiiso}/{opt isolatepop} remain Mata-only.
 {opt antiiso}/{opt isolatepop} additionally gate on the alter's own outdegree, which gives them a
 real, disclosed multi-actor spillover of their own (an actor's own outgoing tie choice changes that
 actor's OWN outdegree, which can independently flip that same actor's own separate membership in
 {opt antiiso}'s global count - the same kind of spillover {opt isolatenet} already has, just via a
-different pathway). {bf:{opt antiiso}/{opt isolatepop} are known to destabilize the Robbins-Monro
-estimator on small/sparse networks} (the same class of fragility {opt isolatenet} already has,
-confirmed independent of native/Mata backend). {bf:Both {opt isolatenet}/{opt outiso} and this family can be
-weakly identified on small or sparse networks} - a real, disclosed finding from development, not
+different pathway). {bf:{opt antiiso}/{opt isolatepop} are known to destabilize the Robbins-Monro estimator on small/sparse networks} (the same class of fragility {opt isolatenet} already has,
+confirmed independent of native/Mata backend). {bf:Both {opt isolatenet}/{opt outiso} and this family can be weakly identified on small or sparse networks} - a real, disclosed finding from development, not
 hypothetical: real Glasgow data (this help file's own worked examples) has zero isolates at every
 observed wave, so it cannot exercise either effect at all, and even toy networks up to 10 actors with
 a handful of isolate transitions were enough to trigger {bf:thetaBound} or the phase-3
 covariance-finiteness safeguard during certification - the same kind of rare-count identification
-limit {opt linearendow}/{opt linearcreation} has (see {help nwsaom##endowcreation:Endowment/creation
-functions} above), not a defect in either effect.
+limit {opt linearendow}/{opt linearcreation} has (see {help nwsaom##endowcreation:Endowment/creation functions} above), not a defect in either effect.
 
 {pstd}
 {bf:transrectrip}/{bf:outoutass}/{bf:ininass} are a small batch picked from RSiena's own real,
@@ -368,8 +368,7 @@ current remaining effect catalog (RSiena 1.6.6's own {cmd:getEffects()} inventor
 against its own real RSiena C++ source ({cmd:TransitiveReciprocatedTripletsEffect.cpp}/
 {cmd:OutOutDegreeAssortativityEffect.cpp}/{cmd:InInDegreeAssortativityEffect.cpp}). Default/base
 parameterization only in each case (v1 scope, matching {opt gwesp()}'s own fixed-decay-first
-precedent) - none of the three expose a {cmd:sqrt}-transformed variant. {bf:All three have a
-genuine, disclosed multi-actor spillover}, the same class {opt isolatenet} already has: each
+precedent) - none of the three expose a {cmd:sqrt}-transformed variant. {bf:All three have a genuine, disclosed multi-actor spillover}, the same class {opt isolatenet} already has: each
 actor's own ministep change function correctly computes only its OWN local delta (matching
 RSiena's real {cmd:calculateContribution} exactly), while the toggle can also shift OTHER actors'
 own separate statistics (e.g. for {opt outoutass}, any pre-existing tie INTO the toggling actor
@@ -401,11 +400,11 @@ is JUST the geometric-decay kernel's own lookup for the toggled dyad's CURRENT s
 count - no neighbor-adjustment loops at all - a genuinely simpler, deliberate approximation
 specific to that framework, NOT the same quantity as {help nwergm}'s own full change statistic
 (own-dyad term plus two neighbor-adjustment loops, correct for an ERGM MCMC toggle's effect on the
-GLOBAL statistic, but the wrong standard for an SAOM ministep). {bf:These are genuinely different
-quantities, not interchangeable, and the corrected, ministep-specific formula is what ships here.} The
+GLOBAL statistic, but the wrong standard for an SAOM ministep). {bf:These are genuinely different quantities, not interchangeable, and the corrected, ministep-specific formula is what ships here.} The
 {opt gwesp()} argument is the DIRECT decay value (Statnet's own convention, matching
 {help nwergm}'s own {opt gwesp()}) - NOT RSiena's own user-facing "parameter", which is 100x this
-value (RSiena's default {cmd:gwespFF(69)} corresponds to {opt gwesp(.69)} here).
+value (RSiena's default {cmd:gwespFF(69)} corresponds to {opt gwesp(.69)} here). Natively ported
+(the decay argument crosses to the native backend as an ordinary per-term parameter).
 
 {pstd}
 {bf:simcov(varname)} (covariate similarity) is freshly derived and independently verified against
@@ -414,6 +413,46 @@ plus-or-minus(1 - |attr_i - attr_j| / range), where {it:range} is the observed v
 max-minus-min. A disclosed simplification: this omits RSiena's own {cmd:similarityMean} centering
 constant - a pure re-parameterization against the always-present {opt outdegree} term, not a
 correctness gap.
+
+{marker interaction}{...}
+{title:Interaction effects}
+
+{pstd}
+{opt interact(effect1#effect2)} is a direct port of RSiena's real {cmd:includeInteraction()}
+mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}): the interaction's own
+contribution to an actor's ministep utility, for a candidate tie change to a given alter, is the
+PRODUCT of the two component effects' own contributions (not their sum, and not computed on the two
+components' aggregate statistics) - so {cmd:interact(reciprocity#transtrip)} contributes
+{it:reciprocity's own change value} times {it:transtrip's own change value} for that same candidate
+tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an interaction
+term is likewise the sum, over the network's existing ties, of the product of the two components'
+own per-tie value at that tie - genuinely different from simply multiplying the two components' own
+already-reported totals together, and different again from the ministep contribution formula above
+for any component effect whose own ministep contribution has a "spillover" onto other ties
+({opt transties}, {opt outoutass}, {opt ininass}, {opt outinass}, {opt inoutass}, {opt cycle4},
+{opt balance}) - RSiena's own real source keeps these as two genuinely different functions
+({cmd:tieStatistic()} for the statistic, {cmd:calculateContribution()} for the ministep), and this
+port mirrors that split exactly rather than approximating one with the other.
+
+{pstd}
+Both named effects must already be included in the model as their own main-effect terms (add
+{opt reciprocity} and {opt transtrip} before writing {cmd:interact(reciprocity#transtrip)}) - an
+interaction naming an effect not otherwise in the model is rejected with a clear error, never
+silently invented. Only "dyadic" (tie-level) effects with a well-defined per-tie value are eligible
+(see {opt interact()}'s own syntax-table entry above for the full list); the node-level effects
+(indegree/outdegree popularity and activity, the isolate family) are RSiena's own "ego effects" and
+have no such value, so are rejected outright.
+
+{pstd}
+Like any other effect, an interaction's own identifiability depends on the data: two effects that
+are themselves highly correlated in a given network (a common real property of, for example,
+reciprocity and transitivity in friendship data, where most closed triads are also reciprocated)
+can leave their PRODUCT weakly identified even though each main effect alone estimates cleanly -
+the SAME kind of Robbins-Monro divergence (a non-positive Jacobian diagonal, or a near-singular
+phase-3 covariance) this file's own {opt thetaBound} safeguard already catches for other effects,
+not a defect in this port. A model with an interaction between two effects unrelated to each other
+(e.g. {cmd:interact(reciprocity#nodecov(x))} for an {it:x} uncorrelated with network structure)
+converges normally.
 
 {marker multiplex}{...}
 {title:Multiplex (two networks)}
@@ -526,8 +565,7 @@ real RSiena models network/behavior change via three possible "roles" for any ef
 (contributes only when it DECREASES) - and its own manual states that using an effect in all THREE
 roles together is exactly collinear ("never in all three... this leads to collinearity"). {cmd:nwsaom}
 lets the behavior-side {bf:linear} effect be split this way: {opt linearendow} and {opt linearcreation}
-must be specified TOGETHER, replacing plain {opt linear} (not combinable with it). {bf:This split is
-genuinely, and expectedly, weakly identified} - real RSiena's own manual says so explicitly
+must be specified TOGETHER, replacing plain {opt linear} (not combinable with it). {bf:This split is genuinely, and expectedly, weakly identified} - real RSiena's own manual says so explicitly
 ("Separating the contribution of an effect into two functions requires more of the data... this
 would lead to large standard errors") and its own live diagnostics confirm it on real data (a
 direct cross-check against real RSiena on RSiena's own s50+alcohol tutorial dataset produced
@@ -626,6 +664,7 @@ on "fixed at its starting value" if the data does not identify it reliably (the 
 safeguard {opt rate0()}'s own refinement already uses) - {bf:e(ratecoef_fixed)} reports whether this
 happened.
 
+{marker undirected}{...}
 {title:Undirected/symmetric relations}
 
 {pstd}
@@ -644,13 +683,20 @@ Several effects are not meaningful once every tie is forced symmetric and are re
 {opt antiiso}, {opt isolatepop}, {opt transrectrip}, and {opt transtrip} (each either a constant, an
 exact duplicate of an already-available effect, or an effect real RSiena itself does not offer for a
 non-directed relation). {opt outdegree}, {opt indegpopularity}, {opt outactivity}, {opt cycle4},
-{opt isolatenet}, {opt outiso}, {opt antiiniso}, {opt antiiniso2}, {opt outinass}, and every covariate
-effect ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/{opt nodematch()}/{opt simcov()} and their
-egoX/altX/sameX/simX aliases) remain available and genuinely meaningful.
+{opt isolatenet}, {opt outiso}, {opt antiiniso}, {opt antiiniso2}, {opt inplus3}, {opt outinass},
+{opt gwesp()}, {opt transties}, {opt balance}, and every covariate effect ({opt nodecov()}/
+{opt nodeicov()}/{opt nodeocov()}/{opt nodematch()}/{opt simcov()} and their egoX/altX/sameX/simX
+aliases) remain available and genuinely meaningful - {opt gwesp()}/{opt transties}/{opt balance}/
+{opt antiiniso}/{opt antiiniso2}/{opt inplus3} required a native (C) port before {opt symmetric} could actually use them (that
+option needs 100% native term coverage); all five are now natively ported.
 
 {pstd}
-v1 scope: exactly two waves, network-only, and not yet combinable with {opt present()},
-{opt missnet()}, or {opt ratecov()}.
+{opt present()}, {opt missnet()}, and {opt ratecov()} can each be combined with {opt symmetric}.
+v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), and
+network-only (no {opt behavior()}/co-evolution). Note: combining {opt ratecov()} with
+{opt symmetric} runs correctly but currently reports an unreliably wide standard error on the
+rate-covariate coefficient itself (the network effect's own coefficient is unaffected) - a known,
+disclosed limitation, not a crash or a silently wrong estimate.
 
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}
@@ -755,6 +801,7 @@ simpler alternative to ordinary missing data - not implemented); missing COVARIA
 ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/{opt simcov()} etc. must be fully observed);
 native (C) backend support for the rate parameter's own post-hoc refinement under missing data.
 
+{marker estimation}{...}
 {title:Estimation}
 
 {pstd}
@@ -894,8 +941,7 @@ RSiena's own convention exactly.
 {title:References}
 
 {pstd}
-Snijders, T.A.B. (2001). The statistical evaluation of social network dynamics. {it:Sociological
-Methodology}, 31(1), 361-395. (SAOM/Method of Moments)
+Snijders, T.A.B. (2001). The statistical evaluation of social network dynamics. {it:Sociological Methodology}, 31(1), 361-395. (SAOM/Method of Moments)
 
 {pstd}
 Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to stochastic

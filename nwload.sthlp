@@ -85,7 +85,7 @@ use {help nwdrop} or {help nwclear} (very similar to how one would drop or clear
 
 {pstd}
 {bf:nwload} not only loads the adjacency matrix as variables, but also generates (or overwrites) the variable {it:_nwnode}. This variable identifies nodes. When
-the network is two-mode (see {help nw2set:introduction to two-mode networks), the command also creates the variable {it:_nwmode}. Lastly, the command
+the network is two-mode (see {help nw2set:introduction to two-mode networks}), the command also creates the variable {it:_nwmode}. Lastly, the command
 generates (or overwrites) the variable {it:_nwinclude} (unless option {opt:generate()} specifies another variable name. This variable indicates which nodes
 are part of the network that has been loaded. 
 

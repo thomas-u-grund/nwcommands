@@ -94,9 +94,9 @@ program nwturnover, rclass
 		noi di "{hline 40}"
 		noi di "{txt}  Networks: {res}`netname1'{txt} -> {res}`netname2'"
 		noi di "{txt}  Stable: {res}`=nw_stable'{txt}  Formed: {res}`=nw_formed'{txt}  Dissolved: {res}`=nw_dissolved'"
-		noi di "{txt}  Jaccard index: {res}`=round(`jaccard',0.0001)'"
+		noi di "{txt}  Jaccard index: {res}`=round(`jaccard',0.001)'"
 		if `persistdenom' > 0 {
-			noi di "{txt}  Persistence: {res}`=round(`persistence',0.0001)'"
+			noi di "{txt}  Persistence: {res}`=round(`persistence',0.001)'"
 		}
 		noi di " "
 	}

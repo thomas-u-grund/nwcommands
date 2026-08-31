@@ -6,7 +6,7 @@ OK ok1, label("OK")
 CANCEL can1, label("Cancel")
 SUBMIT sub1, label("Submit")
 RESET res1
-POSITION 10 10 550 310
+POSITION 10 10 550 394
 
 SCRIPT PREINIT
 BEGIN
@@ -17,7 +17,7 @@ DIALOG main, title("nwqap - Multivariate QAP regression")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
-  GROUPBOX gb_opt 10 44 520 216, label("Options")
+  GROUPBOX gb_opt 10 44 520 300, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
   TEXT tx_ed_type 20 82 260 ., label("regression command to be used for dyad dataset; default =")
@@ -32,6 +32,12 @@ BEGIN
   EDIT ed_save 290 194 190 ., nomem option(save)
   TEXT tx_cb_predict 20 222 260 ., label("store the fitted dyad-level values (from 's own default prediction, e.g. Pr(y=1)")
   COMBOBOX cb_predict 290 222 190 ., dropdown contents(netlist) nomem option(predict)
+  TEXT tx_cx_qapspp 20 250 260 ., label("double semi-partialling (Dekker, Krackhardt & Snijders 2007), a more robust MRQAP variant")
+  CHECKBOX cx_qapspp 290 250 190 ., label("qapspp") option(qapspp)
+  TEXT tx_cx_plot 20 278 260 ., label("draw a histogram-plus-reference-line panel per coefficient")
+  CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
+  TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
+  EDIT ed_name 290 306 190 ., nomem option(name)
 END
 
 LIST netlist
@@ -56,6 +62,9 @@ BEGIN
 		optionarg main.sp_permutations
 		optionarg main.ed_save
 		optionarg main.cb_predict
+		option main.cx_qapspp
+		option main.cx_plot
+		optionarg main.ed_name
 	endoptions
 	stata
 END

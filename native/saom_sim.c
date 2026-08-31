@@ -209,6 +209,13 @@
 #define TERMCODE_CYCLE4 21					// direct port of change_saom_cycle4() - needs need_adj (both outadj AND inadj, see pair_cycle4_threepaths())
 #define TERMCODE_CRPROD 22					// multiplex cross-network effect (unw_saom.do's stat_crprod()/change_crprod()) - reused for BOTH "crprod" and "crprodb" (Mata's own single change_crprod() already serves both, since the distinction is only which model/graph hosts the term, not a different formula) - ONLY valid inside the two-graph multiplex native path below (saom_change_term_nn()), never in the ordinary single-graph stata_call() path, since it needs a second graph_t to read
 #define TERMCODE_TRANSMEDTRIP 23				// direct port of change_saom_transmedtrip() (unw_saom.do) - RSiena's real transMedTrip, pure ISP(i,j) via the already-existing pair_isp() primitive, no batch precompute (mirrors TRANSRECTRIP's own direct-per-alternative shape, not TRANSTRIP's/CYCLE3's batched one)
+#define TERMCODE_ANTIINISO 24					// direct port of change_saom_antiiniso() - AntiIsolateEffect(outAlso=false,minDegree=1), alter-indexed, spillover-free (outIso's own shape)
+#define TERMCODE_ANTIINISO2 25					// direct port of change_saom_antiiniso2() - AntiIsolateEffect(outAlso=false,minDegree=2)
+#define TERMCODE_GWESP 26					// direct port of change_saom_gwesp() - RSiena's gwespFF ministep IS just gw_kernel(pair_otp(i,j),decay), no neighbor-adjustment loops (real RSiena's own GenericNetworkEffect::calculateContribution() shape, deliberately simpler than nwergm's own full ERGM change statistic - see unw_saom.do's own header comment); uses p1 for decay, same convention as TERMCODE_SIMCOV
+#define TERMCODE_TRANSTIES 27					// direct port of change_saom_transties() - own-dyad OTP(i,j)>=1 indicator plus a neighbors_out(j) loop checking each existing i->b for a newly-crossed OTP(i,b)>=1 threshold (RSiena's own dedicated TransitiveTiesEffect class, NOT a Generic-effect kernel lookup like GWESP above)
+#define TERMCODE_BALANCE 28					// direct port of change_saom_balance() - RSiena's own dedicated BalanceEffect class; uses p1 for the data-derived balanceMean constant (b0), precomputed once by Mata's saom_balance_mean() before simulation starts, same "real scalar parameter crosses via p1" convention as GWESP/SIMCOV above
+#define TERMCODE_IN3PLUS 29					// direct port of change_saom_in3plus() - RSiena's real "in3Plus", dispatched by EffectFactory.cpp to the SAME AntiIsolateEffect class as ANTIINISO/ANTIINISO2 above, just with minDegree=3 instead of 1/2 - identical alter-indexed, spillover-free shape
+#define TERMCODE_INTERACT2 30					// two-way interaction between two ALREADY-REGISTERED dyadic ("tie-summed") network effects (RSiena's includeInteraction()) - direct port of RSiena's real NetworkInteractionEffect (confirmed from RSiena/src/model/effects/NetworkInteractionEffect.cpp): calculateContribution() = product of the two components' own calculateContribution(); tieStatistic() = product of the two components' own tieStatistic() (a GENUINELY different formula for any component with ministep neighbor-spillover - transties/outoutass/ininass/outinass/inoutass/cycle4/balance - see saom_tie_stat()'s own header comment). Attridx/p1 are REPURPOSED for this termcode ONLY: attridx holds the 1-based slot index (into this SAME model's own termcodes[]/attridx[]/p1[]/attrs[] arrays) of component A, p1 holds component B's 1-based slot index (cast to int at use) - reuses the existing per-term wire slots instead of adding new wire-protocol fields, matching this file's own established "reuse p1" convention (see TERMCODE_SIMCOV's own comment). Restricted to the "dyadic" termcode subset with a well-defined tieStatistic() - the node-level/nonlinear-in-degree termcodes (indegpop, outactivity, outpop, inactivity, isolatenet, outiso, antiiniso, antiiniso2, in3plus - RSiena's own "ego effects") are rejected by nwsaom.ado's own interact() eligibility check before ever reaching here. Three-way interactions (RSiena's optional third effect) and behavior-behavior/network-behavior interactions are a disclosed, not-yet-built follow-up.
 
 /* Behavior (co-evolution, harmonisation unit 26) term codes - a
    SEPARATE numbering range (101+, not 14+) so the wire protocol's own
@@ -590,6 +597,31 @@ static long pair_isp(graph_t *g, long i, long j) {
 	return cnt;
 }
 
+/* OSP(i,j) = #{k: i->k, j->k} - common OUT-neighbors, the mirror of
+   pair_isp() above over outadj instead of inadj (Mata's own
+   ErgmGraph::shared_partners_osp(), unw_ergm.do, read-only reference -
+   used here by BALANCE, harmonisation unit 25's own D(i,j) term). */
+static long pair_osp(graph_t *g, long i, long j) {
+	long cnt = 0, m, k, other;
+	adjlist_t *small;
+	if (g->outadj[i].len <= g->outadj[j].len) { small = &g->outadj[i]; other = j; }
+	else { small = &g->outadj[j]; other = i; }
+	for (m = 0; m < small->len; m++) {
+		k = small->nb[m];
+		if (has_edge(g, other, k)) cnt++;
+	}
+	return cnt;
+}
+
+/* gw_kernel(d,decay) = exp(decay)*(1-(1-exp(-decay))^d) - Mata's own
+   ErgmGraph-side gw_kernel() (unw_ergm.do) and native/ergm_mcmc.c's own
+   identical helper, independently re-declared here rather than shared
+   across files (this file's own established "never share/edit
+   native/ergm_mcmc.c" convention) - used by GWESP below. */
+static double gw_kernel(double d, double decay) {
+	return exp(decay) * (1.0 - pow(1.0 - exp(-decay), d));
+}
+
 /* Direct C port of Mata's _saom_cycle4_threepaths(G,i,j) (unw_saom.do,
    harmonisation unit 168) - RSiena's own FourCyclesEffect::countThreePaths,
    i->h<-k->j: h ranges over i's own OUT-neighbors (h!=j), k ranges over
@@ -673,6 +705,33 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_TRANSMEDTRIP:					// stat_saom_transmedtrip(): sum over ties (ego,alter) of ISP(ego,alter) - same primitive as TRANSTRIP's own stat case, but this term's OWN change function is pure ISP too (unlike TRANSTRIP's OTP+OSP change), so the two termcodes are NOT interchangeable despite sharing this one line
 			for (k = 0; k < g->nties; k++) tot += (double)pair_isp(g, g->elist_i[k], g->elist_j[k]);
 			return tot;
+		case TERMCODE_ANTIINISO:					// stat_saom_antiiniso(): #{i : indegree(i)>=1}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 1) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_ANTIINISO2:					// stat_saom_antiiniso2(): #{i : indegree(i)>=2}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 2) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_IN3PLUS:						// stat_saom_in3plus(): #{i : indegree(i)>=3}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 3) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_GWESP:						// stat_saom_gwesp(): sum over ties (ego,alter) of gw_kernel(OTP(ego,alter), decay) - direct reuse of nwergm's own already-certified stat_gwesp_otp() formula (RSiena's tieStatistic() confirmed to match exactly; only the MINISTEP formula below differs from nwergm's own)
+			for (k = 0; k < g->nties; k++) tot += gw_kernel((double)pair_otp(g, g->elist_i[k], g->elist_j[k]), p1);
+			return tot;
+		case TERMCODE_TRANSTIES:					// stat_transitiveties(): sum over ties (ego,alter) of indicator(OTP(ego,alter)>=1) - direct reuse of nwergm's own already-certified global statistic (RSiena's tieStatistic() confirmed to match; only the MINISTEP formula below differs)
+			for (k = 0; k < g->nties; k++) tot += (pair_otp(g, g->elist_i[k], g->elist_j[k]) >= 1) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_BALANCE: {					// stat_saom_balance(): sum over ties (i,j) of ((n-2)*b0 - D(i,j)), D(i,j) = (dout[i]-1) + (dout[j]-has_edge(j,i)) - 2*OSP(i,j) - p1 carries b0 (balanceMean), precomputed once by Mata's saom_balance_mean() before simulation starts
+			double b0 = p1;
+			double nterm = (double)g->n - 2.0;
+			for (k = 0; k < g->nties; k++) {
+				long ei = g->elist_i[k], ej = g->elist_j[k];
+				double D = ((double)g->dout[ei] - 1.0)
+					+ ((double)g->dout[ej] - (has_edge(g, ej, ei) ? 1.0 : 0.0))
+					- 2.0 * (double)pair_osp(g, ei, ej);
+				tot += nterm * b0 - D;
+			}
+			return tot;
+		}
 		case TERMCODE_CYCLE3:						// stat_saom_cycle3(): sum over ties (ego,alter) of OTP(alter,ego)
 			for (k = 0; k < g->nties; k++) tot += (double)pair_otp(g, g->elist_j[k], g->elist_i[k]);
 			return tot;
@@ -810,6 +869,50 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 			double delta = (double)pair_isp(g, i, j);
 			return ij_exists ? -delta : delta;
 		}
+		case TERMCODE_ANTIINISO: {					// change_saom_antiiniso(): mechanical port, same shape as TERMCODE_ANTIINISO2/OUTISO (alter-indexed, spillover-free)
+			long d = g->din[j];
+			int cond = ij_exists ? (d <= 1) : (d == 0);
+			return cond ? (ij_exists ? -1.0 : 1.0) : 0.0;
+		}
+		case TERMCODE_ANTIINISO2: {					// change_saom_antiiniso2(): mechanical port
+			long d = g->din[j];
+			int cond = ij_exists ? (d == 2) : (d == 1);
+			return cond ? (ij_exists ? -1.0 : 1.0) : 0.0;
+		}
+		case TERMCODE_IN3PLUS: {					// change_saom_in3plus(): mechanical port, same shape as TERMCODE_ANTIINISO2 with threshold 3 instead of 2
+			long d = g->din[j];
+			int cond = ij_exists ? (d == 3) : (d == 2);
+			return cond ? (ij_exists ? -1.0 : 1.0) : 0.0;
+		}
+		case TERMCODE_GWESP: {						// change_saom_gwesp(): mechanical port - RSiena's own GenericNetworkEffect kernel-lookup shape, deliberately NOT nwergm's own full ERGM change statistic (no neighbor-adjustment loops - see this termcode's own #define comment)
+			double delta = gw_kernel((double)pair_otp(g, i, j), p1);
+			return ij_exists ? -delta : delta;
+		}
+		case TERMCODE_TRANSTIES: {					// change_saom_transties(): mechanical port - own-dyad OTP(i,j)>=1 indicator plus a neighbors_out(j) loop checking each existing i->b (b!=i) for a newly-crossed OTP(i,b)>=1 threshold; deliberately excludes nwergm's own "na" spillover-onto-other-actors loop (myopic-actor restriction, see this termcode's own #define comment)
+			double delta = ij_exists ? -1.0 : 1.0;
+			double chg = delta * ((pair_otp(g, i, j) >= 1) ? 1.0 : 0.0);
+			long m, b;
+			for (m = 0; m < g->outadj[j].len; m++) {
+				b = g->outadj[j].nb[m];
+				if (b == i) continue;
+				if (!has_edge(g, i, b)) continue;
+				long oldb = pair_otp(g, i, b);
+				double newflag = ((oldb + delta) >= 1) ? 1.0 : 0.0;
+				double oldflag = (oldb >= 1) ? 1.0 : 0.0;
+				chg += newflag - oldflag;
+			}
+			return chg;
+		}
+		case TERMCODE_BALANCE: {					// change_saom_balance(): mechanical port - p1 carries the precomputed balanceMean constant (b0)
+			double b0 = p1;
+			double val = ((double)g->n - 2.0) * b0
+				- (double)g->dout[j]
+				+ 2.0 * (double)pair_osp(g, i, j)
+				+ 2.0 * (double)pair_otp(g, i, j)
+				+ (has_edge(g, j, i) ? 1.0 : 0.0)
+				- 2.0 * ((double)g->dout[i] - (ij_exists ? 1.0 : 0.0));
+			return ij_exists ? -val : val;
+		}
 		case TERMCODE_OUTOUTASS: {					// change_saom_outoutass(): mechanical port, same shape as the Mata original
 			double ldegree = (double)g->dout[i];
 			double alterdeg = (double)g->dout[j];
@@ -846,6 +949,131 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		}
 	}
 	return 0.0;
+}
+
+/* ===================================================================
+   Interaction effects (TERMCODE_INTERACT2, RSiena's includeInteraction())
+   - see this termcode's own #define comment for the full design account.
+   saom_tie_stat() below is a literal copy of each eligible termcode's own
+   tie-loop summand ALREADY in saom_stat_term() below (not re-derived),
+   giving exactly RSiena's real tieStatistic(alter) value for that
+   component at a SPECIFIC (ego,alter) pair - genuinely different from
+   saom_change_term()'s own ij_exists=0 branch for the seven termcodes
+   with ministep neighbor-spillover (transties/outoutass/ininass/
+   outinass/inoutass/cycle4/balance - confirmed directly from RSiena's
+   own NetworkEffect::egoStatistic()/tieStatistic() vs
+   calculateContribution() split, RSiena/src/model/effects/
+   NetworkEffect.cpp), identical to it for every other (spillover-free)
+   termcode. Only ever called with (ego,alter) pairs that are ACTUAL
+   EXISTING ties (from saom_stat_interact()'s own tie-loop below) -
+   matches every tie-summed case in saom_stat_term() itself, which makes
+   the same assumption (e.g. TERMCODE_BALANCE's own `dout[ego]-1`
+   subtraction only makes sense for a tie that already exists).
+   =================================================================== */
+static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long ego, long alter) {
+	switch (termcode) {
+		case TERMCODE_OUTDEGREE: return 1.0;
+		case TERMCODE_RECIPROCITY: return has_edge(g, alter, ego) ? 1.0 : 0.0;
+		case TERMCODE_NODEMATCH: return (a[ego] == a[alter]) ? 1.0 : 0.0;
+		case TERMCODE_NODECOV: return a[ego] + a[alter];
+		case TERMCODE_NODEICOV: return a[alter];
+		case TERMCODE_NODEOCOV: return a[ego];
+		case TERMCODE_TRANSTRIP: return (double)pair_isp(g, ego, alter);
+		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
+		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
+		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) / p1;
+		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
+		case TERMCODE_OUTOUTASS: return (double)g->dout[ego] * (double)g->dout[alter];
+		case TERMCODE_ININASS: return (double)g->din[ego] * (double)g->din[alter];
+		case TERMCODE_OUTINASS: return (double)g->dout[ego] * (double)g->din[alter];
+		case TERMCODE_INOUTASS: return (double)g->din[ego] * (double)g->dout[alter];
+		case TERMCODE_CYCLE4: return 0.25 * (double)pair_cycle4_threepaths(g, ego, alter);
+		case TERMCODE_GWESP: return gw_kernel((double)pair_otp(g, ego, alter), p1);
+		case TERMCODE_TRANSTIES: return (pair_otp(g, ego, alter) >= 1) ? 1.0 : 0.0;
+		case TERMCODE_BALANCE: {
+			double b0 = p1;
+			double nterm = (double)g->n - 2.0;
+			double D = ((double)g->dout[ego] - 1.0)
+				+ ((double)g->dout[alter] - (has_edge(g, alter, ego) ? 1.0 : 0.0))
+				- 2.0 * (double)pair_osp(g, ego, alter);
+			return nterm * b0 - D;
+		}
+	}
+	return 0.0;		// node-level/"ego effect" termcode - rejected upstream by nwsaom.ado's own interact() eligibility check, never reached in practice
+}
+
+/* saom_stat_interact(): TERMCODE_INTERACT2's own global-statistic
+   computation - sum over the network's ACTUAL EXISTING ties of the
+   product of the two components' own saom_tie_stat() values, matching
+   RSiena's real NetworkInteractionEffect::tieStatistic() (a product),
+   summed via the same NetworkEffect::egoStatistic()/statistic() shape
+   every other termcode's own saom_stat_term() case already uses. */
+static double saom_stat_interact(graph_t *g, int subAcode, double *aA, double p1A, int subBcode, double *aB, double p1B) {
+	long k;
+	double tot = 0.0;
+	for (k = 0; k < g->nties; k++) {
+		long ei = g->elist_i[k], ej = g->elist_j[k];
+		tot += saom_tie_stat(g, subAcode, aA, p1A, ei, ej) * saom_tie_stat(g, subBcode, aB, p1B, ei, ej);
+	}
+	return tot;
+}
+
+/* saom_eval_change()/saom_eval_stat(): thin dispatch wrappers inserted
+   at every caller of saom_change_term()/saom_stat_term() in the ministep
+   loop and full-statistic pass below, so TERMCODE_INTERACT2 (which needs
+   the FULL termcodes[]/attridx[]/p1[]/attrs[] arrays to resolve its own
+   two component slots - room saom_change_term()'s/saom_stat_term()'s own
+   existing (termcode, a, p1) signature has no space for) can be handled
+   without changing either function's signature or any of its existing,
+   already-certified cases. For every ordinary (non-interaction) term
+   these are a transparent passthrough - byte-identical to the inline
+   code they replace. */
+static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, double **attrs,
+	graph_t *g, long i, long j, int ij_exists, double *tt_arr, double *c3_arr) {
+	if (termcodes[k] == TERMCODE_INTERACT2) {
+		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
+		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
+		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
+		double cvA = saom_change_term(g, termcodes[subA], aA, p1[subA], i, j, ij_exists, tt_arr, c3_arr);
+		double cvB = saom_change_term(g, termcodes[subB], aB, p1[subB], i, j, ij_exists, tt_arr, c3_arr);
+		return cvA * cvB;
+	}
+	{
+		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+		return saom_change_term(g, termcodes[k], a, p1[k], i, j, ij_exists, tt_arr, c3_arr);
+	}
+}
+
+static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, double **attrs, graph_t *g) {
+	if (termcodes[k] == TERMCODE_INTERACT2) {
+		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
+		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
+		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
+		return saom_stat_interact(g, termcodes[subA], aA, p1[subA], termcodes[subB], aB, p1[subB]);
+	}
+	{
+		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+		return saom_stat_term(g, termcodes[k], a, p1[k]);
+	}
+}
+
+/* saom_mark_need_flags(): the per-termcode need_adj/need_transtrip/
+   need_cycle3 eligibility rules already used by stata_call()'s own
+   argument-parsing loop, factored out so an INTERACT2 term's two
+   component termcodes can be checked too (see stata_call()'s own call
+   site for why this now runs as a SEPARATE pass after every term's
+   termcodes[]/attridx[]/p1[] are fully populated, not interleaved with
+   parsing - an interaction's own component slot index can point
+   anywhere in the array, including a HIGHER index than the interaction
+   term's own, so its target termcode may not be parsed yet if this ran
+   inline). */
+static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int *need_cycle3) {
+	if (tc == TERMCODE_TRANSTRIP || tc == TERMCODE_CYCLE3) *need_adj = 1;
+	if (tc == TERMCODE_TRANSTRIP) *need_transtrip = 1;
+	if (tc == TERMCODE_CYCLE3) *need_cycle3 = 1;
+	if (tc == TERMCODE_TRANSRECTRIP || tc == TERMCODE_OUTOUTASS || tc == TERMCODE_OUTINASS || tc == TERMCODE_TRANSMEDTRIP) *need_adj = 1;
+	if (tc == TERMCODE_CYCLE4) *need_adj = 1;
+	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE) *need_adj = 1;
 }
 
 /* ===================================================================
@@ -1046,11 +1274,34 @@ static void free_graph(graph_t *gm) {
 
 static char *tok_saveptr;
 
+/* wire_parse_error: set the moment strtok(NULL, " \t") runs out of
+   tokens (a wire-protocol field-count desync between a Mata caller and
+   this parser - a real, recurring bug class in this project, see
+   docs/SAOM_ROADMAP.md). Previously next_long()/next_double() fed a NULL
+   pointer straight into atof()/strtod_l(), crashing the whole Stata
+   process (confirmed via a real macOS crash report, SIGABRT inside
+   strtod_l, no repro command available) instead of failing cleanly.
+   Reset to 0 at the top of every stata_call() invocation (the plugin
+   persists across calls within one Stata session); every field read
+   AFTER the first missing one silently returns 0 rather than crashing
+   again on the SAME now-exhausted strtok state, but the caller MUST
+   check this flag (both call sites below do, immediately after their
+   own parsing finishes and before any simulation work begins) and bail
+   out via SF_error()+return(198) - matching this file's own established
+   "never silently wrong, always error loudly" convention for every
+   other bounds check (MAXTERMS/MAXATTR/MAXBEHTERMS) - rather than ever
+   returning a result computed from partially-missing input. */
+static int wire_parse_error;
+
 static long next_long(void) {
-	return (long)atof(strtok(NULL, " \t"));
+	char *tok = strtok(NULL, " \t");
+	if (!tok) { wire_parse_error = 1; return 0; }
+	return (long)atof(tok);
 }
 static double next_double(void) {
-	return atof(strtok(NULL, " \t"));
+	char *tok = strtok(NULL, " \t");
+	if (!tok) { wire_parse_error = 1; return 0.0; }
+	return atof(tok);
 }
 
 STDLL stata_call(int argc, char *argv[]) {
@@ -1139,6 +1390,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	double rcscore = 0.0;
 	(void)tok_saveptr;
 
+	wire_parse_error = 0;
 	if (argc < 1) { SF_error("saom_sim: missing argument string\n"); return(198); }
 
 	// --- multiplex (two-network co-evolution), native-first per direct
@@ -1205,7 +1457,11 @@ STDLL stata_call(int argc, char *argv[]) {
 		seedv = atof(blk2);
 		free(nnfull);
 
-		n1v = (long)atof(strtok(nnbuf0, " \t"));
+		{
+			char *tok0 = strtok(nnbuf0, " \t");
+			if (!tok0) { free(nnbuf0); SF_error("saom_sim: multiplex net1 argument string empty\n"); return(198); }
+			n1v = (long)atof(tok0);
+		}
 		nties1v = next_long();
 		nterms1v = next_long();
 		if (nterms1v > MAXTERMS) { SF_error("saom_sim: multiplex net1 too many terms\n"); free(nnbuf0); return(198); }
@@ -1217,7 +1473,11 @@ STDLL stata_call(int argc, char *argv[]) {
 		rate1v = next_double();
 		free(nnbuf0);
 
-		n2v = (long)atof(strtok(nnbuf1, " \t"));
+		{
+			char *tok0 = strtok(nnbuf1, " \t");
+			if (!tok0) { free(nnbuf1); SF_error("saom_sim: multiplex net2 argument string empty\n"); return(198); }
+			n2v = (long)atof(tok0);
+		}
 		nties2v = next_long();
 		nterms2v = next_long();
 		if (nterms2v > MAXTERMS) { SF_error("saom_sim: multiplex net2 too many terms\n"); free(nnbuf1); return(198); }
@@ -1229,6 +1489,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		rate2v = next_double();
 		free(nnbuf1);
 
+		if (wire_parse_error) { SF_error("saom_sim: multiplex wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
 		if (n1v != n2v) { SF_error("saom_sim: multiplex requires both networks on the same actor set (n1 != n2)\n"); return(198); }
 		for (kk = 0; kk < nterms1v; kk++) {
 			if (tc1[kk] != TERMCODE_OUTDEGREE && tc1[kk] != TERMCODE_RECIPROCITY && tc1[kk] != TERMCODE_CRPROD) {
@@ -1384,7 +1645,11 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	argbuf = (char *)malloc(strlen(argv[0]) + 1);
 	strcpy(argbuf, argv[0]);
-	n         = (long)atof(strtok(argbuf, " \t"));
+	{
+		char *tok0 = strtok(argbuf, " \t");
+		if (!tok0) { free(argbuf); SF_error("saom_sim: empty argument string\n"); return(198); }
+		n = (long)atof(tok0);
+	}
 	directed  = next_long();
 	nties_in  = next_long();
 	rate      = next_double();
@@ -1400,19 +1665,28 @@ STDLL stata_call(int argc, char *argv[]) {
 		termcodes[i] = (int)next_long();
 		attridx[i] = (int)next_long();
 		p1[i] = next_double();
-		if (termcodes[i] == TERMCODE_TRANSTRIP || termcodes[i] == TERMCODE_CYCLE3) need_adj = 1;
-		if (termcodes[i] == TERMCODE_TRANSTRIP) need_transtrip = 1;
-		if (termcodes[i] == TERMCODE_CYCLE3) need_cycle3 = 1;
-		// transrectrip/outoutass/outinass all walk outadj[i] directly (no
-		// batch precompute like transtrip/cycle3 get - see
-		// saom_change_term()'s own case comments for why a direct
-		// per-alternative port was chosen here); ininass/inoutass only
-		// ever touch din[]/dout[] scalars (confirmed from real RSiena
-		// source - neither factor in either term is affected by the
-		// toggle in a way that needs a neighbor sum), so those two need
-		// no adjacency lists at all.
-		if (termcodes[i] == TERMCODE_TRANSRECTRIP || termcodes[i] == TERMCODE_OUTOUTASS || termcodes[i] == TERMCODE_OUTINASS || termcodes[i] == TERMCODE_TRANSMEDTRIP) need_adj = 1;	// pair_isp() reads inadj[i]/inadj[j], both allocated together whenever need_adj is set
-		if (termcodes[i] == TERMCODE_CYCLE4) need_adj = 1;		// pair_cycle4_threepaths() needs BOTH outadj (i's own out-neighbors, the "h" step) AND inadj (h's own in-neighbors, the "k" step) - the single need_adj flag allocates both together (build_masked_graph()'s own comment confirms this)
+	}
+	// need_adj/need_transtrip/need_cycle3: a SEPARATE pass, now that every
+	// term's termcodes[]/attridx[]/p1[] are fully populated (see
+	// saom_mark_need_flags()'s own header comment for why an
+	// INTERACT2 term's own component slot cannot be resolved reliably
+	// inline during parsing). transrectrip/outoutass/outinass/
+	// transmedtrip all walk outadj[i] directly (no batch precompute like
+	// transtrip/cycle3 get - see saom_change_term()'s own case comments
+	// for why a direct per-alternative port was chosen here); ininass/
+	// inoutass/antiiniso/antiiniso2 only ever touch din[]/dout[] scalars
+	// (confirmed from real RSiena source), so need no adjacency lists at
+	// all. cycle4 needs BOTH outadj and inadj (pair_cycle4_threepaths()).
+	// gwesp/transties/balance all call pair_otp()/pair_osp(), both of
+	// which read outadj/inadj.
+	for (i = 0; i < nterms; i++) {
+		if (termcodes[i] == TERMCODE_INTERACT2) {
+			int subA = attridx[i] - 1, subB = (int)p1[i] - 1;
+			saom_mark_need_flags((subA >= 0 && subA < nterms) ? termcodes[subA] : -1, &need_adj, &need_transtrip, &need_cycle3);
+			saom_mark_need_flags((subB >= 0 && subB < nterms) ? termcodes[subB] : -1, &need_adj, &need_transtrip, &need_cycle3);
+		} else {
+			saom_mark_need_flags(termcodes[i], &need_adj, &need_transtrip, &need_cycle3);
+		}
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();
 	want_score = next_long();		// harmonisation unit 16 - see saom_stat_term()'s own sibling, the score accumulator in the ministep loop below
@@ -1450,6 +1724,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	}
 	free(argbuf);
 
+	if (wire_parse_error) { SF_error("saom_sim: wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
 	if (!directed) { SF_error("saom_sim: directed networks only\n"); return(198); }
 	if (need_behadj) need_adj = 1;		// avalt/avsim need outadj exactly like transtrip/cycle3 do
 
@@ -1727,9 +2002,8 @@ STDLL stata_call(int argc, char *argv[]) {
 					double u_actor = 0.0, u_alter = 0.0;
 					double *chg_actor = want_score ? (double *)malloc((size_t)nterms * sizeof(double)) : NULL;
 					for (k = 0; k < nterms; k++) {
-						double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-						double cv_actor = saom_change_term(&g, termcodes[k], a, p1[k], actor, alter, ij_exists, NULL, NULL);
-						double cv_alter = saom_change_term(&g, termcodes[k], a, p1[k], alter, actor, ij_exists, NULL, NULL);
+						double cv_actor = saom_eval_change(k, termcodes, attridx, p1, attrs, &g, actor, alter, ij_exists, NULL, NULL);
+						double cv_alter = saom_eval_change(k, termcodes, attridx, p1, attrs, &g, alter, actor, ij_exists, NULL, NULL);
 						u_actor += theta[k] * cv_actor;
 						u_alter += theta[k] * cv_alter;
 						if (want_score) chg_actor[k] = cv_actor;
@@ -1812,8 +2086,7 @@ STDLL stata_call(int argc, char *argv[]) {
 						int ij_exists = has_edge(&g, actor, j);
 						double uj = 0.0;
 						for (k = 0; k < nterms; k++) {
-							double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
-							double cv = saom_change_term(&g, termcodes[k], a, p1[k], actor, j, ij_exists, tt_arr, c3_arr);
+							double cv = saom_eval_change(k, termcodes, attridx, p1, attrs, &g, actor, j, ij_exists, tt_arr, c3_arr);
 							if (want_score) chgstore[j * nterms + k] = cv;
 							uj += theta[k] * cv;
 						}
@@ -1993,9 +2266,8 @@ STDLL stata_call(int argc, char *argv[]) {
 	}
 	for (k = 0; k < nterms; k++) {
 		char statname[40];
-		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 		sprintf(statname, "__saom_native_stat%ld", k + 1);
-		SF_scal_save(statname, saom_stat_term(have_gm ? &gm : &g, termcodes[k], a, p1[k]));
+		SF_scal_save(statname, saom_eval_stat(k, termcodes, attridx, p1, attrs, have_gm ? &gm : &g));
 	}
 
 	// --- co-evolution (harmonisation unit 26): write back the final

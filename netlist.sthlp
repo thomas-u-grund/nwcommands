@@ -23,13 +23,11 @@ Examples include
 {p 8 34 2}{cmd:my~net} {space 16} one network starting with {cmd:my} &
                 ending with {cmd:net} with any number of other characters
                 between{p_end}
-{p 8 34 2}{cmd:my?var} {space 16} networks starting with {cmd:my} & endin
-> g with
-                {cmd:net} with one other character between{p_end}
+{p 8 34 2}{cmd:my?var} {space 16} networks starting with {cmd:my} & ending
+                with {cmd:net} with one other character between{p_end}
 {p 8 34 2}{cmd:mynet1-mynet6} {space 9} {cmd:mynet1}, {cmd:mynet2}, ...,
                 {cmd:net6} (probably){p_end}
-{p 8 34 2}{cmd:this-that} {space 13} networks {cmd:this} through {cmd:tha
-> t},
+{p 8 34 2}{cmd:this-that} {space 13} networks {cmd:this} through {cmd:that},
                 inclusive{p_end}
 {p 8 34 2}{cmd:_all} {space 18} all networks{p_end}
 
@@ -48,10 +46,8 @@ The {cmd:?} character matches one character.  All networks matching
 the pattern are returned.
 
 {pstd}
-The {cmd:-} character indicates that all networks in the dataset, startin
-> g
-with the network to the left of the {cmd:-} and ending with the network 
-> to
+The {cmd:-} character indicates that all networks in the dataset, starting
+with the network to the left of the {cmd:-} and ending with the network to
 the right of the {cmd:-} are to be returned.
 
 {pstd}
@@ -71,9 +67,9 @@ The networks in the dataset can be reordered with {help nworder}.
 {pstd}The next four commands are all equivalent.
 
 	{cmd:. nwsummarize glasgow1 glasgow2 glasgow3}
-	{cmd:. nwsummarize glasgow1-glasgow3}{
-	{cmd:. nwsummarize glasg*}{
-	{cmd:. nwsummarize _all}{
+	{cmd:. nwsummarize glasgow1-glasgow3}
+	{cmd:. nwsummarize glasg*}
+	{cmd:. nwsummarize _all}
 
 {title:See also}
 
