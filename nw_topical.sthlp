@@ -139,6 +139,7 @@
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:    {bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
+{p2col:    {bf:{help nwpagerank }}}PageRank centrality{p_end}
 {marker analysis_cohesion}{...}
 
 {col 8}   {c TLC}{hline 43}{c TRC}
@@ -148,9 +149,13 @@
 {p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
 {p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
 {p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
+{p2col:    {bf:{help nwfactions }}}UCINET-style K-group faction partitioning{p_end}
 {p2col:    {bf:{help nwkcomponents }}}Maximal k-component enumeration{p_end}
 {p2col:    {bf:{help nwkcore }}}k-core decomposition{p_end}
 {p2col:    {bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
+{p2col:    {bf:{help nwlambda }}}Edge (line) connectivity matrix and lambda sets{p_end}
+{p2col:    {bf:{help nwmatching }}}Maximum-cardinality bipartite matching{p_end}
+{p2col:    {bf:{help nwmaxflow }}}Maximum flow and minimum cut between two nodes{p_end}
 {p2col:    {bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
 {p2col:    {bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
 {p2col:    {bf:{help nwsimmelian }}}Calculate Simmelian ties{p_end}
@@ -195,6 +200,7 @@
 {p2col:    {bf:{help nwgeodesic }}}Calculate shortest paths between{p_end}
 {p2col:    {bf:{help nwneighbor }}}Extract the network neighbors of a node{p_end}
 {p2col:    {bf:{help nwpath }}}Calculate paths between nodes{p_end}
+{p2col:    {bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:    {bf:{help nwreach }}}Calculate reachability network{p_end}
 {marker analysis_statmodels}{...}
 

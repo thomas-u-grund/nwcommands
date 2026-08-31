@@ -95,12 +95,16 @@ In total, the software supports up to 9999 networks in memory at once, regardles
 {pstd}
 Most of the package's own graph-traversal commands - {help nwcomponents}, {help nwdegree}, {help nwclustering},
 {help nwneighbor}, {help nwgeodesic}'s unweighted mode, {help nwevcent} (eigenvector centrality, migrated to
-sparse power iteration - it only ever needed the dominant eigenpair, not a full dense eigendecomposition), and
-anything built on them - operate on a genuinely sparse internal representation. They do {bf:not} allocate memory
-proportional to the square of the node count, only to the number of actual ties, and have been benchmarked
-directly at 100,000 nodes / 1,000,000 ties (full connected-components analysis in well under 10 seconds;
-degree/neighbor lookups near-instant). Networks at this scale, or considerably beyond it, are practical for
-these commands specifically.
+sparse power iteration - it only ever needed the dominant eigenpair, not a full dense eigendecomposition),
+{help nwpagerank} (also sparse power iteration), {help nwrandomwalk} (exact hitting time via a sparse linear
+solve, not simulation), {help nwmaxflow} and {help nwmatching} (Edmonds-Karp max-flow on a sparse vertex-split
+representation), {help nwlambda} (edge connectivity, the same sparse max-flow primitive), and anything built on
+them - operate on a genuinely sparse internal representation. They do {bf:not} allocate memory proportional to
+the square of the node count, only to the number of actual ties, and have been benchmarked directly at 100,000
+nodes / 1,000,000 ties (full connected-components analysis in well under 10 seconds; degree/neighbor lookups
+near-instant). Networks at this scale, or considerably beyond it, are practical for these commands specifically.
+({help nwfactions} and {help nwmotifs} are combinatorial rather than sparse-traversal in nature - see their own
+help files for their own, different scaling characteristics.)
 
 {marker limits_dense}{...}
 {title:Commands that need the full adjacency matrix (older algorithms, weighted distances)}
@@ -138,7 +142,7 @@ network's data into ordinary Stata commands - just no longer something every gen
 automatically.
 
 {marker limits_ergm}{...}
-{title:Statistical network models ({help nwergm})}
+{title:Statistical network models ({help nwergm}, {help nwsaom}, {help nwrem})}
 
 {pstd}
 {cmd:nwergm}'s own native (C) MCMC backend (see its own "Performance" help section) has been benchmarked directly
@@ -151,10 +155,23 @@ that; models using the geometrically-weighted shared-partner (GWESP) term family
 constant cost per proposal and are the main remaining gap versus R on larger, denser networks.
 
 {pstd}
+{cmd:nwsaom} (stochastic actor-oriented models, RSiena-style) also has a native (C) simulation backend, used
+automatically whenever the fitted model's own effects all have native coverage. Benchmarked directly against a
+real, installed RSiena on its own standard s50 tutorial dataset (50 actors): at parity with RSiena for a
+network-only model, and genuinely faster for a network+behavior co-evolution model - see {help nwsaom}'s own
+"Performance" section for the exact figures and methodology. Not yet benchmarked beyond that scale in this
+project.
+
+{pstd}
+{cmd:nwrem} (relational event models) has no native C backend yet - its pure-Mata engine is nonetheless already
+2-3x faster than R's own {cmd:relevent::rem.dyad()} on direct head-to-head wall-clock benchmarks (identical
+data/model), per {help nwrem}'s own documented figures.
+
+{pstd}
 None of the figures on this page are promises for every possible network shape or every command - a command's
 own help file is the authority on anything specific to it. When in doubt for a genuinely large network, try the
 structural commands first (they are the ones proven at real scale), and treat the dense-matrix-dependent and
-{cmd:nwergm} figures above as realistic planning numbers rather than hard guarantees.
+statistical-model figures above as realistic planning numbers rather than hard guarantees.
 
 
 {marker nwconcepts}{...}

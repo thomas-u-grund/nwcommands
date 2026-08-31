@@ -79,6 +79,7 @@
 {p2col:{bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand variable to network{p_end}
 {p2col:{bf:{help nwexport }}}Export network as Pajek or Ucinet file{p_end}
+{p2col:{bf:{help nwfactions }}}UCINET-style K-group faction partitioning{p_end}
 {p2col:{bf:{help nwfromedge }}}Imports network data from edgelist{p_end}
 {p2col:{bf:{help nwgen }}}Network extensions to generate{p_end}
 {p2col:{bf:{help nwgenerate }}}Network extensions to generate{p_end}
@@ -95,10 +96,14 @@
 {p2col:{bf:{help nwkeep }}}Keep a network (or only certain nodes){p_end}
 {p2col:{bf:{help nwkeepnodes }}}Keep nodes of a network{p_end}
 {p2col:{bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
+{p2col:{bf:{help nwlambda }}}Edge (line) connectivity matrix and lambda sets{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
+{p2col:{bf:{help nwmatching }}}Maximum-cardinality bipartite matching{p_end}
+{p2col:{bf:{help nwmaxflow }}}Maximum flow and minimum cut between two nodes{p_end}
 {p2col:{bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
 {p2col:{bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
+{p2col:{bf:{help nwmotifs }}}4-node undirected motif/graphlet census{p_end}
 {p2col:{bf:{help nwmovie }}}Animate a sequence of networks{p_end}
 {p2col:{bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
 {p2col:{bf:{help nwname }}}Obtain and change meta-information of a network{p_end}
@@ -108,6 +113,7 @@
 {p2col:{bf:{help nwnode }}}Checks if node exists in a network{p_end}
 {p2col:{bf:{help nwnoderename }}}Rename a single node in a network{p_end}
 {p2col:{bf:{help nworder }}}Reorder networks in dataset{p_end}
+{p2col:{bf:{help nwpagerank }}}PageRank centrality{p_end}
 {p2col:{bf:{help nwpath }}}Calculate paths between nodes{p_end}
 {p2col:{bf:{help nwpermute }}}Generate permutation of a network{p_end}
 {p2col:{bf:{help nwplot }}}Plot a network{p_end}
@@ -116,6 +122,7 @@
 {p2col:{bf:{help nwpreserve }}}Preserve and restore network data{p_end}
 {p2col:{bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:{bf:{help nwrandom }}}Generate a random network{p_end}
+{p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:{bf:{help nwreach }}}Calculate reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode network{p_end}
 {p2col:{bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}

@@ -192,7 +192,7 @@ A quick overview of all networks that are currently in memory can be obtained wi
 {pstd}
 One can caluclate all sorts of network statistics with the nwcommands. There is a set of programs that calculate the centrality
 of nodes in a network, e.g. {help nwdegree:degree centrality}, {help nwbetween:betweenness centrality}, {help nwevcent:eigenvector centrality},
-{help nwcloseness:closeness centrality}, {help nwkatz:Katz centrality}. 
+{help nwcloseness:closeness centrality}, {help nwkatz:Katz centrality}, {help nwpagerank:PageRank centrality}.
 
 {pstd}
 Another program calculates the {help nwclustering:clustering coefficient} for each node.
@@ -225,7 +225,10 @@ the Gang network and calculates for each node the number of network neighbors wh
 give a very quick overview about the ties that exist in the network between nodes with certain attributes (see also {help nwtabulate}). 
 
 {pstd}
-Some more sophisticated programs exist for the statistical modelling of networks: {help nwqap:MR-QAP regression} and {help nwergm:exponential random graph modeling}.
+Some more sophisticated programs exist for the statistical modelling of networks: {help nwqap:MR-QAP regression}, {help nwergm:exponential random graph modeling}, {help nwsaom:stochastic actor-oriented models} for longitudinal network+behavior co-evolution, and {help nwrem:relational event models} for continuous-time event-stream data.
 
 {pstd}
-Another set of commands calculates {help nwpath:paths between network nodes} or the entire set of {help nwgeodesic:shortest paths between network nodes}.
+Another set of commands calculates {help nwpath:paths between network nodes}, the entire set of {help nwgeodesic:shortest paths between network nodes}, or the expected {help nwrandomwalk:random-walk hitting time} to a target node.
+
+{pstd}
+A further group of commands work on connectivity and flow: {help nwmaxflow:maximum flow and minimum cut}, {help nwmatching:bipartite matching}, {help nwlambda:edge connectivity and lambda sets}, {help nwfactions:UCINET-style faction partitioning}, and {help nwmotifs:the 4-node motif census}.
