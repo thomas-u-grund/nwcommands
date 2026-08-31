@@ -4,6 +4,20 @@ program nwcug, rclass
 	version 12
 	syntax [anything(name=netname)], STAT(string) RNAME(string) [reps(integer 1000) seed(integer -1) tail(string) condition(string) silent plot name(string)]
 
+	// BUGFIX: reps() was never validated - reps(0) silently "succeeded"
+	// with a meaningless result (mean_null/sd_null missing, but p(two-
+	// sided) reported as a concrete-looking 1, not obviously an error to
+	// a user skimming the output), and any negative reps() crashed with
+	// a raw Mata "argument out of range" the instant nwcug_nullvals =
+	// J(reps,1,.) tried to allocate a negative-length vector. Confirmed
+	// directly via an adversarial-input probe. A meaningful null
+	// distribution needs at least 2 draws (1 alone gives sd_null
+	// undefined too), so that is the floor enforced here.
+	if `reps' < 2 {
+		di "{err}reps() must be at least 2 (a null distribution needs more than one draw); got `reps'."
+		error 198
+	}
+
 	local tail = lower("`tail'")
 	if "`tail'" == "" {
 		local tail "both"

@@ -41,6 +41,21 @@ program nwbetween
 			local netgenerate "`netgenerate'_`netname_temp'"
 		}
 
+		// BUGFIX: nwbetween never synced the active dataset to the
+		// target network before st_store()-ing into it below, unlike
+		// every sibling command in this group (nwcloseness/nwdegree/
+		// nwevcent all call `_nwsetobs'/`nw_datasync' first) - a fresh
+		// or differently-sized dataset (e.g. right after `clear', or
+		// after working with a different network) crashed with a raw
+		// "argument out of range" (r3300) the instant st_store() tried
+		// to write into row `nodes' of a dataset with fewer rows than
+		// that. Confirmed directly via an adversarial-input probe: a
+		// bare `clear' followed immediately by `nwbetween' on any
+		// network reproduced this every time.
+		_nwsetobs `netname_temp'
+		tempvar included
+		nw_datasync `netname_temp', generate(`included')
+
 		capture confirm variable `netgenerate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`netgenerate'} already exists; use {bf:replace} or {bf:generate()}"

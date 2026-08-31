@@ -354,3 +354,21 @@ assert __tmplain_istemporal == 0
 scalar drop __tmplain_istemporal
 
 di "=== nwset twomode + temporal composability REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): mat() with a
+* non-square matrix for a plain (non-bipartite) one-mode network used
+* to crash uncleanly two different ways - check_bipartite()'s own
+* non-bipartite branch silently truncates to the smaller-dimension
+* square submatrix with no warning, then a modes-vector sizing
+* mismatch (sized off the truncated matrix, indexed via the ORIGINAL
+* untruncated one) indexed out of bounds and crashed with a raw
+* "subscript invalid" (r3301). An empty (0x0) matrix hit an identical
+* crash one function earlier. Both now rejected cleanly.
+nwclear
+capture noisily nwset, mat((1,2,3\4,5,6))
+assert _rc == 198
+capture noisily nwset, mat(J(0,0,0))
+assert _rc == 198
+nwset, mat((0,1,1\1,0,1\1,1,0)) name(stillworks)
+assert _rc == 0
+di "=== nwset mat() non-square/empty-matrix REGRESSION VERIFIED ==="

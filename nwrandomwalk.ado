@@ -22,6 +22,14 @@ program nwrandomwalk, rclass
 		err 99
 	}
 
+	// BUGFIX: the active dataset was never synced to the target network
+	// before st_store() below - see nwpagerank.ado's identical fix and
+	// comment for the full account; confirmed to crash the same way
+	// here via the same adversarial-input probe.
+	_nwsetobs `netname'
+	tempvar __nw_ht_included
+	nw_datasync `netname', generate(`__nw_ht_included')
+
 	tempname __nw_ht
 	capture noisily mata: `__nw_ht' = `netobj'->calculate_randomwalk_hitting(`tid')
 	if _rc != 0 {

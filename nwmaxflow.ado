@@ -38,6 +38,17 @@ program nwmaxflow, rclass
 	mata: st_numscalar("__nwmaxflow_cutedges", `__nw_mf'[`nodes'+2,1])
 
 	if "`generate'" != "" {
+		// BUGFIX: the active dataset was never synced to the target
+		// network before st_store() below - see nwpagerank.ado's
+		// identical fix and comment for the full account; confirmed to
+		// crash the same way here via the same adversarial-input probe
+		// (only exercised when generate() is actually used, which is
+		// why this went unnoticed - nwmaxflow's own regression test
+		// never called generate() on a freshly cleared dataset).
+		_nwsetobs `netname'
+		tempvar __nw_mf_included
+		nw_datasync `netname', generate(`__nw_mf_included')
+
 		capture drop `generate'
 		gen `generate' = .
 		mata: st_store((1::`nodes'),"`generate'", `__nw_mf'[1::`nodes',1])

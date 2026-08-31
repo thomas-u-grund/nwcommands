@@ -262,6 +262,23 @@ end
 assert any_selfloop == 0
 di "=== nwfromedge: self-loop row correctly excluded from sparse structure REGRESSION VERIFIED ==="
 
+* --- BUGFIX regression (adversarial-input pressure test): if every
+* single row's own ego/alter id was missing, egen group() leaves the
+* dictionary's own _id missing too, so the merge still matches
+* (missing-to-missing, not dropped) and fromvar/tovar end up missing
+* for every row rather than being removed - sum(fromvar) if fromvar!=.
+* then succeeds with r(N)==0/r(max) missing, and that missing value
+* used to be passed as a Mata J() dimension argument, crashing with a
+* raw "argument out of range" (r3300) instead of a clean message.
+nwclear
+clear
+set obs 3
+gen x = .
+gen y = .
+capture noisily nwfromedge x y
+assert _rc == 2000
+di "=== nwfromedge: all-missing ids REGRESSION VERIFIED ==="
+
 
 
 

@@ -14,6 +14,14 @@ program nwmatching, rclass
 		err 99
 	}
 
+	// BUGFIX: the active dataset was never synced to the target network
+	// before st_store() below - see nwpagerank.ado's identical fix and
+	// comment for the full account; confirmed to crash the same way
+	// here via the same adversarial-input probe.
+	_nwsetobs `netname'
+	tempvar __nw_match_included
+	nw_datasync `netname', generate(`__nw_match_included')
+
 	tempname __nw_match
 	capture noisily mata: `__nw_match' = `netobj'->calculate_bipartite_matching()
 	if _rc != 0 {

@@ -24,6 +24,17 @@ program nwpagerank, rclass
 		err 99
 	}
 
+	// BUGFIX: the active dataset was never synced to the target network
+	// before st_store() below - a fresh or differently-sized dataset
+	// (e.g. right after `clear', or after working with a different
+	// network) crashed with a raw "argument out of range" (r3300) the
+	// instant st_store() tried to write into row `nodes' of a dataset
+	// with fewer rows than that. Confirmed directly via an adversarial-
+	// input probe (a bare `clear' immediately before this command).
+	_nwsetobs `netname'
+	tempvar __nw_pr_included
+	nw_datasync `netname', generate(`__nw_pr_included')
+
 	tempname __nw_pr
 	mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')
 	capture drop `generate'

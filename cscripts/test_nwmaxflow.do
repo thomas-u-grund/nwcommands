@@ -38,3 +38,15 @@ capture nwmaxflow flownet, source(A) sink(A)
 assert _rc == 198
 
 di "=== nwmaxflow hand-computable cases REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): the active
+* dataset was never synced to the target network before st_store()
+* when generate() is used - a bare `clear' immediately before the call
+* crashed with a raw "argument out of range" (r3300). Only exercised
+* when generate() is actually requested, which is why this went
+* unnoticed originally.
+clear
+capture noisily nwmaxflow flownet, source(A) sink(D) generate(cutside)
+assert _rc == 0
+assert _N >= 4
+di "=== nwmaxflow: dataset-sync-after-clear REGRESSION VERIFIED ==="

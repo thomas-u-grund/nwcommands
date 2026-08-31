@@ -45,6 +45,14 @@ program nwfactions, rclass
 
 	local val = ("`netmeasure'" == "valued")
 
+	// BUGFIX: the active dataset was never synced to the target network
+	// before st_store() below - see nwpagerank.ado's identical fix and
+	// comment for the full account; confirmed to crash the same way
+	// here via the same adversarial-input probe.
+	_nwsetobs `netname'
+	tempvar __nw_fac_included
+	nw_datasync `netname', generate(`__nw_fac_included')
+
 	capture drop `netgenerate'
 	gen `netgenerate' = .
 	mata: st_rclear()

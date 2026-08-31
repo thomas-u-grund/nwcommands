@@ -562,6 +562,42 @@ if "`overwrite'" != "" local replace "replace"
 				mata: `__nwmatcopy' = st_matrix("`mat'")
 				local mat "`__nwmatcopy'"
 			}
+
+			// BUGFIX: a non-square matrix passed to mat() for a plain
+			// (non-bipartite) one-mode network used to crash uncleanly
+			// two different ways depending on shape - check_bipartite()'s
+			// own non-bipartite branch first SILENTLY TRUNCATES to the
+			// smaller-dimension square submatrix (m=min(rows,cols),
+			// edge[1::m,1::m]) with no warning, discarding real data the
+			// caller likely did not intend to lose; then the modes-vector
+			// sizing just below (`__modes' sized off the TRUNCATED
+			// matrix's own column count, but indexed via `mode1' from the
+			// ORIGINAL untruncated one) indexes out of bounds and crashes
+			// with a raw, low-level "subscript invalid" (r3301) with no
+			// nwcommands-style message at all. An empty (0x0) matrix hit
+			// the identical crash one function earlier, inside
+			// check_bipartite() itself (min(0,0)=0, `edge[1::0,1::0]' is
+			// itself the actual trigger there). Both confirmed via a
+			// direct adversarial-input probe, not merely inspection.
+			// Fixed by validating BEFORE any of this runs: a non-bipartite
+			// mat() needs a genuinely square, non-empty matrix; a
+			// bipartite one only needs at least one row and column
+			// (rectangular is the whole point there).
+			mata: st_numscalar("__nwset_mat_rows", rows(`mat'))
+			mata: st_numscalar("__nwset_mat_cols", cols(`mat'))
+			if "`bipartite'" == "" {
+				if `=__nwset_mat_rows' != `=__nwset_mat_cols' | `=__nwset_mat_rows' == 0 {
+					di "{err}mat() must be a square, non-empty matrix for a one-mode network (got `=__nwset_mat_rows' x `=__nwset_mat_cols'); use the {bf:bipartite} option for a rectangular affiliation matrix."
+					error 198
+				}
+			}
+			else {
+				if `=__nwset_mat_rows' == 0 | `=__nwset_mat_cols' == 0 {
+					di "{err}mat() must have at least one row and one column."
+					error 198
+				}
+			}
+
 			mata: mode1 = cols(`mat')
 			mata: st_local("mode1", strofreal(mode1))
 			mata: `__nwnew' = check_bipartite(`mat',"`bipartite'")

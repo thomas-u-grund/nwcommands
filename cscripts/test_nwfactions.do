@@ -59,3 +59,13 @@ assert _rc == 99
 nwfactions twotri, groups(2) generate(fac) replace silent
 assert _rc == 0
 di "=== nwfactions error handling REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): the active
+* dataset was never synced to the target network before st_store() -
+* a bare `clear' immediately before the call crashed with a raw
+* "argument out of range" (r3300).
+clear
+capture noisily nwfactions twotri, groups(2)
+assert _rc == 0
+assert _N >= 6
+di "=== nwfactions: dataset-sync-after-clear REGRESSION VERIFIED ==="

@@ -55,3 +55,15 @@ capture nwmatching onemode
 assert _rc == 6556
 
 di "=== nwmatching REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): the active
+* dataset was never synced to the target network before st_store() -
+* a bare `clear' immediately before the call crashed with a raw
+* "argument out of range" (r3300).
+nwclear
+nwset, mat((1,0,1\0,1,0\1,0,0)) name(bipnet2) bipartite
+clear
+capture noisily nwmatching bipnet2
+assert _rc == 0
+assert _N >= 6
+di "=== nwmatching: dataset-sync-after-clear REGRESSION VERIFIED ==="

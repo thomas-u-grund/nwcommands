@@ -164,3 +164,16 @@ assert _N == 3
 assert canary[1] == 1 & canary[2] == 2 & canary[3] == 3
 capture graph drop cugplottest
 di "=== nwcug plot() OK ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): reps() was
+* never validated - reps(0) silently "succeeded" with a meaningless
+* result (a concrete-looking but undefined p=1), and any negative
+* reps() crashed with a raw "argument out of range" (r3300) trying to
+* allocate a negative-length Mata vector.
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(0)
+assert _rc == 198
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(-5)
+assert _rc == 198
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(1)
+assert _rc == 198
+di "=== nwcug: reps() validation REGRESSION VERIFIED ==="

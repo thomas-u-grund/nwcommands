@@ -52,3 +52,13 @@ assert _rc == 99
 nwpagerank cyc3, generate(pr) replace silent
 assert _rc == 0
 di "=== nwpagerank error handling REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): the active
+* dataset was never synced to the target network before st_store() -
+* a bare `clear' immediately before the call crashed with a raw
+* "argument out of range" (r3300).
+clear
+capture noisily nwpagerank cyc3
+assert _rc == 0
+assert _N >= 3
+di "=== nwpagerank: dataset-sync-after-clear REGRESSION VERIFIED ==="

@@ -45,3 +45,15 @@ nwset, mat((0,1,0\1,0,0\0,0,0)) name(withisolate) labs(A,B,C)
 capture nwrandomwalk withisolate, target(A)
 assert _rc == 6556
 di "=== nwrandomwalk error handling REGRESSION VERIFIED ==="
+
+* --- BUGFIX regression (adversarial-input pressure test): the active
+* dataset was never synced to the target network before st_store() -
+* a bare `clear' immediately before the call crashed with a raw
+* "argument out of range" (r3300).
+nwclear
+nwset, mat((0,1,0\1,0,1\0,1,0)) name(path3rw2) labs(A,B,C)
+clear
+capture noisily nwrandomwalk path3rw2, target(C)
+assert _rc == 0
+assert _N >= 3
+di "=== nwrandomwalk: dataset-sync-after-clear REGRESSION VERIFIED ==="

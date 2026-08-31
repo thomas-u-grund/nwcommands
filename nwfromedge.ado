@@ -197,7 +197,23 @@ program nwfromedge
 	drop _merge
 	replace `tovar' = `_id' 
 	
+	// BUGFIX: if every single row's own ego/alter id was missing, `egen
+	// group()' above (which does NOT assign a group to missing values
+	// unless told to) leaves `_id' missing for that dictionary entry
+	// too, so the merge below still matches (missing-to-missing is a
+	// normal equi-join value here, not dropped by `_merge != 3') and
+	// `fromvar'/`tovar' end up missing for every row rather than being
+	// removed. `sum ... if fromvar != .' then succeeds with rc=0 but
+	// r(N)==0/r(max) missing (confirmed directly - it does NOT itself
+	// raise an error), so `maxNodes' silently became the LITERAL STRING
+	// "." and was later passed as a Mata dimension argument to
+	// get_nodenames_from_string()'s own J() call, crashing with a raw
+	// "argument out of range" (r3300) instead of a clean message.
 	sum `fromvar' if `fromvar' != .
+	if r(N) == 0 {
+		noisily di "{err}no valid (non-missing) node identifiers found in `fromvar'/`tovar' - nothing to build a network from."
+		exit 2000
+	}
 	local maxNodes = r(max)
 	sum `tovar' if `tovar' != .
 	if (r(max) != .) {
