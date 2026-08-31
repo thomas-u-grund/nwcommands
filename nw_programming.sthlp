@@ -96,7 +96,7 @@ Afterwards, all we have to do is {help nwset} a new network using the option {bf
 {pstd}
 Notice this program's own public option is {bf:name()}, not {bf:generate()} - unlike {it:myindegree}
 above, {it:myinverse} always produces exactly one new network as its core, unavoidable job (there is
-no "in place" version of inverting a network to fall back to), matching how {help nwset}/{help nw2project}
+no "in place" version of inverting a network to fall back to), matching how {help nwset} and {help nw2project}
 name the network they create. {bf:generate()} is reserved elsewhere in the package for a new Stata
 {it:variable} (as in {it:myindegree} above), or for opting into a copy when a command's default
 behavior is to modify something in place instead (see {help nwsym}, {help nwrecode}).
@@ -251,6 +251,45 @@ Use plain quotes for emphasis in comments instead of backticks.
 in a Mata function must be declared ({bf:real scalar}, {bf:real matrix}, {bf:pointer(...)}, etc.)
 before use, including loop counters and temporaries that a looser Mata script would let you introduce
 implicitly.
+{p_end}
+
+{p 6 10 2}
+11. A command declared {bf:program name, rclass} that posts a result via a raw
+{bf:mata: st_numscalar("r(x)", val)}/{bf:st_global("r(x)", val)} poke instead of the formal
+{bf:return scalar}/{bf:return local} command will find {bf:r(x)} silently empty once the program
+returns to its caller - Stata's rclass wrapper discards anything not published through the formal
+{bf:return} mechanism. A handful of commands with no class declared at all happen to work with the
+raw-poke pattern anyway (nothing wipes an undeclared program's own scalars), which makes this easy
+to copy from the wrong example - always use {bf:return scalar}/{bf:return local} in anything
+declared {bf:rclass}. Note this pairs with pitfall 5 above: once you switch to {bf:return scalar},
+{bf:r(x)} still reads as missing from {it:inside} that same program body, so any display logic
+needs the underlying local, not {bf:r(x)}, either way.
+{p_end}
+
+{p 6 10 2}
+12. Any command that {bf:st_store()}s a result into a Stata variable must first ensure the active
+dataset actually has enough, correctly-aligned rows for the target network - call
+{bf:_nwsetobs netname} (grows {bf:_N} to at least the largest node count among currently registered
+networks) and then {bf:nw_datasync netname, generate(included)} (aligns row {it:i} with node {it:i} by name,
+reusing existing rows/attributes where possible) before the {bf:st_store()} call, exactly as
+{bf:nwcloseness}/{bf:nwdegree}/{bf:nwevcent} already do. Skipping this works fine as long as the
+caller's active dataset already happens to be sized to the target network - and crashes with a raw
+Mata "argument out of range" the moment it is not (e.g. immediately after {bf:clear}, or right after
+working with a differently-sized network) - a real bug independently reintroduced in six different
+new commands in one session before being caught by deliberate adversarial testing, not by normal use.
+{p_end}
+
+{p 6 10 2}
+13. A sparse-native construction path that builds {bf:colidx}/{bf:rowptr} directly from a triplet
+list (rather than materializing a dense matrix first) needs its own explicit self-loop filter if the
+network disallows them - the dense path's own convention ({bf:set_selfloop()}/
+{bf:ensure_dense_built()} both blank the diagonal via {bf:_diag(e,.)} when {bf:isselfloop==0}) does
+{bf:not} automatically apply to a hand-built sparse index. A stray self-referential row in a real
+dataset's own source edge list can otherwise bake a phantom self-tie permanently into
+{bf:has_edge()}/{bf:neighbors()}, while {bf:get_matrix()}/{bf:get_matrix_mod()} keep reporting a
+clean diagonal (they re-derive it fresh from the dense-side filter every time) - the two
+representations silently disagree, with no error anywhere, until something built on the sparse
+accessors (a triad census, say) produces a structurally impossible fractional count.
 {p_end}
 
 {pstd}
