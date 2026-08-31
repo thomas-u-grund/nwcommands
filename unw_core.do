@@ -1712,6 +1712,126 @@ real scalar maxflow_sparse_query(pointer(real colvector) scalar edgeToP,
 }
 
 /*
+	bfs_augment_sparse_buffered: identical BFS logic to bfs_augment_sparse()
+	above, but `visited'/`queue'/`parentEdge' are CALLER-OWNED buffers
+	(passed by pointer, sized once for the whole query sequence) instead
+	of freshly J()-allocated on every single call - see
+	maxflow_sparse_query_buffered()'s own header comment for why this
+	matters. `visited' uses a monotonically-increasing `stamp' instead of
+	a literal 0/1 reset: an entry is "visited (by this call)" exactly
+	when it equals the CURRENT stamp, so a fresh traversal needs no O(N)
+	zeroing pass - the caller just increments the stamp before each call.
+	`queue' needs no reset at all even without the stamp trick: `qhead'/
+	`qtail' always start at 1 and only ever advance to positions this
+	SAME call has itself written, so no stale entry from an earlier call
+	is ever read. `parentEdge' has the identical property (only read at
+	indices this call marked visited).
+*/
+real scalar bfs_augment_sparse_buffered(real colvector edgeTo, real colvector edgeCap, real colvector flow,
+		real colvector headEdge, real colvector nextEdge,
+		real scalar s, real scalar t,
+		pointer(real colvector) scalar visitedP,
+		pointer(real colvector) scalar queueP,
+		pointer(real colvector) scalar parentEdgeP,
+		real scalar stamp){
+	real scalar qhead, qtail, u, e, v
+
+	qhead = 1
+	qtail = 1
+	(*queueP)[1] = s
+	(*visitedP)[s] = stamp
+
+	while (qhead <= qtail) {
+		u = (*queueP)[qhead]
+		qhead++
+		e = headEdge[u]
+		while (e != 0) {
+			if ((edgeCap[e] - flow[e]) > 0) {
+				v = edgeTo[e]
+				if ((*visitedP)[v] != stamp) {
+					(*visitedP)[v] = stamp
+					(*parentEdgeP)[v] = e
+					if (v == t) return(1)
+					qtail++
+					(*queueP)[qtail] = v
+				}
+			}
+			e = nextEdge[e]
+		}
+	}
+	return(0)
+}
+
+/*
+	maxflow_sparse_query_buffered: identical contract and result to
+	maxflow_sparse_query() above, for the callers that run it inside a
+	tight O(n) (fast_min_cut_search_edges()) or O(delta^2)
+	(fast_min_cut_search()) loop of independent queries against the SAME
+	shared topology. Those callers now allocate `visited'/`queue'/
+	`parentEdge' (each sized N=2n) and a `stamp' counter exactly ONCE for
+	their entire query sequence and pass them through here by pointer,
+	instead of this function (or bfs_augment_sparse() inside it)
+	re-allocating fresh O(N) buffers on every one of the potentially
+	thousands of augmenting-path BFS calls a single such sequence makes -
+	the buffer-reuse follow-on flagged in docs/CERTIFICATION.md/
+	docs/ROADMAP.md after the max-flow query-sharing fix (harmonisation
+	unit 108) as the likely dominant remaining allocation cost for the
+	"confirm this subgraph already meets the target k" case specifically
+	(disproving a lower bound can early-exit on the first small cut
+	found; proving one cannot, and so pays this cost on every query).
+	`flow' itself still gets a fresh J() per query (unlike
+	visited/queue/parentEdge, its own VALUES - not just "touched or not"
+	- are read arithmetically and must genuinely start at zero for each
+	new query's own residual graph) - out of scope for this fix, and a
+	strictly smaller, already-necessary O(edges) cost per query either
+	way.
+*/
+real scalar maxflow_sparse_query_buffered(pointer(real colvector) scalar edgeToP,
+		pointer(real colvector) scalar edgeCapP,
+		pointer(real colvector) scalar edgeRevP,
+		pointer(real colvector) scalar headEdgeP,
+		pointer(real colvector) scalar nextEdgeP,
+		real scalar n, real scalar bignum, real scalar s, real scalar t,
+		pointer(real colvector) scalar visitedP,
+		pointer(real colvector) scalar queueP,
+		pointer(real colvector) scalar parentEdgeP,
+		pointer(real scalar) scalar stampP){
+	real scalar maxf, pathflow, pf, v, e, erev
+	real colvector flow
+
+	(*edgeCapP)[2*s-1] = bignum
+	(*edgeCapP)[2*t-1] = bignum
+
+	flow = J(rows(*edgeToP), 1, 0)
+	maxf = 0
+	(*stampP) = (*stampP) + 1
+	while (bfs_augment_sparse_buffered(*edgeToP, *edgeCapP, flow, *headEdgeP, *nextEdgeP, n+s, t, visitedP, queueP, parentEdgeP, *stampP)) {
+		pathflow = bignum
+		v = t
+		while (v != n+s) {
+			e = (*parentEdgeP)[v]
+			pf = (*edgeCapP)[e] - flow[e]
+			if (pf < pathflow) pathflow = pf
+			v = (*edgeToP)[(*edgeRevP)[e]]
+		}
+		v = t
+		while (v != n+s) {
+			e = (*parentEdgeP)[v]
+			erev = (*edgeRevP)[e]
+			flow[e] = flow[e] + pathflow
+			flow[erev] = flow[erev] - pathflow
+			v = (*edgeToP)[erev]
+		}
+		maxf = maxf + pathflow
+		(*stampP) = (*stampP) + 1
+	}
+
+	(*edgeCapP)[2*s-1] = 1
+	(*edgeCapP)[2*t-1] = 1
+	return(maxf)
+}
+
+/*
 	build_vertexsplit_sparse_edges: identical construction to
 	build_vertexsplit_sparse() above, but taking an already-sparse
 	symmetric edge list (eu, ev - each undirected tie listed once in
@@ -1801,11 +1921,12 @@ void build_vertexsplit_sparse_edges(real scalar n, real colvector eu, real colve
 	n=5,000 even after this same unit's sparse max-flow fix.
 */
 real rowvector fast_min_cut_search_edges(real scalar n, real colvector eu, real colvector ev, | real scalar target){
-	real scalar m, i, j, v0, delta, f, minflow, best_s, best_t, bignum, e, has_target
+	real scalar m, i, j, v0, delta, f, minflow, best_s, best_t, bignum, e, has_target, stamp
 	real colvector deg, rowptr, colidx, cursor
 	real rowvector neighbors_v0, isNbrJ
 	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
 	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+	real colvector visited, queue, parentEdge
 
 	// BUGFIX (this unit): step (2) below - "v0 to every vertex it is
 	// NOT adjacent to" - is genuinely O(n-1-delta) queries, not O(delta)
@@ -1868,6 +1989,18 @@ real rowvector fast_min_cut_search_edges(real scalar n, real colvector eu, real 
 	nextEdgeP = &nextEdge
 	build_vertexsplit_sparse_edges(n, eu, ev, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
 
+	// PERFORMANCE FIX (buffer reuse, flagged in docs/CERTIFICATION.md
+	// after this same unit's own query-sharing fix above): visited/
+	// queue/parentEdge, sized N=2n, allocated ONCE for this function's
+	// entire query sequence (up to O(n) queries below) and reused via
+	// maxflow_sparse_query_buffered()'s own stamp trick, instead of
+	// bfs_augment_sparse() re-allocating all three fresh on every single
+	// augmenting-path BFS call - see that function's own header comment.
+	visited = J(2*n,1,0)
+	queue = J(2*n,1,0)
+	parentEdge = J(2*n,1,0)
+	stamp = 0
+
 	// v0's own neighbor set and a marker array for O(1) "is i tied to
 	// v0?" checks. BUGFIX: Mata's a::b range operator produces a
 	// DESCENDING sequence when a>b (confirmed directly: "6::5" is
@@ -1888,7 +2021,7 @@ real rowvector fast_min_cut_search_edges(real scalar n, real colvector eu, real 
 	// already has a valid (s,t) cutting pair.
 	for (i=1; i<=n & !(has_target & minflow < target); i++) {
 		if (i != v0 & isNbrJ[i] == 0) {
-			f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i)
+			f = maxflow_sparse_query_buffered(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i, &visited, &queue, &parentEdge, &stamp)
 			if (f < minflow) {
 				minflow = f
 				best_s = v0
@@ -1906,7 +2039,7 @@ real rowvector fast_min_cut_search_edges(real scalar n, real colvector eu, real 
 		isNbrJ[colidx[(rowptr[neighbors_v0[i]]+1)::rowptr[neighbors_v0[i]+1]]'] = J(1, deg[neighbors_v0[i]], 1)
 		for (j=i+1; j<=cols(neighbors_v0) & !(has_target & minflow < target); j++) {
 			if (isNbrJ[neighbors_v0[j]] == 0) {
-				f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j])
+				f = maxflow_sparse_query_buffered(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j], &visited, &queue, &parentEdge, &stamp)
 				if (f < minflow) {
 					minflow = f
 					best_s = neighbors_v0[i]
@@ -2187,10 +2320,11 @@ real scalar maxflow_vertex_split_shared(pointer(real matrix) scalar capptr, real
 	it - including the complete-graph case above).
 */
 real rowvector fast_min_cut_search(real matrix adj){
-	real scalar n, i, j, v0, delta, f, minflow, best_s, best_t, bignum
+	real scalar n, i, j, v0, delta, f, minflow, best_s, best_t, bignum, stamp
 	real rowvector degrees, neighbors_v0
 	pointer(real colvector) scalar edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP
 	real colvector edgeTo, edgeCap, edgeRev, headEdge, nextEdge
+	real colvector visited, queue, parentEdge
 
 	n = rows(adj)
 	degrees = J(1, n, 0)
@@ -2235,10 +2369,19 @@ real rowvector fast_min_cut_search(real matrix adj){
 	nextEdgeP = &nextEdge
 	build_vertexsplit_sparse(adj, bignum, edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP)
 
+	// PERFORMANCE FIX (buffer reuse) - see
+	// maxflow_sparse_query_buffered()'s own header comment; identical
+	// fix as fast_min_cut_search_edges() above, applied here to this
+	// function's own O(delta^2) query sequence.
+	visited = J(2*n,1,0)
+	queue = J(2*n,1,0)
+	parentEdge = J(2*n,1,0)
+	stamp = 0
+
 	// (2) v0 to every vertex it is NOT adjacent to
 	for (i=1; i<=n; i++) {
 		if (i != v0 & adj[v0,i] == 0) {
-			f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i)
+			f = maxflow_sparse_query_buffered(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, v0, i, &visited, &queue, &parentEdge, &stamp)
 			if (f < minflow) {
 				minflow = f
 				best_s = v0
@@ -2252,7 +2395,7 @@ real rowvector fast_min_cut_search(real matrix adj){
 	for (i=1; i<=cols(neighbors_v0); i++) {
 		for (j=i+1; j<=cols(neighbors_v0); j++) {
 			if (adj[neighbors_v0[i], neighbors_v0[j]] == 0) {
-				f = maxflow_sparse_query(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j])
+				f = maxflow_sparse_query_buffered(edgeToP, edgeCapP, edgeRevP, headEdgeP, nextEdgeP, n, bignum, neighbors_v0[i], neighbors_v0[j], &visited, &queue, &parentEdge, &stamp)
 				if (f < minflow) {
 					minflow = f
 					best_s = neighbors_v0[i]
