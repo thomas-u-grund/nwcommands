@@ -142,4 +142,22 @@ assert colsof(e(b)) == 6
 di as text "  all-families fit (degree+recency+covariates): " colsof(e(b)) " coefficients"
 
 di as text "{hline 60}"
+di as text "Test: nwrem requires at least one effect option"
+di as text "{hline 60}"
+capture noisily nwrem chatlog
+assert _rc == 198
+di as text "  correctly rejected zero-effect call (rc=" _rc ")"
+
+* Two-mode rejection (nwrem.ado's own explicit guard, see its header
+* comment) is NOT exercised here: nwset's own time()/interval()/
+* eventtime() options cannot currently be combined with twomode/
+* bipartite in the same call (docs/ROADMAP.md's own tracked
+* composability gap), so no live network can reach is2mode()=="true"
+* while also being an event-type network via the public interface
+* today - the same "genuinely unreachable from outside, not a bug"
+* situation this project's own nwtab2/nwtab3 dispatch guards are in
+* (see cscripts/test_nwtab2.do). Revisit once that composability gap
+* closes.
+
+di as text "{hline 60}"
 di as result "ALL TESTS PASSED"
