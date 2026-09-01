@@ -13,9 +13,9 @@
         {help netexample##gang:gang}{col 29}{stata "nwwebuse gang":use} | {stata "sysdescribe gang.dta":describe}
         {help netexample##glasgow:glasgow}{col 29}{stata "nwwebuse glasgow":use} | {stata "sysdescribe glasgow.dta":describe}
         {help netexample##florentine:florentine}{col 29}{stata "nwwebuse florentine":use} | {stata "sysdescribe florentine.dta":describe}
-        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "sysdescribe usstates.dta":describe}
-        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "sysdescribe klas12b.dta":describe}
-        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "sysdescribe hpotter.dta":describe}
+        {help netexample##usstates:usstates}{col 29}{stata "nwwebuse usstates":use} | {stata "sysdescribe usstates.nwdta":describe}
+        {help netexample##klas12b:klas12b}{col 29}{stata "nwwebuse klas12b":use} | {stata "sysdescribe klas12b.nwdta":describe}
+        {help netexample##hpotter:hpotter}{col 29}{stata "nwwebuse hpotter":use} | {stata "sysdescribe hpotter.nwdta":describe}
         {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "sysdescribe macaque.nwdta":describe}
         {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "sysdescribe chesapeake.nwdta":describe}
         {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "sysdescribe usair.nwdta":describe}
@@ -171,14 +171,34 @@ Breiger R. and Pattison P. (1986). Cumulated social roles: The duality of person
 
 
 
+{marker usstates}
+{title:US states data}
+
+{pstd}
+{bf:Networks:} {it:usstates} (undirected){p_end}
+{pstd}
+{bf:Vertex attributes:} none - vertex labels are the two-letter state abbreviations.
+
+{pstd}
+A tie between two US states means they share a land border. 50 states, 107 border ties.
+
+
+
 {marker klas12b}
 {title:Klas12b data}
 
 {pstd}
-{bf:Networks:} {it:klas12b_wave1, klas12b_wave2, klas12b_wave3, klas12b_wave4, klas12b_primary}{p_end}
+{bf:Networks:} {it:klas12b_wave1, klas12b_wave2, klas12b_wave3, klas12b_wave4, klas12b_primary} (directed){p_end}
 {pstd}
 {bf:Vertex attributes:}
 {it:delinq1, delinq3, delinq3, delinq4, alcohol2, alcohol3, alcohol4, sex age, ethnicity, age, religion, advice}
+
+{pstd}
+As loaded via {opt nwwebuse}, each network's own tie indicator is binary (1 = nomination,
+0 = otherwise) - the raw source coding's own {bf:9} (missing) and {bf:10} (not a member of the
+classroom at that wave, a structural zero) both collapse to "no tie" rather than surviving as a
+separate valued/missing distinction, so a "0" in the loaded network does not distinguish an
+explicit non-nomination from a genuinely unobserved or structurally absent dyad.
 
 {pstd}
 This data is about a friendship network in a Dutch school class. The data were collected between September 2003 and June 2004 by Andrea 
@@ -284,7 +304,7 @@ Steglich, Christian, and Knecht, Andrea (2009), Die statistische Analyse dynamis
 {title:Harry Potter data}
 
 {pstd}
-{bf:Networks:} {it:hpbook1, hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6 }{p_end}
+{bf:Networks:} {it:hpbook1, hpbook2, hpbook3, hpbook4, hpbook5, hpbook6} (directed){p_end}
 {pstd}
 {bf:Vertex attributes:}
 {it:schoolyear, gender, and house}
