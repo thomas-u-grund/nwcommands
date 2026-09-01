@@ -15,6 +15,12 @@ mata: assert(`r(adj)'[1,2] == 1)
 mata: `r(adj_copy)'[1,2] = 99
 mata: assert(`r(adj)'[1,2] == 1)
 
+* --- failure path: a misspelled/nonexistent network name is rejected
+* with this command's own clean error (482, see nw_tomata.ado's own
+* header comment), not a raw Mata "subscript invalid" (r3301) crash.
+capture noisily nw_tomata bogusnet123, mat(z2)
+assert _rc == 482
+
 
 
 

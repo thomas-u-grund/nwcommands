@@ -59,6 +59,13 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 4
 assert         r(id)            == 1
 
+* --- failure paths: varlist requires at least 2 variables (rejected by
+* Stata's own syntax parser, min=2); a nonexistent variable name is
+* rejected the same way (r(111), "variable not found").
+capture noisily nw2fromedge x
+assert _rc != 0
 
+capture noisily nw2fromedge x nonexistentvar
+assert _rc == 111
 
 

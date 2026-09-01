@@ -91,6 +91,15 @@ assert         r(missing_edges) == 13
 assert         r(selfloops)     == 0
 assert         r(id)            == 1
 
+* --- failure path: nw2set's own edgelist branch dispatches straight to
+* nw2fromedge, which requires at least 2 variables (min=2) - a single
+* variable (or a nonexistent one) is rejected the same way as a direct
+* nw2fromedge call.
+capture noisily nw2set x, edgelist
+assert _rc != 0
+capture noisily nw2set x nonexistentvar, edgelist
+assert _rc == 111
+
 
 
 

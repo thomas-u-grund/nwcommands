@@ -12,5 +12,11 @@ assert `"`r(unab)'"'     == `"mynet1 mynet2"'
 assert `"`r(netlist)'"'  == `"mynet1 mynet2"'
 assert `"`r(networks)'"' == `"2"'
 
+* --- failure path: min() is passed straight through to Stata's own
+* `unab', which enforces it - a pattern matching zero networks with
+* min(1) required is rejected, not silently returned as an empty list.
+capture noisily nw_unab nets2 : bogus_pattern_xyz*, min(1)
+assert _rc != 0
+
 
 
