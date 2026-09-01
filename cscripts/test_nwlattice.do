@@ -135,3 +135,11 @@ nwclear
 nwlattice 3 3, ntimes(3)
 assert `"`r(netlist)'"' == `"lattice_1 lattice_2 lattice_3"'
 di "=== r(netlist) REGRESSION VERIFIED ==="
+
+* --- failure path: an explicit, caller-chosen name() that collides
+* with an already-loaded network is rejected (unlike the default
+* unnamed case above, which auto-increments instead).
+nwclear
+nwlattice 3 3, name(explicitlattice)
+capture noisily nwlattice 3 3, name(explicitlattice)
+assert _rc != 0
