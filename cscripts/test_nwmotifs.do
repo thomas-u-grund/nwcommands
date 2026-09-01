@@ -120,3 +120,8 @@ nwset, mat((0,1,0\1,0,1\0,1,0)) name(m_toosmall) labs(A,B,C)
 capture nwmotifs m_toosmall
 assert _rc == 6556
 di "=== nwmotifs error handling REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwmotifs nonexistent
+assert _rc == 482

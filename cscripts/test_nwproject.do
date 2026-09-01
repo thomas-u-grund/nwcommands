@@ -40,3 +40,8 @@ nwtomata proj1, mat(M2)
 mata: assert(M2[1,2] == 7)
 
 di "=== nwproject alias VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw2project's own nw_syntax passthrough (error 482).
+capture noisily nwproject nonexistent, project(1)
+assert _rc == 482
