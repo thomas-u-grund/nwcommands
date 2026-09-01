@@ -25,6 +25,7 @@ program unw_defs
 	c_local 	errNetexpMalformed	6077	// a netexp expression is empty or has unmatched parentheses
 	c_local 	errMatrixShape	6082	// a user-supplied Mata/Stata matrix has the wrong shape (not square, wrong dimensions, etc.)
 	c_local 	errFormatUnsupported	6705	// an unsupported file/data format was requested or detected
+	c_local 	errNodeNotFound	485	// a referenced node (by name or id) does not exist in the network, or an id is out of range
 	// Stata's own reserved codes are used as-is (not reinvented) for
 	// their standard meanings package-wide: 99 = a STATA VARIABLE
 	// already exists, specify replace (distinct from errNWsExists

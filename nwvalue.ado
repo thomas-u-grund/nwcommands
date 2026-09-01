@@ -13,11 +13,27 @@ program nwvalue
 		local netname = substr("`netname'", 1, `bracketpos' - 1)
 	}
 
+	unw_defs
 	mata: st_rclear()
 
+	// BUGFIX (error-code coherence, found alongside the out-of-range fix
+	// below): this and the two "does not exist" checks just below used
+	// to all raise the bare literal `error 3000' - Stata's OWN reserved
+	// code for "Mata compile-time error", so every one of these prints
+	// Stata's own generic canned text for that ALONGSIDE this command's
+	// real message, confusingly implying an internal crash rather than
+	// a deliberate validation guard (the exact anti-pattern nwsimmelian.ado
+	// already identified and fixed for its own unrelated "already exists"
+	// case - see that file's own comment). This specific guard ("neither
+	// ego()/alter() nor egoid()/alterid() given") is a required-option-
+	// combination failure, which unw_defs.ado's own registry documents
+	// Stata's reserved 198 as the package-wide convention for - not a
+	// node-lookup failure - so it gets 198, while the two "node does not
+	// exist" checks just below (and the out-of-range checks further
+	// down) get the new `errNodeNotFound' (485) instead.
 	if (!(("`ego'" != "" & "`alter'" != "" ) | (`egoid' != 0 & `alterid' != 0))){
 		di "{err}Either options {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified."
-		error 3000
+		error 198
 	}
 	nw_syntax `netname', max(1)
 	if `"`ego'"' != "" {
@@ -25,14 +41,14 @@ program nwvalue
 			// check that ego and alter are valid
 			mata: st_numscalar("r(ego_valid)", `netobj'->has_node(`"`ego'"'))
 			mata: st_numscalar("r(alter_valid)", `netobj'->has_node(`"`alter'"'))
-			
+
 			if `r(ego_valid)' != 1 {
 				di "{err}node {it:`ego'} does not exist in network {bf:`netname'}"
-				error 3000
+				error `errNodeNotFound'
 			}
 			if `r(alter_valid)' != 1 {
 				di "{err}node {it:`alter'} does not exist in network {it:`netname'}"
-				error 3000
+				error `errNodeNotFound'
 			}
 			
 			capture mata: st_numscalar("r(ego_id)", select((1::`nodes'), (`netobj'->get_nodenames() :== "`ego'")'))
@@ -52,15 +68,15 @@ program nwvalue
 		// for missing. The equivalent ego()/alter() (name-based) path
 		// just above already raises a clean error for an invalid node
 		// - out-of-range ids are the same kind of caller mistake and
-		// now raise the same way (same error code this file already
-		// uses for "does not exist").
+		// now raise the same way (`errNodeNotFound', the same code
+		// this file's own name-based ego()/alter() path above uses).
 		if `egoid' < 1 | `egoid' > `nodes' {
 			di "{err}egoid {it:`egoid'} out of range (network `netname' has `nodes' nodes)"
-			error 3000
+			error `errNodeNotFound'
 		}
 		if `alterid' < 1 | `alterid' > `nodes' {
 			di "{err}alterid {it:`alterid'} out of range (network `netname' has `nodes' nodes)"
-			error 3000
+			error `errNodeNotFound'
 		}
 		capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`egoid', `alterid'])
 		capture mata: st_numscalar("r(ego_id)", `egoid')
