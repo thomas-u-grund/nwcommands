@@ -40,7 +40,7 @@
 {marker import_type}{...}
 {p2col:{it:import_type}}Description{p_end}
 {p2line}
-{p2col:{cmd: pajek}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":Pajek NET file format}
+{p2col:{cmd: pajek}}network is given in {browse "https://docs.gephi.org/desktop/User_Manual/Import/Pajek_NET_Format/":Pajek NET file format}
 		{p_end}
 {p2col:{cmd: ucinet}}network is given in {help nwimport##ucinet:Ucinet file format}
 		{p_end}
@@ -50,7 +50,7 @@
 		{p_end}
 {p2col:{cmd: compressed}}network is given as a {help nwimport##compressed:compressed edgelist} (e.g. txt, CSV)
 		{p_end}
-{p2col:{cmd: gml}}network is given in {browse "http://gephi.github.io/users/supported-graph-formats/gml-format/":GML file format}
+{p2col:{cmd: gml}}network is given in {browse "https://docs.gephi.org/desktop/User_Manual/Import/GML_File_Format/":GML file format}
 	{p_end}
 
 
@@ -105,8 +105,8 @@ column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the sam
 {pstd}
 {cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
 multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
-networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
-or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}.
+networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/UCINET_DL_Format/":here}
+or the {browse "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf":Ucinet manual}.
 
 {phang}
 {bf:Example 1:}{p_end}
@@ -180,7 +180,7 @@ or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":
 {pstd}
 {cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}, with vertex
 labels read from the file's own {it:*Vertices} block. Two-mode networks are not supported. For a detailed description of the
-Pajek .net file format see {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":here}.
+Pajek .net file format see {browse "https://docs.gephi.org/desktop/User_Manual/Import/Pajek_NET_Format/":here}.
 
 
 

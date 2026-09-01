@@ -14,19 +14,14 @@ program animate
 	else {
 		local dloop = 0
 	}
-	if c(os) == "MacOSX" {
-		local download = "http://cactuslab.com/imagemagick/assets/ImageMagick-6.8.7-2.pkg.zip"
-	}
-	if c(os) == "Windows" {
-		if c(osdtl) == "64-bit" {
-			local download ="http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-5-Q16-x64-dll.exe"
-		}
-		else {
-			local download ="http://www.imagemagick.org/download/binaries/ImageMagick-6.8.8-5-Q8-x86-dll.exe"
-		}
-	}
-	
-	di `"{err}command requires {net "http://www.imagemagick.org/":ImageMagick} to be installed on your computer; {net "`download'":download it here}"'
+	// Version-pinned installer URLs (cactuslab.com Mac build, imagemagick.org
+	// binaries/ Windows builds) rot as soon as that version is superseded -
+	// confirmed dead (404) 2026-09-01, see cscripts/test_external_links.do.
+	// Point at ImageMagick's own current download page instead, which stays
+	// valid across version bumps.
+	local download = "https://imagemagick.org/script/download.php"
+
+	di `"{err}command requires {net "https://imagemagick.org/":ImageMagick} to be installed on your computer; {net "`download'":download it here}"'
 	
 	if "`delay'" == "" {
 		local delay "50"

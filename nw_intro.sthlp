@@ -255,7 +255,7 @@ Once you are signed up you will receive information about updates, new releases 
 If you want to get involved in the development of this software visit: 
 
 {pmore}
-{browse "http://github.com/ThomasGrund/nwcommands"}
+{browse "https://github.com/thomas-u-grund/nwcommands"}
 
 {pstd}
 You can also send an email directly to {browse "mailto:thomas.u.grund@gmail.com"}

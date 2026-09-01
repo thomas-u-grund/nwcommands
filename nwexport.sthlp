@@ -30,7 +30,7 @@
 {marker exp_type}{...}
 {p2col:{it:exp_type}}Description{p_end}
 {p2line}
-{p2col:{cmd: pajek}}network is saved in {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":Pajek .NET file format}
+{p2col:{cmd: pajek}}network is saved in {browse "https://docs.gephi.org/desktop/User_Manual/Import/Pajek_NET_Format/":Pajek .NET file format}
 		{p_end}
 {p2col:{cmd: ucinet}}network is saved in {help nwimport##ucinet:Ucinet .DL file format}
 		{p_end}
