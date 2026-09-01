@@ -135,22 +135,22 @@ neighbors. The coefficient is -1 when the two nodes have no network neighbors in
     {c BLC}{hline 21}{c BRC}
 
 {pstd}
-In this example, we first load the data from Zachary's Karate Club (saved in Ucinet format). These are 
-data collected from the members of a university karate club by  Wayne Zachary (1977). The ZACHE network represents 
-the presence or absence of ties among the members of the club; the ZACHC network indicates the relative
-strength of the associations (number of situations in and outside the club in which interactions 
-occurred).
+In this example, we first load the data from Zachary's Karate Club (see {help netexample##zachary:zachary}).
+These are data collected from the members of a university karate club by Wayne Zachary (1977). The
+{it:zachary_bin} network represents the presence or absence of ties among the members of the club;
+{it:zachary_val} indicates the relative strength of the associations (number of situations in and
+outside the club in which interactions occurred).
 
 {pmore}
-{cmd:. nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/zachary.dat, type(ucinet)}
+{cmd:. nwwebuse zachary, nwclear}
 
 {pstd}
-Next, let us calculate the correlation between nodes (which essentially gives us an idea about the overlap of 
+Next, let us calculate the correlation between nodes (which essentially gives us an idea about the overlap of
 ties between nodes). Remember that the correlation between two nodes is 1 when these two nodes share exactly
-the same network neighbors. 
+the same network neighbors.
 
 {pmore}
-{cmd:. nwcorrelate ZACHE}
+{cmd:. nwcorrelate zachary_bin}
 
 {pstd}
 This generates the new network {it:_corr}, which holds the pair-wise node correlations. These node correlations tell us

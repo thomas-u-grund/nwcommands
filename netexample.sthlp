@@ -23,30 +23,11 @@
         {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "sysdescribe s50.nwdta":describe}
         {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "sysdescribe sampson.nwdta":describe}
         {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "sysdescribe mesa.nwdta":describe}
+        {help netexample##zachary:zachary}{col 29}{stata "nwwebuse zachary":use} | {stata "sysdescribe zachary.nwdta":describe}
+        {help netexample##kapferer:kapferer}{col 29}{stata "nwwebuse kapferer":use} | {stata "sysdescribe kapferer.nwdta":describe}
 
 {hline}
 
-{marker ucinet}{...}
-{pstd}The datasets listed are in {help nwsave##fileformat:Ucinet file-format} and hosted on http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm.
-{p_end}
-
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#bkfrat":Bernhard & Killworh fraternity}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/bkfrat.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#bkham":Bernhard & Kilworth ham radio}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/bkham.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#bkoff":Bernhard & Kilworth office}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/bkoff.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#bktec":Bernhard & Kilworth technical}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/bktec.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#prison":Gangnon & Macrae prison}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat, type(ucinet) name(PRISON)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#kapmine":Kapferer mine}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/kapmine.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#kaptail":Kapferer tailor shop}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/kaptail.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#krackoff":Krackhardt office (non-symmetric)}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/krackad.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#krackoff":Krackhadt office (symmetric)}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/krackfr.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#newfrat":Newcomb fraternity}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/newfrat.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#sampson":Sampson monastery}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/sampson.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#taro":Schwimmer taro exchange}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/taro.dat, type(ucinet) name(TARO)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#thuroff":Thurman office}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/thuroff.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#wolf":Wolfe primates}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/wolf.dat, type(ucinet)":import} 
-        {browse "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/ucidata.htm#zachary":Zachary karate club}{col 55}{stata "nwimport http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/zachary.dat, type(ucinet)":import} 
-
-		
 {marker gang}
 {title:Gang data}
 
@@ -542,3 +523,59 @@ Software, 24(3).
 {pmore}
 Distributed with R's own {cmd:ergm} package as {cmd:data(faux.mesa.high)} (part of the Statnet
 Project).
+
+
+
+{marker zachary}
+{title:Zachary karate club data}
+
+{pstd}
+{bf:Networks:} {it:zachary_bin} (undirected, binary), {it:zachary_val} (undirected, valued - the
+same ties, weighted by the number of contexts the two members interacted in outside the club){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:group}
+
+{pstd}
+Wayne Zachary's 1970s study of a university karate club: 34 members, a tie whenever two members
+were observed interacting outside the club's own scheduled activities. Partway through the study a
+dispute between the club's president and instructor split the club into two factions - {it:group}
+(1/2) records which side each member ultimately joined, making this the single most widely used
+worked example for community-detection/faction-recovery methods in network analysis. Node labels
+are {it:Mr Hi} (the instructor), {it:Actor 2}-{it:Actor 34} (the officer/president is node 34).
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Zachary, W.W. (1977). An information flow model for conflict and fission in small groups. Journal
+of Anthropological Research, 33, 452-473.
+
+{pmore}
+Distributed with R's own {cmd:igraphdata} package as {cmd:data(karate)}.
+
+
+
+{marker kapferer}
+{title:Kapferer tailor shop data}
+
+{pstd}
+{bf:Networks:} {it:kapferer_t1} (39 nodes), {it:kapferer_t2} (43 nodes) - both undirected{p_end}
+{pstd}
+{bf:Vertex attributes:} none
+
+{pstd}
+Bruce Kapferer's 1972 study of sociation among workers at a Zambian tailor shop, observed at two
+time points around a labor dispute (an unsuccessful attempt to unionize) - {it:kapferer_t1} is the
+"before" network, {it:kapferer_t2} the "after" one. The two networks do NOT share a common node
+set (workers left and joined the shop between observations, a real and deliberate feature of the
+original study, not a data-quality issue) - they are two independent networks, not a two-wave panel
+on the same actors the way {help netexample##s50:s50}/{help netexample##klas12b:klas12b} are.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Kapferer, B. (1972). Strategy and Transaction in an African Factory. Manchester University Press.
+
+{pmore}
+Distributed with R's own {cmd:ergm} package as {cmd:data(kapferer)} (part of the Statnet Project).

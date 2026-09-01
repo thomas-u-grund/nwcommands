@@ -83,10 +83,11 @@ The following network formats are supported:
 {pmore}{help nwimport##gml:- GML}{p_end}
 
 {pstd}
-Can also be used to import networks from the internet:
+{it:{help filename}} can also be a URL, so networks can be imported directly from the internet
+without downloading a local copy first, e.g.:
 
 {phang}
-{cmd:. nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)}{p_end}
+{cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/edgelist_example.txt", type(edgelist)}{p_end}
 
 {title:Supported network types}
 
@@ -105,7 +106,7 @@ column node sets (e.g. rectangular Ucinet/Pajek matrices); auto-detected the sam
 {cmd:nwimport} can import the most common Ucinet DL format types: {it:fullmatrix, upperhalf, edgelist1, nodelist1}. It also supports
 multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
 networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
-or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
+or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}.
 
 {phang}
 {bf:Example 1:}{p_end}
@@ -177,10 +178,9 @@ or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":
 {title:Import Pajek .net format}
 
 {pstd}
-{cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}. It also supports
-multiple networks ({it:nm > 0), diagonal = absent, labels:, matrix labels:, level labels:, labels embedded, row labels embedded, col labels embedded}. Two-mode
-networks are not supported. For a detailed description of the Ucinet .dl file format see {browse "http://gephi.github.io/users/supported-graph-formats/ucinet-dl-format/":here}
-or the {browse "https://www.soc.umn.edu/~knoke/pages/UCINET_6_User's_Guide.doc":Ucinet manual}. Here is a {help netexample##ucinet:list of popular networks delivered with Ucinet}.  
+{cmd:nwimport} can import the most common Pajek .net formats: {it:*arcs, *edges, *arcslist, *edgeslist, *matrix}, with vertex
+labels read from the file's own {it:*Vertices} block. Two-mode networks are not supported. For a detailed description of the
+Pajek .net file format see {browse "http://gephi.github.io/users/supported-graph-formats/pajek-net-format/":here}.
 
 
 

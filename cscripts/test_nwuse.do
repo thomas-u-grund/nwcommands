@@ -107,3 +107,33 @@ qui nwsummarize mesa
 assert r(nodes) == 205
 assert r(edges) == 203
 
+* --- zachary/kapferer: replace the UCINET-hosted (now-dead-host)
+* "zachary"/"kapferer mine/tailor shop" examples netexample.sthlp used
+* to link to - sourced the same way as lazega/s50/sampson/mesa above
+* (igraphdata::karate, ergm::kapferer/kapferer2), not typed from
+* memory, and checked against known published statistics (Zachary's
+* own 34-node/78-edge/16-18-faction split; Kapferer's own 39/158 and
+* 43/190 pre-/post-dispute node/tie counts) before being trusted.
+nwclear
+nwuse data/zachary, nwclear
+nwset
+assert r(networks) == 2
+assert `"`r(nets)'"' == `" zachary_bin zachary_val"'
+confirm variable group
+qui nwsummarize zachary_bin
+assert r(nodes) == 34
+assert r(edges) == 78
+qui nwsummarize zachary_val
+
+nwclear
+nwuse data/kapferer, nwclear
+nwset
+assert r(networks) == 2
+assert `"`r(nets)'"' == `" kapferer_t1 kapferer_t2"'
+qui nwsummarize kapferer_t1
+assert r(nodes) == 39
+assert r(edges) == 158
+qui nwsummarize kapferer_t2
+assert r(nodes) == 43
+assert r(edges) == 190
+

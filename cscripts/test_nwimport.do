@@ -202,9 +202,76 @@ assert __ge21 == 0
 mata: mata drop __pg
 di "=== type(gml), real externally-sourced fixture (blank line + multi-word labels) SELF-CONTAINED REGRESSION VERIFIED ==="
 
+* --- type(ucinet)/type(pajek) regression, self-contained (no external
+* host needed): this section used to fetch every fixture from
+* http://vlado.fmf.uni-lj.si (Vladimir Batagelj's personal academic
+* page, hosting the "prison"/"zachary"/"football" example files this
+* section's own assertions are named after) - that host is now dead
+* (confirmed directly: DNS resolves, but the TCP connection itself
+* times out with no response at all, and a user independently confirmed
+* the same from their own network - not a one-off/local blip). Rather
+* than deleting this section's own real coverage (single- vs.
+* multi-network DL import, nwappend/nwclear/forcedirected/
+* forceundirected/name() interaction, Pajek .net import), it now builds
+* small local .dl/.net fixtures inline via `file write` (matching this
+* file's own already-established "type(matrix)"/"type(gml)" sections'
+* self-contained convention above) reproducing the exact DL syntax
+* nwimport.sthlp's own Example 1/Example 2 document - a single-network
+* directed 4-node fixture standing in for "prison", and a two-network
+* fixture with `matrix labels: ZACHE,ZACHC` standing in for "zachary"
+* (the embedded matrix labels are what named those two networks in the
+* original test, not the filename - `_nwimpdl' sets `nameoff="true"'
+* whenever "matrix labels:" is present, so any `name()' passed by the
+* caller is correctly ignored for these two, exactly as before).
+* "prison" itself is not filename-derived here (an arbitrary Stata
+* tempfile path, not literally named prison.dl) - passed explicitly via
+* `name(prison)' at every call site instead, decoupling the test from
+* any specific local filename.
+
 nwclear
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet)
+tempfile prisondl
+file open dlh using `"`prisondl'"', write replace
+file write dlh "dl n=4 format=fullmatrix" _n
+file write dlh "data:" _n
+file write dlh "0 1 0 0" _n
+file write dlh "0 0 1 0" _n
+file write dlh "0 0 0 1" _n
+file write dlh "1 0 0 0" _n
+file close dlh
+
+tempfile zachdl
+file open dlh using `"`zachdl'"', write replace
+file write dlh "dl n=4 nm=2" _n
+file write dlh "matrix labels:" _n
+file write dlh "ZACHE,ZACHC" _n
+file write dlh "data:" _n
+file write dlh "0 1 0 1" _n
+file write dlh "1 0 0 0" _n
+file write dlh "0 0 1 0" _n
+file write dlh "1 0 0 1" _n
+file write dlh "" _n
+file write dlh "0 1 1 1" _n
+file write dlh "1 0 0 0" _n
+file write dlh "1 0 0 1" _n
+file write dlh "1 0 1 0" _n
+file close dlh
+
+tempfile footballnet
+file open neth using `"`footballnet'"', write replace
+file write neth "*Vertices 4" _n
+file write neth `"1 "A""' _n
+file write neth `"2 "B""' _n
+file write neth `"3 "C""' _n
+file write neth `"4 "D""' _n
+file write neth "*Edges" _n
+file write neth "1 2" _n
+file write neth "2 3" _n
+file write neth "3 4" _n
+file write neth "4 1" _n
+file close neth
+
+nwimport `"`prisondl'"', type(ucinet) name(prison)
 assert _rc == 0
 nwname
 assert `"`r(valued)'"'   == `"false"'
@@ -213,26 +280,26 @@ assert `"`r(netname)'"'  == `"prison"'
 assert `"`r(directed)'"' == `"true"'
 assert `"`r(selfloop)'"' == `"false"'
 
-capture nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/zachary.dat", type(ucinet)
+capture nwimport `"`zachdl'"', type(ucinet)
 assert _rc != 0
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/zachary.dat", type(ucinet) nwappend
+nwimport `"`zachdl'"', type(ucinet) nwappend
 assert _rc == 0
 nwset
 assert `"`r(nets)'"' == `" prison ZACHE ZACHC"'
 assert         r(networks) == 3
 
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", nwappend name(prison2) forceundirected type(ucinet)
+nwimport `"`prisondl'"', nwappend name(prison2) forceundirected type(ucinet)
 
 assert _rc == 0
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet) nwclear
+nwimport `"`prisondl'"', type(ucinet) nwclear name(prison)
 assert _rc == 0
 nwset
 assert `"`r(nets)'"' == `" prison"'
 assert         r(networks) == 1
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet) forcedirected nwclear
+nwimport `"`prisondl'"', type(ucinet) forcedirected nwclear name(prison)
 assert _rc == 0
 nwsummarize
 
@@ -244,18 +311,19 @@ assert `"`r(directed)'"' == `"true"'
 assert `"`r(selfloop)'"' == `"false"'
 
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", type(ucinet) nwappend
+nwimport `"`prisondl'"', type(ucinet) nwappend name(prison3)
 assert _rc == 0
 nwsummarize
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data./sport/football.net", type(pajek) nwclear
+nwimport `"`footballnet'"', type(pajek) nwclear
 assert _rc == 0
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", nwclear type(ucinet) name(blabla) forcedirected
+nwimport `"`prisondl'"', nwclear type(ucinet) name(blabla) forcedirected
 nwname
 assert `"`r(directed)'"' == `"true"'
 
-nwimport "http://vlado.fmf.uni-lj.si/pub/networks/data/ucinet/prison.dat", nwclear type(ucinet) name(blabla2) forceundirected
+nwimport `"`prisondl'"', nwclear type(ucinet) name(blabla2) forceundirected
 nwname
 assert `"`r(directed)'"' == `"false"'
+di "=== type(ucinet)/type(pajek), self-contained local .dl/.net fixtures (no external host needed) SELF-CONTAINED REGRESSION VERIFIED ==="
 
