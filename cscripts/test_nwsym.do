@@ -139,3 +139,8 @@ mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest")]->get_matrix())[1
 mata: assert((*nw.nws.pdefs[nw.nws.get_index_of("replacetest_g")]->get_matrix())[1,2] == 4)
 di "=== replace/generate() REGRESSION VERIFIED ==="
 
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwsym nonexistent
+assert _rc == 482
+
