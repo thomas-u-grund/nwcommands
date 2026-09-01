@@ -62,3 +62,17 @@ nwtabulate net1, attribute(x)
 assert `"`r(netname)'"' == "net1"
 assert `"`r(attribute)'"' == "x"
 di "=== r(netname)/r(attribute) REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own error 482, before nwtabulate ever looks at
+* attribute() - reached through the public nwtabulate() dispatcher
+* (nwtab3 is a companion program inside nwtabulate.ado, not
+* independently callable - see test_nwtab1.do's own note on this).
+* (attribute() itself has no separately reachable "required" failure
+* via the public interface: an empty attribute() is valid Stata syntax,
+* treated as "not given", not rejected - and nwtabulate's own dispatch
+* logic only ever calls nwtab3 once a real attribute() value is
+* already confirmed present, so nwtab3's own required-option guard is
+* unreachable from outside, the same as nwtab2's inner min/max check.)
+capture noisily nwtabulate nonexistent, attribute(x)
+assert _rc == 482

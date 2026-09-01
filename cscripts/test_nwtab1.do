@@ -27,3 +27,13 @@ nwtabulate mynet, matcell(m)
 assert 		m[1,1] == 81
 assert 		m[2,1] == 6
 assert 		m[3,1] == 3
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482). Reached
+* through the public nwtabulate() dispatcher, not a direct nwtab1 call
+* - nwtab1 is a companion program defined inside nwtabulate.ado, not
+* independently callable outside that dispatch (confirmed directly:
+* even after a prior successful nwtabulate call in the same session, a
+* bare "nwtab1 ..." still raises a plain "command unrecognized").
+capture noisily nwtabulate nonexistent
+assert _rc == 482
