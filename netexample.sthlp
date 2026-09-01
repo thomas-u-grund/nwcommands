@@ -19,7 +19,11 @@
         {help netexample##macaque:macaque}{col 29}{stata "nwwebuse macaque":use} | {stata "sysdescribe macaque.nwdta":describe}
         {help netexample##chesapeake:chesapeake}{col 29}{stata "nwwebuse chesapeake":use} | {stata "sysdescribe chesapeake.nwdta":describe}
         {help netexample##usair:usair}{col 29}{stata "nwwebuse usair":use} | {stata "sysdescribe usair.nwdta":describe}
-		 
+        {help netexample##lazega:lazega}{col 29}{stata "nwwebuse lazega":use} | {stata "sysdescribe lazega.nwdta":describe}
+        {help netexample##s50:s50}{col 29}{stata "nwwebuse s50":use} | {stata "sysdescribe s50.nwdta":describe}
+        {help netexample##sampson:sampson}{col 29}{stata "nwwebuse sampson":use} | {stata "sysdescribe sampson.nwdta":describe}
+        {help netexample##mesa:mesa}{col 29}{stata "nwwebuse mesa":use} | {stata "sysdescribe mesa.nwdta":describe}
+
 {hline}
 
 {marker ucinet}{...}
@@ -395,3 +399,146 @@ non-social, directed transportation network.
 
 {pmore}
 OpenFlights.org Airport and Route Databases, https://openflights.org/data.php. Distributed under the Open Database License.
+
+
+
+{marker lazega}
+{title:Lazega lawyers data}
+
+{pstd}
+{bf:Networks:} {it:lazega_adv, lazega_cow, lazega_fr} (directed - advice, co-work, and friendship
+ties among the same 71 lawyers){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:age, gender, office, practice, school, seniority, status, yrs_frm}
+
+{pstd}
+This is Emmanuel Lazega's corporate law partnership network: three ties among 71 lawyers at a
+Northeastern US corporate law firm - {it:lazega_adv} ("Who do you go to for professional advice?"),
+{it:lazega_cow} ("Who do you work with?"), and {it:lazega_fr} ("Who is a personal friend?"). One of
+the standard multiplex/multi-relational ERGM and SAOM teaching networks, widely used to illustrate
+same-office/same-practice/same-status homophily. {it:status} is {it:partner} or {it:associate};
+{it:practice} is {it:litigation} or {it:corporate}; {it:office} is the lawyer's own Boston/Hartford/
+Providence location; {it:school} is {it:Harvard/Yale}, {it:UConnecticut}, or {it:other};
+{it:seniority} is each lawyer's own rank by years since joining the firm; {it:yrs_frm} is years
+with the firm. Node labels are plain sequential ids (1-71) - the original data anonymizes the
+lawyers themselves.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Lazega, E. (2001). The Collegial Phenomenon: The Social Mechanisms of Cooperation Among Peers in
+a Corporate Law Partnership. Oxford University Press.
+
+{pmore}
+Lazega, E. and van Duijn, M. (1997). Position in formal structure, personal characteristics and
+choices of advisors in a law firm: A logistic regression model for dyadic network data. Social
+Networks, 19, 375-397.
+
+{pmore}
+Distributed with R's own {cmd:ergm.multi} package as {cmd:data(Lazega)} (part of the Statnet
+Project).
+
+
+
+{marker s50}
+{title:s50 data}
+
+{pstd}
+{bf:Networks:} {it:s50_w1, s50_w2, s50_w3} (directed - friendship nominations among the same 50
+university students at three time points){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:alcohol1, alcohol2, alcohol3, smoke1, smoke2, smoke3}
+
+{pstd}
+This is Van de Bunt's university-freshmen friendship panel (a subset of 50 students from a larger
+study), collected at three points during their first year - the single most commonly used
+teaching dataset for Stochastic Actor-Oriented Models (SAOM, {help nwsaom}), distributed as the
+"s50" example data with the RSiena software this package's own SAOM implementation was
+cross-validated against. {it:alcohol1-3} (1 = never to 5 = more than once a week) and
+{it:smoke1-3} (1 = non-smoker to 3 = regular smoker) are each student's own self-reported behavior
+at the matching wave. Node labels are plain sequential ids (1-50).
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Van de Bunt, G.G., Van Duijn, M.A.J., and Snijders, T.A.B. (1999). Friendship networks through
+time: An actor-oriented dynamic statistical network model. Computational and Mathematical
+Organization Theory, 5, 167-192.
+
+{pmore}
+Distributed with the RSiena software/package (part of the Siena/RSiena project,
+https://www.stats.ox.ac.uk/~snijders/siena/).
+
+
+
+{marker sampson}
+{title:Sampson monastery data}
+
+{pstd}
+{bf:Networks:} {it:samplk1, samplk2, samplk3} (directed, valued - positive-affect ranking among
+the same 18 monks at three time points), {it:samplike} (directed, valued - the same monks' own
+final-wave "liking" ranking, the relation most commonly used on its own in ERGM teaching){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:faction, cloisterville}
+
+{pstd}
+This is Samuel Sampson's classic monastery study: 18 novice monks at a New England monastery,
+each asked to rank their top three (later four) choices on several relations across the training
+period leading up to a political crisis that split the monastery into factions. Every tie value is
+1/2/3, ranking that choice's own strength (1 = highest). {it:faction} is each monk's own
+eventually-revealed group - {it:Loyal} (supported the group in power), {it:Turks} (the opposition),
+or {it:Outcasts} (aligned with neither) - the single most commonly cited example of using ERGM/SNA
+methods to recover real-world faction structure from network data alone. {it:cloisterville}
+flags the handful of monks who transferred in from a minor seminary already called "Cloisterville"
+rather than entering directly. Node labels are the monks' own (pseudonymous, as originally
+published) first names.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Sampson, S.F. (1969). Crisis in a Cloister. Unpublished doctoral dissertation, Cornell University.
+
+{pmore}
+Distributed with R's own {cmd:ergm} package as {cmd:data(samplk)}/{cmd:data(sampson)} (part of the
+Statnet Project).
+
+
+
+{marker mesa}
+{title:Mesa High data}
+
+{pstd}
+{bf:Networks:} {it:mesa} (undirected){p_end}
+{pstd}
+{bf:Vertex attributes:} {it:grade, race, sex}
+
+{pstd}
+This is "Faux Mesa High" - a simulated but realistic 205-student high-school friendship network
+built to reproduce the same size, grade/race/sex composition, and homophily/degree structure as a
+real school network from the National Longitudinal Study of Adolescent Health (Add Health), without
+disclosing the real (restricted-access) data itself. The single most widely used worked example in
+R {cmd:ergm}'s own documentation and teaching materials for {opt nodematch()}/{opt nodemix()}/
+{opt gwesp()}-style homophily and triad-closure effects. {it:grade} is US school grade (7-12);
+{it:race} is {it:White}, {it:Black}, {it:Hisp} (Hispanic), {it:NatAm} (Native American), or
+{it:Other}; {it:sex} is {it:F}/{it:M}. 57 of the 205 students report no friendship ties at all
+(isolates) - kept in the loaded network exactly as in the original data, not silently dropped.
+
+{pmore}
+{bf:Reference}
+
+{pmore}
+Resnick, M.D. et al. (1997). Protecting adolescents from harm: Findings from the National
+Longitudinal Study on Adolescent Health. Journal of the American Medical Association, 278,
+823-832.
+
+{pmore}
+Hunter, D.R., Handcock, M.S., Butts, C.T., Goodreau, S.M., and Morris, M. (2008). ergm: A Package
+to Fit, Simulate and Diagnose Exponential-Family Models for Networks. Journal of Statistical
+Software, 24(3).
+
+{pmore}
+Distributed with R's own {cmd:ergm} package as {cmd:data(faux.mesa.high)} (part of the Statnet
+Project).
