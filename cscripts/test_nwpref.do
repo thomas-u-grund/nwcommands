@@ -103,3 +103,11 @@ nwclear
 nwpref 10, name(explicitpref)
 capture noisily nwpref 10, name(explicitpref)
 assert _rc != 0
+
+* --- failure path (BUGFIX: used to print the message and fall through
+* to actually generating an unweighted network anyway, returning
+* _rc==0 as if nothing were wrong - confirmed directly before this
+* fix, same as the identical bug in nwrandom/nwring/nwsmall/nwdyadprob).
+nwclear
+capture noisily nwpref 10, weights(abc,def)
+assert _rc != 0

@@ -47,8 +47,13 @@ program nwdendrogram
 		cluster query
 		local clus : word 1 of `r(names)'
 		if "`clus'" == "" {
+			// BUGFIX: was a bare `exit' (no return code) - the message
+			// printed but the command returned rc==0 as if nothing were
+			// wrong (same disguised-silent-failure class already fixed
+			// elsewhere in this package, see nwevcent.ado's own header
+			// comment). Confirmed directly.
 			di "{err}No cluster analysis found"
-			exit
+			error 198
 		}
 	}	
 	
@@ -156,8 +161,11 @@ program dendrogram_classes
 	if "`cutpoints'" != "" {
 		local cpts : word count `cutpoints'
 		if `cpts' != `=`rings' + 1' {
+			// BUGFIX: was a bare `exit' (no return code) - same
+			// disguised-silent-failure class as the "No cluster
+			// analysis found" guard above.
 			di "{err}Wrong number of cutpoints"
-			exit 
+			error 198
 		}
 	}
 	

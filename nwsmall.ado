@@ -111,7 +111,12 @@ program nwsmall
 		tempname w
 		capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights')) 
 		if _rc != 0 {
+			// BUGFIX: see nwrandom.ado's own header comment on this
+			// identical block for the full explanation - this used to
+			// print the message and fall through, silently producing an
+			// unweighted network while claiming success.
 			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+			error 198
 		}
 		capture mata: `w' = `w' :/ sum((`weights'))
 		if "`undirected'" != "" {

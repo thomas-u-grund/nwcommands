@@ -95,3 +95,11 @@ nwring 10, k(2) name(explicitring)
 capture noisily nwring 10, k(2) name(explicitring)
 assert _rc != 0
 di "=== r(netlist) REGRESSION VERIFIED ==="
+
+* --- failure path (BUGFIX: used to print the message and fall through
+* to actually generating an unweighted network anyway, returning
+* _rc==0 as if nothing were wrong - confirmed directly before this
+* fix, same as the identical bug in nwrandom/nwsmall/nwpref/
+* nwdyadprob).
+capture noisily nwring 10, k(2) weights(abc,def)
+assert _rc != 0

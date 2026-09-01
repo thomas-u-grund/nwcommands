@@ -100,3 +100,22 @@ nwrandom 5, prob(.5) name(explicitname)
 capture noisily nwrandom 5, prob(.5) name(explicitname)
 assert _rc != 0
 di "=== explicit name() collision REGRESSION VERIFIED ==="
+
+* --- failure paths (BUGFIX: all three of these used to print their own
+* clear error message and then either fall through to actually
+* generating an unweighted network anyway, or silently create nothing -
+* either way returning _rc==0 as if nothing were wrong, confirmed
+* directly before this fix): neither prob(), density(), nor census()
+* given; a malformed weights() that can't actually be sampled; census()
+* requesting more dyads than the network can hold.
+nwclear
+capture noisily nwrandom 5
+assert _rc != 0
+qui nwset
+assert r(networks) == 0
+
+capture noisily nwrandom 5, prob(1) weights(abc,def)
+assert _rc != 0
+
+capture noisily nwrandom 3, census(10 10)
+assert _rc != 0

@@ -327,3 +327,43 @@ nwname
 assert `"`r(directed)'"' == `"false"'
 di "=== type(ucinet)/type(pajek), self-contained local .dl/.net fixtures (no external host needed) SELF-CONTAINED REGRESSION VERIFIED ==="
 
+* --- BUGFIX (fixed in nwimport.ado, not independently reproduced here):
+* the guard rejecting a Ucinet DL file that combines format(lowerhalf)
+* with "row labels embedded" used to check a local (`rowlabsembedded')
+* that this program's own header never actually populates - a plain
+* naming mismatch with the real local, `rowlab_embedded' - so it could
+* never fire regardless of the file's real content (confirmed by
+* reading _nwimpdl's own header, which only ever declares/sets
+* `rowlab_embedded'), and even once reachable, used to only print the
+* message without calling `error' at all. Fixed to check the correct
+* local and to actually error. Not given its own dedicated repro here:
+* constructing a real DL file that reaches this exact narrow branch
+* (format(lowerhalf) + a recognized "row labels embedded" header,
+* without tripping an earlier, unrelated parsing failure first) proved
+* fragile through this file's own local-fixture approach - the
+* underlying fix was verified safe by confirming the rest of this
+* file's own existing UCINET/Pajek coverage still passes unchanged.
+*
+* --- failure path: an unrecognized format() string is rejected (this
+* fix separately touched the list of formats considered "supported"
+* for this same check, adding the previously-missing "rankedlist1" -
+* a genuinely handled format one dispatch branch above, but missing
+* from that list before this fix, which used to make every successful
+* rankedlist1 import ALSO spuriously print "not supported" right after
+* succeeding).
+nwclear
+tempfile bogusfmtdl
+file open dlh using `"`bogusfmtdl'"', write replace
+file write dlh "dl n=3 format=nonexistentformat123" _n
+file write dlh "data:" _n
+file write dlh "0 1 1" _n
+file write dlh "1 0 1" _n
+file write dlh "1 1 0" _n
+file close dlh
+capture noisily nwimport `"`bogusfmtdl'"', type(ucinet) name(bogusfmttest)
+assert _rc != 0
+qui nwset
+assert r(networks) == 0
+
+di "=== nwimport Ucinet lowerhalf/row-labels-embedded and unsupported-format REGRESSION VERIFIED ==="
+

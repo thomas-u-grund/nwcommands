@@ -1294,8 +1294,27 @@ program _nwimpdl
 			qui capture _nwimpdl_nodelist1, edgelist filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "lowerhalf" {
-			if "`rowlabsembedded'" != "" {
+			// BUGFIX: this checked a local named `rowlabsembedded' (no
+			// underscore before "embedded"), but the local this
+			// program's own header actually populates when the DL
+			// file's header says "row labels embedded" is
+			// `rowlab_embedded' (WITH the underscore, set a few dozen
+			// lines above) - a plain naming mismatch, confirmed
+			// directly (`rowlabsembedded' is never assigned anywhere in
+			// this program's scope). The guard below could therefore
+			// never fire regardless of the actual DL file content, so a
+			// row-labels-embedded lowerhalf file silently went through
+			// the `else' branch's own import attempt (`_nwimpdl_lowerhalf'
+			// does not itself understand embedded row labels for this
+			// format, so that import would produce a wrong/garbled
+			// result rather than the intended clear rejection). Fixed
+			// to check the actual local, and (separately, the second
+			// bug found alongside it) to actually raise an error rather
+			// than only printing - see this file's own header comment
+			// convention for that class of fix.
+			if "`rowlab_embedded'" != "" {
 				noi di "{err}Ucinet {bf:row labels embedded} not supported together with format {bf:lowerhalf}"
+				error `errFormatUnsupported'
 			}
 			else {
 				capture _nwimpdl_lowerhalf, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
@@ -1303,14 +1322,29 @@ program _nwimpdl
 		}
 	}
 	mata: st_global("r(netlabs)", "`netlabs'")
-	
+
 	capture file close `importfile'
-	local sformat "fullmatrix nodelist1 edgelist1 lowerhalf"
+	// BUGFIX: "rankedlist1" is a real, handled format (the dispatch
+	// block just above explicitly imports it via
+	// "_nwimpdl_nodelist1, rankedlist ..."), but was missing from this
+	// list entirely - so every successful rankedlist1 import used to
+	// ALSO spuriously print "Ucinet format = rankedlist1 not supported"
+	// right after succeeding (harmless only because the message below
+	// used to have no `error' call either - see that bugfix note).
+	// Added here so a genuine rankedlist1 import is no longer
+	// misreported as unsupported.
+	local sformat "fullmatrix nodelist1 rankedlist1 edgelist1 lowerhalf"
 	local f : list format & sformat
-			
+
 	if "`f'" == "" {
+		// BUGFIX: this used to print the message and fall straight
+		// through with no error and no import actually performed - the
+		// command returned rc==0 as if nothing were wrong (same
+		// disguised-silent-failure class already fixed elsewhere in
+		// this package, see nwevcent.ado's own header comment).
 		noi di "{err}Ucinet format = {bf:`format'} not supported."
-	}	
+		error `errFormatUnsupported'
+	}
 	mata: st_global("r(nameoff)","`nameoff'")
 end
 

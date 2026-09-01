@@ -52,3 +52,11 @@ nwclear
 capture noisily nwdyadprob, mat(J(5,5,.5)) name(undirtest) undirected xvars
 assert _rc == 0
 di "=== mat() literal expression + undirected REGRESSION VERIFIED ==="
+
+* --- failure path (BUGFIX: used to print the message and fall through
+* to actually generating an unweighted network anyway, returning
+* _rc==0 as if nothing were wrong - confirmed directly before this
+* fix, same as the identical bug in nwrandom/nwring/nwsmall/nwpref).
+nwclear
+capture noisily nwdyadprob, mat(J(5,5,.5)) name(wtest) weights(abc,def)
+assert _rc != 0

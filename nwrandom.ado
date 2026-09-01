@@ -73,8 +73,14 @@ program nwrandom
 		}
 		local total = `mutual' + `asym'	
 		if `total' > `=((`nodes' * (`nodes'-1)) / 2)' {
-			di "{err}Too manny dyads requested,"
-			exit
+			// BUGFIX: was a bare `exit' (no return code) - the message
+			// printed but the command returned rc==0 as if nothing were
+			// wrong (same disguised-silent-failure class already fixed
+			// elsewhere in this package, see nwevcent.ado's own header
+			// comment). Also fixed a typo ("manny" -> "many") while
+			// touching this line.
+			di "{err}Too many dyads requested,"
+			error 198
 		}
 		mata: `__nwnew' = dyadcensusGenerator(`nodes', `mutual', `asym')
 	}
@@ -84,7 +90,19 @@ program nwrandom
 		capture mata: `w' = (`weights') :/ sum((`weights')) 
 		capture mata: `w' = rdiscrete(`nodes', `nodes',(`w')) 
 		if _rc != 0 {
+			// BUGFIX: this used to print the message and fall straight
+			// through - the two `capture mata:' lines just below then
+			// ALSO silently failed (operating on `w', left undefined by
+			// this same failure), so `__nwnew' never actually got
+			// multiplied by any weight at all and the command returned
+			// rc==0 with a plain unweighted 0/1 network, silently
+			// ignoring weights() entirely instead of erroring. Confirmed
+			// directly (nwrandom 5, prob(1) weights(abc,def) printed the
+			// message and still returned a "Valued: false" network).
+			// Same fix applied identically to nwring.ado/nwsmall.ado/
+			// nwpref.ado/nwdyadprob.ado, which all share this exact code.
 			di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+			error 198
 		}
 
 		if "`undirected'" != "" {
@@ -95,8 +113,14 @@ program nwrandom
 	}
 	
 	if ("`prob'"=="" & "`density'"=="" & "`census'" == ""){
+		// BUGFIX: was a bare `exit' (no return code) - the message
+		// printed but the command returned rc==0 as if nothing were
+		// wrong (same disguised-silent-failure class already fixed
+		// elsewhere in this package, see nwevcent.ado's own header
+		// comment, and nwsmall.ado's own identical "neither prob() nor
+		// shortcuts() given" case).
 		di "{err}either {it:prob}(), {it:density}() or {it:census()} missing"
-		exit
+		error 198
 	}
 
 	mata: st_rclear()

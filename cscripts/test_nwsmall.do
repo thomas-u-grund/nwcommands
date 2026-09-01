@@ -91,3 +91,10 @@ capture noisily nwsmall 10, k(2) prob(-.1)
 assert _rc != 0
 qui nwset
 assert r(networks) == 0
+
+* --- failure path (BUGFIX: used to print the message and fall through
+* to actually generating an unweighted network anyway, returning
+* _rc==0 as if nothing were wrong - confirmed directly before this
+* fix, same as the identical bug in nwrandom/nwring/nwpref/nwdyadprob).
+capture noisily nwsmall 10, k(2) prob(.2) weights(abc,def)
+assert _rc != 0

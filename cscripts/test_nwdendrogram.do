@@ -53,3 +53,14 @@ capture noisily nwdendrogram bogus_cluster_xyz_that_does_not_exist
 assert _rc == 111
 
 di "=== nwdendrogram REGRESSION VERIFIED ==="
+
+* --- failure path (BUGFIX: this used to print "No cluster analysis
+* found" and then fall through - a bare `exit' with no return code -
+* returning _rc==0 as if nothing were wrong, confirmed directly before
+* this fix): a bare nwdendrogram call with no cluster analysis at all
+* in the session (no cluster name given, and `cluster query' finds
+* none).
+clear
+cluster drop _all
+capture noisily nwdendrogram
+assert _rc != 0

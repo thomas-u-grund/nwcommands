@@ -104,7 +104,14 @@ program nwdyadprob
 				tempname w
 				capture mata: `w' = rdiscrete(`nodes', `nodes',(`weights'))
 				if _rc != 0 {
+					// BUGFIX: see nwrandom.ado's own header comment on
+					// this identical block (nwrandom/nwring/nwsmall/
+					// nwpref all share it too) for the full explanation -
+					// this used to print the message and fall through,
+					// silently producing an unweighted network while
+					// claiming success.
 					di "{err}Could not sample tie weights, check option {bf:weights()}.{txt}"
+					error 198
 				}
 				capture mata: `w' = `w' :/ sum((`weights'))
 				if "`undirected'" != "" {
@@ -154,9 +161,16 @@ program nwdyadprob
 		qui gen _nonzero = (_tempdyad > 0)
 		qui sum _nonzero
 		if `r(sum)' < `ties' {
+			// BUGFIX: was a bare `exit' (no return code) after dropping
+			// the never-completed target network - the message printed
+			// but the command returned rc==0 as if nothing were wrong,
+			// with no network actually created (same disguised-silent-
+			// failure class already fixed elsewhere in this package,
+			// see nwrandom.ado's own header comment on its sibling
+			// "Could not sample tie weights" bug).
 			noi di "{err}Not enough non-zero weights to generate `ties' ties"
 			nwdrop _tempdyad
-			exit
+			error 198
 		}
 		qui drop if `nw_ego' == `nw_alter'
 		gsample `ties' [aweight=_tempdyad], generate(link) wor
