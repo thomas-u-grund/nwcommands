@@ -30,3 +30,9 @@ nwunab allnets : *neta netb
 assert `r(networks)' == 3
 
 di "=== nwunab r(networks) REGRESSION VERIFIED ==="
+
+* --- failure path: min() is passed straight through to Stata's own
+* `unab', which enforces it - a pattern matching zero networks with
+* min(1) required is rejected, not silently returned as an empty list.
+capture noisily nwunab nomatch : bogus_pattern_xyz*, min(1)
+assert _rc != 0
