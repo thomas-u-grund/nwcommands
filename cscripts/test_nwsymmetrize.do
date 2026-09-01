@@ -45,3 +45,8 @@ capture noisily nwsymmetrize mynet, replace generate(x)
 assert _rc == 198
 
 di "=== nwsymmetrize alias VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nwsym's own nw_syntax passthrough (error 482).
+capture noisily nwsymmetrize nonexistent
+assert _rc == 482

@@ -178,6 +178,25 @@ assert `"`r(ego)'"' == "A"
 
 di "=== nwneighbor subnet() (induced-subgraph output) REGRESSION VERIFIED ==="
 
+* --- failure paths: ego() is a required option (rejected by Stata's
+* own syntax parser without it); a node that doesn't exist in the
+* network is rejected (err 99, via nwnode's own -1 "not found" id);
+* an invalid mode() value is rejected by _opts_oneof (error 6556); a
+* name that isn't a loaded network is rejected via nw_syntax (482).
+nwclear
+nwset, mat((0,1\1,0)) name(failnet) labs(A,B)
+capture noisily nwneighbor failnet
+assert _rc != 0
+
+capture noisily nwneighbor failnet, ego(Z)
+assert _rc == 99
+
+capture noisily nwneighbor failnet, ego(A) mode(sideways)
+assert _rc == 6556
+
+capture noisily nwneighbor nonexistent, ego(A)
+assert _rc == 482
+
 
 
 

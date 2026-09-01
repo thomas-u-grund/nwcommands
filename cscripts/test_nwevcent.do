@@ -57,3 +57,8 @@ assert ev_k5[1] > 0.4
 capture noisily nwevcent k5net, generate(ev_k5)
 assert _rc == 99
 di "=== error-code coherence REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwevcent nonexistent
+assert _rc == 482

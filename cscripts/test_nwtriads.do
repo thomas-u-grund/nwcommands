@@ -105,6 +105,11 @@ assert canary[1] == 1 & canary[2] == 2 & canary[3] == 3
 capture graph drop nwtriadsplottest
 di "=== nwtriads plot() OK ==="
 
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwtriads nonexistent
+assert _rc == 482
+
 
 
 

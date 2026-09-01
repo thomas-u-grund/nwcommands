@@ -82,4 +82,16 @@ assert `"`r(netlist)'"' == `"ring"'
 nwclear
 nwring 10, k(2) ntimes(3)
 assert `"`r(netlist)'"' == `"ring_1 ring_2 ring_3"'
+
+* --- failure paths: k() is a required option (rejected by Stata's own
+* syntax parser without it); an explicit, caller-chosen name() that
+* collides with an already-loaded network is rejected (unlike the
+* default unnamed case, which auto-increments - "ring", "ring_1", ...).
+capture noisily nwring 10
+assert _rc != 0
+
+nwclear
+nwring 10, k(2) name(explicitring)
+capture noisily nwring 10, k(2) name(explicitring)
+assert _rc != 0
 di "=== r(netlist) REGRESSION VERIFIED ==="
