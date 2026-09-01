@@ -88,3 +88,18 @@ nwclear
 nwpref 10, ntimes(3)
 assert `"`r(netlist)'"' == `"pref_1 pref_2 pref_3"'
 di "=== r(netlist) REGRESSION VERIFIED ==="
+
+* --- failure paths: nodes must be > 1 (this command's own explicit
+* guard, error 125); an explicit, caller-chosen name() that collides
+* with an already-loaded network is rejected (unlike the default
+* unnamed case, which auto-increments).
+capture noisily nwpref 1
+assert _rc == 125
+
+capture noisily nwpref 0
+assert _rc == 125
+
+nwclear
+nwpref 10, name(explicitpref)
+capture noisily nwpref 10, name(explicitpref)
+assert _rc != 0

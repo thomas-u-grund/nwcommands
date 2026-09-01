@@ -67,3 +67,15 @@ capture noisily nwmatching bipnet2
 assert _rc == 0
 assert _N >= 6
 di "=== nwmatching: dataset-sync-after-clear REGRESSION VERIFIED ==="
+
+* --- failure paths: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482); the target
+* variable already existing without replace is rejected (err 99).
+capture noisily nwmatching nonexistent
+assert _rc == 482
+
+nwclear
+nwset, mat((1,0,1\0,1,0\1,0,0)) name(bipnet3) bipartite
+qui nwmatching bipnet3
+capture noisily nwmatching bipnet3
+assert _rc == 99

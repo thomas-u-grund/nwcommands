@@ -15,11 +15,23 @@ program nwpath
 		di "{err}Options {bf:sym} and {bf:generate()} cannot be combined."
 		err 99
 	}
-	if "`ego'" == "" & "`egoid'" == "" {
+	// BUGFIX: `egoid'/`alterid' are declared `integer 0' (a numeric
+	// option with a default), so their own string form is never truly
+	// empty - it reads "0" when not given, not "" - making
+	// `"`egoid'" == ""'/`"`alterid'" == ""' always false regardless of
+	// whether the caller passed the option. Both guards below were
+	// therefore dead code: calling nwpath with neither ego() nor
+	// egoid() (or neither alter() nor alterid()) never actually raised
+	// this command's own clear message, it fell through to a much more
+	// confusing downstream "Node  or  does not exist" (an empty ego/
+	// alter name reaching nwnode). Fixed to compare the actual integer
+	// value against its own documented "not given" sentinel (0) instead
+	// of a string comparison that could never be true.
+	if "`ego'" == "" & `egoid' == 0 {
 		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
 		err 99
 	}
-	if "`alter'" == "" & "`alterid'" == "" {
+	if "`alter'" == "" & `alterid' == 0 {
 		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
 		err 99
 	}

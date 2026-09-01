@@ -60,3 +60,25 @@ nwset, mat((0,5\0,0)) name(valnet2) directed labs(A,B)
 capture noisily nwpath valnet2, ego(A) alter(B)
 assert _rc == 0
 di "=== valued-network path REGRESSION VERIFIED ==="
+
+* --- failure paths: neither ego()/alter() nor egoid()/alterid() given
+* (err 99, this command's own explicit guard - BUGFIX: this used to be
+* dead code, since egoid()/alterid()'s own string form is never truly
+* empty - "0", not "" - when not given, so the intended clear message
+* never actually fired; confirmed directly before this fix, the call
+* fell through to a confusing "Node  or  does not exist" instead);
+* sym and generate() cannot be combined (err 99); a name that isn't a
+* loaded network is rejected via nw_syntax (482).
+nwclear
+nwset, mat((0,1\1,0)) name(pathfailnet) labs(A,B)
+capture noisily nwpath pathfailnet
+assert _rc == 99
+
+capture noisily nwpath pathfailnet, ego(A)
+assert _rc == 99
+
+capture noisily nwpath pathfailnet, ego(A) alter(B) sym generate(pp)
+assert _rc == 99
+
+capture noisily nwpath nonexistent, ego(A) alter(B)
+assert _rc == 482
