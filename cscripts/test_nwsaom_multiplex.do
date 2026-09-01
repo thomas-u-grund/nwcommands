@@ -6,7 +6,7 @@
 * synthetic data with a KNOWN true theta, before any .ado-level wiring.
 
 clear all
-cd "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
+cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
 do unw_core.do
 do unw_ergm.do
 do unw_saom.do

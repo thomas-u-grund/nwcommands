@@ -4,8 +4,8 @@ capture mata: mata clear
 
 * Simulate a fresh Stata session: project root on adopath for .ado files,
 * lib/ added for the compiled Mata library. No "do unw_core.do" anywhere.
-cd "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
-adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
+cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
+adopath + "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/lib"
 
 di "=== confirm classes are NOT already in memory ==="
 capture mata: nw_def

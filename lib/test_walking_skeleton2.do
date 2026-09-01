@@ -4,8 +4,8 @@ capture mata: mata clear
 
 * This time: cd directly into lib/ so "." matches where the mlib/index live
 * (matches how it was built), and add PROJECT root to adopath for .ado files.
-cd "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016/lib"
-adopath + "/Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016"
+cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/lib"
+adopath + "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
 
 capture mata: nw_def
 di "rc for nw_def before any command: " _rc

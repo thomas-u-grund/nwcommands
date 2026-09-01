@@ -22,7 +22,7 @@ capture mata: mata clear
 	Run: /Applications/Stata/StataBE.app/Contents/MacOS/StataBE -e do "lib/benchmark_sparse.do"
 */
 
-cd /Users/tgrund/FILES_NEW/RESEARCH/nwcommands_2016
+cd /Users/tgrund/FILES_NEW/SOFTWARE/nwcommands
 do unw_core.do
 
 mata:
