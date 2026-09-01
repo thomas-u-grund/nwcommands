@@ -48,14 +48,14 @@ program nwwebuse
 
 	if "`subcommand'" != "set" {
 		if "`thispath'" == "" | "`thispath'" == "\" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data"
 		}
 	}
 
 	if "`subcommand'" == "set" {
 		local subcmd2 = word("`anything'",2)
 		if  "`subcmd2'" == "" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data"
 		}
 		else {
 			global nwwebpath = word("`anything'",2)
