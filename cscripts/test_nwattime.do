@@ -127,3 +127,12 @@ nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(onemode) undirected labs(A,B,C)
 capture noisily nwattime onemode, at(1)
 assert _rc != 0
+
+* --- failure paths: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482); at() is a
+* required option (rejected by Stata's own syntax parser without it).
+capture noisily nwattime nonexistent, at(1)
+assert _rc == 482
+
+capture noisily nwattime onemode
+assert _rc != 0

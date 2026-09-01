@@ -126,3 +126,13 @@ nwcontext egonet, attribute(xe) mat(Mctx)
 assert _rc == 0
 mata: assert(max(abs(st_data(.,"zmatcmp") - Mctx)) < 1E-8)
 di "=== mat() OPTION REGRESSION VERIFIED ==="
+
+* --- failure paths: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482); attribute()
+* is a required option (rejected by Stata's own syntax parser without
+* it).
+capture noisily nwcontext nonexistent, attribute(xe)
+assert _rc == 482
+
+capture noisily nwcontext egonet
+assert _rc != 0
