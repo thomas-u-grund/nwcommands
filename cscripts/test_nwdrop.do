@@ -64,6 +64,20 @@ nwset, mat((1,1,0\0,0,0\1,0,0)) name("second")
 gen test = _N - _n
 nwdrop if round(test) == 2
 
+* --- failure paths: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482), both for the
+* whole-network-drop path and the if/in row-drop path.
+nwclear
+nwset, mat((1,1,0\0,0,0\1,0,0)) name("first")
+capture noisily nwdrop nonexistent
+assert _rc == 482
+capture noisily nwdrop nonexistent if _n < 2
+assert _rc == 482
+
+nwclear
+capture noisily nwdrop first
+assert _rc == 482
+
 
 
 

@@ -32,4 +32,17 @@ nwds mynet, not alpha
 assert `"`r(netlist)'"' == `"a"'
 di "=== nwds not-option REGRESSION VERIFIED ==="
 
+* --- failure paths: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482, unw_defs.ado's
+* own errNWsNotFound), not silently treated as an empty match.
+capture noisily nwds nonexistent
+assert _rc == 482
+
+capture noisily nwds nonexistent, not
+assert _rc == 482
+
+nwclear
+capture noisily nwds
+assert _rc == 482
+
 

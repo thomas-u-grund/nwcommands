@@ -94,7 +94,34 @@ program nwsave
 	qui merge 1:1 _nw_running using `attributes', nogenerate
 	qui merge 1:1 _nw_running using `edgelist', nogenerate
 	
-	qui save`old' `webname'.nwdta, replace `options'
+	// BUGFIX: this used to hardcode the literal "replace" here regardless
+	// of whether the caller actually passed the `replace' option (that
+	// local was declared in `syntax' and documented in nwsave.sthlp as
+	// "overwrite existing dataset", but never once referenced in the
+	// command body) - so nwsave always silently overwrote an existing
+	// target file, exactly the data-loss `replace' exists to guard
+	// against. Found via a failure-path test that expected a plain
+	// second `nwsave <same file>' (no `replace') to error and it didn't.
+	// Fixed to pass the caller's own `replace' local through instead of
+	// a hardcoded one, so an existing target file without `replace'
+	// now correctly raises Stata's own "file already exists" error.
+	//
+	// BUGFIX (found immediately by the fix above): once this save can
+	// actually fail, failing here used to abort the command before the
+	// `use `existing', clear' line below ever ran - leaving the CALLER'S
+	// OWN in-memory dataset stuck in this command's internal merged/
+	// mutated working state (stray _nw_running/_nw_match_* columns etc.)
+	// instead of restored, and the next command run in that same session
+	// (including a corrected `nwsave ..., replace' retry) hit an
+	// unrelated, confusing "variable _nw_running already defined" error
+	// instead of ever surfacing the real problem. `capture` the save,
+	// always restore the caller's original data either way, then
+	// re-raise the real error/rc so failures are still reported.
+	capture qui save`old' `webname'.nwdta, `replace' `options'
+	local savercc = _rc
 	use `existing', clear
+	if `savercc' != 0 {
+		error `savercc'
+	}
 end
 
