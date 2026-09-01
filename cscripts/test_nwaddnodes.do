@@ -112,3 +112,8 @@ assert r(nodes) == 7
 nw_syntax bipnet4, max(1)
 mata: st_local("__t158_modes4", `netobj'->get_modes_labeled_string())
 assert `"`__t158_modes4'"' == `"n1=1,n2=1,n3=1,n4=2,n5=2,New Person=1,Org X=2"'
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwaddnodes nonexistent, nodenames(X)
+assert _rc == 482

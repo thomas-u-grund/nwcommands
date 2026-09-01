@@ -153,3 +153,8 @@ nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) undirected labs(A,B,C,D) name(allg
 capture noisily nwdropnodes allgone, nodes(1 2 3 4)
 assert _rc == 198
 di "=== drop-every-node REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwdropnodes nonexistent, nodes(1)
+assert _rc == 482
