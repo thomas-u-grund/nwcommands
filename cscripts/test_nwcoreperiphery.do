@@ -111,3 +111,8 @@ nwclear
 nwset, mat((0,1,1,1,1,1\1,0,1,1,1,1\1,1,0,1,1,1\1,1,1,0,0,0\1,1,1,0,0,0\1,1,1,0,0,0)) name(net1) undirected labs(A,B,C,D,E,F)
 capture noisily nwcoreperiphery net1, maxiter(0)
 assert _rc != 0
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwcoreperiphery nonexistent
+assert _rc == 482

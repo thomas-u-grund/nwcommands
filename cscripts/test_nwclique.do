@@ -127,3 +127,8 @@ nwclique tri, silent
 assert _rc == 0
 assert r(cliques) == 1
 di "=== silent REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwclique nonexistent
+assert _rc == 482

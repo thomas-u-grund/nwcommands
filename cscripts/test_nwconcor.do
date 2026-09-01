@@ -176,3 +176,8 @@ nwset, mat((0,1,1\1,0,1\1,1,0)) name(clean) undirected labs(A,B,C)
 nwconcor clean
 assert _rc == 0
 di "=== SUCCESSFUL CALL LEAVES _rc==0, VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwconcor nonexistent
+assert _rc == 482

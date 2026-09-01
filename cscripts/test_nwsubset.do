@@ -92,3 +92,8 @@ assert _rc == 483
 nwsubset mynet2 if _n<=3, name(fixedname) replace
 assert _rc == 0
 di "=== default-name auto-increment / explicit-name collision REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwsubset nonexistent
+assert _rc == 482

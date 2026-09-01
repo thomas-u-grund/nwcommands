@@ -157,3 +157,8 @@ assert _rc == 198
 capture noisily nwcommunity wbridge, resolution(0) generate(rzero) silent
 assert _rc == 198
 di "=== resolution() validation REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwcommunity nonexistent
+assert _rc == 482

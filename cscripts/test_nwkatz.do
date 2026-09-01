@@ -158,3 +158,8 @@ nwset, mat((0,1,1\1,0,1\1,1,0)) name(k3walks2) undirected labs(A,B,C)
 nwkatz k3walks2, generate(katzolddefault)
 assert reldif(katzolddefault[1], 2) < 1E-6 // K3, alpha=1 default: 2 neighbors at dist 1
 di "=== walks REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwkatz nonexistent
+assert _rc == 482
