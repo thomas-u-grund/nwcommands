@@ -1366,6 +1366,34 @@ static double change_cyclicalties(graph_t *g, long i, long j) {
 #define TERMCODE_EDGECOV        68
 #define TERMCODE_HAMMING        69
 
+/* nsp(d): raw (unweighted) non-edgewise-shared-partners per-level count -
+   direct port of stat_nsp()/change_nsp() in unw_ergm.do, which is itself
+   a thin composition (dsp(d) - esp(d), a definitional tautology - see
+   that function's own header comment) - the raw counterpart gwnspfree()
+   needs the same way gwespfree()/gwdegreefree()/etc. reuse the plain
+   esp/degree/etc. termcodes above (this is the one raw multi-level term
+   that had no native slot of its own before - gwnsp itself already did,
+   TERMCODE_GWNSP/_OTP/etc. above, being a thin GW-weighted composition
+   of the SAME two functions). Six variants for the same reason ESP/DSP
+   have six each - td.sptype's OTP/ITP/OSP/ISP/RTP dispatch, inherited
+   "for free" by composition per stat_nsp()'s own header comment. */
+#define TERMCODE_NSP             70
+#define TERMCODE_NSP_OTP         71
+#define TERMCODE_NSP_ITP         72
+#define TERMCODE_NSP_OSP         73
+#define TERMCODE_NSP_ISP         74
+#define TERMCODE_NSP_RTP         75
+
+/* bipartite (two-mode) Stage 4 terms - direct ports of
+   change_b1nodematch()/change_b2nodematch()/change_bgwdegree1()/
+   change_bgwdegree2() in unw_ergm.do (harmonisation unit 162). Only ever
+   registered on a bipartite graph, same guarantee TERMCODE_B1COV etc.
+   above already rely on. */
+#define TERMCODE_B1NODEMATCH     76
+#define TERMCODE_B2NODEMATCH     77
+#define TERMCODE_BGWDEGREE1      78
+#define TERMCODE_BGWDEGREE2      79
+
 /* exact-match indicator kernel, direct port of the `(x :== td.levels')`
    rowvector construction esp()/dsp() use in unw_ergm.do - here evaluated
    for a single target d (one native "slot" per requested d, exactly
@@ -1482,6 +1510,31 @@ static double degree_change_at(double olddeg, double delta, double target) {
 	if (olddeg == target) c -= 1.0;
 	if (olddeg + delta == target) c += 1.0;
 	return c;
+}
+
+/* b1nodematch()/b2nodematch() shared helper - direct port of
+   _ergm_bnodematch_partner_count() in unw_ergm.do: among node2's own
+   CURRENT neighbors (excluding node1 itself), how many share node1's own
+   `attr' value. Walks g->adj[node2] (bipartite graphs are always
+   undirected - see g->bipartite's own header comment - so the plain
+   undirected adjacency list is exactly node2's neighbor set), gated by
+   need_adj the same way ESP/DSP/NSP already are.
+   No explicit missing-value guard (unlike Mata's own `a1 >= .' check) -
+   every attribute array crossing the wire already has SF_is_missing()
+   converted to a plain 0.0 upstream (this function's own caller reads
+   `attr' straight from that same shared array, same as NODEMATCH/
+   NODEFACTOR/B1FACTOR/B2FACTOR above), so adding a special case here
+   alone would make this term behave differently from every sibling
+   attribute-based term instead of consistently with them. */
+static double bnodematch_partner_count(graph_t *g, long node1, long node2, double *attr) {
+	double a1 = attr[node1];
+	adjlist_t *nb = &g->adj[node2];
+	long m, cnt = 0;
+	for (m = 0; m < nb->len; m++) {
+		if (nb->nb[m] == node1) continue;
+		if (attr[nb->nb[m]] == a1) cnt++;
+	}
+	return (double)cnt;
 }
 
 /*
@@ -1738,6 +1791,50 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			double tied = has_edge(g, i, j) ? 1.0 : 0.0;
 			return (tied == ref) ? 1.0 : -1.0;
 		}
+		/* nsp(d) = dsp(d) - esp(d), same thin composition as
+		   TERMCODE_GWNSP(_OTP/_ITP/_OSP/_ISP/_RTP) above, one level down
+		   (raw per-level dsp/esp instead of GW-weighted) - direct port of
+		   change_nsp() in unw_ergm.do. */
+		case TERMCODE_NSP:
+			return change_dsp(g, i, j, p1) - change_esp(g, i, j, p1);
+		case TERMCODE_NSP_OTP:
+			return change_dsp_otp(g, i, j, p1) - change_esp_otp(g, i, j, p1);
+		case TERMCODE_NSP_ITP:
+			return change_dsp_itp(g, i, j, p1) - change_esp_itp(g, i, j, p1);
+		case TERMCODE_NSP_OSP:
+			return change_dsp_osp(g, i, j, p1) - change_esp_osp(g, i, j, p1);
+		case TERMCODE_NSP_ISP:
+			return change_dsp_isp(g, i, j, p1) - change_esp_isp(g, i, j, p1);
+		case TERMCODE_NSP_RTP:
+			return change_dsp_rtp(g, i, j, p1) - change_esp_rtp(g, i, j, p1);
+		/* bipartite Stage 4 - direct ports of change_b1nodematch()/
+		   change_b2nodematch()/change_bgwdegree1()/change_bgwdegree2() in
+		   unw_ergm.do. `delta' is already the caller's own has_edge?-1:+1
+		   signed toggle direction (see this function's own header
+		   comment) - both b1nodematch/b2nodematch's own Mata source and
+		   bgwdegree1/bgwdegree2's own already reuse exactly that same
+		   quantity rather than recomputing has_edge() a second time, so
+		   these cases do too. */
+		case TERMCODE_B1NODEMATCH: {
+			long node1 = (g->mode[i] == 1) ? i : j;
+			long node2 = (g->mode[i] == 1) ? j : i;
+			return delta * bnodematch_partner_count(g, node1, node2, attr);
+		}
+		case TERMCODE_B2NODEMATCH: {
+			long node2 = (g->mode[i] == 2) ? i : j;
+			long node1 = (g->mode[i] == 2) ? j : i;
+			return delta * bnodematch_partner_count(g, node2, node1, attr);
+		}
+		case TERMCODE_BGWDEGREE1: {
+			long node1 = (g->mode[i] == 1) ? i : j;
+			double d1 = (double)g->deg[node1];
+			return gw_kernel(d1 + delta, p1) - gw_kernel(d1, p1);
+		}
+		case TERMCODE_BGWDEGREE2: {
+			long node2 = (g->mode[i] == 2) ? i : j;
+			double d2 = (double)g->deg[node2];
+			return gw_kernel(d2 + delta, p1) - gw_kernel(d2, p1);
+		}
 	}
 	return 0.0;
 }
@@ -1809,6 +1906,41 @@ static void propose_tnt(graph_t *g, rng_t *rng, long *pi, long *pj, double *logr
 		*logratio = (E == 0) ? log(DP + Q) : log(1.0 + DO / (E + 1.0));
 	}
 	*pi = i; *pj = j;
+}
+
+/* Fixed-density (R ergm's own `constraints=~edges', nwergm's
+   `fixdensity' option) compound proposal - direct port of
+   ergm_propose_swap() in unw_ergm.do: pick a uniformly random CURRENT
+   tie to remove (t1,h1), then a uniformly random dyad via
+   propose_uniform()'s own rejection loop until it lands on a current
+   non-tie to add (t2,h2). No Hastings-ratio correction (mirrors the
+   Mata original exactly - ErgmMCMCSampleSwap()'s own `cutoff = theta *
+   chgtot'' has no logratio term added, unlike propose_tnt() above), so
+   this function reports none (unlike propose_uniform()/propose_tnt(),
+   it has no `logratio' output parameter at all - its caller in
+   stata_call() below never needs one, always using this proposal ALONE,
+   never mixed with a masked/TNT branch, since fixdensity is mutually
+   exclusive with freedyads()/blockdiag() by nwergm.ado's own
+   validation). Returns nonzero if no valid swap exists (an edgeless or
+   complete network - cannot happen for a real fixed-density fit
+   starting from an observed network with at least one tie and one
+   non-tie, guarded explicitly the same way ergm_propose_swap()'s own
+   Mata header comment describes, and the same way
+   propose_uniform_masked()'s own exhausted-retry-cap guard above
+   reports failure to its caller rather than looping forever). */
+static int propose_swap(graph_t *g, rng_t *rng, long *t1, long *h1, long *t2, long *h2) {
+	long erow, i, j;
+	double lr;
+	if (g->nties == 0 || (double)g->nties == total_dyads(g)) return 1;
+	erow = rng_below(rng, g->nties);
+	*t1 = g->elist_i[erow];
+	*h1 = g->elist_j[erow];
+	do {
+		propose_uniform(g, rng, &i, &j, &lr);
+	} while (has_edge(g, i, j));
+	*t2 = i;
+	*h2 = j;
+	return 0;
 }
 
 /* Masked proposals (harmonisation unit 168, freedyads() native port) -
@@ -2141,7 +2273,7 @@ static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long mode, n, directed, bipartite, nties_in, samplesize, burnin, interval, proposal_code, nattr, ncovmat, hasmask, nterms, i, k;
+	long mode, n, directed, bipartite, nties_in, samplesize, burnin, interval, proposal_code, nattr, ncovmat, hasmask, fixed_density, nterms, i, k;
 	long attrcol_base, covmatcol_base, maskcol_base, outcol_base;
 	long ncurved;
 	double curved_decay_start;
@@ -2199,6 +2331,21 @@ STDLL stata_call(int argc, char *argv[]) {
 	   own field count aligned across every mode, the same discipline
 	   `ncovmat' itself required when IT was added (unit 160). */
 	hasmask       = next_long();
+	/* fixed_density (R ergm's own `constraints=~edges', nwergm's
+	   `fixdensity' option): inserted right after hasmask, the SAME
+	   "all three callers, in lockstep" discipline every earlier field
+	   addition here required - ErgmNativeSampleCore() is the only
+	   caller that ever sends a genuine model's own M.fixed_density value
+	   (0 or 1); ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit()
+	   always send a literal 0 (a fixed-density model is MCMLE-only -
+	   nwergm.ado itself requires method(mcmle) for fixdensity - so
+	   neither MPLE mode ever legitimately runs on one; kept only for
+	   the shared header's own field-count alignment). When 1, the
+	   burnin/sampling loops below dispatch to propose_swap()'s own
+	   compound tie/non-tie move instead of the ordinary single-dyad
+	   uniform/TNT/masked proposal - direct port of
+	   ErgmMCMCSampleSwap()/ErgmMCMCSampleDiagSwap() in unw_ergm.do. */
+	fixed_density = next_long();
 	nterms        = next_long();
 	if (nterms > MAXTERMS) { SF_error("ergm_mcmc: too many terms\n"); free(argbuf); return(198); }
 	if (nattr > MAXATTR) { SF_error("ergm_mcmc: too many attribute arrays\n"); free(argbuf); return(198); }
@@ -2212,6 +2359,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		switch (termcodes[i]) {
 			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
 			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
+			case TERMCODE_NSP: case TERMCODE_B1NODEMATCH: case TERMCODE_B2NODEMATCH:
 				need_adj = 1;
 		}
 		switch (termcodes[i]) {
@@ -2238,6 +2386,9 @@ STDLL stata_call(int argc, char *argv[]) {
 			case TERMCODE_GWESP_RTP: case TERMCODE_GWDSP_RTP:
 			case TERMCODE_GWNSP_RTP: case TERMCODE_ESP_RTP:
 			case TERMCODE_DSP_RTP:
+			case TERMCODE_NSP_OTP: case TERMCODE_NSP_ITP:
+			case TERMCODE_NSP_OSP: case TERMCODE_NSP_ISP:
+			case TERMCODE_NSP_RTP:
 				need_dirsp = 1;
 		}
 	}
@@ -2583,11 +2734,42 @@ STDLL stata_call(int argc, char *argv[]) {
 	cur = (double *)malloc((size_t)nterms * sizeof(double));
 	for (i = 0; i < nterms; i++) cur[i] = obs[i];
 
+	if (fixed_density && (g.nties == 0 || (double)g.nties == total_dyads(&g))) {
+		SF_error("ergm_mcmc: fixdensity: network has no ties, or is complete - no valid tie/non-tie swap exists.\n");
+		free(cur);
+		return(198);
+	}
+
 	for (step = 0; step < burnin; step++) {
 		long pi, pj;
 		double logratio, cutoff = 0.0, delta;
 		double chg[MAXTERMS];
 		int propfail = 0;
+		if (fixed_density) {
+			long t1, h1, t2, h2;
+			double chg1[MAXTERMS], chg2[MAXTERMS];
+			propose_swap(&g, &rng, &t1, &h1, &t2, &h2);
+			for (k = 0; k < nterms; k++) {
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+			}
+			toggle(&g, t1, h1);
+			for (k = 0; k < nterms; k++) {
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+				cutoff += theta[k] * (chg1[k] + chg2[k]);
+			}
+			if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
+				toggle(&g, t2, h2);
+				for (k = 0; k < nterms; k++) cur[k] += chg1[k] + chg2[k];
+			}
+			else {
+				toggle(&g, t1, h1);
+			}
+			continue;
+		}
 		if (g.has_mask) {
 			if (proposal_code == 2) propfail = propose_tnt_masked(&g, &rng, &pi, &pj, &logratio);
 			else propfail = propose_uniform_masked(&g, &rng, &pi, &pj, &logratio);
@@ -2615,6 +2797,33 @@ STDLL stata_call(int argc, char *argv[]) {
 			double logratio, cutoff = 0.0, delta;
 			double chg[MAXTERMS];
 			int propfail = 0;
+			if (fixed_density) {
+				long t1, h1, t2, h2;
+				double chg1[MAXTERMS], chg2[MAXTERMS];
+				propose_swap(&g, &rng, &t1, &h1, &t2, &h2);
+				for (k = 0; k < nterms; k++) {
+					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+					chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+				}
+				toggle(&g, t1, h1);
+				for (k = 0; k < nterms; k++) {
+					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+					chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+					cutoff += theta[k] * (chg1[k] + chg2[k]);
+				}
+				ntried++;
+				if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
+					toggle(&g, t2, h2);
+					for (k = 0; k < nterms; k++) cur[k] += chg1[k] + chg2[k];
+					naccept++;
+				}
+				else {
+					toggle(&g, t1, h1);
+				}
+				continue;
+			}
 			if (g.has_mask) {
 				if (proposal_code == 2) propfail = propose_tnt_masked(&g, &rng, &pi, &pj, &logratio);
 				else propfail = propose_uniform_masked(&g, &rng, &pi, &pj, &logratio);

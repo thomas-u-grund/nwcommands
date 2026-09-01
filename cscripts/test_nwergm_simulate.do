@@ -391,3 +391,173 @@ assert `__ergm_type_diff_found' == 1
 di "=== type() accepted, and produces genuinely different draws (not just accepted syntax) under OTP/ITP/OSP/ISP/RTP on the simulate path ==="
 
 di "=== nwergm simulate: full-term-library regression coverage complete (harmonisation unit 142) ==="
+
+* =====================================================================
+* Bipartite (two-mode) simulation support: `bipartite()' gives the
+* mode-1 node count, mirroring R's own `network(n, bipartite=nb1)'
+* convention - nodes 1..bipartite() are mode 1, the rest are mode 2
+* (see nwergm.ado's own header comment on this option for the full
+* account of why simulate needs its own explicit contiguous-prefix
+* convention rather than reading an existing network's per-node mode
+* assignment, unlike the estimation path). Exercises the same
+* Stage-1-4 bipartite term family (b1cov/b2cov/b1factor/b2factor/
+* b1degree/b2degree/b1star/b2star/b1nodematch/b2nodematch/
+* bgwdegree1/bgwdegree2) the estimation path already certifies,
+* through the simulate command end to end, plus the network-type
+* validation guarding it.
+* =====================================================================
+
+* --- edges-only: statistical correctness check analogous to the
+* plain one-mode Bernoulli check at the top of this file, restricted
+* to the cross-mode dyad space (D = mode1count * mode2count, the only
+* dyads the bipartite MCMC proposal ever toggles).
+local n1 = 4
+local n2 = 3
+local D = `n1' * `n2'
+local theta = -0.3
+local p = exp(`theta')/(1+exp(`theta'))
+local nsim = 40
+
+set seed 7001
+nwclear
+qui nwergm simulate `=`n1'+`n2'', edges bipartite(`n1') theta(`theta') nsim(`nsim') mcmcburnin(3000) mcmcinterval(30) generate(bipedge)
+
+tempname bties
+scalar `bties' = 0
+forvalues i = 1/`nsim' {
+	qui nw_syntax bipedge_`i', max(1)
+	assert `nodes' == `n1' + `n2'
+	assert "`directed'" == "false"
+	assert "`is2mode'" == "true"
+	mata: st_local("__t", strofreal(sum(*`netobj'->get_matrix_mod(1,0))/2))
+	scalar `bties' = `bties' + `__t'
+}
+local mean_ties = `bties'/`nsim'
+local exact_mean = `D'*`p'
+di "bipartite exact mean ties = " `exact_mean' ", simulated mean over `nsim' networks = " `mean_ties'
+assert abs(`mean_ties' - `exact_mean') < 1.5
+di "=== bipartite simulate (edges only): correct node/mode counts, and mean tie count over `nsim' draws matches the exact cross-mode-dyad Bernoulli mean ==="
+
+* --- b1cov()/b2cov(): directional correctness, mirroring the
+* nodematch() E-I check above - a strongly POSITIVE mode-1 covariate
+* coefficient should produce a denser network than a strongly negative
+* one, on the identical covariate/seed.
+nwclear
+clear
+set obs 7
+gen x1 = _n
+set seed 7002
+qui nwergm simulate 7, edges bcov1(x1) bipartite(4) theta(-1 .8) nsim(1) mcmcburnin(4000) generate(bcovpos)
+qui nwtomata bcovpos, mat(__bcovmat_pos)
+mata: st_local("__ties_pos", strofreal(sum(__bcovmat_pos)/2))
+
+clear
+set obs 7
+gen x1 = _n
+set seed 7002
+qui nwergm simulate 7, edges bcov1(x1) bipartite(4) theta(-1 -.8) nsim(1) mcmcburnin(4000) generate(bcovneg)
+qui nwtomata bcovneg, mat(__bcovmat_neg)
+mata: st_local("__ties_neg", strofreal(sum(__bcovmat_neg)/2))
+mata: mata drop __bcovmat_pos __bcovmat_neg
+
+di "b1cov theta=+.8: `__ties_pos' ties; b1cov theta=-.8: `__ties_neg' ties (expect more under the positive coefficient)"
+assert `__ties_pos' > `__ties_neg'
+
+* --- b2cov()/b1factor()/b2factor(): runs end to end with the right
+* coefficient count (b1factor/b2factor each drop one base level).
+nwclear
+clear
+set obs 9
+gen x2 = _n
+gen grpb = mod(_n,2)
+set seed 7003
+qui nwergm simulate 9, edges bcov2(x2) bfactor1(grpb) bfactor2(grpb) bipartite(5) ///
+	theta(-1.5 .2 .3 .3) nsim(1) mcmcburnin(3000) generate(bfacsim)
+qui nw_syntax bfacsim, max(1)
+assert `nodes' == 9
+assert "`is2mode'" == "true"
+
+* --- b1degree()/b2degree()/b1star()/b2star(): numlist-parameterized
+* dyad-dependent family, smoke-tested end to end (statistical
+* correctness for the underlying degree/star statistics themselves is
+* already certified via degree()/kstar() above and at the Mata level).
+nwclear
+set seed 7004
+qui nwergm simulate 9, edges bdegree1(1) bdegree2(1) bstar1(2) bstar2(2) bipartite(5) ///
+	theta(-1.5 .3 .3 .1 .1) nsim(1) mcmcburnin(3000) generate(bdegsim)
+qui nw_syntax bdegsim, max(1)
+assert `nodes' == 9
+assert "`is2mode'" == "true"
+
+* --- b1nodematch()/b2nodematch(): directional correctness, mirroring
+* nodematch()'s own E-I check - a strongly positive coefficient should
+* raise the fraction of same-attribute-value cross-mode ties.
+nwclear
+clear
+set obs 10
+gen grpm = mod(_n,3)
+set seed 7005
+qui nwergm simulate 10, edges bnodematch1(grpm) bnodematch2(grpm) bipartite(6) ///
+	theta(-2 2 2) nsim(1) mcmcburnin(4000) generate(bnmpos)
+qui nwtomata bnmpos, mat(__bnmmat_pos)
+mata: st_local("__nm_ties_pos", strofreal(sum(__bnmmat_pos)/2))
+
+clear
+set obs 10
+gen grpm = mod(_n,3)
+set seed 7005
+qui nwergm simulate 10, edges bnodematch1(grpm) bnodematch2(grpm) bipartite(6) ///
+	theta(-2 -2 -2) nsim(1) mcmcburnin(4000) generate(bnmneg)
+qui nwtomata bnmneg, mat(__bnmmat_neg)
+mata: st_local("__nm_ties_neg", strofreal(sum(__bnmmat_neg)/2))
+mata: mata drop __bnmmat_pos __bnmmat_neg
+
+di "b1/b2nodematch theta=+2: `__nm_ties_pos' ties; theta=-2: `__nm_ties_neg' ties (expect more under the positive coefficient)"
+assert `__nm_ties_pos' > `__nm_ties_neg'
+
+* --- bgwdegree1()/bgwdegree2(): fixed-decay geometrically weighted
+* bipartite-degree family, smoke-tested end to end.
+nwclear
+set seed 7006
+qui nwergm simulate 9, edges bgwdegree1(.5) bgwdegree2(.5) bipartite(5) ///
+	theta(-1.5 .3 .3) nsim(1) mcmcburnin(3000) generate(bgwsim)
+qui nw_syntax bgwsim, max(1)
+assert `nodes' == 9
+assert "`is2mode'" == "true"
+
+* --- round-trip: a simulated bipartite draw estimates back cleanly
+* through the actual nwergm estimation command (not merely `nw_syntax'
+* accepting it) - the SAME correctness contract the offset()/curved
+* MCMLE units elsewhere in this suite hold estimation to, now checked
+* on a simulate-produced network.
+nwclear
+clear
+set obs 8
+gen xrt = _n
+set seed 7007
+qui nwergm simulate 8, edges bcov1(xrt) bipartite(5) theta(-1.2 .3) nsim(1) mcmcburnin(4000) generate(rtsim)
+qui set obs 8
+qui gen xrt = _n
+qui nwergm rtsim, edges bcov1(xrt) method(mple)
+assert _rc == 0
+assert e(nodes) == 8
+assert colsof(e(b)) == 2
+di "=== bipartite simulate: round-trips cleanly through nwergm estimation on the simulated network ==="
+
+* --- error paths: one-mode-only term with bipartite(), bipartite-only
+* term without bipartite(), directed+bipartite, bipartite() out of
+* range (>= nodes, or negative) - the same "reject, never silently
+* reinterpret" discipline the main command's own network-type
+* validation already holds to (nwergm.ado lines ~121-153).
+nwclear
+capture noisily nwergm simulate 8, edges bipartite(5) mutual theta(-1.5 .3)
+assert _rc == 198
+capture noisily nwergm simulate 8, edges bcov1(xrt) theta(-1.5 .3)
+assert _rc == 198
+capture noisily nwergm simulate 8, edges bipartite(5) directed theta(-1.5)
+assert _rc == 198
+capture noisily nwergm simulate 8, edges bipartite(8) theta(-1.5)
+assert _rc == 198
+capture noisily nwergm simulate 8, edges bipartite(-1) theta(-1.5)
+assert _rc == 198
+di "=== bipartite simulate error paths (one-mode term + bipartite(), bipartite-only term without bipartite(), directed+bipartite, bipartite() out of range) all verified ==="

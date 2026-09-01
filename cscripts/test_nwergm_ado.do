@@ -476,7 +476,7 @@ nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
 0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
 0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedgwespnet)
 
-qui nwergm curvedgwespnet, edges gwespfree(0.7)
+qui nwergm curvedgwespnet, edges gwespfree(0.7) method(mple)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert e(curved) == 1
@@ -489,25 +489,241 @@ assert reldif(_b[gwesp_decay], 4.1538188381) < 1e-2
 di "=== curved gwesp MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
 
 * --- error paths: gwesp()/esp() cannot combine with gwespfree();
-* directed networks and networks under 3 nodes are rejected;
-* method(mcmle) is rejected (curved MCMLE not yet implemented).
+* networks under 3 nodes are rejected (directed or not - harmonisation
+* unit 170 lifted the last type()-specific directed restriction, so
+* `tinydirnet' below - a 3-node directed network - is now a genuine
+* success case, not an error one; only the SEPARATE 2-node too-few-
+* nodes check below still errors on a directed network).
 capture noisily nwergm curvedgwespnet, edges gwesp(0.5) gwespfree(0.7)
 assert _rc == 198
 capture noisily nwergm curvedgwespnet, edges esp(1 2) gwespfree(0.7)
 assert _rc == 198
-capture noisily nwergm curvedgwespnet, edges gwespfree(0.7) method(mcmle)
-assert _rc == 198
+
+* method(mcmle) for a curved term now RUNS (previously rejected outright
+* with error 198 - curved MCMLE now implemented via the Hummel/Hunter/
+* Handcock (2012) steplength, done directly in theta-space as of
+* harmonisation unit 180; see nwergm.ado's own gwespfree() gate comment
+* and docs/ERGM_ROADMAP.md for the full account). `curvedgwespnet' is
+* THIS package's own documented known-pathological network (see this
+* file's earlier gwespfree() MPLE block and docs/ERGM_ROADMAP.md's own
+* extensive account - R's own reference implementation independently
+* fails outright on it too, "did not mix at all"), so at the
+* deliberately tiny budget below either a real result (_rc==0) or this
+* package's own explicit, documented degeneracy refusal (_rc==430,
+* nwergm.ado's own curved-vcov guard) is a CORRECT outcome - what this
+* test actually certifies is that the command no longer hard-rejects
+* with error 198 before ever attempting the fit, not that this specific
+* hard network converges at this tiny a budget.
+capture qui nwergm curvedgwespnet, edges gwespfree(0.7) method(mcmle) mcmleiterations(3) mcmcsamplesize(500) mcmcburnin(500)
+assert _rc == 0 | _rc == 430
+if _rc == 0 {
+	assert `"`e(method)'"' == "mcmle"
+	assert e(curved) == 1
+	assert colsof(e(b)) == 3
+}
 
 nwclear
-nwset, mat((0,1,0\1,0,1\0,1,0)) directed name(tinydirnet)
-capture noisily nwergm tinydirnet, edges gwespfree(0.7)
+nwset, mat((0,1\1,0)) directed name(tinydirnet2)
+capture noisily nwergm tinydirnet2, edges gwespfree(0.7)
 assert _rc == 198
 
 nwclear
 nwset, mat((0,1\1,0)) undirected name(tinynet2)
 capture noisily nwergm tinynet2, edges gwespfree(0.7)
 assert _rc == 198
-di "=== gwespfree() error paths (combined with gwesp()/esp(), directed, too few nodes, method(mcmle)) all verified ==="
+di "=== gwespfree() error paths (combined with gwesp()/esp(), too few nodes) verified; method(mcmle) now succeeds ==="
+
+* --- gwespfree() on a DIRECTED network, all five type() definitions
+* (harmonisation unit 169 shipped type(OTP) alone; unit 170 widened it
+* to ITP/OSP/ISP/RTP) - the first directed curved gwesp-FAMILY term
+* (distinct from gwodegreefree()/gwidegreefree()'s own degree-family
+* directed extension, unit 141). Reuses stat_esp()/change_esp()'s
+* existing td.sptype dispatch to the already-certified directed
+* shared_partners_otp/itp/osp/isp/rtp() machinery (unit 91) directly -
+* no new statistic/change code, only registration/validation
+* boilerplate plus one new bound function, ergm_graph_max_sp_dir()
+* (unw_ergm.do, takes sptype), mirroring unit 145's own
+* ties-only-vs-all-dyads reasoning (this bound only has to cover ESP's
+* tied-dyads-only case, unlike the undirected bound shared with
+* gwdspfree()). Each type certified against a REAL independent R
+* ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type=...), estimate=
+* "MPLE") fit (ergm 4.12.0) on its own random 15-node directed
+* network, found well-identified via a seeded search over Erdos-Renyi
+* draws (unlike gwespfree()'s own undirected certification network
+* above, which needed a deliberately clique-heavy structure).
+*
+* RTP surfaced a genuine, confirmed UPSTREAM R BUG along the way
+* (statnet/ergm issue #656, unfixed in the installed ergm 4.12.0):
+* `summary()`/MPLE/MCMC for esp(type="RTP")/gwesp(type="RTP") return
+* WRONG values whenever R's shared-partner cache is enabled (the
+* default) - `espRTP_change()` reads its own focal-dyad cache entry
+* with the DIRECTED getter `GETDDMUI()` instead of the UNDIRECTED
+* `GETUDMUI()` every other read in that same macro uses (the RTP cache
+* itself is keyed by UNORDERED dyad), silently returning 0 whenever
+* tail > head. Found by hand-deriving RTP from R's own documented rule
+* ("k is an RTP shared partner of (i,j) iff i<->k<->j", matching
+* `unw_ergm.do`'s own `shared_partners_rtp()`, already independently
+* brute-force certified in `cscripts/test_nwergm_termexpansion9.do`)
+* and discovering it disagreed with R's own DEFAULT (cached) output on
+* a 15-node random network (24/23/8/1 vs 31/16/8/1 across esp levels
+* 0-3) despite matching R's own small hand-built cases exactly - the
+* asymmetry (RTP is mathematically symmetric, i<->k<->j does not care
+* about tail/head order, so a real definitional difference could never
+* produce an ODD count of mismatched dyads) was the tell that this was
+* an implementation quirk, not a genuine alternate definition. R's own
+* `term.options=list(cache.sp=FALSE)` reproduces nwergm's numbers
+* EXACTLY (confirmed on the same network), which is the reference this
+* unit's own RTP certification below uses - nwergm's implementation
+* needed no change at all, it was already correct.
+nwclear
+nwset, mat((0,1,0,0,0,0,1,0,0,0,1,1,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,1,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,1,0,1,0,0,0 \ ///
+0,0,0,0,0,0,0,0,1,1,1,0,0,1,0 \ ///
+1,1,0,0,0,1,1,0,0,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,0,0,0,1,1,1,0,0,0 \ ///
+0,1,1,1,0,0,0,0,1,0,0,0,0,1,1 \ ///
+0,1,0,0,0,0,0,0,1,1,0,0,0,1,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,1,0,0,0,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,0,0,0,0,1 \ ///
+0,1,0,0,0,1,0,0,0,0,0,0,0,0,0 \ ///
+0,0,1,0,1,0,0,0,0,1,0,1,0,0,0 \ ///
+0,0,0,0,0,1,1,0,0,0,0,1,0,0,0 \ ///
+0,0,1,0,0,0,1,0,0,0,0,0,0,0,0)) directed name(curvedgwespotpnet)
+
+qui nwergm curvedgwespotpnet, edges gwespfree(0.7) method(mple)
+assert _rc == 0
+assert `"`e(method)'"' == "mple"
+assert e(curved) == 1
+assert colsof(e(b)) == 3
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type="OTP"), estimate="MPLE"):
+* edges=-0.774572031566 gwesp.OTP=-0.383231481801 gwesp.OTP.decay=1.559802008526
+assert reldif(_b[edges], -0.774572031566) < 1e-2
+assert reldif(_b[gwesp_weight], -0.383231481801) < 1e-2
+assert reldif(_b[gwesp_decay], 1.559802008526) < 1e-2
+di "=== directed curved gwesp (type(OTP)) MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* type() explicitly set to its own default (OTP) must behave identically
+* to leaving it unset - not silently reinterpreted or double-applied.
+qui nwergm curvedgwespotpnet, edges gwespfree(0.7) type(otp) method(mple)
+assert _rc == 0
+assert reldif(_b[edges], -0.774572031566) < 1e-2
+di "=== gwespfree() type(otp) explicit matches the default-type() fit ==="
+
+* --- type(ITP): also confirms a directed network under 3 nodes is now
+* a genuine SUCCESS case (harmonisation unit 170 lifted the last
+* type()-scoped directed restriction gwespfree() had).
+nwclear
+nwset, mat((0,0,1,0,0,0,0,0,1,0,0,0,1,1,0 \ ///
+0,0,0,1,1,0,0,0,1,0,0,1,0,0,0 \ ///
+0,0,0,0,0,0,1,0,0,0,0,0,1,0,0 \ ///
+1,1,0,0,0,0,0,0,1,0,1,0,1,1,1 \ ///
+1,0,0,1,0,0,1,0,0,0,0,0,0,0,1 \ ///
+0,0,0,0,1,0,0,0,0,0,0,0,0,0,0 \ ///
+1,1,1,0,0,1,0,0,0,0,1,0,0,0,0 \ ///
+0,1,0,0,0,0,0,0,0,0,1,0,0,0,1 \ ///
+0,1,1,1,1,0,0,1,0,1,0,0,0,0,0 \ ///
+0,0,1,0,0,0,0,0,0,0,1,1,0,0,0 \ ///
+0,0,0,0,0,0,0,1,0,0,0,0,0,0,0 \ ///
+0,0,0,0,1,1,0,1,1,0,0,0,0,0,0 \ ///
+0,0,0,0,1,0,0,1,0,0,1,0,0,0,0 \ ///
+1,0,0,0,0,0,1,0,1,1,0,0,0,0,0 \ ///
+1,0,0,0,1,1,1,0,0,1,0,0,0,0,0)) directed name(curvedgwespitpnet)
+qui nwergm curvedgwespitpnet, edges gwespfree(0.7) type(itp) method(mple)
+assert _rc == 0
+assert e(curved) == 1
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type="ITP"), estimate="MPLE"):
+* edges=-1.1843108076164 gwesp.ITP=0.0783287451981 gwesp.ITP.decay=1.0363753950930
+assert reldif(_b[edges], -1.1843108076164) < 1e-2
+assert reldif(_b[gwesp_weight], 0.0783287451981) < 1e-2
+assert reldif(_b[gwesp_decay], 1.0363753950930) < 1e-2
+di "=== directed curved gwesp (type(ITP)) MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- type(OSP) ---
+nwclear
+nwset, mat((0,0,0,0,0,0,0,0,0,0,0,1,0,0,0 \ ///
+1,0,1,0,1,0,1,0,1,0,0,0,0,0,0 \ ///
+1,1,0,1,1,0,1,0,0,0,1,0,0,1,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,1,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,1,0,1 \ ///
+0,0,0,0,1,0,0,0,0,0,0,1,0,0,1 \ ///
+0,0,0,0,0,1,0,1,0,0,0,0,0,0,0 \ ///
+0,0,1,0,0,0,0,0,0,0,1,0,0,0,1 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,1,0,0 \ ///
+1,1,0,0,0,0,1,0,0,0,0,1,1,0,0 \ ///
+0,0,0,0,1,0,0,0,0,0,0,1,0,0,0 \ ///
+0,0,0,0,1,0,0,0,0,0,1,0,0,0,0 \ ///
+1,0,0,1,0,0,0,1,0,0,0,1,0,0,0 \ ///
+0,0,0,0,0,1,1,0,0,1,0,1,1,0,0 \ ///
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)) directed name(curvedgwespospnet)
+qui nwergm curvedgwespospnet, edges gwespfree(0.7) type(osp) method(mple)
+assert _rc == 0
+assert e(curved) == 1
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type="OSP"), estimate="MPLE"):
+* edges=-1.2010984053674 gwesp.OSP=-0.1411842264149 gwesp.OSP.decay=0.0914151348972
+assert reldif(_b[edges], -1.2010984053674) < 1e-2
+assert reldif(_b[gwesp_weight], -0.1411842264149) < 1e-2
+assert reldif(_b[gwesp_decay], 0.0914151348972) < 1e-2
+di "=== directed curved gwesp (type(OSP)) MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- type(ISP) ---
+nwclear
+nwset, mat((0,0,0,0,0,0,0,0,0,0,1,0,0,1,0 \ ///
+0,0,0,0,0,1,0,0,0,1,0,0,0,0,0 \ ///
+0,0,0,0,1,0,0,1,0,0,1,0,0,0,0 \ ///
+1,0,0,0,0,1,0,0,0,1,0,0,0,0,0 \ ///
+0,0,0,0,0,0,0,0,0,1,0,1,0,0,1 \ ///
+0,0,0,0,0,0,1,0,0,1,0,0,1,0,0 \ ///
+0,0,0,0,0,0,0,0,1,0,0,0,0,0,0 \ ///
+0,1,0,0,0,0,0,0,0,0,0,1,0,0,0 \ ///
+1,0,1,0,0,0,0,0,0,0,0,0,0,1,0 \ ///
+1,0,0,0,0,0,0,0,0,0,1,0,0,0,0 \ ///
+0,0,0,0,0,1,0,1,0,0,0,0,0,0,0 \ ///
+0,0,0,0,0,1,0,0,0,0,0,0,0,0,0 \ ///
+1,0,1,0,0,1,0,0,0,0,0,0,0,1,1 \ ///
+0,0,0,0,0,1,0,0,1,1,0,0,0,0,0 \ ///
+0,0,1,1,1,0,0,0,0,0,1,0,0,0,0)) directed name(curvedgwespispnet)
+qui nwergm curvedgwespispnet, edges gwespfree(0.7) type(isp) method(mple)
+assert _rc == 0
+assert e(curved) == 1
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type="ISP"), estimate="MPLE"):
+* edges=-0.941839200227 gwesp.ISP=-0.637263544824 gwesp.ISP.decay=0.126430000963
+assert reldif(_b[edges], -0.941839200227) < 1e-2
+assert reldif(_b[gwesp_weight], -0.637263544824) < 1e-2
+assert reldif(_b[gwesp_decay], 0.126430000963) < 1e-2
+di "=== directed curved gwesp (type(ISP)) MPLE fit matches an independent R ergm fit to within 1e-2 relative difference ==="
+
+* --- type(RTP) - see the header comment above this block for the real
+* R/ergm#656 upstream caching bug this certification's own target
+* value deliberately routes around (term.options=list(cache.sp=FALSE)
+* in R, matching nwergm's already-correct uncached computation).
+nwclear
+nwset, mat((0,0,0,0,0,0,0,1,0,0,0,0,1,0,0 \ ///
+0,0,1,1,1,0,1,0,0,0,0,0,1,1,1 \ ///
+0,1,0,0,1,0,0,0,0,0,1,0,0,0,0 \ ///
+0,0,1,0,0,0,0,0,1,1,1,0,0,0,1 \ ///
+0,1,1,0,0,0,0,0,0,0,0,0,1,0,0 \ ///
+0,0,0,1,0,0,1,1,0,0,0,1,0,0,0 \ ///
+0,0,0,0,0,1,0,0,1,0,0,0,0,0,0 \ ///
+0,0,0,0,0,1,0,0,0,0,0,0,0,0,0 \ ///
+0,0,0,1,1,0,1,0,0,1,1,0,0,1,0 \ ///
+0,1,0,1,0,0,0,0,0,0,0,0,0,0,0 \ ///
+0,0,1,1,0,0,0,0,1,0,0,0,0,1,0 \ ///
+0,0,0,0,0,0,0,0,0,0,1,0,0,0,1 \ ///
+1,1,0,0,1,0,0,1,0,0,1,0,0,0,1 \ ///
+0,1,0,1,0,0,0,0,1,0,1,0,0,0,1 \ ///
+0,1,0,1,0,0,0,0,0,0,0,0,1,1,0)) directed name(curvedgwesprtpnet)
+qui nwergm curvedgwesprtpnet, edges gwespfree(0.7) type(rtp) method(mple)
+assert _rc == 0
+assert e(curved) == 1
+* R ergm(net ~ edges + gwesp(0.7, fixed=FALSE, type="RTP"), estimate="MPLE",
+* control=control.ergm(term.options=list(cache.sp=FALSE))) - see comment above:
+* edges=-1.876354144764 gwesp.RTP=0.820834175933 gwesp.RTP.decay=0.208024541683
+assert reldif(_b[edges], -1.876354144764) < 1e-2
+assert reldif(_b[gwesp_weight], 0.820834175933) < 1e-2
+assert reldif(_b[gwesp_decay], 0.208024541683) < 1e-2
+di "=== directed curved gwesp (type(RTP)) MPLE fit matches an independent R ergm fit (cache.sp=FALSE) to within 1e-2 relative difference ==="
 
 * --- gwespfree() combined with ANOTHER dyad-dependent term (triangle) -
 * nothing in nwergm.ado forbids this (only gwesp()/esp() are forbidden,
@@ -548,7 +764,7 @@ nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
 0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
 0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedcombonet)
 
-qui nwergm curvedcombonet, edges triangle gwespfree(0.7)
+qui nwergm curvedcombonet, edges triangle gwespfree(0.7) method(mple)
 assert _rc == 0
 assert e(curved) == 1
 assert colsof(e(b)) == 4
@@ -588,7 +804,7 @@ nwset, mat((0,1,0,0,0,0,0,1,1,0,1,0,0,1,0 \ ///
 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
 0,1,0,0,1,0,0,0,0,0,0,0,0,0,0)) undirected name(curvedgwdegreenet)
 
-qui nwergm curvedgwdegreenet, edges gwdegreefree(0.7)
+qui nwergm curvedgwdegreenet, edges gwdegreefree(0.7) method(mple)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert e(curved) == 1
@@ -634,7 +850,7 @@ nwset, mat((0,1,0,1,1,0,0,0,0,0,0,0,0,0,0 \ ///
 0,0,0,0,0,0,1,0,0,0,1,0,0,0,0 \ ///
 0,0,0,0,0,0,0,1,0,0,1,1,1,0,0)) undirected name(curvedgwdspnet)
 
-qui nwergm curvedgwdspnet, edges gwdspfree(0.7)
+qui nwergm curvedgwdspnet, edges gwdspfree(0.7) method(mple)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert e(curved) == 1
@@ -699,7 +915,7 @@ nwset, mat((0,0,0,1,0,0,1,0,0,0,0,0,0,0,0 \ ///
 0,0,1,0,0,0,0,0,0,0,0,0,0,0,0 \ ///
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)) undirected name(curvedgwnspnet)
 
-qui nwergm curvedgwnspnet, edges gwnspfree(0.7)
+qui nwergm curvedgwnspnet, edges gwnspfree(0.7) method(mple)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert e(curved) == 1
@@ -748,7 +964,7 @@ nwset, mat((0,0,1,0,1,1,0,1,0,0,1,0,0,0,0 \ ///
 0,0,0,0,0,0,0,0,0,0,0,0,1,0,0 \ ///
 0,0,0,0,0,0,0,0,0,0,0,0,1,0,0)) directed name(curvedgwodegreenet)
 
-qui nwergm curvedgwodegreenet, edges gwodegreefree(0.7)
+qui nwergm curvedgwodegreenet, edges gwodegreefree(0.7) method(mple)
 assert _rc == 0
 assert `"`e(method)'"' == "mple"
 assert e(curved) == 1
@@ -760,7 +976,7 @@ assert reldif(_b[gwodegree_weight], 1.25844151033) < 1e-2
 assert reldif(_b[gwodegree_decay], 0.03366907151) < 1e-2
 di "=== curved gwodegree MPLE fit matches an independent R ergm fit ==="
 
-qui nwergm curvedgwodegreenet, edges gwidegreefree(0.7)
+qui nwergm curvedgwodegreenet, edges gwidegreefree(0.7) method(mple)
 assert _rc == 0
 assert e(curved) == 1
 assert colsof(e(b)) == 3
@@ -784,3 +1000,73 @@ assert _rc == 198
 capture noisily nwergm curvedgwodegreenet, edges gwespfree(0.7) gwodegreefree(0.7)
 assert _rc == 198
 di "=== gwodegreefree()/gwidegreefree() error paths (undirected rejection, mutual exclusivity) all verified ==="
+
+* --- offset() (harmonisation unit 183): holds a named coefficient
+* fixed at a user-supplied value rather than estimating it, matching R
+* ergm's own offset() formula wrapper - certified directly against a
+* REAL independent R ergm 4.12.0 fit (`net ~ edges + offset(triangle)`,
+* offset.coef=0.3) on this same 10-node/10-tie network, both
+* estimate="MPLE" and estimate="MLE": MPLE matches to <1e-4 relative
+* difference (deterministic given the graph, same as every other MPLE
+* certification in this file); MCMLE matches within the ~7%-13% Monte
+* Carlo tolerance this project's own `mutual` MCMLE certification
+* already established as the right standard for two independent
+* stochastic estimators (R's own vcov() uses a completely different
+* RNG stream). Both R fits report the offset coefficient at EXACTLY
+* the given value with SE exactly 0 (confirmed directly, not assumed) -
+* matched here too.
+nwclear
+nwset, mat((0,0,0,1,0,0,0,0,1,0 \ ///
+0,0,0,0,0,0,1,0,0,0 \ ///
+0,0,0,1,0,0,0,1,0,0 \ ///
+1,0,1,0,1,0,0,0,0,0 \ ///
+0,0,0,1,0,0,0,0,0,1 \ ///
+0,0,0,0,0,0,0,1,1,0 \ ///
+0,1,0,0,0,0,0,0,0,0 \ ///
+0,0,1,0,0,1,0,0,1,0 \ ///
+1,0,0,0,0,1,0,1,0,0 \ ///
+0,0,0,0,1,0,0,0,0,0)) undirected name(offsetnet)
+
+qui nwergm offsetnet, edges triangle offset(triangle 0.3) method(mple)
+assert _rc == 0
+* R ergm(net ~ edges + offset(triangle), offset.coef=0.3, estimate="MPLE"):
+* edges=-1.344545, SE(edges)=0.3591732; offset(triangle)=0.3, SE=0
+assert reldif(_b[edges], -1.344545) < 1e-3
+matrix offV_mple = e(V)
+assert reldif(sqrt(offV_mple[1,1]), 0.3591732) < 1e-3
+assert _b[triangle] == 0.3
+assert offV_mple[2,2] == 0
+assert offV_mple[1,2] == 0 & offV_mple[2,1] == 0
+di "=== offset() MPLE fit matches an independent R ergm fit to within 1e-3 relative difference; offset coefficient/SE/vcov row-col exactly as R reports them ==="
+
+qui nwergm offsetnet, edges triangle offset(triangle 0.3) method(mcmle) mcmleiterations(20)
+assert _rc == 0
+assert e(converged) == 1
+* R ergm(..., estimate="MLE", control=control.ergm(seed=7, MCMLE.maxit=20)):
+* edges=-1.371041 (Monte Carlo tolerance vs. an independent R fit -
+* this project's own established ~7%-13% standard for two independent
+* stochastic MCMLE estimators, not the <1e-2 bar used for deterministic
+* MPLE fits above)
+assert reldif(_b[edges], -1.371041) < 0.15
+assert _b[triangle] == 0.3
+matrix offV_mcmle = e(V)
+assert offV_mcmle[2,2] == 0
+assert offV_mcmle[1,2] == 0 & offV_mcmle[2,1] == 0
+di "=== offset() MCMLE fit matches an independent R ergm fit within Monte Carlo tolerance; offset coefficient/SE/vcov row-col exactly as R reports them ==="
+
+* --- error paths
+capture noisily nwergm offsetnet, edges triangle offset(nosuchcoef 0.3)
+assert _rc == 198
+capture noisily nwergm offsetnet, edges triangle offset(triangle notanumber)
+assert _rc == 198
+capture noisily nwergm offsetnet, edges triangle offset(triangle)
+assert _rc == 198
+capture noisily nwergm offsetnet, edges triangle offset(triangle 0.3 triangle 0.5)
+assert _rc == 198
+capture noisily nwergm offsetnet, edges offset(edges 1)
+assert _rc == 198
+nwclear
+nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) undirected name(tinycurvednet)
+capture noisily nwergm tinycurvednet, edges gwespfree(0.7) offset(gwesp_weight 0.5)
+assert _rc == 198
+di "=== offset() error paths (unknown coefname, non-numeric value, odd token count, duplicate coefname, fixing every coefficient, curved model) all verified ==="

@@ -234,6 +234,76 @@ void test_eligibility(){
 	assert(ErgmNativeSetup(M, 1) == 1)
 	assert(M.native_enabled == 1)
 
+	// nsp(d): the raw per-level term gwnspfree() registers under (see
+	// stat_nsp()'s own header comment) - closes the one gap left after
+	// gwespfree()/gwdegreefree()/gwdspfree()/gwodegreefree()/
+	// gwidegreefree() all became native via their own OWN raw multi-
+	// level names (esp/degree/dsp/odegree/idegree) already being
+	// native-eligible; "nsp" itself had no native slot of its own until
+	// this update (TERMCODE_NSP/_OTP/_ITP/_OSP/_ISP/_RTP = 70-75).
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.levels = (0\1)
+	M.addterm("nsp", 2, &stat_nsp(), &change_nsp(), td6, ("nsp0","nsp1"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	// bipartite Stage 4 (b1nodematch/b2nodematch/bgwdegree1/bgwdegree2) -
+	// the last bipartite term family that was still Mata-only, now
+	// native (TERMCODE_B1NODEMATCH/B2NODEMATCH/BGWDEGREE1/BGWDEGREE2 =
+	// 76-79).
+	attr = (0\1\0\1\0)
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.attr = attr
+	M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), td6, ("b1nodematch_x"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.attr = attr
+	M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), td6, ("b2nodematch_x"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), td6, ("bgwdegree1"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	M = ErgmModel()
+	M.init()
+	td6 = ErgmTermData()
+	td6.decay = 0.5
+	M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), td6, ("bgwdegree2"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+
+	// fixdensity no longer forces native off on its own (nwergm.ado no
+	// longer sets M.native_enabled_sample=0 unconditionally for a
+	// fixdensity model - native/ergm_mcmc.c's own propose_swap() now
+	// ports the compound tie/non-tie swap move too) - a fixed_density
+	// model's own eligibility is decided purely by its TERMS, exactly
+	// like every other model; setting M.fixed_density here must not
+	// change ErgmNativeSetup()'s own verdict at all.
+	M = ErgmModel()
+	M.init()
+	M.fixed_density = 1
+	td6 = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), td6, ("edges"))
+	td7 = ErgmTermData()
+	M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), td7, ("triangle"))
+	assert(ErgmNativeSetup(M, 1) == 1)
+	assert(M.native_enabled == 1)
+	assert(M.native_enabled_sample == 1)
+
 	printf("test_eligibility: OK\n")
 }
 test_eligibility()
@@ -765,6 +835,29 @@ void run_esp_dsp_test(){
 }
 run_esp_dsp_test()
 
+// --- undirected: edges + nsp(0,1) - the raw per-level term
+//     gwnspfree() registers under (this update's own native-coverage
+//     closure; see stat_nsp()'s header comment - nsp(d)=dsp(d)-esp(d),
+//     the SAME composition TERMCODE_GWNSP already used one level up). ---
+void run_nsp_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdn2
+	real scalar n
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdn2 = ErgmTermData()
+	tdn2.levels = (0\1)
+	M.addterm("nsp", 2, &stat_nsp(), &change_nsp(), tdn2, ("nsp0","nsp1"))
+
+	test_equivalence("undirected edges+nsp(0,1)", n, 4, 0, M,
+		(-2.0, 0.05, 0.05), 2000, 5, 2000, 6)
+}
+run_nsp_test()
+
 // --- undirected: edges + triangle ---
 void run_triangle_test(){
 	class ErgmModel scalar M
@@ -1135,5 +1228,207 @@ void run_edgecov_hamming_test(){
 		(-2.5, 0.4, 0.05, 0.02, 0.01), 2000, 5, 2000, 6)
 }
 run_edgecov_hamming_test()
+
+// --- bipartite Stage 4 native port: b1nodematch/b2nodematch/
+//     bgwdegree1/bgwdegree2, the last term family that was still
+//     Mata-only. test_equivalence() itself always builds a ONE-MODE
+//     graph internally (build_directed()/build_undirected() +
+//     G.init(n,directed), no set_bipartite() call anywhere in it) -
+//     bipartite needs its own comparison here, duplicating
+//     test_equivalence()'s own core mean/SE/self-consistency logic
+//     rather than extending that already-established function's own
+//     signature/behavior for a shape only this one test needs. ---
+void build_bipartite_test(class ErgmGraph G, real scalar n1, real scalar n2, real scalar deg) {
+	real scalar a, b, n
+	n = n1 + n2
+	G.set_bipartite((J(n1,1,1) \ J(n2,1,2)))
+	for (a=1; a<=n1; a++) {
+		for (b=1; b<=deg; b++) {
+			real scalar j
+			j = n1 + mod(a + b*3, n2) + 1
+			if (!G.has_edge(a,j)) G.toggle(a,j)
+		}
+	}
+}
+
+void run_bipartite_native_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdc, tdn1, tdn2, tdg1, tdg2
+	class ErgmGraph scalar Gmata, Gnative
+	real matrix samp_mata, samp_native
+	real rowvector mean_mata, mean_native, sd_mata, sd_native, se,
+		rho_mata, rho_native, infl_mata, infl_native, theta, obs
+	real colvector attr
+	real scalar n1, n2, n, k, p, burnin, interval, samplesize, checkstat
+
+	n1 = 40
+	n2 = 30
+	n = n1 + n2
+	attr = J(n, 1, 0)
+	for (k=1; k<=n; k++) attr[k] = mod(k, 3)
+
+	M = ErgmModel()
+	M.init()
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdc = ErgmTermData()
+	tdc.attr = attr
+	M.addterm("b1cov", 1, &stat_b1cov(), &change_b1cov(), tdc, ("b1cov_x"))
+	tdn1 = ErgmTermData()
+	tdn1.attr = attr
+	M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), tdn1, ("b1nodematch_x"))
+	tdn2 = ErgmTermData()
+	tdn2.attr = attr
+	M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), tdn2, ("b2nodematch_x"))
+	tdg1 = ErgmTermData()
+	tdg1.decay = 0.5
+	M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), tdg1, ("bgwdegree1"))
+	tdg2 = ErgmTermData()
+	tdg2.decay = 0.5
+	M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), tdg2, ("bgwdegree2"))
+
+	theta = (-3.0, 0.02, 0.3, 0.3, 0.1, 0.1)
+	burnin = 2000
+	interval = 5
+	samplesize = 2000
+
+	Gmata = ErgmGraph()
+	Gmata.init(n, 0)
+	build_bipartite_test(Gmata, n1, n2, 4)
+	Gnative = ErgmGraph()
+	Gnative.init(n, 0)
+	build_bipartite_test(Gnative, n1, n2, 4)
+
+	M.native_enabled = 0
+	samp_mata = ErgmMCMCSample(M, Gmata, theta, burnin, interval, samplesize, &ergm_propose_tnt())
+
+	assert(ErgmNativeSetup(M, 2, Gnative) == 1)
+	samp_native = ErgmMCMCSample(M, Gnative, theta, burnin, interval, samplesize, &ergm_propose_tnt())
+	M.native_enabled = 0
+
+	p = cols(theta)
+	mean_mata = mean(samp_mata)
+	mean_native = mean(samp_native)
+	sd_mata = sqrt(diagonal(variance(samp_mata)))'
+	sd_native = sqrt(diagonal(variance(samp_native)))'
+	rho_mata = ergm_lag1_autocorr(samp_mata)
+	rho_native = ergm_lag1_autocorr(samp_native)
+	infl_mata = (1 :+ rho_mata) :/ (1 :- rho_mata)
+	infl_native = (1 :+ rho_native) :/ (1 :- rho_native)
+	se = sqrt((sd_mata:^2 :* infl_mata + sd_native:^2 :* infl_native) :/ samplesize) :+ 1e-8
+
+	printf("bipartite edges+b1cov+b1nodematch+b2nodematch+bgwdegree1+bgwdegree2: mata_mean=")
+	for (k=1; k<=p; k++) printf("%9.4f ", mean_mata[k])
+	printf(" native_mean=")
+	for (k=1; k<=p; k++) printf("%9.4f ", mean_native[k])
+	printf(" se=")
+	for (k=1; k<=p; k++) printf("%7.4f ", se[k])
+	printf("\n")
+
+	for (k=1; k<=p; k++) assert(abs(mean_mata[k] - mean_native[k]) < 6 * se[k])
+
+	obs = M.full_statistic(Gnative)
+	checkstat = max(abs(obs - samp_native[samplesize, .]))
+	assert(checkstat < 1e-6 + 1e-6 * max(abs(obs)))
+
+	printf("bipartite Stage 4 (b1nodematch/b2nodematch/bgwdegree1/bgwdegree2): OK (self-consistency max diff = %9.2e)\n", checkstat)
+}
+run_bipartite_native_test()
+
+// --- fixdensity native port: propose_swap()'s own compound tie/non-tie
+//     move, direct C port of ergm_propose_swap()/ErgmMCMCSampleSwap() -
+//     M.fixed_density itself now crosses the wire (ErgmNativeSampleCore()'s
+//     own argstr), rather than forcing native off the way this option
+//     used to. Checked two ways: (1) native and Mata land on
+//     statistically the same mean statistic (same tolerance discipline
+//     as every other equivalence check above), and (2) the swap's own
+//     CORE invariant - total tie count never changes - actually holds
+//     on the native run specifically (a bug in propose_swap()'s own
+//     dyad selection, e.g. picking a non-tie for BOTH ends of the swap,
+//     would drift the tie count silently; the mean-statistic check
+//     above would likely also catch it eventually, but this is the
+//     direct, unambiguous signal). ---
+void run_fixdensity_native_test(){
+	class ErgmModel scalar M
+	class ErgmTermData scalar tde, tdt
+	class ErgmGraph scalar Gmata, Gnative
+	real matrix samp_mata, samp_native
+	real rowvector mean_mata, mean_native, sd_mata, sd_native, se,
+		rho_mata, rho_native, infl_mata, infl_native, theta
+	real scalar n, k, p, burnin, interval, samplesize, nties0
+
+	n = 80
+	M = ErgmModel()
+	M.init()
+	M.fixed_density = 1
+	tde = ErgmTermData()
+	M.addterm("edges", 1, &stat_edges(), &change_edges(), tde, ("edges"))
+	tdt = ErgmTermData()
+	M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), tdt, ("triangle"))
+
+	theta = (0, 0.05)
+	burnin = 2000
+	interval = 5
+	samplesize = 2000
+
+	Gmata = ErgmGraph()
+	Gmata.init(n, 0)
+	build_undirected(Gmata, n, 4)
+	Gnative = ErgmGraph()
+	Gnative.init(n, 0)
+	build_undirected(Gnative, n, 4)
+	nties0 = Gmata.nties
+
+	// M.fixed_density is already 1 and M.native_enabled_sample is still
+	// its own init() default of 0 at this point (ErgmNativeSetup() has
+	// not run yet) - ErgmMCMCSample()'s own dispatch therefore falls
+	// through to the Mata ErgmMCMCSampleSwap() fallback for this first
+	// call, exactly as intended (mirrors every other equivalence test's
+	// own "Mata run happens before ErgmNativeSetup() ever touches this
+	// M instance" sequencing).
+	samp_mata = ErgmMCMCSample(M, Gmata, theta, burnin, interval, samplesize, &ergm_propose_tnt())
+	assert(Gmata.nties == nties0)
+
+	// ErgmNativeSetup() itself unconditionally resets M.fixed_density=0
+	// at its own start (its own header comment: "explicit default for
+	// EVERY model") - real nwergm.ado sets M.fixed_density=1 only AFTER
+	// calling it (nwergm.ado's own fixdensity block), never before; this
+	// test must reproduce that exact ordering, not the reverse (setting
+	// it before ErgmNativeSetup(), as an earlier version of this test
+	// did, silently gets it clobbered back to 0 - caught directly here
+	// via the tie-count invariant below going from 320 to 2275, an
+	// ordinary unconstrained run that never engaged propose_swap() at
+	// all, not a propose_swap() correctness bug).
+	assert(ErgmNativeSetup(M, 2, Gnative) == 1)
+	M.fixed_density = 1
+	assert(M.native_enabled_sample == 1)
+	samp_native = ErgmMCMCSample(M, Gnative, theta, burnin, interval, samplesize, &ergm_propose_tnt())
+	assert(Gnative.nties == nties0)
+	M.native_enabled = 0
+
+	p = cols(theta)
+	mean_mata = mean(samp_mata)
+	mean_native = mean(samp_native)
+	sd_mata = sqrt(diagonal(variance(samp_mata)))'
+	sd_native = sqrt(diagonal(variance(samp_native)))'
+	rho_mata = ergm_lag1_autocorr(samp_mata)
+	rho_native = ergm_lag1_autocorr(samp_native)
+	infl_mata = (1 :+ rho_mata) :/ (1 :- rho_mata)
+	infl_native = (1 :+ rho_native) :/ (1 :- rho_native)
+	se = sqrt((sd_mata:^2 :* infl_mata + sd_native:^2 :* infl_native) :/ samplesize) :+ 1e-8
+
+	printf("fixdensity edges+triangle: mata_mean=")
+	for (k=1; k<=p; k++) printf("%9.4f ", mean_mata[k])
+	printf(" native_mean=")
+	for (k=1; k<=p; k++) printf("%9.4f ", mean_native[k])
+	printf(" se=")
+	for (k=1; k<=p; k++) printf("%7.4f ", se[k])
+	printf(" (tie count held fixed at %g on both chains)\n", nties0)
+
+	for (k=1; k<=p; k++) assert(abs(mean_mata[k] - mean_native[k]) < 6 * se[k])
+
+	printf("fixdensity native port: OK\n")
+}
+run_fixdensity_native_test()
 
 end

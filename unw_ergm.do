@@ -599,6 +599,92 @@ real scalar ergm_graph_max_shared_partners(class ErgmGraph scalar G){
 }
 
 /*
+	Directed counterpart to `ergm_graph_max_shared_partners()' just
+	above - the true maximum directed shared-partner count (any of the
+	five R-ergm-compatible definitions - OTP/ITP/OSP/ISP/RTP, selected
+	by `sptype', same convention as `td.sptype') over any TIED dyad
+	(i,j) in the network, for `gwespfree()' on a directed network
+	(harmonisation unit 169 built the OTP-only case; unit 170 widened
+	the same function, in place, to all five - `shared_partners_itp()'/
+	`_osp()'/`_isp()'/`_rtp()' already existed and are already certified
+	via the fixed-decay `gwesp()' path, unit 91, so this is dispatch
+	widening only, no new shared-partner logic). Deliberately TIES-only,
+	unlike the undirected function's own all-dyads sweep: that
+	function's own bound is shared by BOTH `gwespfree()' (esp, tied
+	dyads only) and `gwdspfree()' (dsp, every dyad), so it has to cover
+	the wider dsp case; this function is registered from `gwespfree()'
+	alone (directed `gwdspfree()'/`gwnspfree()' need every dyad, not
+	just ties - see `ergm_graph_max_sp_dir_all()' just below, added for
+	them in unit 171), and `stat_esp_otp/itp/osp/isp/
+	rtp()'/`change_esp_otp/itp/osp/isp/rtp()' (all above) only ever
+	evaluate their own `shared_partners_*()' on tied dyads, so a
+	ties-only sweep is exact for this caller, not merely a looser
+	approximation. Same "+1" caller obligation as
+	`ergm_graph_max_shared_partners()' - see that function's own header
+	comment for why (a single toggle can raise a DIFFERENT,
+	already-tied dyad's own count by one, not just the toggled dyad's
+	own value) - the reasoning is definition-agnostic: any directed
+	shared-partner definition's own change statistic only ever touches
+	dyads sharing an endpoint with the toggled one, one unit at a time,
+	the same locality property `change_esp_otp()' etc. already rely on.
+*/
+real scalar ergm_graph_max_sp_dir(class ErgmGraph scalar G, string scalar sptype){
+	real matrix ties
+	real scalar k, p, best
+
+	ties = G.all_ties()
+	best = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (sptype == "OTP") p = G.shared_partners_otp(ties[k,1], ties[k,2])
+		else if (sptype == "ITP") p = G.shared_partners_itp(ties[k,1], ties[k,2])
+		else if (sptype == "OSP") p = G.shared_partners_osp(ties[k,1], ties[k,2])
+		else if (sptype == "ISP") p = G.shared_partners_isp(ties[k,1], ties[k,2])
+		else p = G.shared_partners_rtp(ties[k,1], ties[k,2])
+		if (p > best) best = p
+	}
+	return(best)
+}
+
+/*
+	ALL-DYADS counterpart to `ergm_graph_max_sp_dir()' just above -
+	needed for `gwdspfree()'/`gwnspfree()' on a directed network
+	(harmonisation unit 171), the same way the ties-only version above
+	was not enough for `gwespfree()' alone: `dsp(d)'/`nsp(d)' are
+	defined over EVERY dyad (tied or not - `stat_dsp()'/`stat_nsp()'
+	above, both dispatching to the directed `shared_partners_*()'
+	primitives the identical way `stat_esp()' does), not only tied ones,
+	so the true maximum has to be swept over every ordered pair, not
+	just `G.all_ties()'. O(n^2) dyads, each an O(degree) call into the
+	relevant `shared_partners_*()' - the same cost class the undirected
+	`ergm_graph_max_shared_partners()' already pays for the identical
+	reason (this is a one-time, registration-time snapshot, not a
+	per-MCMC-iteration cost, so unlike the live change-statistic path
+	this has never needed the sparse/incremental treatment `enable_sp_cache()'
+	gives the undirected UTP case - "decide term by term through
+	profiling", unit 83's own discipline, not preemptive optimization).
+	Same "+1" caller obligation as every other bound function in this
+	family.
+*/
+real scalar ergm_graph_max_sp_dir_all(class ErgmGraph scalar G, string scalar sptype){
+	real scalar n, i, j, p, best
+
+	n = G.n
+	best = 0
+	for (i=1; i<=n; i++) {
+		for (j=1; j<=n; j++) {
+			if (i == j) continue
+			if (sptype == "OTP") p = G.shared_partners_otp(i, j)
+			else if (sptype == "ITP") p = G.shared_partners_itp(i, j)
+			else if (sptype == "OSP") p = G.shared_partners_osp(i, j)
+			else if (sptype == "ISP") p = G.shared_partners_isp(i, j)
+			else p = G.shared_partners_rtp(i, j)
+			if (p > best) best = p
+		}
+	}
+	return(best)
+}
+
+/*
 	Number of nodes k that are neighbors of BOTH i and j (undirected
 	sense: k s.t. has_edge(i,k) and has_edge(j,k)) - the "shared
 	partner" count GWESP needs. Iterates whichever of i/j has the
@@ -3693,9 +3779,30 @@ class ErgmModel {
 	// below is later, separate work - not yet done.
 	real rowvector curved
 
+	// Fixed-coefficient (offset) support (harmonisation unit 183,
+	// docs/ERGM_ROADMAP.md's own "Offsets/fixed-coefficient terms" row) -
+	// PER COEFFICIENT/eta-column (length nparam(), same indexing as
+	// `coefnames' - NOT per term instance like `curved' above, since a
+	// single multi-column term instance, e.g. a 3-level `nodefactor()',
+	// can have just ONE of its columns fixed while the others are still
+	// estimated). `isfixed[k]==1' holds `coefnames[k]''s own coefficient
+	// at `fixedvalue[k]' throughout MPLE/MCMLE rather than estimating
+	// it, matching R ergm's own `offset()' formula wrapper - reported,
+	// not estimated (SE exactly 0, matching R's own real output,
+	// confirmed directly: `vcov(fit)' has an entirely zero row/column
+	// for an offset coefficient, not merely a small value). v1 scope:
+	// ordinary (non-curved) coefficients only - rejected at the
+	// `nwergm.ado' validation stage for a curved term's own columns,
+	// not silently mishandled here.
+	real rowvector isfixed
+	real rowvector fixedvalue
+
 	void init()
 	void addterm()
 	void mark_curved()
+	void mark_fixed()
+	real rowvector freeidx()
+	real scalar findcoef()
 	real scalar nparam()
 	real scalar ntheta()
 	real rowvector theta_to_eta()
@@ -3720,6 +3827,8 @@ void ErgmModel::init(){
 	native_enabled_sample = 0
 	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
 	curved = J(1, 0, .)
+	isfixed = J(1, 0, .)
+	fixedvalue = J(1, 0, .)
 }
 
 /*
@@ -3744,6 +3853,8 @@ void ErgmModel::addterm(string scalar name, real scalar npar0,
 	td = (td, &td0)
 	coefnames = (coefnames, cnames)
 	curved = (curved, 0)
+	isfixed = (isfixed, J(1, npar0, 0))
+	fixedvalue = (fixedvalue, J(1, npar0, 0))
 }
 
 /*
@@ -3757,6 +3868,77 @@ void ErgmModel::addterm(string scalar name, real scalar npar0,
 */
 void ErgmModel::mark_curved(){
 	curved[nterms] = 1
+}
+
+/*
+	Marks eta-space column `colidx' (1-based, into `coefnames'/`isfixed'/
+	`fixedvalue' - NOT a term-instance index like mark_curved()'s own
+	implicit "last term" convention, since a specific COLUMN, not term
+	instance, is what a user names via offset()) as fixed at `value'.
+	Called from `nwergm.ado' once per (coefname,value) pair in the
+	user's own `offset()' option, after resolving each name against
+	`coefnames' - this method itself does no name resolution, matching
+	the existing division of labor (the Stata layer parses/validates
+	user-facing option syntax; the Mata layer only ever indexes by
+	position).
+*/
+void ErgmModel::mark_fixed(real scalar colidx, real scalar value){
+	isfixed[colidx] = 1
+	fixedvalue[colidx] = value
+}
+
+/*
+	1-based column indices of the NOT-fixed eta-space coefficients, in
+	their original order - the reduced index set MPLE/MCMLE restrict
+	their own estimating equations to when one or more coefficients are
+	held fixed via offset(). Equals (1..nparam()) unchanged whenever no
+	coefficient is fixed (the ordinary case, `isfixed' all zero).
+*/
+real rowvector ErgmModel::freeidx(){
+	return(selectindex(!isfixed))
+}
+
+/*
+	1-based position of `cname' in `coefnames' (harmonisation unit 183,
+	offset() support) - 0 if not found. `nwergm.ado' uses this to
+	resolve each user-supplied "coefname value" pair in offset() to the
+	eta-space column `mark_fixed()' actually needs, with a clear error
+	on a typo'd name rather than a silent no-op.
+*/
+real scalar ErgmModel::findcoef(string scalar cname){
+	real scalar k
+	for (k=1; k<=cols(coefnames); k++) if (coefnames[k]==cname) return(k)
+	return(0)
+}
+
+/*
+	Expands a REDUCED (free-columns-only, in `freeidx()' order) MPLE
+	coefficient vector/covariance into their full eta-space width,
+	filling in each fixed coefficient's own known value (`b') and an
+	entirely zero row/column (`V') - harmonisation unit 183, matching
+	`ErgmMCMLE()''s own identical final-vcov treatment and R ergm's own
+	real reported `coef()'/`vcov()' for an offset() term (confirmed
+	directly against a real R fit). Posted directly to Stata matrices
+	`bname'/`Vname' (nwergm.ado's own convention for every other
+	MPLE/MCMLE result matrix) rather than returned, since the two
+	matrices have to travel back across the Mata/Stata boundary anyway.
+	No-op expansion (bfree/Vfree copied through unchanged) whenever
+	nothing is fixed.
+*/
+void ergm_mple_expand_fixed(class ErgmModel scalar M, real matrix bfree, real matrix Vfree, string scalar bname, string scalar Vname){
+	real scalar p, k
+	real rowvector fidx, bfull
+	real matrix Vfull
+
+	p = M.nparam()
+	fidx = M.freeidx()
+	bfull = J(1, p, 0)
+	Vfull = J(p, p, 0)
+	for (k=1; k<=p; k++) if (M.isfixed[k]) bfull[k] = M.fixedvalue[k]
+	bfull[fidx] = bfree
+	Vfull[fidx, fidx] = Vfree
+	st_matrix(bname, bfull)
+	st_matrix(Vname, Vfull)
 }
 
 real scalar ErgmModel::nparam(){
@@ -4163,9 +4345,43 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 		found = 0
 		for (halvings=1; halvings<=30; halvings++) {
 			theta_try = theta + step :* delta
-			if (theta_try[alpha_pos] > 1e-6) {
+			// Harmonisation unit 171: `& theta_try[alpha_pos] < 500' guards
+			// the MIRROR-IMAGE failure mode to the pre-existing `> 1e-6'
+			// floor - decay drifting to +infinity, not just -infinity/0.
+			// Root-caused via direct iteration tracing on a real directed
+			// gwnspfree() certification network: an accepted step drove
+			// decay to ~2638 (still positive and finite, so it passed the
+			// floor check and had an in-bounds, non-missing `ll1' at THAT
+			// point, since the pseudolikelihood surface is already
+			// numerically flat out there) - the very NEXT iteration's
+			// `ergm_gwdecay_map()'/`_gradient()' then overflowed (`exp(alpha
+			// + ...)' with alpha=2638 vastly exceeds float64's ~709 overflow
+			// threshold), producing missing eta/Jacobian/delta and
+			// cascading to missing coefficients - a DIFFERENT crash path
+			// than the `missing(ll1)' guard just below catches (that guards
+			// a NON-finite ll1 from an EXTREME step; this guards a merely-
+			// large-but-finite one that only breaks the FOLLOWING
+			// iteration). 500 is comfortably below the overflow threshold
+			// and already far past any statistically meaningful decay value
+			// (every other curved term's own near-boundary certification
+			// case in this file tops out under 20).
+			if (theta_try[alpha_pos] > 1e-6 & theta_try[alpha_pos] < 500) {
 				ll1 = ergm_curved_loglik(M, X, y, theta_try)
-				if (ll1 >= ll0) {
+				// `missing(ll1)' MUST be checked explicitly before
+				// comparing - Stata/Mata's own missing-value ordering
+				// convention treats `.' as larger than every real number,
+				// so a bare `ll1 >= ll0' would silently ACCEPT a step whose
+				// log-likelihood came back missing (confirmed directly:
+				// `. >= 5' evaluates to true in Mata) - a second,
+				// independent way this same class of bug can corrupt theta
+				// and cascade to missing coefficients/variance downstream.
+				// R's own BFGS-based optimizer does not have either failure
+				// mode (IEEE NaN comparisons are never true, and it does
+				// not take literal, undamped Newton steps in the first
+				// place), so neither was ever surfaced by any earlier
+				// curved-term certification network - each one happened to
+				// stay far enough from both numerical edges.
+				if (!missing(ll1) & ll1 >= ll0) {
 					found = 1
 					break
 				}
@@ -4173,18 +4389,24 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 			step = step / 2
 		}
 		if (!found) {
-			// No improving, alpha-positive step exists even after 30
-			// halvings - the genuine signature of a boundary/degenerate
-			// solution (decay -> 0), not a bug: measured directly on a
-			// real combined triangle+curved-gwesp model where R's own
-			// BFGS independently lands at decay=2.5e-10, essentially
-			// the same boundary. Stop gracefully AT the boundary
-			// (clamp decay to its floor, leave every other parameter at
-			// its own last valid value) rather than accepting whatever
-			// the final failed attempt happened to be, which is what
-			// was cascading to missing everywhere downstream on this
-			// exact case before this fix.
-			theta[alpha_pos] = 1e-6
+			// No improving, in-bounds step exists even after 30 halvings -
+			// the genuine signature of a boundary/degenerate solution, not
+			// a bug: measured directly on a real combined triangle+curved-
+			// gwesp model where R's own BFGS independently lands at
+			// decay=2.5e-10, essentially the same (floor) boundary. Stop
+			// gracefully AT the boundary that was actually blocking further
+			// progress - the SIGN of the Newton direction's own decay
+			// component says which one: `delta[alpha_pos] < 0' means the
+			// step wanted to DECREASE decay (blocked by the floor), `> 0'
+			// means it wanted to INCREASE it (blocked by the unit-171
+			// ceiling above). Clamping to the wrong boundary here would
+			// misreport a decay->infinity degeneracy as decay->0, the
+			// opposite of what actually happened. Leave every other
+			// parameter at its own last valid value, rather than accepting
+			// whatever the final failed attempt happened to be, which is
+			// what was cascading to missing everywhere downstream before
+			// this fix.
+			theta[alpha_pos] = (delta[alpha_pos] < 0) ? 1e-6 : 500
 			converged = 1
 			break
 		}
@@ -5155,6 +5377,57 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			termcodes[pos] = 69
 			covidxs[pos] = cidx
 		}
+		// nsp(d): the raw per-level term gwnspfree() registers under
+		// (see stat_nsp()'s own header comment) - a native slot of its
+		// own only now (native/ergm_mcmc.c TERMCODE_NSP/_OTP/_ITP/_OSP/
+		// _ISP/_RTP = 70-75), one raw multi-level term shy of the
+		// esp()/dsp() pair already ported, mirroring their own exact
+		// per-level dispatch pattern (`tdt.levels[k]' as p1, `td.sptype'
+		// resolved via ErgmNativeSPCode() the identical way).
+		else if (nm == "nsp") {
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = ErgmNativeSPCode(tdt.sptype, 70, 71, 72, 73, 74, 75)
+				p1v[pos] = tdt.levels[k]
+			}
+		}
+		// bipartite Stage 4 (harmonisation unit 162's own two term
+		// families) - native/ergm_mcmc.c TERMCODE_B1NODEMATCH/
+		// B2NODEMATCH/BGWDEGREE1/BGWDEGREE2 = 76-79, direct ports of
+		// change_b1nodematch()/change_b2nodematch()/change_bgwdegree1()/
+		// change_bgwdegree2() in this file. b1nodematch()/b2nodematch()
+		// mirror nodematch()'s own attrmat registration exactly (one
+		// attribute array, no per-level expansion - unlike b1factor()/
+		// b2factor() above, this term has a single coefficient);
+		// bgwdegree1()/bgwdegree2() mirror bgwdegree1/2's own MPLE/MCMLE
+		// registration in nwergm.ado (a bare decay value, no attribute
+		// array at all - same shape as plain gwdegree() above).
+		else if (nm == "b1nodematch") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 76
+			attridxs[pos] = aidx
+		}
+		else if (nm == "b2nodematch") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 77
+			attridxs[pos] = aidx
+		}
+		else if (nm == "bgwdegree1") {
+			pos++
+			termcodes[pos] = 78
+			p1v[pos] = tdt.decay
+		}
+		else if (nm == "bgwdegree2") {
+			pos++
+			termcodes[pos] = 79
+			p1v[pos] = tdt.decay
+		}
 		else return(0)
 	}
 
@@ -5364,9 +5637,18 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// function is the only one that ever sends 1; see
 	// ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() below, which
 	// each send a literal 0 at the same position).
+	// fixed_density (fixdensity native port): inserted right after
+	// hasmask, the same "all three callers, in lockstep" discipline
+	// every earlier field addition here required - this is the only one
+	// of the three that ever sends a genuine model's own
+	// M.fixed_density (0 or 1); ErgmNativeBuildMPLEData()/
+	// ErgmNativeCurvedMPLEFit() below each send a literal 0 at the same
+	// position (a fixed-density model is MCMLE-only, nwergm.ado itself
+	// requires method(mcmle) for fixdensity, so neither MPLE mode ever
+	// legitimately runs on one).
 	argstr = "0 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite) + " " + strofreal(nties) + " " +
 		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
-		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(ncovmat) + " " + strofreal(hasmask) + " " + strofreal(p)
+		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(ncovmat) + " " + strofreal(hasmask) + " " + strofreal(M.fixed_density) + " " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
 			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
@@ -5534,8 +5816,12 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	// whether this function is even called) to 0 for a masked model, so
 	// this path never runs for one; the literal 0 below only keeps the
 	// shared header's OWN field count aligned with ErgmNativeSampleCore()'s.
+	// fixed_density: always 0 here, same reasoning as hasmask's own
+	// comment just above (a fixed-density model is MCMLE-only, never
+	// MPLE) - kept only for the shared header's own field-count
+	// alignment with ErgmNativeSampleCore()'s.
 	argstr = "1 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite) + " " + strofreal(nties) + " " +
-		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 " + strofreal(p)
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
 			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
@@ -5670,8 +5956,11 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	// has no mask awareness either, and never runs when native_enabled
 	// is 0 anyway; kept only for the shared header's own field-count
 	// alignment across all three callers.
+	// fixed_density: always 0 here, same reasoning as hasmask's own
+	// comment just above - curved MPLE is never a fixed-density model
+	// either.
 	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " 0 " + strofreal(nties) + " " +
-		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 " + strofreal(p)
+		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
 			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
@@ -6133,20 +6422,6 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 
 	cur = M.full_statistic(G)
 
-	// Fixed-density dispatch (M.fixed_density, set in nwergm.ado only for
-	// a `fixdensity' model - explicitly 0 for every other model via
-	// ErgmNativeSetup(), which always runs before this function is ever
-	// called, so this branch is unreachable/always-false for the
-	// ordinary case, leaving everything below completely unchanged).
-	// Checked BEFORE the native branch below since a fixed-density model
-	// always has native_enabled_sample forced to 0 anyway (no native
-	// port for this constraint - see ErgmMCMCSampleSwap()'s own header),
-	// but checking first here documents that ordering explicitly rather
-	// than relying on it silently.
-	if (M.fixed_density) {
-		return(ErgmMCMCSampleSwap(M, G, theta, burnin, interval, samplesize))
-	}
-
 	// Native backend fast path (harmonisation unit 83) - see this file's
 	// own "Native (C) MCMC backend" section above. M.native_enabled is
 	// set once per `nwergm' call by ErgmNativeSetup(), never inside this
@@ -6156,9 +6431,26 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	// completely unchanged from before this unit - proposalfn is simply
 	// unused in the native branch, since the plugin implements its own
 	// proposal/toggle loop natively (crossing the Mata/native boundary
-	// once for this whole call, not once per proposal).
+	// once for this whole call, not once per proposal). Checked BEFORE
+	// the fixed-density dispatch below (native/ergm_mcmc.c's own
+	// propose_swap() now natively ports fixdensity too - the plugin's
+	// own wire-carried `M.fixed_density' flag makes ErgmNativeSampleCore()
+	// select the compound-swap loop internally), since a fixed-density
+	// model's own native eligibility is decided purely by its TERMS
+	// (exactly like every other model) - fixdensity itself is a
+	// proposal-shape choice, not a term, so it never independently
+	// forces native_enabled_sample to 0 any more.
 	if (M.native_enabled_sample) {
 		return(ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur))
+	}
+
+	// Fixed-density Mata fallback (M.fixed_density, set in nwergm.ado
+	// only for a `fixdensity' model) - reached only when native is
+	// unavailable at all (no compiled plugin for this platform) or this
+	// model's own terms fall outside the native backend's scope, mirroring
+	// every other native-eligibility fallback in this file.
+	if (M.fixed_density) {
+		return(ErgmMCMCSampleSwap(M, G, theta, burnin, interval, samplesize))
 	}
 
 	out = J(samplesize, cols(cur), 0)
@@ -6285,22 +6577,23 @@ struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class Er
 
 	cur = M.full_statistic(G)
 
-	// Fixed-density dispatch - see ErgmMCMCSample()'s own identical
-	// branch for the full rationale.
-	if (M.fixed_density) {
-		return(ErgmMCMCSampleDiagSwap(M, G, theta, burnin, interval, samplesize))
-	}
-
 	// Native backend fast path - see ErgmMCMCSample()'s own identical
-	// branch just above for the full rationale; the acceptance rate
-	// ErgmNativeSampleCore() tallies internally is picked up from
-	// M.native_lastaccept here since this function's own return type
-	// (unlike ErgmMCMCSample()'s bare matrix) has a natural place to put
-	// it.
+	// branch (checked before the fixed-density Mata fallback for the
+	// same reason - see that function's own updated comment) for the
+	// full rationale; the acceptance rate ErgmNativeSampleCore() tallies
+	// internally is picked up from M.native_lastaccept here since this
+	// function's own return type (unlike ErgmMCMCSample()'s bare matrix)
+	// has a natural place to put it.
 	if (M.native_enabled_sample) {
 		res.sample = ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur)
 		res.acceptrate = M.native_lastaccept
 		return(res)
+	}
+
+	// Fixed-density Mata fallback - see ErgmMCMCSample()'s own identical
+	// branch for the full rationale.
+	if (M.fixed_density) {
+		return(ErgmMCMCSampleDiagSwap(M, G, theta, burnin, interval, samplesize))
 	}
 
 	res.sample = J(samplesize, cols(cur), 0)
@@ -6532,9 +6825,9 @@ real rowvector ergm_lag1_autocorr(real matrix samp){
 	exactly mirroring how `ergm_lag1_autocorr()' was already used.
 */
 real scalar ergm_ar_yw_infl(real colvector x, real scalar pmax){
-	real scalar n, gamma0, k, j, p, best_aic, best_sigma2, sigma2, aic, sumphi, lag
-	real colvector acf, phi, r
-	real matrix R
+	real scalar n, gamma0, k, j, p, best_aic, best_sigma2, sigma2, aic, sumphi
+	real scalar v_prev, v_cur, refl, result, min_effective_n
+	real colvector acf, phi_prev, phi_cur
 
 	n = rows(x)
 	gamma0 = variance(x) * (n-1) / n
@@ -6549,30 +6842,83 @@ real scalar ergm_ar_yw_infl(real colvector x, real scalar pmax){
 	p = 0
 	sumphi = 0
 
+	// Durbin-Levinson recursion (harmonisation unit 181,
+	// docs/ERGM_ROADMAP.md's own unit-180 follow-up account) - matches
+	// what R's own `ar(x, method="yule-walker")' (the function
+	// `coda::spectrum0.ar()' - and therefore Statnet's own
+	// `spectrum0.mvar()' this file's own header comment already cites -
+	// actually calls) uses internally: a Levinson recursion (R's own
+	// univariate code path calls a Fortran `eureka' routine implementing
+	// exactly this), NOT a direct Toeplitz-matrix inversion the way the
+	// PREVIOUS version of this function did (`phi = invsym(R) * r').
+	// The reflection coefficient `refl' computed at each step below is
+	// mathematically guaranteed to lie in [-1,1] whenever the input ACF
+	// sequence is a valid (positive-semi-definite) one - guaranteed here
+	// because `acf' already uses the standard BIASED (divide-by-`n', not
+	// by `n-k') sample-autocovariance estimator, the exact property
+	// textbooks cite as the reason to prefer it for this purpose. A
+	// STATIONARY fit (`sumphi<1') is therefore guaranteed BY
+	// CONSTRUCTION at every candidate order, not merely "usually true,
+	// clipped after the fact if not" the way the direct-inversion
+	// version needed (`if (sumphi>=1) sumphi=0.999' there still let the
+	// final inflation factor come out enormous whenever `sumphi' was
+	// merely CLOSE to 1, since `(1-0.999)^2=1e-6' is a tiny denominator
+	// regardless). Measured directly to matter, not a theoretical
+	// concern only: on a curved MCMLE fit that had settled at a
+	// completely stable theta (bit-identical across 30+ iterations - a
+	// near-constant/near-zero-variance `x', exactly what a curved term
+	// settling at a boundary produces, not a genuinely slow-mixing
+	// chain), the OLD direct-inversion version's own returned inflation
+	// factor swung from 545 to 17,332 between two CONSECUTIVE iterations
+	// of the SAME stationary process at an UNCHANGED parameter - a 30x
+	// jump no genuine autocorrelation measurement of an unchanging
+	// process would produce, strong evidence of numerical instability in
+	// the matrix-inversion approach specifically on near-singular
+	// empirical Toeplitz matrices, not a real difference in mixing.
+	v_prev = 1
+	phi_prev = J(0, 1, 0)
 	for (j=1; j<=pmax; j++) {
-		R = J(j, j, 0)
-		r = acf[1::j]
-		for (k=1; k<=j; k++) {
-			for (lag=1; lag<=j; lag++) {
-				R[k,lag] = (k==lag) ? 1 : acf[abs(k-lag)]
-			}
+		if (j==1) refl = acf[1]
+		else {
+			refl = acf[j]
+			for (k=1; k<=j-1; k++) refl = refl - phi_prev[k]*acf[j-k]
+			refl = refl / v_prev
 		}
-		phi = invsym(R) * r
-		sigma2 = gamma0 * (1 - r' * phi)
-		if (sigma2 <= 0) continue
+		phi_cur = J(j, 1, 0)
+		phi_cur[j] = refl
+		for (k=1; k<=j-1; k++) phi_cur[k] = phi_prev[k] - refl*phi_prev[j-k]
+		v_cur = v_prev * (1 - refl^2)
+
+		sigma2 = v_cur * gamma0
+		if (sigma2 <= 0) break	// floating-point erosion of the PSD guarantee at a high order on near-singular data - stop extending, keep the best order already found
 		aic = n * ln(sigma2) + 2*j
 		if (aic < best_aic) {
 			best_aic = aic
 			best_sigma2 = sigma2
 			p = j
-			sumphi = sum(phi)
+			sumphi = sum(phi_cur)
 		}
+		phi_prev = phi_cur
+		v_prev = v_cur
 	}
 
 	if (p == 0) return(1)
-	// guard against a nonstationary fit at the selected order
+	// `sumphi' is guaranteed <1 by construction (see this function's own
+	// header comment) - kept as a tiny defensive margin only, not a
+	// load-bearing clip the way it was for the old direct-inversion code.
 	if (sumphi >= 1) sumphi = 0.999
-	return( (best_sigma2 / (1-sumphi)^2) / gamma0 )
+	result = (best_sigma2 / (1-sumphi)^2) / gamma0
+	// Absolute sanity cap on the IMPLIED per-dimension effective sample
+	// size (`n/result'), scaling with how much data was actually drawn
+	// rather than being a fixed inflation ceiling - kept as a final,
+	// now-unlikely-to-bind defense in depth (belt and suspenders) after
+	// the Durbin-Levinson fix above already addresses the root cause;
+	// `min_effective_n=5' is "at least a handful of effectively
+	// independent draws is required before this correction can be
+	// trusted at all", not a claim of precision beyond that.
+	min_effective_n = 5
+	if (result > n / min_effective_n) result = n / min_effective_n
+	return(result)
 }
 
 /*
@@ -6647,6 +6993,317 @@ real scalar ergm_spec0_scalar(real colvector xcentered){
 	if (pmax < 1) pmax = 1
 	gamma0 = variance(xcentered) * (n-1) / n
 	return(ergm_ar_yw_infl(xcentered, pmax) * gamma0)
+}
+
+// Hummel/Hunter/Handcock (2012) MCMLE steplength - replaces the ad hoc
+// Mahalanobis-2-capped Newton step both branches of ErgmMCMLE() used
+// previously (harmonisation units 138/152/159 - see docs/ERGM_ROADMAP.md's
+// own "Curved parameters" row for the full account of why that damping
+// scheme failed even after several rounds of tuning: it caps the SIZE of
+// the theta/eta-space step but never checks whether the resulting target
+// is a statistic value the MCMC sample actually supports, so it can - and,
+// on a real directed network with `gwesp()' fixed-decay, WAS OBSERVED TO -
+// drive `theta' into a degenerate region with an exploded edges
+// coefficient and an entirely missing vcov). R's own `ergm' package never
+// damps the parameter step directly at all; `.Hummel.steplength()' damps
+// the TARGET STATISTIC instead, finding the largest gamma in (0,1] such
+// that `gamma*(observed-target)' stays inside the convex hull of what the
+// current MCMC sample actually explored - completely agnostic to whether
+// the model is curved, since it operates on the RAW sufficient-statistic
+// sample (`D' below), not on theta/eta at all. Ported here as the same
+// two-stage construction R uses: `ergm_hummel_gammamax()' is the
+// geometric primitive (an LP), `ergm_hummel_steplength()' is the wrapper
+// applying the margin/cap R's own `.Hummel.steplength()' applies around
+// it. Both independently certified against R's own installed `ergm'
+// 4.12.0 (`ergm:::shrink_into_CH'/`ergm:::.Hummel.steplength', called
+// directly via Rscript on identical generated data) to <1e-7 relative
+// difference across n=20-3000, k=2-6 - see docs/CERTIFICATION.md's own
+// entry for this unit.
+//
+// The geometry: R poses this as the DUAL LP (minimize c'y subject to
+// M_j'y >= -1, y in R^k unbounded - k=dimension, small; M = the n-row
+// MCMC sample) because it is built to handle MANY test points at once
+// (the missing-data/constrained-network case this package does not
+// implement - `nwergm.ado' never passes a second, "observed", MCMC
+// sample to `ErgmMCMLE()', so there is always exactly ONE test point,
+// the origin). For a single test point this package instead solves the
+// mathematically equivalent PRIMAL directly - maximize gamma subject to
+// `M'w = gamma*x', `sum(w)=1', `w>=0' - because THAT formulation has
+// only k+1 EQUALITY constraints (one per statistic dimension, plus the
+// convexity constraint) regardless of how large the MCMC sample n is,
+// so a two-phase tableau simplex over it needs only a (k+1)x(k+1)
+// working basis - cheap even at n=3000 (measured: ~50ms/call, negligible
+// against the MCMC sampling itself) - rather than needing R's own
+// dual-space machinery (built for the many-test-point case this
+// package's own architecture never triggers).
+real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
+	real scalar n, k, i, j, ii, iter, ncols, nrows, entering, leaving
+	real scalar mincost, ratio, minratio, phase1obj, pivot, tol
+	real matrix T
+	real rowvector cost1, cost2, redcost, basis
+	real colvector b
+	real scalar gpcol, gmcol, artcol0, gam
+
+	n = rows(Mm)
+	k = cols(Mm)
+	tol = 1e-9
+
+	// target already coincides with the sample's own mean (in the
+	// caller's centered coordinates) - no shrinkage needed, matching
+	// R's own `all(abs(x)) <= sqrt(eps)' special case.
+	if (max(abs(x)) < 1e-10) return(.)
+
+	// standard-form variables: w_1..w_n (the convex-combination weights),
+	// gamma+/gamma- (gamma split into its nonnegative parts, since the
+	// true gamma can come out negative if `x' points away from where
+	// the sample actually sits), then k+1 artificials (one per equality
+	// constraint) for the phase-1 simplex.
+	nrows = k+1
+	ncols = n + 2 + nrows
+	gpcol = n+1
+	gmcol = n+2
+	artcol0 = n+2
+
+	T = J(nrows, ncols, 0)
+	for (i=1; i<=k; i++) {
+		for (j=1; j<=n; j++) T[i,j] = Mm[j,i]
+		T[i,gpcol] = -x[i]
+		T[i,gmcol] = x[i]
+		T[i, artcol0+i] = 1
+	}
+	for (j=1; j<=n; j++) T[k+1,j] = 1
+	T[k+1, artcol0+(k+1)] = 1
+
+	b = J(nrows,1,0)
+	b[k+1] = 1
+
+	basis = J(1,nrows,0)
+	for (i=1; i<=nrows; i++) basis[i] = artcol0+i
+
+	// ---- Phase 1: drive the artificials out, i.e. find ANY feasible
+	// (w,gamma) - equivalently, check that the origin (0, in the
+	// caller's centered coordinates) is reachable at all as a convex
+	// combination of the sample. Bland's rule (smallest-index entering/
+	// tie-broken leaving) throughout, guaranteeing termination (no
+	// cycling) even though it forgoes the usual steepest-descent speed-up -
+	// unnecessary here given how cheap each pivot already is.
+	cost1 = J(1,ncols,0)
+	for (i=1; i<=nrows; i++) cost1[artcol0+i] = 1
+
+	for (iter=1; iter<=2000; iter++) {
+		redcost = J(1,ncols,0)
+		for (j=1; j<=ncols; j++) {
+			redcost[j] = cost1[j]
+			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost1[basis[i]]*T[i,j]
+		}
+		entering = 0
+		for (j=1; j<=ncols; j++) {
+			if (redcost[j] < -tol) { entering = j; break; }
+		}
+		if (entering==0) break
+
+		minratio = .
+		leaving = 0
+		for (i=1; i<=nrows; i++) {
+			if (T[i,entering] > tol) {
+				ratio = b[i]/T[i,entering]
+				// note: `leaving==0' is checked BEFORE any comparison
+				// that would index `basis[leaving]' - Mata's `&'/`|'
+				// do NOT short-circuit, so folding this into one
+				// compound condition (as an earlier version of this
+				// unit did) evaluates `basis[0]' and throws "subscript
+				// invalid" on the very first pivot.
+				if (leaving==0) {
+					minratio = ratio
+					leaving = i
+				}
+				else if (ratio < minratio - 1e-12) {
+					minratio = ratio
+					leaving = i
+				}
+				else if (abs(ratio-minratio)<1e-9 & basis[i]<basis[leaving]) {
+					minratio = ratio
+					leaving = i
+				}
+			}
+		}
+		if (leaving==0) return(.)  // unbounded in phase 1 - not expected (phase-1 objective is bounded below by 0)
+
+		pivot = T[leaving,entering]
+		T[leaving,.] = T[leaving,.] / pivot
+		b[leaving] = b[leaving]/pivot
+		for (i=1; i<=nrows; i++) {
+			if (i!=leaving & abs(T[i,entering])>tol) {
+				b[i] = b[i] - T[i,entering]*b[leaving]
+				T[i,.] = T[i,.] - T[i,entering]*T[leaving,.]
+			}
+		}
+		basis[leaving] = entering
+	}
+
+	phase1obj = 0
+	for (i=1; i<=nrows; i++) if (basis[i] > artcol0) phase1obj = phase1obj + b[i]
+	// infeasible: the origin is not in the convex hull of the current
+	// MCMC sample at all (a badly non-mixed chain) - the caller falls
+	// back to the pre-Hummel damping rule in this rare case.
+	if (phase1obj > 1e-6) return(.)
+
+	// drive any residual (degenerate, zero-valued) artificials out of
+	// the basis where a real column is available to replace them, so
+	// phase 2's own cost row (which pins remaining artificials at a
+	// huge cost) never has to fight a basic artificial with a nonzero
+	// reduced cost.
+	for (i=1; i<=nrows; i++) {
+		if (basis[i] > artcol0) {
+			entering = 0
+			for (j=1; j<=n+2; j++) {
+				if (abs(T[i,j]) > tol) { entering = j; break; }
+			}
+			if (entering>0) {
+				pivot = T[i,entering]
+				T[i,.] = T[i,.]/pivot
+				b[i] = b[i]/pivot
+				for (ii=1; ii<=nrows; ii++) {
+					if (ii!=i & abs(T[ii,entering])>tol) {
+						b[ii] = b[ii] - T[ii,entering]*b[i]
+						T[ii,.] = T[ii,.] - T[ii,entering]*T[i,.]
+					}
+				}
+				basis[i] = entering
+			}
+		}
+	}
+
+	// ---- Phase 2: maximize gamma (minimize -gamma+ + gamma-) over the
+	// feasible region phase 1 found. Artificial columns are barred from
+	// re-entering (cost 1e15) rather than removed outright, so a
+	// degenerate artificial still pinned at 0 in the basis cannot be
+	// mistaken for a genuine unbounded direction.
+	cost2 = J(1,ncols,0)
+	cost2[gpcol] = -1
+	cost2[gmcol] = 1
+	for (i=1; i<=nrows; i++) if (basis[i]>artcol0) cost2[basis[i]] = 1e15
+
+	for (iter=1; iter<=5000; iter++) {
+		redcost = J(1,ncols,0)
+		for (j=1; j<=artcol0-1; j++) {
+			redcost[j] = cost2[j]
+			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost2[basis[i]]*T[i,j]
+		}
+		// Bland's rule (smallest-index entering, not steepest-descent)
+		// here too, matching phase 1 - guarantees termination even on
+		// the degenerate/ill-conditioned MCMC samples a badly-mixed
+		// chain can produce (measured directly: steepest-descent
+		// entering selection here, paired with Bland's-rule-tie-broken
+		// leaving selection, does NOT guarantee anti-cycling - Bland's
+		// rule requires the smallest-index rule on BOTH sides - and
+		// this mismatch was observed to hang for minutes on the
+		// project's own `curvedgwespnet' certification network, whose
+		// MCMC sample is already known to be pathological: R's own
+		// `ergm' independently fails outright on curved MCMLE for this
+		// exact network too, see docs/ERGM_ROADMAP.md).
+		entering = 0
+		for (j=1; j<=artcol0-1; j++) {
+			if (redcost[j] < -tol) { entering = j; break; }
+		}
+		if (entering==0) break
+
+		// Same Bland's-rule tie-break as phase 1's own leaving selection
+		// (smallest BASIS-VARIABLE index among tied rows, not smallest
+		// row index - the two are not the same thing, since `basis[]'
+		// can hold any column in any row depending on pivot history;
+		// omitting this tie-break here, while phase 1 already had it,
+		// was itself enough to break the anti-cycling guarantee on a
+		// degenerate LP instance).
+		minratio = .
+		leaving = 0
+		for (i=1; i<=nrows; i++) {
+			if (T[i,entering] > tol) {
+				ratio = b[i]/T[i,entering]
+				if (leaving==0) {
+					minratio = ratio
+					leaving = i
+				}
+				else if (ratio < minratio - 1e-12) {
+					minratio = ratio
+					leaving = i
+				}
+				else if (abs(ratio-minratio)<1e-9 & basis[i]<basis[leaving]) {
+					minratio = ratio
+					leaving = i
+				}
+			}
+		}
+		// unbounded: cannot happen for a genuine convex hull of real
+		// (finite) MCMC draws - conv(Mm) is always bounded, so gamma is
+		// capped by the geometry itself. Returned as a large finite
+		// sentinel (rather than erroring) purely so the caller's own
+		// margin/steplength.max capping still applies uniformly.
+		if (leaving==0) return(1e15)
+
+		pivot = T[leaving,entering]
+		T[leaving,.] = T[leaving,.] / pivot
+		b[leaving] = b[leaving]/pivot
+		for (i=1; i<=nrows; i++) {
+			if (i!=leaving & abs(T[i,entering])>tol) {
+				b[i] = b[i] - T[i,entering]*b[leaving]
+				T[i,.] = T[i,.] - T[i,entering]*T[leaving,.]
+			}
+		}
+		basis[leaving] = entering
+	}
+
+	gam = 0
+	for (i=1; i<=nrows; i++) {
+		if (basis[i]==gpcol) gam = gam + b[i]
+		if (basis[i]==gmcol) gam = gam - b[i]
+	}
+	return(gam)
+}
+
+// Wrapper matching R's own `.Hummel.steplength(statsmatrix, NULL, margin,
+// steplength.max)' call shape for the ordinary (no missing-data/
+// constrained-network) case this package always is - see
+// `ergm_hummel_gammamax()''s own header for the certification account.
+// `D' is the RAW (uncentered) MCMC sample minus the observed statistic
+// (exactly this function's own `D' local, `samp :- obs') - centering by
+// `Dbar' and targeting `-Dbar' here reproduces R's own internal
+// `x1c'/`m2c' construction (`.Hummel.steplength' centers everything by
+// the sample's own mean, then asks how far the ORIGIN - i.e. matching
+// the observed network's statistic exactly - is reachable from there).
+// `margin'/`steplength_max' default to R's own `control.ergm()' defaults
+// (0.05 and 1 respectively) at every call site below.
+real scalar ergm_hummel_steplength(real matrix D, real scalar margin, real scalar steplength_max){
+	real rowvector Dbar
+	real matrix Dc, Du
+	real scalar g
+
+	Dbar = mean(D)
+	Dc = D :- Dbar
+
+	// Deduplicate rows before handing them to the LP - mirrors R's own
+	// `.Hummel.steplength()' (`d12 <- duplicated(rbind(x1,x2))'),
+	// mathematically exact (duplicate points cannot change a convex
+	// hull) and purely a performance measure - but measured directly
+	// to matter A LOT here: `esp'/`gwesp' statistics are small
+	// non-negative integers, and a slowly-mixing chain (low neff) can
+	// return an MCMC sample dominated by a handful of DISTINCT values
+	// repeated hundreds of times each. `ergm_hummel_gammamax()''s own
+	// two-phase simplex has no inherent problem with duplicate rows
+	// mathematically, but Bland's rule (needed for guaranteed
+	// termination - see that function's own header) trades pivot speed
+	// for that guarantee, and a heavily degenerate polytope (many
+	// ratio-test ties from duplicate rows) was observed directly to
+	// make it take minutes on a real (native-backed, otherwise fast)
+	// curved MCMLE fit whose chain had neff below 30 out of a nominal
+	// 3000-row sample - deduplicating first collapses that same n=3000
+	// down to however many rows are actually distinct, fixing the slow
+	// case without changing the LP's answer at all.
+	Du = uniqrows(Dc)
+
+	g = ergm_hummel_gammamax(Du, -Dbar)
+	if (g==.) return(.)  // signals "fall back" to the caller - target unreachable or already at the mean
+	return(min((steplength_max, g/(1+margin))))
 }
 
 // Geweke (1992) z-score: compares the mean of the first `frac1' of the
@@ -6764,18 +7421,30 @@ real matrix ergm_heidel_diag(real matrix samp, real scalar critval, real scalar 
 
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
-	real scalar samplesize, pointer(real rowvector function) scalar proposalfn,
+	real scalar samplesize0, pointer(real rowvector function) scalar proposalfn,
 	real scalar verbose, | real rowvector theta_c0){
 
 	struct ErgmMCMLEFit scalar res
 	struct ErgmMCMCDiag scalar diag
-	real rowvector obs, theta, Dbar, delta, se, theta_c, delta_theta
-	real matrix samp, D, V, Vinv, Vc, Vcinv, coefhist, coefhist_theta, Jac, JtVinvJ
-	real scalar iter, p, mahal, gamma, converged, k, neff, min_neff, interval_cap, growth, interval
-	real scalar T2, Fstat, Fcrit, confidence, is_curved, mahal_theta
+	real rowvector obs, theta, Dbar, delta, se, theta_c
+	real matrix samp, D, V, Vc, Vcinv, coefhist, coefhist_theta, Jac
+	real scalar iter, p, mahal, gamma, gamma_undamped, converged, k, neff, min_neff, interval_cap, growth, interval
+	real rowvector theta_c_prev
+	real scalar theta_c_stable_count, theta_c_maxdiff
+	real scalar T2, Fstat, Fcrit, confidence, is_curved, gamma_hummel
 	real rowvector rho, infl
-	real rowvector eta_full_target, r0, r1, theta_try, theta_c_try
-	real scalar obj0_bt, obj1_bt, bt
+	real scalar samplesize, samplesize_cap, samplesize_boost, Fstat_prev, stall_count, confidence_boost, boost_threshold, total_draws_cap
+	real rowvector theta_old, etadiff
+	real colvector lw, w
+	real scalar ess_factor
+	real rowvector nonvarying, varyidx
+	real scalar pvarying, Vrank
+	real matrix Dtest, Vtest, Vtestinv
+	real rowvector Dtestbar, Dtestbar_w
+	real scalar ptest_const
+	real rowvector theta_c_try
+	real scalar bt_domain
+	real rowvector freeidx, delta_apply
 
 	// Mata passes a bare-variable argument by reference, so this
 	// function's own adaptive-interval growth (below) reassigning its
@@ -6790,12 +7459,24 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// is this function's own private, freely-mutable working copy.
 	interval = interval0
 
+	// R-faithful sample-size boosting (see this unit's own header
+	// account of R's boost_samplesize mechanism): samplesize0 is the
+	// untouched formal parameter; samplesize is the mutable working
+	// copy, exactly mirroring interval0/interval above.
+	samplesize = samplesize0
+	Fstat_prev = .
+	stall_count = 0
+	confidence_boost = 2			// R's own MCMLE.confidence.boost default
+	boost_threshold = 1			// R's own MCMLE.confidence.boost.threshold default (simplified to a consecutive-run count below - see the loop's own comment for why)
+	samplesize_cap = samplesize0 * 20	// R has no hard cap on this (only an indirect one via MCMLE.MCMC.max.ESS.frac in "precision" mode, which this package does not implement) - added purely so a chain that never escapes the tolerance region cannot grow samplesize (and therefore runtime/memory) unboundedly across maxit iterations
+
 	obs = M.full_statistic(G)
 	theta = theta0
 	p = cols(theta)
 	coefhist = J(0, p, 0)
 	coefhist_theta = J(0, M.ntheta(), 0)
 	converged = 0
+	theta_c_stable_count = 0
 
 	// Curved MCMLE (harmonisation unit 138): `theta' throughout this
 	// function is always ETA-space (the actual sufficient-statistic
@@ -6855,121 +7536,309 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// needs no change anywhere outside this loop, including the native
 	// backend (unit 83), which simply receives whatever `interval' this
 	// loop passes it each call.
-	min_neff = max((200, 64*p))
+	// `freeidx' (harmonisation unit 183, fixed-coefficient/offset()
+	// support, docs/ERGM_ROADMAP.md's own "Offsets/fixed-coefficient
+	// terms" row): the eta-space columns actually being ESTIMATED -
+	// `1..p' unchanged whenever no coefficient is fixed (`M.isfixed'
+	// all zero, the ordinary case), a strict subset otherwise. v1 scope
+	// is non-curved models only (validated/rejected at the
+	// `nwergm.ado' layer for a curved term's own columns, not handled
+	// here) - `is_curved' and `M.isfixed' are never both nontrivial in
+	// practice, so no combined-reduction case needs designing.
+	freeidx = M.freeidx()
+
+	// `ptest_const' is the dimension the Newton step/Hummel/convergence
+	// test actually operate in (harmonisation unit 180 - see the loop's
+	// own header comment below for the full account): `p' (eta-space)
+	// for an ordinary model, `M.ntheta()' (theta-space) for a curved
+	// one, FURTHER reduced to `cols(freeidx)' whenever one or more
+	// ordinary coefficients are held fixed via offset() (unit 183) -
+	// constant across iterations, computed once here rather than
+	// requeried every iteration.
+	ptest_const = (is_curved ? M.ntheta() : cols(freeidx))
+	min_neff = max((200, 64*ptest_const))
 	interval_cap = 20000
 
+	// Combined safety bound on `interval * samplesize' (the TOTAL raw
+	// MCMC draws one sample costs): `interval' (autocorrelation
+	// control, above) and `samplesize' (precision, the new R-faithful
+	// boosting below) grow independently and for independent reasons,
+	// but their PRODUCT is what actually determines runtime - measured
+	// directly during this unit's own development that letting both
+	// reach their own separate ceilings at once (interval already at
+	// its 20000 cap, samplesize also boosted) produced a single sample
+	// call requesting over a billion draws and hung for minutes. Capped
+	// at the pre-existing implicit worst case this codebase already
+	// tolerated before samplesize boosting existed at all - interval at
+	// its historical cap, combined with the ORIGINAL requested
+	// samplesize - so this unit's own new lever cannot make the
+	// existing interval-growth mechanism's own worst case any worse.
+	total_draws_cap = interval_cap * samplesize0
+
 	for (iter=1; iter<=maxit; iter++) {
+		theta_old = theta	// the eta point THIS iteration's sample was actually drawn at - needed below to reweight that (by-then-stale) sample toward the point the Newton step is about to propose, mirroring R's own importance-sampling reweighting.
 		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
 		D = samp :- obs
-		Dbar = mean(D)
-		V = variance(D)
-		Vinv = invsym(V)
-		delta = -Dbar * Vinv
 
+		// THETA-SPACE Newton step for curved models (harmonisation unit
+		// 180, docs/ERGM_ROADMAP.md's own scoped-investigation entry) -
+		// replaces the previous eta-space-Newton-then-project-onto-the-
+		// manifold design (units 138/152/159/162) entirely, after
+		// tracing R's own `ergm.MCMLE()' source and finding the actual
+		// reason nwergm's own curved fits kept drifting to an extreme
+		// decay while R stayed put on the SAME network/starting point
+		// (docs/ERGM_ROADMAP.md's own unit-177/178/179 benchmark
+		// entries): R's Newton step, Hummel steplength check, AND
+		// convergence test are ALL computed on `ergm.estfun()''s own
+		// output, which for a curved model is `-stats %*% etagradmult'
+		// - i.e. the raw eta-space statistic sample projected THROUGH
+		// THE JACOBIAN into theta-space - not on the raw eta-space
+		// statistics directly. R therefore never needs a "snap back
+		// onto the manifold" step at all: every theta-space point is
+		// automatically on the manifold by construction, so doing the
+		// ENTIRE Newton step in theta-space (rather than nwergm's own
+		// previous eta-space-then-project design) eliminates the
+		// projection/backtracking machinery's own reason to exist, not
+		// merely adds a diagnostic on top of it - `project_eta_to_theta()'
+		// itself is UNCHANGED and still used elsewhere (`ErgmCurvedMPLEFit()'),
+		// just no longer called from this loop.
+		//
+		// `Dtest'/`Dtestbar'/`Vtest' below are simply `D'/`mean(D)'/
+		// `variance(D)' for an ordinary model (`Jac' is the identity in
+		// spirit - no projection needed since eta IS theta there), and
+		// the Jacobian-projected `D*Jac'/`variance(D*Jac)' for a curved
+		// one, evaluated at `theta_c' (the theta-space point THIS
+		// iteration's sample was actually drawn at, matching R's own
+		// `mcmc.init'). `variance(D*Jac) == Jac'*variance(D)*Jac'
+		// exactly (a linear transform of a fixed matrix through a FIXED
+		// Jacobian, not an approximation) - confirmed by direct
+		// derivation, matching the closed-form delta-method Fisher
+		// information any standard MCMLE reference derives for a
+		// reparameterized exponential family.
 		if (is_curved) {
-			// Damp the OUTER Newton step using the THETA-SPACE
-			// Jacobian's own conditioning, not the raw eta-space V -
-			// unit 138's own documented next step
-			// (docs/CERTIFICATION.md), tried here for the first time.
-			// The eta-space-only `mahal'/`gamma' rule below (the
-			// `else' branch) is calibrated for the FULL unconstrained
-			// eta space; once a curved term is present, only a much
-			// lower-dimensional MANIFOLD of eta points is actually
-			// achievable, and a step that looks modest by the raw
-			// eta-space rule can require an implausibly large jump
-			// once projected onto that manifold - unit 138's own
-			// disclosed failure (decay drifting to 105+, 0% MCMC
-			// acceptance) even after the projection step itself
-			// separately gained its own backtracking safeguard.
-			// Local linearization at the CURRENT `theta_c' (the
-			// previous iteration's own theta-space point, or the
-			// caller-supplied/fallback start on the first iteration):
-			// `Jac' (nparam() x ntheta()) is the exact same analytic
-			// Jacobian `project_eta_to_theta()' itself uses below,
-			// mapping a small theta-space move to its own local
-			// eta-space effect. Solving the weighted least-squares
-			// "which theta-space step best explains the raw eta-space
-			// Newton direction delta" - using the SAME `Vinv' metric
-			// already in hand, the natural GLS weight - gives
-			// `delta_theta'; its own size in the resulting
-			// Gauss-Newton theta-space metric (`Jac'' Vinv Jac', the
-			// same normal-equations matrix `project_eta_to_theta()'
-			// itself inverts per curved block) is what actually
-			// determines how large a jump the curved manifold would
-			// be asked to make - capped by the SAME threshold (2) the
-			// existing eta-space rule already uses, but applied to the
-			// THETA-space step size, so an implausible jump is capped
-			// BEFORE it ever reaches the projection, not after.
-			// TRUST-REGION BACKTRACKING (harmonisation unit 162): the
-			// Mahalanobis-2 cap below uses a LOCAL LINEARIZATION (Jac,
-			// taken at the CURRENT theta_c) to bound the theta-space step
-			// size - but the true theta->eta map (via the GW kernel) is
-			// highly nonlinear in decay, and its own decay-derivative can
-			// SATURATE (flatten toward 0) well before a "Mahalanobis-2"
-			// linear step would suggest, so a step that looks modest
-			// under the linear approximation can massively overshoot in
-			// the true nonlinear space and land somewhere the estimating
-			// equations can no longer see any local improvement at all -
-			// permanently stuck from that point on, not oscillating or
-			// slowly drifting. Directly measured on this project's own
-			// curvedgwespnet certification network: decay jumped from its
-			// MPLE start (4.15) to 66.7 in EXACTLY ONE outer iteration
-			// under the unit-152 damping alone, then stayed bit-identical
-			// at 66.7 for 19 further iterations - a genuinely different,
-			// more specific mechanism than unit 152's own "gradual drift"
-			// framing suggested, found by finally building the theta-space
-			// trajectory logging that unit itself called for but never
-			// implemented (this unit's own `coefhist_theta' addition).
-			// Fix: verify the step actually improves the TRUE (not
-			// linearized) weighted eta-space objective - measured via a
-			// real, un-linearized round trip through
-			// `project_eta_to_theta()'/`theta_to_eta()' - before accepting
-			// it; halve gamma and retry if not, exactly the same
-			// backtracking discipline `project_eta_to_theta()''s own inner
-			// loop and `ErgmCurvedMPLEFit()' already both use elsewhere in
-			// this same file, just applied one level up, to the outer
-			// step itself.
 			Jac = M.theta_to_eta_jacobian(theta_c)
-			JtVinvJ = Jac' * Vinv * Jac
-			delta_theta = (invsym(JtVinvJ) * Jac' * Vinv * delta')'
-			mahal_theta = sqrt(delta_theta * JtVinvJ * delta_theta')
-			gamma = (mahal_theta > 2 ? 2/mahal_theta : 1)
-
-			eta_full_target = theta + delta	// the UNDAMPED eta-space Newton target - what the step is trying to approach, regardless of how much of it gets taken
-			r0 = eta_full_target - M.theta_to_eta(theta_c)
-			obj0_bt = r0 * Vinv * r0'
-			for (bt=1; bt<=20; bt++) {
-				theta_try = theta + gamma*delta
-				theta_c_try = M.project_eta_to_theta(theta_try, Vinv, theta_c, 100, 1e-10)
-				r1 = eta_full_target - M.theta_to_eta(theta_c_try)
-				obj1_bt = r1 * Vinv * r1'
-				if (obj1_bt <= obj0_bt) break
-				gamma = gamma / 2
-			}
+			Dtest = D * Jac
 		}
 		else {
-			mahal = sqrt(delta * V * delta')
-			gamma = (mahal > 2 ? 2/mahal : 1)
+			Jac = I(p)
+			// Restricted to `freeidx' (harmonisation unit 183) - a
+			// no-op selecting every column, in order, whenever nothing
+			// is fixed (the ordinary case). Reducing `Dtest' itself
+			// here, rather than reducing `delta' only after the fact,
+			// is what makes this correct: the free coefficients' own
+			// Newton step/Hummel steplength/convergence test need the
+			// MARGINAL distribution of their own statistics (mean and
+			// covariance restricted to the free columns), exactly the
+			// standard constrained-MLE estimating equations for a
+			// partially-fixed exponential family - not the full-model
+			// step with the fixed entries merely zeroed out afterward,
+			// which would ignore the free/fixed covariance structure.
+			Dtest = D[., freeidx]
+		}
+		Dtestbar = mean(Dtest)
+		Vtest = variance(Dtest)
+
+		// Non-identifiability/collinearity check (harmonisation unit 179,
+		// docs/ERGM_ROADMAP.md's own scoped item #2 for this) - ported
+		// from R's `check_nonidentifiability()'/`ergm_lindep()', run at
+		// the SAME point in the loop R runs it (right after drawing the
+		// sample, before the Newton step) and on the SAME quantity R
+		// runs it on (`esteq' - `Dtest' here, not the raw eta-space `D',
+		// updated in unit 180 to match once the theta-space redesign
+		// above made the distinction real for a curved model). Flags
+		// (a) a statistic with essentially zero variance THIS iteration
+		// - R's own "extreme point/dead-end configuration" diagnosis -
+		// and (b) linear dependence among the remaining (varying)
+		// statistics, via `rank()' on their covariance submatrix
+		// (Mata's own built-in numerical-rank function, playing the
+		// same role as R's own pivoted-QR `ergm_lindep()' without
+		// needing a from-scratch port of that algorithm). Matches R's
+		// own DEFAULT policy exactly - `MCMLE.nonident="warning"' -
+		// print and continue, do NOT alter the fit: the degeneracy this
+		// detects is a property of the MODEL/DATA (an ill-identified
+		// curved term is often genuinely non-identified, not a bug an
+		// algorithm can safely paper over), so R users hit the
+		// identical warning with no automatic correction either -
+		// unconditional (not gated behind `verbose'), matching R's own
+		// warnings, which are not silenced by an equivalent quiet mode.
+		nonvarying = J(1, ptest_const, 0)
+		for (k=1; k<=ptest_const; k++) if (Vtest[k,k] < 1e-10) nonvarying[k] = 1
+		if (sum(nonvarying) > 0) {
+			printf("{err}Warning: MCMLE iter %g - statistic(s) at column(s) ", iter)
+			for (k=1; k<=ptest_const; k++) if (nonvarying[k]) printf("%g ", k)
+			printf("not varying this iteration - this may indicate an extreme point or dead-end configuration.\n")
+		}
+		pvarying = ptest_const - sum(nonvarying)
+		if (pvarying > 1) {
+			varyidx = J(1, 0, 0)
+			for (k=1; k<=ptest_const; k++) if (!nonvarying[k]) varyidx = varyidx, k
+			Vrank = rank(Vtest[varyidx, varyidx])
+			if (Vrank < pvarying) {
+				printf("{err}Warning: MCMLE iter %g - linear dependence detected among the model statistics (rank %g of %g varying dimensions) - the model may be nonidentifiable.\n", iter, Vrank, pvarying)
+			}
 		}
 
-		theta = theta + gamma*delta
+		Vtestinv = invsym(Vtest)
+		delta = -Dtestbar * Vtestinv
+
+		// Hummel/Hunter/Handcock (2012) steplength (see
+		// `ergm_hummel_steplength()''s own header) - computed on
+		// `Dtest' (the SAME quantity the Newton step above and the
+		// convergence test below both use), identically for curved and
+		// non-curved models by construction now that `Dtest' already
+		// carries the theta-space projection where one is needed - no
+		// separate curved-vs-non-curved branch required here any more
+		// (unit 180 removed the old theta-space-Jacobian-conditioning
+		// fallback/trust-region-backtracking pair entirely; `gamma' is
+		// simply a scalar steplength multiplying `delta' in whichever
+		// space `delta' already lives in). This REPLACES the previous
+		// per-branch Mahalanobis-2-capped damping (harmonisation units
+		// 80/138/152/159), which capped the SIZE of the Newton step but
+		// never checked whether the resulting target was a statistic
+		// value the MCMC sample actually supported - confirmed to fail
+		// on BOTH a curved model (decay exploding to 66.7 in one
+		// iteration) AND, independently, a plain (non-curved) `gwesp()'
+		// fit on a real directed network (edges coefficient exploding
+		// to ~900, vcov collapsing entirely to missing - see
+		// docs/ERGM_ROADMAP.md and nwergm.ado's own post-fit
+		// degeneracy guards on both branches). `missing()'
+		// (gamma_hummel==.) signals either "target already at the
+		// sample mean" (no damping needed - handled naturally below,
+		// `gamma' still gets set by the fallback rule, which also
+		// correctly returns 1 in that case) or "the origin is not even
+		// in the convex hull of this iteration's own MCMC sample" (a
+		// badly non-mixed chain) - the old Mahalanobis rule is kept as
+		// the fallback for exactly that rare case, rather than failing
+		// the whole fit outright.
+		gamma_hummel = ergm_hummel_steplength(Dtest, 0.05, 1)
+		if (gamma_hummel != .) gamma = gamma_hummel
+		else {
+			mahal = sqrt(delta * Vtest * delta')
+			gamma = (mahal > 2 ? 2/mahal : 1)
+		}
+		// `gamma_undamped' remembers what Hummel (or its Mahalanobis
+		// fallback) itself concluded was safe, BEFORE the domain-
+		// validity backtrack below can shrink `gamma' further - the
+		// convergence gate needs this pre-clamp value, not the
+		// post-clamp one (see that gate's own comment for why).
+		gamma_undamped = gamma
+
 		if (is_curved) {
-			// snap the (now backtracked-safe) eta-space Newton target
-			// back onto the achievable curved manifold - `Vinv' (this
-			// iteration's own eta-space information, already computed
-			// above for the Newton step itself) is the natural GLS
-			// weight, exactly the same role it plays in
-			// ErgmCurvedMPLEFit()'s own analogous step. `theta_c'
-			// warm-starts from its own PREVIOUS iteration's value, not a
-			// generic restart, matching how theta itself is never
-			// restarted iteration to iteration either.
-			theta_c = M.project_eta_to_theta(theta, Vinv, theta_c, 100, 1e-10)
+			// Direct theta-space update - `theta_c' IS the manifold by
+			// construction, so no GAUSS-NEWTON projection/snap-back is
+			// needed (see this block's own header comment above). A
+			// DOMAIN-VALIDITY backtrack is still needed, though: theta-
+			// space is not unconstrained (a GW curved decay must stay
+			// positive - `ergm_gwdecay_map()' itself computes
+			// `log(1-exp(-decay))', undefined for `decay<=0') and a
+			// full-strength theta-space step can propose a value
+			// outside that domain, same as any Newton step on a
+			// constrained parameter can. `project_eta_to_theta()' (used
+			// elsewhere, e.g. `ErgmCurvedMPLEFit()') already has this
+			// EXACT halving-then-floor-clamp pattern for the identical
+			// reason; reproduced here rather than reused because that
+			// function solves a different (weighted-least-squares)
+			// sub-problem with its own convergence loop, not a drop-in
+			// call site. Found as a REAL bug during this unit's own
+			// development, not a hypothetical: an undamped
+			// (`gamma==1') full step drove decay negative, `theta_to_eta()'
+			// returned entirely MISSING, and - compounded by a second
+			// bug this unit also fixed (Mata's `<=' treating two
+			// missing values as satisfying the convergence test) - the
+			// fit was reported `converged=1' with a missing `theta'.
+			theta_c_prev = theta_c
+			theta_c_try = theta_c + gamma*delta
+			for (bt_domain=1; bt_domain<=30; bt_domain++) {
+				if (missing(M.theta_to_eta(theta_c_try)) == 0) break
+				gamma = gamma / 2
+				theta_c_try = theta_c + gamma*delta
+			}
+			if (missing(M.theta_to_eta(theta_c_try)) > 0) {
+				// no valid step exists even after 30 halvings - graceful
+				// boundary stop, matching `project_eta_to_theta()''s own
+				// identical fallback: do not move this iteration at all
+				// (gamma=0) rather than propose an invalid point.
+				gamma = 0
+				theta_c_try = theta_c
+			}
+			theta_c = theta_c_try
 			theta = M.theta_to_eta(theta_c)
 			coefhist_theta = coefhist_theta \ theta_c
+			theta_c_maxdiff = max(abs(theta_c - theta_c_prev))
+		}
+		else {
+			// `delta' is `cols(freeidx)'-long (harmonisation unit 183) -
+			// expand back to full eta-space width before applying,
+			// leaving every fixed column's own entry at exactly 0 so
+			// `theta' at a fixed position never moves from whatever it
+			// was initialized to (the caller-supplied fixed value -
+			// nwergm.ado's own responsibility to seed `theta0'
+			// correctly there, not this function's). A no-op expansion
+			// (`delta_apply' identical to `delta') whenever nothing is
+			// fixed.
+			delta_apply = J(1, p, 0)
+			delta_apply[freeidx] = gamma*delta
+			theta = theta + delta_apply
 		}
 		coefhist = coefhist \ theta
 
-		se = sqrt(diagonal(V)/samplesize)'
+		// Importance-sampling reweighting toward the point the Newton
+		// step just proposed (harmonisation unit 178, docs/ERGM_ROADMAP.md's
+		// own scoped item for this - ported from R's `ergm.MCMLE()' own
+		// `IS.lw()'/`lw2w()'): `samp'/`D' were drawn at `theta_old', not
+		// at the NEW `theta' this iteration just moved to, so testing
+		// convergence directly on the raw (by-then-stale) `Dtestbar'
+		// answers "was the OLD point already adequate?" rather than the
+		// actually useful question, "does the sample support the point
+		// I am ABOUT TO report?" - confirmed directly relevant to the
+		// observed curved-MCMLE drift (docs/ERGM_ROADMAP.md's own
+		// R-vs-nwergm benchmark entry): a step can look locally fine
+		// against the stale sample while the reweighted-to-new-theta
+		// picture would already show trouble. Per-draw
+		// log-importance-weight is the dot product of each (uncentered)
+		// draw with `etadiff' - R's own `sm %*% etadiff' - deliberately
+		// computed on the RAW eta-space `D'/`etadiff', not `Dtest',
+		// even for a curved model: the likelihood-ratio weight is
+		// intrinsically a property of the SAMPLING distribution, which
+		// is always parameterized in eta regardless of curvature -
+		// matches R's own construction exactly (`etadiff' there is
+		// `ergm.eta(coef(v),...) - ergm.eta(mcmc.init,...)', an
+		// eta-space quantity, applied to reweight the ALREADY
+		// theta-projected `esteq'). Softmax-normalized for numerical
+		// stability (`lw :- max(lw)' before `exp()', exactly `lw2w()''s
+		// own trick; R additionally excludes zero-variance/offset
+		// columns from this dot product for the same reason `nochg'
+		// exists there, but a constant column contributes an identical
+		// additive shift to every row's `lw', which the
+		// max-subtraction step cancels exactly, so this package has no
+		// offset terms to filter and omits that filter as a no-op
+		// simplification, not a missing piece). `ess_factor =
+		// n*sum(w^2)' is Kish's effective-sample-size CORRECTION FACTOR
+		// (>=1, equality only when every weight is identical) - R's own
+		// `estcov = hotel$covariance.x * sum(esteq.w^2)*length(esteq.w)'
+		// inflates the ORDINARY (unweighted) sample covariance by
+		// exactly this factor rather than computing a
+		// separately-estimated weighted covariance (avoiding a noisier
+		// second covariance estimate), reused identically below
+		// alongside this function's own PRE-EXISTING autocorrelation-
+		// based inflation (`infl', unit 86) - two independent sources
+		// of effective-sample-size loss (Monte Carlo autocorrelation;
+		// importance-weight degeneracy), composed multiplicatively
+		// since each degrades precision independently. Deliberately
+		// reweights only `Dtestbar' (the actual test target,
+		// `Dtestbar_w' below) - the NEWTON DIRECTION `delta' above
+		// still uses the raw, unweighted `Dtestbar'/`Vtestinv', exactly
+		// matching R's own design (reweighting only ever feeds
+		// `ergm.MCMLE()''s own convergence TEST, never
+		// `ergm.estimate()''s own step).
+		etadiff = theta - theta_old
+		lw = D * etadiff'
+		w = exp(lw :- max(lw))
+		w = w :/ sum(w)
+		Dtestbar_w = w' * Dtest
+		ess_factor = rows(Dtest) * sum(w:^2)
+
+		se = sqrt(diagonal(Vtest)/samplesize)'
 		// Joint Hotelling's T^2 test that the centered mean Dbar is
 		// statistically indistinguishable from the zero vector, given
 		// its own sampling covariance - replacing an earlier per-
@@ -7012,11 +7881,11 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		// autocorrelation machinery the final variance step already
 		// applies (`ergm_lag1_autocorr()'/the `(1+rho)/(1-rho)' inflation
 		// factor) one step earlier - inside this per-iteration test, not
-		// only in the one-off final reporting pass - inflating V's own
-		// diagonal per parameter and correspondingly shrinking the
+		// only in the one-off final reporting pass - inflating Vtest's
+		// own diagonal per parameter and correspondingly shrinking the
 		// effective sample size `neff' used for T2/Fstat/Fcrit. The
 		// NEWTON STEP ITSELF (`delta'/`mahal'/`gamma'/the theta update
-		// above) deliberately still uses the UNINFLATED `V'/`Vinv' -
+		// above) deliberately still uses the UNINFLATED `Vtest'/`Vtestinv' -
 		// theta was never the problem (it already tracks Statnet's own
 		// converged value from iteration 1), so this fix touches only the
 		// STATISTICAL TEST deciding when to stop, not the optimizer.
@@ -7027,24 +7896,115 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		// accurate whenever the chain's autocorrelation structure is
 		// richer than a single lag captures) validated directly against
 		// a real Statnet reference value, not merely assumed superior.
-		infl = ergm_spectral0_ar(D)
-		Vc = V
-		for (k=1; k<=p; k++) Vc[k,k] = V[k,k] * infl[k]
+		infl = ergm_spectral0_ar(Dtest)
+		Vc = Vtest
+		// `ess_factor' (>=1, computed above) composes multiplicatively
+		// with the pre-existing per-dimension autocorrelation inflation
+		// `infl' - two independent effective-sample-size losses (Monte
+		// Carlo autocorrelation; importance-weight degeneracy from
+		// reweighting `Dtestbar' toward the just-proposed `theta') - see
+		// this block's own header comment above for the full account.
+		for (k=1; k<=ptest_const; k++) Vc[k,k] = Vtest[k,k] * infl[k] * ess_factor
 		Vcinv = invsym(Vc)
-		neff = samplesize / mean(infl')
+		neff = samplesize / (mean(infl') * ess_factor)
 		// guard against a pathologically small effective sample size
 		// (near-unit-root autocorrelation) making the F distribution's
 		// own degrees of freedom invalid or the test meaningless.
-		if (neff < p + 2) neff = p + 2
-		T2 = neff * (Dbar * Vcinv * Dbar')
-		Fstat = T2 * (neff - p) / (p * (neff - 1))
-		Fcrit = invF(p, neff - p, confidence)
+		if (neff < ptest_const + 2) neff = ptest_const + 2
+		T2 = neff * (Dtestbar_w * Vcinv * Dtestbar_w')
+		Fstat = T2 * (neff - ptest_const) / (ptest_const * (neff - 1))
+		Fcrit = invF(ptest_const, neff - ptest_const, confidence)
 		if (verbose) {
-			printf("MCMLE iter %g: steplen=%5.3f theta=", iter, gamma)
+			printf("MCMLE iter %g: steplen=%5.3f (undamped=%5.3f) theta=", iter, gamma, gamma_undamped)
 			for (k=1; k<=p; k++) printf("%9.5f ", theta[k])
-			printf(" F=%7.3f (crit %7.3f at %g%% conf, neff=%7.1f/%g) max|Dbar/se|=%6.3f interval=%g\n", Fstat, Fcrit, confidence*100, neff, min_neff, max(abs(Dbar :/ se)), interval)
+			if (is_curved) {
+				printf(" theta_c=")
+				for (k=1; k<=cols(theta_c); k++) printf("%9.5f ", theta_c[k])
+			}
+			printf(" F=%7.3f (crit %7.3f at %g%% conf, neff=%7.1f/%g) max|Dtestbar_w/se|=%6.3f interval=%g ess=%5.3f\n", Fstat, Fcrit, confidence*100, neff, min_neff, max(abs(Dtestbar_w :/ se)), interval, 1/ess_factor)
 		}
-		if (Fstat <= Fcrit & gamma==1 & neff >= min_neff) {
+		// Convergence is decided by the statistical test ALONE (plus
+		// `gamma==1', i.e. the outer Newton step itself was undamped -
+		// otherwise the fit that just passed the test is not the fit
+		// `theta' will actually hold once the step completes) - R's own
+		// `ergm.MCMLE()' ("confidence" termination, its default) works
+		// the same way: its Hotelling/T2-style test is the sole
+		// convergence gate, with no separate minimum-effective-size
+		// requirement layered on top. A prior version of this function
+		// ALSO required `neff >= min_neff' here - stricter than R ever
+		// is, and observed directly to matter in practice: on a curved
+		// gwesp fit whose chain mixes slowly, `theta' can sit
+		// completely stable (bit-identical for 15+ iterations) with
+		// `Fstat' near-zero, yet never clear a fixed `neff' floor even
+		// at the interval-growth cap below, so the fit would never be
+		// reported converged no matter how many `mcmleiterations()'
+		// were allowed - a real, observed failure mode this removal
+		// fixes. `min_neff' remains in use below, purely to drive
+		// interval growth (an autocorrelation-control heuristic,
+		// independent of the convergence decision itself).
+		// `Fstat!=.' guards against a real bug found directly while
+		// building unit 180's own theta-space redesign: Mata's `<='
+		// treats two MISSING operands as equal, so a completely
+		// degenerate iteration (`theta_c' landing outside the curved
+		// term's own valid domain - e.g. a negative decay - makes
+		// `theta_to_eta()'/everything downstream come back entirely
+		// missing) was observed satisfying `Fstat<=Fcrit' (both `.')
+		// and getting reported `converged=1' with a MISSING theta -
+		// the single worst possible outcome this project's own "never
+		// silently report a wrong answer" convention exists to prevent.
+		// Convergence via a SECOND, independent path for curved models
+		// (harmonisation unit 182, docs/ERGM_ROADMAP.md's own unit-181
+		// follow-up account) - direct THETA-SPACE STABILITY, not just
+		// the statistical test above. Two real problems were found and
+		// fixed in sequence building this: (1) gating on the post-clamp
+		// `gamma' alone blocks convergence forever once `theta_c' sits
+		// right at the curved decay's own positivity boundary - a full
+		// step is legitimately unreachable there (`ergm_gwdecay_map()'
+		// is undefined for `decay<=0'), so `gamma' never reaches 1
+		// even once the fit is genuinely done. (2) the FIRST attempted
+		// fix - gating on `gamma_undamped' (what Hummel concluded
+		// BEFORE domain clamping) instead - was too permissive: directly
+		// observed converging at iteration 2 of the SAME benchmark
+		// network with `decay=1.37', nowhere near the eventual `~0'
+		// fixed point, because `gamma_undamped==1' can hold at almost
+		// ANY iteration whenever Hummel trusts that particular step,
+		// independent of whether `theta_c' has actually stopped moving.
+		// A further, independently-found problem with the STATISTICAL
+		// test alone (`Fstat<=Fcrit & gamma==1', unmodified): watched
+		// this SAME network converge cleanly toward `decay~0' over 11
+		// iterations (each step shrinking the remaining distance
+		// geometically), then a single unlucky MCMC sample at iteration
+		// 12 proposed an isolated jump to `decay=15.6' - a MUCH worse
+		// point than iterations 9-11 already had - which happened to
+		// satisfy `Fstat<=Fcrit & gamma==1' by chance and got reported
+		// converged anyway. Both failures share a root cause: neither
+		// `gamma' nor a single iteration's `Fstat' is a reliable-enough
+		// signal near a boundary/low-neff regime. The direct, robust
+		// signal used here instead: has `theta_c' (the actual parameter
+		// estimate) stopped moving across MULTIPLE CONSECUTIVE
+		// iterations - not a statistical inference about whether it
+		// SHOULD have stopped, a literal check that it DID. Required
+		// alongside (not instead of) `Fstat<=Fcrit' as an extra safety
+		// net against declaring "stable" on a frozen/degenerate chain
+		// (which this file's own separate degeneracy guards - missing/
+		// zero `vcov' - already catch downstream regardless, but
+		// checking here too costs nothing). `theta_c_stable_count>=2'
+		// (two consecutive negligible-change iterations, not one, to
+		// resist a single lucky/coincidental match) with
+		// `theta_c_maxdiff' compared against an absolute tolerance
+		// (1e-3) calibrated directly against this same benchmark
+		// network's own observed trajectory (theta_c's per-iteration
+		// change had already dropped below this well before the point
+		// that visually looked converged - edges/weight frozen exactly,
+		// decay still shrinking by ever-smaller absolute amounts toward
+		// 0 - and stayed there for many further iterations, so this
+		// tolerance is neither cutting the trajectory short nor
+		// requiring literal bit-identical equality).
+		if (is_curved) {
+			if (theta_c_maxdiff < 1e-3) theta_c_stable_count = theta_c_stable_count + 1
+			else theta_c_stable_count = 0
+		}
+		if (Fstat!=. & Fcrit!=. & Fstat <= Fcrit & (gamma==1 | (is_curved & theta_c_stable_count>=2))) {
 			converged = 1
 			break
 		}
@@ -7060,6 +8020,71 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		if (neff < min_neff) {
 			growth = min((8, ceil(min_neff/neff)))
 			interval = min((interval * growth, interval_cap))
+		}
+
+		// R-faithful sample-size boosting: when `ergm.MCMLE()''s own
+		// test fails, R does not just thin harder - it also grows the
+		// RAW number of MCMC draws (`.boost_samplesize()'), scaled by
+		// how far the test statistic sits from its critical value,
+		// capped by `MCMLE.confidence.boost' (2, i.e. at most doubling
+		// per boost). Thinning alone (the `interval' mechanism above)
+		// can plateau: on a slowly-mixing chain, even thinning at the
+		// cap may never lift `neff' much past a few dozen out of a
+		// fixed `samplesize' - directly observed on a curved gwesp fit
+		// (neff stuck near 20-35 out of 3000 even at interval=20000).
+		// The only real remedy in that situation, matching R, is more
+		// raw draws.
+		//
+		// R gates this behind its own multi-stage machinery (a cheap
+		// preliminary test, then boosting only if the estimating
+		// equations failed to move closer to the tolerance region in
+		// more than `MCMLE.confidence.boost.threshold' (1) of the last
+		// `MCMLE.confidence.boost.lag' (4) iterations) so a single
+		// noisy iteration never triggers it. Reproduced here as a
+		// simplified consecutive-run count (`stall_count') rather than
+		// R's exact length-4 sliding window - the SAME intent (do not
+		// react to isolated Monte Carlo noise, do react to genuine
+		// stalling), not a byte-for-byte port of R's own bookkeeping.
+		//
+		// CRITICALLY gated on `gamma==1' - R's own convergence test
+		// (and therefore its own sample-size boosting, which only ever
+		// runs as part of that same test) never even runs while its
+		// Hummel steplength is still damped (`!steplen.converged'); it
+		// just resets to the BASE sample size and tries again with a
+		// fresh draw (`.boost_samplesize(1, TRUE)'). Boosting here
+		// while `gamma<1' would be wrong on two counts: (1) more
+		// precision cannot fix a step that is being damped for
+		// step-SIZE reasons, only a fresh sample can, matching R: (2) a
+		// naive `Fstat/Fcrit' ratio is not even guaranteed to be
+		// growing - measured directly on a near-fixed-point curved fit
+		// where `Fstat' was ALREADY far below `Fcrit' every iteration
+		// (0.06-0.12 against a critical value near 4) purely because
+		// `gamma' kept landing at 0.95, not 1 (a healthy convex-hull
+		// sample only very narrowly missing the `steplength.max=1'
+		// bound) - applying the boost formula there would have
+		// SHRUNK `samplesize' every iteration instead of growing it.
+		// Kept on plain `gamma==1' (not `gamma_undamped') - an earlier
+		// version of this unit used `gamma_undamped' here too, but that
+		// signal proved too permissive for the convergence gate above
+		// (see that gate's own comment) and was not worth the added
+		// complexity/risk of a second, less-tested use once the
+		// convergence gate itself moved to the more robust theta-space-
+		// stability signal instead.
+		if (gamma==1) {
+			if (Fstat_prev != .) {
+				if (Fstat >= Fstat_prev) stall_count = stall_count + 1
+				else stall_count = 0
+			}
+			Fstat_prev = Fstat
+			if (stall_count > boost_threshold & samplesize < samplesize_cap) {
+				samplesize_boost = min((Fstat/Fcrit, confidence_boost))
+				samplesize = min((ceil(samplesize * samplesize_boost), samplesize_cap, floor(total_draws_cap/interval)))
+				stall_count = 0
+			}
+		}
+		else {
+			Fstat_prev = .
+			stall_count = 0
 		}
 	}
 
@@ -7100,6 +8125,27 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// disclosed, deliberate simplification, not an oversight).
 	infl = ergm_spectral0_ar(samp :- mean(samp))
 	for (k=1; k<=p; k++) V[k,k] = V[k,k] * infl[k]
+
+	// Zero out every fixed coefficient's own row/column of `V' before
+	// inverting (harmonisation unit 183) - matches R ergm's own real
+	// reported `vcov()' for an offset() term exactly (confirmed
+	// directly: an entirely zero row/column, not merely small), and is
+	// the mathematically correct partitioned-parameter result: with
+	// `V' playing the role of the (autocorrelation-corrected) Fisher
+	// information for the full eta vector, zeroing a fixed dimension
+	// before `invsym()' leaves the free/free block inverted on its own
+	// (the standard asymptotic covariance for estimating a SUBSET of
+	// parameters while the rest are held at known, fixed values) and
+	// returns exactly 0 for the fixed dimension itself - a no-op
+	// whenever nothing is fixed.
+	if (sum(M.isfixed) > 0) {
+		for (k=1; k<=p; k++) {
+			if (M.isfixed[k]) {
+				V[k,.] = J(1,p,0)
+				V[.,k] = J(p,1,0)
+			}
+		}
+	}
 
 	res.coef = theta
 	res.vcov = invsym(V)

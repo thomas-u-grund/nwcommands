@@ -24,7 +24,8 @@ program nwergm, eclass
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
-		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ]
+		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
+		OFFSET(string) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -179,8 +180,15 @@ program nwergm, eclass
 	// dependent like any other gwesp-family term, so method() auto-
 	// selection (below, unchanged) already picks mcmle by default and
 	// mple only when explicitly requested - no special-casing needed
-	// here now that both methods are actually implemented. Undirected
-	// v1 scope only, matching gwesp() itself.
+	// here now that both methods are actually implemented. Directed
+	// networks are now supported too, under any of the five type()
+	// definitions (harmonisation unit 169 shipped type(OTP) alone
+	// first, mirroring gwodegreefree()/gwidegreefree()'s own unit-141
+	// precedent that the curved-MPLE pipeline never assumed
+	// undirected-ness anywhere; unit 170 widened it to ITP/OSP/ISP/RTP,
+	// each individually R-certified - see docs/CERTIFICATION.md unit
+	// 170). gwdspfree()/gwnspfree() gained the identical directed
+	// extension in unit 171 (see their own registration sites below).
 	if "`gwespfree'" != "" {
 		if "`gwesp'" != "" {
 			di "{err}options {bf:gwesp()} and {bf:gwespfree()} cannot both be specified - a gwesp term is either fixed-decay or curved (free-decay), not both."
@@ -194,36 +202,31 @@ program nwergm, eclass
 			di "{err}option {bf:gwespfree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
 			error 198
 		}
-		if "`directed'" == "true" {
-			di "{err}option {bf:gwespfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwesp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
-			error 198
-		}
 		if `nodes' < 3 {
 			di "{err}option {bf:gwespfree()} needs at least 3 nodes (gwesp itself needs a real shared-partner count to be achievable)."
 			error 198
 		}
-		// method(mple) only, for now (harmonisation unit 138): the
-		// underlying curved-MCMLE plumbing (ErgmMCMLE()'s own
-		// per-iteration eta->theta snap-back, delta-method SEs,
-		// missing-value degeneracy guard - unw_ergm.do) is built and
-		// does not regress the non-curved path, but direct testing on
-		// two independent real networks (one where R's own reference
-		// implementation independently failed identically -
-		// "Unconstrained MCMC sampling did not mix at all" - and a
-		// second, unrelated network) both drove the chain to a 0%
-		// Metropolis-Hastings acceptance rate even after adding
-		// backtracking robustness to the projection step itself. This
-		// is a genuinely deeper problem than a local fix - the OUTER
-		// eta-space Newton step's own step-length damping (calibrated
-		// for the full, unconstrained eta space) does not yet account
-		// for how differently a step behaves once snapped onto the
-		// much lower-dimensional curved manifold - not yet solved, so
-		// not yet exposed to users. See docs/ERGM_ROADMAP.md.
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwespfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED (harmonisation unit - Hummel/Hunter/
+		// Handcock 2012 steplength): the previous method(mple)-only
+		// restriction here was never a scope limitation of the curved
+		// plumbing itself (ErgmMCMLE()'s per-iteration eta->theta
+		// snap-back, delta-method SEs, missing-value degeneracy guard
+		// all already worked) - it was a genuine convergence failure of
+		// the OUTER Newton step's damping, which capped the SIZE of the
+		// eta-space step but never checked whether the resulting target
+		// was a statistic value the MCMC sample actually supported, so
+		// it could (and on two independent real networks, did) drive
+		// the chain to 0% Metropolis-Hastings acceptance - the same
+		// root cause independently confirmed on a plain (non-curved)
+		// gwesp() fit too (see docs/ERGM_ROADMAP.md). Replaced with
+		// R's own actual mechanism: damp the TARGET STATISTIC (shrink
+		// it into the convex hull of what the current MCMC sample
+		// explored) rather than the raw parameter step - agnostic to
+		// curved vs. non-curved by construction. method() now
+		// auto-selects mcmle for a curved term exactly as for any
+		// other dyad-dependent term (below); method(mple) remains
+		// available too. No longer restricted here - the check that
+		// used to force method(mple)/reject method(mcmle) is removed.
 	}
 	// gwdegreefree() (harmonisation unit 139): curved (free-decay)
 	// gwdegree, mirroring gwespfree()'s own exact pattern - reuses the
@@ -254,11 +257,8 @@ program nwergm, eclass
 			di "{err}option {bf:gwdegreefree()} needs at least 2 nodes."
 			error 198
 		}
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwdegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED here too - same fix, see gwespfree()'s
+		// own comment above for the full account.
 	}
 	// gwdspfree() (harmonisation unit 140): curved (free-decay)
 	// gwdsp, mirroring gwespfree()'s/gwdegreefree()'s own exact
@@ -269,8 +269,10 @@ program nwergm, eclass
 	// still bounded by nodes-2 (every other node is a candidate
 	// shared partner) - same maxd formula as gwespfree(), different
 	// underlying dyad universe. method(mple) only, same reasoning as
-	// the other two curved options. Undirected v1 scope only, matching
-	// gwdsp() itself.
+	// the other two curved options. Directed networks, under any of
+	// the five type() definitions, supported since harmonisation unit
+	// 171 (mirroring gwespfree()'s own unit 169/170 directed rollout -
+	// stat_dsp()/change_dsp() already dispatch on td.sptype, unit 91).
 	if "`gwdspfree'" != "" {
 		if "`gwdsp'" != "" {
 			di "{err}options {bf:gwdsp()} and {bf:gwdspfree()} cannot both be specified - a gwdsp term is either fixed-decay or curved (free-decay), not both."
@@ -284,19 +286,12 @@ program nwergm, eclass
 			di "{err}options {bf:dsp()} and {bf:gwdspfree()} cannot both be specified - gwdspfree() already spans every achievable shared-partner count, so combining it with an explicit dsp() subset would be redundant/collinear."
 			error 198
 		}
-		if "`directed'" == "true" {
-			di "{err}option {bf:gwdspfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwdsp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
-			error 198
-		}
 		if `nodes' < 3 {
 			di "{err}option {bf:gwdspfree()} needs at least 3 nodes (gwdsp itself needs a real shared-partner count to be achievable)."
 			error 198
 		}
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwdspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED here too - same fix, see gwespfree()'s
+		// own comment above for the full account.
 	}
 	// gwnspfree() (harmonisation unit 152): curved (free-decay) gwnsp -
 	// the last of the five fixed-decay GW terms this package implements
@@ -314,8 +309,11 @@ program nwergm, eclass
 	// certified against an independent direct-enumeration oracle before
 	// use. Same maxd formula as gwdspfree() (nsp, like dsp, is defined
 	// over EVERY dyad, tied or not, but the achievable per-dyad count is
-	// still bounded by nodes-2). method(mple) only, undirected v1 scope,
-	// same reasoning as every other curved option.
+	// still bounded by nodes-2). method(mple) only. Directed networks,
+	// under any of the five type() definitions, supported since
+	// harmonisation unit 171 (mirroring gwdspfree()'s own same-unit
+	// directed rollout - stat_nsp()/change_nsp() inherit td.sptype
+	// dispatch for free from stat_dsp()/stat_esp()).
 	if "`gwnspfree'" != "" {
 		if "`gwnsp'" != "" {
 			di "{err}options {bf:gwnsp()} and {bf:gwnspfree()} cannot both be specified - a gwnsp term is either fixed-decay or curved (free-decay), not both."
@@ -325,19 +323,12 @@ program nwergm, eclass
 			di "{err}option {bf:gwnspfree()} cannot be combined with another curved option - v1 scope supports at most one curved term per model."
 			error 198
 		}
-		if "`directed'" == "true" {
-			di "{err}option {bf:gwnspfree()} (v1 scope) is undirected only; {bf:`netname'} is directed. Use {bf:gwnsp()} with {bf:type()} for a directed fixed-decay model - curved directed models are not yet supported."
-			error 198
-		}
 		if `nodes' < 3 {
 			di "{err}option {bf:gwnspfree()} needs at least 3 nodes (gwnsp itself needs a real shared-partner count to be achievable)."
 			error 198
 		}
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwnspfree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED here too - same fix, see gwespfree()'s
+		// own comment above for the full account.
 	}
 	// gwodegreefree()/gwidegreefree() (harmonisation unit 141): the
 	// first DIRECTED curved terms - every curved option so far
@@ -372,11 +363,8 @@ program nwergm, eclass
 			di "{err}option {bf:gwodegreefree()} needs at least 2 nodes."
 			error 198
 		}
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwodegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED here too - same fix, see gwespfree()'s
+		// own comment above for the full account.
 	}
 	if "`gwidegreefree'" != "" {
 		if "`gwidegree'" != "" {
@@ -399,11 +387,8 @@ program nwergm, eclass
 			di "{err}option {bf:gwidegreefree()} needs at least 2 nodes."
 			error 198
 		}
-		if "`method'" != "" & "`method'" != "mple" {
-			di "{err}option {bf:gwidegreefree()} is currently estimable via {bf:method(mple)} only - curved MCMLE is built but not yet reliable enough to expose (see docs/ERGM_ROADMAP.md)."
-			error 198
-		}
-		local method "mple"
+		// method(mcmle) LIFTED here too - same fix, see gwespfree()'s
+		// own comment above for the full account.
 	}
 	if ("`nodeicov'" != "" | "`nodeocov'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:nodeicov()}/{bf:nodeocov()} require a directed network; {bf:`netname'} is undirected."
@@ -433,8 +418,8 @@ program nwergm, eclass
 	if `__ergm_type_explicit' & "`directed'" != "true" {
 		di "{err}note: option {bf:type()} only affects directed networks; {bf:`netname'} is undirected, so the undirected shared-partner definition is used regardless."
 	}
-	if `__ergm_type_explicit' & "`gwesp'`gwdsp'`gwnsp'`esp'`dsp'" == "" {
-		di "{err}note: option {bf:type()} has no effect - no {bf:gwesp()}/{bf:gwdsp()}/{bf:gwnsp()}/{bf:esp()}/{bf:dsp()} term was requested."
+	if `__ergm_type_explicit' & "`gwesp'`gwdsp'`gwnsp'`esp'`dsp'`gwespfree'`gwdspfree'`gwnspfree'" == "" {
+		di "{err}note: option {bf:type()} has no effect - no {bf:gwesp()}/{bf:gwdsp()}/{bf:gwnsp()}/{bf:esp()}/{bf:dsp()}/{bf:gwespfree()}/{bf:gwdspfree()}/{bf:gwnspfree()} term was requested."
 	}
 	if ("`gwodegree'" != "" | "`gwidegree'" != "") & "`directed'" != "true" {
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:gwdegree()} for an undirected network."
@@ -1457,11 +1442,29 @@ program nwergm, eclass
 		// a DIFFERENT, already-adjacent dyad's own shared-partner count
 		// by one, not just the toggled dyad's own value, so the network's
 		// current true maximum alone is not itself always reachable-safe).
-		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		// Harmonisation unit 169 (type(OTP)), widened to all five types
+		// by unit 170: on a directed network the bound instead comes
+		// from ergm_graph_max_sp_dir(), the same "+1" reasoning but over
+		// the requested type()'s own shared_partners_*() ties rather
+		// than the undirected UTP definition.
+		if "`directed'" == "true" {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_sp_dir(__nwergm_last_G, "`type'") + 1))
+		}
+		else {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwespfree
 		mata: `__td_gwespfree' = ErgmTermData()
 		mata: `__td_gwespfree'.levels = (1..`__ergm_curved_maxd')'
+		// Sets the same td.sptype fixed-decay gwesp() itself sets for a
+		// directed network (nwergm.ado:1355 above) - stat_esp()/
+		// change_esp() (unw_ergm.do) already dispatch on td.sptype to
+		// all five directed definitions, so no new statistic/change
+		// code is needed for any of them.
+		if "`directed'" == "true" {
+			mata: `__td_gwespfree'.sptype = "`type'"
+		}
 		// addterm()'s own cnames must have length npar (here
 		// __ergm_curved_maxd, the ETA-space dimension - one name per
 		// achievable shared-partner count) - NOT the 2-dimensional
@@ -1521,12 +1524,26 @@ program nwergm, eclass
 		// (plus one - see ergm_graph_max_shared_partners()'s own header
 		// comment) as gwespfree()'s own registration site above (DSP is
 		// the identical common-neighbor concept, evaluated over every
-		// dyad rather than only tied ones).
-		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		// dyad rather than only tied ones). Harmonisation unit 171: on a
+		// directed network the bound instead comes from
+		// ergm_graph_max_sp_dir_all() - the all-dyads counterpart to
+		// gwespfree()'s own ties-only ergm_graph_max_sp_dir(), needed
+		// here because dsp(d) is defined over every dyad, not just ties.
+		if "`directed'" == "true" {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_sp_dir_all(__nwergm_last_G, "`type'") + 1))
+		}
+		else {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwdspfree
 		mata: `__td_gwdspfree' = ErgmTermData()
 		mata: `__td_gwdspfree'.levels = (1..`__ergm_curved_maxd')'
+		// Sets td.sptype exactly as gwespfree()'s own registration site
+		// does - stat_dsp()/change_dsp() already dispatch on it (unit 91).
+		if "`directed'" == "true" {
+			mata: `__td_gwdspfree'.sptype = "`type'"
+		}
 		local __ergm_curved_cnames ""
 		forvalues __k = 1/`__ergm_curved_maxd' {
 			local __ergm_curved_cnames "`__ergm_curved_cnames' gwdspfree_`__k'"
@@ -1543,12 +1560,23 @@ program nwergm, eclass
 		// same TRUE shared-partner-count bound (plus one) as
 		// gwdspfree()'s own registration site - nsp, like dsp, is
 		// defined over every dyad (tied or not), so the same bound
-		// applies.
-		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		// applies, directed or not.
+		if "`directed'" == "true" {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_sp_dir_all(__nwergm_last_G, "`type'") + 1))
+		}
+		else {
+			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
+		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
 		tempname __td_gwnspfree
 		mata: `__td_gwnspfree' = ErgmTermData()
 		mata: `__td_gwnspfree'.levels = (1..`__ergm_curved_maxd')'
+		// nsp inherits td.sptype dispatch for free via stat_dsp()/
+		// stat_esp() (stat_nsp() = stat_dsp() - stat_esp()), same as
+		// the fixed-decay gwnsp() path already relies on.
+		if "`directed'" == "true" {
+			mata: `__td_gwnspfree'.sptype = "`type'"
+		}
 		local __ergm_curved_cnames ""
 		forvalues __k = 1/`__ergm_curved_maxd' {
 			local __ergm_curved_cnames "`__ergm_curved_cnames' gwnspfree_`__k'"
@@ -1637,12 +1665,65 @@ program nwergm, eclass
 	// attribute, not on other dyads' state), so they are deliberately
 	// excluded from this check. kstar/ostar/istar/degrange/odegrange/
 	// idegrange are all degree-based and so are dyad-dependent (wave 3).
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	// `gwnspfree' added to this check now that method(mcmle) is
+	// actually reachable for curved terms (see the gwespfree() gate's
+	// own comment above) - previously harmless to omit only because
+	// gwnspfree() unconditionally forced method(mple) regardless of
+	// this check's own result, a forcing that no longer happens.
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
 	if "`method'" == "mple" & !`__ergm_dind' {
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
+	}
+
+	// offset() (harmonisation unit 183, docs/ERGM_ROADMAP.md's own
+	// "Offsets/fixed-coefficient terms" row) - holds one or more named
+	// coefficients fixed at a user-supplied value rather than
+	// estimating them, matching R ergm's own `offset()' formula
+	// wrapper (verified directly against a real R fit: the offset
+	// coefficient is reported at exactly the given value, with SE
+	// exactly 0 and an entirely zero row/column in the full vcov - see
+	// unw_ergm.do's own ErgmMCMLE()/the MPLE branch below for where
+	// that is reproduced). v1 scope: ordinary (non-curved) coefficients
+	// only - a curved term's own weight/decay are not addressable here.
+	if "`offset'" != "" {
+		if `__ergm_curved' {
+			di "{err}option {bf:offset()} is not currently supported for a model containing a curved (free-decay) term."
+			error 198
+		}
+		local __ergm_noffset : word count `offset'
+		if mod(`__ergm_noffset', 2) != 0 {
+			di "{err}option {bf:offset()} needs coefname/value PAIRS - `offset' has `__ergm_noffset' token(s), an odd count."
+			error 198
+		}
+		local __ergm_noffset_pairs = `__ergm_noffset' / 2
+		forvalues __k = 1/`__ergm_noffset_pairs' {
+			local __ergm_off_name : word `=2*`__k'-1' of `offset'
+			local __ergm_off_val : word `=2*`__k'' of `offset'
+			capture confirm number `__ergm_off_val'
+			if _rc {
+				di "{err}option {bf:offset()}: `__ergm_off_val' is not a valid number - expected coefname/value pairs, e.g. {bf:offset(mutual 2)}."
+				error 198
+			}
+			mata: st_local("__ergm_off_colpos", strofreal(__nwergm_last_M.findcoef("`__ergm_off_name'")))
+			if `__ergm_off_colpos' == 0 {
+				di "{err}option {bf:offset()}: `__ergm_off_name' is not a coefficient name in this model."
+				error 198
+			}
+			mata: st_local("__ergm_off_dup", strofreal(__nwergm_last_M.isfixed[`__ergm_off_colpos']))
+			if `__ergm_off_dup' {
+				di "{err}option {bf:offset()}: `__ergm_off_name' is given more than once."
+				error 198
+			}
+			mata: __nwergm_last_M.mark_fixed(`__ergm_off_colpos', `__ergm_off_val')
+		}
+		mata: st_local("__ergm_nfree", strofreal(cols(__nwergm_last_M.freeidx())))
+		if `__ergm_nfree' == 0 {
+			di "{err}option {bf:offset()} cannot fix every coefficient in the model - at least one must remain free to estimate."
+			error 198
+		}
 	}
 
 	// Built directly as a Mata matrix and handed straight to st_store()
@@ -1774,6 +1855,28 @@ program nwergm, eclass
 		qui gen double __ergm_y = .
 		mata: st_store(., tokens("`__ergm_xlist' __ergm_y"), `__nw_D')
 
+		// offset() (harmonisation unit 183): a fixed coefficient's own
+		// column is EXCLUDED from the free regressor list and its known
+		// contribution added instead via `logit''s own native offset()
+		// option - the standard GLM-offset construction, and exactly
+		// what a fixed/known linear-predictor term means statistically.
+		// No-op (`__ergm_free_xlist'==`__ergm_xlist', no offset option)
+		// whenever nothing is fixed.
+		mata: st_local("__ergm_has_offset", strofreal(sum(__nwergm_last_M.isfixed)>0))
+		local __ergm_free_xlist ""
+		forvalues __k = 1/`__ergm_p' {
+			mata: st_local("__ergm_isfix_k", strofreal(__nwergm_last_M.isfixed[`__k']))
+			if !`__ergm_isfix_k' {
+				local __ergm_free_xlist "`__ergm_free_xlist' __ergm_x`__k'"
+			}
+		}
+		local __ergm_offset_opt ""
+		if `__ergm_has_offset' {
+			qui gen double __ergm_offset = .
+			mata: st_store(., "__ergm_offset", `__nw_D'[.,(1..`__ergm_p')] * (__nwergm_last_M.isfixed :* __nwergm_last_M.fixedvalue)')
+			local __ergm_offset_opt "offset(__ergm_offset)"
+		}
+
 		// BUGFIX: a fully edgeless (zero-tie) network - an MPLE fit
 		// where the outcome never varies - used to crash completely
 		// silently (only "r(2000);", no explanatory text at all) from
@@ -1784,16 +1887,25 @@ program nwergm, eclass
 		// would leave the caller's own dataset in the modified,
 		// mid-preserve state (the same class of bug already fixed once
 		// in nwrename.ado this same pass).
-		capture qui logit __ergm_y `__ergm_xlist', noconstant
+		capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
 		if _rc != 0 {
 			local __ergm_mple_rc = _rc
 			restore
 			di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
 			error `__ergm_mple_rc'
 		}
-		matrix `__b_mple' = e(b)
-		matrix `__V_mple' = e(V)
-		restore
+		if `__ergm_has_offset' {
+			tempname __b_mple_free __V_mple_free
+			matrix `__b_mple_free' = e(b)
+			matrix `__V_mple_free' = e(V)
+			restore
+			mata: ergm_mple_expand_fixed(__nwergm_last_M, st_matrix("`__b_mple_free'"), st_matrix("`__V_mple_free'"), "`__b_mple'", "`__V_mple'")
+		}
+		else {
+			matrix `__b_mple' = e(b)
+			matrix `__V_mple' = e(V)
+			restore
+		}
 	}
 
 	if "`method'" == "mple" {
@@ -1931,16 +2043,27 @@ program nwergm, eclass
 			mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode', __nwergm_last_G)
 			mata: mata drop __ergm_native_setup_rc
 		}
-		// fixdensity: force native off unconditionally (no native port
-		// for this constraint - see ErgmMCMCSampleSwap()'s own header in
-		// unw_ergm.do) regardless of whether ErgmNativeSetup() ran above
-		// or was skipped via nonative - this is the single place that
-		// sets M.fixed_density=1, guaranteed to run before ErgmMCMLE()
-		// is ever called below.
+		// fixdensity: this is the single place that sets M.fixed_density=1,
+		// guaranteed to run before ErgmMCMLE() is ever called below.
+		// `native_enabled' (the MPLE-design-matrix-build flag) is forced
+		// off unconditionally regardless of whether ErgmNativeSetup() ran
+		// above or was skipped via nonative - a fixed-density model is
+		// always method(mcmle) (checked earlier in this program), so its
+		// own MPLE-mode native path is simply never reached either way;
+		// forcing it off here just documents that explicitly rather than
+		// leaving it as an unexercised accident. `native_enabled_sample'
+		// (the MCMC-SAMPLING flag ErgmMCMCSample()/ErgmMCMCSampleDiag()
+		// actually check) is deliberately left at whatever
+		// ErgmNativeSetup() already decided from this model's own TERMS -
+		// native/ergm_mcmc.c's own propose_swap() now natively ports the
+		// fixdensity compound tie/non-tie swap move too (its own
+		// wire-carried M.fixed_density flag selects that proposal loop
+		// internally), so fixdensity no longer forces a Mata-only fit the
+		// way it used to; a fixed-density model runs native exactly when
+		// an ordinary model with the same terms would.
 		if "`fixdensity'" != "" {
 			mata: __nwergm_last_M.fixed_density = 1
 			mata: __nwergm_last_M.native_enabled = 0
-			mata: __nwergm_last_M.native_enabled_sample = 0
 		}
 		// native_enabled_sample (unit 168), not native_enabled: for a
 		// freedyads()-masked model native_enabled itself is forced to 0
@@ -1993,6 +2116,20 @@ program nwergm, eclass
 			// robustness against MCMC degeneracy (a substantially
 			// larger undertaking, and one R's own mature
 			// implementation does not fully solve either).
+			// Checked on `coef_theta' AND (harmonisation unit 180 - the
+			// theta-space Newton redesign) the FINAL transformed
+			// `__V_mcmle' too, not just `coef_theta' alone: a finite
+			// `coef_theta' can still carry a near-singular RAW `vcov'
+			// (the final diagnostics simulation's own sample frozen/
+			// near-zero-variance at a hard-to-mix theta) that the
+			// Jacobian delta-method sandwich below then turns into a
+			// matrix of missing values - observed directly on this
+			// package's own known-pathological `curvedgwespnet' network
+			// under a deliberately tiny iteration/sample budget, where
+			// the ORIGINAL (coef_theta-only) guard let a missing-VCOV
+			// fit reach `ereturn post', which then failed with a raw,
+			// unexplained "estimates post: matrix has missing values"
+			// (r(504)) instead of this command's own clear message.
 			mata: st_local("__ergm_curved_degenerate", strofreal(missing(`__fit'.coef_theta) > 0))
 			if `__ergm_curved_degenerate' {
 				di "{err}The curved MCMLE fit did not produce a valid result - the underlying MCMC chain likely became degenerate for this model/network combination (this is a genuine difficulty of curved-decay estimation in general, not specific to this package; R's own ergm can fail identically with 'Unconstrained MCMC sampling did not mix at all' on a hard case). Try a different starting decay value, a longer {bf:mcmcburnin()}, or a simpler model."
@@ -2002,9 +2139,35 @@ program nwergm, eclass
 			mata: __ergm_Jac_mcmle = __nwergm_last_M.theta_to_eta_jacobian(`__fit'.coef_theta)
 			mata: st_matrix("`__V_mcmle'", invsym(__ergm_Jac_mcmle' * invsym(`__fit'.vcov) * __ergm_Jac_mcmle))
 			mata: mata drop __ergm_Jac_mcmle
+			mata: st_local("__ergm_curved_vcov_degenerate", strofreal(missing(st_matrix("`__V_mcmle'")) > 0))
+			if `__ergm_curved_vcov_degenerate' {
+				di "{err}The curved MCMLE fit did not produce a valid result - the final variance-covariance simulation landed at a near-degenerate (frozen) point, leaving the theta-space variance-covariance matrix undefined after the delta-method transform. Try a different starting decay value, a longer {bf:mcmcburnin()}, a larger {bf:mcmcsamplesize()}, or a simpler model."
+				error 430
+			}
 			mata: st_local("__ergm_coefnames", invtokens(__nwergm_last_M.theta_coefnames()))
 		}
 		else {
+			// Non-curved degeneracy guard, mirroring the curved guard
+			// immediately above (unit 138): an outer Newton step with no
+			// check against what the MCMC sample actually supports can
+			// drive `theta' into a degenerate region (observed directly:
+			// an edges coefficient near 900, forcing a near-frozen
+			// graph) where the final diagnostics simulation's own sampled
+			// statistics have essentially zero variance - ergm_spectral0_ar()'s
+			// autocorrelation estimate is then undefined (0/0), cascading
+			// through `V[k,k] = V[k,k]*infl[k]' and `invsym(V)' into an
+			// entirely missing vcov, while the F-test can spuriously
+			// "pass" on a frozen chain (Dbar trivially ~0 when nothing
+			// varies) - so `converged==1' alone is not sufficient
+			// evidence of a usable fit. Checked and refused explicitly,
+			// matching this project's own "never silently report a
+			// wrong answer" convention - same as the curved branch, not
+			// previously applied here.
+			mata: st_local("__ergm_mcmle_degenerate", strofreal(missing(`__fit'.vcov) > 0))
+			if `__ergm_mcmle_degenerate' {
+				di "{err}The MCMLE fit did not produce a valid result - the underlying MCMC chain likely became degenerate for this model/network combination (the fitted parameters drove the simulated graph into a near-deterministic region, leaving the variance-covariance matrix undefined). Try different starting values, a longer {bf:mcmcburnin()}, or a simpler model."
+				error 430
+			}
 			mata: st_matrix("`__b_mcmle'", `__fit'.coef)
 			mata: st_matrix("`__V_mcmle'", `__fit'.vcov)
 		}
@@ -2179,6 +2342,10 @@ program nwergm_simulate
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
 		TYPE(string) ///
+		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
+		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
+		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(real 0) BGWDEGREE2(real 0) ///
+		BIPARTITE(integer 0) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
 		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
 
@@ -2186,6 +2353,43 @@ program nwergm_simulate
 	if `nodes' < 2 {
 		di "{err}nwergm simulate needs at least 2 nodes."
 		error 198
+	}
+	// Bipartite (two-mode) simulation support (mirrors the main nwergm
+	// command's own network-type validation block above): `bipartite()'
+	// gives the mode-1 node count, following this package's own
+	// established convention (nwset's own mat()+bipartite branch,
+	// check_bipartite()/get_2mode_edge() in nwset.ado) that mode-1 nodes
+	// are node indices 1..bipartite() and mode-2 nodes are the
+	// remaining bipartite()+1..nodes - unlike ErgmGraph's own general
+	// non-contiguous `mode' field (see unw_ergm.do's own header comment
+	// on it), simulate has no existing network to read a per-node mode
+	// assignment FROM, so it needs its own explicit, R-`network(n,
+	// bipartite=)'-analogous contiguous-prefix convention here - the
+	// same one nwset's own mat()+bipartite construction already uses,
+	// so a simulated bipartite draw round-trips cleanly back through
+	// nwset/nwergm without any node relabeling.
+	if `bipartite' != 0 & "`directed'" != "" {
+		di "{err}nwergm simulate does not support directed two-mode (bipartite) networks - bipartite ERGMs are undirected only, matching the reference implementation this package studies (R's ergm package)."
+		error 198
+	}
+	if `bipartite' < 0 | `bipartite' == `nodes' {
+		di "{err}option {bf:bipartite()} must give the mode-1 node count, strictly between 0 and {bf:nodes()} (`nodes'); got `bipartite'."
+		error 198
+	}
+	if `bipartite' != 0 {
+		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + (`gwesp'!=0) + (`gwdsp'!=0) + (`gwnsp'!=0) + (`gwdegree'!=0) + (`gwodegree'!=0) + (`gwidegree'!=0) + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
+		if `__ergm_b2mode_otherterm' > 0 {
+			di "{err}nwergm simulate's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; this model requests at least one other (one-mode-only) term."
+			di "{err}nwergm simulate never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
+			error 198
+		}
+	}
+	else {
+		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `bgwdegree1' != 0 | `bgwdegree2' != 0 {
+			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require {bf:bipartite()} (the mode-1 node count)."
+			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode simulation's own analogous effect."
+			error 198
+		}
 	}
 	if "`theta'" == "" {
 		di "{err}option {bf:theta()} is required - one coefficient per requested term, in the same order the term options are listed (edges first)."
@@ -2417,6 +2621,173 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' `__ergm_cnames'"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
 		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
+	// --- bipartite (two-mode) terms: bcov1()/bcov2()/bfactor1()/
+	// bfactor2()/bdegree1()/bdegree2()/bstar1()/bstar2()/bnodematch1()/
+	// bnodematch2()/bgwdegree1()/bgwdegree2(), ported from the
+	// estimation path above - only ever registered when `bipartite'!=0
+	// (validated above). bfactor1()/bfactor2()'s own level-set is built
+	// from the mode-1/mode-2 node INDEX RANGES directly (1::`bipartite''
+	// / (`bipartite'+1)::`nodes'), not `__nwergm_last_G.mode1nodes'/
+	// `mode2nodes' as the estimation path uses - simulate registers
+	// every term BEFORE any ErgmGraph exists at all (a fresh one is
+	// built per draw, inside the `nsim' loop below), whereas estimation
+	// builds its one graph first. Both give the identical index set
+	// here since this program's own `bipartite()' option IS exactly
+	// that contiguous "mode-1 nodes are indices 1..bipartite()"
+	// convention (see the validation block above's own header comment).
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bcov1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1c`__ergm_termidx'
+		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b1cov", 1, &stat_b1cov(), &change_b1cov(), `__td_b1c`__ergm_termidx'', ("b1cov_`__ergm_v'"))
+		local ntermtok "`ntermtok' b1cov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1c`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bcov2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2c`__ergm_termidx'
+		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b2cov", 1, &stat_b2cov(), &change_b2cov(), `__td_b2c`__ergm_termidx'', ("b2cov_`__ergm_v'"))
+		local ntermtok "`ntermtok' b2cov_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2c`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bfactor1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1f`__ergm_termidx'
+		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_b1f`__ergm_termidx''.levels = uniqrows(`__td_b1f`__ergm_termidx''.attr[1::`bipartite'])
+		mata: `__td_b1f`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_b1f`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_b1f`__ergm_termidx''.levels)))
+		tempname __ergm_levvec_b1f
+		mata: st_matrix("`__ergm_levvec_b1f'", `__td_b1f`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' b1factor_`__ergm_v'_`=`__ergm_levvec_b1f'[1,`__k']'"
+		}
+		mata: __nwergm_last_M.addterm("b1factor", `__ergm_nlev', &stat_b1factor(), &change_b1factor(), `__td_b1f`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1f`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bfactor2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2f`__ergm_termidx'
+		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: `__td_b2f`__ergm_termidx''.levels = uniqrows(`__td_b2f`__ergm_termidx''.attr[(`bipartite'+1)::`nodes'])
+		mata: `__td_b2f`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_b2f`__ergm_termidx''.levels)
+		mata: st_local("__ergm_nlev", strofreal(rows(`__td_b2f`__ergm_termidx''.levels)))
+		tempname __ergm_levvec_b2f
+		mata: st_matrix("`__ergm_levvec_b2f'", `__td_b2f`__ergm_termidx''.levels')
+		local __ergm_cnames ""
+		forvalues __k = 1/`__ergm_nlev' {
+			local __ergm_cnames "`__ergm_cnames' b2factor_`__ergm_v'_`=`__ergm_levvec_b2f'[1,`__k']'"
+		}
+		mata: __nwergm_last_M.addterm("b2factor", `__ergm_nlev', &stat_b2factor(), &change_b2factor(), `__td_b2f`__ergm_termidx'', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2f`__ergm_termidx''"
+	}
+	if "`bdegree1'" != "" {
+		tempname __td_bd1
+		mata: `__td_bd1' = ErgmTermData()
+		mata: `__td_bd1'.levels = strtoreal(tokens("`bdegree1'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd1'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `bdegree1' {
+			local __ergm_cnames "`__ergm_cnames' b1degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("b1degree", `__ergm_ndeg', &stat_b1degree(), &change_b1degree(), `__td_bd1', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bd1'"
+	}
+	if "`bdegree2'" != "" {
+		tempname __td_bd2
+		mata: `__td_bd2' = ErgmTermData()
+		mata: `__td_bd2'.levels = strtoreal(tokens("`bdegree2'"))'
+		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd2'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_dv of numlist `bdegree2' {
+			local __ergm_cnames "`__ergm_cnames' b2degree_`__ergm_dv'"
+		}
+		mata: __nwergm_last_M.addterm("b2degree", `__ergm_ndeg', &stat_b2degree(), &change_b2degree(), `__td_bd2', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bd2'"
+	}
+	if "`bstar1'" != "" {
+		tempname __td_bs1
+		mata: `__td_bs1' = ErgmTermData()
+		mata: `__td_bs1'.levels = strtoreal(tokens("`bstar1'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs1'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `bstar1' {
+			local __ergm_cnames "`__ergm_cnames' b1star_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("b1star", `__ergm_nk', &stat_b1star(), &change_b1star(), `__td_bs1', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bs1'"
+	}
+	if "`bstar2'" != "" {
+		tempname __td_bs2
+		mata: `__td_bs2' = ErgmTermData()
+		mata: `__td_bs2'.levels = strtoreal(tokens("`bstar2'"))'
+		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs2'.levels)))
+		local __ergm_cnames ""
+		foreach __ergm_kv of numlist `bstar2' {
+			local __ergm_cnames "`__ergm_cnames' b2star_`__ergm_kv'"
+		}
+		mata: __nwergm_last_M.addterm("b2star", `__ergm_nk', &stat_b2star(), &change_b2star(), `__td_bs2', tokens("`__ergm_cnames'"))
+		local ntermtok "`ntermtok' `__ergm_cnames'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bs2'"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bnodematch1 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b1nm`__ergm_termidx'
+		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b1nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), `__td_b1nm`__ergm_termidx'', ("b1nodematch_`__ergm_v'"))
+		local ntermtok "`ntermtok' b1nodematch_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b1nm`__ergm_termidx''"
+	}
+	local __ergm_termidx = 0
+	foreach __ergm_v of local bnodematch2 {
+		confirm variable `__ergm_v'
+		local ++__ergm_termidx
+		tempname __td_b2nm`__ergm_termidx'
+		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
+		mata: `__td_b2nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
+		mata: __nwergm_last_M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), `__td_b2nm`__ergm_termidx'', ("b2nodematch_`__ergm_v'"))
+		local ntermtok "`ntermtok' b2nodematch_`__ergm_v'"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
+	}
+	if `bgwdegree1' != 0 {
+		tempname __td_bgwd1
+		mata: `__td_bgwd1' = ErgmTermData()
+		mata: `__td_bgwd1'.decay = `bgwdegree1'
+		mata: __nwergm_last_M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), `__td_bgwd1', ("bgwdegree1"))
+		local ntermtok "`ntermtok' bgwdegree1"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
+	}
+	if `bgwdegree2' != 0 {
+		tempname __td_bgwd2
+		mata: `__td_bgwd2' = ErgmTermData()
+		mata: `__td_bgwd2'.decay = `bgwdegree2'
+		mata: __nwergm_last_M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), `__td_bgwd2', ("bgwdegree2"))
+		local ntermtok "`ntermtok' bgwdegree2"
+		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd2'"
 	}
 
 	// --- structural terms with no covariate data at all: numlist-
@@ -2865,10 +3236,20 @@ program nwergm_simulate
 	// accepts directly (the same pattern nwrandom.ado's own generators
 	// already use) and has no size limit to hit.
 	tempname __ergm_simmat
+	tempname __ergm_simmat_bip
 	forvalues __s = 1/`nsim' {
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
 		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
+		if `bipartite' != 0 {
+			// same contiguous mode-1-first convention as the validation
+			// block's own header comment (nodes 1..`bipartite'' = mode 1,
+			// the rest = mode 2) - set_bipartite() itself just wants a
+			// plain n x 1 vector of 1/2 mode labels, built directly here
+			// rather than via nwset/an NWdef object (simulate has no
+			// existing network to read one from).
+			mata: __nwergm_last_G.set_bipartite((J(`bipartite',1,1) \ J(`nodes'-`bipartite',1,2)))
+		}
 		// enable_sp_cache() only when the user explicitly opted in via
 		// spcache (see this program's own build-up comment above for why
 		// it is off by default and why simulate's own cost-benefit is
@@ -2893,9 +3274,37 @@ program nwergm_simulate
 		capture nwdrop `__ergm_simname'
 		qui drop _all
 		qui set obs `nodes'
-		nwset, mat(`__ergm_simmat') `=cond("`directed'"!="","directed","undirected")' name(`__ergm_simname')
+		if `bipartite' != 0 {
+			// nwset's own mat()+bipartite branch (check_bipartite()/
+			// get_2mode_edge() in nwset.ado) wants a genuinely
+			// RECTANGULAR mode2-count x mode1-count affiliation matrix,
+			// not the full n x n dense form G.to_dense() returns (whose
+			// only nonzero block is exactly this cross-mode rectangle,
+			// since the bipartite MCMC proposal above never touches a
+			// same-mode dyad) - `mode1 = cols(mat)' there, so this
+			// project's own mode1-nodes-first convention above means the
+			// needed rectangle is rows (mode-2 nodes) x cols (mode-1
+			// nodes).
+			mata: `__ergm_simmat_bip' = `__ergm_simmat'[(`bipartite'+1)::`nodes', (1::`bipartite')]
+			nwset, mat(`__ergm_simmat_bip') bipartite name(`__ergm_simname')
+		}
+		else {
+			nwset, mat(`__ergm_simmat') `=cond("`directed'"!="","directed","undirected")' name(`__ergm_simname')
+		}
 	}
 
+	// `__ergm_simmat_bip' is only ever assigned inside the `bipartite'!=0
+	// branch above - dropped conditionally on the SAME test, rather than
+	// via a `capture'd unconditional drop, so a one-mode simulate call
+	// (the common case) never has to swallow a real "not found" error
+	// here (a lingering nonzero `_rc' from a `capture'd failure survives
+	// every ordinary successful command after it - confirmed directly -
+	// and would otherwise leak out to this program's own caller as a
+	// spurious nonzero `_rc' despite the simulate call itself having
+	// fully succeeded).
+	if `bipartite' != 0 {
+		mata: mata drop `__ergm_simmat_bip'
+	}
 	mata: mata drop __nwergm_last_M __nwergm_last_G __gof_discard `__ergm_simmat' `__ergm_matatemps'
 end
 
