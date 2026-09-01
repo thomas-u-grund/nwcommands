@@ -90,3 +90,15 @@ mata: assert(Munrel2[1,2] == 1)
 nwtomata recoded_net3_1, mat(Mrec2)
 mata: assert(Mrec2[1,2] == 5)
 di "=== prefix() collision REGRESSION VERIFIED ==="
+
+* --- failure paths: a network name that isn't loaded is rejected via
+* nw_syntax's own "Network X not found" check (error 482); calling
+* with no argument at all is rejected by Stata's own syntax parser
+* (`arg' is a required positional argument).
+nwclear
+nwset, mat((0,1\1,0)) name(recnet)
+capture noisily nwrecode nonexistent(1=1)
+assert _rc == 482
+
+capture noisily nwrecode
+assert _rc != 0

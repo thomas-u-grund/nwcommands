@@ -34,5 +34,15 @@ assert         r(selfloops)     == 0
 assert         r(nodes)         == 2
 assert         r(id)            == 1
 
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482), both for the
+* whole-network-keep path and the if/in row-keep path.
+nwclear
+nwset, mat((1,1,0\0,0,0\1,0,0)) name("first")
+capture noisily nwkeep nonexistent
+assert _rc == 482
+capture noisily nwkeep nonexistent if _n < 2
+assert _rc == 482
+
 
 

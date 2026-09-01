@@ -26,5 +26,11 @@ assert `"`r(exists)'"'    == `"false"'
 assert `"`r(validname)'"' == `"network"'
 assert `"`r(tryname)'"'   == `"network"'
 
+* --- failure path: `netname' is a required positional argument -
+* calling with none is rejected by Stata's own syntax parser, not
+* silently treated as an empty string.
+capture noisily nwvalidate
+assert _rc != 0
+
 
 

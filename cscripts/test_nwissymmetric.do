@@ -54,3 +54,12 @@ nwclear
 nwset, mat((0,1,0\0,0,0\0,0,0)) directed name(onesided) nooutput
 nwissymmetric onesided
 assert r(issymmetric) == 0
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwissymmetric nonexistent
+assert _rc == 482
+
+nwclear
+capture noisily nwissymmetric
+assert _rc == 482

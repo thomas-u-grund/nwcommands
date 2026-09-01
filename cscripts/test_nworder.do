@@ -45,3 +45,10 @@ nwtomata x2, mat(M)
 mata: assert(M[1,2] == 1)
 mata: assert(M[1,3] == 0)
 mata: assert(M[2,3] == 1)
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* this command's own explicit validation loop (error 482) - this is
+* the exact regression this file's own header comment describes fixing
+* (a raw r(111) "variable not found" before that fix).
+capture noisily nworder x1 nonexistent
+assert _rc == 482

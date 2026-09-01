@@ -44,3 +44,13 @@ nwname nX
 assert `"`r(caption)'"' == "cap text"
 assert `"`r(provenance)'"' == "prov text"
 di "=== newcaption()/newprovenance() REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482), reached
+* through nw_name's own passthrough.
+capture noisily nwname nonexistent
+assert _rc == 482
+
+nwclear
+capture noisily nwname
+assert _rc != 0
