@@ -88,3 +88,8 @@ assert `g1' != `g2'
 assert `sd1' == 0
 assert `sd2' == 0
 di "=== nwlambda + nwhierarchy end-to-end lambda-set extraction REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwlambda nonexistent
+assert _rc == 482
