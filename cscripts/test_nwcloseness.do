@@ -99,3 +99,8 @@ assert reldif(c1[2], .6666667) < 1E-6
 nwcloseness startest, generate(c2 f2 n2) nosym replace
 assert missing(c2[2])
 di "=== directed default-vs-nosym REGRESSION VERIFIED ==="
+
+* --- failure path: a name that isn't a loaded network is rejected via
+* nw_syntax's own "Network X not found" check (error 482).
+capture noisily nwcloseness nonexistent
+assert _rc == 482
