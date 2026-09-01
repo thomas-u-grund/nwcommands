@@ -66,3 +66,28 @@ nwclear
 nwsmall 10, k(2) prob(.1) ntimes(3)
 assert `"`r(netlist)'"' == `"small_1 small_2 small_3"'
 di "=== r(netlist) REGRESSION VERIFIED ==="
+
+* --- failure paths (BUGFIX: all three of these used to print their own
+* clear error message and then either fall through to actually
+* generating a network anyway, or silently do nothing - either way
+* returning _rc==0 as if nothing were wrong, confirmed directly before
+* this fix): neither prob() nor shortcuts() given; prob() out of the
+* valid [0,1] range; a name that isn't a loaded network (via k()'s own
+* nw_syntax passthrough inside the ntimes()==1 non-recursive path is
+* not applicable here since nwsmall is a pure generator with no network
+* argument - the relevant failure is the option validation above).
+nwclear
+capture noisily nwsmall 10, k(2)
+assert _rc != 0
+qui nwset
+assert r(networks) == 0
+
+capture noisily nwsmall 10, k(2) prob(1.5)
+assert _rc != 0
+qui nwset
+assert r(networks) == 0
+
+capture noisily nwsmall 10, k(2) prob(-.1)
+assert _rc != 0
+qui nwset
+assert r(networks) == 0

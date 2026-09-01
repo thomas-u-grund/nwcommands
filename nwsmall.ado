@@ -15,16 +15,27 @@ program nwsmall
 	// name(string) correctly.
 	syntax anything(name=nodes), k(integer) [ weights(string) ntimes(integer 1) labs(string) name(string) prob(string) shortcuts(string) undirected noreplace xvars]
 	
+	// BUGFIX: this `di "{err}..."' had no `error' call after it - an
+	// out-of-range prob() printed the message but then fell straight
+	// through into actually generating the network anyway (with the
+	// invalid probability), returning rc==0 as if nothing were wrong.
+	// Confirmed directly (nwsmall 10, k(2) prob(1.5) printed the
+	// message and still returned _rc==0) before this fix.
 	if "`prob'" != "" {
 		if (`prob' > 1) | (`prob' < 0){
 			di "{err}Probability needs to be between 0 and 1.{txt}"
+			error 198
 		}
 	}
-	if "`density'" != "" {
-		if (`density' > 1 | `density' < 0){
-			di "{err}Density needs to be between 0 and 1.{txt}"
-		}
-	}
+	// The `density' block that used to sit here was genuinely dead code:
+	// nwsmall.ado's own `syntax' line never declares a `density()'
+	// option at all (nwsmall.sthlp only ever documented `prob()'/
+	// `shortcuts()'), so `"`density'" != ""' could never be true
+	// regardless of caller input - confirmed via nwsmall.sthlp having no
+	// density() entry anywhere. Removed rather than wired up (adding a
+	// real density() option would be new functionality, not a bug fix -
+	// see nwring.ado's own identical "out of scope" note for its
+	// removed prob()).
 	local directed = ("`undirected'" == "")
 
 	// BUGFIX: an unspecified name() has always been documented/expected
@@ -74,9 +85,18 @@ program nwsmall
 	}
 	
 	
+	// BUGFIX: was a bare `exit' (no return code) - the message printed
+	// but the command returned rc==0, and (confirmed directly) created
+	// no network at all while claiming success, exactly the same
+	// disguised-silent-failure class already fixed elsewhere in this
+	// package for the identical "prints an error, forgets to actually
+	// error()" mistake (see nwevcent.ado's own header comment). This is
+	// a required-option-combination failure, which this package's own
+	// registry (unw_defs.ado) documents Stata's reserved 198 as the
+	// package-wide convention for.
 	if ("`prob'"=="" & "`shortcuts'"==""){
 		di "{err}either {it:prob}() or {it:shortcuts}() missing"
-		exit
+		error 198
 	}
 	
 	tempname __nwnew
