@@ -74,7 +74,22 @@ assert         r(sum_w) == 16
 assert         r(N)     == 16
 
 nwclear
-nwset, mat(J(6,4,1)) name(mynet)
+* BUGFIX (test-only, found while re-verifying this file 2026-09-01): this
+* used to build via a genuinely rectangular J(6,4,1) matrix - nwset's own
+* one-mode mat() path used to silently TRUNCATE a non-square matrix down
+* to its own smaller dimension (a real, since-removed behavior -
+* check_bipartite()'s own non-bipartite branch, unw_core.do:
+* `m=min(rows,cols); edge=edge[(1::m),(1::m)]'), so a 6x4 all-ones input
+* silently became a 4x4 all-ones network (this block's own assertions
+* below - sum/N==12 - match a 4-node ALL-ONES directed network exactly:
+* 4*3=12 off-diagonal ties). nwset now correctly REJECTS a non-square
+* mat() for a one-mode network instead of silently reinterpreting it
+* ("use the bipartite option for a rectangular affiliation matrix") -
+* the underlying behavior this block exercises never depended on the
+* truncation quirk itself, only on the RESULTING 4x4 all-ones network,
+* so built directly here instead of relying on a now-removed silent
+* fallback.
+nwset, mat(J(4,4,1)) name(mynet)
 nwtoedge
 summarize
 assert         r(sum)   == 12

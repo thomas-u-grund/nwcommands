@@ -16,27 +16,26 @@
 {cmdab: nwmoviexy}
 {it:{help netlist}}
 [{cmd:,}
-{it:{help nwmovie##movie_options:movie_options}}
-{it:{help nwmovie##switch_options:switch_options}}
-{it:{help nwmovie##time_options:time_options}}
-{it:{help nwplot:nwplot_options}}
-{it:{help twoway_options}}]
+{it:{help nwmovie:nwmovie_options}}]
 
 {marker description}{...}
 {title:Description}
 
 {pstd}
-{cmd:nwmoviexy} is an alias for {help nwmovie} - the two commands accept the exact same syntax and options
-and behave identically, including the {opt nodexys(varlist)} option for placing nodes at fixed x/y
-coordinates across every time point (rather than letting the layout algorithm reposition them each
-frame). Historically {cmd:nwmoviexy} was a separate, coordinate-specific implementation; once
-{help nwmovie:nwmovie} itself gained {opt nodexys()}, the two became functionally identical, and
-{cmd:nwmoviexy} is now kept only as a thin, backward-compatible alias so existing scripts that call it
-by name continue to work.
+{cmd:nwmoviexy} is a thin alias for {help nwmovie}: it forwards its entire argument string to
+{cmd:nwmovie} unchanged and behaves identically to it in every way. Historically {cmd:nwmoviexy} was
+a separate, coordinate-specific implementation (accepting an explicit {cmd:nodexys(varlist)} option
+to place nodes at fixed x/y coordinates supplied by the caller). {help nwmovie:nwmovie} itself was
+rebuilt on a Cytoscape.js-based rendering pipeline (see that command's own help file) and no longer
+has an equivalent option - fixed node positions across waves are now produced automatically via its
+own {opt fixedlayout} option (one shared layout computed once and reused every frame) instead of
+requiring the caller to supply coordinates. {cmd:nwmoviexy} is kept only as a thin, backward-compatible
+alias so existing scripts that call it by name continue to work; it accepts exactly {help nwmovie:nwmovie}'s
+own current option set, nothing more.
 
 {pstd}
 New code should call {help nwmovie:nwmovie} directly - see its own help file for the complete option
-reference, requirements (ImageMagick), and worked examples.
+reference and worked examples.
 
 {title:Examples}
 

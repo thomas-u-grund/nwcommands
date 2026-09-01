@@ -65,7 +65,22 @@ nwplot
 assert _rc == 0
 nwplot random_1
 assert _rc == 0
-nwdegree
+* BUGFIX (test-only, found while re-verifying this file 2026-09-01):
+* the FIRST `nwdegree` call above (line ~55) already left `_outdegree`/
+* `_indegree` behind PERMANENTLY (its own documented, correct, by-design
+* behavior without `generate()`/`replace` - nwdegree's own "variable
+* already exists" guard is not the nwplot bug this file exists to catch,
+* it is nwdegree correctly refusing to silently overwrite the user's own
+* prior output). A second bare `nwdegree` call was ALWAYS going to hit
+* that guard regardless of anything nwplot itself does - confirmed
+* directly via a step-by-step instrumented trace: `_outdegree`/
+* `_indegree` are correctly ABSENT after every `nwplot` call alone (its
+* own internal cleanup works), and only ever present because of this
+* file's own earlier bare `nwdegree` call. `replace` added here (and
+* below) to test what this block actually intends to test - that a
+* real `nwdegree` call still works after `nwplot` has run on multiple
+* networks - without the test colliding with its own earlier output.
+nwdegree, replace
 assert _rc == 0
 
 * --- the bug reproduces on a SINGLE network's own second nwplot/
@@ -77,7 +92,7 @@ nwplot
 assert _rc == 0
 nwplot
 assert _rc == 0
-nwdegree
+nwdegree, replace
 assert _rc == 0
 
 * --- directed and undirected networks both exercised the same buggy

@@ -103,10 +103,30 @@ end
 capture noisily nwset ego alter, time(t1) interval(t1 t2)
 assert _rc != 0
 
-* --- temporal + twomode/bipartite combination not yet supported -
-* explicit, clear error rather than silently ignoring one or the other.
-capture noisily nwset ego alter, time(t1) twomode
+* --- temporal + bipartite (wide affiliation matrix) is rejected with a
+* clear, explicit error (nwset.ado's own validation: bipartite's shape
+* has no per-row time value to attach) - `twomode' (edgelist shape) is
+* the one that DOES support temporal composability, checked separately
+* right after. BUGFIX (test-only, found while re-verifying this file
+* 2026-09-01): this used to assert `time()+twomode' itself was
+* rejected too, but nwset.ado's own current error message for the
+* bipartite case explicitly says "Use twomode instead ... two-mode +
+* temporal composability is supported there" - confirmed directly
+* (`nwset ego alter, time(t1) twomode' now succeeds, `_rc==0', not a
+* stale assumption). The assertion below was simply never updated once
+* that support was added.
+nwclear
+clear
+input str10 ego str10 alter t1
+"A" "B" 1
+end
+capture noisily nwset ego alter, time(t1) bipartite
 assert _rc != 0
+
+capture noisily nwset ego alter, time(t1) twomode
+assert _rc == 0
+nwset
+assert r(networks) > 0
 
 * --- wrong variable count is rejected with a clear error.
 nwclear
