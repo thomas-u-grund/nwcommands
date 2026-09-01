@@ -31,4 +31,13 @@ nwset
 assert `"`r(nets)'"' == `" mynet2 mynet1 mynet1_1"'
 assert         r(networks) == 3
 
+* --- failure paths: `using' is a required argument (rejected by
+* Stata's own syntax parser without it); a genuinely nonexistent file
+* is rejected via nwuse's own "could not load" error (601).
+capture noisily nwappend
+assert _rc != 0
+
+capture noisily nwappend using nonexistent_file_xyz_123
+assert _rc == 601
+
 

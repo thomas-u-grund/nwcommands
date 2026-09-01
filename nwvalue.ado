@@ -42,12 +42,31 @@ program nwvalue
 			capture mata: st_global("r(alter)", "`alter'")	
 		}
 	}
-	if `egoid' != 0 & `alterid' != 0 & `egoid' <= `nodes' & `alterid' <= `nodes' {
-			capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`egoid', `alterid'])
-			capture mata: st_numscalar("r(ego_id)", `egoid')
-			capture mata: st_numscalar("r(alter_id)", `alterid')
-			capture mata: st_global("r(ego)", `netobj'->get_nodenames()[`r(ego_id)'])
-			capture mata: st_global("r(alter)", `netobj'->get_nodenames()[`r(alter_id)'])	
+	if `egoid' != 0 & `alterid' != 0 {
+		// BUGFIX: out-of-range egoid()/alterid() (either below 1 or
+		// above the network's own node count) used to fall straight
+		// through this whole block with none of its conditions true -
+		// no error, no r(value), just a silent "di ""'" printing an
+		// empty line, indistinguishable from a genuine zero-valued tie
+		// unless the caller happened to also check `_rc' or `r(value)'
+		// for missing. The equivalent ego()/alter() (name-based) path
+		// just above already raises a clean error for an invalid node
+		// - out-of-range ids are the same kind of caller mistake and
+		// now raise the same way (same error code this file already
+		// uses for "does not exist").
+		if `egoid' < 1 | `egoid' > `nodes' {
+			di "{err}egoid {it:`egoid'} out of range (network `netname' has `nodes' nodes)"
+			error 3000
+		}
+		if `alterid' < 1 | `alterid' > `nodes' {
+			di "{err}alterid {it:`alterid'} out of range (network `netname' has `nodes' nodes)"
+			error 3000
+		}
+		capture mata: st_numscalar("r(value)",(*`netobj'->get_matrix())[`egoid', `alterid'])
+		capture mata: st_numscalar("r(ego_id)", `egoid')
+		capture mata: st_numscalar("r(alter_id)", `alterid')
+		capture mata: st_global("r(ego)", `netobj'->get_nodenames()[`r(ego_id)'])
+		capture mata: st_global("r(alter)", `netobj'->get_nodenames()[`r(alter_id)'])
 	}
 	di "`r(value)'"
 end

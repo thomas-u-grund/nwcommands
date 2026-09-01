@@ -24,6 +24,12 @@ nwset
 assert `"`r(nets)'"' == `" coll1 coll2"'
 di "=== name collision REGRESSION VERIFIED ==="
 
+* --- failure path: renaming a network that isn't loaded is rejected
+* (no dummy variable was generated for it, so the underlying `rename'
+* fails with Stata's own "variable not found").
+capture noisily nwrename nonexistentnet newname2
+assert _rc != 0
+
 
 
 

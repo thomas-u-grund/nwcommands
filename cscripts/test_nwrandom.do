@@ -89,3 +89,14 @@ nwclear
 capture noisily nwrandom 5, prob(.5) thisoptiondoesnotexist(123)
 assert _rc == 198
 di "=== unknown-option rejection REGRESSION VERIFIED ==="
+
+* --- failure path: an explicit, caller-chosen name() that collides
+* with an already-loaded network is rejected (nwset's own create/
+* replace guard, unlike the default unnamed case above - "random",
+* "random_1", ... - which auto-increments instead, per this file's own
+* header comment on that distinction).
+nwclear
+nwrandom 5, prob(.5) name(explicitname)
+capture noisily nwrandom 5, prob(.5) name(explicitname)
+assert _rc != 0
+di "=== explicit name() collision REGRESSION VERIFIED ==="
