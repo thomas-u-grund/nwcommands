@@ -5336,14 +5336,48 @@ real scalar BlauIndex(real colvector vals){
 }
 
 real matrix `NWdef'::calculate_alterstat(real colvector srcvar, string scalar stat){
-	real scalar n, i, m
-	real matrix result, nb, vals
+	real scalar n, i, m, k, wsum
+	real matrix result, nb, vals, w
 
 	n = get_nodes()
 	result = J(n, 1, .)
 
 	for (i = 1; i <= n; i++){
 		nb = neighbors(i)
+		if (stat == "wmean"){
+			// tie-weighted exposure/peer-effect mean (e.g. Marsden &
+			// Friedkin 1993's own weighted social-influence exposure
+			// term): sum(w_k*x_k)/sum(w_k) over ego i's alters, instead
+			// of every alter counting equally - a real, previously
+			// missing gap (docs/NETWORK_TYPE_MATRIX.md self-flagged
+			// nwaltergen as "Weighted: no" before this). `w' is built
+			// alongside `nb'/`vals' (not via a separate pass) so a
+			// missing srcvar value still drops both its own value AND
+			// its own weight together - an alter excluded from the
+			// numerator must not stay counted in the weight-sum
+			// denominator, or the result would be biased toward zero.
+			// On a binary (unweighted) network every real tie has
+			// weight 1, so this reduces to the exact same result as
+			// plain "mean" - not a coincidence, edge_weight() already
+			// returns 1 for any present, unvalued tie.
+			if (rows(nb) > 0){
+				vals = srcvar[nb]
+				w = J(rows(nb), 1, .)
+				for (k=1; k<=rows(nb); k++) w[k] = edge_weight(i, nb[k])
+				w = select(w, vals :!= .)
+				vals = select(vals, vals :!= .)
+			}
+			else {
+				vals = J(0, 1, .)
+				w = J(0, 1, .)
+			}
+			m = rows(vals)
+			if (m > 0){
+				wsum = sum(w)
+				if (wsum != 0) result[i] = sum(w :* vals) / wsum
+			}
+			continue
+		}
 		if (rows(nb) > 0){
 			vals = srcvar[nb]
 			vals = select(vals, vals :!= .)

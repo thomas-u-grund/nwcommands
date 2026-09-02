@@ -55,14 +55,24 @@ program nwaltergen
 			error 198
 		}
 	}
-	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|sum|min|max|sd|count|diversity)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
-		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value)"
+	else if !regexm("`expr'", "^([A-Za-z_][A-Za-z0-9_]*)=(mean|wmean|sum|min|max|sd|count|diversity)\(alter\.([A-Za-z_][A-Za-z0-9_]*)\)$") {
+		di as err "syntax should be: {it:newvar} = {it:stat}(alter.{it:srcvar}), {it:stat} one of mean|wmean|sum|min|max|sd|count|diversity|proportion(alter.srcvar==value)"
 		error 198
 	}
 	else {
 		local newvarname = regexs(1)
 		local stat = regexs(2)
 		local srcvar = regexs(3)
+		if "`stat'" == "wmean" & `hop' > 1 {
+			// Scope limit, disclosed not silently mishandled: which
+			// single tie weight should represent a multi-hop path (the
+			// first hop's? the last hop's? the product/geometric mean
+			// along the path?) has no single obviously-correct answer,
+			// unlike the unweighted hop-count case calculate_alterstat_
+			// hop() already handles cleanly - not attempted here.
+			di as err "{err}wmean() is only supported at hop(1) (direct alters) - combining it with hop() > 1 would need a choice of which tie weight represents a multi-hop path, which has no single well-defined answer."
+			error 198
+		}
 	}
 
 	confirm variable `srcvar'

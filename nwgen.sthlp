@@ -127,9 +127,10 @@ of a node in a network.
 {pstd}
 {cmd:nwgen} {it:newvar} {cmd:=} {it:stat}{cmd:(alter.}{it:srcvar}{cmd:)} generates a variable summarizing
 an existing Stata variable's values among each node's network neighbors (alters) - e.g.
-{cmd:nwgen exposure = mean(alter.smoking)}. {it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max},
-{bf:sd}, {bf:count}. This is a thin shortcut for {help nwaltergen}, which documents the full syntax,
-options, and missing-value/directed-network conventions.
+{cmd:nwgen exposure = mean(alter.smoking)}. {it:stat} is one of {bf:mean}, {bf:wmean}, {bf:sum},
+{bf:min}, {bf:max}, {bf:sd}, {bf:count}, {bf:diversity}. This is a thin shortcut for
+{help nwaltergen}, which documents the full syntax, options, and missing-value/directed-network
+conventions.
 
 
 {title:Generating networks}

@@ -276,3 +276,58 @@ assert divviaalter == divviagen2
 capture noisily nwaltergen divviaalter = diversity(alter.divcat3)
 assert _rc == 99
 di "=== error-code coherence REGRESSION VERIFIED ==="
+
+* --- wmean(alter.srcvar): tie-strength-weighted exposure mean
+* (2026-09-02 addition, closing a self-flagged "Weighted: no" gap in
+* docs/NETWORK_TYPE_MATRIX.md - tie strength never entered any
+* nwaltergen statistic before this). Valued star network: A ties to B
+* (weight 2) and C (weight 4); srcvar (e.g. income) B=10, C=20. Hand
+* computed: wmean(A) = (2*10 + 4*20) / (2+4) = 100/6 = 16.666667 - NOT
+* the plain unweighted mean, 15, confirming the weight actually enters
+* the calculation, not just tolerated syntax that's silently ignored.
+nwclear
+nwset, mat((0,2,4\2,0,0\4,0,0)) name(wexpnet) undirected labs(A,B,C)
+gen wsrcvar = .
+replace wsrcvar = 10 in 2
+replace wsrcvar = 20 in 3
+nwaltergen wexp = wmean(alter.wsrcvar)
+assert _rc == 0
+assert reldif(wexp[1], 100/6) < 1E-6
+di "=== wmean() weighted-exposure REGRESSION VERIFIED ==="
+
+* --- on a BINARY (unvalued) network, every real tie has weight 1, so
+* wmean() must reduce to the exact same result as plain mean() - not
+* approximately, since edge_weight() returns exactly 1 for any
+* present, unvalued tie.
+nwclear
+nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(binexpnet) undirected labs(A,B,C,D)
+gen bsrcvar = .
+replace bsrcvar = 10 in 1
+replace bsrcvar = 1 in 2
+replace bsrcvar = 2 in 3
+nwaltergen bwexp = wmean(alter.bsrcvar)
+nwaltergen bmean = mean(alter.bsrcvar)
+assert reldif(bwexp[1], bmean[1]) < 1E-8
+di "=== wmean() on a binary network matches plain mean() exactly REGRESSION VERIFIED ==="
+
+* --- failure path: wmean() combined with hop() > 1 is rejected with a
+* clear, disclosed-scope-limit error, not silently misinterpreted
+* (which single tie weight would represent a multi-hop path has no
+* single well-defined answer).
+nwclear
+nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(hopexpnet) undirected labs(A,B,C,D)
+gen hsrcvar = .
+replace hsrcvar = 10 in 1
+capture noisily nwaltergen hwexp = wmean(alter.hsrcvar), hop(2)
+assert _rc == 198
+
+* --- nwgen's own dispatch recognizes wmean() too.
+nwclear
+nwset, mat((0,2,4\2,0,0\4,0,0)) name(wexpnet2) undirected labs(A,B,C)
+gen wsrcvar2 = .
+replace wsrcvar2 = 10 in 2
+replace wsrcvar2 = 20 in 3
+nwaltergen wexpviaalter = wmean(alter.wsrcvar2)
+nwgen wexpviagen = wmean(alter.wsrcvar2)
+assert wexpviaalter == wexpviagen
+di "=== nwgen wmean() dispatch REGRESSION VERIFIED ==="

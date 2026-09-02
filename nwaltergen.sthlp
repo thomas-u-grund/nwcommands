@@ -26,7 +26,8 @@
 {opth hop(int)}]
 
 {p 8 17 2}
-{it:stat} is one of {bf:mean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count}, {bf:diversity}.
+{it:stat} is one of {bf:mean}, {bf:wmean}, {bf:sum}, {bf:min}, {bf:max}, {bf:sd}, {bf:count},
+{bf:diversity}.
 
 {marker propop}{...}
 {p 8 17 2}
@@ -97,6 +98,22 @@ dropping missing values) returns missing, not spuriously 0 (mirroring {bf:mean}/
 data to summarize, not naturally zero).
 
 {pstd}
+{bf:wmean(alter.}{it:srcvar}{bf:)} is a tie-strength-{it:weighted} exposure mean - {bf:sum(w*x) /
+sum(w)} over ego's alters, where {it:w} is the tie weight to each alter and {it:x} is that alter's
+{it:srcvar} value - instead of {bf:mean()}'s own plain, equally-weighted average. This is the
+standard weighted-exposure/peer-effect formulation used when tie strength itself should matter -
+e.g. a strong tie's contact matters more to exposure than a weak one (see e.g. Marsden and Friedkin
+1993 on weighted social influence). On a binary (unweighted) network every present tie has weight 1,
+so {bf:wmean()} gives exactly the same result as {bf:mean()} - not an approximation, since a tie's
+weight is exactly 1 whenever the network itself carries no distinct tie values. An alter with a
+missing {it:srcvar} is dropped from both the numerator {it:and} the weight-sum denominator together
+(so it does not silently bias the result toward zero), matching every other {it:stat}'s own
+missing-value convention. {bf:wmean()} is only supported at the default {opth hop(int):hop(1)}
+(direct alters) - which single tie weight should represent a multi-hop path has no single
+well-defined answer, so combining it with {opth hop(int)} > 1 is rejected with a clear error rather
+than guessed at.
+
+{pstd}
 {opth hop(int)} aggregates over nodes exactly that many (unweighted) steps away instead of direct
 (one-hop) neighbors - e.g. {cmd:mean(alter.smoking), hop(2)} is "the average smoking status among
 the contacts of a person's contacts" (excluding the person's own direct contacts, unless a network
@@ -118,16 +135,20 @@ dispatches to {cmd:nwaltergen} automatically - {cmd:nwgen exposure = mean(alter.
 
 {pstd}
 Binary: yes. Directed: yes - {it:alter} means out-neighbors only, since exposure/influence follows
-tie direction (see above). Weighted: no - only structural adjacency (and, with {opt hop()},
-unweighted step distance) determines who counts as an alter; tie strength itself does not enter any
-statistic. Signed: not checked. Two-mode: no - {it:srcvar} is read per node under the one-mode
-{it:_nwnode} indexing convention, with no mode-specific handling.
+tie direction (see above). Weighted: {bf:W2} - {bf:mean}/{bf:sum}/{bf:min}/{bf:max}/{bf:sd}/
+{bf:count}/{bf:diversity} use only structural adjacency (tie strength does not enter); {bf:wmean}
+(added 2026-09-02, closing a self-flagged gap) uses tie strength directly as the aggregation weight,
+an explicit opt-in via a separate {it:stat} name rather than an automatic switch. Signed: not
+checked - {bf:wmean()} would divide by a possibly near-zero or sign-cancelling weight sum for a
+node with negative-weighted ties, not handled distinctly. Two-mode: no - {it:srcvar} is read per
+node under the one-mode {it:_nwnode} indexing convention, with no mode-specific handling.
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwaltergen richavg = mean(alter.wealth)}
 	{cmd:. nwgen richavg2 = mean(alter.wealth), replace}
+	{cmd:. nwaltergen richwexp = wmean(alter.wealth)}
 	{cmd:. nwaltergen priorseat = proportion(alter.seat==1)}
 	{cmd:. nwaltergen richavg2hop = mean(alter.wealth), hop(2)}
 	{cmd:. nwaltergen seatdiv = diversity(alter.seat)}
@@ -140,6 +161,10 @@ Valente, T.W. (2005). Network models and methods for studying the diffusion of i
 {it:Models and Methods in Social Network Analysis}, Cambridge University Press.
 
 {pstd}
+Marsden, P.V., Friedkin, N.E. (1993). Network studies of social influence. {it:Sociological Methods
+& Research} 22(1), 127-151. ({bf:wmean()}'s own tie-strength-weighted exposure formulation)
+
+{pstd}
 Blau, P.M. (1977). {it:Inequality and Heterogeneity: A Primitive Theory of Social Structure}. Free
 Press. ({bf:diversity()}'s own index of heterogeneity)
 
@@ -147,4 +172,4 @@ Press. ({bf:diversity()}'s own index of heterogeneity)
 
 	{help nwgen}, {help nwneighbor}, {help nwdegree}
 
-last certified : 24 Aug 2026
+last certified : 02 Sep 2026
