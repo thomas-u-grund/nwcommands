@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  28aug2026 author: Thomas Grund}{...}
+{* *! version 1.1.0  02sep2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
@@ -34,7 +34,7 @@
 {p2line}
 {p2col:{it:{help nwsaom##covariate_options:covariate_options}}}node covariate main effects ({opt nodematch()}, {opt nodecov()}, {opt nodeicov()}, {opt nodeocov()}){p_end}
 {p2col:{it:{help nwsaom##structural_options:structural_options}}}structural network effects (popularity, activity, triadic closure, isolates, assortativity, {opt gwesp()}){p_end}
-{p2col:{it:{help nwsaom##interaction_options:interaction_options}}}two-way interaction effects between two already-included effects ({opt interact()}){p_end}
+{p2col:{it:{help nwsaom##interaction_options:interaction_options}}}two- or three-way interaction effects between already-included effects ({opt interact()}){p_end}
 {p2col:{it:{help nwsaom##alias_options:alias_options}}}RSiena-spelling aliases for the covariate effects above ({opt simcov()}/{opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}){p_end}
 {p2col:{it:{help nwsaom##coev_options:coev_options}}}behavior co-evolution: a second, jointly-evolving dependent variable and its own effects{p_end}
 {p2col:{it:{help nwsaom##compchange_options:compchange_options}}}composition change (joiners/leavers) and missing tie/behavior data{p_end}
@@ -94,7 +94,7 @@
 
 {marker interaction_options}{...}
 {syntab:Interaction effects}
-{synopt:{opt interact(effect1#effect2 [effect3#effect4 ...])}}Two-way interaction (RSiena's own {cmd:includeInteraction()}) between two effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the two components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected. Three-way interactions and behavior interactions are not yet supported. See {help nwsaom##interaction:Interaction effects} below{p_end}
+{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom##interaction:Interaction effects} below{p_end}
 
 {marker alias_options}{...}
 {syntab:RSiena naming aliases}
@@ -418,30 +418,37 @@ correctness gap.
 {title:Interaction effects}
 
 {pstd}
-{opt interact(effect1#effect2)} is a direct port of RSiena's real {cmd:includeInteraction()}
-mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}): the interaction's own
-contribution to an actor's ministep utility, for a candidate tie change to a given alter, is the
-PRODUCT of the two component effects' own contributions (not their sum, and not computed on the two
-components' aggregate statistics) - so {cmd:interact(reciprocity#transtrip)} contributes
-{it:reciprocity's own change value} times {it:transtrip's own change value} for that same candidate
-tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an interaction
-term is likewise the sum, over the network's existing ties, of the product of the two components'
-own per-tie value at that tie - genuinely different from simply multiplying the two components' own
-already-reported totals together, and different again from the ministep contribution formula above
-for any component effect whose own ministep contribution has a "spillover" onto other ties
-({opt transties}, {opt outoutass}, {opt ininass}, {opt outinass}, {opt inoutass}, {opt cycle4},
-{opt balance}) - RSiena's own real source keeps these as two genuinely different functions
-({cmd:tieStatistic()} for the statistic, {cmd:calculateContribution()} for the ministep), and this
-port mirrors that split exactly rather than approximating one with the other.
+{opt interact(effect1#effect2 [#effect3])} is a direct port of RSiena's real
+{cmd:includeInteraction()} mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}):
+the interaction's own contribution to an actor's ministep utility, for a candidate tie change to a
+given alter, is the PRODUCT of the component effects' own contributions (not their sum, and not
+computed on the components' aggregate statistics) - so {cmd:interact(reciprocity#transtrip)}
+contributes {it:reciprocity's own change value} times {it:transtrip's own change value} for that
+same candidate tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an
+interaction term is likewise the sum, over the network's existing ties, of the product of the
+components' own per-tie value at that tie - genuinely different from simply multiplying the
+components' own already-reported totals together, and different again from the ministep
+contribution formula above for any component effect whose own ministep contribution has a
+"spillover" onto other ties ({opt transties}, {opt outoutass}, {opt ininass}, {opt outinass},
+{opt inoutass}, {opt cycle4}, {opt balance}) - RSiena's own real source keeps these as two
+genuinely different functions ({cmd:tieStatistic()} for the statistic,
+{cmd:calculateContribution()} for the ministep), and this port mirrors that split exactly rather
+than approximating one with the other. A THIRD effect is optional, matching RSiena's own
+{cmd:includeInteraction()} signature exactly (its own {cmd:effect3} argument, confirmed directly
+from real source): when given, it simply multiplies in as a third factor, both for the ministep
+contribution and the statistic - {cmd:interact(reciprocity#transtrip#nodecov(x))} contributes the
+product of all three components' own values. Three-way {opt interact()} is Mata-only for now (the
+native backend's own wire protocol has room for only two component references); it still runs, just
+without the native speed-up, falling back the same way any other native-ineligible model does.
 
 {pstd}
-Both named effects must already be included in the model as their own main-effect terms (add
+Every named effect must already be included in the model as its own main-effect term (add
 {opt reciprocity} and {opt transtrip} before writing {cmd:interact(reciprocity#transtrip)}) - an
 interaction naming an effect not otherwise in the model is rejected with a clear error, never
 silently invented. Only "dyadic" (tie-level) effects with a well-defined per-tie value are eligible
 (see {opt interact()}'s own syntax-table entry above for the full list); the node-level effects
 (indegree/outdegree popularity and activity, the isolate family) are RSiena's own "ego effects" and
-have no such value, so are rejected outright.
+have no such value, so are rejected outright, whether named first, second, or third.
 
 {pstd}
 Like any other effect, an interaction's own identifiability depends on the data: two effects that

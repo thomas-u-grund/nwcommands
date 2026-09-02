@@ -1210,6 +1210,44 @@ if _rc == 0 {
 
 di as text "nwsaom.ado interact() (two-way interaction effects) PASS"
 
+* --- interact(): three-way interaction effects ("expansion",
+* 2026-09-02) - RSiena's own OPTIONAL third effect in
+* includeInteraction(), confirmed directly from its real source
+* (NetworkInteractionEffect::tieStatistic() simply multiplies in a
+* third component's own tieStatistic() when present). The underlying
+* formula was independently hand-verified against pre-existing,
+* already-certified change_edges()/change_mutual()/change_nodecov()/
+* stat_edges()/stat_mutual()/stat_nodecov() calls directly, NOT the
+* interaction dispatcher itself, on both the global statistic and the
+* ministep change contribution (dev/saom_interact3_crosscheck.do) -
+* only the .ado-level option-parsing/eligibility contract is re-tested
+* here. Mata only - native/saom_sim.c's own TERMCODE_INTERACT2 wire
+* protocol has room for only two component slot references (a
+* disclosed follow-on, see unw_saom.do's own SaomNativeSetup() gate).
+
+* more than three effect names is a clear error (198), not a crash.
+capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(outdegree#reciprocity#nodecov#reciprocity) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+* naming a node-level ("ego effect") component as the THIRD name is
+* rejected outright too, not just when it's the first or second.
+capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity outactivity interact(outdegree#reciprocity#outactivity) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+* a well-identified three-way interaction converges end-to-end through
+* the real command (same acceptance criteria as the two-way case above
+* - thetaBound on this genuinely small/sparse toy network is a known,
+* accepted outcome, not a defect).
+set seed 42
+capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(outdegree#reciprocity#nodecov) k0(30) k3(400) rate0(1.5) seed(42)
+assert _rc == 0 | _rc == 498
+if _rc == 0 {
+	matrix __ix3b = e(b)
+	assert colsof(__ix3b) == 4
+}
+
+di as text "nwsaom.ado interact() (three-way interaction effects) PASS"
+
 * --- estat mems: Micro Effects on Macro Structure (Duxbury's netmediate
 * package, MEMS()/MEMS_saom()) - see nwsaom_estat.ado's own "estat mems"
 * header comment for the full design/derivation account (real algorithm

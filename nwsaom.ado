@@ -1202,21 +1202,32 @@ program nwsaom, eclass
 	// effect must already appear in the model under THAT canonical name
 	// (SaomBuildInteractTd()'s own name-based lookup against
 	// __nwsaom_last_M, unw_saom.do), regardless of which spelling
-	// originally added it. Three-way interactions (RSiena's optional
-	// third effect) and behavior-behavior/network-behavior interactions
-	// are a disclosed, not-yet-built follow-up (docs/SAOM_ROADMAP.md).
+	// originally added it. Three-way interactions ("expansion",
+	// 2026-09-02 - RSiena's own OPTIONAL third effect in
+	// includeInteraction(), confirmed directly from its real source:
+	// NetworkInteractionEffect::tieStatistic() simply multiplies in a
+	// third component's own tieStatistic() when present, no other
+	// change to the formula) are supported via effect1#effect2#effect3
+	// - Mata only for now, native/saom_sim.c's own TERMCODE_INTERACT2
+	// wire protocol only has room for two component slot references
+	// (see unw_saom.do's own SaomNativeSetup() eligible=0 gate for this
+	// case - a disclosed follow-on, not attempted here).
+	// Behavior-behavior/network-behavior interactions remain a
+	// disclosed, not-yet-built follow-up (docs/SAOM_ROADMAP.md).
 	if "`interact'" != "" {
 		local __nwsaom_ixok "outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance"
 		local __nwsaom_ixn = 0
 		foreach __nwsaom_ixpair of local interact {
 			local __nwsaom_ixwords = subinstr("`__nwsaom_ixpair'", "#", " ", .)
 			local __nwsaom_ixnw : word count `__nwsaom_ixwords'
-			if `__nwsaom_ixnw' != 2 {
-				di "{err}interact() expects effect1#effect2 pairs (two-way interactions only in this version); got: `__nwsaom_ixpair'"
+			if `__nwsaom_ixnw' < 2 | `__nwsaom_ixnw' > 3 {
+				di "{err}interact() expects effect1#effect2 or effect1#effect2#effect3 (two- or three-way interactions); got: `__nwsaom_ixpair'"
 				error 198
 			}
 			local __nwsaom_ixa : word 1 of `__nwsaom_ixwords'
 			local __nwsaom_ixb : word 2 of `__nwsaom_ixwords'
+			local __nwsaom_ixc ""
+			if `__nwsaom_ixnw' == 3 local __nwsaom_ixc : word 3 of `__nwsaom_ixwords'
 			if "`__nwsaom_ixa'" == "samex" local __nwsaom_ixa "nodematch"
 			if "`__nwsaom_ixa'" == "simx" local __nwsaom_ixa "simcov"
 			if "`__nwsaom_ixa'" == "altx" local __nwsaom_ixa "nodeicov"
@@ -1225,18 +1236,48 @@ program nwsaom, eclass
 			if "`__nwsaom_ixb'" == "simx" local __nwsaom_ixb "simcov"
 			if "`__nwsaom_ixb'" == "altx" local __nwsaom_ixb "nodeicov"
 			if "`__nwsaom_ixb'" == "egox" local __nwsaom_ixb "nodeocov"
+			if "`__nwsaom_ixc'" == "samex" local __nwsaom_ixc "nodematch"
+			if "`__nwsaom_ixc'" == "simx" local __nwsaom_ixc "simcov"
+			if "`__nwsaom_ixc'" == "altx" local __nwsaom_ixc "nodeicov"
+			if "`__nwsaom_ixc'" == "egox" local __nwsaom_ixc "nodeocov"
 			local __nwsaom_ixposa : list posof "`__nwsaom_ixa'" in __nwsaom_ixok
 			local __nwsaom_ixposb : list posof "`__nwsaom_ixb'" in __nwsaom_ixok
 			if `__nwsaom_ixposa' == 0 | `__nwsaom_ixposb' == 0 {
 				di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'"
 				error 198
 			}
+			if "`__nwsaom_ixc'" != "" {
+				local __nwsaom_ixposc : list posof "`__nwsaom_ixc'" in __nwsaom_ixok
+				if `__nwsaom_ixposc' == 0 {
+					di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'"
+					error 198
+				}
+			}
 			local __nwsaom_ixn = `__nwsaom_ixn' + 1
 			tempname __td_ix`__nwsaom_ixn'
 			mata: `__td_ix`__nwsaom_ixn'' = ErgmTermData()
-			mata: SaomBuildInteractTd(__nwsaom_last_M, `nodes', "`__nwsaom_ixa'", "`__nwsaom_ixb'", `__td_ix`__nwsaom_ixn'')
-			mata: __nwsaom_last_M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), `__td_ix`__nwsaom_ixn'', ("interact_`__nwsaom_ixa'_`__nwsaom_ixb'"))
-			local __nwsaom_efflist "`__nwsaom_efflist' interact(`__nwsaom_ixa'#`__nwsaom_ixb')"
+			mata: SaomBuildInteractTd(__nwsaom_last_M, `nodes', "`__nwsaom_ixa'", "`__nwsaom_ixb'", "`__nwsaom_ixc'", `__td_ix`__nwsaom_ixn'')
+			if "`__nwsaom_ixc'" == "" {
+				local __nwsaom_ixname "interact_`__nwsaom_ixa'_`__nwsaom_ixb'"
+				local __nwsaom_efflist "`__nwsaom_efflist' interact(`__nwsaom_ixa'#`__nwsaom_ixb')"
+			}
+			else {
+				local __nwsaom_ixname "interact_`__nwsaom_ixa'_`__nwsaom_ixb'_`__nwsaom_ixc'"
+				local __nwsaom_efflist "`__nwsaom_efflist' interact(`__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc')"
+			}
+			// Stata's own matrix-colname/name length cap is 32 characters -
+			// long component names (e.g. transmedtrip/transrectrip, 12
+			// chars each) can push the natural "interact_A_B[_C]" label
+			// past that, which addterm()'s own st_matrix colnames step
+			// would otherwise reject with a raw "invalid name" error deep
+			// inside estimation rather than a clear, immediate one. Falls
+			// back to a short, deterministic, always-valid "interactN"
+			// name (N = this option's own 1-based interaction count) -
+			// e(effects) above already carries the full, readable
+			// effect1#effect2[#effect3] spelling regardless of which
+			// column-name form gets used.
+			if strlen("`__nwsaom_ixname'") > 32 local __nwsaom_ixname "interact`__nwsaom_ixn'"
+			mata: __nwsaom_last_M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), `__td_ix`__nwsaom_ixn'', ("`__nwsaom_ixname'"))
 		}
 	}
 

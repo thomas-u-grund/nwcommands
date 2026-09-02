@@ -2467,29 +2467,36 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
 }
 
 /* SaomBuildInteractTd(): nwsaom.ado's own registration-time helper -
-   looks up the two named component effects among M's ALREADY-ADDED
-   terms (by name; both must already be registered as their own
-   main-effect terms, giving a clear error otherwise rather than ever
-   guessing) and packs tdout per stat_saom_interact()'s/
-   change_saom_interact()'s own header comment: td.sptype =
-   "nameA|nameB", td.levels = (decayA \ decayB), td.attr = (attrA \ attrB)
-   stacked into 2*n rows (a zero-filled placeholder for whichever
-   component, if either, does not use an attribute array - every
-   eligible name has rows(attr) EITHER 0 (unused) or exactly n, so this
-   check is unambiguous). `n' is the caller's own actor count (not
-   re-derived from G, since this runs at REGISTRATION time, before any
-   per-model G object need be in scope here). */
+   looks up the two (or three, "expansion" 2026-09-02 - see
+   stat_saom_interact()'s own header comment) named component effects
+   among M's ALREADY-ADDED terms (by name; every one must already be
+   registered as its own main-effect term, giving a clear error
+   otherwise rather than ever guessing) and packs tdout: td.sptype =
+   "nameA|nameB" (two-way) or "nameA|nameB|nameC" (three-way, nameC
+   passed as ""for two-way - the OMITTED case, distinct from an empty
+   name being an error), td.levels = (decayA \ decayB [\ decayC]),
+   td.attr = (attrA \ attrB [\ attrC]) stacked into 2*n or 3*n rows (a
+   zero-filled placeholder for whichever component does not use an
+   attribute array - every eligible name has rows(attr) EITHER 0
+   (unused) or exactly n, so this check is unambiguous). `n' is the
+   caller's own actor count (not re-derived from G, since this runs at
+   REGISTRATION time, before any per-model G object need be in scope
+   here). */
 void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
-	string scalar nameA, string scalar nameB, class ErgmTermData scalar tdout){
+	string scalar nameA, string scalar nameB, string scalar nameC, class ErgmTermData scalar tdout){
 
-	real scalar subA, subB, si
-	class ErgmTermData scalar tdA, tdB
+	real scalar subA, subB, subC, si, threeway
+	class ErgmTermData scalar tdA, tdB, tdC
+
+	threeway = (nameC != "")
 
 	subA = 0
 	subB = 0
+	subC = 0
 	for (si=1; si<=M.nterms; si++) {
 		if (M.names[si] == nameA & subA == 0) subA = si
 		if (M.names[si] == nameB & subB == 0) subB = si
+		if (threeway & M.names[si] == nameC & subC == 0) subC = si
 	}
 	if (subA == 0) {
 		errprintf("nwsaom: interact() names '" + nameA + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
@@ -2499,49 +2506,82 @@ void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
 		errprintf("nwsaom: interact() names '" + nameB + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
 		exit(error(198))
 	}
+	if (threeway & subC == 0) {
+		errprintf("nwsaom: interact() names '" + nameC + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
+		exit(error(198))
+	}
 	tdA = *M.td[subA]
 	tdB = *M.td[subB]
-	tdout.sptype = nameA + "|" + nameB
-	tdout.levels = (tdA.decay \ tdB.decay)
-	tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \ (rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)))
+	if (threeway) {
+		tdC = *M.td[subC]
+		tdout.sptype = nameA + "|" + nameB + "|" + nameC
+		tdout.levels = (tdA.decay \ tdB.decay \ tdC.decay)
+		tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \
+			(rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)) \
+			(rows(tdC.attr) == n ? tdC.attr : J(n, 1, 0)))
+	}
+	else {
+		tdout.sptype = nameA + "|" + nameB
+		tdout.levels = (tdA.decay \ tdB.decay)
+		tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \ (rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)))
+	}
 }
 
 /* stat_saom_interact()/change_saom_interact(): the TERMCODE_INTERACT2
    registration pair (nwsaom.ado's own addterm() call), unpacking td's
-   own "nameA|nameB" (td.sptype), (decayA \ decayB) (td.levels), and
-   stacked (attrA \ attrB) (td.attr, 2*G.n rows) - see this section's own
-   header comment for why this packing exists. */
+   own "nameA|nameB" or "nameA|nameB|nameC" (td.sptype),
+   (decayA \ decayB [\ decayC]) (td.levels), and stacked
+   (attrA \ attrB [\ attrC]) (td.attr, 2*G.n or 3*G.n rows) - see this
+   section's own header comment for why this packing exists. Three-way
+   interactions ("expansion", 2026-09-02 - RSiena's own OPTIONAL third
+   effect in includeInteraction(), confirmed directly from its real
+   source: NetworkInteractionEffect::tieStatistic() simply multiplies
+   in a third component's own tieStatistic() when present, no other
+   change to the formula) are detected via cols(nms) == 5 (tokens()
+   returns the "|" delimiters themselves as their own tokens - real
+   names live at positions 1/3/5, not 1/2/3, confirmed directly). Mata
+   only - native/saom_sim.c's own TERMCODE_INTERACT2 wire protocol only
+   has room for two component slot references (attridx/p1); a genuine
+   third slot needs new wire-protocol fields, a disclosed follow-on -
+   see SaomNativeSetup()'s own eligible=0 gate for cols(nms)>3. */
 real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	string rowvector nms
 	real matrix ties
-	real scalar n, k, tot
-	real colvector aA, aB
+	real scalar n, k, tot, threeway
+	real colvector aA, aB, aC
 
 	nms = tokens(td.sptype, "|")
+	threeway = (cols(nms) == 5)
 	n = G.n
 	aA = td.attr[1::n]
 	aB = td.attr[(n+1)::(2*n)]
+	if (threeway) aC = td.attr[(2*n+1)::(3*n)]
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
 		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2]) *
-			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2])
+			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2]) *
+			(threeway ? _saom_tiestat(G, nms[5], aC, td.levels[3], ties[k,1], ties[k,2]) : 1)
 	}
 	return(tot)
 }
 real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	string rowvector nms
-	real scalar n
-	real colvector aA, aB
-	real scalar cvA, cvB
+	real scalar n, threeway
+	real colvector aA, aB, aC
+	real scalar cvA, cvB, cvC
 
 	nms = tokens(td.sptype, "|")
+	threeway = (cols(nms) == 5)
 	n = G.n
 	aA = td.attr[1::n]
 	aB = td.attr[(n+1)::(2*n)]
 	cvA = _saom_tiechange(G, nms[1], aA, td.levels[1], i, j)
 	cvB = _saom_tiechange(G, nms[3], aB, td.levels[2], i, j)
-	return(cvA * cvB)
+	if (!threeway) return(cvA * cvB)
+	aC = td.attr[(2*n+1)::(3*n)]
+	cvC = _saom_tiechange(G, nms[5], aC, td.levels[3], i, j)
+	return(cvA * cvB * cvC)
 }
 
 /* ===================================================================
@@ -6877,18 +6917,31 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			// be found, rather than ever guessing.
 			tdt = *M.td[t]
 			nms = tokens(tdt.sptype, "|")
-			subA = 0
-			subB = 0
-			for (si=1; si<=M.nterms; si++) {
-				if (si == t) continue
-				if (M.names[si] == nms[1] & subA == 0) subA = si
-				if (M.names[si] == nms[3] & subB == 0) subB = si
+			if (cols(nms) > 3) {
+				// Three-way interact() ("expansion", 2026-09-02) - native
+				// still only has wire-protocol room for TWO component slot
+				// references (attridx/p1, see this termcode's own #define
+				// comment); a genuine third slot needs new wire-protocol
+				// fields, a disclosed follow-on, not attempted here. Falls
+				// back to the fully-certified Mata path, matching this
+				// function's own existing "eligible=0 when native can't
+				// represent this term" contract - never guessed/truncated.
+				cfg.eligible = 0
 			}
-			if (subA == 0 | subB == 0) cfg.eligible = 0
 			else {
-				cfg.termcodes[t] = 30
-				cfg.attridx[t] = subA
-				cfg.p1[t] = subB
+				subA = 0
+				subB = 0
+				for (si=1; si<=M.nterms; si++) {
+					if (si == t) continue
+					if (M.names[si] == nms[1] & subA == 0) subA = si
+					if (M.names[si] == nms[3] & subB == 0) subB = si
+				}
+				if (subA == 0 | subB == 0) cfg.eligible = 0
+				else {
+					cfg.termcodes[t] = 30
+					cfg.attridx[t] = subA
+					cfg.p1[t] = subB
+				}
 			}
 		}
 		else cfg.eligible = 0
