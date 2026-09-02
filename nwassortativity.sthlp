@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
+{* *! version 1.1.0  02sep2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##analysis_positions:[NW-2.6.4] Positions, Roles & Equivalence}
 
@@ -17,6 +17,7 @@
 [{it:{help netname}}]
 [{cmd:,}
 {opt attribute(varname)}
+{opt weighted}
 {opt silent}]
 
 
@@ -24,6 +25,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt attribute(varname)}}Numeric node attribute to correlate across ties; default = each node's own degree{p_end}
+{synopt:{opt weighted}}Weight the correlation by each tie's own strength (Leung and Chau 2007), instead of every tie counting equally{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -62,6 +64,14 @@ Social networks are frequently found to be assortative by degree (popular people
 people); many biological and technological networks (e.g. the internet's own router-level topology)
 are disassortative instead (a few high-degree hubs connect to many low-degree peripheral nodes).
 
+{pstd}
+{opt weighted} computes Leung and Chau's (2007) weighted extension instead: the same {it:(x,y)} pairs
+above, but correlated with each pair {it:weighted by its own tie's strength}, so a strong tie
+contributes more to the coefficient than a weak one - not a different pair construction, only a
+different (weighted Pearson) correlation of the identical pairs the unweighted case already builds.
+On a binary (unweighted) network every present tie has weight 1, so {opt weighted} gives exactly the
+same coefficient as omitting it - not an approximation.
+
 
 {title:Examples}
 
@@ -69,6 +79,8 @@ are disassortative instead (a few high-degree hubs connect to many low-degree pe
 	{cmd:. nwassortativity glasgow1}
 
 	{cmd:. nwassortativity glasgow1, attribute(sport1)}
+
+	{cmd:. nwassortativity glasgow1, weighted}
 
 
 {title:Stored results}
@@ -80,15 +92,18 @@ are disassortative instead (a few high-degree hubs connect to many low-degree pe
 	Macros:
 	  {bf:r(name)}           name of the network
 	  {bf:r(attribute)}      attribute used (or "degree" for the default)
+	  {bf:r(weighted)}       {bf:"true"} if {opt weighted} was specified, {bf:"false"} otherwise
 
 
 {title:Supported network types}
 
 {pstd}
 Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same
-reasoning as {help nwclustering}/{help nwclique}). Weighted: not used - only presence/absence of a
-tie determines which pairs are correlated; tie strength does not enter the formula (matching
-Newman's own original, unweighted definition). Signed: not checked. Two-mode: not checked - operates
+reasoning as {help nwclustering}/{help nwclique}). Weighted: {bf:W2} (added 2026-09-02, closing a
+self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's
+own original definition; {opt weighted} (Leung and Chau 2007) is an explicit opt-in that weights the
+same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the
+weighted correlation's own denominators, not handled distinctly. Two-mode: not checked - operates
 on the network's own stored ties directly.
 
 {pstd}
@@ -102,6 +117,10 @@ degree-undefined cases (e.g. {help nwclustering}).
 
 {pstd}
 Newman, M. E. J. (2002). Assortative mixing in networks. {it:Physical Review Letters}, 89(20), 208701.
+
+{pstd}
+Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks model. {it:Physica
+A} 378(2), 591-602. ({opt weighted}'s own extension)
 
 
 {title:See also}

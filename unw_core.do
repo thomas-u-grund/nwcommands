@@ -8342,22 +8342,34 @@ real matrix `NWdef'::connected_neighbors(real scalar i){
 
 /*
 	calculate_assortativity_pairs(attr): builds the symmetrized,
-	edge-doubled (attr[i], attr[j]) pair list Newman's (2002)
+	edge-doubled (attr[i], attr[j], w_ij) triple list Newman's (2002)
 	assortativity coefficient needs - every tied pair {i,j} (in either
 	direction, via connected_neighbors(), matching this package's own
 	established convention for measures with no natural directed
 	generalization - the same reasoning `nwclustering`/`nwclique`
 	already apply) contributes both (attr[i],attr[j]) and
-	(attr[j],attr[i]) rows, so the Pearson correlation of the two
+	(attr[j],attr[i]) rows, so the Pearson correlation of the first two
 	columns (computed by the caller, nwassortativity.ado, via Mata's
 	own `correlation()') is exactly Newman's r regardless of edge
 	traversal order. `attr' is any per-node numeric vector - the
 	caller passes each node's own connected-degree for the (default)
 	degree-assortativity case, or an arbitrary node attribute
 	otherwise; this method itself is agnostic to which.
+
+	Column 3 (tie weight): added for the Leung & Chau (2007) weighted
+	assortativity extension (`nwassortativity, weighted`) - r_w is
+	exactly the WEIGHTED Pearson correlation of the same two attribute
+	columns, using each pair's own tie weight as the correlation
+	weight (not a different pair-construction). Reads `edge_weight(i,j)`
+	when that direction has a tie, falling back to `edge_weight(j,i)`
+	otherwise - the same "whichever direction connects them" logic
+	`connected_neighbors()` itself already uses to decide reachability,
+	extended to also read that direction's own weight. On a binary
+	(unweighted) network every present tie has weight 1, so weighting
+	by column 3 is a no-op and r_w reduces to exactly the unweighted r.
 */
 real matrix `NWdef'::calculate_assortativity_pairs(real colvector attr){
-	real scalar n, i, k, m, cnt
+	real scalar n, i, k, m, cnt, j
 	real colvector Nci
 	real matrix pairs
 
@@ -8365,17 +8377,44 @@ real matrix `NWdef'::calculate_assortativity_pairs(real colvector attr){
 	m = 0
 	for (i=1; i<=n; i++) m = m + rows(connected_neighbors(i))
 
-	pairs = J(m, 2, .)
+	pairs = J(m, 3, .)
 	cnt = 0
 	for (i=1; i<=n; i++){
 		Nci = connected_neighbors(i)
 		for (k=1; k<=rows(Nci); k++){
 			cnt++
+			j = Nci[k]
 			pairs[cnt,1] = attr[i]
-			pairs[cnt,2] = attr[Nci[k]]
+			pairs[cnt,2] = attr[j]
+			pairs[cnt,3] = (has_edge(i,j) ? edge_weight(i,j) : edge_weight(j,i))
 		}
 	}
 	return(pairs)
+}
+
+/*
+	Weighted Pearson correlation of columns 1-2 of `pairs', weighted by
+	column 3 - the Leung & Chau (2007) weighted assortativity formula,
+	r_w = weighted-Pearson-correlation(X, Y; w). Written out directly
+	(weighted mean -> weighted covariance/variance -> ratio) rather than
+	relying on Mata's own mean()/variance() optional weight arguments,
+	so the exact formula being applied is visible and auditable here,
+	not implicit in a built-in's own documented-elsewhere convention.
+*/
+real scalar WeightedPearsonCorr(real matrix pairs){
+	real colvector x, y, w
+	real scalar wsum, xbar, ybar, covxy, varx, vary
+
+	x = pairs[,1]
+	y = pairs[,2]
+	w = pairs[,3]
+	wsum = sum(w)
+	xbar = sum(w :* x) / wsum
+	ybar = sum(w :* y) / wsum
+	covxy = sum(w :* (x :- xbar) :* (y :- ybar)) / wsum
+	varx = sum(w :* (x :- xbar):^2) / wsum
+	vary = sum(w :* (y :- ybar):^2) / wsum
+	return(covxy / sqrt(varx * vary))
 }
 
 /*
