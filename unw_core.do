@@ -4143,12 +4143,28 @@ real matrix `NWdef'::calculate_brokerage(real matrix group){
 	assumed from node-index ranges - confirmed empirically that a
 	bipartite network's mode-1/mode-2 node index ranges are an internal
 	storage detail, not something callers should hardcode.
+
+	`alpha' generalizes this to a weighted (tie-strength-aware) variant,
+	via the same Opsahl et al. (2010) k_i*(s_i/k_i)^alpha blend
+	get_outdegree()/get_indegree() already use for one-mode degree (k_i =
+	raw tie count, s_i = tie-value sum) - self-documented as a real,
+	missing gap in docs/NETWORK_TYPE_MATRIX.md before this fix (unlike
+	nwdegree, this had no weighted variant at all). alpha(0) collapses
+	the Opsahl blend back to plain k_i, exactly reproducing the original
+	unweighted formula above bit-for-bit - callers passing the
+	established default of 0 see no behavior change. Two-mode ties are
+	always stored undirected (see this file's own "Directed: not
+	applicable" convention for two-mode networks), so this reads directly
+	from the forward (out) sparse index only, unconditionally - unlike
+	get_indegree()'s own isdirect branch, there is no reverse index to
+	fall back from.
 */
-real matrix `NWdef'::calculate_2mode_degree(){
+real matrix `NWdef'::calculate_2mode_degree(real scalar alpha){
 	string matrix modes
 	real matrix result, idx1, idx2
-	real scalar n1, n2, i
+	real scalar n1, n2, i, node, k, s
 
+	ensure_sparse_built()
 	modes = get_modes()
 	idx1 = selectindex(modes :== "1")
 	idx2 = selectindex(modes :== "2")
@@ -4157,10 +4173,16 @@ real matrix `NWdef'::calculate_2mode_degree(){
 
 	result = J(get_nodes(), 1, .)
 	for (i=1; i<=n1; i++){
-		result[idx1[i],1] = degree(idx1[i]) / n2
+		node = idx1[i]
+		k = rowptr[node+1] - rowptr[node]
+		s = (k > 0 ? sum(cweight[(rowptr[node]::(rowptr[node+1]-1)),1]) : 0)
+		result[node,1] = editmissing((k * ((s/k)^alpha)), 0) / n2
 	}
 	for (i=1; i<=n2; i++){
-		result[idx2[i],1] = degree(idx2[i]) / n1
+		node = idx2[i]
+		k = rowptr[node+1] - rowptr[node]
+		s = (k > 0 ? sum(cweight[(rowptr[node]::(rowptr[node+1]-1)),1]) : 0)
+		result[node,1] = editmissing((k * ((s/k)^alpha)), 0) / n1
 	}
 	return(result)
 }

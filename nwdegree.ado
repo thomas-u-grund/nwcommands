@@ -52,15 +52,19 @@ program nwdegree
 		// this message uses {err}, arguably inconsistent with "don't
 		// call normal expected behaviour a warning"; not changed here
 		// to avoid an unrelated, out-of-scope edit to that file).
-		// nw2degree's own option set (generate()/replace/silent) is
-		// smaller than nwdegree's one-mode-specific one
-		// (alpha()/isolates/standardize/in()/out()/outputoff, none of
-		// which have a bipartite equivalent) - forwarding only what
-		// applies and naming explicitly, not silently, whatever was
-		// requested but doesn't carry over.
+		// nw2degree's own option set (generate()/replace/silent/
+		// alpha()) is smaller than nwdegree's one-mode-specific one
+		// (isolates/standardize/in()/out()/outputoff have no bipartite
+		// equivalent) - forwarding only what applies and naming
+		// explicitly, not silently, whatever was requested but
+		// doesn't carry over. `alpha()' USED to be listed here as
+		// having no bipartite equivalent - it does now (nw2degree
+		// gained a weighted Opsahl-style two-mode degree variant,
+		// self-flagged as a real gap in docs/NETWORK_TYPE_MATRIX.md
+		// and closed 2026-09-02), so it is forwarded like any other
+		// shared option instead.
 		if "`is2mode'" == "true" {
 			local ignored_opts ""
-			if "`alpha'" != "0" local ignored_opts "`ignored_opts' alpha()"
 			if "`isolates'" != "" local ignored_opts "`ignored_opts' isolates"
 			if "`standardize'" != "" local ignored_opts "`ignored_opts' standardize"
 			if "`in'" != "" local ignored_opts "`ignored_opts' in()"
@@ -70,7 +74,7 @@ program nwdegree
 			if "`ignored_opts'" != "" {
 				noi di "{txt}      the following option(s) have no bipartite equivalent and were ignored:{bf:`ignored_opts'}"
 			}
-			noi nw2degree `netname_temp', generate(`generate') `replace' `silent'
+			noi nw2degree `netname_temp', generate(`generate') `replace' `silent' alpha(`alpha')
 			continue
 		}
 

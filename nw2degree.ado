@@ -2,7 +2,7 @@
 capture program drop nw2degree
 program nw2degree, rclass
 	version 12
-	syntax [anything(name=netname)][, GENerate(string) replace silent]
+	syntax [anything(name=netname)][, GENerate(string) replace silent alpha(real 0.0)]
 	set more off
 
 	nw_syntax `netname', max(9999)
@@ -37,7 +37,7 @@ program nw2degree, rclass
 			set obs `nodes'
 		}
 		nw_syntax `netname_temp'
-		mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree())
+		mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`alpha'))
 
 		// see nwbrokerage.ado's own header comment for why this is
 		// needed: quietly/mata:-only commands above do not refresh _rc

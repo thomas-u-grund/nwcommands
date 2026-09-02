@@ -88,7 +88,11 @@ Binary: yes. Directed: yes - generates separate {it:_indegree}/{it:_outdegree} (
 {it:_outstrength} for a valued network) automatically. Weighted: {bf:W1}, native - the Opsahl et al.
 (2010) generalized degree formula above is the command's default and only formulation, controlled
 by {opt alpha()}; weight meaning is tie strength, used directly (not a distance). Signed: not
-checked. Two-mode: not checked.
+checked. Two-mode: {bf:T1-via-redirect} - automatically redirects to {help nw2degree} with a clear
+note when given a two-mode network, forwarding {opt alpha()} (nw2degree gained its own weighted
+two-mode degree/strength variant, the same Opsahl formula applied to bipartite normalization) and
+naming explicitly, not silently, any other one-mode-only option ({opt isolates}, {opt standardize},
+{opt in()}, {opt out()}, {opt outputoff}) that has no bipartite equivalent and was ignored.
 
 
 {title:References}

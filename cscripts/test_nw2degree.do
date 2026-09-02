@@ -108,3 +108,87 @@ mata: mata drop `lab2' `val2'
 * nw_syntax's own "Network X not found" check (error 482).
 capture noisily nw2degree nonexistent
 assert _rc == 482
+
+* --- weighted (alpha()) two-mode degree/strength (2026-09-02 addition,
+* closing the "Weighted: not used" gap docs/NETWORK_TYPE_MATRIX.md
+* self-flagged for this command): Opsahl et al. (2010)'s generalized
+* degree k*(s/k)^alpha, same convention nwdegree's own alpha() already
+* uses for one-mode degree, applied to each node's two-mode tie set and
+* normalized by the OTHER mode's size exactly like the unweighted
+* formula above. Hand-computable valued bipartite network: mode-1 A/B,
+* mode-2 X/Y/Z (n1=2, n2=3); A-X weight 2, A-Y weight 4, B-Z weight 6.
+*   A: k=2, s=6 -> alpha=0: (2*1)/3=.6667 (must match the plain
+*      unweighted formula exactly); alpha=1: (2*3)/3=2 (pure strength,
+*      normalized); alpha=.5: (2*sqrt(3))/3=1.1547005
+*   B: k=1, s=6 -> alpha=0: 1/3=.3333; alpha=1: 6/3=2
+*   X: k=1, s=2 -> alpha=0: 1/2=.5;    alpha=1: 2/2=1
+*   Y: k=1, s=4 -> alpha=0: 1/2=.5;    alpha=1: 4/2=2
+*   Z: k=1, s=6 -> alpha=0: 1/2=.5;    alpha=1: 6/2=3
+nwclear
+clear
+input str10 mode1 str10 mode2 value
+"A" "X" 2
+"A" "Y" 4
+"B" "Z" 6
+end
+nwset mode1 mode2 value, twomode name(wbip)
+nw2degree wbip
+assert _rc == 0
+sort _nwnode
+tempname wlab wval
+mata: `wlab' = st_sdata(., "_nwnode")
+mata: `wval' = st_data(., "_2degree")
+mata: assert(reldif(select(`wval', `wlab':=="A"), 2/3) < 1e-6)
+mata: assert(reldif(select(`wval', `wlab':=="B"), 1/3) < 1e-6)
+mata: assert(reldif(select(`wval', `wlab':=="X"), .5) < 1e-6)
+mata: assert(reldif(select(`wval', `wlab':=="Y"), .5) < 1e-6)
+mata: assert(reldif(select(`wval', `wlab':=="Z"), .5) < 1e-6)
+mata: mata drop `wlab' `wval'
+di "=== alpha(0) reproduces the plain unweighted formula exactly REGRESSION VERIFIED ==="
+
+nw2degree wbip, generate(strength1) alpha(1) replace
+assert _rc == 0
+sort _nwnode
+tempname slab sval
+mata: `slab' = st_sdata(., "_nwnode")
+mata: `sval' = st_data(., "strength1")
+mata: assert(reldif(select(`sval', `slab':=="A"), 2) < 1e-6)
+mata: assert(reldif(select(`sval', `slab':=="B"), 2) < 1e-6)
+mata: assert(reldif(select(`sval', `slab':=="X"), 1) < 1e-6)
+mata: assert(reldif(select(`sval', `slab':=="Y"), 2) < 1e-6)
+mata: assert(reldif(select(`sval', `slab':=="Z"), 3) < 1e-6)
+mata: mata drop `slab' `sval'
+di "=== alpha(1) pure normalized strength REGRESSION VERIFIED ==="
+
+nw2degree wbip, generate(halfalpha) alpha(.5) replace
+assert _rc == 0
+sort _nwnode
+tempname hlab hval
+mata: `hlab' = st_sdata(., "_nwnode")
+mata: `hval' = st_data(., "halfalpha")
+mata: assert(reldif(select(`hval', `hlab':=="A"), (2*sqrt(3))/3) < 1e-6)
+mata: mata drop `hlab' `hval'
+di "=== alpha(.5) fractional blend REGRESSION VERIFIED ==="
+
+* --- nwdegree's own two-mode redirect forwards alpha() through to
+* nw2degree too now (it used to be listed as having "no bipartite
+* equivalent" and silently dropped, with a note saying so - that note
+* is only correct for a genuinely inapplicable option, and alpha() no
+* longer is one).
+nwclear
+clear
+input str10 mode1 str10 mode2 value
+"A" "X" 2
+"A" "Y" 4
+"B" "Z" 6
+end
+nwset mode1 mode2 value, twomode name(wbip2)
+capture noisily nwdegree wbip2, alpha(1) generate(viaredirect)
+assert _rc == 0
+sort _nwnode
+tempname rlab rval
+mata: `rlab' = st_sdata(., "_nwnode")
+mata: `rval' = st_data(., "viaredirect")
+mata: assert(reldif(select(`rval', `rlab':=="A"), 2) < 1e-6)
+mata: mata drop `rlab' `rval'
+di "=== nwdegree's own two-mode redirect now forwards alpha() REGRESSION VERIFIED ==="
