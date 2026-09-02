@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy_nw.sh -- the nwcommands publish pipeline, end to end. Run this
+# deploy.sh -- the nwcommands publish pipeline, end to end. Run this
 # instead of hand-rolling "rebuild the mlib, regenerate the .pkg files,
 # commit, push" every time, since every one of those steps has silently
 # gone stale in the past (see the commit history around 2026-09-02:
@@ -30,9 +30,9 @@
 #      conflict, stops and hands control back rather than guessing.
 #
 # Usage:
-#   ./deploy_nw.sh "commit message"
-#   ./deploy_nw.sh --include-untracked "commit message"   (git add -A instead)
-#   ./deploy_nw.sh --check-only                            (steps 1-3 only)
+#   ./deploy.sh "commit message"
+#   ./deploy.sh --include-untracked "commit message"   (git add -A instead)
+#   ./deploy.sh --check-only                            (steps 1-3 only)
 
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -56,7 +56,7 @@ done
 
 if [ "$CHECK_ONLY" = 0 ] && [ -z "$MSG" ]; then
   echo "error: a commit message is required (or pass --check-only)." >&2
-  echo "usage: ./deploy_nw.sh [--include-untracked] \"commit message\"" >&2
+  echo "usage: ./deploy.sh [--include-untracked] \"commit message\"" >&2
   exit 1
 fi
 

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.15.0  02sep2026 author: Thomas Grund}{...}
+{* *! version 1.16.0  02sep2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##analysis_statmodels:[NW-2.6.7] Statistical Estimation of Networks}
 
@@ -142,12 +142,23 @@ actor; the first observed event contributes only its own {it:beta'X_{s_1}} term 
 against real {cmd:goldfish} - there is no assumed risk period before the first observed event).
 {opt submodel(rate)} only, matching {cmd:goldfish}'s own architecture (only the rate sub-model has
 ever had an intercept concept - the choice sub-model's own conditional logit has none, by
-construction). {opt indegwindow()}, {opt outdegwindow()}, {opt weightedindeg}, {opt weightedoutdeg},
-and two-mode (bipartite) networks are not yet verified together with {opt intercept} - a real,
-disclosed v1 limitation, rejected outright rather than silently combined.
+construction). {opt weightedindeg}, {opt weightedoutdeg}, and two-mode (bipartite) networks
+("expansion batch 18") are verified together with {opt intercept} - the same statistic swaps the
+NO-intercept engine already uses turned out to compose correctly with the hazard-integral
+aggregation exactly as written, confirmed by exact agreement with real {cmd:goldfish}.
+{opt indegwindow()} and {opt outdegwindow()} combined with {opt intercept} remain REJECTED - a real,
+disclosed architectural gap, not merely unverified: {cmd:goldfish}'s own {opt window()} mechanism
+inserts synthetic "dissolve" events into the timeline at exactly {it:event_time + window} for every
+windowed tie, forcing its piecewise-constant hazard machinery to recompute right at each expiry;
+this command only recomputes statistics at real dependent events, so a windowed contact would
+silently over-count for the rest of the current inter-event interval once {opt intercept}'s own
+hazard-INTEGRAL aggregation is in play (the NO-intercept engine's ordinal partial likelihood never
+integrates over real time at all, which is why {opt indegwindow()} and {opt outdegwindow()} already work
+correctly without {opt intercept}).
 
 	{cmd:. nwdynam mynet, submodel(rate) intercept indeg}
 	{cmd:. nwdynam mynet, submodel(rate) intercept outdeg ego(dept)}
+	{cmd:. nwdynam mynet, submodel(rate) intercept weightedoutdeg}
 
 {pstd}
 {bf:submodel(choice_coordination)} is goldfish's own THIRD sub-model (Stadtfeld, Hollway & Block
@@ -475,7 +486,12 @@ is likewise verified, alone and combined with {opt inertia} - see
 on a real hand-built toy directed network with REAL (unevenly-spaced) timestamps, matching
 {cmd:goldfish} exactly on two independent effect combinations - see
 {cmd:dev/dynam_unit20_rateintercept_crosscheck.R}, the matching direct Mata-call {cmd:.do}, and
-{cmd:dev/dynam_unit20b_rateintercept_ado_crosscheck.do}.
+{cmd:dev/dynam_unit20b_rateintercept_ado_crosscheck.do}. {opt intercept} combined with two-mode
+networks and with {opt weightedindeg} and {opt weightedoutdeg} is likewise verified, each independently
+on its own real toy network with real timestamps - see
+{cmd:dev/dynam_unit21_rateintercept_twomode_crosscheck.R} and {cmd:dynam_unit21c_..._weighted_...R}, the
+matching direct Mata-call {cmd:dev/dynam_unit21_rateintercept_extras_crosscheck.do}, and
+{cmd:dev/dynam_unit21b_rateintercept_extras_ado_crosscheck.do}.
 
 {pstd}
 Selecting exactly the three original structural effects, with neither window active, reuses a
@@ -623,9 +639,12 @@ same actor count and order as {cmd:chat}):{p_end}
 	{cmd:. nwdynam chat, inertia tie(covnet)}
 
 {pstd}Fit the genuinely continuous-time WITH-INTERCEPT rate sub-model, sensitive to the real
-elapsed time between events, not just their order:{p_end}
+elapsed time between events, not just their order (combining {opt intercept} with
+{opt weightedoutdeg} or a two-mode network is also verified and supported;
+{opt indegwindow()} and {opt outdegwindow()} are not, see {bf:Description} above):{p_end}
 
 	{cmd:. nwdynam chat, submodel(rate) intercept indeg}
+	{cmd:. nwdynam chat, submodel(rate) intercept weightedoutdeg}
 
 
 {title:Also see}

@@ -772,6 +772,10 @@ assert _rc == 198
 di as text "  correctly rejected (rc=" _rc ")"
 
 di as text "Test: intercept rejected combined with indegwindow()/outdegwindow()"
+di as text "(a real, disclosed architectural gap - see nwdynam.ado's own"
+di as text "intercept validation block for the full account - NOT merely"
+di as text "unverified: goldfish's own window() mechanism needs synthetic"
+di as text "mid-interval expiry events this engine does not yet inject)"
 capture noisily nwdynam tiesmall, submodel(rate) intercept indegwindow(3)
 assert _rc == 198
 di as text "  correctly rejected indegwindow() (rc=" _rc ")"
@@ -779,13 +783,42 @@ capture noisily nwdynam tiesmall, submodel(rate) intercept outdegwindow(3)
 assert _rc == 198
 di as text "  correctly rejected outdegwindow() (rc=" _rc ")"
 
-di as text "Test: intercept rejected combined with weightedindeg/weightedoutdeg"
-capture noisily nwdynam tiesmall, submodel(rate) intercept weightedindeg
-assert _rc == 198
-di as text "  correctly rejected weightedindeg (rc=" _rc ")"
-capture noisily nwdynam tiesmall, submodel(rate) intercept weightedoutdeg
-assert _rc == 198
-di as text "  correctly rejected weightedoutdeg (rc=" _rc ")"
+di as text "{hline 60}"
+di as text "Test: intercept + weightedindeg/weightedoutdeg (batch 18, 2026-09-02) -"
+di as text "now verified and supported. Real cross-tool correctness check is"
+di as text "dev/dynam_unit21_rateintercept_extras_crosscheck.do (direct Mata)"
+di as text "and dev/dynam_unit21b_..._ado_crosscheck.do (through this same"
+di as text ".ado command)."
+di as text "{hline 60}"
+nwdynam tiesmall, submodel(rate) intercept weightedindeg
+di as text "  fits successfully with intercept + weightedindeg, e(effects)=`e(effects)'"
+assert "`e(effects)'" == "Intercept indeg"
+nwdynam tiesmall, submodel(rate) intercept weightedoutdeg
+di as text "  fits successfully with intercept + weightedoutdeg, e(effects)=`e(effects)'"
+assert "`e(effects)'" == "Intercept outdeg"
+
+di as text "{hline 60}"
+di as text "Test: intercept + two-mode (batch 18, 2026-09-02) - now verified and"
+di as text "supported (outdeg only - goldfish itself rejects indeg on a"
+di as text "two-mode rate sub-model, already established for the no-intercept"
+di as text "engine)."
+di as text "{hline 60}"
+nwclear
+clear
+input str2 person str2 org double time
+"A1" "B1" 1
+"A2" "B1" 2
+"A1" "B2" 3
+"A3" "B2" 4
+"A2" "B2" 5
+"A3" "B1" 6
+end
+encode person, gen(personnum)
+encode org, gen(orgnum)
+nwset personnum orgnum, twomode eventtime(time) name(intertwomodesmall)
+nwdynam intertwomodesmall, submodel(rate) intercept outdeg
+di as text "  fits successfully with intercept + outdeg (two-mode), e(effects)=`e(effects)'"
+assert "`e(effects)'" == "Intercept outdeg"
 
 di as text "{hline 60}"
 di as result "ALL TESTS PASSED"

@@ -475,27 +475,44 @@ program nwdynam, eclass
 	// goldfish's own DyNAM architecture, where only the rate sub-model
 	// has ever had an intercept concept (the choice sub-model's own
 	// conditional logit has no intercept term at all, by construction).
-	// v1 scope (a real, disclosed limit, not silently narrow): window,
-	// `weighted=TRUE', and two-mode support are NOT yet verified
-	// together with `intercept' - see unw_dynam.do's own header comment
-	// above dynam_rateint_loglik_grad_multi() for the exact formula and
-	// its real-goldfish verification (dev/dynam_unit20_
-	// rateintercept_crosscheck.R/.do).
+	// v1 scope, extended "expansion batch 18" (2026-09-02): two-mode and
+	// `weighted=TRUE' are now verified together with `intercept' (each
+	// independently, against real goldfish on a toy network with real
+	// timestamps - dev/dynam_unit21_rateintercept_twomode_crosscheck.R,
+	// dynam_unit21c_..._weighted_...R) and no longer rejected - the SAME
+	// statistic swaps the no-intercept engine already uses (a real-time
+	// window read, a cumulative weighted count, mode-2 actors masked
+	// out of the hazard sum) turned out to compose correctly with the
+	// hazard-integral aggregation exactly as written, confirmed by
+	// exact agreement with real goldfish, not merely assumed.
+	//
+	// `indegwindow()'/`outdegwindow()' remain REJECTED with `intercept'
+	// - this one is a genuine, disclosed architectural gap, not a
+	// pending verification: evaluating the fitted log-likelihood
+	// directly at real goldfish's own reported MLE (not re-optimizing)
+	// found a real, substantial mismatch (~0.3 in logLik, far past
+	// floating-point noise), traced to goldfish's own `window()'
+	// mechanism (`createWindowedEvents()' in its R source) inserting
+	// SYNTHETIC "dissolve" events into the timeline at exactly
+	// `event_time + window' for every windowed tie, forcing its
+	// piecewise-constant hazard machinery to recompute right at each
+	// expiry. This engine only recomputes statistics at REAL dependent
+	// events, so a windowed contact silently keeps counting toward
+	// `indeg'/`outdeg' for the rest of the current inter-event interval
+	// even after it should have aged out mid-interval - wrong only when
+	// intercept's own hazard-INTEGRAL aggregation is in play (the
+	// no-intercept engine's ordinal partial likelihood never integrates
+	// over real time at all, which is why window already works
+	// correctly there). Fixing this needs the same synthetic-event
+	// injection goldfish itself uses - a real, disclosed follow-on, not
+	// attempted this batch.
 	if "`intercept'" != "" {
 		if "`submodel'" != "rate" {
 			di as error "intercept only applies to submodel(rate) - see {help nwdynam}."
 			error 198
 		}
-		if `__nwdynam_n1' > 0 {
-			di as error "intercept is not yet verified together with two-mode (bipartite) networks - a real, disclosed v1 gap - see {help nwdynam}."
-			error 198
-		}
 		if `__nwdynam_windowindeg' < 1e300 | `__nwdynam_windowoutdeg' < 1e300 {
-			di as error "intercept is not yet verified together with indegwindow()/outdegwindow() - a real, disclosed v1 gap - see {help nwdynam}."
-			error 198
-		}
-		if `__nwdynam_weightedindeg' | `__nwdynam_weightedoutdeg' {
-			di as error "intercept is not yet verified together with weightedindeg/weightedoutdeg - a real, disclosed v1 gap - see {help nwdynam}."
+			di as error "intercept is not yet verified together with indegwindow()/outdegwindow() - a real, disclosed architectural gap (goldfish's own window() mechanism needs synthetic mid-interval expiry events this engine does not yet inject) - see {help nwdynam}."
 			error 198
 		}
 	}
@@ -729,7 +746,7 @@ program nwdynam, eclass
 	}
 	else if "`submodel'" == "rate" {
 		if "`intercept'" != "" {
-			mata: DynamRateInterceptFitMulti(`__nwdynam_events', `nodes', (`__nwdynam_active'), `__nwdynam_ego', `__nwdynam_tertius', "__nwdynam_b", "__nwdynam_V", "__nwdynam_ll")
+			mata: DynamRateInterceptFitMulti(`__nwdynam_events', `nodes', (`__nwdynam_active'), `__nwdynam_ego', `__nwdynam_tertius', `__nwdynam_windowindeg', `__nwdynam_windowoutdeg', `__nwdynam_weightedindeg', `__nwdynam_weightedoutdeg', `__nwdynam_n1', "__nwdynam_b", "__nwdynam_V", "__nwdynam_ll")
 			local __nwdynam_collabs "Intercept`__nwdynam_collabs'"
 			local __nwdynam_title "Dynamic Network Actor Model, rate sub-model, WITH intercept (continuous-time competing-risks hazard, MLE)"
 			local __nwdynam_hdr "Dynamic Network Actor Model - rate sub-model, with intercept (MLE)"

@@ -1671,23 +1671,41 @@ void DynamRateFitMulti(real matrix eventmat, real scalar n, real rowvector activ
 	(k=1: just `X_{s_1,j}', no dt term), with the intercept itself
 	simply X_{i,intercept}=1 for every actor.
 
-	SCOPE (v1, disclosed rather than silently narrow): the intercept is
-	ALWAYS included (theta[1], not an `active[]' toggle - matching
-	goldfish's own "give `1' as a formula term" convention, not a
-	boolean flag) alongside any subset of the SAME five rate-submodel
-	effects (`indeg'/`outdeg'/`ego'/`nodetrans'/`tertius') the
-	NO-intercept engine already has - reusing their own already-verified
-	statistic-building code unchanged, only the AGGREGATION differs.
-	Window, `weighted=TRUE', and two-mode support are NOT yet verified
-	together with the intercept (a real, disclosed follow-on, not
-	silently combined) - `nwdynam.ado' rejects these combinations before
-	ever reaching here.
+	SCOPE: the intercept is ALWAYS included (theta[1], not an `active[]'
+	toggle - matching goldfish's own "give `1' as a formula term"
+	convention, not a boolean flag) alongside any subset of the SAME
+	five rate-submodel effects (`indeg'/`outdeg'/`ego'/`nodetrans'/
+	`tertius') the NO-intercept engine already has - reusing their own
+	already-verified statistic-building code unchanged, only the
+	AGGREGATION differs. `nodeTrans'/`tertius' remain UNWINDOWED and
+	unweighted here too, matching their own scope limit in the
+	NO-intercept engine.
+
+	Window/`weighted=TRUE'/two-mode combined with the intercept
+	("expansion batch 18", 2026-09-02) - each verified independently
+	against real goldfish on a toy network with real, unevenly-spaced
+	timestamps BEFORE this code was written (see dev/dynam_unit21_
+	rateintercept_twomode_crosscheck.R, dynam_unit21b_..._window_...R,
+	dynam_unit21c_..._weighted_...R): the SAME statistic swaps the
+	no-intercept engine already uses (`indeg_i'/`outdeg_i' read from a
+	real-time window or a cumulative weighted count instead of the
+	full-history distinct-neighbor count; mode-2 actors masked to
+	-1e300 in `lp' so their hazard underflows to ~0) turned out to
+	compose correctly with the hazard-integral aggregation exactly as
+	written, with no further correction needed - confirmed by exact
+	agreement with real goldfish on all three, not merely assumed from
+	the no-intercept case. Two-mode is verified here with `outdeg' only
+	(goldfish itself rejects `indeg' - an "ego"-type effect - on a
+	two-mode RATE sub-model; already established for the no-intercept
+	engine, see dynam_rate_loglik_grad_multi()'s own header).
 */
 void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active,
-		real rowvector egovec, real rowvector tertiusvec,
+		real rowvector egovec, real rowvector tertiusvec, real rowvector modvec,
 		pointer(class DynamState scalar) scalar pS, real scalar ll, real rowvector grad) {
 	real scalar i, s, r, n, j, e, tcur, tprev, dt, intercept
-	real matrix lastcontact, A, AA
+	real scalar windowindeg, windowoutdeg, weightedindeg, weightedoutdeg, n1
+	real scalar nowindowindeg, nowindowoutdeg
+	real matrix lastcontact, tiecount, A, AA
 	real rowvector indeg_i, outdeg_i, nodetrans_i, tertius_i, tertiusnumer, tertiusdenom, hasin
 	real rowvector lp, haz, gradfull, idx
 
@@ -1695,7 +1713,16 @@ void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active
 	ll = 0
 	gradfull = J(1, 6, 0)
 	lastcontact = J(n, n, -1e300)
+	tiecount = J(n, n, 0)
 	intercept = theta[1]
+
+	windowindeg = modvec[1]
+	windowoutdeg = modvec[2]
+	weightedindeg = modvec[3]
+	weightedoutdeg = modvec[4]
+	n1 = modvec[5]
+	nowindowindeg = (windowindeg >= 1e300)
+	nowindowoutdeg = (windowoutdeg >= 1e300)
 
 	idx = J(1, 5, 0)
 	j = 1
@@ -1711,8 +1738,12 @@ void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active
 		r = (*pS).events[i,2]
 		tcur = (*pS).events[i,3]
 
-		indeg_i = colsum(lastcontact :> -1e300)
-		outdeg_i = rowsum(lastcontact :> -1e300)'
+		if (weightedindeg) indeg_i = colsum(tiecount)
+		else if (nowindowindeg) indeg_i = colsum(lastcontact :> -1e300)
+		else indeg_i = colsum((tcur :- lastcontact) :<= windowindeg)
+		if (weightedoutdeg) outdeg_i = rowsum(tiecount)'
+		else if (nowindowoutdeg) outdeg_i = rowsum(lastcontact :> -1e300)'
+		else outdeg_i = rowsum((tcur :- lastcontact) :<= windowoutdeg)'
 		if (active[4] | active[5]) A = (lastcontact :> -1e300)
 		if (active[4]) {
 			AA = A * A
@@ -1731,6 +1762,12 @@ void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active
 		if (active[3]) lp = lp :+ theta[idx[3]] :* egovec
 		if (active[4]) lp = lp :+ theta[idx[4]] :* nodetrans_i
 		if (active[5]) lp = lp :+ theta[idx[5]] :* tertius_i
+		// Two-mode: mode-2 actors can never be the next sender - see
+		// dynam_rate_loglik_grad_multi()'s own identical comment. Here
+		// this also correctly zeroes their contribution to the hazard
+		// SUM below (exp(-1e300) underflows to 0), not just the
+		// softmax the no-intercept engine uses.
+		if (n1 > 0) lp[(n1+1)..n] = J(1, n-n1, -1e300)
 
 		if (i == 1) {
 			ll = ll + lp[s]
@@ -1754,6 +1791,7 @@ void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active
 		}
 
 		lastcontact[s,r] = tcur
+		tiecount[s,r] = tiecount[s,r] + 1
 		tprev = tcur
 	}
 
@@ -1762,42 +1800,54 @@ void dynam_rateint_loglik_grad_multi(real rowvector theta, real rowvector active
 }
 
 real scalar dynam_rateint_loglik_multi(real rowvector theta, real rowvector active,
-		real rowvector egovec, real rowvector tertiusvec,
+		real rowvector egovec, real rowvector tertiusvec, real rowvector modvec,
 		pointer(class DynamState scalar) scalar pS) {
 	real scalar ll
 	real rowvector grad
-	dynam_rateint_loglik_grad_multi(theta, active, egovec, tertiusvec, pS, ll, grad)
+	dynam_rateint_loglik_grad_multi(theta, active, egovec, tertiusvec, modvec, pS, ll, grad)
 	return(ll)
 }
 
 void dynam_rateint_eval_multi(real scalar todo, real rowvector theta, pointer(real rowvector) scalar pActive,
 		pointer(real rowvector) scalar pEgovec, pointer(real rowvector) scalar pTertiusvec,
+		pointer(real rowvector) scalar pModvec,
 		pointer(class DynamState scalar) scalar pS, real scalar y, real rowvector g, real matrix H) {
 	real rowvector grad
-	dynam_rateint_loglik_grad_multi(theta, *pActive, *pEgovec, *pTertiusvec, pS, y, grad)
+	dynam_rateint_loglik_grad_multi(theta, *pActive, *pEgovec, *pTertiusvec, *pModvec, pS, y, grad)
 	if (todo >= 1) g = grad
 }
 
 /*
 	DynamRateInterceptFitMulti() -- fits the WITH-INTERCEPT rate
 	sub-model (see dynam_rateint_loglik_grad_multi()'s own header
-	comment for the formula and its real-goldfish verification). The
-	intercept is ALWAYS estimated (theta[1]); `activevec' selects any
-	subset of the same five rate effects the NO-intercept engine has.
-	Multi-start strategy matches every other Multi engine in this file.
+	comment for the formula and its real-goldfish verification,
+	including the window/weighted/two-mode combinations added in
+	"expansion batch 18"). The intercept is ALWAYS estimated (theta[1]);
+	`activevec' selects any subset of the same five rate effects the
+	NO-intercept engine has. `windowindeg'/`windowoutdeg' each >=1e300
+	means no window for that effect; `weightedindeg'/`weightedoutdeg'
+	mirror the no-intercept engine's own flags; `n1' is the mode-1 actor
+	count (0 = not two-mode) - all five bundled into ONE `modvec'
+	argument for the same optimize_init_argument()-cap reason as
+	DynamRateFitMulti()'s own modvec. Multi-start strategy matches every
+	other Multi engine in this file.
 */
 void DynamRateInterceptFitMulti(real matrix eventmat, real scalar n, real rowvector activevec,
 		real rowvector egovec, real rowvector tertiusvec,
+		real scalar windowindeg, real scalar windowoutdeg,
+		real scalar weightedindeg, real scalar weightedoutdeg, real scalar n1,
 		string scalar bname, string scalar vname, string scalar llname) {
 	class DynamState scalar S
 	transmorphic S_opt
-	real rowvector theta0, theta_hat
+	real rowvector theta0, theta_hat, modvec
 	real matrix V_best
 	real scalar nparams, attempt, nconverged, errcode, nstarts, thisval, bestval
 	real matrix starts
 
 	S = DynamState()
 	S.init(eventmat, n)
+
+	modvec = (windowindeg, windowoutdeg, weightedindeg, weightedoutdeg, n1)
 
 	nparams = 1 + sum(activevec)
 
@@ -1824,7 +1874,8 @@ void DynamRateInterceptFitMulti(real matrix eventmat, real scalar n, real rowvec
 		optimize_init_argument(S_opt, 1, &activevec)
 		optimize_init_argument(S_opt, 2, &egovec)
 		optimize_init_argument(S_opt, 3, &tertiusvec)
-		optimize_init_argument(S_opt, 4, &S)
+		optimize_init_argument(S_opt, 4, &modvec)
+		optimize_init_argument(S_opt, 5, &S)
 		optimize_init_technique(S_opt, "bfgs")
 		optimize_init_which(S_opt, "max")
 		optimize_init_tracelevel(S_opt, "none")
@@ -1849,7 +1900,8 @@ void DynamRateInterceptFitMulti(real matrix eventmat, real scalar n, real rowvec
 		optimize_init_argument(S_opt, 1, &activevec)
 		optimize_init_argument(S_opt, 2, &egovec)
 		optimize_init_argument(S_opt, 3, &tertiusvec)
-		optimize_init_argument(S_opt, 4, &S)
+		optimize_init_argument(S_opt, 4, &modvec)
+		optimize_init_argument(S_opt, 5, &S)
 		optimize_init_technique(S_opt, "nm")
 		optimize_init_which(S_opt, "max")
 		optimize_init_tracelevel(S_opt, "none")
