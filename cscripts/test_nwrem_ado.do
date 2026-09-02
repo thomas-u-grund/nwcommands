@@ -160,4 +160,47 @@ di as text "  correctly rejected zero-effect call (rc=" _rc ")"
 * closes.
 
 di as text "{hline 60}"
+di as text "Test: nwrem's covsnd()/covrec()/covint() validate the current dataset"
+di as text "{hline 60}"
+
+* covsnd() naming a non-numeric (string) variable is rejected - by
+* Stata's own syntax parser (r109, "type mismatch"), not nwrem.ado's
+* own body-level "is not a numeric variable" guard: covsnd() is
+* declared `varname numeric` in the syntax line itself, so a string
+* variable never reaches that later check at all (confirmed directly -
+* that guard is unreachable dead code via the public interface, kept
+* as defense in depth rather than removed).
+nwload chatlog, xvars
+gen strseniority = "a"
+capture noisily nwrem chatlog, nodsnd covsnd(strseniority)
+assert _rc == 109
+di as text "  correctly rejected non-numeric covsnd() (rc=" _rc ")"
+
+* covsnd() is rejected when the current dataset's row count doesn't
+* match chatlog's own actor count (10) - here 5 rows instead of 10.
+* (chatlog itself, looked up by name via nw_syntax, is unaffected by
+* what dataset happens to be active - only the covsnd() row-count
+* check below cares about that.)
+clear
+set obs 5
+gen mismatchedcov = _n
+capture noisily nwrem chatlog, nodsnd covsnd(mismatchedcov)
+assert _rc != 0
+di as text "  correctly rejected wrong-row-count covsnd() (rc=" _rc ")"
+
+di as text "{hline 60}"
+di as text "Test: nwrem requires at least 2 events to fit a model"
+di as text "{hline 60}"
+nwclear
+clear
+set obs 1
+gen long sender = 1
+gen long receiver = 2
+gen eventtime = 1
+nwset sender receiver, eventtime(eventtime) name(onevent)
+capture noisily nwrem onevent, nodsnd
+assert _rc == 2001
+di as text "  correctly rejected a single-event network (rc=" _rc ")"
+
+di as text "{hline 60}"
 di as result "ALL TESTS PASSED"
