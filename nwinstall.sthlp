@@ -40,13 +40,13 @@
 {synopt:{opt remove}}remove the "Network Analysis" menu from your Stata{p_end}
 {synopt:{opt help}}download the help files{p_end}
 {synopt:{opt ado}}download the core command (.ado) files{p_end}
-{synopt:{opt ext}}download the extension files{p_end}
+{synopt:{opt ext}}accepted for backward compatibility, does nothing (the "extension" commands it used to download separately - {help nwdissimilar}, {help nwhierarchy}, {help nwdendrogram} - are ordinary commands shipped with every other {opt ado}/{opt help} install, and were never genuinely distinct from the rest of the package){p_end}
 {synopt:{opt dialog}}download the dialog boxes{p_end}
 {synopt:{opt usermenu}}update menu items for dialog-boxes{p_end}
 {synopt:{opt update}}refresh the installed menu (an internal, self-recursive flag: re-invokes {cmd:nwinstall, help usermenu}){p_end}
 {synopt:{opt downloadoff}}rebuild the menu from what is already installed, without downloading anything (used internally by {bf:profile.do} integration; equivalent to {opt usermenu} for this purpose){p_end}
 {synopt:{opth menu(string)}}install in this menu; default = "stUser"{p_end}
-{synopt:{opt all}}download the help files, dialog boxes, extensions and install them permanently{p_end}
+{synopt:{opt all}}download the core commands, help files, and dialog boxes, and install them permanently{p_end}
 {synopt:{opth path(string)}}directory where profile.do is installed; default: sysdir_stata{p_end}
 {synopt:{opt localcopy}}install by copying files from an existing local nwcommands folder instead of downloading from GitHub - see {help nwinstall##offline:Computers without internet access or admin rights} below{p_end}
 {synopt:{opth from(string)}}with {opt localcopy}: the local folder to copy nwcommands files from; default: the current directory{p_end}
@@ -144,8 +144,9 @@ In that case Stata will not find it automatically, so add it to your ado path ev
 or make that permanent by adding the same line to your own {cmd:profile.do} (see {help profiles}).
 
 {pstd}
-{opt localcopy} accepts the same {opt ado}/{opt help}/{opt ext}/{opt dialog}/{opt all}
-selectors as the normal network install, so e.g. {cmd:nwinstall, localcopy dialog} copies
-only the dialog boxes.
+{opt localcopy} accepts the same {opt ado}/{opt help}/{opt dialog}/{opt all}
+selectors as the normal network install ({opt ext} is accepted but does nothing, same as
+without {opt localcopy} - see {opt ext} above), so e.g. {cmd:nwinstall, localcopy dialog}
+copies only the dialog boxes.
 
 

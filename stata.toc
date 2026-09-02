@@ -16,9 +16,6 @@ d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1 of 2)
 p nwcommands-hlp2
 d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2 of 2)
 
-p nwcommands-ext1
-d nwcommands-ext. Social Network Analysis Using Stata - Extension_1
-
 p nwcommands-dlg1
 d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part 1 of 2)
 

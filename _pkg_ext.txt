@@ -1,6 +1,0 @@
-f nwdissimilar.ado
-f nwdissimilar.sthlp
-f nwhierarchy.ado
-f nwhierarchy.sthlp
-f nwdendrogram.ado
-f nwdendrogram.sthlp

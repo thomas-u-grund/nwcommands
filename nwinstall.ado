@@ -22,7 +22,6 @@ program nwinstall
 	
 	if "`all'" != "" {
 		local help = "help"
-		local ext = "ext"
 		local dialog = "dialog"
 		local permanently = "permanently"
 	}
@@ -49,9 +48,6 @@ program nwinstall
 		}
 		if "`help'" != "" | "`all'" != "" {
 			nwinstall_copymanifest, manifest("_pkg_hlp.txt") from("`from'") dest("`dest'")
-		}
-		if "`ext'" != "" | "`all'" != "" {
-			nwinstall_copymanifest, manifest("_pkg_ext.txt") from("`from'") dest("`dest'")
 		}
 		if "`dialog'" != "" | "`all'" != "" {
 			nwinstall_copydialogs, from("`from'") dest("`dest'")
@@ -110,21 +106,27 @@ program nwinstall
 		capture confirm number 1
 	}
 
-	if "`ext'" != "" & "`localcopy'" == "" {
-		// BUGFIX (2026-09-02): nwcommands-ext.pkg was renamed to
-		// nwcommands-ext1.pkg to match the numbered adoN/hlpN/dlgN
-		// convention every other package file already uses (it was
-		// the one unnumbered outlier). A user who installed under the
-		// OLD bare "nwcommands-ext" name before this fix would
-		// otherwise be left with a stale duplicate registered
-		// alongside the new "nwcommands-ext1" - uninstall both names
-		// (each `capture'd, since one or both may never have existed
-		// for a given user) so re-running nwinstall always converges
-		// to just the new name.
+	if "`localcopy'" == "" {
+		// REMOVED (2026-09-02): nwcommands-ext.pkg (nwdissimilar/
+		// nwhierarchy/nwdendrogram) used to be its own separately
+		// net-installed package, requested via the `ext' option. It
+		// turned out to be 100% redundant - all three commands'
+		// .ado/.sthlp files were ALREADY listed in _pkg_ado.txt/
+		// _pkg_hlp.txt too, so they already ship as part of the
+		// ordinary `ado'/`help' install above; there was never a real
+		// reason to call them out as a separate "Extension" distinct
+		// from every other command in the package. The `ext' option
+		// itself stays accepted (a harmless no-op) for any saved
+		// script that still passes it. What remains genuinely needed
+		// here is migration: a user who installed under the old
+		// "nwcommands-ext" name (or the transient, never-published
+		// "nwcommands-ext1" this fix briefly used mid-development)
+		// would otherwise be left with a stale duplicate registered
+		// after upgrading - uninstall both (each `capture'd, since
+		// neither may exist for a given user) unconditionally, not
+		// gated on `ext', so it always runs once on every update.
 		capture ado uninstall "nwcommands-ext"
 		capture ado uninstall "nwcommands-ext1"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
-		net install "nwcommands-ext1", all replace
 	}
 
 
