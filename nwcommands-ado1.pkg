@@ -2,7 +2,7 @@ v 3
 d nwcommands-ado. Social Network Analysis Using Stata (part 1)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 28aug2026
+d Distribution-Date: 2sep2026
 f _extract_valuelabels.ado
 f _nwdeploy.ado
 f _nwdialog.ado
@@ -15,11 +15,13 @@ f _nwnodelab.ado
 f _nwsetobs.ado
 f _opts_oneof.ado
 f animate.ado
+f nw2clustering.ado
 f nw2degree.ado
 f nw2fromedge.ado
 f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
+f nw_syntax.ado
 f nwaddnodes.ado
 f nwaltergen.ado
 f nwappend.ado
@@ -63,6 +65,7 @@ f nwergm_estat.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado
+f nwfactions.ado
 f nwfromedge.ado
 f nwgen.ado
 f nwgenerate.ado
@@ -80,9 +83,3 @@ f nwkcore.ado
 f nwkeep.ado
 f nwkeepnodes.ado
 f nwkplex.ado
-f nwlattice.ado
-f nwload.ado
-f nwmodularity.ado
-f nwmovie.ado
-f nwmoviexy.ado
-f nwname.ado

@@ -26,12 +26,12 @@
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
 {p2col:{bf:{help nw_clear }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
-{p2col:{bf:{help nw_deployfile }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_evalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_optsoneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
@@ -66,6 +66,7 @@
 {p2col:{bf:{help nwcurrent }}}Report and set current network{p_end}
 {p2col:{bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:{bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
+{p2col:{bf:{help nwdichotomize }}}Dichotomize a network at a threshold (built on {help nwrecode}){p_end}
 {p2col:{bf:{help nwdissimilar }}}Generate node dissimilarities{p_end}
 {p2col:{bf:{help nwdrop }}}Drop networks or network nodes{p_end}
 {p2col:{bf:{help nwdropnodes }}}Drop nodes from a network{p_end}
@@ -73,14 +74,14 @@
 {p2col:{bf:{help nwduplicate }}}Duplicate a network{p_end}
 {p2col:{bf:{help nwdyadprob }}}Generate a network based on tie probabilities{p_end}
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
-{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice and rate sub-models (MLE){p_end}
+{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
 {p2col:{bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
 {p2col:{bf:{help nwergm_estat }}}Postestimation tools for {cmd:nwergm}{p_end}
 {p2col:{bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand variable to network{p_end}
 {p2col:{bf:{help nwexport }}}Export network as Pajek or Ucinet file{p_end}
-{p2col:{bf:{help nwfactions }}}UCINET-style K-group faction partitioning{p_end}
+{p2col:{bf:{help nwfactions }}}Partition nodes into a specified number of cohesive factions{p_end}
 {p2col:{bf:{help nwfromedge }}}Imports network data from edgelist{p_end}
 {p2col:{bf:{help nwgen }}}Network extensions to generate{p_end}
 {p2col:{bf:{help nwgenerate }}}Network extensions to generate{p_end}
@@ -98,7 +99,7 @@
 {p2col:{bf:{help nwkeep }}}Keep a network (or only certain nodes){p_end}
 {p2col:{bf:{help nwkeepnodes }}}Keep nodes of a network{p_end}
 {p2col:{bf:{help nwkplex }}}Maximal k-plex enumeration{p_end}
-{p2col:{bf:{help nwlambda }}}Edge (line) connectivity matrix and lambda sets{p_end}
+{p2col:{bf:{help nwlambda }}}Edge (line) connectivity matrix between all node pairs{p_end}
 {p2col:{bf:{help nwlattice }}}Generate a lattice network{p_end}
 {p2col:{bf:{help nwload }}}Load a network as Stata variables{p_end}
 {p2col:{bf:{help nwmatching }}}Maximum-cardinality bipartite matching{p_end}
@@ -106,7 +107,7 @@
 {p2col:{bf:{help nwmixing }}}E-I index and mixing table for a categorical node attribute{p_end}
 {p2col:{bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
 {p2col:{bf:{help nwmotifs }}}4-node undirected motif/graphlet census{p_end}
-{p2col:{bf:{help nwmovie }}}Animate a sequence of networks{p_end}
+{p2col:{bf:{help nwmovie }}}Interactive, animated network movie (panel waves or a relational-event timeline){p_end}
 {p2col:{bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
 {p2col:{bf:{help nwname }}}Obtain and change meta-information of a network{p_end}
 {p2col:{bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
@@ -122,6 +123,7 @@
 {p2col:{bf:{help nwplotmatrix }}}Plot a network as sociomatrix{p_end}
 {p2col:{bf:{help nwpref }}}Generate a preferential-attachment network{p_end}
 {p2col:{bf:{help nwpreserve }}}Preserve and restore network data{p_end}
+{p2col:{bf:{help nwproject }}}One-mode projection of a two-mode network (alias for {help nw2project}){p_end}
 {p2col:{bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:{bf:{help nwrandom }}}Generate a random network{p_end}
 {p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
@@ -134,6 +136,7 @@
 {p2col:{bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
 {p2col:{bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves{p_end}
+{p2col:{bf:{help nwsaom_estat }}}Postestimation tools for {cmd:nwsaom}{p_end}
 {p2col:{bf:{help nwsave }}}Save network data in file{p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
@@ -145,6 +148,7 @@
 {p2col:{bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:{bf:{help nwsummarize }}}Summarize a network{p_end}
 {p2col:{bf:{help nwsym }}}Symmetrize network{p_end}
+{p2col:{bf:{help nwsymmetrize }}}Symmetrize network (alias for {help nwsym}){p_end}
 {p2col:{bf:{help nwsync }}}Sync network with Stata variables{p_end}
 {p2col:{bf:{help nwtabulate }}}One-way table of dyads{p_end}
 {p2col:{bf:{help nwtoedge }}}Convert network to edgelist{p_end}

@@ -2,10 +2,20 @@ v 3
 d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 28aug2026
+d Distribution-Date: 2sep2026
+f nwkcomponents.sthlp
+f nwkcore.sthlp
+f nwkeep.sthlp
+f nwkeepnodes.sthlp
+f nwkplex.sthlp
+f nwlambda.sthlp
 f nwlattice.sthlp
 f nwload.sthlp
+f nwmatching.sthlp
+f nwmaxflow.sthlp
+f nwmixing.sthlp
 f nwmodularity.sthlp
+f nwmotifs.sthlp
 f nwmovie.sthlp
 f nwmoviexy.sthlp
 f nwname.sthlp
@@ -15,6 +25,7 @@ f nwneighbor.sthlp
 f nwnode.sthlp
 f nwnoderename.sthlp
 f nworder.sthlp
+f nwpagerank.sthlp
 f nwpath.sthlp
 f nwpermute.sthlp
 f nwplot.sthlp
@@ -24,6 +35,7 @@ f nwpreserve.sthlp
 f nwproject.sthlp
 f nwqap.sthlp
 f nwrandom.sthlp
+f nwrandomwalk.sthlp
 f nwreach.sthlp
 f nwrecode.sthlp
 f nwrem.sthlp
@@ -49,9 +61,12 @@ f nwsymmetrize.sthlp
 f nwsync.sthlp
 f nwtab1.sthlp
 f nwtab2.sthlp
+f nwtab3.sthlp
 f nwtabulate.sthlp
 f nwtoedge.sthlp
 f nwtomata.sthlp
+f nwtomatafast.sthlp
+f nwtostata.sthlp
 f nwtranspose.sthlp
 f nwtriads.sthlp
 f nwturnover.sthlp

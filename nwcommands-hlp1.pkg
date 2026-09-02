@@ -2,7 +2,7 @@ v 3
 d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 1)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 28aug2026
+d Distribution-Date: 2sep2026
 f _nwnodeid.sthlp
 f _nwnodelab.sthlp
 f animate.sthlp
@@ -12,6 +12,7 @@ f netlist.sthlp
 f netname.sthlp
 f newnetname.sthlp
 f nodeid.sthlp
+f nw2clustering.sthlp
 f nw2degree.sthlp
 f nw2fromedge.sthlp
 f nw2project.sthlp
@@ -69,6 +70,7 @@ f nwergm_estat.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp
 f nwexport.sthlp
+f nwfactions.sthlp
 f nwfromedge.sthlp
 f nwgen.sthlp
 f nwgenerate.sthlp
@@ -81,8 +83,3 @@ f nwinduced.sthlp
 f nwinstall.sthlp
 f nwissymmetric.sthlp
 f nwkatz.sthlp
-f nwkcomponents.sthlp
-f nwkcore.sthlp
-f nwkeep.sthlp
-f nwkeepnodes.sthlp
-f nwkplex.sthlp
