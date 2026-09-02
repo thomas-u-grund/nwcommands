@@ -4777,13 +4777,20 @@ string scalar ErgmNativePluginPath(){
 
 /*
 	Whether a compiled native plugin exists for THIS platform. Returns 0
-	(never errors) on any platform where lib/plugins/ergm_mcmc.plugin was
-	not built - the only currently-built platform is macOS (arm64 +
-	x86_64 fat binary; see native/Makefile and docs/ERGM_ARCHITECTURE.md's
-	native-backend section for the documented, not-yet-executed Windows/
-	Linux build recipe) - Windows/Linux users transparently get the
-	existing, fully-functional Mata backend instead, matching this
-	project's own explicit cross-platform requirement.
+	(never errors) on any platform where the matching lib/plugins/<os>/
+	ergm_mcmc*.plugin was not built. All three platforms are actually
+	built now (2026-09-02 status check - corrected from a stale
+	"Windows/Linux not yet executed" note): macOS locally via
+	native/Makefile's own `macos` target (arm64 + x86_64 fat binary);
+	Windows/Linux via .github/workflows/build-plugins.yml on GitHub's
+	own hosted runners (confirmed real, working binaries already
+	committed - lib/plugins/windows/ergm_mcmc.plugin is a genuine PE32+
+	DLL, lib/plugins/unix/ergm_mcmc_unix.plugin a genuine ELF .so, both
+	from recent "ci: rebuild native plugins" commits). A platform whose
+	binary is ever missing (a fresh checkout before the first CI run,
+	or a platform this workflow doesn't cover) still falls back to the
+	existing, fully-functional Mata backend transparently, matching
+	this project's own explicit cross-platform requirement.
 */
 real scalar ErgmNativeAvailable(){
 	string scalar p
