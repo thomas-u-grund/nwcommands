@@ -106,29 +106,73 @@ real rowvector SaomNetworkFullChangeGated(class ErgmModel scalar M, real rowvect
 	return(out)
 }
 
-real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
-	real rowvector theta, real scalar i, | real colvector present, real rowvector fntype) {
+/* SaomStructuralMatchesWaves(): structural zeros/ones ("expansion",
+   2026-09-02) - nwsaom.ado's own registration-time validation helper.
+   Returns 1 iff every dyad marked `structural[i,j]==1' holds the SAME
+   tie value in BOTH `Gstart' and `Gend' - a frozen dyad that genuinely
+   differs between the two observed waves means something toggled it
+   despite being declared structurally fixed, a real data/declaration
+   mismatch nwsaom.ado rejects with a clear error rather than silently
+   simulating from an inconsistent starting assumption. */
+real scalar SaomStructuralMatchesWaves(class ErgmGraph scalar Gstart,
+	class ErgmGraph scalar Gend, real matrix structural) {
 
-	real scalar n, j, k, maxu, denom, draw, cum, choice, haspresent, hasfntype
+	real scalar n, i, j
+
+	n = Gstart.n
+	for (i=1; i<=n; i++) {
+		for (j=1; j<=n; j++) {
+			if (i == j) continue
+			if (structural[i,j] != 1) continue
+			if (Gstart.has_edge(i,j) != Gend.has_edge(i,j)) return(0)
+		}
+	}
+	return(1)
+}
+
+real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
+	real rowvector theta, real scalar i, | real colvector present, real rowvector fntype,
+	real matrix structural) {
+
+	real scalar n, j, k, maxu, denom, draw, cum, choice, haspresent, hasfntype, hasstructural
 	real rowvector u
 	real rowvector chg
 
 	n = G.n
 	haspresent = (args() >= 5)
-	hasfntype = (args() == 6)
+	// CONTENT-based (not args()>=6) - matching SaomEstimateRM()'s own
+	// established hasnetgate convention exactly, since a caller reaching
+	// past fntype to supply `structural' must pass SOME fntype value in
+	// this slot even when it doesn't genuinely want gating (Mata's own
+	// optional-argument ordering rule) - an args()-count check would
+	// wrongly read that filler as a real fntype request.
+	hasfntype = (args() >= 6) & (cols(fntype) > 0) & any(fntype :!= 0)
+	// Structural zeros/ones ("expansion", 2026-09-02 - RSiena's own
+	// dyad-level frozen-tie mechanism, see this file's own "Structural
+	// zeros/ones" header comment above SaomBuildStructuralMask() for the
+	// full design account). CONTENT-based detection (rows(structural)>0),
+	// NOT args()-count-based - this file's own established lesson
+	// (see SaomEstimateRM()'s own header comment on hasnetgate/
+	// hasratecov): an args()==7 check would break the moment any FURTHER
+	// optional argument is added after this one, forcing every future
+	// caller reaching past it to also look "structural-active" even when
+	// passing an empty filler matrix.
+	hasstructural = (rows(structural) > 0)
 	u = J(1, n, 0)		// u[j] for j!=i; u[i] itself unused (self-toggle undefined)
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
 		if (haspresent) if (present[j] == 0) continue
+		if (hasstructural) if (structural[i,j] == 1) continue
 		chg = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 		u[j] = theta * chg'
 	}
 
-	// numerically stable softmax over {u[1..n excl. i, excl. absent], 0 for "stay"}
+	// numerically stable softmax over {u[1..n excl. i, excl. absent, excl. structural], 0 for "stay"}
 	maxu = 0	// "stay"'s own utility, always included as a candidate max
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
 		if (haspresent) if (present[j] == 0) continue
+		if (hasstructural) if (structural[i,j] == 1) continue
 		if (u[j] > maxu) maxu = u[j]
 	}
 
@@ -136,6 +180,7 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
 		if (haspresent) if (present[j] == 0) continue
+		if (hasstructural) if (structural[i,j] == 1) continue
 		denom = denom + exp(u[j] - maxu)
 	}
 
@@ -148,6 +193,7 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
 		if (haspresent) if (present[j] == 0) continue
+		if (hasstructural) if (structural[i,j] == 1) continue
 		cum = cum + exp(u[j] - maxu)
 		choice = j	// last alternative enumerated so far - fallback if draw==denom exactly (floating-point edge case)
 		if (draw <= cum) break
@@ -378,12 +424,12 @@ struct SaomScoredResult {
 
 struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
-	real rowvector fntype) {
+	real rowvector fntype, real matrix structural) {
 
 	struct SaomScoredResult scalar res
 	real matrix chgmat
 	real rowvector u, ebar, chosen_chg
-	real scalar t, n, p, i, j, k, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype
+	real scalar t, n, p, i, j, k, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype, hasstructural
 	real colvector presentIdx
 
 	n = G.n
@@ -395,9 +441,14 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 	// harmonisation unit 33 (composition change) - same optional,
 	// backward-compatible convention as SaomMinistep()/
 	// SaomSimulateInterval()'s own identical parameter; see
-	// SaomSimulateInterval()'s own header comment for the full account.
+	// SaomSimulateInterval()'s own header account. `structural'
+	// ("expansion", 2026-09-02) - see SaomMinistep()'s own header
+	// comment for the full design account; CONTENT-based detection
+	// throughout (not args()==), matching this file's own hasnetgate/
+	// hasratecov lesson.
 	haspresent = (args() >= 5)
-	hasfntype = (args() == 6)
+	hasfntype = (args() >= 6) & (cols(fntype) > 0) & any(fntype :!= 0)
+	hasstructural = (rows(structural) > 0)
 	if (haspresent) {
 		presentIdx = selectindex(present)
 		npresent = length(presentIdx)
@@ -417,6 +468,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
 				if (haspresent) if (present[j] == 0) continue
+				if (hasstructural) if (structural[i,j] == 1) continue
 				chgmat[j,.] = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 				u[j] = theta * chgmat[j,.]'
 				if (u[j] > maxu) maxu = u[j]
@@ -426,6 +478,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
 				if (haspresent) if (present[j] == 0) continue
+				if (hasstructural) if (structural[i,j] == 1) continue
 				denom = denom + exp(u[j] - maxu)
 			}
 
@@ -433,6 +486,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
 				if (haspresent) if (present[j] == 0) continue
+				if (hasstructural) if (structural[i,j] == 1) continue
 				ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
 			}
 
@@ -444,6 +498,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
 					if (haspresent) if (present[j] == 0) continue
+					if (hasstructural) if (structural[i,j] == 1) continue
 					cum = cum + exp(u[j] - maxu)
 					choice = j
 					if (draw <= cum) break
@@ -484,10 +539,10 @@ struct SaomCountedResult {
 
 struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
-	real rowvector fntype) {
+	real rowvector fntype, real matrix structural) {
 
 	struct SaomCountedResult scalar res
-	real scalar t, i, picked, haspresent, npresent, hasfntype
+	real scalar t, i, picked, haspresent, npresent, hasfntype, hasstructural
 	real colvector presentIdx
 
 	// harmonisation unit 33 (composition change) - same optional,
@@ -499,9 +554,14 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 	// (Mata's own optional-argument ordering rule), matching this
 	// file's own established "a fntype-only caller passes an
 	// all-present placeholder" precedent (see SaomEstimateRM()'s own
-	// header comment for the analogous missMask case).
+	// header comment for the analogous missMask case). `structural'
+	// ("expansion", 2026-09-02) is a further trailing argument, same
+	// chained convention - see SaomMinistep()'s own header comment for
+	// the full design account; CONTENT-based detection (not args()==),
+	// matching this file's own hasnetgate/hasratecov lesson.
 	haspresent = (args() >= 5)
-	hasfntype = (args() == 6)
+	hasfntype = (args() >= 6) & (cols(fntype) > 0) & any(fntype :!= 0)
+	hasstructural = (rows(structural) > 0)
 	if (haspresent) {
 		presentIdx = selectindex(present)
 		npresent = length(presentIdx)
@@ -516,7 +576,8 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 		if (t < 1) {
 			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
 			else i = ceil(runiform(1,1) * G.n)
-			if (hasfntype) picked = SaomMinistep(G, M, theta, i, present, fntype)
+			if (hasstructural) picked = SaomMinistep(G, M, theta, i, (haspresent ? present : J(G.n,1,1)), (hasfntype ? fntype : J(1,0,0)), structural)
+			else if (hasfntype) picked = SaomMinistep(G, M, theta, i, present, fntype)
 			else if (haspresent) picked = SaomMinistep(G, M, theta, i, present)
 			else picked = SaomMinistep(G, M, theta, i)
 			if (picked != 0) res.nchanges = res.nchanges + 1
@@ -3163,7 +3224,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	real rowvector theta0, real scalar rate0,
 	real scalar K0, real scalar K3, real scalar firstg, | real colvector present,
 	real matrix missMask, real rowvector fntype,
-	real colvector ratecovattr, real scalar ratecoef, real scalar symtype) {
+	real colvector ratecovattr, real scalar ratecoef, real scalar symtype,
+	real matrix structural) {
 
 	struct SaomFit scalar fit
 	struct SaomNativeConfig scalar cfg
@@ -3180,7 +3242,7 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	real matrix Zsco3, Ddev3, Dsco3, Dhat3, Dinv3	// harmonisation unit 18
 	real matrix missDyadsNative	// harmonisation unit 35 (native port) - see SaomMaskToDyadList()'s own header comment
 	real colvector presentForCall	// harmonisation unit 33 (native port) - see native/saom_sim.c's own "COMPOSITION CHANGE" header section
-	real scalar p, k, use_native, targetRate, ratecur, nch, haspresent, haspresentReal, npresent, hasmiss, needsExtras, hasnetgate, hasratecov
+	real scalar p, k, use_native, targetRate, ratecur, nch, haspresent, haspresentReal, npresent, hasmiss, needsExtras, hasnetgate, hasratecov, hasstructural
 	// symtype (undirected/symmetric relations, native-first): a 13th,
 	// backward-compatible optional trailing arg, matching this function's
 	// own established "args()-gated, every pre-existing caller omits it"
@@ -3277,6 +3339,13 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	hasratecov = (rows(ratecovattr) > 0)
 	hasmiss = (args() >= 10)
 	symtypearg = (args() >= 14) ? symtype : 0
+	// Structural zeros/ones ("expansion", 2026-09-02) - a new 15th
+	// trailing optional arg, past symtype. CONTENT-based (rows()>0),
+	// matching this comment block's own hasratecov/hasnetgate lesson
+	// exactly (an args()>=15 check would be correct TODAY but breaks
+	// the instant anything is ever added past this - not a hypothetical,
+	// this file has now hit that exact bug three times).
+	hasstructural = (rows(structural) > 0)
 	if (hasmiss) {
 		target = SaomMaskedStatistic(Gobs_end, M, missMask)
 		targetRate = SaomCountDifferingMasked(Gobs_start, Gobs_end, missMask)
@@ -3370,6 +3439,13 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	// the Mata fallback exactly like composition change/missing data
 	// already force it off above for their own unsupported cases.
 	if (hasnetgate) use_native = 0
+	// Structural zeros/ones ("expansion", 2026-09-02): native has no
+	// wire-protocol field for a per-dyad frozen-tie mask at all - force
+	// the Mata fallback, matching hasnetgate's own identical-shaped gate
+	// immediately above (a disclosed v1 scope limit, not silently
+	// unsupported: nwsaom.ado's own structural() option handling
+	// documents this).
+	if (hasstructural) use_native = 0
 	// ratecov (native-first, direct instruction): native/saom_sim.c's own
 	// ministep loop now supports the SAME per-actor rate reweighting
 	// SaomSimIntCountedRateCov()/SaomSimIntScoredRateCov() implement in
@@ -3483,6 +3559,15 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 			SaomCopyGraph(Gobs_start, Gwork)
 			if (hasratecov) sres = SaomSimIntScoredRateCov(Gwork, M, theta0, ratecur, ratecovattr, ratecoef, present, fntype)
 			else if (hasnetgate) sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur, present, fntype)
+			// Structural zeros/ones ("expansion", 2026-09-02) - not yet
+			// combinable with ratecov()/netgate above (nwsaom.ado's own
+			// validation enforces this, a real disclosed v1 scope limit,
+			// not silently ignored), so this branch is only ever reached
+			// with hasratecov/hasnetgate both false. Passes a true
+			// all-present filler when `present' was not itself supplied,
+			// matching SaomSimulateIntervalCounted()'s own established
+			// convention for reaching a later optional arg.
+			else if (hasstructural) sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur, (haspresent ? present : J(Gwork.n,1,1)), J(1,0,0), structural)
 			else if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur, present)
 			else sres = SaomSimulateIntervalScored(Gwork, M, theta0, ratecur)
 			rawstat = (hasmiss ? SaomMaskedStatistic(Gwork, M, missMask) : M.full_statistic(Gwork))
@@ -3695,6 +3780,11 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 					// choice, since it never changed during the fit.
 					if (hasratecov) cres = SaomSimIntCountedRateCov(Gwork, M, theta, ratecur, ratecovattr, ratecoefCur, present, fntype)
 					else if (hasnetgate) cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur, present, fntype)
+					// Structural zeros/ones - see the identical-shaped
+					// SaomSimulateIntervalScored() branch above for the
+					// full account (not combinable with ratecov()/
+					// netgate, enforced by nwsaom.ado).
+					else if (hasstructural) cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur, (haspresent ? present : J(Gwork.n,1,1)), J(1,0,0), structural)
 					else if (haspresent) cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur, present)
 					else cres = SaomSimulateIntervalCounted(Gwork, M, theta, ratecur)
 					rawstat = (hasmiss ? SaomMaskedStatistic(Gwork, M, missMask) : M.full_statistic(Gwork))
@@ -3858,6 +3948,9 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 			// as fit.theta/fit.rate already get here.
 			if (hasratecov) sres = SaomSimIntScoredRateCov(Gwork, M, fit.theta, fit.rate, ratecovattr, fit.ratecoef, present, fntype)
 			else if (hasnetgate) sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate, present, fntype)
+			// Structural zeros/ones - see the identical-shaped phase-2/3
+			// branch above for the full account.
+			else if (hasstructural) sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate, (haspresent ? present : J(Gwork.n,1,1)), J(1,0,0), structural)
 			else if (haspresent) sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate, present)
 			else sres = SaomSimulateIntervalScored(Gwork, M, fit.theta, fit.rate)
 			rawstat = (hasmiss ? SaomMaskedStatistic(Gwork, M, missMask) : M.full_statistic(Gwork))

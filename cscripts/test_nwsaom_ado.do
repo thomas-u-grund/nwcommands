@@ -1316,3 +1316,48 @@ assert r(mems_lb) <= r(mems_ub)
 assert r(mems_p) >= 0 & r(mems_p) <= 1
 
 di as text "nwsaom_estat.ado estat mems (Micro Effects on Macro Structure) PASS"
+
+* --- structural(): structural zeros/ones (2026-09-02) - RSiena's own
+* separate, simpler "structural values" mechanism (a dyad's value is
+* fixed by design, not merely unobserved), source-verified against
+* NetworkVariable.cpp's own `valid = !pData->structural(i, j, period)`
+* candidacy gate. This .ado-level smoke test only re-certifies the
+* option-parsing/validation/dispatch contract on this file's own toy
+* network; the Mata-level mechanism (frozen dyads never toggle, free
+* dyads toggle normally) and a real RSiena cross-check are independently
+* verified in dev/saom_structural_crosscheck.do,
+* dev/saom_structural_ado_crosscheck.do, and
+* dev/saom_structural_rsiena_crosscheck.R/.do.
+
+nwclear
+nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(structw1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(structw2) labs(A,B,C,D,E,F)
+
+* A<->C is mutually tied, identically at both waves - eligible to be
+* frozen.
+matrix structfrozen = J(6,6,0)
+matrix structfrozen[1,3] = 1
+matrix structfrozen[3,1] = 1
+
+* a well-identified fit with structural() converges end-to-end.
+set seed 7
+nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structfrozen) k0(20) k3(200) rate0(1.5) seed(7)
+assert colsof(e(b)) == 2
+
+* A->D genuinely differs between waves (0 then 1) - marking it
+* structural is rejected outright, not silently accepted.
+matrix structbad = J(6,6,0)
+matrix structbad[1,4] = 1
+matrix structbad[4,1] = 1
+capture nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structbad) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+* not yet combinable with symmetric/ratecov()/waves()/behavior() - each
+* a clear v1-scope error, not a crash.
+capture nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structfrozen) symmetric k0(5) k3(20) seed(1)
+assert _rc == 198
+gen byte grp = mod(_n,2)
+capture nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity ratecov(grp) structural(structfrozen) k0(5) k3(20) seed(1)
+assert _rc == 198
+
+di as text "nwsaom.ado structural() (structural zeros/ones) PASS"

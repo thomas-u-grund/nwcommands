@@ -179,7 +179,7 @@ program nwsaom, eclass
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHTHETA0(string) ///
-		PRESENT(string) MISSNET(string) MISSBEH(string) ///
+		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(real 1) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) ]
@@ -450,6 +450,74 @@ program nwsaom, eclass
 	}
 	local __nwsaom_hasmiss = (`__nwsaom_hasmissnet' | `__nwsaom_hasmissbeh')
 
+	// --- structural(): structural zeros/ones ("expansion", 2026-09-02) -
+	// RSiena's own SIMPLER alternative to present()'s "joiners and
+	// leavers" (Section 5.3.3 of the manual): certain DYADS, not actors,
+	// are fixed/frozen at whatever value they hold, with no change to
+	// ministep sampling eligibility for that specific dyad - unlike
+	// present()'s per-actor absence, structural() never removes an actor
+	// from the risk set, it just removes ONE dyad from being toggleable.
+	// Real RSiena's own R-facing convention embeds this directly in the
+	// network array via special values 10/11 (structural zero/one,
+	// auto-detected and split out internally, confirmed directly from
+	// its own changeToStructural() source) - this port instead takes a
+	// SEPARATE n x n 0/1 mask matrix, matching this file's own missnet()
+	// precedent (a raw Stata matrix, not embedded sentinel values in the
+	// wave data itself) rather than porting RSiena's own R-level
+	// encoding convention.
+	//
+	// v1 scope (a real, disclosed limit, not silently narrow): exactly
+	// TWO waves (wave1()/wave2(), not waves()), network-only (no
+	// behavior()), and not combinable with symmetric/ratecov()/
+	// outdegreeendow()/reciprocitycreation() (network endow/creation) -
+	// each would need its own real verification this pass did not do.
+	// Native is force-disabled whenever structural() is active
+	// (unw_saom.do's own SaomEstimateRM() header comment) - a disclosed
+	// follow-on, not a correctness gap; the Mata fallback is fully
+	// certified (dev/saom_structural_crosscheck.do).
+	local __nwsaom_hasstructural = 0
+	if "`structural'" != "" {
+		if `__nwsaom_multi' {
+			di "{err}option {bf:structural()} is v1 scope: exactly two waves ({bf:wave1()}/{bf:wave2()}, not {bf:waves()})."
+			error 198
+		}
+		if `__nwsaom_coev' {
+			di "{err}option {bf:structural()} is v1 scope: network-only, not combinable with {bf:behavior()}."
+			error 198
+		}
+		if "`symmetric'" != "" {
+			di "{err}option {bf:structural()} is v1 scope: not yet combinable with {bf:symmetric}."
+			error 198
+		}
+		if "`ratecov'" != "" {
+			di "{err}option {bf:structural()} is v1 scope: not yet combinable with {bf:ratecov()}."
+			error 198
+		}
+		if "`outdegreeendow'" != "" | "`outdegreecreation'" != "" | "`reciprocityendow'" != "" | "`reciprocitycreation'" != "" {
+			di "{err}option {bf:structural()} is v1 scope: not yet combinable with {bf:outdegreeendow()}/{bf:outdegreecreation()}/{bf:reciprocityendow()}/{bf:reciprocitycreation()} (network endowment/creation)."
+			error 198
+		}
+		confirm matrix `structural'
+		tempname __nwsaom_structcheck
+		mata: `__nwsaom_structcheck' = st_matrix("`structural'")
+		mata: st_local("__nwsaom_struct_dimok", strofreal(rows(`__nwsaom_structcheck') == `nodes' & cols(`__nwsaom_structcheck') == `nodes'))
+		if `__nwsaom_struct_dimok' == 0 {
+			di "{err}option {bf:structural()} matrix must be `nodes' x `nodes' (one row/column per actor) - `structural' is not."
+			error 198
+		}
+		mata: st_local("__nwsaom_struct_ok", strofreal(all((`__nwsaom_structcheck' :== 0) :| (`__nwsaom_structcheck' :== 1))))
+		if `__nwsaom_struct_ok' == 0 {
+			di "{err}option {bf:structural()} matrix must be coded 0/1 (1=dyad frozen, not toggleable this period) - `structural' has a value outside {0,1}."
+			error 198
+		}
+		mata: st_local("__nwsaom_struct_diagok", strofreal(sum(diagonal(`__nwsaom_structcheck')) == 0))
+		if `__nwsaom_struct_diagok' == 0 {
+			di "{err}option {bf:structural()} matrix must have an all-zero diagonal (no self-ties)."
+			error 198
+		}
+		local __nwsaom_hasstructural = 1
+	}
+
 	// --- harmonisation unit 167 (network-side endowment/creation):
 	// outdegreeendow/outdegreecreation and reciprocityendow/
 	// reciprocitycreation are a real, RSiena-native alternative role split
@@ -572,6 +640,26 @@ program nwsaom, eclass
 				error 198
 			}
 			mata: __nwsaom_missnet_last = SaomImputeNetworkWave(__nwsaom_last_G`__w', __nwsaom_missnet_w`__w', __nwsaom_missnet_last)
+		}
+	}
+
+	// --- structural(): build the Mata mask and verify every dyad marked
+	// frozen genuinely holds the SAME observed value at both waves - a
+	// structural dyad that differs between wave1/wave2 in the real data
+	// would mean something toggled it despite being declared frozen, a
+	// real data/declaration mismatch, not something to silently accept
+	// (RSiena's own manual describes structural values as externally
+	// fixed/known, never a genuinely observed change). Built here, AFTER
+	// missnet()'s own imputation above (so this reads the FINAL,
+	// determinate wave graphs, not raw possibly-missing input) and
+	// BEFORE the dispatch call further below needs it.
+	if `__nwsaom_hasstructural' {
+		capture mata: mata drop __nwsaom_structmat
+		mata: __nwsaom_structmat = st_matrix("`structural'")
+		mata: st_local("__nwsaom_struct_matchok", strofreal(SaomStructuralMatchesWaves(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_structmat)))
+		if `__nwsaom_struct_matchok' == 0 {
+			di "{err}option {bf:structural()} marks a dyad as frozen whose observed value genuinely differs between wave1 and wave2 - a structural dyad must hold the SAME value at every wave (RSiena's own manual: structural values are externally fixed, never a genuinely observed change)."
+			error 198
 		}
 	}
 
@@ -1756,6 +1844,33 @@ program nwsaom, eclass
 			mata: __nwsaom_nomissmask1 = J(`nodes', `nodes', 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_allpresent1, __nwsaom_nomissmask1, __nwsaom_netfntype)
+		}
+		else if `__nwsaom_hasstructural' {
+			// Structural zeros/ones - reaching SaomEstimateRM()'s own
+			// trailing `structural' argument requires present/missMask/
+			// fntype/ratecovattr/ratecoef/symtype to also be supplied
+			// first (Mata's own optional-argument ordering rule) -
+			// reuses __nwsaom_present1/__nwsaom_missmask1 (already built
+			// above whenever present()/missnet() are ALSO active) or an
+			// all-present/all-zero no-op placeholder otherwise, matching
+			// this file's own established pattern for every other
+			// chained-optional case (symmetric/ratecov/hasnetgate above).
+			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
+				mata: __nwsaom_struct_present = __nwsaom_present1
+			}
+			else {
+				mata: __nwsaom_struct_present = J(`nodes', 1, 1)
+			}
+			if `__nwsaom_hasmiss' {
+				mata: __nwsaom_struct_missmask = __nwsaom_missmask1
+			}
+			else {
+				mata: __nwsaom_struct_missmask = J(`nodes', `nodes', 0)
+			}
+			mata: __nwsaom_struct_fntype = J(1, __nwsaom_last_M.nterms, 0)
+			mata: __nwsaom_struct_ratecovattr = J(0, 1, 0)
+			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
+				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_struct_present, __nwsaom_struct_missmask, __nwsaom_struct_fntype, __nwsaom_struct_ratecovattr, 0, 0, __nwsaom_structmat)
 		}
 		else if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///

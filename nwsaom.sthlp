@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.1.0  02sep2026 author: Thomas Grund}{...}
+{* *! version 1.2.0  02sep2026 author: Thomas Grund}{...}
 {marker topic}
 {helpb nw_topical##analysis_statmodels:[NW-2.6.6] Statistical Estimation of Networks}
 
@@ -123,6 +123,7 @@
 {synopt:{opth present(varlist)}}Composition change ("joiners and leavers"): one 0/1 variable per wave, same "one variable per wave" convention as {opt behavior()}, marking which actors are present at each wave. Optional - omitting it means every actor is present the whole time. See {help nwsaom##compchange:Composition change} below{p_end}
 {synopt:{opt missnet(matlist)}}Missing tie data: one 0/1 n x n MATRIX name per wave, marking which dyads are missing at that wave. Optional - omitting it means every dyad is fully observed. See {help nwsaom##missingdata:Missing data} below{p_end}
 {synopt:{opth missbeh(varlist)}}Missing behavior data: one 0/1 variable per wave, same "one variable per wave" convention as {opt present()}, marking which actors' behavior value is missing at that wave. Requires {opt behavior()}. Optional - omitting it means every actor's value is fully observed. See {help nwsaom##missingdata:Missing data} below{p_end}
+{synopt:{opt structural(matname)}}Structural zeros/ones: ONE 0/1 n x n MATRIX (zero diagonal) marking dyads whose tie value is fixed by design rather than actor choice (e.g. a legally mandated reporting tie, or a dyad known a priori to never form) - a marked dyad is excluded from every actor's own ministep candidate set, so it can never toggle during simulation. The marked dyad's OBSERVED value must be identical at both waves (a "frozen" dyad that genuinely changed between waves is rejected outright, matching RSiena's own structural-value convention that a fixed dyad's data must actually be constant). v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no {opt behavior()}); not yet combinable with {opt symmetric}, {opt ratecov()}, or the network endowment/creation split. See {help nwsaom##structural:Structural zeros/ones} below{p_end}
 
 {marker ratecov_options}{...}
 {syntab:Covariate-dependent rate}
@@ -803,10 +804,45 @@ post-hoc refinement ({cmd:e(rate)}/{cmd:e(rates)} stay at their closed-form star
 masking support yet, a disclosed, scoped-out follow-up.
 
 {pstd}
-{bf:Genuinely out of scope}: real RSiena's own "structural zeros/ones" mechanism (a separate,
-simpler alternative to ordinary missing data - not implemented); missing COVARIATE data
-({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/{opt simcov()} etc. must be fully observed);
-native (C) backend support for the rate parameter's own post-hoc refinement under missing data.
+{bf:Genuinely out of scope}: missing COVARIATE data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
+{opt simcov()} etc. must be fully observed); native (C) backend support for the rate parameter's own
+post-hoc refinement under missing data. Real RSiena's own "structural zeros/ones" mechanism - a
+separate, simpler alternative to ordinary missing data for dyads whose value is fixed by design
+rather than merely unobserved - IS implemented; see {help nwsaom##structural:Structural zeros/ones}
+below.
+
+{marker structural}{...}
+{title:Structural zeros/ones}
+
+{pstd}
+{opt structural(matname)} marks dyads whose tie value is fixed by design rather than a genuine actor
+choice - real RSiena's own "structural values" mechanism (a DIFFERENT, simpler idea than the missing
+data above: a structural dyad's value is not unknown, it is known and unchangeable, e.g. a legally
+mandated reporting relationship, a physically impossible tie, or a dyad an analyst wants held fixed
+for a counterfactual). Real RSiena marks a structural dyad by embedding sentinel values 10 (structural
+zero)/11 (structural one) directly in the network data array; this port uses a SEPARATE 0/1 mask
+matrix instead, matching {opt missnet()}'s own separate-matrix convention rather than RSiena's
+embedded-sentinel one.
+
+{pstd}
+{opt structural(matname)} takes ONE 0/1 n x n MATRIX (a raw Stata matrix, not an {cmd:nwset} network
+object - build one with {cmd:matrix input} or {cmd:mkmat}), zero diagonal, 1 marking a dyad whose tie
+value is frozen for the whole period. The marked dyad's OBSERVED value must be IDENTICAL at both
+{opt wave1()}/{opt wave2()} - a dyad that genuinely changed between waves cannot be structural (its
+value was evidently not fixed) and is rejected outright with an error, rather than silently ignored.
+
+{pstd}
+Mechanically, a structural dyad is excluded from every actor's own ministep candidate set during
+simulation - {opt outdegree}/{opt reciprocity}/etc.'s own statistic and change functions are reused
+completely unchanged (the dyad simply never appears as a toggle option), so no per-effect
+special-casing was needed, mirroring the design of {opt missnet()} above.
+
+{pstd}
+v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no
+{opt behavior()}); not yet combinable with {opt symmetric}, {opt ratecov()}, or the network
+endowment/creation split ({opt outdegreeendow}/{opt outdegreecreation}/{opt reciprocityendow}/
+{opt reciprocitycreation}) - each is rejected outright when combined with {opt structural()}. Uses
+the Mata engine only (no native speed-up yet).
 
 {marker estimation}{...}
 {title:Estimation}
