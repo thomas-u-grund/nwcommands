@@ -138,6 +138,7 @@
 {p2col:    {bf:{help nwcloseness }}}Calculate closeness centrality{p_end}
 {p2col:    {bf:{help nwdegree }}}Degree centrality and distribution{p_end}
 {p2col:    {bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
+{p2col:    {bf:{help nwinduced }}}Induced, endogenous and exogenous centrality{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:    {bf:{help nwpagerank }}}PageRank centrality{p_end}
 {marker analysis_cohesion}{...}
@@ -210,6 +211,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
+{p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice and rate sub-models (MLE){p_end}
 {p2col:    {bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}

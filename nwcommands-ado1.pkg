@@ -56,6 +56,7 @@ f nwds.ado
 f nwduplicate.ado
 f nwdyadprob.ado
 f nwdyads.ado
+f nwdynam.ado
 f nwego.ado
 f nwergm.ado
 f nwergm_estat.ado
@@ -70,6 +71,7 @@ f nwgeodesic.ado
 f nwhierarchy.ado
 f nwhomophily.ado
 f nwimport.ado
+f nwinduced.ado
 f nwinstall.ado
 f nwissymmetric.ado
 f nwkatz.ado

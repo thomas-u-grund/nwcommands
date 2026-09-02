@@ -73,6 +73,7 @@
 {p2col:{bf:{help nwduplicate }}}Duplicate a network{p_end}
 {p2col:{bf:{help nwdyadprob }}}Generate a network based on tie probabilities{p_end}
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
+{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice and rate sub-models (MLE){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
 {p2col:{bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
 {p2col:{bf:{help nwergm_estat }}}Postestimation tools for {cmd:nwergm}{p_end}
@@ -88,6 +89,7 @@
 {p2col:{bf:{help nwhierarchy }}}Hierarchical clustering of nodes (role/position analysis){p_end}
 {p2col:{bf:{help nwhomophily }}}Generate a homophily network{p_end}
 {p2col:{bf:{help nwimport }}}Import network{p_end}
+{p2col:{bf:{help nwinduced }}}Induced, endogenous and exogenous centrality{p_end}
 {p2col:{bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
 {p2col:{bf:{help nwissymmetric }}}Check if network is symmetric{p_end}
 {p2col:{bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}

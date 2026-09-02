@@ -15,6 +15,15 @@
 #                     coordination note) - added here as a third
 #                     independent plugin target, touching neither of the
 #                     other two targets below.
+#   - dynam_sim.c    nwdynam (DyNAM) log-likelihood/gradient kernel -
+#                     see ../docs/DYNAM_ROADMAP.md and dynam_sim.c's own
+#                     header. A fourth independent plugin target,
+#                     touching none of the three above - unlike
+#                     ergm_mcmc.c/saom_sim.c (full sampling/simulation
+#                     loops in C), this one accelerates only the hot
+#                     inner likelihood/gradient evaluation Mata's own
+#                     optimize() calls repeatedly; the optimizer itself
+#                     stays in Mata.
 #
 # Output layout: ../lib/plugins/<platform>/<name>*.plugin - one
 # subdirectory per platform (harmonisation unit 87), not a single shared
@@ -42,7 +51,7 @@
 #     documented macOS plugin build recipe at stata.com/plugins/) ---
 #
 #   make macos              (builds every plugin)
-#   make macos-ergm_mcmc     make macos-nwgraph     make macos-saom_sim     (build just one)
+#   make macos-ergm_mcmc     make macos-nwgraph     make macos-saom_sim     make macos-dynam_sim     (build just one)
 #
 # --- Windows (built automatically by CI - see ../.github/workflows/
 #     build-plugins.yml - once this repo lives on GitHub; NOT built or
@@ -56,13 +65,15 @@
 #        /Fe:..\lib\plugins\windows\nwgraph.plugin
 #     cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c ^
 #        /Fe:..\lib\plugins\windows\saom_sim.plugin
+#     cl /LD /DSYSTEM=STWIN32 /I spi dynam_sim.c spi\stplugin.c ^
+#        /Fe:..\lib\plugins\windows\dynam_sim.plugin
 #
 # --- Linux (built automatically by CI, same reason as Windows above -
 #     no Linux toolchain/cross-compiler or Docker was available in the
 #     environment this unit was authored in) ---
 #
 #   make unix                (builds every plugin)
-#   make unix-ergm_mcmc        make unix-nwgraph      make unix-saom_sim      (build just one)
+#   make unix-ergm_mcmc        make unix-nwgraph      make unix-saom_sim      make unix-dynam_sim      (build just one)
 #
 #   (Stata expects a Unix plugin named "<progname>_unix.plugin"
 #   specifically - unlike the Mac ".plugin" and Windows ".dll"/".plugin"
@@ -72,9 +83,9 @@
 CC = clang
 CFLAGS = -O2 -Wall -Ispi
 
-.PHONY: macos unix clean macos-ergm_mcmc macos-nwgraph macos-saom_sim unix-ergm_mcmc unix-nwgraph unix-saom_sim
+.PHONY: macos unix clean macos-ergm_mcmc macos-nwgraph macos-saom_sim macos-dynam_sim unix-ergm_mcmc unix-nwgraph unix-saom_sim unix-dynam_sim
 
-macos: macos-ergm_mcmc macos-nwgraph macos-saom_sim
+macos: macos-ergm_mcmc macos-nwgraph macos-saom_sim macos-dynam_sim
 
 macos-ergm_mcmc:
 	mkdir -p ../lib/plugins/macos
@@ -112,11 +123,23 @@ macos-saom_sim:
 	@echo "Built ../lib/plugins/macos/saom_sim.plugin"
 	@file ../lib/plugins/macos/saom_sim.plugin
 
+macos-dynam_sim:
+	mkdir -p ../lib/plugins/macos
+	$(CC) -bundle -o dynam_sim.x86_64 dynam_sim.c spi/stplugin.c \
+		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
+	$(CC) -bundle -o dynam_sim.arm64 dynam_sim.c spi/stplugin.c \
+		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
+	lipo -create -output ../lib/plugins/macos/dynam_sim.plugin dynam_sim.x86_64 dynam_sim.arm64
+	codesign -s - ../lib/plugins/macos/dynam_sim.plugin
+	rm -f dynam_sim.x86_64 dynam_sim.arm64
+	@echo "Built ../lib/plugins/macos/dynam_sim.plugin"
+	@file ../lib/plugins/macos/dynam_sim.plugin
+
 # Run only on an actual Linux host (or Linux CI runner) - `gcc -shared`
 # targeting OPUNIX is meaningless cross-compiled from macOS without a
 # genuine Linux sysroot/toolchain, which this development environment did
 # not have.
-unix: unix-ergm_mcmc unix-nwgraph unix-saom_sim
+unix: unix-ergm_mcmc unix-nwgraph unix-saom_sim unix-dynam_sim
 
 unix-ergm_mcmc:
 	mkdir -p ../lib/plugins/unix
@@ -139,8 +162,17 @@ unix-saom_sim:
 	@echo "Built ../lib/plugins/unix/saom_sim_unix.plugin"
 	@file ../lib/plugins/unix/saom_sim_unix.plugin
 
+unix-dynam_sim:
+	mkdir -p ../lib/plugins/unix
+	gcc -shared -fPIC -DSYSTEM=OPUNIX $(CFLAGS) -o ../lib/plugins/unix/dynam_sim_unix.plugin \
+		dynam_sim.c spi/stplugin.c -ldl
+	@echo "Built ../lib/plugins/unix/dynam_sim_unix.plugin"
+	@file ../lib/plugins/unix/dynam_sim_unix.plugin
+
 clean:
 	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 nwgraph.x86_64 nwgraph.arm64 saom_sim.x86_64 saom_sim.arm64 \
+		dynam_sim.x86_64 dynam_sim.arm64 \
 		../lib/plugins/macos/ergm_mcmc.plugin ../lib/plugins/unix/ergm_mcmc_unix.plugin \
 		../lib/plugins/macos/nwgraph.plugin ../lib/plugins/unix/nwgraph_unix.plugin \
-		../lib/plugins/macos/saom_sim.plugin ../lib/plugins/unix/saom_sim_unix.plugin
+		../lib/plugins/macos/saom_sim.plugin ../lib/plugins/unix/saom_sim_unix.plugin \
+		../lib/plugins/macos/dynam_sim.plugin ../lib/plugins/unix/dynam_sim_unix.plugin

@@ -3,10 +3,16 @@ name: Build native plugins
 # Harmonisation unit 87 (phase C, cross-platform native builds -
 # docs/CERTIFICATION.md), extended in unit 95 to also build nwgraph.c
 # (docs/NATIVE_GRAPH_LIBRARIES.md's own native graph-algorithm kernel -
-# currently betweenness centrality), and again (2026-08-29) to also build
-# saom_sim.c (nwsaom's own native ministep-simulation kernel) - it was
-# already a dependency of native/Makefile's own `macos`/`unix` targets,
-# so macOS/Linux were silently already BUILDING it and just never
+# currently betweenness centrality), again (2026-08-29) to also build
+# saom_sim.c (nwsaom's own native ministep-simulation kernel), and again
+# (2026-09-02) to also build dynam_sim.c (nwdynam's own native
+# log-likelihood/gradient kernel - see docs/DYNAM_ROADMAP.md and
+# dynam_sim.c's own header; unlike saom_sim.c/ergm_mcmc.c, this plugin
+# does not run a full sampling/simulation loop in C - it accelerates
+# only the hot inner evaluation Mata's own optimize() calls repeatedly,
+# the optimizer itself stays in Mata). Each addition was already a
+# dependency of native/Makefile's own `macos`/`unix` targets, so
+# macOS/Linux were silently already BUILDING it and just never
 # uploading/committing it; Windows never even compiled it. No Windows/Linux
 # toolchain or
 # cross-compiler was available in the environment this workflow was
@@ -67,6 +73,7 @@ jobs:
             lib/plugins/macos/ergm_mcmc.plugin
             lib/plugins/macos/nwgraph.plugin
             lib/plugins/macos/saom_sim.plugin
+            lib/plugins/macos/dynam_sim.plugin
             lib/plugins/macos/nwedit_viewer
 
   windows:
@@ -94,6 +101,7 @@ jobs:
           cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
           cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph.plugin
           cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c /Fe:..\lib\plugins\windows\saom_sim.plugin
+          cl /LD /DSYSTEM=STWIN32 /I spi dynam_sim.c spi\stplugin.c /Fe:..\lib\plugins\windows\dynam_sim.plugin
       - name: Fetch WebView2 SDK + WIL headers (nwedit_viewer dependency)
         shell: cmd
         run: |
@@ -117,6 +125,7 @@ jobs:
             lib/plugins/windows/nwedit_viewer.exe
             lib/plugins/windows/nwgraph.plugin
             lib/plugins/windows/saom_sim.plugin
+            lib/plugins/windows/dynam_sim.plugin
 
   linux:
     runs-on: ubuntu-latest
@@ -142,6 +151,7 @@ jobs:
             lib/plugins/unix/ergm_mcmc_unix.plugin
             lib/plugins/unix/nwgraph_unix.plugin
             lib/plugins/unix/saom_sim_unix.plugin
+            lib/plugins/unix/dynam_sim_unix.plugin
             lib/plugins/unix/nwedit_viewer
 
   commit-binaries:
