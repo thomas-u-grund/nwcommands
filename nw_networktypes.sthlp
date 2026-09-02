@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 1.0.0  24aug2026}{...}
+{* *! version 1.1.0  02sep2026}{...}
 {marker topic}
 {helpb nw_topical##utilities:[NW-2.7] Utilities}
 
@@ -44,6 +44,66 @@ bipartite analogue and needs its own definition), not because the package needs 
 just to recognize the network type. Where a one-mode command's statistic degrades gracefully or
 redirects cleanly (e.g. {help nwdegree} on a two-mode network), it does so automatically and says so
 in its own {bf:Supported network types} section rather than raising an error.
+
+{title:Weighted (valued) networks}
+
+{pstd}
+A network is {it:valued} (weighted) when its ties carry a real number, not just presence/absence -
+set automatically whenever {help nwset}, {help nwfromedge}, or an import command is given tie
+values other than a plain 0/1 indicator, and readable via {help nwsummarize}/{help nwname}'s own
+{cmd:valued} field. As with two-mode status, ordinary commands do not need a special flag to tell
+them a network is valued; each command's own {bf:Supported network types} section states what it
+actually does with the tie values.
+
+{pstd}
+Three patterns cover almost every command in this package:
+
+{phang2}
+{bf:1. Native (W1)} - the tie value enters the calculation directly, with one well-defined
+formula for the whole [0,1] weighted-to-binary spectrum. Most centrality/cohesion commands with a
+weighted variant follow Opsahl, Agneessens and Skvoretz (2010)'s own generalized-degree convention:
+{it:k_i * (s_i/k_i)^alpha}, where {it:k_i} is the plain tie count and {it:s_i} is the tie-value sum
+("strength"). {opt alpha(0)} always reduces this back to plain unweighted degree exactly - not
+approximately - so a command gaining this option never changes an existing unweighted result;
+{opt alpha(1)} gives pure strength; values in between blend the two. {help nwdegree} and
+{help nw2degree} (one-mode and two-mode degree respectively) both use this exact formula;
+{help nwbetween}'s {opt weighted} option uses the same {opt alpha()} convention to turn tie
+strength into a Dijkstra path cost instead ({help nwgeodesic}/{help nwkatz} do too, for distance);
+{help nwconstraint}/{help nwburt} use tie weight directly as Burt's own investment-proportion
+formula, with no separate binary mode at all.
+
+{phang2}
+{bf:2. Optional, explicit toggle (W2)} - a command supports both a binary and a weighted
+formulation, selected by an option rather than assumed from the network's own valued/unvalued
+status. {help nwclustering}/{help nwcommunity}/{help nwconcor}/{help nw2clustering}'s own
+{opt measure(binary|valued)} is the recurring convention here (usually defaulting to whichever
+matches the loaded network, documented explicitly in each command's own help file, never silently
+picked).
+
+{phang2}
+{bf:3. Binary-only, documented (W3)} - the command has a single, dichotomized formulation and
+says so plainly (e.g. {help nwtriads}' triad census, {help nwclique}'s clique membership,
+{help nwcomponents}' weak-connectivity components) - not a gap, since no standard weighted
+generalization of the underlying concept exists in the literature, but worth checking a command's
+own help file before assuming tie strength is being used.
+
+{pstd}
+A tie value of exactly 0 and "no tie at all" are treated identically almost everywhere in this
+package (both mean "not connected") - a network with meaningful zero-valued ties distinct from
+missing ones needs a workaround (e.g. a small constant offset) rather than being handled natively.
+{bf:Negative (signed) tie values} are a separate, much less consistently supported dimension - most
+commands' own "Signed" field in their {bf:Supported network types} section reads "not checked" or
+"not supported", meaning a negative weight is not distinguished from an unusually low positive one
+in most formulas (an explicit exception: {help nwbalance}, which exists specifically to classify
+triads by tie sign). Checking a specific command's own {bf:Signed} field before relying on negative
+ties is worth doing explicitly - do not assume support carries over from a command's own weighted
+(W1/W2) status.
+
+{pstd}
+{help nwsummarize} reports whether a loaded network is valued directly:
+
+	{cmd:. nwwebuse florentine, nwclear}
+	{cmd:. nwsummarize flomarriage}
 
 {title:Reading a "Supported network types" section}
 
