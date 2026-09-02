@@ -118,13 +118,28 @@ jobs:
       - name: Build nwedit_viewer (chromeless interactive-view launcher)
         shell: cmd
         run: |
+          rem BUGFIX (2026-09-02): /Fe: is a cl.exe compiler-driver flag, not
+          rem a link.exe flag - once /link appears on the command line,
+          rem everything after it is passed straight to link.exe verbatim,
+          rem which does not understand /Fe: (its own equivalent is /OUT:)
+          rem and silently ignores it. That left /Fe: previously placed
+          rem AFTER /link with no effect at all: the linker fell back to
+          rem its own default output name (nwedit_viewer_win.exe, next to
+          rem the .obj, in native/) instead of writing to
+          rem lib\plugins\windows\nwedit_viewer_windows.exe - so the file
+          rem this job's own upload-artifact step looked for never
+          rem existed, silently (no error at any step; confirmed directly
+          rem by inspecting a real run's own linker command echo, which
+          rem showed "/out:nwedit_viewer_win.exe", not the intended path).
+          rem /Fe: must come BEFORE /link to be interpreted by cl.exe
+          rem itself.
           cl /EHsc /DUNICODE /D_UNICODE ^
+            /Fe:lib\plugins\windows\nwedit_viewer_windows.exe ^
             /I packages\Microsoft.Web.WebView2.1.0.2592.51\build\native\include ^
             /I packages\Microsoft.Windows.ImplementationLibrary.1.0.240122.1\include ^
             native\nwedit_viewer_win.cpp ^
             /link /LIBPATH:packages\Microsoft.Web.WebView2.1.0.2592.51\build\native\x64 ^
-            WebView2LoaderStatic.lib shlwapi.lib user32.lib ole32.lib shell32.lib advapi32.lib ^
-            /Fe:lib\plugins\windows\nwedit_viewer_windows.exe
+            WebView2LoaderStatic.lib shlwapi.lib user32.lib ole32.lib shell32.lib advapi32.lib
       - uses: actions/upload-artifact@v4
         with:
           name: plugins-windows
