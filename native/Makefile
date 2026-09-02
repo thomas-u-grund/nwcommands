@@ -25,19 +25,25 @@
 #                     optimize() calls repeatedly; the optimizer itself
 #                     stays in Mata.
 #
-# Output layout: ../lib/plugins/<platform>/<name>*.plugin - one
-# subdirectory per platform (harmonisation unit 87), not a single shared
-# path, because macOS's and Windows's own plugins would otherwise both be
-# named "<name>.plugin" and collide at the same location once all three
-# platforms' binaries ship from the same commit (built by separate CI
-# runners - see ../.github/workflows/build-plugins.yml - not chosen
-# one-at-a-time by a single developer's own machine). Each plugin's own
+# Output layout: ../lib/plugins/<platform>/<name>_<platform>.plugin - one
+# subdirectory per platform (harmonisation unit 87) AND a platform suffix
+# on every filename (harmonisation 2026-09-02, docs/CERTIFICATION.md).
+# Both matter for a different reason: the per-platform subdirectory keeps
+# this repo's own dev-mode lookup (a raw git checkout, `adopath ++
+# <repo-root>`) working; the per-platform SUFFIX is what actually matters
+# for a real `net install`, which flattens every package file into one
+# shared PLUS folder by basename alone, discarding any subdirectory -
+# without the suffix, macOS's and Windows's own binaries would both be
+# named "<name>.plugin" and silently overwrite each other there (verified
+# directly - see docs/CERTIFICATION.md's own account). Each plugin's own
 # Mata-side dispatcher (unw_ergm.do's ErgmNativePluginPath(), unw_core.do's
-# NativeGraphPluginPath()) picks the right subdirectory/filename for the
-# running platform via c(os), and gracefully falls back to the pure-Mata
-# implementation when a given platform's binary is absent - so a platform
-# this Makefile has not been run on (or cannot target) is simply not
-# accelerated, never broken.
+# NativeGraphPluginPath(), etc.) tries `findfile()` on the platform-
+# specific basename first (what a real net install needs), falling back to
+# the subdirectory-relative path for the dev-checkout case, and gracefully
+# falls back further to the pure-Mata implementation when a given
+# platform's binary is absent altogether - so a platform this Makefile has
+# not been run on (or cannot target) is simply not accelerated, never
+# broken.
 #
 # spi/stplugin.h and spi/stplugin.c are StataCorp's own official Stata
 # Plugin Interface (SPI) version 3.0 files, redistributed here exactly
@@ -60,13 +66,13 @@
 #
 #   From a Visual Studio "x64 Native Tools" command prompt, per plugin:
 #     cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c ^
-#        /Fe:..\lib\plugins\windows\ergm_mcmc.plugin
+#        /Fe:..\lib\plugins\windows\ergm_mcmc_windows.plugin
 #     cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c ^
-#        /Fe:..\lib\plugins\windows\nwgraph.plugin
+#        /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
 #     cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c ^
-#        /Fe:..\lib\plugins\windows\saom_sim.plugin
+#        /Fe:..\lib\plugins\windows\saom_sim_windows.plugin
 #     cl /LD /DSYSTEM=STWIN32 /I spi dynam_sim.c spi\stplugin.c ^
-#        /Fe:..\lib\plugins\windows\dynam_sim.plugin
+#        /Fe:..\lib\plugins\windows\dynam_sim_windows.plugin
 #
 # --- Linux (built automatically by CI, same reason as Windows above -
 #     no Linux toolchain/cross-compiler or Docker was available in the
@@ -93,11 +99,11 @@ macos-ergm_mcmc:
 		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
 	$(CC) -bundle -o ergm_mcmc.arm64 ergm_mcmc.c spi/stplugin.c \
 		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
-	lipo -create -output ../lib/plugins/macos/ergm_mcmc.plugin ergm_mcmc.x86_64 ergm_mcmc.arm64
-	codesign -s - ../lib/plugins/macos/ergm_mcmc.plugin
+	lipo -create -output ../lib/plugins/macos/ergm_mcmc_macos.plugin ergm_mcmc.x86_64 ergm_mcmc.arm64
+	codesign -s - ../lib/plugins/macos/ergm_mcmc_macos.plugin
 	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64
-	@echo "Built ../lib/plugins/macos/ergm_mcmc.plugin"
-	@file ../lib/plugins/macos/ergm_mcmc.plugin
+	@echo "Built ../lib/plugins/macos/ergm_mcmc_macos.plugin"
+	@file ../lib/plugins/macos/ergm_mcmc_macos.plugin
 
 macos-nwgraph:
 	mkdir -p ../lib/plugins/macos
@@ -105,11 +111,11 @@ macos-nwgraph:
 		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
 	$(CC) -bundle -o nwgraph.arm64 nwgraph.c spi/stplugin.c \
 		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
-	lipo -create -output ../lib/plugins/macos/nwgraph.plugin nwgraph.x86_64 nwgraph.arm64
-	codesign -s - ../lib/plugins/macos/nwgraph.plugin
+	lipo -create -output ../lib/plugins/macos/nwgraph_macos.plugin nwgraph.x86_64 nwgraph.arm64
+	codesign -s - ../lib/plugins/macos/nwgraph_macos.plugin
 	rm -f nwgraph.x86_64 nwgraph.arm64
-	@echo "Built ../lib/plugins/macos/nwgraph.plugin"
-	@file ../lib/plugins/macos/nwgraph.plugin
+	@echo "Built ../lib/plugins/macos/nwgraph_macos.plugin"
+	@file ../lib/plugins/macos/nwgraph_macos.plugin
 
 macos-saom_sim:
 	mkdir -p ../lib/plugins/macos
@@ -117,11 +123,11 @@ macos-saom_sim:
 		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
 	$(CC) -bundle -o saom_sim.arm64 saom_sim.c spi/stplugin.c \
 		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
-	lipo -create -output ../lib/plugins/macos/saom_sim.plugin saom_sim.x86_64 saom_sim.arm64
-	codesign -s - ../lib/plugins/macos/saom_sim.plugin
+	lipo -create -output ../lib/plugins/macos/saom_sim_macos.plugin saom_sim.x86_64 saom_sim.arm64
+	codesign -s - ../lib/plugins/macos/saom_sim_macos.plugin
 	rm -f saom_sim.x86_64 saom_sim.arm64
-	@echo "Built ../lib/plugins/macos/saom_sim.plugin"
-	@file ../lib/plugins/macos/saom_sim.plugin
+	@echo "Built ../lib/plugins/macos/saom_sim_macos.plugin"
+	@file ../lib/plugins/macos/saom_sim_macos.plugin
 
 macos-dynam_sim:
 	mkdir -p ../lib/plugins/macos
@@ -129,11 +135,11 @@ macos-dynam_sim:
 		-DSYSTEM=APPLEMAC -target x86_64-apple-macos10.11 $(CFLAGS)
 	$(CC) -bundle -o dynam_sim.arm64 dynam_sim.c spi/stplugin.c \
 		-DSYSTEM=APPLEMAC -target arm64-apple-macos11 $(CFLAGS)
-	lipo -create -output ../lib/plugins/macos/dynam_sim.plugin dynam_sim.x86_64 dynam_sim.arm64
-	codesign -s - ../lib/plugins/macos/dynam_sim.plugin
+	lipo -create -output ../lib/plugins/macos/dynam_sim_macos.plugin dynam_sim.x86_64 dynam_sim.arm64
+	codesign -s - ../lib/plugins/macos/dynam_sim_macos.plugin
 	rm -f dynam_sim.x86_64 dynam_sim.arm64
-	@echo "Built ../lib/plugins/macos/dynam_sim.plugin"
-	@file ../lib/plugins/macos/dynam_sim.plugin
+	@echo "Built ../lib/plugins/macos/dynam_sim_macos.plugin"
+	@file ../lib/plugins/macos/dynam_sim_macos.plugin
 
 # Run only on an actual Linux host (or Linux CI runner) - `gcc -shared`
 # targeting OPUNIX is meaningless cross-compiled from macOS without a
@@ -172,7 +178,7 @@ unix-dynam_sim:
 clean:
 	rm -f ergm_mcmc.x86_64 ergm_mcmc.arm64 nwgraph.x86_64 nwgraph.arm64 saom_sim.x86_64 saom_sim.arm64 \
 		dynam_sim.x86_64 dynam_sim.arm64 \
-		../lib/plugins/macos/ergm_mcmc.plugin ../lib/plugins/unix/ergm_mcmc_unix.plugin \
-		../lib/plugins/macos/nwgraph.plugin ../lib/plugins/unix/nwgraph_unix.plugin \
-		../lib/plugins/macos/saom_sim.plugin ../lib/plugins/unix/saom_sim_unix.plugin \
-		../lib/plugins/macos/dynam_sim.plugin ../lib/plugins/unix/dynam_sim_unix.plugin
+		../lib/plugins/macos/ergm_mcmc_macos.plugin ../lib/plugins/unix/ergm_mcmc_unix.plugin \
+		../lib/plugins/macos/nwgraph_macos.plugin ../lib/plugins/unix/nwgraph_unix.plugin \
+		../lib/plugins/macos/saom_sim_macos.plugin ../lib/plugins/unix/saom_sim_unix.plugin \
+		../lib/plugins/macos/dynam_sim_macos.plugin ../lib/plugins/unix/dynam_sim_unix.plugin

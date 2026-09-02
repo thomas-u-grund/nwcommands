@@ -111,9 +111,20 @@ program nwinstall
 	}
 
 	if "`ext'" != "" & "`localcopy'" == "" {
+		// BUGFIX (2026-09-02): nwcommands-ext.pkg was renamed to
+		// nwcommands-ext1.pkg to match the numbered adoN/hlpN/dlgN
+		// convention every other package file already uses (it was
+		// the one unnumbered outlier). A user who installed under the
+		// OLD bare "nwcommands-ext" name before this fix would
+		// otherwise be left with a stale duplicate registered
+		// alongside the new "nwcommands-ext1" - uninstall both names
+		// (each `capture'd, since one or both may never have existed
+		// for a given user) so re-running nwinstall always converges
+		// to just the new name.
 		capture ado uninstall "nwcommands-ext"
+		capture ado uninstall "nwcommands-ext1"
 		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
-		net install "nwcommands-ext", all replace
+		net install "nwcommands-ext1", all replace
 	}
 
 
@@ -148,6 +159,7 @@ program nwinstall
 		capture ado uninstall "nwcommands-ado"
 		capture ado uninstall "nwcommands-hlp"
 		capture ado uninstall "nwcommands-ext"
+		capture ado uninstall "nwcommands-ext1"
 		local permanently "permanently"
 	}
 	else {

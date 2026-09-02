@@ -6964,6 +6964,27 @@ real matrix `NWdef'::calculate_betweenness(){
 	unlike nwergm's own ErgmNative* functions, which only ever needed to
 	locate exactly one plugin name and were never generalized.
 */
+/*
+	TWO genuinely different lookup strategies are needed (harmonisation
+	2026-09-02, docs/CERTIFICATION.md - see unw_ergm.do's own
+	ErgmNativePluginPath() for the full account), tried in order:
+	 (1) `findfile()` on the platform-specific basename alone - what
+	     actually finds the plugin after a real `net install`, which
+	     flattens every package "f" line into
+	     PLUS/<firstletter-of-basename>/<basename>, discarding any
+	     declared subdirectory entirely. Distinct per-platform basenames
+	     (macOS and Windows used to share the bare "nwgraph.plugin"
+	     name; only Unix had its own "_unix" suffix) are exactly what
+	     let this same flat PLUS folder hold all three platforms'
+	     binaries at once without collision.
+	 (2) a manually-constructed path relative to nwset.ado's own
+	     directory, `lib/plugins/<os>/<name>' - unreachable after a real
+	     net install (per (1) above) but still needed for a raw git
+	     checkout (`adopath ++ <repo-root>`): `findfile()` does not
+	     search subdirectories of a plain adopath entry, so the nested
+	     lib/plugins/<os>/ layout the repo itself uses is invisible to
+	     strategy (1) alone.
+*/
 string scalar NativeGraphInstallDir(){
 	string scalar full, dir, fn
 
@@ -6983,17 +7004,25 @@ string scalar NativeGraphPluginSubdir(){
 }
 
 string scalar NativeGraphPluginFilename(){
-	if (st_global("c(os)") == "Unix") return("nwgraph_unix.plugin")
-	return("nwgraph.plugin")
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("nwgraph_windows.plugin")
+	if (os == "Unix") return("nwgraph_unix.plugin")
+	return("nwgraph_macos.plugin")
 }
 
 string scalar NativeGraphPluginPath(){
-	string scalar dir
+	string scalar fname, found, dir
+
+	fname = NativeGraphPluginFilename()
+	found = findfile(fname)
+	if (found != "") return(found)
 
 	dir = NativeGraphInstallDir()
 	if (dir == "") return("")
 	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(NativeGraphPluginSubdir(), NativeGraphPluginFilename()))))
+		pathjoin("plugins", pathjoin(NativeGraphPluginSubdir(), fname))))
 }
 
 real scalar NativeGraphAvailable(){
@@ -7027,18 +7056,36 @@ string scalar NweditViewerSubdir(){
 	return("macos")
 }
 
+/*
+	macOS and Unix binaries used to share the bare "nwedit_viewer" name
+	(no extension on either platform) - the one pair in this project's
+	whole native-binary set that DIDN'T already have a Unix-distinguishing
+	suffix, since GUI viewer isn't a Stata plugin. Both now get their own
+	suffix too, for the same reason as every *NativePluginFilename()
+	above (harmonisation 2026-09-02, docs/CERTIFICATION.md) - a real
+	`net install` flattens all three platforms' binaries into ONE shared
+	PLUS folder, so identical basenames collide.
+*/
 string scalar NweditViewerFilename(){
-	if (st_global("c(os)") == "Windows") return("nwedit_viewer.exe")
-	return("nwedit_viewer")
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("nwedit_viewer_windows.exe")
+	if (os == "Unix") return("nwedit_viewer_unix")
+	return("nwedit_viewer_macos")
 }
 
 string scalar NweditViewerPath(){
-	string scalar dir
+	string scalar fname, found, dir
+
+	fname = NweditViewerFilename()
+	found = findfile(fname)
+	if (found != "") return(found)
 
 	dir = NativeGraphInstallDir()
 	if (dir == "") return("")
 	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(NweditViewerSubdir(), NweditViewerFilename()))))
+		pathjoin("plugins", pathjoin(NweditViewerSubdir(), fname))))
 }
 
 real scalar NweditViewerAvailable(){

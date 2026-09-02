@@ -4713,45 +4713,53 @@ mata:
    =================================================================== */
 
 /*
-	Directory containing the installed nwergm.ado (hence, by this
-	project's own dev-repo layout, the sibling lib/plugins/ directory
-	holding the compiled plugin) - "" if nwergm.ado cannot be found on
-	the adopath (should not happen in practice, but ErgmNativeAvailable()
-	below treats that as "native unavailable", falling back to Mata,
-	rather than erroring).
-*/
-string scalar ErgmNativeInstallDir(){
-	string scalar full, dir, fn
-
-	full = findfile("nwergm.ado")
-	if (full == "") return("")
-	pathsplit(full, dir, fn)
-	return(dir)
-}
-
-/*
 	Platform-aware plugin location (harmonisation unit 87,
 	docs/CERTIFICATION.md - phase C, cross-platform native builds).
 	Three different platforms' own compiled plugin binaries need to
 	coexist in the SAME repository/install tree simultaneously (built by
 	separate CI runners on separate operating systems - see
-	.github/workflows/build-plugins.yml - not chosen one-at-a-time by a
-	single developer's own machine the way this project's earlier macOS-
-	only build was). Stata's own plugin-naming convention
-	(".plugin"/"_unix.plugin") is a human/packaging convention for
-	program-name-based auto-discovery via adopath WITHOUT an explicit
-	using() path - since every call site here always passes using() with
-	a full, explicit path (see ErgmNativeSampleCore()), the actual
-	on-disk filename Stata loads is never inferred from the program name,
-	so per-platform SUBDIRECTORIES (rather than colliding on a single
-	shared filename, which macOS's and Windows's own ".plugin" naming
-	would otherwise do) are the simplest, most robust way to ship all
-	three platforms' binaries from one commit without any one of them
-	overwriting another. `c(os)` is read via `st_global("c(os)")` since
-	Mata has no direct OS-detection primitive of its own - confirmed by
-	direct trial to return "MacOSX"/"Windows"/"Unix" on the three
-	platforms Stata supports.
+	.github/workflows/build-plugins.yml). `c(os)` is read via
+	`st_global("c(os)")` since Mata has no direct OS-detection primitive
+	of its own - confirmed by direct trial to return
+	"MacOSX"/"Windows"/"Unix" on the three platforms Stata supports.
+	macOS and Windows used to share the bare "ergm_mcmc.plugin" name
+	(only Unix had its own "_unix" suffix); both now get their own
+	suffix too - see why below.
+
+	TWO genuinely different lookup strategies are needed (harmonisation
+	2026-09-02, docs/CERTIFICATION.md), tried in order:
+	 (1) `findfile()` on the platform-specific basename alone - this is
+	     what actually finds the plugin after a real `net install`,
+	     which flattens every package "f" line into
+	     PLUS/<firstletter-of-basename>/<basename>, discarding any
+	     declared subdirectory entirely (verified directly by installing
+	     a real test package into a scratch PLUS directory - a prior
+	     version of this function instead derived a path relative to
+	     nwergm.ado's own install directory, `lib/plugins/<os>/...',
+	     which is NEVER reachable this way, since net install has no
+	     subdirectory concept at all). Distinct per-platform basenames
+	     are exactly what let this same flat PLUS folder hold all three
+	     platforms' binaries at once without collision.
+	 (2) a manually-constructed path relative to nwergm.ado's own
+	     directory, `lib/plugins/<os>/<name>` - unreachable after a real
+	     net install (per (1) above) but still needed for a raw git
+	     checkout (`adopath ++ <repo-root>`, this project's own
+	     dev-mode/regression-testing convention throughout
+	     cscripts/dev/): `findfile()` does not search subdirectories of
+	     a plain adopath entry (confirmed directly - only PLUS's own
+	     single-letter-subfolder convention gets that treatment), so the
+	     nested lib/plugins/<os>/ layout the repo itself uses is
+	     invisible to strategy (1) alone.
 */
+string scalar ErgmNativePluginFilename(){
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("ergm_mcmc_windows.plugin")
+	if (os == "Unix") return("ergm_mcmc_unix.plugin")
+	return("ergm_mcmc_macos.plugin")
+}
+
 string scalar ErgmNativePluginSubdir(){
 	string scalar os
 
@@ -4761,18 +4769,18 @@ string scalar ErgmNativePluginSubdir(){
 	return("macos")
 }
 
-string scalar ErgmNativePluginFilename(){
-	if (st_global("c(os)") == "Unix") return("ergm_mcmc_unix.plugin")
-	return("ergm_mcmc.plugin")
-}
-
 string scalar ErgmNativePluginPath(){
-	string scalar dir
+	string scalar fname, found, full, dir, fn
 
-	dir = ErgmNativeInstallDir()
-	if (dir == "") return("")
+	fname = ErgmNativePluginFilename()
+	found = findfile(fname)
+	if (found != "") return(found)
+
+	full = findfile("nwergm.ado")
+	if (full == "") return("")
+	pathsplit(full, dir, fn)
 	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(ErgmNativePluginSubdir(), ErgmNativePluginFilename()))))
+		pathjoin("plugins", pathjoin(ErgmNativePluginSubdir(), fname))))
 }
 
 /*

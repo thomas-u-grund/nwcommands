@@ -6692,13 +6692,34 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
    never a silent partial fallback mid-run.
    =================================================================== */
 
-string scalar SaomNativeInstallDir(){
-	string scalar full, dir, fn
+/*
+	TWO genuinely different lookup strategies are needed (harmonisation
+	2026-09-02, docs/CERTIFICATION.md - see unw_ergm.do's own
+	ErgmNativePluginPath() for the full account), tried in order:
+	 (1) `findfile()` on the platform-specific basename alone - what
+	     actually finds the plugin after a real `net install`, which
+	     flattens every package "f" line into
+	     PLUS/<firstletter-of-basename>/<basename>, discarding any
+	     declared subdirectory entirely. Distinct per-platform basenames
+	     (macOS and Windows used to share the bare "saom_sim.plugin"
+	     name; only Unix had its own "_unix" suffix) are exactly what
+	     let this same flat PLUS folder hold all three platforms'
+	     binaries at once without collision.
+	 (2) a manually-constructed path relative to nwsaom.ado's own
+	     directory, `lib/plugins/<os>/<name>' - unreachable after a real
+	     net install (per (1) above) but still needed for a raw git
+	     checkout (`adopath ++ <repo-root>`): `findfile()` does not
+	     search subdirectories of a plain adopath entry, so the nested
+	     lib/plugins/<os>/ layout the repo itself uses is invisible to
+	     strategy (1) alone.
+*/
+string scalar SaomNativePluginFilename(){
+	string scalar os
 
-	full = findfile("nwsaom.ado")
-	if (full == "") return("")
-	pathsplit(full, dir, fn)
-	return(dir)
+	os = st_global("c(os)")
+	if (os == "Windows") return("saom_sim_windows.plugin")
+	if (os == "Unix") return("saom_sim_unix.plugin")
+	return("saom_sim_macos.plugin")
 }
 
 string scalar SaomNativePluginSubdir(){
@@ -6710,18 +6731,18 @@ string scalar SaomNativePluginSubdir(){
 	return("macos")
 }
 
-string scalar SaomNativePluginFilename(){
-	if (st_global("c(os)") == "Unix") return("saom_sim_unix.plugin")
-	return("saom_sim.plugin")
-}
-
 string scalar SaomNativePluginPath(){
-	string scalar dir
+	string scalar fname, found, full, dir, fn
 
-	dir = SaomNativeInstallDir()
-	if (dir == "") return("")
+	fname = SaomNativePluginFilename()
+	found = findfile(fname)
+	if (found != "") return(found)
+
+	full = findfile("nwsaom.ado")
+	if (full == "") return("")
+	pathsplit(full, dir, fn)
 	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(SaomNativePluginSubdir(), SaomNativePluginFilename()))))
+		pathjoin("plugins", pathjoin(SaomNativePluginSubdir(), fname))))
 }
 
 /* Returns 0 (never errors) on any platform where lib/plugins/saom_sim.plugin

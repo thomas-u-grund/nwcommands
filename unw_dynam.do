@@ -95,9 +95,8 @@ capture mata: mata drop dynam_choice_eval_unit1()
 capture mata: mata drop DynamFitRateUnit1()
 capture mata: mata drop dynam_rate_loglik_unit1()
 capture mata: mata drop dynam_rate_eval_unit1()
-capture mata: mata drop DynamNativeInstallDir()
-capture mata: mata drop DynamNativePluginSubdir()
 capture mata: mata drop DynamNativePluginFilename()
+capture mata: mata drop DynamNativePluginSubdir()
 capture mata: mata drop DynamNativePluginPath()
 capture mata: mata drop DynamNativeAvailable()
 capture mata: mata drop dynam_choice_eval_unit1_native()
@@ -176,14 +175,37 @@ void DynamState::init(real matrix rawevents, real scalar nn) {
 	design does not need to take). `DynamNativeAvailable()` below
 	follows the exact same "return 0, never error, caller falls back to
 	Mata" contract as `ErgmNativeAvailable()`/`NativeGraphAvailable()`.
-*/
-string scalar DynamNativeInstallDir(){
-	string scalar full, dir, fn
 
-	full = findfile("nwdynam.ado")
-	if (full == "") return("")
-	pathsplit(full, dir, fn)
-	return(dir)
+	TWO genuinely different lookup strategies are needed (harmonisation
+	2026-09-02, docs/CERTIFICATION.md), tried in order:
+	 (1) `findfile()` on the platform-specific basename alone - what
+	     actually finds the plugin after a real `net install`, which
+	     flattens every package "f" line into
+	     PLUS/<firstletter-of-basename>/<basename>, discarding any
+	     declared subdirectory entirely (verified directly by installing
+	     a real test package into a scratch PLUS directory). Distinct
+	     per-platform basenames (macOS and Windows used to share the
+	     bare "dynam_sim.plugin" name; only Unix had its own "_unix"
+	     suffix) are exactly what let this same flat PLUS folder hold
+	     all three platforms' binaries at once without collision.
+	 (2) a manually-constructed path relative to nwdynam.ado's own
+	     directory, `lib/plugins/<os>/<name>' - unreachable after a real
+	     net install (per (1) above, since net install has no
+	     subdirectory concept at all) but still needed for a raw git
+	     checkout (`adopath ++ <repo-root>`, this project's own
+	     dev-mode/regression-testing convention): `findfile()` does not
+	     search subdirectories of a plain adopath entry (confirmed
+	     directly - only PLUS's own single-letter-subfolder convention
+	     gets that treatment), so the nested lib/plugins/<os>/ layout
+	     the repo itself uses is invisible to strategy (1) alone.
+*/
+string scalar DynamNativePluginFilename(){
+	string scalar os
+
+	os = st_global("c(os)")
+	if (os == "Windows") return("dynam_sim_windows.plugin")
+	if (os == "Unix") return("dynam_sim_unix.plugin")
+	return("dynam_sim_macos.plugin")
 }
 
 string scalar DynamNativePluginSubdir(){
@@ -195,18 +217,18 @@ string scalar DynamNativePluginSubdir(){
 	return("macos")
 }
 
-string scalar DynamNativePluginFilename(){
-	if (st_global("c(os)") == "Unix") return("dynam_sim_unix.plugin")
-	return("dynam_sim.plugin")
-}
-
 string scalar DynamNativePluginPath(){
-	string scalar dir
+	string scalar fname, found, full, dir, fn
 
-	dir = DynamNativeInstallDir()
-	if (dir == "") return("")
+	fname = DynamNativePluginFilename()
+	found = findfile(fname)
+	if (found != "") return(found)
+
+	full = findfile("nwdynam.ado")
+	if (full == "") return("")
+	pathsplit(full, dir, fn)
 	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(DynamNativePluginSubdir(), DynamNativePluginFilename()))))
+		pathjoin("plugins", pathjoin(DynamNativePluginSubdir(), fname))))
 }
 
 real scalar DynamNativeAvailable(){

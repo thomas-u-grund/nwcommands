@@ -194,9 +194,9 @@ program _nwdeploy
 	file close _pkg_boot1
 	file close deploy_boot
 
-	file open deploy_ext1 using nwcommands-ext.pkg, replace write
+	file open deploy_ext1 using nwcommands-ext1.pkg, replace write
 	file write deploy_ext1 "v 3" _n
-	file write deploy_ext1 "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
+	file write deploy_ext1 "d nwcommands-ext. Social Network Analysis Using Stata - Extension_1" _n
 	file write deploy_ext1 "d Thomas U. Grund, University College Dublin, www.grund.co.uk" _n
 	file write deploy_ext1 "d email: thomas.u.grund@gmail.com" _n
 	local d = lower(subinstr(c(current_date)," ","",.))
@@ -210,6 +210,14 @@ program _nwdeploy
 	}
 	file close _pkg_ext1
 	file close deploy_ext1
+	// BUGFIX (2026-09-02): renamed nwcommands-ext.pkg -> nwcommands-ext1.pkg
+	// to match the numbered adoN/hlpN/dlgN convention every other
+	// package file uses (was the one unnumbered outlier, plus its own
+	// description line wrongly said "nwcommands-hlp." - a stale
+	// copy/paste from the hlp writer above, now also fixed). Erase the
+	// old unnumbered name so a checkout carrying it from before this fix
+	// doesn't leave a stale duplicate package lying around.
+	capture erase nwcommands-ext.pkg
 	
 	// BUGFIX: same "package file too long" limit as nwcommands-ado/-hlp
 	// above, just discovered later - the dialog rebuild grew the .dlg
@@ -254,7 +262,7 @@ program _nwdeploy
 	forvalues i = 1/`nhlpchunks' {
 		file write `toc' _n "p nwcommands-hlp`i'" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part `i' of `nhlpchunks')" _n
 	}
-	file write `toc' _n "p nwcommands-ext" _n "d nwcommands-hlp. Social Network Analysis Using Stata - Extension_1" _n
+	file write `toc' _n "p nwcommands-ext1" _n "d nwcommands-ext. Social Network Analysis Using Stata - Extension_1" _n
 	forvalues i = 1/`ndlgchunks' {
 		file write `toc' _n "p nwcommands-dlg`i'" _n "d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part `i' of `ndlgchunks')" _n
 	}
