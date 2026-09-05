@@ -24,7 +24,7 @@
 *! player itself (play/pause/scrub/speed, keyframe diffing with real
 *! .animate() transitions, GIF export via vendored gif.js) lives in
 *! nwmovie_template.html, opened via the same chromeless native viewer
-*! nwplot's own interactive option uses (nw_openviewer.ado).
+*! nwplot's own interactive option uses (_nwopenviewer.ado).
 
 capture program drop nwmovie
 program nwmovie
@@ -431,7 +431,7 @@ program nwmovie
 
 	di "{txt}Wrote {bf:`fname'.html}"
 	if "`noopen'" == "" {
-		nw_openviewer "`c(pwd)'/`fname'.html"
+		_nwopenviewer "`c(pwd)'/`fname'.html"
 	}
 end
 

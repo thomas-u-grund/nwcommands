@@ -1,6 +1,6 @@
-*! nw_openviewer: shared internal helper (not a public documented command,
-*! matching the nw_-prefixed programming-infrastructure convention of
-*! nw_syntax/nw_datasync/etc.) that opens a self-contained local HTML file
+*! _nwopenviewer: shared internal helper (not a public documented command,
+*! matching this package's leading-underscore convention for internal-only
+*! infrastructure) that opens a self-contained local HTML file
 *! in the chromeless native viewer (nwedit_viewer, see unw_core.do's
 *! NweditViewerAvailable()/NweditViewerPath()), falling back to
 *! `view browse` when the native binary isn't available for the current
@@ -17,14 +17,14 @@
 *! `~/Library/Application Support/Stata/ado/plus/`, has a space in it and
 *! hit this every time before the fix).
 
-capture program drop nw_openviewer
-program nw_openviewer, rclass
+capture program drop _nwopenviewer
+program _nwopenviewer, rclass
 	syntax anything(name=htmlpath)
 
 	// REAL BUG FOUND AND FIXED: `anything' captures the caller's raw
 	// argument text VERBATIM, including any literal double quotes typed
 	// at the call site - confirmed directly via `set trace on': calling
-	// `nw_openviewer "/tmp/x.html"' left `htmlpath' holding the
+	// `_nwopenviewer "/tmp/x.html"' left `htmlpath' holding the
 	// 13-character string ""/tmp/x.html"" (quotes included), not the
 	// 11-character path. Unlike a `string'/`varname' syntax element,
 	// `anything' does no quote-stripping of its own - by design, its

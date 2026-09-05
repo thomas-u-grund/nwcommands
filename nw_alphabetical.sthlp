@@ -17,6 +17,7 @@
 {p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
 {p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
+{p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help animate }}}Animate graphs{p_end}
@@ -29,7 +30,6 @@
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_tomata }}}Return adjacency matrix of network{p_end}

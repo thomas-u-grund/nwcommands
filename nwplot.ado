@@ -1504,15 +1504,15 @@ program nwplot, rclass
 		if "`noopen'" == "" {
 			di "{text:Opening interactive view...}"
 			// Launch logic (chromeless native viewer via `winexec`, falling
-			// back to `view browse`) now lives in nw_openviewer.ado - shared
+			// back to `view browse`) now lives in _nwopenviewer.ado - shared
 			// with nwmovie's own Cytoscape-based movie player, which needs
 			// the identical launch path including the macOS winexec
-			// space-in-path staging fix (see nw_openviewer.ado's own header
+			// space-in-path staging fix (see _nwopenviewer.ado's own header
 			// comment for the full account). noopen (new, added alongside
 			// movieexport()) lets nwmovie resolve one network's own
 			// styling/positions without a viewer window popping open for
 			// every single network in its own sequence.
-			nw_openviewer "`_nwedit_out'"
+			_nwopenviewer "`_nwedit_out'"
 		}
 	}
 
@@ -2277,7 +2277,7 @@ capture mata: mata drop _nwedit_writejson()
 mata:
 // Split out of what used to be _nwedit_buildinteractivehtml()'s own body
 // (harmonisation: nwmovie's own real-world-data movie player, see
-// nw_openviewer.ado's header for the sibling refactor) - this half does
+// _nwopenviewer.ado's header for the sibling refactor) - this half does
 // only the resolved-node/edge JSON construction, with no template/
 // vendored-JS/file-output concern at all, so nwmovie's movieexport()
 // path (_nwedit_writejson() below) can reuse it directly without paying
