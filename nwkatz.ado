@@ -30,7 +30,7 @@ program nwkatz
 
 	nw_syntax `netname', max(1)
 	local origdirected "`directed'"
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	local original `netname'
 	if "`generate'" == "" {

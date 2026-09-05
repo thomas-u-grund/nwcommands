@@ -47,7 +47,7 @@ program nwmaxflow, rclass
 		// never called generate() on a freshly cleared dataset).
 		_nwsetobs `netname'
 		tempvar __nw_mf_included
-		nw_datasync `netname', generate(`__nw_mf_included')
+		_nwdatasync `netname', generate(`__nw_mf_included')
 
 		capture drop `generate'
 		gen `generate' = .

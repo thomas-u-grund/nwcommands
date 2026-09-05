@@ -27,7 +27,7 @@
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt xvars}}Run only a lightweight {help nw_datasync} sync and exit immediately - does NOT itself
+{synopt:{opt xvars}}Run only a lightweight {help _nwdatasync} sync and exit immediately - does NOT itself
 materialize the adjacency-matrix Stata variables the way a bare {cmd:nwload} call does; despite the
 similar name, this is a different operation from the {opt xvars} option other nwcommands (network
 generators) offer{p_end}
@@ -36,7 +36,7 @@ generators) offer{p_end}
 {synopt:{opth generate(varname)}}Generate flag for nodes of the loaded network; default = {it:_nwinclude}{p_end}
 {synopt:{opt viewoff}}Unconnect view from network to dataset; default{p_end}
 {synopt:{opt viewon}}Establish view of network to dataset{p_end}
-{synopt:{opt overwrite}}Forwarded to {help nw_datasync}'s own {opt overwrite} option; only used for advanced programming{p_end}
+{synopt:{opt overwrite}}Forwarded to {help _nwdatasync}'s own {opt overwrite} option; only used for advanced programming{p_end}
 {synopt:{opt force}}By default, matrix is not loaded for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
 		
 {title:Description}

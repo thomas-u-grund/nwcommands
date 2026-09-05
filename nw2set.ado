@@ -35,7 +35,7 @@ program nw2set
 		nw_syntax
 		mata: `netobj'->set_description_mode1("M")
 		mata: `netobj'->set_description_mode2("N")
-		nw_datasync
+		_nwdatasync
 		unw_defs
 		capture drop if `nw_nodename' == ""
 	}

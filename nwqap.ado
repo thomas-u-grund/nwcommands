@@ -83,7 +83,7 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 			// `net''s own node names (e.g. "g1".."g54") already loaded in
 			// the active dataset. nwexpand's own internal nwload(,xvars)
 			// call then tries to sync the active dataset to this
-			// mismatched-node-name network via nw_datasync's merge -
+			// mismatched-node-name network via _nwdatasync's merge -
 			// which, on a 0% name match, appends every node as an
 			// unmatched observation instead of merging in place, silently
 			// doubling the dataset and leaving every OTHER variable

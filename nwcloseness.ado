@@ -107,10 +107,10 @@ program nwcloseness
 		// coverage: without this sync, st_store below wrote into
 		// whatever rows happened to be there, silently misplacing
 		// and even losing data for every network after the first).
-		// nw_datasync is this package's own established mechanism for
+		// _nwdatasync is this package's own established mechanism for
 		// that alignment (see e.g. nwdegree's netlist support).
 		tempvar included
-		nw_datasync `netname_temp', generate(`included')
+		_nwdatasync `netname_temp', generate(`included')
 
 		// BUGFIX: nwcloseness had no `replace' option and no
 		// "already exists" guard at all, unlike every sibling command

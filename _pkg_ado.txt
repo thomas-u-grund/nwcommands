@@ -18,7 +18,7 @@ f nw2fromedge.ado
 f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
-f nw_datasync.ado
+f _nwdatasync.ado
 f _nwedgelabs.ado
 f _nwexpnetexp.ado
 f _nwname.ado

@@ -697,7 +697,7 @@ if "`overwrite'" != "" local replace "replace"
 		// check if network is valued or not
 		mata: `netobj'->set_valued(`netobj'->check_valued())
 		
-		nw_datasync
+		_nwdatasync
 	}
 	
 	 capture mata: mata drop mode1

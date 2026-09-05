@@ -6,7 +6,7 @@ program def nwsync
 	
 	nw_syntax `netname', max(1)
 	if "`label'" != "" {
-		nw_datasync `netname'
+		_nwdatasync `netname'
 	}
 	
 	mata: st_global("r(vars)", `netobj'->get_nodesvar_string())

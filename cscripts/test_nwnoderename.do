@@ -13,7 +13,7 @@ do unw_core.do
 * nwdropnodes/nwkeepnodes/nwreplacemat.
 
 * --- basic rename: the target node's label changes in place (same row),
-* and nw_datasync leaves a second, _nwinclude==0 row behind holding the
+* and _nwdatasync leaves a second, _nwinclude==0 row behind holding the
 * old label (the same shared-dataset-can-back-multiple-networks
 * convention documented for nwdropnodes; not itself a bug).
 nwclear

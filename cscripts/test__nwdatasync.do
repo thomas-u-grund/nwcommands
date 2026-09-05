@@ -18,12 +18,12 @@ gen x = _n
 gsort - x
 
 assert _nwnode[1] != "n1"
-nw_datasync mynet1
+_nwdatasync mynet1
 assert _nwnode[1] == "n1"
 
 * --- failure path: a name that isn't a loaded network is rejected via
 * nw_syntax's own "Network X not found" check (error 482).
-capture noisily nw_datasync nonexistent
+capture noisily _nwdatasync nonexistent
 assert _rc == 482
 
 

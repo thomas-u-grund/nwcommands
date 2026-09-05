@@ -2,10 +2,10 @@ cscript
 
 do unw_core.do
 
-* REAL BUG FOUND AND FIXED: nw_openviewer.ado's own `syntax
+* REAL BUG FOUND AND FIXED: _nwopenviewer.ado's own `syntax
 * anything(name=htmlpath)' captured the caller's raw argument text
 * VERBATIM, including any literal double quotes typed at the call site
-* - `nw_openviewer "/tmp/x.html"' left `htmlpath' holding the
+* - `_nwopenviewer "/tmp/x.html"' left `htmlpath' holding the
 * 13-character string ""/tmp/x.html"" (quotes included), not the
 * 11-character path. Those stray quote characters then became part of
 * the literal argument text `winexec' hands to the launched chromeless
@@ -35,12 +35,12 @@ program _test_nwov_probe, rclass
 end
 _test_nwov_probe "`htmlfile'.html"
 assert `"`r(htmlpath)'"' == `"`htmlfile'.html"'
-di "=== nw_openviewer's own quote-stripping logic REGRESSION VERIFIED ==="
+di "=== _nwopenviewer's own quote-stripping logic REGRESSION VERIFIED ==="
 
-* end-to-end: nw_openviewer itself must not error, and (when the native
+* end-to-end: _nwopenviewer itself must not error, and (when the native
 * chromeless viewer is available) must actually launch it with a clean,
 * existing, unquoted file path - not merely "did not crash".
-nw_openviewer "`htmlfile'.html"
+_nwopenviewer "`htmlfile'.html"
 assert _rc == 0
 if `r(usedviewer)' == 1 {
 	sleep 1000
@@ -65,7 +65,7 @@ if `r(usedviewer)' == 1 {
 	assert `_nwov_found' == 1
 	assert `_nwov_foundbad' == 0
 	shell pkill -f nwedit_viewer 2>/dev/null
-	di "=== nw_openviewer launches the chromeless viewer with a clean (unquoted) argv REGRESSION VERIFIED ==="
+	di "=== _nwopenviewer launches the chromeless viewer with a clean (unquoted) argv REGRESSION VERIFIED ==="
 }
 else {
 	di "=== chromeless viewer not available on this platform/build - view browse fallback path exercised instead ==="

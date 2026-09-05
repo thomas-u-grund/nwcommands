@@ -27,7 +27,7 @@ program nw2clustering
 		err 99
 	}
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	// BUGFIX: level() accepted any integer with no validation at all -
 	// an out-of-range value (anything but 1 or 2) crashed several steps

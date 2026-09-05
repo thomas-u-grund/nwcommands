@@ -17,7 +17,7 @@ program nw2toedge
 	}
 
 	foreach net in `nets' {
-		nw_datasync `net'
+		_nwdatasync `net'
 	}
 
 	// Deal with two-mode networks

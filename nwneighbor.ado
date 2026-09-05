@@ -3,7 +3,7 @@ capture program drop nwneighbor
 program nwneighbor
 	syntax [anything(name=netname)], ego(string) [ mode(string) generate(string) replace SUBnet(string) subreplace]
 	nw_syntax `netname', max(1)
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	nwname `netname'
 
 	capture confirm variable `generate'

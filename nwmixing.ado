@@ -31,7 +31,7 @@ program nwmixing
 	// elsewhere in this package (`directed'/`valued' etc: the string
 	// "true" or empty).
 	local undirected = cond("`directed'" == "false", "true", "")
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	tempvar att
 	tempname attmat

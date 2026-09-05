@@ -7,7 +7,7 @@ program nwclustering
 	unw_defs
 
 	nw_syntax `netname', max(1)
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	local original "`netname'"
 
 	tempname symnet
@@ -81,7 +81,7 @@ program nwclustering
 	qui gen `generate' = .
 
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	// PERFORMANCE FIX (this unit): this command used to implement its own
 	// independent Stata-level pipeline here - nwtoedge, three separate

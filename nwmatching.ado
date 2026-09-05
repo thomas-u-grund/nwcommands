@@ -20,7 +20,7 @@ program nwmatching, rclass
 	// here via the same adversarial-input probe.
 	_nwsetobs `netname'
 	tempvar __nw_match_included
-	nw_datasync `netname', generate(`__nw_match_included')
+	_nwdatasync `netname', generate(`__nw_match_included')
 
 	tempname __nw_match
 	capture noisily mata: `__nw_match' = `netobj'->calculate_bipartite_matching()

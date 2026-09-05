@@ -212,7 +212,7 @@ foreach v in x_ego x_alter same_x {
 * appended as new all-missing-except-attributes rows by the plain
 * merge m:n below (Stata's default unmatched-"using" behavior) - one
 * phantom row per dropped node per egovars()/altervars() call. Fixed by
-* filtering fromfile/tofile on `_nwinclude' (nw_datasync's own node-
+* filtering fromfile/tofile on `_nwinclude' (_nwdatasync's own node-
 * membership flag, already computed earlier in this same command) before
 * the merge. 5-node undirected network, drop 2 nodes (B, D): the
 * resulting 3-node undirected network's edgelist (upper triangle plus

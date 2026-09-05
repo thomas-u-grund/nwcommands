@@ -7,6 +7,7 @@
 {p2colset 5 32 34 2}{p2col:{bf:{help _extract_valuelabels }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _gnwdegree }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _growmedian2 }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwdatasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help _nwdeploy }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
@@ -29,7 +30,6 @@
 {p2col:{bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
-{p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}

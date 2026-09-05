@@ -7,14 +7,14 @@ version 2.0.0
 {title:Title}
 
 {p2colset 9 17 22 2}{...}
-{p2col :nw_datasync {hline 2}}Utility to sync current network with dataset{p_end}
+{p2col :_nwdatasync {hline 2}}Utility to sync current network with dataset{p_end}
 {p2colreset}{...}
 
 
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nw_datasync} 
+{cmdab: _nwdatasync} 
 [{it:{help netname}}]
 [{cmd:,}
 {opt generate}({it:{help varname}})
@@ -40,7 +40,7 @@ Node attributes are saved in the normal Stata dataset. The observations in the d
 name of the nodes. In the dataset this match is performed on the variable {bf:_nwnode}. In case this variable does not exist, it is automatically created. 
 
 {pstd}
-Normally, there is no need to explicitly call {bf:nw_datasync}. All other nwcommands that make use of variables in the Stata dataset (e.g. node attributes) sync automatically.
+Normally, there is no need to explicitly call {bf:_nwdatasync}. All other nwcommands that make use of variables in the Stata dataset (e.g. node attributes) sync automatically.
 
 {pstd}
 Syncing is relatively fast, hence, there should be no need to switch it off. Furthermore, a sync is only performed when it is actually needed and the
@@ -55,7 +55,7 @@ Generate a variable indicating which dataset observations correspond to nodes in
 
 	{cmd:. nwclear}
 	{cmd:. nwrandom 5, prob(.4) name(mynet)}
-	{cmd:. nw_datasync mynet, generate(innet)}
+	{cmd:. _nwdatasync mynet, generate(innet)}
 	{cmd:. list innet}
 
 last certified : 22 Aug 2026

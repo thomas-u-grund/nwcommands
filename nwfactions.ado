@@ -51,7 +51,7 @@ program nwfactions, rclass
 	// here via the same adversarial-input probe.
 	_nwsetobs `netname'
 	tempvar __nw_fac_included
-	nw_datasync `netname', generate(`__nw_fac_included')
+	_nwdatasync `netname', generate(`__nw_fac_included')
 
 	capture drop `netgenerate'
 	gen `netgenerate' = .

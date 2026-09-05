@@ -7,7 +7,7 @@ program nwload
 	nwname `netname'
 
 	if "`xvars'" != "" {
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		exit
 	}
 	
@@ -39,14 +39,14 @@ program nwload
 
 	// unconnect edge list from view to the dataset
 	if "`viewoff'" != "" {
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		mata: `netobj'->set_edge(st_data((1::(`netobj'->get_nodes())), `netobj'->nodesvar))
 	}
 	
 	// maybe it is already a view
 	mata: st_numscalar("r(isview)", isview(*`netobj'->get_matrix()))
 	if (`r(isview)' == 1) {
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		exit
 	}
 		
@@ -67,7 +67,7 @@ program nwload
 		mata: `nws'.make_current_from_name("`netname'")
 	}
 	
-	nw_datasync `netname', generate(`generate') `overwrite'
+	_nwdatasync `netname', generate(`generate') `overwrite'
 	
 	if "`labelonly'" == "" {	
 		mata: `nws'.generate_current_nodesvar()

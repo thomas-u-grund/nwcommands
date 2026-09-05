@@ -115,7 +115,7 @@ program nw2fromedge
 	mata: `netobj'->clean_matrix_2mode()
 
 	nw_syntax
-	nw_datasync
+	_nwdatasync
 	capture order `nw_nodename' `nw_mode'
 	
 end

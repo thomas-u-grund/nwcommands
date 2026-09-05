@@ -168,7 +168,7 @@ assert _wa0[4] == _wu[4]
 * --- BUGFIX regression (adversarial-input pressure test): nwbetween
 * never synced the active dataset to the target network before
 * st_store()-ing into it, unlike every sibling command (nwcloseness/
-* nwdegree/nwevcent all call _nwsetobs/nw_datasync first) - a bare
+* nwdegree/nwevcent all call _nwsetobs/_nwdatasync first) - a bare
 * `clear' immediately before the call crashed with a raw "argument out
 * of range" (r3300) the instant st_store() tried to write into a row
 * that did not exist in the (0-observation) active dataset.

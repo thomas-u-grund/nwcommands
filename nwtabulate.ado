@@ -253,7 +253,7 @@ program nwtab3
 	restore
 	preserve
 	
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	tempvar group
 	egen `group' = group(`attribute')

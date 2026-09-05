@@ -10,7 +10,7 @@ do unw_core.do
 * rather than going through a `return clear'-triggering dispatch.
 * That incidental survival is NOT a documented cross-command contract
 * and is not guaranteed to survive every possible internal call chain
-* (e.g. through nwload/nw_datasync's own, much deeper internal r()
+* (e.g. through nwload/_nwdatasync's own, much deeper internal r()
 * bookkeeping) - dropped from this test accordingly; only nwvalidate's
 * own actual, documented stored results are asserted below.
 nwclear

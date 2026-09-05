@@ -39,7 +39,7 @@ program _nwexport_pajek
 	
 	unw_defs
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	tempvar _running
 	tempfile f
@@ -111,7 +111,7 @@ program _nwexport_ucinet
 	
 	unw_defs
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	tempvar _running
 	tempfile f
@@ -188,7 +188,7 @@ program _nwexport_gml
 
 	unw_defs
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	tempname expfile
 	file open `expfile' using "`fname'.gml", write `replace'
@@ -265,7 +265,7 @@ program _nwexport_edgelist
 
 	unw_defs
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	preserve
 	qui nwtoedge `netname'

@@ -22,7 +22,7 @@ program nwreplace, rclass
 	}
 
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	local newcmd0 "(*`netobj'->get_matrix())"
 	local newcmd "(*`netobj'->get_matrix())`subset'"

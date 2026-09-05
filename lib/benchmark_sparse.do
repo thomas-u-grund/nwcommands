@@ -13,7 +13,7 @@ capture mata: mata clear
 	(Commit 7), which is the genuinely sparse-native construction path.
 	nwfromedge.ado itself has NOT been rewired to use this path yet (see
 	the roadmap doc for why: its downstream side effects - nwsym
-	symmetrization, bipartite embedding, nw_datasync - all currently touch
+	symmetrization, bipartite embedding, _nwdatasync - all currently touch
 	the dense matrix at various points and need their own audit before
 	they can be made lazy without risking a silent behavior change; this
 	benchmark instead exercises the same underlying storage/query layer

@@ -18,7 +18,7 @@ program nwdrop
 	else {
 		nw_syntax `netname', max(1)
 		local n `nodes'
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		
 		tempvar ifcond temp
 		tempname drop
@@ -31,7 +31,7 @@ program nwdrop
 		if "`clean'" != "" {
 			capture drop if `temp' == 1
 		}
-		nw_datasync `netname'
+		_nwdatasync `netname'
 	}
 	mata: st_rclear()
 end

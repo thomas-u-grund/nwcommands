@@ -270,7 +270,7 @@ needs the underlying local, not {bf:r(x)}, either way.
 12. Any command that {bf:st_store()}s a result into a Stata variable must first ensure the active
 dataset actually has enough, correctly-aligned rows for the target network - call
 {bf:_nwsetobs netname} (grows {bf:_N} to at least the largest node count among currently registered
-networks) and then {bf:nw_datasync netname, generate(included)} (aligns row {it:i} with node {it:i} by name,
+networks) and then {bf:_nwdatasync netname, generate(included)} (aligns row {it:i} with node {it:i} by name,
 reusing existing rows/attributes where possible) before the {bf:st_store()} call, exactly as
 {bf:nwcloseness}/{bf:nwdegree}/{bf:nwevcent} already do. Skipping this works fine as long as the
 caller's active dataset already happens to be sized to the target network - and crashes with a raw

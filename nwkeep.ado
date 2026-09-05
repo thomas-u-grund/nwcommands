@@ -22,7 +22,7 @@ program nwkeep
 	else {
 		nw_syntax `netname', max(1)
 		local n `nodes'
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		//list _nw*
 		
 		tempvar ifcond orig
@@ -48,7 +48,7 @@ program nwkeep
 		
 		mata: mata drop `keep'
 		
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		order `nw_nodename' `nw_included'
 	}
 	if "`clean'" != "" {

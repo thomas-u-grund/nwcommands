@@ -20,7 +20,7 @@ do unw_core.do
 * Node-value lookups below use _nwnode (the node label) rather than a
 * fixed Stata observation number, following the same discipline already
 * established for nwdegree's own netlist certification earlier this
-* session: nw_datasync's own documented row-ordering does not
+* session: _nwdatasync's own documented row-ordering does not
 * necessarily match raw Mata node index order. Tolerances use 1e-6, not
 * a tighter value - the generated variable is an ordinary (float-
 * precision) Stata variable, matching the plain "gen x = ." convention

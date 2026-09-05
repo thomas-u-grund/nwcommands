@@ -28,7 +28,7 @@ program nwrandomwalk, rclass
 	// here via the same adversarial-input probe.
 	_nwsetobs `netname'
 	tempvar __nw_ht_included
-	nw_datasync `netname', generate(`__nw_ht_included')
+	_nwdatasync `netname', generate(`__nw_ht_included')
 
 	tempname __nw_ht
 	capture noisily mata: `__nw_ht' = `netobj'->calculate_randomwalk_hitting(`tid')

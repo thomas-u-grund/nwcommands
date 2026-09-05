@@ -27,7 +27,7 @@ program nwbalance
 
 	unw_defs
 	nw_syntax `netname', max(1)
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	local original "`netname'"
 
 	// PERFORMANCE/CORRECTNESS FIX: this command used to implement its own

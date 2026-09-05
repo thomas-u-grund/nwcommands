@@ -97,7 +97,7 @@ unw_defs
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
 	
-	nw_datasync `netname1'
+	_nwdatasync `netname1'
 	
 	nw_syntax `netname1'
 	local netnodes1 `nodes'

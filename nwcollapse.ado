@@ -40,7 +40,7 @@ program nwcollapse
 	}
 	
 	nwduplicate `original', name(_temp_`original')
-	nw_datasync _temp_`original'
+	_nwdatasync _temp_`original'
 	nw_syntax _temp_`original'
 	tempvar by_group by_dummy
 	gen `by_dummy' = 1

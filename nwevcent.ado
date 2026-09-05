@@ -3,7 +3,7 @@ program nwevcent
 	version 9
 	syntax [anything(name=netname)] , [nosym weighted GENerate(string) replace]
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 
 	if "`generate'" == "" {
 		local generate "_evcent"

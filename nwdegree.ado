@@ -79,7 +79,7 @@ program nwdegree
 		}
 
 		tempvar included
-		nw_datasync `netname_temp', generate(`included')
+		_nwdatasync `netname_temp', generate(`included')
 		local nodes_temp `nodes'
 
 		tempname outdegree

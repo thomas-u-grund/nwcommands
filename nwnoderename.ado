@@ -3,7 +3,7 @@ capture program drop nwnoderename
 program nwnoderename	
 	syntax [anything(name=netname)], old(string) new(string)
 	nw_syntax `netname'
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	unw_defs
 	
 	mata: st_numscalar("r(success)", (*`netobj').rename_nodename("`old'", "`new'"))
@@ -13,7 +13,7 @@ program nwnoderename
 		expand 2 if `nw_nodename' == "`old'", generate(`original')
 		replace `nw_nodename' = "`new'" if `nw_nodename' == "`old'" & `original' == 1
 		capture rename `old' `new'
-		nw_datasync `netname'
+		_nwdatasync `netname'
 		mata: st_numscalar("r(success)", 1)
 	}
 	else{

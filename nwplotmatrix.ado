@@ -49,7 +49,7 @@ program nwplotmatrix
 		local freq = "freq"
 	}
 
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	qui replace `nw_included' = . if `nw_included' == 0
 	
 	tempvar _sorting _group

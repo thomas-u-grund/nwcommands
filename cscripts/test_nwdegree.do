@@ -117,7 +117,7 @@ assert mysiolate[2] == 0
 * each network"), but the code never actually implemented it - fixed
 * here to do what it always claimed to do.
 *
-* Note: nw_datasync re-sorts the shared dataset to align "node i of
+* Note: _nwdatasync re-sorts the shared dataset to align "node i of
 * whichever network was just synced" with "observation i" (its own
 * documented behavior), so after processing two differently-ordered
 * networks in one call, row numbers no longer correspond to a fixed

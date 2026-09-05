@@ -2943,7 +2943,7 @@ mata:
 		nwsdef is definition of networks
 		nwsder is derived from nws
 		
-		datasync:  allows switching off -nw_datasync- for speed-up
+		datasync:  allows switching off -_nwdatasync- for speed-up
 */
 
 class `NWs' {
@@ -8789,7 +8789,7 @@ class `NWsdef' {
 	pointer(class `NWdef' scalar) rowvector 	pdefs
 	real scalar number  // number of networks in memory
 	pointer(class nw_def scalar) scalar pcurrent
-    `BOOL' datasync // flag for -nw_datasync- on/off
+    `BOOL' datasync // flag for -_nwdatasync- on/off
     
 	
 //!! methods:
@@ -9182,7 +9182,7 @@ void `NWsdef'::dumper() {
 	Version 1 definition of derived-across-network datasig
 */
 class `NWsder' {
-	string scalar datasig		// used by -nw_datasync-
+	string scalar datasig		// used by -_nwdatasync-
 //!! methods:
 }
 

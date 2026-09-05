@@ -51,7 +51,7 @@ program nwtoedge
 		local alter = "`nw_alter'"
 	}	
 
-	// BUGFIX: `nw_datasync' (this program's own `_nwinclude'-generating
+	// BUGFIX: `_nwdatasync' (this program's own `_nwinclude'-generating
 	// mechanism) DROPS and REGENERATES `_nwinclude' fresh on every
 	// single call (`capture drop `nw_included''; `gen `nw_included' =
 	// (`current'==1)'' - see its own source) - looping it over MULTIPLE
@@ -75,14 +75,14 @@ program nwtoedge
 	// was completely missing for every row after a save/reload, `_nw_
 	// match_<last network>' was correct. Fixed by accumulating a
 	// UNION flag (`nw_included'_all, initialized 0, OR'd in after each
-	// `nw_datasync' call) across the whole loop, rather than reading
+	// `_nwdatasync' call) across the whole loop, rather than reading
 	// the last call's own overwritten `_nwinclude' directly - a true
 	// "belongs to any network in `nets'" flag, matching the comment's
 	// own already-stated (but previously unimplemented) intent.
 	capture drop `nw_included'_all
 	local __nwtoedge_haveall = 0
 	foreach net in `nets' {
-		nw_datasync `net'
+		_nwdatasync `net'
 		if !`__nwtoedge_haveall' {
 			gen `nw_included'_all = 0
 			local __nwtoedge_haveall = 1
@@ -120,10 +120,10 @@ program nwtoedge
 	// _ego/_alter/tie value all missing.
 	//
 	// `_nwinclude' (this program's own `nw_included' local) is exactly
-	// the flag `nw_datasync' just generated for this purpose - 1 for a
+	// the flag `_nwdatasync' just generated for this purpose - 1 for a
 	// row that is a genuine current node of the network(s) just synced,
 	// 0 for a leftover row from some other network sharing the same
-	// dataset (nw_datasync.ado's own header documents this convention).
+	// dataset (_nwdatasync.ado's own header documents this convention).
 	// Filtering on it here is a no-op whenever every row already is a
 	// live node (the ordinary case), so this changes nothing for any
 	// network that was never node-dropped.

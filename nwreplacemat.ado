@@ -114,7 +114,7 @@ program nwreplacemat
 		// unlike the resize branch, which already forwards it (via
 		// nwrandom's own xvars handling). Calling bare `nwload', not
 		// `nwload, xvars' - nwload's OWN `xvars' flag confusingly means
-		// something else entirely (a lightweight `nw_datasync' sync,
+		// something else entirely (a lightweight `_nwdatasync' sync,
 		// exiting immediately) - its DEFAULT (no-flag) path is what
 		// actually generates the Stata variables, confirmed directly
 		// against nwload.ado's own body.

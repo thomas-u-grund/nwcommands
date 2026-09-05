@@ -17,7 +17,7 @@ program nwplot, rclass
 	// not allowed" straight from `graph twoway' itself.
 	local twowayopt `"`options'"'
 
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	
 	// filter out lgc and nodeclash
 	local 0 "`layout'"

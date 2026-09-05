@@ -51,7 +51,7 @@ di "=== degree identity (path graph) VERIFIED ==="
 
 * --- exact hand-computed values on the star network (A hub, B/C/D
 * leaves): endogenous = degree = (3,1,1,1); induced = (6,2,2,2);
-* exogenous = (3,1,1,1). Sorted by _nwnode since nw_datasync's own row
+* exogenous = (3,1,1,1). Sorted by _nwnode since _nwdatasync's own row
 * order is not guaranteed to match input order.
 nwclear
 nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(starnet5) undirected labs(A,B,C,D)

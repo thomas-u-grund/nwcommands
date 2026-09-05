@@ -1,7 +1,7 @@
 
 
-capture program drop nw_datasync
-program nw_datasync
+capture program drop _nwdatasync
+program _nwdatasync
 	syntax [anything(name=netname)] [, force overwrite generate(string) on off]
 	unw_defs
 	if "`on'" != "" {
@@ -184,7 +184,7 @@ program nw_datasync
 	// them happened to run last, not this call's real, successful
 	// completion - the exact bug that used to silently leak a stray
 	// nonzero _rc into nwload's own `xvars'-suppress branch
-	// (nw_datasync `netname'; exit), which unlike this full var-
+	// (_nwdatasync `netname'; exit), which unlike this full var-
 	// generation path has no further command of its own to mask the
 	// leak. `exit'/`exit 0' do NOT themselves reset `_rc' (confirmed
 	// directly - neither clears a stale nonzero `_rc' left by an

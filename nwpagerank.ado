@@ -33,7 +33,7 @@ program nwpagerank, rclass
 	// input probe (a bare `clear' immediately before this command).
 	_nwsetobs `netname'
 	tempvar __nw_pr_included
-	nw_datasync `netname', generate(`__nw_pr_included')
+	_nwdatasync `netname', generate(`__nw_pr_included')
 
 	tempname __nw_pr
 	mata: `__nw_pr' = `netobj'->calculate_pagerank(`damping', `maxiter', `tol')

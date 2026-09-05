@@ -112,8 +112,8 @@ program nwcug, rclass
 	// BUGFIX: each draw below used to get nwrandom's own generic
 	// auto-generated node names ("n1", "n2", ...) rather than
 	// `origname''s own real ones ("g1", "g2", ... for `gang', say).
-	// nw_datasync() matches dataset rows to network nodes BY NAME (its
-	// own documented contract - see nw_datasync.ado's own header), so a
+	// _nwdatasync() matches dataset rows to network nodes BY NAME (its
+	// own documented contract - see _nwdatasync.ado's own header), so a
 	// differently-named draw never matched any existing row and instead
 	// got `nodes' entirely NEW rows appended to the dataset, with every
 	// pre-existing node-attribute variable (e.g. a `nodematch()'-style
@@ -129,7 +129,7 @@ program nwcug, rclass
 	// "less than", producing a confident-looking but meaningless p-value
 	// rather than an error. Fixed by giving every draw `origname''s own
 	// real node names via `labs()' - nwrandom already supports this
-	// option, so nw_datasync's existing name-matching then reuses
+	// option, so _nwdatasync's existing name-matching then reuses
 	// `origname''s own existing rows (attributes and all) for each draw
 	// instead of appending new, attribute-less ones. Harmless for a
 	// stat() that does not depend on names/attributes at all (density,

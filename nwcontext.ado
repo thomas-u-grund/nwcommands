@@ -34,7 +34,7 @@ program nwcontext
 	}
 	capture drop `generate'
 	
-	nw_datasync `netname'
+	_nwdatasync `netname'
 	nw_syntax `netname', max(1)
 
 	if ("`stat'" == "") {
