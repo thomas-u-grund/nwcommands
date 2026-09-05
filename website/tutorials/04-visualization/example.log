@@ -1,0 +1,137 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+
+
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
+> cratchpad/tutorials_workdir/profile.do ...
+
+. do example.do 
+
+. * Tutorial 4: Visualization
+. * Run from a directory with nwcommands net-installed (not a dev checkout).
+. 
+. * A basic plot of the current network - no styling, just structure
+. nwwebuse florentine, nwclear
+
+. nwplot flomarriage, scheme(s1network) export("plot_basic.svg") replace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_basic.svg...
+(file plot_basic.svg not found)
+file plot_basic.svg saved as SVG format
+
+. 
+. * Layout algorithms position the same nodes differently
+. nwplot flomarriage, layout(circle) scheme(s1network) export("plot_circle.svg") replace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_circle.svg...
+(file plot_circle.svg not found)
+file plot_circle.svg saved as SVG format
+
+. nwplot flomarriage, layout(kk) scheme(s1network) export("plot_kk.svg") replace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_kk.svg...
+(file plot_kk.svg not found)
+file plot_kk.svg saved as SVG format
+
+. 
+. * Color, symbol, and size can each be driven by a variable
+. nwwebuse glasgow, nwclear
+
+. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s1network) export("plot_styled.svg") replace
+Calculating node coordinates...
+Generating splines...
+Plotting network...
+Exporting graph to plot_styled.svg...
+(file plot_styled.svg not found)
+file plot_styled.svg saved as SVG format
+
+. 
+. * nwcommands ships three schemes purpose-built for network plots
+. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s2network) export("plot_scheme2.svg") replac
+> e
+Calculating node coordinates...
+Generating splines...
+Plotting network...
+Exporting graph to plot_scheme2.svg...
+(file plot_scheme2.svg not found)
+file plot_scheme2.svg saved as SVG format
+
+. nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s3network) export("plot_scheme3.svg") replac
+> e
+Calculating node coordinates...
+Generating splines...
+Plotting network...
+Exporting graph to plot_scheme3.svg...
+(file plot_scheme3.svg not found)
+file plot_scheme3.svg saved as SVG format
+
+. 
+. * Highlight a shortest path between two nodes
+. nwwebuse florentine, nwclear
+
+. nwpath flomarriage, ego(medici) alter(peruzzi) generate(sp)
+
+----------------------------------------
+  Network: flomarriage
+----------------------------------------
+    Ego                  : medici
+    Alter                : peruzzi
+    Shortest path length : 3
+----------------------------------------
+  Path 1: medici <=> barbadori <=> castellani <=> peruzzi
+  Path 2: medici <=> ridolfi <=> strozzi <=> peruzzi
+
+. nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5) scheme(s1network) export(
+> "plot_path.svg") replace
+Calculating node coordinates...
+Plotting network...
+Exporting graph to plot_path.svg...
+(file plot_path.svg not found)
+file plot_path.svg saved as SVG format
+
+. 
+. * interactive opens an editable, browser-based version of the same plot:
+. * drag nodes to reposition them, edit the color/shape legend directly
+. nwwebuse glasgow, nwclear
+
+. nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen
+Calculating node coordinates...
+Generating splines...
+Preparing interactive view...
+Plotting network...
+
+. display "`r(interactive)'"
+/var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T/nwedit_145600_404175.html
+
+. 
+. * nwmovie builds an interactive, browser-based timeline player directly
+. * from a sequence of waves - drag the slider, watch nodes and ties change
+. nwmovie glasgow1 glasgow2 glasgow3, noopen fname(friendship_movie)
+Resolving network glasgow1 (1/3)...
+Resolving network glasgow2 (2/3)...
+Resolving network glasgow3 (3/3)...
+Wrote friendship_movie.html
+
+. 
+end of do-file
