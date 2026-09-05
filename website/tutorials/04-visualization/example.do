@@ -20,7 +20,7 @@ nwplot glasgow1, color(smoke1) symbol(sport1) size(alcohol1) scheme(s3network) e
 * Highlight a shortest path between two nodes
 nwwebuse florentine, nwclear
 nwpath flomarriage, ego(medici) alter(peruzzi) generate(sp)
-nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5) scheme(s1network) export("plot_path.svg") replace
+nwplot flomarriage, edgecolor(sp_1, legendoff) scheme(s1network) export("plot_path.svg") replace
 
 * interactive opens an editable, browser-based version of the same plot:
 * drag nodes to reposition them, edit the color/shape legend directly

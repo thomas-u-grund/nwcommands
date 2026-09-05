@@ -75,8 +75,10 @@ distinct by default:
 
 ## Highlighting a path
 
-Combining `nwpath` with `edgecolor()`/`edgesize()` highlights a specific route through the
-network — here, the shortest path between two Medici-era Florentine families:
+Combining `nwpath` with `edgecolor()` highlights a specific route through the network — here,
+the shortest path between two Medici-era Florentine families. `nwpath`'s `generate()` creates a
+new network per shortest path found (`sp_1` here - a pair with multiple shortest paths would
+also get `sp_2`, `sp_3`, ...), and that new network can be passed straight to `edgecolor()`:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -93,10 +95,15 @@ network — here, the shortest path between two Medici-era Florentine families:
   Path 1: medici <=> barbadori <=> castellani <=> peruzzi
   Path 2: medici <=> ridolfi <=> strozzi <=> peruzzi
 
-. nwplot flomarriage, edgecolor(sp_1, legendoff) edgesize(sp_1, legendoff) edgefactor(5) scheme(s1network) export("plot_path.svg") replace
+. nwplot flomarriage, edgecolor(sp_1, legendoff) scheme(s1network) export("plot_path.svg") replace
 ```
 
 ![Shortest path between medici and peruzzi highlighted](plot_path.svg)
+
+Don't reach for `edgesize()` here to make the path stand out further - it scales edge width
+*proportionally* to the variable's own value, so a 0/1 indicator like `sp_1` makes every
+non-path edge exactly zero-width (invisible), leaving only the path on the plot. `edgecolor()`
+alone is the right tool for a discrete highlight/no-highlight distinction like this.
 
 ## Interactive plots
 
