@@ -19,7 +19,7 @@ program _nwnodelab
 		error 600022
 	}
 	else {
-		// r(labs) is comma-separated (see nw_name.ado's own
+		// r(labs) is comma-separated (see _nwname.ado's own
 		// invtokens with a comma delimiter), but "word N of ..."
 		// needs a space-separated list - without this conversion,
 		// the whole comma-joined string is one "word" and any

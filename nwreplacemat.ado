@@ -128,7 +128,7 @@ program nwreplacemat
 
 	// was "global nwdirected_`id' = ..." - same legacy-global issue as
 	// above; set_directed() is the modern equivalent (matches
-	// nw_name.ado's own newdirected() implementation).
+	// _nwname.ado's own newdirected() implementation).
 	if (`r(directed)' == 1) {
 		mata: `netobj'->set_directed(0)
 	}

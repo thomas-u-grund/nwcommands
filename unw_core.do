@@ -7388,7 +7388,7 @@ string matrix `NWdef'::get_modes(){
 	so it survives round-tripping through nwsave/nwuse even though the
 	reload path (nwfromedge, rebuilding the network from a saved
 	edgelist) is not guaranteed to reproduce the exact original node
-	ordering. Used by nwsave.ado (via a new nw_name.ado r(modes) return)
+	ordering. Used by nwsave.ado (via a new _nwname.ado r(modes) return)
 	to persist mode membership - previously NOT saved at all despite
 	is2mode itself being saved correctly, a genuine, previously-
 	undiscovered bug: nwsave's own edgelist-export step

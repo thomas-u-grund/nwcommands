@@ -14,7 +14,7 @@ do unw_core.do
 *
 * Once that crash was fixed, a second, independent, unrelated bug
 * surfaced in both _nwnodelab and _nwnodeid: nwname's r(labs) is
-* comma-separated ("A,B,C" - see nw_name.ado's own invtokens with a
+* comma-separated ("A,B,C" - see _nwname.ado's own invtokens with a
 * comma delimiter), but both files fed it directly into constructs
 * that expect a space-separated list ("word N of `labs''" in
 * _nwnodelab, "foreach onelab in `labs''" in _nwnodeid) - the whole

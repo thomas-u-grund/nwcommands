@@ -233,7 +233,7 @@ di "=== JACCARD/COSINE ON PARTIAL-OVERLAP NEIGHBORS VERIFIED ==="
 * Part 4/roadmap provenance gap. Checked both immediately and across a
 * real nwsave/nwuse round-trip, since the two are backed by genuinely
 * different code paths (nw2project.ado's own set_provenance() call vs.
-* nwsave.ado/nwuse.ado/nw_name.ado's newprovenance() persistence
+* nwsave.ado/nwuse.ado/_nwname.ado's newprovenance() persistence
 * wiring) - either could work while the other doesn't.
 * structnet is rebuilt fresh here rather than reused from earlier -
 * nwclear (in the partial-overlap block above) drops every previously

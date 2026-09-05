@@ -142,7 +142,7 @@ program nwreplace, rclass
 	mata: st_numscalar("r(valued)", `netobj'->check_valued())
 	// BUGFIX: captured into plain locals IMMEDIATELY after the two
 	// `mata: st_numscalar("r(...)", ...)' calls above, before either
-	// `if' block below can run `nw_name' - a separate ado invocation
+	// `if' block below can run `_nwname' - a separate ado invocation
 	// that, like any command, replaces r() with its own results the
 	// moment it runs. The previous ordering read `r(symmetric)'/
 	// `r(valued)' AFTER these `if' blocks, so whenever the
@@ -150,7 +150,7 @@ program nwreplace, rclass
 	// (network content and RNG-state dependent - confirmed via a live
 	// repro: `nwcorrelate ..., permutations(100)' followed by
 	// `nwrandom ... undirected' occasionally produces a matrix that
-	// isn't perfectly symmetric, triggering the correction), `nw_name'
+	// isn't perfectly symmetric, triggering the correction), `_nwname'
 	// had already wiped r(), leaving `` `r(symmetric)' `` empty and
 	// `local __symmetric = `r(symmetric)'' a bare `local x = ' -
 	// Stata's own generic "invalid syntax" (r(198)), not a message
@@ -160,10 +160,10 @@ program nwreplace, rclass
 	local __symmetric = `r(symmetric)'
 	local __valued = `r(valued)'
 	if ("`directed'"=="false" & `__symmetric'==0) {
-		nw_name `netname', newdirected(false)
+		_nwname `netname', newdirected(false)
 	}
 	if ("`valued'" == "false" & "`r(valued)'" == "false"){
-		nw_name `netname', newvalued(true)
+		_nwname `netname', newvalued(true)
 	}
 	nwsync `netname'
 	return scalar symmetric = `__symmetric'

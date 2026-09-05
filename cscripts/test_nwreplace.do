@@ -52,7 +52,7 @@ di "=== r(symmetric)/r(valued) REGRESSION VERIFIED ==="
 * `nwcorrelate ..., permutations(100)' followed by `nwrandom ...
 * undirected' occasionally producing a not-quite-symmetric matrix): the
 * fix above only captured r(symmetric)/r(valued) into locals - it never
-* exercised the branch where the correction actually FIRES (`nw_name
+* exercised the branch where the correction actually FIRES (`_nwname
 * ..., newdirected(false)'), which is itself a separate ado call that
 * wipes r() the moment it runs. Only a bracket-replace that makes an
 * undirected network's matrix genuinely asymmetric (one cell, not its
@@ -66,7 +66,7 @@ assert r(symmetric) == 0
 assert r(valued) == 0
 nwsummarize rtest2
 assert r(directed) == "false"
-di "=== nw_name-clobbers-r() REGRESSION VERIFIED ==="
+di "=== _nwname-clobbers-r() REGRESSION VERIFIED ==="
 
 * --- failure paths: a name that isn't a loaded network is rejected via
 * nw_syntax's own "Network X not found" check (error 482); an

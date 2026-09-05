@@ -76,7 +76,7 @@ program nwinf
 	
 	mata: st_rclear()
 	
-	nw_name `netname'
+	_nwname `netname'
 	
 	mata: st_global("r(name)", "`netname'")
 	mata: st_global("r(netname)", "`netname'")

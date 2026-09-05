@@ -52,7 +52,7 @@ program nwgenerate
 	// no varfcn or netfcn
 	if `netfcn' == 0 {
 		local netexp : subinstr local netexp "=" " "
-		capture nw_name `newnetname'
+		capture _nwname `newnetname'
 		if _rc == 0 & (strpos("`options'", "replace")==0){
 			// Error-code coherence pass: the identical "already exists,
 			// specify replace" situation as the guard just above (and
@@ -93,7 +93,7 @@ program nwgenerate
 		// instead been relying on the bug, so needs updating to match
 		// now that nwsym stores what it always documented).
 		if "`r(is_symmetric)'" == "true" {
-			nw_name `newnetname', newdirected(false)
+			_nwname `newnetname', newdirected(false)
 		}
 		
 		if "`ifcond'" != "" {

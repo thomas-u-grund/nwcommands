@@ -34,7 +34,7 @@ program nwrename
 	local i = 1
 	foreach onenet in `oldnames' {
 		local newname : word `i' of `newnames'
-		nw_name `onenet', newname(`newname')
+		_nwname `onenet', newname(`newname')
 		local i = `i' + 1
 	}
 end

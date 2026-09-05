@@ -34,7 +34,7 @@ do unw_core.do
 * assigned the wrong mode to the wrong node in exactly this situation;
 * a label-keyed one is correct regardless of any reordering.
 *
-* Wired through nw_name.ado's own newmodes()/r(modes) (plus
+* Wired through _nwname.ado's own newmodes()/r(modes) (plus
 * newmode1desc()/newmode2desc()/r(mode1desc)/r(mode2desc), fixing a
 * second, related gap: NWdef::get_description_mode1()/get_description_mode2()
 * already existed and were already displayed by nwsummarize, but

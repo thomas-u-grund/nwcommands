@@ -27,7 +27,7 @@ program _nwnodeid
 	else {
 		nwname `netname'
 		local labs "`r(labs)'"
-		// r(labs) is comma-separated (see nw_name.ado's own
+		// r(labs) is comma-separated (see _nwname.ado's own
 		// invtokens with a comma delimiter), but the foreach loop
 		// below needs a space-separated list to iterate over
 		// individual labels - without this, the whole comma-joined

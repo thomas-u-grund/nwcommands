@@ -1,5 +1,5 @@
-capture program drop nw_name
-program nw_name
+capture program drop _nwname
+program _nwname
 	version 9
 	// `newvars(string)' removed - it was accepted by syntax but never
 	// referenced anywhere in this file's body (a fully dead,

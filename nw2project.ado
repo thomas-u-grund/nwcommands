@@ -65,7 +65,7 @@ program nw2project, rclass
 	// (an earlier version wrote "network '`srcname''") - a literal
 	// embedded apostrophe survives one round of compound-quoting but
 	// corrupts the string once it passes through further macro
-	// re-expansion (nwname forwarding its full `0' to nw_name), found
+	// re-expansion (nwname forwarding its full `0' to _nwname), found
 	// via a direct probe: the provenance note silently truncated mid-
 	// string and even clobbered unrelated option text following it.
 	local provnote "projected from network `srcname', mode `project'"

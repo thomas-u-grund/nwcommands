@@ -22,7 +22,7 @@ set seed 1
 * A second, independent bug was found and fixed while verifying the
 * first: the displayed per-variable row label was always blank,
 * because nwqap.ado read `r(name)' after calling nwname, but nwname
-* (via nw_name) actually returns `r(netname)' - r(name) never
+* (via _nwname) actually returns `r(netname)' - r(name) never
 * existed, so the label local was always empty. This only affected
 * the printed table, not e(b)/e(pvalues) (Stata's own regression
 * command sets those directly from the dataset's actual variable

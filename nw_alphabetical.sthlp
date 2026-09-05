@@ -15,6 +15,7 @@
 {p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwname }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
 {p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
 {p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
@@ -30,7 +31,6 @@
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
