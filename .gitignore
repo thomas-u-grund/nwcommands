@@ -3,6 +3,11 @@ lib/cscripts_prod/
 lib/*.log
 *.log
 
+# Exception: tutorial example.log files ARE tracked - per
+# docs/TUTORIALS_STYLE.md, each is the real, traceable Stata run backing
+# that tutorial page's code blocks, not a disposable debug log.
+!website/tutorials/**/example.log
+
 # Editor/OS
 .DS_Store
 
