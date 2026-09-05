@@ -1,0 +1,271 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+
+
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
+> cratchpad/tutorials_workdir/profile.do ...
+
+. do example.do 
+
+. * Tutorial 2: Core Concepts
+. * Run from a directory with nwcommands net-installed (not a dev checkout).
+. 
+. * A dataset that already declares more than one network at once
+. nwwebuse florentine
+
+. nwset
+(2 networks)
+--------------------
+      flobusiness
+      flomarriage
+
+. 
+. * the "current network" - the one commands act on when no netname is given
+. nwcurrent
+----------------------------------------
+   Current network:  flomarriage
+   Number of nodes:  16
+----------------------------------------
+
+. nwcurrent flobusiness
+----------------------------------------
+   Current network:  flobusiness
+   Number of nodes:  16
+----------------------------------------
+
+. nwcurrent
+----------------------------------------
+   Current network:  flobusiness
+   Number of nodes:  16
+----------------------------------------
+
+. 
+. * netlist wildcard syntax, on a three-wave dataset
+. nwwebuse glasgow, nwclear
+
+. nwset
+(3 networks)
+--------------------
+      glasgow1
+      glasgow2
+      glasgow3
+
+. nwsummarize glasgow1 glasgow2 glasgow3
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .046
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow2
+   Network id:  2
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 116
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .047
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow3
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 122
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .05
+   Temporal: false
+
+. nwsummarize glasgow1-glasgow3
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .046
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow2
+   Network id:  2
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 116
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .047
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow3
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 122
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .05
+   Temporal: false
+
+. nwsummarize glasg*
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .046
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow2
+   Network id:  2
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 116
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .047
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow3
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 122
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .05
+   Temporal: false
+
+. nwsummarize _all
+--------------------------------------------------
+   Network name:  glasgow1
+   Network id:  1
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .046
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow2
+   Network id:  2
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 116
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .047
+   Temporal: false
+--------------------------------------------------
+   Network name:  glasgow3
+   Network id:  3
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 122
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .05
+   Temporal: false
+
+. 
+. * networks coexist with ordinary Stata variables
+. nwclear
+
+. nwwebuse florentine
+
+. gen note = "wealthiest families"
+
+. describe
+
+Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/florentine.nwdta
+ Observations:            16                  
+    Variables:             6                  16 May 2019 17:02
+------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+------------------------------------------------------------------------------------------------------------------
+_nwnode         str12   %12s                  
+_nwinclude      float   %9.0g                 
+wealth          float   %9.0g                 
+priorates       float   %9.0g                 
+seat            float   %9.0g                 
+note            str19   %19s                  
+------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. list note in 1
+
+     +---------------------+
+     |                note |
+     |---------------------|
+  1. | wealthiest families |
+     +---------------------+
+
+. 
+end of do-file
