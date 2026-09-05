@@ -22,8 +22,7 @@ data commands.
   `help nw_topical` once installed for the full, organized command index).
 - **Statistical network models**: `nwergm` — exponential-family random graph models (ERGM),
   with maximum pseudolikelihood and MCMC maximum likelihood estimation, a substantial term
-  library, and an optional native (C) MCMC backend for performance (see
-  `docs/ERGM_ARCHITECTURE.md`).
+  library, and an optional native (C) MCMC backend for performance (see `ARCHITECTURE.md`).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, permanently` (or `db <command>` directly) — for
@@ -96,11 +95,9 @@ evidence-based summary of what to expect at various network sizes.
 - `cscripts/` — 140+ regression tests, one per command family, run in both "dev mode" (against
   the Mata source directly, `do unw_core.do`) and "production mode" (against the compiled
   `lib/lnwcommands.mlib`, mirrored under `lib/cscripts_prod/`, a gitignored build artifact).
-- `native/` — C sources for the two native plugins (`ergm_mcmc.c`, `nwgraph.c`) and their own
-  `Makefile`; `.github/workflows/build-plugins.yml` builds and commits all three platforms'
-  binaries on push.
-- `dev/` — benchmark scripts (including R-vs-Stata comparisons for `nwergm`) and other
-  development-only utilities not part of the shipped package.
+- `native/` — C sources for the native plugins (`ergm_mcmc.c`, `saom_sim.c`, `dynam_sim.c`,
+  `nwgraph.c`) and their own `Makefile`; `.github/workflows/build-plugins.yml` builds and commits
+  all three platforms' binaries on push.
 
 ## License
 
