@@ -77,6 +77,10 @@ scale.
   communities.
 - Larger-scale layouts for `nwplot` (current layouts are designed for graphs up to a few hundred
   to low thousands of nodes).
+- Faster `nwplot` layout computation — the current (Mata) layout algorithm is noticeably slow;
+  a plot should render close to instantaneously. Worth profiling to find the actual bottleneck,
+  and likely a candidate for a native (C) kernel alongside the package's existing native
+  betweenness/ERGM/SAOM/DyNAM backends, rather than a purely algorithmic fix.
 - Self-loop rendering, automatic two-mode color/symbol styling, and parallel-edge rendering in
   `nwplot`.
 - Full blockmodeling (image matrices, stochastic block models, goodness-of-fit) building on the
