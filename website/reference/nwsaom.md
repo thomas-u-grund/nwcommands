@@ -44,10 +44,10 @@ control_options]
 | | |
 |---|---|
 | `outdegree` | Outdegree (density) effect, evaluation-function role; **required** in every model UNLESS `outdegreeendow`/`outdegreecreation` are given instead |
-| `outdegreeendow` | Outdegree effect, ENDOWMENT (tie-withdrawal) role - splits outdegree's own contribution so it fires only on ties that are REMOVED between waves; must be given together with `outdegreecreation`, and not combined with plain `outdegree` (all three roles together are exactly collinear). Satisfies the same required-baseline role plain `outdegree` does. Not yet supported combined with co-evolution, multi-wave models, `present()`, or `missnet()`. See [Endowment/creation functions](nwsaom) below |
+| `outdegreeendow` | Outdegree effect, ENDOWMENT (tie-withdrawal) role - splits outdegree's own contribution so it fires only on ties that are REMOVED between waves; must be given together with `outdegreecreation`, and not combined with plain `outdegree` (all three roles together are exactly collinear). Satisfies the same required-baseline role plain `outdegree` does. Not yet supported combined with co-evolution, multi-wave models, `present()`, or `missnet()`. See [Endowment/creation functions](nwsaom_remarks) in nwsaom_remarks |
 | `outdegreecreation` | Outdegree effect, CREATION (new-tie) role - the mirror of `outdegreeendow`, firing only on ties that are ADDED between waves; must be given together with it |
 | `reciprocity` | Reciprocated-tie effect, evaluation-function role |
-| `reciprocityendow` | Reciprocity effect, ENDOWMENT role - same mechanism/rules as `outdegreeendow`, applied to reciprocity instead; independent of whichever baseline role (`outdegree` or `outdegreeendow`/`outdegreecreation`) is in use. Note: on data where a mutual tie is essentially never lost in BOTH directions at once, this effect's own observed target can be exactly zero, leaving it unidentified (a genuine data property, not a bug) - see [Endowment/creation functions](nwsaom) below |
+| `reciprocityendow` | Reciprocity effect, ENDOWMENT role - same mechanism/rules as `outdegreeendow`, applied to reciprocity instead; independent of whichever baseline role (`outdegree` or `outdegreeendow`/`outdegreecreation`) is in use. Note: on data where a mutual tie is essentially never lost in BOTH directions at once, this effect's own observed target can be exactly zero, leaving it unidentified (a genuine data property, not a bug) - see [Endowment/creation functions](nwsaom_remarks) in nwsaom_remarks |
 | `reciprocitycreation` | Reciprocity effect, CREATION role - the mirror of `reciprocityendow`; must be given together with it |
 
 **Node covariate effects**
@@ -92,7 +92,7 @@ control_options]
 
 | | |
 |---|---|
-| `interact(effect1#effect2[#effect3] [effect4#effect5 ...])` | Two- or three-way interaction (RSiena's own `includeInteraction()`) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: **outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance** (and their RSiena aliases `egox()`/`altx()`/`samex()`/`simx()`) - the node-level effects (**indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3**) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See [Interaction effects](nwsaom) below |
+| `interact(effect1#effect2[#effect3] [effect4#effect5 ...])` | Two- or three-way interaction (RSiena's own `includeInteraction()`) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: **outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance** (and their RSiena aliases `egox()`/`altx()`/`samex()`/`simx()`) - the node-level effects (**indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3**) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See [Interaction effects](nwsaom_remarks) in nwsaom_remarks |
 
 **RSiena naming aliases**
 
@@ -108,9 +108,9 @@ control_options]
 
 | | |
 |---|---|
-| `behavior(varlist)` | Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as `wave1()`/`wave2()` or `waves()` (e.g. two waves: `behavior(b1 b2)`; three: `behavior(b1 b2 b3)`). Requires `linear`. A SECOND dependent variable evolving jointly with the network - see [Co-evolution](nwsaom) below |
+| `behavior(varlist)` | Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as `wave1()`/`wave2()` or `waves()` (e.g. two waves: `behavior(b1 b2)`; three: `behavior(b1 b2 b3)`). Requires `linear`. A SECOND dependent variable evolving jointly with the network - see [Co-evolution](nwsaom_remarks) in nwsaom_remarks |
 | `linear` | Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; **required** whenever `behavior()` is specified UNLESS `linearendow`/`linearcreation` are given instead, matching `outdegree`'s own required-baseline role on the network side |
-| `linearendow` | Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with `linearcreation`, and not combined with `linear` (all three roles together are exactly collinear). See [Endowment/creation functions](nwsaom) below |
+| `linearendow` | Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with `linearcreation`, and not combined with `linear` (all three roles together are exactly collinear). See [Endowment/creation functions](nwsaom_remarks) in nwsaom_remarks |
 | `linearcreation` | Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to `linearendow`; must be given together with it |
 | `quadratic` | Behavior quadratic shape effect; requires `behavior()`, not combinable with `quadraticendow`/`quadraticcreation` |
 | `quadraticendow` `quadraticcreation` | Behavior quadratic effect split into its ENDOWMENT/CREATION roles - same mechanism/rules as `linearendow`/`linearcreation` (must be given together, not combined with plain `quadratic`), applied to the quadratic shape effect instead; independent of whichever baseline role (`linear` or `linearendow`/`linearcreation`) is in use |
@@ -124,30 +124,30 @@ control_options]
 
 | | |
 |---|---|
-| `present(varlist)` | Composition change ("joiners and leavers"): one 0/1 variable per wave, same "one variable per wave" convention as `behavior()`, marking which actors are present at each wave. Optional - omitting it means every actor is present the whole time. See [Composition change](nwsaom) below |
-| `missnet(matlist)` | Missing tie data: one 0/1 n x n MATRIX name per wave, marking which dyads are missing at that wave. Optional - omitting it means every dyad is fully observed. See [Missing data](nwsaom) below |
-| `missbeh(varlist)` | Missing behavior data: one 0/1 variable per wave, same "one variable per wave" convention as `present()`, marking which actors' behavior value is missing at that wave. Requires `behavior()`. Optional - omitting it means every actor's value is fully observed. See [Missing data](nwsaom) below |
-| `structural(matname)` | Structural zeros/ones: ONE 0/1 n x n MATRIX (zero diagonal) marking dyads whose tie value is fixed by design rather than actor choice (e.g. a legally mandated reporting tie, or a dyad known a priori to never form) - a marked dyad is excluded from every actor's own ministep candidate set, so it can never toggle during simulation. The marked dyad's OBSERVED value must be identical at both waves (a "frozen" dyad that genuinely changed between waves is rejected outright, matching RSiena's own structural-value convention that a fixed dyad's data must actually be constant). v1 scope: exactly two waves (`wave1()`/`wave2()`, not `waves()`), network-only (no `behavior()`); not yet combinable with `symmetric`, `ratecov()`, or the network endowment/creation split. See [Structural zeros/ones](nwsaom) below |
+| `present(varlist)` | Composition change ("joiners and leavers"): one 0/1 variable per wave, same "one variable per wave" convention as `behavior()`, marking which actors are present at each wave. Optional - omitting it means every actor is present the whole time. See [Composition change](nwsaom_remarks) in nwsaom_remarks |
+| `missnet(matlist)` | Missing tie data: one 0/1 n x n MATRIX name per wave, marking which dyads are missing at that wave. Optional - omitting it means every dyad is fully observed. See [Missing data](nwsaom_remarks) in nwsaom_remarks |
+| `missbeh(varlist)` | Missing behavior data: one 0/1 variable per wave, same "one variable per wave" convention as `present()`, marking which actors' behavior value is missing at that wave. Requires `behavior()`. Optional - omitting it means every actor's value is fully observed. See [Missing data](nwsaom_remarks) in nwsaom_remarks |
+| `structural(matname)` | Structural zeros/ones: ONE 0/1 n x n MATRIX (zero diagonal) marking dyads whose tie value is fixed by design rather than actor choice (e.g. a legally mandated reporting tie, or a dyad known a priori to never form) - a marked dyad is excluded from every actor's own ministep candidate set, so it can never toggle during simulation. The marked dyad's OBSERVED value must be identical at both waves (a "frozen" dyad that genuinely changed between waves is rejected outright, matching RSiena's own structural-value convention that a fixed dyad's data must actually be constant). v1 scope: exactly two waves (`wave1()`/`wave2()`, not `waves()`), network-only (no `behavior()`); not yet combinable with `symmetric`, `ratecov()`, or the network endowment/creation split. See [Structural zeros/ones](nwsaom_remarks) in nwsaom_remarks |
 
 **Covariate-dependent rate**
 
 | | |
 |---|---|
-| `ratecov(varname)` | Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes *rate**exp(**ratecovcoef****varname*[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, `present()`, `missnet()`, or `symmetric`. See **Remarks** below |
+| `ratecov(varname)` | Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes *rate**exp(**ratecovcoef****varname*[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, `present()`, `missnet()`, or `symmetric`. See [Remarks](nwsaom_remarks) |
 | `ratecovcoef(real)` | Starting value for `ratecov()`'s own jointly-estimated coefficient (default 0) |
 
 **Undirected/symmetric relations**
 
 | | |
 |---|---|
-| `symmetric` | Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see **Remarks** below for the full list. v1 scope: exactly two waves (`wave1()`/`wave2()`, not `waves()`), network-only (no `behavior()`); combinable with `present()`, `missnet()`, and `ratecov()` (see **Remarks**) |
+| `symmetric` | Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see [Remarks](nwsaom_remarks) for the full list. v1 scope: exactly two waves (`wave1()`/`wave2()`, not `waves()`), network-only (no `behavior()`); combinable with `present()`, `missnet()`, and `ratecov()` (see [Remarks](nwsaom_remarks)) |
 | `symtype(string)` | Which mutual-consent rule `symmetric` uses: **joint** (default) accepts a change when the sum of both actors' own preferences is favorable; **force** lets the initiating actor alone decide, ignoring the other actor's own preference; **agree** requires both actors to independently agree when creating a tie, or either one to want it gone when removing one. Requires `symmetric` |
 
 **Estimation control**
 
 | | |
 |---|---|
-| `rate0(real)` | Accepted for backward compatibility only - **no longer used**; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see **Remarks** below) |
+| `rate0(real)` | Accepted for backward compatibility only - **no longer used**; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see [Remarks](nwsaom_remarks)) |
 | `theta0(numlist)` | Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero |
 | `k0(int)` | Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50 |
 | `k3(int)` | Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000 |
@@ -160,7 +160,9 @@ control_options]
 
 An SAOM models network change as a sequence of unobserved, actor-driven "ministeps": between consecutive observed waves, actors are activated one at a time (at a rate governed by the model's own rate parameter) and each activated actor may create or drop exactly one of its own outgoing ties, choosing among the available alternatives (including "no change") via a multinomial-logit choice model on a linear combination of effect-specific "change statistics", weighted by the effect's own estimated coefficient. This actor-oriented, MYOPIC formulation - an actor's own choice is evaluated purely from that actor's own resulting local network statistic, never from how the choice would affect any OTHER actor's own statistics - is what genuinely distinguishes an SAOM from an ERGM (see [nwergm](nwergm)): an ERGM has no actors or ministeps at all, only a single global probability distribution over entire graphs. Coefficients are estimated by the Method of Moments via Robbins-Monro stochastic approximation (RSiena's own default estimation algorithm), not maximum likelihood.
 
-**A genuine, hard-won methodological lesson from this implementation's own development, worth stating explicitly here**: several of RSiena's own effects (e.g. `gwesp()`) compute their observed/global statistic in a way that is IDENTICAL to the corresponding ERGM statistic, which made it tempting to also reuse an ERGM package's own change-statistic (ministep) formula for the same effect - this is WRONG in general. RSiena's own ministep formula for a given effect is restricted to the ACTIVATED ACTOR'S OWN statistic only (the myopic-actor rule above), which for several effects is a genuinely SMALLER quantity than the effect's own full ERGM change statistic (which legitimately captures the toggle's effect on every actor's own statistic, appropriate for an ERGM's single-actor-free global model but not for an SAOM ministep). Every effect below was independently re-derived and verified against RSiena's own real ministep-contribution source code, not assumed from its global-statistic formula alone; see [Effect library](nwsaom) below for the account, term by term, including one case (`gwesp()`) where an initial reuse assumption was shipped, caught, and corrected during this package's own development - kept in that section's own account rather than silently erased, matching this whole package's disclosure standard.
+## Remarks
+
+See [nwsaom_remarks](nwsaom_remarks) for the full effect-derivation library (every effect's own ministep formula and how it was verified against RSiena's real source), interaction/multiplex/co-evolution mechanics, composition-change/missing-data/structural-zero handling, the full performance benchmark, and the estimation-algorithm background (Method-of-Moments phase structure, rate refinement). That material was split into its own file purely to keep this file's own length within Stata's interactive Viewer's rendering limits - it is not optional/secondary content, just relocated.
 
 ## Examples
 
@@ -195,12 +197,7 @@ An SAOM models network change as a sequence of unobserved, actor-driven "ministe
 
 ## Performance
 
-`nwsaom` has a native (C) simulation backend, used automatically whenever the fitted model's effects all have native coverage (no option needed to opt in - see **Estimation** below and, for co-evolution, the note at the end of [Co-evolution](nwsaom) below). A direct, reproducible wall-clock comparison against a real, installed RSiena (version 1.6.6, R 4.6.0) - identical data, identical model, single run each, scripts and full methodology in browse "dev/saom_rsiena_benchmark.R" and browse "dev/saom_rsiena_benchmark.do" - on RSiena's own standard s50 tutorial dataset (50 students, friendship network + alcohol-use behavior, waves 1-2):
-
-- outdegree + reciprocity: RSiena 0.96s, `nwsaom` 0.94s
-- + behavior(alcohol), linear + quadratic: RSiena 1.18s, `nwsaom` 0.63s
-
-For the network-only model `nwsaom` is at parity with real RSiena; for the co-evolution model it is genuinely faster. This did not happen by accident: an earlier round of this same benchmark found `nwsaom` roughly 22x slower (network-only) and 3.2x slower (co-evolution) than real RSiena, and both gaps were profiled and closed - not by approximating the method more coarsely, but by finding and eliminating real, avoidable overhead (a rate-refinement loop that had never been ported to the native backend, and a co-evolution code path that was silently redoing, in slow interpreted Mata, statistic computations the native backend had already computed in C).
+`nwsaom` has a native (C) simulation backend, used automatically whenever the fitted model's effects all have native coverage (no option needed to opt in). See [Remarks](nwsaom_remarks) for a full wall-clock benchmark against real RSiena and the performance-tuning history behind it.
 
 ## Supported network types
 
@@ -215,12 +212,12 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(N)** number of actors (= e(nodes))
 - **e(nodes)** number of actors
 - **e(nwaves)** number of waves supplied
-- **e(rate)** estimated network rate parameter (wave1()/wave2() path only) - REFINED for a plain network-only fit with no `present()`/`missnet()`/`missbeh()`; the closed-form STARTING value only for a co-evolution fit (real RSiena's own default behavior for 2+ dependent variables), a `present()` fit (composition change forces unconditional estimation - see **Estimation** above), or a missing-data fit (`missnet()`/`missbeh()` - see [Missing data](nwsaom) above)
-- **e(rate_tratio)** network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see **Estimation** above)
+- **e(rate)** estimated network rate parameter (wave1()/wave2() path only) - REFINED for a plain network-only fit with no `present()`/`missnet()`/`missbeh()`; the closed-form STARTING value only for a co-evolution fit (real RSiena's own default behavior for 2+ dependent variables), a `present()` fit (composition change forces unconditional estimation - see [Estimation](nwsaom_remarks) in nwsaom_remarks), or a missing-data fit (`missnet()`/`missbeh()` - see [Missing data](nwsaom_remarks) in nwsaom_remarks)
+- **e(rate_tratio)** network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_se)** standard error of the REFINED e(rate) (plain network-only fits with no `present()`/`missnet()`/`missbeh()` only - 0 for a co-evolution, `present()`, or missing-data fit, whose e(rate) is not refined)
 - **e(has_behavior)** 1 if this is a co-evolution fit (`behavior()` specified), 0 otherwise
 - **e(p_net)** number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed `beh_`)
-- **e(rate_beh)** estimated behavior rate parameter (co-evolution, wave1()/wave2() path only) - closed-form starting value, not refined (see **Estimation** above)
+- **e(rate_beh)** estimated behavior rate parameter (co-evolution, wave1()/wave2() path only) - closed-form starting value, not refined (see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_beh_tratio)** behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
 
 **Macros**

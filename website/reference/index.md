@@ -233,6 +233,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwintro`](nwintro)
 - [`nwprogramming`](nwprogramming)
 - [`nwsaom_estat`](nwsaom_estat)
+- [`nwsaom_remarks`](nwsaom_remarks)
 - [`nwstart`](nwstart)
 - [`nwtab1`](nwtab1)
 - [`nwtab2`](nwtab2)
