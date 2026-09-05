@@ -26,7 +26,7 @@
 
 {help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}
 
-{marker oncept}{...}
+{marker concept}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Concepts}{col 36}{c LT}{hline}
@@ -38,7 +38,7 @@
 {p2col:    {bf:{help netname }}}{p_end}
 {p2col:    {bf:{help newnetname }}}{p_end}
 {p2col:    {bf:{help nodeid }}}{p_end}
-{marker mport}{...}
+{marker import}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Import/Export}{col 36}{c LT}{hline}
@@ -56,7 +56,7 @@
 {p2col:    {bf:{help nwtoedge }}}Convert network to edgelist{p_end}
 {p2col:    {bf:{help nwuse }}}Load Stata network dataset{p_end}
 {p2col:    {bf:{help nwwebuse }}}Load network data over the web{p_end}
-{marker enerator}{...}
+{marker generator}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Generators}{col 36}{c LT}{hline}
@@ -83,7 +83,7 @@
 {p2col:    {bf:{help nwsmall }}}Generate a small-world network{p_end}
 {p2col:    {bf:{help nwsubset }}}Subset the nodes of a network{p_end}
 {p2col:    {bf:{help nwtranspose }}}Transpose a network{p_end}
-{marker nformation}{...}
+{marker information}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Information}{col 36}{c LT}{hline}
@@ -97,7 +97,7 @@
 {p2col:    {bf:{help nwsummarize }}}Summarize a network{p_end}
 {p2col:    {bf:{help nwtabulate }}}One-way table of dyads{p_end}
 {p2col:    {bf:{help nwtriads }}}Triad census of the network{p_end}
-{marker anipulation}{...}
+{marker manipulation}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Manipulation}{col 36}{c LT}{hline}
@@ -125,10 +125,11 @@
 {p2col:    {bf:{help nwsym }}}Symmetrize network{p_end}
 {p2col:    {bf:{help nwsymmetrize }}}Symmetrize network (alias for {help nwsym}){p_end}
 {p2col:    {bf:{help nwtranspose }}}Transpose a network{p_end}
-{marker nalysis_centrality}{...}
+{marker analysis}{...}
+{marker analysis_centrality}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Centrality}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.1] Centrality}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
@@ -140,10 +141,10 @@
 {p2col:    {bf:{help nwinduced }}}Induced, endogenous and exogenous centrality{p_end}
 {p2col:    {bf:{help nwkatz }}}Calculate a Katz-inspired distance-decay centrality{p_end}
 {p2col:    {bf:{help nwpagerank }}}PageRank centrality{p_end}
-{marker nalysis_cohesion}{...}
+{marker analysis_cohesion}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Cohesion, Component}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.2] Cohesion, Components & Subgroups}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
@@ -155,19 +156,19 @@
 {p2col:    {bf:{help nwnclan }}}Maximal n-clan enumeration{p_end}
 {p2col:    {bf:{help nwnclique }}}Maximal n-clique enumeration{p_end}
 {p2col:    {bf:{help nwsimmelian }}}Calculate Simmelian ties{p_end}
-{marker nalysis_community}{...}
+{marker analysis_community}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Community Detection}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.3] Community Detection}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
 {p2col:    {bf:{help nwmodularity }}}Score an existing node partition using Newman's modularity{p_end}
 {p2col:    {bf:{help nwspectral }}}Graph Laplacian spectral analysis{p_end}
-{marker nalysis_positions}{...}
+{marker analysis_positions}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Positions, Roles & }{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.4] Positions, Roles & Equivalence}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
@@ -188,10 +189,10 @@
 {p2col:    {bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
 {p2col:    {bf:{help nwsimilar }}}Generate node similarities{p_end}
 {p2col:    {bf:{help nwsimindex }}}Common-neighbor similarity indices between all node pairs{p_end}
-{marker nalysis_paths}{...}
+{marker analysis_paths}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Paths, Reachability}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.5] Paths, Reachability & Ego Networks}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
@@ -202,10 +203,10 @@
 {p2col:    {bf:{help nwpath }}}Calculate paths between nodes{p_end}
 {p2col:    {bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:    {bf:{help nwreach }}}Calculate reachability network{p_end}
-{marker nalysis_statmodels}{...}
+{marker analysis_statmodels}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Statistical Estimat}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.6] Statistical Estimation}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
@@ -214,10 +215,10 @@
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
 {p2col:    {bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves{p_end}
 {p2col:    {bf:{help nwutility }}}Calculate utility scores according to Jackson and Wollinsky (1996){p_end}
-{marker nalysis_other}{...}
+{marker analysis_other}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Other Analysis Util}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.7] Other Analysis Utilities}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
@@ -227,15 +228,15 @@
 {p2col:    {bf:{help nwnode }}}Checks if node exists in a network{p_end}
 {p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
 {p2col:    {bf:{help nwvalue }}}Returns a tie value{p_end}
-{marker nalysis_statmodels}{...}
+{marker analysis_dynamicmodels}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:] Statistical Estimat}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:[NW-2.6.8] Dynamic & Event-Based Models}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE){p_end}
 {p2col:    {bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}
-{marker tilities}{...}
+{marker utilities}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Utilities}{col 36}{c LT}{hline}
@@ -255,14 +256,14 @@
 {p2col:    {bf:{help nwunab }}}Unabbreviate network list{p_end}
 {p2col:    {bf:{help nwvalidate }}}Validate network name{p_end}
 {p2col:    {bf:{help nwvalidvars }}}Validate Stata variables for network{p_end}
-{marker nalysis_utility}{...}
+{marker analysis_utility}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Utility Commands}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwds }}}List loaded networks, in the style of Stata's own {help ds}{p_end}
-{marker isualization}{...}
+{marker visualization}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Visualization}{col 36}{c LT}{hline}
@@ -273,7 +274,7 @@
 {p2col:    {bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
 {p2col:    {bf:{help nwplot }}}Plot a network{p_end}
 {p2col:    {bf:{help nwplotmatrix }}}Plot a network as sociomatrix{p_end}
-{marker rogramming}{...}
+{marker programming}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
 {col 8}{hline 3}{c RT}       {it:Programming}{col 36}{c LT}{hline}
