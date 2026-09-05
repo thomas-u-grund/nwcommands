@@ -50,7 +50,7 @@ program animate
 		local epslist "`epslist' `geps'.eps"
 	
 		if `i' == `numgraphs' {
-			local last "`geps'.eps"
+			local last "`geps'"
 		}
 		local i = `i' + 1
 	}
