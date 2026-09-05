@@ -19,11 +19,13 @@ f nw2project.sthlp
 f nw2set.sthlp
 f nw2toedge.sthlp
 f nw_alphabetical.sthlp
+f nw_datasync.sthlp
 f nw_errorcodes.sthlp
 f nw_intro.sthlp
 f nw_networktypes.sthlp
 f nw_programming.sthlp
 f nw_start.sthlp
+f nw_tomata.sthlp
 f nw_topical.sthlp
 f nwaddnodes.sthlp
 f nwaltergen.sthlp
@@ -81,5 +83,3 @@ f nwhomophily.sthlp
 f nwimport.sthlp
 f nwinduced.sthlp
 f nwinstall.sthlp
-f nwissymmetric.sthlp
-f nwkatz.sthlp

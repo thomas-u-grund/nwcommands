@@ -245,7 +245,6 @@
 {p2col:    {bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:    {bf:{help nw_networktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:    {bf:{help nw_tomata }}}Return adjacency matrix of network{p_end}
-{p2col:    {bf:{help nw_unab }}}Unabbreviate network list{p_end}
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:    {bf:{help nwcurrent }}}Report and set current network{p_end}
 {p2col:    {bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
@@ -299,19 +298,15 @@
 {p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_clusters }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_clear }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_evalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_optsoneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_validate }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}

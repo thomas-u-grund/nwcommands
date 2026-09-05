@@ -53,7 +53,7 @@ program nwneighbor
 	// hierarchy already uses internally, here made user-visible for the
 	// first time (that pointer was previously only ever used for a
 	// throwaway, never-registered internal recursion step). Deliberately
-	// placed HERE, before the r()-posting section below - `nw_validate'/
+	// placed HERE, before the r()-posting section below - `nwvalidate'/
 	// `nwdrop'/`nw_syntax' each set their OWN r() results as an
 	// unavoidable side effect of running, which would otherwise silently
 	// clobber nwneighbor's own r(egoid)/r(num_neighbors)/r(neighbors)/
@@ -74,7 +74,7 @@ program nwneighbor
 	if "`subnet'" != "" {
 		mata: __nwneighbor_sel = _select
 		mata: __nwneighbor_sel[`egoid'] = 1
-		nw_validate `subnet'
+		nwvalidate `subnet'
 		if "`r(exists)'" == "true" {
 			if "`subreplace'" == "" {
 				di "{err}Network {bf:`subnet'} already exists; use {bf:subreplace}"

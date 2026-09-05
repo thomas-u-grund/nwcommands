@@ -12,6 +12,7 @@
 {p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_clusters }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
 {p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
@@ -24,20 +25,14 @@
 {p2col:{bf:{help nw2project }}}One-mode projection of a two-mode network{p_end}
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
-{p2col:{bf:{help nw_clear }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
-{p2col:{bf:{help nw_edgelabs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_evalnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_optsoneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_tomata }}}Return adjacency matrix of network{p_end}
-{p2col:{bf:{help nw_unab }}}Unabbreviate network list{p_end}
-{p2col:{bf:{help nw_validate }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:{bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
 {p2col:{bf:{help nwappend }}}Append network dataset{p_end}

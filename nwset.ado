@@ -6,7 +6,7 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite RE
 // check anywhere in this file (confirmed directly: it was the ONLY
 // occurrence of the word in the whole file) - a network name
 // collision has always silently auto-picked a different valid name
-// via nw_validate below and warned, regardless of whether `overwrite'
+// via nwvalidate below and warned, regardless of whether `overwrite'
 // was given. `replace' is the real, now-wired option (matching this
 // package's own naming convention elsewhere, e.g. nwgenerate's
 // `replace'); `overwrite' is kept as a backward-compatible alias for
@@ -483,7 +483,7 @@ if "`overwrite'" != "" local replace "replace"
 			local name "network"
 		}
 
-		nw_validate `name'
+		nwvalidate `name'
 		if "`r(exists)'"=="true" {
 			if "`replace'" != "" {
 				// keep the caller's own requested name and drop the

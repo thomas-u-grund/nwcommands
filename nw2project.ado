@@ -27,7 +27,7 @@ program nw2project, rclass
 	}
 	// replace, when given, reuses the exact requested name (drop then
 	// recreate) rather than silently auto-incrementing to a different one.
-	// nw_validate's own r(validname) auto-increments unconditionally on a
+	// nwvalidate's own r(validname) auto-increments unconditionally on a
 	// name collision; unconditionally taking it (as this line used to)
 	// meant replace never actually replaced anything - name was already
 	// switched to the incremented name before the "if replace" block
@@ -35,7 +35,7 @@ program nw2project, rclass
 	// going to be reused anyway. Found and fixed while building
 	// nwsimindex, which had copied this same pattern - see its own
 	// docs/CERTIFICATION.md entry.
-	nw_validate `name'
+	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
 			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."

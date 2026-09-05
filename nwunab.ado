@@ -13,9 +13,18 @@ program nwunab, rclass
 	
 	preserve
 	drop _all
-	mata: st_global("r(names)", nw.nws.get_names())
+	unw_defs
+	mata: st_global("r(names)", `nws'.get_names())
 	foreach n in `r(names)' {
 		noi gen `n' = .
+	}
+	// BUGFIX: `passthru' defaults an unspecified max() to the literal
+	// text "max(.)" rather than leaving it empty, which `unab' itself
+	// would reject/misinterpret as a real max() value of "." - normalize
+	// back to "no max given" before forwarding to `unab' (ported from
+	// nw_unab.ado, which already had this fix - see LEGACY_FILES.md).
+	if "`max'" == "max(.)" {
+		local max ""
 	}
 	unab unabnets : `netlist', `max' `min'
 	// BUGFIX: was `word count "`unablist'"' - `unablist' is never

@@ -14,7 +14,7 @@ program nwlambda, rclass
 	// - matches nwsimindex.ado's own identical convention exactly (this
 	// command is the same shape: compute an n x n matrix, save it as a
 	// new valued network).
-	nw_validate `name'
+	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
 			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."

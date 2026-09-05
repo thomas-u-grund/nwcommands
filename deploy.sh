@@ -76,19 +76,20 @@ fi
 echo "   ok."
 
 echo "== 3. Consistency check =="
-# Known, already-triaged exceptions - legacy-looking duplicate files with
-# their own .sthlp that were found by this exact check (2026-09-02) but
-# deliberately deferred to a dedicated LEGACY_FILES.md archival pass
-# rather than silently registered or silently deleted. Remove an entry
-# here the moment it's actually resolved either way.
+# Known, already-triaged exceptions - kept as an empty array (rather than
+# removed) so the mechanism stays ready for the next genuinely-deferred
+# case. nw_datasync/nw_tomata/nw_unab used to live here (found
+# 2026-09-02, genuinely resolved 2026-09-05: they were real, live,
+# documented commands just missing from the manifest by oversight, not
+# legacy duplicates - added to _pkg_ado.txt/_pkg_hlp.txt for real
+# instead).
 KNOWN_EXCEPTIONS=(
-  "nw_datasync.ado" "nw_datasync.sthlp"
-  "nw_tomata.ado" "nw_tomata.sthlp"
-  "nw_unab.ado" "nw_unab.sthlp"
 )
 is_known_exception() {
   local f="$1"
-  for e in "${KNOWN_EXCEPTIONS[@]}"; do
+  # ${arr[@]+...} guards against "unbound variable" under `set -u` when
+  # KNOWN_EXCEPTIONS is genuinely empty (no items currently deferred).
+  for e in "${KNOWN_EXCEPTIONS[@]+"${KNOWN_EXCEPTIONS[@]}"}"; do
     [ "$e" = "$f" ] && return 0
   done
   return 1

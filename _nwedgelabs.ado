@@ -3,8 +3,8 @@
 *! Author      : Thomas Grund, University College Dublin
 *! Email	   : thomas.u.grund@gmail.com
 
-capture program drop nw_edgelabs
-program nw_edgelabs
+capture program drop _nwedgelabs
+program _nwedgelabs
 	//!TODO
 	mata: st_global("r(edgelabs)", "")
 end

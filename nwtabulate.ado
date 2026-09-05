@@ -31,7 +31,7 @@ program nwtab1
 	if "`directed'" == "false" {
 		local upper = "upper"
 	}
-	nw_edgelabs `anything'
+	_nwedgelabs `anything'
 	local edgelabs r(edgelabs)
 	
 	nwtoedge `netname', `upper'
@@ -72,12 +72,12 @@ program nwtab2
 	nwtoedge `netname0', `upper'
 	
 	local net1: word 1 of `netname0'
-	nw_edgelabs `net1'
+	_nwedgelabs `net1'
 	capture label def elab1 `r(edgelabs)'
 	capture label val `net1' elab1
 	
 	local net2: word 2 of `netname0'
-	nw_edgelabs `net2'
+	_nwedgelabs `net2'
 	capture label def elab2 `r(edgelabs)'
 	capture label val `net2' elab2
 

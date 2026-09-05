@@ -18,10 +18,10 @@ program nwsimindex, rclass
 	// replace, when given, reuses the exact requested name (drop then
 	// recreate) rather than silently auto-incrementing to a different one
 	// - the ordinary, non-surprising meaning of "replace" elsewhere in this
-	// package (e.g. nwkcore's generate()/replace). nw_validate's own
+	// package (e.g. nwkcore's generate()/replace). nwvalidate's own
 	// r(validname) auto-increments unconditionally on a name collision,
 	// which is only applied here when replace was NOT given.
-	nw_validate `name'
+	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
 			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."

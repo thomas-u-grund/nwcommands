@@ -1,4 +1,6 @@
 f _extract_valuelabels.ado
+f _gnwdegree.ado
+f _growmedian2.ado
 f _nwdeploy.ado
 f _nwdialog.ado
 f _nwdialog_append.ado
@@ -16,7 +18,14 @@ f nw2fromedge.ado
 f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
+f nw_datasync.ado
+f _nwedgelabs.ado
+f nw_expnetexp.ado
+f nw_name.ado
+f nw_openviewer.ado
 f nw_syntax.ado
+f nw_tomata.ado
+f nw_unab.ado
 f nwaddnodes.ado
 f nwaltergen.ado
 f nwappend.ado

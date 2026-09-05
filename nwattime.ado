@@ -14,7 +14,7 @@ program nwattime, rclass
 	if "`name'" == "" {
 		local name "atview"
 	}
-	nw_validate `name'
+	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
 			di "{txt}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use."
