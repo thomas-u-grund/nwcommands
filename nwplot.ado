@@ -1352,11 +1352,53 @@ program nwplot, rclass
 			}
 		}
 
-		// Shape: map to the 4 shapes the interactive canvas supports;
-		// unresolved scheme-relative tokens (never vary by group in any
-		// nwcommands-shipped scheme, verified while building this feature)
-		// and anything else fall back to circle, the same default Stata
-		// itself uses for an unstyled marker.
+		// Shape: map to the 4 shapes the interactive canvas supports. When
+		// no symbolpalette() is given, _getcolorstyle's r(symbol) is an
+		// UNRESOLVED scheme-relative token ("scheme p<n>") - the previous
+		// version of this loop only ever matched LITERAL names (S/T/D/
+		// square/...), so "scheme p<n>" never matched anything and every
+		// group silently fell back to circle, even for nwcommands' own
+		// s1network/s2network/s3network schemes, which genuinely DO vary
+		// symbol p1=circle/p2=diamond/p3=square/p4=triangle/... (confirmed
+		// directly in scheme-s1network.scheme) - the real static plot
+		// (Stata's own renderer resolves "scheme p<n>" at draw time) was
+		// never affected, only this browser-canvas path, which has no
+		// live Stata renderer to resolve it. Fixed by reading the actual
+		// .scheme file's own "symbol p<n> <name>" lines directly - the
+		// same plain-text format every Stata scheme ships in, built-in or
+		// not (see `help schemes intro') - so a scheme that never varies
+		// symbol by group (e.g. economist, which defines no p1/p2/...
+		// lines at all) still correctly falls back to its own single
+		// generic "symbol p" default, exactly matching what Stata's own
+		// renderer would have drawn.
+		capture findfile "scheme-`scheme'.scheme"
+		if _rc == 0 {
+			local _nwedit_schemefile `"`r(fn)'"'
+			local _nwedit_schemesymdefault "circle"
+			tempname _nwedit_schfh
+			file open `_nwedit_schfh' using `"`_nwedit_schemefile'"', read
+			file read `_nwedit_schfh' _nwedit_schline
+			while r(eof) == 0 {
+				local _nwedit_schline = trim(`"`_nwedit_schline'"')
+				if substr(`"`_nwedit_schline'"', 1, 7) == "symbol " {
+					local _nwedit_schrest = trim(substr(`"`_nwedit_schline'"', 8, .))
+					local _nwedit_schkey : word 1 of `_nwedit_schrest'
+					local _nwedit_schval : word 2 of `_nwedit_schrest'
+					if `"`_nwedit_schkey'"' == "p" {
+						local _nwedit_schemesymdefault "`_nwedit_schval'"
+					}
+					else if substr(`"`_nwedit_schkey'"', 1, 1) == "p" & length(`"`_nwedit_schkey'"') > 1 & real(substr(`"`_nwedit_schkey'"', 2, .)) < . {
+						local _nwedit_schemesym`=substr(`"`_nwedit_schkey'"', 2, .)' "`_nwedit_schval'"
+					}
+				}
+				file read `_nwedit_schfh' _nwedit_schline
+			}
+			file close `_nwedit_schfh'
+		}
+		else {
+			local _nwedit_schemesymdefault "circle"
+		}
+
 		forvalues _nwedit_si = 1/`symbs' {
 			local _nwedit_sg = nsymbolrow[`_nwedit_si', 1]
 			if "`importcoords'" != "" & "`_nwedit_shapemap_`_nwedit_sg''" != "" {
@@ -1365,6 +1407,14 @@ program nwplot, rclass
 			else {
 				_getcolorstyle, i(0) j(`_nwedit_sg') colorpalette(`colorpalette') symbolpalette(`symbolpalette') scheme(`scheme') mlcolor(`mlcolor_symbol') mlwidth(`mlwidth_symbol')
 				local _nwedit_symtok = r(symbol)
+				if substr(`"`_nwedit_symtok'"', 1, 6) == "scheme" {
+					if `"`_nwedit_schemesym`_nwedit_sg''"' != "" {
+						local _nwedit_symtok "`_nwedit_schemesym`_nwedit_sg''"
+					}
+					else {
+						local _nwedit_symtok "`_nwedit_schemesymdefault'"
+					}
+				}
 				local _nwedit_shp "circle"
 				if inlist("`_nwedit_symtok'", "S", "square", "smsquare") local _nwedit_shp "square"
 				if inlist("`_nwedit_symtok'", "T", "triangle", "smtriangle") local _nwedit_shp "triangle"

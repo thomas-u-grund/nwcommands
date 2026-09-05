@@ -67,8 +67,17 @@ __NWEDIT_CYTOSCAPE__
     /* Stata's own twoway legend defaults to a horizontally centered band
        below the plot region, not floating over the data -- bottom-center
        is the closer visual match, vs. the earlier top-left placement that
-       sat on top of the graph. Still draggable from there if it overlaps. */
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+       sat on top of the graph. Still draggable from there if it overlaps.
+       "left: 50%" alone centers against the FULL viewport (this element's
+       containing block, since body is never positioned) - but #cy itself
+       only spans up to "right: 260px" (the side panel's width), so a plain
+       50% put the legend's center 130px (half the panel width) right of
+       #cy's own true center, overlapping the panel at most viewport sizes.
+       "calc(50% - 130px)" re-centers it under #cy's actual visible area
+       instead - and since exportPng() bakes the legend in at wherever it
+       visibly sits on screen, this fixes its default position in an
+       exported PNG too, not just the live view. */
+    position: absolute; bottom: 16px; left: calc(50% - 130px); transform: translateX(-50%);
     min-width: 130px; min-height: 50px;
     max-width: 90%; max-height: 80%;
     background: rgba(255,255,255,0.95); border: 1px solid #999; border-radius: 3px;
@@ -415,6 +424,18 @@ function drawLegendOnCanvas(ctx, x, y, w, h, scale) {
   ctx.lineWidth = scale;
   ctx.fillRect(x, y, w, h);
   ctx.strokeRect(x, y, w, h);
+
+  // Content beyond the box's own height just SCROLLS live (the box has
+  // "overflow: auto"), so a network's own worth of node/edge/size legend
+  // rows never actually spills out on screen - but this function has no
+  // notion of scroll position and draws every row unconditionally, so
+  // without a clip it drew straight past the box's bottom edge and onto
+  // the graph below in the exported PNG, matching the "legend covers the
+  // network" report. Clip to the (unscrolled) box bounds so the export
+  // shows exactly what's visible on screen, never more.
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
 
   const pad = 10 * s;
   const lineH = 18 * s;
@@ -894,12 +915,25 @@ function exportPng() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-    const lx = (legendRect.left - cyRect.left) * scale;
-    const ly = (legendRect.top - cyRect.top) * scale;
-    const lw = legendRect.width * scale;
-    const lh = legendRect.height * scale;
+    // cy.png()'s own `scale` compounds with window.devicePixelRatio
+    // internally (confirmed directly: on a 2x/Retina display, a requested
+    // scale:2 produced a 4x-sized image, not 2x) - using the requested
+    // `scale` constant here to convert the legend's CSS-pixel position/size
+    // into the exported canvas's pixel space was therefore only ever
+    // correct on a 1x display; on Retina it placed the legend at roughly
+    // half its intended position and size, which could easily land it in
+    // the middle of the network instead of near its on-screen spot. Deriving
+    // the REAL effective scale from the loaded image's actual dimensions
+    // vs. #cy's own CSS size is correct regardless of devicePixelRatio.
+    const effScaleX = canvas.width / cyRect.width;
+    const effScaleY = canvas.height / cyRect.height;
+
+    const lx = (legendRect.left - cyRect.left) * effScaleX;
+    const ly = (legendRect.top - cyRect.top) * effScaleY;
+    const lw = legendRect.width * effScaleX;
+    const lh = legendRect.height * effScaleY;
     if (lx + lw > 0 && ly + lh > 0 && lx < canvas.width && ly < canvas.height) {
-      drawLegendOnCanvas(ctx, lx, ly, lw, lh, scale);
+      drawLegendOnCanvas(ctx, lx, ly, lw, lh, effScaleX);
     }
 
     if (hasNativeSave) {
