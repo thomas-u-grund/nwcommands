@@ -93,6 +93,13 @@ qui erase "`pluginpath'"
 qui nwbetween cmpnet, generate(_bc_mata) silent
 qui copy "`movedplugin'" "`pluginpath'", replace
 qui erase "`movedplugin'"
+// Stata's own `copy' does not preserve the source file's executable bit -
+// restore it directly (macOS/Linux only; harmless no-op elsewhere, and
+// not load-bearing for Stata's own plugin loading either way - confirmed
+// directly, the native path above already worked with the bit missing -
+// but leaving it off needlessly re-dirties this tracked binary's git
+// mode on every test run).
+capture shell chmod +x "`pluginpath'"
 mata: bn = st_data((1::6), "_bc_native")
 mata: bm = st_data((1::6), "_bc_mata")
 mata: assert(max(abs(bn - bm)) < 1e-9)
