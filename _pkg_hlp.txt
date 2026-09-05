@@ -124,6 +124,7 @@ f nwrestore.sthlp
 f nwring.sthlp
 f nwsaom.sthlp
 f nwsaom_estat.sthlp
+f nwsaom_remarks.sthlp
 f nwsave.sthlp
 f nwset.sthlp
 f nwshared.sthlp

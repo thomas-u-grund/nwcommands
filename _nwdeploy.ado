@@ -37,7 +37,7 @@ program _nwdeploy
 	// generate topical glossary help
 	tempname memhold
 	tempfile topics
-	postfile `memhold' str30 cmdname str40 link str30 topic using `topics'
+	postfile `memhold' str30 cmdname str60 link str80 topic using `topics'
 	foreach file in `sthlpfiles' {
 		// add sthlp meta info
 		//di "sthlp: `file'"
@@ -97,14 +97,49 @@ program _nwdeploy
 "{help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}" _n _n
 
 	set more off
-	gen topicmarker = substr(link, 13,.)
-	
+	// Was a hardcoded `substr(link, 13, .)`, tuned for the old
+	// "nw_topical##" prefix (12 chars) - silently started stripping one
+	// character too few after the nw_topical -> nwtopical rename shortened
+	// the prefix to "nwtopical##" (11 chars), truncating every single
+	// marker name by its own first character (e.g. "concept" -> "oncept")
+	// without erroring, since Stata's help viewer resolves anchors by
+	// exact string match, not by validating they're real words. Found via
+	// a from-scratch website-reference regeneration (see GOTCHA.md).
+	// Fixed to derive the offset from the actual "##" delimiter instead
+	// of a hardcoded length, so a future rename can't reintroduce this.
+	gen topicmarker = substr(link, strpos(link, "##") + 2, .)
+
+	local wrote_analysis_marker = 0
 	forvalues i = 1/`=_N' {
 		local t = topicmarker[`i']
 		local t_lag = topicmarker[`=`i'-1']
 		if "`t'" != "`t_lag'" {
+			// The hardcoded TOC block above links {help nwtopical##analysis:...}
+			// for the "Analysis" row, but no {marker analysis} was ever emitted
+			// anywhere in the generated file - a dangling anchor since the TOC
+			// was first written (pre-dates the rename bugs above). Emit it once,
+			// right before the first analysis_* subsection reached in sort
+			// order - guarded by a flag rather than "did the previous group
+			// start with analysis_", since the "analysis_utility"/nwds group
+			// sorts away from its analysis_* siblings (its own topic string,
+			// "[NW-2.7] Utility Commands", sorts after the unrelated
+			// "[NW-2.7] Utilities" section), which would otherwise emit this
+			// marker a second time.
+			if substr("`t'", 1, 9) == "analysis_" & `wrote_analysis_marker' == 0 {
+				file write `topical' "{marker analysis}{...}" _n
+				local wrote_analysis_marker = 1
+			}
 			local tm = topicmarker[`i']
-			local tc = substr(topic[`i'],10,.)
+			// Was a hardcoded `substr(topic[`i'],10,.)`, tuned for a
+			// single-level section number like "[NW-2.1] " (9 chars
+			// through the space) - silently dropped the closing bracket
+			// and space for a two-level number like "[NW-2.6.6] " (11
+			// chars), leaving the banner title starting with a stray "]"
+			// (e.g. "] Statistical Estimation..." instead of "Statistical
+			// Estimation..."). Derive the cut point from the actual "] "
+			// delimiter instead of a hardcoded length. See GOTCHA.md.
+			local tpos = strpos(topic[`i'], "] ")
+			local tc = substr(topic[`i'], `tpos' + 2, .)
 			file write `topical' "{marker `tm'}{...}" _n ///
 					"" _n ///
 					"{col 8}   {c TLC}{hline 24}{c TRC}" _n ///

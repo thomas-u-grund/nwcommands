@@ -94,7 +94,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 
 ## Analysis
 
-### [NW-2.6.1] Centrality
+### Centrality
 
 - [`nw2degree`](nw2degree) --- Two-mode (bipartite) degree centrality
 - [`nwbetween`](nwbetween) --- Calculate betweenness centrality
@@ -106,7 +106,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwkatz`](nwkatz) --- Calculate a Katz-inspired distance-decay centrality
 - [`nwpagerank`](nwpagerank) --- PageRank centrality
 
-### [NW-2.6.2] Cohesion, Components & Subgroups
+### Cohesion, Components & Subgroups
 
 - [`nwbridges`](nwbridges) --- Calculate bridges
 - [`nwclique`](nwclique) --- Maximal clique enumeration
@@ -118,13 +118,13 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwnclique`](nwnclique) --- Maximal n-clique enumeration
 - [`nwsimmelian`](nwsimmelian) --- Calculate Simmelian ties
 
-### [NW-2.6.3] Community Detection
+### Community Detection
 
 - [`nwcommunity`](nwcommunity) --- Detect communities via the Louvain method or label propagation
 - [`nwmodularity`](nwmodularity) --- Score an existing node partition using Newman's modularity
 - [`nwspectral`](nwspectral) --- Graph Laplacian spectral analysis
 
-### [NW-2.6.4] Positions, Roles & Equivalence
+### Positions, Roles & Equivalence
 
 - [`nw2clustering`](nw2clustering) --- Clustering coefficient (transitivity) of a two-mode network
 - [`nwassortativity`](nwassortativity) --- Newman's assortativity coefficient
@@ -145,7 +145,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwsimilar`](nwsimilar) --- Generate node similarities
 - [`nwsimindex`](nwsimindex) --- Common-neighbor similarity indices between all node pairs
 
-### [NW-2.6.5] Paths, Reachability & Ego Networks
+### Paths, Reachability & Ego Networks
 
 - [`nwaltergen`](nwaltergen) --- Generate a variable from alter/neighbor attributes
 - [`nwego`](nwego) --- Ego-network size and density
@@ -156,7 +156,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwrandomwalk`](nwrandomwalk) --- Mean random-walk hitting time to a target node
 - [`nwreach`](nwreach) --- Calculate reachability network
 
-### [NW-2.6.6] Statistical Estimation
+### Statistical Estimation of Networks
 
 - [`nwcorrelate`](nwcorrelate) --- Correlate networks and variables
 - [`nwcug`](nwcug) --- Conditional Uniform Graph (CUG) test
@@ -165,7 +165,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwsaom`](nwsaom) --- Stochastic actor-oriented model (SAOM) estimation between observed network waves
 - [`nwutility`](nwutility) --- Calculate utility scores according to Jackson and Wollinsky (1996)
 
-### [NW-2.6.7] Other Analysis Utilities
+### Other Analysis Utilities
 
 - [`nwcontext`](nwcontext) --- Create a context variable
 - [`nwgen`](nwgen) --- Network extensions to generate
@@ -175,7 +175,7 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwturnover`](nwturnover) --- Tie turnover/stability between two waves of the same network
 - [`nwvalue`](nwvalue) --- Returns a tie value
 
-### [NW-2.6.8] Dynamic & Event-Based Models
+### Dynamic & Event-Based Models
 
 - [`nwdynam`](nwdynam) --- Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE)
 - [`nwrem`](nwrem) --- Relational event model (ordinal partial likelihood, MLE)

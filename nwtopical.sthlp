@@ -129,7 +129,7 @@
 {marker analysis_centrality}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.1] Centrality}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Centrality}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
@@ -144,7 +144,7 @@
 {marker analysis_cohesion}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.2] Cohesion, Components & Subgroups}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Cohesion, Components & Subgroups}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
@@ -159,7 +159,7 @@
 {marker analysis_community}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.3] Community Detection}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Community Detection}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcommunity }}}Detect communities via the Louvain method or label propagation{p_end}
@@ -168,7 +168,7 @@
 {marker analysis_positions}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.4] Positions, Roles & Equivalence}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Positions, Roles & Equivalence}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
@@ -192,7 +192,7 @@
 {marker analysis_paths}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.5] Paths, Reachability & Ego Networks}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Paths, Reachability & Ego Networks}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
@@ -206,7 +206,7 @@
 {marker analysis_statmodels}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.6] Statistical Estimation}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Statistical Estimation of Networks}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
@@ -218,7 +218,7 @@
 {marker analysis_other}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.7] Other Analysis Utilities}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Other Analysis Utilities}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcontext }}}Create a context variable{p_end}
@@ -231,7 +231,7 @@
 {marker analysis_dynamicmodels}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:[NW-2.6.8] Dynamic & Event-Based Models}{col 36}{c LT}{hline}
+{col 8}{hline 3}{c RT}       {it:Dynamic & Event-Based Models}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE){p_end}
