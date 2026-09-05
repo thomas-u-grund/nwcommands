@@ -241,8 +241,6 @@
 {col 8}{hline 3}{c RT}       {it:Utilities}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help _nwdatasync }}}Utility to sync current network with dataset{p_end}
-{p2col:    {bf:{help _nwtomata }}}Return adjacency matrix of network{p_end}
 {p2col:    {bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:    {bf:{help nw_networktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
@@ -281,8 +279,6 @@
 {col 8}{hline 3}{c RT}       {it:Programming}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
-{p2col:    {bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
 {p2col:    {bf:{help nwcompressobs }}}Compresses observations in Stata{p_end}
 {marker uncategorized}{...}
 
@@ -290,22 +286,6 @@
 {col 8}{hline 3}{c RT}       {it:Uncategorized}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
-{p2col:{bf:{help _extract_valuelabels }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _gnwdegree }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _growmedian2 }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdeploy }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_clusters }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwname }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwsyntax }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}

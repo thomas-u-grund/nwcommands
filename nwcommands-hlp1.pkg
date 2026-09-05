@@ -22,6 +22,7 @@ f nw_alphabetical.sthlp
 f _nwdatasync.sthlp
 f nw_errorcodes.sthlp
 f nw_intro.sthlp
+f nwinternals.sthlp
 f nw_networktypes.sthlp
 f nw_programming.sthlp
 f nw_start.sthlp
@@ -82,4 +83,3 @@ f nwhierarchy.sthlp
 f nwhomophily.sthlp
 f nwimport.sthlp
 f nwinduced.sthlp
-f nwinstall.sthlp

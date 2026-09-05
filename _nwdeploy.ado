@@ -42,8 +42,15 @@ program _nwdeploy
 		// add sthlp meta info
 		//di "sthlp: `file'"
 		//qui _addmeta_hlp `file', date(`d') version(`version')
-		
-		local cmdname = substr("`file'", 1, `=(length("`file'") - 6)') 
+
+		local cmdname = substr("`file'", 1, `=(length("`file'") - 6)')
+		// Leading-underscore files are internal-only helpers (see
+		// nwinternals.sthlp), even when (like _nwdatasync/_nwtomata)
+		// they have their own .sthlp for programmers - never listed
+		// in the general topical index.
+		if substr("`cmdname'", 1, 1) == "_" {
+			continue
+		}
 		getcmdtopic `cmdname'
 		if "`r(cmdtopic)'" != "" {
 			post `memhold' ("`cmdname'") ("`r(topiclink)'") ("`r(cmdtopic)'")
@@ -123,10 +130,14 @@ program _nwdeploy
 					""
 					
 	foreach file in `adofiles' {
-		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)') 
+		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)')
 		getcmddesc `cmdname'
-		if "`r(cmddesc)'" == "{err}no help file yet{txt}" {
-			file write `topical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n	
+		// Leading-underscore files are internal-only helpers (see
+		// nwinternals.sthlp) - never meant to be called by name
+		// directly, so they don't belong in the general topical index
+		// even as an "Uncategorized" catch-all entry.
+		if "`r(cmddesc)'" == "{err}no help file yet{txt}" & substr("`cmdname'", 1, 1) != "_" {
+			file write `topical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 		}
 		file write `versionlog' `"echo "*! v`version' __ `c(current_date)' __ `c(current_time)'" >> `file'"'  _n
 	}
@@ -153,6 +164,12 @@ program _nwdeploy
 		//qui _addmeta_do `file', date(`d') author(`author') email(`email') version(`version') other(`other')
 
 		local cmdname = substr("`file'", 1, `=(length("`file'") - 4)')
+		// Leading-underscore files are internal-only helpers (see
+		// nwinternals.sthlp) - not listed in the general alphabetical
+		// index, same reasoning as the topical index above.
+		if substr("`cmdname'", 1, 1) == "_" {
+			continue
+		}
 		getcmddesc `cmdname'
 		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 	}
@@ -442,6 +459,8 @@ program _write_nwcommands
 "{help nw_programming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}" _n ///
 "" _n ///
 "{help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}" _n ///
+"" _n ///
+"{help nwinternals:{col 14}{bf:[NW-7]}{...}{col 31}{bf:Internal helper files}}" _n ///
 "" _n ///
 "" _n ///
 "		*! Date        : `c(current_date)'" _n ///

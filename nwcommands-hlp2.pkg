@@ -3,6 +3,7 @@ d nwcommands-hlp. Social Network Analysis Using Stata - Help Files (part 2)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 5sep2026
+f nwinstall.sthlp
 f nwissymmetric.sthlp
 f nwkatz.sthlp
 f nwkcomponents.sthlp

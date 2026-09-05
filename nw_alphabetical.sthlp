@@ -4,27 +4,7 @@
 {help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network programs
  
 {col 5}{hline}
-{p2colset 5 32 34 2}{p2col:{bf:{help _extract_valuelabels }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _gnwdegree }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _growmedian2 }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdatasync }}}Utility to sync current network with dataset{p_end}
-{p2col:{bf:{help _nwdeploy }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_append }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_clusters }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwname }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
-{p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
-{p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwsyntax }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help _nwtomata }}}Return adjacency matrix of network{p_end}
-{p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help animate }}}Animate graphs{p_end}
+{p2colset 5 32 34 2}{p2col:{bf:{help animate }}}Animate graphs{p_end}
 {p2col:{bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
 {p2col:{bf:{help nw2degree }}}Two-mode (bipartite) degree centrality{p_end}
 {p2col:{bf:{help nw2fromedge }}}Import two-mode network data from edgelist{p_end}
