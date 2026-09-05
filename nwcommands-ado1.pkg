@@ -25,7 +25,7 @@ f nw2set.ado
 f nw2toedge.ado
 f nw_datasync.ado
 f _nwedgelabs.ado
-f nw_expnetexp.ado
+f _nwexpnetexp.ado
 f nw_name.ado
 f nw_openviewer.ado
 f nw_syntax.ado

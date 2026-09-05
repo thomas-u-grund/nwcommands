@@ -1,5 +1,5 @@
-capture program drop nw_expnetexp
-program nw_expnetexp
+capture program drop _nwexpnetexp
+program _nwexpnetexp
 	syntax [anything] [, nodes(string) print force]
 	unw_defs
 	local mynodes = "`nodes'"

@@ -102,27 +102,27 @@ program nwreplace, rclass
 	}
 	local netexp = substr(`"`nonet'"',1, `firstcond') 
 	local netexp `"(`netexp')"'
-	nw_expnetexp `netexp', nodes(`nodes')
+	_nwexpnetexp `netexp', nodes(`nodes')
 	local newnetexp `netexp'
 
 	local cndcmd "J(`nodes',`nodes',1)"
 	if `"`ifcmd'"' != "" {
 		local netexp ""
-		capture nw_expnetexp `ifcmd', nodes(`nodes')
+		capture _nwexpnetexp `ifcmd', nodes(`nodes')
 		local ifnetexp `"`netexp'"'
 		local cndcmd `"`cndcmd' :* `ifnetexp'"'
 	}
 	
 	if `"`ifegocmd'"' != "" {
 		local netexp ""
-		capture nw_expnetexp `ifegocmd', nodes(`nodes')
+		capture _nwexpnetexp `ifegocmd', nodes(`nodes')
 		local ifegonetexp `"`netexp'"'
 		local cndcmd `"(`cndcmd') :* (`ifegonetexp')"'
 	}
 	
 	if `"`ifaltercmd'"' != "" {
 		local netexp ""
-		capture nw_expnetexp `ifaltercmd', nodes(`nodes')
+		capture _nwexpnetexp `ifaltercmd', nodes(`nodes')
 		local ifalternetexp `"`netexp'"'
 		local cndcmd `"(`cndcmd') :* (`ifalternetexp')'"'
 	}

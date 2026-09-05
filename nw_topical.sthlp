@@ -300,9 +300,9 @@
 {p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}

@@ -135,7 +135,7 @@ program nwkatz
 		// safe.
 		qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
 		nw_syntax `geo'
-		// nwreplace's own expression parser (nw_expnetexp.ado) treats its
+		// nwreplace's own expression parser (_nwexpnetexp.ado) treats its
 		// input as plain Stata-style arithmetic text and translates it into
 		// Mata syntax via naive string substitution (e.g. every "*" becomes
 		// " :* ", every "^" becomes " :^ "). It was never designed to accept

@@ -70,7 +70,7 @@ program nwgenerate
 		}
 
 		// evaluate network expression
-		nw_expnetexp `netexp'
+		_nwexpnetexp `netexp'
 		// The hardcoded literal `xvars' this line used to append
 		// unconditionally (on top of `options') was a real, latent bug:
 		// `options' already holds the caller's own full raw option text

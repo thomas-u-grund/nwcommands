@@ -14,6 +14,7 @@
 {p2col:{bf:{help _nwdialog_lablist }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwedgelabs }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwevalnetexp }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwexpnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwnodeid }}}Returns the nodeid of a node given its node label{p_end}
 {p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
@@ -26,7 +27,6 @@
 {p2col:{bf:{help nw2set }}}Declare data to be two-mode network data{p_end}
 {p2col:{bf:{help nw2toedge }}}Convert two-mode network to edgelist{p_end}
 {p2col:{bf:{help nw_datasync }}}Utility to sync current network with dataset{p_end}
-{p2col:{bf:{help nw_expnetexp }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_openviewer }}}{err}no help file yet{txt}{p_end}
