@@ -68,9 +68,9 @@ end
 
 di ""
 di "=== FUNCTIONAL: URLs real commands fetch from ==="
-_check_and_post "functional" "nwwebuse/nwuse default host (\$nwwebpath)" "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/florentine.nwdta"
+_check_and_post "functional" "nwwebuse/nwuse default host (\$nwwebpath)" "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/florentine.nwdta"
 * NOTE: nwinstall's own net-install host is this same raw.githubusercontent.com
-* /.../develop tree, checked above via florentine.nwdta - a bare directory
+* /.../master tree, checked above via florentine.nwdta - a bare directory
 * prefix (no filename) isn't itself a fetchable target, `copy` against it
 * always returns rc=1 regardless of whether the host is healthy, so it isn't
 * a meaningful separate check (an earlier version of this file included it

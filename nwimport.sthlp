@@ -87,7 +87,7 @@ The following network formats are supported:
 without downloading a local copy first, e.g.:
 
 {phang}
-{cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/edgelist_example.txt", type(edgelist)}{p_end}
+{cmd:. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/edgelist_example.txt", type(edgelist)}{p_end}
 
 {title:Supported network types}
 

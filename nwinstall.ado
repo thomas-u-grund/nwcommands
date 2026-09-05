@@ -73,7 +73,7 @@ program nwinstall
 	// command needing to hardcode that count.
 	if ("`ado'" != "" | "`all'" != "") & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-ado"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -93,7 +93,7 @@ program nwinstall
 
 	if "`help'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-hlp"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		local i = 1
 		local keepgoing = 1
 		while `keepgoing' {
@@ -132,7 +132,7 @@ program nwinstall
 
 	if "`dialog'" != "" & "`localcopy'" == "" {
 		capture ado uninstall "nwcommands-dlg"
-		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+		net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 		// BUGFIX: was a single `net install "nwcommands-dlg", all' -
 		// the dialog rebuild grew the .dlg count past Stata's
 		// per-package line limit (see _nwdeploy.ado's own comment on

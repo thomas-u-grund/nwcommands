@@ -1,0 +1,37 @@
+name: Bug report
+description: Report something in nwcommands that isn't working as documented
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal example
+      description: The smallest Stata code that reproduces it, ideally using a built-in example dataset (`nwwebuse`) rather than your own data.
+      render: stata
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: nwcommands version
+      description: "The version/date shown at the top of `help nwcommands`, or roughly when you last ran `net install`/`nwinstall`"
+    validations:
+      required: false
+
+  - type: input
+    id: stata-version
+    attributes:
+      label: Stata version
+      description: "e.g. Stata 18.0 BE, macOS"
+    validations:
+      required: false

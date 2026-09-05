@@ -36,7 +36,7 @@ variable budget unless you ask it to.
 ## Installation
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop"
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 . net install nwcommands
 . nwinstall, all
 ```

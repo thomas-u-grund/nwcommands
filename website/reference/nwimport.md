@@ -52,7 +52,7 @@ Imports networks from popular network file formats. The command automatically re
 *`filename`* can also be a URL, so networks can be imported directly from the internet without downloading a local copy first, e.g.:
 
 ```stata
-. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/edgelist_example.txt", type(edgelist)
+. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/edgelist_example.txt", type(edgelist)
 ```
 
 ## Supported network types

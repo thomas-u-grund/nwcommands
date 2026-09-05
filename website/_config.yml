@@ -17,6 +17,8 @@ aux_links:
     - "https://github.com/thomas-u-grund/nwcommands"
   "Request a feature":
     - "https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"
+  "Report an issue":
+    - "https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"
 
 footer_content: >-
   nwcommands is free to install and use, including for commercial research.

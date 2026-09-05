@@ -7,13 +7,12 @@
 * now-dead nwcommands.org host to this project's own new GitHub repository
 * (raw.githubusercontent.com), resolving a gap previously logged in
 * docs/CERTIFICATION.md's own Pending list ("nwcommands.org's own data host
-* is dead"). Points at the "develop" branch specifically (the actually
-* current, complete branch - `master` was found to be a stale, diverged
-* legacy line during this same migration, NOT simply an older point on the
-* same history) - a user can still override via `nwwebuse set <path>` at
-* any time, and `$nwwebpath` remains the single, centralized place this
-* would need to change again (e.g. to a versioned/tagged path for a future
-* stable release) rather than a hardcoded literal scattered across files.
+* is dead"). Points at the "master" branch (the current, tested release
+* branch users are told to install from) - a user can still override via
+* `nwwebuse set <path>` at any time, and `$nwwebpath` remains the single,
+* centralized place this would need to change again (e.g. to a
+* versioned/tagged path for a future stable release) rather than a
+* hardcoded literal scattered across files.
 *
 * webnwuse/nwwebuse consolidation (2026-08-23): this command used to be a
 * one-line wrapper around webnwuse.ado, which held the real implementation -
@@ -48,14 +47,14 @@ program nwwebuse
 
 	if "`subcommand'" != "set" {
 		if "`thispath'" == "" | "`thispath'" == "\" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
 		}
 	}
 
 	if "`subcommand'" == "set" {
 		local subcmd2 = word("`anything'",2)
 		if  "`subcmd2'" == "" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
 		}
 		else {
 			global nwwebpath = word("`anything'",2)

@@ -185,7 +185,7 @@ A two-mode (bipartite) network has two distinct sets of nodes ("modes"), with ti
 
 ```stata
 . nwclear
-. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/develop/data/institutions.dta", clear
+. use "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/institutions.dta", clear
 . nwset person institution, twomode name(mynet)
 ```
 This also automatically sets each mode's own human-readable description from the variable names used (*person*/*institution* here - see **r(mode1desc)**/**r(mode2desc)** in [nwname](nwname.md), [nwsummarize](nwsummarize.md)), and (if **xvars** is given) generates a *_mode* variable holding each node's own mode ("1" for persons, "2" for institutions - see [nw2fromedge](nw2fromedge.md) for the full option set this delegates to internally, including **name()**/**xvars**/**keeporiginal**). **twomode** cannot be combined with **bipartite** - they declare two different input shapes (an edgelist of ties vs. a wide affiliation matrix, below) that cannot be told apart from a bare `varlist` alone, so combining them is rejected as an explicit error rather than guessed at.
