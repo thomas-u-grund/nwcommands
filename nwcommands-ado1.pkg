@@ -30,7 +30,6 @@ f _nwname.ado
 f _nwopenviewer.ado
 f _nwsyntax.ado
 f _nwtomata.ado
-f nw_unab.ado
 f nwaddnodes.ado
 f nwaltergen.ado
 f nwappend.ado
@@ -83,3 +82,4 @@ f nwgeodesic.ado
 f nwhierarchy.ado
 f nwhomophily.ado
 f nwimport.ado
+f nwinduced.ado

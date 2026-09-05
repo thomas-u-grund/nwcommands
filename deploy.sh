@@ -133,6 +133,31 @@ if [ -d lib/plugins ]; then
   done < <(find lib/plugins -type f)
 fi
 
+# Reverse direction of the checks above: every "f <path>" entry in the
+# three hand/generator-maintained manifests must point at a file that
+# actually exists - a stale entry (left over from an archive/delete, or
+# a rename that only updated the .ado/.sthlp/.do content but missed a
+# manifest .txt file, since .txt isn't covered by any of this project's
+# rename caller-searches) silently ships a "file not found" `net install`
+# to real users instead of failing here. Found twice by hand this way
+# (nw_unab.ado still listed in _pkg_ado.txt after being archived;
+# nw_intro.sthlp/nw_start.sthlp still listed in _pkg_boot.txt after
+# being renamed) before this check existed.
+for manifest in _pkg_ado.txt _pkg_hlp.txt _pkg_boot.txt; do
+  [ -f "$manifest" ] || continue
+  while IFS= read -r line; do
+    case "$line" in
+      "f "*)
+        path="${line#f }"
+        if [ ! -e "$path" ]; then
+          echo "  MANIFEST ENTRY POINTS AT MISSING FILE: $path (in $manifest)"
+          check_failed=1
+        fi
+        ;;
+    esac
+  done < "$manifest"
+done
+
 if [ "$check_failed" = 1 ]; then
   echo "error: consistency check failed - fix the items above (usually: add" >&2
   echo "  the missing 'f <file>' line(s) to _pkg_ado.txt/_pkg_hlp.txt, or add" >&2

@@ -6,5 +6,5 @@ d Distribution-Date: 5sep2026
 f nwinstall.ado
 f nwinstall.sthlp
 f nwcommands.sthlp
-f nw_intro.sthlp
-f nw_start.sthlp
+f nwintro.sthlp
+f nwstart.sthlp
