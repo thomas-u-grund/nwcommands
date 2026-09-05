@@ -26,7 +26,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth n(int)}}Maximum geodesic distance allowed between any two members; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-n-clique membership size; default = {it:_ncliquenum}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest n-clique size to report; default = 3{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -53,7 +53,7 @@ extra requirement.
 {pstd}
 Like cliques, n-cliques genuinely overlap - a node can belong to several at once - so {cmd:nwnclique}
 follows {help nwclique}'s own output shape: a single per-node "largest maximal n-clique membership
-size" summary variable ({opth generate(newvarname)}, default {it:_ncliquenum}), plus the complete
+size" summary variable ({opth generate(newvarname)}, required), plus the complete
 overlapping structure in {bf:r(nclique_matrix)} (an n-cliques-by-nodes 0/1 membership matrix) and
 {bf:r(ncliques)} (count). {opth minsize(int)} filters out n-cliques smaller than the given size
 before generating and returning results, matching {help nwclique}'s own default of 3 (a dyad or an
@@ -72,8 +72,8 @@ variable, not a spurious 0.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwnclique flomarriage}
-	{cmd:. nwnclique flomarriage, n(3) replace}
+	{cmd:. nwnclique flomarriage, generate(_ncliquenum)}
+	{cmd:. nwnclique flomarriage, n(3) generate(_ncliquenum) replace}
 
 
 {title:References}

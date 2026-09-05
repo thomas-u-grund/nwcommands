@@ -27,7 +27,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt generate}({it:{help newvarlist}})}variable name for betweenness centrality; default = {it:_between}{p_end}
+{synopt:{opt generate}({it:{help newvarlist}})}{bf:Required.} Variable name for betweenness centrality{p_end}
 {synopt:{opt replace}}allow overwriting an existing variable of the same name{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt standardize}}standardize centrality scores{p_end}
@@ -79,17 +79,17 @@ Directed network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))}
 Undirected network: {it:Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)}
 
 {pstd}
-The Stata variable {it:varname} is overwritten (pass {opt replace} to allow this deliberately, or
-{opt generate()} to use a different name instead). When betweenness centrality is calculated
-for more than one network at the same time (e.g. {bf:nwbetween glasgow1 glasgow2}), the command
-generates one variable per network, named {it:varname_netname} (e.g. {it:_between_glasgow1},
-{it:_between_glasgow2}).
+{opt generate()} is required and names the Stata variable to hold the result (pass {opt replace}
+to allow overwriting an existing variable of that name). When betweenness centrality is calculated
+for more than one network at the same time (e.g. {bf:nwbetween glasgow1 glasgow2, generate(bw)}), the command
+generates one variable per network, named {it:varname_netname} (e.g. {it:bw_glasgow1},
+{it:bw_glasgow2}).
 
 
 {title:Examples}
 
 	{cmd:. nwwebuse gang, nwclear}
-	{cmd:. nwbetween gang}
+	{cmd:. nwbetween gang, generate(_between)}
 	{cmd:. sum _between}
 
 

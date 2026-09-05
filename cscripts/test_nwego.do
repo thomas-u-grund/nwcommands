@@ -33,7 +33,7 @@ M[5,6] = 1; M[6,5] = 1
 st_matrix("M", M)
 end
 nwset, mat(M) name(net1) undirected labs(A,B,C,D,E,F)
-nwego net1
+nwego net1, sizevar(_egosize) densvar(_egodensity)
 assert _rc == 0
 sort _nwnode
 tempname lab sz dens
@@ -64,7 +64,7 @@ D[2,3] = 1
 st_matrix("D", D)
 end
 nwset, mat(D) name(dnet) directed labs(A,B,C,E)
-nwego dnet
+nwego dnet, sizevar(_egosize) densvar(_egodensity)
 assert _rc == 0
 sort _nwnode
 tempname lab2 sz2 dens2
@@ -105,7 +105,7 @@ nwclear
 mata: st_matrix("M", M)
 nwset, mat(M) name(net1) undirected labs(A,B,C,D,E,F)
 nwset, mat(M) name(net2) undirected labs(A,B,C,D,E,F)
-nwego net1 net2
+nwego net1 net2, sizevar(_egosize) densvar(_egodensity)
 assert _rc == 0
 capture confirm variable _egosize1, exact
 assert _rc == 0

@@ -24,7 +24,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores two-mode degree centrality; default = {it:_2degree}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores two-mode degree centrality{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 {synopt:{opt alpha(#)}}Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = {it:0} (plain unweighted degree, identical to omitting the option){p_end}
@@ -48,7 +48,7 @@ so that a mode-1 node tied to every mode-2 node (or vice versa) scores exactly 1
 degree centrality's own [0,1] range and interpretation.
 
 {pstd}
-By default, {cmd:nw2degree} generates a new variable {it:_2degree} holding this value for every
+{opt generate()} is required and names the new variable that holds this value for every
 node, regardless of which mode it belongs to (mode membership itself is available via
 {help nw2set}'s own mode-id variable, not duplicated here).
 
@@ -75,7 +75,7 @@ always applies.
 	{cmd:. nwclear}
 	{cmd:. mata: net = (1,1\1,0\0,1)}
 	{cmd:. nw2set, mat(net) name(mynet)}
-	{cmd:. nw2degree mynet}
+	{cmd:. nw2degree mynet, generate(_2degree)}
 
 {pstd}Weighted (strength-aware) variant, on a valued two-mode network:{p_end}
 

@@ -25,7 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own Fiedler-vector entry; default = {it:_fiedler}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own Fiedler-vector entry{p_end}
 {synopt:{opt bipartition}}Also generate a two-way spectral partition ({it:_fiedlersign}, or {it:generate()}{bf:sign}) from the sign of the Fiedler vector{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt replace}}Replace existing variable(s){p_end}
@@ -56,7 +56,7 @@ result above), and otherwise a genuine measure of how well-connected the network
 values indicate a more robustly connected structure, harder to disconnect by removing few
 edges.{p_end}
 {p2col:{bf:Spectral bipartition}}The eigenvector belonging to the Fiedler value (the "Fiedler
-vector") - stored per node via {opth generate(newvarname)} (default {it:_fiedler}) - is a classical
+vector") - stored per node via {opth generate(newvarname)} (required) - is a classical
 continuous relaxation of graph bisection: nodes with similar Fiedler-vector values tend to be
 well-connected to each other. {opt bipartition} additionally generates a discrete two-way split
 from its sign ({it:_fiedlersign}, or {it:generate()}{bf:sign} when {opt generate()} is
@@ -83,8 +83,8 @@ should not be interpreted as meaningful when {bf:r(algebraic_connectivity)} is (
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwspectral flomarriage}
-	{cmd:. nwspectral flomarriage, bipartition replace}
+	{cmd:. nwspectral flomarriage, generate(_fiedler)}
+	{cmd:. nwspectral flomarriage, bipartition generate(_fiedler) replace}
 
 {title:References}
 

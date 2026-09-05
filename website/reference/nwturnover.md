@@ -23,7 +23,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each node's own local stability; default = *_turnover* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own local stability |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -33,7 +33,7 @@ silent]
 
 **r(jaccard)** is the standard "Jaccard index of network change" used in longitudinal SNA (e.g. Snijders et al.'s SIENA methodology) to gauge whether enough change occurred between waves to be worth modeling at all: **stable / (stable + formed + dissolved)** - 1 when the two networks are identical, 0 when they share no tie in common whatsoever. **r(persistence)** is a related but distinct question - of the ties that existed at *net1*, what fraction survived to *net2*: **stable / (stable + dissolved)**, undefined (missing) if *net1* has no ties at all.
 
-By default, `nwturnover` also generates a per-node variable (*_turnover*) giving each node's OWN local Jaccard stability - computed the same way as **r(jaccard)**, but restricted to that one node's own ties across the two waves, rather than the whole network's.
+`generate()` is required and names the per-node variable that gives each node's OWN local Jaccard stability - computed the same way as **r(jaccard)**, but restricted to that one node's own ties across the two waves, rather than the whole network's.
 
 *net1* and *net2* must have the same number of nodes and the same directedness (both directed or both undirected) - comparing a directed network to an undirected one, or two networks of different size, is rejected explicitly rather than silently doing something arithmetically possible but conceptually meaningless.
 
@@ -44,7 +44,7 @@ For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(di
 ```stata
 . nwset, mat((0,1,1\1,0,0\1,0,0)) name(wave1)
 . nwset, mat((0,1,0\1,0,1\0,1,0)) name(wave2)
-. nwturnover wave1 wave2
+. nwturnover wave1 wave2, generate(_turnover)
 ```
 
 ## Supported network types

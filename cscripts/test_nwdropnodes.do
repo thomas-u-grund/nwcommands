@@ -101,7 +101,7 @@ nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) name(net4) undirected labs(A,B,C,D
 nwdropnodes net4, nodes(2)
 nwsummarize net4
 assert r(nodes) == 3
-nwdegree net4
+nwdegree net4, generate(_degree)
 assert _degree[1] == 0
 
 * --- generate(): leaves the source network untouched and produces the

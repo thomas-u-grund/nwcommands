@@ -25,7 +25,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth group(varname)}}Existing Stata variable holding each node's group membership (required){p_end}
-{synopt:{opth generate(newvarname)}}Stem for the 5 new Stata variables that store role counts; default = {it:_broker}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Stem for the 5 new Stata variables that store role counts{p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -46,8 +46,8 @@ roles defined by Gould and Fernandez (1989). For every directed two-path {it:a -
 	{col 4}{bf:liaison}{col 20}{it:a}, {it:b} and {it:c} all in different groups
 
 {pstd}
-Five new Stata variables are generated, one per role, each holding node {it:b}'s count of that
-role (e.g. the default {opt generate(_broker)} produces {it:_broker_coordinator},
+{opt generate()} is required and gives the stem for five new Stata variables, one per role, each
+holding node {it:b}'s count of that role (e.g. {opt generate(_broker)} produces {it:_broker_coordinator},
 {it:_broker_gatekeeper}, {it:_broker_representative}, {it:_broker_consultant} and
 {it:_broker_liaison}).
 
@@ -67,7 +67,7 @@ directional distinction a directed network provides.
 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. gen faction = mod(_n, 2)}
-	{cmd:. nwbrokerage flomarriage, group(faction)}
+	{cmd:. nwbrokerage flomarriage, group(faction) generate(_broker)}
 
 
 {title:References}

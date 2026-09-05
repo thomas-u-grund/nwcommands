@@ -23,7 +23,8 @@ program nwinduced, rclass
 	}
 
 	if "`generate'" == "" {
-		local generate "_induced"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	local endogvar "`generate'_endog"
 	local inducedvar "`generate'_induced"

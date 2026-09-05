@@ -30,7 +30,8 @@ program nwcontext
 		err 99
 	}
 	if "`generate'" == "" {
-		local generate _context_`attribute'
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	capture drop `generate'
 	

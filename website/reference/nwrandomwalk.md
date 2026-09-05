@@ -25,7 +25,7 @@ silent]
 | | |
 |---|---|
 | `target(nodename)` | The node every hitting time is measured TO |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's own mean hitting time to `target()`; default = *_hitting* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own mean hitting time to `target()` |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -41,7 +41,7 @@ Solved EXACTLY via the standard linear system this quantity satisfies (not simul
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwrandomwalk flomarriage, target(medici)
+. nwrandomwalk flomarriage, target(medici) generate(_hitting)
 . gsort _hitting
 . list _name _hitting in 1/5
 ```

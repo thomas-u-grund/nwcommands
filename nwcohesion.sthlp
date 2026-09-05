@@ -22,7 +22,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own highest cohesion level; default = {it:_cohesion}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own highest cohesion level{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -55,7 +55,7 @@ sub-block its removal reveals) and nest (a child block's own node set is always 
 its parent's), so the complete structure is returned via {bf:r(cohesion_matrix)} (a blocks-by-nodes
 0/1 membership matrix, one row per block found at ANY level of the hierarchy) and
 {bf:r(cohesion_levels)} (a parallel column vector giving each row's own connectivity level).
-{opth generate(newvarname)} (default {it:_cohesion}) stores, per node, the HIGHEST level of any
+{opth generate(newvarname)} (required) stores, per node, the HIGHEST level of any
 block that node belongs to - the standard node-level structural-cohesion summary statistic - and is
 always well-defined for every node (even an isolate gets its own top-block level, typically 0),
 unlike {help nwkcomponents}' own {it:_kcompnum}, which is missing for nodes that don't qualify for
@@ -73,7 +73,7 @@ the one requested {opth k(int)}.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcohesion flomarriage}
+	{cmd:. nwcohesion flomarriage, generate(_cohesion)}
 
 
 {title:References}

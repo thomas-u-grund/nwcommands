@@ -72,10 +72,16 @@ program nwhierarchy, rclass
 		capture cluster drop `nwhier_clustername'
 		clustermat `linkage' `dismat', name(`nwhier_clustername') `add' `clear' `options'
 
-		local netgenerate "`equivgen'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_role"
+		// generate()/equivgen() is required (suite-wide
+		// generate()-required style decision, 2026-09-05): this
+		// command's whole purpose is producing this variable, so -
+		// matching Stata's own egen/predict convention - there is no
+		// default name to silently fall back to.
+		if "`equivgen'" == "" {
+			di "{err}option {bf:generate()} (or its {bf:equivgen()} alias) required."
+			error 198
 		}
+		local netgenerate "`equivgen'"
 		capture confirm variable `netgenerate', exact
 		if _rc == 0 & "`replace'" == "" {
 			di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"

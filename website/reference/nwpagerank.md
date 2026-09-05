@@ -26,7 +26,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each node's PageRank score; default = *_pagerank* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's PageRank score |
 | `replace` | Replace existing variable |
 | `damping(real)` | Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value) |
 | `maxiter(int)` | Maximum power-iteration sweeps; default 1000 |
@@ -45,7 +45,7 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwpagerank flomarriage
+. nwpagerank flomarriage, generate(_pagerank)
 . gsort -_pagerank
 . list _name _pagerank in 1/5
 ```

@@ -62,8 +62,13 @@ program nwclustering
 		exit 198
 	}
 
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwclustering's whole purpose is producing
+	// this variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
-		local generate = "_clustering"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 
 	// Consistency (moderate-severity pass, positions_equivalence group):

@@ -37,7 +37,7 @@ do unw_core.do
 * structure-forced regression check, not merely "runs without crashing".
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net1) undirected labs(A,B,C,D,E,F)
-nwconcor net1
+nwconcor net1, generate(_concor)
 assert _rc == 0
 assert r(blocks) == 2
 assert _concor[1] == _concor[2]
@@ -91,7 +91,7 @@ assert rowsof(r(block_sizeid)) == 4
 * --- isolates are rejected explicitly, not silently mishandled.
 nwclear
 nwset, mat((0,1,0\1,0,0\0,0,0)) name(neti) undirected labs(A,B,C)
-capture noisily nwconcor neti
+capture noisily nwconcor neti, generate(_concor) replace
 assert _rc != 0
 
 * --- directed networks work directly, no symmetrize needed (unlike
@@ -99,7 +99,7 @@ assert _rc != 0
 * in-ties separate.
 nwclear
 nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\0,0,0,0,0,0\0,0,0,0,1,1\0,0,0,0,0,1\0,0,0,0,0,0)) name(dnet) directed labs(A,B,C,D,E,F)
-nwconcor dnet
+nwconcor dnet, generate(_concor) replace
 assert _rc == 0
 assert r(blocks) == 2
 
@@ -107,9 +107,9 @@ assert r(blocks) == 2
 * valued network (default follows the network's own valued-ness).
 nwclear
 nwset, mat((0,5,3,0,0,0\5,0,4,0,0,0\3,4,0,0,0,0\0,0,0,0,2,7\0,0,0,2,0,6\0,0,0,7,6,0)) name(wnet) undirected labs(A,B,C,D,E,F)
-nwconcor wnet, measure(binary)
+nwconcor wnet, measure(binary) generate(_concor) replace
 assert _rc == 0
-nwconcor wnet, measure(valued) replace
+nwconcor wnet, measure(valued) generate(_concor) replace
 assert _rc == 0
 
 * --- generate()/replace: a custom name must be honored, and a second
@@ -132,7 +132,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net1) undirected labs(A,B,C,D,E,F)
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net3) undirected labs(A,B,C,D,E,F)
-nwconcor net1 net3
+nwconcor net1 net3, generate(_concor)
 assert _rc == 0
 capture confirm variable _concor1, exact
 assert _rc == 0
@@ -165,15 +165,15 @@ assert _rc != 0
 * ordinary successful commands, only on another capture or a real error).
 nwclear
 nwset, mat((0,1,0\1,0,0\0,0,0)) name(withiso) undirected labs(A,B,C)
-capture noisily nwconcor withiso
+capture noisily nwconcor withiso, generate(_concoriso)
 assert _rc != 0
-capture confirm variable _concor, exact
+capture confirm variable _concoriso, exact
 assert _rc != 0
 di "=== NO STALE VARIABLE AFTER A FAILED CALL, VERIFIED ==="
 
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(clean) undirected labs(A,B,C)
-nwconcor clean
+nwconcor clean, generate(_concor) replace
 assert _rc == 0
 di "=== SUCCESSFUL CALL LEAVES _rc==0, VERIFIED ==="
 

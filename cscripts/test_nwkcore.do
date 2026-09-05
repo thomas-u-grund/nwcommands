@@ -5,7 +5,7 @@ do unw_core.do
 * --- Triangle {A,B,C} + pendant D attached only to A -> expect 2,2,2,1
 nwclear
 nwset, mat((0,1,1,1\1,0,1,0\1,1,0,0\1,0,0,0)) name(trinet) undirected labs(A,B,C,D)
-nwkcore
+nwkcore, generate(_kcore)
 
 assert r(maxcore) == 2
 assert _kcore[1] == 2
@@ -89,7 +89,7 @@ assert dircore[3] == 2
 nwclear
 nwset, mat((0,1\1,0)) name(nA) undirected
 nwset, mat((0,1\1,0)) name(nB) undirected
-nwkcore nA nB
+nwkcore nA nB, generate(_kcore)
 assert _rc == 0
 capture confirm variable _kcore1, exact
 assert _rc == 0
@@ -100,7 +100,7 @@ assert _rc == 0
 * exercised.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwkcore tri, silent
+nwkcore tri, generate(_kcore) silent
 assert _rc == 0
 assert r(maxcore) == 2
 di "=== silent REGRESSION VERIFIED ==="

@@ -31,8 +31,8 @@ values via that function; default = {it:arithmetic} for a valued undirected netw
 otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before calculating (required for any
 weighted {opt measure()} on a directed network - see Supported network types below){p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own
-clustering coefficient; default = {it:_clustering}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own
+clustering coefficient{p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -48,7 +48,7 @@ themselves friends"). A node with fewer than 2 neighbors has no potential triple
 clustering coefficient is reported as missing.
 
 {pstd}
-{cmd:nwclustering} generates a new variable (default {it:_clustering}) holding each node's own
+{opt generate()} is required and names the new variable that holds each node's own
 clustering coefficient, and returns both the network-level average ({bf:r(cluster_avg)}, the mean
 of the per-node values) and the network-level global clustering coefficient ({bf:r(cluster_global)},
 the ratio of the total count of closed triples to the total count of potential triples across the
@@ -84,7 +84,7 @@ validated or rejected. Two-mode: automatically delegated to {help nw2clustering}
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwclustering flomarriage}
+	{cmd:. nwclustering flomarriage, generate(_clustering)}
 	{cmd:. sum _clustering}
 
 {title:References}

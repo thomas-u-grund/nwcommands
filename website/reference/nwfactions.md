@@ -27,7 +27,7 @@ silent]
 | | |
 |---|---|
 | `groups(int)` | Number of factions to partition nodes into; must be between 2 and the number of nodes; default = 2 |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's faction membership (1..`groups()`); default = *_faction* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's faction membership (1..`groups()`) |
 | `replace` | Replace existing variable |
 | `measure(binary\|valued)` | Whether tie VALUES enter the fitness calculation, or only tie presence/absence; default follows whether the network itself is valued |
 | `maxiter(int)` | Maximum number of full local-search sweeps; default 100 |
@@ -43,7 +43,7 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwfactions flomarriage, groups(3)
+. nwfactions flomarriage, groups(3) generate(_faction)
 . tab _faction
 ```
 

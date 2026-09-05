@@ -23,7 +23,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores information about components; default = *_component* or *_lgc* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores information about components (component membership, or largest-component membership if `lgc` is given) |
 | `replace` | Replace existing variable |
 | `lgc` | Calculate membership to largest component |
 | `silent` | Suppress display of results |
@@ -32,13 +32,13 @@ silent]
 
 Calculate the components of a network or a list of networks. A component is a set of nodes that are only connected among each other. All calculations are performed on the undirected network. Nodes can only belong to one component.
 
-By default, `nwcomponents` generates a new variable *_components* which stores the component membership. When option **lgc** is specified, the command generates a new variable *_lgc* which stores information about membership to the largest component.
+`generate()` is required and names the new variable that stores the component membership. When option **lgc** is specified, the command instead stores in that variable information about membership to the largest component.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwcomponents flomarriage
+. nwcomponents flomarriage, generate(_component)
 ```
 - hline 40
 - Network name: flomarriage
@@ -56,7 +56,7 @@ This shows that there are two components in the Florentine marriage network. All
 ```stata
 . nwwebuse glasgow
 . nwcomponents glasgow1, generate(mycomponent)
-. nwcomponents _all, lgc
+. nwcomponents _all, lgc generate(_lgc)
 . nwcomponents _all, lgc generate(mylgc)
 ```
 

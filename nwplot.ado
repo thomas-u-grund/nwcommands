@@ -1025,29 +1025,32 @@ program nwplot, rclass
 		// one drop per variable makes each one independent: a missing
 		// variable is silently skipped (via `capture'), not treated as
 		// a reason to abandon dropping the others.
+		// nwdegree's own generate() is now a required option (suite-wide
+		// generate()-required style decision, 2026-09-05 - single-purpose
+		// commands must be told a name explicitly, matching Stata's own
+		// egen/predict convention, rather than silently falling back to
+		// a default-named variable that risked exactly the kind of
+		// leftover-variable collision this whole block used to fight).
+		// Using real tempvars here (rather than the old fixed default
+		// names _degree/_outdegree/_indegree) also makes the whole
+		// "capture drop" dance above and below unnecessary - a tempvar
+		// is already scoped to this program's own execution and never
+		// collides with anything in the caller's real dataset.
 		capture drop _isolates
-		capture drop _degree
-		capture drop _outdegree
-		capture drop _indegree
-		qui nwdegree `netname', silent
-		capture confirm variable _degree
-		if _rc == 0 {
-			qui gen _isolates = (_degree == 0)
+		_nwsyntax `netname', max(1)
+		if "`directed'" == "true" {
+			tempvar nwplotdeg1 nwplotdeg2
+			qui nwdegree `netname', silent generate(`nwplotdeg1' `nwplotdeg2')
+			qui gen _isolates = (`nwplotdeg1' == 0) & (`nwplotdeg2' == 0)
 		}
 		else {
-			qui gen _isolates = (_outdegree == 0) & (_indegree == 0)
+			tempvar nwplotdeg1
+			qui nwdegree `netname', silent generate(`nwplotdeg1')
+			qui gen _isolates = (`nwplotdeg1' == 0)
 		}
 		qui count if _isolates == 1
 		local isol = `r(N)'
-		// same fix as the pre-emptive cleanup above - one drop per
-		// variable, not a single compound drop that silently fails
-		// entirely (and drops nothing) the moment any one of these four
-		// names doesn't exist, which is always true for at least one of
-		// _degree vs _outdegree/_indegree.
 		capture drop _isolates
-		capture drop _degree
-		capture drop _outdegree
-		capture drop _indegree
 		local nonisol = `nodes' - `isol'
 		
 		// Get number of components

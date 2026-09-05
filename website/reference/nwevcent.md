@@ -24,8 +24,7 @@ replace]
 
 | | |
 |---|---|
-| `generate`(*`varname`*) | variable name for eigenvector centrality scores; default:
-*varname = _evcent* |
+| `generate`(*`varname`*) | **Required.** Variable name for eigenvector centrality scores |
 | `nosym` | do not symmetrize network before calculation |
 | `weighted` | calculate on tie values instead of dichotomizing a valued network |
 | `replace` | replace existing *generate()* variable |

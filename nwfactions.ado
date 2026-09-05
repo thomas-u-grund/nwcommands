@@ -32,10 +32,11 @@ program nwfactions, rclass
 	}
 	_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 
-	local netgenerate "`generate'"
-	if "`netgenerate'" == "" {
-		local netgenerate = "_faction"
+	if "`generate'" == "" {
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
+	local netgenerate "`generate'"
 
 	capture confirm variable `netgenerate', exact
 	if _rc == 0 & "`replace'" == "" {

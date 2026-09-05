@@ -26,7 +26,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores block membership; default = *_concor* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores block membership |
 | `replace` | Replace existing variable |
 | `splits(int)` | Number of recursive bisections; final number of blocks is up to 2^*splits*; default = 1 |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
@@ -39,7 +39,7 @@ silent]
 
 With `splits(1)` (the default) `nwconcor` performs a single bisection, producing 2 blocks. With `splits(k)`, each resulting block from the previous level is independently re-split using only the ties among its own members, producing up to 2^*k* blocks in total - this is the classical recursive CONCOR procedure, not merely applying a single bisection *k* times to the whole network. A block that cannot be split further (all of its members end up on the same side of its own bisection, or all of its members only tie to nodes *outside* the block, leaving no internal structure to split on) simply stays as one block rather than being forced apart - `nwconcor` may therefore return fewer than 2^*splits* blocks; **r(blocks)** always reports the actual number found.
 
-By default, `nwconcor` generates a new variable *_concor* which stores, for each node, the id of the block it was assigned to.
+`generate()` is required and names the new variable that stores, for each node, the id of the block it was assigned to.
 
 A node with no ties at all (in any direction) has no tie profile to compare against anyone else's, so `nwconcor` requires every node to have at least one tie; remove isolates first (see [nwdropnodes](nwdropnodes.md)) if your network has any.
 
@@ -49,10 +49,10 @@ A node with no ties at all (in any direction) has no tie profile to compare agai
 . nwwebuse florentine, nwclear
 . * pucci is an isolate in this network - CONCOR requires every node to have a tie
 . nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)
-. nwconcor flomarriage2
+. nwconcor flomarriage2, generate(_concor)
 ```
 ```stata
-. nwconcor flomarriage2, splits(2) replace
+. nwconcor flomarriage2, splits(2) generate(_concor) replace
 ```
 
 ## Supported network types

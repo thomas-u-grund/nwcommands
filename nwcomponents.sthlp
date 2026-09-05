@@ -23,7 +23,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores information about components; default = {it:_component} or {it:_lgc}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores information about components (component membership, or largest-component membership if {opt lgc} is given){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt lgc}}Calculate membership to largest component{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -37,10 +37,9 @@ Calculate the components of a network or a list of networks. A component is a se
 only connected among each other. All calculations are performed on the undirected network. Nodes can only belong to one component. 
 
 {pstd}
-By default, {cmd:nwcomponents} generates 
-a new variable {it:_components} which stores the component membership. When
-option {bf:lgc} is specified, the command generates a new variable 
-{it:_lgc} which stores information about membership to the largest component.
+{opt generate()} is required and names the new variable that stores the component membership. When
+option {bf:lgc} is specified, the command instead stores in that variable
+information about membership to the largest component.
 
 
 
@@ -61,7 +60,7 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcomponents flomarriage}
+	{cmd:. nwcomponents flomarriage, generate(_component)}
 
 	{res}{hline 40}
 	{txt}  Network name: {res}flomarriage
@@ -79,9 +78,9 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
  component. Some alternative ways how the commands can be used.
  
 	{cmd:. nwwebuse glasgow}
-	{cmd:. nwcomponents glasgow1, generate(mycomponent)} 
-	{cmd:. nwcomponents _all, lgc} 
-	{cmd:. nwcomponents _all, lgc generate(mylgc)} 
+	{cmd:. nwcomponents glasgow1, generate(mycomponent)}
+	{cmd:. nwcomponents _all, lgc generate(_lgc)}
+	{cmd:. nwcomponents _all, lgc generate(mylgc)}
   
 
  {title:See also}

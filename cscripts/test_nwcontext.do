@@ -10,7 +10,7 @@ nwload mynet1
 
 // Test two context for two different networks in memory
 gen attr = _n
-nwcontext mynet1, attribute(attr)
+nwcontext mynet1, attribute(attr) generate(_context_attr)
 sum _context_attr
 
 assert reldif( r(sum)    , 7.133333206176758 ) <  1E-8
@@ -24,7 +24,7 @@ assert         r(N)     == 3
 
 
 
-nwcontext mynet2, attribute(attr)
+nwcontext mynet2, attribute(attr) generate(_context_attr) replace
 sum _context_attr
 
 
@@ -44,21 +44,21 @@ nwclear
 nwset, mat((0,1,1\1,0,0\0,0,0)) name(mynet)
 gen x = _n
 
-nwcontext mynet, attribute(x)
+nwcontext mynet, attribute(x) generate(_context_x)
 assert _context_x[1] == 2.5
 assert _context_x[3] == .
 
-nwcontext mynet, attribute(x) stat(max)
+nwcontext mynet, attribute(x) stat(max) generate(_context_x) replace
 assert _context_x[1] == 3
 
-nwcontext mynet, attribute(x) stat(min)
+nwcontext mynet, attribute(x) stat(min) generate(_context_x) replace
 assert _context_x[1] == 2
 
-nwcontext mynet, attribute(x) stat(minego)
+nwcontext mynet, attribute(x) stat(minego) generate(_context_x) replace
 assert _context_x[1] == 1
 
 // Test different network contexts
-nwcontext mynet, attribute(x) mode(both)
+nwcontext mynet, attribute(x) mode(both) generate(_context_x) replace
 assert _context_x[3] == 1
 
 // "either" is the package-wide canonical term for this concept (matches
@@ -122,7 +122,7 @@ di "=== maxego/meanego REGRESSION VERIFIED ==="
 * generate()-based result exactly on the same call.
 nwcontext egonet, attribute(xe) generate(zmatcmp)
 assert _rc == 0
-nwcontext egonet, attribute(xe) mat(Mctx)
+nwcontext egonet, attribute(xe) generate(zmatcmp_dummy) mat(Mctx)
 assert _rc == 0
 mata: assert(max(abs(st_data(.,"zmatcmp") - Mctx)) < 1E-8)
 di "=== mat() OPTION REGRESSION VERIFIED ==="

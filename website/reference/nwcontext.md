@@ -30,7 +30,7 @@ replace]
 | `attribute(varname)` | Attribute variable |
 | `stat`(*[statistic](nwcontext.md)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
 | `mode`(*[context](nwcontext.md)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
-| `generate(newvarname)` | Name of the context variable to be generated; default = *_context_varname* |
+| `generate(newvarname)` | **Required.** Name of the context variable to be generated |
 | `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable |
 | `noweight` | Ignore valued ties and treats all as binary |
 | `replace` | Replace `generate()`'s target variable if it already exists |

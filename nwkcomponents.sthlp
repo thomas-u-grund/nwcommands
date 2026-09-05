@@ -25,7 +25,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth k(int)}}Minimum vertex connectivity required; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest qualifying k-component size; default = {it:_kcompnum}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest qualifying k-component size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -60,7 +60,7 @@ Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - th
 removal disconnects a graph (a cutset) remain shared members of every resulting sub-block their
 removal reveals, not assigned to just one side - so {cmd:nwkcomponents} follows the same output
 shape as {help nwclique}/{help nwkplex}/{help nwnclique}: a single per-node "largest qualifying
-k-component size" summary variable ({opth generate(newvarname)}, default {it:_kcompnum}), plus the
+k-component size" summary variable ({opth generate(newvarname)}, required), plus the
 complete overlapping structure in {bf:r(kcomp_matrix)} (a k-components-by-nodes 0/1 membership
 matrix) and {bf:r(kcomponents)} (count). Unlike those commands there is no {opt minsize()} - a
 k-component's own minimum possible size is already {opth k(int)}+1 (a smaller set cannot reach
@@ -91,8 +91,8 @@ provides, not a reason to withhold the single-level version now.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwkcomponents flomarriage}
-	{cmd:. nwkcomponents flomarriage, k(3) replace}
+	{cmd:. nwkcomponents flomarriage, generate(_kcompnum)}
+	{cmd:. nwkcomponents flomarriage, k(3) generate(_kcompnum) replace}
 
 
 {title:References}

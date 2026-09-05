@@ -32,7 +32,7 @@ force]
 | `symopt(options)` | Options controlling the symmetrization when `sym` is specified (see [nwsym](nwsym.md)) |
 | `name`(*[newnetname](newnetname.md)*) | Name of the new distance network; default = *_geodesic* |
 | `nwreplace` | Overwrite existing network *newnetname* |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; default = *_eccentricity* |
+| `generate(newvarname)` | Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via **r(radius)**, the network-wide minimum) |
 | `xvars` | Generate Stata variables for the network |
 | `force` | force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise) |
 
@@ -42,7 +42,7 @@ force]
 
 With option `sym` the distances are calculated from the symmetrized network. Option `symopt()` allows control over the symmetrization (see options in [nwsym](nwsym.md)).
 
-`nwgeodesic` also generates a new variable (default: *_eccentricity*) that stores each node's *eccentricity* - the length of the longest shortest path from that node to any other node - and returns the network's *radius* (the smallest eccentricity across all nodes) as **r(radius)**. Like the diameter, both are undefined (missing for a node's eccentricity; **r(radius) = -1**) when the network has unconnected pairs and **unconnected()** was not specified. An existing *generate()* variable is overwritten when **nwreplace** is specified (there is no separate **replace** option for just the variable).
+`nwgeodesic`'s primary output is the distance network itself (`name()`); the network's *radius* (the smallest node eccentricity across the whole network) is always returned as **r(radius)**, regardless of `generate()`. If `generate()` is also given, `nwgeodesic` additionally stores each node's own *eccentricity* - the length of the longest shortest path from that node to any other node - as a Stata variable under that name; omit `generate()` to skip this per-node variable entirely (unlike most other nwcommands `generate()` options, there is no default name - eccentricity is a secondary, opt-in output here, not this command's main purpose). Like the diameter, both **r(radius)** and a node's eccentricity are undefined (**r(radius) = -1**; missing for the node) when the network has unconnected pairs and **unconnected()** was not specified. An existing *generate()* variable is overwritten when **nwreplace** is specified (there is no separate **replace** option for just the variable).
 
 By default, the distance between two unconnected nodes *i* and *j*, i.e. there is no path that connects node *i* with node *j*, is set to missing. Non-existent paths are excluded from the calculation of the average shortest path length (unless option **unconnected()** is specified).
 

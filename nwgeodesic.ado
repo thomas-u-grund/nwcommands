@@ -18,26 +18,23 @@ program nwgeodesic
 	_nwsyntax `netname', max(1)
 
 	local eccvar "`generate'"
-	if "`eccvar'" == "" {
-		local eccvar "_eccentricity"
-	}
-	// Deliberately reuses nwreplace (not a separate replace option): this
-	// syntax line already declares a dead, unused `noreplace' option, and
-	// Stata's syntax parser silently fails to populate a `replace' local
-	// when both `replace' and `noreplace' are declared together - verified
-	// directly rather than assumed. Piggybacking on the existing, already-
-	// working nwreplace avoids the collision entirely.
-	// BUGFIX: this guard used to run unconditionally, even when `xvars'
-	// was never requested - but `eccvar' is only actually written
-	// further down, inside the `if "`xvars'" != ""' block. A call with
-	// no xvars at all (or even a genuinely unrelated call, e.g. a
-	// second nwgeodesic ... name(other) with no xvars) failed this
-	// check purely because SOME earlier call had once left `eccvar'
-	// (default "_eccentricity") lying around in the dataset, despite
-	// this call never touching it. nwreach.ado wraps its own internal
-	// nwgeodesic call in `qui', so this message never even reached the
-	// user - just a bare, uninformative r(99).
-	if "`xvars'" != "" {
+	// nwgeodesic is dual-purpose: its PRIMARY output is the distance
+	// network (name(), already required to be non-empty via its own
+	// default-name convention above - a separate, already-decided,
+	// legitimate style for network-producing commands, see
+	// styleguides/NWCOMMANDS_COMMAND_STYLE.md's "Output creation"
+	// section). Per-node eccentricity is a secondary, optional bonus
+	// output layered on top - unlike a single-purpose command (nwdegree,
+	// nwbetween, ...), where omitting generate() would mean the call
+	// accomplishes nothing and so generate() is REQUIRED there, forcing
+	// every nwgeodesic caller to also name an eccentricity variable it
+	// doesn't want would make THIS command worse, not safer. So:
+	// generate() omitted here simply means "skip eccentricity entirely"
+	// (no variable, no error) - this is also what let nwreach.ado's own
+	// internal call (which only ever wanted the reachability network)
+	// drop its former `eccoff' workaround option entirely; omitting
+	// generate() already does the right thing on its own now.
+	if "`eccvar'" != "" {
 		capture confirm variable `eccvar'
 		if _rc == 0 & "`nwreplace'" == "" {
 			di "{err}Variable {bf:`eccvar'} already exists; specify {bf:nwreplace}"
@@ -144,7 +141,7 @@ program nwgeodesic
 	tempname __nw_ecc
 	mata: `__nw_ecc' = rowmax(*`netobj'->get_matrix())
 	mata: st_numscalar("r(radius)", min(`__nw_ecc'))
-	if "`xvars'" != "" {
+	if "`eccvar'" != "" {
 		qui capture drop `eccvar'
 		qui gen `eccvar' = .
 		mata: st_store((1::`nodes'), "`eccvar'", `__nw_ecc')

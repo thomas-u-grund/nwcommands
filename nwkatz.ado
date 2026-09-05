@@ -33,8 +33,13 @@ program nwkatz
 	_nwdatasync `netname'
 
 	local original `netname'
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwkatz's whole purpose is producing this
+	// variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
-		local generate = "_katz"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 
 	// `replace' was previously absorbed by the trailing `*' catch-all
@@ -133,6 +138,13 @@ program nwkatz
 		// active. This scratch network is dropped again a few lines below
 		// regardless, so always allowing nwgeodesic to overwrite it here is
 		// safe.
+		// nwgeodesic's own eccentricity output is optional and skipped
+		// entirely when generate() is omitted (see nwgeodesic.ado's own
+		// header comment) - so this internal call, which never forwards
+		// generate() itself, naturally never creates an unrequested
+		// "_eccentricity" side effect. If the caller's own forwarded
+		// geodesic_options DOES include generate(), that ask passes
+		// through via `options' and is respected exactly as given.
 		qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
 		_nwsyntax `geo'
 		// nwreplace's own expression parser (_nwexpnetexp.ado) treats its

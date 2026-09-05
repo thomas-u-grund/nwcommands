@@ -25,7 +25,7 @@ silent]
 | | |
 |---|---|
 | `k(int)` | Minimum vertex connectivity required; default = 2 |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's largest qualifying k-component size; default = *_kcompnum* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest qualifying k-component size |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -35,14 +35,14 @@ silent]
 
 `k(int)` defaults to 2 - the smallest level that is a genuine refinement of [nwcomponents](nwcomponents.md)' own plain connectivity - and must be at least 1 ([nwcomponents](nwcomponents.md) already covers that trivial case directly). Vertex connectivity is computed via the standard node-splitting reduction to max-flow (Even 1979) combined with Menger's theorem (the minimum vertex set separating any two non-adjacent nodes equals the maximum flow between them in the split graph); the network's own overall k-components are then found by the standard recursive decomposition also underlying Moody and White's (2003) cohesive blocking - see [Algorithm](nwkcomponents.md) below for the one respect in which this command deliberately does less than the full Moody-White procedure.
 
-Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - the nodes whose removal disconnects a graph (a cutset) remain shared members of every resulting sub-block their removal reveals, not assigned to just one side - so `nwkcomponents` follows the same output shape as [nwclique](nwclique.md)/[nwkplex](nwkplex.md)/[nwnclique](nwnclique.md): a single per-node "largest qualifying k-component size" summary variable (`generate(newvarname)`, default *_kcompnum*), plus the complete overlapping structure in **r(kcomp_matrix)** (a k-components-by-nodes 0/1 membership matrix) and **r(kcomponents)** (count). Unlike those commands there is no `minsize()` - a k-component's own minimum possible size is already `k(int)`+1 (a smaller set cannot reach connectivity `k(int)` at all, since the maximum possible connectivity of an s-node graph is s-1), so there is no equivalent "trivial small case" to filter out separately.
+Like cliques/k-plexes/n-cliques/n-clans, k-components can genuinely overlap - the nodes whose removal disconnects a graph (a cutset) remain shared members of every resulting sub-block their removal reveals, not assigned to just one side - so `nwkcomponents` follows the same output shape as [nwclique](nwclique.md)/[nwkplex](nwkplex.md)/[nwnclique](nwnclique.md): a single per-node "largest qualifying k-component size" summary variable (`generate(newvarname)`, required), plus the complete overlapping structure in **r(kcomp_matrix)** (a k-components-by-nodes 0/1 membership matrix) and **r(kcomponents)** (count). Unlike those commands there is no `minsize()` - a k-component's own minimum possible size is already `k(int)`+1 (a smaller set cannot reach connectivity `k(int)` at all, since the maximum possible connectivity of an s-node graph is s-1), so there is no equivalent "trivial small case" to filter out separately.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwkcomponents flomarriage
-. nwkcomponents flomarriage, k(3) replace
+. nwkcomponents flomarriage, generate(_kcompnum)
+. nwkcomponents flomarriage, k(3) generate(_kcompnum) replace
 ```
 
 ## Supported network types

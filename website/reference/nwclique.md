@@ -24,7 +24,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each node's largest maximal-clique membership size; default = *_cliquenum* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-clique membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest clique size to report; default = 3 |
 | `silent` | Suppress display of results |
@@ -41,7 +41,7 @@ Cliques are fundamentally different from the partitions [nwcomponents](nwcompone
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwclique flomarriage
+. nwclique flomarriage, generate(_cliquenum)
 ```
 
 ## Supported network types

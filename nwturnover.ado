@@ -29,10 +29,11 @@ program nwturnover, rclass
 	}
 	local isdirected = ("`directed1'" == "true")
 
-	local netgenerate "`generate'"
-	if "`netgenerate'" == "" {
-		local netgenerate = "_turnover"
+	if "`generate'" == "" {
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
+	local netgenerate "`generate'"
 	capture confirm variable `netgenerate', exact
 	if _rc == 0 & "`replace'" == "" {
 		noi di "{err}Variable {bf:`netgenerate'} already exists; specify {bf:replace}"

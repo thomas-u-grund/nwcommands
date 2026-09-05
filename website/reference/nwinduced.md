@@ -25,7 +25,7 @@ silent]
 | | |
 |---|---|
 | `measure(string)` | Underlying centrality measure: one of **degree**, **betweenness**, **closeness**, **evcent** |
-| `generate(stub)` | Prefix for the three output variables (*stub***_endog**, *stub***_induced**, *stub***_exog**); default = **_induced** |
+| `generate(stub)` | **Required.** Prefix for the three output variables (*stub***_endog**, *stub***_induced**, *stub***_exog**) |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
 
@@ -48,7 +48,7 @@ The real computational cost is the leave-one-out reconstruction: computing induc
 ```stata
 . nwclear
 . nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(starnet) undirected labs(A,B,C,D)
-. nwinduced starnet, measure(degree)
+. nwinduced starnet, measure(degree) generate(_induced)
 ```
 - A hub (A, degree 3) and three leaves (B/C/D, degree 1) - endogenous exactly reproduces plain
 - degree; induced is exactly twice that (6 for A, 2 for each leaf); exogenous equals endogenous

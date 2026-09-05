@@ -24,8 +24,8 @@ silent]
 
 | | |
 |---|---|
-| `sizevar(newvarname)` | Name of the Stata variable that stores ego-network size; default = *_egosize* |
-| `densvar(newvarname)` | Name of the Stata variable that stores ego-network density; default = *_egodensity* |
+| `sizevar(newvarname)` | **Required.** Name of the Stata variable that stores ego-network size |
+| `densvar(newvarname)` | **Required.** Name of the Stata variable that stores ego-network density |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
 
@@ -37,13 +37,13 @@ silent]
 
 **Ego-network density** is the proportion of possible ties actually present *among the alters themselves* - ego itself is excluded, the standard convention for reporting how interconnected an ego's contacts are with each other, independent of their (by definition, complete) ties to ego. For a directed network, ordered alter-alter pairs are counted (an alter set of size *k* has *k(k-1)* possible ties); for an undirected network, unordered pairs are counted (*k(k-1)/2* possible ties). An ego with fewer than 2 alters has no pair to assess - density is reported missing for it, not spuriously 0 or 1.
 
-By default, `nwego` generates *_egosize* and *_egodensity*.
+`sizevar()` and `densvar()` are both required and name the Stata variables that store ego-network size and density, respectively.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwego flomarriage
+. nwego flomarriage, sizevar(_egosize) densvar(_egodensity)
 ```
 
 ## Supported network types

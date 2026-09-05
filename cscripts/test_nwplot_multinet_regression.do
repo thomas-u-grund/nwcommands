@@ -52,7 +52,7 @@ assert r(networks) == 0
 nwrandom 1000, prob(.01)
 nwplot
 assert _rc == 0
-nwdegree
+nwdegree, generate(_outdegree _indegree)
 assert _rc == 0
 
 nwrandom 100, prob(.1)
@@ -80,7 +80,7 @@ assert _rc == 0
 * below) to test what this block actually intends to test - that a
 * real `nwdegree` call still works after `nwplot` has run on multiple
 * networks - without the test colliding with its own earlier output.
-nwdegree, replace
+nwdegree, generate(_outdegree _indegree) replace
 assert _rc == 0
 
 * --- the bug reproduces on a SINGLE network's own second nwplot/
@@ -92,7 +92,7 @@ nwplot
 assert _rc == 0
 nwplot
 assert _rc == 0
-nwdegree, replace
+nwdegree, generate(_outdegree _indegree) replace
 assert _rc == 0
 
 * --- directed and undirected networks both exercised the same buggy
@@ -108,7 +108,7 @@ nwplot
 assert _rc == 0
 nwplot
 assert _rc == 0
-nwdegree, replace
+nwdegree, generate(_outdegree _indegree) replace
 assert _rc == 0
 
 nwclear
@@ -121,7 +121,7 @@ nwplot
 assert _rc == 0
 nwplot
 assert _rc == 0
-nwdegree, replace
+nwdegree, generate(_degree) replace
 assert _rc == 0
 
 * --- the actual root-cause invariant: nwplot must never leave
@@ -153,11 +153,11 @@ nwplot random_1
 assert _rc == 0
 nwplot random_2
 assert _rc == 0
-nwdegree random, replace
+nwdegree random, generate(_outdegree _indegree) replace
 assert _rc == 0
-nwdegree random_1, replace
+nwdegree random_1, generate(_outdegree _indegree) replace
 assert _rc == 0
-nwdegree random_2, replace
+nwdegree random_2, generate(_outdegree _indegree) replace
 assert _rc == 0
 
 * --- repeated switching A -> B -> A -> C -> B -> A
@@ -193,9 +193,9 @@ nwplot ordinary
 assert _rc == 0
 nwplot random
 assert _rc == 0
-nwdegree ordinary, replace
+nwdegree ordinary, generate(_degree) replace
 assert _rc == 0
-nwdegree random, replace
+nwdegree random, generate(_outdegree _indegree) replace
 assert _rc == 0
 _nwsyntax twomodenet
 assert `"`is2mode'"' == "true"
@@ -207,6 +207,6 @@ assert `"`is2mode'"' == "true"
 * original bug report ("do not treat r(99) as the diagnosis").
 nwclear
 nwrandom 60, prob(.1)
-qui nwdegree random
-capture noisily nwdegree random
+qui nwdegree random, generate(_outdegree _indegree)
+capture noisily nwdegree random, generate(_outdegree _indegree)
 assert _rc == 99

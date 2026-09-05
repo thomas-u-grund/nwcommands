@@ -15,10 +15,10 @@ nwclear
 nwset, mat(A)
 nwname, newname(twoclique)
 
-qui nwcomponents twoclique
+qui nwcomponents twoclique, generate(_component)
 assert r(components) == 2
 
-nwcug twoclique, stat(nwcomponents ##net##, replace) rname(components) reps(500) seed(20260821)
+nwcug twoclique, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(500) seed(20260821)
 assert r(obs) == 2
 assert r(reps) == 500
 assert r(mean_null) == 1
@@ -28,7 +28,7 @@ assert r(p_less) == 1
 assert r(p) == 0
 
 * reproducibility: identical seed -> identical results
-nwcug twoclique, stat(nwcomponents ##net##, replace) rname(components) reps(500) seed(20260821)
+nwcug twoclique, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(500) seed(20260821)
 assert r(p_greater) == 0
 assert r(mean_null) == 1
 
@@ -41,10 +41,10 @@ assert r(mean_null) == 1
 nwclear
 nwset, mat((0,1,0,0,0,0,0,0,0,0\1,0,0,0,0,0,0,0,0,0\0,0,0,1,0,0,0,0,0,0\0,0,1,0,0,0,0,0,0,0\0,0,0,0,0,1,0,0,0,0\0,0,0,0,1,0,0,0,0,0\0,0,0,0,0,0,0,1,0,0\0,0,0,0,0,0,1,0,0,0\0,0,0,0,0,0,0,0,0,1\0,0,0,0,0,0,0,0,1,0)) name(fragnet) undirected
 
-qui nwcomponents fragnet
+qui nwcomponents fragnet, generate(_component) replace
 assert r(components) == 5
 
-nwcug fragnet, stat(nwcomponents ##net##, replace) rname(components) reps(200) seed(20260821) silent
+nwcug fragnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(200) seed(20260821) silent
 assert r(obs) == 5
 assert r(reps) == 200
 assert r(p_greater) >= 0 & r(p_greater) <= 1
@@ -55,18 +55,18 @@ assert r(sd_null) >= 0
 
 
 * --- tail() option validity
-capture nwcug fragnet, stat(nwcomponents ##net##, replace) rname(components) reps(10) tail(bogus)
+capture nwcug fragnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(10) tail(bogus)
 assert _rc != 0
 
-nwcug fragnet, stat(nwcomponents ##net##, replace) rname(components) reps(50) seed(1) tail(upper) silent
+nwcug fragnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(50) seed(1) tail(upper) silent
 assert r(p_greater) >= 0 & r(p_greater) <= 1
 
-nwcug fragnet, stat(nwcomponents ##net##, replace) rname(components) reps(50) seed(1) tail(lower) silent
+nwcug fragnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(50) seed(1) tail(lower) silent
 assert r(p_less) >= 0 & r(p_less) <= 1
 
 
 * --- invalid rname() errors cleanly (stat() ran but never returned r(bogusname))
-capture nwcug fragnet, stat(nwcomponents ##net##, replace) rname(bogusname) reps(10)
+capture nwcug fragnet, stat(nwcomponents ##net##, generate(_component) replace) rname(bogusname) reps(10)
 assert _rc != 0
 
 
@@ -106,7 +106,7 @@ assert r(p_less) == 1
 * mutual/asymmetric/null dyad types have no meaning without direction.
 nwclear
 nwset, mat((0,1,1,0\1,0,0,1\1,0,0,0\0,1,0,0)) undirected name(undirnet)
-capture nwcug undirnet, stat(nwcomponents ##net##, replace) rname(components) reps(10) condition(census)
+capture nwcug undirnet, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(10) condition(census)
 assert _rc != 0
 
 * invalid condition() value errors cleanly.
@@ -121,7 +121,7 @@ mata: A2[6::10,6::10] = J(5,5,1) - I(5)
 nwclear
 nwset, mat(A2)
 nwname, newname(twoclique2)
-nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(500) seed(20260821) condition(density)
+nwcug twoclique2, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(500) seed(20260821) condition(density)
 assert r(mean_null) == 1
 assert r(sd_null) == 0
 
@@ -134,7 +134,7 @@ assert r(sd_null) == 0
 * immediately and cleanly instead.
 nwclear
 nwset, mat((0)) name(singlenetcug) undirected
-capture noisily nwcug singlenetcug, stat(nwcomponents ##net##, replace) rname(components) reps(10)
+capture noisily nwcug singlenetcug, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(10)
 assert _rc != 0
 di "=== SINGLE-NODE DENSITY-CONDITIONED HANG REGRESSION VERIFIED ==="
 
@@ -143,7 +143,7 @@ di "=== SINGLE-NODE DENSITY-CONDITIONED HANG REGRESSION VERIFIED ==="
 * clean message.
 nwclear
 nwrandom 5, prob(.5) name(realnetcug)
-capture noisily nwcug typobogus, stat(nwcomponents ##net##, replace) rname(x) reps(2)
+capture noisily nwcug typobogus, stat(nwcomponents ##net##, generate(_component) replace) rname(x) reps(2)
 assert _rc == 482
 di "=== misspelled network name REGRESSION VERIFIED ==="
 
@@ -158,7 +158,7 @@ nwname, newname(twoclique2)
 clear
 set obs 3
 gen canary = _n
-nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(50) seed(1) plot name(cugplottest)
+nwcug twoclique2, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(50) seed(1) plot name(cugplottest)
 assert _rc == 0
 assert _N == 3
 assert canary[1] == 1 & canary[2] == 2 & canary[3] == 3
@@ -170,10 +170,10 @@ di "=== nwcug plot() OK ==="
 * result (a concrete-looking but undefined p=1), and any negative
 * reps() crashed with a raw "argument out of range" (r3300) trying to
 * allocate a negative-length Mata vector.
-capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(0)
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(0)
 assert _rc == 198
-capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(-5)
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(-5)
 assert _rc == 198
-capture noisily nwcug twoclique2, stat(nwcomponents ##net##, replace) rname(components) reps(1)
+capture noisily nwcug twoclique2, stat(nwcomponents ##net##, generate(_component) replace) rname(components) reps(1)
 assert _rc == 198
 di "=== nwcug: reps() validation REGRESSION VERIFIED ==="

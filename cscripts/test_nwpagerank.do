@@ -58,7 +58,7 @@ di "=== nwpagerank error handling REGRESSION VERIFIED ==="
 * a bare `clear' immediately before the call crashed with a raw
 * "argument out of range" (r3300).
 clear
-capture noisily nwpagerank cyc3
+capture noisily nwpagerank cyc3, generate(pr)
 assert _rc == 0
 assert _N >= 3
 di "=== nwpagerank: dataset-sync-after-clear REGRESSION VERIFIED ==="

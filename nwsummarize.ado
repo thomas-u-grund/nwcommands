@@ -64,7 +64,17 @@ program nwinf
 		local reciprocity = `r(reciprocity)'
 		qui nwtriads `netname'
 		local transitivity = `r(transitivity)'
-		qui nwdegree `netname', silent
+		// nwdegree's own generate() is now required (suite-wide
+		// generate()-required style decision, 2026-09-05) - only r()
+		// scalars are read here, so a tempvar is all that's needed.
+		if ("`localdirected'"=="false"){
+			tempvar nwsumdeg1
+			qui nwdegree `netname', silent generate(`nwsumdeg1')
+		}
+		else {
+			tempvar nwsumdeg1 nwsumdeg2
+			qui nwdegree `netname', silent generate(`nwsumdeg1' `nwsumdeg2')
+		}
 		if ("`localdirected'"=="false"){
 			local central = `r(dg_central)'
 		}

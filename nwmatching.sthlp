@@ -22,7 +22,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched); default = {it:_match}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -74,7 +74,7 @@ not checked. Two-mode: required.
 {title:Examples}
 
 	{cmd:. nwset person org, twomode name(assign)}
-	{cmd:. nwmatching assign}
+	{cmd:. nwmatching assign, generate(_match)}
 	{cmd:. list person _match if _match > 0}
 
 {title:References}

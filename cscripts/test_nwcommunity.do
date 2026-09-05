@@ -7,7 +7,7 @@ do unw_core.do
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) undirected labs(A,B,C,D,E,F) name(bridge)
 
-nwcommunity bridge
+nwcommunity bridge, generate(_community)
 assert r(communities) == 2
 assert reldif(r(modularity), .35714285714285715) < 1E-8
 assert _community[1] == _community[2]
@@ -20,7 +20,7 @@ assert _community[1] != _community[4]
 // split is strictly modularity-decreasing), hand-verified Q = 0.5.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) undirected labs(A,B,C,D,E,F) name(disconnected)
-nwcommunity disconnected, replace
+nwcommunity disconnected, generate(_community) replace
 assert r(communities) == 2
 assert reldif(r(modularity), .5) < 1E-8
 assert _community[1] == _community[2]
@@ -42,7 +42,7 @@ nwclear
 nwset, mat((0,1,0\0,0,1\1,0,0)) name(dirnet)
 capture nwcommunity dirnet
 assert _rc != 0
-nwcommunity dirnet, symmetrize
+nwcommunity dirnet, symmetrize generate(_community)
 assert r(communities) >= 1
 
 * --- netlist regression: see test_nwcomponents.do's identical
@@ -110,7 +110,7 @@ nwclear
 nwset, mat((0,1,0\0,0,1\1,0,0)) name(dirnet2)
 capture nwcommunity dirnet2, algorithm(labelprop)
 assert _rc != 0
-nwcommunity dirnet2, algorithm(labelprop) symmetrize seed(1)
+nwcommunity dirnet2, algorithm(labelprop) symmetrize seed(1) generate(_community) replace
 assert r(communities) >= 1
 
 * PERFORMANCE/CORRECTNESS FIX: `tab ..., matrow() matcell()' (used to

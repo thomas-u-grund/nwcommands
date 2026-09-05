@@ -19,10 +19,11 @@ program nwspectral, rclass
 	_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 	local val = ("`netmeasure'" == "valued")
 
-	local netgenerate "`generate'"
-	if "`netgenerate'" == "" {
-		local netgenerate = "_fiedler"
+	if "`generate'" == "" {
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
+	local netgenerate "`generate'"
 	local signvar = "`netgenerate'" + "sign"
 
 	capture confirm variable `netgenerate', exact

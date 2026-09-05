@@ -28,7 +28,7 @@ do unw_core.do
 * e.g. {A,B,C} cannot extend to D since d(A,D)=3 > 2).
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(net1) undirected labs(A,B,C,D,E)
-nwnclique net1
+nwnclique net1, generate(_ncliquenum)
 assert _rc == 0
 assert r(ncliques) == 3
 sort _nwnode
@@ -69,7 +69,7 @@ assert _rc != 0
 * already 1.
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4) undirected labs(A,B,C,D)
-nwnclique k4
+nwnclique k4, generate(_ncliquenum)
 assert _rc == 0
 assert r(ncliques) == 1
 count if _ncliquenum == 4
@@ -82,7 +82,7 @@ assert r(N) == 4
 * size 3 at n=2.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwnclique dnet
+nwnclique dnet, generate(_ncliquenum)
 assert _rc == 0
 assert r(ncliques) == 1
 
@@ -104,7 +104,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(neta) undirected labs(A,B,C,D,E)
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(netb) undirected labs(A,B,C,D,E)
-nwnclique neta netb
+nwnclique neta netb, generate(_ncliquenum)
 assert _rc == 0
 capture confirm variable _ncliquenum1, exact
 assert _rc == 0
@@ -126,7 +126,7 @@ assert _rc != 0
 * a single n-clique.
 nwclear
 nwset, mat((0,1,0,0,0,0\1,0,1,0,0,0\0,1,0,1,0,0\0,0,1,0,1,0\0,0,0,1,0,1\0,0,0,0,1,0)) name(path6) undirected labs(A,B,C,D,E,F)
-nwnclique path6, n(5) minsize(6)
+nwnclique path6, n(5) minsize(6) generate(_ncliquenum)
 assert _rc == 0
 assert r(ncliques) == 1
 count if _ncliquenum == 6
@@ -136,7 +136,7 @@ assert r(N) == 6
 * exercised.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwnclique tri, silent
+nwnclique tri, generate(_ncliquenum) silent
 assert _rc == 0
 assert r(ncliques) == 1
 di "=== silent REGRESSION VERIFIED ==="

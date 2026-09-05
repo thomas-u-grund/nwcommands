@@ -27,8 +27,7 @@ geodesic_options]
 |---|---|
 | `alpha(real)` | penalization factor for calculation of weights; default = 1 (distance-decay mode) or **0.9/rho** (walk-counting mode, `walks`) |
 | `walks` | switch to the literature's own genuine walk-counting Katz/Bonacich centrality, *(I - alpha*A)^-1 * 1*, instead of this command's own default distance-decay formula (see Description) |
-| `generate`(*`varname`*) | variable name for Katz centrality scores; default =
-*_katz* |
+| `generate`(*`varname`*) | **Required.** Variable name for Katz centrality scores |
 | `replace` | Replace existing variable |
 | *[geodesic_options](nwgeodesic.md)* | options for calculating distances (forwarded to
 the internal [nwgeodesic](nwgeodesic.md) call); not used when `walks` is specified |
@@ -51,7 +50,7 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic.md) betw
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwkatz flomarriage
+. nwkatz flomarriage, generate(_katz)
 . sum _katz
 ```
 

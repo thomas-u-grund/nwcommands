@@ -154,6 +154,11 @@ program nwgenerate
 		// nwgeodesic shortcut
 		qui if "`whichjob'" == "geodesic(" {
 			noi _nwsyntax `sub1', max(1)
+			// nwgeodesic's own eccentricity output is optional and
+			// skipped entirely when generate() is omitted (see
+			// nwgeodesic.ado's own header comment), so this call never
+			// leaves an unrequested "_eccentricity" behind unless the
+			// user's own `fcn_opt' asks for generate() explicitly.
 			nwgeodesic `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwhomophily shortcut - restored (harmonisation phase). Note

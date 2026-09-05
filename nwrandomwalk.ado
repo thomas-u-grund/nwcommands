@@ -14,7 +14,8 @@ program nwrandomwalk, rclass
 	}
 
 	if "`generate'" == "" {
-		local generate "_hitting"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {

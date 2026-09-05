@@ -104,7 +104,7 @@ di "=== SINGLE-NODE LATTICE REGRESSION VERIFIED ==="
 * degree exactly 4 with no boundary at all.
 nwclear
 nwlattice 3 5, undirected xwrap
-nwdegree
+nwdegree, generate(_degree)
 qui sum _degree
 assert r(min) == 3
 assert r(max) == 4
@@ -112,7 +112,7 @@ assert r(sum) == 54
 
 nwclear
 nwlattice 3 5, undirected ywrap
-nwdegree
+nwdegree, generate(_degree)
 qui sum _degree
 assert r(min) == 3
 assert r(max) == 4
@@ -120,7 +120,7 @@ assert r(sum) == 50
 
 nwclear
 nwlattice 3 5, undirected xwrap ywrap
-nwdegree
+nwdegree, generate(_degree)
 qui sum _degree
 assert r(min) == 4
 assert r(max) == 4

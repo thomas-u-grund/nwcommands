@@ -7,6 +7,19 @@ program nwego, rclass
 
 	_nwsyntax `netname', max(9999)
 
+	// sizevar()/densvar() are required (suite-wide generate()-required
+	// style decision, 2026-09-05): nwego's whole purpose is producing
+	// these two variables, so - matching Stata's own egen/predict
+	// convention - there is no default name to silently fall back to.
+	if "`sizevar'" == "" {
+		di "{err}option {bf:sizevar()} required."
+		error 198
+	}
+	if "`densvar'" == "" {
+		di "{err}option {bf:densvar()} required."
+		error 198
+	}
+
 	if `networks' > 1 {
 		local k = 1
 	}
@@ -15,13 +28,7 @@ program nwego, rclass
 		_nwsyntax `netname_temp'
 
 		local netsizevar "`sizevar'"
-		if "`netsizevar'" == "" {
-			local netsizevar = "_egosize"
-		}
 		local netdensvar "`densvar'"
-		if "`netdensvar'" == "" {
-			local netdensvar = "_egodensity"
-		}
 
 		capture confirm variable `netsizevar'`k', exact
 		if _rc == 0 & "`replace'" == "" {

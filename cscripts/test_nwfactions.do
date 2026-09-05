@@ -65,7 +65,7 @@ di "=== nwfactions error handling REGRESSION VERIFIED ==="
 * a bare `clear' immediately before the call crashed with a raw
 * "argument out of range" (r3300).
 clear
-capture noisily nwfactions twotri, groups(2)
+capture noisily nwfactions twotri, groups(2) generate(fac)
 assert _rc == 0
 assert _N >= 6
 di "=== nwfactions: dataset-sync-after-clear REGRESSION VERIFIED ==="

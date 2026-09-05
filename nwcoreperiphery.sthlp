@@ -25,7 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores core membership; default = {it:_core}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores core membership{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opth maxiter(int)}}Maximum number of local-search sweeps before giving up on convergence; default = 100{p_end}
@@ -49,7 +49,7 @@ necessarily globally optimal partition - the same character of algorithm {help n
 uses for modularity maximization.
 
 {pstd}
-By default, {cmd:nwcoreperiphery} generates a new variable {it:_core} which stores, for each node, 1
+{opt generate()} is required and names the new variable which stores, for each node, 1
 if it was assigned to the core and 0 if it was assigned to the periphery.
 
 {pstd}
@@ -66,7 +66,7 @@ incoming from outgoing ties); a directed network is symmetrized automatically, m
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcoreperiphery flomarriage}
+	{cmd:. nwcoreperiphery flomarriage, generate(_core)}
 
 
 {title:References}

@@ -79,7 +79,7 @@ di "=== hand-computed star network values VERIFIED ==="
 * leftover state contaminating the caller, not the arithmetic itself.
 nwclear
 nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(cleanupnet) undirected labs(A,B,C,D)
-nwinduced cleanupnet, measure(degree) silent
+nwinduced cleanupnet, measure(degree) generate(cleanup) silent
 qui nwset
 assert `"`r(nets)'"' == `" cleanupnet"'
 assert r(networks) == 1

@@ -25,7 +25,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's PageRank score; default = {it:_pagerank}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's PageRank score{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt damping(real)}}Probability of following a tie rather than jumping to a uniformly-random node; must be strictly between 0 and 1; default = 0.85 (Page and Brin's own original value){p_end}
 {synopt:{opt maxiter(int)}}Maximum power-iteration sweeps; default 1000{p_end}
@@ -78,7 +78,7 @@ checked.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwpagerank flomarriage}
+	{cmd:. nwpagerank flomarriage, generate(_pagerank)}
 	{cmd:. gsort -_pagerank}
 	{cmd:. list _name _pagerank in 1/5}
 

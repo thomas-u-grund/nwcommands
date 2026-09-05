@@ -22,7 +22,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's coreness; default = {it:_kcore}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's coreness{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -45,7 +45,7 @@ node's neighbor set is the union of its out- and in-neighbors, matching how {hel
 treats directed networks for the same kind of undirected-sense structural question.
 
 {pstd}
-By default, {cmd:nwkcore} generates a new variable {it:_kcore} which stores each node's coreness.
+{opt generate()} is required and names the new variable which stores each node's coreness.
 
 
 {title:Supported network types}
@@ -65,7 +65,7 @@ Binary: yes (only) - coreness is a structural property, tie values are ignored. 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwkcore flomarriage}
+	{cmd:. nwkcore flomarriage, generate(_kcore)}
 	{cmd:. tab _kcore}
 
 

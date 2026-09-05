@@ -38,7 +38,7 @@
 {synopt:{opt symopt(options)}}Options controlling the symmetrization when {opt sym} is specified (see {help nwsym}){p_end}
 {synopt:{opt name}({it:{help newnetname}})}Name of the new distance network; default = {it:_geodesic}{p_end}
 {synopt:{opt nwreplace}}Overwrite existing network {it:newnetname}{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; default = {it:_eccentricity}{p_end}
+{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's eccentricity; if omitted, eccentricity is not computed as a Stata variable at all (it is still available via {bf:r(radius)}, the network-wide minimum){p_end}
 {synopt:{opt xvars}}Generate Stata variables for the network{p_end}
 {synopt:{opt force}}force distance calculation on a valued network exceeding 100 nodes (potentially slow; not required otherwise){p_end}
 
@@ -55,11 +55,16 @@ With option {opt sym} the distances are calculated from the symmetrized network.
 allows control over the symmetrization (see options in {help nwsym}).
 
 {pstd}
-{cmd:nwgeodesic} also generates a new variable (default: {it:_eccentricity}) that stores each node's
-{it:eccentricity} - the length of the longest shortest path from that node to any other node - and
-returns the network's {it:radius} (the smallest eccentricity across all nodes) as {bf:r(radius)}.
-Like the diameter, both are undefined (missing for a node's eccentricity; {bf:r(radius) = -1}) when
-the network has unconnected pairs and {bf:unconnected()} was not specified. An existing {it:generate()}
+{cmd:nwgeodesic}'s primary output is the distance network itself ({opt name()}); the network's
+{it:radius} (the smallest node eccentricity across the whole network) is always returned as
+{bf:r(radius)}, regardless of {opt generate()}. If {opt generate()} is also given,
+{cmd:nwgeodesic} additionally stores each node's own {it:eccentricity} - the length of the
+longest shortest path from that node to any other node - as a Stata variable under that name;
+omit {opt generate()} to skip this per-node variable entirely (unlike most other nwcommands
+{opt generate()} options, there is no default name - eccentricity is a secondary, opt-in output
+here, not this command's main purpose). Like the diameter, both {bf:r(radius)} and a node's
+eccentricity are undefined ({bf:r(radius) = -1}; missing for the node) when the network has
+unconnected pairs and {bf:unconnected()} was not specified. An existing {opt generate()}
 variable is overwritten when {bf:nwreplace} is specified (there is no separate {bf:replace} option for
 just the variable).
 
@@ -154,8 +159,8 @@ them the length 6.
 
 {pstd}
 ({cmd:nwgeodesic} also reports the network {it:radius} - the minimum node eccentricity - as an
-additional line here, and, if {bf:xvars} is specified, generates a per-node {it:_eccentricity}
-variable; not reproduced above since it depends on live data.)
+additional line here, and, if {opt generate()} is specified, stores each node's own
+{it:eccentricity} under that name; not reproduced above since it depends on live data.)
 
 	
 {title:Stored results}	

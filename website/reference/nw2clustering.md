@@ -29,8 +29,8 @@ four tie values; *binary* dichotomizes every tie to presence/absence first;
 *arithmetic*/*geometric*/*maximum*/*minimum* combine the four raw tie values via that
 function; default = *arithmetic* for a valued network, *binary* otherwise |
 | `level(int)` | Which mode (1 or 2) to compute clustering scores for; default = 1 |
-| `generate(newvarname)` | Name of the Stata variable that stores each `level()`-mode
-node's own clustering coefficient; default = *_clustering2_lev**level* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each `level()`-mode
+node's own clustering coefficient |
 | `replace` | Overwrite an existing `generate(newvarname)` variable; required if it already exists |
 
 ## Description
@@ -45,7 +45,7 @@ Only nodes of the requested `level()` receive a value; nodes of the other mode a
 
 ```stata
 . nwset ego alter, twomode name(bip)
-. nw2clustering bip
+. nw2clustering bip, generate(_clustering2_lev1)
 . sum _clustering2_lev1
 ```
 

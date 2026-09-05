@@ -34,10 +34,11 @@ program nwconcor, rclass
 		}
 		_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_concor"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		// Checks the exact suffixed name this iteration is about to
 		// create, not the bare stem - Stata's own variable-name

@@ -61,7 +61,7 @@ replace grp = 2 in 3
 replace grp = 3 in 4
 replace grp = 2 in 5
 replace grp = 1 in 6
-nwbrokerage net1, group(grp)
+nwbrokerage net1, group(grp) generate(_broker)
 assert _rc == 0
 assert r(pairs) == 6
 assert _broker_coordinator[3] == 1
@@ -94,9 +94,9 @@ replace grp = 2 in 3
 replace grp = 3 in 4
 replace grp = 2 in 5
 replace grp = 1 in 6
-nwbrokerage net1, group(grp)
+nwbrokerage net1, group(grp) generate(_broker) replace
 assert _rc == 0
-nwbrokerage net1, group(grp) replace silent
+nwbrokerage net1, group(grp) generate(_broker) replace silent
 assert _rc == 0
 
 * --- generate()/replace: a custom stem must be honored (producing 5
@@ -125,7 +125,7 @@ replace grp = 2 in 3
 replace grp = 3 in 4
 replace grp = 2 in 5
 replace grp = 1 in 6
-nwbrokerage net1 net2, group(grp)
+nwbrokerage net1 net2, group(grp) generate(_broker)
 assert _rc == 0
 capture confirm variable _broker_coordinator1, exact
 assert _rc == 0
@@ -162,7 +162,7 @@ st_matrix("M2", M2)
 end
 nwset, mat(M2) name(brknet) directed labs(a1,c1,brk,c2)
 gen grp3 = 1
-nwbrokerage brknet, group(grp3)
+nwbrokerage brknet, group(grp3) generate(_broker) replace
 assert _rc == 0
 assert r(pairs) == 1
 assert _broker_coordinator[3] == 1
@@ -184,7 +184,7 @@ replace grp2 = 2 in 3
 replace grp2 = 3 in 4
 replace grp2 = 3 in 5
 replace grp2 = 4 in 6
-nwbrokerage unet, group(grp2)
+nwbrokerage unet, group(grp2) generate(_broker) replace
 assert _rc == 0
 
 * --- failure path: a name that isn't a loaded network is rejected via

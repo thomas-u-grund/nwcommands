@@ -26,7 +26,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth n(int)}}Maximum geodesic distance allowed between any two members; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-n-clan membership size; default = {it:_nclannum}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-n-clan membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest n-clan size to report; default = 3{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -59,7 +59,7 @@ within whatever locally-dense region it belongs to) the two coincide exactly.
 {pstd}
 Like n-cliques, n-clans genuinely overlap, so {cmd:nwnclan} follows {help nwnclique}'s own output
 shape: a single per-node "largest maximal n-clan membership size" summary variable
-({opth generate(newvarname)}, default {it:_nclannum}), plus the complete overlapping structure in
+({opth generate(newvarname)}, required), plus the complete overlapping structure in
 {bf:r(nclan_matrix)} and {bf:r(nclans)}. {opth minsize(int)} defaults to 3, matching
 {help nwclique}/{help nwnclique}.
 
@@ -74,8 +74,8 @@ shape: a single per-node "largest maximal n-clan membership size" summary variab
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwnclan flomarriage}
-	{cmd:. nwnclan flomarriage, n(3) replace}
+	{cmd:. nwnclan flomarriage, generate(_nclannum)}
+	{cmd:. nwnclan flomarriage, n(3) generate(_nclannum) replace}
 
 
 {title:References}

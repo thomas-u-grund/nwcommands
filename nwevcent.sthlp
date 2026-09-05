@@ -24,8 +24,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt generate}({it:{help varname}})}variable name for eigenvector centrality scores; default:
-{it:varname = _evcent}{p_end}
+{synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for eigenvector centrality scores{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation{p_end}
 {synopt:{opt weighted}}calculate on tie values instead of dichotomizing a valued network{p_end}
 {synopt:{opt replace}}replace existing {it:generate()} variable{p_end}

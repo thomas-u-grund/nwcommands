@@ -76,7 +76,7 @@ assert _rc == 0
 * split.
 nwclear
 nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(net1) undirected labs(A,B,C,D)
-nwhierarchy net1, groups(2)
+nwhierarchy net1, groups(2) generate(_role)
 assert _rc == 0
 assert r(groups) == 2
 assert `"`r(rolevar)'"' == `"_role"'
@@ -91,9 +91,9 @@ mata: mata drop `lab' `role'
 
 * --- replace guard: a second groups() call without replace must be
 * rejected; with replace it must succeed.
-capture noisily nwhierarchy net1, groups(2)
+capture noisily nwhierarchy net1, groups(2) generate(_role)
 assert _rc != 0
-nwhierarchy net1, groups(2) replace
+nwhierarchy net1, groups(2) generate(_role) replace
 assert _rc == 0
 
 * --- equivgen() honors a custom variable name.
@@ -104,7 +104,7 @@ assert _rc == 0
 
 * --- groups(1): the trivial case (everyone in one role) must still
 * run cleanly and put every node in the same group.
-nwhierarchy net1, groups(1) replace
+nwhierarchy net1, groups(1) generate(_role) replace
 assert _rc == 0
 qui tab _role
 assert r(r) == 1

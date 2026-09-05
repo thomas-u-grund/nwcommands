@@ -15,7 +15,7 @@ do unw_core.do
 * writing this test. Algebraic connectivity (2nd-smallest) = 2-sqrt(2).
 nwclear
 nwset, mat((0,1,0,0\1,0,1,0\0,1,0,1\0,0,1,0)) undirected labs(A,B,C,D) name(path4)
-nwspectral path4, bipartition
+nwspectral path4, generate(_fiedler) bipartition
 assert _rc == 0
 assert r(components) == 1
 assert reldif(r(algebraic_connectivity), 2 - sqrt(2)) < 1E-6
@@ -40,11 +40,11 @@ assert _fiedlersign[1] != _fiedlersign[3]
 * any disconnected network.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) undirected labs(A,B,C,D,E,F) name(disc)
-nwspectral disc, silent
+nwspectral disc, generate(_fiedler) silent
 assert _rc == 0
 assert r(components) == 2
 assert abs(r(algebraic_connectivity)) < 1E-8
-qui nwcomponents disc
+qui nwcomponents disc, generate(_component)
 assert r(components) == 2
 
 * --- K3 (complete graph on 3 nodes): known closed-form Laplacian
@@ -52,7 +52,7 @@ assert r(components) == 2
 * n-1) - algebraic connectivity is exactly n = 3.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) undirected name(k3)
-nwspectral k3, silent
+nwspectral k3, generate(_fiedler) silent
 assert _rc == 0
 assert reldif(r(algebraic_connectivity), 3) < 1E-6
 
@@ -61,7 +61,7 @@ assert reldif(r(algebraic_connectivity), 3) < 1E-6
 * symmetrizes to the same K3 above, giving the identical spectrum.
 nwclear
 nwset, mat((0,1,0\0,0,1\1,0,0)) directed name(dnet)
-nwspectral dnet, silent
+nwspectral dnet, generate(_fiedler) silent
 assert _rc == 0
 assert reldif(r(algebraic_connectivity), 3) < 1E-6
 
@@ -110,7 +110,7 @@ assert reldif(`algconn_valued', `algconn_binary') > 1E-6
 * matrix has no second (Fiedler) eigenvalue.
 nwclear
 nwset, mat((0)) undirected labs(A) name(single2)
-capture noisily nwspectral single2
+capture noisily nwspectral single2, generate(_fiedler)
 assert _rc == 198
 di "=== single-node REGRESSION VERIFIED ==="
 

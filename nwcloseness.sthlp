@@ -26,8 +26,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opth unconnected(int)}}defines the length of the (non-existent) path between two unconnected nodes{p_end}
-{synopt:{opt generate}({it:{help varname:var1 var2 var3}})}variables names to save closeness, farness and nearness scores; default:
-{it:var1 = _closeness, var2 = _farness, var3 = _nearness} - must be exactly 3 names, or omitted entirely{p_end}
+{synopt:{opt generate}({it:{help varname:var1 var2 var3}})}{bf:Required.} Exactly 3 variable names to save closeness, farness and nearness scores, in that order{p_end}
 {synopt:{opt nosym}}do not symmetrize network before calculation of shortest paths{p_end}
 {synopt:{opt replace}}overwrite existing {it:var1, var2, var3} (or {it:_closeness, _farness, _nearness}); required if they already exist{p_end}
 
@@ -56,8 +55,10 @@ option {bf:unconnected()} is specified. Any integer value can be choosen; {bf:un
 paths a length based on the longest shortest path length observed in the network (plus one) (see {help nwgeodesic}).	
 
 {pstd}
-Existing Stata variables {it:var1, var2, var3} require option {bf:replace} to be overwritten. In case, closeness centrality is calculated
-for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2}), the command generates the variables
+{opt generate()} is required and must always give exactly 3 names ({it:var1 var2 var3}, for closeness,
+farness and nearness respectively). Existing Stata variables {it:var1, var2, var3} require option
+{bf:replace} to be overwritten. In case, closeness centrality is calculated
+for {it:z} networks at the same time (e.g. {bf: nwcloseness glasgow1 glasgow2, generate(clo far near)}), the command generates the variables
 {it:var1_z, var2_z, var3_z} for each network.
 
 
@@ -70,7 +71,7 @@ Binary: yes. Directed: yes - symmetrized by default (the same "no-prefix trap" {
 {title:Examples}
 	
 	{cmd:. nwwebuse gang, nwclear}
-	{cmd:. nwcloseness gang}
+	{cmd:. nwcloseness gang, generate(_closeness _farness _nearness)}
 	{cmd:. sum _closeness _farness _nearness}
 
 

@@ -26,7 +26,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt groups(int)}}Number of factions to partition nodes into; must be between 2 and the number of nodes; default = 2{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's faction membership (1..{opt groups()}); default = {it:_faction}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's faction membership (1..{opt groups()}){p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether tie VALUES enter the fitness calculation, or only tie presence/absence; default follows whether the network itself is valued{p_end}
 {synopt:{opt maxiter(int)}}Maximum number of full local-search sweeps; default 100{p_end}
@@ -79,7 +79,7 @@ just their presence/absence. Signed: not checked. Two-mode: not checked.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwfactions flomarriage, groups(3)}
+	{cmd:. nwfactions flomarriage, groups(3) generate(_faction)}
 	{cmd:. tab _faction}
 
 {title:References}

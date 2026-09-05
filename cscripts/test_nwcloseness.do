@@ -34,7 +34,7 @@ do unw_core.do
 *   nearness_i = 1/farness_i: A=.25, B=.25, C=.3333333, D=.2
 nwclear
 nwset, mat((0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)) name(net1) undirected labs(A,B,C,D)
-nwcloseness net1
+nwcloseness net1, generate(_closeness _farness _nearness)
 assert reldif(_farness[1], 4) < 1e-6
 assert reldif(_farness[2], 4) < 1e-6
 assert reldif(_farness[3], 3) < 1e-6
@@ -55,7 +55,7 @@ assert reldif(_nearness[4], .2) < 1e-6
 nwclear
 nwset, mat((0,1,1,0\1,0,1,0\1,1,0,1\0,0,1,0)) name(net1) undirected labs(A,B,C,D)
 nwset, mat((0,1,0\1,0,1\0,1,0)) name(net2) undirected labs(X,Y,Z)
-nwcloseness net1 net2
+nwcloseness net1 net2, generate(_closeness _farness _nearness)
 confirm variable _closeness1
 confirm variable _closeness2
 gen __row = _n
@@ -73,10 +73,10 @@ drop __row
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected labs(A,B,C) name(net3)
 gen _closeness = 999
-capture noisily nwcloseness net3
+capture noisily nwcloseness net3, generate(_closeness _farness _nearness)
 assert _rc == 99
 assert _closeness[1] == 999
-nwcloseness net3, replace
+nwcloseness net3, generate(_closeness _farness _nearness) replace
 assert _rc == 0
 assert _closeness[1] != 999
 

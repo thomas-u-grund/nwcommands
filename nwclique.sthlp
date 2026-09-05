@@ -24,7 +24,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-clique membership size; default = {it:_cliquenum}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's largest maximal-clique membership size{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest clique size to report; default = 3{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
@@ -68,7 +68,7 @@ value in the generated variable, not a spurious 0.
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwclique flomarriage}
+	{cmd:. nwclique flomarriage, generate(_cliquenum)}
 
 
 {title:References}

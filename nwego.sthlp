@@ -24,8 +24,8 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth sizevar(newvarname)}}Name of the Stata variable that stores ego-network size; default = {it:_egosize}{p_end}
-{synopt:{opth densvar(newvarname)}}Name of the Stata variable that stores ego-network density; default = {it:_egodensity}{p_end}
+{synopt:{opth sizevar(newvarname)}}{bf:Required.} Name of the Stata variable that stores ego-network size{p_end}
+{synopt:{opth densvar(newvarname)}}{bf:Required.} Name of the Stata variable that stores ego-network density{p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -54,12 +54,13 @@ possible ties). An ego with fewer than 2 alters has no pair to assess - density 
 for it, not spuriously 0 or 1.
 
 {pstd}
-By default, {cmd:nwego} generates {it:_egosize} and {it:_egodensity}.
+{opt sizevar()} and {opt densvar()} are both required and name the Stata variables that store
+ego-network size and density, respectively.
 
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwego flomarriage}
+	{cmd:. nwego flomarriage, sizevar(_egosize) densvar(_egodensity)}
 
 
 {title:References}

@@ -15,10 +15,11 @@ program nwbrokerage, rclass
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_broker"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		foreach role of local roles {
 			capture confirm variable `netgenerate'_`role'`k', exact

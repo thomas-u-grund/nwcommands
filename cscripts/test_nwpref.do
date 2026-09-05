@@ -12,7 +12,7 @@ nwclear
 // so no do-file-level version statement is needed/wanted here.)
 set seed 123
 nwpref 20
-nwdegree
+nwdegree, generate(_outdegree _indegree)
 sum _indegree
 // Recalibrated (harmonisation phase, found while restoring nwgenerate's
 // own pref() shortcut): these assertions were silently calibrated

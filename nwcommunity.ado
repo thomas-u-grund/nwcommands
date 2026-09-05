@@ -53,10 +53,11 @@ program nwcommunity, rclass
 			error 198
 		}
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_community"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		// Checks the exact suffixed name this iteration is about to
 		// create, not the bare stem - Stata's own variable-name

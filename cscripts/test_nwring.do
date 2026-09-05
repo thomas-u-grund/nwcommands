@@ -6,7 +6,7 @@ set more off
 
 nwclear
 nwring 20, k(2)
-nwdegree
+nwdegree, generate(_outdegree _indegree)
 sum _indegree
 assert         r(sum)   == 80
 assert         r(max)   == 4
@@ -19,7 +19,7 @@ assert         r(N)     == 20
 
 nwclear
 nwring 20, k(3)
-nwdegree
+nwdegree, generate(_outdegree _indegree)
 sum _indegree
 assert         r(sum)   == 120
 assert         r(max)   == 6
@@ -32,7 +32,7 @@ assert         r(N)     == 20
 
 nwclear
 nwring 20, k(3) weights(0,1)
-nwdegree, alpha(1)
+nwdegree, generate(_outstrength _instrength) alpha(1)
 sum _instrength
 assert         r(sum)   == 240
 assert         r(max)   == 12

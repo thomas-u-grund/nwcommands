@@ -77,7 +77,7 @@ mata: mata drop bignet members_AF members_AFG
 * r(nclan_matrix).
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(net1) undirected labs(A,B,C,D,E)
-nwnclan net1
+nwnclan net1, generate(_nclannum)
 assert _rc == 0
 assert r(nclans) == 3
 sort _nwnode
@@ -95,7 +95,7 @@ mata: mata drop `lab' `num'
 * out to a plain Stata matrix first since nwnclique's own call below
 * is itself rclass and would otherwise clear it before the comparison.
 matrix nclanmat_saved = r(nclan_matrix)
-nwnclique net1
+nwnclique net1, generate(_ncliquenum)
 assert r(ncliques) == 3
 mata: assert(st_matrix("r(nclique_matrix)") == st_matrix("nclanmat_saved"))
 
@@ -108,7 +108,7 @@ assert _rc != 0
 * here either, by definition, since nothing is excluded).
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4) undirected labs(A,B,C,D)
-nwnclan k4
+nwnclan k4, generate(_nclannum)
 assert _rc == 0
 assert r(nclans) == 1
 count if _nclannum == 4
@@ -118,7 +118,7 @@ assert r(N) == 4
 * nwnclique/nwclique/nwkplex already apply).
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwnclan dnet
+nwnclan dnet, generate(_nclannum)
 assert _rc == 0
 assert r(nclans) == 1
 
@@ -139,7 +139,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(neta) undirected labs(A,B,C,D,E)
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(netb) undirected labs(A,B,C,D,E)
-nwnclan neta netb
+nwnclan neta netb, generate(_nclannum)
 assert _rc == 0
 capture confirm variable _nclannum1, exact
 assert _rc == 0
@@ -158,7 +158,7 @@ assert _rc != 0
 * exercised.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwnclan tri, silent
+nwnclan tri, generate(_nclannum) silent
 assert _rc == 0
 assert r(nclans) == 1
 di "=== silent REGRESSION VERIFIED ==="

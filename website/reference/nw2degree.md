@@ -24,7 +24,7 @@ alpha(#)]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores two-mode degree centrality; default = *_2degree* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores two-mode degree centrality |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 | `alpha(#)` | Weighted (tie-strength-aware) degree/strength blend, Opsahl et al. (2010); default = *0* (plain unweighted degree, identical to omitting the option) |
@@ -37,7 +37,7 @@ alpha(#)]
 
 so that a mode-1 node tied to every mode-2 node (or vice versa) scores exactly 1, matching ordinary degree centrality's own [0,1] range and interpretation.
 
-By default, `nw2degree` generates a new variable *_2degree* holding this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set.md)'s own mode-id variable, not duplicated here).
+`generate()` is required and names the new variable that holds this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set.md)'s own mode-id variable, not duplicated here).
 
 `alpha(#)` generalizes the plain tie-count formula above to a weighted (tie-strength-aware) variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend [nwdegree](nwdegree.md)'s own `alpha()` already uses for one-mode degree:
 
@@ -51,7 +51,7 @@ where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its 
 . nwclear
 . mata: net = (1,1\1,0\0,1)
 . nw2set, mat(net) name(mynet)
-. nw2degree mynet
+. nw2degree mynet, generate(_2degree)
 ```
 - Weighted (strength-aware) variant, on a valued two-mode network:
 

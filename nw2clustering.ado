@@ -5,7 +5,8 @@ program nw2clustering
 	unw_defs
 
 	if "`generate'" == "" {
-		local generate = "_clustering2_lev`level'"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 
 	// BUGFIX (moderate-severity pass, positions_equivalence group): no

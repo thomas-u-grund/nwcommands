@@ -28,7 +28,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores community membership; default = {it:_community}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores community membership{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
 {synopt:{opt symmetrize}}Symmetrize a directed network before detecting communities (required for directed networks){p_end}
@@ -62,7 +62,7 @@ even simple, cleanly-separated community structure into one giant community (see
 {help nwcommunity##algorithm:Algorithm} below). Use {opt seed()} for reproducible results.
 
 {pstd}
-By default, {cmd:nwcommunity} generates a new variable {it:_community} which stores, for each node, the
+{opt generate()} is required and names the new variable that stores, for each node, the
 id of the community it was assigned to.
 
 {marker algorithm}{...}
@@ -101,8 +101,8 @@ Binary: yes. Directed: requires {opt symmetrize} - community detection as implem
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwcommunity flomarriage}
-	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345) replace}
+	{cmd:. nwcommunity flomarriage, generate(_community)}
+	{cmd:. nwcommunity flomarriage, algorithm(labelprop) seed(12345) generate(_community) replace}
 
 
 {title:References}

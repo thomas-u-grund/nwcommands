@@ -43,7 +43,7 @@ do unw_core.do
 * written.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net1) undirected labs(A,B,C,D,E,F)
-nwcohesion net1
+nwcohesion net1, generate(_cohesion)
 assert _rc == 0
 assert r(blocks) == 3
 sort _nwnode
@@ -82,7 +82,7 @@ mata: mata drop cm cl targettop target1 target2 foundtop found1 found2 i
 * level 2.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwcohesion tri
+nwcohesion tri, generate(_cohesion)
 assert _rc == 0
 assert r(blocks) == 1
 count if _cohesion == 2
@@ -94,7 +94,7 @@ assert r(N) == 3
 * so recursion stops with exactly the one top block.
 nwclear
 nwset, mat((0,0,0,0\0,0,0,0\0,0,0,0\0,0,0,0)) name(iso) undirected
-nwcohesion iso
+nwcohesion iso, generate(_cohesion)
 assert _rc == 0
 assert r(blocks) == 1
 count if _cohesion == 0
@@ -109,7 +109,7 @@ assert r(N) == 4
 * generate()'s "highest level across all containing blocks" semantics.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net3) undirected
-nwcohesion net3
+nwcohesion net3, generate(_cohesion)
 assert _rc == 0
 assert r(blocks) == 3
 count if _cohesion == 2
@@ -120,7 +120,7 @@ assert r(N) == 6
 * collapses to a full undirected triangle - one block, level 2.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed
-nwcohesion dnet
+nwcohesion dnet, generate(_cohesion)
 assert _rc == 0
 assert r(blocks) == 1
 count if _cohesion == 2
@@ -144,7 +144,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(neta) undirected labs(A,B,C,D,E,F)
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(netb) undirected labs(A,B,C,D,E,F)
-nwcohesion neta netb
+nwcohesion neta netb, generate(_cohesion)
 assert _rc == 0
 capture confirm variable _cohesion1, exact
 assert _rc == 0
@@ -154,7 +154,7 @@ assert _rc == 0
 * --- silent suppresses display but not the underlying computation.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri2) undirected
-nwcohesion tri2, silent
+nwcohesion tri2, generate(_cohesion) silent
 assert _rc == 0
 assert r(blocks) == 1
 

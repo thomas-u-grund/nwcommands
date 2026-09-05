@@ -28,8 +28,7 @@
 {synoptline}
 {synopt:{opt alpha(real)}}penalization factor for calculation of weights; default = 1 (distance-decay mode) or {bf:0.9/rho} (walk-counting mode, {opt walks}){p_end}
 {synopt:{opt walks}}switch to the literature's own genuine walk-counting Katz/Bonacich centrality, {it:(I - alpha*A)^-1 * 1}, instead of this command's own default distance-decay formula (see Description){p_end}
-{synopt:{opt generate}({it:{help varname}})}variable name for Katz centrality scores; default =
-{it:_katz}{p_end}
+{synopt:{opt generate}({it:{help varname}})}{bf:Required.} Variable name for Katz centrality scores{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{it:{help nwgeodesic:geodesic_options}}}options for calculating distances (forwarded to
 the internal {help nwgeodesic} call); not used when {opt walks} is specified{p_end}
@@ -100,7 +99,7 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwkatz flomarriage}
+	{cmd:. nwkatz flomarriage, generate(_katz)}
 	{cmd:. sum _katz}
 
 

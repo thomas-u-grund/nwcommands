@@ -21,7 +21,7 @@ do unw_core.do
 * structure-forced check, not merely "runs without crashing".
 nwclear
 nwset, mat((0,1,1,1,1,1\1,0,1,1,1,1\1,1,0,1,1,1\1,1,1,0,0,0\1,1,1,0,0,0\1,1,1,0,0,0)) name(net1) undirected labs(A,B,C,D,E,F)
-nwcoreperiphery net1
+nwcoreperiphery net1, generate(_core)
 assert _rc == 0
 assert reldif(r(fitness), 1) < 1e-6
 assert r(core) == 3
@@ -49,7 +49,7 @@ forvalues i = 1/6 {
 * any core-implied tie).
 nwclear
 nwset, mat((0,1,1,1,1,1,0\1,0,1,1,1,1,0\1,1,0,1,1,1,0\1,1,1,0,0,0,0\1,1,1,0,0,0,0\1,1,1,0,0,0,0\0,0,0,0,0,0,0)) name(net3) undirected labs(A,B,C,D,E,F,G)
-nwcoreperiphery net3
+nwcoreperiphery net3, generate(_core)
 assert _rc == 0
 assert _core[7] == 0
 
@@ -58,7 +58,7 @@ assert _core[7] == 0
 * mishandled.
 nwclear
 nwset, mat((0,0\0,0)) name(empty1) undirected labs(A,B)
-capture noisily nwcoreperiphery empty1
+capture noisily nwcoreperiphery empty1, generate(_core) replace
 assert _rc != 0
 
 * --- directed networks are symmetrized automatically (no explicit
@@ -67,7 +67,7 @@ assert _rc != 0
 * for a symmetrize option the way nwcommunity does.
 nwclear
 nwset, mat((0,1,1,0,0,0\0,0,1,1,0,0\0,0,0,0,1,0\0,0,0,0,0,0\0,0,0,0,0,1\0,0,0,0,0,0)) name(dnet) directed labs(A,B,C,D,E,F)
-nwcoreperiphery dnet
+nwcoreperiphery dnet, generate(_core) replace
 assert _rc == 0
 assert r(fitness) >= -1 & r(fitness) <= 1
 
@@ -75,9 +75,9 @@ assert r(fitness) >= -1 & r(fitness) <= 1
 * network (default follows the network's own valued-ness).
 nwclear
 nwset, mat((0,5,3,4,2,1\5,0,4,3,2,1\3,4,0,2,1,1\4,3,2,0,0,0\2,2,1,0,0,0\1,1,1,0,0,0)) name(wnet) undirected labs(A,B,C,D,E,F)
-nwcoreperiphery wnet, measure(binary)
+nwcoreperiphery wnet, measure(binary) generate(_core) replace
 assert _rc == 0
-nwcoreperiphery wnet, measure(valued) replace
+nwcoreperiphery wnet, measure(valued) generate(_core) replace
 assert _rc == 0
 assert r(fitness) >= -1 & r(fitness) <= 1
 
@@ -99,7 +99,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,1,1,1,1\1,0,1,1,1,1\1,1,0,1,1,1\1,1,1,0,0,0\1,1,1,0,0,0\1,1,1,0,0,0)) name(net1) undirected labs(A,B,C,D,E,F)
 nwset, mat((0,1,1,1,1,1\1,0,1,1,1,1\1,1,0,1,1,1\1,1,1,0,0,0\1,1,1,0,0,0\1,1,1,0,0,0)) name(net4) undirected labs(A,B,C,D,E,F)
-nwcoreperiphery net1 net4
+nwcoreperiphery net1 net4, generate(_core)
 assert _rc == 0
 capture confirm variable _core1, exact
 assert _rc == 0

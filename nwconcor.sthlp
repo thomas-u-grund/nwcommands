@@ -26,7 +26,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores block membership; default = {it:_concor}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores block membership{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth splits(int)}}Number of recursive bisections; final number of blocks is up to 2^{it:splits}; default = 1{p_end}
 {synopt:{opt measure(binary|valued)}}Whether to use tie values ({it:valued}) or only presence/absence of ties ({it:binary}); default = {it:valued} for valued networks, {it:binary} otherwise{p_end}
@@ -60,7 +60,7 @@ internal structure to split on) simply stays as one block rather than being forc
 the actual number found.
 
 {pstd}
-By default, {cmd:nwconcor} generates a new variable {it:_concor} which stores, for each node, the id
+{opt generate()} is required and names the new variable that stores, for each node, the id
 of the block it was assigned to.
 
 {pstd}
@@ -81,9 +81,9 @@ so {cmd:nwconcor} requires every node to have at least one tie; remove isolates 
 	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. * pucci is an isolate in this network - CONCOR requires every node to have a tie}
 	{cmd:. nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)}
-	{cmd:. nwconcor flomarriage2}
+	{cmd:. nwconcor flomarriage2, generate(_concor)}
 
-	{cmd:. nwconcor flomarriage2, splits(2) replace}
+	{cmd:. nwconcor flomarriage2, splits(2) generate(_concor) replace}
 
 
 {title:References}

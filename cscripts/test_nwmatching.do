@@ -51,7 +51,7 @@ assert r(matched) == 3
 * error: requires a two-mode network.
 nwclear
 nwset, mat((0,1\1,0)) name(onemode) labs(A,B)
-capture nwmatching onemode
+capture nwmatching onemode, generate(match3)
 assert _rc == 6556
 
 di "=== nwmatching REGRESSION VERIFIED ==="
@@ -63,7 +63,7 @@ di "=== nwmatching REGRESSION VERIFIED ==="
 nwclear
 nwset, mat((1,0,1\0,1,0\1,0,0)) name(bipnet2) bipartite
 clear
-capture noisily nwmatching bipnet2
+capture noisily nwmatching bipnet2, generate(match4)
 assert _rc == 0
 assert _N >= 6
 di "=== nwmatching: dataset-sync-after-clear REGRESSION VERIFIED ==="
@@ -76,6 +76,6 @@ assert _rc == 482
 
 nwclear
 nwset, mat((1,0,1\0,1,0\1,0,0)) name(bipnet3) bipartite
-qui nwmatching bipnet3
-capture noisily nwmatching bipnet3
+qui nwmatching bipnet3, generate(match5)
+capture noisily nwmatching bipnet3, generate(match5)
 assert _rc == 99

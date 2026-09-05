@@ -6,7 +6,8 @@ program nwmatching, rclass
 	_nwsyntax `netname'
 
 	if "`generate'" == "" {
-		local generate "_match"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	capture confirm variable `generate'
 	if _rc == 0 & "`replace'" == "" {

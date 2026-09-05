@@ -4,7 +4,7 @@ do unw_core.do
 
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet, unconnected(99) xvars
+nwgeodesic mynet, unconnected(99) xvars generate(_eccentricity)
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -27,7 +27,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 99
 
 
-nwgeodesic mynet, sym unconnected(max) nwreplace xvars
+nwgeodesic mynet, sym unconnected(max) nwreplace xvars generate(_eccentricity)
 assert `"`r(symmetrized)'"' == `"true"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -48,7 +48,7 @@ assert _eccentricity[3] == 2
 assert _eccentricity[4] == 2
 
 
-nwgeodesic mynet, nwreplace xvars
+nwgeodesic mynet, nwreplace xvars generate(_eccentricity)
 assert `"`r(symmetrized)'"' == `"false"'
 assert `"`r(geodesic)'"'    == `"_geodesic"'
 assert `"`r(netname)'"'     == `"mynet"'
@@ -109,7 +109,7 @@ assert B[1] >= 0.7 & B[1] < 0.8
 * Path graph A-B-C-D-E (undirected, unweighted): ecc = 4,3,2,3,4; radius=2
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pathnet2) undirected labs(A,B,C,D,E)
-nwgeodesic pathnet2, xvars
+nwgeodesic pathnet2, xvars generate(_eccentricity)
 assert r(radius) == 2
 assert r(diameter) == 4
 assert _eccentricity[1] == 4
@@ -121,7 +121,7 @@ assert _eccentricity[5] == 4
 * K4 complete graph: every node has eccentricity 1, radius = diameter = 1
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4net2) undirected labs(A,B,C,D)
-nwgeodesic k4net2, xvars
+nwgeodesic k4net2, xvars generate(_eccentricity)
 assert r(radius) == 1
 assert r(diameter) == 1
 forvalues i = 1/4 {
@@ -145,17 +145,42 @@ assert r(radius) == 1
 
 
 
-* --- alpha-audit regression: the eccentricity-variable collision guard
-* used to run unconditionally, even when xvars was never requested -
-* any call failed purely because SOME earlier call had once left the
-* (default-named) eccentricity variable lying around, regardless of
-* whether the current call ever touches it.
+* --- generate() regression: a real bug (found while writing the Paths
+* & Ego Networks tutorial) had eccentricity generation silently gated
+* behind `xvars', so a plain `nwgeodesic ..., generate(ecc)' (no xvars)
+* never created `ecc' at all. Fixed properly per the suite-wide
+* generate()-required style decision (2026-09-05): nwgeodesic is
+* dual-purpose (its PRIMARY output is the distance network via name(),
+* eccentricity is a secondary bonus output) so - unlike a single-purpose
+* command, where omitting generate() now errors - omitting generate()
+* here means "skip eccentricity entirely" (no variable, no error, no
+* default name at all). This also means nwreach.ado's own internal call
+* (which only ever wanted the reachability network) needs no opt-out
+* option whatsoever anymore - simply not passing generate() already does
+* the right thing.
 nwclear
 nwset, mat((1,1,0,2\0,0,0,0\1,4,0,0\0,2,0,0)) name(mynet)
-nwgeodesic mynet, xvars
-capture noisily nwgeodesic mynet, name(_geo2)
+capture drop ecc
+nwgeodesic mynet, generate(ecc)
 assert _rc == 0
-di "=== unconditional eccvar-guard REGRESSION VERIFIED ==="
+capture confirm variable ecc
+assert _rc == 0
+
+* a second call naming the SAME variable must require nwreplace, exactly
+* like every other nwcommands generate() target.
+capture noisily nwgeodesic mynet, name(_geo2) generate(ecc)
+assert _rc == 99
+nwgeodesic mynet, name(_geo2) generate(ecc) nwreplace
+assert _rc == 0
+
+* omitting generate() entirely never creates ANY eccentricity variable,
+* under any name, default or otherwise.
+capture drop _eccentricity
+nwgeodesic mynet, name(_geo3)
+assert _rc == 0
+capture confirm variable _eccentricity
+assert _rc != 0
+di "=== generate()-required/optional-eccentricity REGRESSION VERIFIED ==="
 
 * moderate-severity pass, paths_distance group: an ordinary, fully
 * successful call (no sym, no xvars) used to leave a stale nonzero _rc

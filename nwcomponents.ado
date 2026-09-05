@@ -6,7 +6,19 @@ program nwcomponents, rclass
 	set more off
 
 	_nwsyntax `netname', max(9999)
-	
+
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwcomponents' whole purpose is producing
+	// this variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to. Checked once
+	// here rather than inside the netlist loop below, since that loop
+	// reassigns `generate' in place on its first iteration - checking
+	// inside it would only ever catch an omitted generate() on network 1.
+	if "`generate'" == "" {
+		di "{err}option {bf:generate()} required."
+		error 198
+	}
+
 	if `networks' > 1 {
 		local k = 1
 	}
@@ -15,15 +27,6 @@ program nwcomponents, rclass
 		nwname `netname_temp'
 		local nodes = r(nodes)
 
-		if "`generate'" == "" {
-			if "`lgc'" == "" {
-				local generate = "_component"
-			}
-			else {
-				local generate = "_lgc"
-			}
-		}
-		
 		// Checks the exact suffixed name this iteration is about to
 		// create, not the bare stem - Stata's own variable-name
 		// abbreviation would otherwise let `confirm variable

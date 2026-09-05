@@ -14,10 +14,11 @@ program nwkcore, rclass
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_kcore"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		// BUGFIX: this used to check the bare stem `netgenerate' with no
 		// iteration suffix at all, so a netlist call with 2+ networks

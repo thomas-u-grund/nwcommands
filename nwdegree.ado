@@ -140,29 +140,26 @@ program nwdegree
 		// trigger. Matches nwcloseness.ado's own established pattern:
 		// validate the word count up front and error clearly instead of
 		// silently mis-assigning or crashing downstream.
+		// generate() is required (suite-wide generate()-required style
+		// decision, 2026-09-05): nwdegree's whole purpose is producing
+		// this variable, so - matching Stata's own egen/predict
+		// convention - there is no default name to silently fall back
+		// to; a hidden default is exactly how an existing variable gets
+		// unexpectedly clobbered. No isolates-only exception: the
+		// isolates-append logic just below assumes netgenerate already
+		// holds the real degree name(s) to append an _isolates slot
+		// onto, so generate() must be given even for an isolates-only
+		// call (a real name is still required, even if the caller never
+		// reads it afterward).
+		if ("`netgenerate'" == "") {
+			di "{err}option {bf:generate()} required."
+			error 198
+		}
 		if ("`netgenerate'" != "" & "`directed'" == "true") {
 			local __nwdeg_gencount : word count `netgenerate'
 			if (`__nwdeg_gencount' < 2) {
 				noi di "{err}Option {bf:generate()} needs at least 2 names (outdegree, indegree) for a directed network; got `__nwdeg_gencount'."
 				error 198
-			}
-		}
-		if ("`netgenerate'" == "") {
-			if ("`directed'" == "true") {
-				if "`valued'" == "true" {
-					local netgenerate "_outstrength _instrength"
-				}
-				else {
-					local netgenerate "_outdegree _indegree"
-				}
-			}
-			else {
-				if "`valued'" == "true" {
-					local netgenerate "_strength"
-				}
-				else {
-					local netgenerate "_degree"
-				}
 			}
 		}
 		// Give isolates its own word slot whenever the (default or

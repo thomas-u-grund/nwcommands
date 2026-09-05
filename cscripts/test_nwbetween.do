@@ -106,7 +106,7 @@ assert mbc_pnet2[5] == 0
 * have no suffix
 nwclear
 nwset, mat((0,1,0,0,0\1,0,1,0,0\0,1,0,1,0\0,0,1,0,1\0,0,0,1,0)) name(pnet1) undirected labs(A,B,C,D,E)
-nwbetween pnet1, silent
+nwbetween pnet1, generate(_between) silent
 assert _between[2] == 3
 
 * replace guard: previously dead code ("capture drop `generate'*"
@@ -150,7 +150,7 @@ assert _rc == 0
 * regardless, which is exactly why it did not itself catch the bug.
 nwclear
 nwset, mat((0,1,4,0\1,0,2,0\4,2,0,1\0,0,1,0)) name(wnet) undirected labs(A,B,C,D)
-nwbetween wnet, weighted alpha(1) silent
+nwbetween wnet, generate(_between) weighted alpha(1) silent
 assert _between[1] == 0
 assert _between[2] == 0
 assert _between[3] == 3
@@ -173,7 +173,7 @@ assert _wa0[4] == _wu[4]
 * of range" (r3300) the instant st_store() tried to write into a row
 * that did not exist in the (0-observation) active dataset.
 clear
-capture noisily nwbetween wnet
+capture noisily nwbetween wnet, generate(_between)
 assert _rc == 0
 assert _N >= 4
 di "=== nwbetween: dataset-sync-after-clear REGRESSION VERIFIED ==="

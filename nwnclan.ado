@@ -24,10 +24,11 @@ program nwnclan, rclass
 	qui foreach netname_temp in `netname' {
 		_nwsyntax `netname_temp'
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_nclannum"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		capture confirm variable `netgenerate'`i', exact
 		if _rc == 0 & "`replace'" == "" {

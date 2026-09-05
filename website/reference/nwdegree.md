@@ -32,7 +32,7 @@ outputoff
 | | |
 |---|---|
 | `alpha` | Tuning parameter for valued networks; default = 0 |
-| `generate`(*`varlist`*) | Generate variables for degree, outdegree, indegree, isolate |
+| `generate`(*`varlist`*) | **Required.** Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if `isolates` is also given, an extra name for the isolate indicator |
 | `replace` | Overwrite existing variables *varlist* |
 | `silent` | Surpress output |
 | `outputoff` | Reserved/internal - has no effect on a one-mode network's own output; use `silent` instead. Only meaningful when [netname](netname.md) turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to [nw2degree](nw2degree.md)) |
@@ -44,7 +44,7 @@ outputoff
 
 ## Description
 
-`nwdegree` calculates the generalized degree centrality of the nodes as outlined in Opsahl et al (2010) for the (un-)weighted, (un-directed) networks in [netlist](netlist.md) . By default, the command generates the Stata variables *_degree* for an undirected network. When the network is directed the command generates by default *_outdegree* and *_indegree* unless something else is specified in `generate()`. It also tabulates the newly generated variables.
+`nwdegree` calculates the generalized degree centrality of the nodes as outlined in Opsahl et al (2010) for the (un-)weighted, (un-directed) networks in [netlist](netlist.md). `generate()` is required: name one variable for an undirected network, or two (outdegree, indegree, in that order) for a directed one. It also tabulates the newly generated variable(s).
 
 Following Opsahl et al. (2010) the degree centrality C_i of node i is defined as:
 
@@ -52,11 +52,11 @@ Following Opsahl et al. (2010) the degree centrality C_i of node i is defined as
 
 where *k_i* is the number of ties that node *i* is involved in (regardless of tie values) and *s_i* is the sum of the tie values of these ties. When *alpha = 0* (default), this generalized degree centrality gives the number of ties that a node has. When *alpha = 1*, it gives the node strength, i.e. the sum of the tie values that a node is involved in. For unvalued networks the value of *alpha* does not matter.
 
-Option **isolates** generates the variable *_isolate* that indicates if a node is an isolate (not connected to any other node).
+Option **isolates** adds one more name to `generate()` (after the degree name(s)) for a variable indicating whether a node is an isolate (not connected to any other node) - e.g. `generate(mydeg myisolate) isolates` on an undirected network, or `generate(myout myin myisolate) isolates` on a directed one.
 
 Option **standardize** divides the centrality scores by N - 1, where N = number of nodes in a network.
 
-`nwdegree` accepts a [netlist](netlist.md) (e.g. **nwdegree glasgow1 glasgow2**), calculating degree centrality independently for each network in the list. When more than one network is given, the default output variable names get the network's own name appended (e.g. *_degree_glasgow1*, *_degree_glasgow2*, or *_indegree_glasgow1*/*_outdegree_glasgow1* for a directed network); a single-network call is unaffected and keeps the plain default names (*_degree*, or *_indegree*/*_outdegree*) exactly as before. Explicit `generate()` names are suffixed the same way when more than one network is processed. **r()** results (e.g. **r(dg_central)**) reflect whichever network was processed last, matching this package's convention for other [netlist](netlist.md) commands.
+`nwdegree` accepts a [netlist](netlist.md) (e.g. **nwdegree glasgow1 glasgow2, generate(deg)**), calculating degree centrality independently for each network in the list. When more than one network is given, `generate()`'s own name(s) get the network's own name appended (e.g. *deg_glasgow1*, *deg_glasgow2*); a single-network call is unaffected and keeps the plain name(s) exactly as given. **r()** results (e.g. **r(dg_central)**) reflect whichever network was processed last, matching this package's convention for other [netlist](netlist.md) commands.
 
 ## Examples
 
@@ -69,7 +69,6 @@ Option **standardize** divides the centrality scores by N - 1, where N = number 
 - 0,1,0,.,0,0\
 - 0,1,0,0,.,7\
 - 0,0,0,0,7,.)) undirected labs(A, B, C, D, E, F)
-- . qui nwdegree, alpha(0)
 - . qui nwdegree, alpha(0) generate(deg0)
 - . qui nwdegree, alpha(.5) generate(deg0_5)
 - . qui nwdegree, alpha(1) generate(deg1)
@@ -92,7 +91,7 @@ In the following example, the degree distributions for in- and outdegree are sav
 
 ```stata
 . nwwebuse glasgow
-. nwdegree glasgow1, in(matcell(matindeg)) out(matcell(matoutdeg))
+. nwdegree glasgow1, generate(_outdegree _indegree) in(matcell(matindeg)) out(matcell(matoutdeg))
 . mat list matindeg
 ```
 The next example saves the out- and indegree centrality in the variables *myout* and *myin* and the information about isolates in *myisolate*.

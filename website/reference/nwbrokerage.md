@@ -25,7 +25,7 @@ silent]
 | | |
 |---|---|
 | `group(varname)` | Existing Stata variable holding each node's group membership (required) |
-| `generate(newvarname)` | Stem for the 5 new Stata variables that store role counts; default = *_broker* |
+| `generate(newvarname)` | **Required.** Stem for the 5 new Stata variables that store role counts |
 | `replace` | Replace existing variables |
 | `silent` | Suppress display of results |
 
@@ -39,7 +39,7 @@ silent]
 - **consultant***a* and *c* in the same group, different from *b*'s
 - **liaison***a*, *b* and *c* all in different groups
 
-Five new Stata variables are generated, one per role, each holding node *b*'s count of that role (e.g. the default `generate(_broker)` produces *_broker_coordinator*, *_broker_gatekeeper*, *_broker_representative*, *_broker_consultant* and *_broker_liaison*).
+`generate()` is required and gives the stem for five new Stata variables, one per role, each holding node *b*'s count of that role (e.g. `generate(_broker)` produces *_broker_coordinator*, *_broker_gatekeeper*, *_broker_representative*, *_broker_consultant* and *_broker_liaison*).
 
 For a directed network, *a* ranges over *b*'s incoming ties and *c* over its outgoing ties - brokerage is fundamentally about *a* reaching *c* *through* *b*. For an undirected network, incoming and outgoing ties are identical, so *a* and *c* both range over *b*'s (undirected) neighbors - the same five-role classification still applies, just without the directional distinction a directed network provides.
 
@@ -48,7 +48,7 @@ For a directed network, *a* ranges over *b*'s incoming ties and *c* over its out
 ```stata
 . nwwebuse florentine, nwclear
 . gen faction = mod(_n, 2)
-. nwbrokerage flomarriage, group(faction)
+. nwbrokerage flomarriage, group(faction) generate(_broker)
 ```
 
 ## Supported network types

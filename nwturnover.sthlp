@@ -23,7 +23,7 @@
 {synoptset 25 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own local stability; default = {it:_turnover}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own local stability{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -49,7 +49,7 @@ distinct question - of the ties that existed at {it:net1}, what fraction survive
 {bf:stable / (stable + dissolved)}, undefined (missing) if {it:net1} has no ties at all.
 
 {pstd}
-By default, {cmd:nwturnover} also generates a per-node variable ({it:_turnover}) giving each
+{opt generate()} is required and names the per-node variable that gives each
 node's OWN local Jaccard stability - computed the same way as {bf:r(jaccard)}, but restricted to
 that one node's own ties across the two waves, rather than the whole network's.
 
@@ -79,7 +79,7 @@ in both ratios.
 
 	{cmd:. nwset, mat((0,1,1\1,0,0\1,0,0)) name(wave1)}
 	{cmd:. nwset, mat((0,1,0\1,0,1\0,1,0)) name(wave2)}
-	{cmd:. nwturnover wave1 wave2}
+	{cmd:. nwturnover wave1 wave2, generate(_turnover)}
 
 {title:References}
 

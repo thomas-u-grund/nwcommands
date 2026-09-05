@@ -26,7 +26,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt measure(string)}}Underlying centrality measure: one of {bf:degree}, {bf:betweenness}, {bf:closeness}, {bf:evcent}{p_end}
-{synopt:{opth generate(stub)}}Prefix for the three output variables ({it:stub}{bf:_endog}, {it:stub}{bf:_induced}, {it:stub}{bf:_exog}); default = {bf:_induced}{p_end}
+{synopt:{opth generate(stub)}}{bf:Required.} Prefix for the three output variables ({it:stub}{bf:_endog}, {it:stub}{bf:_induced}, {it:stub}{bf:_exog}){p_end}
 {synopt:{opt replace}}Replace existing variables{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -76,7 +76,7 @@ being aware of before running this against a large network with {opt measure(bet
 
 	{cmd:. nwclear}
 	{cmd:. nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(starnet) undirected labs(A,B,C,D)}
-	{cmd:. nwinduced starnet, measure(degree)}
+	{cmd:. nwinduced starnet, measure(degree) generate(_induced)}
 
 {pstd}A hub (A, degree 3) and three leaves (B/C/D, degree 1) - endogenous exactly reproduces plain
 degree; induced is exactly twice that (6 for A, 2 for each leaf); exogenous equals endogenous

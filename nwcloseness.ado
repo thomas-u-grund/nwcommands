@@ -52,13 +52,18 @@ program nwcloseness
 	// closeness variable) got no error and their requested name was
 	// never created. Now errors clearly instead of silently discarding
 	// it.
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwcloseness's whole purpose is producing
+	// these variables, so - matching Stata's own egen/predict convention
+	// - there is no default name to silently fall back to.
 	local gencount : word count `generate'
-	if (`gencount' != 0 & `gencount' != 3) {
-		di "{err}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'."
+	if (`gencount' == 0) {
+		di "{err}option {bf:generate()} required - needs exactly 3 names (closeness, farness, nearness)."
 		error 198
 	}
-	if (`gencount' == 0) {
-		local generate = "_closeness _farness _nearness"
+	if (`gencount' != 3) {
+		di "{err}Option {bf:generate()} needs exactly 3 names (closeness, farness, nearness); got `gencount'."
+		error 198
 	}
 	local generate_all ""
 	

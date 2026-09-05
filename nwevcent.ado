@@ -5,8 +5,13 @@ program nwevcent
 	_nwsyntax `netname'
 	_nwdatasync `netname'
 
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwevcent's whole purpose is producing this
+	// variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
-		local generate "_evcent"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	// Per Stata's own [P] syntax convention for a "no"-prefixed toggle:
 	// declaring `nosym' in the option list makes Stata define a local

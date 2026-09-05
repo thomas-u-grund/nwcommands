@@ -42,7 +42,7 @@ assert _rc == 99
 
 nwclear
 nwset, mat((0,1,0\1,0,0\0,0,0)) name(withisolate) labs(A,B,C)
-capture nwrandomwalk withisolate, target(A)
+capture nwrandomwalk withisolate, target(A) generate(htiso)
 assert _rc == 6556
 di "=== nwrandomwalk error handling REGRESSION VERIFIED ==="
 
@@ -53,7 +53,7 @@ di "=== nwrandomwalk error handling REGRESSION VERIFIED ==="
 nwclear
 nwset, mat((0,1,0\1,0,1\0,1,0)) name(path3rw2) labs(A,B,C)
 clear
-capture noisily nwrandomwalk path3rw2, target(C)
+capture noisily nwrandomwalk path3rw2, target(C) generate(ht2)
 assert _rc == 0
 assert _N >= 3
 di "=== nwrandomwalk: dataset-sync-after-clear REGRESSION VERIFIED ==="

@@ -28,7 +28,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores community membership; default = *_community* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores community membership |
 | `replace` | Replace existing variable |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `symmetrize` | Symmetrize a directed network before detecting communities (required for directed networks) |
@@ -43,14 +43,14 @@ silent]
 
 **algorithm(labelprop)** uses genuinely randomized sweep order and tie-breaking (unlike Louvain's own fixed, reproducible sweep order) - this is a deliberate, load-bearing part of the algorithm, not an incidental implementation detail: a fixed visiting order with deterministic tie-breaking was tried first and found to be not merely non-standard but actively wrong, systematically collapsing even simple, cleanly-separated community structure into one giant community (see [Algorithm](nwcommunity.md) below). Use `seed()` for reproducible results.
 
-By default, `nwcommunity` generates a new variable *_community* which stores, for each node, the id of the community it was assigned to.
+`generate()` is required and names the new variable that stores, for each node, the id of the community it was assigned to.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwcommunity flomarriage
-. nwcommunity flomarriage, algorithm(labelprop) seed(12345) replace
+. nwcommunity flomarriage, generate(_community)
+. nwcommunity flomarriage, algorithm(labelprop) seed(12345) generate(_community) replace
 ```
 
 ## Supported network types

@@ -28,8 +28,15 @@ program nwbetween
 	_nwsyntax `netname', max(9999)
 	local totalnetworks = `networks'
 
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwbetween's whole purpose is producing this
+	// variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to; a hidden
+	// default is exactly how an existing variable gets unexpectedly
+	// clobbered.
 	if "`generate'" == "" {
-		local generate "_between"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 
 	qui foreach netname_temp in `netname' {

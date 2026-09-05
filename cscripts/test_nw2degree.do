@@ -38,7 +38,7 @@ nwclear
 mata: bip = (1,1 \ 1,0 \ 0,1)
 mata: st_matrix("bip", bip)
 nwset, mat(bip) bipartite name(net1) labs(E1,E2,A,B,C)
-nw2degree net1
+nw2degree net1, generate(_2degree)
 assert _rc == 0
 sort _nwnode
 tempname lab val
@@ -78,7 +78,7 @@ nwclear
 mata: st_matrix("bip", bip)
 nwset, mat(bip) bipartite name(net1) labs(E1,E2,A,B,C)
 nwset, mat(bip) bipartite name(net2) labs(E1,E2,A,B,C)
-nw2degree net1 net2
+nw2degree net1 net2, generate(_2degree)
 assert _rc == 0
 capture confirm variable _2degree1, exact
 assert _rc == 0
@@ -94,7 +94,7 @@ nwclear
 mata: bip2 = (1,0 \ 1,1 \ 1,0 \ 1,1)
 mata: st_matrix("bip2", bip2)
 nwset, mat(bip2) bipartite name(net3) labs(E1,E2,P,Q,R,S)
-nw2degree net3
+nw2degree net3, generate(_2degree)
 assert _rc == 0
 sort _nwnode
 tempname lab2 val2
@@ -132,7 +132,7 @@ input str10 mode1 str10 mode2 value
 "B" "Z" 6
 end
 nwset mode1 mode2 value, twomode name(wbip)
-nw2degree wbip
+nw2degree wbip, generate(_2degree)
 assert _rc == 0
 sort _nwnode
 tempname wlab wval

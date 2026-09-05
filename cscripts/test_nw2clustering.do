@@ -44,7 +44,7 @@ do unw_core.do
 
 nwclear
 nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) name(bip4) bipartite
-nw2clustering bip4
+nw2clustering bip4, generate(_clustering2_lev1)
 assert _rc == 0
 nwload
 mata: st_view(cv1=., ., "_clustering2_lev1")
@@ -73,7 +73,7 @@ forvalues t = 1/8 {
 	}
 	drop if ego == ""
 	nwset ego alter, twomode name(bipnet) nooutput
-	nw2clustering bipnet
+	nw2clustering bipnet, generate(_clustering2_lev1)
 	assert _rc == 0
 	nwload
 	mata: st_view(cv=., ., "_clustering2_lev1")
@@ -137,12 +137,12 @@ di "=== LEVEL(2) REGRESSION VERIFIED ==="
 * several steps later with a cryptic raw error instead of a clear
 * message; calling nw2clustering directly on a one-mode network crashed
 * just as cryptically rather than erroring cleanly.
-capture noisily nw2clustering bipnet2, level(99)
+capture noisily nw2clustering bipnet2, level(99) generate(dummylvl)
 assert _rc != 0
 
 nwclear
 nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(onemode) undirected labs(A,B,C,D)
-capture noisily nw2clustering onemode
+capture noisily nw2clustering onemode, generate(dummymode)
 assert _rc != 0
 di "=== level()/one-mode VALIDATION VERIFIED ==="
 
@@ -181,10 +181,10 @@ di "=== NO-VALID-4-PATH REGRESSION VERIFIED ==="
 nwclear
 nw2set, mat((1,1,0,0\1,1,1,0\0,1,1,1\0,0,1,1\1,0,0,1)) name(bignet)
 gen _clustering2_lev1 = 999
-capture noisily nw2clustering bignet
+capture noisily nw2clustering bignet, generate(_clustering2_lev1)
 assert _rc == 99
 assert _clustering2_lev1[1] == 999
-nw2clustering bignet, replace
+nw2clustering bignet, generate(_clustering2_lev1) replace
 assert _rc == 0
 assert _clustering2_lev1[1] != 999
 di "=== replace guard REGRESSION VERIFIED ==="
@@ -194,5 +194,5 @@ di "=== replace guard REGRESSION VERIFIED ==="
 * given so this doesn't instead hit the (already-tested, above)
 * "variable already exists" guard first, which this file's own dataset
 * state would otherwise trip.
-capture noisily nw2clustering nonexistent, replace
+capture noisily nw2clustering nonexistent, generate(chknonexist) replace
 assert _rc == 482

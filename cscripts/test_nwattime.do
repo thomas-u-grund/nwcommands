@@ -37,7 +37,7 @@ mata: assert(e[b_id,c_id] == 0)
 
 * the static view is a completely ordinary network - runs through an
 * unrelated, unmodified command with zero special-casing.
-nwdegree w1
+nwdegree w1, generate(_degree)
 assert _rc == 0
 
 * an out-of-range timepoint produces an empty (but valid) network, not

@@ -72,7 +72,12 @@ program nwtriads
 	
 	_return hold `r'
 	preserve
-	nwclustering `netname'
+	// nwclustering's own generate() is now required (suite-wide
+	// generate()-required style decision, 2026-09-05) - only
+	// r(cluster_global) is read here, inside preserve/restore, so a
+	// tempvar is all that's needed.
+	tempvar nwtriadsclust
+	nwclustering `netname', generate(`nwtriadsclust')
 	local transitivity `r(cluster_global)'
 	restore
 	_return restore `r'

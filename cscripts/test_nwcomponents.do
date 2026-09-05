@@ -8,7 +8,7 @@ gen x = _n
 gen y = 1
 gen value = 1
 nwset x y value, edgelist
-nwcomponents
+nwcomponents, generate(_component)
 
 assert         r(components) == 1
 
@@ -32,7 +32,7 @@ gen y = 1
 gen value = 1
 replace value = 0 in 4
 nwset x y value, edgelist
-nwcomponents
+nwcomponents, generate(_component) replace
 assert         r(components) == 2
 
 qui {
@@ -50,7 +50,7 @@ _assert_streq `"`: rowfullnames C_comp_sizeid'"' `"comp1 comp2"'
 _assert_streq `"`: colfullnames C_comp_sizeid'"' `"size compid share"'
 mat drop C_comp_sizeid T_comp_sizeid
 
-nwcomponents, lgc
+nwcomponents, lgc generate(_lgc)
 assert _lgc[1] == 1
 assert _lgc[4] == 0
 
@@ -87,7 +87,7 @@ assert _rc == 0
 * display output, unlike every one of its 7 siblings.
 nwclear
 nwset, mat((0,1\1,0)) name(nn) undirected
-capture noisily nwcomponents nn, silent
+capture noisily nwcomponents nn, generate(_component) silent
 assert _rc == 0
 di "=== silent option REGRESSION VERIFIED ==="
 

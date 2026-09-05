@@ -15,8 +15,13 @@ program nwpagerank, rclass
 
 	_nwsyntax `netname'
 
+	// generate() is required (suite-wide generate()-required style
+	// decision, 2026-09-05): nwpagerank's whole purpose is producing
+	// this variable, so - matching Stata's own egen/predict convention -
+	// there is no default name to silently fall back to.
 	if "`generate'" == "" {
-		local generate "_pagerank"
+		di "{err}option {bf:generate()} required."
+		error 198
 	}
 	capture confirm variable `generate', exact
 	if _rc == 0 & "`replace'" == "" {

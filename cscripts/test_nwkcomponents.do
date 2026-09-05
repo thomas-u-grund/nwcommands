@@ -50,7 +50,7 @@ do unw_core.do
 * piece that would have connected them didn't itself qualify).
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net1) undirected labs(A,B,C,D,E,F)
-nwkcomponents net1
+nwkcomponents net1, generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 2
 sort _nwnode
@@ -89,7 +89,7 @@ mata: mata drop kcm target1 target2 found1 found2 i
 * removal reveals, not assigned to just one side.
 nwclear
 nwset, mat((0,1,1,0,0\1,0,1,0,0\1,1,0,1,1\0,0,1,0,1\0,0,1,1,0)) name(net2) undirected labs(A,B,X,D,E)
-nwkcomponents net2
+nwkcomponents net2, generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 2
 sort _nwnode
@@ -119,18 +119,18 @@ mata: mata drop kcm2 target3 target4 found3 found4 i
 * component", cross-checked directly against nwcomponents' own count.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net1) undirected labs(A,B,C,D,E,F)
-nwkcomponents net1, k(1)
+nwkcomponents net1, k(1) generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 1
 count if _kcompnum == 6
 assert r(N) == 6
-nwcomponents net1
+nwcomponents net1, generate(_component)
 assert r(components) == 1
 
 * --- k(3) on the same network: nothing reaches connectivity 3
 * anywhere (the densest substructures are triangles, connectivity 2) -
 * a clean, empty result, not a crash.
-nwkcomponents net1, k(3) replace
+nwkcomponents net1, k(3) generate(_kcompnum) replace
 assert _rc == 0
 assert r(kcomponents) == 0
 
@@ -147,7 +147,7 @@ assert _rc != 0
 * genuinely unreachable pieces.
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(net3) undirected labs(A,B,C,D,E,F)
-nwkcomponents net3, k(1)
+nwkcomponents net3, k(1) generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 2
 
@@ -155,12 +155,12 @@ assert r(kcomponents) == 2
 * qualifies as a single k-component up to k=3 but not k=4.
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4) undirected labs(A,B,C,D)
-nwkcomponents k4, k(3)
+nwkcomponents k4, k(3) generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 1
 count if _kcompnum == 4
 assert r(N) == 4
-nwkcomponents k4, k(4) replace
+nwkcomponents k4, k(4) generate(_kcompnum) replace
 assert _rc == 0
 assert r(kcomponents) == 0
 
@@ -170,7 +170,7 @@ assert r(kcomponents) == 0
 * of size 3.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwkcomponents dnet, k(2)
+nwkcomponents dnet, k(2) generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 1
 
@@ -192,7 +192,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(neta) undirected labs(A,B,C,D,E,F)
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(netb) undirected labs(A,B,C,D,E,F)
-nwkcomponents neta netb
+nwkcomponents neta netb, generate(_kcompnum)
 assert _rc == 0
 capture confirm variable _kcompnum1, exact
 assert _rc == 0
@@ -211,11 +211,11 @@ assert _rc == 0
 * Reproduces for any k(), including the default k(2) and k(1).
 nwclear
 nwset, mat((0)) name(single1) undirected labs(A)
-nwkcomponents single1
+nwkcomponents single1, generate(_kcompnum)
 assert _rc == 0
 assert r(kcomponents) == 0
 
-nwkcomponents single1, k(1) replace
+nwkcomponents single1, k(1) generate(_kcompnum) replace
 assert _rc == 0
 assert r(kcomponents) == 0
 
@@ -223,7 +223,7 @@ assert r(kcomponents) == 0
 * exercised.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwkcomponents tri, silent
+nwkcomponents tri, generate(_kcompnum) silent
 assert _rc == 0
 assert r(kcomponents) == 1
 di "=== silent REGRESSION VERIFIED ==="

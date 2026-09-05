@@ -28,8 +28,8 @@ four tie values; {it:binary} dichotomizes every tie to presence/absence first;
 {it:arithmetic}/{it:geometric}/{it:maximum}/{it:minimum} combine the four raw tie values via that
 function; default = {it:arithmetic} for a valued network, {it:binary} otherwise{p_end}
 {synopt:{opth level(int)}}Which mode (1 or 2) to compute clustering scores for; default = 1{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each {opt level()}-mode
-node's own clustering coefficient; default = {it:_clustering2_lev}{it:level}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each {opt level()}-mode
+node's own clustering coefficient{p_end}
 {synopt:{opt replace}}Overwrite an existing {opth generate(newvarname)} variable; required if it already exists{p_end}
 
 {p2colreset}{...}
@@ -78,7 +78,7 @@ purpose is two-mode clustering; calling it on a one-mode network raises a clear 
 {title:Examples}
 
 	{cmd:. nwset ego alter, twomode name(bip)}
-	{cmd:. nw2clustering bip}
+	{cmd:. nw2clustering bip, generate(_clustering2_lev1)}
 	{cmd:. sum _clustering2_lev1}
 
 {title:References}

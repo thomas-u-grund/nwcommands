@@ -31,28 +31,28 @@ nwfromedge _all, undirected
 
 
 
-nwclustering, measure(binary)
+nwclustering, measure(binary) generate(_clustering)
 
 assert `"`r(measure)'"' == `"binary"'
 
 assert reldif( r(cluster_avg)     , .5416666679084301 ) <  1E-8
 assert reldif( r(cluster_global)  , .3333333333333333 ) <  1E-8
 
-nwclustering, measure(geometric) replace
+nwclustering, measure(geometric) generate(_clustering) replace
 
 assert `"`r(measure)'"' == `"geometric"'
 
 assert reldif( r(cluster_avg)     , .5663523003458977 ) <  1E-8
 assert reldif( r(cluster_global)  , .4361302099462925 ) <  1E-8
 
-nwclustering, measure(minimum) replace
+nwclustering, measure(minimum) generate(_clustering) replace
 
 assert `"`r(measure)'"' == `"minimum"'
 
 assert reldif( r(cluster_avg)     , .5909090936183929 ) <  1E-8
 assert reldif( r(cluster_global)  , .5                ) <  1E-8
 
-nwclustering, measure(maximum) replace
+nwclustering, measure(maximum) generate(_clustering) replace
 assert `"`r(measure)'"' == `"maximum"'
 
 assert reldif( r(cluster_avg)     , .5454545468091965 ) <  1E-8
@@ -94,10 +94,10 @@ assert myclust2[1] == 1
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) undirected labs(A,B,C) name(cnet)
 gen _clustering = 999
-capture noisily nwclustering cnet
+capture noisily nwclustering cnet, generate(_clustering)
 assert _rc == 99
 assert _clustering[1] == 999
-nwclustering cnet, replace
+nwclustering cnet, generate(_clustering) replace
 assert _rc == 0
 assert _clustering[1] != 999
 di "=== replace guard REGRESSION VERIFIED ==="

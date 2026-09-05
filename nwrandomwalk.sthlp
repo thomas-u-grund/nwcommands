@@ -24,7 +24,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt target(nodename)}}The node every hitting time is measured TO{p_end}
-{synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's own mean hitting time to {opt target()}; default = {it:_hitting}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the Stata variable that stores each node's own mean hitting time to {opt target()}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
@@ -73,7 +73,7 @@ disconnected network component containing {opt target()} would give some nodes a
 {title:Examples}
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwrandomwalk flomarriage, target(medici)}
+	{cmd:. nwrandomwalk flomarriage, target(medici) generate(_hitting)}
 	{cmd:. gsort _hitting}
 	{cmd:. list _name _hitting in 1/5}
 

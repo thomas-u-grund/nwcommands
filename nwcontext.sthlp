@@ -31,7 +31,7 @@
 {synopt:{opth attribute(varname)}}Attribute variable{p_end}
 {synopt:{opt stat}({it:{help nwcontext##statistic:statistic}})}Statistic that is used to calculate context variable for node i from attributes of network neighbors{p_end}
 {synopt:{opt mode}({it:{help nwcontext##context:context}})}Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both{p_end}
-{synopt:{opth generate(newvarname)}}Name of the context variable to be generated; default = {it:_context_varname}{p_end}
+{synopt:{opth generate(newvarname)}}{bf:Required.} Name of the context variable to be generated{p_end}
 {synopt:{opt mat(string)}}Store the result in a Mata matrix of this name instead of generating a Stata variable{p_end}
 {synopt:{opt noweight}}Ignore valued ties and treats all as binary{p_end}
 {synopt:{opt replace}}Replace {opt generate()}'s target variable if it already exists{p_end}

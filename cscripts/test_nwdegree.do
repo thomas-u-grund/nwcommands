@@ -3,7 +3,11 @@ do unw_core.do
 
 nwclear
 nwset, mat((1,1,1\0,0,0\1,0,0))
-nwdegree
+* generate() is required (suite-wide generate()-required style decision,
+* 2026-09-05) - nwdegree's whole purpose is producing this variable, so
+* there is no default name to silently fall back to anymore, matching
+* Stata's own egen/predict convention.
+nwdegree, generate(_outdegree _indegree)
 
 assert reldif( r(outdg_central)  , .75               ) <  1E-8
 assert         r(indg_central)  == 0
@@ -30,7 +34,7 @@ assert _outdegree[3] == 1
 
 nwclear
 nwset, mat((0,1,0\0,0,0\1,0,0)) undirected
-nwdegree
+nwdegree, generate(_degree)
 
 assert         r(dg_central) == 1
 
@@ -41,8 +45,8 @@ assert _degree[3] == 1
 
 
 nwwebuse florentine, nwclear
-nwdegree flomarriage, isolates
-assert _isolate[12] == 1 
+nwdegree flomarriage, generate(_degree) isolates
+assert _isolate[12] == 1
 
 * isolates + a partial generate() (1 word, undirected needs 2 slots:
 * degree, isolate) now correctly gives isolate its own genuine
@@ -72,7 +76,7 @@ nwdegree flomarriage, isolates generate(myisolate) replace
 * crash".
 nwclear
 nwset, mat((0,1,1,1\0,0,0,0\0,0,0,0\0,0,0,0)) directed labs(A,B,C,D)
-nwdegree, isolates
+nwdegree, generate(_outdegree _indegree) isolates
 assert _rc == 0
 assert _isolates[1] == 0
 assert _isolates[2] == 0
@@ -83,7 +87,7 @@ assert _isolates[4] == 0
 * same call must correctly flag it, not just avoid crashing.
 nwclear
 nwset, mat((0,1,1,1,0\0,0,0,0,0\0,0,0,0,0\0,0,0,0,0\0,0,0,0,0)) directed labs(A,B,C,D,E)
-nwdegree, isolates
+nwdegree, generate(_outdegree _indegree) isolates
 assert _rc == 0
 assert _isolates[5] == 1
 assert _isolates[1] == 0
@@ -126,8 +130,9 @@ nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(net1) labs(A,B,C)
 nwset, mat((0,1,0\1,0,1\0,1,0)) undirected name(net2) labs(X,Y,Z)
 
-nwdegree net1 net2, silent
-* multi-network default output naming: basevar_<netname>
+nwdegree net1 net2, generate(_degree) silent
+* multi-network output naming: basevar_<netname>, applied to whatever
+* base name generate() gives (generate() itself is now required)
 confirm variable _degree_net1
 confirm variable _degree_net2
 
@@ -140,21 +145,21 @@ assert _degree_net1[`rowA'] == 2
 assert _degree_net2[`rowX'] == 1
 drop __row
 
-* single-network call remains completely unaffected: default names
-* have no suffix
+* single-network call remains completely unaffected: names have no
+* suffix when only one network is being processed
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(net1) labs(A,B,C)
-nwdegree net1, silent
+nwdegree net1, generate(_degree) silent
 assert _degree[1] == 2
 
 * replace guard still works for the multi-network case
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(net1) labs(A,B,C)
 nwset, mat((0,1,0\1,0,1\0,1,0)) undirected name(net2) labs(X,Y,Z)
-nwdegree net1 net2, silent
-capture nwdegree net1 net2, silent
+nwdegree net1 net2, generate(_degree) silent
+capture nwdegree net1 net2, generate(_degree) silent
 assert _rc != 0
-nwdegree net1 net2, silent replace
+nwdegree net1 net2, generate(_degree) silent replace
 assert _rc == 0
 
 * missing_test finding, centrality group: 1- and 2-node networks were
@@ -162,12 +167,12 @@ assert _rc == 0
 * elsewhere in this same group (nwdropnodes, unit 6).
 nwclear
 nwset, mat((0)) name(single1) labs(A)
-capture noisily nwdegree single1, silent
+capture noisily nwdegree single1, generate(_outdegree _indegree) silent
 assert _rc == 0
 
 nwclear
 nwset, mat((0,1\1,0)) name(two1) undirected labs(A,B)
-capture noisily nwdegree two1, silent
+capture noisily nwdegree two1, generate(_degree) silent
 assert _rc == 0
 assert _degree[1] == 1
 assert _degree[2] == 1
@@ -175,6 +180,16 @@ di "=== 1-node/2-node edge case REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
 * _nwsyntax's own "Network X not found" check (error 482).
-capture noisily nwdegree nonexistent
+capture noisily nwdegree nonexistent, generate(_degree)
 assert _rc == 482
+
+* --- generate() is now required: omitting it errors cleanly (suite-wide
+* generate()-required style decision, 2026-09-05), matching Stata's own
+* egen/predict convention rather than silently falling back to a
+* default-named variable.
+nwclear
+nwset, mat((0,1\1,0)) name(two2) undirected labs(A,B)
+capture noisily nwdegree two2
+assert _rc == 198
+di "=== generate()-required REGRESSION VERIFIED ==="
 

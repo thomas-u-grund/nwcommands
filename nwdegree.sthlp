@@ -32,7 +32,7 @@
 {synopthdr}
 {synoptline}
 {synopt:{opt alpha}}Tuning parameter for valued networks; default = 0{p_end}
-{synopt:{opt generate}({it:{help varlist}})}Generate variables for degree, outdegree, indegree, isolate{p_end}
+{synopt:{opt generate}({it:{help varlist}})}{bf:Required.} Variable name(s) for degree (undirected) or outdegree/indegree (directed) - and, if {opt isolates} is also given, an extra name for the isolate indicator{p_end}
 {synopt:{opt replace}}Overwrite existing variables {it:varlist}{p_end}
 {synopt:{opt silent}}Surpress output{p_end}
 {synopt:{opt outputoff}}Reserved/internal - has no effect on a one-mode network's own output; use {opt silent} instead. Only meaningful when {help netname} turns out to be two-mode (where it is named, along with any other one-mode-only option, in the note explaining which options have no bipartite equivalent and were ignored when redirecting to {help nw2degree}){p_end}
@@ -48,8 +48,7 @@
 {title:Description}
 
 {pstd}
-{cmd:nwdegree} calculates the generalized degree centrality of the nodes as outlined in Opsahl et al (2010) for the (un-)weighted, (un-directed) networks in {help netlist} . By default, the command generates the Stata variables {it:_degree} 
-for an undirected network. When the network is directed the command generates by default {it:_outdegree} and {it:_indegree} unless something else is specified in {opt generate()}. It also tabulates the newly generated variables.
+{cmd:nwdegree} calculates the generalized degree centrality of the nodes as outlined in Opsahl et al (2010) for the (un-)weighted, (un-directed) networks in {help netlist}. {opt generate()} is required: name one variable for an undirected network, or two (outdegree, indegree, in that order) for a directed one. It also tabulates the newly generated variable(s).
 
 {pstd}
 Following Opsahl et al. (2010) the degree centrality C_i of node i is defined as:
@@ -63,22 +62,21 @@ degree centrality gives the number of ties that a node has. When {it:alpha = 1},
 value of {it:alpha} does not matter. 
 
 {pstd}
-Option {bf:isolates} generates the variable {it:_isolate} that indicates if a node is an isolate (not connected to any
-other node).
+Option {bf:isolates} adds one more name to {opt generate()} (after the degree name(s)) for a variable
+indicating whether a node is an isolate (not connected to any other node) - e.g.
+{cmd:generate(mydeg myisolate) isolates} on an undirected network, or
+{cmd:generate(myout myin myisolate) isolates} on a directed one.
 
 {pstd}
 Option {bf:standardize} divides the centrality scores by N - 1, where N = number of nodes in a network.
 
 {pstd}
-{cmd:nwdegree} accepts a {help netlist} (e.g. {bf:nwdegree glasgow1 glasgow2}), calculating degree
-centrality independently for each network in the list. When more than one network is given, the
-default output variable names get the network's own name appended (e.g. {it:_degree_glasgow1},
-{it:_degree_glasgow2}, or {it:_indegree_glasgow1}/{it:_outdegree_glasgow1} for a directed network);
-a single-network call is unaffected and keeps the plain default names ({it:_degree}, or
-{it:_indegree}/{it:_outdegree}) exactly as before. Explicit {opt generate()} names are suffixed the
-same way when more than one network is processed. {bf:r()} results (e.g. {bf:r(dg_central)}) reflect
-whichever network was processed last, matching this package's convention for other {help netlist}
-commands.
+{cmd:nwdegree} accepts a {help netlist} (e.g. {bf:nwdegree glasgow1 glasgow2, generate(deg)}), calculating degree
+centrality independently for each network in the list. When more than one network is given,
+{opt generate()}'s own name(s) get the network's own name appended (e.g. {it:deg_glasgow1},
+{it:deg_glasgow2}); a single-network call is unaffected and keeps the plain name(s) exactly as
+given. {bf:r()} results (e.g. {bf:r(dg_central)}) reflect whichever network was processed last,
+matching this package's convention for other {help netlist} commands.
 
 
 {title:Supported network types}
@@ -113,8 +111,7 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 		0,1,0,0,.,7\
 		0,0,0,0,7,.)) undirected labs(A, B, C, D, E, F)
 {res}
-	{com}. qui nwdegree, alpha(0)
-	. qui nwdegree, alpha(0) generate(deg0)
+	{com}. qui nwdegree, alpha(0) generate(deg0)
 	. qui nwdegree, alpha(.5) generate(deg0_5)
 	. qui nwdegree, alpha(1) generate(deg1)
 	. qui nwdegree, alpha(1.5) generate(deg1_5)
@@ -138,7 +135,7 @@ Tore Opsahl, Filip Agneessens, John Skvoretz (2010). Node centrality in weighted
 In the following example, the degree distributions for in- and outdegree are saved in Stata matrices {it:matindeg} and {it:matoutdeg}:
 
 	{cmd:. nwwebuse glasgow}
-	{cmd:. nwdegree glasgow1, in(matcell(matindeg)) out(matcell(matoutdeg))}
+	{cmd:. nwdegree glasgow1, generate(_outdegree _indegree) in(matcell(matindeg)) out(matcell(matoutdeg))}
 	{cmd:. mat list matindeg}
 	
 {pstd}

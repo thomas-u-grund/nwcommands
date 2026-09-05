@@ -22,7 +22,7 @@ do unw_core.do
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(wave1)
 nwset, mat((0,1,0\1,0,1\0,1,0)) undirected name(wave2)
-nwturnover wave1 wave2
+nwturnover wave1 wave2, generate(_turnover)
 assert _rc == 0
 assert r(stable) == 1
 assert r(formed) == 1
@@ -40,7 +40,7 @@ assert _turnover[3] == 0
 nwclear
 nwset, mat((0,1,1\0,0,0\0,0,0)) directed name(dw1)
 nwset, mat((0,1,0\0,0,1\0,0,0)) directed name(dw2)
-nwturnover dw1 dw2, silent
+nwturnover dw1 dw2, generate(_turnover) replace silent
 assert _rc == 0
 assert r(stable) == 1
 assert r(formed) == 1
@@ -51,7 +51,7 @@ assert r(dissolved) == 1
 nwclear
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(same1)
 nwset, mat((0,1,1\1,0,0\1,0,0)) undirected name(same2)
-nwturnover same1 same2, silent
+nwturnover same1 same2, generate(_turnover) replace silent
 assert _rc == 0
 assert r(formed) == 0
 assert r(dissolved) == 0
@@ -63,7 +63,7 @@ assert r(persistence) == 1
 nwclear
 nwset, mat((0,0,0\0,0,0\0,0,0)) undirected name(empty1)
 nwset, mat((0,1,0\1,0,0\0,0,0)) undirected name(empty2)
-nwturnover empty1 empty2, silent
+nwturnover empty1 empty2, generate(_turnover) replace silent
 assert _rc == 0
 assert missing(r(persistence))
 assert r(formed) == 1

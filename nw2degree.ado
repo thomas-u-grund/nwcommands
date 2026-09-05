@@ -19,10 +19,11 @@ program nw2degree, rclass
 			error 198
 		}
 
-		local netgenerate "`generate'"
-		if "`netgenerate'" == "" {
-			local netgenerate = "_2degree"
+		if "`generate'" == "" {
+			di "{err}option {bf:generate()} required."
+			error 198
 		}
+		local netgenerate "`generate'"
 
 		capture confirm variable `netgenerate'`k', exact
 		if _rc == 0 & "`replace'" == "" {
@@ -30,7 +31,26 @@ program nw2degree, rclass
 			err 99
 		}
 
-		capture drop `netgenerate'`k'
+		// BUGFIX: a bare "capture drop X" is subject to Stata's default
+		// variable-name abbreviation (set varabbrev on) - if X does NOT
+		// exist yet but a DIFFERENT, longer variable happens to have X
+		// as a literal prefix (e.g. calling nwdegree on a netlist mixing
+		// a two-mode network with a one-mode one: this redirect's own
+		// unsuffixed base name is always a prefix of nwdegree's own
+		// suffixed one-mode output, "basevar_netname"), this silently
+		// dropped that unrelated, already-computed variable instead of
+		// safely no-op'ing - confirmed directly while writing the Paths
+		// & Ego Networks / centrality tutorials' own test coverage.
+		// Guarding the drop behind the same exact-match confirm already
+		// used for the "already exists" check above eliminates the
+		// ambiguity entirely: skip the drop when the exact name doesn't
+		// exist (nothing to safely drop), and once it's confirmed to
+		// exist, Stata always resolves an exact literal match over an
+		// abbreviation candidate, so the drop can no longer go astray.
+		capture confirm variable `netgenerate'`k', exact
+		if _rc == 0 {
+			drop `netgenerate'`k'
+		}
 		gen `netgenerate'`k' = .
 		mata: st_rclear()
 		qui if _N < `nodes' {

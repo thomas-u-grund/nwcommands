@@ -41,7 +41,7 @@
 {synopt:{opt context}({it:{help nwdissimilar##context:context}})}Context definition for dissimilarity calculation; default = both{p_end}
 {synopt:{opt linkage}({it:{help cluster linkage:linkage}})}Clustering linkage method (e.g. {cmd:singlelinkage}, {cmd:averagelinkage}, {cmd:completelinkage}); default = {cmd:singlelinkage}{p_end}
 {synopt:{opth groups(int)}}Cut the resulting dendrogram into this many role/position equivalence classes, generated as an ordinary Stata variable{p_end}
-{synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates; default = {it:_role}. Ignored unless {opth groups(int)} is specified (alias: {opt generate()}, matching {help nwcommunity}/{help nwspectral}'s own naming in this same group){p_end}
+{synopt:{opth equivgen(newvarname)}}Name of the variable {opth groups(int)} generates. {bf:Required whenever {opth groups(int)} is specified} - give exactly one of {opt generate()} or {opt equivgen()} (they are the same option; alias {opt generate()} matches {help nwcommunity}/{help nwspectral}'s own naming in this same group), not both. Has no effect, and is not required, without {opth groups(int)}{p_end}
 {synopt:{opt replace}}Replace an existing {opth equivgen(newvarname)} variable{p_end}
 
 {synoptset 15 tabbed}{...}
@@ -89,7 +89,7 @@ partition here is by structural role rather than by connectivity.
 {pstd}
 {opth groups(int)}, when specified, additionally cuts the dendrogram into exactly that many groups
 (via Stata's own {cmd:cluster generate ..., groups()}) and stores the result in {opth equivgen(newvarname)}
-(default {it:_role}) - one call in place of first working out {cmd:clustermat}'s own auto-generated
+(or its {opt generate()} alias - one of the two is then required) - one call in place of first working out {cmd:clustermat}'s own auto-generated
 cluster-object name (never itself returned in {cmd:r()}, so it cannot otherwise be recovered
 programmatically) and then calling {cmd:cluster generate} by hand. Without {opth groups(int)}, {cmd:nwhierarchy}
 behaves exactly as before - only the cluster object itself is created (usable with {help cluster} and
@@ -117,7 +117,7 @@ directly), and no {it:_role}-style variable is generated.
 The full role/position workflow, cutting directly to a usable per-node role variable:
 
 	{cmd:. nwwebuse florentine, nwclear}
-	{cmd:. nwhierarchy flomarriage, groups(3)}
+	{cmd:. nwhierarchy flomarriage, groups(3) generate(_role)}
 	{cmd:. tab _role}
 	{cmd:. nwdendrogram _nwhierarchy_role, label(_nwnode)}
 

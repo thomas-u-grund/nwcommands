@@ -23,7 +23,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each node's coreness; default = *_kcore* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's coreness |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -33,13 +33,13 @@ silent]
 
 All calculations are performed on the undirected version of the network: for directed networks, a node's neighbor set is the union of its out- and in-neighbors, matching how [nwcomponents](nwcomponents.md) treats directed networks for the same kind of undirected-sense structural question.
 
-By default, `nwkcore` generates a new variable *_kcore* which stores each node's coreness.
+`generate()` is required and names the new variable which stores each node's coreness.
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwkcore flomarriage
+. nwkcore flomarriage, generate(_kcore)
 . tab _kcore
 ```
 

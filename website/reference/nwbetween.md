@@ -27,7 +27,7 @@ alpha(real)]
 
 | | |
 |---|---|
-| `generate`(*`newvarlist`*) | variable name for betweenness centrality; default = *_between* |
+| `generate`(*`newvarlist`*) | **Required.** Variable name for betweenness centrality |
 | `replace` | allow overwriting an existing variable of the same name |
 | `nosym` | do not symmetrize network before calculation of shortest paths |
 | `standardize` | standardize centrality scores |
@@ -55,13 +55,13 @@ Directed network: *Between_i_std(g) = Between_i(g) / ((N-1)*(N-2))*
 
 Undirected network: *Between_i_std(g) = Between_i(g) / ((N-1)*(N-2)/2)*
 
-The Stata variable *varname* is overwritten (pass `replace` to allow this deliberately, or `generate()` to use a different name instead). When betweenness centrality is calculated for more than one network at the same time (e.g. **nwbetween glasgow1 glasgow2**), the command generates one variable per network, named *varname_netname* (e.g. *_between_glasgow1*, *_between_glasgow2*).
+`generate()` is required and names the Stata variable to hold the result (pass `replace` to allow overwriting an existing variable of that name). When betweenness centrality is calculated for more than one network at the same time (e.g. **nwbetween glasgow1 glasgow2, generate(bw)**), the command generates one variable per network, named *varname_netname* (e.g. *bw_glasgow1*, *bw_glasgow2*).
 
 ## Examples
 
 ```stata
 . nwwebuse gang, nwclear
-. nwbetween gang
+. nwbetween gang, generate(_between)
 . sum _between
 ```
 

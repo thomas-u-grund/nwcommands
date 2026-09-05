@@ -31,7 +31,7 @@ do unw_core.do
 * Default minsize(3) excludes the trivial isolate.
 nwclear
 nwset, mat((0,1,1,0,0\1,0,1,1,0\1,1,0,1,0\0,1,1,0,0\0,0,0,0,0)) name(net1) undirected labs(A,B,C,D,E)
-nwclique net1
+nwclique net1, generate(_cliquenum)
 assert _rc == 0
 assert r(cliques) == 2
 sort _nwnode
@@ -71,7 +71,7 @@ assert r(cliques) == 3
 * containing all 4 nodes - the unambiguous, maximally-connected case.
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4) undirected labs(A,B,C,D)
-nwclique k4
+nwclique k4, generate(_cliquenum)
 assert _rc == 0
 assert r(cliques) == 1
 count if _cliquenum == 4
@@ -84,7 +84,7 @@ assert r(N) == 4
 * giving exactly one maximal clique of size 3.
 nwclear
 nwset, mat((0,1,1\1,0,1\0,1,0)) name(dnet) directed labs(A,B,C)
-nwclique dnet
+nwclique dnet, generate(_cliquenum)
 assert _rc == 0
 assert r(cliques) == 1
 
@@ -106,7 +106,7 @@ assert _rc == 0
 nwclear
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4a) undirected labs(A,B,C,D)
 nwset, mat((0,1,1,1\1,0,1,1\1,1,0,1\1,1,1,0)) name(k4b) undirected labs(A,B,C,D)
-nwclique k4a k4b
+nwclique k4a k4b, generate(_cliquenum)
 assert _rc == 0
 capture confirm variable _cliquenum1, exact
 assert _rc == 0
@@ -123,7 +123,7 @@ assert _rc != 0
 * display but not the underlying computation) was never exercised.
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri) undirected
-nwclique tri, silent
+nwclique tri, generate(_cliquenum) silent
 assert _rc == 0
 assert r(cliques) == 1
 di "=== silent REGRESSION VERIFIED ==="

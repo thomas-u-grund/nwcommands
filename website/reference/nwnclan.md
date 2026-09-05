@@ -26,7 +26,7 @@ silent]
 | | |
 |---|---|
 | `n(int)` | Maximum geodesic distance allowed between any two members; default = 2 |
-| `generate(newvarname)` | Name of the Stata variable that stores each node's largest maximal-n-clan membership size; default = *_nclannum* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's largest maximal-n-clan membership size |
 | `replace` | Replace existing variable |
 | `minsize(int)` | Smallest n-clan size to report; default = 3 |
 | `silent` | Suppress display of results |
@@ -37,14 +37,14 @@ silent]
 
 `nwnclan` works by first enumerating every maximal n-clique (the same computation [nwnclique](nwnclique.md) itself performs) and then keeping only the ones whose own induced subgraph - built from the *original* network, restricted to just that n-clique's members - has every pair of members within `n(int)` steps of *each other, using only ties between members*. This matches the standard treatment of n-clans in the literature: a maximal n-clique that fails this check is simply not reported as a clan at all, rather than being replaced with some smaller, clan-qualifying subset of itself - a genuine, deliberate limitation of the concept, not a shortcut taken here. Every n-clan is therefore also an n-clique, but not every n-clique is an n-clan; on a network with no "shortcut" structure (e.g. a network where every node's shortest paths to everyone else already stay within whatever locally-dense region it belongs to) the two coincide exactly.
 
-Like n-cliques, n-clans genuinely overlap, so `nwnclan` follows [nwnclique](nwnclique.md)'s own output shape: a single per-node "largest maximal n-clan membership size" summary variable (`generate(newvarname)`, default *_nclannum*), plus the complete overlapping structure in **r(nclan_matrix)** and **r(nclans)**. `minsize(int)` defaults to 3, matching [nwclique](nwclique.md)/[nwnclique](nwnclique.md).
+Like n-cliques, n-clans genuinely overlap, so `nwnclan` follows [nwnclique](nwnclique.md)'s own output shape: a single per-node "largest maximal n-clan membership size" summary variable (`generate(newvarname)`, required), plus the complete overlapping structure in **r(nclan_matrix)** and **r(nclans)**. `minsize(int)` defaults to 3, matching [nwclique](nwclique.md)/[nwnclique](nwnclique.md).
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwnclan flomarriage
-. nwnclan flomarriage, n(3) replace
+. nwnclan flomarriage, generate(_nclannum)
+. nwnclan flomarriage, n(3) generate(_nclannum) replace
 ```
 
 ## Supported network types

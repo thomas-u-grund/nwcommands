@@ -25,7 +25,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each node's own Fiedler-vector entry; default = *_fiedler* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each node's own Fiedler-vector entry |
 | `bipartition` | Also generate a two-way spectral partition (*_fiedlersign*, or *generate()***sign**) from the sign of the Fiedler vector |
 | `measure(binary\|valued)` | Whether to use tie values (*valued*) or only presence/absence of ties (*binary*); default = *valued* for valued networks, *binary* otherwise |
 | `replace` | Replace existing variable(s) |
@@ -39,7 +39,7 @@ Three classical results are reported directly:
 
 - ****Connected components**** --- The MULTIPLICITY of eigenvalue 0 in the Laplacian spectrum exactly equals the number of connected components - **r(components)** counts eigenvalues within **1e-8** of 0, cross-checkable directly against [nwcomponents](nwcomponents.md).
 - ****Algebraic connectivity**** --- The second-smallest eigenvalue (the "Fiedler value", **r(algebraic_connectivity)**) - 0 for a disconnected network (matching the component-count result above), and otherwise a genuine measure of how well-connected the network is overall: larger values indicate a more robustly connected structure, harder to disconnect by removing few edges.
-- ****Spectral bipartition**** --- The eigenvector belonging to the Fiedler value (the "Fiedler vector") - stored per node via `generate(newvarname)` (default *_fiedler*) - is a classical continuous relaxation of graph bisection: nodes with similar Fiedler-vector values tend to be well-connected to each other. `bipartition` additionally generates a discrete two-way split from its sign (*_fiedlersign*, or *generate()***sign** when `generate()` is given).
+- ****Spectral bipartition**** --- The eigenvector belonging to the Fiedler value (the "Fiedler vector") - stored per node via `generate(newvarname)` (required) - is a classical continuous relaxation of graph bisection: nodes with similar Fiedler-vector values tend to be well-connected to each other. `bipartition` additionally generates a discrete two-way split from its sign (*_fiedlersign*, or *generate()***sign** when `generate()` is given).
 
 For a network with more than one connected component, the Fiedler value is 0 and its own eigenvector is not uniquely defined (any vector constant on each component, summing to zero overall, is an equally valid choice) - `nwspectral` still reports whatever eigenvector the underlying decomposition happens to return in that case, but `bipartition`'s resulting split should not be interpreted as meaningful when **r(algebraic_connectivity)** is (near) 0; use [nwcomponents](nwcomponents.md) directly instead for a disconnected network's own true partition.
 
@@ -47,8 +47,8 @@ For a network with more than one connected component, the Fiedler value is 0 and
 
 ```stata
 . nwwebuse florentine, nwclear
-. nwspectral flomarriage
-. nwspectral flomarriage, bipartition replace
+. nwspectral flomarriage, generate(_fiedler)
+. nwspectral flomarriage, bipartition generate(_fiedler) replace
 ```
 
 ## Supported network types

@@ -23,7 +23,7 @@ silent]
 
 | | |
 |---|---|
-| `generate(newvarname)` | Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched); default = *_match* |
+| `generate(newvarname)` | **Required.** Name of the Stata variable that stores each mode-1 node's own matched mode-2 partner's node id (0 if unmatched) |
 | `replace` | Replace existing variable |
 | `silent` | Suppress display of results |
 
@@ -39,7 +39,7 @@ Requires a genuine two-mode network (`twomode`/`bipartite` in [nwset](nwset.md),
 
 ```stata
 . nwset person org, twomode name(assign)
-. nwmatching assign
+. nwmatching assign, generate(_match)
 . list person _match if _match > 0
 ```
 

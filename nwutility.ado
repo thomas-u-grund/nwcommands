@@ -82,6 +82,11 @@ program nwutility
 	// nwgeodesic directly to create the named network, the same
 	// working pattern nwcloseness already uses for this exact
 	// purpose.
+	// nwgeodesic's own eccentricity output is optional and skipped
+	// entirely when generate() is omitted (see nwgeodesic.ado's own
+	// header comment), so this call - not wrapped in preserve/restore -
+	// never leaves an unrequested "_eccentricity" behind unless the
+	// caller's own forwarded `options' asks for generate() explicitly.
 	qui nwgeodesic `netname', name(_temp_util) `options'
 	nwtomata _temp_util, mat(geonet)
 	// the diagonal (self-distance) is stored as missing, per this
