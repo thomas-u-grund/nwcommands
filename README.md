@@ -19,10 +19,14 @@ data commands.
   networks (`nwrandom`, `nwsmall`, `nwpref`, `nwlattice`, `nwgenerate`, ...).
 - **Structural analysis**: centrality, components, cliques/k-plexes/k-cores, cohesive
   subgroups, community detection, structural equivalence, QAP, and more (see
-  `help nw_topical` once installed for the full, organized command index).
+  `help nwtopical` once installed for the full, organized command index).
 - **Statistical network models**: `nwergm` — exponential-family random graph models (ERGM),
   with maximum pseudolikelihood and MCMC maximum likelihood estimation, a substantial term
-  library, and an optional native (C) MCMC backend for performance (see `ARCHITECTURE.md`).
+  library, and an optional native (C) MCMC backend for performance; `nwsaom` — stochastic
+  actor-oriented models (SAOM) between observed network waves, with network/behavior
+  co-evolution and a native (C) ministep-sampler backend; `nwrem` — relational event models
+  (REM) for continuous-time event-stream data; `nwdynam` — Dynamic Network Actor Models
+  (DyNAM), with separate rate and choice sub-models (see `ARCHITECTURE.md` for all four).
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, permanently` (or `db <command>` directly) — for
@@ -66,8 +70,8 @@ git clone https://github.com/thomas-u-grund/nwcommands.git
 The repository's own top level *is* the Stata package directory — every `.ado`/`.sthlp` file
 sits at the root, deliberately, matching how a plain `net install`-able Stata package is laid
 out (one flat directory Stata's own `adopath` can point at directly) rather than a
-`src/`-style layout. `help nw_topical` (once on your `adopath`) is the full, organized command
-index; `help nw_intro` covers general concepts, conventions, and — importantly — realistic
+`src/`-style layout. `help nwtopical` (once on your `adopath`) is the full, organized command
+index; `help nwintro` covers general concepts, conventions, and — importantly — realistic
 guidance on what network sizes are actually feasible for which commands.
 
 **Branches**: `master` is the current, tested release — install/point at this by default.
@@ -87,7 +91,7 @@ there is nothing to configure, and results are identical either way:
   `nwergm`'s own MCMC sampler and betweenness centrality. Falls back to an equivalent,
   fully-supported pure-Mata implementation on any platform without a compiled plugin for it.
 
-`help nw_intro` (section "Limitations and feasible network sizes") is the practical,
+`help nwintro` (section "Limitations and feasible network sizes") is the practical,
 evidence-based summary of what to expect at various network sizes.
 
 ## Development

@@ -134,7 +134,7 @@ actually guarantee.
 
 ## Extending the package
 
-`nw_programming.sthlp` (`help nw_programming` once installed) documents the internal
+`nwprogramming.sthlp` (`help nwprogramming` once installed) documents the internal
 `NWdef`/network-registry API for anyone writing a new command against it, including a pitfalls
 list drawn from real bugs found during development. The ERGM/SAOM/DyNAM term-extension pattern
 above is the right model for adding a new effect to any of the three statistical engines; adding
