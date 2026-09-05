@@ -41,7 +41,7 @@ do unw_core.do
 * This has NOTHING to do with the network registry, sparse backend,
 * per-network metadata, current-network tracking, or named-network
 * resolution - all confirmed independently correct by this test's own
-* assertions below (nw_syntax/nwname continue to resolve every network
+* assertions below (_nwsyntax/nwname continue to resolve every network
 * correctly throughout).
 
 * --- exact reported reproduction sequence, end to end ---
@@ -102,7 +102,7 @@ assert _rc == 0
 * actually runs.
 nwclear
 nwrandom 200, prob(.02)
-nw_syntax random
+_nwsyntax random
 assert `"`directed'"' == "true"
 nwplot
 assert _rc == 0
@@ -115,7 +115,7 @@ nwclear
 mata: bigmat = J(80,80,0)
 mata: for(i=1;i<=79;i++) bigmat[i,i+1]=1
 nwset, mat(bigmat) undirected name(bignet)
-nw_syntax bignet
+_nwsyntax bignet
 assert `"`directed'"' == "false"
 nwplot
 assert _rc == 0
@@ -197,7 +197,7 @@ nwdegree ordinary, replace
 assert _rc == 0
 nwdegree random, replace
 assert _rc == 0
-nw_syntax twomodenet
+_nwsyntax twomodenet
 assert `"`is2mode'"' == "true"
 
 * --- the diagnostic message itself must actually reach the user (not

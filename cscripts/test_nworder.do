@@ -4,9 +4,9 @@ do unw_core.do
 
 * nworder had zero test coverage before this session, and crashed on
 * every call with r(111) "no variables defined": it called
-* "_nwsyntax _all, max(9999) name(allnets)", intending nw_syntax's
+* "_nwsyntax _all, max(9999) name(allnets)", intending _nwsyntax's
 * name() option to export the resolved _all network list under a
-* local literally called `allnets' - but nw_syntax's name() option is
+* local literally called `allnets' - but _nwsyntax's name() option is
 * dead code (it sets a local, then never references it again
 * anywhere in the file). `allnets' was therefore always empty, so the
 * "foreach v in `allnets' { gen `v' = . }" loop that builds the
@@ -19,7 +19,7 @@ do unw_core.do
 * desired reorder specification) - a real local-name collision, not
 * specific to the name()-option bug. Fixed by capturing the user's
 * original reorder specification into a separate local before making
-* the nw_syntax call, then restoring `netname' from it afterward.
+* the _nwsyntax call, then restoring `netname' from it afterward.
 
 * --- 3 single-node networks (all node A, so content doesn't matter -
 * only the network *order* is being tested), reordered net3/net1/net2

@@ -185,7 +185,7 @@ if "`overwrite'" != "" local replace "replace"
 		// dataset - safe to call it (and let it replace the dataset)
 		// now.
 		qui nw2fromedge `varlist', name(`name') `xvars' `keeporiginal'
-		nw_syntax `name'
+		_nwsyntax `name'
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
 		if "`time'" != "" {
@@ -325,7 +325,7 @@ if "`overwrite'" != "" local replace "replace"
 		}
 
 		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected' `replace'
-		nw_syntax `name'
+		_nwsyntax `name'
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
 		if "`time'" != "" {
@@ -650,7 +650,7 @@ if "`overwrite'" != "" local replace "replace"
 		mata: st_global("r(names)", `nws'.get_names())
 		mata: `nws'.add("`name'")
 		
-		nw_syntax `name'
+		_nwsyntax `name'
 		mata: `netobj'->create_by_name(`__nwnodenames')
 		mata: `netobj'->set_name("`name'")
 		mata: `netobj'->set_edge(`__nwnew')

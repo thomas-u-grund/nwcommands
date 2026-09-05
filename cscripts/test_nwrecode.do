@@ -12,7 +12,7 @@ do unw_core.do
 * _nwsyntax.ado root-cause fix (that fix corrected the one broken
 * netname re-export _nwsyntax does attempt; it never widened what
 * _nwsyntax exports in the first place). Fixed both by switching to
-* nw_syntax directly (nw_syntax's own other() option gives the exact
+* _nwsyntax directly (_nwsyntax's own other() option gives the exact
 * othernetname/othernodes/etc. naming convention _nwsyntax_other used,
 * a direct drop-in).
 *
@@ -92,7 +92,7 @@ mata: assert(Mrec2[1,2] == 5)
 di "=== prefix() collision REGRESSION VERIFIED ==="
 
 * --- failure paths: a network name that isn't loaded is rejected via
-* nw_syntax's own "Network X not found" check (error 482); calling
+* _nwsyntax's own "Network X not found" check (error 482); calling
 * with no argument at all is rejected by Stata's own syntax parser
 * (`arg' is a required positional argument).
 nwclear

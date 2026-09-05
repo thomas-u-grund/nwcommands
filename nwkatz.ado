@@ -28,7 +28,7 @@ program nwkatz
 		local symopt "sym"
 	}
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	local origdirected "`directed'"
 	_nwdatasync `netname'
 
@@ -134,7 +134,7 @@ program nwkatz
 		// regardless, so always allowing nwgeodesic to overwrite it here is
 		// safe.
 		qui nwgeodesic `netname', name(`geo') nwreplace `symopt' `options'
-		nw_syntax `geo'
+		_nwsyntax `geo'
 		// nwreplace's own expression parser (_nwexpnetexp.ado) treats its
 		// input as plain Stata-style arithmetic text and translates it into
 		// Mata syntax via naive string substitution (e.g. every "*" becomes

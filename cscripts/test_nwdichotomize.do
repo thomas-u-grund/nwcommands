@@ -38,7 +38,7 @@ di "=== nwdichotomize VERIFIED ==="
 
 * --- failure paths: threshold() is a required option (rejected by
 * Stata's own syntax parser without it); a name that isn't a loaded
-* network is rejected via nwrecode's own nw_syntax call (error 482).
+* network is rejected via nwrecode's own _nwsyntax call (error 482).
 nwclear
 nwset, mat((0,1\1,0)) name(dichnet)
 capture noisily nwdichotomize dichnet

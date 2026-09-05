@@ -485,7 +485,7 @@ nwclear
 mata: bipE = (1,1,0 \ 1,0,1 \ 0,1,1 \ 1,1,1)
 mata: st_matrix("bipE", bipE)
 nwset, mat(bipE) bipartite name(plotE) labs(E1,E2,E3,A,B,C,D)
-nw_syntax plotE, max(1)
+_nwsyntax plotE, max(1)
 qui gen _plotE_mode = .
 mata: st_store((1::`nodes'), "_plotE_mode", strtoreal(`netobj'->get_modes())')
 local plotE_svg `"`tmpd'/nwplot_certE.svg"'

@@ -5,14 +5,14 @@ program nw2degree, rclass
 	syntax [anything(name=netname)][, GENerate(string) replace silent alpha(real 0.0)]
 	set more off
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {
 		local k = 1
 	}
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		if "`is2mode'" != "true" {
 			noi di "{err}nw2degree requires a two-mode network; `netname_temp' is one-mode. See {help nwdegree} instead."
@@ -36,7 +36,7 @@ program nw2degree, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 		mata: st_store((1::`nodes'), "`netgenerate'`k'", `netobj'->calculate_2mode_degree(`alpha'))
 
 		// see nwbrokerage.ado's own header comment for why this is

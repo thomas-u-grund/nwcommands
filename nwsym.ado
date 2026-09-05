@@ -6,7 +6,7 @@ program nwsym
 	// referenced anywhere in this file's body (a fully dead,
 	// undocumented no-op; confirmed via a direct probe).
 	syntax [anything(name=netname)][, check generate(string) replace mode(string)]
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 
 	if "`check'" != "" {
@@ -59,11 +59,11 @@ program nwsym
 
 	if ("`generate'" != ""){
 		nwduplicate `netname', name(`generate')
-		nw_syntax
+		_nwsyntax
 		mata: `netobj'->symmetrize("`mode'")
 	}
 	else{
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		mata: `netobj'->symmetrize("`mode'")
 	}
 	nwsync `netname'

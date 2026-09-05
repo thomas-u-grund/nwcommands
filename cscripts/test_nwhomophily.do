@@ -109,7 +109,7 @@ set obs 20
 gen grp = mod(_n,2)
 set seed 42
 nwhomophily grp, homophily(2) density(.1) name(hom2)
-nw_syntax hom2
+_nwsyntax hom2
 mata: __nl = `netobj'->get_nodenames()
 mata: __g = mod(strtoreal(substr(__nl, 2, .)), 2)'
 mata: __samemask = J(20,20,0)

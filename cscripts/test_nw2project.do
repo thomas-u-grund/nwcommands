@@ -139,22 +139,22 @@ nw2fromedge ego2 alter2 value2, name(mynet2)
 
 nw2project mynet2, project(2) name(collideproj)
 nw2project mynet2, project(2) name(collideproj)
-capture nw_syntax collideproj_1, other(_check)
+capture _nwsyntax collideproj_1, other(_check)
 assert _rc == 0
 di "=== NAME COLLISION AUTO-INCREMENTS VERIFIED ==="
 
 nw2project mynet2, project(2) name(collideproj) replace
 * r(nodes)/r(ties) display line bugfix regression, checked immediately
-* (nw_syntax below is itself r-class and would otherwise clobber these):
+* (_nwsyntax below is itself r-class and would otherwise clobber these):
 * the display line used to silently show blank via a bare `r(nodes)'
 * macro-lookup (no such local exists), r(nodes)/r(ties) were correct
 * all along - only the *display* line was ever affected.
 assert r(nodes) == 2
 assert r(ties) == 2
 
-capture nw_syntax collideproj, other(_check)
+capture _nwsyntax collideproj, other(_check)
 assert _rc == 0
-capture nw_syntax collideproj_2, other(_check)
+capture _nwsyntax collideproj_2, other(_check)
 assert _rc != 0
 di "=== REPLACE REUSES EXACT NAME VERIFIED ==="
 

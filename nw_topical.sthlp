@@ -304,9 +304,9 @@
 {p2col:{bf:{help _nwname }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwsyntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_helpwriter }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help schemeinfo }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help unw_defs }}}{err}no help file yet{txt}{p_end}

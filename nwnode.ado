@@ -3,7 +3,7 @@ capture program drop nwnode
 program nwnode
 	version 9
 	syntax [anything(name=netname)], [ego(string) egoid(string)]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	
 	if "`ego'" == ""  & "`egoid'" == "" {
 		di "{err}Either option {bf:ego()} or {bf:egoid()} needs to be specified."

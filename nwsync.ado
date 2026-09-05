@@ -4,7 +4,7 @@ program def nwsync
 	version 9
 	syntax [anything(name=netname)],[ label fromstata]
 	
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	if "`label'" != "" {
 		_nwdatasync `netname'
 	}

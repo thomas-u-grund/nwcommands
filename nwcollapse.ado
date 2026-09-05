@@ -17,7 +17,7 @@ program nwcollapse
 	if "`stat'" == "" {
 		local stat = "max"
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	// BUGFIX: collapsing a two-mode network used to silently produce a
 	// result reported as an ordinary one-mode network (mode2 flipped
 	// from true to false, with no error, warning, or documented
@@ -41,7 +41,7 @@ program nwcollapse
 	
 	nwduplicate `original', name(_temp_`original')
 	_nwdatasync _temp_`original'
-	nw_syntax _temp_`original'
+	_nwsyntax _temp_`original'
 	tempvar by_group by_dummy
 	gen `by_dummy' = 1
 	replace `by_dummy' = . if _n > `nodes'

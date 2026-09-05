@@ -16,15 +16,15 @@ program nwdropnodes
 	}	
 	
 	// _nwsyntax only re-exports 4 locals (netobj/id/netname/networks) -
-	// this file also needs `nodes' (node count), which only nw_syntax
+	// this file also needs `nodes' (node count), which only _nwsyntax
 	// itself provides; the option-supplied `nodes' local (the node
 	// list to drop) is already fully consumed into `nodelist' above,
 	// before this call would overwrite it with the node count.
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	if "`generate'" != "" {
 		nwduplicate `netname', name(`generate')
-		nw_syntax `generate', max(1)
+		_nwsyntax `generate', max(1)
 	}
 	
 	local newnodelist ""

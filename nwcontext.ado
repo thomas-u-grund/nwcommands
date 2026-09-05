@@ -3,7 +3,7 @@ capture program drop nwcontext
 program nwcontext 
 	version 9
 	syntax [anything(name=netname)],  ATTRibute(string) [ stat(string) mode(string) GENerate(string) mat(string) noweight REPlace ]
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	
 	if "`stat'" == "" {
 		local stat = "mean"
@@ -35,7 +35,7 @@ program nwcontext
 	capture drop `generate'
 	
 	_nwdatasync `netname'
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	if ("`stat'" == "") {
 		local stat = "mean"

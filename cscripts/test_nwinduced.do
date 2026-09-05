@@ -104,7 +104,7 @@ di "=== betweenness/closeness/evcent run cleanly REGRESSION VERIFIED ==="
 * --- failure paths: an invalid measure() value is rejected; a
 * directed network is rejected with the disclosed v1-scope error, not
 * silently mishandled; a name that isn't a loaded network is rejected
-* via nw_syntax (482); a target variable already existing without
+* via _nwsyntax (482); a target variable already existing without
 * replace is rejected.
 nwclear
 nwset, mat((0,1\1,0)) name(failnet) undirected labs(A,B)

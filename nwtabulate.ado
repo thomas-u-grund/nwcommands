@@ -2,7 +2,7 @@
 capture program drop nwtabulate
 program nwtabulate
 	syntax [anything(name=netname)] [, attribute(varname) *]
-	nw_syntax `netname', max(2)
+	_nwsyntax `netname', max(2)
 
 	if `networks' == 1 & "`attribute'" == "" {
 		nwtab1 `netname', `options'
@@ -11,7 +11,7 @@ program nwtabulate
 		nwtab2 `netname', `options'
 	}
 	if "`attribute'" != "" {
-		nw_syntax `netname', max(1)
+		_nwsyntax `netname', max(1)
 		nwtab3 `netname', attribute(`attribute') `options'
 	}
 	if `networks' > 2 {
@@ -27,7 +27,7 @@ program nwtab1
 	syntax [anything] , [selfloop *]
 	preserve
 	
-	nw_syntax `anything'
+	_nwsyntax `anything'
 	if "`directed'" == "false" {
 		local upper = "upper"
 	}
@@ -59,10 +59,10 @@ program nwtab2
 	}
 	
 	local netname0 `netname'
-	nw_syntax `netname', max(2) min(2)
+	_nwsyntax `netname', max(2) min(2)
 	local upper = "upper"
 	foreach net in `netname' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		if "`directed'" == "true" {
 			local upper = ""
 		}
@@ -83,11 +83,11 @@ program nwtab2
 
 	local ident = length("`netname'") + 20
 	di
-	nw_syntax `net1'
+	_nwsyntax `net1'
 	local netobj1 `netobj'
 	di "{txt}   Network1:  {res}`net1'{txt}{col `ident'}Directed : {res}`directed'{txt}"
 	di "{txt}                           {txt}{col `ident'}Selfloops: {res}`selfloops'{txt}"
-	nw_syntax `net2'
+	_nwsyntax `net2'
 	local netobj2 `netobj'
 	di "{txt}   Network2:  {res}`net2'{txt}{col `ident'}Directed : {res}`directed'{txt}"
 	di "{txt}                           {txt}{col `ident'}Selfloops: {res}`selfloops'{txt}"
@@ -181,11 +181,11 @@ program nwtab3
 		}
 	}
 	
-	nw_syntax `netname', max(1) min(1)
+	_nwsyntax `netname', max(1) min(1)
 	
 	local upper = "upper"
 	foreach net in `netname' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		if "`directed'" == "true" {
 			local upper = ""
 		}
@@ -203,7 +203,7 @@ program nwtab3
 	nwtoedge `netname', egovars(`attribute') altervars(`attribute') full
 
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	
 	qui keep if `netname' != 0 & `netname' != .
 	tempname tableres tablecol tablerow
@@ -259,7 +259,7 @@ program nwtab3
 	egen `group' = group(`attribute')
 	
 	qui if `permutations' > 1  {
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		mata: `EI_qap' = rep_EIattr(`permutations', `netobj'->get_matrix_copy(), st_data((1::`nodes'),"`group'"))
 		if `EI_index' > 0 {
 			mata: `out' = sum(`EI_qap' :>= `EI_index')

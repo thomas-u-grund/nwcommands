@@ -20,7 +20,7 @@ program nwshared
 		local nwreplace "replace"
 	}
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`name'" == "" {
 		local name "_shared"
@@ -68,7 +68,7 @@ program nwshared
 	}
 	
 	nwduplicate `netname', name(`name')
-	nw_syntax
+	_nwsyntax
 
 	mata: `netobj'->set_edge((`netobj'->get_matrix_unvalued_copy()):* ((`netobj'->get_matrix_unvalued_copy()) * (`netobj'->get_matrix_unvalued_copy())))
 	// BUGFIX: was an unconditional `capture nwdrop `symmetrized'' - the

@@ -2,7 +2,7 @@
 capture program drop nwnoderename
 program nwnoderename	
 	syntax [anything(name=netname)], old(string) new(string)
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 	unw_defs
 	

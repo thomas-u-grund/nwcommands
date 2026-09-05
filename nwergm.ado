@@ -79,7 +79,7 @@ program nwergm, eclass
 	if "`type'" == "" local type "OTP"
 	_opts_oneof "OTP ITP OSP ISP RTP" "type" "`type'" 6556
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	// --- network-type validation (Part IV/XXII/XXIII/XXIV): reject,
 	// never silently reinterpret.
@@ -538,7 +538,7 @@ program nwergm, eclass
 	// (a fixed dyad still contributes its true observed state to every
 	// term's sufficient statistic; only the MCMC PROPOSAL is restricted
 	// from ever touching it) - this is the whole point of "fixed", not
-	// "deleted". Same nw_syntax()-based resolution as edgecov()/hamming()
+	// "deleted". Same _nwsyntax()-based resolution as edgecov()/hamming()
 	// above, reusing get_matrix_mod(0,...) as hamming() does (a binary
 	// tie-presence matrix is exactly a boolean eligibility mask).
 	if "`freedyads'" != "" {
@@ -547,7 +547,7 @@ program nwergm, eclass
 			di "{err}freedyads() takes exactly one network (got `__ergm_fd_n': `freedyads'')."
 			error 198
 		}
-		nw_syntax `freedyads', max(1) other(fd)
+		_nwsyntax `freedyads', max(1) other(fd)
 		if `fdnodes' != `nodes' {
 			di "{err}freedyads() network {bf:`freedyads'} has a different number of nodes than {bf:`netname'}."
 			error 198
@@ -1301,7 +1301,7 @@ program nwergm, eclass
 		local ++__ergm_termidx
 		tempname __td_ec`__ergm_termidx'
 		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
-		nw_syntax `__ergm_v', max(1) other(ec`__ergm_termidx')
+		_nwsyntax `__ergm_v', max(1) other(ec`__ergm_termidx')
 		if `ec`__ergm_termidx'nodes' != `nodes' {
 			di "{err}edgecov() network {bf:`__ergm_v'} has a different number of nodes than {bf:`netname'}."
 			error 198
@@ -1312,7 +1312,7 @@ program nwergm, eclass
 	}
 
 	// --- hamming(netname): Hamming distance to a reference network,
-	// same nw_syntax()-based network-name resolution as edgecov() above,
+	// same _nwsyntax()-based network-name resolution as edgecov() above,
 	// but a BINARY reference (get_matrix_mod(0,...), not (1,...) -
 	// hamming distance cares only about tie/no-tie agreement, not
 	// covariate weight).
@@ -1321,7 +1321,7 @@ program nwergm, eclass
 		local ++__ergm_termidx
 		tempname __td_hm`__ergm_termidx'
 		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
-		nw_syntax `__ergm_v', max(1) other(hm`__ergm_termidx')
+		_nwsyntax `__ergm_v', max(1) other(hm`__ergm_termidx')
 		if `hm`__ergm_termidx'nodes' != `nodes' {
 			di "{err}hamming() network {bf:`__ergm_v'} has a different number of nodes than {bf:`netname'}."
 			error 198
@@ -3101,7 +3101,7 @@ program nwergm_simulate
 
 	// --- dyadic-covariate terms: edgecov()/hamming() reference ANOTHER
 	// already-loaded network (not a plain variable) - resolved via
-	// nw_syntax exactly as the estimation path does, just checked
+	// _nwsyntax exactly as the estimation path does, just checked
 	// against the `nodes' argument instead of an observed netname's own
 	// size (simulate has no observed network to compare against).
 	local __ergm_termidx = 0
@@ -3109,7 +3109,7 @@ program nwergm_simulate
 		local ++__ergm_termidx
 		tempname __td_ec`__ergm_termidx'
 		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
-		nw_syntax `__ergm_v', max(1) other(ec`__ergm_termidx')
+		_nwsyntax `__ergm_v', max(1) other(ec`__ergm_termidx')
 		if `ec`__ergm_termidx'nodes' != `nodes' {
 			di "{err}edgecov() network {bf:`__ergm_v'} has a different number of nodes than requested ({bf:`nodes'})."
 			error 198
@@ -3124,7 +3124,7 @@ program nwergm_simulate
 		local ++__ergm_termidx
 		tempname __td_hm`__ergm_termidx'
 		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
-		nw_syntax `__ergm_v', max(1) other(hm`__ergm_termidx')
+		_nwsyntax `__ergm_v', max(1) other(hm`__ergm_termidx')
 		if `hm`__ergm_termidx'nodes' != `nodes' {
 			di "{err}hamming() network {bf:`__ergm_v'} has a different number of nodes than requested ({bf:`nodes'})."
 			error 198

@@ -1,11 +1,11 @@
 capture program drop _nwsetobs
 program _nwsetobs
 	syntax [anything(name=netname)] 
-	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
+	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
-	// named the same as any of nw_syntax's other exports, so calling it
+	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
-	nw_syntax _all, max(9999)
+	_nwsyntax _all, max(9999)
 	local othernetname `netname'
 	
 	local maxnodes = 0

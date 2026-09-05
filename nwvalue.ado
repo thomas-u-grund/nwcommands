@@ -35,7 +35,7 @@ program nwvalue
 		di "{err}Either options {bf:ego(), alter()} or {bf:egoid(), alterid()} need to be specified."
 		error 198
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	if `"`ego'"' != "" {
 		if `"`alter'"' != "" {
 			// check that ego and alter are valid

@@ -67,7 +67,7 @@ diagonal - {opt set_selfloop(1)} is needed before writing a real 0 there):
 
 		{cmd:. nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(bridge) labs(A,B,C,D,E,F)}
 		{cmd:. nwlambda bridge, name(lam)}
-		{cmd:. nw_syntax lam}
+		{cmd:. _nwsyntax lam}
 		{cmd:. mata: __maxlam = max(*`netobj'->get_matrix())}
 		{cmd:. mata: __dissim = __maxlam :- *`netobj'->get_matrix()}
 		{cmd:. mata: _diag(__dissim, 0)}

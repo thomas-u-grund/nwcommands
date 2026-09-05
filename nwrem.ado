@@ -5,7 +5,7 @@ program nwrem, eclass
 	syntax [anything(name=netname)] [, NODSND NIDREC NIDSND NODREC NTDEGSND NTDEGREC FRPSNDSND FRRECSND COVSND(varname numeric) COVREC(varname numeric) COVINT(varname numeric) COVEVENT(string) RSNDSND RRECSND SEED(integer -1)]
 	set more off
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	if "`istemporal'" != "true" | "`temporaltype'" != "event" {
 		di as error "nwrem requires a network declared via nwset's eventtime() option (an event-type temporal network) - see {help nwset##temporal:nwset}."
@@ -92,13 +92,13 @@ program nwrem, eclass
 	}
 
 	// covevent() references ANOTHER already-loaded network (a pairwise,
-	// not per-actor, covariate) - resolved via nw_syntax exactly as
+	// not per-actor, covariate) - resolved via _nwsyntax exactly as
 	// nwergm's own edgecov()/hamming() do (nwergm.ado's dyadic-covariate
 	// block), using other() so its locals (covevnetobj/covevnodes) don't
 	// clobber `netobj'/`nodes' from the primary network above.
 	tempname __nwrem_covevmat
 	if "`covevent'" != "" {
-		nw_syntax `covevent', max(1) other(covev)
+		_nwsyntax `covevent', max(1) other(covev)
 		if `covevnodes' != `nodes' {
 			di as error "covevent() network `covevent' has `covevnodes' actors but `netname' has `nodes' - covevent() requires the same actors as `netname'."
 			error 198

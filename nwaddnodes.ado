@@ -3,7 +3,7 @@ capture program drop nwaddnodes
 program nwaddnodes
 	syntax [anything(name=netname)], nodenames(string) [mode(numlist) generate(string) xvars]
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	// harmonisation unit 158: `mode()' fixes a previously-documented gap
 	// (this command's own help header used to read "does not offer a
@@ -30,7 +30,7 @@ program nwaddnodes
 
 	if "`generate'" != "" {
 		nwduplicate `netname', name(`generate')
-		nw_syntax, max(1)
+		_nwsyntax, max(1)
 	}
 
 	// Counted via its OWN tokenize pass (not by re-joining segments into

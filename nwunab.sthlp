@@ -26,9 +26,9 @@ and unabbreviates a {help netlist:netlist} of existing networks,
 placing the results in the local macro {it:lmacname}.  {cmd:nwunab} is a
 low-level parsing command and works in exactly the same way as {help unab}.  One can
 also use {help nwds} to unabbreviate network lists. The 
-{help nw_syntax} command is a high-level parsing
+{help _nwsyntax} command is a high-level parsing
 command that, among other things, also unabbreviates network lists; see
-{help nw_syntax}.
+{help _nwsyntax}.
 
 
 {marker options}{...}
@@ -58,4 +58,4 @@ allowed. The system maximum is 9999.
 
 {title:See also}
 
-	{help unab}, {help nwds}, {help nw_syntax}
+	{help unab}, {help nwds}, {help _nwsyntax}

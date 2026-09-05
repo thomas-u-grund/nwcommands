@@ -3,7 +3,7 @@ capture program drop nwduplicate
 program nwduplicate
 	syntax [anything(name=netname)], [name(string) replace]
 	unw_defs
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	local name_given = ("`name'" != "")
 	if "`name'" == "" {

@@ -7,7 +7,7 @@ program nwbetween
 	// behavior ("In case, betweenness centrality is calculated for z
 	// networks at the same time... the command generates the variables
 	// varname_z, one for each network"), but the code never actually
-	// implemented it: nw_syntax was called with no max() override (so
+	// implemented it: _nwsyntax was called with no max() override (so
 	// it defaulted to exactly one network), and "local k = 1" /
 	// "local generate_all """ were vestigial scaffolding from an
 	// abandoned attempt, referenced nowhere else in the body. Finished
@@ -25,7 +25,7 @@ program nwbetween
 	// Fixed by adding a real replace option and making the guard gate
 	// the drop, matching the working convention used elsewhere in this
 	// package (e.g. nwdegree, nwkatz).
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	local totalnetworks = `networks'
 
 	if "`generate'" == "" {
@@ -33,7 +33,7 @@ program nwbetween
 	}
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 		local oldnetname `netname_temp'
 
 		local netgenerate "`generate'"
@@ -77,7 +77,7 @@ program nwbetween
 		// `sym' instead.
 		if "`sym'" == "" {
 			nwsym `netname_temp', generate(`netname_temp'_symmetrized)
-			nw_syntax
+			_nwsyntax
 		}
 
 		if "`weighted'" != "" {

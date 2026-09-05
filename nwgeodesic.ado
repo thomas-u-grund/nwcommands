@@ -5,7 +5,7 @@ program nwgeodesic
 
 	capture
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	local origname "`netname'"
 	
 	if "`name'" == "" {
@@ -15,7 +15,7 @@ program nwgeodesic
 	tempname symnet
 	local symmetrized "false"
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	local eccvar "`generate'"
 	if "`eccvar'" == "" {
@@ -54,10 +54,10 @@ program nwgeodesic
 		// generate() (already given on this same call) determining the
 		// in-place-vs-copy outcome on its own.
 		nwsym `netname', generate(`symnet') `symopt'
-		nw_syntax `symnet', max(1)
+		_nwsyntax `symnet', max(1)
 		local symmetrized "true"
 	}
-	capture nw_syntax `name', other(_check)
+	capture _nwsyntax `name', other(_check)
 	local name_exists = (_rc == 0)
 	if `name_exists' & "`nwreplace'" == "" {
 		di "{pstd} {err}Network {bf:`name'} already exists; use {bf:nwreplace} or specify another {it:newnetname} with {bf:name()}{p_end}"
@@ -73,7 +73,7 @@ program nwgeodesic
 		capture nwdrop `name'
 	}
 	nwduplicate `netname', name(`name')
-	nw_syntax `name'
+	_nwsyntax `name'
 	
 	if ("`valued'" == "false" & `alpha' != 1 ){
 		di "{txt}Network is unvalued; {bf:alpha = `alpha'} is ignored."

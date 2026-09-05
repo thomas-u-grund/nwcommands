@@ -76,7 +76,7 @@ input i j value
 3 2 8
 end
 nwset i j value, name(seatdist_wrongshape)
-nw_syntax seatdist_wrongshape, max(1)
+_nwsyntax seatdist_wrongshape, max(1)
 assert `nodes' == 3
 mata: st_local("wrongshape_names", invtokens(`netobj'->get_nodenames()))
 assert "`wrongshape_names'" == "i j value"
@@ -178,7 +178,7 @@ di as text "  correctly rejected non-numeric covsnd() (rc=" _rc ")"
 
 * covsnd() is rejected when the current dataset's row count doesn't
 * match chatlog's own actor count (10) - here 5 rows instead of 10.
-* (chatlog itself, looked up by name via nw_syntax, is unaffected by
+* (chatlog itself, looked up by name via _nwsyntax, is unaffected by
 * what dataset happens to be active - only the covsnd() row-count
 * check below cares about that.)
 clear

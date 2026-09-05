@@ -108,7 +108,7 @@ assert _rc == 0
 di "=== replace abbreviation REGRESSION VERIFIED ==="
 
 * --- failure paths: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482); exactly 2
+* _nwsyntax's own "Network X not found" check (error 482); exactly 2
 * networks are required (min(2) max(2)), so one network alone is
 * rejected too.
 capture noisily nwturnover w1 nonexistent

@@ -8,10 +8,10 @@ program nwcorrelate
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
 	// low-level Mata error ("subscript invalid", r3301) from inside
-	// `nw_syntax' itself, instead of this package's usual clean
+	// `_nwsyntax' itself, instead of this package's usual clean
 	// "{err}...{txt}" message.
 	unw_defs
-	capture nw_syntax `anything', min(1) max(2)
+	capture _nwsyntax `anything', min(1) max(2)
 	if _rc != 0 {
 		di "{err}One or more of the specified networks could not be found."
 		error `errNWsNotFound'
@@ -32,7 +32,7 @@ end
 capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
 	syntax [anything(name=netname)] [, name(string) context(string)]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	if "`context'" == "" {
 		local context = "outgoing"
 	}
@@ -54,11 +54,11 @@ program nwcorrelate_nodes
 		local neighborhood = 3
 	}
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	local origname "`netname'"
 	
 	nwset, mat(`netobj'->correlate_nodes(`neighborhood')) name("`name'")	
-	nw_syntax
+	_nwsyntax
 	
 	mata: st_rclear()
 	mata: st_numscalar("r(avg_corr)", ( sum(*`netobj'->get_matrix()) / sum((*`netobj'->get_matrix()):!=.)))
@@ -87,9 +87,9 @@ unw_defs
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
 	// low-level Mata error ("subscript invalid", r3301) from inside
-	// `nw_syntax' itself, instead of this package's usual clean
+	// `_nwsyntax' itself, instead of this package's usual clean
 	// "{err}...{txt}" message - a very plausible everyday typo.
-	capture nw_syntax `netnames', max(2) min(1)
+	capture _nwsyntax `netnames', max(2) min(1)
 	if _rc != 0 {
 		di "{err}One or more of the specified networks could not be found."
 		error `errNWsNotFound'
@@ -99,7 +99,7 @@ unw_defs
 	
 	_nwdatasync `netname1'
 	
-	nw_syntax `netname1'
+	_nwsyntax `netname1'
 	local netnodes1 `nodes'
 	local netobj1 `netobj'
 	
@@ -110,7 +110,7 @@ unw_defs
 		local netname2 = "`mode'_`attribute'"
 	}
 	
-	nw_syntax `netname2'
+	_nwsyntax `netname2'
 	local netnodes2 `nodes'
 	local netobj2 `netobj'
 	

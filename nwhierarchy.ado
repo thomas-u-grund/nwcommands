@@ -6,7 +6,7 @@ program nwhierarchy, rclass
 	// repeatedly elsewhere this session. Nothing below actually
 	// referenced any of the locals that wrapper fails to export
 	// (confirmed empirically - this file ran correctly even before
-	// this change), but switched to the modern nw_syntax anyway for
+	// this change), but switched to the modern _nwsyntax anyway for
 	// consistency with the rest of the package and to keep the new
 	// groups()/equivgen() code below (added in this same unit) safe
 	// against ever needing one of those locals in the future.
@@ -26,7 +26,7 @@ program nwhierarchy, rclass
 	if "`generate'" != "" {
 		local equivgen "`generate'"
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`clear'" == "" & "`add'" == "" {
 		local add = "add"

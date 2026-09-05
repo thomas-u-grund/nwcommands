@@ -10,7 +10,7 @@ program nwsimindex, rclass
 	}
 	_opts_oneof "common jaccard dice cosine adamicadar" "measure" "`measure'" 6556
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`name'" == "" {
 		local name "simindex"
@@ -38,7 +38,7 @@ program nwsimindex, rclass
 	nwset, mat(`__nw_sim') name(`name') undirected labs(`labs')
 	mata: mata drop `__nw_sim'
 
-	nw_syntax `name'
+	_nwsyntax `name'
 	mata: `netobj'->set_valued(1)
 
 	return scalar nodes = `nodes'

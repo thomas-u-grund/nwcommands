@@ -4,7 +4,7 @@ program nwbrokerage, rclass
 	version 12
 	syntax [anything(name=netname)], GROUP(varname) [GENerate(string) replace silent]
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {
 		local k = 1
@@ -13,7 +13,7 @@ program nwbrokerage, rclass
 	local roles coordinator gatekeeper representative consultant liaison
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		local netgenerate "`generate'"
 		if "`netgenerate'" == "" {
@@ -32,7 +32,7 @@ program nwbrokerage, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		tempname __nw_grp __nw_brk
 		mata: `__nw_grp' = st_data((1::`nodes'), "`group'")

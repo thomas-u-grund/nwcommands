@@ -107,7 +107,7 @@ For example, one can plot the Florentine marriage network and label the nodes ac
 Furthermore, {bf:nwload} makes {help netname} the current network, unless option {bf:nocurrent} is specified. Many nwcommands (although
 they do something with a network) do not require a network name. In the cases where no {help netname} is specified, a nwcommand 
 automatically runs with the {help nwcurrent:current network}. For programming your own network commands with this feature see 
-{help nw_syntax}.
+{help _nwsyntax}.
 
 {pstd}
 By default, commands that generate a network (see {help nw_topical##generator:network generator}) do NOT also load the network as Stata

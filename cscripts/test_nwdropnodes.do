@@ -11,7 +11,7 @@ do unw_core.do
 *
 * (1) `_nwsyntax` (the deprecated wrapper) only re-exports 4 locals
 * (netobj/id/netname/networks), but this file also needs `nodes' (the
-* node count) - switched to `nw_syntax`, which does export it. The
+* node count) - switched to `_nwsyntax`, which does export it. The
 * option-supplied `nodes' local (the node list to drop) is already
 * fully consumed into `nodelist' before this call runs, so the two
 * uses of the name never actually conflict in practice.
@@ -155,6 +155,6 @@ assert _rc == 198
 di "=== drop-every-node REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwdropnodes nonexistent, nodes(1)
 assert _rc == 482

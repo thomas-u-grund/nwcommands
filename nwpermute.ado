@@ -12,14 +12,14 @@ program nwpermute
 		di "{err}Either option {bf:replace} or {bf:generate} required."
 		error 198
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	if "`generate'" == "" & "`replace'" != "" {
 		mata: `netobj'->permute()
 	}
 	if "`generate'" != "" {
 		capture nwdrop `generate'
 		nwduplicate `netname', name(`generate')
-		nw_syntax `generate'
+		_nwsyntax `generate'
 		mata: `netobj'->permute()
 	}
 	if "`xvars'" != "" {

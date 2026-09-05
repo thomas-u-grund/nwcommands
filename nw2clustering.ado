@@ -26,7 +26,7 @@ program nw2clustering
 		di "{err}Variable {bf:`generate'} already exists; specify {bf:replace}"
 		err 99
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 
 	// BUGFIX: level() accepted any integer with no validation at all -
@@ -55,7 +55,7 @@ program nw2clustering
 	// the netmeasure auto-detection convention already established in
 	// nwcommunity.ado/nwconcor.ado/nwcoreperiphery.ado/nwmodularity.ado/
 	// nwspectral.ado (and nwclustering.ado's own identical fix). Moved
-	// below nw_syntax so `valued' is actually populated before this
+	// below _nwsyntax so `valued' is actually populated before this
 	// check runs - it wasn't, previously.
 	if "`measure'" == "" {
 		if "`valued'" == "true" {

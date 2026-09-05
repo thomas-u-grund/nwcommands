@@ -8,11 +8,11 @@ program nwcurrent
 		mata: nw.nws.make_current(`id')
 	}
 	else if ("`netname'" != ""){
-		nw_syntax `netname', max(1)
+		_nwsyntax `netname', max(1)
 		mata: nw.nws.make_current_from_name("`netname'")
 	}
 	
-	nw_syntax
+	_nwsyntax
 	
 	mata: st_rclear()
 	mata: st_global("r(current)", `nws'.get_current_name())

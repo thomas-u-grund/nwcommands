@@ -149,7 +149,7 @@ di "=== undefined correlation REGRESSION VERIFIED ==="
 * both formulas before this fix was written.
 nwclear
 nwset, mat((0,0,0,1\0,0,0,1\0,0,0,1\1,0,0,0)) directed name(sinktest) labs(A,B,C,D)
-nw_syntax sinktest
+_nwsyntax sinktest
 mata: st_matrix("Cin", `netobj'->correlate_nodes(2))
 mata: st_numscalar("__c_ad", Cin[1,4])
 assert __c_ad == -1

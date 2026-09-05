@@ -7,7 +7,7 @@ program nwbridges
 	// see `_opts_oneof' below) already covers this, making the bare flag
 	// a confusing, fully dead duplicate. Removed.
 	syntax [anything(name=netname)] [, nwreplace name(string) type(string)]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	local oldname `netname'
 	local olddirected `netname'
 	local generate "`name'"
@@ -20,7 +20,7 @@ program nwbridges
 		local generate "_bridges"
 	}
 
-	capture nw_syntax `generate', other(other)
+	capture _nwsyntax `generate', other(other)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace}"
 		err 99
@@ -28,7 +28,7 @@ program nwbridges
 	capture nwdrop `generate'
 	nwduplicate `netname', name(`generate')
 
-	nw_syntax `generate'
+	_nwsyntax `generate'
 	// PERFORMANCE FIX: type(global) only needs to know which ties are
 	// bridges (does removing this one tie disconnect its endpoints?),
 	// not the actual alternate-path distance calculate_distances_
@@ -74,7 +74,7 @@ program nwbridges
 	}
 	mata: st_rclear()
 	
-	nw_syntax `oldname'
+	_nwsyntax `oldname'
 	mata: st_global("r(name)", "`netname'")
 	mata: st_global("r(directed)", "`directed'")
 	mata: st_global("r(bridges)", "`bridges'")

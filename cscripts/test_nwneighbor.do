@@ -135,7 +135,7 @@ qui nwsummarize subC, matonly
 assert r(nodes) == 4
 * the induced subgraph is w1's own true induced structure on {A,B,C,D}:
 * A-C tied, A-D not (A and D were never tied in the original network).
-nw_syntax subC
+_nwsyntax subC
 mata: st_numscalar("__t_ac", (*`netobj'->get_matrix())[1,3])
 mata: st_numscalar("__t_ad", (*`netobj'->get_matrix())[1,4])
 assert __t_ac == 1
@@ -166,7 +166,7 @@ assert r(nodes) == 1
 
 * the CALLING program's own r()/netname state is unaffected by the
 * subnet()-creation detour - a real bug found and fixed while building
-* this (nw_syntax() sets `netname' as a side effect of resolving the
+* this (_nwsyntax() sets `netname' as a side effect of resolving the
 * NEW subnet network, silently redirecting every later line in
 * nwneighbor.ado onto it unless explicitly restored via a SEPARATE
 * saved local, not `netname' itself).
@@ -182,7 +182,7 @@ di "=== nwneighbor subnet() (induced-subgraph output) REGRESSION VERIFIED ==="
 * own syntax parser without it); a node that doesn't exist in the
 * network is rejected (err 99, via nwnode's own -1 "not found" id);
 * an invalid mode() value is rejected by _opts_oneof (error 6556); a
-* name that isn't a loaded network is rejected via nw_syntax (482).
+* name that isn't a loaded network is rejected via _nwsyntax (482).
 nwclear
 nwset, mat((0,1\1,0)) name(failnet) labs(A,B)
 capture noisily nwneighbor failnet

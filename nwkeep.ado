@@ -3,7 +3,7 @@ capture program drop nwkeep
 program nwkeep
 	syntax [anything(name=netname)] [if] [in] [, clean]
 	unw_defs
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	local keeplist `netname'
 	
 	qui nwset
@@ -20,7 +20,7 @@ program nwkeep
 		}
 	}
 	else {
-		nw_syntax `netname', max(1)
+		_nwsyntax `netname', max(1)
 		local n `nodes'
 		_nwdatasync `netname'
 		//list _nw*
@@ -36,7 +36,7 @@ program nwkeep
 		mata: _editmissing(`keep', 0)
 		mata: `netobj'->keep_nodes(`keep')
 
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		
 		if `nodes' == 0 {
 			nwdrop `netname'

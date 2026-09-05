@@ -15,7 +15,7 @@ set more off
 * Maximum matching = 3 (e.g. A-D, B-E, C-F - a perfect matching exists).
 nwclear
 nwset, mat((0,0,0,1,1,0\0,0,0,0,1,0\0,0,0,0,0,1\1,0,0,0,0,0\1,1,0,0,0,0\0,0,1,0,0,0)) name(bipnet) labs(A,B,C,D,E,F)
-nw_syntax bipnet
+_nwsyntax bipnet
 mata: `netobj'->set_2mode(1)
 mata: `netobj'->set_modes(("1","1","1","2","2","2"))
 
@@ -69,7 +69,7 @@ assert _N >= 6
 di "=== nwmatching: dataset-sync-after-clear REGRESSION VERIFIED ==="
 
 * --- failure paths: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482); the target
+* _nwsyntax's own "Network X not found" check (error 482); the target
 * variable already existing without replace is rejected (err 99).
 capture noisily nwmatching nonexistent
 assert _rc == 482

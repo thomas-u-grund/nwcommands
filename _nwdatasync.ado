@@ -12,7 +12,7 @@ program _nwdatasync
 		di "{txt}Switching datasync off."
 		mata: `nws'.set_datasync(0)
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 		
 	capture confirm variable `nw_nodename'
 	
@@ -94,7 +94,7 @@ program _nwdatasync
 
 	qui getmata `nw_nodename' = `nodename', force replace
 	
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	
 	if ("`is2mode'" == "true") {
 		mata: `mode' = (`netobj'->get_modes())'

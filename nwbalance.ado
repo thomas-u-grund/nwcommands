@@ -26,7 +26,7 @@ program nwbalance
 
 
 	unw_defs
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	_nwdatasync `netname'
 	local original "`netname'"
 
@@ -57,7 +57,7 @@ program nwbalance
 	qui if _N < `nodes' {
 		set obs `nodes'
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	tempname __nw_bal
 	mata: `__nw_bal' = `netobj'->calculate_balance()

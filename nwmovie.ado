@@ -61,13 +61,13 @@ program nwmovie
 	local nwords : word count `netname'
 	local mode ""
 	if `nwords' == 1 {
-		capture nw_syntax `netname', max(1)
+		capture _nwsyntax `netname', max(1)
 		if _rc == 0 {
 			if "`istemporal'" == "true" & "`temporaltype'" == "event" local mode "event"
 		}
 	}
 	if "`mode'" == "" {
-		capture nw_syntax `netname', max(999) min(2)
+		capture _nwsyntax `netname', max(999) min(2)
 		if _rc != 0 {
 			di as error "nwmovie requires either ONE event-type temporal network (built via {help nwset}'s {bf:eventtime()} option) or AT LEAST 2 panel networks of the same size, in sequence."
 			error 198
@@ -75,7 +75,7 @@ program nwmovie
 		local mode "panel"
 		local sizecheck = 0
 		foreach _nwmv_onenet in `netname' {
-			nw_syntax `_nwmv_onenet', other(other)
+			_nwsyntax `_nwmv_onenet', other(other)
 			if `sizecheck' == 0 {
 				local sizecheck = `othernodes'
 			}
@@ -171,7 +171,7 @@ program nwmovie
 
 	if "`mode'" == "panel" {
 		local _nwmv_first : word 1 of `netname'
-		nw_syntax `_nwmv_first', other(other)
+		_nwsyntax `_nwmv_first', other(other)
 		local _nwmv_directed = ("`otherdirected'" == "true")
 		local _nwmv_k : word count `netname'
 
@@ -203,7 +203,7 @@ program nwmovie
 			local _nwmv_li = 0
 			foreach _nwmv_onenet3 of local netname {
 				local _nwmv_li = `_nwmv_li' + 1
-				nw_syntax `_nwmv_onenet3', other(other3)
+				_nwsyntax `_nwmv_onenet3', other(other3)
 				mata: _nwmv_labelvec[1,`_nwmv_li'] = (strlen(`other3netobj'->get_label()) > 0 ? `other3netobj'->get_label() : "`_nwmv_onenet3'")
 			}
 		}
@@ -394,7 +394,7 @@ program nwmovie
 		// wide, not dataset-scoped - confirmed directly in nwclear.ado),
 		// which would take the caller's own original event network down
 		// with it (this program is still holding a live pointer into it,
-		// `netobj', from the mode-detection nw_syntax call above). A
+		// `netobj', from the mode-detection _nwsyntax call above). A
 		// brand-new nwset ..., name() call needs no clearing first -
 		// multiple named networks already coexist fine without it
 		// elsewhere in this package (e.g. dev/saom_rsiena_benchmark.do's

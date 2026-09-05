@@ -38,6 +38,6 @@ assert _rc == 198
 di "=== SINGLE-NODE NETWORK REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwplotmatrix nonexistent
 assert _rc == 482

@@ -4,7 +4,7 @@ program nwsummarize
 	version 9
 	syntax [anything(name=netname)][, mat matonly detail save(string asis) silent ]
 	set more off
-	nw_syntax `netname', max(100000)
+	_nwsyntax `netname', max(100000)
 
 	
 	if "`detail'" != "" {
@@ -46,7 +46,7 @@ capture program drop nwinf
 program nwinf
 	version 9
 	syntax [anything(name=netname)], [id(string) mat matonly detail silent]
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	local localdirected `directed'
 	
 	// BUGFIX: was `thisname' throughout - undefined anywhere in this

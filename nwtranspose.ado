@@ -18,7 +18,7 @@ program nwtranspose
 	}
 	unw_defs
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	local netobj1 `netobj'
 
 	if ("`generate'" != ""){
@@ -26,7 +26,7 @@ program nwtranspose
 		// auto-renames the DUPLICATE to `generate'_1 on a name
 		// collision (leaving it as an orphaned, never-used stray
 		// network), but this line still operated on the literal
-		// string `generate' regardless - so `nw_syntax `generate''
+		// string `generate' regardless - so `_nwsyntax `generate''
 		// below resolved to the ORIGINAL, pre-existing network of
 		// that name (not the fresh duplicate), and the transpose then
 		// silently overwrote ITS edge matrix in place. Fixed with the
@@ -35,7 +35,7 @@ program nwtranspose
 		// rather than relying on nwduplicate's own silent auto-rename
 		// (which nwduplicate itself doesn't even report back to the
 		// caller - there is no way to recover the actual name used).
-		capture nw_syntax `generate', other(_check)
+		capture _nwsyntax `generate', other(_check)
 		if _rc == 0 {
 			if "`replace'" == "" {
 				// Error-code coherence pass: consolidated onto
@@ -50,7 +50,7 @@ program nwtranspose
 		nwduplicate `netname', name(`generate')
 		local netname `generate'
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	local netobj2 `netobj'
 	
 	mata: `netobj2'->set_edge((*`netobj1'->get_matrix())')

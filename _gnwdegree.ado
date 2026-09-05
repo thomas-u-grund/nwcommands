@@ -9,7 +9,7 @@ program define _gnwdegree
 	//_egennoby nwdegree() `"`by'"'
 	
 	//syntax [anything(name=netname)] [, *]
-	//nw_syntax `netname'
+	//_nwsyntax `netname'
 	
 	//nwdegree `netname', generate(`h')
 	di "hhh2aå"

@@ -6,7 +6,7 @@ do unw_core.do
 * silently producing WRONG output on every call: it used the
 * deprecated _nwsyntax wrapper, whose own re-export line
 * ("c_local netname `name'") referenced a local that was never set
-* (should have been `netname', the local nw_syntax itself actually
+* (should have been `netname', the local _nwsyntax itself actually
 * sets) - so the caller's netname local was always emptied out after
 * the call. Because the per-network processing loop is
 * "foreach netname_temp in `netname' { ... }", an empty netname meant
@@ -22,7 +22,7 @@ do unw_core.do
 * modern network storage architecture (references the legacy
 * nw_mata`id' global, which no longer exists), crashing with
 * "invalid syntax" the moment the loop actually ran. Fixed by
-* replacing _nwsyntax_other with a direct nw_syntax call (the same
+* replacing _nwsyntax_other with a direct _nwsyntax call (the same
 * pattern already used to fix nwqap this session).
 
 * --- path-like network A-B-C-D (undirected): hand-computed
@@ -101,6 +101,6 @@ assert missing(c2[2])
 di "=== directed default-vs-nosym REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwcloseness nonexistent
 assert _rc == 482

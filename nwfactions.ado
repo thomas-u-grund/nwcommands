@@ -14,7 +14,7 @@ program nwfactions, rclass
 		error 198
 	}
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if `groups' > `nodes' {
 		di "{err}groups(`groups') exceeds the number of nodes (`nodes')."

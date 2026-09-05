@@ -32,7 +32,7 @@ assert _rc == 0
 assert !strpos(fileread(`"`gmlout'.gml"'), "value .")
 
 nwimport `"`gmlout'.gml"', type(gml) name(gmlback) nwclear clear
-nw_syntax gmlback
+_nwsyntax gmlback
 assert `nodes' == 3
 
 nwclear
@@ -50,12 +50,12 @@ assert _N == 2
 restore
 
 nwimport `"`edgeout'.txt"', type(edgelist) name(edgeback) nwclear clear
-nw_syntax edgeback
+_nwsyntax edgeback
 assert `nodes' == 3
 
 di "=== gml/edgelist export format parity REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwexport nonexistent, type(edgelist)
 assert _rc == 482

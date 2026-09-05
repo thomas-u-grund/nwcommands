@@ -8,7 +8,7 @@ do unw_core.do
 * existed on disk, untracked, never actually run as part of the suite -
 * superseded by this file). Found empirically correct as-is (no bugs
 * found) via direct probing before writing these assertions - it already
-* uses the modern nw_syntax (not the deprecated _nwsyntax wrapper), so it
+* uses the modern _nwsyntax (not the deprecated _nwsyntax wrapper), so it
 * was not part of the harmonisation-unit-9-13/unit-30 bug class affecting
 * nwdropnodes/nwkeepnodes/nwreplacemat.
 

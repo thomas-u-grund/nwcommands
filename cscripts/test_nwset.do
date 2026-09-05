@@ -218,7 +218,7 @@ assert r(nodes) == 2
 nwsummarize foo
 assert r(nodes) == 3
 
-* nw_syntax (called by nearly every command in this package to resolve
+* _nwsyntax (called by nearly every command in this package to resolve
 * a network name) raised a raw Mata "type mismatch: exp.exp:
 * transmorphic found where struct expected" (r(3000)) instead of its
 * own documented, clean "Network X not found" (errNWsNotFound) when NO
@@ -230,7 +230,7 @@ assert r(nodes) == 3
 * above look like memory corruption rather than a clean not-found
 * error when something later referenced the never-created network.
 nwclear
-capture nw_syntax nonexistent_network_xyz
+capture _nwsyntax nonexistent_network_xyz
 assert _rc == 482
 
 * mat() has always evaluated its own argument as a bare Mata
@@ -290,7 +290,7 @@ input str10 person str10 org time
 "C" "Y" 2
 end
 nwset person org, twomode time(time) name(tm1)
-nw_syntax tm1
+_nwsyntax tm1
 mata: st_numscalar("__tm1_is2mode", `netobj'->is_2mode_boolean())
 mata: st_numscalar("__tm1_istemporal", `netobj'->is_temporal_boolean())
 assert __tm1_is2mode == 1
@@ -309,7 +309,7 @@ input person org time
 1 2 6
 end
 nwset person org, twomode time(time) name(tm2)
-nw_syntax tm2
+_nwsyntax tm2
 mata: st_numscalar("__tm2_nodes", `netobj'->get_nodes())
 assert __tm2_nodes == 4
 scalar drop __tm2_nodes
@@ -323,7 +323,7 @@ input str10 person str10 org evt
 "A" "Y" 110
 end
 nwset person org, twomode eventtime(evt) name(tm3)
-nw_syntax tm3
+_nwsyntax tm3
 mata: st_numscalar("__tm3_istemporal", `netobj'->is_temporal_boolean())
 assert __tm3_istemporal == 1
 scalar drop __tm3_istemporal
@@ -348,7 +348,7 @@ input str10 person str10 org
 "B" "X"
 end
 nwset person org, twomode name(tmplain)
-nw_syntax tmplain
+_nwsyntax tmplain
 mata: st_numscalar("__tmplain_istemporal", `netobj'->is_temporal_boolean())
 assert __tmplain_istemporal == 0
 scalar drop __tmplain_istemporal

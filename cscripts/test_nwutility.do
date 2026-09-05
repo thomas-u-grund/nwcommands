@@ -10,11 +10,11 @@ do unw_core.do
 *       `nodes' (never re-exported by _nwsyntax - same bug class as
 *       nwqap/nwcloseness/nworder this session), in both the default
 *       and intrvalue()/intrcost() code paths. Fixed by switching to
-*       nw_syntax directly.
+*       _nwsyntax directly.
 *  3.   intrvalue()/intrcost() called the separately-broken
 *       _nwsyntax_other (incompatible with the modern architecture).
-*       Fixed by switching to nw_syntax there too - which also
-*       exposed a real local-name collision (nw_syntax's `netname'/
+*       Fixed by switching to _nwsyntax there too - which also
+*       exposed a real local-name collision (_nwsyntax's `netname'/
 *       `nodes' exports would silently overwrite the main network's
 *       own values when called a second time for intrvalue()/
 *       intrcost()) - fixed by capturing the main network's name and

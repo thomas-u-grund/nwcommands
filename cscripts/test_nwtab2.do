@@ -35,7 +35,7 @@ _assert_streq `"`: colfullnames C_table'"' `"c1"'
 mat drop C_table T_table
 
 * --- failure path: a nonexistent second network name is rejected by
-* nwtabulate's own top-level nw_syntax call (error 482), before
+* nwtabulate's own top-level _nwsyntax call (error 482), before
 * nwtab2 is ever reached - one real network plus a bogus one never
 * reaches nwtab2's own internal min(2)/max(2) check at all (dispatch
 * only happens once nwtabulate's own count is already confirmed valid,

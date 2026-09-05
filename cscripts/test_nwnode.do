@@ -9,7 +9,7 @@ nwnode, ego("p2")
 * --- failure paths: neither ego() nor egoid() given (err 99, this
 * command's own explicit guard); egoid() out of the valid 1..nodes
 * range (err 99); a name that isn't a loaded network (error 482, via
-* nw_syntax).
+* _nwsyntax).
 capture noisily nwnode
 assert _rc == 99
 

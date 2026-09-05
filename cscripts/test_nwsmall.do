@@ -73,7 +73,7 @@ di "=== r(netlist) REGRESSION VERIFIED ==="
 * returning _rc==0 as if nothing were wrong, confirmed directly before
 * this fix): neither prob() nor shortcuts() given; prob() out of the
 * valid [0,1] range; a name that isn't a loaded network (via k()'s own
-* nw_syntax passthrough inside the ntimes()==1 non-recursive path is
+* _nwsyntax passthrough inside the ntimes()==1 non-recursive path is
 * not applicable here since nwsmall is a pure generator with no network
 * argument - the relevant failure is the option validation above).
 nwclear

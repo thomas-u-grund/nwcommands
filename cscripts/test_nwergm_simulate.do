@@ -34,7 +34,7 @@ qui nwergm simulate `n', edges theta(`theta') nsim(`nsim') mcmcburnin(3000) mcmc
 tempname ties
 scalar `ties' = 0
 forvalues i = 1/`nsim' {
-	qui nw_syntax esim_`i', max(1)
+	qui _nwsyntax esim_`i', max(1)
 	mata: st_local("__t", strofreal(sum(*`netobj'->get_matrix_mod(1,0))/2))
 	scalar `ties' = `ties' + `__t'
 	assert `nodes' == `n'
@@ -58,7 +58,7 @@ assert abs(`mean_ties' - `exact_mean') < 1.5
 nwclear
 set seed 5002
 qui nwergm simulate 5, edges mutual directed theta(-0.5 1.5) nsim(1) mcmcburnin(3000) mcmcinterval(30) generate(dsim)
-qui nw_syntax dsim, max(1)
+qui _nwsyntax dsim, max(1)
 assert `nodes' == 5
 assert "`directed'" == "true"
 
@@ -68,7 +68,7 @@ nwclear
 set seed 5003
 qui nwergm simulate 5, edges theta(-0.3) nsim(3) generate(multisim)
 foreach s in 1 2 3 {
-	qui nw_syntax multisim_`s', max(1)
+	qui _nwsyntax multisim_`s', max(1)
 	assert `nodes' == 5
 }
 
@@ -76,7 +76,7 @@ foreach s in 1 2 3 {
 nwclear
 set seed 5004
 qui nwergm simulate 6, edges gwesp(.5) theta(-1.0 0.5) nsim(1) generate(gwsim)
-qui nw_syntax gwsim, max(1)
+qui _nwsyntax gwsim, max(1)
 assert `nodes' == 6
 
 * --- error paths.
@@ -97,7 +97,7 @@ assert _rc == 198
 nwclear
 set seed 5005
 qui nwergm simulate 7, edges gwesp(.5) directed theta(-1.0 0.5) nsim(1) generate(dgwsim)
-qui nw_syntax dgwsim, max(1)
+qui _nwsyntax dgwsim, max(1)
 assert `nodes' == 7
 
 * =====================================================================
@@ -161,7 +161,7 @@ nwclear
 set seed 5007
 qui nwergm simulate 8, edges sender receiver directed ///
 	theta(-1.5 .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 .3) nsim(1) generate(sndsim)
-qui nw_syntax sndsim, max(1)
+qui _nwsyntax sndsim, max(1)
 assert `nodes' == 8
 assert "`directed'" == "true"
 
@@ -200,7 +200,7 @@ set obs 12
 gen grp3 = mod(_n,2)
 set seed 5009
 qui nwergm simulate 12, edges nodematch(grp3) degree(2) theta(-2 1 .5) nsim(1) mcmcburnin(3000) generate(combosim)
-qui nw_syntax combosim, max(1)
+qui _nwsyntax combosim, max(1)
 assert `nodes' == 12
 
 * --- spcache (docs/CERTIFICATION.md unit 132): wired through the
@@ -265,7 +265,7 @@ set seed 6001
 qui nwrandom 8, prob(.3) undirected name(refnet3)
 set seed 6002
 qui nwergm simulate 8, edges nodecov(x) absdist(x) hamming(refnet3) theta(-2 .1 .1 .2) nsim(1) mcmcburnin(3000) generate(covsim1)
-qui nw_syntax covsim1, max(1)
+qui _nwsyntax covsim1, max(1)
 assert `nodes' == 8
 assert "`directed'" == "false"
 
@@ -276,7 +276,7 @@ set obs 8
 gen x = _n
 set seed 6003
 qui nwergm simulate 8, edges nodeicov(x) nodeocov(x) directed theta(-2 .1 .1) nsim(1) mcmcburnin(3000) generate(covsim2)
-qui nw_syntax covsim2, max(1)
+qui _nwsyntax covsim2, max(1)
 assert `nodes' == 8
 assert "`directed'" == "true"
 
@@ -294,7 +294,7 @@ gen grp = mod(_n,2)
 set seed 6004
 qui nwergm simulate 10, edges nodematchdiff(grp) nodefactor(grp) nodemix(grp) ///
 	theta(-1.5 .5 -.5 .3 .1 .2 .1) nsim(1) mcmcburnin(3000) generate(covsim3)
-qui nw_syntax covsim3, max(1)
+qui _nwsyntax covsim3, max(1)
 assert `nodes' == 10
 assert "`directed'" == "false"
 
@@ -306,7 +306,7 @@ gen grp = mod(_n,2)
 set seed 6005
 qui nwergm simulate 10, edges nodeofactor(grp) nodeifactor(grp) directed ///
 	theta(-1.5 .3 .3) nsim(1) mcmcburnin(3000) generate(covsim4)
-qui nw_syntax covsim4, max(1)
+qui _nwsyntax covsim4, max(1)
 assert `nodes' == 10
 assert "`directed'" == "true"
 
@@ -316,7 +316,7 @@ nwclear
 set seed 6006
 qui nwergm simulate 10, edges concurrent triangle kstar(2) degrange(2) esp(1) dsp(1) ///
 	theta(-1.5 .3 .1 .1 .1 .1 .1) nsim(1) mcmcburnin(3000) generate(strucsim1)
-qui nw_syntax strucsim1, max(1)
+qui _nwsyntax strucsim1, max(1)
 assert `nodes' == 10
 assert "`directed'" == "false"
 
@@ -328,7 +328,7 @@ set seed 6007
 qui nwergm simulate 8, edges ctriple transitiveties cyclicalties odegree(2) idegree(2) ///
 	ostar(2) istar(2) odegrange(2) idegrange(2) directed ///
 	theta(-1.5 .1 .1 .1 .3 .3 .1 .1 .3 .3) nsim(1) mcmcburnin(3000) generate(strucsim2)
-qui nw_syntax strucsim2, max(1)
+qui _nwsyntax strucsim2, max(1)
 assert `nodes' == 8
 assert "`directed'" == "true"
 
@@ -339,7 +339,7 @@ nwclear
 set seed 6008
 qui nwergm simulate 8, edges gwdsp(.4) gwnsp(.3) gwdegree(.5) theta(-1.5 .2 .2 .3) ///
 	nsim(1) mcmcburnin(3000) generate(gwrest1)
-qui nw_syntax gwrest1, max(1)
+qui _nwsyntax gwrest1, max(1)
 assert `nodes' == 8
 assert "`directed'" == "false"
 
@@ -347,7 +347,7 @@ nwclear
 set seed 6009
 qui nwergm simulate 8, edges gwodegree(.4) gwidegree(.3) directed theta(-1.5 .3 .3) ///
 	nsim(1) mcmcburnin(3000) generate(gwrest2)
-qui nw_syntax gwrest2, max(1)
+qui _nwsyntax gwrest2, max(1)
 assert `nodes' == 8
 assert "`directed'" == "true"
 
@@ -371,7 +371,7 @@ foreach __ergm_ty in ITP OSP ISP RTP {
 	nwclear
 	set seed 6010
 	qui nwergm simulate 8, edges gwesp(.6) directed type(`__ergm_ty') theta(-1.2 .5) nsim(1) mcmcburnin(3000) generate(typesim_`__ergm_ty')
-	qui nw_syntax typesim_`__ergm_ty', max(1)
+	qui _nwsyntax typesim_`__ergm_ty', max(1)
 	assert `nodes' == 8
 	assert "`directed'" == "true"
 	qui nwtomata typesim_`__ergm_ty', mat(__typemat_`__ergm_ty')
@@ -425,7 +425,7 @@ qui nwergm simulate `=`n1'+`n2'', edges bipartite(`n1') theta(`theta') nsim(`nsi
 tempname bties
 scalar `bties' = 0
 forvalues i = 1/`nsim' {
-	qui nw_syntax bipedge_`i', max(1)
+	qui _nwsyntax bipedge_`i', max(1)
 	assert `nodes' == `n1' + `n2'
 	assert "`directed'" == "false"
 	assert "`is2mode'" == "true"
@@ -473,7 +473,7 @@ gen grpb = mod(_n,2)
 set seed 7003
 qui nwergm simulate 9, edges bcov2(x2) bfactor1(grpb) bfactor2(grpb) bipartite(5) ///
 	theta(-1.5 .2 .3 .3) nsim(1) mcmcburnin(3000) generate(bfacsim)
-qui nw_syntax bfacsim, max(1)
+qui _nwsyntax bfacsim, max(1)
 assert `nodes' == 9
 assert "`is2mode'" == "true"
 
@@ -485,7 +485,7 @@ nwclear
 set seed 7004
 qui nwergm simulate 9, edges bdegree1(1) bdegree2(1) bstar1(2) bstar2(2) bipartite(5) ///
 	theta(-1.5 .3 .3 .1 .1) nsim(1) mcmcburnin(3000) generate(bdegsim)
-qui nw_syntax bdegsim, max(1)
+qui _nwsyntax bdegsim, max(1)
 assert `nodes' == 9
 assert "`is2mode'" == "true"
 
@@ -521,12 +521,12 @@ nwclear
 set seed 7006
 qui nwergm simulate 9, edges bgwdegree1(.5) bgwdegree2(.5) bipartite(5) ///
 	theta(-1.5 .3 .3) nsim(1) mcmcburnin(3000) generate(bgwsim)
-qui nw_syntax bgwsim, max(1)
+qui _nwsyntax bgwsim, max(1)
 assert `nodes' == 9
 assert "`is2mode'" == "true"
 
 * --- round-trip: a simulated bipartite draw estimates back cleanly
-* through the actual nwergm estimation command (not merely `nw_syntax'
+* through the actual nwergm estimation command (not merely `_nwsyntax'
 * accepting it) - the SAME correctness contract the offset()/curved
 * MCMLE units elsewhere in this suite hold estimation to, now checked
 * on a simulate-produced network.

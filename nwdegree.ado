@@ -9,7 +9,7 @@ program nwdegree
 	// behavior ("In case degree centrality is calculated for z networks
 	// at the same time... the command generates the variables
 	// _outdegree_z and _indegree_z for each network"), but the code
-	// never actually implemented it: "nw_syntax ..., max(1)" capped the
+	// never actually implemented it: "_nwsyntax ..., max(1)" capped the
 	// argument to exactly one network, and what looked like the start of
 	// a loop ("if networks > 1 { local k = 1 ... }") never actually
 	// wrapped anything - the rest of the body ran once unconditionally
@@ -21,8 +21,8 @@ program nwdegree
 	// documented as unsupported. Single-network calls (still the common
 	// case) are unaffected: default output variable names have no
 	// suffix, exactly as before.
-	nw_syntax `netname', max(9999)
-	// The "networks" local gets clobbered by the inner nw_syntax call
+	_nwsyntax `netname', max(9999)
+	// The "networks" local gets clobbered by the inner _nwsyntax call
 	// below (which re-parses one network at a time and resets it to 1
 	// each iteration) - capture the true total here, before the loop
 	// starts, matching the convention already used elsewhere in this
@@ -32,7 +32,7 @@ program nwdegree
 	local totalnetworks = `networks'
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		// Plain degree has no meaningful definition on a two-mode
 		// network's own square-matrix sense (every node's "neighbors"

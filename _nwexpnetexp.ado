@@ -81,7 +81,7 @@ program _nwexpnetexp
 			local found = 0
 			
 			// word is a network
-			capture nw_syntax `x'
+			capture _nwsyntax `x'
 			if (_rc == 0){	
 				local found = 1
 				local exp = subinword(`"`exp'"', `"`x'"', "(*`netobj'->get_matrix()) ",1)

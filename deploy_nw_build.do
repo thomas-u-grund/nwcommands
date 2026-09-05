@@ -12,7 +12,7 @@
 *      nwcommands-hlp1.pkg/-hlp2.pkg, nwcommands-dlg1.pkg/-dlg2.pkg,
 *      stata.toc, nwcommands.sthlp) from _pkg_ado.txt/_pkg_hlp.txt (and a
 *      live directory glob for .dlg/.idlg) via _nwdeploy.ado - this is the
-*      step that was never run at all for nw_syntax.ado and 9 other real,
+*      step that was never run at all for _nwsyntax.ado and 9 other real,
 *      documented commands until 2026-09-02, leaving them silently absent
 *      from every net install despite being fully implemented and indexed
 *      in nw_alphabetical.sthlp.

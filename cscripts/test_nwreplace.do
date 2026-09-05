@@ -57,7 +57,7 @@ di "=== r(symmetric)/r(valued) REGRESSION VERIFIED ==="
 * wipes r() the moment it runs. Only a bracket-replace that makes an
 * undirected network's matrix genuinely asymmetric (one cell, not its
 * mirror) triggers that branch; replacing the whole matrix at once
-* (rtest above) never does, since nw_syntax's own symmetrization keeps
+* (rtest above) never does, since _nwsyntax's own symmetrization keeps
 * it symmetric throughout.
 nwclear
 nwset, mat((0,1\1,0)) name(rtest2) undirected
@@ -69,7 +69,7 @@ assert r(directed) == "false"
 di "=== _nwname-clobbers-r() REGRESSION VERIFIED ==="
 
 * --- failure paths: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482); an
+* _nwsyntax's own "Network X not found" check (error 482); an
 * out-of-range bracket subscript is rejected with this command's own
 * "nwsubset ... invalid" error (6400).
 nwclear

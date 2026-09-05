@@ -5,19 +5,19 @@ program nwutility
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
 	// low-level Mata error ("subscript invalid", r3301) from inside
-	// `nw_syntax' itself, instead of this package's usual clean
+	// `_nwsyntax' itself, instead of this package's usual clean
 	// "{err}...{txt}" message.
-	capture nw_syntax `netname', max(1)
+	capture _nwsyntax `netname', max(1)
 	if _rc != 0 {
 		di "{err}Network {bf:`netname'} not found."
 		error `errNWsNotFound'
 	}
-	// _nwsyntax (now nw_syntax directly, since _nwsyntax never
+	// _nwsyntax (now _nwsyntax directly, since _nwsyntax never
 	// re-exports the node count) gives the main network's node
 	// count, but the intrvalue()/intrcost() branches below call
-	// nw_syntax again for a different network - which would silently
+	// _nwsyntax again for a different network - which would silently
 	// overwrite the main network's own name and node-count locals
-	// too, since nw_syntax exports both under the same plain names
+	// too, since _nwsyntax exports both under the same plain names
 	// every time it's called. Captured once here, before any second
 	// call, and the network name is restored from the backup
 	// afterward (the backup already existed in this file, unused,
@@ -36,7 +36,7 @@ program nwutility
 	}
 
 	if "`intrvalue'" != "" {
-		nw_syntax `intrvalue', max(1)
+		_nwsyntax `intrvalue', max(1)
 		if `nodes' != `netnodes' {
 			// Error-code coherence pass: `errNWsSizeMismatch' (6056,
 			// unw_defs.ado) already names this exact situation for
@@ -53,7 +53,7 @@ program nwutility
 	}
 
 	if "`intrcost'" != "" {
-		nw_syntax `intrcost', max(1)
+		_nwsyntax `intrcost', max(1)
 		if `nodes' != `netnodes' {
 			di "{err}network {bf:`intrcost'} of wrong size"
 			error `errNWsSizeMismatch'

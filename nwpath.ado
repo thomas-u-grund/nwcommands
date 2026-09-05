@@ -35,7 +35,7 @@ program nwpath
 		di "{err}Either options {bf:ego()} or {bf:egoid} needs to be specified"
 		err 99
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	
 	if `egoid' != 0 {
 		qui capture nwnode `netname', egoid(`egoid')
@@ -77,7 +77,7 @@ program nwpath
 	if "`sym'" != "" {
 		nwduplicate `netname', name(`_sym')
 		nwsym `_sym'
-		nw_syntax `_sym'
+		_nwsyntax `_sym'
 		local symtext " (symmetrized)"
 		local undirected_sign "<"
 	}
@@ -126,7 +126,7 @@ program nwpath
 	
 	if "`generate'" != "" {
 		forvalues i = 1/`r(paths)' {
-			capture nw_syntax `generate'_`i', other("other")
+			capture _nwsyntax `generate'_`i', other("other")
 			if _rc == 0 & "`nwreplace'" == "" {
 				capture nwdrop `_sym'
 				di "{pstd} {err}Network {bf:`generate'_`i'} already exists; use {bf:nwreplace} or specify another stub {bf:generate()}{p_end}"
@@ -134,7 +134,7 @@ program nwpath
 			}
 			capture nwdrop `generate'_`i'
 			nwduplicate `netname', name(`generate'_`i')
-			nw_syntax 
+			_nwsyntax 
 			mata: `netobj'-> set_edge(makenet(`_path', `i', `nodes'))
 		}
 	}

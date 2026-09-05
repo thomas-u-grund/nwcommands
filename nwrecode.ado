@@ -19,10 +19,10 @@ program nwrecode
 	// incompatible with the modern network storage architecture (it
 	// references a legacy nw_mata<id> Mata global that no longer
 	// exists - the same bug already found and fixed in nwcloseness
-	// this session). nw_syntax's own other() option gives the exact
+	// this session). _nwsyntax's own other() option gives the exact
 	// same othernetname/othernodes/otherid/otherdirected naming
 	// convention _nwsyntax_other used, so it's a direct drop-in.
-	nw_syntax `netname', max(9999) other(other)
+	_nwsyntax `netname', max(9999) other(other)
 
 	preserve
 	tokenize `generate'
@@ -30,9 +30,9 @@ program nwrecode
 	foreach onenet in `othernetname' {
 		// was "_nwsyntax `onenet'" - the deprecated _nwsyntax wrapper
 		// never re-exports `directed' at all (only netobj/id/netname/
-		// networks), so this local was always empty; nw_syntax
+		// networks), so this local was always empty; _nwsyntax
 		// exports it directly.
-		nw_syntax `onenet'
+		_nwsyntax `onenet'
 		local onedirected `directed'
 		// was "forcedirected" - nwtoedge has no such option; the
 		// option that actually forces both (i,j) and (j,i) into the

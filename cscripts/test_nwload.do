@@ -26,14 +26,14 @@ assert v2[3] == 1
 
 nwclear
 nwset, mat(J(6,6,2)) name("mynet2")
-nw_syntax
+_nwsyntax
 mata: `netobj'->edge[3,1]=999
 
 nwload mynet2
 assert `cDftNodepref'1[3] == 999
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwload nonexistent
 assert _rc == 482
 

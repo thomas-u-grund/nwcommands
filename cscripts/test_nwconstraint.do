@@ -81,6 +81,6 @@ mata: assert(reldif(C3[1,3], (1/4)^2) < 1e-8)
 mata: assert(reldif(C3[1,4], (1/4)^2) < 1e-8)
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwconstraint nonexistent
 assert _rc == 482

@@ -2,7 +2,7 @@
 capture program drop nwassortativity
 program nwassortativity, rclass
 	syntax [anything(name=netname)] [, attribute(varname) weighted silent]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	tempname attr pairs corrmat
 	if "`attribute'" == "" {

@@ -14,14 +14,14 @@ program nwconcor, rclass
 		error 198
 	}
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {
 		local k = 1
 	}
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		local netmeasure "`measure'"
 		if "`netmeasure'" == "" {
@@ -81,7 +81,7 @@ program nwconcor, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		tempname __nw_concor
 		capture noisily mata: `__nw_concor' = `netobj'->calculate_concor(`splits', `val', `maxiter')

@@ -4,7 +4,7 @@ program nwrandomwalk, rclass
 	version 12
 	syntax [anything(name=netname)], TARGET(string) [GENerate(string) replace silent]
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	qui nwnode `netname', ego(`target')
 	local tid `r(nodeid)'

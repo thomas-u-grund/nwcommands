@@ -5,13 +5,13 @@ program nwdynam, eclass
 	syntax [anything(name=netname)] [, SUBMODEL(string) INERTIA RECIP INDEG OUTDEG TRANS CYCLE COMMONSENDER COMMONRECEIVER FOUR NODETRANS SAME(varname numeric) DIFF(varname numeric) SIM(varname numeric) EGO(varname numeric) ALTER(varname numeric) TERTIUS(varname numeric) EGOALTERINT(varlist numeric min=2 max=2) INERTIAWINDOW(real -1) RECIPWINDOW(real -1) INDEGWINDOW(real -1) OUTDEGWINDOW(real -1) WEIGHTEDINERTIA WEIGHTEDRECIP WEIGHTEDINDEG WEIGHTEDOUTDEG OPPORTUNITIES(varlist numeric min=2 max=2) TIE(string) INTERCEPT SEED(integer -1)]
 	set more off
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	// `__nwdynam_n1' (mode-1 actor count, contiguous indices 1..n1 in
 	// this package's own combined actor-index convention) - 0 sentinel
 	// for "not two-mode", matching this file's own -1/1e300 "not given"
 	// sentinel conventions elsewhere. Extracted unconditionally right
-	// after nw_syntax (cheap even when unused) since both the two-mode
+	// after _nwsyntax (cheap even when unused) since both the two-mode
 	// effect-eligibility checks below and the Mata dispatch at the very
 	// end need it.
 	if "`is2mode'" == "true" {
@@ -77,7 +77,7 @@ program nwdynam, eclass
 	// is available, rather than assumed.
 	// choice/rate v1 scope (docs/DYNAM_ROADMAP.md scope decision 1,
 	// resolved 2026-09-02): directed-only. A two-mode network reports
-	// `directed' == false from nw_syntax (confirmed directly - ERGM's
+	// `directed' == false from _nwsyntax (confirmed directly - ERGM's
 	// own bipartite convention, where ties have no inherent direction),
 	// even though a two-mode DyNAM event network IS inherently
 	// directional in the sender/receiver sense goldfish itself assumes
@@ -678,7 +678,7 @@ program nwdynam, eclass
 	// EXOGENOUS network instead of the dependent one. v1 scope (a real,
 	// disclosed limit, not silently narrow): `tie()' takes the NAME of
 	// an already-declared, ORDINARY (non-event) network - resolved via
-	// {help nw_syntax}'s own `other()' prefix mechanism so its own
+	// {help _nwsyntax}'s own `other()' prefix mechanism so its own
 	// locals (`__nwdynam_tienet_netobj' etc.) never clash with the
 	// primary network's own already-resolved locals. Genuinely
 	// dynamically-evolving cross-network effects (where the SECOND
@@ -703,7 +703,7 @@ program nwdynam, eclass
 			di as error "tie() only applies to submodel(choice) or submodel(choice_coordination) - see {help nwdynam}."
 			error 198
 		}
-		nw_syntax `tie', other(__nwdynam_tienet_) max(1)
+		_nwsyntax `tie', other(__nwdynam_tienet_) max(1)
 		if "`__nwdynam_tienet_istemporal'" == "true" {
 			di as error "tie(`tie') is an event-type (eventtime()-declared) network - tie() in this release only supports a STATIC exogenous network (a real, disclosed v1 scope limit; genuinely dynamically-evolving cross-network effects are not yet implemented) - see {help nwdynam}."
 			error 198

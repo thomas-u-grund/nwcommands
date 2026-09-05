@@ -4,7 +4,7 @@ program nwreach
 	// referenced anywhere in this file's body (a fully dead, undocumented
 	// no-op).
 	syntax [anything(name=reachnet)], [ name(string) xvars sym nwreplace]
-	nw_syntax `reachnet', name(reachnet)
+	_nwsyntax `reachnet', name(reachnet)
 	unw_defs
 
 	if "`name'" == "" {
@@ -19,7 +19,7 @@ program nwreach
 	// Unlike this, every sibling command in the group (nwgeodesic/
 	// nwpath/nwbridges) requires `nwreplace' before overwriting an
 	// existing target name - now matches that convention.
-	capture nw_syntax `name', other(_check)
+	capture _nwsyntax `name', other(_check)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}Network {bf:`name'} already exists; specify {bf:nwreplace} or a different {bf:name()}."
 		error 99
@@ -30,7 +30,7 @@ program nwreach
 	qui nwgeodesic `reachnet', name(`name') `sym' unconnected(`missing2') nwreplace
 	qui nwreplace `name' = 1 if `name' != (`missing2')
 	qui nwreplace `name' = 0 if `name' == (`missing2')
-	nw_syntax `name'
+	_nwsyntax `name'
 	mata: `netobj'->set_valued(0)
 	
 	if "`xvars'" != "" {

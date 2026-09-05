@@ -138,7 +138,7 @@ mata: test_multiplex_stage1(16)
 * from `program nwsaom' the same way `nwergm simulate' dispatches to
 * `nwergm_simulate', at ZERO regression risk to the main `nwsaom'
 * command's own already-large option surface). Confirms the whole
-* nw_syntax()/NWdef-bridge/ereturn-posting chain works, not just the
+* _nwsyntax()/NWdef-bridge/ereturn-posting chain works, not just the
 * underlying Mata estimator (already certified above).
 * -------------------------------------------------------------------
 nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(mp_net1w1) labs(A,B,C,D,E,F)
@@ -154,7 +154,7 @@ assert e(rate2) > 0 & e(rate2) < 20
 assert colsof(e(b)) == 4
 assert rowsof(e(V)) == 4 & colsof(e(V)) == 4
 
-di as text "test_nwsaom_multiplex.do ado-level PASS: nwsaom multiplex ran end to end (nw_syntax/bridge/ereturn all correct), e(b)/e(V)/e(rate1)/e(rate2) all well-formed"
+di as text "test_nwsaom_multiplex.do ado-level PASS: nwsaom multiplex ran end to end (_nwsyntax/bridge/ereturn all correct), e(b)/e(V)/e(rate1)/e(rate2) all well-formed"
 
 di as text "{hline}"
 di as text "test_nwsaom_multiplex.do: ALL TESTS PASSED"

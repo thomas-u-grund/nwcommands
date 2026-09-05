@@ -5,7 +5,7 @@ program nwspectral, rclass
 	syntax [anything(name=netname)][, GENerate(string) bipartition measure(string) replace silent]
 	set more off
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	local netmeasure "`measure'"
 	if "`netmeasure'" == "" {
@@ -56,7 +56,7 @@ program nwspectral, rclass
 	qui if _N < `nodes' {
 		set obs `nodes'
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	tempname __nw_L __nw_EC __nw_EV __nw_ord __nw_fiedler
 	mata: `__nw_L' = `netobj'->calculate_laplacian(`val')

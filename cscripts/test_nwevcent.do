@@ -59,6 +59,6 @@ assert _rc == 99
 di "=== error-code coherence REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwevcent nonexistent
 assert _rc == 482

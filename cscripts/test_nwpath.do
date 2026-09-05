@@ -68,7 +68,7 @@ di "=== valued-network path REGRESSION VERIFIED ==="
 * never actually fired; confirmed directly before this fix, the call
 * fell through to a confusing "Node  or  does not exist" instead);
 * sym and generate() cannot be combined (err 99); a name that isn't a
-* loaded network is rejected via nw_syntax (482).
+* loaded network is rejected via _nwsyntax (482).
 nwclear
 nwset, mat((0,1\1,0)) name(pathfailnet) labs(A,B)
 capture noisily nwpath pathfailnet

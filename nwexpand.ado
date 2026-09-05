@@ -20,12 +20,12 @@ program nwexpand
 		// creates glasgow1/glasgow2/glasgow3, never a network literally
 		// named "glasgow" - the .sthlp's own example has been corrected
 		// to use glasgow1).
-		capture nw_syntax `network', other(_check) max(1)
+		capture _nwsyntax `network', other(_check) max(1)
 		if _rc != 0 {
 			di "{err}Network {bf:`network'} not found."
 			error `errNWsNotFound'
 		}
-		nw_syntax `network', max(1)
+		_nwsyntax `network', max(1)
 		qui nwsummarize `netname'
 		local labs "`r(labs)'"
 	}

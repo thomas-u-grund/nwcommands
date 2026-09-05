@@ -10,12 +10,12 @@ set seed 1
 * nwqap had zero test coverage before this session, and could not
 * previously execute at all: it used the deprecated _nwsyntax wrapper,
 * which only re-exports 4 locals (netobj/id/netname/networks) to its
-* caller out of the many nw_syntax itself sets (nodes/directed/valued/
+* caller out of the many _nwsyntax itself sets (nodes/directed/valued/
 * is2mode/labs/datasync/selfloops) - so `nodes' was always empty in
 * nwqap.ado, and the very first Mata call referencing it
 * ("J((`nodes' * `nodes'),...)") crashed with r(3000) "nothing found
 * where subexp expected" on every single call, regardless of input.
-* Fixed by switching to nw_syntax directly (also resolves the legacy-
+* Fixed by switching to _nwsyntax directly (also resolves the legacy-
 * architecture item flagged in docs/COMMAND_AUDIT.md's cross-cutting
 * inconsistencies list).
 *
@@ -169,7 +169,7 @@ nwset, mat((0,1,0,1,0\1,0,1,0,1\0,1,0,0,1\1,0,0,0,0\0,1,1,0,0)) name(iv1) undire
 nwset, mat((0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0)) name(wdv) undirected labs(A,B,C,D,E)
 nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
 assert _rc == 0
-capture nw_syntax wdvfitted, other(_check)
+capture _nwsyntax wdvfitted, other(_check)
 assert _rc == 0
 nwtomata wdvfitted, mat(fittedcheck)
 mata: st_numscalar("maxdiff", max(abs(fittedcheck - (0,2,0,2,0\2,0,2,0,2\0,2,0,0,2\2,0,0,0,0\0,2,2,0,0))))
@@ -211,7 +211,7 @@ nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
 assert _rc == 0
 nwqap wdv iv1, permutations(2) type(regress) predict(wdvfitted)
 assert _rc == 0
-capture nw_syntax wdvfitted_1, other(_check)
+capture _nwsyntax wdvfitted_1, other(_check)
 assert _rc == 0
 
 

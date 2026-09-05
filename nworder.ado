@@ -3,7 +3,7 @@ program nworder
 	syntax anything(name=netname) [, *]
 	unw_defs
 	local userorder `netname'
-	nw_syntax _all, max(9999)
+	_nwsyntax _all, max(9999)
 	local allnets `netname'
 	local netname `userorder'
 

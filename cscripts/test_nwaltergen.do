@@ -114,7 +114,7 @@ assert _rc != 0
 nwclear
 nwset, mat((0,1\1,0)) name(basenet)
 nwgen dup1 = duplicate(basenet)
-capture nw_syntax dup1
+capture _nwsyntax dup1
 assert _rc == 0
 
 * --- proportion(alter.srcvar==value) / proportion(alter.srcvar!=value)

@@ -37,7 +37,7 @@ di "=== nwunab r(networks) REGRESSION VERIFIED ==="
 * real bound) must be treated as "no max given", not forwarded to
 * `unab' as-is - `unab' would otherwise misread `.' as a real max()
 * value and wrongly reject a match count it would otherwise accept. No
-* current caller actually triggers this (nw_syntax.ado, the only real
+* current caller actually triggers this (_nwsyntax.ado, the only real
 * caller passing max(), always supplies a concrete integer default),
 * but the defense is real and worth keeping/testing regardless.
 * Placed before the failure-path tests below deliberately: a `unab'

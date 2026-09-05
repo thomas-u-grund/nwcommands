@@ -6,7 +6,7 @@ program nwtoedge
 	ego(name) alter(name) full ignore2mode comparevars(varlist) comparemode(string)]
 
 	unw_defs
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	local nets `netname'
 
 	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
@@ -154,7 +154,7 @@ program nwtoedge
 	
 	// Check if there is at least one directed network in the list
 	qui foreach net in `nets' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		if "`directed'" == "true" {
 			local full = "full"
 		}
@@ -162,7 +162,7 @@ program nwtoedge
 
 	local i = 0
 	qui foreach net in `nets' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		tempfile __nwedgelist`i'
 		
 		if "`upper'" != "" & "`directed'" == "true" {

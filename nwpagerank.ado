@@ -13,7 +13,7 @@ program nwpagerank, rclass
 		error 198
 	}
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`generate'" == "" {
 		local generate "_pagerank"

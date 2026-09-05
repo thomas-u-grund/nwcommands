@@ -29,6 +29,6 @@ assert _rc != 0
 di "=== nwgenvar lacks nwgen's alter.srcvar shortcut, as documented ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nwgenerate's own nw_syntax passthrough (error 482).
+* nwgenerate's own _nwsyntax passthrough (error 482).
 capture noisily nwgenvar deg2 = degree(nonexistent)
 assert _rc != 0

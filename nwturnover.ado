@@ -5,16 +5,16 @@ program nwturnover, rclass
 	syntax anything(name=netnames) [, GENerate(string) REPlace silent]
 	set more off
 
-	nw_syntax `netnames', max(2) min(2)
+	_nwsyntax `netnames', max(2) min(2)
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
 
-	nw_syntax `netname1'
+	_nwsyntax `netname1'
 	local nodes1 `nodes'
 	local directed1 `directed'
 	local netobj1 `netobj'
 
-	nw_syntax `netname2'
+	_nwsyntax `netname2'
 	local nodes2 `nodes'
 	local directed2 `directed'
 	local netobj2 `netobj'
@@ -43,9 +43,9 @@ program nwturnover, rclass
 	qui if _N < `nodes1' {
 		set obs `nodes1'
 	}
-	nw_syntax `netname1'
+	_nwsyntax `netname1'
 	local netobj1 `netobj'
-	nw_syntax `netname2'
+	_nwsyntax `netname2'
 	local netobj2 `netobj'
 
 	tempname __nw_A1 __nw_A2 __nw_pernode __nw_turnrate

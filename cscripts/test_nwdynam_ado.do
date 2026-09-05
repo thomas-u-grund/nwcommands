@@ -492,7 +492,7 @@ di as text "{hline 60}"
 di as text "Test: nwdynam rejects a self-loop event (sender == receiver)"
 di as text "{hline 60}"
 * 3 distinct actors, not 2 - nwset's own directed-vs-undirected
-* auto-detection (unrelated to nwdynam, a pre-existing nw_syntax
+* auto-detection (unrelated to nwdynam, a pre-existing _nwsyntax
 * quirk found while writing this test) mis-resolves a purely
 * 2-actor eventtime() network as undirected, which would make this
 * test hit nwdynam's OWN directed-only guard instead of the self-loop

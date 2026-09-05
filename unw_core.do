@@ -7595,7 +7595,7 @@ pointer(class `NWdef' scalar) scalar `NWdef'::extract_subgraph(rowvector k){
 	unregistered one - for a caller that needs the induced subgraph to
 	become a genuine, user-visible named network in the `nw.nws' store
 	(e.g. nwneighbor's own `subnet()' option), matching nw2project.ado's
-	own established "nw.nws.add(name), nw_syntax name, populate netobj
+	own established "nw.nws.add(name), _nwsyntax name, populate netobj
 	directly" registration pattern rather than trying to splice a
 	standalone extract_subgraph() pointer into that registry after the
 	fact (unsupported/unverified). Deliberately NOT implemented by having

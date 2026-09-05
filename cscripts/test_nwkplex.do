@@ -188,6 +188,6 @@ assert r(kplexes) == 1
 di "=== silent REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwkplex nonexistent
 assert _rc == 482

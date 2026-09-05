@@ -176,7 +176,7 @@ program nwuse
 	qui keep if _nwnode != ""
 	qui capture drop _nw_*
 	
-	nw_syntax _all, max(99999)
+	_nwsyntax _all, max(99999)
 	qui foreach onenet in `netname' {
 		capture drop `onenet'
 	}

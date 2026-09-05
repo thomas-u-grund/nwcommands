@@ -56,7 +56,7 @@ program nwdyadprob
 	}
 
 	if "`weightnet'" != "" {
-		nw_syntax `weightnet', other(_wn)
+		_nwsyntax `weightnet', other(_wn)
 		mata: `mat' = transformIntoProbs((*`_wnnetobj'->get_matrix()))
 	}
 	

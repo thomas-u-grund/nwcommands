@@ -205,16 +205,16 @@ nwclear
 nwset, mat((0,1,0\0,0,1\0,0,0)) directed name(basenet) labs(A,B,C)
 nwgen transnet = transpose(basenet)
 assert _rc == 0
-nw_syntax basenet
+_nwsyntax basenet
 mata: e1 = *(`netobj'->get_matrix_unvalued())
-nw_syntax transnet
+_nwsyntax transnet
 mata: e2 = *(`netobj'->get_matrix_unvalued())
 mata: assert(e2 == e1')
 * generate() semantics: the SOURCE network must be left untouched,
 * not transposed in place (nwtranspose's own default, no-generate()
 * behaviour) - a real distinction this shortcut relies on getting
 * right, checked directly.
-nw_syntax basenet
+_nwsyntax basenet
 mata: assert(*(`netobj'->get_matrix_unvalued()) == e1)
 
 * path( - deliberately still an error, not silently doing nothing

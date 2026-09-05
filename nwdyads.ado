@@ -4,7 +4,7 @@ program nwdyads
 	version 9
 	syntax [anything(name=netname)],
 	
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	mata: census = `netobj'->calculate_dyadcensus()
 	mata: st_rclear()
 	mata: st_numscalar("r(_001)", census[3])

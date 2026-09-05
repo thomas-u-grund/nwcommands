@@ -110,9 +110,9 @@ assert `"`r(vars)'"'     == `"C Georg_Simmel Thomas_Grund"'
 // "nwsym, check" and compares r(is_symmetric) to the documented string
 // "true" - this was silently never firing before the sparse-backend
 // migration's fixes, since r(is_symmetric) was actually stored numeric
-// at the time; separately, this exercise also depends on nw_syntax's
+// at the time; separately, this exercise also depends on _nwsyntax's
 // own `directed' export not clobbering nwfromedge's own option-parsing
-// locals of the same name, fixed via nw_syntax's other() prefixing).
+// locals of the same name, fixed via _nwsyntax's other() prefixing).
 nwclear
 clear
 input str1 ego str1 alter
@@ -122,7 +122,7 @@ input str1 ego str1 alter
 "C" "B"
 end
 nwfromedge ego alter, name(symnet)
-nw_syntax symnet
+_nwsyntax symnet
 assert `"`directed'"' == `"false"'
 mata: assert(`netobj'->check_symmetry() == 1)
 
@@ -140,7 +140,7 @@ input ego alter value
 4 2 0
 end
 nwfromedge ego alter value, name(zeronet)
-nw_syntax zeronet
+_nwsyntax zeronet
 mata: assert(`netobj'->degree(3) == 0)
 
 * an explicit name() collision must error unless replace is given
@@ -251,7 +251,7 @@ nwfromedge x y, name(selfloopedge)
 nwsummarize selfloopedge
 assert r(arcs) == 2
 assert r(selfloops) == 0
-nw_syntax selfloopedge
+_nwsyntax selfloopedge
 mata:
 __any_selfloop = 0
 for (__i=1; __i<=`nodes'; __i++) {

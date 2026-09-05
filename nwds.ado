@@ -8,7 +8,7 @@ program nwds, rclass
 		local netname = "_all"
 	 }
 	 
-	 nw_syntax `netname', max(`nw_max')
+	 _nwsyntax `netname', max(`nw_max')
 
 	 // BUGFIX: the original code checked `not' - but that local is
 	 // ALWAYS empty, a variant of this pass's own established

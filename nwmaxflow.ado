@@ -3,7 +3,7 @@ capture program drop nwmaxflow
 program nwmaxflow, rclass
 	version 12
 	syntax [anything(name=netname)], SOURCE(string) SINK(string) [WEIGHTed GENerate(string) replace]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	qui nwnode `netname', ego(`source')
 	local srcid `r(nodeid)'

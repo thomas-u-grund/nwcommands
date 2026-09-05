@@ -6,7 +6,7 @@ program nwrename
 	
 	preserve
 	drop _all
-	nw_syntax _all, max(9999)
+	_nwsyntax _all, max(9999)
 	foreach onenet in `netname' {
 		gen `onenet' = .
 	}

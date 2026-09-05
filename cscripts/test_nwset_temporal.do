@@ -27,7 +27,7 @@ input str10 ego str10 alter wave
 end
 nwset ego alter, time(wave) name(snapnet) undirected
 assert _rc == 0
-nw_syntax snapnet
+_nwsyntax snapnet
 assert `"`istemporal'"' == "true"
 assert `"`temporaltype'"' == "snapshot"
 nwname snapnet
@@ -53,7 +53,7 @@ input str10 ego str10 alter startw endw
 end
 nwset ego alter, interval(startw endw) name(ivnet) undirected
 assert _rc == 0
-nw_syntax ivnet
+_nwsyntax ivnet
 assert `"`temporaltype'"' == "interval"
 nwname ivnet
 assert `"`r(startvar)'"' == "startw"
@@ -82,7 +82,7 @@ input str10 sender str10 receiver evtime
 end
 nwset sender receiver, eventtime(evtime) name(evnet)
 assert _rc == 0
-nw_syntax evnet
+_nwsyntax evnet
 assert `"`temporaltype'"' == "event"
 nwname evnet
 assert `"`r(eventtimevar)'"' == "evtime"
@@ -148,5 +148,5 @@ nwset, mat((0,1,1\1,0,1\1,1,0)) name(onemode) undirected labs(A,B,C)
 assert _rc == 0
 nwname onemode
 assert `"`r(temporal)'"' == "false"
-nw_syntax onemode
+_nwsyntax onemode
 assert `"`istemporal'"' == "false"

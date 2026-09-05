@@ -81,7 +81,7 @@ program nwplot, rclass
 		error 198
 	}
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	qui nwsummarize `netname'
 	if `r(density)' == 0 {
 		di "{txt}Network empty. Plotting does not make sense.{txt}"
@@ -123,7 +123,7 @@ program nwplot, rclass
 			}
 		}
 		local netname "__temp_in"
-		nw_syntax `netname', max(1)
+		_nwsyntax `netname', max(1)
 	}
 
      if "`if'"!="" {
@@ -146,7 +146,7 @@ program nwplot, rclass
 		
 		local netname "__temp_if"
 	}
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	// interactive/importcoords() companion (nwedit_template.html). The
 	// node-edit CSV importcoords() reads back is validated and captured
@@ -259,7 +259,7 @@ program nwplot, rclass
 	}
 	local arcbend = `arcbend' * 2
 	
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	
 	local gridcols = ceil(sqrt(`nodes'))
 	local 0 = "`layout'"
@@ -689,7 +689,7 @@ program nwplot, rclass
 		// check and clean networks as edgecolor and edgesize
 		local edgesizekeys_legendoff "`legendoff'"
 		local edgesize "`anything'"			
-		nw_syntax `edgesize', max(1) nocurrent other(other)
+		_nwsyntax `edgesize', max(1) nocurrent other(other)
 		local edgesize_directed = "`otherdirected'"	
 		local edgesize = trim("`othernetname'")
 		local siznodes `othernodes'
@@ -751,7 +751,7 @@ program nwplot, rclass
 		// check and clean network 
 		local edgecolorkeys_legendoff "`legendoff'"
 		local edgecolor "`anything'"
-		nw_syntax `edgecolor', max(1) nocurrent other(other)
+		_nwsyntax `edgecolor', max(1) nocurrent other(other)
 		local edgecolor_directed = "`otherdirected'"	
 		local edgecolor = trim("`othernetname'")
 		local siznodes = `othernodes'

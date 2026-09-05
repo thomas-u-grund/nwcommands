@@ -21,7 +21,7 @@ program nwreplace, rclass
 		local netname = substr("`netname'", 1, `n1')
 	}
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 	
 	local newcmd0 "(*`netobj'->get_matrix())"
@@ -137,7 +137,7 @@ program nwreplace, rclass
 	mata: `cmd'
 	mata: `netobj'->invalidate_sparse()
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	mata: st_numscalar("r(symmetric)", `netobj'->check_symmetry())
 	mata: st_numscalar("r(valued)", `netobj'->check_valued())
 	// BUGFIX: captured into plain locals IMMEDIATELY after the two

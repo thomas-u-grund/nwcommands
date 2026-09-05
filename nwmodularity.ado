@@ -13,14 +13,14 @@ program nwmodularity, rclass
 		error 198
 	}
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {
 		local k = 1
 	}
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		local netmeasure "`measure'"
 		if "`netmeasure'" == "" {

@@ -105,7 +105,7 @@ program nw2fromedge
 	restore
 
 	qui nwfromedge `group1' `group2' `value' `if', `options' `xvars' undirected
-	nw_syntax
+	_nwsyntax
 
 	mata: `modes' = modes_from_labels(`netobj'->get_nodenames(), `group1labels')'
 	mata: `netobj'->set_2mode(1)
@@ -114,7 +114,7 @@ program nw2fromedge
 	mata: `netobj'->set_description_mode2("`group2'")
 	mata: `netobj'->clean_matrix_2mode()
 
-	nw_syntax
+	_nwsyntax
 	_nwdatasync
 	capture order `nw_nodename' `nw_mode'
 	

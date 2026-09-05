@@ -190,7 +190,7 @@ assert _clustering2_lev1[1] != 999
 di "=== replace guard REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482). `replace'
+* _nwsyntax's own "Network X not found" check (error 482). `replace'
 * given so this doesn't instead hit the (already-tested, above)
 * "variable already exists" guard first, which this file's own dataset
 * state would otherwise trip.

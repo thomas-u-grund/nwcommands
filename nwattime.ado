@@ -4,7 +4,7 @@ program nwattime, rclass
 	version 12
 	syntax [anything(name=netname)], AT(real) [name(string) xvars replace]
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`istemporal'" != "true" {
 		di "{err}Network {bf:`netname'} is not temporal; nwattime requires a network declared via {help nwset}'s {bf:time()}, {bf:interval()}, or {bf:eventtime()} options."
@@ -28,7 +28,7 @@ program nwattime, rclass
 	// captured from the SOURCE network's own netobj/name before both
 	// are reassigned to the newly-created static-view network below -
 	// mirrors nw2project.ado's own established pattern for exactly the
-	// same reason (the second nw_syntax call below overwrites `netname'
+	// same reason (the second _nwsyntax call below overwrites `netname'
 	// itself, not just `netobj' - confirmed via a direct probe: without
 	// this capture, the display and provenance note both silently
 	// showed the NEW network's own name instead of the source's).
@@ -52,7 +52,7 @@ program nwattime, rclass
 	mata: st_numscalar("ties", rows(`__edges'))
 
 	mata: nw.nws.add("`name'")
-	nw_syntax `name'
+	_nwsyntax `name'
 	mata: `netobj'->create_by_name_sparse(`__srcnames')
 	// BUGFIX (see docs/CERTIFICATION.md unit 42): create_by_name_sparse()
 	// wipes `name' via its own internal zap() call - nwset.ado's own

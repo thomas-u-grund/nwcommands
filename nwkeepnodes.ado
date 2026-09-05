@@ -29,7 +29,7 @@ program nwkeepnodes
 	// already fully consumed into `nodelist' above, before this call
 	// would overwrite it with the node count - same fix, same
 	// reasoning as nwdropnodes.ado's own identical bug.
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	
 	local newnodelist ""
 	foreach onenode in `nodelist' {

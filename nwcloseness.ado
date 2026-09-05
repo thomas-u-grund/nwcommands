@@ -35,11 +35,11 @@ program nwcloseness
 	if "`sym'" == "" {
 		local symopt "sym"
 	}
-	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
+	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
-	// named the same as any of nw_syntax's other exports, so calling it
+	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	
 	if `networks' > 1 {
 		local k = 1
@@ -79,7 +79,7 @@ program nwcloseness
 		// values, only the redundant intermediate copy is removed -
 		// verified byte-identical against the prior nwtomata-based version
 		// in cscripts/test_nwcloseness.do.
-		nw_syntax _tempgeodesic
+		_nwsyntax _tempgeodesic
 		mata: st_numscalar("r(mindistance)", min(*`netobj'->get_matrix()))
 		mata: far = rowsum(*`netobj'->get_matrix())
 
@@ -90,7 +90,7 @@ program nwcloseness
 			exit
 		}
 		
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		mata: nearness = J(`nodes', 1,1) :/ far
 		mata: closeness = nearness :* (`nodes' - 1)

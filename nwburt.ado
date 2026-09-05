@@ -4,7 +4,7 @@ program nwburt, rclass
 	version 12
 	syntax [anything(name=netname)] [, dyadredundancy dyadconstraint replace silent]
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	foreach v in _effsize _efficiency _constraint _hierarchy {
 		capture confirm variable `v'
@@ -62,12 +62,12 @@ program nwburt, rclass
 		if "`dyadredundancy'" != "" {
 			capture nwdrop dyadredundancy
 			nwset, name(dyadredundancy) mat(dr)
-			nw_syntax `netname'
+			_nwsyntax `netname'
 		}
 		if "`dyadconstraint'" != "" {
 			capture nwdrop dyadconstraint
 			nwset, name(dyadconstraint) mat(dc)
-			nw_syntax `netname'
+			_nwsyntax `netname'
 		}
 
 		mata: effsize = rowsum(`onenet') - rowsum(dr)

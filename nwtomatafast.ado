@@ -14,9 +14,9 @@ program nwtomatafast
 	unw_defs
 	// BUGFIX: same misspelled/nonexistent network name crash (raw Mata
 	// r3301) already fixed in _nwtomata.ado - nwtomatafast doesn't share
-	// that helper (it calls nw_syntax directly for its own performance
+	// that helper (it calls _nwsyntax directly for its own performance
 	// reasons), so needs its own independent fix.
-	capture nw_syntax `netname'
+	capture _nwsyntax `netname'
 	if _rc != 0 {
 		di "{err}Network `netname' not found."
 		error `errNWsNotFound'

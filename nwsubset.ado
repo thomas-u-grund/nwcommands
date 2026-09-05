@@ -7,7 +7,7 @@ program nwsubset
 	
 	syntax [ anything(name=netname)] [if/] [, name(string) replace]
 	
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	local original `netname'
 
 	// BUGFIX (moderate-severity pass, generators_derived group):

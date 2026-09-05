@@ -2,7 +2,7 @@ capture program drop nwevcent
 program nwevcent
 	version 9
 	syntax [anything(name=netname)] , [nosym weighted GENerate(string) replace]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 
 	if "`generate'" == "" {

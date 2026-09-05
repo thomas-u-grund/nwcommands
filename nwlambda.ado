@@ -4,7 +4,7 @@ program nwlambda, rclass
 	version 12
 	syntax [anything(name=netname)] [, name(string) xvars replace]
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`name'" == "" {
 		local name "lambda"
@@ -31,7 +31,7 @@ program nwlambda, rclass
 	nwset, mat(`__nw_lam') name(`name') undirected labs(`labs')
 	mata: mata drop `__nw_lam'
 
-	nw_syntax `name'
+	_nwsyntax `name'
 	mata: `netobj'->set_valued(1)
 
 	return scalar nodes = `nodes'

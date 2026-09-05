@@ -246,7 +246,7 @@ program define nwergm_estat_gof, rclass
 
 	local depvar `"`e(depvar)'"'
 	local edirected `"`e(directed)'"'
-	capture nw_syntax `depvar', max(1)
+	capture _nwsyntax `depvar', max(1)
 	if _rc {
 		di as err "network `depvar' (the network nwergm was fitted on) is no longer loaded - estat gof needs it for the observed comparison statistics."
 		exit 498

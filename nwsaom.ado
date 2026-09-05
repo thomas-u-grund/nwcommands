@@ -359,7 +359,7 @@ program nwsaom, eclass
 	local nodes = .
 	forvalues __w = 1/`__nwsaom_nwaves' {
 		local __wname : word `__w' of `__nwsaom_wavelist'
-		nw_syntax `__wname', max(1) other(w`__w')
+		_nwsyntax `__wname', max(1) other(w`__w')
 		if "`w`__w'is2mode'" == "true" {
 			di "{err}nwsaom does not support two-mode (bipartite) networks."
 			error 198
@@ -2125,10 +2125,10 @@ program define nwsaom_multiplex, eclass
 
 	if `seed' != -1 set seed `seed'
 
-	nw_syntax `netawave1', max(1) other(w1a)
-	nw_syntax `netawave2', max(1) other(w1b)
-	nw_syntax `netbwave1', max(1) other(w2a)
-	nw_syntax `netbwave2', max(1) other(w2b)
+	_nwsyntax `netawave1', max(1) other(w1a)
+	_nwsyntax `netawave2', max(1) other(w1b)
+	_nwsyntax `netbwave1', max(1) other(w2a)
+	_nwsyntax `netbwave2', max(1) other(w2b)
 
 	foreach __w in w1a w1b w2a w2b {
 		if "``__w'directed'" != "true" {

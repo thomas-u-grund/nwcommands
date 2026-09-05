@@ -39,7 +39,7 @@ mata: printf("NativeGraphAvailable() = %g (path: %s)\n", NativeGraphAvailable(),
 // --- (2) undirected, small hand-built graph ---
 nwclear
 nwset, mat((0,1,0,1,0,0\1,0,1,0,0,0\0,1,0,1,1,0\1,0,1,0,0,1\0,0,1,0,0,1\0,0,0,1,1,0)) name(undirnet) undirected
-nw_syntax undirnet
+_nwsyntax undirnet
 mata: cm1 = `netobj'->calculate_betweenness()
 mata: cn1 = `netobj'->calculate_betweenness_native()
 mata: assert(max(abs(cm1 - cn1)) < 1e-9)
@@ -47,7 +47,7 @@ mata: assert(max(abs(cm1 - cn1)) < 1e-9)
 // --- (2) directed, small hand-built graph ---
 nwclear
 nwset, mat((0,1,0,1,0,0\0,0,1,0,0,0\0,0,0,1,1,0\0,0,0,0,0,1\0,0,1,0,0,1\0,0,0,0,0,0)) name(dirnet) directed
-nw_syntax dirnet
+_nwsyntax dirnet
 mata: cm2 = `netobj'->calculate_betweenness()
 mata: cn2 = `netobj'->calculate_betweenness_native()
 mata: assert(max(abs(cm2 - cn2)) < 1e-9)
@@ -55,7 +55,7 @@ mata: assert(max(abs(cm2 - cn2)) < 1e-9)
 // --- (2) isolate: node 4 has no ties at all ---
 nwclear
 nwset, mat((0,1,1,0\1,0,1,0\1,1,0,0\0,0,0,0)) name(isonet) undirected
-nw_syntax isonet
+_nwsyntax isonet
 mata: cm3 = `netobj'->calculate_betweenness()
 mata: cn3 = `netobj'->calculate_betweenness_native()
 mata: assert(max(abs(cm3 - cn3)) < 1e-9)
@@ -64,7 +64,7 @@ mata: assert(cn3[4] == 0)
 // --- (2) disconnected: two separate triangles, no path between them ---
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,0,0,0\0,0,0,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(discnet) undirected
-nw_syntax discnet
+_nwsyntax discnet
 mata: cm4 = `netobj'->calculate_betweenness()
 mata: cn4 = `netobj'->calculate_betweenness_native()
 mata: assert(max(abs(cm4 - cn4)) < 1e-9)
@@ -73,7 +73,7 @@ mata: assert(max(abs(cm4 - cn4)) < 1e-9)
 //     the same way, not just "not crash" ---
 nwclear
 nwset, mat((0,1,-1,1\1,0,1,0\-1,1,0,1\1,0,1,0)) name(signednet) undirected
-nw_syntax signednet
+_nwsyntax signednet
 mata: cm5 = `netobj'->calculate_betweenness()
 mata: cn5 = `netobj'->calculate_betweenness_native()
 mata: assert(max(abs(cm5 - cn5)) < 1e-9)

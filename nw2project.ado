@@ -15,7 +15,7 @@ program nw2project, rclass
 	}
 	_opts_oneof "min max minmax sum mean count binary jaccard cosine" "stat" "`stat'" 6556
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`is2mode'" != "true" {
 		di "{err}Network {bf:`netname'} is not a two-mode network; nw2project requires a two-mode network (see {help nw2set})."
@@ -75,7 +75,7 @@ program nw2project, rclass
 	local provnote "`provnote', stat=`stat'"
 
 	mata: nw.nws.add("`name'")
-	nw_syntax `name'
+	_nwsyntax `name'
 	mata: `netobj'->create_by_name_sparse(`__nw_names')
 	// BUGFIX: create_by_name_sparse() calls zap() internally (wiping
 	// every field, including `name', back to blank - see its own header

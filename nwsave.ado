@@ -14,7 +14,7 @@ program nwsave
 
 	tempfile existing
 	qui save `existing'
-	nw_syntax _all, max(99999)
+	_nwsyntax _all, max(99999)
 	local nets r(networks)
 
 	local format = "edgelist"
@@ -30,7 +30,7 @@ program nwsave
 	qui save`old' `attributes', replace
 	
 	// obtain edgelists for each network together with entries to which network entry belongs
-	nw_syntax _all, max(99999)
+	_nwsyntax _all, max(99999)
 	qui foreach onenet in `netname' {
 		nwload `onenet', labelonly
 		gen _nw_match_`onenet' = 1 if _nwinclude == 1

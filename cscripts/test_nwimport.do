@@ -181,7 +181,7 @@ nwclear
 *      comma-delimited convention: `local labs `"`labs'`nextlab',"''.
 nwimport `"`gmlfix'"', type(gml) name(gmltest) nwclear clear
 assert _rc == 0
-nw_syntax gmltest
+_nwsyntax gmltest
 assert `nodes' == 3
 assert "`directed'" == "true"
 mata: __pg = nw.nws.pdefs[nw.nws.get_index_of("gmltest")]

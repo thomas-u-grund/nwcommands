@@ -4,7 +4,7 @@ program nwdrop
 	version 9
 	syntax [anything(name=netname)] [if] [in], [clean]
 	unw_defs
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `"`if'"' == "" & `"`in'"' == "" {
 		foreach netname_temp in `netname' {
@@ -16,7 +16,7 @@ program nwdrop
 		}
 	}
 	else {
-		nw_syntax `netname', max(1)
+		_nwsyntax `netname', max(1)
 		local n `nodes'
 		_nwdatasync `netname'
 		

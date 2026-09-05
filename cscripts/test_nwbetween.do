@@ -15,7 +15,7 @@ do unw_core.do
 	local (`sym') that syntax never populated, so it had no effect (now
 	fixed to check `nosym' as documented). Fixing `nosym' exposed a third,
 	previously-unreachable bug: the temporary-network cleanup after
-	symmetrizing referenced a local clobbered by an unprefixed nw_syntax
+	symmetrizing referenced a local clobbered by an unprefixed _nwsyntax
 	call; also fixed (see the last test case below).
 */
 
@@ -61,7 +61,7 @@ assert bc3[5] == 0
 // same directed path, without nosym: nwbetween symmetrizes into a
 // temporary *_symmetrized network, computes betweenness there, then must
 // drop the temporary network and restore the original as current - this
-// cleanup step used to reference a clobbered local (nw_syntax with no
+// cleanup step used to reference a clobbered local (_nwsyntax with no
 // arguments overwrites the caller's `netname') and crashed the moment
 // nosym was fixed to actually take the symmetrizing branch; both are
 // fixed together here.
@@ -179,6 +179,6 @@ assert _N >= 4
 di "=== nwbetween: dataset-sync-after-clear REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwbetween nonexistent
 assert _rc == 482

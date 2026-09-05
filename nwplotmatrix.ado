@@ -2,7 +2,7 @@ capture program drop nwplotmatrix
 program nwplotmatrix
 	syntax [anything(name=netname)],[ * sortby(varlist) group(string) lab label(varname) ylabel(string) xlabel(string) BAckground(string) labelopt(string) legendopt(string asis) COlorpalette(string) LColor(string) legend(string asis) tievalue tievalueopt(string) ]
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	// BUGFIX: a single-node network used to crash deep inside this
 	// program with a generic, uninformative "invalid syntax" (r198) -

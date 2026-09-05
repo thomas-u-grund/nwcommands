@@ -3,7 +3,7 @@ capture program drop nwmatching
 program nwmatching, rclass
 	version 12
 	syntax [anything(name=netname)], [GENerate(string) replace silent]
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	if "`generate'" == "" {
 		local generate "_match"

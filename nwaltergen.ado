@@ -88,7 +88,7 @@ program nwaltergen
 		error 99
 	}
 
-	nw_syntax `net'
+	_nwsyntax `net'
 
 	if _N < `nodes' {
 		di as err "dataset has fewer observations (`=_N') than the network has nodes (`nodes')"

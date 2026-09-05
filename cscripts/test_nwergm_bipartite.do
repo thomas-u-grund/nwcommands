@@ -589,7 +589,7 @@ input person event
 end
 nwset person event, twomode name(bipnet)
 
-nw_syntax bipnet, max(1)
+_nwsyntax bipnet, max(1)
 assert "`is2mode'" == "true"
 assert "`directed'" != "true"
 assert `nodes' == 10

@@ -35,7 +35,7 @@ assert         r(nodes)         == 2
 assert         r(id)            == 1
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482), both for the
+* _nwsyntax's own "Network X not found" check (error 482), both for the
 * whole-network-keep path and the if/in row-keep path.
 nwclear
 nwset, mat((1,1,0\0,0,0\1,0,0)) name("first")

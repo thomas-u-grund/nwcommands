@@ -310,16 +310,16 @@ program nwfromedge
 	// call site, see its line using __nwnew rows()).
 	mata: `__nwnodenames' = (get_nodenames_from_string(`"`labs'"', `maxNodes', "`cDftNodepref'"))'
 	mata: `nws'.add("`edgename'")
-	// other(other) namespaces nw_syntax's exported locals as
+	// other(other) namespaces _nwsyntax's exported locals as
 	// `otherXXX' - this program's own `syntax' line already declares
-	// `directed'/`labs' as option locals, and an unprefixed nw_syntax
+	// `directed'/`labs' as option locals, and an unprefixed _nwsyntax
 	// call would silently clobber them via c_local (confirmed the hard
 	// way: the auto-symmetrize block below was always seeing the
 	// network's own post-construction `directed' state instead of the
 	// user's directed/undirected option, because the plain call used
 	// to overwrite it). Same convention nwrecode.ado already uses for
 	// exactly this reason.
-	nw_syntax `edgename', other(other)
+	_nwsyntax `edgename', other(other)
 	mata: `othernetobj'->create_by_name_sparse(`__nwnodenames')
 	mata: `othernetobj'->set_name("`edgename'")
 	mata: `othernetobj'->set_edge_from_triplets(__nwego, __nwalter, __nwvalue, 1)

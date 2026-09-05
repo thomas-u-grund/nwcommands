@@ -32,7 +32,7 @@ program nw2set
 		nwset `varlist', `options' bipartite `xvars' labsfromvar(`rownames') name(`name') labs(`labs') vars(`vars')
 		capture drop `varlist'
 		capture drop `rownames'
-		nw_syntax
+		_nwsyntax
 		mata: `netobj'->set_description_mode1("M")
 		mata: `netobj'->set_description_mode2("N")
 		_nwdatasync

@@ -64,7 +64,7 @@ assert `"`r(attribute)'"' == "x"
 di "=== r(netname)/r(attribute) REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own error 482, before nwtabulate ever looks at
+* _nwsyntax's own error 482, before nwtabulate ever looks at
 * attribute() - reached through the public nwtabulate() dispatcher
 * (nwtab3 is a companion program inside nwtabulate.ado, not
 * independently callable - see test_nwtab1.do's own note on this).

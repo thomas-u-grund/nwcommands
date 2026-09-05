@@ -5,7 +5,7 @@ program nwcomponents, rclass
 	syntax [anything(name=netname)][, lgc GENerate(string) replace silent]
 	set more off
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	
 	if `networks' > 1 {
 		local k = 1
@@ -45,7 +45,7 @@ program nwcomponents, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 		mata: st_store((1::`nodes'),"`generate'`k'", `netobj'->calculate_components())
 
 		qui tab `generate'`k', matrow(comp_id) matcell(comp_size)

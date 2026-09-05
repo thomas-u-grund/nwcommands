@@ -5,14 +5,14 @@ program nwego, rclass
 	syntax [anything(name=netname)][, sizevar(string) densvar(string) replace silent]
 	set more off
 
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 
 	if `networks' > 1 {
 		local k = 1
 	}
 
 	qui foreach netname_temp in `netname' {
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		local netsizevar "`sizevar'"
 		if "`netsizevar'" == "" {
@@ -38,7 +38,7 @@ program nwego, rclass
 		qui if _N < `nodes' {
 			set obs `nodes'
 		}
-		nw_syntax `netname_temp'
+		_nwsyntax `netname_temp'
 
 		tempname __nw_ego
 		mata: `__nw_ego' = `netobj'->calculate_egostats()

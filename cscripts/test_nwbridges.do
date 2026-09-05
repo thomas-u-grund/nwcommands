@@ -79,7 +79,7 @@ nwbridges bridgenet, nwreplace type(distance) name(brdist)
 assert _rc == 0
 
 * --- failure paths: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482); an invalid
+* _nwsyntax's own "Network X not found" check (error 482); an invalid
 * type() value is rejected by _opts_oneof.
 capture noisily nwbridges nonexistent
 assert _rc == 482

@@ -21,7 +21,7 @@ program nwgenerate
 	
 	unw_defs
 		
-	capture nw_syntax `newnetname'
+	capture _nwsyntax `newnetname'
 
 	if _rc == 0 & (strpos("`options'", "replace")==0){
 		// Error-code coherence pass: consolidated onto `errNWsExists'
@@ -135,7 +135,7 @@ program nwgenerate
 		
 		// nwduplicate shortcut
 		qui if "`whichjob'" == "duplicate(" {
-			noi nw_syntax `sub1', max(1) 
+			noi _nwsyntax `sub1', max(1) 
 			nwduplicate `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}	
 
@@ -144,7 +144,7 @@ program nwgenerate
 		// weightnet argument is OPTIONAL (unlike every other netname-
 		// based shortcut here - nwdyadprob can generate a plain random
 		// dyad-probability network with no reference network at all),
-		// so this deliberately skips the pre-validation `nw_syntax'
+		// so this deliberately skips the pre-validation `_nwsyntax'
 		// call the netname-required shortcuts below use - nwdyadprob
 		// resolves (or rejects) `sub1' entirely on its own.
 		qui if "`whichjob'" == "dyadprob(" {
@@ -153,7 +153,7 @@ program nwgenerate
 
 		// nwgeodesic shortcut
 		qui if "`whichjob'" == "geodesic(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwgeodesic `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwhomophily shortcut - restored (harmonisation phase). Note
@@ -194,7 +194,7 @@ program nwgenerate
 		}
 		// nwpermute shortcut
 		qui if "`whichjob'" == "permute(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwpermute `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwpref shortcut - restored (harmonisation phase). `sub1' is a
@@ -208,7 +208,7 @@ program nwgenerate
 		}
 		// nwreach shortcut
 		qui if "`whichjob'" == "reach(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwreach `sub1', `sub2' name(`newnetname') `fcn_opt'
 		}
 		// nwring shortcut - restored (harmonisation phase). `sub1' is a
@@ -233,7 +233,7 @@ program nwgenerate
 		// "produces a new network under `newnetname'" contract at all -
 		// generate() is therefore always supplied here, unconditionally.
 		qui if "`whichjob'" == "transpose(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwtranspose `sub1', `sub2' `fcn_opt' generate(`newnetname')
 		}
 
@@ -289,23 +289,23 @@ program nwgenerate
 		// same strpos() check against `options').
 		local hasreplace = (strpos("`fcn_opt'", "replace") != 0)
 		qui if "`whichjob'" == "components(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwcomponents `sub1', generate(`newnetname') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "lgc(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwcomponents `sub1', lgc generate(`newnetname') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "clustering(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwclustering `sub1', generate(`newnetname') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "between(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwbetween `sub1', generate(`newnetname') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "evcent(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwevcent `sub1', generate(`newnetname') `sub2' `fcn_opt'
 		}
 		// nwcontext requires attribute() - not something this shortcut
@@ -314,7 +314,7 @@ program nwgenerate
 		// the same option-passthrough convention every other shortcut
 		// in this file already uses.
 		qui if "`whichjob'" == "context(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			nwcontext `sub1', generate(`newnetname') `sub2' `fcn_opt'
 		}
 		// nwcloseness always generates its own fixed 3-word set
@@ -325,17 +325,17 @@ program nwgenerate
 		// name in the matching word position and let the other two
 		// fall into throwaway tempvars.
 		qui if "`whichjob'" == "closeness(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			tempvar _tmp_far _tmp_near
 			nwcloseness `sub1', generate(`newnetname' `_tmp_far' `_tmp_near') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "farness(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			tempvar _tmp_close _tmp_near
 			nwcloseness `sub1', generate(`_tmp_close' `newnetname' `_tmp_near') `sub2' `fcn_opt'
 		}
 		qui if "`whichjob'" == "nearness(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			tempvar _tmp_close _tmp_far
 			nwcloseness `sub1', generate(`_tmp_close' `_tmp_far' `newnetname') `sub2' `fcn_opt'
 		}
@@ -355,7 +355,7 @@ program nwgenerate
 		// derived (out+in) variable too, not just the two temp ones
 		// nwdegree generates directly.
 		qui if "`whichjob'" == "degree(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			if "`directed'" == "true" {
 				tempvar _tmp_out _tmp_in
 				nwdegree `sub1', generate(`_tmp_out' `_tmp_in') `sub2' `fcn_opt' silent
@@ -372,7 +372,7 @@ program nwgenerate
 			}
 		}
 		qui if "`whichjob'" == "outdegree(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			if "`directed'" == "true" {
 				tempvar _tmp_in
 				nwdegree `sub1', generate(`newnetname' `_tmp_in') `sub2' `fcn_opt'
@@ -382,7 +382,7 @@ program nwgenerate
 			}
 		}
 		qui if "`whichjob'" == "indegree(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			if "`directed'" == "true" {
 				tempvar _tmp_out
 				nwdegree `sub1', generate(`_tmp_out' `newnetname') `sub2' `fcn_opt'
@@ -392,7 +392,7 @@ program nwgenerate
 			}
 		}
 		qui if "`whichjob'" == "isolates(" {
-			noi nw_syntax `sub1', max(1)
+			noi _nwsyntax `sub1', max(1)
 			if "`directed'" == "true" {
 				tempvar _tmp_out _tmp_in
 				nwdegree `sub1', isolates generate(`_tmp_out' `_tmp_in' `newnetname') `sub2' `fcn_opt'

@@ -4,7 +4,7 @@ program nwexport
 	version 9
 	syntax [anything(name=netname)], type(string) [FName(string asis) replace]	
 	
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	_opts_oneof "pajek ucinet gml edgelist" "type" "`type'" 6556
 
 	if `"`fname'"' == "" {
@@ -38,7 +38,7 @@ program _nwexport_pajek
 	syntax [anything(name=netname)], fname(string) [replace]
 	
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 	
 	tempvar _running
@@ -110,7 +110,7 @@ program _nwexport_ucinet
 	syntax [anything(name=netname)], fname(string) [replace]
 	
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 	
 	tempvar _running
@@ -187,7 +187,7 @@ program _nwexport_gml
 	syntax [anything(name=netname)], fname(string) [replace]
 
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 
 	tempname expfile
@@ -264,7 +264,7 @@ program _nwexport_edgelist
 	syntax [anything(name=netname)], fname(string) [replace]
 
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 
 	preserve

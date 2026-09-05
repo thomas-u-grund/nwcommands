@@ -5,7 +5,7 @@ program nwinduced, rclass
 
 	_opts_oneof "degree betweenness closeness evcent" "measure" "`measure'" 6556
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	// Directed networks are supported for betweenness/closeness/evcent
 	// (each already produces exactly one clean per-node output
@@ -108,7 +108,7 @@ program nwinduced, rclass
 		preserve
 		// BUGFIX (caught before this ever ran, not after): `netobj' is
 		// just this program's own local macro, set by the LAST
-		// `nw_syntax' call - by the end of the PREVIOUS loop iteration
+		// `_nwsyntax' call - by the end of the PREVIOUS loop iteration
 		// it still points at that iteration's own (already-dropped)
 		// `__nwind_sub' network, not back at the real source network.
 		// `preserve'/`restore' only save/restore the Stata DATASET, not
@@ -116,13 +116,13 @@ program nwinduced, rclass
 		// network registry, so `netobj' does not revert on its own -
 		// must re-resolve the real source network explicitly at the
 		// TOP of every iteration, before capturing it as `__nwind_src'.
-		nw_syntax `origname', max(1)
+		_nwsyntax `origname', max(1)
 		tempname __nwind_src __nwind_sel
 		mata: `__nwind_src' = `netobj'
 		mata: `__nwind_sel' = J(1, `n', 1)
 		mata: `__nwind_sel'[`v'] = 0
 		mata: nw.nws.add("__nwind_sub")
-		nw_syntax __nwind_sub
+		_nwsyntax __nwind_sub
 		mata: `__nwind_src'->copy_subgraph_into(`netobj', `__nwind_sel')
 		mata: `netobj'->set_name("__nwind_sub")
 		mata: mata drop `__nwind_sel' `__nwind_src'

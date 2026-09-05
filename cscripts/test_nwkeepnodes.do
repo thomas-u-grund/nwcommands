@@ -10,7 +10,7 @@ do unw_core.do
 * header comment for the full explanation) - `_nwsyntax` only re-
 * exports 4 locals, not `nodes' (the node count), which this file's
 * own `forvalues i = 1/`nodes''` loop (building the complement list)
-* needs directly. Switched to `nw_syntax`, the same fix, same
+* needs directly. Switched to `_nwsyntax`, the same fix, same
 * reasoning as nwdropnodes.ado's identical bug.
 
 * --- 4-node undirected chain A-B-C-D. Keeping nodes 1,3,4 (A,C,D) is
@@ -89,6 +89,6 @@ assert r(nodes) == 7
 di "=== empty keep-list / documented example REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwkeepnodes nonexistent, nodes(1)
 assert _rc == 482

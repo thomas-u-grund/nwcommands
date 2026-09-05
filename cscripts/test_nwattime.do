@@ -26,7 +26,7 @@ assert r(ties) == 2
 assert r(at) == 1
 nwname w1
 assert `"`r(temporal)'"' == "false"
-nw_syntax w1
+_nwsyntax w1
 mata: e = *(`netobj'->get_matrix_unvalued())
 mata: a_id = first_index_match(`netobj'->get_nodenames(), "A")
 mata: b_id = first_index_match(`netobj'->get_nodenames(), "B")
@@ -49,7 +49,7 @@ assert r(ties) == 0
 * --- provenance recorded on the resulting static view, and the
 * SOURCE network's own name/type are shown correctly - not the new
 * view's own name (a real bug found and fixed while building this:
-* the second internal nw_syntax call overwrites the `netname' local
+* the second internal _nwsyntax call overwrites the `netname' local
 * nwattime.ado's own display/provenance code would otherwise read).
 nwattime snapnet, at(2) name(provcheck)
 nwname provcheck
@@ -74,7 +74,7 @@ nwset ego alter, interval(startw endw) name(ivnet) undirected
 * directions), not 1.
 nwattime ivnet, at(1) name(ivt1)
 assert r(ties) == 2
-nw_syntax ivt1
+_nwsyntax ivt1
 mata: e = *(`netobj'->get_matrix_unvalued())
 mata: a_id = first_index_match(`netobj'->get_nodenames(), "A")
 mata: b_id = first_index_match(`netobj'->get_nodenames(), "B")
@@ -86,7 +86,7 @@ mata: assert(e[b_id,c_id] == 0)
 * is active
 nwattime ivnet, at(3) name(ivt3)
 assert r(ties) == 2
-nw_syntax ivt3
+_nwsyntax ivt3
 mata: e = *(`netobj'->get_matrix_unvalued())
 mata: assert(e[first_index_match(`netobj'->get_nodenames(),"A"), first_index_match(`netobj'->get_nodenames(),"B")] == 0)
 mata: assert(e[first_index_match(`netobj'->get_nodenames(),"B"), first_index_match(`netobj'->get_nodenames(),"C")] == 1)
@@ -94,7 +94,7 @@ mata: assert(e[first_index_match(`netobj'->get_nodenames(),"B"), first_index_mat
 * t=1000: A-B long over, B-C (missing end = open-ended) still active
 nwattime ivnet, at(1000) name(ivfar)
 assert r(ties) == 2
-nw_syntax ivfar
+_nwsyntax ivfar
 mata: e = *(`netobj'->get_matrix_unvalued())
 mata: assert(e[first_index_match(`netobj'->get_nodenames(),"B"), first_index_match(`netobj'->get_nodenames(),"C")] == 1)
 
@@ -112,7 +112,7 @@ nwset sender receiver, eventtime(evtime) name(evnet)
 nwattime evnet, at(1.5) name(evview)
 assert _rc == 0
 assert r(ties) == 1
-nw_syntax evview
+_nwsyntax evview
 assert `"`directed'"' == "true"
 mata: e = *(`netobj'->get_matrix_unvalued())
 mata: assert(e[first_index_match(`netobj'->get_nodenames(),"A"), first_index_match(`netobj'->get_nodenames(),"B")] == 1)
@@ -129,7 +129,7 @@ capture noisily nwattime onemode, at(1)
 assert _rc != 0
 
 * --- failure paths: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482); at() is a
+* _nwsyntax's own "Network X not found" check (error 482); at() is a
 * required option (rejected by Stata's own syntax parser without it).
 capture noisily nwattime nonexistent, at(1)
 assert _rc == 482

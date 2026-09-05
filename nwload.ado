@@ -3,7 +3,7 @@ capture program drop nwload
 program nwload
 	syntax [anything(name=netname)][, xvars overwrite labelonly force viewon viewoff nocurrent generate(string)]
 	unw_defs
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	nwname `netname'
 
 	if "`xvars'" != "" {
@@ -71,7 +71,7 @@ program nwload
 	
 	if "`labelonly'" == "" {	
 		mata: `nws'.generate_current_nodesvar()
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		mata: st_store((1::(`netobj'->get_nodes())),`netobj'->nodesvar,(*`netobj'->get_matrix())) 
 
 		order `nw_nodename' 

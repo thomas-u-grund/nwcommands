@@ -11,7 +11,7 @@ program nwdendrogram
 	// other two plotting commands in this group. nwdendrogram has no
 	// live network object to query a possibly-customized name from
 	// (unlike nwplot/nwplotmatrix, it works entirely off Stata's own
-	// native `cluster' results, with no nw_syntax/unw_defs call
+	// native `cluster' results, with no _nwsyntax/unw_defs call
 	// anywhere in this file) - so this always resolves to the
 	// conventional default name, not any customized one. Matches the
 	// sibling commands' own precedence exactly: `lab', when given,

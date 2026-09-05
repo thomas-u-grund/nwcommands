@@ -3,8 +3,8 @@
 *! Author      : Thomas Grund, University College Dublin
 *! Email	   : thomas.u.grund@gmail.com
 
-capture program drop nw_syntax
-program nw_syntax
+capture program drop _nwsyntax
+program _nwsyntax
 	syntax [anything],[max(integer 1) min(passthru) other(string) nocurrent name(string)]
 	unw_defs
 
@@ -29,7 +29,7 @@ program nw_syntax
 		// clean "not found" error immediately below, since an
 		// uncaptured error aborts before the `if _rc != 0' check ever
 		// runs. Confirmed via a minimal repro independent of any other
-		// bug: `nwclear' then `nw_syntax somenetwork' in a single
+		// bug: `nwclear' then `_nwsyntax somenetwork' in a single
 		// session reproduces this on its own.
 		capture mata: st_numscalar("r(id)", first_index_match(`nws'.names, "`lastnet'"))
 	}

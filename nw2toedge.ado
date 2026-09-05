@@ -5,7 +5,7 @@ program nw2toedge
 	ego(name) alter(name) full ignore2mode]
 
 	unw_defs
-	nw_syntax `netname', max(9999)
+	_nwsyntax `netname', max(9999)
 	local nets `netname'
 
 
@@ -52,7 +52,7 @@ program nw2toedge
 
 	// Check if there is at least one directed network in the list
 	qui foreach net in `nets' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		if "`directed'" == "true" {
 			local full = "full"
 		}
@@ -60,7 +60,7 @@ program nw2toedge
 
 	local i = 0
 	qui foreach net in `nets' {
-		nw_syntax `net'
+		_nwsyntax `net'
 		tempfile __nwedgelist`i'
 
 		if "`upper'" != "" & "`directed'" == "true" {

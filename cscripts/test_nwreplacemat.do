@@ -24,16 +24,16 @@ do unw_core.do
 * already produce the right *network structure* once the same-size
 * path above was fixed (since it bottoms out there recursively) -
 * but a second, independent bug meant its own labs() option never
-* actually worked at all: nw_syntax itself exports a local called
+* actually worked at all: _nwsyntax itself exports a local called
 * `labs' (the *current* network's own labels, via its own bare
 * c_local labs "..." with no other() prefix), which silently clobbered
-* nwreplacemat's own labs() option value immediately after nw_syntax
+* nwreplacemat's own labs() option value immediately after _nwsyntax
 * ran at the top of the file, before this file ever used it - found
 * by tracing `labs' immediately after that call and finding it held
 * the *original* (pre-resize) network's labels rather than whatever
 * the caller had actually passed. Fixed by capturing the caller's
 * labs() value into a differently-named local before calling
-* nw_syntax. This is the same "nw_syntax's own c_local exports can
+* _nwsyntax. This is the same "_nwsyntax's own c_local exports can
 * silently shadow a caller's identically-named option local" bug
 * class already found once this session for `nodes' (nwdropnodes/
 * nwkeepnodes's own fix, see those files' test coverage) - `labs' is
@@ -54,7 +54,7 @@ mata: assert(M3[1,4] == 0)
 mata: assert(M3[3,4] == 1)
 
 * labs() with a genuinely different label set (not just adding one) -
-* the specific case that was silently broken: nw_syntax's own clobber
+* the specific case that was silently broken: _nwsyntax's own clobber
 * of `labs' meant this always silently reverted to the *original*
 * network's own labels no matter what was passed.
 nwclear

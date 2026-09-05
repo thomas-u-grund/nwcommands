@@ -6,11 +6,11 @@
 capture program drop _nwnodelab
 program _nwnodelab
 	syntax [anything(name=netname)], nodeid(integer) [detail]
-	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
+	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
-	// named the same as any of nw_syntax's other exports, so calling it
+	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	nwname `netname'
 
 	if `nodeid' > `r(nodes)' {

@@ -3,7 +3,7 @@ program nwmotifs, rclass
 	version 9
 	syntax [anything(name=netname)] [, silent PLOT NAME(string)]
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 
 	if "`directed'" == "true" {
 		di "{txt}Note: {bf:`netname'} is directed - the 4-node motif census below"

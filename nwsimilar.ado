@@ -1,11 +1,11 @@
 capture program drop nwsimilar
 program nwsimilar
 	syntax [anything(name=netname)] [, type(string) name(string) mode(string) context(string) xvars]
-	// _nwsyntax is a deprecated pure wrapper around nw_syntax (re-exports
+	// _nwsyntax is a deprecated pure wrapper around _nwsyntax (re-exports
 	// only 4 of its locals) - this file's own syntax line has no option
-	// named the same as any of nw_syntax's other exports, so calling it
+	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	// Naming consistency (moderate-severity pass, generators_derived
 	// group): nwdissimilar (this command's own direct sibling/

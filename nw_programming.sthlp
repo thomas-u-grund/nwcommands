@@ -22,7 +22,7 @@
 
 {pstd}
 Writing own network programs is very easy. The nwcommands offer several helper programs that can be
-included in such programs (see e.g. {help nwtomata}, {help nw_syntax}).
+included in such programs (see e.g. {help nwtomata}, {help _nwsyntax}).
 
 {pstd}
 Let us write our own program {it:myindegree} to calculte indegree centrality (see {help nwdegree}) of a
@@ -33,7 +33,7 @@ and an option {bf:generate()} to save the result.
 	program myindegree
 		syntax [anything(name=netname)] , [ generate(string)]
 
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		nwtomata `netname', mat(net)
 
 		local generate = cond("`generate'"=="", "_myindegree", "`generate'")
@@ -44,9 +44,9 @@ and an option {bf:generate()} to save the result.
 	end{txt}
 
 {pstd}
-The logic of this little program is that after normal use of {help syntax}, {help nw_syntax} is called to check if {it:anything}
-is a valid network and (if necessary) unabbreviates it (this is very similar to {help syntax}). By default, nw_syntax only allows one
-network in {it:anything}, which is just what we want. When used with the defaults, nw_syntax also leaves a local macro {it:netname} behind
+The logic of this little program is that after normal use of {help syntax}, {help _nwsyntax} is called to check if {it:anything}
+is a valid network and (if necessary) unabbreviates it (this is very similar to {help syntax}). By default, _nwsyntax only allows one
+network in {it:anything}, which is just what we want. When used with the defaults, _nwsyntax also leaves a local macro {it:netname} behind
 which holds the unabbreviated network name. Next, in {bf:nwtomata} we refer to this {it:netname} and obtain a Mata matrix {it:net} from
 this network.
 
@@ -77,7 +77,7 @@ Let us write another simple program which takes an existing network as an argume
 	program myinverse
 		syntax [anything(name=netname)] , [ name(string)]
 
-		nw_syntax `netname'
+		_nwsyntax `netname'
 		nwtomata `netname', mat(net)
 
 		local name = cond("`name'"=="", "_myinverse", "`name'")
@@ -125,8 +125,8 @@ package (see {help nwkcore}, {help nwaltergen}, {help nwsimindex}, {help nwcug} 
 of every pattern described here).
 
 {pstd}
-{bf:Entering a network's context.} Use {bf:nw_syntax}, not the historical {bf:_nwsyntax}. Called as
-{bf:nw_syntax `netname'}, it leaves behind (via {help c_local}) a standard set of local macros every
+{bf:Entering a network's context.} Use {bf:_nwsyntax}, not the historical {bf:_nwsyntax}. Called as
+{bf:_nwsyntax `netname'}, it leaves behind (via {help c_local}) a standard set of local macros every
 command relies on:
 
 	{col 6}{bf:netobj}{col 20}a Mata pointer expression, {bf:`nws'.pdefs[`id']}, usable directly
@@ -143,7 +143,7 @@ followed by every {bf:calculate_*()} method added since the sparse backend) is: 
 {bf:NWdef} class in {bf:unw_core.do} that returns a {bf:real matrix} (an {it:n} x 1 column vector,
 row {it:i} = node {it:i}'s value), then call it from the {bf:.ado} file like this:
 
-	{com}nw_syntax `netname'
+	{com}_nwsyntax `netname'
 	tempname __nw_result
 	mata: `__nw_result' = `netobj'->calculate_something()
 	mata: st_store((1::`nodes'), "`generate'", `__nw_result')
@@ -376,4 +376,4 @@ crashes.
 
 {title:See also}
 
-	{help _nwevalnetexp}, {help nw_syntax}, {help nwtomata}
+	{help _nwevalnetexp}, {help _nwsyntax}, {help nwtomata}

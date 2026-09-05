@@ -19,7 +19,7 @@ set more off
 nwclear
 nwset, mat((0,1,0\1,0,1\0,1,0)) name(path3) labs(A,B,C)
 nwlambda path3, name(lam1)
-nw_syntax lam1
+_nwsyntax lam1
 mata: st_numscalar("__ab", (*`netobj'->get_matrix())[1,2])
 mata: st_numscalar("__bc", (*`netobj'->get_matrix())[2,3])
 mata: st_numscalar("__ac", (*`netobj'->get_matrix())[1,3])
@@ -33,7 +33,7 @@ scalar drop __ab __bc __ac
 nwclear
 nwset, mat((0,1,1\1,0,1\1,1,0)) name(tri3) labs(A,B,C)
 nwlambda tri3, name(lam2)
-nw_syntax lam2
+_nwsyntax lam2
 mata: st_numscalar("__ab2", (*`netobj'->get_matrix())[1,2])
 mata: st_numscalar("__bc2", (*`netobj'->get_matrix())[2,3])
 mata: st_numscalar("__ac2", (*`netobj'->get_matrix())[1,3])
@@ -50,7 +50,7 @@ scalar drop __ab2 __bc2 __ac2
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(bridge6) labs(A,B,C,D,E,F)
 nwlambda bridge6, name(lam3)
-nw_syntax lam3
+_nwsyntax lam3
 mata: st_numscalar("__ab3", (*`netobj'->get_matrix())[1,2])
 mata: st_numscalar("__cd3", (*`netobj'->get_matrix())[3,4])
 mata: st_numscalar("__af3", (*`netobj'->get_matrix())[1,6])
@@ -69,7 +69,7 @@ di "=== nwlambda hand-computable lambda-matrix cases REGRESSION VERIFIED ==="
 nwclear
 nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(bridge6b) labs(A,B,C,D,E,F)
 nwlambda bridge6b, name(lamb)
-nw_syntax lamb
+_nwsyntax lamb
 mata: __maxlam = max(*`netobj'->get_matrix())
 mata: __dissim = __maxlam :- *`netobj'->get_matrix()
 mata: _diag(__dissim, 0)
@@ -90,6 +90,6 @@ assert `sd2' == 0
 di "=== nwlambda + nwhierarchy end-to-end lambda-set extraction REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwlambda nonexistent
 assert _rc == 482

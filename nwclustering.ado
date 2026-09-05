@@ -6,7 +6,7 @@ program nwclustering
 
 	unw_defs
 
-	nw_syntax `netname', max(1)
+	_nwsyntax `netname', max(1)
 	_nwdatasync `netname'
 	local original "`netname'"
 
@@ -14,7 +14,7 @@ program nwclustering
 	local symnet_created = 0
 	if "`symmetrize'" != ""  {
 		nwsym `netname', generate(`symnet') mode(max)
-		nw_syntax
+		_nwsyntax
 		local symnet_created = 1
 	}
 
@@ -80,7 +80,7 @@ program nwclustering
 	capture drop `generate'
 	qui gen `generate' = .
 
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	_nwdatasync `netname'
 
 	// PERFORMANCE FIX (this unit): this command used to implement its own
@@ -105,7 +105,7 @@ program nwclustering
 	qui if _N < `nodes' {
 		set obs `nodes'
 	}
-	nw_syntax `netname'
+	_nwsyntax `netname'
 
 	tempname __nw_clust
 	mata: `__nw_clust' = `netobj'->calculate_clustering(`__mode')

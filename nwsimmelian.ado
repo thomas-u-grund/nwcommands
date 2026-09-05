@@ -2,7 +2,7 @@ capture program drop nwsimmelian
 program nwsimmelian
 	syntax [anything(name=netname)] [, name(string) nwreplace]
 	unw_defs
-	nw_syntax `netname'
+	_nwsyntax `netname'
 	
 	if "`name'" == "" {
 		local name "_simmelian"
@@ -27,7 +27,7 @@ program nwsimmelian
 	capture nwdrop `name'
 
 	nwduplicate `netname', name(`name')
-	nw_syntax
+	_nwsyntax
 	mata: __nw_mutual = (*`netobj'->get_matrix_unvalued()) :* (*`netobj'->get_matrix_unvalued())'
 	mata: _editmissing(__nw_mutual,0)
 	mata: __nw_simmel = (__nw_mutual) :* (__nw_mutual * __nw_mutual)

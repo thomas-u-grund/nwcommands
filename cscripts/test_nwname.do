@@ -21,7 +21,7 @@ assert "`r(directed)'" == "false"
 
 
 * --- alpha-audit regression: id() was completely non-functional -
-* nw_syntax's own unprefixed c_local side effect clobbered this
+* _nwsyntax's own unprefixed c_local side effect clobbered this
 * program's own `id' local before it was ever consulted, so
 * `nwname, id(N)' always silently acted on the CURRENT network
 * regardless of N.
@@ -46,7 +46,7 @@ assert `"`r(provenance)'"' == "prov text"
 di "=== newcaption()/newprovenance() REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482), reached
+* _nwsyntax's own "Network X not found" check (error 482), reached
 * through _nwname's own passthrough.
 capture noisily nwname nonexistent
 assert _rc == 482

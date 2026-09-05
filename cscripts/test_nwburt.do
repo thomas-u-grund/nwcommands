@@ -103,6 +103,6 @@ assert _rc == 0
 di "=== stale _rc leak REGRESSION VERIFIED ==="
 
 * --- failure path: a name that isn't a loaded network is rejected via
-* nw_syntax's own "Network X not found" check (error 482).
+* _nwsyntax's own "Network X not found" check (error 482).
 capture noisily nwburt nonexistent
 assert _rc == 482
