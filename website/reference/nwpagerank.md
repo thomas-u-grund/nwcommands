@@ -37,9 +37,9 @@ silent]
 
 `nwpagerank` computes Page and Brin's (1998) PageRank centrality: the stationary distribution of a "random surfer" who, at each step, either follows a uniformly-random OUTGOING tie from the current node (with probability `damping()`) or jumps to a uniformly-random node anywhere in the network (with probability 1 - `damping()`). Every node's own score is the long-run PROPORTION of time the surfer spends there - the `generate()` variable always sums to exactly 1 across all nodes.
 
-Genuinely different from [nwevcent](nwevcent.md) (this package's own existing eigenvector centrality): PageRank works directly on DIRECTED networks with no symmetrization, has no scale ambiguity (the damping term guarantees a unique stationary distribution even on a network eigenvector centrality would otherwise reject as not strongly connected - see that command's own documented limitation), and explicitly handles "dangling" nodes (zero out-degree): a real random surfer stranded there cannot follow any tie, so PageRank's own construction redistributes that node's own probability mass UNIFORMLY across every node in the network on the next step (Page and Brin's own original fix, not an approximation) - `generate()`'s own values still sum to exactly 1 even when such nodes exist.
+Genuinely different from [nwevcent](nwevcent) (this package's own existing eigenvector centrality): PageRank works directly on DIRECTED networks with no symmetrization, has no scale ambiguity (the damping term guarantees a unique stationary distribution even on a network eigenvector centrality would otherwise reject as not strongly connected - see that command's own documented limitation), and explicitly handles "dangling" nodes (zero out-degree): a real random surfer stranded there cannot follow any tie, so PageRank's own construction redistributes that node's own probability mass UNIFORMLY across every node in the network on the next step (Page and Brin's own original fix, not an approximation) - `generate()`'s own values still sum to exactly 1 even when such nodes exist.
 
-Computed via sparse power iteration - no dense n x n matrix is ever materialized, matching the same scalability discipline this package's own sparse-backend commands ([nwkcore](nwkcore.md), [nwevcent](nwevcent.md)) already follow.
+Computed via sparse power iteration - no dense n x n matrix is ever materialized, matching the same scalability discipline this package's own sparse-backend commands ([nwkcore](nwkcore), [nwevcent](nwevcent)) already follow.
 
 ## Examples
 
@@ -66,6 +66,6 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 
 ## See also
 
-- [nwevcent](nwevcent.md), [nwrandomwalk](nwrandomwalk.md), [nwbetween](nwbetween.md), [nwcloseness](nwcloseness.md)
+- [nwevcent](nwevcent), [nwrandomwalk](nwrandomwalk), [nwbetween](nwbetween), [nwcloseness](nwcloseness)
 
 - last certified : 31 Aug 2026

@@ -1,12 +1,12 @@
 ---
-title: "nw_errorcodes"
+title: "nwerrorcodes"
 parent: "Command reference"
 nav_exclude: true
 search_exclude: false
 description: "What this package's own custom return codes mean"
 ---
 
-# `nw_errorcodes`
+# `nwerrorcodes`
 
 What this package's own custom return codes mean
 
@@ -31,4 +31,4 @@ Catch a package-specific error code programmatically:
 
 ## See also
 
-- [nwcommands](nwcommands.md), [nw_topical](nw_topical.md)
+- [nwcommands](nwcommands), [nwtopical](nwtopical)

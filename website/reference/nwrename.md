@@ -47,6 +47,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames the network obj
 
 ## See also
 
-- [nwname](nwname.md), `rename`
+- [nwname](nwname), `rename`
 
 - last certified : 24 Aug 2026

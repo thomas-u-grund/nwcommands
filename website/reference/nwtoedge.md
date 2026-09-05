@@ -31,9 +31,9 @@ comparemode(mode)]
 | `ego(newvarname)` | Sender of ties; default = *_ego* |
 | `alter(newvarname)` | Receiver of ties; default = *_alter* |
 | `comparevars(varlist)` | Add an ego/alter comparison column for each variable (e.g. *same*, *dist*) |
-| `comparemode`(*[mode](nwexpand.md)*) | Comparison used for `comparevars()`; default = *same* |
+| `comparemode`(*[mode](nwexpand)*) | Comparison used for `comparevars()`; default = *same* |
 | `compress` | Compress edgelist |
-| `full` | List both *(i,j)* and *(j,i)* for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a [netlist](netlist.md) is directed |
+| `full` | List both *(i,j)* and *(j,i)* for an undirected network's dyads, rather than only one entry per dyad; forced automatically whenever any network in a [netlist](netlist) is directed |
 | `upper` | List only one entry per undirected dyad (the default; see `full` above) - has no effect and is suppressed with a warning on a directed network |
 | `numeric` | Return every possible node pair (a full node x node grid), not just actual ties; only allowed with a single network |
 | `ignore2mode` | Treat a two-mode network like a one-mode one - suppress the mode indicator that would otherwise be added to `egovars()`/`altervars()` automatically |
@@ -43,11 +43,11 @@ comparemode(mode)]
 
 `nwtoedge` makes an edgelist from a network or a list of networks.
 
-An edgelist of a single network [netname](netname.md) produced by `nwtoedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [nodeid](nodeid.md) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [nodeid](nodeid.md) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
+An edgelist of a single network [netname](netname) produced by `nwtoedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [nodeid](nodeid) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [nodeid](nodeid) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
 
 When a network is undirected only one entry for the dyad pair (*i*,*j*) is generated, unless option `full` is specified.
 
-When the command is used with a [netlist](netlist.md), it generates one new variable for each network *netname* in the list. If only one of the networks in [netlist](netlist.md) is directed, the option `full` is enforced.
+When the command is used with a [netlist](netlist), it generates one new variable for each network *netname* in the list. If only one of the networks in [netlist](netlist) is directed, the option `full` is enforced.
 
 One can also include node attributes (saved as normal Stata variables) in the edgelist. Option `egovars()` generates new variables that match the attributes of the sender of a tie (ego); option `altervars()` generates new variables that match the attributes of the receiver of a tie (alter).
 
@@ -78,9 +78,9 @@ For example,
 - hline 9c -hline 7c -hline 10c -hline 13
 - .....
 
-loads the [Glasgow data](netexample.md) and transforms the network *glasgow1* in an edgelist. For example, *glasgow1[11] = 1* means, that there is a network tie from node 1 to node 11. It also generates a new variable *from_sport1*, which holds in this case information about the attribute of the sender of a tie on the original variable *sport1*.
+loads the [Glasgow data](netexample) and transforms the network *glasgow1* in an edgelist. For example, *glasgow1[11] = 1* means, that there is a network tie from node 1 to node 11. It also generates a new variable *from_sport1*, which holds in this case information about the attribute of the sender of a tie on the original variable *sport1*.
 
-For two-mode networks see [introduction to two-mode networks](nw2set.md)) and [nw2toedge](nw2toedge.md).
+For two-mode networks see [introduction to two-mode networks](nw2set)) and [nw2toedge](nw2toedge).
 
 The command can also transform two (or more) networks in edgelists at the same time.
 
@@ -112,7 +112,7 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 - 15. c | 1 15 0 0 c |
 - .....
 
-`comparevars(varlist)` adds an ego/alter *comparison* column for each listed variable, alongside (not instead of) whatever `egovars()`/`altervars()` already add - e.g. "do ego and alter share the same value" or "how far apart are their values", rather than just the two raw values side by side. `comparemode()` picks which comparison (any [nwexpand mode](nwexpand.md) - **same** (the default), **dist**, **absdist**, **distinv**, **absdistinv**, **sender**, **receiver**) applies to every variable in `comparevars()`; each variable is internally expanded via [nwexpand](nwexpand.md) itself (so the exact same, already-certified comparison logic is used, not a reimplementation) and the resulting column is named *mode_varname* - matching [nwexpand](nwexpand.md)'s own default naming - e.g. `comparevars(sport1)` with the default **comparemode(same)** adds a column named *same_sport1*. **dist**/**distinv**/**sender**/ **receiver** comparisons are directional (ego's value relative to alter's, not the reverse), so adding one automatically triggers the same "any directed network in the list forces `full`" rule already used for a mixed directed/undirected [netlist](netlist.md) - every dyad appears in both directions, so the signed comparison is preserved correctly for both.
+`comparevars(varlist)` adds an ego/alter *comparison* column for each listed variable, alongside (not instead of) whatever `egovars()`/`altervars()` already add - e.g. "do ego and alter share the same value" or "how far apart are their values", rather than just the two raw values side by side. `comparemode()` picks which comparison (any [nwexpand mode](nwexpand) - **same** (the default), **dist**, **absdist**, **distinv**, **absdistinv**, **sender**, **receiver**) applies to every variable in `comparevars()`; each variable is internally expanded via [nwexpand](nwexpand) itself (so the exact same, already-certified comparison logic is used, not a reimplementation) and the resulting column is named *mode_varname* - matching [nwexpand](nwexpand)'s own default naming - e.g. `comparevars(sport1)` with the default **comparemode(same)** adds a column named *same_sport1*. **dist**/**distinv**/**sender**/ **receiver** comparisons are directional (ego's value relative to alter's, not the reverse), so adding one automatically triggers the same "any directed network in the list forces `full`" rule already used for a mixed directed/undirected [netlist](netlist) - every dyad appears in both directions, so the signed comparison is preserved correctly for both.
 
 ```stata
 . nwwebuse glasgow, nwclear
@@ -122,10 +122,10 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see [nw2toedge](nw2toedge.md) for the two-mode-specific counterpart, though this command's own `egovars()`/`altervars()` two-mode handling is used internally by several other commands directly on a two-mode network too.
+Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see [nw2toedge](nw2toedge) for the two-mode-specific counterpart, though this command's own `egovars()`/`altervars()` two-mode handling is used internally by several other commands directly on a two-mode network too.
 
 ## See also
 
-- [nwfromedge](nwfromedge.md), [nw2toedge](nw2toedge.md), [nwsave](nwsave.md), [nwexpand](nwexpand.md)
+- [nwfromedge](nwfromedge), [nw2toedge](nw2toedge), [nwsave](nwsave), [nwexpand](nwexpand)
 
 - last certified : 24 Aug 2026

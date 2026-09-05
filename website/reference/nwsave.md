@@ -27,11 +27,11 @@ old]
 
 ## Description
 
-**nwsave** saves all networks (and Stata variables) currently in memory on disk. Since version 2.1 the command saves data in its own file format **.nwdta**. Network data saved in this way can be loaded with [nwuse](nwuse.md). Notice that the command `save` does not save network data.
+**nwsave** saves all networks (and Stata variables) currently in memory on disk. Since version 2.1 the command saves data in its own file format **.nwdta**. Network data saved in this way can be loaded with [nwuse](nwuse). Notice that the command `save` does not save network data.
 
 ## Examples
 
-This example creates 5 new random networks and [saves](nwsave.md) them as *mynets*. A new dataset called *mynets.nwdta* is created in the working directory.
+This example creates 5 new random networks and [saves](nwsave) them as *mynets*. A new dataset called *mynets.nwdta* is created in the working directory.
 
 ```stata
 . nwclear
@@ -50,5 +50,5 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - saves th
 
 ## See also
 
-- [nwuse](nwuse.md), [nwwebuse](nwwebuse.md), `save`
+- [nwuse](nwuse), [nwwebuse](nwwebuse), `save`
 - last certified : 24 Aug 2026

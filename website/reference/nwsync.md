@@ -27,17 +27,17 @@ fromstata]
 
 ## Description
 
-Networks ultimately exist as Mata objects. However, one can also load them as Stata variables that represent the adjacency matrix of a network (see [nwload](nwload.md)). Normally, when a network is changed through another [nwcommand](nwcommands.md) the Stata variables (if they exist) are automatically synced. But one can also invoke such a sync explicitly. Furthermore, [nwsync](nwsync.md) can be used to sync the other way around, i.e. one can change the values of the Stata variables that represent the network and sync the network (that lives in Mata).
+Networks ultimately exist as Mata objects. However, one can also load them as Stata variables that represent the adjacency matrix of a network (see [nwload](nwload)). Normally, when a network is changed through another [nwcommand](nwcommands) the Stata variables (if they exist) are automatically synced. But one can also invoke such a sync explicitly. Furthermore, [nwsync](nwsync) can be used to sync the other way around, i.e. one can change the values of the Stata variables that represent the network and sync the network (that lives in Mata).
 
 ## Options
 
 `fromstata` Change the direction of the sync, i.e. the network is updated based on the Stata variables that represent the network.
 
-`label` Run an additional [nw_datasync](nw_datasync.md) alignment pass (matching node identity against **_nwnode**) before the normal variable sync below. There is no separate node-label concept or **_nodelab** variable in this package - a node's name (see [nwnoderename](nwnoderename.md)) is its only label, and this option does not sync it; the name once documented here was inaccurate and has been corrected.
+`label` Run an additional [_nwdatasync](_nwdatasync) alignment pass (matching node identity against **_nwnode**) before the normal variable sync below. There is no separate node-label concept or **_nodelab** variable in this package - a node's name (see [nwnoderename](nwnoderename)) is its only label, and this option does not sync it; the name once documented here was inaccurate and has been corrected.
 
 ## Remarks
 
-One can use [nwload](nwload.md) and [ nwsync, fromstata](nwsync.md) to replace tie values in a network. For example,
+One can use [nwload](nwload) and [ nwsync, fromstata](nwsync) to replace tie values in a network. For example,
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -45,7 +45,7 @@ One can use [nwload](nwload.md) and [ nwsync, fromstata](nwsync.md) to replace t
 . replace acciaiuoli = 99 in 2
 . nwsync flomarriage, fromstata
 ```
-However, the preferred method to change the same tie value would be using [nwreplace](nwreplace.md) instead:
+However, the preferred method to change the same tie value would be using [nwreplace](nwreplace) instead:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -58,4 +58,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - syncs no
 
 ## See also
 
-- [nwload](nwload.md), [nwreplace](nwreplace.md), [nwname](nwname.md)
+- [nwload](nwload), [nwreplace](nwreplace), [nwname](nwname)

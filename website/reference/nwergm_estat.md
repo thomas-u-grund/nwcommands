@@ -9,14 +9,14 @@ search_exclude: false
 
 ## Description
 
-The following postestimation commands are available after [nwergm](nwergm.md):
+The following postestimation commands are available after [nwergm](nwergm):
 
 - **`estat mcmcdiag`** --- Basic MCMC diagnostics for the final simulation (method(mcmle) only)
 - **`estat gof`** --- Basic simulation-based goodness of fit
 
 ## Examples
 
-Fit a dyad-dependent [nwergm](nwergm.md) model (`method(mcmle)` runs automatically whenever any dyad-dependent term like `gwesp()` is present), then check MCMC diagnostics and basic goodness of fit:
+Fit a dyad-dependent [nwergm](nwergm) model (`method(mcmle)` runs automatically whenever any dyad-dependent term like `gwesp()` is present), then check MCMC diagnostics and basic goodness of fit:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -27,7 +27,7 @@ Fit a dyad-dependent [nwergm](nwergm.md) model (`method(mcmle)` runs automatical
 
 ## Supported network types
 
-Not applicable - these postestimation tools operate on the fitted model and its own MCMC/simulation output left behind by [nwergm](nwergm.md), not on a network directly; see that command's own classification.
+Not applicable - these postestimation tools operate on the fitted model and its own MCMC/simulation output left behind by [nwergm](nwergm), not on a network directly; see that command's own classification.
 
 ## Stored results
 
@@ -58,10 +58,10 @@ Not applicable - these postestimation tools operate on the fitted model and its 
 - **r(sim_avgpath)** simulated average geodesic distance (missing if every draw was disconnected)
 - **r(obs_triad300)** observed complete-triad count
 - **r(sim_triad300)** simulated complete-triad count, averaged over contributing draws
-- **r(obs_triad*XXX*)** observed count for MAN triad type *XXX* (one per [nwtriads](nwtriads.md) category
+- **r(obs_triad*XXX*)** observed count for MAN triad type *XXX* (one per [nwtriads](nwtriads) category
 - for the network's directedness - e.g. **r(obs_triad_021D)**, **r(obs_triad_300)**)
 - **r(sim_triad*XXX*)** simulated mean count for MAN triad type *XXX*, averaged over contributing draws
 
 ## See also
 
-- [nwergm](nwergm.md)
+- [nwergm](nwergm)

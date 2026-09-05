@@ -24,9 +24,9 @@ replace]
 
 | | |
 |---|---|
-| `mode`(*[mode](nwsym.md)*) | Logic for creating an undirected tie |
+| `mode`(*[mode](nwsym)*) | Logic for creating an undirected tie |
 | `check` | Check if network is symmetric (regardless of whether is declared as directed or undirected) |
-| `generate`(*[newnetname](newnetname.md)*) | Save symmetrization as new network |
+| `generate`(*[newnetname](newnetname)*) | Save symmetrization as new network |
 | `replace` | Symmetrize in place (the default when neither `replace` nor `generate()` is given - this option exists to state that choice explicitly rather than to change behavior). Cannot be combined with `generate()` |
 
 ## Description
@@ -41,9 +41,9 @@ Alternatively, with **mode(min)** an undirected tie is only formed when there ar
 
 *M_ij = min( M_ij, M_ji )*
 
-When not specified otherwise, the network [netname](netname.md) is replaced with the symmetrized network (equivalently, `replace` can be given explicitly to state this). In case `generate()` is specified the new symmetrized network is saved as [newnetname](netname.md) instead, and the original network is left untouched. `replace` and `generate()` are mutually exclusive.
+When not specified otherwise, the network [netname](netname) is replaced with the symmetrized network (equivalently, `replace` can be given explicitly to state this). In case `generate()` is specified the new symmetrized network is saved as [newnetname](netname) instead, and the original network is left untouched. `replace` and `generate()` are mutually exclusive.
 
-Option **check** tests if the underlying adjacency matrix of the network is symmetric (but does not symmetrize the network). Notice that this is independent of any meta-information saved together with the network (see [nwname](nwname.md)). Hence, a network can be set as directed, but still be symmetric. In contrast, all undirected networks are by default also symmetric.
+Option **check** tests if the underlying adjacency matrix of the network is symmetric (but does not symmetrize the network). Notice that this is independent of any meta-information saved together with the network (see [nwname](nwname)). Hence, a network can be set as directed, but still be symmetric. In contrast, all undirected networks are by default also symmetric.
 
 The logic for valued networks works in exactly the same way.
 
@@ -84,6 +84,6 @@ Binary: yes. Directed: yes - this command's entire purpose is converting a direc
 
 ## See also
 
-- [nwsymmetrize](nwsymmetrize.md) (an exact alias for this command)
+- [nwsymmetrize](nwsymmetrize) (an exact alias for this command)
 
 - last certified : 28 Aug 2026

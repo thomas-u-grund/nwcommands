@@ -87,4 +87,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ## See also
 
-- [nwassortativity](nwassortativity.md), [nwqap](nwqap.md), [nwcorrelate](nwcorrelate.md)
+- [nwassortativity](nwassortativity), [nwqap](nwqap), [nwcorrelate](nwcorrelate)

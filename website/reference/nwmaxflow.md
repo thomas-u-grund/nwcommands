@@ -33,7 +33,7 @@ replace]
 
 ## Description
 
-`nwmaxflow` computes the maximum flow (and, by the max-flow/min-cut theorem, the minimum edge cut) between `source()` and `sink()` via the standard Edmonds-Karp augmenting-path algorithm - the same generic max-flow primitive this package's own [nwlambda](nwlambda.md) (pairwise edge connectivity) and [nwkcomponents](nwkcomponents.md) (vertex connectivity, via a node-splitting reduction) already build on internally. By default every existing tie has capacity 1, regardless of its own tie value (so max-flow reduces to counting edge-disjoint paths - the same quantity [nwlambda](nwlambda.md) computes for every pair at once). With `weighted`, tie VALUES are used as capacities instead - useful when a network's own tie strength genuinely represents a throughput/capacity (e.g. trade volume, bandwidth, transaction size).
+`nwmaxflow` computes the maximum flow (and, by the max-flow/min-cut theorem, the minimum edge cut) between `source()` and `sink()` via the standard Edmonds-Karp augmenting-path algorithm - the same generic max-flow primitive this package's own [nwlambda](nwlambda) (pairwise edge connectivity) and [nwkcomponents](nwkcomponents) (vertex connectivity, via a node-splitting reduction) already build on internally. By default every existing tie has capacity 1, regardless of its own tie value (so max-flow reduces to counting edge-disjoint paths - the same quantity [nwlambda](nwlambda) computes for every pair at once). With `weighted`, tie VALUES are used as capacities instead - useful when a network's own tie strength genuinely represents a throughput/capacity (e.g. trade volume, bandwidth, transaction size).
 
 `generate(newvarname)` marks which nodes remain reachable from `source()` in the FINAL residual graph once the flow has converged - the standard max-flow/min-cut construction. Every existing tie from a marked (1) node to an unmarked (0) node is one of the edges in the minimum cut; `r(cutedges)` reports how many such edges exist, without requiring `generate()` to be given just to see the count.
 
@@ -49,7 +49,7 @@ For a DIRECTED network, capacities are directional (a tie A->B only lets flow mo
 
 ## Supported network types
 
-Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual directedness (unlike [nwlambda](nwlambda.md), which always symmetrizes first; a flow network is inherently a directed concept). Weighted: yes, via `weighted`. Signed: not checked - a negative capacity has no meaning here. Two-mode: not checked (see [nwmatching](nwmatching.md) for the two-mode/bipartite analog - maximum matching, not maximum flow).
+Binary: yes (capacity 1 per tie, the default). Directed: yes - respects the network's own actual directedness (unlike [nwlambda](nwlambda), which always symmetrizes first; a flow network is inherently a directed concept). Weighted: yes, via `weighted`. Signed: not checked - a negative capacity has no meaning here. Two-mode: not checked (see [nwmatching](nwmatching) for the two-mode/bipartite analog - maximum matching, not maximum flow).
 
 ## Stored results
 
@@ -71,6 +71,6 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 
 ## See also
 
-- [nwmatching](nwmatching.md), [nwlambda](nwlambda.md), [nwkcomponents](nwkcomponents.md), [nwbridges](nwbridges.md)
+- [nwmatching](nwmatching), [nwlambda](nwlambda), [nwkcomponents](nwkcomponents), [nwbridges](nwbridges)
 
 - last certified : 31 Aug 2026

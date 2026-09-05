@@ -9,7 +9,7 @@ search_exclude: false
 
 ## Description
 
-A *newnetname* is the name of a network that does not exist yet. A *newnetname* is a new *[netname](netname.md)*, such as
+A *newnetname* is the name of a network that does not exist yet. A *newnetname* is a new *[netname](netname)*, such as
 
 - `x`
 - `mynet`
@@ -27,4 +27,4 @@ A *newnetname* is the name of a network that does not exist yet. A *newnetname* 
 
 ## See also
 
-- [netname](netname.md)
+- [netname](netname)

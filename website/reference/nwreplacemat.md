@@ -27,9 +27,9 @@ labs(lab1 lab2 ...)]
 | | |
 |---|---|
 | `newmat`(*matname*) | name of a Stata or Mata matrix |
-| `nosync` | do not sync Stata variables; by default Stata variables are synced (see [nwsync](nwsync.md)) |
+| `nosync` | do not sync Stata variables; by default Stata variables are synced (see [nwsync](nwsync)) |
 | `netonly` | only update the network, do not touch the Stata dataset at all |
-| `xvars` | also load the updated network as Stata variables (see [nwload](nwload.md)) |
+| `xvars` | also load the updated network as Stata variables (see [nwload](nwload)) |
 | `vars`(*`newvarlist`*) | Stata variable names to use when *matname* requires resizing the network; default = auto-generated |
 | `labs`(*lab1 lab2 ...*) | new node labels to use when *matname* requires resizing the network; default = **1**, **2**, ... |
 
@@ -41,7 +41,7 @@ The command checks if the Stata/Mata matrix *matname* has the correct dimensions
 
 By default, the command also checks if the new adjacency matrix is symmetric and if yes, it alters the meta-information of the network (directed => undirected). In case, one still wants to assign a perfectly symmetric matrix to a directed network, one can use:
 
-`nwname` [*[netname](netname.md)*]`, directed(true)`
+`nwname` [*[netname](netname)*]`, directed(true)`
 
 to overwrite the automatic setting afterwards.
 
@@ -69,4 +69,4 @@ Binary: yes. Directed: yes - this command's entire purpose is writing an arbitra
 
 ## See also
 
-- [nwreplace](nwreplace.md)
+- [nwreplace](nwreplace)

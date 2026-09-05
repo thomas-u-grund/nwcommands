@@ -53,6 +53,6 @@ Not applicable - a pure network-listing utility (in the style of Stata's own `ds
 
 ## See also
 
-- `ds`, [nwcurrent](nwcurrent.md), [nwclear](nwclear.md)
+- `ds`, [nwcurrent](nwcurrent), [nwclear](nwclear)
 
 - last certified : 24 Aug 2026

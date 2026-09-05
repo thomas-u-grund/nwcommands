@@ -53,7 +53,7 @@ For a directed network, *a* ranges over *b*'s incoming ties and *c* over its out
 
 ## Supported network types
 
-Binary: yes. Directed: yes, and directionality is used directly (see Description) - this is the network type the model was originally defined for. Undirected networks are supported too, with the directional distinction collapsing away as described above. Weighted: not used - only the presence/absence of a tie determines whether a two-path exists; tie strength does not affect role counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. `group()` must be an existing Stata variable already aligned with the network's nodes (the same convention [nwmodularity](nwmodularity.md)'s own `group()` option uses) - `nwbrokerage` does not detect groups itself; pair it with [nwconcor](nwconcor.md), [nwcoreperiphery](nwcoreperiphery.md), [nwcommunity](nwcommunity.md), or a substantive attribute for the grouping.
+Binary: yes. Directed: yes, and directionality is used directly (see Description) - this is the network type the model was originally defined for. Undirected networks are supported too, with the directional distinction collapsing away as described above. Weighted: not used - only the presence/absence of a tie determines whether a two-path exists; tie strength does not affect role counts. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. `group()` must be an existing Stata variable already aligned with the network's nodes (the same convention [nwmodularity](nwmodularity)'s own `group()` option uses) - `nwbrokerage` does not detect groups itself; pair it with [nwconcor](nwconcor), [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), or a substantive attribute for the grouping.
 
 ## Stored results
 
@@ -67,6 +67,6 @@ Gould, R.V., Fernandez, R.M. (1989). Structures of mediation: A formal approach 
 
 ## See also
 
-- [nwconcor](nwconcor.md), [nwcoreperiphery](nwcoreperiphery.md), [nwcommunity](nwcommunity.md), [nwmodularity](nwmodularity.md)
+- [nwconcor](nwconcor), [nwcoreperiphery](nwcoreperiphery), [nwcommunity](nwcommunity), [nwmodularity](nwmodularity)
 
 - last certified : 21 Aug 2026

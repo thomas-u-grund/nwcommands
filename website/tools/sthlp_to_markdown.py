@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Convert nwcommands .sthlp (SMCL) help files into Markdown reference pages
-for the Just the Docs Jekyll site, grouped using nw_topical.sthlp's own
+for the Just the Docs Jekyll site, grouped using nwtopical.sthlp's own
 category structure."""
 import re
 import sys
@@ -49,7 +49,14 @@ def link_or_code(target, label):
     target = target.strip()
     stem = target.split("##")[0]
     if stem in KNOWN:
-        return f"[{label}]({stem}.md)"
+        # Extension-less, matching Jekyll's own clean-URL serving on the
+        # live site - Jekyll builds each *.md page to a directory-style
+        # .../stem/index.html and does NOT copy the source .md files into
+        # _site/, so a literal ".md" suffix here 404s once deployed (the
+        # link only ever "worked" when reading the raw source file, or in
+        # a renderer that treats .md specially, neither of which describes
+        # the actual deployed site).
+        return f"[{label}]({stem})"
     return f"`{label}`"
 
 
@@ -513,7 +520,7 @@ def parse_topical(path: Path):
 
 
 def main():
-    tree = parse_topical(REPO / "nw_topical.sthlp")
+    tree = parse_topical(REPO / "nwtopical.sthlp")
 
     all_cmds_seen = set()
     for title, cmds, subs in tree:
@@ -534,31 +541,44 @@ def main():
         "",
         "# Command reference",
         "",
-        "All nwcommands commands, grouped as in `help nw_topical`.",
+        "All nwcommands commands, grouped as in `help nwtopical`.",
         "",
     ]
 
+    wrote_uncategorized_heading = False
     for title, cmds, subs in tree:
         index_lines.append(f"## {title}")
         index_lines.append("")
+        wrote_uncategorized_heading = title == "Uncategorized"
         if subs:
             for sub_id, (subtitle, subcmds) in subs:
                 index_lines.append(f"### {subtitle}")
                 index_lines.append("")
                 for c, desc in subcmds:
-                    index_lines.append(f"- [`{c}`]({c}.md) --- {desc}" if desc else f"- [`{c}`]({c}.md)")
+                    index_lines.append(f"- [`{c}`]({c}) --- {desc}" if desc else f"- [`{c}`]({c})")
                 index_lines.append("")
         else:
             for c, desc in (cmds or []):
-                index_lines.append(f"- [`{c}`]({c}.md) --- {desc}" if desc else f"- [`{c}`]({c}.md)")
+                index_lines.append(f"- [`{c}`]({c}) --- {desc}" if desc else f"- [`{c}`]({c})")
             index_lines.append("")
 
+    # Commands nwtopical.sthlp never mentions at all (distinct from its own
+    # {marker uncategorized} block, which lists commands it DOES mention but
+    # puts in that section) - fold into the same heading rather than emitting
+    # a second, duplicate "## Uncategorized".
     uncategorized = sorted(KNOWN - all_cmds_seen)
     if uncategorized:
-        index_lines.append("## Uncategorized")
-        index_lines.append("")
+        if not wrote_uncategorized_heading:
+            index_lines.append("## Uncategorized")
+            index_lines.append("")
+        else:
+            # drop the trailing blank line left after the existing section's
+            # commands so the two lists merge under one heading
+            while index_lines and index_lines[-1] == "":
+                index_lines.pop()
+            index_lines.append("")
         for c in uncategorized:
-            index_lines.append(f"- [`{c}`]({c}.md)")
+            index_lines.append(f"- [`{c}`]({c})")
         index_lines.append("")
 
     (REF_OUT / "index.md").write_text("\n".join(index_lines).strip() + "\n")

@@ -31,9 +31,9 @@ replace]
 
 ## Description
 
-`nwsimindex` computes a common-neighbor similarity index (Liben-Nowell and Kleinberg 2007) for every pair of nodes and stores the result as a new, valued, undirected network [newnetname](newnetname.md) (default: *simindex*). These indices measure how much two nodes' neighborhoods overlap - a standard building block for link prediction, structural-equivalence/role analysis, and as an input to blockmodeling or one-mode projection (see [nw2project](nw2project.md)).
+`nwsimindex` computes a common-neighbor similarity index (Liben-Nowell and Kleinberg 2007) for every pair of nodes and stores the result as a new, valued, undirected network [newnetname](newnetname) (default: *simindex*). These indices measure how much two nodes' neighborhoods overlap - a standard building block for link prediction, structural-equivalence/role analysis, and as an input to blockmodeling or one-mode projection (see [nw2project](nw2project)).
 
-All calculations use the undirected neighbor sense: for directed networks, a node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore.md) uses), since neighborhood overlap is a direction-agnostic question. *measure* is one of:
+All calculations use the undirected neighbor sense: for directed networks, a node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore) uses), since neighborhood overlap is a direction-agnostic question. *measure* is one of:
 
 - **common**
 - the raw count of shared neighbors, *|N(i) intersect N(j)|*
@@ -47,7 +47,7 @@ All calculations use the undirected neighbor sense: for directed networks, a nod
 - Adamic-Adar, *sum over shared neighbors k of 1/log(degree(k))* - weights rare
 - (low-degree) shared neighbors more heavily than common ones
 
-The similarity of a node with itself is not defined and is set to missing, as are any pairs where the underlying formula is undefined - most notably **cosine** between two isolate nodes (0/0). This mirrors how [nwgeodesic](nwgeodesic.md) reports an undefined diameter/radius rather than silently coercing an undefined value to 0.
+The similarity of a node with itself is not defined and is set to missing, as are any pairs where the underlying formula is undefined - most notably **cosine** between two isolate nodes (0/0). This mirrors how [nwgeodesic](nwgeodesic) reports an undefined diameter/radius rather than silently coercing an undefined value to 0.
 
 ## Examples
 
@@ -59,7 +59,7 @@ The similarity of a node with itself is not defined and is set to missing, as ar
 
 ## Supported network types
 
-Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore.md) uses). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - similarity is computed from binary neighbor-set overlap; tie values are ignored. Directed: yes - each node's neighbor set is the union of its out- and in-neighbors (the same convention [nwkcore](nwkcore) uses). Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
 ## Stored results
 
@@ -80,6 +80,6 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 ## See also
 
-- [nwsimilar](nwsimilar.md), [nw2project](nw2project.md), [nwkcore](nwkcore.md), [nwburt](nwburt.md)
+- [nwsimilar](nwsimilar), [nw2project](nw2project), [nwkcore](nwkcore), [nwburt](nwburt)
 
 - last certified : 24 Aug 2026

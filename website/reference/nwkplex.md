@@ -33,7 +33,7 @@ silent]
 
 ## Description
 
-`nwkplex` enumerates every maximal k-plex in the network(s) in [netlist](netlist.md) - a "relaxed clique": a set of nodes in which every member is tied to all but at most `k(int)` - 1 of the *other* members (a plain clique is the special case `k`=1, where nobody may miss any tie - [nwclique](nwclique.md) already handles that case with a cheaper, purpose-built algorithm, so `nwkplex` requires `k(int)` >= 2). A k-plex is *maximal* if no further node could be added to it without breaking that property. Enumeration uses the same Bron and Kerbosch (1973)-style recursive backtracking [nwclique](nwclique.md) uses, generalized to the k-plex membership rule (Seidman and Foster 1978).
+`nwkplex` enumerates every maximal k-plex in the network(s) in [netlist](netlist) - a "relaxed clique": a set of nodes in which every member is tied to all but at most `k(int)` - 1 of the *other* members (a plain clique is the special case `k`=1, where nobody may miss any tie - [nwclique](nwclique) already handles that case with a cheaper, purpose-built algorithm, so `nwkplex` requires `k(int)` >= 2). A k-plex is *maximal* if no further node could be added to it without breaking that property. Enumeration uses the same Bron and Kerbosch (1973)-style recursive backtracking [nwclique](nwclique) uses, generalized to the k-plex membership rule (Seidman and Foster 1978).
 
 Like cliques, k-plexes genuinely overlap - a node can belong to several at once - so there is no single per-node k-plex-membership variable the way there is a single component or community id. `nwkplex` generates a variable holding, for each node, the size of the *largest* maximal k-plex it belongs to - a single, well-defined per-node summary - and returns the full k-plex list (as a k-plexes-by-nodes 0/1 membership matrix) in **r(kplex_matrix)** for anyone who needs the complete overlapping structure.
 
@@ -49,7 +49,7 @@ Like cliques, k-plexes genuinely overlap - a node can belong to several at once 
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each member's own missing-tie count - has no natural directed generalization, the same reasoning [nwclique](nwclique.md) already applies). Weighted: not used - only presence/absence of a tie matters. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem itself, true of any correct algorithm) and, for a fixed network, generally slower than [nwclique](nwclique.md)'s own clique enumeration for the same reason its own "Supported network types" section already notes for cliques, compounded further here since checking whether a candidate can still be added requires examining the whole candidate set's own induced structure, not just a simple neighbor lookup - fine for the moderate network sizes typical of SNA datasets, not specially guarded against here beyond this note.
+Binary: yes. Directed: yes, automatically symmetrized (a k-plex's own definition - a bound on each member's own missing-tie count - has no natural directed generalization, the same reasoning [nwclique](nwclique) already applies). Weighted: not used - only presence/absence of a tie matters. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal k-plex enumeration is worst-case exponential (a mathematical property of the problem itself, true of any correct algorithm) and, for a fixed network, generally slower than [nwclique](nwclique)'s own clique enumeration for the same reason its own "Supported network types" section already notes for cliques, compounded further here since checking whether a candidate can still be added requires examining the whole candidate set's own induced structure, not just a simple neighbor lookup - fine for the moderate network sizes typical of SNA datasets, not specially guarded against here beyond this note.
 
 ## Stored results
 
@@ -71,6 +71,6 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ## See also
 
-- [nwclique](nwclique.md), [nwnclique](nwnclique.md), [nwnclan](nwnclan.md), [nwkcomponents](nwkcomponents.md), [nwkcore](nwkcore.md), [nwcomponents](nwcomponents.md), [nwcommunity](nwcommunity.md), [nwconcor](nwconcor.md)
+- [nwclique](nwclique), [nwnclique](nwnclique), [nwnclan](nwnclan), [nwkcomponents](nwkcomponents), [nwkcore](nwkcore), [nwcomponents](nwcomponents), [nwcommunity](nwcommunity), [nwconcor](nwconcor)
 
 - last certified : 24 Aug 2026

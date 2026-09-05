@@ -20,7 +20,7 @@ nwunab lmacname : netlist [,
 
 ## Description
 
-This is the network version of `unab`. `nwunab` expands and unabbreviates a [netlist](netlist.md) of existing networks, placing the results in the local macro *lmacname*.  `nwunab` is a low-level parsing command and works in exactly the same way as `unab`.  One can also use [nwds](nwds.md) to unabbreviate network lists. The `nw_syntax` command is a high-level parsing command that, among other things, also unabbreviates network lists; see `nw_syntax`.
+This is the network version of `unab`. `nwunab` expands and unabbreviates a [netlist](netlist) of existing networks, placing the results in the local macro *lmacname*.  `nwunab` is a low-level parsing command and works in exactly the same way as `unab`.  One can also use [nwds](nwds) to unabbreviate network lists. The `_nwsyntax` command is a high-level parsing command that, among other things, also unabbreviates network lists; see `_nwsyntax`.
 
 ## Options
 
@@ -45,4 +45,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - resolves
 
 ## See also
 
-- `unab`, [nwds](nwds.md), `nw_syntax`
+- `unab`, [nwds](nwds), `_nwsyntax`

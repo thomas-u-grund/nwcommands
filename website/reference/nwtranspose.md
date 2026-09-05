@@ -23,7 +23,7 @@ replace]
 
 | | |
 |---|---|
-| `generate`(*[newnetname](newnetname.md)*) | Save transpose as new network (alias: `name()`, matching the rest of this group) |
+| `generate`(*[newnetname](newnetname)*) | Save transpose as new network (alias: `name()`, matching the rest of this group) |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway |
 
 ## Description
@@ -61,4 +61,4 @@ Simply transposes a network, i.e. a directed tie from node *i* to node *j* is tr
 
 ## Supported network types
 
-Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: not applicable - transposing a bipartite incidence structure would swap its two modes, which is exactly what [nw2project](nw2project.md) and the [nw2toedge](nw2toedge.md)/[nw2fromedge](nw2fromedge.md) family are for instead.
+Binary: yes. Directed: yes - this command's entire purpose is transposing a network's adjacency matrix (a no-op for a genuinely symmetric undirected network). Weighted: yes, tie values are transposed along with tie presence. Signed: yes, values (including negative) are preserved as-is. Two-mode: not applicable - transposing a bipartite incidence structure would swap its two modes, which is exactly what [nw2project](nw2project) and the [nw2toedge](nw2toedge)/[nw2fromedge](nw2fromedge) family are for instead.

@@ -36,23 +36,23 @@ nonmissing.
 
 `nwrecode` changes the dyad values of networks according to the specified rules. It works almost exactly as `recode`, but for networks. Dyad values that do not meet any of the conditions of the rules are left unchanged, unless an *otherwise* rule is specified.
 
-`min` and `max` provide a convenient way to refer to the minimum and maximum for each dyad value in [netlist](netlist.md) and may be used in both the from-value and the to-value parts of the specification.
+`min` and `max` provide a convenient way to refer to the minimum and maximum for each dyad value in [netlist](netlist) and may be used in both the from-value and the to-value parts of the specification.
 
 **Common recipe: dichotomizing at a single cutoff.** A frequent special case is turning a valued network binary at one threshold - values at or above the cutoff become 1, everything else becomes 0:
 
 ```stata
 . nwrecode trade (100/max=1) (min/max=0)
 ```
-- For exactly this case, [nwdichotomize](nwdichotomize.md) is a thin, more directly discoverable wrapper around
+- For exactly this case, [nwdichotomize](nwdichotomize) is a thin, more directly discoverable wrapper around
 - the same rule shown above: `nwdichotomize trade, threshold(100)`. Reach for `nwrecode`
-- directly whenever you need something [nwdichotomize](nwdichotomize.md) does not offer - multiple bands, an
+- directly whenever you need something [nwdichotomize](nwdichotomize) does not offer - multiple bands, an
 - *otherwise* rule, or `missing`/`nonmissing` handling.
 
 ## Options
 
 - dlgtab:Options
 
-`generate`(*[newnetlist](newnetname.md)*) specifies the names of the network(s) that will contain the transformed dyads.  `into()` is a synonym for `generate()`.
+`generate`(*[newnetlist](newnetname)*) specifies the names of the network(s) that will contain the transformed dyads.  `into()` is a synonym for `generate()`.
 
 If generate() is not specified, the input networks are overwritten; Overwriting networks is dangerous (you cannot undo changes, so we strongly recommend specifying nwgenerate().
 
@@ -106,4 +106,4 @@ Binary: yes - recoding a binary network's 0/1 values is a degenerate but valid c
 
 ## See also
 
-- [nwreplace](nwreplace.md), `recode`, [nwdichotomize](nwdichotomize.md) (a thin wrapper around this command for the common single-cutoff case)
+- [nwreplace](nwreplace), `recode`, [nwdichotomize](nwdichotomize) (a thin wrapper around this command for the common single-cutoff case)

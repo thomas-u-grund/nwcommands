@@ -85,4 +85,4 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 
 ## Supported network types
 
-Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic.md) for weighted distances). Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes (`sym` to symmetrize first). Weighted: not applicable - any nonzero tie is treated as traversable regardless of its value; there is currently no shortest-*weighted* -path variant (see [nwgeodesic](nwgeodesic) for weighted distances). Signed: not checked. Two-mode: not checked.

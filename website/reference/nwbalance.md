@@ -27,9 +27,9 @@ triads, and count of closed triads a node belongs to; default =
 
 ## Description
 
-`nwbalance` evaluates a [network](netname.md)'s ties as signed (positive/negative) and tests every closed triad against Cartwright and Harary's (1956) strong structural balance criterion: a closed triad is *balanced* when the product of its three tie values is positive - equivalently, when it contains an even number (0 or 2) of negative ties ("the friend of my friend is my friend"; "the enemy of my enemy is my friend"). A triad with an odd number (1 or 3) of negative ties is *unbalanced*.
+`nwbalance` evaluates a [network](netname)'s ties as signed (positive/negative) and tests every closed triad against Cartwright and Harary's (1956) strong structural balance criterion: a closed triad is *balanced* when the product of its three tie values is positive - equivalently, when it contains an even number (0 or 2) of negative ties ("the friend of my friend is my friend"; "the enemy of my enemy is my friend"). A triad with an odd number (1 or 3) of negative ties is *unbalanced*.
 
-Ties do not need to be declared [signed](nwvalue.md) in any special way - any tie with a negative value is treated as negative, any positive value as positive.
+Ties do not need to be declared [signed](nwvalue) in any special way - any tie with a negative value is treated as negative, any positive value as positive.
 
 For each node, `nwbalance` generates the number of closed triads it belongs to, the number of those that are balanced, and the ratio of the two. Network-level counts and the overall balance ratio are returned in `r()`.
 
@@ -67,6 +67,6 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 ## See also
 
-- [nwtriads](nwtriads.md), [nwvalue](nwvalue.md)
+- [nwtriads](nwtriads), [nwvalue](nwvalue)
 
 - last certified : 24 Aug 2026

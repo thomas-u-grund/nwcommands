@@ -46,7 +46,7 @@ xvars]
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `ntimes(int)` | number of small-world networks to be generated; default = 1 |
-| `name`(*[newnetname](newnetname.md)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
 | `xvars` | generate Stata variables for the network |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
@@ -99,4 +99,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ## See also
 
-- [nwpref](nwpref.md), [nwrandom](nwrandom.md), [nwlattice](nwlattice.md), [nwring](nwring.md)
+- [nwpref](nwpref), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwring](nwring)

@@ -9,7 +9,7 @@ search_exclude: false
 
 ## Description
 
-The following postestimation command is available after [nwsaom](nwsaom.md):
+The following postestimation command is available after [nwsaom](nwsaom):
 
 - **`estat gof`** --- RSiena-style goodness-of-fit test and violin plot
 - **`estat mems`** --- Micro Effects on Macro Structure (Duxbury) mediation-style sensitivity analysis
@@ -45,7 +45,7 @@ The following postestimation command is available after [nwsaom](nwsaom.md):
 
 ## Supported network types
 
-Not applicable - `estat gof` operates on the fitted model and the wave data left behind by [nwsaom](nwsaom.md), not on a network directly; see that command's own classification.
+Not applicable - `estat gof` operates on the fitted model and the wave data left behind by [nwsaom](nwsaom), not on a network directly; see that command's own classification.
 
 ## Stored results
 
@@ -83,4 +83,4 @@ Duxbury, S.W., Zhao, X. `netmediate`: Micro-Macro Analysis for Social Networks (
 
 ## See also
 
-- [nwsaom](nwsaom.md)
+- [nwsaom](nwsaom)

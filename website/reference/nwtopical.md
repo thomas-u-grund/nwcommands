@@ -1,8 +1,8 @@
 ---
-title: "nw_topical"
+title: "nwtopical"
 parent: "Command reference"
 nav_exclude: true
 search_exclude: false
 ---
 
-# `nw_topical`
+# `nwtopical`

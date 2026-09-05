@@ -31,15 +31,15 @@ name(string)
 | | |
 |---|---|
 | `permutations(int)` | number of QAP permutations; default = 500 |
-| `mode`(*[mode](nwexpand.md)*) | modes for expanding variables to networks |
-| `type`(*[regcmd](nwqap.md)*) | regression command to be used for dyad dataset; default = *logit* |
+| `mode`(*[mode](nwexpand)*) | modes for expanding variables to networks |
+| `type`(*[regcmd](nwqap)*) | regression command to be used for dyad dataset; default = *logit* |
 | `typeoptions(regoptions)` | options to be passed on to the regression command |
 | `detail` | display details of regression results |
 | `save`(*`filename`*) | save coefficients from permutations in file |
 | `predict(newnetname)` | store the fitted dyad-level values (from **type()**'s own default prediction, e.g. Pr(y=1) for **logit**/**probit**, the fitted mean for **regress**) as a new valued network |
 | `plot` | Draw one histogram panel per coefficient (including the constant), each with a dashed reference line at the observed coefficient against its own `permutations()` null draws - the same comparison R's **sna::plot.qaptest()** draws, generalized to every coefficient in the regression |
 | `name(string)` | Name for the combined graph created by `plot`; default = **qap** |
-| `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see [qapspp](nwqap.md) below |
+| `qapspp` | Use double semi-partialling (Dekker, Krackhardt & Snijders 2007) instead of the plain permutation p-value for every independent variable's own coefficient - see [qapspp](nwqap) below |
 
 ## Description
 
@@ -47,7 +47,7 @@ MR-QAP is a multiple regression procedure used to assess the impact of independe
 
 `nwqap` reshapes a network to a dataset of edges/arcs. For example, a directed network with 10 nodes is transformed in a dataset with 90 dyads (selfloops are not permitted).
 
-The dependent variable is *y_ij*, indicating the network relationship between nodes *i* and *j*.  Independent variables can be other [networks](netname.md) or normal `variables`. Normal variables are expanded to networks of the same size as the dependent network using [nwexpand](nwexpand.md). The default **mode** is **"same"** (see [here](nwexpand.md) for other modes. When more than one `varname` is specified as independent variable, different modes can be selected for each variable, e.g. **mode(same dist invdist)** chooses mode **"dist"** for the second `varname` that appears as independent variable.
+The dependent variable is *y_ij*, indicating the network relationship between nodes *i* and *j*.  Independent variables can be other [networks](netname) or normal `variables`. Normal variables are expanded to networks of the same size as the dependent network using [nwexpand](nwexpand). The default **mode** is **"same"** (see [here](nwexpand) for other modes. When more than one `varname` is specified as independent variable, different modes can be selected for each variable, e.g. **mode(same dist invdist)** chooses mode **"dist"** for the second `varname` that appears as independent variable.
 
 `nwqap` performs the regression specified in **type()**, by default `logit` regression is choosen. But notice that any other type of regression can be used (e.g. `probit`, `xtmixed`). Furthermore, options are passed on to the selected regression command with **typeoptions()**. This gives a lot of flexibility to perform dyad-level regression. For example instead of logistic regression one can use probit regression with option *asis*:
 
@@ -105,7 +105,7 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 
 ## Stored results
 
-`nwqap` is an **eclass** command: results are posted with `ereturn`, so `estimates store`, `estimates table`, and other standard postestimation commands that only need *e(b)*/*e(V)* (e.g. `test`, `lincom`) work as usual. *e(V)* is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a classical OLS/logit covariance matrix - dyadic network data violates the independent- observations assumption those classical formulas require, which is the entire reason QAP permutation testing exists in the first place. A native postestimation `predict` does not work after `nwqap` returns (see [Description](nwqap.md) above for why - the dyad-level dataset **type()** actually fits is a transient internal detail, not the current dataset once `nwqap` exits); use `predict(newnetname)` instead to capture fitted dyad-level values directly, at the one point internally where they are genuinely meaningful.
+`nwqap` is an **eclass** command: results are posted with `ereturn`, so `estimates store`, `estimates table`, and other standard postestimation commands that only need *e(b)*/*e(V)* (e.g. `test`, `lincom`) work as usual. *e(V)* is a diagonal matrix built from each coefficient's own QAP-permutation variance, not a classical OLS/logit covariance matrix - dyadic network data violates the independent- observations assumption those classical formulas require, which is the entire reason QAP permutation testing exists in the first place. A native postestimation `predict` does not work after `nwqap` returns (see [Description](nwqap) above for why - the dyad-level dataset **type()** actually fits is a transient internal detail, not the current dataset once `nwqap` exits); use `predict(newnetname)` instead to capture fitted dyad-level values directly, at the one point internally where they are genuinely meaningful.
 
 **Scalars**
 
@@ -127,4 +127,4 @@ Binary: yes. Directed: yes, and undirected networks are not collapsed to unique 
 
 ## See also
 
-- [nwergm](nwergm.md), [nwpermute](nwpermute.md)
+- [nwergm](nwergm), [nwpermute](nwpermute)

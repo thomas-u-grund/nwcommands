@@ -24,7 +24,7 @@ nwreplace]
 | | |
 |---|---|
 | `name(newnetname)` | Save bridges as network; default = *_bridges*. |
-| `type`(*[type](nwbridges.md)*) | Type of bridge; default = *global* |
+| `type`(*[type](nwbridges)*) | Type of bridge; default = *global* |
 | `nwreplace` | Overwrite network *newnetname*. |
 
 ## Description
@@ -62,6 +62,6 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ## See also
 
-- [nwburt](nwburt.md), [nwpath](nwpath.md)
+- [nwburt](nwburt), [nwpath](nwpath)
 
 - last certified : 24 Aug 2026

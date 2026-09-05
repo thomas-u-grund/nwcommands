@@ -68,6 +68,6 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 
 ## See also
 
-- [nwpref](nwpref.md), [nwrandom](nwrandom.md), [nwlattice](nwlattice.md), [nwsmall](nwsmall.md)
+- [nwpref](nwpref), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwsmall](nwsmall)
 
 - last certified : 24 Aug 2026

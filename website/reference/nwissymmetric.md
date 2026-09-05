@@ -19,11 +19,11 @@ nwissymmetric
 
 ## Description
 
-`nwissymmetric` simply checks if the underlying adjacency matrix of network [netname](netname.md) is symmetric, regardless of whether the network is assigned to be directed or undirected (see [nwname](nwname.md)). An adjacency matrix *M* is symmetric when *M_ij == M_ji*. Returns *r(issymmetric)* in the return vector.
+`nwissymmetric` simply checks if the underlying adjacency matrix of network [netname](netname) is symmetric, regardless of whether the network is assigned to be directed or undirected (see [nwname](nwname)). An adjacency matrix *M* is symmetric when *M_ij == M_ji*. Returns *r(issymmetric)* in the return vector.
 
 This command can be useful for programming, when one wants to detect if a network should be undirected.
 
-For example, [nwimport](nwimport.md) automatically checks if a network (e.g. Ucinet fullmatrix) is symmetric and if yes, imports the network as undirected.
+For example, [nwimport](nwimport) automatically checks if a network (e.g. Ucinet fullmatrix) is symmetric and if yes, imports the network as undirected.
 
 ## Examples
 
@@ -35,7 +35,7 @@ For example, [nwimport](nwimport.md) automatically checks if a network (e.g. Uci
 - scalars:
 - r(issymmetric) = 1
 
-Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**false** string macros most other boolean-flag results in this group use (e.g. [nwname](nwname.md)'s **r(directed)**), since it is a computed test result rather than a stored network property.
+Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**false** string macros most other boolean-flag results in this group use (e.g. [nwname](nwname)'s **r(directed)**), since it is a computed test result rather than a stored network property.
 
 ## Supported network types
 
@@ -43,4 +43,4 @@ Binary: yes. Directed: yes - this command's entire purpose is checking whether a
 
 ## See also
 
-- [nwsym](nwsym.md), [nwname](nwname.md)
+- [nwsym](nwsym), [nwname](nwname)

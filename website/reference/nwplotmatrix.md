@@ -33,7 +33,7 @@ twoway_options]
 
 This command plots a network as a sociomatrix. It supports subnetworks specified by the `if` condition. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it is compatible with **schemes()** and accepts all `twoway_options`.
 
-This loads the [Florentine data](netexample.md) and makes a simple matrix plot.
+This loads the [Florentine data](netexample) and makes a simple matrix plot.
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -88,10 +88,10 @@ All normal `options for lines` can be applied as well.
 
 ## Supported network types
 
-Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike [nwplot](nwplot.md)'s node-link layout, which needs `arrows` to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: not checked.
+Binary: yes. Directed: yes - the matrix display itself makes asymmetry visible directly (unlike [nwplot](nwplot)'s node-link layout, which needs `arrows` to show direction). Weighted: yes, tie values can drive cell shading/size. Signed: not checked. Two-mode: not checked.
 
 ## See also
 
-- [nwplot](nwplot.md)
+- [nwplot](nwplot)
 
 - last certified : 25 Aug 2026

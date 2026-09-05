@@ -33,7 +33,7 @@ silent]
 
 ## Description
 
-`nwmodularity` computes Newman's modularity *Q* of the network(s) in [netlist](netlist.md) against an ul:existing node partition given in **group()** — for example a partition obtained from [nwcomponents](nwcomponents.md), a block model, or any hand-coded grouping variable. Unlike [nwcommunity](nwcommunity.md), `nwmodularity` does not search for a partition; it only scores the one given. All calculations are performed on the undirected network; directed networks require **symmetrize**.
+`nwmodularity` computes Newman's modularity *Q* of the network(s) in [netlist](netlist) against an ul:existing node partition given in **group()** — for example a partition obtained from [nwcomponents](nwcomponents), a block model, or any hand-coded grouping variable. Unlike [nwcommunity](nwcommunity), `nwmodularity` does not search for a partition; it only scores the one given. All calculations are performed on the undirected network; directed networks require **symmetrize**.
 
 Modularity compares the fraction of ties that fall within the given groups to the fraction expected under a random network with the same degree sequence. Values near 0 indicate the grouping is no better than chance; higher (positive) values indicate a grouping that captures real community structure. Scoring a single, all-nodes-in-one-group partition always gives *Q* = 0, for any network.
 
@@ -66,4 +66,4 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 10
 
 ## See also
 
-- [nwcommunity](nwcommunity.md), [nwcomponents](nwcomponents.md)
+- [nwcommunity](nwcommunity), [nwcomponents](nwcomponents)

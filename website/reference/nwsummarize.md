@@ -115,15 +115,15 @@ Binary: yes. Directed: yes. Weighted: yes, dyad/triad/degree summaries reflect t
 - **r(labs)** comma-separated node labels
 - **r(vars)** Stata variable names used to represent the network
 - **r(selfloop)** if the network permits self-loops
-- **r(provenance)** provenance/source note, if set (see [nwname](nwname.md))
+- **r(provenance)** provenance/source note, if set (see [nwname](nwname))
 - **r(temporal)** if the network is temporal
 - **r(temporaltype)** temporal storage type, if **r(temporal)** is true
 - **r(mode1_desc)** description of mode 1 (two-mode networks only)
 - **r(mode2_desc)** description of mode 2 (two-mode networks only)
 
-The full set above is inherited unchanged from the internal [nwname](nwname.md) call this command makes on your behalf - see [nwname](nwname.md)'s own **Stored results** section for the authoritative, complete list (this command does not add or remove any of it).
+The full set above is inherited unchanged from the internal [nwname](nwname) call this command makes on your behalf - see [nwname](nwname)'s own **Stored results** section for the authoritative, complete list (this command does not add or remove any of it).
 
 ## See also
 
-- [nwname](nwname.md), [nwdyads](nwdyads.md), [nwtriads](nwtriads.md)
+- [nwname](nwname), [nwdyads](nwdyads), [nwtriads](nwtriads)
 - last certified : 24 Aug 2026

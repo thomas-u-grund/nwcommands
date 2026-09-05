@@ -28,14 +28,14 @@ twoway_options]
 
 | | |
 |---|---|
-| `size`(*`varname`* [,*[node_sub](nwplot.md)*]) | size of the nodes |
+| `size`(*`varname`* [,*[node_sub](nwplot)*]) | size of the nodes |
 | `labelopt`(*`marker_label_options`*) | options for look of node labels (e.g. size, color) |
 
 ## Description
 
 This command plots a network. It gives a lot of flexibility to control all elements in a network plot. Furthermore, it is compatible with **schemes()** and accepts all `twoway_options`.
 
-This example generates a random network and plots it. Because no [netname](netname.md) is given, the command refers to the [current network](nwcurrent.md).
+This example generates a random network and plots it. Because no [netname](netname) is given, the command refers to the [current network](nwcurrent).
 
 ```stata
 . nwclear
@@ -75,7 +75,7 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 ```
 `importcoords()`/`edgeimport()` must be run against the same network, same size, as the `interactive` view they came from (row order is how nwplot matches an edit back to a node/tie, the same way `nodexy()`/`label()` already do) - re-export from `interactive` rather than reusing an old CSV after the network or an `if`/`in` restriction changes. Node size is not yet individually editable in the interactive view; the size-factor slider maps onto `nodefactor()` instead.
 
-Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or asymmetrically connected (see [nwdyads](nwdyads.md)). By default, asymmetrically connected dyads are represented as a straight line, whereas mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as curved lines.
+Arrow heads are plotted when a network is directed. Furthermore, the command notices if a dyad is mutually or asymmetrically connected (see [nwdyads](nwdyads)). By default, asymmetrically connected dyads are represented as a straight line, whereas mutually connecetd dyads are represented as two curved lines. However, one can overwrite this and show all ties as curved lines.
 
 ```stata
 . nwplot, arcstyle(automatic)
@@ -218,4 +218,4 @@ Binary: yes. Weighted: yes (via `edgesize()`/`edgecolor()` - see the shortest-pa
 
 ## See also
 
-- [nwplotmatrix](nwplotmatrix.md)
+- [nwplotmatrix](nwplotmatrix)

@@ -26,9 +26,9 @@ vars(newvarlist)]
 
 | | |
 |---|---|
-| `type`(*[type](nwdissimilar.md)*) | Type of dissimilarity between two nodes; default = euclidean |
-| `context`(*[context](nwdissimilar.md)*) | Context definition for dissimilarity calculation; default = both |
-| `name`(*[newnetname](newnetname.md)*) | Name of the new dissimilarity network; default = *_dissimilar* |
+| `type`(*[type](nwdissimilar)*) | Type of dissimilarity between two nodes; default = euclidean |
+| `context`(*[context](nwdissimilar)*) | Context definition for dissimilarity calculation; default = both |
+| `name`(*[newnetname](newnetname)*) | Name of the new dissimilarity network; default = *_dissimilar* |
 | `xvars` | Generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels; default = the source network's own labels |
 | `vars`(*`newvarlist`*) | new variables that are used for the network |
@@ -75,4 +75,4 @@ Binary: yes. Directed: yes (**context()** lets you restrict the comparison to in
 
 ## See also
 
-- [nwsimilar](nwsimilar.md), [nwcorrelate](nwcorrelate.md), [nwhierarchy](nwhierarchy.md)
+- [nwsimilar](nwsimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)

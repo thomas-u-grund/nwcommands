@@ -42,4 +42,4 @@ Generate a new network with a network function:
 
 ## Supported network types
 
-Not applicable to `nwgenvar` itself - a dispatcher/shortcut layer over [nwgenerate](nwgenerate.md); the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn1*/*netfcn2* shortcut or network expression is invoked - see that function's own help topic.
+Not applicable to `nwgenvar` itself - a dispatcher/shortcut layer over [nwgenerate](nwgenerate); the actual directed/valued/two-mode support depends entirely on whichever underlying *netfcn1*/*netfcn2* shortcut or network expression is invoked - see that function's own help topic.

@@ -25,9 +25,9 @@ nwwebuse set
 
 ## Description
 
-`nwwebuse` *filename* loads the specified network dataset, obtaining it over the web and [sets all networks](nwset.md) in this dataset. By default, datasets are obtained from *https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data*.
+`nwwebuse` *filename* loads the specified network dataset, obtaining it over the web and [sets all networks](nwset) in this dataset. By default, datasets are obtained from *https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data*.
 
-Several [network datasets](netexample.md) are available from this source. If *filename* is specified without a suffix, `.dta` is assumed.
+Several [network datasets](netexample) are available from this source. If *filename* is specified without a suffix, `.dta` is assumed.
 
 `nwwebuse` `query` reports the URL from which network datasets will be obtained.
 
@@ -46,7 +46,7 @@ Several [network datasets](netexample.md) are available from this source. If *fi
 - Reset URL to the default
 - `. nwwebuse set`
 
-- Load the [Florentine network dataset](netexample.md) that is stored at
+- Load the [Florentine network dataset](netexample) that is stored at
 - https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data
 - `. nwwebuse florentine`
 
@@ -59,6 +59,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - fetches 
 
 ## See also
 
-- [nwuse](nwuse.md), [nwimport](nwimport.md), `webuse`
+- [nwuse](nwuse), [nwimport](nwimport), `webuse`
 
 - last certified : 23 Aug 2026

@@ -56,6 +56,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - renames a single node's
 
 ## See also
 
-- [nwrename](nwrename.md), [nwname](nwname.md)
+- [nwrename](nwrename), [nwname](nwname)
 
 - last certified : 24 Aug 2026

@@ -48,9 +48,9 @@ Each unique triad (triple of nodes *i*, *j*, and *k*) in a directed network can 
 - 210 = i->j<->k, i<->k.
 - 300 = i<->j<->k, i<->k, complete triad.
 
-This is the so called MAN notation. As in [nwdyads](nwdyads.md) it characterized a triad by the number of 1) mutual dyads, 2) asymmetric dyads and 3) null dyads. For example, MAN = 102 means that there is one mutual dyad and two null dyads.
+This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a triad by the number of 1) mutual dyads, 2) asymmetric dyads and 3) null dyads. For example, MAN = 102 means that there is one mutual dyad and two null dyads.
 
-`plot` draws a bar chart of the 16 category counts, in the same fixed MAN order the text table above already uses (not sorted by count), via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug.md)'s own `plot` option uses for its null-distribution histogram. Grayscale by design, matching every other plot this package produces.
+`plot` draws a bar chart of the 16 category counts, in the same fixed MAN order the text table above already uses (not sorted by count), via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug)'s own `plot` option uses for its null-distribution histogram. Grayscale by design, matching every other plot this package produces.
 
 ## Examples
 
@@ -84,6 +84,6 @@ Binary: yes. Directed: yes - this is the command's native case; the full 16-type
 
 ## See also
 
-- [nwdyads](nwdyads.md)
+- [nwdyads](nwdyads)
 
 - last certified : 24 Aug 2026

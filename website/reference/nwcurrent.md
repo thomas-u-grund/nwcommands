@@ -25,11 +25,11 @@ id(int)]
 
 ## Description
 
-Almost all nwcommands allow that a [netname](netname.md) or [netlist](netlist.md) is optional. When no network is specified in such a case, by default, the nwcommands apply the command to the *current network*.
+Almost all nwcommands allow that a [netname](netname) or [netlist](netlist) is optional. When no network is specified in such a case, by default, the nwcommands apply the command to the *current network*.
 
-The *current network* is simply the last network that has been [set](nwset.md), [imported](nw_topical.md) or [generated](nw_topical.md). This is a convenient way to way access the latest network one worked with.
+The *current network* is simply the last network that has been [set](nwset), [imported](nwtopical) or [generated](nwtopical). This is a convenient way to way access the latest network one worked with.
 
-`nwcurrent` changes the *current network*. Typically, it can be used with a [netname](netname.md). When used with **id()**, the network ID refers to the original order the networks were generated in. The command also returns some information about the *current network* in the r() vector.
+`nwcurrent` changes the *current network*. Typically, it can be used with a [netname](netname). When used with **id()**, the network ID refers to the original order the networks were generated in. The command also returns some information about the *current network* in the r() vector.
 
 ## Examples
 

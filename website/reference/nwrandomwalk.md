@@ -33,9 +33,9 @@ silent]
 
 `nwrandomwalk` computes the mean hitting time from every node to `target()`: the EXPECTED number of steps a simple random walk (at each step, move to a uniformly-random NEIGHBOR of the current node) starting at that node takes to first reach `target()`. `target()` itself always gets 0.
 
-A classical random-walk characterization of network structure, closely related to effective resistance/commute time in the electrical-network analogy of a graph, and genuinely different from ordinary geodesic distance ([nwgeodesic](nwgeodesic.md)): an unweighted random walk routinely takes far more steps than the shortest path, especially through a low-degree "bottleneck" node it is unlikely to choose directly - the whole reason hitting time is its own separate, informative quantity rather than just a scaled version of geodesic distance.
+A classical random-walk characterization of network structure, closely related to effective resistance/commute time in the electrical-network analogy of a graph, and genuinely different from ordinary geodesic distance ([nwgeodesic](nwgeodesic)): an unweighted random walk routinely takes far more steps than the shortest path, especially through a low-degree "bottleneck" node it is unlikely to choose directly - the whole reason hitting time is its own separate, informative quantity rather than just a scaled version of geodesic distance.
 
-Solved EXACTLY via the standard linear system this quantity satisfies (not simulated, and not subject to any Monte Carlo noise): for every node i other than the target, its own hitting time equals 1 plus the average of its own neighbors' hitting times; the target's own hitting time is fixed at 0. The same "solve directly, do not simulate" discipline [nwkatz](nwkatz.md)'s own walk-counting Katz centrality already established for an analogous exact random-walk quantity.
+Solved EXACTLY via the standard linear system this quantity satisfies (not simulated, and not subject to any Monte Carlo noise): for every node i other than the target, its own hitting time equals 1 plus the average of its own neighbors' hitting times; the target's own hitting time is fixed at 0. The same "solve directly, do not simulate" discipline [nwkatz](nwkatz)'s own walk-counting Katz centrality already established for an analogous exact random-walk quantity.
 
 ## Examples
 
@@ -63,6 +63,6 @@ Lovasz, L. (1993). Random walks on graphs: A survey. *Combinatorics, Paul Erdos 
 
 ## See also
 
-- [nwpagerank](nwpagerank.md), [nwgeodesic](nwgeodesic.md), [nwkatz](nwkatz.md), [nwmaxflow](nwmaxflow.md)
+- [nwpagerank](nwpagerank), [nwgeodesic](nwgeodesic), [nwkatz](nwkatz), [nwmaxflow](nwmaxflow)
 
 - last certified : 31 Aug 2026

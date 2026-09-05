@@ -27,11 +27,11 @@ nwreplace]
 | `sym` | Symmetrize network before calculation of reachability |
 | `name(newnetname)` | Name of the new network; default = *reach* |
 | `xvars` | Generate Stata variables for the network |
-| `nwreplace` | if a network named *newnetname* already exists, drop it and use this name anyway - required, not silent (see [nwgeodesic](nwgeodesic.md) for the same convention) |
+| `nwreplace` | if a network named *newnetname* already exists, drop it and use this name anyway - required, not silent (see [nwgeodesic](nwgeodesic) for the same convention) |
 
 ## Description
 
-`nwreach` calculates the reachability network. The dyads *x_ij* in the reachibility network take value 1 when there is at least one path between *nodes i* and *j* in the original network [netname](netname.md), and 0 if there is no such path.
+`nwreach` calculates the reachability network. The dyads *x_ij* in the reachibility network take value 1 when there is at least one path between *nodes i* and *j* in the original network [netname](netname), and 0 if there is no such path.
 
 ## Examples
 
@@ -58,10 +58,10 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 
 ## Supported network types
 
-Binary: yes (only) - reachability is a structural yes/no property; [nwgeodesic](nwgeodesic.md)'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as [nwgeodesic](nwgeodesic.md)), `sym` available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
+Binary: yes (only) - reachability is a structural yes/no property; [nwgeodesic](nwgeodesic)'s own weighted distance semantics do not carry through here. Directed: yes - symmetrized by default (same convention as [nwgeodesic](nwgeodesic)), `sym` available. Weighted: not applicable. Signed: not applicable. Two-mode: not checked.
 
 ## See also
 
-- [nwgeodesic](nwgeodesic.md), [nwpath](nwpath.md)
+- [nwgeodesic](nwgeodesic), [nwpath](nwpath)
 
 - last certified : 24 Aug 2026

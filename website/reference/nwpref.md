@@ -34,7 +34,7 @@ ntimes(int)]
 | `prob(float)` | probability that new node connects to existing nodes uniformly at random; default = 0 |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
-| `name`(*[newnetname](newnetname.md)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network |
 | `xvars` | generate Stata variables for the network |
 | `ntimes(int)` | number of small-world networks to be generated; default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
@@ -81,6 +81,6 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. *Sci
 
 ## See also
 
-- [nwsmall](nwsmall.md), [nwrandom](nwrandom.md), [nwlattice](nwlattice.md), [nwring](nwring.md)
+- [nwsmall](nwsmall), [nwrandom](nwrandom), [nwlattice](nwlattice), [nwring](nwring)
 
 - last certified : 24 Aug 2026

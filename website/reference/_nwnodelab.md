@@ -22,11 +22,11 @@ nodeid(int)
 | | |
 |---|---|
 | `nodeid(nodeid)` | nodeid of network node i |
-| `detail` | displays the [nodeid](nodeid.md) and [nodelab](nodeid.md) of node i |
+| `detail` | displays the [nodeid](nodeid) and [nodelab](nodeid) of node i |
 
 ## Description
 
-Returns the [nodelab](nodeid.md) of a node given its [nodeid](nodeid.md). Results are also stored in the return vector. When no node with the specified id is found in network *netname* and error is thrown. This command is mostly used for programming with networks.
+Returns the [nodelab](nodeid) of a node given its [nodeid](nodeid). Results are also stored in the return vector. When no node with the specified id is found in network *netname* and error is thrown. This command is mostly used for programming with networks.
 
 ## Examples
 
@@ -60,4 +60,4 @@ Returns the [nodelab](nodeid.md) of a node given its [nodeid](nodeid.md). Result
 
 ## See also
 
-- [_nwnodeid](_nwnodeid.md), [nodelab](nodeid.md), [nodeid](nodeid.md)
+- [_nwnodeid](_nwnodeid), [nodelab](nodeid), [nodeid](nodeid)

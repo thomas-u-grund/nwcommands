@@ -76,4 +76,4 @@ Binary: yes (only) - component membership is a structural (weak-connectivity) pr
 
 ## See also
 
-- [nwgen](nwgen.md), [nwkcomponents](nwkcomponents.md)
+- [nwgen](nwgen), [nwkcomponents](nwkcomponents)

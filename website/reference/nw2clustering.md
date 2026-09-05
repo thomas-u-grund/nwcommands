@@ -35,11 +35,11 @@ node's own clustering coefficient |
 
 ## Description
 
-`nw2clustering` calculates the two-mode (bipartite) analogue of the ordinary clustering coefficient (see [nwclustering](nwclustering.md)) using the 4-path / 6-cycle definition of Opsahl (2013) and Robins & Alexander (2004): an ordinary triangle cannot exist in a two-mode network (a tie only ever connects the two different modes), so "closure" is instead measured on paths of length 4 - two `level()`-mode nodes connected via two distinct intermediate opposite-mode alters - and a path is *closed* when its two ends are ALSO both tied to some further common alter, forming a 6-cycle. This deliberately excludes shorter 4-cycles (reusing one of the same two alters) as a form of closure, matching the cited reference's own distinction between mere shared-affiliation redundancy and genuine triadic-style closure.
+`nw2clustering` calculates the two-mode (bipartite) analogue of the ordinary clustering coefficient (see [nwclustering](nwclustering)) using the 4-path / 6-cycle definition of Opsahl (2013) and Robins & Alexander (2004): an ordinary triangle cannot exist in a two-mode network (a tie only ever connects the two different modes), so "closure" is instead measured on paths of length 4 - two `level()`-mode nodes connected via two distinct intermediate opposite-mode alters - and a path is *closed* when its two ends are ALSO both tied to some further common alter, forming a 6-cycle. This deliberately excludes shorter 4-cycles (reusing one of the same two alters) as a form of closure, matching the cited reference's own distinction between mere shared-affiliation redundancy and genuine triadic-style closure.
 
 Only nodes of the requested `level()` receive a value; nodes of the other mode are left missing. A node with too few alters, or whose own connected component has fewer than 3 same-mode nodes, has no possible 4-path and its own coefficient is reported missing (not spuriously 0).
 
-[nwclustering](nwclustering.md) automatically switches to this command whenever it is called on a two-mode network, forwarding `measure()` and `generate()` (always at the default `level(1)` in that case) - call `nw2clustering` directly to choose `level(2)` or a non-default `measure()`.
+[nwclustering](nwclustering) automatically switches to this command whenever it is called on a two-mode network, forwarding `measure()` and `generate()` (always at the default `level(1)` in that case) - call `nw2clustering` directly to choose `level(2)` or a non-default `measure()`.
 
 ## Examples
 
@@ -73,6 +73,6 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 
 ## See also
 
-- [nwclustering](nwclustering.md), [nw2project](nw2project.md), [nw2degree](nw2degree.md)
+- [nwclustering](nwclustering), [nw2project](nw2project), [nw2degree](nw2degree)
 
 - last certified : 24 Aug 2026

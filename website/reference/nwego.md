@@ -31,9 +31,9 @@ silent]
 
 ## Description
 
-`nwego` calculates, for every node, the size and density of its ego network. A node's alters are every other node it has any tie with - for a directed network, the union of its incoming and outgoing ties (the standard "who is in ego's network at all" question; this is distinct from [nwaltergen](nwaltergen.md)'s own alter-aggregation convention, which deliberately keeps incoming and outgoing ties separate for a different purpose).
+`nwego` calculates, for every node, the size and density of its ego network. A node's alters are every other node it has any tie with - for a directed network, the union of its incoming and outgoing ties (the standard "who is in ego's network at all" question; this is distinct from [nwaltergen](nwaltergen)'s own alter-aggregation convention, which deliberately keeps incoming and outgoing ties separate for a different purpose).
 
-**Ego-network size** is simply the number of alters (equivalent to [nwdegree](nwdegree.md) for an undirected network; for a directed network it is the count of *distinct* nodes tied in either direction, not the sum of in- and out-degree, which could double-count a reciprocated tie).
+**Ego-network size** is simply the number of alters (equivalent to [nwdegree](nwdegree) for an undirected network; for a directed network it is the count of *distinct* nodes tied in either direction, not the sum of in- and out-degree, which could double-count a reciprocated tie).
 
 **Ego-network density** is the proportion of possible ties actually present *among the alters themselves* - ego itself is excluded, the standard convention for reporting how interconnected an ego's contacts are with each other, independent of their (by definition, complete) ties to ego. For a directed network, ordered alter-alter pairs are counted (an alter set of size *k* has *k(k-1)* possible ties); for an undirected network, unordered pairs are counted (*k(k-1)/2* possible ties). An ego with fewer than 2 alters has no pair to assess - density is reported missing for it, not spuriously 0 or 1.
 
@@ -52,10 +52,10 @@ Binary: yes. Directed: yes - alters are the union of in- and out-neighbors; alte
 
 ## References
 
-Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harvard University Press. (ego-network density as used in structural holes analysis - see also [nwconstraint](nwconstraint.md), [nwburt](nwburt.md))
+Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harvard University Press. (ego-network density as used in structural holes analysis - see also [nwconstraint](nwconstraint), [nwburt](nwburt))
 
 ## See also
 
-- [nwdegree](nwdegree.md), [nwaltergen](nwaltergen.md), [nwconstraint](nwconstraint.md), [nwburt](nwburt.md)
+- [nwdegree](nwdegree), [nwaltergen](nwaltergen), [nwconstraint](nwconstraint), [nwburt](nwburt)
 
 - last certified : 21 Aug 2026

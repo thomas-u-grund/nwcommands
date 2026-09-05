@@ -27,23 +27,23 @@ replace]
 
 | | |
 |---|---|
-| `mode`(*[mode](nwexpand.md)*) | mode used to expand variable; default = *same* |
-| `network`(*[netname](netname.md)*) | apply node labels of *netname* |
+| `mode`(*[mode](nwexpand)*) | mode used to expand variable; default = *same* |
+| `network`(*[netname](netname)*) | apply node labels of *netname* |
 | `nodes(int)` | size of new network; default = `_N` - an explicit `nodes(1)` for a genuine 1-node network is honored, distinct from leaving `nodes()` unspecified |
-| `name`(*[newnetname](newnetname.md)*) | name of the new random network; default = *[mode](nwexpand.md)_varname* |
+| `name`(*[newnetname](newnetname)*) | name of the new random network; default = *[mode](nwexpand)_varname* |
 | `xvars` | generate Stata variables for the network |
 | `labs`(*lab1 lab2 ...*) | overwrite node labels |
-| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset.md) for the same convention) |
+| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
 
 ## Description
 
 This command generates a new network by expanding an existing variable. When option **nodes()** is unspecified, the command generates a network with `_N` nodes.
 
-The value *M_ij* of the adjacency matrix *M* of the new network is calculated from the values `varname`**[i]**, `varname`**[j]** and some function *expfcn* defined by *[mode](nwexpand.md)*. By default, *mode = same*.
+The value *M_ij* of the adjacency matrix *M* of the new network is calculated from the values `varname`**[i]**, `varname`**[j]** and some function *expfcn* defined by *[mode](nwexpand)*. By default, *mode = same*.
 
 Valid modes are: **same, dist, distinv, absdist, absdistinv, sender, receiver**
 
-The option **network(**[netname](netname.md)**)** applies the node labels of *netname* when expanding the variable. Often specifying this option is needed.
+The option **network(**[netname](netname)**)** applies the node labels of *netname* when expanding the variable. Often specifying this option is needed.
 
 An example demonstrates how this works. First, we generate a small dataset with 6 observations and the new variable * gender*. This new variable takes the value 0 for observations 1-3 and the value 1 for observations 4-6.
 
@@ -127,6 +127,6 @@ Binary: source attribute values can be binary or continuous - `mode()` selects t
 
 ## See also
 
-- [nwcorrelate](nwcorrelate.md)
+- [nwcorrelate](nwcorrelate)
 
 - last certified : 24 Aug 2026

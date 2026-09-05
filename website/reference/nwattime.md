@@ -31,7 +31,7 @@ replace]
 
 ## Description
 
-`nwattime` takes a temporal network (declared via [nwset](nwset.md)'s **time()**, **interval()**, or **eventtime()** options) and produces an ordinary, static one-mode network containing only the ties active at the requested timepoint - the "temporal network -> select edges active at t -> static graph view -> ordinary nw algorithm" model: the resulting network is a completely normal network, usable with any existing **nw*** command exactly as if it had never been temporal at all. This is deliberate groundwork, not a full temporal-network modelling system - see [nwset](nwset.md)'s own temporal section for what is and is not supported yet.
+`nwattime` takes a temporal network (declared via [nwset](nwset)'s **time()**, **interval()**, or **eventtime()** options) and produces an ordinary, static one-mode network containing only the ties active at the requested timepoint - the "temporal network -> select edges active at t -> static graph view -> ordinary nw algorithm" model: the resulting network is a completely normal network, usable with any existing **nw*** command exactly as if it had never been temporal at all. This is deliberate groundwork, not a full temporal-network modelling system - see [nwset](nwset)'s own temporal section for what is and is not supported yet.
 
 The slicing rule depends on the source network's own temporal semantics:
 
@@ -68,7 +68,7 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 
 ## Supported network types
 
-Binary: yes. Directed: preserved from the source network. Weighted: preserved from the source network's own tie values (the slice selects which ties are active, it does not change their values). Signed: not checked. Two-mode: not yet supported as a source (see [nwset](nwset.md)'s own note that **time()**/ **interval()**/**eventtime()** cannot currently be combined with **twomode**/**bipartite** - a composability item for a later pass).
+Binary: yes. Directed: preserved from the source network. Weighted: preserved from the source network's own tie values (the slice selects which ties are active, it does not change their values). Signed: not checked. Two-mode: not yet supported as a source (see [nwset](nwset)'s own note that **time()**/ **interval()**/**eventtime()** cannot currently be combined with **twomode**/**bipartite** - a composability item for a later pass).
 
 ## Stored results
 
@@ -79,6 +79,6 @@ Binary: yes. Directed: preserved from the source network. Weighted: preserved fr
 
 ## See also
 
-- [nwset](nwset.md), [nwsummarize](nwsummarize.md)
+- [nwset](nwset), [nwsummarize](nwsummarize)
 
 - last certified : 21 Aug 2026

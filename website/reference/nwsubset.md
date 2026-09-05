@@ -23,7 +23,7 @@ replace]
 
 | | |
 |---|---|
-| `name`(*[newnetname](newnetname.md)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network |
 | `replace` | replace existing network |
 
 ## Description
@@ -35,11 +35,11 @@ For example, this generates a new network from the **flomarriage** network that 
 - **. nwwebuse florentine, nwclear**
 - **. nwsubset flomarriage if wealth > 50**
 
-By default, this generates a new network called *flomarriage_sub*. Notice that something similar could be achieved with [nwgen](nwgen.md):
+By default, this generates a new network called *flomarriage_sub*. Notice that something similar could be achieved with [nwgen](nwgen):
 
 - **. nwgen flo_sub = flomarriage if wealth > 50**
 
-However, the last command does not copy the node labels of network *flomarriage*. This is because the `if` condition in [nwgen](nwgen.md) applies to a whole [network expression](netexp.md). Because network expressions can be very complicated, no labels are copied.
+However, the last command does not copy the node labels of network *flomarriage*. This is because the `if` condition in [nwgen](nwgen) applies to a whole [network expression](netexp). Because network expressions can be very complicated, no labels are copied.
 
 ## Supported network types
 
@@ -47,4 +47,4 @@ Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extra
 
 ## See also
 
-- [nwgenerate](nwgenerate.md), [nwduplicate](nwduplicate.md)
+- [nwgenerate](nwgenerate), [nwduplicate](nwduplicate)

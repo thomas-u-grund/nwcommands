@@ -18,9 +18,9 @@ nwrestore
 
 ## Description
 
-`nwrestore` restores network data (including all normal Stata variables) previously saved by [nwpreserve](nwpreserve.md) - the network-aware counterpart of Stata's own `preserve`/ `restore` pair. If nothing was preserved (or it was already restored once), `nwrestore` reports "Nothing to restore" and does nothing further.
+`nwrestore` restores network data (including all normal Stata variables) previously saved by [nwpreserve](nwpreserve) - the network-aware counterpart of Stata's own `preserve`/ `restore` pair. If nothing was preserved (or it was already restored once), `nwrestore` reports "Nothing to restore" and does nothing further.
 
-The temporary file `nwrestore` reads from is deleted once restored, so a given [nwpreserve](nwpreserve.md) call can only be restored once - exactly like Stata's own `preserve`/`restore`.
+The temporary file `nwrestore` reads from is deleted once restored, so a given [nwpreserve](nwpreserve) call can only be restored once - exactly like Stata's own `preserve`/`restore`.
 
 ## Examples
 
@@ -38,4 +38,4 @@ Preserve a network, drop it, then restore it:
 
 ## Supported network types
 
-Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - restores the full working state saved by [nwpreserve](nwpreserve.md), independent of any of these properties.
+Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - restores the full working state saved by [nwpreserve](nwpreserve), independent of any of these properties.

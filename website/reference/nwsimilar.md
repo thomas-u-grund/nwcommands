@@ -24,9 +24,9 @@ xvars]
 
 | | |
 |---|---|
-| `type`(*[type](nwsimilar.md)*) | Type of similarity between two nodes; default = pearson |
-| `context`(*[context](nwsimilar.md)*) | Context definition for similarity calculation; default = both (alias: `mode()`, kept for backward compatibility - [nwdissimilar](nwdissimilar.md), this command's own sibling, uses `context()` for the identical concept) |
-| `name`(*[newnetname](newnetname.md)*) | Name of the new similarity network; default = *_similar* |
+| `type`(*[type](nwsimilar)*) | Type of similarity between two nodes; default = pearson |
+| `context`(*[context](nwsimilar)*) | Context definition for similarity calculation; default = both (alias: `mode()`, kept for backward compatibility - [nwdissimilar](nwdissimilar), this command's own sibling, uses `context()` for the identical concept) |
+| `name`(*[newnetname](newnetname)*) | Name of the new similarity network; default = *_similar* |
 | `xvars` | Generate Stata variables for the network |
 
 ## Description
@@ -37,7 +37,7 @@ By default, the similarity is calculated based on both incoming and outgoing tie
 
 **Pearson similarity:**
 
-This measure calculates the Pearson correlation coefficient for two tie vectors of nodes *i* and *j*. See [here for more information](nwcorrelate.md) on this (see also [nwcorrelate](nwcorrelate.md).
+This measure calculates the Pearson correlation coefficient for two tie vectors of nodes *i* and *j*. See [here for more information](nwcorrelate) on this (see also [nwcorrelate](nwcorrelate).
 
 **Hamming similarity:**
 
@@ -65,8 +65,8 @@ Calculates the cross-product of the tie vectors of nodes ** and *j*
 
 ## Supported network types
 
-Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incoming or outgoing ties only). Weighted: **pearson** (via [nwcorrelate](nwcorrelate.md)) and **crossproduct** use tie weights directly; **hamming**/**jaccard**/**matches** binarize each tie before comparing, so tie strength does not affect these three. Signed: not checked. Two-mode: not supported - operates on the network's own square adjacency matrix. The similarity network itself always carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits its source network's own node labels, so it can be compared directly against the source network node-for-node.
+Binary: yes. Directed: yes (**mode()** lets you restrict the comparison to incoming or outgoing ties only). Weighted: **pearson** (via [nwcorrelate](nwcorrelate)) and **crossproduct** use tie weights directly; **hamming**/**jaccard**/**matches** binarize each tie before comparing, so tie strength does not affect these three. Signed: not checked. Two-mode: not supported - operates on the network's own square adjacency matrix. The similarity network itself always carries a genuine (non-missing) diagonal (a node is maximally similar to itself) and inherits its source network's own node labels, so it can be compared directly against the source network node-for-node.
 
 ## See also
 
-- [nwdissimilar](nwdissimilar.md), [nwcorrelate](nwcorrelate.md), [nwhierarchy](nwhierarchy.md)
+- [nwdissimilar](nwdissimilar), [nwcorrelate](nwcorrelate), [nwhierarchy](nwhierarchy)

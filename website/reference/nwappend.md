@@ -20,7 +20,7 @@ filename contains blanks or other special characters.
 
 | | |
 |---|---|
-| `force` | if a network in *using dataset* has the same name as one already loaded, auto-renumber the incoming network to a fresh name instead of erroring (see help:nwvalidate) - leaves the existing network untouched, unlike `replace` elsewhere in this group (e.g. [nwset](nwset.md)), which overwrites in place |
+| `force` | if a network in *using dataset* has the same name as one already loaded, auto-renumber the incoming network to a fresh name instead of erroring (see help:nwvalidate) - leaves the existing network untouched, unlike `replace` elsewhere in this group (e.g. [nwset](nwset)), which overwrites in place |
 
 ## Description
 
@@ -38,6 +38,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - appends 
 
 ## See also
 
-- [nwuse](nwuse.md), [nwwebuse](nwwebuse.md), [nwsave](nwsave.md), `append`
+- [nwuse](nwuse), [nwwebuse](nwwebuse), [nwsave](nwsave), `append`
 
 - last certified : 24 Aug 2026

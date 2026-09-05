@@ -32,7 +32,7 @@ ntimes(int)]
 | `xwrap` | wrap horizontally |
 | `ywrap` | wrap vertically |
 | `undirected` | generate an undirected network; default = directed |
-| `name`(*[newnetname](newnetname.md)*) | name of the new network |
+| `name`(*[newnetname](newnetname)*) | name of the new network |
 | `vars`(*`newvarlist`*) | new variables that are used for the network |
 | `xvars` | generate Stata variables for the network |
 | `ntimes(int)` | number of networks to be generated; default = 1 |
@@ -69,4 +69,4 @@ Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weigh
 
 ## See also
 
-- [nwpref](nwpref.md), [nwrandom](nwrandom.md), [nwring](nwring.md), [nwsmall](nwsmall.md)
+- [nwpref](nwpref), [nwrandom](nwrandom), [nwring](nwring), [nwsmall](nwsmall)

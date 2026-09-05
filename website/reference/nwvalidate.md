@@ -19,7 +19,7 @@ netname
 
 ## Description
 
-Checks if a network *[netname](netname.md)* already exists. In case it does, the command makes a suggestion for an alternative name. Normally, the command returns *netname_1*. If that also exists, the commands returns *netname_2*.
+Checks if a network *[netname](netname)* already exists. In case it does, the command makes a suggestion for an alternative name. Normally, the command returns *netname_1*. If that also exists, the commands returns *netname_2*.
 
 ## Examples
 

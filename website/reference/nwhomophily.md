@@ -29,18 +29,18 @@ undirected]
 |---|---|
 | `homophily`(*`h1 h2 ...`*) | degree of homophily for each variable in `varlist` |
 | `density(float)` | density of the new network |
-| `mode`(*[expand_mode](nwexpand.md)*) | mode used to generate probabilities for ties |
+| `mode`(*[expand_mode](nwexpand)*) | mode used to generate probabilities for ties |
 | `nodes(integer)` | number of nodes; if not specified the number of valid cases of *`varname`* is used |
 | `name(newnetname)` | name of the new random network |
 | `xvars` | generate Stata variables for the network |
 
 ## Description
 
-`nwhomophily` generates a homophily network - a network where ties between nodes *i* and *j* are more/less likely to exist when the two nodes have the same values on `varlist`. Basically, this command is a convenience wrapper for [nwdyadprob](nwdyadprob.md).
+`nwhomophily` generates a homophily network - a network where ties between nodes *i* and *j* are more/less likely to exist when the two nodes have the same values on `varlist`. Basically, this command is a convenience wrapper for [nwdyadprob](nwdyadprob).
 
 Each possible tie in the new network has the probability *p_ij* to exist. These proabilities are derived from a weight *w_ij* and the values defined in **homophily()** and **density()**.
 
-The weight *w_ij* is calculated on the basis of the identity/similarity of nodes *i* and *j* on variables in `varlist` (see [nwexpand](nwexpand.md)). By default,
+The weight *w_ij* is calculated on the basis of the identity/similarity of nodes *i* and *j* on variables in `varlist` (see [nwexpand](nwexpand)). By default,
 
 *w_ij = (varname[i] == varname[j])*, i.e. node *i* and node *j* have the same value on a variable.
 
@@ -48,7 +48,7 @@ Another way to calculate *w_ij* would be using ** mode(absdistinv)**
 
 *w_ij = max(absdist) - abs(var[i] - var[j])* - a bounded inverse-distance transform (closer pairs score higher), not a literal *1/|diff|* reciprocal, deliberately avoiding the numerical blowup a true reciprocal would cause for near-equal values (see the caveat below)
 
-For more information on how *w_ij* is calculated based on **mode()** see [nwexpand](nwexpand.md).
+For more information on how *w_ij* is calculated based on **mode()** see [nwexpand](nwexpand).
 
 The probability *p_ij* is defined as:
 
@@ -107,4 +107,4 @@ Binary: yes (only). Directed: yes, via `undirected` (default is directed). Weigh
 
 ## See also
 
-- [nwdyadprob](nwdyadprob.md)
+- [nwdyadprob](nwdyadprob)

@@ -29,14 +29,14 @@ This creates a Mata matrix with name *matatamatrix* holding a copy of the adjace
 
 You do not need to know Mata to use any of the nwcommands, but sometimes you might want to obtain the adjacency matrix, for example, when programming your own network commands.
 
-When you make alterations to a Mata matrix derived from **nwtomata** you do not change the underlying network. It simply gives you a copy of the underlying matrix used to store the network. To make changes to this network use  [nwreplace](nwreplace.md) or [nwreplacemat](nwreplacemat.md).
+When you make alterations to a Mata matrix derived from **nwtomata** you do not change the underlying network. It simply gives you a copy of the underlying matrix used to store the network. To make changes to this network use  [nwreplace](nwreplace) or [nwreplacemat](nwreplacemat).
 
 The adjacency matrix of a network can also be displayed with:
 
 ```stata
 . nwsummarize, mat
 ```
-Advanced programmers who might want to directly interact with the adjacency matrix of a network and not with a copy of it, see [advanced network programming](nw_programming.md).
+Advanced programmers who might want to directly interact with the adjacency matrix of a network and not with a copy of it, see [advanced network programming](nwprogramming).
 
 ## Supported network types
 
@@ -44,4 +44,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - returns 
 
 ## See also
 
-- [nwtomatafast](nwtomatafast.md), [nwload](nwload.md), [nwsummarize](nwsummarize.md)
+- [nwtomatafast](nwtomatafast), [nwload](nwload), [nwsummarize](nwsummarize)

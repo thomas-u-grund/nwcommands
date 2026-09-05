@@ -48,7 +48,7 @@ Eigenvector centrality is only defined for connected networks.
 
 ## Supported network types
 
-Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" `nosym` convention as [nwcloseness](nwcloseness.md)/[nwkatz](nwkatz.md)), `nosym` available. Weighted: not by default - `weighted` switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: not applicable (one-mode only).
+Binary: yes. Directed: yes - symmetrized by default (same "no-prefix trap" `nosym` convention as [nwcloseness](nwcloseness)/[nwkatz](nwkatz)), `nosym` available. Weighted: not by default - `weighted` switches to the tie-value-weighted generalization (Newman 2004, Bonacich power centrality); has no effect on an unvalued network. Signed: not checked. Two-mode: not applicable (one-mode only).
 
 ## References
 
@@ -58,6 +58,6 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 ## See also
 
-- [nwcloseness](nwcloseness.md), [nwbetween](nwbetween.md), [nwdegree](nwdegree.md), [nwcloseness](nwcloseness.md)
+- [nwcloseness](nwcloseness), [nwbetween](nwbetween), [nwdegree](nwdegree), [nwcloseness](nwcloseness)
 
 - last certified : 24 Aug 2026

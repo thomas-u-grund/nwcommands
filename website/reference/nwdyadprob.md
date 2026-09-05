@@ -37,9 +37,9 @@ labs(lab1 lab2 ...)]
 
 ## Description
 
-`nwdyadprob` generates a (un-)directed random network where each tie *x_ij* has the probability *p_ij* to exist. The values for *p_ij* are derived either 1) from the edge values in network [netname](netname.md) and the *density* (if given) or 2) from a Stata/Mata matrix specified in **mat()**. The command can be used to create all sorts of networks.
+`nwdyadprob` generates a (un-)directed random network where each tie *x_ij* has the probability *p_ij* to exist. The values for *p_ij* are derived either 1) from the edge values in network [netname](netname) and the *density* (if given) or 2) from a Stata/Mata matrix specified in **mat()**. The command can be used to create all sorts of networks.
 
-Let *e_ij* be the edge values of network [netname](netname.md).
+Let *e_ij* be the edge values of network [netname](netname).
 
 Then, the probability for a tie *x_ij* to exist in the newly created network is *p_ij*:
 
@@ -61,6 +61,6 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 
 ## See also
 
-- [nwhomophily](nwhomophily.md), [nwgen](nwgen.md), [nwexpand](nwexpand.md)
+- [nwhomophily](nwhomophily), [nwgen](nwgen), [nwexpand](nwexpand)
 
 - last certified : 24 Aug 2026

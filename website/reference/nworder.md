@@ -21,23 +21,23 @@ options]
 
 ## Description
 
-`nworder` relocates [netlist](netlist.md) to a position depending on which option you specify. If no option is specified, `nworder` relocates *netlist* to the **beginning** of the dataset in the order in which the variables are specified - matching plain Stata's own `order` command, which `nworder` is a thin wrapper around.
+`nworder` relocates [netlist](netlist) to a position depending on which option you specify. If no option is specified, `nworder` relocates *netlist* to the **beginning** of the dataset in the order in which the variables are specified - matching plain Stata's own `order` command, which `nworder` is a thin wrapper around.
 
-The command is useful when one wants to do bulk-operations with networks and when the network order matters (e.g. when making a movie out of _all networks, see [nwmovie](nwmovie.md)).
+The command is useful when one wants to do bulk-operations with networks and when the network order matters (e.g. when making a movie out of _all networks, see [nwmovie](nwmovie)).
 
 ## Options
 
-`last` shifts [netlist](netlist.md) to the end of the dataset.
+`last` shifts [netlist](netlist) to the end of the dataset.
 
-`first` shifts [netlist](netlist.md) to the beginning of the dataset.  This is the default.
+`first` shifts [netlist](netlist) to the beginning of the dataset.  This is the default.
 
 `before(netname)` shifts varlist before *netname*.
 
 `after(netname)` shifts varlist after *netname*.
 
-`alphabetic` alphabetizes [netlist](netlist.md) and moves it to the beginning of the dataset.  For example, here is a netlist in `alphabetic` order: `a x7 x70 x8 x80 z`.  If combined with another option, `alphabetic` just alphabetizes *varlist*, and the movement of *netlist* is controlled by the other option.
+`alphabetic` alphabetizes [netlist](netlist) and moves it to the beginning of the dataset.  For example, here is a netlist in `alphabetic` order: `a x7 x70 x8 x80 z`.  If combined with another option, `alphabetic` just alphabetizes *varlist*, and the movement of *netlist* is controlled by the other option.
 
-`sequential` alphabetizes [netlist](netlist.md), keeping netnames with the same ordered letters but with differing appended numbers in sequential order. *netlist* is moved to the beginning of the dataset.  For example, here is a netlist in `sequential` order: `a x7 x8 x70 x80 z`.
+`sequential` alphabetizes [netlist](netlist), keeping netnames with the same ordered letters but with differing appended numbers in sequential order. *netlist* is moved to the beginning of the dataset.  For example, here is a netlist in `sequential` order: `a x7 x8 x70 x80 z`.
 
 ## Examples
 
@@ -72,4 +72,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - reorders
 
 ## See also
 
-- [nwds](nwds.md), `order`, [netlist](netlist.md)
+- [nwds](nwds), `order`, [netlist](netlist)

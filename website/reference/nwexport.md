@@ -31,7 +31,7 @@ Exports a network to either 1) Pajek .NET or 2) Ucinet .DL file format. Only exp
 
 ## Examples
 
-This example loads the [Florentine marriage data](netexample.md) and exports to both .DL and .NET format.
+This example loads the [Florentine marriage data](netexample) and exports to both .DL and .NET format.
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -45,6 +45,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: not checked. Two-mode: not ch
 
 ## See also
 
-- [nwimport](nwimport.md), [nwuse](nwuse.md), [nwsave](nwsave.md)
+- [nwimport](nwimport), [nwuse](nwuse), [nwsave](nwsave)
 
 - last certified : 24 Aug 2026

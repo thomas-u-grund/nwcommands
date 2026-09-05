@@ -40,5 +40,5 @@ Binary: yes. Directed: yes - the raw stored (row=ego, column=alter) cell is retu
 
 ## See also
 
-- [nwreplace](nwreplace.md)
+- [nwreplace](nwreplace)
 - last certified : 24 Aug 2026

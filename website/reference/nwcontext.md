@@ -28,8 +28,8 @@ replace]
 | | |
 |---|---|
 | `attribute(varname)` | Attribute variable |
-| `stat`(*[statistic](nwcontext.md)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
-| `mode`(*[context](nwcontext.md)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
+| `stat`(*[statistic](nwcontext)*) | Statistic that is used to calculate context variable for node i from attributes of network neighbors |
+| `mode`(*[context](nwcontext)*) | Define network neighbors of node i as either nodes j who receive ties from i, send ties to j or both |
 | `generate(newvarname)` | **Required.** Name of the context variable to be generated |
 | `mat(string)` | Store the result in a Mata matrix of this name instead of generating a Stata variable |
 | `noweight` | Ignore valued ties and treats all as binary |
@@ -104,6 +104,6 @@ Binary: yes. Directed: yes, via `mode(outgoing|incoming|both|either)`. Weighted:
 
 ## See also
 
-- [nwneighbor](nwneighbor.md)
+- [nwneighbor](nwneighbor)
 
 - last certified : 24 Aug 2026

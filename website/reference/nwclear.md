@@ -18,7 +18,7 @@ nwclear
 
 ## Description
 
-Clears all networks and variables from memory. This is the network extension of `clear`. One can also just drop some or all networks using [nwdrop](nwdrop.md).
+Clears all networks and variables from memory. This is the network extension of `clear`. One can also just drop some or all networks using [nwdrop](nwdrop).
 
 This example loads network data and clears everything afterwards.
 
@@ -26,7 +26,7 @@ This example loads network data and clears everything afterwards.
 . nwwebuse glasgow
 . nwclear
 ```
-Alternatively, one can also just drop networks. This does not delete the Stata variables that are not associated with networks. For more information see [nwdrop](nwdrop.md).
+Alternatively, one can also just drop networks. This does not delete the Stata variables that are not associated with networks. For more information see [nwdrop](nwdrop).
 
 ```stata
 . nwdrop _all
@@ -38,5 +38,5 @@ Not applicable - clears all networks and Stata variables from memory uncondition
 
 ## See also
 
-- [nwdrop](nwdrop.md), `clear`
+- [nwdrop](nwdrop), `clear`
 - last certified : 24 Aug 2026

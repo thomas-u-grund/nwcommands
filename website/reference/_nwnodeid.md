@@ -21,12 +21,12 @@ nodelab(nodelab)
 
 | | |
 |---|---|
-| `nodelab`([nodelab](nodeid.md)) | nodelab of network node i |
-| `detail` | displays the [nodeid](nodeid.md) and [nodelab](nodeid.md) of node i |
+| `nodelab`([nodelab](nodeid)) | nodelab of network node i |
+| `detail` | displays the [nodeid](nodeid) and [nodelab](nodeid) of node i |
 
 ## Description
 
-Returns the [nodeid](nodeid.md) of a node given its node label specified in *nodelab*. Results are stored in the return vector. When no node with the specified label is found in network *netname* and error is thrown. This command is mostly used for programming with networks.
+Returns the [nodeid](nodeid) of a node given its node label specified in *nodelab*. Results are stored in the return vector. When no node with the specified label is found in network *netname* and error is thrown. This command is mostly used for programming with networks.
 
 ## Examples
 
@@ -60,4 +60,4 @@ Returns the [nodeid](nodeid.md) of a node given its node label specified in *nod
 
 ## See also
 
-- [_nwnodelab](_nwnodelab.md), [nodeid](nodeid.md)
+- [_nwnodelab](_nwnodelab), [nodeid](nodeid)

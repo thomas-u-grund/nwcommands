@@ -26,8 +26,8 @@ xvars]
 
 | | |
 |---|---|
-| `nodes`(*`nodeid1...`*) | `numlist` of [nodeid's](nodeid.md) to be dropped |
-| `nodes`(*[nodelab1...](nodeid.md)*) | List of [nodelab's](nodeid.md) to be dropped |
+| `nodes`(*`nodeid1...`*) | `numlist` of [nodeid's](nodeid) to be dropped |
+| `nodes`(*[nodelab1...](nodeid)*) | List of [nodelab's](nodeid) to be dropped |
 | `keepmat`(*matamatrix*) | Mata *nodes* x 1 matrix; 0 = drop, 1 = keep |
 | `attributes(varlist)` | Attribute variables that are included in the drop |
 | `generate(newnetname)` | Generates a new network and does not overwrite the original network |
@@ -36,7 +36,7 @@ xvars]
 
 ## Description
 
-Drops nodes from a network. The nodes that are to be dropped can be either specifified by their [nodeid](nodeid.md) or by their [nodelab](nodeid.md) in option **nodes()**. Alternatively, one can also drop nodes based on a mata matrix.
+Drops nodes from a network. The nodes that are to be dropped can be either specifified by their [nodeid](nodeid) or by their [nodelab](nodeid) in option **nodes()**. Alternatively, one can also drop nodes based on a mata matrix.
 
 By default, the command overwrites the original network. This cannot be undone. Hence, it is recommended to specify option **generate()**, which generates a new network instead and keeps the original network as it was.
 
@@ -67,7 +67,7 @@ Alternatively, one can also drop nodes based on a mata matrix. This drops the fi
 ```stata
 . nwdropnodes flomarriage, keepmat(k)
 ```
-Everything this command does can also be achieved with [nwdrop](nwdrop.md) using the **if** condition. For example, the following command also drops the first three nodes:
+Everything this command does can also be achieved with [nwdrop](nwdrop) using the **if** condition. For example, the following command also drops the first three nodes:
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -75,7 +75,7 @@ Everything this command does can also be achieved with [nwdrop](nwdrop.md) using
 ```stata
 . nwdrop flomarriage if _n <= 3
 ```
-Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop.md) leaves Stata dataset rows alone unless **clean** is specified, while `nwdropnodes` rebuilds the Stata dataset by default unless **netonly** is specified.
+Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) leaves Stata dataset rows alone unless **clean** is specified, while `nwdropnodes` rebuilds the Stata dataset by default unless **netonly** is specified.
 
 ## Supported network types
 
@@ -83,4 +83,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural ope
 
 ## See also
 
-- [nwkeepnodes](nwkeepnodes.md), [nwdrop](nwdrop.md), [nwclear](nwclear.md), [nwkeep](nwkeep.md)
+- [nwkeepnodes](nwkeepnodes), [nwdrop](nwdrop), [nwclear](nwclear), [nwkeep](nwkeep)

@@ -24,7 +24,7 @@ nwset, mat() call that stores the result.
 
 ## Description
 
-Calculates Burt's (1992) dyadic constraint for a [network](netname.md) and stores the result as a new [network](netname.md) (not a Stata variable) via `nwset, mat()` - the constraint matrix becomes the current network afterward. This is a different output shape than most other analysis commands in this package (which `generate()` a per-node Stata variable): `nwconstraint` returns the full dyadic *c_ij* matrix. [nwburt](nwburt.md) computes the standard per-node aggregate constraint (and Burt's related effective size/efficiency/hierarchy measures) directly as Stata variables - use it instead of this command if the dyadic matrix itself isn't what you need; see the "Aggregating to the node level" note below for why a plain row sum of this command's own output is **not** equivalent to [nwburt](nwburt.md)'s aggregate.
+Calculates Burt's (1992) dyadic constraint for a [network](netname) and stores the result as a new [network](netname) (not a Stata variable) via `nwset, mat()` - the constraint matrix becomes the current network afterward. This is a different output shape than most other analysis commands in this package (which `generate()` a per-node Stata variable): `nwconstraint` returns the full dyadic *c_ij* matrix. [nwburt](nwburt) computes the standard per-node aggregate constraint (and Burt's related effective size/efficiency/hierarchy measures) directly as Stata variables - use it instead of this command if the dyadic matrix itself isn't what you need; see the "Aggregating to the node level" note below for why a plain row sum of this command's own output is **not** equivalent to [nwburt](nwburt)'s aggregate.
 
 Constraint measures the extent to which a node *i*'s relationships are concentrated through a single contact or a tightly interconnected group of contacts, rather than spread across independent, unconnected contacts (the latter is Burt's "structural holes" - low constraint, high brokerage potential). Formally, for each pair *i,j*:
 
@@ -34,7 +34,7 @@ Constraint measures the extent to which a node *i*'s relationships are concentra
 
 The diagonal (self-constraint) is not meaningful and is not part of the returned network.
 
-**Aggregating to the node level**: the quantity most commonly reported in the literature as "Burt's constraint" is node *i*'s aggregate constraint, *C_i = sum_j(c_ij)* for *j* in *i*'s direct contacts only - **not** summed over every *j*. This distinction matters because *c_ij* can be nonzero even when *i* and *j* are not directly tied at all (the *sum_q(p_iq*p_qj)* indirect term alone can make it positive), so naively summing an entire row of this command's output - *sum_j(c_ij)* over **all** *j* - silently over-counts and gives a different, larger number than the standard aggregate for any node with such indirect-only contributions. [nwburt](nwburt.md) computes the correctly-restricted aggregate directly (as *_constraint*); this command intentionally does not, since restricting the sum to *N(i)* requires already knowing which entries of the raw network matrix are direct ties, which is exactly the extra step [nwburt](nwburt.md) takes care of.
+**Aggregating to the node level**: the quantity most commonly reported in the literature as "Burt's constraint" is node *i*'s aggregate constraint, *C_i = sum_j(c_ij)* for *j* in *i*'s direct contacts only - **not** summed over every *j*. This distinction matters because *c_ij* can be nonzero even when *i* and *j* are not directly tied at all (the *sum_q(p_iq*p_qj)* indirect term alone can make it positive), so naively summing an entire row of this command's output - *sum_j(c_ij)* over **all** *j* - silently over-counts and gives a different, larger number than the standard aggregate for any node with such indirect-only contributions. [nwburt](nwburt) computes the correctly-restricted aggregate directly (as *_constraint*); this command intentionally does not, since restricting the sum to *N(i)* requires already knowing which entries of the raw network matrix are direct ties, which is exactly the extra step [nwburt](nwburt) takes care of.
 
 ## Examples
 
@@ -56,6 +56,6 @@ Ronald S. Burt (1992). *Structural Holes: The Social Structure of Competition*. 
 
 ## See also
 
-- [nwburt](nwburt.md), [nwdegree](nwdegree.md), [nwbetween](nwbetween.md), [nwcloseness](nwcloseness.md), [nwevcent](nwevcent.md), [nwclustering](nwclustering.md)
+- [nwburt](nwburt), [nwdegree](nwdegree), [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwevcent](nwevcent), [nwclustering](nwclustering)
 
 - last certified : 21 Aug 2026

@@ -76,6 +76,6 @@ Binary: yes (only) - the dyad census (mutual/asymmetric/null) is inherently a pr
 
 ## See also
 
-- [nwtriads](nwtriads.md)
+- [nwtriads](nwtriads)
 
 - last certified : 24 Aug 2026

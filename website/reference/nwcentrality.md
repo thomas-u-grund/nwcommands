@@ -21,12 +21,12 @@ Each measure below is computed by its own dedicated command - for example, degre
 ```
 **See**
 
-[Degree centrality](nwdegree.md)
+[Degree centrality](nwdegree)
 
-[Betweenness centrality](nwbetween.md)
+[Betweenness centrality](nwbetween)
 
-[Eigenvector centrality](nwevcent.md)
+[Eigenvector centrality](nwevcent)
 
-[Closeness centrality](nwcloseness.md)
+[Closeness centrality](nwcloseness)
 
-[Katz centrality](nwkatz.md)
+[Katz centrality](nwkatz)

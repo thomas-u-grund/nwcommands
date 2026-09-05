@@ -29,7 +29,7 @@ name(string)]
 
 ## Description
 
-`nwmotifs` classifies every induced 4-node subgraph of the network into one of 6 "motif" shapes (Milo et al. 2002's own term for a small, recurring, structurally-distinct connectivity pattern), plus a residual bucket for the other, disconnected 4-node cases - the same "every case exhaustively accounted for" census convention [nwtriads](nwtriads.md)'s own 3-node MAN census already established one dimension down, generalized here to 4 nodes.
+`nwmotifs` classifies every induced 4-node subgraph of the network into one of 6 "motif" shapes (Milo et al. 2002's own term for a small, recurring, structurally-distinct connectivity pattern), plus a residual bucket for the other, disconnected 4-node cases - the same "every case exhaustively accounted for" census convention [nwtriads](nwtriads)'s own 3-node MAN census already established one dimension down, generalized here to 4 nodes.
 
 The 6 connected shapes, by increasing edge count:
 
@@ -44,13 +44,13 @@ Every other 4-node induced subgraph (empty, a single tie, either of the two 2-ed
 
 Classified by (edge count, sorted degree sequence) alone - a COMPLETE invariant for 4-node graphs (every one of the 11 non-isomorphic 4-vertex graphs has its own unique combination of the two), so no general graph-isomorphism check is needed.
 
-`nwmotifs` reports a plain census with no significance test of its own - it needs none: because every count is published as an ordinary `r()` scalar, [nwcug](nwcug.md)'s existing `stat()`/`rname()` template machinery already works against it unmodified, the same "compose with existing infrastructure" pattern [nwlambda](nwlambda.md) uses with [nwhierarchy](nwhierarchy.md). To test whether a shape is over- or under-represented relative to a random graph of the same size and density:
+`nwmotifs` reports a plain census with no significance test of its own - it needs none: because every count is published as an ordinary `r()` scalar, [nwcug](nwcug)'s existing `stat()`/`rname()` template machinery already works against it unmodified, the same "compose with existing infrastructure" pattern [nwlambda](nwlambda) uses with [nwhierarchy](nwhierarchy). To test whether a shape is over- or under-represented relative to a random graph of the same size and density:
 
 - `. nwcug mynet, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)`
 
-substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whichever shape's prevalence is of interest, and `condition(census)` for a directed network to hold the mutual/asymmetric/null dyad counts fixed instead of just density (see [nwcug](nwcug.md) for the full set of conditioning/tail/reps options this test supports).
+substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whichever shape's prevalence is of interest, and `condition(census)` for a directed network to hold the mutual/asymmetric/null dyad counts fixed instead of just density (see [nwcug](nwcug) for the full set of conditioning/tail/reps options this test supports).
 
-`plot` draws a bar chart of the 7 category counts, via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug.md)'s own `plot` option and [nwtriads](nwtriads.md)'s own `plot` option (its 3-node analogue) use. Grayscale by design, matching every other plot this package produces.
+`plot` draws a bar chart of the 7 category counts, via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug)'s own `plot` option and [nwtriads](nwtriads)'s own `plot` option (its 3-node analogue) use. Grayscale by design, matching every other plot this package produces.
 
 ## Examples
 
@@ -64,7 +64,7 @@ substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whicheve
 
 Binary: yes. Directed: the command still runs, but every tie is treated as undirected (a directed 4-node census has 218 distinct isomorphism classes and is not attempted here); a note is printed to this effect. Weighted: not applicable (a motif census is inherently a binary count). Signed: not checked. Two-mode: not checked. Requires at least 4 nodes.
 
-`nwmotifs` enumerates every 4-node combination explicitly (O(n^4)) - fine for the moderate network sizes typical of SNA datasets, but not specially guarded against for very large networks, the same disclosed scaling limitation [nwclique](nwclique.md)'s own maximal-clique enumeration and [nwfactions](nwfactions.md)'s own combinatorial search already carry.
+`nwmotifs` enumerates every 4-node combination explicitly (O(n^4)) - fine for the moderate network sizes typical of SNA datasets, but not specially guarded against for very large networks, the same disclosed scaling limitation [nwclique](nwclique)'s own maximal-clique enumeration and [nwfactions](nwfactions)'s own combinatorial search already carry.
 
 ## Stored results
 
@@ -88,6 +88,6 @@ Milo, R., Shen-Orr, S., Itzkovitz, S., Kashtan, N., Chklovskii, D., Alon, U. (20
 
 ## See also
 
-- [nwtriads](nwtriads.md), [nwcug](nwcug.md), [nwclustering](nwclustering.md)
+- [nwtriads](nwtriads), [nwcug](nwcug), [nwclustering](nwclustering)
 
 - last certified : 31 Aug 2026

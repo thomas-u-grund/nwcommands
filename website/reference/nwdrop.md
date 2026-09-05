@@ -28,7 +28,7 @@ clean]
 
 ## Description
 
-Drops a network or a list of networks. The command is the network version of `drop` and mirrors [nwkeep](nwkeep.md).
+Drops a network or a list of networks. The command is the network version of `drop` and mirrors [nwkeep](nwkeep).
 
 It can also be used with `if` or `in`. Then it only drops certain nodes from a network. This updates the Stata variable **_nwinclude**, which indicates if a node is included in a network.
 

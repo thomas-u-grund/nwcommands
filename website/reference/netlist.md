@@ -9,7 +9,7 @@ search_exclude: false
 
 ## Description
 
-A *netlist* is a list of [network names](netname.md). It can also just hold the name of a single network. A *netlist* exclusively refers to existing networks.
+A *netlist* is a list of [network names](netname). It can also just hold the name of a single network. A *netlist* exclusively refers to existing networks.
 
 Examples include
 
@@ -41,7 +41,7 @@ The `-` character indicates that all networks in the dataset, starting with the 
 
 Many commands understand the keyword `_all` to mean all networks. Some commands default to using all networks if none are specified.
 
-The networks in the dataset can be reordered with [nworder](nworder.md).
+The networks in the dataset can be reordered with [nworder](nworder).
 
 ## Examples
 
@@ -60,4 +60,4 @@ The networks in the dataset can be reordered with [nworder](nworder.md).
 
 ## See also
 
-- [netname](netname.md), [nwsummarize](nwsummarize.md), [nworder](nworder.md)
+- [netname](netname), [nwsummarize](nwsummarize), [nworder](nworder)

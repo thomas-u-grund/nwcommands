@@ -28,9 +28,9 @@ them individually |
 
 ## Description
 
-`nwtostata` is the reverse of [nwtomata](nwtomata.md): it copies an existing Mata matrix *matamatrix* into new Stata variables, one column per variable, one row per observation (creating additional observations if the dataset does not already have enough). Exactly one of `gen()` or `stub()` must be specified - `gen()` names each new variable individually (one name per column of *matamatrix*); `stub()` instead generates however many *stub*`1`, *stub*`2`, ... columns are needed to hold every column of *matamatrix*.
+`nwtostata` is the reverse of [nwtomata](nwtomata): it copies an existing Mata matrix *matamatrix* into new Stata variables, one column per variable, one row per observation (creating additional observations if the dataset does not already have enough). Exactly one of `gen()` or `stub()` must be specified - `gen()` names each new variable individually (one name per column of *matamatrix*); `stub()` instead generates however many *stub*`1`, *stub*`2`, ... columns are needed to hold every column of *matamatrix*.
 
-This is a low-level utility for programmers moving data between Mata and Stata directly; ordinary use of the package does not need it - see [nwtomata](nwtomata.md)/[nwload](nwload.md) for the normal way to bring a network's own data into Stata.
+This is a low-level utility for programmers moving data between Mata and Stata directly; ordinary use of the package does not need it - see [nwtomata](nwtomata)/[nwload](nwload) for the normal way to bring a network's own data into Stata.
 
 ## Examples
 
@@ -51,6 +51,6 @@ Not applicable - `nwtostata` copies an arbitrary, already-existing Mata matrix i
 
 ## See also
 
-- [nwtomata](nwtomata.md), [nwload](nwload.md)
+- [nwtomata](nwtomata), [nwload](nwload)
 
 - last certified : 24 Aug 2026

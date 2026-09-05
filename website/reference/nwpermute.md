@@ -29,7 +29,7 @@ xvars]
 
 ## Description
 
-Produces a random permutation of the network [netname](netname.md). In such a permutation, the nodes are randomly reshuffled, while the overall structure of the network remains the same. Either option **replace** or **generate** needs to be specfied.
+Produces a random permutation of the network [netname](netname). In such a permutation, the nodes are randomly reshuffled, while the overall structure of the network remains the same. Either option **replace** or **generate** needs to be specfied.
 
 A simple example illustrates what the command does. First, we generate a regular lattice network.
 
@@ -68,7 +68,7 @@ Now, let us permute the network *lattice*.
 - 9 c | 0 1 0 1 1 0 0 1 0 c |
 - hline 37
 
-The structure of the network remains exactly the same, however, the nodes have a different order. Often, such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for these statistics) while keeping the overall structure of the network constant (see more [nwqap](nwqap.md), [nwcorrelate](nwcorrelate.md)).
+The structure of the network remains exactly the same, however, the nodes have a different order. Often, such a permutation is desired to recalculate network statistics (and derive standard errors and confidence intervals for these statistics) while keeping the overall structure of the network constant (see more [nwqap](nwqap), [nwcorrelate](nwcorrelate)).
 
 ## Supported network types
 
@@ -76,6 +76,6 @@ Binary: yes. Directed: yes. Weighted: yes - tie values move with their ties unde
 
 ## See also
 
-- [nwqap](nwqap.md), [nwcorrelate](nwcorrelate.md)
+- [nwqap](nwqap), [nwcorrelate](nwcorrelate)
 
 - last certified : 24 Aug 2026

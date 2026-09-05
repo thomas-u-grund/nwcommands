@@ -29,15 +29,15 @@ nwclear]
 |---|---|
 | `nwclear` | clear memory before loading dataset |
 | `nwappend` | append to existing data |
-| `force` | when combined with `nwappend`, if the incoming data contains a network with the same name as one already in memory, auto-renumber the incoming network to a fresh name instead of erroring - unlike `replace` elsewhere in this group (e.g. [nwset](nwset.md)), which overwrites the existing network in place under the same name, `force` leaves the existing network untouched |
+| `force` | when combined with `nwappend`, if the incoming data contains a network with the same name as one already in memory, auto-renumber the incoming network to a fresh name instead of erroring - unlike `replace` elsewhere in this group (e.g. [nwset](nwset)), which overwrites the existing network in place under the same name, `force` leaves the existing network untouched |
 
 ## Description
 
-**nwuse** loads a Stata network dataset previously saved with [nwsave](nwsave.md). This includes all networks and Stata variables. If *`filename`* is specified without an extension, **.nwdta** is assumed. If your *filename* contains embedded spaces, remember to enclose it in double quotes.
+**nwuse** loads a Stata network dataset previously saved with [nwsave](nwsave). This includes all networks and Stata variables. If *`filename`* is specified without an extension, **.nwdta** is assumed. If your *filename* contains embedded spaces, remember to enclose it in double quotes.
 
 ## Examples
 
-This example creates 5 new random networks and [saves](nwsave.md) them as *mynets*.A new dataset called *mynets.nwdta* is created in the working directory with the networks and all Stata variables.
+This example creates 5 new random networks and [saves](nwsave) them as *mynets*.A new dataset called *mynets.nwdta* is created in the working directory with the networks and all Stata variables.
 
 ```stata
 . nwclear
@@ -62,4 +62,4 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads a 
 
 ## See also
 
-- [nwwebuse](nwwebuse.md), [nwsave](nwsave.md), `use`, [nwappend](nwappend.md)
+- [nwwebuse](nwwebuse), [nwsave](nwsave), `use`, [nwappend](nwappend)

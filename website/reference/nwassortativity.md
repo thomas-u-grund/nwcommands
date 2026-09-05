@@ -33,7 +33,7 @@ silent]
 
 A positive coefficient means nodes tend to be tied to others with a similar value (e.g. high-degree nodes tend to connect to other high-degree nodes) - the network is "assortative". A negative coefficient means the opposite: nodes tend to be tied to others with a dissimilar value (e.g. high-degree "hubs" connecting mostly to low-degree nodes) - the network is "disassortative". A coefficient near zero means no such pattern.
 
-Formally, for every tie *(i,j)*, *x* is the attribute value at *i* and *y* the value at *j*; the coefficient is the ordinary Pearson correlation of *x* and *y* across every tie, counted in both directions (so the result does not depend on which end of a tie is labeled *i* vs *j*). This is exactly Newman's (2002) own *r* for the undirected case, and is computed here the same symmetrized way for directed input too - a tie assortativity measure has no natural directed generalization the same way ordinary clustering/clique measures do not (see [nwclustering](nwclustering.md)'s own identical reasoning), so a directed network's ties are treated as connections in either direction, matching this package's own established convention elsewhere (e.g. [nwtriads](nwtriads.md), [nwclique](nwclique.md)).
+Formally, for every tie *(i,j)*, *x* is the attribute value at *i* and *y* the value at *j*; the coefficient is the ordinary Pearson correlation of *x* and *y* across every tie, counted in both directions (so the result does not depend on which end of a tie is labeled *i* vs *j*). This is exactly Newman's (2002) own *r* for the undirected case, and is computed here the same symmetrized way for directed input too - a tie assortativity measure has no natural directed generalization the same way ordinary clustering/clique measures do not (see [nwclustering](nwclustering)'s own identical reasoning), so a directed network's ties are treated as connections in either direction, matching this package's own established convention elsewhere (e.g. [nwtriads](nwtriads), [nwclique](nwclique)).
 
 Social networks are frequently found to be assortative by degree (popular people know other popular people); many biological and technological networks (e.g. the internet's own router-level topology) are disassortative instead (a few high-degree hubs connect to many low-degree peripheral nodes).
 
@@ -54,9 +54,9 @@ Social networks are frequently found to be assortative by degree (popular people
 
 ## Supported network types
 
-Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same reasoning as [nwclustering](nwclustering.md)/[nwclique](nwclique.md)). Weighted: **W2** (added 2026-09-02, closing a self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's own original definition; `weighted` (Leung and Chau 2007) is an explicit opt-in that weights the same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the weighted correlation's own denominators, not handled distinctly. Two-mode: not checked - operates on the network's own stored ties directly.
+Binary: yes. Directed: yes, symmetrized (treated as connected in either direction - see above, same reasoning as [nwclustering](nwclustering)/[nwclique](nwclique)). Weighted: **W2** (added 2026-09-02, closing a self-flagged "not used" gap) - the default correlates presence/absence pairs only, matching Newman's own original definition; `weighted` (Leung and Chau 2007) is an explicit opt-in that weights the same pairs by tie strength instead. Signed: not checked - a negative tie weight would distort the weighted correlation's own denominators, not handled distinctly. Two-mode: not checked - operates on the network's own stored ties directly.
 
-A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value - the same convention this package uses elsewhere for degree-undefined cases (e.g. [nwclustering](nwclustering.md)).
+A network with fewer than 2 ties, or one where the attribute (degree, by default) is constant across every tied pair, has an undefined (zero-variance) correlation and returns **r(assortativity)** as missing rather than a spurious value - the same convention this package uses elsewhere for degree-undefined cases (e.g. [nwclustering](nwclustering)).
 
 ## Stored results
 
@@ -77,4 +77,4 @@ Leung, C.C., Chau, H.F. (2007). Weighted assortative and disassortative networks
 
 ## See also
 
-- [nwdegree](nwdegree.md), [nwclustering](nwclustering.md), [nwmixing](nwmixing.md), [nwcorrelate](nwcorrelate.md)
+- [nwdegree](nwdegree), [nwclustering](nwclustering), [nwmixing](nwmixing), [nwcorrelate](nwcorrelate)

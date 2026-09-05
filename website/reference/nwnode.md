@@ -41,5 +41,5 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - a pure n
 
 ## See also
 
-- [nwvalue](nwvalue.md)
+- [nwvalue](nwvalue)
 - last certified : 24 Aug 2026

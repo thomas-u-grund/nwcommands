@@ -22,8 +22,8 @@ replace]
 
 | | |
 |---|---|
-| `name`(*[newnetname](newnetname.md)*) | name of the new network |
-| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset.md) for the same convention) |
+| `name`(*[newnetname](newnetname)*) | name of the new network |
+| `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
 
 ## Description
 
@@ -42,6 +42,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a full, generic copy of
 
 ## See also
 
-- [nwgenerate](nwgenerate.md), [nwsubset](nwsubset.md)
+- [nwgenerate](nwgenerate), [nwsubset](nwsubset)
 
 - last certified : 24 Aug 2026

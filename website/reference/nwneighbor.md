@@ -25,7 +25,7 @@ subreplace]
 
 | | |
 |---|---|
-| `mode`(*[context](nwneighbor.md)*) | Defines the network neighborhood of node *ego*; default = *outgoing* |
+| `mode`(*[context](nwneighbor)*) | Defines the network neighborhood of node *ego*; default = *outgoing* |
 | `generate(newvarname)` | Save information about network neighbors in variable. |
 | `replace` | Overwrite variable *newvarname*. |
 | `subnet(newnetname)` | Save the induced subgraph on *ego* plus its own neighbors (and every tie among them) as a new network |
@@ -35,7 +35,7 @@ subreplace]
 
 ` nwneighbor` returns the network neighbors of *nodename* specified in **ego()**. The network neighborhood of a node is defined in `mode()`. By default, the neighborhood of a node *ego* consists of all nodes *j*, who receive a tie from node *ego*. Tie values are ignored.
 
-`subnet(newnetname)` additionally saves the INDUCED SUBGRAPH on *ego* plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among them (not just ego's own ties) - as *newnetname*. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute aggregate, which [nwaltergen](nwaltergen.md)/[nwego](nwego.md) already compute directly without needing one). The original network is left untouched; *newnetname* inherits its directedness/valued/self-loop/two-mode status.
+`subnet(newnetname)` additionally saves the INDUCED SUBGRAPH on *ego* plus its own neighbors - a genuine new network containing exactly those nodes and every tie the original network has among them (not just ego's own ties) - as *newnetname*. Useful as a starting point for any ego-network-level analysis that needs an actual standalone network object (as opposed to a per-node attribute aggregate, which [nwaltergen](nwaltergen)/[nwego](nwego) already compute directly without needing one). The original network is left untouched; *newnetname* inherits its directedness/valued/self-loop/two-mode status.
 
 ## Examples
 

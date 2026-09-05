@@ -119,9 +119,19 @@ This loads a network dataset from the internet and transforms the network {it:gl
 	{cmd:. nwtoedge glasgow1}
 
 {pstd}
-Afterwards, it can be loaded as a network object again:
+{cmd:nwtoedge} produces variables {it:_ego}/{it:_alter} (not {it:_fromid}/{it:_toid}) plus a tie-value
+column named after the network itself ({it:glasgow1} here, not {it:_link}) - and, being every possible
+pair rather than a compact edgelist, it needs filtering down to the real ties before being turned back
+into a network:
 
-	{cmd:. nwfromedge _fromid _toid _link, name(mynet)}
+	{cmd:. keep if glasgow1 == 1}
+	{cmd:. nwfromedge _ego _alter, name(mynet)}
+
+{pstd}
+A node with zero ties never appears in an edgelist in the first place, so any isolates in the
+original network are silently dropped in a round trip like this one - use {help nwaddnodes}
+afterward to add them back explicitly (see this file's own {bf:Supported network types} section
+above).
 
 	
 	

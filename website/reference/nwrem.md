@@ -55,10 +55,10 @@ seed(#)]
 
 | | |
 |---|---|
-| `covsnd(varname)` | a per-actor covariate affects the sending rate (an "ego" effect - *varname* is read from the CURRENT dataset, one row per actor, in *netname*'s own actor order - see [nwload](nwload.md)'s `xvars` option below) |
+| `covsnd(varname)` | a per-actor covariate affects the sending rate (an "ego" effect - *varname* is read from the CURRENT dataset, one row per actor, in *netname*'s own actor order - see [nwload](nwload)'s `xvars` option below) |
 | `covrec(varname)` | a per-actor covariate affects the receiving rate (an "alter" effect) |
 | `covint(varname)` | a per-actor covariate affects both the sending and the receiving rate together (the same variable, one shared coefficient) |
-| `covevent(netname)` | a pairwise (dyad-level) covariate affects the rate of the event from sender to receiver directly - *netname* must already be a loaded network with the SAME actors as the event network, one value per ordered (sender,receiver) pair (read from its own tie values, exactly like [nwergm](nwergm.md)'s `edgecov()`) |
+| `covevent(netname)` | a pairwise (dyad-level) covariate affects the rate of the event from sender to receiver directly - *netname* must already be a loaded network with the SAME actors as the event network, one value per ordered (sender,receiver) pair (read from its own tie values, exactly like [nwergm](nwergm)'s `edgecov()`) |
 
 **Recency effects**
 
@@ -75,7 +75,7 @@ seed(#)]
 
 `nwrem` fits a relational event model (Butts 2008, "A Relational Event Framework for Social Action," *Sociological Methodology* 38(1), 155-200) to a timestamped sequence of dyadic events, via the ordinal partial likelihood: at each event, the model asks "given that some event happened next, which of the *n*(*n*-1) possible ordered actor pairs was it," and estimates which actor-level effects make the realized event more likely relative to every other pair that could have happened instead - the same conditional-likelihood logic Cox proportional-hazards models use.
 
-Unlike [nwergm](nwergm.md) (static structure) and [nwsaom](nwsaom.md) (discrete panel-wave evolution), `nwrem` works directly on a raw, continuous-time event stream - no snapshot or aggregation step. It requires *netname* to already be declared as an **event**-type temporal network via [nwset](nwset.md)'s `eventtime(varname)` option:
+Unlike [nwergm](nwergm) (static structure) and [nwsaom](nwsaom) (discrete panel-wave evolution), `nwrem` works directly on a raw, continuous-time event stream - no snapshot or aggregation step. It requires *netname* to already be declared as an **event**-type temporal network via [nwset](nwset)'s `eventtime(varname)` option:
 
 ```stata
 . nwset sender receiver, eventtime(t) name(mynet)
@@ -87,16 +87,16 @@ Unlike [nwergm](nwergm.md) (static structure) and [nwsaom](nwsaom.md) (discrete 
 
 **rsndsnd**/**rrecsnd** are different from **frpsndsnd**/**frrecsnd**: the latter measure HOW OFTEN a sender has contacted a given partner relative to their total activity (a fraction); **rsndsnd**/**rrecsnd** measure HOW RECENTLY, via reciprocal RANK among that sender's own past contacts, ignoring how many times contact happened before or since. A sender who contacted a partner once, very recently, scores as high on **rsndsnd** for that partner as one who contacted them constantly and most recently - only the ordering matters, not the count.
 
-**Covariate effects** require the current Stata dataset, at the time `nwrem` is called, to have exactly one row per actor in *netname*'s own actor order - NOT the event-level dataset *netname* itself was declared from. Use [nwload](nwload.md)'s `xvars` option first to load that per-node dataset:
+**Covariate effects** require the current Stata dataset, at the time `nwrem` is called, to have exactly one row per actor in *netname*'s own actor order - NOT the event-level dataset *netname* itself was declared from. Use [nwload](nwload)'s `xvars` option first to load that per-node dataset:
 
 ```stata
 . nwload mynet, xvars
 . gen seniority = ...
 . nwrem mynet, nodsnd covsnd(seniority)
 ```
-This mirrors [nwsaom](nwsaom.md)'s own `nodecov()` convention exactly, not a new mechanism specific to `nwrem`.
+This mirrors [nwsaom](nwsaom)'s own `nodecov()` convention exactly, not a new mechanism specific to `nwrem`.
 
-**covevent()** is different: it is a per-*pair* (not per-actor) covariate, so it is read from ANOTHER already-loaded network's own tie values rather than from a Stata variable - the same convention [nwergm](nwergm.md)'s `edgecov()` already uses for dyadic covariates. Declare the pairwise covariate as its own network first, then reference it by name - **nwset**'s `edgelist` option is required here (`nwset` otherwise reads three bare variables as a wide affiliation matrix, not an edgelist):
+**covevent()** is different: it is a per-*pair* (not per-actor) covariate, so it is read from ANOTHER already-loaded network's own tie values rather than from a Stata variable - the same convention [nwergm](nwergm)'s `edgecov()` already uses for dyadic covariates. Declare the pairwise covariate as its own network first, then reference it by name - **nwset**'s `edgelist` option is required here (`nwset` otherwise reads three bare variables as a wide affiliation matrix, not an edgelist):
 
 ```stata
 . nwset i j value, name(seatdist) edgelist

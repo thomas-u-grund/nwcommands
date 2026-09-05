@@ -31,15 +31,15 @@ alpha(#)]
 
 ## Description
 
-`nw2degree` calculates degree centrality for a two-mode (bipartite) network, using the normalization of Borgatti and Everett (1997). A node's ordinary (raw) degree can only ever reach as high as the size of the *other* mode - a mode-1 node can tie to at most every mode-2 node, never to another mode-1 node - so [nwdegree](nwdegree.md)'s usual *n - 1* normalization does not apply here. Instead, each node's raw degree is divided by the size of the mode it does *not* belong to:
+`nw2degree` calculates degree centrality for a two-mode (bipartite) network, using the normalization of Borgatti and Everett (1997). A node's ordinary (raw) degree can only ever reach as high as the size of the *other* mode - a mode-1 node can tie to at most every mode-2 node, never to another mode-1 node - so [nwdegree](nwdegree)'s usual *n - 1* normalization does not apply here. Instead, each node's raw degree is divided by the size of the mode it does *not* belong to:
 
 *C'D(i) = degree(i) / n_other*, where *n_other* is the number of nodes in the other mode
 
 so that a mode-1 node tied to every mode-2 node (or vice versa) scores exactly 1, matching ordinary degree centrality's own [0,1] range and interpretation.
 
-`generate()` is required and names the new variable that holds this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set.md)'s own mode-id variable, not duplicated here).
+`generate()` is required and names the new variable that holds this value for every node, regardless of which mode it belongs to (mode membership itself is available via [nw2set](nw2set)'s own mode-id variable, not duplicated here).
 
-`alpha(#)` generalizes the plain tie-count formula above to a weighted (tie-strength-aware) variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend [nwdegree](nwdegree.md)'s own `alpha()` already uses for one-mode degree:
+`alpha(#)` generalizes the plain tie-count formula above to a weighted (tie-strength-aware) variant, using the same Opsahl, Agneessens and Skvoretz (2010) blend [nwdegree](nwdegree)'s own `alpha()` already uses for one-mode degree:
 
 *degree_alpha(i) = k_i * (s_i/k_i)^alpha*, then normalized by *n_other* exactly as above
 
@@ -69,7 +69,7 @@ where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its 
 
 ## Supported network types
 
-Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: **W1**, native - `alpha()` generalizes the plain tie-count formula to a tie-strength-aware blend (Opsahl et al. 2010), the same convention [nwdegree](nwdegree.md)'s own `alpha()` uses for one-mode degree; `alpha(0)`, the default, is bit-for-bit identical to the original unweighted formula. Signed: not checked - a negative tie value would distort the strength sum `alpha()` relies on, not handled distinctly from "no tie". Two-mode: this command requires a two-mode network and errors clearly on a one-mode one, the opposite convention of most other commands in this package.
+Binary: yes. Directed: not applicable - two-mode ties in this package's storage are inherently undirected (a tie either connects a mode-1 node to a mode-2 node or it does not). Weighted: **W1**, native - `alpha()` generalizes the plain tie-count formula to a tie-strength-aware blend (Opsahl et al. 2010), the same convention [nwdegree](nwdegree)'s own `alpha()` uses for one-mode degree; `alpha(0)`, the default, is bit-for-bit identical to the original unweighted formula. Signed: not checked - a negative tie value would distort the strength sum `alpha()` relies on, not handled distinctly from "no tie". Two-mode: this command requires a two-mode network and errors clearly on a one-mode one, the opposite convention of most other commands in this package.
 
 ## References
 
@@ -79,6 +79,6 @@ Opsahl, T., Agneessens, F., Skvoretz, J. (2010). Node centrality in weighted net
 
 ## See also
 
-- [nwdegree](nwdegree.md), [nw2set](nw2set.md), [nw2project](nw2project.md), [nw2clustering](nw2clustering.md)
+- [nwdegree](nwdegree), [nw2set](nw2set), [nw2project](nw2project), [nw2clustering](nw2clustering)
 
 - last certified : 02 Sep 2026

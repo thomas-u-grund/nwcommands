@@ -33,11 +33,11 @@ silent]
 
 ## Description
 
-`nwnclique` enumerates every maximal n-clique in the network(s) in [netlist](netlist.md) - a generalization of an ordinary clique (Luce 1950) where every pair of members need only be within geodesic distance `n(int)` of *each other in the network as a whole*, rather than directly tied. A plain clique is the special case `n(int)`=1 (distance-1 "neighbors" are exactly direct ties) - [nwclique](nwclique.md) already handles that case with a cheaper, purpose-built algorithm, so `nwnclique` requires `n(int)` >= 2.
+`nwnclique` enumerates every maximal n-clique in the network(s) in [netlist](netlist) - a generalization of an ordinary clique (Luce 1950) where every pair of members need only be within geodesic distance `n(int)` of *each other in the network as a whole*, rather than directly tied. A plain clique is the special case `n(int)`=1 (distance-1 "neighbors" are exactly direct ties) - [nwclique](nwclique) already handles that case with a cheaper, purpose-built algorithm, so `nwnclique` requires `n(int)` >= 2.
 
-Because n-clique membership is judged by whole-network distance, a pair of members can qualify even though the shortest path between them runs through a node that is not itself part of the n-clique - a well-known limitation of the concept (Alba 1973): an n-clique's own members are not guaranteed to be reachable from one another *while staying inside the group*. [nwnclan](nwnclan.md) adds exactly that extra requirement.
+Because n-clique membership is judged by whole-network distance, a pair of members can qualify even though the shortest path between them runs through a node that is not itself part of the n-clique - a well-known limitation of the concept (Alba 1973): an n-clique's own members are not guaranteed to be reachable from one another *while staying inside the group*. [nwnclan](nwnclan) adds exactly that extra requirement.
 
-Like cliques, n-cliques genuinely overlap - a node can belong to several at once - so `nwnclique` follows [nwclique](nwclique.md)'s own output shape: a single per-node "largest maximal n-clique membership size" summary variable (`generate(newvarname)`, required), plus the complete overlapping structure in **r(nclique_matrix)** (an n-cliques-by-nodes 0/1 membership matrix) and **r(ncliques)** (count). `minsize(int)` filters out n-cliques smaller than the given size before generating and returning results, matching [nwclique](nwclique.md)'s own default of 3 (a dyad or an isolated node is technically a maximal n-clique too, but rarely what "n-clique" is meant to convey). A node that belongs to no n-clique meeting `minsize(int)` gets a missing value in the generated variable, not a spurious 0.
+Like cliques, n-cliques genuinely overlap - a node can belong to several at once - so `nwnclique` follows [nwclique](nwclique)'s own output shape: a single per-node "largest maximal n-clique membership size" summary variable (`generate(newvarname)`, required), plus the complete overlapping structure in **r(nclique_matrix)** (an n-cliques-by-nodes 0/1 membership matrix) and **r(ncliques)** (count). `minsize(int)` filters out n-cliques smaller than the given size before generating and returning results, matching [nwclique](nwclique)'s own default of 3 (a dyad or an isolated node is technically a maximal n-clique too, but rarely what "n-clique" is meant to convey). A node that belongs to no n-clique meeting `minsize(int)` gets a missing value in the generated variable, not a spurious 0.
 
 ## Examples
 
@@ -49,7 +49,7 @@ Like cliques, n-cliques genuinely overlap - a node can belong to several at once
 
 ## Supported network types
 
-Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique.md)/[nwkplex](nwkplex.md) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic.md)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal n-clique enumeration inherits [nwclique](nwclique.md)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general) - fine for the moderate network sizes typical of SNA datasets, not specially guarded against here.
+Binary: yes. Directed: yes, automatically symmetrized (an n-clique's own definition has no directed generalization, the same reasoning [nwclique](nwclique)/[nwkplex](nwkplex) already apply). Weighted: not used for membership - `n(int)` counts hops, not tie strength, though the underlying distance calculation ([nwgeodesic](nwgeodesic)'s own unweighted, `alpha(0)`-equivalent convention) is unaffected by weight either way. Signed: not checked. Two-mode: not checked - operates on the network's own square adjacency matrix. Maximal n-clique enumeration inherits [nwclique](nwclique)'s own worst-case exponential behaviour (a mathematical property of maximal-clique-family problems in general) - fine for the moderate network sizes typical of SNA datasets, not specially guarded against here.
 
 ## Stored results
 
@@ -71,6 +71,6 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ## See also
 
-- [nwnclan](nwnclan.md), [nwclique](nwclique.md), [nwkplex](nwkplex.md), [nwkcomponents](nwkcomponents.md), [nwgeodesic](nwgeodesic.md), [nwkcore](nwkcore.md)
+- [nwnclan](nwnclan), [nwclique](nwclique), [nwkplex](nwkplex), [nwkcomponents](nwkcomponents), [nwgeodesic](nwgeodesic), [nwkcore](nwkcore)
 
 - last certified : 24 Aug 2026

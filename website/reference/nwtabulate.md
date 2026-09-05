@@ -35,6 +35,6 @@ Binary: yes. Directed: yes. Weighted: not applicable - tabulates tie presence/at
 
 ## See also
 
-- [two-way nwtabulate](nwtab2.md), `tabulate`
+- [two-way nwtabulate](nwtab2), `tabulate`
 
 - * *! 12jul2016: Thomas Grund

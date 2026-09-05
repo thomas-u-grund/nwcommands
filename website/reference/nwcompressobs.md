@@ -35,4 +35,4 @@ Not applicable - trims trailing empty (all-missing) Stata observations from the 
 
 ## See also
 
-- [nwdrop](nwdrop.md), `clear`
+- [nwdrop](nwdrop), `clear`

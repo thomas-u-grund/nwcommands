@@ -25,7 +25,7 @@ nwfromedge_options
 
 ## Description
 
-`nw2fromedge` imports a two-mode network from a dataset in edgelist format. It is very similar to [nwfromedge](nwfromedge.md).
+`nw2fromedge` imports a two-mode network from a dataset in edgelist format. It is very similar to [nwfromedge](nwfromedge).
 
 A two-mode network consists of two sets of units (e. g. people and events) and relations connect the two sets, e. g. participation of people in social events. Some examples are:
 
@@ -68,7 +68,7 @@ The following command declares such data as two-mode network data:
 ```
 Besides setting the network, this also creates a new variable *_nwmode*, which has the value 1 for persons (Peter, Tim, Thomas, Michael, Mathilde) and value 2 for institutions (LiU, UdeM, Oxford, ETH, Groningen).
 
-[nwplot](nwplot.md) has no bipartite-specific logic of its own, so nodes are **not** colored by mode automatically; pass the *_nwmode* variable this command creates to `color()` (or `symbol()`) explicitly to tell the two node sets apart at a glance:
+[nwplot](nwplot) has no bipartite-specific logic of its own, so nodes are **not** colored by mode automatically; pass the *_nwmode* variable this command creates to `color()` (or `symbol()`) explicitly to tell the two node sets apart at a glance:
 
 ```stata
 . nwplot mynet, color(_nwmode)
@@ -76,4 +76,4 @@ Besides setting the network, this also creates a new variable *_nwmode*, which h
 
 ## Supported network types
 
-Two-mode: **T1**, native - this command's entire purpose is building a two-mode network directly from an edge list (ego/alter columns drawn from two distinct node sets). Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use [nwaddnodes](nwaddnodes.md)'s own **mode()** option afterward to add any isolates the source data could not represent.
+Two-mode: **T1**, native - this command's entire purpose is building a two-mode network directly from an edge list (ego/alter columns drawn from two distinct node sets). Binary: yes. Directed: not applicable - two-mode ties are inherently undirected affiliations. Weighted: yes, via a third edge-list column. Signed: not checked. A node with zero ties (an isolate) is never created - an edgelist has no way to record one - use [nwaddnodes](nwaddnodes)'s own **mode()** option afterward to add any isolates the source data could not represent.

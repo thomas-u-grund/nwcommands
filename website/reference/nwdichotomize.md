@@ -3,12 +3,12 @@ title: "nwdichotomize"
 parent: "Command reference"
 nav_exclude: true
 search_exclude: false
-description: "Dichotomize a network at a threshold (built on [nwrecode](nwrecode.md))"
+description: "Dichotomize a network at a threshold (built on [nwrecode](nwrecode))"
 ---
 
 # `nwdichotomize`
 
-Dichotomize a network at a threshold (built on [nwrecode](nwrecode.md))
+Dichotomize a network at a threshold (built on [nwrecode](nwrecode))
 
 ## Syntax
 
@@ -28,15 +28,15 @@ threshold(#)
 
 ## Description
 
-`nwdichotomize` converts a valued (weighted) network into a binary one: any dyad whose value is greater than or equal to `threshold()` becomes 1, every other dyad (including missing ties) becomes 0. It is a thin convenience wrapper around [nwrecode](nwrecode.md) - internally it is exactly equivalent to
+`nwdichotomize` converts a valued (weighted) network into a binary one: any dyad whose value is greater than or equal to `threshold()` becomes 1, every other dyad (including missing ties) becomes 0. It is a thin convenience wrapper around [nwrecode](nwrecode) - internally it is exactly equivalent to
 
 - `. nwrecode` *netname* `(`*threshold*`/max=1) (min/max=0)`
 
 - - given its own name specifically so the common "binarize at a cutoff" operation does not require
-- knowing [nwrecode](nwrecode.md)'s own general recode-rule syntax. For anything beyond a single cutoff
-- (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode.md) directly.
+- knowing [nwrecode](nwrecode)'s own general recode-rule syntax. For anything beyond a single cutoff
+- (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode) directly.
 
-As with [nwrecode](nwrecode.md) (and following the package's general convention - see [the style guide](NWCOMMANDS_COMMAND_STYLE.md)'s "Output creation" section - for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
+As with [nwrecode](nwrecode) (and following the package's general convention - see [the style guide](NWCOMMANDS_COMMAND_STYLE.md)'s "Output creation" section - for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
 
 ## Examples
 
@@ -57,4 +57,4 @@ Same, but keep the original valued network and save the binary version under a n
 
 ## Supported network types
 
-Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` leaves it unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked - a negative value below `threshold()` is treated the same as any other sub-threshold value. Two-mode: not checked directly, but inherits whatever [nwrecode](nwrecode.md)/[nwtoedge](nwtoedge.md) support for two-mode data.
+Binary: yes (a no-op - every value is already either 0 or 1, so `threshold(1)` leaves it unchanged). Directed: yes. Weighted: yes - this is its primary use case. Signed: not checked - a negative value below `threshold()` is treated the same as any other sub-threshold value. Two-mode: not checked directly, but inherits whatever [nwrecode](nwrecode)/[nwtoedge](nwtoedge) support for two-mode data.

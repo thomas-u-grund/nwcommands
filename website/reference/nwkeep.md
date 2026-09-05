@@ -28,7 +28,7 @@ clean]
 
 ## Description
 
-Keeps a network or a list of networks. The command is the network version of `keep` and mirrors [nwdrop](nwdrop.md).
+Keeps a network or a list of networks. The command is the network version of `keep` and mirrors [nwdrop](nwdrop).
 
 It can also be used together with `if` or `in`. In this case, the command operates on the node-level and keeps only certain nodes of a network.
 

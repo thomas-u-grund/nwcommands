@@ -33,11 +33,11 @@ xvars]
 | *`nodes`* | number of nodes |
 | `prob(float)` | probability for a tie |
 | `density(float)` | exact density of the new network |
-| `census`([*mutual* [*asym null*]](nwdyads.md)) | dyad census of the new network |
+| `census`([*mutual* [*asym null*]](nwdyads)) | dyad census of the new network |
 | `weights(p1, p2,...)` | probabilities p_k for tie weights k |
 | `undirected` | generate an undirected network; default = directed |
 | `ntimes(int)` | number of random networks to be generated; default = 1 |
-| `name`(*[newnetname](newnetname.md)*) | name of the new random network; default = *random* |
+| `name`(*[newnetname](newnetname)*) | name of the new random network; default = *random* |
 | `labs`(*lab1, lab2, ...*) | overwrite node labels |
 | `selfloop` | allow self-loops (a node tied to itself) in the generated network; default = no self-loops |
 | `xvars` | generate Stata variables for the network |
@@ -49,7 +49,7 @@ xvars]
 
 Alternatively, the overall density of the network can be specified with **density()**. This option always generates the same number of ties ( = *density * nodes*), where each tie has the same probability to exist.
 
-Lastly, one can also generate a random network that has a specific [dyad census](nwdyads.md) using `census()` (see [nwdyads](nwdyads.md)).
+Lastly, one can also generate a random network that has a specific [dyad census](nwdyads) using `census()` (see [nwdyads](nwdyads)).
 
 Either **prob()**, **density()** or **census()** needs to be specified.
 
@@ -91,6 +91,6 @@ Binary: yes (only structural tie placement - see Weighted). Directed: yes, via `
 
 ## See also
 
-- [nwsmall](nwsmall.md), [nwpref](nwpref.md), [nwpref](nwpref.md), [nwlattice](nwlattice.md), [nwring](nwring.md)
+- [nwsmall](nwsmall), [nwpref](nwpref), [nwpref](nwpref), [nwlattice](nwlattice), [nwring](nwring)
 
 - last certified : 24 Aug 2026

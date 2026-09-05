@@ -34,7 +34,7 @@ newmode2desc(string)
 | | |
 |---|---|
 | `id(int)` | network ID |
-| `newname`([newnetname](newnetname.md)) | new name of the network |
+| `newname`([newnetname](newnetname)) | new name of the network |
 | `newtitle(string)` | new title of the network |
 | `newdirected`(boolean) | force change: directed = *true*, not directed = *false* |
 | `new2mode`(boolean) | force change: twomode = *true*, not twomode = *false* |
@@ -43,7 +43,7 @@ newmode2desc(string)
 | `newlabsfromvar(varname)` | new node labels (saved in Stata variable) |
 | `newcaption(string)` | new caption/description text for the network |
 | `newprovenance(string)` | new provenance/source note for the network |
-| `newmodes(string)` | new mode assignment for a two-mode network's own nodes (see [introduction to two-mode networks](nw2set.md)); an empty value is a deliberate no-op |
+| `newmodes(string)` | new mode assignment for a two-mode network's own nodes (see [introduction to two-mode networks](nw2set)); an empty value is a deliberate no-op |
 | `newmode1desc(string)` | new description of mode 1 (two-mode networks) |
 | `newmode2desc(string)` | new description of mode 2 (two-mode networks) |
 
@@ -60,7 +60,7 @@ This loads the Florentine data and returns various information about the *flobus
 . nwname flobusiness
 . return list
 ```
-This changes the name of the network *flobusiness* into *flob*. This could also be achieved with [nwrename](nwrename.md).
+This changes the name of the network *flobusiness* into *flob*. This could also be achieved with [nwrename](nwrename).
 
 ```stata
 . nwname flobusiness, newname(flob)
@@ -105,5 +105,5 @@ Not applicable in the usual sense - this command reports and *sets* a network's 
 
 ## See also
 
-- [nwsummarize](nwsummarize.md), [nwset](nwset.md), [nwload](nwload.md)
+- [nwsummarize](nwsummarize), [nwset](nwset), [nwload](nwload)
 - last certified : 24 Aug 2026

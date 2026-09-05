@@ -24,15 +24,15 @@ xvars]
 | | |
 |---|---|
 | `nodenames`(*n1, n2, ...*) | Node identifiers separated by comma |
-| `mode(numlist)` | Two-mode (bipartite) networks only: the mode (1 or 2) each new node belongs to. Either a SINGLE value (applied to every new node) or one value per node listed in `nodenames()`, in the same order. Required when [netname](netname.md) is two-mode and omitted only for a one-mode network, where it would be meaningless |
-| `generate`(*[newnetname](newnetname.md)*) | Save as new network |
+| `mode(numlist)` | Two-mode (bipartite) networks only: the mode (1 or 2) each new node belongs to. Either a SINGLE value (applied to every new node) or one value per node listed in `nodenames()`, in the same order. Required when [netname](netname) is two-mode and omitted only for a one-mode network, where it would be meaningless |
+| `generate`(*[newnetname](newnetname)*) | Save as new network |
 | `xvars` | Generate Stata variables for the network |
 
 ## Description
 
-Add isolate nodes to an existing networks. By default, [netname](netname.md) is replaced, unless **generate()** is specified.
+Add isolate nodes to an existing networks. By default, [netname](netname) is replaced, unless **generate()** is specified.
 
-An isolate node added this way has no ties to any existing node - this is the ONLY way to represent an isolate in a network that was built from an edgelist ([nwset](nwset.md), [nwfromedge](nwfromedge.md), [nw2fromedge](nw2fromedge.md)): an edgelist can only ever record nodes that appear in at least one tie, so a node with zero ties is never created from edgelist input alone, silently, with no error or note - see [nwset](nwset.md)'s and [nwfromedge](nwfromedge.md)'s own "Supported network types" sections. Call `nwaddnodes` afterward to add any isolates the source data itself could not represent.
+An isolate node added this way has no ties to any existing node - this is the ONLY way to represent an isolate in a network that was built from an edgelist ([nwset](nwset), [nwfromedge](nwfromedge), [nw2fromedge](nw2fromedge)): an edgelist can only ever record nodes that appear in at least one tie, so a node with zero ties is never created from edgelist input alone, silently, with no error or note - see [nwset](nwset)'s and [nwfromedge](nwfromedge)'s own "Supported network types" sections. Call `nwaddnodes` afterward to add any isolates the source data itself could not represent.
 
 ## Examples
 

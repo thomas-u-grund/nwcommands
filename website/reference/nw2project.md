@@ -87,7 +87,7 @@ For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 
 - c | minmax c | 5 c |
 - hline 12c -hline 8
 
-The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](netname.md), and [nwsummarize](nwsummarize.md), which displays it.
+The projected network's provenance (which network and mode it was projected from, and with which `stat()`) is recorded on the new network itself, not just printed - see **r(provenance)** via [nwname](netname), and [nwsummarize](nwsummarize), which displays it.
 
 ## Supported network types
 
@@ -102,6 +102,6 @@ Binary: yes. Directed: not checked - the source two-mode network's ties are trea
 
 ## See also
 
-- [nwproject](nwproject.md) (an exact alias for this command), [nw2set](nw2set.md), [nw2fromedge](nw2fromedge.md), [nw2toedge](nw2toedge.md), [nw2clustering](nw2clustering.md)
+- [nwproject](nwproject) (an exact alias for this command), [nw2set](nw2set), [nw2fromedge](nw2fromedge), [nw2toedge](nw2toedge), [nw2clustering](nw2clustering)
 
 - last certified : 28 Aug 2026
