@@ -70,9 +70,9 @@ Saved as file: flobusiness.net
 
 . describe
 
-Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_50827.000001
+Contains data from /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_52856.000001
  Observations:         2,500                  
-    Variables:             3                  5 Sep 2026 14:21
+    Variables:             3                  5 Sep 2026 14:35
 ------------------------------------------------------------------------------------------------------------------
 Variable      Storage   Display    Value
     name         type    format    label      Variable label
@@ -96,13 +96,38 @@ Sorted by: _ego  _alter
      +--------------------------+
 
 . 
-. * ...keep only the real ties (nwtoedge lists every possible pair, not
+. * ...before filtering, capture every node label that appears in the
+. * full pairs list - this is the only place an isolate's label survives...
+. levelsof _ego, local(alllabels) clean
+n1 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n2 n20 n21 n22 n23 n24 n25 n26 n27 n28 n29 n3 n30 n31 n32 n33 n34 n35 n
+> 36 n37 n38 n39 n4 n40 n41 n42 n43 n44 n45 n46 n47 n48 n49 n5 n50 n6 n7 n8 n9
+
+. 
+. * ...now keep only the real ties (nwtoedge lists every possible pair, not
 . * just the ones that are actually connected)...
 . keep if glasgow1 == 1
 (2,387 observations deleted)
 
 . 
-. * ...and turn that back into a network object again
+. * ...work out which labels from the full set never appear in the filtered
+. * edgelist at all - these are the isolates nwfromedge is about to drop...
+. levelsof _ego, local(remaininglabels) clean
+n1 n10 n11 n12 n14 n15 n16 n17 n18 n19 n2 n21 n22 n23 n24 n25 n26 n27 n28 n29 n3 n30 n31 n32 n33 n34 n35 n36 n37 n
+> 38 n39 n4 n40 n41 n42 n43 n44 n45 n46 n48 n49 n5 n6 n7 n8 n9
+
+. levelsof _alter, local(alterlabels) clean
+n1 n10 n11 n14 n15 n16 n17 n18 n19 n2 n21 n22 n23 n24 n25 n26 n27 n28 n29 n3 n30 n31 n32 n33 n34 n35 n36 n37 n38 n
+> 39 n4 n40 n41 n42 n43 n44 n45 n46 n47 n48 n49 n5 n6 n7 n8 n9
+
+. local remaininglabels : list remaininglabels | alterlabels
+
+. local isolatelabels : list alllabels - remaininglabels
+
+. display "`isolatelabels'"
+n13 n20 n50
+
+. 
+. * ...and turn what's left back into a network object again
 . nwfromedge _ego _alter, name(rebuilt)
 
 . nwsummarize rebuilt
@@ -118,6 +143,27 @@ Sorted by: _ego  _alter
    Minimum value:  0
    Maximum value:  1
    Density:  .052
+   Temporal: false
+
+. 
+. * nwfromedge can only create nodes that appear in at least one tie, so the
+. * isolates identified above are missing from `rebuilt` - add them back
+. * explicitly with the labels the display above just gave us.
+. nwaddnodes rebuilt, nodenames(n13, n20, n50)
+
+. nwsummarize rebuilt
+--------------------------------------------------
+   Network name:  rebuilt
+   Network id:  4
+   Directed: true
+   Valued: false
+   Two-mode: false
+   Nodes: 50
+   Selfloop: false
+   Arcs: 113
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .046
    Temporal: false
 
 . 
