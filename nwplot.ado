@@ -2293,7 +2293,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	string scalar json, lbl, colorstr, shapestr, q, grouplbl, shapelbl, edgegrouplbl, sizelbl
 	real scalar i, cg, sg, ecg, fromidx, toidx, sizepx, nemitted
 	// plotmat is created by ordinary top-level `mata: plotmat = ...` code
-	// earlier in this same program (nw_tomata.ado's own assignment, called
+	// earlier in this same program (_nwtomata.ado's own assignment, called
 	// from nwplot.ado's "Get network data" section) -- a compiled function
 	// body does not automatically see a variable from that enclosing
 	// interactive scope the way another top-level `mata:` block would;

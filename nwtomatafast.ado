@@ -8,12 +8,12 @@ program nwtomatafast
 	// command (nwdissimilar, nwsimilar, nwhierarchy) was broken
 	// ("nw_mata1 not found"). Fixed to return a valid Mata EXPRESSION
 	// (a dereferenced pointer to the live adjacency matrix, matching
-	// nw_tomata's own r(adj) convention) rather than a now-nonexistent
+	// _nwtomata's own r(adj) convention) rather than a now-nonexistent
 	// named matrix - this preserves every caller's existing contract of
 	// substituting `r(mata)' directly into a later mata: line unchanged.
 	unw_defs
 	// BUGFIX: same misspelled/nonexistent network name crash (raw Mata
-	// r3301) already fixed in nw_tomata.ado - nwtomatafast doesn't share
+	// r3301) already fixed in _nwtomata.ado - nwtomatafast doesn't share
 	// that helper (it calls nw_syntax directly for its own performance
 	// reasons), so needs its own independent fix.
 	capture nw_syntax `netname'

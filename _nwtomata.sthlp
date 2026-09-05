@@ -6,14 +6,14 @@
 {title:Title}
 
 {p2colset 9 18 22 2}{...}
-{p2col :nw_tomata {hline 2}}Return adjacency matrix of network{p_end}
+{p2col :_nwtomata {hline 2}}Return adjacency matrix of network{p_end}
 {p2colreset}{...}
 
 
 {title:Syntax}
 
 {p 8 17 2}
-{cmdab: nw_tomata}
+{cmdab: _nwtomata}
 [{it:{help netname}}] 
 {cmd:, }
 [{opt mat(matamatrix)}]
@@ -35,7 +35,7 @@ do not need to know Mata to use any of the nwcommands, but sometimes you might w
 adjacency matrix, for example, when programming your own network commands. 
 
 {pstd}
-{cmd:nw_tomata} returns a link to the {help nw_programming##modernprogramming:Mata network object} and saves it in {bf:r(netobj)}. Furthermore,
+{cmd:_nwtomata} returns a link to the {help nw_programming##modernprogramming:Mata network object} and saves it in {bf:r(netobj)}. Furthermore,
 it returns a direct link to the underlying Mata adjacency matrix of the network object and saves it in
 {bf:r(adj)}.
 
@@ -53,7 +53,7 @@ not change the network.
 
 	{com}. nwclear
 	{com}. nwrandom 5, prob(1) name(mynet)
-	{com}. nw_tomata, mat(myadj)
+	{com}. _nwtomata, mat(myadj)
 	{res}
 	{com}. return list
 

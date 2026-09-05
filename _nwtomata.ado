@@ -1,6 +1,6 @@
 
-capture program drop nw_tomata
-program nw_tomata
+capture program drop _nwtomata
+program _nwtomata
 version 9
 syntax [anything(name=netname)], [ mat(string) ]
 

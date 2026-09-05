@@ -19,6 +19,7 @@
 {p2col:{bf:{help _nwnodelab }}}Returns the nodelab of a node given its nodeid{p_end}
 {p2col:{bf:{help _nwopenviewer }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help _nwsetobs }}}{err}no help file yet{txt}{p_end}
+{p2col:{bf:{help _nwtomata }}}Return adjacency matrix of network{p_end}
 {p2col:{bf:{help _opts_oneof }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help animate }}}Animate graphs{p_end}
 {p2col:{bf:{help nw2clustering }}}Clustering coefficient (transitivity) of a two-mode network{p_end}
@@ -32,7 +33,6 @@
 {p2col:{bf:{help nw_name }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_resetrc }}}{err}no help file yet{txt}{p_end}
 {p2col:{bf:{help nw_syntax }}}{err}no help file yet{txt}{p_end}
-{p2col:{bf:{help nw_tomata }}}Return adjacency matrix of network{p_end}
 {p2col:{bf:{help nwaddnodes }}}Add nodes to network{p_end}
 {p2col:{bf:{help nwaltergen }}}Generate a variable from alter/neighbor attributes{p_end}
 {p2col:{bf:{help nwappend }}}Append network dataset{p_end}

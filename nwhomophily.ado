@@ -64,7 +64,7 @@ program def nwhomophily
 		
 		nwexpand `onevar' if _n <= `nodes', mode(`onemode') name(_tempexpand)
 		
-		nw_tomata _tempexpand, mat(`__temp')
+		_nwtomata _tempexpand, mat(`__temp')
 		nwdrop _tempexpand
 		
 		mata: `__temp' = `__temp' :* `onehom'

@@ -69,7 +69,7 @@ program nwcloseness
 		nwname _tempgeodesic
 		// PERFORMANCE FIX: nwtomata's own mat() option copies the network's
 		// full n x n matrix into a second, separately-named Mata matrix
-		// (confirmed via direct source inspection of nw_tomata.ado:
+		// (confirmed via direct source inspection of _nwtomata.ado:
 		// `mat' = (*`netobj'->get_matrix())`, an unavoidable full copy for
 		// a NAMED handle) purely so that copy can immediately be handed to
 		// min()/rowsum() and discarded - both of those are read-only

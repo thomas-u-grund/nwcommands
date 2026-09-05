@@ -29,7 +29,7 @@ f _nwexpnetexp.ado
 f nw_name.ado
 f _nwopenviewer.ado
 f nw_syntax.ado
-f nw_tomata.ado
+f _nwtomata.ado
 f nw_unab.ado
 f nwaddnodes.ado
 f nwaltergen.ado

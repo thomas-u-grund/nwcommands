@@ -7,5 +7,5 @@ capture program drop nwtomata
 program nwtomata
 version 9
 syntax [anything(name=netname)], mat(string)
-	nw_tomata `netname', mat(`mat')
+	_nwtomata `netname', mat(`mat')
  end
