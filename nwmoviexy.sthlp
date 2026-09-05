@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##visualization:[NW-2.8] Visualization}
+{helpb nwtopical##visualization:[NW-2.8] Visualization}
 
 {title:Title}
 

@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  20aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis_community:[NW-2.6.3] Community Detection}
+{helpb nwtopical##analysis_community:[NW-2.6.3] Community Detection}
 
 {title:Title}
 

@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  31aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##information:[NW-2.4] Information}
+{helpb nwtopical##information:[NW-2.4] Information}
 
 {title:Title}
 

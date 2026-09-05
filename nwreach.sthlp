@@ -1,9 +1,9 @@
 {smcl}
 {* *! 15jul2016 Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##generator:[NW-2.3] Generators}
+{helpb nwtopical##generator:[NW-2.3] Generators}
 {marker top2}
-{helpb nw_topical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+{helpb nwtopical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
 
 {title:Title}
 

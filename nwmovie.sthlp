@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 3.4.0  30aug2026}{...}
 {marker topic}
-{helpb nw_topical##visualization:[NW-2.8] Visualization}
+{helpb nwtopical##visualization:[NW-2.8] Visualization}
 
 {title:Title}
 

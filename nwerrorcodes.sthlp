@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  24aug2026}{...}
 {marker topic}
-{helpb nw_topical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 {title:Title}
 
@@ -86,4 +86,4 @@ this page for an unrelated situation.
 
 {title:See also}
 
-{help nwcommands}, {help nw_topical}
+{help nwcommands}, {help nwtopical}

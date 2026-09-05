@@ -1,7 +1,7 @@
 {smcl}
 {* *! 15jul2016 Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##generator:[NW-2.3] Generators}
+{helpb nwtopical##generator:[NW-2.3] Generators}
 
 {title:Title}
 

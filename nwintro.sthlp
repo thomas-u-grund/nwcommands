@@ -44,7 +44,7 @@ relational data (e.g. genomes, semantic networks, and so on).
 {pstd}
 In contrast to many other statistical approaches, in network analysis one models the interdependencies 
 between entities explicitly. Such a perspective allows the visualization and study of structural features
-of network structures such as e.g. {help nw_topical##analysis:centrality of network nodes}. 
+of network structures such as e.g. {help nwtopical##analysis:centrality of network nodes}. 
 
 {pstd}
 A network G = (V,E) is a set of nodes {it:V} and relationships {it:E}. Relationships between nodes
@@ -57,9 +57,9 @@ a network relationship between nodes {it:i} and {it:j}. However, networks can al
 
 {pstd}
 The {help nwcommands} introduce a software suite of over 50 Stata commands for network analyses in Stata. The
-software includes programs for {help nw_topical##import:importing and exporting, loading and saving}, {help nw_topical##manipulation:handling, manipulating and replacing},
-{help nw_topical##generator:generating}, {help nw_topical##information:describing}, {help nw_topical##analysis:analyzing} and
-{help nw_topical##visualization:visualizing and animating networks}. This includes, for example, commands for measuring the importance of network
+software includes programs for {help nwtopical##import:importing and exporting, loading and saving}, {help nwtopical##manipulation:handling, manipulating and replacing},
+{help nwtopical##generator:generating}, {help nwtopical##information:describing}, {help nwtopical##analysis:analyzing} and
+{help nwtopical##visualization:visualizing and animating networks}. This includes, for example, commands for measuring the importance of network
 nodes, the detection of network patterns and features, the similarity of multiple networks, node attributes,
 and the advanced statistical analysis of networks.
 
@@ -124,7 +124,7 @@ pair, so there is no sparse equivalent available the way there now is for {help 
 {title:Loading a network as Stata variables}
 
 {pstd}
-{help nwload} (and the {opt xvars} option many {help nw_topical##generator:network generators} accept) represents
+{help nwload} (and the {opt xvars} option many {help nwtopical##generator:network generators} accept) represents
 a network as ordinary Stata variables, one per node, in a wide adjacency-matrix layout. This is bounded by
 Stata's own variable-count ceiling ({bf:c(max_k_theory)} - varies by your Stata flavor: for example, a few
 thousand in Small Stata, far more in Stata/IC, BE, or MP), not by anything this package imposes. {cmd:nwload}
@@ -202,7 +202,7 @@ accepting a {help varname} in a similar fashion. One can even abbreviate {help n
 {pstd}
 Furthermore, there are many nwcommands that are very similar to traditional Stata commands. 
 The intution and usage of these network extensions is very similar to what one is used to from Stata. A full list of programs can be found 
-{help nw_topical:here}. These are programs with a lot of similarities to Stata commands.
+{help nwtopical:here}. These are programs with a lot of similarities to Stata commands.
 
 {center:{c TLC}{hline 14}{c TT}{hline 16}{c TT}{hline 31}{c TRC}}
 {center:{c |}   Stata      {c |}  nwcommand     {c |}         Description           {c |}}

@@ -1,9 +1,9 @@
 {smcl}
 {* *! version 2.0.0  19aug2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##information:[NW-2.4] Information}
+{helpb nwtopical##information:[NW-2.4] Information}
 {marker top2}
-{helpb nw_topical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 
 {title:Title}
@@ -35,8 +35,8 @@ is specified in such a case, by default, the nwcommands apply the command to the
 
 {pstd}
 The {it:current network} is simply the last network that has been {help nwset:set},
-{help nw_topical##import:imported}
-or {help nw_topical##generators:generated}. This is a convenient way to way access the latest
+{help nwtopical##import:imported}
+or {help nwtopical##generators:generated}. This is a convenient way to way access the latest
 network one worked with. 
 
 {pstd}

@@ -1,7 +1,7 @@
 {smcl}
 {* *! 6jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##import:[NW-2.2] Import/Export}
+{helpb nwtopical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 
@@ -107,7 +107,7 @@
 {pstd}
 This command declares data to be network data (it is very similar to {help xtset} or {help stset}). When networks are 
 {help nwimport:imported} or {help nwuse:used} or loaded from the {help nwwebuse:internet} or created from
-an {help nwfromedge:edgelist} or created by any other {help nw_topical##generator:network generator}, {bf:nwset} is automatically
+an {help nwfromedge:edgelist} or created by any other {help nwtopical##generator:network generator}, {bf:nwset} is automatically
 invoked. But one can also explicitly declare data to be network data. 
 
 {pstd}

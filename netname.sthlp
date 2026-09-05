@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.6  16may2012 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##concept:[NW-2.1] Concepts}
+{helpb nwtopical##concept:[NW-2.1] Concepts}
 
 {title:Description}
 
@@ -25,7 +25,7 @@ characters may be
 
 {pstd}
 When we use the term netname, we usually mean an existing netname -- a
-network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a network generator (see {help nw_topical##generator:[NW-1.2] Generators}). The alternative would be a
+network that already exists in Stata, i.e. it has been setted by {it: {help nwset}}, loaded or created by a network generator (see {help nwtopical##generator:[NW-1.2] Generators}). The alternative would be a
 {it:{help newnetname}}.
 
 {pstd} 

@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.1  10jan2015 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 {title:Title}
 

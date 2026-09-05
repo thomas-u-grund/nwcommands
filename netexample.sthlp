@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.2  17apr2009}
 {marker topic}
-{helpb nw_topical##concept:[NW-2.1] Concepts}
+{helpb nwtopical##concept:[NW-2.1] Concepts}
 {hline}
 
 {title:Example networks}

@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.1  15sept2014 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##programming:[NW-2.9] Programming}
+{helpb nwtopical##programming:[NW-2.9] Programming}
 
 {title:Title}
 

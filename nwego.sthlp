@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
+{helpb nwtopical##analysis_paths:[NW-2.6.5] Paths, Reachability & Ego Networks}
 
 {title:Title}
 

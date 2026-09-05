@@ -67,7 +67,7 @@ program _nwdeploy
 	sort topic cmdname
 	
 	tempname topical
-	file open `topical' using nw_topical.sthlp, replace write
+	file open `topical' using nwtopical.sthlp, replace write
 	file write `topical' "{smcl}" _n ///	
 			"{* *! version `version' `d'}{...}"  _n ///
 		    "{phang}" _n ///
@@ -78,23 +78,23 @@ program _nwdeploy
 			"" _n ///
 			"{col 14}Section{col 31}Description" _n ///
 			"{col 14}{hline 46}" _n ///
-"{help nw_topical##concept:{col 14}{bf:[NW-2.1]}{...}{col 31}{bf:Concepts}}" _n ///
+"{help nwtopical##concept:{col 14}{bf:[NW-2.1]}{...}{col 31}{bf:Concepts}}" _n ///
 	"" _n ///
-"{help nw_topical##import:{col 14}{bf:[NW-2.2]}{...}{col 31}{bf:Import/Export}}" _n ///
+"{help nwtopical##import:{col 14}{bf:[NW-2.2]}{...}{col 31}{bf:Import/Export}}" _n ///
 	"" _n ///
-"{help nw_topical##generator:{col 14}{bf:[NW-2.3]}{...}{col 31}{bf:Generators}}" _n ///
+"{help nwtopical##generator:{col 14}{bf:[NW-2.3]}{...}{col 31}{bf:Generators}}" _n ///
 	"" _n ///
-"{help nw_topical##information:{col 14}{bf:[NW-2.4]}{...}{col 31}{bf:Information}}" _n ///
+"{help nwtopical##information:{col 14}{bf:[NW-2.4]}{...}{col 31}{bf:Information}}" _n ///
 	"" _n ///
-"{help nw_topical##manipulation:{col 14}{bf:[NW-2.5]}{...}{col 31}{bf:Manipulation}}" _n ///
+"{help nwtopical##manipulation:{col 14}{bf:[NW-2.5]}{...}{col 31}{bf:Manipulation}}" _n ///
 	"" _n ///
-"{help nw_topical##analysis:{col 14}{bf:[NW-2.6]}{...}{col 31}{bf:Analysis}}" _n ///
+"{help nwtopical##analysis:{col 14}{bf:[NW-2.6]}{...}{col 31}{bf:Analysis}}" _n ///
 	"" _n ///
-"{help nw_topical##utilities:{col 14}{bf:[NW-2.7]}{...}{col 31}{bf:Utilities}}" _n ///
+"{help nwtopical##utilities:{col 14}{bf:[NW-2.7]}{...}{col 31}{bf:Utilities}}" _n ///
 	"" _n ///
-"{help nw_topical##visualization:{col 14}{bf:[NW-2.8]}{...}{col 31}{bf:Visualization}}" _n ///
+"{help nwtopical##visualization:{col 14}{bf:[NW-2.8]}{...}{col 31}{bf:Visualization}}" _n ///
 	"" _n ///
-"{help nw_topical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}" _n _n
+"{help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}" _n _n
 
 	set more off
 	gen topicmarker = substr(link, 13,.)
@@ -360,7 +360,7 @@ program getcmddesc, rclass
 				// BUGFIX: this stripped only the trailing "-1" character
 				// (just the closing brace of the source line's own
 				// "{p_end}" tag), leaving a dangling "{p_end" - but every
-				// call site (nw_topical.sthlp's/nwalphabetical.sthlp's
+				// call site (nwtopical.sthlp's/nwalphabetical.sthlp's
 				// own generation, further below) unconditionally appends
 				// its own literal "{p_end}" after this returned cmddesc,
 				// so the actual output was the malformed
@@ -388,7 +388,7 @@ program getcmdtopic, rclass
 	capture findfile `cmd'.sthlp
 	if _rc != 0 {
 		return local cmdtopic = "Uncategorized"
-		return local topiclink = "nw_topical##uncategorized"
+		return local topiclink = "nwtopical##uncategorized"
 		exit
 	}
 	else {
@@ -450,7 +450,7 @@ program _write_nwcommands
 "{col 14}{hline 46}" _n ///
 "{help nwintro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///
 "" _n ///
-"{help nw_topical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}" _n ///
+"{help nwtopical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}" _n ///
 "" _n ///
 "{help nwalphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}" _n ///
 "" _n ///

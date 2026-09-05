@@ -112,7 +112,7 @@ make an animation out of different Stata .gph files.
 {title:Simulating networks}
 
 {pstd}
-There are several {help nw_topical##generator:network generators} that can be used to simulate networks. These network generators
+There are several {help nwtopical##generator:network generators} that can be used to simulate networks. These network generators
 create one (or more) new networks with certain attributes. Most network generators
 allow the options {bf:name(), vars(), labs(), ntimes(), xvars}.
 
@@ -151,7 +151,7 @@ tie probabilities for each potential tie, saved as a matrix or as another networ
 
 {pstd}
 Once a network has been declared, imported or generated, there are many different ways to
-{help nw_topical##manipulation:manipulate networks}. Many of these features resemble what one is used from
+{help nwtopical##manipulation:manipulate networks}. Many of these features resemble what one is used from
 normal Stata. One can {help nwaddnodes:add nodes to a network},
 {help nwdropnodes:drop nodes from a network}, or {help nwkeepnodes:keep nodes of a network}. For example, this
 load the Florentine data and drop two nodes:

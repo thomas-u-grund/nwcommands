@@ -1,7 +1,7 @@
 {smcl}
 {* *!  14jul2016 Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+{helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 

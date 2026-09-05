@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.1.0  02sep2026}{...}
 {marker topic}
-{helpb nw_topical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 {title:Title}
 
@@ -136,4 +136,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 
 {title:See also}
 
-{help nwintro}, {help nw_topical}, {help nw2set:introduction to two-mode networks}
+{help nwintro}, {help nwtopical}, {help nw2set:introduction to two-mode networks}

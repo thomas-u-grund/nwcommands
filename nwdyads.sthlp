@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 2.0.0  7jul2016}{...}
 {marker topic}
-{helpb nw_topical##information:[NW-2.4] Information}
+{helpb nwtopical##information:[NW-2.4] Information}
 version 2.0.0
 
 {title:Title}

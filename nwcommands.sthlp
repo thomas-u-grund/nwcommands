@@ -10,7 +10,7 @@ New here? If this is all you have installed so far, run {cmd:nwinstall, all} to 
 {col 14}{hline 46}
 {help nwintro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}
 
-{help nw_topical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}
+{help nwtopical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}
 
 {help nwalphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}
 

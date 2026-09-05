@@ -1,6 +1,6 @@
 {smcl}
 {* *! version 1.0.0  22aug2026 author: Thomas Grund}{...}
-{helpb nw_topical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
+{helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
 

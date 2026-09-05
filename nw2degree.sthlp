@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis_centrality:[NW-2.6.1] Centrality}
+{helpb nwtopical##analysis_centrality:[NW-2.6.1] Centrality}
 
 {title:Title}
 

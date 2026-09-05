@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 15jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
+{helpb nwtopical##analysis_other:[NW-2.6.7] Other Analysis Utilities}
 
 {title:Title}
 

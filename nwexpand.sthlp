@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 2.0.0  26aug2016}{...}
 {marker topic}
-{helpb nw_topical##generator:[NW-2.3] Generators}
+{helpb nwtopical##generator:[NW-2.3] Generators}
 
 {title:Title}
 

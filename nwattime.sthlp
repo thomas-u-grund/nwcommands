@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  21aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+{helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 

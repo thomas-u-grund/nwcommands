@@ -1,7 +1,7 @@
 {smcl}
 {* *! 11jul2016 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##utilities:[NW-2.7] Utilities}
+{helpb nwtopical##utilities:[NW-2.7] Utilities}
 
 {title:Title}
 
@@ -110,7 +110,7 @@ automatically runs with the {help nwcurrent:current network}. For programming yo
 {help _nwsyntax}.
 
 {pstd}
-By default, commands that generate a network (see {help nw_topical##generator:network generator}) do NOT also load the network as Stata
+By default, commands that generate a network (see {help nwtopical##generator:network generator}) do NOT also load the network as Stata
 variables - creating a network never silently spends Stata's own variable budget. Most network generators have the option {bf:xvars}, which
 DOES invoke {bf:nwload} after creating the new network, generating its Stata variables immediately. This is convenient for a single network at
 a time, but can exhaust Stata's variable limit if used while generating many networks at once.
@@ -126,7 +126,7 @@ been generated) as Stata variables.
 {pstd}
 Notice that {cmd:nwload} does not import or create a network, it simply creates Stata variables to represent a network. Only networks that 
 already do exist in Stata, i.e. have been set by {help nwset} or imported by {help nwimport} or {help nwuse} or {help nwwebuse} or
-created by a {help nw_topical##generator:network generator}, can be loaded as Stata variables. If two different networks use the
+created by a {help nwtopical##generator:network generator}, can be loaded as Stata variables. If two different networks use the
 same variable names, the Stata variables are overwritten.
 
 

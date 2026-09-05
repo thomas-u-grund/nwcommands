@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.0  24aug2026 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##analysis_utility:[NW-2.7] Utility Commands}
+{helpb nwtopical##analysis_utility:[NW-2.7] Utility Commands}
 
 {title:Title}
 

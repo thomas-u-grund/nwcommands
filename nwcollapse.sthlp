@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 2.0.0  19aug2016}{...}
 {marker topic}
-{helpb nw_topical##manipulation:[NW-2.5] Manipulation}
+{helpb nwtopical##manipulation:[NW-2.5] Manipulation}
 
 {title:Title}
 

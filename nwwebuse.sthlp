@@ -1,7 +1,7 @@
 {smcl}
 {* *! version 1.0.4  20nov2014 author: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##import:[NW-2.2] Import/Export}
+{helpb nwtopical##import:[NW-2.2] Import/Export}
 
 {title:Title}
 

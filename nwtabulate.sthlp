@@ -1,7 +1,7 @@
 {smcl}
 {* *! 12jul2016: Thomas Grund}{...}
 {marker topic}
-{helpb nw_topical##information:[NW-2.4] Information}
+{helpb nwtopical##information:[NW-2.4] Information}
 
 {title:Tables of networks}
 
