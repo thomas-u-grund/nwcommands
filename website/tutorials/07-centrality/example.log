@@ -1,23 +1,37 @@
----
-title: "Centrality"
-parent: Tutorials
-nav_order: 7
-description: "Degree, betweenness, closeness, eigenvector, PageRank, and Katz centrality."
----
 
-# Centrality
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
 
-"How central is this node?" has more than one answer — each of nwcommands' six centrality
-commands captures a different notion of importance. This tutorial runs all six on the same
-network, the Florentine marriage network, so the different rankings can be compared directly.
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
 
-## Degree
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
 
-`nwdegree` counts a node's direct ties:
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
 
-```stata
+
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
+> cratchpad/tutorials_workdir/profile.do ...
+
+. do example.do 
+
+. * Tutorial 7: Centrality
+. * Run from a directory with nwcommands net-installed (not a dev checkout).
+. 
 . nwwebuse florentine, nwclear
 
+. 
+. * Degree: how many ties does each node have
 . nwdegree flomarriage, generate(deg)
 ----------------------------------------
   Network name: flomarriage
@@ -36,14 +50,9 @@ network, the Florentine marriage network, so the different rankings can be compa
       Total |         16      100.00
 
    Degree centralization:: .267
-```
 
-## Betweenness
-
-`nwbetween` counts how often a node sits on the shortest path between two other nodes — a
-measure of "brokerage" rather than direct connectivity:
-
-```stata
+. 
+. * Betweenness: how often does a node sit on the shortest path between others
 . nwbetween flomarriage, generate(btw)
 ----------------------------------------
   Network name: flomarriage
@@ -53,13 +62,9 @@ measure of "brokerage" rather than direct connectivity:
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
          btw |         16        9.75    12.30056          0       47.5
-```
 
-## Closeness
-
-`nwcloseness` measures how short a node's paths are to everyone else in the network:
-
-```stata
+. 
+. * Closeness: how short are a node's paths to everyone else
 . nwcloseness flomarriage, generate(clo far near)
 ----------------------------------------
   Network name: flomarriage
@@ -71,18 +76,9 @@ measure of "brokerage" rather than direct connectivity:
          clo |         15    .4447452    .0801896   .3061225         .6
          far |         16      32.625    10.73235          0         49
         near |         15    .0296497     .005346   .0204082        .04
-```
 
-`clo` has one fewer observation than `far` - the isolated node (`pucci`, with degree 0 above)
-has no path to anyone, so closeness is undefined for it even though farness (`.` for an
-unreachable pair contributes nothing) still computes.
-
-## Eigenvector
-
-`nwevcent` scores a node higher when its neighbors are themselves well-connected, not just by
-raw neighbor count:
-
-```stata
+. 
+. * Eigenvector: connections to well-connected nodes count more
 . nwevcent flomarriage, generate(evc)
 ----------------------------------------
   Network name: flomarriage
@@ -93,16 +89,9 @@ raw neighbor count:
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
          evc |         16    .2189135    .1246942   1.90e-34   .4303081
-```
 
-## PageRank
-
-`nwpagerank` is the stationary distribution of a random surfer who follows outgoing ties (with
-probability `damping()`, default 0.85) or jumps to a uniformly random node otherwise. Unlike
-eigenvector centrality, it works natively on directed networks and always produces a unique,
-well-defined score even where eigenvector centrality would refuse:
-
-```stata
+. 
+. * PageRank: stationary distribution of a random surfer following ties
 . nwpagerank flomarriage, generate(pgr)
 (16 missing values generated)
 ----------------------------------------
@@ -113,14 +102,9 @@ well-defined score even where eigenvector centrality would refuse:
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
          pgr |         16       .0625    .0322572    .009901   .1443735
-```
 
-## Katz
-
-`nwkatz` extends degree centrality by also counting nodes reachable at distance 2, 3, ... away,
-penalizing each by how far away it is:
-
-```stata
+. 
+. * Katz: distance-decay reach, penalizing nodes that are further away
 . nwkatz flomarriage, generate(ktz)
 ----------------------------------------
   Katz centrality (shortest-path distance-decay)
@@ -132,14 +116,11 @@ penalizing each by how far away it is:
     Variable |        Obs        Mean    Std. dev.       Min        Max
 -------------+---------------------------------------------------------
          ktz |         16      13.125         3.5          0         14
-```
 
-## The measures don't always agree
-
-Sort by betweenness, and `medici` comes out clearly on top - well ahead of the next node, and by
-a wider margin than its degree alone would suggest:
-
-```stata
+. 
+. * medici ranks near the top on betweenness and closeness despite a
+. * fairly ordinary degree - the different measures do not always agree
+. * on who the "most central" node is
 . gsort -btw
 
 . list _nwnode deg btw in 1/5
@@ -153,14 +134,8 @@ a wider margin than its degree alone would suggest:
   4. | salviati     2         13 |
   5. |  ridolfi     3   10.33333 |
      +---------------------------+
-```
 
-`medici` does have the highest degree here too, but the *gap* to second place is far larger for
-betweenness (47.5 vs. 23.2, roughly double) than for degree (6 vs. 4) - consistent with the
-historical account of the Medici as brokers sitting between otherwise-separate factions, not
-merely the family with the most marriage ties. Looking at every measure for `medici` at once:
-
-```stata
+. 
 . format clo evc pgr ktz %6.3f
 
 . list _nwnode deg btw clo evc pgr ktz if _nwnode == "medici"
@@ -170,10 +145,6 @@ merely the family with the most marriage ties. Looking at every measure for `med
      |-------------------------------------------------------|
   1. |  medici     6   47.5   0.600   0.430   0.144   14.000 |
      +-------------------------------------------------------+
-```
 
-`medici` tops every measure here - but that won't always be true for every node in every
-network. Which measure is "right" depends entirely on what kind of influence you're actually
-asking about: direct access (degree), control over information flow between others
-(betweenness), efficiency of reach (closeness), prestige-by-association (eigenvector, PageRank),
-or penalized total reach (Katz).
+. 
+end of do-file
