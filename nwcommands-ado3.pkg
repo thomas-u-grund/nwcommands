@@ -3,6 +3,8 @@ d nwcommands-ado. Social Network Analysis Using Stata (part 3)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
 d Distribution-Date: 5sep2026
+f lib/lnwcommands.mlib
+f lib/plugins/macos/ergm_mcmc_macos.plugin
 f lib/plugins/macos/nwgraph_macos.plugin
 f lib/plugins/macos/saom_sim_macos.plugin
 f lib/plugins/macos/dynam_sim_macos.plugin

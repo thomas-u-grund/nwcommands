@@ -81,5 +81,5 @@ f unw_defs.ado
 f scheme-s1network.scheme
 f scheme-s2network.scheme
 f scheme-s3network.scheme
-f lib/lnwcommands.mlib
-f lib/plugins/macos/ergm_mcmc_macos.plugin
+f nwmovie_template.html
+f nwedit_template.html
