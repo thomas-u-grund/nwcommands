@@ -9,6 +9,24 @@ program nwtoedge
 	_nwsyntax `netname', max(9999)
 	local nets `netname'
 
+	// Isolate preservation (#5): an edgelist has no way to represent a
+	// zero-tie node, so a plain nwtoedge/nwfromedge round trip silently
+	// drops isolates - confirmed directly on real data (Glasgow
+	// friendship network, 50 nodes -> 47 after a round trip). Attach the
+	// source network's own full node list as a dataset characteristic
+	// (get_nodenames_string()'s own ";"-delimited format) so
+	// nwfromedge/nw2fromedge can add any missing node back automatically,
+	// with no option to remember at either end. Scoped to a single
+	// source network - ambiguous which network's own isolates would
+	// apply once nwtoedge is combining more than one (see comparevars()
+	// above, which is already single-network-only for the same reason).
+	local __iso_nwcount : word count `netname'
+	local __iso_srclabels ""
+	if `__iso_nwcount' == 1 {
+		_nwsyntax `netname'
+		mata: st_local("__iso_srclabels", `netobj'->get_nodenames_string())
+	}
+
 	// comparevars()/comparemode(): ego/alter comparison columns (e.g.
 	// "does this dyad share the same category?", "how far apart are
 	// ego's and alter's values?") - the Stage 5 roadmap item this adds.
@@ -236,4 +254,13 @@ program nwtoedge
 		mata: mata drop __nwedgelist
 	}
 
-end	
+	// See the isolate-preservation note near the top of this file (#5).
+	// `numeric' replaces ego/alter with generic 1..N indices, so real
+	// node labels are meaningless here - skip attaching the char in that
+	// case, matching how `numeric' already disables the multi-network
+	// path above.
+	if `__iso_nwcount' == 1 & "`numeric'" == "" & "`__iso_srclabels'" != "" {
+		char _dta[nwtoedge_nodes] "`__iso_srclabels'"
+	}
+
+end

@@ -28,6 +28,15 @@ program nwfromedge
 	}
 
 	unw_defs
+	// Isolate preservation (#5): if the edgelist in memory came from
+	// nwtoedge on a single source network, it carries that network's own
+	// full node list as a dataset characteristic (get_nodenames_string()'s
+	// ";"-delimited format) - grabbed here, before anything below touches
+	// the dataset, since a characteristic is dataset-level metadata that
+	// `if'/`keep'-style filtering does not disturb but a `preserve'/`use'
+	// of a DIFFERENT dataset would. Applied near the end of this program,
+	// once the new network actually exists.
+	local __iso_srclabels : char _dta[nwtoedge_nodes]
 	// NOTE: this file's own `overwrite' predates this option and controls
 	// nwload's own overwrite behavior further below (`qui nwload,
 	// `overwrite''), unrelated to network-name-collision - kept exactly
@@ -343,6 +352,16 @@ program nwfromedge
 	// diagonal, since it was never previously exercised on a bare, not
 	// yet ensure_dense_built()'d, network.
 	mata: `othernetobj'->set_selfloop(0)
+
+	// Isolate preservation (#5) - see the note near the top of this file.
+	// A no-op whenever the edgelist did not come from nwtoedge on a
+	// single source network (the local is empty), and add_missing_nodes_
+	// from_string() itself skips any label the edgelist already produced
+	// a real, tied node for - only genuine isolates from the source
+	// network actually get added here.
+	if "`__iso_srclabels'" != "" {
+		mata: `othernetobj'->add_missing_nodes_from_string(`"`__iso_srclabels'"')
+	}
 
 	capture mata: mata drop __nwvalue
 	capture mata: mata drop __nwego

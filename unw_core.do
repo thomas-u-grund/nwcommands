@@ -3249,6 +3249,7 @@ class `NWdef' {
 
 	void connect_edge()
 	void add_node()
+	void add_missing_nodes_from_string()
 	void zap()
 	void dumper()
 	void update_nodesvar()
@@ -7478,6 +7479,34 @@ string matrix `NWdef'::get_nodesvar(){
 
 string scalar `NWdef'::get_nodenames_string(){
 	return(invtokens(nodes,";"))
+}
+
+// Adds every label in a ";"-delimited string (get_nodenames_string()'s own
+// format - see nwtoedge.ado's isolate-preservation char, issue #5) that
+// is not already a node here, via add_node() - unlike add_node() itself,
+// silently skips a label that already exists rather than erroring, since
+// the whole point is "restore whatever isolates a round trip lost", not
+// "assert this network never had these nodes before". Same manual
+// semicolon/comma-scanning style as set_modes_from_labeled_string() above.
+void `NWdef'::add_missing_nodes_from_string(string scalar s){
+	string scalar remaining, lab
+	real scalar semipos, idx
+
+	if (s == "") return
+	remaining = s
+	while (strlen(remaining) > 0) {
+		semipos = strpos(remaining, ";")
+		if (semipos == 0) {
+			lab = remaining
+			remaining = ""
+		}
+		else {
+			lab = substr(remaining, 1, semipos-1)
+			remaining = substr(remaining, semipos+1, .)
+		}
+		idx = first_index_match(nodes, lab)
+		if (idx == 0) add_node(lab)
+	}
 }
 
 void `NWdef'::set_nodesvar(string matrix v){

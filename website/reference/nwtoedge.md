@@ -124,6 +124,8 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 
 Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see [nw2toedge](nw2toedge) for the two-mode-specific counterpart, though this command's own `egovars()`/`altervars()` two-mode handling is used internally by several other commands directly on a two-mode network too.
 
+When converting a single network, this command also attaches that network's own full node list to the resulting dataset as a hidden characteristic (no visible extra rows/variables) - purely so a later [nwfromedge](nwfromedge) call on this same edgelist can restore any isolate (zero-tie node) that an edgelist, by construction, cannot represent as a row of its own. See [nwfromedge](nwfromedge)'s own **Supported network types** section for the other half of this.
+
 ## See also
 
 - [nwfromedge](nwfromedge), [nw2toedge](nw2toedge), [nwsave](nwsave), [nwexpand](nwexpand)

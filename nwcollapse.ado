@@ -53,7 +53,15 @@ program nwcollapse
 	nwname _temp_`original', newlabsfromvar(_nwnode)
 	
 	nwtoedge _temp_`original', egovars(`by') altervars(`by') ego(_fromid) alter(_toid)
-	
+	// Isolate preservation (#5) is for a genuine round trip back to the
+	// SAME node set nwtoedge started from - wrong here, where the whole
+	// point is collapsing several original nodes into fewer new ones.
+	// Left attached, nwfromedge below would "restore" every original
+	// node the collapse() step deliberately merged away as if they were
+	// lost isolates. Clear it so nwfromedge treats this edgelist as it
+	// would any other with no such history.
+	char _dta[nwtoedge_nodes] ""
+
 	tempvar _newfrom _newto
 
 	keep _fromid _toid _temp_`original' `by'_fromid `by'_toid

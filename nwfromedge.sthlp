@@ -108,7 +108,7 @@ One can also transfrom any network that exists in memory into such an edgelist w
 {title:Supported network types}
 
 {pstd}
-Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior). A node with zero ties (an isolate) is never created from any edgelist import - use {help nwaddnodes} afterward to add any isolates the source data could not represent.
+Binary: yes. Directed: yes, via {opt directed}/{opt undirected}/{opt forcedirected}/{opt forceundirected}. Weighted: yes - a third edge-list column supplies tie values. Signed: not checked. Two-mode: yes, via {opt twomode} - an exact alias for {help nw2fromedge}, the command that actually implements two-mode edge-list import (see that command's own help file for the full behavior, where isolate preservation below does not apply). A node with zero ties (an isolate) can never appear as a ROW in an edgelist - there is no pair to write - but a round trip through {help nwtoedge} specifically is not affected: {cmd:nwtoedge} attaches its source network's own full node list to the edgelist dataset (invisibly - no extra variables or rows), and {cmd:nwfromedge} automatically adds back any node that list has but the edgelist's own ties did not reproduce. A hand-built or externally-sourced edgelist carries no such list, so isolates neither of those every had are genuinely unrepresentable - add them with {help nwaddnodes} same as always.
 
 {title:Examples}
 
@@ -128,10 +128,11 @@ into a network:
 	{cmd:. nwfromedge _ego _alter, name(mynet)}
 
 {pstd}
-A node with zero ties never appears in an edgelist in the first place, so any isolates in the
-original network are silently dropped in a round trip like this one - use {help nwaddnodes}
-afterward to add them back explicitly (see this file's own {bf:Supported network types} section
-above).
+{it:glasgow1} has 50 nodes but only 47 with at least one tie; {it:mynet} still comes out with all
+50 - the 3 isolates {help nwtoedge} could not write as edgelist rows are added back automatically,
+with no extra step needed (see this file's own {bf:Supported network types} section above). This
+only works because {cmd:nwtoedge} itself produced this particular edgelist; it would not apply to
+an edgelist typed in by hand or imported from an external source.
 
 	
 	

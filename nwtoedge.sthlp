@@ -159,6 +159,13 @@ directions, so the signed comparison is preserved correctly for both.
 {pstd}
 Binary: yes. Directed: yes. Weighted: yes, tie values are carried into the edge list. Signed: not checked. Two-mode: yes - see {help nw2toedge} for the two-mode-specific counterpart, though this command's own {opt egovars()}/{opt altervars()} two-mode handling is used internally by several other commands directly on a two-mode network too.
 
+{pstd}
+When converting a single network, this command also attaches that network's own full node list to
+the resulting dataset as a hidden characteristic (no visible extra rows/variables) - purely so a
+later {help nwfromedge} call on this same edgelist can restore any isolate (zero-tie node) that an
+edgelist, by construction, cannot represent as a row of its own. See {help nwfromedge}'s own
+{bf:Supported network types} section for the other half of this.
+
 {title:See also}
 	
 	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}

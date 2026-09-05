@@ -39,7 +39,14 @@ program nwrecode
 		// edgelist (so an undirected network's recode applies
 		// symmetrically, not just to the upper triangle) is "full".
 		nwtoedge `onenet', full
-		recode `onenet' `rules', `options'		
+		// Isolate preservation (#5) is for a genuine round trip back to
+		// the SAME node set nwtoedge started from - wrong here, where
+		// `recode' below can legitimately zero out every one of a
+		// node's own ties (a real recode effect, not an accidental
+		// loss). Clear it so the nwfromedge call further below treats
+		// this edgelist as it would any other with no such history.
+		char _dta[nwtoedge_nodes] ""
+		recode `onenet' `rules', `options'
 		// was "_fromid _toid" - nwtoedge's actual default output
 		// variable names are _ego/_alter (see nwtoedge.ado's own
 		// ego()/alter() option defaults); _fromid/_toid never existed.
