@@ -26,12 +26,18 @@ TODO/
 # created) - everything genuinely current is already tracked directly;
 # this duplicate only adds repository bloat.
 deprecated/nwcommands_2016.zip
-# Vendored third-party JS libraries (d3.js, sigma.js) kept from an old,
-# no-longer-referenced visualization experiment - confirmed via grep that
-# no live .ado command reads from old/js/ - dead weight, not project code.
-old/js/
-
 .Rhistory
 *.swp
 .swp
 docs/
+
+# Local-only project/dev files (housekeeping 2026-09-05): kept on disk for
+# the author's own reference but not published to the public GitHub repo.
+# Purged from git history at the same time (git filter-repo), not just
+# untracked going forward.
+CLAUDE.md
+LEGACY_FILES.md
+*.R
+deprecated/
+dev/
+old/
