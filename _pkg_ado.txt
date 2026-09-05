@@ -158,6 +158,9 @@ f scheme-s2network.scheme
 f scheme-s3network.scheme
 f nwmovie_template.html
 f nwedit_template.html
+f lib/vendor/cytoscape.min.js
+f lib/vendor/gif.js
+f lib/vendor/gif.worker.js
 f lib/lnwcommands.mlib
 f lib/plugins/macos/ergm_mcmc_macos.plugin
 f lib/plugins/macos/nwgraph_macos.plugin
