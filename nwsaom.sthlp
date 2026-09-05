@@ -42,6 +42,7 @@
 {p2col:{it:{help nwsaom##symmetric_options:symmetric_options}}}undirected/symmetric relations{p_end}
 {p2col:{it:{help nwsaom##control_options:control_options}}}estimation method, starting values, replicate counts, and the random seed{p_end}
 
+{p2colreset}{...}
 {synoptset 22 tabbed}{...}
 {synopthdr}
 {synoptline}
@@ -65,6 +66,12 @@
 {synopt:{opth nodeicov(varname)}}Alter (receiver) covariate effect - RSiena's own "altX"; ONE variable per model - RSiena alias {opt altx()}{p_end}
 {synopt:{opth nodeocov(varname)}}Ego (sender) covariate effect - RSiena's own "egoX"; ONE variable per model - RSiena alias {opt egox()}{p_end}
 
+{synoptline}
+{p2colreset}{...}
+
+{synoptset 22 tabbed}{...}
+{synopthdr}
+{synoptline}
 {marker structural_options}{...}
 {syntab:Structural network effects}
 {synopt:{opt indegpopularity}}Indegree popularity, sqrt-transformed ("preferential attachment" toward already-popular alters){p_end}
@@ -92,6 +99,12 @@
 {synopt:{opt inoutass}}Actors with high indegree preferentially tie to actors with high outdegree, default/non-sqrt parameterization only (RSiena's own "in-out degree assortativity"); no parameter{p_end}
 {synopt:{opt gwesp(real)}}Geometrically weighted edgewise shared partners (OTP-directed), fixed decay - argument is the DIRECT decay value (Statnet's own {opt gwesp(decay=)} scale), NOT RSiena's own "parameter" (RSiena's own value is 100x this one - RSiena {cmd:gwespFF(69)} = {opt gwesp(.69)} here){p_end}
 
+{synoptline}
+{p2colreset}{...}
+
+{synoptset 22 tabbed}{...}
+{synopthdr}
+{synoptline}
 {marker interaction_options}{...}
 {syntab:Interaction effects}
 {synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom##nwsaom_interaction:Interaction effects} below{p_end}
@@ -104,6 +117,12 @@
 {synopt:{opth samex(varname)}}RSiena naming alias for {opt nodematch()} - identical effect, coefficient label follows this spelling{p_end}
 {synopt:{opth simx(varname)}}RSiena naming alias for {opt simcov()} - identical effect, coefficient label follows this spelling{p_end}
 
+{synoptline}
+{p2colreset}{...}
+
+{synoptset 22 tabbed}{...}
+{synopthdr}
+{synoptline}
 {marker coev_options}{...}
 {syntab:Behavior co-evolution effects}
 {synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom##coev:Co-evolution} below{p_end}
@@ -118,6 +137,12 @@
 {synopt:{opt avsimendow} {opt avsimcreation}}{opt avsim} split into its ENDOWMENT/CREATION roles - same mechanism/rules as {opt linearendow}/{opt linearcreation}{p_end}
 {synopt:{opt behtheta0(numlist)}}Starting values for the behavior-side eval-parameter vector, one per requested behavior effect in the order {opt linear} (or {opt linearendow}/{opt linearcreation})/{opt quadratic}/{opt avalt}/{opt avsim} appear above; default all zero{p_end}
 
+{synoptline}
+{p2colreset}{...}
+
+{synoptset 22 tabbed}{...}
+{synopthdr}
+{synoptline}
 {marker compchange_options}{...}
 {syntab:Composition change and missing data}
 {synopt:{opth present(varlist)}}Composition change ("joiners and leavers"): one 0/1 variable per wave, same "one variable per wave" convention as {opt behavior()}, marking which actors are present at each wave. Optional - omitting it means every actor is present the whole time. See {help nwsaom##compchange:Composition change} below{p_end}
@@ -135,6 +160,12 @@
 {synopt:{opt symmetric}}Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see {bf:Remarks} below for the full list. v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no {opt behavior()}); combinable with {opt present()}, {opt missnet()}, and {opt ratecov()} (see {bf:Remarks}){p_end}
 {synopt:{opt symtype(string)}}Which mutual-consent rule {opt symmetric} uses: {bf:joint} (default) accepts a change when the sum of both actors' own preferences is favorable; {bf:force} lets the initiating actor alone decide, ignoring the other actor's own preference; {bf:agree} requires both actors to independently agree when creating a tie, or either one to want it gone when removing one. Requires {opt symmetric}{p_end}
 
+{synoptline}
+{p2colreset}{...}
+
+{synoptset 22 tabbed}{...}
+{synopthdr}
+{synoptline}
 {marker control_options}{...}
 {syntab:Estimation control}
 {synopt:{opt rate0(real)}}Accepted for backward compatibility only - {bf:no longer used}; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see {bf:Remarks} below){p_end}
