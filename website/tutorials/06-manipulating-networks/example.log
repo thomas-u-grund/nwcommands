@@ -1,22 +1,34 @@
----
-title: "Manipulating Networks"
-parent: Tutorials
-nav_order: 6
-description: "Subsetting, collapsing, symmetrizing, recoding, and dichotomizing."
----
 
-# Manipulating Networks
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
 
-Once a network is loaded, you'll often need to reshape it before analysis: pull out a subset of
-nodes, merge nodes together, drop directionality, or remap tie values. This tutorial covers the
-five most common transformations.
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
 
-## Subsetting
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
 
-`nwsubset` keeps only the nodes for which an `if` condition on an attribute is true — here, only
-the wealthiest Florentine families:
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
 
-```stata
+
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
+> cratchpad/tutorials_workdir/profile.do ...
+
+. do example.do 
+
+. * Tutorial 6: Manipulating Networks
+. * Run from a directory with nwcommands net-installed (not a dev checkout).
+. 
+. * Subsetting: keep only the nodes satisfying a condition on an attribute
 . nwwebuse florentine, nwclear
 
 . nwsummarize flomarriage
@@ -50,19 +62,10 @@ the wealthiest Florentine families:
    Maximum value:  1
    Density:  .333
    Temporal: false
-```
 
-By default the result is named `netname_sub` — 16 nodes down to 3. Unlike the similar-looking
-`nwgen flo_sub = flomarriage if wealth > 50`, `nwsubset` also copies over the original network's
-node labels.
-
-## Collapsing
-
-`nwcollapse` merges nodes together — the merged node inherits every tie either of the original
-nodes had. `by()` specifies which nodes get merged, and the new node is named after that
-variable's value:
-
-```stata
+. 
+. * Collapsing: merge nodes together - the collapsed node inherits every
+. * tie either of the original nodes had
 . nwrandom 8, prob(.3) name(mynet)
 
 . nwsummarize mynet
@@ -104,17 +107,9 @@ variable's value:
    Maximum value:  1
    Density:  .548
    Temporal: false
-```
 
-Nodes 1 and 2 collapse into one, taking `mynet` from 8 nodes down to 7.
-
-## Symmetrizing
-
-`nwsymmetrize` (an alias for `nwsym`) turns a directed network into an undirected one. By
-default (`mode(max)`), a tie exists in either direction if it existed in *either* direction
-before:
-
-```stata
+. 
+. * Symmetrizing: turn a directed network into an undirected one
 . nwwebuse glasgow, nwclear
 
 . nwsummarize glasgow1
@@ -154,18 +149,11 @@ before:
    Network name:  glasgow1_sym
    Directed: false
    Symmetric: true
-```
 
-113 directed arcs become 74 undirected edges — reciprocated pairs collapse into a single tie.
-`mode(min)` instead requires a tie in *both* directions before keeping it, which typically keeps
-far fewer ties.
+. 
+. * Recoding: remap dyad values according to arbitrary rules
+. clear
 
-## Recoding
-
-`nwrecode` remaps dyad values according to arbitrary rules — think `recode`, but for tie values
-instead of a Stata variable:
-
-```stata
 . mata: M = (0,1,3 \ 2,0,1 \ 0,2,0)
 
 . nwset, mat(M) name(scores) directed labs(A,B,C)
@@ -215,18 +203,11 @@ instead of a Stata variable:
   2 |  20    .   10  |
   3 |   0   20    .  |
     +----------------+
-```
 
-Rules can also cover ranges (`1/5=1`) and handle missing/other values (`missing=9`, `else=44`) —
-see [nwrecode](../../reference/nwrecode) for the full rule syntax.
+. 
+. * Dichotomizing: the common special case of recoding at a single cutoff
+. clear
 
-## Dichotomizing
-
-Turning a valued network binary at a single cutoff is common enough to have its own thin
-wrapper around `nwrecode`: `nwdichotomize`. Dyads at or above the threshold become 1, everything
-else becomes 0:
-
-```stata
 . mata: M = (0,150,40 \ 90,0,220 \ 60,30,0)
 
 . nwset, mat(M) name(trade) directed labs(A,B,C)
@@ -276,7 +257,6 @@ else becomes 0:
   2 |  0   .   1  |
   3 |  0   0   .  |
     +-------------+
-```
 
-Only the two ties of value ≥ 100 (A→B at 150, B→C at 220) survive as 1; everything else,
-including the two below-threshold ties, becomes 0.
+. 
+end of do-file
