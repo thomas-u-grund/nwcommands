@@ -164,6 +164,9 @@ This is worth doing even if you're comfortable typing syntax — nwcommands ship
 dialog boxes covering nearly every command, and they're a fast way to check an option name or
 its exact syntax without leaving Stata for `help`.
 
+{: .note }
+A screenshot of the "Network Analysis" menu and a dialog box in action is coming soon.
+
 ## Updating vs. pinning a version
 
 Re-running `nwinstall, all` at any time re-downloads and replaces everything with whatever is
