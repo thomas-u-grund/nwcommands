@@ -577,5 +577,5 @@ matching {cmd:nwergm}'s own control conventions rather than continuing one long 
 
 {title:See also}
 
-	{help nwqap}, {help nwrandom}, {help nwcug}, {help nw_intro##limits:feasible network sizes}
+	{help nwqap}, {help nwrandom}, {help nwcug}, {help nwintro##limits:feasible network sizes}
 

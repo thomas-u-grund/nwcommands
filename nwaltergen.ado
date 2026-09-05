@@ -84,7 +84,7 @@ program nwaltergen
 		// group (nwgeodesic/nwpath/nwbridges/nwneighbor/nwego) uses 99
 		// for the identical "already exists" situation, matching this
 		// package's own standard use of 99 for "a Stata variable already
-		// exists" (see nw_errorcodes.sthlp).
+		// exists" (see nwerrorcodes.sthlp).
 		error 99
 	}
 

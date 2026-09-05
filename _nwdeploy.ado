@@ -26,7 +26,7 @@ program _nwdeploy
 	local adofiles : dir "`c(pwd)'" files "*.ado"
 	local sthlpfiles : dir "`c(pwd)'" files "*.sthlp"
 	// `: dir' returns files in filesystem order, not alphabetical - left
-	// that way for years despite nw_alphabetical.sthlp's own name/stated
+	// that way for years despite nwalphabetical.sthlp's own name/stated
 	// purpose (confirmed directly: a from-scratch _nwdeploy run, only
 	// possible for the first time after the quote-parsing fixes above,
 	// produced a genuinely non-alphabetical "alphabetical" list). Sorted
@@ -147,7 +147,7 @@ program _nwdeploy
 	
 	// generate alphabetical glossary help
 	tempname alphabetical
-	file open `alphabetical' using nw_alphabetical.sthlp, replace write
+	file open `alphabetical' using nwalphabetical.sthlp, replace write
 	file write `alphabetical' "{smcl}" _n ///	
 			"{* *! version 1.0.0  3sept2014}{...}"  _n ///
 			"{phang}" _n ///
@@ -360,7 +360,7 @@ program getcmddesc, rclass
 				// BUGFIX: this stripped only the trailing "-1" character
 				// (just the closing brace of the source line's own
 				// "{p_end}" tag), leaving a dangling "{p_end" - but every
-				// call site (nw_topical.sthlp's/nw_alphabetical.sthlp's
+				// call site (nw_topical.sthlp's/nwalphabetical.sthlp's
 				// own generation, further below) unconditionally appends
 				// its own literal "{p_end}" after this returned cmddesc,
 				// so the actual output was the malformed
@@ -448,15 +448,15 @@ program _write_nwcommands
 "" _n ///
 "{col 14}Section{col 31}Description" _n ///
 "{col 14}{hline 46}" _n ///
-"{help nw_intro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///
+"{help nwintro:{col 14}{bf:[NW-1]}{...}{col 31}{bf:Introduction and concepts}}" _n ///
 "" _n ///
 "{help nw_topical:{col 14}{bf:[NW-2]}{...}{col 31}{bf:Topical list of network commands}}" _n ///
 "" _n ///
-"{help nw_alphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}" _n ///
+"{help nwalphabetical:{col 14}{bf:[NW-3]}{...}{col 31}{bf:Alphabetical list of network commands}}" _n ///
 "" _n ///
-"{help nw_start:{col 14}{bf:[NW-4]}{...}{col 31}{bf:Getting started}}" _n ///
+"{help nwstart:{col 14}{bf:[NW-4]}{...}{col 31}{bf:Getting started}}" _n ///
 "" _n ///
-"{help nw_programming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}" _n ///
+"{help nwprogramming:{col 14}{bf:[NW-5]}{...}{col 31}{bf:Network programming}}" _n ///
 "" _n ///
 "{help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}" _n ///
 "" _n ///

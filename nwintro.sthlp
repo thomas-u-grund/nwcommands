@@ -8,23 +8,23 @@
 			
 {col 14}Section{col 31}Description
 {col 14}{hline 46}
-{help nw_intro##intro:{col 14}{bf:[NW-1.1]}{...}{col 31}{bf:Introduction}}
+{help nwintro##intro:{col 14}{bf:[NW-1.1]}{...}{col 31}{bf:Introduction}}
 
-{help nw_intro##limits:{col 14}{bf:[NW-1.2]}{...}{col 31}{bf:Limitations}}
+{help nwintro##limits:{col 14}{bf:[NW-1.2]}{...}{col 31}{bf:Limitations}}
 
-{help nw_intro##nwconcepts:{col 14}{bf:[NW-1.3]}{...}{col 31}{bf:Network concepts similar to Stata}}
+{help nwintro##nwconcepts:{col 14}{bf:[NW-1.3]}{...}{col 31}{bf:Network concepts similar to Stata}}
 
-{help nw_intro##nwprograms:{col 14}{bf:[NW-1.4]}{...}{col 31}{bf:Network programs similar to Stata}}
+{help nwintro##nwprograms:{col 14}{bf:[NW-1.4]}{...}{col 31}{bf:Network programs similar to Stata}}
 
-{help nw_intro##general:{col 14}{bf:[NW-1.5]}{...}{col 31}{bf:General information}}
+{help nwintro##general:{col 14}{bf:[NW-1.5]}{...}{col 31}{bf:General information}}
 
-{help nw_intro##feedback:{col 14}{bf:[NW-1.6]}{...}{col 31}{bf:Feedback}}
+{help nwintro##feedback:{col 14}{bf:[NW-1.6]}{...}{col 31}{bf:Feedback}}
 
-{help nw_intro##email:{col 14}{bf:[NW-1.7]}{...}{col 31}{bf:Email list}}
+{help nwintro##email:{col 14}{bf:[NW-1.7]}{...}{col 31}{bf:Email list}}
 
-{help nw_intro##debelopment:{col 14}{bf:[NW-1.8]}{...}{col 31}{bf:Getting involved}}
+{help nwintro##debelopment:{col 14}{bf:[NW-1.8]}{...}{col 31}{bf:Getting involved}}
 
-{help nw_intro##citation:{col 14}{bf:[NW-1.9]}{...}{col 31}{bf:Citation}}
+{help nwintro##citation:{col 14}{bf:[NW-1.9]}{...}{col 31}{bf:Citation}}
 
 
 {marker intro}{...}
@@ -65,7 +65,7 @@ and the advanced statistical analysis of networks.
 
 {pstd}
 Furthermore, one can easily extend the network capabilities of Stata and write
-own {help nw_programming:network programs}.
+own {help nwprogramming:network programs}.
 
 {pstd}
 A minimal example - load a real network and compute degree centrality:
@@ -75,7 +75,7 @@ A minimal example - load a real network and compute degree centrality:
 	{cmd:. list deg in 1/5}
 
 {pstd}
-See {help nw_start} for a full, hands-on walkthrough.
+See {help nwstart} for a full, hands-on walkthrough.
 
 
 {marker limits}{...}

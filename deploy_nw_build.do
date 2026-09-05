@@ -15,7 +15,7 @@
 *      step that was never run at all for _nwsyntax.ado and 9 other real,
 *      documented commands until 2026-09-02, leaving them silently absent
 *      from every net install despite being fully implemented and indexed
-*      in nw_alphabetical.sthlp.
+*      in nwalphabetical.sthlp.
 *
 * version() below is cosmetic (stamped into nwcommands.sthlp's own footer
 * and each chunked .pkg's own "d" description line) - kept in sync with

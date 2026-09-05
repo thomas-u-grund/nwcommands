@@ -78,8 +78,8 @@ _check_and_post "functional" "nwwebuse/nwuse default host (\$nwwebpath)" "https:
 
 di ""
 di "=== DOCUMENTATION: citations, format specs, about-page links ==="
-_check_and_post "doc" "nw_intro: project GitHub" "https://github.com/thomas-u-grund/nwcommands"
-_check_and_post "doc" "nw_intro: mailing list" "http://groups.google.com/forum/#!forum/nwcommands/join"
+_check_and_post "doc" "nwintro: project GitHub" "https://github.com/thomas-u-grund/nwcommands"
+_check_and_post "doc" "nwintro: mailing list" "http://groups.google.com/forum/#!forum/nwcommands/join"
 _check_and_post "doc" "nwmovie/nwplot: ImageMagick home" "https://imagemagick.org/"
 _check_and_post "doc" "nwmovie: ImageMagick download page" "https://imagemagick.org/script/download.php"
 _check_and_post "doc" "nwimport: Ucinet manual" "https://pages.uoregon.edu/vburris/hc431/Ucinet_Guide.pdf"

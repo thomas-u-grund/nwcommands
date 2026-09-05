@@ -267,7 +267,7 @@ program nwinstall_menu
 	window menu append submenu "`menu'" "Network Analysis"
 
 	window menu append item "Network Analysis" "Example Networks" "help netexample"
-	window menu append item "Network Analysis" "Getting Started" "help nw_start"
+	window menu append item "Network Analysis" "Getting Started" "help nwstart"
 	window menu append separator "Network Analysis"
 	window menu append submenu "Network Analysis" "Paths and Ego Networks"
 	window menu append item "Paths and Ego Networks" "Generate a variable from alter/neighbor attributes" "db nwaltergen"

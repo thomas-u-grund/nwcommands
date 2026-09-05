@@ -138,6 +138,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes. Two-mode: yes - loads th
 
 {title:See also}
    
-   {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nw_intro##limits:feasible network sizes}
+   {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nwintro##limits:feasible network sizes}
 
 last certified : 25 Aug 2026

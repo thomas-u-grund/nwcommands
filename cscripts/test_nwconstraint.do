@@ -3,7 +3,7 @@ cscript
 do unw_core.do
 
 * nwconstraint had zero test coverage and zero documentation before this
-* session (nw_alphabetical.sthlp/nw_topical.sthlp both listed it as "no
+* session (nwalphabetical.sthlp/nw_topical.sthlp both listed it as "no
 * help file yet"). Computes Burt's (1992) dyadic constraint matrix
 * c_ij = (p_ij + sum_q p_iq*p_qj)^2, where p_ij = a_ij / rowsum(a_i.),
 * and stores it as a NEW network (not a per-node Stata variable) via

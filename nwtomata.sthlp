@@ -48,7 +48,7 @@ The adjacency matrix of a network can also be displayed with:
 	
 {pstd}
 Advanced programmers who might want to directly interact with the adjacency matrix of a network 
-and not with a copy of it, see {help nw_programming##modernprogramming:advanced network programming}. 
+and not with a copy of it, see {help nwprogramming##modernprogramming:advanced network programming}. 
 
 
 

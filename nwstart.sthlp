@@ -8,17 +8,17 @@
 			
 {col 14}Section{col 31}Description
 {col 14}{hline 46}
-{help nw_intro##intro:{col 14}{bf:[NW-1.1]}{...}{col 31}{bf:Introduction}}
+{help nwintro##intro:{col 14}{bf:[NW-1.1]}{...}{col 31}{bf:Introduction}}
 
-{help nw_start##gettingdata:{col 14}{bf:[NW-1.2]}{...}{col 31}{bf:Getting network data into Stata }}
+{help nwstart##gettingdata:{col 14}{bf:[NW-1.2]}{...}{col 31}{bf:Getting network data into Stata }}
 
-{help nw_start##visualizing:{col 14}{bf:[NW-1.3]}{...}{col 31}{bf:Visualizing and animating networks}}
+{help nwstart##visualizing:{col 14}{bf:[NW-1.3]}{...}{col 31}{bf:Visualizing and animating networks}}
 
-{help nw_start##simulation:{col 14}{bf:[NW-1.4]}{...}{col 31}{bf:Simulating networks}}
+{help nwstart##simulation:{col 14}{bf:[NW-1.4]}{...}{col 31}{bf:Simulating networks}}
 
-{help nw_start##manipulation:{col 14}{bf:[NW-1.5]}{...}{col 31}{bf:Handling and manipulating networks}}
+{help nwstart##manipulation:{col 14}{bf:[NW-1.5]}{...}{col 31}{bf:Handling and manipulating networks}}
 
-{help nw_start##analysis:{col 14}{bf:[NW-1.6]}{...}{col 31}{bf:Analyzing networks}}
+{help nwstart##analysis:{col 14}{bf:[NW-1.6]}{...}{col 31}{bf:Analyzing networks}}
 
 
 {marker intro}{...}

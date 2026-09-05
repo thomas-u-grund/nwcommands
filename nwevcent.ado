@@ -34,7 +34,7 @@ program nwevcent
 		// believed it succeeded, with the target variable silently kept
 		// at its stale old values. Error-code coherence: standardized
 		// onto 99 (this package's own standard "Stata variable already
-		// exists" code, nw_errorcodes.sthlp), matching nwdegree/
+		// exists" code, nwerrorcodes.sthlp), matching nwdegree/
 		// nwbetween/nw2degree's own convention for the identical
 		// situation in this same group.
 		err 99

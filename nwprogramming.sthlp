@@ -8,11 +8,11 @@
 			
 {col 14}Section{col 31}Description
 {col 14}{hline 46}
-{help nw_programming##programming:{col 14}{bf:[NW-5.1]}{...}{col 31}{bf:Writing own programs}}
+{help nwprogramming##programming:{col 14}{bf:[NW-5.1]}{...}{col 31}{bf:Writing own programs}}
 
-{help nw_programming##modernprogramming:{col 14}{bf:[NW-5.2]}{...}{col 31}{bf:Modern (class-based, sparse-backend) programming}}
+{help nwprogramming##modernprogramming:{col 14}{bf:[NW-5.2]}{...}{col 31}{bf:Modern (class-based, sparse-backend) programming}}
 
-{help nw_programming##internaldesign:{col 14}{bf:[NW-5.3]}{...}{col 31}{bf:Internal design (legacy, pre-2016)}}
+{help nwprogramming##internaldesign:{col 14}{bf:[NW-5.3]}{...}{col 31}{bf:Internal design (legacy, pre-2016)}}
 
 
 

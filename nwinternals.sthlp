@@ -36,7 +36,7 @@ throughout {cmd:ado/base/}.
 This page exists so that a curious user finds an explanation somewhere, rather than these
 files turning up unexplained in an installed-file listing; it is not a tutorial for using
 them. If you are writing your own command against this package's own API (rather than just
-using the documented {cmd:nw*} commands), see {help nw_programming} instead - several of the
+using the documented {cmd:nw*} commands), see {help nwprogramming} instead - several of the
 files below are exactly the shared helpers that page's own worked example uses.
 
 
@@ -106,5 +106,5 @@ currently-incomplete helper intended to return edge labels for {help nwtabulate}
 {cmd:unw_defs} does not follow the leading-underscore convention above (it predates it), but
 belongs on this page for the same reason: it is called by nearly every documented command to
 populate a shared table of this package's own error-code local macros (see
-{help nw_errorcodes} for the user-facing meaning of each code) and a handful of other
+{help nwerrorcodes} for the user-facing meaning of each code) and a handful of other
 commonly-needed locals, rather than each command redefining the same table itself.

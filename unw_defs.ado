@@ -4,7 +4,7 @@ program unw_defs
 	//error codes
 	//
 	// This package's own documented error-code registry (see also
-	// nw_errorcodes.sthlp for the user-facing version of this same
+	// nwerrorcodes.sthlp for the user-facing version of this same
 	// table). Every one of these is a RECURRING situation shared by
 	// multiple commands - use the matching code (by name if this
 	// program is already called in scope, otherwise the literal

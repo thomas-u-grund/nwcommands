@@ -6,14 +6,14 @@
 {title:Title}
 
 {p2colset 9 22 24 2}{...}
-{p2col :nw_networktypes {hline 2}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
+{p2col :nwnetworktypes {hline 2}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2colreset}{...}
 
 {title:Description}
 
 {pstd}
 {cmd:nwcommands} networks can be binary or valued (weighted), undirected or directed, and one-mode
-or two-mode (bipartite) - see {help nw_intro} for the underlying data model. No single command
+or two-mode (bipartite) - see {help nwintro} for the underlying data model. No single command
 supports every combination equally: some are inherently structural and apply unchanged to any
 network (e.g. {help nwdrop}); some have a well-defined weighted generalization but a separate
 binary-only default (e.g. {help nwclustering}); some are only meaningful for one-mode data and
@@ -136,4 +136,4 @@ of {bf:W1}-{bf:W5} for weighted support and {bf:T1}-{bf:T5} for two-mode support
 
 {title:See also}
 
-{help nw_intro}, {help nw_topical}, {help nw2set:introduction to two-mode networks}
+{help nwintro}, {help nw_topical}, {help nw2set:introduction to two-mode networks}

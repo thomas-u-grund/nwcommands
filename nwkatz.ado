@@ -51,7 +51,7 @@ program nwkatz
 			di "{err}Variable {bf:`generate'} already exists; use {bf:replace}"
 			// Error-code coherence: standardized onto 99 (this
 			// package's own standard "Stata variable already exists"
-			// code, nw_errorcodes.sthlp) - was 110, an unexplained
+			// code, nwerrorcodes.sthlp) - was 110, an unexplained
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.
@@ -67,7 +67,7 @@ program nwkatz
 				di "{err}Variable {bf:`c'} already exists; use {bf:replace}"
 				// Error-code coherence: standardized onto 99 (this
 			// package's own standard "Stata variable already exists"
-			// code, nw_errorcodes.sthlp) - was 110, an unexplained
+			// code, nwerrorcodes.sthlp) - was 110, an unexplained
 			// outlier versus nwdegree/nwbetween/nw2degree's own
 			// convention for the identical situation in this same
 			// group.

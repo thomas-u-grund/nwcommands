@@ -241,12 +241,12 @@
 {col 8}{hline 3}{c RT}       {it:Utilities}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help nw_errorcodes }}}What this package's own custom return codes mean{p_end}
-{p2col:    {bf:{help nw_networktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:    {bf:{help nwcurrent }}}Report and set current network{p_end}
+{p2col:    {bf:{help nwerrorcodes }}}What this package's own custom return codes mean{p_end}
 {p2col:    {bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
 {p2col:    {bf:{help nwload }}}Load a network as Stata variables{p_end}
+{p2col:    {bf:{help nwnetworktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:    {bf:{help nworder }}}Reorder networks in dataset{p_end}
 {p2col:    {bf:{help nwsync }}}Sync network with Stata variables{p_end}
 {p2col:    {bf:{help nwtomata }}}Return adjacency matrix of network{p_end}
