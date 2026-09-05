@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a new command, option, or improvement for nwcommands
+title: "[Feature]: "
+labels: ["feature request"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the analysis or workflow this would support. What can't you do today?
+      placeholder: "e.g. I want to compute X for a two-mode network, but nwY only supports one-mode networks."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed command or option
+      description: If you have a concrete idea for the syntax, describe it here (a new command, or a new option on an existing one). Not required — a clear problem description is enough on its own.
+      placeholder: |
+        nwexample netname, newoption(varname)
+      render: stata
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: References or prior art
+      description: Is this based on a published method, or available in another package (R, Python, UCINET, ...)? A citation or link helps a lot.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the [command reference](https://nwcommands.org/reference/) and this isn't already covered by an existing command/option
+          required: true
