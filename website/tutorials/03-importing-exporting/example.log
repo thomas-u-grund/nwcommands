@@ -1,23 +1,36 @@
----
-title: "Importing & Exporting"
-parent: Tutorials
-nav_order: 3
-description: "Edgelists, UCINET/Pajek formats, and moving networks in and out of nwcommands."
----
 
-# Importing & Exporting
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       BE—Basic Edition
 
-Real network data rarely arrives as an nwcommands-native object — it's a text file, a UCINET
-matrix, or something a collaborator built in Pajek. This tutorial covers moving data across that
-boundary in both directions.
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
 
-## Importing a plain edgelist
+Stata license: Single-user  perpetual
+Serial number: 301806005943
+  Licensed to: Thomas Grund
+               RWTH Aachen
 
-`nwimport` reads a range of common formats, and `filename` can be a URL — no local download
-step needed:
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
 
-```stata
-. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/edgelist_example.txt", type(edgelist)
+
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
+> cratchpad/tutorials_workdir/profile.do ...
+
+. do example.do 
+
+. * Tutorial 3: Importing & Exporting
+. * Run from a directory with nwcommands net-installed (not a dev checkout).
+. 
+. * Import a plain edgelist straight from a URL - no local download needed
+. nwimport "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/edgelist_example.txt", type(ed
+> gelist)
 ------------------------------
 Importing successful
 
@@ -35,16 +48,9 @@ Importing successful
    Maximum value:  1
    Density:  .417
    Temporal: false
-```
 
-The imported network is named after the file by default (`edgelist_example`) — use `name()` to
-pick something else.
-
-## Exporting to UCINET and Pajek
-
-`nwexport` writes one network at a time, in either UCINET (`.dl`) or Pajek (`.net`) format:
-
-```stata
+. 
+. * Export to Pajek and UCINET formats
 . nwwebuse florentine, nwclear
 
 . nwexport flomarriage, type(ucinet) replace
@@ -54,18 +60,9 @@ Saved as file: flomarriage.dl
 . nwexport flobusiness, type(pajek) replace
 Exporting network: flobusiness
 Saved as file: flobusiness.net
-```
 
-By default the file lands in Stata's current working directory, named after the network; `fname()`
-overrides that.
-
-## Round-tripping through a plain edgelist
-
-Sometimes the format you need isn't a file format at all — you just want the network as an
-ordinary Stata dataset to reshape, filter, or merge with something else, then turn back into a
-network. `nwtoedge` does the first half:
-
-```stata
+. 
+. * Round-trip: turn an existing network into a plain edgelist dataset...
 . nwwebuse glasgow, nwclear
 
 . nwtoedge glasgow1
@@ -97,16 +94,15 @@ Sorted by: _ego  _alter
   4. |   n1      n12          0 |
   5. |   n1      n13          0 |
      +--------------------------+
-```
 
-Note that this is every possible pair of the 50 nodes (2,500 rows = 50×50), not just the pairs
-that are actually tied — the tie value itself is the column named after the network
-(`glasgow1`, here `0`/`1`/missing for the diagonal). Keep only the real ties before rebuilding:
-
-```stata
+. 
+. * ...keep only the real ties (nwtoedge lists every possible pair, not
+. * just the ones that are actually connected)...
 . keep if glasgow1 == 1
 (2,387 observations deleted)
 
+. 
+. * ...and turn that back into a network object again
 . nwfromedge _ego _alter, name(rebuilt)
 
 . nwsummarize rebuilt
@@ -123,9 +119,6 @@ that are actually tied — the tie value itself is the column named after the ne
    Maximum value:  1
    Density:  .052
    Temporal: false
-```
 
-`rebuilt` has 47 nodes rather than the original 50 — the same behavior [nwfromedge](../../reference/nwfromedge)
-has for any edgelist source: a node with zero ties never appears in an edgelist in the first
-place, so three isolates were silently dropped in the round trip. Use
-[nwaddnodes](../../reference/nwaddnodes) afterward if you need to add them back explicitly.
+. 
+end of do-file
