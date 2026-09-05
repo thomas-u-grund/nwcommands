@@ -21,7 +21,7 @@ New here? If this is all you have installed so far, run {cmd:nwinstall, all} to 
 {help nwinstall:{col 14}{bf:[NW-6]}{...}{col 31}{bf:Install Stata menus/dialogs}}
 
 
-               *! Date        :  2 Sep 2026
+               *! Date        :  5 Sep 2026
                *! Version     : 2.0
                *! Authors     : Thomas U. Grund 
                *! Contact     : thomas.u.grund@gmail.com

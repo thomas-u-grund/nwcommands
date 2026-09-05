@@ -94,7 +94,7 @@
 
 {marker interaction_options}{...}
 {syntab:Interaction effects}
-{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom##interaction:Interaction effects} below{p_end}
+{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom##nwsaom_interaction:Interaction effects} below{p_end}
 
 {marker alias_options}{...}
 {syntab:RSiena naming aliases}
@@ -143,32 +143,6 @@
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
-{synoptline}
-{p2colreset}{...}
-
-{title:Postestimation syntax}
-
-{p 8 17 2}
-{cmd:estat gof}
-{cmd:[}{cmd:,}
-{opt nsim(int)}
-{opt seed(int)}
-{opt stats(namelist)}
-{opt maxdeg(int)}
-{opt maxdist(int)}
-{opt twotailed}
-{opt name(string)}{cmd:]}
-
-{synoptset 20 tabbed}{...}
-{synopthdr}
-{synoptline}
-{synopt:{opt nsim(int)}}Number of fresh post-fit simulated replicates forming the reference distribution; default 50, minimum 5{p_end}
-{synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
-{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:behavior}; default all three network statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself requires a co-evolution fit){p_end}
-{synopt:{opt maxdeg(int)}}Highest EXACT out-/in-degree category before the ("maxdeg+") overflow bin; default 15{p_end}
-{synopt:{opt maxdist(int)}}Highest EXACT geodesic-distance category before the ("NR", not reached) overflow bin; default 6{p_end}
-{synopt:{opt twotailed}}Report a two-tailed p-value instead of the one-tailed default (RSiena's own {cmd:twoTailed=FALSE} default: reject for a SMALL p only, i.e. the observed network is an outlier relative to what the fitted model simulates){p_end}
-{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {cmd:{it:name}_outdegree}, {cmd:{it:name}_indegree}, {cmd:{it:name}_geodesic}){p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -415,7 +389,7 @@ max-minus-min. A disclosed simplification: this omits RSiena's own {cmd:similari
 constant - a pure re-parameterization against the always-present {opt outdegree} term, not a
 correctness gap.
 
-{marker interaction}{...}
+{marker nwsaom_interaction}{...}
 {title:Interaction effects}
 
 {pstd}
@@ -914,6 +888,10 @@ value as a red overlay - Stata's standard DIY {cmd:kdensity}+{cmd:twoway rarea, 
 technique, reproducing RSiena's own {cmd:plot.sienaGOF()} panel layout as closely as Stata's
 graphics primitives allow) with the test's own p-value as the plot's x-axis title, matching
 RSiena's own convention exactly.
+
+{pstd}
+See {help nwsaom_estat} for the full option reference for {cmd:estat gof} (and {cmd:estat mems},
+Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 
 {title:Stored results}
 

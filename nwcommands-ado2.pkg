@@ -2,7 +2,7 @@ v 3
 d nwcommands-ado. Social Network Analysis Using Stata (part 2)
 d Thomas U. Grund, University College Dublin, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 2sep2026
+d Distribution-Date: 5sep2026
 f nwlambda.ado
 f nwlattice.ado
 f nwload.ado
@@ -69,6 +69,7 @@ f nwvalidate.ado
 f nwvalidvars.ado
 f nwvalue.ado
 f nwwebuse.ado
+f unw_defs.ado
 f scheme-s1network.scheme
 f scheme-s2network.scheme
 f scheme-s3network.scheme
@@ -82,4 +83,3 @@ f lib/plugins/windows/ergm_mcmc_windows.plugin
 f lib/plugins/windows/nwgraph_windows.plugin
 f lib/plugins/windows/saom_sim_windows.plugin
 f lib/plugins/windows/dynam_sim_windows.plugin
-f lib/plugins/windows/nwedit_viewer_windows.exe
