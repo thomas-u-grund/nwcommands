@@ -89,3 +89,26 @@ Viewer text into a plain editor to confirm it's not a visual-only glitch; (3) co
 size against a same-package sibling that renders fine; (4) build a truncated test copy ending right
 at the break point and have the reporter `view "path/to/test.sthlp"` it — if that renders clean,
 it's a total-length trigger, not a content bug.
+
+## Attaching a covariate to an `eventtime()`-declared network needs `_nwnode`, not a fresh merge
+
+After `nwset sender receiver, eventtime(t) name(netname)` declares an event network (found while
+building the `socialevolution` example dataset, 2026-09-12), the dataset left in memory is **not**
+the original sender/receiver/t rows anymore — it's one row per actor who appears in at least one
+event, with columns `_nwnode` (the actor's own label) and `_nwinclude`. A `merge 1:1 label using
+covariates.dta` fails outright (`variable label not found`) because there is no `label` variable to
+merge on at that point; the actor identifier is `_nwnode`.
+
+The fix is a rename-merge-rename:
+
+```
+rename _nwnode label
+merge 1:1 label using covariates.dta, keep(master match) nogen
+rename label _nwnode
+```
+
+This is unrelated to how covariates work on an already-`nwsave()`d panel dataset (`glasgow`, `s50`,
+etc.), where attributes like `smoke1`/`alcohol1` are baked into the saved network file itself and
+just show up as ordinary variables on load — no merge needed there at all. The rename-merge-rename
+dance is specific to attaching a covariate *after the fact* onto a freshly `nwset`-declared event
+network built from a plain, not-pre-declared dataset.
