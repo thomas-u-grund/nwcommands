@@ -324,7 +324,7 @@ if "`overwrite'" != "" local replace "replace"
 			mata: `__tval2' = st_data(., "`ivend'")
 		}
 
-		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected' `replace'
+		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `directed' `undirected' `replace'
 		_nwsyntax `name'
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
@@ -435,7 +435,7 @@ if "`overwrite'" != "" local replace "replace"
 	local allnames ""
 	
 	qui if "`edgelist'" != "" {
-		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `undirected' `replace'
+		qui nwfromedge `varlist', name(`name') `xvars' `keeporiginal' `directed' `undirected' `replace'
 		exit
 	}
 	

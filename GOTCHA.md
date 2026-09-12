@@ -112,3 +112,76 @@ etc.), where attributes like `smoke1`/`alcohol1` are baked into the saved networ
 just show up as ordinary variables on load — no merge needed there at all. The rename-merge-rename
 dance is specific to attaching a covariate *after the fact* onto a freshly `nwset`-declared event
 network built from a plain, not-pre-declared dataset.
+
+## `nwset`'s own `directed` option was a complete no-op (fixed 2026-09-12)
+
+Found while building the Stata Press book's DyNAM chapter: `nwset sender receiver, eventtime(t)
+directed name(mynet)` silently produced an **undirected** network regardless of the `directed`
+flag. `nwsummarize` reported `Directed: false` even though `directed` was given explicitly, no
+error, no warning — `nwdynam` then rejected the resulting network outright (`nwdynam` requires a
+directed network for `submodel(choice)`/`submodel(rate)`), which is what surfaced this.
+
+Root cause: `nwset.ado`'s own `syntax` line declares `directed` as an option (alongside
+`undirected`), but the local macro `` `directed' `` was never actually consumed anywhere in the
+file — grep for it and it appears exactly once, in the syntax declaration, nowhere else.
+Directedness for a varlist/edgelist declaration was decided **solely** by whether `undirected` was
+given, forwarded to `nwfromedge` at two call sites (`nwfromedge \`varlist', ... \`undirected' ...`);
+`nwfromedge` itself auto-detects directedness from the data's own reciprocity pattern whenever
+neither `directed` nor `undirected` is passed to it — which is exactly what silently happened here,
+since `directed` was never forwarded at all. On a small reciprocal-heavy toy event log this bit
+unpredictably: a 3-row prefix of the same data correctly came out directed, but the full 10-row
+version (which happens to have every dyad reciprocated at least once) auto-detected as undirected,
+`directed`'s own presence in the command making no difference either way.
+
+**Fixed** by forwarding `` `directed' `` alongside `` `undirected' `` in both `nwfromedge` call
+sites in `nwset.ado` (the plain-edgelist path and the `time()`/`interval()`/`eventtime()` temporal
+path). `nwfromedge` itself already had real, working logic for an explicit `directed` option — it
+just never received it. Verified: explicit `directed` now sticks regardless of the data's own
+reciprocity pattern; the no-flag auto-detect default and explicit `undirected` are both unchanged
+(no regression) — checked against `test_nwset.do`, `test_nwset_temporal.do`,
+`test_nwset_twomode.do`, `test_nwfromedge.do`, `test_nwuse.do`, `test_nwrem_ado.do`,
+`test_nwdynam_ado.do`, and `test_nwsaom_ado.do`, all clean.
+
+**Lesson**: an option present in a command's own `syntax` line is not evidence it does anything —
+grep for where the resulting local macro is actually *read*, not just declared, especially for an
+option that silently degrades to "no error, wrong default" rather than failing loudly.
+
+## `nwsaom`'s native backend can leave state that crashes a later, unrelated `nwsaom` call
+
+Found while building the SAOM chapter's own convergence-workflow example: in one continuous Stata
+session, fitting a multi-wave structural model (`nwsaom, waves(...) outdegree reciprocity transtrip
+nodematch(...)`), then running `estat gof` on it, then attempting an unrelated co-evolution fit
+(`nwsaom, wave1(...) wave2(...) ... behavior(...) linear avsim`) crashes the co-evolution call with
+`variable vbeh not found` / `st_store(): invalid Stata variable name` — a raw Mata-level error, not
+the clean, documented `SAOM estimation diverged during phase 2...` message the identical
+co-evolution command produces when run in a fresh Stata process, or even in the same process
+without that specific `estat gof` call first.
+
+Bisected across roughly a dozen isolated repro attempts (see the SAOM chapter's own build session
+for the trail): the trigger needs *both* a preceding `estat gof` call on a multi-wave/structural
+fit *and* a distinct-shaped `nwsaom` call afterward — plain repeated `nwsaom` calls alone (even
+five or six in a row, even using `theta0()` restarts) never reproduce it; nor does `estat gof` on a
+plain two-effect model followed by co-evolution. Confirmed the corruption isn't one-directional
+either: running the co-evolution call (even one that only reaches the clean divergence path) before
+a later plain multi-wave `nwsaom` call can *also* poison that later call instead (`variable a1 not
+found`). `nwsaom.ado` documents a deliberate "one persistent Mata object per wave" convention
+(around its own line ~1490) for performance, backed by a compiled `native/saom_sim.c` plugin; the
+most likely mechanism is that this persistent per-wave object isn't fully invalidated/rebuilt when
+the *shape* of the fit changes (network-only vs. co-evolution) between calls, especially after a
+call that takes a non-standard exit path like `estat gof`'s own simulation or a divergence.
+
+**Not fixed** — the root cause almost certainly lives in the native C plugin, not the `.ado` layer,
+and wasn't chased further given the scope of the task that found it (writing the book chapter, not
+debugging the native backend). **Workaround that IS verified to work**: never run `estat gof` and a
+`behavior()`/co-evolution `nwsaom` call in the same Stata session with anything else `nwsaom`-shaped
+between them — if a chapter, script, or analysis needs both, do the co-evolution work in its own
+process (or before any `estat gof` call), never after. The SAOM chapter's own do-file structures
+its command order specifically to route around this: every clean/successful demonstration runs
+first, and the (intentionally diverging) co-evolution attempt runs last, with no `estat gof` call
+anywhere in the same script.
+
+**For whoever picks this up next**: start from `dev/`'s own existing SAOM cross-check scripts
+(`dev/dynam_unit*_crosscheck.*` show the pattern used elsewhere in this codebase for isolating a
+native-backend discrepancy) and reproduce the minimal repro above (`waves()` fit with `transtrip`
++ `nodematch()`, then `estat gof`, then any `behavior()` fit) as a permanent regression test before
+touching `native/saom_sim.c` itself.
