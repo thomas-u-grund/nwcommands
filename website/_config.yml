@@ -4,7 +4,6 @@ description: >-
   visualize network data, with statistical network models (ERGM, SAOM,
   DyNAM, relational event models) built in.
 url: "https://nwcommands.org"
-baseurl: ""
 
 theme: just-the-docs
 
