@@ -391,15 +391,16 @@ di as text "nwsaom.ado unit 25 (balance reuse, waves() 3-wave path, pooled balan
 * coefficient table clearly distinguishes network from behavior
 * effects (the "beh_" prefix, per explicit user requirement) and that
 * both rate parameters are separately reported.
-nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
-gen byte behwave1 = mod(_n,5)+1
-gen byte behwave2 = mod(_n+2,5)+1
+* (2026-09-30: co-evolution fits now estimate the rates - unconditional
+* Method of Moments, as RSiena - and the 6-actor toy networks used
+* before cannot identify a co-evolution model; RSiena itself stops with
+* thetaBound on them. The co-evolution smoke tests therefore run on the
+* s50/glasgow data, 50 actors.)
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree reciprocity behavior(behwave1 behwave2) linear quadratic avalt avsim k0(20) k3(50) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadratic avalt avsim k0(20) k3(50) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 assert e(has_behavior) == 1
 assert e(p_net) == 2
 matrix b11 = e(b)
@@ -412,6 +413,11 @@ assert strpos("`__names11'", "beh_avsim") > 0
 assert e(rate) != .
 assert e(rate_beh) != .
 assert e(rate_beh) > 0
+assert e(rate_se) > 0 & e(rate_se) < .
+assert e(rate_beh_se) > 0 & e(rate_beh_se) < .
+assert e(tconv_max) < .
+matrix __tc11 = e(tconv)
+assert colsof(__tc11) == 8
 
 di as text "nwsaom.ado unit 26 (co-evolution: network + behavior, linear+quadratic+avalt+avsim) end-to-end smoke test PASS"
 
@@ -421,6 +427,11 @@ di as text "nwsaom.ado unit 26 (co-evolution: network + behavior, linear+quadrat
 * direction "extend it to N waves"), linear required whenever
 * behavior() is specified, and behavior-only effects require
 * behavior().
+nwclear
+nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
+nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+gen byte behwave1 = mod(_n,5)+1
+gen byte behwave2 = mod(_n+2,5)+1
 nwset, mat((0,1,1,1,1,1\1,0,1,0,1,1\1,1,0,1,0,0\1,0,1,0,1,1\1,1,0,1,0,1\0,1,0,1,1,0)) directed name(saomwave3) labs(A,B,C,D,E,F)
 
 capture nwsaom, waves(saomwave1 saomwave2 saomwave3) outdegree behavior(behwave1 behwave2) linear k0(10) k3(20)
@@ -458,13 +469,9 @@ di as text "nwsaom.ado unit 26 (co-evolution error paths: waves()+behavior(), mi
 * `tempname' (see that file's own header comment on the fix for the
 * full account). This test's own real, successful run is what
 * certifies the fix - it reproduced the bug during development.
-nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
-gen byte behwave1 = mod(_n,5)+1
-gen byte behwave2 = mod(_n+1,5)+1
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree reciprocity behavior(behwave1 behwave2) linear avalt k0(20) k3(50) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear avalt k0(20) k3(50) seed(90210)
 estat gof, nsim(30) seed(12345)
 
 assert r(p_outdegree) >= 0 & r(p_outdegree) <= 1
@@ -480,7 +487,7 @@ capture graph drop gof_geodesic
 capture graph drop gof_behavior
 
 * stats(behavior) on a NON-co-evolution fit must error clearly.
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree reciprocity k0(15) k3(15) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(15) k3(15) seed(90210)
 capture estat gof, stats(behavior) nsim(10)
 assert _rc == 198
 
@@ -508,17 +515,11 @@ di as text "nwsaom.ado unit 26 (co-evolution estat gof: behavior distribution au
 * (nwsaom_estat.ado's own header comment has the full account). This
 * test's own real, successful (non-degenerate) run is what certifies
 * the fix.
-nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,1\1,0,1,0,1,1\1,1,0,1,0,0\1,0,1,0,1,1\1,1,0,1,0,1\0,1,0,1,1,0)) directed name(saomwave3) labs(A,B,C,D,E,F)
-gen byte behwave1 = mod(_n,5)+1
-gen byte behwave2 = mod(_n+1,5)+1
-gen byte behwave3 = mod(_n+2,5)+1
+nwwebuse glasgow, nwclear
 
-nwsaom, waves(saomwave1 saomwave2 saomwave3) outdegree reciprocity behavior(behwave1 behwave2 behwave3) linear avalt k0(20) k3(40) seed(90210)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity behavior(alcohol1 alcohol2 alcohol3) linear avalt k0(20) k3(40) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 assert e(nwaves) == 3
 assert e(has_behavior) == 1
 assert e(p_net) == 2
@@ -527,6 +528,9 @@ assert colsof(b12) == 4
 matrix __ratesbeh12 = e(rates_beh)
 assert colsof(__ratesbeh12) == 2
 assert __ratesbeh12[1,1] > 0 & __ratesbeh12[1,2] > 0
+matrix __ratesbehse12 = e(rates_beh_se)
+assert colsof(__ratesbehse12) == 2
+assert __ratesbehse12[1,1] > 0 & __ratesbehse12[1,1] < .
 
 estat gof, nsim(30) seed(12345)
 
@@ -664,19 +668,15 @@ di as text "nwsaom.ado unit 28/166 (endowment/creation functions, thetaBound-pro
 * harmonisation-unit-28 real-RSiena cross-check
 * (dev/saom_rsiena_crosscheck_endow.do).
 * -------------------------------------------------------------------
-nwclear
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(saombtwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(saombtwave2) labs(A,B,C,D,E,F)
-gen byte behbt1 = mod(_n,5)+1
-gen byte behbt2 = mod(_n+1,5)+1
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saombtwave1) wave2(saombtwave2) outdegree behavior(behbt1 behbt2) linear avalt behtheta0(0.1 0.1) k0(5) k3(5) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt behtheta0(0.1 0.1) k0(20) k3(50) seed(90210)
 assert e(has_behavior) == 1
 matrix __bbt = e(b)
 assert colsof(__bbt) == 3
 
 * wrong-count validation still fires correctly for the renamed option.
-capture nwsaom, wave1(saombtwave1) wave2(saombtwave2) outdegree behavior(behbt1 behbt2) linear avalt behtheta0(0.1) k0(5) k3(5)
+capture nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt behtheta0(0.1) k0(5) k3(5)
 assert _rc == 198
 
 di as text "nwsaom.ado behtheta0() (behavior starting values, renamed from the never-working theta0beh() - real Stata `syntax' prefix-collision bug, independent of harmonisation units 26/28) PASS"
@@ -719,23 +719,7 @@ assert e(nwaves) == 3
 matrix __pb2 = e(b)
 assert colsof(__pb2) == 2
 
-* --- co-evolution, two waves --- (actor F's own behavior value frozen
-* at wave1's value from wave2 onward, same "carry-forward" convention
-* as the network side above)
-gen byte behp1 = mod(_n,5)+1
-gen byte behp2 = mod(_n+1,5)+1
-replace behp2 = behp1 in 6
-nwsaom, wave1(saompwave1) wave2(saompwave2) outdegree behavior(behp1 behp2) linear avalt present(pres1 pres2) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 1
-matrix __pb3 = e(b)
-assert colsof(__pb3) == 3
-
-* --- co-evolution, N waves ---
-gen byte behp3 = mod(_n+2,5)+1
-replace behp3 = behp1 in 6
-nwsaom, waves(saompwave1 saompwave2 saompwave3) outdegree behavior(behp1 behp2 behp3) linear avalt present(pres1 pres2 pres3) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 1
-assert e(nwaves) == 3
+* (co-evolution + present(): see the glasgow block right after this unit)
 
 * --- validation: wrong variable count ---
 capture nwsaom, wave1(saompwave1) wave2(saompwave2) outdegree present(pres1) k0(5) k3(5)
@@ -747,6 +731,23 @@ capture nwsaom, wave1(saompwave1) wave2(saompwave2) outdegree present(pres1 pres
 assert _rc == 198
 
 di as text "nwsaom.ado unit 33 (composition change - present(), network-only + co-evolution, two-wave + N-wave, plus validation) PASS"
+
+* --- unit 33, co-evolution + present(): on the glasgow data (see the
+* unit-26 note above), actor 50 absent from wave 2 on
+preserve
+nwwebuse glasgow, nwclear
+gen byte gpres1 = 1
+gen byte gpres2 = _n != 50
+gen byte gpres3 = _n != 50
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt present(gpres1 gpres2) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 1
+matrix __pb3 = e(b)
+assert colsof(__pb3) == 3
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree behavior(alcohol1 alcohol2 alcohol3) linear avalt present(gpres1 gpres2 gpres3) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 1
+assert e(nwaves) == 3
+restore
+di as text "nwsaom.ado unit 33 (co-evolution + present(), glasgow) PASS"
 
 * -------------------------------------------------------------------
 * harmonisation unit 34 (isolate-related effects: isolatenet, outiso) -
@@ -823,16 +824,7 @@ assert e(nwaves) == 3
 matrix __mb2 = e(b)
 assert colsof(__mb2) == 2
 
-* --- co-evolution, two waves (missnet() + missbeh() together) ---
-nwsaom, wave1(saommwave1) wave2(saommwave2) outdegree behavior(behm1 behm2) linear avalt missnet(mnet1 mnet2) missbeh(missb1 missb2) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 1
-matrix __mb3 = e(b)
-assert colsof(__mb3) == 3
-
-* --- co-evolution, N waves ---
-nwsaom, waves(saommwave1 saommwave2 saommwave3) outdegree behavior(behm1 behm2 behm3) linear avalt missnet(mnet1 mnet2 mnet3) missbeh(missb1 missb2 missb3) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 1
-assert e(nwaves) == 3
+* (co-evolution + missing data: see the glasgow block right after this unit)
 
 * --- combined with present() (composition change + missing data together) ---
 gen byte presm1 = 1
@@ -865,6 +857,29 @@ capture nwsaom, wave1(saommwave1) wave2(saommwave2) outdegree behavior(behm1 beh
 assert _rc == 198
 
 di as text "nwsaom.ado unit 35 (missing data - missnet()/missbeh(), network-only + co-evolution, two-wave + N-wave, plus validation) PASS"
+
+* --- unit 35, co-evolution + missnet() + missbeh(): on the glasgow data
+* (see the unit-26 note above)
+preserve
+nwwebuse glasgow, nwclear
+matrix gmn1 = J(50,50,0)
+matrix gmn1[1,2] = 1
+matrix gmn1[3,4] = 1
+matrix gmn2 = J(50,50,0)
+matrix gmn2[5,6] = 1
+matrix gmn3 = J(50,50,0)
+gen byte gmb1 = 0
+gen byte gmb2 = _n == 7
+gen byte gmb3 = 0
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt missnet(gmn1 gmn2) missbeh(gmb1 gmb2) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 1
+matrix __mb3 = e(b)
+assert colsof(__mb3) == 3
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree behavior(alcohol1 alcohol2 alcohol3) linear avalt missnet(gmn1 gmn2 gmn3) missbeh(gmb1 gmb2 gmb3) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 1
+assert e(nwaves) == 3
+restore
+di as text "nwsaom.ado unit 35 (co-evolution + missing data, glasgow) PASS"
 
 * =====================================================================
 * Harmonisation unit 167: network-side endowment/creation
@@ -1270,12 +1285,8 @@ nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity k0(20) k3(200) rate0
 
 * v1 scope rejections: co-evolution/multi-wave fits are rejected with a
 * clear message, not a crash.
-nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(memscoevw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(memscoevw2) labs(A,B,C,D,E,F)
-gen byte behwave1 = mod(_n,3)
-gen byte behwave2 = mod(_n+1,3)
-nwsaom, wave1(memscoevw1) wave2(memscoevw2) outdegree behavior(behwave1 behwave2) linear k0(10) k3(20) seed(1)
+nwwebuse glasgow, nwclear
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear k0(10) k3(20) seed(1)
 capture estat mems, effect(outdegree) macro(__nwsaom_mems_testmacro) nsim(20)
 assert _rc == 498
 
@@ -1361,3 +1372,19 @@ capture nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity ratecov(gr
 assert _rc == 198
 
 di as text "nwsaom.ado structural() (structural zeros/ones) PASS"
+
+* -------------------------------------------------------------------
+* behsim (2026-09-30): similarity on the co-evolving behavior (RSiena's
+* simX with the dependent behavior). Requires behavior(); a smoke run on
+* glasgow checks the coefficient lands among the network effects. The
+* RSiena benchmark itself is cscripts/test_nwsaom_coev_rsiena.do.
+* -------------------------------------------------------------------
+nwwebuse glasgow, nwclear
+capture nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behsim k0(5) k3(5)
+assert _rc == 198
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behsim behavior(alcohol1 alcohol2) linear avalt k0(20) k3(50) seed(90210)
+matrix __bbs = e(b)
+local __bsnames : colnames __bbs
+assert "`: word 3 of `__bsnames''" == "behsim"
+assert e(p_net) == 3
+di as text "nwsaom.ado behsim (behavior similarity, network side) smoke test PASS"

@@ -178,7 +178,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(real 1) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -346,6 +346,10 @@ program nwsaom, eclass
 			}
 		}
 		local __nwsaom_coev = 1
+	}
+	else if "`behsim'" != "" {
+		di "{err}{bf:behsim} (similarity on the co-evolving behavior) requires {bf:behavior()} to be specified."
+		error 198
 	}
 	else if "`linear'" != "" | "`linearendow'" != "" | "`linearcreation'" != "" | "`quadratic'" != "" | "`quadraticendow'" != "" | "`quadraticcreation'" != "" | "`avalt'" != "" | "`avaltendow'" != "" | "`avaltcreation'" != "" | "`avsim'" != "" | "`avsimendow'" != "" | "`avsimcreation'" != "" {
 		di "{err}{bf:linear}/{bf:linearendow}/{bf:linearcreation}/{bf:quadratic}/{bf:avalt}/{bf:avsim} (and their {bf:endow}/{bf:creation} variants) are behavior effects and require {bf:behavior()} to be specified."
@@ -1612,8 +1616,31 @@ program nwsaom, eclass
 		// the SAME persisted value for its own post-fit simulations,
 		// exactly as balance's own mean already is. Harmless (never
 		// read) whenever avsim was not requested.
-		if "`avsim'" != "" {
+		if "`avsim'" != "" | "`behsim'" != "" {
 			mata: __nwsaom_last_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_last_Behwaves, __nwsaom_beh_maxval - __nwsaom_beh_minval))
+		}
+
+		// --- behsim: network-side similarity on the co-evolving behavior
+		// (RSiena's simX with the dependent behavior, the selection
+		// effect). Added to the NETWORK model here, once the behavior data
+		// exist: td.attr starts at wave 1's values and is kept in step with
+		// the simulated behavior by the co-evolution simulators; range and
+		// the similarity mean are the behavior's own (the same constants
+		// avsim uses). See stat_saom_behsim() in unw_saom.do.
+		if "`behsim'" != "" {
+			mata: st_local("__nwsaom_behrange", strofreal(__nwsaom_beh_maxval - __nwsaom_beh_minval))
+			if `__nwsaom_behrange' <= 0 {
+				di "{err}{bf:behsim}: the behavior variable does not vary, so behavior similarity is undefined."
+				error 198
+			}
+			tempname __td_bs
+			mata: `__td_bs' = ErgmTermData()
+			mata: `__td_bs'.attr = __nwsaom_beh_w1
+			mata: `__td_bs'.decay = __nwsaom_beh_maxval - __nwsaom_beh_minval
+			mata: `__td_bs'.center = __nwsaom_last_Mbeh.simMean
+			mata: __nwsaom_last_M.addterm("behsim", 1, &stat_saom_behsim(), &change_saom_behsim(), `__td_bs', ("behsim"))
+			local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " behsim [behavior:"
+			mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
 		}
 
 		mata: st_local("__nwsaom_pbeh", strofreal(__nwsaom_last_Mbeh.nparam()))
@@ -1947,11 +1974,15 @@ program nwsaom, eclass
 		// rate series (network/behavior, each per-period) - the
 		// coev+multi analogue of unit 17's own e(rates)/e(rate_tratios)
 		// matrices, doubled since there are two dependent variables now.
-		tempname ratesnet ratetrnet ratesbeh ratetrbeh
+		tempname ratesnet ratetrnet ratesbeh ratetrbeh ratesnetse ratesbehse tconv ratetab
 		mata: st_matrix("`ratesnet'", __nwsaom_fit_coevmulti.ratesNet)
 		mata: st_matrix("`ratetrnet'", __nwsaom_fit_coevmulti.rateNetTratios)
 		mata: st_matrix("`ratesbeh'", __nwsaom_fit_coevmulti.ratesBeh)
 		mata: st_matrix("`ratetrbeh'", __nwsaom_fit_coevmulti.rateBehTratios)
+		mata: st_matrix("`ratesnetse'", __nwsaom_fit_coevmulti.ratesNetSE)
+		mata: st_matrix("`ratesbehse'", __nwsaom_fit_coevmulti.ratesBehSE)
+		mata: st_matrix("`tconv'", __nwsaom_fit_coevmulti.tconv)
+		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit_coevmulti.tconvMax))
 		local __nwsaom_periodnames ""
 		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
 			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
@@ -1960,10 +1991,25 @@ program nwsaom, eclass
 		matrix colnames `ratetrnet' = `__nwsaom_periodnames'
 		matrix colnames `ratesbeh' = `__nwsaom_periodnames'
 		matrix colnames `ratetrbeh' = `__nwsaom_periodnames'
+		matrix colnames `ratesnetse' = `__nwsaom_periodnames'
+		matrix colnames `ratesbehse' = `__nwsaom_periodnames'
 		matrix rownames `ratesnet' = rate
 		matrix rownames `ratetrnet' = rate_tratio
 		matrix rownames `ratesbeh' = rate_beh
 		matrix rownames `ratetrbeh' = rate_beh_tratio
+		matrix rownames `ratesnetse' = rate_se
+		matrix rownames `ratesbehse' = rate_beh_se
+		local __nwsaom_tconvnames "`__nwsaom_coefnames'"
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_period`__p'"
+		}
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_beh_period`__p'"
+		}
+		matrix colnames `tconv' = `__nwsaom_tconvnames'
+		matrix rownames `tconv' = tconv
+		matrix `ratetab' = `ratesnet' \ `ratesnetse' \ `ratesbeh' \ `ratesbehse'
+		matrix rownames `ratetab' = network_rate se behavior_rate se
 		ereturn local waves "`__nwsaom_wavelist'"
 		ereturn local behavior "`behavior'"
 
@@ -1973,14 +2019,18 @@ program nwsaom, eclass
 		di as text "Behavior: " as result "`behavior'"
 		di as text "{hline}"
 		ereturn display
-		di as text "Rate parameters (one per inter-wave period):"
-		matlist `ratesnet', format(%9.4f)
-		matlist `ratesbeh', format(%9.4f)
+		di as text "Rate parameters (estimated, one per inter-wave period):"
+		matlist `ratetab', format(%9.4f)
+		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 
 		ereturn matrix rates = `ratesnet'
 		ereturn matrix rate_tratios = `ratetrnet'
 		ereturn matrix rates_beh = `ratesbeh'
 		ereturn matrix rate_beh_tratios = `ratetrbeh'
+		ereturn matrix rates_se = `ratesnetse'
+		ereturn matrix rates_beh_se = `ratesbehse'
+		ereturn matrix tconv = `tconv'
+		ereturn scalar tconv_max = `__nwsaom_tconvmax'
 	}
 	else if `__nwsaom_coev' {
 		// harmonisation unit 26: TWO separate rate parameters, one per
@@ -1994,20 +2044,32 @@ program nwsaom, eclass
 		mata: st_local("__nwsaom_ratetr", strofreal(__nwsaom_fit_coev.rateNetTratio))
 		mata: st_local("__nwsaom_ratebeh", strofreal(__nwsaom_fit_coev.rateBeh))
 		mata: st_local("__nwsaom_ratebehtr", strofreal(__nwsaom_fit_coev.rateBehTratio))
+		mata: st_local("__nwsaom_ratese", strofreal(__nwsaom_fit_coev.rateNetSE))
+		mata: st_local("__nwsaom_ratebehse", strofreal(__nwsaom_fit_coev.rateBehSE))
+		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit_coev.tconvMax))
+		tempname tconv
+		mata: st_matrix("`tconv'", __nwsaom_fit_coev.tconv)
+		matrix colnames `tconv' = `__nwsaom_coefnames' rate rate_beh
+		matrix rownames `tconv' = tconv
 		ereturn scalar rate = `__nwsaom_rate'
 		ereturn scalar rate_tratio = `__nwsaom_ratetr'
 		ereturn scalar rate_beh = `__nwsaom_ratebeh'
 		ereturn scalar rate_beh_tratio = `__nwsaom_ratebehtr'
+		ereturn scalar rate_se = `__nwsaom_ratese'
+		ereturn scalar rate_beh_se = `__nwsaom_ratebehse'
+		ereturn scalar tconv_max = `__nwsaom_tconvmax'
+		ereturn matrix tconv = `tconv'
 		ereturn local wave1 "`wave1'"
 		ereturn local wave2 "`wave2'"
 		ereturn local behavior "`behavior'"
 
 		di as text "{hline}"
 		di as text "SAOM co-evolution (Method of Moments), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
-		di as text "Actors: " as result `nodes' _col(40) as text "Network rate: " as result %6.3f `__nwsaom_rate'
-		di as text "Behavior: " as result "`behavior'" _col(40) as text "Behavior rate: " as result %6.3f `__nwsaom_ratebeh'
+		di as text "Actors: " as result `nodes' _col(40) as text "Network rate: " as result %6.3f `__nwsaom_rate' as text " (" as result %5.3f `__nwsaom_ratese' as text ")"
+		di as text "Behavior: " as result "`behavior'" _col(40) as text "Behavior rate: " as result %6.3f `__nwsaom_ratebeh' as text " (" as result %5.3f `__nwsaom_ratebehse' as text ")"
 		di as text "{hline}"
 		ereturn display
+		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 	}
 	else if `__nwsaom_multi' {
 		// harmonisation unit 17: multi-wave models report e(rates)/

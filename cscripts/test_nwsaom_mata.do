@@ -1239,7 +1239,7 @@ real scalar saom_ego_avalt(class SaomBehavior scalar Beh, class ErgmGraph scalar
 
 	nb = G.neighbors_out(i)
 	if (cols(nb) == 0) return(0)
-	return(Beh.value(i) * mean(Beh.values[nb']))
+	return(Beh.centeredValue(i) * (mean(Beh.values[nb']) - Beh.overallMean))	// centered, as RSiena (2026-09-30)
 }
 
 void saom_test_unit26_avalt_certify(real scalar n, real scalar seed) {
@@ -1397,7 +1397,12 @@ void saom_test_unit26_ministep_dir(real scalar n) {
 		i = ceil(runiform(1,1)*n)
 		picked = SaomBehaviorMinistep(Beh, G, Mbeh, theta, i)
 	}
-	spreadHi = sqrt(variance(Beh.values))
+	// neighbor disagreement along the chain (2026-09-30: with RSiena's
+	// CENTERED avAlt a strong coefficient pulls each actor toward its
+	// neighbors' deviation from the mean, so connected actors agree
+	// while the overall spread can grow - the old "lower overall SD"
+	// check was a property of the earlier uncentered formula)
+	spreadHi = mean(abs(Beh.values[1..n-1] - Beh.values[2..n]))
 
 	// --- effect OFF: theta=0, pure random walk ---
 	rseed(975318)
@@ -1408,11 +1413,11 @@ void saom_test_unit26_ministep_dir(real scalar n) {
 		i = ceil(runiform(1,1)*n)
 		picked = SaomBehaviorMinistep(Beh, G, Mbeh, theta, i)
 	}
-	spreadLo = sqrt(variance(Beh.values))
+	spreadLo = mean(abs(Beh.values[1..n-1] - Beh.values[2..n]))
 
-	printf("unit 26 direction: behavior SD after 400 ministeps with avalt on %6.3f, off %6.3f\n", spreadHi, spreadLo)
+	printf("unit 26 direction: mean |z_i - z_(i+1)| after 400 ministeps with avalt on %6.3f, off %6.3f\n", spreadHi, spreadLo)
 	assert(spreadHi < spreadLo)
-	printf("unit 26 PASS: a strong positive avAlt coefficient pulls connected actors' own behavior values together (lower spread) relative to a pure random walk - the influence mechanism working as intended\n")
+	printf("unit 26 PASS: a strong positive avAlt coefficient makes connected actors' behavior values more alike than a pure random walk - the influence mechanism working as intended\n")
 }
 
 /* -------------------------------------------------------------------
