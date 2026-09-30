@@ -53,10 +53,10 @@
 
 {syntab:Baseline network effects}
 {synopt:{opt outdegree}}Outdegree (density) effect, evaluation-function role; {bf:required} in every model UNLESS {opt outdegreeendow}/{opt outdegreecreation} are given instead{p_end}
-{synopt:{opt outdegreeendow}}Outdegree effect, ENDOWMENT (tie-withdrawal) role - splits outdegree's own contribution so it fires only on ties that are REMOVED between waves; must be given together with {opt outdegreecreation}, and not combined with plain {opt outdegree} (all three roles together are exactly collinear). Satisfies the same required-baseline role plain {opt outdegree} does. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
+{synopt:{opt outdegreeendow}}Outdegree effect, ENDOWMENT (tie-withdrawal) role - splits outdegree's own contribution so it fires only on ties that are REMOVED between waves; must be given together with {opt outdegreecreation}, and not combined with plain {opt outdegree} (all three roles together are exactly collinear). {bf:Currently refused}: the endowment and creation statistics (lost and gained ties) add up to the rate's distance statistic, so with the rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too). See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt outdegreecreation}}Outdegree effect, CREATION (new-tie) role - the mirror of {opt outdegreeendow}, firing only on ties that are ADDED between waves; must be given together with it{p_end}
 {synopt:{opt reciprocity}}Reciprocated-tie effect, evaluation-function role{p_end}
-{synopt:{opt reciprocityendow}}Reciprocity effect, ENDOWMENT role - same mechanism/rules as {opt outdegreeendow}, applied to reciprocity instead; independent of whichever baseline role ({opt outdegree} or {opt outdegreeendow}/{opt outdegreecreation}) is in use. Note: on data where a mutual tie is essentially never lost in BOTH directions at once, this effect's own observed target can be exactly zero, leaving it unidentified (a genuine data property, not a bug) - see {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
+{synopt:{opt reciprocityendow}}Reciprocity effect, ENDOWMENT role - same mechanism/rules as {opt outdegreeendow}, applied to reciprocity instead, with {opt outdegree}. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt reciprocitycreation}}Reciprocity effect, CREATION role - the mirror of {opt reciprocityendow}; must be given together with it{p_end}
 
 {marker covariate_options}{...}
@@ -169,13 +169,13 @@
 {synoptline}
 {marker control_options}{...}
 {syntab:Estimation control}
-{synopt:{opt rate0(real)}}Accepted for backward compatibility only - {bf:no longer used}; the rate parameter's own starting value is now computed automatically from the observed data via RSiena's own verified closed-form formula (see {help nwsaom_remarks:Remarks}){p_end}
-{synopt:{opt theta0(numlist)}}Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero{p_end}
+{synopt:{opt rate0(numlist)}}Starting value(s) of the network rate(s) of a network-only model: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With {opt theta0()}, restarts a fit from earlier estimates (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks){p_end}
+{synopt:{opt theta0(numlist)}}Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero, except that a network-only model starts {opt outdegree} at RSiena's data-derived starting value{p_end}
 {synopt:{opt k0(int)}}Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50{p_end}
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
-{synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every simulation draws from its own random stream derived from the seed and its position, so results for a given {opt seed()} are identical whatever the number of threads. Applies to multi-wave ({opt waves()}) and co-evolution fits with the native backend; see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks{p_end}
+{synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every simulation draws from its own random stream derived from the seed and its position, so results for a given {opt seed()} are identical whatever the number of threads. Applies to fits with the native backend, except {opt symmetric} and {opt ratecov()} fits; see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -255,7 +255,7 @@ See {help nwsaom_remarks} for the full effect-derivation library (every effect's
 formula and how it was verified against RSiena's real source), interaction/multiplex/co-evolution
 mechanics, composition-change/missing-data/structural-zero handling, the full performance
 benchmark, and the estimation-algorithm background (Method-of-Moments phase structure, rate
-refinement). That material was split into its own file purely to keep this file's own length
+estimation). That material was split into its own file purely to keep this file's own length
 within Stata's interactive Viewer's rendering limits - it is not optional/secondary content,
 just relocated.
 
@@ -298,15 +298,15 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(N)}			number of actors (= e(nodes))
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
-		  {bf:e(rate)}			estimated network rate parameter (wave1()/wave2() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; ESTIMATED jointly with the other parameters for a co-evolution fit (unconditional Method of Moments, as RSiena does for 2+ dependent variables - see {help nwsaom_remarks##coev:Co-evolution}); the closed-form STARTING value only for a network-only {opt present()} fit (composition change forces unconditional estimation - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks), or a missing-data fit ({opt missnet()}/{opt missbeh()} - see {help nwsaom_remarks##missingdata:Missing data} in nwsaom_remarks)
-		  {bf:e(rate_tratio)}		network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
-		  {bf:e(rate_se)}		standard error of e(rate) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()}, and every co-evolution fit - 0 for a network-only {opt present()} or missing-data fit, whose e(rate) is not refined)
+		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only), estimated jointly with the other parameters (unconditional Method of Moments - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only)
 		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
 		  {bf:e(p_net)}			number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed {cmd:beh_})
 		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks)
 		  {bf:e(rate_beh_se)}		standard error of e(rate_beh) (co-evolution, wave1()/wave2() path only)
-		  {bf:e(rate_beh_tratio)}	behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
-		  {bf:e(tconv_max)}		RSiena's overall maximum convergence ratio (co-evolution fits only); below 0.25 indicates good convergence
+		  {bf:e(rate_beh_tratio)}	behavior rate parameter's convergence t-ratio on RSiena's scale (co-evolution, wave1()/wave2() path only)
+		  {bf:e(tconv_max)}		RSiena's overall maximum convergence ratio; below 0.25 indicates good convergence
 
 		Macros
 		  {bf:e(cmd)}			{bf:nwsaom}
@@ -320,14 +320,14 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		Matrices
 		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 		  {bf:e(V)}			variance-covariance matrix (eval parameters only)
-		  {bf:e(tratio)}		1 x nparam phase-3 convergence t-ratios, one per eval-parameter coefficient
-		  {bf:e(rates)}			1 x (nwaves-1) per-period estimated network rate parameters (waves() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; ESTIMATED jointly for a co-evolution fit; closed-form STARTING values only for a network-only {opt present()} or missing-data fit
+		  {bf:e(tratio)}		1 x nparam convergence t-ratios on RSiena's scale (phase-3 mean deviation / its standard deviation), one per coefficient of e(b) - the matching columns of e(tconv)
+		  {bf:e(rates)}			1 x (nwaves-1) per-period network rate parameters (waves() path only), estimated jointly with the other parameters
 		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
-		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of e(rates) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()}, and co-evolution fits - 0 otherwise)
+		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of e(rates) (waves() path only)
 		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 		  {bf:e(rate_beh_tratios)}	1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 		  {bf:e(rates_beh_se)}		1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
-		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates (co-evolution fits only); all below 0.1 in absolute value indicates good convergence. e(tratio) above uses a different scale: mean / (sd/sqrt(k3))
+		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. Printed after the coefficient table, followed by e(tconv_max). (Before 2026-10-01 e(tratio) and the rate t-ratios were mean / (sd/sqrt(k3)), about 31.6 times this scale with the default k3(1000))
 
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}, one pair per requested statistic (default
@@ -339,10 +339,17 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 
 {title:Examples}
 
-		{cmd:. nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(wave1)}
-		{cmd:. nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(wave2)}
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity transtrip}
+{pstd}Friendship among 50 pupils, RSiena's s50 data:{p_end}
+		{cmd:. nwwebuse glasgow, nwclear}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1)}
 		{cmd:. estat gof}
+
+{pstd}Restarting from the estimates when the overall maximum convergence ratio is above 0.25:{p_end}
+		{cmd:. matrix b = e(b)}
+		{cmd:. matrix r = e(rates)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)}
+
+{pstd}Other networks {cmd:wave1}, {cmd:wave2}, {cmd:wave3} and behavior variables {cmd:b1}-{cmd:b3}:{p_end}
 
 		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree transties balance}
 

@@ -253,15 +253,27 @@ exactly like plain {cmd:nwsaom}'s own identically-named options.
 (or less) likely wherever the SAME pair is already tied in the second network - the corresponding
 coefficient is reported as {bf:net1_crprod}. {opt crprodb} is the mirror, adding the same kind of
 effect to the second network's own list reading the first ({bf:net2_crprod}); either or both may
-be requested. Each direction identifies cleanly on its own; requesting both at once can leave the
-joint fit unidentified (a reported singular covariance matrix) since each network then rewards
-matching the OTHER's current state at the same time - a real statistical difficulty of that
-specific joint specification, not a sign that either effect alone is untrustworthy.
+be requested. A ministep reads the other network's CURRENT state, but the statistic of a
+{opt crprod} effect is evaluated with the other network at the START of the period (targets and
+simulated statistics alike), as RSiena does for effects that link two dependent variables.
+
+{pstd}
+With two dependent variables both rates are estimated jointly with the effects (unconditional
+Method of Moments, RSiena's default for such models): each rate's statistic is the number of dyads
+in which that network's simulated end state differs from its starting observation, and
+{cmd:e(rate1_se)}/{cmd:e(rate2_se)} are their standard errors; {cmd:e(tconv)} holds the convergence
+t-ratios (theta1, theta2, rate1, rate2) and {cmd:e(tconv_max)} RSiena's overall maximum convergence
+ratio. On a two-network example (friendship: glasgow waves 1-2; a
+seeded "advice" network generated from it - see {cmd:cscripts/test_nwsaom_multiplex.do}) with
+{opt crprod} in both directions, every parameter including both rates agrees with RSiena 1.6.6
+within 0.06 standard errors (mean of five seeds each). (Before 2026-10-01 both rates were held at
+their closed-form starting values and the {opt crprod} statistics used the other network's end
+state.)
 
 {pstd}
 Every other multiplex effect beyond {opt outdegree}/{opt reciprocity}(+{opt crprod}) is a real,
-planned follow-on, not silently dropped. Natively accelerated (all three estimation phases) -
-faster than real RSiena on the benchmark used to certify it.
+planned follow-on, not silently dropped. Natively accelerated (all three estimation phases);
+about 2 seconds per fit on the example above.
 
 {marker coev}{...}
 {title:Co-evolution (network + behavior)}
@@ -413,18 +425,22 @@ this is a shared property of the statistical problem, not specific to {cmd:nwsao
 
 {pstd}
 This split extends to the NETWORK side too - {opt outdegreeendow}/
-{opt outdegreecreation} (replacing plain {opt outdegree}, satisfying the same required-baseline role)
-and {opt reciprocityendow}/{opt reciprocitycreation} (replacing plain {opt reciprocity}) - confirmed
-real via RSiena's own {cmd:getEffects()} output ({cmd:density}/{cmd:recip} both offer {cmd:endow}/
-{cmd:creation} types). Same weak-identification caveat as the behavior side applies, with a concrete
-real-data illustration of WHY: on one real test network, {opt outdegreeendow}/{opt outdegreecreation}
-converged cleanly with genuine, distinct coefficients, while {opt reciprocityendow}/
-{opt reciprocitycreation} hit {bf:thetaBound} because that dataset never loses BOTH directions of a
-mutual tie simultaneously - {opt reciprocityendow}'s own observed target statistic was exactly zero,
-leaving the parameter with no gradient information to estimate from at all (a property of the DATA,
-not a defect). Not yet supported combined with co-evolution, multi-wave models, {opt present()}
-(composition change), or {opt missnet()} (real missing network data) - each is rejected outright
-(error 198) rather than silently producing a partially-gated fit.
+{opt outdegreecreation} (replacing plain {opt outdegree}) and {opt reciprocityendow}/
+{opt reciprocitycreation} (replacing plain {opt reciprocity}) - confirmed real via RSiena's own
+{cmd:getEffects()} output ({cmd:density}/{cmd:recip} both offer {cmd:endow}/{cmd:creation} types).
+The statistics are RSiena's: an endowment statistic is minus the sum, over the ties lost between the
+waves, of the effect's tie statistic in the starting network (1 for outdegree; the reverse tie for
+reciprocity), a creation statistic the sum over the ties gained of the tie statistic in the end
+network (on s50 waves 1-2: reciprocity endowment -35, creation 27, as in RSiena). With the rate
+estimated, {opt outdegreeendow}/{opt outdegreecreation} is not identified - lost plus gained ties is
+exactly the rate's distance statistic, and RSiena reports a singular covariance matrix for the same
+model - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciprocityendow}/
+{opt reciprocitycreation}. On s50 waves 1-2 that model gives (RSiena, unconditional estimation,
+mean of five seeds, in parentheses) outdegree -2.04 (-2.04), reciprocity endowment 0.77 (0.82, SE
+0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run on the Mata engine (about
+a minute on s50). Not yet supported combined with co-evolution, multi-wave models,
+{opt present()} (composition change), or {opt missnet()} (real missing network data) - each is
+rejected outright (error 198) rather than silently producing a partially-gated fit.
 
 {pstd}
 {opt behtheta0()} sets starting values for the behavior-side eval-parameter vector (parallel to
@@ -477,10 +493,10 @@ means more frequent opportunities to act (or fewer, for a negative coefficient).
 {pstd}
 The coefficient is estimated jointly with every other effect, the same Robbins-Monro process the rest
 of the model already uses. {opt ratecovcoef(#)} sets its STARTING value (like {opt theta0()} does for
-the eval effects) - omit it to start from 0. As with the rate parameter itself, estimation can settle
-on "fixed at its starting value" if the data does not identify it reliably (the same real-RSiena-verified
-safeguard {opt rate0()}'s own refinement already uses) - {bf:e(ratecoef_fixed)} reports whether this
-happened.
+the eval effects) - omit it to start from 0. The coefficient, the rate and the effects are one
+Robbins-Monro parameter vector. If the data do not identify the coefficient (a non-positive
+derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
+does - {bf:e(ratecoef_fixed)} reports whether this happened.
 
 {marker undirected}{...}
 {title:Undirected/symmetric relations}
@@ -511,10 +527,20 @@ option needs 100% native term coverage); all five are now natively ported.
 {pstd}
 {opt present()}, {opt missnet()}, and {opt ratecov()} can each be combined with {opt symmetric}.
 v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), and
-network-only (no {opt behavior()}/co-evolution). Note: combining {opt ratecov()} with
-{opt symmetric} runs correctly but currently reports an unreliably wide standard error on the
-rate-covariate coefficient itself (the network effect's own coefficient is unaffected) - a known,
-disclosed limitation, not a crash or a silently wrong estimate.
+network-only (no {opt behavior()}/co-evolution).
+
+{pstd}
+The three rules are RSiena's pairwise model types: {bf:joint} = modelType 6, {bf:force} = 4,
+{bf:agree} = 5 ({bf:agree} reproduces RSiena's alter probability exactly, which for an alter
+utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function). On glasgow waves 1-2 symmetrized, with
+{opt outdegree} alone, the density estimates and their standard errors agree with RSiena's
+(unconditional estimation) within 0.01 standard errors for all three
+({cmd:cscripts/test_nwsaom_rsiena.do}). The rate is on a different scale: {cmd:nwsaom}'s is the
+rate at which an ACTOR gets an opportunity, RSiena reports a much smaller per-pair rate (on these
+data RSiena's is about 1/27 to 1/29 of {cmd:nwsaom}'s, depending on the rule). Before 2026-10-01
+{bf:agree} used a different alter probability, the scores behind the standard errors used only the
+initiating actor's side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()}
+the acting actor was drawn uniformly, so the covariate could not affect who acts.
 
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}
@@ -543,18 +569,13 @@ explain, which is a real, avoidable way to trigger the {bf:thetaBound} safeguard
 it is meant to be read).
 
 {pstd}
-Composition change forces UNCONDITIONAL Method-of-Moments estimation in real RSiena (its own manual,
-Section 7.12.1) - already {cmd:nwsaom}'s own default for the eval-parameter estimation regardless
-(see {bf:Estimation} below), but it DOES mean the rate parameter's own post-hoc refinement (see
-{bf:The rate parameter} below) is skipped for a {opt present()} fit that genuinely restricts at
-least one actor: {cmd:e(rate)}/{cmd:e(rates)} stay at their closed-form starting value, and
-{cmd:e(rate_se)}/{cmd:e(rates_se)} report 0 (a network-only {opt present()} fit; with
-{opt behavior()} the rates are estimated, see {help nwsaom_remarks##coev:Co-evolution}). {opt present()} DOES use the native (C)
-backend, when the model is otherwise native-eligible - the acting-actor draw, the pooled rate, and
-the tie-target restriction are all computed natively too, so a composition-change fit runs at
-essentially the same speed as an equivalent fit without it. Only the rate parameter's own post-hoc
-refinement construction remains Mata-only (a disclosed, scoped-out follow-up), and it does not run
-for a genuinely-restricted {opt present()} fit anyway (see above).
+Composition change requires UNCONDITIONAL Method-of-Moments estimation in RSiena (its manual,
+Section 7.12.1), which is what {cmd:nwsaom} always uses (see {bf:Estimation} below): the rates are
+estimated with the other parameters, only the actors present in a period get opportunities to
+act, and a rate's score counts only them. {opt present()} uses the native (C) backend when the
+model is otherwise native-eligible - the acting-actor draw, the pooled rate, and the tie-target
+restriction are all computed natively too, so a composition-change fit runs at essentially the
+same speed as an equivalent fit without it.
 
 {pstd}
 {bf:Genuinely out of scope}: real RSiena's own more general continuous/fractional within-period
@@ -608,15 +629,12 @@ combined with {opt avalt}/{opt avsim} specifically.
 {pstd}
 Missing data DOES use the native (C) backend, when the model is otherwise native-eligible - the
 masked final-network/final-behavior statistic is computed natively too, matching the Mata engine's
-own result to machine precision. Like {opt present()}, it still skips the rate parameter's own
-post-hoc refinement ({cmd:e(rate)}/{cmd:e(rates)} stay at their closed-form starting value,
-{cmd:e(rate_se)}/{cmd:e(rates_se)} report 0) - the conditional-time refinement construction has no
-masking support yet, a disclosed, scoped-out follow-up.
+own result to machine precision. The rates are estimated with the other parameters; a dyad missing
+at either wave of a period is excluded from the rate's distance statistic and its target too.
 
 {pstd}
 {bf:Genuinely out of scope}: missing COVARIATE data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
-{opt simcov()} etc. must be fully observed); native (C) backend support for the rate parameter's own
-post-hoc refinement under missing data. Real RSiena's own "structural zeros/ones" mechanism - a
+{opt simcov()} etc. must be fully observed). Real RSiena's own "structural zeros/ones" mechanism - a
 separate, simpler alternative to ordinary missing data for dyads whose value is fixed by design
 rather than merely unobserved - IS implemented; see {help nwsaom_remarks##structural:Structural zeros/ones}
 below.
@@ -658,58 +676,68 @@ the Mata engine only (no native speed-up yet).
 {title:Estimation}
 
 {pstd}
-{bf:Speed and threads.} For multi-wave ({opt waves()}) and co-evolution fits with the native
-backend, the periods' starting data are handed to the compiled simulator once per fit, and
-phases 1 and 3 (and the network-only rate refinement) run all their simulations in one call on
+{bf:Speed and threads.} With the native backend, the periods' starting data are handed to the
+compiled simulator once per fit, and phases 1 and 3 run all their simulations in one call on
 worker threads; phase 2 is sequential by construction (each Robbins-Monro step needs the previous
 one) and runs only the periods of a step in parallel, and only when the network is large enough
 for threads to pay off. {opt cores(#)} sets the number of threads (default: all physical cores).
 Each simulation draws from its own random stream derived from the seed and its position, so a
 given {opt seed()} gives identical results with {cmd:cores(1)} and with any other number of
-threads. Timings on one 18-core machine: the s50 three-wave co-evolution model below 0.6 s; a
-synthetic 500-actor three-wave co-evolution model 18 s (324 s before 2026-10-01). Two-wave
-network-only fits ({opt wave1()}/{opt wave2()}) use the single-simulation path (faster ministeps,
-no threads).
+threads. {opt symmetric} and {opt ratecov()} fits use the single-simulation path (no threads).
+Timings on one 18-core machine: the s50 three-wave network-only model {cmd:outdegree reciprocity}
+{cmd:transtrip} 0.33 s, the two-wave {cmd:outdegree reciprocity} model 0.23 s; the s50
+three-wave co-evolution model 0.63 s; a synthetic 500-actor three-wave co-evolution model 18 s.
 
 {pstd}
 Coefficients are estimated by the Method of Moments via Robbins-Monro stochastic approximation,
 matching RSiena's own default algorithm and phase structure: Phase 1 estimates the Jacobian
-(sensitivity of each effect's own expected statistic to each coefficient) via {opt k0()}
-independent simulated replicates at the starting coefficients; Phase 2 performs the actual
-Robbins-Monro coefficient update across RSiena's own default of 4 diminishing-gain subphases
-(unconditionally reused, not re-derived: {cmd:nsub=4}, {cmd:firstg} default 0.2,
-{cmd:reduceg=0.5}, per-subphase minimum/maximum simulation-count schedule per RSiena's own
-{cmd:siena07.r}); Phase 3 runs {opt k3()} further replicates at the final coefficients to compute
-the reported standard errors/covariance matrix (e(V), RSiena's own sandwich-formula construction)
-and each parameter's own phase-3 convergence t-ratio (e(tratio) - a SEPARATE diagnostic from the
-Std. Err./z/P>|z| columns, which come from e(V); RSiena's own convention treats |t| well under 1 as
-good convergence).
+(sensitivity of each expected statistic to each parameter) via {opt k0()} independent simulated
+replicates at the starting values and ends with RSiena's partial quasi-Newton step; Phase 2
+performs the Robbins-Monro update across RSiena's default of 4 diminishing-gain subphases
+({cmd:nsub=4}, {cmd:firstg} default 0.2, {cmd:reduceg=0.5}, RSiena's per-subphase minimum/maximum
+iteration schedule); Phase 3 runs {opt k3()} further replicates at the estimates to compute the
+standard errors (e(V), RSiena's sandwich formula), the convergence t-ratios {cmd:e(tconv)} (mean
+deviation / its standard deviation, one per parameter including the rates) and RSiena's overall
+maximum convergence ratio {cmd:e(tconv_max)}. As in RSiena, a fit is considered converged when
+every |t| is below 0.1 and the overall ratio below 0.25; otherwise, run the model again from the
+estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Every fit prints
+these t-ratios for all parameters, rates included, below the coefficient table, then the overall
+ratio; {cmd:e(tratio)} holds the ones of the coefficients in e(b), on the same scale.
 
 {pstd}
-{bf:The rate parameter} (the per-period intensity governing how often actors are activated to
-ministep) is estimated via real RSiena's own verified CONDITIONAL-estimation construction
-(), confirmed directly from RSiena's own real source and cross-checked live
-against the installed RSiena package: a closed-form formula gives a starting value, then {opt k3()}
-independent replicate simulations - each run not for a fixed time interval but UNTIL the simulated
-network's own distance from the observed starting wave reaches the observed target (the same
-Hamming distance between waves used elsewhere) - are averaged to give the refined estimate
-{cmd:e(rate)}, with {cmd:e(rate_se)} (shown alongside it, in parentheses, matching real RSiena's own
-printed convention) the raw standard deviation of those replicate draws (RSiena's own convention,
-not divided by {opt k3()}'s own square root). Verified on RSiena's own real reference dataset:
-{cmd:e(rate)} matches RSiena's own real fitted rate to within 0.1%, {cmd:e(rate_se)} to within 5%.
-{opt rate0()} is still accepted for backward compatibility but not used - the starting
-value is always computed from the data. This conditional refinement is not used for co-evolution
-fits ({opt behavior()}): RSiena's conditional estimation needs exactly ONE dependent variable, so
-with two it estimates the rates by unconditional Method of Moments, and so does {cmd:nwsaom} (see
-{help nwsaom_remarks##coev:Co-evolution}).
+{bf:The rate parameters} (one per period: how often, on average, an actor gets the opportunity to
+change a tie) are estimated jointly with the effects - UNCONDITIONAL Method of Moments, RSiena's
+{cmd:sienaAlgorithmCreate(cond = FALSE)}. The statistic of a period's rate is the number of dyads
+in which the simulated end-of-period network differs from the observed network at the start of the
+period, and its target is the observed distance between the period's two waves (dyads missing at
+either wave excluded); the rates get standard errors from the same sandwich formula as the effects
+({cmd:e(rate_se)}, or {cmd:e(rates_se)} with {opt waves()}). Starting values: {opt rate0()}, else
+RSiena's closed-form value computed from the data (a start far from the data - e.g. a
+{opt rate0()} twice the closed-form value - can make the phase-1 derivative estimates unusable and
+the fit diverge; the default start is the safe choice). The same holds with composition change
+({opt present()}), missing data ({opt missnet()}), structural zeros, {opt ratecov()} (whose
+coefficient is estimated in the same joint vector), {opt symmetric}, endowment/creation effects
+and co-evolution.
 
 {pstd}
-{opt waves(namelist)} chains three or more waves into ONE pooled fit: the eval-parameter vector
-theta is POOLED/shared across every inter-wave period (RSiena's own multi-period Method-of-Moments
-convention, verified directly against a real RSiena fit), while the rate parameter is estimated
-SEPARATELY per period and reported as e(rates)/e(rate_tratios) (1 x (nwaves-1) matrices, one column
-per period) rather than the scalar e(rate)/e(rate_tratio) the two-wave {opt wave1()}/{opt wave2()}
-path reports.
+RSiena's DEFAULT for a network-only model is CONDITIONAL estimation instead: the rate is removed
+from the Robbins-Monro vector, each period is simulated until the observed distance is reached,
+and the rate is estimated from the time that takes. The two estimators are both consistent but
+not identical in finite samples. On RSiena's s50 data (five models, five seeds each, RSiena 1.6.6),
+{cmd:nwsaom} agrees with RSiena's unconditional estimates within 0.06 standard errors for every
+parameter including the rates; RSiena's own conditional and unconditional estimates differ from
+each other by up to 0.3 standard errors (outdegree more negative and reciprocity larger under
+conditional estimation), so {cmd:nwsaom}'s estimates differ from RSiena's default output by that
+much too. (Before 2026-10-01 the rate was held at its closed-form starting value throughout
+estimation and only refined afterwards; the effects were then estimated from simulations with too
+little change, 0.3-0.6 standard errors off.)
+
+{pstd}
+{opt waves(namelist)} chains three or more waves into ONE pooled fit: the effects are POOLED/shared
+across every inter-wave period (their statistics summed over periods, RSiena's multi-period
+Method-of-Moments convention), while each period has its own rate, reported as
+e(rates)/e(rates_se)/e(rate_tratios) (1 x (nwaves-1) matrices) rather than the scalars
+e(rate)/e(rate_se)/e(rate_tratio) of the two-wave {opt wave1()}/{opt wave2()} path.
 
 
 {title:See also}

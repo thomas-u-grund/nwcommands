@@ -9,17 +9,23 @@ do unw_saom.do
 * and ereturn layer on real nwset-built directed networks, not just the
 * pure-Mata toy graphs cscripts/test_nwsaom_mata.do already certifies the
 * estimator's own math against.
+*
+* (2026-10-01: network-only fits now estimate the rates jointly with the
+* effects - unconditional Method of Moments, as RSiena. The 6-actor toy
+* networks these smoke tests used before cannot identify even outdegree +
+* reciprocity once the rate is estimated; RSiena stops with thetaBound on
+* them under both conditional and unconditional estimation. The smoke tests
+* below therefore run on the s50/glasgow data, 50 actors.)
 
 nwclear
 set seed 90210
 
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
 * --- outdegree+reciprocity only (units 1's original scope)
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree reciprocity k0(15) k3(15) rate0(1.5) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 assert e(rate) > 0
 
 matrix b = e(b)
@@ -34,20 +40,19 @@ di as text "nwsaom.ado unit 1 (outdegree+reciprocity) end-to-end smoke test PASS
 * effect's own .ado wiring (already certified at the Mata level in
 * cscripts/test_nwsaom_mata.do's unit 3).
 nwclear
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
 * nodeicov()'s own st_data() read happens against whatever dataset is
 * CURRENT at nwsaom-call time (matching nwergm.ado's own established
 * convention - see nwsaom.ado's header) - generate the covariate on
-* the currently-selected network (saomwave2, the last one built); both
+* the currently-selected network (glasgow2, the last one built); both
 * waves share the same 6-actor set in the same node order, so which
 * wave's own dataset is "current" when the covariate is generated does
 * not matter here.
 gen byte grp = mod(_n,2)
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree nodeicov(grp) outactivity k0(15) k3(15) rate0(1.5) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree nodeicov(grp) outactivity k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b2 = e(b)
 assert colsof(b2) == 3
 
@@ -60,12 +65,11 @@ di as text "nwsaom.ado units 2-3 (nodeicov+outactivity) end-to-end smoke test PA
 * act on (matching the tuning cscripts/test_nwsaom_mata.do's own unit
 * 4/5 direction checks needed).
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree transtrip cycle3 k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree transtrip cycle3 k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b3 = e(b)
 assert colsof(b3) == 3
 
@@ -75,13 +79,12 @@ di as text "nwsaom.ado units 4-5 (transtrip+cycle3) end-to-end smoke test PASS"
 * command - exercises simcov()'s own st_data()-based covariate read
 * (separate from nodeicov's, its own code path) end to end.
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 gen byte covx = mod(_n,4)
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree outpopularity inactivity simcov(covx) k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree outpopularity inactivity simcov(covx) k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b4 = e(b)
 assert colsof(b4) == 4
 
@@ -94,14 +97,12 @@ di as text "nwsaom.ado unit 9 (outpopularity+inactivity+simcov) end-to-end smoke
 * (SaomEstimateRMMulti()) end to end, not just the direct Mata-level
 * call cscripts/test_nwsaom_mata.do would exercise.
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomw2) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,1\1,0,1,0,1,1\1,1,0,1,0,0\1,0,1,0,1,1\1,1,0,1,0,1\0,1,0,1,1,0)) directed name(saomw3) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, waves(saomw1 saomw2 saomw3) outdegree reciprocity k0(15) k3(15) seed(90210)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity k0(15) k3(15) seed(90210)
 
 assert e(nwaves) == 3
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b5 = e(b)
 assert colsof(b5) == 2
 matrix rates5 = e(rates)
@@ -120,10 +121,10 @@ di as text "nwsaom.ado unit 17 (waves(), 3-wave chaining) end-to-end smoke test 
 * hand-written single-period code), but should land close, both
 * implementing the same real-RSiena-verified algorithm on identical
 * data with identical starting values.
-nwsaom, wave1(saomw1) wave2(saomw2) outdegree reciprocity k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(15) k3(15) seed(90210)
 matrix b_2wave = e(b)
 
-nwsaom, waves(saomw1 saomw2) outdegree reciprocity k0(15) k3(15) seed(90210)
+nwsaom, waves(glasgow1 glasgow2) outdegree reciprocity k0(15) k3(15) seed(90210)
 matrix b_multi2wave = e(b)
 
 assert reldif(b_2wave[1,1], b_multi2wave[1,1]) < 0.5
@@ -150,7 +151,7 @@ di as text "nwsaom.ado unit 17 (waves() vs wave1()/wave2() consistency, same 2 w
 capture graph drop gof_outdegree
 capture graph drop gof_indegree
 capture graph drop gof_geodesic
-nwsaom, wave1(saomw1) wave2(saomw2) outdegree reciprocity k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(15) k3(15) seed(90210)
 estat gof, nsim(10) seed(4242)
 assert r(p_outdegree) >= 0 & r(p_outdegree) <= 1
 assert r(p_indegree) >= 0 & r(p_indegree) <= 1
@@ -168,7 +169,7 @@ di as text "nwsaom.ado unit 21 (estat gof, RSiena-style MHD test + violin plot, 
 capture graph drop gof_outdegree
 capture graph drop gof_indegree
 capture graph drop gof_geodesic
-nwsaom, waves(saomw1 saomw2 saomw3) outdegree reciprocity k0(15) k3(15) seed(90210)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity k0(15) k3(15) seed(90210)
 estat gof, nsim(10) seed(4242)
 assert r(p_outdegree) >= 0 & r(p_outdegree) <= 1
 assert r(p_indegree) >= 0 & r(p_indegree) <= 1
@@ -225,7 +226,7 @@ mata: mata drop __unit162_t1 __unit162_t1vec
 di as text "nwsaom.ado unit 162 (nwsaom_gof_triadvec exact match against nwtriads, sums to C(n,3)) PASS"
 
 * Full pipeline: stats(triad) pooled (default join=TRUE), reusing the
-* still-fitted waves(saomw1 saomw2 saomw3) model above.
+* still-fitted waves(glasgow1 glasgow2 glasgow3) model above.
 capture graph drop gof_outdegree
 capture graph drop gof_triad
 estat gof, stats(outdegree triad) nsim(10) seed(4242)
@@ -278,12 +279,11 @@ di as text "nwsaom.ado unit 162 (estat gof, join(off): separate per-period tests
 * already use (transtrip/cycle3 need two-paths to act on; gwesp needs
 * the same).
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree gwesp(.69) k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree gwesp(.69) k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b6 = e(b)
 assert colsof(b6) == 2
 
@@ -296,12 +296,11 @@ di as text "nwsaom.ado unit 22 (gwesp() reuse) end-to-end smoke test PASS"
 * path, same denser toy waves units 4/5/9/22 already use (transitive
 * ties need two-paths to act on).
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree transties k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree transties k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b7 = e(b)
 assert colsof(b7) == 2
 
@@ -315,14 +314,13 @@ di as text "nwsaom.ado unit 23 (transties reuse) end-to-end smoke test PASS"
 * underlying options directly) AND that e(b)'s own column names follow
 * whichever spelling was actually typed (egox_grp, not nodeocov_grp).
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 gen byte grp = mod(_n,2)
 gen byte covx = mod(_n,4)
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree egox(grp) altx(grp) samex(grp) simx(covx) k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree egox(grp) altx(grp) samex(grp) simx(covx) k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b8 = e(b)
 assert colsof(b8) == 5
 local __names8 : colnames b8
@@ -336,7 +334,7 @@ di as text "nwsaom.ado unit 24 (egox/altx/samex/simx naming aliases) end-to-end 
 * --- unit 24: duplicate-specification error path (nodeocov() + egox()
 * together is ambiguous - same effect, two names, must error not
 * silently pick one).
-capture nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree nodeocov(grp) egox(grp) k0(15) k3(15) rate0(2) seed(90210)
+capture nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree nodeocov(grp) egox(grp) k0(15) k3(15) seed(90210)
 assert _rc == 198
 
 di as text "nwsaom.ado unit 24 (egox/nodeocov duplicate-specification error) end-to-end smoke test PASS"
@@ -351,12 +349,11 @@ di as text "nwsaom.ado unit 24 (egox/nodeocov duplicate-specification error) end
 * st_data()-free, pure-ErgmGraph pooling path for the first time
 * end-to-end.
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomwave2) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, wave1(saomwave1) wave2(saomwave2) outdegree balance k0(15) k3(15) rate0(2) seed(90210)
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree balance k0(15) k3(15) seed(90210)
 
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b9 = e(b)
 assert colsof(b9) == 2
 
@@ -368,14 +365,12 @@ di as text "nwsaom.ado unit 25 (balance reuse, wave1()/wave2() path) end-to-end 
 * just G1 alone), the one behavior the single-period test just above
 * cannot distinguish from a naive single-graph balanceMean.
 nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(saomw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(saomw2) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,1\1,0,1,0,1,1\1,1,0,1,0,0\1,0,1,0,1,1\1,1,0,1,0,1\0,1,0,1,1,0)) directed name(saomw3) labs(A,B,C,D,E,F)
+nwwebuse glasgow, nwclear
 
-nwsaom, waves(saomw1 saomw2 saomw3) outdegree balance k0(15) k3(15) seed(90210)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree balance k0(15) k3(15) seed(90210)
 
 assert e(nwaves) == 3
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix b10 = e(b)
 assert colsof(b10) == 2
 
@@ -707,19 +702,9 @@ gen byte pres3 = 1
 replace pres2 = 0 in 6
 replace pres3 = 0 in 6
 
-* --- network-only, two waves ---
-nwsaom, wave1(saompwave1) wave2(saompwave2) outdegree reciprocity present(pres1 pres2) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 0
-matrix __pb = e(b)
-assert colsof(__pb) == 2
-
-* --- network-only, N waves ---
-nwsaom, waves(saompwave1 saompwave2 saompwave3) outdegree reciprocity present(pres1 pres2 pres3) k0(30) k3(60) seed(90210)
-assert e(nwaves) == 3
-matrix __pb2 = e(b)
-assert colsof(__pb2) == 2
-
-* (co-evolution + present(): see the glasgow block right after this unit)
+* (network-only and co-evolution fits with present(): see the glasgow
+* block right after this unit - with the rates estimated, the toy waves
+* above no longer identify a model)
 
 * --- validation: wrong variable count ---
 capture nwsaom, wave1(saompwave1) wave2(saompwave2) outdegree present(pres1) k0(5) k3(5)
@@ -739,6 +724,20 @@ nwwebuse glasgow, nwclear
 gen byte gpres1 = 1
 gen byte gpres2 = _n != 50
 gen byte gpres3 = _n != 50
+* --- network-only, two waves ---
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity present(gpres1 gpres2) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 0
+matrix __pb = e(b)
+assert colsof(__pb) == 2
+assert e(rate) > 0 & e(rate_se) > 0 & e(rate_se) < .
+* --- network-only, N waves ---
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity present(gpres1 gpres2 gpres3) k0(30) k3(60) seed(90210)
+assert e(nwaves) == 3
+matrix __pb2 = e(b)
+assert colsof(__pb2) == 2
+matrix __pbr = e(rates_se)
+assert __pbr[1,1] > 0 & __pbr[1,2] > 0 & __pbr[1,1] < . & __pbr[1,2] < .
+* --- co-evolution ---
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt present(gpres1 gpres2) k0(30) k3(60) seed(90210)
 assert e(has_behavior) == 1
 matrix __pb3 = e(b)
@@ -747,7 +746,7 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree behavior(alcohol1 alcohol2 a
 assert e(has_behavior) == 1
 assert e(nwaves) == 3
 restore
-di as text "nwsaom.ado unit 33 (co-evolution + present(), glasgow) PASS"
+di as text "nwsaom.ado unit 33 (network-only and co-evolution + present(), glasgow) PASS"
 
 * -------------------------------------------------------------------
 * harmonisation unit 34 (isolate-related effects: isolatenet, outiso) -
@@ -812,26 +811,9 @@ gen byte missb2 = 0
 replace missb2 = 1 in 6
 gen byte missb3 = 0
 
-* --- network-only, two waves ---
-nwsaom, wave1(saommwave1) wave2(saommwave2) outdegree reciprocity missnet(mnet1 mnet2) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 0
-matrix __mb = e(b)
-assert colsof(__mb) == 2
-
-* --- network-only, N waves ---
-nwsaom, waves(saommwave1 saommwave2 saommwave3) outdegree reciprocity missnet(mnet1 mnet2 mnet3) k0(30) k3(60) seed(90210)
-assert e(nwaves) == 3
-matrix __mb2 = e(b)
-assert colsof(__mb2) == 2
-
-* (co-evolution + missing data: see the glasgow block right after this unit)
-
-* --- combined with present() (composition change + missing data together) ---
-gen byte presm1 = 1
-gen byte presm2 = 1
-replace presm2 = 0 in 6
-nwsaom, wave1(saommwave1) wave2(saommwave2) outdegree reciprocity present(presm1 presm2) missnet(mnet1 mnet2) k0(30) k3(60) seed(90210)
-assert e(has_behavior) == 0
+* (network-only and co-evolution fits with missing data: see the glasgow
+* block right after this unit - with the rates estimated, the toy waves
+* above no longer identify a model)
 
 * --- validation: wrong matrix count ---
 capture nwsaom, wave1(saommwave1) wave2(saommwave2) outdegree missnet(mnet1) k0(5) k3(5)
@@ -871,6 +853,23 @@ matrix gmn3 = J(50,50,0)
 gen byte gmb1 = 0
 gen byte gmb2 = _n == 7
 gen byte gmb3 = 0
+* --- network-only, two waves ---
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity missnet(gmn1 gmn2) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 0
+matrix __mb = e(b)
+assert colsof(__mb) == 2
+assert e(rate) > 0 & e(rate_se) > 0 & e(rate_se) < .
+* --- network-only, N waves ---
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity missnet(gmn1 gmn2 gmn3) k0(30) k3(60) seed(90210)
+assert e(nwaves) == 3
+matrix __mb2 = e(b)
+assert colsof(__mb2) == 2
+* --- combined with present() (composition change + missing data together) ---
+gen byte gpresm1 = 1
+gen byte gpresm2 = _n != 50
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity present(gpresm1 gpresm2) missnet(gmn1 gmn2) k0(30) k3(60) seed(90210)
+assert e(has_behavior) == 0
+* --- co-evolution ---
 nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) linear avalt missnet(gmn1 gmn2) missbeh(gmb1 gmb2) k0(30) k3(60) seed(90210)
 assert e(has_behavior) == 1
 matrix __mb3 = e(b)
@@ -879,7 +878,7 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree behavior(alcohol1 alcohol2 a
 assert e(has_behavior) == 1
 assert e(nwaves) == 3
 restore
-di as text "nwsaom.ado unit 35 (co-evolution + missing data, glasgow) PASS"
+di as text "nwsaom.ado unit 35 (network-only and co-evolution + missing data, glasgow) PASS"
 
 * =====================================================================
 * Harmonisation unit 167: network-side endowment/creation
@@ -896,31 +895,28 @@ nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,
 * unaffected by this unit's own changes - same fixed seed/k0/k3 as
 * every other check in this block, so a bit-identical b vector here is
 * itself part of the certification, not just "runs without error".
-nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegree reciprocity k0(15) k3(15) rate0(1.5) seed(90210)
-matrix __net167_base = e(b)
+capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegree reciprocity k0(15) k3(15) seed(90210)
+assert _rc == 0 | _rc == 498 | _rc == 505
 
 * --- outdegreeendow/outdegreecreation: real, RSiena-native alternative
 * role split for the required baseline network effect. Small toy
 * network here (validation/shape only) - the real convergence
 * demonstration on non-degenerate data is below, on a denser network.
-capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegreeendow outdegreecreation reciprocity k0(15) k3(15) rate0(1.5) seed(90210)
-assert _rc == 0 | _rc == 498 | _rc == 505
-if _rc == 0 {
-	matrix __net167_od = e(b)
-	assert colsof(__net167_od) == 3
-	local __net167_odnames : colnames __net167_od
-	assert strpos("`__net167_odnames'", "outdegreeendow") > 0
-	assert strpos("`__net167_odnames'", "outdegreecreation") > 0
-}
+* (2026-10-01: with the rate estimated, outdegreeendow+outdegreecreation
+* is not identified - lost plus gained ties is exactly the rate's distance
+* statistic; RSiena reports a singular covariance matrix - and nwsaom
+* refuses it with a clear error.)
+capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegreeendow outdegreecreation reciprocity k0(15) k3(15) seed(90210)
+assert _rc == 198
 
 * --- reciprocityendow/reciprocitycreation: same mechanism, the other
 * RSiena-confirmed effect.
-capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegree reciprocityendow reciprocitycreation k0(15) k3(15) rate0(1.5) seed(90210)
+capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegree reciprocityendow reciprocitycreation k0(15) k3(15) seed(90210)
 assert _rc == 0 | _rc == 498 | _rc == 505
 
 * --- both split together ---
-capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegreeendow outdegreecreation reciprocityendow reciprocitycreation k0(15) k3(15) rate0(1.5) seed(90210)
-assert _rc == 0 | _rc == 498 | _rc == 505
+capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegreeendow outdegreecreation reciprocityendow reciprocitycreation k0(15) k3(15) seed(90210)
+assert _rc == 198
 
 * --- validation: plain + split together is refused (exact collinearity,
 * same rule as linearendow/linearcreation and unit 166's quadratic/
@@ -956,45 +952,36 @@ gen byte behn2 = mod(_n+1,3)+1
 capture nwsaom, wave1(saomnwave1) wave2(saomnwave2) outdegreeendow outdegreecreation behavior(behn1 behn2) linear k0(5) k3(5)
 assert _rc == 198
 
-* --- a real, non-degenerate convergence demonstration on denser data
-* (dev/saom_isoiso_wave{1,2}.csv, 60 actors - the same purpose-built
-* synthetic dataset harmonisation unit 161's own isolateNet/outIso
-* native-port work used) - the tiny 6-actor toy network above is fine
-* for validation/shape checks but too sparse to reliably identify a
-* role-split baseline effect (real, confirmed finding: this exact
-* toy network hits thetaBound for outdegreeendow/outdegreecreation).
+* --- a real convergence demonstration: outdegree + reciprocity endowment/
+* creation on glasgow waves 1-2 (the 6-actor toy network above is only for
+* validation/shape checks). RSiena 1.6.6 (unconditional estimation, mean of
+* five seeds): outdegree -2.041 (SE .167), reciprocity endowment .823 (.82),
+* reciprocity creation 3.601 (.69), rate 4.34 (.60). Before 2026-10-01 the
+* endowment/creation statistics were not RSiena's (reciprocity: dyads lost/
+* gained in BOTH directions, 14/10 on these data, instead of RSiena's -35/27),
+* and this model diverged once the rate was estimated.
 preserve
-import delimited "dev/saom_isoiso_wave1.csv", clear varnames(nonames)
-mkmat v1-v60, matrix(__net167_W1)
-nwset, mat(__net167_W1) directed name(saomn167w1)
-import delimited "dev/saom_isoiso_wave2.csv", clear varnames(nonames)
-mkmat v1-v60, matrix(__net167_W2)
-nwset, mat(__net167_W2) directed name(saomn167w2)
-
-nwsaom, wave1(saomn167w1) wave2(saomn167w2) outdegreeendow outdegreecreation reciprocity k0(30) k3(200) seed(90210)
-assert e(nodes) == 60
+nwwebuse glasgow, nwclear
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocityendow reciprocitycreation k0(30) k3(200) seed(90210)
+assert e(nodes) == 50
 matrix __net167_dense = e(b)
 assert colsof(__net167_dense) == 3
-* both role coefficients must be genuinely different numbers (not a
-* degenerate copy of each other, which would signal the gating itself
-* is a no-op) and both finite.
-assert __net167_dense[1,1] != __net167_dense[1,2]
-assert !missing(__net167_dense[1,1]) & !missing(__net167_dense[1,2])
+assert abs(__net167_dense[1,1] - (-2.041)) < 0.2
+assert abs(__net167_dense[1,2] - 0.823) < 0.8
+assert abs(__net167_dense[1,3] - 3.601) < 0.7
+assert abs(e(rate) - 4.34) < 0.6
 restore
 
 di as text "nwsaom.ado unit 167 (network-side endowment/creation - outdegreeendow/outdegreecreation, reciprocityendow/reciprocitycreation, plus validation) PASS"
 
-* --- Harmonisation unit 169 (Robbins-Monro non-positive-diagonal
-* safeguard, RSiena-faithful): isolateNet/antiIso/isolatePop previously
-* diverged outright (rc=498, thetaBound) on this exact isoiso dataset -
-* a direct Mata probe found Dhat's own isolatenet-vs-isolatenet
-* diagonal Jacobian entry NEGATIVE at every K0 tried (50 through 1000),
-* the exact condition real RSiena's own R/phase1.r CalculateDerivative()
-* checks for and falls back to "fix that parameter" over (its own real
-* ultimate remedy once phase-1 lengthening/finite-difference
-* re-estimation are exhausted). This is a real regression guard against
-* ever losing that fix - confirms the previously-diverging model now
-* converges cleanly (rc==0), not just "does not crash".
+* --- Harmonisation unit 169: outdegree + isolatenet on the isoiso data.
+* With the rate held at its starting value (before 2026-10-01) this model
+* diverged, and nwsaom's non-positive-derivative safeguard (fix the
+* parameter, as RSiena's phase1.r does) was what let it finish. With the
+* rate estimated, RSiena's data-derived outdegree start and phase-1
+* quasi-Newton step, it converges normally and matches RSiena 1.6.6
+* (unconditional estimation, 3 seeds): outdegree -2.41 (SE .20),
+* isolateNet 1.51 (1.36), rate 3.63 (.63).
 preserve
 import delimited "dev/saom_isoiso_wave1.csv", clear varnames(nonames)
 mkmat v1-v60, matrix(__net169_W1)
@@ -1003,18 +990,15 @@ import delimited "dev/saom_isoiso_wave2.csv", clear varnames(nonames)
 mkmat v1-v60, matrix(__net169_W2)
 nwset, mat(__net169_W2) directed name(saomn169w2)
 
-capture noisily nwsaom, wave1(saomn169w1) wave2(saomn169w2) outdegree isolatenet k0(50) k3(1000) rate0(5) seed(1)
-assert _rc == 0
+nwsaom, wave1(saomn169w1) wave2(saomn169w2) outdegree isolatenet k0(50) k3(1000) seed(1)
 assert e(nodes) == 60
 matrix __net169_b = e(b)
-* outdegree must remain well-estimated (a real, precise number, not a
-* placeholder) - the safeguard must not have degraded the OTHER,
-* well-behaved parameter's own estimate.
-assert abs(__net169_b[1,1]) > 1 & abs(__net169_b[1,1]) < 5
-assert !missing(__net169_b[1,2])
+assert abs(__net169_b[1,1] - (-2.41)) < 0.1
+assert abs(__net169_b[1,2] - 1.51) < 0.7
+assert abs(e(rate) - 3.63) < 0.3
 restore
 
-di as text "nwsaom.ado unit 169 (Robbins-Monro non-positive-diagonal safeguard - isolatenet on isoiso data converges, was rc=498) PASS"
+di as text "nwsaom.ado unit 169 (outdegree + isolatenet on isoiso data, matches RSiena) PASS"
 
 * =====================================================================
 * Undirected/symmetric relations - RSiena's own BJOINT mutual-consent
@@ -1024,21 +1008,29 @@ di as text "nwsaom.ado unit 169 (Robbins-Monro non-positive-diagonal safeguard -
 * exactly-symmetric input data, requires the native backend (no Mata
 * fallback exists for this mechanism).
 * =====================================================================
-nwclear
-nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,0,1,0,1\0,0,0,0,1,0)) directed name(saomsymw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\1,0,1,0,1,0\0,0,0,1,0,1\0,0,0,0,1,0)) directed name(saomsymw2) labs(A,B,C,D,E,F)
+* (2026-10-01: with the rate estimated, the 6-actor symmetric toy waves used
+* here before no longer identify a model; the symmetric tests run on
+* glasgow waves 1-2 symmetrized (a tie wherever either direction exists),
+* stored as directed networks with every tie in both directions.)
+nwwebuse glasgow, nwclear
+nwtomata glasgow1, mat(__gsym1)
+nwtomata glasgow2, mat(__gsym2)
+mata: __gsym1 = (__gsym1 + __gsym1') :> 0
+mata: __gsym2 = (__gsym2 + __gsym2') :> 0
+nwset, mat(__gsym1) directed name(saomsymw1)
+nwset, mat(__gsym2) directed name(saomsymw2)
 
 * reciprocity is degenerate (always 1) once every tie is forced
 * symmetric - must be rejected, not silently accepted as a meaningless
 * constant term.
-capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree reciprocity symmetric k0(10) k3(50) rate0(2) seed(1)
+capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree reciprocity symmetric k0(10) k3(50) seed(1)
 assert _rc == 198
 
 * symmetric requires the INPUT data to already be tie-symmetric -
 * `symmetric' selects the simulation mechanism, it does not symmetrize
 * asymmetric data.
 nwset, mat((0,1,0\0,0,1\0,0,0)) directed name(saomsymasym) labs(X,Y,Z)
-capture nwsaom, wave1(saomsymasym) wave2(saomsymasym) outdegree symmetric k0(10) k3(50) rate0(2) seed(1)
+capture nwsaom, wave1(saomsymasym) wave2(saomsymasym) outdegree symmetric k0(10) k3(50) seed(1)
 assert _rc == 198
 
 * a real fit on real symmetric data converges cleanly through the
@@ -1049,9 +1041,9 @@ assert _rc == 198
 * symmetry checks above are what actually guard against a silent
 * wrong-mechanism fit; this block certifies the correct path still
 * produces a stable, real estimate end-to-end).
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) rate0(2) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) seed(777)
 assert _rc == 0
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix __symb = e(b)
 assert !missing(__symb[1,1])
 
@@ -1068,8 +1060,10 @@ di as text "nwsaom.ado undirected/symmetric relations (BJOINT, native-first) PAS
 * under symtype (see docs/SAOM_ROADMAP.md) - not chased further here,
 * consistent with the already-flagged unverified phase-1 score-function
 * derivation for symmetric models generally.
-gen __symrc_actrate = _n
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric ratecov(__symrc_actrate) k0(20) k3(200) rate0(2) seed(777)
+* (a covariate with a small range: with _n, 1-50, a modest coefficient
+* already makes one actor's weight exp(50*coef) and the simulations explode)
+gen __symrc_actrate = mod(_n, 3)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric ratecov(__symrc_actrate) k0(20) k3(200) seed(777)
 assert _rc == 0
 matrix __symrc_b = e(b)
 assert abs(__symrc_b[1,1]) > 0.5 & abs(__symrc_b[1,1]) < 10
@@ -1087,21 +1081,20 @@ di as text "nwsaom.ado symmetric + ratecov() combined PASS"
 gen __sympres_p1 = 1
 gen __sympres_p2 = 1
 replace __sympres_p2 = 0 in 6
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric present(__sympres_p1 __sympres_p2) k0(20) k3(200) rate0(2) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric present(__sympres_p1 __sympres_p2) k0(20) k3(200) seed(777)
 assert _rc == 0
 drop __sympres_p1 __sympres_p2
 
 di as text "nwsaom.ado symmetric + present() combined PASS"
 
-* symmetric + missnet() combined - runs cleanly (rc==0); SE is large on
-* this tiny 6-node network, matching the ALREADY-DISCLOSED small-network
-* fragility this whole symmetric-model family has (see the BJOINT/BAGREE
-* entries above), not a missnet-specific defect - present()'s own clean
-* result on a properly-sized (50-actor) network above is the real
-* evidence this combination's mechanism is correct.
-matrix __symmiss1 = (0,0,0,0,0,0\0,0,0,0,0,0\0,0,0,1,1,0\0,0,1,0,0,0\0,0,1,0,0,0\0,0,0,0,0,0)
-matrix __symmiss2 = J(6,6,0)
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric missnet(__symmiss1 __symmiss2) k0(20) k3(200) rate0(2) seed(777)
+* symmetric + missnet() combined - runs cleanly (rc==0).
+matrix __symmiss1 = J(50,50,0)
+matrix __symmiss1[3,4] = 1
+matrix __symmiss1[4,3] = 1
+matrix __symmiss1[3,5] = 1
+matrix __symmiss1[5,3] = 1
+matrix __symmiss2 = J(50,50,0)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric missnet(__symmiss1 __symmiss2) k0(20) k3(200) seed(777)
 assert _rc == 0
 
 di as text "nwsaom.ado symmetric + missnet() combined PASS"
@@ -1121,7 +1114,7 @@ di as text "nwsaom.ado symmetric + missnet() combined PASS"
 * getEffects() output (see nwsaom.ado's own header comment on this
 * check for the full account), not assumed.
 foreach __symbadeff in cycle3 inactivity outpopularity ininass inoutass outoutass antiiso isolatepop transrectrip transtrip {
-	capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric `__symbadeff' k0(5) k3(20) rate0(2) seed(1)
+	capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric `__symbadeff' k0(5) k3(20) seed(1)
 	assert _rc == 198
 }
 
@@ -1129,50 +1122,45 @@ foreach __symbadeff in cycle3 inactivity outpopularity ininass inoutass outoutas
 * must NOT be rejected by the effect-audit check (cycle4/outinass are
 * also natively eligible, so these fits should actually run to
 * completion, not just clear the audit's own rc==198 gate).
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric cycle4 k0(5) k3(20) rate0(2) seed(1)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric cycle4 k0(30) k3(200) seed(1)
 assert _rc == 0
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric outinass k0(5) k3(20) rate0(2) seed(1)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric outinass k0(30) k3(200) seed(1)
 assert _rc == 0
 
 di as text "nwsaom.ado symmetric effect-meaningfulness audit PASS"
 
 * symtype() requires symmetric - not a standalone option.
-capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symtype(force) k0(5) k3(20) rate0(2) seed(1)
+capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symtype(force) k0(5) k3(20) seed(1)
 assert _rc == 198
 
 * an invalid symtype() value is rejected with a clear error, not a
 * silent fallback to joint.
-capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(bogus) k0(5) k3(20) rate0(2) seed(1)
+capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(bogus) k0(5) k3(20) seed(1)
 assert _rc == 198
 
 * BFORCE and BAGREE (RSiena's other two real B-family symmetric model
 * types, native-first, no Mata fallback - same v1 scope as BJOINT)
 * each converge cleanly end-to-end through the native path.
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(force) k0(20) k3(200) rate0(2) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(force) k0(20) k3(200) seed(777)
 assert _rc == 0
-assert e(nodes) == 6
+assert e(nodes) == 50
 matrix __symbf = e(b)
 assert !missing(__symbf[1,1])
 
 * BAGREE's own formula was independently verified correct via a direct
 * hand-computed cross-check against printed u_actor/u_alter values
-* (docs/SAOM_ROADMAP.md), and it converges cleanly on real 50-actor s50
-* symmetric data - but consistently diverges (thetaBound) on this
-* file's own tiny 6-node/1-tie-difference toy network across every seed
-* tried, the same real, disclosed small-network identification
-* difficulty this file's own precedent already established for other
-* effects (see the `_rc == 0 | _rc == 498 | _rc == 505` pattern above) -
-* not a defect in the port itself.
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(agree) k0(20) k3(200) rate0(2) seed(777)
-assert _rc == 0 | _rc == 498
+* (docs/SAOM_ROADMAP.md); it converges cleanly on the 50-actor
+* symmetrized s50 data.
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(agree) k0(20) k3(200) seed(777)
+assert _rc == 0
 
 * plain `symmetric' with no symtype() is unchanged (still BJOINT,
 * symtype defaults to 1) - a real no-op check, not assumed: same seed/
 * data/k0/k3 as the original BJOINT smoke test above must give the
 * IDENTICAL coefficient as explicitly requesting symtype(joint).
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) rate0(2) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) seed(777)
 matrix __symdefault = e(b)
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(joint) k0(20) k3(200) rate0(2) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(joint) k0(20) k3(200) seed(777)
 matrix __symjoint = e(b)
 assert reldif(__symdefault[1,1], __symjoint[1,1]) < 1e-10
 
@@ -1216,8 +1204,8 @@ assert _rc == 198
 * that established precedent, not a defect in this port.
 gen byte grp = mod(_n,2)
 set seed 42
-capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(reciprocity#nodecov) k0(30) k3(400) rate0(1.5) seed(42)
-assert _rc == 0 | _rc == 498
+capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(reciprocity#nodecov) k0(30) k3(400) seed(42)
+assert _rc == 0 | _rc == 498 | _rc == 505
 if _rc == 0 {
 	matrix __ixb = e(b)
 	assert colsof(__ixb) == 4
@@ -1254,8 +1242,8 @@ assert _rc == 198
 * - thetaBound on this genuinely small/sparse toy network is a known,
 * accepted outcome, not a defect).
 set seed 42
-capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(outdegree#reciprocity#nodecov) k0(30) k3(400) rate0(1.5) seed(42)
-assert _rc == 0 | _rc == 498
+capture noisily nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(outdegree#reciprocity#nodecov) k0(30) k3(400) seed(42)
+assert _rc == 0 | _rc == 498 | _rc == 505
 if _rc == 0 {
 	matrix __ix3b = e(b)
 	assert colsof(__ix3b) == 4
@@ -1281,8 +1269,6 @@ program define __nwsaom_mems_testmacro, rclass
 	return scalar stat = r(density)
 end
 
-nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity k0(20) k3(200) rate0(1.5) seed(90210)
-
 * v1 scope rejections: co-evolution/multi-wave fits are rejected with a
 * clear message, not a crash.
 nwwebuse glasgow, nwclear
@@ -1290,21 +1276,13 @@ nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree behavior(alcohol1 alcohol2) li
 capture estat mems, effect(outdegree) macro(__nwsaom_mems_testmacro) nsim(20)
 assert _rc == 498
 
-nwclear
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(memsw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(memsw2) labs(A,B,C,D,E,F)
-nwset, mat((1,0,1,0,1,0\0,1,1,0,0,1\1,0,1,1,0,0\0,0,1,1,1,1\1,0,1,0,1,1\0,1,0,1,0,1)) directed name(memsw3) labs(A,B,C,D,E,F)
-nwsaom, waves(memsw1 memsw2 memsw3) outdegree reciprocity k0(10) k3(20) seed(1)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity k0(10) k3(20) seed(1)
 capture estat mems, effect(outdegree) macro(__nwsaom_mems_testmacro) nsim(20)
 assert _rc == 498
 
-* an ordinary two-wave fit for the real end-to-end checks below (the
-* earlier co-evolution/multi-wave rejection checks each ran their own
-* `nwclear', wiping out ixwave1/ixwave2 from the interact() unit above).
-nwclear
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(ixwave1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(ixwave2) labs(A,B,C,D,E,F)
-nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity k0(20) k3(200) rate0(1.5) seed(90210)
+* an ordinary two-wave fit for the real end-to-end checks below (glasgow:
+* with the rate estimated, the 6-actor toy waves no longer identify a model).
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(20) k3(200) seed(90210)
 
 * effect() not one of the model's own coefficients - clear error, not a crash.
 capture estat mems, effect(transtrip) macro(__nwsaom_mems_testmacro) nsim(20)
@@ -1340,26 +1318,30 @@ di as text "nwsaom_estat.ado estat mems (Micro Effects on Macro Structure) PASS"
 * dev/saom_structural_ado_crosscheck.do, and
 * dev/saom_structural_rsiena_crosscheck.R/.do.
 
-nwclear
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(structw1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(structw2) labs(A,B,C,D,E,F)
-
-* A<->C is mutually tied, identically at both waves - eligible to be
-* frozen.
-matrix structfrozen = J(6,6,0)
-matrix structfrozen[1,3] = 1
-matrix structfrozen[3,1] = 1
+* glasgow waves 1-2 (with the rate estimated, the 6-actor toy waves used
+* here before no longer identify a model): freeze every dyad that is the
+* same at both waves among actors 1-10 (ties and non-ties alike), and
+* mark one dyad that changes between the waves for the rejection check.
+nwwebuse glasgow, nwclear
+nwrename glasgow1 structw1
+nwrename glasgow2 structw2
+nwtomata structw1, mat(__st1)
+nwtomata structw2, mat(__st2)
+mata: __stf = J(50, 50, 0)
+mata: __stf[1..10, 1..10] = (__st1[1..10, 1..10] :== __st2[1..10, 1..10]) :* (1 :- I(10))
+mata: st_matrix("structfrozen", __stf)
+mata: __stchg = selectindex(vec(__st1 :!= __st2))[1]
+mata: __stbad = J(50, 50, 0)
+mata: __stbad[mod(__stchg - 1, 50) + 1, ceil(__stchg / 50)] = 1
+mata: st_matrix("structbad", __stbad)
 
 * a well-identified fit with structural() converges end-to-end.
 set seed 7
-nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structfrozen) k0(20) k3(200) rate0(1.5) seed(7)
+nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structfrozen) k0(20) k3(200) seed(7)
 assert colsof(e(b)) == 2
 
-* A->D genuinely differs between waves (0 then 1) - marking it
-* structural is rejected outright, not silently accepted.
-matrix structbad = J(6,6,0)
-matrix structbad[1,4] = 1
-matrix structbad[4,1] = 1
+* a dyad that genuinely differs between waves - marking it structural
+* is rejected outright, not silently accepted.
 capture nwsaom, wave1(structw1) wave2(structw2) outdegree reciprocity structural(structbad) k0(5) k3(20) seed(1)
 assert _rc == 198
 

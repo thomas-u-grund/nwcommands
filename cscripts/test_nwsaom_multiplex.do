@@ -6,7 +6,8 @@
 * synthetic data with a KNOWN true theta, before any .ado-level wiring.
 
 clear all
-cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
+* run from the repository root, like the other cscripts (a hardcoded cd to
+* the main checkout here used to test that checkout's Mata code instead)
 do unw_core.do
 do unw_ergm.do
 do unw_saom.do
@@ -141,20 +142,58 @@ mata: test_multiplex_stage1(16)
 * _nwsyntax()/NWdef-bridge/ereturn-posting chain works, not just the
 * underlying Mata estimator (already certified above).
 * -------------------------------------------------------------------
-nwset, mat((0,1,1,0,0,0\0,0,1,0,0,0\1,0,0,1,0,0\0,0,0,0,1,0\0,0,1,0,0,1\0,0,0,0,0,0)) directed name(mp_net1w1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,1,0)) directed name(mp_net1w2) labs(A,B,C,D,E,F)
-nwset, mat((0,1,0,1,0,0\0,0,1,0,0,0\0,0,0,1,1,0\0,0,0,0,0,1\1,0,0,0,0,1\0,0,0,0,0,0)) directed name(mp_net2w1) labs(A,B,C,D,E,F)
-nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\0,1,0,1,1,0\0,0,0,0,0,1\1,0,0,0,0,1\0,0,0,1,0,0)) directed name(mp_net2w2) labs(A,B,C,D,E,F)
+* Data (2026-10-01): with both rates estimated (unconditional Method of
+* Moments, as RSiena does for two dependent variables) the 6-actor toy
+* networks used here before no longer identify a model. Network 1 is
+* friendship (glasgow waves 1-2), network 2 an "advice" network generated
+* from it below (seeded, so the same every run). RSiena 1.6.6 reference,
+* mean of five seeds (projname=NULL, default algorithm = unconditional),
+* on exactly these matrices, crprod in both directions:
+*   friendship rate 6.753 (1.549), outdegree -2.311 (.140), reciprocity
+*   2.317 (.240), advice: .640 (.432); advice rate 1.825 (.303), outdegree
+*   -1.841 (.195), reciprocity 1.784 (.428), friendship: .765 (.709).
+* RSiena's crprod targets are lagged: sum(x1(t2) * x2(t1)) = 43 and
+* sum(x2(t2) * x1(t1)) = 66 here, as nwsaom's.
+nwwebuse glasgow, nwclear
+nwtomata glasgow1, mat(__mpF1)
+nwtomata glasgow2, mat(__mpF2)
+set seed 20261001
+mata: __mpA1 = __mpF1 :* (runiform(50, 50) :< 0.7)
+mata: __mpA1 = (__mpA1 + (runiform(50, 50) :< 0.005)) :> 0
+mata: _diag(__mpA1, 0)
+mata: __mpA2 = __mpA1 :* (runiform(50, 50) :< 0.8)
+mata: __mpA2 = (__mpA2 + __mpF2 :* (1 :- __mpA1) :* (runiform(50, 50) :< 0.4) + (runiform(50, 50) :< 0.003)) :> 0
+mata: _diag(__mpA2, 0)
+mata: assert(sum(__mpA1) == 98 & sum(__mpA2) == 118 & sum(__mpA1 :!= __mpA2) == 64)
+nwset, mat(__mpA1) directed name(advice1)
+nwset, mat(__mpA2) directed name(advice2)
 
-set seed 20260830
-nwsaom multiplex, netawave1(mp_net1w1) netawave2(mp_net1w2) netbwave1(mp_net2w1) netbwave2(mp_net2w2) k0(30) k3(300) firstg(0.2)
+nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(advice1) netbwave2(advice2) crprod crprodb k0(50) k3(1000) seed(12345)
 
-assert e(rate1) > 0 & e(rate1) < 20
-assert e(rate2) > 0 & e(rate2) < 20
-assert colsof(e(b)) == 4
-assert rowsof(e(V)) == 4 & colsof(e(V)) == 4
+assert colsof(e(b)) == 6
+assert rowsof(e(V)) == 6 & colsof(e(V)) == 6
+capture program drop _mp_check
+program define _mp_check
+	args label est se rs rse
+	di as text %-18s "`label'" "  nwsaom " %8.3f `est' " (" %6.3f `se' ")   RSiena " %8.3f `rs' " (" %6.3f `rse' ")"
+	assert abs(`est' - `rs') < 0.5 * `rse'
+	assert `se' > 0.5*`rse' & `se' < 2*`rse'
+end
+matrix __b = e(b)
+matrix __V = e(V)
+local __rs  "-2.311 2.317 0.640 -1.841 1.784 0.765"
+local __rse "0.140 0.240 0.432 0.195 0.428 0.709"
+local __nm : colnames __b
+forvalues j = 1/6 {
+	_mp_check `: word `j' of `__nm'' __b[1,`j'] sqrt(__V[`j',`j']) `: word `j' of `__rs'' `: word `j' of `__rse''
+}
+_mp_check rate1 e(rate1) e(rate1_se) 6.753 1.549
+_mp_check rate2 e(rate2) e(rate2_se) 1.825 0.303
+assert e(tconv_max) < 0.3
+matrix __tc = e(tconv)
+assert colsof(__tc) == 8
 
-di as text "test_nwsaom_multiplex.do ado-level PASS: nwsaom multiplex ran end to end (_nwsyntax/bridge/ereturn all correct), e(b)/e(V)/e(rate1)/e(rate2) all well-formed"
+di as text "test_nwsaom_multiplex.do ado-level PASS: nwsaom multiplex (both rates estimated) matches RSiena on the friendship/advice example"
 
 di as text "{hline}"
 di as text "test_nwsaom_multiplex.do: ALL TESTS PASSED"

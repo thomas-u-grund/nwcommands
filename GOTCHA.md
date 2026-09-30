@@ -268,8 +268,8 @@ waves (`cscripts/test_nwsaom_coev_rsiena.do`). **Lesson:** compare per-period TA
 with RSiena before comparing estimates; a target that differs pins the bug to a definition, not to
 the optimizer.
 
-Related, not fixed: a network-only fit with `present()` or `missnet()` also cannot use conditional
-estimation, but still keeps its rate at the starting value (documented as "not refined").
+Network-only fits had the same flaw in a milder form; fixed 2026-10-01, see "`nwsaom` network-only
+rates" below.
 
 ## The saom_sim plugin: a stale installed copy in PLUS used to win over the repo's own (fixed 2026-09-30)
 
@@ -292,14 +292,17 @@ at 0.7 ms each, almost all of it the C ministep loop; a plugin call itself costs
 The lagged behavior statistics were computed in Mata at first (0.5 ms per period, 3 s per fit) and
 now come from the plugin (`__saom_native_statbehlag%d`).
 
-## `nwsaom` multiplex (two co-evolving networks) still holds its rates fixed
+## `nwsaom` multiplex: rates fixed, crprod not lagged (fixed 2026-10-01)
 
-`SaomEstimateRMCoevNetNet()` has the same flaw the network+behavior estimator had before
-2026-09-30: two dependent variables, so RSiena estimates the rates by unconditional MoM, but here
-both rates stay at their closed-form starting values. A fix needs per-network ministep counts and
-end-vs-start distances from the NN branch of `native/saom_sim.c` (it only returns the total step
-count), the rates added to the parameter vector, and probably lagged cross-network (`crprod`)
-statistics. Not done yet; there is no RSiena benchmark for it in the test suite.
+`SaomEstimateRMCoevNetNet()` held both rates at their closed-form starting values, like the
+network+behavior estimator before 2026-09-30, and evaluated `crprod` (a tie of network 1 where
+network 2 has one) with the other network's END state. RSiena estimates both rates by unconditional
+MoM and lags the cross-network statistic: its targets on a two-network s50 example are
+`sum(x1(t2) * x2(t1))` (43) and `sum(x2(t2) * x1(t1))` (66). Now the estimator runs on
+`SaomRMCore()` with `(theta1, theta2, rate1, rate2)`; the NN branch of `native/saom_sim.c` returns
+per-network ministep counts, end-vs-start distances and lagged crprod statistics (protocol 5). On
+that example (`cscripts/test_nwsaom_multiplex.do`) every parameter agrees with RSiena within 0.06
+SE. The 6-actor toy networks the ado-level test used before cannot identify the model.
 
 ## Plugin programs defined inside nwsaom are not the ones a do-file defines (found 2026-10-01)
 
@@ -329,3 +332,69 @@ that caches state in a static breaks thread safety. Outputs come back through a 
 for a given seed relative to 2332434: the 6-model RSiena validation moved from max |diff|/SE 0.19
 to 0.17 (mean 0.06 both). Only the macOS plugin is rebuilt locally; the Windows build uses Win32
 threads (`#if defined(_WIN32)`), untested here until CI builds it.
+
+## `nwsaom` network-only rates: fixed during estimation, refined afterwards (fixed 2026-10-01)
+
+`SaomEstimateRM()`/`SaomEstimateRMMulti()` held the rate at RSiena's closed-form STARTING value
+(`n*(0.2 + 2*distance)/(n*(n-1)+1)`) throughout phases 1-3 and only replaced the REPORTED rate
+afterwards by a conditional-simulation estimate. The effects were thus estimated from simulations
+with about 14% too few ministeps, 0.3-0.6 SE off RSiena (reciprocity too small, gwesp too large),
+stable across seeds. Now both, and the multiplex estimator, call `SaomRMCore()` with the rates as
+ordinary MoM parameters (statistic: dyads in which the simulated end network differs from the
+period's start; score: ministeps/rate - active actors), RSiena's `cond = FALSE`. Validation (six
+models on s50, five seeds each; reference numbers in `cscripts/test_nwsaom_rsiena.do`): every
+parameter within 0.06 SE of RSiena's unconditional estimates. Things found on the way:
+
+- **RSiena's DEFAULT for a single network is conditional estimation, and its conditional and
+  unconditional estimates differ by up to 0.3 SE** (outdegree more negative, reciprocity larger
+  under `cond = TRUE`; seed-to-seed SD about 0.005). Matching RSiena "default output" and matching
+  RSiena "unconditional" are not the same target; nwsaom matches the latter.
+- **Simulation seeds were passed to the plugin as `strofreal(seed)`, i.e. `%9.0g`, four
+  significant digits.** With K=1 batch calls in phase 2 the simulated distances came out biased
+  (mean deviation -1.2 instead of +0.35 over 5000 calls at fixed parameters, 7 SE), which pushed
+  the estimated rate up by 0.1 (rate t-ratio +0.13 on average). All seed arguments now use
+  `%12.0f`. `unw_ergm.do` (nwergm's MCMC seed, `strofreal(rngseed)`) has the same formatting and
+  was left alone.
+- **Starting values matter more once the rate moves.** RSiena starts outdegree at a data-derived
+  value (`getNetworkStartingVals()`, now `SaomOutdegreeStart()`) and ends phase 1 with a partial
+  quasi-Newton step (`phase1.2`); nwsaom did neither. From outdegree = 0 the network explodes in
+  phase 1 and the Jacobian is useless; outdegree + isolatenet on the isoiso data diverged. Both are
+  in now (network-only; co-evolution unchanged).
+- **Network endowment/creation statistics were not RSiena's.** The statistic was the effect's
+  statistic on the lost-/gained-ties network, which for reciprocity counts dyads lost/gained in
+  BOTH directions (14/10 on s50) instead of RSiena's lost ties reciprocated at the start (-35) and
+  gained ties reciprocated at the end (27); the endowment sign was also flipped (its phase-1
+  derivative came out negative - the "persistently negative outdegreeendow diagonal" of unit 169).
+  With a fixed rate the fits "converged" anyway; with the rate estimated they diverged.
+  `outdegreeendow`+`outdegreecreation` cannot be estimated with the rate at all (lost + gained ties
+  = the rate's distance statistic, RSiena: singular covariance) and are now refused.
+- The non-positive-derivative safeguard now FIXES the parameter (no updates, SE 0), as RSiena
+  does; a decoupled but still-updated parameter drifted and, with the rates estimated, dragged a
+  rate to 70+ (glacially slow simulations).
+- `cscripts/test_nwsaom_multiplex.do` did `cd` to the main checkout and so tested that checkout's
+  Mata code from any worktree; it now runs from the repository root like the other cscripts.
+- The ado smoke tests ran on 6-actor toy networks that cannot identify a model once the rate is
+  estimated (RSiena stops with thetaBound on them under both estimators); they now use glasgow.
+
+
+## `nwsaom, symmetric`: BAGREE rule, symmetric scores, ratecov actor draw (fixed 2026-10-01)
+
+Checked against RSiena's pairwise model types on symmetrized s50 (joint = modelType 6, force = 4,
+agree = 5). Three things were off in the B-family branch of `native/saom_sim.c`: (1) BAGREE used
+`sigma(-u_alter)` for the alter; RSiena's `calculateSymmetricTieFlipProbabilities()` computes
+`1/(1+exp(u))` for u > 0 and `exp(u)/(1+exp(u))` otherwise, i.e. `sigma(-|u|)` - reproduced as is
+(density -2.44 before, RSiena -1.08, now -1.08); (2) the ministep scores used only the initiating
+actor's change statistic, so BJOINT standard errors were twice RSiena's; the scores are now RSiena's
+(`accumulateSymmetricModelScores()`); (3) with `ratecov()` the acting actor was drawn uniformly,
+so the covariate only rescaled the rate - with the rate estimated the two raced off together.
+Effects and SEs now agree with RSiena within 0.01 SE. The rate is per actor in nwsaom and per pair
+in RSiena (ratio about 27-29 on these data, depending on the rule - not a clean constant; not
+chased).
+
+## `nwsaom` e(tratio) was not on RSiena's scale (changed 2026-10-01)
+
+`e(tratio)`, `e(rate_tratio(s))` and the co-evolution/multiplex t-ratios were mean / (sd/sqrt(k3)),
+i.e. about 31.6 times RSiena's convergence t-ratio (mean / sd) with k3(1000). Compared with
+RSiena's 0.1 threshold (a book example did) they flagged every converged fit. All of them are now on
+RSiena's scale (`e(tratio)` = the effect columns of `e(tconv)`), and every fit prints the whole
+`e(tconv)` table plus `e(tconv_max)` below the coefficients.
