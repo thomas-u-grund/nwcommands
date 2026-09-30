@@ -376,3 +376,17 @@ parameter within 0.06 SE of RSiena's unconditional estimates. Things found on th
 - The ado smoke tests ran on 6-actor toy networks that cannot identify a model once the rate is
   estimated (RSiena stops with thetaBound on them under both estimators); they now use glasgow.
 
+
+## `nwsaom, symmetric`: BAGREE rule, symmetric scores, ratecov actor draw (fixed 2026-10-01)
+
+Checked against RSiena's pairwise model types on symmetrized s50 (joint = modelType 6, force = 4,
+agree = 5). Three things were off in the B-family branch of `native/saom_sim.c`: (1) BAGREE used
+`sigma(-u_alter)` for the alter; RSiena's `calculateSymmetricTieFlipProbabilities()` computes
+`1/(1+exp(u))` for u > 0 and `exp(u)/(1+exp(u))` otherwise, i.e. `sigma(-|u|)` - reproduced as is
+(density -2.44 before, RSiena -1.08, now -1.08); (2) the ministep scores used only the initiating
+actor's change statistic, so BJOINT standard errors were twice RSiena's; the scores are now RSiena's
+(`accumulateSymmetricModelScores()`); (3) with `ratecov()` the acting actor was drawn uniformly,
+so the covariate only rescaled the rate - with the rate estimated the two raced off together.
+Effects and SEs now agree with RSiena within 0.01 SE. The rate is per actor in nwsaom and per pair
+in RSiena (ratio about 27-29 on these data, depending on the rule - not a clean constant; not
+chased).

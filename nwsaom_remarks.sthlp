@@ -526,10 +526,20 @@ option needs 100% native term coverage); all five are now natively ported.
 {pstd}
 {opt present()}, {opt missnet()}, and {opt ratecov()} can each be combined with {opt symmetric}.
 v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), and
-network-only (no {opt behavior()}/co-evolution). Note: combining {opt ratecov()} with
-{opt symmetric} runs correctly but currently reports an unreliably wide standard error on the
-rate-covariate coefficient itself (the network effect's own coefficient is unaffected) - a known,
-disclosed limitation, not a crash or a silently wrong estimate.
+network-only (no {opt behavior()}/co-evolution).
+
+{pstd}
+The three rules are RSiena's pairwise model types: {bf:joint} = modelType 6, {bf:force} = 4,
+{bf:agree} = 5 ({bf:agree} reproduces RSiena's alter probability exactly, which for an alter
+utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function). On glasgow waves 1-2 symmetrized, with
+{opt outdegree} alone, the density estimates and their standard errors agree with RSiena's
+(unconditional estimation) within 0.01 standard errors for all three
+({cmd:cscripts/test_nwsaom_rsiena.do}). The rate is on a different scale: {cmd:nwsaom}'s is the
+rate at which an ACTOR gets an opportunity, RSiena reports a much smaller per-pair rate (on these
+data RSiena's is about 1/27 to 1/29 of {cmd:nwsaom}'s, depending on the rule). Before 2026-10-01
+{bf:agree} used a different alter probability, the scores behind the standard errors used only the
+initiating actor's side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()}
+the acting actor was drawn uniformly, so the covariate could not affect who acts.
 
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}

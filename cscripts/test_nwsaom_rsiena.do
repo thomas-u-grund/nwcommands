@@ -17,8 +17,8 @@ do unw_saom.do
 * Effects: M1 two waves, density + reciprocity; M2-M5 three waves, density
 * + reciprocity plus transTrip (M2), gwespFF with parameter 69 instead of
 * transTrip (M3), transTrip + sameX(smoke1), smoke1 = s50s[, 1] as coCovar
-* (M4), transTrip + inPopSqrt + outAct (M5); and a covariate-dependent
-* rate at the end.
+* (M4), transTrip + inPopSqrt + outAct (M5); then a covariate-dependent
+* rate and the three symmetric (pairwise) model types.
 *
 * cond = FALSE is RSiena's UNCONDITIONAL Method of Moments, the estimator
 * nwsaom uses: the rates are estimated jointly with the effects. RSiena's
@@ -136,5 +136,28 @@ assert e(ratecoef_fixed) == 0
 assert e(tconv_max) < 0.3
 drop __smkc
 di as text "ratecov() PASS"
+
+* ---------------------------------------------------------------- symmetric
+* glasgow waves 1-2 symmetrized (a tie where either direction exists),
+* density only, RSiena's pairwise model types (modelType 6 = joint, 4 =
+* forcing, 5 = mutual/agree), unconditional, seeds 1-3 (runs with a
+* failed convergence or missing SE dropped): density -1.268 (SE .104),
+* -2.541 (.204), -1.083 (.124). The rates are on a different scale (RSiena
+* per pair, nwsaom per actor; ratio about 27-29 here) and not compared.
+nwtomata glasgow1, mat(__gs1)
+nwtomata glasgow2, mat(__gs2)
+mata: __gs1 = (__gs1 + __gs1') :> 0
+mata: __gs2 = (__gs2 + __gs2') :> 0
+nwset, mat(__gs1) directed name(__gsym1)
+nwset, mat(__gs2) directed name(__gsym2)
+local __rs  "-1.268 -2.541 -1.083"
+local __rse "0.104 0.204 0.124"
+local __j 0
+foreach __t in joint force agree {
+	local ++__j
+	nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric symtype(`__t') seed(12345)
+	_net_check "outdegree" "`: word `__j' of `__rs''" "`: word `__j' of `__rse''"
+	di as text "symmetric symtype(`__t') PASS"
+}
 
 di as text "nwsaom network-only vs RSiena: PASS"

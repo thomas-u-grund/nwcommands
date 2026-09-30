@@ -1974,15 +1974,19 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					}
 					/* acceptance probabilities (RSiena's pairwise model types):
 					   BFORCE (modelType 4) the actor alone, sigma(u_actor);
-					   BAGREE (5) creation needs both, sigma(u_actor)*sigma(u_alter),
-					   deletion either, 1-(1-sigma(u_actor))(1-sigma(u_alter));
-					   BJOINT (6) sigma(u_actor + u_alter). u_alter is the alter's
-					   own gain from the same change. BAGREE is being checked
-					   against RSiena (see the next commit). */
+					   BAGREE (5) creation needs both, pEgo*pAlt, deletion either,
+					   pEgo + pAlt - pEgo*pAlt; BJOINT (6) sigma(u_actor + u_alter).
+					   For BAGREE RSiena 1.6.6 (NetworkVariable.cpp,
+					   calculateSymmetricTieFlipProbabilities()) computes the alter's
+					   probability as 1/(1+exp(u_alter)) when u_alter > 0 and as
+					   exp(u_alter)/(1+exp(u_alter)) otherwise, i.e.
+					   sigma(-|u_alter|); reproduced here as is. Before 2026-10-01
+					   nwsaom used sigma(-u_alter) throughout (the first branch
+					   only). Scores: RSiena's accumulateSymmetricModelScores(). */
 					if (P->symtype == 2) prob = stable_logistic(u_actor);
 					else if (P->symtype == 3) {
 						pEgo = stable_logistic(u_actor);
-						pAlt = stable_logistic(u_alter);
+						pAlt = stable_logistic(-fabs(u_alter));
 						prob = ij_exists ? (pEgo + pAlt - pEgo * pAlt) : (pEgo * pAlt);
 					}
 					else prob = stable_logistic(u_actor + u_alter);
