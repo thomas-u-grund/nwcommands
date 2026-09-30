@@ -400,6 +400,12 @@ program nwsaom, eclass
 		}
 	}
 
+	// node attributes (ratecov(), nodematch(), behavior(), present(), ...)
+	// are read by row position: make sure the rows are in the waves'
+	// node order (they are not after a network with another node order
+	// was declared later), and that all waves share one node order.
+	_nwrowalign `__nwsaom_wavelist'
+
 	// --- present(): composition change ("joiners and leavers", harmonisation
 	// unit 33) - one 0/1 Stata variable per wave, same "one variable per
 	// wave" convention behavior() already uses, marking which actors are
@@ -2298,6 +2304,7 @@ program define nwsaom_multiplex, eclass
 	_nwsyntax `netawave2', max(1) other(w1b)
 	_nwsyntax `netbwave1', max(1) other(w2a)
 	_nwsyntax `netbwave2', max(1) other(w2b)
+	_nwrowalign `netawave1' `netawave2' `netbwave1' `netbwave2'
 
 	foreach __w in w1a w1b w2a w2b {
 		if "``__w'directed'" != "true" {

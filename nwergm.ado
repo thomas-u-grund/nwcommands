@@ -80,6 +80,9 @@ program nwergm, eclass
 	_opts_oneof "OTP ITP OSP ISP RTP" "type" "`type'" 6556
 
 	_nwsyntax `netname', max(1)
+	// node attributes are read by row position; see _nwrowalign.ado
+	_nwrowalign `netname'
+	_nwsyntax `netname', max(1)
 
 	// --- network-type validation (Part IV/XXII/XXIII/XXIV): reject,
 	// never silently reinterpret.

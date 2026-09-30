@@ -3428,6 +3428,128 @@ string matrix get_nodenames_from_string(string scalar s, real scalar z, string s
 	return(nodenames)
 }
 
+/*
+	Keeping a newly declared network aligned with the rows of the data
+	(fix for the long-standing "nwset, mat() re-sorts the dataset under
+	existing networks" problem, see GOTCHA.md).
+
+	The dataset holds one row per node, labelled by _nwnode, in the
+	node order of the networks already in memory; node attributes are
+	read by row position.  _nwdatasync merges by node label and then
+	sorts the rows into the node order of the network it syncs to.  A
+	new network that lists the same nodes in a different order (most
+	often an unlabelled mat(), which got the default labels n1, n2, ...
+	while, e.g., glasgow's rows are n1, n10, n11, ...) therefore
+	re-sorted the rows under all existing networks and silently
+	misaligned every positional attribute read for them.
+
+	nw_rowlabels(): the labels of the existing node set, i.e. _nwnode
+	of rows 1..z, if exactly z rows carry a (unique, non-blank) label;
+	otherwise an empty vector.  nwset uses it (nw_rowlabels_or()) as the
+	default labels of an unlabelled network of matching size, if the
+	rows are in the node order of a network in memory: node i of a
+	matrix is observation i of the data.
+
+	nw_align_to_rows(): if the network's node labels are a permutation
+	of the existing node set and the rows are in the node order of
+	another network in memory, reorder the network's nodes (edges, node
+	labels and node variable names together) into the row order of the
+	data, so that _nwdatasync has nothing to re-sort.  Node identity is
+	carried by the labels, so this changes no tie.
+*/
+string rowvector nw_rowlabels(real scalar z, string scalar v){
+	string colvector lab
+	real scalar vi
+
+	vi = _st_varindex(v)
+	if (vi >= . | z < 1 | st_nobs() < z) return(J(1,0,""))
+	if (!st_isstrvar(vi)) return(J(1,0,""))
+	lab = st_sdata(., vi)
+	if (sum(lab :!= "") != z) return(J(1,0,""))
+	lab = lab[(1::z)]
+	if (any(lab :== "")) return(J(1,0,""))
+	if (rows(uniqrows(lab)) != z) return(J(1,0,""))
+	return(lab')
+}
+
+/*
+	nw_rows_aligned(): 1 if rows 1..n of the data are in the node order
+	of network p (or if the data carry no node labels to check), else 0.
+	nw_same_nodeorder(): 1 if two networks list the same node labels in
+	the same order.  Used by _nwrowalign.ado.
+*/
+real scalar nw_rows_aligned(pointer(class nw_def scalar) scalar p, string scalar v){
+	string rowvector nm
+	real scalar vi, n
+
+	vi = _st_varindex(v)
+	if (vi >= .) return(1)
+	if (!st_isstrvar(vi)) return(1)
+	nm = p->get_nodenames()
+	n = cols(nm)
+	if (st_nobs() < n) return(0)
+	return(st_sdata((1::n), vi)' == nm)
+}
+
+real scalar nw_same_nodeorder(pointer(class nw_def scalar) scalar p, pointer(class nw_def scalar) scalar q){
+	return(p->get_nodenames() == q->get_nodenames())
+}
+
+/*
+	nw_rows_follow_net(): 1 if rows 1..n of the data (labels lab) are in
+	the node order of a network in memory other than p.  Only then do the
+	rows carry a node order to keep; after a network over a different
+	node set has re-sorted them, they follow no network, and a new network
+	is left to _nwdatasync as before (which re-sorts the rows into its
+	order, e.g. back into the order of the networks it was derived from).
+*/
+real scalar nw_rows_follow_net(string rowvector lab, pointer(class nw_def scalar) rowvector others, | pointer(class nw_def scalar) scalar p){
+	real scalar k
+
+	for (k = 1; k <= cols(others); k++) {
+		if (others[k] == NULL) continue
+		if (args() >= 3) if (others[k] == p) continue
+		if (others[k]->get_nodes() != cols(lab)) continue
+		if (others[k]->get_nodenames() == lab) return(1)
+	}
+	return(0)
+}
+
+string rowvector nw_rowlabels_or(string rowvector deflab, string scalar v, pointer(class nw_def scalar) rowvector others){
+	string rowvector lab
+
+	lab = nw_rowlabels(cols(deflab), v)
+	if (cols(lab) != cols(deflab)) return(deflab)
+	if (!nw_rows_follow_net(lab, others)) return(deflab)
+	return(lab)
+}
+
+void nw_align_to_rows(pointer(class nw_def scalar) scalar p, string scalar v, pointer(class nw_def scalar) rowvector others){
+	string rowvector nm, lab, nv
+	real colvector o1, o2, perm
+	real matrix E
+	real scalar n
+
+	if (p->is_2mode_boolean()) return
+	nm = p->get_nodenames()
+	n = cols(nm)
+	lab = nw_rowlabels(n, v)
+	if (cols(lab) != n | n == 0) return
+	if (lab == nm) return
+	if (!nw_rows_follow_net(lab, others, p)) return
+	if (rows(uniqrows(nm')) != n) return
+	o1 = order(nm', 1)
+	o2 = order(lab', 1)
+	if (nm[o1'] != lab[o2']) return
+	perm = J(n, 1, .)
+	perm[o2] = o1
+	E = (*p->get_matrix())[perm, perm]
+	nv = p->get_nodesvar()
+	p->set_edge(E)
+	p->set_nodenames(nm[perm'])
+	if (cols(nv) == n) p->set_nodesvar(nv[perm'])
+}
+
 string matrix get_nodenames_from_var(string scalar v, real scalar z, string scalar def){
 	string scalar s
 

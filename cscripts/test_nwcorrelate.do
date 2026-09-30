@@ -23,10 +23,13 @@ assert `"`r(valued)'"'   == `"true"'
 assert `"`r(mode2)'"'    == `"false"'
 assert `"`r(netname)'"'  == `"_corr"'
 assert `"`r(name)'"'     == `"_corr"'
-assert `"`r(labs)'"'     == `"n1,n2,n3,n4"'
+* _corr is a network over netfromvar1's nodes and, since 2026-10-01, takes
+* their labels (it used to be labelled n1..n4, which added four rows)
+assert `"`r(labs)'"'     == `"v1,v2,v3,v4"'
 assert `"`r(directed)'"' == `"true"'
 assert `"`r(selfloop)'"' == `"false"'
-assert `"`r(vars)'"'     == `"n1 n2 n3 n4"'
+assert `"`r(vars)'"'     == `"v1 v2 v3 v4"'
+assert _N == 4
 
 assert         r(nodes)         == 4
 assert         r(density)       == 1
