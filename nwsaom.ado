@@ -182,7 +182,7 @@ program nwsaom, eclass
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(real 1) THETA0(string) K0(integer 50) K3(integer 1000) ///
-		FIRSTG(real 0.2) SEED(integer -1) ]
+		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) ]
 	set more off
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
@@ -1693,6 +1693,13 @@ program nwsaom, eclass
 	}
 
 	capture mata: mata drop __nwsaom_fit
+	// cores(): worker threads for the native batch simulations (0 = all
+	// physical cores); read by SaomCores() in unw_saom.do
+	if `cores' < 0 {
+		di "{err}option {bf:cores()} must be 0 (all physical cores) or a positive number of threads."
+		error 198
+	}
+	mata: __nwsaom_cores = `cores'
 	if `__nwsaom_coev' & `__nwsaom_multi' {
 		// harmonisation unit 26 ("extend it to N waves"): joint
 		// network+behavior Method of Moments / Robbins-Monro, chained

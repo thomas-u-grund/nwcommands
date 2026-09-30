@@ -4233,7 +4233,9 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	real matrix theta_hist, presentPd
 	real colvector condTimes
 	real matrix missDyadsPdCombined, missDyadsPdTmp, presentPdForCall	// harmonisation unit 35/33 (native port)
-	real scalar needsExtras
+	real scalar needsExtras, use_batch
+	real matrix bout, missBehZeroPd
+	real rowvector tsum
 
 	nwaves = cols(Gwaves)
 	nperiods = nwaves - 1
@@ -4328,12 +4330,29 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	}
 	needsExtras = hasmiss | haspresent
 
+	// batch/threaded native path (plugin protocol >= 4, 2026-10-01): the
+	// periods' data are handed to the plugin once; phases 1-3 and the rate
+	// refinement then run K simulations per call on worker threads
+	use_batch = 0
+	if (use_native) use_batch = (SaomNativePluginVersion() >= 4)
+	if (use_batch) {
+		missBehZeroPd = J((*Gwaves[1]).n, nperiods, 0)
+		SaomBatchSetup(Gwaves, nperiods, cfg, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0,
+			hasmiss, missDyadsPdCombined, missBehZeroPd, haspresent, presentPdForCall)
+		tsum = colsum(target)
+	}
+
 	// --- Phase 1: pooled Jacobian - SUM the per-period deviation/score
 	// across periods before building Dhat, otherwise identical to
 	// SaomEstimateRM()'s own phase 1.
 	Zdev = J(K0, p, 0)
 	Zsco = J(K0, p, 0)
-	for (k=1; k<=K0; k++) {
+	if (use_batch) {
+		bout = SaomBatchRun(nperiods, p, 0, theta0, J(1, 0, 0), ratecur, J(1, 0, 0), J(1, 0, 0), K0, 1, 0)
+		Zdev = bout[., 1..p] :- tsum
+		Zsco = bout[., (p+1)..(2*p)]
+	}
+	else for (k=1; k<=K0; k++) {
 		dev = J(1, p, 0)
 		devp = J(1, p, 0)		// score accumulator (reusing devp to avoid a second p-length temp)
 		for (pd=1; pd<=nperiods; pd++) {
@@ -4402,7 +4421,8 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 		while (1) {
 			nit = nit + 1
 			dev = J(1, p, 0)
-			for (pd=1; pd<=nperiods; pd++) {
+			if (use_batch) dev = SaomBatchRun(nperiods, p, 0, theta, J(1, 0, 0), ratecur, J(1, 0, 0), J(1, 0, 0), 1, 0, 0)[1, 1..p] - tsum
+			else for (pd=1; pd<=nperiods; pd++) {
 				Gp = *Gwaves[pd]
 				if (use_native) {
 					if (needsExtras) cres = SaomSimulateIntervalNative(Gp, M, cfg, theta, ratecur[pd], 0, 0, select(missDyadsPdCombined[.,2..3], missDyadsPdCombined[.,1] :== pd), presentPdForCall[.,pd])
@@ -4465,7 +4485,13 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	Zphase3 = J(K3, p, 0)
 	Zsco3 = J(K3, p, 0)		// harmonisation unit 18 - pooled score (summed across periods, same convention as `dev' below)
 	rate_hist = J(K3, nperiods, 0)
-	for (k=1; k<=K3; k++) {
+	if (use_batch) {
+		bout = SaomBatchRun(nperiods, p, 0, fit.theta, J(1, 0, 0), fit.rates, J(1, 0, 0), J(1, 0, 0), K3, 1, 0)
+		Zphase3 = bout[., 1..p] :- tsum
+		Zsco3 = bout[., (p+1)..(2*p)]
+		for (pd=1; pd<=nperiods; pd++) rate_hist[., pd] = bout[., 2*p + 6*(pd-1) + 5] :- targetRate[pd]
+	}
+	else for (k=1; k<=K3; k++) {
 		dev = J(1, p, 0)
 		devp = J(1, p, 0)
 		for (pd=1; pd<=nperiods; pd++) {
@@ -4537,7 +4563,13 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	// reason as SaomEstimateRM()'s own identical block. Gated on
 	// `haspresentReal' (not plain `haspresent') - see SaomEstimateRM()'s
 	// own identical comment.
-	if (!haspresentReal & !hasmiss) {
+	if (!haspresentReal & !hasmiss & use_batch) {
+		bout = SaomBatchRun(nperiods, p, 0, fit.theta, J(1, 0, 0), J(1, nperiods, 1), J(1, 0, 0), targetRate, K3, 0, 1)
+		fit.rates = mean(bout)
+		fit.rate_ses = J(1, nperiods, 0)
+		for (pd=1; pd<=nperiods; pd++) fit.rate_ses[pd] = sqrt(variance(bout[., pd]))
+	}
+	else if (!haspresentReal & !hasmiss) {
 		fit.rates = J(1, nperiods, 0)
 		fit.rate_ses = J(1, nperiods, 0)
 		for (pd=1; pd<=nperiods; pd++) {
@@ -4559,6 +4591,7 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	}
 	else fit.rate_ses = J(1, nperiods, 0)
 
+	if (use_batch) SaomBatchCleanup()
 	if (use_native) SaomNativeCleanupFrame()
 
 	return(fit)
@@ -6207,7 +6240,7 @@ struct SaomCoevCtx {
 	struct SaomNativeConfig scalar cfg
 	struct SaomBehaviorNativeConfig scalar cfgBeh
 	real scalar behminval, behmaxval, overallMean, simMean
-	real scalar use_native, hasmiss, haspresent, needsExtras
+	real scalar use_native, use_batch, hasmiss, haspresent, needsExtras
 	real scalar nperiods, pNet, pBeh, p, ptot, n
 	real matrix target			// nperiods x p
 	real rowvector targetRateNet, targetRateBeh, npresentPd
@@ -6303,6 +6336,43 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 	}
 }
 
+/* K replicates at `theta' (internal order): K x ptot deviations `Z' and
+   scores `S'. Batch (threaded native) path when available, otherwise K
+   calls of SaomCoevReplicate(). */
+void SaomCoevSimMany(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
+	class SaomBehaviorModel scalar Mbeh, real rowvector theta, real scalar K,
+	real scalar want_score, real matrix Z, real matrix S) {
+
+	real matrix out
+	real rowvector dev, sco, tsum
+	real scalar k, pd, P, p, b
+
+	P = C.nperiods
+	p = C.p
+	Z = J(K, C.ptot, 0)
+	S = J(K, C.ptot, 0)
+	if (C.use_batch) {
+		out = SaomBatchRun(P, C.pNet, C.pBeh, theta[1..C.pNet], theta[(C.pNet+1)..p],
+			theta[(p+1)..(p+P)], theta[(p+P+1)..C.ptot], J(1, 0, 0), K, want_score, 0)
+		tsum = colsum(C.target)
+		Z[., 1..p] = out[., 1..p] :- tsum
+		S[., 1..p] = out[., (p+1)..(2*p)]
+		for (pd=1; pd<=P; pd++) {
+			b = 2*p + 6*(pd-1)
+			Z[., p+pd] = out[., b+1] :- C.targetRateNet[pd]
+			Z[., p+P+pd] = out[., b+2] :- C.targetRateBeh[pd]
+			S[., p+pd] = out[., b+3] / theta[p+pd] :- C.npresentPd[pd]
+			S[., p+P+pd] = out[., b+4] / theta[p+P+pd] :- C.npresentPd[pd]
+		}
+		return
+	}
+	for (k=1; k<=K; k++) {
+		SaomCoevReplicate(C, M, Mbeh, theta, dev, sco)
+		Z[k,.] = dev
+		S[k,.] = sco
+	}
+}
+
 struct SaomCoevMultiFit {
 	real rowvector thetaNet
 	real rowvector thetaBeh
@@ -6334,7 +6404,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	class ErgmGraph scalar Gp, Gpend
 	class SaomBehavior scalar Behpend
 	real matrix Zdev, Zsco, Ddev, Dsco, Dhat, temp, Dinv, msf, sfinvcov, Zphase3, Zsco3
-	real matrix Ddev3, Dsco3, Dhat3, Dinv3, missDyadsPdTmp, S3
+	real matrix Ddev3, Dsco3, Dhat3, Dinv3, missDyadsPdTmp, S3, Z1, S1
 	real rowvector theta, theta0, dev, sco, prevdev, prod0, prod1, ac, stdcap
 	real rowvector thav, fchange, changestep, ratesNet0, ratesBeh0, thprev, m3
 	real scalar pd, k, nwaves, P, p, ptot, n, hasbehsim
@@ -6381,7 +6451,12 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	C.cfg = SaomNativeSetup(M)
 	C.cfgBeh = SaomBehaviorNativeSetup(Mbeh)
 	C.use_native = C.cfg.eligible & C.cfgBeh.eligible & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= 3)
+	C.use_batch = 0
+	if (C.use_native) {
+		k = SaomNativePluginVersion()
+		C.use_native = (k >= 3)
+		C.use_batch = (k >= 4)
+	}
 	C.missDyadsPd = J(0, 3, 0)
 	if (C.use_native & C.hasmiss) {
 		for (pd=1; pd<=P; pd++) {
@@ -6426,14 +6501,14 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 
 	theta0 = (theta0Net, theta0Beh, ratesNet0, ratesBeh0)
 
-	// --- Phase 1: Jacobian by the score-function method
-	Zdev = J(K0, ptot, 0)
-	Zsco = J(K0, ptot, 0)
-	for (k=1; k<=K0; k++) {
-		SaomCoevReplicate(C, M, Mbeh, theta0, dev, sco)
-		Zdev[k,.] = dev
-		Zsco[k,.] = sco
+	if (C.use_batch) {
+		if (C.hasmiss & rows(C.missDyadsPd) == 0) C.missDyadsPd = J(0, 3, 0)
+		SaomBatchSetup(Gwaves, P, C.cfg, C.cfgBeh.termcodes, Behwaves, behminval, behmaxval,
+			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd)
 	}
+
+	// --- Phase 1: Jacobian by the score-function method
+	SaomCoevSimMany(C, M, Mbeh, theta0, K0, 1, Zdev, Zsco)
 	Ddev = Zdev :- mean(Zdev)
 	Dsco = Zsco :- mean(Zsco)
 	Dhat = (Ddev' * Dsco) / K0
@@ -6474,7 +6549,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 
 		while (1) {
 			nit = nit + 1
-			SaomCoevReplicate(C, M, Mbeh, theta, dev, sco)
+			SaomCoevSimMany(C, M, Mbeh, theta, 1, 0, Z1, S1)
+			dev = Z1[1,.]
 
 			if (mod(nit,2) == 1) prevdev = dev
 			else {
@@ -6519,13 +6595,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.ratesBeh = theta[(p+P+1)..ptot]
 
 	// --- Phase 3: convergence check and sandwich covariance
-	Zphase3 = J(K3, ptot, 0)
-	Zsco3 = J(K3, ptot, 0)
-	for (k=1; k<=K3; k++) {
-		SaomCoevReplicate(C, M, Mbeh, theta, dev, sco)
-		Zphase3[k,.] = dev
-		Zsco3[k,.] = sco
-	}
+	SaomCoevSimMany(C, M, Mbeh, theta, K3, 1, Zphase3, Zsco3)
 
 	m3 = mean(Zphase3)
 	S3 = variance(Zphase3)
@@ -6557,6 +6627,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.ratesBehSE = sqrt(diagonal(fit.Vfull)[(p+P+1)..ptot])'
 
 	if (hasbehsim) SaomBehSimSync(M, *Behwaves[1])
+	if (C.use_batch) SaomBatchCleanup()
 	if (C.use_native) SaomNativeCleanupFrame()
 
 	return(fit)
@@ -6707,6 +6778,12 @@ string scalar SaomNativePluginSubdir(){
    nwsaom.ado, so the findfile() branch is what applies there. */
 string scalar SaomNativePluginPath(){
 	string scalar fname, found, full, dir, fn, cand
+	pointer(string scalar) scalar ovr
+
+	// testing/benchmarking hook: a Mata external string
+	// __nwsaom_saom_plugin, when set, names the plugin file to use
+	ovr = findexternal("__nwsaom_saom_plugin")
+	if (ovr != NULL) if (*ovr != "") return(*ovr)
 
 	fname = SaomNativePluginFilename()
 	full = findfile("nwsaom.ado")
@@ -7488,6 +7565,129 @@ real scalar SaomNativePluginVersion(){
 	if (rows(v) == 0) return(0)
 	if (v == .) return(0)
 	return(v)
+}
+
+/* ===================================================================
+   Batch simulation (plugin protocol >= 4, 2026-10-01): the estimator
+   hands the plugin every period's starting data ONCE
+   (SaomBatchSetup()), then asks for K independent simulations at a time
+   (SaomBatchRun()); the plugin runs them on worker threads. Replicate k,
+   period pd draws from its own random stream seeded from (seed, k, pd),
+   with `seed' drawn from Stata's RNG once per SaomBatchRun() call, so a
+   given `set seed' gives the same result whatever the number of threads.
+
+   SaomCores(): threads to use - the Mata external __nwsaom_cores (set
+   by nwsaom.ado's cores() option), 0 or unset = all physical cores.
+   =================================================================== */
+real scalar SaomCores(){
+	pointer(real scalar) scalar p
+	p = findexternal("__nwsaom_cores")
+	if (p == NULL) return(0)
+	if (*p == .) return(0)
+	return(*p)
+}
+
+void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scalar P,
+	struct SaomNativeConfig scalar cfg, real rowvector behtermcodes,
+	pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
+	real scalar simMean, real scalar overallMean, real scalar hasmiss, real matrix missDyadsPd,
+	real matrix missBehPd, real scalar haspresent, real matrix presentPd) {
+
+	real matrix E, t
+	real scalar n, pd, nattr, nbeh, nrows, i, junk
+	string rowvector names
+	string scalar origframe, argstr
+
+	n = (*Gwaves[1]).n
+	E = J(0, 3, 0)
+	for (pd=1; pd<=P; pd++) {
+		t = (*Gwaves[pd]).all_ties()
+		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t)
+	}
+	nattr = cols(cfg.attrmat)
+	nbeh = cols(behtermcodes)
+	nrows = max((rows(E), n, rows(missDyadsPd), 1))
+
+	names = ("e_pd", "e_i", "e_j")
+	for (i=1; i<=nattr; i++) names = names, "a" + strofreal(i)
+	if (nbeh > 0) for (pd=1; pd<=P; pd++) names = names, "b" + strofreal(pd)
+	if (hasmiss) {
+		names = names, ("m_pd", "m_i", "m_j")
+		if (nbeh > 0) for (pd=1; pd<=P; pd++) names = names, "mb" + strofreal(pd)
+	}
+	if (haspresent) for (pd=1; pd<=P; pd++) names = names, "pr" + strofreal(pd)
+
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_batch")
+	stata("frame create __saom_batch")
+	st_framecurrent("__saom_batch")
+	st_addobs(nrows)
+	junk = st_addvar("double", names)
+	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
+	for (i=1; i<=nattr; i++) st_store((1::n), "a" + strofreal(i), cfg.attrmat[1::n, i])
+	if (nbeh > 0) for (pd=1; pd<=P; pd++) st_store((1::n), "b" + strofreal(pd), *Behwaves[pd])
+	if (hasmiss) {
+		if (rows(missDyadsPd) > 0) st_store((1::rows(missDyadsPd)), ("m_pd", "m_i", "m_j"), missDyadsPd)
+		if (nbeh > 0) for (pd=1; pd<=P; pd++) st_store((1::n), "mb" + strofreal(pd), missBehPd[., pd])
+	}
+	if (haspresent) for (pd=1; pd<=P; pd++) st_store((1::n), "pr" + strofreal(pd), presentPd[., pd])
+
+	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
+	for (i=1; i<=cols(cfg.termcodes); i++) argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
+	argstr = argstr + " " + strofreal(nbeh)
+	for (i=1; i<=nbeh; i++) argstr = argstr + " " + strofreal(behtermcodes[i])
+	argstr = argstr + " " + strofreal(behmin, "%25.17g") + " " + strofreal(behmax, "%25.17g") + " " + strofreal(simMean, "%25.17g") + " " + strofreal(overallMean, "%25.17g")
+	argstr = argstr + " " + strofreal(hasmiss) + " " + strofreal(haspresent) + " " + strofreal(rows(E)) + " " + strofreal(rows(missDyadsPd))
+
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_batch")
+}
+
+/* K replicates at the given parameters. condmode=0: K x (2*(pNet+pBeh)
+   + 6*P) - summed statistics (network, then lagged behavior), summed
+   scores, then per period (netdist, behdist, stepsNet, stepsBeh,
+   nchanges, nchangesBeh). condmode=1: K x P conditional times (rates
+   must be 1 and `targets' the per-period target distances). */
+real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
+	real rowvector thetaNet, real rowvector thetaBeh, real rowvector ratesNet,
+	real rowvector ratesBeh, real rowvector targets, real scalar K,
+	real scalar want_score, real scalar condmode) {
+
+	real scalar W, i, seed, junk
+	string rowvector names
+	string scalar origframe, argstr
+	real matrix out
+
+	W = condmode ? P : 2*(pNet + pBeh) + 6*P
+	names = J(1, W, "")
+	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
+	origframe = st_framecurrent()
+	// phase 2 calls this once per Robbins-Monro step: only touch the
+	// frame when it is missing or too small
+	if (!st_frameexists("__saom_batch_out")) stata("frame create __saom_batch_out")
+	st_framecurrent("__saom_batch_out")
+	if (st_nvar() < W) for (i=st_nvar()+1; i<=W; i++) junk = st_addvar("double", names[i])
+	if (st_nobs() < K) st_addobs(K - st_nobs())
+
+	seed = floor(runiform(1,1) * 2147483647)
+	argstr = "BATCHRUN|" + strofreal(K) + " " + strofreal(seed) + " " + strofreal(SaomCores()) + " " + strofreal(want_score) + " " + strofreal(condmode)
+	for (i=1; i<=pNet; i++) argstr = argstr + " " + strofreal(thetaNet[i], "%25.17g")
+	for (i=1; i<=pBeh; i++) argstr = argstr + " " + strofreal(thetaBeh[i], "%25.17g")
+	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal(ratesNet[i], "%25.17g")
+	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(ratesBeh) ? ratesBeh[i] : 0), "%25.17g")
+	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(targets) ? targets[i] : 0), "%25.17g")
+
+	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
+	out = st_data((1::K), names)
+	st_framecurrent(origframe)
+	return(out)
+}
+
+void SaomBatchCleanup(){
+	stata("capture plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	stata("capture frame drop __saom_batch_out")
 }
 
 /* Drops the persistent __saom_native frame (harmonisation unit 12 -

@@ -300,3 +300,32 @@ both rates stay at their closed-form starting values. A fix needs per-network mi
 end-vs-start distances from the NN branch of `native/saom_sim.c` (it only returns the total step
 count), the rates added to the parameter vector, and probably lagged cross-network (`crprod`)
 statistics. Not done yet; there is no RSiena benchmark for it in the test suite.
+
+## Plugin programs defined inside nwsaom are not the ones a do-file defines (found 2026-10-01)
+
+`program saomnativesim, plugin using("other.plugin")` typed in a do-file does NOT make nwsaom use
+`other.plugin`: the plugin program nwsaom's own Mata code defines (via `stata("capture program
+saomnativesim, plugin using(...)")` while the ado-file runs) is a separate definition, and a
+`plugin call saomnativesim` from the do-file afterwards even reports "unrecognized command". Two
+"old vs new plugin" comparisons and a pinned-baseline benchmark silently ran the checkout plugin
+before this was noticed (a static call counter in a profiling build showed calls=1). To choose a
+plugin file for testing or benchmarking, set the Mata external `__nwsaom_saom_plugin` to its path;
+`SaomNativePluginPath()` returns it when set. Likewise, a diagnostic `plugin call` (e.g. a
+profiling dump) must be issued from inside the same Mata code path, not from the do-file.
+
+## nwsaom threads: results must not depend on the number of cores (2026-10-01)
+
+The batch entry points (`BATCHSETUP|`/`BATCHRUN|`/`BATCHCLEAN|` in `native/saom_sim.c`) keep the
+periods' starting data resident in the plugin between calls (static `batch_state`; freed by
+`SaomBatchCleanup()`), and run K replicates x P periods on worker threads. Unit (k, pd) seeds its
+own RNG from (seed, k, pd), and per-replicate sums over periods are formed after the join in a
+fixed order, so `cores(1)` and the default give bit-identical results (checked on six benchmark
+models). Worker threads call only `simulate_period()`, which touches no Stata API and no mutable
+statics (`saom_behsim_range` is set before the threads start). Keep it that way: any new term
+that caches state in a static breaks thread safety. Outputs come back through a frame
+(`__saom_batch_out`), not a Stata matrix: Stata/BE matrices are limited to 800 rows, below k3 =
+1000. For small networks, phase-2 steps run single-threaded (waking threads costs more than a
+50-actor simulation); that choice does not affect results. The new random streams changed results
+for a given seed relative to 2332434: the 6-model RSiena validation moved from max |diff|/SE 0.19
+to 0.17 (mean 0.06 both). Only the macOS plugin is rebuilt locally; the Windows build uses Win32
+threads (`#if defined(_WIN32)`), untested here until CI builds it.
