@@ -2108,7 +2108,7 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (one per inter-wave period):"
 		matlist `rates', format(%9.4f)
-		di as text "Rate standard errors (real RSiena's own reported convention, raw SD not SE-of-mean):"
+		di as text "Rate standard errors:"
 		matlist `ratese', format(%9.4f)
 
 		ereturn matrix rates = `rates'
