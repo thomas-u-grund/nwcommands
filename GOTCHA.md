@@ -353,8 +353,9 @@ parameter within 0.06 SE of RSiena's unconditional estimates. Things found on th
   significant digits.** With K=1 batch calls in phase 2 the simulated distances came out biased
   (mean deviation -1.2 instead of +0.35 over 5000 calls at fixed parameters, 7 SE), which pushed
   the estimated rate up by 0.1 (rate t-ratio +0.13 on average). All seed arguments now use
-  `%12.0f`. `unw_ergm.do` (nwergm's MCMC seed, `strofreal(rngseed)`) has the same formatting and
-  was left alone.
+  `%12.0f`. nwergm had the same bug (`unw_ergm.do`, the MCMC seed, and theta, term parameters and
+  observed statistics sent with the default `%9.0g`); fixed the same way on 2026-10-01 (seed
+  `%12.0f`, reals `%25.17g`).
 - **Starting values matter more once the rate moves.** RSiena starts outdegree at a data-derived
   value (`getNetworkStartingVals()`, now `SaomOutdegreeStart()`) and ends phase 1 with a partial
   quasi-Newton step (`phase1.2`); nwsaom did neither. From outdegree = 0 the network explodes in
@@ -398,3 +399,46 @@ i.e. about 31.6 times RSiena's convergence t-ratio (mean / sd) with k3(1000). Co
 RSiena's 0.1 threshold (a book example did) they flagged every converged fit. All of them are now on
 RSiena's scale (`e(tratio)` = the effect columns of `e(tconv)`), and every fit prints the whole
 `e(tconv)` table plus `e(tconv_max)` below the coefficients.
+
+## `nwsaom` conditional estimation is the default for network-only models (2026-10-01)
+
+RSiena's `initializeFRAN()`: `cconditional <- !maxlike && (number of dependent variables == 1)`,
+and not with composition change. nwsaom follows that: network-only fits are conditional unless
+`unconditional` is given; co-evolution and multiplex fits are always unconditional; `present()`
+that restricts an actor switches a network-only fit to unconditional. Conditional mode simulates
+each period at rate 1 until the distance from the start reaches the observed distance
+(`EpochSimulation::runEpoch()`: checked after every step, so at least one step; missing dyads not
+counted; symmetric networks in steps of two); the rate is the mean phase-3 time and its reported
+"SE" the SD of those times (`terminateFRAN()`). Details that matter for matching RSiena:
+- The distance must exclude missing dyads and count symmetric changes twice in the plugin's
+  conditional mode too (protocol 6); protocol 5 counted every toggle.
+- RSiena's conditional and unconditional estimates differ by up to 0.3 SE on s50; each nwsaom mode
+  matches its RSiena counterpart within 0.07 SE (`cscripts/test_nwsaom_rsiena.do`).
+- For the symmetric (pairwise) model types RSiena's conditional rate is per pair: nwsaom's
+  per-actor rate divided by n - 1. RSiena's UNCONDITIONAL pairwise rates are on yet another scale
+  (about 1.8 times its conditional ones on s50); not chased.
+- `outdegreeendow`+`outdegreecreation` stays refused: lost + gained ties is the distance that
+  conditional estimation holds fixed, and RSiena's covariance is singular under both estimators.
+  `linearendow`+`linearcreation` (co-evolution) is refused for the same reason (behavior distance).
+
+## `nwset, mat()` re-sorts the dataset under existing networks (found 2026-10-01, not fixed)
+
+After `nwwebuse glasgow`, the data rows are in the networks' node order (n1, n10, n11, ...).
+`nwset, mat(...) name(new)` then sorts the dataset by node label (n1, n2, n3, ...) while the
+existing networks keep their node order. Every command that reads a node covariate by row
+position afterwards (nwsaom `ratecov()`, `nodematch()`, ..., probably nwergm too) silently pairs
+actors with other actors' values: `ratecov(smkc)` on glasgow gave 0.90 before such an `nwset` and
+0.12 after it. Create covariates and run models before declaring new networks with `mat()`, or
+re-derive the covariate after it. Not investigated further.
+
+## `nwergm` estat mcmcdiag ESS was overstated; estat gof chains too short (changed 2026-10-01)
+
+`estat mcmcdiag` computed ESS as n(1-rho1)/(1+rho1), which assumes geometric decay of the
+autocorrelation. ERGM chains on sparse networks decay much more slowly (Faux Mesa High: lag-1 0.86,
+lag-10 still 0.62), so ESS was overstated severalfold (472-539 reported, 262-318 true). It is now
+coda's `effectiveSize()`, n*var(x)/spectrum0.ar(x) via `ergm_spec0_scalar()`, and is returned as
+`r(ess)` (checked against coda in `cscripts/test_nwergm_ess.do`). `estat gof` used a fixed
+3000/50 burn-in/interval and 50 draws regardless of the fit; on slowly mixing models its simulated
+averages then drifted with the seed (mean degree 2.25-2.41 vs observed 1.98). Defaults now follow
+R's `gof.ergm()`: 100 draws and the fit's `e(mcmc_burnin)`/`e(mcmc_interval_final)`. Even so, such
+models vary from seed to seed in R too (same theta: mean degree 1.97-2.12 over 4 seeds).

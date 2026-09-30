@@ -267,8 +267,10 @@ real scalar SaomSimulateInterval(class ErgmGraph scalar G, class ErgmModel scala
    elapsed time. Averaged over replicates at given effects, the elapsed
    time estimates the rate that reproduces the target distance.
 
-   nwsaom's estimators are UNCONDITIONAL (see SaomEstimateNet()) and do
-   not call this. It is kept, with its native counterpart
+   The estimators do not call this (conditional estimation uses the
+   conditional mode of the interval simulators, which also return the
+   statistics and scores - see SaomEstimateNet()). It is kept, with its
+   native counterpart
    SaomSimulateCondTimeNative() and the batch condmode=1 of
    SaomBatchRun(), as a simulation utility; cscripts/test_nwsaom_native.do
    checks the native version against it.
@@ -325,6 +327,7 @@ real scalar SaomSimulateConditionalTime(class ErgmGraph scalar G, class ErgmGrap
    =================================================================== */
 struct SaomScoredResult {
 	real scalar steps
+	real scalar t			// elapsed time (conditional simulation: the time the target distance took)
 	real scalar nchanges		// ACCEPTED ministeps only (excludes "stay"); the rate's statistic is the end-vs-start distance instead (SaomEstimateNet())
 	real rowvector score
 	real scalar rcscore		// harmonisation unit 172 - covariate-rate coefficient's own SCORE (a compensated-counting-process martingale score, NOT a moment statistic), ONLY populated by SaomSimIntScoredRateCov(); see that function's own header comment for the real-RSiena-verified formula this reproduces (DependentVariable.cpp's accumulateRateScores())
@@ -332,11 +335,13 @@ struct SaomScoredResult {
 
 struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
-	real rowvector fntype, real matrix structural) {
+	real rowvector fntype, real matrix structural, real scalar condtarget, real matrix distmask) {
 
 	struct SaomScoredResult scalar res
 	real matrix chgmat
 	real rowvector u, ebar, chosen_chg
+	real scalar iscond, hasdm, simDist
+	real matrix dflip
 	real scalar t, n, p, i, j, k, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype, hasstructural
 	real colvector presentIdx
 
@@ -354,6 +359,17 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 	// comment for the full design account; CONTENT-based detection
 	// throughout (not args()==), matching this file's own hasnetgate/
 	// hasratecov lesson.
+	// conditional simulation (RSiena's conditional estimation, see
+	// SaomEstimateNet()): run until the distance from the starting network
+	// reaches `condtarget' (at least one step); `distmask' flags dyads not
+	// counted (missing at either end of the period); condtarget missing or
+	// < 0 = the ordinary unit interval
+	iscond = 0
+	if (args() >= 8) iscond = (condtarget < . & condtarget >= 0)
+	hasdm = 0
+	if (args() >= 9) hasdm = (rows(distmask) > 0)
+	simDist = 0
+	if (iscond) dflip = J(G.n, G.n, 0)
 	haspresent = (args() >= 5)
 	hasfntype = (args() >= 6) & (cols(fntype) > 0) & any(fntype :!= 0)
 	hasstructural = (rows(structural) > 0)
@@ -364,9 +380,9 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 	else npresent = n
 
 	t = 0
-	while (t < 1) {
+	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
 		t = t - ln(runiform(1,1)) / (npresent * rate)
-		if (t < 1) {
+		if (iscond | t < 1) {
 			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
 			else i = ceil(runiform(1,1) * n)
 
@@ -418,10 +434,23 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			if (choice != 0) {
 				G.toggle(i, choice)
 				res.nchanges = res.nchanges + 1
+				if (iscond) {
+					if (hasdm) {
+						if (distmask[i, choice] == 0) {
+							dflip[i, choice] = 1 - dflip[i, choice]
+							simDist = simDist + (dflip[i, choice] ? 1 : -1)
+						}
+					}
+					else {
+						dflip[i, choice] = 1 - dflip[i, choice]
+						simDist = simDist + (dflip[i, choice] ? 1 : -1)
+					}
+				}
 			}
 			res.steps = res.steps + 1
 		}
 	}
+	res.t = t
 	return(res)
 }
 
@@ -439,6 +468,7 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
    =================================================================== */
 struct SaomCountedResult {
 	real scalar steps
+	real scalar t			// elapsed time (conditional simulation: the time the target distance took)
 	real scalar nchanges
 	real rowvector stat		// harmonisation unit 14 - ONLY populated by SaomSimulateIntervalNative(); SaomSimulateIntervalCounted() (the Mata path) leaves it empty, since callers on that path already call M.full_statistic() themselves as before
 	real rowvector score		// harmonisation unit 16 - ONLY populated by SaomSimulateIntervalNative() when called with want_score=1 (phase 1's own native path); empty otherwise
@@ -448,9 +478,11 @@ struct SaomCountedResult {
 
 struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate, | real colvector present,
-	real rowvector fntype, real matrix structural) {
+	real rowvector fntype, real matrix structural, real scalar condtarget, real matrix distmask) {
 
 	struct SaomCountedResult scalar res
+	real scalar iscond, hasdm, simDist
+	real matrix dflip
 	real scalar t, i, picked, haspresent, npresent, hasfntype, hasstructural
 	real colvector presentIdx
 
@@ -468,6 +500,17 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 	// chained convention - see SaomMinistep()'s own header comment for
 	// the full design account; CONTENT-based detection (not args()==),
 	// matching this file's own hasnetgate/hasratecov lesson.
+	// conditional simulation (RSiena's conditional estimation, see
+	// SaomEstimateNet()): run until the distance from the starting network
+	// reaches `condtarget' (at least one step); `distmask' flags dyads not
+	// counted (missing at either end of the period); condtarget missing or
+	// < 0 = the ordinary unit interval
+	iscond = 0
+	if (args() >= 8) iscond = (condtarget < . & condtarget >= 0)
+	hasdm = 0
+	if (args() >= 9) hasdm = (rows(distmask) > 0)
+	simDist = 0
+	if (iscond) dflip = J(G.n, G.n, 0)
 	haspresent = (args() >= 5)
 	hasfntype = (args() >= 6) & (cols(fntype) > 0) & any(fntype :!= 0)
 	hasstructural = (rows(structural) > 0)
@@ -480,19 +523,34 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 	res.steps = 0
 	res.nchanges = 0
 	t = 0
-	while (t < 1) {
+	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
 		t = t - ln(runiform(1,1)) / (npresent * rate)
-		if (t < 1) {
+		if (iscond | t < 1) {
 			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
 			else i = ceil(runiform(1,1) * G.n)
 			if (hasstructural) picked = SaomMinistep(G, M, theta, i, (haspresent ? present : J(G.n,1,1)), (hasfntype ? fntype : J(1,0,0)), structural)
 			else if (hasfntype) picked = SaomMinistep(G, M, theta, i, present, fntype)
 			else if (haspresent) picked = SaomMinistep(G, M, theta, i, present)
 			else picked = SaomMinistep(G, M, theta, i)
-			if (picked != 0) res.nchanges = res.nchanges + 1
+			if (picked != 0) {
+				res.nchanges = res.nchanges + 1
+				if (iscond) {
+					if (hasdm) {
+						if (distmask[i, picked] == 0) {
+							dflip[i, picked] = 1 - dflip[i, picked]
+							simDist = simDist + (dflip[i, picked] ? 1 : -1)
+						}
+					}
+					else {
+						dflip[i, picked] = 1 - dflip[i, picked]
+						simDist = simDist + (dflip[i, picked] ? 1 : -1)
+					}
+				}
+			}
 			res.steps = res.steps + 1
 		}
 	}
+	res.t = t
 	return(res)
 }
 
@@ -527,15 +585,29 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate,
 	real colvector ratecovattr, real scalar ratecoef, | real colvector present,
-	real rowvector fntype) {
+	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
 	struct SaomCountedResult scalar res
+	real scalar iscond, hasdm, simDist
+	real matrix dflip
 	real scalar t, i, k, picked, haspresent, npresent, hasfntype, totw, draw, cum
 	real colvector presentIdx
 	real rowvector wfull, w
 
+	// conditional simulation (RSiena's conditional estimation, see
+	// SaomEstimateNet()): run until the distance from the starting network
+	// reaches `condtarget' (at least one step); `distmask' flags dyads not
+	// counted (missing at either end of the period); condtarget missing or
+	// < 0 = the ordinary unit interval
+	iscond = 0
+	if (args() >= 9) iscond = (condtarget < . & condtarget >= 0)
+	hasdm = 0
+	if (args() >= 10) hasdm = (rows(distmask) > 0)
+	simDist = 0
+	if (iscond) dflip = J(G.n, G.n, 0)
 	haspresent = (args() >= 7)
-	hasfntype = (args() == 8)
+	hasfntype = 0
+	if (args() >= 8) hasfntype = (cols(fntype) > 0) & any(fntype :!= 0)
 	if (haspresent) {
 		presentIdx = selectindex(present)
 		npresent = length(presentIdx)
@@ -547,11 +619,11 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 	res.steps = 0
 	res.nchanges = 0
 	t = 0
-	while (t < 1) {
+	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
 		w = haspresent ? wfull[presentIdx] : wfull
 		totw = sum(w)
 		t = t - ln(runiform(1,1)) / totw / rate
-		if (t < 1) {
+		if (iscond | t < 1) {
 			draw = runiform(1,1) * totw
 			cum = 0
 			k = npresent
@@ -566,21 +638,38 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 			if (hasfntype) picked = SaomMinistep(G, M, theta, i, present, fntype)
 			else if (haspresent) picked = SaomMinistep(G, M, theta, i, present)
 			else picked = SaomMinistep(G, M, theta, i)
-			if (picked != 0) res.nchanges = res.nchanges + 1
+			if (picked != 0) {
+				res.nchanges = res.nchanges + 1
+				if (iscond) {
+					if (hasdm) {
+						if (distmask[i, picked] == 0) {
+							dflip[i, picked] = 1 - dflip[i, picked]
+							simDist = simDist + (dflip[i, picked] ? 1 : -1)
+						}
+					}
+					else {
+						dflip[i, picked] = 1 - dflip[i, picked]
+						simDist = simDist + (dflip[i, picked] ? 1 : -1)
+					}
+				}
+			}
 			res.steps = res.steps + 1
 		}
 	}
+	res.t = t
 	return(res)
 }
 
 struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate,
 	real colvector ratecovattr, real scalar ratecoef, | real colvector present,
-	real rowvector fntype) {
+	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
 	struct SaomScoredResult scalar res
 	real matrix chgmat
 	real rowvector u, ebar, chosen_chg, wfull, w
+	real scalar iscond, hasdm, simDist
+	real matrix dflip
 	real scalar t, n, p, i, k, j, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype, totw, tau, covrateSum
 	real colvector presentIdx
 
@@ -591,8 +680,20 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	res.nchanges = 0
 	res.rcscore = 0
 
+	// conditional simulation (RSiena's conditional estimation, see
+	// SaomEstimateNet()): run until the distance from the starting network
+	// reaches `condtarget' (at least one step); `distmask' flags dyads not
+	// counted (missing at either end of the period); condtarget missing or
+	// < 0 = the ordinary unit interval
+	iscond = 0
+	if (args() >= 9) iscond = (condtarget < . & condtarget >= 0)
+	hasdm = 0
+	if (args() >= 10) hasdm = (rows(distmask) > 0)
+	simDist = 0
+	if (iscond) dflip = J(G.n, G.n, 0)
 	haspresent = (args() >= 7)
-	hasfntype = (args() == 8)
+	hasfntype = 0
+	if (args() >= 8) hasfntype = (cols(fntype) > 0) & any(fntype :!= 0)
 	if (haspresent) {
 		presentIdx = selectindex(present)
 		npresent = length(presentIdx)
@@ -624,12 +725,12 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	covrateSum = rate * sum(ratecovattr' :* wfull)
 
 	t = 0
-	while (t < 1) {
+	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
 		w = haspresent ? wfull[presentIdx] : wfull
 		totw = sum(w)
 		tau = - ln(runiform(1,1)) / totw / rate
 		t = t + tau
-		if (t < 1) {
+		if (iscond | t < 1) {
 			// harmonisation unit 172: the REAL covariate-rate score,
 			// verified directly from RSiena's own C++ source
 			// (DependentVariable.cpp's accumulateRateScores(): a
@@ -709,10 +810,23 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 			if (choice != 0) {
 				G.toggle(i, choice)
 				res.nchanges = res.nchanges + 1
+				if (iscond) {
+					if (hasdm) {
+						if (distmask[i, choice] == 0) {
+							dflip[i, choice] = 1 - dflip[i, choice]
+							simDist = simDist + (dflip[i, choice] ? 1 : -1)
+						}
+					}
+					else {
+						dflip[i, choice] = 1 - dflip[i, choice]
+						simDist = simDist + (dflip[i, choice] ? 1 : -1)
+					}
+				}
 			}
 			res.steps = res.steps + 1
 		}
 	}
+	res.t = t
 	return(res)
 }
 
@@ -3126,16 +3240,19 @@ struct SaomFit {
 	real scalar ratecoef		// ratecov(): estimated covariate-rate coefficient
 	real scalar ratecoef_se
 	real scalar ratecoef_tratio
+	real scalar cond		// 1: conditional estimation (RSiena's default for one network); the rates are then mean phase-3 times, rate_se(s) their SDs, rate_tratio(s) missing
 	real scalar ratecoef_fixed	// ratecov(): 1 if ratecoef was held fixed at its starting value (non-positive derivative), see rmfixed
 }
 
 /* ===================================================================
-   Network-only estimation: UNCONDITIONAL Method of Moments (RSiena's
-   siena07() with sienaAlgorithmCreate(cond = FALSE)).
+   Network-only estimation: Method of Moments, CONDITIONAL (RSiena's
+   default for one dependent network, cond = TRUE) or UNCONDITIONAL
+   (sienaAlgorithmCreate(cond = FALSE), nwsaom's `unconditional' option).
 
-   Parameters, in this internal order:
+   Parameters, in this internal order (unconditional):
      theta (p effects), one network rate per period, and, with
-     ratecov(), the covariate-rate coefficient.
+     ratecov(), the covariate-rate coefficient; conditional: the same
+     without the rates (see the CONDITIONAL paragraph below).
    Every one of them is an ordinary Method-of-Moments parameter,
    estimated jointly in phases 1-3 with the same multi-subphase
    Robbins-Monro algorithm RSiena uses (rsiena/R/phase1.r, phase2.r,
@@ -3160,13 +3277,22 @@ struct SaomFit {
    exp(ratecoef*x_i) are summed instead of counted; the ratecoef score
    is RSiena's compensated counting-process score.
 
-   RSiena's default for a single dependent variable is CONDITIONAL
-   estimation, which removes the rate from the parameter vector and
-   simulates each period until the observed distance is reached. Both
-   are consistent estimators of the same model and give the same
-   estimates within Monte Carlo error; the unconditional one is used
-   here because every other nwsaom model (co-evolution, composition
-   change, missing data) needs it too. Starting values for the rates:
+   CONDITIONAL estimation (C.cond = 1, RSiena's default for a single
+   dependent network - initializeFRAN(): !maxlike & one dependent
+   variable, and not with composition change): the rates are removed from
+   the parameter vector; every period is simulated at rate 1 until the
+   distance from its starting observation reaches the observed distance
+   (at least one ministep; missing dyads not counted; symmetric networks
+   in steps of two, as EpochSimulation::runEpoch() and
+   NetworkVariable::makeChange()), with the effect statistics and scores
+   of the network at that point; a period's rate is the mean of those
+   simulated times over the phase-3 replicates and its reported standard
+   error their standard deviation (terminateFRAN(): colMeans/sd of
+   z$ntim). A ratecov() coefficient stays a Method-of-Moments parameter,
+   as in RSiena (only the basic rates are conditioned on). The two
+   estimators are consistent for the same model but differ in finite
+   samples: on s50, RSiena's conditional and unconditional estimates
+   differ by up to 0.3 SE. Unconditional starting values for the rates:
    rate0() when given, else RSiena's closed form
    n_active*(0.2 + 2*distance)/(n_active*(n_active-1) + 1).
 
@@ -3193,6 +3319,8 @@ struct SaomNetCtx {
 	pointer(class ErgmModel scalar) scalar Mp	// set by SaomEstimateNet()
 	struct SaomNativeConfig scalar cfg
 	real scalar use_native, use_batch, native_netdist
+	real scalar cond		// 1: conditional estimation (set by the caller before SaomNetCtxInit(); 0 under composition change)
+	real matrix lastT		// conditional: elapsed times of the last K replicates (K x P)
 	real scalar P, p, ptot, n
 	real scalar hasmiss, haspresent, hasnetgate, hasstructural, hasratecov, symtype
 	real matrix target		// P x p
@@ -3236,7 +3364,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.hasratecov = (rows(ratecovattr) > 0)
 	C.ratecovattr = ratecovattr
 	C.symtype = symtype
-	C.ptot = C.p + C.P + C.hasratecov
+	// RSiena (initializeFRAN()): conditional estimation is not used with
+	// composition change
+	if (C.cond) {
+		if (C.haspresent) if (min(C.npresentPd) < C.n) C.cond = 0
+	}
+	C.ptot = C.p + (C.cond ? 0 : C.P) + C.hasratecov
 
 	C.target = J(C.P, C.p, 0)
 	C.targetRate = J(1, C.P, 0)
@@ -3263,6 +3396,9 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.cfg = SaomNativeSetup(M)
 	C.use_native = C.cfg.eligible & SaomNativeAvailable() & !C.hasnetgate & !C.hasstructural
 	ver = (C.use_native ? SaomNativePluginVersion() : 0)
+	// conditional estimation needs protocol 6 (missing-aware distance,
+	// symmetric distance, batch condmode 2); older binaries: Mata
+	if (C.cond & ver < 6) C.use_native = 0
 	C.native_netdist = (ver >= 5)
 	C.use_batch = C.use_native & (ver >= 5) & !C.hasratecov & (C.symtype == 0)
 	if (C.symtype != 0 & !C.use_native) {
@@ -3379,17 +3515,112 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	}
 }
 
+/* Conditional counterpart of SaomNetReplicate() (RSiena's conditional
+   estimation, C.cond == 1): every period is simulated at rate 1 until the
+   distance from its starting observation reaches the observed distance;
+   `par' = (theta, [ratecoef]); the elapsed times go to `tim' (1 x P). */
+void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
+	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco,
+	real rowvector tim) {
+
+	struct SaomCountedResult scalar cres
+	struct SaomScoredResult scalar sres
+	class ErgmGraph scalar Gwork
+	real rowvector theta, stat, fnarg
+	real colvector pres, presNat, rcattr
+	real matrix mdy, dm
+	real scalar pd, p, P, ratecoef, rcstat, rcscore, ct
+
+	p = C.p
+	P = C.P
+	theta = par[1..p]
+	ratecoef = (C.hasratecov ? par[C.ptot] : 0)
+	rcattr = (C.hasratecov ? C.ratecovattr : J(0, 1, 0))
+	fnarg = (C.hasnetgate ? C.fntype : J(1, 0, 0))
+	dev = J(1, C.ptot, 0)
+	sco = J(1, C.ptot, 0)
+	tim = J(1, P, 0)
+	for (pd=1; pd<=P; pd++) {
+		ct = C.targetRate[pd]
+		pres = C.presentPd[., pd]
+		presNat = (C.haspresent ? pres : J(0, 1, 0))
+		dm = (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0))
+		rcstat = 0
+		rcscore = 0
+		Gwork = ErgmGraph()
+		if (C.use_native) {
+			mdy = J(0, 2, 0)
+			if (C.hasmiss) {
+				mdy = select(C.missDyadsPd[., 2..3], C.missDyadsPd[., 1] :== pd)
+				if (rows(mdy) == 0) mdy = J(0, 2, 0)
+			}
+			if (C.hasratecov) {
+				SaomCopyGraph(*C.Gwaves[pd], Gwork)
+				cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, 1, 1, want_score, mdy, presNat, C.symtype, rcattr, ratecoef, ct)
+				rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+				if (want_score) rcscore = cres.rcscore
+			}
+			else cres = SaomSimulateIntervalNative(*C.Gwaves[pd], M, C.cfg, theta, 1, 0, want_score, mdy, presNat, C.symtype, rcattr, 0, ct)
+			stat = cres.stat
+			tim[pd] = cres.t
+			if (want_score) sco[1..p] = sco[1..p] + cres.score
+		}
+		else {
+			SaomCopyGraph(*C.Gwaves[pd], Gwork)
+			if (want_score) {
+				if (C.hasratecov) sres = SaomSimIntScoredRateCov(Gwork, M, theta, 1, C.ratecovattr, ratecoef, pres, fnarg, ct, dm)
+				else sres = SaomSimulateIntervalScored(Gwork, M, theta, 1, pres, fnarg, (C.hasstructural ? C.structural : J(0, 0, 0)), ct, dm)
+				sco[1..p] = sco[1..p] + sres.score
+				if (C.hasratecov) rcscore = sres.rcscore
+				tim[pd] = sres.t
+			}
+			else {
+				if (C.hasratecov) cres = SaomSimIntCountedRateCov(Gwork, M, theta, 1, C.ratecovattr, ratecoef, pres, fnarg, ct, dm)
+				else cres = SaomSimulateIntervalCounted(Gwork, M, theta, 1, pres, fnarg, (C.hasstructural ? C.structural : J(0, 0, 0)), ct, dm)
+				tim[pd] = cres.t
+			}
+			stat = (C.hasmiss ? SaomMaskedStatistic(Gwork, M, *C.missMaskPd[pd]) : M.full_statistic(Gwork))
+			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork)
+			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+		}
+		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
+		if (C.hasratecov) {
+			dev[C.ptot] = dev[C.ptot] + (rcstat - C.targetRateCov[pd])
+			if (want_score) sco[C.ptot] = sco[C.ptot] + rcscore
+		}
+	}
+}
+
 /* K replicates at `par': K x ptot deviations `Z' and scores `S'. */
 void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real rowvector par, real scalar K, real scalar want_score, real matrix Z, real matrix S) {
 
 	real matrix out
-	real rowvector dev, sco
+	real rowvector dev, sco, tim
 	real scalar k, pd, p, b
 
 	p = C.p
 	Z = J(K, C.ptot, 0)
 	S = J(K, C.ptot, 0)
+	if (C.cond) {
+		// conditional: the elapsed times are kept in C.lastT (K x P); the
+		// rate estimate is their mean over phase 3 (RSiena terminateFRAN())
+		C.lastT = J(K, C.P, 0)
+		if (C.use_batch) {
+			out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2)
+			Z[., 1..p] = out[., 1..p] :- colsum(C.target)
+			if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
+			for (pd=1; pd<=C.P; pd++) C.lastT[., pd] = out[., 2*p + 7*(pd-1) + 7]
+			return
+		}
+		for (k=1; k<=K; k++) {
+			SaomNetReplicateCond(C, M, par, want_score, dev, sco, tim)
+			Z[k,.] = dev
+			S[k,.] = sco
+			C.lastT[k,.] = tim
+		}
+		return
+	}
 	if (C.use_batch) {
 		out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0)
 		Z[., 1..p] = out[., 1..p] :- colsum(C.target)
@@ -3422,6 +3653,7 @@ struct SaomNetFit {
 	real matrix Vfull
 	real matrix theta_path		// nsub x p
 	real rowvector rmfixed		// 1 x ptot
+	real matrix T			// conditional estimation: phase-3 times, K3 x P
 }
 
 /* SaomRMCore: the three-phase Robbins-Monro algorithm (see the header
@@ -3608,12 +3840,29 @@ struct SaomNetFit scalar SaomEstimateNet(struct SaomNetCtx scalar C, class ErgmM
 
 	C.Mp = &M
 	israte = J(1, C.ptot, 0)
-	israte[(C.p+1)..(C.p+C.P)] = J(1, C.P, 1)
+	if (!C.cond) israte[(C.p+1)..(C.p+C.P)] = J(1, C.P, 1)
 	// thetaBound applies to the effects and ratecoef, not to the rates
 	fit = SaomRMCore(C, &SaomNetSimManyCB(), par0, C.p, israte, 1 :- israte, K0, K3, firstg)
+	// conditional: the rate of a period is the mean phase-3 time to reach
+	// the observed distance, its reported standard error the standard
+	// deviation of those times (RSiena's terminateFRAN(): z$rate <-
+	// colMeans(z$ntim), z$vrate <- apply(z$ntim, 2, sd))
+	if (C.cond) fit.T = C.lastT
 	if (C.use_batch) SaomBatchCleanup()
 	if (C.use_native) SaomNativeCleanupFrame()
 	return(fit)
+}
+
+/* SaomCondRequested(): conditional estimation for the network-only
+   wrappers when the Mata external __nwsaom_cond is 1 (set by nwsaom.ado:
+   RSiena's default, off with the `unconditional' option); unset or 0 =
+   unconditional (the default for direct Mata calls). */
+real scalar SaomCondRequested(){
+	pointer(real scalar) scalar pc
+	pc = findexternal("__nwsaom_cond")
+	if (pc == NULL) return(0)
+	if (*pc == .) return(0)
+	return(*pc != 0)
 }
 
 /* closed-form starting rate (RSiena's effects.r): n_active*(0.2 +
@@ -3711,9 +3960,11 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	if (nargs >= 14) symArg = symtype
 	if (nargs >= 15) structArg = structural
 
+	C.cond = SaomCondRequested()
 	SaomNetCtxInit(C, (&Gobs_start, &Gobs_end), M, presentArg, mm, fnArg, rcArg, symArg, structArg)
 	p = C.p
-	par0 = theta0, ((rate0 < . & rate0 > 0) ? rate0 : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
+	par0 = theta0
+	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? rate0 : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
 	if (C.hasratecov) par0 = par0, (nargs >= 13 ? ratecoef : 0)
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
@@ -3726,9 +3977,17 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	fit.tconv = nf.tconv
 	fit.tconvMax = nf.tconvMax
 	fit.rmfixed = nf.rmfixed
-	fit.rate = nf.par[p+1]
-	fit.rate_tratio = nf.tratio[p+1]
-	fit.rate_se = sqrt(nf.Vfull[p+1, p+1])
+	fit.cond = C.cond
+	if (C.cond) {
+		fit.rate = mean(nf.T)
+		fit.rate_se = sqrt(variance(nf.T))
+		fit.rate_tratio = .
+	}
+	else {
+		fit.rate = nf.par[p+1]
+		fit.rate_tratio = nf.tratio[p+1]
+		fit.rate_se = sqrt(nf.Vfull[p+1, p+1])
+	}
 	fit.rates = fit.rate
 	fit.rate_tratios = fit.rate_tratio
 	fit.rate_ses = fit.rate_se
@@ -3778,6 +4037,7 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	mm = J(1, 0, NULL)
 	if (nargs >= 8) mm = missMaskPd
 
+	C.cond = SaomCondRequested()
 	SaomNetCtxInit(C, Gwaves, M, presentPd, mm, J(1, 0, 0), J(0, 1, 0), 0, J(0, 0, 0))
 	p = C.p
 	r0 = J(1, P, .)
@@ -3786,7 +4046,7 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 		else if (cols(rates0) == 1) r0 = J(1, P, rates0)
 	}
 	for (pd=1; pd<=P; pd++) if (!(r0[pd] < . & r0[pd] > 0)) r0[pd] = SaomRateStart(C.npresentPd[pd], C.targetRate[pd])
-	par0 = theta0, r0
+	par0 = (C.cond ? theta0 : (theta0, r0))
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
 
@@ -3798,9 +4058,17 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	fit.tconv = nf.tconv
 	fit.tconvMax = nf.tconvMax
 	fit.rmfixed = nf.rmfixed
-	fit.rates = nf.par[(p+1)..(p+P)]
-	fit.rate_tratios = nf.tratio[(p+1)..(p+P)]
-	fit.rate_ses = sqrt(diagonal(nf.Vfull)[(p+1)..(p+P)])'
+	fit.cond = C.cond
+	if (C.cond) {
+		fit.rates = mean(nf.T)
+		fit.rate_ses = sqrt(diagonal(variance(nf.T)))'
+		fit.rate_tratios = J(1, P, .)
+	}
+	else {
+		fit.rates = nf.par[(p+1)..(p+P)]
+		fit.rate_tratios = nf.tratio[(p+1)..(p+P)]
+		fit.rate_ses = sqrt(diagonal(nf.Vfull)[(p+1)..(p+P)])'
+	}
 	return(fit)
 }
 
@@ -6069,11 +6337,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scalar G, class ErgmModel scalar M,
 	struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar rate, real scalar rebuild_g,
 	real scalar want_score, | real matrix missDyads, real colvector present, real scalar symtype,
-	real colvector ratecovattr, real scalar ratecoef){
+	real colvector ratecovattr, real scalar ratecoef, real scalar condtarget){
 
 	struct SaomCountedResult scalar res
 	real matrix ties, newties
-	real scalar n, nties, nattr, i, rngseed, nties_out, __junk, neededrows, neededvars, hasmiss, nmissdyads, haspresentNet, symtypearg, hasratecov
+	real scalar n, nties, nattr, i, rngseed, nties_out, __junk, neededrows, neededvars, hasmiss, nmissdyads, haspresentNet, symtypearg, hasratecov, iscondnat
 	string scalar origframe, argstr, cmd, attrvarlist
 	string rowvector attrvarnames
 
@@ -6214,7 +6482,13 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	for (i=1; i<=M.nterms; i++) argstr = argstr + " " + strofreal(theta[i], "%25.17g")
 	argstr = argstr + " " + strofreal(want_score)		// harmonisation unit 16 - trailing field, see native/saom_sim.c's own stata_call() parsing
 	argstr = argstr + " 0"		// harmonisation unit 26: nbehterms=0 - the network-only wire-protocol footprint is now "no further fields at all"; see SaomSimulateIntervalCoevNative() below for the co-evolution counterpart that supplies real behavior fields here
-	argstr = argstr + " 0 0"		// harmonisation unit 30: condmode=0/targetChange=0 - fixed-interval mode, unchanged behavior; see SaomSimulateCondTimeNative() below for the conditional-mode counterpart
+	// condmode/targetChange: conditional simulation when `condtarget' (13th
+	// argument) is given and >= 0 (SaomEstimateNet()'s conditional
+	// estimation), the unit interval otherwise
+	iscondnat = 0
+	if (args() >= 13) iscondnat = (condtarget < . & condtarget >= 0)
+	if (iscondnat) argstr = argstr + " 1 " + strofreal(condtarget, "%12.0f")
+	else argstr = argstr + " 0 0"
 	argstr = argstr + " " + strofreal(hasmiss) + " " + strofreal(nmissdyads)		// harmonisation unit 35 - see native/saom_sim.c's own "MISSING DATA" header section
 	argstr = argstr + " " + strofreal(haspresentNet)		// harmonisation unit 33 (native port) - see native/saom_sim.c's own "COMPOSITION CHANGE" header section
 	argstr = argstr + " " + strofreal(symtypearg)		// undirected/symmetric relations (native-first) - see native/saom_sim.c's own header comment on this field
@@ -6237,6 +6511,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	res.steps = st_numscalar("__saom_native_steps")
 	res.nchanges = st_numscalar("__saom_native_nchanges")
 	res.netdist = st_numscalar("__saom_native_netdist")		// protocol >= 5 (network-only models too)
+	res.t = st_numscalar("__saom_native_condtime")
 
 	// harmonisation unit 14: the plugin now ALSO returns the full
 	// statistic vector directly (saom_stat_term(), native/saom_sim.c),
@@ -6674,7 +6949,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
    + 6*P) - summed statistics (network, then lagged behavior), summed
    scores, then per period (netdist, behdist, stepsNet, stepsBeh,
    nchanges, nchangesBeh). condmode=1: K x P conditional times (rates
-   must be 1 and `targets' the per-period target distances). */
+   must be 1 and `targets' the per-period target distances). condmode=2:
+   conditional simulation (rates 1, `targets' the distances) with the
+   condmode-0 output plus a 7th per-period column, the time. */
 real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	real rowvector thetaNet, real rowvector thetaBeh, real rowvector ratesNet,
 	real rowvector ratesBeh, real rowvector targets, real scalar K,
@@ -6685,7 +6962,7 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	string scalar origframe, argstr
 	real matrix out
 
-	W = condmode ? P : 2*(pNet + pBeh) + 6*P
+	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P
 	names = J(1, W, "")
 	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
 	origframe = st_framecurrent()

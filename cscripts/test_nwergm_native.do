@@ -1287,7 +1287,14 @@ void run_bipartite_native_test(){
 	tdg2.decay = 0.5
 	M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), tdg2, ("bgwdegree2"))
 
-	theta = (-3.0, 0.02, 0.3, 0.3, 0.1, 0.1)
+	// edges -3.5 (was -3.0, 2026-10-01): at -3.0 this model is near-
+	// degenerate - the edge count drifts upward for tens of thousands of
+	// steps, and both the Mata and the native chain means range from
+	// about 150 to 390 across seeds, so the comparison passed or failed
+	// by seed alone (it failed once nwergm's plugin seed stopped being
+	// rounded to four digits). At -3.5 the chains mix and agree within
+	// 2-3 SE for every seed tried.
+	theta = (-3.5, 0.02, 0.3, 0.3, 0.1, 0.1)
 	burnin = 2000
 	interval = 5
 	samplesize = 2000

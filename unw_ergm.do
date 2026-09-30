@@ -5664,13 +5664,13 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// legitimately runs on one).
 	argstr = "0 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite) + " " + strofreal(nties) + " " +
 		strofreal(samplesize) + " " + strofreal(burnin) + " " + strofreal(interval) + " " +
-		strofreal(M.native_proposal) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(ncovmat) + " " + strofreal(hasmask) + " " + strofreal(M.fixed_density) + " " + strofreal(p)
+		strofreal(M.native_proposal) + " " + strofreal(rngseed, "%12.0f") + " " + strofreal(nattr) + " " + strofreal(ncovmat) + " " + strofreal(hasmask) + " " + strofreal(M.fixed_density) + " " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
+			" " + strofreal(M.native_p1[i], "%25.17g") + " " + strofreal(M.native_p2[i], "%25.17g") + " " + strofreal(M.native_covidx[i])
 	}
-	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i])
-	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i])
+	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i], "%25.17g")
+	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i], "%25.17g")
 
 	// Stata will not let an already-loaded plugin-type program be
 	// dropped and redefined within the same session (confirmed by
@@ -5840,7 +5840,7 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
+			" " + strofreal(M.native_p1[i], "%25.17g") + " " + strofreal(M.native_p2[i], "%25.17g") + " " + strofreal(M.native_covidx[i])
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
@@ -5979,11 +5979,11 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
-			" " + strofreal(M.native_p1[i]) + " " + strofreal(M.native_p2[i]) + " " + strofreal(M.native_covidx[i])
+			" " + strofreal(M.native_p1[i], "%25.17g") + " " + strofreal(M.native_p2[i], "%25.17g") + " " + strofreal(M.native_covidx[i])
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
-	argstr = argstr + " " + strofreal(ncurved) + " " + strofreal(curved_decay_start)
+	argstr = argstr + " " + strofreal(ncurved) + " " + strofreal(curved_decay_start, "%25.17g")
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 

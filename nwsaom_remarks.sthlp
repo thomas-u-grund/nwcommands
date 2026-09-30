@@ -121,7 +121,7 @@ hypothetical: real Glasgow data (this help file's own worked examples) has zero 
 observed wave, so it cannot exercise either effect at all, and even toy networks up to 10 actors with
 a handful of isolate transitions were enough to trigger {bf:thetaBound} or the phase-3
 covariance-finiteness safeguard during certification - the same kind of rare-count identification
-limit {opt linearendow}/{opt linearcreation} has (see {help nwsaom_remarks##endowcreation:Endowment/creation functions} above), not a defect in either effect.
+limit the endowment/creation splits have (see {help nwsaom_remarks##endowcreation:Endowment/creation functions} above), not a defect in either effect.
 
 {pstd}
 {bf:transrectrip}/{bf:outoutass}/{bf:ininass} are a small batch picked from RSiena's own real,
@@ -393,31 +393,27 @@ real RSiena models network/behavior change via three possible "roles" for any ef
 (the default, direction-blind), creation (contributes only when the value INCREASES), and endowment
 (contributes only when it DECREASES) - and its own manual states that using an effect in all THREE
 roles together is exactly collinear ("never in all three... this leads to collinearity"). {cmd:nwsaom}
-lets the behavior-side {bf:linear} effect be split this way: {opt linearendow} and {opt linearcreation}
-must be specified TOGETHER, replacing plain {opt linear} (not combinable with it). {bf:This split is genuinely, and expectedly, weakly identified} - real RSiena's own manual says so explicitly
-("Separating the contribution of an effect into two functions requires more of the data... this
-would lead to large standard errors") and its own live diagnostics confirm it on real data (a
-direct cross-check against real RSiena on RSiena's own s50+alcohol tutorial dataset produced
-RSiena's own {cmd:"Standard errors not reliable"}/{cmd:"Covariance matrix not positive definite"}
-warnings for this exact model). Because of this, an {cmd:nwsaom} fit using
-{opt linearendow}/{opt linearcreation} can legitimately stop with an error reporting that
-{bf:thetaBound} (a coefficient's own magnitude exceeding 50 during estimation) was exceeded -
-this is {cmd:nwsaom}'s own port of real RSiena's IDENTICAL safeguard for the identical situation
-(its own {cmd:R/phase2.r} checks the same condition, at the same point, with the same default
-bound), not a bug. A SECOND, related safeguard can also stop such a fit: if theta itself stays
-within {bf:thetaBound} but the separate phase-3 covariance computation is still too close to
-singular to invert reliably, {cmd:nwsaom} reports that directly rather than let it surface as
-Stata's own opaque, uninformative matrix-missing-values error. Either message means the same
-thing - if it happens, try plain {opt linear} instead, or supply better starting values via
-{opt behtheta0()}.
+offers the split for the behavior effects {opt quadratic}/{opt avalt}/{opt avsim} and for the
+network effect {opt reciprocity} (below). The behavior-side {bf:linear} split ({opt linearendow}
+with {opt linearcreation}, replacing {opt linear}) is refused: its two statistics (the sums of the
+decreases and of the increases) add up exactly to the behavior rate's distance statistic, so with
+the behavior rate estimated the model is not identified - RSiena reports "Covariance matrix not
+positive definite" and no standard errors for this model on s50 (alcohol, three waves). Splits are
+weakly identified in general - RSiena's manual: "Separating the contribution of an effect into two
+functions requires more of the data... this would lead to large standard errors" - so a fit with one
+can legitimately stop with an error reporting that {bf:thetaBound} (a coefficient's own magnitude
+exceeding 50 during estimation) was exceeded - {cmd:nwsaom}'s port of RSiena's identical safeguard
+({cmd:R/phase2.r}), not a bug - or that the phase-3 covariance matrix is too close to singular to
+invert. Either message means the same thing: use the plain effect instead, or supply better
+starting values via {opt behtheta0()}.
 
 {pstd}
 The same endowment/creation split is also available for {opt quadratic}/{opt avalt}/{opt avsim} (as
 {opt quadraticendow}/{opt quadraticcreation}, {opt avaltendow}/{opt avaltcreation},
 {opt avsimendow}/{opt avsimcreation}) - confirmed as real, RSiena-offered effect/type combinations
 via RSiena's own {cmd:getEffects()} output, not guessed. Each effect's own role-split is independent
-of every other effect's - e.g. {opt linearendow linearcreation quadratic} (baseline split, quadratic
-left plain) is a valid combination. Splitting more than one effect at once compounds the same
+of every other effect's - e.g. {opt linear quadraticendow quadraticcreation} is a valid
+combination. Splitting more than one effect at once compounds the same
 weak-identification property described above; a direct RSiena cross-check splitting BOTH
 {opt linear} and {opt quadratic} together on the same real tutorial data reproduced unreliable
 standard errors and a non-positive-definite covariance matrix from real RSiena itself, confirming
@@ -431,10 +427,11 @@ This split extends to the NETWORK side too - {opt outdegreeendow}/
 The statistics are RSiena's: an endowment statistic is minus the sum, over the ties lost between the
 waves, of the effect's tie statistic in the starting network (1 for outdegree; the reverse tie for
 reciprocity), a creation statistic the sum over the ties gained of the tie statistic in the end
-network (on s50 waves 1-2: reciprocity endowment -35, creation 27, as in RSiena). With the rate
-estimated, {opt outdegreeendow}/{opt outdegreecreation} is not identified - lost plus gained ties is
-exactly the rate's distance statistic, and RSiena reports a singular covariance matrix for the same
-model - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciprocityendow}/
+network (on s50 waves 1-2: reciprocity endowment -35, creation 27, as in RSiena).
+{opt outdegreeendow}/{opt outdegreecreation} is not identified - lost plus gained ties is exactly
+the distance that conditional estimation simulates to and that unconditional estimation uses as the
+rate's statistic, and RSiena reports a singular covariance matrix for this model under both
+estimators - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciprocityendow}/
 {opt reciprocitycreation}. On s50 waves 1-2 that model gives (RSiena, unconditional estimation,
 mean of five seeds, in parentheses) outdegree -2.04 (-2.04), reciprocity endowment 0.77 (0.82, SE
 0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run on the Mata engine (about
@@ -469,8 +466,8 @@ Co-evolution has the same native (C) speed backend as the network-only case (see
 above), used automatically - no option needed to opt in - whenever every network AND every behavior
 term in the model has native coverage; a fit combining even one not-yet-natively-ported term on
 either side transparently falls back to the fully-certified, always-available Mata engine for the
-WHOLE fit, never a silent partial native run. {bf:linearendow}/{bf:linearcreation} (below) are one
-such case: they always run on the Mata engine, not the native backend, so a fit using them will be
+WHOLE fit, never a silent partial native run. The behavior endowment/creation splits (below) are
+one such case: they always run on the Mata engine, not the native backend, so a fit using them will be
 noticeably slower than the {bf:Performance} section's own benchmark numbers, which are for
 evaluation-function-only models.
 
@@ -493,8 +490,8 @@ means more frequent opportunities to act (or fewer, for a negative coefficient).
 {pstd}
 The coefficient is estimated jointly with every other effect, the same Robbins-Monro process the rest
 of the model already uses. {opt ratecovcoef(#)} sets its STARTING value (like {opt theta0()} does for
-the eval effects) - omit it to start from 0. The coefficient, the rate and the effects are one
-Robbins-Monro parameter vector. If the data do not identify the coefficient (a non-positive
+the eval effects) - omit it to start from 0. The coefficient and the effects (and, with
+{opt unconditional}, the rate) are one Robbins-Monro parameter vector. If the data do not identify the coefficient (a non-positive
 derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
 does - {bf:e(ratecoef_fixed)} reports whether this happened.
 
@@ -534,10 +531,11 @@ The three rules are RSiena's pairwise model types: {bf:joint} = modelType 6, {bf
 {bf:agree} = 5 ({bf:agree} reproduces RSiena's alter probability exactly, which for an alter
 utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function). On glasgow waves 1-2 symmetrized, with
 {opt outdegree} alone, the density estimates and their standard errors agree with RSiena's
-(unconditional estimation) within 0.01 standard errors for all three
+within 0.05 standard errors for all three, conditional and unconditional
 ({cmd:cscripts/test_nwsaom_rsiena.do}). The rate is on a different scale: {cmd:nwsaom}'s is the
-rate at which an ACTOR gets an opportunity, RSiena reports a much smaller per-pair rate (on these
-data RSiena's is about 1/27 to 1/29 of {cmd:nwsaom}'s, depending on the rule). Before 2026-10-01
+rate at which an ACTOR gets an opportunity; RSiena's conditional (default) rate for these model
+types is per pair, {cmd:nwsaom}'s divided by n - 1 (exactly, on these data); RSiena's unconditional
+pairwise rates are on yet another scale, about 1.8 times its conditional ones. Before 2026-10-01
 {bf:agree} used a different alter probability, the scores behind the standard errors used only the
 initiating actor's side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()}
 the acting actor was drawn uniformly, so the covariate could not affect who acts.
@@ -570,7 +568,8 @@ it is meant to be read).
 
 {pstd}
 Composition change requires UNCONDITIONAL Method-of-Moments estimation in RSiena (its manual,
-Section 7.12.1), which is what {cmd:nwsaom} always uses (see {bf:Estimation} below): the rates are
+Section 7.12.1), which is what {cmd:nwsaom} then uses, even without {opt unconditional} (see
+{bf:Estimation} below): the rates are
 estimated with the other parameters, only the actors present in a period get opportunities to
 act, and a rate's score counts only them. {opt present()} uses the native (C) backend when the
 model is otherwise native-eligible - the acting-actor draw, the pooled rate, and the tie-target
@@ -629,8 +628,9 @@ combined with {opt avalt}/{opt avsim} specifically.
 {pstd}
 Missing data DOES use the native (C) backend, when the model is otherwise native-eligible - the
 masked final-network/final-behavior statistic is computed natively too, matching the Mata engine's
-own result to machine precision. The rates are estimated with the other parameters; a dyad missing
-at either wave of a period is excluded from the rate's distance statistic and its target too.
+own result to machine precision. A dyad missing at either wave of a period is not counted in the
+distance that conditional estimation simulates to, nor in the rate's distance statistic of
+unconditional estimation, nor in their target (as RSiena).
 
 {pstd}
 {bf:Genuinely out of scope}: missing COVARIATE data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
@@ -706,31 +706,40 @@ ratio; {cmd:e(tratio)} holds the ones of the coefficients in e(b), on the same s
 
 {pstd}
 {bf:The rate parameters} (one per period: how often, on average, an actor gets the opportunity to
-change a tie) are estimated jointly with the effects - UNCONDITIONAL Method of Moments, RSiena's
-{cmd:sienaAlgorithmCreate(cond = FALSE)}. The statistic of a period's rate is the number of dyads
-in which the simulated end-of-period network differs from the observed network at the start of the
-period, and its target is the observed distance between the period's two waves (dyads missing at
-either wave excluded); the rates get standard errors from the same sandwich formula as the effects
-({cmd:e(rate_se)}, or {cmd:e(rates_se)} with {opt waves()}). Starting values: {opt rate0()}, else
-RSiena's closed-form value computed from the data (a start far from the data - e.g. a
-{opt rate0()} twice the closed-form value - can make the phase-1 derivative estimates unusable and
-the fit diverge; the default start is the safe choice). The same holds with composition change
-({opt present()}), missing data ({opt missnet()}), structural zeros, {opt ratecov()} (whose
-coefficient is estimated in the same joint vector), {opt symmetric}, endowment/creation effects
-and co-evolution.
+change a tie) are estimated in one of RSiena's two ways, and {cmd:nwsaom} uses RSiena's default for
+each kind of model (RSiena's {cmd:initializeFRAN()}: conditional when there is a single dependent
+variable, and not with composition change):
+
+{p2colset 9 13 15 2}{...}
+{p2col: o}{bf:Conditional estimation} (RSiena's {cmd:cond = TRUE}), the default for a network-only
+model: the rates are not Robbins-Monro parameters. Each period is simulated at rate 1 until the
+distance between the simulated network and the observed network at the start of the period (dyads
+that differ; dyads missing at either wave not counted; symmetric networks in steps of two) reaches
+the observed distance between the period's two waves, and the effect statistics are those of the
+network at that point. A period's rate is the mean of the simulated times over the {opt k3()}
+phase-3 replicates, and {cmd:e(rate_se)}/{cmd:e(rates_se)} report their standard deviation, as
+RSiena does ({cmd:ans$rate}, {cmd:ans$vrate}); there is no rate t-ratio. A {opt ratecov()}
+coefficient remains a Method-of-Moments parameter, as in RSiena.{p_end}
+{p2col: o}{bf:Unconditional estimation} (RSiena's {cmd:cond = FALSE}), option {opt unconditional},
+and always for co-evolution and {cmd:nwsaom multiplex} models (two dependent variables) and for
+network-only models with composition change ({opt present()} restricting some actor): every rate
+is a Method-of-Moments parameter estimated jointly with the effects; its statistic is the distance
+above at the end of a unit period, its standard error comes from the sandwich formula. Starting
+values: {opt rate0()}, else RSiena's closed-form value computed from the data (a start far from
+the data - e.g. twice the closed-form value - can make the phase-1 derivative estimates unusable
+and the fit diverge).{p_end}
+{p2colreset}{...}
 
 {pstd}
-RSiena's DEFAULT for a network-only model is CONDITIONAL estimation instead: the rate is removed
-from the Robbins-Monro vector, each period is simulated until the observed distance is reached,
-and the rate is estimated from the time that takes. The two estimators are both consistent but
-not identical in finite samples. On RSiena's s50 data (five models, five seeds each, RSiena 1.6.6),
-{cmd:nwsaom} agrees with RSiena's unconditional estimates within 0.06 standard errors for every
-parameter including the rates; RSiena's own conditional and unconditional estimates differ from
-each other by up to 0.3 standard errors (outdegree more negative and reciprocity larger under
-conditional estimation), so {cmd:nwsaom}'s estimates differ from RSiena's default output by that
-much too. (Before 2026-10-01 the rate was held at its closed-form starting value throughout
-estimation and only refined afterwards; the effects were then estimated from simulations with too
-little change, 0.3-0.6 standard errors off.)
+The two estimators are consistent for the same model but differ in finite samples: on RSiena's
+s50 data RSiena's own conditional and unconditional estimates differ by up to 0.3 standard errors
+(outdegree more negative and reciprocity larger under conditional estimation). Checked against
+RSiena 1.6.6 (five models on s50, five seeds each): with the default (conditional) estimation every
+parameter, the rates included, is within 0.07 RSiena standard errors of RSiena's default output,
+and with {opt unconditional} within 0.06 of RSiena's {cmd:cond = FALSE} output; the co-evolution
+model agrees with RSiena's (unconditional) default within 0.05. Before 2026-10-01 the rate was held
+at its closed-form starting value throughout estimation and only refined afterwards; the effects
+were then estimated from simulations with too little change, 0.3-0.6 standard errors off.
 
 {pstd}
 {opt waves(namelist)} chains three or more waves into ONE pooled fit: the effects are POOLED/shared

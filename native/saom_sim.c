@@ -241,7 +241,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 5		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances
+#define SAOM_NATIVE_VERSION 6		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1928,7 +1928,11 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			covrateSum_rc *= rate;
 		}
 		grandRate = P->hasratecov ? (rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
-		while (P->condmode ? (simDist < P->targetChange) : (t < 1.0)) {
+		/* conditional mode (RSiena's conditional estimation): steps until
+		   the distance from the starting network reaches the target, at
+		   least one step (EpochSimulation::runEpoch() checks after each
+		   step); dyads missing at either end of the period do not count */
+		while (P->condmode ? (steps == 0.0 || simDist < P->targetChange) : (t < 1.0)) {
 			double dt_rc = -log(rng_unif(&rng)) / grandRate;
 			t += dt_rc;
 			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) rcscore -= dt_rc * covrateSum_rc;
@@ -2016,6 +2020,16 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						toggle(&g, actor, alter);
 						toggle(&g, alter, actor);
 						nchanges += 1.0;
+						/* both arcs change: distance steps of two, as RSiena's
+						   symmetric networks */
+						if (P->condmode) {
+							long origval;
+							if (!(hasmiss && ht_get(&missht, dyadkey(&g, actor, alter), &origval))) {
+								int newstate = has_edge(&g, actor, alter);
+								int origstate = ht_get(&horig, dyadkey(&g, actor, alter), &origval);
+								if (newstate == origstate) simDist -= 2; else simDist += 2;
+							}
+						}
 					}
 				}
 				else if (actNet) {
@@ -2093,9 +2107,11 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						nchanges += 1.0;
 						if (P->condmode) {
 							long origval;
-							int newstate = has_edge(&g, actor, choice);
-							int origstate = ht_get(&horig, dyadkey(&g, actor, choice), &origval);
-							if (newstate == origstate) simDist -= 1; else simDist += 1;
+							if (!(hasmiss && ht_get(&missht, dyadkey(&g, actor, choice), &origval))) {
+								int newstate = has_edge(&g, actor, choice);
+								int origstate = ht_get(&horig, dyadkey(&g, actor, choice), &origval);
+								if (newstate == origstate) simDist -= 1; else simDist += 1;
+							}
 						}
 					}
 				}
@@ -2542,7 +2558,9 @@ static ST_retcode batch_setup(char *arg) {
      condmode=0: W = 2*(nterms+nbeh) + 6*P:
        sum over periods of (stat, statBehLag), sum of (score, scoreBeh),
        then per period: netdist behdist stepsNet stepsBeh nchanges nchangesBeh
-     condmode=1: W = P, the conditional-simulation time per period. */
+     condmode=1: W = P, the conditional-simulation time per period;
+     condmode=2: conditional simulation, the mode-0 columns with a 7th
+       per-period column (after nchangesBeh), the simulated time. */
 static ST_retcode batch_run(char *arg) {
 	model_t *M = &batch_state.M;
 	long K, nthreads, pd, k, u, P, pNet, pBeh, W, c;
@@ -2573,7 +2591,7 @@ static ST_retcode batch_run(char *arg) {
 			memcpy(prm[pd].theta, th, sizeof(th));
 			memcpy(prm[pd].thetaBeh, thb, sizeof(thb));
 			prm[pd].want_score = want_score;
-			prm[pd].condmode = condmode;
+			prm[pd].condmode = (condmode != 0);
 		}
 		for (pd = 0; pd < P; pd++) prm[pd].rate = next_double();
 		for (pd = 0; pd < P; pd++) prm[pd].rateBeh = next_double();
@@ -2594,9 +2612,11 @@ static ST_retcode batch_run(char *arg) {
 	J.M = M; J.per = batch_state.per; J.prm = prm; J.K = K; J.P = P; J.seed = seed; J.res = res;
 	batch_run_units(&J, nthreads);
 
-	W = condmode ? P : (2 * (pNet + pBeh) + 6 * P);
+	/* condmode 2 = conditional simulation with the full output of mode 0
+	   plus a 7th per-period column, the simulated time */
+	W = (condmode == 1) ? P : (2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P);
 	for (k = 0; k < K; k++) {
-		if (condmode) {
+		if (condmode == 1) {
 			for (pd = 0; pd < P; pd++) SF_vstore((int)(pd + 1), (int)(k + 1), res[k * P + pd].t);
 			continue;
 		}
@@ -2613,13 +2633,14 @@ static ST_retcode batch_run(char *arg) {
 			for (c = 0; c < 2 * (pNet + pBeh); c++) SF_vstore((int)(c + 1), (int)(k + 1), acc[c]);
 			for (pd = 0; pd < P; pd++) {
 				simres_t *r = &res[k * P + pd];
-				long base = 2 * (pNet + pBeh) + 6 * pd + 1;
+				long base = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * pd + 1;
 				SF_vstore((int)base, (int)(k + 1), r->netdist);
 				SF_vstore((int)(base + 1), (int)(k + 1), r->behdist);
 				SF_vstore((int)(base + 2), (int)(k + 1), r->stepsNet);
 				SF_vstore((int)(base + 3), (int)(k + 1), r->stepsBeh);
 				SF_vstore((int)(base + 4), (int)(k + 1), r->nchanges);
 				SF_vstore((int)(base + 5), (int)(k + 1), r->nchangesBeh);
+				if (condmode == 2) SF_vstore((int)(base + 6), (int)(k + 1), r->t);
 			}
 		}
 	}
