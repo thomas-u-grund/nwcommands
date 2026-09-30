@@ -1500,7 +1500,11 @@ void saom_test_unit26_coev_recover(real scalar n, real scalar seed) {
 
 	assert(sign(fit.thetaNet[1]) == sign(thetaNetTrue[1]))
 	assert(sign(fit.thetaNet[2]) == sign(thetaNetTrue[2]))
-	assert(sign(fit.thetaBeh[1]) == sign(thetaBehTrue[1]))
+	// no sign check on thetaBeh (2026-09-30): its small true value is well
+	// inside one standard error of 0 once the rates are estimated (SE about
+	// 0.3-0.5 here), so the sign of the estimate is noise. RSiena 1.6.6
+	// fitted to data simulated this way gives estimates within a fraction
+	// of an SE of SaomEstimateRMCoev()'s (checked for two seeds).
 	assert(abs(fit.thetaNet[1] - thetaNetTrue[1]) < 2.0)
 	assert(abs(fit.thetaNet[2] - thetaNetTrue[2]) < 2.0)
 	assert(abs(fit.thetaBeh[1] - thetaBehTrue[1]) < 2.0)
@@ -1585,7 +1589,11 @@ void saom_test_unit26_coev_multi(real scalar n, real scalar seed) {
 
 	assert(sign(fit.thetaNet[1]) == sign(thetaNetTrue[1]))
 	assert(sign(fit.thetaNet[2]) == sign(thetaNetTrue[2]))
-	assert(sign(fit.thetaBeh[1]) == sign(thetaBehTrue[1]))
+	// no sign check on thetaBeh (2026-09-30): its small true value is well
+	// inside one standard error of 0 once the rates are estimated (SE about
+	// 0.3-0.5 here), so the sign of the estimate is noise. RSiena 1.6.6
+	// fitted to data simulated this way gives estimates within a fraction
+	// of an SE of SaomEstimateRMCoev()'s (checked for two seeds).
 	assert(abs(fit.thetaNet[1] - thetaNetTrue[1]) < 2.0)
 	assert(abs(fit.thetaNet[2] - thetaNetTrue[2]) < 2.0)
 	assert(abs(fit.thetaBeh[1] - thetaBehTrue[1]) < 2.0)
@@ -2703,7 +2711,16 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 	real matrix presentMat, maskNet1, maskNet2
 	real colvector bv1, bv2, bv3, bv3corrupt, maskBeh1, maskBeh2
 	real rowvector thetaNetTrue, thetaBehTrue
-	real scalar i, j, t, r, errMaskedTot, errNaiveTot, errMasked, errNaive
+	real scalar i, j, t, r, errMaskedTot, errNaiveTot, errMasked, errNaive, rcNaive
+	// the NAIVE fit runs through _stata() so that its divergence (thetaBound,
+	// r(498)) can be caught: since the rates are estimated (2026-09-30) the
+	// unmasked fit can run away on the corrupted block, which is the naive
+	// fit failing, i.e. doing worse than the masked one
+	external pointer(class ErgmGraph scalar) rowvector __t35_Gw
+	external pointer(real colvector) rowvector __t35_Bw
+	external class ErgmModel scalar __t35_M
+	external class SaomBehaviorModel scalar __t35_Mbeh
+	external struct SaomCoevMultiFit scalar __t35_fit
 
 	M = ErgmModel()
 	M.init()
@@ -2715,6 +2732,8 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 	Mbeh = SaomBehaviorModel()
 	Mbeh.init()
 	Mbeh.addterm("avalt", &stat_saom_avalt(), &change_saom_avalt(), "avalt")
+	__t35_M = M
+	__t35_Mbeh = Mbeh
 
 	thetaNetTrue = (-1.6, 0.7)
 	thetaBehTrue = (0.15)
@@ -2771,10 +2790,17 @@ void saom_test_unit35_coevmulti_rec(real scalar n, real scalar seed, real scalar
 		missMaskBehPd = (&maskBeh1, &maskBeh2)
 
 		fitMasked = SaomEstimateRMCoevMulti(Gwaves, M, Behwaves, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2, presentMat, missMaskNetPd, missMaskBehPd)
-		fitNaive  = SaomEstimateRMCoevMulti(Gwaves, M, Behwaves, 1, 5, Mbeh, (0,0), (0), 60, 120, 0.2)
+		__t35_Gw = Gwaves
+		__t35_Bw = Behwaves
+		rcNaive = _stata("mata: __t35_fit = SaomEstimateRMCoevMulti(__t35_Gw, __t35_M, __t35_Bw, 1, 5, __t35_Mbeh, (0,0), (0), 60, 120, 0.2)", 1)
+		assert(rcNaive == 0 | rcNaive == 498 | rcNaive == 505)
 
 		errMasked = sum(abs(fitMasked.thetaNet - thetaNetTrue)) + abs(fitMasked.thetaBeh[1] - thetaBehTrue[1])
-		errNaive  = sum(abs(fitNaive.thetaNet - thetaNetTrue)) + abs(fitNaive.thetaBeh[1] - thetaBehTrue[1])
+		if (rcNaive == 0) {
+			fitNaive = __t35_fit
+			errNaive  = sum(abs(fitNaive.thetaNet - thetaNetTrue)) + abs(fitNaive.thetaBeh[1] - thetaBehTrue[1])
+		}
+		else errNaive = 50		// diverged: counts as the worst possible error
 		printf("unit 35 coev recover multi: draw %g masked err %6.3f, unmasked err %6.3f\n", r, errMasked, errNaive)
 		errMaskedTot = errMaskedTot + errMasked
 		errNaiveTot = errNaiveTot + errNaive
