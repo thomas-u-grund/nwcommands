@@ -69,6 +69,9 @@ program define nwergm_estat_mcmcdiag, rclass
 	di as txt "Thinning interval:{col 22}={res}  " %6.0f e(mcmc_interval)
 	di as txt "Acceptance rate:{col 22}={res}  " %6.4f e(mcmc_acceptrate)
 	di
+	tempname __essm
+	matrix `__essm' = J(1, `p', .)
+	matrix colnames `__essm' = `names'
 	di as txt "{hline 16}{c TT}{hline 11}{hline 11}{hline 12}{hline 9}"
 	di as txt %-16s "Statistic" "{c |}" %10s "Mean" %11s "SD" %12s "Autocorr" %9s "ESS"
 	di as txt "{hline 16}{c +}{hline 11}{hline 11}{hline 12}{hline 9}"
@@ -77,8 +80,15 @@ program define nwergm_estat_mcmcdiag, rclass
 		mata: st_local("__ergm_mn", strofreal(mean(`samp'[.,`k'])))
 		mata: st_local("__ergm_sd", strofreal(sqrt(variance(`samp'[.,`k']))))
 		mata: st_local("__ergm_rho", strofreal(ergm_lag1_autocorr(`samp')[`k']))
-		local __ergm_rhoclip = max(0, min(0.999, `__ergm_rho'))
-		mata: st_local("__ergm_ess", strofreal(rows(`samp')*(1-`__ergm_rhoclip')/(1+`__ergm_rhoclip')))
+		// ESS as coda::effectiveSize(): n*var(x)/spectrum0.ar(x), the
+		// spectral density at 0 from an AR(p) fit (ergm_spec0_scalar()).
+		// The lag-1 formula n(1-rho)/(1+rho) used before assumed geometric
+		// decay and overstated ESS severalfold for slowly mixing chains.
+		mata: __ergm_essx = `samp'[.,`k'] :- mean(`samp'[.,`k'])
+		mata: __ergm_esss = ergm_spec0_scalar(__ergm_essx)
+		mata: st_local("__ergm_ess", strofreal(__ergm_esss > 0 ? rows(__ergm_essx)*variance(__ergm_essx)/__ergm_esss : 0))
+		capture mata: mata drop __ergm_essx __ergm_esss
+		matrix `__essm'[1, `k'] = `__ergm_ess'
 		di as txt %-16s "`nm'" "{c |}" as res %10.4f `__ergm_mn' %11.4f `__ergm_sd' %12.4f `__ergm_rho' %9.1f `__ergm_ess'
 	}
 	di as txt "{hline 16}{c BT}{hline 11}{hline 11}{hline 12}{hline 9}"
@@ -138,6 +148,7 @@ program define nwergm_estat_mcmcdiag, rclass
 	di as txt "Note: {bf:Stationary} = passed a Cramer-von-Mises test on the chain's own cumulative-sum path (Heidelberger & Welch 1983), discarding an increasing initial fraction (up to 50%) until it does - {bf:Start} is the first retained iteration once it passes, {bf:FAILED} means no discard fraction achieved stationarity. {bf:HW test} additionally requires the retained portion's own 95% CI halfwidth to be within {bf:eps()} (default 10%) of its own mean - a separate, stricter precision check, only meaningful once stationarity itself has passed."
 	di
 
+	return matrix ess = `__essm'
 	return matrix geweke = `__gew'
 	return matrix heidel = `__hd'
 
@@ -228,8 +239,21 @@ end
 
 capture program drop nwergm_estat_gof
 program define nwergm_estat_gof, rclass
-	syntax [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50) ///
+	syntax [, NSIM(integer 100) SEED(integer -1) GOFBURNIN(integer -1) GOFINTERVAL(integer -1) ///
 		PLOT MAXDEG(integer 15) MAXDIST(integer 6) NAME(string)]
+	// Defaults as R's gof.ergm(): 100 draws, and the MCMC burn-in and
+	// interval of the fitted model (MPLE fits: 3000 and 50 as before).
+	// A fixed short chain (3000/50) drifts on slowly mixing models and
+	// makes the simulated averages depend on the seed.
+	if `gofburnin' < 0 {
+		local gofburnin = 3000
+		if "`e(mcmc_burnin)'" != "" local gofburnin = e(mcmc_burnin)
+	}
+	if `gofinterval' < 0 {
+		local gofinterval = 50
+		if "`e(mcmc_interval_final)'" != "" local gofinterval = e(mcmc_interval_final)
+		else if "`e(mcmc_interval)'" != "" local gofinterval = e(mcmc_interval)
+	}
 
 	if `"`e(cmd)'"' != "nwergm" {
 		di as err "last nwergm estimates not found"

@@ -430,3 +430,15 @@ position afterwards (nwsaom `ratecov()`, `nodematch()`, ..., probably nwergm too
 actors with other actors' values: `ratecov(smkc)` on glasgow gave 0.90 before such an `nwset` and
 0.12 after it. Create covariates and run models before declaring new networks with `mat()`, or
 re-derive the covariate after it. Not investigated further.
+
+## `nwergm` estat mcmcdiag ESS was overstated; estat gof chains too short (changed 2026-10-01)
+
+`estat mcmcdiag` computed ESS as n(1-rho1)/(1+rho1), which assumes geometric decay of the
+autocorrelation. ERGM chains on sparse networks decay much more slowly (Faux Mesa High: lag-1 0.86,
+lag-10 still 0.62), so ESS was overstated severalfold (472-539 reported, 262-318 true). It is now
+coda's `effectiveSize()`, n*var(x)/spectrum0.ar(x) via `ergm_spec0_scalar()`, and is returned as
+`r(ess)` (checked against coda in `cscripts/test_nwergm_ess.do`). `estat gof` used a fixed
+3000/50 burn-in/interval and 50 draws regardless of the fit; on slowly mixing models its simulated
+averages then drifted with the seed (mean degree 2.25-2.41 vs observed 1.98). Defaults now follow
+R's `gof.ergm()`: 100 draws and the fit's `e(mcmc_burnin)`/`e(mcmc_interval_final)`. Even so, such
+models vary from seed to seed in R too (same theta: mean degree 1.97-2.12 over 4 seeds).
