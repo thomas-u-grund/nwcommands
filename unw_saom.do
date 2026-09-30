@@ -5706,7 +5706,7 @@ struct SaomCoevNetNetScoredResult scalar SaomSimIntCoevNNNative(
 	for (i=1; i<=nterms2; i++) argstr1 = argstr1 + " " + strofreal(tc2[i]) + " " + strofreal(p2a[i], "%25.17g") + " " + strofreal(theta2[i], "%25.17g")
 	argstr1 = argstr1 + " " + strofreal(rate2, "%25.17g")
 
-	argstr2 = strofreal(rngseed)
+	argstr2 = strofreal(rngseed, "%12.0f")
 
 	// Single combined string (matching every other native call site's own
 	// convention in this file - see e.g. SaomEstimateRM()'s own
@@ -7167,7 +7167,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	rngseed = floor(runiform(1,1) * 2147483647)
 
 	argstr = strofreal(n) + " " + strofreal(G.directed) + " " + strofreal(nties) + " " +
-		strofreal(rate, "%25.17g") + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(M.nterms)
+		strofreal(rate, "%25.17g") + " " + strofreal(rngseed, "%12.0f") + " " + strofreal(nattr) + " " + strofreal(M.nterms)
 	for (i=1; i<=M.nterms; i++) {
 		argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
 	}
@@ -7321,7 +7321,7 @@ real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph
 	// want_score=0, nbehterms=0, condmode=1 - see this function's own
 	// header comment.
 	argstr = strofreal(n) + " " + strofreal(G.directed) + " " + strofreal(nties) + " " +
-		strofreal(1) + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(M.nterms)
+		strofreal(1) + " " + strofreal(rngseed, "%12.0f") + " " + strofreal(nattr) + " " + strofreal(M.nterms)
 	for (i=1; i<=M.nterms; i++) {
 		argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
 	}
@@ -7479,7 +7479,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	rngseed = floor(runiform(1,1) * 2147483647)
 
 	argstr = strofreal(n) + " " + strofreal(G.directed) + " " + strofreal(nties) + " " +
-		strofreal(rateNet, "%25.17g") + " " + strofreal(rngseed) + " " + strofreal(nattr) + " " + strofreal(M.nterms)
+		strofreal(rateNet, "%25.17g") + " " + strofreal(rngseed, "%12.0f") + " " + strofreal(nattr) + " " + strofreal(M.nterms)
 	for (i=1; i<=M.nterms; i++) {
 		argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
 	}
@@ -7672,7 +7672,7 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	if (st_nobs() < K) st_addobs(K - st_nobs())
 
 	seed = floor(runiform(1,1) * 2147483647)
-	argstr = "BATCHRUN|" + strofreal(K) + " " + strofreal(seed) + " " + strofreal(SaomCores()) + " " + strofreal(want_score) + " " + strofreal(condmode)
+	argstr = "BATCHRUN|" + strofreal(K) + " " + strofreal(seed, "%12.0f") + " " + strofreal(SaomCores()) + " " + strofreal(want_score) + " " + strofreal(condmode)
 	for (i=1; i<=pNet; i++) argstr = argstr + " " + strofreal(thetaNet[i], "%25.17g")
 	for (i=1; i<=pBeh; i++) argstr = argstr + " " + strofreal(thetaBeh[i], "%25.17g")
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal(ratesNet[i], "%25.17g")
