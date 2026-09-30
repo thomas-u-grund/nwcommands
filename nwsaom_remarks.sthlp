@@ -684,8 +684,8 @@ Each simulation draws from its own random stream derived from the seed and its p
 given {opt seed()} gives identical results with {cmd:cores(1)} and with any other number of
 threads. {opt symmetric} and {opt ratecov()} fits use the single-simulation path (no threads).
 Timings on one 18-core machine: the s50 three-wave network-only model {cmd:outdegree reciprocity}
-{cmd:transtrip} 0.35 s; the s50 three-wave co-evolution model below 0.6 s; a synthetic 500-actor
-three-wave co-evolution model 18 s.
+{cmd:transtrip} 0.33 s, the two-wave {cmd:outdegree reciprocity} model 0.23 s; the s50
+three-wave co-evolution model 0.63 s; a synthetic 500-actor three-wave co-evolution model 18 s.
 
 {pstd}
 Coefficients are estimated by the Method of Moments via Robbins-Monro stochastic approximation,
@@ -710,7 +710,9 @@ in which the simulated end-of-period network differs from the observed network a
 period, and its target is the observed distance between the period's two waves (dyads missing at
 either wave excluded); the rates get standard errors from the same sandwich formula as the effects
 ({cmd:e(rate_se)}, or {cmd:e(rates_se)} with {opt waves()}). Starting values: {opt rate0()}, else
-RSiena's closed-form value computed from the data. The same holds with composition change
+RSiena's closed-form value computed from the data (a start far from the data - e.g. a
+{opt rate0()} twice the closed-form value - can make the phase-1 derivative estimates unusable and
+the fit diverge; the default start is the safe choice). The same holds with composition change
 ({opt present()}), missing data ({opt missnet()}), structural zeros, {opt ratecov()} (whose
 coefficient is estimated in the same joint vector), {opt symmetric}, endowment/creation effects
 and co-evolution.
