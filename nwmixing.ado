@@ -58,7 +58,14 @@ program nwmixing
 	local attrlab : value label `egosrc'
 
 	preserve
-	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc')
+	// BUGFIX (2026-09-30): nwtoedge lists an undirected edge only once, so
+	// the table counted each edge in one arbitrary stored orientation: it
+	// was asymmetric, could drop a category entirely (on faux.mesa.high,
+	// the "Other" row vanished), and contradicted the "two entries for
+	// each edge" header printed below. Ask for both orientations. The E-I
+	// index is unchanged (internal and external counts both double).
+	local __nwmix_full = cond("`undirected'" != "", "full", "")
+	nwtoedge `netname', egovars(`egosrc') altervars(`egosrc') `__nwmix_full'
 	local egoname "`egosrc'_ego"
 	local altername "`egosrc'_alter"
 	capture label val `egoname' `attrlab'
@@ -85,7 +92,13 @@ program nwmixing
 	mata: `__nwtable' = st_matrix("`tableres'")
 	mata: `__nwcol' = st_matrix("`tablecol'")
 	mata: `__nwrow' = st_matrix("`tablerow'")
-	mata: `__nwinternal' = sum(diagonal(`__nwtable'))
+	// BUGFIX (2026-09-30): internal ties were summed from diagonal(), which
+	// assumes the table's rows and columns list the same categories in the
+	// same order. When a category appears only as ego or only as alter,
+	// the table is not square and the diagonal pairs different categories
+	// (faux.mesa.high race: E-I .025 instead of the correct -.015). Match
+	// row and column VALUES instead of positions.
+	mata: `__nwinternal' = sum(`__nwtable' :* ((`__nwrow' * J(1, cols(`__nwcol'), 1)) :== (J(rows(`__nwrow'), 1, 1) * `__nwcol')))
 	mata: `__nwexternal' = sum(`__nwtable') - `__nwinternal'
 	mata: `__nwei_index' = (`__nwexternal' - `__nwinternal') / (`__nwexternal' + `__nwinternal')
 	

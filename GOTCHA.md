@@ -228,3 +228,13 @@ Both `cd` into `/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands` by absolute path. R
 worktree or any other copy, they silently rebuild the *main checkout's* mlib instead of the one
 you are working on. From a worktree, build with a copy of `lib/build.do` whose paths point at the
 worktree.
+
+## `nwmixing` on undirected networks: one-sided table and a wrong E-I index (fixed 2026-09-30)
+
+`nwtoedge` lists each undirected edge once, so `nwmixing`'s table counted every edge in one
+arbitrary stored orientation. The table was asymmetric, could drop a category entirely, and
+contradicted its own "two entries for each edge" header. Worse, the E-I index summed internal
+ties with `diagonal()`, which silently pairs *different* categories whenever the table is not
+square (faux.mesa.high race: .025 instead of the correct -.015). The fix asks `nwtoedge` for both
+orientations (`full`) when the network is undirected, and matches row and column *values*
+rather than positions. The permutation p-value (`rep_EIvar()`) was never affected.

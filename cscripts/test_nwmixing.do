@@ -92,3 +92,19 @@ gen grpmix = _n
 capture noisily nwmixing typobogus, attribute(grpmix)
 assert _rc == 482
 di "=== misspelled network name REGRESSION VERIFIED ==="
+
+* --- BUGFIX (2026-09-30): undirected networks. nwtoedge lists each
+* undirected edge once, so the table was asymmetric, could drop a category,
+* and (via diagonal() on a non-square table) gave a wrong E-I index:
+* faux.mesa.high race gave .025; the correct value is -6/406 = -.0148.
+nwwebuse mesa, nwclear
+encode race, generate(racen)
+nwmixing mesa, attribute(racen) permutations(1)
+matrix T = r(table)
+assert rowsof(T) == 5 & colsof(T) == 5
+matrix Tt = T'
+assert mreldif(T, Tt) == 0
+mata: st_numscalar("tot", sum(st_matrix("T")))
+assert tot == 406
+assert abs(r(EI_index) - (-6/406)) < 1e-6
+di "=== undirected mixing table REGRESSION VERIFIED ==="
