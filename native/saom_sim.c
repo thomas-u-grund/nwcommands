@@ -241,7 +241,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 2
+#define SAOM_NATIVE_VERSION 3		// 3 = also __saom_native_statbehlag%d (behavior statistics on the period's STARTING network)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2338,6 +2338,56 @@ STDLL stata_call(int argc, char *argv[]) {
 			if (has_edge(&g, start_i[dk], start_j[dk])) continue;
 			if (hasmiss && ht_get(&missht, dyadkey(&g, start_i[dk], start_j[dk]), &dv)) continue;
 			netdist += 1.0;
+		}
+		// LAGGED behavior statistics (protocol version 3): end-of-period
+		// behavior on the period's STARTING network, as RSiena's
+		// statistics for network-dependent behavior effects are (see
+		// unw_saom.do's SaomCoevReplicate()). Same masking as
+		// SaomCoevStatBeh(): missing dyads dropped from the start network,
+		// missing actors' values replaced by the overall mean. Computed
+		// here so the estimator needs no Mata pass per simulation.
+		{
+			double *bz = behval, *bzm = NULL, *sumz, *sumabs, *odl;
+			sumz = (double *)calloc((size_t)(n + 1), sizeof(double));
+			sumabs = (double *)calloc((size_t)(n + 1), sizeof(double));
+			odl = (double *)calloc((size_t)(n + 1), sizeof(double));
+			if (hasmiss) {
+				bzm = (double *)malloc((size_t)(n + 1) * sizeof(double));
+				for (i = 1; i <= n; i++) bzm[i] = (missbeh[i] != 0.0) ? behOverallMean : behval[i];
+				bz = bzm;
+			}
+			for (dk = 0; dk < nstart; dk++) {
+				long ei = start_i[dk], ej = start_j[dk];
+				if (hasmiss && ht_get(&missht, dyadkey(&g, ei, ej), &dv)) continue;
+				odl[ei] += 1.0;
+				sumz[ei] += bz[ej];
+			}
+			for (dk = 0; dk < nstart; dk++) {
+				long ei = start_i[dk], ej = start_j[dk];
+				if (hasmiss && ht_get(&missht, dyadkey(&g, ei, ej), &dv)) continue;
+				sumabs[ei] += fabs(bz[ej] - bz[ei]);
+			}
+			for (k = 0; k < nbehterms; k++) {
+				double tot = 0.0;
+				char statname[48];
+				switch (behtermcodes[k]) {
+					case TERMCODE_BEH_LINEAR:
+						for (i = 1; i <= n; i++) tot += bz[i];
+						break;
+					case TERMCODE_BEH_QUADRATIC:
+						for (i = 1; i <= n; i++) tot += bz[i] * bz[i];
+						break;
+					case TERMCODE_BEH_AVALT:
+						for (i = 1; i <= n; i++) if (odl[i] > 0.0) tot += (bz[i] - behOverallMean) * (sumz[i] / odl[i] - behOverallMean);
+						break;
+					case TERMCODE_BEH_AVSIM:
+						for (i = 1; i <= n; i++) if (odl[i] > 0.0) tot += 1.0 - (sumabs[i] / behrange) / odl[i] - behSimMean;
+						break;
+				}
+				sprintf(statname, "__saom_native_statbehlag%ld", k + 1);
+				SF_scal_save(statname, tot);
+			}
+			free(sumz); free(sumabs); free(odl); free(bzm);
 		}
 		ht_free(&hstart);
 		free(start_i); free(start_j);

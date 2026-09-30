@@ -5305,6 +5305,7 @@ struct SaomCoevScoredResult {
 	real rowvector statBeh		// harmonisation unit 31 - behavior-side counterpart to `stat' above, same convention
 	real scalar stepsNet		// ministep opportunities of each variable - the rate parameters' scores (stepsX/rateX - npresent) need them separately
 	real scalar stepsBeh
+	real rowvector statBehLag	// native path only (protocol >= 3): behavior statistics of the simulated end behavior on the period's STARTING network (the lagged statistics the co-evolution estimator uses), masked like SaomCoevStatBeh()
 	real scalar netdist		// native path only: number of dyads in which the simulated end network differs from the start network (missing dyads excluded) - the network rate's moment statistic
 }
 
@@ -6269,6 +6270,7 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 			}
 			else sres = SaomSimulateIntervalCoevNative(*C.Gwaves[pd], M, C.cfg, thetaNet, Behwork, Mbeh, C.cfgBeh, thetaBeh, rateNet, rateBeh, 0)
 			statNet = sres.stat		// behsim already evaluated with the starting behavior by the plugin
+			statBeh = sres.statBehLag	// lagged, computed by the plugin
 			distNet = sres.netdist
 		}
 		else {
@@ -6285,9 +6287,9 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 				statNet = M.full_statistic(Gwork)
 				distNet = SaomCountDiffering(*C.Gwaves[pd], Gwork)
 			}
+			// lagged: behavior statistics on the period's STARTING network
+			statBeh = SaomCoevStatBeh(Behwork, *C.GpStat[pd], Mbeh, missBeh)
 		}
-		// lagged: behavior statistics on the period's STARTING network
-		statBeh = SaomCoevStatBeh(Behwork, *C.GpStat[pd], Mbeh, missBeh)
 		simstat = SaomBehaviorPatchEndowCreation(Mbeh, (statNet, statBeh), C.pNet, behStart,
 			(C.hasmiss ? SaomMaskCoevEndowCreationValues(Behwork.values, behStart, missBeh) : Behwork.values))
 		distBeh = sum(abs(Behwork.values - behStart) :* (1 :- missBeh))
@@ -6375,11 +6377,11 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	C.needsExtras = C.hasmiss | C.haspresent
 
 	// native dispatch: every term on both sides natively covered, and a
-	// plugin new enough for unconditional estimation (protocol >= 2)
+	// plugin new enough for unconditional estimation (protocol >= 3)
 	C.cfg = SaomNativeSetup(M)
 	C.cfgBeh = SaomBehaviorNativeSetup(Mbeh)
 	C.use_native = C.cfg.eligible & C.cfgBeh.eligible & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= 2)
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= 3)
 	C.missDyadsPd = J(0, 3, 0)
 	if (C.use_native & C.hasmiss) {
 		for (pd=1; pd<=P; pd++) {
@@ -6694,18 +6696,28 @@ string scalar SaomNativePluginSubdir(){
 	return("macos")
 }
 
+/* Lookup order (changed 2026-09-30): the plugin that sits next to the
+   nwsaom.ado actually being run (a git checkout's lib/plugins/<os>/)
+   comes FIRST, findfile() on the flat basename (a net install) second.
+   The old order let a stale `net install`ed copy in PLUS shadow a
+   checkout's freshly built plugin, so a checkout silently ran an old
+   binary - for co-evolution, one too old for unconditional estimation,
+   which then fell back to the pure-Mata simulator (minutes instead of
+   seconds). After a real net install there is no lib/plugins/ next to
+   nwsaom.ado, so the findfile() branch is what applies there. */
 string scalar SaomNativePluginPath(){
-	string scalar fname, found, full, dir, fn
+	string scalar fname, found, full, dir, fn, cand
 
 	fname = SaomNativePluginFilename()
-	found = findfile(fname)
-	if (found != "") return(found)
-
 	full = findfile("nwsaom.ado")
-	if (full == "") return("")
-	pathsplit(full, dir, fn)
-	return(pathjoin(pathjoin(dir, "lib"),
-		pathjoin("plugins", pathjoin(SaomNativePluginSubdir(), fname))))
+	if (full != "") {
+		pathsplit(full, dir, fn)
+		cand = pathjoin(pathjoin(dir, "lib"),
+			pathjoin("plugins", pathjoin(SaomNativePluginSubdir(), fname)))
+		if (fileexists(cand)) return(cand)
+	}
+	found = findfile(fname)
+	return(found)
 }
 
 /* Returns 0 (never errors) on any platform where lib/plugins/saom_sim.plugin
@@ -7431,6 +7443,8 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	res.stepsNet = st_numscalar("__saom_native_stepsnet")
 	res.stepsBeh = st_numscalar("__saom_native_stepsbeh")
 	res.netdist = st_numscalar("__saom_native_netdist")
+	res.statBehLag = J(1, pBeh, 0)
+	for (i=1; i<=pBeh; i++) res.statBehLag[i] = st_numscalar("__saom_native_statbehlag" + strofreal(i))
 
 	if (rebuild_g) {
 		if (nties_out > 0) newties = st_data((1::nties_out), ("v1","v2"))
@@ -7450,7 +7464,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
    (native/saom_sim.c's SAOM_NATIVE_VERSION), obtained from one trivial
    probe call (2 actors, rate 0, so no ministep runs). 0 when the plugin is
    missing or predates the version scalar. The co-evolution estimators need
-   version >= 2 (per-variable ministep counts, network distance, behsim,
+   version >= 3 (per-variable ministep counts, network distance, behsim, lagged behavior statistics,
    centered avAlt); with an older binary they use the Mata simulator. */
 real scalar SaomNativePluginVersion(){
 	string scalar origframe

@@ -271,13 +271,32 @@ the optimizer.
 Related, not fixed: a network-only fit with `present()` or `missnet()` also cannot use conditional
 estimation, but still keeps its rate at the starting value (documented as "not refined").
 
-## The saom_sim plugin: a stale installed copy in PLUS wins over the repo's own
+## The saom_sim plugin: a stale installed copy in PLUS used to win over the repo's own (fixed 2026-09-30)
 
-`SaomNativePluginPath()` tries `findfile("saom_sim_macos.plugin")` first, which finds a `net
-install`ed copy in PLUS before the repo's `lib/plugins/<os>/` one when you run from a checkout.
-A test run then silently exercises an OLD binary (the baseline `test_nwsaom_native.do` run hung
-in `saom_test_native_cycle4_equiv` that way, 2026-09-30). When testing plugin changes from a
-checkout, put `lib/plugins/<os>` on the adopath first (`adopath ++ <repo>/lib/plugins/macos`).
-Since protocol version 2 the plugin reports `__saom_native_version`; the co-evolution estimators
-call `SaomNativePluginVersion()` and fall back to the Mata simulator for anything older, so a
-stale unix/windows binary (they are rebuilt by CI, not locally) is slow, not wrong.
+`SaomNativePluginPath()` used to try `findfile("saom_sim_macos.plugin")` first, which finds a `net
+install`ed copy in PLUS before the checkout's `lib/plugins/<os>/` one. Running from a checkout then
+silently exercised an OLD binary. Two real consequences on 2026-09-30: the baseline
+`test_nwsaom_native.do` run hung in `saom_test_native_cycle4_equiv`, and the new co-evolution
+estimator, which needs plugin protocol >= 3 (`__saom_native_version`, checked by
+`SaomNativePluginVersion()`), fell back to the pure-Mata simulator: the s50 three-wave model took
+over 10 minutes (two waves: 1,038 s) instead of 5 s. The lookup now prefers the plugin next to the
+`nwsaom.ado` being run and only then `findfile()`; after a real net install there is no
+`lib/plugins/` next to `nwsaom.ado`, so nothing changes there. The unix/windows binaries are rebuilt
+by CI, not locally: until then they report an older protocol and co-evolution runs (correctly, but
+slowly) in Mata on those platforms. Other plugins (`ergm_mcmc`, `nwgraph`, `dynam_sim`) still use
+the old findfile-first order.
+
+Timing, s50 three-wave model (`outdegree reciprocity transtrip behsim` / `linear quadratic
+avalt`), native path: 5.0 s (phase 1 0.07 s, phase 2 3.2 s, phase 3 1.6 s; 6,014 simulated periods
+at 0.7 ms each, almost all of it the C ministep loop; a plugin call itself costs about 0.01 ms).
+The lagged behavior statistics were computed in Mata at first (0.5 ms per period, 3 s per fit) and
+now come from the plugin (`__saom_native_statbehlag%d`).
+
+## `nwsaom` multiplex (two co-evolving networks) still holds its rates fixed
+
+`SaomEstimateRMCoevNetNet()` has the same flaw the network+behavior estimator had before
+2026-09-30: two dependent variables, so RSiena estimates the rates by unconditional MoM, but here
+both rates stay at their closed-form starting values. A fix needs per-network ministep counts and
+end-vs-start distances from the NN branch of `native/saom_sim.c` (it only returns the total step
+count), the rates added to the parameter vector, and probably lagged cross-network (`crprod`)
+statistics. Not done yet; there is no RSiena benchmark for it in the test suite.
