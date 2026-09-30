@@ -241,7 +241,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 4		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES
+#define SAOM_NATIVE_VERSION 5		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1352,7 +1352,8 @@ static ST_retcode nn_call(char *argv[]) {
 		graph_t g1, g2;
 		rng_t rngnn;
 		long ii, kk;
-		double tnn, stepsnn, nch1, nch2;
+		double tnn, stepsnn, nch1, nch2, steps1 = 0.0, steps2 = 0.0, dist1 = 0.0, dist2 = 0.0;
+		long *s1i, *s1j, *s2i, *s2j;
 
 		// Split the ONE combined string into its 3 logical blocks first
 		// (a separate strtok pass on "|", run to completion before the
@@ -1431,11 +1432,14 @@ static ST_retcode nn_call(char *argv[]) {
 		g1.dout = (long *)calloc((size_t)(n1v + 1), sizeof(long));
 		g1.din  = (long *)calloc((size_t)(n1v + 1), sizeof(long));
 		g1.outadj = NULL; g1.inadj = NULL;
+		s1i = (long *)malloc((size_t)(nties1v > 0 ? nties1v : 1) * sizeof(long));
+		s1j = (long *)malloc((size_t)(nties1v > 0 ? nties1v : 1) * sizeof(long));
 		for (ii = 1; ii <= nties1v; ii++) {
 			ST_double vi, vj;
 			SF_vdata(1, ii, &vi);
 			SF_vdata(2, ii, &vj);
 			toggle(&g1, (long)vi, (long)vj);
+			s1i[ii - 1] = (long)vi; s1j[ii - 1] = (long)vj;
 		}
 
 		g2.n = n2v; g2.need_adj = 0; g2.adjm = NULL;
@@ -1444,11 +1448,14 @@ static ST_retcode nn_call(char *argv[]) {
 		g2.dout = (long *)calloc((size_t)(n2v + 1), sizeof(long));
 		g2.din  = (long *)calloc((size_t)(n2v + 1), sizeof(long));
 		g2.outadj = NULL; g2.inadj = NULL;
+		s2i = (long *)malloc((size_t)(nties2v > 0 ? nties2v : 1) * sizeof(long));
+		s2j = (long *)malloc((size_t)(nties2v > 0 ? nties2v : 1) * sizeof(long));
 		for (ii = 1; ii <= nties2v; ii++) {
 			ST_double vi, vj;
 			SF_vdata(3, ii, &vi);
 			SF_vdata(4, ii, &vj);
 			toggle(&g2, (long)vi, (long)vj);
+			s2i[ii - 1] = (long)vi; s2j[ii - 1] = (long)vj;
 		}
 
 		rng_seed(&rngnn, (unsigned long long)seedv);
@@ -1534,8 +1541,9 @@ static ST_retcode nn_call(char *argv[]) {
 						toggle(gme, i, choice);
 						if (onNet1) nch1 += 1.0; else nch2 += 1.0;
 					}
+					if (onNet1) steps1 += 1.0; else steps2 += 1.0;
+					stepsnn += 1.0;
 				}
-				stepsnn += 1.0;
 			}
 			for (kk = 0; kk < nterms1v; kk++) { char sn[48]; sprintf(sn, "__saom_native_nn_score1_%ld", kk + 1); SF_scal_save(sn, score1[kk]); }
 			for (kk = 0; kk < nterms2v; kk++) { char sn[48]; sprintf(sn, "__saom_native_nn_score2_%ld", kk + 1); SF_scal_save(sn, score2[kk]); }
@@ -1550,17 +1558,62 @@ static ST_retcode nn_call(char *argv[]) {
 		SF_scal_save("__saom_native_nn_nch1", (ST_double)nch1);
 		SF_scal_save("__saom_native_nn_nch2", (ST_double)nch2);
 		SF_scal_save("__saom_native_nn_steps", (ST_double)stepsnn);
-		for (kk = 0; kk < nterms1v; kk++) {
-			char statname[48];
-			sprintf(statname, "__saom_native_nn_stat1_%ld", kk + 1);
-			SF_scal_save(statname, saom_stat_term_nn(&g1, &g2, tc1[kk], pp1[kk]));
+		/* per-network ministep counts and end-vs-start distances: the
+		   statistics and scores of the two rates under unconditional
+		   estimation (protocol 5) */
+		{
+			dyadht_t hs;
+			long dv;
+			ht_alloc(&hs, ht_next_pow2(nties1v * 2 + 16));
+			for (ii = 0; ii < nties1v; ii++) ht_put(&hs, dyadkey(&g1, s1i[ii], s1j[ii]), 1);
+			for (ii = 0; ii < g1.nties; ii++) if (!ht_get(&hs, dyadkey(&g1, g1.elist_i[ii], g1.elist_j[ii]), &dv)) dist1 += 1.0;
+			for (ii = 0; ii < nties1v; ii++) if (!has_edge(&g1, s1i[ii], s1j[ii])) dist1 += 1.0;
+			ht_free(&hs);
+			ht_alloc(&hs, ht_next_pow2(nties2v * 2 + 16));
+			for (ii = 0; ii < nties2v; ii++) ht_put(&hs, dyadkey(&g2, s2i[ii], s2j[ii]), 1);
+			for (ii = 0; ii < g2.nties; ii++) if (!ht_get(&hs, dyadkey(&g2, g2.elist_i[ii], g2.elist_j[ii]), &dv)) dist2 += 1.0;
+			for (ii = 0; ii < nties2v; ii++) if (!has_edge(&g2, s2i[ii], s2j[ii])) dist2 += 1.0;
+			ht_free(&hs);
 		}
-		for (kk = 0; kk < nterms2v; kk++) {
-			char statname[48];
-			sprintf(statname, "__saom_native_nn_stat2_%ld", kk + 1);
-			SF_scal_save(statname, saom_stat_term_nn(&g2, &g1, tc2[kk], pp2[kk]));
+		SF_scal_save("__saom_native_nn_steps1", (ST_double)steps1);
+		SF_scal_save("__saom_native_nn_steps2", (ST_double)steps2);
+		SF_scal_save("__saom_native_nn_dist1", (ST_double)dist1);
+		SF_scal_save("__saom_native_nn_dist2", (ST_double)dist2);
+		/* statistics of the end networks; a cross-network effect (crprod)
+		   reads the OTHER network at the START of the period, as RSiena
+		   (lagged; RSiena's targets on a two-network s50 example confirm
+		   it), while the ministeps above read its current state */
+		{
+			graph_t g1s, g2s;
+			g1s.n = n1v; g1s.need_adj = 0; g1s.adjm = NULL;
+			ht_alloc(&g1s.ht, ht_next_pow2(nties1v * 2 + 16));
+			g1s.elist_i = NULL; g1s.elist_j = NULL; g1s.ecap = 0; g1s.nties = 0;
+			g1s.dout = (long *)calloc((size_t)(n1v + 1), sizeof(long));
+			g1s.din  = (long *)calloc((size_t)(n1v + 1), sizeof(long));
+			g1s.outadj = NULL; g1s.inadj = NULL;
+			for (ii = 0; ii < nties1v; ii++) toggle(&g1s, s1i[ii], s1j[ii]);
+			g2s.n = n2v; g2s.need_adj = 0; g2s.adjm = NULL;
+			ht_alloc(&g2s.ht, ht_next_pow2(nties2v * 2 + 16));
+			g2s.elist_i = NULL; g2s.elist_j = NULL; g2s.ecap = 0; g2s.nties = 0;
+			g2s.dout = (long *)calloc((size_t)(n2v + 1), sizeof(long));
+			g2s.din  = (long *)calloc((size_t)(n2v + 1), sizeof(long));
+			g2s.outadj = NULL; g2s.inadj = NULL;
+			for (ii = 0; ii < nties2v; ii++) toggle(&g2s, s2i[ii], s2j[ii]);
+			for (kk = 0; kk < nterms1v; kk++) {
+				char statname[48];
+				sprintf(statname, "__saom_native_nn_stat1_%ld", kk + 1);
+				SF_scal_save(statname, saom_stat_term_nn(&g1, &g2s, tc1[kk], pp1[kk]));
+			}
+			for (kk = 0; kk < nterms2v; kk++) {
+				char statname[48];
+				sprintf(statname, "__saom_native_nn_stat2_%ld", kk + 1);
+				SF_scal_save(statname, saom_stat_term_nn(&g2, &g1s, tc2[kk], pp2[kk]));
+			}
+			ht_free(&g1s.ht); free(g1s.elist_i); free(g1s.elist_j); free(g1s.dout); free(g1s.din);
+			ht_free(&g2s.ht); free(g2s.elist_i); free(g2s.elist_j); free(g2s.dout); free(g2s.din);
 		}
 
+		free(s1i); free(s1j); free(s2i); free(s2j);
 		ht_free(&g1.ht); free(g1.elist_i); free(g1.elist_j); free(g1.dout); free(g1.din);
 		ht_free(&g2.ht); free(g2.elist_i); free(g2.elist_j); free(g2.dout); free(g2.din);
 		return(0);
@@ -1885,11 +1938,26 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					/* B-family symmetric ministep - see the long comment in the
 					   pre-rewrite stata_call() (git history) for the derivation;
 					   logic unchanged. */
-					long actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
+					long actor;
 					long alter;
 					int ij_exists, accepted;
-					double u_actor = 0.0, u_alter = 0.0, prob;
-					double chg_actor[MAXTERMS];
+					double u_actor = 0.0, u_alter = 0.0, prob, pEgo = 0.0, pAlt = 0.0;
+					double chg_actor[MAXTERMS], chg_alter[MAXTERMS];
+					/* ratecov(): the acting actor is drawn with probability
+					   proportional to exp(ratecoef * x_i), as in the directed
+					   branch below (before 2026-10-01 this branch drew
+					   uniformly, so the covariate only rescaled the rate) */
+					if (P->hasratecov) {
+						double drawA = rng_unif(&rng) * totw_rc, cumA = 0.0;
+						long ii;
+						actor = n;
+						for (ii = 0; ii < n; ii++) {
+							cumA += wfull_rc[ii];
+							if (drawA <= cumA) { actor = ii + 1; break; }
+						}
+						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
+					}
+					else actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					if (PD->haspresent) {
 						do { alter = presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)]; } while (alter == actor);
 					} else {
@@ -1902,19 +1970,41 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						u_actor += P->theta[k] * cv_actor;
 						u_alter += P->theta[k] * cv_alter;
 						chg_actor[k] = cv_actor;
+						chg_alter[k] = cv_alter;
 					}
+					/* acceptance probabilities (RSiena's pairwise model types):
+					   BFORCE (modelType 4) the actor alone, sigma(u_actor);
+					   BAGREE (5) creation needs both, sigma(u_actor)*sigma(u_alter),
+					   deletion either, 1-(1-sigma(u_actor))(1-sigma(u_alter));
+					   BJOINT (6) sigma(u_actor + u_alter). u_alter is the alter's
+					   own gain from the same change. BAGREE is being checked
+					   against RSiena (see the next commit). */
 					if (P->symtype == 2) prob = stable_logistic(u_actor);
 					else if (P->symtype == 3) {
-						double pEgo = stable_logistic(u_actor);
-						double pAlt = stable_logistic(-u_alter);
+						pEgo = stable_logistic(u_actor);
+						pAlt = stable_logistic(u_alter);
 						prob = ij_exists ? (pEgo + pAlt - pEgo * pAlt) : (pEgo * pAlt);
 					}
 					else prob = stable_logistic(u_actor + u_alter);
 					accepted = (rng_unif(&rng) < prob);
 					if (P->want_score) {
+						/* d log P(outcome) / d theta for the model type (the
+						   score-function Jacobian of phases 1 and 3) */
 						for (k = 0; k < M->nterms; k++) {
-							double chosen_k = accepted ? chg_actor[k] : 0.0;
-							score[k] += chosen_k - prob * chg_actor[k];
+							double sk;
+							if (P->symtype == 2) sk = ((accepted ? 1.0 : 0.0) - prob) * chg_actor[k];
+							else if (P->symtype == 3) {
+								if (!ij_exists) {
+									double g = (1.0 - pEgo) * chg_actor[k] + (1.0 - pAlt) * chg_alter[k];
+									sk = accepted ? g : -prob * g / (1.0 - prob);
+								}
+								else {
+									if (accepted) sk = (pEgo * (1.0 - pEgo) * (1.0 - pAlt) * chg_actor[k] + pAlt * (1.0 - pAlt) * (1.0 - pEgo) * chg_alter[k]) / prob;
+									else sk = -(pEgo * chg_actor[k] + pAlt * chg_alter[k]);
+								}
+							}
+							else sk = ((accepted ? 1.0 : 0.0) - prob) * (chg_actor[k] + chg_alter[k]);
+							score[k] += sk;
 						}
 					}
 					stepsNet += 1.0;
@@ -2070,11 +2160,13 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	R->steps = steps; R->stepsNet = stepsNet; R->stepsBeh = stepsBeh;
 	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = t; R->rcscore = rcscore;
 
-	/* distances from the start state (unconditional co-evolution rate
-	   statistics), missing dyads/actors excluded */
-	if (M->nbehterms > 0) {
+	/* distances from the start state (the rate statistics of
+	   unconditional estimation), missing dyads/actors excluded; the
+	   network distance for every model, the behavior distance and the
+	   lagged behavior statistics only with a behavior */
+	{
 		long d, dv;
-		double nd = 0.0, bd = 0.0;
+		double nd = 0.0;
 		{
 			/* start ties as a hash (or dense) set */
 			dyadht_t hs;
@@ -2093,11 +2185,15 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			}
 			ht_free(&hs);
 		}
+		R->netdist = nd;
+	}
+	if (M->nbehterms > 0) {
+		long d, dv;
+		double bd = 0.0;
 		for (i = 1; i <= n; i++) {
 			if (hasmiss && PD->missbeh[i] != 0.0) continue;
 			bd += fabs(behval[i] - PD->beh0[i]);
 		}
-		R->netdist = nd;
 		R->behdist = bd;
 
 		/* lagged behavior statistics: end behavior on the STARTING network */

@@ -142,6 +142,9 @@ void __nwsaom_mp_fit_and_post(
 	st_matrix(Vname, fit.V)
 	st_numscalar(rate1name, fit.rate1)
 	st_numscalar(rate2name, fit.rate2)
+	st_numscalar(rate1name + "_se", fit.rate1SE)
+	st_numscalar(rate2name + "_se", fit.rate2SE)
+	st_numscalar(rate1name + "_tconvmax", fit.tconvMax)
 	// Coefficient names built here (not hardcoded in nwsaom_multiplex's
 	// own Stata code) since the column count/order now varies with
 	// wantcrprod/wantcrprodb - posted as one space-separated string
@@ -181,7 +184,7 @@ program nwsaom, eclass
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
-		RATE0(real 1) THETA0(string) K0(integer 50) K3(integer 1000) ///
+		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) ]
 	set more off
 
@@ -546,6 +549,16 @@ program nwsaom, eclass
 			di "{err}{bf:`__nwsaom_nec_eff'endow} and {bf:`__nwsaom_nec_eff'creation} must be specified together - a single non-evaluation role alone is not supported (same restriction as {bf:linearendow}/{bf:linearcreation})."
 			error 198
 		}
+	}
+	// outdegreeendow+outdegreecreation replace the evaluation outdegree
+	// effect. Their statistics are minus the number of lost ties and the
+	// number of gained ties, whose difference is exactly the rate's
+	// distance statistic (dyads that differ between the waves), so with
+	// the rate estimated the three parameters are not identified (RSiena:
+	// covariance matrix not positive definite, no standard errors).
+	if "`outdegreeendow'" != "" & "`behavior'" == "" {
+		di "{err}{bf:outdegreeendow}+{bf:outdegreecreation} cannot be estimated together with the rate: their statistics (lost and gained ties) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:outdegree}, optionally with {bf:reciprocityendow}+{bf:reciprocitycreation}."
+		error 198
 	}
 	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "")
 	// v1 scope restriction, disclosed not silently degraded: network
@@ -1646,6 +1659,23 @@ program nwsaom, eclass
 		mata: st_local("__nwsaom_pbeh", strofreal(__nwsaom_last_Mbeh.nparam()))
 	}
 
+	// --- rate0(): starting value(s) of the network rate(s), one per
+	// inter-wave period (a single value is used for every period);
+	// omitted: RSiena's closed-form starting value. Network-only models;
+	// co-evolution models always start from the closed form.
+	local __nwsaom_rate0 "."
+	capture mata: mata drop __nwsaom_rates0
+	mata: __nwsaom_rates0 = J(1, 0, .)
+	if "`rate0'" != "" {
+		local __nwsaom_nr0 : word count `rate0'
+		if `__nwsaom_nr0' != 1 & `__nwsaom_nr0' != `__nwsaom_nwaves' - 1 {
+			di "{err}rate0() must supply one starting rate, or one per inter-wave period (`=`__nwsaom_nwaves'-1')."
+			error 198
+		}
+		local __nwsaom_rate0 : word 1 of `rate0'
+		mata: __nwsaom_rates0 = strtoreal(tokens("`rate0'"))
+	}
+
 	capture mata: mata drop __nwsaom_theta0
 	if "`theta0'" == "" {
 		mata: __nwsaom_theta0 = J(1, `__nwsaom_p', 0)
@@ -1657,6 +1687,15 @@ program nwsaom, eclass
 			error 198
 		}
 		mata: __nwsaom_theta0 = strtoreal(tokens("`theta0'"))
+	}
+	// network-only models without theta0(): start the outdegree effect
+	// at RSiena's data-derived value (getNetworkStartingVals()) instead of
+	// 0, as RSiena does - with the rate estimated jointly, a start at 0
+	// (a network that densifies quickly) can make the phase-1 derivative
+	// estimates unusable
+	if "`theta0'" == "" & !`__nwsaom_coev' & "`outdegree'" != "" {
+		if `__nwsaom_multi' mata: __nwsaom_theta0[1] = SaomOutdegreeStart(__nwsaom_last_Gwaves, ("`symmetric'" != ""))
+		else mata: __nwsaom_theta0[1] = SaomOutdegreeStart((&__nwsaom_last_G1, &__nwsaom_last_G2), ("`symmetric'" != ""))
 	}
 
 	// --- behtheta0(): same size-checked-starting-value convention as
@@ -1758,15 +1797,15 @@ program nwsaom, eclass
 		// verification this pooling convention is based on.
 		if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
-				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_presentmat, __nwsaom_missmaskptr)
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_presentmat, __nwsaom_missmaskptr, __nwsaom_rates0)
 		}
 		else if `__nwsaom_haspresent' {
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
-				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_presentmat)
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_presentmat, J(1, 0, NULL), __nwsaom_rates0)
 		}
 		else {
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
-				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg')
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', J(0, 0, 0), J(1, 0, NULL), __nwsaom_rates0)
 		}
 	}
 	else {
@@ -1782,7 +1821,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symmiss_fntype = J(1, __nwsaom_last_M.nterms, 0)
 			mata: __nwsaom_symmiss_ratecovattr = J(0, 1, 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_missmask1, __nwsaom_symmiss_fntype, __nwsaom_symmiss_ratecovattr, 0, `__nwsaom_symtypeval')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_missmask1, __nwsaom_symmiss_fntype, __nwsaom_symmiss_ratecovattr, 0, `__nwsaom_symtypeval')
 		}
 		else if "`symmetric'" != "" & `__nwsaom_haspresent' {
 			// symmetric + present() only (composition change WITHOUT
@@ -1793,7 +1832,7 @@ program nwsaom, eclass
 			mata: __nwsaom_sympres_ratecovattr = J(0, 1, 0)
 			mata: __nwsaom_sympres_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_sympres_nomiss, __nwsaom_sympres_fntype, __nwsaom_sympres_ratecovattr, 0, `__nwsaom_symtypeval')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_sympres_nomiss, __nwsaom_sympres_fntype, __nwsaom_sympres_ratecovattr, 0, `__nwsaom_symtypeval')
 		}
 		else if "`symmetric'" != "" & `__nwsaom_hasratecov' {
 			// symmetric + ratecov() combined (native-first): native/
@@ -1812,7 +1851,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symrc_fntype = J(1, __nwsaom_last_M.nterms, 0)
 			mata: __nwsaom_symrc_ratecovattr = st_data(1::`nodes', "`ratecov'")
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
 		}
 		else if "`symmetric'" != "" {
 			// symmetric: reaching SaomEstimateRM()'s own trailing
@@ -1827,7 +1866,7 @@ program nwsaom, eclass
 			mata: __nwsaom_sym_fntype = J(1, __nwsaom_last_M.nterms, 0)
 			mata: __nwsaom_sym_ratecovattr = J(0, 1, 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_sym_allpresent, __nwsaom_sym_nomiss, __nwsaom_sym_fntype, __nwsaom_sym_ratecovattr, 0, `__nwsaom_symtypeval')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_sym_allpresent, __nwsaom_sym_nomiss, __nwsaom_sym_fntype, __nwsaom_sym_ratecovattr, 0, `__nwsaom_symtypeval')
 		}
 		else if `__nwsaom_hasratecov' {
 			// Same chained-optional-argument placeholders `hasnetgate'
@@ -1847,7 +1886,7 @@ program nwsaom, eclass
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_ratecovattr = st_data(1::`nodes', "`ratecov'")
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
 		}
 		else if `__nwsaom_hasnetgate' {
 			// harmonisation unit 167: reaching SaomEstimateRM()'s own
@@ -1877,7 +1916,7 @@ program nwsaom, eclass
 			mata: __nwsaom_allpresent1 = J(`nodes', 1, 1)
 			mata: __nwsaom_nomissmask1 = J(`nodes', `nodes', 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_allpresent1, __nwsaom_nomissmask1, __nwsaom_netfntype)
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_allpresent1, __nwsaom_nomissmask1, __nwsaom_netfntype)
 		}
 		else if `__nwsaom_hasstructural' {
 			// Structural zeros/ones - reaching SaomEstimateRM()'s own
@@ -1904,19 +1943,19 @@ program nwsaom, eclass
 			mata: __nwsaom_struct_fntype = J(1, __nwsaom_last_M.nterms, 0)
 			mata: __nwsaom_struct_ratecovattr = J(0, 1, 0)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_struct_present, __nwsaom_struct_missmask, __nwsaom_struct_fntype, __nwsaom_struct_ratecovattr, 0, 0, __nwsaom_structmat)
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_struct_present, __nwsaom_struct_missmask, __nwsaom_struct_fntype, __nwsaom_struct_ratecovattr, 0, 0, __nwsaom_structmat)
 		}
 		else if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_missmask1)
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_present1, __nwsaom_missmask1)
 		}
 		else if `__nwsaom_haspresent' {
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg', __nwsaom_present1)
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_present1)
 		}
 		else {
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
-				__nwsaom_last_M, __nwsaom_theta0, `rate0', `k0', `k3', `firstg')
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg')
 		}
 	}
 
@@ -2086,13 +2125,17 @@ program nwsaom, eclass
 		// than one rate value here, matching real RSiena's own
 		// per-period rate reporting (verified directly, see
 		// SaomEstimateRMMulti()'s own header comment).
-		tempname rates ratetr ratese
+		tempname rates ratetr ratese ratetab tconv
 		mata: st_matrix("`rates'", __nwsaom_fit.rates)
 		mata: st_matrix("`ratetr'", __nwsaom_fit.rate_tratios)
 		mata: st_matrix("`ratese'", __nwsaom_fit.rate_ses)
+		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
+		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit.tconvMax))
 		local __nwsaom_periodnames ""
+		local __nwsaom_tconvnames "`__nwsaom_coefnames'"
 		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
 			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
+			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_period`__p'"
 		}
 		matrix colnames `rates' = `__nwsaom_periodnames'
 		matrix colnames `ratetr' = `__nwsaom_periodnames'
@@ -2100,28 +2143,41 @@ program nwsaom, eclass
 		matrix rownames `rates' = rate
 		matrix rownames `ratetr' = rate_tratio
 		matrix rownames `ratese' = rate_se
+		matrix colnames `tconv' = `__nwsaom_tconvnames'
+		matrix rownames `tconv' = tconv
+		matrix `ratetab' = `rates' \ `ratese'
+		matrix rownames `ratetab' = rate se
 
 		di as text "{hline}"
 		di as text "SAOM (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
 		di as text "{hline}"
 		ereturn display
-		di as text "Rate parameters (one per inter-wave period):"
-		matlist `rates', format(%9.4f)
-		di as text "Rate standard errors:"
-		matlist `ratese', format(%9.4f)
+		di as text "Rate parameters (estimated, one per inter-wave period):"
+		matlist `ratetab', format(%9.4f)
+		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
 		ereturn matrix rates_se = `ratese'
+		ereturn matrix tconv = `tconv'
+		ereturn scalar tconv_max = `__nwsaom_tconvmax'
 	}
 	else {
 		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit.rate))
 		mata: st_local("__nwsaom_ratetr", strofreal(__nwsaom_fit.rate_tratio))
 		mata: st_local("__nwsaom_ratese", strofreal(__nwsaom_fit.rate_se))
+		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit.tconvMax))
+		tempname tconv
+		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
+		if `__nwsaom_hasratecov' matrix colnames `tconv' = `__nwsaom_coefnames' rate ratecoef
+		else matrix colnames `tconv' = `__nwsaom_coefnames' rate
+		matrix rownames `tconv' = tconv
 		ereturn scalar rate = `__nwsaom_rate'
 		ereturn scalar rate_tratio = `__nwsaom_ratetr'
 		ereturn scalar rate_se = `__nwsaom_ratese'
+		ereturn scalar tconv_max = `__nwsaom_tconvmax'
+		ereturn matrix tconv = `tconv'
 		ereturn local wave1 "`wave1'"
 		ereturn local wave2 "`wave2'"
 		if `__nwsaom_hasratecov' {
@@ -2142,9 +2198,10 @@ program nwsaom, eclass
 		ereturn display
 		if `__nwsaom_hasratecov' {
 			di as text "Covariate-rate coefficient (" as result "`ratecov'" as text "): " as result %9.4f `__nwsaom_ratecoef' as text " (se " as result %6.4f `__nwsaom_ratecoef_se' as text ")" _continue
-			if `__nwsaom_ratecoef_fx' di as text " - left at its starting value; the data did not identify it reliably (e(ratecoef_fixed)==1)"
+			if `__nwsaom_ratecoef_fx' di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoef_fixed)==1)"
 			else di ""
 		}
+		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 	}
 end
 
@@ -2255,6 +2312,10 @@ program define nwsaom_multiplex, eclass
 	ereturn post `b' `V', obs(`nodes')
 	ereturn scalar rate1 = __nwsaom_mp_rate1
 	ereturn scalar rate2 = __nwsaom_mp_rate2
+	ereturn scalar rate1_se = __nwsaom_mp_rate1_se
+	ereturn scalar rate2_se = __nwsaom_mp_rate2_se
+	ereturn scalar tconv_max = __nwsaom_mp_rate1_tconvmax
+	scalar drop __nwsaom_mp_rate1 __nwsaom_mp_rate2 __nwsaom_mp_rate1_se __nwsaom_mp_rate2_se __nwsaom_mp_rate1_tconvmax
 	ereturn local cmd "nwsaom_multiplex"
 
 	di as text "{hline}"
@@ -2262,5 +2323,6 @@ program define nwsaom_multiplex, eclass
 	else di as text "Multiplex SAOM (Stage 1: within-network effects only), Method of Moments"
 	di as text "{hline}"
 	ereturn display
-	di as text "note: net1's own opportunity rate = " %6.3f e(rate1) ", net2's own = " %6.3f e(rate2) "."
+	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
+	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
 end

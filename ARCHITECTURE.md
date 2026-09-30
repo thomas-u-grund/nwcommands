@@ -97,7 +97,9 @@ the acting actor, compute the objective-function delta for every possible altern
 change, softmax, and draw. Continuous time is handled without a Poisson-count generator, by
 exploiting the fact that the pooled waiting time across `n` actors with a constant rate is the
 minimum of `n` i.i.d. exponentials. Parameters are estimated via Robbins-Monro stochastic
-approximation, matching RSiena's own algorithm.
+approximation, matching RSiena's own algorithm: unconditional Method of Moments, with the rate
+parameters estimated jointly with the effects (the shared `SaomRMCore()`; co-evolution has its own
+copy of the same loop).
 
 DyNAM factors the same kind of actor-oriented dynamics into two separate sub-models — which
 actor acts next (a continuous-time competing-risks rate model), and which receiver they choose

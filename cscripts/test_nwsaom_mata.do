@@ -155,7 +155,7 @@ void saom_test_unit1c(real scalar n, real colvector attr) {
 	printf("unit 1c: true theta:      %6.3f %6.3f %6.3f\n", theta_true[1], theta_true[2], theta_true[3])
 	printf("unit 1c: recovered theta: %6.3f %6.3f %6.3f\n", fit.theta[1], fit.theta[2], fit.theta[3])
 	printf("unit 1c: phase-3 t-ratios: %6.3f %6.3f %6.3f\n", fit.tratio[1], fit.tratio[2], fit.tratio[3])
-	printf("unit 1c: recovered rate: %6.3f (SE %6.3f, true 2.5) - harmonisation unit 27's own real-RSiena-verified conditional-refinement construction, not the closed-form starting value\n", fit.rate, fit.rate_se)
+	printf("unit 1c: recovered rate: %6.3f (SE %6.3f, true 2.5) - estimated jointly with theta (unconditional Method of Moments)\n", fit.rate, fit.rate_se)
 
 	assert(sign(fit.theta[1]) == sign(theta_true[1]))
 	assert(sign(fit.theta[2]) == sign(theta_true[2]))
@@ -163,15 +163,11 @@ void saom_test_unit1c(real scalar n, real colvector attr) {
 	assert(abs(fit.theta[1] - theta_true[1]) < 2.0)
 	assert(abs(fit.theta[2] - theta_true[2]) < 2.0)
 	assert(abs(fit.theta[3] - theta_true[3]) < 2.0)
-	// tightened from the old (0.5,6) closed-form-only bound (harmonisation
-	// unit 27) - the refined rate should recover the TRUE generating rate
-	// (2.5) much more closely than the closed-form starting value alone
-	// (which was never guaranteed to be close to any particular true
-	// rate, only a reasonable data-driven guess).
+	// the estimated rate should recover the TRUE generating rate (2.5)
 	assert(abs(fit.rate - 2.5) < 1.0)
 	assert(fit.rate_se > 0)
 
-	printf("unit 1c PASS: recovered theta within loose tolerance of true theta, refined rate within tight tolerance of the TRUE generating rate\n")
+	printf("unit 1c PASS: recovered theta within loose tolerance of true theta, estimated rate within tolerance of the TRUE generating rate\n")
 }
 
 /* -------------------------------------------------------------------
@@ -1748,16 +1744,16 @@ void saom_test_unit33_recover(real scalar n, real scalar seed) {
 	fit = SaomEstimateRM(G1, G2, M, (0,0), 5, 100, 200, 0.2, present)
 
 	printf("unit 33 recover: true theta %6.3f %6.3f, recovered %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2], fit.theta[1], fit.theta[2])
-	printf("unit 33 recover: rate=%6.3f rate_se=%6.3f (expect rate_se==0, unrefined under composition change)\n", fit.rate, fit.rate_se)
+	printf("unit 33 recover: rate=%6.3f rate_se=%6.3f (true rate 4, estimated with the present actors' activity)\n", fit.rate, fit.rate_se)
 
 	assert(sign(fit.theta[1]) == sign(thetaTrue[1]))
 	assert(sign(fit.theta[2]) == sign(thetaTrue[2]))
 	assert(abs(fit.theta[1] - thetaTrue[1]) < 1.5)
 	assert(abs(fit.theta[2] - thetaTrue[2]) < 1.5)
-	assert(fit.rate_se == 0)
-	assert(fit.rate > 0)
+	assert(fit.rate_se > 0 & fit.rate_se < .)
+	assert(abs(fit.rate - 4) < 2)
 
-	printf("unit 33 PASS: SaomEstimateRM() with present() recovers the true theta within loose tolerance, and correctly leaves the rate unrefined (composition change forces unconditional estimation)\n")
+	printf("unit 33 PASS: SaomEstimateRM() with present() recovers the true theta and rate within loose tolerance\n")
 }
 
 /* -------------------------------------------------------------------
@@ -1823,16 +1819,16 @@ void saom_test_unit33_recover_multi(real scalar n, real scalar seed) {
 	fit = SaomEstimateRMMulti(Gwaves, M, (0,0), 80, 150, 0.2, presentMat)
 
 	printf("unit 33 recover multi: true theta %6.3f %6.3f, recovered %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2], fit.theta[1], fit.theta[2])
-	printf("unit 33 recover multi: rates %6.3f %6.3f, rate_ses %6.3f %6.3f (expect both 0)\n", fit.rates[1], fit.rates[2], fit.rate_ses[1], fit.rate_ses[2])
+	printf("unit 33 recover multi: rates %6.3f %6.3f (true 4 4), rate_ses %6.3f %6.3f\n", fit.rates[1], fit.rates[2], fit.rate_ses[1], fit.rate_ses[2])
 
 	assert(sign(fit.theta[1]) == sign(thetaTrue[1]))
 	assert(sign(fit.theta[2]) == sign(thetaTrue[2]))
 	assert(abs(fit.theta[1] - thetaTrue[1]) < 1.5)
 	assert(abs(fit.theta[2] - thetaTrue[2]) < 1.5)
-	assert(fit.rate_ses[1] == 0 & fit.rate_ses[2] == 0)
-	assert(fit.rates[1] > 0 & fit.rates[2] > 0)
+	assert(fit.rate_ses[1] > 0 & fit.rate_ses[2] > 0 & fit.rate_ses[1] < . & fit.rate_ses[2] < .)
+	assert(abs(fit.rates[1] - 4) < 2 & abs(fit.rates[2] - 4) < 2)
 
-	printf("unit 33 PASS: SaomEstimateRMMulti() with presentMat() recovers the true theta within loose tolerance across 3 waves/2 periods, correctly leaving both periods' own rates unrefined\n")
+	printf("unit 33 PASS: SaomEstimateRMMulti() with presentMat() recovers the true theta and both periods' rates within loose tolerance across 3 waves/2 periods\n")
 }
 
 /* -------------------------------------------------------------------
@@ -2497,10 +2493,10 @@ void saom_test_unit35_recover(real scalar n, real scalar seed) {
 	printf("unit 35 recover: true theta %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2])
 	printf("unit 35 recover: masked   theta %6.3f %6.3f (abs err %6.3f)\n", fitMasked.theta[1], fitMasked.theta[2], errMasked)
 	printf("unit 35 recover: unmasked theta %6.3f %6.3f (abs err %6.3f)\n", fitNaive.theta[1], fitNaive.theta[2], errNaive)
-	assert(fitMasked.rate_se == 0)
+	assert(fitMasked.rate_se > 0 & fitMasked.rate_se < .)
 	assert(errMasked < errNaive)
 
-	printf("unit 35 PASS: SaomEstimateRM() with missMask() recovers the true theta more closely than an unmasked fit on the same corrupted data, and correctly leaves the rate unrefined\n")
+	printf("unit 35 PASS: SaomEstimateRM() with missMask() recovers the true theta more closely than an unmasked fit on the same corrupted data, with an estimated rate\n")
 }
 
 /* -------------------------------------------------------------------
@@ -2574,7 +2570,7 @@ void saom_test_unit35_recover_multi(real scalar n, real scalar seed) {
 	printf("unit 35 recover multi: true theta %6.3f %6.3f\n", thetaTrue[1], thetaTrue[2])
 	printf("unit 35 recover multi: masked   theta %6.3f %6.3f (abs err %6.3f)\n", fitMasked.theta[1], fitMasked.theta[2], errMasked)
 	printf("unit 35 recover multi: unmasked theta %6.3f %6.3f (abs err %6.3f)\n", fitNaive.theta[1], fitNaive.theta[2], errNaive)
-	assert(fitMasked.rate_ses[1] == 0 & fitMasked.rate_ses[2] == 0)
+	assert(fitMasked.rate_ses[1] > 0 & fitMasked.rate_ses[2] > 0 & fitMasked.rate_ses[1] < . & fitMasked.rate_ses[2] < .)
 	assert(errMasked < errNaive)
 
 	printf("unit 35 PASS: SaomEstimateRMMulti() with missMaskPd() recovers the true theta more closely than an unmasked fit on the same corrupted data across 3 waves/2 periods\n")
@@ -3297,8 +3293,12 @@ void saom_test_unit167_patch(real scalar seed) {
 	raw = M.full_statistic(Gend)			// both slots read Gend's own raw total (2 ties) before patching
 	assert(raw[1] == 2 & raw[2] == 2)
 	patched = SaomNetworkPatchEndowCreation(M, fntype, raw, Gstart, Gend)
-	printf("unit 167 patch: raw=(%g,%g) patched=(%g,%g) - expect endow=1 (the one lost tie (1,3)), creation=1 (the one gained tie (1,2))\n", raw[1], raw[2], patched[1], patched[2])
-	assert(patched[1] == 1)
+	// RSiena's statistics (NetworkEffect.cpp): endowment = minus the sum
+	// over LOST ties of the tie statistic in the starting network,
+	// creation = the sum over GAINED ties of the tie statistic in the end
+	// network; for outdegree the tie statistic is 1
+	printf("unit 167 patch: raw=(%g,%g) patched=(%g,%g) - expect endow=-1 (the one lost tie (1,3)), creation=1 (the one gained tie (1,2))\n", raw[1], raw[2], patched[1], patched[2])
+	assert(patched[1] == -1)
 	assert(patched[2] == 1)
 
 	// The tie present in BOTH waves (4,5) must contribute to NEITHER
@@ -3308,7 +3308,34 @@ void saom_test_unit167_patch(real scalar seed) {
 	assert(stat_edges(SaomBuildLostTiesGraph(Gstart, Gend), tdA)[1] == 1)
 	assert(stat_edges(SaomBuildGainedTiesGraph(Gstart, Gend), tdB)[1] == 1)
 
-	printf("unit 167 patch PASS: SaomNetworkPatchEndowCreation() correctly replaces the endow/creation slots with the lost-ties/gained-ties network's own statistic, leaving an unchanged tie out of both, and never touching an eval-type slot (not exercised by this all-endow/creation model, covered instead by the mixed-model .ado-level test)\n")
+	// reciprocity: tie statistic x_ji. Start: 1<->3 mutual, 2->1; end: 3->1
+	// kept, 1->3 lost (reciprocated at the start: endowment -1), 1->2
+	// gained (reciprocated by 2->1 at the end: creation +1), 4->5 gained
+	// (not reciprocated: 0)
+	Gstart = ErgmGraph()
+	Gstart.init(5, 1)
+	Gstart.toggle(1,3)
+	Gstart.toggle(3,1)
+	Gstart.toggle(2,1)
+	Gend = ErgmGraph()
+	Gend.init(5, 1)
+	Gend.toggle(3,1)
+	Gend.toggle(2,1)
+	Gend.toggle(1,2)
+	Gend.toggle(4,5)
+	M = ErgmModel()
+	M.init()
+	tdA = ErgmTermData()
+	tdB = ErgmTermData()
+	M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), tdA, ("reciprocityendow"))
+	M.addterm("reciprocitycreation", 1, &stat_mutual(), &change_mutual(), tdB, ("reciprocitycreation"))
+	patched = SaomNetworkPatchEndowCreation(M, (1, 2), M.full_statistic(Gend), Gstart, Gend)
+	printf("unit 167 patch (reciprocity): patched=(%g,%g) - expect (-1, 1)\n", patched[1], patched[2])
+	assert(patched[1] == -1)
+	assert(patched[2] == 1)
+
+
+	printf("unit 167 patch PASS: SaomNetworkPatchEndowCreation() replaces the endow/creation slots with RSiena's endowment/creation statistics (outdegree and reciprocity), leaving unchanged ties out of both\n")
 }
 
 end
