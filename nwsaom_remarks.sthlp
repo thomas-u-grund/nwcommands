@@ -529,16 +529,44 @@ network-only (no {opt behavior()}/co-evolution).
 {pstd}
 The three rules are RSiena's pairwise model types: {bf:joint} = modelType 6, {bf:force} = 4,
 {bf:agree} = 5 ({bf:agree} reproduces RSiena's alter probability exactly, which for an alter
-utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function). On glasgow waves 1-2 symmetrized, with
-{opt outdegree} alone, the density estimates and their standard errors agree with RSiena's
-within 0.05 standard errors for all three, conditional and unconditional
-({cmd:cscripts/test_nwsaom_rsiena.do}). The rate is on a different scale: {cmd:nwsaom}'s is the
-rate at which an ACTOR gets an opportunity; RSiena's conditional (default) rate for these model
-types is per pair, {cmd:nwsaom}'s divided by n - 1 (exactly, on these data); RSiena's unconditional
-pairwise rates are on yet another scale, about 1.8 times its conditional ones. Before 2026-10-01
-{bf:agree} used a different alter probability, the scores behind the standard errors used only the
-initiating actor's side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()}
-the acting actor was drawn uniformly, so the covariate could not affect who acts.
+utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function).
+
+{pstd}
+{it:The rate of a symmetric model.} {cmd:nwsaom} simulates a pairwise ministep as an actor getting an
+opportunity at rate rho (the per-actor rate of every other {cmd:nwsaom} model) and picking an alter
+among the other n - 1 actors; RSiena gives each actor the basic rate lambda, draws the actor and then
+the alter by these rates, and runs at total rate n(n - 1)lambda^2, so each pair at rate lambda^2.
+The two are the same process with lambda^2 = rho/(n - 1) (n: actors present). {cmd:e(rate)} is
+reported on RSiena's scale, and {cmd:e(rate_actor)} keeps rho:
+
+{p 8 12 2}- unconditional estimation: {cmd:e(rate)} = lambda = sqrt(rho/(n - 1)), RSiena's basic rate
+parameter; its standard error by the delta method, se(rho)/(2 sqrt(rho(n - 1))).{p_end}
+{p 8 12 2}- conditional estimation: {cmd:e(rate)} = the mean time to reach the observed distance at basic
+rate 1, as RSiena reports it, which is {cmd:nwsaom}'s time divided by n - 1, and its SD.{p_end}
+
+{pstd}
+The conditional rate is thus on the scale of lambda^2 (the time at basic rate 1 equals lambda^2),
+the unconditional one on the scale of lambda, in RSiena as here: on glasgow waves 1-2 symmetrized
+0.30 and 0.55 ({bf:joint}; 0.55^2 = 0.30). With {opt ratecov()}, actor i's rate is lambda exp(b x_i), the alter is drawn by
+these rates as well, and the same conversion holds with n all actors. {opt rate0()} is on RSiena's
+scale too. The convergence t-ratio of the rate does not depend on the scale.
+
+{pstd}
+Validation (glasgow waves 1-2 symmetrized; density alone, density and {opt nodematch(smoke1)}, and
+density with {opt ratecov(smoke1)}, centered; each for all three types, conditional and
+unconditional; RSiena 1.6.6 and {cmd:nwsaom}, five seeds each): every estimate, the rates and the
+covariate-rate coefficient included, agrees with RSiena's within 0.1 RSiena standard errors (mean
+0.04), except one conditional covariate-rate coefficient ({bf:force}, 0.13); forward simulations at
+fixed parameters give the same expected statistics. RSiena's default starting value for the rate of
+these model types is on the per-actor scale (5.6 on these data); from it, unconditional estimation
+often fails ("Unlikely to terminate this epoch") or leaves the rate at its start, so the RSiena
+references start the rate at 0.5.
+
+{pstd}
+Before 2026-10-01 {cmd:e(rate)} of a symmetric model was the per-actor rate rho; {bf:agree} used a
+different alter probability, the scores behind the standard errors used only the initiating actor's
+side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()} the actor and the
+alter were drawn uniformly, so the covariate could not affect who acts.
 
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}

@@ -218,6 +218,14 @@ program define nwsaom_estat_gof, rclass
 	else {
 		local __gof_rate1 = e(rate)
 	}
+	// symmetric (pairwise) fits report e(rate) on RSiena's scale; the
+	// simulation uses the per-actor rate e(rate_actor) and the pairwise
+	// ministep of e(symtype)
+	local __gof_symtype = 0
+	if "`e(symtype)'" != "" {
+		local __gof_rate1 = e(rate_actor)
+		local __gof_symtype = cond("`e(symtype)'" == "joint", 1, cond("`e(symtype)'" == "force", 2, 3))
+	}
 	// harmonisation unit 26: co-evolution's own SEPARATE behavior rate,
 	// per-period just like the network rate above ("extend it to N
 	// waves" - e(rates_beh), a 1 x nperiods matrix, for the waves()
@@ -248,6 +256,10 @@ program define nwsaom_estat_gof, rclass
 		mata: __nwsaom_gof_cfg = SaomNativeSetup(__nwsaom_last_M)
 		mata: st_numscalar("__nwsaom_gof_native", __nwsaom_gof_cfg.eligible & SaomNativeAvailable())
 		local __gof_usenative = __nwsaom_gof_native
+	}
+	if `__gof_symtype' & !`__gof_usenative' {
+		di as err "estat gof needs the native (C) simulator for a symmetric (pairwise) fit."
+		exit 498
 	}
 
 	// --- observed auxiliary-statistic vectors, POOLED (summed) across
@@ -396,7 +408,8 @@ program define nwsaom_estat_gof, rclass
 				}
 			}
 			else if `__gof_usenative' {
-				mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0)
+				if `__gof_symtype' mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0, J(0, 2, 0), J(0, 1, 0), `__gof_symtype')
+				else mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0)
 			}
 			else {
 				mata: __nwsaom_gof_cres = SaomSimulateIntervalCounted(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'"), `__gof_rate`__pd'')

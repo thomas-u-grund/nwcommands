@@ -466,6 +466,21 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## Symmetric nwsaom models report the rate on RSiena's scale (changed 2026-10-01)
+
+`e(rate)` of a `symmetric` fit used to be the per-actor rate rho (about 14.7 on glasgow waves 1-2
+symmetrized). RSiena's pairwise model types give each actor the basic rate lambda and pairs the rate
+lambda^2 (total rate (sum lambda_i)^2 - sum lambda_i^2, `DependentVariable::calculateRates()`), so
+lambda^2 = rho/(n-1). `e(rate)` is now RSiena's: unconditional lambda = sqrt(rho/(n-1)) (0.55; SE by
+the delta method), conditional the mean time at basic rate 1, nwsaom's time/(n-1) (0.30; RSiena's
+`terminateFRAN()` reports the time, which is on the lambda^2 scale). `e(rate_actor)` keeps rho,
+`rate0()` takes RSiena's scale, `estat gof` simulates with `e(rate_actor)` and the pairwise ministep
+(`e(symtype)`). With `ratecov()` the alter is now drawn by the covariate as in RSiena (it was
+uniform), with RSiena's total rate (plugin protocol 7). Validated for joint/force/agree, conditional
+and unconditional, 5 seeds: all within 0.1 RSiena SE except one conditional ratecov coefficient
+(0.13). RSiena's own default start for these rates is on the per-actor scale (5.6) and its
+unconditional estimation then often fails; the references start the rate at 0.5.
+
 ## `nwergm` estat mcmcdiag ESS was overstated; estat gof chains too short (changed 2026-10-01)
 
 `estat mcmcdiag` computed ESS as n(1-rho1)/(1+rho1), which assumes geometric decay of the

@@ -134,7 +134,7 @@ control_options]
 
 | | |
 |---|---|
-| `ratecov(varname)` | Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes *rate**exp(**ratecovcoef****varname*[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, `present()`, `missnet()`, or `symmetric`. See [Remarks](nwsaom_remarks) |
+| `ratecov(varname)` | Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes *rate**exp(**ratecovcoef****varname*[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, `present()`, or `missnet()`; combinable with `symmetric`. See [Remarks](nwsaom_remarks) |
 | `ratecovcoef(real)` | Starting value for `ratecov()`'s own jointly-estimated coefficient (default 0) |
 
 **Undirected/symmetric relations**
@@ -149,7 +149,7 @@ control_options]
 | | |
 |---|---|
 | `unconditional` | Estimate a network-only model by UNCONDITIONAL Method of Moments (RSiena's `cond = FALSE`): the rates become Method-of-Moments parameters. The default for a network-only model is CONDITIONAL estimation, RSiena's default for a single dependent network (`cond = TRUE`); co-evolution and `nwsaom multiplex` models are always unconditional, as in RSiena (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
-| `rate0(numlist)` | Starting value(s) of the network rate(s) of an unconditional network-only fit: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With `theta0()`, restarts a fit from earlier estimates. Not used under conditional estimation, where the rates are not estimated by Robbins-Monro (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
+| `rate0(numlist)` | Starting value(s) of the network rate(s) of an unconditional network-only fit: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With `theta0()`, restarts a fit from earlier estimates. For `symmetric` fits on RSiena's scale, as e(rate). Not used under conditional estimation, where the rates are not estimated by Robbins-Monro (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
 | `theta0(numlist)` | Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero, except that a network-only model starts `outdegree` at RSiena's data-derived starting value |
 | `k0(int)` | Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50 |
 | `k3(int)` | Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000 |
@@ -238,7 +238,8 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(N)** number of actors (= e(nodes))
 - **e(nodes)** number of actors
 - **e(nwaves)** number of waves supplied
-- **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks)
+- **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks). `symmetric` fits: on RSiena's scale for pairwise models (see [Undirected/symmetric relations](nwsaom_remarks) in nwsaom_remarks)
+- **e(rate_actor)** `symmetric` fits only: the rate at which an actor gets an opportunity to change, the scale of every other `nwsaom` rate (e(rate) is RSiena's pairwise rate)
 - **e(conditional)** 1 for conditional estimation, 0 for unconditional
 - **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
@@ -254,6 +255,7 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(cmd)** **nwsaom**
 - **e(title)** title of estimation
 - **e(waves)** list of wave network names, in temporal order
+- **e(symtype)** `symmetric` fits only: the pairwise model type, **joint**, **force**, or **agree**
 - **e(wave1)** first wave name (wave1()/wave2() path only)
 - **e(wave2)** second wave name (wave1()/wave2() path only)
 - **e(behavior)** list of behavior variable names, one per wave, in temporal order (co-evolution fits only)
