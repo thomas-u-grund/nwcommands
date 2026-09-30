@@ -3110,7 +3110,7 @@ struct SaomBehaviorNativeConfig {
    =================================================================== */
 struct SaomFit {
 	real rowvector theta		// estimated effect coefficients (length M.nparam())
-	real rowvector tratio		// phase-3 t-ratio per effect, mean deviation / (sd / sqrt(K3))
+	real rowvector tratio		// RSiena convergence t-ratio per effect, phase-3 mean deviation / sd (= tconv[1..p])
 	real scalar rate		// SaomEstimateRM(): the ESTIMATED rate
 	real scalar rate_tratio		// SaomEstimateRM(): phase-3 t-ratio of the rate's distance statistic
 	real scalar rate_se		// SaomEstimateRM(): standard error of the rate (sandwich covariance)
@@ -3416,7 +3416,7 @@ void SaomNetSimManyCB(struct SaomNetCtx scalar C, real rowvector par, real scala
 
 struct SaomNetFit {
 	real rowvector par		// theta, rates, ratecoef
-	real rowvector tratio		// mean/(sd/sqrt(K3)), 1 x ptot
+	real rowvector tratio		// = tconv (kept for the wrappers' field names)
 	real rowvector tconv		// mean/sd, 1 x ptot
 	real scalar tconvMax
 	real matrix Vfull
@@ -3578,13 +3578,8 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	m3 = mean(Z3)
 	S3 = variance(Z3)
 	fit.tconv = J(1, ptot, 0)
-	fit.tratio = J(1, ptot, 0)
-	for (k=1; k<=ptot; k++) {
-		if (S3[k,k] > 1e-10) {
-			fit.tconv[k] = m3[k] / sqrt(S3[k,k])
-			if (K3 > 1) fit.tratio[k] = m3[k] / sqrt(S3[k,k] / K3)
-		}
-	}
+	for (k=1; k<=ptot; k++) if (S3[k,k] > 1e-10) fit.tconv[k] = m3[k] / sqrt(S3[k,k])
+	fit.tratio = fit.tconv
 	if (max(rmfixed) == 0) fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
 	else fit.tconvMax = sqrt(max((select(m3, !rmfixed) * invsym(select(select(S3, !rmfixed'), !rmfixed)) * select(m3, !rmfixed)', 0)))
 	Dhat3 = ((Z3 :- m3)' * (Sc3 :- mean(Sc3))) / K3
@@ -5431,9 +5426,9 @@ struct SaomCoevMultiFit {
 	real rowvector ratesBeh		// 1 x nperiods, ESTIMATED
 	real rowvector ratesNetSE		// 1 x nperiods
 	real rowvector ratesBehSE		// 1 x nperiods
-	real rowvector tratioNet		// phase-3 mean/(sd/sqrt(K3)), this package's e(tratio) convention
+	real rowvector tratioNet		// RSiena's convergence t-ratio, phase-3 mean deviation / sd (= the matching tconv entries)
 	real rowvector tratioBeh
-	real rowvector rateNetTratios		// 1 x nperiods, same convention, on the rate's distance statistic
+	real rowvector rateNetTratios		// 1 x nperiods, same, on the rate's distance statistic
 	real rowvector rateBehTratios		// 1 x nperiods
 	real rowvector tconv		// RSiena's convergence t-ratio mean/sd, 1 x ptot in the order: effects (net, beh), network rates, behavior rates
 	real scalar tconvMax		// RSiena's overall maximum convergence ratio, sqrt(m' S^-1 m)
@@ -5654,18 +5649,11 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	for (k=1; k<=ptot; k++) if (S3[k,k] > 1e-10) fit.tconv[k] = m3[k] / sqrt(S3[k,k])
 	fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
 
-	fit.tratioNet = J(1, C.pNet, 0)
-	fit.tratioBeh = J(1, C.pBeh, 0)
-	fit.rateNetTratios = J(1, P, 0)
-	fit.rateBehTratios = J(1, P, 0)
-	if (K3 > 1) {
-		for (k=1; k<=C.pNet; k++) if (S3[k,k] > 1e-10) fit.tratioNet[k] = m3[k] / sqrt(S3[k,k] / K3)
-		for (k=1; k<=C.pBeh; k++) if (S3[C.pNet+k,C.pNet+k] > 1e-10) fit.tratioBeh[k] = m3[C.pNet+k] / sqrt(S3[C.pNet+k,C.pNet+k] / K3)
-		for (pd=1; pd<=P; pd++) {
-			if (S3[p+pd,p+pd] > 1e-10) fit.rateNetTratios[pd] = m3[p+pd] / sqrt(S3[p+pd,p+pd] / K3)
-			if (S3[p+P+pd,p+P+pd] > 1e-10) fit.rateBehTratios[pd] = m3[p+P+pd] / sqrt(S3[p+P+pd,p+P+pd] / K3)
-		}
-	}
+	// t-ratios on RSiena's scale (the matching entries of tconv)
+	fit.tratioNet = fit.tconv[1..C.pNet]
+	fit.tratioBeh = fit.tconv[(C.pNet+1)..p]
+	fit.rateNetTratios = fit.tconv[(p+1)..(p+P)]
+	fit.rateBehTratios = fit.tconv[(p+P+1)..ptot]
 
 	Ddev3 = Zphase3 :- m3
 	Dsco3 = Zsco3 :- mean(Zsco3)

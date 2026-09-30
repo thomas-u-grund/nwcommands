@@ -390,3 +390,11 @@ so the covariate only rescaled the rate - with the rate estimated the two raced 
 Effects and SEs now agree with RSiena within 0.01 SE. The rate is per actor in nwsaom and per pair
 in RSiena (ratio about 27-29 on these data, depending on the rule - not a clean constant; not
 chased).
+
+## `nwsaom` e(tratio) was not on RSiena's scale (changed 2026-10-01)
+
+`e(tratio)`, `e(rate_tratio(s))` and the co-evolution/multiplex t-ratios were mean / (sd/sqrt(k3)),
+i.e. about 31.6 times RSiena's convergence t-ratio (mean / sd) with k3(1000). Compared with
+RSiena's 0.1 threshold (a book example did) they flagged every converged fit. All of them are now on
+RSiena's scale (`e(tratio)` = the effect columns of `e(tconv)`), and every fit prints the whole
+`e(tconv)` table plus `e(tconv_max)` below the coefficients.

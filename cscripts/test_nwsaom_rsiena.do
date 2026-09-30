@@ -82,6 +82,14 @@ di as text "M1 (2 waves) PASS"
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(12345)
 _net_check "rate1 rate2 outdegree reciprocity transtrip" ///
 	"6.485 5.283 -2.650 2.421 0.614" "1.094 0.899 0.119 0.193 0.079"
+* e(tratio) is on RSiena's scale: the effect columns of e(tconv)
+matrix __tr = e(tratio)
+matrix __tc = e(tconv)
+assert colsof(__tc) == 5
+forvalues j = 1/3 {
+	assert reldif(__tr[1,`j'], __tc[1,`j']) < 1e-12
+}
+assert max(abs(__tc[1,1]), abs(__tc[1,2]), abs(__tc[1,3]), abs(__tc[1,4]), abs(__tc[1,5])) < 0.3
 di as text "M2 (transTrip) PASS"
 
 * ---------------------------------------------------------------- M3

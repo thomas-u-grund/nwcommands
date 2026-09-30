@@ -145,6 +145,7 @@ void __nwsaom_mp_fit_and_post(
 	st_numscalar(rate1name + "_se", fit.rate1SE)
 	st_numscalar(rate2name + "_se", fit.rate2SE)
 	st_numscalar(rate1name + "_tconvmax", fit.tconvMax)
+	st_matrix(rate1name + "_tconv", fit.tconv)
 	// Coefficient names built here (not hardcoded in nwsaom_multiplex's
 	// own Stata code) since the column count/order now varies with
 	// wantcrprod/wantcrprodb - posted as one space-separated string
@@ -2067,7 +2068,6 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
 		matlist `ratetab', format(%9.4f)
-		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 
 		ereturn matrix rates = `ratesnet'
 		ereturn matrix rate_tratios = `ratetrnet'
@@ -2115,7 +2115,6 @@ program nwsaom, eclass
 		di as text "Behavior: " as result "`behavior'" _col(40) as text "Behavior rate: " as result %6.3f `__nwsaom_ratebeh' as text " (" as result %5.3f `__nwsaom_ratebehse' as text ")"
 		di as text "{hline}"
 		ereturn display
-		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 	}
 	else if `__nwsaom_multi' {
 		// harmonisation unit 17: multi-wave models report e(rates)/
@@ -2155,7 +2154,6 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
 		matlist `ratetab', format(%9.4f)
-		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
@@ -2201,8 +2199,29 @@ program nwsaom, eclass
 			if `__nwsaom_ratecoef_fx' di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoef_fixed)==1)"
 			else di ""
 		}
-		di as text "Overall maximum convergence ratio: " as result %6.3f `__nwsaom_tconvmax'
 	}
+	_nwsaom_tconvtable
+end
+
+/* Convergence t-ratios on RSiena's scale (phase-3 mean deviation / its
+   standard deviation, e(tconv)) for every parameter including the rates,
+   two per line within 80 columns, then RSiena's overall maximum
+   convergence ratio e(tconv_max). */
+capture program drop _nwsaom_tconvtable
+program define _nwsaom_tconvtable
+	tempname m
+	matrix `m' = e(tconv)
+	local names : colnames `m'
+	local k = colsof(`m')
+	di as text "Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):"
+	forvalues j = 1/`k' {
+		local nm : word `j' of `names'
+		if udstrlen("`nm'") > 24 local nm = usubstr("`nm'", 1, 23) + "~"
+		if mod(`j', 2) == 1 di as text "  " %-24s "`nm'" as result %8.3f `m'[1,`j'] _continue
+		else di as text "      " %-24s "`nm'" as result %8.3f `m'[1,`j']
+	}
+	if mod(`k', 2) == 1 di ""
+	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
 end
 
 /* ===================================================================
@@ -2316,6 +2335,9 @@ program define nwsaom_multiplex, eclass
 	ereturn scalar rate2_se = __nwsaom_mp_rate2_se
 	ereturn scalar tconv_max = __nwsaom_mp_rate1_tconvmax
 	scalar drop __nwsaom_mp_rate1 __nwsaom_mp_rate2 __nwsaom_mp_rate1_se __nwsaom_mp_rate2_se __nwsaom_mp_rate1_tconvmax
+	matrix colnames __nwsaom_mp_rate1_tconv = `__mp_coefnames' rate1 rate2
+	matrix rownames __nwsaom_mp_rate1_tconv = tconv
+	ereturn matrix tconv = __nwsaom_mp_rate1_tconv
 	ereturn local cmd "nwsaom_multiplex"
 
 	di as text "{hline}"
@@ -2324,5 +2346,5 @@ program define nwsaom_multiplex, eclass
 	di as text "{hline}"
 	ereturn display
 	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
-	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
+	_nwsaom_tconvtable
 end

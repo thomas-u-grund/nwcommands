@@ -231,13 +231,13 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(nodes)** number of actors
 - **e(nwaves)** number of waves supplied
 - **e(rate)** network rate parameter (wave1()/wave2() path only), estimated jointly with the other parameters (unconditional Method of Moments - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
-- **e(rate_tratio)** network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
+- **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only)
 - **e(has_behavior)** 1 if this is a co-evolution fit (`behavior()` specified), 0 otherwise
 - **e(p_net)** number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed `beh_`)
 - **e(rate_beh)** estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see [Co-evolution](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_beh_se)** standard error of e(rate_beh) (co-evolution, wave1()/wave2() path only)
-- **e(rate_beh_tratio)** behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
+- **e(rate_beh_tratio)** behavior rate parameter's convergence t-ratio on RSiena's scale (co-evolution, wave1()/wave2() path only)
 - **e(tconv_max)** RSiena's overall maximum convergence ratio; below 0.25 indicates good convergence
 
 **Macros**
@@ -254,14 +254,14 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 
 - **e(b)** coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 - **e(V)** variance-covariance matrix (eval parameters only)
-- **e(tratio)** 1 x nparam phase-3 convergence t-ratios, one per eval-parameter coefficient
+- **e(tratio)** 1 x nparam convergence t-ratios on RSiena's scale (phase-3 mean deviation / its standard deviation), one per coefficient of e(b) - the matching columns of e(tconv)
 - **e(rates)** 1 x (nwaves-1) per-period network rate parameters (waves() path only), estimated jointly with the other parameters
 - **e(rate_tratios)** 1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
 - **e(rates_se)** 1 x (nwaves-1) per-period standard errors of e(rates) (waves() path only)
 - **e(rates_beh)** 1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 - **e(rate_beh_tratios)** 1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 - **e(rates_beh_se)** 1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
-- **e(tconv)** RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. e(tratio) above uses a different scale: mean / (sd/sqrt(k3))
+- **e(tconv)** RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. Printed after the coefficient table, followed by e(tconv_max). (Before 2026-10-01 e(tratio) and the rate t-ratios were mean / (sd/sqrt(k3)), about 31.6 times this scale with the default k3(1000))
 
 `estat gof` stores the following in `r()`, one pair per requested statistic (default **outdegree**/**indegree**/**geodesic**):
 

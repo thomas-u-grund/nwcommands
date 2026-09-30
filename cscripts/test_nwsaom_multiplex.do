@@ -190,6 +190,8 @@ forvalues j = 1/6 {
 _mp_check rate1 e(rate1) e(rate1_se) 6.753 1.549
 _mp_check rate2 e(rate2) e(rate2_se) 1.825 0.303
 assert e(tconv_max) < 0.3
+matrix __tc = e(tconv)
+assert colsof(__tc) == 8
 
 di as text "test_nwsaom_multiplex.do ado-level PASS: nwsaom multiplex (both rates estimated) matches RSiena on the friendship/advice example"
 

@@ -261,8 +261,9 @@ simulated statistics alike), as RSiena does for effects that link two dependent 
 With two dependent variables both rates are estimated jointly with the effects (unconditional
 Method of Moments, RSiena's default for such models): each rate's statistic is the number of dyads
 in which that network's simulated end state differs from its starting observation, and
-{cmd:e(rate1_se)}/{cmd:e(rate2_se)} are their standard errors; {cmd:e(tconv_max)} is RSiena's overall
-maximum convergence ratio. On a two-network example (friendship: glasgow waves 1-2; a
+{cmd:e(rate1_se)}/{cmd:e(rate2_se)} are their standard errors; {cmd:e(tconv)} holds the convergence
+t-ratios (theta1, theta2, rate1, rate2) and {cmd:e(tconv_max)} RSiena's overall maximum convergence
+ratio. On a two-network example (friendship: glasgow waves 1-2; a
 seeded "advice" network generated from it - see {cmd:cscripts/test_nwsaom_multiplex.do}) with
 {opt crprod} in both directions, every parameter including both rates agrees with RSiena 1.6.6
 within 0.06 standard errors (mean of five seeds each). (Before 2026-10-01 both rates were held at
@@ -699,8 +700,9 @@ standard errors (e(V), RSiena's sandwich formula), the convergence t-ratios {cmd
 deviation / its standard deviation, one per parameter including the rates) and RSiena's overall
 maximum convergence ratio {cmd:e(tconv_max)}. As in RSiena, a fit is considered converged when
 every |t| is below 0.1 and the overall ratio below 0.25; otherwise, run the model again from the
-estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). {cmd:e(tratio)}
-is a different diagnostic on another scale: mean / (sd/sqrt({opt k3()})).
+estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Every fit prints
+these t-ratios for all parameters, rates included, below the coefficient table, then the overall
+ratio; {cmd:e(tratio)} holds the ones of the coefficients in e(b), on the same scale.
 
 {pstd}
 {bf:The rate parameters} (one per period: how often, on average, an actor gets the opportunity to

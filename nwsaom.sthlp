@@ -299,13 +299,13 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
 		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only), estimated jointly with the other parameters (unconditional Method of Moments - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
-		  {bf:e(rate_tratio)}		network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
 		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only)
 		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
 		  {bf:e(p_net)}			number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed {cmd:beh_})
 		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks)
 		  {bf:e(rate_beh_se)}		standard error of e(rate_beh) (co-evolution, wave1()/wave2() path only)
-		  {bf:e(rate_beh_tratio)}	behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
+		  {bf:e(rate_beh_tratio)}	behavior rate parameter's convergence t-ratio on RSiena's scale (co-evolution, wave1()/wave2() path only)
 		  {bf:e(tconv_max)}		RSiena's overall maximum convergence ratio; below 0.25 indicates good convergence
 
 		Macros
@@ -320,14 +320,14 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		Matrices
 		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 		  {bf:e(V)}			variance-covariance matrix (eval parameters only)
-		  {bf:e(tratio)}		1 x nparam phase-3 convergence t-ratios, one per eval-parameter coefficient
+		  {bf:e(tratio)}		1 x nparam convergence t-ratios on RSiena's scale (phase-3 mean deviation / its standard deviation), one per coefficient of e(b) - the matching columns of e(tconv)
 		  {bf:e(rates)}			1 x (nwaves-1) per-period network rate parameters (waves() path only), estimated jointly with the other parameters
 		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
 		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of e(rates) (waves() path only)
 		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 		  {bf:e(rate_beh_tratios)}	1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 		  {bf:e(rates_beh_se)}		1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
-		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. e(tratio) above uses a different scale: mean / (sd/sqrt(k3))
+		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. Printed after the coefficient table, followed by e(tconv_max). (Before 2026-10-01 e(tratio) and the rate t-ratios were mean / (sd/sqrt(k3)), about 31.6 times this scale with the default k3(1000))
 
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}, one pair per requested statistic (default
