@@ -31,7 +31,7 @@ output left behind by {help nwergm}, not on a network directly; see that command
 {pstd}
 {cmd:estat mcmcdiag} reports diagnostics for the final MCMC simulation {cmd:nwergm} ran
 at its converged (or last-tried) coefficient vector: per-statistic mean, standard deviation,
-lag-1 autocorrelation, and an AR(1)-based effective sample size; the Geweke (1992) z-score and
+lag-1 autocorrelation, and the effective sample size (ESS), computed as {cmd:coda}'s {cmd:effectiveSize()} does: n*var(x) divided by the spectral density at frequency 0, estimated from an autoregressive model; the Geweke (1992) z-score and
 the Heidelberger-Welch (1983) stationarity/halfwidth test (the two formal convergence hypothesis
 tests behind R {cmd:ergm}'s own {cmd:mcmc.diagnostics()}, via its {cmd:coda} package
 dependency); plus the overall Metropolis-Hastings acceptance rate and {cmd:nwergm}'s own MCMLE
@@ -75,7 +75,7 @@ acceptable. {opt name()} sets the combined graph's name; default {cmd:mcmcdiag}.
 {title:estat gof}
 
 {p 8 17 2}
-{cmd:estat gof} {opt [, NSIM(integer 50) SEED(integer -1) GOFBURNIN(integer 3000) GOFINTERVAL(integer 50) PLOT MAXDEG(integer 15) MAXDIST(integer 6) NAME(string)]}
+{cmd:estat gof} {opt [, NSIM(integer 100) SEED(integer -1) GOFBURNIN(integer) GOFINTERVAL(integer) PLOT MAXDEG(integer 15) MAXDIST(integer 6) NAME(string)]}
 
 {pstd}
 {cmd:estat gof} compares the fitted model's own simulated networks against the network
@@ -85,7 +85,9 @@ distance ({helpb nwgeodesic}), and the full MAN triad census ({helpb nwtriads}).
 {opt nsim()} simulated networks are drawn by continuing the Markov chain from wherever
 {cmd:nwergm}'s own fit left it (for {opt method(mcmle)}) or from the observed network itself
 (for {opt method(mple)}, which never runs MCMC during estimation), recording one snapshot every
-{opt gofinterval()} steps.
+{opt gofinterval()} steps. As in R's {cmd:gof()}, the defaults are 100 draws and the MCMC
+settings of the fit: {opt gofburnin()} defaults to {cmd:e(mcmc_burnin)} and {opt gofinterval()} to
+{cmd:e(mcmc_interval_final)} (for {opt method(mple)} fits, 3000 and 50).
 
 {pstd}
 {bf:Triad census.} The summary table's own "Complete triads" row is joined by a full breakdown,
@@ -108,11 +110,11 @@ contribute to the geodesic/triad-census averages respectively (reported in the o
 than being treated as an error.
 
 {pstd}
-{bf:The default {opt nsim(50)} can be too small to trust on its own.} Each simulated draw is
+{bf:For slowly mixing models, even 100 draws can be too few.} Each simulated draw is
 {opt gofinterval()} Metropolis-Hastings steps apart, not an independent redraw, so a
 statistic with substantial autocorrelation in the underlying chain (visible via
 {help nwergm_estat##mcmcdiag:estat mcmcdiag}'s own Autocorr/ESS columns) can show real
-run-to-run swings in the Simulated column at {opt nsim(50)} that have nothing to do with model
+run-to-run swings in the Simulated column that have nothing to do with model
 fit - confirmed directly: refitting the same model at different seeds moved the simulated mean
 degree from noticeably below the observed value to noticeably above it, purely from Monte Carlo
 noise, before settling down once {opt nsim()} was increased into the hundreds. If the final MCMC
@@ -156,6 +158,7 @@ goodness of fit:
 	  {bf:r(acceptrate)}		Metropolis-Hastings acceptance rate over the final simulation
 
 	Matrices
+	  {bf:r(ess)}		1 x {it:p} row vector of effective sample sizes, as {cmd:coda}'s {cmd:effectiveSize()}
 	  {bf:r(geweke)}		1 x {it:p} row vector of Geweke z-scores, one per model term (same
 	                    column order as {bf:e(b)})
 	  {bf:r(heidel)}		{it:p} x 6 matrix, one row per model term, columns
