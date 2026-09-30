@@ -238,3 +238,65 @@ ties with `diagonal()`, which silently pairs *different* categories whenever the
 square (faux.mesa.high race: .025 instead of the correct -.015). The fix asks `nwtoedge` for both
 orientations (`full`) when the network is undirected, and matches row and column *values*
 rather than positions. The permutation p-value (`rep_EIvar()`) was never affected.
+
+## `nwsaom` co-evolution: rates were never estimated; cross statistics must be lagged (fixed 2026-09-30)
+
+With `behavior()` there are two dependent variables, so RSiena uses UNCONDITIONAL Method of
+Moments: every period's network rate and behavior rate is an ordinary MoM parameter, estimated
+with the others in phases 1-3. The rate statistics are DISTANCES from the period's starting
+observation: differing dyads (network), sum of |z_end - z_start| (behavior). `nwsaom` instead kept
+both rates at their closed-form starting values (the conditional shortcut that is fine for a
+network-only fit) and only reported t-ratios on the number of toggles, which is not the distance.
+On s50 the behavior parameters ran away (linear shape -40, SE 274). The help text even claimed
+this was RSiena's default for 2+ dependent variables; it is not. Now `SaomEstimateRMCoevMulti()`
+estimates `(thetaNet, thetaBeh, net rates, behavior rates)` jointly, rate score =
+ministeps/rate - active actors; `SaomEstimateRMCoev()` is a one-period wrapper.
+
+Three further RSiena mismatches surfaced while matching RSiena's per-period targets
+(`ans$targets2`) on s50, each invisible without that comparison:
+- Statistics linking the two variables are LAGGED: a behavior-dependent network effect uses the
+  START-of-period behavior, a network-dependent behavior effect (avAlt, avSim) the START-of-period
+  network, for targets and simulated statistics alike. We used end-of-period values.
+- avAlt is CENTERED in RSiena (statistic and ministep change): `(z_i - zbar) * avg_j (z_j - zbar)`.
+  The uncentered version is a different model, not a reparametrization.
+- There was no selection effect on the co-evolving behavior: `simcov()` reads a fixed covariate.
+  New `behsim` = RSiena's simX(behavior), centered by the behavior's similarity mean, reading the
+  CURRENT simulated behavior (the simulators keep `td.attr` in step: `SaomBehSimSync()`).
+
+After the fix nwsaom matches RSiena on s50 within a fraction of an SE for every parameter, 3 and 2
+waves (`cscripts/test_nwsaom_coev_rsiena.do`). **Lesson:** compare per-period TARGET statistics
+with RSiena before comparing estimates; a target that differs pins the bug to a definition, not to
+the optimizer.
+
+Related, not fixed: a network-only fit with `present()` or `missnet()` also cannot use conditional
+estimation, but still keeps its rate at the starting value (documented as "not refined").
+
+## The saom_sim plugin: a stale installed copy in PLUS used to win over the repo's own (fixed 2026-09-30)
+
+`SaomNativePluginPath()` used to try `findfile("saom_sim_macos.plugin")` first, which finds a `net
+install`ed copy in PLUS before the checkout's `lib/plugins/<os>/` one. Running from a checkout then
+silently exercised an OLD binary. Two real consequences on 2026-09-30: the baseline
+`test_nwsaom_native.do` run hung in `saom_test_native_cycle4_equiv`, and the new co-evolution
+estimator, which needs plugin protocol >= 3 (`__saom_native_version`, checked by
+`SaomNativePluginVersion()`), fell back to the pure-Mata simulator: the s50 three-wave model took
+over 10 minutes (two waves: 1,038 s) instead of 5 s. The lookup now prefers the plugin next to the
+`nwsaom.ado` being run and only then `findfile()`; after a real net install there is no
+`lib/plugins/` next to `nwsaom.ado`, so nothing changes there. The unix/windows binaries are rebuilt
+by CI, not locally: until then they report an older protocol and co-evolution runs (correctly, but
+slowly) in Mata on those platforms. Other plugins (`ergm_mcmc`, `nwgraph`, `dynam_sim`) still use
+the old findfile-first order.
+
+Timing, s50 three-wave model (`outdegree reciprocity transtrip behsim` / `linear quadratic
+avalt`), native path: 5.0 s (phase 1 0.07 s, phase 2 3.2 s, phase 3 1.6 s; 6,014 simulated periods
+at 0.7 ms each, almost all of it the C ministep loop; a plugin call itself costs about 0.01 ms).
+The lagged behavior statistics were computed in Mata at first (0.5 ms per period, 3 s per fit) and
+now come from the plugin (`__saom_native_statbehlag%d`).
+
+## `nwsaom` multiplex (two co-evolving networks) still holds its rates fixed
+
+`SaomEstimateRMCoevNetNet()` has the same flaw the network+behavior estimator had before
+2026-09-30: two dependent variables, so RSiena estimates the rates by unconditional MoM, but here
+both rates stay at their closed-form starting values. A fix needs per-network ministep counts and
+end-vs-start distances from the NN branch of `native/saom_sim.c` (it only returns the total step
+count), the rates added to the parameter vector, and probably lagged cross-network (`crprod`)
+statistics. Not done yet; there is no RSiena benchmark for it in the test suite.

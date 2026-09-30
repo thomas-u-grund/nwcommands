@@ -135,6 +135,7 @@
 {synopt:{opt avaltendow} {opt avaltcreation}}{opt avalt} split into its ENDOWMENT/CREATION roles - same mechanism/rules as {opt linearendow}/{opt linearcreation}{p_end}
 {synopt:{opt avsim}}Behavior "average similarity" influence effect - own value moves to maximize average similarity to network neighbors' own values, net of a data-derived centering constant; requires {opt behavior()}{p_end}
 {synopt:{opt avsimendow} {opt avsimcreation}}{opt avsim} split into its ENDOWMENT/CREATION roles - same mechanism/rules as {opt linearendow}/{opt linearcreation}{p_end}
+{synopt:{opt behsim}}Network-side SELECTION effect on the co-evolving behavior (RSiena's {cmd:simX} with the dependent behavior, e.g. "drinking similarity"): actors prefer ties to others whose CURRENT behavior value is similar to their own. Tie-level contribution 1 - |z_i - z_j|/range - simMean, with range and simMean the behavior's own (the same constants {opt avsim} uses). Unlike {opt simcov()}, which reads a fixed covariate, the values change during the simulation as the behavior co-evolves. A network effect: its coefficient appears among the network coefficients, after the other network effects. Requires {opt behavior()}{p_end}
 {synopt:{opt behtheta0(numlist)}}Starting values for the behavior-side eval-parameter vector, one per requested behavior effect in the order {opt linear} (or {opt linearendow}/{opt linearcreation})/{opt quadratic}/{opt avalt}/{opt avsim} appear above; default all zero{p_end}
 
 {synoptline}
@@ -296,13 +297,15 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(N)}			number of actors (= e(nodes))
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
-		  {bf:e(rate)}			estimated network rate parameter (wave1()/wave2() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; the closed-form STARTING value only for a co-evolution fit (real RSiena's own default behavior for 2+ dependent variables), a {opt present()} fit (composition change forces unconditional estimation - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks), or a missing-data fit ({opt missnet()}/{opt missbeh()} - see {help nwsaom_remarks##missingdata:Missing data} in nwsaom_remarks)
+		  {bf:e(rate)}			estimated network rate parameter (wave1()/wave2() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; ESTIMATED jointly with the other parameters for a co-evolution fit (unconditional Method of Moments, as RSiena does for 2+ dependent variables - see {help nwsaom_remarks##coev:Co-evolution}); the closed-form STARTING value only for a network-only {opt present()} fit (composition change forces unconditional estimation - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks), or a missing-data fit ({opt missnet()}/{opt missbeh()} - see {help nwsaom_remarks##missingdata:Missing data} in nwsaom_remarks)
 		  {bf:e(rate_tratio)}		network rate parameter's own phase-3 convergence t-ratio (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
-		  {bf:e(rate_se)}		standard error of the REFINED e(rate) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()} only - 0 for a co-evolution, {opt present()}, or missing-data fit, whose e(rate) is not refined)
+		  {bf:e(rate_se)}		standard error of e(rate) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()}, and every co-evolution fit - 0 for a network-only {opt present()} or missing-data fit, whose e(rate) is not refined)
 		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
 		  {bf:e(p_net)}			number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed {cmd:beh_})
-		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only) - closed-form starting value, not refined (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks)
+		  {bf:e(rate_beh_se)}		standard error of e(rate_beh) (co-evolution, wave1()/wave2() path only)
 		  {bf:e(rate_beh_tratio)}	behavior rate parameter's own phase-3 convergence t-ratio (co-evolution, wave1()/wave2() path only)
+		  {bf:e(tconv_max)}		RSiena's overall maximum convergence ratio (co-evolution fits only); below 0.25 indicates good convergence
 
 		Macros
 		  {bf:e(cmd)}			{bf:nwsaom}
@@ -317,11 +320,13 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 		  {bf:e(V)}			variance-covariance matrix (eval parameters only)
 		  {bf:e(tratio)}		1 x nparam phase-3 convergence t-ratios, one per eval-parameter coefficient
-		  {bf:e(rates)}			1 x (nwaves-1) per-period estimated network rate parameters (waves() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; closed-form STARTING values only for a co-evolution, {opt present()}, or missing-data fit
+		  {bf:e(rates)}			1 x (nwaves-1) per-period estimated network rate parameters (waves() path only) - REFINED for a plain network-only fit with no {opt present()}/{opt missnet()}/{opt missbeh()}; ESTIMATED jointly for a co-evolution fit; closed-form STARTING values only for a network-only {opt present()} or missing-data fit
 		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
-		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of the REFINED e(rates) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()} only - 0 otherwise)
+		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of e(rates) (plain network-only fits with no {opt present()}/{opt missnet()}/{opt missbeh()}, and co-evolution fits - 0 otherwise)
 		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 		  {bf:e(rate_beh_tratios)}	1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
+		  {bf:e(rates_beh_se)}		1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
+		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates (co-evolution fits only); all below 0.1 in absolute value indicates good convergence. e(tratio) above uses a different scale: mean / (sd/sqrt(k3))
 
 {pstd}
 {cmd:estat gof} stores the following in {cmd:r()}, one pair per requested statistic (default
@@ -348,6 +353,10 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avalt}
 
 		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avsim}
+
+{pstd}Co-evolution of friendship and drinking (selection and influence), RSiena's s50 data:{p_end}
+		{cmd:. nwwebuse glasgow, nwclear}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}
 
 		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linearendow linearcreation}
 

@@ -225,6 +225,29 @@
    change_saom_avalt/change_saom_avsim's own out-neighbor iteration
    reuses this file's own `outadj' (already built for TRANSTRIP/CYCLE3),
    so `need_adj' below is also set whenever AVALT or AVSIM is active. */
+/* TERMCODE_BEHSIM (2026-09-30): network-side similarity on the CO-EVOLVING
+   behavior (RSiena's simX with the dependent behavior as interaction1,
+   unw_saom.do's change_saom_behsim()). Change contribution for i->j:
+   1 - |z_i - z_j|/behrange - p1, where p1 carries the similarity mean and
+   z is the CURRENT simulated behavior. stata_call() points the term's
+   attribute slot at `behval' during simulation and at the period's
+   STARTING behavior for the final statistic (RSiena's lagged
+   cross-statistic). Only valid when nbehterms > 0. */
+#define TERMCODE_BEHSIM 31
+
+/* Plugin protocol version, saved as __saom_native_version on every call.
+   2 = adds TERMCODE_BEHSIM, centered avAlt, and the per-variable ministep
+   counts (__saom_native_stepsnet/stepsbeh) and end-vs-start network
+   distance (__saom_native_netdist) that unconditional co-evolution
+   estimation needs. The Mata side refuses the native co-evolution path for
+   a plugin reporting < 2 (stale binary) and falls back to Mata. */
+#define SAOM_NATIVE_VERSION 3		// 3 = also __saom_native_statbehlag%d (behavior statistics on the period's STARTING network)
+
+/* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
+   behavior block is parsed (saom_change_term()'s signature has no room
+   for it). */
+static double saom_behsim_range = 1.0;
+
 #define TERMCODE_BEH_LINEAR 101
 #define TERMCODE_BEH_QUADRATIC 102
 #define TERMCODE_BEH_AVALT 103
@@ -741,6 +764,12 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 				tot += 1.0 - fabs(a[ei] - a[ej]) / p1;
 			}
 			return tot;
+		case TERMCODE_BEHSIM:						// stat_saom_behsim(): sum over ties of 1-|z[ego]-z[alter]|/range - simMean
+			for (k = 0; k < g->nties; k++) {
+				long ei = g->elist_i[k], ej = g->elist_j[k];
+				tot += 1.0 - fabs(a[ei] - a[ej]) / saom_behsim_range - p1;
+			}
+			return tot;
 		case TERMCODE_ISOLATENET:					// stat_saom_isolatenet(): #{i : indegree(i)=0 AND outdegree(i)=0}
 			for (i = 1; i <= g->n; i++) tot += (g->din[i] == 0 && g->dout[i] == 0) ? 1.0 : 0.0;
 			return tot;
@@ -841,6 +870,10 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		}
 		case TERMCODE_SIMCOV: {
 			double d = 1.0 - fabs(a[i] - a[j]) / p1;
+			return ij_exists ? -d : d;
+		}
+		case TERMCODE_BEHSIM: {
+			double d = 1.0 - fabs(a[i] - a[j]) / saom_behsim_range - p1;
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_ISOLATENET: {					// change_saom_isolatenet(): mechanical port, same shape as the Mata original
@@ -982,6 +1015,7 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
 		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
 		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) / p1;
+		case TERMCODE_BEHSIM: return 1.0 - fabs(a[ego] - a[alter]) / saom_behsim_range - p1;
 		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
 		case TERMCODE_OUTOUTASS: return (double)g->dout[ego] * (double)g->dout[alter];
 		case TERMCODE_ININASS: return (double)g->din[ego] * (double)g->din[alter];
@@ -1128,7 +1162,7 @@ static double saom_stat_term_nn(graph_t *g, graph_t *other, int termcode, double
 	}
 	return saom_stat_term(g, termcode, NULL, p1);
 }
-static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean) {
+static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean, double overallMean) {
 	long i, k, od;
 	double tot = 0.0, vego, sumabs;
 	switch (termcode) {
@@ -1138,13 +1172,13 @@ static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, doubl
 		case TERMCODE_BEH_QUADRATIC:					// stat_saom_quadratic(): sum(values^2), RAW/uncentered
 			for (i = 1; i <= g->n; i++) tot += behval[i] * behval[i];
 			return tot;
-		case TERMCODE_BEH_AVALT:					// stat_saom_avalt(): sum_i value_i * avg_{j in N_out(i)}(value_j)
+		case TERMCODE_BEH_AVALT:					// stat_saom_avalt(): sum_i (z_i-zbar) * avg_{j in N_out(i)}(z_j-zbar) - CENTERED, as RSiena (fixed 2026-09-30)
 			for (i = 1; i <= g->n; i++) {
 				od = g->outadj[i].len;
 				if (od == 0) continue;
 				double s = 0.0;
 				for (k = 0; k < od; k++) s += behval[g->outadj[i].nb[k]];
-				tot += behval[i] * (s / (double)od);
+				tot += (behval[i] - overallMean) * (s / (double)od - overallMean);
 			}
 			return tot;
 		case TERMCODE_BEH_AVSIM:					// stat_saom_avsim(): sum_i [avg_j sim(value_i,value_j) - simMean], 0 for no out-ties
@@ -1180,7 +1214,7 @@ static double saom_beh_change_term(graph_t *g, double *behval, int termcode, dou
 			if (od == 0) return 0.0;
 			double s = 0.0;
 			for (k = 0; k < od; k++) s += behval[g->outadj[i].nb[k]];
-			return diff * (s / (double)od);
+			return diff * (s / (double)od - overallMean);		// centered, as RSiena (fixed 2026-09-30)
 		}
 		case TERMCODE_BEH_AVSIM: {
 			od = g->outadj[i].len;
@@ -1330,6 +1364,15 @@ STDLL stata_call(int argc, char *argv[]) {
 	double *behval = NULL;
 	double nchangesBeh;
 	int need_behadj;
+	// unconditional co-evolution estimation (2026-09-30, see
+	// SAOM_NATIVE_VERSION): per-variable ministep counts, the starting
+	// behavior (behsim's lagged statistic), and the starting tie set (the
+	// network rate's distance statistic).
+	double stepsNet = 0.0, stepsBeh = 0.0, netdist = 0.0;
+	double *behval_start = NULL;
+	long *start_i = NULL, *start_j = NULL, nstart = 0;
+	dyadht_t hstart;
+	int has_behsim = 0;
 	// --- conditional mode (harmonisation unit 30) - see this file's
 	// own header comment's "CONDITIONAL MODE" section for the full
 	// account. `horig'/`simDist' only touched when condmode!=0.
@@ -1725,6 +1768,11 @@ STDLL stata_call(int argc, char *argv[]) {
 	free(argbuf);
 
 	if (wire_parse_error) { SF_error("saom_sim: wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
+	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
+	saom_behsim_range = (behrange > 0.0) ? behrange : 1.0;
+	for (i = 0; i < nterms; i++) if (termcodes[i] == TERMCODE_BEHSIM) has_behsim = 1;
+	if (has_behsim && nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior (nbehterms > 0)\n"); return(198); }
+	if (has_behsim && nattr >= MAXATTR) { SF_error("saom_sim: too many attribute arrays for behsim\n"); return(198); }
 	if (!directed) { SF_error("saom_sim: directed networks only\n"); return(198); }
 	if (need_behadj) need_adj = 1;		// avalt/avsim need outadj exactly like transtrip/cycle3 do
 
@@ -1781,6 +1829,25 @@ STDLL stata_call(int argc, char *argv[]) {
 			ST_double v;
 			SF_vdata((int)(3 + nattr), i, &v);
 			behval[i] = v;
+		}
+		behval_start = (double *)malloc((size_t)(n + 1) * sizeof(double));
+		memcpy(behval_start, behval, (size_t)(n + 1) * sizeof(double));
+		// behsim reads the behavior through the ordinary attribute slot
+		// mechanism: one extra slot (index nattr, never freed by the attrs
+		// loop below) pointing at the LIVE behavior during simulation.
+		if (has_behsim) {
+			attrs[nattr] = behval;
+			for (i = 0; i < nterms; i++) if (termcodes[i] == TERMCODE_BEHSIM) attridx[i] = (int)(nattr + 1);
+		}
+		// starting tie set, for the end-vs-start network distance
+		nstart = g.nties;
+		start_i = (long *)malloc((size_t)(nstart > 0 ? nstart : 1) * sizeof(long));
+		start_j = (long *)malloc((size_t)(nstart > 0 ? nstart : 1) * sizeof(long));
+		ht_alloc(&hstart, ht_next_pow2(nstart * 2 + 16));
+		for (i = 0; i < nstart; i++) {
+			start_i[i] = g.elist_i[i];
+			start_j[i] = g.elist_j[i];
+			ht_put(&hstart, dyadkey(&g, start_i[i], start_j[i]), 1);
 		}
 	}
 
@@ -2044,6 +2111,7 @@ STDLL stata_call(int argc, char *argv[]) {
 						}
 					}
 					if (chg_actor) free(chg_actor);
+					stepsNet += 1.0;
 					if (accepted) {
 						toggle(&g, actor, alter);
 						toggle(&g, alter, actor);
@@ -2127,6 +2195,7 @@ STDLL stata_call(int argc, char *argv[]) {
 							score[k] += chosen_k - ebar_k;
 						}
 					}
+					stepsNet += 1.0;
 					if (choice != 0) {
 						toggle(&g, actor, choice);
 						nchanges += 1.0;
@@ -2204,6 +2273,7 @@ STDLL stata_call(int argc, char *argv[]) {
 						}
 					}
 					if (diff != 0.0) nchangesBeh += 1.0;
+					stepsBeh += 1.0;
 				}
 				steps += 1.0;
 			}
@@ -2251,6 +2321,82 @@ STDLL stata_call(int argc, char *argv[]) {
 	SF_scal_save("__saom_native_nchanges", (ST_double)nchanges);
 	SF_scal_save("__saom_native_condtime", (ST_double)t);		// harmonisation unit 30 - only meaningful when condmode!=0, always saved (uniform wire contract)
 	SF_scal_save("__saom_native_rcscore", (ST_double)rcscore);		// ratecov - only meaningful when hasratecov && want_score, always saved (uniform wire contract)
+	SF_scal_save("__saom_native_stepsnet", (ST_double)stepsNet);
+	SF_scal_save("__saom_native_stepsbeh", (ST_double)stepsBeh);
+	if (nbehterms > 0) {
+		// network distance between the simulated end state and the start
+		// state (the network rate's moment statistic in unconditional
+		// estimation), missing dyads excluded
+		long dk, dv;
+		for (dk = 0; dk < g.nties; dk++) {
+			long key = dyadkey(&g, g.elist_i[dk], g.elist_j[dk]);
+			if (ht_get(&hstart, key, &dv)) continue;
+			if (hasmiss && ht_get(&missht, key, &dv)) continue;
+			netdist += 1.0;
+		}
+		for (dk = 0; dk < nstart; dk++) {
+			if (has_edge(&g, start_i[dk], start_j[dk])) continue;
+			if (hasmiss && ht_get(&missht, dyadkey(&g, start_i[dk], start_j[dk]), &dv)) continue;
+			netdist += 1.0;
+		}
+		// LAGGED behavior statistics (protocol version 3): end-of-period
+		// behavior on the period's STARTING network, as RSiena's
+		// statistics for network-dependent behavior effects are (see
+		// unw_saom.do's SaomCoevReplicate()). Same masking as
+		// SaomCoevStatBeh(): missing dyads dropped from the start network,
+		// missing actors' values replaced by the overall mean. Computed
+		// here so the estimator needs no Mata pass per simulation.
+		{
+			double *bz = behval, *bzm = NULL, *sumz, *sumabs, *odl;
+			sumz = (double *)calloc((size_t)(n + 1), sizeof(double));
+			sumabs = (double *)calloc((size_t)(n + 1), sizeof(double));
+			odl = (double *)calloc((size_t)(n + 1), sizeof(double));
+			if (hasmiss) {
+				bzm = (double *)malloc((size_t)(n + 1) * sizeof(double));
+				for (i = 1; i <= n; i++) bzm[i] = (missbeh[i] != 0.0) ? behOverallMean : behval[i];
+				bz = bzm;
+			}
+			for (dk = 0; dk < nstart; dk++) {
+				long ei = start_i[dk], ej = start_j[dk];
+				if (hasmiss && ht_get(&missht, dyadkey(&g, ei, ej), &dv)) continue;
+				odl[ei] += 1.0;
+				sumz[ei] += bz[ej];
+			}
+			for (dk = 0; dk < nstart; dk++) {
+				long ei = start_i[dk], ej = start_j[dk];
+				if (hasmiss && ht_get(&missht, dyadkey(&g, ei, ej), &dv)) continue;
+				sumabs[ei] += fabs(bz[ej] - bz[ei]);
+			}
+			for (k = 0; k < nbehterms; k++) {
+				double tot = 0.0;
+				char statname[48];
+				switch (behtermcodes[k]) {
+					case TERMCODE_BEH_LINEAR:
+						for (i = 1; i <= n; i++) tot += bz[i];
+						break;
+					case TERMCODE_BEH_QUADRATIC:
+						for (i = 1; i <= n; i++) tot += bz[i] * bz[i];
+						break;
+					case TERMCODE_BEH_AVALT:
+						for (i = 1; i <= n; i++) if (odl[i] > 0.0) tot += (bz[i] - behOverallMean) * (sumz[i] / odl[i] - behOverallMean);
+						break;
+					case TERMCODE_BEH_AVSIM:
+						for (i = 1; i <= n; i++) if (odl[i] > 0.0) tot += 1.0 - (sumabs[i] / behrange) / odl[i] - behSimMean;
+						break;
+				}
+				sprintf(statname, "__saom_native_statbehlag%ld", k + 1);
+				SF_scal_save(statname, tot);
+			}
+			free(sumz); free(sumabs); free(odl); free(bzm);
+		}
+		ht_free(&hstart);
+		free(start_i); free(start_j);
+		// behsim's statistic uses the period's STARTING behavior (RSiena's
+		// lagged cross-statistic), so repoint its slot before the
+		// statistic loop below
+		if (has_behsim) attrs[nattr] = behval_start;
+	}
+	SF_scal_save("__saom_native_netdist", (ST_double)netdist);
 	if (wfull_rc) free(wfull_rc);
 	if (ratecovattr) free(ratecovattr);
 	if (condmode) ht_free(&horig);
@@ -2297,12 +2443,13 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (k = 0; k < nbehterms; k++) {
 				char statname[40];
 				sprintf(statname, "__saom_native_statbeh%ld", k + 1);
-				SF_scal_save(statname, saom_beh_stat_term(have_gm ? &gm : &g, behval_use, behtermcodes[k], behrange, behSimMean));
+				SF_scal_save(statname, saom_beh_stat_term(have_gm ? &gm : &g, behval_use, behtermcodes[k], behrange, behSimMean, behOverallMean));
 			}
 			free(behval_masked);
 		}
 	}
 	free(behval);
+	free(behval_start);
 	if (have_gm) free_graph(&gm);
 	if (hasmiss) {
 		ht_free(&missht);

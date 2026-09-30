@@ -299,8 +299,10 @@ value squared - two genuinely different scales for the same effect, both needed.
 {pstd}
 {bf:avalt} (RSiena's own "avAlt", {cmd:AverageAlterEffect}) is the canonical INFLUENCE effect: an
 activated actor's own behavior value is pulled toward the average current value of that actor's own
-network neighbors (ministep delta = {cmd:diff * average-neighbor-value}, 0 for an actor with no
-out-ties). {bf:A genuine, disclosed small-sample finding from certifying the joint estimator}: at a
+network neighbors (ministep delta = {cmd:diff * (average-neighbor-value - mean)}, 0 for an actor with
+no out-ties; statistic = sum over actors of (own value - mean) * (average neighbor value - mean),
+with mean = the overall behavior mean, as RSiena centers it). Before 2026-09-30 {cmd:nwsaom} used
+uncentered values here, which is a different model, not a reparametrization. {bf:A genuine, disclosed small-sample finding from certifying the joint estimator}: at a
 small toy scale (a handful of actors, on the order of RSiena's own smallest worked examples),
 {opt avalt} specifically can make the joint Robbins-Monro fit genuinely diverge - not a bug, but a
 real small-sample identification problem (too few behavior-ministep opportunities for
@@ -324,6 +326,53 @@ very last, pooled by summation over every ordered actor pair - the identical poo
 directly from RSiena's own R-side {cmd:rangeAndSimilarity()} source (not invented): this constant
 is defined as exactly 0 whenever the pooled data has zero variance, rather than the 1 the general
 formula would otherwise give.
+
+{pstd}
+{bf:behsim} (RSiena's {cmd:simX} with the co-evolving behavior as its variable, e.g. "drinking
+similarity") is the standard SELECTION effect of a co-evolution model, on the network side: the
+tie-level contribution of i->j is 1 - |z_i - z_j|/range - simMean, where z are the CURRENT
+simulated behavior values (they change during a simulated period, unlike a fixed covariate in
+{opt simcov()}), range is the observed behavior range and simMean the same similarity mean
+{opt avsim} uses. The centering by simMean matches RSiena, so the outdegree coefficient is directly
+comparable to RSiena's.
+
+{pstd}
+{bf:How co-evolution models are estimated.} With two dependent variables, {cmd:nwsaom} uses
+UNCONDITIONAL Method of Moments, as RSiena does: the network rate and the behavior rate of every
+period are estimated jointly with all other parameters in phases 1-3. The statistic for a network
+rate is the number of dyads in which the simulated end-of-period network differs from the network
+at the start of the period; for a behavior rate it is the sum of absolute differences between the
+simulated end-of-period behavior and the behavior at the start of the period. Their targets are
+the same distances between the observed waves. The rates therefore get standard errors
+({cmd:e(rate_se)}/{cmd:e(rate_beh_se)}, or {cmd:e(rates_se)}/{cmd:e(rates_beh_se)} with
+{opt waves()}), and the table below the coefficients reports them per period. Statistics that
+link the two variables are lagged, as in RSiena: {opt behsim} (network side) is evaluated with the
+behavior at the START of the period, {opt avalt}/{opt avsim} (behavior side) with the network at
+the START of the period; the ministep change statistics always use the current state. Before
+2026-09-30 the rates were held at closed-form starting values and never estimated, which is not
+what RSiena does, and on real data (s50) let the behavior parameters run away. {cmd:e(tconv)}
+reports RSiena-style convergence t-ratios for every parameter including the rates and
+{cmd:e(tconv_max)} RSiena's overall maximum convergence ratio.
+
+{pstd}
+{bf:Check against RSiena.} RSiena 1.6.6 on its s50 data (friendship {cmd:s501-s503}, drinking
+{cmd:s50a}; {cmd:nwwebuse glasgow} holds the same data, nodes in a different order), network:
+density, reciprocity, transTrip, simX(drinking); behavior: linear, quad, avAlt. RSiena estimates
+(SE) versus {cmd:nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim
+behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
+
+{p2colset 9 36 50 2}{...}
+{p2col:{it:effect}}{it:RSiena}{space 8}{it:nwsaom}{p_end}
+{p2col:friendship rate p1/p2}6.48/5.17{space 5}6.43/5.12{p_end}
+{p2col:outdegree}-2.760 (.145){space 2}-2.752 (.188){p_end}
+{p2col:reciprocity}2.354 (.198){space 3}2.364 (.217){p_end}
+{p2col:transitive triplets}0.617 (.077){space 3}0.615 (.095){p_end}
+{p2col:drinking similarity}1.484 (.626){space 3}1.431 (.842){p_end}
+{p2col:drinking rate p1/p2}1.31/1.81{space 5}1.31/1.73{p_end}
+{p2col:linear shape}0.392 (.205){space 3}0.386 (.216){p_end}
+{p2col:quadratic shape}-0.589 (.311){space 2}-0.567 (.391){p_end}
+{p2col:average alter}1.286 (.774){space 3}1.223 (.882){p_end}
+{p2colreset}{...}
 
 {marker endowcreation}{...}
 {pstd}
@@ -379,7 +428,8 @@ not a defect). Not yet supported combined with co-evolution, multi-wave models, 
 
 {pstd}
 {opt behtheta0()} sets starting values for the behavior-side eval-parameter vector (parallel to
-{opt theta0()} for the network side); the behavior rate's own starting value is computed
+{opt theta0()} for the network side); the behavior rate's own STARTING value (it is then
+estimated, see above) is computed
 automatically from the observed behavior data via RSiena's own closed-form formula for the general
 (non-binary) case, mirroring how the network rate's own starting value is computed (see
 {bf:Estimation} below) - a disclosed simplification that skips RSiena's own separate binary-behavior
@@ -498,8 +548,8 @@ Section 7.12.1) - already {cmd:nwsaom}'s own default for the eval-parameter esti
 (see {bf:Estimation} below), but it DOES mean the rate parameter's own post-hoc refinement (see
 {bf:The rate parameter} below) is skipped for a {opt present()} fit that genuinely restricts at
 least one actor: {cmd:e(rate)}/{cmd:e(rates)} stay at their closed-form starting value, and
-{cmd:e(rate_se)}/{cmd:e(rates_se)} report 0 - the same "not refined" signal a co-evolution fit's own
-rate already carries, for a related but distinct reason. {opt present()} DOES use the native (C)
+{cmd:e(rate_se)}/{cmd:e(rates_se)} report 0 (a network-only {opt present()} fit; with
+{opt behavior()} the rates are estimated, see {help nwsaom_remarks##coev:Co-evolution}). {opt present()} DOES use the native (C)
 backend, when the model is otherwise native-eligible - the acting-actor draw, the pooled rate, and
 the tie-target restriction are all computed natively too, so a composition-change fit runs at
 essentially the same speed as an equivalent fit without it. Only the rate parameter's own post-hoc
@@ -634,12 +684,10 @@ printed convention) the raw standard deviation of those replicate draws (RSiena'
 not divided by {opt k3()}'s own square root). Verified on RSiena's own real reference dataset:
 {cmd:e(rate)} matches RSiena's own real fitted rate to within 0.1%, {cmd:e(rate_se)} to within 5%.
 {opt rate0()} is still accepted for backward compatibility but not used - the starting
-value is always computed from the data. {bf:A real, disclosed scope limit}: this refinement is not
-performed for co-evolution fits ({opt behavior()}) - matching real RSiena's own actual default
-behavior, not an oversight: RSiena's own conditional-estimation default requires exactly ONE
-dependent variable, and a co-evolution model has two (network and behavior), so real RSiena itself
-falls back to the SAME closed-form starting-value convention {cmd:nwsaom}'s own co-evolution rates
-already use.
+value is always computed from the data. This conditional refinement is not used for co-evolution
+fits ({opt behavior()}): RSiena's conditional estimation needs exactly ONE dependent variable, so
+with two it estimates the rates by unconditional Method of Moments, and so does {cmd:nwsaom} (see
+{help nwsaom_remarks##coev:Co-evolution}).
 
 {pstd}
 {opt waves(namelist)} chains three or more waves into ONE pooled fit: the eval-parameter vector
