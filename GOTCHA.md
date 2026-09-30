@@ -421,15 +421,65 @@ counted; symmetric networks in steps of two); the rate is the mean phase-3 time 
   conditional estimation holds fixed, and RSiena's covariance is singular under both estimators.
   `linearendow`+`linearcreation` (co-evolution) is refused for the same reason (behavior distance).
 
-## `nwset, mat()` re-sorts the dataset under existing networks (found 2026-10-01, not fixed)
+## `nwset, mat()` re-sorted the dataset under existing networks (found 2026-10-01, fixed 2026-10-01)
 
 After `nwwebuse glasgow`, the data rows are in the networks' node order (n1, n10, n11, ...).
-`nwset, mat(...) name(new)` then sorts the dataset by node label (n1, n2, n3, ...) while the
-existing networks keep their node order. Every command that reads a node covariate by row
-position afterwards (nwsaom `ratecov()`, `nodematch()`, ..., probably nwergm too) silently pairs
-actors with other actors' values: `ratecov(smkc)` on glasgow gave 0.90 before such an `nwset` and
-0.12 after it. Create covariates and run models before declaring new networks with `mat()`, or
-re-derive the covariate after it. Not investigated further.
+`nwset, mat(...) name(new)` then re-sorted the rows into n1, n2, n3, ... while the existing
+networks kept their node order. Every command that reads a node attribute by row position
+(`st_data(1::nodes, var)`: nwsaom `ratecov()`/`nodematch()`/`behavior()`/`present()`, nwergm
+`nodematch()`/`nodecov()`, ...) then paired actors with other actors' values: `ratecov(smkc)` on
+glasgow gave 0.90 before such an `nwset` and 0.12 after it.
+
+Cause: an unlabelled network got the default labels n1, n2, ..., nN (`get_node_suffix()`), i.e.
+node i of the matrix was *named* "n`i`" instead of being identified with observation i. On
+glasgow those names exist but in another row order, so `_nwdatasync` (merge by `_nwnode`, then
+`gsort` into the new network's node order) moved the row of "n2" (observation 12) to row 2. On
+datasets whose labels are not n1..nN (gang: g1, g10, ...; s50: v1, v10, ...) the names did not
+match at all and the data grew to 2N rows. The same happened with `labs()` listing the existing
+nodes in another order, and with every command that declares networks through `nwset, mat()`
+(nwrandom, nwring, nwsmall, nwlattice, nwexpand, nwhomophily, nwdyadprob, ...). `nwdyadprob,
+density()` additionally decoded node positions from the labels ("n12" -> 12) and declared its
+result on the edge list it had preserved, so its result was re-sorted on `restore`.
+
+Fix:
+- `nwset` gives an unlabelled network (no `labs()`, `labsfromvar()`, `nodenames()`, one-mode)
+  whose size equals the number of labelled rows in the data the labels of rows 1..N in row order
+  (`nw_rowlabels_or()` in `unw_core.do`): node i is observation i. Otherwise the defaults n1..nN
+  remain.
+- A new network whose labels are a permutation of the existing node set is reordered into the row
+  order of the data before `_nwdatasync` (`nw_align_to_rows()`): its edge matrix, node names and
+  node variable names are permuted together, so no tie changes and nothing is re-sorted.
+- Both apply only while the rows are in the node order of some network in memory
+  (`nw_rows_follow_net()`). After a network over a different node set has re-sorted them, the rows
+  follow no network and a new network is synced as before; e.g. `nwgen x = net if _n >= 2` then
+  still re-sorts the rows into `net`'s order before applying `if` (`cscripts/test_nwgenerate.do`).
+- `nwdyadprob, density()` maps labels to positions through the network's node names and declares
+  its result after `restore`.
+- A network over a *different* node set still re-sorts (and extends) the data, as documented for
+  datasync. nwsaom and nwergm now call `_nwrowalign` first: it refuses waves that list their
+  nodes in different orders, and if the rows are not in the (first) network's node order it
+  re-syncs them to it (attributes move with their labels) with a note
+  "(data sorted into the node order of network ...)".
+
+Test: `cscripts/test_nwset_alignment.do` (glasgow, gang, s50, lazega; every network-creating
+command; nwsaom and nwergm estimates identical before and after declaring new networks).
+Other commands that read attributes by row position were not audited; after declaring a network
+over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
+
+## Symmetric nwsaom models report the rate on RSiena's scale (changed 2026-10-01)
+
+`e(rate)` of a `symmetric` fit used to be the per-actor rate rho (about 14.7 on glasgow waves 1-2
+symmetrized). RSiena's pairwise model types give each actor the basic rate lambda and pairs the rate
+lambda^2 (total rate (sum lambda_i)^2 - sum lambda_i^2, `DependentVariable::calculateRates()`), so
+lambda^2 = rho/(n-1). `e(rate)` is now RSiena's: unconditional lambda = sqrt(rho/(n-1)) (0.55; SE by
+the delta method), conditional the mean time at basic rate 1, nwsaom's time/(n-1) (0.30; RSiena's
+`terminateFRAN()` reports the time, which is on the lambda^2 scale). `e(rate_actor)` keeps rho,
+`rate0()` takes RSiena's scale, `estat gof` simulates with `e(rate_actor)` and the pairwise ministep
+(`e(symtype)`). With `ratecov()` the alter is now drawn by the covariate as in RSiena (it was
+uniform), with RSiena's total rate (plugin protocol 7). Validated for joint/force/agree, conditional
+and unconditional, 5 seeds: all within 0.1 RSiena SE except one conditional ratecov coefficient
+(0.13). RSiena's own default start for these rates is on the per-actor scale (5.6) and its
+unconditional estimation then often fails; the references start the rate at 0.5.
 
 ## `nwergm` estat mcmcdiag ESS was overstated; estat gof chains too short (changed 2026-10-01)
 

@@ -400,6 +400,12 @@ program nwsaom, eclass
 		}
 	}
 
+	// node attributes (ratecov(), nodematch(), behavior(), present(), ...)
+	// are read by row position: make sure the rows are in the waves'
+	// node order (they are not after a network with another node order
+	// was declared later), and that all waves share one node order.
+	_nwrowalign `__nwsaom_wavelist'
+
 	// --- present(): composition change ("joiners and leavers", harmonisation
 	// unit 33) - one 0/1 Stata variable per wave, same "one variable per
 	// wave" convention behavior() already uses, marking which actors are
@@ -2183,9 +2189,9 @@ program nwsaom, eclass
 		ereturn scalar tconv_max = `__nwsaom_tconvmax'
 	}
 	else {
-		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit.rate))
+		mata: st_local("__nwsaom_rate", strofreal(__nwsaom_fit.rate, "%21.0g"))
 		mata: st_local("__nwsaom_ratetr", strofreal(__nwsaom_fit.rate_tratio))
-		mata: st_local("__nwsaom_ratese", strofreal(__nwsaom_fit.rate_se))
+		mata: st_local("__nwsaom_ratese", strofreal(__nwsaom_fit.rate_se, "%21.0g"))
 		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit.tconvMax))
 		tempname tconv
 		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
@@ -2201,6 +2207,15 @@ program nwsaom, eclass
 		ereturn matrix tconv = `tconv'
 		ereturn local wave1 "`wave1'"
 		ereturn local wave2 "`wave2'"
+		// symmetric (pairwise) models report the rate on RSiena's scale
+		// (SaomSymRateToRSiena() in unw_saom.do); the per-actor rate the
+		// simulation uses is kept in e(rate_actor)
+		mata: st_local("__nwsaom_rateact", strofreal(__nwsaom_fit.rate_actor, "%21.0g"))
+		if "`symmetric'" != "" {
+			ereturn scalar rate_actor = `__nwsaom_rateact'
+			local __nwsaom_symtypenm : word `__nwsaom_symtypeval' of joint force agree
+			ereturn local symtype "`__nwsaom_symtypenm'"
+		}
 		if `__nwsaom_hasratecov' {
 			mata: st_local("__nwsaom_ratecoef", strofreal(__nwsaom_fit.ratecoef))
 			mata: st_local("__nwsaom_ratecoef_se", strofreal(__nwsaom_fit.ratecoef_se))
@@ -2218,6 +2233,10 @@ program nwsaom, eclass
 		di as text "{hline}"
 		ereturn display
 		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
+		if "`symmetric'" != "" {
+			if `__nwsaom_iscond' di as text "(pairwise model: RSiena's time scale, mean time / (actors - 1); per-actor" _n " rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
+			else di as text "(pairwise model: rate = RSiena's basic rate, sqrt(per-actor rate /" _n " (actors - 1)); per-actor rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
+		}
 		if `__nwsaom_hasratecov' {
 			di as text "Covariate-rate coefficient (" as result "`ratecov'" as text "): " as result %9.4f `__nwsaom_ratecoef' as text " (se " as result %6.4f `__nwsaom_ratecoef_se' as text ")" _continue
 			if `__nwsaom_ratecoef_fx' di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoef_fixed)==1)"
@@ -2298,6 +2317,7 @@ program define nwsaom_multiplex, eclass
 	_nwsyntax `netawave2', max(1) other(w1b)
 	_nwsyntax `netbwave1', max(1) other(w2a)
 	_nwsyntax `netbwave2', max(1) other(w2b)
+	_nwrowalign `netawave1' `netawave2' `netbwave1' `netbwave2'
 
 	foreach __w in w1a w1b w2a w2b {
 		if "``__w'directed'" != "true" {

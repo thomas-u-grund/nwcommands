@@ -218,8 +218,14 @@ program nwdyadprob
 		// for a 20-node network), never bare numeric strings - so the
 		// leading "n" is stripped before strtoreal() converts the
 		// remainder back to the position it always encodes.
-		mata: __nwdp_ego = strtoreal(substr(st_sdata(., "`nw_ego'"), 2, .))
-		mata: __nwdp_alt = strtoreal(substr(st_sdata(., "`nw_alter'"), 2, .))
+		// (2026-10-01) Labels are mapped back to positions through
+		// `_tempdyad''s own node names rather than by stripping the
+		// leading "n": nwset now gives an unlabelled network the labels
+		// of the rows in the data when the sizes match (e.g. glasgow's
+		// n1, n10, n11, ...), so a label no longer encodes a position.
+		_nwsyntax _tempdyad, max(1) other(td)
+		mata: __nwdp_ego = _nwdp_index(st_sdata(., "`nw_ego'"), `tdnetobj'->get_nodenames())
+		mata: __nwdp_alt = _nwdp_index(st_sdata(., "`nw_alter'"), `tdnetobj'->get_nodenames())
 		mata: __nwdp_link = st_data(., "link")
 		mata: __nwdp_sel = selectindex(__nwdp_link :== 1)
 		mata: for (__nwdp_i=1; __nwdp_i<=rows(__nwdp_sel); __nwdp_i++) `__densemat'[__nwdp_ego[__nwdp_sel[__nwdp_i]], __nwdp_alt[__nwdp_sel[__nwdp_i]]] = 1
@@ -228,10 +234,13 @@ program nwdyadprob
 			mata: `__densemat' = (`__densemat' :> 0)
 		}
 		mata: mata drop __nwdp_ego __nwdp_alt __nwdp_link __nwdp_sel __nwdp_i
+		nwdrop _tempdyad
+		// the network is declared on the node data, not on the edge list
+		// held while preserved, so that it gets the same node labels as
+		// `_tempdyad' did and the rows are not re-sorted on restore
+		restore
 		nwset, mat(`__densemat') name(`name') `labs' `xvars'
 		mata: mata drop `__densemat'
-		nwdrop _tempdyad
-		restore
 	}
 	
 	if "`undirected'" != "" {
@@ -248,6 +257,7 @@ end
 
 capture mata: mata drop getNetFromProbs()
 capture mata: mata drop transformIntoProbs()
+capture mata: mata drop _nwdp_index()
 
 mata:
 real matrix getNetFromProbs(real matrix probs) {
@@ -261,6 +271,18 @@ real matrix getNetFromProbs(real matrix probs) {
 		_diag(net, 0)
 	}
 	return(net)
+}
+
+real colvector _nwdp_index(string colvector lab, string rowvector names) {
+	transmorphic A
+	real colvector idx
+	real scalar i
+
+	A = asarray_create()
+	for (i = 1; i <= cols(names); i++) asarray(A, names[i], i)
+	idx = J(rows(lab), 1, .)
+	for (i = 1; i <= rows(lab); i++) idx[i] = asarray(A, lab[i])
+	return(idx)
 }
 
 real matrix transformIntoProbs(real matrix net) {

@@ -643,6 +643,16 @@ if "`overwrite'" != "" local replace "replace"
 
 		if (("`labs'" == "" & "`labsfromvar'" == "") | `notvalid' != 0) {
 			mata: `__nwnodenames' = (J(rows(`__nwnew'),1,"`cDftNodepref'") + get_node_suffix(rows(`__nwnew')))'
+			// An unlabelled network whose size matches the node set
+			// already in the data takes that node set's labels in row
+			// order (node i = observation i) instead of n1, n2, ...
+			// Before, it got n1, n2, ..., and _nwdatasync then sorted
+			// the rows into that order under all existing networks
+			// (e.g. glasgow's n1, n10, n11, ...), silently misaligning
+			// node attributes; see nw_rowlabels() in unw_core.do.
+			if "`bipartite'" == "" & "`nodenames'" == "" {
+				mata: `__nwnodenames' = nw_rowlabels_or(`__nwnodenames', "`nw_nodename'", `nws'.pdefs)
+			}
 		}
 		
 		mata: st_rclear()
@@ -696,6 +706,16 @@ if "`overwrite'" != "" local replace "replace"
 		
 		// check if network is valued or not
 		mata: `netobj'->set_valued(`netobj'->check_valued())
+
+		// If the new network lists the nodes already in the data in a
+		// different order (labs(), nodenames(), varlist), reorder the
+		// network's nodes into the row order of the data, so that
+		// _nwdatasync does not re-sort the rows under the networks
+		// already in memory.  Ties are unchanged (nodes keep their
+		// labels).  See nw_align_to_rows() in unw_core.do.
+		if "`bipartite'" == "" {
+			mata: nw_align_to_rows(`netobj', "`nw_nodename'", `nws'.pdefs)
+		}
 		
 		_nwdatasync
 	}

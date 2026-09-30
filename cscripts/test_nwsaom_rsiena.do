@@ -148,23 +148,30 @@ di as text "ratecov() PASS"
 * ---------------------------------------------------------------- symmetric
 * glasgow waves 1-2 symmetrized (a tie where either direction exists),
 * density only, RSiena's pairwise model types (modelType 6 = joint, 4 =
-* forcing, 5 = mutual/agree), unconditional, seeds 1-3 (runs with a
-* failed convergence or missing SE dropped): density -1.268 (SE .104),
-* -2.541 (.204), -1.083 (.124). The rates are on a different scale (RSiena
-* per pair, nwsaom per actor; ratio about 27-29 here) and not compared.
+* forcing, 5 = mutual/agree), unconditional, seeds 1-5 (runs that failed
+* or did not converge replaced by the next seed). RSiena's default start
+* for these basic rates is on the per-actor scale (5.6 here), from which
+* phase 2 diverges ("more than 1000000 steps") or never moves the rate;
+* the references use initialValue 0.5 for the rate. The rate is RSiena's
+* basic rate parameter lambda (pairs at rate lambda^2), which nwsaom
+* reports since 2026-10-01 (e(rate_actor) keeps the per-actor rate):
+* joint rate .546 (.051), density -1.271 (.108); force .545 (.047),
+* -2.539 (.206); agree .585 (.051), -1.083 (.122).
 nwtomata glasgow1, mat(__gs1)
 nwtomata glasgow2, mat(__gs2)
 mata: __gs1 = (__gs1 + __gs1') :> 0
 mata: __gs2 = (__gs2 + __gs2') :> 0
 nwset, mat(__gs1) directed name(__gsym1)
 nwset, mat(__gs2) directed name(__gsym2)
-local __rs  "-1.268 -2.541 -1.083"
-local __rse "0.104 0.204 0.124"
+local __rs  `""0.546 -1.271" "0.545 -2.539" "0.585 -1.083""'
+local __rse `""0.051 0.108" "0.047 0.206" "0.051 0.122""'
 local __j 0
 foreach __t in joint force agree {
 	local ++__j
 	nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric symtype(`__t') unconditional seed(12345)
-	_net_check "outdegree" "`: word `__j' of `__rs''" "`: word `__j' of `__rse''"
+	_net_check "rate1 outdegree" "`: word `__j' of `__rs''" "`: word `__j' of `__rse''"
+	assert abs(e(rate) - sqrt(e(rate_actor) / 49)) < 1e-10
+	assert "`e(symtype)'" == "`__t'"
 	di as text "symmetric symtype(`__t') PASS"
 }
 
@@ -239,25 +246,41 @@ _net_check "rate1 rate2 outdegree reciprocity transtrip" ///
 di as text "conditional missnet() PASS"
 
 * symmetric (pairwise) model types, conditional (RSiena cond = TRUE,
-* seeds 1-3): density -1.275 (.105), -2.549 (.205), -1.083 (.123). RSiena's
-* conditional rate of a pairwise model is nwsaom's divided by n - 1 (per
-* pair instead of per actor): 0.301, 0.301, 0.342 here.
+* seeds 1-5). RSiena reports the mean time to reach the observed distance
+* at basic rate 1 (pairs at rate 1), nwsaom's time divided by n - 1:
+* joint rate .300 (.043), density -1.275 (.106); force .300 (.044),
+* -2.549 (.208); agree .343 (.050), -1.087 (.124).
 nwtomata glasgow1, mat(__gs1)
 nwtomata glasgow2, mat(__gs2)
 mata: __gs1 = (__gs1 + __gs1') :> 0
 mata: __gs2 = (__gs2 + __gs2') :> 0
 nwset, mat(__gs1) directed name(__gsym1)
 nwset, mat(__gs2) directed name(__gsym2)
-local __rs  "-1.275 -2.549 -1.083"
-local __rse "0.105 0.205 0.123"
-local __rr  "0.301 0.301 0.342"
+local __rs  `""0.300 -1.275" "0.300 -2.549" "0.343 -1.087""'
+local __rse `""0.043 0.106" "0.044 0.208" "0.050 0.124""'
 local __j 0
 foreach __t in joint force agree {
 	local ++__j
 	nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric symtype(`__t') seed(12345)
-	_net_check "outdegree" "`: word `__j' of `__rs''" "`: word `__j' of `__rse''"
-	assert abs(e(rate) / 49 - `: word `__j' of `__rr'') < 0.03
+	_net_check "rate1 outdegree" "`: word `__j' of `__rs''" "`: word `__j' of `__rse''"
+	assert abs(e(rate) - e(rate_actor) / 49) < 1e-10
 	di as text "conditional symmetric symtype(`__t') PASS"
 }
+
+* pairwise model with a covariate-dependent rate (RateX, joint, cond =
+* TRUE, seeds 1-5): rate .289 (.043), density -1.265 (.104), smoke1 on
+* rate .311 (.133). RSiena gives actor i the rate lambda * exp(b x_i),
+* draws the actor and then the alter by these rates, at total rate
+* (sum)^2 - sum of squares; nwsaom does the same since 2026-10-01 (before,
+* the alter was drawn uniformly).
+qui sum smoke1
+generate double __smkc3 = smoke1 - r(mean)
+nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric ratecov(__smkc3) seed(12345)
+_net_check "rate1 outdegree" "0.289 -1.265" "0.043 0.104"
+di as text "ratecoef nwsaom" %8.3f e(ratecoef) " (" %5.3f e(ratecoef_se) ")  RSiena   0.311 (0.133)"
+assert abs(e(ratecoef) - 0.311) < 0.25 * 0.133
+assert e(ratecoef_se) > 0.133 / 1.5 & e(ratecoef_se) < 1.5 * 0.133
+drop __smkc3
+di as text "conditional symmetric ratecov() PASS"
 
 di as text "nwsaom network-only vs RSiena: PASS"

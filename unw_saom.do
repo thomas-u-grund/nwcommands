@@ -3240,6 +3240,7 @@ struct SaomFit {
 	real scalar ratecoef		// ratecov(): estimated covariate-rate coefficient
 	real scalar ratecoef_se
 	real scalar ratecoef_tratio
+	real scalar rate_actor		// SaomEstimateRM(): the rate on nwsaom's per-actor scale (differs from rate for symmetric models, see SaomSymRateToRSiena())
 	real scalar cond		// 1: conditional estimation (RSiena's default for one network); the rates are then mean phase-3 times, rate_se(s) their SDs, rate_tratio(s) missing
 	real scalar ratecoef_fixed	// ratecov(): 1 if ratecoef was held fixed at its starting value (non-positive derivative), see rmfixed
 }
@@ -3399,6 +3400,9 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
 	if (C.cond & ver < 6) C.use_native = 0
+	// symmetric (pairwise) models with ratecov() draw the alter by the
+	// covariate as RSiena does from protocol 7 on
+	if (C.symtype != 0 & C.hasratecov & ver < 7) C.use_native = 0
 	C.native_netdist = (ver >= 5)
 	C.use_batch = C.use_native & (ver >= 5) & !C.hasratecov & (C.symtype == 0)
 	if (C.symtype != 0 & !C.use_native) {
@@ -3509,9 +3513,64 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		if (C.hasratecov) dev[C.ptot] = dev[C.ptot] + (rcstat - C.targetRateCov[pd])
 		if (want_score) {
 			active = (C.hasratecov ? sum(exp(ratecoef :* C.ratecovattr)) : C.npresentPd[pd])
+			// pairwise models with ratecov(): total rate rate * (S^2 -
+			// sum w^2) / (n - 1), see saom_sim.c
+			if (C.hasratecov & C.symtype != 0) active = (active^2 - sum(exp(2 :* ratecoef :* C.ratecovattr))) / (C.n - 1)
 			sco[p + pd] = steps / rate - active
 			if (C.hasratecov) sco[C.ptot] = sco[C.ptot] + rcscore
 		}
+	}
+}
+
+/* Symmetric (pairwise, RSiena model types BFORCE/BAGREE/BJOINT) models:
+   the rate on RSiena's scale.
+
+   nwsaom simulates a pairwise ministep as: an actor at rate rho (the
+   per-actor rate of every other nwsaom model), an alter uniformly among
+   the m - 1 others (m: actors present), so an ordered pair (i, j) is
+   chosen at rate rho / (m - 1).  RSiena (DependentVariable::
+   calculateRates(), NetworkVariable::calculateModelTypeBProbabilities())
+   gives each actor the basic rate lambda, chooses the actor and then the
+   alter by these rates, with total rate (sum lambda_i)^2 - sum lambda_i^2
+   = m (m - 1) lambda^2, so a pair at rate lambda^2.  The two agree with
+   lambda^2 = rho / (m - 1).  With ratecov() both use actor rates
+   lambda * w_i, w_i = exp(ratecoef * x_i), and rho = lambda^2 (n - 1)
+   (saom_sim.c), so the same conversion holds with m = n.
+
+   Reported rate:
+     unconditional estimation: lambda = sqrt(rho / (m - 1)), the basic
+       rate parameter RSiena estimates; its SE by the delta method,
+       se(lambda) = se(rho) / (2 sqrt(rho (m - 1)));
+     conditional estimation: RSiena reports the mean phase-3 time taken
+       at basic rate 1 to reach the observed distance (terminateFRAN(),
+       z$rate = colMeans(z$ntim)).  At basic rate 1 pairs occur at rate
+       1, in nwsaom's conditional simulation (rho = 1) at rate 1/(m - 1),
+       so RSiena's time is nwsaom's time / (m - 1): rate and SD are
+       divided by m - 1.  This is on the scale of lambda^2, not lambda
+       (RSiena's own convention for these model types: the time at basic
+       rate 1 equals lambda^2), so conditional and unconditional rates of
+       a symmetric model are not directly comparable, in RSiena as here.
+   The convergence t-ratio of the rate is scale-free and unchanged; the
+   per-actor rate rho is kept in fit.rate_actor. */
+real scalar SaomSymRateScale(struct SaomNetCtx scalar C) {
+	return((C.hasratecov ? C.n : C.npresentPd[1]) - 1)
+}
+
+void SaomSymRateToRSiena(struct SaomFit scalar fit, struct SaomNetCtx scalar C, real scalar p) {
+	real scalar m1, rho, d
+
+	m1 = SaomSymRateScale(C)
+	if (fit.cond) {
+		fit.rate = fit.rate / m1
+		fit.rate_se = fit.rate_se / m1
+	}
+	else {
+		rho = fit.rate
+		d = 1 / (2 * sqrt(rho * m1))
+		fit.rate = sqrt(rho / m1)
+		fit.rate_se = fit.rate_se * d
+		fit.Vfull[p+1, .] = fit.Vfull[p+1, .] :* d
+		fit.Vfull[., p+1] = fit.Vfull[., p+1] :* d
 	}
 }
 
@@ -3964,7 +4023,9 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	SaomNetCtxInit(C, (&Gobs_start, &Gobs_end), M, presentArg, mm, fnArg, rcArg, symArg, structArg)
 	p = C.p
 	par0 = theta0
-	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? rate0 : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
+	// symmetric (pairwise) models: rate0() is on RSiena's scale, see
+	// SaomSymRateScale()
+	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? (C.symtype != 0 ? rate0^2 * SaomSymRateScale(C) : rate0) : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
 	if (C.hasratecov) par0 = par0, (nargs >= 13 ? ratecoef : 0)
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
@@ -3988,6 +4049,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 		fit.rate_tratio = nf.tratio[p+1]
 		fit.rate_se = sqrt(nf.Vfull[p+1, p+1])
 	}
+	fit.rate_actor = fit.rate
+	if (C.symtype != 0) SaomSymRateToRSiena(fit, C, p)
 	fit.rates = fit.rate
 	fit.rate_tratios = fit.rate_tratio
 	fit.rate_ses = fit.rate_se

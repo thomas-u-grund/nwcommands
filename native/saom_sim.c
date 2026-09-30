@@ -241,7 +241,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 6		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2
+#define SAOM_NATIVE_VERSION 7		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1918,16 +1918,34 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		double *scoreBeh = R->scoreBeh;
 		double rate = P->rate, rateBeh = P->rateBeh;
 		double grandRate;
+		int symB = (P->symtype == 1 || P->symtype == 2 || P->symtype == 3);
+		double sumw2_rc = 0.0, sumw2x_rc = 0.0, Sp_rc = 0.0, symGfac_rc = 0.0, symdlogG_rc = 0.0;
 		if (P->hasratecov) {
 			wfull_rc = (double *)malloc((size_t)n * sizeof(double));
 			for (i = 0; i < n; i++) {
 				wfull_rc[i] = exp(P->ratecoef * P->ratecovattr[i]);
 				totw_rc += wfull_rc[i];
 				covrateSum_rc += P->ratecovattr[i] * wfull_rc[i];
+				sumw2_rc += wfull_rc[i] * wfull_rc[i];
+				sumw2x_rc += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[i];
 			}
+			Sp_rc = covrateSum_rc;
 			covrateSum_rc *= rate;
+			if (symB) {
+				/* RSiena's pairwise (B) model types with a rate covariate
+				   (DependentVariable::calculateRates(), NetworkVariable::
+				   calculateModelTypeBProbabilities()): actor rates
+				   lambda_i = lambda * w_i, total rate (sum lambda_i)^2 -
+				   sum lambda_i^2, the actor drawn proportional to w_i and
+				   the alter proportional to w_j among the others.  Here
+				   rate = lambda^2 * (n - 1), the scale on which the rate
+				   of the model without covariate is the per-actor rate. */
+				symGfac_rc = (totw_rc * totw_rc - sumw2_rc) / (double)(n - 1);
+				covrateSum_rc = rate * (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (double)(n - 1);
+				symdlogG_rc = (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (totw_rc * totw_rc - sumw2_rc);
+			}
 		}
-		grandRate = P->hasratecov ? (rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
+		grandRate = P->hasratecov ? (symB ? rate * symGfac_rc : rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
 		/* conditional mode (RSiena's conditional estimation): steps until
 		   the distance from the starting network reaches the target, at
 		   least one step (EpochSimulation::runEpoch() checks after each
@@ -1962,7 +1980,32 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
 					}
 					else actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
-					if (PD->haspresent) {
+					if (P->hasratecov) {
+						/* alter proportional to w_j among the others: RSiena's
+						   calculateModelTypeBProbabilities() redraws while the
+						   alter is the actor, which is the same distribution;
+						   drawn here directly from the others, so that an actor
+						   holding nearly all the weight cannot stall the loop.
+						   Then the score of log P(actor, alter) and of
+						   log(total rate). */
+						{
+							double drawB = rng_unif(&rng) * (totw_rc - wfull_rc[actor - 1]), cumB = 0.0;
+							long jj;
+							alter = (actor == n) ? n - 1 : n;
+							for (jj = 0; jj < n; jj++) {
+								if (jj == actor - 1) continue;
+								cumB += wfull_rc[jj];
+								if (drawB <= cumB) { alter = jj + 1; break; }
+							}
+						}
+						if (P->want_score) {
+							double wa = wfull_rc[actor - 1];
+							rcscore += P->ratecovattr[alter - 1] - Sp_rc / totw_rc
+								- (Sp_rc - wa * P->ratecovattr[actor - 1]) / (totw_rc - wa)
+								+ symdlogG_rc;
+						}
+					}
+					else if (PD->haspresent) {
 						do { alter = presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)]; } while (alter == actor);
 					} else {
 						do { alter = 1 + (long)(rng_unif(&rng) * (double)n); } while (alter == actor);
