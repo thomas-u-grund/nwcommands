@@ -1044,6 +1044,54 @@ assert !missing(__symb[1,1])
 
 di as text "nwsaom.ado undirected/symmetric relations (BJOINT, native-first) PASS"
 
+* non-directed relations recognized from the data (2026-10-01), as RSiena:
+* waves declared undirected, or directed waves that are all tie-symmetric,
+* are modeled as non-directed without the symmetric option, with RSiena's
+* default model type (modelType 2, forcing)
+* (the 3-node saomsymasym above re-sorted the rows; put them back into the
+* glasgow node order, so that the unlabelled matrices below take it)
+qui _nwdatasync saomsymw1
+nwset, mat(__gsym1) undirected name(saomundw1)
+nwset, mat(__gsym2) undirected name(saomundw2)
+nwsaom, wave1(saomundw1) wave2(saomundw2) outdegree k0(20) k3(200) seed(777)
+assert "`e(symtype)'" == "forcing" & e(modeltype) == 2
+matrix __und_b = e(b)
+* the same data stored as directed, tie-symmetric: same model, same result
+nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree k0(20) k3(200) seed(777)
+assert "`e(symtype)'" == "forcing"
+assert mreldif(e(b), __und_b) < 1e-12
+* ... and with the symmetric option
+nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) seed(777)
+assert mreldif(e(b), __und_b) < 1e-12
+* undirected and directed-stored symmetric waves mixed: one relation
+nwsaom, wave1(saomundw1) wave2(saomsymw2) outdegree k0(20) k3(200) seed(777)
+assert mreldif(e(b), __und_b) < 1e-12
+* model types by name or RSiena modelType number
+foreach __t in 2 3 4 5 6 forcing confirmation force agree joint {
+	nwsaom, wave1(saomundw1) wave2(saomundw2) outdegree symtype(`__t') k0(10) k3(50) seed(1)
+	local __mt = cond("`__t'" == "forcing", 2, cond("`__t'" == "confirmation", 3, cond("`__t'" == "force", 4, cond("`__t'" == "agree", 5, cond("`__t'" == "joint", 6, real("`__t'"))))))
+	assert e(modeltype) == `__mt'
+}
+capture nwsaom, wave1(saomundw1) wave2(saomundw2) outdegree symtype(bogus) k0(10) k3(50) seed(1)
+assert _rc == 198
+* reciprocity on directed-stored symmetric waves: kept a directed model
+* (RSiena would not allow it for a non-directed relation), with a note
+nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree reciprocity k0(20) k3(200) seed(777)
+assert "`e(symtype)'" == ""
+* an undirected wave together with a directed asymmetric one: refused
+capture noisily nwsaom, wave1(saomundw1) wave2(glasgow2) outdegree k0(10) k3(50) seed(1)
+assert _rc == 198
+* symmetric with directed asymmetric waves: refused
+capture noisily nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree symmetric k0(10) k3(50) seed(1)
+assert _rc == 198
+* symtype() on directed asymmetric waves: refused
+capture noisily nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree symtype(joint) k0(10) k3(50) seed(1)
+assert _rc == 198
+* ordinary directed data stays directed
+nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k0(20) k3(200) seed(777)
+assert "`e(symtype)'" == ""
+di as text "nwsaom.ado non-directed relations recognized from the data PASS"
+
 * symmetric + ratecov() combined (native-first): native/saom_sim.c's
 * ministep loop already gates hasratecov (weighted actor selection) and
 * symtype (the two-sided ministep decision) as two independent flags in
@@ -1124,9 +1172,11 @@ assert _rc == 0
 
 di as text "nwsaom.ado symmetric effect-meaningfulness audit PASS"
 
-* symtype() requires symmetric - not a standalone option.
+* symtype() needs a non-directed relation; on tie-symmetric waves it no
+* longer needs the symmetric option (2026-10-01; asymmetric waves: see the
+* block "non-directed relations recognized from the data" above)
 capture nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symtype(force) k0(5) k3(20) seed(1)
-assert _rc == 198
+assert _rc == 0 & "`e(symtype)'" == "force"
 
 * an invalid symtype() value is rejected with a clear error, not a
 * silent fallback to joint.
@@ -1149,13 +1199,12 @@ assert !missing(__symbf[1,1])
 capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(agree) k0(20) k3(200) seed(777)
 assert _rc == 0
 
-* plain `symmetric' with no symtype() is unchanged (still BJOINT,
-* symtype defaults to 1) - a real no-op check, not assumed: same seed/
-* data/k0/k3 as the original BJOINT smoke test above must give the
-* IDENTICAL coefficient as explicitly requesting symtype(joint).
+* plain `symmetric' with no symtype() uses RSiena's default for a
+* non-directed network, modelType 2 = forcing (before 2026-10-01: joint):
+* identical to symtype(forcing) at the same seed
 capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric k0(20) k3(200) seed(777)
 matrix __symdefault = e(b)
-capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(joint) k0(20) k3(200) seed(777)
+capture noisily nwsaom, wave1(saomsymw1) wave2(saomsymw2) outdegree symmetric symtype(forcing) k0(20) k3(200) seed(777)
 matrix __symjoint = e(b)
 assert reldif(__symdefault[1,1], __symjoint[1,1]) < 1e-10
 

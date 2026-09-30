@@ -389,15 +389,59 @@ program nwsaom, eclass
 			di "{err}nwsaom v1 estimates on binary ties only; a valued/weighted wave network is not yet supported."
 			error 198
 		}
-		if "`w`__w'directed'" != "true" {
-			di "{err}nwsaom requires a network stored as directed - SAOM's own ministep formulation is inherently directed (an actor controls only its own outgoing ties). To model a genuinely symmetric/undirected relation, store the data as directed (each tie coded both ways) and use the {bf:symmetric} option, which adds a mutual-consent ministep on top of that same directed storage."
-			error 198
-		}
 		if `__w' == 1 local nodes = `w1nodes'
 		else if `w`__w'nodes' != `nodes' {
 			di "{err}every wave must have the same number of nodes - nwsaom always uses a FIXED, common actor set across every wave; an actor not present at every wave still needs a row in each wave's own network, marked absent via {bf:present()}, not omitted from the network itself."
 			error 198
 		}
+	}
+
+	// --- non-directed relations (2026-10-01): as RSiena, which treats a
+	// symmetric one-mode dependent network as non-directed automatically,
+	// waves declared undirected, or directed waves that are all
+	// tie-symmetric, are modeled as a non-directed relation (as if
+	// `symmetric' had been given; RSiena's default model type, see
+	// symtype() below). Waves mixing undirected and asymmetric directed
+	// networks are refused. Directed tie-symmetric waves in a model the
+	// non-directed ministeps do not cover (waves(), behavior(),
+	// endowment/creation effects) stay directed, with a note.
+	local __nwsaom_nundir 0
+	local __nwsaom_allsym 1
+	local __nwsaom_asymlist ""
+	forvalues __w = 1/`__nwsaom_nwaves' {
+		local __wname : word `__w' of `__nwsaom_wavelist'
+		if "`w`__w'directed'" != "true" local ++__nwsaom_nundir
+		mata: st_local("__nwsaom_issym", strofreal(issymmetric((*`w`__w'netobj'->get_matrix()) :!= 0)))
+		if !`__nwsaom_issym' {
+			local __nwsaom_allsym 0
+			local __nwsaom_asymlist "`__nwsaom_asymlist' `__wname'"
+		}
+	}
+	local __nwsaom_autosym 0
+	if "`symmetric'" == "" & `__nwsaom_nundir' > 0 {
+		if !`__nwsaom_allsym' {
+			di "{err}some waves are declared undirected, but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " directed and not tie-symmetric. Declare all waves directed (a directed relation) or all tie-symmetric (a non-directed relation, e.g. with {bf:nwsym})."
+			error 198
+		}
+		local symmetric "symmetric"
+		local __nwsaom_autosym 1
+	}
+	else if "`symmetric'" == "" & `__nwsaom_allsym' {
+		local __nwsaom_autosym_ok = !(`__nwsaom_multi' | `__nwsaom_coev' | "`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
+		if `__nwsaom_autosym_ok' & "`reciprocity'" == "" {
+			local symmetric "symmetric"
+			local __nwsaom_autosym 1
+		}
+		else {
+			di as text "(all waves are tie-symmetric; modeled as a directed relation because " cond("`reciprocity'" != "", "reciprocity was requested", "the non-directed model does not cover this specification") ")"
+		}
+	}
+	if "`symmetric'" != "" & !`__nwsaom_allsym' {
+		di "{err}{bf:symmetric} (a non-directed relation) needs tie-symmetric waves (x_ij == x_ji for every dyad), but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " not; symmetrize the data first (e.g. {bf:nwsym}) or omit {bf:symmetric} for a directed relation."
+		error 198
+	}
+	if `__nwsaom_nundir' > 0 & `__nwsaom_nundir' < `__nwsaom_nwaves' & "`symmetric'" != "" {
+		di as text "(waves mix undirected and directed-stored networks; all are tie-symmetric and modeled as one non-directed relation)"
 	}
 
 	// node attributes (ratecov(), nodematch(), behavior(), present(), ...)
@@ -728,28 +772,31 @@ program nwsaom, eclass
 			di "{err}{bf:reciprocity} is not meaningful under {bf:symmetric} - every tie is reciprocated by construction once both directions are forced equal, so this effect's own statistic is a constant (RSiena itself does not offer {bf:recip} for a non-directed dependent variable)."
 			error 198
 		}
-		// symtype(): which of RSiena's own real B-family symmetric model
-		// types (NetworkModelType enum, source-verified from
-		// NetworkVariable.cpp) drives the mutual-consent ministep -
-		// default {bf:joint} (RSiena's own BJOINT, this option's original
-		// and only behavior before this addition, so plain {bf:symmetric}
-		// with no {bf:symtype()} is unchanged). {bf:force}/{bf:agree} are
-		// RSiena's own BFORCE/BAGREE, native-first per standing
-		// instruction (native/saom_sim.c's own `symtype' dispatch, no
-		// Mata fallback exists for any of the three, matching the
-		// existing joint-only behavior). A-family
-		// (AFORCE/AAGREE)/DOUBLESTEP*/NETCONTEMP are real RSiena model
-		// types too but use a structurally different call path in
-		// RSiena's own source (not the B-family switch these three
-		// share) - not attempted here, a disclosed follow-on.
-		local __nwsaom_symtypeval = 1
+		// symtype(): the model type of the non-directed relation, named
+		// or as RSiena's modelType number (NetworkModelType enum,
+		// NetworkVariable.cpp):
+		//   forcing       2 AFORCE  unilateral initiative, imposed (default,
+		//                 RSiena's default for a symmetric network:
+		//                 initializeFRAN() changes modelType 1 to 2)
+		//   confirmation  3 AAGREE  unilateral initiative, a new tie needs
+		//                 the alter's confirmation
+		//   force         4 BFORCE  pairwise, the initiator decides
+		//   agree         5 BAGREE  pairwise, creation needs both
+		//   joint         6 BJOINT  pairwise, joint decision
+		// Internal codes (native/saom_sim.c): joint 1, force 2, agree 3,
+		// forcing 4, confirmation 5. Before 2026-10-01 the default was
+		// joint and the A types did not exist.
+		local __nwsaom_symtypeval = 4
 		if "`symtype'" != "" {
-			local __nwsaom_symtype_lc = lower("`symtype'")
-			if "`__nwsaom_symtype_lc'" == "joint" local __nwsaom_symtypeval = 1
-			else if "`__nwsaom_symtype_lc'" == "force" local __nwsaom_symtypeval = 2
-			else if "`__nwsaom_symtype_lc'" == "agree" local __nwsaom_symtypeval = 3
-			else {
-				di "{err}{bf:symtype()} must be {bf:joint} (default, RSiena's BJOINT), {bf:force} (BFORCE), or {bf:agree} (BAGREE) - got {bf:`symtype''}."
+			local __nwsaom_symtype_lc = lower(strtrim("`symtype'"))
+			local __nwsaom_symtypeval = 0
+			if inlist("`__nwsaom_symtype_lc'", "joint", "6") local __nwsaom_symtypeval = 1
+			else if inlist("`__nwsaom_symtype_lc'", "force", "4") local __nwsaom_symtypeval = 2
+			else if inlist("`__nwsaom_symtype_lc'", "agree", "5") local __nwsaom_symtypeval = 3
+			else if inlist("`__nwsaom_symtype_lc'", "forcing", "2") local __nwsaom_symtypeval = 4
+			else if inlist("`__nwsaom_symtype_lc'", "confirmation", "3") local __nwsaom_symtypeval = 5
+			if `__nwsaom_symtypeval' == 0 {
+				di "{err}{bf:symtype()} must be {bf:forcing} (default; RSiena modelType 2), {bf:confirmation} (3), {bf:force} (4), {bf:agree} (5), or {bf:joint} (6), or one of these numbers - got {bf:`symtype'}."
 				error 198
 			}
 		}
@@ -802,12 +849,12 @@ program nwsaom, eclass
 		mata: st_numscalar("__nwsaom_symchk1", max(abs(__nwsaom_last_G1.to_dense() - __nwsaom_last_G1.to_dense()')))
 		mata: st_numscalar("__nwsaom_symchk2", max(abs(__nwsaom_last_G2.to_dense() - __nwsaom_last_G2.to_dense()')))
 		if __nwsaom_symchk1 > 0 | __nwsaom_symchk2 > 0 {
-			di "{err}{bf:symmetric} requires both wave networks to already be tie-symmetric (x_ij == x_ji for every dyad) - {bf:symmetric} selects RSiena's own BJOINT mutual-consent SIMULATION mechanism, it does not symmetrize asymmetric input data for you."
+			di "{err}{bf:symmetric} requires both wave networks to be tie-symmetric (x_ij == x_ji for every dyad); it selects a non-directed ministep, it does not symmetrize the data."
 			error 198
 		}
 	}
 	else if "`symtype'" != "" {
-		di "{err}{bf:symtype()} requires {bf:symmetric} - it selects which of RSiena's real B-family symmetric model types {bf:symmetric} itself uses, it is not a standalone option."
+		di "{err}{bf:symtype()} applies to a non-directed relation only (tie-symmetric or undirected waves, or {bf:symmetric})."
 		error 198
 	}
 
@@ -2213,8 +2260,10 @@ program nwsaom, eclass
 		mata: st_local("__nwsaom_rateact", strofreal(__nwsaom_fit.rate_actor, "%21.0g"))
 		if "`symmetric'" != "" {
 			ereturn scalar rate_actor = `__nwsaom_rateact'
-			local __nwsaom_symtypenm : word `__nwsaom_symtypeval' of joint force agree
+			local __nwsaom_symtypenm : word `__nwsaom_symtypeval' of joint force agree forcing confirmation
 			ereturn local symtype "`__nwsaom_symtypenm'"
+			local __nwsaom_mtnum : word `__nwsaom_symtypeval' of 6 4 5 2 3
+			ereturn scalar modeltype = `__nwsaom_mtnum'
 		}
 		if `__nwsaom_hasratecov' {
 			mata: st_local("__nwsaom_ratecoef", strofreal(__nwsaom_fit.ratecoef))
@@ -2233,7 +2282,8 @@ program nwsaom, eclass
 		di as text "{hline}"
 		ereturn display
 		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
-		if "`symmetric'" != "" {
+		if "`symmetric'" != "" di as text "(non-directed relation, model type " as result "`__nwsaom_symtypenm'" as text " = RSiena modelType " as result "`__nwsaom_mtnum'" as text ")"
+		if "`symmetric'" != "" & inlist(0`__nwsaom_symtypeval', 1, 2, 3) {
 			if `__nwsaom_iscond' di as text "(pairwise model: RSiena's time scale, mean time / (actors - 1); per-actor" _n " rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
 			else di as text "(pairwise model: rate = RSiena's basic rate, sqrt(per-actor rate /" _n " (actors - 1)); per-actor rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
 		}

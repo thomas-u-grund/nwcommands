@@ -158,8 +158,8 @@
 
 {marker symmetric_options}{...}
 {syntab:Undirected/symmetric relations}
-{synopt:{opt symmetric}}Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see {help nwsaom_remarks:Remarks} for the full list. v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no {opt behavior()}); combinable with {opt present()}, {opt missnet()}, and {opt ratecov()} (see {help nwsaom_remarks:Remarks}){p_end}
-{synopt:{opt symtype(string)}}Which mutual-consent rule {opt symmetric} uses: {bf:joint} (default) accepts a change when the sum of both actors' own preferences is favorable; {bf:force} lets the initiating actor alone decide, ignoring the other actor's own preference; {bf:agree} requires both actors to independently agree when creating a tie, or either one to want it gone when removing one. Requires {opt symmetric}{p_end}
+{synopt:{opt symmetric}}Model a non-directed relation (x_ij always equals x_ji). Not needed for waves declared undirected ({cmd:nwset ..., undirected}, {help nwsym}) or directed waves that are all tie-symmetric: like RSiena, {cmd:nwsaom} then models a non-directed relation automatically (tie-symmetric directed waves stay directed only with {opt reciprocity} or where the non-directed model does not apply: {opt waves()}, {opt behavior()}, endowment/creation effects). With directed waves that are not tie-symmetric {opt symmetric} is an error; it does not symmetrize data. Several effects are not meaningful for a non-directed relation and are rejected - see {help nwsaom_remarks##undirected:Remarks}. v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}), network-only; combinable with {opt present()}, {opt missnet()}, and {opt ratecov()}{p_end}
+{synopt:{opt symtype(string)}}Model type of a non-directed relation, by name or RSiena's modelType number: {bf:forcing} (2; default, RSiena's default for a symmetric network) - an actor chooses a tie to change and imposes it; {bf:confirmation} (3) - as forcing, but a new tie needs the alter's confirmation; {bf:force} (4), {bf:agree} (5), {bf:joint} (6) - pairwise: a random pair meets and the tie changes if the initiator wants it (force), if both want a new tie or either wants to end one (agree), or if their summed preferences favor it (joint). Before 2026-10-01 the default was {bf:joint} and types 2/3 were not available. See {help nwsaom_remarks##undirected:Remarks}{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -300,7 +300,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
 		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks). {opt symmetric} fits: on RSiena's scale for pairwise models (see {help nwsaom_remarks##undirected:Undirected/symmetric relations} in nwsaom_remarks)
-		  {bf:e(rate_actor)}		{opt symmetric} fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (e(rate) is RSiena's pairwise rate)
+		  {bf:e(rate_actor)}		non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 		  {bf:e(conditional)}		1 for conditional estimation, 0 for unconditional
 		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
 		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
@@ -315,7 +315,8 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(cmd)}			{bf:nwsaom}
 		  {bf:e(title)}			title of estimation
 		  {bf:e(waves)}			list of wave network names, in temporal order
-		  {bf:e(symtype)}		{opt symmetric} fits only: the pairwise model type, {bf:joint}, {bf:force}, or {bf:agree}
+		  {bf:e(symtype)}		non-directed fits only: the model type, {bf:forcing}, {bf:confirmation}, {bf:force}, {bf:agree}, or {bf:joint}
+		  {bf:e(modeltype)}		non-directed fits only: RSiena's modelType number of e(symtype) (2, 3, 4, 5, 6)
 		  {bf:e(wave1)}			first wave name (wave1()/wave2() path only)
 		  {bf:e(wave2)}			second wave name (wave1()/wave2() path only)
 		  {bf:e(behavior)}		list of behavior variable names, one per wave, in temporal order (co-evolution fits only)

@@ -466,6 +466,29 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## nwsaom: undirected / tie-symmetric waves are a non-directed relation; default model type forcing (changed 2026-10-01)
+
+nwsaom refused networks declared undirected ("store the data as directed ... and use symmetric").
+RSiena treats a symmetric one-mode dependent network as non-directed automatically, and its default
+model type for it is 2, AFORCE (`initializeFRAN()`: `z$modelType[(z$modelType == 1) & symms] <- 2`),
+a unilateral-initiative type nwsaom did not have (it had only the pairwise B types 4-6, default
+joint = 6). Now:
+- undirected waves, or directed waves that are all tie-symmetric, are modeled as non-directed
+  without `symmetric` (tie-symmetric directed waves stay directed with `reciprocity`, `waves()`,
+  `behavior()` or endowment/creation effects, with a note); undirected waves mixed with asymmetric
+  directed ones, and `symmetric` with asymmetric directed waves, are errors;
+- `symtype()` adds `forcing` (modelType 2, AFORCE, the new default also for `symmetric`) and
+  `confirmation` (3, AAGREE), and accepts RSiena's modelType numbers; `e(modeltype)` is returned.
+  Both follow `NetworkVariable::makeChange()`: the directed multinomial choice, then the tie changes
+  in both directions; AAGREE: a new tie only if the alter confirms, probability sigma(alter's utility),
+  scores as `addAlterAgreementScores()` (RSiena's confirmation step for the no-change option, which
+  changes nothing, is left out). Rate: per-actor, RSiena's. Plugin protocol 8 (native only, as the
+  B types).
+- Validated (glasgow 1-2 symmetrized, declared undirected; density; density + sameX(smoke1);
+  cond/uncond; 5 seeds): all within 0.06 RSiena SE. RSiena's default run equals modelType 2.
+- Plain `symmetric` without `symtype()` now gives forcing, not joint: results of earlier
+  `symmetric` fits change unless `symtype(joint)` is added.
+
 ## Symmetric nwsaom models report the rate on RSiena's scale (changed 2026-10-01)
 
 `e(rate)` of a `symmetric` fit used to be the per-actor rate rho (about 14.7 on glasgow waves 1-2

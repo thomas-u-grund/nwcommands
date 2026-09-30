@@ -241,7 +241,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 7		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate
+#define SAOM_NATIVE_VERSION 8		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2144,16 +2144,42 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					stepsNet += 1.0;
 					PROF_ADD(PR_SOFTMAX, pt_s);
 					if (choice != 0) {
-						PROF_START(pt_ap);
-						toggle(&g, actor, choice);
-						PROF_ADD(PR_APPLY, pt_ap);
-						nchanges += 1.0;
-						if (P->condmode) {
-							long origval;
-							if (!(hasmiss && ht_get(&missht, dyadkey(&g, actor, choice), &origval))) {
-								int newstate = has_edge(&g, actor, choice);
-								int origstate = ht_get(&horig, dyadkey(&g, actor, choice), &origval);
-								if (newstate == origstate) simDist -= 1; else simDist += 1;
+						/* non-directed relation, unilateral initiative (RSiena
+						   modelType 2 AFORCE, 3 AAGREE; NetworkVariable::
+						   makeChange()): the actor chooses as in the directed
+						   model; the tie then changes in both directions, for
+						   AAGREE a new tie only if the alter confirms it, with
+						   probability sigma(alter's utility of the change)
+						   (checkAlterAgreement(); score addAlterAgreementScores()).
+						   RSiena also runs the confirmation for the no-change
+						   option (alter == ego), which changes nothing; not
+						   reproduced. */
+						int symA = (P->symtype == 4 || P->symtype == 5);
+						int doit = 1;
+						if (P->symtype == 5 && !ijx[choice]) {
+							double ua = 0.0, pa, ca[MAXTERMS];
+							for (k = 0; k < M->nterms; k++) {
+								ca[k] = saom_eval_change((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs, &g, choice, actor, 0, NULL, NULL);
+								ua += P->theta[k] * ca[k];
+							}
+							pa = stable_logistic(ua);
+							doit = (rng_unif(&rng) < pa);
+							if (P->want_score) for (k = 0; k < M->nterms; k++) score[k] += (doit ? (1.0 - pa) : -pa) * ca[k];
+						}
+						if (doit) {
+							PROF_START(pt_ap);
+							toggle(&g, actor, choice);
+							if (symA) toggle(&g, choice, actor);
+							PROF_ADD(PR_APPLY, pt_ap);
+							nchanges += 1.0;
+							if (P->condmode) {
+								long origval;
+								if (!(hasmiss && ht_get(&missht, dyadkey(&g, actor, choice), &origval))) {
+									int newstate = has_edge(&g, actor, choice);
+									int origstate = ht_get(&horig, dyadkey(&g, actor, choice), &origval);
+									double dstep = symA ? 2.0 : 1.0;
+									if (newstate == origstate) simDist -= dstep; else simDist += dstep;
+								}
 							}
 						}
 					}
