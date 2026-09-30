@@ -275,12 +275,36 @@ foreach __t in joint force agree {
 * the alter was drawn uniformly).
 qui sum smoke1
 generate double __smkc3 = smoke1 - r(mean)
-nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric ratecov(__smkc3) seed(12345)
+nwsaom, wave1(__gsym1) wave2(__gsym2) outdegree symmetric symtype(joint) ratecov(__smkc3) seed(12345)
 _net_check "rate1 outdegree" "0.289 -1.265" "0.043 0.104"
 di as text "ratecoef nwsaom" %8.3f e(ratecoef) " (" %5.3f e(ratecoef_se) ")  RSiena   0.311 (0.133)"
 assert abs(e(ratecoef) - 0.311) < 0.25 * 0.133
 assert e(ratecoef_se) > 0.133 / 1.5 & e(ratecoef_se) < 1.5 * 0.133
 drop __smkc3
 di as text "conditional symmetric ratecov() PASS"
+
+* non-directed relation, unilateral initiative (RSiena modelType 2 =
+* AFORCE, RSiena's default for a symmetric network, and 3 = AAGREE),
+* density only, seeds 1-5, waves DECLARED undirected and passed without
+* the symmetric option (modeled as non-directed automatically, default
+* type forcing). The rate is the per-actor rate, as in RSiena.
+* Conditional: forcing rate 1.970 (.289), density -1.354 (.116);
+* confirmation 4.113 (.602), -.737 (.082). Unconditional: forcing 1.989
+* (.292), -1.353 (.118); confirmation 4.120 (.611), -.736 (.081).
+nwset, mat(__gs1) undirected name(__gu1)
+nwset, mat(__gs2) undirected name(__gu2)
+nwsaom, wave1(__gu1) wave2(__gu2) outdegree seed(12345)
+assert "`e(symtype)'" == "forcing" & e(modeltype) == 2
+assert e(rate) == e(rate_actor)
+_net_check "rate1 outdegree" "1.970 -1.354" "0.289 0.116"
+nwsaom, wave1(__gu1) wave2(__gu2) outdegree symtype(confirmation) seed(12345)
+assert e(modeltype) == 3
+_net_check "rate1 outdegree" "4.113 -0.737" "0.602 0.082"
+nwsaom, wave1(__gu1) wave2(__gu2) outdegree symtype(2) unconditional seed(12345)
+assert "`e(symtype)'" == "forcing"
+_net_check "rate1 outdegree" "1.989 -1.353" "0.292 0.118"
+nwsaom, wave1(__gu1) wave2(__gu2) outdegree symtype(confirmation) unconditional seed(12345)
+_net_check "rate1 outdegree" "4.120 -0.736" "0.611 0.081"
+di as text "non-directed forcing/confirmation PASS"
 
 di as text "nwsaom network-only vs RSiena: PASS"

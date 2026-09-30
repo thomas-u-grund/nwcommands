@@ -255,9 +255,11 @@ END
 
 LIST list_symtype
 BEGIN
-	joint
+	forcing
+	confirmation
 	force
 	agree
+	joint
 END
 
 PROGRAM initialize

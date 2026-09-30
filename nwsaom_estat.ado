@@ -224,7 +224,8 @@ program define nwsaom_estat_gof, rclass
 	local __gof_symtype = 0
 	if "`e(symtype)'" != "" {
 		local __gof_rate1 = e(rate_actor)
-		local __gof_symtype = cond("`e(symtype)'" == "joint", 1, cond("`e(symtype)'" == "force", 2, 3))
+		local __gof_symtypes "joint force agree forcing confirmation"
+		local __gof_symtype : list posof "`e(symtype)'" in __gof_symtypes
 	}
 	// harmonisation unit 26: co-evolution's own SEPARATE behavior rate,
 	// per-period just like the network rate above ("extend it to N

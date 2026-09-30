@@ -499,13 +499,33 @@ does - {bf:e(ratecoef_fixed)} reports whether this happened.
 {title:Undirected/symmetric relations}
 
 {pstd}
-{opt symmetric} fits a relation where every tie is symmetric (x_ij always equals x_ji at both waves) -
-a candidate tie change is only made when both actors' own preferences favor it, rather than the
-ordinary directed model's single-actor decision. {opt symtype()} picks which of three real rules
-combines the two actors' own preferences: {bf:joint} (default) sums both actors' own preferences and
-accepts the change if the sum favors it; {bf:force} lets the initiating actor's own preference alone
-decide, ignoring the other actor entirely; {bf:agree} requires both actors to independently favor
-creating a new tie, or either one to favor removing an existing one.
+A non-directed relation is one where every tie is symmetric (x_ij always equals x_ji). As in RSiena,
+which treats a symmetric one-mode dependent network as non-directed, {cmd:nwsaom} models it as such
+when the waves are declared undirected ({cmd:nwset ..., undirected}, {help nwsym}) or are directed
+networks that are all tie-symmetric; the option {opt symmetric} requests it explicitly. Waves that
+mix undirected networks with directed ones that are not tie-symmetric are refused, as is
+{opt symmetric} with such directed waves ({cmd:nwsaom} does not symmetrize data). Tie-symmetric
+directed waves stay a directed relation, with a note, when {opt reciprocity} is requested or the
+non-directed model does not apply ({opt waves()}, {opt behavior()}, endowment/creation effects).
+
+{pstd}
+{opt symtype()} chooses how a tie changes (RSiena's model types, by name or modelType number):
+
+{p 8 12 2}{bf:forcing} (modelType 2, AFORCE; the default, as RSiena's default for a symmetric
+network): an actor, at the per-actor rate, chooses one tie to create or end (or none) exactly as in
+the directed model, and imposes the change.{p_end}
+{p 8 12 2}{bf:confirmation} (3, AAGREE): as {bf:forcing}, but a new tie is only made if the alter
+confirms it, with the logistic probability of the alter's utility of the new tie; ending a tie is
+unilateral.{p_end}
+{p 8 12 2}{bf:force} (4, BFORCE), {bf:agree} (5, BAGREE), {bf:joint} (6, BJOINT): pairwise; a pair of
+actors meets and the tie changes if the initiator wants it (force), if both want a new tie or either
+wants to end one (agree), or if their summed utilities favor the change (joint).{p_end}
+
+{pstd}
+Before 2026-10-01 {opt symmetric} was required, its default was {bf:joint}, and {bf:forcing} and
+{bf:confirmation} did not exist. RSiena's {bf:confirmation} also computes the confirmation step for
+the no-change option (the actor choosing itself), which changes nothing but adds to the scores
+behind the derivative estimate; {cmd:nwsaom} leaves it out.
 
 {pstd}
 Several effects are not meaningful once every tie is forced symmetric and are rejected outright:
@@ -527,12 +547,19 @@ v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt wav
 network-only (no {opt behavior()}/co-evolution).
 
 {pstd}
-The three rules are RSiena's pairwise model types: {bf:joint} = modelType 6, {bf:force} = 4,
-{bf:agree} = 5 ({bf:agree} reproduces RSiena's alter probability exactly, which for an alter
-utility u is {it:sigma}(-|u|), where {it:sigma} is the logistic function).
+{bf:agree} reproduces RSiena's alter probability exactly, which for an alter utility u is
+{it:sigma}(-|u|), where {it:sigma} is the logistic function.
 
 {pstd}
-{it:The rate of a symmetric model.} {cmd:nwsaom} simulates a pairwise ministep as an actor getting an
+{it:The rate of a non-directed model.} For {bf:forcing} and {bf:confirmation} it is the per-actor
+rate, as in the directed model and in RSiena. Validation (glasgow waves 1-2 symmetrized and declared
+undirected; density, and density with {opt nodematch(smoke1)}; conditional and unconditional; RSiena
+and {cmd:nwsaom}, five seeds each): every estimate, the rate included, within 0.06 RSiena standard
+errors (mean 0.025); e.g. {bf:forcing}, conditional, rate 1.97, density -1.35. For the pairwise
+types:
+
+{pstd}
+{cmd:nwsaom} simulates a pairwise ministep as an actor getting an
 opportunity at rate rho (the per-actor rate of every other {cmd:nwsaom} model) and picking an alter
 among the other n - 1 actors; RSiena gives each actor the basic rate lambda, draws the actor and then
 the alter by these rates, and runs at total rate n(n - 1)lambda^2, so each pair at rate lambda^2.

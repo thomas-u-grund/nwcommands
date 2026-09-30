@@ -3403,10 +3403,13 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// symmetric (pairwise) models with ratecov() draw the alter by the
 	// covariate as RSiena does from protocol 7 on
 	if (C.symtype != 0 & C.hasratecov & ver < 7) C.use_native = 0
+	// unilateral-initiative model types (forcing, confirmation) from
+	// protocol 8 on
+	if (C.symtype >= 4 & ver < 8) C.use_native = 0
 	C.native_netdist = (ver >= 5)
 	C.use_batch = C.use_native & (ver >= 5) & !C.hasratecov & (C.symtype == 0)
 	if (C.symtype != 0 & !C.use_native) {
-		errprintf("SAOM estimation with symtype()/BJOINT requires the native (C) backend, which is not available for this model/platform (no Mata fallback exists for this mechanism).\n")
+		errprintf("SAOM estimation of a non-directed relation (symmetric, symtype()) requires the native (C) backend, protocol 8 or later for symtype(forcing)/(confirmation); it is not available for this model/platform (there is no Mata fallback for these ministeps).\n")
 		exit(198)
 	}
 	C.missDyadsPd = J(0, 3, 0)
@@ -3515,7 +3518,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			active = (C.hasratecov ? sum(exp(ratecoef :* C.ratecovattr)) : C.npresentPd[pd])
 			// pairwise models with ratecov(): total rate rate * (S^2 -
 			// sum w^2) / (n - 1), see saom_sim.c
-			if (C.hasratecov & C.symtype != 0) active = (active^2 - sum(exp(2 :* ratecoef :* C.ratecovattr))) / (C.n - 1)
+			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* ratecoef :* C.ratecovattr))) / (C.n - 1)
 			sco[p + pd] = steps / rate - active
 			if (C.hasratecov) sco[C.ptot] = sco[C.ptot] + rcscore
 		}
@@ -3983,7 +3986,7 @@ real scalar SaomOutdegreeStart(pointer(class ErgmGraph scalar) rowvector Gwaves,
      present (n x 1, composition change), missMask (n x n, 1 = dyad
      missing at either wave), fntype (network endowment/creation codes
      per term), ratecovattr (ratecov() covariate) and ratecoef (its
-     starting value), symtype (0 directed, 1 BJOINT, 2 BFORCE, 3 BAGREE),
+     starting value), symtype (0 directed, 1 BJOINT, 2 BFORCE, 3 BAGREE, 4 AFORCE, 5 AAGREE),
      structural (n x n, 1 = structurally fixed dyad).
    =================================================================== */
 struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
@@ -4025,7 +4028,7 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	par0 = theta0
 	// symmetric (pairwise) models: rate0() is on RSiena's scale, see
 	// SaomSymRateScale()
-	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? (C.symtype != 0 ? rate0^2 * SaomSymRateScale(C) : rate0) : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
+	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? ((C.symtype >= 1 & C.symtype <= 3) ? rate0^2 * SaomSymRateScale(C) : rate0) : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
 	if (C.hasratecov) par0 = par0, (nargs >= 13 ? ratecoef : 0)
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
@@ -4050,7 +4053,9 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 		fit.rate_se = sqrt(nf.Vfull[p+1, p+1])
 	}
 	fit.rate_actor = fit.rate
-	if (C.symtype != 0) SaomSymRateToRSiena(fit, C, p)
+	// pairwise (B) types only; the unilateral (A) types use the per-actor
+	// rate, which is RSiena's rate for them
+	if (C.symtype >= 1 & C.symtype <= 3) SaomSymRateToRSiena(fit, C, p)
 	fit.rates = fit.rate
 	fit.rate_tratios = fit.rate_tratio
 	fit.rate_ses = fit.rate_se

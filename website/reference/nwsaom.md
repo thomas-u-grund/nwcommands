@@ -141,8 +141,8 @@ control_options]
 
 | | |
 |---|---|
-| `symmetric` | Fit a relation where every tie is symmetric (x_ij always equals x_ji), using a mutual-consent ministep: a candidate tie change is only made when BOTH actors' own preferences favor it. Requires the input data to already be tie-symmetric at both waves (this option changes how ties are simulated, it does not symmetrize your data). Several effects are not meaningful once every tie is forced symmetric and are rejected outright - see [Remarks](nwsaom_remarks) for the full list. v1 scope: exactly two waves (`wave1()`/`wave2()`, not `waves()`), network-only (no `behavior()`); combinable with `present()`, `missnet()`, and `ratecov()` (see [Remarks](nwsaom_remarks)) |
-| `symtype(string)` | Which mutual-consent rule `symmetric` uses: **joint** (default) accepts a change when the sum of both actors' own preferences is favorable; **force** lets the initiating actor alone decide, ignoring the other actor's own preference; **agree** requires both actors to independently agree when creating a tie, or either one to want it gone when removing one. Requires `symmetric` |
+| `symmetric` | Model a non-directed relation (x_ij always equals x_ji). Not needed for waves declared undirected (`nwset ..., undirected`, [nwsym](nwsym)) or directed waves that are all tie-symmetric: like RSiena, `nwsaom` then models a non-directed relation automatically (tie-symmetric directed waves stay directed only with `reciprocity` or where the non-directed model does not apply: `waves()`, `behavior()`, endowment/creation effects). With directed waves that are not tie-symmetric `symmetric` is an error; it does not symmetrize data. Several effects are not meaningful for a non-directed relation and are rejected - see [Remarks](nwsaom_remarks). v1 scope: exactly two waves (`wave1()`/`wave2()`), network-only; combinable with `present()`, `missnet()`, and `ratecov()` |
+| `symtype(string)` | Model type of a non-directed relation, by name or RSiena's modelType number: **forcing** (2; default, RSiena's default for a symmetric network) - an actor chooses a tie to change and imposes it; **confirmation** (3) - as forcing, but a new tie needs the alter's confirmation; **force** (4), **agree** (5), **joint** (6) - pairwise: a random pair meets and the tie changes if the initiator wants it (force), if both want a new tie or either wants to end one (agree), or if their summed preferences favor it (joint). Before 2026-10-01 the default was **joint** and types 2/3 were not available. See [Remarks](nwsaom_remarks) |
 
 **Estimation control**
 
@@ -239,7 +239,7 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(nodes)** number of actors
 - **e(nwaves)** number of waves supplied
 - **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks). `symmetric` fits: on RSiena's scale for pairwise models (see [Undirected/symmetric relations](nwsaom_remarks) in nwsaom_remarks)
-- **e(rate_actor)** `symmetric` fits only: the rate at which an actor gets an opportunity to change, the scale of every other `nwsaom` rate (e(rate) is RSiena's pairwise rate)
+- **e(rate_actor)** non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other `nwsaom` rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 - **e(conditional)** 1 for conditional estimation, 0 for unconditional
 - **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
@@ -255,7 +255,8 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(cmd)** **nwsaom**
 - **e(title)** title of estimation
 - **e(waves)** list of wave network names, in temporal order
-- **e(symtype)** `symmetric` fits only: the pairwise model type, **joint**, **force**, or **agree**
+- **e(symtype)** non-directed fits only: the model type, **forcing**, **confirmation**, **force**, **agree**, or **joint**
+- **e(modeltype)** non-directed fits only: RSiena's modelType number of e(symtype) (2, 3, 4, 5, 6)
 - **e(wave1)** first wave name (wave1()/wave2() path only)
 - **e(wave2)** second wave name (wave1()/wave2() path only)
 - **e(behavior)** list of behavior variable names, one per wave, in temporal order (co-evolution fits only)
