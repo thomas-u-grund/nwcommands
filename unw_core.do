@@ -3443,9 +3443,9 @@ string matrix get_nodenames_from_string(string scalar s, real scalar z, string s
 	re-sorted the rows under all existing networks and silently
 	misaligned every positional attribute read for them.
 
-	nw_rowlabels(): the labels of the existing node set, i.e. _nwnode
-	of rows 1..z, if exactly z rows carry a (unique, non-blank) label;
-	otherwise an empty vector.  nwset uses it (nw_rowlabels_or()) as the
+	nw_rowlabels(): the labels of rows 1..z (_nwnode) if they are unique
+	and non-blank, otherwise an empty vector (further rows may belong to
+	networks over other nodes).  nwset uses it (nw_rowlabels_or()) as the
 	default labels of an unlabelled network of matching size, if the
 	rows are in the node order of a network in memory: node i of a
 	matrix is observation i of the data.
@@ -3464,9 +3464,7 @@ string rowvector nw_rowlabels(real scalar z, string scalar v){
 	vi = _st_varindex(v)
 	if (vi >= . | z < 1 | st_nobs() < z) return(J(1,0,""))
 	if (!st_isstrvar(vi)) return(J(1,0,""))
-	lab = st_sdata(., vi)
-	if (sum(lab :!= "") != z) return(J(1,0,""))
-	lab = lab[(1::z)]
+	lab = st_sdata((1::z), vi)
 	if (any(lab :== "")) return(J(1,0,""))
 	if (rows(uniqrows(lab)) != z) return(J(1,0,""))
 	return(lab')

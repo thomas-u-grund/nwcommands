@@ -443,9 +443,9 @@ result on the edge list it had preserved, so its result was re-sorted on `restor
 
 Fix:
 - `nwset` gives an unlabelled network (no `labs()`, `labsfromvar()`, `nodenames()`, one-mode)
-  whose size equals the number of labelled rows in the data the labels of rows 1..N in row order
-  (`nw_rowlabels_or()` in `unw_core.do`): node i is observation i. Otherwise the defaults n1..nN
-  remain.
+  of N nodes the labels of rows 1..N in row order (`nw_rowlabels_or()` in `unw_core.do`): node i
+  is observation i. Otherwise the defaults n1..nN remain. (The first version of this fix required the data to have
+  exactly N labelled rows; further rows may belong to networks over other nodes.)
 - A new network whose labels are a permutation of the existing node set is reordered into the row
   order of the data before `_nwdatasync` (`nw_align_to_rows()`): its edge matrix, node names and
   node variable names are permuted together, so no tie changes and nothing is re-sorted.

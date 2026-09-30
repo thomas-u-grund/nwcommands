@@ -389,9 +389,8 @@ automatically labels nodes according the variables that have been set.
 {pstd}
 The rows of the dataset hold the nodes' attributes, in the node order of the networks in memory
 (variable {bf:_nwnode} holds the node labels). A network declared with {bf:mat()} and without
-labels is aligned with these rows: if it has as many nodes as the data have labelled rows, and the
-rows are in the node order of a network in memory, node {it:i} of the matrix is observation {it:i}
-and gets its label. Otherwise its nodes are labelled n1, n2, .... A new network whose labels
+labels is aligned with these rows: if it has {it:N} nodes and rows 1 to {it:N} are in the node order
+of a network in memory, node {it:i} of the matrix is observation {it:i} and gets its label. Otherwise its nodes are labelled n1, n2, .... A new network whose labels
 ({bf:labs()}, {bf:labsfromvar()}, {bf:nodenames()}) list the nodes already in such rows in another
 order is reordered into the row order of the data (ties unchanged), so declaring it does not
 re-sort the rows under the other networks. Only a network over a different set of nodes re-sorts (and extends) the data; commands
