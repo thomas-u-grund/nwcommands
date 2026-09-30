@@ -60,3 +60,23 @@ di "=== mat() literal expression + undirected REGRESSION VERIFIED ==="
 nwclear
 capture noisily nwdyadprob, mat(J(5,5,.5)) name(wtest) weights(abc,def)
 assert _rc != 0
+
+* --- BUGFIX (2026-09-30): `undirected' drew both i->j and j->i from the
+* full probability matrix and OR-ed them, so each undirected tie appeared
+* with probability 1-(1-p)^2 (~2p) instead of p: p = .1 on 200 nodes gave
+* density .188. Now one draw per unordered pair; directed is unchanged.
+nwclear
+clear
+set obs 200
+gen one = 1
+nwexpand one, name(same)
+nwgen p10 = .1*same
+set seed 12345
+nwdyadprob p10, undirected name(u)
+nwsummarize u
+assert r(density) > .085 & r(density) < .115
+set seed 12345
+nwdyadprob p10, name(d)
+nwsummarize d
+assert r(density) > .085 & r(density) < .115
+di "=== undirected tie probability REGRESSION VERIFIED ==="

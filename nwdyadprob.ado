@@ -84,8 +84,17 @@ program nwdyadprob
 				di "{err}Mata matrix `mat' not square.{txt}"
 				error `errMatrixShape'
 			}
+			// BUGFIX: `undirected' used to apply lowertriangle() to the
+			// probability matrix AFTER `__nwnew' had already been drawn
+			// from the full matrix, so i->j and j->i were both drawn
+			// and the final nwsym OR-ed them: each undirected tie
+			// appeared with probability 1-(1-p)^2 (~2p) instead of p
+			// (p=.1 on 200 nodes gave density .188). Keep only one draw
+			// per unordered pair (the lower triangle) and mirror it.
+			// Directed draws are untouched (same random numbers).
 			if "`undirected'" != "" {
-				mata: `mat' = lowertriangle(`mat')
+				mata: `__nwnew' = lowertriangle(`__nwnew', 0)
+				mata: `__nwnew' = `__nwnew' + `__nwnew''
 			}
 			// BUGFIX: `weights()' is documented ("the command generates
 			// a weighted network") but was accepted by `syntax' and
