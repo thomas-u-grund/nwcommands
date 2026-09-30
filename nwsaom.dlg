@@ -130,12 +130,13 @@ DIALOG estimation, tabtitle("Estimation")
 BEGIN
   TEXT tx_theta0 20 10 100 ., label("theta0()")
   EDIT ed_theta0 195 10 155 ., nomem
-  TEXT tx_rate0 490 10 130 ., label("rate0() - starting rate(s)")
+  TEXT tx_rate0 490 10 130 ., label("rate0() - unconditional")
   EDIT ed_rate0 665 10 70 ., nomem
   TEXT tx_k0 20 42 100 ., label("k0() - Phase 1 reps")
   SPINNER sp_k0 195 42 70 ., default(50) min(1) max(999999) nomem option(k0)
   TEXT tx_k3 490 42 130 ., label("k3() - Phase 3 reps")
   SPINNER sp_k3 665 42 70 ., default(1000) min(1) max(999999) nomem option(k3)
+  CHECKBOX ck_uncond 20 106 400 ., label("unconditional (RSiena cond = FALSE)") option(unconditional)
   TEXT tx_firstg 20 74 100 ., label("firstg()")
   EDIT ed_firstg 195 74 155 ., default("0.2") nomem
   TEXT tx_seed 490 74 130 ., label("seed()")
@@ -413,6 +414,7 @@ BEGIN
 			if estimation.ed_rate0.isneq("") {
 				put " rate0(" estimation.ed_rate0 ")"
 			}
+			option estimation.ck_uncond
 		endoptions
 	}
 	stata

@@ -567,16 +567,11 @@ nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,
 gen byte behewave1 = mod(_n,5)+1
 gen byte behewave2 = mod(_n+2,5)+1
 
+* (2026-10-01: refused. With the behavior rate estimated, the decreases
+* and increases that make up the two statistics add up to the rate's
+* distance statistic; RSiena reports no standard errors for this model.)
 capture nwsaom, wave1(saomewave1) wave2(saomewave2) outdegree behavior(behewave1 behewave2) linearendow linearcreation k0(30) k3(60) seed(90210)
-assert _rc == 0 | _rc == 498
-if _rc == 0 {
-	matrix __be = e(b)
-	assert colsof(__be) == 3
-	assert e(has_behavior) == 1
-	local __benames : colnames __be
-	assert strpos("`__benames'", "beh_linear_endow") > 0
-	assert strpos("`__benames'", "beh_linear_creation") > 0
-}
+assert _rc == 198
 
 * --- validation: all three roles together is refused (exact
 * collinearity, matches real RSiena's own manual: "never in all
@@ -605,12 +600,10 @@ assert _rc == 198
 * not a real RSiena constraint - RSiena's own manual only forbids using
 * the SAME effect in all three roles at once, never forbids splitting
 * one effect while leaving another plain).
+* (2026-10-01: linearendow+linearcreation is refused whatever else is in
+* the model - see above.)
 capture nwsaom, wave1(saomewave1) wave2(saomewave2) outdegree behavior(behewave1 behewave2) linearendow linearcreation quadratic k0(5) k3(5)
-assert _rc == 0 | _rc == 498 | _rc == 505		// this tiny 6-node/k0(5)/k3(5) toy setup with THREE behavior parameters (endow+creation+quadratic) is itself real, disclosed weak-identification territory - thetaBound/singular-covariance are legitimate outcomes here, not errors in the option
-mata: st_local("__benames", invtokens(__nwsaom_last_Mbeh.coefnames))
-assert strpos("`__benames'", "beh_linear_endow") > 0
-assert strpos("`__benames'", "beh_linear_creation") > 0
-assert strpos("`__benames'", "beh_quadratic") > 0 & strpos("`__benames'", "beh_quadratic_endow") == 0
+assert _rc == 198
 
 * --- validation: quadraticendow/quadraticcreation must be paired (same
 * rule as linearendow/linearcreation), and cannot combine with plain
@@ -954,9 +947,10 @@ assert _rc == 198
 
 * --- a real convergence demonstration: outdegree + reciprocity endowment/
 * creation on glasgow waves 1-2 (the 6-actor toy network above is only for
-* validation/shape checks). RSiena 1.6.6 (unconditional estimation, mean of
-* five seeds): outdegree -2.041 (SE .167), reciprocity endowment .823 (.82),
-* reciprocity creation 3.601 (.69), rate 4.34 (.60). Before 2026-10-01 the
+* validation/shape checks). RSiena 1.6.6, default (conditional) estimation
+* as nwsaom's default, mean of five seeds: outdegree -2.045 (SE .16),
+* reciprocity endowment .812 (.80), reciprocity creation 3.635 (.63), rate
+* 4.32 (.58) (unconditional: -2.041, .823, 3.601, 4.34). Before 2026-10-01 the
 * endowment/creation statistics were not RSiena's (reciprocity: dyads lost/
 * gained in BOTH directions, 14/10 on these data, instead of RSiena's -35/27),
 * and this model diverged once the rate was estimated.
@@ -966,10 +960,10 @@ nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocityendow reciprocitycr
 assert e(nodes) == 50
 matrix __net167_dense = e(b)
 assert colsof(__net167_dense) == 3
-assert abs(__net167_dense[1,1] - (-2.041)) < 0.2
-assert abs(__net167_dense[1,2] - 0.823) < 0.8
-assert abs(__net167_dense[1,3] - 3.601) < 0.7
-assert abs(e(rate) - 4.34) < 0.6
+assert abs(__net167_dense[1,1] - (-2.045)) < 0.2
+assert abs(__net167_dense[1,2] - 0.812) < 0.8
+assert abs(__net167_dense[1,3] - 3.635) < 0.7
+assert abs(e(rate) - 4.32) < 0.6
 restore
 
 di as text "nwsaom.ado unit 167 (network-side endowment/creation - outdegreeendow/outdegreecreation, reciprocityendow/reciprocitycreation, plus validation) PASS"
@@ -980,8 +974,9 @@ di as text "nwsaom.ado unit 167 (network-side endowment/creation - outdegreeendo
 * parameter, as RSiena's phase1.r does) was what let it finish. With the
 * rate estimated, RSiena's data-derived outdegree start and phase-1
 * quasi-Newton step, it converges normally and matches RSiena 1.6.6
-* (unconditional estimation, 3 seeds): outdegree -2.41 (SE .20),
-* isolateNet 1.51 (1.36), rate 3.63 (.63).
+* (default, conditional estimation, 2 seeds; the third stopped with an
+* error): outdegree -2.42 (SE .19), isolateNet 1.63 (1.19), rate 3.58 (.65)
+* (unconditional: -2.41, 1.51, 3.63).
 preserve
 import delimited "dev/saom_isoiso_wave1.csv", clear varnames(nonames)
 mkmat v1-v60, matrix(__net169_W1)
@@ -993,9 +988,9 @@ nwset, mat(__net169_W2) directed name(saomn169w2)
 nwsaom, wave1(saomn169w1) wave2(saomn169w2) outdegree isolatenet k0(50) k3(1000) seed(1)
 assert e(nodes) == 60
 matrix __net169_b = e(b)
-assert abs(__net169_b[1,1] - (-2.41)) < 0.1
-assert abs(__net169_b[1,2] - 1.51) < 0.7
-assert abs(e(rate) - 3.63) < 0.3
+assert abs(__net169_b[1,1] - (-2.42)) < 0.1
+assert abs(__net169_b[1,2] - 1.63) < 0.7
+assert abs(e(rate) - 3.58) < 0.3
 restore
 
 di as text "nwsaom.ado unit 169 (outdegree + isolatenet on isoiso data, matches RSiena) PASS"

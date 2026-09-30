@@ -110,7 +110,7 @@ control_options]
 |---|---|
 | `behavior(varlist)` | Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as `wave1()`/`wave2()` or `waves()` (e.g. two waves: `behavior(b1 b2)`; three: `behavior(b1 b2 b3)`). Requires `linear`. A SECOND dependent variable evolving jointly with the network - see [Co-evolution](nwsaom_remarks) in nwsaom_remarks |
 | `linear` | Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; **required** whenever `behavior()` is specified UNLESS `linearendow`/`linearcreation` are given instead, matching `outdegree`'s own required-baseline role on the network side |
-| `linearendow` | Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with `linearcreation`, and not combined with `linear` (all three roles together are exactly collinear). See [Endowment/creation functions](nwsaom_remarks) in nwsaom_remarks |
+| `linearendow` | Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with `linearcreation`, and not combined with `linear` (all three roles together are exactly collinear). **Currently refused**: the two statistics (decreases and increases) add up to the behavior rate's distance statistic, so with the behavior rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too); use `linear`. See [Endowment/creation functions](nwsaom_remarks) in nwsaom_remarks |
 | `linearcreation` | Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to `linearendow`; must be given together with it |
 | `quadratic` | Behavior quadratic shape effect; requires `behavior()`, not combinable with `quadraticendow`/`quadraticcreation` |
 | `quadraticendow` `quadraticcreation` | Behavior quadratic effect split into its ENDOWMENT/CREATION roles - same mechanism/rules as `linearendow`/`linearcreation` (must be given together, not combined with plain `quadratic`), applied to the quadratic shape effect instead; independent of whichever baseline role (`linear` or `linearendow`/`linearcreation`) is in use |
@@ -148,7 +148,8 @@ control_options]
 
 | | |
 |---|---|
-| `rate0(numlist)` | Starting value(s) of the network rate(s) of a network-only model: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With `theta0()`, restarts a fit from earlier estimates (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
+| `unconditional` | Estimate a network-only model by UNCONDITIONAL Method of Moments (RSiena's `cond = FALSE`): the rates become Method-of-Moments parameters. The default for a network-only model is CONDITIONAL estimation, RSiena's default for a single dependent network (`cond = TRUE`); co-evolution and `nwsaom multiplex` models are always unconditional, as in RSiena (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
+| `rate0(numlist)` | Starting value(s) of the network rate(s) of an unconditional network-only fit: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With `theta0()`, restarts a fit from earlier estimates. Not used under conditional estimation, where the rates are not estimated by Robbins-Monro (see [Estimation](nwsaom_remarks) in nwsaom_remarks) |
 | `theta0(numlist)` | Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero, except that a network-only model starts `outdegree` at RSiena's data-derived starting value |
 | `k0(int)` | Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50 |
 | `k3(int)` | Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000 |
@@ -179,8 +180,15 @@ See [nwsaom_remarks](nwsaom_remarks) for the full effect-derivation library (eve
 
 ```stata
 . matrix b = e(b)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)
+```
+- The same model by unconditional estimation (RSiena's `cond = FALSE`), restarted with the rates too:
+
+```stata
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional seed(1)
+. matrix b = e(b)
 . matrix r = e(rates)
-. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)
 ```
 - Other networks `wave1`, `wave2`, `wave3` and behavior variables `b1`-`b3`:
 
@@ -207,7 +215,7 @@ See [nwsaom_remarks](nwsaom_remarks) for the full effect-derivation library (eve
 . nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)
 ```
 ```stata
-. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linearendow linearcreation
+. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear quadraticendow quadraticcreation
 ```
 ```stata
 . nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity present(p1 p2)
@@ -230,9 +238,10 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(N)** number of actors (= e(nodes))
 - **e(nodes)** number of actors
 - **e(nwaves)** number of waves supplied
-- **e(rate)** network rate parameter (wave1()/wave2() path only), estimated jointly with the other parameters (unconditional Method of Moments - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
-- **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
-- **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only)
+- **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks)
+- **e(conditional)** 1 for conditional estimation, 0 for unconditional
+- **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
+- **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
 - **e(has_behavior)** 1 if this is a co-evolution fit (`behavior()` specified), 0 otherwise
 - **e(p_net)** number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed `beh_`)
 - **e(rate_beh)** estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see [Co-evolution](nwsaom_remarks) in nwsaom_remarks)
@@ -255,7 +264,7 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(b)** coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 - **e(V)** variance-covariance matrix (eval parameters only)
 - **e(tratio)** 1 x nparam convergence t-ratios on RSiena's scale (phase-3 mean deviation / its standard deviation), one per coefficient of e(b) - the matching columns of e(tconv)
-- **e(rates)** 1 x (nwaves-1) per-period network rate parameters (waves() path only), estimated jointly with the other parameters
+- **e(rates)** 1 x (nwaves-1) per-period network rate parameters (waves() path only), as e(rate)
 - **e(rate_tratios)** 1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
 - **e(rates_se)** 1 x (nwaves-1) per-period standard errors of e(rates) (waves() path only)
 - **e(rates_beh)** 1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)

@@ -127,7 +127,7 @@
 {syntab:Behavior co-evolution effects}
 {synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks{p_end}
 {synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
-{synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
+{synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). {bf:Currently refused}: the two statistics (decreases and increases) add up to the behavior rate's distance statistic, so with the behavior rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too); use {opt linear}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt linearcreation}}Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to {opt linearendow}; must be given together with it{p_end}
 {synopt:{opt quadratic}}Behavior quadratic shape effect; requires {opt behavior()}, not combinable with {opt quadraticendow}/{opt quadraticcreation}{p_end}
 {synopt:{opt quadraticendow} {opt quadraticcreation}}Behavior quadratic effect split into its ENDOWMENT/CREATION roles - same mechanism/rules as {opt linearendow}/{opt linearcreation} (must be given together, not combined with plain {opt quadratic}), applied to the quadratic shape effect instead; independent of whichever baseline role ({opt linear} or {opt linearendow}/{opt linearcreation}) is in use{p_end}
@@ -169,7 +169,8 @@
 {synoptline}
 {marker control_options}{...}
 {syntab:Estimation control}
-{synopt:{opt rate0(numlist)}}Starting value(s) of the network rate(s) of a network-only model: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With {opt theta0()}, restarts a fit from earlier estimates (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks){p_end}
+{synopt:{opt unconditional}}Estimate a network-only model by UNCONDITIONAL Method of Moments (RSiena's {cmd:cond = FALSE}): the rates become Method-of-Moments parameters. The default for a network-only model is CONDITIONAL estimation, RSiena's default for a single dependent network ({cmd:cond = TRUE}); co-evolution and {cmd:nwsaom multiplex} models are always unconditional, as in RSiena (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks){p_end}
+{synopt:{opt rate0(numlist)}}Starting value(s) of the network rate(s) of an unconditional network-only fit: one value, or one per inter-wave period; default RSiena's closed-form starting value, computed from the data. With {opt theta0()}, restarts a fit from earlier estimates. Not used under conditional estimation, where the rates are not estimated by Robbins-Monro (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks){p_end}
 {synopt:{opt theta0(numlist)}}Starting values for the eval-parameter vector, one per requested effect IN THE ORDER LISTED IN THE ERROR MESSAGE if omitted or mis-sized (outdegree first, then every other effect in the order its own option appears above); default all zero, except that a network-only model starts {opt outdegree} at RSiena's data-derived starting value{p_end}
 {synopt:{opt k0(int)}}Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50{p_end}
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
@@ -298,9 +299,10 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(N)}			number of actors (= e(nodes))
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
-		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only), estimated jointly with the other parameters (unconditional Method of Moments - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
-		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
-		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only)
+		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(conditional)}		1 for conditional estimation, 0 for unconditional
+		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
+		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
 		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
 		  {bf:e(p_net)}			number of network-side eval-parameter coefficients (co-evolution fits only; the first e(p_net) columns of e(b)/e(V)/e(tratio) are the network's own, the remainder the behavior's own, prefixed {cmd:beh_})
 		  {bf:e(rate_beh)}		estimated behavior rate parameter (co-evolution, wave1()/wave2() path only), estimated jointly with the other parameters (see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks)
@@ -321,7 +323,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(b)}			coefficient vector (eval parameters only - excludes rate; network then behavior for a co-evolution fit, see e(p_net) above)
 		  {bf:e(V)}			variance-covariance matrix (eval parameters only)
 		  {bf:e(tratio)}		1 x nparam convergence t-ratios on RSiena's scale (phase-3 mean deviation / its standard deviation), one per coefficient of e(b) - the matching columns of e(tconv)
-		  {bf:e(rates)}			1 x (nwaves-1) per-period network rate parameters (waves() path only), estimated jointly with the other parameters
+		  {bf:e(rates)}			1 x (nwaves-1) per-period network rate parameters (waves() path only), as e(rate)
 		  {bf:e(rate_tratios)}		1 x (nwaves-1) per-period network rate convergence t-ratios (waves() path only)
 		  {bf:e(rates_se)}		1 x (nwaves-1) per-period standard errors of e(rates) (waves() path only)
 		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
@@ -346,8 +348,13 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 
 {pstd}Restarting from the estimates when the overall maximum convergence ratio is above 0.25:{p_end}
 		{cmd:. matrix b = e(b)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)}
+
+{pstd}The same model by unconditional estimation (RSiena's {cmd:cond = FALSE}), restarted with the rates too:{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional seed(1)}
+		{cmd:. matrix b = e(b)}
 		{cmd:. matrix r = e(rates)}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)}
 
 {pstd}Other networks {cmd:wave1}, {cmd:wave2}, {cmd:wave3} and behavior variables {cmd:b1}-{cmd:b3}:{p_end}
 
@@ -366,7 +373,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		{cmd:. nwwebuse glasgow, nwclear}
 		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}
 
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linearendow linearcreation}
+		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear quadraticendow quadraticcreation}
 
 		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity present(p1 p2)}
 

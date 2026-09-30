@@ -186,7 +186,7 @@ program nwsaom, eclass
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
-		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) ]
+		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional ]
 	set more off
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
@@ -318,6 +318,15 @@ program nwsaom, eclass
 		}
 		if ("`linearendow'" != "" & "`linearcreation'" == "") | ("`linearendow'" == "" & "`linearcreation'" != "") {
 			di "{err}{bf:linearendow} and {bf:linearcreation} must be specified together - this port does not (yet) support a single non-evaluation role alone. Use plain {bf:linear} instead if you only want the evaluation-only baseline."
+			error 198
+		}
+		// linearendow+linearcreation: their statistics (the sums of the
+		// decreases and of the increases) add up to the behavior rate's
+		// distance statistic, so with the behavior rate estimated the model
+		// is not identified; RSiena reports a covariance matrix that is not
+		// positive definite and no standard errors for it (s50, alcohol).
+		if "`linearendow'" != "" & "`linearcreation'" != "" {
+			di "{err}{bf:linearendow}+{bf:linearcreation} cannot be estimated together with the behavior rate: their statistics (the decreases and the increases) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:linear} as the baseline; the quadratic/avalt/avsim endowment/creation splits remain available."
 			error 198
 		}
 		if "`linear'" == "" & "`linearendow'" == "" {
@@ -1740,6 +1749,13 @@ program nwsaom, eclass
 		error 198
 	}
 	mata: __nwsaom_cores = `cores'
+	// conditional estimation (RSiena's default whenever there is a single
+	// dependent network - its initializeFRAN(): cconditional = !maxlike &
+	// one dependent variable, and not with composition change): network-
+	// only fits, unless `unconditional' is given. Co-evolution and multiplex
+	// fits (two dependent variables) are always unconditional, as in RSiena.
+	local __nwsaom_condreq = ("`unconditional'" == "" & !`__nwsaom_coev')
+	mata: __nwsaom_cond = `__nwsaom_condreq'
 	if `__nwsaom_coev' & `__nwsaom_multi' {
 		// harmonisation unit 26 ("extend it to N waves"): joint
 		// network+behavior Method of Moments / Robbins-Monro, chained
@@ -1999,6 +2015,9 @@ program nwsaom, eclass
 	// nwsaom versions carried.
 	ereturn post `b' `V', depname("`__nwsaom_depname'") obs(`nodes')
 	ereturn local cmd "nwsaom"
+	capture mata: st_local("__nwsaom_condpost", strofreal(__nwsaom_fit.cond))
+	if `__nwsaom_coev' local __nwsaom_condpost 0
+	ereturn scalar conditional = `__nwsaom_condpost'
 	// harmonisation unit 19 ("GOF"): `estat' only forwards to a
 	// command's own e(estat_cmd) program (confirmed directly from the
 	// real Stata `estat.ado' dispatch mechanism, matching nwergm.ado's
@@ -2130,11 +2149,12 @@ program nwsaom, eclass
 		mata: st_matrix("`ratese'", __nwsaom_fit.rate_ses)
 		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
 		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit.tconvMax))
+		mata: st_local("__nwsaom_iscond", strofreal(__nwsaom_fit.cond))
 		local __nwsaom_periodnames ""
 		local __nwsaom_tconvnames "`__nwsaom_coefnames'"
 		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
 			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
-			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_period`__p'"
+			if !`__nwsaom_iscond' local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_period`__p'"
 		}
 		matrix colnames `rates' = `__nwsaom_periodnames'
 		matrix colnames `ratetr' = `__nwsaom_periodnames'
@@ -2148,12 +2168,13 @@ program nwsaom, eclass
 		matrix rownames `ratetab' = rate se
 
 		di as text "{hline}"
-		di as text "SAOM (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
+		di as text "SAOM (Method of Moments, " as result cond(`__nwsaom_iscond', "conditional", "unconditional") as text "), waves: " as result "`__nwsaom_wavelist'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
 		di as text "{hline}"
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
 		matlist `ratetab', format(%9.4f)
+		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
@@ -2168,8 +2189,10 @@ program nwsaom, eclass
 		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit.tconvMax))
 		tempname tconv
 		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
-		if `__nwsaom_hasratecov' matrix colnames `tconv' = `__nwsaom_coefnames' rate ratecoef
-		else matrix colnames `tconv' = `__nwsaom_coefnames' rate
+		mata: st_local("__nwsaom_iscond", strofreal(__nwsaom_fit.cond))
+		local __nwsaom_tcrate = cond(`__nwsaom_iscond', "", "rate")
+		if `__nwsaom_hasratecov' matrix colnames `tconv' = `__nwsaom_coefnames' `__nwsaom_tcrate' ratecoef
+		else matrix colnames `tconv' = `__nwsaom_coefnames' `__nwsaom_tcrate'
 		matrix rownames `tconv' = tconv
 		ereturn scalar rate = `__nwsaom_rate'
 		ereturn scalar rate_tratio = `__nwsaom_ratetr'
@@ -2190,10 +2213,11 @@ program nwsaom, eclass
 		}
 
 		di as text "{hline}"
-		di as text "SAOM (Method of Moments), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
+		di as text "SAOM (Method of Moments, " as result cond(`__nwsaom_iscond', "conditional", "unconditional") as text "), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Estimated rate: " as result %6.3f `__nwsaom_rate' as text " (" as result %5.3f `__nwsaom_ratese' as text ")"
 		di as text "{hline}"
 		ereturn display
+		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 		if `__nwsaom_hasratecov' {
 			di as text "Covariate-rate coefficient (" as result "`ratecov'" as text "): " as result %9.4f `__nwsaom_ratecoef' as text " (se " as result %6.4f `__nwsaom_ratecoef_se' as text ")" _continue
 			if `__nwsaom_ratecoef_fx' di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoef_fixed)==1)"
