@@ -175,6 +175,7 @@
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
+{synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every simulation draws from its own random stream derived from the seed and its position, so results for a given {opt seed()} are identical whatever the number of threads. Applies to multi-wave ({opt waves()}) and co-evolution fits with the native backend; see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks{p_end}
 {synoptline}
 {p2colreset}{...}
 

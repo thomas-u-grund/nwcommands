@@ -658,6 +658,20 @@ the Mata engine only (no native speed-up yet).
 {title:Estimation}
 
 {pstd}
+{bf:Speed and threads.} For multi-wave ({opt waves()}) and co-evolution fits with the native
+backend, the periods' starting data are handed to the compiled simulator once per fit, and
+phases 1 and 3 (and the network-only rate refinement) run all their simulations in one call on
+worker threads; phase 2 is sequential by construction (each Robbins-Monro step needs the previous
+one) and runs only the periods of a step in parallel, and only when the network is large enough
+for threads to pay off. {opt cores(#)} sets the number of threads (default: all physical cores).
+Each simulation draws from its own random stream derived from the seed and its position, so a
+given {opt seed()} gives identical results with {cmd:cores(1)} and with any other number of
+threads. Timings on one 18-core machine: the s50 three-wave co-evolution model below 0.6 s; a
+synthetic 500-actor three-wave co-evolution model 18 s (324 s before 2026-10-01). Two-wave
+network-only fits ({opt wave1()}/{opt wave2()}) use the single-simulation path (faster ministeps,
+no threads).
+
+{pstd}
 Coefficients are estimated by the Method of Moments via Robbins-Monro stochastic approximation,
 matching RSiena's own default algorithm and phase structure: Phase 1 estimates the Jacobian
 (sensitivity of each effect's own expected statistic to each coefficient) via {opt k0()}
