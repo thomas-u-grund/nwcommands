@@ -353,8 +353,9 @@ parameter within 0.06 SE of RSiena's unconditional estimates. Things found on th
   significant digits.** With K=1 batch calls in phase 2 the simulated distances came out biased
   (mean deviation -1.2 instead of +0.35 over 5000 calls at fixed parameters, 7 SE), which pushed
   the estimated rate up by 0.1 (rate t-ratio +0.13 on average). All seed arguments now use
-  `%12.0f`. `unw_ergm.do` (nwergm's MCMC seed, `strofreal(rngseed)`) has the same formatting and
-  was left alone.
+  `%12.0f`. nwergm had the same bug (`unw_ergm.do`, the MCMC seed, and theta, term parameters and
+  observed statistics sent with the default `%9.0g`); fixed the same way on 2026-10-01 (seed
+  `%12.0f`, reals `%25.17g`).
 - **Starting values matter more once the rate moves.** RSiena starts outdegree at a data-derived
   value (`getNetworkStartingVals()`, now `SaomOutdegreeStart()`) and ends phase 1 with a partial
   quasi-Newton step (`phase1.2`); nwsaom did neither. From outdegree = 0 the network explodes in
