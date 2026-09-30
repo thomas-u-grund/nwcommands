@@ -52,7 +52,7 @@
 {marker covariate_effects}{...}
 {syntab:Node and dyadic covariate effects}
 {synopt:{opt mutual}}Reciprocated-tie count; directed networks only{p_end}
-{synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable){p_end}
+{synopt:{opth nodematch(varlist)}}Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable). All node-attribute terms require {it:numeric} variables; {cmd:encode} a string attribute first{p_end}
 {synopt:{opth nodematchdiff(varlist)}}Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attribute, rather than pooled across levels{p_end}
 {synopt:{opth nodecov(varlist)}}Continuous node covariate main effect (sum over tie endpoints){p_end}
 {synopt:{opth nodeicov(varlist)}}Directed receiver-covariate effect; directed networks only{p_end}

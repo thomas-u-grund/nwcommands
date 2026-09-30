@@ -651,7 +651,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodematch {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodematch
 		local ++__ergm_termidx
 		tempname __td_nm`__ergm_termidx'
 		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
@@ -662,7 +662,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodecov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodecov
 		local ++__ergm_termidx
 		tempname __td_nc`__ergm_termidx'
 		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
@@ -673,7 +673,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeicov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeicov
 		local ++__ergm_termidx
 		tempname __td_ni`__ergm_termidx'
 		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
@@ -684,7 +684,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeocov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeocov
 		local ++__ergm_termidx
 		tempname __td_no`__ergm_termidx'
 		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
@@ -700,7 +700,7 @@ program nwergm, eclass
 	// comment on these four terms for the full statistical definitions.
 	local __ergm_termidx = 0
 	foreach __ergm_v of local absdist {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' absdist
 		local ++__ergm_termidx
 		tempname __td_ad`__ergm_termidx'
 		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
@@ -711,7 +711,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodematchdiff {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodematchdiff
 		local ++__ergm_termidx
 		tempname __td_nmd`__ergm_termidx'
 		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
@@ -730,7 +730,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodefactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodefactor
 		local ++__ergm_termidx
 		tempname __td_nf`__ergm_termidx'
 		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
@@ -765,7 +765,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodemix {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodemix
 		local ++__ergm_termidx
 		tempname __td_mx`__ergm_termidx'
 		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
@@ -804,7 +804,7 @@ program nwergm, eclass
 	// "b1factor"/"b2factor" spelling - only the OPTION name differs.
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bcov1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bcov1
 		local ++__ergm_termidx
 		tempname __td_b1c`__ergm_termidx'
 		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
@@ -815,7 +815,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bcov2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bcov2
 		local ++__ergm_termidx
 		tempname __td_b2c`__ergm_termidx'
 		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
@@ -826,7 +826,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bfactor1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bfactor1
 		local ++__ergm_termidx
 		tempname __td_b1f`__ergm_termidx'
 		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
@@ -860,7 +860,7 @@ program nwergm, eclass
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bfactor2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bfactor2
 		local ++__ergm_termidx
 		tempname __td_b2f`__ergm_termidx'
 		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
@@ -957,7 +957,7 @@ program nwergm, eclass
 	// own treatment exactly.
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bnodematch1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bnodematch1
 		local ++__ergm_termidx
 		tempname __td_b1nm`__ergm_termidx'
 		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
@@ -967,7 +967,7 @@ program nwergm, eclass
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bnodematch2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bnodematch2
 		local ++__ergm_termidx
 		tempname __td_b2nm`__ergm_termidx'
 		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
@@ -1059,7 +1059,7 @@ program nwergm, eclass
 	// degree counts, from()/to() as paired numlists).
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeofactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeofactor
 		local ++__ergm_termidx
 		tempname __td_nof`__ergm_termidx'
 		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
@@ -1078,7 +1078,7 @@ program nwergm, eclass
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeifactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeifactor
 		local ++__ergm_termidx
 		tempname __td_nif`__ergm_termidx'
 		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
@@ -2506,7 +2506,7 @@ program nwergm_simulate
 	// documented in nwergm.sthlp's own Simulation section.
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodematch {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodematch
 		local ++__ergm_termidx
 		tempname __td_nm`__ergm_termidx'
 		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
@@ -2517,7 +2517,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodecov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodecov
 		local ++__ergm_termidx
 		tempname __td_nc`__ergm_termidx'
 		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
@@ -2528,7 +2528,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeicov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeicov
 		local ++__ergm_termidx
 		tempname __td_ni`__ergm_termidx'
 		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
@@ -2539,7 +2539,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeocov {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeocov
 		local ++__ergm_termidx
 		tempname __td_no`__ergm_termidx'
 		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
@@ -2550,7 +2550,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local absdist {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' absdist
 		local ++__ergm_termidx
 		tempname __td_ad`__ergm_termidx'
 		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
@@ -2561,7 +2561,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodematchdiff {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodematchdiff
 		local ++__ergm_termidx
 		tempname __td_nmd`__ergm_termidx'
 		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
@@ -2580,7 +2580,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodefactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodefactor
 		local ++__ergm_termidx
 		tempname __td_nf`__ergm_termidx'
 		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
@@ -2600,7 +2600,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodemix {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodemix
 		local ++__ergm_termidx
 		tempname __td_mx`__ergm_termidx'
 		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
@@ -2639,7 +2639,7 @@ program nwergm_simulate
 	// convention (see the validation block above's own header comment).
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bcov1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bcov1
 		local ++__ergm_termidx
 		tempname __td_b1c`__ergm_termidx'
 		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
@@ -2650,7 +2650,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bcov2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bcov2
 		local ++__ergm_termidx
 		tempname __td_b2c`__ergm_termidx'
 		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
@@ -2661,7 +2661,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bfactor1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bfactor1
 		local ++__ergm_termidx
 		tempname __td_b1f`__ergm_termidx'
 		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
@@ -2681,7 +2681,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bfactor2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bfactor2
 		local ++__ergm_termidx
 		tempname __td_b2f`__ergm_termidx'
 		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
@@ -2753,7 +2753,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bnodematch1 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bnodematch1
 		local ++__ergm_termidx
 		tempname __td_b1nm`__ergm_termidx'
 		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
@@ -2764,7 +2764,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local bnodematch2 {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' bnodematch2
 		local ++__ergm_termidx
 		tempname __td_b2nm`__ergm_termidx'
 		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
@@ -2859,7 +2859,7 @@ program nwergm_simulate
 
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeofactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeofactor
 		local ++__ergm_termidx
 		tempname __td_nof`__ergm_termidx'
 		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
@@ -2879,7 +2879,7 @@ program nwergm_simulate
 	}
 	local __ergm_termidx = 0
 	foreach __ergm_v of local nodeifactor {
-		confirm variable `__ergm_v'
+		_nwergm_numvar `__ergm_v' nodeifactor
 		local ++__ergm_termidx
 		tempname __td_nif`__ergm_termidx'
 		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
@@ -3333,4 +3333,21 @@ void ergm_bridge_from_netobj(pointer(class nw_def scalar) scalar netobj,
 		}
 	}
 }
+end
+
+* _nwergm_numvar: every node-attribute term reads its variable with Mata's
+* st_data(), which silently returns missing values for a STRING variable.
+* For nodematch() that made every pair "match" (missing == missing), so
+* the term became an exact copy of edges (coefficient 0, "rank k-1 of k"
+* warnings, and a meaningless fit). Refuse string attributes explicitly.
+capture program drop _nwergm_numvar
+program _nwergm_numvar
+	args v term
+	confirm variable `v'
+	capture confirm numeric variable `v'
+	if _rc {
+		di "{err}{bf:`term'(`v')}: {bf:`v'} is a string variable; nwergm needs a numeric attribute."
+		di "{err}Encode it first, e.g. {bf:encode `v', generate(`v'_n)}, and specify {bf:`term'(`v'_n)}."
+		error 109
+	}
 end

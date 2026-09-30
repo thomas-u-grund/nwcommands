@@ -1070,3 +1070,24 @@ nwset, mat((0,1,0,1\1,0,1,0\0,1,0,1\1,0,1,0)) undirected name(tinycurvednet)
 capture noisily nwergm tinycurvednet, edges gwespfree(0.7) offset(gwesp_weight 0.5)
 assert _rc == 198
 di "=== offset() error paths (unknown coefname, non-numeric value, odd token count, duplicate coefname, fixing every coefficient, curved model) all verified ==="
+
+* --- BUGFIX (2026-09-30): MCMLE standard errors. The AR(p) autocorrelation
+* factor used to inflate the Fisher information itself, shrinking every SE
+* by sqrt(infl): florentine edges+gwesp(.5)+nodematch(seat) reported an
+* edges SE of .181 where R ergm 4.12 gives .45-.48 across seeds. Now
+* vcov = Iinv + Iinv*(S/n)*Iinv, as in R ergm.
+nwwebuse florentine, nwclear
+nwergm flomarriage, edges gwesp(.5) nodematch(seat) seed(12345)
+assert _se[edges] > .35 & _se[edges] < .60
+assert _se[nodematch_seat] > .38 & _se[nodematch_seat] < .65
+di "=== MCMLE standard error REGRESSION VERIFIED ==="
+
+* --- BUGFIX (2026-09-30): string node attributes were read as all-missing,
+* so nodematch() silently became a copy of edges. Now a clear r(109).
+nwwebuse florentine, nwclear
+generate seatstr = cond(seat == 1, "yes", "no")
+capture noisily nwergm flomarriage, edges nodematch(seatstr) seed(12345)
+assert _rc == 109
+capture noisily nwergm flomarriage, edges nodecov(seatstr) seed(12345)
+assert _rc == 109
+di "=== string attribute REGRESSION VERIFIED ==="

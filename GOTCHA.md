@@ -185,3 +185,46 @@ anywhere in the same script.
 native-backend discrepancy) and reproduce the minimal repro above (`waves()` fit with `transtrip`
 + `nodematch()`, then `estat gof`, then any `behavior()` fit) as a permanent regression test before
 touching `native/saom_sim.c` itself.
+
+## `nwergm` MCMLE standard errors: the autocorrelation factor goes on the Monte Carlo error, not the information (fixed 2026-09-30)
+
+`ErgmMCMLE()` (unw_ergm.do) estimates the Fisher information as `V = variance(samp)`, the covariance
+of the statistics simulated at the final theta. It used to multiply `V`'s diagonal by the AR(p)
+spectral inflation factors (`infl`) and then report `invsym(V)`. Inflating the *information*
+shrinks every standard error by `sqrt(infl)`, and the worse the chain mixes, the larger `infl`
+gets, so the SEs shrank most exactly where they should be widest. On the 5-node certification network
+in `test_nwergm_mcmle.do` the chain mixes almost perfectly (`infl` about 1), so it passed and the
+bug went unnoticed. On real models it was drastic. Checked against R `ergm` 4.12:
+
+| model | nwergm before | nwergm after | R ergm |
+|---|---|---|---|
+| florentine `edges gwesp(.5) nodematch(seat)`, edges SE | .181 | .450 | .45-.48 |
+| glasgow1 `edges mutual nodematch(smoke1)`, edges SE | .0067 | .199 | .206 |
+| mesa `edges gwesp(.25) nodematch(grade race)`, edges SE | .0012 | .176 | .155 |
+
+Now `vcov = Vinv + Vinv*(S/n)*Vinv` with `S = D*V*D`, `D = diag(sqrt(infl))`: the model variance plus
+the MCMC error of the estimate, as R `ergm` reports by default. **Lesson:** a certification test on a
+network where a correction factor is about 1 cannot detect that the factor is applied in the wrong
+place. Validate variance code on at least one sticky, realistic chain.
+
+## `nwergm` node-attribute terms silently mis-read string variables (fixed 2026-09-30)
+
+Every node-attribute term reads its variable with Mata's `st_data()`, which returns missing values
+for a string variable, with no error. For `nodematch()`, missing == missing for every pair, so the
+term became an exact copy of `edges` (coefficient 0, a "rank k-1 of k" warning every iteration,
+and a meaningless fit). All 32 attribute-read sites (estimation and `simulate`) now go through
+`_nwergm_numvar`, which stops with r(109) and suggests `encode`. Proper string support (with
+readable level names in `nodefactor`/`nodemix` coefficient names) would be a feature, not a fix.
+
+## `nwdyadprob, undirected` doubled the tie probability (fixed 2026-09-30)
+
+The mat()/probability-network path drew from the full matrix *before* applying `undirected`, and
+the final `nwsym` OR-ed i->j with j->i, so each tie appeared with probability 1-(1-p)^2 (p = .1 gave
+density .188 on 200 nodes). One draw per unordered pair now; the `density()` path was already right.
+
+## `lib/build.do` and `deploy_nw_build.do` hardcode the checkout path
+
+Both `cd` into `/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands` by absolute path. Run from a git
+worktree or any other copy, they silently rebuild the *main checkout's* mlib instead of the one
+you are working on. From a worktree, build with a copy of `lib/build.do` whose paths point at the
+worktree.

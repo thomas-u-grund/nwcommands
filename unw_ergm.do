@@ -7447,7 +7447,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	real rowvector theta_c_prev
 	real scalar theta_c_stable_count, theta_c_maxdiff
 	real scalar T2, Fstat, Fcrit, confidence, is_curved, gamma_hummel
-	real rowvector rho, infl
+	real rowvector rho, infl, Sdiag
+	real matrix S, Vinv
 	real scalar samplesize, samplesize_cap, samplesize_boost, Fstat_prev, stall_count, confidence_boost, boost_threshold, total_draws_cap
 	real rowvector theta_old, etadiff
 	real colvector lw, w
@@ -8139,7 +8140,20 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// multivariate spectrum0.mvar() rather than a full VAR fit (a
 	// disclosed, deliberate simplification, not an oversight).
 	infl = ergm_spectral0_ar(samp :- mean(samp))
-	for (k=1; k<=p; k++) V[k,k] = V[k,k] * infl[k]
+	// BUGFIX (2026-09-30): `infl' used to be applied to V itself
+	// (V[k,k] = V[k,k]*infl[k]) before inverting. V is the Fisher
+	// information, so inflating it SHRANK every standard error by
+	// sqrt(infl): harmless on the well-mixing 5-node certification
+	// network above (infl ~ 1), but on real models with autocorrelated
+	// chains the SEs collapsed 30-130x (Glasgow edges+mutual: .0067 vs
+	// R ergm .206; faux.mesa.high edges+gwesp+nodematch: .0012 vs .155).
+	// The autocorrelation correction belongs on the Monte Carlo error of
+	// the estimate, as in R ergm: vcov = Iinv + Iinv*(S/n)*Iinv, with
+	// S = D*V*D the spectral-density-at-zero approximation (D =
+	// diag(sqrt(infl)), the same per-dimension AR(p) factors as before)
+	// and n the MCMC sample size.
+	Sdiag = sqrt(infl)
+	S = V :* (Sdiag' * Sdiag)
 
 	// Zero out every fixed coefficient's own row/column of `V' before
 	// inverting (harmonisation unit 183) - matches R ergm's own real
@@ -8158,12 +8172,15 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 			if (M.isfixed[k]) {
 				V[k,.] = J(1,p,0)
 				V[.,k] = J(p,1,0)
+				S[k,.] = J(1,p,0)
+				S[.,k] = J(p,1,0)
 			}
 		}
 	}
 
 	res.coef = theta
-	res.vcov = invsym(V)
+	Vinv = invsym(V)
+	res.vcov = Vinv + Vinv * (S / rows(samp)) * Vinv
 	res.converged = converged
 	res.niter = iter <= maxit ? iter : maxit
 	res.coefhist = coefhist
