@@ -355,41 +355,92 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 
 {title:Examples}
 
-{pstd}Friendship among 50 pupils, RSiena's s50 data:{p_end}
+{pstd}
+All examples except the last use the Glasgow friendship data (RSiena's s50 data): three waves of
+friendship among 50 pupils ({cmd:glasgow1}-{cmd:glasgow3}) and smoking, alcohol and sport at each
+wave ({cmd:smoke1}-{cmd:smoke3}, {cmd:alcohol1}-{cmd:alcohol3}, {cmd:sport1}-{cmd:sport3}).
+
 		{cmd:. nwwebuse glasgow, nwclear}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1)}
+
+{pstd}{bf:Network change between two waves, and over three waves}{p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity seed(1)}
+
+{pstd}{bf:Triadic closure and degree effects}{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip cycle3 seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity seed(1)}
+
+{pstd}{bf:Covariate effects} (homophily on smoking; ego, alter and similarity effects of alcohol and
+sport); {opt detail} also lists RSiena's effect names, the covariate means and every convergence
+t-ratio{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) samex(smoke1) egox(alcohol1 sport1) altx(alcohol1 sport1) simx(alcohol1) seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) samex(smoke1) seed(1) detail}
+
+{pstd}{bf:Interaction}: does the effect of reciprocity depend on the sender's alcohol use?{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) egox(alcohol1) interact(egox#reciprocity) seed(1)}
+
+{pstd}{bf:Goodness of fit}{p_end}
 		{cmd:. estat gof}
 
-{pstd}Restarting from the estimates when the overall maximum convergence ratio is above 0.25:{p_end}
+{pstd}{bf:Restarting from the estimates} when the overall maximum convergence ratio is above 0.25{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(1)}
 		{cmd:. matrix b = e(b)}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)}
 
-{pstd}The same model by unconditional estimation (RSiena's {cmd:cond = FALSE}), restarted with the rates too:{p_end}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional seed(1)}
-		{cmd:. matrix b = e(b)}
-		{cmd:. matrix r = e(rates)}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)}
+{pstd}{bf:Unconditional estimation} (RSiena's {cmd:cond = FALSE}; restart it with {opt rate0()} as well
+as {opt theta0()}){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(1)}
 
-{pstd}Other networks {cmd:wave1}, {cmd:wave2}, {cmd:wave3} and behavior variables {cmd:b1}-{cmd:b3}:{p_end}
+{pstd}{bf:Covariate-dependent rate}: do heavier drinkers change their friendships more often?{p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ratecov(alcohol1) seed(1)}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree transties balance}
-
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree isolatenet outiso}
-
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear avalt}
+{pstd}{bf:Co-evolution of friendship and drinking}: selection ({opt behsim}) and influence
+({opt avalt}, or {opt avsim} as the alternative influence effect){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avsim seed(1)}
 		{cmd:. estat gof}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avalt}
+{pstd}{bf:Separate effects for increasing and decreasing behavior} (endowment and creation){p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(1)}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avsim}
+{pstd}{bf:Undirected networks}: symmetrized friendship; RSiena's default model type (forcing), and
+the pairwise model in which both actors decide jointly{p_end}
+		{cmd:. nwsym glasgow1, generate(u1) mode(max)}
+		{cmd:. nwsym glasgow2, generate(u2) mode(max)}
+		{cmd:. nwsaom, wave1(u1) wave2(u2) outdegree gwesp(.69) samex(smoke1) seed(1)}
+		{cmd:. nwsaom, wave1(u1) wave2(u2) outdegree symtype(joint) seed(1)}
 
-{pstd}Co-evolution of friendship and drinking (selection and influence), RSiena's s50 data:{p_end}
-		{cmd:. nwwebuse glasgow, nwclear}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}
+{pstd}{bf:Composition change}: three pupils leave after the first wave ({cmd:p1}, {cmd:p2} mark who
+is present){p_end}
+		{cmd:. generate byte p1 = 1}
+		{cmd:. generate byte p2 = _n > 3}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity present(p1 p2) seed(1)}
 
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear quadraticendow quadraticcreation}
+{pstd}{bf:Missing data}: a missing behavior value ({opt missbeh()}: one 0/1 variable per wave) and
+missing tie values ({opt missnet()}: one 0/1 matrix per wave){p_end}
+		{cmd:. generate byte mb1 = _n == 5}
+		{cmd:. generate byte mb2 = 0}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear avalt missbeh(mb1 mb2) seed(1)}
+		{cmd:. matrix miss1 = J(50, 50, 0)}
+		{cmd:. matrix miss1[1,2] = 1}
+		{cmd:. matrix miss2 = J(50, 50, 0)}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity missnet(miss1 miss2) seed(1)}
 
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity present(p1 p2)}
+{pstd}{bf:Structural zeros}: dyads that cannot change (a 0/1 matrix; here, ties from pupil 1 to
+pupils 11-20, which are absent at both waves){p_end}
+		{cmd:. matrix zeros = J(50, 50, 0)}
+		{cmd:. forvalues j = 11/20 {c -(}}
+		{cmd:.     matrix zeros[1,`j'] = 1}
+		{cmd:. {c )-}}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity structural(zeros) seed(1)}
+
+{pstd}{bf:Threads}: the same results on one thread (the default uses all physical cores){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) cores(1) seed(1)}
+
+{pstd}{bf:Two co-evolving networks} ({cmd:nwsaom multiplex}), for networks {cmd:a} and {cmd:b}
+observed at two waves ({cmd:a1}, {cmd:a2}, {cmd:b1}, {cmd:b2}); {opt crprod} lets ties in
+{cmd:b} affect ties in {cmd:a}, {opt crprodb} the reverse{p_end}
+		{cmd:. nwsaom multiplex, netawave1(a1) netawave2(a2) netbwave1(b1) netbwave2(b2) crprod crprodb seed(1)}
 
 {title:References}
 
