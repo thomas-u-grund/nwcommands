@@ -307,4 +307,80 @@ nwsaom, wave1(__gu1) wave2(__gu2) outdegree symtype(confirmation) unconditional 
 _net_check "rate1 outdegree" "4.120 -0.736" "0.611 0.081"
 di as text "non-directed forcing/confirmation PASS"
 
+* covariate effects for several variables at once (2026-10-01; before,
+* one variable per effect type). RSiena 1.6.6, seeds 1-5 (default
+* algorithm), glasgow waves 1-2 (3 for the co-evolution model);
+* covariates centred for egoX/altX/RateX as RSiena centres them; simX is
+* centred by its similarity mean in both. Model C3 is the "realistic"
+* model with outAct (RSiena's outdegree activity) - with outPopSqrt
+* instead RSiena itself does not converge (tconv.max about 3 on every
+* seed, even started from nwsaom's estimates), so it cannot serve as a
+* reference.
+nwwebuse glasgow, nwclear
+qui sum smoke1
+generate double smkc = smoke1 - r(mean)
+qui sum alcohol1
+generate double alcc = alcohol1 - r(mean)
+local w12 wave1(glasgow1) wave2(glasgow2)
+
+* (a) sameX on two variables, conditional and unconditional
+nwsaom, `w12' outdegree reciprocity samex(smoke1 sport1) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1" ///
+	"5.446 -2.517 2.457 0.345 0.073" "0.826 0.220 0.245 0.190 0.185"
+nwsaom, `w12' outdegree reciprocity samex(smoke1 sport1) unconditional seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1" ///
+	"5.507 -2.500 2.429 0.342 0.076" "0.840 0.224 0.246 0.193 0.185"
+di as text "(a) samex(smoke1 sport1) PASS"
+
+* (b) egoX, altX, simX on two variables
+nwsaom, `w12' outdegree reciprocity egox(alcc smkc) altx(alcc smkc) simx(alcc smkc) seed(12345)
+_net_check "rate1 outdegree reciprocity altx_alcc altx_smkc egox_alcc egox_smkc simx_alcc simx_smkc" ///
+	"5.367 -2.349 2.402 -0.098 0.104 -0.005 0.348 1.064 0.803" ///
+	"0.810 0.143 0.250 0.110 0.177 0.115 0.191 0.442 0.316"
+di as text "(b) egox/altx/simx on two variables PASS"
+
+* (c) realistic model: gwespFF, transRecTrip, inPopSqrt, outAct, sameX on
+* two variables, egoX/altX/simX(alcohol1)
+nwsaom, `w12' outdegree reciprocity gwesp(.69) transrectrip indegpopularity outactivity ///
+	samex(smoke1 sport1) egox(alcc) altx(alcc) simx(alcc) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1 altx_alcc egox_alcc indegpopularity outactivity transrectrip gwesp_.69 simx_alcc" ///
+	"6.948 -1.590 2.243 0.268 0.116 -0.067 0.086 -0.364 -0.180 -0.116 2.079 0.869" ///
+	"1.248 0.614 0.374 0.245 0.195 0.103 0.117 0.295 0.069 0.258 0.428 0.446"
+di as text "(c) realistic model PASS"
+
+* (d) co-evolution, waves 1-3: friendship with sameX(sport1),
+* sameX(alcohol1), simX(smoking); smoking linear, quadratic, avAlt
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity samex(sport1 alcohol1) behsim ///
+	behavior(smoke1 smoke2 smoke3) linear quadratic avalt seed(12345)
+_net_check "rate1 rate2 outdegree reciprocity samex_sport1 samex_alcohol1 behsim beh_linear beh_quadratic beh_avalt" ///
+	"5.865 4.624 -2.530 2.743 0.198 0.124 0.612 -1.730 1.831 1.780" ///
+	"0.945 0.733 0.154 0.191 0.143 0.142 0.310 0.465 0.475 1.160"
+matrix __rb = e(rates_beh)
+assert abs(__rb[1,1] - 2.937) < 0.25 * 1.690 & abs(__rb[1,2] - 2.728) < 0.25 * 1.413
+di as text "(d) co-evolution with two covariate homophily effects PASS"
+
+* (e) two covariate-dependent rate effects (RateX smoke1, RateX alcohol1)
+nwsaom, `w12' outdegree reciprocity ratecov(smkc alcc) seed(12345)
+_net_check "rate1 outdegree reciprocity" "5.688 -2.250 2.463" "0.912 0.149 0.269"
+matrix __rc = e(ratecoefs)
+matrix __rcs = e(ratecoefs_se)
+di as text "ratecoef smkc " %8.3f __rc[1,1] " (" %5.3f __rcs[1,1] ")  RSiena 0.811 (0.437)"
+di as text "ratecoef alcc " %8.3f __rc[1,2] " (" %5.3f __rcs[1,2] ")  RSiena 0.088 (0.215)"
+assert abs(__rc[1,1] - 0.811) < 0.25 * 0.437 & abs(__rc[1,2] - 0.088) < 0.25 * 0.215
+assert __rcs[1,1] > 0.437 / 1.5 & __rcs[1,1] < 1.5 * 0.437
+assert __rcs[1,2] > 0.215 / 1.5 & __rcs[1,2] < 1.5 * 0.215
+di as text "(e) ratecov() on two variables PASS"
+
+* interactions (RSiena includeInteraction(), seeds 1-5, conditional).
+* Before 2026-10-01 a two-way interaction's change had the wrong sign on
+* tie withdrawals (the product of two signed changes); sameX x recip then
+* failed in phase 3 (r(505)), egoX x recip was biased.
+nwsaom, `w12' outdegree reciprocity samex(smoke1) interact(samex#reciprocity) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 interact_nodematch_reciprocity" ///
+	"5.451 -2.453 2.417 0.314 0.071" "0.826 0.232 0.450 0.268 0.533"
+nwsaom, `w12' outdegree reciprocity egox(alcc) interact(egox#reciprocity) seed(12345)
+_net_check "rate1 outdegree reciprocity egox_alcc interact_nodeocov_reciprocity" ///
+	"5.155 -2.315 2.552 0.311 -0.879" "0.745 0.160 0.286 0.166 0.360"
+di as text "interactions PASS"
+
 di as text "nwsaom network-only vs RSiena: PASS"

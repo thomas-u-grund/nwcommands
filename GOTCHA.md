@@ -466,6 +466,76 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## nwsaom: everything runs in the plugin (protocol 11, 2026-10-01)
+
+Formerly Mata-only, now native (and threaded), certified against the Mata simulator at fixed
+parameters (test_nwsaom_native.do) and against RSiena (5 seeds, cond/uncond, within 0.1 SE):
+network endowment/creation (gating + RSiena's endowment/creation statistics computed in C),
+structural() fixed dyads (excluded from the actor's alternatives), three-way interact()
+(TERMCODE_INTERACT3), behavior endowment/creation (gating + statistics as Mata), the threaded batch
+path for ratecov() (statistic and score per covariate in C) and non-directed models, estat gof for
+co-evolution (before always Mata) and for endowment/creation/structural/ratecov/present/non-directed
+fits (before, network gof simulated the plain model). Limits MAXTERMS 256, MAXATTR 128, MAXBEHTERMS 64.
+Timings on glasgow (seed 1, before -> after): reciprocity endowment/creation 58.6 -> 0.21 s;
+structural() 42.1 -> 0.17 s; three-way interaction 227 -> 0.29 s; co-evolution with quadratic
+endowment/creation 118 -> 0.45 s; ratecov() two covariates 3.5 -> 0.27 s; joint + ratecov() 3.3 ->
+0.21 s. Mata remains only as the fallback (no plugin for the platform, an older plugin, more than 256
+effects); e(engine) shows which ran.
+estat mems now simulates the fitted model the same way. Open: the multiplex command offers only
+outdegree/reciprocity/crprod (all native already, not threaded). Pre-existing, found while porting (C reproduces
+Mata): the behavior endowment/creation STATISTIC is the linear one (sum of decreases/increases) for
+every term; RSiena has no quadratic-shape endowment statistic and a different avAlt one, so
+quadratic/avalt/avsim endowment/creation splits are not RSiena's effects (quadratic endowment +
+creation with the rate is not even identified).
+
+## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
+
+RSiena's interaction contribution is the product of the components' contributions for creating the
+tie (NetworkInteractionEffect::calculateContribution()), negated once when the tie exists
+(NetworkVariable::calculateTieFlipContributions()). nwsaom multiplied the components' SIGNED
+changes, so for two components a withdrawal got +c_A*c_B instead of -c_A*c_B (Mata
+change_saom_interact() and the plugin's saom_eval_change(); three-way products happened to have the
+right sign). On glasgow, `samex(smoke1) interact(samex#reciprocity)` then stopped in phase 3
+(r(505)) while RSiena estimates it (interaction 0.07, SE 0.53), and `egox#reciprocity` was off.
+Fixed in both; the plugin's interaction runs natively from protocol 10 only (older plugins: Mata).
+Validated: sameX x recip and egoX x recip, 5 seeds, cond/uncond, all within 0.05 SE of RSiena.
+
+## nwsaom covariate effects take varlists; simx() centred (changed 2026-10-01)
+
+`samex()/nodematch()`, `egox()/nodeocov()`, `altx()/nodeicov()`, `nodecov()`, `simx()/simcov()` and
+`ratecov()` took ONE variable each, which made realistic models (homophily on several attributes,
+ego/alter/similarity on several covariates) impossible. Each now takes a varlist: one term and one
+coefficient per variable, named `<effect>_<variable>` with the option's spelling (`samex_smoke1`);
+single-variable names are unchanged. Order in e(b)/theta0(): effect types in their fixed order,
+variables as listed. `ratecov(varlist)`: one coefficient per variable (w_i = exp(sum b_k x_ik)),
+`ratecovcoef(numlist)`, e(ratecoefs)/e(ratecoefs_se)/... matrices (scalars e(ratecoef) etc. kept for
+one variable); plugin protocol 9 passes K covariates (K = 1 is the old layout).
+`interact()` resolves components by coefficient name (`samex_smoke1#transtrip`); the instance index
+is stored in the interaction's td.levels, so SaomNativeSetup() finds the right term when an effect
+type occurs several times (before, the first instance by type name). An effect type that occurs
+several times must be named by variable (error otherwise).
+`simx()` is now centred by the similarity mean over all ordered pairs, as RSiena's simX
+(`rangeAndSimilarity()`); this changes the outdegree coefficient of simx models (simx's own
+coefficient is unchanged). The plugin gets x/range and the mean (protocol 9; older plugins: Mata).
+Plugin limits raised: MAXTERMS 32, MAXATTR 24 (larger models fall back to Mata).
+Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate effects for
+several variables": all within 0.07 SE. Note: nwsaom does not centre egox/altx/nodecov/ratecov
+covariates (RSiena does by default); centre them to compare outdegree/rate with RSiena.
+
+## nwsaom conditional estimation could run forever; e(engine) (changed 2026-10-01)
+
+A conditional simulation runs until the simulated distance reaches the observed one. When the
+Robbins-Monro estimates diverge (e.g. `interact(samex#transtrip)` on glasgow, an interaction RSiena
+itself rejects - "must be at least one ego or both dyadic effects"), that distance may never be
+reached and the native plugin (or Mata) looped indefinitely at 100% of one core. This looked like
+a silent fallback to Mata, but the model ran natively. Now, as RSiena ("Unlikely to terminate this
+epoch: more than 1000000 steps"), a period is abandoned after 10^6 ministeps and nwsaom stops
+with a clear error (r(498)) - within 2 seconds for that model.
+To make the simulator visible: e(engine) is "native" or "mata", e(engine_why) gives the reason, and
+a note follows the output when it is Mata. `antiiso` and `isolatepop` had no termcode and ran in
+Mata; they are now native (protocol 9). cscripts/test_nwsaom_engine.do asserts e(engine)=="native"
+for one model per effect family and path.
+
 ## nwsaom: undirected / tie-symmetric waves are a non-directed relation; default model type forcing (changed 2026-10-01)
 
 nwsaom refused networks declared undirected ("store the data as directed ... and use symmetric").

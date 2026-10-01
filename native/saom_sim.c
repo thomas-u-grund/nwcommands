@@ -182,9 +182,10 @@
 #include <string.h>
 #include <math.h>
 
-#define MAXTERMS 16
-#define MAXATTR 8
-#define MAXBEHTERMS 8
+#define MAXTERMS 256
+#define MAXATTR 128
+#define MAXRC 16		/* ratecov() covariates */
+#define MAXBEHTERMS 64
 
 #define TERMCODE_OUTDEGREE 1
 #define TERMCODE_RECIPROCITY 2
@@ -234,6 +235,9 @@
    STARTING behavior for the final statistic (RSiena's lagged
    cross-statistic). Only valid when nbehterms > 0. */
 #define TERMCODE_BEHSIM 31
+#define TERMCODE_ANTIISO 32					// protocol 9: direct port of change_saom_antiiso() (#{i : indegree>=1, outdegree 0}, alter-indexed)
+#define TERMCODE_ISOLATEPOP 33
+#define TERMCODE_INTERACT3 34					// protocol 11: three-way interaction, components attridx (A) and p1 = B + 1000*C (1-based slots); change = product of the three signed changes (a withdrawal: (-)(-)(-) = minus the product of the creation contributions, RSiena's sign)					// protocol 9: direct port of change_saom_isolatepop() (#{i : indegree==1, outdegree 0}, alter-indexed)
 
 /* Plugin protocol version, saved as __saom_native_version on every call.
    2 = adds TERMCODE_BEHSIM, centered avAlt, and the per-variable ministep
@@ -241,7 +245,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 8		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE)
+#define SAOM_NATIVE_VERSION 11		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -732,6 +736,12 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_TRANSMEDTRIP:					// stat_saom_transmedtrip(): sum over ties (ego,alter) of ISP(ego,alter) - same primitive as TRANSTRIP's own stat case, but this term's OWN change function is pure ISP too (unlike TRANSTRIP's OTP+OSP change), so the two termcodes are NOT interchangeable despite sharing this one line
 			for (k = 0; k < g->nties; k++) tot += (double)pair_isp(g, g->elist_i[k], g->elist_j[k]);
 			return tot;
+		case TERMCODE_ANTIISO:						// stat_saom_antiiso(): #{i : indegree(i)>=1 and outdegree(i)<=0}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 1 && g->dout[i] <= 0) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_ISOLATEPOP:					// stat_saom_isolatepop(): #{j : indegree(j)==1 and outdegree(j)==0}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] == 1 && g->dout[i] == 0) ? 1.0 : 0.0;
+			return tot;
 		case TERMCODE_ANTIINISO:					// stat_saom_antiiniso(): #{i : indegree(i)>=1}
 			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 1) ? 1.0 : 0.0;
 			return tot;
@@ -762,10 +772,10 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_CYCLE3:						// stat_saom_cycle3(): sum over ties (ego,alter) of OTP(alter,ego)
 			for (k = 0; k < g->nties; k++) tot += (double)pair_otp(g, g->elist_j[k], g->elist_i[k]);
 			return tot;
-		case TERMCODE_SIMCOV:						// stat_saom_simcov(): sum over ties of 1-|attr[ego]-attr[alter]|/decay
+		case TERMCODE_SIMCOV:						// stat_saom_simcov(): sum over ties of 1-|attr[ego]-attr[alter]|/range - simMean (attr arrives as x/range, p1 = simMean)
 			for (k = 0; k < g->nties; k++) {
 				long ei = g->elist_i[k], ej = g->elist_j[k];
-				tot += 1.0 - fabs(a[ei] - a[ej]) / p1;
+				tot += 1.0 - fabs(a[ei] - a[ej]) - p1;	/* protocol 9: a = x/range, p1 = similarity mean */
 			}
 			return tot;
 		case TERMCODE_BEHSIM:						// stat_saom_behsim(): sum over ties of 1-|z[ego]-z[alter]|/range - simMean
@@ -873,7 +883,7 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_SIMCOV: {
-			double d = 1.0 - fabs(a[i] - a[j]) / p1;
+			double d = 1.0 - fabs(a[i] - a[j]) - p1;
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_BEHSIM: {
@@ -905,6 +915,12 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		case TERMCODE_TRANSMEDTRIP: {					// change_saom_transmedtrip(): mechanical port - pure pair_isp(i,j), no neighbor loop needed (unlike TRANSRECTRIP above, which combines pair_otp() with an extra loop) since this term's own real definition is exactly ISP alone
 			double delta = (double)pair_isp(g, i, j);
 			return ij_exists ? -delta : delta;
+		}
+		case TERMCODE_ANTIISO:						// change_saom_antiiso(): mechanical port
+		case TERMCODE_ISOLATEPOP: {					// change_saom_isolatepop(): mechanical port (the same expression)
+			long d = g->din[j];
+			int cond = ij_exists ? (d <= 1) : (d == 0);
+			return (cond && g->dout[j] <= 0) ? (ij_exists ? -1.0 : 1.0) : 0.0;
 		}
 		case TERMCODE_ANTIINISO: {					// change_saom_antiiniso(): mechanical port, same shape as TERMCODE_ANTIINISO2/OUTISO (alter-indexed, spillover-free)
 			long d = g->din[j];
@@ -1018,7 +1034,7 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 		case TERMCODE_TRANSTRIP: return (double)pair_isp(g, ego, alter);
 		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
 		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
-		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) / p1;
+		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) - p1;
 		case TERMCODE_BEHSIM: return 1.0 - fabs(a[ego] - a[alter]) / saom_behsim_range - p1;
 		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
 		case TERMCODE_OUTOUTASS: return (double)g->dout[ego] * (double)g->dout[alter];
@@ -1066,15 +1082,37 @@ static double saom_stat_interact(graph_t *g, int subAcode, double *aA, double p1
    already-certified cases. For every ordinary (non-interaction) term
    these are a transparent passthrough - byte-identical to the inline
    code they replace. */
+static void ix3_slots(int k, int *attridx, double *p1, int *sA, int *sB, int *sC) {
+	long code = (long)(p1[k] + 0.5);
+	*sA = attridx[k] - 1;
+	*sB = (int)(code % 1000) - 1;
+	*sC = (int)(code / 1000) - 1;
+}
+
 static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, double **attrs,
 	graph_t *g, long i, long j, int ij_exists, double *tt_arr, double *c3_arr) {
+	if (termcodes[k] == TERMCODE_INTERACT3) {
+		int sA, sB, sC;
+		double *aA, *aB, *aC;
+		ix3_slots(k, attridx, p1, &sA, &sB, &sC);
+		aA = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
+		aB = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
+		aC = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
+		return saom_change_term(g, termcodes[sA], aA, p1[sA], i, j, ij_exists, tt_arr, c3_arr)
+			* saom_change_term(g, termcodes[sB], aB, p1[sB], i, j, ij_exists, tt_arr, c3_arr)
+			* saom_change_term(g, termcodes[sC], aC, p1[sC], i, j, ij_exists, tt_arr, c3_arr);
+	}
 	if (termcodes[k] == TERMCODE_INTERACT2) {
 		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
 		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
 		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
 		double cvA = saom_change_term(g, termcodes[subA], aA, p1[subA], i, j, ij_exists, tt_arr, c3_arr);
 		double cvB = saom_change_term(g, termcodes[subB], aB, p1[subB], i, j, ij_exists, tt_arr, c3_arr);
-		return cvA * cvB;
+		/* RSiena: product of the components' CREATION contributions,
+		   negated once for a withdrawal; the components' changes are
+		   signed, so their product is negated again when the tie exists
+		   (before protocol 10 a withdrawal had the wrong sign) */
+		return (ij_exists ? -1.0 : 1.0) * cvA * cvB;
 	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
@@ -1083,6 +1121,21 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 }
 
 static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, double **attrs, graph_t *g) {
+	if (termcodes[k] == TERMCODE_INTERACT3) {
+		int sA, sB, sC;
+		long e;
+		double tot = 0.0, *aA, *aB, *aC;
+		ix3_slots(k, attridx, p1, &sA, &sB, &sC);
+		aA = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
+		aB = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
+		aC = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
+		for (e = 0; e < g->nties; e++) {
+			long ei = g->elist_i[e], ej = g->elist_j[e];
+			tot += saom_tie_stat(g, termcodes[sA], aA, p1[sA], ei, ej) * saom_tie_stat(g, termcodes[sB], aB, p1[sB], ei, ej)
+				* saom_tie_stat(g, termcodes[sC], aC, p1[sC], ei, ej);
+		}
+		return tot;
+	}
 	if (termcodes[k] == TERMCODE_INTERACT2) {
 		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
 		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
@@ -1105,6 +1158,28 @@ static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, do
    anywhere in the array, including a HIGHER index than the interaction
    term's own, so its target termcode may not be parsed yet if this ran
    inline). */
+static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int *need_cycle3);
+
+/* need flags of every term, interaction components included */
+static void saom_model_need_flags(int nterms, int *termcodes, int *attridx, double *p1, int *need_adj, int *need_transtrip, int *need_cycle3) {
+	int i;
+	for (i = 0; i < nterms; i++) {
+		if (termcodes[i] == TERMCODE_INTERACT2) {
+			int subA = attridx[i] - 1, subB = (int)p1[i] - 1;
+			saom_mark_need_flags((subA >= 0 && subA < nterms) ? termcodes[subA] : -1, need_adj, need_transtrip, need_cycle3);
+			saom_mark_need_flags((subB >= 0 && subB < nterms) ? termcodes[subB] : -1, need_adj, need_transtrip, need_cycle3);
+		}
+		else if (termcodes[i] == TERMCODE_INTERACT3) {
+			int sA, sB, sC;
+			ix3_slots(i, attridx, p1, &sA, &sB, &sC);
+			saom_mark_need_flags((sA >= 0 && sA < nterms) ? termcodes[sA] : -1, need_adj, need_transtrip, need_cycle3);
+			saom_mark_need_flags((sB >= 0 && sB < nterms) ? termcodes[sB] : -1, need_adj, need_transtrip, need_cycle3);
+			saom_mark_need_flags((sC >= 0 && sC < nterms) ? termcodes[sC] : -1, need_adj, need_transtrip, need_cycle3);
+		}
+		else saom_mark_need_flags(termcodes[i], need_adj, need_transtrip, need_cycle3);
+	}
+}
+
 static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int *need_cycle3) {
 	if (tc == TERMCODE_TRANSTRIP || tc == TERMCODE_CYCLE3) *need_adj = 1;
 	if (tc == TERMCODE_TRANSTRIP) *need_transtrip = 1;
@@ -1340,6 +1415,13 @@ static double next_double(void) {
 	char *tok = strtok(NULL, " \t");
 	if (!tok) { wire_parse_error = 1; return 0.0; }
 	return atof(tok);
+}
+/* an OPTIONAL trailing field (protocol 11 trailers): missing = `def',
+   without flagging a parse error, so that an older caller still works */
+static long next_long_opt(long def) {
+	char *tok = strtok(NULL, " \t");
+	if (!tok) return def;
+	return (long)atof(tok);
 }
 
 /* two-network (multiplex) simulation - moved unchanged out of stata_call() */
@@ -1673,6 +1755,12 @@ typedef struct {
 	long nbehterms;
 	int behtermcodes[MAXBEHTERMS];
 	double behminval, behmaxval, behrange, behSimMean, behOverallMean;
+	/* protocol 11 */
+	int hasfntype;
+	int fntype[MAXTERMS];			// network: 0 eval, 1 endowment (withdrawals only), 2 creation (new ties only)
+	int behfntype[MAXBEHTERMS];		// behavior: 1 endowment (decreases only), 2 creation (increases only)
+	long nstruct;				// structural (fixed) dyads, CSR by ego: struct_j[struct_off[i]..struct_off[i+1]-1]
+	long *struct_off, *struct_j;
 } model_t;
 
 typedef struct {
@@ -1695,9 +1783,9 @@ typedef struct {
 	long condmode;
 	double targetChange;
 	long symtype;
-	long hasratecov;
-	double *ratecovattr;		// 0-based, n entries
-	double ratecoef;
+	long hasratecov;		// number of ratecov() covariates K (0: none)
+	double *ratecovattr;		// 0-based, K x n entries, covariate k at [k*n + i]
+	double *ratecoef;		// K coefficients
 } simparams_t;
 
 typedef struct {
@@ -1706,7 +1794,9 @@ typedef struct {
 	double statBehLag[MAXBEHTERMS];	// end behavior on the STARTING network (masked)
 	double score[MAXTERMS];
 	double scoreBeh[MAXBEHTERMS];
-	double steps, stepsNet, stepsBeh, nchanges, nchangesBeh, netdist, behdist, t, rcscore;
+	double steps, stepsNet, stepsBeh, nchanges, nchangesBeh, netdist, behdist, t;
+	double rcscore[MAXRC];		// ratecov() scores, one per covariate
+	double rcstat[MAXRC];		// protocol 11: ratecov() statistics, sum over differing dyads of the tail's covariate
 	graph_t *gfinal;			// only when keep_final: caller frees with graph_free()+free()
 	double *behfinal;			// only when keep_final: caller frees
 } simres_t;
@@ -1765,7 +1855,7 @@ static double eval_network_alternatives(const model_t *M, const simparams_t *P, 
 #ifdef SAOM_PROFILE
 		double pt0 = prof_now();
 #endif
-		double *a = (tc != TERMCODE_INTERACT2 && M->attridx[k] > 0) ? attrs[M->attridx[k] - 1] : NULL;
+		double *a = (tc != TERMCODE_INTERACT2 && tc != TERMCODE_INTERACT3 && M->attridx[k] > 0) ? attrs[M->attridx[k] - 1] : NULL;
 		double p1 = M->p1[k];
 		switch (tc) {
 			case TERMCODE_OUTDEGREE:
@@ -1797,7 +1887,7 @@ static double eval_network_alternatives(const model_t *M, const simparams_t *P, 
 				for (j = 1; j <= n; j++) c[j] = ijx[j] ? -c3_arr[j] : c3_arr[j];
 				break;
 			case TERMCODE_SIMCOV:
-				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) / p1; c[j] = ijx[j] ? -d : d; }
+				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) - p1; c[j] = ijx[j] ? -d : d; }
 				break;
 			case TERMCODE_BEHSIM:
 				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) / saom_behsim_range - p1; c[j] = ijx[j] ? -d : d; }
@@ -1809,6 +1899,13 @@ static double eval_network_alternatives(const model_t *M, const simparams_t *P, 
 					c[j] = saom_eval_change((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs, g, actor, j, ijx[j], tt_arr, c3_arr);
 				}
 				break;
+		}
+		/* protocol 11, endowment/creation (SaomNetworkFullChangeGated()):
+		   an endowment term counts only for withdrawals, a creation term
+		   only for new ties */
+		if (M->hasfntype && M->fntype[k] != 0) {
+			if (M->fntype[k] == 1) { for (j = 1; j <= n; j++) if (!ijx[j]) c[j] = 0.0; }
+			else { for (j = 1; j <= n; j++) if (ijx[j]) c[j] = 0.0; }
 		}
 #ifdef SAOM_PROFILE
 		prof_term_t[k] += prof_now() - pt0;
@@ -1874,7 +1971,9 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	long npresent = n;
 	long *presentIdxArr = NULL;
 	const double *presentArr = PD->haspresent ? PD->present : NULL;
-	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc = 0.0, rcscore = 0.0;
+	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc[MAXRC], rcscore[MAXRC];
+	long krc, nrc = P->hasratecov;
+	int condcap = 0;
 	int hasmiss = PD->hasmiss;
 
 	PROF_START(pt_setup);
@@ -1910,6 +2009,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	{
 		double *u = (double *)malloc((size_t)(n + 1) * sizeof(double));
 		double *ev = (double *)malloc((size_t)(n + 1) * sizeof(double));
+		double *availbuf = (M->nstruct > 0) ? (double *)malloc((size_t)(n + 1) * sizeof(double)) : NULL;
 		double *tt_arr = M->need_transtrip ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
 		double *c3_arr = M->need_cycle3 ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
 		double *chg = (double *)malloc((size_t)(n + 1) * (size_t)(M->nterms > 0 ? M->nterms : 1) * sizeof(double));
@@ -1919,18 +2019,24 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		double rate = P->rate, rateBeh = P->rateBeh;
 		double grandRate;
 		int symB = (P->symtype == 1 || P->symtype == 2 || P->symtype == 3);
-		double sumw2_rc = 0.0, sumw2x_rc = 0.0, Sp_rc = 0.0, symGfac_rc = 0.0, symdlogG_rc = 0.0;
+		double sumw2_rc = 0.0, sumw2x_rc[MAXRC], Sp_rc[MAXRC], symGfac_rc = 0.0, symdlogG_rc[MAXRC];
+		for (krc = 0; krc < MAXRC; krc++) { covrateSum_rc[krc] = 0.0; rcscore[krc] = 0.0; sumw2x_rc[krc] = 0.0; Sp_rc[krc] = 0.0; symdlogG_rc[krc] = 0.0; }
 		if (P->hasratecov) {
+			/* K covariates (protocol 9): w_i = exp(sum_k b_k x_ik); every
+			   score term below is linear in the covariate, one per k */
 			wfull_rc = (double *)malloc((size_t)n * sizeof(double));
 			for (i = 0; i < n; i++) {
-				wfull_rc[i] = exp(P->ratecoef * P->ratecovattr[i]);
+				double eta = 0.0;
+				for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * P->ratecovattr[krc * n + i];
+				wfull_rc[i] = exp(eta);
 				totw_rc += wfull_rc[i];
-				covrateSum_rc += P->ratecovattr[i] * wfull_rc[i];
 				sumw2_rc += wfull_rc[i] * wfull_rc[i];
-				sumw2x_rc += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[i];
+				for (krc = 0; krc < nrc; krc++) {
+					Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
+					sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[krc * n + i];
+				}
 			}
-			Sp_rc = covrateSum_rc;
-			covrateSum_rc *= rate;
+			for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
 			if (symB) {
 				/* RSiena's pairwise (B) model types with a rate covariate
 				   (DependentVariable::calculateRates(), NetworkVariable::
@@ -1941,8 +2047,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				   rate = lambda^2 * (n - 1), the scale on which the rate
 				   of the model without covariate is the per-actor rate. */
 				symGfac_rc = (totw_rc * totw_rc - sumw2_rc) / (double)(n - 1);
-				covrateSum_rc = rate * (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (double)(n - 1);
-				symdlogG_rc = (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (totw_rc * totw_rc - sumw2_rc);
+				for (krc = 0; krc < nrc; krc++) {
+					covrateSum_rc[krc] = rate * (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (double)(n - 1);
+					symdlogG_rc[krc] = (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (totw_rc * totw_rc - sumw2_rc);
+				}
 			}
 		}
 		grandRate = P->hasratecov ? (symB ? rate * symGfac_rc : rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
@@ -1951,9 +2059,15 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		   least one step (EpochSimulation::runEpoch() checks after each
 		   step); dyads missing at either end of the period do not count */
 		while (P->condmode ? (steps == 0.0 || simDist < P->targetChange) : (t < 1.0)) {
+			/* RSiena's guard (EpochSimulation::runEpoch(): "Unlikely to
+			   terminate this epoch: more than 1000000 steps"): a
+			   conditional period that does not reach the observed distance
+			   within a million ministeps is abandoned; the time is then
+			   returned as missing (SV_missval), which the caller reports */
+			if (P->condmode && steps >= 1000000.0) { condcap = 1; break; }
 			double dt_rc = -log(rng_unif(&rng)) / grandRate;
 			t += dt_rc;
-			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) rcscore -= dt_rc * covrateSum_rc;
+			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
 			if (P->condmode || t < 1.0) {
 				int actNet = (M->nbehterms == 0) || (rng_unif(&rng) * grandRate <= (double)npresent * rate);
 				if (actNet && (P->symtype == 1 || P->symtype == 2 || P->symtype == 3)) {
@@ -1977,7 +2091,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
 					}
 					else actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					if (P->hasratecov) {
@@ -2000,9 +2114,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						}
 						if (P->want_score) {
 							double wa = wfull_rc[actor - 1];
-							rcscore += P->ratecovattr[alter - 1] - Sp_rc / totw_rc
-								- (Sp_rc - wa * P->ratecovattr[actor - 1]) / (totw_rc - wa)
-								+ symdlogG_rc;
+							for (krc = 0; krc < nrc; krc++)
+								rcscore[krc] += P->ratecovattr[krc * n + alter - 1] - Sp_rc[krc] / totw_rc
+									- (Sp_rc[krc] - wa * P->ratecovattr[krc * n + actor - 1]) / (totw_rc - wa)
+									+ symdlogG_rc[krc];
 						}
 					}
 					else if (PD->haspresent) {
@@ -2077,6 +2192,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				}
 				else if (actNet) {
 					long actor, j, choice;
+					const double *avail;
 					double maxu, stayterm, denom, draw, cum;
 					PROF_START(pt_a);
 					if (P->hasratecov) {
@@ -2087,7 +2203,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
 					} else {
 						actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					}
@@ -2103,7 +2219,16 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 					PROF_ADD(PR_ACTOR, pt_a);
 					PROF_START(pt_e);
-					maxu = eval_network_alternatives(M, P, &g, attrs, actor, presentArr, tt_arr, c3_arr, chg, u, ijx);
+					/* protocol 11, structural(): fixed dyads of the actor are
+					   not among its alternatives (as absent actors) */
+					avail = presentArr;
+					if (M->nstruct > 0 && M->struct_off[actor + 1] > M->struct_off[actor]) {
+						long q;
+						for (j = 1; j <= n; j++) availbuf[j] = presentArr ? presentArr[j] : 1.0;
+						for (q = M->struct_off[actor]; q < M->struct_off[actor + 1]; q++) availbuf[M->struct_j[q]] = 0.0;
+						avail = availbuf;
+					}
+					maxu = eval_network_alternatives(M, P, &g, attrs, actor, avail, tt_arr, c3_arr, chg, u, ijx);
 					PROF_ADD(PR_EVAL, pt_e);
 					PROF_START(pt_s);
 
@@ -2111,7 +2236,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					denom = stayterm;
 					for (j = 1; j <= n; j++) {
 						if (j == actor) continue;
-						if (presentArr && presentArr[j] == 0.0) continue;
+						if (avail && avail[j] == 0.0) continue;
 						ev[j] = exp(u[j] - maxu);
 						denom += ev[j];
 					}
@@ -2122,7 +2247,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					if (draw > cum) {
 						for (j = 1; j <= n; j++) {
 							if (j == actor) continue;
-							if (presentArr && presentArr[j] == 0.0) continue;
+							if (avail && avail[j] == 0.0) continue;
 							cum += ev[j];
 							choice = j;
 							if (draw <= cum) break;
@@ -2134,7 +2259,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							const double *c = chg + k * stride;
 							for (j = 1; j <= n; j++) {
 								if (j == actor) continue;
-								if (presentArr && presentArr[j] == 0.0) continue;
+								if (avail && avail[j] == 0.0) continue;
 								ebar_k += (ev[j] / denom) * c[j];
 							}
 							chosen_k = (choice != 0) ? c[choice] : 0.0;
@@ -2194,14 +2319,14 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 					if (hasDown) {
 						for (k = 0; k < M->nbehterms; k++) {
-							chgDown[k] = saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, -1.0);
+							chgDown[k] = (M->hasfntype && M->behfntype[k] == 2) ? 0.0 : saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, -1.0);
 							uDown += P->thetaBeh[k] * chgDown[k];
 						}
 						if (uDown > maxu2) maxu2 = uDown;
 					}
 					if (hasUp) {
 						for (k = 0; k < M->nbehterms; k++) {
-							chgUp[k] = saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, 1.0);
+							chgUp[k] = (M->hasfntype && M->behfntype[k] == 1) ? 0.0 : saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, 1.0);
 							uUp += P->thetaBeh[k] * chgUp[k];
 						}
 						if (uUp > maxu2) maxu2 = uUp;
@@ -2240,14 +2365,15 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				steps += 1.0;
 			}
 		}
-		free(u); free(ev); free(tt_arr); free(c3_arr); free(chg); free(ijx);
+		free(u); free(ev); free(tt_arr); free(c3_arr); free(chg); free(ijx); free(availbuf);
 	}
 	if (wfull_rc) free(wfull_rc);
 	if (P->condmode) ht_free(&horig);
 	PROF_START(pt_end);
 
 	R->steps = steps; R->stepsNet = stepsNet; R->stepsBeh = stepsBeh;
-	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = t; R->rcscore = rcscore;
+	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = condcap ? SV_missval : t;
+	for (krc = 0; krc < MAXRC; krc++) R->rcscore[krc] = rcscore[krc];
 
 	/* distances from the start state (the rate statistics of
 	   unconditional estimation), missing dyads/actors excluded; the
@@ -2266,11 +2392,13 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				if (ht_get(&hs, key, &dv)) continue;
 				if (hasmiss && ht_get(&missht, key, &dv)) continue;
 				nd += 1.0;
+				for (krc = 0; krc < nrc; krc++) R->rcstat[krc] += P->ratecovattr[krc * n + g.elist_i[d] - 1];
 			}
 			for (d = 0; d < PD->nties; d++) {
 				if (has_edge(&g, PD->ti[d], PD->tj[d])) continue;
 				if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
 				nd += 1.0;
+				for (krc = 0; krc < nrc; krc++) R->rcstat[krc] += P->ratecovattr[krc * n + PD->ti[d] - 1];
 			}
 			ht_free(&hs);
 		}
@@ -2320,6 +2448,57 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		}
 		for (k = 0; k < M->nbehterms; k++) R->statBeh[k] = saom_beh_stat_term(have_gm ? &gm : &g, behval_use, M->behtermcodes[k], M->behrange, M->behSimMean, M->behOverallMean);
 		free(behval_masked);
+	}
+	/* protocol 11, endowment/creation statistics (RSiena's
+	   endowmentStatistic()/creationStatistic(), SaomNetworkPatchEndowCreation()
+	   and SaomBehaviorPatchEndowCreation()): network outdegree/reciprocity
+	   endowment = minus the sum over LOST ties of their tie statistic in the
+	   starting network (1, or x_ji), creation = the sum over GAINED ties of
+	   it in the end network; behavior endowment = the sum of the (masked)
+	   decreases, creation = of the increases */
+	if (M->hasfntype) {
+		long d, dv;
+		int needs = 0;
+		for (k = 0; k < M->nterms; k++) if (M->fntype[k] != 0) needs = 1;
+		if (needs) {
+			dyadht_t hs;
+			ht_alloc(&hs, ht_next_pow2(PD->nties * 2 + 16));
+			for (d = 0; d < PD->nties; d++) ht_put(&hs, dyadkey(&g, PD->ti[d], PD->tj[d]), 1);
+			for (k = 0; k < M->nterms; k++) {
+				int rec;
+				double v = 0.0;
+				if (M->fntype[k] == 0) continue;
+				rec = (M->termcodes[k] == TERMCODE_RECIPROCITY);
+				if (M->fntype[k] == 1) {
+					for (d = 0; d < PD->nties; d++) {
+						if (has_edge(&g, PD->ti[d], PD->tj[d])) continue;
+						v -= rec ? (ht_get(&hs, dyadkey(&g, PD->tj[d], PD->ti[d]), &dv) ? 1.0 : 0.0) : 1.0;
+					}
+				}
+				else {
+					for (d = 0; d < g.nties; d++) {
+						long ei = g.elist_i[d], ej = g.elist_j[d];
+						if (ht_get(&hs, dyadkey(&g, ei, ej), &dv)) continue;
+						v += rec ? (has_edge(&g, ej, ei) ? 1.0 : 0.0) : 1.0;
+					}
+				}
+				R->stat[k] = v;
+			}
+			ht_free(&hs);
+		}
+		if (M->nbehterms > 0) {
+			double dn = 0.0, up = 0.0;
+			for (i = 1; i <= n; i++) {
+				double dd;
+				if (hasmiss && PD->missbeh[i] != 0.0) continue;
+				dd = behval[i] - PD->beh0[i];
+				if (dd < 0) dn += dd; else up += dd;
+			}
+			for (k = 0; k < M->nbehterms; k++) {
+				if (M->behfntype[k] == 1) { R->statBeh[k] = dn; R->statBehLag[k] = dn; }
+				else if (M->behfntype[k] == 2) { R->statBeh[k] = up; R->statBehLag[k] = up; }
+			}
+		}
 	}
 	if (have_gm) free_graph(&gm);
 	if (hasmiss) ht_free(&missht);
@@ -2402,6 +2581,9 @@ typedef struct {
 	long P;				// periods
 	period_t *per;		// P entries
 	double **attrmem;	// nattr arrays of n+1
+	long symtype;		// protocol 11: non-directed model type
+	long nrc;		// protocol 11: ratecov() covariates
+	double *rcattr;		// nrc x n
 } batch_state_t;
 
 static batch_state_t batch_state = {0};
@@ -2416,6 +2598,8 @@ static void batch_free(void) {
 	free(batch_state.per);
 	for (k = 0; k < batch_state.M.nattr; k++) free(batch_state.attrmem[k]);
 	free(batch_state.attrmem);
+	free(batch_state.M.struct_off); free(batch_state.M.struct_j);
+	free(batch_state.rcattr);
 	memset(&batch_state, 0, sizeof(batch_state));
 }
 
@@ -2492,6 +2676,42 @@ static void batch_run_units(batch_job_t *J, long nthreads) {
      then m_pd m_i m_j (hasmiss) stacked missing dyads, rows 1..nmisstot
      then mb1..mbP (hasmiss)    behavior missingness per period
      then pr1..prP (haspresent) presence per period */
+/* protocol 11 model trailer (optional; absent = none of these):
+     hasfn [fntype]*nterms [behfntype]*nbehterms   (hasfn = 0: no fields)
+     nstruct [ego alter]*nstruct                    (structural dyads)
+   The structural dyads become a CSR list by ego (1-based). */
+static void parse_model_trailer11(model_t *M) {
+	long k, nst, *si, *sj, i;
+	M->hasfntype = (int)next_long_opt(0);
+	if (M->hasfntype) {
+		for (k = 0; k < M->nterms; k++) M->fntype[k] = (int)next_long();
+		for (k = 0; k < M->nbehterms; k++) M->behfntype[k] = (int)next_long();
+	}
+	nst = next_long_opt(0);
+	M->nstruct = nst;
+	M->struct_off = NULL;
+	M->struct_j = NULL;
+	if (nst > 0) {
+		si = (long *)malloc((size_t)nst * sizeof(long));
+		sj = (long *)malloc((size_t)nst * sizeof(long));
+		for (k = 0; k < nst; k++) { si[k] = next_long(); sj[k] = next_long(); }
+		M->struct_off = (long *)calloc((size_t)(M->n + 2), sizeof(long));
+		M->struct_j = (long *)malloc((size_t)nst * sizeof(long));
+		for (k = 0; k < nst; k++) if (si[k] >= 1 && si[k] <= M->n) M->struct_off[si[k] + 1]++;
+		for (i = 1; i <= M->n + 1; i++) M->struct_off[i] += M->struct_off[i - 1];
+		{
+			long *fill = (long *)calloc((size_t)(M->n + 2), sizeof(long));
+			for (k = 0; k < nst; k++) {
+				if (si[k] < 1 || si[k] > M->n) continue;
+				M->struct_j[M->struct_off[si[k]] + fill[si[k]]] = sj[k];
+				fill[si[k]]++;
+			}
+			free(fill);
+		}
+		free(si); free(sj);
+	}
+}
+
 static ST_retcode batch_setup(char *arg) {
 	model_t *M;
 	long n, P, i, k, pd, ntot, nmtot, col;
@@ -2526,17 +2746,20 @@ static ST_retcode batch_setup(char *arg) {
 	haspresent = (int)next_long();
 	ntot = next_long();
 	nmtot = next_long();
+	/* protocol 11 trailer: model trailer, then the simulation type
+	   (symtype) and the ratecov() covariates (K, then K x n values) */
+	parse_model_trailer11(M);
+	batch_state.symtype = next_long_opt(0);
+	batch_state.nrc = next_long_opt(0);
+	if (batch_state.nrc < 0 || batch_state.nrc > MAXRC) { SF_error("saom_sim: BATCHSETUP too many ratecov() covariates\n"); return 198; }
+	if (batch_state.nrc > 0) {
+		batch_state.rcattr = (double *)malloc((size_t)(n * batch_state.nrc) * sizeof(double));
+		for (i = 0; i < n * batch_state.nrc; i++) batch_state.rcattr[i] = next_double();
+	}
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
-	for (k = 0; k < M->nterms; k++) {
-		if (M->termcodes[k] == TERMCODE_INTERACT2) {
-			int subA = M->attridx[k] - 1, subB = (int)M->p1[k] - 1;
-			saom_mark_need_flags((subA >= 0 && subA < M->nterms) ? M->termcodes[subA] : -1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
-			saom_mark_need_flags((subB >= 0 && subB < M->nterms) ? M->termcodes[subB] : -1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
-		}
-		else saom_mark_need_flags(M->termcodes[k], &M->need_adj, &M->need_transtrip, &M->need_cycle3);
-		if (M->termcodes[k] == TERMCODE_BEHSIM) M->has_behsim = 1;
-	}
+	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
+	for (k = 0; k < M->nterms; k++) if (M->termcodes[k] == TERMCODE_BEHSIM) M->has_behsim = 1;
 	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM) M->need_adj = 1;
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
@@ -2639,6 +2862,7 @@ static ST_retcode batch_run(char *arg) {
 	simparams_t *prm;
 	batch_job_t J;
 	simres_t *res;
+	double rcoef[MAXRC];
 
 	if (!batch_state.ready) { SF_error("saom_sim: BATCHRUN without BATCHSETUP\n"); return 198; }
 	P = batch_state.P;
@@ -2665,6 +2889,14 @@ static ST_retcode batch_run(char *arg) {
 		for (pd = 0; pd < P; pd++) prm[pd].rate = next_double();
 		for (pd = 0; pd < P; pd++) prm[pd].rateBeh = next_double();
 		for (pd = 0; pd < P; pd++) prm[pd].targetChange = next_double();
+		/* protocol 11: the ratecov() coefficients (nrc of them) */
+		for (k = 0; k < batch_state.nrc; k++) rcoef[k] = next_double();
+		for (pd = 0; pd < P; pd++) {
+			prm[pd].symtype = batch_state.symtype;
+			prm[pd].hasratecov = batch_state.nrc;
+			prm[pd].ratecovattr = batch_state.rcattr;
+			prm[pd].ratecoef = rcoef;
+		}
 	}
 	if (wire_parse_error) { free(prm); SF_error("saom_sim: BATCHRUN argument string ran out of fields\n"); return 198; }
 	if (nthreads <= 0) nthreads = saom_physical_cores();
@@ -2683,7 +2915,9 @@ static ST_retcode batch_run(char *arg) {
 
 	/* condmode 2 = conditional simulation with the full output of mode 0
 	   plus a 7th per-period column, the simulated time */
-	W = (condmode == 1) ? P : (2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P);
+	/* protocol 11: with ratecov(), 2*nrc more columns at the end: per
+	   covariate the statistic and the score, summed over periods */
+	W = (condmode == 1) ? P : (2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc);
 	for (k = 0; k < K; k++) {
 		if (condmode == 1) {
 			for (pd = 0; pd < P; pd++) SF_vstore((int)(pd + 1), (int)(k + 1), res[k * P + pd].t);
@@ -2710,6 +2944,16 @@ static ST_retcode batch_run(char *arg) {
 				SF_vstore((int)(base + 4), (int)(k + 1), r->nchanges);
 				SF_vstore((int)(base + 5), (int)(k + 1), r->nchangesBeh);
 				if (condmode == 2) SF_vstore((int)(base + 6), (int)(k + 1), r->t);
+			}
+			if (batch_state.nrc > 0) {
+				long base0 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 1;
+				long kr;
+				for (kr = 0; kr < batch_state.nrc; kr++) {
+					double sc = 0.0, st = 0.0;
+					for (pd = 0; pd < P; pd++) { sc += res[k * P + pd].rcscore[kr]; st += res[k * P + pd].rcstat[kr]; }
+					SF_vstore((int)(base0 + 2 * kr), (int)(k + 1), st);
+					SF_vstore((int)(base0 + 2 * kr + 1), (int)(k + 1), sc);
+				}
 			}
 		}
 	}
@@ -2761,15 +3005,7 @@ static ST_retcode legacy_call(char *arg0) {
 		M.attridx[i] = (int)next_long();
 		M.p1[i] = next_double();
 	}
-	for (i = 0; i < M.nterms; i++) {
-		if (M.termcodes[i] == TERMCODE_INTERACT2) {
-			int subA = M.attridx[i] - 1, subB = (int)M.p1[i] - 1;
-			saom_mark_need_flags((subA >= 0 && subA < M.nterms) ? M.termcodes[subA] : -1, &M.need_adj, &M.need_transtrip, &M.need_cycle3);
-			saom_mark_need_flags((subB >= 0 && subB < M.nterms) ? M.termcodes[subB] : -1, &M.need_adj, &M.need_transtrip, &M.need_cycle3);
-		} else {
-			saom_mark_need_flags(M.termcodes[i], &M.need_adj, &M.need_transtrip, &M.need_cycle3);
-		}
-	}
+	saom_model_need_flags((int)M.nterms, M.termcodes, M.attridx, M.p1, &M.need_adj, &M.need_transtrip, &M.need_cycle3);
 	for (i = 0; i < M.nterms; i++) P.theta[i] = next_double();
 	P.want_score = (int)next_long();
 
@@ -2798,11 +3034,18 @@ static ST_retcode legacy_call(char *arg0) {
 	haspresentNet = next_long();
 	P.symtype = next_long();
 	P.hasratecov = next_long();
+	P.ratecovattr = NULL;
+	P.ratecoef = NULL;
+	if (P.hasratecov < 0 || P.hasratecov > MAXRC) { free(argbuf); SF_error("saom_sim: too many ratecov() covariates\n"); return(198); }
 	if (P.hasratecov) {
-		P.ratecovattr = (double *)malloc((size_t)n * sizeof(double));
-		for (i = 0; i < n; i++) P.ratecovattr[i] = next_double();
-		P.ratecoef = next_double();
+		/* K covariates: K x n values, then K coefficients (K = 1: the
+		   protocol-7 layout) */
+		P.ratecovattr = (double *)malloc((size_t)(n * P.hasratecov) * sizeof(double));
+		P.ratecoef = (double *)malloc((size_t)P.hasratecov * sizeof(double));
+		for (i = 0; i < n * P.hasratecov; i++) P.ratecovattr[i] = next_double();
+		for (i = 0; i < P.hasratecov; i++) P.ratecoef[i] = next_double();
 	}
+	parse_model_trailer11(&M);
 	free(argbuf);
 
 	if (wire_parse_error) { free(P.ratecovattr); SF_error("saom_sim: wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
@@ -2895,7 +3138,12 @@ static ST_retcode legacy_call(char *arg0) {
 	SF_scal_save("__saom_native_steps", (ST_double)R.steps);
 	SF_scal_save("__saom_native_nchanges", (ST_double)R.nchanges);
 	SF_scal_save("__saom_native_condtime", (ST_double)R.t);
-	SF_scal_save("__saom_native_rcscore", (ST_double)R.rcscore);
+	SF_scal_save("__saom_native_rcscore", (ST_double)R.rcscore[0]);
+	for (i = 0; i < P.hasratecov; i++) {
+		char rcnm[48];
+		snprintf(rcnm, sizeof(rcnm), "__saom_native_rcscore%ld", (long)(i + 1));
+		SF_scal_save(rcnm, (ST_double)R.rcscore[i]);
+	}
 	SF_scal_save("__saom_native_stepsnet", (ST_double)R.stepsNet);
 	SF_scal_save("__saom_native_stepsbeh", (ST_double)R.stepsBeh);
 	SF_scal_save("__saom_native_netdist", (ST_double)R.netdist);
@@ -2921,6 +3169,8 @@ static ST_retcode legacy_call(char *arg0) {
 	for (k = 0; k < M.nattr; k++) free(attrmem[k]);
 	free(PD.ti); free(PD.tj); free(PD.beh0); free(PD.mi); free(PD.mj); free(PD.missbeh); free(PD.present);
 	free(P.ratecovattr);
+	free(P.ratecoef);
+	free(M.struct_off); free(M.struct_j);
 	return(0);
 }
 

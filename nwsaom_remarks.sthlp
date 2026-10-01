@@ -110,7 +110,7 @@ as {opt antiiniso}/{opt antiiniso2}, just with a threshold of 3 instead of 1/2) 
 does not accept an option name with a digit followed by more letters; the coefficient itself is
 still labeled {cmd:in3plus}. {opt antiiniso}/{opt antiiniso2}/{opt inplus3} are genuinely
 spillover-free (match the exact global before/after difference on any toggle, {opt outiso}'s own
-shape) and natively ported; {opt antiiso}/{opt isolatepop} remain Mata-only.
+shape) and natively ported; {opt antiiso}/{opt isolatepop} are native since 2026-10-01 (Mata-only before).
 {opt antiiso}/{opt isolatepop} additionally gate on the alter's own outdegree, which gives them a
 real, disclosed multi-actor spillover of their own (an actor's own outgoing tie choice changes that
 actor's OWN outdegree, which can independently flip that same actor's own separate membership in
@@ -182,8 +182,11 @@ correctness gap.
 {opt interact(effect1#effect2 [#effect3])} is a direct port of RSiena's real
 {cmd:includeInteraction()} mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}):
 the interaction's own contribution to an actor's ministep utility, for a candidate tie change to a
-given alter, is the PRODUCT of the component effects' own contributions (not their sum, and not
-computed on the components' aggregate statistics) - so {cmd:interact(reciprocity#transtrip)}
+given alter, is the PRODUCT of the component effects' own contributions for creating that tie,
+negated when the change withdraws an existing tie (not their sum, and not computed on the
+components' aggregate statistics; before 2026-10-01 a two-way interaction had the wrong sign on
+withdrawals, see GOTCHA.md; validated since against RSiena for sameX x recip and egoX x recip,
+within 0.05 standard errors) - so {cmd:interact(reciprocity#transtrip)}
 contributes {it:reciprocity's own change value} times {it:transtrip's own change value} for that
 same candidate tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an
 interaction term is likewise the sum, over the network's existing ties, of the product of the
@@ -198,9 +201,9 @@ than approximating one with the other. A THIRD effect is optional, matching RSie
 {cmd:includeInteraction()} signature exactly (its own {cmd:effect3} argument, confirmed directly
 from real source): when given, it simply multiplies in as a third factor, both for the ministep
 contribution and the statistic - {cmd:interact(reciprocity#transtrip#nodecov(x))} contributes the
-product of all three components' own values. Three-way {opt interact()} is Mata-only for now (the
-native backend's own wire protocol has room for only two component references); it still runs, just
-without the native speed-up, falling back the same way any other native-ineligible model does.
+product of all three components' own values. Three-way {opt interact()} runs in the native plugin
+since 2026-10-01 (before, in Mata: about 4 minutes instead of 0.3 s on glasgow); validated against
+RSiena (sameX x recip x egoX, 5 seeds, within 0.03 standard errors).
 
 {pstd}
 Every named effect must already be included in the model as its own main-effect term (add
@@ -434,8 +437,8 @@ rate's statistic, and RSiena reports a singular covariance matrix for this model
 estimators - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciprocityendow}/
 {opt reciprocitycreation}. On s50 waves 1-2 that model gives (RSiena, unconditional estimation,
 mean of five seeds, in parentheses) outdegree -2.04 (-2.04), reciprocity endowment 0.77 (0.82, SE
-0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run on the Mata engine (about
-a minute on s50). Not yet supported combined with co-evolution, multi-wave models,
+0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run in the native plugin since
+2026-10-01 (0.2 s on s50; before, in Mata, about a minute). Not yet supported combined with co-evolution, multi-wave models,
 {opt present()} (composition change), or {opt missnet()} (real missing network data) - each is
 rejected outright (error 198) rather than silently producing a partially-gated fit.
 
@@ -466,10 +469,8 @@ Co-evolution has the same native (C) speed backend as the network-only case (see
 above), used automatically - no option needed to opt in - whenever every network AND every behavior
 term in the model has native coverage; a fit combining even one not-yet-natively-ported term on
 either side transparently falls back to the fully-certified, always-available Mata engine for the
-WHOLE fit, never a silent partial native run. The behavior endowment/creation splits (below) are
-one such case: they always run on the Mata engine, not the native backend, so a fit using them will be
-noticeably slower than the {bf:Performance} section's own benchmark numbers, which are for
-evaluation-function-only models.
+WHOLE fit, never a silent partial native run, and reports it ({cmd:e(engine)}, and a note after the
+output). Since 2026-10-01 every effect is native, the behavior endowment/creation splits included.
 
 {pstd}
 {bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): endowment/creation
@@ -494,6 +495,37 @@ the eval effects) - omit it to start from 0. The coefficient and the effects (an
 {opt unconditional}, the rate) are one Robbins-Monro parameter vector. If the data do not identify the coefficient (a non-positive
 derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
 does - {bf:e(ratecoef_fixed)} reports whether this happened.
+
+{marker covariates}{...}
+{title:Covariate effects for several variables}
+
+{pstd}
+{opt samex()}/{opt nodematch()}, {opt egox()}/{opt nodeocov()}, {opt altx()}/{opt nodeicov()},
+{opt nodecov()}, {opt simx()}/{opt simcov()} and {opt ratecov()} take a varlist, one effect and
+coefficient per variable, e.g. {cmd:samex(smoke1 sport1) egox(alcohol1) altx(alcohol1) simx(alcohol1)}.
+Coefficients are named {it:effect}_{it:variable} ({cmd:samex_smoke1}); e(b), and {opt theta0()},
+list the effect types in their fixed order and the variables in the order given. An interaction
+names a variable's effect by its coefficient name, {cmd:interact(samex_smoke1#transtrip)}.
+
+{pstd}
+As in RSiena, centre a covariate before using it in {opt egox()}, {opt altx()}, {opt nodecov()} or
+{opt ratecov()} if the outdegree (and rate) coefficients are to be comparable with RSiena's, which
+centres covariates by default ({cmd:coCovar(..., centered = TRUE)}); the covariate coefficients are
+the same either way. {opt simx()} is centred by the covariate's similarity mean, as RSiena's simX
+(since 2026-10-01).
+
+{pstd}
+Validation against RSiena 1.6.6 (glasgow waves 1-2, five seeds each, conditional and unconditional):
+sameX on smoke1 and sport1; egoX, altX and simX on two covariates; a model with gwespFF,
+transRecTrip, inPopSqrt, outAct, sameX on two covariates and egoX/altX/simX(alcohol1); a
+co-evolution model (waves 1-3, smoking) with sameX on sport1 and alcohol1, simX(smoking),
+linear, quadratic and avAlt; RateX on two covariates. Every estimate, rates included, agrees
+with RSiena's within 0.07 standard errors (mean 0.02), standard errors within 10% (RateX,
+unconditional: nwsaom's 0.7-0.95 of RSiena's, whose mean is inflated by one seed). With
+outPopSqrt in place of outAct in the larger model, RSiena itself does not converge on these data
+(maximum convergence ratio about 3 on every seed, also started from {cmd:nwsaom}'s estimates),
+while {cmd:nwsaom} converges (below 0.25). Timings for the larger model: {cmd:nwsaom} about 1 s,
+RSiena 5-7 s per fit.
 
 {marker undirected}{...}
 {title:Undirected/symmetric relations}
@@ -724,8 +756,8 @@ special-casing was needed, mirroring the design of {opt missnet()} above.
 v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no
 {opt behavior()}); not yet combinable with {opt symmetric}, {opt ratecov()}, or the network
 endowment/creation split ({opt outdegreeendow}/{opt outdegreecreation}/{opt reciprocityendow}/
-{opt reciprocitycreation}) - each is rejected outright when combined with {opt structural()}. Uses
-the Mata engine only (no native speed-up yet).
+{opt reciprocitycreation}) - each is rejected outright when combined with {opt structural()}. Runs in
+the native plugin since 2026-10-01 (before, in Mata: 42 s instead of 0.2 s on glasgow).
 
 {marker estimation}{...}
 {title:Estimation}
@@ -738,7 +770,9 @@ one) and runs only the periods of a step in parallel, and only when the network 
 for threads to pay off. {opt cores(#)} sets the number of threads (default: all physical cores).
 Each simulation draws from its own random stream derived from the seed and its position, so a
 given {opt seed()} gives identical results with {cmd:cores(1)} and with any other number of
-threads. {opt symmetric} and {opt ratecov()} fits use the single-simulation path (no threads).
+threads. Since 2026-10-01 non-directed ({opt symmetric}), {opt ratecov()}, endowment/creation and
+{opt structural()} fits use the threaded path too (before, single simulations: e.g. 3.5 s instead of
+0.3 s for {opt ratecov()} with two covariates).
 Timings on one 18-core machine: the s50 three-wave network-only model {cmd:outdegree reciprocity}
 {cmd:transtrip} 0.33 s, the two-wave {cmd:outdegree reciprocity} model 0.23 s; the s50
 three-wave co-evolution model 0.63 s; a synthetic 500-actor three-wave co-evolution model 18 s.

@@ -93,8 +93,11 @@ directed, so all 16 categories are always reported (no undirected-network specia
 {bf:behavior} (real RSiena's own {cmd:BehaviorDistribution()}), and simulate network and behavior
 JOINTLY for every replicate regardless of which {opt stats()} were actually requested - the fitted
 coefficients were estimated jointly, so a network-only simulation would not be faithful to the
-fitted model even when only network statistics are being checked. Co-evolution GOF always uses the
-Mata reference simulator (no native backend yet for the joint network+behavior case).
+fitted model even when only network statistics are being checked. GOF simulates the fitted model -
+endowment/creation, {opt structural()}, {opt ratecov()}, {opt present()} and non-directed model
+types included - in the native plugin when it covers the model (co-evolution too since 2026-10-01;
+before, co-evolution GOF ran in Mata, and network GOF ignored endowment/creation, {opt structural()},
+{opt ratecov()} and {opt present()}).
 
 {pstd}
 {bf:The plot.} Each statistic's own result is additionally rendered as a violin plot: a
