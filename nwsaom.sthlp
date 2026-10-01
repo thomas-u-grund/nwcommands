@@ -61,10 +61,10 @@
 
 {marker covariate_options}{...}
 {syntab:Node covariate effects}
-{synopt:{opth nodematch(varname)}}Homophily on a categorical node attribute (exact match); ONE variable per model - RSiena alias {opt samex()}{p_end}
-{synopt:{opth nodecov(varname)}}Continuous covariate main effect (sum over sender's and receiver's own values); ONE variable per model{p_end}
-{synopt:{opth nodeicov(varname)}}Alter (receiver) covariate effect - RSiena's own "altX"; ONE variable per model - RSiena alias {opt altx()}{p_end}
-{synopt:{opth nodeocov(varname)}}Ego (sender) covariate effect - RSiena's own "egoX"; ONE variable per model - RSiena alias {opt egox()}{p_end}
+{synopt:{opth nodematch(varlist)}}Homophily on categorical node attributes (exact match), one effect per variable - RSiena alias {opt samex()}{p_end}
+{synopt:{opth nodecov(varlist)}}Continuous covariate main effect (sum over sender's and receiver's own values), one effect per variable{p_end}
+{synopt:{opth nodeicov(varlist)}}Alter (receiver) covariate effect - RSiena's own "altX", one effect per variable - RSiena alias {opt altx()}{p_end}
+{synopt:{opth nodeocov(varlist)}}Ego (sender) covariate effect - RSiena's own "egoX", one effect per variable - RSiena alias {opt egox()}{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -107,15 +107,15 @@
 {synoptline}
 {marker interaction_options}{...}
 {syntab:Interaction effects}
-{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom_remarks##nwsaom_interaction:Interaction effects} in nwsaom_remarks{p_end}
+{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's own {cmd:includeInteraction()}) between effects ALREADY included in the model as their own main effects - the interaction's own contribution to an actor's ministep utility is the PRODUCT of the components' own contributions, with its own freely-estimated coefficient. Multiple interactions may be listed, space-separated. Restricted to "dyadic" (tie-level) effects that have a well-defined per-tie contribution to multiply: {bf:outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance} (and their RSiena aliases {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}) - the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}) have no such per-tie value and are rejected, whether named first, second, or third. A covariate effect given for several variables is named by its coefficient name, e.g. {cmd:interact(samex_smoke1#transtrip)} (either spelling, {cmd:nodematch_smoke1} or {cmd:samex_smoke1}); with one variable the effect type alone still works ({cmd:interact(samex#transtrip)}). Coefficients are named interact_{it:A}_{it:B}, or ix_{it:A}_{it:B} when that is longer than 32 characters. Three-way interactions are Mata-only (no native speed-up yet); behavior interactions are not yet supported. See {help nwsaom_remarks##nwsaom_interaction:Interaction effects} in nwsaom_remarks{p_end}
 
 {marker alias_options}{...}
 {syntab:RSiena naming aliases}
-{synopt:{opth simcov(varname)}}Covariate similarity effect; ONE variable per model - RSiena alias {opt simx()}{p_end}
-{synopt:{opth egox(varname)}}RSiena naming alias for {opt nodeocov()} - identical effect, coefficient label follows this spelling{p_end}
-{synopt:{opth altx(varname)}}RSiena naming alias for {opt nodeicov()} - identical effect, coefficient label follows this spelling{p_end}
-{synopt:{opth samex(varname)}}RSiena naming alias for {opt nodematch()} - identical effect, coefficient label follows this spelling{p_end}
-{synopt:{opth simx(varname)}}RSiena naming alias for {opt simcov()} - identical effect, coefficient label follows this spelling{p_end}
+{synopt:{opth simcov(varlist)}}Covariate similarity effect, 1 - |x_i - x_j|/range minus its mean over all pairs (RSiena's simX; before 2026-10-01 not centred, which changed only the outdegree coefficient), one effect per variable - RSiena alias {opt simx()}{p_end}
+{synopt:{opth egox(varlist)}}RSiena naming alias for {opt nodeocov()} - identical effect, coefficient label follows this spelling{p_end}
+{synopt:{opth altx(varlist)}}RSiena naming alias for {opt nodeicov()} - identical effect, coefficient label follows this spelling{p_end}
+{synopt:{opth samex(varlist)}}RSiena naming alias for {opt nodematch()} - identical effect, coefficient label follows this spelling{p_end}
+{synopt:{opth simx(varlist)}}RSiena naming alias for {opt simcov()} - identical effect, coefficient label follows this spelling{p_end}
 
 {synoptline}
 {p2colreset}{...}
@@ -153,8 +153,8 @@
 
 {marker ratecov_options}{...}
 {syntab:Covariate-dependent rate}
-{synopt:{opth ratecov(varname)}}Let a node covariate raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp({bf:ratecovcoef}*{it:varname}[i]). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}; combinable with {opt symmetric}. See {help nwsaom_remarks:Remarks}{p_end}
-{synopt:{opt ratecovcoef(real)}}Starting value for {opt ratecov()}'s own jointly-estimated coefficient (default 0){p_end}
+{synopt:{opth ratecov(varlist)}}Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp(sum of {it:b_k}*{it:x_k}[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}; combinable with {opt symmetric}. See {help nwsaom_remarks:Remarks}{p_end}
+{synopt:{opt ratecovcoef(numlist)}}Starting values for the {opt ratecov()} coefficients, one per variable or one for all (default 0){p_end}
 
 {marker symmetric_options}{...}
 {syntab:Undirected/symmetric relations}
@@ -242,10 +242,14 @@ variable. The linear shape effect can be split into endowment/creation roles
 {p2colreset}{...}
 
 {pstd}
-Each of {opt nodematch()}, {opt nodecov()}, {opt nodeicov()}/{opt egox()}, {opt nodeocov()}/
-{opt altx()}, {opt simcov()}/{opt simx()} accepts exactly ONE variable per model (unlike
-{help nwergm}'s own {opt varlist}-based options) - a real, current v1 restriction, not a design
-choice expected to be permanent.
+Each of {opt nodematch()}/{opt samex()}, {opt nodecov()}, {opt nodeicov()}/{opt altx()},
+{opt nodeocov()}/{opt egox()}, {opt simcov()}/{opt simx()} and {opt ratecov()} takes a varlist:
+one effect, with its own coefficient, per variable (as RSiena allows any number). Coefficients are
+named {it:effect}_{it:variable}, using the spelling of the option given ({cmd:samex(smoke1 sport1)}
+gives {cmd:samex_smoke1} and {cmd:samex_sport1}); with one variable the name is the same as it
+always was. In e(b), and so in {opt theta0()}, the effect types come in their fixed order and,
+within a type, the variables in the order listed; {cmd:matrix list e(b)} shows it. (Before
+2026-10-01 each of these options took one variable.)
 
 {marker effects}{...}
 
@@ -300,6 +304,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(nodes)}			number of actors
 		  {bf:e(nwaves)}		number of waves supplied
 		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks). {opt symmetric} fits: on RSiena's scale for pairwise models (see {help nwsaom_remarks##undirected:Undirected/symmetric relations} in nwsaom_remarks)
+		  {bf:e(ratecoefs)}		{opt ratecov()} fits: 1 x K covariate-rate coefficients, columns named by the variables; also {bf:e(ratecoefs_se)}, {bf:e(ratecoefs_tratio)}, {bf:e(ratecoefs_fixed)} (with one variable also the scalars {bf:e(ratecoef)}, {bf:e(ratecoef_se)}, {bf:e(ratecoef_tratio)}, {bf:e(ratecoef_fixed)})
 		  {bf:e(rate_actor)}		non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 		  {bf:e(conditional)}		1 for conditional estimation, 0 for unconditional
 		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)

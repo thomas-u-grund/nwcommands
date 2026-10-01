@@ -495,6 +495,37 @@ the eval effects) - omit it to start from 0. The coefficient and the effects (an
 derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
 does - {bf:e(ratecoef_fixed)} reports whether this happened.
 
+{marker covariates}{...}
+{title:Covariate effects for several variables}
+
+{pstd}
+{opt samex()}/{opt nodematch()}, {opt egox()}/{opt nodeocov()}, {opt altx()}/{opt nodeicov()},
+{opt nodecov()}, {opt simx()}/{opt simcov()} and {opt ratecov()} take a varlist, one effect and
+coefficient per variable, e.g. {cmd:samex(smoke1 sport1) egox(alcohol1) altx(alcohol1) simx(alcohol1)}.
+Coefficients are named {it:effect}_{it:variable} ({cmd:samex_smoke1}); e(b), and {opt theta0()},
+list the effect types in their fixed order and the variables in the order given. An interaction
+names a variable's effect by its coefficient name, {cmd:interact(samex_smoke1#transtrip)}.
+
+{pstd}
+As in RSiena, centre a covariate before using it in {opt egox()}, {opt altx()}, {opt nodecov()} or
+{opt ratecov()} if the outdegree (and rate) coefficients are to be comparable with RSiena's, which
+centres covariates by default ({cmd:coCovar(..., centered = TRUE)}); the covariate coefficients are
+the same either way. {opt simx()} is centred by the covariate's similarity mean, as RSiena's simX
+(since 2026-10-01).
+
+{pstd}
+Validation against RSiena 1.6.6 (glasgow waves 1-2, five seeds each, conditional and unconditional):
+sameX on smoke1 and sport1; egoX, altX and simX on two covariates; a model with gwespFF,
+transRecTrip, inPopSqrt, outAct, sameX on two covariates and egoX/altX/simX(alcohol1); a
+co-evolution model (waves 1-3, smoking) with sameX on sport1 and alcohol1, simX(smoking),
+linear, quadratic and avAlt; RateX on two covariates. Every estimate, rates included, agrees
+with RSiena's within 0.07 standard errors (mean 0.02), standard errors within 10% (RateX,
+unconditional: nwsaom's 0.7-0.95 of RSiena's, whose mean is inflated by one seed). With
+outPopSqrt in place of outAct in the larger model, RSiena itself does not converge on these data
+(maximum convergence ratio about 3 on every seed, also started from {cmd:nwsaom}'s estimates),
+while {cmd:nwsaom} converges (below 0.25). Timings for the larger model: {cmd:nwsaom} about 1 s,
+RSiena 5-7 s per fit.
+
 {marker undirected}{...}
 {title:Undirected/symmetric relations}
 

@@ -645,8 +645,34 @@ program nwsaom, eclass
 		}
 	}
 
+	// ratecov(varlist): one covariate-rate coefficient per variable
+	// (2026-10-01; RSiena allows several RateX effects), the actor's rate
+	// is rate*exp(sum_k b_k x_k). ratecovcoef(numlist): starting values,
+	// one per variable or one for all.
 	local __nwsaom_hasratecov = ("`ratecov'" != "")
-	if `__nwsaom_hasratecov' & "`ratecovcoef'" == "" local ratecovcoef "0"
+	local __nwsaom_nratecov 0
+	if `__nwsaom_hasratecov' {
+		unab ratecov : `ratecov'
+		local __nwsaom_nratecov : word count `ratecov'
+		if `__nwsaom_nratecov' > 16 {
+			di "{err}{bf:ratecov()} takes at most 16 variables."
+			error 198
+		}
+		if "`ratecovcoef'" == "" local ratecovcoef "0"
+		capture numlist "`ratecovcoef'"
+		if _rc {
+			di "{err}{bf:ratecovcoef()} must be a list of numbers (starting values of the covariate-rate coefficients)."
+			error 198
+		}
+		local ratecovcoef "`r(numlist)'"
+		local __nwsaom_nrcc : word count `ratecovcoef'
+		if `__nwsaom_nrcc' != 1 & `__nwsaom_nrcc' != `__nwsaom_nratecov' {
+			di "{err}{bf:ratecovcoef()} must give one starting value, or one per {bf:ratecov()} variable (`__nwsaom_nratecov')."
+			error 198
+		}
+		local ratecovcoef : subinstr local ratecovcoef " " ",", all
+		local ratecovcoef "(`ratecovcoef')"
+	}
 	// v1 scope restriction, disclosed not silently degraded - same
 	// reasoning and same narrow scope as outdegreeendow/reciprocityendow
 	// immediately above: this reuses SaomEstimateRM()'s own chained-
@@ -1005,13 +1031,19 @@ program nwsaom, eclass
 		local __nwsaom_netfntype_list "`__nwsaom_netfntype_list' 0"
 	}
 
+	// covariate effects take a varlist (2026-10-01): one term and one
+	// coefficient per variable, named <effect>_<variable> (e.g.
+	// samex_smoke1), in the order the variables are listed - the same
+	// name a single variable always had.
 	if "`nodematch'" != "" {
-		confirm variable `nodematch'
-		tempname __td_nm
-		mata: `__td_nm' = ErgmTermData()
-		mata: `__td_nm'.attr = st_data(1::`nodes', "`nodematch'")
-		mata: __nwsaom_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm', ("`__nwsaom_samelab'_`nodematch'"))
-		local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_samelab'(`nodematch')"
+		unab nodematch : `nodematch'
+		foreach __v of local nodematch {
+			tempname __td_nm
+			mata: `__td_nm' = ErgmTermData()
+			mata: `__td_nm'.attr = st_data(1::`nodes', "`__v'")
+			mata: __nwsaom_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm', ("`__nwsaom_samelab'_`__v'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_samelab'(`__v')"
+		}
 	}
 
 	// --- nodecov()/nodeicov()/nodeocov(): direct reuse of nwergm's own
@@ -1020,28 +1052,34 @@ program nwsaom, eclass
 	// RSiena "ego" effect, nodeicov = standard "alter" effect, nodecov
 	// = their combined sum). See docs/SAOM_ROADMAP.md unit 2.
 	if "`nodecov'" != "" {
-		confirm variable `nodecov'
-		tempname __td_nc
-		mata: `__td_nc' = ErgmTermData()
-		mata: `__td_nc'.attr = st_data(1::`nodes', "`nodecov'")
-		mata: __nwsaom_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc', ("nodecov_`nodecov'"))
-		local __nwsaom_efflist "`__nwsaom_efflist' nodecov(`nodecov')"
+		unab nodecov : `nodecov'
+		foreach __v of local nodecov {
+			tempname __td_nc
+			mata: `__td_nc' = ErgmTermData()
+			mata: `__td_nc'.attr = st_data(1::`nodes', "`__v'")
+			mata: __nwsaom_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc', ("nodecov_`__v'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' nodecov(`__v')"
+		}
 	}
 	if "`nodeicov'" != "" {
-		confirm variable `nodeicov'
-		tempname __td_nic
-		mata: `__td_nic' = ErgmTermData()
-		mata: `__td_nic'.attr = st_data(1::`nodes', "`nodeicov'")
-		mata: __nwsaom_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_nic', ("`__nwsaom_altlab'_`nodeicov'"))
-		local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_altlab'(`nodeicov')"
+		unab nodeicov : `nodeicov'
+		foreach __v of local nodeicov {
+			tempname __td_nic
+			mata: `__td_nic' = ErgmTermData()
+			mata: `__td_nic'.attr = st_data(1::`nodes', "`__v'")
+			mata: __nwsaom_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_nic', ("`__nwsaom_altlab'_`__v'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_altlab'(`__v')"
+		}
 	}
 	if "`nodeocov'" != "" {
-		confirm variable `nodeocov'
-		tempname __td_noc
-		mata: `__td_noc' = ErgmTermData()
-		mata: `__td_noc'.attr = st_data(1::`nodes', "`nodeocov'")
-		mata: __nwsaom_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_noc', ("`__nwsaom_egolab'_`nodeocov'"))
-		local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`nodeocov')"
+		unab nodeocov : `nodeocov'
+		foreach __v of local nodeocov {
+			tempname __td_noc
+			mata: `__td_noc' = ErgmTermData()
+			mata: `__td_noc'.attr = st_data(1::`nodes', "`__v'")
+			mata: __nwsaom_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_noc', ("`__nwsaom_egolab'_`__v'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
+		}
 	}
 
 	// --- indegpopularity/outactivity: freshly-derived SAOM-native
@@ -1339,13 +1377,16 @@ program nwsaom, eclass
 		local __nwsaom_efflist "`__nwsaom_efflist' inactivity"
 	}
 	if "`simcov'" != "" {
-		confirm variable `simcov'
-		tempname __td_sc
-		mata: `__td_sc' = ErgmTermData()
-		mata: `__td_sc'.attr = st_data(1::`nodes', "`simcov'")
-		mata: `__td_sc'.decay = max(`__td_sc'.attr) - min(`__td_sc'.attr)
-		mata: __nwsaom_last_M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), `__td_sc', ("`__nwsaom_simlab'_`simcov'"))
-		local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_simlab'(`simcov')"
+		unab simcov : `simcov'
+		foreach __v of local simcov {
+			tempname __td_sc
+			mata: `__td_sc' = ErgmTermData()
+			mata: `__td_sc'.attr = st_data(1::`nodes', "`__v'")
+			mata: `__td_sc'.decay = max(`__td_sc'.attr) - min(`__td_sc'.attr)
+			mata: `__td_sc'.center = SaomSimMean(`__td_sc'.attr)
+			mata: __nwsaom_last_M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), `__td_sc', ("`__nwsaom_simlab'_`__v'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_simlab'(`__v')"
+		}
 	}
 
 	// --- interact(): two-way interaction effects (RSiena's own
@@ -1396,26 +1437,50 @@ program nwsaom, eclass
 			local __nwsaom_ixb : word 2 of `__nwsaom_ixwords'
 			local __nwsaom_ixc ""
 			if `__nwsaom_ixnw' == 3 local __nwsaom_ixc : word 3 of `__nwsaom_ixwords'
-			if "`__nwsaom_ixa'" == "samex" local __nwsaom_ixa "nodematch"
-			if "`__nwsaom_ixa'" == "simx" local __nwsaom_ixa "simcov"
-			if "`__nwsaom_ixa'" == "altx" local __nwsaom_ixa "nodeicov"
-			if "`__nwsaom_ixa'" == "egox" local __nwsaom_ixa "nodeocov"
-			if "`__nwsaom_ixb'" == "samex" local __nwsaom_ixb "nodematch"
-			if "`__nwsaom_ixb'" == "simx" local __nwsaom_ixb "simcov"
-			if "`__nwsaom_ixb'" == "altx" local __nwsaom_ixb "nodeicov"
-			if "`__nwsaom_ixb'" == "egox" local __nwsaom_ixb "nodeocov"
-			if "`__nwsaom_ixc'" == "samex" local __nwsaom_ixc "nodematch"
-			if "`__nwsaom_ixc'" == "simx" local __nwsaom_ixc "simcov"
-			if "`__nwsaom_ixc'" == "altx" local __nwsaom_ixc "nodeicov"
-			if "`__nwsaom_ixc'" == "egox" local __nwsaom_ixc "nodeocov"
-			local __nwsaom_ixposa : list posof "`__nwsaom_ixa'" in __nwsaom_ixok
-			local __nwsaom_ixposb : list posof "`__nwsaom_ixb'" in __nwsaom_ixok
+			// a component is an effect type (aliases mapped to the
+			// canonical type) or, for a covariate effect given for several
+			// variables, its coefficient name (e.g. samex_smoke1): its
+			// type is then the part before the first "_"
+			local __nwsaom_ixlab 0
+			foreach __c in a b c {
+				local __t "`__nwsaom_ix`__c''"
+				if "`__t'" == "" continue
+				if "`__t'" == "samex" local __t "nodematch"
+				if "`__t'" == "simx" local __t "simcov"
+				if "`__t'" == "altx" local __t "nodeicov"
+				if "`__t'" == "egox" local __t "nodeocov"
+				local __nwsaom_ix`__c' "`__t'"
+				local __nwsaom_ixtype`__c' "`__t'"
+				local __u = strpos("`__t'", "_")
+				if `__u' > 0 {
+					local __pre = substr("`__t'", 1, `__u' - 1)
+					if inlist("`__pre'", "nodematch", "samex", "nodecov", "nodeicov", "altx", "nodeocov", "egox", "simcov", "simx") {
+						if "`__pre'" == "samex" local __pre "nodematch"
+						if "`__pre'" == "simx" local __pre "simcov"
+						if "`__pre'" == "altx" local __pre "nodeicov"
+						if "`__pre'" == "egox" local __pre "nodeocov"
+						local __nwsaom_ixtype`__c' "`__pre'"
+						local __nwsaom_ixlab 1
+						// the coefficient name uses the spelling given for
+						// the effect (samex() -> samex_x, nodematch() ->
+						// nodematch_x); accept either spelling here
+						local __lp "`__pre'"
+						if "`__pre'" == "nodematch" local __lp "`__nwsaom_samelab'"
+						if "`__pre'" == "simcov" local __lp "`__nwsaom_simlab'"
+						if "`__pre'" == "nodeicov" local __lp "`__nwsaom_altlab'"
+						if "`__pre'" == "nodeocov" local __lp "`__nwsaom_egolab'"
+						local __nwsaom_ix`__c' = "`__lp'" + substr("`__t'", `__u', .)
+					}
+				}
+			}
+			local __nwsaom_ixposa : list posof "`__nwsaom_ixtypea'" in __nwsaom_ixok
+			local __nwsaom_ixposb : list posof "`__nwsaom_ixtypeb'" in __nwsaom_ixok
 			if `__nwsaom_ixposa' == 0 | `__nwsaom_ixposb' == 0 {
 				di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'"
 				error 198
 			}
 			if "`__nwsaom_ixc'" != "" {
-				local __nwsaom_ixposc : list posof "`__nwsaom_ixc'" in __nwsaom_ixok
+				local __nwsaom_ixposc : list posof "`__nwsaom_ixtypec'" in __nwsaom_ixok
 				if `__nwsaom_ixposc' == 0 {
 					di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'"
 					error 198
@@ -1444,6 +1509,9 @@ program nwsaom, eclass
 			// e(effects) above already carries the full, readable
 			// effect1#effect2[#effect3] spelling regardless of which
 			// column-name form gets used.
+			// too long: ix_A_B[_C] (2026-10-01; covariate components named
+			// by variable easily exceed 32 characters), then interactN
+			if strlen("`__nwsaom_ixname'") > 32 local __nwsaom_ixname = "ix" + substr("`__nwsaom_ixname'", 9, .)
 			if strlen("`__nwsaom_ixname'") > 32 local __nwsaom_ixname "interact`__nwsaom_ixn'"
 			mata: __nwsaom_last_M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), `__td_ix`__nwsaom_ixn'', ("`__nwsaom_ixname'"))
 		}
@@ -2244,7 +2312,14 @@ program nwsaom, eclass
 		mata: st_matrix("`tconv'", __nwsaom_fit.tconv)
 		mata: st_local("__nwsaom_iscond", strofreal(__nwsaom_fit.cond))
 		local __nwsaom_tcrate = cond(`__nwsaom_iscond', "", "rate")
-		if `__nwsaom_hasratecov' matrix colnames `tconv' = `__nwsaom_coefnames' `__nwsaom_tcrate' ratecoef
+		local __nwsaom_rcnames "ratecoef"
+		if `__nwsaom_nratecov' > 1 {
+			local __nwsaom_rcnames ""
+			foreach __v of local ratecov {
+				local __nwsaom_rcnames "`__nwsaom_rcnames' ratecoef_`__v'"
+			}
+		}
+		if `__nwsaom_hasratecov' matrix colnames `tconv' = `__nwsaom_coefnames' `__nwsaom_tcrate' `__nwsaom_rcnames'
 		else matrix colnames `tconv' = `__nwsaom_coefnames' `__nwsaom_tcrate'
 		matrix rownames `tconv' = tconv
 		ereturn scalar rate = `__nwsaom_rate'
@@ -2266,14 +2341,27 @@ program nwsaom, eclass
 			ereturn scalar modeltype = `__nwsaom_mtnum'
 		}
 		if `__nwsaom_hasratecov' {
-			mata: st_local("__nwsaom_ratecoef", strofreal(__nwsaom_fit.ratecoef))
-			mata: st_local("__nwsaom_ratecoef_se", strofreal(__nwsaom_fit.ratecoef_se))
-			mata: st_local("__nwsaom_ratecoef_tr", strofreal(__nwsaom_fit.ratecoef_tratio))
-			mata: st_local("__nwsaom_ratecoef_fx", strofreal(__nwsaom_fit.ratecoef_fixed))
-			ereturn scalar ratecoef = `__nwsaom_ratecoef'
-			ereturn scalar ratecoef_se = `__nwsaom_ratecoef_se'
-			ereturn scalar ratecoef_tratio = `__nwsaom_ratecoef_tr'
-			ereturn scalar ratecoef_fixed = `__nwsaom_ratecoef_fx'
+			// one variable: the scalars e(ratecoef) etc. as before; any
+			// number: 1 x K matrices e(ratecoefs) etc., columns named by
+			// the variables
+			tempname __rcb __rcse __rctr __rcfx
+			mata: st_matrix("`__rcb'", __nwsaom_fit.ratecoef)
+			mata: st_matrix("`__rcse'", __nwsaom_fit.ratecoef_se)
+			mata: st_matrix("`__rctr'", __nwsaom_fit.ratecoef_tratio)
+			mata: st_matrix("`__rcfx'", __nwsaom_fit.ratecoef_fixed)
+			foreach __m in __rcb __rcse __rctr __rcfx {
+				matrix colnames ``__m'' = `ratecov'
+			}
+			if `__nwsaom_nratecov' == 1 {
+				ereturn scalar ratecoef = `__rcb'[1,1]
+				ereturn scalar ratecoef_se = `__rcse'[1,1]
+				ereturn scalar ratecoef_tratio = `__rctr'[1,1]
+				ereturn scalar ratecoef_fixed = `__rcfx'[1,1]
+			}
+			ereturn matrix ratecoefs = `__rcb', copy
+			ereturn matrix ratecoefs_se = `__rcse', copy
+			ereturn matrix ratecoefs_tratio = `__rctr', copy
+			ereturn matrix ratecoefs_fixed = `__rcfx', copy
 		}
 
 		di as text "{hline}"
@@ -2288,9 +2376,15 @@ program nwsaom, eclass
 			else di as text "(pairwise model: rate = RSiena's basic rate, sqrt(per-actor rate /" _n " (actors - 1)); per-actor rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
 		}
 		if `__nwsaom_hasratecov' {
-			di as text "Covariate-rate coefficient (" as result "`ratecov'" as text "): " as result %9.4f `__nwsaom_ratecoef' as text " (se " as result %6.4f `__nwsaom_ratecoef_se' as text ")" _continue
-			if `__nwsaom_ratecoef_fx' di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoef_fixed)==1)"
-			else di ""
+			tempname __rcshow
+			matrix `__rcshow' = e(ratecoefs) \ e(ratecoefs_se) \ e(ratecoefs_fixed)
+			local __k 0
+			foreach __v of local ratecov {
+				local ++__k
+				di as text "Covariate-rate coefficient (" as result "`__v'" as text "): " as result %9.4f `__rcshow'[1,`__k'] as text " (se " as result %6.4f `__rcshow'[2,`__k'] as text ")" _continue
+				if `__rcshow'[3,`__k'] di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoefs_fixed))"
+				else di ""
+			}
 		}
 	}
 	_nwsaom_tconvtable
@@ -2316,6 +2410,7 @@ program define _nwsaom_tconvtable
 	if mod(`k', 2) == 1 di ""
 	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
 end
+
 
 /* ===================================================================
    nwsaom multiplex: Stage 1 of multiplex/multi-relation SAOM support

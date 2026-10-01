@@ -466,6 +466,28 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## nwsaom covariate effects take varlists; simx() centred (changed 2026-10-01)
+
+`samex()/nodematch()`, `egox()/nodeocov()`, `altx()/nodeicov()`, `nodecov()`, `simx()/simcov()` and
+`ratecov()` took ONE variable each, which made realistic models (homophily on several attributes,
+ego/alter/similarity on several covariates) impossible. Each now takes a varlist: one term and one
+coefficient per variable, named `<effect>_<variable>` with the option's spelling (`samex_smoke1`);
+single-variable names are unchanged. Order in e(b)/theta0(): effect types in their fixed order,
+variables as listed. `ratecov(varlist)`: one coefficient per variable (w_i = exp(sum b_k x_ik)),
+`ratecovcoef(numlist)`, e(ratecoefs)/e(ratecoefs_se)/... matrices (scalars e(ratecoef) etc. kept for
+one variable); plugin protocol 9 passes K covariates (K = 1 is the old layout).
+`interact()` resolves components by coefficient name (`samex_smoke1#transtrip`); the instance index
+is stored in the interaction's td.levels, so SaomNativeSetup() finds the right term when an effect
+type occurs several times (before, the first instance by type name). An effect type that occurs
+several times must be named by variable (error otherwise).
+`simx()` is now centred by the similarity mean over all ordered pairs, as RSiena's simX
+(`rangeAndSimilarity()`); this changes the outdegree coefficient of simx models (simx's own
+coefficient is unchanged). The plugin gets x/range and the mean (protocol 9; older plugins: Mata).
+Plugin limits raised: MAXTERMS 32, MAXATTR 24 (larger models fall back to Mata).
+Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate effects for
+several variables": all within 0.07 SE. Note: nwsaom does not centre egox/altx/nodecov/ratecov
+covariates (RSiena does by default); centre them to compare outdegree/rate with RSiena.
+
 ## nwsaom: undirected / tie-symmetric waves are a non-directed relation; default model type forcing (changed 2026-10-01)
 
 nwsaom refused networks declared undirected ("store the data as directed ... and use symmetric").

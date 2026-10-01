@@ -182,8 +182,9 @@
 #include <string.h>
 #include <math.h>
 
-#define MAXTERMS 16
-#define MAXATTR 8
+#define MAXTERMS 32
+#define MAXATTR 24
+#define MAXRC 16		/* ratecov() covariates */
 #define MAXBEHTERMS 8
 
 #define TERMCODE_OUTDEGREE 1
@@ -241,7 +242,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 8		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE)
+#define SAOM_NATIVE_VERSION 9		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -762,10 +763,10 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_CYCLE3:						// stat_saom_cycle3(): sum over ties (ego,alter) of OTP(alter,ego)
 			for (k = 0; k < g->nties; k++) tot += (double)pair_otp(g, g->elist_j[k], g->elist_i[k]);
 			return tot;
-		case TERMCODE_SIMCOV:						// stat_saom_simcov(): sum over ties of 1-|attr[ego]-attr[alter]|/decay
+		case TERMCODE_SIMCOV:						// stat_saom_simcov(): sum over ties of 1-|attr[ego]-attr[alter]|/range - simMean (attr arrives as x/range, p1 = simMean)
 			for (k = 0; k < g->nties; k++) {
 				long ei = g->elist_i[k], ej = g->elist_j[k];
-				tot += 1.0 - fabs(a[ei] - a[ej]) / p1;
+				tot += 1.0 - fabs(a[ei] - a[ej]) - p1;	/* protocol 9: a = x/range, p1 = similarity mean */
 			}
 			return tot;
 		case TERMCODE_BEHSIM:						// stat_saom_behsim(): sum over ties of 1-|z[ego]-z[alter]|/range - simMean
@@ -873,7 +874,7 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_SIMCOV: {
-			double d = 1.0 - fabs(a[i] - a[j]) / p1;
+			double d = 1.0 - fabs(a[i] - a[j]) - p1;
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_BEHSIM: {
@@ -1018,7 +1019,7 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 		case TERMCODE_TRANSTRIP: return (double)pair_isp(g, ego, alter);
 		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
 		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
-		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) / p1;
+		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) - p1;
 		case TERMCODE_BEHSIM: return 1.0 - fabs(a[ego] - a[alter]) / saom_behsim_range - p1;
 		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
 		case TERMCODE_OUTOUTASS: return (double)g->dout[ego] * (double)g->dout[alter];
@@ -1695,9 +1696,9 @@ typedef struct {
 	long condmode;
 	double targetChange;
 	long symtype;
-	long hasratecov;
-	double *ratecovattr;		// 0-based, n entries
-	double ratecoef;
+	long hasratecov;		// number of ratecov() covariates K (0: none)
+	double *ratecovattr;		// 0-based, K x n entries, covariate k at [k*n + i]
+	double *ratecoef;		// K coefficients
 } simparams_t;
 
 typedef struct {
@@ -1706,7 +1707,8 @@ typedef struct {
 	double statBehLag[MAXBEHTERMS];	// end behavior on the STARTING network (masked)
 	double score[MAXTERMS];
 	double scoreBeh[MAXBEHTERMS];
-	double steps, stepsNet, stepsBeh, nchanges, nchangesBeh, netdist, behdist, t, rcscore;
+	double steps, stepsNet, stepsBeh, nchanges, nchangesBeh, netdist, behdist, t;
+	double rcscore[MAXRC];		// ratecov() scores, one per covariate
 	graph_t *gfinal;			// only when keep_final: caller frees with graph_free()+free()
 	double *behfinal;			// only when keep_final: caller frees
 } simres_t;
@@ -1797,7 +1799,7 @@ static double eval_network_alternatives(const model_t *M, const simparams_t *P, 
 				for (j = 1; j <= n; j++) c[j] = ijx[j] ? -c3_arr[j] : c3_arr[j];
 				break;
 			case TERMCODE_SIMCOV:
-				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) / p1; c[j] = ijx[j] ? -d : d; }
+				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) - p1; c[j] = ijx[j] ? -d : d; }
 				break;
 			case TERMCODE_BEHSIM:
 				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) / saom_behsim_range - p1; c[j] = ijx[j] ? -d : d; }
@@ -1874,7 +1876,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	long npresent = n;
 	long *presentIdxArr = NULL;
 	const double *presentArr = PD->haspresent ? PD->present : NULL;
-	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc = 0.0, rcscore = 0.0;
+	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc[MAXRC], rcscore[MAXRC];
+	long krc, nrc = P->hasratecov;
 	int hasmiss = PD->hasmiss;
 
 	PROF_START(pt_setup);
@@ -1919,18 +1922,24 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		double rate = P->rate, rateBeh = P->rateBeh;
 		double grandRate;
 		int symB = (P->symtype == 1 || P->symtype == 2 || P->symtype == 3);
-		double sumw2_rc = 0.0, sumw2x_rc = 0.0, Sp_rc = 0.0, symGfac_rc = 0.0, symdlogG_rc = 0.0;
+		double sumw2_rc = 0.0, sumw2x_rc[MAXRC], Sp_rc[MAXRC], symGfac_rc = 0.0, symdlogG_rc[MAXRC];
+		for (krc = 0; krc < MAXRC; krc++) { covrateSum_rc[krc] = 0.0; rcscore[krc] = 0.0; sumw2x_rc[krc] = 0.0; Sp_rc[krc] = 0.0; symdlogG_rc[krc] = 0.0; }
 		if (P->hasratecov) {
+			/* K covariates (protocol 9): w_i = exp(sum_k b_k x_ik); every
+			   score term below is linear in the covariate, one per k */
 			wfull_rc = (double *)malloc((size_t)n * sizeof(double));
 			for (i = 0; i < n; i++) {
-				wfull_rc[i] = exp(P->ratecoef * P->ratecovattr[i]);
+				double eta = 0.0;
+				for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * P->ratecovattr[krc * n + i];
+				wfull_rc[i] = exp(eta);
 				totw_rc += wfull_rc[i];
-				covrateSum_rc += P->ratecovattr[i] * wfull_rc[i];
 				sumw2_rc += wfull_rc[i] * wfull_rc[i];
-				sumw2x_rc += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[i];
+				for (krc = 0; krc < nrc; krc++) {
+					Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
+					sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[krc * n + i];
+				}
 			}
-			Sp_rc = covrateSum_rc;
-			covrateSum_rc *= rate;
+			for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
 			if (symB) {
 				/* RSiena's pairwise (B) model types with a rate covariate
 				   (DependentVariable::calculateRates(), NetworkVariable::
@@ -1941,8 +1950,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				   rate = lambda^2 * (n - 1), the scale on which the rate
 				   of the model without covariate is the per-actor rate. */
 				symGfac_rc = (totw_rc * totw_rc - sumw2_rc) / (double)(n - 1);
-				covrateSum_rc = rate * (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (double)(n - 1);
-				symdlogG_rc = (2.0 * totw_rc * Sp_rc - 2.0 * sumw2x_rc) / (totw_rc * totw_rc - sumw2_rc);
+				for (krc = 0; krc < nrc; krc++) {
+					covrateSum_rc[krc] = rate * (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (double)(n - 1);
+					symdlogG_rc[krc] = (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (totw_rc * totw_rc - sumw2_rc);
+				}
 			}
 		}
 		grandRate = P->hasratecov ? (symB ? rate * symGfac_rc : rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
@@ -1953,7 +1964,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		while (P->condmode ? (steps == 0.0 || simDist < P->targetChange) : (t < 1.0)) {
 			double dt_rc = -log(rng_unif(&rng)) / grandRate;
 			t += dt_rc;
-			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) rcscore -= dt_rc * covrateSum_rc;
+			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
 			if (P->condmode || t < 1.0) {
 				int actNet = (M->nbehterms == 0) || (rng_unif(&rng) * grandRate <= (double)npresent * rate);
 				if (actNet && (P->symtype == 1 || P->symtype == 2 || P->symtype == 3)) {
@@ -1977,7 +1988,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
 					}
 					else actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					if (P->hasratecov) {
@@ -2000,9 +2011,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						}
 						if (P->want_score) {
 							double wa = wfull_rc[actor - 1];
-							rcscore += P->ratecovattr[alter - 1] - Sp_rc / totw_rc
-								- (Sp_rc - wa * P->ratecovattr[actor - 1]) / (totw_rc - wa)
-								+ symdlogG_rc;
+							for (krc = 0; krc < nrc; krc++)
+								rcscore[krc] += P->ratecovattr[krc * n + alter - 1] - Sp_rc[krc] / totw_rc
+									- (Sp_rc[krc] - wa * P->ratecovattr[krc * n + actor - 1]) / (totw_rc - wa)
+									+ symdlogG_rc[krc];
 						}
 					}
 					else if (PD->haspresent) {
@@ -2087,7 +2099,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) rcscore += P->ratecovattr[actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
 					} else {
 						actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					}
@@ -2247,7 +2259,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	PROF_START(pt_end);
 
 	R->steps = steps; R->stepsNet = stepsNet; R->stepsBeh = stepsBeh;
-	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = t; R->rcscore = rcscore;
+	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = t;
+	for (krc = 0; krc < MAXRC; krc++) R->rcscore[krc] = rcscore[krc];
 
 	/* distances from the start state (the rate statistics of
 	   unconditional estimation), missing dyads/actors excluded; the
@@ -2798,10 +2811,16 @@ static ST_retcode legacy_call(char *arg0) {
 	haspresentNet = next_long();
 	P.symtype = next_long();
 	P.hasratecov = next_long();
+	P.ratecovattr = NULL;
+	P.ratecoef = NULL;
+	if (P.hasratecov < 0 || P.hasratecov > MAXRC) { free(argbuf); SF_error("saom_sim: too many ratecov() covariates\n"); return(198); }
 	if (P.hasratecov) {
-		P.ratecovattr = (double *)malloc((size_t)n * sizeof(double));
-		for (i = 0; i < n; i++) P.ratecovattr[i] = next_double();
-		P.ratecoef = next_double();
+		/* K covariates: K x n values, then K coefficients (K = 1: the
+		   protocol-7 layout) */
+		P.ratecovattr = (double *)malloc((size_t)(n * P.hasratecov) * sizeof(double));
+		P.ratecoef = (double *)malloc((size_t)P.hasratecov * sizeof(double));
+		for (i = 0; i < n * P.hasratecov; i++) P.ratecovattr[i] = next_double();
+		for (i = 0; i < P.hasratecov; i++) P.ratecoef[i] = next_double();
 	}
 	free(argbuf);
 
@@ -2895,7 +2914,12 @@ static ST_retcode legacy_call(char *arg0) {
 	SF_scal_save("__saom_native_steps", (ST_double)R.steps);
 	SF_scal_save("__saom_native_nchanges", (ST_double)R.nchanges);
 	SF_scal_save("__saom_native_condtime", (ST_double)R.t);
-	SF_scal_save("__saom_native_rcscore", (ST_double)R.rcscore);
+	SF_scal_save("__saom_native_rcscore", (ST_double)R.rcscore[0]);
+	for (i = 0; i < P.hasratecov; i++) {
+		char rcnm[48];
+		snprintf(rcnm, sizeof(rcnm), "__saom_native_rcscore%ld", (long)(i + 1));
+		SF_scal_save(rcnm, (ST_double)R.rcscore[i]);
+	}
 	SF_scal_save("__saom_native_stepsnet", (ST_double)R.stepsNet);
 	SF_scal_save("__saom_native_stepsbeh", (ST_double)R.stepsBeh);
 	SF_scal_save("__saom_native_netdist", (ST_double)R.netdist);
@@ -2921,6 +2945,7 @@ static ST_retcode legacy_call(char *arg0) {
 	for (k = 0; k < M.nattr; k++) free(attrmem[k]);
 	free(PD.ti); free(PD.tj); free(PD.beh0); free(PD.mi); free(PD.mj); free(PD.missbeh); free(PD.present);
 	free(P.ratecovattr);
+	free(P.ratecoef);
 	return(0);
 }
 

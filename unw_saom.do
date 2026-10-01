@@ -330,7 +330,7 @@ struct SaomScoredResult {
 	real scalar t			// elapsed time (conditional simulation: the time the target distance took)
 	real scalar nchanges		// ACCEPTED ministeps only (excludes "stay"); the rate's statistic is the end-vs-start distance instead (SaomEstimateNet())
 	real rowvector score
-	real scalar rcscore		// harmonisation unit 172 - covariate-rate coefficient's own SCORE (a compensated-counting-process martingale score, NOT a moment statistic), ONLY populated by SaomSimIntScoredRateCov(); see that function's own header comment for the real-RSiena-verified formula this reproduces (DependentVariable.cpp's accumulateRateScores())
+	real rowvector rcscore		// one entry per ratecov() variable (2026-10-01: several); harmonisation unit 172 - covariate-rate coefficient's own SCORE (a compensated-counting-process martingale score, NOT a moment statistic), ONLY populated by SaomSimIntScoredRateCov(); see that function's own header comment for the real-RSiena-verified formula this reproduces (DependentVariable.cpp's accumulateRateScores())
 }
 
 struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar G,
@@ -473,7 +473,7 @@ struct SaomCountedResult {
 	real rowvector stat		// harmonisation unit 14 - ONLY populated by SaomSimulateIntervalNative(); SaomSimulateIntervalCounted() (the Mata path) leaves it empty, since callers on that path already call M.full_statistic() themselves as before
 	real rowvector score		// harmonisation unit 16 - ONLY populated by SaomSimulateIntervalNative() when called with want_score=1 (phase 1's own native path); empty otherwise
 	real scalar netdist		// SaomSimulateIntervalNative() only: dyads in which the final network differs from the start (missing dyads excluded)
-	real scalar rcscore		// ratecov (native-first) - the covariate-rate coefficient's own martingale score, ONLY populated by SaomSimulateIntervalNative() when called with a genuine ratecov (hasratecov) request AND want_score=1; matches SaomScoredResult's own identical-purpose field (SaomSimIntScoredRateCov(), the Mata reference this native path reproduces)
+	real rowvector rcscore		// one entry per ratecov() variable; ratecov (native-first) - the covariate-rate coefficient's own martingale score, ONLY populated by SaomSimulateIntervalNative() when called with a genuine ratecov (hasratecov) request AND want_score=1; matches SaomScoredResult's own identical-purpose field (SaomSimIntScoredRateCov(), the Mata reference this native path reproduces)
 }
 
 struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scalar G,
@@ -584,7 +584,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
    =================================================================== */
 struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate,
-	real colvector ratecovattr, real scalar ratecoef, | real colvector present,
+	real matrix ratecovattr, real rowvector ratecoef, | real colvector present,
 	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
 	struct SaomCountedResult scalar res
@@ -614,7 +614,8 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 	}
 	else npresent = G.n
 
-	wfull = exp(ratecoef :* ratecovattr)'
+	// several ratecov() variables: w_i = exp(sum_k ratecoef_k x_ik)
+	wfull = exp(ratecovattr * ratecoef')'
 
 	res.steps = 0
 	res.nchanges = 0
@@ -662,7 +663,7 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 
 struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	class ErgmModel scalar M, real rowvector theta, real scalar rate,
-	real colvector ratecovattr, real scalar ratecoef, | real colvector present,
+	real matrix ratecovattr, real rowvector ratecoef, | real colvector present,
 	real rowvector fntype, real scalar condtarget, real matrix distmask) {
 
 	struct SaomScoredResult scalar res
@@ -670,7 +671,8 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	real rowvector u, ebar, chosen_chg, wfull, w
 	real scalar iscond, hasdm, simDist
 	real matrix dflip
-	real scalar t, n, p, i, k, j, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype, totw, tau, covrateSum
+	real scalar t, n, p, i, k, j, maxu, denom, draw, cum, choice, haspresent, npresent, hasfntype, totw, tau
+	real rowvector covrateSum
 	real colvector presentIdx
 
 	n = G.n
@@ -678,7 +680,7 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	res.score = J(1, p, 0)
 	res.steps = 0
 	res.nchanges = 0
-	res.rcscore = 0
+	res.rcscore = J(1, cols(ratecovattr), 0)
 
 	// conditional simulation (RSiena's conditional estimation, see
 	// SaomEstimateNet()): run until the distance from the starting network
@@ -700,7 +702,8 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	}
 	else npresent = n
 
-	wfull = exp(ratecoef :* ratecovattr)'
+	// several ratecov() variables: w_i = exp(sum_k ratecoef_k x_ik)
+	wfull = exp(ratecovattr * ratecoef')'
 	// harmonisation unit 172: sum_i ratecovattr[i]*wfull[i] over ALL n
 	// actors (never the present-restricted subset - ratecov()'s own v1
 	// scope never combines with composition change, see nwsaom.ado's own
@@ -722,7 +725,7 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	// below) - omitting that same `rate' factor here under-scaled the
 	// compensator relative to the jump term, which fires at the TRUE
 	// combined rate `rate*wfull[i]'. Fixed by including it explicitly.
-	covrateSum = rate * sum(ratecovattr' :* wfull)
+	covrateSum = rate * (wfull * ratecovattr)
 
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
@@ -764,7 +767,7 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 				}
 			}
 			i = haspresent ? presentIdx[k] : k
-			res.rcscore = res.rcscore + ratecovattr[i]	// harmonisation unit 172 - the jump term, see this function's own header comment above
+			res.rcscore = res.rcscore + ratecovattr[i,.]	// harmonisation unit 172 - the jump term, see this function's own header comment above
 
 			chgmat = J(n, p, 0)
 			u = J(1, n, 0)
@@ -2025,14 +2028,16 @@ real rowvector stat_saom_simcov(class ErgmGraph scalar G, class ErgmTermData sca
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
-		tot = tot + 1 - abs(td.attr[ties[k,1]] - td.attr[ties[k,2]]) / td.decay
+		tot = tot + 1 - abs(td.attr[ties[k,1]] - td.attr[ties[k,2]]) / td.decay - _saom_center0(td)
 	}
 	return(tot)
 }
 real rowvector change_saom_simcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	real scalar delta
 
-	delta = 1 - abs(td.attr[i] - td.attr[j]) / td.decay
+	// RSiena's simX: similarity minus its mean over all pairs (td.center,
+	// SaomSimMean(); 2026-10-01, before: not centered)
+	delta = 1 - abs(td.attr[i] - td.attr[j]) / td.decay - _saom_center0(td)
 	return(G.has_edge(i,j) ? -delta : delta)
 }
 
@@ -2462,7 +2467,7 @@ real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real
    outiso, antiiniso, antiiniso2, inplus3) before an interaction naming
    one of them can ever reach here. */
 real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
-	real colvector a, real scalar decay, real scalar ego, real scalar alter){
+	real colvector a, real scalar decay, real scalar ego, real scalar alter, | real scalar center){
 
 	real scalar nterm, b0, D
 
@@ -2474,7 +2479,7 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	if (nm == "nodeocov") return(a[ego])
 	if (nm == "transtrip" | nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
 	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego))
-	if (nm == "simcov") return(1 - abs(a[ego] - a[alter]) / decay)
+	if (nm == "simcov") return(1 - abs(a[ego] - a[alter]) / decay - (args() >= 7 ? center : 0))
 	if (nm == "transrectrip") return(G.has_edge(alter, ego) ? G.shared_partners_otp(ego, alter) : 0)
 	if (nm == "outoutass") return(G.degree_out(ego) * G.degree_out(alter))
 	if (nm == "ininass") return(G.degree_in(ego) * G.degree_in(alter))
@@ -2501,7 +2506,7 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
    NOT (see this section's own header comment for why these are two
    different functions, per RSiena's own real source). */
 real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
-	real colvector a, real scalar decay, real scalar i, real scalar j){
+	real colvector a, real scalar decay, real scalar i, real scalar j, | real scalar center){
 
 	real scalar tied, delta, chg, egodeg, alterdeg, ldegree, neighborsum, oldb, b0, n, val, k, h
 	real rowvector nb
@@ -2536,7 +2541,7 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
 		return(tied ? -delta : delta)
 	}
 	if (nm == "simcov") {
-		delta = 1 - abs(a[i] - a[j]) / decay
+		delta = 1 - abs(a[i] - a[j]) / decay - (args() >= 7 ? center : 0)
 		return(tied ? -delta : delta)
 	}
 	if (nm == "transrectrip") {
@@ -2628,47 +2633,95 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
    caller's own actor count (not re-derived from G, since this runs at
    REGISTRATION time, before any per-model G object need be in scope
    here). */
+/* _SaomInteractComponent(): the term instance an interact() component
+   names. A component is either an effect type (M.names: "nodematch",
+   "transtrip", ...), which must then occur exactly once, or a
+   coefficient name (M.coefnames: "samex_smoke1", "egox_alcohol1",
+   ...), which names one instance when a covariate effect is given for
+   several variables (2026-10-01). Returns the instance index; *type
+   receives the instance's effect type. */
+real scalar _SaomInteractComponent(class ErgmModel scalar M, string scalar nm, string scalar type) {
+	real scalar si, found, nfound, ci
+
+	found = 0
+	nfound = 0
+	for (si=1; si<=M.nterms; si++) {
+		if (M.names[si] == nm) {
+			nfound++
+			if (found == 0) found = si
+		}
+	}
+	if (nfound > 1) {
+		errprintf("nwsaom: interact() names the effect type '" + nm + "', which this model has for several variables; name one by its coefficient name as shown in e(b) (e.g. samex_smoke1#transtrip).\n")
+		exit(error(198))
+	}
+	if (found == 0) {
+		ci = 0
+		for (si=1; si<=M.nterms; si++) {
+			if (M.npar[si] == 1 & M.coefnames[ci + 1] == nm) found = si
+			ci = ci + M.npar[si]
+		}
+	}
+	if (found == 0) {
+		errprintf("nwsaom: interact() names '" + nm + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
+		exit(error(198))
+	}
+	type = M.names[found]
+	return(found)
+}
+
+real scalar _saom_center0(class ErgmTermData scalar td) {
+	return(td.center < . ? td.center : 0)
+}
+
+/* SaomSimMean(): RSiena's similarity mean of a covariate
+   (rangeAndSimilarity() in sienaDataCreate.r): the mean of
+   1 - |x_i - x_j| / range over all ordered pairs i != j; 0 for a
+   constant covariate. simX/simcov() subtracts it from every tie's
+   similarity. */
+real scalar SaomSimMean(real colvector x) {
+	real scalar n, r, i, tot
+
+	n = rows(x)
+	r = max(x) - min(x)
+	if (r == 0 | n < 2) return(0)
+	tot = 0
+	for (i=1; i<=n; i++) tot = tot + sum(1 :- abs(x[i] :- x) :/ r) - 1
+	return(tot / (n * (n - 1)))
+}
+
 void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
 	string scalar nameA, string scalar nameB, string scalar nameC, class ErgmTermData scalar tdout){
 
-	real scalar subA, subB, subC, si, threeway
+	real scalar subA, subB, subC, threeway
+	string scalar tA, tB, tC
 	class ErgmTermData scalar tdA, tdB, tdC
 
 	threeway = (nameC != "")
-
-	subA = 0
-	subB = 0
-	subC = 0
-	for (si=1; si<=M.nterms; si++) {
-		if (M.names[si] == nameA & subA == 0) subA = si
-		if (M.names[si] == nameB & subB == 0) subB = si
-		if (threeway & M.names[si] == nameC & subC == 0) subC = si
-	}
-	if (subA == 0) {
-		errprintf("nwsaom: interact() names '" + nameA + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
-		exit(error(198))
-	}
-	if (subB == 0) {
-		errprintf("nwsaom: interact() names '" + nameB + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
-		exit(error(198))
-	}
-	if (threeway & subC == 0) {
-		errprintf("nwsaom: interact() names '" + nameC + "' as a component effect, but it is not itself included in this model - add it as its own main effect first.\n")
-		exit(error(198))
-	}
+	tA = ""
+	tB = ""
+	tC = ""
+	subA = _SaomInteractComponent(M, nameA, tA)
+	subB = _SaomInteractComponent(M, nameB, tB)
+	subC = (threeway ? _SaomInteractComponent(M, nameC, tC) : 0)
 	tdA = *M.td[subA]
 	tdB = *M.td[subB]
+	// td.sptype holds the component TYPES (stat/change dispatch on them);
+	// td.levels the components' decays, followed by the component
+	// instance indices (SaomNativeSetup() uses those, so that the right
+	// instance is found when an effect type occurs several times)
 	if (threeway) {
 		tdC = *M.td[subC]
-		tdout.sptype = nameA + "|" + nameB + "|" + nameC
-		tdout.levels = (tdA.decay \ tdB.decay \ tdC.decay)
+		tdout.sptype = tA + "|" + tB + "|" + tC
+		tdout.levels = (tdA.decay \ tdB.decay \ tdC.decay \ subA \ subB \ subC \
+			_saom_center0(tdA) \ _saom_center0(tdB) \ _saom_center0(tdC))
 		tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \
 			(rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)) \
 			(rows(tdC.attr) == n ? tdC.attr : J(n, 1, 0)))
 	}
 	else {
-		tdout.sptype = nameA + "|" + nameB
-		tdout.levels = (tdA.decay \ tdB.decay)
+		tdout.sptype = tA + "|" + tB
+		tdout.levels = (tdA.decay \ tdB.decay \ subA \ subB \ _saom_center0(tdA) \ _saom_center0(tdB))
 		tdout.attr = ((rows(tdA.attr) == n ? tdA.attr : J(n, 1, 0)) \ (rows(tdB.attr) == n ? tdB.attr : J(n, 1, 0)))
 	}
 }
@@ -2690,6 +2743,16 @@ void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
    has room for two component slot references (attridx/p1); a genuine
    third slot needs new wire-protocol fields, a disclosed follow-on -
    see SaomNativeSetup()'s own eligible=0 gate for cols(nms)>3. */
+/* the c-th component's centering constant (simcov's similarity mean),
+   stored after the decays and instance indices in td.levels; 0 for
+   interactions registered before 2026-10-01 */
+real scalar _saom_ixcenter(class ErgmTermData scalar td, real scalar c, real scalar threeway) {
+	real scalar k
+	k = (threeway ? 3 : 2)
+	if (rows(td.levels) < 3*k) return(0)
+	return(td.levels[2*k + c])
+}
+
 real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	string rowvector nms
 	real matrix ties
@@ -2705,9 +2768,9 @@ real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData s
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
-		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2]) *
-			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2]) *
-			(threeway ? _saom_tiestat(G, nms[5], aC, td.levels[3], ties[k,1], ties[k,2]) : 1)
+		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2], _saom_ixcenter(td, 1, threeway)) *
+			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2], _saom_ixcenter(td, 2, threeway)) *
+			(threeway ? _saom_tiestat(G, nms[5], aC, td.levels[3], ties[k,1], ties[k,2], _saom_ixcenter(td, 3, threeway)) : 1)
 	}
 	return(tot)
 }
@@ -2722,11 +2785,11 @@ real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, rea
 	n = G.n
 	aA = td.attr[1::n]
 	aB = td.attr[(n+1)::(2*n)]
-	cvA = _saom_tiechange(G, nms[1], aA, td.levels[1], i, j)
-	cvB = _saom_tiechange(G, nms[3], aB, td.levels[2], i, j)
+	cvA = _saom_tiechange(G, nms[1], aA, td.levels[1], i, j, _saom_ixcenter(td, 1, threeway))
+	cvB = _saom_tiechange(G, nms[3], aB, td.levels[2], i, j, _saom_ixcenter(td, 2, threeway))
 	if (!threeway) return(cvA * cvB)
 	aC = td.attr[(2*n+1)::(3*n)]
-	cvC = _saom_tiechange(G, nms[5], aC, td.levels[3], i, j)
+	cvC = _saom_tiechange(G, nms[5], aC, td.levels[3], i, j, _saom_ixcenter(td, 3, threeway))
 	return(cvA * cvB * cvC)
 }
 
@@ -2800,18 +2863,19 @@ real scalar SaomCountDiffering(class ErgmGraph scalar G1, class ErgmGraph scalar
    `M.full_statistic(Gwork)' (a final-state snapshot, not an
    accumulator) already works for the eval parameters' own deviation).
    =================================================================== */
-real scalar SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGraph scalar G2,
-	real colvector ratecovattr) {
+real rowvector SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGraph scalar G2,
+	real matrix ratecovattr) {
 
 	real matrix t1, t2
 	real scalar k
-	real scalar s
+	real rowvector s
 
+	// one column per ratecov() variable, one entry per column
 	t1 = G1.all_ties()
 	t2 = G2.all_ties()
-	s = 0
-	for (k=1; k<=rows(t1); k++) if (!G2.has_edge(t1[k,1], t1[k,2])) s = s + ratecovattr[t1[k,1]]
-	for (k=1; k<=rows(t2); k++) if (!G1.has_edge(t2[k,1], t2[k,2])) s = s + ratecovattr[t2[k,1]]
+	s = J(1, cols(ratecovattr), 0)
+	for (k=1; k<=rows(t1); k++) if (!G2.has_edge(t1[k,1], t1[k,2])) s = s + ratecovattr[t1[k,1],.]
+	for (k=1; k<=rows(t2); k++) if (!G1.has_edge(t2[k,1], t2[k,2])) s = s + ratecovattr[t2[k,1],.]
 	return(s)
 }
 
@@ -3237,12 +3301,12 @@ struct SaomFit {
 	real rowvector tconv		// RSiena convergence t-ratios, mean deviation / sd, same order as Vfull
 	real scalar tconvMax		// RSiena overall maximum convergence ratio, sqrt(m' S^-1 m)
 	real rowvector rmfixed		// 1 for a parameter held fixed at its starting value because its phase-1 derivative was non-positive (see SaomEstimateNet())
-	real scalar ratecoef		// ratecov(): estimated covariate-rate coefficient
-	real scalar ratecoef_se
-	real scalar ratecoef_tratio
+	real rowvector ratecoef		// ratecov(): estimated covariate-rate coefficient(s), one per variable
+	real rowvector ratecoef_se
+	real rowvector ratecoef_tratio
 	real scalar rate_actor		// SaomEstimateRM(): the rate on nwsaom's per-actor scale (differs from rate for symmetric models, see SaomSymRateToRSiena())
 	real scalar cond		// 1: conditional estimation (RSiena's default for one network); the rates are then mean phase-3 times, rate_se(s) their SDs, rate_tratio(s) missing
-	real scalar ratecoef_fixed	// ratecov(): 1 if ratecoef was held fixed at its starting value (non-positive derivative), see rmfixed
+	real rowvector ratecoef_fixed	// ratecov(): 1 if ratecoef was held fixed at its starting value (non-positive derivative), see rmfixed
 }
 
 /* ===================================================================
@@ -3326,21 +3390,21 @@ struct SaomNetCtx {
 	real scalar hasmiss, haspresent, hasnetgate, hasstructural, hasratecov, symtype
 	real matrix target		// P x p
 	real rowvector targetRate	// 1 x P
-	real rowvector targetRateCov	// 1 x P (ratecov only)
+	real matrix targetRateCov	// P x K (ratecov only; K = ratecov() variables)
 	real matrix presentPd		// n x P, all ones without composition change
 	real rowvector npresentPd
 	pointer(real matrix) rowvector missMaskPd
 	real matrix missDyadsPd		// stacked (period, i, j)
 	real rowvector fntype
 	real matrix structural
-	real colvector ratecovattr
+	real matrix ratecovattr		// n x K
 }
 
 /* Fills the context: targets, native dispatch. presentPd is n x P (or
    0 x 0), missMaskPd one n x n mask per period (or empty). */
 void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M, real matrix presentPd, pointer(real matrix) rowvector missMaskPd,
-	real rowvector fntype, real colvector ratecovattr, real scalar symtype, real matrix structural) {
+	real rowvector fntype, real matrix ratecovattr, real scalar symtype, real matrix structural) {
 
 	real scalar pd, ver
 	real matrix mdt
@@ -3362,7 +3426,8 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.fntype = fntype
 	C.hasstructural = (rows(structural) > 0)
 	C.structural = structural
-	C.hasratecov = (rows(ratecovattr) > 0)
+	// hasratecov = number of ratecov() variables (0: none)
+	C.hasratecov = (rows(ratecovattr) > 0 ? cols(ratecovattr) : 0)
 	C.ratecovattr = ratecovattr
 	C.symtype = symtype
 	// RSiena (initializeFRAN()): conditional estimation is not used with
@@ -3374,7 +3439,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 
 	C.target = J(C.P, C.p, 0)
 	C.targetRate = J(1, C.P, 0)
-	C.targetRateCov = J(1, C.P, 0)
+	C.targetRateCov = J(C.P, max((C.hasratecov, 1)), 0)
 	for (pd=1; pd<=C.P; pd++) {
 		if (C.hasmiss) {
 			C.target[pd,.] = SaomMaskedStatistic(*Gwaves[pd+1], M, *missMaskPd[pd])
@@ -3385,7 +3450,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 			C.targetRate[pd] = SaomCountDiffering(*Gwaves[pd], *Gwaves[pd+1])
 		}
 		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1])
-		if (C.hasratecov) C.targetRateCov[pd] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr)
+		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr)
 	}
 
 	// native dispatch, decided once per fit. Endowment/creation gating
@@ -3403,6 +3468,8 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// symmetric (pairwise) models with ratecov() draw the alter by the
 	// covariate as RSiena does from protocol 7 on
 	if (C.symtype != 0 & C.hasratecov & ver < 7) C.use_native = 0
+	// several ratecov() variables from protocol 9 on
+	if (C.hasratecov > 1 & ver < 9) C.use_native = 0
 	// unilateral-initiative model types (forcing, confirmation) from
 	// protocol 8 on
 	if (C.symtype >= 4 & ver < 8) C.use_native = 0
@@ -3437,20 +3504,23 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real rowvector theta, stat
 	real colvector pres, presNat
 	real matrix mdy
-	real scalar pd, p, P, rate, ratecoef, steps, netdist, rcstat, rcscore, active, rebuild
+	real scalar pd, p, P, rate, steps, netdist, active, rebuild, K
+	real rowvector ratecoef, rcstat, rcscore, rcix
 
 	p = C.p
 	P = C.P
 	theta = par[1..p]
-	ratecoef = (C.hasratecov ? par[C.ptot] : 0)
+	K = C.hasratecov
+	rcix = (K ? (C.ptot-K+1)..C.ptot : J(1, 0, 0))
+	ratecoef = (K ? par[rcix] : 0)
 	dev = J(1, C.ptot, 0)
 	sco = J(1, C.ptot, 0)
 	for (pd=1; pd<=P; pd++) {
 		rate = par[p + pd]
 		pres = C.presentPd[., pd]
 		presNat = (C.haspresent ? pres : J(0, 1, 0))
-		rcstat = 0
-		rcscore = 0
+		rcstat = J(1, max((K, 1)), 0)
+		rcscore = J(1, max((K, 1)), 0)
 		if (C.use_native) {
 			mdy = J(0, 2, 0)
 			if (C.hasmiss) {
@@ -3513,14 +3583,14 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
 		dev[p + pd] = netdist - C.targetRate[pd]
-		if (C.hasratecov) dev[C.ptot] = dev[C.ptot] + (rcstat - C.targetRateCov[pd])
+		if (K) dev[rcix] = dev[rcix] + (rcstat - C.targetRateCov[pd,.])
 		if (want_score) {
-			active = (C.hasratecov ? sum(exp(ratecoef :* C.ratecovattr)) : C.npresentPd[pd])
+			active = (K ? sum(exp(C.ratecovattr * ratecoef')) : C.npresentPd[pd])
 			// pairwise models with ratecov(): total rate rate * (S^2 -
 			// sum w^2) / (n - 1), see saom_sim.c
-			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* ratecoef :* C.ratecovattr))) / (C.n - 1)
+			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')))) / (C.n - 1)
 			sco[p + pd] = steps / rate - active
-			if (C.hasratecov) sco[C.ptot] = sco[C.ptot] + rcscore
+			if (K) sco[rcix] = sco[rcix] + rcscore
 		}
 	}
 }
@@ -3589,15 +3659,19 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	struct SaomScoredResult scalar sres
 	class ErgmGraph scalar Gwork
 	real rowvector theta, stat, fnarg
-	real colvector pres, presNat, rcattr
+	real colvector pres, presNat
+	real matrix rcattr
 	real matrix mdy, dm
-	real scalar pd, p, P, ratecoef, rcstat, rcscore, ct
+	real scalar pd, p, P, ct, K
+	real rowvector ratecoef, rcstat, rcscore, rcix
 
 	p = C.p
 	P = C.P
 	theta = par[1..p]
-	ratecoef = (C.hasratecov ? par[C.ptot] : 0)
-	rcattr = (C.hasratecov ? C.ratecovattr : J(0, 1, 0))
+	K = C.hasratecov
+	rcix = (K ? (C.ptot-K+1)..C.ptot : J(1, 0, 0))
+	ratecoef = (K ? par[rcix] : 0)
+	rcattr = (K ? C.ratecovattr : J(0, 1, 0))
 	fnarg = (C.hasnetgate ? C.fntype : J(1, 0, 0))
 	dev = J(1, C.ptot, 0)
 	sco = J(1, C.ptot, 0)
@@ -3607,8 +3681,8 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		pres = C.presentPd[., pd]
 		presNat = (C.haspresent ? pres : J(0, 1, 0))
 		dm = (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0))
-		rcstat = 0
-		rcscore = 0
+		rcstat = J(1, max((K, 1)), 0)
+		rcscore = J(1, max((K, 1)), 0)
 		Gwork = ErgmGraph()
 		if (C.use_native) {
 			mdy = J(0, 2, 0)
@@ -3646,9 +3720,9 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
-		if (C.hasratecov) {
-			dev[C.ptot] = dev[C.ptot] + (rcstat - C.targetRateCov[pd])
-			if (want_score) sco[C.ptot] = sco[C.ptot] + rcscore
+		if (K) {
+			dev[rcix] = dev[rcix] + (rcstat - C.targetRateCov[pd,.])
+			if (want_score) sco[rcix] = sco[rcix] + rcscore
 		}
 	}
 }
@@ -3994,7 +4068,7 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	real rowvector theta0, real scalar rate0,
 	real scalar K0, real scalar K3, real scalar firstg, | real colvector present,
 	real matrix missMask, real rowvector fntype,
-	real colvector ratecovattr, real scalar ratecoef, real scalar symtype,
+	real matrix ratecovattr, real rowvector ratecoef, real scalar symtype,
 	real matrix structural) {
 
 	struct SaomFit scalar fit
@@ -4003,8 +4077,8 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	pointer(real matrix) rowvector mm
 	real matrix presentArg, structArg
 	real rowvector fnArg, par0
-	real colvector rcArg
-	real scalar nargs, symArg, p
+	real matrix rcArg
+	real scalar nargs, symArg, p, k
 
 	nargs = args()
 	presentArg = J(0, 0, 0)
@@ -4029,7 +4103,9 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	// symmetric (pairwise) models: rate0() is on RSiena's scale, see
 	// SaomSymRateScale()
 	if (!C.cond) par0 = par0, ((rate0 < . & rate0 > 0) ? ((C.symtype >= 1 & C.symtype <= 3) ? rate0^2 * SaomSymRateScale(C) : rate0) : SaomRateStart(C.npresentPd[1], C.targetRate[1]))
-	if (C.hasratecov) par0 = par0, (nargs >= 13 ? ratecoef : 0)
+	// one starting value per ratecov() variable (a single value is used
+	// for all of them)
+	if (C.hasratecov) par0 = par0, (nargs >= 13 ? (cols(ratecoef) == C.hasratecov ? ratecoef : J(1, C.hasratecov, ratecoef[1])) : J(1, C.hasratecov, 0))
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
 
@@ -4060,10 +4136,11 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 	fit.rate_tratios = fit.rate_tratio
 	fit.rate_ses = fit.rate_se
 	if (C.hasratecov) {
-		fit.ratecoef = nf.par[C.ptot]
-		fit.ratecoef_se = sqrt(nf.Vfull[C.ptot, C.ptot])
-		fit.ratecoef_tratio = nf.tratio[C.ptot]
-		fit.ratecoef_fixed = nf.rmfixed[C.ptot]
+		k = C.ptot - C.hasratecov
+		fit.ratecoef = nf.par[(k+1)..C.ptot]
+		fit.ratecoef_se = sqrt(diagonal(nf.Vfull)[(k+1)..C.ptot])'
+		fit.ratecoef_tratio = nf.tratio[(k+1)..C.ptot]
+		fit.ratecoef_fixed = nf.rmfixed[(k+1)..C.ptot]
 	}
 	return(fit)
 }
@@ -6207,10 +6284,11 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, si
+	real scalar t, nextattr, subA, subB, si, hassimcov
 	string scalar nm
 	string rowvector nms
 
+	hassimcov = 0
 	cfg.termcodes = J(1, M.nterms, 0)
 	cfg.attridx = J(1, M.nterms, 0)
 	cfg.p1 = J(1, M.nterms, 0)
@@ -6257,12 +6335,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		else if (nm == "transtrip") cfg.termcodes[t] = 11
 		else if (nm == "cycle3") cfg.termcodes[t] = 12
 		else if (nm == "simcov") {
+			// protocol 9: the plugin gets x / range and the similarity
+			// mean, d = 1 - |a_i - a_j| - p1
 			cfg.termcodes[t] = 13
 			tdt = *M.td[t]
 			nextattr++
 			cfg.attridx[t] = nextattr
-			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
-			cfg.p1[t] = tdt.decay
+			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr / tdt.decay : (cfg.attrmat, tdt.attr / tdt.decay))
+			cfg.p1[t] = _saom_center0(tdt)
+			hassimcov = 1
 		}
 		else if (nm == "behsim") {
 			// TERMCODE_BEHSIM (native/saom_sim.c): the plugin supplies the
@@ -6327,10 +6408,18 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			else {
 				subA = 0
 				subB = 0
-				for (si=1; si<=M.nterms; si++) {
-					if (si == t) continue
-					if (M.names[si] == nms[1] & subA == 0) subA = si
-					if (M.names[si] == nms[3] & subB == 0) subB = si
+				// component instances recorded by SaomBuildInteractTd()
+				// (td.levels = decays, then instance indices)
+				if (rows(tdt.levels) >= 4) {
+					subA = tdt.levels[3]
+					subB = tdt.levels[4]
+				}
+				else {
+					for (si=1; si<=M.nterms; si++) {
+						if (si == t) continue
+						if (M.names[si] == nms[1] & subA == 0) subA = si
+						if (M.names[si] == nms[3] & subB == 0) subB = si
+					}
 				}
 				if (subA == 0 | subB == 0) cfg.eligible = 0
 				else {
@@ -6341,6 +6430,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			}
 		}
 		else cfg.eligible = 0
+	}
+	// the plugin's fixed limits (native/saom_sim.c MAXTERMS 32, MAXATTR 24
+	// with one slot kept for behsim); larger models run in Mata
+	if (M.nterms > 32 | cols(cfg.attrmat) > 23) cfg.eligible = 0
+	// before protocol 9 the limits were 16 terms and 7 attribute arrays
+	if (cfg.eligible & (M.nterms > 16 | cols(cfg.attrmat) > 7 | hassimcov)) {
+		if (SaomNativePluginVersion() < 9) cfg.eligible = 0
 	}
 	return(cfg)
 }
@@ -6405,11 +6501,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scalar G, class ErgmModel scalar M,
 	struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar rate, real scalar rebuild_g,
 	real scalar want_score, | real matrix missDyads, real colvector present, real scalar symtype,
-	real colvector ratecovattr, real scalar ratecoef, real scalar condtarget){
+	real matrix ratecovattr, real rowvector ratecoef, real scalar condtarget){
 
 	struct SaomCountedResult scalar res
 	real matrix ties, newties
-	real scalar n, nties, nattr, i, rngseed, nties_out, __junk, neededrows, neededvars, hasmiss, nmissdyads, haspresentNet, symtypearg, hasratecov, iscondnat
+	real scalar n, nties, nattr, i, k, rngseed, nties_out, __junk, neededrows, neededvars, hasmiss, nmissdyads, haspresentNet, symtypearg, hasratecov, iscondnat
 	string scalar origframe, argstr, cmd, attrvarlist
 	string rowvector attrvarnames
 
@@ -6429,7 +6525,8 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	// wanting this one, would otherwise still have to supply SOME
 	// placeholder for ratecovattr/ratecoef to get there - args()>=12
 	// alone would wrongly read as hasratecov=true for that caller too).
-	hasratecov = (args() >= 12) ? (rows(ratecovattr) > 0) : 0
+	// hasratecov = number of ratecov() variables (columns of ratecovattr)
+	hasratecov = (args() >= 12) ? (rows(ratecovattr) > 0 ? cols(ratecovattr) : 0) : 0
 
 	n = G.n
 	ties = G.all_ties()
@@ -6562,8 +6659,12 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	argstr = argstr + " " + strofreal(symtypearg)		// undirected/symmetric relations (native-first) - see native/saom_sim.c's own header comment on this field
 	argstr = argstr + " " + strofreal(hasratecov)		// ratecov (native-first) - see native/saom_sim.c's own header comment on this field
 	if (hasratecov) {
-		for (i=1; i<=n; i++) argstr = argstr + " " + strofreal(ratecovattr[i], "%25.17g")
-		argstr = argstr + " " + strofreal(ratecoef, "%25.17g")
+		// K covariates: K x n values (variable by variable), then K
+		// coefficients; K = 1 is the protocol-7 layout unchanged
+		for (k=1; k<=hasratecov; k++) {
+			for (i=1; i<=n; i++) argstr = argstr + " " + strofreal(ratecovattr[i,k], "%25.17g")
+		}
+		for (k=1; k<=hasratecov; k++) argstr = argstr + " " + strofreal(ratecoef[k], "%25.17g")
 	}
 
 	// see ErgmNativeSampleCore()'s own header comment for why `capture`
@@ -6598,7 +6699,10 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 		res.score = J(1, M.nterms, 0)
 		for (i=1; i<=M.nterms; i++) res.score[i] = st_numscalar("__saom_native_score" + strofreal(i))
 	}
-	if (hasratecov) res.rcscore = st_numscalar("__saom_native_rcscore")
+	if (hasratecov) {
+		res.rcscore = J(1, hasratecov, 0)
+		for (k=1; k<=hasratecov; k++) res.rcscore[k] = st_numscalar("__saom_native_rcscore" + strofreal(k))
+	}
 
 	// harmonisation unit 15 (performance pass, see docs/SAOM_ROADMAP.md's
 	// own "Native backend performance" entry): `G' was read-only above
