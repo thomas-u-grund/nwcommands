@@ -258,9 +258,12 @@ program define nwsaom_estat_gof, rclass
 		mata: st_numscalar("__nwsaom_gof_native", __nwsaom_gof_cfg.eligible & SaomNativeAvailable())
 		local __gof_usenative = __nwsaom_gof_native
 	}
-	if `__gof_symtype' & !`__gof_usenative' {
-		di as err "estat gof needs the native (C) simulator for a symmetric (pairwise) fit."
-		exit 498
+	// ratecov(): the covariates and coefficients of the fit
+	mata: __nwsaom_gof_rcattr = J(0, 0, 0)
+	mata: __nwsaom_gof_rccoef = J(1, 0, 0)
+	if "`e(ratecov)'" != "" {
+		mata: __nwsaom_gof_rcattr = st_data(1::`=e(nodes)', "`e(ratecov)'")
+		mata: __nwsaom_gof_rccoef = st_matrix("e(ratecoefs)")
 	}
 
 	// --- observed auxiliary-statistic vectors, POOLED (summed) across
@@ -400,7 +403,7 @@ program define nwsaom_estat_gof, rclass
 				// at fit time, not recomputed here.
 				mata: __nwsaom_gof_Behwork = SaomBehavior()
 				mata: __nwsaom_gof_Behwork.init(*__nwsaom_last_Behwaves[`__pd'], __nwsaom_beh_minval, __nwsaom_beh_maxval, `__gof_behoverallmean', __nwsaom_last_Mbeh.simMean)
-				mata: __nwsaom_gof_coevres = SaomSimulateIntervalCoev(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'")[1,1..`__nwsaom_gof_pnet'], ///
+				mata: __nwsaom_gof_eng = SaomGofSimCoev(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'")[1,1..`__nwsaom_gof_pnet'], ///
 					__nwsaom_gof_Behwork, __nwsaom_last_Mbeh, st_matrix("`bmat'")[1,(`__nwsaom_gof_pnet'+1)..cols(st_matrix("`bmat'"))], `__gof_rate`__pd'', `__gof_ratebeh`__pd'')
 				if strpos(" `stats' ", " behavior ") {
 					mata: __nwsaom_gof_thisval = saom_gof_behdist(__nwsaom_gof_Behwork.values, __nwsaom_beh_minval, __nwsaom_beh_maxval)
@@ -408,12 +411,11 @@ program define nwsaom_estat_gof, rclass
 					if !`__gof_join' mata: __nwsaom_gof_simP`__pd'_behavior[`__s',.] = __nwsaom_gof_thisval
 				}
 			}
-			else if `__gof_usenative' {
-				if `__gof_symtype' mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0, J(0, 2, 0), J(0, 1, 0), `__gof_symtype')
-				else mata: __nwsaom_gof_cres = SaomSimulateIntervalNative(__nwsaom_gof_Gwork, __nwsaom_last_M, __nwsaom_gof_cfg, st_matrix("`bmat'"), `__gof_rate`__pd'', 1, 0)
-			}
 			else {
-				mata: __nwsaom_gof_cres = SaomSimulateIntervalCounted(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'"), `__gof_rate`__pd'')
+				// the fitted model, native when the plugin covers it
+				// (endowment/creation, structural(), ratecov(), present(),
+				// non-directed types)
+				mata: __nwsaom_gof_eng = SaomGofSimNet(__nwsaom_gof_Gwork, __nwsaom_last_M, st_matrix("`bmat'"), `__gof_rate`__pd'', `__gof_symtype', __nwsaom_gof_rcattr, __nwsaom_gof_rccoef)
 			}
 			// see the observed-side block above (harmonisation unit 26)
 			// for why this is an explicit Mata name, not `tempname'.
@@ -1034,6 +1036,12 @@ program define nwsaom_estat_mems, rclass
 	mata: __nwsaom_mems_cfg = SaomNativeSetup(__nwsaom_last_M)
 	mata: st_numscalar("__nwsaom_mems_native", __nwsaom_mems_cfg.eligible & SaomNativeAvailable())
 	local __mems_usenative = __nwsaom_mems_native
+	mata: __nwsaom_mems_rcattr = J(0, 0, 0)
+	mata: __nwsaom_mems_rccoef = J(1, 0, 0)
+	if "`e(ratecov)'" != "" {
+		mata: __nwsaom_mems_rcattr = st_data(1::`=e(nodes)', "`e(ratecov)'")
+		mata: __nwsaom_mems_rccoef = st_matrix("e(ratecoefs)")
+	}
 
 	mata: __nwsaom_mems_outdata = J(`nsim', `__mems_nint', .)
 
@@ -1046,12 +1054,10 @@ program define nwsaom_estat_mems, rclass
 			mata: __nwsaom_mems_theta_s[1,`__mems_effpos'] = __nwsaom_mems_theta_s[1,`__mems_effpos'] * (`__mems_ival')
 			mata: __nwsaom_mems_Gwork = ErgmGraph()
 			mata: SaomCopyGraph(__nwsaom_last_G1, __nwsaom_mems_Gwork)
-			if `__mems_usenative' {
-				mata: SaomSimulateIntervalNative(__nwsaom_mems_Gwork, __nwsaom_last_M, __nwsaom_mems_cfg, __nwsaom_mems_theta_s, `__mems_rate', 1, 0)
-			}
-			else {
-				mata: SaomSimulateIntervalCounted(__nwsaom_mems_Gwork, __nwsaom_last_M, __nwsaom_mems_theta_s, `__mems_rate')
-			}
+			// the fitted model (endowment/creation, structural(),
+			// ratecov(), present()), native when the plugin covers it
+			// (2026-10-01; before, the plain model)
+			mata: __nwsaom_mems_eng = SaomGofSimNet(__nwsaom_mems_Gwork, __nwsaom_last_M, __nwsaom_mems_theta_s, `__mems_rate', 0, __nwsaom_mems_rcattr, __nwsaom_mems_rccoef)
 			mata: __nwsaom_mems_densemat = __nwsaom_mems_Gwork.to_dense()
 			nwsaom_mems_callmacro __nwsaom_mems_densemat "`macro'"
 			mata: __nwsaom_mems_outdata[`__mems_s',`__mems_i'] = `r(stat)'

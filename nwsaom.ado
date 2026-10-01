@@ -1877,6 +1877,19 @@ program nwsaom, eclass
 	// fits (two dependent variables) are always unconditional, as in RSiena.
 	local __nwsaom_condreq = ("`unconditional'" == "" & !`__nwsaom_coev')
 	mata: __nwsaom_cond = `__nwsaom_condreq'
+	// what estat gof needs to simulate the fitted model (2026-10-01):
+	// endowment/creation codes, structural dyads, presence
+	capture mata: mata drop __nwsaom_last_fntype __nwsaom_last_struct __nwsaom_last_present
+	mata: __nwsaom_last_fntype = J(1, __nwsaom_last_M.nterms, 0)
+	local __nwsaom_lfn : word count `__nwsaom_netfntype_list'
+	if `__nwsaom_lfn' > 0 {
+		local __nwsaom_lfnc : subinstr local __nwsaom_netfntype_list " " ",", all
+		mata: __nwsaom_last_fntype[1..`__nwsaom_lfn'] = (`__nwsaom_lfnc')
+	}
+	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
+	else mata: __nwsaom_last_struct = J(0, 0, 0)
+	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
+	else mata: __nwsaom_last_present = J(0, 1, 0)
 	mata: __nwsaom_engine = ""
 	mata: __nwsaom_engine_why = ""
 	if `__nwsaom_coev' & `__nwsaom_multi' {
@@ -2361,6 +2374,7 @@ program nwsaom, eclass
 				ereturn scalar ratecoef_tratio = `__rctr'[1,1]
 				ereturn scalar ratecoef_fixed = `__rcfx'[1,1]
 			}
+			ereturn local ratecov "`ratecov'"
 			ereturn matrix ratecoefs = `__rcb', copy
 			ereturn matrix ratecoefs_se = `__rcse', copy
 			ereturn matrix ratecoefs_tratio = `__rctr', copy

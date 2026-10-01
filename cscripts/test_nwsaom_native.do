@@ -1711,6 +1711,223 @@ real scalar _test_simsum(class ErgmGraph scalar G, real colvector a, real scalar
 	return(s)
 }
 
+/* 2026-10-01 (protocol 11): the formerly Mata-only cases run in the
+   plugin. Each is compared with the Mata simulator at fixed parameters
+   (means of the statistics and scores over nruns simulations, z < 4):
+   network endowment/creation (gating and RSiena's endowment/creation
+   statistics), structural() fixed dyads, a three-way interaction,
+   behavior endowment/creation, and the threaded batch path against
+   single native simulations for ratecov() (two covariates) and the
+   non-directed model types. */
+real rowvector _v11_z(real matrix A, real matrix B) {
+	real scalar k, nr
+	real rowvector z
+	nr = rows(A)
+	z = J(1, cols(A), 0)
+	for (k=1; k<=cols(A); k++) {
+		if (variance(A[.,k]) + variance(B[.,k]) == 0) z[k] = (mean(A[.,k]) == mean(B[.,k]) ? 0 : 99)
+		else z[k] = (mean(A[.,k]) - mean(B[.,k])) / sqrt(variance(A[.,k])/nr + variance(B[.,k])/rows(B))
+	}
+	return(z)
+}
+
+class ErgmGraph scalar _v11_graph(real scalar n, real scalar dens, real scalar sd) {
+	class ErgmGraph scalar G
+	real scalar k, i, j
+	rseed(sd)
+	G = ErgmGraph()
+	G.init(n, 1)
+	for (k=1; k<=round(dens*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G.has_edge(i,j)) G.toggle(i,j)
+	}
+	return(G)
+}
+
+void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvector attr2, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	struct SaomNativeConfig scalar cfg
+	struct SaomScoredResult scalar sres
+	struct SaomCountedResult scalar cres
+	real rowvector theta, fn, z
+	real matrix Zm, Zn, Sm, Sn, st, sp
+	real scalar r, p, k, i, j
+
+	G0 = _v11_graph(n, 0.15, 4711)
+
+	// (1) endowment/creation: outdegree, reciprocity endowment, creation
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocityendow"))
+	td3 = ErgmTermData()
+	M.addterm("reciprocitycreation", 1, &stat_mutual(), &change_mutual(), td3, ("reciprocitycreation"))
+	fn = (0, 1, 2)
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1 & cfg.needv11 == 1)
+	cfg.fntype = fn
+	theta = (-1.0, 1.2, 1.5)
+	p = 3
+	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
+	rseed(101)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4, J(n, 1, 1), fn)
+		Zm[r,.] = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gwork), G0, Gwork)
+		Sm[r,.] = sres.score
+	}
+	rseed(202)
+	for (r=1; r<=nruns; r++) {
+		cres = SaomSimulateIntervalNative(G0, M, cfg, theta, 4, 0, 1)
+		Zn[r,.] = cres.stat
+		Sn[r,.] = cres.score
+	}
+	z = _v11_z(Zm, Zn), _v11_z(Sm, Sn)
+	printf("v11 endowment/creation: z "); z
+	assert(max(abs(z)) < 4)
+
+	// (2) structural(): outdegree, reciprocity, a block of fixed dyads
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	st = J(n, n, 0)
+	st[1..6, 1..6] = 1 :- I(6)
+	cfg = SaomNativeSetup(M)
+	cfg.structpairs = SaomMaskToDyadList(st :== 1)
+	theta = (-1.0, 1.5)
+	p = 2
+	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
+	rseed(303)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4, J(n, 1, 1), J(1, 0, 0), st)
+		Zm[r,.] = M.full_statistic(Gwork)
+		Sm[r,.] = sres.score
+	}
+	rseed(404)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 1)
+		Zn[r,.] = M.full_statistic(Gwork)
+		Sn[r,.] = cres.score
+		// the fixed dyads never change
+		for (i=1; i<=6; i++) for (j=1; j<=6; j++) if (i != j) assert(Gwork.has_edge(i,j) == G0.has_edge(i,j))
+	}
+	z = _v11_z(Zm, Zn), _v11_z(Sm, Sn)
+	printf("v11 structural: z "); z
+	assert(max(abs(z)) < 4)
+
+	// (3) three-way interaction: nodematch x reciprocity x nodeocov
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	td3 = ErgmTermData()
+	td3.attr = attr
+	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td3, ("samex_a"))
+	td4 = ErgmTermData()
+	td4.attr = attr2
+	M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td4, ("egox_b"))
+	td5 = ErgmTermData()
+	SaomBuildInteractTd(M, n, "nodematch", "reciprocity", "nodeocov", td5)
+	M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), td5, ("ix3"))
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1 & cfg.termcodes[5] == 34 & cfg.attridx[5] == 3 & cfg.p1[5] == 2 + 1000*4)
+	theta = (-1.2, 1.0, 0.4, 0.1, -0.3)
+	p = 5
+	Zm = J(nruns, p, 0); Sm = J(nruns, p, 0); Zn = J(nruns, p, 0); Sn = J(nruns, p, 0)
+	rseed(505)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		sres = SaomSimulateIntervalScored(Gwork, M, theta, 4)
+		Zm[r,.] = M.full_statistic(Gwork)
+		Sm[r,.] = sres.score
+	}
+	rseed(606)
+	for (r=1; r<=nruns; r++) {
+		cres = SaomSimulateIntervalNative(G0, M, cfg, theta, 4, 0, 1)
+		Zn[r,.] = cres.stat
+		Sn[r,.] = cres.score
+	}
+	z = _v11_z(Zm, Zn), _v11_z(Sm, Sn)
+	printf("v11 three-way interaction: z "); z
+	assert(max(abs(z)) < 4)
+	printf("native v11 network equivalence PASS (endowment/creation, structural, three-way interaction)\n")
+}
+
+void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2
+	class SaomBehavior scalar Behwork
+	class SaomBehaviorModel scalar Mbeh
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+	struct SaomCoevScoredResult scalar sres
+	real rowvector thetaNet, thetaBeh, z
+	real matrix Zm, Zn
+	real colvector startvals
+	real scalar r
+
+	G0 = _v11_graph(n, 0.15, 8080)
+	rseed(9090)
+	startvals = ceil(runiform(n,1)*5)
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+	Mbeh = SaomBehaviorModel()
+	Mbeh.init()
+	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
+	Mbeh.addterm("quadratic_endow", &stat_saom_quadratic(), &change_saom_quadratic(), "beh_quadratic_endow", 1)
+	Mbeh.addterm("quadratic_creation", &stat_saom_quadratic(), &change_saom_quadratic(), "beh_quadratic_creation", 2)
+	cfg = SaomNativeSetup(M)
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	assert(cfgBeh.eligible == 1 & cfgBeh.fntype == (0, 1, 2))
+	thetaNet = (-1.2, 1.0)
+	thetaBeh = (0.1, 0.3, -0.2)
+	Zm = J(nruns, 2 + 3 + 3, 0)
+	Zn = J(nruns, 2 + 3 + 3, 0)
+	rseed(1111)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		Behwork = SaomBehavior()
+		Behwork.init(startvals, 1, 5, mean(startvals), 0)
+		sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, 3, 2)
+		Zm[r,.] = (SaomBehaviorPatchEndowCreation(Mbeh, (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, G0)), 2, startvals, Behwork.values), sres.scoreBeh)
+	}
+	rseed(2222)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		Behwork = SaomBehavior()
+		Behwork.init(startvals, 1, 5, mean(startvals), 0)
+		sres = SaomSimulateIntervalCoevNative(Gwork, M, cfg, thetaNet, Behwork, Mbeh, cfgBeh, thetaBeh, 3, 2, 1)
+		Zn[r,.] = (sres.stat, sres.statBehLag, sres.scoreBeh)
+	}
+	z = _v11_z(Zm, Zn)
+	printf("v11 behavior endowment/creation: z "); z
+	assert(max(abs(z)) < 4)
+	printf("native v11 behavior equivalence PASS\n")
+}
+
 end
 
 mata:
@@ -1755,5 +1972,8 @@ saom_test_native_5effects_equiv(n, 150)
 saom_test_native_in3plus_equiv(n, 150)
 
 saom_test_native_v9_equiv(n, attr, attr2, 150)
+
+saom_test_native_v11_equiv(n, attr, attr2, 200)
+saom_test_native_v11_beh(n, 200)
 
 end

@@ -3319,6 +3319,9 @@ real colvector SaomImputeBehaviorWave(pointer(real colvector) rowvector rawBeh,
 struct SaomNativeConfig {
 	real scalar eligible
 	string scalar whynot		// why not eligible: the first term the plugin does not cover
+	real rowvector fntype		// protocol 11: network endowment/creation codes per term (set by the estimator)
+	real matrix structpairs		// protocol 11: structural (fixed) dyads, k x 2 (set by the estimator)
+	real scalar needv11		// protocol 11 needed (endowment/creation, three-way interactions, large models)
 	real rowvector termcodes	// one per term instance in M, in M's own order
 	real rowvector attridx		// 0 = no attribute needed; else 1-based column into attrmat
 	real rowvector p1		// one generic scalar per term instance (only simcov uses it - the covariate's own range); 0 for every other term
@@ -3334,6 +3337,7 @@ struct SaomNativeConfig {
 struct SaomBehaviorNativeConfig {
 	real scalar eligible
 	real rowvector termcodes	// one per term instance in Mbeh, in Mbeh's own order
+	real rowvector fntype		// protocol 11: endowment (1)/creation (2) codes per term
 }
 
 /* ===================================================================
@@ -3515,8 +3519,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// in Mata. The threaded batch path covers the plain, missing-data and
 	// composition-change cases.
 	C.cfg = SaomNativeSetup(M)
-	C.use_native = C.cfg.eligible & SaomNativeAvailable() & !C.hasnetgate & !C.hasstructural
+	// protocol 11: endowment/creation and structural() run natively too
+	if (C.hasnetgate) C.cfg.fntype = fntype
+	if (C.hasstructural) C.cfg.structpairs = SaomMaskToDyadList(structural :== 1)
+	C.use_native = C.cfg.eligible & SaomNativeAvailable()
 	ver = (C.use_native ? SaomNativePluginVersion() : 0)
+	if ((C.hasnetgate | C.hasstructural) & ver < 11) C.use_native = 0
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
 	if (C.cond & ver < 6) C.use_native = 0
@@ -3530,13 +3538,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	if (C.symtype >= 4 & ver < 8) C.use_native = 0
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
-	else if (C.hasnetgate) why = "endowment/creation effects (Mata only)"
-	else if (C.hasstructural) why = "structural() (Mata only)"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
 	else why = "native plugin too old for this model"
 	SaomSetEngine(C.use_native, why)
 	C.native_netdist = (ver >= 5)
-	C.use_batch = C.use_native & (ver >= 5) & !C.hasratecov & (C.symtype == 0)
+	// the threaded batch path: every model from protocol 11 on
+	C.use_batch = C.use_native & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
 	if (C.symtype != 0 & !C.use_native) {
 		errprintf("SAOM estimation of a non-directed relation (symmetric, symtype()) requires the native (C) backend, protocol 8 or later for symtype(forcing)/(confirmation); it is not available for this model/platform (there is no Mata fallback for these ministeps).\n")
 		exit(198)
@@ -3550,7 +3557,8 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	}
 	if (C.use_batch) {
 		SaomBatchSetup(Gwaves, C.P, C.cfg, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0,
-			C.hasmiss, C.missDyadsPd, J(C.n, C.P, 0), C.haspresent, C.presentPd)
+			C.hasmiss, C.missDyadsPd, J(C.n, C.P, 0), C.haspresent, C.presentPd,
+			J(1, 0, 0), C.symtype, (C.hasratecov ? C.ratecovattr : J(0, 0, 0)))
 	}
 }
 
@@ -3805,10 +3813,12 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		// rate estimate is their mean over phase 3 (RSiena terminateFRAN())
 		C.lastT = J(K, C.P, 0)
 		if (C.use_batch) {
-			out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2)
+			if (C.hasratecov) out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2, par[(C.ptot-C.hasratecov+1)..C.ptot])
+			else out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2)
 			Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 			if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
 			for (pd=1; pd<=C.P; pd++) C.lastT[., pd] = out[., 2*p + 7*(pd-1) + 7]
+			if (C.hasratecov) SaomBatchRateCovCols(C, out, 2*p + 7*C.P, want_score, Z, S)
 			SaomCondTimeCheck(C.lastT)
 			return
 		}
@@ -3822,14 +3832,16 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		return
 	}
 	if (C.use_batch) {
-		out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0)
+		if (C.hasratecov) out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0, par[(C.ptot-C.hasratecov+1)..C.ptot])
+		else out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0)
 		Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 		if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
 		for (pd=1; pd<=C.P; pd++) {
 			b = 2*p + 6*(pd-1)
 			Z[., p+pd] = out[., b+1] :- C.targetRate[pd]
-			if (want_score) S[., p+pd] = out[., b+3] / par[p+pd] :- C.npresentPd[pd]
+			if (want_score) S[., p+pd] = out[., b+3] / par[p+pd] :- SaomActiveRate(C, par, pd)
 		}
+		if (C.hasratecov) SaomBatchRateCovCols(C, out, 2*p + 6*C.P, want_score, Z, S)
 		return
 	}
 	for (k=1; k<=K; k++) {
@@ -3837,6 +3849,32 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		Z[k,.] = dev
 		S[k,.] = sco
 	}
+}
+
+/* the batch path's ratecov() columns: per covariate the summed statistic
+   and score after column `base' */
+void SaomBatchRateCovCols(struct SaomNetCtx scalar C, real matrix out, real scalar base,
+	real scalar want_score, real matrix Z, real matrix S) {
+	real scalar kk, K, c0
+	K = C.hasratecov
+	c0 = C.ptot - K
+	for (kk=1; kk<=K; kk++) {
+		Z[., c0+kk] = out[., base + 2*kk - 1] :- colsum(C.targetRateCov[., kk])
+		if (want_score) S[., c0+kk] = out[., base + 2*kk]
+	}
+}
+
+/* the rate score's compensator: steps/rate minus this (the total rate
+   divided by the rate), as in SaomNetReplicate() */
+real scalar SaomActiveRate(struct SaomNetCtx scalar C, real rowvector par, real scalar pd) {
+	real scalar active, K
+	real rowvector ratecoef
+	K = C.hasratecov
+	if (!K) return(C.npresentPd[pd])
+	ratecoef = par[(C.ptot-K+1)..C.ptot]
+	active = sum(exp(C.ratecovattr * ratecoef'))
+	if (C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')))) / (C.n - 1)
+	return(active)
 }
 
 /* SaomRMCore() callback: K replicates at `par' */
@@ -5986,6 +6024,11 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		k = SaomNativePluginVersion()
 		C.use_native = (k >= 3)
 		C.use_batch = (k >= 4)
+		// behavior endowment/creation from protocol 11 on
+		if (any(C.cfgBeh.fntype :!= 0) & k < 11) {
+			C.use_native = 0
+			C.use_batch = 0
+		}
 	}
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
@@ -6040,7 +6083,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	if (C.use_batch) {
 		if (C.hasmiss & rows(C.missDyadsPd) == 0) C.missDyadsPd = J(0, 3, 0)
 		SaomBatchSetup(Gwaves, P, C.cfg, C.cfgBeh.termcodes, Behwaves, behminval, behmaxval,
-			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd)
+			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd,
+			C.cfgBeh.fntype)
 	}
 
 	// --- Phase 1: Jacobian by the score-function method
@@ -6361,14 +6405,17 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, si, hassimcov, needv9, needv10
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv9 = 0
 	needv10 = 0
+	cfg.needv11 = 0
 	cfg.whynot = ""
+	cfg.fntype = J(1, M.nterms, 0)
+	cfg.structpairs = J(0, 2, 0)
 	cfg.termcodes = J(1, M.nterms, 0)
 	cfg.attridx = J(1, M.nterms, 0)
 	cfg.p1 = J(1, M.nterms, 0)
@@ -6379,6 +6426,17 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	for (t=1; t<=M.nterms; t++) {
 		nm = M.names[t]
 		if (nm == "outdegree") cfg.termcodes[t] = 1
+		// protocol 11: the endowment/creation terms are outdegree or
+		// reciprocity gated by their function type (cfg.fntype, set by the
+		// estimator from its own fntype list)
+		else if (nm == "outdegreeendow" | nm == "outdegreecreation") {
+			cfg.termcodes[t] = 1
+			cfg.needv11 = 1
+		}
+		else if (nm == "reciprocityendow" | nm == "reciprocitycreation") {
+			cfg.termcodes[t] = 2
+			cfg.needv11 = 1
+		}
 		else if (nm == "reciprocity") cfg.termcodes[t] = 2
 		else if (nm == "nodematch") {
 			cfg.termcodes[t] = 3
@@ -6480,16 +6538,26 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			tdt = *M.td[t]
 			nms = tokens(tdt.sptype, "|")
 			if (cols(nms) > 3) {
-				// Three-way interact() ("expansion", 2026-09-02) - native
-				// still only has wire-protocol room for TWO component slot
-				// references (attridx/p1, see this termcode's own #define
-				// comment); a genuine third slot needs new wire-protocol
-				// fields, a disclosed follow-on, not attempted here. Falls
-				// back to the fully-certified Mata path, matching this
-				// function's own existing "eligible=0 when native can't
-				// represent this term" contract - never guessed/truncated.
-				cfg.eligible = 0
-				if (cfg.whynot == "") cfg.whynot = "three-way interact()"
+				// three-way interact(): TERMCODE_INTERACT3 (protocol 11),
+				// components A in attridx, B and C in p1 = B + 1000*C
+				subA = 0
+				subB = 0
+				subC = 0
+				if (rows(tdt.levels) >= 6) {
+					subA = tdt.levels[4]
+					subB = tdt.levels[5]
+					subC = tdt.levels[6]
+				}
+				if (subA == 0 | subB == 0 | subC == 0) {
+					cfg.eligible = 0
+					if (cfg.whynot == "") cfg.whynot = "three-way interact() registered before 2026-10-01"
+				}
+				else {
+					cfg.termcodes[t] = 34
+					cfg.attridx[t] = subA
+					cfg.p1[t] = subB + 1000 * subC
+					cfg.needv11 = 1
+				}
 			}
 			else {
 				subA = 0
@@ -6528,9 +6596,18 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	}
 	// the plugin's fixed limits (native/saom_sim.c MAXTERMS 32, MAXATTR 24
 	// with one slot kept for behsim); larger models run in Mata
-	if (M.nterms > 32 | cols(cfg.attrmat) > 23) {
+	// the plugin's limits (native/saom_sim.c MAXTERMS 256, MAXATTR 128 with
+	// one slot kept for behsim; protocol 11, before: 32 and 24)
+	if (M.nterms > 256 | cols(cfg.attrmat) > 127) {
 		cfg.eligible = 0
-		if (cfg.whynot == "") cfg.whynot = "more than 32 effects or 23 covariate arrays"
+		if (cfg.whynot == "") cfg.whynot = "more than 256 effects or 127 covariate arrays"
+	}
+	if (M.nterms > 32 | cols(cfg.attrmat) > 23) cfg.needv11 = 1
+	if (cfg.eligible & cfg.needv11) {
+		if (SaomNativePluginVersion() < 11) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 11 (endowment/creation, three-way interact(), or a large model)"
+		}
 	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays
 	if (cfg.eligible & needv10) {
@@ -6568,13 +6645,15 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 	string scalar nm
 
 	cfg.termcodes = J(1, Mbeh.nterms, 0)
+	cfg.fntype = J(1, Mbeh.nterms, 0)
 	cfg.eligible = 1
 	for (t=1; t<=Mbeh.nterms; t++) {
 		nm = Mbeh.names[t]
-		if (Mbeh.fntype[t] != 0) {
-			cfg.eligible = 0
-			continue
-		}
+		// protocol 11: endowment/creation terms are the eval term gated by
+		// the direction of the change (the caller checks the version)
+		cfg.fntype[t] = Mbeh.fntype[t]
+		if (strpos(nm, "_endow")) nm = subinstr(nm, "_endow", "")
+		if (strpos(nm, "_creation")) nm = subinstr(nm, "_creation", "")
 		if (nm == "linear") cfg.termcodes[t] = 101
 		else if (nm == "quadratic") cfg.termcodes[t] = 102
 		else if (nm == "avalt") cfg.termcodes[t] = 103
@@ -6605,6 +6684,31 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
    two initiatives' native calls cannot collide even if both run in the
    same Stata session.
 */
+/* SaomTrailer11(): the protocol-11 model trailer of the plugin's wire
+   string (native/saom_sim.c parse_model_trailer11()): endowment/creation
+   codes of the network and behavior terms, and the structural dyads.
+   Older plugins ignore it (the model is then not sent to them: see the
+   version checks in the estimators). */
+string scalar SaomTrailer11(struct SaomNativeConfig scalar cfg, real scalar nterms, real rowvector behfntype) {
+	string scalar s
+	real rowvector fn
+	real scalar i, hasfn
+
+	fn = J(1, nterms, 0)
+	if (cols(cfg.fntype) == nterms) fn = cfg.fntype
+	hasfn = any(fn :!= 0)
+	if (cols(behfntype) > 0) hasfn = hasfn | any(behfntype :!= 0)
+	if (hasfn) {
+		s = " 1"
+		for (i=1; i<=nterms; i++) s = s + " " + strofreal(fn[i])
+		for (i=1; i<=cols(behfntype); i++) s = s + " " + strofreal(behfntype[i])
+	}
+	else s = " 0"
+	s = s + " " + strofreal(rows(cfg.structpairs))
+	for (i=1; i<=rows(cfg.structpairs); i++) s = s + " " + strofreal(cfg.structpairs[i,1]) + " " + strofreal(cfg.structpairs[i,2])
+	return(s)
+}
+
 struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scalar G, class ErgmModel scalar M,
 	struct SaomNativeConfig scalar cfg, real rowvector theta, real scalar rate, real scalar rebuild_g,
 	real scalar want_score, | real matrix missDyads, real colvector present, real scalar symtype,
@@ -6773,6 +6877,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 		}
 		for (k=1; k<=hasratecov; k++) argstr = argstr + " " + strofreal(ratecoef[k], "%25.17g")
 	}
+	argstr = argstr + SaomTrailer11(cfg, M.nterms, J(1, 0, 0))
 
 	// see ErgmNativeSampleCore()'s own header comment for why `capture`
 	// here is correct (an already-defined plugin program cannot be
@@ -7071,6 +7176,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	argstr = argstr + " " + strofreal(haspresentNet)		// harmonisation unit 33 (native port) - see native/saom_sim.c's own "COMPOSITION CHANGE" header section
 	argstr = argstr + " 0"		// undirected/symmetric relations (native-first): symtype=0 - the co-evolution path does not yet support symmetric relations (out of scope for this unit), same FIXED-trailer contract
 	argstr = argstr + " 0"		// ratecov (native-first): hasratecov=0 - ratecov() is rejected together with co-evolution at the .ado layer (v1 scope), same FIXED-trailer contract
+	argstr = argstr + SaomTrailer11(cfg, M.nterms, (cols(cfgBeh.fntype) == Mbeh.nterms ? cfgBeh.fntype : J(1, Mbeh.nterms, 0)))
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 
@@ -7111,6 +7217,78 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	st_framecurrent(origframe)
 
 	return(res)
+}
+
+/* estat gof (nwsaom_estat.ado): one simulated period of the fitted model,
+   in the plugin when it covers the model (2026-10-01; before, co-evolution
+   gof always ran in Mata, and network gof ignored endowment/creation,
+   structural(), ratecov() and present()). Model details persisted by
+   nwsaom.ado: __nwsaom_last_fntype, __nwsaom_last_struct,
+   __nwsaom_last_present. Returns 1 if the plugin ran it. */
+transmorphic _SaomGofExt(string scalar nm, transmorphic dflt) {
+	pointer scalar p
+	p = findexternal(nm)
+	if (p == NULL) return(dflt)
+	return(*p)
+}
+
+real scalar SaomGofSimNet(class ErgmGraph scalar G, class ErgmModel scalar M,
+	real rowvector theta, real scalar rate, real scalar symtype,
+	real matrix rcattr, real rowvector rccoef) {
+
+	struct SaomNativeConfig scalar cfg
+	struct SaomCountedResult scalar r
+	real rowvector fn
+	real matrix st
+	real colvector pr
+	real scalar native, hasfn, hasst, haspr
+
+	fn = _SaomGofExt("__nwsaom_last_fntype", J(1, 0, 0))
+	st = _SaomGofExt("__nwsaom_last_struct", J(0, 0, 0))
+	pr = _SaomGofExt("__nwsaom_last_present", J(0, 1, 0))
+	if (cols(fn) != M.nterms) fn = J(1, M.nterms, 0)
+	hasfn = any(fn :!= 0)
+	hasst = (rows(st) > 0)
+	haspr = (rows(pr) > 0)
+	cfg = SaomNativeSetup(M)
+	native = cfg.eligible & SaomNativeAvailable()
+	if (native & (hasfn | hasst | cols(rccoef) > 1)) native = (SaomNativePluginVersion() >= 11)
+	if (native) {
+		if (hasfn) cfg.fntype = fn
+		if (hasst) cfg.structpairs = SaomMaskToDyadList(st :== 1)
+		if (rows(rcattr) > 0) r = SaomSimulateIntervalNative(G, M, cfg, theta, rate, 1, 0, J(0, 2, 0), (haspr ? pr : J(0, 1, 0)), symtype, rcattr, rccoef)
+		else r = SaomSimulateIntervalNative(G, M, cfg, theta, rate, 1, 0, J(0, 2, 0), (haspr ? pr : J(0, 1, 0)), symtype)
+		return(1)
+	}
+	if (symtype != 0) {
+		errprintf("estat gof needs the native (C) simulator for a non-directed fit.\n")
+		exit(498)
+	}
+	if (rows(rcattr) > 0) r = SaomSimIntCountedRateCov(G, M, theta, rate, rcattr, rccoef, (haspr ? pr : J(G.n, 1, 1)), fn)
+	else r = SaomSimulateIntervalCounted(G, M, theta, rate, (haspr ? pr : J(G.n, 1, 1)), fn, (hasst ? st : J(0, 0, 0)))
+	return(0)
+}
+
+real scalar SaomGofSimCoev(class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
+	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
+	real scalar rateNet, real scalar rateBeh) {
+
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgBeh
+	struct SaomCoevScoredResult scalar r
+	struct SaomCoevResult scalar rm
+	real scalar native
+
+	cfg = SaomNativeSetup(M)
+	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
+	native = cfg.eligible & cfgBeh.eligible & SaomNativeAvailable()
+	if (native) native = (SaomNativePluginVersion() >= (any(cfgBeh.fntype :!= 0) ? 11 : 3))
+	if (native) {
+		r = SaomSimulateIntervalCoevNative(G, M, cfg, thetaNet, Beh, Mbeh, cfgBeh, thetaBeh, rateNet, rateBeh, 1)
+		return(1)
+	}
+	rm = SaomSimulateIntervalCoev(G, M, thetaNet, Beh, Mbeh, thetaBeh, rateNet, rateBeh)
+	return(0)
 }
 
 /* SaomNativePluginVersion(): the saom_sim plugin's protocol version
@@ -7170,9 +7348,11 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	struct SaomNativeConfig scalar cfg, real rowvector behtermcodes,
 	pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real scalar simMean, real scalar overallMean, real scalar hasmiss, real matrix missDyadsPd,
-	real matrix missBehPd, real scalar haspresent, real matrix presentPd) {
+	real matrix missBehPd, real scalar haspresent, real matrix presentPd,
+	| real rowvector behfntype, real scalar symtype, real matrix rcattr) {
 
 	real matrix E, t
+	real scalar k
 	real scalar n, pd, nattr, nbeh, nrows, i, junk
 	string rowvector names
 	string scalar origframe, argstr
@@ -7217,6 +7397,14 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	for (i=1; i<=nbeh; i++) argstr = argstr + " " + strofreal(behtermcodes[i])
 	argstr = argstr + " " + strofreal(behmin, "%25.17g") + " " + strofreal(behmax, "%25.17g") + " " + strofreal(simMean, "%25.17g") + " " + strofreal(overallMean, "%25.17g")
 	argstr = argstr + " " + strofreal(hasmiss) + " " + strofreal(haspresent) + " " + strofreal(rows(E)) + " " + strofreal(rows(missDyadsPd))
+	// protocol 11 trailer: model trailer, symtype, ratecov() covariates
+	argstr = argstr + SaomTrailer11(cfg, cols(cfg.termcodes), (args() >= 15 ? behfntype : J(1, nbeh, 0)))
+	argstr = argstr + " " + strofreal(args() >= 16 ? symtype : 0)
+	if (args() >= 17 & rows(rcattr) > 0) {
+		argstr = argstr + " " + strofreal(cols(rcattr))
+		for (k=1; k<=cols(rcattr); k++) for (i=1; i<=n; i++) argstr = argstr + " " + strofreal(rcattr[i,k], "%25.17g")
+	}
+	else argstr = argstr + " 0"
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
@@ -7234,14 +7422,17 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	real rowvector thetaNet, real rowvector thetaBeh, real rowvector ratesNet,
 	real rowvector ratesBeh, real rowvector targets, real scalar K,
-	real scalar want_score, real scalar condmode) {
+	real scalar want_score, real scalar condmode, | real rowvector ratecoef) {
 
-	real scalar W, i, seed, junk
+	real scalar W, i, seed, junk, nrc
 	string rowvector names
 	string scalar origframe, argstr
 	real matrix out
 
-	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P
+	// protocol 11: with ratecov(), per covariate the summed statistic and
+	// score in 2 more columns
+	nrc = (args() >= 12 ? cols(ratecoef) : 0)
+	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P + 2*nrc
 	names = J(1, W, "")
 	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
 	origframe = st_framecurrent()
@@ -7259,6 +7450,7 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal(ratesNet[i], "%25.17g")
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(ratesBeh) ? ratesBeh[i] : 0), "%25.17g")
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(targets) ? targets[i] : 0), "%25.17g")
+	for (i=1; i<=nrc; i++) argstr = argstr + " " + strofreal(ratecoef[i], "%25.17g")
 
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
 	out = st_data((1::K), names)

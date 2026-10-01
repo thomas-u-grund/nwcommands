@@ -98,8 +98,38 @@ _eng native
 nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(glasgow2) netbwave2(glasgow3) k3(100) seed(1)
 _eng native
 
-* endowment/creation effects: Mata by design, reported as such
+* formerly Mata-only (native from protocol 11, 2026-10-01): network
+* endowment/creation, structural(), three-way interactions, behavior
+* endowment/creation
 nwsaom, `w2' outdegree reciprocityendow reciprocitycreation `o'
-_eng mata
+_eng native
+nwsaom, `w2' outdegree reciprocityendow reciprocitycreation unconditional `o'
+_eng native
+nwtomata glasgow1, mat(__a1)
+nwtomata glasgow2, mat(__a2)
+mata: __st = J(50, 50, 0)
+mata: __st[1..10, 1..10] = (__a1[1..10, 1..10] :== __a2[1..10, 1..10]) :* (1 :- I(10))
+mata: st_matrix("__structfrozen", __st)
+nwsaom, `w2' outdegree reciprocity structural(__structfrozen) `o'
+_eng native
+nwsaom, `w2' outdegree reciprocity samex(smoke1) egox(alcc) interact(samex#reciprocity#egox) `o'
+_eng native
+* (the behavior endowment/creation models do not converge on these data;
+* the simulator chosen is checked)
+capture nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity behavior(smoke1 smoke2 smoke3) ///
+	linear quadratic avaltendow avaltcreation `o'
+mata: st_local("__eng", __nwsaom_engine)
+di as text "engine (behavior endowment/creation): `__eng'"
+assert "`__eng'" == "native"
+* estat gof of a co-evolution fit and of an endowment/creation fit run
+* natively too (no engine flag; they must run and be quick)
+nwsaom, `w2' outdegree reciprocityendow reciprocitycreation `o'
+timer clear 9
+timer on 9
+estat gof, nsim(50) seed(3)
+timer off 9
+qui timer list 9
+di as text "estat gof (endowment/creation, 50 simulations): " r(t9) " s"
+assert r(t9) < 20
 
 di as text "test_nwsaom_engine: all checks passed"

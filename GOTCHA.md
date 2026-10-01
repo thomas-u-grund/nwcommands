@@ -466,6 +466,28 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## nwsaom: everything runs in the plugin (protocol 11, 2026-10-01)
+
+Formerly Mata-only, now native (and threaded), certified against the Mata simulator at fixed
+parameters (test_nwsaom_native.do) and against RSiena (5 seeds, cond/uncond, within 0.1 SE):
+network endowment/creation (gating + RSiena's endowment/creation statistics computed in C),
+structural() fixed dyads (excluded from the actor's alternatives), three-way interact()
+(TERMCODE_INTERACT3), behavior endowment/creation (gating + statistics as Mata), the threaded batch
+path for ratecov() (statistic and score per covariate in C) and non-directed models, estat gof for
+co-evolution (before always Mata) and for endowment/creation/structural/ratecov/present/non-directed
+fits (before, network gof simulated the plain model). Limits MAXTERMS 256, MAXATTR 128, MAXBEHTERMS 64.
+Timings on glasgow (seed 1, before -> after): reciprocity endowment/creation 58.6 -> 0.21 s;
+structural() 42.1 -> 0.17 s; three-way interaction 227 -> 0.29 s; co-evolution with quadratic
+endowment/creation 118 -> 0.45 s; ratecov() two covariates 3.5 -> 0.27 s; joint + ratecov() 3.3 ->
+0.21 s. Mata remains only as the fallback (no plugin for the platform, an older plugin, more than 256
+effects); e(engine) shows which ran.
+estat mems now simulates the fitted model the same way. Open: the multiplex command offers only
+outdegree/reciprocity/crprod (all native already, not threaded). Pre-existing, found while porting (C reproduces
+Mata): the behavior endowment/creation STATISTIC is the linear one (sum of decreases/increases) for
+every term; RSiena has no quadratic-shape endowment statistic and a different avAlt one, so
+quadratic/avalt/avsim endowment/creation splits are not RSiena's effects (quadratic endowment +
+creation with the rate is not even identified).
+
 ## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
 
 RSiena's interaction contribution is the product of the components' contributions for creating the
