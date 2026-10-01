@@ -304,6 +304,17 @@ reports RSiena-style convergence t-ratios for every parameter including the rate
 {cmd:e(tconv_max)} RSiena's overall maximum convergence ratio.
 
 {pstd}
+{bf:Starting values and a stuck behavior.} As in RSiena, the outdegree effect, the linear shape
+effect and the rates start at values computed from the data (RSiena's {cmd:getEffects()}), and
+phase 1 ends with RSiena's partial Newton step. On a few random seeds, phase 2 can still overshoot
+so far (for example to a large {opt quadratic} effect) that simulated actors hardly change the
+behavior any more and the estimates drift without end. {cmd:nwsaom} detects this (in two
+consecutive windows of 25 phase-2 steps, the simulated behavior changes by less than three
+quarters of the observed amount in every period) and then runs phases 1 and 2 once more with new
+simulations; a note says so. On the smoking co-evolution model of the benchmark this happened on 2
+of 60 seeds, and every seed then converged.
+
+{pstd}
 {bf:Check against RSiena.} RSiena 1.6.6 on its s50 data (friendship {cmd:s501-s503}, drinking
 {cmd:s50a}; {cmd:nwwebuse glasgow} holds the same data, nodes in a different order), network:
 density, reciprocity, transTrip, simX(drinking); behavior: linear, quad, avAlt. RSiena estimates

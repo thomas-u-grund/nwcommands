@@ -5062,6 +5062,60 @@ real scalar SaomBehaviorMinistep(class SaomBehavior scalar Beh, class ErgmGraph 
    Robbins-Monro's own starting point for the linear-shape coefficient,
    not correctness).
 */
+/* RSiena's data-derived starting values for a behavior variable
+   (getBehaviorStartingVals() and getEffects(), R/effects.r).
+   SaomBehRateStartRange2(): the rate of one period for a behavior whose
+   range (maximum - minimum over all waves) is 2: with u = share of actors
+   at the minimum who move up and d = share at the maximum who move down,
+   each count plus 1, val = u + d (0.5 if above 0.9), rate = -log(1 - val).
+   SaomBehLinearStart(): the starting value of the linear shape effect
+   ("tendency"), from the changes pooled over all periods. */
+real scalar SaomBehRateStartRange2(real colvector s, real colvector e,
+	real scalar minv, real scalar maxv) {
+
+	real colvector d
+	real scalar m0, m1, x0, x1, val
+
+	d = e - s
+	m0 = 1 + sum((s :== minv) :& (d :== 0))
+	m1 = 1 + sum((s :== minv) :& (d :> 0))
+	x0 = 1 + sum((s :== maxv) :& (d :== 0))
+	x1 = 1 + sum((s :== maxv) :& (d :< 0))
+	val = m1 / (m0 + m1) + x1 / (x0 + x1)
+	if (val > 0.9) val = 0.5
+	return(-ln(1 - val))
+}
+
+real scalar SaomBehLinearStart(pointer(real colvector) rowvector B,
+	real scalar minv, real scalar maxv) {
+
+	real colvector s, d, alld
+	real scalar pd, P, m0, m1, x0, x1, t, md, vd
+
+	P = cols(B) - 1
+	if (round(maxv - minv) == 2) {
+		m0 = m1 = x0 = x1 = 0
+		for (pd=1; pd<=P; pd++) {
+			s = *B[pd]
+			d = *B[pd+1] - s
+			m0 = m0 + 1 + sum((s :== minv) :& (d :== 0))
+			m1 = m1 + 1 + sum((s :== minv) :& (d :> 0))
+			x0 = x0 + 1 + sum((s :== maxv) :& (d :== 0))
+			x1 = x1 + 1 + sum((s :== maxv) :& (d :< 0))
+		}
+		t = ln((m1 * (x0 + x1)) / (x1 * (m0 + m1)))
+		return(min((max((t, -2)), 2)))
+	}
+	alld = J(0, 1, .)
+	for (pd=1; pd<=P; pd++) alld = alld \ round(*B[pd+1] - *B[pd])
+	md = mean(alld)
+	vd = variance(alld)
+	if (md < 0.9 * vd) t = 0.5 * ln((md + vd) / (vd - md))
+	else t = md / (vd + 1)
+	// RSiena trims only from below here (its upper bound is 3/0)
+	return(max((t, -3)))
+}
+
 real scalar SaomBehaviorRateStart(real colvector startvals, real colvector endvals) {
 	real colvector d
 
@@ -6129,6 +6183,10 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real matrix Ddev3, Dsco3, Dhat3, Dinv3, missDyadsPdTmp, S3, Z1, S1
 	real rowvector theta, theta0, dev, sco, prevdev, prod0, prod1, ac, stdcap
 	real rowvector thav, fchange, changestep, ratesNet0, ratesBeh0, thprev, m3
+	real rowvector step1
+	real scalar attempt, restart, behtarget, nshort
+	real rowvector theta0start
+	real rowvector behwin
 	real scalar pd, k, nwaves, P, p, ptot, n, hasbehsim
 	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
 	real rowvector n2minimum, n2maximum
@@ -6232,7 +6290,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		C.targetRateBeh[pd] = sum(abs((*Behwaves[pd+1] - *Behwaves[pd]) :* (1 :- C.missBehPd[.,pd])))
 
 		ratesNet0[pd] = C.npresentPd[pd] * (0.2 + 2*C.targetRateNet[pd]) / (C.npresentPd[pd]*(C.npresentPd[pd]-1) + 1)
-		ratesBeh0[pd] = (C.hasmiss ? SaomBehaviorRateStartMasked(*Behwaves[pd], *Behwaves[pd+1], C.missBehPd[.,pd]) : SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1]))
+		if (C.hasmiss) ratesBeh0[pd] = SaomBehaviorRateStartMasked(*Behwaves[pd], *Behwaves[pd+1], C.missBehPd[.,pd])
+		else if (round(behmaxval - behminval) == 2) ratesBeh0[pd] = SaomBehRateStartRange2(*Behwaves[pd], *Behwaves[pd+1], behminval, behmaxval)
+		else ratesBeh0[pd] = SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1])
 	}
 
 	theta0 = (theta0Net, theta0Beh, ratesNet0, ratesBeh0)
@@ -6243,6 +6303,13 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd,
 			C.cfgBeh.fntype)
 	}
+
+	// A behavior can get stuck (see phase 2 below). Then phases 1 and 2
+	// are run once more, with new simulations.
+	behtarget = sum(C.targetRateBeh)
+	theta0start = theta0
+	for (attempt=1; attempt<=2; attempt++) {
+	theta0 = theta0start
 
 	// --- Phase 1: Jacobian by the score-function method. As RSiena
 	// (phase1.r): a non-positive diagonal element of an effect's
@@ -6286,6 +6353,16 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		if (stdcap[k] > 1) stdcap[k] = 1
 	}
 
+	// quasi-Newton step after phase 1 (RSiena's phase1.2, as in
+	// SaomEstimateRMMulti()): half of firstg times the full step, scaled
+	// down so that no parameter moves by more than 1, a rate by at most
+	// half its value, and fixed parameters not at all
+	step1 = (Dinv * mean(Zdev)')' * (0.5 * firstg) :* (1 :- coevfixed)
+	if (hasmissing(step1)) step1 = J(1, ptot, 0)
+	if (max(abs(step1)) > 1) step1 = step1 / max(abs(step1))
+	for (k=p+1; k<=ptot; k++) if (step1[k] >= theta0[k]) step1[k] = 0.5 * theta0[k]
+	theta0 = theta0 - step1
+
 	// --- Phase 2: Robbins-Monro, same schedule as before
 	nsub = 4
 	reduceg = 0.5
@@ -6300,6 +6377,19 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		n2maximum[k] = n2minimum[k] + 200
 	}
 
+	// A behavior can get stuck: if phase 2 overshoots, for example to a
+	// large quadratic shape effect, simulated actors (nearly) stop
+	// changing the behavior, raising the behavior rate no longer helps, and
+	// the updates drift without end. When, in two consecutive windows of
+	// 25 steps of the first subphase (from step 50 on), the simulated
+	// behavior changes on average by less than three quarters of the
+	// observed amount in every period, the estimation starts again once
+	// from phase 1, with new simulations. (In a fit that is on track,
+	// these window averages lie close to the observed amount.)
+	restart = 0
+	behwin = J(1, P, 0)
+	nshort = 0
+	gain = firstg
 	theta = theta0
 	for (subphase=1; subphase<=nsub; subphase++) {
 		thav = theta
@@ -6314,6 +6404,18 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			nit = nit + 1
 			SaomCoevSimMany(C, M, Mbeh, theta, 1, 0, Z1, S1)
 			dev = Z1[1,.]
+			if (attempt == 1 & behtarget > 0 & subphase == 1) {
+				behwin = behwin + Z1[1,(p+P+1)..ptot]
+				if (mod(nit, 25) == 0) {
+					if (nit >= 50 & all(behwin/25 :< -0.25 * C.targetRateBeh)) nshort = nshort + 1
+					else nshort = 0
+					behwin = J(1, P, 0)
+					if (nshort >= 2) {
+						restart = 1
+						break
+					}
+				}
+			}
 
 			if (mod(nit,2) == 1) prevdev = dev
 			else {
@@ -6348,8 +6450,12 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			if (nit >= n2minimum[subphase] & maxacor < 1e-10) break
 		}
 
+		if (restart) break
 		theta = thav / thavn
 		gain = gain * reduceg
+	}
+	if (!restart) break
+	printf("{txt}note: during phase 2 the simulated behavior nearly stopped changing (the estimates had overshot); the estimation was started again from phase 1.\n")
 	}
 
 	fit.thetaNet = theta[1..C.pNet]

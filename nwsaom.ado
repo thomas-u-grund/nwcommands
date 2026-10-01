@@ -1853,12 +1853,12 @@ program nwsaom, eclass
 		}
 		mata: __nwsaom_theta0 = strtoreal(tokens("`theta0'"))
 	}
-	// network-only models without theta0(): start the outdegree effect
+	// models without theta0(): start the outdegree effect
 	// at RSiena's data-derived value (getNetworkStartingVals()) instead of
 	// 0, as RSiena does - with the rate estimated jointly, a start at 0
 	// (a network that densifies quickly) can make the phase-1 derivative
 	// estimates unusable
-	if "`theta0'" == "" & !`__nwsaom_coev' & "`outdegree'" != "" {
+	if "`theta0'" == "" & "`outdegree'" != "" {
 		if `__nwsaom_multi' mata: __nwsaom_theta0[1] = SaomOutdegreeStart(__nwsaom_last_Gwaves, ("`symmetric'" != ""))
 		else mata: __nwsaom_theta0[1] = SaomOutdegreeStart((&__nwsaom_last_G1, &__nwsaom_last_G2), ("`symmetric'" != ""))
 	}
@@ -1885,6 +1885,11 @@ program nwsaom, eclass
 	if `__nwsaom_coev' {
 		if "`behtheta0'" == "" {
 			mata: __nwsaom_theta0beh = J(1, `__nwsaom_pbeh', 0)
+			// the linear shape starts at RSiena's data-derived value
+			// (getEffects(): "tendency"), as RSiena does
+			if "`linear'" != "" & !`__nwsaom_hasmissbeh' {
+				mata: __nwsaom_theta0beh[1] = SaomBehLinearStart(__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval)
+			}
 		}
 		else {
 			local __nwsaom_ntbeh : word count `behtheta0'

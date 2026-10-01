@@ -651,3 +651,16 @@ term data. Symptom: the NEXT command that reads the model fails, e.g. a second `
 violin-plot routine (`__gv_summ`, `__gv_stack`); fixed by using fixed names (`__nwsaom_gv_*`).
 Rule: in any code that runs after an nwsaom fit, name Mata objects explicitly with a `__nwsaom_`
 prefix; `tempname` is fine only for Stata matrices and scalars.
+
+## Co-evolution phase 2 can run into a "stuck behavior" trap (fixed 2026-10-01)
+
+On roughly 3% of seeds, the smoking co-evolution model (3-category behavior, quadratic + avSim)
+ran away in phase 2: the quadratic effect overshot early, simulated actors (nearly) stopped
+changing the behavior, the behavior-rate deviations stayed negative whatever the rate, and
+linear/quadratic/rates drifted to 15-30 (r(505), singular phase-3 matrix, or tconv_max ~50-150).
+RSiena 1.6.6 converged on all 60 seeds. Fixed in SaomEstimateRMCoevMulti(): RSiena's data-derived
+starts (outdegree, linear "tendency", range-2 behavior rate) and its phase-1 Newton step, plus a
+restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 2 does NOT help:
+with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
+correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
+not one: the failure is rare and moves between seeds when anything upstream changes.
