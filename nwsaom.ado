@@ -2630,7 +2630,7 @@ capture program drop nwsaom_multiplex
 program define nwsaom_multiplex, eclass
 	version 14
 	syntax , NETAWAVE1(string) NETAWAVE2(string) NETBWAVE1(string) NETBWAVE2(string) ///
-		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB ]
+		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB DETail ]
 
 	if `seed' != -1 set seed `seed'
 
@@ -2714,6 +2714,6 @@ program define nwsaom_multiplex, eclass
 	di as text "{hline}"
 	ereturn display
 	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
-	_nwsaom_tconvtable
+	_nwsaom_tconvtable, `detail'
 end
 

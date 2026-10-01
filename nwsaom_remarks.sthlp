@@ -265,7 +265,7 @@ single Method-of-Moments fit - a separate subcommand, not an option on plain {cm
 {cmd:netbwave1(}{it:netname}{cmd:)} {cmd:netbwave2(}{it:netname}{cmd:)}
 {cmd:[}{opt crprod}{cmd:]} {cmd:[}{opt crprodb}{cmd:]}
 {cmd:[}{opt theta01(numlist)}{cmd:]} {cmd:[}{opt theta02(numlist)}{cmd:]}
-{cmd:[}{opt k0(#)}{cmd:]} {cmd:[}{opt k3(#)}{cmd:]} {cmd:[}{opt firstg(#)}{cmd:]} {cmd:[}{opt seed(#)}{cmd:]}{p_end}
+{cmd:[}{opt k0(#)}{cmd:]} {cmd:[}{opt k3(#)}{cmd:]} {cmd:[}{opt firstg(#)}{cmd:]} {cmd:[}{opt seed(#)}{cmd:]} {cmd:[}{opt detail}{cmd:]}{p_end}
 
 {pstd}
 {opt netawave1()}/{opt netawave2()} name the first network's own two waves; {opt netbwave1()}/
@@ -275,7 +275,8 @@ immediately followed by a letter). Both networks must be directed, non-bipartite
 same fixed set of nodes. {opt theta01()}/{opt theta02()} give starting values (comma-separated,
 one per network's own effect count, which grows by one when {opt crprod()}/{opt crprodb()} is
 given - default 0 for every effect); {opt k0()}/{opt k3()}/{opt firstg()} tune the estimator
-exactly like plain {cmd:nwsaom}'s own identically-named options.
+exactly like plain {cmd:nwsaom}'s own identically-named options, and {opt detail} lists the
+convergence t-ratio of every parameter, as there.
 
 {pstd}
 {opt crprod} adds a cross-network effect to the first network's own effect list: a tie is more
