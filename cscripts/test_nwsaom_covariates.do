@@ -57,10 +57,12 @@ assert _rc == 111
 * coefficient name, either spelling, and the ambiguous case
 nwsaom, `w12' outdegree reciprocity samex(smoke1) interact(samex#reciprocity) `o'
 _names "outdegree reciprocity samex_smoke1 interact_nodematch_reciprocity"
+assert "`e(engine)'" == "native"
 nwsaom, `w12' outdegree reciprocity samex(smoke1 sport1) interact(samex_sport1#reciprocity) `o'
 * (interact_samex_sport1_reciprocity has 33 characters, one more than a
 * Stata name allows: ix_ instead of interact_)
 _names "outdegree reciprocity samex_smoke1 samex_sport1 ix_samex_sport1_reciprocity"
+assert "`e(engine)'" == "native"
 matrix __bi = e(b)
 * the same interaction named with the other spelling
 nwsaom, `w12' outdegree reciprocity samex(smoke1 sport1) interact(nodematch_sport1#reciprocity) `o'

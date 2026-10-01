@@ -381,6 +381,12 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
+		// RSiena's guard against a conditional period that cannot reach
+		// the observed distance (see SaomCondTimeCheck())
+		if (iscond & res.steps >= 1000000) {
+			t = .
+			break
+		}
 		t = t - ln(runiform(1,1)) / (npresent * rate)
 		if (iscond | t < 1) {
 			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
@@ -524,6 +530,12 @@ struct SaomCountedResult scalar SaomSimulateIntervalCounted(class ErgmGraph scal
 	res.nchanges = 0
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
+		// RSiena's guard against a conditional period that cannot reach
+		// the observed distance (see SaomCondTimeCheck())
+		if (iscond & res.steps >= 1000000) {
+			t = .
+			break
+		}
 		t = t - ln(runiform(1,1)) / (npresent * rate)
 		if (iscond | t < 1) {
 			if (haspresent) i = presentIdx[ceil(runiform(1,1) * npresent)]
@@ -621,6 +633,12 @@ struct SaomCountedResult scalar SaomSimIntCountedRateCov(class ErgmGraph scalar 
 	res.nchanges = 0
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
+		// RSiena's guard against a conditional period that cannot reach
+		// the observed distance (see SaomCondTimeCheck())
+		if (iscond & res.steps >= 1000000) {
+			t = .
+			break
+		}
 		w = haspresent ? wfull[presentIdx] : wfull
 		totw = sum(w)
 		t = t - ln(runiform(1,1)) / totw / rate
@@ -729,6 +747,12 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
+		// RSiena's guard against a conditional period that cannot reach
+		// the observed distance (see SaomCondTimeCheck())
+		if (iscond & res.steps >= 1000000) {
+			t = .
+			break
+		}
 		w = haspresent ? wfull[presentIdx] : wfull
 		totw = sum(w)
 		tau = - ln(runiform(1,1)) / totw / rate
@@ -2397,6 +2421,28 @@ void SaomCheckThetaBound(real rowvector theta, real scalar thetaBound) {
    see that function's own header comment for why), called right after
    `fit.V' is computed in every estimator.
    =================================================================== */
+/* SaomCondTimeCheck(): under conditional estimation a simulated period
+   that does not reach the observed distance within a million ministeps
+   is abandoned and returns a missing time (native/saom_sim.c and the
+   Mata simulators), as RSiena stops with "Unlikely to terminate this
+   epoch: more than 1000000 steps" (EpochSimulation::runEpoch()). Before
+   2026-10-01 such a period ran on indefinitely. */
+/* SaomSetEngine(): which simulator a fit used, for e(engine) ("native"
+   or "mata") and the note nwsaom prints when it is Mata (2026-10-01; a
+   model the plugin covers must never fall back silently). */
+void SaomSetEngine(real scalar native, string scalar reason) {
+	external string scalar __nwsaom_engine, __nwsaom_engine_why
+	__nwsaom_engine = (native ? "native" : "mata")
+	__nwsaom_engine_why = (native ? "" : reason)
+}
+
+void SaomCondTimeCheck(real matrix T) {
+	if (hasmissing(T)) {
+		errprintf("SAOM simulation: a simulated period did not reach the observed distance within 1000000 ministeps (RSiena: Unlikely to terminate this epoch: more than 1000000 steps). The estimates probably diverged (e.g. a phase-1 derivative estimated from too few simulations, k0()); try the default k0(), other starting values (theta0()), or a narrower model.\n")
+		exit(498)
+	}
+}
+
 void SaomCheckCovarianceFinite(real matrix V) {
 	if (hasmissing(V)) {
 		errprintf("SAOM estimation's own phase-3 covariance matrix (e(V)) contains missing values - the phase-3 Jacobian was too close to singular to invert reliably. This is a further symptom of the SAME kind of weak identification thetaBound exists to catch - theta itself stayed within thetaBound's own limit, but the separate phase-3 covariance computation still broke down, which usually signals a genuine identification problem for this specific model/data combination, not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
@@ -3265,6 +3311,7 @@ real colvector SaomImputeBehaviorWave(pointer(real colvector) rowvector rawBeh,
    =================================================================== */
 struct SaomNativeConfig {
 	real scalar eligible
+	string scalar whynot		// why not eligible: the first term the plugin does not cover
 	real rowvector termcodes	// one per term instance in M, in M's own order
 	real rowvector attridx		// 0 = no attribute needed; else 1-based column into attrmat
 	real rowvector p1		// one generic scalar per term instance (only simcov uses it - the covariate's own range); 0 for every other term
@@ -3405,6 +3452,7 @@ struct SaomNetCtx {
 void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M, real matrix presentPd, pointer(real matrix) rowvector missMaskPd,
 	real rowvector fntype, real matrix ratecovattr, real scalar symtype, real matrix structural) {
+	string scalar why
 
 	real scalar pd, ver
 	real matrix mdt
@@ -3473,6 +3521,13 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// unilateral-initiative model types (forcing, confirmation) from
 	// protocol 8 on
 	if (C.symtype >= 4 & ver < 8) C.use_native = 0
+	why = ""
+	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
+	else if (C.hasnetgate) why = "endowment/creation effects (Mata only)"
+	else if (C.hasstructural) why = "structural() (Mata only)"
+	else if (!C.cfg.eligible) why = C.cfg.whynot
+	else why = "native plugin too old for this model"
+	SaomSetEngine(C.use_native, why)
 	C.native_netdist = (ver >= 5)
 	C.use_batch = C.use_native & (ver >= 5) & !C.hasratecov & (C.symtype == 0)
 	if (C.symtype != 0 & !C.use_native) {
@@ -3747,6 +3802,7 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 			if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
 			for (pd=1; pd<=C.P; pd++) C.lastT[., pd] = out[., 2*p + 7*(pd-1) + 7]
+			SaomCondTimeCheck(C.lastT)
 			return
 		}
 		for (k=1; k<=K; k++) {
@@ -3755,6 +3811,7 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			S[k,.] = sco
 			C.lastT[k,.] = tim
 		}
+		SaomCondTimeCheck(C.lastT)
 		return
 	}
 	if (C.use_batch) {
@@ -5601,6 +5658,7 @@ struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
 	class ErgmGraph scalar G2obs_start, class ErgmGraph scalar G2obs_end, class ErgmModel scalar M2,
 	real rowvector theta01, real rowvector theta02,
 	real scalar K0, real scalar K3, real scalar firstg) {
+	string scalar why
 
 	struct SaomCoevNetNetFit scalar fit
 	struct SaomNNCtx scalar C
@@ -5623,6 +5681,11 @@ struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
 	C.nncfg = SaomNativeSetupNN(M1, M2)
 	C.use_native = C.nncfg.eligible & SaomNativeAvailable()
 	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= 5)
+	why = ""
+	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
+	else if (!C.nncfg.eligible) why = "an effect without a native implementation"
+	else why = "native plugin too old for this model"
+	SaomSetEngine(C.use_native, why)
 	if (C.use_native) C.nnframe = SaomSetupNNFrame(G1obs_start, G2obs_start)
 
 	// targets: end networks, crprod lagged (the other network at the start)
@@ -5857,6 +5920,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real matrix presentMat,
 	pointer(real matrix) rowvector missMaskNetPd, pointer(real colvector) rowvector missMaskBehPd) {
+	string scalar why
 
 	struct SaomCoevMultiFit scalar fit
 	struct SaomCoevCtx scalar C
@@ -5916,6 +5980,12 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		C.use_native = (k >= 3)
 		C.use_batch = (k >= 4)
 	}
+	why = ""
+	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
+	else if (!C.cfg.eligible) why = C.cfg.whynot
+	else if (!C.cfgBeh.eligible) why = "a behavior effect without a native implementation (e.g. an endowment/creation split)"
+	else why = "native plugin too old for this model"
+	SaomSetEngine(C.use_native, why)
 	C.missDyadsPd = J(0, 3, 0)
 	if (C.use_native & C.hasmiss) {
 		for (pd=1; pd<=P; pd++) {
@@ -6284,11 +6354,13 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, si, hassimcov
+	real scalar t, nextattr, subA, subB, si, hassimcov, needv9
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
+	needv9 = 0
+	cfg.whynot = ""
 	cfg.termcodes = J(1, M.nterms, 0)
 	cfg.attridx = J(1, M.nterms, 0)
 	cfg.p1 = J(1, M.nterms, 0)
@@ -6366,6 +6438,11 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		else if (nm == "antiiniso") cfg.termcodes[t] = 24
 		else if (nm == "antiiniso2") cfg.termcodes[t] = 25
 		else if (nm == "in3plus") cfg.termcodes[t] = 29
+		else if (nm == "antiiso" | nm == "isolatepop") {
+			// protocol 9 (2026-10-01; before, these two ran in Mata)
+			cfg.termcodes[t] = (nm == "antiiso" ? 32 : 33)
+			needv9 = 1
+		}
 		else if (nm == "gwesp") {
 			cfg.termcodes[t] = 26
 			tdt = *M.td[t]
@@ -6404,6 +6481,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				// function's own existing "eligible=0 when native can't
 				// represent this term" contract - never guessed/truncated.
 				cfg.eligible = 0
+				if (cfg.whynot == "") cfg.whynot = "three-way interact()"
 			}
 			else {
 				subA = 0
@@ -6421,7 +6499,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 						if (M.names[si] == nms[3] & subB == 0) subB = si
 					}
 				}
-				if (subA == 0 | subB == 0) cfg.eligible = 0
+				if (subA == 0 | subB == 0) {
+					cfg.eligible = 0
+					if (cfg.whynot == "") cfg.whynot = "interact() component not found"
+				}
 				else {
 					cfg.termcodes[t] = 30
 					cfg.attridx[t] = subA
@@ -6429,14 +6510,23 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				}
 			}
 		}
-		else cfg.eligible = 0
+		else {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "effect " + nm
+		}
 	}
 	// the plugin's fixed limits (native/saom_sim.c MAXTERMS 32, MAXATTR 24
 	// with one slot kept for behsim); larger models run in Mata
-	if (M.nterms > 32 | cols(cfg.attrmat) > 23) cfg.eligible = 0
+	if (M.nterms > 32 | cols(cfg.attrmat) > 23) {
+		cfg.eligible = 0
+		if (cfg.whynot == "") cfg.whynot = "more than 32 effects or 23 covariate arrays"
+	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays
-	if (cfg.eligible & (M.nterms > 16 | cols(cfg.attrmat) > 7 | hassimcov)) {
-		if (SaomNativePluginVersion() < 9) cfg.eligible = 0
+	if (cfg.eligible & (M.nterms > 16 | cols(cfg.attrmat) > 7 | hassimcov | needv9)) {
+		if (SaomNativePluginVersion() < 9) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 9 (simx(), antiiso, isolatepop, or more than 16 effects)"
+		}
 	}
 	return(cfg)
 }

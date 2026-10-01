@@ -240,6 +240,7 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(nwaves)** number of waves supplied
 - **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks). `symmetric` fits: on RSiena's scale for pairwise models (see [Undirected/symmetric relations](nwsaom_remarks) in nwsaom_remarks)
 - **e(ratecoefs)** `ratecov()` fits: 1 x K covariate-rate coefficients, columns named by the variables; also **e(ratecoefs_se)**, **e(ratecoefs_tratio)**, **e(ratecoefs_fixed)** (with one variable also the scalars **e(ratecoef)**, **e(ratecoef_se)**, **e(ratecoef_tratio)**, **e(ratecoef_fixed)**)
+- **e(engine)** **native** if the simulations ran in the C plugin, **mata** if in Mata (then also a note after the table and **e(engine_why)**)
 - **e(rate_actor)** non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other `nwsaom` rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 - **e(conditional)** 1 for conditional estimation, 0 for unconditional
 - **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)

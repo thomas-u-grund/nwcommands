@@ -305,6 +305,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(nwaves)}		number of waves supplied
 		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks). {opt symmetric} fits: on RSiena's scale for pairwise models (see {help nwsaom_remarks##undirected:Undirected/symmetric relations} in nwsaom_remarks)
 		  {bf:e(ratecoefs)}		{opt ratecov()} fits: 1 x K covariate-rate coefficients, columns named by the variables; also {bf:e(ratecoefs_se)}, {bf:e(ratecoefs_tratio)}, {bf:e(ratecoefs_fixed)} (with one variable also the scalars {bf:e(ratecoef)}, {bf:e(ratecoef_se)}, {bf:e(ratecoef_tratio)}, {bf:e(ratecoef_fixed)})
+		  {bf:e(engine)}		{bf:native} if the simulations ran in the C plugin, {bf:mata} if in Mata (then also a note after the table and {bf:e(engine_why)})
 		  {bf:e(rate_actor)}		non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 		  {bf:e(conditional)}		1 for conditional estimation, 0 for unconditional
 		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)

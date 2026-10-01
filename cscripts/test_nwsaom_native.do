@@ -1618,6 +1618,99 @@ void saom_test_native_in3plus_equiv(real scalar n, real scalar nruns) {
 	printf("native in3plus equivalence PASS: native and Mata backends agree within Monte Carlo tolerance\n")
 }
 
+/* 2026-10-01 (protocol 9): antiiso and isolatepop are native (they ran in
+   Mata before); simcov is centred by its similarity mean (RSiena's simX)
+   and reaches the plugin as x/range with the mean in p1; a covariate
+   effect may be given for several variables (one term and attribute
+   array each). Native and Mata simulations must agree. */
+void saom_test_native_v9_equiv(real scalar n, real colvector attr, real colvector attr2, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5, td6
+	struct SaomNativeConfig scalar cfg
+	real rowvector theta
+	real matrix Zmata, Znative
+	real scalar r, k, p, i, j, nedges0
+	real rowvector mmata, mnative, zstat
+
+	rseed(97531)
+	G0 = ErgmGraph()
+	G0.init(n, 1)
+	nedges0 = round(0.15 * n * (n-1))
+	for (k=1; k<=nedges0; k++) {
+		i = ceil(runiform(1,1)*n)
+		j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	M = ErgmModel()
+	M.init()
+	td1 = ErgmTermData()
+	M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+	td2 = ErgmTermData()
+	M.addterm("antiiso", 1, &stat_saom_antiiso(), &change_saom_antiiso(), td2, ("antiiso"))
+	td3 = ErgmTermData()
+	M.addterm("isolatepop", 1, &stat_saom_isolatepop(), &change_saom_isolatepop(), td3, ("isolatepop"))
+	td4 = ErgmTermData()
+	td4.attr = attr
+	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td4, ("samex_a"))
+	td5 = ErgmTermData()
+	td5.attr = attr2
+	M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td5, ("samex_b"))
+	td6 = ErgmTermData()
+	td6.attr = attr2
+	td6.decay = max(attr2) - min(attr2)
+	td6.center = SaomSimMean(attr2)
+	M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td6, ("simx_b"))
+
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1)
+	assert(cfg.termcodes == (1, 32, 33, 3, 3, 13))
+	assert(cols(cfg.attrmat) == 3)
+	assert(cfg.attridx[4] == 1 & cfg.attridx[5] == 2 & cfg.attridx[6] == 3)
+	assert(abs(cfg.p1[6] - td6.center) < 1e-12)
+	// simx centring: the statistic subtracts the similarity mean per tie
+	assert(abs(stat_saom_simcov(G0, td6) - (sum(J(1,0,0)) + _test_simsum(G0, attr2, td6.decay) - td6.center * G0.nties)) < 1e-9)
+
+	theta = (-1.0, 0.4, -0.3, 0.5, 0.3, 0.6)
+	p = M.nparam()
+	Zmata = J(nruns, p, 0)
+	rseed(1212)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateInterval(Gwork, M, theta, 4)
+		Zmata[r,.] = M.full_statistic(Gwork)
+	}
+	Znative = J(nruns, p, 0)
+	rseed(3434)
+	for (r=1; r<=nruns; r++) {
+		Gwork = ErgmGraph()
+		SaomCopyGraph(G0, Gwork)
+		SaomSimulateIntervalNative(Gwork, M, cfg, theta, 4, 1, 0)
+		Znative[r,.] = M.full_statistic(Gwork)
+	}
+	mmata = mean(Zmata)
+	mnative = mean(Znative)
+	zstat = J(1,p,0)
+	for (k=1; k<=p; k++) {
+		zstat[k] = (mmata[k] - mnative[k]) / sqrt(variance(Zmata[.,k])/nruns + variance(Znative[.,k])/nruns)
+	}
+	printf("native v9 equivalence: Mata   "); mmata
+	printf("native v9 equivalence: native "); mnative
+	printf("native v9 equivalence: z      "); zstat
+	for (k=1; k<=p; k++) assert(abs(zstat[k]) < 4)
+	printf("native v9 equivalence PASS (antiiso, isolatepop, two samex, centred simx)\n")
+}
+
+real scalar _test_simsum(class ErgmGraph scalar G, real colvector a, real scalar r) {
+	real matrix ties
+	real scalar k, s
+	ties = G.all_ties()
+	s = 0
+	for (k=1; k<=rows(ties); k++) s = s + 1 - abs(a[ties[k,1]] - a[ties[k,2]]) / r
+	return(s)
+}
+
 end
 
 mata:
@@ -1660,5 +1753,7 @@ saom_test_native_cycle4_equiv(n, 150)
 saom_test_native_5effects_equiv(n, 150)
 
 saom_test_native_in3plus_equiv(n, 150)
+
+saom_test_native_v9_equiv(n, attr, attr2, 150)
 
 end

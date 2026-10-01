@@ -235,6 +235,8 @@
    STARTING behavior for the final statistic (RSiena's lagged
    cross-statistic). Only valid when nbehterms > 0. */
 #define TERMCODE_BEHSIM 31
+#define TERMCODE_ANTIISO 32					// protocol 9: direct port of change_saom_antiiso() (#{i : indegree>=1, outdegree 0}, alter-indexed)
+#define TERMCODE_ISOLATEPOP 33					// protocol 9: direct port of change_saom_isolatepop() (#{i : indegree==1, outdegree 0}, alter-indexed)
 
 /* Plugin protocol version, saved as __saom_native_version on every call.
    2 = adds TERMCODE_BEHSIM, centered avAlt, and the per-variable ministep
@@ -733,6 +735,12 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_TRANSMEDTRIP:					// stat_saom_transmedtrip(): sum over ties (ego,alter) of ISP(ego,alter) - same primitive as TRANSTRIP's own stat case, but this term's OWN change function is pure ISP too (unlike TRANSTRIP's OTP+OSP change), so the two termcodes are NOT interchangeable despite sharing this one line
 			for (k = 0; k < g->nties; k++) tot += (double)pair_isp(g, g->elist_i[k], g->elist_j[k]);
 			return tot;
+		case TERMCODE_ANTIISO:						// stat_saom_antiiso(): #{i : indegree(i)>=1 and outdegree(i)<=0}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 1 && g->dout[i] <= 0) ? 1.0 : 0.0;
+			return tot;
+		case TERMCODE_ISOLATEPOP:					// stat_saom_isolatepop(): #{j : indegree(j)==1 and outdegree(j)==0}
+			for (i = 1; i <= g->n; i++) tot += (g->din[i] == 1 && g->dout[i] == 0) ? 1.0 : 0.0;
+			return tot;
 		case TERMCODE_ANTIINISO:					// stat_saom_antiiniso(): #{i : indegree(i)>=1}
 			for (i = 1; i <= g->n; i++) tot += (g->din[i] >= 1) ? 1.0 : 0.0;
 			return tot;
@@ -906,6 +914,12 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		case TERMCODE_TRANSMEDTRIP: {					// change_saom_transmedtrip(): mechanical port - pure pair_isp(i,j), no neighbor loop needed (unlike TRANSRECTRIP above, which combines pair_otp() with an extra loop) since this term's own real definition is exactly ISP alone
 			double delta = (double)pair_isp(g, i, j);
 			return ij_exists ? -delta : delta;
+		}
+		case TERMCODE_ANTIISO:						// change_saom_antiiso(): mechanical port
+		case TERMCODE_ISOLATEPOP: {					// change_saom_isolatepop(): mechanical port (the same expression)
+			long d = g->din[j];
+			int cond = ij_exists ? (d <= 1) : (d == 0);
+			return (cond && g->dout[j] <= 0) ? (ij_exists ? -1.0 : 1.0) : 0.0;
 		}
 		case TERMCODE_ANTIINISO: {					// change_saom_antiiniso(): mechanical port, same shape as TERMCODE_ANTIINISO2/OUTISO (alter-indexed, spillover-free)
 			long d = g->din[j];
@@ -1878,6 +1892,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	const double *presentArr = PD->haspresent ? PD->present : NULL;
 	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc[MAXRC], rcscore[MAXRC];
 	long krc, nrc = P->hasratecov;
+	int condcap = 0;
 	int hasmiss = PD->hasmiss;
 
 	PROF_START(pt_setup);
@@ -1962,6 +1977,12 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		   least one step (EpochSimulation::runEpoch() checks after each
 		   step); dyads missing at either end of the period do not count */
 		while (P->condmode ? (steps == 0.0 || simDist < P->targetChange) : (t < 1.0)) {
+			/* RSiena's guard (EpochSimulation::runEpoch(): "Unlikely to
+			   terminate this epoch: more than 1000000 steps"): a
+			   conditional period that does not reach the observed distance
+			   within a million ministeps is abandoned; the time is then
+			   returned as missing (SV_missval), which the caller reports */
+			if (P->condmode && steps >= 1000000.0) { condcap = 1; break; }
 			double dt_rc = -log(rng_unif(&rng)) / grandRate;
 			t += dt_rc;
 			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
@@ -2259,7 +2280,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	PROF_START(pt_end);
 
 	R->steps = steps; R->stepsNet = stepsNet; R->stepsBeh = stepsBeh;
-	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = t;
+	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = condcap ? SV_missval : t;
 	for (krc = 0; krc < MAXRC; krc++) R->rcscore[krc] = rcscore[krc];
 
 	/* distances from the start state (the rate statistics of

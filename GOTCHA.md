@@ -488,6 +488,20 @@ Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate 
 several variables": all within 0.07 SE. Note: nwsaom does not centre egox/altx/nodecov/ratecov
 covariates (RSiena does by default); centre them to compare outdegree/rate with RSiena.
 
+## nwsaom conditional estimation could run forever; e(engine) (changed 2026-10-01)
+
+A conditional simulation runs until the simulated distance reaches the observed one. When the
+Robbins-Monro estimates diverge (e.g. `interact(samex#transtrip)` on glasgow, an interaction RSiena
+itself rejects - "must be at least one ego or both dyadic effects"), that distance may never be
+reached and the native plugin (or Mata) looped indefinitely at 100% of one core. This looked like
+a silent fallback to Mata, but the model ran natively. Now, as RSiena ("Unlikely to terminate this
+epoch: more than 1000000 steps"), a period is abandoned after 10^6 ministeps and nwsaom stops
+with a clear error (r(498)) - within 2 seconds for that model.
+To make the simulator visible: e(engine) is "native" or "mata", e(engine_why) gives the reason, and
+a note follows the output when it is Mata. `antiiso` and `isolatepop` had no termcode and ran in
+Mata; they are now native (protocol 9). cscripts/test_nwsaom_engine.do asserts e(engine)=="native"
+for one model per effect family and path.
+
 ## nwsaom: undirected / tie-symmetric waves are a non-directed relation; default model type forcing (changed 2026-10-01)
 
 nwsaom refused networks declared undirected ("store the data as directed ... and use symmetric").

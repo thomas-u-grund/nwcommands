@@ -1877,6 +1877,8 @@ program nwsaom, eclass
 	// fits (two dependent variables) are always unconditional, as in RSiena.
 	local __nwsaom_condreq = ("`unconditional'" == "" & !`__nwsaom_coev')
 	mata: __nwsaom_cond = `__nwsaom_condreq'
+	mata: __nwsaom_engine = ""
+	mata: __nwsaom_engine_why = ""
 	if `__nwsaom_coev' & `__nwsaom_multi' {
 		// harmonisation unit 26 ("extend it to N waves"): joint
 		// network+behavior Method of Moments / Robbins-Monro, chained
@@ -2136,6 +2138,7 @@ program nwsaom, eclass
 	// nwsaom versions carried.
 	ereturn post `b' `V', depname("`__nwsaom_depname'") obs(`nodes')
 	ereturn local cmd "nwsaom"
+	_nwsaom_postengine
 	capture mata: st_local("__nwsaom_condpost", strofreal(__nwsaom_fit.cond))
 	if `__nwsaom_coev' local __nwsaom_condpost 0
 	ereturn scalar conditional = `__nwsaom_condpost'
@@ -2409,8 +2412,23 @@ program define _nwsaom_tconvtable
 	}
 	if mod(`k', 2) == 1 di ""
 	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
+	if "`e(engine)'" == "mata" {
+		di as text "(simulated in Mata, not the native plugin: `e(engine_why)')"
+	}
 end
 
+/* e(engine): "native" or "mata", the simulator the fit used (set by the
+   estimators through SaomSetEngine(), unw_saom.do); e(engine_why): why
+   Mata. A model the plugin covers must never fall back silently. */
+capture program drop _nwsaom_postengine
+program define _nwsaom_postengine, eclass
+	capture mata: st_local("__eng", __nwsaom_engine)
+	if _rc local __eng ""
+	capture mata: st_local("__why", __nwsaom_engine_why)
+	if _rc local __why ""
+	ereturn local engine "`__eng'"
+	ereturn local engine_why "`__why'"
+end
 
 /* ===================================================================
    nwsaom multiplex: Stage 1 of multiplex/multi-relation SAOM support
@@ -2458,6 +2476,8 @@ program define nwsaom_multiplex, eclass
 
 	if `seed' != -1 set seed `seed'
 
+	mata: __nwsaom_engine = ""
+	mata: __nwsaom_engine_why = ""
 	_nwsyntax `netawave1', max(1) other(w1a)
 	_nwsyntax `netawave2', max(1) other(w1b)
 	_nwsyntax `netbwave1', max(1) other(w2a)
@@ -2528,6 +2548,7 @@ program define nwsaom_multiplex, eclass
 	matrix rownames __nwsaom_mp_rate1_tconv = tconv
 	ereturn matrix tconv = __nwsaom_mp_rate1_tconv
 	ereturn local cmd "nwsaom_multiplex"
+	_nwsaom_postengine
 
 	di as text "{hline}"
 	if `wantcrprod' | `wantcrprodb' di as text "Multiplex SAOM (Stage 2: crprod cross-network effect), Method of Moments"
