@@ -20,8 +20,8 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
-> cratchpad/tutorials_workdir/profile.do ...
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/dd506fca-d14d-47db-993d-6a7ac002e250/scratchp
+> ad/tutdev/website/tutorials/05-generating-networks/profile.do ...
 
 . do example.do 
 
@@ -112,7 +112,6 @@ Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_smallworld.svg...
-(file plot_smallworld.svg not found)
 file plot_smallworld.svg saved as SVG format
 
 . 
@@ -154,17 +153,17 @@ file plot_smallworld.svg saved as SVG format
 
    Degree centralization:: .427
 
-. sort deg
+. sort deg _nwnode
 
 . list _nwnode deg in -5/-1
 
      +---------------+
      | _nwnode   deg |
      |---------------|
- 16. |     n15     5 |
+ 16. |      n8     5 |
  17. |      n3     6 |
- 18. |      n4     7 |
- 19. |      n2     7 |
+ 18. |      n2     7 |
+ 19. |      n4     7 |
  20. |      n1    11 |
      +---------------+
 
@@ -172,7 +171,6 @@ file plot_smallworld.svg saved as SVG format
 Calculating node coordinates...
 Plotting network...
 Exporting graph to plot_prefattach.svg...
-(file plot_prefattach.svg not found)
 file plot_prefattach.svg saved as SVG format
 
 . 
@@ -199,7 +197,6 @@ Calculating node coordinates...
 Generating splines...
 Plotting network...
 Exporting graph to plot_lattice.svg...
-(file plot_lattice.svg not found)
 file plot_lattice.svg saved as SVG format
 
 . 
