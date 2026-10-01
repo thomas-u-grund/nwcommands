@@ -483,10 +483,8 @@ endowment/creation 118 -> 0.45 s; ratecov() two covariates 3.5 -> 0.27 s; joint 
 effects); e(engine) shows which ran.
 estat mems now simulates the fitted model the same way. Open: the multiplex command offers only
 outdegree/reciprocity/crprod (all native already, not threaded). Pre-existing, found while porting (C reproduces
-Mata): the behavior endowment/creation STATISTIC is the linear one (sum of decreases/increases) for
-every term; RSiena has no quadratic-shape endowment statistic and a different avAlt one, so
-quadratic/avalt/avsim endowment/creation splits are not RSiena's effects (quadratic endowment +
-creation with the rate is not even identified).
+Mata): the behavior endowment/creation STATISTIC was the linear one for every term - fixed, see
+"behavior endowment/creation splits" below.
 
 ## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
 
@@ -600,4 +598,19 @@ uncentred egox/altx/nodecov/ratecov variable change in outdegree (and rate/ratec
 the coefficient names are unchanged. Validated with raw variables (glasgow, realistic model with
 gwesp, transrectrip, inPopSqrt, outAct, sameX, egoX/altX/simX of alcohol1; cond/uncond, 5 seeds):
 all coefficients including outdegree within 0.07 RSiena SE; RateX of two raw covariates within 0.03.
+
+## nwsaom behavior endowment/creation splits were not RSiena's (fixed 2026-10-01)
+
+`SaomBehaviorPatchEndowCreation()` gave every split the linear statistic (sum of decreases or
+increases). RSiena (`StatisticCalculator::calculateBehaviorStatistics()`): with c = current -
+overall mean and d = initial - current (0 if missing), endowment = sum over actors with d_i > 0 of
+the effect's egoEndowmentStatistic, creation = -endowment(-d). linear: -d_i; quadratic:
+c_i^2 - (c_i + d_i)^2; avAlt: (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j)) / outdeg_i; avSim:
+(sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|) / n_i over non-missing alters, all on the
+period's starting network. Mata and the plugin (protocol 12) now compute these. Co-evolution phase 1
+also follows RSiena's rule for a non-positive derivative (repeat with more runs, then fix the
+parameter): RSiena fixes avSim endowment/creation (not estimable), and so does nwsaom now. Validated
+(glasgow alcohol co-evolution, 5 seeds): linear + quadratic endow/creation + avAlt within 0.03 SE;
+linear + quadratic + avAlt endow/creation within 0.02 SE; avSim endow/creation fixed by both, the
+rest within 0.07 SE.
 

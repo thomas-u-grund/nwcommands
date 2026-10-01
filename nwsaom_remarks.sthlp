@@ -423,6 +423,24 @@ standard errors and a non-positive-definite covariance matrix from real RSiena i
 this is a shared property of the statistical problem, not specific to {cmd:nwsaom}.
 
 {pstd}
+The statistics are RSiena's ({cmd:StatisticCalculator::calculateBehaviorStatistics()}; since
+2026-10-01, before every split used the linear statistic). With c_i the actor's current value minus
+the overall mean and d_i = initial - current (0 if missing), the endowment statistic is the sum, over
+the actors whose value decreased (d_i > 0), of the effect's endowment statistic, and the creation
+statistic is minus the endowment statistic computed with -d: linear -d_i; quadratic
+c_i^2 - (c_i + d_i)^2; avAlt (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j))/outdeg_i over the
+alters j of i; avSim (sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|)/n_i over the alters with a
+value - all on the period's starting network. As in RSiena, an effect whose phase-1 derivative stays
+non-positive after a longer phase 1 is fixed at its starting value with a note (RSiena fixes the
+avSim endowment/creation pair on glasgow; so does {cmd:nwsaom}). Validated against RSiena on the
+glasgow alcohol co-evolution (unconditional, 5 seeds): linear, quadratic endowment/creation and avAlt
+within 0.03 standard errors; linear, quadratic and avAlt endowment/creation within 0.02 (weakly
+identified: standard errors vary by seed in both, and one of five {cmd:nwsaom} seeds stopped at
+thetaBound); linear, quadratic and avSim endowment/creation (fixed by both) within 0.07.
+RSiena also allows a single role (endowment or creation alone, with or without the evaluation
+effect); {cmd:nwsaom} requires the pair, which replaces the evaluation effect.
+
+{pstd}
 This split extends to the NETWORK side too - {opt outdegreeendow}/
 {opt outdegreecreation} (replacing plain {opt outdegree}) and {opt reciprocityendow}/
 {opt reciprocitycreation} (replacing plain {opt reciprocity}) - confirmed real via RSiena's own

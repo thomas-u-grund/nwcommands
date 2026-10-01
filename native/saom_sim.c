@@ -245,7 +245,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 11		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64
+#define SAOM_NATIVE_VERSION 12		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1957,6 +1957,55 @@ static void beh_stats_on_edges(const model_t *M, long ne, const long *ei, const 
 	free(sumz); free(sumabs); free(odl);
 }
 
+/* RSiena's behavior endowment statistic (protocol 12; see
+   SaomBehaviorPatchEndowCreation() in unw_saom.do): the sum over actors
+   with dd > 0 of the effect's egoEndowmentStatistic(dd, c), c the centred
+   current values, dd = initial - current (both 0 for missing actors), the
+   alters from the (masked) starting network's ties li -> lj. The creation
+   statistic is minus this with -dd. */
+static double beh_endow_stat(int code, long n, long ne, const long *li, const long *lj,
+	const double *c, const double *dd, const double *missb) {
+	long i, e;
+	double s = 0.0;
+	if (code == TERMCODE_BEH_LINEAR) {
+		for (i = 1; i <= n; i++) if (dd[i] > 0) s -= dd[i];
+		return s;
+	}
+	if (code == TERMCODE_BEH_QUADRATIC) {
+		for (i = 1; i <= n; i++) if (dd[i] > 0) s += c[i] * c[i] - (c[i] + dd[i]) * (c[i] + dd[i]);
+		return s;
+	}
+	{
+		double *a = (double *)calloc((size_t)(n + 1), sizeof(double));
+		double *b = (double *)calloc((size_t)(n + 1), sizeof(double));
+		double *k = (double *)calloc((size_t)(n + 1), sizeof(double));
+		for (e = 0; e < ne; e++) {
+			long ei = li[e], ej = lj[e];
+			if (code == TERMCODE_BEH_AVALT) {
+				a[ei] += c[ej];
+				b[ei] += c[ej] + dd[ej];
+				k[ei] += 1.0;
+			}
+			else {
+				if (missb && missb[ej] != 0.0) continue;
+				a[ei] += fabs(c[ej] - c[ei]);
+				b[ei] += fabs(c[ej] + dd[ej] - c[ei] - dd[ei]);
+				k[ei] += 1.0;
+			}
+		}
+		for (i = 1; i <= n; i++) {
+			if (dd[i] <= 0 || k[i] == 0.0) continue;
+			if (code == TERMCODE_BEH_AVALT) s += (c[i] * a[i] - (c[i] + dd[i]) * b[i]) / k[i];
+			else {
+				if (missb && missb[i] != 0.0) continue;
+				s += (a[i] - b[i]) / k[i];
+			}
+		}
+		free(a); free(b); free(k);
+	}
+	return s;
+}
+
 static int simulate_period(const model_t *M, const period_t *PD, const simparams_t *P,
 	unsigned long long seed, int keep_final, simres_t *R) {
 
@@ -2487,17 +2536,34 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			ht_free(&hs);
 		}
 		if (M->nbehterms > 0) {
-			double dn = 0.0, up = 0.0;
+			/* RSiena's behavior endowment/creation statistics on the
+			   (masked) starting network (protocol 12) */
+			long d, dv, ne = 0;
+			long *li = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+			long *lj = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+			double *cc = (double *)calloc((size_t)(n + 1), sizeof(double));
+			double *dd = (double *)calloc((size_t)(n + 1), sizeof(double));
+			double *nd = (double *)calloc((size_t)(n + 1), sizeof(double));
+			const double *mb = hasmiss ? PD->missbeh : NULL;
+			for (d = 0; d < PD->nties; d++) {
+				if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
+				li[ne] = PD->ti[d]; lj[ne] = PD->tj[d]; ne++;
+			}
 			for (i = 1; i <= n; i++) {
-				double dd;
-				if (hasmiss && PD->missbeh[i] != 0.0) continue;
-				dd = behval[i] - PD->beh0[i];
-				if (dd < 0) dn += dd; else up += dd;
+				if (mb && mb[i] != 0.0) continue;
+				cc[i] = behval[i] - M->behOverallMean;
+				dd[i] = PD->beh0[i] - behval[i];
+				nd[i] = -dd[i];
 			}
 			for (k = 0; k < M->nbehterms; k++) {
-				if (M->behfntype[k] == 1) { R->statBeh[k] = dn; R->statBehLag[k] = dn; }
-				else if (M->behfntype[k] == 2) { R->statBeh[k] = up; R->statBehLag[k] = up; }
+				double v;
+				if (M->behfntype[k] == 0) continue;
+				if (M->behfntype[k] == 1) v = beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, dd, mb);
+				else v = -beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, nd, mb);
+				R->statBeh[k] = v;
+				R->statBehLag[k] = v;
 			}
+			free(li); free(lj); free(cc); free(dd); free(nd);
 		}
 	}
 	if (have_gm) free_graph(&gm);
