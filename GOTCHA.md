@@ -632,4 +632,9 @@ statistic (exact). New in interactions: indegpopularity, outpopularity, outactiv
 outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives inActSqrt and
 outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
 (outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
-documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`.
+documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`. This is a deliberate
+divergence, decided 2026-10-01: the RSiena default looks like a bug (introduced in 1.6.1, commit
+1155e31, which moved only outPop/inAct to default 1 and left outPop.c, outPopSqrt, outPopMore,
+outPopSqrtMore, outPopThreshold, inAct.c, inActSqrt at 0) and was reported as
+https://github.com/stocnet/rsiena/issues/151. Do NOT "fix" nwsaom to match RSiena's default; when
+validating against RSiena, set parameter = 1 for these effects. Revisit if the issue is resolved.

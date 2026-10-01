@@ -228,10 +228,20 @@ Validated against RSiena (glasgow waves 1-2, conditional, 5 seeds; coefficient d
 RSiena standard errors): sameX x recip, egoX x recip and sameX x recip x egoX within 0.05;
 outIso x egoX, inPopSqrt x egoX and outAct x egoX within 0.04; inActSqrt x recip,
 outPopSqrt x recip and egoX x inActSqrt x transTrip within 0.1. For the last three, RSiena was run
-with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt: with RSiena 1.6.6's default
-internal parameter 0 their statistic uses the degrees at the start of the period (outPopSqrt then
-without the square root) while the ministep uses the current degrees; {cmd:nwsaom} uses the
-documented statistic.
+with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt.
+
+{pstd}
+{it:Note on RSiena's default for inActSqrt and outPopSqrt.} Since RSiena 1.6.1 (January 2026;
+unchanged in 1.6.6 on CRAN and 1.6.12 on GitHub), internal parameter 0 makes the outPop and inAct
+effect classes use the degrees at the start of the period, and parameter -1 the sum of start-of-period
+and current degrees. RSiena moved the default of outPop and inAct to 1 to keep their behavior, but
+outPopSqrt, inActSqrt and the other effects built on the same classes (outPop.c, inAct.c, outPopMore,
+outPopSqrtMore, outPopThreshold) kept the default 0. Their statistic therefore uses start-of-period
+degrees (outPopSqrt then without the square root), while the ministep uses the current degrees. This
+appears to be a bug and has been reported as
+{browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}. {cmd:nwsaom} deliberately
+does not copy it: {opt outpopularity} and {opt inactivity} use the documented statistic, the same as
+RSiena with {cmd:setEffect(..., parameter = 1)}. To compare with RSiena, set that parameter there.
 
 {pstd}
 Like any other effect, an interaction's own identifiability depends on the data: two effects that
@@ -569,9 +579,9 @@ with RSiena's within 0.07 standard errors (mean 0.02), standard errors within 10
 unconditional: nwsaom's 0.7-0.95 of RSiena's, whose mean is inflated by one seed). With
 outPopSqrt in place of outAct in the larger model, RSiena itself does not converge on these data
 (maximum convergence ratio about 3 on every seed, also started from {cmd:nwsaom}'s estimates),
-while {cmd:nwsaom} converges (below 0.25): with RSiena 1.6.6's default internal parameter 0,
-outPopSqrt's statistic uses the outdegrees at the start of the period without the square root, while
-its ministep uses the square root of the current outdegree (see {help nwsaom_remarks##nwsaom_interaction:Interaction effects}).
+while {cmd:nwsaom} converges (below 0.25). The reason is RSiena's default internal parameter 0 for
+outPopSqrt, reported as {browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}
+(see the note under {help nwsaom_remarks##nwsaom_interaction:Interaction effects}).
 Run with {cmd:setEffect(..., outPopSqrt, parameter = 1)}, RSiena converges on every seed and agrees
 with {cmd:nwsaom} within 0.06 standard errors (conditional, five seeds). Timings for the larger model: {cmd:nwsaom} about 1 s,
 RSiena 5-7 s per fit.

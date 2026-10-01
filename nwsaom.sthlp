@@ -75,9 +75,9 @@
 {marker structural_options}{...}
 {syntab:Structural network effects}
 {synopt:{opt indegpopularity}}Indegree popularity, sqrt-transformed ("preferential attachment" toward already-popular alters){p_end}
-{synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed{p_end}
+{synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed (RSiena's outPopSqrt as documented; see {help nwsaom_remarks##nwsaom_interaction:the note on RSiena's default}){p_end}
 {synopt:{opt outactivity}}Outdegree activity, squared (concentrates out-ties on already-active senders){p_end}
-{synopt:{opt inactivity}}Indegree activity, sqrt-transformed{p_end}
+{synopt:{opt inactivity}}Indegree activity, sqrt-transformed (RSiena's inActSqrt as documented; see {help nwsaom_remarks##nwsaom_interaction:the note on RSiena's default}){p_end}
 {synopt:{opt transtrip}}Transitive triplets (weighted count of transitive closures i->j via existing two-paths){p_end}
 {synopt:{opt transmedtrip}}Transitive mediated triplets: for each tie i->j, the number of other actors with an incoming tie to both i and j (RSiena's own "transMedTrip") - a distinct measure of shared incoming ties from `transtrip'{p_end}
 {synopt:{opt cycle3}}Directed 3-cycles (i->j->h->i){p_end}
