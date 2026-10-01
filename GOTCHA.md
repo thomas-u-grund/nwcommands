@@ -466,6 +466,18 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
+## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
+
+RSiena's interaction contribution is the product of the components' contributions for creating the
+tie (NetworkInteractionEffect::calculateContribution()), negated once when the tie exists
+(NetworkVariable::calculateTieFlipContributions()). nwsaom multiplied the components' SIGNED
+changes, so for two components a withdrawal got +c_A*c_B instead of -c_A*c_B (Mata
+change_saom_interact() and the plugin's saom_eval_change(); three-way products happened to have the
+right sign). On glasgow, `samex(smoke1) interact(samex#reciprocity)` then stopped in phase 3
+(r(505)) while RSiena estimates it (interaction 0.07, SE 0.53), and `egox#reciprocity` was off.
+Fixed in both; the plugin's interaction runs natively from protocol 10 only (older plugins: Mata).
+Validated: sameX x recip and egoX x recip, 5 seeds, cond/uncond, all within 0.05 SE of RSiena.
+
 ## nwsaom covariate effects take varlists; simx() centred (changed 2026-10-01)
 
 `samex()/nodematch()`, `egox()/nodeocov()`, `altx()/nodeicov()`, `nodecov()`, `simx()/simcov()` and

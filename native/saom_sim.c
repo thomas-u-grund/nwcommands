@@ -244,7 +244,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 9		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24
+#define SAOM_NATIVE_VERSION 10		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1089,7 +1089,11 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
 		double cvA = saom_change_term(g, termcodes[subA], aA, p1[subA], i, j, ij_exists, tt_arr, c3_arr);
 		double cvB = saom_change_term(g, termcodes[subB], aB, p1[subB], i, j, ij_exists, tt_arr, c3_arr);
-		return cvA * cvB;
+		/* RSiena: product of the components' CREATION contributions,
+		   negated once for a withdrawal; the components' changes are
+		   signed, so their product is negated again when the tie exists
+		   (before protocol 10 a withdrawal had the wrong sign) */
+		return (ij_exists ? -1.0 : 1.0) * cvA * cvB;
 	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;

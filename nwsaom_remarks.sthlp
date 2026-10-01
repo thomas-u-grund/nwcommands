@@ -182,8 +182,11 @@ correctness gap.
 {opt interact(effect1#effect2 [#effect3])} is a direct port of RSiena's real
 {cmd:includeInteraction()} mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}):
 the interaction's own contribution to an actor's ministep utility, for a candidate tie change to a
-given alter, is the PRODUCT of the component effects' own contributions (not their sum, and not
-computed on the components' aggregate statistics) - so {cmd:interact(reciprocity#transtrip)}
+given alter, is the PRODUCT of the component effects' own contributions for creating that tie,
+negated when the change withdraws an existing tie (not their sum, and not computed on the
+components' aggregate statistics; before 2026-10-01 a two-way interaction had the wrong sign on
+withdrawals, see GOTCHA.md; validated since against RSiena for sameX x recip and egoX x recip,
+within 0.05 standard errors) - so {cmd:interact(reciprocity#transtrip)}
 contributes {it:reciprocity's own change value} times {it:transtrip's own change value} for that
 same candidate tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an
 interaction term is likewise the sum, over the network's existing ties, of the product of the

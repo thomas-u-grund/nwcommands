@@ -371,4 +371,16 @@ assert __rcs[1,1] > 0.437 / 1.5 & __rcs[1,1] < 1.5 * 0.437
 assert __rcs[1,2] > 0.215 / 1.5 & __rcs[1,2] < 1.5 * 0.215
 di as text "(e) ratecov() on two variables PASS"
 
+* interactions (RSiena includeInteraction(), seeds 1-5, conditional).
+* Before 2026-10-01 a two-way interaction's change had the wrong sign on
+* tie withdrawals (the product of two signed changes); sameX x recip then
+* failed in phase 3 (r(505)), egoX x recip was biased.
+nwsaom, `w12' outdegree reciprocity samex(smoke1) interact(samex#reciprocity) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 interact_nodematch_reciprocity" ///
+	"5.451 -2.453 2.417 0.314 0.071" "0.826 0.232 0.450 0.268 0.533"
+nwsaom, `w12' outdegree reciprocity egox(alcc) interact(egox#reciprocity) seed(12345)
+_net_check "rate1 outdegree reciprocity egox_alcc interact_nodeocov_reciprocity" ///
+	"5.155 -2.315 2.552 0.311 -0.879" "0.745 0.160 0.286 0.166 0.360"
+di as text "interactions PASS"
+
 di as text "nwsaom network-only vs RSiena: PASS"

@@ -2833,7 +2833,14 @@ real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, rea
 	aB = td.attr[(n+1)::(2*n)]
 	cvA = _saom_tiechange(G, nms[1], aA, td.levels[1], i, j, _saom_ixcenter(td, 1, threeway))
 	cvB = _saom_tiechange(G, nms[3], aB, td.levels[2], i, j, _saom_ixcenter(td, 2, threeway))
-	if (!threeway) return(cvA * cvB)
+	// RSiena (NetworkInteractionEffect::calculateContribution(), then
+	// NetworkVariable::calculateTieFlipContributions()): the product of
+	// the components' contributions for CREATING the tie, negated once
+	// when the tie exists. The components' changes are signed (negative
+	// for a withdrawal), so for two components their product must be
+	// negated again (for three the signs already give -1). Before
+	// 2026-10-01 a two-way interaction had the wrong sign on withdrawals.
+	if (!threeway) return((G.has_edge(i, j) ? -1 : 1) * cvA * cvB)
 	aC = td.attr[(2*n+1)::(3*n)]
 	cvC = _saom_tiechange(G, nms[5], aC, td.levels[3], i, j, _saom_ixcenter(td, 3, threeway))
 	return(cvA * cvB * cvC)
@@ -6354,12 +6361,13 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, si, hassimcov, needv9
+	real scalar t, nextattr, subA, subB, si, hassimcov, needv9, needv10
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv9 = 0
+	needv10 = 0
 	cfg.whynot = ""
 	cfg.termcodes = J(1, M.nterms, 0)
 	cfg.attridx = J(1, M.nterms, 0)
@@ -6507,6 +6515,9 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 					cfg.termcodes[t] = 30
 					cfg.attridx[t] = subA
 					cfg.p1[t] = subB
+					// the withdrawal sign of an interaction is right from
+					// protocol 10 on
+					needv10 = 1
 				}
 			}
 		}
@@ -6522,6 +6533,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (cfg.whynot == "") cfg.whynot = "more than 32 effects or 23 covariate arrays"
 	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays
+	if (cfg.eligible & needv10) {
+		if (SaomNativePluginVersion() < 10) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 10 (interact())"
+		}
+	}
 	if (cfg.eligible & (M.nterms > 16 | cols(cfg.attrmat) > 7 | hassimcov | needv9)) {
 		if (SaomNativePluginVersion() < 9) {
 			cfg.eligible = 0
