@@ -483,10 +483,8 @@ endowment/creation 118 -> 0.45 s; ratecov() two covariates 3.5 -> 0.27 s; joint 
 effects); e(engine) shows which ran.
 estat mems now simulates the fitted model the same way. Open: the multiplex command offers only
 outdegree/reciprocity/crprod (all native already, not threaded). Pre-existing, found while porting (C reproduces
-Mata): the behavior endowment/creation STATISTIC is the linear one (sum of decreases/increases) for
-every term; RSiena has no quadratic-shape endowment statistic and a different avAlt one, so
-quadratic/avalt/avsim endowment/creation splits are not RSiena's effects (quadratic endowment +
-creation with the rate is not even identified).
+Mata): the behavior endowment/creation STATISTIC was the linear one for every term - fixed, see
+"behavior endowment/creation splits" below.
 
 ## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
 
@@ -519,8 +517,8 @@ several times must be named by variable (error otherwise).
 coefficient is unchanged). The plugin gets x/range and the mean (protocol 9; older plugins: Mata).
 Plugin limits raised: MAXTERMS 32, MAXATTR 24 (larger models fall back to Mata).
 Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate effects for
-several variables": all within 0.07 SE. Note: nwsaom does not centre egox/altx/nodecov/ratecov
-covariates (RSiena does by default); centre them to compare outdegree/rate with RSiena.
+several variables": all within 0.07 SE. (Covariates are now centred by default, see "covariates are
+centred" below.)
 
 ## nwsaom conditional estimation could run forever; e(engine) (changed 2026-10-01)
 
@@ -585,3 +583,53 @@ coda's `effectiveSize()`, n*var(x)/spectrum0.ar(x) via `ergm_spec0_scalar()`, an
 averages then drifted with the seed (mean degree 2.25-2.41 vs observed 1.98). Defaults now follow
 R's `gof.ergm()`: 100 draws and the fit's `e(mcmc_burnin)`/`e(mcmc_interval_final)`. Even so, such
 models vary from seed to seed in R too (same theta: mean degree 1.97-2.12 over 4 seeds).
+
+## nwsaom covariates are centred by default; RSiena's effect names (changed 2026-10-01)
+
+RSiena's `coCovar()` is `centered = TRUE` by default: the values are stored minus their mean
+(missing values imputed by the mean), so egoX, altX, egoPlusAltX and RateX use centred values (sameX
+is unaffected, simX has its own similarity mean). nwsaom used the raw values, so with an uncentred
+covariate the outdegree coefficient (and the rate) differed from RSiena's although the covariate
+coefficients agreed. nwsaom now centres egox/altx/nodecov/ratecov covariates (`SaomCovPrep()`),
+`nocenter` keeps the raw values; `e(covmeans)` and `e(centered)` are returned and the means are
+listed under the table, with RSiena's effect names for the covariate, interaction and behavior
+effects (`e(rsiena_labels)`, all coefficients in e(b) order). Results of earlier fits with an
+uncentred egox/altx/nodecov/ratecov variable change in outdegree (and rate/ratecov intercepts);
+the coefficient names are unchanged. Validated with raw variables (glasgow, realistic model with
+gwesp, transrectrip, inPopSqrt, outAct, sameX, egoX/altX/simX of alcohol1; cond/uncond, 5 seeds):
+all coefficients including outdegree within 0.07 RSiena SE; RateX of two raw covariates within 0.03.
+
+## nwsaom behavior endowment/creation splits were not RSiena's (fixed 2026-10-01)
+
+`SaomBehaviorPatchEndowCreation()` gave every split the linear statistic (sum of decreases or
+increases). RSiena (`StatisticCalculator::calculateBehaviorStatistics()`): with c = current -
+overall mean and d = initial - current (0 if missing), endowment = sum over actors with d_i > 0 of
+the effect's egoEndowmentStatistic, creation = -endowment(-d). linear: -d_i; quadratic:
+c_i^2 - (c_i + d_i)^2; avAlt: (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j)) / outdeg_i; avSim:
+(sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|) / n_i over non-missing alters, all on the
+period's starting network. Mata and the plugin (protocol 12) now compute these. Co-evolution phase 1
+also follows RSiena's rule for a non-positive derivative (repeat with more runs, then fix the
+parameter): RSiena fixes avSim endowment/creation (not estimable), and so does nwsaom now. Validated
+(glasgow alcohol co-evolution, 5 seeds): linear + quadratic endow/creation + avAlt within 0.03 SE;
+linear + quadratic + avAlt endow/creation within 0.02 SE; avSim endow/creation fixed by both, the
+rest within 0.07 SE.
+
+## nwsaom interact(): RSiena's rule and RSiena's interaction statistic (changed 2026-10-01)
+
+interact() accepted only "dyadic" effects, with its own list. It now follows RSiena
+(`R/sienaeffects.r`): each effect is ego, dyadic or other (interactionType); two effects need an ego
+effect or two dyadic ones, three effects two ego effects or only ego and dyadic ones; RSiena's
+messages. Interactions RSiena accepts but its C++ cannot compute (no tieStatistic: isolateNet and
+outIso unless every other effect is egoX/outdegree, and the anti-isolate effects, whose statistic
+RSiena gives to the first actor) are refused. The statistic is RSiena's
+`NetworkInteractionEffect::egoStatistic()`: with all effects but one C++ ego effects (egoX,
+density) the product of their values and the other's egoStatistic, otherwise the sum over ties of
+the product of tie statistics. Two tie statistics were wrong (only their sum over all ties was
+right, so the main effects were unaffected): transtrip used in-shared partners (RSiena: two-paths
+ego -> h -> alter), cycle3 all reverse two-paths (RSiena: a third). Checked against RSiena on 581
+combinations: same accept/reject decision and message, and for the 119 computable ones the same
+statistic (exact). New in interactions: indegpopularity, outpopularity, outactivity, inactivity,
+outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives inActSqrt and
+outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
+(outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
+documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`.

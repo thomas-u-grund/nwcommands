@@ -2518,13 +2518,26 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	real scalar nterm, b0, D
 
 	if (nm == "outdegree") return(1)
+	// RSiena's tieStatistic() of the degree effects (2026-10-01):
+	// inPopSqrt, outPopSqrt, outAct (outdegree of ego), inActSqrt (ego)
+	if (nm == "indegpopularity") return(sqrt(G.din[alter]))
+	if (nm == "outpopularity") return(sqrt(G.dout[alter]))
+	if (nm == "outactivity") return(G.dout[ego])
+	if (nm == "inactivity") return(sqrt(G.din[ego]))
+	if (nm == "isolatepop") return(G.dout[alter] == 0 & G.din[alter] == 1)
 	if (nm == "reciprocity") return(G.has_edge(alter, ego) ? 1 : 0)
 	if (nm == "nodematch") return(a[ego] == a[alter] ? 1 : 0)
 	if (nm == "nodecov") return(a[ego] + a[alter])
 	if (nm == "nodeicov") return(a[alter])
 	if (nm == "nodeocov") return(a[ego])
-	if (nm == "transtrip" | nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
-	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego))
+	// RSiena's tieStatistic(): transTrip the two-paths ego -> h -> alter,
+	// cycle3 a third of the two-paths alter -> h -> ego (2026-10-01;
+	// before, in-shared partners and all of the two-paths: only their sum
+	// over all ties was right, which mattered only for the interactions
+	// RSiena does not allow)
+	if (nm == "transtrip") return(G.shared_partners_otp(ego, alter))
+	if (nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
+	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego) / 3)
 	if (nm == "simcov") return(1 - abs(a[ego] - a[alter]) / decay - (args() >= 7 ? center : 0))
 	if (nm == "transrectrip") return(G.has_edge(alter, ego) ? G.shared_partners_otp(ego, alter) : 0)
 	if (nm == "outoutass") return(G.degree_out(ego) * G.degree_out(alter))
@@ -2560,6 +2573,21 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
 	tied = G.has_edge(i, j)
 
 	if (nm == "outdegree") return(tied ? -1 : 1)
+	// the degree effects' changes (as their change_saom_X())
+	if (nm == "indegpopularity") return(tied ? -sqrt(G.din[j]) : sqrt(G.din[j] + 1))
+	if (nm == "outpopularity") return(tied ? -sqrt(G.dout[j]) : sqrt(G.dout[j]))
+	if (nm == "outactivity") return(tied ? -(2 * G.dout[i] - 1) : (2 * G.dout[i] + 1))
+	if (nm == "inactivity") return(tied ? -sqrt(G.din[i]) : sqrt(G.din[i]))
+	if (nm == "outiso") return((tied ? (G.dout[i] - 1 == 0) : 0) - (G.dout[i] == 0))
+	if (nm == "isolatenet") {
+		if (G.din[i] != 0) return(0)
+		return((tied ? (G.dout[i] - 1 == 0) : 0) - (G.dout[i] == 0))
+	}
+	if (nm == "isolatepop") {
+		if (G.dout[j] > 0) return(0)
+		if (tied) return(G.din[j] <= 1 ? -1 : 0)
+		return(G.din[j] == 0 ? 1 : 0)
+	}
 	if (nm == "reciprocity") {
 		if (!G.has_edge(j, i)) return(0)
 		return(tied ? -1 : 1)
@@ -2800,25 +2828,63 @@ real scalar _saom_ixcenter(class ErgmTermData scalar td, real scalar c, real sca
 }
 
 real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	string rowvector nms
-	real matrix ties
-	real scalar n, k, tot, threeway
-	real colvector aA, aB, aC
+	string rowvector nms, comp
+	real scalar n, k, c, e, tot, nc, nego, ne, v, s_e
+	real matrix A
+	real rowvector nb
 
+	// RSiena's NetworkInteractionEffect::egoStatistic(): when all
+	// components but one are ego effects (egoX, density), the ego's
+	// statistic is the product of the ego effects' values and the other
+	// component's egoStatistic(); otherwise the sum over the ego's ties of
+	// the product of the components' tie statistics (2026-10-01; before,
+	// always the latter, which differs for outIso)
 	nms = tokens(td.sptype, "|")
-	threeway = (cols(nms) == 5)
+	nc = (cols(nms) + 1) / 2
+	comp = J(1, nc, "")
+	for (c=1; c<=nc; c++) comp[c] = nms[2*c - 1]
 	n = G.n
-	aA = td.attr[1::n]
-	aB = td.attr[(n+1)::(2*n)]
-	if (threeway) aC = td.attr[(2*n+1)::(3*n)]
-	ties = G.all_ties()
+	A = J(n, nc, 0)
+	for (c=1; c<=nc; c++) A[., c] = td.attr[((c-1)*n+1)::(c*n)]
+	nego = 0
+	ne = 0
+	for (c=1; c<=nc; c++) {
+		if (_saom_isegoeffect(comp[c])) nego++
+		else ne = c
+	}
 	tot = 0
-	for (k=1; k<=rows(ties); k++) {
-		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2], _saom_ixcenter(td, 1, threeway)) *
-			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2], _saom_ixcenter(td, 2, threeway)) *
-			(threeway ? _saom_tiestat(G, nms[5], aC, td.levels[3], ties[k,1], ties[k,2], _saom_ixcenter(td, 3, threeway)) : 1)
+	for (e=1; e<=n; e++) {
+		if (nego == nc - 1) {
+			s_e = 1
+			for (c=1; c<=nc; c++) if (c != ne) s_e = s_e * _saom_tiestat(G, comp[c], A[., c], td.levels[c], e, e, _saom_ixcenter(td, c, nc == 3))
+			if (comp[ne] == "outiso") v = (G.dout[e] == 0)
+			else if (comp[ne] == "isolatenet") v = (G.dout[e] == 0 & G.din[e] == 0)
+			else {
+				v = 0
+				nb = G.neighbors_out(e)
+				for (k=1; k<=cols(nb); k++) v = v + _saom_tiestat(G, comp[ne], A[., ne], td.levels[ne], e, nb[k], _saom_ixcenter(td, ne, nc == 3))
+			}
+			tot = tot + s_e * v
+		}
+		else {
+			nb = G.neighbors_out(e)
+			for (k=1; k<=cols(nb); k++) {
+				v = 1
+				for (c=1; c<=nc; c++) v = v * _saom_tiestat(G, comp[c], A[., c], td.levels[c], e, nb[k], _saom_ixcenter(td, c, nc == 3))
+				tot = tot + v
+			}
+		}
 	}
 	return(tot)
+}
+
+/* the effects whose C++ class is an ego effect in RSiena
+   (Effect::egoEffect(): egoX and density) - these, not the R-level
+   interactionType "ego" used by the rule in nwsaom.ado, select
+   NetworkInteractionEffect::egoStatistic()'s special case. It matters
+   only for outIso, which has an egoStatistic() but no tieStatistic() */
+real scalar _saom_isegoeffect(string scalar nm) {
+	return(nm == "nodeocov" | nm == "outdegree")
 }
 real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	string rowvector nms
@@ -4775,17 +4841,104 @@ real rowvector SaomBehaviorModel::full_change(class SaomBehavior scalar Beh, cla
    from Behobs_start_values by construction, matching the SAME
    (initial, current) pairing real RSiena's own construction uses). */
 real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbeh, real rowvector stat,
-	real scalar pNet, real colvector startvals, real colvector currentvals){
+	real scalar pNet, real colvector startvals, real colvector currentvals,
+	| pointer(class ErgmGraph scalar) scalar Gp, real scalar overallMean, real colvector missvec){
 
-	real scalar t
-	real colvector d
+	real scalar t, n, havegraph
+	class ErgmGraph scalar G0
+	real colvector c, dd, miss
+	string scalar nm
 
-	d = currentvals - startvals
+	// RSiena (StatisticCalculator::calculateBehaviorStatistics(),
+	// BehaviorEffect::endowmentStatistic()/creationStatistic()):
+	//   c  = current values centred by the overall mean (0 if missing),
+	//   dd = initial - current (positive: a decrease; 0 if missing);
+	//   endowment = sum over actors with dd > 0 of the effect's
+	//     egoEndowmentStatistic(dd, c);
+	//   creation = minus the endowment statistic computed with -dd (the
+	//     actors that increased; RSiena's own "trick", reproduced as is).
+	// The network is the period's starting (predictor) network. Before
+	// 2026-10-01 every split used the linear statistic.
+	n = rows(startvals)
+	miss = (args() >= 8 ? (rows(missvec) == n ? missvec : J(n, 1, 0)) : J(n, 1, 0))
+	havegraph = 0
+	if (args() >= 6) havegraph = (Gp != NULL)
+	G0 = ErgmGraph()
+	c = (currentvals :- (args() >= 7 ? overallMean : 0)) :* (miss :== 0)
+	dd = (startvals - currentvals) :* (miss :== 0)
 	for (t=1; t<=Mbeh.nterms; t++) {
-		if (Mbeh.fntype[t] == 1) stat[pNet+t] = sum(d :* (d :< 0))
-		else if (Mbeh.fntype[t] == 2) stat[pNet+t] = sum(d :* (d :> 0))
+		if (Mbeh.fntype[t] == 0) continue
+		nm = Mbeh.names[t]
+		nm = subinstr(subinstr(nm, "_endow", ""), "_creation", "")
+		if (!havegraph & nm != "linear") {
+			errprintf("SaomBehaviorPatchEndowCreation(): the network is needed for " + nm + "\n")
+			exit(198)
+		}
+		if (havegraph) {
+			if (Mbeh.fntype[t] == 1) stat[pNet+t] = _SaomBehEndowStat(nm, *Gp, c, dd, miss)
+			else stat[pNet+t] = -_SaomBehEndowStat(nm, *Gp, c, -dd, miss)
+		}
+		else {
+			if (Mbeh.fntype[t] == 1) stat[pNet+t] = _SaomBehEndowStat(nm, G0, c, dd, miss)
+			else stat[pNet+t] = -_SaomBehEndowStat(nm, G0, c, -dd, miss)
+		}
 	}
 	return(stat)
+}
+
+/* RSiena's egoEndowmentStatistic() summed over the actors with dd > 0
+   (LinearShapeEffect, QuadraticShapeEffect::endowmentStatistic(),
+   AverageAlterEffect, SimilarityEffect with average similarity):
+     linear     -dd_i
+     quadratic  c_i^2 - (c_i + dd_i)^2
+     avalt      (c_i * sum_j c_j - (c_i + dd_i) * sum_j (c_j + dd_j)) / outdeg_i
+     avsim      (sum_j |c_j - c_i| - sum_j |c_j + dd_j - c_i - dd_i|) / n_i
+   j over i's out-ties in G; avsim skips missing actors (n_i: the
+   non-missing alters). */
+real scalar _SaomBehEndowStat(string scalar nm, class ErgmGraph scalar G, real colvector c,
+	real colvector dd, real colvector miss) {
+
+	real scalar n, i, k, s, a, b, nb
+	real rowvector nbr
+
+	n = rows(c)
+	s = 0
+	for (i=1; i<=n; i++) {
+		if (dd[i] <= 0) continue
+		if (nm == "linear") s = s - dd[i]
+		else if (nm == "quadratic") s = s + c[i]^2 - (c[i] + dd[i])^2
+		else if (nm == "avalt") {
+			nbr = G.neighbors_out(i)
+			if (cols(nbr) == 0) continue
+			a = 0
+			b = 0
+			for (k=1; k<=cols(nbr); k++) {
+				a = a + c[nbr[k]]
+				b = b + c[nbr[k]] + dd[nbr[k]]
+			}
+			s = s + (c[i] * a - (c[i] + dd[i]) * b) / cols(nbr)
+		}
+		else if (nm == "avsim") {
+			if (miss[i] != 0) continue
+			nbr = G.neighbors_out(i)
+			if (cols(nbr) == 0) continue
+			a = 0
+			b = 0
+			nb = 0
+			for (k=1; k<=cols(nbr); k++) {
+				if (miss[nbr[k]] != 0) continue
+				a = a + abs(c[nbr[k]] - c[i])
+				b = b + abs(c[nbr[k]] + dd[nbr[k]] - c[i] - dd[i])
+				nb++
+			}
+			if (nb > 0) s = s + (a - b) / nb
+		}
+		else {
+			errprintf("nwsaom: no RSiena endowment/creation statistic for behavior effect " + nm + "\n")
+			exit(198)
+		}
+	}
+	return(s)
 }
 
 /* SaomMaskCoevEndowCreationValues: harmonisation unit 35 (missing
@@ -5891,7 +6044,7 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 			statBeh = SaomCoevStatBeh(Behwork, *C.GpStat[pd], Mbeh, missBeh)
 		}
 		simstat = SaomBehaviorPatchEndowCreation(Mbeh, (statNet, statBeh), C.pNet, behStart,
-			(C.hasmiss ? SaomMaskCoevEndowCreationValues(Behwork.values, behStart, missBeh) : Behwork.values))
+			Behwork.values, C.GpStat[pd], C.overallMean, missBeh)
 		distBeh = sum(abs(Behwork.values - behStart) :* (1 :- missBeh))
 
 		dev[1..C.p] = dev[1..C.p] + (simstat - C.target[pd, .])
@@ -5955,6 +6108,7 @@ struct SaomCoevMultiFit {
 	real scalar tconvMax		// RSiena's overall maximum convergence ratio, sqrt(m' S^-1 m)
 	real matrix V			// effects only, (pNet+pBeh) x (pNet+pBeh)
 	real matrix Vfull		// every parameter incl. rates, internal order
+	real rowvector fixed		// 1 for an effect kept fixed at its starting value (non-positive phase-1 derivative, RSiena's rule)
 }
 
 struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
@@ -5978,6 +6132,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real scalar pd, k, nwaves, P, p, ptot, n, hasbehsim
 	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
 	real rowvector n2minimum, n2maximum
+	real scalar kp1
+	real rowvector coevfixed
 	real colvector allbehvals, missBehZero
 
 	nwaves = cols(Gwaves)
@@ -6024,8 +6180,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		k = SaomNativePluginVersion()
 		C.use_native = (k >= 3)
 		C.use_batch = (k >= 4)
-		// behavior endowment/creation from protocol 11 on
-		if (any(C.cfgBeh.fntype :!= 0) & k < 11) {
+		// behavior endowment/creation from protocol 12 on (RSiena's
+		// statistics; protocol 11 had the linear one for every split)
+		if (any(C.cfgBeh.fntype :!= 0) & k < 12) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -6068,7 +6225,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		if (C.hasmiss) C.target[pd,.] = (SaomMaskedStatistic(Gpend, M, *missMaskNetPd[pd]), SaomCoevStatBeh(Behpend, *C.GpStat[pd], Mbeh, C.missBehPd[.,pd]))
 		else C.target[pd,.] = (M.full_statistic(Gpend), SaomCoevStatBeh(Behpend, *C.GpStat[pd], Mbeh, missBehZero))
 		C.target[pd,.] = SaomBehaviorPatchEndowCreation(Mbeh, C.target[pd,.], C.pNet, *Behwaves[pd],
-			(C.hasmiss ? SaomMaskCoevEndowCreationValues(*Behwaves[pd+1], *Behwaves[pd], C.missBehPd[.,pd]) : *Behwaves[pd+1]))
+			*Behwaves[pd+1], C.GpStat[pd], C.overallMean, C.missBehPd[.,pd])
 
 		if (C.hasmiss) C.targetRateNet[pd] = SaomCountDifferingMasked(Gp, Gpend, *missMaskNetPd[pd])
 		else C.targetRateNet[pd] = SaomCountDiffering(Gp, Gpend)
@@ -6087,11 +6244,37 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.cfgBeh.fntype)
 	}
 
-	// --- Phase 1: Jacobian by the score-function method
-	SaomCoevSimMany(C, M, Mbeh, theta0, K0, 1, Zdev, Zsco)
-	Ddev = Zdev :- mean(Zdev)
-	Dsco = Zsco :- mean(Zsco)
-	Dhat = (Ddev' * Dsco) / K0
+	// --- Phase 1: Jacobian by the score-function method. As RSiena
+	// (phase1.r): a non-positive diagonal element of an effect's
+	// derivative first doubles the length of phase 1 (while it is below
+	// 200 simulations), then fixes that effect at its starting value
+	// (RSiena tries finite differences in between; not done here).
+	kp1 = K0
+	SaomCoevSimMany(C, M, Mbeh, theta0, kp1, 1, Zdev, Zsco)
+	Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / kp1
+	while (any(diagonal(Dhat)[1..p] :<= 0) & kp1 < 200) {
+		kp1 = 2 * kp1
+		SaomCoevSimMany(C, M, Mbeh, theta0, kp1, 1, Zdev, Zsco)
+		Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / kp1
+	}
+	// in place of RSiena's finite-difference phase 1: one more, longer
+	// score-function phase 1 before anything is fixed
+	if (any(diagonal(Dhat)[1..p] :<= 0)) {
+		kp1 = max((2 * kp1, 400))
+		SaomCoevSimMany(C, M, Mbeh, theta0, kp1, 1, Zdev, Zsco)
+		Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / kp1
+	}
+	coevfixed = J(1, ptot, 0)
+	for (k=1; k<=p; k++) {
+		if (Dhat[k,k] <= 0) {
+			coevfixed[k] = 1
+			Dhat[k,.] = J(1, ptot, 0)
+			Dhat[.,k] = J(ptot, 1, 0)
+			Dhat[k,k] = 1
+			printf("{txt}note: parameter %f has a non-positive derivative estimate and is kept fixed at its starting value, as RSiena does (R/phase1.r).\n", k)
+		}
+	}
+	fit.fixed = coevfixed
 	temp = 0.8 * Dhat + 0.2 * diag(diagonal(Dhat))
 	Dinv = luinv(temp)
 
@@ -6143,7 +6326,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 
 			if (nit == 1) changestep = dev
 			else changestep = changestep + dev
-			fchange = gain * ((changestep * Dinv') :* stdcap)
+			fchange = gain * ((changestep * Dinv') :* stdcap) :* (1 :- coevfixed)
 
 			thprev = theta
 			theta = (thav / thavn) - fchange
@@ -6151,7 +6334,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			for (k=p+1; k<=ptot; k++) if (theta[k] < 0.5*thprev[k]) theta[k] = 0.5*thprev[k]
 			thav = thav + theta
 			thavn = thavn + 1
-			SaomCheckThetaBound(theta[1..p], 50)
+			SaomCheckThetaBound(select(theta[1..p], !coevfixed[1..p]), 50)
 
 			if (nit >= 2) {
 				ac = J(1, ptot, -1)
@@ -6181,7 +6364,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	S3 = variance(Zphase3)
 	fit.tconv = J(1, ptot, 0)
 	for (k=1; k<=ptot; k++) if (S3[k,k] > 1e-10) fit.tconv[k] = m3[k] / sqrt(S3[k,k])
-	fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
+	if (max(coevfixed) == 0) fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
+	else fit.tconvMax = sqrt(max((select(m3, !coevfixed) * invsym(select(select(S3, !coevfixed'), !coevfixed)) * select(m3, !coevfixed)', 0)))
 
 	// t-ratios on RSiena's scale (the matching entries of tconv)
 	fit.tratioNet = fit.tconv[1..C.pNet]
@@ -6192,6 +6376,16 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	Ddev3 = Zphase3 :- m3
 	Dsco3 = Zsco3 :- mean(Zsco3)
 	Dhat3 = (Ddev3' * Dsco3) / K3
+	// a fixed effect gets no standard error (0; RSiena: NA)
+	for (k=1; k<=ptot; k++) {
+		if (coevfixed[k]) {
+			Dhat3[k,.] = J(1, ptot, 0)
+			Dhat3[.,k] = J(ptot, 1, 0)
+			Dhat3[k,k] = 1
+			S3[k,.] = J(1, ptot, 0)
+			S3[.,k] = J(ptot, 1, 0)
+		}
+	}
 	Dinv3 = luinv(Dhat3)
 	fit.Vfull = Dinv3 * S3 * Dinv3'
 	SaomCheckCovarianceFinite(fit.Vfull)
@@ -6405,13 +6599,14 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv9 = 0
 	needv10 = 0
+	needv12 = 0
 	cfg.needv11 = 0
 	cfg.whynot = ""
 	cfg.fntype = J(1, M.nterms, 0)
@@ -6557,6 +6752,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 					cfg.attridx[t] = subA
 					cfg.p1[t] = subB + 1000 * subC
 					cfg.needv11 = 1
+					needv12 = 1
 				}
 			}
 			else {
@@ -6586,6 +6782,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 					// the withdrawal sign of an interaction is right from
 					// protocol 10 on
 					needv10 = 1
+					needv12 = 1
 				}
 			}
 		}
@@ -6607,6 +6804,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 11) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 11 (endowment/creation, three-way interact(), or a large model)"
+		}
+	}
+	// protocol 12: RSiena's interaction statistic with ego effects
+	// (NetworkInteractionEffect::egoStatistic()) and the degree effects'
+	// tie statistics
+	if (cfg.eligible & needv12) {
+		if (SaomNativePluginVersion() < 12) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
 		}
 	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays
@@ -6684,6 +6890,24 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
    two initiatives' native calls cannot collide even if both run in the
    same Stata session.
 */
+/* _SaomFrameLayoutOK(): whether the current frame (__saom_native) has
+   exactly the variables a native call needs, in order: v1 v2 a1..aK
+   [vbeh] [mv1 mv2 missbeh] [present]. The names are compared, not only
+   the count: a coev frame and a network frame can have the same number
+   of variables. */
+real scalar _SaomFrameLayoutOK(real scalar nattr, real scalar beh, real scalar hasmiss, real scalar haspres) {
+	string rowvector want
+	real scalar i
+	want = ("v1", "v2")
+	for (i=1; i<=nattr; i++) want = want, "a" + strofreal(i)
+	if (beh) want = want, "vbeh"
+	if (hasmiss) want = want, ("mv1", "mv2", "missbeh")
+	if (haspres) want = want, "present"
+	if (st_nvar() != cols(want)) return(0)
+	for (i=1; i<=cols(want); i++) if (st_varname(i) != want[i]) return(0)
+	return(1)
+}
+
 /* SaomTrailer11(): the protocol-11 model trailer of the plugin's wire
    string (native/saom_sim.c parse_model_trailer11()): endowment/creation
    codes of the network and behavior terms, and the structural dyads.
@@ -6807,7 +7031,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	// silently reused with a stale/mismatched layout. SaomEstimateRM()
 	// drops this frame once, via SaomNativeCleanupFrame(), after its own
 	// last native call - not here, not per call.
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 0, hasmiss, haspresentNet)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
@@ -6973,7 +7197,7 @@ real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph
 	stata("capture frame create __saom_native")
 	st_framecurrent("__saom_native")
 
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 0, 0, 0)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
@@ -7120,7 +7344,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	stata("capture frame create __saom_native")
 	st_framecurrent("__saom_native")
 
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 1, hasmiss, haspresentNet)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
@@ -7219,6 +7443,122 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	return(res)
 }
 
+/* RSiena's coCovar(centered = TRUE) (sienaDataCreate.r): a constant
+   covariate is stored minus its mean, missing values imputed by it (0
+   after centring). SaomCovPrep(): one variable, its mean in `m';
+   SaomCovPrepMat(): every column. */
+real colvector SaomCovPrep(real colvector x, real scalar center, real scalar m) {
+	real colvector y
+	real scalar i
+	m = mean(select(x, x :< .))
+	y = x
+	for (i=1; i<=rows(y); i++) if (y[i] >= .) y[i] = m
+	if (center) y = y :- m
+	return(y)
+}
+real matrix SaomCovPrepMat(real matrix X, real scalar center) {
+	real matrix Y
+	real scalar k, m
+	Y = X
+	for (k=1; k<=cols(X); k++) Y[., k] = SaomCovPrep(X[., k], center, m)
+	return(Y)
+}
+
+/* RSiena's effect names (getEffects() effectName) of the effects of a fit,
+   in e(b) order, "|"-separated: covariate effects with their variable
+   ("alcohol1 ego", "same smoke1"), interactions joined by " x ",
+   endowment/creation marked, behavior effects with the behavior's name. */
+string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar symmetric, real scalar decay) {
+	string scalar v
+	real scalar u
+	u = strpos(coef, "_")
+	v = (u ? substr(coef, u + 1, .) : "")
+	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "outdegreeendow") return("outdegree (density) [endowment]")
+	if (term == "outdegreecreation") return("outdegree (density) [creation]")
+	if (term == "reciprocity") return("reciprocity")
+	if (term == "reciprocityendow") return("reciprocity [endowment]")
+	if (term == "reciprocitycreation") return("reciprocity [creation]")
+	if (term == "nodematch") return("same " + v)
+	if (term == "nodeicov") return(v + " alter")
+	if (term == "nodeocov") return(v + " ego")
+	if (term == "nodecov") return(v + " ego and alt")
+	if (term == "simcov") return(v + " similarity")
+	if (term == "transtrip") return("transitive triplets")
+	if (term == "transmedtrip") return("transitive mediated triplets")
+	if (term == "transrectrip") return("transitive recipr. triplets")
+	if (term == "cycle3") return("3-cycles")
+	if (term == "cycle4") return("4 cycles (1)")
+	if (term == "transties") return("transitive ties")
+	if (term == "balance") return("balance")
+	if (term == "gwesp") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "indegpopularity") return("indegree - popularity (sqrt)")
+	if (term == "outpopularity") return("outdegree - popularity (sqrt)")
+	if (term == "outactivity") return("outdegree - activity")
+	if (term == "inactivity") return("indegree - activity (sqrt)")
+	if (term == "isolatenet") return("network-isolate")
+	if (term == "outiso") return("out-isolate")
+	if (term == "antiiso") return("anti isolates")
+	if (term == "antiiniso") return("anti in-isolates")
+	if (term == "antiiniso2") return("anti in-near-isolates")
+	if (term == "in3plus") return("indegree at least 3")
+	if (term == "isolatepop") return("isolate - popularity")
+	if (term == "outoutass") return("out-out degree^(1/1) assortativity")
+	if (term == "outinass") return("out-in degree^(1/1) assortativity")
+	if (term == "inoutass") return("in-out degree^(1/1) assortativity")
+	if (term == "ininass") return("in-in degree^(1/1) assortativity")
+	return(coef)
+}
+
+string scalar SaomRSienaLabels(class ErgmModel scalar M, real scalar symmetric, string scalar behname, | pointer(class SaomBehaviorModel scalar) scalar Mbp) {
+	string rowvector lab, nms
+	string scalar out, nm, base, l
+	real scalar t, ci, k, idx, pass, isego
+	class ErgmTermData scalar tdt
+
+	lab = J(1, M.nterms, "")
+	ci = 0
+	for (t=1; t<=M.nterms; t++) {
+		tdt = *M.td[t]
+		if (M.names[t] == "behsim") lab[t] = behname + " similarity"
+		else if (M.names[t] != "interact") lab[t] = _SaomRSLabel1(M.names[t], M.coefnames[ci + 1], symmetric, tdt.decay)
+		ci = ci + M.npar[t]
+	}
+	// interactions: the components' labels joined by " x ", RSiena's ego
+	// effects (interactionType "ego") first
+	for (t=1; t<=M.nterms; t++) {
+		if (M.names[t] != "interact") continue
+		tdt = *M.td[t]
+		nms = tokens(tdt.sptype, "|")
+		l = ""
+		for (pass=1; pass<=2; pass++) {
+			for (k=1; k<=(cols(nms)+1)/2; k++) {
+				isego = anyof(("nodeocov", "inactivity", "isolatenet", "antiiso", "antiiniso", "antiiniso2", "inplus3", "isolatepop"), nms[2*k-1])
+				if ((pass == 1) != isego) continue
+				idx = (rows(tdt.levels) >= (cols(nms)+1)/2 * 2 ? tdt.levels[(cols(nms)+1)/2 + k] : 0)
+				l = l + (l != "" ? " x " : "") + (idx > 0 ? lab[idx] : nms[2*k-1])
+			}
+		}
+		lab[t] = l
+	}
+	out = invtokens(lab, "|")
+	if (args() >= 4) {
+		for (t=1; t<=(*Mbp).nterms; t++) {
+			nm = (*Mbp).names[t]
+			base = subinstr(subinstr(nm, "_endow", ""), "_creation", "")
+			if (base == "linear") l = behname + " linear shape"
+			else if (base == "quadratic") l = behname + " quadratic shape"
+			else if (base == "avalt") l = behname + " average alter"
+			else if (base == "avsim") l = behname + " average similarity"
+			else l = behname + " " + base
+			if ((*Mbp).fntype[t] == 1) l = l + " [endowment]"
+			if ((*Mbp).fntype[t] == 2) l = l + " [creation]"
+			out = out + "|" + l
+		}
+	}
+	return(out)
+}
+
 /* estat gof (nwsaom_estat.ado): one simulated period of the fitted model,
    in the plugin when it covers the model (2026-10-01; before, co-evolution
    gof always ran in Mata, and network gof ignored endowment/creation,
@@ -7282,7 +7622,7 @@ real scalar SaomGofSimCoev(class ErgmGraph scalar G, class ErgmModel scalar M, r
 	cfg = SaomNativeSetup(M)
 	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
 	native = cfg.eligible & cfgBeh.eligible & SaomNativeAvailable()
-	if (native) native = (SaomNativePluginVersion() >= (any(cfgBeh.fntype :!= 0) ? 11 : 3))
+	if (native) native = (SaomNativePluginVersion() >= (any(cfgBeh.fntype :!= 0) ? 12 : 3))
 	if (native) {
 		r = SaomSimulateIntervalCoevNative(G, M, cfg, thetaNet, Beh, Mbeh, cfgBeh, thetaBeh, rateNet, rateBeh, 1)
 		return(1)

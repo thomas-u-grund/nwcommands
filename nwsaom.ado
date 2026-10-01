@@ -186,7 +186,7 @@ program nwsaom, eclass
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
-		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional ]
+		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ]
 	set more off
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
@@ -1031,6 +1031,15 @@ program nwsaom, eclass
 		local __nwsaom_netfntype_list "`__nwsaom_netfntype_list' 0"
 	}
 
+	// RSiena's coCovar(centered = TRUE) default (2026-10-01): the
+	// covariates of egox()/altx()/nodecov()/ratecov() are centred by
+	// their mean (missing values imputed by it, i.e. 0); nocenter keeps
+	// the raw values (RSiena's centered = FALSE). sameX and simX do not
+	// depend on centring (simX is centred by its similarity mean).
+	local __nwsaom_center = ("`nocenter'" == "")
+	local __nwsaom_cmeans ""
+	capture mata: mata drop __nwsaom_cm
+	mata: __nwsaom_cm = .
 	// covariate effects take a varlist (2026-10-01): one term and one
 	// coefficient per variable, named <effect>_<variable> (e.g.
 	// samex_smoke1), in the order the variables are listed - the same
@@ -1056,7 +1065,9 @@ program nwsaom, eclass
 		foreach __v of local nodecov {
 			tempname __td_nc
 			mata: `__td_nc' = ErgmTermData()
-			mata: `__td_nc'.attr = st_data(1::`nodes', "`__v'")
+			mata: `__td_nc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
+			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			mata: __nwsaom_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc', ("nodecov_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' nodecov(`__v')"
 		}
@@ -1066,7 +1077,9 @@ program nwsaom, eclass
 		foreach __v of local nodeicov {
 			tempname __td_nic
 			mata: `__td_nic' = ErgmTermData()
-			mata: `__td_nic'.attr = st_data(1::`nodes', "`__v'")
+			mata: `__td_nic'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
+			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			mata: __nwsaom_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_nic', ("`__nwsaom_altlab'_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_altlab'(`__v')"
 		}
@@ -1076,7 +1089,9 @@ program nwsaom, eclass
 		foreach __v of local nodeocov {
 			tempname __td_noc
 			mata: `__td_noc' = ErgmTermData()
-			mata: `__td_noc'.attr = st_data(1::`nodes', "`__v'")
+			mata: `__td_noc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
+			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			mata: __nwsaom_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_noc', ("`__nwsaom_egolab'_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
 		}
@@ -1381,7 +1396,9 @@ program nwsaom, eclass
 		foreach __v of local simcov {
 			tempname __td_sc
 			mata: `__td_sc' = ErgmTermData()
-			mata: `__td_sc'.attr = st_data(1::`nodes', "`__v'")
+			// simX: missing values imputed by the mean (RSiena); centring
+			// does not change a similarity
+			mata: `__td_sc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
 			mata: `__td_sc'.decay = max(`__td_sc'.attr) - min(`__td_sc'.attr)
 			mata: `__td_sc'.center = SaomSimMean(`__td_sc'.attr)
 			mata: __nwsaom_last_M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), `__td_sc', ("`__nwsaom_simlab'_`__v'"))
@@ -1389,42 +1406,14 @@ program nwsaom, eclass
 		}
 	}
 
-	// --- interact(): two-way interaction effects (RSiena's own
-	// includeInteraction()) between two effects ALREADY added above as
-	// their own main-effect terms - see unw_saom.do's own
-	// "Interaction effects" header comment (right after
-	// change_saom_balance()) for the full design/derivation account
-	// (direct port of RSiena's real NetworkInteractionEffect, confirmed
-	// from RSiena/src/model/effects/NetworkInteractionEffect.cpp).
-	// Syntax mirrors Stata's own factor-variable `#' for a familiar,
-	// multiple-pairs-in-one-option shape: interact(effect1#effect2
-	// [effect3#effect4 ...]). Restricted to the "dyadic" (tie-summed)
-	// effect subset that has a well-defined tieStatistic() at all - the
-	// node-level/nonlinear-in-degree effects (indegpopularity,
-	// outactivity, outpopularity, inactivity, isolatenet, outiso,
-	// antiiso, antiiniso, antiiniso2, inplus3 - RSiena's own "ego
-	// effects") are rejected here with a clear message, matching
-	// TERMCODE_INTERACT2's own #define comment in native/saom_sim.c.
-	// egox()/altx()/samex()/simx() (RSiena's own aliases, this file's
-	// own top-of-program section) are accepted here too, resolved to
-	// their canonical Statnet-style name before lookup - the interacting
-	// effect must already appear in the model under THAT canonical name
-	// (SaomBuildInteractTd()'s own name-based lookup against
-	// __nwsaom_last_M, unw_saom.do), regardless of which spelling
-	// originally added it. Three-way interactions ("expansion",
-	// 2026-09-02 - RSiena's own OPTIONAL third effect in
-	// includeInteraction(), confirmed directly from its real source:
-	// NetworkInteractionEffect::tieStatistic() simply multiplies in a
-	// third component's own tieStatistic() when present, no other
-	// change to the formula) are supported via effect1#effect2#effect3
-	// - Mata only for now, native/saom_sim.c's own TERMCODE_INTERACT2
-	// wire protocol only has room for two component slot references
-	// (see unw_saom.do's own SaomNativeSetup() eligible=0 gate for this
-	// case - a disclosed follow-on, not attempted here).
-	// Behavior-behavior/network-behavior interactions remain a
-	// disclosed, not-yet-built follow-up (docs/SAOM_ROADMAP.md).
+	// --- interact(): two- and three-way interactions of network effects
+	// already in the model (RSiena's includeInteraction(); see
+	// unw_saom.do's "Interaction effects" comment). Syntax:
+	// interact(effect1#effect2[#effect3] ...). The effects allowed and
+	// rejected follow RSiena's rule (ego, dyadic and other effects; see
+	// below); egox()/altx()/samex()/simx() map to their canonical names.
+	// Behavior interactions are not offered.
 	if "`interact'" != "" {
-		local __nwsaom_ixok "outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance"
 		local __nwsaom_ixn = 0
 		foreach __nwsaom_ixpair of local interact {
 			local __nwsaom_ixwords = subinstr("`__nwsaom_ixpair'", "#", " ", .)
@@ -1473,16 +1462,61 @@ program nwsaom, eclass
 					}
 				}
 			}
-			local __nwsaom_ixposa : list posof "`__nwsaom_ixtypea'" in __nwsaom_ixok
-			local __nwsaom_ixposb : list posof "`__nwsaom_ixtypeb'" in __nwsaom_ixok
-			if `__nwsaom_ixposa' == 0 | `__nwsaom_ixposb' == 0 {
-				di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'"
+			// RSiena's rule (R/sienaeffects.r, includeInteraction()):
+			// each effect is an ego, a dyadic or another effect
+			// (interactionType in RSiena's effects table); a two-way
+			// interaction needs at least one ego effect or two dyadic
+			// effects, a three-way interaction at least two ego effects
+			// or only ego and dyadic effects
+			local __nwsaom_ixego "nodeocov inactivity isolatenet antiiso antiiniso antiiniso2 inplus3 isolatepop"
+			local __nwsaom_ixdyad "outdegree reciprocity nodematch nodeicov nodecov simcov gwesp outpopularity inoutass"
+			local __nwsaom_ixall "`__nwsaom_ixego' `__nwsaom_ixdyad' indegpopularity outactivity outiso transtrip transmedtrip transrectrip cycle3 cycle4 transties balance outoutass outinass ininass"
+			local __nwsaom_ixne 0
+			local __nwsaom_ixnd 0
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if "`__t'" == "" continue
+				if !`: list __t in __nwsaom_ixall' {
+					di "{err}interact(): {bf:`__nwsaom_ix`__c''} is not a network effect that can be part of an interaction"
+					error 198
+				}
+				if `: list __t in __nwsaom_ixego' local __nwsaom_ixne = `__nwsaom_ixne' + 1
+				if `: list __t in __nwsaom_ixdyad' local __nwsaom_ixnd = `__nwsaom_ixnd' + 1
+			}
+			if "`__nwsaom_ixc'" == "" & `__nwsaom_ixne' < 1 & `__nwsaom_ixnd' != 2 {
+				di "{err}invalid network interaction specification: must be at least one ego or both dyadic effects (`__nwsaom_ixa'#`__nwsaom_ixb'; RSiena's rule)"
+				di "{err}  ego effects: egox (nodeocov), inactivity, isolatenet, isolatepop; dyadic effects: outdegree, reciprocity, samex (nodematch), altx (nodeicov), nodecov, simx (simcov), gwesp, outpopularity, inoutass; the others are neither"
 				error 198
 			}
-			if "`__nwsaom_ixc'" != "" {
-				local __nwsaom_ixposc : list posof "`__nwsaom_ixtypec'" in __nwsaom_ixok
-				if `__nwsaom_ixposc' == 0 {
-					di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'"
+			if "`__nwsaom_ixc'" != "" & `__nwsaom_ixne' < 2 & `__nwsaom_ixne' + `__nwsaom_ixnd' < 3 {
+				di "{err}invalid network 3-way interaction specification: must be at least two ego effects or all ego or dyadic effects (`__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'; RSiena's rule)"
+				di "{err}  ego effects: egox (nodeocov), inactivity, isolatenet, isolatepop; dyadic effects: outdegree, reciprocity, samex (nodematch), altx (nodeicov), nodecov, simx (simcov), gwesp, outpopularity, inoutass; the others are neither"
+				error 198
+			}
+			// interactions RSiena's rule accepts but its C++ code does not
+			// compute: isolateNet and outIso have no tie statistic and
+			// work only when every other effect is egoX or outdegree
+			// (density), RSiena's C++ ego effects
+			// (NetworkInteractionEffect::egoStatistic()); otherwise RSiena
+			// stops with "tieStatistic not implemented". antiIso,
+			// antiInIso, antiInIso2 and in3Plus have no tie statistic
+			// either, and with egoX RSiena attributes their whole
+			// statistic to the first actor
+			// (__nwsaom_ixnoego: the number of effects other than egoX and
+			// outdegree; with outIso or isolateNet it must be 1)
+			local __nwsaom_ixnoego 0
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if "`__t'" != "" & !inlist("`__t'", "nodeocov", "outdegree") local __nwsaom_ixnoego = `__nwsaom_ixnoego' + 1
+			}
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if inlist("`__t'", "antiiso", "antiiniso", "antiiniso2", "inplus3") {
+					di "{err}interact(): {bf:`__t'} cannot be part of an interaction: RSiena accepts it but stops with an error (tieStatistic not implemented) or, with egoX, attributes the whole statistic to the first actor"
+					error 198
+				}
+				if inlist("`__t'", "outiso", "isolatenet") & `__nwsaom_ixnoego' > 1 {
+					di "{err}interact(): {bf:`__t'} can be interacted only with {bf:egox()} (and {bf:outdegree}); RSiena accepts other interactions with it but stops with an error when it computes them (tieStatistic not implemented)"
 					error 198
 				}
 			}
@@ -2002,7 +2036,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symrc_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_symrc_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_symrc_fntype = J(1, __nwsaom_last_M.nterms, 0)
-			mata: __nwsaom_symrc_ratecovattr = st_data(1::`nodes', "`ratecov'")
+			mata: __nwsaom_symrc_ratecovattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
 		}
@@ -2037,7 +2071,7 @@ program nwsaom, eclass
 			}
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
-			mata: __nwsaom_ratecovattr = st_data(1::`nodes', "`ratecov'")
+			mata: __nwsaom_ratecovattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
 		}
@@ -2152,6 +2186,37 @@ program nwsaom, eclass
 	ereturn post `b' `V', depname("`__nwsaom_depname'") obs(`nodes')
 	ereturn local cmd "nwsaom"
 	_nwsaom_postengine
+	// RSiena's effect names and the covariate centring means (RSiena
+	// prints both), 2026-10-01
+	local __nwsaom_symflag = ("`symmetric'" != "")
+	if `__nwsaom_coev' {
+		local __nwsaom_behn : word 1 of `behavior'
+		local __nwsaom_behn = ustrregexra("`__nwsaom_behn'", "[0-9]+$", "")
+		mata: st_local("__nwsaom_rslab", SaomRSienaLabels(__nwsaom_last_M, `__nwsaom_symflag', "`__nwsaom_behn'", &__nwsaom_last_Mbeh))
+	}
+	else mata: st_local("__nwsaom_rslab", SaomRSienaLabels(__nwsaom_last_M, `__nwsaom_symflag', ""))
+	ereturn local rsiena_labels `"`__nwsaom_rslab'"'
+	if `__nwsaom_hasratecov' {
+		foreach __v of local ratecov {
+			qui summarize `__v' in 1/`nodes', meanonly
+			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `=r(mean)'"
+		}
+	}
+	local __nwsaom_ncm : word count `__nwsaom_cmeans'
+	if `__nwsaom_ncm' > 0 {
+		tempname __cm
+		matrix `__cm' = J(1, `__nwsaom_ncm' / 2, .)
+		local __cmn ""
+		forvalues __k = 1/`=`__nwsaom_ncm'/2' {
+			local __cv : word `=2*`__k'-1' of `__nwsaom_cmeans'
+			local __cmv : word `=2*`__k'' of `__nwsaom_cmeans'
+			matrix `__cm'[1, `__k'] = `__cmv'
+			local __cmn "`__cmn' `__cv'"
+		}
+		matrix colnames `__cm' = `__cmn'
+		ereturn matrix covmeans = `__cm'
+	}
+	ereturn scalar centered = `__nwsaom_center'
 	capture mata: st_local("__nwsaom_condpost", strofreal(__nwsaom_fit.cond))
 	if `__nwsaom_coev' local __nwsaom_condpost 0
 	ereturn scalar conditional = `__nwsaom_condpost'
@@ -2404,7 +2469,64 @@ program nwsaom, eclass
 			}
 		}
 	}
+	_nwsaom_rsnotes
 	_nwsaom_tconvtable
+end
+
+/* RSiena's names of the covariate, interaction and behavior effects
+   (e(rsiena_labels)), and the covariates' centring means (e(covmeans);
+   RSiena's coCovar default), 2026-10-01 */
+capture program drop _nwsaom_rsnotes
+program define _nwsaom_rsnotes
+	local names : colnames e(b)
+	local nn : word count `names'
+	// the labels, "|"-separated in e(b) order, into lab1, lab2, ...
+	local rest `"`e(rsiena_labels)'"'
+	forvalues k = 1/`nn' {
+		local p = strpos(`"`rest'"', "|")
+		if `p' > 0 {
+			local lab`k' = substr(`"`rest'"', 1, `p' - 1)
+			local rest = substr(`"`rest'"', `p' + 1, .)
+		}
+		else {
+			local lab`k' `"`rest'"'
+			local rest ""
+		}
+	}
+	local first 1
+	local k 0
+	foreach nm of local names {
+		local ++k
+		// structural effects keep their obvious names; show the
+		// covariate, interaction, behavior and gwesp effects
+		if strpos("`nm'", "_") == 0 continue
+		if `first' di as text "RSiena effect names:"
+		local first 0
+		if udstrlen("`nm'") > 29 local nm = usubstr("`nm'", 1, 28) + "~"
+		di as text "  " %-30s "`nm'" as result `"`lab`k''"'
+	}
+	capture confirm matrix e(ratecoefs)
+	if !_rc {
+		local rn : colnames e(ratecoefs)
+		foreach v of local rn {
+			if `first' di as text "RSiena effect names:"
+			local first 0
+			di as text "  " %-30s "ratecoef (`v')" as result "effect `v' on rate"
+		}
+	}
+	capture confirm matrix e(covmeans)
+	if !_rc {
+		tempname cm
+		matrix `cm' = e(covmeans)
+		local cn : colnames `cm'
+		if e(centered) == 0 di as text "Covariates not centred ({bf:nocenter}); their means:"
+		else di as text "Covariates centred by their means, as RSiena's coCovar(centered = TRUE):"
+		local i 0
+		foreach v of local cn {
+			local ++i
+			di as text "  " %-30s "`v'" as result %9.3f `cm'[1,`i']
+		}
+	}
 end
 
 /* Convergence t-ratios on RSiena's scale (phase-3 mean deviation / its
@@ -2572,3 +2694,4 @@ program define nwsaom_multiplex, eclass
 	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
 	_nwsaom_tconvtable
 end
+

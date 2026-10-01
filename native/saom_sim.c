@@ -245,7 +245,7 @@
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 11		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64
+#define SAOM_NATIVE_VERSION 12		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1026,14 +1026,24 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long ego, long alter) {
 	switch (termcode) {
 		case TERMCODE_OUTDEGREE: return 1.0;
+		/* protocol 12: RSiena's tie statistics of the degree effects */
+		case TERMCODE_INDEGPOP: return sqrt((double)g->din[alter]);
+		case TERMCODE_OUTPOP: return sqrt((double)g->dout[alter]);
+		case TERMCODE_OUTACTIVITY: return (double)g->dout[ego];
+		case TERMCODE_INACTIVITY: return sqrt((double)g->din[ego]);
+		case TERMCODE_ISOLATEPOP: return (g->dout[alter] == 0 && g->din[alter] == 1) ? 1.0 : 0.0;
 		case TERMCODE_RECIPROCITY: return has_edge(g, alter, ego) ? 1.0 : 0.0;
 		case TERMCODE_NODEMATCH: return (a[ego] == a[alter]) ? 1.0 : 0.0;
 		case TERMCODE_NODECOV: return a[ego] + a[alter];
 		case TERMCODE_NODEICOV: return a[alter];
 		case TERMCODE_NODEOCOV: return a[ego];
-		case TERMCODE_TRANSTRIP: return (double)pair_isp(g, ego, alter);
+		/* protocol 12: RSiena's tieStatistic() - transTrip the two-paths
+		   ego -> h -> alter, cycle3 a third of the two-paths alter -> h ->
+		   ego (before: in-shared partners and all of the two-paths; only
+		   their sum over all ties was right) */
+		case TERMCODE_TRANSTRIP: return (double)pair_otp(g, ego, alter);
 		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
-		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
+		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego) / 3.0;
 		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) - p1;
 		case TERMCODE_BEHSIM: return 1.0 - fabs(a[ego] - a[alter]) / saom_behsim_range - p1;
 		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
@@ -1053,24 +1063,52 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 			return nterm * b0 - D;
 		}
 	}
-	return 0.0;		// node-level/"ego effect" termcode - rejected upstream by nwsaom.ado's own interact() eligibility check, never reached in practice
+	return 0.0;		// other node-level termcodes: rejected upstream by nwsaom.ado's interact() check (RSiena's rule plus the effects it cannot evaluate)
 }
 
-/* saom_stat_interact(): TERMCODE_INTERACT2's own global-statistic
+/* ix_stat() below (formerly saom_stat_interact()): TERMCODE_INTERACT2's own global-statistic
    computation - sum over the network's ACTUAL EXISTING ties of the
    product of the two components' own saom_tie_stat() values, matching
    RSiena's real NetworkInteractionEffect::tieStatistic() (a product),
    summed via the same NetworkEffect::egoStatistic()/statistic() shape
    every other termcode's own saom_stat_term() case already uses. */
-static double saom_stat_interact(graph_t *g, int subAcode, double *aA, double p1A, int subBcode, double *aB, double p1B) {
-	long k;
+/* protocol 12: RSiena's NetworkInteractionEffect::egoStatistic(): when
+   every component but one is an ego effect (egoX, density), the ego's
+   statistic is the product of their values and the other component's
+   egoStatistic (for outIso: outdegree 0); otherwise the sum over the
+   ego's ties of the product of the tie statistics */
+static int ix_isego(int code) { return code == TERMCODE_NODEOCOV || code == TERMCODE_OUTDEGREE; }
+static double ix_stat(graph_t *g, int nc, const int *codes, double **as, const double *p1s) {
+	long e, k;
+	int c, nego = 0, ne = 0;
 	double tot = 0.0;
+	for (c = 0; c < nc; c++) { if (ix_isego(codes[c])) nego++; else ne = c; }
+	if (nego == nc - 1) {
+		for (e = 1; e <= g->n; e++) {
+			double se = 1.0, v = 0.0;
+			for (c = 0; c < nc; c++) if (c != ne) se *= saom_tie_stat(g, codes[c], as[c], p1s[c], e, e);
+			if (se == 0.0) continue;
+			if (codes[ne] == TERMCODE_OUTISO) v = (g->dout[e] == 0) ? 1.0 : 0.0;
+			else if (codes[ne] == TERMCODE_ISOLATENET) v = (g->dout[e] == 0 && g->din[e] == 0) ? 1.0 : 0.0;
+			else {
+				for (k = 0; k < g->nties; k++) {
+					if (g->elist_i[k] != e) continue;
+					v += saom_tie_stat(g, codes[ne], as[ne], p1s[ne], e, g->elist_j[k]);
+				}
+			}
+			tot += se * v;
+		}
+		return tot;
+	}
 	for (k = 0; k < g->nties; k++) {
 		long ei = g->elist_i[k], ej = g->elist_j[k];
-		tot += saom_tie_stat(g, subAcode, aA, p1A, ei, ej) * saom_tie_stat(g, subBcode, aB, p1B, ei, ej);
+		double v = 1.0;
+		for (c = 0; c < nc; c++) v *= saom_tie_stat(g, codes[c], as[c], p1s[c], ei, ej);
+		tot += v;
 	}
 	return tot;
 }
+
 
 /* saom_eval_change()/saom_eval_stat(): thin dispatch wrappers inserted
    at every caller of saom_change_term()/saom_stat_term() in the ministep
@@ -1122,25 +1160,25 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 
 static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, double **attrs, graph_t *g) {
 	if (termcodes[k] == TERMCODE_INTERACT3) {
-		int sA, sB, sC;
-		long e;
-		double tot = 0.0, *aA, *aB, *aC;
+		int sA, sB, sC, codes[3];
+		double *as[3], p1s[3];
 		ix3_slots(k, attridx, p1, &sA, &sB, &sC);
-		aA = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
-		aB = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
-		aC = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
-		for (e = 0; e < g->nties; e++) {
-			long ei = g->elist_i[e], ej = g->elist_j[e];
-			tot += saom_tie_stat(g, termcodes[sA], aA, p1[sA], ei, ej) * saom_tie_stat(g, termcodes[sB], aB, p1[sB], ei, ej)
-				* saom_tie_stat(g, termcodes[sC], aC, p1[sC], ei, ej);
-		}
-		return tot;
+		codes[0] = termcodes[sA]; codes[1] = termcodes[sB]; codes[2] = termcodes[sC];
+		as[0] = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
+		as[1] = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
+		as[2] = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
+		p1s[0] = p1[sA]; p1s[1] = p1[sB]; p1s[2] = p1[sC];
+		return ix_stat(g, 3, codes, as, p1s);
 	}
 	if (termcodes[k] == TERMCODE_INTERACT2) {
 		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
-		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
-		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
-		return saom_stat_interact(g, termcodes[subA], aA, p1[subA], termcodes[subB], aB, p1[subB]);
+		int codes[2];
+		double *as[2], p1s[2];
+		codes[0] = termcodes[subA]; codes[1] = termcodes[subB];
+		as[0] = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
+		as[1] = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
+		p1s[0] = p1[subA]; p1s[1] = p1[subB];
+		return ix_stat(g, 2, codes, as, p1s);
 	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
@@ -1957,6 +1995,55 @@ static void beh_stats_on_edges(const model_t *M, long ne, const long *ei, const 
 	free(sumz); free(sumabs); free(odl);
 }
 
+/* RSiena's behavior endowment statistic (protocol 12; see
+   SaomBehaviorPatchEndowCreation() in unw_saom.do): the sum over actors
+   with dd > 0 of the effect's egoEndowmentStatistic(dd, c), c the centred
+   current values, dd = initial - current (both 0 for missing actors), the
+   alters from the (masked) starting network's ties li -> lj. The creation
+   statistic is minus this with -dd. */
+static double beh_endow_stat(int code, long n, long ne, const long *li, const long *lj,
+	const double *c, const double *dd, const double *missb) {
+	long i, e;
+	double s = 0.0;
+	if (code == TERMCODE_BEH_LINEAR) {
+		for (i = 1; i <= n; i++) if (dd[i] > 0) s -= dd[i];
+		return s;
+	}
+	if (code == TERMCODE_BEH_QUADRATIC) {
+		for (i = 1; i <= n; i++) if (dd[i] > 0) s += c[i] * c[i] - (c[i] + dd[i]) * (c[i] + dd[i]);
+		return s;
+	}
+	{
+		double *a = (double *)calloc((size_t)(n + 1), sizeof(double));
+		double *b = (double *)calloc((size_t)(n + 1), sizeof(double));
+		double *k = (double *)calloc((size_t)(n + 1), sizeof(double));
+		for (e = 0; e < ne; e++) {
+			long ei = li[e], ej = lj[e];
+			if (code == TERMCODE_BEH_AVALT) {
+				a[ei] += c[ej];
+				b[ei] += c[ej] + dd[ej];
+				k[ei] += 1.0;
+			}
+			else {
+				if (missb && missb[ej] != 0.0) continue;
+				a[ei] += fabs(c[ej] - c[ei]);
+				b[ei] += fabs(c[ej] + dd[ej] - c[ei] - dd[ei]);
+				k[ei] += 1.0;
+			}
+		}
+		for (i = 1; i <= n; i++) {
+			if (dd[i] <= 0 || k[i] == 0.0) continue;
+			if (code == TERMCODE_BEH_AVALT) s += (c[i] * a[i] - (c[i] + dd[i]) * b[i]) / k[i];
+			else {
+				if (missb && missb[i] != 0.0) continue;
+				s += (a[i] - b[i]) / k[i];
+			}
+		}
+		free(a); free(b); free(k);
+	}
+	return s;
+}
+
 static int simulate_period(const model_t *M, const period_t *PD, const simparams_t *P,
 	unsigned long long seed, int keep_final, simres_t *R) {
 
@@ -2487,17 +2574,34 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			ht_free(&hs);
 		}
 		if (M->nbehterms > 0) {
-			double dn = 0.0, up = 0.0;
+			/* RSiena's behavior endowment/creation statistics on the
+			   (masked) starting network (protocol 12) */
+			long d, dv, ne = 0;
+			long *li = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+			long *lj = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+			double *cc = (double *)calloc((size_t)(n + 1), sizeof(double));
+			double *dd = (double *)calloc((size_t)(n + 1), sizeof(double));
+			double *nd = (double *)calloc((size_t)(n + 1), sizeof(double));
+			const double *mb = hasmiss ? PD->missbeh : NULL;
+			for (d = 0; d < PD->nties; d++) {
+				if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
+				li[ne] = PD->ti[d]; lj[ne] = PD->tj[d]; ne++;
+			}
 			for (i = 1; i <= n; i++) {
-				double dd;
-				if (hasmiss && PD->missbeh[i] != 0.0) continue;
-				dd = behval[i] - PD->beh0[i];
-				if (dd < 0) dn += dd; else up += dd;
+				if (mb && mb[i] != 0.0) continue;
+				cc[i] = behval[i] - M->behOverallMean;
+				dd[i] = PD->beh0[i] - behval[i];
+				nd[i] = -dd[i];
 			}
 			for (k = 0; k < M->nbehterms; k++) {
-				if (M->behfntype[k] == 1) { R->statBeh[k] = dn; R->statBehLag[k] = dn; }
-				else if (M->behfntype[k] == 2) { R->statBeh[k] = up; R->statBehLag[k] = up; }
+				double v;
+				if (M->behfntype[k] == 0) continue;
+				if (M->behfntype[k] == 1) v = beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, dd, mb);
+				else v = -beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, nd, mb);
+				R->statBeh[k] = v;
+				R->statBehLag[k] = v;
 			}
+			free(li); free(lj); free(cc); free(dd); free(nd);
 		}
 	}
 	if (have_gm) free_graph(&gm);

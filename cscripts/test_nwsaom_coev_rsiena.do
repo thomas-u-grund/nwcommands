@@ -101,3 +101,34 @@ forvalues i = 1/`=colsof(__tc)' {
 }
 assert e(tconv_max) < 0.3
 di as text "nwsaom co-evolution vs RSiena, 2 waves: PASS"
+
+* ---------------------------------------------------------------- behavior endowment/creation
+* RSiena's endowment/creation statistics (2026-10-01; before, every split
+* used the linear statistic). RSiena 1.6.6, unconditional, means of seeds
+* 1-5:
+*   B1: linear, quad endowment + creation, avAlt
+*   B3: linear, quad, avSim endowment + creation (RSiena fixes both avSim
+*       parameters at 0 after phase 1, not estimable; so does nwsaom)
+nwwebuse glasgow, nwclear
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim ///
+	behavior(alcohol1 alcohol2 alcohol3) linear quadraticendow quadraticcreation avalt seed(1)
+_coev_check "outdegree reciprocity transtrip behsim beh_linear beh_quadratic_endow beh_quadratic_creation beh_avalt" ///
+	"-2.761 2.355 0.618 1.468 0.479 -0.483 -0.832 1.398" ///
+	"0.158 0.198 0.079 0.695 0.321 0.440 0.859 1.136"
+matrix __rb = e(rates_beh)
+matrix __rbse = e(rates_beh_se)
+_coev_rate "rate beh p1" __rb[1,1] __rbse[1,1] 1.337 0.373
+_coev_rate "rate beh p2" __rb[1,2] __rbse[1,2] 1.842 0.534
+di as text "nwsaom quadratic endowment/creation vs RSiena: PASS"
+
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim ///
+	behavior(alcohol1 alcohol2 alcohol3) linear quadratic avsimendow avsimcreation seed(1)
+_coev_check "outdegree reciprocity transtrip behsim beh_linear beh_quadratic" ///
+	"-2.743 2.385 0.625 1.391 0.363 -0.200" "0.135 0.196 0.077 0.573 0.150 0.095"
+matrix __b = e(b)
+matrix __V = e(V)
+local j1 = colnumb(__b, "beh_avsim_endow")
+local j2 = colnumb(__b, "beh_avsim_creation")
+assert __b[1,`j1'] == 0 & __b[1,`j2'] == 0 & __V[`j1',`j1'] == 0 & __V[`j2',`j2'] == 0
+di as text "nwsaom avSim endowment/creation (fixed, as RSiena): PASS"
+

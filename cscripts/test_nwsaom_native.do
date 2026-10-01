@@ -1869,6 +1869,107 @@ void saom_test_native_v11_equiv(real scalar n, real colvector attr, real colvect
 	printf("native v11 network equivalence PASS (endowment/creation, structural, three-way interaction)\n")
 }
 
+/* 2026-10-01 (protocol 12): interactions with RSiena's ego effects and
+   degree effects. RSiena's NetworkInteractionEffect::egoStatistic():
+   when all components but one are ego effects (egoX, inActSqrt), an
+   actor's statistic is the product of their values and the other
+   component's egoStatistic (outIso: outdegree 0); otherwise the sum
+   over its ties of the product of the tie statistics. The statistics
+   are checked against these formulas in Mata and in the plugin, and
+   the plugin's simulations against Mata's at fixed parameters. */
+void saom_test_native_v12_ix(real scalar n, real colvector x, real scalar nruns) {
+	class ErgmGraph scalar G0, Gwork
+	class ErgmModel scalar M
+	class ErgmTermData scalar td1, td2, td3, td4, td5
+	struct SaomNativeConfig scalar cfg
+	struct SaomScoredResult scalar sres
+	struct SaomCountedResult scalar cres
+	real rowvector theta, z, st
+	real matrix Zm, Zn, Sm, Sn, A
+	real colvector din, dout, tt
+	real scalar r, c, i, j, h, want
+	string rowvector comp
+	string scalar nm, stf
+
+	G0 = _v11_graph(n, 0.12, 5150)
+	A = J(n, n, 0)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) if (i != j) A[i,j] = G0.has_edge(i,j)
+	din = colsum(A)'
+	dout = rowsum(A)
+	tt = J(n, 1, 0)
+	for (i=1; i<=n; i++) for (j=1; j<=n; j++) if (A[i,j]) for (h=1; h<=n; h++) if (h != i & h != j) tt[i] = tt[i] + A[i,h] * A[h,j]
+	comp = ("outiso", "indegpopularity", "outactivity", "inactivity", "outpopularity", "egox3", "isolatenet", "isolatepop")
+	for (c=1; c<=cols(comp); c++) {
+		M = ErgmModel()
+		M.init()
+		td1 = ErgmTermData()
+		M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1, ("outdegree"))
+		td2 = ErgmTermData()
+		M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2, ("reciprocity"))
+		td3 = ErgmTermData()
+		td3.attr = x
+		M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td3, ("egox_x"))
+		td4 = ErgmTermData()
+		nm = comp[c]
+		if (nm == "outiso") M.addterm(nm, 1, &stat_saom_outiso(), &change_saom_outiso(), td4, (nm))
+		else if (nm == "indegpopularity") M.addterm(nm, 1, &stat_saom_indegpop(), &change_saom_indegpop(), td4, (nm))
+		else if (nm == "outactivity") M.addterm(nm, 1, &stat_saom_outactivity(), &change_saom_outactivity(), td4, (nm))
+		else if (nm == "outpopularity") M.addterm(nm, 1, &stat_saom_outpop(), &change_saom_outpop(), td4, (nm))
+		else if (nm == "isolatenet") M.addterm(nm, 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), td4, (nm))
+		else if (nm == "isolatepop") M.addterm(nm, 1, &stat_saom_isolatepop(), &change_saom_isolatepop(), td4, (nm))
+		else M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), td4, ("inactivity"))
+		td5 = ErgmTermData()
+		if (nm == "egox3") {
+			M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), ErgmTermData(), ("transtrip"))
+			SaomBuildInteractTd(M, n, "nodeocov", "inactivity", "transtrip", td5)
+			want = sum(x :* sqrt(din) :* tt)
+		}
+		else if (nm == "inactivity" | nm == "outpopularity") {
+			SaomBuildInteractTd(M, n, nm, "reciprocity", "", td5)
+			if (nm == "inactivity") want = sum((A :* A') :* sqrt(din))
+			else want = sum((A :* A') :* sqrt(dout'))
+		}
+		else {
+			SaomBuildInteractTd(M, n, nm, "nodeocov", "", td5)
+			if (nm == "outiso") want = sum(x :* (dout :== 0))
+			else if (nm == "isolatenet") want = sum(x :* (dout :== 0) :* (din :== 0))
+			else if (nm == "isolatepop") want = sum(A :* x :* ((dout :== 0) :* (din :== 1))')
+			else if (nm == "indegpopularity") want = sum(A :* x :* sqrt(din'))
+			else want = sum(x :* dout:^2)
+		}
+		M.addterm("interact", 1, &stat_saom_interact(), &change_saom_interact(), td5, ("ix"))
+		st = M.full_statistic(G0)
+		assert(reldif(st[M.nterms], want) < 1e-10)
+		cfg = SaomNativeSetup(M)
+		assert(cfg.eligible == 1)
+		theta = J(1, M.nterms, 0.1)
+		theta[1] = -1.5
+		theta[2] = 1
+		Zm = J(nruns, M.nterms, 0); Sm = Zm; Zn = Zm; Sn = Zm
+		rseed(700 + c)
+		for (r=1; r<=nruns; r++) {
+			Gwork = ErgmGraph()
+			SaomCopyGraph(G0, Gwork)
+			sres = SaomSimulateIntervalScored(Gwork, M, theta, 4)
+			Zm[r,.] = M.full_statistic(Gwork)
+			Sm[r,.] = sres.score
+		}
+		rseed(800 + c)
+		for (r=1; r<=nruns; r++) {
+			cres = SaomSimulateIntervalNative(G0, M, cfg, theta, 4, 0, 1)
+			Zn[r,.] = cres.stat
+			Sn[r,.] = cres.score
+		}
+		// the plugin's statistic of the starting network equals Mata's
+		cres = SaomSimulateIntervalNative(G0, M, cfg, theta, 0.000001, 0, 1)
+		assert(mreldif(cres.stat, st) < 1e-10)
+		z = _v11_z(Zm, Zn), _v11_z(Sm, Sn)
+		printf("v12 interaction %s: z ", nm); z
+		assert(max(abs(z)) < 4)
+	}
+	printf("native v12 interactions PASS (statistics = RSiena's formulas; plugin = Mata)\n")
+}
+
 void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 	class ErgmGraph scalar G0, Gwork
 	class ErgmModel scalar M
@@ -1897,13 +1998,17 @@ void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 	Mbeh.addterm("linear", &stat_saom_linear(), &change_saom_linear(), "beh_linear")
 	Mbeh.addterm("quadratic_endow", &stat_saom_quadratic(), &change_saom_quadratic(), "beh_quadratic_endow", 1)
 	Mbeh.addterm("quadratic_creation", &stat_saom_quadratic(), &change_saom_quadratic(), "beh_quadratic_creation", 2)
+	Mbeh.addterm("avalt_endow", &stat_saom_avalt(), &change_saom_avalt(), "beh_avalt_endow", 1)
+	Mbeh.addterm("avalt_creation", &stat_saom_avalt(), &change_saom_avalt(), "beh_avalt_creation", 2)
+	Mbeh.addterm("avsim_endow", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim_endow", 1)
+	Mbeh.addterm("avsim_creation", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim_creation", 2)
 	cfg = SaomNativeSetup(M)
 	cfgBeh = SaomBehaviorNativeSetup(Mbeh)
-	assert(cfgBeh.eligible == 1 & cfgBeh.fntype == (0, 1, 2))
+	assert(cfgBeh.eligible == 1 & cfgBeh.fntype == (0, 1, 2, 1, 2, 1, 2))
 	thetaNet = (-1.2, 1.0)
-	thetaBeh = (0.1, 0.3, -0.2)
-	Zm = J(nruns, 2 + 3 + 3, 0)
-	Zn = J(nruns, 2 + 3 + 3, 0)
+	thetaBeh = (0.1, 0.3, -0.2, 0.2, 0.1, 0.3, -0.1)
+	Zm = J(nruns, 2 + 7 + 7, 0)
+	Zn = J(nruns, 2 + 7 + 7, 0)
 	rseed(1111)
 	for (r=1; r<=nruns; r++) {
 		Gwork = ErgmGraph()
@@ -1911,7 +2016,7 @@ void saom_test_native_v11_beh(real scalar n, real scalar nruns) {
 		Behwork = SaomBehavior()
 		Behwork.init(startvals, 1, 5, mean(startvals), 0)
 		sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, 3, 2)
-		Zm[r,.] = (SaomBehaviorPatchEndowCreation(Mbeh, (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, G0)), 2, startvals, Behwork.values), sres.scoreBeh)
+		Zm[r,.] = (SaomBehaviorPatchEndowCreation(Mbeh, (M.full_statistic(Gwork), Mbeh.full_statistic(Behwork, G0)), 2, startvals, Behwork.values, &G0, mean(startvals), J(n, 1, 0)), sres.scoreBeh)
 	}
 	rseed(2222)
 	for (r=1; r<=nruns; r++) {
@@ -1975,5 +2080,6 @@ saom_test_native_v9_equiv(n, attr, attr2, 150)
 
 saom_test_native_v11_equiv(n, attr, attr2, 200)
 saom_test_native_v11_beh(n, 200)
+saom_test_native_v12_ix(n, attr2, 200)
 
 end

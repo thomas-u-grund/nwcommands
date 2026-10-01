@@ -383,4 +383,29 @@ _net_check "rate1 outdegree reciprocity egox_alcc interact_nodeocov_reciprocity"
 	"5.155 -2.315 2.552 0.311 -0.879" "0.745 0.160 0.286 0.166 0.360"
 di as text "interactions PASS"
 
+* (f) the realistic model (c) with the raw alcohol1: nwsaom centres the
+* covariate as RSiena's coCovar() does, so the reference is the same,
+* outdegree included (2026-10-01; before, outdegree was off)
+nwsaom, `w12' outdegree reciprocity gwesp(.69) transrectrip indegpopularity outactivity ///
+	samex(smoke1 sport1) egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1 altx_alcohol1 egox_alcohol1 indegpopularity outactivity transrectrip gwesp_.69 simx_alcohol1" ///
+	"6.948 -1.590 2.243 0.268 0.116 -0.067 0.086 -0.364 -0.180 -0.116 2.079 0.869" ///
+	"1.248 0.614 0.374 0.245 0.195 0.103 0.117 0.295 0.069 0.258 0.428 0.446"
+di as text "(f) realistic model, raw covariate PASS"
+
+* (g) interactions with RSiena's ego and degree effects (seeds 1-5,
+* conditional; RSiena: includeInteraction(e, outIso, egoX), (outAct,
+* egoX), and (egoX, inActSqrt, transTrip) with setEffect(inActSqrt,
+* parameter = 1), see nwsaom_remarks)
+nwsaom, `w12' outdegree reciprocity outiso egox(alcohol1) interact(outiso#egox) seed(12345)
+_net_check "rate1 outdegree reciprocity outiso egox_alcohol1 interact_outiso_nodeocov" ///
+	"5.471 -2.265 2.469 -0.199 -0.005 0.264" "0.843 0.142 0.243 0.847 0.103 0.786"
+nwsaom, `w12' outdegree reciprocity outactivity egox(alcohol1) interact(outactivity#egox) seed(12345)
+_net_check "rate1 outdegree reciprocity outactivity egox_alcohol1 interact_outactivity_nodeocov" ///
+	"5.466 -2.111 2.466 -0.027 -0.177 0.029" "0.843 0.323 0.244 0.056 0.274 0.049"
+nwsaom, `w12' outdegree reciprocity transtrip inactivity egox(alcohol1) interact(egox#inactivity#transtrip) seed(12345)
+_net_check "rate1 outdegree reciprocity transtrip inactivity egox_alcohol1 ix_nodeocov_inactivity_transtrip" ///
+	"5.796 -1.297 2.757 0.812 -1.128 0.134 -0.079" "0.928 0.563 0.387 0.152 0.505 0.176 0.079"
+di as text "(g) interactions with ego and degree effects PASS"
+
 di as text "nwsaom network-only vs RSiena: PASS"
