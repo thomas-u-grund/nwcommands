@@ -179,40 +179,59 @@ correctness gap.
 {title:Interaction effects}
 
 {pstd}
-{opt interact(effect1#effect2 [#effect3])} is a direct port of RSiena's real
-{cmd:includeInteraction()} mechanism (its underlying C++ class, {cmd:NetworkInteractionEffect}):
-the interaction's own contribution to an actor's ministep utility, for a candidate tie change to a
-given alter, is the PRODUCT of the component effects' own contributions for creating that tie,
-negated when the change withdraws an existing tie (not their sum, and not computed on the
-components' aggregate statistics; before 2026-10-01 a two-way interaction had the wrong sign on
-withdrawals, see GOTCHA.md; validated since against RSiena for sameX x recip and egoX x recip,
-within 0.05 standard errors) - so {cmd:interact(reciprocity#transtrip)}
-contributes {it:reciprocity's own change value} times {it:transtrip's own change value} for that
-same candidate tie, with its own freely-estimated coefficient. The reported/target STATISTIC for an
-interaction term is likewise the sum, over the network's existing ties, of the product of the
-components' own per-tie value at that tie - genuinely different from simply multiplying the
-components' own already-reported totals together, and different again from the ministep
-contribution formula above for any component effect whose own ministep contribution has a
-"spillover" onto other ties ({opt transties}, {opt outoutass}, {opt ininass}, {opt outinass},
-{opt inoutass}, {opt cycle4}, {opt balance}) - RSiena's own real source keeps these as two
-genuinely different functions ({cmd:tieStatistic()} for the statistic,
-{cmd:calculateContribution()} for the ministep), and this port mirrors that split exactly rather
-than approximating one with the other. A THIRD effect is optional, matching RSiena's own
-{cmd:includeInteraction()} signature exactly (its own {cmd:effect3} argument, confirmed directly
-from real source): when given, it simply multiplies in as a third factor, both for the ministep
-contribution and the statistic - {cmd:interact(reciprocity#transtrip#nodecov(x))} contributes the
-product of all three components' own values. Three-way {opt interact()} runs in the native plugin
-since 2026-10-01 (before, in Mata: about 4 minutes instead of 0.3 s on glasgow); validated against
-RSiena (sameX x recip x egoX, 5 seeds, within 0.03 standard errors).
+{opt interact(effect1#effect2[#effect3])} is RSiena's {cmd:includeInteraction()} (its C++ class
+{cmd:NetworkInteractionEffect}). In a ministep, the interaction's contribution for a tie change to
+an alter is the product of the components' contributions for creating that tie, negated when the
+change withdraws an existing tie. Its statistic is RSiena's
+{cmd:NetworkInteractionEffect::egoStatistic()}, summed over actors: when all components but one are
+RSiena's C++ ego effects ({opt egox()} and {opt outdegree}), an actor's statistic is the product of
+their values and the other component's own statistic for that actor (for {opt outiso}: whether the
+actor has no out-ties); otherwise it is the sum, over the actor's ties, of the product of the
+components' tie statistics ({cmd:tieStatistic()}, e.g. the number of two-paths from ego to alter for
+{opt transtrip}, a third of the two-paths from alter to ego for {opt cycle3}). The ministep
+contribution and the tie statistic are different functions for effects with spillovers onto other
+ties ({opt transties}, the assortativity effects, {opt cycle4}, {opt balance}), as in RSiena.
 
 {pstd}
-Every named effect must already be included in the model as its own main-effect term (add
-{opt reciprocity} and {opt transtrip} before writing {cmd:interact(reciprocity#transtrip)}) - an
-interaction naming an effect not otherwise in the model is rejected with a clear error, never
-silently invented. Only "dyadic" (tie-level) effects with a well-defined per-tie value are eligible
-(see {opt interact()}'s own syntax-table entry above for the full list); the node-level effects
-(indegree/outdegree popularity and activity, the isolate family) are RSiena's own "ego effects" and
-have no such value, so are rejected outright, whether named first, second, or third.
+Every named effect must also be in the model as a main effect (add {opt reciprocity} and
+{opt egox(x)} before writing {cmd:interact(egox#reciprocity)}). The combinations allowed are
+RSiena's (R/sienaeffects.r). Each effect is an ego, a dyadic or another effect (interactionType in
+RSiena's effects table):
+
+{p2colset 9 26 28 2}{...}
+{p2col:ego}{opt egox()}, {opt inactivity}, {opt isolatenet}, {opt isolatepop} (and the
+anti-isolate effects){p_end}
+{p2col:dyadic}{opt outdegree}, {opt reciprocity}, {opt samex()}, {opt altx()}, {opt nodecov()},
+{opt simx()}, {opt gwesp()}, {opt outpopularity}, {opt inoutass}{p_end}
+{p2col:other}{opt transtrip}, {opt transmedtrip}, {opt transrectrip}, {opt cycle3}, {opt cycle4},
+{opt transties}, {opt balance}, {opt indegpopularity}, {opt outactivity}, {opt outiso},
+{opt outoutass}, {opt outinass}, {opt ininass}{p_end}
+{p2colreset}{...}
+
+{pstd}
+A two-way interaction needs at least one ego effect or two dyadic effects ("invalid network
+interaction specification: must be at least one ego or both dyadic effects"); a three-way
+interaction needs at least two ego effects or only ego and dyadic effects ("invalid network 3-way
+interaction specification: must be at least two ego effects or all ego or dyadic effects"). So
+{cmd:interact(transtrip#reciprocity)} is refused, {cmd:interact(egox#transtrip)} and
+{cmd:interact(egox#inactivity#transtrip)} are allowed. RSiena accepts some interactions its C++
+code then cannot compute; {cmd:nwsaom} refuses them: {opt outiso} and {opt isolatenet} have no tie
+statistic and work only when every other component is {opt egox()} or {opt outdegree} (RSiena:
+"tieStatistic not implemented"), and the anti-isolate effects ({opt antiiso}, {opt antiiniso},
+{opt antiiniso2}, {opt inplus3}) are refused altogether (RSiena stops with that error, or with
+{opt egox()} gives their whole statistic to the first actor). Checked against RSiena 1.6.6 on 581
+combinations of these effects (all pairs and 146 triples): the same decision and message, and, for
+the 119 that RSiena computes, the same statistic.
+
+{pstd}
+Validated against RSiena (glasgow waves 1-2, conditional, 5 seeds; coefficient differences in
+RSiena standard errors): sameX x recip, egoX x recip and sameX x recip x egoX within 0.05;
+outIso x egoX, inPopSqrt x egoX and outAct x egoX within 0.04; inActSqrt x recip,
+outPopSqrt x recip and egoX x inActSqrt x transTrip within 0.1. For the last three, RSiena was run
+with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt: with RSiena 1.6.6's default
+internal parameter 0 their statistic uses the degrees at the start of the period (outPopSqrt then
+without the square root) while the ministep uses the current degrees; {cmd:nwsaom} uses the
+documented statistic.
 
 {pstd}
 Like any other effect, an interaction's own identifiability depends on the data: two effects that
@@ -550,7 +569,11 @@ with RSiena's within 0.07 standard errors (mean 0.02), standard errors within 10
 unconditional: nwsaom's 0.7-0.95 of RSiena's, whose mean is inflated by one seed). With
 outPopSqrt in place of outAct in the larger model, RSiena itself does not converge on these data
 (maximum convergence ratio about 3 on every seed, also started from {cmd:nwsaom}'s estimates),
-while {cmd:nwsaom} converges (below 0.25). Timings for the larger model: {cmd:nwsaom} about 1 s,
+while {cmd:nwsaom} converges (below 0.25): with RSiena 1.6.6's default internal parameter 0,
+outPopSqrt's statistic uses the outdegrees at the start of the period without the square root, while
+its ministep uses the square root of the current outdegree (see {help nwsaom_remarks##nwsaom_interaction:Interaction effects}).
+Run with {cmd:setEffect(..., outPopSqrt, parameter = 1)}, RSiena converges on every seed and agrees
+with {cmd:nwsaom} within 0.06 standard errors (conditional, five seeds). Timings for the larger model: {cmd:nwsaom} about 1 s,
 RSiena 5-7 s per fit.
 
 {marker undirected}{...}

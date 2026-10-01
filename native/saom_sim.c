@@ -1026,14 +1026,24 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long ego, long alter) {
 	switch (termcode) {
 		case TERMCODE_OUTDEGREE: return 1.0;
+		/* protocol 12: RSiena's tie statistics of the degree effects */
+		case TERMCODE_INDEGPOP: return sqrt((double)g->din[alter]);
+		case TERMCODE_OUTPOP: return sqrt((double)g->dout[alter]);
+		case TERMCODE_OUTACTIVITY: return (double)g->dout[ego];
+		case TERMCODE_INACTIVITY: return sqrt((double)g->din[ego]);
+		case TERMCODE_ISOLATEPOP: return (g->dout[alter] == 0 && g->din[alter] == 1) ? 1.0 : 0.0;
 		case TERMCODE_RECIPROCITY: return has_edge(g, alter, ego) ? 1.0 : 0.0;
 		case TERMCODE_NODEMATCH: return (a[ego] == a[alter]) ? 1.0 : 0.0;
 		case TERMCODE_NODECOV: return a[ego] + a[alter];
 		case TERMCODE_NODEICOV: return a[alter];
 		case TERMCODE_NODEOCOV: return a[ego];
-		case TERMCODE_TRANSTRIP: return (double)pair_isp(g, ego, alter);
+		/* protocol 12: RSiena's tieStatistic() - transTrip the two-paths
+		   ego -> h -> alter, cycle3 a third of the two-paths alter -> h ->
+		   ego (before: in-shared partners and all of the two-paths; only
+		   their sum over all ties was right) */
+		case TERMCODE_TRANSTRIP: return (double)pair_otp(g, ego, alter);
 		case TERMCODE_TRANSMEDTRIP: return (double)pair_isp(g, ego, alter);
-		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego);
+		case TERMCODE_CYCLE3: return (double)pair_otp(g, alter, ego) / 3.0;
 		case TERMCODE_SIMCOV: return 1.0 - fabs(a[ego] - a[alter]) - p1;
 		case TERMCODE_BEHSIM: return 1.0 - fabs(a[ego] - a[alter]) / saom_behsim_range - p1;
 		case TERMCODE_TRANSRECTRIP: return has_edge(g, alter, ego) ? (double)pair_otp(g, ego, alter) : 0.0;
@@ -1053,24 +1063,52 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 			return nterm * b0 - D;
 		}
 	}
-	return 0.0;		// node-level/"ego effect" termcode - rejected upstream by nwsaom.ado's own interact() eligibility check, never reached in practice
+	return 0.0;		// other node-level termcodes: rejected upstream by nwsaom.ado's interact() check (RSiena's rule plus the effects it cannot evaluate)
 }
 
-/* saom_stat_interact(): TERMCODE_INTERACT2's own global-statistic
+/* ix_stat() below (formerly saom_stat_interact()): TERMCODE_INTERACT2's own global-statistic
    computation - sum over the network's ACTUAL EXISTING ties of the
    product of the two components' own saom_tie_stat() values, matching
    RSiena's real NetworkInteractionEffect::tieStatistic() (a product),
    summed via the same NetworkEffect::egoStatistic()/statistic() shape
    every other termcode's own saom_stat_term() case already uses. */
-static double saom_stat_interact(graph_t *g, int subAcode, double *aA, double p1A, int subBcode, double *aB, double p1B) {
-	long k;
+/* protocol 12: RSiena's NetworkInteractionEffect::egoStatistic(): when
+   every component but one is an ego effect (egoX, density), the ego's
+   statistic is the product of their values and the other component's
+   egoStatistic (for outIso: outdegree 0); otherwise the sum over the
+   ego's ties of the product of the tie statistics */
+static int ix_isego(int code) { return code == TERMCODE_NODEOCOV || code == TERMCODE_OUTDEGREE; }
+static double ix_stat(graph_t *g, int nc, const int *codes, double **as, const double *p1s) {
+	long e, k;
+	int c, nego = 0, ne = 0;
 	double tot = 0.0;
+	for (c = 0; c < nc; c++) { if (ix_isego(codes[c])) nego++; else ne = c; }
+	if (nego == nc - 1) {
+		for (e = 1; e <= g->n; e++) {
+			double se = 1.0, v = 0.0;
+			for (c = 0; c < nc; c++) if (c != ne) se *= saom_tie_stat(g, codes[c], as[c], p1s[c], e, e);
+			if (se == 0.0) continue;
+			if (codes[ne] == TERMCODE_OUTISO) v = (g->dout[e] == 0) ? 1.0 : 0.0;
+			else if (codes[ne] == TERMCODE_ISOLATENET) v = (g->dout[e] == 0 && g->din[e] == 0) ? 1.0 : 0.0;
+			else {
+				for (k = 0; k < g->nties; k++) {
+					if (g->elist_i[k] != e) continue;
+					v += saom_tie_stat(g, codes[ne], as[ne], p1s[ne], e, g->elist_j[k]);
+				}
+			}
+			tot += se * v;
+		}
+		return tot;
+	}
 	for (k = 0; k < g->nties; k++) {
 		long ei = g->elist_i[k], ej = g->elist_j[k];
-		tot += saom_tie_stat(g, subAcode, aA, p1A, ei, ej) * saom_tie_stat(g, subBcode, aB, p1B, ei, ej);
+		double v = 1.0;
+		for (c = 0; c < nc; c++) v *= saom_tie_stat(g, codes[c], as[c], p1s[c], ei, ej);
+		tot += v;
 	}
 	return tot;
 }
+
 
 /* saom_eval_change()/saom_eval_stat(): thin dispatch wrappers inserted
    at every caller of saom_change_term()/saom_stat_term() in the ministep
@@ -1122,25 +1160,25 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 
 static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, double **attrs, graph_t *g) {
 	if (termcodes[k] == TERMCODE_INTERACT3) {
-		int sA, sB, sC;
-		long e;
-		double tot = 0.0, *aA, *aB, *aC;
+		int sA, sB, sC, codes[3];
+		double *as[3], p1s[3];
 		ix3_slots(k, attridx, p1, &sA, &sB, &sC);
-		aA = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
-		aB = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
-		aC = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
-		for (e = 0; e < g->nties; e++) {
-			long ei = g->elist_i[e], ej = g->elist_j[e];
-			tot += saom_tie_stat(g, termcodes[sA], aA, p1[sA], ei, ej) * saom_tie_stat(g, termcodes[sB], aB, p1[sB], ei, ej)
-				* saom_tie_stat(g, termcodes[sC], aC, p1[sC], ei, ej);
-		}
-		return tot;
+		codes[0] = termcodes[sA]; codes[1] = termcodes[sB]; codes[2] = termcodes[sC];
+		as[0] = (attridx[sA] > 0) ? attrs[attridx[sA] - 1] : NULL;
+		as[1] = (attridx[sB] > 0) ? attrs[attridx[sB] - 1] : NULL;
+		as[2] = (attridx[sC] > 0) ? attrs[attridx[sC] - 1] : NULL;
+		p1s[0] = p1[sA]; p1s[1] = p1[sB]; p1s[2] = p1[sC];
+		return ix_stat(g, 3, codes, as, p1s);
 	}
 	if (termcodes[k] == TERMCODE_INTERACT2) {
 		int subA = attridx[k] - 1, subB = (int)p1[k] - 1;
-		double *aA = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
-		double *aB = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
-		return saom_stat_interact(g, termcodes[subA], aA, p1[subA], termcodes[subB], aB, p1[subB]);
+		int codes[2];
+		double *as[2], p1s[2];
+		codes[0] = termcodes[subA]; codes[1] = termcodes[subB];
+		as[0] = (attridx[subA] > 0) ? attrs[attridx[subA] - 1] : NULL;
+		as[1] = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
+		p1s[0] = p1[subA]; p1s[1] = p1[subB];
+		return ix_stat(g, 2, codes, as, p1s);
 	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;

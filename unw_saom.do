@@ -2518,13 +2518,26 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	real scalar nterm, b0, D
 
 	if (nm == "outdegree") return(1)
+	// RSiena's tieStatistic() of the degree effects (2026-10-01):
+	// inPopSqrt, outPopSqrt, outAct (outdegree of ego), inActSqrt (ego)
+	if (nm == "indegpopularity") return(sqrt(G.din[alter]))
+	if (nm == "outpopularity") return(sqrt(G.dout[alter]))
+	if (nm == "outactivity") return(G.dout[ego])
+	if (nm == "inactivity") return(sqrt(G.din[ego]))
+	if (nm == "isolatepop") return(G.dout[alter] == 0 & G.din[alter] == 1)
 	if (nm == "reciprocity") return(G.has_edge(alter, ego) ? 1 : 0)
 	if (nm == "nodematch") return(a[ego] == a[alter] ? 1 : 0)
 	if (nm == "nodecov") return(a[ego] + a[alter])
 	if (nm == "nodeicov") return(a[alter])
 	if (nm == "nodeocov") return(a[ego])
-	if (nm == "transtrip" | nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
-	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego))
+	// RSiena's tieStatistic(): transTrip the two-paths ego -> h -> alter,
+	// cycle3 a third of the two-paths alter -> h -> ego (2026-10-01;
+	// before, in-shared partners and all of the two-paths: only their sum
+	// over all ties was right, which mattered only for the interactions
+	// RSiena does not allow)
+	if (nm == "transtrip") return(G.shared_partners_otp(ego, alter))
+	if (nm == "transmedtrip") return(G.shared_partners_isp(ego, alter))
+	if (nm == "cycle3") return(G.shared_partners_otp(alter, ego) / 3)
 	if (nm == "simcov") return(1 - abs(a[ego] - a[alter]) / decay - (args() >= 7 ? center : 0))
 	if (nm == "transrectrip") return(G.has_edge(alter, ego) ? G.shared_partners_otp(ego, alter) : 0)
 	if (nm == "outoutass") return(G.degree_out(ego) * G.degree_out(alter))
@@ -2560,6 +2573,21 @@ real scalar _saom_tiechange(class ErgmGraph scalar G, string scalar nm,
 	tied = G.has_edge(i, j)
 
 	if (nm == "outdegree") return(tied ? -1 : 1)
+	// the degree effects' changes (as their change_saom_X())
+	if (nm == "indegpopularity") return(tied ? -sqrt(G.din[j]) : sqrt(G.din[j] + 1))
+	if (nm == "outpopularity") return(tied ? -sqrt(G.dout[j]) : sqrt(G.dout[j]))
+	if (nm == "outactivity") return(tied ? -(2 * G.dout[i] - 1) : (2 * G.dout[i] + 1))
+	if (nm == "inactivity") return(tied ? -sqrt(G.din[i]) : sqrt(G.din[i]))
+	if (nm == "outiso") return((tied ? (G.dout[i] - 1 == 0) : 0) - (G.dout[i] == 0))
+	if (nm == "isolatenet") {
+		if (G.din[i] != 0) return(0)
+		return((tied ? (G.dout[i] - 1 == 0) : 0) - (G.dout[i] == 0))
+	}
+	if (nm == "isolatepop") {
+		if (G.dout[j] > 0) return(0)
+		if (tied) return(G.din[j] <= 1 ? -1 : 0)
+		return(G.din[j] == 0 ? 1 : 0)
+	}
 	if (nm == "reciprocity") {
 		if (!G.has_edge(j, i)) return(0)
 		return(tied ? -1 : 1)
@@ -2800,25 +2828,63 @@ real scalar _saom_ixcenter(class ErgmTermData scalar td, real scalar c, real sca
 }
 
 real rowvector stat_saom_interact(class ErgmGraph scalar G, class ErgmTermData scalar td){
-	string rowvector nms
-	real matrix ties
-	real scalar n, k, tot, threeway
-	real colvector aA, aB, aC
+	string rowvector nms, comp
+	real scalar n, k, c, e, tot, nc, nego, ne, v, s_e
+	real matrix A
+	real rowvector nb
 
+	// RSiena's NetworkInteractionEffect::egoStatistic(): when all
+	// components but one are ego effects (egoX, density), the ego's
+	// statistic is the product of the ego effects' values and the other
+	// component's egoStatistic(); otherwise the sum over the ego's ties of
+	// the product of the components' tie statistics (2026-10-01; before,
+	// always the latter, which differs for outIso)
 	nms = tokens(td.sptype, "|")
-	threeway = (cols(nms) == 5)
+	nc = (cols(nms) + 1) / 2
+	comp = J(1, nc, "")
+	for (c=1; c<=nc; c++) comp[c] = nms[2*c - 1]
 	n = G.n
-	aA = td.attr[1::n]
-	aB = td.attr[(n+1)::(2*n)]
-	if (threeway) aC = td.attr[(2*n+1)::(3*n)]
-	ties = G.all_ties()
+	A = J(n, nc, 0)
+	for (c=1; c<=nc; c++) A[., c] = td.attr[((c-1)*n+1)::(c*n)]
+	nego = 0
+	ne = 0
+	for (c=1; c<=nc; c++) {
+		if (_saom_isegoeffect(comp[c])) nego++
+		else ne = c
+	}
 	tot = 0
-	for (k=1; k<=rows(ties); k++) {
-		tot = tot + _saom_tiestat(G, nms[1], aA, td.levels[1], ties[k,1], ties[k,2], _saom_ixcenter(td, 1, threeway)) *
-			_saom_tiestat(G, nms[3], aB, td.levels[2], ties[k,1], ties[k,2], _saom_ixcenter(td, 2, threeway)) *
-			(threeway ? _saom_tiestat(G, nms[5], aC, td.levels[3], ties[k,1], ties[k,2], _saom_ixcenter(td, 3, threeway)) : 1)
+	for (e=1; e<=n; e++) {
+		if (nego == nc - 1) {
+			s_e = 1
+			for (c=1; c<=nc; c++) if (c != ne) s_e = s_e * _saom_tiestat(G, comp[c], A[., c], td.levels[c], e, e, _saom_ixcenter(td, c, nc == 3))
+			if (comp[ne] == "outiso") v = (G.dout[e] == 0)
+			else if (comp[ne] == "isolatenet") v = (G.dout[e] == 0 & G.din[e] == 0)
+			else {
+				v = 0
+				nb = G.neighbors_out(e)
+				for (k=1; k<=cols(nb); k++) v = v + _saom_tiestat(G, comp[ne], A[., ne], td.levels[ne], e, nb[k], _saom_ixcenter(td, ne, nc == 3))
+			}
+			tot = tot + s_e * v
+		}
+		else {
+			nb = G.neighbors_out(e)
+			for (k=1; k<=cols(nb); k++) {
+				v = 1
+				for (c=1; c<=nc; c++) v = v * _saom_tiestat(G, comp[c], A[., c], td.levels[c], e, nb[k], _saom_ixcenter(td, c, nc == 3))
+				tot = tot + v
+			}
+		}
 	}
 	return(tot)
+}
+
+/* the effects whose C++ class is an ego effect in RSiena
+   (Effect::egoEffect(): egoX and density) - these, not the R-level
+   interactionType "ego" used by the rule in nwsaom.ado, select
+   NetworkInteractionEffect::egoStatistic()'s special case. It matters
+   only for outIso, which has an egoStatistic() but no tieStatistic() */
+real scalar _saom_isegoeffect(string scalar nm) {
+	return(nm == "nodeocov" | nm == "outdegree")
 }
 real rowvector change_saom_interact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
 	string rowvector nms
@@ -6533,13 +6599,14 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv9 = 0
 	needv10 = 0
+	needv12 = 0
 	cfg.needv11 = 0
 	cfg.whynot = ""
 	cfg.fntype = J(1, M.nterms, 0)
@@ -6685,6 +6752,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 					cfg.attridx[t] = subA
 					cfg.p1[t] = subB + 1000 * subC
 					cfg.needv11 = 1
+					needv12 = 1
 				}
 			}
 			else {
@@ -6714,6 +6782,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 					// the withdrawal sign of an interaction is right from
 					// protocol 10 on
 					needv10 = 1
+					needv12 = 1
 				}
 			}
 		}
@@ -6735,6 +6804,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 11) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 11 (endowment/creation, three-way interact(), or a large model)"
+		}
+	}
+	// protocol 12: RSiena's interaction statistic with ego effects
+	// (NetworkInteractionEffect::egoStatistic()) and the degree effects'
+	// tie statistics
+	if (cfg.eligible & needv12) {
+		if (SaomNativePluginVersion() < 12) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
 		}
 	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays

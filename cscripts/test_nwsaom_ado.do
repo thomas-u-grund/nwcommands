@@ -1233,9 +1233,8 @@ nwset, mat((0,1,1,1,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,0\0,0,1,1,0,1\0,0,0,0,
 capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity interact(reciprocity#transtrip) k0(5) k3(20) seed(1)
 assert _rc == 198
 
-* naming a node-level ("ego effect") component - no well-defined per-tie
-* value to multiply - is rejected outright, even when that effect IS
-* itself included in the model.
+* reciprocity x outactivity breaks RSiena's rule (a dyadic and an "other"
+* effect: an interaction needs an ego effect or two dyadic effects).
 capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity outactivity interact(reciprocity#outactivity) k0(5) k3(20) seed(1)
 assert _rc == 198
 
@@ -1276,8 +1275,8 @@ di as text "nwsaom.ado interact() (two-way interaction effects) PASS"
 capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity nodecov(grp) interact(outdegree#reciprocity#nodecov#reciprocity) k0(5) k3(20) seed(1)
 assert _rc == 198
 
-* naming a node-level ("ego effect") component as the THIRD name is
-* rejected outright too, not just when it's the first or second.
+* outdegree x reciprocity x outactivity breaks RSiena's 3-way rule (two
+* ego effects, or only ego and dyadic effects).
 capture nwsaom, wave1(ixwave1) wave2(ixwave2) outdegree reciprocity outactivity interact(outdegree#reciprocity#outactivity) k0(5) k3(20) seed(1)
 assert _rc == 198
 

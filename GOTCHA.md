@@ -614,3 +614,22 @@ parameter): RSiena fixes avSim endowment/creation (not estimable), and so does n
 linear + quadratic + avAlt endow/creation within 0.02 SE; avSim endow/creation fixed by both, the
 rest within 0.07 SE.
 
+## nwsaom interact(): RSiena's rule and RSiena's interaction statistic (changed 2026-10-01)
+
+interact() accepted only "dyadic" effects, with its own list. It now follows RSiena
+(`R/sienaeffects.r`): each effect is ego, dyadic or other (interactionType); two effects need an ego
+effect or two dyadic ones, three effects two ego effects or only ego and dyadic ones; RSiena's
+messages. Interactions RSiena accepts but its C++ cannot compute (no tieStatistic: isolateNet and
+outIso unless every other effect is egoX/outdegree, and the anti-isolate effects, whose statistic
+RSiena gives to the first actor) are refused. The statistic is RSiena's
+`NetworkInteractionEffect::egoStatistic()`: with all effects but one C++ ego effects (egoX,
+density) the product of their values and the other's egoStatistic, otherwise the sum over ties of
+the product of tie statistics. Two tie statistics were wrong (only their sum over all ties was
+right, so the main effects were unaffected): transtrip used in-shared partners (RSiena: two-paths
+ego -> h -> alter), cycle3 all reverse two-paths (RSiena: a third). Checked against RSiena on 581
+combinations: same accept/reject decision and message, and for the 119 computable ones the same
+statistic (exact). New in interactions: indegpopularity, outpopularity, outactivity, inactivity,
+outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives inActSqrt and
+outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
+(outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
+documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`.

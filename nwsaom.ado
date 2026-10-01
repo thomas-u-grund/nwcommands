@@ -1406,42 +1406,14 @@ program nwsaom, eclass
 		}
 	}
 
-	// --- interact(): two-way interaction effects (RSiena's own
-	// includeInteraction()) between two effects ALREADY added above as
-	// their own main-effect terms - see unw_saom.do's own
-	// "Interaction effects" header comment (right after
-	// change_saom_balance()) for the full design/derivation account
-	// (direct port of RSiena's real NetworkInteractionEffect, confirmed
-	// from RSiena/src/model/effects/NetworkInteractionEffect.cpp).
-	// Syntax mirrors Stata's own factor-variable `#' for a familiar,
-	// multiple-pairs-in-one-option shape: interact(effect1#effect2
-	// [effect3#effect4 ...]). Restricted to the "dyadic" (tie-summed)
-	// effect subset that has a well-defined tieStatistic() at all - the
-	// node-level/nonlinear-in-degree effects (indegpopularity,
-	// outactivity, outpopularity, inactivity, isolatenet, outiso,
-	// antiiso, antiiniso, antiiniso2, inplus3 - RSiena's own "ego
-	// effects") are rejected here with a clear message, matching
-	// TERMCODE_INTERACT2's own #define comment in native/saom_sim.c.
-	// egox()/altx()/samex()/simx() (RSiena's own aliases, this file's
-	// own top-of-program section) are accepted here too, resolved to
-	// their canonical Statnet-style name before lookup - the interacting
-	// effect must already appear in the model under THAT canonical name
-	// (SaomBuildInteractTd()'s own name-based lookup against
-	// __nwsaom_last_M, unw_saom.do), regardless of which spelling
-	// originally added it. Three-way interactions ("expansion",
-	// 2026-09-02 - RSiena's own OPTIONAL third effect in
-	// includeInteraction(), confirmed directly from its real source:
-	// NetworkInteractionEffect::tieStatistic() simply multiplies in a
-	// third component's own tieStatistic() when present, no other
-	// change to the formula) are supported via effect1#effect2#effect3
-	// - Mata only for now, native/saom_sim.c's own TERMCODE_INTERACT2
-	// wire protocol only has room for two component slot references
-	// (see unw_saom.do's own SaomNativeSetup() eligible=0 gate for this
-	// case - a disclosed follow-on, not attempted here).
-	// Behavior-behavior/network-behavior interactions remain a
-	// disclosed, not-yet-built follow-up (docs/SAOM_ROADMAP.md).
+	// --- interact(): two- and three-way interactions of network effects
+	// already in the model (RSiena's includeInteraction(); see
+	// unw_saom.do's "Interaction effects" comment). Syntax:
+	// interact(effect1#effect2[#effect3] ...). The effects allowed and
+	// rejected follow RSiena's rule (ego, dyadic and other effects; see
+	// below); egox()/altx()/samex()/simx() map to their canonical names.
+	// Behavior interactions are not offered.
 	if "`interact'" != "" {
-		local __nwsaom_ixok "outdegree reciprocity nodematch nodecov nodeicov nodeocov transtrip cycle3 simcov transrectrip outoutass ininass outinass inoutass cycle4 transmedtrip gwesp transties balance"
 		local __nwsaom_ixn = 0
 		foreach __nwsaom_ixpair of local interact {
 			local __nwsaom_ixwords = subinstr("`__nwsaom_ixpair'", "#", " ", .)
@@ -1490,16 +1462,61 @@ program nwsaom, eclass
 					}
 				}
 			}
-			local __nwsaom_ixposa : list posof "`__nwsaom_ixtypea'" in __nwsaom_ixok
-			local __nwsaom_ixposb : list posof "`__nwsaom_ixtypeb'" in __nwsaom_ixok
-			if `__nwsaom_ixposa' == 0 | `__nwsaom_ixposb' == 0 {
-				di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'"
+			// RSiena's rule (R/sienaeffects.r, includeInteraction()):
+			// each effect is an ego, a dyadic or another effect
+			// (interactionType in RSiena's effects table); a two-way
+			// interaction needs at least one ego effect or two dyadic
+			// effects, a three-way interaction at least two ego effects
+			// or only ego and dyadic effects
+			local __nwsaom_ixego "nodeocov inactivity isolatenet antiiso antiiniso antiiniso2 inplus3 isolatepop"
+			local __nwsaom_ixdyad "outdegree reciprocity nodematch nodeicov nodecov simcov gwesp outpopularity inoutass"
+			local __nwsaom_ixall "`__nwsaom_ixego' `__nwsaom_ixdyad' indegpopularity outactivity outiso transtrip transmedtrip transrectrip cycle3 cycle4 transties balance outoutass outinass ininass"
+			local __nwsaom_ixne 0
+			local __nwsaom_ixnd 0
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if "`__t'" == "" continue
+				if !`: list __t in __nwsaom_ixall' {
+					di "{err}interact(): {bf:`__nwsaom_ix`__c''} is not a network effect that can be part of an interaction"
+					error 198
+				}
+				if `: list __t in __nwsaom_ixego' local __nwsaom_ixne = `__nwsaom_ixne' + 1
+				if `: list __t in __nwsaom_ixdyad' local __nwsaom_ixnd = `__nwsaom_ixnd' + 1
+			}
+			if "`__nwsaom_ixc'" == "" & `__nwsaom_ixne' < 1 & `__nwsaom_ixnd' != 2 {
+				di "{err}invalid network interaction specification: must be at least one ego or both dyadic effects (`__nwsaom_ixa'#`__nwsaom_ixb'; RSiena's rule)"
+				di "{err}  ego effects: egox (nodeocov), inactivity, isolatenet, isolatepop; dyadic effects: outdegree, reciprocity, samex (nodematch), altx (nodeicov), nodecov, simx (simcov), gwesp, outpopularity, inoutass; the others are neither"
 				error 198
 			}
-			if "`__nwsaom_ixc'" != "" {
-				local __nwsaom_ixposc : list posof "`__nwsaom_ixtypec'" in __nwsaom_ixok
-				if `__nwsaom_ixposc' == 0 {
-					di "{err}interact() only supports interactions between dyadic (tie-level) effects, which have a well-defined per-tie contribution to multiply - not the node-level effects ({bf:indegpopularity outactivity outpopularity inactivity isolatenet outiso antiiso antiiniso antiiniso2 inplus3}). Got: `__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'"
+			if "`__nwsaom_ixc'" != "" & `__nwsaom_ixne' < 2 & `__nwsaom_ixne' + `__nwsaom_ixnd' < 3 {
+				di "{err}invalid network 3-way interaction specification: must be at least two ego effects or all ego or dyadic effects (`__nwsaom_ixa'#`__nwsaom_ixb'#`__nwsaom_ixc'; RSiena's rule)"
+				di "{err}  ego effects: egox (nodeocov), inactivity, isolatenet, isolatepop; dyadic effects: outdegree, reciprocity, samex (nodematch), altx (nodeicov), nodecov, simx (simcov), gwesp, outpopularity, inoutass; the others are neither"
+				error 198
+			}
+			// interactions RSiena's rule accepts but its C++ code does not
+			// compute: isolateNet and outIso have no tie statistic and
+			// work only when every other effect is egoX or outdegree
+			// (density), RSiena's C++ ego effects
+			// (NetworkInteractionEffect::egoStatistic()); otherwise RSiena
+			// stops with "tieStatistic not implemented". antiIso,
+			// antiInIso, antiInIso2 and in3Plus have no tie statistic
+			// either, and with egoX RSiena attributes their whole
+			// statistic to the first actor
+			// (__nwsaom_ixnoego: the number of effects other than egoX and
+			// outdegree; with outIso or isolateNet it must be 1)
+			local __nwsaom_ixnoego 0
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if "`__t'" != "" & !inlist("`__t'", "nodeocov", "outdegree") local __nwsaom_ixnoego = `__nwsaom_ixnoego' + 1
+			}
+			foreach __c in a b c {
+				local __t "`__nwsaom_ixtype`__c''"
+				if inlist("`__t'", "antiiso", "antiiniso", "antiiniso2", "inplus3") {
+					di "{err}interact(): {bf:`__t'} cannot be part of an interaction: RSiena accepts it but stops with an error (tieStatistic not implemented) or, with egoX, attributes the whole statistic to the first actor"
+					error 198
+				}
+				if inlist("`__t'", "outiso", "isolatenet") & `__nwsaom_ixnoego' > 1 {
+					di "{err}interact(): {bf:`__t'} can be interacted only with {bf:egox()} (and {bf:outdegree}); RSiena accepts other interactions with it but stops with an error when it computes them (tieStatistic not implemented)"
 					error 198
 				}
 			}

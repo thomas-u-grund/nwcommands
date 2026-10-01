@@ -393,4 +393,19 @@ _net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1 altx_alcohol1 
 	"1.248 0.614 0.374 0.245 0.195 0.103 0.117 0.295 0.069 0.258 0.428 0.446"
 di as text "(f) realistic model, raw covariate PASS"
 
+* (g) interactions with RSiena's ego and degree effects (seeds 1-5,
+* conditional; RSiena: includeInteraction(e, outIso, egoX), (outAct,
+* egoX), and (egoX, inActSqrt, transTrip) with setEffect(inActSqrt,
+* parameter = 1), see nwsaom_remarks)
+nwsaom, `w12' outdegree reciprocity outiso egox(alcohol1) interact(outiso#egox) seed(12345)
+_net_check "rate1 outdegree reciprocity outiso egox_alcohol1 interact_outiso_nodeocov" ///
+	"5.471 -2.265 2.469 -0.199 -0.005 0.264" "0.843 0.142 0.243 0.847 0.103 0.786"
+nwsaom, `w12' outdegree reciprocity outactivity egox(alcohol1) interact(outactivity#egox) seed(12345)
+_net_check "rate1 outdegree reciprocity outactivity egox_alcohol1 interact_outactivity_nodeocov" ///
+	"5.466 -2.111 2.466 -0.027 -0.177 0.029" "0.843 0.323 0.244 0.056 0.274 0.049"
+nwsaom, `w12' outdegree reciprocity transtrip inactivity egox(alcohol1) interact(egox#inactivity#transtrip) seed(12345)
+_net_check "rate1 outdegree reciprocity transtrip inactivity egox_alcohol1 ix_nodeocov_inactivity_transtrip" ///
+	"5.796 -1.297 2.757 0.812 -1.128 0.134 -0.079" "0.928 0.563 0.387 0.152 0.505 0.176 0.079"
+di as text "(g) interactions with ego and degree effects PASS"
+
 di as text "nwsaom network-only vs RSiena: PASS"
