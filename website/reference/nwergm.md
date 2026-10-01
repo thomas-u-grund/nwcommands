@@ -41,7 +41,7 @@ estimation_control]
 | | |
 |---|---|
 | `mutual` | Reciprocated-tie count; directed networks only |
-| `nodematch(varlist)` | Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable) |
+| `nodematch(varlist)` | Pooled homophily on each listed categorical node attribute (exact match, one coefficient per variable). All node-attribute terms require *numeric* variables; `encode` a string attribute first |
 | `nodematchdiff(varlist)` | Differential homophily: one coefficient PER DISTINCT LEVEL of each listed attribute, rather than pooled across levels |
 | `nodecov(varlist)` | Continuous node covariate main effect (sum over tie endpoints) |
 | `nodeicov(varlist)` | Directed receiver-covariate effect; directed networks only |
