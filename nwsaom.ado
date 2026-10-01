@@ -2661,13 +2661,19 @@ program define nwsaom_multiplex, eclass
 	local wantcrprod = ("`crprod'" != "")
 	local wantcrprodb = ("`crprodb'" != "")
 
-	// Mata row-vector literal syntax needs COMMA-separated elements
-	// (`(0, 0)', not `(0 0)') - confirmed directly, not assumed (the
-	// space-separated form is a genuine parse error, "invalid
-	// expression"), so theta01()/theta02() must be given comma-separated
-	// too if a user overrides the default. Default length now tracks
-	// whether crprod()/crprodb() add a third parameter to that network's
-	// own effect list.
+	// theta01()/theta02(): numbers separated by spaces or commas, passed to
+	// Mata as a comma-separated row vector; one value per effect of that
+	// network (outdegree, reciprocity, and crprod/crprodb if requested)
+	foreach __t in theta01 theta02 {
+		if "``__t''" != "" {
+			local __v : subinstr local `__t' "," " ", all
+			local `__t' ""
+			foreach __x of local __v {
+				confirm number `__x'
+				local `__t' = cond("``__t''" == "", "`__x'", "``__t'', `__x'")
+			}
+		}
+	}
 	if "`theta01'" == "" local theta01 = cond(`wantcrprod', "0, 0, 0", "0, 0")
 	if "`theta02'" == "" local theta02 = cond(`wantcrprodb', "0, 0, 0", "0, 0")
 

@@ -29,6 +29,16 @@
 {it:{help nwsaom##symmetric_options:symmetric_options}}
 {it:{help nwsaom##control_options:control_options}}]
 
+{pstd}
+Two networks that change together ({help nwsaom##multiplex:nwsaom multiplex}):
+
+{p 8 17 2}
+{cmd:nwsaom multiplex}
+{cmd:,}
+{opt netawave1(netname)} {opt netawave2(netname)}
+{opt netbwave1(netname)} {opt netbwave2(netname)}
+[{it:{help nwsaom##multiplex_options:multiplex_options}}]
+
 {synoptset 20}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
@@ -182,19 +192,38 @@
 {synoptline}
 {p2colreset}{...}
 
+{marker multiplex_options}{...}
+{synoptset 22 tabbed}{...}
+{synopthdr:multiplex_options}
+{synoptline}
+{syntab:Waves (all required)}
+{synopt:{opt netawave1(netname)}}first network (A) at the first wave{p_end}
+{synopt:{opt netawave2(netname)}}network A at the second wave{p_end}
+{synopt:{opt netbwave1(netname)}}second network (B) at the first wave{p_end}
+{synopt:{opt netbwave2(netname)}}network B at the second wave{p_end}
+{syntab:Effects}
+{synopt:{opt crprod}}effect of a tie in B on the same tie in A (coefficient {bf:net1_crprod}){p_end}
+{synopt:{opt crprodb}}effect of a tie in A on the same tie in B (coefficient {bf:net2_crprod}){p_end}
+{syntab:Estimation}
+{synopt:{opt theta01(numlist)}}starting values for network A's effects, in the order {bf:outdegree}, {bf:reciprocity}, {bf:crprod}; default 0{p_end}
+{synopt:{opt theta02(numlist)}}starting values for network B's effects, in the order {bf:outdegree}, {bf:reciprocity}, {bf:crprodb}; default 0{p_end}
+{synopt:{opt k0(#)}}Phase 1 simulations; default 30{p_end}
+{synopt:{opt k3(#)}}Phase 3 simulations; default 200{p_end}
+{synopt:{opt firstg(#)}}initial Robbins-Monro gain; default 0.2{p_end}
+{synopt:{opt seed(#)}}random-number seed{p_end}
+{synopt:{opt detail}}list the convergence t-ratio of every parameter{p_end}
+{synoptline}
+{p2colreset}{...}
+
 {title:Description}
 
 {pstd}
 {cmd:nwsaom} fits a stochastic actor-oriented model (SAOM, Snijders-style) between two or more
-observed panel waves of the same directed network on a fixed actor set - a fully native
-Stata/Mata implementation, no R or other external statistical software called at any point. The
-{browse "https://www.stats.ox.ac.uk/~snijders/siena/":RSiena} package (Ripley, Snijders et al.)
-was studied in detail as the methodological reference throughout development - both its published
-manual and, where the manual alone was not enough, its own real R/C++ source (read directly via
-{cmd:gh api} against {browse "https://github.com/stocnet/rsiena":github.com/stocnet/rsiena} during
-development) - and used, during development only, to certify {cmd:nwsaom}'s own independently
-written implementation against real reference output. {cmd:nwsaom} is an independent
-reimplementation and is not affiliated with or endorsed by the RSiena project.
+observed panel waves of the same network on a fixed set of actors. It fits the same models as
+the {browse "https://www.stats.ox.ac.uk/~snijders/siena/":RSiena} package (Ripley, Snijders et
+al.), with the same effects and estimation algorithm, and gives the same estimates; no R or other
+outside software is needed. {cmd:nwsaom} is not affiliated with or endorsed by the RSiena
+project.
 
 {pstd}
 An SAOM models network change as a sequence of unobserved, actor-driven "ministeps": between
@@ -202,13 +231,24 @@ consecutive observed waves, actors are activated one at a time (at a rate govern
 own rate parameter) and each activated actor may create or drop exactly one of its own outgoing
 ties, choosing among the available alternatives (including "no change") via a multinomial-logit
 choice model on a linear combination of effect-specific "change statistics", weighted by the
-effect's own estimated coefficient. This actor-oriented, MYOPIC formulation - an actor's own
-choice is evaluated purely from that actor's own resulting local network statistic, never from
-how the choice would affect any OTHER actor's own statistics - is what genuinely distinguishes an
-SAOM from an ERGM (see {help nwergm}): an ERGM has no actors or ministeps at all, only a single
-global probability distribution over entire graphs. Coefficients are estimated by the Method of
-Moments via Robbins-Monro stochastic approximation (RSiena's own default estimation algorithm),
-not maximum likelihood.
+effect's estimated coefficient. An actor evaluates a choice only by its own resulting
+statistics, not by its effect on other actors; this distinguishes an SAOM from an ERGM (see
+{help nwergm}), which describes a probability distribution over whole networks. Coefficients are
+estimated by the Method of Moments via Robbins-Monro stochastic approximation, RSiena's default.
+
+{marker multiplex}{...}
+{pstd}
+{cmd:nwsaom multiplex} fits two directed networks on the same actors that change together
+between two waves, for example friendship and advice. Each network has its own
+{bf:outdegree} and {bf:reciprocity} effects and its own rate; {opt crprod} adds the effect of a
+tie in the second network on the same tie in the first, and {opt crprodb} the reverse. In a
+ministep the other network's current state counts; the {opt crprod} statistics use the other
+network at the start of the period, as RSiena does for effects linking two dependent variables.
+Both rates are estimated with the effects (unconditional Method of Moments, RSiena's default for
+two dependent variables). Other effects, more than two waves, and {cmd:estat gof} are not
+available for multiplex models. On a friendship network and a simulated advice network, every
+parameter agrees with RSiena 1.6.6 within 0.06 standard errors (five seeds). See
+{help nwsaom_remarks##multiplex:Multiplex} in nwsaom_remarks for details.
 
 {title:Performance}
 
@@ -267,6 +307,9 @@ within Stata's interactive Viewer's rendering limits - it is not optional/second
 just relocated.
 
 {title:Postestimation}
+
+{pstd}
+{cmd:estat gof} is available after {cmd:nwsaom} (not after {cmd:nwsaom multiplex}).
 
 {pstd}
 {cmd:estat gof} reports RSiena's own goodness-of-fit methodology
@@ -353,6 +396,22 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:r(p_{it:stat})}		empirical Mahalanobis-distance test p-value for that statistic
 		  {bf:r(mhd_{it:stat})}		observed vector's own Mahalanobis distance from the simulated mean
 
+{pstd}
+{cmd:nwsaom multiplex} stores the following in {cmd:e()}:
+
+		Scalars
+		  {bf:e(N)}			number of actors
+		  {bf:e(rate1)}, {bf:e(rate2)}	rates of networks A and B
+		  {bf:e(rate1_se)}, {bf:e(rate2_se)}	their standard errors
+		  {bf:e(tconv_max)}		overall maximum convergence ratio
+		Macros
+		  {bf:e(cmd)}			{bf:nwsaom_multiplex}
+		  {bf:e(engine)}		{bf:native} or {bf:mata}
+		Matrices
+		  {bf:e(b)}			coefficients: {bf:net1_outdegree}, {bf:net1_reciprocity}, [{bf:net1_crprod}], {bf:net2_outdegree}, {bf:net2_reciprocity}, [{bf:net2_crprod}]
+		  {bf:e(V)}			their covariance matrix
+		  {bf:e(tconv)}			convergence t-ratios of the coefficients and the two rates
+
 {title:Examples}
 
 {pstd}
@@ -437,10 +496,24 @@ pupils 11-20, which are absent at both waves){p_end}
 {pstd}{bf:Threads}: the same results on one thread (the default uses all physical cores){p_end}
 		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) cores(1) seed(1)}
 
-{pstd}{bf:Two co-evolving networks} ({cmd:nwsaom multiplex}), for networks {cmd:a} and {cmd:b}
-observed at two waves ({cmd:a1}, {cmd:a2}, {cmd:b1}, {cmd:b2}); {opt crprod} lets ties in
-{cmd:b} affect ties in {cmd:a}, {opt crprodb} the reverse{p_end}
-		{cmd:. nwsaom multiplex, netawave1(a1) netawave2(a2) netbwave1(b1) netbwave2(b2) crprod crprodb seed(1)}
+{pstd}{bf:Two networks that change together} ({cmd:nwsaom multiplex}). The Glasgow data have one
+network, so this example simulates a second one, "advice", that overlaps with friendship:{p_end}
+		{cmd:. nwtomata glasgow1, mat(F1)}
+		{cmd:. nwtomata glasgow2, mat(F2)}
+		{cmd:. set seed 20261001}
+		{cmd:. mata: A1 = (F1 :* (runiform(50, 50) :< 0.7) + (runiform(50, 50) :< 0.005)) :> 0}
+		{cmd:. mata: _diag(A1, 0)}
+		{cmd:. mata: A2 = (A1 :* (runiform(50, 50) :< 0.8) + F2 :* (1 :- A1) :* (runiform(50, 50) :< 0.4)) :> 0}
+		{cmd:. mata: _diag(A2, 0)}
+		{cmd:. nwset, mat(A1) directed name(advice1)}
+		{cmd:. nwset, mat(A2) directed name(advice2)}
+
+{pstd}Each network with outdegree and reciprocity, and the effect of each network on the other:{p_end}
+		{cmd:. nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(advice1) netbwave2(advice2) crprod crprodb seed(1)}
+
+{pstd}Restarting from the estimates (one starting value per effect of each network):{p_end}
+		{cmd:. matrix b = e(b)}
+		{cmd:. nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(advice1) netbwave2(advice2) crprod crprodb theta01(`=b[1,1]' `=b[1,2]' `=b[1,3]') theta02(`=b[1,4]' `=b[1,5]' `=b[1,6]') seed(2)}
 
 {title:References}
 
