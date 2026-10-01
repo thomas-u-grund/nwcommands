@@ -29,6 +29,16 @@
 {it:{help nwsaom##symmetric_options:symmetric_options}}
 {it:{help nwsaom##control_options:control_options}}]
 
+{pstd}
+Two networks that change together ({help nwsaom##multiplex:nwsaom multiplex}):
+
+{p 8 17 2}
+{cmd:nwsaom multiplex}
+{cmd:,}
+{opt netawave1(netname)} {opt netawave2(netname)}
+{opt netbwave1(netname)} {opt netbwave2(netname)}
+[{it:{help nwsaom##multiplex_options:multiplex_options}}]
+
 {synoptset 20}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
@@ -75,9 +85,9 @@
 {marker structural_options}{...}
 {syntab:Structural network effects}
 {synopt:{opt indegpopularity}}Indegree popularity, sqrt-transformed ("preferential attachment" toward already-popular alters){p_end}
-{synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed{p_end}
+{synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed (RSiena's outPopSqrt as documented; see {help nwsaom_remarks##nwsaom_interaction:the note on RSiena's default}){p_end}
 {synopt:{opt outactivity}}Outdegree activity, squared (concentrates out-ties on already-active senders){p_end}
-{synopt:{opt inactivity}}Indegree activity, sqrt-transformed{p_end}
+{synopt:{opt inactivity}}Indegree activity, sqrt-transformed (RSiena's inActSqrt as documented; see {help nwsaom_remarks##nwsaom_interaction:the note on RSiena's default}){p_end}
 {synopt:{opt transtrip}}Transitive triplets (weighted count of transitive closures i->j via existing two-paths){p_end}
 {synopt:{opt transmedtrip}}Transitive mediated triplets: for each tie i->j, the number of other actors with an incoming tie to both i and j (RSiena's own "transMedTrip") - a distinct measure of shared incoming ties from `transtrip'{p_end}
 {synopt:{opt cycle3}}Directed 3-cycles (i->j->h->i){p_end}
@@ -107,7 +117,7 @@
 {synoptline}
 {marker interaction_options}{...}
 {syntab:Interaction effects}
-{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's {cmd:includeInteraction()}) of network effects already in the model as main effects, with its own coefficient; its contribution to a ministep is the product of the components' contributions. Several interactions may be listed. The effects allowed follow RSiena's rule: each effect is an ego effect ({opt egox()}, {opt inactivity}, {opt isolatenet}, {opt isolatepop}), a dyadic effect ({opt outdegree}, {opt reciprocity}, {opt samex()}, {opt altx()}, {opt nodecov()}, {opt simx()}, {opt gwesp()}, {opt outpopularity}, {opt inoutass}) or another effect ({opt transtrip}, {opt transmedtrip}, {opt transrectrip}, {opt cycle3}, {opt cycle4}, {opt transties}, {opt balance}, {opt indegpopularity}, {opt outactivity}, {opt outiso}, {opt outoutass}, {opt outinass}, {opt ininass}); two effects need an ego effect or two dyadic effects, three effects two ego effects or only ego and dyadic effects. Interactions RSiena accepts but cannot compute are refused too: {opt outiso} and {opt isolatenet} only with {opt egox()} (and {opt outdegree}), and the anti-isolate effects not at all. A covariate effect given for several variables is named by its coefficient name, e.g. {cmd:interact(samex_smoke1#egox_alcohol1)} (either spelling, {cmd:nodematch_smoke1} or {cmd:samex_smoke1}); with one variable the effect type alone works ({cmd:interact(samex#egox)}). Coefficients are named interact_{it:A}_{it:B}, or ix_{it:A}_{it:B} when that is longer than 32 characters; RSiena's name is listed under the table. Behavior interactions are not supported. See {help nwsaom_remarks##nwsaom_interaction:Interaction effects} in nwsaom_remarks{p_end}
+{synopt:{opt interact(effect1#effect2[#effect3] [effect4#effect5 ...])}}Two- or three-way interaction (RSiena's {cmd:includeInteraction()}) of network effects already in the model as main effects, with its own coefficient; its contribution to a ministep is the product of the components' contributions. Several interactions may be listed. The effects allowed follow RSiena's rule: each effect is an ego effect ({opt egox()}, {opt inactivity}, {opt isolatenet}, {opt isolatepop}), a dyadic effect ({opt outdegree}, {opt reciprocity}, {opt samex()}, {opt altx()}, {opt nodecov()}, {opt simx()}, {opt gwesp()}, {opt outpopularity}, {opt inoutass}) or another effect ({opt transtrip}, {opt transmedtrip}, {opt transrectrip}, {opt cycle3}, {opt cycle4}, {opt transties}, {opt balance}, {opt indegpopularity}, {opt outactivity}, {opt outiso}, {opt outoutass}, {opt outinass}, {opt ininass}); two effects need an ego effect or two dyadic effects, three effects two ego effects or only ego and dyadic effects. Interactions RSiena accepts but cannot compute are refused too: {opt outiso} and {opt isolatenet} only with {opt egox()} (and {opt outdegree}), and the anti-isolate effects not at all. A covariate effect given for several variables is named by its coefficient name, e.g. {cmd:interact(samex_smoke1#egox_alcohol1)} (either spelling, {cmd:nodematch_smoke1} or {cmd:samex_smoke1}); with one variable the effect type alone works ({cmd:interact(samex#egox)}). Coefficients are named interact_{it:A}_{it:B}, or ix_{it:A}_{it:B} when that is longer than 32 characters; RSiena's name is in {bf:e(rsiena_labels)} and listed under the table with {opt detail}. Behavior interactions are not supported. See {help nwsaom_remarks##nwsaom_interaction:Interaction effects} in nwsaom_remarks{p_end}
 
 {marker alias_options}{...}
 {syntab:RSiena naming aliases}
@@ -126,7 +136,7 @@
 {marker coev_options}{...}
 {syntab:Behavior co-evolution effects}
 {synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks{p_end}
-{synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
+{synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified, as {opt outdegree} is on the network side{p_end}
 {synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). {bf:Currently refused}: the two statistics (decreases and increases) add up to the behavior rate's distance statistic, so with the behavior rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too); use {opt linear}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt linearcreation}}Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to {opt linearendow}; must be given together with it{p_end}
 {synopt:{opt quadratic}}Behavior quadratic shape effect; requires {opt behavior()}, not combinable with {opt quadraticendow}/{opt quadraticcreation}{p_end}
@@ -155,7 +165,7 @@
 {syntab:Covariate-dependent rate}
 {synopt:{opth ratecov(varlist)}}Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp(sum of {it:b_k}*{it:x_k}[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}; combinable with {opt symmetric}. See {help nwsaom_remarks:Remarks}{p_end}
 {synopt:{opt ratecovcoef(numlist)}}Starting values for the {opt ratecov()} coefficients, one per variable or one for all (default 0){p_end}
-{synopt:{opt nocenter}}Use the raw values of the covariates of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()}. By default they are centred by their means (missing values set to the mean), as RSiena's {cmd:coCovar(centered = TRUE)}, so that all coefficients, including outdegree and the rate, are RSiena's; the means are listed under the table and returned in {bf:e(covmeans)}. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients. {opt samex()} does not depend on it; {opt simx()} is centred by its similarity mean either way{p_end}
+{synopt:{opt nocenter}}Use the raw values of the covariates of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()}. By default they are centred by their means (missing values set to the mean), as RSiena's {cmd:coCovar(centered = TRUE)}, so that all coefficients, including outdegree and the rate, are RSiena's; the means are returned in {bf:e(covmeans)} and listed under the table with {opt detail}. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients. {opt samex()} does not depend on it; {opt simx()} is centred by its similarity mean either way{p_end}
 
 {marker symmetric_options}{...}
 {syntab:Undirected/symmetric relations}
@@ -178,6 +188,30 @@
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every simulation draws from its own random stream derived from the seed and its position, so results for a given {opt seed()} are identical whatever the number of threads. Applies to fits with the native backend; see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks{p_end}
+{synopt:{opt detail}}Also display RSiena's names of the covariate, interaction and behavior effects, the covariates' centring means, an explanation of the conditional rate, and the convergence t-ratio of every parameter. By default only the overall maximum convergence ratio is shown, with any parameter whose t-ratio is 0.1 or more in absolute value; the full information is always stored in {bf:e(rsiena_labels)}, {bf:e(covmeans)} and {bf:e(tconv)}{p_end}
+{synoptline}
+{p2colreset}{...}
+
+{marker multiplex_options}{...}
+{synoptset 22 tabbed}{...}
+{synopthdr:multiplex_options}
+{synoptline}
+{syntab:Waves (all required)}
+{synopt:{opt netawave1(netname)}}first network (A) at the first wave{p_end}
+{synopt:{opt netawave2(netname)}}network A at the second wave{p_end}
+{synopt:{opt netbwave1(netname)}}second network (B) at the first wave{p_end}
+{synopt:{opt netbwave2(netname)}}network B at the second wave{p_end}
+{syntab:Effects}
+{synopt:{opt crprod}}effect of a tie in B on the same tie in A (coefficient {bf:net1_crprod}){p_end}
+{synopt:{opt crprodb}}effect of a tie in A on the same tie in B (coefficient {bf:net2_crprod}){p_end}
+{syntab:Estimation}
+{synopt:{opt theta01(numlist)}}starting values for network A's effects, in the order {bf:outdegree}, {bf:reciprocity}, {bf:crprod}; default 0{p_end}
+{synopt:{opt theta02(numlist)}}starting values for network B's effects, in the order {bf:outdegree}, {bf:reciprocity}, {bf:crprodb}; default 0{p_end}
+{synopt:{opt k0(#)}}Phase 1 simulations; default 30{p_end}
+{synopt:{opt k3(#)}}Phase 3 simulations; default 200{p_end}
+{synopt:{opt firstg(#)}}initial Robbins-Monro gain; default 0.2{p_end}
+{synopt:{opt seed(#)}}random-number seed{p_end}
+{synopt:{opt detail}}list the convergence t-ratio of every parameter{p_end}
 {synoptline}
 {p2colreset}{...}
 
@@ -185,15 +219,11 @@
 
 {pstd}
 {cmd:nwsaom} fits a stochastic actor-oriented model (SAOM, Snijders-style) between two or more
-observed panel waves of the same directed network on a fixed actor set - a fully native
-Stata/Mata implementation, no R or other external statistical software called at any point. The
-{browse "https://www.stats.ox.ac.uk/~snijders/siena/":RSiena} package (Ripley, Snijders et al.)
-was studied in detail as the methodological reference throughout development - both its published
-manual and, where the manual alone was not enough, its own real R/C++ source (read directly via
-{cmd:gh api} against {browse "https://github.com/stocnet/rsiena":github.com/stocnet/rsiena} during
-development) - and used, during development only, to certify {cmd:nwsaom}'s own independently
-written implementation against real reference output. {cmd:nwsaom} is an independent
-reimplementation and is not affiliated with or endorsed by the RSiena project.
+observed panel waves of the same network on a fixed set of actors. It fits the same models as
+the {browse "https://www.stats.ox.ac.uk/~snijders/siena/":RSiena} package (Ripley, Snijders et
+al.), with the same effects and estimation algorithm, and gives the same estimates; no R or other
+outside software is needed. {cmd:nwsaom} is not affiliated with or endorsed by the RSiena
+project.
 
 {pstd}
 An SAOM models network change as a sequence of unobserved, actor-driven "ministeps": between
@@ -201,13 +231,24 @@ consecutive observed waves, actors are activated one at a time (at a rate govern
 own rate parameter) and each activated actor may create or drop exactly one of its own outgoing
 ties, choosing among the available alternatives (including "no change") via a multinomial-logit
 choice model on a linear combination of effect-specific "change statistics", weighted by the
-effect's own estimated coefficient. This actor-oriented, MYOPIC formulation - an actor's own
-choice is evaluated purely from that actor's own resulting local network statistic, never from
-how the choice would affect any OTHER actor's own statistics - is what genuinely distinguishes an
-SAOM from an ERGM (see {help nwergm}): an ERGM has no actors or ministeps at all, only a single
-global probability distribution over entire graphs. Coefficients are estimated by the Method of
-Moments via Robbins-Monro stochastic approximation (RSiena's own default estimation algorithm),
-not maximum likelihood.
+effect's estimated coefficient. An actor evaluates a choice only by its own resulting
+statistics, not by its effect on other actors; this distinguishes an SAOM from an ERGM (see
+{help nwergm}), which describes a probability distribution over whole networks. Coefficients are
+estimated by the Method of Moments via Robbins-Monro stochastic approximation, RSiena's default.
+
+{marker multiplex}{...}
+{pstd}
+{cmd:nwsaom multiplex} fits two directed networks on the same actors that change together
+between two waves, for example friendship and advice. Each network has its own
+{bf:outdegree} and {bf:reciprocity} effects and its own rate; {opt crprod} adds the effect of a
+tie in the second network on the same tie in the first, and {opt crprodb} the reverse. In a
+ministep the other network's current state counts; the {opt crprod} statistics use the other
+network at the start of the period, as RSiena does for effects linking two dependent variables.
+Both rates are estimated with the effects (unconditional Method of Moments, RSiena's default for
+two dependent variables). Other effects, more than two waves, and {cmd:estat gof} are not
+available for multiplex models. On a friendship network and a simulated advice network, every
+parameter agrees with RSiena 1.6.6 within 0.06 standard errors (five seeds). See
+{help nwsaom_remarks##multiplex:Multiplex} in nwsaom_remarks for details.
 
 {title:Performance}
 
@@ -237,9 +278,9 @@ tie/behavior data ({opt missnet()}/{opt missbeh()}) are both supported - see
 each one's own scope and caveats. RSiena's own more general continuous/fractional within-period
 join-leave timing is out of scope - {cmd:nwsaom} supports whole-period composition change only.{p_end}
 {p2col: o}Behavior co-evolution ({opt behavior()}) supports exactly ONE co-evolving behavior
-variable. The linear shape effect can be split into endowment/creation roles
-({opt linearendow}/{opt linearcreation}); the same split is also available for
-{opt quadratic}/{opt avalt}/{opt avsim} - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks.{p_end}
+variable. {opt quadratic}, {opt avalt} and {opt avsim} can be split into endowment and creation
+effects; the linear shape effect cannot, because with the behavior rate estimated that model is
+not identified - see {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks.{p_end}
 {p2colreset}{...}
 
 {pstd}
@@ -266,6 +307,9 @@ within Stata's interactive Viewer's rendering limits - it is not optional/second
 just relocated.
 
 {title:Postestimation}
+
+{pstd}
+{cmd:estat gof} is available after {cmd:nwsaom} (not after {cmd:nwsaom multiplex}).
 
 {pstd}
 {cmd:estat gof} reports RSiena's own goodness-of-fit methodology
@@ -352,43 +396,124 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:r(p_{it:stat})}		empirical Mahalanobis-distance test p-value for that statistic
 		  {bf:r(mhd_{it:stat})}		observed vector's own Mahalanobis distance from the simulated mean
 
+{pstd}
+{cmd:nwsaom multiplex} stores the following in {cmd:e()}:
+
+		Scalars
+		  {bf:e(N)}			number of actors
+		  {bf:e(rate1)}, {bf:e(rate2)}	rates of networks A and B
+		  {bf:e(rate1_se)}, {bf:e(rate2_se)}	their standard errors
+		  {bf:e(tconv_max)}		overall maximum convergence ratio
+		Macros
+		  {bf:e(cmd)}			{bf:nwsaom_multiplex}
+		  {bf:e(engine)}		{bf:native} or {bf:mata}
+		Matrices
+		  {bf:e(b)}			coefficients: {bf:net1_outdegree}, {bf:net1_reciprocity}, [{bf:net1_crprod}], {bf:net2_outdegree}, {bf:net2_reciprocity}, [{bf:net2_crprod}]
+		  {bf:e(V)}			their covariance matrix
+		  {bf:e(tconv)}			convergence t-ratios of the coefficients and the two rates
+
 {title:Examples}
 
-{pstd}Friendship among 50 pupils, RSiena's s50 data:{p_end}
+{pstd}
+All examples except the last use the Glasgow friendship data (RSiena's s50 data): three waves of
+friendship among 50 pupils ({cmd:glasgow1}-{cmd:glasgow3}) and smoking, alcohol and sport at each
+wave ({cmd:smoke1}-{cmd:smoke3}, {cmd:alcohol1}-{cmd:alcohol3}, {cmd:sport1}-{cmd:sport3}).
+
 		{cmd:. nwwebuse glasgow, nwclear}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1)}
+
+{pstd}{bf:Network change between two waves, and over three waves}{p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity seed(1)}
+
+{pstd}{bf:Triadic closure and degree effects}{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip cycle3 seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) indegpopularity outactivity seed(1)}
+
+{pstd}{bf:Covariate effects} (homophily on smoking; ego, alter and similarity effects of alcohol and
+sport); {opt detail} also lists RSiena's effect names, the covariate means and every convergence
+t-ratio{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) samex(smoke1) egox(alcohol1 sport1) altx(alcohol1 sport1) simx(alcohol1) seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) samex(smoke1) seed(1) detail}
+
+{pstd}{bf:Interaction}: does the effect of reciprocity depend on the sender's alcohol use?{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) egox(alcohol1) interact(egox#reciprocity) seed(1)}
+
+{pstd}{bf:Goodness of fit}{p_end}
 		{cmd:. estat gof}
 
-{pstd}Restarting from the estimates when the overall maximum convergence ratio is above 0.25:{p_end}
+{pstd}{bf:Restarting from the estimates} when the overall maximum convergence ratio is above 0.25{p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) seed(1)}
 		{cmd:. matrix b = e(b)}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') seed(2)}
 
-{pstd}The same model by unconditional estimation (RSiena's {cmd:cond = FALSE}), restarted with the rates too:{p_end}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional seed(1)}
-		{cmd:. matrix b = e(b)}
-		{cmd:. matrix r = e(rates)}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip unconditional theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]') rate0(`=r[1,1]' `=r[1,2]') seed(2)}
+{pstd}{bf:Unconditional estimation} (RSiena's {cmd:cond = FALSE}; restart it with {opt rate0()} as well
+as {opt theta0()}){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) unconditional seed(1)}
 
-{pstd}Other networks {cmd:wave1}, {cmd:wave2}, {cmd:wave3} and behavior variables {cmd:b1}-{cmd:b3}:{p_end}
+{pstd}{bf:Covariate-dependent rate}: do heavier drinkers change their friendships more often?{p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity ratecov(alcohol1) seed(1)}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree transties balance}
-
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree isolatenet outiso}
-
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear avalt}
+{pstd}{bf:Co-evolution of friendship and drinking}: selection ({opt behsim}) and influence
+({opt avalt}, or {opt avsim} as the alternative influence effect){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(1)}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avsim seed(1)}
 		{cmd:. estat gof}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avalt}
+{pstd}{bf:Separate effects for increasing and decreasing behavior} (endowment and creation){p_end}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear quadraticendow quadraticcreation seed(1)}
 
-		{cmd:. nwsaom, waves(wave1 wave2 wave3) outdegree behavior(b1 b2 b3) linear avsim}
+{pstd}{bf:Undirected networks}: symmetrized friendship; RSiena's default model type (forcing), and
+the pairwise model in which both actors decide jointly{p_end}
+		{cmd:. nwsym glasgow1, generate(u1) mode(max)}
+		{cmd:. nwsym glasgow2, generate(u2) mode(max)}
+		{cmd:. nwsaom, wave1(u1) wave2(u2) outdegree gwesp(.69) samex(smoke1) seed(1)}
+		{cmd:. nwsaom, wave1(u1) wave2(u2) outdegree symtype(joint) seed(1)}
 
-{pstd}Co-evolution of friendship and drinking (selection and influence), RSiena's s50 data:{p_end}
-		{cmd:. nwwebuse glasgow, nwclear}
-		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}
+{pstd}{bf:Composition change}: three pupils leave after the first wave ({cmd:p1}, {cmd:p2} mark who
+is present){p_end}
+		{cmd:. generate byte p1 = 1}
+		{cmd:. generate byte p2 = _n > 3}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity present(p1 p2) seed(1)}
 
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity behavior(b1 b2) linear quadraticendow quadraticcreation}
+{pstd}{bf:Missing data}: a missing behavior value ({opt missbeh()}: one 0/1 variable per wave) and
+missing tie values ({opt missnet()}: one 0/1 matrix per wave){p_end}
+		{cmd:. generate byte mb1 = _n == 5}
+		{cmd:. generate byte mb2 = 0}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity behavior(alcohol1 alcohol2) linear avalt missbeh(mb1 mb2) seed(1)}
+		{cmd:. matrix miss1 = J(50, 50, 0)}
+		{cmd:. matrix miss1[1,2] = 1}
+		{cmd:. matrix miss2 = J(50, 50, 0)}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity missnet(miss1 miss2) seed(1)}
 
-		{cmd:. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity present(p1 p2)}
+{pstd}{bf:Structural zeros}: dyads that cannot change (a 0/1 matrix; here, ties from pupil 1 to
+pupils 11-20, which are absent at both waves){p_end}
+		{cmd:. matrix zeros = J(50, 50, 0)}
+		{cmd:. forvalues j = 11/20 {c -(}}
+		{cmd:.     matrix zeros[1,`j'] = 1}
+		{cmd:. {c )-}}
+		{cmd:. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity structural(zeros) seed(1)}
+
+{pstd}{bf:Threads}: the same results on one thread (the default uses all physical cores){p_end}
+		{cmd:. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) cores(1) seed(1)}
+
+{pstd}{bf:Two networks that change together} ({cmd:nwsaom multiplex}). The Glasgow data have one
+network, so this example simulates a second one, "advice", that overlaps with friendship:{p_end}
+		{cmd:. nwtomata glasgow1, mat(F1)}
+		{cmd:. nwtomata glasgow2, mat(F2)}
+		{cmd:. set seed 20261001}
+		{cmd:. mata: A1 = (F1 :* (runiform(50, 50) :< 0.7) + (runiform(50, 50) :< 0.005)) :> 0}
+		{cmd:. mata: _diag(A1, 0)}
+		{cmd:. mata: A2 = (A1 :* (runiform(50, 50) :< 0.8) + F2 :* (1 :- A1) :* (runiform(50, 50) :< 0.4)) :> 0}
+		{cmd:. mata: _diag(A2, 0)}
+		{cmd:. nwset, mat(A1) directed name(advice1)}
+		{cmd:. nwset, mat(A2) directed name(advice2)}
+
+{pstd}Each network with outdegree and reciprocity, and the effect of each network on the other:{p_end}
+		{cmd:. nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(advice1) netbwave2(advice2) crprod crprodb seed(1)}
+
+{pstd}Restarting from the estimates (one starting value per effect of each network):{p_end}
+		{cmd:. matrix b = e(b)}
+		{cmd:. nwsaom multiplex, netawave1(glasgow1) netawave2(glasgow2) netbwave1(advice1) netbwave2(advice2) crprod crprodb theta01(`=b[1,1]' `=b[1,2]' `=b[1,3]') theta02(`=b[1,4]' `=b[1,5]' `=b[1,6]') seed(2)}
 
 {title:References}
 

@@ -186,7 +186,7 @@ program nwsaom, eclass
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
-		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ]
+		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER DETail ]
 	set more off
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
@@ -1853,12 +1853,12 @@ program nwsaom, eclass
 		}
 		mata: __nwsaom_theta0 = strtoreal(tokens("`theta0'"))
 	}
-	// network-only models without theta0(): start the outdegree effect
+	// models without theta0(): start the outdegree effect
 	// at RSiena's data-derived value (getNetworkStartingVals()) instead of
 	// 0, as RSiena does - with the rate estimated jointly, a start at 0
 	// (a network that densifies quickly) can make the phase-1 derivative
 	// estimates unusable
-	if "`theta0'" == "" & !`__nwsaom_coev' & "`outdegree'" != "" {
+	if "`theta0'" == "" & "`outdegree'" != "" {
 		if `__nwsaom_multi' mata: __nwsaom_theta0[1] = SaomOutdegreeStart(__nwsaom_last_Gwaves, ("`symmetric'" != ""))
 		else mata: __nwsaom_theta0[1] = SaomOutdegreeStart((&__nwsaom_last_G1, &__nwsaom_last_G2), ("`symmetric'" != ""))
 	}
@@ -1885,6 +1885,11 @@ program nwsaom, eclass
 	if `__nwsaom_coev' {
 		if "`behtheta0'" == "" {
 			mata: __nwsaom_theta0beh = J(1, `__nwsaom_pbeh', 0)
+			// the linear shape starts at RSiena's data-derived value
+			// (getEffects(): "tendency"), as RSiena does
+			if "`linear'" != "" & !`__nwsaom_hasmissbeh' {
+				mata: __nwsaom_theta0beh[1] = SaomBehLinearStart(__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval)
+			}
 		}
 		else {
 			local __nwsaom_ntbeh : word count `behtheta0'
@@ -2376,7 +2381,7 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
 		matlist `ratetab', format(%9.4f)
-		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
+		if `__nwsaom_iscond' & "`detail'" != "" di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
@@ -2451,7 +2456,7 @@ program nwsaom, eclass
 		di as text "Actors: " as result `nodes' _col(40) as text "Estimated rate: " as result %6.3f `__nwsaom_rate' as text " (" as result %5.3f `__nwsaom_ratese' as text ")"
 		di as text "{hline}"
 		ereturn display
-		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
+		if `__nwsaom_iscond' & "`detail'" != "" di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 		if "`symmetric'" != "" di as text "(non-directed relation, model type " as result "`__nwsaom_symtypenm'" as text " = RSiena modelType " as result "`__nwsaom_mtnum'" as text ")"
 		if "`symmetric'" != "" & inlist(0`__nwsaom_symtypeval', 1, 2, 3) {
 			if `__nwsaom_iscond' di as text "(pairwise model: RSiena's time scale, mean time / (actors - 1); per-actor" _n " rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
@@ -2469,8 +2474,10 @@ program nwsaom, eclass
 			}
 		}
 	}
-	_nwsaom_rsnotes
-	_nwsaom_tconvtable
+	// the RSiena names, covariate means and every convergence t-ratio are
+	// in e(rsiena_labels), e(covmeans) and e(tconv); shown with detail
+	if "`detail'" != "" _nwsaom_rsnotes
+	_nwsaom_tconvtable, `detail'
 end
 
 /* RSiena's names of the covariate, interaction and behavior effects
@@ -2529,25 +2536,45 @@ program define _nwsaom_rsnotes
 	}
 end
 
-/* Convergence t-ratios on RSiena's scale (phase-3 mean deviation / its
-   standard deviation, e(tconv)) for every parameter including the rates,
-   two per line within 80 columns, then RSiena's overall maximum
-   convergence ratio e(tconv_max). */
+/* Convergence summary. By default one line: RSiena's overall maximum
+   convergence ratio e(tconv_max), and the parameters whose convergence
+   t-ratio is 0.1 or more in absolute value, if any. With detail, every
+   t-ratio (e(tconv): phase-3 mean deviation / its standard deviation, one
+   per parameter including the rates), two per line within 80 columns. */
 capture program drop _nwsaom_tconvtable
 program define _nwsaom_tconvtable
+	syntax [, DETail]
 	tempname m
 	matrix `m' = e(tconv)
 	local names : colnames `m'
 	local k = colsof(`m')
-	di as text "Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):"
-	forvalues j = 1/`k' {
-		local nm : word `j' of `names'
-		if udstrlen("`nm'") > 24 local nm = usubstr("`nm'", 1, 23) + "~"
-		if mod(`j', 2) == 1 di as text "  " %-24s "`nm'" as result %8.3f `m'[1,`j'] _continue
-		else di as text "      " %-24s "`nm'" as result %8.3f `m'[1,`j']
+	if "`detail'" != "" {
+		di as text "Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):"
+		forvalues j = 1/`k' {
+			local nm : word `j' of `names'
+			if udstrlen("`nm'") > 24 local nm = usubstr("`nm'", 1, 23) + "~"
+			if mod(`j', 2) == 1 di as text "  " %-24s "`nm'" as result %8.3f `m'[1,`j'] _continue
+			else di as text "      " %-24s "`nm'" as result %8.3f `m'[1,`j']
+		}
+		if mod(`k', 2) == 1 di ""
+		di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
 	}
-	if mod(`k', 2) == 1 di ""
-	di as text "Overall maximum convergence ratio: " as result %6.3f e(tconv_max)
+	else {
+		local bad ""
+		forvalues j = 1/`k' {
+			if abs(`m'[1,`j']) >= 0.1 {
+				local nm : word `j' of `names'
+				local bad "`bad' `nm' (`: di %5.3f `m'[1,`j']')"
+			}
+		}
+		local ok = e(tconv_max) < 0.25
+		di as text "Overall maximum convergence ratio: " as result %5.3f e(tconv_max) _continue
+		if `ok' & "`bad'" == "" di as text " (good; all t-ratios below 0.1)"
+		else if `ok' di as text " (below 0.25)"
+		else di as text " ({bf:not converged}: should be below 0.25)"
+		if "`bad'" != "" di as text "Convergence t-ratios of 0.1 or more in absolute value:" as result "`bad'"
+		if !`ok' di as text "Refit starting from these estimates with theta0(); see {help nwsaom}."
+	}
 	if "`e(engine)'" == "mata" {
 		di as text "(simulated in Mata, not the native plugin: `e(engine_why)')"
 	}
@@ -2608,7 +2635,7 @@ capture program drop nwsaom_multiplex
 program define nwsaom_multiplex, eclass
 	version 14
 	syntax , NETAWAVE1(string) NETAWAVE2(string) NETBWAVE1(string) NETBWAVE2(string) ///
-		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB ]
+		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB DETail ]
 
 	if `seed' != -1 set seed `seed'
 
@@ -2639,13 +2666,19 @@ program define nwsaom_multiplex, eclass
 	local wantcrprod = ("`crprod'" != "")
 	local wantcrprodb = ("`crprodb'" != "")
 
-	// Mata row-vector literal syntax needs COMMA-separated elements
-	// (`(0, 0)', not `(0 0)') - confirmed directly, not assumed (the
-	// space-separated form is a genuine parse error, "invalid
-	// expression"), so theta01()/theta02() must be given comma-separated
-	// too if a user overrides the default. Default length now tracks
-	// whether crprod()/crprodb() add a third parameter to that network's
-	// own effect list.
+	// theta01()/theta02(): numbers separated by spaces or commas, passed to
+	// Mata as a comma-separated row vector; one value per effect of that
+	// network (outdegree, reciprocity, and crprod/crprodb if requested)
+	foreach __t in theta01 theta02 {
+		if "``__t''" != "" {
+			local __v : subinstr local `__t' "," " ", all
+			local `__t' ""
+			foreach __x of local __v {
+				confirm number `__x'
+				local `__t' = cond("``__t''" == "", "`__x'", "``__t'', `__x'")
+			}
+		}
+	}
 	if "`theta01'" == "" local theta01 = cond(`wantcrprod', "0, 0, 0", "0, 0")
 	if "`theta02'" == "" local theta02 = cond(`wantcrprodb', "0, 0, 0", "0, 0")
 
@@ -2692,6 +2725,6 @@ program define nwsaom_multiplex, eclass
 	di as text "{hline}"
 	ereturn display
 	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
-	_nwsaom_tconvtable
+	_nwsaom_tconvtable, `detail'
 end
 

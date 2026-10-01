@@ -632,4 +632,35 @@ statistic (exact). New in interactions: indegpopularity, outpopularity, outactiv
 outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives inActSqrt and
 outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
 (outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
-documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`.
+documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`. This is a deliberate
+divergence, decided 2026-10-01: the RSiena default looks like a bug (introduced in 1.6.1, commit
+1155e31, which moved only outPop/inAct to default 1 and left outPop.c, outPopSqrt, outPopMore,
+outPopSqrtMore, outPopThreshold, inAct.c, inActSqrt at 0) and was reported as
+https://github.com/stocnet/rsiena/issues/151. Do NOT "fix" nwsaom to match RSiena's default; when
+validating against RSiena, set parameter = 1 for these effects. Revisit if the issue is resolved.
+
+## Never store a Mata object under a Stata `tempname` in nwsaom code
+
+`nwsaom.ado` keeps each effect's term data in Mata variables named with Stata `tempname`s
+(`__td_*`), referenced by pointer from `__nwsaom_last_M`. Stata reissues a tempname string once
+the program that created it returns, so any later program that does
+`tempname x` + `mata: \`x' = ...` (or `mata drop \`x'`) can overwrite or delete the fitted model's
+term data. Symptom: the NEXT command that reads the model fails, e.g. a second `estat gof` with
+`SaomNativeSetup(): 3261 non class/struct found where class/struct required`, or
+`[6,6] found where scalar required` in a change function. Found 2026-10-01 in `estat gof`'s
+violin-plot routine (`__gv_summ`, `__gv_stack`); fixed by using fixed names (`__nwsaom_gv_*`).
+Rule: in any code that runs after an nwsaom fit, name Mata objects explicitly with a `__nwsaom_`
+prefix; `tempname` is fine only for Stata matrices and scalars.
+
+## Co-evolution phase 2 can run into a "stuck behavior" trap (fixed 2026-10-01)
+
+On roughly 3% of seeds, the smoking co-evolution model (3-category behavior, quadratic + avSim)
+ran away in phase 2: the quadratic effect overshot early, simulated actors (nearly) stopped
+changing the behavior, the behavior-rate deviations stayed negative whatever the rate, and
+linear/quadratic/rates drifted to 15-30 (r(505), singular phase-3 matrix, or tconv_max ~50-150).
+RSiena 1.6.6 converged on all 60 seeds. Fixed in SaomEstimateRMCoevMulti(): RSiena's data-derived
+starts (outdegree, linear "tendency", range-2 behavior rate) and its phase-1 Newton step, plus a
+restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 2 does NOT help:
+with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
+correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
+not one: the failure is rare and moves between seeds when anything upstream changes.

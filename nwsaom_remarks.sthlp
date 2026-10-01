@@ -10,170 +10,108 @@
 {title:Description}
 
 {pstd}
-This file holds the full effect-derivation library, interaction/multiplex/co-evolution mechanics,
-composition-change/missing-data/structural-zero handling, the full performance benchmark, and the
-estimation-algorithm background for {helpb nwsaom} - split out into its own file purely to keep
-{helpb nwsaom}'s own help file within Stata's interactive Viewer's rendering limits (its combined
-length triggered a real Viewer-side rendering bug on very long SMCL documents once it grew past
-roughly 1,000 lines). See {helpb nwsaom} itself for the command's syntax, options, and examples.
-
-{pstd}
-{bf:A genuine, hard-won methodological lesson from this implementation's own development, worth stating explicitly here}: several of RSiena's own effects (e.g. {opt gwesp()}) compute their
-observed/global statistic in a way that is IDENTICAL to the corresponding ERGM statistic, which
-made it tempting to also reuse an ERGM package's own change-statistic (ministep) formula for the
-same effect - this is WRONG in general. RSiena's own ministep formula for a given effect is
-restricted to the ACTIVATED ACTOR'S OWN statistic only (the myopic-actor rule above), which for
-several effects is a genuinely SMALLER quantity than the effect's own full ERGM change statistic
-(which legitimately captures the toggle's effect on every actor's own statistic, appropriate for
-an ERGM's single-actor-free global model but not for an SAOM ministep). Every effect below was
-independently re-derived and verified against RSiena's own real ministep-contribution source
-code, not assumed from its global-statistic formula alone; see {help nwsaom_remarks##effects:Effect library} below for the account, term by term, including one case ({opt gwesp()}) where an initial
-reuse assumption was shipped, caught, and corrected during this package's own development - kept
-in that section's own account rather than silently erased, matching this whole package's
-disclosure standard.
+This file describes the effects of {helpb nwsaom}, interactions, multiplex and co-evolution
+models, composition change, missing data, structural zeros, undirected relations, and the
+estimation algorithm. See {helpb nwsaom} for the syntax, options, and examples.
 
 {marker effects}{...}
 {title:Effect library}
 
 {pstd}
-{bf:outdegree} and {bf:reciprocity} are the base structural effects, direct RSiena analogues of
-{help nwergm}'s own {opt edges}/{opt mutual}.
+{bf:outdegree} and {bf:reciprocity} are the base structural effects (RSiena's density and recip),
+the analogues of {help nwergm}'s {opt edges}/{opt mutual}.
 
 {pstd}
-{bf:nodematch()}/{bf:nodecov()}/{bf:nodeicov()}/{bf:nodeocov()} are direct reuses of
-{help nwergm}'s own already-certified covariate-effect statistic/change-statistic pair - each is a
-genuine single-actor-local effect (an actor's own choice depends only on its own and the specific
-alter's own covariate value), so no myopic-actor restriction was needed here; RSiena's own naming
-maps as {opt nodeocov()} = "egoX" (sender's own value), {opt nodeicov()} = "altX" (receiver's own
-value), {opt nodematch()} = "sameX", {opt nodecov()} = their combined sum.
+{bf:nodematch()}/{bf:nodecov()}/{bf:nodeicov()}/{bf:nodeocov()} use the same covariate statistics
+as {help nwergm}. Each depends only on the covariate values of ego and the alter. RSiena names:
+{opt nodeocov()} = egoX (the sender's value), {opt nodeicov()} = altX (the receiver's value),
+{opt nodematch()} = sameX, {opt nodecov()} = the sum of the two. Each takes a varlist; see
+{help nwsaom_remarks##covariates:Covariate effects for several variables} for naming and centring.
 
 {pstd}
-{bf:indegpopularity}/{bf:outpopularity}/{bf:outactivity}/{bf:inactivity} are freshly derived
-SAOM-native effects (no ERGM analogue reused) - sqrt-transformed in/outdegree popularity, squared
-outdegree activity, and sqrt-transformed indegree activity respectively, each independently
-verified against RSiena's own real effect source before implementation. A genuine, disclosed
-subtlety: unlike a single-actor-local covariate effect above, these effects' own ministep deltas
-do NOT equal a toggle's effect on the global statistic (toggling one tie changes OTHER actors' own
-popularity/activity statistics too) - expected behavior for a myopic-actor SAOM formulation, not a
-bug.
+{bf:indegpopularity}/{bf:outpopularity}/{bf:outactivity}/{bf:inactivity} are RSiena's inPopSqrt,
+outPopSqrt, outAct, and inActSqrt: square-root indegree popularity, square-root outdegree
+popularity, squared outdegree activity, and square-root indegree activity. A tie change also
+changes other actors' popularity/activity statistics, so the ministep contribution is not the
+change in the global statistic.
 
 {pstd}
-{bf:transtrip} (transitive triplets) and {bf:cycle3} (directed 3-cycles) are freshly derived,
-reusing {cmd:nwsaom}'s own already-certified shared-partner primitives (two-path/out-star/in-star
-counts) rather than any ERGM term-function pair directly - {opt transtrip}'s own ministep delta is
-OTP(i,j)+OSP(i,j); {opt cycle3}'s is OTP(j,i) (a genuinely different, easy-to-get-backwards
-argument order from {opt transtrip}'s own).
+{bf:transtrip} (transitive triplets) and {bf:cycle3} (directed 3-cycles) are computed from two-path,
+out-star, and in-star counts. The ministep contribution of {opt transtrip} is OTP(i,j)+OSP(i,j);
+that of {opt cycle3} is OTP(j,i) (note the reversed argument order).
 
 {pstd}
-{bf:transties} (RSiena's own "transTies") is a simpler, existence-indicator alternative to
-{opt transtrip}: a tied arc i->j counts toward the statistic if AND ONLY IF a two-path i->k->j
-already exists, rather than {opt transtrip}'s own weighted count of every such two-path. Verified
-directly against RSiena's real {cmd:TransitiveTiesEffect.cpp} - its OWN dedicated ministep-
-contribution class (not a "Generic effect" wrapper, see {opt gwesp()} below), so its own ministep
-formula genuinely is the exact myopic-actor-restricted gradient of a well-defined local statistic;
-certified via brute-force recomputation, not merely assumed. Natively ported.
+{bf:transties} (RSiena's transTies, {cmd:TransitiveTiesEffect}) is an existence-indicator
+alternative to {opt transtrip}: a tie i->j counts if and only if at least one two-path i->k->j
+exists, instead of counting every such two-path.
 
 {pstd}
-{bf:balance} (RSiena's own structural balance) has NO user-supplied parameter: RSiena's own
-"balanceMean" constant (the SIENA manual's {it:b0}) is a DATA-DERIVED quantity - the empirical mean
-of |x_ih - x_jh| over every distinct valid actor triple in the observed wave data - computed
-automatically from the wave(s) supplied to {opt wave1()}/{opt wave2()} or {opt waves()} at
-estimation time, pooled across every inter-wave PERIOD'S OWN starting wave by summing
-numerators/denominators separately and dividing once (RSiena's own {cmd:calcBalmean()} pooling
-convention exactly, not an average of per-period ratios). Like {opt transties}, {opt balance} has
-its own dedicated RSiena ministep class, and was independently verified against RSiena's real
-{cmd:BalanceEffect.cpp} source before implementation. Natively ported (the data-derived
-balanceMean constant crosses to the native backend as an ordinary per-term parameter, computed
-once before simulation starts).
+{bf:balance} (RSiena's balance, {cmd:BalanceEffect}) has no user-supplied parameter. RSiena's
+"balanceMean" constant (the SIENA manual's {it:b0}) is derived from the data: the mean of
+|x_ih - x_jh| over every distinct valid actor triple in the observed waves. It is computed from the
+waves in {opt wave1()}/{opt wave2()} or {opt waves()}, pooled across the starting wave of every
+period by summing numerators and denominators separately and dividing once (RSiena's
+{cmd:calcBalmean()}), not by averaging per-period ratios.
 
 {pstd}
-{bf:isolatenet} (RSiena's own "network-isolate") and {bf:outiso} (RSiena's own "out-isolate") both
-have NO user-supplied parameter. {opt isolatenet} counts TRUE isolates - actors with BOTH indegree
-AND outdegree exactly 0 - verified against RSiena's real {cmd:IsolateNetEffect.cpp} source; a
-genuine, disclosed multi-actor spillover applies here (creating a tie also raises the ALTER's own
-indegree, which can independently change the alter's own isolate status too - the same kind of
-spillover {opt indegpopularity}/{opt outactivity} already have). {opt outiso} counts actors with
-outdegree exactly 0 REGARDLESS of indegree - a weaker condition than {opt isolatenet}'s own true-isolate
-definition - verified against RSiena's real {cmd:TruncatedOutdegreeEffect.cpp} source (RSiena's own
-{cmd:EffectFactory.cpp} confirms "outIso" maps to that class with a specific parameter configuration,
-not a separate dedicated class); unlike {opt isolatenet}, {opt outiso} has no such spillover (toggling
-an actor's own outgoing tie never affects another actor's own outdegree).
+{bf:isolatenet} (RSiena's network-isolate) and {bf:outiso} (RSiena's out-isolate) have no
+user-supplied parameter. {opt isolatenet} counts true isolates, actors with indegree and outdegree
+both 0 ({cmd:IsolateNetEffect}). Creating a tie also raises the alter's indegree, which can change
+the alter's isolate status, so the change also affects other actors' statistics. {opt outiso}
+counts actors with outdegree 0 regardless of indegree; RSiena implements outIso through
+{cmd:TruncatedOutdegreeEffect} with a specific parameter. {opt outiso} has no spillover: a tie
+change never alters another actor's outdegree.
 
 {pstd}
-{bf:antiiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:inplus3}/{bf:isolatepop} are RSiena's own
-alter-indexed isolate family - each actor's own ministep contribution depends on the ALTER's degree,
-not ego's own (like {opt indegpopularity}), verified against RSiena's real
-{cmd:AntiIsolateEffect.cpp}/{cmd:IsolatePopEffect.cpp} source. {opt inplus3} is RSiena's real
-"in3Plus" (its own {cmd:EffectFactory.cpp} dispatches it to the SAME {cmd:AntiIsolateEffect} class
-as {opt antiiniso}/{opt antiiniso2}, just with a threshold of 3 instead of 1/2) - exposed as
-{opt inplus3} rather than the RSiena-matching spelling because Stata's own {cmd:syntax} command
-does not accept an option name with a digit followed by more letters; the coefficient itself is
-still labeled {cmd:in3plus}. {opt antiiniso}/{opt antiiniso2}/{opt inplus3} are genuinely
-spillover-free (match the exact global before/after difference on any toggle, {opt outiso}'s own
-shape) and natively ported; {opt antiiso}/{opt isolatepop} are native since 2026-10-01 (Mata-only before).
-{opt antiiso}/{opt isolatepop} additionally gate on the alter's own outdegree, which gives them a
-real, disclosed multi-actor spillover of their own (an actor's own outgoing tie choice changes that
-actor's OWN outdegree, which can independently flip that same actor's own separate membership in
-{opt antiiso}'s global count - the same kind of spillover {opt isolatenet} already has, just via a
-different pathway). {bf:{opt antiiso}/{opt isolatepop} are known to destabilize the Robbins-Monro estimator on small/sparse networks} (the same class of fragility {opt isolatenet} already has,
-confirmed independent of native/Mata backend). {bf:Both {opt isolatenet}/{opt outiso} and this family can be weakly identified on small or sparse networks} - a real, disclosed finding from development, not
-hypothetical: real Glasgow data (this help file's own worked examples) has zero isolates at every
-observed wave, so it cannot exercise either effect at all, and even toy networks up to 10 actors with
-a handful of isolate transitions were enough to trigger {bf:thetaBound} or the phase-3
-covariance-finiteness safeguard during certification - the same kind of rare-count identification
-limit the endowment/creation splits have (see {help nwsaom_remarks##endowcreation:Endowment/creation functions} above), not a defect in either effect.
+{bf:antiiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:inplus3}/{bf:isolatepop} are RSiena's
+alter-indexed isolate effects ({cmd:AntiIsolateEffect}/{cmd:IsolatePopEffect}): the ministep
+contribution depends on the alter's degree, not ego's. {opt inplus3} is RSiena's in3Plus, the same
+{cmd:AntiIsolateEffect} as {opt antiiniso}/{opt antiiniso2} with threshold 3 instead of 1 or 2
+(Stata option names cannot have a digit followed by letters; the coefficient is labelled
+{cmd:in3plus}). {opt antiiniso}/{opt antiiniso2}/{opt inplus3} have no spillover: the ministep
+contribution equals the change in the global statistic. {opt antiiso}/{opt isolatepop} also
+depend on ego's outdegree, so a tie change can also change ego's membership in the global count.
 
 {pstd}
-{bf:transrectrip}/{bf:outoutass}/{bf:ininass} are a small batch picked from RSiena's own real,
-current remaining effect catalog (RSiena 1.6.6's own {cmd:getEffects()} inventory), each verified
-against its own real RSiena C++ source ({cmd:TransitiveReciprocatedTripletsEffect.cpp}/
-{cmd:OutOutDegreeAssortativityEffect.cpp}/{cmd:InInDegreeAssortativityEffect.cpp}). Default/base
-parameterization only in each case (v1 scope, matching {opt gwesp()}'s own fixed-decay-first
-precedent) - none of the three expose a {cmd:sqrt}-transformed variant. {bf:All three have a genuine, disclosed multi-actor spillover}, the same class {opt isolatenet} already has: each
-actor's own ministep change function correctly computes only its OWN local delta (matching
-RSiena's real {cmd:calculateContribution} exactly), while the toggle can also shift OTHER actors'
-own separate statistics (e.g. for {opt outoutass}, any pre-existing tie INTO the toggling actor
-uses that actor's own outdegree as its own alter-degree factor) - by SAOM's own "myopic actor"
-design this is correct, not a bug, but it does mean a naive whole-network before/after comparison
-is the wrong way to spot-check these three - compare against each ego's own recomputed local
-statistic instead.
+On small or sparse networks, {opt isolatenet}, {opt outiso}, and the anti-isolate effects can be
+weakly identified, and {opt antiiso}/{opt isolatepop} can destabilize the Robbins-Monro estimator.
+The Glasgow data have no isolates at any wave, so these effects cannot be estimated there. On toy
+networks of up to 10 actors with a few isolate transitions, fits stopped at {bf:thetaBound} or at
+the phase-3 covariance check (see {help nwsaom_remarks##endowcreation:Endowment/creation functions}).
 
 {pstd}
-{bf:outinass}/{bf:inoutass} complete the remaining two directed-assortativity directions RSiena
-offers, verified against the real {cmd:OutInDegreeAssortativityEffect.cpp}/
-{cmd:InOutDegreeAssortativityEffect.cpp}. {bf:outinass} is NOT a mechanical degree-substitution of
-{opt outoutass} - toggling a tie changes the alter's own INdegree too (an out-tie from the toggling
-actor is an in-tie to the alter), so its creating-branch formula differs from {opt outoutass}'s own
-in a way only the real source reveals; it has the SAME kind of multi-actor spillover as
-{opt outoutass}/{opt ininass} above. {bf:inoutass} is the simplest of all four directions - neither
-factor in its own product (indegree of ego, outdegree of alter) is affected by the toggle in either
-direction, so it has NO spillover at all, not even within the toggling actor's own row. Both are
-natively ported from introduction (unlike {opt transrectrip}/{opt outoutass}/{opt ininass}'s own
-first-pass Mata-only release, later ported natively too).
+{bf:transrectrip}/{bf:outoutass}/{bf:ininass} are RSiena's transRecTrip, outOutAss, and inInAss
+({cmd:TransitiveReciprocatedTripletsEffect}, {cmd:OutOutDegreeAssortativityEffect},
+{cmd:InInDegreeAssortativityEffect}), in their default parameterization; no square-root variants
+are offered. For all three, the change also affects other actors' statistics (for {opt outoutass},
+any existing tie into the acting actor uses that actor's outdegree as its alter-degree factor). To
+spot-check them, compare each ego's local statistic, not the whole-network statistic before and
+after a change.
 
 {pstd}
-{bf:gwesp(real)} (geometrically weighted edgewise shared partners, OTP-directed) reuses
-{help nwergm}'s own already-certified GLOBAL/observed statistic directly (RSiena's own
-{cmd:tieStatistic()} confirmed to match it exactly) but NOT its own full ERGM change statistic for
-the ministep: RSiena's real {cmd:gwespFF} effect is wired through its own "Generic effect"
-framework ({cmd:GenericNetworkEffect::calculateContribution()}), whose own ministep contribution
-is JUST the geometric-decay kernel's own lookup for the toggled dyad's CURRENT shared-partner
-count - no neighbor-adjustment loops at all - a genuinely simpler, deliberate approximation
-specific to that framework, NOT the same quantity as {help nwergm}'s own full change statistic
-(own-dyad term plus two neighbor-adjustment loops, correct for an ERGM MCMC toggle's effect on the
-GLOBAL statistic, but the wrong standard for an SAOM ministep). {bf:These are genuinely different quantities, not interchangeable, and the corrected, ministep-specific formula is what ships here.} The
-{opt gwesp()} argument is the DIRECT decay value (Statnet's own convention, matching
-{help nwergm}'s own {opt gwesp()}) - NOT RSiena's own user-facing "parameter", which is 100x this
-value (RSiena's default {cmd:gwespFF(69)} corresponds to {opt gwesp(.69)} here). Natively ported
-(the decay argument crosses to the native backend as an ordinary per-term parameter).
+{bf:outinass}/{bf:inoutass} are RSiena's outInAss and inOutAss
+({cmd:OutInDegreeAssortativityEffect}, {cmd:InOutDegreeAssortativityEffect}). {opt outinass} is
+not a degree substitution of {opt outoutass}: an out-tie from ego is an in-tie to the alter, so the
+alter's indegree changes too, and the creation formula differs. It has the same kind of spillover
+as {opt outoutass}/{opt ininass}. {opt inoutass} has no spillover: neither ego's indegree nor the
+alter's outdegree changes with the tie.
 
 {pstd}
-{bf:simcov(varname)} (covariate similarity) is freshly derived and independently verified against
-RSiena's real {cmd:CovariateSimilarityEffect.cpp}/{cmd:Covariate.cpp} source: Delta =
-plus-or-minus(1 - |attr_i - attr_j| / range), where {it:range} is the observed variable's own
-max-minus-min. A disclosed simplification: this omits RSiena's own {cmd:similarityMean} centering
-constant - a pure re-parameterization against the always-present {opt outdegree} term, not a
-correctness gap.
+{bf:gwesp(real)} (geometrically weighted edgewise shared partners, OTP-directed) is RSiena's
+gwespFF. Its global statistic equals {help nwergm}'s {opt gwesp()} statistic (RSiena's
+{cmd:tieStatistic()}). The ministep contribution, as in RSiena's
+{cmd:GenericNetworkEffect::calculateContribution()}, is the decay weight of the dyad's current
+shared-partner count; it is not the ERGM change statistic. The argument of {opt gwesp()} is the
+decay value itself (the statnet convention, as in {help nwergm}); RSiena's parameter is 100 times
+this value, so RSiena's default {cmd:gwespFF(69)} is {opt gwesp(.69)}.
+
+{pstd}
+{bf:simcov(varlist)} (RSiena's simX, {cmd:CovariateSimilarityEffect}) has the tie contribution
+1 - |x_i - x_j|/range - simMean, where {it:range} is the observed maximum minus minimum of the
+covariate and simMean, RSiena's similarityMean, is the mean similarity over all pairs.
+
+{pstd}
+All effects run in the native (C) backend.
 
 {marker nwsaom_interaction}{...}
 {title:Interaction effects}
@@ -185,7 +123,7 @@ an alter is the product of the components' contributions for creating that tie, 
 change withdraws an existing tie. Its statistic is RSiena's
 {cmd:NetworkInteractionEffect::egoStatistic()}, summed over actors: when all components but one are
 RSiena's C++ ego effects ({opt egox()} and {opt outdegree}), an actor's statistic is the product of
-their values and the other component's own statistic for that actor (for {opt outiso}: whether the
+their values and the other component's statistic for that actor (for {opt outiso}: whether the
 actor has no out-ties); otherwise it is the sum, over the actor's ties, of the product of the
 components' tie statistics ({cmd:tieStatistic()}, e.g. the number of two-paths from ego to alter for
 {opt transtrip}, a third of the two-paths from alter to ego for {opt cycle3}). The ministep
@@ -228,29 +166,33 @@ Validated against RSiena (glasgow waves 1-2, conditional, 5 seeds; coefficient d
 RSiena standard errors): sameX x recip, egoX x recip and sameX x recip x egoX within 0.05;
 outIso x egoX, inPopSqrt x egoX and outAct x egoX within 0.04; inActSqrt x recip,
 outPopSqrt x recip and egoX x inActSqrt x transTrip within 0.1. For the last three, RSiena was run
-with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt: with RSiena 1.6.6's default
-internal parameter 0 their statistic uses the degrees at the start of the period (outPopSqrt then
-without the square root) while the ministep uses the current degrees; {cmd:nwsaom} uses the
-documented statistic.
+with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt.
 
 {pstd}
-Like any other effect, an interaction's own identifiability depends on the data: two effects that
-are themselves highly correlated in a given network (a common real property of, for example,
-reciprocity and transitivity in friendship data, where most closed triads are also reciprocated)
-can leave their PRODUCT weakly identified even though each main effect alone estimates cleanly -
-the SAME kind of Robbins-Monro divergence (a non-positive Jacobian diagonal, or a near-singular
-phase-3 covariance) this file's own {opt thetaBound} safeguard already catches for other effects,
-not a defect in this port. A model with an interaction between two effects unrelated to each other
-(e.g. {cmd:interact(reciprocity#nodecov(x))} for an {it:x} uncorrelated with network structure)
-converges normally.
+{it:Note on RSiena's default for inActSqrt and outPopSqrt.} Since RSiena 1.6.1 (unchanged in 1.6.6
+on CRAN and 1.6.12 on GitHub), these two effects have the default internal parameter 0, which makes
+their statistic use the degrees at the start of the period (outPopSqrt then without the square root),
+while their ministep still uses the square root of the current degree. This appears to be a bug and
+has been reported as {browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}.
+{cmd:nwsaom} deliberately does not copy it: {opt outpopularity} and {opt inactivity} use the square
+root of the current degree throughout, the same as RSiena with {cmd:setEffect(..., parameter = 1)}.
+To compare with RSiena, set that parameter there.
+
+{pstd}
+An interaction can be weakly identified when its two effects are highly correlated in the data
+(for example reciprocity and transitivity in friendship networks, where most closed triads are
+also reciprocated), even if each main effect is estimated well. The fit then diverges or stops at
+the {bf:thetaBound} or phase-3 covariance checks. An interaction of two unrelated effects (e.g.
+{cmd:interact(reciprocity#nodecov(x))} for an {it:x} unrelated to network structure) converges
+normally.
 
 {marker multiplex}{...}
 {title:Multiplex (two networks)}
 
 {pstd}
-{cmd:nwsaom multiplex} fits two networks co-evolving over the same two waves, each with its own
-{opt outdegree}/{opt reciprocity} effects and its own opportunity rate, estimated jointly via a
-single Method-of-Moments fit - a separate subcommand, not an option on plain {cmd:nwsaom}:
+{cmd:nwsaom multiplex} fits two networks co-evolving over the same two waves, each with its
+{opt outdegree}/{opt reciprocity} effects and its opportunity rate, estimated jointly in one
+Method-of-Moments fit. It is a separate subcommand:
 
 {p 8 8 2}
 {cmd:nwsaom multiplex ,}
@@ -258,121 +200,96 @@ single Method-of-Moments fit - a separate subcommand, not an option on plain {cm
 {cmd:netbwave1(}{it:netname}{cmd:)} {cmd:netbwave2(}{it:netname}{cmd:)}
 {cmd:[}{opt crprod}{cmd:]} {cmd:[}{opt crprodb}{cmd:]}
 {cmd:[}{opt theta01(numlist)}{cmd:]} {cmd:[}{opt theta02(numlist)}{cmd:]}
-{cmd:[}{opt k0(#)}{cmd:]} {cmd:[}{opt k3(#)}{cmd:]} {cmd:[}{opt firstg(#)}{cmd:]} {cmd:[}{opt seed(#)}{cmd:]}{p_end}
+{cmd:[}{opt k0(#)}{cmd:]} {cmd:[}{opt k3(#)}{cmd:]} {cmd:[}{opt firstg(#)}{cmd:]}
+{cmd:[}{opt seed(#)}{cmd:]} {cmd:[}{opt detail}{cmd:]}{p_end}
 
 {pstd}
-{opt netawave1()}/{opt netawave2()} name the first network's own two waves; {opt netbwave1()}/
-{opt netbwave2()} the second network's (option names use {cmd:a}/{cmd:b}, not {cmd:1}/{cmd:2}, in
-the middle of the name - Stata's {cmd:syntax} command rejects an option name with a digit
-immediately followed by a letter). Both networks must be directed, non-bipartite, and share the
-same fixed set of nodes. {opt theta01()}/{opt theta02()} give starting values (comma-separated,
-one per network's own effect count, which grows by one when {opt crprod()}/{opt crprodb()} is
-given - default 0 for every effect); {opt k0()}/{opt k3()}/{opt firstg()} tune the estimator
-exactly like plain {cmd:nwsaom}'s own identically-named options.
+{opt netawave1()}/{opt netawave2()} name the two waves of the first network, {opt netbwave1()}/
+{opt netbwave2()} those of the second (Stata option names cannot have a digit followed by a
+letter, hence {cmd:a}/{cmd:b}). Both networks must be directed, not bipartite, and on the same
+nodes. {opt theta01()}/{opt theta02()} give comma-separated starting values, one per effect of
+each network (one more with {opt crprod}/{opt crprodb}); the default is 0. {opt k0()}/{opt k3()}/
+{opt firstg()} work as in {cmd:nwsaom}, and {opt detail} lists the convergence t-ratio of every
+parameter.
 
 {pstd}
-{opt crprod} adds a cross-network effect to the first network's own effect list: a tie is more
-(or less) likely wherever the SAME pair is already tied in the second network - the corresponding
-coefficient is reported as {bf:net1_crprod}. {opt crprodb} is the mirror, adding the same kind of
-effect to the second network's own list reading the first ({bf:net2_crprod}); either or both may
-be requested. A ministep reads the other network's CURRENT state, but the statistic of a
-{opt crprod} effect is evaluated with the other network at the START of the period (targets and
-simulated statistics alike), as RSiena does for effects that link two dependent variables.
+{opt crprod} adds a cross-network effect to the first network: a tie is more (or less) likely where
+the same pair is tied in the second network; its coefficient is {bf:net1_crprod}. {opt crprodb}
+adds the mirror effect to the second network ({bf:net2_crprod}); either or both may be given. A
+ministep reads the other network's current state, but the statistic of a {opt crprod} effect is
+evaluated with the other network at the start of the period (targets and simulated statistics
+alike), as RSiena does for effects that link two dependent variables.
 
 {pstd}
-With two dependent variables both rates are estimated jointly with the effects (unconditional
-Method of Moments, RSiena's default for such models): each rate's statistic is the number of dyads
-in which that network's simulated end state differs from its starting observation, and
+Both rates are estimated jointly with the effects (unconditional Method of Moments, RSiena's
+default for two dependent variables): each rate's statistic is the number of dyads in which that
+network's simulated end state differs from its starting observation, and
 {cmd:e(rate1_se)}/{cmd:e(rate2_se)} are their standard errors; {cmd:e(tconv)} holds the convergence
 t-ratios (theta1, theta2, rate1, rate2) and {cmd:e(tconv_max)} RSiena's overall maximum convergence
-ratio. On a two-network example (friendship: glasgow waves 1-2; a
-seeded "advice" network generated from it - see {cmd:cscripts/test_nwsaom_multiplex.do}) with
-{opt crprod} in both directions, every parameter including both rates agrees with RSiena 1.6.6
-within 0.06 standard errors (mean of five seeds each). (Before 2026-10-01 both rates were held at
-their closed-form starting values and the {opt crprod} statistics used the other network's end
-state.)
+ratio. On a two-network example (friendship: glasgow waves 1-2; a seeded "advice" network generated
+from it) with {opt crprod} in both directions, every parameter including both rates agrees with
+RSiena 1.6.6 within 0.06 standard errors (mean of five seeds each).
 
 {pstd}
-Every other multiplex effect beyond {opt outdegree}/{opt reciprocity}(+{opt crprod}) is a real,
-planned follow-on, not silently dropped. Natively accelerated (all three estimation phases);
-about 2 seconds per fit on the example above.
+Effects other than {opt outdegree}, {opt reciprocity}, and {opt crprod} are not yet available for
+multiplex models. Fits use the native backend in all three phases; the example above takes about
+2 seconds.
 
 {marker coev}{...}
 {title:Co-evolution (network + behavior)}
 
 {pstd}
-{opt behavior(varlist)} adds a SECOND dependent variable - a bounded-integer "behavior" (an actor
-attribute, e.g. an ordinal opinion or a count) that evolves ALONGSIDE the network between the same
-observed waves, with its own rate function and its own evaluation function, estimated JOINTLY with
-the network side via a single Method-of-Moments fit. This is what lets a fitted model separate
-SELECTION (network effects that depend on the behavior - {opt simcov()}/{opt nodeicov()}/
-{opt nodeocov()} above) from INFLUENCE (behavior effects that depend on the network, below) in the
-SAME model. Verified directly against RSiena's own real source
-({cmd:src/model/EpochSimulation.cpp}, {cmd:src/model/variables/BehaviorVariable.cpp}): at each
-ministep opportunity, ONE pooled exponential waiting time is drawn from the grand total rate
-(summed across BOTH variables' own total rates), which variable gets to act is chosen proportional
-to its own share of that total, then an actor is chosen uniformly within that variable - the same
-continuous-time construction the network side alone already uses (see {bf:Estimation} above),
-generalized to a race between two competing Poisson processes. A behavior ministep has exactly
-THREE alternatives (change by -1, 0, or +1, clamped at the observed min/max range), chosen via the
-same multinomial-logit construction as a network ministep, now over 3 alternatives instead of n.
+{opt behavior(varlist)} adds a second dependent variable, a bounded-integer behavior (e.g. an
+ordinal opinion or a count) that changes together with the network between the same waves. It has
+its own rate and evaluation function and is estimated jointly with the network side in one
+Method-of-Moments fit. This separates selection (network effects that depend on the behavior, such
+as {opt behsim}, {opt simcov()}, {opt nodeicov()}, {opt nodeocov()}) from influence (behavior
+effects that depend on the network, below) in one model. As in RSiena
+({cmd:EpochSimulation.cpp}, {cmd:BehaviorVariable.cpp}), each ministep draws one exponential
+waiting time from the total rate summed over both variables, chooses the variable in proportion to
+its share of that total, and then chooses an actor within that variable. A behavior ministep has
+three alternatives (change by -1, 0, or +1, within the observed range), chosen by the same
+multinomial logit as a network ministep.
 
 {pstd}
-{bf:linear} (RSiena's own {cmd:LinearShapeEffect}) is the behavior-side analogue of {opt outdegree}
-- {bf:required} whenever {opt behavior()} is specified. Ministep delta = the raw change (\xb11);
-global/observed statistic = the raw sum of every actor's own current value.
+{bf:linear} (RSiena's linear, {cmd:LinearShapeEffect}) is the behavior analogue of {opt outdegree}
+and is required with {opt behavior()}. Ministep contribution: the change (+1 or -1). Statistic: the
+sum of the actors' current values.
 
 {pstd}
-{bf:quadratic} (RSiena's own {cmd:QuadraticShapeEffect}) - a genuine, easy-to-miss subtlety caught
-by reading the actual RSiena source, not the manual, and kept exactly as RSiena has it rather than
-"fixed" toward internal consistency (matching real RSiena's own numbers is this package's own
-certification standard throughout): the MINISTEP delta uses the CENTERED value
-({cmd:(2*(value-mean)+diff)*diff}), but the GLOBAL/observed statistic sums the RAW, uncentered
-value squared - two genuinely different scales for the same effect, both needed.
+{bf:quadratic} (RSiena's quad, {cmd:QuadraticShapeEffect}): as in RSiena, the ministep contribution
+uses the centred value, {cmd:(2*(value-mean)+diff)*diff}, while the statistic is the sum of the
+uncentred values squared.
 
 {pstd}
-{bf:avalt} (RSiena's own "avAlt", {cmd:AverageAlterEffect}) is the canonical INFLUENCE effect: an
-activated actor's own behavior value is pulled toward the average current value of that actor's own
-network neighbors (ministep delta = {cmd:diff * (average-neighbor-value - mean)}, 0 for an actor with
-no out-ties; statistic = sum over actors of (own value - mean) * (average neighbor value - mean),
-with mean = the overall behavior mean, as RSiena centers it). Before 2026-09-30 {cmd:nwsaom} used
-uncentered values here, which is a different model, not a reparametrization. {bf:A genuine, disclosed small-sample finding from certifying the joint estimator}: at a
-small toy scale (a handful of actors, on the order of RSiena's own smallest worked examples),
-{opt avalt} specifically can make the joint Robbins-Monro fit genuinely diverge - not a bug, but a
-real small-sample identification problem (too few behavior-ministep opportunities for
-Robbins-Monro to stay stable against this effect's own self-reinforcing nonlinearity: a stronger
-pull produces a more deterministic ministep, which produces an even stronger apparent pull).
-Confirmed directly (the phase-1 Jacobian is well-conditioned and the simulator is unbiased AT the
-true generating theta - ruling out a formula bug) and resolved simply by using a network with more
-actors/behavior activity.
+{bf:avalt} (RSiena's avAlt, {cmd:AverageAlterEffect}) is the standard influence effect: an actor's
+behavior is pulled toward the average current value of its network neighbors. Ministep
+contribution: {cmd:diff * (average neighbor value - mean)}, 0 for an actor without out-ties.
+Statistic: the sum over actors of (value - mean) * (average neighbor value - mean), with mean the
+overall behavior mean, as in RSiena. On very small networks (a handful of actors) a model with
+{opt avalt} can diverge because there are too few behavior ministeps to identify it; use more
+actors or waves.
 
 {pstd}
-{bf:avsim} (RSiena's own "avSim", verified directly against {cmd:SimilarityEffect.cpp} - the
-{cmd:average=TRUE, hi=TRUE, lo=TRUE} construction {cmd:EffectFactory.cpp} itself dispatches
-{cmd:"avSim"} to) is a SECOND, alternative influence parameterization to {opt avalt}: instead of
-pulling an actor's own value toward its neighbors' own AVERAGE VALUE, {opt avsim} pulls it toward
-maximizing its own AVERAGE SIMILARITY to neighbors (sim(a,b) = 1 - |a-b|/range), net of a
-DATA-DERIVED "similarityMean" centering constant - RSiena's own {it:b0}-style constant, playing
-exactly the same role {opt balance}'s own {it:balanceMean} does on the network side: computed
-automatically from the observed behavior data (every PERIOD-BASE wave, i.e. every wave except the
-very last, pooled by summation over every ordered actor pair - the identical pooling convention
-{opt balance}'s own constant already uses), never user-supplied. A real, disclosed quirk verified
-directly from RSiena's own R-side {cmd:rangeAndSimilarity()} source (not invented): this constant
-is defined as exactly 0 whenever the pooled data has zero variance, rather than the 1 the general
-formula would otherwise give.
+{bf:avsim} (RSiena's avSim, {cmd:SimilarityEffect} with average, hi, and lo) is an alternative
+influence effect: an actor's behavior moves toward a higher average similarity to its neighbors
+(sim(a,b) = 1 - |a-b|/range), minus RSiena's similarityMean. This constant is derived from the
+observed behavior, like {opt balance}'s balanceMean: it is pooled over every ordered actor pair in
+every wave except the last, by summing numerators and denominators. As in RSiena's
+{cmd:rangeAndSimilarity()}, it is 0 when the pooled data have zero variance.
 
 {pstd}
 {bf:behsim} (RSiena's {cmd:simX} with the co-evolving behavior as its variable, e.g. "drinking
-similarity") is the standard SELECTION effect of a co-evolution model, on the network side: the
-tie-level contribution of i->j is 1 - |z_i - z_j|/range - simMean, where z are the CURRENT
+similarity") is the standard selection effect of a co-evolution model, on the network side: the
+tie-level contribution of i->j is 1 - |z_i - z_j|/range - simMean, where z are the current
 simulated behavior values (they change during a simulated period, unlike a fixed covariate in
 {opt simcov()}), range is the observed behavior range and simMean the same similarity mean
-{opt avsim} uses. The centering by simMean matches RSiena, so the outdegree coefficient is directly
+{opt avsim} uses. The centring by simMean matches RSiena, so the outdegree coefficient is directly
 comparable to RSiena's.
 
 {pstd}
 {bf:How co-evolution models are estimated.} With two dependent variables, {cmd:nwsaom} uses
-UNCONDITIONAL Method of Moments, as RSiena does: the network rate and the behavior rate of every
+unconditional Method of Moments, as RSiena does: the network rate and the behavior rate of every
 period are estimated jointly with all other parameters in phases 1-3. The statistic for a network
 rate is the number of dyads in which the simulated end-of-period network differs from the network
 at the start of the period; for a behavior rate it is the sum of absolute differences between the
@@ -381,19 +298,28 @@ the same distances between the observed waves. The rates therefore get standard 
 ({cmd:e(rate_se)}/{cmd:e(rate_beh_se)}, or {cmd:e(rates_se)}/{cmd:e(rates_beh_se)} with
 {opt waves()}), and the table below the coefficients reports them per period. Statistics that
 link the two variables are lagged, as in RSiena: {opt behsim} (network side) is evaluated with the
-behavior at the START of the period, {opt avalt}/{opt avsim} (behavior side) with the network at
-the START of the period; the ministep change statistics always use the current state. Before
-2026-09-30 the rates were held at closed-form starting values and never estimated, which is not
-what RSiena does, and on real data (s50) let the behavior parameters run away. {cmd:e(tconv)}
+behavior at the start of the period, {opt avalt}/{opt avsim} (behavior side) with the network at
+the start of the period; the ministep contributions always use the current state. {cmd:e(tconv)}
 reports RSiena-style convergence t-ratios for every parameter including the rates and
 {cmd:e(tconv_max)} RSiena's overall maximum convergence ratio.
+
+{pstd}
+{bf:Starting values and a stuck behavior.} As in RSiena, the outdegree effect, the linear shape
+effect and the rates start at values computed from the data (RSiena's {cmd:getEffects()}), and
+phase 1 ends with RSiena's partial Newton step. On a few random seeds, phase 2 can still overshoot
+so far (for example to a large {opt quadratic} effect) that simulated actors hardly change the
+behavior any more and the estimates drift without end. {cmd:nwsaom} detects this (in two
+consecutive windows of 25 phase-2 steps, the simulated behavior changes by less than three
+quarters of the observed amount in every period) and then runs phases 1 and 2 once more with new
+simulations; a note says so. On the smoking co-evolution model of the benchmark this happened on 2
+of 60 seeds, and every seed then converged.
 
 {pstd}
 {bf:Check against RSiena.} RSiena 1.6.6 on its s50 data (friendship {cmd:s501-s503}, drinking
 {cmd:s50a}; {cmd:nwwebuse glasgow} holds the same data, nodes in a different order), network:
 density, reciprocity, transTrip, simX(drinking); behavior: linear, quad, avAlt. RSiena estimates
-(SE) versus {cmd:nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim
-behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
+(SE) versus {cmd:nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim}
+{cmd:behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 
 {p2colset 9 36 50 2}{...}
 {p2col:{it:effect}}{it:RSiena}{space 8}{it:nwsaom}{p_end}
@@ -411,127 +337,112 @@ behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 {marker endowcreation}{...}
 {pstd}
 {bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}):
-real RSiena models network/behavior change via three possible "roles" for any effect - evaluation
-(the default, direction-blind), creation (contributes only when the value INCREASES), and endowment
-(contributes only when it DECREASES) - and its own manual states that using an effect in all THREE
-roles together is exactly collinear ("never in all three... this leads to collinearity"). {cmd:nwsaom}
-offers the split for the behavior effects {opt quadratic}/{opt avalt}/{opt avsim} and for the
-network effect {opt reciprocity} (below). The behavior-side {bf:linear} split ({opt linearendow}
-with {opt linearcreation}, replacing {opt linear}) is refused: its two statistics (the sums of the
-decreases and of the increases) add up exactly to the behavior rate's distance statistic, so with
-the behavior rate estimated the model is not identified - RSiena reports "Covariance matrix not
-positive definite" and no standard errors for this model on s50 (alcohol, three waves). Splits are
-weakly identified in general - RSiena's manual: "Separating the contribution of an effect into two
-functions requires more of the data... this would lead to large standard errors" - so a fit with one
-can legitimately stop with an error reporting that {bf:thetaBound} (a coefficient's own magnitude
-exceeding 50 during estimation) was exceeded - {cmd:nwsaom}'s port of RSiena's identical safeguard
-({cmd:R/phase2.r}), not a bug - or that the phase-3 covariance matrix is too close to singular to
-invert. Either message means the same thing: use the plain effect instead, or supply better
-starting values via {opt behtheta0()}.
+RSiena lets an effect enter in three roles: evaluation (the default, direction-blind), creation
+(contributes only when the value increases), and endowment (contributes only when it decreases).
+Using an effect in all three roles is exactly collinear (RSiena manual: "never in all three...
+this leads to collinearity"). {cmd:nwsaom} offers the split for the behavior effects
+{opt quadratic}/{opt avalt}/{opt avsim} and for the network effect {opt reciprocity} (below). The
+behavior {bf:linear} split ({opt linearendow} with {opt linearcreation}, replacing {opt linear}) is
+refused: its two statistics (the sums of the decreases and of the increases) add up exactly to the
+behavior rate's distance statistic, so with the behavior rate estimated the model is not identified.
+RSiena reports "Covariance matrix not positive definite" and no standard errors for this model on
+s50 (alcohol, three waves). Splits are weakly identified in general (RSiena manual: "Separating the
+contribution of an effect into two functions requires more of the data... this would lead to large
+standard errors"), so a fit with one can stop with an error that {bf:thetaBound} (a coefficient
+exceeding 50 in magnitude during estimation, RSiena's safeguard in {cmd:R/phase2.r}) was exceeded,
+or that the phase-3 covariance matrix is too close to singular to invert. Either message means the
+same: use the plain effect instead, or supply better starting values via {opt behtheta0()}.
 
 {pstd}
-The same endowment/creation split is also available for {opt quadratic}/{opt avalt}/{opt avsim} (as
-{opt quadraticendow}/{opt quadraticcreation}, {opt avaltendow}/{opt avaltcreation},
-{opt avsimendow}/{opt avsimcreation}) - confirmed as real, RSiena-offered effect/type combinations
-via RSiena's own {cmd:getEffects()} output, not guessed. Each effect's own role-split is independent
-of every other effect's - e.g. {opt linear quadraticendow quadraticcreation} is a valid
-combination. Splitting more than one effect at once compounds the same
-weak-identification property described above; a direct RSiena cross-check splitting BOTH
-{opt linear} and {opt quadratic} together on the same real tutorial data reproduced unreliable
-standard errors and a non-positive-definite covariance matrix from real RSiena itself, confirming
-this is a shared property of the statistical problem, not specific to {cmd:nwsaom}.
+The split for {opt quadratic}/{opt avalt}/{opt avsim} is given as
+{opt quadraticendow}/{opt quadraticcreation}, {opt avaltendow}/{opt avaltcreation}, and
+{opt avsimendow}/{opt avsimcreation}, all effect/type combinations that RSiena's
+{cmd:getEffects()} offers. Each effect is split independently, e.g.
+{opt linear quadraticendow quadraticcreation} is valid. Splitting more than one effect makes weak
+identification more likely; RSiena itself gives unreliable standard errors and a non-positive-definite
+covariance matrix when both {opt linear} and {opt quadratic} are split on the same data.
 
 {pstd}
-The statistics are RSiena's ({cmd:StatisticCalculator::calculateBehaviorStatistics()}; since
-2026-10-01, before every split used the linear statistic). With c_i the actor's current value minus
-the overall mean and d_i = initial - current (0 if missing), the endowment statistic is the sum, over
-the actors whose value decreased (d_i > 0), of the effect's endowment statistic, and the creation
-statistic is minus the endowment statistic computed with -d: linear -d_i; quadratic
-c_i^2 - (c_i + d_i)^2; avAlt (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j))/outdeg_i over the
-alters j of i; avSim (sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|)/n_i over the alters with a
-value - all on the period's starting network. As in RSiena, an effect whose phase-1 derivative stays
-non-positive after a longer phase 1 is fixed at its starting value with a note (RSiena fixes the
-avSim endowment/creation pair on glasgow; so does {cmd:nwsaom}). Validated against RSiena on the
-glasgow alcohol co-evolution (unconditional, 5 seeds): linear, quadratic endowment/creation and avAlt
-within 0.03 standard errors; linear, quadratic and avAlt endowment/creation within 0.02 (weakly
-identified: standard errors vary by seed in both, and one of five {cmd:nwsaom} seeds stopped at
-thetaBound); linear, quadratic and avSim endowment/creation (fixed by both) within 0.07.
-RSiena also allows a single role (endowment or creation alone, with or without the evaluation
-effect); {cmd:nwsaom} requires the pair, which replaces the evaluation effect.
+The statistics are RSiena's ({cmd:StatisticCalculator::calculateBehaviorStatistics()}). With c_i
+the actor's current value minus the overall mean and d_i = initial - current (0 if missing), the
+endowment statistic is the sum, over the actors whose value decreased (d_i > 0), of the effect's
+endowment statistic, and the creation statistic is minus the endowment statistic computed with -d:
+linear -d_i; quadratic c_i^2 - (c_i + d_i)^2; avAlt (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j))
+/outdeg_i over the alters j of i; avSim (sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|)/n_i over
+the alters with a value, all on the period's starting network. As in RSiena, an effect whose
+phase-1 derivative stays non-positive after a longer phase 1 is fixed at its starting value with a
+note (RSiena fixes the avSim endowment/creation pair on glasgow; so does {cmd:nwsaom}). Validated
+against RSiena on the glasgow alcohol co-evolution (unconditional, 5 seeds): linear, quadratic
+endowment/creation and avAlt within 0.03 standard errors; linear, quadratic and avAlt
+endowment/creation within 0.02 (weakly identified: standard errors vary by seed in both, and one
+of five {cmd:nwsaom} seeds stopped at thetaBound); linear, quadratic and avSim endowment/creation
+(fixed by both) within 0.07. RSiena also allows a single role (endowment or creation alone, with
+or without the evaluation effect); {cmd:nwsaom} requires the pair, which replaces the evaluation
+effect.
 
 {pstd}
-This split extends to the NETWORK side too - {opt outdegreeendow}/
-{opt outdegreecreation} (replacing plain {opt outdegree}) and {opt reciprocityendow}/
-{opt reciprocitycreation} (replacing plain {opt reciprocity}) - confirmed real via RSiena's own
-{cmd:getEffects()} output ({cmd:density}/{cmd:recip} both offer {cmd:endow}/{cmd:creation} types).
-The statistics are RSiena's: an endowment statistic is minus the sum, over the ties lost between the
-waves, of the effect's tie statistic in the starting network (1 for outdegree; the reverse tie for
-reciprocity), a creation statistic the sum over the ties gained of the tie statistic in the end
-network (on s50 waves 1-2: reciprocity endowment -35, creation 27, as in RSiena).
-{opt outdegreeendow}/{opt outdegreecreation} is not identified - lost plus gained ties is exactly
-the distance that conditional estimation simulates to and that unconditional estimation uses as the
-rate's statistic, and RSiena reports a singular covariance matrix for this model under both
-estimators - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciprocityendow}/
-{opt reciprocitycreation}. On s50 waves 1-2 that model gives (RSiena, unconditional estimation,
-mean of five seeds, in parentheses) outdegree -2.04 (-2.04), reciprocity endowment 0.77 (0.82, SE
-0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run in the native plugin since
-2026-10-01 (0.2 s on s50; before, in Mata, about a minute). Not yet supported combined with co-evolution, multi-wave models,
-{opt present()} (composition change), or {opt missnet()} (real missing network data) - each is
-rejected outright (error 198) rather than silently producing a partially-gated fit.
+On the network side, {opt outdegreeendow}/{opt outdegreecreation} (replacing {opt outdegree}) and
+{opt reciprocityendow}/{opt reciprocitycreation} (replacing {opt reciprocity}) correspond to the
+endow/creation types of RSiena's density and recip. The statistics are RSiena's: an endowment
+statistic is minus the sum, over the ties lost between the waves, of the effect's tie statistic in
+the starting network (1 for outdegree; the reverse tie for reciprocity), a creation statistic the
+sum over the ties gained of the tie statistic in the end network (on s50 waves 1-2: reciprocity
+endowment -35, creation 27, as in RSiena). {opt outdegreeendow}/{opt outdegreecreation} is not
+identified: lost plus gained ties is exactly the distance that conditional estimation simulates to
+and that unconditional estimation uses as the rate's statistic, and RSiena reports a singular
+covariance matrix for this model under both estimators. {cmd:nwsaom} therefore refuses it; use
+{opt outdegree} with {opt reciprocityendow}/{opt reciprocitycreation}. On s50 waves 1-2 that model
+gives (RSiena, unconditional estimation, mean of five seeds, in parentheses) outdegree -2.04
+(-2.04), reciprocity endowment 0.77 (0.82, SE 0.8), reciprocity creation 3.65 (3.60), rate 4.32
+(4.34); a fit takes about 0.2 s. The network split cannot yet be combined with co-evolution,
+multi-wave models, {opt present()} (composition change), or {opt missnet()} (missing network
+data); each is refused (error 198).
 
 {pstd}
-{opt behtheta0()} sets starting values for the behavior-side eval-parameter vector (parallel to
-{opt theta0()} for the network side); the behavior rate's own STARTING value (it is then
-estimated, see above) is computed
-automatically from the observed behavior data via RSiena's own closed-form formula for the general
-(non-binary) case, mirroring how the network rate's own starting value is computed (see
-{bf:Estimation} below) - a disclosed simplification that skips RSiena's own separate binary-behavior
-logistic formula.
+{opt behtheta0()} sets starting values for the behavior effects (as {opt theta0()} does for the
+network effects). The starting value of the behavior rate (which is then estimated, see above) is
+computed from the observed behavior with RSiena's closed-form formula for the general (non-binary)
+case, as for the network rate (see {help nwsaom_remarks##estimation:Estimation}). RSiena uses a
+separate logistic formula for a binary behavior; {cmd:nwsaom} uses the general formula.
 
 {pstd}
-{opt behavior()} works with EITHER {opt wave1()}/{opt wave2()} (exactly two waves) OR
-{opt waves()} (three or more, chaining {it:nwaves}{cmd:-1} periods exactly as the network-only case
-does - see {bf:Estimation} below); it needs exactly one behavior variable name per wave, in the same
-temporal order. The coefficient table shows both variables' own effects in ONE table, network
-coefficients unprefixed and every behavior coefficient prefixed {cmd:beh_} (e.g. {cmd:beh_linear},
-{cmd:beh_avalt}) so the two evaluation functions stay visually distinct while being reported as the
-single joint fit they actually are. Two separate rate parameters are reported throughout - see
-{bf:Stored results} below - and {cmd:estat gof} gains a fourth default auxiliary statistic,
-{bf:behavior} (RSiena's own {cmd:BehaviorDistribution}: the exact bounded-value distribution of
-behavior values, no overflow category since every value is already clamped to
-{cmd:[min,max]} by construction), automatically added to the default {opt stats()} list.
+{opt behavior()} works with {opt wave1()}/{opt wave2()} (two waves) or {opt waves()} (three or
+more, chaining {it:nwaves}{cmd:-1} periods as in the network-only case, see
+{help nwsaom_remarks##estimation:Estimation}). It needs one behavior variable per wave, in the
+same order as the waves. Network and behavior coefficients appear in one table; behavior
+coefficients are prefixed {cmd:beh_} (e.g. {cmd:beh_linear}, {cmd:beh_avalt}). The two rates are
+reported separately (see {bf:Stored results} in {help nwsaom}). {cmd:estat gof} adds a fourth
+default auxiliary statistic, {bf:behavior} (RSiena's {cmd:BehaviorDistribution}: the distribution
+of behavior values over the observed range, with no overflow category).
 
 {pstd}
-Co-evolution has the same native (C) speed backend as the network-only case (see {bf:Performance}
-above), used automatically - no option needed to opt in - whenever every network AND every behavior
-term in the model has native coverage; a fit combining even one not-yet-natively-ported term on
-either side transparently falls back to the fully-certified, always-available Mata engine for the
-WHOLE fit, never a silent partial native run, and reports it ({cmd:e(engine)}, and a note after the
-output). Since 2026-10-01 every effect is native, the behavior endowment/creation splits included.
+Co-evolution uses the native (C) backend, like the network-only case (see {bf:Performance} in
+{help nwsaom}). Every effect, the behavior endowment/creation splits included, has native code. If
+a model ever contains a term without native code, the whole fit runs in Mata, and
+{cmd:e(engine)} and a note after the output say so.
 
 {pstd}
-{bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): endowment/creation
-for any behavior effect OTHER than {bf:linear} ({opt quadratic}/{opt avalt}/{opt avsim} - not yet
-attempted); network-side endowment/creation (not yet attempted); more than one co-evolving behavior
-variable.
+{bf:Not supported}: more than one co-evolving behavior variable, and the network
+endowment/creation split together with {opt behavior()}.
 
 {marker ratecov}{...}
 {title:Covariate-dependent rate}
 
 {pstd}
-By default every actor shares the same, constant opportunity rate within a period - the process
-that decides who gets the next chance to reconsider their ties runs at one shared speed for everyone.
-{opt ratecov(varname)} lets a node covariate speed some actors up and slow others down: actor i's own
-rate becomes the period rate times exp({bf:ratecovcoef}*{it:varname}[i]), so a higher covariate value
-means more frequent opportunities to act (or fewer, for a negative coefficient).
+By default every actor has the same opportunity rate within a period. {opt ratecov(varlist)} lets
+node covariates speed some actors up and slow others down (RSiena's RateX effects): actor i's rate
+becomes the period rate times exp(sum_k {it:b_k}*{it:x_k}[i]), one coefficient per variable, so a
+higher value means more frequent opportunities to act (or fewer, for a negative coefficient). The
+covariates are centred by their means unless {opt nocenter} is given.
 
 {pstd}
-The coefficient is estimated jointly with every other effect, the same Robbins-Monro process the rest
-of the model already uses. {opt ratecovcoef(#)} sets its STARTING value (like {opt theta0()} does for
-the eval effects) - omit it to start from 0. The coefficient and the effects (and, with
-{opt unconditional}, the rate) are one Robbins-Monro parameter vector. If the data do not identify the coefficient (a non-positive
-derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
-does - {bf:e(ratecoef_fixed)} reports whether this happened.
+The coefficients are estimated jointly with the other effects (and, with {opt unconditional}, the
+rate) in one Robbins-Monro parameter vector. {opt ratecovcoef(numlist)} sets their starting values,
+one per variable or one for all (default 0). If the data do not identify a coefficient (a
+non-positive derivative estimate), it is kept fixed at its starting value, as RSiena does;
+{bf:e(ratecoefs_fixed)} (with one variable {bf:e(ratecoef_fixed)}) reports whether this happened.
+{opt ratecov()} cannot yet be combined with co-evolution, multi-wave models, {opt present()}, or
+{opt missnet()}; it can be combined with {opt symmetric}.
 
 {marker covariates}{...}
 {title:Covariate effects for several variables}
@@ -547,12 +458,12 @@ names a variable's effect by its coefficient name, {cmd:interact(samex_smoke1#tr
 {pstd}
 Like RSiena's {cmd:coCovar(..., centered = TRUE)}, the default, {cmd:nwsaom} centres the covariates
 of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()} by their means (missing values
-take the mean), so that every coefficient, outdegree and the rate included, is RSiena's (since
-2026-10-01; before, the raw values were used, which changes only the outdegree coefficient and the
-rate intercept). {opt nocenter} uses the raw values, as {cmd:centered = FALSE}. The means are listed
-under the coefficient table and returned in {bf:e(covmeans)}. {opt samex()} does not depend on the
-centring; {opt simx()} is centred by the covariate's similarity mean, as RSiena's simX. Under the
-table, {cmd:nwsaom} also lists RSiena's names of the covariate, interaction and behavior effects
+take the mean), so that every coefficient, outdegree and the rate included, is RSiena's.
+{opt nocenter} uses the raw values, as {cmd:centered = FALSE}; this changes only the outdegree
+coefficient and the rate intercept. {opt samex()} does not depend on the centring; {opt simx()} is
+centred by the covariate's similarity mean, as RSiena's simX. The covariate means are returned in
+{bf:e(covmeans)}. The default output is compact; with {opt detail}, {cmd:nwsaom} also lists the
+covariate means and RSiena's names of the covariate, interaction and behavior effects
 ("alcohol1 ego", "same smoke1", "alcohol1 similarity", "alcohol1 ego x reciprocity"); all names are
 in {bf:e(rsiena_labels)}. With raw (uncentred) covariates, the model with gwespFF, transRecTrip,
 inPopSqrt, outAct, sameX on smoke1 and sport1 and egoX/altX/simX(alcohol1) agrees with RSiena's
@@ -567,14 +478,14 @@ co-evolution model (waves 1-3, smoking) with sameX on sport1 and alcohol1, simX(
 linear, quadratic and avAlt; RateX on two covariates. Every estimate, rates included, agrees
 with RSiena's within 0.07 standard errors (mean 0.02), standard errors within 10% (RateX,
 unconditional: nwsaom's 0.7-0.95 of RSiena's, whose mean is inflated by one seed). With
-outPopSqrt in place of outAct in the larger model, RSiena itself does not converge on these data
+outPopSqrt in place of outAct in the larger model, RSiena does not converge on these data
 (maximum convergence ratio about 3 on every seed, also started from {cmd:nwsaom}'s estimates),
-while {cmd:nwsaom} converges (below 0.25): with RSiena 1.6.6's default internal parameter 0,
-outPopSqrt's statistic uses the outdegrees at the start of the period without the square root, while
-its ministep uses the square root of the current outdegree (see {help nwsaom_remarks##nwsaom_interaction:Interaction effects}).
+while {cmd:nwsaom} converges (below 0.25). The reason is RSiena's default internal parameter 0 for
+outPopSqrt, reported as {browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}
+(see the note under {help nwsaom_remarks##nwsaom_interaction:Interaction effects}).
 Run with {cmd:setEffect(..., outPopSqrt, parameter = 1)}, RSiena converges on every seed and agrees
-with {cmd:nwsaom} within 0.06 standard errors (conditional, five seeds). Timings for the larger model: {cmd:nwsaom} about 1 s,
-RSiena 5-7 s per fit.
+with {cmd:nwsaom} within 0.06 standard errors (conditional, five seeds). Timings for the larger
+model: {cmd:nwsaom} about 1 s, RSiena 5-7 s per fit.
 
 {marker undirected}{...}
 {title:Undirected/symmetric relations}
@@ -603,29 +514,25 @@ actors meets and the tie changes if the initiator wants it (force), if both want
 wants to end one (agree), or if their summed utilities favor the change (joint).{p_end}
 
 {pstd}
-Before 2026-10-01 {opt symmetric} was required, its default was {bf:joint}, and {bf:forcing} and
-{bf:confirmation} did not exist. RSiena's {bf:confirmation} also computes the confirmation step for
-the no-change option (the actor choosing itself), which changes nothing but adds to the scores
-behind the derivative estimate; {cmd:nwsaom} leaves it out.
+RSiena's {bf:confirmation} also computes the confirmation step for the no-change option (the actor
+choosing itself), which changes nothing but adds to the scores behind the derivative estimate;
+{cmd:nwsaom} leaves it out.
 
 {pstd}
-Several effects are not meaningful once every tie is forced symmetric and are rejected outright:
-{opt reciprocity} (trivially constant - every tie is already reciprocated by construction),
-{opt cycle3}, {opt inactivity}, {opt outpopularity}, {opt ininass}, {opt inoutass}, {opt outoutass},
-{opt antiiso}, {opt isolatepop}, {opt transrectrip}, and {opt transtrip} (each either a constant, an
-exact duplicate of an already-available effect, or an effect real RSiena itself does not offer for a
+Effects that are not meaningful for a non-directed relation are refused: {opt reciprocity} (every
+tie is reciprocated), {opt cycle3}, {opt inactivity}, {opt outpopularity}, {opt ininass},
+{opt inoutass}, {opt outoutass}, {opt antiiso}, {opt isolatepop}, {opt transrectrip}, and
+{opt transtrip} (each is constant, duplicates another effect, or is not offered by RSiena for a
 non-directed relation). {opt outdegree}, {opt indegpopularity}, {opt outactivity}, {opt cycle4},
 {opt isolatenet}, {opt outiso}, {opt antiiniso}, {opt antiiniso2}, {opt inplus3}, {opt outinass},
 {opt gwesp()}, {opt transties}, {opt balance}, and every covariate effect ({opt nodecov()}/
 {opt nodeicov()}/{opt nodeocov()}/{opt nodematch()}/{opt simcov()} and their egoX/altX/sameX/simX
-aliases) remain available and genuinely meaningful - {opt gwesp()}/{opt transties}/{opt balance}/
-{opt antiiniso}/{opt antiiniso2}/{opt inplus3} required a native (C) port before {opt symmetric} could actually use them (that
-option needs 100% native term coverage); all five are now natively ported.
+aliases) are available.
 
 {pstd}
 {opt present()}, {opt missnet()}, and {opt ratecov()} can each be combined with {opt symmetric}.
-v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), and
-network-only (no {opt behavior()}/co-evolution).
+Otherwise the scope is two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}) and network-only
+models (no {opt behavior()}).
 
 {pstd}
 {bf:agree} reproduces RSiena's alter probability exactly, which for an alter utility u is
@@ -655,9 +562,10 @@ rate 1, as RSiena reports it, which is {cmd:nwsaom}'s time divided by n - 1, and
 {pstd}
 The conditional rate is thus on the scale of lambda^2 (the time at basic rate 1 equals lambda^2),
 the unconditional one on the scale of lambda, in RSiena as here: on glasgow waves 1-2 symmetrized
-0.30 and 0.55 ({bf:joint}; 0.55^2 = 0.30). With {opt ratecov()}, actor i's rate is lambda exp(b x_i), the alter is drawn by
-these rates as well, and the same conversion holds with n all actors. {opt rate0()} is on RSiena's
-scale too. The convergence t-ratio of the rate does not depend on the scale.
+0.30 and 0.55 ({bf:joint}; 0.55^2 = 0.30). With {opt ratecov()}, actor i's rate is
+lambda exp(b x_i), the alter is drawn by these rates as well, and the same conversion holds with n
+all actors. {opt rate0()} is on RSiena's scale too. The convergence t-ratio of the rate does not
+depend on the scale.
 
 {pstd}
 Validation (glasgow waves 1-2 symmetrized; density alone, density and {opt nodematch(smoke1)}, and
@@ -670,143 +578,112 @@ these model types is on the per-actor scale (5.6 on these data); from it, uncond
 often fails ("Unlikely to terminate this epoch") or leaves the rate at its start, so the RSiena
 references start the rate at 0.5.
 
-{pstd}
-Before 2026-10-01 {cmd:e(rate)} of a symmetric model was the per-actor rate rho; {bf:agree} used a
-different alter probability, the scores behind the standard errors used only the initiating actor's
-side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()} the actor and the
-alter were drawn uniformly, so the covariate could not affect who acts.
-
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}
 
 {pstd}
-{opt present(varlist)} handles actors who join or leave the network between observed waves - real
-RSiena's own "method of joiners and leavers" (Huisman and Snijders 2003, Section 5.3.3 of its own
-manual). One 0/1 variable per wave (same convention as {opt behavior()}): 1 marks an actor present
-(eligible to act, and eligible to be tied to by another actor) at that wave, 0 marks absent. An
-actor is treated as present for a given inter-wave PERIOD only if present at BOTH that period's own
-endpoint waves - {cmd:nwsaom} supports WHOLE-PERIOD composition change only (an actor's presence can
-change at wave boundaries, not at an arbitrary point strictly between two waves, unlike real
-RSiena's own more general continuous-time joiners/leavers construction) - this covers the common
-real-world case (an actor enrolled, transferred, or dropped out between whole survey waves).
+{opt present(varlist)} handles actors who join or leave the network between observed waves,
+RSiena's method of joiners and leavers (Huisman and Snijders 2003; RSiena manual, Section 5.3.3).
+It takes one 0/1 variable per wave (as {opt behavior()}): 1 marks an actor present (able to act
+and to receive ties) at that wave, 0 absent. An actor is present in a period only if present at
+both of its waves. {cmd:nwsaom} supports composition change at wave boundaries only, not RSiena's
+more general joining and leaving at any time within a period. This covers the common case of
+actors who enrol, transfer, or drop out between survey waves.
 
 {pstd}
-{bf:The observed wave data itself must already be prepared correctly} - {cmd:nwsaom} does not derive
-this for you, matching real RSiena's own manual, which places the identical responsibility on the
-user: an absent actor's own ties should be coded 0 before the actor joins, and FROZEN at their own
-last-observed values after the actor leaves (never left to look like the actor kept forming new
-ties while genuinely absent). The same applies to {opt behavior()}'s own values under co-evolution.
-Getting this wrong will not corrupt the fit silently - since an absent actor can no longer act, an
-inconsistently-coded absent actor's own row/column looks to the estimator like activity it can never
-explain, which is a real, avoidable way to trigger the {bf:thetaBound} safeguard (see
-{help nwsaom_remarks##endowcreation:Endowment/creation functions} above for what that error means and how
-it is meant to be read).
+The wave data must be prepared by the user, as RSiena's manual also requires: an absent actor's
+ties should be coded 0 before the actor joins and kept at their last observed values after the
+actor leaves. The same applies to {opt behavior()} values in co-evolution models. If this is done
+wrong, the absent actor's row and column show changes the model cannot explain, which can make the
+fit stop at the {bf:thetaBound} safeguard (see
+{help nwsaom_remarks##endowcreation:Endowment/creation functions}).
 
 {pstd}
-Composition change requires UNCONDITIONAL Method-of-Moments estimation in RSiena (its manual,
-Section 7.12.1), which is what {cmd:nwsaom} then uses, even without {opt unconditional} (see
-{bf:Estimation} below): the rates are
-estimated with the other parameters, only the actors present in a period get opportunities to
-act, and a rate's score counts only them. {opt present()} uses the native (C) backend when the
-model is otherwise native-eligible - the acting-actor draw, the pooled rate, and the tie-target
-restriction are all computed natively too, so a composition-change fit runs at essentially the
-same speed as an equivalent fit without it.
+Composition change requires unconditional Method-of-Moments estimation in RSiena (manual, Section
+7.12.1), and {cmd:nwsaom} uses it even without {opt unconditional} (see
+{help nwsaom_remarks##estimation:Estimation}): the rates are estimated with the other parameters,
+only the actors present in a period get opportunities to act, and a rate's score counts only them.
+{opt present()} uses the native (C) backend, including the draw of the acting actor, the pooled
+rate, and the restriction of tie targets, so a fit with composition change runs about as fast as
+one without.
 
 {pstd}
-{bf:Genuinely out of scope}: real RSiena's own more general continuous/fractional within-period
-join-leave timing (whole-period presence only here); the "structural zeros/ones" alternative method
-real RSiena's own manual also documents (a simpler, less statistically efficient approach - joiners
-and leavers was chosen instead). Missing tie/behavior data (a related but distinct mechanism from
-composition change) IS supported - see {help nwsaom_remarks##missingdata:Missing data} below.
+{bf:Not supported}: joining and leaving within a period (only whole-period presence), and RSiena's
+alternative method of structural zeros/ones for composition change, which is simpler but less
+efficient. Missing tie and behavior data, a distinct mechanism, is supported; see
+{help nwsaom_remarks##missingdata:Missing data}.
 
 {marker missingdata}{...}
 {title:Missing data}
 
 {pstd}
-{opt missnet(matlist)}/{opt missbeh(varlist)} handle dyads/actors whose true value at a given wave
-is unknown rather than genuinely absent - real RSiena's own regular missing-data machinery (Section
-5.3.2 of its own manual), a DIFFERENT mechanism from composition change above (missing data is
-uncertainty about an otherwise-active actor's own ties/value; composition change is the actor not
-being part of the network at all - both can be used together).
+{opt missnet(matlist)}/{opt missbeh(varlist)} handle dyads and actors whose value at a wave is
+unknown, RSiena's missing-data treatment (manual, Section 5.3.2). This differs from composition
+change: missing data are uncertainty about the ties or values of an active actor, composition
+change means the actor is not part of the network. Both can be used together.
 
 {pstd}
-{opt missnet(matlist)} takes one 0/1 n x n MATRIX name per wave, in the same temporal order as
-{opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:missnet(m1 m2)}) - 1 marks a dyad
-missing at that wave, 0 observed. A raw Stata matrix, not an {cmd:nwset} network object - build one
-with {cmd:matrix input} or {cmd:mkmat} from your own missingness indicator. {opt missbeh(varlist)}
-takes one 0/1 VARIABLE per wave (same "one variable per wave" convention as {opt present()}),
-marking which actors' behavior value is missing at that wave; requires {opt behavior()}. Both are
-optional and independent of each other - specify {opt missnet()} alone, {opt missbeh()} alone, or
-both together.
+{opt missnet(matlist)} takes one 0/1 n x n matrix name per wave, in the same order as
+{opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:missnet(m1 m2)}); 1 marks a dyad
+missing at that wave, 0 observed. These are Stata matrices, not {cmd:nwset} networks; build them
+with {cmd:matrix input} or {cmd:mkmat}. {opt missbeh(varlist)} takes one 0/1 variable per wave (as
+{opt present()}), marking actors whose behavior value is missing at that wave; it requires
+{opt behavior()}. The two options can be used separately or together.
 
 {pstd}
-Missing dyads/actors are handled in two steps, matching real RSiena's own real mechanism exactly.
-(1) {bf:Imputation}: every missing dyad is filled in via last-observation-carried-forward (the value
-from the last wave where it WAS observed - 0 if never observed by that point); every missing
-behavior value is filled in from the previous observation, else the next observation, else the
-observationwise (cross-sectional, same-wave) mode. Imputed values then participate in simulation
-completely normally - unlike {opt present()}, missing data does NOT restrict who can act. (2)
-{bf:Target/simulated-statistic masking}: a dyad/actor missing at EITHER endpoint wave of a period is
-excluded from BOTH the observed target statistic and every simulated replicate's own statistic for
-that period, so the moment condition is not biased by the exclusion - the same principle real RSiena
-applies, reusing every already-certified effect's own statistic function unchanged (no per-effect
-special-casing needed for {opt outdegree}/{opt reciprocity}/{opt linear}/{opt quadratic}/etc.).
+Missing values are handled in two steps, as in RSiena. (1) {bf:Imputation}: a missing dyad takes
+its value from the last wave where it was observed (0 if never observed so far); a missing behavior
+value takes the previous observation, else the next observation, else the mode of that wave.
+Imputed values are then simulated normally; unlike {opt present()}, missing data do not restrict
+who can act. (2) {bf:Masking}: a dyad or actor missing at either wave of a period is excluded from
+the observed target statistic and from every simulated statistic for that period, so the moment
+conditions are not biased. This works with every effect's statistic unchanged.
 
 {pstd}
-{bf:A disclosed approximation for network-dependent behavior effects}: {opt avalt}/{opt avsim}'s own
-statistic for a given actor depends on that actor's real alters' CURRENT values, which vary across
-simulated replicates - so the masking above, provably exact for single-actor-local effects
-({opt linear}/{opt quadratic}), is only an intentional approximation there. This is empirically
-favorable on most data (masking clearly outperforms not masking) but can occasionally be less
-precise than an idealized per-effect masking implementation would be under heavy missingness
-combined with {opt avalt}/{opt avsim} specifically.
+For {opt avalt}/{opt avsim} the masking is an approximation: an actor's statistic depends on the
+current values of its alters, which vary across simulations. Masking is exact for effects that
+depend only on the actor's own value ({opt linear}/{opt quadratic}). In practice masking works
+better than not masking, but with heavy missingness and {opt avalt}/{opt avsim} it can be less
+precise.
 
 {pstd}
-Missing data DOES use the native (C) backend, when the model is otherwise native-eligible - the
-masked final-network/final-behavior statistic is computed natively too, matching the Mata engine's
-own result to machine precision. A dyad missing at either wave of a period is not counted in the
-distance that conditional estimation simulates to, nor in the rate's distance statistic of
-unconditional estimation, nor in their target (as RSiena).
+Missing data use the native (C) backend, with the same results as the Mata engine to machine
+precision. A dyad missing at either wave of a period is not counted in the distance that
+conditional estimation simulates to, nor in the rate's distance statistic of unconditional
+estimation, nor in their target (as RSiena).
 
 {pstd}
-{bf:Genuinely out of scope}: missing COVARIATE data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
-{opt simcov()} etc. must be fully observed). Real RSiena's own "structural zeros/ones" mechanism - a
-separate, simpler alternative to ordinary missing data for dyads whose value is fixed by design
-rather than merely unobserved - IS implemented; see {help nwsaom_remarks##structural:Structural zeros/ones}
-below.
+{bf:Not supported}: missing covariate data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
+{opt simcov()} etc. must be fully observed). Structural zeros/ones, for dyads whose value is fixed
+by design rather than unobserved, are supported; see
+{help nwsaom_remarks##structural:Structural zeros/ones}.
 
 {marker structural}{...}
 {title:Structural zeros/ones}
 
 {pstd}
-{opt structural(matname)} marks dyads whose tie value is fixed by design rather than a genuine actor
-choice - real RSiena's own "structural values" mechanism (a DIFFERENT, simpler idea than the missing
-data above: a structural dyad's value is not unknown, it is known and unchangeable, e.g. a legally
-mandated reporting relationship, a physically impossible tie, or a dyad an analyst wants held fixed
-for a counterfactual). Real RSiena marks a structural dyad by embedding sentinel values 10 (structural
-zero)/11 (structural one) directly in the network data array; this port uses a SEPARATE 0/1 mask
-matrix instead, matching {opt missnet()}'s own separate-matrix convention rather than RSiena's
-embedded-sentinel one.
+{opt structural(matname)} marks dyads whose tie value is fixed by design rather than chosen by an
+actor, RSiena's structural values. Unlike missing data, the value of a structural dyad is known
+and cannot change (e.g. a mandated reporting relationship, an impossible tie, or a dyad held fixed
+for a counterfactual). RSiena codes structural zeros and ones as 10 and 11 in the network data;
+{cmd:nwsaom} uses a separate 0/1 matrix instead, like {opt missnet()}.
 
 {pstd}
-{opt structural(matname)} takes ONE 0/1 n x n MATRIX (a raw Stata matrix, not an {cmd:nwset} network
-object - build one with {cmd:matrix input} or {cmd:mkmat}), zero diagonal, 1 marking a dyad whose tie
-value is frozen for the whole period. The marked dyad's OBSERVED value must be IDENTICAL at both
-{opt wave1()}/{opt wave2()} - a dyad that genuinely changed between waves cannot be structural (its
-value was evidently not fixed) and is rejected outright with an error, rather than silently ignored.
+{opt structural(matname)} takes one 0/1 n x n Stata matrix (not an {cmd:nwset} network; build it
+with {cmd:matrix input} or {cmd:mkmat}) with a zero diagonal; 1 marks a dyad whose value is fixed
+for the whole period. A marked dyad must have the same observed value in {opt wave1()} and
+{opt wave2()}; a dyad that changed between the waves is refused with an error.
 
 {pstd}
-Mechanically, a structural dyad is excluded from every actor's own ministep candidate set during
-simulation - {opt outdegree}/{opt reciprocity}/etc.'s own statistic and change functions are reused
-completely unchanged (the dyad simply never appears as a toggle option), so no per-effect
-special-casing was needed, mirroring the design of {opt missnet()} above.
+A structural dyad is removed from every actor's set of possible ministep changes. All effect
+statistics are used unchanged.
 
 {pstd}
-v1 scope: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no
-{opt behavior()}); not yet combinable with {opt symmetric}, {opt ratecov()}, or the network
+Scope: two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), network-only (no
+{opt behavior()}); cannot yet be combined with {opt symmetric}, {opt ratecov()}, or the network
 endowment/creation split ({opt outdegreeendow}/{opt outdegreecreation}/{opt reciprocityendow}/
-{opt reciprocitycreation}) - each is rejected outright when combined with {opt structural()}. Runs in
-the native plugin since 2026-10-01 (before, in Mata: 42 s instead of 0.2 s on glasgow).
+{opt reciprocitycreation}), each refused with {opt structural()}. A fit on glasgow takes about
+0.2 s.
 
 {marker estimation}{...}
 {title:Estimation}
@@ -819,16 +696,16 @@ one) and runs only the periods of a step in parallel, and only when the network 
 for threads to pay off. {opt cores(#)} sets the number of threads (default: all physical cores).
 Each simulation draws from its own random stream derived from the seed and its position, so a
 given {opt seed()} gives identical results with {cmd:cores(1)} and with any other number of
-threads. Since 2026-10-01 non-directed ({opt symmetric}), {opt ratecov()}, endowment/creation and
-{opt structural()} fits use the threaded path too (before, single simulations: e.g. 3.5 s instead of
-0.3 s for {opt ratecov()} with two covariates).
-Timings on one 18-core machine: the s50 three-wave network-only model {cmd:outdegree reciprocity}
-{cmd:transtrip} 0.33 s, the two-wave {cmd:outdegree reciprocity} model 0.23 s; the s50
-three-wave co-evolution model 0.63 s; a synthetic 500-actor three-wave co-evolution model 18 s.
+threads. Non-directed ({opt symmetric}), {opt ratecov()}, endowment/creation and
+{opt structural()} fits use the threaded path too (e.g. 0.3 s for {opt ratecov()} with two
+covariates). Timings on one 18-core machine: the s50 three-wave network-only model
+{cmd:outdegree reciprocity transtrip} 0.33 s, the two-wave {cmd:outdegree reciprocity} model
+0.23 s; the s50 three-wave co-evolution model 0.63 s; a synthetic 500-actor three-wave
+co-evolution model 18 s.
 
 {pstd}
 Coefficients are estimated by the Method of Moments via Robbins-Monro stochastic approximation,
-matching RSiena's own default algorithm and phase structure: Phase 1 estimates the Jacobian
+RSiena's default algorithm and phase structure: Phase 1 estimates the Jacobian
 (sensitivity of each expected statistic to each parameter) via {opt k0()} independent simulated
 replicates at the starting values and ends with RSiena's partial quasi-Newton step; Phase 2
 performs the Robbins-Monro update across RSiena's default of 4 diminishing-gain subphases
@@ -838,9 +715,10 @@ standard errors (e(V), RSiena's sandwich formula), the convergence t-ratios {cmd
 deviation / its standard deviation, one per parameter including the rates) and RSiena's overall
 maximum convergence ratio {cmd:e(tconv_max)}. As in RSiena, a fit is considered converged when
 every |t| is below 0.1 and the overall ratio below 0.25; otherwise, run the model again from the
-estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Every fit prints
-these t-ratios for all parameters, rates included, below the coefficient table, then the overall
-ratio; {cmd:e(tratio)} holds the ones of the coefficients in e(b), on the same scale.
+estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Below the coefficient
+table, every fit prints the overall ratio and names any parameter whose |t| is 0.1 or more; the
+{opt detail} option lists the t-ratios of all parameters, rates included, and {cmd:e(tratio)}
+holds the ones of the coefficients in e(b), on the same scale.
 
 {pstd}
 {bf:The rate parameters} (one per period: how often, on average, an actor gets the opportunity to
@@ -864,24 +742,24 @@ network-only models with composition change ({opt present()} restricting some ac
 is a Method-of-Moments parameter estimated jointly with the effects; its statistic is the distance
 above at the end of a unit period, its standard error comes from the sandwich formula. Starting
 values: {opt rate0()}, else RSiena's closed-form value computed from the data (a start far from
-the data - e.g. twice the closed-form value - can make the phase-1 derivative estimates unusable
+the data, e.g. twice the closed-form value, can make the phase-1 derivative estimates unusable
 and the fit diverge).{p_end}
 {p2colreset}{...}
 
 {pstd}
 The two estimators are consistent for the same model but differ in finite samples: on RSiena's
-s50 data RSiena's own conditional and unconditional estimates differ by up to 0.3 standard errors
+s50 data RSiena's conditional and unconditional estimates differ by up to 0.3 standard errors
 (outdegree more negative and reciprocity larger under conditional estimation). Checked against
 RSiena 1.6.6 (five models on s50, five seeds each): with the default (conditional) estimation every
 parameter, the rates included, is within 0.07 RSiena standard errors of RSiena's default output,
 and with {opt unconditional} within 0.06 of RSiena's {cmd:cond = FALSE} output; the co-evolution
-model agrees with RSiena's (unconditional) default within 0.05. Before 2026-10-01 the rate was held
-at its closed-form starting value throughout estimation and only refined afterwards; the effects
-were then estimated from simulations with too little change, 0.3-0.6 standard errors off.
+model agrees with RSiena's (unconditional) default within 0.05. Versions of {cmd:nwsaom} before
+1 October 2026 did not centre covariates and held the rates of co-evolution models fixed, so
+their estimates differ.
 
 {pstd}
-{opt waves(namelist)} chains three or more waves into ONE pooled fit: the effects are POOLED/shared
-across every inter-wave period (their statistics summed over periods, RSiena's multi-period
+{opt waves(namelist)} chains three or more waves into one pooled fit: the effects are shared
+across every period (their statistics summed over periods, RSiena's multi-period
 Method-of-Moments convention), while each period has its own rate, reported as
 e(rates)/e(rates_se)/e(rate_tratios) (1 x (nwaves-1) matrices) rather than the scalars
 e(rate)/e(rate_se)/e(rate_tratio) of the two-wave {opt wave1()}/{opt wave2()} path.
