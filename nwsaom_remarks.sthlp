@@ -845,9 +845,10 @@ standard errors (e(V), RSiena's sandwich formula), the convergence t-ratios {cmd
 deviation / its standard deviation, one per parameter including the rates) and RSiena's overall
 maximum convergence ratio {cmd:e(tconv_max)}. As in RSiena, a fit is considered converged when
 every |t| is below 0.1 and the overall ratio below 0.25; otherwise, run the model again from the
-estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Every fit prints
-these t-ratios for all parameters, rates included, below the coefficient table, then the overall
-ratio; {cmd:e(tratio)} holds the ones of the coefficients in e(b), on the same scale.
+estimates ({opt theta0()} and {opt rate0()}, see the examples in {help nwsaom}). Below the coefficient
+table, every fit prints the overall ratio and names any parameter whose |t| is 0.1 or more; the
+{opt detail} option lists the t-ratios of all parameters, rates included, and {cmd:e(tratio)}
+holds the ones of the coefficients in e(b), on the same scale.
 
 {pstd}
 {bf:The rate parameters} (one per period: how often, on average, an actor gets the opportunity to
