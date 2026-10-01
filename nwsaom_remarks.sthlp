@@ -231,17 +231,14 @@ outPopSqrt x recip and egoX x inActSqrt x transTrip within 0.1. For the last thr
 with {cmd:setEffect(..., parameter = 1)} for inActSqrt and outPopSqrt.
 
 {pstd}
-{it:Note on RSiena's default for inActSqrt and outPopSqrt.} Since RSiena 1.6.1 (January 2026;
-unchanged in 1.6.6 on CRAN and 1.6.12 on GitHub), internal parameter 0 makes the outPop and inAct
-effect classes use the degrees at the start of the period, and parameter -1 the sum of start-of-period
-and current degrees. RSiena moved the default of outPop and inAct to 1 to keep their behavior, but
-outPopSqrt, inActSqrt and the other effects built on the same classes (outPop.c, inAct.c, outPopMore,
-outPopSqrtMore, outPopThreshold) kept the default 0. Their statistic therefore uses start-of-period
-degrees (outPopSqrt then without the square root), while the ministep uses the current degrees. This
-appears to be a bug and has been reported as
-{browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}. {cmd:nwsaom} deliberately
-does not copy it: {opt outpopularity} and {opt inactivity} use the documented statistic, the same as
-RSiena with {cmd:setEffect(..., parameter = 1)}. To compare with RSiena, set that parameter there.
+{it:Note on RSiena's default for inActSqrt and outPopSqrt.} Since RSiena 1.6.1 (unchanged in 1.6.6
+on CRAN and 1.6.12 on GitHub), these two effects have the default internal parameter 0, which makes
+their statistic use the degrees at the start of the period (outPopSqrt then without the square root),
+while their ministep still uses the square root of the current degree. This appears to be a bug and
+has been reported as {browse "https://github.com/stocnet/rsiena/issues/151":RSiena issue #151}.
+{cmd:nwsaom} deliberately does not copy it: {opt outpopularity} and {opt inactivity} use the square
+root of the current degree throughout, the same as RSiena with {cmd:setEffect(..., parameter = 1)}.
+To compare with RSiena, set that parameter there.
 
 {pstd}
 Like any other effect, an interaction's own identifiability depends on the data: two effects that
