@@ -106,4 +106,32 @@ __m = (sum(__D) - trace(__D)) / (rows(__x) * (rows(__x) - 1))
 assert(abs(SaomSimMean(__x) - __m) < 1e-12)
 end
 
+* covariates are centred by their means by default, like RSiena's
+* coCovar(centered = TRUE): egox() of the raw variable gives the same
+* fit as egox() of the centred variable; nocenter keeps the raw values
+* (then the outdegree coefficient changes, the egox coefficient does not
+* in expectation); e(covmeans) holds the means, e(centered) the choice
+nwsaom, `w12' outdegree reciprocity egox(alcohol1) altx(alcohol1) `o'
+matrix __braw = e(b)
+assert e(centered) == 1
+matrix __cm = e(covmeans)
+local cn : colnames __cm
+assert "`cn'" == "alcohol1"
+qui sum alcohol1
+assert reldif(__cm[1,1], r(mean)) < 1e-12
+nwsaom, `w12' outdegree reciprocity egox(alcc) altx(alcc) `o'
+matrix __bc = e(b)
+assert mreldif(__braw, __bc) < 1e-8
+nwsaom, `w12' outdegree reciprocity egox(alcohol1) altx(alcohol1) nocenter `o'
+assert e(centered) == 0
+matrix __bn = e(b)
+assert abs(__bn[1,1] - __braw[1,1]) > 0.1
+* ratecov() is centred too
+nwsaom, `w12' outdegree reciprocity ratecov(smoke1) `o'
+local r1 = e(ratecoef)
+nwsaom, `w12' outdegree reciprocity ratecov(smkc) `o'
+assert reldif(e(ratecoef), `r1') < 1e-8
+* RSiena's effect names, in e(b)'s order
+nwsaom, `w12' outdegree reciprocity samex(smoke1) egox(alcohol1) interact(reciprocity#egox) `o'
+assert `"`e(rsiena_labels)'"' == "outdegree (density)|reciprocity|same smoke1|alcohol1 ego|alcohol1 ego x reciprocity"
 di as text "test_nwsaom_covariates: all checks passed"

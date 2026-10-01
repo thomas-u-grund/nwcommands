@@ -519,8 +519,8 @@ several times must be named by variable (error otherwise).
 coefficient is unchanged). The plugin gets x/range and the mean (protocol 9; older plugins: Mata).
 Plugin limits raised: MAXTERMS 32, MAXATTR 24 (larger models fall back to Mata).
 Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate effects for
-several variables": all within 0.07 SE. Note: nwsaom does not centre egox/altx/nodecov/ratecov
-covariates (RSiena does by default); centre them to compare outdegree/rate with RSiena.
+several variables": all within 0.07 SE. (Covariates are now centred by default, see "covariates are
+centred" below.)
 
 ## nwsaom conditional estimation could run forever; e(engine) (changed 2026-10-01)
 
@@ -585,3 +585,19 @@ coda's `effectiveSize()`, n*var(x)/spectrum0.ar(x) via `ergm_spec0_scalar()`, an
 averages then drifted with the seed (mean degree 2.25-2.41 vs observed 1.98). Defaults now follow
 R's `gof.ergm()`: 100 draws and the fit's `e(mcmc_burnin)`/`e(mcmc_interval_final)`. Even so, such
 models vary from seed to seed in R too (same theta: mean degree 1.97-2.12 over 4 seeds).
+
+## nwsaom covariates are centred by default; RSiena's effect names (changed 2026-10-01)
+
+RSiena's `coCovar()` is `centered = TRUE` by default: the values are stored minus their mean
+(missing values imputed by the mean), so egoX, altX, egoPlusAltX and RateX use centred values (sameX
+is unaffected, simX has its own similarity mean). nwsaom used the raw values, so with an uncentred
+covariate the outdegree coefficient (and the rate) differed from RSiena's although the covariate
+coefficients agreed. nwsaom now centres egox/altx/nodecov/ratecov covariates (`SaomCovPrep()`),
+`nocenter` keeps the raw values; `e(covmeans)` and `e(centered)` are returned and the means are
+listed under the table, with RSiena's effect names for the covariate, interaction and behavior
+effects (`e(rsiena_labels)`, all coefficients in e(b) order). Results of earlier fits with an
+uncentred egox/altx/nodecov/ratecov variable change in outdegree (and rate/ratecov intercepts);
+the coefficient names are unchanged. Validated with raw variables (glasgow, realistic model with
+gwesp, transrectrip, inPopSqrt, outAct, sameX, egoX/altX/simX of alcohol1; cond/uncond, 5 seeds):
+all coefficients including outdegree within 0.07 RSiena SE; RateX of two raw covariates within 0.03.
+

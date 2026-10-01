@@ -155,6 +155,7 @@
 {syntab:Covariate-dependent rate}
 {synopt:{opth ratecov(varlist)}}Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp(sum of {it:b_k}*{it:x_k}[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, {opt present()}, or {opt missnet()}; combinable with {opt symmetric}. See {help nwsaom_remarks:Remarks}{p_end}
 {synopt:{opt ratecovcoef(numlist)}}Starting values for the {opt ratecov()} coefficients, one per variable or one for all (default 0){p_end}
+{synopt:{opt nocenter}}Use the raw values of the covariates of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()}. By default they are centred by their means (missing values set to the mean), as RSiena's {cmd:coCovar(centered = TRUE)}, so that all coefficients, including outdegree and the rate, are RSiena's; the means are listed under the table and returned in {bf:e(covmeans)}. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients. {opt samex()} does not depend on it; {opt simx()} is centred by its similarity mean either way{p_end}
 
 {marker symmetric_options}{...}
 {syntab:Undirected/symmetric relations}
@@ -306,8 +307,10 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(rate)}			network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks). {opt symmetric} fits: on RSiena's scale for pairwise models (see {help nwsaom_remarks##undirected:Undirected/symmetric relations} in nwsaom_remarks)
 		  {bf:e(ratecoefs)}		{opt ratecov()} fits: 1 x K covariate-rate coefficients, columns named by the variables; also {bf:e(ratecoefs_se)}, {bf:e(ratecoefs_tratio)}, {bf:e(ratecoefs_fixed)} (with one variable also the scalars {bf:e(ratecoef)}, {bf:e(ratecoef_se)}, {bf:e(ratecoef_tratio)}, {bf:e(ratecoef_fixed)})
 		  {bf:e(engine)}		{bf:native} if the simulations ran in the C plugin, {bf:mata} if in Mata (then also a note after the table and {bf:e(engine_why)})
+		  {bf:e(rsiena_labels)}	RSiena's effect names of the coefficients, in {bf:e(b)}'s order, separated by "|" (e.g. "alcohol1 ego", "same smoke1", "alcohol1 ego x reciprocity")
 		  {bf:e(rate_actor)}		non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 		  {bf:e(conditional)}		1 for conditional estimation, 0 for unconditional
+		  {bf:e(centered)}		1 if the covariates were centred (the default), 0 with {opt nocenter}
 		  {bf:e(rate_tratio)}		network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see {help nwsaom_remarks##estimation:Estimation} in nwsaom_remarks)
 		  {bf:e(rate_se)}		standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
 		  {bf:e(has_behavior)}		1 if this is a co-evolution fit ({opt behavior()} specified), 0 otherwise
@@ -338,6 +341,7 @@ Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 		  {bf:e(rates_beh)}		1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 		  {bf:e(rate_beh_tratios)}	1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 		  {bf:e(rates_beh_se)}		1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
+		  {bf:e(covmeans)}		means of the covariates of {opt egox()}/{opt altx()}/{opt nodecov()}/{opt ratecov()}, columns named by the variables (subtracted unless {opt nocenter})
 		  {bf:e(tconv)}			RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. Printed after the coefficient table, followed by e(tconv_max). (Before 2026-10-01 e(tratio) and the rate t-ratios were mean / (sd/sqrt(k3)), about 31.6 times this scale with the default k3(1000))
 
 {pstd}

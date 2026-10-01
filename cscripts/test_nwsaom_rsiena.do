@@ -383,4 +383,14 @@ _net_check "rate1 outdegree reciprocity egox_alcc interact_nodeocov_reciprocity"
 	"5.155 -2.315 2.552 0.311 -0.879" "0.745 0.160 0.286 0.166 0.360"
 di as text "interactions PASS"
 
+* (f) the realistic model (c) with the raw alcohol1: nwsaom centres the
+* covariate as RSiena's coCovar() does, so the reference is the same,
+* outdegree included (2026-10-01; before, outdegree was off)
+nwsaom, `w12' outdegree reciprocity gwesp(.69) transrectrip indegpopularity outactivity ///
+	samex(smoke1 sport1) egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(12345)
+_net_check "rate1 outdegree reciprocity samex_smoke1 samex_sport1 altx_alcohol1 egox_alcohol1 indegpopularity outactivity transrectrip gwesp_.69 simx_alcohol1" ///
+	"6.948 -1.590 2.243 0.268 0.116 -0.067 0.086 -0.364 -0.180 -0.116 2.079 0.869" ///
+	"1.248 0.614 0.374 0.245 0.195 0.103 0.117 0.295 0.069 0.258 0.428 0.446"
+di as text "(f) realistic model, raw covariate PASS"
+
 di as text "nwsaom network-only vs RSiena: PASS"

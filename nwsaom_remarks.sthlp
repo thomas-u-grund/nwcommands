@@ -508,11 +508,19 @@ list the effect types in their fixed order and the variables in the order given.
 names a variable's effect by its coefficient name, {cmd:interact(samex_smoke1#transtrip)}.
 
 {pstd}
-As in RSiena, centre a covariate before using it in {opt egox()}, {opt altx()}, {opt nodecov()} or
-{opt ratecov()} if the outdegree (and rate) coefficients are to be comparable with RSiena's, which
-centres covariates by default ({cmd:coCovar(..., centered = TRUE)}); the covariate coefficients are
-the same either way. {opt simx()} is centred by the covariate's similarity mean, as RSiena's simX
-(since 2026-10-01).
+Like RSiena's {cmd:coCovar(..., centered = TRUE)}, the default, {cmd:nwsaom} centres the covariates
+of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()} by their means (missing values
+take the mean), so that every coefficient, outdegree and the rate included, is RSiena's (since
+2026-10-01; before, the raw values were used, which changes only the outdegree coefficient and the
+rate intercept). {opt nocenter} uses the raw values, as {cmd:centered = FALSE}. The means are listed
+under the coefficient table and returned in {bf:e(covmeans)}. {opt samex()} does not depend on the
+centring; {opt simx()} is centred by the covariate's similarity mean, as RSiena's simX. Under the
+table, {cmd:nwsaom} also lists RSiena's names of the covariate, interaction and behavior effects
+("alcohol1 ego", "same smoke1", "alcohol1 similarity", "alcohol1 ego x reciprocity"); all names are
+in {bf:e(rsiena_labels)}. With raw (uncentred) covariates, the model with gwespFF, transRecTrip,
+inPopSqrt, outAct, sameX on smoke1 and sport1 and egoX/altX/simX(alcohol1) agrees with RSiena's
+default run within 0.07 standard errors for every coefficient (conditional and unconditional, five
+seeds), and RateX on two raw covariates within 0.03.
 
 {pstd}
 Validation against RSiena 1.6.6 (glasgow waves 1-2, five seeds each, conditional and unconditional):

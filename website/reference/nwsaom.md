@@ -136,6 +136,7 @@ control_options]
 |---|---|
 | `ratecov(varlist)` | Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes *rate**exp(sum of *b_k***x_k*[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated jointly with every other effect. Not yet supported combined with co-evolution, multi-wave models, `present()`, or `missnet()`; combinable with `symmetric`. See [Remarks](nwsaom_remarks) |
 | `ratecovcoef(numlist)` | Starting values for the `ratecov()` coefficients, one per variable or one for all (default 0) |
+| `nocenter` | Use the raw values of the covariates of `egox()`, `altx()`, `nodecov()` and `ratecov()`. By default they are centred by their means (missing values set to the mean), as RSiena's `coCovar(centered = TRUE)`, so that all coefficients, including outdegree and the rate, are RSiena's; the means are listed under the table and returned in **e(covmeans)**. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients. `samex()` does not depend on it; `simx()` is centred by its similarity mean either way |
 
 **Undirected/symmetric relations**
 
@@ -241,8 +242,10 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(rate)** network rate parameter (wave1()/wave2() path only): conditional estimation, the mean simulated time to reach the observed distance (RSiena's rate); unconditional, a Method-of-Moments estimate (see [Estimation](nwsaom_remarks) in nwsaom_remarks). `symmetric` fits: on RSiena's scale for pairwise models (see [Undirected/symmetric relations](nwsaom_remarks) in nwsaom_remarks)
 - **e(ratecoefs)** `ratecov()` fits: 1 x K covariate-rate coefficients, columns named by the variables; also **e(ratecoefs_se)**, **e(ratecoefs_tratio)**, **e(ratecoefs_fixed)** (with one variable also the scalars **e(ratecoef)**, **e(ratecoef_se)**, **e(ratecoef_tratio)**, **e(ratecoef_fixed)**)
 - **e(engine)** **native** if the simulations ran in the C plugin, **mata** if in Mata (then also a note after the table and **e(engine_why)**)
+- **e(rsiena_labels)** RSiena's effect names of the coefficients, in **e(b)**'s order, separated by "|" (e.g. "alcohol1 ego", "same smoke1", "alcohol1 ego x reciprocity")
 - **e(rate_actor)** non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other `nwsaom` rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)
 - **e(conditional)** 1 for conditional estimation, 0 for unconditional
+- **e(centered)** 1 if the covariates were centred (the default), 0 with `nocenter`
 - **e(rate_tratio)** network rate parameter's convergence t-ratio on RSiena's scale, missing under conditional estimation (wave1()/wave2() path only - see [Estimation](nwsaom_remarks) in nwsaom_remarks)
 - **e(rate_se)** standard error of e(rate) (wave1()/wave2() path only); conditional estimation: RSiena's, the standard deviation of the simulated times
 - **e(has_behavior)** 1 if this is a co-evolution fit (`behavior()` specified), 0 otherwise
@@ -275,6 +278,7 @@ Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required
 - **e(rates_beh)** 1 x (nwaves-1) per-period estimated behavior rate parameters (co-evolution, waves() path only)
 - **e(rate_beh_tratios)** 1 x (nwaves-1) per-period behavior rate convergence t-ratios (co-evolution, waves() path only)
 - **e(rates_beh_se)** 1 x (nwaves-1) per-period standard errors of e(rates_beh) (co-evolution, waves() path only)
+- **e(covmeans)** means of the covariates of `egox()`/`altx()`/`nodecov()`/`ratecov()`, columns named by the variables (subtracted unless `nocenter`)
 - **e(tconv)** RSiena-style convergence t-ratios (phase-3 mean deviation / its standard deviation), one per parameter including the rates; all below 0.1 in absolute value indicates good convergence. Printed after the coefficient table, followed by e(tconv_max). (Before 2026-10-01 e(tratio) and the rate t-ratios were mean / (sd/sqrt(k3)), about 31.6 times this scale with the default k3(1000))
 
 `estat gof` stores the following in `r()`, one pair per requested statistic (default **outdegree**/**indegree**/**geodesic**):

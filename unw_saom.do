@@ -7219,6 +7219,122 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	return(res)
 }
 
+/* RSiena's coCovar(centered = TRUE) (sienaDataCreate.r): a constant
+   covariate is stored minus its mean, missing values imputed by it (0
+   after centring). SaomCovPrep(): one variable, its mean in `m';
+   SaomCovPrepMat(): every column. */
+real colvector SaomCovPrep(real colvector x, real scalar center, real scalar m) {
+	real colvector y
+	real scalar i
+	m = mean(select(x, x :< .))
+	y = x
+	for (i=1; i<=rows(y); i++) if (y[i] >= .) y[i] = m
+	if (center) y = y :- m
+	return(y)
+}
+real matrix SaomCovPrepMat(real matrix X, real scalar center) {
+	real matrix Y
+	real scalar k, m
+	Y = X
+	for (k=1; k<=cols(X); k++) Y[., k] = SaomCovPrep(X[., k], center, m)
+	return(Y)
+}
+
+/* RSiena's effect names (getEffects() effectName) of the effects of a fit,
+   in e(b) order, "|"-separated: covariate effects with their variable
+   ("alcohol1 ego", "same smoke1"), interactions joined by " x ",
+   endowment/creation marked, behavior effects with the behavior's name. */
+string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar symmetric, real scalar decay) {
+	string scalar v
+	real scalar u
+	u = strpos(coef, "_")
+	v = (u ? substr(coef, u + 1, .) : "")
+	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "outdegreeendow") return("outdegree (density) [endowment]")
+	if (term == "outdegreecreation") return("outdegree (density) [creation]")
+	if (term == "reciprocity") return("reciprocity")
+	if (term == "reciprocityendow") return("reciprocity [endowment]")
+	if (term == "reciprocitycreation") return("reciprocity [creation]")
+	if (term == "nodematch") return("same " + v)
+	if (term == "nodeicov") return(v + " alter")
+	if (term == "nodeocov") return(v + " ego")
+	if (term == "nodecov") return(v + " ego and alt")
+	if (term == "simcov") return(v + " similarity")
+	if (term == "transtrip") return("transitive triplets")
+	if (term == "transmedtrip") return("transitive mediated triplets")
+	if (term == "transrectrip") return("transitive recipr. triplets")
+	if (term == "cycle3") return("3-cycles")
+	if (term == "cycle4") return("4 cycles (1)")
+	if (term == "transties") return("transitive ties")
+	if (term == "balance") return("balance")
+	if (term == "gwesp") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "indegpopularity") return("indegree - popularity (sqrt)")
+	if (term == "outpopularity") return("outdegree - popularity (sqrt)")
+	if (term == "outactivity") return("outdegree - activity")
+	if (term == "inactivity") return("indegree - activity (sqrt)")
+	if (term == "isolatenet") return("network-isolate")
+	if (term == "outiso") return("out-isolate")
+	if (term == "antiiso") return("anti isolates")
+	if (term == "antiiniso") return("anti in-isolates")
+	if (term == "antiiniso2") return("anti in-near-isolates")
+	if (term == "in3plus") return("indegree at least 3")
+	if (term == "isolatepop") return("isolate - popularity")
+	if (term == "outoutass") return("out-out degree^(1/1) assortativity")
+	if (term == "outinass") return("out-in degree^(1/1) assortativity")
+	if (term == "inoutass") return("in-out degree^(1/1) assortativity")
+	if (term == "ininass") return("in-in degree^(1/1) assortativity")
+	return(coef)
+}
+
+string scalar SaomRSienaLabels(class ErgmModel scalar M, real scalar symmetric, string scalar behname, | pointer(class SaomBehaviorModel scalar) scalar Mbp) {
+	string rowvector lab, nms
+	string scalar out, nm, base, l
+	real scalar t, ci, k, idx, pass, isego
+	class ErgmTermData scalar tdt
+
+	lab = J(1, M.nterms, "")
+	ci = 0
+	for (t=1; t<=M.nterms; t++) {
+		tdt = *M.td[t]
+		if (M.names[t] == "behsim") lab[t] = behname + " similarity"
+		else if (M.names[t] != "interact") lab[t] = _SaomRSLabel1(M.names[t], M.coefnames[ci + 1], symmetric, tdt.decay)
+		ci = ci + M.npar[t]
+	}
+	// interactions: the components' labels joined by " x ", RSiena's ego
+	// effects (interactionType "ego") first
+	for (t=1; t<=M.nterms; t++) {
+		if (M.names[t] != "interact") continue
+		tdt = *M.td[t]
+		nms = tokens(tdt.sptype, "|")
+		l = ""
+		for (pass=1; pass<=2; pass++) {
+			for (k=1; k<=(cols(nms)+1)/2; k++) {
+				isego = anyof(("nodeocov", "inactivity", "isolatenet", "antiiso", "antiiniso", "antiiniso2", "inplus3", "isolatepop"), nms[2*k-1])
+				if ((pass == 1) != isego) continue
+				idx = (rows(tdt.levels) >= (cols(nms)+1)/2 * 2 ? tdt.levels[(cols(nms)+1)/2 + k] : 0)
+				l = l + (l != "" ? " x " : "") + (idx > 0 ? lab[idx] : nms[2*k-1])
+			}
+		}
+		lab[t] = l
+	}
+	out = invtokens(lab, "|")
+	if (args() >= 4) {
+		for (t=1; t<=(*Mbp).nterms; t++) {
+			nm = (*Mbp).names[t]
+			base = subinstr(subinstr(nm, "_endow", ""), "_creation", "")
+			if (base == "linear") l = behname + " linear shape"
+			else if (base == "quadratic") l = behname + " quadratic shape"
+			else if (base == "avalt") l = behname + " average alter"
+			else if (base == "avsim") l = behname + " average similarity"
+			else l = behname + " " + base
+			if ((*Mbp).fntype[t] == 1) l = l + " [endowment]"
+			if ((*Mbp).fntype[t] == 2) l = l + " [creation]"
+			out = out + "|" + l
+		}
+	}
+	return(out)
+}
+
 /* estat gof (nwsaom_estat.ado): one simulated period of the fitted model,
    in the plugin when it covers the model (2026-10-01; before, co-evolution
    gof always ran in Mata, and network gof ignored endowment/creation,
