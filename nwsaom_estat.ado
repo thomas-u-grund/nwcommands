@@ -453,13 +453,13 @@ program define nwsaom_estat_gof, rclass
 	// --- the Mahalanobis test + violin plot, per auxiliary statistic.
 	local __gof_twotailed = ("`twotailed'" != "")
 	di
-	di as txt "Goodness of fit (nwsaom), Mahalanobis-distance test (Lospinoso & Snijders 2019, real RSiena's own sienaGOF() construction), " `nsim' " simulated repl. at the fitted coefficients"
+	di as txt "Goodness of fit: Mahalanobis distance test, " as res `nsim' as txt " simulations at the estimates" _continue
 	if `__gof_join' {
-		if `nperiods' > 1 di as txt "(pooled across all " `nperiods' " periods by summation - real RSiena's own join=TRUE default)"
+		if `nperiods' > 1 di as txt " (" as res `nperiods' as txt " periods pooled)"
+		else di ""
 	}
-	else {
-		di as txt "(join(off): a SEPARATE test per period - real RSiena's own join=FALSE, replacing the pooled test entirely)"
-	}
+	else di as txt " (one test per period)"
+	local __gof_graphs ""
 	di as txt "{hline 60}"
 	foreach __gof_s of local stats {
 	  if `__gof_join' {
@@ -474,6 +474,7 @@ program define nwsaom_estat_gof, rclass
 			as txt cond(`__gof_pval' < 0.05, " (evidence AGAINST fit)", " (no evidence against fit)")
 
 		local __gof_thisname = cond("`name'"=="", "gof_`__gof_s'", "`name'_`__gof_s'")
+		local __gof_graphs "`__gof_graphs' `__gof_thisname'"
 		local __gof_behminval = 0
 		if "`__gof_s'" == "behavior" mata: st_local("__gof_behminval", strofreal(__nwsaom_beh_minval))
 		nwsaom_estat_gofviolin __nwsaom_gof_sim_`__gof_s' __nwsaom_gof_obs_`__gof_s' ///
@@ -495,6 +496,7 @@ program define nwsaom_estat_gof, rclass
 				as txt cond(`__gof_pval' < 0.05, " (evidence AGAINST fit)", " (no evidence against fit)")
 
 			local __gof_thisname = cond("`name'"=="", "gof_`__gof_s'_p`__pd'", "`name'_`__gof_s'_p`__pd'")
+			local __gof_graphs "`__gof_graphs' `__gof_thisname'"
 			local __gof_behminval = 0
 			if "`__gof_s'" == "behavior" mata: st_local("__gof_behminval", strofreal(__nwsaom_beh_minval))
 			nwsaom_estat_gofviolin __nwsaom_gof_simP`__pd'_`__gof_s' __nwsaom_gof_obsP`__pd'_`__gof_s' ///
@@ -506,7 +508,8 @@ program define nwsaom_estat_gof, rclass
 	  }
 	}
 	di as txt "{hline 60}"
-	di as txt "Note: p < 0.05 (RSiena convention) is evidence AGAINST the fitted model on that auxiliary statistic - the observed network is then an outlier relative to what the fitted model actually simulates. One-tailed by default (twotailed not requested); each violin's own x-axis title shows its p-value, matching real RSiena's plot.sienaGOF() convention exactly."
+	di as txt "p < 0.05: the observed statistic is unlikely under the fitted model (" cond(`__gof_twotailed', "two", "one") "-tailed test)."
+	di as txt "Violin plots:" as res "`__gof_graphs'"
 
 	capture mata: mata drop __nwsaom_gof_cfg
 	foreach __gof_s of local stats {
@@ -766,7 +769,9 @@ program define nwsaom_estat_gofviolin
 	// per-category summary: median, p25/p75 (thin embedded box), p2.5/p97.5
 	// (dashed envelope) - RSiena's own default perc=0.05, i.e. a 95%
 	// envelope.
-	tempname __gv_summ
+	// fixed Mata names, not tempname: a recycled tempname can overwrite the
+	// fitted model's term data, which nwsaom keeps under tempnames
+	local __gv_summ "__nwsaom_gv_summ"
 	mata: `__gv_summ' = J(`ncat', 5, .)
 	forvalues __c = 1/`ncat' {
 		qui summarize v`__c', detail
@@ -789,7 +794,7 @@ program define nwsaom_estat_gofviolin
 	// missing-value separator row between categories so a SINGLE
 	// `twoway rarea ..., horizontal' layer renders every violin without
 	// spuriously connecting one category's shape to the next.
-	tempname __gv_stack
+	local __gv_stack "__nwsaom_gv_stack"
 	mata: `__gv_stack' = J(0, 3, .)		// xlo, xhi, y
 	// `kdensity ..., generate() n(50)' needs at least 50 OBSERVATIONS in
 	// the current dataset to store its own 50-point grid (missing
@@ -881,7 +886,6 @@ program define nwsaom_estat_gofviolin
 		title("`title'", size(small)) legend(off) name(`graphname', replace)
 	restore
 
-	di as txt "(plot saved as {bf:`graphname'}; violin = simulated distribution's own shape, thin black bar = interquartile range, dashed gray lines = 95% envelope, red = observed)"
 end
 
 // ===========================================================================

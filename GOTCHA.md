@@ -638,3 +638,16 @@ divergence, decided 2026-10-01: the RSiena default looks like a bug (introduced 
 outPopSqrtMore, outPopThreshold, inAct.c, inActSqrt at 0) and was reported as
 https://github.com/stocnet/rsiena/issues/151. Do NOT "fix" nwsaom to match RSiena's default; when
 validating against RSiena, set parameter = 1 for these effects. Revisit if the issue is resolved.
+
+## Never store a Mata object under a Stata `tempname` in nwsaom code
+
+`nwsaom.ado` keeps each effect's term data in Mata variables named with Stata `tempname`s
+(`__td_*`), referenced by pointer from `__nwsaom_last_M`. Stata reissues a tempname string once
+the program that created it returns, so any later program that does
+`tempname x` + `mata: \`x' = ...` (or `mata drop \`x'`) can overwrite or delete the fitted model's
+term data. Symptom: the NEXT command that reads the model fails, e.g. a second `estat gof` with
+`SaomNativeSetup(): 3261 non class/struct found where class/struct required`, or
+`[6,6] found where scalar required` in a change function. Found 2026-10-01 in `estat gof`'s
+violin-plot routine (`__gv_summ`, `__gv_stack`); fixed by using fixed names (`__nwsaom_gv_*`).
+Rule: in any code that runs after an nwsaom fit, name Mata objects explicitly with a `__nwsaom_`
+prefix; `tempname` is fine only for Stata matrices and scalars.
