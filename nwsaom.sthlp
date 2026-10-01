@@ -126,7 +126,7 @@
 {marker coev_options}{...}
 {syntab:Behavior co-evolution effects}
 {synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks{p_end}
-{synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
+{synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified, as {opt outdegree} is on the network side{p_end}
 {synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). {bf:Currently refused}: the two statistics (decreases and increases) add up to the behavior rate's distance statistic, so with the behavior rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too); use {opt linear}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt linearcreation}}Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to {opt linearendow}; must be given together with it{p_end}
 {synopt:{opt quadratic}}Behavior quadratic shape effect; requires {opt behavior()}, not combinable with {opt quadraticendow}/{opt quadraticcreation}{p_end}
@@ -238,9 +238,9 @@ tie/behavior data ({opt missnet()}/{opt missbeh()}) are both supported - see
 each one's own scope and caveats. RSiena's own more general continuous/fractional within-period
 join-leave timing is out of scope - {cmd:nwsaom} supports whole-period composition change only.{p_end}
 {p2col: o}Behavior co-evolution ({opt behavior()}) supports exactly ONE co-evolving behavior
-variable. The linear shape effect can be split into endowment/creation roles
-({opt linearendow}/{opt linearcreation}); the same split is also available for
-{opt quadratic}/{opt avalt}/{opt avsim} - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks.{p_end}
+variable. {opt quadratic}, {opt avalt} and {opt avsim} can be split into endowment and creation
+effects; the linear shape effect cannot, because with the behavior rate estimated that model is
+not identified - see {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks.{p_end}
 {p2colreset}{...}
 
 {pstd}
