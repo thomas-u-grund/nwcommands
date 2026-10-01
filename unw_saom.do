@@ -6812,6 +6812,24 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
    two initiatives' native calls cannot collide even if both run in the
    same Stata session.
 */
+/* _SaomFrameLayoutOK(): whether the current frame (__saom_native) has
+   exactly the variables a native call needs, in order: v1 v2 a1..aK
+   [vbeh] [mv1 mv2 missbeh] [present]. The names are compared, not only
+   the count: a coev frame and a network frame can have the same number
+   of variables. */
+real scalar _SaomFrameLayoutOK(real scalar nattr, real scalar beh, real scalar hasmiss, real scalar haspres) {
+	string rowvector want
+	real scalar i
+	want = ("v1", "v2")
+	for (i=1; i<=nattr; i++) want = want, "a" + strofreal(i)
+	if (beh) want = want, "vbeh"
+	if (hasmiss) want = want, ("mv1", "mv2", "missbeh")
+	if (haspres) want = want, "present"
+	if (st_nvar() != cols(want)) return(0)
+	for (i=1; i<=cols(want); i++) if (st_varname(i) != want[i]) return(0)
+	return(1)
+}
+
 /* SaomTrailer11(): the protocol-11 model trailer of the plugin's wire
    string (native/saom_sim.c parse_model_trailer11()): endowment/creation
    codes of the network and behavior terms, and the structural dyads.
@@ -6935,7 +6953,7 @@ struct SaomCountedResult scalar SaomSimulateIntervalNative(class ErgmGraph scala
 	// silently reused with a stale/mismatched layout. SaomEstimateRM()
 	// drops this frame once, via SaomNativeCleanupFrame(), after its own
 	// last native call - not here, not per call.
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 0, hasmiss, haspresentNet)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
@@ -7101,7 +7119,7 @@ real scalar SaomSimulateCondTimeNative(class ErgmGraph scalar G, class ErgmGraph
 	stata("capture frame create __saom_native")
 	st_framecurrent("__saom_native")
 
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 0, 0, 0)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
@@ -7248,7 +7266,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevNative(
 	stata("capture frame create __saom_native")
 	st_framecurrent("__saom_native")
 
-	if (st_nvar() > 0 & st_nvar() != neededvars) {
+	if (st_nvar() > 0 & !_SaomFrameLayoutOK(nattr, 1, hasmiss, haspresentNet)) {
 		st_framecurrent(origframe)
 		stata("frame drop __saom_native")
 		stata("frame create __saom_native")
