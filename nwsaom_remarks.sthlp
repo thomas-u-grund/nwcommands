@@ -432,8 +432,10 @@ endowment 0.11 against 0.09 and creation 0.64 against 0.66 (standard errors 0.55
 targets are identical to RSiena's (-74/94, -17.3/31, -74/93, -41/61) and the estimates agree. The split of a
 sparse effect such as {opt transrectrip} can need a longer first phase: with the default {opt k0(50)} two of ten
 seeds stopped (a divergence error, or a parameter kept at its starting value because its estimated derivative
-was not positive), while {opt k0(200)} gave RSiena's values; if a split fit stops or reports a fixed
-parameter, increase {opt k0()}.
+was not positive), while {opt k0(200)} gave RSiena's values. Since 2026-10-22 a non-positive derivative
+estimate first lengthens phase 1 (up to 200 replicates, RSiena's rule in phase1.r) before the parameter is fixed;
+about 4% of {opt transrectrip} split fits still stop with a divergence error (RSiena stops at its
+{cmd:thetaBound} too, less often); if a split fit stops, try another {opt seed()} or a larger {opt k0()}.
 
 {pstd}
 {bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}):

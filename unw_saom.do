@@ -4190,14 +4190,24 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	real rowvector par, par1, dev, prevdev, prod0, prod1, ac, stdcap, thav, fchange, changestep, thprev, m3
 	real rowvector rmfixed, rmfixedDec
 	real scalar ptot, k, nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
-	real scalar attempt, diverged
+	real scalar attempt, diverged, kp1
 	real rowvector n2minimum, n2maximum
 
 	ptot = cols(par0)
 
-	// --- Phase 1: Jacobian by the score-function method
-	(*simfn)(C, par0, K0, 1, Zdev, Zsco)
-	Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / K0
+	// --- Phase 1: Jacobian by the score-function method. As RSiena (phase1.r): if the diagonal of the
+	// derivative matrix has a non-positive element and phase 1 has fewer than 200 replicates, a new phase 1
+	// of twice the length is run before anything is fixed (the later last-resort fixing is below).
+	kp1 = K0
+	while (1) {
+		(*simfn)(C, par0, kp1, 1, Zdev, Zsco)
+		Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / kp1
+		if (kp1 < 200 & any(diagonal(Dhat) :<= 0)) {
+			kp1 = kp1 * 2
+			continue
+		}
+		break
+	}
 	rmfixedDec = J(1, ptot, 0)
 	DhatDec = Dhat
 	for (k=1; k<=ptot; k++) {
