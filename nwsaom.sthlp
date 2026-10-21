@@ -58,6 +58,8 @@
 {synopt:{opt reciprocity}}Reciprocated-tie effect, evaluation-function role{p_end}
 {synopt:{opt reciprocityendow}}Reciprocity effect, ENDOWMENT role - same mechanism/rules as {opt outdegreeendow}, applied to reciprocity instead, with {opt outdegree}. Works with {opt waves()}, {opt present()} and {opt missnet()}; not yet supported combined with co-evolution. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt reciprocitycreation}}Reciprocity effect, CREATION role - the mirror of {opt reciprocityendow}; must be given together with it{p_end}
+{synopt:{opt transtiesendow}}Transitive ties ({opt transties}), ENDOWMENT role (RSiena: transTies, type endow) - the effect counts only for tie withdrawals, and its statistic is minus the number of lost ties that had a two-path in the start network; must be given together with {opt transtiescreation} and not with plain {opt transties}. Works with {opt waves()}, {opt present()} and {opt missnet()}; not yet with co-evolution or {opt symmetric}{p_end}
+{synopt:{opt transtiescreation}}Transitive ties, CREATION role - counts only new ties; its statistic is the number of gained ties that have a two-path in the end network; must be given together with {opt transtiesendow}{p_end}
 
 {marker covariate_options}{...}
 {syntab:Node covariate effects}

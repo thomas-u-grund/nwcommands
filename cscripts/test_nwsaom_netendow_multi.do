@@ -133,3 +133,70 @@ assert !missing(e(ratecoef)) & colsof(e(b)) == 2 & colsof(e(rates)) == 2
 capture nwsaom, waves(sy1 sy2 sy3) symmetric outdegree ratecov(rcx) present(sp1 sp2 sp3)
 assert _rc == 198
 di as text "ratecov() with waves() PASS"
+
+* --- transTies endowment/creation: native statistic equals the Mata one, then the full fit
+nwclear
+mata:
+mata set matastrict off
+void tte_test() {
+	class ErgmModel scalar M
+	class ErgmGraph scalar G0, Gw
+	class ErgmTermData scalar t1, t2, t3, t4
+	struct SaomCountedResult scalar res
+	struct SaomNativeConfig scalar cfg
+	real rowvector fn, mst, maxerr
+	real scalar n, k, i, j, r
+	n = 40
+	rseed(77)
+	M = ErgmModel(); M.init()
+	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+	t2 = ErgmTermData(); M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), t2, ("reciprocity"))
+	t3 = ErgmTermData(); M.addterm("transtiesendow", 1, &stat_transitiveties(), &change_saom_transties(), t3, ("transtiesendow"))
+	t4 = ErgmTermData(); M.addterm("transtiescreation", 1, &stat_transitiveties(), &change_saom_transties(), t4, ("transtiescreation"))
+	fn = SaomFntypeFromNames(M)
+	assert(fn == (0, 0, 1, 2))
+	cfg = SaomNativeSetup(M)
+	cfg.fntype = fn
+	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
+	G0 = ErgmGraph(); G0.init(n, 1)
+	for (k=1; k<=round(0.12*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	maxerr = J(1, 4, 0)
+	for (r=1; r<=20; r++) {
+		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, 1.5, -0.3, 1.0), 3, 1, 0)
+		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
+		maxerr = colmax(abs(res.stat \ mst) )
+		assert(max(abs(res.stat - mst)) < 1e-9)
+	}
+}
+tte_test()
+end
+mata:
+void tte_data() {
+	n = 50
+	rseed(99)
+	A = (runiform(n, n) :< 0.08)
+	A = A - diag(diag(A))
+	for (w=1; w<=3; w++) {
+		st_matrix("__T" + strofreal(w), A)
+		F = (runiform(n, n) :< 0.10)
+		A = abs(A - F)
+		A = A - diag(diag(A))
+	}
+}
+tte_data()
+end
+forvalues w = 1/3 {
+	nwset, mat(__T`w') directed name(tt`w') nooutput
+}
+nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity transtiesendow transtiescreation k3(300) seed(4)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+* plain + endow is collinear, a single role is refused
+capture nwsaom, waves(tt1 tt2 tt3) outdegree transties transtiesendow transtiescreation
+assert _rc == 198
+capture nwsaom, waves(tt1 tt2 tt3) outdegree transtiesendow
+assert _rc == 198
+di as text "transTies endowment/creation PASS"

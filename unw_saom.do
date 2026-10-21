@@ -3351,6 +3351,23 @@ class ErgmGraph scalar SaomBuildGainedTiesGraph(class ErgmGraph scalar Gstart, c
    - 14 and 10 on s50 - a statistic that barely responds to the
    parameter; and the positive sign of the outdegree endowment count
    made its phase-1 derivative negative.) */
+/* the endowment (1) / creation (2) role of every network term, from the term names
+   ("...endow" / "...creation"); 0 = evaluation. Independent of the order the terms were registered in. */
+real rowvector SaomFntypeFromNames(class ErgmModel scalar M) {
+	real rowvector f
+	real scalar t, l
+	string scalar nm
+
+	f = J(1, M.nterms, 0)
+	for (t=1; t<=M.nterms; t++) {
+		nm = M.names[t]
+		l = strlen(nm)
+		if (l > 4) if (substr(nm, l - 4, .) == "endow") f[t] = 1
+		if (l > 8) if (substr(nm, l - 7, .) == "creation") f[t] = 2
+	}
+	return(f)
+}
+
 real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowvector fntype,
 	real rowvector stat, class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend) {
 
@@ -3358,7 +3375,8 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 	real rowvector out, part
 	real matrix ties
 	real scalar t, k, pos, built_lost, built_gained, recip, v
-	string scalar nm
+	string scalar nm, base
+	class ErgmTermData scalar td
 
 	out = stat
 	built_lost = 0
@@ -3389,21 +3407,28 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 			}
 			out[pos] = v
 		}
-		else if (fntype[t] == 1) {
-			if (!built_lost) {
-				Glost = SaomBuildLostTiesGraph(Gstart, Gend)
-				built_lost = 1
-			}
-			part = (*M.statfn[t])(Glost, *M.td[t])
-			for (k=1; k<=M.npar[t]; k++) out[pos+k-1] = part[k]
-		}
 		else {
-			if (!built_gained) {
-				Ggained = SaomBuildGainedTiesGraph(Gstart, Gend)
-				built_gained = 1
+			// any other dyadic effect (transTies, ...): RSiena's endowmentStatistic() /
+			// creationStatistic() = minus the sum over LOST ties (plus the sum over GAINED
+			// ties) of the effect's tie statistic, evaluated in the start (end) network
+			td = *M.td[t]
+			base = (fntype[t] == 1 ? substr(nm, 1, strlen(nm) - 5) : substr(nm, 1, strlen(nm) - 8))
+			v = 0
+			if (fntype[t] == 1) {
+				ties = Gstart.all_ties()
+				for (k=1; k<=rows(ties); k++) {
+					if (Gend.has_edge(ties[k,1], ties[k,2])) continue
+					v = v - _saom_tiestat(Gstart, base, td.attr, td.decay, ties[k,1], ties[k,2])
+				}
 			}
-			part = (*M.statfn[t])(Ggained, *M.td[t])
-			for (k=1; k<=M.npar[t]; k++) out[pos+k-1] = part[k]
+			else {
+				ties = Gend.all_ties()
+				for (k=1; k<=rows(ties); k++) {
+					if (Gstart.has_edge(ties[k,1], ties[k,2])) continue
+					v = v + _saom_tiestat(Gend, base, td.attr, td.decay, ties[k,1], ties[k,2])
+				}
+			}
+			out[pos] = v
 		}
 		pos = pos + M.npar[t]
 	}
@@ -6776,12 +6801,13 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv13 = 0
+	needv14 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -6802,6 +6828,11 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		// protocol 11: the endowment/creation terms are outdegree or
 		// reciprocity gated by their function type (cfg.fntype, set by the
 		// estimator from its own fntype list)
+		else if (nm == "transtiesendow" | nm == "transtiescreation") {
+			cfg.termcodes[t] = 27
+			cfg.needv11 = 1
+			needv14 = 1
+		}
 		else if (nm == "outdegreeendow" | nm == "outdegreecreation") {
 			cfg.termcodes[t] = 1
 			cfg.needv11 = 1
@@ -7025,6 +7056,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv14) {
+		if (SaomNativePluginVersion() < 14) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 14 (endowment/creation of transTies)"
 		}
 	}
 	if (cfg.eligible & needv13) {
@@ -7697,6 +7734,8 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocity") return("reciprocity")
 	if (term == "reciprocityendow") return("reciprocity [endowment]")
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
+	if (term == "transtiesendow") return("transitive ties [endowment]")
+	if (term == "transtiescreation") return("transitive ties [creation]")
 	if (term == "nodematch") return("same " + v)
 	if (term == "nodeicov") return(v + " alter")
 	if (term == "nodeocov") return(v + " ego")

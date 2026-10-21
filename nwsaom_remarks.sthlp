@@ -515,6 +515,17 @@ for any behavior effect OTHER than {bf:linear} ({opt quadratic}/{opt avalt}/{opt
 attempted); network-side endowment/creation (not yet attempted); more than one co-evolving behavior
 variable.
 
+{pstd}
+{opt transtiesendow}/{opt transtiescreation} split {opt transties} the same way. RSiena's rule, which
+is general: the endowment statistic is minus the sum, over the ties lost between the waves, of the
+effect's tie statistic evaluated in the {it:start} network (for transTies: 1 if the lost tie had a
+two-path), and the creation statistic is the sum over the ties gained of the tie statistic in the
+{it:end} network, while the ministep contribution is the usual change statistic restricted to
+withdrawals or to new ties. Checked against RSiena 1.6.6 on s501-s503 (density, reciprocity and
+the transTies split): targets -62 and 68 are identical, and over three seeds endowment
+-0.40/-0.33/-0.45 against RSiena's -0.32/-0.38/-0.41, creation 2.47/2.39/2.47 against
+2.40/2.43/2.44, density -2.96 against -2.96.
+
 {marker ratecov}{...}
 {title:Covariate-dependent rate}
 

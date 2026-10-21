@@ -174,7 +174,7 @@ program nwsaom, eclass
 		exit
 	}
 	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
-		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION ///
+		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
@@ -597,7 +597,7 @@ program nwsaom, eclass
 	// unit-166 bug (folding a role-split into a shared if/else-if
 	// baseline-resolution chain) is avoided from the start here by never
 	// building one at all.
-	foreach __nwsaom_nec_eff in outdegree reciprocity {
+	foreach __nwsaom_nec_eff in outdegree reciprocity transties {
 		local __nwsaom_nec_e = "``__nwsaom_nec_eff'endow'"
 		local __nwsaom_nec_c = "``__nwsaom_nec_eff'creation'"
 		local __nwsaom_nec_plain = "``__nwsaom_nec_eff''"
@@ -620,7 +620,7 @@ program nwsaom, eclass
 		di "{err}{bf:outdegreeendow}+{bf:outdegreecreation} cannot be estimated together with the rate: their statistics (lost and gained ties) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:outdegree}, optionally with {bf:reciprocityendow}+{bf:reciprocitycreation}."
 		error 198
 	}
-	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "")
+	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "" | "`transtiesendow'" != "")
 	// v1 scope restriction, disclosed not silently degraded: network
 	// endow/creation reuses SaomEstimateRM()'s own missing-data code path
 	// internally (see that function's own header comment on the chained-
@@ -1337,6 +1337,16 @@ program nwsaom, eclass
 		mata: __nwsaom_last_M.addterm("transties", 1, &stat_transitiveties(), &change_saom_transties(), `__td_tt2', ("transties"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transties"
 	}
+	// transTies split into its endowment / creation roles (RSiena: transTies endow / creation).
+	// The role of every term is read off its name by SaomFntypeFromNames().
+	if "`transtiesendow'" != "" {
+		tempname __td_tte __td_ttc
+		mata: `__td_tte' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("transtiesendow", 1, &stat_transitiveties(), &change_saom_transties(), `__td_tte', ("transtiesendow"))
+		mata: `__td_ttc' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("transtiescreation", 1, &stat_transitiveties(), &change_saom_transties(), `__td_ttc', ("transtiescreation"))
+		local __nwsaom_efflist "`__nwsaom_efflist' transtiesendow transtiescreation"
+	}
 
 	// --- balance: harmonisation unit 25. NO user-supplied free
 	// parameter - RSiena's own "balanceMean" (b0 in the SIENA manual's
@@ -1901,12 +1911,7 @@ program nwsaom, eclass
 	// what estat gof needs to simulate the fitted model (2026-10-01):
 	// endowment/creation codes, structural dyads, presence
 	capture mata: mata drop __nwsaom_last_fntype __nwsaom_last_struct __nwsaom_last_present
-	mata: __nwsaom_last_fntype = J(1, __nwsaom_last_M.nterms, 0)
-	local __nwsaom_lfn : word count `__nwsaom_netfntype_list'
-	if `__nwsaom_lfn' > 0 {
-		local __nwsaom_lfnc : subinstr local __nwsaom_netfntype_list " " ",", all
-		mata: __nwsaom_last_fntype[1..`__nwsaom_lfn'] = (`__nwsaom_lfnc')
-	}
+	mata: __nwsaom_last_fntype = SaomFntypeFromNames(__nwsaom_last_M)
 	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
 	else mata: __nwsaom_last_struct = J(0, 0, 0)
 	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
@@ -1986,10 +1991,7 @@ program nwsaom, eclass
 				mata: __nwsaom_mw_missptr = J(1, 0, NULL)
 			}
 			if `__nwsaom_hasnetgate' {
-				local __nwsaom_netfntype_n : word count `__nwsaom_netfntype_list'
-				local __nwsaom_netfntype_commas : subinstr local __nwsaom_netfntype_list " " ",", all
-				mata: st_local("__nwsaom_netfntype_pad", strofreal(__nwsaom_last_M.nterms - `__nwsaom_netfntype_n'))
-				mata: __nwsaom_mw_fntype = (`__nwsaom_netfntype_commas', J(1, `__nwsaom_netfntype_pad', 0))
+				mata: __nwsaom_mw_fntype = __nwsaom_last_fntype
 			}
 			else {
 				mata: __nwsaom_mw_fntype = J(1, 0, 0)
@@ -2088,15 +2090,7 @@ program nwsaom, eclass
 			// already established above (all-present, all-eval fntype,
 			// no missing data) - ratecov() v1 scope requires the plain
 			// two-wave case, validated earlier in this program.
-			local __nwsaom_ratecov_ntf : word count `__nwsaom_netfntype_list'
-			local __nwsaom_ratecov_ntf_commas : subinstr local __nwsaom_netfntype_list " " ",", all
-			mata: st_local("__nwsaom_ratecov_pad", strofreal(__nwsaom_last_M.nterms - `__nwsaom_ratecov_ntf'))
-			if "`__nwsaom_ratecov_ntf_commas'" != "" {
-				mata: __nwsaom_ratecov_fntype = (`__nwsaom_ratecov_ntf_commas', J(1, `__nwsaom_ratecov_pad', 0))
-			}
-			else {
-				mata: __nwsaom_ratecov_fntype = J(1, __nwsaom_last_M.nterms, 0)
-			}
+			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_ratecovattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
@@ -2118,16 +2112,8 @@ program nwsaom, eclass
 			// eval-type, so the vector is zero-padded up to the model's
 			// own final `nterms' count here, once every option has
 			// finished registering its own term(s).
-			local __nwsaom_netfntype_n : word count `__nwsaom_netfntype_list'
-			// Mata's own (a,b,c) row-vector literal needs COMMA
-			// separators, not the plain-whitespace separators
-			// `__nwsaom_netfntype_list' uses for Stata's own `: word
-			// count' to work - converted here, right at the Mata
-			// interpolation boundary, rather than storing commas in the
-			// Stata local itself (which would break `word count' above).
-			local __nwsaom_netfntype_commas : subinstr local __nwsaom_netfntype_list " " ",", all
-			mata: st_local("__nwsaom_netfntype_pad", strofreal(__nwsaom_last_M.nterms - `__nwsaom_netfntype_n'))
-			mata: __nwsaom_netfntype = (`__nwsaom_netfntype_commas', J(1, `__nwsaom_netfntype_pad', 0))
+			// the role of every term, read off the registered term names
+			mata: __nwsaom_netfntype = __nwsaom_last_fntype
 			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
 				mata: __nwsaom_allpresent1 = __nwsaom_present1
 			}

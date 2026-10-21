@@ -265,7 +265,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 13		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 14		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2601,10 +2601,37 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			dyadht_t hs;
 			ht_alloc(&hs, ht_next_pow2(PD->nties * 2 + 16));
 			for (d = 0; d < PD->nties; d++) ht_put(&hs, dyadkey(&g, PD->ti[d], PD->tj[d]), 1);
+			graph_t gs;
+			int need_gs = 0;
+			for (k = 0; k < M->nterms; k++) if (M->fntype[k] != 0 && M->termcodes[k] != TERMCODE_OUTDEGREE && M->termcodes[k] != TERMCODE_RECIPROCITY) need_gs = 1;
+			if (need_gs) {			/* protocol 14: the start network, for the tie statistic of other dyadic effects */
+				graph_init(&gs, n, M->need_adj, PD->nties);
+				for (d = 0; d < PD->nties; d++) toggle(&gs, PD->ti[d], PD->tj[d]);
+			}
 			for (k = 0; k < M->nterms; k++) {
 				int rec;
 				double v = 0.0;
 				if (M->fntype[k] == 0) continue;
+				if (M->termcodes[k] != TERMCODE_OUTDEGREE && M->termcodes[k] != TERMCODE_RECIPROCITY) {
+					/* RSiena endowmentStatistic() / creationStatistic(): minus the sum over LOST ties of the
+					   effect's tie statistic in the start network; the sum over GAINED ties of it in the end network */
+					double *ak = (M->attridx[k] > 0) ? attrs[M->attridx[k] - 1] : NULL;
+					if (M->fntype[k] == 1) {
+						for (d = 0; d < PD->nties; d++) {
+							if (has_edge(&g, PD->ti[d], PD->tj[d])) continue;
+							v -= saom_tie_stat(&gs, M->termcodes[k], ak, M->p1[k], PD->ti[d], PD->tj[d]);
+						}
+					}
+					else {
+						for (d = 0; d < g.nties; d++) {
+							long ei = g.elist_i[d], ej = g.elist_j[d];
+							if (has_edge(&gs, ei, ej)) continue;
+							v += saom_tie_stat(&g, M->termcodes[k], ak, M->p1[k], ei, ej);
+						}
+					}
+					R->stat[k] = v;
+					continue;
+				}
 				rec = (M->termcodes[k] == TERMCODE_RECIPROCITY);
 				if (M->fntype[k] == 1) {
 					for (d = 0; d < PD->nties; d++) {
@@ -2621,6 +2648,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				}
 				R->stat[k] = v;
 			}
+			if (need_gs) graph_free(&gs);
 			ht_free(&hs);
 		}
 		if (M->nbehterms > 0) {
