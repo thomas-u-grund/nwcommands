@@ -179,7 +179,7 @@ program nwsaom, eclass
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
-		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ///
+		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
@@ -1120,6 +1120,27 @@ program nwsaom, eclass
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
+		}
+	}
+
+	// --- absdiffx(varlist) / egoxaltx(varlist): RSiena's absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j).
+	// Centred covariates as altX/egoX (egoXaltX depends on the centring, absDiffX does not). v1: variables
+	// without missing values only (RSiena skips pairs with a missing value in the statistic).
+	foreach __dk in absdiffx egoxaltx {
+		if "``__dk''" != "" {
+			unab `__dk' : ``__dk''
+			foreach __v of local `__dk' {
+				mata: st_local("__nmiss", strofreal(sum(st_data(1::`nodes', "`__v'") :>= .)))
+				if `__nmiss' > 0 {
+					di "{err}{bf:`__dk'()}: variable {bf:`__v'} has missing values, which are not yet supported for this effect."
+					error 198
+				}
+				tempname __td_ad
+				mata: `__td_ad' = ErgmTermData()
+				mata: `__td_ad'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_ad', ("`__dk'_`__v'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+			}
 		}
 	}
 

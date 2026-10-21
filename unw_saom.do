@@ -2149,6 +2149,37 @@ real scalar SaomSimMeanObs(real colvector x, real colvector miss) {
    them to 0 after centring). td.edgecovmat holds this matrix.
    X:      ministep contribution = value(i,j) (negated for a withdrawal); statistic = sum over ties of value(i,j).
    XRecip: the same, but only when the reverse tie j -> i exists. */
+/* absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j) on centred covariate values (td.attr) */
+real rowvector stat_saom_absdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + abs(td.attr[ties[k,2]] - td.attr[ties[k,1]])
+	return(tot)
+}
+real rowvector change_saom_absdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+
+	d = abs(td.attr[j] - td.attr[i])
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_egoxaltx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] * td.attr[ties[k,2]]
+	return(tot)
+}
+real rowvector change_saom_egoxaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+
+	d = td.attr[i] * td.attr[j]
+	return(G.has_edge(i,j) ? -d : d)
+}
 real matrix SaomDyadPrep(real matrix X, real scalar center, real scalar m) {
 	real matrix W, ok
 	real scalar n, i
@@ -6913,7 +6944,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16
 	string scalar nm
 	string rowvector nms
 
@@ -6921,6 +6952,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv13 = 0
 	needv14 = 0
 	needv15 = 0
+	needv16 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -6956,6 +6988,14 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.termcodes[t] = (substr(nm, 1, 9) == "transtrip" ? 11 : (substr(nm, 1, 6) == "cycle3" ? 12 : (substr(nm, 1, 12) == "transmedtrip" ? 23 : 16)))
 			cfg.needv11 = 1
 			needv14 = 1
+		}
+		else if (nm == "absdiffx" | nm == "egoxaltx") {
+			cfg.termcodes[t] = (nm == "absdiffx" ? 42 : 43)
+			tdt = *M.td[t]
+			nextattr++
+			cfg.attridx[t] = nextattr
+			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			needv16 = 1
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -7203,6 +7243,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv16) {
+		if (SaomNativePluginVersion() < 16) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 16 (absdiffx, egoxaltx)"
 		}
 	}
 	if (cfg.eligible & needv15) {
@@ -7889,6 +7935,8 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
+	if (term == "absdiffx") return(v + " abs. difference")
+	if (term == "egoxaltx") return(v + " ego x alter")
 	if (term == "dyadcov") return(v)
 	if (term == "dyadcovrecip") return(v + " x reciprocity")
 	if (term == "transtripendow") return("transitive triplets [endowment]")

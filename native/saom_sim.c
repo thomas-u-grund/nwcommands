@@ -252,6 +252,10 @@
    the diagonal = 0) arrives as n consecutive attribute columns, column i = row i of the matrix, so
    value(i,j) = attrs[attridx - 1 + (i - 1)][j]. X: ministep contribution = value(i,j); XRecip: value(i,j) only if
    the reverse tie j -> i exists; the statistic is the sum over the existing ties (of the same quantity). */
+/* protocol 16: RSiena absDiffX = |x_j - x_i| and egoXaltX = x_i * x_j (centred covariate values; variables without
+   missing values only - RSiena skips pairs with a missing value in the statistic) */
+#define TERMCODE_ABSDIFFX 42
+#define TERMCODE_EGOXALTX 43
 #define TERMCODE_DYADCOV 40
 #define TERMCODE_DYADCOVRECIP 41
 static int saom_masked_base(int tc) {
@@ -271,7 +275,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 15		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 16		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -738,6 +742,12 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		case TERMCODE_NODECOV:						// stat_nodecov(): sum over ties of attr[ego]+attr[alter]
 			for (k = 0; k < g->nties; k++) tot += a[g->elist_i[k]] + a[g->elist_j[k]];
 			return tot;
+		case TERMCODE_ABSDIFFX:
+			for (k = 0; k < g->nties; k++) tot += fabs(a[g->elist_j[k]] - a[g->elist_i[k]]);
+			return tot;
+		case TERMCODE_EGOXALTX:
+			for (k = 0; k < g->nties; k++) tot += a[g->elist_i[k]] * a[g->elist_j[k]];
+			return tot;
 		case TERMCODE_NODEICOV:					// stat_nodeicov(): sum over nodes of attr[node]*indegree(node)
 			for (i = 1; i <= g->n; i++) tot += a[i] * (double)g->din[i];
 			return tot;
@@ -878,6 +888,14 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 			return ij_exists ? -1.0 : 1.0;
 		case TERMCODE_NODECOV: {
 			double v = a[i] + a[j];
+			return ij_exists ? -v : v;
+		}
+		case TERMCODE_ABSDIFFX: {
+			double v = fabs(a[j] - a[i]);
+			return ij_exists ? -v : v;
+		}
+		case TERMCODE_EGOXALTX: {
+			double v = a[i] * a[j];
 			return ij_exists ? -v : v;
 		}
 		case TERMCODE_NODEICOV:

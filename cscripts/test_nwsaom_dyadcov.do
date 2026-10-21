@@ -87,4 +87,44 @@ capture nwsaom, wave1(dd1) wave2(dd2) outdegree dyadcov(__small) k3(50)
 assert _rc == 198
 capture nwsaom, wave1(dd1) wave2(dd2) outdegree dyadcov(nosuchmat) k3(50)
 assert _rc == 111
+* --- absdiffx() / egoxaltx(): native statistic equals the Mata one; fits; missing values refused
+mata:
+mata set matastrict off
+void absdiff_test() {
+	class ErgmModel scalar M
+	class ErgmGraph scalar G0, Gw
+	class ErgmTermData scalar t1, t2, t3
+	struct SaomCountedResult scalar res
+	struct SaomNativeConfig scalar cfg
+	real colvector x
+	real scalar n, k, i, j, r, m
+	n = 40
+	rseed(62)
+	x = SaomCovPrep(floor(runiform(n, 1) * 5), 1, m)
+	M = ErgmModel(); M.init()
+	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+	t2 = ErgmTermData(); t2.attr = x; M.addterm("absdiffx", 1, &stat_saom_absdiffx(), &change_saom_absdiffx(), t2, ("absdiffx_x"))
+	t3 = ErgmTermData(); t3.attr = x; M.addterm("egoxaltx", 1, &stat_saom_egoxaltx(), &change_saom_egoxaltx(), t3, ("egoxaltx_x"))
+	cfg = SaomNativeSetup(M)
+	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
+	assert(cfg.termcodes == (1, 42, 43))
+	G0 = ErgmGraph(); G0.init(n, 1)
+	for (k=1; k<=round(0.12*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	for (r=1; r<=15; r++) {
+		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, 0.3, 0.2), 3, 1, 0)
+		assert(max(abs(res.stat - M.full_statistic(Gw))) < 1e-8)
+	}
+}
+absdiff_test()
+end
+gen double xcov = mod(_n * 7, 5)
+nwsaom, waves(dd1 dd2 dd3) outdegree reciprocity absdiffx(xcov) egoxaltx(xcov) k3(300) seed(3)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4)) & "`e(engine)'" == "native"
+replace xcov = . in 5
+capture nwsaom, waves(dd1 dd2 dd3) outdegree absdiffx(xcov) k3(50)
+assert _rc == 198
 di as text "dyadic covariates PASS"
