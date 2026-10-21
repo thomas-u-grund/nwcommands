@@ -183,7 +183,7 @@
 #include <math.h>
 
 #define MAXTERMS 256
-#define MAXATTR 128
+#define MAXATTR 1024		/* one dyadic covariate takes n attribute columns (protocol 15) */
 #define MAXRC 16		/* ratecov() covariates */
 #define MAXBEHTERMS 64
 
@@ -248,6 +248,12 @@
 #define TERMCODE_NODEICOV_M 37
 #define TERMCODE_NODEOCOV_M 38
 #define TERMCODE_SIMCOV_M 39
+/* protocol 15: dyadic covariates (RSiena X / XRecip). The n x n matrix of centred values (missing dyads and
+   the diagonal = 0) arrives as n consecutive attribute columns, column i = row i of the matrix, so
+   value(i,j) = attrs[attridx - 1 + (i - 1)][j]. X: ministep contribution = value(i,j); XRecip: value(i,j) only if
+   the reverse tie j -> i exists; the statistic is the sum over the existing ties (of the same quantity). */
+#define TERMCODE_DYADCOV 40
+#define TERMCODE_DYADCOVRECIP 41
 static int saom_masked_base(int tc) {
 	switch (tc) {
 		case TERMCODE_NODEMATCH_M: return TERMCODE_NODEMATCH;
@@ -265,7 +271,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 14		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 15		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1172,6 +1178,11 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 		   (before protocol 10 a withdrawal had the wrong sign) */
 		return (ij_exists ? -1.0 : 1.0) * cvA * cvB;
 	}
+	if (termcodes[k] == TERMCODE_DYADCOV || termcodes[k] == TERMCODE_DYADCOVRECIP) {
+		double d = attrs[attridx[k] - 1 + (i - 1)][j];
+		if (termcodes[k] == TERMCODE_DYADCOVRECIP && !has_edge(g, j, i)) return 0.0;
+		return ij_exists ? -d : d;
+	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 		int tc = termcodes[k], base = saom_masked_base(tc);
@@ -1200,6 +1211,16 @@ static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, do
 		as[1] = (attridx[subB] > 0) ? attrs[attridx[subB] - 1] : NULL;
 		p1s[0] = p1[subA]; p1s[1] = p1[subB];
 		return ix_stat(g, 2, codes, as, p1s);
+	}
+	if (termcodes[k] == TERMCODE_DYADCOV || termcodes[k] == TERMCODE_DYADCOVRECIP) {
+		double tot = 0.0;
+		long kk;
+		for (kk = 0; kk < g->nties; kk++) {
+			long ei = g->elist_i[kk], ej = g->elist_j[kk];
+			if (termcodes[k] == TERMCODE_DYADCOVRECIP && !has_edge(g, ej, ei)) continue;
+			tot += attrs[attridx[k] - 1 + (ei - 1)][ej];
+		}
+		return tot;
 	}
 	if (saom_masked_base(termcodes[k])) {
 		double *a = attrs[attridx[k] - 1];

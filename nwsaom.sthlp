@@ -66,6 +66,8 @@
 
 {marker covariate_options}{...}
 {syntab:Node covariate effects}
+{synopt:{opt dyadcov(matnames)}}Dyadic covariate (RSiena's {cmd:X} effect): each name is a Stata {it:n} x {it:n} matrix (rows and columns in the node order of the waves) whose value x_ij enters an actor's utility for the tie i -> j. Centred by the mean of its non-missing off-diagonal cells (not with {opt nocenter}); missing cells ({bf:.}) count as 0 after centring and are left out of the statistic, as in RSiena. One effect and coefficient ({cmd:dyadcov_}{it:name}) per matrix; constant over time. Uses {it:n} native attribute columns per matrix (Stata variable limit). Not combinable with {opt interact()}{p_end}
+{synopt:{opt dyadcovrecip(matnames)}}RSiena's {cmd:XRecip}: the same matrices, but the value counts only when the reverse tie j -> i exists{p_end}
 {synopt:{opth nodematch(varlist)}}Homophily on categorical node attributes (exact match), one effect per variable - RSiena alias {opt samex()}{p_end}
 {synopt:{opth nodecov(varlist)}}Continuous covariate main effect (sum over sender's and receiver's own values), one effect per variable{p_end}
 {synopt:{opth nodeicov(varlist)}}Alter (receiver) covariate effect - RSiena's own "altX", one effect per variable - RSiena alias {opt altx()}{p_end}

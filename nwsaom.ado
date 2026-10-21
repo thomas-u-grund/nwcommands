@@ -179,7 +179,7 @@ program nwsaom, eclass
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
-		GWESP(string) TRANSTIES BALANCE INTERACT(string) ///
+		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
@@ -1120,6 +1120,31 @@ program nwsaom, eclass
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
+		}
+	}
+
+	// --- dyadcov(matnames) / dyadcovrecip(matnames): dyadic covariates (RSiena X / XRecip). Each name is a
+	// Stata n x n matrix (rows/columns in the order of the nodes); centred by the mean of its non-missing
+	// off-diagonal cells unless nocenter; missing (.) cells are excluded.
+	foreach __dk in dyadcov dyadcovrecip {
+		if "``__dk''" != "" {
+			foreach __dm of local `__dk' {
+				capture confirm matrix `__dm'
+				if _rc {
+					di "{err}{bf:`__dk'()}: matrix {bf:`__dm'} not found."
+					error 111
+				}
+				tempname __td_dc
+				mata: `__td_dc' = ErgmTermData()
+				mata: st_local("__dcn", strofreal(rows(st_matrix("`__dm'"))))
+				if `__dcn' != `nodes' | colsof(`__dm') != `nodes' {
+					di "{err}{bf:`__dk'()}: matrix {bf:`__dm'} must be `nodes' x `nodes' (one row/column per actor)."
+					error 198
+				}
+				mata: `__td_dc'.edgecovmat = SaomDyadPrep(st_matrix("`__dm'"), `__nwsaom_center', __nwsaom_cm)
+				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_dc', ("`__dk'_`__dm'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__dm')"
+			}
 		}
 	}
 

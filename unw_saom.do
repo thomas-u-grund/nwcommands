@@ -2143,6 +2143,59 @@ real scalar SaomSimMeanObs(real colvector x, real colvector miss) {
 	return(tot / (no * (no - 1)))
 }
 
+/* ---- Dyadic covariates (RSiena's X and XRecip, sienaDataCreate.r / DyadicCovariate*Effect.cpp).
+   The covariate is an n x n matrix; unless nocenter it is centred by the mean of its non-missing off-diagonal
+   cells; missing cells and the diagonal are then 0 (RSiena excludes missing dyads from the statistic and sets
+   them to 0 after centring). td.edgecovmat holds this matrix.
+   X:      ministep contribution = value(i,j) (negated for a withdrawal); statistic = sum over ties of value(i,j).
+   XRecip: the same, but only when the reverse tie j -> i exists. */
+real matrix SaomDyadPrep(real matrix X, real scalar center, real scalar m) {
+	real matrix W, ok
+	real scalar n, i
+
+	n = rows(X)
+	ok = (X :< .)
+	for (i=1; i<=n; i++) ok[i,i] = 0
+	m = (sum(ok) > 0 ? sum(select(vec(X), vec(ok))) / sum(ok) : 0)
+	W = editmissing(X, 0)
+	for (i=1; i<=n; i++) W[i,i] = 0
+	// (a missing cell stays missing under :* 0 in Mata, hence editmissing() first)
+	if (center) W = (W :- m) :* ok
+	else W = W :* ok
+	return(W)
+}
+real rowvector stat_saom_dyadcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.edgecovmat[ties[k,1], ties[k,2]]
+	return(tot)
+}
+real rowvector change_saom_dyadcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+
+	d = td.edgecovmat[i,j]
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_dyadcovrecip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) if (G.has_edge(ties[k,2], ties[k,1])) tot = tot + td.edgecovmat[ties[k,1], ties[k,2]]
+	return(tot)
+}
+real rowvector change_saom_dyadcovrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+
+	if (!G.has_edge(j,i)) return(0)
+	d = td.edgecovmat[i,j]
+	return(G.has_edge(i,j) ? -d : d)
+}
+
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov") & n > 0 & rows(td.levels) == n)
@@ -6850,13 +6903,14 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
 	needv13 = 0
 	needv14 = 0
+	needv15 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -6892,6 +6946,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.termcodes[t] = (substr(nm, 1, 9) == "transtrip" ? 11 : (substr(nm, 1, 6) == "cycle3" ? 12 : (substr(nm, 1, 12) == "transmedtrip" ? 23 : 16)))
 			cfg.needv11 = 1
 			needv14 = 1
+		}
+		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
+			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
+			cfg.termcodes[t] = (nm == "dyadcov" ? 40 : 41)
+			tdt = *M.td[t]
+			cfg.attridx[t] = nextattr + 1
+			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.edgecovmat' : (cfg.attrmat, tdt.edgecovmat'))
+			nextattr = nextattr + rows(tdt.edgecovmat)
+			needv15 = 1
 		}
 		else if (nm == "balanceendow" | nm == "balancecreation") {
 			cfg.termcodes[t] = 28
@@ -7130,6 +7193,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv15) {
+		if (SaomNativePluginVersion() < 15) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 15 (dyadic covariates)"
 		}
 	}
 	if (cfg.eligible & needv14) {
@@ -7810,6 +7879,8 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
+	if (term == "dyadcov") return(v)
+	if (term == "dyadcovrecip") return(v + " x reciprocity")
 	if (term == "transtripendow") return("transitive triplets [endowment]")
 	if (term == "transtripcreation") return("transitive triplets [creation]")
 	if (term == "cycle3endow") return("3-cycles [endowment]")

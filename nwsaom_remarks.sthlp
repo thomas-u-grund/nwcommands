@@ -581,6 +581,21 @@ with the alcohol covariate of s50a (directed, density and reciprocity): RateX 0.
 and for a symmetrized version (BJOINT, {opt symtype(joint)}): RateX 0.153 against 0.151, density
 -1.316 against -1.312, rates 0.307/0.264 against 0.305/0.263.
 
+{marker dyadcov}{...}
+{title:Dyadic covariates}
+
+{pstd}
+{opt dyadcov(matnames)} and {opt dyadcovrecip(matnames)} add RSiena's {cmd:X} and {cmd:XRecip} effects for
+covariates defined on pairs of actors (kinship, distance, an earlier relation). Each name is an
+{it:n} x {it:n} Stata matrix; the value is centred by the mean of its non-missing off-diagonal cells (unless
+{opt nocenter}), missing cells are 0 after centring and left out of the statistic, and a tie's statistic is its
+value ({cmd:XRecip}: its value if the reverse tie exists). Natively the matrix travels to the plugin as {it:n}
+attribute columns, so {it:n} is limited by Stata's variable limit (about 2,000 in Stata BE, minus the other
+covariates). Checked against RSiena 1.6.6 on s501-s503 with the absolute difference of the alcohol variable of
+s50a as the covariate (density and reciprocity in the model): the targets agree (-82.42 for {cmd:X}), and the
+estimates are X -0.145 to -0.151 against -0.147, XRecip -0.059 to -0.070 against -0.066, and with 120 missing
+cells -0.157 to -0.160 against -0.161.
+
 {marker covariates}{...}
 {title:Covariate effects for several variables}
 
