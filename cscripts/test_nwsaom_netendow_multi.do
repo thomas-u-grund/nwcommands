@@ -258,6 +258,46 @@ void gwc_test() {
 }
 gwc_test()
 end
+mata:
+mata set matastrict off
+void bal_test() {
+	class ErgmModel scalar M
+	class ErgmGraph scalar G0, Gw
+	class ErgmTermData scalar t1, t2, t3
+	struct SaomCountedResult scalar res
+	struct SaomNativeConfig scalar cfg
+	real rowvector fn, mst
+	real scalar n, k, i, j, r
+	n = 40
+	rseed(56)
+	M = ErgmModel(); M.init()
+	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+	t2 = ErgmTermData(); t2.decay = 0.09; M.addterm("balanceendow", 1, &stat_saom_balance(), &change_saom_balance(), t2, ("balanceendow"))
+	t3 = ErgmTermData(); t3.decay = 0.09; M.addterm("balancecreation", 1, &stat_saom_balance(), &change_saom_balance(), t3, ("balancecreation"))
+	fn = SaomFntypeFromNames(M)
+	assert(fn == (0, 1, 2))
+	cfg = SaomNativeSetup(M)
+	cfg.fntype = fn
+	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
+	G0 = ErgmGraph(); G0.init(n, 1)
+	for (k=1; k<=round(0.12*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	for (r=1; r<=15; r++) {
+		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.1, 0.5), 3, 1, 0)
+		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
+		assert(max(abs(res.stat - mst)) < 1e-7)
+	}
+}
+bal_test()
+end
+nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(balance) creation(balance) k3(300) seed(4)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+matrix __bm = J(50, 50, 0)
+capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(balance) creation(balance) missnet(__bm __bm __bm) k3(50)
+assert _rc == 198
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity gwesp(0.69) endow(gwesp) creation(gwesp) k3(300) seed(4)
 assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(cycle4) creation(cycle4) k3(300) seed(4)

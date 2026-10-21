@@ -412,7 +412,7 @@ behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 {pstd}
 {bf:Syntax.} The roles are chosen with two lists, {opt endow(effects)} and {opt creation(effects)}
 (RSiena's {cmd:includeEffects(type = "endow")} / {cmd:type = "creation"}); the effects available are
-{bf:outdegree}, {bf:reciprocity}, {bf:transties}, {bf:cycle4}, {bf:gwesp} on the network and {bf:linear}, {bf:quadratic},
+{bf:outdegree}, {bf:reciprocity}, {bf:transties}, {bf:cycle4}, {bf:gwesp}, {bf:balance} on the network and {bf:linear}, {bf:quadratic},
 {bf:avalt}, {bf:avsim} on the behavior. {cmd:endow(transties) creation(transties)} is the same as
 the older option pair {cmd:transtiesendow transtiescreation}, which still works; so do
 {opt outdegreeendow}/{opt outdegreecreation}, {opt reciprocityendow}/{opt reciprocitycreation} and

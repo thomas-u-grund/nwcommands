@@ -6887,6 +6887,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.needv11 = 1
 			needv14 = 1
 		}
+		else if (nm == "balanceendow" | nm == "balancecreation") {
+			cfg.termcodes[t] = 28
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.decay
+			cfg.needv11 = 1
+			needv14 = 1
+		}
 		else if (nm == "gwespendow" | nm == "gwespcreation") {
 			cfg.termcodes[t] = 26
 			tdt = *M.td[t]
@@ -7797,6 +7804,8 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
+	if (term == "balanceendow") return("balance [endowment]")
+	if (term == "balancecreation") return("balance [creation]")
 	if (term == "cycle4endow") return("4 cycles (1) [endowment]")
 	if (term == "cycle4creation") return("4 cycles (1) [creation]")
 	if (term == "gwespendow") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ") [endowment]")
