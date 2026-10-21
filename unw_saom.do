@@ -6155,6 +6155,7 @@ struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
    (RSiena's positivity rule for rate parameters in phase 2).
    =================================================================== */
 struct SaomCoevCtx {
+	real scalar hasnetgate		// network endowment/creation terms in the model
 	pointer(class ErgmGraph scalar) rowvector Gwaves
 	pointer(class ErgmGraph scalar) rowvector GpStat	// per period: the starting network the behavior statistics are evaluated on (masked when missing data are present)
 	pointer(real colvector) rowvector Behwaves
@@ -6320,7 +6321,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	class SaomBehaviorModel scalar Mbeh,
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real matrix presentMat,
-	pointer(real matrix) rowvector missMaskNetPd, pointer(real colvector) rowvector missMaskBehPd) {
+	pointer(real matrix) rowvector missMaskNetPd, pointer(real colvector) rowvector missMaskBehPd,
+	real rowvector fntype) {
 	string scalar why
 
 	struct SaomCoevMultiFit scalar fit
@@ -6363,7 +6365,11 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		for (pd=1; pd<=P; pd++) C.presentPd[.,pd] = presentMat[.,pd] :* presentMat[.,pd+1]
 	}
 	C.npresentPd = colsum(C.presentPd)
-	C.hasmiss = (args() == 14)
+	C.hasmiss = (args() >= 14)
+	if (C.hasmiss) C.hasmiss = (cols(missMaskNetPd) > 0)
+	// network endowment/creation (a 15th, trailing argument: the role of every network term)
+	C.hasnetgate = 0
+	if (args() >= 15) C.hasnetgate = (cols(fntype) > 0) & any(fntype :!= 0)
 	missBehZero = J(n, 1, 0)
 	C.missBehPd = J(n, P, 0)
 	if (C.hasmiss) {
@@ -6375,6 +6381,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	// native dispatch: every term on both sides natively covered, and a
 	// plugin new enough for unconditional estimation (protocol >= 3)
 	C.cfg = SaomNativeSetup(M)
+	if (C.hasnetgate) C.cfg.fntype = fntype
 	C.cfgBeh = SaomBehaviorNativeSetup(Mbeh)
 	C.use_native = C.cfg.eligible & C.cfgBeh.eligible & SaomNativeAvailable()
 	C.use_batch = 0
@@ -6382,6 +6389,11 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		k = SaomNativePluginVersion()
 		C.use_native = (k >= 3)
 		C.use_batch = (k >= 4)
+		// network endowment/creation from protocol 11 on
+		if (C.hasnetgate & k < 11) {
+			C.use_native = 0
+			C.use_batch = 0
+		}
 		// behavior endowment/creation from protocol 12 on (RSiena's
 		// statistics; protocol 11 had the linear one for every split)
 		if (any(C.cfgBeh.fntype :!= 0) & k < 12) {
@@ -6395,6 +6407,10 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	else if (!C.cfgBeh.eligible) why = "a behavior effect without a native implementation (e.g. an endowment/creation split)"
 	else why = "native plugin too old for this model"
 	SaomSetEngine(C.use_native, why)
+	if (C.hasnetgate & !C.use_native) {
+		errprintf("nwsaom: the endowment/creation split of a network effect together with behavior() needs the native (C) plugin (protocol 11 or later), which is not available for this model/platform.\n")
+		exit(198)
+	}
 	C.missDyadsPd = J(0, 3, 0)
 	if (C.use_native & C.hasmiss) {
 		for (pd=1; pd<=P; pd++) {
@@ -6428,6 +6444,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		else C.target[pd,.] = (M.full_statistic(Gpend), SaomCoevStatBeh(Behpend, *C.GpStat[pd], Mbeh, missBehZero))
 		C.target[pd,.] = SaomBehaviorPatchEndowCreation(Mbeh, C.target[pd,.], C.pNet, *Behwaves[pd],
 			*Behwaves[pd+1], C.GpStat[pd], C.overallMean, C.missBehPd[.,pd])
+		if (C.hasnetgate) C.target[pd,1..C.pNet] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,1..C.pNet], Gp, Gpend)
 
 		if (C.hasmiss) C.targetRateNet[pd] = SaomCountDifferingMasked(Gp, Gpend, *missMaskNetPd[pd])
 		else C.targetRateNet[pd] = SaomCountDiffering(Gp, Gpend)
@@ -6631,7 +6648,7 @@ struct SaomCoevFit scalar SaomEstimateRMCoev(
 	real scalar behminval, real scalar behmaxval, class SaomBehaviorModel scalar Mbeh,
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real colvector present,
-	real matrix missMaskNet, real colvector missMaskBeh) {
+	real matrix missMaskNet, real colvector missMaskBeh, real rowvector fntype) {
 
 	struct SaomCoevFit scalar fit
 	struct SaomCoevMultiFit scalar mf
@@ -6642,7 +6659,17 @@ struct SaomCoevFit scalar SaomEstimateRMCoev(
 
 	Gw = (&Gobs_start, &Gobs_end)
 	Bw = (&Behobs_start_values, &Behobs_end_values)
-	if (args() == 16) {
+	if (args() >= 17) {
+		// network endowment/creation: present and the masks are placeholders when not really used
+		mnp = J(1, 0, NULL)
+		mbp = J(1, 0, NULL)
+		if (rows(missMaskNet) > 0) {
+			mnp = (&missMaskNet)
+			mbp = (&missMaskBeh)
+		}
+		mf = SaomEstimateRMCoevMulti(Gw, M, Bw, behminval, behmaxval, Mbeh, theta0Net, theta0Beh, K0, K3, firstg, (present, present), mnp, mbp, fntype)
+	}
+	else if (args() == 16) {
 		mnp = (&missMaskNet)
 		mbp = (&missMaskBeh)
 		mf = SaomEstimateRMCoevMulti(Gw, M, Bw, behminval, behmaxval, Mbeh, theta0Net, theta0Beh, K0, K3, firstg, (present, present), mnp, mbp)

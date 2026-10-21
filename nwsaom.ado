@@ -648,7 +648,7 @@ program nwsaom, eclass
 	// distance statistic (dyads that differ between the waves), so with
 	// the rate estimated the three parameters are not identified (RSiena:
 	// covariance matrix not positive definite, no standard errors).
-	if "`outdegreeendow'" != "" & "`behavior'" == "" {
+	if "`outdegreeendow'" != "" {
 		di "{err}{bf:outdegreeendow}+{bf:outdegreecreation} cannot be estimated together with the rate: their statistics (lost and gained ties) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:outdegree}, optionally with {bf:reciprocityendow}+{bf:reciprocitycreation}."
 		error 198
 	}
@@ -664,12 +664,7 @@ program nwsaom, eclass
 	// change to correctness-critical shared code).
 	// endowment/creation runs for two waves and for waves(), with present() and missnet(); the
 	// estimation core (SaomNetCtx) is period-general. Co-evolution is the remaining gap.
-	if `__nwsaom_hasnetgate' {
-		if `__nwsaom_coev' {
-			di "{err}{bf:outdegreeendow}/{bf:reciprocityendow} (network-side endowment/creation) is not yet supported together with co-evolution ({bf:behavior()})."
-			error 198
-		}
-	}
+	// (the network split also works together with behavior(): natively, protocol 11 or later)
 
 	// ratecov(varlist): one covariate-rate coefficient per variable
 	// (2026-10-01; RSiena allows several RateX effects), the actor's rate
@@ -1978,7 +1973,27 @@ program nwsaom, eclass
 		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
 		// unit-26 entry for the full account.
 		capture mata: mata drop __nwsaom_fit_coevmulti
-		if `__nwsaom_hasmiss' {
+		if `__nwsaom_hasnetgate' {
+			// network endowment/creation + behavior: presentMat, the mask pointers and fntype are all
+			// supplied (real ones when present()/missnet()/missbeh() are active, placeholders otherwise)
+			if !`__nwsaom_haspresent' & !`__nwsaom_hasmiss' {
+				capture mata: mata drop __nwsaom_presentmat
+				mata: __nwsaom_presentmat = J(`nodes', `__nwsaom_nwaves', 1)
+			}
+			if `__nwsaom_hasmiss' {
+				mata: __nwsaom_cn_mnp = __nwsaom_missmaskptr
+				mata: __nwsaom_cn_mbp = __nwsaom_missmaskbehptr
+			}
+			else {
+				mata: __nwsaom_cn_mnp = J(1, 0, NULL)
+				mata: __nwsaom_cn_mbp = J(1, 0, NULL)
+			}
+			mata: __nwsaom_fit_coevmulti = SaomEstimateRMCoevMulti(__nwsaom_last_Gwaves, __nwsaom_last_M, ///
+				__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
+				__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg', __nwsaom_presentmat, ///
+				__nwsaom_cn_mnp, __nwsaom_cn_mbp, __nwsaom_last_fntype)
+		}
+		else if `__nwsaom_hasmiss' {
 			// harmonisation unit 35: missing data - `present'/`presentMat'
 			// is guaranteed built above (real or an all-present
 			// placeholder) whenever `hasmiss' is true, matching Mata's own
@@ -2005,7 +2020,27 @@ program nwsaom, eclass
 		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
 		// unit-26 entry for the full three-phase account.
 		capture mata: mata drop __nwsaom_fit_coev
-		if `__nwsaom_hasmiss' {
+		if `__nwsaom_hasnetgate' {
+			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
+				mata: __nwsaom_cn_pres = __nwsaom_present1
+			}
+			else {
+				mata: __nwsaom_cn_pres = J(`nodes', 1, 1)
+			}
+			if `__nwsaom_hasmiss' {
+				mata: __nwsaom_cn_mm = __nwsaom_missmask1
+				mata: __nwsaom_cn_mmb = __nwsaom_missmaskbeh1
+			}
+			else {
+				mata: __nwsaom_cn_mm = J(0, 0, 0)
+				mata: __nwsaom_cn_mmb = J(0, 1, 0)
+			}
+			mata: __nwsaom_fit_coev = SaomEstimateRMCoev(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_last_M, ///
+				__nwsaom_beh_startvals, __nwsaom_beh_endvals, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
+				__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg', __nwsaom_cn_pres, ///
+				__nwsaom_cn_mm, __nwsaom_cn_mmb, __nwsaom_last_fntype)
+		}
+		else if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit_coev = SaomEstimateRMCoev(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_last_M, ///
 				__nwsaom_beh_startvals, __nwsaom_beh_endvals, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
 				__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg', __nwsaom_present1, ///

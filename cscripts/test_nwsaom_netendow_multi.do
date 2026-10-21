@@ -76,11 +76,7 @@ nwsaom, waves(rw1 rw2 rw3) `m' missnet(__M1 __M2 __M3) k3(300) seed(5)
 assert colsof(e(b)) == 3 & !missing(el(e(b),1,1))
 di as text "reciprocity endow/creation + missnet() PASS"
 
-* co-evolution is still refused
-gen byte beh1 = mod(_n, 3)
-gen byte beh2 = mod(_n, 3)
-capture nwsaom, wave1(rw1) wave2(rw2) outdegree reciprocityendow reciprocitycreation behavior(beh1 beh2) linear
-assert _rc == 198
+* (co-evolution with the network split is tested at the end of this file)
 di as text "network endow/creation test PASS"
 
 * --- symmetric with waves(): three tie-symmetric waves, simulated by OR-ing each wave with its reverse
@@ -272,3 +268,21 @@ assert _rc == 198
 capture nwsaom, waves(tt1 tt2 tt3) outdegree cycle4 endow(cycle4) creation(cycle4)
 assert _rc == 198
 di as text "gwesp/cycle4 endowment/creation PASS"
+
+* --- network endowment/creation together with behavior() (co-evolution): two waves, three waves, present().
+* The synthetic behavior is random, so a fit may legitimately hit RSiena's thetaBound (rc 498); the point
+* here is that the combination is accepted and runs natively (real-data check: dev/saom_rsiena_coev_netendow.*)
+gen byte tb3 = mod(_n*3 + 2*(_n > 20), 5) + 1
+gen byte cp1 = 1
+gen byte cp2 = 1
+replace cp2 = 0 in 1/2
+capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2) linear quadratic avalt k0(30) k3(200) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert colsof(e(b)) == 6 & "`e(engine)'" == "native"
+capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2 tb3) linear quadratic avalt k0(30) k3(200) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert colsof(e(b)) == 6
+capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2) linear quadratic present(cp1 cp2) k0(30) k3(200) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert colsof(e(b)) == 5
+di as text "network endowment/creation with behavior() PASS"
