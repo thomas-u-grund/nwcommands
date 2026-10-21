@@ -122,3 +122,14 @@ replace sp3 = 0 in 1/2
 nwsaom, waves(sy1 sy2 sy3) symmetric outdegree transties present(sp1 sp2 sp3) k3(300) seed(3)
 assert colsof(e(b)) == 2
 di as text "symmetric with waves() PASS"
+
+* --- ratecov() with waves(): directed (RSiena RateX is one shared coefficient) and symmetric
+gen double rcx = mod(_n * 7, 5)
+nwsaom, waves(sy1 sy2 sy3) symmetric symtype(joint) outdegree ratecov(rcx) k3(500) seed(3)
+assert !missing(e(ratecoef)) & !missing(e(ratecoef_se)) & colsof(e(rates)) == 2
+nwsaom, waves(sy1 sy2 sy3) outdegree reciprocity ratecov(rcx) k3(300) seed(3)
+assert !missing(e(ratecoef)) & colsof(e(b)) == 2 & colsof(e(rates)) == 2
+* ratecov() is still refused with present() / missnet()
+capture nwsaom, waves(sy1 sy2 sy3) symmetric outdegree ratecov(rcx) present(sp1 sp2 sp3)
+assert _rc == 198
+di as text "ratecov() with waves() PASS"

@@ -533,6 +533,14 @@ the eval effects) - omit it to start from 0. The coefficient and the effects (an
 derivative estimate, and the plain fit diverges), it is kept fixed at its starting value, as RSiena
 does - {bf:e(ratecoef_fixed)} reports whether this happened.
 
+{pstd}
+With {opt waves()} the coefficient is one value shared by every period (RSiena's {cmd:RateX} has no
+period index), each period keeps its own basic rate. Checked against RSiena 1.6.6 on s501-s503
+with the alcohol covariate of s50a (directed, density and reciprocity): RateX 0.355 against RSiena's
+0.357, density -2.38 and reciprocity 2.85 against -2.375 and 2.849, rates 5.7/4.4 against 5.67/4.47;
+and for a symmetrized version (BJOINT, {opt symtype(joint)}): RateX 0.153 against 0.151, density
+-1.316 against -1.312, rates 0.307/0.264 against 0.305/0.263.
+
 {marker covariates}{...}
 {title:Covariate effects for several variables}
 
@@ -623,7 +631,7 @@ aliases) remain available and genuinely meaningful - {opt gwesp()}/{opt transtie
 option needs 100% native term coverage); all five are now natively ported.
 
 {pstd}
-{opt waves()}, {opt present()}, {opt missnet()}, and (for two waves) {opt ratecov()} can each be
+{opt waves()}, {opt present()}, {opt missnet()}, and {opt ratecov()} can each be
 combined with {opt symmetric}. Scope otherwise: network-only (no {opt behavior()}/co-evolution).
 
 {pstd}

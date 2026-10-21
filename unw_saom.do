@@ -4464,15 +4464,16 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M, real rowvector theta0, real scalar K0, real scalar K3,
 	real scalar firstg, | real matrix presentMat, pointer(real matrix) rowvector missMaskPd,
-	real rowvector rates0, real rowvector fntype, real scalar symtype) {
+	real rowvector rates0, real rowvector fntype, real scalar symtype,
+	real matrix ratecovattr, real rowvector ratecoef) {
 
 	struct SaomFit scalar fit
 	struct SaomNetCtx scalar C
 	struct SaomNetFit scalar nf
 	pointer(real matrix) rowvector mm
-	real matrix presentPd
+	real matrix presentPd, rcArg
 	real rowvector par0, r0, fnArg
-	real scalar P, pd, p, nargs, symArg, m1, rho, d
+	real scalar P, pd, p, nargs, symArg, m1, rho, d, k
 
 	nargs = args()
 	P = cols(Gwaves) - 1
@@ -4490,8 +4491,10 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	if (nargs >= 10) fnArg = fntype
 	symArg = 0
 	if (nargs >= 11) symArg = symtype
+	rcArg = J(0, 1, 0)
+	if (nargs >= 12) rcArg = ratecovattr
 	C.cond = SaomCondRequested()
-	SaomNetCtxInit(C, Gwaves, M, presentPd, mm, fnArg, J(0, 1, 0), symArg, J(0, 0, 0))
+	SaomNetCtxInit(C, Gwaves, M, presentPd, mm, fnArg, rcArg, symArg, J(0, 0, 0))
 	p = C.p
 	r0 = J(1, P, .)
 	if (nargs >= 9) {
@@ -4502,9 +4505,11 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 		if (!(r0[pd] < . & r0[pd] > 0)) r0[pd] = SaomRateStart(C.npresentPd[pd], C.targetRate[pd])
 		// symmetric (pairwise) models: a given rates0() is on RSiena's scale, the
 		// estimator's rate is rho = rate^2 * (n - 1) per period (cf. SaomEstimateRM())
-		else if (C.symtype >= 1 & C.symtype <= 3) r0[pd] = r0[pd]^2 * (C.npresentPd[pd] - 1)
+		else if (C.symtype >= 1 & C.symtype <= 3) r0[pd] = r0[pd]^2 * ((C.hasratecov ? C.n : C.npresentPd[pd]) - 1)
 	}
 	par0 = (C.cond ? theta0 : (theta0, r0))
+	// one starting value per ratecov() variable (a single value is used for all of them)
+	if (C.hasratecov) par0 = par0, (nargs >= 13 ? (cols(ratecoef) == C.hasratecov ? ratecoef : J(1, C.hasratecov, ratecoef[1])) : J(1, C.hasratecov, 0))
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
 
@@ -4532,7 +4537,7 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	// per-actor rate)
 	if (C.symtype >= 1 & C.symtype <= 3) {
 		for (pd=1; pd<=P; pd++) {
-			m1 = C.npresentPd[pd] - 1
+			m1 = (C.hasratecov ? C.n : C.npresentPd[pd]) - 1
 			if (C.cond) {
 				fit.rates[pd] = fit.rates[pd] / m1
 				fit.rate_ses[pd] = fit.rate_ses[pd] / m1
@@ -4546,6 +4551,13 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 				fit.Vfull[., p+pd] = fit.Vfull[., p+pd] :* d
 			}
 		}
+	}
+	if (C.hasratecov) {
+		k = C.ptot - C.hasratecov
+		fit.ratecoef = nf.par[(k+1)..C.ptot]
+		fit.ratecoef_se = sqrt(diagonal(nf.Vfull)[(k+1)..C.ptot])'
+		fit.ratecoef_tratio = nf.tratio[(k+1)..C.ptot]
+		fit.ratecoef_fixed = nf.rmfixed[(k+1)..C.ptot]
 	}
 	return(fit)
 }
