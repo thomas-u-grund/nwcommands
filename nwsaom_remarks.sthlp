@@ -410,6 +410,17 @@ behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 
 {marker endowcreation}{...}
 {pstd}
+{bf:Syntax.} The roles are chosen with two lists, {opt endow(effects)} and {opt creation(effects)}
+(RSiena's {cmd:includeEffects(type = "endow")} / {cmd:type = "creation"}); the effects available are
+{bf:outdegree}, {bf:reciprocity}, {bf:transties} on the network and {bf:linear}, {bf:quadratic},
+{bf:avalt}, {bf:avsim} on the behavior. {cmd:endow(transties) creation(transties)} is the same as
+the older option pair {cmd:transtiesendow transtiescreation}, which still works; so do
+{opt outdegreeendow}/{opt outdegreecreation}, {opt reciprocityendow}/{opt reciprocitycreation} and
+{opt linearendow}/{opt linearcreation} (and likewise for the other behavior effects). Splitting an
+effect means naming it in both lists and not giving the plain effect; the plain effect and both of
+its roles together would be exactly collinear, and a single role on its own is not supported yet.
+
+{pstd}
 {bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}):
 real RSiena models network/behavior change via three possible "roles" for any effect - evaluation
 (the default, direction-blind), creation (contributes only when the value INCREASES), and endowment

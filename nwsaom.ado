@@ -186,8 +186,34 @@ program nwsaom, eclass
 		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
-		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ]
+		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
+		ENDOW(string) CREATION(string) ]
 	set more off
+
+	// --- endow(effects) creation(effects): RSiena's effect "types" (includeEffects(type = "endow" /
+	// "creation")) as two role lists instead of a pair of options per effect. An effect named in
+	// BOTH lists is split into its endowment and creation roles and takes the place of the plain
+	// effect; naming it in only one list, or also giving the plain effect, is refused (see the
+	// per-effect checks below). The older option pairs (outdegreeendow/outdegreecreation,
+	// reciprocityendow/..., transtiesendow/..., linearendow/..., quadraticendow/..., avaltendow/...,
+	// avsimendow/...) stay as exact aliases: endow(x) sets `xendow', creation(x) sets `xcreation'.
+	local __nwsaom_ecvalid "outdegree reciprocity transties linear quadratic avalt avsim"
+	foreach __r in endow creation {
+		local `__r' = strlower("``__r''")
+		foreach __e of local `__r' {
+			if !`: list __e in __nwsaom_ecvalid' {
+				di "{err}{bf:`__e'} cannot be split into endowment and creation roles in {bf:`__r'()}; available: `__nwsaom_ecvalid'."
+				error 198
+			}
+			local `__e'`__r' "`__e'`__r'"
+		}
+	}
+	foreach __e of local __nwsaom_ecvalid {
+		if ("``__e'endow'" != "") != ("``__e'creation'" != "") {
+			di "{err}{bf:`__e'} must be named in both {bf:endow()} and {bf:creation()} (a single non-evaluation role alone is not supported); to keep it as an ordinary effect give just {bf:`__e'}."
+			error 198
+		}
+	}
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
 	// simX are RSiena's OWN names for the SAME effects this package

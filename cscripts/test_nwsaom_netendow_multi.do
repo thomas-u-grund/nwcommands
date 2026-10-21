@@ -200,3 +200,26 @@ assert _rc == 198
 capture nwsaom, waves(tt1 tt2 tt3) outdegree transtiesendow
 assert _rc == 198
 di as text "transTies endowment/creation PASS"
+
+* --- endow() / creation() syntax: identical to the long option pair, refuses invalid combinations
+quietly nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity transtiesendow transtiescreation k3(300) seed(4)
+matrix __a = e(b)
+quietly nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(transties) creation(transties) k3(300) seed(4)
+matrix __b = e(b)
+assert mreldif(__a, __b) < 1e-12
+assert "`: colnames e(b)'" == "outdegree reciprocity transtiesendow transtiescreation"
+capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(transties)
+assert _rc == 198
+capture nwsaom, waves(tt1 tt2 tt3) outdegree transties endow(transties) creation(transties)
+assert _rc == 198
+capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(gwesp) creation(gwesp)
+assert _rc == 198
+* behavior side: same estimates as the long option pair
+gen byte tb1 = mod(_n*3, 5) + 1
+gen byte tb2 = mod(_n*3 + (_n > 25), 5) + 1
+nwsaom, wave1(tt1) wave2(tt2) outdegree reciprocity behavior(tb1 tb2) linear quadraticendow quadraticcreation k0(30) k3(200) seed(2)
+matrix __c = e(b)
+nwsaom, wave1(tt1) wave2(tt2) outdegree reciprocity behavior(tb1 tb2) linear endow(quadratic) creation(quadratic) k0(30) k3(200) seed(2)
+matrix __d = e(b)
+assert mreldif(__c, __d) < 1e-12
+di as text "endow()/creation() syntax PASS"
