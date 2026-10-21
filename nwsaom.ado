@@ -197,7 +197,7 @@ program nwsaom, eclass
 	// per-effect checks below). The older option pairs (outdegreeendow/outdegreecreation,
 	// reciprocityendow/..., transtiesendow/..., linearendow/..., quadraticendow/..., avaltendow/...,
 	// avsimendow/...) stay as exact aliases: endow(x) sets `xendow', creation(x) sets `xcreation'.
-	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp balance linear quadratic avalt avsim"
+	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip linear quadratic avalt avsim"
 	foreach __r in endow creation {
 		local `__r' = strlower("``__r''")
 		foreach __e of local `__r' {
@@ -629,7 +629,7 @@ program nwsaom, eclass
 	// unit-166 bug (folding a role-split into a shared if/else-if
 	// baseline-resolution chain) is avoided from the start here by never
 	// building one at all.
-	foreach __nwsaom_nec_eff in outdegree reciprocity transties cycle4 balance {
+	foreach __nwsaom_nec_eff in outdegree reciprocity transties cycle4 balance transtrip cycle3 transmedtrip transrectrip {
 		local __nwsaom_nec_e = "``__nwsaom_nec_eff'endow'"
 		local __nwsaom_nec_c = "``__nwsaom_nec_eff'creation'"
 		local __nwsaom_nec_plain = "``__nwsaom_nec_eff''"
@@ -652,7 +652,10 @@ program nwsaom, eclass
 		di "{err}{bf:outdegreeendow}+{bf:outdegreecreation} cannot be estimated together with the rate: their statistics (lost and gained ties) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:outdegree}, optionally with {bf:reciprocityendow}+{bf:reciprocitycreation}."
 		error 198
 	}
-	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "" | "`transtiesendow'" != "" | "`cycle4endow'" != "" | "`gwespendow'" != "" | "`balanceendow'" != "")
+	local __nwsaom_hasnetgate = 0
+	foreach __e in outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip {
+		if "``__e'endow'" != "" local __nwsaom_hasnetgate = 1
+	}
 	// v1 scope restriction, disclosed not silently degraded: network
 	// endow/creation reuses SaomEstimateRM()'s own missing-data code path
 	// internally (see that function's own header comment on the chained-
@@ -1427,6 +1430,17 @@ program nwsaom, eclass
 		mata: `__td_bal'.decay = saom_balance_mean(__nwsaom_last_Gbases)
 		mata: __nwsaom_last_M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), `__td_bal', ("balance"))
 		local __nwsaom_efflist "`__nwsaom_efflist' balance"
+	}
+	// the triad-type effects with a simple tie statistic: one generic registration
+	foreach __e in transtrip cycle3 transmedtrip transrectrip {
+		if "``__e'endow'" != "" {
+			tempname __td_x1 __td_x2
+			mata: `__td_x1' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__e'endow", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_x1', ("`__e'endow"))
+			mata: `__td_x2' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__e'creation", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_x2', ("`__e'creation"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__e'endow `__e'creation"
+		}
 	}
 	if "`balanceendow'" != "" {
 		tempname __td_bale __td_balc

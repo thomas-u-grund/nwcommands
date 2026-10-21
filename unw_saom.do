@@ -6887,6 +6887,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.needv11 = 1
 			needv14 = 1
 		}
+		else if (nm == "transtripendow" | nm == "transtripcreation" | nm == "cycle3endow" | nm == "cycle3creation" | ///
+			nm == "transmedtripendow" | nm == "transmedtripcreation" | nm == "transrectripendow" | nm == "transrectripcreation") {
+			cfg.termcodes[t] = (substr(nm, 1, 9) == "transtrip" ? 11 : (substr(nm, 1, 6) == "cycle3" ? 12 : (substr(nm, 1, 12) == "transmedtrip" ? 23 : 16)))
+			cfg.needv11 = 1
+			needv14 = 1
+		}
 		else if (nm == "balanceendow" | nm == "balancecreation") {
 			cfg.termcodes[t] = 28
 			tdt = *M.td[t]
@@ -7804,6 +7810,14 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
+	if (term == "transtripendow") return("transitive triplets [endowment]")
+	if (term == "transtripcreation") return("transitive triplets [creation]")
+	if (term == "cycle3endow") return("3-cycles [endowment]")
+	if (term == "cycle3creation") return("3-cycles [creation]")
+	if (term == "transmedtripendow") return("transitive mediated triplets [endowment]")
+	if (term == "transmedtripcreation") return("transitive mediated triplets [creation]")
+	if (term == "transrectripendow") return("transitive recipr. triplets [endowment]")
+	if (term == "transrectripcreation") return("transitive recipr. triplets [creation]")
 	if (term == "balanceendow") return("balance [endowment]")
 	if (term == "balancecreation") return("balance [creation]")
 	if (term == "cycle4endow") return("4 cycles (1) [endowment]")

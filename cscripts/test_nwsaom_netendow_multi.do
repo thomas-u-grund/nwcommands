@@ -293,6 +293,66 @@ void bal_test() {
 }
 bal_test()
 end
+mata:
+mata set matastrict off
+void triad_test() {
+	class ErgmModel scalar M
+	class ErgmGraph scalar G0, Gw
+	class ErgmTermData scalar t1, t2, t3
+	struct SaomCountedResult scalar res
+	struct SaomNativeConfig scalar cfg
+	real rowvector fn, mst
+	real scalar n, k, i, j, r, q
+	string rowvector nms
+	n = 40
+	rseed(57)
+	nms = ("transtrip", "cycle3", "transmedtrip", "transrectrip")
+	G0 = ErgmGraph(); G0.init(n, 1)
+	for (k=1; k<=round(0.12*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	for (q=1; q<=4; q++) {
+		M = ErgmModel(); M.init()
+		t1 = ErgmTermData(); t2 = ErgmTermData(); t3 = ErgmTermData()
+		M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+		if (q==1) {
+			M.addterm("transtripendow", 1, &stat_saom_transtrip(), &change_saom_transtrip(), t2, ("a"))
+			M.addterm("transtripcreation", 1, &stat_saom_transtrip(), &change_saom_transtrip(), t3, ("b"))
+		}
+		if (q==2) {
+			M.addterm("cycle3endow", 1, &stat_saom_cycle3(), &change_saom_cycle3(), t2, ("a"))
+			M.addterm("cycle3creation", 1, &stat_saom_cycle3(), &change_saom_cycle3(), t3, ("b"))
+		}
+		if (q==3) {
+			M.addterm("transmedtripendow", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), t2, ("a"))
+			M.addterm("transmedtripcreation", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), t3, ("b"))
+		}
+		if (q==4) {
+			M.addterm("transrectripendow", 1, &stat_saom_transrectrip(), &change_saom_transrectrip(), t2, ("a"))
+			M.addterm("transrectripcreation", 1, &stat_saom_transrectrip(), &change_saom_transrectrip(), t3, ("b"))
+		}
+		fn = SaomFntypeFromNames(M)
+		assert(fn == (0, 1, 2))
+		cfg = SaomNativeSetup(M)
+		cfg.fntype = fn
+		assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
+		for (r=1; r<=10; r++) {
+			Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+			res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.1, 0.3), 3, 1, 0)
+			mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
+			assert(max(abs(res.stat - mst)) < 1e-7)
+		}
+	}
+}
+triad_test()
+end
+foreach ef in transtrip cycle3 transmedtrip {
+	nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(`ef') creation(`ef') k3(300) seed(4)
+	assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+}
+capture nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(transrectrip) creation(transrectrip) k3(300) seed(4)
+assert inlist(_rc, 0, 498)
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(balance) creation(balance) k3(300) seed(4)
 assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
 matrix __bm = J(50, 50, 0)

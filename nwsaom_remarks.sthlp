@@ -412,7 +412,7 @@ behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 {pstd}
 {bf:Syntax.} The roles are chosen with two lists, {opt endow(effects)} and {opt creation(effects)}
 (RSiena's {cmd:includeEffects(type = "endow")} / {cmd:type = "creation"}); the effects available are
-{bf:outdegree}, {bf:reciprocity}, {bf:transties}, {bf:cycle4}, {bf:gwesp}, {bf:balance} on the network and {bf:linear}, {bf:quadratic},
+{bf:outdegree}, {bf:reciprocity}, {bf:transties}, {bf:cycle4}, {bf:gwesp}, {bf:balance}, {bf:transtrip}, {bf:cycle3}, {bf:transmedtrip}, {bf:transrectrip} on the network and {bf:linear}, {bf:quadratic},
 {bf:avalt}, {bf:avsim} on the behavior. {cmd:endow(transties) creation(transties)} is the same as
 the older option pair {cmd:transtiesendow transtiescreation}, which still works; so do
 {opt outdegreeendow}/{opt outdegreecreation}, {opt reciprocityendow}/{opt reciprocitycreation} and
@@ -426,6 +426,14 @@ RSiena 1.6.6 on s501-s503 (density, reciprocity, and the split): the targets are
 (gwesp -67.98 / 80.71, cycle4 -19.75 / 32.5), the gwesp endowment/creation estimates -0.75/-0.69/-0.73
 and 3.18/3.13/3.17 against RSiena's -0.75/-0.82/-0.67 and 3.23/3.17/3.10, and for cycle4 over six seeds
 endowment 0.11 against 0.09 and creation 0.64 against 0.66 (standard errors 0.55 and 0.3).
+
+{pstd}
+{opt transtrip}, {opt cycle3}, {opt transmedtrip} and {opt transrectrip} split the same way; on s501-s503 the
+targets are identical to RSiena's (-74/94, -17.3/31, -74/93, -41/61) and the estimates agree. The split of a
+sparse effect such as {opt transrectrip} can need a longer first phase: with the default {opt k0(50)} two of ten
+seeds stopped (a divergence error, or a parameter kept at its starting value because its estimated derivative
+was not positive), while {opt k0(200)} gave RSiena's values; if a split fit stops or reports a fixed
+parameter, increase {opt k0()}.
 
 {pstd}
 {bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}):
