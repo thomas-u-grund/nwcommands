@@ -633,3 +633,33 @@ outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives in
 outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
 (outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
 documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`.
+
+## Work on `develop`, not on whatever branch is checked out (check first!)
+
+Feature work (nwsaom, nwergm, nwrem, nwdynam, native plugins, tests, help files) happens on
+**`develop`**, which the owner later merges into `master` (the release branch). Other branches
+(for example `website-docs`) are task branches that can be many commits BEHIND `develop`.
+On 2026-10-21 a whole session of nwsaom work was done on `website-docs`, 38 commits behind
+`develop`, and mostly had to be discarded because `develop` already had it (varlist covariates,
+native endow/creation, a much larger plugin, joint rate estimation).
+
+Before the first edit of a session:
+1. Run `git branch --show-current` and `git log --oneline HEAD..develop | wc -l`. If the current
+   branch is not `develop` and `develop` is ahead, do not edit here: use a worktree of `develop`
+   (`git worktree prune`, then `git worktree add <dir> develop`) or switch branches if the tree
+   is clean.
+2. Docs under `docs/` are gitignored and shared, so they describe `develop`'s state even when your
+   checkout is older. If they name a function, option or commit that `grep`/`git cat-file` cannot
+   find in your checkout, you are on the wrong branch.
+3. Commit to `develop` only. Never commit to or merge into `master` unless explicitly asked.
+4. A stale plugin in Stata's PLUS folder shadows the repo build (see GOTCHA.md): test a rebuilt
+   plugin through a scratch `adopath`.
+
+## A stale installed plugin in PLUS shadows the repo's freshly built native plugin
+
+`findfile()` finds `saom_sim_macos.plugin` (and the other native plugins) in the user's
+`~/Library/Application Support/Stata/ado/plus/s/` ahead of `lib/plugins/<platform>/`. After
+`make macos-saom_sim` a Stata test can keep running the OLD binary. Don't overwrite the user's
+installed copy; copy the new plugin into a scratch dir and `adopath ++ <that dir>` at the top of the
+test do-file. `lib/plugins/unix` and `lib/plugins/windows` are built by CI and are stale locally
+until it runs.

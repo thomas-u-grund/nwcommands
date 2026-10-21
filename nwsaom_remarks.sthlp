@@ -769,8 +769,19 @@ distance that conditional estimation simulates to, nor in the rate's distance st
 unconditional estimation, nor in their target (as RSiena).
 
 {pstd}
-{bf:Genuinely out of scope}: missing COVARIATE data ({opt nodecov()}/{opt nodeicov()}/{opt nodeocov()}/
-{opt simcov()} etc. must be fully observed). Real RSiena's own "structural zeros/ones" mechanism - a
+{bf:Missing covariate data} ({opt nodematch()}, {opt nodecov()}, {opt nodeicov()}, {opt nodeocov()},
+{opt simcov()} and their aliases) follows RSiena (checked against its source): a missing value is
+imputed with the covariate mean when actors decide ministeps, but the {it:statistic} - the target and
+every simulated one - skips a tie whose relevant actor is missing (the alter for {opt altx()}, the
+ego for {opt egox()}, either one for {opt samex()}/{opt simx()}). With the default centring a missing
+{opt altx()}/{opt egox()}/{opt nodecov()} value is 0, so skipping changes nothing; under
+{opt nocenter} and for {opt samex()}/{opt simx()} it does, and {opt simx()}'s range and similarity
+mean use the observed values only. Checked against RSiena 1.6.6 on s501/s502 with 8 of 50 covariate
+values missing: density, reciprocity, altX, egoX and simX agree to within sampling noise (simX 0.79
+against RSiena's 0.78; before this was handled it was 1.02). An {opt interact()} that names a
+{opt samex()} or {opt simx()} effect whose variable has missing values is rejected.
+
+RSiena's own "structural zeros/ones" mechanism - a
 separate, simpler alternative to ordinary missing data for dyads whose value is fixed by design
 rather than merely unobserved - IS implemented; see {help nwsaom_remarks##structural:Structural zeros/ones}
 below.

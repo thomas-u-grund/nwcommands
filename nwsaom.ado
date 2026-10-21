@@ -1049,8 +1049,7 @@ program nwsaom, eclass
 		foreach __v of local nodematch {
 			tempname __td_nm
 			mata: `__td_nm' = ErgmTermData()
-			mata: `__td_nm'.attr = st_data(1::`nodes', "`__v'")
-			mata: __nwsaom_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm', ("`__nwsaom_samelab'_`__v'"))
+			mata: SaomRegCov(__nwsaom_last_M, "nodematch", "`__v'", `nodes', `__nwsaom_center', `__td_nm', ("`__nwsaom_samelab'_`__v'"), __nwsaom_cm)
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_samelab'(`__v')"
 		}
 	}
@@ -1065,10 +1064,9 @@ program nwsaom, eclass
 		foreach __v of local nodecov {
 			tempname __td_nc
 			mata: `__td_nc' = ErgmTermData()
-			mata: `__td_nc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: SaomRegCov(__nwsaom_last_M, "nodecov", "`__v'", `nodes', `__nwsaom_center', `__td_nc', ("nodecov_`__v'"), __nwsaom_cm)
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
-			mata: __nwsaom_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc', ("nodecov_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' nodecov(`__v')"
 		}
 	}
@@ -1077,10 +1075,9 @@ program nwsaom, eclass
 		foreach __v of local nodeicov {
 			tempname __td_nic
 			mata: `__td_nic' = ErgmTermData()
-			mata: `__td_nic'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: SaomRegCov(__nwsaom_last_M, "nodeicov", "`__v'", `nodes', `__nwsaom_center', `__td_nic', ("`__nwsaom_altlab'_`__v'"), __nwsaom_cm)
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
-			mata: __nwsaom_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_nic', ("`__nwsaom_altlab'_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_altlab'(`__v')"
 		}
 	}
@@ -1089,10 +1086,9 @@ program nwsaom, eclass
 		foreach __v of local nodeocov {
 			tempname __td_noc
 			mata: `__td_noc' = ErgmTermData()
-			mata: `__td_noc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+			mata: SaomRegCov(__nwsaom_last_M, "nodeocov", "`__v'", `nodes', `__nwsaom_center', `__td_noc', ("`__nwsaom_egolab'_`__v'"), __nwsaom_cm)
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
-			mata: __nwsaom_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_noc', ("`__nwsaom_egolab'_`__v'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
 		}
 	}
@@ -1398,10 +1394,7 @@ program nwsaom, eclass
 			mata: `__td_sc' = ErgmTermData()
 			// simX: missing values imputed by the mean (RSiena); centring
 			// does not change a similarity
-			mata: `__td_sc'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
-			mata: `__td_sc'.decay = max(`__td_sc'.attr) - min(`__td_sc'.attr)
-			mata: `__td_sc'.center = SaomSimMean(`__td_sc'.attr)
-			mata: __nwsaom_last_M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), `__td_sc', ("`__nwsaom_simlab'_`__v'"))
+			mata: SaomRegCov(__nwsaom_last_M, "simcov", "`__v'", `nodes', `__nwsaom_center', `__td_sc', ("`__nwsaom_simlab'_`__v'"), __nwsaom_cm)
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_simlab'(`__v')"
 		}
 	}

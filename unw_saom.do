@@ -2065,6 +2065,131 @@ real rowvector change_saom_simcov(class ErgmGraph scalar G, real scalar i, real 
 	return(G.has_edge(i,j) ? -delta : delta)
 }
 
+/* ---- Covariates with MISSING values (sameX, simX; altX/egoX/nodecov when not
+   centred). RSiena (CovariateAlterEffect/CovariateEgoEffect/SameCovariateEffect/
+   CovariateSimilarityEffect .cpp): a missing value is imputed by the covariate mean
+   for the ministep (SaomCovPrep()), but the STATISTIC - target and simulated - skips
+   a tie whose relevant actor is missing: altX the alter, egoX the ego, sameX and
+   simX either. With centred altX/egoX/nodecov the imputed value is 0, so skipping
+   changes nothing; these masked statistics are used only where it does. simX's
+   similarity mean and range come from the OBSERVED values only
+   (rangeAndSimilarity() in sienaDataCreate.r).
+   Encoding: td.attr = imputed (and, for the three, centred) values, td.levels = 0/1
+   mask (1 = missing); simcov also td.decay (range) and td.center (simMean). The
+   ministep change functions are the ordinary ones. SaomRegCov() registers. */
+real rowvector stat_saom_nodematch_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, cnt
+
+	ties = G.all_ties()
+	cnt = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.levels[ties[k,1]] == 0 & td.levels[ties[k,2]] == 0) {
+			if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) cnt++
+		}
+	}
+	return(cnt)
+}
+real rowvector stat_saom_nodeicov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.levels[ties[k,2]] == 0) tot = tot + td.attr[ties[k,2]]
+	}
+	return(tot)
+}
+real rowvector stat_saom_nodeocov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.levels[ties[k,1]] == 0) tot = tot + td.attr[ties[k,1]]
+	}
+	return(tot)
+}
+real rowvector stat_saom_nodecov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(stat_saom_nodeicov_m(G, td) + stat_saom_nodeocov_m(G, td))
+}
+real rowvector stat_saom_simcov_m(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (td.levels[ties[k,1]] == 0 & td.levels[ties[k,2]] == 0) {
+			tot = tot + 1 - abs(td.attr[ties[k,1]] - td.attr[ties[k,2]]) / td.decay - _saom_center0(td)
+		}
+	}
+	return(tot)
+}
+
+/* mean similarity over ordered pairs of OBSERVED actors */
+real scalar SaomSimMeanObs(real colvector x, real colvector miss) {
+	real colvector o
+	real scalar r, i, tot, no
+
+	o = select(x, miss :== 0)
+	no = rows(o)
+	r = max(o) - min(o)
+	if (r == 0 | no < 2) return(0)
+	tot = 0
+	for (i=1; i<=no; i++) tot = tot + sum(1 :- abs(o[i] :- o) :/ r) - 1
+	return(tot / (no * (no - 1)))
+}
+
+/* is this term instance a covariate effect with a missing-value mask? */
+real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
+	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov") & n > 0 & rows(td.levels) == n)
+}
+
+/* SaomRegCov(): register a covariate effect. kind: nodematch/nodecov/nodeicov/
+   nodeocov/simcov; vn: the variable; center: RSiena's coCovar centring (applies to
+   nodecov/nodeicov/nodeocov only); m receives the variable's mean (SaomCovPrep()).
+   A variable without missing values is registered exactly as before. */
+void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n,
+	real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m) {
+
+	real colvector x, miss
+	real scalar usecenter, masked
+
+	x = st_data(1::n, vn)
+	miss = (x :>= .)
+	usecenter = (kind == "nodecov" | kind == "nodeicov" | kind == "nodeocov") ? center : 0
+	td.attr = SaomCovPrep(x, usecenter, m)
+	masked = any(miss) & (kind == "nodematch" | kind == "simcov" | !center)
+	if (kind == "simcov") {
+		td.decay = max(td.attr) - min(td.attr)
+		td.center = (masked ? SaomSimMeanObs(x, miss) : SaomSimMean(td.attr))
+	}
+	if (masked) td.levels = miss
+	if (kind == "nodematch") {
+		if (masked) M.addterm("nodematch", 1, &stat_saom_nodematch_m(), &change_nodematch(), td, coefname)
+		else M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, coefname)
+	}
+	else if (kind == "nodecov") {
+		if (masked) M.addterm("nodecov", 1, &stat_saom_nodecov_m(), &change_nodecov(), td, coefname)
+		else M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td, coefname)
+	}
+	else if (kind == "nodeicov") {
+		if (masked) M.addterm("nodeicov", 1, &stat_saom_nodeicov_m(), &change_nodeicov(), td, coefname)
+		else M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td, coefname)
+	}
+	else if (kind == "nodeocov") {
+		if (masked) M.addterm("nodeocov", 1, &stat_saom_nodeocov_m(), &change_nodeocov(), td, coefname)
+		else M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td, coefname)
+	}
+	else {
+		if (masked) M.addterm("simcov", 1, &stat_saom_simcov_m(), &change_saom_simcov(), td, coefname)
+		else M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td, coefname)
+	}
+}
+
 /*
    behsim: similarity on the CO-EVOLVING behavior (RSiena's simX with the
    dependent behavior as interaction1, e.g. "drinking similarity" - the
@@ -2780,6 +2905,17 @@ void SaomBuildInteractTd(class ErgmModel scalar M, real scalar n,
 	subC = (threeway ? _SaomInteractComponent(M, nameC, tC) : 0)
 	tdA = *M.td[subA]
 	tdB = *M.td[subB]
+	if (_saom_cov_masked(tdA, tA, n) | _saom_cov_masked(tdB, tB, n)) {
+		errprintf("nwsaom: interact() does not support a covariate effect whose variable has missing values (its statistic skips the missing actors, which an interaction's per-tie product cannot represent).\n")
+		exit(error(198))
+	}
+	if (threeway) {
+		tdC = *M.td[subC]
+		if (_saom_cov_masked(tdC, tC, n)) {
+			errprintf("nwsaom: interact() does not support a covariate effect whose variable has missing values.\n")
+			exit(error(198))
+		}
+	}
 	// td.sptype holds the component TYPES (stat/change dispatch on them);
 	// td.levels the components' decays, followed by the component
 	// instance indices (SaomNativeSetup() uses those, so that the right
@@ -6599,11 +6735,12 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13
 	string scalar nm
 	string rowvector nms
 
 	hassimcov = 0
+	needv13 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -6639,6 +6776,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				// protocol 13: missing covariate values - the mask rides in the next attribute slot
+				cfg.termcodes[t] = 35
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv13 = 1
+			}
 		}
 		else if (nm == "nodecov") {
 			cfg.termcodes[t] = 4
@@ -6646,6 +6790,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				// protocol 13: missing covariate values - the mask rides in the next attribute slot
+				cfg.termcodes[t] = 36
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv13 = 1
+			}
 		}
 		else if (nm == "nodeicov") {
 			cfg.termcodes[t] = 5
@@ -6653,6 +6804,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				// protocol 13: missing covariate values - the mask rides in the next attribute slot
+				cfg.termcodes[t] = 37
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv13 = 1
+			}
 		}
 		else if (nm == "nodeocov") {
 			cfg.termcodes[t] = 6
@@ -6660,6 +6818,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				// protocol 13: missing covariate values - the mask rides in the next attribute slot
+				cfg.termcodes[t] = 38
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv13 = 1
+			}
 		}
 		else if (nm == "indegpopularity") cfg.termcodes[t] = 7
 		else if (nm == "outactivity") cfg.termcodes[t] = 8
@@ -6677,6 +6842,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr / tdt.decay : (cfg.attrmat, tdt.attr / tdt.decay))
 			cfg.p1[t] = _saom_center0(tdt)
 			hassimcov = 1
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				cfg.termcodes[t] = 39
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv13 = 1
+			}
 		}
 		else if (nm == "behsim") {
 			// TERMCODE_BEHSIM (native/saom_sim.c): the plugin supplies the
@@ -6813,6 +6984,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv13) {
+		if (SaomNativePluginVersion() < 13) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 13 (missing covariate values)"
 		}
 	}
 	// before protocol 9 the limits were 16 terms and 7 attribute arrays
