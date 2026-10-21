@@ -18,8 +18,11 @@ areas, and preserve compatibility for everything already shipped.
   native (C) MCMC backend for performance.
 - `nwsaom` — stochastic actor-oriented models (Snijders-style SAOM), including the full RSiena
   effect catalog for wave 1, multi-wave chaining, standard errors, network/behavior co-evolution,
-  composition change, and missing-data handling, with a native (C) backend for the ministep
-  sampler.
+  composition change, and missing-data handling (including missing covariate values), with a
+  native (C) backend for the ministep sampler. Also: endowment/creation splits of the main network
+  effects (`endow()`/`creation()`), dyadic covariates, undirected (symmetric) relations over several
+  waves and with a co-evolving behavior, and covariate-dependent rates. Not yet: several co-evolving
+  behaviors and two-mode (bipartite) SAOMs (design notes exist).
 - `nwrem` — relational event models (Butts 2008), fit via the ordinal partial likelihood, with
   degree, inertia, recency-rank, and covariate effect families.
 - `nwdynam` — Dynamic Network Actor Models (Stadtfeld & Block 2017), with separate rate and
