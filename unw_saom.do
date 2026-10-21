@@ -4464,15 +4464,15 @@ struct SaomFit scalar SaomEstimateRM(class ErgmGraph scalar Gobs_start,
 struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M, real rowvector theta0, real scalar K0, real scalar K3,
 	real scalar firstg, | real matrix presentMat, pointer(real matrix) rowvector missMaskPd,
-	real rowvector rates0) {
+	real rowvector rates0, real rowvector fntype, real scalar symtype) {
 
 	struct SaomFit scalar fit
 	struct SaomNetCtx scalar C
 	struct SaomNetFit scalar nf
 	pointer(real matrix) rowvector mm
 	real matrix presentPd
-	real rowvector par0, r0
-	real scalar P, pd, p, nargs
+	real rowvector par0, r0, fnArg
+	real scalar P, pd, p, nargs, symArg, m1, rho, d
 
 	nargs = args()
 	P = cols(Gwaves) - 1
@@ -4486,15 +4486,24 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 	mm = J(1, 0, NULL)
 	if (nargs >= 8) mm = missMaskPd
 
+	fnArg = J(1, 0, 0)
+	if (nargs >= 10) fnArg = fntype
+	symArg = 0
+	if (nargs >= 11) symArg = symtype
 	C.cond = SaomCondRequested()
-	SaomNetCtxInit(C, Gwaves, M, presentPd, mm, J(1, 0, 0), J(0, 1, 0), 0, J(0, 0, 0))
+	SaomNetCtxInit(C, Gwaves, M, presentPd, mm, fnArg, J(0, 1, 0), symArg, J(0, 0, 0))
 	p = C.p
 	r0 = J(1, P, .)
 	if (nargs >= 9) {
 		if (cols(rates0) == P) r0 = rates0
 		else if (cols(rates0) == 1) r0 = J(1, P, rates0)
 	}
-	for (pd=1; pd<=P; pd++) if (!(r0[pd] < . & r0[pd] > 0)) r0[pd] = SaomRateStart(C.npresentPd[pd], C.targetRate[pd])
+	for (pd=1; pd<=P; pd++) {
+		if (!(r0[pd] < . & r0[pd] > 0)) r0[pd] = SaomRateStart(C.npresentPd[pd], C.targetRate[pd])
+		// symmetric (pairwise) models: a given rates0() is on RSiena's scale, the
+		// estimator's rate is rho = rate^2 * (n - 1) per period (cf. SaomEstimateRM())
+		else if (C.symtype >= 1 & C.symtype <= 3) r0[pd] = r0[pd]^2 * (C.npresentPd[pd] - 1)
+	}
 	par0 = (C.cond ? theta0 : (theta0, r0))
 
 	nf = SaomEstimateNet(C, M, par0, K0, K3, firstg)
@@ -4517,6 +4526,26 @@ struct SaomFit scalar SaomEstimateRMMulti(pointer(class ErgmGraph scalar) rowvec
 		fit.rates = nf.par[(p+1)..(p+P)]
 		fit.rate_tratios = nf.tratio[(p+1)..(p+P)]
 		fit.rate_ses = sqrt(diagonal(nf.Vfull)[(p+1)..(p+P)])'
+	}
+	// pairwise (B) symmetric types: report each period's rate on RSiena's scale
+	// (SaomSymRateToRSiena(), per period; the unilateral A types already use the
+	// per-actor rate)
+	if (C.symtype >= 1 & C.symtype <= 3) {
+		for (pd=1; pd<=P; pd++) {
+			m1 = C.npresentPd[pd] - 1
+			if (C.cond) {
+				fit.rates[pd] = fit.rates[pd] / m1
+				fit.rate_ses[pd] = fit.rate_ses[pd] / m1
+			}
+			else {
+				rho = fit.rates[pd]
+				d = 1 / (2 * sqrt(rho * m1))
+				fit.rates[pd] = sqrt(rho / m1)
+				fit.rate_ses[pd] = fit.rate_ses[pd] * d
+				fit.Vfull[p+pd, .] = fit.Vfull[p+pd, .] :* d
+				fit.Vfull[., p+pd] = fit.Vfull[., p+pd] :* d
+			}
+		}
 	}
 	return(fit)
 }

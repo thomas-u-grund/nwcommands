@@ -403,8 +403,8 @@ program nwsaom, eclass
 	// `symmetric' had been given; RSiena's default model type, see
 	// symtype() below). Waves mixing undirected and asymmetric directed
 	// networks are refused. Directed tie-symmetric waves in a model the
-	// non-directed ministeps do not cover (waves(), behavior(),
-	// endowment/creation effects) stay directed, with a note.
+	// non-directed ministeps do not cover (behavior(), endowment/creation
+	// effects) stay directed, with a note.
 	local __nwsaom_nundir 0
 	local __nwsaom_allsym 1
 	local __nwsaom_asymlist ""
@@ -427,7 +427,7 @@ program nwsaom, eclass
 		local __nwsaom_autosym 1
 	}
 	else if "`symmetric'" == "" & `__nwsaom_allsym' {
-		local __nwsaom_autosym_ok = !(`__nwsaom_multi' | `__nwsaom_coev' | "`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
+		local __nwsaom_autosym_ok = !(`__nwsaom_coev' | "`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
 		if `__nwsaom_autosym_ok' & "`reciprocity'" == "" {
 			local symmetric "symmetric"
 			local __nwsaom_autosym 1
@@ -630,17 +630,11 @@ program nwsaom, eclass
 	// deliberately did not attempt (matching this whole roadmap effort's
 	// own standing instruction against forcing a rushed, undertested
 	// change to correctness-critical shared code).
+	// endowment/creation runs for two waves and for waves(), with present() and missnet(); the
+	// estimation core (SaomNetCtx) is period-general. Co-evolution is the remaining gap.
 	if `__nwsaom_hasnetgate' {
-		if `__nwsaom_coev' | `__nwsaom_multi' {
-			di "{err}{bf:outdegreeendow}/{bf:reciprocityendow} (network-side endowment/creation) is not yet supported for co-evolution or multi-wave models - v1 scope is the exactly-two-wave, network-only case only."
-			error 198
-		}
-		if `__nwsaom_haspresent' {
-			di "{err}{bf:outdegreeendow}/{bf:reciprocityendow} cannot currently be combined with {bf:present()} (composition change) - not yet supported together."
-			error 198
-		}
-		if `__nwsaom_hasmissnet' {
-			di "{err}{bf:outdegreeendow}/{bf:reciprocityendow} cannot currently be combined with {bf:missnet()} - not yet supported together."
+		if `__nwsaom_coev' {
+			di "{err}{bf:outdegreeendow}/{bf:reciprocityendow} (network-side endowment/creation) is not yet supported together with co-evolution ({bf:behavior()})."
 			error 198
 		}
 	}
@@ -790,8 +784,8 @@ program nwsaom, eclass
 	// for a different NWdef storage mode, only a different ministep
 	// mechanism on data that happens to already be tie-symmetric.
 	if "`symmetric'" != "" {
-		if `__nwsaom_multi' | `__nwsaom_coev' | `__nwsaom_hasnetgate' {
-			di "{err}{bf:symmetric} is v1 scope: exactly two waves ({bf:wave1()}/{bf:wave2()}, not {bf:waves()}), network-only (no {bf:behavior()}), and none of {bf:outdegreeendow()}/{bf:reciprocityendow()} - each a real, disclosed follow-on, not yet combinable with {bf:symmetric}. {bf:ratecov()}/{bf:present()}/{bf:missnet()} ARE now combinable with {bf:symmetric} (see below)."
+		if `__nwsaom_coev' | `__nwsaom_hasnetgate' {
+			di "{err}{bf:symmetric} is network-only (no {bf:behavior()}) and cannot be combined with {bf:outdegreeendow()}/{bf:reciprocityendow()} - each a real, disclosed follow-on. {bf:waves()}, {bf:present()} and {bf:missnet()} are combinable with {bf:symmetric}; {bf:ratecov()} only with two waves."
 			error 198
 		}
 		if "`reciprocity'" != "" {
@@ -1975,7 +1969,41 @@ program nwsaom, eclass
 		// period, rate is period-specific - see SaomEstimateRMMulti()'s
 		// own header comment (unw_saom.do) for the real-RSiena
 		// verification this pooling convention is based on.
-		if `__nwsaom_hasmiss' {
+		if "`symmetric'" != "" | `__nwsaom_hasnetgate' {
+			// symmetric / endowment-creation: reaching the trailing fntype and symtype
+			// arguments needs presentMat, the mask pointers and rates0 as well - real ones
+			// when present()/missnet() are active, no-op placeholders otherwise
+			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
+				mata: __nwsaom_mw_present = __nwsaom_presentmat
+			}
+			else {
+				mata: __nwsaom_mw_present = J(0, 0, 0)
+			}
+			if `__nwsaom_hasmiss' {
+				mata: __nwsaom_mw_missptr = __nwsaom_missmaskptr
+			}
+			else {
+				mata: __nwsaom_mw_missptr = J(1, 0, NULL)
+			}
+			if `__nwsaom_hasnetgate' {
+				local __nwsaom_netfntype_n : word count `__nwsaom_netfntype_list'
+				local __nwsaom_netfntype_commas : subinstr local __nwsaom_netfntype_list " " ",", all
+				mata: st_local("__nwsaom_netfntype_pad", strofreal(__nwsaom_last_M.nterms - `__nwsaom_netfntype_n'))
+				mata: __nwsaom_mw_fntype = (`__nwsaom_netfntype_commas', J(1, `__nwsaom_netfntype_pad', 0))
+			}
+			else {
+				mata: __nwsaom_mw_fntype = J(1, 0, 0)
+			}
+			if "`symmetric'" != "" {
+				local __nwsaom_mw_sym = `__nwsaom_symtypeval'
+			}
+			else {
+				local __nwsaom_mw_sym = 0
+			}
+			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_mw_present, __nwsaom_mw_missptr, __nwsaom_rates0, __nwsaom_mw_fntype, `__nwsaom_mw_sym')
+		}
+		else if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_presentmat, __nwsaom_missmaskptr, __nwsaom_rates0)
 		}
@@ -2093,8 +2121,18 @@ program nwsaom, eclass
 			local __nwsaom_netfntype_commas : subinstr local __nwsaom_netfntype_list " " ",", all
 			mata: st_local("__nwsaom_netfntype_pad", strofreal(__nwsaom_last_M.nterms - `__nwsaom_netfntype_n'))
 			mata: __nwsaom_netfntype = (`__nwsaom_netfntype_commas', J(1, `__nwsaom_netfntype_pad', 0))
-			mata: __nwsaom_allpresent1 = J(`nodes', 1, 1)
-			mata: __nwsaom_nomissmask1 = J(`nodes', `nodes', 0)
+			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
+				mata: __nwsaom_allpresent1 = __nwsaom_present1
+			}
+			else {
+				mata: __nwsaom_allpresent1 = J(`nodes', 1, 1)
+			}
+			if `__nwsaom_hasmiss' {
+				mata: __nwsaom_nomissmask1 = __nwsaom_missmask1
+			}
+			else {
+				mata: __nwsaom_nomissmask1 = J(`nodes', `nodes', 0)
+			}
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_allpresent1, __nwsaom_nomissmask1, __nwsaom_netfntype)
 		}

@@ -475,9 +475,9 @@ estimators - so {cmd:nwsaom} refuses it; use {opt outdegree} with {opt reciproci
 {opt reciprocitycreation}. On s50 waves 1-2 that model gives (RSiena, unconditional estimation,
 mean of five seeds, in parentheses) outdegree -2.04 (-2.04), reciprocity endowment 0.77 (0.82, SE
 0.8), reciprocity creation 3.65 (3.60), rate 4.32 (4.34). These fits run in the native plugin since
-2026-10-01 (0.2 s on s50; before, in Mata, about a minute). Not yet supported combined with co-evolution, multi-wave models,
-{opt present()} (composition change), or {opt missnet()} (real missing network data) - each is
-rejected outright (error 198) rather than silently producing a partially-gated fit.
+2026-10-01 (0.2 s on s50; before, in Mata, about a minute). Works with {opt waves()}, {opt present()} (composition change) and {opt missnet()} (real missing
+network data); combined with co-evolution it is rejected outright (error 198) rather than
+silently producing a partially-gated fit.
 
 {pstd}
 {opt behtheta0()} sets starting values for the behavior-side eval-parameter vector (parallel to
@@ -587,7 +587,7 @@ networks that are all tie-symmetric; the option {opt symmetric} requests it expl
 mix undirected networks with directed ones that are not tie-symmetric are refused, as is
 {opt symmetric} with such directed waves ({cmd:nwsaom} does not symmetrize data). Tie-symmetric
 directed waves stay a directed relation, with a note, when {opt reciprocity} is requested or the
-non-directed model does not apply ({opt waves()}, {opt behavior()}, endowment/creation effects).
+non-directed model does not apply ({opt behavior()}, endowment/creation effects).
 
 {pstd}
 {opt symtype()} chooses how a tie changes (RSiena's model types, by name or modelType number):
@@ -623,9 +623,8 @@ aliases) remain available and genuinely meaningful - {opt gwesp()}/{opt transtie
 option needs 100% native term coverage); all five are now natively ported.
 
 {pstd}
-{opt present()}, {opt missnet()}, and {opt ratecov()} can each be combined with {opt symmetric}.
-v1 scope otherwise: exactly two waves ({opt wave1()}/{opt wave2()}, not {opt waves()}), and
-network-only (no {opt behavior()}/co-evolution).
+{opt waves()}, {opt present()}, {opt missnet()}, and (for two waves) {opt ratecov()} can each be
+combined with {opt symmetric}. Scope otherwise: network-only (no {opt behavior()}/co-evolution).
 
 {pstd}
 {bf:agree} reproduces RSiena's alter probability exactly, which for an alter utility u is
