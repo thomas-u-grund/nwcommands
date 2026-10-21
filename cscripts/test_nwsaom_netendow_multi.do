@@ -223,3 +223,52 @@ nwsaom, wave1(tt1) wave2(tt2) outdegree reciprocity behavior(tb1 tb2) linear end
 matrix __d = e(b)
 assert mreldif(__c, __d) < 1e-12
 di as text "endow()/creation() syntax PASS"
+
+* --- gwesp / cycle4 endowment/creation: native statistic equals the Mata one; fits; refusals
+mata:
+mata set matastrict off
+void gwc_test() {
+	class ErgmModel scalar M
+	class ErgmGraph scalar G0, Gw
+	class ErgmTermData scalar t1, t2, t3, t4, t5
+	struct SaomCountedResult scalar res
+	struct SaomNativeConfig scalar cfg
+	real rowvector fn, mst
+	real scalar n, k, i, j, r
+	n = 40
+	rseed(55)
+	M = ErgmModel(); M.init()
+	t1 = ErgmTermData(); M.addterm("outdegree", 1, &stat_edges(), &change_edges(), t1, ("outdegree"))
+	t2 = ErgmTermData(); t2.decay = 0.69; t2.sptype = "OTP"; M.addterm("gwespendow", 1, &stat_gwesp(), &change_saom_gwesp(), t2, ("gwespendow"))
+	t3 = ErgmTermData(); t3.decay = 0.69; t3.sptype = "OTP"; M.addterm("gwespcreation", 1, &stat_gwesp(), &change_saom_gwesp(), t3, ("gwespcreation"))
+	t4 = ErgmTermData(); M.addterm("cycle4endow", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t4, ("cycle4endow"))
+	t5 = ErgmTermData(); M.addterm("cycle4creation", 1, &stat_saom_cycle4(), &change_saom_cycle4(), t5, ("cycle4creation"))
+	fn = SaomFntypeFromNames(M)
+	assert(fn == (0, 1, 2, 1, 2))
+	cfg = SaomNativeSetup(M)
+	cfg.fntype = fn
+	assert(cfg.eligible == 1 & SaomNativeAvailable() == 1)
+	G0 = ErgmGraph(); G0.init(n, 1)
+	for (k=1; k<=round(0.12*n*(n-1)); k++) {
+		i = ceil(runiform(1,1)*n); j = ceil(runiform(1,1)*n)
+		if (i!=j & !G0.has_edge(i,j)) G0.toggle(i,j)
+	}
+	for (r=1; r<=15; r++) {
+		Gw = ErgmGraph(); SaomCopyGraph(G0, Gw)
+		res = SaomSimulateIntervalNative(Gw, M, cfg, (-2, -0.2, 0.5, 0.1, 0.3), 3, 1, 0)
+		mst = SaomNetworkPatchEndowCreation(M, fn, M.full_statistic(Gw), G0, Gw)
+		assert(max(abs(res.stat - mst)) < 1e-8)
+	}
+}
+gwc_test()
+end
+nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity gwesp(0.69) endow(gwesp) creation(gwesp) k3(300) seed(4)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(cycle4) creation(cycle4) k3(300) seed(4)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+* gwesp needs its decay; plain cycle4 plus the split is collinear
+capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(gwesp) creation(gwesp)
+assert _rc == 198
+capture nwsaom, waves(tt1 tt2 tt3) outdegree cycle4 endow(cycle4) creation(cycle4)
+assert _rc == 198
+di as text "gwesp/cycle4 endowment/creation PASS"

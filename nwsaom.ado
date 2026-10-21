@@ -197,7 +197,7 @@ program nwsaom, eclass
 	// per-effect checks below). The older option pairs (outdegreeendow/outdegreecreation,
 	// reciprocityendow/..., transtiesendow/..., linearendow/..., quadraticendow/..., avaltendow/...,
 	// avsimendow/...) stay as exact aliases: endow(x) sets `xendow', creation(x) sets `xcreation'.
-	local __nwsaom_ecvalid "outdegree reciprocity transties linear quadratic avalt avsim"
+	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp linear quadratic avalt avsim"
 	foreach __r in endow creation {
 		local `__r' = strlower("``__r''")
 		foreach __e of local `__r' {
@@ -213,6 +213,12 @@ program nwsaom, eclass
 			di "{err}{bf:`__e'} must be named in both {bf:endow()} and {bf:creation()} (a single non-evaluation role alone is not supported); to keep it as an ordinary effect give just {bf:`__e'}."
 			error 198
 		}
+	}
+	// gwesp needs its decay: gwesp(#) supplies the parameter, endow()/creation() choose the roles
+	// (unlike the flag effects, gwesp(#) alone does not mean "evaluation role" once it is split)
+	if "`gwespendow'" != "" & "`gwesp'" == "" {
+		di "{err}{bf:endow(gwesp) creation(gwesp)} needs the decay parameter: give {bf:gwesp(#)}, e.g. {bf:gwesp(0.69)}."
+		error 198
 	}
 
 	// --- RSiena naming aliases (harmonisation unit 24): egoX/altX/sameX/
@@ -623,7 +629,7 @@ program nwsaom, eclass
 	// unit-166 bug (folding a role-split into a shared if/else-if
 	// baseline-resolution chain) is avoided from the start here by never
 	// building one at all.
-	foreach __nwsaom_nec_eff in outdegree reciprocity transties {
+	foreach __nwsaom_nec_eff in outdegree reciprocity transties cycle4 {
 		local __nwsaom_nec_e = "``__nwsaom_nec_eff'endow'"
 		local __nwsaom_nec_c = "``__nwsaom_nec_eff'creation'"
 		local __nwsaom_nec_plain = "``__nwsaom_nec_eff''"
@@ -646,7 +652,7 @@ program nwsaom, eclass
 		di "{err}{bf:outdegreeendow}+{bf:outdegreecreation} cannot be estimated together with the rate: their statistics (lost and gained ties) add up to the rate's distance statistic, so the model is not identified (RSiena reports a singular covariance matrix for it too). Use {bf:outdegree}, optionally with {bf:reciprocityendow}+{bf:reciprocitycreation}."
 		error 198
 	}
-	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "" | "`transtiesendow'" != "")
+	local __nwsaom_hasnetgate = ("`outdegreeendow'" != "" | "`reciprocityendow'" != "" | "`transtiesendow'" != "" | "`cycle4endow'" != "" | "`gwespendow'" != "")
 	// v1 scope restriction, disclosed not silently degraded: network
 	// endow/creation reuses SaomEstimateRM()'s own missing-data code path
 	// internally (see that function's own header comment on the chained-
@@ -1297,6 +1303,14 @@ program nwsaom, eclass
 		mata: __nwsaom_last_M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), `__td_c4', ("cycle4"))
 		local __nwsaom_efflist "`__nwsaom_efflist' cycle4"
 	}
+	if "`cycle4endow'" != "" {
+		tempname __td_c4e __td_c4c
+		mata: `__td_c4e' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("cycle4endow", 1, &stat_saom_cycle4(), &change_saom_cycle4(), `__td_c4e', ("cycle4endow"))
+		mata: `__td_c4c' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("cycle4creation", 1, &stat_saom_cycle4(), &change_saom_cycle4(), `__td_c4c', ("cycle4creation"))
+		local __nwsaom_efflist "`__nwsaom_efflist' cycle4endow cycle4creation"
+	}
 
 	// --- gwesp(): harmonisation unit 22 ("GWESP reuse verification" per
 	// explicit user direction), CORRECTED after a real bug was caught on
@@ -1330,7 +1344,7 @@ program nwsaom, eclass
 	// correction). NOT YET natively ported (v1 Mata-only) -
 	// SaomNativeSetup() correctly falls back to the pure-Mata path for
 	// any model using this term.
-	if "`gwesp'" != "" {
+	if "`gwesp'" != "" & "`gwespendow'" == "" {
 		confirm number `gwesp'
 		tempname __td_gw
 		mata: `__td_gw' = ErgmTermData()
@@ -1338,6 +1352,19 @@ program nwsaom, eclass
 		mata: `__td_gw'.sptype = "OTP"
 		mata: __nwsaom_last_M.addterm("gwesp", 1, &stat_gwesp(), &change_saom_gwesp(), `__td_gw', ("gwesp_`gwesp'"))
 		local __nwsaom_efflist "`__nwsaom_efflist' gwesp(`gwesp')"
+	}
+	if "`gwespendow'" != "" {
+		confirm number `gwesp'
+		tempname __td_gwe __td_gwc
+		mata: `__td_gwe' = ErgmTermData()
+		mata: `__td_gwe'.decay = `gwesp'
+		mata: `__td_gwe'.sptype = "OTP"
+		mata: __nwsaom_last_M.addterm("gwespendow", 1, &stat_gwesp(), &change_saom_gwesp(), `__td_gwe', ("gwespendow_`gwesp'"))
+		mata: `__td_gwc' = ErgmTermData()
+		mata: `__td_gwc'.decay = `gwesp'
+		mata: `__td_gwc'.sptype = "OTP"
+		mata: __nwsaom_last_M.addterm("gwespcreation", 1, &stat_gwesp(), &change_saom_gwesp(), `__td_gwc', ("gwespcreation_`gwesp'"))
+		local __nwsaom_efflist "`__nwsaom_efflist' gwespendow(`gwesp') gwespcreation(`gwesp')"
 	}
 
 	// --- transties: harmonisation unit 23. NO free parameter (unlike

@@ -412,13 +412,20 @@ behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)}:
 {pstd}
 {bf:Syntax.} The roles are chosen with two lists, {opt endow(effects)} and {opt creation(effects)}
 (RSiena's {cmd:includeEffects(type = "endow")} / {cmd:type = "creation"}); the effects available are
-{bf:outdegree}, {bf:reciprocity}, {bf:transties} on the network and {bf:linear}, {bf:quadratic},
+{bf:outdegree}, {bf:reciprocity}, {bf:transties}, {bf:cycle4}, {bf:gwesp} on the network and {bf:linear}, {bf:quadratic},
 {bf:avalt}, {bf:avsim} on the behavior. {cmd:endow(transties) creation(transties)} is the same as
 the older option pair {cmd:transtiesendow transtiescreation}, which still works; so do
 {opt outdegreeendow}/{opt outdegreecreation}, {opt reciprocityendow}/{opt reciprocitycreation} and
 {opt linearendow}/{opt linearcreation} (and likewise for the other behavior effects). Splitting an
 effect means naming it in both lists and not giving the plain effect; the plain effect and both of
 its roles together would be exactly collinear, and a single role on its own is not supported yet.
+For {bf:gwesp}, {opt gwesp(#)} supplies the decay parameter and {cmd:endow(gwesp) creation(gwesp)} the roles
+({cmd:gwesp(0.69) endow(gwesp) creation(gwesp)}); unlike the effects without a parameter, giving
+{opt gwesp(#)} together with both lists is the split, not a plain-plus-split conflict. Checked against
+RSiena 1.6.6 on s501-s503 (density, reciprocity, and the split): the targets are identical
+(gwesp -67.98 / 80.71, cycle4 -19.75 / 32.5), the gwesp endowment/creation estimates -0.75/-0.69/-0.73
+and 3.18/3.13/3.17 against RSiena's -0.75/-0.82/-0.67 and 3.23/3.17/3.10, and for cycle4 over six seeds
+endowment 0.11 against 0.09 and creation 0.64 against 0.66 (standard errors 0.55 and 0.3).
 
 {pstd}
 {bf:Endowment/creation functions} ({opt linearendow}/{opt linearcreation}):
