@@ -663,8 +663,14 @@ aliases) remain available and genuinely meaningful - {opt gwesp()}/{opt transtie
 option needs 100% native term coverage); all five are now natively ported.
 
 {pstd}
-{opt waves()}, {opt present()}, {opt missnet()}, and {opt ratecov()} can each be
-combined with {opt symmetric}. Scope otherwise: network-only (no {opt behavior()}/co-evolution).
+{opt waves()}, {opt present()}, {opt missnet()}, and {opt ratecov()} (network-only) can each be
+combined with {opt symmetric}, and so can {opt behavior()}: an undirected relation co-evolving with a behavior
+(native plugin with the threaded batch path required; {cmd:nwsaom, ... symmetric symtype(joint) outdegree
+behavior(b1 b2) linear avalt}). The network rates are reported on RSiena's scale, as for network-only fits.
+Checked only partly against RSiena: its own estimation of this model (symmetrized s501/s502, alcohol
+behavior, BJOINT) is unstable - three of four seeds stop at {cmd:thetaBound} and the finished one fixes
+avAlt at 0 - but where RSiena produced numbers they agree with {cmd:nwsaom} (behavior linear 0.32 against
+0.29-0.32, behavior rate 1.22 against 1.23-1.26, density -1.32 against -1.27).
 
 {pstd}
 {bf:agree} reproduces RSiena's alter probability exactly, which for an alter utility u is

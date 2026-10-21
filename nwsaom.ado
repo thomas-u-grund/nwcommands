@@ -811,8 +811,8 @@ program nwsaom, eclass
 	// for a different NWdef storage mode, only a different ministep
 	// mechanism on data that happens to already be tie-symmetric.
 	if "`symmetric'" != "" {
-		if `__nwsaom_coev' | `__nwsaom_hasnetgate' {
-			di "{err}{bf:symmetric} is network-only (no {bf:behavior()}) and cannot be combined with {bf:outdegreeendow()}/{bf:reciprocityendow()} - a real, disclosed follow-on. {bf:waves()}, {bf:present()}, {bf:missnet()} and {bf:ratecov()} are combinable with {bf:symmetric}."
+		if `__nwsaom_hasnetgate' | (`__nwsaom_coev' & `__nwsaom_hasratecov') {
+			di "{err}{bf:symmetric} cannot be combined with {bf:endow()}/{bf:creation()} of network effects, nor ({bf:behavior()}) with {bf:ratecov()} - disclosed follow-ons. {bf:waves()}, {bf:present()}, {bf:missnet()}, {bf:ratecov()} and {bf:behavior()} are otherwise combinable with {bf:symmetric}."
 			error 198
 		}
 		if "`reciprocity'" != "" {
@@ -1973,7 +1973,9 @@ program nwsaom, eclass
 		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
 		// unit-26 entry for the full account.
 		capture mata: mata drop __nwsaom_fit_coevmulti
-		if `__nwsaom_hasnetgate' {
+		local __nwsaom_cn_sym = 0
+		if "`symmetric'" != "" local __nwsaom_cn_sym = `__nwsaom_symtypeval'
+		if `__nwsaom_hasnetgate' | "`symmetric'" != "" {
 			// network endowment/creation + behavior: presentMat, the mask pointers and fntype are all
 			// supplied (real ones when present()/missnet()/missbeh() are active, placeholders otherwise)
 			if !`__nwsaom_haspresent' & !`__nwsaom_hasmiss' {
@@ -1991,7 +1993,7 @@ program nwsaom, eclass
 			mata: __nwsaom_fit_coevmulti = SaomEstimateRMCoevMulti(__nwsaom_last_Gwaves, __nwsaom_last_M, ///
 				__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
 				__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg', __nwsaom_presentmat, ///
-				__nwsaom_cn_mnp, __nwsaom_cn_mbp, __nwsaom_last_fntype)
+				__nwsaom_cn_mnp, __nwsaom_cn_mbp, __nwsaom_last_fntype, `__nwsaom_cn_sym')
 		}
 		else if `__nwsaom_hasmiss' {
 			// harmonisation unit 35: missing data - `present'/`presentMat'
@@ -2020,7 +2022,9 @@ program nwsaom, eclass
 		// header comment (unw_saom.do) and docs/SAOM_ROADMAP.md's
 		// unit-26 entry for the full three-phase account.
 		capture mata: mata drop __nwsaom_fit_coev
-		if `__nwsaom_hasnetgate' {
+		local __nwsaom_cn_sym = 0
+		if "`symmetric'" != "" local __nwsaom_cn_sym = `__nwsaom_symtypeval'
+		if `__nwsaom_hasnetgate' | "`symmetric'" != "" {
 			if `__nwsaom_haspresent' | `__nwsaom_hasmiss' {
 				mata: __nwsaom_cn_pres = __nwsaom_present1
 			}
@@ -2038,7 +2042,7 @@ program nwsaom, eclass
 			mata: __nwsaom_fit_coev = SaomEstimateRMCoev(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_last_M, ///
 				__nwsaom_beh_startvals, __nwsaom_beh_endvals, __nwsaom_beh_minval, __nwsaom_beh_maxval, __nwsaom_last_Mbeh, ///
 				__nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg', __nwsaom_cn_pres, ///
-				__nwsaom_cn_mm, __nwsaom_cn_mmb, __nwsaom_last_fntype)
+				__nwsaom_cn_mm, __nwsaom_cn_mmb, __nwsaom_last_fntype, `__nwsaom_cn_sym')
 		}
 		else if `__nwsaom_hasmiss' {
 			mata: __nwsaom_fit_coev = SaomEstimateRMCoev(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_last_M, ///

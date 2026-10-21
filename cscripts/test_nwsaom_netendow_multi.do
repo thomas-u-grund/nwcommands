@@ -286,3 +286,39 @@ capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reci
 assert inlist(_rc, 0, 498)
 if _rc == 0 assert colsof(e(b)) == 5
 di as text "network endowment/creation with behavior() PASS"
+
+* --- symmetric (undirected) co-evolution: tie-symmetric waves + a behavior, native batch path.
+* (Real-data check against RSiena: dev/saom_rsiena_symmetric_coev*.{R,do}.)
+nwclear
+mata:
+mata set matastrict off
+void symcoev_data() {
+	n = 50
+	rseed(8675)
+	A = (runiform(n, n) :< 0.07)
+	A = A :| A'
+	A = A - diag(diag(A))
+	for (w=1; w<=3; w++) {
+		st_matrix("__Y" + strofreal(w), A)
+		F = (runiform(n, n) :< 0.05)
+		F = F :| F'
+		F = F - diag(diag(F))
+		A = abs(A - F)
+		A = A - diag(diag(A))
+	}
+}
+symcoev_data()
+end
+forvalues w = 1/3 {
+	nwset, mat(__Y`w') directed name(yc`w') nooutput
+}
+gen byte yb1 = mod(_n*3, 5) + 1
+gen byte yb2 = mod(_n*3 + (_n > 25), 5) + 1
+gen byte yb3 = mod(_n*3 + 2*(_n > 20), 5) + 1
+capture nwsaom, wave1(yc1) wave2(yc2) symmetric symtype(joint) outdegree behavior(yb1 yb2) linear avalt k0(30) k3(200) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert colsof(e(b)) == 3 & "`e(engine)'" == "native" & e(rate) < 5
+capture nwsaom, waves(yc1 yc2 yc3) symmetric symtype(joint) outdegree behavior(yb1 yb2 yb3) linear avalt k0(30) k3(200) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert colsof(e(b)) == 3
+di as text "symmetric co-evolution PASS"

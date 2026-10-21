@@ -6156,6 +6156,7 @@ struct SaomCoevNetNetFit scalar SaomEstimateRMCoevNetNet(
    =================================================================== */
 struct SaomCoevCtx {
 	real scalar hasnetgate		// network endowment/creation terms in the model
+	real scalar symtype		// non-directed relation: RSiena model type code (0 = directed), see SaomEstimateRMMulti()
 	pointer(class ErgmGraph scalar) rowvector Gwaves
 	pointer(class ErgmGraph scalar) rowvector GpStat	// per period: the starting network the behavior statistics are evaluated on (masked when missing data are present)
 	pointer(real colvector) rowvector Behwaves
@@ -6322,8 +6323,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real matrix presentMat,
 	pointer(real matrix) rowvector missMaskNetPd, pointer(real colvector) rowvector missMaskBehPd,
-	real rowvector fntype) {
+	real rowvector fntype, real scalar symtype) {
 	string scalar why
+	real scalar m1, rho, d
 
 	struct SaomCoevMultiFit scalar fit
 	struct SaomCoevCtx scalar C
@@ -6370,6 +6372,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	// network endowment/creation (a 15th, trailing argument: the role of every network term)
 	C.hasnetgate = 0
 	if (args() >= 15) C.hasnetgate = (cols(fntype) > 0) & any(fntype :!= 0)
+	C.symtype = 0
+	if (args() >= 16) C.symtype = symtype
 	missBehZero = J(n, 1, 0)
 	C.missBehPd = J(n, P, 0)
 	if (C.hasmiss) {
@@ -6407,6 +6411,10 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	else if (!C.cfgBeh.eligible) why = "a behavior effect without a native implementation (e.g. an endowment/creation split)"
 	else why = "native plugin too old for this model"
 	SaomSetEngine(C.use_native, why)
+	if (C.symtype != 0 & !C.use_batch) {
+		errprintf("nwsaom: co-evolution of a non-directed (symmetric) relation needs the native (C) plugin with the threaded batch path (protocol 11 or later), which is not available for this model/platform.\n")
+		exit(198)
+	}
 	if (C.hasnetgate & !C.use_native) {
 		errprintf("nwsaom: the endowment/creation split of a network effect together with behavior() needs the native (C) plugin (protocol 11 or later), which is not available for this model/platform.\n")
 		exit(198)
@@ -6460,7 +6468,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		if (C.hasmiss & rows(C.missDyadsPd) == 0) C.missDyadsPd = J(0, 3, 0)
 		SaomBatchSetup(Gwaves, P, C.cfg, C.cfgBeh.termcodes, Behwaves, behminval, behmaxval,
 			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd,
-			C.cfgBeh.fntype)
+			C.cfgBeh.fntype, C.symtype)
 	}
 
 	// --- Phase 1: Jacobian by the score-function method. As RSiena
@@ -6612,6 +6620,20 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.ratesNetSE = sqrt(diagonal(fit.Vfull)[(p+1)..(p+P)])'
 	fit.ratesBehSE = sqrt(diagonal(fit.Vfull)[(p+P+1)..ptot])'
 
+	// pairwise (B) symmetric types: report each period's network rate on RSiena's scale, as the
+	// network-only symmetric fits do (SaomSymRateToRSiena()); the behavior rates are unchanged
+	if (C.symtype >= 1 & C.symtype <= 3) {
+		for (pd=1; pd<=P; pd++) {
+			m1 = C.npresentPd[pd] - 1
+			rho = fit.ratesNet[pd]
+			d = 1 / (2 * sqrt(rho * m1))
+			fit.ratesNet[pd] = sqrt(rho / m1)
+			fit.ratesNetSE[pd] = fit.ratesNetSE[pd] * d
+			fit.Vfull[p+pd, .] = fit.Vfull[p+pd, .] :* d
+			fit.Vfull[., p+pd] = fit.Vfull[., p+pd] :* d
+		}
+	}
+
 	if (hasbehsim) SaomBehSimSync(M, *Behwaves[1])
 	if (C.use_batch) SaomBatchCleanup()
 	if (C.use_native) SaomNativeCleanupFrame()
@@ -6648,7 +6670,7 @@ struct SaomCoevFit scalar SaomEstimateRMCoev(
 	real scalar behminval, real scalar behmaxval, class SaomBehaviorModel scalar Mbeh,
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real colvector present,
-	real matrix missMaskNet, real colvector missMaskBeh, real rowvector fntype) {
+	real matrix missMaskNet, real colvector missMaskBeh, real rowvector fntype, real scalar symtype) {
 
 	struct SaomCoevFit scalar fit
 	struct SaomCoevMultiFit scalar mf
@@ -6667,7 +6689,7 @@ struct SaomCoevFit scalar SaomEstimateRMCoev(
 			mnp = (&missMaskNet)
 			mbp = (&missMaskBeh)
 		}
-		mf = SaomEstimateRMCoevMulti(Gw, M, Bw, behminval, behmaxval, Mbeh, theta0Net, theta0Beh, K0, K3, firstg, (present, present), mnp, mbp, fntype)
+		mf = SaomEstimateRMCoevMulti(Gw, M, Bw, behminval, behmaxval, Mbeh, theta0Net, theta0Beh, K0, K3, firstg, (present, present), mnp, mbp, fntype, (args() >= 18 ? symtype : 0))
 	}
 	else if (args() == 16) {
 		mnp = (&missMaskNet)
