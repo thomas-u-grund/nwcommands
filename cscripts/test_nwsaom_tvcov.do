@@ -59,13 +59,13 @@ assert "`e(engine)'" == "mata"
 global NWSAOM_NONATIVE
 di as text "Mata engine PASS"
 
-* refusals: wrong number of variables, missing values, behavior
+* refusals: wrong number of variables, missing values, symmetric
 capture nwsaom, waves(tv1 tv2 tv3) outdegree tvcov(x1) nodeocov(x)
 assert _rc == 198
 replace x2 = . in 3
 capture nwsaom, waves(tv1 tv2 tv3) outdegree tvcov(x1 x2 x3) nodeocov(x) k3(30)
 assert _rc == 198
 replace x2 = 1 in 3
-capture nwsaom, waves(tv1 tv2 tv3) outdegree tvcov(x1 x2 x3) nodeocov(x) behavior(x1 x2 x3) linear
+capture nwsaom, waves(tv1 tv2 tv3) outdegree tvcov(x1 x2 x3) nodeocov(x) symmetric
 assert _rc == 198
 di as text "tvcov refusals PASS"

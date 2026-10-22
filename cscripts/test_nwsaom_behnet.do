@@ -76,4 +76,22 @@ if _rc == 0 {
 	local cn : colnames e(b)
 	assert strpos("`cn'", "beh_avxalt_cv2") & strpos("`cn'", "beh_totsamexalt_cv2") & strpos("`cn'", "beh_from_cv1")
 }
+* time-varying covariates together with a co-evolving behavior (tvcov + behavior, protocol 21 in the several-behavior batch)
+gen double tw1 = mod(_n, 4)
+gen double tw2 = mod(_n + (_n > 20), 4)
+gen double tw3 = mod(_n + (_n > 20) + (_n > 10), 4)
+capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity tvcov(tw1 tw2 tw3) egox(tw) behavior(z1 z2 z3 : linear) k0(10) k3(40) seed(3)
+assert inlist(_rc, 0, 498)
+if _rc == 0 {
+	assert "`e(engine)'" == "native" & colsof(e(b)) == 4
+	assert trim("`e(tvcov)'") == "tw"
+}
+* changing (tvcov) covariates on the behavior: behfrom / behavxalt with a tvcov stem (per-period covariates, protocol 38)
+capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity tvcov(tw1 tw2 tw3) behavior(z1 z2 z3 : linear) behfrom(tw) behavxalt(tw) k0(10) k3(40) seed(3)
+assert inlist(_rc, 0, 498)
+if _rc == 0 {
+	assert "`e(engine)'" == "native" & colsof(e(b)) == 5
+	local cn : colnames e(b)
+	assert strpos("`cn'", "beh_from_tw") & strpos("`cn'", "beh_avxalt_tw")
+}
 di as text "behavior network effects PASS"

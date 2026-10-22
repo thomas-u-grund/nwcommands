@@ -8018,7 +8018,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 37)) {
+		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 38)) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -10251,7 +10251,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	real rowvector bover, | real scalar hastimed, real matrix presentPd, pointer(real matrix) rowvector compEv) {
 
 	real matrix E, t, EV
-	real scalar n, pd, nattr, nb, b, nrows, i, junk, o, k, sframe, haspres
+	real scalar n, pd, nattr, nb, b, nrows, i, junk, o, k, sframe, haspres, ntv
 	real rowvector off
 	string rowvector names
 	string scalar origframe, argstr
@@ -10275,6 +10275,8 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	for (pd=1; pd<=P; pd++) names = names, "b" + strofreal(pd)
 	if (haspres) for (pd=1; pd<=P; pd++) names = names, "pr" + strofreal(pd)
 	for (b=2; b<=nb; b++) for (pd=1; pd<=P; pd++) names = names, "x" + strofreal(b) + "_" + strofreal(pd)
+	ntv = cols(cfg.tvcol)
+	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) names = names, "tv" + strofreal(k) + "_" + strofreal(pd)
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
 	if (rows(EV) > 0) names = names, ("ev_p", "ev_t", "ev_a", "ev_k")
@@ -10291,6 +10293,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	if (haspres) for (pd=1; pd<=P; pd++) st_store((1::n), "pr" + strofreal(pd), presentPd[., pd])
 	if (rows(EV) > 0) st_store((1::rows(EV)), ("ev_p", "ev_t", "ev_a", "ev_k"), EV)
 	for (b=2; b<=nb; b++) for (pd=1; pd<=P; pd++) st_store((1::n), "x" + strofreal(b) + "_" + strofreal(pd), *Bw[b,pd])
+	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) st_store((1::n), "tv" + strofreal(k) + "_" + strofreal(pd), cfg.tvmat[., (k-1)*P + pd])
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
 
 	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
@@ -10308,7 +10311,9 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 		argstr = argstr + " " + strofreal(bmin[b], "%25.17g") + " " + strofreal(bmax[b], "%25.17g") + " " + strofreal(bsim[b], "%25.17g") + " " + strofreal(bover[b], "%25.17g")
 		for (k=off[b]; k<off[b+1]; k++) argstr = argstr + " " + strofreal(fnt[k])
 	}
-	argstr = argstr + " 0 " + strofreal(rows(EV))		// no time-varying attributes; protocol 27: composition-change events
+	argstr = argstr + " " + strofreal(ntv)
+	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
+	argstr = argstr + " " + strofreal(rows(EV))		// protocol 21: time-varying attributes; protocol 27: composition-change events
 	argstr = argstr + SaomBehCovTrailer(n)
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
@@ -10368,6 +10373,7 @@ struct SaomMBCtx {
 	real rowvector codes, fnt, pB, off		// native codes / fn types of all behavior terms, terms per behavior, offsets (nb+1)
 	real rowvector behmin, behmax, simMean, overallMean
 	real scalar nb, P, n, pNet, pBehTot, p, ptot, use_native
+	real scalar hastv				// time-varying covariates in the network model
 	real matrix target				// P x p
 	real rowvector targetRateNet			// 1 x P
 	real matrix targetRateBeh			// nb x P
@@ -10448,6 +10454,8 @@ void SaomMBReplicate(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 	zero = J(C.n, 1, 0)
 	hasbehsim = SaomHasBehSim(*C.Mp)
 	for (pd=1; pd<=P; pd++) {
+		if (C.hastv) SaomTVSync(*C.Mp, pd)
+		SaomBehCovPd(pd)
 		Gwork = ErgmGraph()
 		SaomCopyGraph(*C.Gwaves[pd], Gwork)
 		Behs = J(1, nb, NULL)
@@ -10607,6 +10615,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	C.npresentPd = J(1, C.P, C.n)
 	C.compEv = J(1, C.P, NULL)
 	C.hastimed = SaomTimedLoad(C.n, C.P, C.presentPd, C.compEv, C.npresentPd)
+	C.hastv = SaomModelHasTV(M)
 
 	// native dispatch: every term on every side natively covered, and a plugin that knows several behaviors
 	C.cfg = SaomNativeSetup(M)
@@ -10624,7 +10633,7 @@ struct SaomMBCtx scalar SaomMBInit(
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 37))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 38))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -10641,6 +10650,8 @@ struct SaomMBCtx scalar SaomMBInit(
 	ratesBeh0 = J(C.nb, C.P, 0)
 	for (pd=1; pd<=C.P; pd++) {
 		Gend = *Gwaves[pd+1]
+		if (C.hastv) SaomTVSync(M, pd)
+		SaomBehCovPd(pd)
 		if (SaomHasBehSim(M)) SaomBehSimSync(M, *Behwaves[1,pd])		// lagged: starting behavior
 		C.target[pd, 1..C.pNet] = M.full_statistic(Gend)
 		for (b=1; b<=C.nb; b++) {
@@ -10971,26 +10982,52 @@ real rowvector stat_saom_effcov(class SaomBehavior scalar Beh, real scalar j) {
 	external real matrix __saom_behcov
 	real scalar i, tot
 	tot = 0
-	for (i=1; i<=Beh.n; i++) tot = tot + _sb_c(Beh, i) * __saom_behcov[i, j]
+	for (i=1; i<=Beh.n; i++) tot = tot + _sb_c(Beh, i) * _sb_cv(i, j)
 	return(tot)
 }
 real scalar change_saom_effcov(class SaomBehavior scalar Beh, real scalar i, real scalar diff, real scalar j) {
 	external real matrix __saom_behcov
-	return(diff * __saom_behcov[i, j])
+	return(diff * _sb_cv(i, j))
 }
-/* centred covariate columns from the dataset for behfrom(); stored in __saom_behcov / __saom_behcovnames */
-void SaomBehCovSet(string rowvector vars) {
+/* covariates of the behavior covariate effects: names[j] is the label, vlists[j] the variable list (one variable = constant,
+   nper variables = changing, period p takes the p-th); centred by the mean of all its values (RSiena); stored in
+   __saom_behcov (n x columns), __saom_behcovoff / __saom_behcovper (first column and number of periods per covariate),
+   __saom_behcovnames; __saom_behcov_pd is the period the Mata terms read (SaomBehCovPd()) */
+void SaomBehCovInit() {
 	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper
+	external real scalar __saom_behcov_pd
 	external string rowvector __saom_behcovnames
-	real colvector x
-	real scalar j
 	__saom_behcov = J(st_nobs(), 0, 0)
-	__saom_behcovnames = vars
-	for (j=1; j<=cols(vars); j++) {
-		x = st_data(., vars[j])
-		x = editmissing(x, mean(x))
-		__saom_behcov = (__saom_behcov, x :- mean(x))
-	}
+	__saom_behcovnames = J(1, 0, "")
+	__saom_behcovoff = J(1, 0, 0)
+	__saom_behcovper = J(1, 0, 1)
+	__saom_behcov_pd = 1
+}
+void SaomBehCovAdd(string scalar name, string scalar vlist, real scalar nper) {
+	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper
+	external string rowvector __saom_behcovnames
+	real matrix X
+	string rowvector vv
+	vv = tokens(vlist)
+	if (cols(vv) > 1) vv = vv[1..nper]
+	X = st_data(., vv)
+	X = editmissing(X, mean(vec(X)))
+	__saom_behcovnames = (__saom_behcovnames, name)
+	__saom_behcovoff = (__saom_behcovoff, cols(__saom_behcov) + 1)
+	__saom_behcovper = (__saom_behcovper, cols(vv))
+	__saom_behcov = (__saom_behcov, X :- mean(vec(X)))
+}
+void SaomBehCovPd(real scalar pd) {
+	external real scalar __saom_behcov_pd
+	if (findexternal("__saom_behcov_pd") != NULL) __saom_behcov_pd = pd
+}
+real scalar _sb_cv(real scalar i, real scalar j) {
+	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper
+	external real scalar __saom_behcov_pd
+	return(__saom_behcov[i, __saom_behcovoff[j] + (__saom_behcovper[j] > 1 ? __saom_behcov_pd - 1 : 0)])
 }
 void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars) {
 	real scalar j, t, v
@@ -11012,8 +11049,8 @@ real scalar _sb_xaltT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, r
 	t = 0
 	for (k=1; k<=nb; k++) {
 		a = al[k]
-		if (v == 1 | v == 3) t = t + (abs(__saom_behcov[a, j] - __saom_behcov[i, j]) < 1e-6)
-		else t = t + __saom_behcov[a, j]
+		if (v == 1 | v == 3) t = t + (abs(_sb_cv(a, j) - _sb_cv(i, j)) < 1e-6)
+		else t = t + _sb_cv(a, j)
 	}
 	return(v <= 1 ? t / nb : t)
 }
@@ -11105,12 +11142,16 @@ real rowvector _sb_xaltparse(string scalar nm) {
 }
 string scalar SaomBehCovTrailer(real scalar n) {
 	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper
 	string scalar out
-	real scalar j, i
+	real scalar j, i, q
 	if (findexternal("__saom_behcov") == NULL) return(" 0")
-	if (rows(__saom_behcov) != n | cols(__saom_behcov) == 0) return(" 0")
-	out = " " + strofreal(cols(__saom_behcov))
-	for (j=1; j<=cols(__saom_behcov); j++) for (i=1; i<=n; i++) out = out + " " + strofreal(__saom_behcov[i, j], "%25.17g")
+	if (rows(__saom_behcov) != n | cols(__saom_behcovoff) == 0) return(" 0")
+	out = " " + strofreal(cols(__saom_behcovoff))
+	for (j=1; j<=cols(__saom_behcovoff); j++) {
+		out = out + " " + strofreal(__saom_behcovper[j])
+		for (q=0; q<__saom_behcovper[j]; q++) for (i=1; i<=n; i++) out = out + " " + strofreal(__saom_behcov[i, __saom_behcovoff[j] + q], "%25.17g")
+	}
 	return(out)
 }
 real rowvector stat_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 1))
@@ -11364,8 +11405,8 @@ void SaomMBEngineCheck(pointer(class ErgmGraph scalar) rowvector Gwaves, class E
 	tsum = colsum(C.target)
 	printf("engine check, K=%f replicates: mean (sd) of the statistic [native | Mata], mean of the score\n", K)
 	for (j=1; j<=C.ptot; j++) {
-		printf("  par %2.0f  stat %9.3f (%7.3f) | %9.3f (%7.3f)   score %9.3f | %9.3f\n", j,
-			mean(Zn[.,j]), sqrt(variance(Zn[.,j])), mean(Zm[.,j]), sqrt(variance(Zm[.,j])), mean(Sn[.,j]), mean(Sm[.,j]))
+		printf("  par %2.0f  stat %9.3f (%7.3f) | %9.3f (%7.3f)   score %9.3f | %9.3f   target %9.3f\n", j,
+			mean(Zn[.,j]), sqrt(variance(Zn[.,j])), mean(Zm[.,j]), sqrt(variance(Zm[.,j])), mean(Sn[.,j]), mean(Sm[.,j]), tsum[j])
 	}
 }
 

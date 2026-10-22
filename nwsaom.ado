@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHFROM(varlist numeric) BEHAVXALT(varlist numeric) BEHAVSAMEXALT(varlist numeric) BEHTOTXALT(varlist numeric) BEHTOTSAMEXALT(varlist numeric) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -1292,8 +1292,8 @@ program nwsaom, eclass
 	// nodematch()/simcov() (egox()/altx()/samex()/simx()); the covariate is centred by the mean of all its values.
 	local __nwsaom_tvnames ""
 	if `"`tvcov'"' != "" {
-		if `__nwsaom_coev' | `__nwsaom_tm' | "`interact'" != "" | "`symmetric'" != "" {
-			di "{err}{bf:tvcov()} cannot yet be combined with {bf:behavior()}, two-mode networks, {bf:interact()} or {bf:symmetric}."
+		if `__nwsaom_tm' | "`interact'" != "" | "`symmetric'" != "" {
+			di "{err}{bf:tvcov()} cannot yet be combined with two-mode networks, {bf:interact()} or {bf:symmetric}."
 			error 198
 		}
 		local __rest `"`tvcov'"'
@@ -2265,7 +2265,7 @@ program nwsaom, eclass
 			local __nwsaom_endowcreation = 1
 		}
 		// RSiena's behavior effects of the network position, the alters and the similarity family (protocol 35), behavior 1
-		capture mata: mata drop __saom_behcov __saom_behcovnames
+		capture mata: mata drop __saom_behcov __saom_behcovnames __saom_behcovoff __saom_behcovper __saom_behcov_pd
 		local __bcvall "`behfrom' `behavxalt' `behavsamexalt' `behtotxalt' `behtotsamexalt'"
 		local __bcvall : list uniq __bcvall
 		if "`__bcvall'" != "" {
@@ -2282,7 +2282,20 @@ program nwsaom, eclass
 					local beheff "`beheff' `__pre'`__slot'"
 				}
 			}
-			mata: SaomBehCovSet(tokens("`__bcvall'"))
+			mata: SaomBehCovInit()
+			foreach __v of local __bcvall {
+				if `: list __v in __nwsaom_tvnames' {
+					mata: SaomBehCovAdd("`__v'", "`__nwsaom_tvv_`__v''", `=`__nwsaom_nwaves'-1')
+				}
+				else {
+					capture confirm numeric variable `__v'
+					if _rc {
+						di "{err}behfrom()/behavxalt()/...: `__v' is neither a numeric variable nor a tvcov() covariate."
+						error 198
+					}
+					mata: SaomBehCovAdd("`__v'", "`__v'", 1)
+				}
+			}
 		}
 		if "`beheff'" != "" {
 			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
