@@ -813,6 +813,24 @@ different alter probability, the scores behind the standard errors used only the
 side ({bf:joint} standard errors were twice RSiena's), and with {opt ratecov()} the actor and the
 alter were drawn uniformly, so the covariate could not affect who acts.
 
+{marker sizelimits}{...}
+{title:Size limits}
+
+{pstd}
+{bf:How large a network can be fitted.} With the native (C) engine, fit time grows roughly with the cube of the number of actors above about 1,000 actors. For a plain model (outdegree,
+reciprocity, transitive triplets; three waves; about ten ties per actor; {opt k0(30)} {opt k3(200)}): 250 actors 1.5 seconds, 500 actors 2.6 s, 1,000 actors 10 s, 2,000 actors 67 s, 4,000 actors
+520 s; a full-length run costs several times more. One thousand actors is routine, a few thousand take minutes; beyond roughly 10,000 actors the model itself (every ministep considers all
+possible alters) is the limit.
+
+{pstd}
+{bf:Stata's own limits matter.} Anything given to {cmd:nwsaom} as a Stata matrix ({opt dyadcov()}, {opt dyadcovrecip()}, {opt missnet()}) is limited by Stata's matrix size: 800 x 800 in Stata/BE,
+11,000 x 11,000 in Stata/SE, 65,534 x 65,534 in Stata/MP. A dyadic covariate also travels to the plugin as one variable per actor, so the native engine handles it up to about 1,000 actors (1,023
+covariate arrays; Stata/BE has 2,048 variables altogether). Bring larger networks in as edge lists, not matrices.
+
+{pstd}
+{bf:Check which engine ran.} If a model exceeds a limit of the native engine, {cmd:nwsaom} falls back to the Mata engine without an error; it gives the same results but is orders of magnitude slower.
+After fitting a large network look at {cmd:e(engine)} ({cmd:native} or {cmd:mata}). Until 22 October 2026 a dyadic covariate on 129 or more actors fell back to Mata by mistake.
+
 {marker compchange}{...}
 {title:Composition change (joiners and leavers)}
 

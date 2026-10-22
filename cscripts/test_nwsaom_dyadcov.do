@@ -129,3 +129,32 @@ replace xcov = . in 5
 nwsaom, waves(dd1 dd2 dd3) outdegree absdiffx(xcov) k3(100) seed(3)
 assert colsof(e(b)) == 2 & !missing(el(e(b),1,2))
 di as text "dyadic covariates PASS"
+
+* a dyadic covariate on more than 127 actors stays on the native engine (before 2026-10-22 the Mata gate counted its n arrays
+* against a limit of 127 and the fit silently ran in Mata, hours instead of seconds)
+nwclear
+mata:
+mata set matastrict off
+void dc_big() {
+	n = 140
+	rseed(77)
+	st_matrix("__BX", (runiform(n, n) :< 0.3))
+	A = (runiform(n, n) :< 0.05)
+	A = A - diag(diag(A))
+	for (w=1; w<=2; w++) {
+		st_matrix("__BW" + strofreal(w), A)
+		F = (runiform(n, n) :< 0.03)
+		A = abs(A - F)
+		A = A - diag(diag(A))
+	}
+}
+dc_big()
+end
+clear
+set obs 140
+forvalues w = 1/2 {
+	nwset, mat(__BW`w') directed name(bg`w') nooutput
+}
+nwsaom, wave1(bg1) wave2(bg2) outdegree reciprocity dyadcov(__BX) k0(30) k3(100) seed(1)
+assert "`e(engine)'" == "native"
+di as text "dyadcov() with 140 actors on the native engine PASS"

@@ -701,3 +701,9 @@ end of the period); `setLeaversBack` runs only for periods that have join/leave 
 `SaomNativePluginPath()` finds `lib/plugins/<platform>/` next to the loaded code before it looks at the adopath, so `adopath ++ scratch`
 only works for copies that have no plugin of their own. When testing a rebuilt plugin in a development copy, copy it to that copy's
 `lib/plugins/macos/` too (symptom: the `TRACE ctx: ver ...` line of `NWSAOM_TRACE 4` still shows the old protocol).
+
+## Size limits (Stata editions, native engine) and the silent Mata fallback
+
+See `docs/SIZE_LIMITS.md` (not tracked) and the "Size limits" section of `nwsaom_remarks.sthlp`. In short: Stata/BE matrices are 800 x 800 and a frame has at most 2,048 variables;
+a dyadic covariate takes n covariate arrays in the plugin (limit 1,023); a model that exceeds a native limit runs in Mata without an error - check `e(engine)`. Fit time (plain model, k3 200): n = 1,000
+10 s, 2,000 67 s, 4,000 520 s.

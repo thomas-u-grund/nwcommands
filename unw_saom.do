@@ -8141,9 +8141,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	// with one slot kept for behsim); larger models run in Mata
 	// the plugin's limits (native/saom_sim.c MAXTERMS 256, MAXATTR 128 with
 	// one slot kept for behsim; protocol 11, before: 32 and 24)
-	if (M.nterms > 256 | cols(cfg.attrmat) > 127) {
+	// (protocol 15: MAXATTR 1024 - a dyadic covariate takes one array per actor, so dyadcov() works natively up to about 1000 actors)
+	if (M.nterms > 256 | cols(cfg.attrmat) > 1023) {
 		cfg.eligible = 0
-		if (cfg.whynot == "") cfg.whynot = "more than 256 effects or 127 covariate arrays"
+		if (cfg.whynot == "") cfg.whynot = "more than 256 effects or 1023 covariate arrays (a dyadic covariate takes one array per actor)"
 	}
 	if (M.nterms > 32 | cols(cfg.attrmat) > 23) cfg.needv11 = 1
 	if (cfg.eligible & cfg.needv11) {
