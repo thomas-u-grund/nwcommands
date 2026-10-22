@@ -128,3 +128,42 @@ void dg_reci_check() {
 dg_reci_check()
 end
 di as text "reciprocated-degree effects PASS"
+
+* gwdspFF, gwdspFB, betweenness (s50 targets 450.806, 494.808, 291 - dev/saom_rsiena_gwdsp.{R,do}); the statistics against a brute-force count
+nwsaom, waves(dg1 dg2 dg3) outdegree reciprocity gwdspff(0.69) gwdspfb(0.69) between k0(30) k3(150) seed(7)
+assert colsof(e(b)) == 5 & !missing(el(e(b),1,3), el(e(b),1,5)) & "`e(engine)'" == "native"
+mata:
+mata set matastrict off
+void dg_gwdsp_check() {
+	external class ErgmModel scalar __nwsaom_last_M
+	external class ErgmGraph scalar __nwsaom_last_G3
+	real rowvector st
+	real scalar n, i, h, k, ff, fb, bt, cff, cfb
+	n = __nwsaom_last_G3.n
+	ff = 0
+	fb = 0
+	bt = 0
+	for (i=1; i<=n; i++) {
+		for (h=1; h<=n; h++) {
+			if (h == i) continue
+			cff = 0
+			cfb = 0
+			for (k=1; k<=n; k++) {
+				if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, h)) cff++
+				if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(h, k)) cfb++
+			}
+			ff = ff + gw_kernel(cff, 0.69)
+			fb = fb + gw_kernel(cfb, 0.69)
+			if (__nwsaom_last_G3.has_edge(h, i)) {
+				for (k=1; k<=n; k++) if (k != i & k != h & __nwsaom_last_G3.has_edge(i, k) & !__nwsaom_last_G3.has_edge(h, k)) bt++
+			}
+		}
+	}
+	st = __nwsaom_last_M.full_statistic(__nwsaom_last_G3)
+	assert(abs(st[3] - ff) < 1e-8 & abs(st[4] - fb) < 1e-8 & abs(st[5] - bt) < 1e-9)
+}
+dg_gwdsp_check()
+end
+capture noisily nwsaom, wave1(dg1) wave2(dg2) outdegree gwdspff(-1) k3(50)
+assert _rc == 198
+di as text "gwdsp and betweenness PASS"

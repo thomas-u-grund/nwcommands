@@ -104,6 +104,9 @@
 {synopt:{opt outthreshold(#)}}RSiena {cmd:outThreshold}: number of actors with outdegree greater than #{p_end}
 {synopt:{opt outinv(#)}}RSiena {cmd:outInv}: sum over actors of 1/(outdegree + #), # at least 1{p_end}
 {synopt:{opt outsqinv(#)}}RSiena {cmd:outSqInv}: sum over actors of 1/((outdegree + #)(outdegree + # + 1)){p_end}
+{synopt:{opt gwdspff(#)}}RSiena {cmd:gwdspFF}: geometrically weighted dyadwise shared partners, sum over ordered pairs of the weight of the number of two-paths i->k->j; # is the decay (RSiena's parameter / 100, e.g. 0.69). Copied from RSiena exactly (its simulation contribution only changes the ego's own row){p_end}
+{synopt:{opt gwdspfb(#)}}RSiena {cmd:gwdspFB}: as {opt gwdspff()} for common out-neighbours i->k<-j{p_end}
+{synopt:{opt between}}RSiena {cmd:between}: betweenness, the number of open two-paths h->i->j (no tie h->j). Copied from RSiena exactly{p_end}
 {synopt:{opt recipop}}RSiena {cmd:reciPop}: sum over ties of the alter's reciprocal degree (its number of mutual ties). Copied from RSiena exactly, including that its simulation uses a contribution that is not the change of this statistic{p_end}
 {synopt:{opt recipopsqrt}}RSiena {cmd:reciPopSqrt}: as {opt recipop} with the square root of the reciprocal degree{p_end}
 {synopt:{opt reciact}}RSiena {cmd:reciAct}: sum over ties of the sender's reciprocal degree (copied exactly, as {opt recipop}){p_end}

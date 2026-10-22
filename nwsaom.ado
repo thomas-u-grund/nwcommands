@@ -191,7 +191,7 @@ program nwsaom, eclass
 	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
-		RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
+		GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
@@ -543,7 +543,7 @@ program nwsaom, eclass
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
@@ -1553,6 +1553,35 @@ program nwsaom, eclass
 				local __nwsaom_efflist "`__nwsaom_efflist' `__e'(`__cv')"
 			}
 		}
+	}
+	// RSiena's gwdspFF / gwdspFB (decay = 0.01 * RSiena's parameter; give the decay, e.g. 0.69) and betweenness (protocol 32)
+	foreach __e in gwdspff gwdspfb {
+		if "``__e''" != "" {
+			if "`symmetric'" != "" {
+				di "{err}{bf:`__e'()} is not available for a non-directed relation ({bf:symmetric})."
+				error 198
+			}
+			capture confirm number ``__e''
+			if _rc | real("``__e''") < 0 {
+				di "{err}{bf:`__e'()} needs a non-negative decay, e.g. {bf:`__e'(0.69)}."
+				error 198
+			}
+			tempname __td_gd
+			mata: `__td_gd' = ErgmTermData()
+			mata: `__td_gd'.decay = ``__e''
+			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_gd', ("`__e'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__e'(``__e'')"
+		}
+	}
+	if "`between'" != "" {
+		if "`symmetric'" != "" {
+			di "{err}{bf:between} is not available for a non-directed relation ({bf:symmetric})."
+			error 198
+		}
+		tempname __td_bt
+		mata: `__td_bt' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("between", 1, &stat_saom_between(), &change_saom_between(), `__td_bt', ("between"))
+		local __nwsaom_efflist "`__nwsaom_efflist' between"
 	}
 	// RSiena's reciprocated-degree effects (copied exactly, protocol 31)
 	foreach __e in recipop recipopsqrt reciact reciactsqrt {

@@ -1025,6 +1025,67 @@ real rowvector change_saom_reciact(class ErgmGraph scalar G, real scalar i, real
 real rowvector stat_saom_reciactsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 4))
 real rowvector change_saom_reciactsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 4))
 
+/* RSiena's gwdspFF / gwdspFB (geometrically weighted dyadwise shared partners; statistic: sum over ordered pairs (i,h), h != i, of the weight of the number of
+   two-paths i->k->h (FF) or of common out-neighbours i->k<-h (FB); decay = 0.01 * RSiena's parameter) and betweenness (number of open two-paths h->i->j,
+   h != j, no tie h->j). As reciPop, RSiena's calculateContribution() is only the change in the ego's own row (and for betweenness omits the closed paths), so the
+   statistic and the contribution are coded separately. */
+real scalar _saom_gwdsp_stat(class ErgmGraph scalar G, real scalar decay, real scalar fb) {
+	real scalar i, k, h, a, b, tot
+	real rowvector nk, nh
+	real colvector cnt
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		cnt = J(G.n, 1, 0)
+		nk = G.neighbors_out(i)
+		for (a=1; a<=cols(nk); a++) {
+			k = nk[a]
+			nh = (fb ? G.neighbors_in(k) : G.neighbors_out(k))
+			for (b=1; b<=cols(nh); b++) {
+				h = nh[b]
+				if (h != i) cnt[h] = cnt[h] + 1
+			}
+		}
+		for (h=1; h<=G.n; h++) if (cnt[h] > 0) tot = tot + gw_kernel(cnt[h], decay)
+	}
+	return(tot)
+}
+real scalar _saom_gwdsp_change(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar decay, real scalar fb) {
+	real scalar tied, a, h, c, contr
+	real rowvector nh
+	tied = G.has_edge(i, j)
+	nh = (fb ? G.neighbors_in(j) : G.neighbors_out(j))
+	contr = 0
+	for (a=1; a<=cols(nh); a++) {
+		h = nh[a]
+		if (h == i) continue
+		c = (fb ? G.shared_partners_osp(i, h) : G.shared_partners_otp(i, h))
+		if (tied) contr = contr + gw_kernel(c, decay) - gw_kernel(c - 1, decay)
+		else contr = contr + gw_kernel(c + 1, decay) - gw_kernel(c, decay)
+	}
+	return(tied ? -contr : contr)
+}
+real rowvector stat_saom_gwdspff(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 0))
+real rowvector change_saom_gwdspff(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 0))
+real rowvector stat_saom_gwdspfb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwdsp_stat(G, td.decay, 1))
+real rowvector change_saom_gwdspfb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwdsp_change(G, i, j, td.decay, 1))
+real rowvector stat_saom_between(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real matrix ties
+	real scalar k, tot, i, j
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		i = ties[k,1]
+		j = ties[k,2]
+		tot = tot + G.din[i] - G.has_edge(j, i) - G.shared_partners_isp(i, j)
+	}
+	return(tot)
+}
+real rowvector change_saom_between(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+	real scalar c
+	c = G.din[i] - G.has_edge(j, i) - G.shared_partners_isp(i, j)
+	return(G.has_edge(i, j) ? -c : c)
+}
+
 /* RSiena's functions of the outdegree: outTrunc(c) min(d,c), outMore(c) max(d-c,0), outThreshold(c) 1{d>c}, outInv(c) 1/(d+c),
    outSqInv(c) 1/((d+c)(d+c+1)); statistic = sum over actors, change = f(d_without+1) - f(d_without), negated for an existing tie */
 real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {
@@ -3109,6 +3170,9 @@ real scalar _saom_degfun_code(string scalar nm) {
 	if (nm == "recipopsqrt") return(60)
 	if (nm == "reciact") return(61)
 	if (nm == "reciactsqrt") return(62)
+	if (nm == "gwdspff") return(63)
+	if (nm == "gwdspfb") return(64)
+	if (nm == "between") return(65)
 	return(0)
 }
 
@@ -7938,7 +8002,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -7953,6 +8017,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv29 = 0
 	needv30 = 0
 	needv31 = 0
+	needv32 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8142,6 +8207,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.p1[t] = tdt.decay
 			needv30 = 1
 			if (cfg.termcodes[t] >= 59) needv31 = 1
+			if (cfg.termcodes[t] >= 63) needv32 = 1
 		}
 		else if (_saom_degsplit_code(nm) > 0) {
 			// endowment / creation roles of the degree effects: the base effect's plugin code, gated by cfg.fntype
@@ -8330,6 +8396,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv32) {
+		if (SaomNativePluginVersion() < 32) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 32 (gwdsp, betweenness)"
 		}
 	}
 	if (cfg.eligible & needv31) {
@@ -9055,6 +9127,9 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "gwdspff") return("GWDSP I -> K -> J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "gwdspfb") return("GWDSP I -> K <- J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "between") return("betweenness")
 	if (term == "recipop") return("reciprocal degree - popularity")
 	if (term == "recipopsqrt") return("reciprocal degree - popularity (sqrt)")
 	if (term == "reciact") return("reciprocal degree - activity")
