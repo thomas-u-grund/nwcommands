@@ -99,6 +99,11 @@
 {synopt:{opt outpop}}RSiena {cmd:outPop}: outdegree popularity, sum over ties of the alter's outdegree{p_end}
 {synopt:{opt inact}}RSiena {cmd:inAct}: indegree activity, sum of own outdegree x own indegree (same total statistic as {opt outpop}, so the pair is not identified: RSiena accepts it with arbitrary estimates, {cmd:nwsaom} refuses it){p_end}
 {synopt:{opt outactsqrt}}RSiena {cmd:outActSqrt}: sum of outdegree^1.5{p_end}
+{synopt:{opt outtrunc(#)}}RSiena {cmd:outTrunc}: sum over actors of min(outdegree, #); one term per value given, # a positive integer{p_end}
+{synopt:{opt outmore(#)}}RSiena {cmd:outMore}: sum over actors of max(outdegree - #, 0){p_end}
+{synopt:{opt outthreshold(#)}}RSiena {cmd:outThreshold}: number of actors with outdegree greater than #{p_end}
+{synopt:{opt outinv(#)}}RSiena {cmd:outInv}: sum over actors of 1/(outdegree + #), # at least 1{p_end}
+{synopt:{opt outsqinv(#)}}RSiena {cmd:outSqInv}: sum over actors of 1/((outdegree + #)(outdegree + # + 1)){p_end}
 {synopt:{opt inactivity}}Indegree activity, sqrt-transformed{p_end}
 {synopt:{opt transtrip}}Transitive triplets (weighted count of transitive closures i->j via existing two-paths){p_end}
 {synopt:{opt transmedtrip}}Transitive mediated triplets: for each tie i->j, the number of other actors with an incoming tie to both i and j (RSiena's own "transMedTrip") - a distinct measure of shared incoming ties from `transtrip'{p_end}

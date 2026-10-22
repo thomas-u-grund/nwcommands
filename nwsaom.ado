@@ -191,7 +191,7 @@ program nwsaom, eclass
 	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
-		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
+		OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
@@ -543,7 +543,7 @@ program nwsaom, eclass
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity outpop inact isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
@@ -1535,6 +1535,23 @@ program nwsaom, eclass
 			mata: `__td_dg' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__tn'", 1, &stat_saom_`__tn'(), &change_saom_`__tn'(), `__td_dg', ("`__e'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__e'"
+		}
+	}
+	// RSiena's functions of the outdegree with a parameter c (outTrunc, outMore, outThreshold, outInv, outSqInv; protocol 30):
+	// one term per value given
+	foreach __e in outtrunc outmore outthreshold outinv outsqinv {
+		if "``__e''" != "" {
+			if "`symmetric'" != "" {
+				di "{err}{bf:`__e'()} is not available for a non-directed relation ({bf:symmetric})."
+				error 198
+			}
+			foreach __cv of local `__e' {
+				tempname __td_df
+				mata: `__td_df' = ErgmTermData()
+				mata: `__td_df'.decay = `__cv'
+				mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_df', ("`__e'_`__cv'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__e'(`__cv')"
+			}
 		}
 	}
 	if "`outactivity'" != "" {

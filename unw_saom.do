@@ -966,6 +966,39 @@ real rowvector change_saom_outactsqrt(class ErgmGraph scalar G, real scalar i, r
 	return(G.has_edge(i,j) ? -(d^1.5 - (d-1)^1.5) : ((d+1)^1.5 - d^1.5))
 }
 
+/* RSiena's functions of the outdegree: outTrunc(c) min(d,c), outMore(c) max(d-c,0), outThreshold(c) 1{d>c}, outInv(c) 1/(d+c),
+   outSqInv(c) 1/((d+c)(d+c+1)); statistic = sum over actors, change = f(d_without+1) - f(d_without), negated for an existing tie */
+real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {
+	if (kind == 1) return(min((d, c)))
+	if (kind == 2) return(max((d - c, 0)))
+	if (kind == 3) return(d > c)
+	if (kind == 4) return(1 / (d + c))
+	return(1 / ((d + c) * (d + c + 1)))
+}
+real scalar _saom_degfun_stat(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind) {
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) tot = tot + _saom_degfun(kind, G.dout[i], td.decay)
+	return(tot)
+}
+real scalar _saom_degfun_change(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td, real scalar kind) {
+	real scalar tied, dwo, diff
+	tied = G.has_edge(i, j)
+	dwo = G.dout[i] - tied
+	diff = _saom_degfun(kind, dwo + 1, td.decay) - _saom_degfun(kind, dwo, td.decay)
+	return(tied ? -diff : diff)
+}
+real rowvector stat_saom_outtrunc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 1))
+real rowvector change_saom_outtrunc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 1))
+real rowvector stat_saom_outmore(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 2))
+real rowvector change_saom_outmore(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 2))
+real rowvector stat_saom_outthreshold(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 3))
+real rowvector change_saom_outthreshold(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 3))
+real rowvector stat_saom_outinv(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 4))
+real rowvector change_saom_outinv(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 4))
+real rowvector stat_saom_outsqinv(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_degfun_stat(G, td, 5))
+real rowvector change_saom_outsqinv(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_degfun_change(G, i, j, td, 5))
+
 real rowvector stat_saom_outactivity(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real scalar i, tot
 
@@ -3006,6 +3039,16 @@ real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real
    (indegpopularity, outactivity, outpopularity, inactivity, isolatenet,
    outiso, antiiniso, antiiniso2, inplus3) before an interaction naming
    one of them can ever reach here. */
+/* plugin term code of RSiena's functions of the outdegree (0 = not one of them) */
+real scalar _saom_degfun_code(string scalar nm) {
+	if (nm == "outtrunc") return(54)
+	if (nm == "outmore") return(55)
+	if (nm == "outthreshold") return(56)
+	if (nm == "outinv") return(57)
+	if (nm == "outsqinv") return(58)
+	return(0)
+}
+
 /* plugin term code of a degree effect's endowment/creation term (0 = not one of them) */
 real scalar _saom_degsplit_code(string scalar nm) {
 	string scalar base
@@ -7832,7 +7875,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -7845,6 +7888,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv23 = 0
 	needv24 = 0
 	needv29 = 0
+	needv30 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8026,6 +8070,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				cfg.attrmat = (cfg.attrmat, tdt.levels)
 				needv13 = 1
 			}
+		}
+		else if (_saom_degfun_code(nm) > 0) {
+			// protocol 30: RSiena's functions of the outdegree with their parameter c
+			cfg.termcodes[t] = _saom_degfun_code(nm)
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.decay
+			needv30 = 1
 		}
 		else if (_saom_degsplit_code(nm) > 0) {
 			// endowment / creation roles of the degree effects: the base effect's plugin code, gated by cfg.fntype
@@ -8214,6 +8265,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv30) {
+		if (SaomNativePluginVersion() < 30) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 30 (outTrunc, outMore, outThreshold, outInv, outSqInv)"
 		}
 	}
 	if (cfg.eligible & needv29) {
@@ -8927,6 +8984,11 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "outtrunc") return("outdegree-trunc(" + strofreal(decay) + ")")
+	if (term == "outmore") return("outdegree more(" + strofreal(decay) + ")")
+	if (term == "outthreshold") return("out-threshold(" + strofreal(decay) + ")")
+	if (term == "outinv") return("1/(outdegree + " + strofreal(decay) + ")")
+	if (term == "outsqinv") return("1/(outdegree+ " + strofreal(decay) + ")(outdegree+1+ " + strofreal(decay) + ")")
 	if (term == "outdegreeendow") return("outdegree (density) [endowment]")
 	if (term == "outdegreecreation") return("outdegree (density) [creation]")
 	if (term == "reciprocity") return("reciprocity")

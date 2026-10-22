@@ -83,3 +83,25 @@ end
 di as text "endow/creation of the degree effects PASS"
 capture noisily nwsaom, waves(dg1 dg2 dg3) outdegree inpop endow(inpop) creation(inpop) k3(50)
 assert _rc == 198
+
+* functions of the outdegree with a parameter (RSiena outTrunc, outMore, outThreshold, outInv, outSqInv; s50 targets 207, 76, 45, 37.15, 11.533 - dev/saom_rsiena_degfun.{R,do})
+nwsaom, waves(dg1 dg2 dg3) outdegree reciprocity outtrunc(3) outmore(2) outinv(1) k0(30) k3(150) seed(5)
+assert colsof(e(b)) == 5 & !missing(el(e(b),1,3), el(e(b),1,5)) & "`e(engine)'" == "native"
+mata:
+mata set matastrict off
+void dg_fun_check() {
+	external class ErgmModel scalar __nwsaom_last_M
+	external class ErgmGraph scalar __nwsaom_last_G3
+	real rowvector st
+	real colvector d
+	st = __nwsaom_last_M.full_statistic(__nwsaom_last_G3)
+	d = __nwsaom_last_G3.dout
+	assert(abs(st[3] - sum(d :* (d :< 3) + 3 :* (d :>= 3))) < 1e-9)
+	assert(abs(st[4] - sum((d :- 2) :* (d :> 2))) < 1e-9)
+	assert(abs(st[5] - sum(1 :/ (d :+ 1))) < 1e-9)
+}
+dg_fun_check()
+end
+capture noisily nwsaom, wave1(dg1) wave2(dg2) outdegree outtrunc(0) k3(50)
+assert _rc == 125 | _rc == 198 | _rc == 121
+di as text "functions of the outdegree PASS"
