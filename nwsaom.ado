@@ -459,7 +459,7 @@ program nwsaom, eclass
 		local __nwsaom_autosym 1
 	}
 	else if "`symmetric'" == "" & `__nwsaom_allsym' {
-		local __nwsaom_autosym_ok = !(`__nwsaom_coev' | "`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
+		local __nwsaom_autosym_ok = !("`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
 		if `__nwsaom_autosym_ok' & "`reciprocity'" == "" {
 			local symmetric "symmetric"
 			local __nwsaom_autosym 1
@@ -668,12 +668,7 @@ program nwsaom, eclass
 	// endowment/creation runs for two waves and for waves(), with present() and missnet(); the
 	// estimation core (SaomNetCtx) is period-general. Co-evolution is the remaining gap.
 	// (the network split also works together with behavior(): natively, protocol 11 or later)
-	// RSiena's balance tie statistic treats actors with missing ties specially (BalanceEffect::tieStatistic());
-	// nwsaom's does not, so the balance split is refused together with missnet() until that is ported
-	if "`balanceendow'" != "" & `__nwsaom_hasmissnet' {
-		di "{err}{bf:endow(balance) creation(balance)} cannot yet be combined with {bf:missnet()}: RSiena's balance statistic handles actors with missing ties specially, which is not ported."
-		error 198
-	}
+	// the balance split with missnet() uses RSiena's missing-aware balance tie statistic (protocol 17; Mata equivalent)
 
 	// ratecov(varlist): one covariate-rate coefficient per variable
 	// (2026-10-01; RSiena allows several RateX effects), the actor's rate
@@ -1005,6 +1000,18 @@ program nwsaom, eclass
 	}
 	capture mata: mata drop __nwsaom_last_Gbases
 	mata: __nwsaom_last_Gbases = (`__nwsaom_baseptrlist')
+	// RSiena's balanceMean skips the missing network entries of every period-base wave
+	local __nwsaom_balmean "saom_balance_mean(__nwsaom_last_Gbases)"
+	if `__nwsaom_hasmissnet' {
+		local __nwsaom_balmaskptrlist ""
+		forvalues __w = 1/`__nwsaom_nbases' {
+			if `__w' == 1 local __nwsaom_balmaskptrlist "&__nwsaom_missnet_w1"
+			else local __nwsaom_balmaskptrlist "`__nwsaom_balmaskptrlist', &__nwsaom_missnet_w`__w'"
+		}
+		capture mata: mata drop __nwsaom_balmaskptr
+		mata: __nwsaom_balmaskptr = (`__nwsaom_balmaskptrlist')
+		local __nwsaom_balmean "saom_balance_mean(__nwsaom_last_Gbases, __nwsaom_balmaskptr)"
+	}
 
 	// --- build the model: one addterm() call per requested effect,
 	// same "effect list order fixes coefficient/theta0 order" convention
@@ -1473,7 +1480,7 @@ program nwsaom, eclass
 	if "`balance'" != "" {
 		tempname __td_bal
 		mata: `__td_bal' = ErgmTermData()
-		mata: `__td_bal'.decay = saom_balance_mean(__nwsaom_last_Gbases)
+		mata: `__td_bal'.decay = `__nwsaom_balmean'
 		mata: __nwsaom_last_M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), `__td_bal', ("balance"))
 		local __nwsaom_efflist "`__nwsaom_efflist' balance"
 	}
@@ -1491,10 +1498,10 @@ program nwsaom, eclass
 	if "`balanceendow'" != "" {
 		tempname __td_bale __td_balc
 		mata: `__td_bale' = ErgmTermData()
-		mata: `__td_bale'.decay = saom_balance_mean(__nwsaom_last_Gbases)
+		mata: `__td_bale'.decay = `__nwsaom_balmean'
 		mata: __nwsaom_last_M.addterm("balanceendow", 1, &stat_saom_balance(), &change_saom_balance(), `__td_bale', ("balanceendow"))
 		mata: `__td_balc' = ErgmTermData()
-		mata: `__td_balc'.decay = saom_balance_mean(__nwsaom_last_Gbases)
+		mata: `__td_balc'.decay = `__nwsaom_balmean'
 		mata: __nwsaom_last_M.addterm("balancecreation", 1, &stat_saom_balance(), &change_saom_balance(), `__td_balc', ("balancecreation"))
 		local __nwsaom_efflist "`__nwsaom_efflist' balanceendow balancecreation"
 	}

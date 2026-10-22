@@ -355,9 +355,20 @@ capture nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(transrectrip) cre
 assert inlist(_rc, 0, 498)
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(balance) creation(balance) k3(300) seed(4)
 assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
+* balance split with missing network entries (RSiena's missing-aware balance statistic; real-data check:
+* dev/saom_rsiena_balance_missnet.*): runs, and with an all-zero mask equals the fit without missnet()
 matrix __bm = J(50, 50, 0)
-capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(balance) creation(balance) missnet(__bm __bm __bm) k3(50)
-assert _rc == 198
+matrix __bm2 = J(50, 50, 0)
+forvalues r = 1/40 {
+	matrix __bm2[1 + mod(`r' * 7, 50), 1 + mod(`r' * 13, 50)] = 1
+}
+matrix __bm2 = __bm2 - diag(vecdiag(__bm2))
+nwsaom, waves(tt1 tt2 tt3) outdegree endow(balance) creation(balance) k3(100) seed(4)
+matrix __b0 = e(b)
+nwsaom, waves(tt1 tt2 tt3) outdegree endow(balance) creation(balance) missnet(__bm __bm __bm) k3(100) seed(4)
+assert mreldif(__b0, e(b)) < 1e-10
+nwsaom, waves(tt1 tt2 tt3) outdegree endow(balance) creation(balance) missnet(__bm2 __bm2 __bm2) k3(100) seed(4)
+assert colsof(e(b)) == 3 & !missing(el(e(b),1,2), el(e(b),1,3))
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity gwesp(0.69) endow(gwesp) creation(gwesp) k3(300) seed(4)
 assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4))
 nwsaom, waves(tt1 tt2 tt3) outdegree reciprocity endow(cycle4) creation(cycle4) k3(300) seed(4)
@@ -385,6 +396,12 @@ if _rc == 0 assert colsof(e(b)) == 6
 capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2) linear quadratic present(cp1 cp2) k0(30) k3(200) seed(2)
 assert inlist(_rc, 0, 498)
 if _rc == 0 assert colsof(e(b)) == 5
+* Mata fallback (no native plugin): same combination, tiny run; engine must be mata
+global NWSAOM_NONATIVE 1
+capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2) linear quadratic k0(30) k3(100) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert "`e(engine)'" == "mata" & colsof(e(b)) == 5
+global NWSAOM_NONATIVE
 di as text "network endowment/creation with behavior() PASS"
 
 * --- symmetric (undirected) co-evolution: tie-symmetric waves + a behavior, native batch path.
@@ -421,4 +438,14 @@ if _rc == 0 assert colsof(e(b)) == 3 & "`e(engine)'" == "native" & e(rate) < 5
 capture nwsaom, waves(yc1 yc2 yc3) symmetric symtype(joint) outdegree behavior(yb1 yb2 yb3) linear avalt k0(30) k3(200) seed(2)
 assert inlist(_rc, 0, 498)
 if _rc == 0 assert colsof(e(b)) == 3
+* tie-symmetric waves + behavior() without the symmetric option are modelled as non-directed automatically (RSiena)
+capture nwsaom, wave1(yc1) wave2(yc2) symmetric outdegree behavior(yb1 yb2) linear avalt k0(30) k3(200) seed(2)
+local rc1 = _rc
+if `rc1' == 0 matrix bsym = e(b)
+capture nwsaom, wave1(yc1) wave2(yc2) outdegree behavior(yb1 yb2) linear avalt k0(30) k3(200) seed(2)
+assert _rc == `rc1'
+if `rc1' == 0 {
+	matrix bauto = e(b)
+	assert mreldif(bsym, bauto) < 1e-12
+}
 di as text "symmetric co-evolution PASS"

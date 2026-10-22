@@ -2529,16 +2529,33 @@ real rowvector change_saom_transties(class ErgmGraph scalar G, real scalar i, re
    [(n-2)*b0 - D(i,j)]` - confirmed to actually pass, not merely assumed
    (`cscripts/test_nwsaom_mata.do`'s own unit 25 certify test).
 */
-real scalar saom_balance_mean(pointer(class ErgmGraph scalar) rowvector Gbases){
+real scalar saom_balance_mean(pointer(class ErgmGraph scalar) rowvector Gbases, | pointer(real matrix) rowvector masks){
 	class ErgmGraph scalar G
-	real scalar k, K, n, h, indeg, tempra, temprb
+	real scalar k, K, n, h, indeg, tempra, temprb, m, ones, hasmask
+	real matrix X, Mk
+	real colvector ok
 
 	tempra = 0
 	temprb = 0
 	K = cols(Gbases)
+	hasmask = (args() >= 2) ? (cols(masks) > 0) : 0
 	for (k=1; k<=K; k++) {
 		G = *Gbases[k]
 		n = G.n
+		if (hasmask) {
+			// RSiena's calcBalmean() with missing data: per column h only the observed off-diagonal entries count
+			X = G.to_dense()
+			Mk = *masks[k]
+			for (h=1; h<=n; h++) {
+				ok = (Mk[., h] :== 0)
+				ok[h] = 0
+				m = sum(ok)
+				ones = sum(X[., h] :* ok)
+				tempra = tempra + 2*ones*(m - ones)
+				temprb = temprb + m*(m-1)
+			}
+			continue
+		}
 		for (h=1; h<=n; h++) {
 			indeg = G.degree_in(h)
 			tempra = tempra + 2*indeg*((n-1)-indeg)
@@ -3452,8 +3469,36 @@ real rowvector SaomFntypeFromNames(class ErgmModel scalar M) {
 	return(f)
 }
 
+/* does the model carry a balance endowment/creation term? (its tie statistic depends on the missing-data mask,
+   which the native plugin knows from protocol 17 on) */
+real scalar SaomHasBalanceSplit(class ErgmModel scalar M, real rowvector fntype) {
+	real scalar t
+
+	for (t=1; t<=M.nterms; t++) if (fntype[t] != 0) if (strpos(M.names[t], "balance") == 1) return(1)
+	return(0)
+}
+
+/* RSiena's BalanceEffect::tieStatistic() with missing data: sum over the actors h (not ego/alter, with no missing
+   tie from ego or alter in either wave of the period) of (b0 - |x_ih - x_jh|) */
+real scalar _saom_balance_tiestat_masked(class ErgmGraph scalar G, real scalar b0, real scalar ego,
+	real scalar alter, real matrix missMask) {
+	real scalar h, nvalid, ndiff
+
+	nvalid = 0
+	ndiff = 0
+	for (h=1; h<=G.n; h++) {
+		if (h == ego | h == alter) continue
+		if (missMask[ego,h] != 0 | missMask[alter,h] != 0) continue
+		nvalid++
+		if (G.has_edge(ego, h) != G.has_edge(alter, h)) ndiff++
+	}
+	return(nvalid * b0 - ndiff)
+}
+
 real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowvector fntype,
-	real rowvector stat, class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend) {
+	real rowvector stat, class ErgmGraph scalar Gstart, class ErgmGraph scalar Gend, | real matrix missMask) {
+	real scalar usemask
+	class ErgmGraph scalar Gcm
 
 	class ErgmGraph scalar Glost, Ggained
 	real rowvector out, part
@@ -3462,6 +3507,8 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 	string scalar nm, base
 	class ErgmTermData scalar td
 
+	usemask = (args() >= 6) ? (rows(missMask) > 0) : 0
+	Gcm = (usemask ? SaomBuildMaskedGraph(Gend, missMask) : Gend)
 	out = stat
 	built_lost = 0
 	built_gained = 0
@@ -3486,6 +3533,7 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 				ties = Gend.all_ties()
 				for (k=1; k<=rows(ties); k++) {
 					if (Gstart.has_edge(ties[k,1], ties[k,2])) continue
+					if (usemask) if (missMask[ties[k,1], ties[k,2]] != 0) continue
 					v = v + (recip ? Gend.has_edge(ties[k,2], ties[k,1]) : 1)
 				}
 			}
@@ -3502,14 +3550,15 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 				ties = Gstart.all_ties()
 				for (k=1; k<=rows(ties); k++) {
 					if (Gend.has_edge(ties[k,1], ties[k,2])) continue
-					v = v - _saom_tiestat(Gstart, base, td.attr, td.decay, ties[k,1], ties[k,2])
+					v = v - ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gstart, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gstart, base, td.attr, td.decay, ties[k,1], ties[k,2]))
 				}
 			}
 			else {
 				ties = Gend.all_ties()
 				for (k=1; k<=rows(ties); k++) {
 					if (Gstart.has_edge(ties[k,1], ties[k,2])) continue
-					v = v + _saom_tiestat(Gend, base, td.attr, td.decay, ties[k,1], ties[k,2])
+					if (usemask) if (missMask[ties[k,1], ties[k,2]] != 0) continue
+					v = v + ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gend, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gcm, base, td.attr, td.decay, ties[k,1], ties[k,2]))
 				}
 			}
 			out[pos] = v
@@ -3819,7 +3868,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 			C.target[pd,.] = M.full_statistic(*Gwaves[pd+1])
 			C.targetRate[pd] = SaomCountDiffering(*Gwaves[pd], *Gwaves[pd+1])
 		}
-		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1])
+		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1], (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
 		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr)
 	}
 
@@ -3836,6 +3885,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.use_native = C.cfg.eligible & SaomNativeAvailable()
 	ver = (C.use_native ? SaomNativePluginVersion() : 0)
 	if ((C.hasnetgate | C.hasstructural) & ver < 11) C.use_native = 0
+	if (C.hasnetgate & C.hasmiss & ver < 17) if (SaomHasBalanceSplit(M, fntype)) C.use_native = 0
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
 	if (C.cond & ver < 6) C.use_native = 0
@@ -3959,7 +4009,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 				stat = M.full_statistic(Gwork)
 				netdist = SaomCountDiffering(*C.Gwaves[pd], Gwork)
 			}
-			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork)
+			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
@@ -4097,7 +4147,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 				tim[pd] = cres.t
 			}
 			stat = (C.hasmiss ? SaomMaskedStatistic(Gwork, M, *C.missMaskPd[pd]) : M.full_statistic(Gwork))
-			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork)
+			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
@@ -5516,9 +5566,10 @@ struct SaomCoevScoredResult {
 struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 	class ErgmGraph scalar G, class ErgmModel scalar M, real rowvector thetaNet,
 	class SaomBehavior scalar Beh, class SaomBehaviorModel scalar Mbeh, real rowvector thetaBeh,
-	real scalar rateNet, real scalar rateBeh, | real colvector present) {
+	real scalar rateNet, real scalar rateBeh, | real colvector present, real rowvector fntype) {
 
 	struct SaomCoevScoredResult scalar res
+	real scalar hasfntype
 	real matrix chgmat
 	real rowvector u, ebar, chosen_chg, chgDown, chgUp
 	real scalar t, n, pNet, pBeh, i, j, maxu, denom, draw, draw2, cum, choice, haspresent, npresent
@@ -5535,6 +5586,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 	res.nchangesBeh = 0
 	res.stepsNet = 0
 	res.stepsBeh = 0
+	hasfntype = (args() >= 9) & (cols(fntype) > 0) & any(fntype :!= 0)
 	hasbehsim = SaomHasBehSim(M)
 	if (hasbehsim) SaomBehSimSync(M, Beh.values)	// behsim reads the CURRENT behavior
 
@@ -5572,7 +5624,7 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
 					if (haspresent) if (present[j] == 0) continue
-					chgmat[j,.] = M.full_change(G, i, j)
+					chgmat[j,.] = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 					u[j] = thetaNet * chgmat[j,.]'
 					if (u[j] > maxu) maxu = u[j]
 				}
@@ -6327,7 +6379,8 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 		else {
 			Gwork = ErgmGraph()
 			SaomCopyGraph(*C.Gwaves[pd], Gwork)
-			if (C.haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh, C.presentPd[., pd])
+			if (C.hasnetgate) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh, (C.haspresent ? C.presentPd[., pd] : J(C.n, 1, 1)), C.cfg.fntype)
+			else if (C.haspresent) sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh, C.presentPd[., pd])
 			else sres = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet, rateBeh)
 			if (hasbehsim) SaomBehSimSync(M, behStart)		// lagged: behsim statistic uses the starting behavior
 			if (C.hasmiss) {
@@ -6341,6 +6394,7 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 			// lagged: behavior statistics on the period's STARTING network
 			statBeh = SaomCoevStatBeh(Behwork, *C.GpStat[pd], Mbeh, missBeh)
 		}
+		if (C.hasnetgate & !C.use_native) statNet = SaomNetworkPatchEndowCreation(M, C.cfg.fntype, statNet, *C.Gwaves[pd], Gwork, (C.hasmiss ? *C.missMaskNetPd[pd] : J(0, 0, 0)))
 		simstat = SaomBehaviorPatchEndowCreation(Mbeh, (statNet, statBeh), C.pNet, behStart,
 			Behwork.values, C.GpStat[pd], C.overallMean, missBeh)
 		distBeh = sum(abs(Behwork.values - behStart) :* (1 :- missBeh))
@@ -6492,6 +6546,10 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
+		if (C.hasnetgate & C.hasmiss & k < 17) if (SaomHasBalanceSplit(M, fntype)) {
+			C.use_native = 0
+			C.use_batch = 0
+		}
 		// behavior endowment/creation from protocol 12 on (RSiena's
 		// statistics; protocol 11 had the linear one for every split)
 		if (any(C.cfgBeh.fntype :!= 0) & k < 12) {
@@ -6507,10 +6565,6 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	SaomSetEngine(C.use_native, why)
 	if (C.symtype != 0 & !C.use_batch) {
 		errprintf("nwsaom: co-evolution of a non-directed (symmetric) relation needs the native (C) plugin with the threaded batch path (protocol 11 or later), which is not available for this model/platform.\n")
-		exit(198)
-	}
-	if (C.hasnetgate & !C.use_native) {
-		errprintf("nwsaom: the endowment/creation split of a network effect together with behavior() needs the native (C) plugin (protocol 11 or later), which is not available for this model/platform.\n")
 		exit(198)
 	}
 	C.missDyadsPd = J(0, 3, 0)
@@ -6546,7 +6600,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		else C.target[pd,.] = (M.full_statistic(Gpend), SaomCoevStatBeh(Behpend, *C.GpStat[pd], Mbeh, missBehZero))
 		C.target[pd,.] = SaomBehaviorPatchEndowCreation(Mbeh, C.target[pd,.], C.pNet, *Behwaves[pd],
 			*Behwaves[pd+1], C.GpStat[pd], C.overallMean, C.missBehPd[.,pd])
-		if (C.hasnetgate) C.target[pd,1..C.pNet] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,1..C.pNet], Gp, Gpend)
+		if (C.hasnetgate) C.target[pd,1..C.pNet] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,1..C.pNet], Gp, Gpend, (C.hasmiss ? *missMaskNetPd[pd] : J(0, 0, 0)))
 
 		if (C.hasmiss) C.targetRateNet[pd] = SaomCountDifferingMasked(Gp, Gpend, *missMaskNetPd[pd])
 		else C.targetRateNet[pd] = SaomCountDiffering(Gp, Gpend)
@@ -6916,6 +6970,8 @@ string scalar SaomNativePluginPath(){
 real scalar SaomNativeAvailable(){
 	string scalar p
 
+	// debugging/testing switch: global NWSAOM_NONATIVE = 1 forces the Mata engine
+	if (strtoreal(st_global("NWSAOM_NONATIVE")) == 1) return(0)
 	p = SaomNativePluginPath()
 	if (p == "") return(0)
 	return(fileexists(p))

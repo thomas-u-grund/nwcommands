@@ -540,8 +540,8 @@ output). Since 2026-10-01 every effect is native, the behavior endowment/creatio
 {pstd}
 {bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): more than one
 co-evolving behavior variable. The network-side endowment/creation split ({opt endow()}/{opt creation()})
-works together with {opt behavior()} (two or more waves, {opt present()}, {opt missnet()}; it needs the native
-plugin): on s501/s502 with the alcohol behavior (reciprocity endowment/creation, linear, quadratic, avAlt)
+works together with {opt behavior()} (two or more waves, {opt present()}, {opt missnet()}; native plugin, with a slower
+Mata fallback that gives the same estimates): on s501/s502 with the alcohol behavior (reciprocity endowment/creation, linear, quadratic, avAlt)
 the estimates agree with RSiena 1.6.6 - density -2.04 against -2.03/-2.05/-2.03, reciprocity endowment
 0.79-0.84 against 0.75-0.84, creation 3.60-3.65 against 3.63, behavior linear 0.32, quadratic -0.27,
 avAlt 0.96-1.04 against 0.32, -0.27 and 0.90-1.00, rates 4.3 and 1.24.

@@ -275,7 +275,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 16		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 17		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1108,6 +1108,20 @@ static double saom_tie_stat(graph_t *g, int termcode, double *a, double p1, long
 		}
 	}
 	return 0.0;		// other node-level termcodes: rejected upstream by nwsaom.ado's interact() check (RSiena's rule plus the effects it cannot evaluate)
+}
+
+/* protocol 17: RSiena's BalanceEffect::tieStatistic() with missing data: the sum over h of (b0 - |x_ih - x_jh|) runs
+   only over actors h that are not ego/alter and have no missing tie from ego or from alter (in either wave of the
+   period); mh = the period's missing dyads (NULL = none) */
+static double saom_balance_tie_masked(graph_t *g, double b0, long ego, long alter, dyadht_t *mh) {
+	long h, dv, nvalid = 0, ndiff = 0;
+	for (h = 1; h <= g->n; h++) {
+		if (h == ego || h == alter) continue;
+		if (mh && (ht_get(mh, dyadkey(g, ego, h), &dv) || ht_get(mh, dyadkey(g, alter, h), &dv))) continue;
+		nvalid++;
+		if (has_edge(g, ego, h) != has_edge(g, alter, h)) ndiff++;
+	}
+	return (double)nvalid * b0 - (double)ndiff;
 }
 
 /* ix_stat() below (formerly saom_stat_interact()): TERMCODE_INTERACT2's own global-statistic
@@ -2658,14 +2672,16 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					if (M->fntype[k] == 1) {
 						for (d = 0; d < PD->nties; d++) {
 							if (has_edge(&g, PD->ti[d], PD->tj[d])) continue;
-							v -= saom_tie_stat(&gs, M->termcodes[k], ak, M->p1[k], PD->ti[d], PD->tj[d]);
+							if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
+							v -= (M->termcodes[k] == TERMCODE_BALANCE && hasmiss) ? saom_balance_tie_masked(&gs, M->p1[k], PD->ti[d], PD->tj[d], &missht) : saom_tie_stat(&gs, M->termcodes[k], ak, M->p1[k], PD->ti[d], PD->tj[d]);
 						}
 					}
 					else {
-						for (d = 0; d < g.nties; d++) {
-							long ei = g.elist_i[d], ej = g.elist_j[d];
+						graph_t *ge = have_gm ? &gm : &g;
+						for (d = 0; d < ge->nties; d++) {
+							long ei = ge->elist_i[d], ej = ge->elist_j[d];
 							if (has_edge(&gs, ei, ej)) continue;
-							v += saom_tie_stat(&g, M->termcodes[k], ak, M->p1[k], ei, ej);
+							v += (M->termcodes[k] == TERMCODE_BALANCE && hasmiss) ? saom_balance_tie_masked(&g, M->p1[k], ei, ej, &missht) : saom_tie_stat(have_gm ? &gm : &g, M->termcodes[k], ak, M->p1[k], ei, ej);
 						}
 					}
 					R->stat[k] = v;
