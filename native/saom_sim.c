@@ -288,7 +288,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 27		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period)
+#define SAOM_NATIVE_VERSION 28		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2428,15 +2428,27 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				for (i = 1; i <= n; i++) if (presloc[i] != 0.0) presentIdxArr[npresent++] = i;
 				if (P->hasratecov) {
 					totw_rc = 0.0;
-					for (krc = 0; krc < MAXRC; krc++) Sp_rc[krc] = 0.0;
+					sumw2_rc = 0.0;
+					for (krc = 0; krc < MAXRC; krc++) { Sp_rc[krc] = 0.0; sumw2x_rc[krc] = 0.0; }
 					for (i = 0; i < n; i++) {
 						wfull_rc[i] = (presloc[i + 1] != 0.0) ? wbase_rc[i] : 0.0;
 						totw_rc += wfull_rc[i];
-						for (krc = 0; krc < nrc; krc++) Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
+						sumw2_rc += wfull_rc[i] * wfull_rc[i];
+						for (krc = 0; krc < nrc; krc++) {
+							Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
+							sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[krc * n + i];
+						}
 					}
 					for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
+					if (symB) {
+						symGfac_rc = (totw_rc * totw_rc - sumw2_rc) / (double)(n - 1);
+						for (krc = 0; krc < nrc; krc++) {
+							covrateSum_rc[krc] = rate * (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (double)(n - 1);
+							symdlogG_rc[krc] = (2.0 * totw_rc * Sp_rc[krc] - 2.0 * sumw2x_rc[krc]) / (totw_rc * totw_rc - sumw2_rc);
+						}
+					}
 				}
-				grandRate = P->hasratecov ? rate * totw_rc : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
+				grandRate = P->hasratecov ? (symB ? rate * symGfac_rc : rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
 				if (M->nbeh > 1) for (b = 1; b < M->nbeh; b++) grandRate += (double)npresent * P->xrateBeh[b];
 				evi++;
 				dt_rc = -log(rng_unif(&rng)) / grandRate;
@@ -2510,7 +2522,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						}
 					}
 					else {
-						do { alter = 1 + (long)(rng_unif(&rng) * (double)n); } while (alter == actor);
+						/* RSiena (calculateModelTypeBProbabilities()): the alter is drawn in proportion to the alters' RATES, which are 0 for an
+						   inactive actor - unlike the directed and the unilateral models, where inactive actors stay among the alters */
+						if (PD->haspresent) { do { alter = presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)]; } while (alter == actor); }
+						else { do { alter = 1 + (long)(rng_unif(&rng) * (double)n); } while (alter == actor); }
 					}
 					ij_exists = has_edge(&g, actor, alter);
 					for (k = 0; k < M->nterms; k++) {

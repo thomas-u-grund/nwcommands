@@ -676,7 +676,7 @@ program nwsaom, eclass
 				confirm numeric variable ``__opt''
 			}
 		}
-		foreach __opt in symmetric symtype endow creation tvcov {
+		foreach __opt in endow creation tvcov {
 			if "``__opt''" != "" {
 				di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with {bf:`__opt'}."
 				error 198
@@ -901,7 +901,7 @@ program nwsaom, eclass
 			error 198
 		}
 		if `__nwsaom_haspresent' & "`symmetric'" != "" {
-			di "{err}{bf:ratecov()} with {bf:present()} is not yet supported for a non-directed relation ({bf:symmetric})."
+			di "{err}{bf:ratecov()} with {bf:present()}/{bf:joinat()}/{bf:leaveat()} is not yet supported for a non-directed relation ({bf:symmetric}): siena07 itself fails on that combination, so there is no reference to check against."
 			error 198
 		}
 	}

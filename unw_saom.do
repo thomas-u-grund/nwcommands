@@ -4228,6 +4228,24 @@ real scalar SaomTimedIntegralG(real colvector act0, real matrix ev, real colvect
 	return(tot + (1 - t) * sum(w :* act))
 }
 
+/* pairwise (symmetric) models with a rate covariate: the integral of (S(t)^2 - sum w^2)/(n-1), S = sum of the active weights */
+real scalar SaomTimedIntegralSym(struct SaomNetCtx scalar C, real scalar pd, real colvector w) {
+	real colvector act
+	real matrix ev
+	real scalar t, tot, s
+
+	ev = *C.compEv[pd]
+	act = (C.presentPd[., pd] :!= 0)
+	t = 0
+	tot = 0
+	for (s=1; s<=rows(ev); s++) {
+		tot = tot + (ev[s,1] - t) * (sum(w :* act)^2 - sum(w:^2 :* act)) / (C.n - 1)
+		act[ev[s,2]] = (ev[s,3] == 1)
+		t = ev[s,1]
+	}
+	return(tot + (1 - t) * (sum(w :* act)^2 - sum(w:^2 :* act)) / (C.n - 1))
+}
+
 real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real colvector w) {
 	return(SaomTimedIntegralG(C.presentPd[., pd], *C.compEv[pd], w))
 }
@@ -4412,6 +4430,8 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	if (C.hastv & ver < 21) C.use_native = 0
 	// protocol 26: an inactive actor stays among the alters of an active ego (RSiena)
 	if (C.haspresent & ver < 26) C.use_native = 0
+	// protocol 28: the pairwise models draw the alter among the active actors
+	if (C.haspresent & C.symtype >= 1 & C.symtype <= 3 & ver < 28) C.use_native = 0
 	if (C.hasnetgate & C.hasmiss & ver < 17) if (SaomHasBalanceSplit(M, fntype)) C.use_native = 0
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
@@ -4854,7 +4874,10 @@ real scalar SaomActiveRate(struct SaomNetCtx scalar C, real rowvector par, real 
 	K = C.hasratecov
 	if (!K) return(C.npresentPd[pd])
 	ratecoef = par[(C.ptot-K+1)..C.ptot]
-	if (C.hastimed) return(SaomTimedIntegral(C, pd, exp(C.ratecovattr * ratecoef')))
+	if (C.hastimed) {
+		if (C.symtype >= 1 & C.symtype <= 3) return(SaomTimedIntegralSym(C, pd, exp(C.ratecovattr * ratecoef')))
+		return(SaomTimedIntegral(C, pd, exp(C.ratecovattr * ratecoef')))
+	}
 	active = sum(exp(C.ratecovattr * ratecoef') :* (C.presentPd[., pd] :!= 0))
 	if (C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')) :* (C.presentPd[., pd] :!= 0))) / (C.n - 1)
 	return(active)

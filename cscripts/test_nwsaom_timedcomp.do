@@ -73,6 +73,34 @@ gen double inb2 = 3
 replace inb2 = 1.6 in 1
 capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree joinat(inb) leaveat(inb2) k3(50)
 assert _rc == 198
-capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree joinat(jn) symmetric k3(50)
+* symmetric (non-directed) relation with joiners and leavers
+mata:
+mata set matastrict off
+void tc_sym() {
+	n = 30
+	rseed(1357)
+	A = (runiform(n, n) :< 0.10)
+	A = A - diag(diag(A))
+	A = ((A + A') :> 0)
+	for (w=1; w<=3; w++) {
+		st_matrix("__S" + strofreal(w), A)
+		F = (runiform(n, n) :< 0.04)
+		F = ((F + F') :> 0)
+		F = F - diag(diag(F))
+		A = abs(A - F)
+		A = A - diag(diag(A))
+	}
+}
+tc_sym()
+end
+forvalues w = 1/3 {
+	nwset, mat(__S`w') directed name(sy`w') nooutput
+}
+gen double jn2 = 1
+replace jn2 = 1.4 in 1/2
+nwsaom, waves(sy1 sy2 sy3) symmetric symtype(joint) outdegree transties joinat(jn2) leaveat(lv) k0(30) k3(100) seed(2)
+assert e(b)[1,1] < .
+di as text "symmetric with joinat()/leaveat() PASS"
+capture noisily nwsaom, waves(sy1 sy2 sy3) symmetric symtype(joint) outdegree joinat(jn2) ratecov(jn) k3(50)
 assert _rc == 198
 di as text "invalid input refused PASS"
