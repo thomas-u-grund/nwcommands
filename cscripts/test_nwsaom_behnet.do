@@ -29,7 +29,7 @@ forvalues w = 1/3 {
 gen double z1 = mod(_n * 7, 5)
 gen double z2 = mod(_n * 7 + (_n > 20), 5)
 gen double z3 = mod(_n * 7 + (_n > 20) + (_n > 10), 5)
-foreach ef in indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego {
+foreach ef in indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego avinsim totinsim avinsimpopalt totinsimpopalt avsimrecip totsimrecip avsimrecpop totsimrecpop popalt totpopalt avinalt totinalt {
 	capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) beheff(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498)
 	if _rc == 0 {

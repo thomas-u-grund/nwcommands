@@ -369,7 +369,7 @@ program nwsaom, eclass
 	local __nwsaom_nbehv = 1
 	if `"`behavior'"' != "" & (strpos(`"`behavior'"', "|") | strpos(`"`behavior'"', ":")) {
 		// RSiena's behavior effects of the network position / the alters / the similarity family (protocol 35), also valid as beheff() tokens
-		local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
+		local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego avinsim totinsim avinsimpopalt totinsimpopalt avsimrecip totsimrecip avsimrecpop totsimrecpop popalt totpopalt avinalt totinalt"
 		local __nwsaom_mbeffnames "linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation behsim `__nwsaom_newbeh'"
 		local __nwsaom_gl ""
 		foreach __e in linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation {
@@ -2566,7 +2566,7 @@ program nwsaom, eclass
 			}
 		}
 		if "`beheff'" != "" {
-			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
+			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego avinsim totinsim avinsimpopalt totinsimpopalt avsimrecip totsimrecip avsimrecpop totsimrecpop popalt totpopalt avinalt totinalt"
 			foreach __e of local beheff {
 				if !`: list __e in __nwsaom_newbeh' & !regexm("`__e'", "^((effcov|avxalt|avsamexalt|totxalt|totsamexalt)[1-8]|bs[0-9]+_[1-8])$") {
 					di "{err}beheff(): unknown effect {bf:`__e'}; available: `__nwsaom_newbeh'."

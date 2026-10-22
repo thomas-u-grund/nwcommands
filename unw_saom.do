@@ -8330,7 +8330,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 38) | (C.cfgBeh.needv43 & k < 43)) {
+		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 38) | (C.cfgBeh.needv43 & k < 44)) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -9404,6 +9404,7 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 			cfg.termcodes[t] = _sb_newcode(nm)
 			if (cfg.fntype[t] != 0) cfg.eligible = 0
 			cfg.needv35 = 1
+			if (cfg.termcodes[t] >= 820) cfg.needv43 = 1
 		}
 		else cfg.eligible = 0
 	}
@@ -11051,7 +11052,7 @@ struct SaomMBCtx scalar SaomMBInit(
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 38) & (!anyneed43 | SaomNativePluginVersion() >= 43))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 38) & (!anyneed43 | SaomNativePluginVersion() >= 44))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -12029,6 +12030,74 @@ real rowvector _sb_bsparse(string scalar nm) {
 	return((-1, 0))
 }
 
+/* protocol 44: behavior effects of the network without a covariate (avinsim ... totinalt, see beh_bq_ego_stat() in native/saom_sim.c). NATIVE ONLY. */
+real scalar _sb_bqego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar i) {
+	real colvector al
+	real scalar m, j, st, nb, avg, pop, t, zi, ts
+	zi = _sb_c(Beh, i)
+	st = 0
+	nb = 0
+	if (f <= 7) {
+		avg = (mod(f, 2) == 0)
+		pop = (f == 2 | f == 3 | f == 6 | f == 7)
+		al = _sb_bsalters(G, i, (f <= 3) ? 1 : 2)
+		for (m=1; m<=rows(al); m++) {
+			j = al[m]
+			ts = 1 - abs(Beh.values[i] - Beh.values[j]) / Beh.range - Beh.simMean
+			if (pop) ts = ts * cols(G.neighbors_in(j))
+			st = st + ts
+			nb = nb + 1
+		}
+		if (avg & nb > 0) st = st / nb
+		return(st)
+	}
+	if (f <= 9) {
+		al = _sb_bsalters(G, i, 0)
+		if (rows(al) == 0) return(0)
+		t = 0
+		for (m=1; m<=rows(al); m++) t = t + cols(G.neighbors_in(al[m]))
+		if (f == 8) t = t / rows(al)
+		return(zi * t)
+	}
+	al = _sb_bsalters(G, i, 1)
+	if (rows(al) == 0) return(0)
+	for (m=1; m<=rows(al); m++) st = st + _sb_c(Beh, al[m])
+	st = st * zi
+	if (f == 10) st = st / rows(al)
+	return(st)
+}
+real rowvector stat_saom_bq(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f) {
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=Beh.n; i++) tot = tot + _sb_bqego(Beh, G, f, i)
+	return(tot)
+}
+real rowvector stat_saom_avinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 0))
+real scalar change_saom_avinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 1))
+real scalar change_saom_totinsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 2))
+real scalar change_saom_avinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 3))
+real scalar change_saom_totinsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 4))
+real scalar change_saom_avsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 5))
+real scalar change_saom_totsimrecip(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 6))
+real scalar change_saom_avsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 7))
+real scalar change_saom_totsimrecpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_popalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 8))
+real scalar change_saom_popalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 9))
+real scalar change_saom_totpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_avinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 10))
+real scalar change_saom_avinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bq(Beh, G, 11))
+real scalar change_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+string rowvector _sb_bqtokens() return(("avinsim", "totinsim", "avinsimpopalt", "totinsimpopalt", "avsimrecip", "totsimrecip", "avsimrecpop", "totsimrecpop", "popalt", "totpopalt", "avinalt", "totinalt"))
+
 /* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
 string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
@@ -12046,6 +12115,18 @@ string scalar _sb_label(string scalar base) {
 		if (findexternal("__saom_behcovnames") != NULL) if (j >= 1 & j <= cols(__saom_behcovnames)) return("effFrom " + __saom_behcovnames[j])
 		return("effFrom covariate " + strofreal(j))
 	}
+	if (base == "avinsim") return("average in-similarity")
+	if (base == "totinsim") return("total in-similarity")
+	if (base == "avinsimpopalt") return("ave. in-sim. x popularity alter")
+	if (base == "totinsimpopalt") return("tot. in-sim. x popularity alter")
+	if (base == "avsimrecip") return("average similarity x reciprocity")
+	if (base == "totsimrecip") return("total similarity x reciprocity")
+	if (base == "avsimrecpop") return("ave. sim. x reciprocity x popularity alter")
+	if (base == "totsimrecpop") return("tot. sim. x reciprocity x popularity alter")
+	if (base == "popalt") return("average popularity alter")
+	if (base == "totpopalt") return("total popularity alter")
+	if (base == "avinalt") return("average in-alter")
+	if (base == "totinalt") return("total in-alter")
 	if (base == "indeg") return("indegree")
 	if (base == "outdeg") return("outdegree")
 	if (base == "recipdeg") return("reciprocated degree")
@@ -12076,6 +12157,8 @@ real scalar _sb_newcode(string scalar nm) {
 	string rowvector tk
 	tk = _sb_newtokens()
 	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(104 + k)
+	tk = _sb_bqtokens()
+	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(820 + k - 1)
 	return(0)
 }
 
@@ -12332,6 +12415,18 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "bs19_6") Mbeh.addterm("bs19_6", &stat_saom_bs19_6(), &change_saom_bs19_6(), pre + "bs19_6")
 		else if (nm == "bs19_7") Mbeh.addterm("bs19_7", &stat_saom_bs19_7(), &change_saom_bs19_7(), pre + "bs19_7")
 		else if (nm == "bs19_8") Mbeh.addterm("bs19_8", &stat_saom_bs19_8(), &change_saom_bs19_8(), pre + "bs19_8")
+		else if (nm == "avinsim") Mbeh.addterm("avinsim", &stat_saom_avinsim(), &change_saom_avinsim(), pre + "avinsim")
+		else if (nm == "totinsim") Mbeh.addterm("totinsim", &stat_saom_totinsim(), &change_saom_totinsim(), pre + "totinsim")
+		else if (nm == "avinsimpopalt") Mbeh.addterm("avinsimpopalt", &stat_saom_avinsimpopalt(), &change_saom_avinsimpopalt(), pre + "avinsimpopalt")
+		else if (nm == "totinsimpopalt") Mbeh.addterm("totinsimpopalt", &stat_saom_totinsimpopalt(), &change_saom_totinsimpopalt(), pre + "totinsimpopalt")
+		else if (nm == "avsimrecip") Mbeh.addterm("avsimrecip", &stat_saom_avsimrecip(), &change_saom_avsimrecip(), pre + "avsimrecip")
+		else if (nm == "totsimrecip") Mbeh.addterm("totsimrecip", &stat_saom_totsimrecip(), &change_saom_totsimrecip(), pre + "totsimrecip")
+		else if (nm == "avsimrecpop") Mbeh.addterm("avsimrecpop", &stat_saom_avsimrecpop(), &change_saom_avsimrecpop(), pre + "avsimrecpop")
+		else if (nm == "totsimrecpop") Mbeh.addterm("totsimrecpop", &stat_saom_totsimrecpop(), &change_saom_totsimrecpop(), pre + "totsimrecpop")
+		else if (nm == "popalt") Mbeh.addterm("popalt", &stat_saom_popalt(), &change_saom_popalt(), pre + "popalt")
+		else if (nm == "totpopalt") Mbeh.addterm("totpopalt", &stat_saom_totpopalt(), &change_saom_totpopalt(), pre + "totpopalt")
+		else if (nm == "avinalt") Mbeh.addterm("avinalt", &stat_saom_avinalt(), &change_saom_avinalt(), pre + "avinalt")
+		else if (nm == "totinalt") Mbeh.addterm("totinalt", &stat_saom_totinalt(), &change_saom_totinalt(), pre + "totinalt")
 		else if (substr(nm, strlen(nm) - 7, .) == "creation") continue		// the partner of an endow term, added with it
 		else {
 			errprintf("nwsaom: unknown behavior effect '" + nm + "'\n")
