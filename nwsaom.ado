@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -545,7 +545,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1470,6 +1470,32 @@ program nwsaom, eclass
 					mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
 					mata: `__td_cv'.decay = max(`__td_cv'.attr) - min(`__td_cv'.attr)
 					mata: `__td_cv'.center = (rows(`__td_cv'.levels) > 0 ? SaomSimMeanObs(__nwsaom_xx, `__td_cv'.levels) : SaomSimMean(`__td_cv'.attr))
+				}
+				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+			}
+		}
+	}
+	// protocol 39: covariate x triad / popularity / activity effects (native only; the observed statistic is evaluated in Mata)
+	foreach __dk in samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop {
+		if "``__dk''" != "" {
+			unab `__dk' : ``__dk''
+			foreach __v of local `__dk' {
+				capture assert !missing(`__v') in 1/`nodes'
+				if _rc {
+					di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
+					error 198
+				}
+				tempname __td_cv
+				mata: `__td_cv' = ErgmTermData()
+				mata: `__td_cv'.levels = J(0, 1, 0)
+				if "`__dk'" == "simxtranstrip" {
+					mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
+					mata: `__td_cv'.decay = max(`__td_cv'.attr) - min(`__td_cv'.attr)
+					mata: `__td_cv'.center = SaomSimMean(`__td_cv'.attr)
+					mata: `__td_cv'.attr = `__td_cv'.attr / `__td_cv'.decay
+					mata: `__td_cv'.center = `__td_cv'.center
 				}
 				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))

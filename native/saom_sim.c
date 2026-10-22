@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 38		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects
+#define SAOM_NATIVE_VERSION 39		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -952,9 +952,124 @@ static double cov2_val(int code, double vi, double vj, double p1) {
 }
 static int cov2_isrecip(int code) { return code == TERMCODE_SAMEXRECIP || code == TERMCODE_SIMRECIPX; }
 
+/* protocol 39: covariate x triad / popularity / activity effects (RSiena sameXTransTrip, diffXTransTrip, simXTransTrip, homXTransTrip,
+   sameXOutAct, diffXOutAct, sameXReciAct, diffXReciAct, homXOutAct, altXOutAct, inPopX, outPopX, inActX, outActX, sameXInPop, diffXInPop):
+   term code 165 + variant, attribute = the (centred) covariate (simXTransTrip: x / range, p1 = similarity mean). cx_value() is RSiena's
+   calculateContribution() (the simulation negates it for an existing tie), cx_tie() its tieStatistic() (the statistic is the sum over ties). */
+#define TERMCODE_CX0 165
+#define SAOM_CXTC(tc) ((tc) >= TERMCODE_CX0 && (tc) < TERMCODE_CX0 + 16)
+static int cx_same(const double *a, long i, long j) { return fabs(a[i] - a[j]) < 1e-6; }
+static long cx_twopath(graph_t *g, long i, long j) {
+	long m, c = 0;
+	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, g->outadj[i].nb[m], j)) c++;
+	return c;
+}
+static double cx_sum(graph_t *g, const double *a, long j, int in) {
+	long m;
+	double t = 0.0;
+	adjlist_t *L = in ? &g->inadj[j] : &g->outadj[j];
+	for (m = 0; m < L->len; m++) t += a[L->nb[m]];
+	return t;
+}
+static double cx_value(graph_t *g, int v, const double *a, double p1, long i, long j) {
+	long m, c = 0;
+	adjlist_t *O = &g->outadj[i];
+	switch (v) {
+		case 0: case 1: {
+			int same = (v == 0);
+			double t = ((cx_same(a, j, i) != 0) == same) ? (double)cx_twopath(g, i, j) : 0.0;
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (((cx_same(a, h, i) != 0) == same) && has_edge(g, j, h)) t += 1.0; }
+			return t;
+		}
+		case 2: {
+			double t = (1.0 - fabs(a[i] - a[j]) - p1) * (double)cx_twopath(g, i, j);
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (has_edge(g, h, j)) t += 1.0 - fabs(a[i] - a[h]) - p1; }
+			return t;
+		}
+		case 3: {
+			double t = 0.0;
+			if (cx_same(a, j, i)) for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (cx_same(a, h, i)) { if (has_edge(g, j, h)) t += 1.0; if (has_edge(g, h, j)) t += 1.0; } }
+			return t;
+		}
+		case 4: case 5: {
+			int same = (v == 4);
+			if ((cx_same(a, j, i) != 0) == same) {
+				for (m = 0; m < O->len; m++) { long h = O->nb[m]; if ((cx_same(a, h, i) != 0) == same) c++; }
+				if (has_edge(g, i, j)) c--;
+			}
+			return 2.0 * (double)c + 1.0;
+		}
+		case 6: case 7: {
+			int same = (v == 6);
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (((cx_same(a, h, i) != 0) == same) && has_edge(g, h, i)) c++; }
+			if (has_edge(g, i, j)) c--;
+			return 2.0 * (double)c + 1.0;
+		}
+		case 8: {
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (h != j && cx_same(a, h, j)) c++; }
+			return 2.0 * (double)c + 1.0;
+		}
+		case 9: {
+			double s2 = cx_sum(g, a, i, 0);
+			if (has_edge(g, i, j)) s2 -= a[j];
+			return a[j] * 2.0 * s2 + a[j] * a[j];
+		}
+		case 10: return cx_sum(g, a, j, 1);
+		case 11: return cx_sum(g, a, j, 0);
+		case 12: return cx_sum(g, a, i, 1);
+		case 13: return cx_sum(g, a, i, 0);
+		case 14: case 15: {
+			int same = (v == 14);
+			adjlist_t *I = &g->inadj[j];
+			for (m = 0; m < I->len; m++) if ((cx_same(a, I->nb[m], i) != 0) == same) c++;
+			if (same && !has_edge(g, i, j)) c++;
+			return (double)c;
+		}
+	}
+	return 0.0;
+}
+static double cx_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
+	long m, c = 0;
+	adjlist_t *O = &g->outadj[i];
+	switch (v) {
+		case 0: case 1: return ((cx_same(a, j, i) != 0) == (v == 0)) ? (double)cx_twopath(g, i, j) : 0.0;
+		case 2: return (1.0 - fabs(a[i] - a[j]) - p1) * (double)cx_twopath(g, i, j);
+		case 3:
+			if (cx_same(a, j, i)) for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (cx_same(a, h, i) && has_edge(g, h, j)) c++; }
+			return (double)c;
+		case 4: case 5: {
+			int same = (v == 4);
+			if ((cx_same(a, j, i) != 0) == same) for (m = 0; m < O->len; m++) if ((cx_same(a, O->nb[m], i) != 0) == same) c++;
+			return (double)c;
+		}
+		case 6: case 7: {
+			int same = (v == 6);
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (((cx_same(a, h, i) != 0) == same) && has_edge(g, h, i)) c++; }
+			return (double)c;
+		}
+		case 8: for (m = 0; m < O->len; m++) if (cx_same(a, O->nb[m], j)) c++; return (double)c;
+		case 9: return a[j] * cx_sum(g, a, i, 0);
+		case 10: return cx_sum(g, a, j, 1);
+		case 11: return cx_sum(g, a, j, 0);
+		case 12: return cx_sum(g, a, i, 1);
+		case 13: return cx_sum(g, a, i, 0);
+		case 14: case 15: {
+			int same = (v == 14);
+			adjlist_t *I = &g->inadj[j];
+			for (m = 0; m < I->len; m++) if ((cx_same(a, I->nb[m], i) != 0) == same) c++;
+			return (double)c;
+		}
+	}
+	return 0.0;
+}
+
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
+	if (SAOM_CXTC(termcode)) {
+		for (k = 0; k < g->nties; k++) tot += cx_tie(g, termcode - TERMCODE_CX0, a, p1, g->elist_i[k], g->elist_j[k]);
+		return tot;
+	}
 	switch (termcode) {
 		case TERMCODE_OUTDEGREE:					// stat_edges(): G.nties
 			return (double)g->nties;
@@ -1155,6 +1270,10 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
    model. */
 static double saom_change_term(graph_t *g, int termcode, double *a, double p1, long i, long j, int ij_exists,
 	double *tt_arr, double *c3_arr) {
+	if (SAOM_CXTC(termcode)) {
+		double v = cx_value(g, termcode - TERMCODE_CX0, a, p1, i, j);
+		return ij_exists ? -v : v;
+	}
 	switch (termcode) {
 		case TERMCODE_OUTDEGREE:
 			return ij_exists ? -1.0 : 1.0;
@@ -1688,7 +1807,7 @@ static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int
 	if (tc == TERMCODE_TRANSTRIP) *need_transtrip = 1;
 	if (tc == TERMCODE_CYCLE3) *need_cycle3 = 1;
 	if (tc == TERMCODE_TRANSRECTRIP || tc == TERMCODE_OUTOUTASS || tc == TERMCODE_OUTINASS || tc == TERMCODE_TRANSMEDTRIP) *need_adj = 1;
-	if (tc == TERMCODE_CYCLE4) *need_adj = 1;
+	if (tc == TERMCODE_CYCLE4 || SAOM_CXTC(tc)) *need_adj = 1;
 	if (tc == TERMCODE_GWDSPFF || tc == TERMCODE_GWDSPFB || tc == TERMCODE_BETWEEN) *need_adj = 1;
 	if ((tc >= TERMCODE_GWESPFB && tc <= TERMCODE_CYCLE4SQRT)) *need_adj = 1;
 	if (tc == TERMCODE_RECIPOP || tc == TERMCODE_RECIPOPSQRT || tc == TERMCODE_RECIACT || tc == TERMCODE_RECIACTSQRT) *need_adj = 1;

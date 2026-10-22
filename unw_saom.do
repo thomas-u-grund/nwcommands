@@ -2910,6 +2910,114 @@ real rowvector change_saom_dyadcovrecip(class ErgmGraph scalar G, real scalar i,
 	return(G.has_edge(i,j) ? -d : d)
 }
 
+/* protocol 39: covariate x triad / popularity / activity effects (RSiena sameXTransTrip ... diffXInPop). NATIVE ONLY: Mata evaluates the observed
+   statistic (the target) from RSiena's tieStatistic() summed over the ties; the simulation needs the plugin (protocol 39). */
+real scalar _saom_cxsame(real colvector a, real scalar i, real scalar j) return(abs(a[i] - a[j]) < 1e-6)
+real scalar _saom_cxsum(real colvector a, real rowvector nb) {
+	real scalar m, t
+	t = 0
+	for (m=1; m<=cols(nb); m++) t = t + a[nb[m]]
+	return(t)
+}
+real scalar _saom_cxcnt(class ErgmGraph scalar G, real colvector a, real scalar i, real scalar j, real scalar v, real scalar p1) {
+	real rowvector nb
+	real scalar m, h, c, same
+	c = 0
+	nb = G.neighbors_out(i)
+	if (v == 0 | v == 1) {
+		if (_saom_cxsame(a, j, i) == (v == 0)) {
+			for (m=1; m<=cols(nb); m++) c = c + G.has_edge(nb[m], j)
+		}
+		return(c)
+	}
+	if (v == 2) {
+		for (m=1; m<=cols(nb); m++) c = c + G.has_edge(nb[m], j)
+		return((1 - abs(a[i] - a[j]) - p1) * c)
+	}
+	if (v == 3) {
+		if (_saom_cxsame(a, j, i)) {
+			for (m=1; m<=cols(nb); m++) {
+				h = nb[m]
+				if (_saom_cxsame(a, h, i)) c = c + G.has_edge(h, j)
+			}
+		}
+		return(c)
+	}
+	if (v == 4 | v == 5) {
+		same = (v == 4)
+		if (_saom_cxsame(a, j, i) == same) {
+			for (m=1; m<=cols(nb); m++) c = c + (_saom_cxsame(a, nb[m], i) == same)
+		}
+		return(c)
+	}
+	if (v == 6 | v == 7) {
+		same = (v == 6)
+		for (m=1; m<=cols(nb); m++) {
+			h = nb[m]
+			if (_saom_cxsame(a, h, i) == same & G.has_edge(h, i)) c = c + 1
+		}
+		return(c)
+	}
+	if (v == 8) {
+		for (m=1; m<=cols(nb); m++) c = c + _saom_cxsame(a, nb[m], j)
+		return(c)
+	}
+	if (v == 9) return(a[j] * _saom_cxsum(a, nb))
+	if (v == 10) return(_saom_cxsum(a, G.neighbors_in(j)))
+	if (v == 11) return(_saom_cxsum(a, G.neighbors_out(j)))
+	if (v == 12) return(_saom_cxsum(a, G.neighbors_in(i)))
+	if (v == 13) return(_saom_cxsum(a, nb))
+	same = (v == 14)
+	nb = G.neighbors_in(j)
+	for (m=1; m<=cols(nb); m++) c = c + (_saom_cxsame(a, nb[m], i) == same)
+	return(c)
+}
+real scalar _saom_cxstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real matrix ties
+	real scalar k, tot, a1
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + _saom_cxcnt(G, td.attr, ties[k,1], ties[k,2], v, (v == 2 ? td.center : 0))
+	return(tot)
+}
+real rowvector _saom_cxchg(string scalar nm) {
+	errprintf("nwsaom: " + nm + " needs the native plugin (protocol 39 or later); there is no Mata implementation of this effect.\n")
+	exit(198)
+	return(0)
+}
+real rowvector stat_saom_samextranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(0, G, td))
+real rowvector change_saom_samextranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samextranstrip"))
+real rowvector stat_saom_diffxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(1, G, td))
+real rowvector change_saom_diffxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxtranstrip"))
+real rowvector stat_saom_simxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(2, G, td))
+real rowvector change_saom_simxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("simxtranstrip"))
+real rowvector stat_saom_homxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(3, G, td))
+real rowvector change_saom_homxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("homxtranstrip"))
+real rowvector stat_saom_samexoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(4, G, td))
+real rowvector change_saom_samexoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexoutact"))
+real rowvector stat_saom_diffxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(5, G, td))
+real rowvector change_saom_diffxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxoutact"))
+real rowvector stat_saom_samexreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(6, G, td))
+real rowvector change_saom_samexreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexreciact"))
+real rowvector stat_saom_diffxreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(7, G, td))
+real rowvector change_saom_diffxreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxreciact"))
+real rowvector stat_saom_homxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(8, G, td))
+real rowvector change_saom_homxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("homxoutact"))
+real rowvector stat_saom_altxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(9, G, td))
+real rowvector change_saom_altxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("altxoutact"))
+real rowvector stat_saom_inpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(10, G, td))
+real rowvector change_saom_inpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("inpopx"))
+real rowvector stat_saom_outpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(11, G, td))
+real rowvector change_saom_outpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("outpopx"))
+real rowvector stat_saom_inactx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(12, G, td))
+real rowvector change_saom_inactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("inactx"))
+real rowvector stat_saom_outactx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(13, G, td))
+real rowvector change_saom_outactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("outactx"))
+real rowvector stat_saom_samexinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(14, G, td))
+real rowvector change_saom_samexinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("samexinpop"))
+real rowvector stat_saom_diffxinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(15, G, td))
+real rowvector change_saom_diffxinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxinpop"))
+
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -8476,7 +8584,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8494,6 +8602,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv32 = 0
 	needv33 = 0
 	needv34 = 0
+	needv39 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8571,6 +8680,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				cfg.attrmat = (cfg.attrmat, tdt.levels)
 				needv24 = 1
 			}
+		}
+		else if (nm == "samextranstrip" | nm == "diffxtranstrip" | nm == "simxtranstrip" | nm == "homxtranstrip" | nm == "samexoutact" | nm == "diffxoutact" | nm == "samexreciact" | nm == "diffxreciact" | nm == "homxoutact" | nm == "altxoutact" | nm == "inpopx" | nm == "outpopx" | nm == "inactx" | nm == "outactx" | nm == "samexinpop" | nm == "diffxinpop") {
+			cfg.termcodes[t] = 165 + (nm == "samextranstrip" ? 0 : (nm == "diffxtranstrip" ? 1 : (nm == "simxtranstrip" ? 2 : (nm == "homxtranstrip" ? 3 : (nm == "samexoutact" ? 4 : (nm == "diffxoutact" ? 5 : (nm == "samexreciact" ? 6 : (nm == "diffxreciact" ? 7 : (nm == "homxoutact" ? 8 : (nm == "altxoutact" ? 9 : (nm == "inpopx" ? 10 : (nm == "outpopx" ? 11 : (nm == "inactx" ? 12 : (nm == "outactx" ? 13 : (nm == "samexinpop" ? 14 : 15)))))))))))))))
+			tdt = *M.td[t]
+			nextattr++
+			cfg.attridx[t] = nextattr
+			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (nm == "simxtranstrip") cfg.p1[t] = tdt.center
+			needv39 = 1
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -8922,6 +9040,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv39) {
+		if (SaomNativePluginVersion() < 39) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 39 (covariate x triad/popularity/activity effects)"
 		}
 	}
 	if (cfg.eligible & needv23) {
@@ -9671,6 +9795,22 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	}
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
+	if (term == "samextranstrip") return(v + " same x transitive triplets")
+	if (term == "diffxtranstrip") return(v + " diff x transitive triplets")
+	if (term == "simxtranstrip") return(v + " similarity x transitive triplets")
+	if (term == "homxtranstrip") return(v + " homogeneous x transitive triplets")
+	if (term == "samexoutact") return(v + " outdegree activity to same x")
+	if (term == "diffxoutact") return(v + " outdegree activity to different x")
+	if (term == "samexreciact") return(v + " reciprocated activity to same x")
+	if (term == "diffxreciact") return(v + " reciprocated activity to different x")
+	if (term == "homxoutact") return(v + " outdegree activity to homogeneous x")
+	if (term == "altxoutact") return(v + " outdegree activity weighted by alter x")
+	if (term == "inpopx") return(v + " indegree popularity weighted by x")
+	if (term == "outpopx") return(v + " outdegree popularity weighted by x")
+	if (term == "inactx") return(v + " indegree activity weighted by x")
+	if (term == "outactx") return(v + " outdegree activity weighted by x")
+	if (term == "samexinpop") return(v + " indegree popularity from same x")
+	if (term == "diffxinpop") return(v + " indegree popularity from different x")
 	if (term == "absdiffx") return(v + " abs. difference")
 	if (term == "diffx") return(v + " difference")
 	if (term == "higher") return(v + " higher")
