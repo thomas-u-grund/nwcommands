@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(varlist numeric) DIFFSQX(varlist numeric) EGODIFFX(varlist numeric) ALTHIGHEREGOX(varlist numeric) UNEQUALX(varlist numeric) EGOLTHRESHOLDX(varlist numeric) EGORTHRESHOLDX(varlist numeric) ALTLTHRESHOLDX(varlist numeric) ALTRTHRESHOLDX(varlist numeric) DEGABSDIFFX(varlist numeric) DEGPOSDIFFX(varlist numeric) DEGNEGDIFFX(varlist numeric) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -1492,8 +1492,34 @@ program nwsaom, eclass
 	// protocol 23: diffx (x_j - x_i), higher (x_i > x_j), egosqx (x_i^2), altsqx (x_j^2), samexrecip, simrecipx
 	foreach __dk in diffx higher egosqx altsqx samexrecip simrecipx {
 		if "``__dk''" != "" {
-			unab `__dk' : ``__dk''
+			local __ul ""
+			foreach __t of local `__dk' {
+				if `: list __t in __nwsaom_tvnames' local __ul "`__ul' `__t'"
+				else {
+					unab __u : `__t'
+					capture confirm numeric variable `__u'
+					if _rc {
+						di "{err}`__dk'(): `__u' is not a numeric variable."
+						error 198
+					}
+					local __ul "`__ul' `__u'"
+				}
+			}
+			local `__dk' "`__ul'"
 			foreach __v of local `__dk' {
+				if `: list __v in __nwsaom_tvnames' {
+					if inlist("`__dk'", "simrecipx", "simxtranstrip") {
+						di "{err}`__dk'() is not available for a time-varying covariate."
+						error 198
+					}
+					tempname __td_tvx
+					mata: `__td_tvx' = ErgmTermData()
+					mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
+					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
+					mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_tvx', ("`__dk'_`__v'"))
+					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+					continue
+				}
 				tempname __td_cv
 				mata: `__td_cv' = ErgmTermData()
 				mata: __nwsaom_xx = st_data(1::`nodes', "`__v'")
@@ -1522,8 +1548,34 @@ program nwsaom, eclass
 					error 198
 				}
 			}
-			unab `__dk' : ``__dk''
+			local __ul ""
+			foreach __t of local `__dk' {
+				if `: list __t in __nwsaom_tvnames' local __ul "`__ul' `__t'"
+				else {
+					unab __u : `__t'
+					capture confirm numeric variable `__u'
+					if _rc {
+						di "{err}`__dk'(): `__u' is not a numeric variable."
+						error 198
+					}
+					local __ul "`__ul' `__u'"
+				}
+			}
+			local `__dk' "`__ul'"
 			foreach __v of local `__dk' {
+				if `: list __v in __nwsaom_tvnames' {
+					if inlist("`__dk'", "simrecipx", "simxtranstrip") {
+						di "{err}`__dk'() is not available for a time-varying covariate."
+						error 198
+					}
+					tempname __td_tvx
+					mata: `__td_tvx' = ErgmTermData()
+					mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
+					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
+					mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_tvx', ("`__dk'_`__v'"))
+					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+					continue
+				}
 				if !`__nwsaom_tm' {
 					capture assert !missing(`__v') in 1/`nodes'
 					if _rc {
@@ -1610,8 +1662,34 @@ program nwsaom, eclass
 					error 198
 				}
 			}
-			unab `__dk' : ``__dk''
+			local __ul ""
+			foreach __t of local `__dk' {
+				if `: list __t in __nwsaom_tvnames' local __ul "`__ul' `__t'"
+				else {
+					unab __u : `__t'
+					capture confirm numeric variable `__u'
+					if _rc {
+						di "{err}`__dk'(): `__u' is not a numeric variable."
+						error 198
+					}
+					local __ul "`__ul' `__u'"
+				}
+			}
+			local `__dk' "`__ul'"
 			foreach __v of local `__dk' {
+				if `: list __v in __nwsaom_tvnames' {
+					if inlist("`__dk'", "simrecipx", "simxtranstrip") {
+						di "{err}`__dk'() is not available for a time-varying covariate."
+						error 198
+					}
+					tempname __td_tvx
+					mata: `__td_tvx' = ErgmTermData()
+					mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
+					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
+					mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_tvx', ("`__dk'_`__v'"))
+					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+					continue
+				}
 				if !`__nwsaom_tm' {
 					capture assert !missing(`__v') in 1/`nodes'
 					if _rc {
@@ -1636,8 +1714,34 @@ program nwsaom, eclass
 	}
 	foreach __dk in absdiffx egoxaltx {
 		if "``__dk''" != "" {
-			unab `__dk' : ``__dk''
+			local __ul ""
+			foreach __t of local `__dk' {
+				if `: list __t in __nwsaom_tvnames' local __ul "`__ul' `__t'"
+				else {
+					unab __u : `__t'
+					capture confirm numeric variable `__u'
+					if _rc {
+						di "{err}`__dk'(): `__u' is not a numeric variable."
+						error 198
+					}
+					local __ul "`__ul' `__u'"
+				}
+			}
+			local `__dk' "`__ul'"
 			foreach __v of local `__dk' {
+				if `: list __v in __nwsaom_tvnames' {
+					if inlist("`__dk'", "simrecipx", "simxtranstrip") {
+						di "{err}`__dk'() is not available for a time-varying covariate."
+						error 198
+					}
+					tempname __td_tvx
+					mata: `__td_tvx' = ErgmTermData()
+					mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
+					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
+					mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_tvx', ("`__dk'_`__v'"))
+					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+					continue
+				}
 				tempname __td_ad
 				mata: `__td_ad' = ErgmTermData()
 				mata: __nwsaom_xx = st_data(1::`nodes', "`__v'")

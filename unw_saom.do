@@ -3195,6 +3195,25 @@ string scalar SaomSRTrailer() {
 	if (cols(t) == 0) return(" 0")
 	return(" " + strofreal(cols(t)) + " " + invtokens(strofreal(t)))
 }
+/* time-varying covariate of one of the native covariate effects: td.attrpd = the (pooled-mean centred) values of the periods, td.attr = period 1 */
+void SaomCovTVAttr(class ErgmTermData scalar td, string scalar vlist, real scalar n, real scalar nper, real scalar center, real scalar m) {
+	string rowvector vv
+	real matrix X
+	vv = tokens(vlist)
+	if (cols(vv) < nper) {
+		errprintf("nwsaom: the time-varying covariate " + vlist + " needs a variable for each of the " + strofreal(nper) + " periods.\n")
+		exit(198)
+	}
+	X = st_data(1::n, vv[1..nper])
+	if (any(X :>= .)) {
+		errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
+		exit(198)
+	}
+	m = mean(vec(X))
+	td.attrpd = (center ? X :- m : X)
+	td.attr = td.attrpd[., 1]
+	td.levels = J(0, 1, 0)
+}
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -8840,6 +8859,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			needv16 = 1
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				// protocol 24: missing covariate values - the mask rides in the next attribute slot
@@ -8859,6 +8882,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				cfg.p1[t] = tdt.center
 			}
 			else cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			needv23 = 1
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				cfg.termcodes[t] = cfg.termcodes[t] + 100
@@ -8873,6 +8900,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			if (nm == "simxtranstrip") cfg.p1[t] = tdt.center
 			needv39 = 1
 		}
@@ -8888,6 +8919,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			cfg.p1[t] = tdt.decay
 			needv41 = 1
 		}
