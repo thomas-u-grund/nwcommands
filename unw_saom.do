@@ -3214,6 +3214,329 @@ void SaomCovTVAttr(class ErgmTermData scalar td, string scalar vlist, real scala
 	td.attr = td.attrpd[., 1]
 	td.levels = J(0, 1, 0)
 }
+/* protocol 45: network effects with the DEPENDENT BEHAVIOR as the covariate (RSiena "a behavior variable" contexts; the option value @beh). The term is
+   named bv_<effect>: SaomBehSimSync() keeps td.attr = the (raw) behavior values, td.center = their overall mean; the statistic is that of <effect>
+   with the centred behavior. NATIVE ONLY (term code of <effect> + 1000). */
+real scalar _saom_bvcode(string scalar nm) {
+	string rowvector nms
+	real rowvector cds
+	real scalar k
+	nms = ("diffx", "higher", "egosqx", "altsqx", "samexrecip", "absdiffx", "egoxaltx", "samextranstrip", "diffxtranstrip", "homxtranstrip", "samexoutact", "diffxoutact", "samexreciact", "diffxreciact", "homxoutact", "altxoutact", "inpopx", "outpopx", "inactx", "outactx", "samexinpop", "diffxinpop", "egoplusaltsqx", "diffsqx", "egodiffx", "althigheregox", "unequalx", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx", "degabsdiffx", "degposdiffx", "degnegdiffx")
+	cds = (48, 49, 50, 51, 52, 42, 43, 165, 166, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200)
+	for (k=1; k<=cols(nms); k++) if (nms[k] == nm) return(cds[k])
+	return(0)
+}
+real scalar change_saom_bv(string scalar nm) {
+	errprintf("nwsaom: " + nm + " with the behavior as covariate needs the native plugin (protocol 45 or later).\n")
+	exit(198)
+	return(0)
+}
+real rowvector stat_saom_bv_diffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffx(G, t2))
+}
+real rowvector change_saom_bv_diffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffx"))
+real rowvector stat_saom_bv_higher(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_higher(G, t2))
+}
+real rowvector change_saom_bv_higher(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("higher"))
+real rowvector stat_saom_bv_egosqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egosqx(G, t2))
+}
+real rowvector change_saom_bv_egosqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egosqx"))
+real rowvector stat_saom_bv_altsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_altsqx(G, t2))
+}
+real rowvector change_saom_bv_altsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altsqx"))
+real rowvector stat_saom_bv_samexrecip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_samexrecip(G, t2))
+}
+real rowvector change_saom_bv_samexrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexrecip"))
+real rowvector stat_saom_bv_absdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_absdiffx(G, t2))
+}
+real rowvector change_saom_bv_absdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("absdiffx"))
+real rowvector stat_saom_bv_egoxaltx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egoxaltx(G, t2))
+}
+real rowvector change_saom_bv_egoxaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egoxaltx"))
+real rowvector stat_saom_bv_samextranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_samextranstrip(G, t2))
+}
+real rowvector change_saom_bv_samextranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samextranstrip"))
+real rowvector stat_saom_bv_diffxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffxtranstrip(G, t2))
+}
+real rowvector change_saom_bv_diffxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxtranstrip"))
+real rowvector stat_saom_bv_homxtranstrip(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_homxtranstrip(G, t2))
+}
+real rowvector change_saom_bv_homxtranstrip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("homxtranstrip"))
+real rowvector stat_saom_bv_samexoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_samexoutact(G, t2))
+}
+real rowvector change_saom_bv_samexoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexoutact"))
+real rowvector stat_saom_bv_diffxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffxoutact(G, t2))
+}
+real rowvector change_saom_bv_diffxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxoutact"))
+real rowvector stat_saom_bv_samexreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_samexreciact(G, t2))
+}
+real rowvector change_saom_bv_samexreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexreciact"))
+real rowvector stat_saom_bv_diffxreciact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffxreciact(G, t2))
+}
+real rowvector change_saom_bv_diffxreciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxreciact"))
+real rowvector stat_saom_bv_homxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_homxoutact(G, t2))
+}
+real rowvector change_saom_bv_homxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("homxoutact"))
+real rowvector stat_saom_bv_altxoutact(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_altxoutact(G, t2))
+}
+real rowvector change_saom_bv_altxoutact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altxoutact"))
+real rowvector stat_saom_bv_inpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_inpopx(G, t2))
+}
+real rowvector change_saom_bv_inpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("inpopx"))
+real rowvector stat_saom_bv_outpopx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_outpopx(G, t2))
+}
+real rowvector change_saom_bv_outpopx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("outpopx"))
+real rowvector stat_saom_bv_inactx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_inactx(G, t2))
+}
+real rowvector change_saom_bv_inactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("inactx"))
+real rowvector stat_saom_bv_outactx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_outactx(G, t2))
+}
+real rowvector change_saom_bv_outactx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("outactx"))
+real rowvector stat_saom_bv_samexinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_samexinpop(G, t2))
+}
+real rowvector change_saom_bv_samexinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samexinpop"))
+real rowvector stat_saom_bv_diffxinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffxinpop(G, t2))
+}
+real rowvector change_saom_bv_diffxinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffxinpop"))
+real rowvector stat_saom_bv_egoplusaltsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egoplusaltsqx(G, t2))
+}
+real rowvector change_saom_bv_egoplusaltsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egoplusaltsqx"))
+real rowvector stat_saom_bv_diffsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_diffsqx(G, t2))
+}
+real rowvector change_saom_bv_diffsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("diffsqx"))
+real rowvector stat_saom_bv_egodiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egodiffx(G, t2))
+}
+real rowvector change_saom_bv_egodiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egodiffx"))
+real rowvector stat_saom_bv_althigheregox(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_althigheregox(G, t2))
+}
+real rowvector change_saom_bv_althigheregox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("althigheregox"))
+real rowvector stat_saom_bv_unequalx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_unequalx(G, t2))
+}
+real rowvector change_saom_bv_unequalx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("unequalx"))
+real rowvector stat_saom_bv_egolthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egolthresholdx(G, t2))
+}
+real rowvector change_saom_bv_egolthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egolthresholdx"))
+real rowvector stat_saom_bv_egorthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_egorthresholdx(G, t2))
+}
+real rowvector change_saom_bv_egorthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("egorthresholdx"))
+real rowvector stat_saom_bv_altlthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_altlthresholdx(G, t2))
+}
+real rowvector change_saom_bv_altlthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altlthresholdx"))
+real rowvector stat_saom_bv_altrthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_altrthresholdx(G, t2))
+}
+real rowvector change_saom_bv_altrthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("altrthresholdx"))
+real rowvector stat_saom_bv_degabsdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_degabsdiffx(G, t2))
+}
+real rowvector change_saom_bv_degabsdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degabsdiffx"))
+real rowvector stat_saom_bv_degposdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_degposdiffx(G, t2))
+}
+real rowvector change_saom_bv_degposdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degposdiffx"))
+real rowvector stat_saom_bv_degnegdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	class ErgmTermData scalar t2
+	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
+	t2.attr = td.attr :- td.center
+	t2.decay = td.decay
+	t2.levels = J(0, 1, 0)
+	return(stat_saom_degnegdiffx(G, t2))
+}
+real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degnegdiffx"))
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -3463,7 +3786,7 @@ real rowvector change_saom_behsim(class ErgmGraph scalar G, real scalar i, real 
    SaomEstimateRMCoevNetNet()). */
 /* the network terms that read the co-evolving behavior (behsim and RSiena's egoX / altX / egoPlusAltX of the dependent behavior) */
 real scalar _saom_isdynname(string scalar nm) {
-	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt")
+	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt" | substr(nm, 1, 3) == "bv_")
 }
 void SaomBehSimSync(class ErgmModel scalar M, real colvector vals){
 	real scalar t
@@ -8788,7 +9111,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8809,6 +9132,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv39 = 0
 	needv40 = 0
 	needv41 = 0
+	needv45 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8834,7 +9158,14 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.needv11 = 1
 			needv14 = 1
 		}
-		if (nm == "outdegree") cfg.termcodes[t] = 1
+		if (substr(nm, 1, 3) == "bv_") {
+			cfg.termcodes[t] = _saom_bvcode(substr(nm, 4, .)) + 1000
+			tdt = *M.td[t]
+			cfg.attridx[t] = 0
+			cfg.p1[t] = tdt.decay
+			needv45 = 1
+		}
+		else if (nm == "outdegree") cfg.termcodes[t] = 1
 		// protocol 11: the endowment/creation terms are outdegree or
 		// reciprocity gated by their function type (cfg.fntype, set by the
 		// estimator from its own fntype list)
@@ -9277,6 +9608,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv45) {
+		if (SaomNativePluginVersion() < 45) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 45 (network effects with the behavior as covariate)"
 		}
 	}
 	if (cfg.eligible & needv41) {

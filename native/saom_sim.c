@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 44		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+)
+#define SAOM_NATIVE_VERSION 45		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1136,6 +1136,7 @@ static double ct_value(graph_t *g, int v, const double *a, double p1, long i, lo
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
+	if (termcode >= 1000) termcode -= 1000;		/* protocol 45: the dependent behavior as the covariate (centred live copy in a) */
 	if (SAOM_CTTC(termcode)) {
 		int v = termcode - TERMCODE_CT0;
 		if (v < 9) { for (k = 0; k < g->nties; k++) tot += ct_tieval(v, a[g->elist_i[k]], a[g->elist_j[k]], p1); return tot; }
@@ -1355,6 +1356,7 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
    model. */
 static double saom_change_term(graph_t *g, int termcode, double *a, double p1, long i, long j, int ij_exists,
 	double *tt_arr, double *c3_arr) {
+	if (termcode >= 1000) termcode -= 1000;
 	if (SAOM_CXTC(termcode)) {
 		double v = cx_value(g, termcode - TERMCODE_CX0, a, p1, i, j);
 		return ij_exists ? -v : v;
@@ -1896,6 +1898,7 @@ static void saom_model_need_flags(int nterms, int *termcodes, int *attridx, doub
 }
 
 static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int *need_cycle3) {
+	if (tc >= 1000) tc -= 1000;
 	if (tc == TERMCODE_TRANSTRIP || tc == TERMCODE_CYCLE3) *need_adj = 1;
 	if (tc == TERMCODE_TRANSTRIP) *need_transtrip = 1;
 	if (tc == TERMCODE_CYCLE3) *need_cycle3 = 1;
@@ -2804,6 +2807,7 @@ typedef struct model_s {
 	double *attrs[MAXATTR + 1];		// attrs[nattr] is the behsim slot, filled per simulation
 	int need_adj, need_transtrip, need_cycle3;
 	int has_behsim;
+	int has_behcov;		/* protocol 45: network terms with the dependent behavior as covariate (term code + 1000, attribute slot nattr + 1) */
 	long nbehterms;
 	int behtermcodes[MAXBEHTERMS];
 	double behminval, behmaxval, behrange, behSimMean, behOverallMean;
@@ -3112,6 +3116,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	{ int jc; for (jc = 0; jc < 8; jc++) saom_tl_cov[jc] = PD->bcov[jc]; }
 	double t, steps = 0.0, nchanges = 0.0, nchangesBeh = 0.0, stepsNet = 0.0, stepsBeh = 0.0;
 	double *behval = NULL, *attrs[MAXATTR + 1];
+	double *behc = NULL, *behc0 = NULL;		// protocol 45: centred live / starting behavior for the network terms that read it
 	double *behvalb[MAXBEH];		// protocol 19: current values of every behavior (behvalb[0] == behval)
 	double xsteps[MAXBEH], xnch[MAXBEH];	// ministeps / changes of behaviors 1..
 	int bsel;
@@ -3135,6 +3140,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	memset(R, 0, sizeof(simres_t));
 	for (k = 0; k < M->nattr; k++) attrs[k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
 	attrs[M->nattr] = NULL;
+	attrs[M->nattr + 1] = NULL;
 
 	graph_init(&g, n, M->need_adj, PD->nties);
 	for (i = 0; i < PD->nties; i++) toggle(&g, PD->ti[i], PD->tj[i]);
@@ -3149,6 +3155,13 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		memcpy(behval, PD->beh0, (size_t)(n + 1) * sizeof(double));
 		if (M->has_behsim) attrs[M->nattr] = behval;
 		behvalb[0] = behval;
+		if (M->has_behcov) {
+			long q;
+			behc = (double *)calloc((size_t)(n + 1), sizeof(double));
+			behc0 = (double *)calloc((size_t)(n + 1), sizeof(double));
+			for (q = 1; q <= n; q++) { behc[q] = behval[q] - M->behOverallMean; behc0[q] = PD->beh0[q] - M->behOverallMean; }
+			attrs[M->nattr + 1] = behc;
+		}
 		for (b = 1; b < M->nbeh; b++) {
 			behvalb[b] = (double *)malloc((size_t)(n + 1) * sizeof(double));
 			memcpy(behvalb[b], PD->xbeh0[b], (size_t)(n + 1) * sizeof(double));
@@ -3613,6 +3626,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					if (hasDown && draw2 <= exp(uDown - maxu2)) {
 						diff = -1.0;
 						bv[actor] = cur - 1.0;
+						if (behc && bsel == 0) behc[actor] = bv[actor] - M->behOverallMean;
 						if (P->want_score) for (k = 0; k < Mb->nbehterms; k++) scB[k] += chgDown[k];
 					}
 					else {
@@ -3621,6 +3635,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						else {
 							diff = 1.0;
 							bv[actor] = cur + 1.0;
+							if (behc && bsel == 0) behc[actor] = bv[actor] - M->behOverallMean;
 							if (P->want_score) for (k = 0; k < Mb->nbehterms; k++) scB[k] += chgUp[k];
 						}
 					}
@@ -3728,6 +3743,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		}
 		free(li); free(lj);
 		if (M->has_behsim) attrs[M->nattr] = (double *)PD->beh0;		// behsim statistic: STARTING behavior
+		if (behc0) attrs[M->nattr + 1] = behc0;
 	}
 
 	if (hasmiss) {
@@ -3859,6 +3875,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	free(presentIdxArr);
 
 	PROF_ADD(PR_END, pt_end);
+	free(behc); free(behc0);
 	if (keep_final) {
 		R->gfinal = (graph_t *)malloc(sizeof(graph_t));
 		*R->gfinal = g;
@@ -4199,6 +4216,8 @@ static ST_retcode batch_setup(char *arg) {
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
+	for (k = 0; k < M->nterms; k++) if (M->termcodes[k] >= 1000 && M->termcodes[k] < 2000) { M->has_behcov = 1; M->attridx[k] = (int)(M->nattr + 2); }
+	if (M->has_behcov && (M->nbehterms == 0 || M->nattr + 2 > MAXATTR)) { SF_error("saom_sim: network terms with the behavior as covariate need a co-evolving behavior\n"); return 198; }
 
 	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BEH_XALTTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BSTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BQTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
 
@@ -4624,6 +4643,8 @@ static ST_retcode legacy_call(char *arg0) {
 	if (M.has_behsim && M.nattr >= MAXATTR) { free(P.ratecovattr); SF_error("saom_sim: too many attribute arrays for behsim\n"); return(198); }
 	if (!directed) { free(P.ratecovattr); SF_error("saom_sim: directed networks only\n"); return(198); }
 	if (M.has_behsim) for (i = 0; i < M.nterms; i++) if (SAOM_DYNTC(M.termcodes[i])) M.attridx[i] = (int)(M.nattr + 1);
+	for (i = 0; i < M.nterms; i++) if (M.termcodes[i] >= 1000 && M.termcodes[i] < 2000) { M.has_behcov = 1; M.attridx[i] = (int)(M.nattr + 2); }
+	if (M.has_behcov && (M.nbehterms == 0 || M.nattr + 2 > MAXATTR)) { free(P.ratecovattr); SF_error("saom_sim: network terms with the behavior as covariate need a co-evolving behavior\n"); return(198); }
 
 	for (k = 0; k < M.nattr; k++) {
 		attrmem[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
