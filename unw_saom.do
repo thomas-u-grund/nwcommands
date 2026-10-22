@@ -966,6 +966,65 @@ real rowvector change_saom_outactsqrt(class ErgmGraph scalar G, real scalar i, r
 	return(G.has_edge(i,j) ? -(d^1.5 - (d-1)^1.5) : ((d+1)^1.5 - d^1.5))
 }
 
+/* RSiena's reciprocated-degree effects, copied exactly (2026-10-22, your decision "copy RSiena exactly"): reciPop / reciPopSqrt (statistic: sum over ties i->j of the
+   reciprocal degree of j, or its square root) and reciAct / reciAct with parameter 2 (sum over ties i->j of the reciprocal degree of i, or its square root). RSiena's
+   calculateContribution() is NOT the change of that statistic (it ignores the indegrees whose terms change when a dyad becomes mutual); the simulation uses the
+   contribution, the target and the simulated statistic use the statistic, so both are copied separately. reciprocal degree = number of mutual ties of an actor. */
+real scalar _saom_recdeg(class ErgmGraph scalar G, real scalar j) {
+	real rowvector nb
+	real scalar k, c
+	nb = G.neighbors_out(j)
+	c = 0
+	for (k=1; k<=cols(nb); k++) if (G.has_edge(nb[k], j)) c++
+	return(c)
+}
+real scalar _saom_recistat(class ErgmGraph scalar G, real scalar kind) {
+	real scalar j, rd, tot
+	tot = 0
+	for (j=1; j<=G.n; j++) {
+		rd = _saom_recdeg(G, j)
+		if (kind == 1) tot = tot + G.din[j] * rd
+		else if (kind == 2) tot = tot + G.din[j] * sqrt(rd)
+		else if (kind == 3) tot = tot + G.dout[j] * rd
+		else tot = tot + G.dout[j] * sqrt(rd)
+	}
+	return(tot)
+}
+real scalar _saom_recichange(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar kind) {
+	real scalar tied, back, rd, ch, rr, outd, dif
+	tied = G.has_edge(i, j)
+	back = G.has_edge(j, i)
+	if (kind <= 2) {
+		ch = _saom_recdeg(G, j) + back
+		if (kind == 2) ch = sqrt(ch)
+	}
+	else if (kind == 3) {
+		rd = _saom_recdeg(G, i)
+		if (back) rd = rd + G.dout[i] + (tied ? -1 : 1)
+		ch = rd
+	}
+	else {
+		// RSiena's SqrtTable::sqrt(-1) reads just before its table (about 0): the square root of a negative count is taken as 0
+		rd = _saom_recdeg(G, i) - tied
+		rr = (rd > 0 ? sqrt(rd) : 0)
+		dif = 0
+		if (back) {
+			outd = G.dout[i] + (tied ? 0 : 1)
+			dif = outd * ((rd + 1 > 0 ? sqrt(rd + 1) : 0) - rr)
+		}
+		ch = rr + dif
+	}
+	return(tied ? -ch : ch)
+}
+real rowvector stat_saom_recipop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 1))
+real rowvector change_saom_recipop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 1))
+real rowvector stat_saom_recipopsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 2))
+real rowvector change_saom_recipopsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 2))
+real rowvector stat_saom_reciact(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 3))
+real rowvector change_saom_reciact(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 3))
+real rowvector stat_saom_reciactsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_recistat(G, 4))
+real rowvector change_saom_reciactsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_recichange(G, i, j, 4))
+
 /* RSiena's functions of the outdegree: outTrunc(c) min(d,c), outMore(c) max(d-c,0), outThreshold(c) 1{d>c}, outInv(c) 1/(d+c),
    outSqInv(c) 1/((d+c)(d+c+1)); statistic = sum over actors, change = f(d_without+1) - f(d_without), negated for an existing tie */
 real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {
@@ -3046,6 +3105,10 @@ real scalar _saom_degfun_code(string scalar nm) {
 	if (nm == "outthreshold") return(56)
 	if (nm == "outinv") return(57)
 	if (nm == "outsqinv") return(58)
+	if (nm == "recipop") return(59)
+	if (nm == "recipopsqrt") return(60)
+	if (nm == "reciact") return(61)
+	if (nm == "reciactsqrt") return(62)
 	return(0)
 }
 
@@ -7875,7 +7938,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -7889,6 +7952,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv24 = 0
 	needv29 = 0
 	needv30 = 0
+	needv31 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8072,11 +8136,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			}
 		}
 		else if (_saom_degfun_code(nm) > 0) {
-			// protocol 30: RSiena's functions of the outdegree with their parameter c
+			// protocol 30: RSiena's functions of the outdegree with their parameter c; protocol 31: the reciprocated-degree effects
 			cfg.termcodes[t] = _saom_degfun_code(nm)
 			tdt = *M.td[t]
 			cfg.p1[t] = tdt.decay
 			needv30 = 1
+			if (cfg.termcodes[t] >= 59) needv31 = 1
 		}
 		else if (_saom_degsplit_code(nm) > 0) {
 			// endowment / creation roles of the degree effects: the base effect's plugin code, gated by cfg.fntype
@@ -8265,6 +8330,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv31) {
+		if (SaomNativePluginVersion() < 31) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 31 (reciPop, reciAct)"
 		}
 	}
 	if (cfg.eligible & needv30) {
@@ -8984,6 +9055,10 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "recipop") return("reciprocal degree - popularity")
+	if (term == "recipopsqrt") return("reciprocal degree - popularity (sqrt)")
+	if (term == "reciact") return("reciprocal degree - activity")
+	if (term == "reciactsqrt") return("reciprocal degree - activity (sqrt)")
 	if (term == "outtrunc") return("outdegree-trunc(" + strofreal(decay) + ")")
 	if (term == "outmore") return("outdegree more(" + strofreal(decay) + ")")
 	if (term == "outthreshold") return("out-threshold(" + strofreal(decay) + ")")

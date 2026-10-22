@@ -104,6 +104,10 @@
 {synopt:{opt outthreshold(#)}}RSiena {cmd:outThreshold}: number of actors with outdegree greater than #{p_end}
 {synopt:{opt outinv(#)}}RSiena {cmd:outInv}: sum over actors of 1/(outdegree + #), # at least 1{p_end}
 {synopt:{opt outsqinv(#)}}RSiena {cmd:outSqInv}: sum over actors of 1/((outdegree + #)(outdegree + # + 1)){p_end}
+{synopt:{opt recipop}}RSiena {cmd:reciPop}: sum over ties of the alter's reciprocal degree (its number of mutual ties). Copied from RSiena exactly, including that its simulation uses a contribution that is not the change of this statistic{p_end}
+{synopt:{opt recipopsqrt}}RSiena {cmd:reciPopSqrt}: as {opt recipop} with the square root of the reciprocal degree{p_end}
+{synopt:{opt reciact}}RSiena {cmd:reciAct}: sum over ties of the sender's reciprocal degree (copied exactly, as {opt recipop}){p_end}
+{synopt:{opt reciactsqrt}}RSiena {cmd:reciAct} with parameter 2: the square root of the sender's reciprocal degree{p_end}
 {synopt:{opt inactivity}}Indegree activity, sqrt-transformed{p_end}
 {synopt:{opt transtrip}}Transitive triplets (weighted count of transitive closures i->j via existing two-paths){p_end}
 {synopt:{opt transmedtrip}}Transitive mediated triplets: for each tie i->j, the number of other actors with an incoming tie to both i and j (RSiena's own "transMedTrip") - a distinct measure of shared incoming ties from `transtrip'{p_end}

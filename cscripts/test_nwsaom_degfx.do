@@ -105,3 +105,26 @@ end
 capture noisily nwsaom, wave1(dg1) wave2(dg2) outdegree outtrunc(0) k3(50)
 assert _rc == 125 | _rc == 198 | _rc == 121
 di as text "functions of the outdegree PASS"
+
+* reciprocated-degree effects, copied exactly from RSiena (reciPop 532, reciPopSqrt 335.803, reciAct 505, reciAct(2) 319.113 on s50 - dev/saom_rsiena_reci.{R,do})
+nwsaom, waves(dg1 dg2 dg3) outdegree reciprocity recipop reciact k0(30) k3(150) seed(6)
+assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4)) & "`e(engine)'" == "native"
+mata:
+mata set matastrict off
+void dg_reci_check() {
+	external class ErgmModel scalar __nwsaom_last_M
+	external class ErgmGraph scalar __nwsaom_last_G3
+	real rowvector st
+	real colvector rd
+	real scalar j, k, nb
+	rd = J(__nwsaom_last_G3.n, 1, 0)
+	for (j=1; j<=__nwsaom_last_G3.n; j++) {
+		for (k=1; k<=__nwsaom_last_G3.n; k++) if (__nwsaom_last_G3.has_edge(j, k) & __nwsaom_last_G3.has_edge(k, j)) rd[j] = rd[j] + 1
+	}
+	st = __nwsaom_last_M.full_statistic(__nwsaom_last_G3)
+	assert(abs(st[3] - sum(__nwsaom_last_G3.din :* rd)) < 1e-9)
+	assert(abs(st[4] - sum(__nwsaom_last_G3.dout :* rd)) < 1e-9)
+}
+dg_reci_check()
+end
+di as text "reciprocated-degree effects PASS"

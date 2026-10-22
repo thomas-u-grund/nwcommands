@@ -273,6 +273,10 @@
 #define TERMCODE_OUTTHRESHOLD 56
 #define TERMCODE_OUTINV 57
 #define TERMCODE_OUTSQINV 58
+#define TERMCODE_RECIPOP 59			/* protocol 31: RSiena's reciprocated-degree effects, statistic and contribution copied separately */
+#define TERMCODE_RECIPOPSQRT 60
+#define TERMCODE_RECIACT 61
+#define TERMCODE_RECIACTSQRT 62
 #define TERMCODE_DYADCOV 40
 #define TERMCODE_DYADCOVRECIP 41
 static int saom_masked_base(int tc) {
@@ -303,7 +307,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 30		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c)
+#define SAOM_NATIVE_VERSION 31		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -702,6 +706,37 @@ static long pair_osp(graph_t *g, long i, long j) {
 	return cnt;
 }
 
+/* reciprocal degree of j: the number of actors with a tie both ways (needs outadj) */
+static long saom_recdeg(graph_t *g, long j) {
+	long cnt = 0, m;
+	for (m = 0; m < g->outadj[j].len; m++) if (has_edge(g, g->outadj[j].nb[m], j)) cnt++;
+	return cnt;
+}
+/* RSiena's calculateContribution() of the four effects (unsigned: "with tie minus without tie" as RSiena codes it), see unw_saom.do */
+static double saom_reci_change(graph_t *g, int termcode, long i, long j, int tied) {
+	int back = has_edge(g, j, i);
+	double ch;
+	if (termcode == TERMCODE_RECIPOP || termcode == TERMCODE_RECIPOPSQRT) {
+		ch = (double)saom_recdeg(g, j) + (back ? 1.0 : 0.0);
+		if (termcode == TERMCODE_RECIPOPSQRT) ch = sqrt(ch);
+	}
+	else if (termcode == TERMCODE_RECIACT) {
+		double rd = (double)saom_recdeg(g, i);
+		if (back) rd += (double)g->dout[i] + (tied ? -1.0 : 1.0);
+		ch = rd;
+	}
+	else {
+		/* RSiena's SqrtTable::sqrt(-1) reads just before its table (about 0): the square root of a negative count is taken as 0 */
+		double rd = (double)saom_recdeg(g, i) - (tied ? 1.0 : 0.0), rr = rd > 0.0 ? sqrt(rd) : 0.0, dif = 0.0;
+		if (back) {
+			double outd = (double)g->dout[i] + (tied ? 0.0 : 1.0);
+			dif = outd * ((rd + 1.0 > 0.0 ? sqrt(rd + 1.0) : 0.0) - rr);
+		}
+		ch = rr + dif;
+	}
+	return tied ? -ch : ch;
+}
+
 /* gw_kernel(d,decay) = exp(decay)*(1-(1-exp(-decay))^d) - Mata's own
    ErgmGraph-side gw_kernel() (unw_ergm.do) and native/ergm_mcmc.c's own
    identical helper, independently re-declared here rather than shared
@@ -825,6 +860,12 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 			return tot;
 		case TERMCODE_OUTTRUNC: case TERMCODE_OUTMORE: case TERMCODE_OUTTHRESHOLD: case TERMCODE_OUTINV: case TERMCODE_OUTSQINV:
 			for (i = 1; i <= g->n; i++) tot += saom_degfun(termcode, (double)g->dout[i], p1);
+			return tot;
+		case TERMCODE_RECIPOP: case TERMCODE_RECIPOPSQRT:
+			for (i = 1; i <= g->n; i++) { double rd = (double)saom_recdeg(g, i); tot += (double)g->din[i] * (termcode == TERMCODE_RECIPOPSQRT ? sqrt(rd) : rd); }
+			return tot;
+		case TERMCODE_RECIACT: case TERMCODE_RECIACTSQRT:
+			for (i = 1; i <= g->n; i++) { double rd = (double)saom_recdeg(g, i); tot += (double)g->dout[i] * (termcode == TERMCODE_RECIACTSQRT ? sqrt(rd) : rd); }
 			return tot;
 		case TERMCODE_INACTIVITY:					// stat_saom_inact(): sum over nodes of outdegree*sqrt(indegree)
 			for (i = 1; i <= g->n; i++) tot += (double)g->dout[i] * sqrt((double)g->din[i]);
@@ -1002,6 +1043,8 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 			double d = (double)g->dout[i];
 			return ij_exists ? -(pow(d, 1.5) - pow(d - 1.0, 1.5)) : (pow(d + 1.0, 1.5) - pow(d, 1.5));
 		}
+		case TERMCODE_RECIPOP: case TERMCODE_RECIPOPSQRT: case TERMCODE_RECIACT: case TERMCODE_RECIACTSQRT:
+			return saom_reci_change(g, termcode, i, j, ij_exists);
 		case TERMCODE_OUTTRUNC: case TERMCODE_OUTMORE: case TERMCODE_OUTTHRESHOLD: case TERMCODE_OUTINV: case TERMCODE_OUTSQINV: {
 			double dwo = (double)g->dout[i] - (ij_exists ? 1.0 : 0.0);
 			double diff = saom_degfun(termcode, dwo + 1.0, p1) - saom_degfun(termcode, dwo, p1);
@@ -1446,6 +1489,7 @@ static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int
 	if (tc == TERMCODE_CYCLE3) *need_cycle3 = 1;
 	if (tc == TERMCODE_TRANSRECTRIP || tc == TERMCODE_OUTOUTASS || tc == TERMCODE_OUTINASS || tc == TERMCODE_TRANSMEDTRIP) *need_adj = 1;
 	if (tc == TERMCODE_CYCLE4) *need_adj = 1;
+	if (tc == TERMCODE_RECIPOP || tc == TERMCODE_RECIPOPSQRT || tc == TERMCODE_RECIACT || tc == TERMCODE_RECIACTSQRT) *need_adj = 1;
 	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE) *need_adj = 1;
 }
 
