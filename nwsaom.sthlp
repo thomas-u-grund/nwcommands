@@ -51,6 +51,7 @@
 {synopt:{opt wave1(netname)}}First observed wave; requires {opt wave2()}, exactly two waves. Not combinable with {opt waves()}{p_end}
 {synopt:{opt wave2(netname)}}Second (ending) observed wave; requires {opt wave1()}{p_end}
 {synopt:{opt waves(namelist)}}Two or more observed waves, in temporal order (e.g. {cmd:waves(w1 w2 w3)}) - chains {it:namelist}{cmd:-1} inter-wave periods into one pooled fit. Not combinable with {opt wave1()}/{opt wave2()}{p_end}
+{synopt:{opt tvcov(groups)}}Time-varying covariates (RSiena's {cmd:varCovar}): {cmd:tvcov(a1 a2 a3 | s1 s2 s3)} declares covariates with one variable per wave ('|' separates covariates); period {it:p} takes the value of wave {it:p} (the last wave's value is not used). Each is named after its first variable without trailing digits ({cmd:a}, {cmd:s}) and used by that name in {opt nodeocov()}/{opt nodeicov()}/{opt nodecov()}/{opt nodematch()}/{opt simcov()} (or {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}), e.g. {cmd:tvcov(a1 a2 a3) egox(a) simx(a)}. Centred by the mean of all values, as RSiena. No missing values; not with {opt behavior()}, two-mode networks, {opt interact()}, {opt symmetric} or {cmd:estat gof}. See {help nwsaom_remarks##tvcov:Time-varying covariates}{p_end}
 {synopt:{opt actormode(#)}}Two-mode networks: the mode whose nodes are the actors (they choose their ties to the other mode, the events); 1 or 2, default 2 = the {it:rows} of the affiliation matrix given to {cmd:nwset, bipartite}. See {help nwsaom_remarks##twomode:Two-mode networks}{p_end}
 
 {syntab:Baseline network effects}

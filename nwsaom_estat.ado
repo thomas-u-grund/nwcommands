@@ -119,6 +119,10 @@ capture program drop nwsaom_estat
 program define nwsaom_estat, rclass
 	gettoken subcmd rest : 0, parse(" ,")
 	local subcmd = lower(trim("`subcmd'"))
+	if "`e(tvcov)'" != "" {
+		di as err "estat `subcmd' is not yet available after a fit with time-varying covariates ({bf:tvcov()})."
+		exit 198
+	}
 	if e(nbeh) < . {
 		if e(nbeh) > 1 {
 			di as err "estat `subcmd' is not yet available after a fit with several behaviors in {bf:behavior()}."

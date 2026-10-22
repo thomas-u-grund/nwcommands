@@ -2236,6 +2236,75 @@ real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, rea
    nodeocov/simcov; vn: the variable; center: RSiena's coCovar centring (applies to
    nodecov/nodeicov/nodeocov only); m receives the variable's mean (SaomCovPrep()).
    A variable without missing values is registered exactly as before. */
+/* time-varying covariates (RSiena varCovar): a term whose covariate differs by period carries the n x periods
+   values in td.attrpd; SaomTVSync() sets td.attr to the values of period `pd' (the period's START wave) before that
+   period's targets/simulation are evaluated in Mata. The plugin gets the per-period values by the batch frame. */
+real scalar SaomModelHasTV(class ErgmModel scalar M) {
+	real scalar t
+	pointer(class ErgmTermData scalar) scalar pt
+	for (t=1; t<=M.nterms; t++) {
+		pt = M.td[t]
+		if (rows(pt->attrpd) > 0) return(1)
+	}
+	return(0)
+}
+
+void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
+	real scalar t
+	pointer(class ErgmTermData scalar) scalar pt
+	for (t=1; t<=M.nterms; t++) {
+		pt = M.td[t]
+		if (rows(pt->attrpd) > 0) pt->attr = pt->attrpd[., pd]
+	}
+}
+
+/* registers a time-varying covariate effect (nodematch, nodecov, nodeicov, nodeocov, simcov): `vlist' = one variable
+   per period (the period's start wave); centred (nodecov/nodeicov/nodeocov) by the mean of ALL the values, as RSiena
+   centres a varCovar; simX's range and similarity mean pool all periods. Missing values are refused. */
+void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vlist, real scalar n,
+	real scalar nper, real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m) {
+
+	string rowvector vv
+	real matrix X, Xc
+	real scalar usecenter, pd, i, j, tot, cnt
+
+	vv = tokens(vlist)
+	if (cols(vv) < nper) {
+		errprintf("nwsaom: the time-varying covariate " + vlist + " needs a variable for each of the " + strofreal(nper) + " periods.\n")
+		exit(198)
+	}
+	X = st_data(1::n, vv[1..nper])
+	if (any(X :>= .)) {
+		errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
+		exit(198)
+	}
+	usecenter = (kind == "nodecov" | kind == "nodeicov" | kind == "nodeocov") ? center : 0
+	m = mean(vec(X))
+	Xc = (usecenter ? X :- m : X)
+	td.attrpd = Xc
+	td.attr = Xc[., 1]
+	if (kind == "simcov") {
+		td.decay = max(vec(X)) - min(vec(X))
+		if (td.decay <= 0) td.decay = 1
+		tot = 0
+		cnt = 0
+		for (pd=1; pd<=nper; pd++) {
+			for (i=1; i<=n; i++) for (j=1; j<=n; j++) {
+				if (i == j) continue
+				tot = tot + 1 - abs(X[i,pd] - X[j,pd]) / td.decay
+				cnt++
+			}
+		}
+		td.center = tot / cnt
+		if (max(vec(X)) == min(vec(X))) td.center = 0
+	}
+	if (kind == "nodematch") M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, coefname)
+	else if (kind == "nodecov") M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), td, coefname)
+	else if (kind == "nodeicov") M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), td, coefname)
+	else if (kind == "nodeocov") M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), td, coefname)
+	else M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td, coefname)
+}
+
 void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n,
 	real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m,
 	| real colvector idx) {
@@ -3711,6 +3780,8 @@ struct SaomNativeConfig {
 	real rowvector attridx		// 0 = no attribute needed; else 1-based column into attrmat
 	real rowvector p1		// one generic scalar per term instance (only simcov uses it - the covariate's own range); 0 for every other term
 	real matrix attrmat		// one column per term instance that needs an attribute array (harmonisation unit 10: NOT deduplicated across terms sharing the same underlying variable - simple over maximally compact, matches MAXATTR's own generous cap)
+	real rowvector tvcol		// protocol 21: the attrmat columns (1-based) that vary by period
+	real matrix tvmat		// protocol 21: n x (ntv*periods): for tvcol[j] the periods' values in columns (j-1)*periods+1..j*periods
 }
 
 /* Co-evolution's own native-config counterpart (harmonisation unit 26)
@@ -3843,6 +3914,7 @@ struct SaomNetCtx {
 	real matrix ratecovattr		// n x K
 	real scalar wantper		// 1: SaomNetSimMany() also returns the per-period deviations and scores
 	real scalar perok		// the plugin returns per-period statistics and scores (protocol 18+)
+	real scalar hastv		// the model has time-varying covariates (protocol 21 for the plugin)
 	real matrix Zper, Sper		// K x (P*ptot): period pd in columns (pd-1)*ptot+1..pd*ptot (RSiena's derivative matrix is a sum over periods)
 }
 
@@ -3879,6 +3951,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.symtype = symtype
 	C.wantper = 0
 	C.perok = 0
+	C.hastv = SaomModelHasTV(M)
 	// RSiena (initializeFRAN()): conditional estimation is not used with
 	// composition change
 	if (C.cond) {
@@ -3890,6 +3963,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.targetRate = J(1, C.P, 0)
 	C.targetRateCov = J(C.P, max((C.hasratecov, 1)), 0)
 	for (pd=1; pd<=C.P; pd++) {
+		if (C.hastv) SaomTVSync(M, pd)
 		if (C.hasmiss) {
 			C.target[pd,.] = SaomMaskedStatistic(*Gwaves[pd+1], M, *missMaskPd[pd])
 			C.targetRate[pd] = SaomCountDifferingMasked(*Gwaves[pd], *Gwaves[pd+1], *missMaskPd[pd])
@@ -3915,6 +3989,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.use_native = C.cfg.eligible & SaomNativeAvailable()
 	ver = (C.use_native ? SaomNativePluginVersion() : 0)
 	if ((C.hasnetgate | C.hasstructural) & ver < 11) C.use_native = 0
+	if (C.hastv & ver < 21) C.use_native = 0
 	if (C.hasnetgate & C.hasmiss & ver < 17) if (SaomHasBalanceSplit(M, fntype)) C.use_native = 0
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
@@ -3984,6 +4059,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		scop = J(P, C.ptot, 0)
 	}
 	for (pd=1; pd<=P; pd++) {
+		if (C.hastv) SaomTVSync(M, pd)
 		rate = par[p + pd]
 		pres = C.presentPd[., pd]
 		presNat = (C.haspresent ? pres : J(0, 1, 0))
@@ -4163,6 +4239,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	}
 	scpd = J(1, p, 0)
 	for (pd=1; pd<=P; pd++) {
+		if (C.hastv) SaomTVSync(M, pd)
 		ct = C.targetRate[pd]
 		pres = C.presentPd[., pd]
 		presNat = (C.haspresent ? pres : J(0, 1, 0))
@@ -7236,6 +7313,8 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	cfg.attridx = J(1, M.nterms, 0)
 	cfg.p1 = J(1, M.nterms, 0)
 	cfg.attrmat = J(0, 0, 0)	// built up column by column below, one per attribute-needing term
+	cfg.tvcol = J(1, 0, 0)
+	cfg.tvmat = J(0, 0, 0)
 	cfg.eligible = 1
 	nextattr = 0
 
@@ -7307,6 +7386,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				// protocol 13: missing covariate values - the mask rides in the next attribute slot
 				cfg.termcodes[t] = 35
@@ -7321,6 +7404,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				// protocol 13: missing covariate values - the mask rides in the next attribute slot
 				cfg.termcodes[t] = 36
@@ -7335,6 +7422,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				// protocol 13: missing covariate values - the mask rides in the next attribute slot
 				cfg.termcodes[t] = 37
@@ -7349,6 +7440,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+			}
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
 				// protocol 13: missing covariate values - the mask rides in the next attribute slot
 				cfg.termcodes[t] = 38
@@ -7371,6 +7466,10 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			nextattr++
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr / tdt.decay : (cfg.attrmat, tdt.attr / tdt.decay))
+			if (rows(tdt.attrpd) > 0) {
+				cfg.tvcol = (cfg.tvcol, nextattr)
+				cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd / tdt.decay : (cfg.tvmat, tdt.attrpd / tdt.decay))
+			}
 			cfg.p1[t] = _saom_center0(tdt)
 			hassimcov = 1
 			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
@@ -8451,7 +8550,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 
 	real matrix E, t
 	real scalar k
-	real scalar n, pd, nattr, nbeh, nrows, i, junk, sframe
+	real scalar n, pd, nattr, nbeh, nrows, i, junk, sframe, ntv
 	string rowvector names
 	string scalar origframe, argstr
 
@@ -8473,6 +8572,8 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 		if (nbeh > 0) for (pd=1; pd<=P; pd++) names = names, "mb" + strofreal(pd)
 	}
 	if (haspresent) for (pd=1; pd<=P; pd++) names = names, "pr" + strofreal(pd)
+	ntv = cols(cfg.tvcol)
+	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) names = names, "tv" + strofreal(k) + "_" + strofreal(pd)
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
 
@@ -8490,6 +8591,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 		if (nbeh > 0) for (pd=1; pd<=P; pd++) st_store((1::n), "mb" + strofreal(pd), missBehPd[., pd])
 	}
 	if (haspresent) for (pd=1; pd<=P; pd++) st_store((1::n), "pr" + strofreal(pd), presentPd[., pd])
+	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) st_store((1::n), "tv" + strofreal(k) + "_" + strofreal(pd), cfg.tvmat[., (k-1)*P + pd])
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
 
 	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
@@ -8506,6 +8608,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 		for (k=1; k<=cols(rcattr); k++) for (i=1; i<=n; i++) argstr = argstr + " " + strofreal(rcattr[i,k], "%25.17g")
 	}
 	else argstr = argstr + " 0"
+	// protocol 21: no extra behaviors (MB trailer), then the attributes that vary by period
+	argstr = argstr + " 0 " + strofreal(ntv)
+	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))

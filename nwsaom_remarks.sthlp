@@ -546,6 +546,17 @@ the estimates agree with RSiena 1.6.6 - density -2.04 against -2.03/-2.05/-2.03,
 0.79-0.84 against 0.75-0.84, creation 3.60-3.65 against 3.63, behavior linear 0.32, quadratic -0.27,
 avAlt 0.96-1.04 against 0.32, -0.27 and 0.90-1.00, rates 4.3 and 1.24.
 
+{marker tvcov}{...}
+{pstd}
+{bf:Time-varying covariates.} {cmd:tvcov(}{it:a1 a2 a3}{cmd:)} (several: separated by '|') declares a covariate that changes between
+waves, as RSiena's {cmd:varCovar}: the simulation of period {it:p} and its observed statistics use the covariate of wave {it:p}. The
+effects are the ordinary covariate effects, called with the covariate's name (the first variable without trailing digits). The values are
+centred by the mean of all periods' values (simX: the range and the similarity mean pool all periods). The plugin receives the
+period's values through the batch frame (protocol 21). Validation against RSiena 1.6.6 (s50, alcohol waves 1-2 as the changing covariate;
+density, reciprocity, transitive triplets, altX, egoX, simX, sameX): the observed statistics are identical to RSiena's targets (238, 160 [80
+mutual dyads], 225, 12.38, 20.38, 21.996, 80) and the estimates agree: density -2.69 (-2.70), reciprocity 2.41-2.44 (2.41-2.44),
+transTrip 0.63 (0.63), altX -0.03 (-0.03 to -0.04), egoX 0.034-0.037 (0.036-0.042), simX 1.02-1.05 (0.96-1.04), sameX -0.16 (-0.11 to -0.15).
+
 {marker twomode}{...}
 {pstd}
 {bf:Two-mode networks.} A two-mode (bipartite) network, declared with {cmd:nwset, mat(}{it:A}{cmd:) bipartite}, is estimated like

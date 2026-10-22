@@ -1039,6 +1039,7 @@ class ErgmTermData {
 	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree/gwdsp
 	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov/absdist/nodefactor/nodemix: node-indexed covariate (already numeric-coded)
 	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
+	real matrix attrpd		// nwsaom time-varying covariates: n x periods, column p = the values used in period p (td.attr holds the current period's column); 0 x 0 for every other term
 	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
 	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic
 	string scalar sptype		// gwesp/gwdsp/gwnsp/esp/dsp: shared-partner definition on a DIRECTED network - "" (default) means the undirected/UTP definition (used as-is for undirected networks); one of "OTP"/"ITP"/"OSP"/"ISP"/"RTP" selects the corresponding directed definition (harmonisation unit 91 wave 5 added OTP; a later wave added ITP/OSP/ISP; RTP (reciprocated two-path) added last - all five of R ergm's own directed shared-partner types are now implemented).

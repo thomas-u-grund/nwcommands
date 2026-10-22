@@ -202,7 +202,7 @@ program nwsaom, eclass
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
-		ENDOW(string) CREATION(string) ACTORMODE(integer 0) ]
+		ENDOW(string) CREATION(string) ACTORMODE(integer 0) TVCOV(string) ]
 	set more off
 
 	// --- endow(effects) creation(effects): RSiena's effect "types" (includeEffects(type = "endow" /
@@ -1222,6 +1222,86 @@ program nwsaom, eclass
 	if `__nwsaom_tm' {
 		local __nwsaom_idxE ", __nwsaom_tm_evidx"
 		local __nwsaom_idxA ", __nwsaom_tm_actidx"
+	}
+	// --- time-varying covariates (RSiena's varCovar): tvcov(s1 s2 s3 | a1 a2 a3) declares covariates with one variable
+	// per wave (the first nwaves-1 are used: period p takes the value of wave p); each is named after its first variable
+	// without trailing digits (here sport... "s", "a") and used by that name in nodeocov()/nodeicov()/nodecov()/
+	// nodematch()/simcov() (egox()/altx()/samex()/simx()); the covariate is centred by the mean of all its values.
+	local __nwsaom_tvnames ""
+	if `"`tvcov'"' != "" {
+		if `__nwsaom_coev' | `__nwsaom_tm' | "`interact'" != "" | "`symmetric'" != "" {
+			di "{err}{bf:tvcov()} cannot yet be combined with {bf:behavior()}, two-mode networks, {bf:interact()} or {bf:symmetric}."
+			error 198
+		}
+		local __rest `"`tvcov'"'
+		while `"`__rest'"' != "" {
+			local __bar = strpos(`"`__rest'"', "|")
+			if `__bar' > 0 {
+				local __grp = strtrim(substr(`"`__rest'"', 1, `__bar' - 1))
+				local __rest = strtrim(substr(`"`__rest'"', `__bar' + 1, .))
+			}
+			else {
+				local __grp = strtrim(`"`__rest'"')
+				local __rest ""
+			}
+			local __nc : word count `__grp'
+			if `__nc' != `__nwsaom_nwaves' & `__nc' != `__nwsaom_nwaves' - 1 {
+				di "{err}each covariate in {bf:tvcov()} needs one variable per wave (`=`__nwsaom_nwaves'-1' or `__nwsaom_nwaves'); got `__nc'."
+				error 198
+			}
+			local __fv : word 1 of `__grp'
+			local __stem = ustrregexra("`__fv'", "[0-9]+$", "")
+			if "`__stem'" == "" local __stem "tv`=wordcount("`__nwsaom_tvnames'")+1'"
+			if `: list __stem in __nwsaom_tvnames' {
+				di "{err}{bf:tvcov()}: two covariates would both be called {bf:`__stem'}."
+				error 198
+			}
+			local __vl ""
+			forvalues __k = 1/`=`__nwsaom_nwaves'-1' {
+				local __vk : word `__k' of `__grp'
+				confirm numeric variable `__vk'
+				local __vl "`__vl' `__vk'"
+			}
+			local __nwsaom_tvv_`__stem' "`__vl'"
+			local __nwsaom_tvnames "`__nwsaom_tvnames' `__stem'"
+		}
+		foreach __eff in nodematch nodecov nodeicov nodeocov simcov {
+			local __plain ""
+			foreach __t of local `__eff' {
+				if `: list __t in __nwsaom_tvnames' {
+					if "`__eff'" == "nodematch" {
+						local __lab "`__nwsaom_samelab'_`__t'"
+						local __efl "`__nwsaom_samelab'(`__t')"
+					}
+					else if "`__eff'" == "nodecov" {
+						local __lab "nodecov_`__t'"
+						local __efl "nodecov(`__t')"
+					}
+					else if "`__eff'" == "nodeicov" {
+						local __lab "`__nwsaom_altlab'_`__t'"
+						local __efl "`__nwsaom_altlab'(`__t')"
+					}
+					else if "`__eff'" == "nodeocov" {
+						local __lab "`__nwsaom_egolab'_`__t'"
+						local __efl "`__nwsaom_egolab'(`__t')"
+					}
+					else {
+						local __lab "`__nwsaom_simlab'_`__t'"
+						local __efl "`__nwsaom_simlab'(`__t')"
+					}
+					tempname __td_tv
+					mata: `__td_tv' = ErgmTermData()
+					mata: SaomRegCovTV(__nwsaom_last_M, "`__eff'", "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `__td_tv', ("`__lab'"), __nwsaom_cm)
+					if inlist("`__eff'", "nodecov", "nodeicov", "nodeocov") {
+						mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
+						if !strpos(" `__nwsaom_cmeans' ", " `__t' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__t' `__m'"
+					}
+					local __nwsaom_efflist "`__nwsaom_efflist' `__efl'"
+				}
+				else local __plain "`__plain' `__t'"
+			}
+			local `__eff' = strtrim("`__plain'")
+		}
 	}
 	// covariate effects take a varlist (2026-10-01): one term and one
 	// coefficient per variable, named <effect>_<variable> (e.g.
@@ -2687,6 +2767,7 @@ program nwsaom, eclass
 	ereturn scalar N = `nodes'
 	ereturn scalar nodes = `nodes'
 	ereturn scalar twomode = `__nwsaom_tm'
+	ereturn local tvcov "`__nwsaom_tvnames'"
 	if `__nwsaom_tm' {
 		ereturn scalar n_actors = `__nwsaom_tm_na'
 		ereturn scalar n_events = `__nwsaom_tm_ne'

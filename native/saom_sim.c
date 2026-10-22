@@ -276,7 +276,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 20		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 21		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1903,6 +1903,8 @@ typedef struct model_s {
 	int behfntype[MAXBEHTERMS];		// behavior: 1 endowment (decreases only), 2 creation (increases only)
 	long nstruct;				// structural (fixed) dyads, CSR by ego: struct_j[struct_off[i]..struct_off[i+1]-1]
 	long nstruct_pending;			// protocol 20: structural dyads sent in the frame's last two columns (BATCHSETUP only)
+	int ntv;				// protocol 21: attributes that vary by period (BATCHSETUP only)
+	int tvcol[MAXATTR];			// their 1-based attribute columns
 	long *struct_off, *struct_j;
 	/* protocol 19: several co-evolving behaviors. Behavior 0 is the legacy block above (nbehterms, behtermcodes,
 	   behminval..., behfntype); behaviors 1..nbeh-1 are views (bm[b]): a model_t of its own holding only that
@@ -1925,6 +1927,7 @@ typedef struct {
 	double *missbeh;		// 1..n, NULL unless hasmiss
 	double *xbeh0[MAXBEH];		// protocol 19: starting values of behaviors 1.., index 1..n
 	double *xmissbeh[MAXBEH];	// their missingness (1..n), NULL unless hasmiss
+	double *xattr[MAXATTR + 1];	// protocol 21: this period's values of the time-varying attributes (index = attribute column - 1), NULL = the model's own
 	int haspresent;
 	double *present;		// 1..n, NULL unless haspresent
 } period_t;
@@ -2187,7 +2190,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 	PROF_START(pt_setup);
 	memset(R, 0, sizeof(simres_t));
-	for (k = 0; k < M->nattr; k++) attrs[k] = M->attrs[k];
+	for (k = 0; k < M->nattr; k++) attrs[k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
 	attrs[M->nattr] = NULL;
 
 	graph_init(&g, n, M->need_adj, PD->nties);
@@ -2894,6 +2897,7 @@ static void batch_free(void) {
 		period_t *p = &batch_state.per[pd];
 		free(p->ti); free(p->tj); free(p->beh0); free(p->mi); free(p->mj); free(p->missbeh); free(p->present);
 		{ long b; for (b = 1; b < MAXBEH; b++) { free(p->xbeh0[b]); free(p->xmissbeh[b]); } }
+		{ long a; for (a = 0; a <= MAXATTR; a++) free(p->xattr[a]); }
 	}
 	{ long b; for (b = 1; b < MAXBEH; b++) free(batch_state.M.bm[b]); }
 	free(batch_state.per);
@@ -3100,6 +3104,10 @@ static ST_retcode batch_setup(char *arg) {
 			M->nbeh++;
 		}
 	}
+	/* protocol 21: attributes that vary by period (ntv, then their 1-based attribute columns) */
+	M->ntv = (int)next_long_opt(0);
+	if (M->ntv < 0 || M->ntv > MAXATTR - 1) { SF_error("saom_sim: BATCHSETUP too many time-varying attributes\n"); return 198; }
+	for (k = 0; k < M->ntv; k++) M->tvcol[k] = (int)next_long();
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
@@ -3198,6 +3206,17 @@ static ST_retcode batch_setup(char *arg) {
 				double *mm = (double *)calloc((size_t)(n + 1), sizeof(double));
 				if (hasmiss) { for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); mm[i] = v; } col++; }
 				batch_state.per[pd].xmissbeh[b] = mm;
+			}
+		}
+	}
+	{
+		long j;
+		for (j = 0; j < M->ntv; j++) {
+			for (pd = 0; pd < P; pd++) {
+				double *xa = (double *)calloc((size_t)(n + 1), sizeof(double));
+				for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); xa[i] = v; }
+				batch_state.per[pd].xattr[M->tvcol[j] - 1] = xa;
+				col++;
 			}
 		}
 	}
