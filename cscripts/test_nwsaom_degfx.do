@@ -41,3 +41,45 @@ global NWSAOM_NONATIVE
 capture nwsaom, waves(dg1 dg2 dg3) outdegree outpop inact
 assert _rc == 198
 di as text "degree effects PASS"
+
+* endowment / creation split of the degree effects: RSiena's statistics (endowment: minus the sum over lost ties of the tie statistic in the start
+* network; creation: the sum over gained ties of it in the end network - but for the ego-activity effects, which override endowmentStatistic(), in the START
+* network too; s50: inPop -382 / 395, outActSqrt -179.11 / 167.86, outAct -316 / 278, inAct -293 / 299 - dev/saom_rsiena_degsplit.{R,do})
+capture nwsaom, waves(dg1 dg2) outdegree reciprocity endow(inpop outactsqrt) creation(inpop outactsqrt) k0(5) k3(5) seed(2)
+mata:
+mata set matastrict off
+void dg_split_check() {
+	external class ErgmModel scalar __nwsaom_last_M
+	external class ErgmGraph scalar __nwsaom_last_G1, __nwsaom_last_G2
+	real rowvector st
+	real matrix ties1, ties2
+	real scalar k, e1, c1, e2, c2
+	assert(__nwsaom_last_M.nterms == 6)
+	assert(__nwsaom_last_M.names[3] == "inpopendow" & __nwsaom_last_M.names[4] == "inpopcreation" & __nwsaom_last_M.names[5] == "outactsqrtendow" & __nwsaom_last_M.names[6] == "outactsqrtcreation")
+	st = SaomNetworkPatchEndowCreation(__nwsaom_last_M, SaomFntypeFromNames(__nwsaom_last_M), __nwsaom_last_M.full_statistic(__nwsaom_last_G2), __nwsaom_last_G1, __nwsaom_last_G2)
+	ties1 = __nwsaom_last_G1.all_ties()
+	ties2 = __nwsaom_last_G2.all_ties()
+	e1 = 0
+	c1 = 0
+	e2 = 0
+	c2 = 0
+	for (k=1; k<=rows(ties1); k++) {
+		if (!__nwsaom_last_G2.has_edge(ties1[k,1], ties1[k,2])) {
+			e1 = e1 - __nwsaom_last_G1.din[ties1[k,2]]
+			e2 = e2 - sqrt(__nwsaom_last_G1.dout[ties1[k,1]])
+		}
+	}
+	for (k=1; k<=rows(ties2); k++) {
+		if (!__nwsaom_last_G1.has_edge(ties2[k,1], ties2[k,2])) {
+			c1 = c1 + __nwsaom_last_G2.din[ties2[k,2]]
+			c2 = c2 + sqrt(__nwsaom_last_G1.dout[ties2[k,1]])
+		}
+	}
+	assert(abs(st[3] - e1) < 1e-9 & abs(st[4] - c1) < 1e-9 & abs(st[5] - e2) < 1e-9 & abs(st[6] - c2) < 1e-9)
+	assert(e1 < 0 & c1 > 0 & e2 < 0 & c2 > 0)
+}
+dg_split_check()
+end
+di as text "endow/creation of the degree effects PASS"
+capture noisily nwsaom, waves(dg1 dg2 dg3) outdegree inpop endow(inpop) creation(inpop) k3(50)
+assert _rc == 198

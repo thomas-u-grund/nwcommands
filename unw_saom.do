@@ -3006,6 +3006,26 @@ real rowvector change_saom_balance(class ErgmGraph scalar G, real scalar i, real
    (indegpopularity, outactivity, outpopularity, inactivity, isolatenet,
    outiso, antiiniso, antiiniso2, inplus3) before an interaction naming
    one of them can ever reach here. */
+/* plugin term code of a degree effect's endowment/creation term (0 = not one of them) */
+real scalar _saom_degsplit_code(string scalar nm) {
+	string scalar base
+	real scalar l
+
+	l = strlen(nm)
+	base = ""
+	if (l > 5) if (substr(nm, l - 4, .) == "endow") base = substr(nm, 1, l - 5)
+	if (l > 8) if (substr(nm, l - 7, .) == "creation") base = substr(nm, 1, l - 8)
+	if (base == "indegpopularity") return(7)
+	if (base == "outactivity") return(8)
+	if (base == "outpopularity") return(9)
+	if (base == "inactivity") return(10)
+	if (base == "inpop") return(44)
+	if (base == "outpoplin") return(45)
+	if (base == "inactlin") return(46)
+	if (base == "outactsqrt") return(47)
+	return(0)
+}
+
 real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	real colvector a, real scalar decay, real scalar ego, real scalar alter, | real scalar center){
 
@@ -3836,7 +3856,9 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 				for (k=1; k<=rows(ties); k++) {
 					if (Gstart.has_edge(ties[k,1], ties[k,2])) continue
 					if (usemask) if (missMask[ties[k,1], ties[k,2]] != 0) continue
-					v = v + ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gend, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gcm, base, td.attr, td.decay, ties[k,1], ties[k,2], td.center))
+					// RSiena: the ego-activity effects override endowmentStatistic() (start-network degree times the lost ties), and
+					// creationStatistic() reuses it, so for them the creation statistic uses the START network degrees too
+					v = v + ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gend, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat((anyof(("outactivity", "inactivity", "inactlin", "outactsqrt"), base) ? Gstart : Gcm), base, td.attr, td.decay, ties[k,1], ties[k,2], td.center))
 				}
 			}
 			out[pos] = v
@@ -7810,7 +7832,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -7822,6 +7844,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv22 = 0
 	needv23 = 0
 	needv24 = 0
+	needv29 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8004,6 +8027,14 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				needv13 = 1
 			}
 		}
+		else if (_saom_degsplit_code(nm) > 0) {
+			// endowment / creation roles of the degree effects: the base effect's plugin code, gated by cfg.fntype
+			cfg.termcodes[t] = _saom_degsplit_code(nm)
+			cfg.needv11 = 1
+			needv14 = 1
+			if (cfg.termcodes[t] >= 44) needv22 = 1
+			needv29 = 1
+		}
 		else if (nm == "indegpopularity") cfg.termcodes[t] = 7
 		else if (nm == "inpop") {
 			cfg.termcodes[t] = 44
@@ -8183,6 +8214,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv29) {
+		if (SaomNativePluginVersion() < 29) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 29 (endowment/creation of the degree effects)"
 		}
 	}
 	if (cfg.eligible & needv24) {
@@ -8886,7 +8923,7 @@ real matrix SaomCovPrepMat(real matrix X, real scalar center) {
    endowment/creation marked, behavior effects with the behavior's name. */
 string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar symmetric, real scalar decay) {
 	string scalar v, u2, _kb
-	real scalar u, _isend
+	real scalar u, _isend, l
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
@@ -8895,6 +8932,11 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "reciprocity") return("reciprocity")
 	if (term == "reciprocityendow") return("reciprocity [endowment]")
 	if (term == "reciprocitycreation") return("reciprocity [creation]")
+	if (_saom_degsplit_code(term) > 0) {
+		l = strlen(term)
+		if (l > 5) if (substr(term, l - 4, .) == "endow") return(_SaomRSLabel1(substr(term, 1, l - 5), coef, symmetric, decay) + " [endowment]")
+		return(_SaomRSLabel1(substr(term, 1, l - 8), coef, symmetric, decay) + " [creation]")
+	}
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
 	if (term == "absdiffx") return(v + " abs. difference")

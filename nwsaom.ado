@@ -212,7 +212,7 @@ program nwsaom, eclass
 	// per-effect checks below). The older option pairs (outdegreeendow/outdegreecreation,
 	// reciprocityendow/..., transtiesendow/..., linearendow/..., quadraticendow/..., avaltendow/...,
 	// avsimendow/...) stay as exact aliases: endow(x) sets `xendow', creation(x) sets `xcreation'.
-	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip linear quadratic avalt avsim"
+	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip linear quadratic avalt avsim indegpopularity outpopularity outactivity inactivity inpop outpop inact outactsqrt"
 	// covariate effects are named effect:variable, e.g. endow(altx:alc) creation(altx:alc) (egox/altx/samex/simx or
 	// nodeocov/nodeicov/nodematch/simcov): the effect for that variable is split and replaces the plain one
 	local __nwsaom_cvend ""
@@ -845,7 +845,7 @@ program nwsaom, eclass
 	}
 	local __nwsaom_hasnetgate = 0
 	if "`__nwsaom_cvec'" != "" local __nwsaom_hasnetgate = 1
-	foreach __e in outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip {
+	foreach __e in outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip indegpopularity outpopularity outactivity inactivity inpop outpop inact outactsqrt {
 		if "``__e'endow'" != "" local __nwsaom_hasnetgate = 1
 	}
 	// v1 scope restriction, disclosed not silently degraded: network
@@ -1808,6 +1808,36 @@ program nwsaom, eclass
 		mata: `__td_ttc' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transtiescreation", 1, &stat_transitiveties(), &change_saom_transties(), `__td_ttc', ("transtiescreation"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transtiesendow transtiescreation"
+	}
+
+	// degree effects split into their endowment / creation roles (RSiena: inPop, outPop, inAct, outActSqrt and the
+	// square-root variants, type endow / creation): the same statistic functions as the plain effects, gated by role
+	foreach __e in indegpopularity outpopularity outactivity inactivity inpop outpop inact outactsqrt {
+		if "``__e'endow'" != "" {
+			if "``__e''" != "" {
+				di "{err}{bf:`__e'} is split by {bf:endow(`__e') creation(`__e')}; do not give the plain effect {bf:`__e'} as well."
+				error 198
+			}
+			local __tn "`__e'"
+			local __sf "`__e'"
+			if "`__e'" == "indegpopularity" local __sf "indegpop"
+			if "`__e'" == "outpopularity" local __sf "outpop"
+			if "`__e'" == "inactivity" local __sf "inact"
+			if "`__e'" == "outpop" {
+				local __tn "outpoplin"
+				local __sf "outpoplin"
+			}
+			if "`__e'" == "inact" {
+				local __tn "inactlin"
+				local __sf "inactlin"
+			}
+			tempname __td_dge __td_dgc
+			mata: `__td_dge' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__tn'endow", 1, &stat_saom_`__sf'(), &change_saom_`__sf'(), `__td_dge', ("`__e'endow"))
+			mata: `__td_dgc' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__tn'creation", 1, &stat_saom_`__sf'(), &change_saom_`__sf'(), `__td_dgc', ("`__e'creation"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__e'endow `__e'creation"
+		}
 	}
 
 	// --- balance: harmonisation unit 25. NO user-supplied free
