@@ -275,7 +275,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 17		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 18		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -3094,7 +3094,7 @@ static ST_retcode batch_run(char *arg) {
 	model_t *M = &batch_state.M;
 	long K, nthreads, pd, k, u, P, pNet, pBeh, W, c;
 	unsigned long long seed;
-	int want_score, condmode;
+	int want_score, condmode, perper = 0;
 	char *tok0;
 	simparams_t *prm;
 	batch_job_t J;
@@ -3128,6 +3128,8 @@ static ST_retcode batch_run(char *arg) {
 		for (pd = 0; pd < P; pd++) prm[pd].targetChange = next_double();
 		/* protocol 11: the ratecov() coefficients (nrc of them) */
 		for (k = 0; k < batch_state.nrc; k++) rcoef[k] = next_double();
+		/* protocol 18: optional trailing flag, per-period statistics and scores appended to the output */
+		perper = (int)next_long_opt(0);
 		for (pd = 0; pd < P; pd++) {
 			prm[pd].symtype = batch_state.symtype;
 			prm[pd].hasratecov = batch_state.nrc;
@@ -3181,6 +3183,25 @@ static ST_retcode batch_run(char *arg) {
 				SF_vstore((int)(base + 4), (int)(k + 1), r->nchanges);
 				SF_vstore((int)(base + 5), (int)(k + 1), r->nchangesBeh);
 				if (condmode == 2) SF_vstore((int)(base + 6), (int)(k + 1), r->t);
+			}
+			if (perper && condmode != 1) {
+				/* protocol 18: per period, the statistics (network, lagged behavior), the scores (network, behavior)
+				   and per ratecov() covariate the statistic and the score; RSiena's derivative matrix is the sum over
+				   the periods of the covariance of that period's score and deviation */
+				long wper = 2 * (pNet + pBeh) + 2 * batch_state.nrc;
+				long base1 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc + 1;
+				for (pd = 0; pd < P; pd++) {
+					simres_t *r = &res[k * P + pd];
+					long b2 = base1 + wper * pd, kr;
+					for (c = 0; c < pNet; c++) SF_vstore((int)(b2 + c), (int)(k + 1), r->stat[c]);
+					for (c = 0; c < pBeh; c++) SF_vstore((int)(b2 + pNet + c), (int)(k + 1), r->statBehLag[c]);
+					for (c = 0; c < pNet; c++) SF_vstore((int)(b2 + pNet + pBeh + c), (int)(k + 1), r->score[c]);
+					for (c = 0; c < pBeh; c++) SF_vstore((int)(b2 + 2 * pNet + pBeh + c), (int)(k + 1), r->scoreBeh[c]);
+					for (kr = 0; kr < batch_state.nrc; kr++) {
+						SF_vstore((int)(b2 + 2 * (pNet + pBeh) + 2 * kr), (int)(k + 1), r->rcstat[kr]);
+						SF_vstore((int)(b2 + 2 * (pNet + pBeh) + 2 * kr + 1), (int)(k + 1), r->rcscore[kr]);
+					}
+				}
 			}
 			if (batch_state.nrc > 0) {
 				long base0 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 1;

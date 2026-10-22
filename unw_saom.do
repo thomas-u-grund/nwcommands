@@ -3816,6 +3816,8 @@ struct SaomNetCtx {
 	real rowvector fntype
 	real matrix structural
 	real matrix ratecovattr		// n x K
+	real scalar wantper		// 1: SaomNetSimMany() also returns the per-period deviations and scores
+	real matrix Zper, Sper		// K x (P*ptot): period pd in columns (pd-1)*ptot+1..pd*ptot (RSiena's derivative matrix is a sum over periods)
 }
 
 /* Fills the context: targets, native dispatch. presentPd is n x P (or
@@ -3849,6 +3851,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.hasratecov = (rows(ratecovattr) > 0 ? cols(ratecovattr) : 0)
 	C.ratecovattr = ratecovattr
 	C.symtype = symtype
+	C.wantper = 0
 	// RSiena (initializeFRAN()): conditional estimation is not used with
 	// composition change
 	if (C.cond) {
@@ -3927,7 +3930,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
    order): deviations from the targets in `dev', scores in `sco'
    (1 x ptot each; scores only when want_score). */
 void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
-	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco) {
+	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco, | real matrix devp, real matrix scop) {
 
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
@@ -3936,7 +3939,8 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real colvector pres, presNat
 	real matrix mdy
 	real scalar pd, p, P, rate, steps, netdist, active, rebuild, K
-	real rowvector ratecoef, rcstat, rcscore, rcix
+	real rowvector ratecoef, rcstat, rcscore, rcix, scpd
+	real scalar wantp
 
 	p = C.p
 	P = C.P
@@ -3946,6 +3950,11 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	ratecoef = (K ? par[rcix] : 0)
 	dev = J(1, C.ptot, 0)
 	sco = J(1, C.ptot, 0)
+	wantp = (args() >= 7)
+	if (wantp) {
+		devp = J(P, C.ptot, 0)
+		scop = J(P, C.ptot, 0)
+	}
 	for (pd=1; pd<=P; pd++) {
 		rate = par[p + pd]
 		pres = C.presentPd[., pd]
@@ -3978,7 +3987,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			}
 			stat = cres.stat
 			steps = cres.steps
-			if (want_score) sco[1..p] = sco[1..p] + cres.score
+			if (want_score) scpd = cres.score
 		}
 		else {
 			Gwork = ErgmGraph()
@@ -3990,7 +3999,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 				else if (C.haspresent) sres = SaomSimulateIntervalScored(Gwork, M, theta, rate, pres)
 				else sres = SaomSimulateIntervalScored(Gwork, M, theta, rate)
 				steps = sres.steps
-				sco[1..p] = sco[1..p] + sres.score
+				scpd = sres.score
 				if (C.hasratecov) rcscore = sres.rcscore
 			}
 			else {
@@ -4015,13 +4024,24 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
 		dev[p + pd] = netdist - C.targetRate[pd]
 		if (K) dev[rcix] = dev[rcix] + (rcstat - C.targetRateCov[pd,.])
+		if (wantp) {
+			devp[pd, 1..p] = stat - C.target[pd, .]
+			devp[pd, p + pd] = netdist - C.targetRate[pd]
+			if (K) devp[pd, rcix] = rcstat - C.targetRateCov[pd,.]
+		}
 		if (want_score) {
+			sco[1..p] = sco[1..p] + scpd
 			active = (K ? sum(exp(C.ratecovattr * ratecoef')) : C.npresentPd[pd])
 			// pairwise models with ratecov(): total rate rate * (S^2 -
 			// sum w^2) / (n - 1), see saom_sim.c
 			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')))) / (C.n - 1)
 			sco[p + pd] = steps / rate - active
 			if (K) sco[rcix] = sco[rcix] + rcscore
+			if (wantp) {
+				scop[pd, 1..p] = scpd
+				scop[pd, p + pd] = steps / rate - active
+				if (K) scop[pd, rcix] = rcscore
+			}
 		}
 	}
 }
@@ -4084,7 +4104,7 @@ void SaomSymRateToRSiena(struct SaomFit scalar fit, struct SaomNetCtx scalar C, 
    `par' = (theta, [ratecoef]); the elapsed times go to `tim' (1 x P). */
 void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real rowvector par, real scalar want_score, real rowvector dev, real rowvector sco,
-	real rowvector tim) {
+	real rowvector tim, | real matrix devp, real matrix scop) {
 
 	struct SaomCountedResult scalar cres
 	struct SaomScoredResult scalar sres
@@ -4093,7 +4113,8 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real colvector pres, presNat
 	real matrix rcattr
 	real matrix mdy, dm
-	real scalar pd, p, P, ct, K
+	real scalar pd, p, P, ct, K, wantp
+	real rowvector scpd
 	real rowvector ratecoef, rcstat, rcscore, rcix
 
 	p = C.p
@@ -4107,6 +4128,12 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	dev = J(1, C.ptot, 0)
 	sco = J(1, C.ptot, 0)
 	tim = J(1, P, 0)
+	wantp = (args() >= 7)
+	if (wantp) {
+		devp = J(P, C.ptot, 0)
+		scop = J(P, C.ptot, 0)
+	}
+	scpd = J(1, p, 0)
 	for (pd=1; pd<=P; pd++) {
 		ct = C.targetRate[pd]
 		pres = C.presentPd[., pd]
@@ -4130,14 +4157,14 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			else cres = SaomSimulateIntervalNative(*C.Gwaves[pd], M, C.cfg, theta, 1, 0, want_score, mdy, presNat, C.symtype, rcattr, 0, ct)
 			stat = cres.stat
 			tim[pd] = cres.t
-			if (want_score) sco[1..p] = sco[1..p] + cres.score
+			if (want_score) scpd = cres.score
 		}
 		else {
 			SaomCopyGraph(*C.Gwaves[pd], Gwork)
 			if (want_score) {
 				if (C.hasratecov) sres = SaomSimIntScoredRateCov(Gwork, M, theta, 1, C.ratecovattr, ratecoef, pres, fnarg, ct, dm)
 				else sres = SaomSimulateIntervalScored(Gwork, M, theta, 1, pres, fnarg, (C.hasstructural ? C.structural : J(0, 0, 0)), ct, dm)
-				sco[1..p] = sco[1..p] + sres.score
+				scpd = sres.score
 				if (C.hasratecov) rcscore = sres.rcscore
 				tim[pd] = sres.t
 			}
@@ -4151,9 +4178,18 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
+		if (want_score) sco[1..p] = sco[1..p] + scpd
+		if (wantp) {
+			devp[pd, 1..p] = stat - C.target[pd, .]
+			if (want_score) scop[pd, 1..p] = scpd
+		}
 		if (K) {
 			dev[rcix] = dev[rcix] + (rcstat - C.targetRateCov[pd,.])
 			if (want_score) sco[rcix] = sco[rcix] + rcscore
+			if (wantp) {
+				devp[pd, rcix] = rcstat - C.targetRateCov[pd,.]
+				if (want_score) scop[pd, rcix] = rcscore
+			}
 		}
 	}
 }
@@ -4162,39 +4198,49 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	real rowvector par, real scalar K, real scalar want_score, real matrix Z, real matrix S) {
 
-	real matrix out
-	real rowvector dev, sco, tim
-	real scalar k, pd, p, b
+	real matrix out, devp, scop
+	real rowvector dev, sco, tim, rcc
+	real scalar k, pd, p, b, doper
 
 	p = C.p
 	Z = J(K, C.ptot, 0)
 	S = J(K, C.ptot, 0)
+	doper = (C.wantper & want_score)
+	if (doper) {
+		C.Zper = J(K, C.P * C.ptot, 0)
+		C.Sper = J(K, C.P * C.ptot, 0)
+	}
+	rcc = (C.hasratecov ? par[(C.ptot-C.hasratecov+1)..C.ptot] : J(1, 0, 0))
 	if (C.cond) {
 		// conditional: the elapsed times are kept in C.lastT (K x P); the
 		// rate estimate is their mean over phase 3 (RSiena terminateFRAN())
 		C.lastT = J(K, C.P, 0)
 		if (C.use_batch) {
-			if (C.hasratecov) out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2, par[(C.ptot-C.hasratecov+1)..C.ptot])
-			else out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2)
+			out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), J(1, C.P, 1), J(1, 0, 0), C.targetRate, K, want_score, 2, rcc, doper)
 			Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 			if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
 			for (pd=1; pd<=C.P; pd++) C.lastT[., pd] = out[., 2*p + 7*(pd-1) + 7]
 			if (C.hasratecov) SaomBatchRateCovCols(C, out, 2*p + 7*C.P, want_score, Z, S)
+			if (doper) SaomBatchPerPeriod(C, out, par, 1)
 			SaomCondTimeCheck(C.lastT)
 			return
 		}
 		for (k=1; k<=K; k++) {
-			SaomNetReplicateCond(C, M, par, want_score, dev, sco, tim)
+			if (doper) SaomNetReplicateCond(C, M, par, want_score, dev, sco, tim, devp, scop)
+			else SaomNetReplicateCond(C, M, par, want_score, dev, sco, tim)
 			Z[k,.] = dev
 			S[k,.] = sco
 			C.lastT[k,.] = tim
+			if (doper) {
+				C.Zper[k,.] = rowshape(devp, 1)
+				C.Sper[k,.] = rowshape(scop, 1)
+			}
 		}
 		SaomCondTimeCheck(C.lastT)
 		return
 	}
 	if (C.use_batch) {
-		if (C.hasratecov) out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0, par[(C.ptot-C.hasratecov+1)..C.ptot])
-		else out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0)
+		out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0, rcc, doper)
 		Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 		if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
 		for (pd=1; pd<=C.P; pd++) {
@@ -4203,12 +4249,48 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			if (want_score) S[., p+pd] = out[., b+3] / par[p+pd] :- SaomActiveRate(C, par, pd)
 		}
 		if (C.hasratecov) SaomBatchRateCovCols(C, out, 2*p + 6*C.P, want_score, Z, S)
+		if (doper) SaomBatchPerPeriod(C, out, par, 0)
 		return
 	}
 	for (k=1; k<=K; k++) {
-		SaomNetReplicate(C, M, par, want_score, dev, sco)
+		if (doper) SaomNetReplicate(C, M, par, want_score, dev, sco, devp, scop)
+		else SaomNetReplicate(C, M, par, want_score, dev, sco)
 		Z[k,.] = dev
 		S[k,.] = sco
+		if (doper) {
+			C.Zper[k,.] = rowshape(devp, 1)
+			C.Sper[k,.] = rowshape(scop, 1)
+		}
+	}
+}
+
+/* per-period deviations and scores from the batch output (protocol 18, appended after the summed columns):
+   C.Zper / C.Sper, period pd in columns (pd-1)*ptot+1..pd*ptot */
+void SaomBatchPerPeriod(struct SaomNetCtx scalar C, real matrix out, real rowvector par, real scalar cond) {
+	real scalar pd, kk, p, P, nrc, W0, wper, blk, b, bb
+	real rowvector ie, ic
+
+	p = C.p
+	P = C.P
+	nrc = C.hasratecov
+	W0 = 2*p + (cond ? 7 : 6)*P + 2*nrc
+	wper = 2*p + 2*nrc
+	for (pd=1; pd<=P; pd++) {
+		blk = (pd-1) * C.ptot
+		b = W0 + wper*(pd-1)
+		ie = (1..p)
+		ic = blk :+ ie
+		C.Zper[., ic] = out[., b :+ ie] :- C.target[pd, .]
+		C.Sper[., ic] = out[., (b + p) :+ ie]
+		if (!cond) {
+			bb = 2*p + 6*(pd-1)
+			C.Zper[., blk + p + pd] = out[., bb+1] :- C.targetRate[pd]
+			C.Sper[., blk + p + pd] = out[., bb+3] / par[p+pd] :- SaomActiveRate(C, par, pd)
+		}
+		for (kk=1; kk<=nrc; kk++) {
+			C.Zper[., blk + C.ptot - nrc + kk] = out[., b + 2*p + 2*kk - 1] :- C.targetRateCov[pd, kk]
+			C.Sper[., blk + C.ptot - nrc + kk] = out[., b + 2*p + 2*kk]
+		}
 	}
 }
 
@@ -4240,8 +4322,18 @@ real scalar SaomActiveRate(struct SaomNetCtx scalar C, real rowvector par, real 
 
 /* SaomRMCore() callback: K replicates at `par' */
 void SaomNetSimManyCB(struct SaomNetCtx scalar C, real rowvector par, real scalar K,
-	real scalar want_score, real matrix Z, real matrix S) {
+	real scalar want_score, real matrix Z, real matrix S, | real matrix Zp, real matrix Sp) {
+	C.wantper = (args() >= 8)
 	SaomNetSimMany(C, *C.Mp, par, K, want_score, Z, S)
+	if (C.wantper & want_score) {
+		Zp = C.Zper
+		Sp = C.Sper
+	}
+	else if (args() >= 8) {
+		Zp = Z
+		Sp = S
+	}
+	C.wantper = 0
 }
 
 struct SaomNetFit {
@@ -4253,6 +4345,24 @@ struct SaomNetFit {
 	real matrix theta_path		// nsub x p
 	real rowvector rmfixed		// 1 x ptot
 	real matrix T			// conditional estimation: phase-3 times, K3 x P
+}
+
+/* RSiena's derivative matrix (R/phase1.r derivativeFromScoresAndDeviations()): the sum over periods of the
+   covariance of that period's scores and deviations; Zp, Sp are K x (nper*ptot), period pd in columns
+   (pd-1)*ptot+1..pd*ptot. (Not the covariance of the period sums, which adds the cross-period covariances,
+   zero in expectation but noise in a sample.) */
+real matrix SaomJacobianPerPeriod(real matrix Zp, real matrix Sp, real scalar nper, real scalar ptot) {
+	real matrix D, Zb, Sb
+	real scalar pd, K
+
+	K = rows(Zp)
+	D = J(ptot, ptot, 0)
+	for (pd=1; pd<=nper; pd++) {
+		Zb = Zp[., ((pd-1)*ptot+1)..(pd*ptot)]
+		Sb = Sp[., ((pd-1)*ptot+1)..(pd*ptot)]
+		D = D + ((Zb :- mean(Zb))' * (Sb :- mean(Sb))) / K
+	}
+	return(D)
 }
 
 /* SaomRMCore: the three-phase Robbins-Monro algorithm (see the header
@@ -4267,7 +4377,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	real scalar K0, real scalar K3, real scalar firstg) {
 
 	struct SaomNetFit scalar fit
-	real matrix Zdev, Zsco, Dhat, DhatDec, Dinv, DinvOrig, DinvDec, msf, sfinvcov, Z1, S1, Z3, S3, Sc3, Dhat3
+	real matrix Zdev, Zsco, Dhat, DhatDec, Dinv, DinvOrig, DinvDec, msf, sfinvcov, Z1, S1, Z3, S3, Sc3, Dhat3, Zp1, Sp1, Zp3, Sp3
 	real rowvector par, par1, dev, prevdev, prod0, prod1, ac, stdcap, thav, fchange, changestep, thprev, m3
 	real rowvector rmfixed, rmfixedDec
 	real scalar ptot, k, nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
@@ -4281,13 +4391,19 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	// of twice the length is run before anything is fixed (the later last-resort fixing is below).
 	kp1 = K0
 	while (1) {
-		(*simfn)(C, par0, kp1, 1, Zdev, Zsco)
-		Dhat = ((Zdev :- mean(Zdev))' * (Zsco :- mean(Zsco))) / kp1
+		(*simfn)(C, par0, kp1, 1, Zdev, Zsco, Zp1, Sp1)
+		Dhat = SaomJacobianPerPeriod(Zp1, Sp1, cols(Zp1) / ptot, ptot)
 		if (kp1 < 200 & any(diagonal(Dhat) :<= 0)) {
 			kp1 = kp1 * 2
 			continue
 		}
 		break
+	}
+	if (strtoreal(st_global("NWSAOM_TRACE")) == 1) {
+		printf("TRACE phase 1: replicates %f, diag(Dhat) =", kp1)
+		diagonal(Dhat)'
+		printf("TRACE mean(Zdev) =")
+		mean(Zdev)
 	}
 	rmfixedDec = J(1, ptot, 0)
 	DhatDec = Dhat
@@ -4386,6 +4502,12 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 				for (k=1; k<=ptot; k++) if (israte[k] & par[k] < 0.5*thprev[k]) par[k] = 0.5*thprev[k]
 				thav = thav + par
 				thavn = thavn + 1
+				if (strtoreal(st_global("NWSAOM_TRACE")) == 1) if (nit <= 3 | mod(nit, 25) == 0) {
+					printf("TRACE sub %f it %f gain %5.3f par =", subphase, nit, gain)
+					par
+					printf("TRACE    dev =")
+					dev
+				}
 				if (max(abs(select(par, bounded :& !rmfixed))) > 50) {
 					diverged = 1
 					break
@@ -4415,7 +4537,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	fit.rmfixed = rmfixed
 
 	// --- Phase 3: convergence check and sandwich covariance
-	(*simfn)(C, par, K3, 1, Z3, Sc3)
+	(*simfn)(C, par, K3, 1, Z3, Sc3, Zp3, Sp3)
 	m3 = mean(Z3)
 	S3 = variance(Z3)
 	fit.tconv = J(1, ptot, 0)
@@ -4423,7 +4545,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	fit.tratio = fit.tconv
 	if (max(rmfixed) == 0) fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
 	else fit.tconvMax = sqrt(max((select(m3, !rmfixed) * invsym(select(select(S3, !rmfixed'), !rmfixed)) * select(m3, !rmfixed)', 0)))
-	Dhat3 = ((Z3 :- m3)' * (Sc3 :- mean(Sc3))) / K3
+	Dhat3 = SaomJacobianPerPeriod(Zp3, Sp3, cols(Zp3) / ptot, ptot)
 	// a fixed parameter gets no standard error (0): decoupled Jacobian,
 	// no variance
 	for (k=1; k<=ptot; k++) {
@@ -6161,7 +6283,7 @@ void SaomNNPointCrprod(class ErgmModel scalar M1, class ErgmModel scalar M2,
 
 /* SaomRMCore() callback: K replicates at `par' = (theta1, theta2, rate1, rate2) */
 void SaomNNSimManyCB(struct SaomNNCtx scalar C, real rowvector par, real scalar K,
-	real scalar want_score, real matrix Z, real matrix S) {
+	real scalar want_score, real matrix Z, real matrix S, | real matrix Zp, real matrix Sp) {
 
 	struct SaomCoevNetNetScoredResult scalar sres
 	class ErgmGraph scalar G1work, G2work
@@ -6196,6 +6318,10 @@ void SaomNNSimManyCB(struct SaomNNCtx scalar C, real rowvector par, real scalar 
 		}
 		Z[k,.] = (simstat - C.target, d1 - C.targetRate[1], d2 - C.targetRate[2])
 		S[k,.] = (sres.score1, sres.score2, sres.steps1 / r1 - C.n, sres.steps2 / r2 - C.n)
+	}
+	if (args() >= 8) {
+		Zp = Z
+		Sp = S
 	}
 }
 
@@ -8292,9 +8418,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	real rowvector thetaNet, real rowvector thetaBeh, real rowvector ratesNet,
 	real rowvector ratesBeh, real rowvector targets, real scalar K,
-	real scalar want_score, real scalar condmode, | real rowvector ratecoef) {
+	real scalar want_score, real scalar condmode, | real rowvector ratecoef, real scalar perper) {
 
-	real scalar W, i, seed, junk, nrc
+	real scalar W, i, seed, junk, nrc, doper
 	string rowvector names
 	string scalar origframe, argstr
 	real matrix out
@@ -8302,7 +8428,8 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	// protocol 11: with ratecov(), per covariate the summed statistic and
 	// score in 2 more columns
 	nrc = (args() >= 12 ? cols(ratecoef) : 0)
-	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P + 2*nrc
+	doper = (args() >= 13 ? (perper != 0 & condmode != 1) : 0)
+	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P + 2*nrc + doper * P * (2*(pNet + pBeh) + 2*nrc)
 	names = J(1, W, "")
 	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
 	origframe = st_framecurrent()
@@ -8321,6 +8448,7 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(ratesBeh) ? ratesBeh[i] : 0), "%25.17g")
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(targets) ? targets[i] : 0), "%25.17g")
 	for (i=1; i<=nrc; i++) argstr = argstr + " " + strofreal(ratecoef[i], "%25.17g")
+	if (doper) argstr = argstr + " 1"
 
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
 	out = st_data((1::K), names)
