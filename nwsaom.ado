@@ -676,7 +676,7 @@ program nwsaom, eclass
 				confirm numeric variable ``__opt''
 			}
 		}
-		foreach __opt in endow creation tvcov {
+		foreach __opt in endow creation {
 			if "``__opt''" != "" {
 				di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with {bf:`__opt'}."
 				error 198

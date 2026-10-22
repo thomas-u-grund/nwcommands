@@ -66,6 +66,11 @@ nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity behavior(bh1 bh2 bh3 : linear q
 assert e(b)[1,1] < .
 di as text "several behaviors with joinat()/leaveat() PASS"
 
+* time-varying covariate with timed composition change
+nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity tvcov(bh1 bh2 bh3) egox(bh) simx(bh) joinat(jn) leaveat(lv) k0(30) k3(100) seed(8)
+assert e(b)[1,1] < .
+di as text "tvcov() with joinat()/leaveat() PASS"
+
 * invalid input
 capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree joinat(jn) leaveat(lv) present(jn jn jn) k3(50)
 assert _rc == 198
