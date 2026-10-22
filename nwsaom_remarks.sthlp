@@ -553,6 +553,12 @@ outActSqrt 0.11-0.12 (0.12-0.14); inAct alone -0.044 (-0.044 to -0.051). Unlike 
 have the default internal parameter 1 and are not affected by the RSiena 1.6.1 change documented above (stocnet/rsiena#151).
 {opt outpop} and {opt inact} have the same total statistic and cannot be estimated together.
 
+{pstd}
+{bf:Covariate variants diffx, higher, egosqx, altsqx, samexrecip, simrecipx.} Checked against RSiena 1.6.6 on s50 with alcohol (density,
+reciprocity and one effect): observed statistics -10, 122.5, 327.587, 303.187, 52 and 13.655 identical; estimates diffX -0.04 (-0.046),
+higher 0.19 (0.18), egoSqX 0.12 (0.115), altSqX 0.023 (0.019), sameXRecip -0.148 (-0.155), simRecipX 0.285 (0.265). Variables with
+missing values are not yet supported for these effects.
+
 {marker tvcov}{...}
 {pstd}
 {bf:Time-varying covariates.} {cmd:tvcov(}{it:a1 a2 a3}{cmd:)} (several: separated by '|') declares a covariate that changes between

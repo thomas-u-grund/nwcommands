@@ -2185,6 +2185,73 @@ real scalar SaomSimMeanObs(real colvector x, real colvector miss) {
    them to 0 after centring). td.edgecovmat holds this matrix.
    X:      ministep contribution = value(i,j) (negated for a withdrawal); statistic = sum over ties of value(i,j).
    XRecip: the same, but only when the reverse tie j -> i exists. */
+/* RSiena diffX, higher, egoSqX, altSqX, sameXRecip, simRecipX (protocol 23): a value per tie from the (centred) covariate
+   td.attr; the Recip effects count only reciprocated ties (a tie i->j adds the value times x_ji) */
+real scalar _saom_cov2val(string scalar nm, real scalar vi, real scalar vj, class ErgmTermData scalar td) {
+	if (nm == "diffx") return(vj - vi)
+	if (nm == "higher") return(vi > vj ? 1 : (vi == vj ? 0.5 : 0))		// RSiena: ties count half
+	if (nm == "egosqx") return(vi^2)
+	if (nm == "altsqx") return(vj^2)
+	if (nm == "samexrecip") return(vi == vj)
+	return(1 - abs(vi - vj) / td.decay - td.center)		// simrecipx
+}
+real scalar _saom_cov2stat(string scalar nm, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real matrix ties
+	real scalar k, tot, rec
+
+	rec = (nm == "samexrecip" | nm == "simrecipx")
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) {
+		if (rec) if (!G.has_edge(ties[k,2], ties[k,1])) continue
+		tot = tot + _saom_cov2val(nm, td.attr[ties[k,1]], td.attr[ties[k,2]], td)
+	}
+	return(tot)
+}
+real scalar _saom_cov2chg(string scalar nm, class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+	real scalar v
+
+	v = _saom_cov2val(nm, td.attr[i], td.attr[j], td)
+	if (nm == "samexrecip" | nm == "simrecipx") if (!G.has_edge(j, i)) v = 0
+	return(G.has_edge(i,j) ? -v : v)
+}
+real rowvector stat_saom_diffx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("diffx", G, td))
+}
+real rowvector change_saom_diffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("diffx", G, i, j, td))
+}
+real rowvector stat_saom_higher(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("higher", G, td))
+}
+real rowvector change_saom_higher(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("higher", G, i, j, td))
+}
+real rowvector stat_saom_egosqx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("egosqx", G, td))
+}
+real rowvector change_saom_egosqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("egosqx", G, i, j, td))
+}
+real rowvector stat_saom_altsqx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("altsqx", G, td))
+}
+real rowvector change_saom_altsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("altsqx", G, i, j, td))
+}
+real rowvector stat_saom_samexrecip(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("samexrecip", G, td))
+}
+real rowvector change_saom_samexrecip(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("samexrecip", G, i, j, td))
+}
+real rowvector stat_saom_simrecipx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(_saom_cov2stat("simrecipx", G, td))
+}
+real rowvector change_saom_simrecipx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return(_saom_cov2chg("simrecipx", G, i, j, td))
+}
+
 /* absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j) on centred covariate values (td.attr) */
 real rowvector stat_saom_absdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real matrix ties
@@ -7333,7 +7400,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23
 	string scalar nm
 	string rowvector nms
 
@@ -7343,6 +7410,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv15 = 0
 	needv16 = 0
 	needv22 = 0
+	needv23 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -7388,6 +7456,18 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
 			needv16 = 1
+		}
+		else if (nm == "diffx" | nm == "higher" | nm == "egosqx" | nm == "altsqx" | nm == "samexrecip" | nm == "simrecipx") {
+			cfg.termcodes[t] = (nm == "diffx" ? 48 : (nm == "higher" ? 49 : (nm == "egosqx" ? 50 : (nm == "altsqx" ? 51 : (nm == "samexrecip" ? 52 : 53)))))
+			tdt = *M.td[t]
+			nextattr++
+			cfg.attridx[t] = nextattr
+			if (nm == "simrecipx") {
+				cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr / tdt.decay : (cfg.attrmat, tdt.attr / tdt.decay))
+				cfg.p1[t] = tdt.center
+			}
+			else cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			needv23 = 1
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -7671,6 +7751,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv23) {
+		if (SaomNativePluginVersion() < 23) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 23 (diffx, higher, egosqx, altsqx, samexrecip, simrecipx)"
 		}
 	}
 	if (cfg.eligible & needv22) {
@@ -8374,6 +8460,12 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "transtiesendow") return("transitive ties [endowment]")
 	if (term == "transtiescreation") return("transitive ties [creation]")
 	if (term == "absdiffx") return(v + " abs. difference")
+	if (term == "diffx") return(v + " difference")
+	if (term == "higher") return(v + " higher")
+	if (term == "egosqx") return(v + " ego squared")
+	if (term == "altsqx") return(v + " alter squared")
+	if (term == "samexrecip") return(v + " same x reciprocity")
+	if (term == "simrecipx") return(v + " similarity x reciprocity")
 	if (term == "egoxaltx") return(v + " ego x alter")
 	if (term == "dyadcov") return(v)
 	if (term == "dyadcovrecip") return(v + " x reciprocity")

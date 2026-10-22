@@ -194,7 +194,7 @@ program nwsaom, eclass
 		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
-		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) ///
+		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
@@ -520,7 +520,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1359,6 +1359,29 @@ program nwsaom, eclass
 	// --- absdiffx(varlist) / egoxaltx(varlist): RSiena's absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j).
 	// Centred covariates as altX/egoX (egoXaltX depends on the centring, absDiffX does not). v1: variables
 	// without missing values only (RSiena skips pairs with a missing value in the statistic).
+	// protocol 23: diffx (x_j - x_i), higher (x_i > x_j), egosqx (x_i^2), altsqx (x_j^2), samexrecip, simrecipx
+	foreach __dk in diffx higher egosqx altsqx samexrecip simrecipx {
+		if "``__dk''" != "" {
+			unab `__dk' : ``__dk''
+			foreach __v of local `__dk' {
+				mata: st_local("__nmiss", strofreal(sum(st_data(1::`nodes', "`__v'") :>= .)))
+				if `__nmiss' > 0 {
+					di "{err}{bf:`__dk'()}: variable {bf:`__v'} has missing values, which are not yet supported for this effect."
+					error 198
+				}
+				tempname __td_cv
+				mata: `__td_cv' = ErgmTermData()
+				if "`__dk'" == "simrecipx" {
+					mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
+					mata: `__td_cv'.decay = max(`__td_cv'.attr) - min(`__td_cv'.attr)
+					mata: `__td_cv'.center = SaomSimMean(`__td_cv'.attr)
+				}
+				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+			}
+		}
+	}
 	foreach __dk in absdiffx egoxaltx {
 		if "``__dk''" != "" {
 			unab `__dk' : ``__dk''

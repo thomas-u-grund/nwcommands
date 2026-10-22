@@ -70,6 +70,12 @@
 {syntab:Node covariate effects}
 {synopt:{opt absdiffx(varlist)}}Absolute difference of a covariate between sender and receiver, |x_j - x_i| (RSiena {cmd:absDiffX}); one effect per variable. Variables with missing values are not yet supported{p_end}
 {synopt:{opt egoxaltx(varlist)}}Product of sender and receiver values of a (centred) covariate, x_i * x_j (RSiena {cmd:egoXaltX}); one effect per variable. Variables with missing values are not yet supported{p_end}
+{synopt:{opt diffx(varlist)}}RSiena {cmd:diffX}: sum over ties of x_j - x_i (centred covariate){p_end}
+{synopt:{opt higher(varlist)}}RSiena {cmd:higher}: sum over ties of 1 if x_i > x_j (0.5 if equal, as RSiena){p_end}
+{synopt:{opt egosqx(varlist)}}RSiena {cmd:egoSqX}: sum over ties of x_i^2{p_end}
+{synopt:{opt altsqx(varlist)}}RSiena {cmd:altSqX}: sum over ties of x_j^2{p_end}
+{synopt:{opt samexrecip(varlist)}}RSiena {cmd:sameXRecip}: number of reciprocated ties between actors with the same value (counted per tie){p_end}
+{synopt:{opt simrecipx(varlist)}}RSiena {cmd:simRecipX}: similarity (as {opt simx}) summed over reciprocated ties{p_end}
 {synopt:{opt dyadcov(matnames)}}Dyadic covariate (RSiena's {cmd:X} effect): each name is a Stata {it:n} x {it:n} matrix (rows and columns in the node order of the waves) whose value x_ij enters an actor's utility for the tie i -> j. Centred by the mean of its non-missing off-diagonal cells (not with {opt nocenter}); missing cells ({bf:.}) count as 0 after centring and are left out of the statistic, as in RSiena. One effect and coefficient ({cmd:dyadcov_}{it:name}) per matrix; constant over time. Uses {it:n} native attribute columns per matrix (Stata variable limit). Not combinable with {opt interact()}{p_end}
 {synopt:{opt dyadcovrecip(matnames)}}RSiena's {cmd:XRecip}: the same matrices, but the value counts only when the reverse tie j -> i exists{p_end}
 {synopt:{opth nodematch(varlist)}}Homophily on categorical node attributes (exact match), one effect per variable - RSiena alias {opt samex()}{p_end}

@@ -257,6 +257,13 @@
    missing values only - RSiena skips pairs with a missing value in the statistic) */
 #define TERMCODE_ABSDIFFX 42
 #define TERMCODE_EGOXALTX 43
+/* protocol 23: RSiena diffX, higher, egoSqX, altSqX, sameXRecip, simRecipX (centred covariate values; recip: times x_ji) */
+#define TERMCODE_DIFFX 48
+#define TERMCODE_HIGHER 49
+#define TERMCODE_EGOSQX 50
+#define TERMCODE_ALTSQX 51
+#define TERMCODE_SAMEXRECIP 52
+#define TERMCODE_SIMRECIPX 53
 #define TERMCODE_INPOP 44			/* protocol 22: RSiena inPop: sum_j indeg_j^2 */
 #define TERMCODE_OUTPOPL 45			/* outPop: sum_j outdeg_j * indeg_j */
 #define TERMCODE_INACTL 46			/* inAct: sum_i outdeg_i * indeg_i (actor form: indeg of ego) */
@@ -280,7 +287,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 22		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 23		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -727,6 +734,21 @@ static long pair_cycle4_threepaths(graph_t *g, long i, long j) {
    CYCLE3 (the only cases needing pair_isp()/pair_otp()) are only ever
    dispatched when need_adj is true, matching the existing invariant
    that those termcodes are what SETS need_adj in the first place. */
+
+/* per-tie value of the protocol-23 covariate effects; p1 = the similarity mean (simrecipx; its attribute is already divided by the range) */
+static double cov2_val(int code, double vi, double vj, double p1) {
+	switch (code) {
+		case TERMCODE_DIFFX: return vj - vi;
+		case TERMCODE_HIGHER: return (vi > vj) ? 1.0 : ((vi == vj) ? 0.5 : 0.0);
+		case TERMCODE_EGOSQX: return vi * vi;
+		case TERMCODE_ALTSQX: return vj * vj;
+		case TERMCODE_SAMEXRECIP: return (vi == vj) ? 1.0 : 0.0;
+		case TERMCODE_SIMRECIPX: return 1.0 - fabs(vi - vj) - p1;
+	}
+	return 0.0;
+}
+static int cov2_isrecip(int code) { return code == TERMCODE_SAMEXRECIP || code == TERMCODE_SIMRECIPX; }
+
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
@@ -767,6 +789,13 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 			return tot;
 		case TERMCODE_OUTPOP:						// stat_saom_outpop(): sum over nodes of sqrt(outdegree)*indegree
 			for (i = 1; i <= g->n; i++) tot += sqrt((double)g->dout[i]) * (double)g->din[i];
+			return tot;
+		case TERMCODE_DIFFX: case TERMCODE_HIGHER: case TERMCODE_EGOSQX: case TERMCODE_ALTSQX: case TERMCODE_SAMEXRECIP: case TERMCODE_SIMRECIPX:
+			for (k = 0; k < g->nties; k++) {
+				long ei = g->elist_i[k], ej = g->elist_j[k];
+				if (cov2_isrecip(termcode) && !has_edge(g, ej, ei)) continue;
+				tot += cov2_val(termcode, a[ei], a[ej], p1);
+			}
 			return tot;
 		case TERMCODE_INPOP:
 			for (i = 1; i <= g->n; i++) tot += (double)g->din[i] * (double)g->din[i];
@@ -932,6 +961,11 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		case TERMCODE_INACTIVITY: {
 			double d = sqrt((double)g->din[i]);
 			return ij_exists ? -d : d;
+		}
+		case TERMCODE_DIFFX: case TERMCODE_HIGHER: case TERMCODE_EGOSQX: case TERMCODE_ALTSQX: case TERMCODE_SAMEXRECIP: case TERMCODE_SIMRECIPX: {
+			double v = cov2_val(termcode, a[i], a[j], p1);
+			if (cov2_isrecip(termcode) && !has_edge(g, j, i)) v = 0.0;
+			return ij_exists ? -v : v;
 		}
 		case TERMCODE_INPOP: {
 			double d = (double)g->din[j];
