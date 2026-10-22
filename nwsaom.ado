@@ -1711,8 +1711,8 @@ program nwsaom, eclass
 	// protocol 46: netx(effect:var ...) - further covariate network effects, native only (the observed statistic comes from the plugin's NETSTAT):
 	// crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2
 	// simegoindist2 sameegoindist2; var is a numeric variable or a tvcov stem. xparam(#) is outxmore's c.
-	local __nx_names "crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2"
-	local __nx_codes "220 221 222 223 224 225 226 227 228 229 230 231 232 233 234"
+	local __nx_names "crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox"
+	local __nx_codes "220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242"
 	foreach __t of local netx {
 		gettoken __f __vv : __t, parse(":")
 		local __vv = subinstr("`__vv'", ":", "", 1)
@@ -1726,6 +1726,10 @@ program nwsaom, eclass
 		if "`__f'" == "homxoutact2" local __kind "r"
 		if inlist("`__f'", "simdist2", "simegodist2", "simegoindist2") local __kind "s"
 		local __vl "`__vv'"
+		if inlist("`__f'", "avgroupegox", "totgroupegox") & !`: list __vv in __nwsaom_tvnames' {
+			di "{err}netx(`__f'): RSiena defines it for a changing covariate (tvcov()) or the dependent behavior only."
+			error 198
+		}
 		if `: list __vv in __nwsaom_tvnames' local __vl "`__nwsaom_tvv_`__vv''"
 		else {
 			capture confirm numeric variable `__vv'
@@ -1757,7 +1761,7 @@ program nwsaom, eclass
 			di "{err}dyadx(): matrix {bf:`__vv'} must be `nodes' x `nodes'."
 			error 198
 		}
-		mata: SaomRegNatDy(__nwsaom_last_M, "`__f'", `=239+`__fi'', "`__vv'", `nodes')
+		mata: SaomRegNatDy(__nwsaom_last_M, "`__f'", `=249+`__fi'', "`__vv'", `nodes')
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
 	}
 	foreach __dk in absdiffx egoxaltx {
@@ -2854,8 +2858,8 @@ program nwsaom, eclass
 		// covariate x triad / popularity / activity families and the threshold / contrast families); behavior 1, centred by its overall mean.
 		if "`netbeh'" != "" {
 			local __nb_ok "samex diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx"
-			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2"
-			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234"
+			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox"
+			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234 235 236 237 238 239 240 241 242"
 			foreach __e of local netbeh {
 				local __ni : list posof "`__e'" in __nbn_names
 				if `__ni' > 0 {
