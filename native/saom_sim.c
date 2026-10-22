@@ -186,6 +186,7 @@
 #define MAXATTR 1024		/* one dyadic covariate takes n attribute columns (protocol 15) */
 #define MAXRC 16		/* ratecov() covariates */
 #define MAXBEHTERMS 64
+#define MAXBEH 8			/* protocol 19: co-evolving behavior variables */
 
 #define TERMCODE_OUTDEGREE 1
 #define TERMCODE_RECIPROCITY 2
@@ -275,7 +276,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 18		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 20		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1883,7 +1884,7 @@ static double prof_now(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC
 #endif
 enum { PR_SETUP = 0, PR_ACTOR, PR_EVAL, PR_SOFTMAX, PR_APPLY, PR_BEH, PR_END, PR_WAIT };
 
-typedef struct {
+typedef struct model_s {
 	long n;
 	long nterms;
 	int termcodes[MAXTERMS];
@@ -1901,7 +1902,17 @@ typedef struct {
 	int fntype[MAXTERMS];			// network: 0 eval, 1 endowment (withdrawals only), 2 creation (new ties only)
 	int behfntype[MAXBEHTERMS];		// behavior: 1 endowment (decreases only), 2 creation (increases only)
 	long nstruct;				// structural (fixed) dyads, CSR by ego: struct_j[struct_off[i]..struct_off[i+1]-1]
+	long nstruct_pending;			// protocol 20: structural dyads sent in the frame's last two columns (BATCHSETUP only)
 	long *struct_off, *struct_j;
+	/* protocol 19: several co-evolving behaviors. Behavior 0 is the legacy block above (nbehterms, behtermcodes,
+	   behminval..., behfntype); behaviors 1..nbeh-1 are views (bm[b]): a model_t of its own holding only that
+	   behavior's terms and constants, so the single-behavior code runs unchanged on any behavior. nbehterms of the
+	   MAIN model is behavior 0's (as before); nbehtermsAll the total; behoff[b] the offset of behavior b's terms in the
+	   concatenated per-term arrays (statBeh, scoreBeh, thetaBeh). */
+	int nbeh;
+	long nbehtermsAll;			// total over behaviors (nbehterms of the main model is behavior 0's)
+	long behoff[MAXBEH];
+	struct model_s *bm[MAXBEH];
 } model_t;
 
 typedef struct {
@@ -1912,14 +1923,17 @@ typedef struct {
 	int hasmiss;
 	long *mi, *mj;
 	double *missbeh;		// 1..n, NULL unless hasmiss
+	double *xbeh0[MAXBEH];		// protocol 19: starting values of behaviors 1.., index 1..n
+	double *xmissbeh[MAXBEH];	// their missingness (1..n), NULL unless hasmiss
 	int haspresent;
 	double *present;		// 1..n, NULL unless haspresent
 } period_t;
 
 typedef struct {
 	double theta[MAXTERMS];
-	double thetaBeh[MAXBEHTERMS];
+	double thetaBeh[MAXBEHTERMS];		// all behaviors' coefficients, concatenated (behavior b from M->behoff[b])
 	double rate, rateBeh;
+	double xrateBeh[MAXBEH];		// protocol 19: rates of behaviors 1..
 	int want_score;
 	long condmode;
 	double targetChange;
@@ -1936,6 +1950,7 @@ typedef struct {
 	double score[MAXTERMS];
 	double scoreBeh[MAXBEHTERMS];
 	double steps, stepsNet, stepsBeh, nchanges, nchangesBeh, netdist, behdist, t;
+	double xstepsBeh[MAXBEH], xbehdist[MAXBEH], xnchangesBeh[MAXBEH];		// protocol 19: behaviors 1..
 	double rcscore[MAXRC];		// ratecov() scores, one per covariate
 	double rcstat[MAXRC];		// protocol 11: ratecov() statistics, sum over differing dyads of the tail's covariate
 	graph_t *gfinal;			// only when keep_final: caller frees with graph_free()+free()
@@ -2156,6 +2171,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	rng_t rng;
 	double t, steps = 0.0, nchanges = 0.0, nchangesBeh = 0.0, stepsNet = 0.0, stepsBeh = 0.0;
 	double *behval = NULL, *attrs[MAXATTR + 1];
+	double *behvalb[MAXBEH];		// protocol 19: current values of every behavior (behvalb[0] == behval)
+	double xsteps[MAXBEH], xnch[MAXBEH];	// ministeps / changes of behaviors 1..
+	int bsel;
+	long b;
 	dyadht_t horig, missht;
 	long simDist = 0;
 	long npresent = n;
@@ -2178,10 +2197,16 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		ht_alloc(&horig, ht_next_pow2(PD->nties * 2 + 16));
 		for (i = 0; i < g.nties; i++) ht_put(&horig, dyadkey(&g, g.elist_i[i], g.elist_j[i]), 1);
 	}
+	for (b = 0; b < MAXBEH; b++) { behvalb[b] = NULL; xsteps[b] = 0.0; xnch[b] = 0.0; }
 	if (M->nbehterms > 0) {
 		behval = (double *)malloc((size_t)(n + 1) * sizeof(double));
 		memcpy(behval, PD->beh0, (size_t)(n + 1) * sizeof(double));
 		if (M->has_behsim) attrs[M->nattr] = behval;
+		behvalb[0] = behval;
+		for (b = 1; b < M->nbeh; b++) {
+			behvalb[b] = (double *)malloc((size_t)(n + 1) * sizeof(double));
+			memcpy(behvalb[b], PD->xbeh0[b], (size_t)(n + 1) * sizeof(double));
+		}
 	}
 	if (hasmiss) {
 		ht_alloc(&missht, ht_next_pow2(PD->nmiss * 2 + 16));
@@ -2244,6 +2269,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			}
 		}
 		grandRate = P->hasratecov ? (symB ? rate * symGfac_rc : rate * totw_rc) : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
+		if (M->nbeh > 1) for (b = 1; b < M->nbeh; b++) grandRate += (double)npresent * P->xrateBeh[b];
 		/* conditional mode (RSiena's conditional estimation): steps until
 		   the distance from the starting network reaches the target, at
 		   least one step (EpochSimulation::runEpoch() checks after each
@@ -2259,7 +2285,21 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			t += dt_rc;
 			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
 			if (P->condmode || t < 1.0) {
-				int actNet = (M->nbehterms == 0) || (rng_unif(&rng) * grandRate <= (double)npresent * rate);
+				int actNet = 1;
+				bsel = 0;
+				if (M->nbehterms > 0) {
+					double uvar = rng_unif(&rng) * grandRate;
+					actNet = (uvar <= (double)npresent * rate);
+					if (!actNet && M->nbeh > 1) {
+						/* protocol 19: the acting behavior in proportion to its rate (the same single uniform) */
+						double rem = uvar - (double)npresent * rate;
+						for (b = 0; b < M->nbeh; b++) {
+							double rb = (double)npresent * (b == 0 ? rateBeh : P->xrateBeh[b]);
+							if (rem <= rb || b == M->nbeh - 1) { bsel = (int)b; break; }
+							rem -= rb;
+						}
+					}
+				}
 				if (actNet && (P->symtype == 1 || P->symtype == 2 || P->symtype == 3)) {
 					/* B-family symmetric ministep - see the long comment in the
 					   pre-rewrite stata_call() (git history) for the derivation;
@@ -2501,23 +2541,27 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				}
 				else {
 					PROF_START(pt_b);
+					const model_t *Mb = bsel ? M->bm[bsel] : M;
+					double *bv = behvalb[bsel];
+					const double *thB = P->thetaBeh + M->behoff[bsel];
+					double *scB = scoreBeh + M->behoff[bsel];
 					long actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
-					double cur = behval[actor];
+					double cur = bv[actor];
 					double chgDown[MAXBEHTERMS], chgUp[MAXBEHTERMS];
 					double uDown = 0.0, uUp = 0.0, maxu2 = 0.0, denom2, draw2, diff;
-					int hasDown = (cur > M->behminval), hasUp = (cur < M->behmaxval);
+					int hasDown = (cur > Mb->behminval), hasUp = (cur < Mb->behmaxval);
 
 					if (hasDown) {
-						for (k = 0; k < M->nbehterms; k++) {
-							chgDown[k] = (M->hasfntype && M->behfntype[k] == 2) ? 0.0 : saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, -1.0);
-							uDown += P->thetaBeh[k] * chgDown[k];
+						for (k = 0; k < Mb->nbehterms; k++) {
+							chgDown[k] = (M->hasfntype && Mb->behfntype[k] == 2) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, actor, -1.0);
+							uDown += thB[k] * chgDown[k];
 						}
 						if (uDown > maxu2) maxu2 = uDown;
 					}
 					if (hasUp) {
-						for (k = 0; k < M->nbehterms; k++) {
-							chgUp[k] = (M->hasfntype && M->behfntype[k] == 1) ? 0.0 : saom_beh_change_term(&g, behval, M->behtermcodes[k], M->behOverallMean, M->behrange, actor, 1.0);
-							uUp += P->thetaBeh[k] * chgUp[k];
+						for (k = 0; k < Mb->nbehterms; k++) {
+							chgUp[k] = (M->hasfntype && Mb->behfntype[k] == 1) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, actor, 1.0);
+							uUp += thB[k] * chgUp[k];
 						}
 						if (uUp > maxu2) maxu2 = uUp;
 					}
@@ -2525,31 +2569,31 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					if (hasDown) denom2 += exp(uDown - maxu2);
 					if (hasUp) denom2 += exp(uUp - maxu2);
 					if (P->want_score) {
-						for (k = 0; k < M->nbehterms; k++) {
+						for (k = 0; k < Mb->nbehterms; k++) {
 							double ebar_k = 0.0;
 							if (hasDown) ebar_k += (exp(uDown - maxu2) / denom2) * chgDown[k];
 							if (hasUp) ebar_k += (exp(uUp - maxu2) / denom2) * chgUp[k];
-							scoreBeh[k] -= ebar_k;
+							scB[k] -= ebar_k;
 						}
 					}
 					draw2 = rng_unif(&rng) * denom2;
 					diff = 0.0;
 					if (hasDown && draw2 <= exp(uDown - maxu2)) {
 						diff = -1.0;
-						behval[actor] = cur - 1.0;
-						if (P->want_score) for (k = 0; k < M->nbehterms; k++) scoreBeh[k] += chgDown[k];
+						bv[actor] = cur - 1.0;
+						if (P->want_score) for (k = 0; k < Mb->nbehterms; k++) scB[k] += chgDown[k];
 					}
 					else {
 						if (hasDown) draw2 -= exp(uDown - maxu2);
 						if (draw2 <= exp(0.0 - maxu2)) diff = 0.0;
 						else {
 							diff = 1.0;
-							behval[actor] = cur + 1.0;
-							if (P->want_score) for (k = 0; k < M->nbehterms; k++) scoreBeh[k] += chgUp[k];
+							bv[actor] = cur + 1.0;
+							if (P->want_score) for (k = 0; k < Mb->nbehterms; k++) scB[k] += chgUp[k];
 						}
 					}
-					if (diff != 0.0) nchangesBeh += 1.0;
-					stepsBeh += 1.0;
+					if (diff != 0.0) { if (bsel == 0) nchangesBeh += 1.0; else xnch[bsel] += 1.0; }
+					if (bsel == 0) stepsBeh += 1.0; else xsteps[bsel] += 1.0;
 					PROF_ADD(PR_BEH, pt_b);
 				}
 				steps += 1.0;
@@ -2563,6 +2607,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 	R->steps = steps; R->stepsNet = stepsNet; R->stepsBeh = stepsBeh;
 	R->nchanges = nchanges; R->nchangesBeh = nchangesBeh; R->t = condcap ? SV_missval : t;
+	for (b = 1; b < M->nbeh; b++) { R->xstepsBeh[b] = xsteps[b]; R->xnchangesBeh[b] = xnch[b]; }
 	for (krc = 0; krc < MAXRC; krc++) R->rcscore[krc] = rcscore[krc];
 
 	/* distances from the start state (the rate statistics of
@@ -2596,31 +2641,38 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	}
 	if (M->nbehterms > 0) {
 		long d, dv;
-		double bd = 0.0;
-		for (i = 1; i <= n; i++) {
-			if (hasmiss && PD->missbeh[i] != 0.0) continue;
-			bd += fabs(behval[i] - PD->beh0[i]);
+		long *li = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+		long *lj = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
+		long ne = 0;
+		for (d = 0; d < PD->nties; d++) {
+			if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
+			li[ne] = PD->ti[d]; lj[ne] = PD->tj[d]; ne++;
 		}
-		R->behdist = bd;
+		for (b = 0; b < M->nbeh; b++) {
+			const model_t *Mb = b ? M->bm[b] : M;
+			const double *b0 = b ? PD->xbeh0[b] : PD->beh0;
+			const double *mbb = b ? PD->xmissbeh[b] : PD->missbeh;
+			double *bvb = behvalb[b];
+			double bd = 0.0;
+			for (i = 1; i <= n; i++) {
+				if (hasmiss && mbb[i] != 0.0) continue;
+				bd += fabs(bvb[i] - b0[i]);
+			}
+			if (b == 0) R->behdist = bd; else R->xbehdist[b] = bd;
 
-		/* lagged behavior statistics: end behavior on the STARTING network */
-		{
-			double *bz = behval, *bzm = NULL;
-			long *li = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
-			long *lj = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
-			long ne = 0;
-			if (hasmiss) {
-				bzm = (double *)malloc((size_t)(n + 1) * sizeof(double));
-				for (i = 1; i <= n; i++) bzm[i] = (PD->missbeh[i] != 0.0) ? M->behOverallMean : behval[i];
-				bz = bzm;
+			/* lagged behavior statistics: end behavior on the STARTING network */
+			{
+				double *bz = bvb, *bzm = NULL;
+				if (hasmiss) {
+					bzm = (double *)malloc((size_t)(n + 1) * sizeof(double));
+					for (i = 1; i <= n; i++) bzm[i] = (mbb[i] != 0.0) ? Mb->behOverallMean : bvb[i];
+					bz = bzm;
+				}
+				beh_stats_on_edges(Mb, ne, li, lj, bz, R->statBehLag + M->behoff[b]);
+				free(bzm);
 			}
-			for (d = 0; d < PD->nties; d++) {
-				if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
-				li[ne] = PD->ti[d]; lj[ne] = PD->tj[d]; ne++;
-			}
-			beh_stats_on_edges(M, ne, li, lj, bz, R->statBehLag);
-			free(li); free(lj); free(bzm);
 		}
+		free(li); free(lj);
 		if (M->has_behsim) attrs[M->nattr] = (double *)PD->beh0;		// behsim statistic: STARTING behavior
 	}
 
@@ -2630,14 +2682,18 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	}
 	for (k = 0; k < M->nterms; k++) R->stat[k] = saom_eval_stat((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs, have_gm ? &gm : &g);
 	if (M->nbehterms > 0) {
-		double *behval_use = behval, *behval_masked = NULL;
-		if (hasmiss) {
-			behval_masked = (double *)malloc((size_t)(n + 1) * sizeof(double));
-			for (i = 1; i <= n; i++) behval_masked[i] = (PD->missbeh[i] != 0.0) ? M->behOverallMean : behval[i];
-			behval_use = behval_masked;
+		for (b = 0; b < M->nbeh; b++) {
+			const model_t *Mb = b ? M->bm[b] : M;
+			const double *mbb = b ? PD->xmissbeh[b] : PD->missbeh;
+			double *behval_use = behvalb[b], *behval_masked = NULL;
+			if (hasmiss) {
+				behval_masked = (double *)malloc((size_t)(n + 1) * sizeof(double));
+				for (i = 1; i <= n; i++) behval_masked[i] = (mbb[i] != 0.0) ? Mb->behOverallMean : behvalb[b][i];
+				behval_use = behval_masked;
+			}
+			for (k = 0; k < Mb->nbehterms; k++) R->statBeh[M->behoff[b] + k] = saom_beh_stat_term(have_gm ? &gm : &g, behval_use, Mb->behtermcodes[k], Mb->behrange, Mb->behSimMean, Mb->behOverallMean);
+			free(behval_masked);
 		}
-		for (k = 0; k < M->nbehterms; k++) R->statBeh[k] = saom_beh_stat_term(have_gm ? &gm : &g, behval_use, M->behtermcodes[k], M->behrange, M->behSimMean, M->behOverallMean);
-		free(behval_masked);
 	}
 	/* protocol 11, endowment/creation statistics (RSiena's
 	   endowmentStatistic()/creationStatistic(), SaomNetworkPatchEndowCreation()
@@ -2708,31 +2764,36 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		}
 		if (M->nbehterms > 0) {
 			/* RSiena's behavior endowment/creation statistics on the
-			   (masked) starting network (protocol 12) */
+			   (masked) starting network (protocol 12), for every behavior (protocol 19) */
 			long d, dv, ne = 0;
 			long *li = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
 			long *lj = (long *)malloc((size_t)(PD->nties > 0 ? PD->nties : 1) * sizeof(long));
 			double *cc = (double *)calloc((size_t)(n + 1), sizeof(double));
 			double *dd = (double *)calloc((size_t)(n + 1), sizeof(double));
 			double *nd = (double *)calloc((size_t)(n + 1), sizeof(double));
-			const double *mb = hasmiss ? PD->missbeh : NULL;
 			for (d = 0; d < PD->nties; d++) {
 				if (hasmiss && ht_get(&missht, dyadkey(&g, PD->ti[d], PD->tj[d]), &dv)) continue;
 				li[ne] = PD->ti[d]; lj[ne] = PD->tj[d]; ne++;
 			}
-			for (i = 1; i <= n; i++) {
-				if (mb && mb[i] != 0.0) continue;
-				cc[i] = behval[i] - M->behOverallMean;
-				dd[i] = PD->beh0[i] - behval[i];
-				nd[i] = -dd[i];
-			}
-			for (k = 0; k < M->nbehterms; k++) {
-				double v;
-				if (M->behfntype[k] == 0) continue;
-				if (M->behfntype[k] == 1) v = beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, dd, mb);
-				else v = -beh_endow_stat(M->behtermcodes[k], n, ne, li, lj, cc, nd, mb);
-				R->statBeh[k] = v;
-				R->statBehLag[k] = v;
+			for (b = 0; b < M->nbeh; b++) {
+				const model_t *Mb = b ? M->bm[b] : M;
+				const double *b0 = b ? PD->xbeh0[b] : PD->beh0;
+				const double *mb = hasmiss ? (b ? PD->xmissbeh[b] : PD->missbeh) : NULL;
+				for (i = 1; i <= n; i++) {
+					cc[i] = 0.0; dd[i] = 0.0; nd[i] = 0.0;
+					if (mb && mb[i] != 0.0) continue;
+					cc[i] = behvalb[b][i] - Mb->behOverallMean;
+					dd[i] = b0[i] - behvalb[b][i];
+					nd[i] = -dd[i];
+				}
+				for (k = 0; k < Mb->nbehterms; k++) {
+					double v;
+					if (Mb->behfntype[k] == 0) continue;
+					if (Mb->behfntype[k] == 1) v = beh_endow_stat(Mb->behtermcodes[k], n, ne, li, lj, cc, dd, mb);
+					else v = -beh_endow_stat(Mb->behtermcodes[k], n, ne, li, lj, cc, nd, mb);
+					R->statBeh[M->behoff[b] + k] = v;
+					R->statBehLag[M->behoff[b] + k] = v;
+				}
 			}
 			free(li); free(lj); free(cc); free(dd); free(nd);
 		}
@@ -2750,6 +2811,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	else {
 		graph_free(&g);
 		free(behval);
+		for (b = 1; b < MAXBEH; b++) free(behvalb[b]);
 	}
 	return 0;
 }
@@ -2831,7 +2893,9 @@ static void batch_free(void) {
 	for (pd = 0; pd < batch_state.P; pd++) {
 		period_t *p = &batch_state.per[pd];
 		free(p->ti); free(p->tj); free(p->beh0); free(p->mi); free(p->mj); free(p->missbeh); free(p->present);
+		{ long b; for (b = 1; b < MAXBEH; b++) { free(p->xbeh0[b]); free(p->xmissbeh[b]); } }
 	}
+	{ long b; for (b = 1; b < MAXBEH; b++) free(batch_state.M.bm[b]); }
 	free(batch_state.per);
 	for (k = 0; k < batch_state.M.nattr; k++) free(batch_state.attrmem[k]);
 	free(batch_state.attrmem);
@@ -2917,8 +2981,27 @@ static void batch_run_units(batch_job_t *J, long nthreads) {
      hasfn [fntype]*nterms [behfntype]*nbehterms   (hasfn = 0: no fields)
      nstruct [ego alter]*nstruct                    (structural dyads)
    The structural dyads become a CSR list by ego (1-based). */
+/* structural dyads (ego si[k], alter sj[k]) as a CSR list by ego (1-based) */
+static void build_struct_csr(model_t *M, long nst, const long *si, const long *sj) {
+	long k, i;
+	M->nstruct = nst;
+	M->struct_off = (long *)calloc((size_t)(M->n + 2), sizeof(long));
+	M->struct_j = (long *)malloc((size_t)(nst > 0 ? nst : 1) * sizeof(long));
+	for (k = 0; k < nst; k++) if (si[k] >= 1 && si[k] <= M->n) M->struct_off[si[k] + 1]++;
+	for (i = 1; i <= M->n + 1; i++) M->struct_off[i] += M->struct_off[i - 1];
+	{
+		long *fill = (long *)calloc((size_t)(M->n + 2), sizeof(long));
+		for (k = 0; k < nst; k++) {
+			if (si[k] < 1 || si[k] > M->n) continue;
+			M->struct_j[M->struct_off[si[k]] + fill[si[k]]] = sj[k];
+			fill[si[k]]++;
+		}
+		free(fill);
+	}
+}
+
 static void parse_model_trailer11(model_t *M) {
-	long k, nst, *si, *sj, i;
+	long k, nst, *si, *sj;
 	M->hasfntype = (int)next_long_opt(0);
 	if (M->hasfntype) {
 		for (k = 0; k < M->nterms; k++) M->fntype[k] = (int)next_long();
@@ -2926,25 +3009,19 @@ static void parse_model_trailer11(model_t *M) {
 	}
 	nst = next_long_opt(0);
 	M->nstruct = nst;
+	M->nstruct_pending = 0;
 	M->struct_off = NULL;
 	M->struct_j = NULL;
-	if (nst > 0) {
+	if (nst < 0) {
+		/* protocol 20: -N = N structural dyads in the last two frame columns (read at the end of BATCHSETUP) */
+		M->nstruct = 0;
+		M->nstruct_pending = -nst;
+	}
+	else if (nst > 0) {
 		si = (long *)malloc((size_t)nst * sizeof(long));
 		sj = (long *)malloc((size_t)nst * sizeof(long));
 		for (k = 0; k < nst; k++) { si[k] = next_long(); sj[k] = next_long(); }
-		M->struct_off = (long *)calloc((size_t)(M->n + 2), sizeof(long));
-		M->struct_j = (long *)malloc((size_t)nst * sizeof(long));
-		for (k = 0; k < nst; k++) if (si[k] >= 1 && si[k] <= M->n) M->struct_off[si[k] + 1]++;
-		for (i = 1; i <= M->n + 1; i++) M->struct_off[i] += M->struct_off[i - 1];
-		{
-			long *fill = (long *)calloc((size_t)(M->n + 2), sizeof(long));
-			for (k = 0; k < nst; k++) {
-				if (si[k] < 1 || si[k] > M->n) continue;
-				M->struct_j[M->struct_off[si[k]] + fill[si[k]]] = sj[k];
-				fill[si[k]]++;
-			}
-			free(fill);
-		}
+		build_struct_csr(M, nst, si, sj);
 		free(si); free(sj);
 	}
 }
@@ -2973,6 +3050,9 @@ static ST_retcode batch_setup(char *arg) {
 	}
 	M->nbehterms = next_long();
 	if (M->nbehterms > MAXBEHTERMS) { SF_error("saom_sim: BATCHSETUP too many behavior terms\n"); return 198; }
+	M->nbeh = (M->nbehterms > 0) ? 1 : 0;
+	M->nbehtermsAll = M->nbehterms;
+	M->behoff[0] = 0;
 	for (k = 0; k < M->nbehterms; k++) M->behtermcodes[k] = (int)next_long();
 	M->behminval = next_double();
 	M->behmaxval = next_double();
@@ -2993,6 +3073,33 @@ static ST_retcode batch_setup(char *arg) {
 		batch_state.rcattr = (double *)malloc((size_t)(n * batch_state.nrc) * sizeof(double));
 		for (i = 0; i < n * batch_state.nrc; i++) batch_state.rcattr[i] = next_double();
 	}
+	/* protocol 19: behaviors 1.. (trailer: nbx, then per extra behavior its term count, term codes, behmin behmax
+	   simMean overallMean and the endowment/creation code of every term) */
+	{
+		long nbx = next_long_opt(0), b, kk;
+		if (nbx < 0 || nbx + 1 > MAXBEH) { SF_error("saom_sim: BATCHSETUP too many behaviors\n"); return 198; }
+		for (b = 1; b <= nbx; b++) {
+			model_t *V = (model_t *)calloc(1, sizeof(model_t));
+			long nt = next_long();
+			if (nt < 1 || M->nbehtermsAll + nt > MAXBEHTERMS) { SF_error("saom_sim: BATCHSETUP too many behavior terms\n"); return 198; }
+			V->n = n;
+			V->nbehterms = nt;
+			for (kk = 0; kk < nt; kk++) V->behtermcodes[kk] = (int)next_long();
+			V->behminval = next_double();
+			V->behmaxval = next_double();
+			V->behSimMean = next_double();
+			V->behOverallMean = next_double();
+			V->behrange = V->behmaxval - V->behminval;
+			for (kk = 0; kk < nt; kk++) {
+				V->behfntype[kk] = (int)next_long();
+				if (V->behfntype[kk] != 0) M->hasfntype = 1;
+			}
+			M->bm[b] = V;
+			M->behoff[b] = M->nbehtermsAll;
+			M->nbehtermsAll += nt;
+			M->nbeh++;
+		}
+	}
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
@@ -3001,6 +3108,8 @@ static ST_retcode batch_setup(char *arg) {
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (M->termcodes[k] == TERMCODE_BEHSIM) M->attridx[k] = (int)(M->nattr + 1);
+
+	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM) M->need_adj = 1; }
 
 	batch_state.P = P;
 	batch_state.per = (period_t *)calloc((size_t)P, sizeof(period_t));
@@ -3075,6 +3184,35 @@ static ST_retcode batch_setup(char *arg) {
 			col++;
 		}
 	}
+	/* protocol 19: starting values (and missingness) of behaviors 1.. per period, the last columns of the frame */
+	{
+		long b;
+		for (b = 1; b < M->nbeh; b++) {
+			for (pd = 0; pd < P; pd++) {
+				double *bb = (double *)calloc((size_t)(n + 1), sizeof(double));
+				for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); bb[i] = v; }
+				batch_state.per[pd].xbeh0[b] = bb;
+				col++;
+			}
+			for (pd = 0; pd < P; pd++) {
+				double *mm = (double *)calloc((size_t)(n + 1), sizeof(double));
+				if (hasmiss) { for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); mm[i] = v; } col++; }
+				batch_state.per[pd].xmissbeh[b] = mm;
+			}
+		}
+	}
+	if (M->nstruct_pending > 0) {
+		long q, np = M->nstruct_pending;
+		long *si = (long *)malloc((size_t)np * sizeof(long)), *sj = (long *)malloc((size_t)np * sizeof(long));
+		for (q = 0; q < np; q++) {
+			ST_double a, b2;
+			SF_vdata((int)col, q + 1, &a); SF_vdata((int)(col + 1), q + 1, &b2);
+			si[q] = (long)a; sj[q] = (long)b2;
+		}
+		build_struct_csr(M, np, si, sj);
+		free(si); free(sj);
+		col += 2;
+	}
 	batch_state.ready = 1;
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
 	return 0;
@@ -3104,7 +3242,7 @@ static ST_retcode batch_run(char *arg) {
 	if (!batch_state.ready) { SF_error("saom_sim: BATCHRUN without BATCHSETUP\n"); return 198; }
 	P = batch_state.P;
 	pNet = M->nterms;
-	pBeh = M->nbehterms;
+	pBeh = M->nbehtermsAll;
 	tok0 = strtok(arg, " \t");
 	if (!tok0) { SF_error("saom_sim: BATCHRUN empty\n"); return 198; }
 	K = (long)atof(tok0);
@@ -3116,7 +3254,7 @@ static ST_retcode batch_run(char *arg) {
 	{
 		double th[MAXTERMS], thb[MAXBEHTERMS];
 		for (k = 0; k < pNet; k++) th[k] = next_double();
-		for (k = 0; k < pBeh; k++) thb[k] = next_double();
+		for (k = 0; k < M->nbehterms; k++) thb[k] = next_double();
 		for (pd = 0; pd < P; pd++) {
 			memcpy(prm[pd].theta, th, sizeof(th));
 			memcpy(prm[pd].thetaBeh, thb, sizeof(thb));
@@ -3130,6 +3268,13 @@ static ST_retcode batch_run(char *arg) {
 		for (k = 0; k < batch_state.nrc; k++) rcoef[k] = next_double();
 		/* protocol 18: optional trailing flag, per-period statistics and scores appended to the output */
 		perper = (int)next_long_opt(0);
+		/* protocol 19: the coefficients and rates of behaviors 1.. */
+		if (M->nbeh > 1) {
+			long b2;
+			for (b2 = 1; b2 < M->nbeh; b2++) for (k = 0; k < M->bm[b2]->nbehterms; k++) thb[M->behoff[b2] + k] = next_double();
+			for (pd = 0; pd < P; pd++) memcpy(prm[pd].thetaBeh, thb, sizeof(thb));
+			for (b2 = 1; b2 < M->nbeh; b2++) for (pd = 0; pd < P; pd++) prm[pd].xrateBeh[b2] = next_double();
+		}
 		for (pd = 0; pd < P; pd++) {
 			prm[pd].symtype = batch_state.symtype;
 			prm[pd].hasratecov = batch_state.nrc;
@@ -3203,6 +3348,20 @@ static ST_retcode batch_run(char *arg) {
 					}
 				}
 			}
+			if (M->nbeh > 1 && condmode != 1) {
+				/* protocol 19: last columns, per period and behavior 1..: behdist, stepsBeh, nchangesBeh */
+				long wper0 = 2 * (pNet + pBeh) + 2 * batch_state.nrc;
+				long baseX = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc + (perper ? P * wper0 : 0) + 1, b2;
+				for (pd = 0; pd < P; pd++) {
+					simres_t *r = &res[k * P + pd];
+					for (b2 = 1; b2 < M->nbeh; b2++) {
+						long bx = baseX + 3 * ((b2 - 1) * P + pd);
+						SF_vstore((int)bx, (int)(k + 1), r->xbehdist[b2]);
+						SF_vstore((int)(bx + 1), (int)(k + 1), r->xstepsBeh[b2]);
+						SF_vstore((int)(bx + 2), (int)(k + 1), r->xnchangesBeh[b2]);
+					}
+				}
+			}
 			if (batch_state.nrc > 0) {
 				long base0 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 1;
 				long kr;
@@ -3268,6 +3427,9 @@ static ST_retcode legacy_call(char *arg0) {
 	P.want_score = (int)next_long();
 
 	M.nbehterms = next_long();
+	M.nbeh = (M.nbehterms > 0) ? 1 : 0;
+	M.nbehtermsAll = M.nbehterms;
+	M.behoff[0] = 0;
 	if (M.nbehterms > MAXBEHTERMS) { SF_error("saom_sim: too many behavior terms\n"); free(argbuf); return(198); }
 	for (i = 0; i < M.nbehterms; i++) {
 		M.behtermcodes[i] = (int)next_long();
@@ -3308,8 +3470,10 @@ static ST_retcode legacy_call(char *arg0) {
 
 	if (wire_parse_error) { free(P.ratecovattr); SF_error("saom_sim: wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
-	saom_behsim_range = (M.behrange > 0.0) ? M.behrange : 1.0;
 	for (i = 0; i < M.nterms; i++) if (M.termcodes[i] == TERMCODE_BEHSIM) M.has_behsim = 1;
+	/* only a model that uses behsim sets the (process-wide) range: the version probe, a single call without behavior,
+	   must not reset the range of a batch model that is set up */
+	if (M.has_behsim) saom_behsim_range = (M.behrange > 0.0) ? M.behrange : 1.0;
 	if (M.has_behsim && M.nbehterms == 0) { free(P.ratecovattr); SF_error("saom_sim: behsim needs a co-evolving behavior (nbehterms > 0)\n"); return(198); }
 	if (M.has_behsim && M.nattr >= MAXATTR) { free(P.ratecovattr); SF_error("saom_sim: too many attribute arrays for behsim\n"); return(198); }
 	if (!directed) { free(P.ratecovattr); SF_error("saom_sim: directed networks only\n"); return(198); }

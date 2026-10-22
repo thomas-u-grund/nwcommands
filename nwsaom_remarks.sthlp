@@ -538,13 +538,47 @@ WHOLE fit, never a silent partial native run, and reports it ({cmd:e(engine)}, a
 output). Since 2026-10-01 every effect is native, the behavior endowment/creation splits included.
 
 {pstd}
-{bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): more than one
-co-evolving behavior variable. The network-side endowment/creation split ({opt endow()}/{opt creation()})
+{bf:Genuinely out of scope for co-evolution v1} (tracked, not silently dropped): cross-behavior effects (one behavior
+influencing another) and {opt behsim} on a behavior other than the first. The network-side endowment/creation split ({opt endow()}/{opt creation()})
 works together with {opt behavior()} (two or more waves, {opt present()}, {opt missnet()}; native plugin, with a slower
 Mata fallback that gives the same estimates): on s501/s502 with the alcohol behavior (reciprocity endowment/creation, linear, quadratic, avAlt)
 the estimates agree with RSiena 1.6.6 - density -2.04 against -2.03/-2.05/-2.03, reciprocity endowment
 0.79-0.84 against 0.75-0.84, creation 3.60-3.65 against 3.63, behavior linear 0.32, quadratic -0.27,
 avAlt 0.96-1.04 against 0.32, -0.27 and 0.90-1.00, rates 4.3 and 1.24.
+
+{marker twomode}{...}
+{pstd}
+{bf:Two-mode networks.} A two-mode (bipartite) network, declared with {cmd:nwset, mat(}{it:A}{cmd:) bipartite}, is estimated like
+RSiena's bipartite dependent variable: the actors (by default the rows of the affiliation matrix, {opt actormode()}) change their ties
+to the events; events do not act. Internally the network is embedded in a directed one-mode graph on all nodes in which only
+actor-to-event dyads are free (all others are structurally zero), so the one-mode sampler, native plugin and statistics are used
+unchanged; the rate is the per-actor rate. Available effects: {opt outdegree} (density), {opt indegpopularity} (inPopSqrt),
+{opt outactivity} (outAct), {opt cycle4} (four-cycles), {opt outiso}, {opt antiiniso}, {opt antiiniso2}, {opt inplus3}, and covariates
+{opt nodeocov()} (egoX, a value per actor) and {opt nodeicov()} (altX, a value per event); the covariates are variables on the
+{it:node} rows of the dataset after {cmd:nwset} (one row per node, {cmd:_nwmode} tells the mode), centred within their mode. Several
+waves ({opt waves()}) are supported. Not available: reciprocity, triads, balance, gwesp, other covariate effects, behaviors,
+{opt present()}, {opt missnet()}, endowment/creation. Validation against RSiena 1.6.6 on a simulated 40 x 20, 3-wave network
+(known parameters; dev/saom_rsiena_twomode_sim.R): the observed statistics are identical to RSiena's targets (density 529,
+cycle4 12990, inPopSqrt 2399.29, outAct 4359, egoX 103.142, altX 71.484), and the estimates agree: density -2.37..-2.50 against -2.42..-2.53,
+cycle4 0.094 (0.09-0.096), inPopSqrt 0.57 (0.57-0.59), outAct 0.06-0.08 (0.07-0.08), egoX 0.55-0.57 (0.55-0.57), altX 0.217 (0.215),
+rates 4.49 and 3.03 (4.52, 3.05).
+
+{marker multibeh}{...}
+{pstd}
+{bf:Several behaviors.} {cmd:behavior(}{it:vars}{cmd: : }{it:effects}{cmd: | }{it:vars}{cmd: : }{it:effects}{cmd:)}: '|' separates
+the behaviors, each given as one variable per wave, optionally followed by ':' and that behavior's own effects
+({opt linear quadratic avalt avsim}, their {opt endow}/{opt creation} variants, and {opt behsim} for the first behavior);
+without ':' the global effect options apply to every behavior. Every behavior has its own rate per period; at each
+step the acting variable is drawn in proportion to its rate and then the actor uniformly (RSiena's mechanism). The
+behaviors interact only through the network (avAlt and avSim read it; {opt behsim} selects ties on the first behavior).
+Coefficients are named {cmd:beh_}{it:name}{cmd:_}{it:effect}, {it:name} being the first variable without its trailing
+digits; {cmd:e(rates_beh)} has one row per behavior. Not yet combinable with {opt symmetric}, {opt ratecov()},
+{opt present()}, {opt missnet()}/{opt missbeh()}, {opt structural()}, network {opt endow()}/{opt creation()}, or
+{cmd:estat gof}/{cmd:mems}. Validation against RSiena 1.6.6 (s501-s503, alcohol and smoking from s50a/s50s; outdegree,
+reciprocity, transitive triplets; linear, quadratic and avAlt for each behavior): outdegree -2.65 against -2.65,
+reciprocity 2.42 against 2.43, transitive triplets 0.61 against 0.61; alcohol linear 0.42 (0.43), quadratic -0.54 (-0.54),
+avAlt 1.28-1.30 (1.26-1.31); smoking linear -1.91 to -1.94 (-1.92 to -1.94), quadratic 2.02-2.03 (2.03-2.05), avAlt
+1.92-1.97 (2.01-2.06); network rates 6.5 and 5.3 (6.5, 5.3), alcohol 1.25 and 1.68 (1.25, 1.66), smoking 2.8 and 2.6 (2.7, 2.6).
 
 {pstd}
 {opt transtiesendow}/{opt transtiescreation} split {opt transties} the same way. RSiena's rule, which

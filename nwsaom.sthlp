@@ -51,6 +51,7 @@
 {synopt:{opt wave1(netname)}}First observed wave; requires {opt wave2()}, exactly two waves. Not combinable with {opt waves()}{p_end}
 {synopt:{opt wave2(netname)}}Second (ending) observed wave; requires {opt wave1()}{p_end}
 {synopt:{opt waves(namelist)}}Two or more observed waves, in temporal order (e.g. {cmd:waves(w1 w2 w3)}) - chains {it:namelist}{cmd:-1} inter-wave periods into one pooled fit. Not combinable with {opt wave1()}/{opt wave2()}{p_end}
+{synopt:{opt actormode(#)}}Two-mode networks: the mode whose nodes are the actors (they choose their ties to the other mode, the events); 1 or 2, default 2 = the {it:rows} of the affiliation matrix given to {cmd:nwset, bipartite}. See {help nwsaom_remarks##twomode:Two-mode networks}{p_end}
 
 {syntab:Baseline network effects}
 {synopt:{opt endow(effects)}}Endowment role (RSiena effect type "endow": the effect counts only for tie/value withdrawals). {it:effects} is a list of {bf:outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip} (network; {bf:gwesp} takes its decay from {opt gwesp(#)}, which with {opt endow()}/{opt creation()} gives the parameter and not an evaluation role) and {bf:linear quadratic avalt avsim} (behavior). An effect named in {it:both} {opt endow()} and {opt creation()} is split into its two roles and takes the place of the plain effect; naming it in only one list, or also giving the plain effect, is an error. The long option pairs below ({opt outdegreeendow}/{opt outdegreecreation}, {opt reciprocityendow}/..., {opt transtiesendow}/..., {opt linearendow}/...) are the same thing and still work. Example: {cmd:nwsaom, waves(w1 w2 w3) outdegree reciprocity endow(transties) creation(transties)}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
@@ -134,7 +135,7 @@
 {synoptline}
 {marker coev_options}{...}
 {syntab:Behavior co-evolution effects}
-{synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable, ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks{p_end}
+{synopt:{opth behavior(varlist)}}Co-evolution: one bounded-integer behavior variable (several behaviors: {cmd:behavior(a1 a2 a3 : linear avalt | s1 s2 s3 : linear)}, see {help nwsaom_remarks##multibeh:Several behaviors}), ONE Stata variable name per wave, same temporal order as {opt wave1()}/{opt wave2()} or {opt waves()} (e.g. two waves: {cmd:behavior(b1 b2)}; three: {cmd:behavior(b1 b2 b3)}). Requires {opt linear}. A SECOND dependent variable evolving jointly with the network - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks{p_end}
 {synopt:{opt linear}}Behavior linear shape effect (RSiena's own baseline behavior effect), evaluation-function role; {bf:required} whenever {opt behavior()} is specified UNLESS {opt linearendow}/{opt linearcreation} are given instead, matching {opt outdegree}'s own required-baseline role on the network side{p_end}
 {synopt:{opt linearendow}}Behavior linear effect, ENDOWMENT (loss/decrease) role - splits the linear effect's downward direction into its own parameter; must be given together with {opt linearcreation}, and not combined with {opt linear} (all three roles together are exactly collinear). {bf:Currently refused}: the two statistics (decreases and increases) add up to the behavior rate's distance statistic, so with the behavior rate estimated the model is not identified (RSiena reports a singular covariance matrix for it too); use {opt linear}. See {help nwsaom_remarks##endowcreation:Endowment/creation functions} in nwsaom_remarks{p_end}
 {synopt:{opt linearcreation}}Behavior linear effect, CREATION (gain/increase) role - the upward-direction counterpart to {opt linearendow}; must be given together with it{p_end}
@@ -238,15 +239,16 @@ undirected wave is rejected. Two-mode: no (rejected). Signed: not applicable/not
 {cmd:nwsaom} estimates {bf:binary, directed, one-mode} SAOMs:
 
 {p2colset 9 13 15 2}{...}
-{p2col: o}Two-mode (bipartite), temporal-metadata, valued/weighted, or undirected waves are all
-rejected with an explicit error - never silently coerced.{p_end}
+{p2col: o}Two-mode (bipartite) waves are supported (see {help nwsaom_remarks##twomode:Two-mode networks}); temporal-metadata
+and valued/weighted waves are rejected with an explicit error - never silently coerced.{p_end}
 {p2col: o}Composition change (actors joining/leaving between waves, {opt present()}) and missing
 tie/behavior data ({opt missnet()}/{opt missbeh()}) are both supported - see
 {help nwsaom_remarks##compchange:Composition change} and {help nwsaom_remarks##missingdata:Missing data} in nwsaom_remarks for
 each one's own scope and caveats. RSiena's own more general continuous/fractional within-period
 join-leave timing is out of scope - {cmd:nwsaom} supports whole-period composition change only.{p_end}
-{p2col: o}Behavior co-evolution ({opt behavior()}) supports exactly ONE co-evolving behavior
-variable. The linear shape effect can be split into endowment/creation roles
+{p2col: o}Behavior co-evolution ({opt behavior()}) supports several co-evolving behaviors
+({cmd:behavior(a1 a2 a3 : linear quadratic avalt | s1 s2 s3 : linear avalt)}), which interact only through the
+network; see {help nwsaom_remarks##multibeh:Several behaviors}. The linear shape effect can be split into endowment/creation roles
 ({opt linearendow}/{opt linearcreation}); the same split is also available for
 {opt quadratic}/{opt avalt}/{opt avsim} - see {help nwsaom_remarks##coev:Co-evolution} in nwsaom_remarks.{p_end}
 {p2colreset}{...}

@@ -119,6 +119,12 @@ capture program drop nwsaom_estat
 program define nwsaom_estat, rclass
 	gettoken subcmd rest : 0, parse(" ,")
 	local subcmd = lower(trim("`subcmd'"))
+	if e(nbeh) < . {
+		if e(nbeh) > 1 {
+			di as err "estat `subcmd' is not yet available after a fit with several behaviors in {bf:behavior()}."
+			exit 198
+		}
+	}
 	if "`subcmd'" == "gof" {
 		nwsaom_estat_gof `rest'
 		// see nwergm_estat.ado's own identical `return add' - without

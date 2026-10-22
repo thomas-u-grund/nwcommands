@@ -43,6 +43,21 @@
 
 capture mata: mata drop __nwsaom_bridge_from_netobj()
 mata:
+/* two-mode: the ties actor -> event only (the network is stored symmetrically over all nodes) */
+void __nwsaom_bridge_twomode(pointer(class nw_def scalar) scalar netobj,
+	class ErgmGraph scalar G, real rowvector isactor){
+	real scalar i, k
+	real matrix nb
+
+	for (i=1; i<=G.n; i++) {
+		if (!isactor[i]) continue
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!isactor[nb[k]]) G.toggle(i, nb[k])
+		}
+	}
+}
+
 void __nwsaom_bridge_from_netobj(pointer(class nw_def scalar) scalar netobj,
 	class ErgmGraph scalar G){
 	real scalar i, k
@@ -187,7 +202,7 @@ program nwsaom, eclass
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
-		ENDOW(string) CREATION(string) ]
+		ENDOW(string) CREATION(string) ACTORMODE(integer 0) ]
 	set more off
 
 	// --- endow(effects) creation(effects): RSiena's effect "types" (includeEffects(type = "endow" /
@@ -325,6 +340,67 @@ program nwsaom, eclass
 	// name per wave" convention as waves() itself - ONE behavior
 	// variable only (v1 scope; multiple co-evolving behaviors remain
 	// out of scope).
+	// several co-evolving behaviors (protocol 19): behavior(a1 a2 a3 : linear quadratic avalt | s1 s2 s3 : linear avalt);
+	// '|' separates behaviors, ':' the per-wave variables from that behavior's effects (omitted: the global effect
+	// options). One behavior with ':' is the same as the global options.
+	local __nwsaom_mb = 0
+	local __nwsaom_nbehv = 1
+	if `"`behavior'"' != "" & (strpos(`"`behavior'"', "|") | strpos(`"`behavior'"', ":")) {
+		local __nwsaom_mbeffnames "linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation behsim"
+		local __nwsaom_gl ""
+		foreach __e in linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation {
+			if "``__e''" != "" local __nwsaom_gl "`__nwsaom_gl' `__e'"
+		}
+		local __rest `"`behavior'"'
+		local __nb 0
+		while `"`__rest'"' != "" {
+			local __bar = strpos(`"`__rest'"', "|")
+			if `__bar' > 0 {
+				local __grp = strtrim(substr(`"`__rest'"', 1, `__bar' - 1))
+				local __rest = strtrim(substr(`"`__rest'"', `__bar' + 1, .))
+			}
+			else {
+				local __grp = strtrim(`"`__rest'"')
+				local __rest ""
+			}
+			local ++__nb
+			local __col = strpos(`"`__grp'"', ":")
+			if `__col' > 0 {
+				local __nwsaom_mbv`__nb' = strtrim(substr(`"`__grp'"', 1, `__col' - 1))
+				local __nwsaom_mbe`__nb' = strtrim(substr(`"`__grp'"', `__col' + 1, .))
+			}
+			else {
+				local __nwsaom_mbv`__nb' = strtrim(`"`__grp'"')
+				local __nwsaom_mbe`__nb' ""
+			}
+			if "`__nwsaom_mbe`__nb''" == "" local __nwsaom_mbe`__nb' "`__nwsaom_gl'"
+			local __nwc : word count `__nwsaom_mbv`__nb''
+			if `__nwc' != `__nwsaom_nwaves' {
+				di "{err}each behavior in {bf:behavior()} must supply exactly `__nwsaom_nwaves' variable name(s), one per wave, in the same temporal order; behavior `__nb' has `__nwc'."
+				error 198
+			}
+			foreach __e of local __nwsaom_mbe`__nb' {
+				if !`: list __e in __nwsaom_mbeffnames' {
+					di "{err}behavior `__nb' of {bf:behavior()}: unknown effect {bf:`__e'}; the effects are linear quadratic avalt avsim, their endow/creation variants (linearendow ...) and behsim."
+					error 198
+				}
+				if "`__e'" == "behsim" & `__nb' > 1 {
+					di "{err}{bf:behsim} (network similarity on a behavior) is available for the first behavior only."
+					error 198
+				}
+			}
+		}
+		local __nwsaom_nbehv = `__nb'
+		// the global behavior-effect options are replaced by the first behavior's own list (the single-behavior code reads them)
+		foreach __e in linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation behsim {
+			local `__e' ""
+		}
+		foreach __e of local __nwsaom_mbe1 {
+			local `__e' "`__e'"
+		}
+		local behavior "`__nwsaom_mbv1'"
+		if `__nwsaom_nbehv' >= 2 local __nwsaom_mb = 1
+	}
 	local __nwsaom_coev = 0
 	if "`behavior'" != "" {
 		local __nwsaom_nbeh : word count `behavior'
@@ -406,13 +482,11 @@ program nwsaom, eclass
 	// across the WHOLE wave set, matching the same per-pair checks the
 	// original wave1()/wave2() path always ran, generalized to N waves.
 	local nodes = .
+	local __nwsaom_ntm 0
 	forvalues __w = 1/`__nwsaom_nwaves' {
 		local __wname : word `__w' of `__nwsaom_wavelist'
 		_nwsyntax `__wname', max(1) other(w`__w')
-		if "`w`__w'is2mode'" == "true" {
-			di "{err}nwsaom does not support two-mode (bipartite) networks."
-			error 198
-		}
+		if "`w`__w'is2mode'" == "true" local ++__nwsaom_ntm
 		if "`w`__w'istemporal'" == "true" {
 			di "{err}nwsaom estimates on ordinary static wave snapshots; no wave() network may itself carry {bf:nwset}-style temporal metadata (build an explicit static slice first, e.g. via {bf:nwattime})."
 			error 198
@@ -428,6 +502,60 @@ program nwsaom, eclass
 		}
 	}
 
+	// --- two-mode (bipartite) networks: every wave two-mode, same node sets. The actors (the senders, who change
+	// ties) are the nodes of one mode (actormode(), default 2 = the ROWS of the affiliation matrix given to
+	// nwset, bipartite); the other mode are the events. The network is embedded as a directed one-mode graph
+	// on all nodes in which only actor -> event dyads are free (every other dyad is structurally zero), so every
+	// piece of the one-mode machinery - sampler, statistics, native plugin - runs unchanged.
+	local __nwsaom_tm = 0
+	if `__nwsaom_ntm' > 0 {
+		if `__nwsaom_ntm' < `__nwsaom_nwaves' {
+			di "{err}the waves mix two-mode and one-mode networks."
+			error 198
+		}
+		local __nwsaom_tm = 1
+		local __nwsaom_tmmode = cond(`actormode' == 0, 2, `actormode')
+		if !inlist(`__nwsaom_tmmode', 1, 2) {
+			di "{err}{bf:actormode()} must be 1 or 2 (the mode whose nodes are the actors)."
+			error 198
+		}
+		foreach __opt in symmetric ratecov present missnet missbeh behavior structural interact nodecov nodematch simcov ///
+			absdiffx egoxaltx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			outpopularity inactivity isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
+			if "``__opt''" != "" {
+				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
+				error 198
+			}
+		}
+		capture mata: mata drop __nwsaom_tm_isactor
+		mata: __nwsaom_tm_isactor = (`w1netobj'->get_modes() :== "`__nwsaom_tmmode'")
+		forvalues __w = 2/`__nwsaom_nwaves' {
+			mata: st_local("__nwsaom_tmok", strofreal(all((`w`__w'netobj'->get_modes() :== "`__nwsaom_tmmode'") :== __nwsaom_tm_isactor)))
+			if !`__nwsaom_tmok' {
+				di "{err}the waves have different two-mode node sets (modes)."
+				error 198
+			}
+		}
+		mata: st_local("__nwsaom_tm_na", strofreal(sum(__nwsaom_tm_isactor)))
+		mata: st_local("__nwsaom_tm_ne", strofreal(cols(__nwsaom_tm_isactor) - sum(__nwsaom_tm_isactor)))
+		if `__nwsaom_tm_na' == 0 | `__nwsaom_tm_ne' == 0 {
+			di "{err}the two-mode network needs nodes in both modes."
+			error 198
+		}
+		// node indices of the actors / events, for the covariates
+		capture mata: mata drop __nwsaom_tm_actidx __nwsaom_tm_evidx
+		mata: __nwsaom_tm_actidx = selectindex(__nwsaom_tm_isactor)'
+		mata: __nwsaom_tm_evidx = selectindex(1 :- __nwsaom_tm_isactor)'
+		// the structural mask: every dyad that is not actor -> event is fixed at 0
+		tempname __nwsaom_tmS
+		mata: st_matrix("`__nwsaom_tmS'", 1 :- (__nwsaom_tm_isactor' * (1 :- __nwsaom_tm_isactor)))
+		matrix `__nwsaom_tmS' = `__nwsaom_tmS' - diag(vecdiag(`__nwsaom_tmS'))
+		matrix __nwsaom_tm_structmat = `__nwsaom_tmS'
+		local structural "__nwsaom_tm_structmat"
+		di as text "(two-mode network: " `__nwsaom_tm_na' " actors (mode `__nwsaom_tmmode') choose among " `__nwsaom_tm_ne' " events)"
+	}
+
 	// --- non-directed relations (2026-10-01): as RSiena, which treats a
 	// symmetric one-mode dependent network as non-directed automatically,
 	// waves declared undirected, or directed waves that are all
@@ -437,50 +565,56 @@ program nwsaom, eclass
 	// networks are refused. Directed tie-symmetric waves in a model the
 	// non-directed ministeps do not cover (behavior(), endowment/creation
 	// effects) stay directed, with a note.
+	local __nwsaom_autosym 0
 	local __nwsaom_nundir 0
 	local __nwsaom_allsym 1
-	local __nwsaom_asymlist ""
-	forvalues __w = 1/`__nwsaom_nwaves' {
-		local __wname : word `__w' of `__nwsaom_wavelist'
-		if "`w`__w'directed'" != "true" local ++__nwsaom_nundir
-		mata: st_local("__nwsaom_issym", strofreal(issymmetric((*`w`__w'netobj'->get_matrix()) :!= 0)))
-		if !`__nwsaom_issym' {
-			local __nwsaom_allsym 0
-			local __nwsaom_asymlist "`__nwsaom_asymlist' `__wname'"
+	if !`__nwsaom_tm' {
+		local __nwsaom_nundir 0
+		local __nwsaom_allsym 1
+		local __nwsaom_asymlist ""
+		forvalues __w = 1/`__nwsaom_nwaves' {
+			local __wname : word `__w' of `__nwsaom_wavelist'
+			if "`w`__w'directed'" != "true" local ++__nwsaom_nundir
+			mata: st_local("__nwsaom_issym", strofreal(issymmetric((*`w`__w'netobj'->get_matrix()) :!= 0)))
+			if !`__nwsaom_issym' {
+				local __nwsaom_allsym 0
+				local __nwsaom_asymlist "`__nwsaom_asymlist' `__wname'"
+			}
 		}
-	}
-	local __nwsaom_autosym 0
-	if "`symmetric'" == "" & `__nwsaom_nundir' > 0 {
-		if !`__nwsaom_allsym' {
-			di "{err}some waves are declared undirected, but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " directed and not tie-symmetric. Declare all waves directed (a directed relation) or all tie-symmetric (a non-directed relation, e.g. with {bf:nwsym})."
-			error 198
-		}
-		local symmetric "symmetric"
-		local __nwsaom_autosym 1
-	}
-	else if "`symmetric'" == "" & `__nwsaom_allsym' {
-		local __nwsaom_autosym_ok = !("`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
-		if `__nwsaom_autosym_ok' & "`reciprocity'" == "" {
+		local __nwsaom_autosym 0
+		if "`symmetric'" == "" & `__nwsaom_nundir' > 0 {
+			if !`__nwsaom_allsym' {
+				di "{err}some waves are declared undirected, but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " directed and not tie-symmetric. Declare all waves directed (a directed relation) or all tie-symmetric (a non-directed relation, e.g. with {bf:nwsym})."
+				error 198
+			}
 			local symmetric "symmetric"
 			local __nwsaom_autosym 1
 		}
-		else {
-			di as text "(all waves are tie-symmetric; modeled as a directed relation because " cond("`reciprocity'" != "", "reciprocity was requested", "the non-directed model does not cover this specification") ")"
+		else if "`symmetric'" == "" & `__nwsaom_allsym' {
+			local __nwsaom_autosym_ok = !("`outdegreeendow'`outdegreecreation'`reciprocityendow'`reciprocitycreation'" != "")
+			if `__nwsaom_autosym_ok' & "`reciprocity'" == "" {
+				local symmetric "symmetric"
+				local __nwsaom_autosym 1
+			}
+			else {
+				di as text "(all waves are tie-symmetric; modeled as a directed relation because " cond("`reciprocity'" != "", "reciprocity was requested", "the non-directed model does not cover this specification") ")"
+			}
 		}
-	}
-	if "`symmetric'" != "" & !`__nwsaom_allsym' {
-		di "{err}{bf:symmetric} (a non-directed relation) needs tie-symmetric waves (x_ij == x_ji for every dyad), but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " not; symmetrize the data first (e.g. {bf:nwsym}) or omit {bf:symmetric} for a directed relation."
-		error 198
-	}
-	if `__nwsaom_nundir' > 0 & `__nwsaom_nundir' < `__nwsaom_nwaves' & "`symmetric'" != "" {
-		di as text "(waves mix undirected and directed-stored networks; all are tie-symmetric and modeled as one non-directed relation)"
+		if "`symmetric'" != "" & !`__nwsaom_allsym' {
+			di "{err}{bf:symmetric} (a non-directed relation) needs tie-symmetric waves (x_ij == x_ji for every dyad), but{bf:`__nwsaom_asymlist'} " cond(wordcount("`__nwsaom_asymlist'") > 1, "are", "is") " not; symmetrize the data first (e.g. {bf:nwsym}) or omit {bf:symmetric} for a directed relation."
+			error 198
+		}
+		if `__nwsaom_nundir' > 0 & `__nwsaom_nundir' < `__nwsaom_nwaves' & "`symmetric'" != "" {
+			di as text "(waves mix undirected and directed-stored networks; all are tie-symmetric and modeled as one non-directed relation)"
+		}
+
 	}
 
 	// node attributes (ratecov(), nodematch(), behavior(), present(), ...)
 	// are read by row position: make sure the rows are in the waves'
 	// node order (they are not after a network with another node order
 	// was declared later), and that all waves share one node order.
-	_nwrowalign `__nwsaom_wavelist'
+	if !`__nwsaom_tm' _nwrowalign `__nwsaom_wavelist'
 
 	// --- present(): composition change ("joiners and leavers", harmonisation
 	// unit 33) - one 0/1 Stata variable per wave, same "one variable per
@@ -576,7 +710,7 @@ program nwsaom, eclass
 	// certified (dev/saom_structural_crosscheck.do).
 	local __nwsaom_hasstructural = 0
 	if "`structural'" != "" {
-		if `__nwsaom_multi' {
+		if `__nwsaom_multi' & !`__nwsaom_tm' {
 			di "{err}option {bf:structural()} is v1 scope: exactly two waves ({bf:wave1()}/{bf:wave2()}, not {bf:waves()})."
 			error 198
 		}
@@ -736,7 +870,8 @@ program nwsaom, eclass
 		capture mata: mata drop __nwsaom_last_G`__w'
 		mata: __nwsaom_last_G`__w' = ErgmGraph()
 		mata: __nwsaom_last_G`__w'.init(`nodes', 1)
-		mata: __nwsaom_bridge_from_netobj(`w`__w'netobj', __nwsaom_last_G`__w')
+		if `__nwsaom_tm' mata: __nwsaom_bridge_twomode(`w`__w'netobj', __nwsaom_last_G`__w', __nwsaom_tm_isactor)
+		else mata: __nwsaom_bridge_from_netobj(`w`__w'netobj', __nwsaom_last_G`__w')
 	}
 
 	// --- missnet(): impute missing dyads via last-observation-carried-
@@ -784,7 +919,12 @@ program nwsaom, eclass
 	if `__nwsaom_hasstructural' {
 		capture mata: mata drop __nwsaom_structmat
 		mata: __nwsaom_structmat = st_matrix("`structural'")
-		mata: st_local("__nwsaom_struct_matchok", strofreal(SaomStructuralMatchesWaves(__nwsaom_last_G1, __nwsaom_last_G2, __nwsaom_structmat)))
+		local __nwsaom_struct_matchok 1
+		forvalues __w = 2/`__nwsaom_nwaves' {
+			local __wp = `__w' - 1
+			mata: st_local("__nwsaom_struct_m1", strofreal(SaomStructuralMatchesWaves(__nwsaom_last_G`__wp', __nwsaom_last_G`__w', __nwsaom_structmat)))
+			if !`__nwsaom_struct_m1' local __nwsaom_struct_matchok 0
+		}
 		if `__nwsaom_struct_matchok' == 0 {
 			di "{err}option {bf:structural()} marks a dyad as frozen whose observed value genuinely differs between wave1 and wave2 - a structural dyad must hold the SAME value at every wave (RSiena's own manual: structural values are externally fixed, never a genuinely observed change)."
 			error 198
@@ -1077,6 +1217,12 @@ program nwsaom, eclass
 	local __nwsaom_cmeans ""
 	capture mata: mata drop __nwsaom_cm
 	mata: __nwsaom_cm = .
+	local __nwsaom_idxE ""
+	local __nwsaom_idxA ""
+	if `__nwsaom_tm' {
+		local __nwsaom_idxE ", __nwsaom_tm_evidx"
+		local __nwsaom_idxA ", __nwsaom_tm_actidx"
+	}
 	// covariate effects take a varlist (2026-10-01): one term and one
 	// coefficient per variable, named <effect>_<variable> (e.g.
 	// samex_smoke1), in the order the variables are listed - the same
@@ -1112,7 +1258,7 @@ program nwsaom, eclass
 		foreach __v of local nodeicov {
 			tempname __td_nic
 			mata: `__td_nic' = ErgmTermData()
-			mata: SaomRegCov(__nwsaom_last_M, "nodeicov", "`__v'", `nodes', `__nwsaom_center', `__td_nic', ("`__nwsaom_altlab'_`__v'"), __nwsaom_cm)
+			mata: SaomRegCov(__nwsaom_last_M, "nodeicov", "`__v'", `nodes', `__nwsaom_center', `__td_nic', ("`__nwsaom_altlab'_`__v'"), __nwsaom_cm`__nwsaom_idxE')
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_altlab'(`__v')"
@@ -1123,7 +1269,7 @@ program nwsaom, eclass
 		foreach __v of local nodeocov {
 			tempname __td_noc
 			mata: `__td_noc' = ErgmTermData()
-			mata: SaomRegCov(__nwsaom_last_M, "nodeocov", "`__v'", `nodes', `__nwsaom_center', `__td_noc', ("`__nwsaom_egolab'_`__v'"), __nwsaom_cm)
+			mata: SaomRegCov(__nwsaom_last_M, "nodeocov", "`__v'", `nodes', `__nwsaom_center', `__td_noc', ("`__nwsaom_egolab'_`__v'"), __nwsaom_cm`__nwsaom_idxA')
 			mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
@@ -1952,6 +2098,87 @@ program nwsaom, eclass
 		mata: st_local("__nwsaom_pbeh", strofreal(__nwsaom_last_Mbeh.nparam()))
 	}
 
+	// --- several behaviors (protocol 19): behavior 1 was built above; behaviors 2.. are built here, each with its own
+	// SaomBehaviorModel, its wave vectors and its constants. Not in this version: missing data, composition change,
+	// non-directed networks, ratecov(), network endowment/creation, structural().
+	local __nwsaom_mbtotal = `__nwsaom_pbeh'
+	if `__nwsaom_mb' {
+		foreach __opt in symmetric ratecov present missnet missbeh structural {
+			if "``__opt''" != "" {
+				di "{err}several behaviors in {bf:behavior()} cannot yet be combined with {bf:`__opt'()}/{bf:`__opt'}."
+				error 198
+			}
+		}
+		if `__nwsaom_hasnetgate' {
+			di "{err}several behaviors in {bf:behavior()} cannot yet be combined with {bf:endow()}/{bf:creation()} of network effects (the behavior effects can have them)."
+			error 198
+		}
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			local __v1 : word 1 of `__nwsaom_mbv`__b''
+			local __stem = ustrregexra("`__v1'", "[0-9]+$", "")
+			if "`__stem'" == "" local __stem "beh`__b'"
+			local __nwsaom_mbname`__b' "`__stem'"
+		}
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			forvalues __c = 1/`=`__b'-1' {
+				if "`__nwsaom_mbname`__b''" == "`__nwsaom_mbname`__c''" local __nwsaom_mbname`__b' "`__nwsaom_mbname`__b''`__b'"
+			}
+		}
+		mata: SaomMBRenameCoefs(__nwsaom_last_Mbeh, "`__nwsaom_mbname1'")
+		local __nwsaom_mbp1 = `__nwsaom_pbeh'
+		local __nwsaom_mbeff1 "`__nwsaom_effbeh'"
+		mata: __nwsaom_mbmin = __nwsaom_beh_minval
+		mata: __nwsaom_mbmax = __nwsaom_beh_maxval
+		mata: __nwsaom_mbover = mean(SaomMBPooled(__nwsaom_last_Behwaves))
+		mata: __nwsaom_mbsim = __nwsaom_last_Mbeh.simMean
+		local __nwsaom_mbptrM "&__nwsaom_last_Mbeh"
+		local __nwsaom_mbtotal = `__nwsaom_pbeh'
+		forvalues __b = 2/`__nwsaom_nbehv' {
+			capture mata: mata drop __nwsaom_mbM`__b'
+			mata: __nwsaom_mbM`__b' = SaomBehaviorModel()
+			mata: __nwsaom_mbM`__b'.init()
+			mata: st_local("__nwsaom_mbeff`__b'", SaomMBAddTerms(__nwsaom_mbM`__b', "`__nwsaom_mbe`__b''", "beh_`__nwsaom_mbname`__b''_"))
+			mata: st_local("__nwsaom_mbp`__b'", strofreal(__nwsaom_mbM`__b'.nparam()))
+			if `__nwsaom_mbp`__b'' == 0 {
+				di "{err}behavior `__b' of {bf:behavior()} needs at least one effect (a baseline {bf:linear} shape effect is required)."
+				error 198
+			}
+			local __ptrs ""
+			forvalues __w = 1/`__nwsaom_nwaves' {
+				local __wbeh : word `__w' of `__nwsaom_mbv`__b''
+				confirm variable `__wbeh'
+				capture mata: mata drop __nwsaom_mbB`__b'_w`__w'
+				mata: __nwsaom_mbB`__b'_w`__w' = st_data(1::`nodes', "`__wbeh'")
+				if `__w' == 1 local __ptrs "&__nwsaom_mbB`__b'_w1"
+				else local __ptrs "`__ptrs', &__nwsaom_mbB`__b'_w`__w'"
+			}
+			capture mata: mata drop __nwsaom_mbBp`__b'
+			mata: __nwsaom_mbBp`__b' = (`__ptrs')
+			mata: __nwsaom_mbmin = (__nwsaom_mbmin, min(SaomMBPooled(__nwsaom_mbBp`__b')))
+			mata: __nwsaom_mbmax = (__nwsaom_mbmax, max(SaomMBPooled(__nwsaom_mbBp`__b')))
+			mata: __nwsaom_mbover = (__nwsaom_mbover, mean(SaomMBPooled(__nwsaom_mbBp`__b')))
+			if strpos(" `__nwsaom_mbeff`__b'' ", " avsim ") | strpos(" `__nwsaom_mbeff`__b'' ", " avsimendow ") {
+				mata: __nwsaom_mbM`__b'.setsimmean(saom_similarity_mean(__nwsaom_mbBp`__b', max(SaomMBPooled(__nwsaom_mbBp`__b')) - min(SaomMBPooled(__nwsaom_mbBp`__b'))))
+			}
+			mata: __nwsaom_mbsim = (__nwsaom_mbsim, __nwsaom_mbM`__b'.simMean)
+			local __nwsaom_mbptrM "`__nwsaom_mbptrM', &__nwsaom_mbM`__b'"
+			local __nwsaom_mbtotal = `__nwsaom_mbtotal' + `__nwsaom_mbp`__b''
+			local __nwsaom_efflist "`__nwsaom_efflist' [behavior `__nwsaom_mbname`__b'': `__nwsaom_mbeff`__b'']"
+		}
+		capture mata: mata drop __nwsaom_mbMb
+		mata: __nwsaom_mbMb = (`__nwsaom_mbptrM')
+		// the behavior data pointers: behavior b, wave w
+		capture mata: mata drop __nwsaom_mbBw
+		mata: __nwsaom_mbBw = J(`__nwsaom_nbehv', `__nwsaom_nwaves', NULL)
+		forvalues __w = 1/`__nwsaom_nwaves' {
+			mata: __nwsaom_mbBw[1, `__w'] = &__nwsaom_beh_w`__w'
+			forvalues __b = 2/`__nwsaom_nbehv' {
+				mata: __nwsaom_mbBw[`__b', `__w'] = &__nwsaom_mbB`__b'_w`__w'
+			}
+		}
+		local __nwsaom_pbeh = `__nwsaom_mbtotal'
+	}
+
 	// --- rate0(): starting value(s) of the network rate(s), one per
 	// inter-wave period (a single value is used for every period);
 	// omitted: RSiena's closed-form starting value. Network-only models;
@@ -1987,8 +2214,10 @@ program nwsaom, eclass
 	// (a network that densifies quickly) can make the phase-1 derivative
 	// estimates unusable
 	if "`theta0'" == "" & !`__nwsaom_coev' & "`outdegree'" != "" {
-		if `__nwsaom_multi' mata: __nwsaom_theta0[1] = SaomOutdegreeStart(__nwsaom_last_Gwaves, ("`symmetric'" != ""))
-		else mata: __nwsaom_theta0[1] = SaomOutdegreeStart((&__nwsaom_last_G1, &__nwsaom_last_G2), ("`symmetric'" != ""))
+		local __nwsaom_ndy = `nodes' * (`nodes' - 1)
+		if `__nwsaom_tm' local __nwsaom_ndy = `__nwsaom_tm_na' * `__nwsaom_tm_ne'
+		if `__nwsaom_multi' mata: __nwsaom_theta0[1] = SaomOutdegreeStart(__nwsaom_last_Gwaves, ("`symmetric'" != ""), `__nwsaom_ndy')
+		else mata: __nwsaom_theta0[1] = SaomOutdegreeStart((&__nwsaom_last_G1, &__nwsaom_last_G2), ("`symmetric'" != ""), `__nwsaom_ndy')
 	}
 
 	// --- behtheta0(): same size-checked-starting-value convention as
@@ -2049,7 +2278,15 @@ program nwsaom, eclass
 	else mata: __nwsaom_last_present = J(0, 1, 0)
 	mata: __nwsaom_engine = ""
 	mata: __nwsaom_engine_why = ""
-	if `__nwsaom_coev' & `__nwsaom_multi' {
+	if `__nwsaom_mb' {
+		// several co-evolving behaviors (protocol 19): SaomEstimateRMCoevMB() on SaomRMCore()
+		capture mata: mata drop __nwsaom_fit_mb __nwsaom_mbGw
+		if `__nwsaom_multi' mata: __nwsaom_mbGw = __nwsaom_last_Gwaves
+		else mata: __nwsaom_mbGw = (&__nwsaom_last_G1, &__nwsaom_last_G2)
+		mata: __nwsaom_fit_mb = SaomEstimateRMCoevMB(__nwsaom_mbGw, __nwsaom_last_M, __nwsaom_mbBw, __nwsaom_mbmin, ///
+			__nwsaom_mbmax, __nwsaom_mbsim, __nwsaom_mbover, __nwsaom_mbMb, __nwsaom_theta0, __nwsaom_theta0beh, `k0', `k3', `firstg')
+	}
+	else if `__nwsaom_coev' & `__nwsaom_multi' {
 		// harmonisation unit 26 ("extend it to N waves"): joint
 		// network+behavior Method of Moments / Robbins-Monro, chained
 		// across every period - see SaomEstimateRMCoevMulti()'s own
@@ -2149,7 +2386,12 @@ program nwsaom, eclass
 		// period, rate is period-specific - see SaomEstimateRMMulti()'s
 		// own header comment (unw_saom.do) for the real-RSiena
 		// verification this pooling convention is based on.
-		if "`symmetric'" != "" | `__nwsaom_hasnetgate' | `__nwsaom_hasratecov' {
+		if `__nwsaom_hasstructural' {
+			// structural dyads with waves() (the two-mode embedding): the trailing arguments are placeholders
+			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', J(0, 0, 0), J(1, 0, NULL), __nwsaom_rates0, J(1, 0, 0), 0, J(0, 1, 0), J(1, 0, 0), __nwsaom_structmat)
+		}
+		else if "`symmetric'" != "" | `__nwsaom_hasnetgate' | `__nwsaom_hasratecov' {
 			// symmetric / endowment-creation / ratecov(): reaching the trailing fntype and symtype
 			// arguments needs presentMat, the mask pointers and rates0 as well - real ones
 			// when present()/missnet() are active, no-op placeholders otherwise
@@ -2346,7 +2588,13 @@ program nwsaom, eclass
 	}
 
 	tempname b tratio V
-	if `__nwsaom_coev' & `__nwsaom_multi' {
+	if `__nwsaom_mb' {
+		mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames) + " " + SaomMBCoefNames(__nwsaom_mbMb))
+		mata: st_matrix("`b'", (__nwsaom_fit_mb.thetaNet, __nwsaom_fit_mb.thetaBeh))
+		mata: st_matrix("`tratio'", (__nwsaom_fit_mb.tratioNet, __nwsaom_fit_mb.tratioBeh))
+		mata: st_matrix("`V'", __nwsaom_fit_mb.V)
+	}
+	else if `__nwsaom_coev' & `__nwsaom_multi' {
 		mata: st_local("__nwsaom_coefnames", invtokens(__nwsaom_last_M.coefnames) + " " + invtokens(__nwsaom_last_Mbeh.coefnames))
 		mata: st_matrix("`b'", (__nwsaom_fit_coevmulti.thetaNet, __nwsaom_fit_coevmulti.thetaBeh))
 		mata: st_matrix("`tratio'", (__nwsaom_fit_coevmulti.tratioNet, __nwsaom_fit_coevmulti.tratioBeh))
@@ -2388,7 +2636,14 @@ program nwsaom, eclass
 	// RSiena's effect names and the covariate centring means (RSiena
 	// prints both), 2026-10-01
 	local __nwsaom_symflag = ("`symmetric'" != "")
-	if `__nwsaom_coev' {
+	if `__nwsaom_mb' {
+		local __nwsaom_mbnames ""
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			local __nwsaom_mbnames "`__nwsaom_mbnames' `__nwsaom_mbname`__b''"
+		}
+		mata: st_local("__nwsaom_rslab", SaomMBLabels(__nwsaom_last_M, `__nwsaom_symflag', "`__nwsaom_mbnames'", __nwsaom_mbMb))
+	}
+	else if `__nwsaom_coev' {
 		local __nwsaom_behn : word 1 of `behavior'
 		local __nwsaom_behn = ustrregexra("`__nwsaom_behn'", "[0-9]+$", "")
 		mata: st_local("__nwsaom_rslab", SaomRSienaLabels(__nwsaom_last_M, `__nwsaom_symflag', "`__nwsaom_behn'", &__nwsaom_last_Mbeh))
@@ -2431,12 +2686,89 @@ program nwsaom, eclass
 	ereturn local waves "`__nwsaom_wavelist'"
 	ereturn scalar N = `nodes'
 	ereturn scalar nodes = `nodes'
+	ereturn scalar twomode = `__nwsaom_tm'
+	if `__nwsaom_tm' {
+		ereturn scalar n_actors = `__nwsaom_tm_na'
+		ereturn scalar n_events = `__nwsaom_tm_ne'
+	}
 	ereturn scalar nwaves = `__nwsaom_nwaves'
 	ereturn matrix tratio = `tratio'
 	ereturn scalar has_behavior = `__nwsaom_coev'
 	ereturn scalar p_net = `__nwsaom_p'
 
-	if `__nwsaom_coev' & `__nwsaom_multi' {
+	if `__nwsaom_mb' {
+		// several behaviors: rates of the network (1 x periods) and of every behavior (behaviors x periods)
+		tempname ratesnet ratetrnet ratesbeh ratetrbeh ratesnetse ratesbehse tconv ratetab
+		mata: st_matrix("`ratesnet'", __nwsaom_fit_mb.ratesNet)
+		mata: st_matrix("`ratetrnet'", __nwsaom_fit_mb.rateNetTratios)
+		mata: st_matrix("`ratesbeh'", __nwsaom_fit_mb.ratesBeh)
+		mata: st_matrix("`ratetrbeh'", __nwsaom_fit_mb.rateBehTratios)
+		mata: st_matrix("`ratesnetse'", __nwsaom_fit_mb.ratesNetSE)
+		mata: st_matrix("`ratesbehse'", __nwsaom_fit_mb.ratesBehSE)
+		mata: st_matrix("`tconv'", __nwsaom_fit_mb.tconv)
+		mata: st_local("__nwsaom_tconvmax", strofreal(__nwsaom_fit_mb.tconvMax))
+		local __nwsaom_periodnames ""
+		local __nwsaom_behrows ""
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			local __nwsaom_periodnames "`__nwsaom_periodnames' period`__p'"
+		}
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			local __nwsaom_behrows "`__nwsaom_behrows' rate_`__nwsaom_mbname`__b''"
+		}
+		matrix colnames `ratesnet' = `__nwsaom_periodnames'
+		matrix colnames `ratetrnet' = `__nwsaom_periodnames'
+		matrix colnames `ratesbeh' = `__nwsaom_periodnames'
+		matrix colnames `ratetrbeh' = `__nwsaom_periodnames'
+		matrix colnames `ratesnetse' = `__nwsaom_periodnames'
+		matrix colnames `ratesbehse' = `__nwsaom_periodnames'
+		matrix rownames `ratesnet' = rate
+		matrix rownames `ratetrnet' = rate_tratio
+		matrix rownames `ratesnetse' = rate_se
+		matrix rownames `ratesbeh' = `__nwsaom_behrows'
+		matrix rownames `ratetrbeh' = `__nwsaom_behrows'
+		matrix rownames `ratesbehse' = `__nwsaom_behrows'
+		local __nwsaom_tconvnames "`__nwsaom_coefnames'"
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_period`__p'"
+		}
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+				local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_`__nwsaom_mbname`__b''_period`__p'"
+			}
+		}
+		matrix colnames `tconv' = `__nwsaom_tconvnames'
+		matrix rownames `tconv' = tconv
+		matrix `ratetab' = `ratesnet' \ `ratesnetse' \ `ratesbeh' \ `ratesbehse'
+		ereturn local waves "`__nwsaom_wavelist'"
+		ereturn local behavior "`behavior'"
+		local __nwsaom_allbeh ""
+		forvalues __b = 1/`__nwsaom_nbehv' {
+			local __nwsaom_allbeh "`__nwsaom_allbeh' `__nwsaom_mbname`__b''"
+		}
+		ereturn local behavior_names "`__nwsaom_allbeh'"
+		ereturn scalar nbeh = `__nwsaom_nbehv'
+
+		di as text "{hline}"
+		di as text "SAOM co-evolution of the network and `__nwsaom_nbehv' behaviors (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
+		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
+		di as text "Behaviors:" as result "`__nwsaom_allbeh'"
+		di as text "{hline}"
+		ereturn display
+		di as text "Rate parameters (estimated, one per inter-wave period; network, then each behavior):"
+		matlist `ratetab', format(%9.4f)
+
+		mata: st_numscalar("__nwsaom_r1", __nwsaom_fit_mb.ratesNet[1])
+		ereturn scalar rate = scalar(__nwsaom_r1)
+		ereturn matrix rates = `ratesnet'
+		ereturn matrix rate_tratios = `ratetrnet'
+		ereturn matrix rates_beh = `ratesbeh'
+		ereturn matrix rate_beh_tratios = `ratetrbeh'
+		ereturn matrix rates_se = `ratesnetse'
+		ereturn matrix rates_beh_se = `ratesbehse'
+		ereturn matrix tconv = `tconv'
+		ereturn scalar tconv_max = `__nwsaom_tconvmax'
+	}
+	else if `__nwsaom_coev' & `__nwsaom_multi' {
 		// harmonisation unit 26 ("extend it to N waves"): FOUR separate
 		// rate series (network/behavior, each per-period) - the
 		// coev+multi analogue of unit 17's own e(rates)/e(rate_tratios)
@@ -2579,6 +2911,7 @@ program nwsaom, eclass
 		di as text "{hline}"
 		di as text "SAOM (Method of Moments, " as result cond(`__nwsaom_iscond', "conditional", "unconditional") as text "), waves: " as result "`__nwsaom_wavelist'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
+		if `__nwsaom_tm' di as text "Two-mode network: " as result `__nwsaom_tm_na' as text " actors choose among " as result `__nwsaom_tm_ne' as text " events"
 		di as text "{hline}"
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
@@ -2686,6 +3019,7 @@ program nwsaom, eclass
 		di as text "{hline}"
 		di as text "SAOM (Method of Moments, " as result cond(`__nwsaom_iscond', "conditional", "unconditional") as text "), waves: " as result "`wave1'" as text " -> " as result "`wave2'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Estimated rate: " as result %6.3f `__nwsaom_rate' as text " (" as result %5.3f `__nwsaom_ratese' as text ")"
+		if `__nwsaom_tm' di as text "Two-mode network: " as result `__nwsaom_tm_na' as text " actors choose among " as result `__nwsaom_tm_ne' as text " events"
 		di as text "{hline}"
 		ereturn display
 		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"

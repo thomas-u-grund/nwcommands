@@ -663,3 +663,18 @@ Before the first edit of a session:
 installed copy; copy the new plugin into a scratch dir and `adopath ++ <that dir>` at the top of the
 test do-file. `lib/plugins/unix` and `lib/plugins/windows` are built by CI and are stale locally
 until it runs.
+
+## `SaomNativePluginVersion()` is a plugin CALL: never call it between a batch setup and the batch runs
+
+The version probe runs `plugin call saomnativesim` in the single-call mode, which re-initialises state that lives in
+the plugin process (before 2026-10-22 it reset the process-wide `saom_behsim_range` to 1, silently corrupting every
+`behsim` statistic of a batch model set up earlier - the symptom was a co-evolution fit with `behsim` whose
+outdegree and behsim estimates ran away with standard errors of 1e6 while everything else looked normal). The result
+is now cached per plugin path (external Mata scalars `__saom_ver_path/_val`) and the single-call parser only sets
+the range when the model has behsim. Read the version once in a context's init (`C.perok`, `C.use_batch`, ...) and
+keep it in the context.
+
+## Mata: `A[., c + (1..p)]` is a conformability error
+
+Inside a subscript the `..` range binds in a way that makes `A[., blk + (1..p)]` fail with 3200. Build the index
+first (`ic = blk :+ (1..p)`; `A[., ic]`).
