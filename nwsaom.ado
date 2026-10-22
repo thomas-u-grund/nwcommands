@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(varlist numeric) DIFFSQX(varlist numeric) EGODIFFX(varlist numeric) ALTHIGHEREGOX(varlist numeric) UNEQUALX(varlist numeric) EGOLTHRESHOLDX(varlist numeric) EGORTHRESHOLDX(varlist numeric) ALTLTHRESHOLDX(varlist numeric) ALTRTHRESHOLDX(varlist numeric) DEGABSDIFFX(varlist numeric) DEGPOSDIFFX(varlist numeric) DEGNEGDIFFX(varlist numeric) COVTHRESHOLD(real 0) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -545,7 +545,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx inpopc outpopc outactc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx inpopc outpopc outactc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1539,6 +1539,31 @@ program nwsaom, eclass
 			}
 			mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_df', ("`__dk'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__dk'"
+		}
+	}
+	// protocol 41: covariate threshold / contrast effects (native only; the observed statistic is evaluated in Mata)
+	foreach __dk in egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx {
+		if "``__dk''" != "" {
+			if "`symmetric'" != "" {
+				di "{err}{bf:`__dk'()} is not yet available for a non-directed relation ({bf:symmetric})."
+				error 198
+			}
+			unab `__dk' : ``__dk''
+			foreach __v of local `__dk' {
+				capture assert !missing(`__v') in 1/`nodes'
+				if _rc {
+					di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
+					error 198
+				}
+				tempname __td_ct
+				mata: `__td_ct' = ErgmTermData()
+				mata: `__td_ct'.levels = J(0, 1, 0)
+				mata: `__td_ct'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+				// RSiena compares the threshold with the CENTRED covariate value
+				mata: `__td_ct'.decay = `covthreshold'
+				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_ct', ("`__dk'_`__v'"))
+				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
+			}
 		}
 	}
 	foreach __dk in absdiffx egoxaltx {

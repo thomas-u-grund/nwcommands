@@ -3077,6 +3077,71 @@ real rowvector change_saom_avdeg(class ErgmGraph scalar G, real scalar i, real s
 real rowvector stat_saom_transtriads(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(7, G, td))
 real rowvector change_saom_transtriads(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("transtriads"))
 
+/* protocol 41: covariate threshold / contrast effects (RSiena egoPlusAltSqX ... degNegDiffX). NATIVE ONLY: Mata evaluates the observed statistic;
+   td.attr = the centred covariate, td.decay = the threshold. */
+real scalar _saom_ctstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real rowvector nb
+	real colvector a
+	real scalar i, m, j, tot, xi, xj, thr, x, dd
+	a = td.attr
+	thr = td.decay
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		xi = a[i]
+		if (v >= 9) {
+			x = floor(xi)
+			dd = cols(nb) - x
+			if (v == 9) tot = tot + abs(dd)
+			else if (v == 10) tot = tot + (dd > 0 ? dd : 0)
+			else tot = tot + (dd < 0 ? -dd : 0)
+			continue
+		}
+		for (m=1; m<=cols(nb); m++) {
+			xj = a[nb[m]]
+			if (v == 0) tot = tot + xi^2 + xj^2
+			else if (v == 1) tot = tot + (xj - xi)^2
+			else if (v == 2) tot = tot + (xj - xi) * xi
+			else if (v == 3) tot = tot + (xi > xj ? -1 : (xi < xj ? 1 : 0))
+			else if (v == 4) tot = tot + (abs(xj - xi) >= 1e-6)
+			else if (v == 5) tot = tot + (xi <= thr + 1e-12)
+			else if (v == 6) tot = tot + (xi >= thr - 1e-12)
+			else if (v == 7) tot = tot + (xj <= thr + 1e-12)
+			else tot = tot + (xj >= thr - 1e-12)
+		}
+	}
+	return(tot)
+}
+real rowvector _saom_ctchg(string scalar nm) {
+	errprintf("nwsaom: " + nm + " needs the native plugin (protocol 41 or later); there is no Mata implementation of this effect.\n")
+	exit(198)
+	return(0)
+}
+real rowvector stat_saom_egoplusaltsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(0, G, td))
+real rowvector change_saom_egoplusaltsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egoplusaltsqx"))
+real rowvector stat_saom_diffsqx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(1, G, td))
+real rowvector change_saom_diffsqx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("diffsqx"))
+real rowvector stat_saom_egodiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(2, G, td))
+real rowvector change_saom_egodiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egodiffx"))
+real rowvector stat_saom_althigheregox(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(3, G, td))
+real rowvector change_saom_althigheregox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("althigheregox"))
+real rowvector stat_saom_unequalx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(4, G, td))
+real rowvector change_saom_unequalx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("unequalx"))
+real rowvector stat_saom_egolthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(5, G, td))
+real rowvector change_saom_egolthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egolthresholdx"))
+real rowvector stat_saom_egorthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(6, G, td))
+real rowvector change_saom_egorthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("egorthresholdx"))
+real rowvector stat_saom_altlthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(7, G, td))
+real rowvector change_saom_altlthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("altlthresholdx"))
+real rowvector stat_saom_altrthresholdx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(8, G, td))
+real rowvector change_saom_altrthresholdx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("altrthresholdx"))
+real rowvector stat_saom_degabsdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(9, G, td))
+real rowvector change_saom_degabsdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degabsdiffx"))
+real rowvector stat_saom_degposdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(10, G, td))
+real rowvector change_saom_degposdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degposdiffx"))
+real rowvector stat_saom_degnegdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(11, G, td))
+real rowvector change_saom_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degnegdiffx"))
+
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -8643,7 +8708,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8663,6 +8728,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv34 = 0
 	needv39 = 0
 	needv40 = 0
+	needv41 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8755,6 +8821,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			tdt = *M.td[t]
 			cfg.p1[t] = tdt.decay
 			needv40 = 1
+		}
+		else if (nm == "egoplusaltsqx" | nm == "diffsqx" | nm == "egodiffx" | nm == "althigheregox" | nm == "unequalx" | nm == "egolthresholdx" | nm == "egorthresholdx" | nm == "altlthresholdx" | nm == "altrthresholdx" | nm == "degabsdiffx" | nm == "degposdiffx" | nm == "degnegdiffx") {
+			cfg.termcodes[t] = 189 + (nm == "egoplusaltsqx" ? 0 : (nm == "diffsqx" ? 1 : (nm == "egodiffx" ? 2 : (nm == "althigheregox" ? 3 : (nm == "unequalx" ? 4 : (nm == "egolthresholdx" ? 5 : (nm == "egorthresholdx" ? 6 : (nm == "altlthresholdx" ? 7 : (nm == "altrthresholdx" ? 8 : (nm == "degabsdiffx" ? 9 : (nm == "degposdiffx" ? 10 : 11)))))))))))
+			tdt = *M.td[t]
+			nextattr++
+			cfg.attridx[t] = nextattr
+			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+			cfg.p1[t] = tdt.decay
+			needv41 = 1
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -9106,6 +9181,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv41) {
+		if (SaomNativePluginVersion() < 41) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 41 (covariate threshold / contrast effects)"
 		}
 	}
 	if (cfg.eligible & needv40) {
@@ -9891,6 +9972,18 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "degplusc") return("degree activity + popularity (centred)")
 	if (term == "avdeg") return("average degree")
 	if (term == "transtriads") return("transitive triads")
+	if (term == "egoplusaltsqx") return(v + " sq. ego and alt")
+	if (term == "diffsqx") return(v + " diff. squared")
+	if (term == "egodiffx") return(v + " ego * difference")
+	if (term == "althigheregox") return(v + " sign(alt - ego)")
+	if (term == "unequalx") return(v + " unequal")
+	if (term == "egolthresholdx") return(v + " left threshold ego")
+	if (term == "egorthresholdx") return(v + " right threshold ego")
+	if (term == "altlthresholdx") return(v + " left threshold alter")
+	if (term == "altrthresholdx") return(v + " right threshold alter")
+	if (term == "degabsdiffx") return(v + " abs. (outdegree - x)")
+	if (term == "degposdiffx") return(v + " pos. (outdegree - x)")
+	if (term == "degnegdiffx") return(v + " neg. (x - outdegree)")
 	if (term == "absdiffx") return(v + " abs. difference")
 	if (term == "diffx") return(v + " difference")
 	if (term == "higher") return(v + " higher")
