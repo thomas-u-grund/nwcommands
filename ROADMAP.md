@@ -80,6 +80,8 @@ scale.
 
 - Leiden community detection, refining Louvain's known tendency toward badly-connected
   communities.
+- `nwsaom`: a multi-group meta-analysis of separate Method-of-Moments fits (many small networks, such as
+  classrooms, pooled with random effects, as RSiena's `siena08`).
 - Larger-scale layouts for `nwplot` (current layouts are designed for graphs up to a few hundred
   to low thousands of nodes).
 - Faster `nwplot` layout computation — the current (Mata) layout algorithm is noticeably slow;
