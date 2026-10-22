@@ -7152,8 +7152,12 @@ real rowvector SaomBehaviorModel::full_statistic(class SaomBehavior scalar Beh, 
 	real rowvector out
 	real scalar t
 
+	external string scalar __sb_cur_name
 	out = J(1, nterms, 0)
-	for (t=1; t<=nterms; t++) out[t] = (*statfn[t])(Beh, G)[1]
+	for (t=1; t<=nterms; t++) {
+		__sb_cur_name = names[t]
+		out[t] = (*statfn[t])(Beh, G)[1]
+	}
 	return(out)
 }
 
@@ -9838,6 +9842,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 		else if (nm == "quadratic") cfg.termcodes[t] = 102
 		else if (nm == "avalt") cfg.termcodes[t] = 103
 		else if (nm == "avsim") cfg.termcodes[t] = 104
+		else if (substr(nm, 1, 3) == "bn_") {
+			cfg.termcodes[t] = strtoreal(substr(substr(nm, 4, .), 1, strpos(substr(nm, 4, .), "_") - 1))
+			if (cfg.fntype[t] != 0) cfg.eligible = 0
+			cfg.needv43 = 1
+		}
 		else if (_sb_bsparse(nm)[1] >= 0) {
 			cfg.termcodes[t] = 300 + 16 * _sb_bsparse(nm)[1] + _sb_bsparse(nm)[2] - 1
 			if (cfg.fntype[t] != 0) cfg.eligible = 0
@@ -12470,7 +12479,7 @@ real scalar change_saom_bs19_7(class SaomBehavior scalar Beh, class ErgmGraph sc
 real rowvector stat_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 8))
 real scalar change_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
 string rowvector _sb_bsfamilies() {
-	return(("avxinalt", "totxinalt", "avxrecalt", "totxrecalt", "avsamexinalt", "totsamexinalt", "avsamexrecalt", "totsamexrecalt", "avaltsamex", "totaltsamex", "avrecaltsamex", "totrecaltsamex", "avaltaltx", "avsimaltx", "totsimaltx", "minxalt", "maxxalt", "degabscontrx", "degposcontrx", "degnegcontrx"))
+	return(("avxinalt", "totxinalt", "avxrecalt", "totxrecalt", "avsamexinalt", "totsamexinalt", "avsamexrecalt", "totsamexrecalt", "avaltsamex", "totaltsamex", "avrecaltsamex", "totrecaltsamex", "avaltaltx", "avsimaltx", "totsimaltx", "minxalt", "maxxalt", "degabscontrx", "degposcontrx", "degnegcontrx", "avxaltdist2", "totxaltdist2", "avtxaltdist2", "totaxaltdist2", "avxinaltdist2", "totxinaltdist2", "avtxinaltdist2", "totaxinaltdist2", "avsimegox", "totsimegox", "avaltegox", "totaltegox"))
 }
 /* "bs12_3" -> (12, 3), else (-1, 0) */
 real rowvector _sb_bsparse(string scalar nm) {
@@ -12480,7 +12489,7 @@ real rowvector _sb_bsparse(string scalar nm) {
 	if (u == 0) return((-1, 0))
 	f = strtoreal(substr(nm, 3, u - 3))
 	sl = strtoreal(substr(nm, u + 1, .))
-	if (f >= 0 & f < 20 & sl >= 1 & sl <= 8 & f == floor(f) & sl == floor(sl)) return((f, sl))
+	if (f >= 0 & f < 32 & sl >= 1 & sl <= 8 & f == floor(f) & sl == floor(sl)) return((f, sl))
 	return((-1, 0))
 }
 
@@ -12552,6 +12561,52 @@ real rowvector stat_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph
 real scalar change_saom_totinalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
 string rowvector _sb_bqtokens() return(("avinsim", "totinsim", "avinsimpopalt", "totinsimpopalt", "avsimrecip", "totsimrecip", "avsimrecpop", "totsimrecpop", "popalt", "totpopalt", "avinalt", "totinalt"))
 
+/* protocol 47: the generic bridge for native-only BEHAVIOR terms: bn_<code>_<slot>. The observed statistic comes from the plugin (BEHSTAT); the term name is
+   made known to the statistic function through the external string __sb_cur_name that SaomBehaviorModel::full_statistic() sets. */
+real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar code, real scalar sl) {
+	real matrix E
+	real rowvector nb
+	real scalar i, m, ne, n, junk
+	string scalar origframe
+	n = G.n
+	E = J(0, 2, 0)
+	for (i=1; i<=n; i++) {
+		nb = G.neighbors_out(i)
+		for (m=1; m<=cols(nb); m++) E = E \ (i, nb[m])
+	}
+	ne = rows(E)
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_behstat")
+	stata("frame create __saom_behstat")
+	st_framecurrent("__saom_behstat")
+	st_addobs(max((ne, n, 1)))
+	junk = st_addvar("double", ("ev1", "ev2", "bb", "cc"))
+	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
+	st_store((1::n), "bb", Beh.values)
+	for (i=1; i<=n; i++) st_store(i, "cc", (sl > 0 ? _sb_cv(i, sl) : 0))
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim ev1 ev2 bb cc, " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + char(34))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_behstat")
+	return(st_numscalar("__saom_behstat_val"))
+}
+real rowvector stat_saom_bn(class SaomBehavior scalar Beh, class ErgmGraph scalar G) {
+	external string scalar __sb_cur_name
+	string scalar nm
+	real scalar u
+	nm = substr(__sb_cur_name, 4, .)
+	u = strpos(nm, "_")
+	return(SaomNativeBehStat(Beh, G, strtoreal(substr(nm, 1, u - 1)), strtoreal(substr(nm, u + 1, .))))
+}
+
+string rowvector _sb_bnqtokens() return(("avaltdist2", "totaltdist2", "avtaltdist2", "totaaltdist2", "avinaltdist2", "totinaltdist2", "avtinaltdist2", "totainaltdist2"))
+real scalar _sb_bnqcode(string scalar nm) {
+	real scalar k
+	string rowvector tk
+	tk = _sb_bnqtokens()
+	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(832 + k - 1)
+	return(0)
+}
 /* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
 string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
@@ -12581,6 +12636,14 @@ string scalar _sb_label(string scalar base) {
 	if (base == "totpopalt") return("total popularity alter")
 	if (base == "avinalt") return("average in-alter")
 	if (base == "totinalt") return("total in-alter")
+	if (base == "avaltdist2") return("average alter at distance 2")
+	if (base == "totaltdist2") return("total alter at distance 2")
+	if (base == "avtaltdist2") return("average alter at distance 2 (ego average)")
+	if (base == "totaaltdist2") return("total alter at distance 2 (alter average)")
+	if (base == "avinaltdist2") return("average in-alter at distance 2")
+	if (base == "totinaltdist2") return("total in-alter at distance 2")
+	if (base == "avtinaltdist2") return("average in-alter at distance 2 (ego average)")
+	if (base == "totainaltdist2") return("total in-alter at distance 2 (alter average)")
 	if (base == "indeg") return("indegree")
 	if (base == "outdeg") return("outdegree")
 	if (base == "recipdeg") return("reciprocated degree")
@@ -12709,6 +12772,8 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
 		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
 		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
+		else if (_sb_bnqcode(nm) > 0) Mbeh.addterm("bn_" + strofreal(_sb_bnqcode(nm)) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
+		else if (_sb_bsparse(nm)[1] >= 20) Mbeh.addterm("bn_" + strofreal(300 + 16 * _sb_bsparse(nm)[1] + _sb_bsparse(nm)[2] - 1) + "_" + strofreal(_sb_bsparse(nm)[2]), &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (nm == "bs0_1") Mbeh.addterm("bs0_1", &stat_saom_bs0_1(), &change_saom_bs0_1(), pre + "bs0_1")
 		else if (nm == "bs0_2") Mbeh.addterm("bs0_2", &stat_saom_bs0_2(), &change_saom_bs0_2(), pre + "bs0_2")
 		else if (nm == "bs0_3") Mbeh.addterm("bs0_3", &stat_saom_bs0_3(), &change_saom_bs0_3(), pre + "bs0_3")

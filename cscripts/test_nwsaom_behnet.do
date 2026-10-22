@@ -29,7 +29,7 @@ forvalues w = 1/3 {
 gen double z1 = mod(_n * 7, 5)
 gen double z2 = mod(_n * 7 + (_n > 20), 5)
 gen double z3 = mod(_n * 7 + (_n > 20) + (_n > 10), 5)
-foreach ef in indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego avinsim totinsim avinsimpopalt totinsimpopalt avsimrecip totsimrecip avsimrecpop totsimrecpop popalt totpopalt avinalt totinalt {
+foreach ef in indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego avinsim totinsim avinsimpopalt totinsimpopalt avsimrecip totsimrecip avsimrecpop totsimrecpop popalt totpopalt avinalt totinalt avaltdist2 totaltdist2 avtaltdist2 totaaltdist2 avinaltdist2 totinaltdist2 avtinaltdist2 totainaltdist2 {
 	capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) beheff(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498)
 	if _rc == 0 {
@@ -95,7 +95,7 @@ if _rc == 0 {
 	assert strpos("`cn'", "beh_from_tw") & strpos("`cn'", "beh_avxalt_tw")
 }
 * behavior effects of the network x a covariate (behx(family:var), protocol 43)
-foreach fm in avxinalt totxrecalt avsamexinalt totrecaltsamex avaltaltx avsimaltx minxalt maxxalt degabscontrx {
+foreach fm in avxinalt totxrecalt avsamexinalt totrecaltsamex avaltaltx avsimaltx minxalt maxxalt degabscontrx avxaltdist2 totaxinaltdist2 avsimegox totaltegox {
 	capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) behx(`fm':cv1) k0(10) k3(30) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 {
