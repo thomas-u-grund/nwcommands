@@ -3221,8 +3221,8 @@ real scalar _saom_bvcode(string scalar nm) {
 	string rowvector nms
 	real rowvector cds
 	real scalar k
-	nms = ("diffx", "higher", "egosqx", "altsqx", "samexrecip", "absdiffx", "egoxaltx", "samextranstrip", "diffxtranstrip", "homxtranstrip", "samexoutact", "diffxoutact", "samexreciact", "diffxreciact", "homxoutact", "altxoutact", "inpopx", "outpopx", "inactx", "outactx", "samexinpop", "diffxinpop", "egoplusaltsqx", "diffsqx", "egodiffx", "althigheregox", "unequalx", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx", "degabsdiffx", "degposdiffx", "degnegdiffx")
-	cds = (48, 49, 50, 51, 52, 42, 43, 165, 166, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200)
+	nms = ("diffx", "higher", "egosqx", "altsqx", "samexrecip", "absdiffx", "egoxaltx", "samex", "samextranstrip", "diffxtranstrip", "homxtranstrip", "samexoutact", "diffxoutact", "samexreciact", "diffxreciact", "homxoutact", "altxoutact", "inpopx", "outpopx", "inactx", "outactx", "samexinpop", "diffxinpop", "egoplusaltsqx", "diffsqx", "egodiffx", "althigheregox", "unequalx", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx", "degabsdiffx", "degposdiffx", "degnegdiffx")
+	cds = (48, 49, 50, 51, 52, 42, 43, 3, 165, 166, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200)
 	for (k=1; k<=cols(nms); k++) if (nms[k] == nm) return(cds[k])
 	return(0)
 }
@@ -3231,6 +3231,15 @@ real scalar change_saom_bv(string scalar nm) {
 	exit(198)
 	return(0)
 }
+real rowvector stat_saom_bv_samex(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real matrix ties
+	real scalar k, cnt
+	ties = G.all_ties()
+	cnt = 0
+	for (k=1; k<=rows(ties); k++) if (td.attr[ties[k,1]] == td.attr[ties[k,2]]) cnt++
+	return(cnt)
+}
+real rowvector change_saom_bv_samex(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("samex"))
 real rowvector stat_saom_bv_diffx(class ErgmGraph scalar G, class ErgmTermData scalar td) {
 	class ErgmTermData scalar t2
 	t2 = ErgmTermData()		// a class assignment is a reference: build a fresh object
