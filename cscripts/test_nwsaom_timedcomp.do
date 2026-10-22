@@ -58,6 +58,14 @@ di as text "behavior() with joinat()/leaveat() PASS"
 capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree behavior(bh1 bh2 bh3 : linear behsim) joinat(jn) leaveat(lv) k3(50)
 assert _rc == 198
 
+* two co-evolving behaviors with timed composition change
+gen double sm1 = mod(_n * 5, 4)
+gen double sm2 = mod(_n * 5 + (_n > 15), 4)
+gen double sm3 = mod(_n * 5 + (_n > 15) + (_n > 7), 4)
+nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity behavior(bh1 bh2 bh3 : linear quadratic | sm1 sm2 sm3 : linear quadratic) joinat(jn) leaveat(lv) k0(30) k3(100) seed(6)
+assert e(b)[1,1] < .
+di as text "several behaviors with joinat()/leaveat() PASS"
+
 * invalid input
 capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree joinat(jn) leaveat(lv) present(jn jn jn) k3(50)
 assert _rc == 198

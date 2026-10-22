@@ -2309,7 +2309,7 @@ program nwsaom, eclass
 	// non-directed networks, ratecov(), network endowment/creation, structural().
 	local __nwsaom_mbtotal = `__nwsaom_pbeh'
 	if `__nwsaom_mb' {
-		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh structural {
+		foreach __opt in symmetric ratecov present missnet missbeh structural {
 			if "``__opt''" != "" {
 				di "{err}several behaviors in {bf:behavior()} cannot yet be combined with {bf:`__opt'()}/{bf:`__opt'}."
 				error 198
@@ -2318,6 +2318,16 @@ program nwsaom, eclass
 		if `__nwsaom_hasnetgate' {
 			di "{err}several behaviors in {bf:behavior()} cannot yet be combined with {bf:endow()}/{bf:creation()} of network effects (the behavior effects can have them)."
 			error 198
+		}
+		if `__nwsaom_hastimed' {
+			forvalues __b = 1/`__nwsaom_nbehv' {
+				foreach __e of local __nwsaom_mbe`__b' {
+					if inlist("`__e'", "behsim", "linearendow", "linearcreation", "quadraticendow", "quadraticcreation") | inlist("`__e'", "avaltendow", "avaltcreation", "avsimendow", "avsimcreation") {
+						di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with the behavior effect {bf:`__e'}."
+						error 198
+					}
+				}
+			}
 		}
 		forvalues __b = 1/`__nwsaom_nbehv' {
 			local __v1 : word 1 of `__nwsaom_mbv`__b''

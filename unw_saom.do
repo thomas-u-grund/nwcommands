@@ -9318,8 +9318,10 @@ struct SaomMBResult {
 struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, class ErgmModel scalar M,
 	real rowvector thetaNet, pointer(class SaomBehavior scalar) rowvector Behs,
 	pointer(class SaomBehaviorModel scalar) rowvector Mbehs, real rowvector thetaBeh, real rowvector off,
-	real scalar rateNet, real rowvector ratesBeh) {
+	real scalar rateNet, real rowvector ratesBeh, | real colvector present) {
 
+	real colvector presentIdx
+	real scalar npres
 	struct SaomMBResult scalar res
 	class SaomBehavior scalar Beh
 	class SaomBehaviorModel scalar Mbeh
@@ -9339,8 +9341,15 @@ struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, 
 	res.nchangesBeh = J(1, nb, 0)
 	hasbehsim = SaomHasBehSim(M)
 	if (hasbehsim) SaomBehSimSync(M, (*Behs[1]).values)
-	totalRateNet = n * rateNet
-	grandRate = totalRateNet + n * sum(ratesBeh)
+	// composition change: only the present actors act (alters stay unrestricted, as RSiena)
+	npres = n
+	presentIdx = (1::n)
+	if (args() >= 10) {
+		presentIdx = select((1::n), present :!= 0)
+		npres = rows(presentIdx)
+	}
+	totalRateNet = npres * rateNet
+	grandRate = totalRateNet + npres * sum(ratesBeh)
 
 	t = 0
 	while (t < 1) {
@@ -9349,7 +9358,7 @@ struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, 
 		draw = runiform(1,1) * grandRate
 		if (draw <= totalRateNet) {
 			// --- network ministep, scored ---
-			i = ceil(runiform(1,1) * n)
+			i = presentIdx[ceil(runiform(1,1) * npres)]
 			chgmat = J(n, pNet, 0)
 			u = J(1, n, 0)
 			maxu = 0
@@ -9394,17 +9403,17 @@ struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, 
 			rem = draw - totalRateNet
 			b = nb
 			for (j=1; j<=nb; j++) {
-				if (rem <= n * ratesBeh[j]) {
+				if (rem <= npres * ratesBeh[j]) {
 					b = j
 					break
 				}
-				rem = rem - n * ratesBeh[j]
+				rem = rem - npres * ratesBeh[j]
 			}
 			Beh = *Behs[b]
 			Mbeh = *Mbehs[b]
 			pB = Mbeh.nparam()
 			thB = thetaBeh[off[b]..(off[b]+pB-1)]
-			i = ceil(runiform(1,1) * Beh.n)
+			i = presentIdx[ceil(runiform(1,1) * npres)]
 			cur = Beh.value(i)
 
 			uDown = .
@@ -9461,10 +9470,10 @@ struct SaomMBResult scalar SaomSimulateIntervalCoevMB(class ErgmGraph scalar G, 
 void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real scalar P,
 	struct SaomNativeConfig scalar cfg, real rowvector codes, real rowvector fnt, real rowvector pB,
 	pointer(real colvector) matrix Bw, real rowvector bmin, real rowvector bmax, real rowvector bsim,
-	real rowvector bover) {
+	real rowvector bover, | real scalar hastimed, real matrix presentPd, pointer(real matrix) rowvector compEv) {
 
-	real matrix E, t
-	real scalar n, pd, nattr, nb, b, nrows, i, junk, o, k, sframe
+	real matrix E, t, EV
+	real scalar n, pd, nattr, nb, b, nrows, i, junk, o, k, sframe, haspres
 	real rowvector off
 	string rowvector names
 	string scalar origframe, argstr
@@ -9478,14 +9487,19 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t)
 	}
 	nattr = cols(cfg.attrmat)
-	nrows = max((rows(E), n, rows(cfg.structpairs), 1))
+	haspres = (args() >= 13 ? hastimed : 0)
+	EV = J(0, 4, 0)
+	if (haspres) for (pd=1; pd<=P; pd++) if (compEv[pd] != NULL) if (rows(*compEv[pd]) > 0) EV = EV \ (J(rows(*compEv[pd]), 1, pd), *compEv[pd])
+	nrows = max((rows(E), n, rows(cfg.structpairs), rows(EV), 1))
 
 	names = ("e_pd", "e_i", "e_j")
 	for (i=1; i<=nattr; i++) names = names, "a" + strofreal(i)
 	for (pd=1; pd<=P; pd++) names = names, "b" + strofreal(pd)
+	if (haspres) for (pd=1; pd<=P; pd++) names = names, "pr" + strofreal(pd)
 	for (b=2; b<=nb; b++) for (pd=1; pd<=P; pd++) names = names, "x" + strofreal(b) + "_" + strofreal(pd)
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
+	if (rows(EV) > 0) names = names, ("ev_p", "ev_t", "ev_a", "ev_k")
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_batch")
@@ -9496,6 +9510,8 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
 	for (i=1; i<=nattr; i++) st_store((1::n), "a" + strofreal(i), cfg.attrmat[1::n, i])
 	for (pd=1; pd<=P; pd++) st_store((1::n), "b" + strofreal(pd), *Bw[1,pd])
+	if (haspres) for (pd=1; pd<=P; pd++) st_store((1::n), "pr" + strofreal(pd), presentPd[., pd])
+	if (rows(EV) > 0) st_store((1::rows(EV)), ("ev_p", "ev_t", "ev_a", "ev_k"), EV)
 	for (b=2; b<=nb; b++) for (pd=1; pd<=P; pd++) st_store((1::n), "x" + strofreal(b) + "_" + strofreal(pd), *Bw[b,pd])
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
 
@@ -9504,7 +9520,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	argstr = argstr + " " + strofreal(pB[1])
 	for (k=off[1]; k<off[2]; k++) argstr = argstr + " " + strofreal(codes[k])
 	argstr = argstr + " " + strofreal(bmin[1], "%25.17g") + " " + strofreal(bmax[1], "%25.17g") + " " + strofreal(bsim[1], "%25.17g") + " " + strofreal(bover[1], "%25.17g")
-	argstr = argstr + " 0 0 " + strofreal(rows(E)) + " 0"
+	argstr = argstr + " 0 " + strofreal(haspres) + " " + strofreal(rows(E)) + " 0"
 	argstr = argstr + SaomTrailer11(cfg, cols(cfg.termcodes), fnt[off[1]..(off[2]-1)], sframe)
 	argstr = argstr + " 0 0"
 	argstr = argstr + " " + strofreal(nb - 1)
@@ -9514,6 +9530,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 		argstr = argstr + " " + strofreal(bmin[b], "%25.17g") + " " + strofreal(bmax[b], "%25.17g") + " " + strofreal(bsim[b], "%25.17g") + " " + strofreal(bover[b], "%25.17g")
 		for (k=off[b]; k<off[b+1]; k++) argstr = argstr + " " + strofreal(fnt[k])
 	}
+	argstr = argstr + " 0 " + strofreal(rows(EV))		// no time-varying attributes; protocol 27: composition-change events
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
@@ -9577,6 +9594,52 @@ struct SaomMBCtx {
 	real matrix targetRateBeh			// nb x P
 	real scalar wantper
 	real matrix Zper, Sper
+	real scalar hastimed				// composition change at fractional times (joinat()/leaveat())
+	real matrix presentPd				// n x P: active at the start of the period
+	real rowvector npresentPd			// time-integrated number of active actors
+	pointer(real matrix) rowvector compEv
+}
+
+/* one period of the several-behaviors model with composition change at fractional times (see SaomCoevPeriodTimed()) */
+void SaomMBPeriodTimed(struct SaomMBCtx scalar C, real rowvector thetaNet, real rowvector thetaBeh, real scalar rateNet,
+	real rowvector ratesBehPd, real scalar pd, pointer(class SaomBehavior scalar) rowvector Behs,
+	class ErgmGraph scalar Gwork, struct SaomMBResult scalar sres) {
+
+	struct SaomMBResult scalar seg
+	real colvector act
+	real matrix ev
+	real scalar t, s, tend, d, j, b
+
+	ev = *C.compEv[pd]
+	act = (C.presentPd[., pd] :!= 0)
+	sres.scoreNet = J(1, C.pNet, 0)
+	sres.scoreBeh = J(1, C.pBehTot, 0)
+	sres.stepsNet = 0
+	sres.nchangesNet = 0
+	sres.stepsBeh = J(1, C.nb, 0)
+	sres.nchangesBeh = J(1, C.nb, 0)
+	t = 0
+	for (s=1; s<=rows(ev)+1; s++) {
+		tend = (s <= rows(ev) ? ev[s,1] : 1)
+		d = tend - t
+		if (d > 1e-12) {
+			seg = SaomSimulateIntervalCoevMB(Gwork, *C.Mp, thetaNet, Behs, C.Mbehs, thetaBeh, C.off, rateNet*d, ratesBehPd*d, act)
+			sres.scoreNet = sres.scoreNet + seg.scoreNet
+			sres.scoreBeh = sres.scoreBeh + seg.scoreBeh
+			sres.stepsNet = sres.stepsNet + seg.stepsNet
+			sres.nchangesNet = sres.nchangesNet + seg.nchangesNet
+			sres.stepsBeh = sres.stepsBeh + seg.stepsBeh
+			sres.nchangesBeh = sres.nchangesBeh + seg.nchangesBeh
+		}
+		if (s <= rows(ev)) SaomTimedApply(Gwork, *C.Gwaves[pd], ev[s,2], ev[s,3], act)
+		t = tend
+	}
+	if (rows(ev) > 0) {
+		for (j=1; j<=C.n; j++) if (!act[j]) {
+			SaomTimedApply(Gwork, *C.Gwaves[pd], j, 3, act)
+			for (b=1; b<=C.nb; b++) (*Behs[b]).setvalue(j, (*C.Behwaves[b,pd])[j])
+		}
+	}
 }
 
 /* one replicate through the Mata engine: deviations and scores (1 x ptot) and, per period, the same (P x ptot) */
@@ -9613,7 +9676,8 @@ void SaomMBReplicate(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 			Behs[b] = &(SaomBehavior())
 			(*Behs[b]).init(*C.Behwaves[b,pd], C.behmin[b], C.behmax[b], C.overallMean[b], C.simMean[b])
 		}
-		sres = SaomSimulateIntervalCoevMB(Gwork, *C.Mp, thetaNet, Behs, C.Mbehs, thetaBeh, C.off, ratesNet[pd], ratesBeh[., pd]')
+		if (C.hastimed) SaomMBPeriodTimed(C, thetaNet, thetaBeh, ratesNet[pd], ratesBeh[., pd]', pd, Behs, Gwork, sres)
+		else sres = SaomSimulateIntervalCoevMB(Gwork, *C.Mp, thetaNet, Behs, C.Mbehs, thetaBeh, C.off, ratesNet[pd], ratesBeh[., pd]')
 		if (hasbehsim) SaomBehSimSync(*C.Mp, *C.Behwaves[1,pd])		// lagged: the behsim statistic uses the starting behavior
 		simstat = (*C.Mp).full_statistic(Gwork)
 		for (b=1; b<=nb; b++) {
@@ -9629,8 +9693,8 @@ void SaomMBReplicate(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 		}
 		if (want_score) {
 			scop[pd, 1..p] = (sres.scoreNet, sres.scoreBeh)
-			scop[pd, p + pd] = sres.stepsNet / ratesNet[pd] - C.n
-			for (b=1; b<=nb; b++) scop[pd, p + P + (b-1)*P + pd] = sres.stepsBeh[b] / ratesBeh[b,pd] - C.n
+			scop[pd, p + pd] = sres.stepsNet / ratesNet[pd] - C.npresentPd[pd]
+			for (b=1; b<=nb; b++) scop[pd, p + P + (b-1)*P + pd] = sres.stepsBeh[b] / ratesBeh[b,pd] - C.npresentPd[pd]
 		}
 		dev = dev + devp[pd,.]
 		sco = sco + scop[pd,.]
@@ -9669,13 +9733,13 @@ void SaomMBSimManyCB(struct SaomMBCtx scalar C, real rowvector par, real scalar 
 		for (pd=1; pd<=P; pd++) {
 			o6 = 2*p + 6*(pd-1)
 			Z[., p + pd] = out[., o6+1] :- C.targetRateNet[pd]
-			if (want_score) S[., p + pd] = out[., o6+3] / ratesNet[pd] :- C.n
+			if (want_score) S[., p + pd] = out[., o6+3] / ratesNet[pd] :- C.npresentPd[pd]
 			Z[., p + P + pd] = out[., o6+2] :- C.targetRateBeh[1,pd]
-			if (want_score) S[., p + P + pd] = out[., o6+4] / ratesBeh[1,pd] :- C.n
+			if (want_score) S[., p + P + pd] = out[., o6+4] / ratesBeh[1,pd] :- C.npresentPd[pd]
 			for (b=2; b<=nb; b++) {
 				bx = baseX + 3*((b-2)*P + (pd-1))
 				Z[., p + P + (b-1)*P + pd] = out[., bx+1] :- C.targetRateBeh[b,pd]
-				if (want_score) S[., p + P + (b-1)*P + pd] = out[., bx+2] / ratesBeh[b,pd] :- C.n
+				if (want_score) S[., p + P + (b-1)*P + pd] = out[., bx+2] / ratesBeh[b,pd] :- C.npresentPd[pd]
 			}
 			if (doper) {
 				blk = (pd-1) * C.ptot
@@ -9760,6 +9824,10 @@ struct SaomMBCtx scalar SaomMBInit(
 	C.overallMean = overallMean
 	C.wantper = 0
 	zero = J(C.n, 1, 0)
+	C.presentPd = J(C.n, C.P, 1)
+	C.npresentPd = J(1, C.P, C.n)
+	C.compEv = J(1, C.P, NULL)
+	C.hastimed = SaomTimedLoad(C.n, C.P, C.presentPd, C.compEv, C.npresentPd)
 
 	// native dispatch: every term on every side natively covered, and a plugin that knows several behaviors
 	C.cfg = SaomNativeSetup(M)
@@ -9773,7 +9841,7 @@ struct SaomMBCtx scalar SaomMBInit(
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= 19)
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -9802,10 +9870,10 @@ struct SaomMBCtx scalar SaomMBInit(
 			ratesBeh0[b,pd] = SaomBehaviorRateStart(*Behwaves[b,pd], *Behwaves[b,pd+1])
 		}
 		C.targetRateNet[pd] = SaomCountDiffering(*Gwaves[pd], Gend)
-		ratesNet0[pd] = SaomRateStart(C.n, C.targetRateNet[pd])
+		ratesNet0[pd] = SaomRateStart(C.npresentPd[pd], C.targetRateNet[pd])
 	}
 
-	if (C.use_native) SaomBatchSetupMB(Gwaves, C.P, C.cfg, C.codes, C.fnt, C.pB, Behwaves, behmin, behmax, simMean, overallMean)
+	if (C.use_native) SaomBatchSetupMB(Gwaves, C.P, C.cfg, C.codes, C.fnt, C.pB, Behwaves, behmin, behmax, simMean, overallMean, C.hastimed, C.presentPd, C.compEv)
 	ratesNet0out = ratesNet0
 	ratesBeh0out = rowshape(ratesBeh0, 1)
 	return(C)

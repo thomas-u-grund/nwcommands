@@ -878,7 +878,7 @@ deviations from the targets as {cmd:siena07}, and s50 with 10 joiners/leavers gi
 reciprocity, transitive triplets, both rates, and a rate covariate). The same rules apply to {opt present()}: since 2026-10-22 an
 absent actor stays among the alters of an active actor, as in RSiena. As in RSiena (option 1), the ties an absent actor has in the
 data are used as given - code them 0 for the waves in which the actor is absent - and the distance (the rate target) counts them.
-Works with one co-evolving {opt behavior()} (not with behsim or endowment/creation effects); works with {opt symmetric} (not together with {opt ratecov()}); not yet combined with several behaviors, {opt endow()}/{opt creation()} or {opt tvcov()}.
+Works with co-evolving {opt behavior()} (one or several behaviors; not with behsim or endowment/creation effects); works with {opt symmetric} (not together with {opt ratecov()}); not yet combined with {opt endow()}/{opt creation()} or {opt tvcov()}.
 
 {pstd}
 {bf:Genuinely out of scope}: RSiena's composition-change options 2-4 (other treatments of the data of absent actors), several
