@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(varlist numeric) DIFFSQX(varlist numeric) EGODIFFX(varlist numeric) ALTHIGHEREGOX(varlist numeric) UNEQUALX(varlist numeric) EGOLTHRESHOLDX(varlist numeric) EGORTHRESHOLDX(varlist numeric) ALTLTHRESHOLDX(varlist numeric) ALTRTHRESHOLDX(varlist numeric) DEGABSDIFFX(varlist numeric) DEGPOSDIFFX(varlist numeric) DEGNEGDIFFX(varlist numeric) COVTHRESHOLD(real 0) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(varlist numeric) DIFFSQX(varlist numeric) EGODIFFX(varlist numeric) ALTHIGHEREGOX(varlist numeric) UNEQUALX(varlist numeric) EGOLTHRESHOLDX(varlist numeric) EGORTHRESHOLDX(varlist numeric) ALTLTHRESHOLDX(varlist numeric) ALTRTHRESHOLDX(varlist numeric) DEGABSDIFFX(varlist numeric) DEGPOSDIFFX(varlist numeric) DEGNEGDIFFX(varlist numeric) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -869,11 +869,43 @@ program nwsaom, eclass
 	// (2026-10-01; RSiena allows several RateX effects), the actor's rate
 	// is rate*exp(sum_k b_k x_k). ratecovcoef(numlist): starting values,
 	// one per variable or one for all.
-	local __nwsaom_hasratecov = ("`ratecov'" != "")
+	// protocol 42: RSiena's structural rate effects outRate / inRate / recipRate and the Inv / Log versions: rate covariates that follow the
+	// network (the actor's rate is rate*exp(sum_k b_k f_k(degree))); estimated as further covariate-rate coefficients
+	local __nwsaom_srtypes ""
+	local __nwsaom_srnames ""
+	local __nwsaom_nsr 0
+	local __sri 0
+	foreach __s in outrate inrate reciprate outrateinv inrateinv reciprateinv outratelog inratelog recipratelog {
+		local ++__sri
+		if "``__s''" != "" {
+			local ++__nwsaom_nsr
+			local __nwsaom_srtypes "`__nwsaom_srtypes' `__sri'"
+			local __nwsaom_srnames "`__nwsaom_srnames' `__s'"
+		}
+	}
+	local __nwsaom_srtypes = trim("`__nwsaom_srtypes'")
+	capture mata: mata drop __saom_srtypes
+	if `__nwsaom_nsr' > 0 {
+		foreach __o in symmetric present joinat leaveat missnet missbeh behavior structural interact {
+			if "``__o''" != "" | (`__nwsaom_tm' & "`__o'" == "symmetric") {
+				di "{err}the structural rate effects (outrate, inrate, ...) are not yet available together with {bf:`__o'}."
+				error 198
+			}
+		}
+		if `__nwsaom_tm' {
+			di "{err}the structural rate effects (outrate, inrate, ...) are not yet available for a two-mode network."
+			error 198
+		}
+		mata: __saom_srtypes = (`=subinstr("`__nwsaom_srtypes'", " ", ",", .)')
+	}
+	local __nwsaom_hasratecov = ("`ratecov'" != "" | `__nwsaom_nsr' > 0)
 	local __nwsaom_nratecov 0
+	local __nwsaom_rclist ""
 	if `__nwsaom_hasratecov' {
-		unab ratecov : `ratecov'
-		local __nwsaom_nratecov : word count `ratecov'
+		if "`ratecov'" != "" unab ratecov : `ratecov'
+		local __nwsaom_rclist "`ratecov' `__nwsaom_srnames'"
+		local __nwsaom_rclist = trim("`__nwsaom_rclist'")
+		local __nwsaom_nratecov : word count `__nwsaom_rclist'
 		if `__nwsaom_nratecov' > 16 {
 			di "{err}{bf:ratecov()} takes at most 16 variables."
 			error 198
@@ -2937,7 +2969,7 @@ program nwsaom, eclass
 				local __nwsaom_mw_sym = 0
 			}
 			if `__nwsaom_hasratecov' {
-				mata: __nwsaom_mw_rcattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
+				mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
 				mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 					__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_mw_present, __nwsaom_mw_missptr, __nwsaom_rates0, __nwsaom_mw_fntype, `__nwsaom_mw_sym', __nwsaom_mw_rcattr, `ratecovcoef')
 			}
@@ -3000,7 +3032,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symrc_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_symrc_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_symrc_fntype = J(1, __nwsaom_last_M.nterms, 0)
-			mata: __nwsaom_symrc_ratecovattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
+			mata: __nwsaom_symrc_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
 		}
@@ -3027,7 +3059,7 @@ program nwsaom, eclass
 			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
-			mata: __nwsaom_ratecovattr = SaomCovPrepMat(st_data(1::`nodes', "`ratecov'"), `__nwsaom_center')
+			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
 		}
@@ -3409,7 +3441,7 @@ program nwsaom, eclass
 		}
 		if `__nwsaom_hasratecov' {
 			if `__nwsaom_nratecov' > 1 {
-				foreach __v of local ratecov {
+				foreach __v of local __nwsaom_rclist {
 					local __nwsaom_tconvnames "`__nwsaom_tconvnames' ratecoef_`__v'"
 				}
 			}
@@ -3449,7 +3481,7 @@ program nwsaom, eclass
 			mata: st_matrix("`__rctr'", __nwsaom_fit.ratecoef_tratio)
 			mata: st_matrix("`__rcfx'", __nwsaom_fit.ratecoef_fixed)
 			foreach __m in __rcb __rcse __rctr __rcfx {
-				matrix colnames ``__m'' = `ratecov'
+				matrix colnames ``__m'' = `__nwsaom_rclist'
 			}
 			if `__nwsaom_nratecov' == 1 {
 				ereturn scalar ratecoef = `__rcb'[1,1]
@@ -3465,7 +3497,7 @@ program nwsaom, eclass
 			tempname __rcshow
 			matrix `__rcshow' = e(ratecoefs) \ e(ratecoefs_se) \ e(ratecoefs_fixed)
 			local __k 0
-			foreach __v of local ratecov {
+			foreach __v of local __nwsaom_rclist {
 				local ++__k
 				di as text "Covariate-rate coefficient (" as result "`__v'" as text "): " as result %9.4f `__rcshow'[1,`__k'] as text " (se " as result %6.4f `__rcshow'[2,`__k'] as text ")"
 				if `__rcshow'[3,`__k'] di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoefs_fixed))"
@@ -3484,7 +3516,7 @@ program nwsaom, eclass
 		local __nwsaom_rcnames "ratecoef"
 		if `__nwsaom_nratecov' > 1 {
 			local __nwsaom_rcnames ""
-			foreach __v of local ratecov {
+			foreach __v of local __nwsaom_rclist {
 				local __nwsaom_rcnames "`__nwsaom_rcnames' ratecoef_`__v'"
 			}
 		}
@@ -3519,7 +3551,7 @@ program nwsaom, eclass
 			mata: st_matrix("`__rctr'", __nwsaom_fit.ratecoef_tratio)
 			mata: st_matrix("`__rcfx'", __nwsaom_fit.ratecoef_fixed)
 			foreach __m in __rcb __rcse __rctr __rcfx {
-				matrix colnames ``__m'' = `ratecov'
+				matrix colnames ``__m'' = `__nwsaom_rclist'
 			}
 			if `__nwsaom_nratecov' == 1 {
 				ereturn scalar ratecoef = `__rcb'[1,1]
@@ -3550,7 +3582,7 @@ program nwsaom, eclass
 			tempname __rcshow
 			matrix `__rcshow' = e(ratecoefs) \ e(ratecoefs_se) \ e(ratecoefs_fixed)
 			local __k 0
-			foreach __v of local ratecov {
+			foreach __v of local __nwsaom_rclist {
 				local ++__k
 				di as text "Covariate-rate coefficient (" as result "`__v'" as text "): " as result %9.4f `__rcshow'[1,`__k'] as text " (se " as result %6.4f `__rcshow'[2,`__k'] as text ")" _continue
 				if `__rcshow'[3,`__k'] di as text " - not reliably estimated: non-positive derivative estimate (e(ratecoefs_fixed))"

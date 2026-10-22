@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 41		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200)
+#define SAOM_NATIVE_VERSION 42		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2703,6 +2703,8 @@ typedef struct {
 	long hasratecov;		// number of ratecov() covariates K (0: none)
 	double *ratecovattr;		// 0-based, K x n entries, covariate k at [k*n + i]
 	double *ratecoef;		// K coefficients
+	int nsr;			// protocol 42: the last nsr rate covariates are structural (degree-dependent, updated with the network)
+	int srtype[MAXRC];		// their types, see sr_value()
 } simparams_t;
 
 typedef struct {
@@ -2932,6 +2934,17 @@ static double beh_endow_stat(int code, long n, long ne, const long *li, const lo
 	return s;
 }
 
+/* protocol 42: RSiena's structural rate effects (outRate, inRate, recipRate and the Inv / Log versions of StructuralRateEffect): the covariate of
+   actor a is f(degree), type 1 out, 2 in, 3 reciprocal; 4-6 1/(d+1) of out / in / reciprocal degree; 7-9 log(d+1) of them */
+static double sr_value(graph_t *g, int type, long a) {
+	double d;
+	int kind = (type <= 3) ? type : ((type <= 6) ? type - 3 : type - 6);
+	d = (kind == 1) ? (double)g->dout[a] : (kind == 2 ? (double)g->din[a] : (double)saom_recdeg(g, a));
+	if (type <= 3) return d;
+	if (type <= 6) return 1.0 / (d + 1.0);
+	return log(d + 1.0);
+}
+
 static int simulate_period(const model_t *M, const period_t *PD, const simparams_t *P,
 	unsigned long long seed, int keep_final, simres_t *R) {
 
@@ -2956,6 +2969,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	long evi = 0;
 	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc[MAXRC], rcscore[MAXRC];
 	long krc, nrc = P->hasratecov;
+	double *rcval = NULL;
+	const double *rcv = P->ratecovattr;
 	int condcap = 0;
 	int hasmiss = PD->hasmiss;
 
@@ -3021,9 +3036,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			   score term below is linear in the covariate, one per k */
 			wfull_rc = (double *)malloc((size_t)n * sizeof(double));
 			wbase_rc = (double *)malloc((size_t)n * sizeof(double));
+			if (P->nsr > 0) { rcval = (double *)malloc((size_t)(n * nrc) * sizeof(double)); memcpy(rcval, P->ratecovattr, (size_t)(n * nrc) * sizeof(double)); rcv = rcval; }
 			for (i = 0; i < n; i++) {
 				double eta = 0.0;
-				for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * P->ratecovattr[krc * n + i];
+				for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * rcv[krc * n + i];
 				wfull_rc[i] = exp(eta);
 				wbase_rc[i] = wfull_rc[i];
 				/* composition change: an absent actor has rate 0 (RSiena's calculateRates()) */
@@ -3031,8 +3047,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				totw_rc += wfull_rc[i];
 				sumw2_rc += wfull_rc[i] * wfull_rc[i];
 				for (krc = 0; krc < nrc; krc++) {
-					Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
-					sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[krc * n + i];
+					Sp_rc[krc] += rcv[krc * n + i] * wfull_rc[i];
+					sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * rcv[krc * n + i];
 				}
 			}
 			for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
@@ -3103,8 +3119,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						totw_rc += wfull_rc[i];
 						sumw2_rc += wfull_rc[i] * wfull_rc[i];
 						for (krc = 0; krc < nrc; krc++) {
-							Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
-							sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * P->ratecovattr[krc * n + i];
+							Sp_rc[krc] += rcv[krc * n + i] * wfull_rc[i];
+							sumw2x_rc[krc] += wfull_rc[i] * wfull_rc[i] * rcv[krc * n + i];
 						}
 					}
 					for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
@@ -3160,7 +3176,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += rcv[krc * n + actor - 1];
 					}
 					else actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					if (P->hasratecov) {
@@ -3184,8 +3200,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 						if (P->want_score) {
 							double wa = wfull_rc[actor - 1];
 							for (krc = 0; krc < nrc; krc++)
-								rcscore[krc] += P->ratecovattr[krc * n + alter - 1] - Sp_rc[krc] / totw_rc
-									- (Sp_rc[krc] - wa * P->ratecovattr[krc * n + actor - 1]) / (totw_rc - wa)
+								rcscore[krc] += rcv[krc * n + alter - 1] - Sp_rc[krc] / totw_rc
+									- (Sp_rc[krc] - wa * rcv[krc * n + actor - 1]) / (totw_rc - wa)
 									+ symdlogG_rc[krc];
 						}
 					}
@@ -3273,7 +3289,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							cumA += wfull_rc[ii];
 							if (drawA <= cumA) { actor = ii + 1; break; }
 						}
-						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += P->ratecovattr[krc * n + actor - 1];
+						if (P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] += rcv[krc * n + actor - 1];
 					} else {
 						actor = PD->haspresent ? presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)] : 1 + (long)(rng_unif(&rng) * (double)n);
 					}
@@ -3367,6 +3383,25 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 							if (symA) toggle(&g, choice, actor);
 							PROF_ADD(PR_APPLY, pt_ap);
 							nchanges += 1.0;
+							if (rcval && wfull_rc) {
+								/* protocol 42: the structural rate covariates of the two actors involved change with the network */
+								long aa[2], q;
+								aa[0] = actor; aa[1] = choice;
+								for (q = 0; q < 2; q++) {
+									long a0 = aa[q] - 1, s2;
+									double wold = wfull_rc[a0], eta = 0.0, wnew;
+									totw_rc -= wold;
+									for (krc = 0; krc < nrc; krc++) Sp_rc[krc] -= rcval[krc * n + a0] * wold;
+									for (s2 = 0; s2 < P->nsr; s2++) rcval[(nrc - P->nsr + s2) * n + a0] = sr_value(&g, P->srtype[s2], aa[q]);
+									for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * rcval[krc * n + a0];
+									wnew = exp(eta);
+									wfull_rc[a0] = wnew; wbase_rc[a0] = wnew;
+									totw_rc += wnew;
+									for (krc = 0; krc < nrc; krc++) Sp_rc[krc] += rcval[krc * n + a0] * wnew;
+								}
+								for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
+								grandRate = rate * totw_rc;
+							}
 							if (P->condmode) {
 								long origval;
 								if (!(hasmiss && ht_get(&missht, dyadkey(&g, actor, choice), &origval))) {
@@ -3463,6 +3498,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	if (presloc) free(presloc);
 	if (wbase_rc) free(wbase_rc);
 	if (wfull_rc) free(wfull_rc);
+	if (rcval) free(rcval);
 	if (P->condmode) ht_free(&horig);
 	PROF_START(pt_end);
 
@@ -3746,6 +3782,9 @@ typedef struct {
 	long symtype;		// protocol 11: non-directed model type
 	long nrc;		// protocol 11: ratecov() covariates
 	double *rcattr;		// nrc x n
+	long nsr;		// protocol 42: structural rate covariates (the last nsr of the nrc columns)
+	int srtype[MAXRC];
+	double **rcper;		// per period: rcattr with the structural columns computed from the starting network
 } batch_state_t;
 
 static batch_state_t batch_state = {0};
@@ -3765,6 +3804,7 @@ static void batch_free(void) {
 	free(batch_state.attrmem);
 	free(batch_state.M.struct_off); free(batch_state.M.struct_j);
 	free(batch_state.rcattr);
+	if (batch_state.rcper) { long q; for (q = 0; q < batch_state.P; q++) free(batch_state.rcper[q]); free(batch_state.rcper); }
 	memset(&batch_state, 0, sizeof(batch_state));
 }
 
@@ -3989,6 +4029,10 @@ static ST_retcode batch_setup(char *arg) {
 			}
 		}
 	}
+	/* protocol 42: structural rate covariates (count, then their types) */
+	batch_state.nsr = next_long_opt(0);
+	if (batch_state.nsr < 0 || batch_state.nsr > MAXRC) { SF_error("saom_sim: BATCHSETUP too many structural rate effects\n"); return 198; }
+	for (k = 0; k < batch_state.nsr; k++) batch_state.srtype[k] = (int)next_long();
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
@@ -4000,6 +4044,7 @@ static ST_retcode batch_setup(char *arg) {
 
 	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BEH_XALTTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
 
+	{ long q; for (q = 0; q < batch_state.nsr; q++) { int ty = batch_state.srtype[q]; int kd = (ty <= 3) ? ty : ((ty <= 6) ? ty - 3 : ty - 6); if (kd == 3) M->need_adj = 1; } }
 	batch_state.P = P;
 	batch_state.per = (period_t *)calloc((size_t)P, sizeof(period_t));
 	{ long c, q; for (c = 0; c < 8; c++) if (saom_behcov_pp[c]) for (q = 0; q < P; q++) batch_state.per[q].bcov[c] = saom_behcov_pp[c][saom_behcov_np[c] == 1 ? 0 : q]; }
@@ -4022,6 +4067,24 @@ static ST_retcode batch_setup(char *arg) {
 			p->ti[p->nties] = (long)vi; p->tj[p->nties] = (long)vj; p->nties++;
 		}
 		free(cnt);
+	}
+	/* protocol 42: per period the rate covariates, the structural columns from the period's starting network */
+	batch_state.rcper = NULL;
+	if (batch_state.nsr > 0) {
+		long pdq, sq, a, c0 = batch_state.nrc - batch_state.nsr, e2;
+		if (c0 < 0) { SF_error("saom_sim: BATCHSETUP more structural rate effects than rate covariates\n"); return 198; }
+		batch_state.rcper = (double **)calloc((size_t)P, sizeof(double *));
+		for (pdq = 0; pdq < P; pdq++) {
+			graph_t gt;
+			period_t *pq = &batch_state.per[pdq];
+			double *arr = (double *)malloc((size_t)(n * batch_state.nrc) * sizeof(double));
+			memcpy(arr, batch_state.rcattr, (size_t)(n * batch_state.nrc) * sizeof(double));
+			graph_init(&gt, n, 1, pq->nties + 8);
+			for (e2 = 0; e2 < pq->nties; e2++) toggle(&gt, pq->ti[e2], pq->tj[e2]);
+			for (sq = 0; sq < batch_state.nsr; sq++) for (a = 1; a <= n; a++) arr[(c0 + sq) * n + a - 1] = sr_value(&gt, batch_state.srtype[sq], a);
+			graph_free(&gt);
+			batch_state.rcper[pdq] = arr;
+		}
 	}
 	col = 4;
 	for (k = 0; k < M->nattr; k++) {
@@ -4200,7 +4263,9 @@ static ST_retcode batch_run(char *arg) {
 		for (pd = 0; pd < P; pd++) {
 			prm[pd].symtype = batch_state.symtype;
 			prm[pd].hasratecov = batch_state.nrc;
-			prm[pd].ratecovattr = batch_state.rcattr;
+			prm[pd].ratecovattr = batch_state.rcper ? batch_state.rcper[pd] : batch_state.rcattr;
+			prm[pd].nsr = (int)batch_state.nsr;
+			memcpy(prm[pd].srtype, batch_state.srtype, sizeof(batch_state.srtype));
 			prm[pd].ratecoef = rcoef;
 		}
 	}
@@ -4378,6 +4443,7 @@ static ST_retcode legacy_call(char *arg0) {
 	P.hasratecov = next_long();
 	P.ratecovattr = NULL;
 	P.ratecoef = NULL;
+	P.nsr = 0;
 	if (P.hasratecov < 0 || P.hasratecov > MAXRC) { free(argbuf); SF_error("saom_sim: too many ratecov() covariates\n"); return(198); }
 	if (P.hasratecov) {
 		/* K covariates: K x n values, then K coefficients (K = 1: the

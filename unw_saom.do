@@ -3149,6 +3149,52 @@ real colvector SaomCovPrepIdx(real colvector xfull, real colvector idx, real sca
 	out[idx] = SaomCovPrep(xfull[idx], center, m)
 	return(out)
 }
+/* protocol 42: rate covariates = the user's ratecov() columns plus S zero placeholder columns for the structural rate effects (the plugin
+   computes their values from each period's starting network) */
+real matrix SaomRateAttr(real scalar n, string scalar vars, real scalar center, real scalar S) {
+	real matrix U
+	if (strtrim(vars) == "") U = J(n, 0, 0)
+	else U = SaomCovPrepMat(st_data(1::n, vars), center)
+	return((U, J(n, S, 0)))
+}
+/* start-of-period values of the structural rate covariates (types as in sr_value() of native/saom_sim.c): n x S */
+real matrix SaomStructRateAttr(class ErgmGraph scalar G, real rowvector types) {
+	real matrix A
+	real colvector dout, din, rd
+	real rowvector nb
+	real scalar i, m, s, kind, d
+	dout = J(G.n, 1, 0)
+	din = J(G.n, 1, 0)
+	rd = J(G.n, 1, 0)
+	for (i=1; i<=G.n; i++) {
+		nb = G.neighbors_out(i)
+		dout[i] = cols(nb)
+		for (m=1; m<=cols(nb); m++) {
+			din[nb[m]] = din[nb[m]] + 1
+			if (G.has_edge(nb[m], i)) rd[i] = rd[i] + 1
+		}
+	}
+	A = J(G.n, cols(types), 0)
+	for (s=1; s<=cols(types); s++) {
+		kind = (types[s] <= 3 ? types[s] : (types[s] <= 6 ? types[s] - 3 : types[s] - 6))
+		for (i=1; i<=G.n; i++) {
+			d = (kind == 1 ? dout[i] : (kind == 2 ? din[i] : rd[i]))
+			A[i, s] = (types[s] <= 3 ? d : (types[s] <= 6 ? 1 / (d + 1) : ln(d + 1)))
+		}
+	}
+	return(A)
+}
+real rowvector SaomSRTypes() {
+	external real rowvector __saom_srtypes
+	if (findexternal("__saom_srtypes") == NULL) return(J(1, 0, 0))
+	return(__saom_srtypes)
+}
+string scalar SaomSRTrailer() {
+	real rowvector t
+	t = SaomSRTypes()
+	if (cols(t) == 0) return(" 0")
+	return(" " + strofreal(cols(t)) + " " + invtokens(strofreal(t)))
+}
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -5313,6 +5359,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 		}
 		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1], (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
 		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr, (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
+		if (cols(SaomSRTypes()) > 0) C.targetRateCov[pd, (C.hasratecov - cols(SaomSRTypes()) + 1)..C.hasratecov] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], SaomStructRateAttr(*Gwaves[pd], SaomSRTypes()), J(0, 0, 0))
 	}
 
 	// native dispatch, decided once per fit. Endowment/creation gating
@@ -5354,6 +5401,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.perok = (ver >= 18)
 	// the threaded batch path: every model from protocol 11 on
 	C.use_batch = C.use_native & (!C.hastimed | ver >= 27) & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
+	if (cols(SaomSRTypes()) > 0) {
+		if (!C.use_batch | ver < 42) {
+			errprintf("nwsaom: the structural rate effects (outrate, inrate, ...) need the native plugin, protocol 42 or later; there is no Mata implementation.\n")
+			exit(198)
+		}
+	}
 	if (C.symtype != 0 & !C.use_native) {
 		errprintf("SAOM estimation of a non-directed relation (symmetric, symtype()) requires the native (C) backend, protocol 8 or later for symtype(forcing)/(confirmation); it is not available for this model/platform (there is no Mata fallback for these ministeps).\n")
 		exit(198)
@@ -10317,6 +10370,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 	argstr = argstr + SaomBehCovTrailer(n)
+	argstr = argstr + SaomSRTrailer()
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
