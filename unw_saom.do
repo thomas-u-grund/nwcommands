@@ -2203,7 +2203,23 @@ real scalar _saom_cov2stat(string scalar nm, class ErgmGraph scalar G, class Erg
 	ties = G.all_ties()
 	tot = 0
 	for (k=1; k<=rows(ties); k++) {
+		if (rows(td.levels) == G.n) {
+			// RSiena: egoSqX skips a tie with a missing ego value, altSqX with a missing alter value, the others either
+			if (nm == "egosqx") {
+				if (td.levels[ties[k,1]]) continue
+			}
+			else if (nm == "altsqx") {
+				if (td.levels[ties[k,2]]) continue
+			}
+			else if (nm != "higher") {
+				if (td.levels[ties[k,1]] | td.levels[ties[k,2]]) continue
+			}
+		}
 		if (rec) if (!G.has_edge(ties[k,2], ties[k,1])) continue
+		if (nm == "higher" & rows(td.levels) == G.n) if (td.levels[ties[k,1]] | td.levels[ties[k,2]]) {
+			tot = tot + 0.5		// RSiena: a pair with a missing value counts as a tie
+			continue
+		}
 		tot = tot + _saom_cov2val(nm, td.attr[ties[k,1]], td.attr[ties[k,2]], td)
 	}
 	return(tot)
@@ -2212,6 +2228,7 @@ real scalar _saom_cov2chg(string scalar nm, class ErgmGraph scalar G, real scala
 	real scalar v
 
 	v = _saom_cov2val(nm, td.attr[i], td.attr[j], td)
+	if (nm == "higher" & rows(td.levels) == G.n) if (td.levels[i] | td.levels[j]) v = 0.5
 	if (nm == "samexrecip" | nm == "simrecipx") if (!G.has_edge(j, i)) v = 0
 	return(G.has_edge(i,j) ? -v : v)
 }
@@ -2259,7 +2276,10 @@ real rowvector stat_saom_absdiffx(class ErgmGraph scalar G, class ErgmTermData s
 
 	ties = G.all_ties()
 	tot = 0
-	for (k=1; k<=rows(ties); k++) tot = tot + abs(td.attr[ties[k,2]] - td.attr[ties[k,1]])
+	for (k=1; k<=rows(ties); k++) {
+		if (rows(td.levels) == G.n) if (td.levels[ties[k,1]] | td.levels[ties[k,2]]) continue
+		tot = tot + abs(td.attr[ties[k,2]] - td.attr[ties[k,1]])
+	}
 	return(tot)
 }
 real rowvector change_saom_absdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
@@ -2274,7 +2294,10 @@ real rowvector stat_saom_egoxaltx(class ErgmGraph scalar G, class ErgmTermData s
 
 	ties = G.all_ties()
 	tot = 0
-	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] * td.attr[ties[k,2]]
+	for (k=1; k<=rows(ties); k++) {
+		if (rows(td.levels) == G.n) if (td.levels[ties[k,1]] | td.levels[ties[k,2]]) continue
+		tot = tot + td.attr[ties[k,1]] * td.attr[ties[k,2]]
+	}
 	return(tot)
 }
 real rowvector change_saom_egoxaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
@@ -2332,7 +2355,8 @@ real rowvector change_saom_dyadcovrecip(class ErgmGraph scalar G, real scalar i,
 
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
-	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov") & n > 0 & rows(td.levels) == n)
+	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
+		nm == "diffx" | nm == "higher" | nm == "egosqx" | nm == "altsqx" | nm == "samexrecip" | nm == "simrecipx") & n > 0 & rows(td.levels) == n)
 }
 
 /* SaomRegCov(): register a covariate effect. kind: nodematch/nodecov/nodeicov/
@@ -7400,7 +7424,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24
 	string scalar nm
 	string rowvector nms
 
@@ -7411,6 +7435,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv16 = 0
 	needv22 = 0
 	needv23 = 0
+	needv24 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -7456,6 +7481,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.attridx[t] = nextattr
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
 			needv16 = 1
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				// protocol 24: missing covariate values - the mask rides in the next attribute slot
+				cfg.termcodes[t] = cfg.termcodes[t] + 100
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv24 = 1
+			}
 		}
 		else if (nm == "diffx" | nm == "higher" | nm == "egosqx" | nm == "altsqx" | nm == "samexrecip" | nm == "simrecipx") {
 			cfg.termcodes[t] = (nm == "diffx" ? 48 : (nm == "higher" ? 49 : (nm == "egosqx" ? 50 : (nm == "altsqx" ? 51 : (nm == "samexrecip" ? 52 : 53)))))
@@ -7468,6 +7500,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			}
 			else cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
 			needv23 = 1
+			if (_saom_cov_masked(tdt, nm, rows(tdt.attr))) {
+				cfg.termcodes[t] = cfg.termcodes[t] + 100
+				nextattr++
+				cfg.attrmat = (cfg.attrmat, tdt.levels)
+				needv24 = 1
+			}
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -7751,6 +7789,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv24) {
+		if (SaomNativePluginVersion() < 24) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
 		}
 	}
 	if (cfg.eligible & needv23) {

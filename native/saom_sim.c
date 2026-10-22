@@ -271,6 +271,7 @@
 #define TERMCODE_DYADCOV 40
 #define TERMCODE_DYADCOVRECIP 41
 static int saom_masked_base(int tc) {
+	if (tc == 142 || tc == 143 || (tc >= 148 && tc <= 153)) return tc - 100;		/* protocol 24: masked absdiffx, egoxaltx, diffx ... simrecipx */
 	switch (tc) {
 		case TERMCODE_NODEMATCH_M: return TERMCODE_NODEMATCH;
 		case TERMCODE_NODECOV_M: return TERMCODE_NODECOV;
@@ -287,7 +288,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 23		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 24		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1284,6 +1285,12 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 		if (termcodes[k] == TERMCODE_DYADCOVRECIP && !has_edge(g, j, i)) return 0.0;
 		return ij_exists ? -d : d;
 	}
+	if (termcodes[k] == 149) {
+		/* masked higher: a pair with a missing value counts 0.5 */
+		double *a = attrs[attridx[k] - 1], *m = attrs[attridx[k]];
+		double v = (m[i] != 0.0 || m[j] != 0.0) ? 0.5 : cov2_val(TERMCODE_HIGHER, a[i], a[j], 0.0);
+		return ij_exists ? -v : v;
+	}
 	{
 		double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 		int tc = termcodes[k], base = saom_masked_base(tc);
@@ -1344,6 +1351,26 @@ static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, do
 			case TERMCODE_NODEOCOV_M:
 				for (ii = 1; ii <= g->n; ii++) if (m[ii] == 0.0) tot += a[ii] * (double)g->dout[ii];
 				return tot;
+			case 142: case 143: case 148: case 149: case 150: case 151: case 152: case 153: {
+				int bc = termcodes[k] - 100;
+				for (kk = 0; kk < g->nties; kk++) {
+					long ei = g->elist_i[kk], ej = g->elist_j[kk];
+					/* RSiena skips a tie when the value its statistic reads is missing: egoSqX the ego's, altSqX the alter's,
+					   the others either (higher and simRecipX use the imputed values and have no masked variant) */
+					if (bc == TERMCODE_HIGHER) {
+						/* RSiena: a pair with a missing value counts as a tie (0.5) */
+						if (cov2_isrecip(bc) && !has_edge(g, ej, ei)) continue;
+						tot += (m[ei] != 0.0 || m[ej] != 0.0) ? 0.5 : cov2_val(bc, a[ei], a[ej], p1[k]);
+						continue;
+					}
+					if (bc == TERMCODE_EGOSQX ? (m[ei] != 0.0) : (bc == TERMCODE_ALTSQX ? (m[ej] != 0.0) : (m[ei] != 0.0 || m[ej] != 0.0))) continue;
+					if (cov2_isrecip(bc) && !has_edge(g, ej, ei)) continue;
+					if (bc == TERMCODE_ABSDIFFX) tot += fabs(a[ej] - a[ei]);
+					else if (bc == TERMCODE_EGOXALTX) tot += a[ei] * a[ej];
+					else tot += cov2_val(bc, a[ei], a[ej], p1[k]);
+				}
+				return tot;
+			}
 			default:				/* TERMCODE_SIMCOV_M: a = x / range, p1 = simMean */
 				for (kk = 0; kk < g->nties; kk++) {
 					long ei = g->elist_i[kk], ej = g->elist_j[kk];

@@ -125,6 +125,7 @@ gen double xcov = mod(_n * 7, 5)
 nwsaom, waves(dd1 dd2 dd3) outdegree reciprocity absdiffx(xcov) egoxaltx(xcov) k3(300) seed(3)
 assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4)) & "`e(engine)'" == "native"
 replace xcov = . in 5
-capture nwsaom, waves(dd1 dd2 dd3) outdegree absdiffx(xcov) k3(50)
-assert _rc == 198
+* a missing covariate value is allowed since protocol 24 (ties with a missing value are skipped, as RSiena)
+nwsaom, waves(dd1 dd2 dd3) outdegree absdiffx(xcov) k3(100) seed(3)
+assert colsof(e(b)) == 2 & !missing(el(e(b),1,2))
 di as text "dyadic covariates PASS"

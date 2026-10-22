@@ -47,4 +47,17 @@ assert "`e(engine)'" == "mata"
 global NWSAOM_NONATIVE
 capture nwsaom, wave1(c22) wave2(c23) outdegree diffx(z) symmetric
 assert _rc != 0
+* missing covariate values (RSiena: pairs with a missing value are skipped; higher counts them 0.5)
+replace z = . in 3/5
+foreach ef in absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx {
+	nwsaom, wave1(c22) wave2(c23) outdegree `ef'(z) k0(30) k3(100) seed(2)
+	assert colsof(e(b)) == 2 & !missing(el(e(b),1,2)) & "`e(engine)'" == "native"
+}
+mata: A = __nwsaom_last_G2.to_dense(); x = st_data(1::36, "z"); ok = (x :< .); K = (ok * ok')
+mata: st_numscalar("__ties", sum(A)); st_numscalar("__obsties", sum(A :* K))
+assert scalar(__obsties) < scalar(__ties)
+nwsaom, wave1(c22) wave2(c23) outdegree diffx(z) k0(30) k3(100) seed(2)
+mata: A = __nwsaom_last_G2.to_dense(); x = st_data(1::36, "z"); ok = (x :< .); xm = x :- mean(select(x, ok)); xm = editmissing(xm, 0); stv = __nwsaom_last_M.full_statistic(__nwsaom_last_G2)
+mata: XI = xm * J(1, 36, 1); XJ = J(36, 1, 1) * xm'; K = (ok * ok'); st_numscalar("__ref", sum(A :* K :* (XJ - XI))); st_numscalar("__obs", stv[2])
+assert abs(scalar(__ref) - scalar(__obs)) < 1e-9
 di as text "covariate variants PASS"

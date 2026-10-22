@@ -1364,17 +1364,14 @@ program nwsaom, eclass
 		if "``__dk''" != "" {
 			unab `__dk' : ``__dk''
 			foreach __v of local `__dk' {
-				mata: st_local("__nmiss", strofreal(sum(st_data(1::`nodes', "`__v'") :>= .)))
-				if `__nmiss' > 0 {
-					di "{err}{bf:`__dk'()}: variable {bf:`__v'} has missing values, which are not yet supported for this effect."
-					error 198
-				}
 				tempname __td_cv
 				mata: `__td_cv' = ErgmTermData()
+				mata: __nwsaom_xx = st_data(1::`nodes', "`__v'")
+				mata: `__td_cv'.levels = (any(__nwsaom_xx :>= .) ? (__nwsaom_xx :>= .) : J(0, 1, 0))
 				if "`__dk'" == "simrecipx" {
 					mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
 					mata: `__td_cv'.decay = max(`__td_cv'.attr) - min(`__td_cv'.attr)
-					mata: `__td_cv'.center = SaomSimMean(`__td_cv'.attr)
+					mata: `__td_cv'.center = (rows(`__td_cv'.levels) > 0 ? SaomSimMeanObs(__nwsaom_xx, `__td_cv'.levels) : SaomSimMean(`__td_cv'.attr))
 				}
 				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))
@@ -1386,13 +1383,10 @@ program nwsaom, eclass
 		if "``__dk''" != "" {
 			unab `__dk' : ``__dk''
 			foreach __v of local `__dk' {
-				mata: st_local("__nmiss", strofreal(sum(st_data(1::`nodes', "`__v'") :>= .)))
-				if `__nmiss' > 0 {
-					di "{err}{bf:`__dk'()}: variable {bf:`__v'} has missing values, which are not yet supported for this effect."
-					error 198
-				}
 				tempname __td_ad
 				mata: `__td_ad' = ErgmTermData()
+				mata: __nwsaom_xx = st_data(1::`nodes', "`__v'")
+				mata: `__td_ad'.levels = (any(__nwsaom_xx :>= .) ? (__nwsaom_xx :>= .) : J(0, 1, 0))
 				mata: `__td_ad'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_ad', ("`__dk'_`__v'"))
 				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"

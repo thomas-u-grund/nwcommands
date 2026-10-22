@@ -68,8 +68,8 @@
 
 {marker covariate_options}{...}
 {syntab:Node covariate effects}
-{synopt:{opt absdiffx(varlist)}}Absolute difference of a covariate between sender and receiver, |x_j - x_i| (RSiena {cmd:absDiffX}); one effect per variable. Variables with missing values are not yet supported{p_end}
-{synopt:{opt egoxaltx(varlist)}}Product of sender and receiver values of a (centred) covariate, x_i * x_j (RSiena {cmd:egoXaltX}); one effect per variable. Variables with missing values are not yet supported{p_end}
+{synopt:{opt absdiffx(varlist)}}Absolute difference of a covariate between sender and receiver, |x_j - x_i| (RSiena {cmd:absDiffX}); one effect per variable. Missing values: ties with a missing value are skipped in the statistic (RSiena).{p_end}
+{synopt:{opt egoxaltx(varlist)}}Product of sender and receiver values of a (centred) covariate, x_i * x_j (RSiena {cmd:egoXaltX}); one effect per variable. Missing values: ties with a missing value are skipped in the statistic (RSiena).{p_end}
 {synopt:{opt diffx(varlist)}}RSiena {cmd:diffX}: sum over ties of x_j - x_i (centred covariate){p_end}
 {synopt:{opt higher(varlist)}}RSiena {cmd:higher}: sum over ties of 1 if x_i > x_j (0.5 if equal, as RSiena){p_end}
 {synopt:{opt egosqx(varlist)}}RSiena {cmd:egoSqX}: sum over ties of x_i^2{p_end}

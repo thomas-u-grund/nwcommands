@@ -556,8 +556,10 @@ have the default internal parameter 1 and are not affected by the RSiena 1.6.1 c
 {pstd}
 {bf:Covariate variants diffx, higher, egosqx, altsqx, samexrecip, simrecipx.} Checked against RSiena 1.6.6 on s50 with alcohol (density,
 reciprocity and one effect): observed statistics -10, 122.5, 327.587, 303.187, 52 and 13.655 identical; estimates diffX -0.04 (-0.046),
-higher 0.19 (0.18), egoSqX 0.12 (0.115), altSqX 0.023 (0.019), sameXRecip -0.148 (-0.155), simRecipX 0.285 (0.265). Variables with
-missing values are not yet supported for these effects.
+higher 0.19 (0.18), egoSqX 0.12 (0.115), altSqX 0.023 (0.019), sameXRecip -0.148 (-0.155), simRecipX 0.285 (0.265). With missing values (7 of 50 alcohol values set missing; RSiena's rule: a tie
+with a missing value is skipped - egoSqX only the ego's, altSqX only the alter's; higher counts such a tie 0.5) the statistics are identical to
+RSiena's too (absDiffX 113, egoXaltX 109.489, diffX -9, higher 122.5, egoSqX 216.676, altSqX 207.257, sameXRecip 42, simRecipX 12.977) and the
+estimates agree (dev/saom_rsiena_cov2miss.*).
 
 {marker tvcov}{...}
 {pstd}
