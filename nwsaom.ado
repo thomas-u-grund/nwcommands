@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -490,8 +490,8 @@ program nwsaom, eclass
 		}
 		local __nwsaom_coev = 1
 	}
-	else if "`behsim'" != "" {
-		di "{err}{bf:behsim} (similarity on the co-evolving behavior) requires {bf:behavior()} to be specified."
+	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" {
+		di "{err}{bf:behsim}/{bf:behegox}/{bf:behaltx}/{bf:behegoplusalt} (selection effects of the co-evolving behavior) require {bf:behavior()} to be specified."
 		error 198
 	}
 	else if "`linear'" != "" | "`linearendow'" != "" | "`linearcreation'" != "" | "`quadratic'" != "" | "`quadraticendow'" != "" | "`quadraticcreation'" != "" | "`avalt'" != "" | "`avaltendow'" != "" | "`avaltcreation'" != "" | "`avsim'" != "" | "`avsimendow'" != "" | "`avsimcreation'" != "" {
@@ -2417,6 +2417,26 @@ program nwsaom, eclass
 			mata: __nwsaom_last_M.addterm("behsim", 1, &stat_saom_behsim(), &change_saom_behsim(), `__td_bs', ("behsim"))
 			local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " behsim [behavior:"
 			mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
+		}
+
+		// --- RSiena's egoX / altX / egoPlusAltX with the dependent behavior as the covariate (protocol 34): the value is the
+		// current behavior minus its overall mean; like behsim the statistic uses the starting behavior and the simulation the
+		// live one. Behavior 1 only.
+		foreach __e in behegox behaltx behegoplusalt {
+			if "``__e''" != "" {
+				mata: st_local("__nwsaom_behrange", strofreal(__nwsaom_beh_maxval - __nwsaom_beh_minval))
+				if `__nwsaom_behrange' <= 0 {
+					di "{err}{bf:`__e'}: the behavior variable does not vary."
+					error 198
+				}
+				tempname __td_be
+				mata: `__td_be' = ErgmTermData()
+				mata: `__td_be'.attr = __nwsaom_beh_w1
+				mata: `__td_be'.center = mean(SaomMBPooled(__nwsaom_last_Behwaves))
+				mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_be', ("`__e'"))
+				local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " `__e' [behavior:"
+				mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
+			}
 		}
 
 		mata: st_local("__nwsaom_pbeh", strofreal(__nwsaom_last_Mbeh.nparam()))

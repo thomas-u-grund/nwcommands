@@ -3157,12 +3157,16 @@ real rowvector change_saom_behsim(class ErgmGraph scalar G, real scalar i, real 
    without behsim. M.td is an untyped pointer rowvector, so the field is
    reached through a typed intermediate pointer (see the crprod note in
    SaomEstimateRMCoevNetNet()). */
+/* the network terms that read the co-evolving behavior (behsim and RSiena's egoX / altX / egoPlusAltX of the dependent behavior) */
+real scalar _saom_isdynname(string scalar nm) {
+	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt")
+}
 void SaomBehSimSync(class ErgmModel scalar M, real colvector vals){
 	real scalar t
 	pointer(class ErgmTermData scalar) scalar ptd
 
 	for (t=1; t<=M.nterms; t++) {
-		if (M.names[t] != "behsim") continue
+		if (!_saom_isdynname(M.names[t])) continue
 		ptd = M.td[t]
 		(*ptd).attr = vals
 	}
@@ -3173,7 +3177,7 @@ void SaomBehSimSetValue(class ErgmModel scalar M, real scalar i, real scalar v){
 	pointer(class ErgmTermData scalar) scalar ptd
 
 	for (t=1; t<=M.nterms; t++) {
-		if (M.names[t] != "behsim") continue
+		if (!_saom_isdynname(M.names[t])) continue
 		ptd = M.td[t]
 		a = (*ptd).attr		// (*ptd).attr[i] = v is not a valid lvalue in Mata
 		a[i] = v
@@ -3181,7 +3185,49 @@ void SaomBehSimSetValue(class ErgmModel scalar M, real scalar i, real scalar v){
 	}
 }
 real scalar SaomHasBehSim(class ErgmModel scalar M){
-	return(anyof(M.names, "behsim"))
+	real scalar t
+	for (t=1; t<=M.nterms; t++) if (_saom_isdynname(M.names[t])) return(1)
+	return(0)
+}
+/* RSiena egoX / altX / egoPlusAltX with the dependent behavior as the covariate: the value is the current behavior minus its overall mean (td.center) */
+real rowvector stat_saom_behegox(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] - td.center
+	return(tot)
+}
+real rowvector change_saom_behegox(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = td.attr[i] - td.center
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_behaltx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,2]] - td.center
+	return(tot)
+}
+real rowvector change_saom_behaltx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = td.attr[j] - td.center
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_behegoplusalt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + td.attr[ties[k,1]] + td.attr[ties[k,2]] - 2 * td.center
+	return(tot)
+}
+real rowvector change_saom_behegoplusalt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = td.attr[i] + td.attr[j] - 2 * td.center
+	return(G.has_edge(i,j) ? -d : d)
 }
 
 /*
@@ -8424,7 +8470,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8441,6 +8487,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv31 = 0
 	needv32 = 0
 	needv33 = 0
+	needv34 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8684,6 +8731,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				needv13 = 1
 			}
 		}
+		else if (nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt") {
+			// protocol 34: the dependent behavior as the covariate; p1 = its overall mean, the plugin supplies the live behavior values
+			cfg.termcodes[t] = (nm == "behegox" ? 73 : (nm == "behaltx" ? 74 : 75))
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.center
+			needv34 = 1
+		}
 		else if (nm == "behsim") {
 			// TERMCODE_BEHSIM (native/saom_sim.c): the plugin supplies the
 			// behavior values itself (its own live behavior array), so no
@@ -8820,6 +8874,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv34) {
+		if (SaomNativePluginVersion() < 34) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 34 (egoX/altX of the dependent behavior)"
 		}
 	}
 	if (cfg.eligible & needv33) {
@@ -9664,6 +9724,9 @@ string scalar SaomRSienaLabels(class ErgmModel scalar M, real scalar symmetric, 
 	for (t=1; t<=M.nterms; t++) {
 		tdt = *M.td[t]
 		if (M.names[t] == "behsim") lab[t] = behname + " similarity"
+		else if (M.names[t] == "behegox") lab[t] = behname + " ego"
+		else if (M.names[t] == "behaltx") lab[t] = behname + " alter"
+		else if (M.names[t] == "behegoplusalt") lab[t] = behname + " ego + alter"
 		else if (M.names[t] != "interact") lab[t] = _SaomRSLabel1(M.names[t], M.coefnames[ci + 1], symmetric, tdt.decay)
 		ci = ci + M.npar[t]
 	}

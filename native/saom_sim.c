@@ -286,6 +286,10 @@
 #define TERMCODE_GWESPRR 69
 #define TERMCODE_NBRDIST2 70
 #define TERMCODE_NBRDIST2TWICE 71
+#define TERMCODE_BEHEGOX 73			/* protocol 34: egoX / altX / egoPlusAltX of the dependent behavior (p1 = its overall mean; the term reads the live behavior slot attrs[nattr]) */
+#define TERMCODE_BEHALTX 74
+#define TERMCODE_BEHEGOPLUSALT 75
+#define SAOM_DYNTC(tc) ((tc) == TERMCODE_BEHSIM || ((tc) >= TERMCODE_BEHEGOX && (tc) <= TERMCODE_BEHEGOPLUSALT))
 #define TERMCODE_CYCLE4SQRT 72			/* cycle4 / sharedPop with RSiena parameter 2 */
 #define TERMCODE_DYADCOV 40
 #define TERMCODE_DYADCOVRECIP 41
@@ -317,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 33		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71)
+#define SAOM_NATIVE_VERSION 34		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1050,6 +1054,15 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 				tot += 1.0 - fabs(a[ei] - a[ej]) - p1;	/* protocol 9: a = x/range, p1 = similarity mean */
 			}
 			return tot;
+		case TERMCODE_BEHEGOX:
+			for (k = 0; k < g->nties; k++) tot += a[g->elist_i[k]] - p1;
+			return tot;
+		case TERMCODE_BEHALTX:
+			for (k = 0; k < g->nties; k++) tot += a[g->elist_j[k]] - p1;
+			return tot;
+		case TERMCODE_BEHEGOPLUSALT:
+			for (k = 0; k < g->nties; k++) tot += a[g->elist_i[k]] + a[g->elist_j[k]] - 2.0 * p1;
+			return tot;
 		case TERMCODE_BEHSIM:						// stat_saom_behsim(): sum over ties of 1-|z[ego]-z[alter]|/range - simMean
 			for (k = 0; k < g->nties; k++) {
 				long ei = g->elist_i[k], ej = g->elist_j[k];
@@ -1206,6 +1219,18 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		}
 		case TERMCODE_SIMCOV: {
 			double d = 1.0 - fabs(a[i] - a[j]) - p1;
+			return ij_exists ? -d : d;
+		}
+		case TERMCODE_BEHEGOX: {
+			double d = a[i] - p1;
+			return ij_exists ? -d : d;
+		}
+		case TERMCODE_BEHALTX: {
+			double d = a[j] - p1;
+			return ij_exists ? -d : d;
+		}
+		case TERMCODE_BEHEGOPLUSALT: {
+			double d = a[i] + a[j] - 2.0 * p1;
 			return ij_exists ? -d : d;
 		}
 		case TERMCODE_BEHSIM: {
@@ -3520,11 +3545,11 @@ static ST_retcode batch_setup(char *arg) {
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
-	for (k = 0; k < M->nterms; k++) if (M->termcodes[k] == TERMCODE_BEHSIM) M->has_behsim = 1;
+	for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->has_behsim = 1;
 	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM) M->need_adj = 1;
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
-	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (M->termcodes[k] == TERMCODE_BEHSIM) M->attridx[k] = (int)(M->nattr + 1);
+	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
 
 	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM) M->need_adj = 1; }
 
@@ -3919,14 +3944,14 @@ static ST_retcode legacy_call(char *arg0) {
 
 	if (wire_parse_error) { free(P.ratecovattr); SF_error("saom_sim: wire-protocol argument string ran out of fields (a Mata/native field-count mismatch) - refusing to simulate on partially-parsed input\n"); return(198); }
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
-	for (i = 0; i < M.nterms; i++) if (M.termcodes[i] == TERMCODE_BEHSIM) M.has_behsim = 1;
+	for (i = 0; i < M.nterms; i++) if (SAOM_DYNTC(M.termcodes[i])) M.has_behsim = 1;
 	/* only a model that uses behsim sets the (process-wide) range: the version probe, a single call without behavior,
 	   must not reset the range of a batch model that is set up */
 	if (M.has_behsim) saom_behsim_range = (M.behrange > 0.0) ? M.behrange : 1.0;
 	if (M.has_behsim && M.nbehterms == 0) { free(P.ratecovattr); SF_error("saom_sim: behsim needs a co-evolving behavior (nbehterms > 0)\n"); return(198); }
 	if (M.has_behsim && M.nattr >= MAXATTR) { free(P.ratecovattr); SF_error("saom_sim: too many attribute arrays for behsim\n"); return(198); }
 	if (!directed) { free(P.ratecovattr); SF_error("saom_sim: directed networks only\n"); return(198); }
-	if (M.has_behsim) for (i = 0; i < M.nterms; i++) if (M.termcodes[i] == TERMCODE_BEHSIM) M.attridx[i] = (int)(M.nattr + 1);
+	if (M.has_behsim) for (i = 0; i < M.nterms; i++) if (SAOM_DYNTC(M.termcodes[i])) M.attridx[i] = (int)(M.nattr + 1);
 
 	for (k = 0; k < M.nattr; k++) {
 		attrmem[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
