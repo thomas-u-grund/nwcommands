@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 34		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75)
+#define SAOM_NATIVE_VERSION 35		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -332,6 +332,28 @@ static double saom_behsim_range = 1.0;
 #define TERMCODE_BEH_QUADRATIC 102
 #define TERMCODE_BEH_AVALT 103
 #define TERMCODE_BEH_AVSIM 104
+/* protocol 35: RSiena's behavior effects of the network position, of the alters and the similarity family (copied from the C++, see unw_saom.do) */
+#define TERMCODE_BEH_INDEG 105
+#define TERMCODE_BEH_OUTDEG 106
+#define TERMCODE_BEH_RECIPDEG 107
+#define TERMCODE_BEH_ISOLATE 108
+#define TERMCODE_BEH_OUTISOLATE 109
+#define TERMCODE_BEH_TOTALT 110
+#define TERMCODE_BEH_AVALTPOP 111
+#define TERMCODE_BEH_TOTALTPOP 112
+#define TERMCODE_BEH_MAXALT 113
+#define TERMCODE_BEH_MINALT 114
+#define TERMCODE_BEH_AVRECALT 115
+#define TERMCODE_BEH_TOTRECALT 116
+#define TERMCODE_BEH_TOTSIM 117
+#define TERMCODE_BEH_AVATTHIGHER 118
+#define TERMCODE_BEH_AVATTLOWER 119
+#define TERMCODE_BEH_TOTATTHIGHER 120
+#define TERMCODE_BEH_TOTATTLOWER 121
+#define TERMCODE_BEH_AVSIMPOPALT 122
+#define TERMCODE_BEH_TOTSIMPOPALT 123
+#define TERMCODE_BEH_AVSIMPOPEGO 124
+#define SAOM_BEH_NEWTC(tc) ((tc) >= TERMCODE_BEH_INDEG && (tc) <= TERMCODE_BEH_AVSIMPOPEGO)
 
 /* ===================================================================
    xorshift128+ RNG - independent reimplementation, same construction
@@ -1718,9 +1740,159 @@ static double saom_stat_term_nn(graph_t *g, graph_t *other, int termcode, double
 	}
 	return saom_stat_term(g, termcode, NULL, p1);
 }
+/* flags (average, alterPop, egoPop, hi, lo) of the similarity family */
+static void beh_sim_flags(int tc, int *f) {
+	f[0] = f[1] = f[2] = f[3] = f[4] = 0;
+	switch (tc) {
+		case TERMCODE_BEH_AVSIM: f[0] = 1; f[3] = 1; f[4] = 1; break;
+		case TERMCODE_BEH_TOTSIM: f[3] = 1; f[4] = 1; break;
+		case TERMCODE_BEH_AVATTHIGHER: f[0] = 1; f[3] = 1; break;
+		case TERMCODE_BEH_AVATTLOWER: f[0] = 1; f[4] = 1; break;
+		case TERMCODE_BEH_TOTATTHIGHER: f[3] = 1; break;
+		case TERMCODE_BEH_TOTATTLOWER: f[4] = 1; break;
+		case TERMCODE_BEH_AVSIMPOPALT: f[0] = 1; f[1] = 1; f[3] = 1; f[4] = 1; break;
+		case TERMCODE_BEH_TOTSIMPOPALT: f[1] = 1; f[3] = 1; f[4] = 1; break;
+		case TERMCODE_BEH_AVSIMPOPEGO: f[0] = 1; f[2] = 1; f[3] = 1; f[4] = 1; break;
+	}
+}
+static long beh_recdeg(graph_t *g, long j) {
+	long cnt = 0, m;
+	for (m = 0; m < g->outadj[j].len; m++) if (has_edge(g, g->outadj[j].nb[m], j)) cnt++;
+	return cnt;
+}
+/* statistic of one actor (new effects) */
+static double beh_new_ego_stat(graph_t *g, double *bv, int tc, double range, double simMean, double mean, long i) {
+	long k, nb = g->outadj[i].len;
+	double zi = bv[i] - mean, st, s;
+	switch (tc) {
+		case TERMCODE_BEH_INDEG: return zi * (double)g->din[i];
+		case TERMCODE_BEH_OUTDEG: return zi * (double)g->dout[i];
+		case TERMCODE_BEH_RECIPDEG: return zi * (double)beh_recdeg(g, i);
+		case TERMCODE_BEH_ISOLATE: return g->din[i] == 0 ? zi : 0.0;
+		case TERMCODE_BEH_OUTISOLATE: return g->dout[i] == 0 ? zi : 0.0;
+		case TERMCODE_BEH_TOTALT: case TERMCODE_BEH_AVALTPOP: case TERMCODE_BEH_TOTALTPOP: {
+			int pop = (tc != TERMCODE_BEH_TOTALT), div = (tc == TERMCODE_BEH_AVALTPOP);
+			if (nb == 0) return 0.0;
+			s = 0.0;
+			for (k = 0; k < nb; k++) { long j = g->outadj[i].nb[k]; s += (bv[j] - mean) * (pop ? (double)g->din[j] : 1.0); }
+			s *= zi;
+			if (div) s /= (double)nb;
+			return s;
+		}
+		case TERMCODE_BEH_MAXALT: case TERMCODE_BEH_MINALT: {
+			int minim = (tc == TERMCODE_BEH_MINALT);
+			if (nb == 0) return 0.0;
+			st = minim ? 1000.0 : -1000.0;
+			for (k = 0; k < nb; k++) { double v = bv[g->outadj[i].nb[k]] - mean; if (minim ? v < st : v > st) st = v; }
+			return st * zi;
+		}
+		case TERMCODE_BEH_AVRECALT: case TERMCODE_BEH_TOTRECALT: {
+			long cnt = 0;
+			s = 0.0;
+			for (k = 0; k < nb; k++) { long j = g->outadj[i].nb[k]; if (has_edge(g, j, i)) { s += bv[j] - mean; cnt++; } }
+			if (cnt == 0) return 0.0;
+			s *= zi;
+			if (tc == TERMCODE_BEH_AVRECALT) s /= (double)cnt;
+			return s;
+		}
+		default: {
+			int f[5];
+			long cnt = 0;
+			double totc = 0.0, dif;
+			beh_sim_flags(tc, f);
+			st = 0.0;
+			for (k = 0; k < nb; k++) {
+				long j = g->outadj[i].nb[k];
+				dif = (bv[j] - mean) - zi;
+				if (f[1]) dif *= (double)g->din[j];
+				if (f[3] && dif > 0) st += dif;
+				if (f[4] && dif < 0) st -= dif;
+				cnt++;
+				if (f[1]) totc += (double)g->din[j];
+			}
+			if (!f[1]) totc = (double)cnt;
+			st = totc - st / range;
+			if (f[3] && f[4]) st -= totc * simMean;
+			if (f[0] && cnt > 0) st /= (double)cnt;
+			if (f[2]) st *= (double)g->din[i];
+			return st;
+		}
+	}
+}
+/* RSiena's calculateChangeContribution() (new effects) */
+static double beh_new_change(graph_t *g, double *bv, int tc, double range, double simMean, double mean, long i, double diff) {
+	long k, nb = g->outadj[i].len;
+	double s, ch;
+	switch (tc) {
+		case TERMCODE_BEH_INDEG: return diff * (double)g->din[i];
+		case TERMCODE_BEH_OUTDEG: return diff * (double)g->dout[i];
+		case TERMCODE_BEH_RECIPDEG: return diff * (double)beh_recdeg(g, i);
+		case TERMCODE_BEH_ISOLATE: return g->din[i] == 0 ? diff : 0.0;
+		case TERMCODE_BEH_OUTISOLATE: return g->dout[i] == 0 ? diff : 0.0;
+		case TERMCODE_BEH_TOTALT: case TERMCODE_BEH_AVALTPOP: case TERMCODE_BEH_TOTALTPOP: {
+			int pop = (tc != TERMCODE_BEH_TOTALT), div = (tc == TERMCODE_BEH_AVALTPOP);
+			double tota = 0.0, popsum = 0.0;
+			for (k = 0; k < nb; k++) { long j = g->outadj[i].nb[k]; tota += bv[j] - mean; popsum += (bv[j] - mean) * (double)g->din[j]; }
+			ch = tota;
+			if (nb > 0) {
+				if (pop) ch += popsum;
+				else ch = diff * tota;
+				if (div) ch /= (double)nb;
+			}
+			return ch;
+		}
+		case TERMCODE_BEH_MAXALT: case TERMCODE_BEH_MINALT: {
+			int minim = (tc == TERMCODE_BEH_MINALT);
+			if (nb == 0 || diff == 0.0) return 0.0;
+			s = minim ? 1000.0 : -1000.0;
+			for (k = 0; k < nb; k++) { double v = bv[g->outadj[i].nb[k]] - mean; if (minim ? v < s : v > s) s = v; }
+			return s * diff;
+		}
+		case TERMCODE_BEH_AVRECALT: case TERMCODE_BEH_TOTRECALT: {
+			long cnt = 0;
+			s = 0.0;
+			for (k = 0; k < nb; k++) { long j = g->outadj[i].nb[k]; if (has_edge(g, j, i)) { s += bv[j] - mean; cnt++; } }
+			if (cnt == 0) return 0.0;
+			ch = diff * s;
+			if (tc == TERMCODE_BEH_AVRECALT) ch /= (double)cnt;
+			return ch;
+		}
+		default: {
+			int f[5];
+			long nh = 0, nl = 0, ne = 0, nhp = 0, nlp = 0, nep = 0;
+			double vego = bv[i], tcnt = 0.0;
+			if (nb == 0) return 0.0;
+			beh_sim_flags(tc, f);
+			for (k = 0; k < nb; k++) {
+				long j = g->outadj[i].nb[k];
+				if (bv[j] > vego) { nh++; nhp += g->din[j]; }
+				else if (bv[j] < vego) { nl++; nlp += g->din[j]; }
+				else { ne++; nhp += g->din[j]; }		/* RSiena: the equal alters join the HIGHER popularity count */
+			}
+			if (f[1]) {
+				if (diff > 0) { if (f[3]) tcnt += (double)nhp; if (f[4]) tcnt -= (double)nep + (double)nlp; }
+				else if (diff < 0) { if (f[3]) tcnt -= (double)nhp + (double)nep; if (f[4]) tcnt += (double)nlp; }
+			}
+			else {
+				if (diff > 0) { if (f[3]) tcnt += (double)nh; if (f[4]) tcnt -= (double)ne + (double)nl; }
+				else if (diff < 0) { if (f[3]) tcnt -= (double)nh + (double)ne; if (f[4]) tcnt += (double)nl; }
+			}
+			ch = tcnt / range;
+			if (f[0]) ch /= (double)nb;
+			else if (f[3] && f[4]) ch -= (double)nb * simMean;
+			if (f[2]) ch *= (double)g->din[i];
+			return ch;
+		}
+	}
+}
+
 static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean, double overallMean) {
 	long i, k, od;
 	double tot = 0.0, vego, sumabs;
+	if (SAOM_BEH_NEWTC(termcode) || (termcode >= TERMCODE_BEH_TOTSIM && termcode <= TERMCODE_BEH_AVSIMPOPEGO)) {
+		for (i = 1; i <= g->n; i++) tot += beh_new_ego_stat(g, behval, termcode, range, simMean, overallMean, i);
+		return tot;
+	}
 	switch (termcode) {
 		case TERMCODE_BEH_LINEAR:					// stat_saom_linear(): sum(values)
 			for (i = 1; i <= g->n; i++) tot += behval[i];
@@ -1756,10 +1928,11 @@ static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, doubl
    saom_beh_stat_term() above takes - see unw_saom.do's own
    change_saom_quadratic()/change_saom_avsim() for the derivation each
    branch below is a direct, mechanical port of. */
-static double saom_beh_change_term(graph_t *g, double *behval, int termcode, double overallMean, double range,
+static double saom_beh_change_term(graph_t *g, double *behval, int termcode, double overallMean, double range, double simMean,
 	long i, double diff) {
 	long od, k, nhigh, nlow;
 	double vego;
+	if (SAOM_BEH_NEWTC(termcode)) return beh_new_change(g, behval, termcode, range, simMean, overallMean, i, diff);
 	switch (termcode) {
 		case TERMCODE_BEH_LINEAR:
 			return diff;
@@ -2435,6 +2608,7 @@ static void beh_stats_on_edges(const model_t *M, long ne, const long *ei, const 
 		sumz[ei[d]] += bz[ej[d]];
 	}
 	for (d = 0; d < ne; d++) sumabs[ei[d]] += fabs(bz[ej[d]] - bz[ei[d]]);
+	graph_t gl; int haveg = 0;
 	for (k = 0; k < M->nbehterms; k++) {
 		double tot = 0.0;
 		switch (M->behtermcodes[k]) {
@@ -2450,9 +2624,16 @@ static void beh_stats_on_edges(const model_t *M, long ne, const long *ei, const 
 			case TERMCODE_BEH_AVSIM:
 				for (i = 1; i <= n; i++) if (odl[i] > 0.0) tot += 1.0 - (sumabs[i] / M->behrange) / odl[i] - M->behSimMean;
 				break;
+			default:
+				if (M->behtermcodes[k] >= TERMCODE_BEH_INDEG) {		// network-position / alter effects: evaluate on a graph of the edge list
+					if (!haveg) { graph_init(&gl, n, 1, ne); for (d = 0; d < ne; d++) toggle(&gl, ei[d], ej[d]); haveg = 1; }
+					tot = saom_beh_stat_term(&gl, (double *)bz, M->behtermcodes[k], M->behrange, M->behSimMean, M->behOverallMean);
+				}
+				break;
 		}
 		out[k] = tot;
 	}
+	if (haveg) graph_free(&gl);
 	free(sumz); free(sumabs); free(odl);
 }
 
@@ -2965,14 +3146,14 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 					if (hasDown) {
 						for (k = 0; k < Mb->nbehterms; k++) {
-							chgDown[k] = (M->hasfntype && Mb->behfntype[k] == 2) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, actor, -1.0);
+							chgDown[k] = (M->hasfntype && Mb->behfntype[k] == 2) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, Mb->behSimMean, actor, -1.0);
 							uDown += thB[k] * chgDown[k];
 						}
 						if (uDown > maxu2) maxu2 = uDown;
 					}
 					if (hasUp) {
 						for (k = 0; k < Mb->nbehterms; k++) {
-							chgUp[k] = (M->hasfntype && Mb->behfntype[k] == 1) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, actor, 1.0);
+							chgUp[k] = (M->hasfntype && Mb->behfntype[k] == 1) ? 0.0 : saom_beh_change_term(&g, bv, Mb->behtermcodes[k], Mb->behOverallMean, Mb->behrange, Mb->behSimMean, actor, 1.0);
 							uUp += thB[k] * chgUp[k];
 						}
 						if (uUp > maxu2) maxu2 = uUp;
@@ -3546,12 +3727,12 @@ static ST_retcode batch_setup(char *arg) {
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
 	for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->has_behsim = 1;
-	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM) M->need_adj = 1;
+	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->behtermcodes[k])) M->need_adj = 1;
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
 
-	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM) M->need_adj = 1; }
+	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
 
 	batch_state.P = P;
 	batch_state.per = (period_t *)calloc((size_t)P, sizeof(period_t));
@@ -3907,7 +4088,7 @@ static ST_retcode legacy_call(char *arg0) {
 	if (M.nbehterms > MAXBEHTERMS) { SF_error("saom_sim: too many behavior terms\n"); free(argbuf); return(198); }
 	for (i = 0; i < M.nbehterms; i++) {
 		M.behtermcodes[i] = (int)next_long();
-		if (M.behtermcodes[i] == TERMCODE_BEH_AVALT || M.behtermcodes[i] == TERMCODE_BEH_AVSIM) M.need_adj = 1;
+		if (M.behtermcodes[i] == TERMCODE_BEH_AVALT || M.behtermcodes[i] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M.behtermcodes[i])) M.need_adj = 1;
 	}
 	for (i = 0; i < M.nbehterms; i++) P.thetaBeh[i] = next_double();
 	if (M.nbehterms > 0) {

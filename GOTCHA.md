@@ -707,3 +707,11 @@ only works for copies that have no plugin of their own. When testing a rebuilt p
 See `docs/SIZE_LIMITS.md` (not tracked) and the "Size limits" section of `nwsaom_remarks.sthlp`. In short: Stata/BE matrices are 800 x 800 and a frame has at most 2,048 variables;
 a dyadic covariate takes n covariate arrays in the plugin (limit 1,023); a model that exceeds a native limit runs in Mata without an error - check `e(engine)`. Fit time (plain model, k3 200): n = 1,000
 10 s, 2,000 67 s, 4,000 520 s.
+
+## A new native behavior term code must be added in TWO places in `native/saom_sim.c`
+
+`saom_beh_stat_term()` / `saom_beh_change_term()` handle the term in the simulation, but the
+LAGGED behavior statistic (end behavior on the starting network) is computed by a separate switch in
+`beh_stats_on_edges()`. A code missing there gets a silent 0: the native fit then shows the new
+coefficient as omitted or diverges (rc 498) while the Mata engine is fine (seen 2026-10-22 with the
+`beheff()` terms, protocol 35). If native and Mata disagree for a new behavior term, check that switch first.

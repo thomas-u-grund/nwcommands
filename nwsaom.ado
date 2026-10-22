@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -368,7 +368,9 @@ program nwsaom, eclass
 	local __nwsaom_mb = 0
 	local __nwsaom_nbehv = 1
 	if `"`behavior'"' != "" & (strpos(`"`behavior'"', "|") | strpos(`"`behavior'"', ":")) {
-		local __nwsaom_mbeffnames "linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation behsim"
+		// RSiena's behavior effects of the network position / the alters / the similarity family (protocol 35), also valid as beheff() tokens
+		local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
+		local __nwsaom_mbeffnames "linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation behsim `__nwsaom_newbeh'"
 		local __nwsaom_gl ""
 		foreach __e in linear quadratic avalt avsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation {
 			if "``__e''" != "" local __nwsaom_gl "`__nwsaom_gl' `__e'"
@@ -418,7 +420,8 @@ program nwsaom, eclass
 			local `__e' ""
 		}
 		foreach __e of local __nwsaom_mbe1 {
-			local `__e' "`__e'"
+			if `: list __e in __nwsaom_newbeh' local beheff "`beheff' `__e'"
+			else local `__e' "`__e'"
 		}
 		local behavior "`__nwsaom_mbv1'"
 		if `__nwsaom_nbehv' >= 2 local __nwsaom_mb = 1
@@ -490,7 +493,7 @@ program nwsaom, eclass
 		}
 		local __nwsaom_coev = 1
 	}
-	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" {
+	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" {
 		di "{err}{bf:behsim}/{bf:behegox}/{bf:behaltx}/{bf:behegoplusalt} (selection effects of the co-evolving behavior) require {bf:behavior()} to be specified."
 		error 198
 	}
@@ -2260,6 +2263,18 @@ program nwsaom, eclass
 			mata: __nwsaom_last_Mbeh.addterm("avsim_creation", &stat_saom_avsim(), &change_saom_avsim(), "beh_avsim_creation", 2)
 			local __nwsaom_effbeh "`__nwsaom_effbeh' avsimendow avsimcreation"
 			local __nwsaom_endowcreation = 1
+		}
+		// RSiena's behavior effects of the network position, the alters and the similarity family (protocol 35), behavior 1
+		if "`beheff'" != "" {
+			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
+			foreach __e of local beheff {
+				if !`: list __e in __nwsaom_newbeh' {
+					di "{err}beheff(): unknown effect {bf:`__e'}; available: `__nwsaom_newbeh'."
+					error 198
+				}
+			}
+			mata: st_local("__nwsaom_newadded", SaomMBAddTerms(__nwsaom_last_Mbeh, "`beheff'", "beh_"))
+			local __nwsaom_effbeh "`__nwsaom_effbeh' `__nwsaom_newadded'"
 		}
 		local __nwsaom_efflist "`__nwsaom_efflist' [behavior: `__nwsaom_effbeh']"
 

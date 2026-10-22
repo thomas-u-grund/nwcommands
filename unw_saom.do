@@ -4638,6 +4638,7 @@ struct SaomBehaviorNativeConfig {
 	real scalar eligible
 	real rowvector termcodes	// one per term instance in Mbeh, in Mbeh's own order
 	real rowvector fntype		// protocol 11: endowment (1)/creation (2) codes per term
+	real scalar needv35		// protocol 35: network-position / alter / similarity-family behavior effects (term codes 105-124)
 }
 
 /* ===================================================================
@@ -8016,6 +8017,10 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
+		if (C.cfgBeh.needv35 & k < 35) {
+			C.use_native = 0
+			C.use_batch = 0
+		}
 		// the alters of an active ego include the inactive actors (RSiena), protocol 26
 		if (C.haspresent & k < 26) {
 			C.use_native = 0
@@ -8992,6 +8997,7 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 	cfg.termcodes = J(1, Mbeh.nterms, 0)
 	cfg.fntype = J(1, Mbeh.nterms, 0)
 	cfg.eligible = 1
+	cfg.needv35 = 0
 	for (t=1; t<=Mbeh.nterms; t++) {
 		nm = Mbeh.names[t]
 		// protocol 11: endowment/creation terms are the eval term gated by
@@ -9003,6 +9009,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 		else if (nm == "quadratic") cfg.termcodes[t] = 102
 		else if (nm == "avalt") cfg.termcodes[t] = 103
 		else if (nm == "avsim") cfg.termcodes[t] = 104
+		else if (_sb_newcode(nm) > 0) {
+			cfg.termcodes[t] = _sb_newcode(nm)
+			if (cfg.fntype[t] != 0) cfg.eligible = 0
+			cfg.needv35 = 1
+		}
 		else cfg.eligible = 0
 	}
 	return(cfg)
@@ -9756,7 +9767,7 @@ string scalar SaomRSienaLabels(class ErgmModel scalar M, real scalar symmetric, 
 			else if (base == "quadratic") l = behname + " quadratic shape"
 			else if (base == "avalt") l = behname + " average alter"
 			else if (base == "avsim") l = behname + " average similarity"
-			else l = behname + " " + base
+			else l = behname + " " + _sb_label(base)
 			if ((*Mbp).fntype[t] == 1) l = l + " [endowment]"
 			if ((*Mbp).fntype[t] == 2) l = l + " [creation]"
 			out = out + "|" + l
@@ -10555,7 +10566,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	real rowvector ratesNet0, stb
 	real matrix ratesBeh0
 	real colvector zero
-	real scalar pd, b, p, why_ok
+	real scalar pd, b, p, why_ok, anyneed35
 	string scalar why
 
 	C.Gwaves = Gwaves
@@ -10588,14 +10599,16 @@ struct SaomMBCtx scalar SaomMBInit(
 	C.codes = J(1, 0, 0)
 	C.fnt = J(1, 0, 0)
 	why_ok = C.cfg.eligible
+	anyneed35 = 0
 	for (b=1; b<=C.nb; b++) {
 		cb = SaomBehaviorNativeSetup(*Mbehs[b])
+		anyneed35 = anyneed35 | cb.needv35
 		why_ok = why_ok & cb.eligible
 		C.codes = (C.codes, cb.termcodes)
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -10675,6 +10688,302 @@ struct SaomCoevMBFit scalar SaomEstimateRMCoevMB(
 }
 
 
+/* ===================================================================
+   RSiena's behavior effects of the network position and of the alters (priorities 3 and 4 of docs/SAOM_EFFECTS_TODO.md), copied from the C++ of
+   IndegreeEffect, OutdegreeEffect, ReciprocalDegreeBehaviorEffect, IsolateEffect, AverageAlterEffect, MaxAlterEffect, AverageReciprocatedAlterEffect and
+   SimilarityEffect. The behavior values are centred by the overall mean in the statistics (currentValues) and in the alter sums (centeredValue()).
+   RSiena quirks copied: the alter-popularity contribution of avAltPop/totAltPop adds the popularity sum to the plain alter sum and ignores the difference;
+   in the alter-popularity counts of SimilarityEffect an equal alter is added to the HIGHER count (lnumberAlterEqualPop is never incremented).
+   =================================================================== */
+real scalar _sb_c(class SaomBehavior scalar Beh, real scalar j) return(Beh.values[j] - Beh.overallMean)
+real rowvector stat_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar kind) {
+	real scalar i, tot, w
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		if (kind == 1) w = G.din[i]
+		else if (kind == 2) w = G.dout[i]
+		else if (kind == 3) w = _saom_recdeg(G, i)
+		else if (kind == 4) w = (G.din[i] == 0)
+		else w = (G.dout[i] == 0)
+		tot = tot + _sb_c(Beh, i) * w
+	}
+	return(tot)
+}
+real scalar change_saom_bdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar kind) {
+	real scalar w
+	if (kind == 1) w = G.din[i]
+	else if (kind == 2) w = G.dout[i]
+	else if (kind == 3) w = _saom_recdeg(G, i)
+	else if (kind == 4) w = (G.din[i] == 0)
+	else w = (G.dout[i] == 0)
+	return(diff * w)
+}
+real rowvector stat_saom_indeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 1))
+real scalar change_saom_indeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 1))
+real rowvector stat_saom_outdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 2))
+real scalar change_saom_outdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 2))
+real rowvector stat_saom_recipdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 3))
+real scalar change_saom_recipdeg(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 3))
+real rowvector stat_saom_isolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 4))
+real scalar change_saom_isolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 4))
+real rowvector stat_saom_outisolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bdeg(Beh, G, 5))
+real scalar change_saom_outisolate(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bdeg(Beh, G, i, diff, 5))
+
+/* totAlt (divide = 0), avAltPop / totAltPop (alterPop = 1) */
+real rowvector stat_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar divide, real scalar pop) {
+	real scalar i, k, s, nb, tot
+	real rowvector nbr
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nbr = G.neighbors_out(i)
+		nb = cols(nbr)
+		if (nb == 0) continue
+		s = 0
+		for (k=1; k<=nb; k++) s = s + _sb_c(Beh, nbr[k]) * (pop ? G.din[nbr[k]] : 1)
+		s = s * _sb_c(Beh, i)
+		if (divide) s = s / nb
+		tot = tot + s
+	}
+	return(tot)
+}
+real scalar change_saom_balter(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar divide, real scalar pop) {
+	real scalar k, nb, ch, tota, popsum
+	real rowvector nbr
+	nbr = G.neighbors_out(i)
+	nb = cols(nbr)
+	tota = 0
+	for (k=1; k<=nb; k++) tota = tota + _sb_c(Beh, nbr[k])
+	ch = tota
+	if (nb > 0) {
+		if (pop) {
+			popsum = 0
+			for (k=1; k<=nb; k++) popsum = popsum + _sb_c(Beh, nbr[k]) * G.din[nbr[k]]
+			ch = ch + popsum
+		}
+		else ch = diff * tota
+		if (divide) ch = ch / nb
+	}
+	return(ch)
+}
+real rowvector stat_saom_totalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 0, 0))
+real scalar change_saom_totalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 0))
+real rowvector stat_saom_avaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 1, 1))
+real scalar change_saom_avaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 1, 1))
+real rowvector stat_saom_totaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_balter(Beh, G, 0, 1))
+real scalar change_saom_totaltpop(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_balter(Beh, G, i, diff, 0, 1))
+
+/* maxAlt (minim = 0) / minAlt (minim = 1) */
+real rowvector stat_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar minim) {
+	real scalar i, k, m, tot, v
+	real rowvector nbr
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nbr = G.neighbors_out(i)
+		if (cols(nbr) == 0) continue
+		m = (minim ? 1000 : -1000)
+		for (k=1; k<=cols(nbr); k++) {
+			v = _sb_c(Beh, nbr[k])
+			if (minim ? v < m : v > m) m = v
+		}
+		tot = tot + m * _sb_c(Beh, i)
+	}
+	return(tot)
+}
+real scalar change_saom_bmaxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar minim) {
+	real scalar k, m, v
+	real rowvector nbr
+	nbr = G.neighbors_out(i)
+	if (cols(nbr) == 0 | diff == 0) return(0)
+	m = (minim ? 1000 : -1000)
+	for (k=1; k<=cols(nbr); k++) {
+		v = _sb_c(Beh, nbr[k])
+		if (minim ? v < m : v > m) m = v
+	}
+	return(m * diff)
+}
+real rowvector stat_saom_maxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 0))
+real scalar change_saom_maxalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 0))
+real rowvector stat_saom_minalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bmaxalt(Beh, G, 1))
+real scalar change_saom_minalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bmaxalt(Beh, G, i, diff, 1))
+
+/* avRecAlt (divide = 1) / totRecAlt: the reciprocated alters */
+real scalar _sb_recalts(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar cnt) {
+	real rowvector nbr
+	real scalar k, s
+	nbr = G.neighbors_out(i)
+	s = 0
+	cnt = 0
+	for (k=1; k<=cols(nbr); k++) {
+		if (G.has_edge(nbr[k], i)) {
+			s = s + _sb_c(Beh, nbr[k])
+			cnt++
+		}
+	}
+	return(s)
+}
+real rowvector stat_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar divide) {
+	real scalar i, s, cnt, tot
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		s = _sb_recalts(Beh, G, i, cnt)
+		if (cnt > 0) {
+			s = s * _sb_c(Beh, i)
+			if (divide) s = s / cnt
+			tot = tot + s
+		}
+	}
+	return(tot)
+}
+real scalar change_saom_brecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar divide) {
+	real scalar s, cnt, ch
+	s = _sb_recalts(Beh, G, i, cnt)
+	ch = 0
+	if (cnt > 0) {
+		ch = diff * s
+		if (divide) ch = ch / cnt
+	}
+	return(ch)
+}
+real rowvector stat_saom_avrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_brecalt(Beh, G, 1))
+real scalar change_saom_avrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 1))
+real rowvector stat_saom_totrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_brecalt(Beh, G, 0))
+real scalar change_saom_totrecalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_brecalt(Beh, G, i, diff, 0))
+
+/* RSiena SimilarityEffect(average, alterPopularity, egoPopularity, hi, lo); flags in the 5-vector fl */
+real rowvector stat_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real rowvector fl) {
+	real scalar i, k, nb, tot, st, dif, cnt, totc
+	real rowvector nbr
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		nbr = G.neighbors_out(i)
+		nb = cols(nbr)
+		st = 0
+		cnt = 0
+		totc = 0
+		for (k=1; k<=nb; k++) {
+			dif = _sb_c(Beh, nbr[k]) - _sb_c(Beh, i)
+			if (fl[2]) dif = dif * G.din[nbr[k]]
+			if (fl[4]) if (dif > 0) st = st + dif
+			if (fl[5]) if (dif < 0) st = st - dif
+			cnt++
+			if (fl[2]) totc = totc + G.din[nbr[k]]
+		}
+		if (!fl[2]) totc = cnt
+		st = totc - st / Beh.range
+		if (fl[4] & fl[5]) st = st - totc * Beh.simMean
+		if (fl[1] & cnt > 0) st = st / cnt
+		if (fl[3]) st = st * G.din[i]
+		tot = tot + st
+	}
+	return(tot)
+}
+real scalar change_saom_bsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real rowvector fl) {
+	real scalar k, nb, nh, nl, ne, nhp, nlp, nep, vego, vj, tc, ch
+	real rowvector nbr
+	nbr = G.neighbors_out(i)
+	nb = cols(nbr)
+	if (nb == 0) return(0)
+	nh = 0
+	nl = 0
+	ne = 0
+	nhp = 0
+	nlp = 0
+	nep = 0
+	vego = Beh.values[i]
+	for (k=1; k<=nb; k++) {
+		vj = Beh.values[nbr[k]]
+		if (vj > vego) {
+			nh++
+			nhp = nhp + G.din[nbr[k]]
+		}
+		else if (vj < vego) {
+			nl++
+			nlp = nlp + G.din[nbr[k]]
+		}
+		else {
+			ne++
+			nhp = nhp + G.din[nbr[k]]		// RSiena: the equal alters are added to the HIGHER popularity count
+		}
+	}
+	tc = 0
+	if (fl[2]) {
+		if (diff > 0) {
+			if (fl[4]) tc = tc + nhp
+			if (fl[5]) tc = tc - nep - nlp
+		}
+		else if (diff < 0) {
+			if (fl[4]) tc = tc - nhp - nep
+			if (fl[5]) tc = tc + nlp
+		}
+	}
+	else {
+		if (diff > 0) {
+			if (fl[4]) tc = tc + nh
+			if (fl[5]) tc = tc - ne - nl
+		}
+		else if (diff < 0) {
+			if (fl[4]) tc = tc - nh - ne
+			if (fl[5]) tc = tc + nl
+		}
+	}
+	ch = tc / Beh.range
+	if (fl[1]) ch = ch / nb
+	else if (fl[4] & fl[5]) ch = ch - nb * Beh.simMean
+	if (fl[3]) ch = ch * G.din[i]
+	return(ch)
+}
+real rowvector stat_saom_totsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,1)))
+real scalar change_saom_totsim(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,1)))
+real rowvector stat_saom_avatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,1,0)))
+real scalar change_saom_avatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,1,0)))
+real rowvector stat_saom_avattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,0,0,1)))
+real scalar change_saom_avattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,0,0,1)))
+real rowvector stat_saom_totatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,1,0)))
+real scalar change_saom_totatthigher(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,1,0)))
+real rowvector stat_saom_totattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,0,0,0,1)))
+real scalar change_saom_totattlower(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,0,0,0,1)))
+real rowvector stat_saom_avsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,1,0,1,1)))
+real scalar change_saom_avsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,1,0,1,1)))
+real rowvector stat_saom_totsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (0,1,0,1,1)))
+real scalar change_saom_totsimpopalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (0,1,0,1,1)))
+real rowvector stat_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,1,1,1)))
+real scalar change_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,1,1,1)))
+
+/* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
+string scalar _sb_label(string scalar base) {
+	if (base == "indeg") return("indegree")
+	if (base == "outdeg") return("outdegree")
+	if (base == "recipdeg") return("reciprocated degree")
+	if (base == "isolate") return("in-isolate")
+	if (base == "outisolate") return("out-isolate")
+	if (base == "totalt") return("total alter")
+	if (base == "avaltpop") return("ave. alter x pop. alter")
+	if (base == "totaltpop") return("total alter x pop. alter")
+	if (base == "maxalt") return("max. alter")
+	if (base == "minalt") return("min. alter")
+	if (base == "avrecalt") return("average rec. alters")
+	if (base == "totrecalt") return("total rec. alters")
+	if (base == "totsim") return("total similarity")
+	if (base == "avatthigher") return("average attraction higher")
+	if (base == "avattlower") return("average attraction lower")
+	if (base == "totatthigher") return("total attraction higher")
+	if (base == "totattlower") return("total attraction lower")
+	if (base == "avsimpopalt") return("ave. sim. x popularity alter")
+	if (base == "totsimpopalt") return("tot. sim. x popularity alter")
+	if (base == "avsimpopego") return("ave. sim. x popularity ego")
+	return(base)
+}
+string rowvector _sb_newtokens() {
+	return(("indeg","outdeg","recipdeg","isolate","outisolate","totalt","avaltpop","totaltpop","maxalt","minalt","avrecalt","totrecalt","totsim","avatthigher","avattlower","totatthigher","totattlower","avsimpopalt","totsimpopalt","avsimpopego"))
+}
+real scalar _sb_newcode(string scalar nm) {
+	real scalar k
+	string rowvector tk
+	tk = _sb_newtokens()
+	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(104 + k)
+	return(0)
+}
+
 /* adds the terms named in `effects' (space-separated: linear quadratic avalt avsim, each also with the suffix endow /
    creation as linearendow, ...; an endow/creation pair is added as the two gated terms) to a behavior model; the
    coefficient names get the prefix `pre' (e.g. "beh_alc_"). Returns the effect list as it was added ("linearendow
@@ -10708,6 +11017,26 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 			Mbeh.addterm("avsim_endow", &stat_saom_avsim(), &change_saom_avsim(), pre + "avsim_endow", 1)
 			Mbeh.addterm("avsim_creation", &stat_saom_avsim(), &change_saom_avsim(), pre + "avsim_creation", 2)
 		}
+		else if (nm == "indeg") Mbeh.addterm("indeg", &stat_saom_indeg(), &change_saom_indeg(), pre + "indeg")
+		else if (nm == "outdeg") Mbeh.addterm("outdeg", &stat_saom_outdeg(), &change_saom_outdeg(), pre + "outdeg")
+		else if (nm == "recipdeg") Mbeh.addterm("recipdeg", &stat_saom_recipdeg(), &change_saom_recipdeg(), pre + "recipdeg")
+		else if (nm == "isolate") Mbeh.addterm("isolate", &stat_saom_isolate(), &change_saom_isolate(), pre + "isolate")
+		else if (nm == "outisolate") Mbeh.addterm("outisolate", &stat_saom_outisolate(), &change_saom_outisolate(), pre + "outisolate")
+		else if (nm == "totalt") Mbeh.addterm("totalt", &stat_saom_totalt(), &change_saom_totalt(), pre + "totalt")
+		else if (nm == "avaltpop") Mbeh.addterm("avaltpop", &stat_saom_avaltpop(), &change_saom_avaltpop(), pre + "avaltpop")
+		else if (nm == "totaltpop") Mbeh.addterm("totaltpop", &stat_saom_totaltpop(), &change_saom_totaltpop(), pre + "totaltpop")
+		else if (nm == "maxalt") Mbeh.addterm("maxalt", &stat_saom_maxalt(), &change_saom_maxalt(), pre + "maxalt")
+		else if (nm == "minalt") Mbeh.addterm("minalt", &stat_saom_minalt(), &change_saom_minalt(), pre + "minalt")
+		else if (nm == "avrecalt") Mbeh.addterm("avrecalt", &stat_saom_avrecalt(), &change_saom_avrecalt(), pre + "avrecalt")
+		else if (nm == "totrecalt") Mbeh.addterm("totrecalt", &stat_saom_totrecalt(), &change_saom_totrecalt(), pre + "totrecalt")
+		else if (nm == "totsim") Mbeh.addterm("totsim", &stat_saom_totsim(), &change_saom_totsim(), pre + "totsim")
+		else if (nm == "avatthigher") Mbeh.addterm("avatthigher", &stat_saom_avatthigher(), &change_saom_avatthigher(), pre + "avatthigher")
+		else if (nm == "avattlower") Mbeh.addterm("avattlower", &stat_saom_avattlower(), &change_saom_avattlower(), pre + "avattlower")
+		else if (nm == "totatthigher") Mbeh.addterm("totatthigher", &stat_saom_totatthigher(), &change_saom_totatthigher(), pre + "totatthigher")
+		else if (nm == "totattlower") Mbeh.addterm("totattlower", &stat_saom_totattlower(), &change_saom_totattlower(), pre + "totattlower")
+		else if (nm == "avsimpopalt") Mbeh.addterm("avsimpopalt", &stat_saom_avsimpopalt(), &change_saom_avsimpopalt(), pre + "avsimpopalt")
+		else if (nm == "totsimpopalt") Mbeh.addterm("totsimpopalt", &stat_saom_totsimpopalt(), &change_saom_totsimpopalt(), pre + "totsimpopalt")
+		else if (nm == "avsimpopego") Mbeh.addterm("avsimpopego", &stat_saom_avsimpopego(), &change_saom_avsimpopego(), pre + "avsimpopego")
 		else if (substr(nm, strlen(nm) - 7, .) == "creation") continue		// the partner of an endow term, added with it
 		else {
 			errprintf("nwsaom: unknown behavior effect '" + nm + "'\n")
@@ -10768,7 +11097,7 @@ string scalar SaomMBLabels(class ErgmModel scalar M, real scalar symmetric, stri
 			else if (base == "quadratic") l = names[b] + " quadratic shape"
 			else if (base == "avalt") l = names[b] + " average alter"
 			else if (base == "avsim") l = names[b] + " average similarity"
-			else l = names[b] + " " + base
+			else l = names[b] + " " + _sb_label(base)
 			if ((*Mbehs[b]).fntype[t] == 1) l = l + " [endowment]"
 			if ((*Mbehs[b]).fntype[t] == 2) l = l + " [creation]"
 			out = out + "|" + l
