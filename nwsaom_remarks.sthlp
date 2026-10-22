@@ -561,6 +561,13 @@ with a missing value is skipped - egoSqX only the ego's, altSqX only the alter's
 RSiena's too (absDiffX 113, egoXaltX 109.489, diffX -9, higher 122.5, egoSqX 216.676, altSqX 207.257, sameXRecip 42, simRecipX 12.977) and the
 estimates agree (dev/saom_rsiena_cov2miss.*).
 
+{pstd}
+{bf:Endowment/creation of covariate effects.} {cmd:endow(altx:alc) creation(altx:alc)} (also egox, samex, simx, nodecov): the tie statistic of the
+effect over the lost ties in the start network and over the gained ties in the end network, as RSiena's {cmd:type = "endow"/"creation"}. Checked on
+s50 with alcohol (density, reciprocity, one split): the eight observed statistics (altX -34.72/19.8, egoX -27.72/28.8, sameX -34/33, simX
+-5.978/5.799) are identical to RSiena's and the estimates agree (altX -0.38/0.26 (-0.38/0.26), egoX -2.15/2.16 (-2.15/2.15), sameX 0.11/0.17
+(0.09/0.20), simX 0.47/0.68 (0.52/0.63)).
+
 {marker tvcov}{...}
 {pstd}
 {bf:Time-varying covariates.} {cmd:tvcov(}{it:a1 a2 a3}{cmd:)} (several: separated by '|') declares a covariate that changes between

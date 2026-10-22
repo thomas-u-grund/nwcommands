@@ -213,14 +213,36 @@ program nwsaom, eclass
 	// reciprocityendow/..., transtiesendow/..., linearendow/..., quadraticendow/..., avaltendow/...,
 	// avsimendow/...) stay as exact aliases: endow(x) sets `xendow', creation(x) sets `xcreation'.
 	local __nwsaom_ecvalid "outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip linear quadratic avalt avsim"
+	// covariate effects are named effect:variable, e.g. endow(altx:alc) creation(altx:alc) (egox/altx/samex/simx or
+	// nodeocov/nodeicov/nodematch/simcov): the effect for that variable is split and replaces the plain one
+	local __nwsaom_cvend ""
+	local __nwsaom_cvcre ""
 	foreach __r in endow creation {
 		local `__r' = strlower("``__r''")
 		foreach __e of local `__r' {
+			if strpos("`__e'", ":") {
+				local __nwsaom_cv`=substr("`__r'", 1, 3)' "`__nwsaom_cv`=substr("`__r'", 1, 3)'' `__e'"
+				continue
+			}
 			if !`: list __e in __nwsaom_ecvalid' {
 				di "{err}{bf:`__e'} cannot be split into endowment and creation roles in {bf:`__r'()}; available: `__nwsaom_ecvalid'."
 				error 198
 			}
 			local `__e'`__r' "`__e'`__r'"
+		}
+	}
+	local __nwsaom_cvec ""
+	foreach __t of local __nwsaom_cvend {
+		if !`: list __t in __nwsaom_cvcre' {
+			di "{err}{bf:`__t'} must be named in both {bf:endow()} and {bf:creation()}."
+			error 198
+		}
+		local __nwsaom_cvec "`__nwsaom_cvec' `__t'"
+	}
+	foreach __t of local __nwsaom_cvcre {
+		if !`: list __t in __nwsaom_cvend' {
+			di "{err}{bf:`__t'} must be named in both {bf:endow()} and {bf:creation()}."
+			error 198
 		}
 	}
 	foreach __e of local __nwsaom_ecvalid {
@@ -787,6 +809,7 @@ program nwsaom, eclass
 		error 198
 	}
 	local __nwsaom_hasnetgate = 0
+	if "`__nwsaom_cvec'" != "" local __nwsaom_hasnetgate = 1
 	foreach __e in outdegree reciprocity transties cycle4 gwesp balance transtrip cycle3 transmedtrip transrectrip {
 		if "``__e'endow'" != "" local __nwsaom_hasnetgate = 1
 	}
@@ -1354,6 +1377,41 @@ program nwsaom, eclass
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `__m'"
 			local __nwsaom_efflist "`__nwsaom_efflist' `__nwsaom_egolab'(`__v')"
 		}
+	}
+
+	// --- endow/creation split of covariate effects: endow(altx:alc) creation(altx:alc)
+	foreach __t of local __nwsaom_cvec {
+		gettoken __ef __vv : __t, parse(":")
+		local __vv = substr("`__vv'", 2, .)
+		if inlist("`__ef'", "egox", "nodeocov") {
+			local __kind "nodeocov"
+		}
+		else if inlist("`__ef'", "altx", "nodeicov") {
+			local __kind "nodeicov"
+		}
+		else if inlist("`__ef'", "samex", "nodematch") {
+			local __kind "nodematch"
+		}
+		else if inlist("`__ef'", "simx", "simcov") {
+			local __kind "simcov"
+		}
+		else if "`__ef'" == "nodecov" {
+			local __kind "nodecov"
+		}
+		else {
+			di "{err}`__ef' cannot be split in endow()/creation(): use egox, altx, samex, simx or nodecov as effect:variable."
+			error 198
+		}
+		confirm numeric variable `__vv'
+		if `: list __vv in `__kind'' {
+			di "{err}`__ef':`__vv' is split into endowment and creation; do not also give `__vv' in the plain `__ef'() option."
+			error 198
+		}
+		tempname __td_s1 __td_s2
+		mata: `__td_s1' = ErgmTermData()
+		mata: `__td_s2' = ErgmTermData()
+		mata: SaomRegCovSplit(__nwsaom_last_M, "`__kind'", "`__vv'", `nodes', `__nwsaom_center', `__td_s1', `__td_s2', ("`__ef'endow_`__vv'", "`__ef'creation_`__vv'"), __nwsaom_cm)
+		local __nwsaom_efflist "`__nwsaom_efflist' `__ef'endow(`__vv') `__ef'creation(`__vv')"
 	}
 
 	// --- absdiffx(varlist) / egoxaltx(varlist): RSiena's absDiffX (|x_j - x_i|) and egoXaltX (x_i * x_j).

@@ -60,4 +60,20 @@ nwsaom, wave1(c22) wave2(c23) outdegree diffx(z) k0(30) k3(100) seed(2)
 mata: A = __nwsaom_last_G2.to_dense(); x = st_data(1::36, "z"); ok = (x :< .); xm = x :- mean(select(x, ok)); xm = editmissing(xm, 0); stv = __nwsaom_last_M.full_statistic(__nwsaom_last_G2)
 mata: XI = xm * J(1, 36, 1); XJ = J(36, 1, 1) * xm'; K = (ok * ok'); st_numscalar("__ref", sum(A :* K :* (XJ - XI))); st_numscalar("__obs", stv[2])
 assert abs(scalar(__ref) - scalar(__obs)) < 1e-9
+* endow/creation split of covariate effects: endow(altx:z) creation(altx:z) (RSiena includeEffects(altX, type = "endow"/"creation"))
+replace z = mod(_n * 5, 4)
+foreach ef in altx egox samex simx {
+	nwsaom, waves(c21 c22 c23) outdegree reciprocity endow(`ef':z) creation(`ef':z) k0(30) k3(120) seed(2)
+	assert colsof(e(b)) == 4 & !missing(el(e(b),1,3), el(e(b),1,4)) & "`e(engine)'" == "native"
+	local cn : colfullnames e(b)
+	assert strpos("`cn'", "`ef'endow_z") & strpos("`cn'", "`ef'creation_z")
+}
+capture nwsaom, waves(c21 c22 c23) outdegree endow(altx:z)
+assert _rc == 198
+capture nwsaom, waves(c21 c22 c23) outdegree altx(z) endow(altx:z) creation(altx:z)
+assert _rc == 198
+global NWSAOM_NONATIVE 1
+nwsaom, wave1(c22) wave2(c23) outdegree endow(samex:z) creation(samex:z) k0(20) k3(50) seed(2)
+assert "`e(engine)'" == "mata"
+global NWSAOM_NONATIVE
 di as text "covariate variants PASS"

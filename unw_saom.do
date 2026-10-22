@@ -2432,6 +2432,64 @@ void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vl
 	else M.addterm("simcov", 1, &stat_saom_simcov(), &change_saom_simcov(), td, coefname)
 }
 
+/* endow/creation split of a covariate effect (RSiena includeEffects(altX, type = "endow"/"creation")): the name of a split term
+   is <kind>endow or <kind>creation, kind = nodematch/nodecov/nodeicov/nodeocov/simcov */
+string scalar _saom_covsplit_base(string scalar nm) {
+	string scalar b
+	string rowvector kinds
+	real scalar i
+
+	kinds = ("nodematch", "nodecov", "nodeicov", "nodeocov", "simcov")
+	for (i=1; i<=cols(kinds); i++) {
+		if (nm == kinds[i] + "endow" | nm == kinds[i] + "creation") return(kinds[i])
+	}
+	return("")
+}
+
+/* registers the endowment and the creation term of a covariate effect (td1, td2: separate ErgmTermData objects); missing values
+   are not supported for the split effects */
+void SaomRegCovSplit(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n, real scalar center,
+	class ErgmTermData scalar td1, class ErgmTermData scalar td2, string rowvector coefname, real scalar m) {
+
+	real colvector x
+	real scalar usecenter
+
+	x = st_data(1::n, vn)
+	if (any(x :>= .)) {
+		errprintf("nwsaom: the covariate " + vn + " has missing values; the endow/creation split of a covariate effect does not support them yet.\n")
+		exit(198)
+	}
+	usecenter = (kind == "nodecov" | kind == "nodeicov" | kind == "nodeocov") ? center : 0
+	td1.attr = SaomCovPrep(x, usecenter, m)
+	if (kind == "simcov") {
+		td1.decay = max(td1.attr) - min(td1.attr)
+		td1.center = SaomSimMean(td1.attr)
+	}
+	td2.attr = td1.attr
+	td2.decay = td1.decay
+	td2.center = td1.center
+	if (kind == "nodematch") {
+		M.addterm("nodematchendow", 1, &stat_nodematch(), &change_nodematch(), td1, (coefname[1]))
+		M.addterm("nodematchcreation", 1, &stat_nodematch(), &change_nodematch(), td2, (coefname[2]))
+	}
+	else if (kind == "nodecov") {
+		M.addterm("nodecovendow", 1, &stat_nodecov(), &change_nodecov(), td1, (coefname[1]))
+		M.addterm("nodecovcreation", 1, &stat_nodecov(), &change_nodecov(), td2, (coefname[2]))
+	}
+	else if (kind == "nodeicov") {
+		M.addterm("nodeicovendow", 1, &stat_nodeicov(), &change_nodeicov(), td1, (coefname[1]))
+		M.addterm("nodeicovcreation", 1, &stat_nodeicov(), &change_nodeicov(), td2, (coefname[2]))
+	}
+	else if (kind == "nodeocov") {
+		M.addterm("nodeocovendow", 1, &stat_nodeocov(), &change_nodeocov(), td1, (coefname[1]))
+		M.addterm("nodeocovcreation", 1, &stat_nodeocov(), &change_nodeocov(), td2, (coefname[2]))
+	}
+	else {
+		M.addterm("simcovendow", 1, &stat_saom_simcov(), &change_saom_simcov(), td1, (coefname[1]))
+		M.addterm("simcovcreation", 1, &stat_saom_simcov(), &change_saom_simcov(), td2, (coefname[2]))
+	}
+}
+
 void SaomRegCov(class ErgmModel scalar M, string scalar kind, string scalar vn, real scalar n,
 	real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m,
 	| real colvector idx) {
@@ -3775,7 +3833,7 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 				ties = Gstart.all_ties()
 				for (k=1; k<=rows(ties); k++) {
 					if (Gend.has_edge(ties[k,1], ties[k,2])) continue
-					v = v - ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gstart, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gstart, base, td.attr, td.decay, ties[k,1], ties[k,2]))
+					v = v - ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gstart, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gstart, base, td.attr, td.decay, ties[k,1], ties[k,2], td.center))
 				}
 			}
 			else {
@@ -3783,7 +3841,7 @@ real rowvector SaomNetworkPatchEndowCreation(class ErgmModel scalar M, real rowv
 				for (k=1; k<=rows(ties); k++) {
 					if (Gstart.has_edge(ties[k,1], ties[k,2])) continue
 					if (usemask) if (missMask[ties[k,1], ties[k,2]] != 0) continue
-					v = v + ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gend, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gcm, base, td.attr, td.decay, ties[k,1], ties[k,2]))
+					v = v + ((usemask & base == "balance") ? _saom_balance_tiestat_masked(Gend, td.decay, ties[k,1], ties[k,2], missMask) : _saom_tiestat(Gcm, base, td.attr, td.decay, ties[k,1], ties[k,2], td.center))
 				}
 			}
 			out[pos] = v
@@ -7425,7 +7483,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
 	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24
-	string scalar nm
+	string scalar nm, nmb
 	string rowvector nms
 
 	hassimcov = 0
@@ -7454,6 +7512,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 
 	for (t=1; t<=M.nterms; t++) {
 		nm = M.names[t]
+		nmb = nm
+		if (_saom_covsplit_base(nm) != "") {
+			// the endowment/creation terms of a covariate effect: the base effect gated by the direction of the change
+			nmb = _saom_covsplit_base(nm)
+			cfg.needv11 = 1
+			needv14 = 1
+		}
 		if (nm == "outdegree") cfg.termcodes[t] = 1
 		// protocol 11: the endowment/creation terms are outdegree or
 		// reciprocity gated by their function type (cfg.fntype, set by the
@@ -7539,7 +7604,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.needv11 = 1
 		}
 		else if (nm == "reciprocity") cfg.termcodes[t] = 2
-		else if (nm == "nodematch") {
+		else if (nmb == "nodematch") {
 			cfg.termcodes[t] = 3
 			tdt = *M.td[t]
 			nextattr++
@@ -7557,7 +7622,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				needv13 = 1
 			}
 		}
-		else if (nm == "nodecov") {
+		else if (nmb == "nodecov") {
 			cfg.termcodes[t] = 4
 			tdt = *M.td[t]
 			nextattr++
@@ -7575,7 +7640,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				needv13 = 1
 			}
 		}
-		else if (nm == "nodeicov") {
+		else if (nmb == "nodeicov") {
 			cfg.termcodes[t] = 5
 			tdt = *M.td[t]
 			nextattr++
@@ -7593,7 +7658,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				needv13 = 1
 			}
 		}
-		else if (nm == "nodeocov") {
+		else if (nmb == "nodeocov") {
 			cfg.termcodes[t] = 6
 			tdt = *M.td[t]
 			nextattr++
@@ -7633,7 +7698,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		else if (nm == "inactivity") cfg.termcodes[t] = 10
 		else if (nm == "transtrip") cfg.termcodes[t] = 11
 		else if (nm == "cycle3") cfg.termcodes[t] = 12
-		else if (nm == "simcov") {
+		else if (nmb == "simcov") {
 			// protocol 9: the plugin gets x / range and the similarity
 			// mean, d = 1 - |a_i - a_j| - p1
 			cfg.termcodes[t] = 13
@@ -8491,8 +8556,8 @@ real matrix SaomCovPrepMat(real matrix X, real scalar center) {
    ("alcohol1 ego", "same smoke1"), interactions joined by " x ",
    endowment/creation marked, behavior effects with the behavior's name. */
 string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar symmetric, real scalar decay) {
-	string scalar v
-	real scalar u
+	string scalar v, u2, _kb
+	real scalar u, _isend
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
@@ -8527,6 +8592,12 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "cycle4creation") return("4 cycles (1) [creation]")
 	if (term == "gwespendow") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ") [endowment]")
 	if (term == "gwespcreation") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ") [creation]")
+	if (_saom_covsplit_base(term) != "") {
+		_isend = (substr(term, strlen(term) - 4, .) == "endow")
+		_kb = _saom_covsplit_base(term)
+		u2 = (_kb == "nodematch" ? "same " + v : (_kb == "nodeicov" ? v + " alter" : (_kb == "nodeocov" ? v + " ego" : (_kb == "nodecov" ? v + " ego and alt" : v + " similarity"))))
+		return(u2 + (_isend ? " [endowment]" : " [creation]"))
+	}
 	if (term == "nodematch") return("same " + v)
 	if (term == "nodeicov") return(v + " alter")
 	if (term == "nodeocov") return(v + " ego")
