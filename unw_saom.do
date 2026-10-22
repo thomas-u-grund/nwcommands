@@ -4638,6 +4638,7 @@ struct SaomBehaviorNativeConfig {
 	real scalar eligible
 	real rowvector termcodes	// one per term instance in Mbeh, in Mbeh's own order
 	real rowvector fntype		// protocol 11: endowment (1)/creation (2) codes per term
+	real scalar needv36		// protocol 36: effFrom terms (covariate main effects on a behavior)
 	real scalar needv35		// protocol 35: network-position / alter / similarity-family behavior effects (term codes 105-124)
 }
 
@@ -8017,7 +8018,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if (C.cfgBeh.needv35 & k < 35) {
+		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 36)) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -8998,6 +8999,7 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 	cfg.fntype = J(1, Mbeh.nterms, 0)
 	cfg.eligible = 1
 	cfg.needv35 = 0
+	cfg.needv36 = 0
 	for (t=1; t<=Mbeh.nterms; t++) {
 		nm = Mbeh.names[t]
 		// protocol 11: endowment/creation terms are the eval term gated by
@@ -9009,6 +9011,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 		else if (nm == "quadratic") cfg.termcodes[t] = 102
 		else if (nm == "avalt") cfg.termcodes[t] = 103
 		else if (nm == "avsim") cfg.termcodes[t] = 104
+		else if (substr(nm, 1, 6) == "effcov" & strtoreal(substr(nm, 7, .)) >= 1 & strtoreal(substr(nm, 7, .)) <= 8) {
+			cfg.termcodes[t] = 124 + strtoreal(substr(nm, 7, .))
+			if (cfg.fntype[t] != 0) cfg.eligible = 0
+			cfg.needv36 = 1
+		}
 		else if (_sb_newcode(nm) > 0) {
 			cfg.termcodes[t] = _sb_newcode(nm)
 			if (cfg.fntype[t] != 0) cfg.eligible = 0
@@ -9984,6 +9991,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	argstr = argstr + " 0 " + strofreal(ntv)
 	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
+	argstr = argstr + SaomBehCovTrailer(n)
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
@@ -10296,6 +10304,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 		for (k=off[b]; k<off[b+1]; k++) argstr = argstr + " " + strofreal(fnt[k])
 	}
 	argstr = argstr + " 0 " + strofreal(rows(EV))		// no time-varying attributes; protocol 27: composition-change events
+	argstr = argstr + SaomBehCovTrailer(n)
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
@@ -10566,7 +10575,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	real rowvector ratesNet0, stb
 	real matrix ratesBeh0
 	real colvector zero
-	real scalar pd, b, p, why_ok, anyneed35
+	real scalar pd, b, p, why_ok, anyneed35, anyneed36
 	string scalar why
 
 	C.Gwaves = Gwaves
@@ -10600,15 +10609,17 @@ struct SaomMBCtx scalar SaomMBInit(
 	C.fnt = J(1, 0, 0)
 	why_ok = C.cfg.eligible
 	anyneed35 = 0
+	anyneed36 = 0
 	for (b=1; b<=C.nb; b++) {
 		cb = SaomBehaviorNativeSetup(*Mbehs[b])
 		anyneed35 = anyneed35 | cb.needv35
+		anyneed36 = anyneed36 | cb.needv36
 		why_ok = why_ok & cb.eligible
 		C.codes = (C.codes, cb.termcodes)
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 36))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -10949,8 +10960,73 @@ real scalar change_saom_totsimpopalt(class SaomBehavior scalar Beh, class ErgmGr
 real rowvector stat_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bsim(Beh, G, (1,0,1,1,1)))
 real scalar change_saom_avsimpopego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bsim(Beh, G, i, diff, (1,0,1,1,1)))
 
+/* protocol 36: effFrom. The covariates live in the global matrix __saom_behcov (n x ncov, centred, set by nwsaom.ado);
+   term effcovJ is RSiena's MainCovariateEffect on covariate column J: contribution diff * x_i, statistic z_i * x_i */
+real rowvector stat_saom_effcov(class SaomBehavior scalar Beh, real scalar j) {
+	external real matrix __saom_behcov
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=Beh.n; i++) tot = tot + _sb_c(Beh, i) * __saom_behcov[i, j]
+	return(tot)
+}
+real scalar change_saom_effcov(class SaomBehavior scalar Beh, real scalar i, real scalar diff, real scalar j) {
+	external real matrix __saom_behcov
+	return(diff * __saom_behcov[i, j])
+}
+/* centred covariate columns from the dataset for behfrom(); stored in __saom_behcov / __saom_behcovnames */
+void SaomBehCovSet(string rowvector vars) {
+	external real matrix __saom_behcov
+	external string rowvector __saom_behcovnames
+	real colvector x
+	real scalar j
+	__saom_behcov = J(st_nobs(), 0, 0)
+	__saom_behcovnames = vars
+	for (j=1; j<=cols(vars); j++) {
+		x = st_data(., vars[j])
+		x = editmissing(x, mean(x))
+		__saom_behcov = (__saom_behcov, x :- mean(x))
+	}
+}
+void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars) {
+	real scalar j, t
+	for (j=1; j<=cols(vars); j++) for (t=1; t<=Mbeh.nterms; t++) if (Mbeh.coefnames[t] == "beh_effcov" + strofreal(j)) Mbeh.coefnames[t] = "beh_from_" + vars[j]
+}
+string scalar SaomBehCovTrailer(real scalar n) {
+	external real matrix __saom_behcov
+	string scalar out
+	real scalar j, i
+	if (findexternal("__saom_behcov") == NULL) return(" 0")
+	if (rows(__saom_behcov) != n | cols(__saom_behcov) == 0) return(" 0")
+	out = " " + strofreal(cols(__saom_behcov))
+	for (j=1; j<=cols(__saom_behcov); j++) for (i=1; i<=n; i++) out = out + " " + strofreal(__saom_behcov[i, j], "%25.17g")
+	return(out)
+}
+real rowvector stat_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 1))
+real scalar change_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 1))
+real rowvector stat_saom_effcov2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 2))
+real scalar change_saom_effcov2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 2))
+real rowvector stat_saom_effcov3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 3))
+real scalar change_saom_effcov3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 3))
+real rowvector stat_saom_effcov4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 4))
+real scalar change_saom_effcov4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 4))
+real rowvector stat_saom_effcov5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 5))
+real scalar change_saom_effcov5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 5))
+real rowvector stat_saom_effcov6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 6))
+real scalar change_saom_effcov6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 6))
+real rowvector stat_saom_effcov7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 7))
+real scalar change_saom_effcov7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 7))
+real rowvector stat_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 8))
+real scalar change_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 8))
+
 /* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
 string scalar _sb_label(string scalar base) {
+	external string rowvector __saom_behcovnames
+	real scalar j
+	if (substr(base, 1, 6) == "effcov") {
+		j = strtoreal(substr(base, 7, .))
+		if (findexternal("__saom_behcovnames") != NULL) if (j >= 1 & j <= cols(__saom_behcovnames)) return("effFrom " + __saom_behcovnames[j])
+		return("effFrom covariate " + strofreal(j))
+	}
 	if (base == "indeg") return("indegree")
 	if (base == "outdeg") return("outdegree")
 	if (base == "recipdeg") return("reciprocated degree")
@@ -11037,6 +11113,14 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "avsimpopalt") Mbeh.addterm("avsimpopalt", &stat_saom_avsimpopalt(), &change_saom_avsimpopalt(), pre + "avsimpopalt")
 		else if (nm == "totsimpopalt") Mbeh.addterm("totsimpopalt", &stat_saom_totsimpopalt(), &change_saom_totsimpopalt(), pre + "totsimpopalt")
 		else if (nm == "avsimpopego") Mbeh.addterm("avsimpopego", &stat_saom_avsimpopego(), &change_saom_avsimpopego(), pre + "avsimpopego")
+		else if (nm == "effcov1") Mbeh.addterm("effcov1", &stat_saom_effcov1(), &change_saom_effcov1(), pre + "effcov1")
+		else if (nm == "effcov2") Mbeh.addterm("effcov2", &stat_saom_effcov2(), &change_saom_effcov2(), pre + "effcov2")
+		else if (nm == "effcov3") Mbeh.addterm("effcov3", &stat_saom_effcov3(), &change_saom_effcov3(), pre + "effcov3")
+		else if (nm == "effcov4") Mbeh.addterm("effcov4", &stat_saom_effcov4(), &change_saom_effcov4(), pre + "effcov4")
+		else if (nm == "effcov5") Mbeh.addterm("effcov5", &stat_saom_effcov5(), &change_saom_effcov5(), pre + "effcov5")
+		else if (nm == "effcov6") Mbeh.addterm("effcov6", &stat_saom_effcov6(), &change_saom_effcov6(), pre + "effcov6")
+		else if (nm == "effcov7") Mbeh.addterm("effcov7", &stat_saom_effcov7(), &change_saom_effcov7(), pre + "effcov7")
+		else if (nm == "effcov8") Mbeh.addterm("effcov8", &stat_saom_effcov8(), &change_saom_effcov8(), pre + "effcov8")
 		else if (substr(nm, strlen(nm) - 7, .) == "creation") continue		// the partner of an endow term, added with it
 		else {
 			errprintf("nwsaom: unknown behavior effect '" + nm + "'\n")

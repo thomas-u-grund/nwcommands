@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 35		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124)
+#define SAOM_NATIVE_VERSION 36		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -353,6 +353,9 @@ static double saom_behsim_range = 1.0;
 #define TERMCODE_BEH_AVSIMPOPALT 122
 #define TERMCODE_BEH_TOTSIMPOPALT 123
 #define TERMCODE_BEH_AVSIMPOPEGO 124
+#define TERMCODE_BEH_EFFCOV0 125					/* protocol 36: effFrom, covariate slot tc-125 (0..7) */
+#define SAOM_BEH_COVTC(tc) ((tc) >= TERMCODE_BEH_EFFCOV0 && (tc) < TERMCODE_BEH_EFFCOV0 + 8)
+static double *saom_behcov[8];				/* centred covariates (1-based), from the BATCHSETUP trailer */
 #define SAOM_BEH_NEWTC(tc) ((tc) >= TERMCODE_BEH_INDEG && (tc) <= TERMCODE_BEH_AVSIMPOPEGO)
 
 /* ===================================================================
@@ -1889,6 +1892,12 @@ static double beh_new_change(graph_t *g, double *bv, int tc, double range, doubl
 static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean, double overallMean) {
 	long i, k, od;
 	double tot = 0.0, vego, sumabs;
+	if (SAOM_BEH_COVTC(termcode)) {
+		const double *cv = saom_behcov[termcode - TERMCODE_BEH_EFFCOV0];
+		if (!cv) return 0.0;
+		for (i = 1; i <= g->n; i++) tot += (behval[i] - overallMean) * cv[i];
+		return tot;
+	}
 	if (SAOM_BEH_NEWTC(termcode) || (termcode >= TERMCODE_BEH_TOTSIM && termcode <= TERMCODE_BEH_AVSIMPOPEGO)) {
 		for (i = 1; i <= g->n; i++) tot += beh_new_ego_stat(g, behval, termcode, range, simMean, overallMean, i);
 		return tot;
@@ -1932,6 +1941,7 @@ static double saom_beh_change_term(graph_t *g, double *behval, int termcode, dou
 	long i, double diff) {
 	long od, k, nhigh, nlow;
 	double vego;
+	if (SAOM_BEH_COVTC(termcode)) return saom_behcov[termcode - TERMCODE_BEH_EFFCOV0] ? diff * saom_behcov[termcode - TERMCODE_BEH_EFFCOV0][i] : 0.0;
 	if (SAOM_BEH_NEWTC(termcode)) return beh_new_change(g, behval, termcode, range, simMean, overallMean, i, diff);
 	switch (termcode) {
 		case TERMCODE_BEH_LINEAR:
@@ -3723,6 +3733,16 @@ static ST_retcode batch_setup(char *arg) {
 	for (k = 0; k < M->ntv; k++) M->tvcol[k] = (int)next_long();
 	/* protocol 27: number of composition-change events (their four frame columns follow the structural ones) */
 	M->nev_pending = next_long_opt(0);
+	/* protocol 36: covariates of the effFrom terms (count, then count x n centred values) */
+	{
+		long nc = next_long_opt(0), c, ii;
+		if (nc < 0 || nc > 8) { SF_error("saom_sim: BATCHSETUP too many behavior covariates\n"); return 198; }
+		for (c = 0; c < 8; c++) { free(saom_behcov[c]); saom_behcov[c] = NULL; }
+		for (c = 0; c < nc; c++) {
+			saom_behcov[c] = (double *)calloc((size_t)(n + 1), sizeof(double));
+			for (ii = 1; ii <= n; ii++) saom_behcov[c][ii] = next_double();
+		}
+	}
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);

@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) BEHFROM(varlist numeric) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -493,7 +493,7 @@ program nwsaom, eclass
 		}
 		local __nwsaom_coev = 1
 	}
-	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" {
+	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" | "`behfrom'" != "" {
 		di "{err}{bf:behsim}/{bf:behegox}/{bf:behaltx}/{bf:behegoplusalt} (selection effects of the co-evolving behavior) require {bf:behavior()} to be specified."
 		error 198
 	}
@@ -2265,15 +2265,32 @@ program nwsaom, eclass
 			local __nwsaom_endowcreation = 1
 		}
 		// RSiena's behavior effects of the network position, the alters and the similarity family (protocol 35), behavior 1
+		capture mata: mata drop __saom_behcov __saom_behcovnames
+		if "`behfrom'" != "" {
+			local __nbf : word count `behfrom'
+			if `__nbf' > 8 {
+				di "{err}behfrom(): at most 8 covariates."
+				error 198
+			}
+			local __bfn = 0
+			foreach __v of local behfrom {
+				local ++__bfn
+				local beheff "`beheff' effcov`__bfn'"
+			}
+			mata: SaomBehCovSet(tokens("`behfrom'"))
+		}
 		if "`beheff'" != "" {
 			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
 			foreach __e of local beheff {
-				if !`: list __e in __nwsaom_newbeh' {
+				if !`: list __e in __nwsaom_newbeh' & !regexm("`__e'", "^effcov[1-8]$") {
 					di "{err}beheff(): unknown effect {bf:`__e'}; available: `__nwsaom_newbeh'."
 					error 198
 				}
 			}
 			mata: st_local("__nwsaom_newadded", SaomMBAddTerms(__nwsaom_last_Mbeh, "`beheff'", "beh_"))
+			if "`behfrom'" != "" {
+				mata: SaomBehCovRename(__nwsaom_last_Mbeh, tokens("`behfrom'"))
+			}
 			local __nwsaom_effbeh "`__nwsaom_effbeh' `__nwsaom_newadded'"
 		}
 		local __nwsaom_efflist "`__nwsaom_efflist' [behavior: `__nwsaom_effbeh']"
