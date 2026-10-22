@@ -107,13 +107,13 @@ foreach fm in avxinalt totxrecalt avsamexinalt totrecaltsamex avaltaltx avsimalt
 capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) behx(nosuchfamily:cv1) k3(30)
 assert _rc == 198
 * network effects with the dependent behavior as the covariate (netbeh(), protocol 45)
-foreach ef in diffx higher egosqx absdiffx samextranstrip samexoutact homxoutact inpopx outactx samexinpop egoplusaltsqx egolthresholdx degabsdiffx {
+foreach ef in diffx higher egosqx absdiffx samextranstrip samexoutact homxoutact inpopx outactx samexinpop egoplusaltsqx egolthresholdx degabsdiffx crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 {
 	capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(`ef') k0(10) k3(30) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 {
 		assert "`e(engine)'" == "native" & colsof(e(b)) == 4
 		local cn : colnames e(b)
-		assert strpos("`cn'", "bv_`ef'")
+		assert strpos("`cn'", "bv_`ef'") | strpos("`cn'", "natb_`ef'")
 	}
 }
 capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(simxtranstrip) k3(30)

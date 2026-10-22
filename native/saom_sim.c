@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 45		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000)
+#define SAOM_NATIVE_VERSION 46		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1133,10 +1133,180 @@ static double ct_value(graph_t *g, int v, const double *a, double p1, long i, lo
 	}
 }
 
+/* protocol 46: further covariate network effects (term code 220 + v; attribute = the centred covariate, scaled by 1/range and with p1 = the similarity
+   mean for the similarity versions, the RAW categories for homXOutAct2, p1 = c for outXMore). v: 0 crossXOutAct 1 homXOutAct2 2 outXMore 3 IndTies
+   4 transTripX 5 jumpXTransTrip 6 altDist2 7 totDist2 8 simDist2 9 simEgoDist2 10 sameEgoDist2 11 altInDist2 12 totInDist2 13 simEgoInDist2
+   14 sameEgoInDist2. Ports of RSiena's calculateContribution() (cz_value) and tieStatistic() / egoStatistic() (cz_tie, cz_ego). */
+#define TERMCODE_CZ0 220
+#define SAOM_CZTC(tc) ((tc) >= TERMCODE_CZ0 && (tc) < TERMCODE_CZ0 + 15)
+static long cz_twopath(graph_t *g, long i, long h) {
+	long m, c = 0;
+	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, g->outadj[i].nb[m], h)) c++;
+	return c;
+}
+static double cz_avgout(graph_t *g, const double *a, long j, int tot) {
+	long m, d = g->outadj[j].len;
+	double t = 0.0;
+	if (d == 0) return 0.0;
+	for (m = 0; m < d; m++) t += a[g->outadj[j].nb[m]];
+	return tot ? t : t / (double)d;
+}
+static double cz_sim(double x, double y, double p1) { return 1.0 - fabs(x - y) - p1; }
+static double cz_value(graph_t *g, int v, const double *a, double p1, long i, long j) {
+	long m, d;
+	double t;
+	int ex = has_edge(g, i, j);
+	switch (v) {
+		case 0: {
+			long ds = 0, dd = 0;
+			for (m = 0; m < g->outadj[i].len; m++) { if (cx_same(a, g->outadj[i].nb[m], i)) ds++; else dd++; }
+			if (ex) { if (cx_same(a, j, i)) ds--; else dd--; }
+			return cx_same(a, j, i) ? (2.0 * (double)ds + 1.0) * (double)dd : (2.0 * (double)dd + 1.0) * (double)ds;
+		}
+		case 1: {
+			long b = (long)floor(a[j] + 0.5), cnt = 0;
+			if (b < 1) return 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) if ((long)floor(a[g->outadj[i].nb[m]] + 0.5) == b) cnt++;
+			if (ex) cnt -= 2;
+			return 2.0 * (double)cnt + 1.0;
+		}
+		case 2: {
+			long outd = -(long)floor(p1 + 0.001);
+			if (a[j] <= 0.0) return 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) if (a[g->outadj[i].nb[m]] > 0.0) outd++;
+			if (ex) return outd >= 1 ? 1.0 : 0.0;
+			return outd >= 0 ? 1.0 : 0.0;
+		}
+		case 3: {
+			double ch = 0.0;
+			long crit = ex ? 1 : 0;
+			if (cz_twopath(g, i, j) != 0) ch -= a[j];
+			for (m = 0; m < g->outadj[j].len; m++) {
+				long h = g->outadj[j].nb[m];
+				if (h != i && !has_edge(g, i, h) && cz_twopath(g, i, h) == crit) ch += a[h];
+			}
+			return ch;
+		}
+		case 4: {
+			long instar = 0;
+			t = 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) { long h = g->outadj[i].nb[m]; if (has_edge(g, j, h)) instar++; if (has_edge(g, h, j)) t += a[h]; }
+			return a[j] * (double)instar + t;
+		}
+		case 5: {
+			long c = 0;
+			int sj = cx_same(a, j, i);
+			for (m = 0; m < g->outadj[i].len; m++) {
+				long h = g->outadj[i].nb[m];
+				if (sj) { if (!cx_same(a, h, i) && has_edge(g, j, h)) c++; }
+				else { if (cx_same(a, h, i) && has_edge(g, h, j)) c++; }
+			}
+			return (double)c;
+		}
+		case 6: return cz_avgout(g, a, j, 0);
+		case 7: return cz_avgout(g, a, j, 1);
+		case 8: return cz_sim(cz_avgout(g, a, i, 0), cz_avgout(g, a, j, 0), p1);
+		case 9: {
+			double oa = cz_avgout(g, a, j, 1);
+			d = g->outadj[j].len;
+			if (has_edge(g, j, i)) { oa -= a[i]; d--; }
+			oa = (d >= 1) ? oa / (double)d : 0.0;
+			return cz_sim(a[i], oa, p1);
+		}
+		case 10: case 14: {
+			adjlist_t *L = (v == 10) ? &g->outadj[j] : &g->inadj[j];
+			long used = 0;
+			t = 0.0;
+			if (L->len > 0) {
+				for (m = 0; m < L->len; m++) { long h = L->nb[m]; if (h == i) continue; if (fabs(a[h] - a[i]) < 1e-12) t += 1.0; used++; }
+				if (used > 0) t /= (double)used;
+			}
+			return t;
+		}
+		case 11: case 12: {
+			double tot = 0.0, val;
+			d = g->inadj[j].len;
+			for (m = 0; m < d; m++) tot += a[g->inadj[j].nb[m]];
+			if (d == 0) { val = (v == 12) ? 0.0 : 0.0; }
+			else val = (v == 12) ? tot : tot / (double)d;
+			if (has_edge(g, i, j)) {
+				if (v == 12) val = val - a[i];
+				else val = (d > 1) ? ((double)d * val - a[i]) / (double)(d - 1) : 0.0;
+			}
+			return val;
+		}
+		case 13: {
+			double ia = 0.0;
+			d = g->inadj[j].len;
+			for (m = 0; m < d; m++) ia += a[g->inadj[j].nb[m]];
+			if (has_edge(g, i, j)) { ia -= a[i]; d--; }
+			ia = (d >= 1) ? ia / (double)d : 0.0;
+			return cz_sim(a[i], ia, p1);
+		}
+	}
+	return 0.0;
+}
+static double cz_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
+	long m;
+	switch (v) {
+		case 1: {
+			long b = (long)floor(a[j] + 0.5), cnt = 0;
+			if (b < 1) return 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) if ((long)floor(a[g->outadj[i].nb[m]] + 0.5) == b) cnt++;
+			return (double)cnt;
+		}
+		case 4: {
+			long instar = 0;
+			for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, j, g->outadj[i].nb[m])) instar++;
+			return a[j] * (double)instar;
+		}
+		case 5: {
+			long c = 0;
+			if (cx_same(a, j, i)) return 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) { long h = g->outadj[i].nb[m]; if (cx_same(a, h, i) && has_edge(g, h, j)) c++; }
+			return (double)c;
+		}
+		default: return cz_value(g, v, a, p1, i, j);		/* the other tie statistics equal the contribution evaluated with the tie present */
+	}
+}
+static double cz_ego(graph_t *g, int v, const double *a, double p1, long i) {
+	long m;
+	if (v == 0) {
+		long ds = 0, dd = 0;
+		for (m = 0; m < g->outadj[i].len; m++) { if (cx_same(a, g->outadj[i].nb[m], i)) ds++; else dd++; }
+		return (double)ds * (double)dd;
+	}
+	{
+		long outd = -(long)floor(p1 + 0.001);
+		for (m = 0; m < g->outadj[i].len; m++) if (a[g->outadj[i].nb[m]] > 0.0) outd++;
+		return outd > 0 ? (double)outd : 0.0;
+	}
+}
+/* IndTies: the statistic of ego i is the sum of a over the distance-two actors (two-path, no tie), reached once */
+static double cz_indties_ego(graph_t *g, const double *a, long i) {
+	long m, m2;
+	double st = 0.0;
+	unsigned char *mark = (unsigned char *)calloc((size_t)(g->n + 1), 1);
+	for (m = 0; m < g->outadj[i].len; m++) {
+		long j = g->outadj[i].nb[m];
+		for (m2 = 0; m2 < g->outadj[j].len; m2++) { long h = g->outadj[j].nb[m2]; if (!mark[h]) { mark[h] = 1; st += a[h]; } }
+	}
+	for (m = 0; m < g->outadj[i].len; m++) { long h = g->outadj[i].nb[m]; if (mark[h]) { mark[h] = 0; st -= a[h]; } }
+	free(mark);
+	return st;
+}
+
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
-	if (termcode >= 1000) termcode -= 1000;		/* protocol 45: the dependent behavior as the covariate (centred live copy in a) */
+	if (termcode >= 1000) termcode -= 1000;
+	if (SAOM_CZTC(termcode)) {
+		int v = termcode - TERMCODE_CZ0;
+		if (v == 0 || v == 2) { for (i = 1; i <= g->n; i++) tot += cz_ego(g, v, a, p1, i); return tot; }
+		if (v == 3) { for (i = 1; i <= g->n; i++) tot += cz_indties_ego(g, a, i); return tot; }
+		for (k = 0; k < g->nties; k++) tot += cz_tie(g, v, a, p1, g->elist_i[k], g->elist_j[k]);
+		return tot;
+	}
 	if (SAOM_CTTC(termcode)) {
 		int v = termcode - TERMCODE_CT0;
 		if (v < 9) { for (k = 0; k < g->nties; k++) tot += ct_tieval(v, a[g->elist_i[k]], a[g->elist_j[k]], p1); return tot; }
@@ -1357,6 +1527,10 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 static double saom_change_term(graph_t *g, int termcode, double *a, double p1, long i, long j, int ij_exists,
 	double *tt_arr, double *c3_arr) {
 	if (termcode >= 1000) termcode -= 1000;
+	if (SAOM_CZTC(termcode)) {
+		double v2 = cz_value(g, termcode - TERMCODE_CZ0, a, p1, i, j);
+		return ij_exists ? -v2 : v2;
+	}
 	if (SAOM_CXTC(termcode)) {
 		double v = cx_value(g, termcode - TERMCODE_CX0, a, p1, i, j);
 		return ij_exists ? -v : v;
@@ -1903,7 +2077,7 @@ static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int
 	if (tc == TERMCODE_TRANSTRIP) *need_transtrip = 1;
 	if (tc == TERMCODE_CYCLE3) *need_cycle3 = 1;
 	if (tc == TERMCODE_TRANSRECTRIP || tc == TERMCODE_OUTOUTASS || tc == TERMCODE_OUTINASS || tc == TERMCODE_TRANSMEDTRIP) *need_adj = 1;
-	if (tc == TERMCODE_CYCLE4 || SAOM_CXTC(tc) || tc == TERMCODE_DF0 + 7) *need_adj = 1;
+	if (tc == TERMCODE_CYCLE4 || SAOM_CXTC(tc) || tc == TERMCODE_DF0 + 7 || SAOM_CZTC(tc)) *need_adj = 1;
 	if (tc == TERMCODE_GWDSPFF || tc == TERMCODE_GWDSPFB || tc == TERMCODE_BETWEEN) *need_adj = 1;
 	if ((tc >= TERMCODE_GWESPFB && tc <= TERMCODE_CYCLE4SQRT)) *need_adj = 1;
 	if (tc == TERMCODE_RECIPOP || tc == TERMCODE_RECIPOPSQRT || tc == TERMCODE_RECIACT || tc == TERMCODE_RECIACTSQRT) *need_adj = 1;
@@ -4766,6 +4940,35 @@ static ST_retcode legacy_call(char *arg0) {
 #ifdef SAOM_PROFILE
 static double prof_calls = 0.0;
 #endif
+/* protocol 46: NETSTAT|n ne termcode p1 - the observed statistic of ONE network term evaluated by the plugin's own saom_stat_term(), so that a
+   native-only term needs no Mata twin for its target. Data in the current frame: columns 1, 2 = the arcs (ne rows), column 3 = the attribute
+   (n rows, 1-based actors). The value is returned in the scalar __saom_netstat_val. */
+static ST_retcode netstat_cmd(char *arg) {
+	long n, ne, i;
+	int tc;
+	double p1, *a, val;
+	graph_t g;
+	char *tok = strtok(arg, " \t");
+	if (!tok) return 198;
+	n = (long)atof(tok);
+	tok = strtok(NULL, " \t"); ne = (long)atof(tok);
+	tok = strtok(NULL, " \t"); tc = (int)atof(tok);
+	tok = strtok(NULL, " \t"); p1 = atof(tok);
+	graph_init(&g, n, 1, ne + 8);
+	for (i = 1; i <= ne; i++) {
+		ST_double v1, v2;
+		SF_vdata(1, i, &v1); SF_vdata(2, i, &v2);
+		toggle(&g, (long)v1, (long)v2);
+	}
+	a = (double *)calloc((size_t)(n + 1), sizeof(double));
+	for (i = 1; i <= n; i++) { ST_double v; SF_vdata(3, i, &v); a[i] = v; }
+	val = saom_stat_term(&g, tc, a, p1);
+	SF_scal_save("__saom_netstat_val", (ST_double)val);
+	free(a);
+	graph_free(&g);
+	return 0;
+}
+
 STDLL stata_call(int argc, char *argv[]) {
 	wire_parse_error = 0;
 #ifdef SAOM_PROFILE
@@ -4790,6 +4993,14 @@ STDLL stata_call(int argc, char *argv[]) {
 		return rc;
 	}
 	if (strncmp(argv[0], "BATCHCLEAN|", 11) == 0) { batch_free(); return 0; }
+	if (strncmp(argv[0], "NETSTAT|", 8) == 0) {
+		char *buf = (char *)malloc(strlen(argv[0]) + 1);
+		ST_retcode rc;
+		strcpy(buf, argv[0] + 8);
+		rc = netstat_cmd(buf);
+		free(buf);
+		return rc;
+	}
 #ifdef SAOM_PROFILE
 	if (strncmp(argv[0], "PROFILE|", 8) == 0) {
 		const char *nm[8] = {"setup", "actor", "eval", "softmax", "apply", "beh", "end", "wait"};

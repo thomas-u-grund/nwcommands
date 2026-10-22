@@ -42,4 +42,22 @@ foreach ef in egox altx samex simx absdiffx diffx samextranstrip homxoutact {
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 2 & trim("`e(tvcov)'") == "tw"
 }
+* netx(): further covariate network effects (protocol 46, statistics from the plugin's NETSTAT), also with a tvcov stem
+gen double xc = 1 + mod(_n * 3, 4)
+foreach ef in crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2 {
+	local v xa
+	if "`ef'" == "homxoutact2" local v xc
+	capture nwsaom, waves(sc1 sc2 sc3) symmetric outdegree netx(`ef':`v') k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 2
+}
+foreach ef in indties altdist2 transtripx sameegodist2 {
+	capture nwsaom, waves(sc1 sc2 sc3) symmetric outdegree tvcov(tw1 tw2 tw3) netx(`ef':tw) k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 2 & trim("`e(tvcov)'") == "tw"
+}
+capture nwsaom, waves(sc1 sc2 sc3) symmetric outdegree netx(nosuch:xa) k3(30)
+assert _rc == 198
+capture nwsaom, waves(sc1 sc2 sc3) symmetric outdegree tvcov(tw1 tw2 tw3) netx(simdist2:tw) k3(30)
+assert _rc != 0
 di as text "symmetric covariate effects PASS"

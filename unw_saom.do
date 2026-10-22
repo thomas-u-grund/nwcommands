@@ -3537,6 +3537,96 @@ real rowvector stat_saom_bv_degnegdiffx(class ErgmGraph scalar G, class ErgmTerm
 	return(stat_saom_degnegdiffx(G, t2))
 }
 real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(change_saom_bv("degnegdiffx"))
+/* protocol 46: the generic bridge for NATIVE-ONLY network terms. The observed statistic is evaluated by the plugin (command NETSTAT, the same
+   saom_stat_term() the simulation uses), so a new native term needs no Mata twin. A term "nat_<effect>" (static or tvcov covariate) or "natb_<effect>"
+   (the dependent behavior as covariate: td.attr = raw behavior, td.center = its overall mean) carries td.levels = (term code \ dynamic flag), td.attr
+   the covariate (td.attrpd per period for a changing covariate) and td.decay = p1 (similarity mean, the parameter c, ...). */
+real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a) {
+	real matrix E
+	real rowvector nb
+	real scalar i, m, ne, n, junk
+	string scalar origframe
+	n = G.n
+	E = J(0, 2, 0)
+	for (i=1; i<=n; i++) {
+		nb = G.neighbors_out(i)
+		for (m=1; m<=cols(nb); m++) E = E \ (i, nb[m])
+	}
+	ne = rows(E)
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_netstat")
+	stata("frame create __saom_netstat")
+	st_framecurrent("__saom_netstat")
+	st_addobs(max((ne, n, 1)))
+	junk = st_addvar("double", ("ev1", "ev2", "aa"))
+	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
+	st_store((1::n), "aa", a)
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim ev1 ev2 aa, " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + char(34))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_netstat")
+	return(st_numscalar("__saom_netstat_val"))
+}
+real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real colvector a
+	real scalar dyn
+	dyn = (td.levels[2] != 0)
+	a = (dyn ? td.attr :- td.center : td.attr)
+	return(SaomNativeNetStat(G, td.levels[1] + (dyn ? 1000 : 0), td.decay, a))
+}
+real rowvector change_saom_nat(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
+	errprintf("nwsaom: this network effect needs the native plugin (protocol 46 or later); there is no Mata implementation of its simulation.\n")
+	exit(198)
+	return(0)
+}
+/* registers a native-only covariate network effect. kind: "c" centred covariate, "r" raw values (categories), "s" similarity type (centred /
+   range, p1 = the similarity mean). vlist: one variable, or the per-period variables of a tvcov covariate. */
+void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar kind, string scalar label, string scalar vlist,
+	real scalar n, real scalar nper, real scalar center, real scalar p1) {
+	class ErgmTermData scalar td
+	string rowvector vv
+	real matrix X
+	real scalar m, rng
+	td = ErgmTermData()
+	vv = tokens(vlist)
+	td.levels = (code \ 0)
+	td.decay = p1
+	if (cols(vv) > 1) {
+		if (kind == "s") {
+			errprintf("nwsaom: " + eff + " is not available for a time-varying covariate.\n")
+			exit(198)
+		}
+		SaomCovTVAttr(td, vlist, n, nper, center, m)
+		td.levels = (code \ 0)
+	}
+	else {
+		X = st_data(1::n, vv[1])
+		if (any(X :>= .)) {
+			errprintf("nwsaom: " + eff + "(): " + vv[1] + " has missing values (not supported).\n")
+			exit(198)
+		}
+		m = mean(X)
+		if (kind == "r") td.attr = X
+		else if (kind == "s") {
+			rng = max(X) - min(X)
+			if (rng <= 0) rng = 1
+			td.decay = SaomSimMean(X)
+			td.attr = (X :- m) :/ rng
+		}
+		else td.attr = (center ? X :- m : X)
+	}
+	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + label))
+}
+/* the dependent behavior (first one, raw start values behw1, overall mean bmean) as the covariate */
+void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1) {
+	class ErgmTermData scalar td
+	td = ErgmTermData()
+	td.levels = (code \ 1)
+	td.attr = behw1
+	td.center = bmean
+	td.decay = p1
+	M.addterm("natb_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("natb_" + eff))
+}
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -3786,7 +3876,7 @@ real rowvector change_saom_behsim(class ErgmGraph scalar G, real scalar i, real 
    SaomEstimateRMCoevNetNet()). */
 /* the network terms that read the co-evolving behavior (behsim and RSiena's egoX / altX / egoPlusAltX of the dependent behavior) */
 real scalar _saom_isdynname(string scalar nm) {
-	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt" | substr(nm, 1, 3) == "bv_")
+	return(nm == "behsim" | nm == "behegox" | nm == "behaltx" | nm == "behegoplusalt" | substr(nm, 1, 3) == "bv_" | substr(nm, 1, 5) == "natb_")
 }
 void SaomBehSimSync(class ErgmModel scalar M, real colvector vals){
 	real scalar t
@@ -9111,7 +9201,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45, needv46
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -9133,6 +9223,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv40 = 0
 	needv41 = 0
 	needv45 = 0
+	needv46 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -9158,7 +9249,26 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.needv11 = 1
 			needv14 = 1
 		}
-		if (substr(nm, 1, 3) == "bv_") {
+		if (substr(nm, 1, 4) == "nat_" | substr(nm, 1, 5) == "natb_") {
+			tdt = *M.td[t]
+			cfg.termcodes[t] = tdt.levels[1]
+			cfg.p1[t] = tdt.decay
+			if (tdt.levels[2] != 0) {
+				cfg.termcodes[t] = cfg.termcodes[t] + 1000
+				cfg.attridx[t] = 0
+			}
+			else {
+				nextattr++
+				cfg.attridx[t] = nextattr
+				cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
+				if (rows(tdt.attrpd) > 0) {
+					cfg.tvcol = (cfg.tvcol, nextattr)
+					cfg.tvmat = (cols(cfg.tvmat)==0 ? tdt.attrpd : (cfg.tvmat, tdt.attrpd))
+				}
+			}
+			needv46 = 1
+		}
+		else if (substr(nm, 1, 3) == "bv_") {
 			cfg.termcodes[t] = _saom_bvcode(substr(nm, 4, .)) + 1000
 			tdt = *M.td[t]
 			cfg.attridx[t] = 0
@@ -9608,6 +9718,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv46) {
+		if (SaomNativePluginVersion() < 46) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 46 (native-only network effects)"
 		}
 	}
 	if (cfg.eligible & needv45) {
@@ -10356,6 +10472,7 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	real scalar u, _isend, l
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
+	if (substr(term, 1, 4) == "nat_" | substr(term, 1, 5) == "natb_") return(substr(term, strpos(term, "_") + 1, .) + " " + (substr(term, 1, 5) == "natb_" ? "(behavior)" : v))
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
 	if (term == "cycle4sqrt") return("cycles (sqrt)")
 	if (term == "gwespfb") return("GWESP I -> K <- J (" + strofreal(round(100 * decay)) + ")")

@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -545,7 +545,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1708,6 +1708,35 @@ program nwsaom, eclass
 			}
 		}
 	}
+	// protocol 46: netx(effect:var ...) - further covariate network effects, native only (the observed statistic comes from the plugin's NETSTAT):
+	// crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2
+	// simegoindist2 sameegoindist2; var is a numeric variable or a tvcov stem. xparam(#) is outxmore's c.
+	local __nx_names "crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2"
+	local __nx_codes "220 221 222 223 224 225 226 227 228 229 230 231 232 233 234"
+	foreach __t of local netx {
+		gettoken __f __vv : __t, parse(":")
+		local __vv = subinstr("`__vv'", ":", "", 1)
+		local __fi : list posof "`__f'" in __nx_names
+		if `__fi' == 0 | "`__vv'" == "" {
+			di "{err}netx(): `__t' is not effect:variable; effects: `__nx_names'."
+			error 198
+		}
+		local __code : word `__fi' of `__nx_codes'
+		local __kind "c"
+		if "`__f'" == "homxoutact2" local __kind "r"
+		if inlist("`__f'", "simdist2", "simegodist2", "simegoindist2") local __kind "s"
+		local __vl "`__vv'"
+		if `: list __vv in __nwsaom_tvnames' local __vl "`__nwsaom_tvv_`__vv''"
+		else {
+			capture confirm numeric variable `__vv'
+			if _rc {
+				di "{err}netx(): `__vv' is not a numeric variable or a tvcov() covariate."
+				error 198
+			}
+		}
+		mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam')
+		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
+	}
 	foreach __dk in absdiffx egoxaltx {
 		if "``__dk''" != "" {
 			local __ul ""
@@ -2758,7 +2787,17 @@ program nwsaom, eclass
 		// covariate x triad / popularity / activity families and the threshold / contrast families); behavior 1, centred by its overall mean.
 		if "`netbeh'" != "" {
 			local __nb_ok "diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx"
+			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2"
+			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234"
 			foreach __e of local netbeh {
+				local __ni : list posof "`__e'" in __nbn_names
+				if `__ni' > 0 {
+					local __nc : word `__ni' of `__nbn_codes'
+					mata: SaomRegNatBeh(__nwsaom_last_M, "`__e'", `__nc', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `xparam')
+					local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " natb_`__e' [behavior:"
+					mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
+					continue
+				}
 				if `: list posof "`__e'" in __nb_ok' == 0 {
 					di "{err}netbeh(): `__e' is not available with the behavior as covariate; available: `__nb_ok'."
 					error 198
