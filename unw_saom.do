@@ -10838,6 +10838,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
 	if (rows(EV) > 0) names = names, ("ev_p", "ev_t", "ev_a", "ev_k")
+	names = names, SaomBehDyNames(n)
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_batch")
@@ -10845,6 +10846,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	st_framecurrent("__saom_batch")
 	st_addobs(nrows)
 	junk = st_addvar("double", names)
+	SaomBehDyStore(n)
 	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
 	for (i=1; i<=nattr; i++) st_store((1::n), "a" + strofreal(i), cfg.attrmat[1::n, i])
 	if (nbeh > 0) for (pd=1; pd<=P; pd++) st_store((1::n), "b" + strofreal(pd), *Behwaves[pd])
@@ -10876,6 +10878,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 	argstr = argstr + SaomBehCovTrailer(n)
+	argstr = argstr + SaomBehDyTrailer(n)
 	argstr = argstr + SaomSRTrailer()
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
@@ -11160,6 +11163,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
 	if (rows(EV) > 0) names = names, ("ev_p", "ev_t", "ev_a", "ev_k")
+	names = names, SaomBehDyNames(n)
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_batch")
@@ -11167,6 +11171,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	st_framecurrent("__saom_batch")
 	st_addobs(nrows)
 	junk = st_addvar("double", names)
+	SaomBehDyStore(n)
 	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
 	for (i=1; i<=nattr; i++) st_store((1::n), "a" + strofreal(i), cfg.attrmat[1::n, i])
 	for (pd=1; pd<=P; pd++) st_store((1::n), "b" + strofreal(pd), *Bw[1,pd])
@@ -11195,6 +11200,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 21: time-varying attributes; protocol 27: composition-change events
 	argstr = argstr + SaomBehCovTrailer(n)
+	argstr = argstr + SaomBehDyTrailer(n)
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
@@ -11916,10 +11922,15 @@ real scalar _sb_cv(real scalar i, real scalar j) {
 	return(__saom_behcov[i, __saom_behcovoff[j] + (__saom_behcovper[j] > 1 ? __saom_behcov_pd - 1 : 0)])
 }
 void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars) {
+	external string rowvector __saom_behdynames
 	real scalar j, t, v, q
 	string rowvector fam
 	fam = _sb_bsfamilies()
 	for (t=1; t<=Mbeh.nterms; t++) {
+		if (_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1] >= 0) {
+			Mbeh.coefnames[t] = "beh_" + _sb_brfamilies()[mod(_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1], 10) + 1] + (_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1] < 10 & anyof((0, 2, 8), _sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1]) ? "_p1" : "") + "_" + __saom_behdynames[_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[2]]
+			continue
+		}
 		q = _sb_bsparse(substr(Mbeh.coefnames[t], 5, .))[1]
 		if (q >= 0) Mbeh.coefnames[t] = "beh_" + fam[q + 1] + "_" + vars[_sb_bsparse(substr(Mbeh.coefnames[t], 5, .))[2]]
 	}
@@ -12563,7 +12574,7 @@ string rowvector _sb_bqtokens() return(("avinsim", "totinsim", "avinsimpopalt", 
 
 /* protocol 47: the generic bridge for native-only BEHAVIOR terms: bn_<code>_<slot>. The observed statistic comes from the plugin (BEHSTAT); the term name is
    made known to the statistic function through the external string __sb_cur_name that SaomBehaviorModel::full_statistic() sets. */
-real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar code, real scalar sl) {
+real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar code, real scalar sl, | real matrix Wd) {
 	real matrix E
 	real rowvector nb
 	real scalar i, m, ne, n, junk
@@ -12581,11 +12592,15 @@ real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph sca
 	st_framecurrent("__saom_behstat")
 	st_addobs(max((ne, n, 1)))
 	junk = st_addvar("double", ("ev1", "ev2", "bb", "cc"))
+	if (args() >= 5) if (rows(Wd) == n) {
+		for (i=1; i<=n; i++) junk = st_addvar("double", "dd" + strofreal(i))
+	}
 	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
 	st_store((1::n), "bb", Beh.values)
+	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
 	for (i=1; i<=n; i++) st_store(i, "cc", (sl > 0 ? _sb_cv(i, sl) : 0))
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 bb cc, " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + char(34))
+	stata("plugin call saomnativesim ev1 ev2 bb cc " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + " " + strofreal(args() >= 5 ? (rows(Wd) == n) : 0) + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_behstat")
 	return(st_numscalar("__saom_behstat_val"))
@@ -12596,7 +12611,14 @@ real rowvector stat_saom_bn(class SaomBehavior scalar Beh, class ErgmGraph scala
 	real scalar u
 	nm = substr(__sb_cur_name, 4, .)
 	u = strpos(nm, "_")
-	return(SaomNativeBehStat(Beh, G, strtoreal(substr(nm, 1, u - 1)), strtoreal(substr(nm, u + 1, .))))
+	real scalar code, d
+	external real matrix __saom_behdy
+	code = strtoreal(substr(nm, 1, u - 1))
+	if (code >= 840 & code < 1000) {
+		d = mod(code - 840, 8)
+		return(SaomNativeBehStat(Beh, G, code, 0, __saom_behdy[., (d * Beh.n + 1)..((d + 1) * Beh.n)]))
+	}
+	return(SaomNativeBehStat(Beh, G, code, strtoreal(substr(nm, u + 1, .))))
 }
 
 string rowvector _sb_bnqtokens() return(("avaltdist2", "totaltdist2", "avtaltdist2", "totaaltdist2", "avinaltdist2", "totinaltdist2", "avtinaltdist2", "totainaltdist2"))
@@ -12607,10 +12629,67 @@ real scalar _sb_bnqcode(string scalar nm) {
 	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(832 + k - 1)
 	return(0)
 }
+/* protocol 48: dyadic covariates of the behavior effects (avAltW ... totSimW): __saom_behdy = n x (n * k), the centred n x n matrices side by side */
+void SaomBehDyInit() {
+	external real matrix __saom_behdy
+	external string rowvector __saom_behdynames
+	__saom_behdy = J(0, 0, 0)
+	__saom_behdynames = J(1, 0, "")
+}
+void SaomBehDyAdd(string scalar name, string scalar matname, real scalar center) {
+	external real matrix __saom_behdy
+	external string rowvector __saom_behdynames
+	real matrix W
+	real scalar m
+	W = SaomDyadPrep(st_matrix(matname), center, m)
+	__saom_behdy = (cols(__saom_behdy) == 0 ? W : (__saom_behdy, W))
+	__saom_behdynames = (__saom_behdynames, name)
+}
+string scalar SaomBehDyTrailer(real scalar n) {
+	external real matrix __saom_behdy
+	if (findexternal("__saom_behdy") == NULL) return(" 0")
+	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return(" 0")
+	return(" " + strofreal(cols(__saom_behdy) / n))
+}
+/* the frame columns of the dyadic covariates: dy<k>_<j> holds column j of covariate k (read by the plugin after the last other column) */
+string rowvector SaomBehDyNames(real scalar n) {
+	external real matrix __saom_behdy
+	string rowvector nm
+	real scalar k, j
+	nm = J(1, 0, "")
+	if (findexternal("__saom_behdy") == NULL) return(nm)
+	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return(nm)
+	for (k=1; k<=cols(__saom_behdy)/n; k++) for (j=1; j<=n; j++) nm = nm, ("dy" + strofreal(k) + "_" + strofreal(j))
+	return(nm)
+}
+void SaomBehDyStore(real scalar n) {
+	external real matrix __saom_behdy
+	real scalar k
+	if (findexternal("__saom_behdy") == NULL) return
+	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return
+	for (k=1; k<=cols(__saom_behdy)/n; k++) st_store((1::n), SaomBehDyNames(n)[((k-1)*n+1)..(k*n)], __saom_behdy[., ((k-1)*n+1)..(k*n)])
+}
+string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
+/* "br8_2" -> (8, 2), else (-1, 0) */
+real rowvector _sb_brparse(string scalar nm) {
+	real scalar u, f, d
+	if (substr(nm, 1, 2) != "br") return((-1, 0))
+	u = strpos(nm, "_")
+	if (u == 0) return((-1, 0))
+	f = strtoreal(substr(nm, 3, u - 3))
+	d = strtoreal(substr(nm, u + 1, .))
+	if (f >= 0 & f < 20 & d >= 1 & d <= 8 & f == floor(f) & d == floor(d)) return((f, d))
+	return((-1, 0))
+}
+
 /* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
 string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
+	external string rowvector __saom_behdynames
 	real scalar j
+	if (_sb_brparse(base)[1] >= 0) {
+		return(_sb_brfamilies()[mod(_sb_brparse(base)[1], 10) + 1] + (_sb_brparse(base)[1] < 10 & anyof((0, 2, 8), _sb_brparse(base)[1]) ? " (parameter 1)" : "") + (cols(__saom_behdynames) >= _sb_brparse(base)[2] ? " " + __saom_behdynames[_sb_brparse(base)[2]] : ""))
+	}
 	if (_sb_bsparse(base)[1] >= 0) {
 		j = _sb_bsparse(base)[2]
 		return(_sb_bsfamilies()[_sb_bsparse(base)[1] + 1] + (findexternal("__saom_behcovnames") != NULL ? " " + __saom_behcovnames[j] : ""))
@@ -12772,6 +12851,7 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
 		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
 		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
+		else if (_sb_brparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(840 + 80 * (_sb_brparse(nm)[1] >= 10) + 8 * mod(_sb_brparse(nm)[1], 10) + _sb_brparse(nm)[2] - 1) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_bnqcode(nm) > 0) Mbeh.addterm("bn_" + strofreal(_sb_bnqcode(nm)) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_bsparse(nm)[1] >= 20) Mbeh.addterm("bn_" + strofreal(300 + 16 * _sb_bsparse(nm)[1] + _sb_bsparse(nm)[2] - 1) + "_" + strofreal(_sb_bsparse(nm)[2]), &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (nm == "bs0_1") Mbeh.addterm("bs0_1", &stat_saom_bs0_1(), &change_saom_bs0_1(), pre + "bs0_1")

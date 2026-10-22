@@ -715,3 +715,11 @@ LAGGED behavior statistic (end behavior on the starting network) is computed by 
 `beh_stats_on_edges()`. A code missing there gets a silent 0: the native fit then shows the new
 coefficient as omitted or diverges (rc 498) while the Mata engine is fine (seen 2026-10-22 with the
 `beheff()` terms, protocol 35). If native and Mata disagree for a new behavior term, check that switch first.
+
+## Big text blobs do not go through `plugin call ..., "string"`; and a scratch run uses the plugin NEXT TO the first nwsaom.ado on the adopath
+
+1. A BATCHSETUP argument string of about 46,000 characters (a 50 x 50 dyadic matrix as text) fails with `too many options` (rc 3598). Bulk numbers
+   go in frame columns that the plugin reads after the last other column (protocol 48: `dy<k>_<j>`), the argument string carries only counts.
+2. `SaomNativePluginPath()` looks for `lib/plugins/<os>/` next to the `nwsaom.ado` that `findfile` finds first. A scratch directory that has its
+   own `nwsaom.ado` plus an old `lib/plugins` copy silently runs the OLD plugin (symptom: `wire-protocol argument string ran out of fields` for
+   a term code the new plugin knows). Copy the rebuilt plugin into that `lib/plugins/macos/` too, or set the Mata external `__nwsaom_saom_plugin`.

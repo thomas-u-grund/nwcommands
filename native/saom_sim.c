@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 47		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin
+#define SAOM_NATIVE_VERSION 48		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -359,7 +359,10 @@ static double saom_behsim_range = 1.0;
 #define SAOM_BEH_XALTTC(tc) ((tc) >= TERMCODE_BEH_XALT0 && (tc) < TERMCODE_BEH_XALT0 + 32)
 static double **saom_behcov_pp[8];			/* centred covariates (1-based): per covariate 1 (constant) or P (changing) value arrays, from the BATCHSETUP trailer */
 static int saom_behcov_np[8];
-static double saom_behcov_mean[8];		/* the covariates' raw means (RSiena's covariateMean(), the value of min / max without alters) */
+static double saom_behcov_mean[8];
+static double *saom_bdy[8];			/* protocol 48: dyadic covariates of the behavior effects, n x n, row-major (i-1)*n + (j-1) */
+static long saom_bdy_pending = 0;
+static long saom_bdy_n = 0;		/* the covariates' raw means (RSiena's covariateMean(), the value of min / max without alters) */
 static __thread const double *saom_tl_cov[8];	/* the current period's covariates, set at the start of simulate_period() */
 #define SAOM_BEH_NEWTC(tc) ((tc) >= TERMCODE_BEH_INDEG && (tc) <= TERMCODE_BEH_AVSIMPOPEGO)
 
@@ -2492,9 +2495,82 @@ static double beh_bq_change(graph_t *g, double *bv, int tc, double range, double
 	return tot;
 }
 
+/* protocol 48: behavior effects with a DYADIC covariate (RSiena avAltW ... totSimW): term code 840 + 8 f + d, d = the dyadic covariate slot. f: 0 avAltW
+   1 totAltW 2 avInAltW 3 totInAltW 4 avWAlt 5 totWAlt 6 avWInAlt 7 totWInAlt 8 avSimW 9 totSimW (DyadicCovariateAvAltEffect, SimilarityWEffect). */
+#define TERMCODE_BR0 840
+/* codes 840..919: parameter 1 (denominator = the number of alters); 920..999: parameter 2 (denominator = the sum of the weights) */
+#define SAOM_BRTC(tc) ((tc) >= TERMCODE_BR0 && (tc) < TERMCODE_BR0 + 160)
+static double beh_br_ego_stat(graph_t *g, double *bv, int tc, double range, double simMean, double mean, long i) {
+	int par2 = (tc - TERMCODE_BR0) >= 80, f = ((tc - TERMCODE_BR0) % 80) / 8, d = (tc - TERMCODE_BR0) % 8;
+	const double *W = saom_bdy[d];
+	long n = saom_bdy_n, m;
+	double zi = bv[i] - mean, st = 0.0, tw = 0.0;
+	long cnt = 0;
+	if (!W) return 0.0;
+	if (f <= 7) {
+		int asw = (f <= 3), in = (f == 2 || f == 3 || f == 6 || f == 7), av = (f % 2 == 0);
+		adjlist_t *L = in ? &g->inadj[i] : &g->outadj[i];
+		for (m = 0; m < L->len; m++) {
+			long j = L->nb[m];
+			double w = W[(i - 1) * n + (j - 1)];
+			st += asw ? (bv[j] - mean) * w : w;
+			tw += (par2 && asw) ? w : 1.0;
+		}
+		st *= zi;
+		if (av && fabs(tw) > 1e-12) st /= tw;
+		return st;
+	}
+	for (m = 0; m < g->outadj[i].len; m++) {
+		long j = g->outadj[i].nb[m];
+		double w = W[(i - 1) * n + (j - 1)];
+		st += w * (1.0 - fabs(bv[i] - bv[j]) / range - simMean);
+		if (w != 0.0) cnt++;
+		tw += par2 ? w : 1.0;
+	}
+	if (f == 8 && cnt > 0 && fabs(tw) > 1e-12) st /= tw;
+	return st;
+}
+static double beh_br_change(graph_t *g, double *bv, int tc, double range, double simMean, double mean, long i, double diff) {
+	int par2 = (tc - TERMCODE_BR0) >= 80, f = ((tc - TERMCODE_BR0) % 80) / 8, d = (tc - TERMCODE_BR0) % 8;
+	const double *W = saom_bdy[d];
+	long n = saom_bdy_n, m;
+	double tot = 0.0, tw = 0.0;
+	long cnt = 0;
+	(void)simMean;
+	if (!W) return 0.0;
+	if (f <= 7) {
+		int asw = (f <= 3), in = (f == 2 || f == 3 || f == 6 || f == 7), av = (f % 2 == 0);
+		adjlist_t *L = in ? &g->inadj[i] : &g->outadj[i];
+		if (L->len == 0) return 0.0;
+		for (m = 0; m < L->len; m++) {
+			long j = L->nb[m];
+			double w = W[(i - 1) * n + (j - 1)];
+			tot += asw ? (bv[j] - mean) * w : w;
+			tw += (par2 && asw) ? w : 1.0;
+		}
+		if (av) return fabs(tw) > 1e-12 ? diff * tot / tw : 0.0;
+		return diff * tot;
+	}
+	if (g->outadj[i].len == 0) return 0.0;
+	for (m = 0; m < g->outadj[i].len; m++) {
+		long j = g->outadj[i].nb[m];
+		double w = W[(i - 1) * n + (j - 1)];
+		tot += w * (fabs(bv[i] - bv[j]) - fabs(bv[i] + diff - bv[j]));
+		if (w != 0.0) cnt++;
+		tw += par2 ? w : 1.0;
+	}
+	tot /= range;
+	if (f == 8 && cnt > 0 && fabs(tw) > 1e-12) tot /= tw;
+	return tot;
+}
+
 static double saom_beh_stat_term(graph_t *g, double *behval, int termcode, double range, double simMean, double overallMean) {
 	long i, k, od;
 	double tot = 0.0, vego, sumabs;
+	if (SAOM_BRTC(termcode)) {
+		for (i = 1; i <= g->n; i++) tot += beh_br_ego_stat(g, behval, termcode, range, simMean, overallMean, i);
+		return tot;
+	}
 	if (SAOM_BQTC(termcode)) {
 		for (i = 1; i <= g->n; i++) tot += beh_bq_ego_stat(g, behval, termcode, range, simMean, overallMean, i);
 		return tot;
@@ -2556,6 +2632,7 @@ static double saom_beh_change_term(graph_t *g, double *behval, int termcode, dou
 	long i, double diff) {
 	long od, k, nhigh, nlow;
 	double vego;
+	if (SAOM_BRTC(termcode)) return beh_br_change(g, behval, termcode, range, simMean, overallMean, i, diff);
 	if (SAOM_BQTC(termcode)) return beh_bq_change(g, behval, termcode, range, simMean, overallMean, i, diff);
 	if (SAOM_BSTC(termcode)) return beh_bs_change(g, behval, termcode, range, simMean, overallMean, i, diff);
 	if (SAOM_BEH_XALTTC(termcode)) return diff * beh_xalt_sum(g, termcode, i);
@@ -4427,6 +4504,14 @@ static ST_retcode batch_setup(char *arg) {
 			saom_behcov_mean[c] = next_double();
 		}
 	}
+	/* protocol 48: dyadic covariates of the behavior effects: the count here, the n x n values in the frame's last columns (column j of covariate c = row j of W, rows 1..n) */
+	{
+		long nd = next_long_opt(0), c;
+		if (nd < 0 || nd > 8) { SF_error("saom_sim: BATCHSETUP too many dyadic behavior covariates\n"); return 198; }
+		for (c = 0; c < 8; c++) { free(saom_bdy[c]); saom_bdy[c] = NULL; }
+		saom_bdy_n = n;
+		saom_bdy_pending = nd;
+	}
 	/* protocol 42: structural rate covariates (count, then their types) */
 	batch_state.nsr = next_long_opt(0);
 	if (batch_state.nsr < 0 || batch_state.nsr > MAXRC) { SF_error("saom_sim: BATCHSETUP too many structural rate effects\n"); return 198; }
@@ -4435,14 +4520,14 @@ static ST_retcode batch_setup(char *arg) {
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
 	for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->has_behsim = 1;
-	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->behtermcodes[k]) || SAOM_BEH_XALTTC(M->behtermcodes[k]) || SAOM_BSTC(M->behtermcodes[k]) || SAOM_BQTC(M->behtermcodes[k])) M->need_adj = 1;
+	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->behtermcodes[k]) || SAOM_BEH_XALTTC(M->behtermcodes[k]) || SAOM_BSTC(M->behtermcodes[k]) || SAOM_BQTC(M->behtermcodes[k]) || SAOM_BRTC(M->behtermcodes[k])) M->need_adj = 1;
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
 	for (k = 0; k < M->nterms; k++) if (M->termcodes[k] >= 1000 && M->termcodes[k] < 2000) { M->has_behcov = 1; M->attridx[k] = (int)(M->nattr + 2); }
 	if (M->has_behcov && (M->nbehterms == 0 || M->nattr + 2 > MAXATTR)) { SF_error("saom_sim: network terms with the behavior as covariate need a co-evolving behavior\n"); return 198; }
 
-	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BEH_XALTTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BSTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BQTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
+	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BEH_XALTTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BSTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BQTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BRTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
 
 	{ long q; for (q = 0; q < batch_state.nsr; q++) { int ty = batch_state.srtype[q]; int kd = (ty <= 3) ? ty : ((ty <= 6) ? ty - 3 : ty - 6); if (kd == 3) M->need_adj = 1; } }
 	batch_state.P = P;
@@ -4597,6 +4682,17 @@ static ST_retcode batch_setup(char *arg) {
 		}
 		free(cnt);
 		col += 4;
+	}
+	if (saom_bdy_pending > 0) {
+		long c, jj, ii;
+		for (c = 0; c < saom_bdy_pending; c++) {
+			saom_bdy[c] = (double *)calloc((size_t)(n * n), sizeof(double));
+			for (jj = 1; jj <= n; jj++) {
+				for (ii = 1; ii <= n; ii++) { ST_double v; SF_vdata((int)col, ii, &v); saom_bdy[c][(ii - 1) * n + (jj - 1)] = v; }
+				col++;
+			}
+		}
+		saom_bdy_pending = 0;
 	}
 	batch_state.ready = 1;
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
@@ -4820,7 +4916,7 @@ static ST_retcode legacy_call(char *arg0) {
 	if (M.nbehterms > MAXBEHTERMS) { SF_error("saom_sim: too many behavior terms\n"); free(argbuf); return(198); }
 	for (i = 0; i < M.nbehterms; i++) {
 		M.behtermcodes[i] = (int)next_long();
-		if (M.behtermcodes[i] == TERMCODE_BEH_AVALT || M.behtermcodes[i] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M.behtermcodes[i]) || SAOM_BEH_XALTTC(M.behtermcodes[i]) || SAOM_BSTC(M.behtermcodes[i]) || SAOM_BQTC(M.behtermcodes[i])) M.need_adj = 1;
+		if (M.behtermcodes[i] == TERMCODE_BEH_AVALT || M.behtermcodes[i] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M.behtermcodes[i]) || SAOM_BEH_XALTTC(M.behtermcodes[i]) || SAOM_BSTC(M.behtermcodes[i]) || SAOM_BQTC(M.behtermcodes[i]) || SAOM_BRTC(M.behtermcodes[i])) M.need_adj = 1;
 	}
 	for (i = 0; i < M.nbehterms; i++) P.thetaBeh[i] = next_double();
 	if (M.nbehterms > 0) {
@@ -5023,7 +5119,7 @@ static ST_retcode netstat_cmd(char *arg) {
    column 4 = a covariate (centred, n rows; offered in every covariate slot). Result in the scalar __saom_behstat_val. */
 static ST_retcode behstat_cmd(char *arg) {
 	long n, ne, i;
-	int tc, sl;
+	int tc, sl, hasdy;
 	double range, simMean, mean, *bv, *cv, val;
 	graph_t g;
 	char *tok = strtok(arg, " \t");
@@ -5034,6 +5130,7 @@ static ST_retcode behstat_cmd(char *arg) {
 	tok = strtok(NULL, " \t"); range = atof(tok);
 	tok = strtok(NULL, " \t"); simMean = atof(tok);
 	tok = strtok(NULL, " \t"); mean = atof(tok);
+	tok = strtok(NULL, " \t"); hasdy = tok ? (int)atof(tok) : 0;
 	graph_init(&g, n, 1, ne + 8);
 	for (i = 1; i <= ne; i++) {
 		ST_double v1, v2;
@@ -5044,7 +5141,20 @@ static ST_retcode behstat_cmd(char *arg) {
 	cv = (double *)calloc((size_t)(n + 1), sizeof(double));
 	for (i = 1; i <= n; i++) { ST_double v; SF_vdata(3, i, &v); bv[i] = v; SF_vdata(4, i, &v); cv[i] = v; }
 	for (sl = 0; sl < 8; sl++) saom_tl_cov[sl] = cv;
-	val = saom_beh_stat_term(&g, bv, tc, range, simMean, mean);
+	{
+		double *dy = NULL, *olddy[8];
+		long jj, ii;
+		for (sl = 0; sl < 8; sl++) olddy[sl] = saom_bdy[sl];
+		if (hasdy) {
+			dy = (double *)calloc((size_t)(n * n), sizeof(double));
+			for (jj = 1; jj <= n; jj++) for (ii = 1; ii <= n; ii++) { ST_double v; SF_vdata((int)(4 + jj), ii, &v); dy[(ii - 1) * n + (jj - 1)] = v; }
+			for (sl = 0; sl < 8; sl++) saom_bdy[sl] = dy;
+			saom_bdy_n = n;
+		}
+		val = saom_beh_stat_term(&g, bv, tc, range, simMean, mean);
+		for (sl = 0; sl < 8; sl++) saom_bdy[sl] = olddy[sl];
+		free(dy);
+	}
 	for (sl = 0; sl < 8; sl++) saom_tl_cov[sl] = NULL;
 	SF_scal_save("__saom_behstat_val", (ST_double)val);
 	free(bv); free(cv);
