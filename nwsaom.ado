@@ -1324,8 +1324,8 @@ program nwsaom, eclass
 	// nodematch()/simcov() (egox()/altx()/samex()/simx()); the covariate is centred by the mean of all its values.
 	local __nwsaom_tvnames ""
 	if `"`tvcov'"' != "" {
-		if `__nwsaom_tm' | "`interact'" != "" | "`symmetric'" != "" {
-			di "{err}{bf:tvcov()} cannot yet be combined with two-mode networks, {bf:interact()} or {bf:symmetric}."
+		if `__nwsaom_tm' | "`interact'" != "" {
+			di "{err}{bf:tvcov()} cannot yet be combined with two-mode networks or {bf:interact()}."
 			error 198
 		}
 		local __rest `"`tvcov'"'
@@ -1650,10 +1650,6 @@ program nwsaom, eclass
 	// protocol 41: covariate threshold / contrast effects (native only; the observed statistic is evaluated in Mata)
 	foreach __dk in egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx {
 		if "``__dk''" != "" {
-			if "`symmetric'" != "" {
-				di "{err}{bf:`__dk'()} is not yet available for a non-directed relation ({bf:symmetric})."
-				error 198
-			}
 			if `__nwsaom_tm' {
 				local __tmok : list __dk in __tm_actcov
 				local __tmok2 : list __dk in __tm_evcov
