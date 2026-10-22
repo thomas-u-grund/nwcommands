@@ -3541,7 +3541,7 @@ real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar 
    saom_stat_term() the simulation uses), so a new native term needs no Mata twin. A term "nat_<effect>" (static or tvcov covariate) or "natb_<effect>"
    (the dependent behavior as covariate: td.attr = raw behavior, td.center = its overall mean) carries td.levels = (term code \ dynamic flag), td.attr
    the covariate (td.attrpd per period for a changing covariate) and td.decay = p1 (similarity mean, the parameter c, ...). */
-real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a) {
+real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd) {
 	real matrix E
 	real rowvector nb
 	real scalar i, m, ne, n, junk
@@ -3559,10 +3559,12 @@ real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real s
 	st_framecurrent("__saom_netstat")
 	st_addobs(max((ne, n, 1)))
 	junk = st_addvar("double", ("ev1", "ev2", "aa"))
+	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) junk = st_addvar("double", "dd" + strofreal(i))
 	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
 	st_store((1::n), "aa", a)
+	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 aa, " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + char(34))
+	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_netstat")
 	return(st_numscalar("__saom_netstat_val"))
@@ -3571,6 +3573,7 @@ real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar
 	real colvector a
 	real scalar dyn
 	dyn = (td.levels[2] != 0)
+	if (rows(td.edgecovmat) == G.n) return(SaomNativeNetStat(G, td.levels[1], td.decay, J(G.n, 1, 0), td.edgecovmat))
 	a = (dyn ? td.attr :- td.center : td.attr)
 	return(SaomNativeNetStat(G, td.levels[1] + (dyn ? 1000 : 0), td.decay, a))
 }
@@ -3616,6 +3619,16 @@ void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, s
 		else td.attr = (center ? X :- m : X)
 	}
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + label))
+}
+/* protocol 49: a native-only network effect of a dyadic covariate: W is the raw n x n matrix (missing and the diagonal 0, never centred) */
+void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
+	class ErgmTermData scalar td
+	real scalar m
+	td = ErgmTermData()
+	td.levels = (code \ 0)
+	td.decay = 0
+	td.edgecovmat = SaomDyadPrep(st_matrix(matname), 0, m)
+	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + matname))
 }
 /* the dependent behavior (first one, raw start values behw1, overall mean bmean) as the covariate */
 void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1) {
@@ -9205,7 +9218,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45, needv46
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45, needv46, needv49
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -9228,6 +9241,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv41 = 0
 	needv45 = 0
 	needv46 = 0
+	needv49 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -9260,6 +9274,13 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			if (tdt.levels[2] != 0) {
 				cfg.termcodes[t] = cfg.termcodes[t] + 1000
 				cfg.attridx[t] = 0
+			}
+			else if (rows(tdt.edgecovmat) > 0) {
+				// protocol 49: the dyadic matrix as n attribute columns (column i = row i)
+				cfg.attridx[t] = nextattr + 1
+				cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.edgecovmat' : (cfg.attrmat, tdt.edgecovmat'))
+				nextattr = nextattr + rows(tdt.edgecovmat)
+				needv49 = 1
 			}
 			else {
 				nextattr++
@@ -9722,6 +9743,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv49) {
+		if (SaomNativePluginVersion() < 49) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 49 (network effects of a dyadic covariate)"
 		}
 	}
 	if (cfg.eligible & needv46) {
