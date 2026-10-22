@@ -1435,6 +1435,10 @@ program nwsaom, eclass
 		local __nwsaom_efflist "`__nwsaom_efflist' indegpopularity"
 	}
 	// RSiena inPop / outPop / inAct / outActSqrt (protocol 22)
+	if "`outpop'" != "" & "`inact'" != "" {
+		di "{err}{bf:outpop} and {bf:inact} have the same total statistic (sum of own outdegree x indegree), so the pair is not identified: RSiena accepts it but its estimates are arbitrary; use one of them."
+		error 198
+	}
 	foreach __e in inpop outpop inact outactsqrt {
 		if "``__e''" != "" {
 			tempname __td_dg

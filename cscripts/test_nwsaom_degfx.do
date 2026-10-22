@@ -38,4 +38,6 @@ global NWSAOM_NONATIVE 1
 nwsaom, wave1(dg1) wave2(dg2) outdegree inpop outactsqrt k0(20) k3(50) seed(4)
 assert "`e(engine)'" == "mata"
 global NWSAOM_NONATIVE
+capture nwsaom, waves(dg1 dg2 dg3) outdegree outpop inact
+assert _rc == 198
 di as text "degree effects PASS"

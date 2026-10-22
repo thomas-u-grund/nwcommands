@@ -551,7 +551,7 @@ avAlt 0.96-1.04 against 0.32, -0.27 and 0.90-1.00, rates 4.3 and 1.24.
 RSiena 1.6.6 on s50 (3 waves): observed statistics 798, 676, 676, 416.092 identical; inPop 0.180 (0.18), outPop -0.26 (-0.25 to -0.26),
 outActSqrt 0.11-0.12 (0.12-0.14); inAct alone -0.044 (-0.044 to -0.051). Unlike {opt outpopularity}/{opt inactivity}, these RSiena effects
 have the default internal parameter 1 and are not affected by the RSiena 1.6.1 change documented above (stocnet/rsiena#151).
-{opt outpop} and {opt inact} have the same total statistic and cannot be estimated together.
+{opt outpop} and {opt inact} have the same total statistic, so the pair is not identified; RSiena accepts it (with arbitrary estimates), {cmd:nwsaom} refuses it with an error.
 
 {pstd}
 {bf:Covariate variants diffx, higher, egosqx, altsqx, samexrecip, simrecipx.} Checked against RSiena 1.6.6 on s50 with alcohol (density,
