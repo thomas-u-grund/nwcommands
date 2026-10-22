@@ -167,3 +167,45 @@ end
 capture noisily nwsaom, wave1(dg1) wave2(dg2) outdegree gwdspff(-1) k3(50)
 assert _rc == 198
 di as text "gwdsp and betweenness PASS"
+
+* gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice, cycle4 with parameter 2 (s50 targets 188.141, 186.383, 176.883, 124.951, 239, 45, 92.578 - dev/saom_rsiena_gwesp2.{R,do}, saom_rsiena_cyc4sqrt.{R,do})
+nwsaom, waves(dg1 dg2 dg3) outdegree reciprocity gwespfb(0.69) gwesprr(0.69) nbrdist2 dblnbrdist2 sqrtcycle4 k0(30) k3(150) seed(8)
+assert colsof(e(b)) == 7 & !missing(el(e(b),1,3), el(e(b),1,7)) & "`e(engine)'" == "native"
+mata:
+mata set matastrict off
+void dg_gwesp2_check() {
+	external class ErgmModel scalar __nwsaom_last_M
+	external class ErgmGraph scalar __nwsaom_last_G3
+	real rowvector st
+	real scalar n, i, j, k, fb, rr, nd1, nd2, c, c4
+	real colvector cnt
+	n = __nwsaom_last_G3.n
+	fb = 0
+	rr = 0
+	nd1 = 0
+	nd2 = 0
+	c4 = 0
+	for (i=1; i<=n; i++) {
+		cnt = J(n, 1, 0)
+		for (j=1; j<=n; j++) {
+			if (i == j) continue
+			c = 0
+			for (k=1; k<=n; k++) if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(j, k)) c++
+			if (__nwsaom_last_G3.has_edge(i, j)) fb = fb + gw_kernel(c, 0.69)
+			c = 0
+			for (k=1; k<=n; k++) if (k != i & k != j & __nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, i) & __nwsaom_last_G3.has_edge(j, k) & __nwsaom_last_G3.has_edge(k, j)) c++
+			if (__nwsaom_last_G3.has_edge(i, j)) rr = rr + gw_kernel(c, 0.69)
+			c = 0
+			for (k=1; k<=n; k++) if (__nwsaom_last_G3.has_edge(i, k) & __nwsaom_last_G3.has_edge(k, j)) c++
+			if (c >= 1 & !__nwsaom_last_G3.has_edge(i, j)) nd1++
+			if (c >= 2 & !__nwsaom_last_G3.has_edge(i, j)) nd2++
+		}
+	}
+	st = __nwsaom_last_M.full_statistic(__nwsaom_last_G3)
+	assert(abs(st[3] - fb) < 1e-8 & abs(st[4] - rr) < 1e-8 & st[6] == nd1 & st[7] == nd2 & st[5] > 0)
+}
+dg_gwesp2_check()
+end
+capture noisily nwsaom, wave1(dg1) wave2(dg2) outdegree cycle4 sqrtcycle4 k3(50)
+assert _rc == 198
+di as text "gwesp variants, nbrDist2, cycle4 sqrt PASS"

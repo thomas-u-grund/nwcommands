@@ -1086,6 +1086,79 @@ real rowvector change_saom_between(class ErgmGraph scalar G, real scalar i, real
 	return(G.has_edge(i, j) ? -c : c)
 }
 
+/* RSiena's gwespFB / gwespBF / gwespBB / gwespRR: sum over ties i->j of gw_kernel(count, decay) with count = common out-neighbours of i and j (FB), common
+   in-neighbours (BF), two-paths j->h->i (BB), or actors m with i<->m<->j (RR); RSiena's contribution is just the kernel of the tie (no neighbour adjustment) */
+real scalar _saom_gwesp_count(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar kind) {
+	real scalar m, c
+	if (kind == 1) return(G.shared_partners_osp(i, j))
+	if (kind == 2) return(G.shared_partners_isp(i, j))
+	if (kind == 3) return(G.shared_partners_otp(j, i))
+	c = 0
+	for (m=1; m<=G.n; m++) {
+		if (m == i | m == j) continue
+		if (G.has_edge(i, m) & G.has_edge(m, i) & G.has_edge(j, m) & G.has_edge(m, j)) c++
+	}
+	return(c)
+}
+real scalar _saom_gwesp_stat(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind) {
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + gw_kernel(_saom_gwesp_count(G, ties[k,1], ties[k,2], kind), td.decay)
+	return(tot)
+}
+real scalar _saom_gwesp_change(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td, real scalar kind) {
+	real scalar d
+	d = gw_kernel(_saom_gwesp_count(G, i, j, kind), td.decay)
+	return(G.has_edge(i, j) ? -d : d)
+}
+real rowvector stat_saom_gwespfb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 1))
+real rowvector change_saom_gwespfb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 1))
+real rowvector stat_saom_gwespbf(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 2))
+real rowvector change_saom_gwespbf(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 2))
+real rowvector stat_saom_gwespbb(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 3))
+real rowvector change_saom_gwespbb(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 3))
+real rowvector stat_saom_gwesprr(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_gwesp_stat(G, td, 4))
+real rowvector change_saom_gwesprr(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_gwesp_change(G, i, j, td, 4))
+
+/* RSiena's nbrDist2 (c = 1) and nbrDist2twice (c = 2): the number of actors h at distance two from some i (no tie i->h, h != i) with at least c two-paths i->k->h;
+   RSiena's contribution only follows the ego's own row */
+real scalar _saom_nbrdist2_stat(class ErgmGraph scalar G, real scalar c) {
+	real scalar i, a, b, h, tot
+	real rowvector nk, nh
+	real colvector cnt
+	tot = 0
+	for (i=1; i<=G.n; i++) {
+		cnt = J(G.n, 1, 0)
+		nk = G.neighbors_out(i)
+		for (a=1; a<=cols(nk); a++) {
+			nh = G.neighbors_out(nk[a])
+			for (b=1; b<=cols(nh); b++) cnt[nh[b]] = cnt[nh[b]] + 1
+		}
+		for (h=1; h<=G.n; h++) if (h != i & cnt[h] >= c & !G.has_edge(i, h)) tot = tot + 1
+	}
+	return(tot)
+}
+real scalar _saom_nbrdist2_change(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar c) {
+	real scalar tied, ch, crit, a, h
+	real rowvector nh
+	tied = G.has_edge(i, j)
+	ch = 0
+	if (G.shared_partners_otp(i, j) >= c) ch = ch - 1
+	crit = c - (tied ? 0 : 1)
+	nh = G.neighbors_out(j)
+	for (a=1; a<=cols(nh); a++) {
+		h = nh[a]
+		if (h != i & !G.has_edge(i, h) & G.shared_partners_otp(i, h) == crit) ch = ch + 1
+	}
+	return(tied ? -ch : ch)
+}
+real rowvector stat_saom_nbrdist2(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_nbrdist2_stat(G, 1))
+real rowvector change_saom_nbrdist2(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 1))
+real rowvector stat_saom_nbrdist2twice(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_nbrdist2_stat(G, 2))
+real rowvector change_saom_nbrdist2twice(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 2))
+
 /* RSiena's functions of the outdegree: outTrunc(c) min(d,c), outMore(c) max(d-c,0), outThreshold(c) 1{d>c}, outInv(c) 1/(d+c),
    outSqInv(c) 1/((d+c)(d+c+1)); statistic = sum over actors, change = f(d_without+1) - f(d_without), negated for an existing tie */
 real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {
@@ -2089,6 +2162,31 @@ real scalar _saom_cycle4_threepaths(class ErgmGraph scalar G, real scalar i, rea
 	}
 	return(tot)
 }
+/* RSiena cycle4 / sharedPop with parameter 2 (FourCyclesEffect, lroot): statistic = sum over ties of 0.5 * sqrt(three-paths i->h<-k->j); contribution =
+   |sqrt(new cycle count) - sqrt(current cycle count)| with the ego's current count = floor(sum over its out-ties of the three-paths / 2), the new count
+   current -/+ the alter's three-paths (not halved: RSiena's own arithmetic; a negative count has the square root 0, as RSiena's table lookup effectively gives) */
+real rowvector stat_saom_cycle4sqrt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar k, tot
+	ties = G.all_ties()
+	tot = 0
+	for (k=1; k<=rows(ties); k++) tot = tot + 0.5 * sqrt(_saom_cycle4_threepaths(G, ties[k,1], ties[k,2]))
+	return(tot)
+}
+real rowvector change_saom_cycle4sqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar tied, cur, newc, tp, a, ch
+	real rowvector nb
+	tied = G.has_edge(i, j)
+	nb = G.neighbors_out(i)
+	cur = 0
+	for (a=1; a<=cols(nb); a++) cur = cur + _saom_cycle4_threepaths(G, i, nb[a])
+	cur = floor(cur / 2)
+	tp = _saom_cycle4_threepaths(G, i, j)
+	newc = (tied ? cur - tp : cur + tp)
+	ch = abs((newc > 0 ? sqrt(newc) : 0) - sqrt(cur))
+	return(tied ? -ch : ch)
+}
+
 real rowvector stat_saom_cycle4(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real matrix ties
 	real scalar k, tot
@@ -3173,6 +3271,13 @@ real scalar _saom_degfun_code(string scalar nm) {
 	if (nm == "gwdspff") return(63)
 	if (nm == "gwdspfb") return(64)
 	if (nm == "between") return(65)
+	if (nm == "gwespfb") return(66)
+	if (nm == "gwespbf") return(67)
+	if (nm == "gwespbb") return(68)
+	if (nm == "gwesprr") return(69)
+	if (nm == "nbrdist2") return(70)
+	if (nm == "nbrdist2twice") return(71)
+	if (nm == "cycle4sqrt") return(72)
 	return(0)
 }
 
@@ -8002,7 +8107,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8018,6 +8123,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv30 = 0
 	needv31 = 0
 	needv32 = 0
+	needv33 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8208,6 +8314,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			needv30 = 1
 			if (cfg.termcodes[t] >= 59) needv31 = 1
 			if (cfg.termcodes[t] >= 63) needv32 = 1
+			if (cfg.termcodes[t] >= 66) needv33 = 1
 		}
 		else if (_saom_degsplit_code(nm) > 0) {
 			// endowment / creation roles of the degree effects: the base effect's plugin code, gated by cfg.fntype
@@ -8396,6 +8503,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv33) {
+		if (SaomNativePluginVersion() < 33) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 33 (gwesp variants, nbrDist2)"
 		}
 	}
 	if (cfg.eligible & needv32) {
@@ -9127,6 +9240,13 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	u = strpos(coef, "_")
 	v = (u ? substr(coef, u + 1, .) : "")
 	if (term == "outdegree") return(symmetric ? "degree (density)" : "outdegree (density)")
+	if (term == "cycle4sqrt") return("cycles (sqrt)")
+	if (term == "gwespfb") return("GWESP I -> K <- J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "gwespbf") return("GWESP I <- K -> J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "gwespbb") return("GWESP I <- K <- J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "gwesprr") return("GWESP I <-> K <-> J (" + strofreal(round(100 * decay)) + ")")
+	if (term == "nbrdist2") return("number of actors at distance 2")
+	if (term == "nbrdist2twice") return("number of actors at distance 2 (twice)")
 	if (term == "gwdspff") return("GWDSP I -> K -> J (" + strofreal(round(100 * decay)) + ")")
 	if (term == "gwdspfb") return("GWDSP I -> K <- J (" + strofreal(round(100 * decay)) + ")")
 	if (term == "between") return("betweenness")

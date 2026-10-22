@@ -191,7 +191,7 @@ program nwsaom, eclass
 	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
-		GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
+		GWESPFB(string) GWESPBF(string) GWESPBB(string) GWESPRR(string) SQRTCYCLE4 DBLNBRDIST2 NBRDIST2 GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
@@ -543,7 +543,7 @@ program nwsaom, eclass
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
@@ -1554,8 +1554,8 @@ program nwsaom, eclass
 			}
 		}
 	}
-	// RSiena's gwdspFF / gwdspFB (decay = 0.01 * RSiena's parameter; give the decay, e.g. 0.69) and betweenness (protocol 32)
-	foreach __e in gwdspff gwdspfb {
+	// RSiena's gwespFB / gwespBF / gwespBB / gwespRR, gwdspFF / gwdspFB (decay = 0.01 * RSiena's parameter; give the decay, e.g. 0.69), betweenness, nbrDist2 (protocol 32-33)
+	foreach __e in gwespfb gwespbf gwespbb gwesprr gwdspff gwdspfb {
 		if "``__e''" != "" {
 			if "`symmetric'" != "" {
 				di "{err}{bf:`__e'()} is not available for a non-directed relation ({bf:symmetric})."
@@ -1571,6 +1571,35 @@ program nwsaom, eclass
 			mata: `__td_gd'.decay = ``__e''
 			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_gd', ("`__e'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__e'(``__e'')"
+		}
+	}
+	// (Stata's syntax rejects an option name with a digit followed by letters, see in3plus: nbrDist2twice is the option dblnbrdist2)
+	if "`sqrtcycle4'" != "" {
+		if "`symmetric'" != "" {
+			di "{err}{bf:sqrtcycle4} is not available for a non-directed relation ({bf:symmetric})."
+			error 198
+		}
+		if "`cycle4'" != "" {
+			di "{err}give either {bf:cycle4} or {bf:sqrtcycle4} (RSiena: the same effect with parameter 1 or 2)."
+			error 198
+		}
+		tempname __td_c4s
+		mata: `__td_c4s' = ErgmTermData()
+		mata: __nwsaom_last_M.addterm("cycle4sqrt", 1, &stat_saom_cycle4sqrt(), &change_saom_cycle4sqrt(), `__td_c4s', ("cycle4sqrt"))
+		local __nwsaom_efflist "`__nwsaom_efflist' cycle4sqrt"
+	}
+	foreach __o in nbrdist2 dblnbrdist2 {
+		local __e "`__o'"
+		if "`__e'" == "dblnbrdist2" local __e "nbrdist2twice"
+		if "``__o''" != "" {
+			if "`symmetric'" != "" {
+				di "{err}{bf:`__e'} is not available for a non-directed relation ({bf:symmetric})."
+				error 198
+			}
+			tempname __td_nd
+			mata: `__td_nd' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_nd', ("`__e'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__e'"
 		}
 	}
 	if "`between'" != "" {
