@@ -695,3 +695,9 @@ Use `local v : environ NAME` to read an environment variable (e.g. to parameteri
 See DECISIONS 42 in `docs/nwsaom_DECISIONS.md`. The three non-obvious rules, each found by comparing fixed-parameter simulations with
 `siena07` (dev/saom_rsiena_tc_scen.R): an inactive actor stays among the alters of an active ego (ties made to it are real until the
 end of the period); `setLeaversBack` runs only for periods that have join/leave events; a joiner only switches ON its start-network ties.
+
+## A copy of the repo with its own `lib/plugins/` shadows a scratch `adopath` plugin
+
+`SaomNativePluginPath()` finds `lib/plugins/<platform>/` next to the loaded code before it looks at the adopath, so `adopath ++ scratch`
+only works for copies that have no plugin of their own. When testing a rebuilt plugin in a development copy, copy it to that copy's
+`lib/plugins/macos/` too (symptom: the `TRACE ctx: ver ...` line of `NWSAOM_TRACE 4` still shows the old protocol).

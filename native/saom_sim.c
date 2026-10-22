@@ -288,7 +288,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 26		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change)
+#define SAOM_NATIVE_VERSION 27		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1998,6 +1998,7 @@ typedef struct model_s {
 	int behfntype[MAXBEHTERMS];		// behavior: 1 endowment (decreases only), 2 creation (increases only)
 	long nstruct;				// structural (fixed) dyads, CSR by ego: struct_j[struct_off[i]..struct_off[i+1]-1]
 	long nstruct_pending;			// protocol 20: structural dyads sent in the frame's last two columns (BATCHSETUP only)
+	long nev_pending;			// protocol 27: composition-change events in the last four frame columns (period, time, actor, type; BATCHSETUP only)
 	int ntv;				// protocol 21: attributes that vary by period (BATCHSETUP only)
 	int tvcol[MAXATTR];			// their 1-based attribute columns
 	long *struct_off, *struct_j;
@@ -2024,7 +2025,11 @@ typedef struct {
 	double *xmissbeh[MAXBEH];	// their missingness (1..n), NULL unless hasmiss
 	double *xattr[MAXATTR + 1];	// protocol 21: this period's values of the time-varying attributes (index = attribute column - 1), NULL = the model's own
 	int haspresent;
-	double *present;		// 1..n, NULL unless haspresent
+	double *present;		// 1..n, NULL unless haspresent (with events: the actors active at the START of the period)
+	long nev;			// protocol 27: composition change at fractional times: events of this period, sorted by time
+	double *evt;			// event times in (0,1)
+	long *eva;			// event actors (1..n)
+	int *evk;			// 1 join / 2 leave
 } period_t;
 
 typedef struct {
@@ -2277,7 +2282,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	long simDist = 0;
 	long npresent = n;
 	long *presentIdxArr = NULL;
-	const double *presentArr = PD->haspresent ? PD->present : NULL;
+	double *presloc = NULL;		/* protocol 27: the active set while the period's composition changes */
+	double *wbase_rc = NULL;
+	dyadht_t hstart;
+	long evi = 0;
 	double *wfull_rc = NULL, totw_rc = 0.0, covrateSum_rc[MAXRC], rcscore[MAXRC];
 	long krc, nrc = P->hasratecov;
 	int condcap = 0;
@@ -2315,6 +2323,12 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 		npresent = 0;
 		for (i = 1; i <= n; i++) if (PD->present[i] != 0.0) presentIdxArr[npresent++] = i;
 	}
+	if (PD->nev > 0 && PD->haspresent) {
+		presloc = (double *)malloc((size_t)(n + 1) * sizeof(double));
+		memcpy(presloc, PD->present, (size_t)(n + 1) * sizeof(double));
+		ht_alloc(&hstart, ht_next_pow2(PD->nties * 2 + 16));
+		for (i = 0; i < PD->nties; i++) ht_put(&hstart, dyadkey(&g, PD->ti[i], PD->tj[i]), 1);
+	}
 
 	rng_seed(&rng, seed);
 	t = 0.0;
@@ -2338,10 +2352,12 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			/* K covariates (protocol 9): w_i = exp(sum_k b_k x_ik); every
 			   score term below is linear in the covariate, one per k */
 			wfull_rc = (double *)malloc((size_t)n * sizeof(double));
+			wbase_rc = (double *)malloc((size_t)n * sizeof(double));
 			for (i = 0; i < n; i++) {
 				double eta = 0.0;
 				for (krc = 0; krc < nrc; krc++) eta += P->ratecoef[krc] * P->ratecovattr[krc * n + i];
 				wfull_rc[i] = exp(eta);
+				wbase_rc[i] = wfull_rc[i];
 				/* composition change: an absent actor has rate 0 (RSiena's calculateRates()) */
 				if (PD->haspresent && PD->present[i + 1] == 0.0) wfull_rc[i] = 0.0;
 				totw_rc += wfull_rc[i];
@@ -2382,6 +2398,49 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			   returned as missing (SV_missval), which the caller reports */
 			if (P->condmode && steps >= 1000000.0) { condcap = 1; break; }
 			double dt_rc = -log(rng_unif(&rng)) / grandRate;
+			/* protocol 27: composition change at fractional times (EpochSimulation::makeNextCompositionChange()):
+			   an event that falls before the next ministep is made first and the waiting time redrawn */
+			while (presloc && evi < PD->nev && PD->evt[evi] <= t + dt_rc) {
+				long ea = PD->eva[evi], ej;
+				double te = PD->evt[evi];
+				if (P->hasratecov && P->want_score) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= (te - t) * covrateSum_rc[krc];
+				t = te;
+				if (PD->evk[evi] == 1) {
+					presloc[ea] = 1.0;
+					/* a joiner switches on the ties of the start network to the active actors (actOnJoiner()) */
+					for (ej = 1; ej <= n; ej++) {
+						long dv;
+						if (ej == ea || presloc[ej] == 0.0) continue;
+						if (ht_get(&hstart, dyadkey(&g, ea, ej), &dv) && !has_edge(&g, ea, ej)) toggle(&g, ea, ej);
+						if (ht_get(&hstart, dyadkey(&g, ej, ea), &dv) && !has_edge(&g, ej, ea)) toggle(&g, ej, ea);
+					}
+				}
+				else {
+					presloc[ea] = 0.0;
+					/* a leaver loses all its ties (actOnLeaver()) */
+					for (ej = 1; ej <= n; ej++) {
+						if (ej == ea) continue;
+						if (has_edge(&g, ea, ej)) toggle(&g, ea, ej);
+						if (has_edge(&g, ej, ea)) toggle(&g, ej, ea);
+					}
+				}
+				npresent = 0;
+				for (i = 1; i <= n; i++) if (presloc[i] != 0.0) presentIdxArr[npresent++] = i;
+				if (P->hasratecov) {
+					totw_rc = 0.0;
+					for (krc = 0; krc < MAXRC; krc++) Sp_rc[krc] = 0.0;
+					for (i = 0; i < n; i++) {
+						wfull_rc[i] = (presloc[i + 1] != 0.0) ? wbase_rc[i] : 0.0;
+						totw_rc += wfull_rc[i];
+						for (krc = 0; krc < nrc; krc++) Sp_rc[krc] += P->ratecovattr[krc * n + i] * wfull_rc[i];
+					}
+					for (krc = 0; krc < nrc; krc++) covrateSum_rc[krc] = rate * Sp_rc[krc];
+				}
+				grandRate = P->hasratecov ? rate * totw_rc : ((double)npresent * rate + (double)npresent * (M->nbehterms > 0 ? rateBeh : 0.0));
+				if (M->nbeh > 1) for (b = 1; b < M->nbeh; b++) grandRate += (double)npresent * P->xrateBeh[b];
+				evi++;
+				dt_rc = -log(rng_unif(&rng)) / grandRate;
+			}
 			t += dt_rc;
 			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
 			if (P->condmode || t < 1.0) {
@@ -2697,8 +2756,29 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 				steps += 1.0;
 			}
 		}
+		/* EpochSimulation::runEpoch(): setLeaversBack() when the period has composition events - the ties and the
+		   behavior values of the actors still inactive go back to the start of the period */
+		if (presloc) {
+			long ia, ja;
+			for (ia = 1; ia <= n; ia++) {
+				if (presloc[ia] != 0.0) continue;
+				for (ja = 1; ja <= n; ja++) {
+					long dv;
+					if (ja == ia) continue;
+					if ((ht_get(&hstart, dyadkey(&g, ia, ja), &dv) ? 1 : 0) != has_edge(&g, ia, ja)) toggle(&g, ia, ja);
+					if ((ht_get(&hstart, dyadkey(&g, ja, ia), &dv) ? 1 : 0) != has_edge(&g, ja, ia)) toggle(&g, ja, ia);
+				}
+				if (M->nbehterms > 0) {
+					behval[ia] = PD->beh0[ia];
+					for (b = 1; b < M->nbeh; b++) behvalb[b][ia] = PD->xbeh0[b][ia];
+				}
+			}
+			ht_free(&hstart);
+		}
 		free(u); free(ev); free(tt_arr); free(c3_arr); free(chg); free(ijx); free(availbuf);
 	}
+	if (presloc) free(presloc);
+	if (wbase_rc) free(wbase_rc);
 	if (wfull_rc) free(wfull_rc);
 	if (P->condmode) ht_free(&horig);
 	PROF_START(pt_end);
@@ -2990,7 +3070,7 @@ static void batch_free(void) {
 	if (!batch_state.ready) return;
 	for (pd = 0; pd < batch_state.P; pd++) {
 		period_t *p = &batch_state.per[pd];
-		free(p->ti); free(p->tj); free(p->beh0); free(p->mi); free(p->mj); free(p->missbeh); free(p->present);
+		free(p->ti); free(p->tj); free(p->beh0); free(p->mi); free(p->mj); free(p->missbeh); free(p->present); free(p->evt); free(p->eva); free(p->evk);
 		{ long b; for (b = 1; b < MAXBEH; b++) { free(p->xbeh0[b]); free(p->xmissbeh[b]); } }
 		{ long a; for (a = 0; a <= MAXATTR; a++) free(p->xattr[a]); }
 	}
@@ -3203,6 +3283,8 @@ static ST_retcode batch_setup(char *arg) {
 	M->ntv = (int)next_long_opt(0);
 	if (M->ntv < 0 || M->ntv > MAXATTR - 1) { SF_error("saom_sim: BATCHSETUP too many time-varying attributes\n"); return 198; }
 	for (k = 0; k < M->ntv; k++) M->tvcol[k] = (int)next_long();
+	/* protocol 27: number of composition-change events (their four frame columns follow the structural ones) */
+	M->nev_pending = next_long_opt(0);
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
@@ -3326,6 +3408,27 @@ static ST_retcode batch_setup(char *arg) {
 		build_struct_csr(M, np, si, sj);
 		free(si); free(sj);
 		col += 2;
+	}
+	if (M->nev_pending > 0) {
+		long q, ne = M->nev_pending;
+		long *cnt = (long *)calloc((size_t)P, sizeof(long));
+		for (q = 1; q <= ne; q++) { ST_double v; SF_vdata((int)col, q, &v); cnt[(long)v - 1]++; }
+		for (pd = 0; pd < P; pd++) {
+			period_t *pp = &batch_state.per[pd];
+			pp->nev = 0;
+			pp->evt = (double *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(double));
+			pp->eva = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
+			pp->evk = (int *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(int));
+		}
+		for (q = 1; q <= ne; q++) {
+			ST_double vp, vt, va, vk;
+			period_t *pp;
+			SF_vdata((int)col, q, &vp); SF_vdata((int)(col + 1), q, &vt); SF_vdata((int)(col + 2), q, &va); SF_vdata((int)(col + 3), q, &vk);
+			pp = &batch_state.per[(long)vp - 1];
+			pp->evt[pp->nev] = vt; pp->eva[pp->nev] = (long)va; pp->evk[pp->nev] = (int)vk; pp->nev++;
+		}
+		free(cnt);
+		col += 4;
 	}
 	batch_state.ready = 1;
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);

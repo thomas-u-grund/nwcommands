@@ -4432,7 +4432,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.native_netdist = (ver >= 5)
 	C.perok = (ver >= 18)
 	// the threaded batch path: every model from protocol 11 on
-	C.use_batch = C.use_native & !C.hastimed & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
+	C.use_batch = C.use_native & (!C.hastimed | ver >= 27) & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
 	if (C.symtype != 0 & !C.use_native) {
 		errprintf("SAOM estimation of a non-directed relation (symmetric, symtype()) requires the native (C) backend, protocol 8 or later for symtype(forcing)/(confirmation); it is not available for this model/platform (there is no Mata fallback for these ministeps).\n")
 		exit(198)
@@ -4444,10 +4444,11 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 			if (rows(mdt) > 0) C.missDyadsPd = C.missDyadsPd \ (J(rows(mdt), 1, pd), mdt)
 		}
 	}
+	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE ctx: ver %g native %g batch %g timed %g\n", ver, C.use_native, C.use_batch, C.hastimed)
 	if (C.use_batch) {
 		SaomBatchSetup(Gwaves, C.P, C.cfg, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0,
 			C.hasmiss, C.missDyadsPd, J(C.n, C.P, 0), C.haspresent, C.presentPd,
-			J(1, 0, 0), C.symtype, (C.hasratecov ? C.ratecovattr : J(0, 0, 0)))
+			J(1, 0, 0), C.symtype, (C.hasratecov ? C.ratecovattr : J(0, 0, 0)), C.compEv)
 	}
 }
 
@@ -7337,7 +7338,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if (C.hastimed) C.use_batch = 0
+		if (C.hastimed & k < 27) C.use_batch = 0
 		// behavior endowment/creation from protocol 12 on (RSiena's
 		// statistics; protocol 11 had the linear one for every split)
 		if (any(C.cfgBeh.fntype :!= 0) & k < 12) {
@@ -7404,7 +7405,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		if (C.hasmiss & rows(C.missDyadsPd) == 0) C.missDyadsPd = J(0, 3, 0)
 		SaomBatchSetup(Gwaves, P, C.cfg, C.cfgBeh.termcodes, Behwaves, behminval, behmaxval,
 			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd,
-			C.cfgBeh.fntype, C.symtype)
+			C.cfgBeh.fntype, C.symtype, J(0, 0, 0), C.compEv)
 	}
 
 	// --- Phase 1: Jacobian by the score-function method. As RSiena
@@ -9124,9 +9125,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real scalar simMean, real scalar overallMean, real scalar hasmiss, real matrix missDyadsPd,
 	real matrix missBehPd, real scalar haspresent, real matrix presentPd,
-	| real rowvector behfntype, real scalar symtype, real matrix rcattr) {
+	| real rowvector behfntype, real scalar symtype, real matrix rcattr, pointer(real matrix) rowvector compEv) {
 
-	real matrix E, t
+	real matrix E, t, EV
 	real scalar k
 	real scalar n, pd, nattr, nbeh, nrows, i, junk, sframe, ntv
 	string rowvector names
@@ -9140,7 +9141,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	}
 	nattr = cols(cfg.attrmat)
 	nbeh = cols(behtermcodes)
-	nrows = max((rows(E), n, rows(missDyadsPd), rows(cfg.structpairs), 1))
+	EV = J(0, 4, 0)
+	if (args() >= 18) for (pd=1; pd<=P; pd++) if (compEv[pd] != NULL) if (rows(*compEv[pd]) > 0) EV = EV \ (J(rows(*compEv[pd]), 1, pd), *compEv[pd])
+	nrows = max((rows(E), n, rows(missDyadsPd), rows(cfg.structpairs), rows(EV), 1))
 
 	names = ("e_pd", "e_i", "e_j")
 	for (i=1; i<=nattr; i++) names = names, "a" + strofreal(i)
@@ -9154,6 +9157,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) names = names, "tv" + strofreal(k) + "_" + strofreal(pd)
 	sframe = (rows(cfg.structpairs) > 40)
 	if (sframe) names = names, ("st_i", "st_j")
+	if (rows(EV) > 0) names = names, ("ev_p", "ev_t", "ev_a", "ev_k")
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_batch")
@@ -9171,6 +9175,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	if (haspresent) for (pd=1; pd<=P; pd++) st_store((1::n), "pr" + strofreal(pd), presentPd[., pd])
 	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) st_store((1::n), "tv" + strofreal(k) + "_" + strofreal(pd), cfg.tvmat[., (k-1)*P + pd])
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
+	if (rows(EV) > 0) st_store((1::rows(EV)), ("ev_p", "ev_t", "ev_a", "ev_k"), EV)
 
 	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
 	for (i=1; i<=cols(cfg.termcodes); i++) argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
@@ -9189,6 +9194,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	// protocol 21: no extra behaviors (MB trailer), then the attributes that vary by period
 	argstr = argstr + " 0 " + strofreal(ntv)
 	for (k=1; k<=ntv; k++) argstr = argstr + " " + strofreal(cfg.tvcol[k])
+	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
