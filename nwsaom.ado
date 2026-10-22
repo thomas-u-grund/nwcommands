@@ -198,7 +198,7 @@ program nwsaom, eclass
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHTHETA0(string) ///
-		PRESENT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
+		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
@@ -541,7 +541,7 @@ program nwsaom, eclass
 			di "{err}{bf:actormode()} must be 1 or 2 (the mode whose nodes are the actors)."
 			error 198
 		}
-		foreach __opt in symmetric ratecov present missnet missbeh behavior structural interact nodecov nodematch simcov ///
+		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
@@ -657,6 +657,33 @@ program nwsaom, eclass
 			error 198
 		}
 		local __nwsaom_haspresent = 1
+	}
+
+	// --- joinat()/leaveat(): composition change with joiners and leavers at
+	// FRACTIONAL times inside a period, as RSiena's sienaCompositionChange()
+	// (ccOption 1): one numeric node variable each, on RSiena's time scale
+	// (wave 1 = time 1, wave W = time W). An actor is active from joinat() to
+	// leaveat() (missing: from the first wave / to the last wave); one interval
+	// per actor. present() is the special case of whole-period presence.
+	local __nwsaom_hastimed = 0
+	if "`joinat'`leaveat'" != "" {
+		if "`present'" != "" {
+			di "{err}{bf:joinat()}/{bf:leaveat()} and {bf:present()} are alternatives: give the actors' joining and leaving times, or their presence at each wave, not both."
+			error 198
+		}
+		foreach __opt in joinat leaveat {
+			if "``__opt''" != "" {
+				confirm numeric variable ``__opt''
+			}
+		}
+		foreach __opt in symmetric symtype behavior endow creation tvcov {
+			if "``__opt''" != "" {
+				di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with {bf:`__opt'}."
+				error 198
+			}
+		}
+		local __nwsaom_haspresent = 1
+		local __nwsaom_hastimed = 1
 	}
 
 	// --- missnet()/missbeh(): missing tie/behavior data (harmonisation
@@ -1077,7 +1104,7 @@ program nwsaom, eclass
 	// nwaves `__nwsaom_presentmat' is what SaomEstimateRMMulti()/
 	// SaomEstimateRMCoevMulti() derive per-period presence from
 	// themselves.
-	if `__nwsaom_haspresent' {
+	if `__nwsaom_haspresent' & !`__nwsaom_hastimed' {
 		capture mata: mata drop __nwsaom_presentmat __nwsaom_present1
 		mata: __nwsaom_presentmat = J(`nodes', `__nwsaom_nwaves', 1)
 		forvalues __w = 1/`__nwsaom_nwaves' {
@@ -1091,6 +1118,12 @@ program nwsaom, eclass
 			mata: __nwsaom_presentmat[.,`__w'] = st_data(1::`nodes', "`__wpres'")
 		}
 		mata: __nwsaom_present1 = __nwsaom_presentmat[.,1] :* __nwsaom_presentmat[.,2]
+	}
+	capture mata: mata drop __nwsaom_compstart __nwsaom_compev
+	if `__nwsaom_hastimed' {
+		capture mata: mata drop __nwsaom_presentmat __nwsaom_present1
+		mata: SaomTimedFromVars(`nodes', `__nwsaom_nwaves', "`joinat'", "`leaveat'")
+		mata: __nwsaom_present1 = __nwsaom_compstart[.,1]
 	}
 	// harmonisation unit 35: the estimators' own `present'/`presentMat'
 	// parameter must be supplied whenever `missMask'/`missMaskPd' is
@@ -2268,7 +2301,7 @@ program nwsaom, eclass
 	// non-directed networks, ratecov(), network endowment/creation, structural().
 	local __nwsaom_mbtotal = `__nwsaom_pbeh'
 	if `__nwsaom_mb' {
-		foreach __opt in symmetric ratecov present missnet missbeh structural {
+		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh structural {
 			if "``__opt''" != "" {
 				di "{err}several behaviors in {bf:behavior()} cannot yet be combined with {bf:`__opt'()}/{bf:`__opt'}."
 				error 198

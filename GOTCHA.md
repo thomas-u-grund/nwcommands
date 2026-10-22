@@ -678,3 +678,20 @@ keep it in the context.
 
 Inside a subscript the `..` range binds in a way that makes `A[., blk + (1..p)]` fail with 3200. Build the index
 first (`ic = blk :+ (1..p)`; `A[., ic]`).
+
+## Mata: `C.x[pd] = &(local)` stores a pointer to the variable, not to a copy
+
+In a loop, `ptrs[k] = &(evp)` makes every pointer point at the same variable `evp`, which holds only the last value after the loop
+(the symptom: the join/leave event lists of all periods were empty, the fit ran without any events and still looked plausible).
+Use `&(evp :+ 0)` (an expression is copied) or a function result. Same family: an optional class argument cannot be declared
+`class X scalar` (error 3000 "class scalars may not be received as optional arguments"); declare it `| class X Gout`.
+
+## Stata: `"$NAME"` does not read an environment variable inside a do-file run with `-e`
+
+Use `local v : environ NAME` to read an environment variable (e.g. to parameterise a dev script from the shell).
+
+## RSiena composition change: what "exactly as RSiena" means
+
+See DECISIONS 42 in `docs/nwsaom_DECISIONS.md`. The three non-obvious rules, each found by comparing fixed-parameter simulations with
+`siena07` (dev/saom_rsiena_tc_scen.R): an inactive actor stays among the alters of an active ego (ties made to it are real until the
+end of the period); `setLeaversBack` runs only for periods that have join/leave events; a joiner only switches ON its start-network ties.

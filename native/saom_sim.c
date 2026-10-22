@@ -288,7 +288,7 @@ static int saom_masked_base(int tc) {
    distance (__saom_native_netdist) that unconditional co-evolution
    estimation needs. The Mata side refuses the native co-evolution path for
    a plugin reporting < 2 (stale binary) and falls back to Mata. */
-#define SAOM_NATIVE_VERSION 25		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics)
+#define SAOM_NATIVE_VERSION 26		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -2450,9 +2450,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 									+ symdlogG_rc[krc];
 						}
 					}
-					else if (PD->haspresent) {
-						do { alter = presentIdxArr[(long)(rng_unif(&rng) * (double)npresent)]; } while (alter == actor);
-					} else {
+					else {
 						do { alter = 1 + (long)(rng_unif(&rng) * (double)n); } while (alter == actor);
 					}
 					ij_exists = has_edge(&g, actor, alter);
@@ -2551,10 +2549,10 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 					PROF_START(pt_e);
 					/* protocol 11, structural(): fixed dyads of the actor are
 					   not among its alternatives (as absent actors) */
-					avail = presentArr;
+					avail = NULL;	/* RSiena: an inactive actor stays among the alters of an active ego (NetworkVariable::calculatePermissibleChanges()) */
 					if (M->nstruct > 0 && M->struct_off[actor + 1] > M->struct_off[actor]) {
 						long q;
-						for (j = 1; j <= n; j++) availbuf[j] = presentArr ? presentArr[j] : 1.0;
+						for (j = 1; j <= n; j++) availbuf[j] = 1.0;
 						for (q = M->struct_off[actor]; q < M->struct_off[actor + 1]; q++) availbuf[M->struct_j[q]] = 0.0;
 						avail = availbuf;
 					}

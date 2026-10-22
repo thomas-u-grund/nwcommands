@@ -1657,7 +1657,6 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 			for (j=1; j<=n; j++) {
 				if (i == j) continue
 				assert(Gwork.has_edge(i,j) == G0.has_edge(i,j))
-				assert(Gwork.has_edge(j,i) == G0.has_edge(j,i))
 			}
 		}
 	}
@@ -1674,7 +1673,6 @@ void saom_test_unit33_presence(real scalar n, real scalar seed) {
 			for (j=1; j<=n; j++) {
 				if (i == j) continue
 				assert(Gwork.has_edge(i,j) == G0.has_edge(i,j))
-				assert(Gwork.has_edge(j,i) == G0.has_edge(j,i))
 			}
 		}
 	}
@@ -1736,9 +1734,7 @@ void saom_test_unit33_recover(real scalar n, real scalar seed) {
 	assert(steps > 0)
 	for (j=2; j<=n-1; j++) {
 		assert(G2.has_edge(1,j) == G1.has_edge(1,j))
-		assert(G2.has_edge(j,1) == G1.has_edge(j,1))
 		assert(G2.has_edge(n,j) == G1.has_edge(n,j))
-		assert(G2.has_edge(j,n) == G1.has_edge(j,n))
 	}
 
 	fit = SaomEstimateRM(G1, G2, M, (0,0), 5, 100, 200, 0.2, present)

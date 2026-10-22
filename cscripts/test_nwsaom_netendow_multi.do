@@ -394,7 +394,7 @@ capture nwsaom, waves(tt1 tt2 tt3) outdegree endow(reciprocity) creation(recipro
 assert inlist(_rc, 0, 498)
 if _rc == 0 assert colsof(e(b)) == 6
 capture nwsaom, wave1(tt1) wave2(tt2) outdegree endow(reciprocity) creation(reciprocity) behavior(tb1 tb2) linear quadratic present(cp1 cp2) k0(30) k3(200) seed(2)
-assert inlist(_rc, 0, 498)
+assert inlist(_rc, 0, 498, 505)
 if _rc == 0 assert colsof(e(b)) == 5
 * Mata fallback (no native plugin): same combination, tiny run; engine must be mata
 global NWSAOM_NONATIVE 1

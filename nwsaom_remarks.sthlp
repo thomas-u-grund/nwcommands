@@ -823,8 +823,7 @@ manual). One 0/1 variable per wave (same convention as {opt behavior()}): 1 mark
 (eligible to act, and eligible to be tied to by another actor) at that wave, 0 marks absent. An
 actor is treated as present for a given inter-wave PERIOD only if present at BOTH that period's own
 endpoint waves - {cmd:nwsaom} supports WHOLE-PERIOD composition change only (an actor's presence can
-change at wave boundaries, not at an arbitrary point strictly between two waves, unlike real
-RSiena's own more general continuous-time joiners/leavers construction) - this covers the common
+change at wave boundaries; for a change at an arbitrary point strictly between two waves use {opt joinat()}/{opt leaveat()}, below) - this covers the common
 real-world case (an actor enrolled, transferred, or dropped out between whole survey waves).
 
 {pstd}
@@ -850,11 +849,24 @@ restriction are all computed natively too, so a composition-change fit runs at e
 same speed as an equivalent fit without it.
 
 {pstd}
-{bf:Genuinely out of scope}: real RSiena's own more general continuous/fractional within-period
-join-leave timing (whole-period presence only here); the "structural zeros/ones" alternative method
-real RSiena's own manual also documents (a simpler, less statistically efficient approach - joiners
-and leavers was chosen instead). Missing tie/behavior data (a related but distinct mechanism from
-composition change) IS supported - see {help nwsaom_remarks##missingdata:Missing data} below.
+{bf:Joiners and leavers at fractional times}: {opt joinat(varname)} and {opt leaveat(varname)} give each actor's joining and
+leaving time on RSiena's scale (wave 1 = time 1, wave W = time W; one interval per actor), reproducing
+{cmd:sienaCompositionChange()} with option 1. Within a period the active actors act at their rate; a joiner takes on the
+ties it had in the start network, a leaver loses all its ties, and (as in RSiena) an inactive actor stays among the possible
+alters of an active actor - a tie made to it is removed again at the end of the period when the period has join/leave events.
+The rate parameter's compensator is the time-integral of the number of active actors. The simulation reproduces RSiena's:
+the five scenarios of {cmd:dev/saom_rsiena_tc_scen.R} (joiners/leavers in each period, actors absent for a whole period) give the same
+deviations from the targets as {cmd:siena07}, and s50 with 10 joiners/leavers gives estimates within noise of RSiena (density,
+reciprocity, transitive triplets, both rates, and a rate covariate). The same rules apply to {opt present()}: since 2026-10-22 an
+absent actor stays among the alters of an active actor, as in RSiena. As in RSiena (option 1), the ties an absent actor has in the
+data are used as given - code them 0 for the waves in which the actor is absent - and the distance (the rate target) counts them.
+Not yet combined with {opt symmetric}, {opt behavior()}, {opt endow()}/{opt creation()} or {opt tvcov()}.
+
+{pstd}
+{bf:Genuinely out of scope}: RSiena's composition-change options 2-4 (other treatments of the data of absent actors), several
+intervals per actor; the "structural zeros/ones" alternative method real RSiena's own manual also documents (a simpler, less
+statistically efficient approach - joiners and leavers was chosen instead). Missing tie/behavior data (a related but distinct
+mechanism from composition change) IS supported - see {help nwsaom_remarks##missingdata:Missing data} below.
 
 {marker missingdata}{...}
 {title:Missing data}

@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.." || exit 1
 mode=${1:-quick}
 plug=${2:-}
 STATA=${STATA:-/Applications/Stata/StataBE.app/Contents/MacOS/StataBE}
-quick=(test_nwsaom_ado test_nwsaom_dyadcov test_nwsaom_covmiss test_nwsaom_multibeh test_nwsaom_twomode test_nwsaom_tvcov test_nwsaom_degfx test_nwsaom_cov2)
+quick=(test_nwsaom_ado test_nwsaom_dyadcov test_nwsaom_covmiss test_nwsaom_multibeh test_nwsaom_twomode test_nwsaom_tvcov test_nwsaom_degfx test_nwsaom_cov2 test_nwsaom_timedcomp)
 full=($quick test_nwsaom_netendow_multi test_nwsaom_native test_nwsaom_mata test_nwsaom_multiplex test_nwsaom_coev_rsiena test_nwsaom_covariates test_nwsaom_engine test_nwsaom_rsiena)
 [[ $mode == full ]] && tests=($full) || tests=($quick)
 tmp=$(mktemp -d)

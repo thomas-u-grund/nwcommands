@@ -53,11 +53,11 @@ mata:
    leavers", Huisman and Snijders 2003; see docs/SAOM_ROADMAP.md's own
    unit-33 entry for the full method/scope account) is an OPTIONAL
    trailing n x 1 real colvector, 1/0 per actor - when supplied, an
-   ABSENT actor (present[j]==0) is never offered as an alternative j
-   (excluded from the choice set entirely, exactly as if it did not
-   exist for this ministep - matching real RSiena's own joiners/
-   leavers construction: an absent actor cannot be tied TO during its
-   own absence). Omitting `present' entirely (every pre-existing call
+   ABSENT actor (present[j]==0) never acts (its rate is 0) but, as in
+   RSiena (NetworkVariable::calculatePermissibleChanges(), "for
+   comparability with siena3"), it stays among the alternatives j of an
+   active ego; ties made to it vanish at the end of the period when it
+   is still absent (setLeaversBack(); see SaomPeriodTimed()). Omitting `present' entirely (every pre-existing call
    site) is IDENTICAL to passing an all-ones vector - a true no-op,
    zero behavior change for any caller not yet updated for composition
    change. Does NOT restrict which actor i itself may be i - callers
@@ -160,7 +160,6 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	u = J(1, n, 0)		// u[j] for j!=i; u[i] itself unused (self-toggle undefined)
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
-		if (haspresent) if (present[j] == 0) continue
 		if (hasstructural) if (structural[i,j] == 1) continue
 		chg = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 		u[j] = theta * chg'
@@ -170,7 +169,6 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	maxu = 0	// "stay"'s own utility, always included as a candidate max
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
-		if (haspresent) if (present[j] == 0) continue
 		if (hasstructural) if (structural[i,j] == 1) continue
 		if (u[j] > maxu) maxu = u[j]
 	}
@@ -178,7 +176,6 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	denom = exp(0 - maxu)	// "stay"'s own exp term
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
-		if (haspresent) if (present[j] == 0) continue
 		if (hasstructural) if (structural[i,j] == 1) continue
 		denom = denom + exp(u[j] - maxu)
 	}
@@ -191,7 +188,6 @@ real scalar SaomMinistep(class ErgmGraph scalar G, class ErgmModel scalar M,
 	choice = 0
 	for (j=1; j<=n; j++) {
 		if (j == i) continue
-		if (haspresent) if (present[j] == 0) continue
 		if (hasstructural) if (structural[i,j] == 1) continue
 		cum = cum + exp(u[j] - maxu)
 		choice = j	// last alternative enumerated so far - fallback if draw==denom exactly (floating-point edge case)
@@ -397,7 +393,6 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			maxu = 0
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				if (hasstructural) if (structural[i,j] == 1) continue
 				chgmat[j,.] = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 				u[j] = theta * chgmat[j,.]'
@@ -407,7 +402,6 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			denom = exp(0 - maxu)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				if (hasstructural) if (structural[i,j] == 1) continue
 				denom = denom + exp(u[j] - maxu)
 			}
@@ -415,7 +409,6 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			ebar = J(1, p, 0)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				if (hasstructural) if (structural[i,j] == 1) continue
 				ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
 			}
@@ -427,7 +420,6 @@ struct SaomScoredResult scalar SaomSimulateIntervalScored(class ErgmGraph scalar
 			if (draw > cum) {
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
-					if (haspresent) if (present[j] == 0) continue
 					if (hasstructural) if (structural[i,j] == 1) continue
 					cum = cum + exp(u[j] - maxu)
 					choice = j
@@ -799,7 +791,6 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 			maxu = 0
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				chgmat[j,.] = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 				u[j] = theta * chgmat[j,.]'
 				if (u[j] > maxu) maxu = u[j]
@@ -808,14 +799,12 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 			denom = exp(0 - maxu)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				denom = denom + exp(u[j] - maxu)
 			}
 
 			ebar = J(1, p, 0)
 			for (j=1; j<=n; j++) {
 				if (j == i) continue
-				if (haspresent) if (present[j] == 0) continue
 				ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
 			}
 
@@ -826,7 +815,6 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 			if (draw > cum) {
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
-					if (haspresent) if (present[j] == 0) continue
 					cum = cum + exp(u[j] - maxu)
 					choice = j
 					if (draw <= cum) break
@@ -4101,8 +4089,10 @@ struct SaomNetCtx {
 	real matrix target		// P x p
 	real rowvector targetRate	// 1 x P
 	real matrix targetRateCov	// P x K (ratecov only; K = ratecov() variables)
-	real matrix presentPd		// n x P, all ones without composition change
-	real rowvector npresentPd
+	real matrix presentPd		// n x P, all ones without composition change; with timed composition change: active at the START of the period
+	real rowvector npresentPd	// active actors (timed composition change: time-integrated over the period)
+	real scalar hastimed		// RSiena-style joiners/leavers at fractional times within a period (Mata externals __nwsaom_compev)
+	pointer(real matrix) rowvector compEv	// per period: rows (time, actor, type 1 join/2 leave), sorted by time
 	pointer(real matrix) rowvector missMaskPd
 	real matrix missDyadsPd		// stacked (period, i, j)
 	real rowvector fntype
@@ -4112,6 +4102,225 @@ struct SaomNetCtx {
 	real scalar perok		// the plugin returns per-period statistics and scores (protocol 18+)
 	real scalar hastv		// the model has time-varying covariates (protocol 21 for the plugin)
 	real matrix Zper, Sper		// K x (P*ptot): period pd in columns (pd-1)*ptot+1..pd*ptot (RSiena's derivative matrix is a sum over periods)
+}
+
+/* joinat()/leaveat() -> the externals __nwsaom_compstart (n x P, active at
+   the start of period pd), __nwsaom_compev (period, time, actor, type) and
+   __nwsaom_presentmat (n x W, active at wave w). RSiena's
+   sienaDataCreate(): active at wave w iff ceil(join) <= w <= trunc(leave);
+   a joining event at join-trunc(join) in period trunc(join) if join > 1, a
+   leaving event likewise if leave < W; events at time 0 are dropped
+   (unpackCompositionChange(): time > 1e-10). */
+void SaomTimedFromVars(real scalar n, real scalar W, string scalar jv, string scalar lv) {
+	real colvector join, leave
+	real matrix act, ev
+	real scalar i, w, per, tm
+	pointer(real matrix) scalar pc, pe, pp
+
+	join = J(n, 1, 1)
+	leave = J(n, 1, W)
+	if (jv != "") join = st_data(1::n, jv)
+	if (lv != "") leave = st_data(1::n, lv)
+	for (i=1; i<=n; i++) {
+		if (join[i] >= .) join[i] = 1
+		if (leave[i] >= .) leave[i] = W
+		if (join[i] < 1 | leave[i] > W | join[i] > leave[i]) {
+			errprintf("joinat()/leaveat(): actor %g has the times %g and %g; they must satisfy 1 <= joinat <= leaveat <= %g (the number of waves)\n", i, join[i], leave[i], W)
+			exit(198)
+		}
+		if (ceil(join[i]) > trunc(leave[i])) {
+			errprintf("joinat()/leaveat(): actor %g (times %g and %g) is not active at any observation; RSiena requires every interval to contain a wave\n", i, join[i], leave[i])
+			exit(198)
+		}
+	}
+	act = J(n, W, 0)
+	for (w=1; w<=W; w++) act[., w] = (ceil(join) :<= w) :& (w :<= trunc(leave))
+	ev = J(0, 4, 0)
+	for (i=1; i<=n; i++) {
+		if (join[i] > 1) {
+			per = trunc(join[i])
+			tm = join[i] - per
+			if (tm > 1e-10) ev = ev \ (per, tm, i, 1)
+		}
+		if (leave[i] < W) {
+			per = trunc(leave[i])
+			tm = leave[i] - per
+			if (tm > 1e-10) ev = ev \ (per, tm, i, 2)
+		}
+	}
+	if (rows(ev) > 0) ev = sort(ev, (1, 2))
+	pp = crexternal("__nwsaom_presentmat")
+	*pp = act
+	pc = crexternal("__nwsaom_compstart")
+	*pc = act[., 1..(W-1)]
+	pe = crexternal("__nwsaom_compev")
+	*pe = ev
+}
+
+/* ===================================================================
+   Composition change at fractional times (RSiena's sienaCompositionChange()
+   with joiners/leavers inside a period, ccOption 1). Supplied through two
+   Mata externals set by nwsaom.ado: __nwsaom_compstart (n x P, active at
+   the start of period pd) and __nwsaom_compev (rows: period, time in
+   (0,1), actor, type 1 join / 2 leave). As in EpochSimulation: the active
+   actors act at rate `rate' each; a joiner takes on its start-of-period
+   ties to the other active actors (NetworkVariable::actOnJoiner), a
+   leaver loses all ties (actOnLeaver), and at the end of the period the
+   ties of every inactive actor are put back to their start-of-period
+   values (setLeaversBack). The period is simulated as a sequence of
+   segments with a constant active set, each by the ordinary engine with
+   rate*duration (the process is memoryless), so native and Mata share the
+   logic. The rate score's compensator is the time-integral of the active
+   rates (SaomTimedIntegral()).
+   =================================================================== */
+void SaomTimedInit(struct SaomNetCtx scalar C) {
+	pointer(real matrix) scalar ps, pe
+	real matrix ev, evp
+	real scalar pd
+
+	C.hastimed = 0
+	C.compEv = J(1, C.P, NULL)
+	ps = findexternal("__nwsaom_compstart")
+	if (ps == NULL) return
+	if (rows(*ps) != C.n | cols(*ps) != C.P) {
+		errprintf("internal error: the composition-change start matrix must be n x P\n")
+		exit(498)
+	}
+	C.hastimed = 1
+	C.haspresent = 1
+	C.presentPd = *ps
+	pe = findexternal("__nwsaom_compev")
+	ev = (pe == NULL ? J(0, 4, 0) : *pe)
+	if (rows(ev) == 0) ev = J(0, 4, 0)
+	for (pd=1; pd<=C.P; pd++) {
+		evp = select(ev[., 2..4], ev[., 1] :== pd)
+		if (rows(evp) > 0) evp = sort(evp, 1)
+		else evp = J(0, 3, 0)
+		C.compEv[pd] = &(evp :+ 0)
+		C.npresentPd[pd] = SaomTimedIntegral(C, pd, J(C.n, 1, 1))
+	}
+}
+
+/* the time-integral over the period of sum_i w_i * active_i(t) */
+real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real colvector w) {
+	real colvector act
+	real matrix ev
+	real scalar t, tot, s
+
+	ev = *C.compEv[pd]
+	act = (C.presentPd[., pd] :!= 0)
+	t = 0
+	tot = 0
+	for (s=1; s<=rows(ev); s++) {
+		tot = tot + (ev[s,1] - t) * sum(w :* act)
+		act[ev[s,2]] = (ev[s,3] == 1)
+		t = ev[s,1]
+	}
+	return(tot + (1 - t) * sum(w :* act))
+}
+
+void SaomSetTie(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar v) {
+	if (G.has_edge(i, j) != v) G.toggle(i, j)
+}
+
+/* a joiner (type 1) or leaver (type 2); type 3: put the ties of actor a
+   back to their values at the start of the period (end of period) */
+void SaomTimedApply(class ErgmGraph scalar G, class ErgmGraph scalar G0, real scalar a, real scalar type, real colvector act) {
+	real scalar j
+
+	if (type == 1) act[a] = 1
+	if (type == 2) act[a] = 0
+	for (j=1; j<=G.n; j++) {
+		if (j == a) continue
+		if (type == 1) {
+			// NetworkVariable::actOnJoiner(): ties of the start network are
+			// switched on; ties made to the joiner before it joined stay
+			if (act[j]) {
+				if (G0.has_edge(a, j)) SaomSetTie(G, a, j, 1)
+				if (G0.has_edge(j, a)) SaomSetTie(G, j, a, 1)
+			}
+		}
+		else if (type == 2) {
+			SaomSetTie(G, a, j, 0)
+			SaomSetTie(G, j, a, 0)
+		}
+		else {
+			SaomSetTie(G, a, j, G0.has_edge(a, j))
+			SaomSetTie(G, j, a, G0.has_edge(j, a))
+		}
+	}
+}
+
+/* one period of a model with composition change at fractional times */
+void SaomPeriodTimed(struct SaomNetCtx scalar C, class ErgmModel scalar M, real rowvector theta, real scalar rate,
+	real rowvector ratecoef, real scalar pd, real scalar want_score, real scalar K,
+	real rowvector stat, real scalar netdist, real scalar steps, real rowvector scpd,
+	real rowvector rcstat, real rowvector rcscore, | class ErgmGraph Gout) {
+
+	class ErgmGraph scalar Gwork
+	struct SaomCountedResult scalar cres
+	struct SaomScoredResult scalar sres
+	real colvector act
+	real matrix ev, mdy
+	real scalar t, s, tend, d, j
+
+	ev = *C.compEv[pd]
+	act = (C.presentPd[., pd] :!= 0)
+	Gwork = ErgmGraph()
+	SaomCopyGraph(*C.Gwaves[pd], Gwork)
+	mdy = J(0, 2, 0)
+	if (C.use_native & C.hasmiss) {
+		mdy = select(C.missDyadsPd[., 2..3], C.missDyadsPd[., 1] :== pd)
+		if (rows(mdy) == 0) mdy = J(0, 2, 0)
+	}
+	steps = 0
+	scpd = J(1, C.p, 0)
+	rcscore = J(1, max((K, 1)), 0)
+	t = 0
+	for (s=1; s<=rows(ev)+1; s++) {
+		tend = (s <= rows(ev) ? ev[s,1] : 1)
+		d = tend - t
+		if (d > 1e-12) {
+			if (C.use_native) {
+				if (K) cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate*d, 1, want_score, mdy, act, C.symtype, C.ratecovattr, ratecoef)
+				else cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate*d, 1, want_score, mdy, act, C.symtype)
+				steps = steps + cres.steps
+				if (want_score) {
+					scpd = scpd + cres.score
+					if (K) rcscore = rcscore + cres.rcscore
+				}
+			}
+			else if (want_score) {
+				if (K) sres = SaomSimIntScoredRateCov(Gwork, M, theta, rate*d, C.ratecovattr, ratecoef, act, C.fntype)
+				else if (C.hasstructural) sres = SaomSimulateIntervalScored(Gwork, M, theta, rate*d, act, J(1, 0, 0), C.structural)
+				else sres = SaomSimulateIntervalScored(Gwork, M, theta, rate*d, act)
+				steps = steps + sres.steps
+				scpd = scpd + sres.score
+				if (K) rcscore = rcscore + sres.rcscore
+			}
+			else {
+				if (K) cres = SaomSimIntCountedRateCov(Gwork, M, theta, rate*d, C.ratecovattr, ratecoef, act, C.fntype)
+				else if (C.hasstructural) cres = SaomSimulateIntervalCounted(Gwork, M, theta, rate*d, act, J(1, 0, 0), C.structural)
+				else cres = SaomSimulateIntervalCounted(Gwork, M, theta, rate*d, act)
+				steps = steps + cres.steps
+			}
+		}
+		if (s <= rows(ev)) SaomTimedApply(Gwork, *C.Gwaves[pd], ev[s,2], ev[s,3], act)
+		t = tend
+	}
+	// EpochSimulation::runEpoch(): setLeaversBack() only when the period has composition events
+	if (rows(ev) > 0) for (j=1; j<=C.n; j++) if (!act[j]) SaomTimedApply(Gwork, *C.Gwaves[pd], j, 3, act)
+	if (C.hasmiss) {
+		stat = SaomMaskedStatistic(Gwork, M, *C.missMaskPd[pd])
+		netdist = SaomCountDifferingMasked(*C.Gwaves[pd], Gwork, *C.missMaskPd[pd])
+	}
+	else {
+		stat = M.full_statistic(Gwork)
+		netdist = SaomCountDiffering(*C.Gwaves[pd], Gwork)
+	}
+	rcstat = J(1, max((K, 1)), 0)
+	if (K) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
+	if (args() >= 15) Gout = Gwork
 }
 
 /* Fills the context: targets, native dispatch. presentPd is n x P (or
@@ -4131,6 +4340,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.haspresent = (rows(presentPd) > 0)
 	C.presentPd = (C.haspresent ? presentPd : J(C.n, C.P, 1))
 	C.npresentPd = colsum(C.presentPd :!= 0)
+	SaomTimedInit(C)
 	C.hasmiss = 0
 	if (cols(missMaskPd) > 0) {
 		for (pd=1; pd<=C.P; pd++) if (any(*missMaskPd[pd] :!= 0)) C.hasmiss = 1
@@ -4152,6 +4362,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	// composition change
 	if (C.cond) {
 		if (C.haspresent) if (min(C.npresentPd) < C.n) C.cond = 0
+		if (C.hastimed) C.cond = 0
 	}
 	C.ptot = C.p + (C.cond ? 0 : C.P) + C.hasratecov
 
@@ -4186,6 +4397,8 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	ver = (C.use_native ? SaomNativePluginVersion() : 0)
 	if ((C.hasnetgate | C.hasstructural) & ver < 11) C.use_native = 0
 	if (C.hastv & ver < 21) C.use_native = 0
+	// protocol 26: an inactive actor stays among the alters of an active ego (RSiena)
+	if (C.haspresent & ver < 26) C.use_native = 0
 	if (C.hasnetgate & C.hasmiss & ver < 17) if (SaomHasBalanceSplit(M, fntype)) C.use_native = 0
 	// conditional estimation needs protocol 6 (missing-aware distance,
 	// symmetric distance, batch condmode 2); older binaries: Mata
@@ -4206,7 +4419,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.native_netdist = (ver >= 5)
 	C.perok = (ver >= 18)
 	// the threaded batch path: every model from protocol 11 on
-	C.use_batch = C.use_native & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
+	C.use_batch = C.use_native & !C.hastimed & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
 	if (C.symtype != 0 & !C.use_native) {
 		errprintf("SAOM estimation of a non-directed relation (symmetric, symtype()) requires the native (C) backend, protocol 8 or later for symtype(forcing)/(confirmation); it is not available for this model/platform (there is no Mata fallback for these ministeps).\n")
 		exit(198)
@@ -4261,7 +4474,10 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		presNat = (C.haspresent ? pres : J(0, 1, 0))
 		rcstat = J(1, max((K, 1)), 0)
 		rcscore = J(1, max((K, 1)), 0)
-		if (C.use_native) {
+		if (C.hastimed) {
+			SaomPeriodTimed(C, M, theta, rate, ratecoef, pd, want_score, K, stat, netdist, steps, scpd, rcstat, rcscore)
+		}
+		else if (C.use_native) {
 			mdy = J(0, 2, 0)
 			if (C.hasmiss) {
 				mdy = select(C.missDyadsPd[., 2..3], C.missDyadsPd[., 1] :== pd)
@@ -4332,11 +4548,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		if (want_score) {
 			sco[1..p] = sco[1..p] + scpd
 			// present actors only (RSiena: rate 0 for absent actors)
-			pmask = (C.presentPd[., pd] :!= 0)
-			active = (K ? sum(exp(C.ratecovattr * ratecoef') :* pmask) : C.npresentPd[pd])
-			// pairwise models with ratecov(): total rate rate * (S^2 -
-			// sum w^2) / (n - 1), see saom_sim.c
-			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')) :* pmask)) / (C.n - 1)
+			active = SaomActiveRate(C, par, pd)
 			sco[p + pd] = steps / rate - active
 			if (K) sco[rcix] = sco[rcix] + rcscore
 			if (wantp) {
@@ -4628,6 +4840,7 @@ real scalar SaomActiveRate(struct SaomNetCtx scalar C, real rowvector par, real 
 	K = C.hasratecov
 	if (!K) return(C.npresentPd[pd])
 	ratecoef = par[(C.ptot-K+1)..C.ptot]
+	if (C.hastimed) return(SaomTimedIntegral(C, pd, exp(C.ratecovattr * ratecoef')))
 	active = sum(exp(C.ratecovattr * ratecoef') :* (C.presentPd[., pd] :!= 0))
 	if (C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')) :* (C.presentPd[., pd] :!= 0))) / (C.n - 1)
 	return(active)
@@ -6058,7 +6271,6 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 				maxu = 0
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
-					if (haspresent) if (present[j] == 0) continue
 					chgmat[j,.] = hasfntype ? SaomNetworkFullChangeGated(M, fntype, G, i, j) : M.full_change(G, i, j)
 					u[j] = thetaNet * chgmat[j,.]'
 					if (u[j] > maxu) maxu = u[j]
@@ -6066,13 +6278,11 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 				denom = exp(0 - maxu)
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
-					if (haspresent) if (present[j] == 0) continue
 					denom = denom + exp(u[j] - maxu)
 				}
 				ebar = J(1, pNet, 0)
 				for (j=1; j<=n; j++) {
 					if (j == i) continue
-					if (haspresent) if (present[j] == 0) continue
 					ebar = ebar + (exp(u[j]-maxu)/denom) * chgmat[j,.]
 				}
 				draw2 = runiform(1,1) * denom
@@ -6082,7 +6292,6 @@ struct SaomCoevScoredResult scalar SaomSimulateIntervalCoevScored(
 				if (draw2 > cum) {
 					for (j=1; j<=n; j++) {
 						if (j == i) continue
-						if (haspresent) if (present[j] == 0) continue
 						cum = cum + exp(u[j] - maxu)
 						choice = j
 						if (draw2 <= cum) break

@@ -953,12 +953,11 @@ void saom_test_native_present_equiv(real scalar n, real colvector attr, real sca
 		SaomCopyGraph(G0, Gwork)
 		cres = SaomSimulateIntervalNative(Gwork, M, cfg, theta, 3, 1, 0, J(0,2,0), present)
 		Znative[r,.] = M.full_statistic(Gwork)
-		// hard invariant, both backends: an absent actor's own row/col
-		// must never change from its own starting value.
+		// hard invariant, both backends: an absent actor's own row
+		// must never change from its own starting value (ties TO it may be made: RSiena keeps it among the alters).
 		for (i=1; i<=3; i++) for (j=1; j<=n; j++) {
 			if (i==j) continue
 			assert(Gwork.has_edge(i,j) == G0.has_edge(i,j))
-			assert(Gwork.has_edge(j,i) == G0.has_edge(j,i))
 		}
 	}
 
@@ -1064,7 +1063,6 @@ void saom_test_coev_native_present(real scalar n, real colvector attr, real scal
 			for (j=1; j<=n; j++) {
 				if (i==j) continue
 				assert(Gwork.has_edge(i,j) == G0.has_edge(i,j))
-				assert(Gwork.has_edge(j,i) == G0.has_edge(j,i))
 			}
 		}
 	}
