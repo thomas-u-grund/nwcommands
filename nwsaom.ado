@@ -545,8 +545,8 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx inpopc outpopc outactc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
@@ -1478,14 +1478,26 @@ program nwsaom, eclass
 		}
 	}
 	// protocol 39: covariate x triad / popularity / activity effects (native only; the observed statistic is evaluated in Mata)
+	local __tm_actcov "samexinpop diffxinpop inpopx egolthresholdx egorthresholdx degabsdiffx degposdiffx degnegdiffx"
+	local __tm_evcov "homxoutact altxoutact outactx altlthresholdx altrthresholdx"
 	foreach __dk in samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop {
 		if "``__dk''" != "" {
+			if `__nwsaom_tm' {
+				local __tmok : list __dk in __tm_actcov
+				local __tmok2 : list __dk in __tm_evcov
+				if !`__tmok' & !`__tmok2' {
+					di "{err}{bf:`__dk'()} is not available for a two-mode network."
+					error 198
+				}
+			}
 			unab `__dk' : ``__dk''
 			foreach __v of local `__dk' {
-				capture assert !missing(`__v') in 1/`nodes'
-				if _rc {
-					di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
-					error 198
+				if !`__nwsaom_tm' {
+					capture assert !missing(`__v') in 1/`nodes'
+					if _rc {
+						di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
+						error 198
+					}
 				}
 				tempname __td_cv
 				mata: `__td_cv' = ErgmTermData()
@@ -1496,6 +1508,10 @@ program nwsaom, eclass
 					mata: `__td_cv'.center = SaomSimMean(`__td_cv'.attr)
 					mata: `__td_cv'.attr = `__td_cv'.attr / `__td_cv'.decay
 					mata: `__td_cv'.center = `__td_cv'.center
+				}
+				else if `__nwsaom_tm' {
+					local __tmidx = cond(`: list __dk in __tm_actcov', "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")
+					mata: `__td_cv'.attr = SaomCovPrepIdx(st_data(1::`nodes', "`__v'"), `__tmidx', `__nwsaom_center', __nwsaom_cm)
 				}
 				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))
@@ -1508,6 +1524,10 @@ program nwsaom, eclass
 		if "``__dk''" != "" {
 			if "`__dk'" == "transtriads" & "`symmetric'" == "" {
 				di "{err}{bf:transtriads} is RSiena's triangle count for a non-directed relation; use {bf:symmetric} (for a directed relation see transtrip)."
+				error 198
+			}
+			if `__nwsaom_tm' & !inlist("`__dk'", "inpopc", "outactc") {
+				di "{err}{bf:`__dk'} is not available for a two-mode network."
 				error 198
 			}
 			if "`symmetric'" == "" & inlist("`__dk'", "degplus", "degplusc") {
@@ -1531,8 +1551,10 @@ program nwsaom, eclass
 			else {
 				// RSiena: average in-/out-degree over all waves (degPlus.c: twice the average out-degree)
 				mata: __nwsaom_dfc = 0
+				local __dfn = `nodes'
+				if `__nwsaom_tm' local __dfn = cond("`__dk'" == "inpopc", `__nwsaom_tm_ne', `__nwsaom_tm_na')
 				forvalues __w = 1/`__nwsaom_nwaves' {
-					mata: __nwsaom_dfc = __nwsaom_dfc + sum(__nwsaom_last_G`__w'.to_dense() :!= 0) / (`nodes' * `__nwsaom_nwaves')
+					mata: __nwsaom_dfc = __nwsaom_dfc + sum(__nwsaom_last_G`__w'.to_dense() :!= 0) / (`__dfn' * `__nwsaom_nwaves')
 				}
 				mata: `__td_df'.decay = __nwsaom_dfc * ("`__dk'" == "degplusc" ? 2 : 1)
 				capture mata: mata drop __nwsaom_dfc
@@ -1548,17 +1570,31 @@ program nwsaom, eclass
 				di "{err}{bf:`__dk'()} is not yet available for a non-directed relation ({bf:symmetric})."
 				error 198
 			}
+			if `__nwsaom_tm' {
+				local __tmok : list __dk in __tm_actcov
+				local __tmok2 : list __dk in __tm_evcov
+				if !`__tmok' & !`__tmok2' {
+					di "{err}{bf:`__dk'()} is not available for a two-mode network."
+					error 198
+				}
+			}
 			unab `__dk' : ``__dk''
 			foreach __v of local `__dk' {
-				capture assert !missing(`__v') in 1/`nodes'
-				if _rc {
-					di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
-					error 198
+				if !`__nwsaom_tm' {
+					capture assert !missing(`__v') in 1/`nodes'
+					if _rc {
+						di "{err}`__dk'(): `__v' has missing values; not supported for this effect."
+						error 198
+					}
 				}
 				tempname __td_ct
 				mata: `__td_ct' = ErgmTermData()
 				mata: `__td_ct'.levels = J(0, 1, 0)
-				mata: `__td_ct'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
+				if `__nwsaom_tm' {
+					local __tmidx = cond(`: list __dk in __tm_actcov', "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")
+					mata: `__td_ct'.attr = SaomCovPrepIdx(st_data(1::`nodes', "`__v'"), `__tmidx', `__nwsaom_center', __nwsaom_cm)
+				}
+				else mata: `__td_ct'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				// RSiena compares the threshold with the CENTRED covariate value
 				mata: `__td_ct'.decay = `covthreshold'
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_ct', ("`__dk'_`__v'"))

@@ -3142,6 +3142,13 @@ real rowvector change_saom_degposdiffx(class ErgmGraph scalar G, real scalar i, 
 real rowvector stat_saom_degnegdiffx(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_ctstat(11, G, td))
 real rowvector change_saom_degnegdiffx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_ctchg("degnegdiffx"))
 
+/* two-mode: the centred covariate of one mode (rows idx of the full-length vector, mean-imputed), 0 for the other mode's nodes */
+real colvector SaomCovPrepIdx(real colvector xfull, real colvector idx, real scalar center, real scalar m) {
+	real colvector out
+	out = J(rows(xfull), 1, 0)
+	out[idx] = SaomCovPrep(xfull[idx], center, m)
+	return(out)
+}
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
