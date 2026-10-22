@@ -191,7 +191,7 @@ program nwsaom, eclass
 	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
-		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY SIMCOV(string) ///
+		INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) ///
@@ -521,7 +521,7 @@ program nwsaom, eclass
 		}
 		foreach __opt in symmetric ratecov present missnet missbeh behavior structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			outpopularity inactivity outpop inact isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
@@ -1030,7 +1030,7 @@ program nwsaom, eclass
 		// are absent, and this package implements none of those
 		// interaction forms regardless, so no restriction is needed for
 		// the covariate family.
-		if "`cycle3'" != "" | "`inactivity'" != "" | "`outpopularity'" != "" | "`ininass'" != "" | "`inoutass'" != "" | "`outoutass'" != "" | "`antiiso'" != "" | "`isolatepop'" != "" | "`transrectrip'" != "" | "`transtrip'" != "" {
+		if "`cycle3'" != "" | "`inactivity'" != "" | "`inpop'" != "" | "`outpop'" != "" | "`inact'" != "" | "`outactsqrt'" != "" | "`outpopularity'" != "" | "`ininass'" != "" | "`inoutass'" != "" | "`outoutass'" != "" | "`antiiso'" != "" | "`isolatepop'" != "" | "`transrectrip'" != "" | "`transtrip'" != "" {
 			di "{err}under {bf:symmetric}, {bf:cycle3}/{bf:inactivity}/{bf:outpopularity}/{bf:ininass}/{bf:inoutass}/{bf:outoutass}/{bf:antiiso}/{bf:isolatepop}/{bf:transrectrip}/{bf:transtrip} are each either a constant, an exact duplicate of an already-available effect, or an effect real RSiena itself does not offer for a non-directed relation (confirmed against RSiena's own real {bf:getEffects()} output, not assumed) - {bf:outdegree}/{bf:indegpopularity}/{bf:outactivity}/{bf:cycle4}/{bf:isolatenet}/{bf:outiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:outinass}/{bf:gwesp}/{bf:transties}/{bf:balance} and every covariate effect remain available."
 			error 198
 		}
@@ -1410,6 +1410,16 @@ program nwsaom, eclass
 		mata: `__td_ip' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), `__td_ip', ("indegpopularity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' indegpopularity"
+	}
+	// RSiena inPop / outPop / inAct / outActSqrt (protocol 22)
+	foreach __e in inpop outpop inact outactsqrt {
+		if "``__e''" != "" {
+			tempname __td_dg
+			local __tn = cond("`__e'" == "outpop", "outpoplin", cond("`__e'" == "inact", "inactlin", "`__e'"))
+			mata: `__td_dg' = ErgmTermData()
+			mata: __nwsaom_last_M.addterm("`__tn'", 1, &stat_saom_`__tn'(), &change_saom_`__tn'(), `__td_dg', ("`__e'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__e'"
+		}
 	}
 	if "`outactivity'" != "" {
 		tempname __td_oa

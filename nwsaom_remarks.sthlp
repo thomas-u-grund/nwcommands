@@ -546,6 +546,13 @@ the estimates agree with RSiena 1.6.6 - density -2.04 against -2.03/-2.05/-2.03,
 0.79-0.84 against 0.75-0.84, creation 3.60-3.65 against 3.63, behavior linear 0.32, quadratic -0.27,
 avAlt 0.96-1.04 against 0.32, -0.27 and 0.90-1.00, rates 4.3 and 1.24.
 
+{pstd}
+{bf:Degree effects inpop, outpop, inact, outactsqrt.} The plain (non-square-root) popularity/activity effects of RSiena. Checked against
+RSiena 1.6.6 on s50 (3 waves): observed statistics 798, 676, 676, 416.092 identical; inPop 0.180 (0.18), outPop -0.26 (-0.25 to -0.26),
+outActSqrt 0.11-0.12 (0.12-0.14); inAct alone -0.044 (-0.044 to -0.051). Unlike {opt outpopularity}/{opt inactivity}, these RSiena effects
+have the default internal parameter 1 and are not affected by the RSiena 1.6.1 change documented above (stocnet/rsiena#151).
+{opt outpop} and {opt inact} have the same total statistic and cannot be estimated together.
+
 {marker tvcov}{...}
 {pstd}
 {bf:Time-varying covariates.} {cmd:tvcov(}{it:a1 a2 a3}{cmd:)} (several: separated by '|') declares a covariate that changes between

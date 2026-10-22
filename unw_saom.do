@@ -941,6 +941,42 @@ real rowvector change_saom_indegpop(class ErgmGraph scalar G, real scalar i, rea
    freshly-derived function anyway (not reused from unw_ergm.do) since
    no ERGM term computes this squared-degree form.
 */
+
+/* RSiena inPop / outPop / inAct / outActSqrt (protocol 22): actor i's evaluation terms are sum_j x_ij x_+j, sum_j x_ij x_j+,
+   x_i+ x_+i and x_i+^1.5 */
+real rowvector stat_saom_inpop(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(sum(G.din :^ 2))
+}
+real rowvector change_saom_inpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = G.din[j]
+	return(G.has_edge(i,j) ? -d : d + 1)
+}
+real rowvector stat_saom_outpoplin(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(sum(G.dout :* G.din))
+}
+real rowvector change_saom_outpoplin(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = G.dout[j]
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_inactlin(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(sum(G.dout :* G.din))
+}
+real rowvector change_saom_inactlin(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = G.din[i]
+	return(G.has_edge(i,j) ? -d : d)
+}
+real rowvector stat_saom_outactsqrt(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	return(sum(G.dout :^ 1.5))
+}
+real rowvector change_saom_outactsqrt(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar d
+	d = G.dout[i]
+	return(G.has_edge(i,j) ? -(d^1.5 - (d-1)^1.5) : ((d+1)^1.5 - d^1.5))
+}
+
 real rowvector stat_saom_outactivity(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real scalar i, tot
 
@@ -2841,6 +2877,10 @@ real scalar _saom_tiestat(class ErgmGraph scalar G, string scalar nm,
 	// RSiena's tieStatistic() of the degree effects (2026-10-01):
 	// inPopSqrt, outPopSqrt, outAct (outdegree of ego), inActSqrt (ego)
 	if (nm == "indegpopularity") return(sqrt(G.din[alter]))
+	if (nm == "inpop") return(G.din[alter])
+	if (nm == "outpoplin") return(G.dout[alter])
+	if (nm == "inactlin") return(G.din[ego])
+	if (nm == "outactsqrt") return(sqrt(G.dout[ego]))
 	if (nm == "outpopularity") return(sqrt(G.dout[alter]))
 	if (nm == "outactivity") return(G.dout[ego])
 	if (nm == "inactivity") return(sqrt(G.din[ego]))
@@ -7293,7 +7333,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22
 	string scalar nm
 	string rowvector nms
 
@@ -7302,6 +7342,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv14 = 0
 	needv15 = 0
 	needv16 = 0
+	needv22 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -7453,6 +7494,22 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			}
 		}
 		else if (nm == "indegpopularity") cfg.termcodes[t] = 7
+		else if (nm == "inpop") {
+			cfg.termcodes[t] = 44
+			needv22 = 1
+		}
+		else if (nm == "outpoplin") {
+			cfg.termcodes[t] = 45
+			needv22 = 1
+		}
+		else if (nm == "inactlin") {
+			cfg.termcodes[t] = 46
+			needv22 = 1
+		}
+		else if (nm == "outactsqrt") {
+			cfg.termcodes[t] = 47
+			needv22 = 1
+		}
 		else if (nm == "outactivity") cfg.termcodes[t] = 8
 		else if (nm == "outpopularity") cfg.termcodes[t] = 9
 		else if (nm == "inactivity") cfg.termcodes[t] = 10
@@ -7614,6 +7671,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 12) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 12 (interact())"
+		}
+	}
+	if (cfg.eligible & needv22) {
+		if (SaomNativePluginVersion() < 22) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 22 (inpop, outpop, inact, outactsqrt)"
 		}
 	}
 	if (cfg.eligible & needv16) {
@@ -8342,6 +8405,10 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "balance") return("balance")
 	if (term == "gwesp") return("GWESP I -> K -> J (" + strofreal(round(100 * decay)) + ")")
 	if (term == "indegpopularity") return("indegree - popularity (sqrt)")
+	if (term == "inpop") return("indegree - popularity")
+	if (term == "outpoplin") return("outdegree - popularity")
+	if (term == "inactlin") return("indegree - activity")
+	if (term == "outactsqrt") return("outdegree - activity (sqrt)")
 	if (term == "outpopularity") return("outdegree - popularity (sqrt)")
 	if (term == "outactivity") return("outdegree - activity")
 	if (term == "inactivity") return("indegree - activity (sqrt)")

@@ -88,6 +88,10 @@
 {synopt:{opt indegpopularity}}Indegree popularity, sqrt-transformed ("preferential attachment" toward already-popular alters){p_end}
 {synopt:{opt outpopularity}}Outdegree popularity, sqrt-transformed{p_end}
 {synopt:{opt outactivity}}Outdegree activity, squared (concentrates out-ties on already-active senders){p_end}
+{synopt:{opt inpop}}RSiena {cmd:inPop}: indegree popularity, sum of squared indegrees (evaluation role; actor i's term is the sum over its ties of the alter's indegree). Compare {opt indegpopularity} (inPopSqrt){p_end}
+{synopt:{opt outpop}}RSiena {cmd:outPop}: outdegree popularity, sum over ties of the alter's outdegree{p_end}
+{synopt:{opt inact}}RSiena {cmd:inAct}: indegree activity, sum of own outdegree x own indegree (same total statistic as {opt outpop}; do not use both){p_end}
+{synopt:{opt outactsqrt}}RSiena {cmd:outActSqrt}: sum of outdegree^1.5{p_end}
 {synopt:{opt inactivity}}Indegree activity, sqrt-transformed{p_end}
 {synopt:{opt transtrip}}Transitive triplets (weighted count of transitive closures i->j via existing two-paths){p_end}
 {synopt:{opt transmedtrip}}Transitive mediated triplets: for each tie i->j, the number of other actors with an incoming tie to both i and j (RSiena's own "transMedTrip") - a distinct measure of shared incoming ties from `transtrip'{p_end}
