@@ -4942,6 +4942,7 @@ struct SaomBehaviorNativeConfig {
 	real scalar eligible
 	real rowvector termcodes	// one per term instance in Mbeh, in Mbeh's own order
 	real rowvector fntype		// protocol 11: endowment (1)/creation (2) codes per term
+	real scalar needv43		// protocol 43: behavior effects of the network x a covariate
 	real scalar needv36		// protocol 36: effFrom terms (covariate main effects on a behavior)
 	real scalar needv35		// protocol 35: network-position / alter / similarity-family behavior effects (term codes 105-124)
 }
@@ -8329,7 +8330,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 38)) {
+		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 38) | (C.cfgBeh.needv43 & k < 43)) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -9372,6 +9373,7 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 	cfg.eligible = 1
 	cfg.needv35 = 0
 	cfg.needv36 = 0
+	cfg.needv43 = 0
 	for (t=1; t<=Mbeh.nterms; t++) {
 		nm = Mbeh.names[t]
 		// protocol 11: endowment/creation terms are the eval term gated by
@@ -9383,6 +9385,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 		else if (nm == "quadratic") cfg.termcodes[t] = 102
 		else if (nm == "avalt") cfg.termcodes[t] = 103
 		else if (nm == "avsim") cfg.termcodes[t] = 104
+		else if (_sb_bsparse(nm)[1] >= 0) {
+			cfg.termcodes[t] = 300 + 16 * _sb_bsparse(nm)[1] + _sb_bsparse(nm)[2] - 1
+			if (cfg.fntype[t] != 0) cfg.eligible = 0
+			cfg.needv43 = 1
+		}
 		else if (substr(nm, 1, 6) == "effcov" & strtoreal(substr(nm, 7, .)) >= 1 & strtoreal(substr(nm, 7, .)) <= 8) {
 			cfg.termcodes[t] = 124 + strtoreal(substr(nm, 7, .))
 			if (cfg.fntype[t] != 0) cfg.eligible = 0
@@ -10997,7 +11004,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	real rowvector ratesNet0, stb
 	real matrix ratesBeh0
 	real colvector zero
-	real scalar pd, b, p, why_ok, anyneed35, anyneed36
+	real scalar pd, b, p, why_ok, anyneed35, anyneed36, anyneed43
 	string scalar why
 
 	C.Gwaves = Gwaves
@@ -11033,16 +11040,18 @@ struct SaomMBCtx scalar SaomMBInit(
 	why_ok = C.cfg.eligible
 	anyneed35 = 0
 	anyneed36 = 0
+	anyneed43 = 0
 	for (b=1; b<=C.nb; b++) {
 		cb = SaomBehaviorNativeSetup(*Mbehs[b])
 		anyneed35 = anyneed35 | cb.needv35
 		anyneed36 = anyneed36 | cb.needv36
+		anyneed43 = anyneed43 | cb.needv43
 		why_ok = why_ok & cb.eligible
 		C.codes = (C.codes, cb.termcodes)
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 38))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 38) & (!anyneed43 | SaomNativePluginVersion() >= 43))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -11404,6 +11413,7 @@ real scalar change_saom_effcov(class SaomBehavior scalar Beh, real scalar i, rea
    __saom_behcovnames; __saom_behcov_pd is the period the Mata terms read (SaomBehCovPd()) */
 void SaomBehCovInit() {
 	external real matrix __saom_behcov
+	external real rowvector __saom_behcovmean
 	external real rowvector __saom_behcovoff, __saom_behcovper
 	external real scalar __saom_behcov_pd
 	external string rowvector __saom_behcovnames
@@ -11411,18 +11421,21 @@ void SaomBehCovInit() {
 	__saom_behcovnames = J(1, 0, "")
 	__saom_behcovoff = J(1, 0, 0)
 	__saom_behcovper = J(1, 0, 1)
+	__saom_behcovmean = J(1, 0, 0)
 	__saom_behcov_pd = 1
 }
 void SaomBehCovAdd(string scalar name, string scalar vlist, real scalar nper) {
 	external real matrix __saom_behcov
 	external real rowvector __saom_behcovoff, __saom_behcovper
 	external string rowvector __saom_behcovnames
+	external real rowvector __saom_behcovmean
 	real matrix X
 	string rowvector vv
 	vv = tokens(vlist)
 	if (cols(vv) > 1) vv = vv[1..nper]
 	X = st_data(., vv)
 	X = editmissing(X, mean(vec(X)))
+	__saom_behcovmean = (__saom_behcovmean, mean(vec(X)))
 	__saom_behcovnames = (__saom_behcovnames, name)
 	__saom_behcovoff = (__saom_behcovoff, cols(__saom_behcov) + 1)
 	__saom_behcovper = (__saom_behcovper, cols(vv))
@@ -11439,7 +11452,13 @@ real scalar _sb_cv(real scalar i, real scalar j) {
 	return(__saom_behcov[i, __saom_behcovoff[j] + (__saom_behcovper[j] > 1 ? __saom_behcov_pd - 1 : 0)])
 }
 void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars) {
-	real scalar j, t, v
+	real scalar j, t, v, q
+	string rowvector fam
+	fam = _sb_bsfamilies()
+	for (t=1; t<=Mbeh.nterms; t++) {
+		q = _sb_bsparse(substr(Mbeh.coefnames[t], 5, .))[1]
+		if (q >= 0) Mbeh.coefnames[t] = "beh_" + fam[q + 1] + "_" + vars[_sb_bsparse(substr(Mbeh.coefnames[t], 5, .))[2]]
+	}
 	string rowvector pf, lab
 	pf = ("effcov", "avxalt", "avsamexalt", "totxalt", "totsamexalt")
 	lab = ("from", "avxalt", "avsamexalt", "totxalt", "totsamexalt")
@@ -11551,7 +11570,7 @@ real rowvector _sb_xaltparse(string scalar nm) {
 }
 string scalar SaomBehCovTrailer(real scalar n) {
 	external real matrix __saom_behcov
-	external real rowvector __saom_behcovoff, __saom_behcovper
+	external real rowvector __saom_behcovoff, __saom_behcovper, __saom_behcovmean
 	string scalar out
 	real scalar j, i, q
 	if (findexternal("__saom_behcov") == NULL) return(" 0")
@@ -11560,6 +11579,7 @@ string scalar SaomBehCovTrailer(real scalar n) {
 	for (j=1; j<=cols(__saom_behcovoff); j++) {
 		out = out + " " + strofreal(__saom_behcovper[j])
 		for (q=0; q<__saom_behcovper[j]; q++) for (i=1; i<=n; i++) out = out + " " + strofreal(__saom_behcov[i, __saom_behcovoff[j] + q], "%25.17g")
+		out = out + " " + strofreal(__saom_behcovmean[j], "%25.17g")
 	}
 	return(out)
 }
@@ -11580,10 +11600,443 @@ real scalar change_saom_effcov7(class SaomBehavior scalar Beh, class ErgmGraph s
 real rowvector stat_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 8))
 real scalar change_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_effcov(Beh, i, diff, 8))
 
+/* protocol 43: behavior effects of the network x a covariate (RSiena avXInAlt ... degNegContrX; see bs_T() in native/saom_sim.c). NATIVE ONLY:
+   Mata evaluates the observed statistic. bs<f>_<slot> = family f on covariate slot `slot'. */
+real colvector _sb_bsalters(class ErgmGraph scalar G, real scalar i, real scalar set) {
+	real rowvector nb
+	real colvector out
+	real scalar m
+	if (set == 1) return(G.neighbors_in(i)')
+	nb = G.neighbors_out(i)
+	if (set == 0) return(nb')
+	out = J(0, 1, 0)
+	for (m=1; m<=cols(nb); m++) if (G.has_edge(nb[m], i)) out = out \ nb[m]
+	return(out)
+}
+real scalar _sb_bsT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl, real scalar i) {
+	external real rowvector __saom_behcovmean
+	real colvector al
+	real scalar kindX, kindSame, kindZS, kindZX, div, set, m, j, nalt, t, same, best, c
+	kindX = (f <= 3)
+	kindSame = (f >= 4 & f <= 7)
+	kindZS = (f >= 8 & f <= 11)
+	kindZX = (f == 12)
+	div = (f == 0 | f == 2 | f == 4 | f == 6 | f == 8 | f == 10 | f == 12)
+	set = (f <= 1 | f == 4 | f == 5) ? 1 : ((f == 2 | f == 3 | f == 6 | f == 7 | f == 10 | f == 11) ? 2 : 0)
+	al = _sb_bsalters(G, i, (f == 15 | f == 16) ? 0 : set)
+	if (f == 15 | f == 16) {
+		if (rows(al) == 0) return(0)
+		best = _sb_cv(al[1], sl)
+		for (m=2; m<=rows(al); m++) {
+			c = _sb_cv(al[m], sl)
+			if (f == 15 ? c < best : c > best) best = c
+		}
+		return(best)
+	}
+	nalt = 0
+	t = 0
+	for (m=1; m<=rows(al); m++) {
+		j = al[m]
+		same = (abs(_sb_cv(j, sl) - _sb_cv(i, sl)) < 1e-6)
+		if (kindX) {
+			t = t + _sb_cv(j, sl)
+			nalt = nalt + 1
+		}
+		else if (kindSame) {
+			t = t + same
+			nalt = nalt + 1
+		}
+		else if (kindZS) {
+			if (same) {
+				t = t + _sb_c(Beh, j)
+				nalt = nalt + 1
+			}
+		}
+		else if (kindZX) {
+			t = t + _sb_c(Beh, j) * _sb_cv(j, sl)
+			nalt = nalt + 1
+		}
+	}
+	if (nalt == 0) return(0)
+	return(div ? t / nalt : t)
+}
+real scalar _sb_bsego(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl, real scalar i) {
+	real rowvector nb
+	real scalar st, m, j, xi, c, deg
+	if (f >= 17) {
+		xi = _sb_cv(i, sl)
+		deg = cols(G.neighbors_out(i))
+		c = 0
+		if (f == 17 | f == 18) if (deg > xi) c = deg - xi
+		if (f == 17 | f == 19) if (deg < xi) c = xi - deg
+		return(_sb_c(Beh, i) * c)
+	}
+	if (f == 13 | f == 14) {
+		nb = G.neighbors_out(i)
+		st = 0
+		for (m=1; m<=cols(nb); m++) {
+			j = nb[m]
+			st = st + (1 - abs(Beh.values[i] - Beh.values[j]) / Beh.range - Beh.simMean) * _sb_cv(j, sl)
+		}
+		if (f == 13 & cols(nb) > 0) st = st / cols(nb)
+		return(st)
+	}
+	return(_sb_c(Beh, i) * _sb_bsT(Beh, G, f, sl, i))
+}
+real rowvector stat_saom_bs(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar f, real scalar sl) {
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=Beh.n; i++) tot = tot + _sb_bsego(Beh, G, f, sl, i)
+	return(tot)
+}
+real scalar change_saom_bs(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) {
+	errprintf("nwsaom: this behavior effect needs the native plugin (protocol 43 or later); there is no Mata implementation of its simulation.\n")
+	exit(198)
+	return(0)
+}
+real rowvector stat_saom_bs0_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 1))
+real scalar change_saom_bs0_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 2))
+real scalar change_saom_bs0_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 3))
+real scalar change_saom_bs0_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 4))
+real scalar change_saom_bs0_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 5))
+real scalar change_saom_bs0_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 6))
+real scalar change_saom_bs0_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 7))
+real scalar change_saom_bs0_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs0_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 0, 8))
+real scalar change_saom_bs0_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 1))
+real scalar change_saom_bs1_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 2))
+real scalar change_saom_bs1_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 3))
+real scalar change_saom_bs1_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 4))
+real scalar change_saom_bs1_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 5))
+real scalar change_saom_bs1_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 6))
+real scalar change_saom_bs1_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 7))
+real scalar change_saom_bs1_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs1_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 1, 8))
+real scalar change_saom_bs1_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 1))
+real scalar change_saom_bs2_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 2))
+real scalar change_saom_bs2_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 3))
+real scalar change_saom_bs2_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 4))
+real scalar change_saom_bs2_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 5))
+real scalar change_saom_bs2_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 6))
+real scalar change_saom_bs2_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 7))
+real scalar change_saom_bs2_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs2_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 2, 8))
+real scalar change_saom_bs2_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 1))
+real scalar change_saom_bs3_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 2))
+real scalar change_saom_bs3_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 3))
+real scalar change_saom_bs3_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 4))
+real scalar change_saom_bs3_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 5))
+real scalar change_saom_bs3_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 6))
+real scalar change_saom_bs3_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 7))
+real scalar change_saom_bs3_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs3_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 3, 8))
+real scalar change_saom_bs3_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 1))
+real scalar change_saom_bs4_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 2))
+real scalar change_saom_bs4_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 3))
+real scalar change_saom_bs4_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 4))
+real scalar change_saom_bs4_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 5))
+real scalar change_saom_bs4_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 6))
+real scalar change_saom_bs4_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 7))
+real scalar change_saom_bs4_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs4_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 4, 8))
+real scalar change_saom_bs4_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 1))
+real scalar change_saom_bs5_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 2))
+real scalar change_saom_bs5_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 3))
+real scalar change_saom_bs5_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 4))
+real scalar change_saom_bs5_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 5))
+real scalar change_saom_bs5_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 6))
+real scalar change_saom_bs5_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 7))
+real scalar change_saom_bs5_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs5_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 5, 8))
+real scalar change_saom_bs5_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 1))
+real scalar change_saom_bs6_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 2))
+real scalar change_saom_bs6_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 3))
+real scalar change_saom_bs6_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 4))
+real scalar change_saom_bs6_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 5))
+real scalar change_saom_bs6_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 6))
+real scalar change_saom_bs6_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 7))
+real scalar change_saom_bs6_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs6_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 6, 8))
+real scalar change_saom_bs6_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 1))
+real scalar change_saom_bs7_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 2))
+real scalar change_saom_bs7_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 3))
+real scalar change_saom_bs7_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 4))
+real scalar change_saom_bs7_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 5))
+real scalar change_saom_bs7_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 6))
+real scalar change_saom_bs7_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 7))
+real scalar change_saom_bs7_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs7_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 7, 8))
+real scalar change_saom_bs7_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 1))
+real scalar change_saom_bs8_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 2))
+real scalar change_saom_bs8_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 3))
+real scalar change_saom_bs8_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 4))
+real scalar change_saom_bs8_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 5))
+real scalar change_saom_bs8_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 6))
+real scalar change_saom_bs8_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 7))
+real scalar change_saom_bs8_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs8_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 8, 8))
+real scalar change_saom_bs8_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 1))
+real scalar change_saom_bs9_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 2))
+real scalar change_saom_bs9_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 3))
+real scalar change_saom_bs9_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 4))
+real scalar change_saom_bs9_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 5))
+real scalar change_saom_bs9_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 6))
+real scalar change_saom_bs9_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 7))
+real scalar change_saom_bs9_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs9_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 9, 8))
+real scalar change_saom_bs9_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 1))
+real scalar change_saom_bs10_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 2))
+real scalar change_saom_bs10_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 3))
+real scalar change_saom_bs10_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 4))
+real scalar change_saom_bs10_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 5))
+real scalar change_saom_bs10_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 6))
+real scalar change_saom_bs10_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 7))
+real scalar change_saom_bs10_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs10_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 10, 8))
+real scalar change_saom_bs10_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 1))
+real scalar change_saom_bs11_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 2))
+real scalar change_saom_bs11_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 3))
+real scalar change_saom_bs11_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 4))
+real scalar change_saom_bs11_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 5))
+real scalar change_saom_bs11_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 6))
+real scalar change_saom_bs11_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 7))
+real scalar change_saom_bs11_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs11_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 11, 8))
+real scalar change_saom_bs11_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 1))
+real scalar change_saom_bs12_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 2))
+real scalar change_saom_bs12_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 3))
+real scalar change_saom_bs12_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 4))
+real scalar change_saom_bs12_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 5))
+real scalar change_saom_bs12_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 6))
+real scalar change_saom_bs12_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 7))
+real scalar change_saom_bs12_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs12_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 12, 8))
+real scalar change_saom_bs12_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 1))
+real scalar change_saom_bs13_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 2))
+real scalar change_saom_bs13_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 3))
+real scalar change_saom_bs13_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 4))
+real scalar change_saom_bs13_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 5))
+real scalar change_saom_bs13_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 6))
+real scalar change_saom_bs13_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 7))
+real scalar change_saom_bs13_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs13_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 13, 8))
+real scalar change_saom_bs13_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 1))
+real scalar change_saom_bs14_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 2))
+real scalar change_saom_bs14_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 3))
+real scalar change_saom_bs14_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 4))
+real scalar change_saom_bs14_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 5))
+real scalar change_saom_bs14_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 6))
+real scalar change_saom_bs14_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 7))
+real scalar change_saom_bs14_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs14_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 14, 8))
+real scalar change_saom_bs14_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 1))
+real scalar change_saom_bs15_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 2))
+real scalar change_saom_bs15_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 3))
+real scalar change_saom_bs15_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 4))
+real scalar change_saom_bs15_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 5))
+real scalar change_saom_bs15_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 6))
+real scalar change_saom_bs15_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 7))
+real scalar change_saom_bs15_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs15_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 15, 8))
+real scalar change_saom_bs15_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 1))
+real scalar change_saom_bs16_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 2))
+real scalar change_saom_bs16_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 3))
+real scalar change_saom_bs16_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 4))
+real scalar change_saom_bs16_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 5))
+real scalar change_saom_bs16_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 6))
+real scalar change_saom_bs16_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 7))
+real scalar change_saom_bs16_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs16_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 16, 8))
+real scalar change_saom_bs16_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 1))
+real scalar change_saom_bs17_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 2))
+real scalar change_saom_bs17_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 3))
+real scalar change_saom_bs17_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 4))
+real scalar change_saom_bs17_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 5))
+real scalar change_saom_bs17_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 6))
+real scalar change_saom_bs17_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 7))
+real scalar change_saom_bs17_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs17_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 17, 8))
+real scalar change_saom_bs17_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 1))
+real scalar change_saom_bs18_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 2))
+real scalar change_saom_bs18_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 3))
+real scalar change_saom_bs18_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 4))
+real scalar change_saom_bs18_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 5))
+real scalar change_saom_bs18_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 6))
+real scalar change_saom_bs18_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 7))
+real scalar change_saom_bs18_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs18_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 18, 8))
+real scalar change_saom_bs18_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 1))
+real scalar change_saom_bs19_1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 2))
+real scalar change_saom_bs19_2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 3))
+real scalar change_saom_bs19_3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 4))
+real scalar change_saom_bs19_4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 5))
+real scalar change_saom_bs19_5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 6))
+real scalar change_saom_bs19_6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 7))
+real scalar change_saom_bs19_7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+real rowvector stat_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_bs(Beh, G, 19, 8))
+real scalar change_saom_bs19_8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_bs(Beh, G, i, diff))
+string rowvector _sb_bsfamilies() {
+	return(("avxinalt", "totxinalt", "avxrecalt", "totxrecalt", "avsamexinalt", "totsamexinalt", "avsamexrecalt", "totsamexrecalt", "avaltsamex", "totaltsamex", "avrecaltsamex", "totrecaltsamex", "avaltaltx", "avsimaltx", "totsimaltx", "minxalt", "maxxalt", "degabscontrx", "degposcontrx", "degnegcontrx"))
+}
+/* "bs12_3" -> (12, 3), else (-1, 0) */
+real rowvector _sb_bsparse(string scalar nm) {
+	real scalar u, f, sl
+	if (substr(nm, 1, 2) != "bs") return((-1, 0))
+	u = strpos(nm, "_")
+	if (u == 0) return((-1, 0))
+	f = strtoreal(substr(nm, 3, u - 3))
+	sl = strtoreal(substr(nm, u + 1, .))
+	if (f >= 0 & f < 20 & sl >= 1 & sl <= 8 & f == floor(f) & sl == floor(sl)) return((f, sl))
+	return((-1, 0))
+}
+
 /* the new behavior effects by token: names understood by SaomMBAddTerms() / nwsaom's beheff() */
 string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
 	real scalar j
+	if (_sb_bsparse(base)[1] >= 0) {
+		j = _sb_bsparse(base)[2]
+		return(_sb_bsfamilies()[_sb_bsparse(base)[1] + 1] + (findexternal("__saom_behcovnames") != NULL ? " " + __saom_behcovnames[j] : ""))
+	}
 	if (_sb_xaltparse(base)[1] >= 0) {
 		j = _sb_xaltparse(base)[2]
 		return((("avXAlt", "avSameXAlt", "totXAlt", "totSameXAlt"))[_sb_xaltparse(base)[1] + 1] + (findexternal("__saom_behcovnames") != NULL ? " " + __saom_behcovnames[j] : ""))
@@ -11719,6 +12172,166 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
 		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
 		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
+		else if (nm == "bs0_1") Mbeh.addterm("bs0_1", &stat_saom_bs0_1(), &change_saom_bs0_1(), pre + "bs0_1")
+		else if (nm == "bs0_2") Mbeh.addterm("bs0_2", &stat_saom_bs0_2(), &change_saom_bs0_2(), pre + "bs0_2")
+		else if (nm == "bs0_3") Mbeh.addterm("bs0_3", &stat_saom_bs0_3(), &change_saom_bs0_3(), pre + "bs0_3")
+		else if (nm == "bs0_4") Mbeh.addterm("bs0_4", &stat_saom_bs0_4(), &change_saom_bs0_4(), pre + "bs0_4")
+		else if (nm == "bs0_5") Mbeh.addterm("bs0_5", &stat_saom_bs0_5(), &change_saom_bs0_5(), pre + "bs0_5")
+		else if (nm == "bs0_6") Mbeh.addterm("bs0_6", &stat_saom_bs0_6(), &change_saom_bs0_6(), pre + "bs0_6")
+		else if (nm == "bs0_7") Mbeh.addterm("bs0_7", &stat_saom_bs0_7(), &change_saom_bs0_7(), pre + "bs0_7")
+		else if (nm == "bs0_8") Mbeh.addterm("bs0_8", &stat_saom_bs0_8(), &change_saom_bs0_8(), pre + "bs0_8")
+		else if (nm == "bs1_1") Mbeh.addterm("bs1_1", &stat_saom_bs1_1(), &change_saom_bs1_1(), pre + "bs1_1")
+		else if (nm == "bs1_2") Mbeh.addterm("bs1_2", &stat_saom_bs1_2(), &change_saom_bs1_2(), pre + "bs1_2")
+		else if (nm == "bs1_3") Mbeh.addterm("bs1_3", &stat_saom_bs1_3(), &change_saom_bs1_3(), pre + "bs1_3")
+		else if (nm == "bs1_4") Mbeh.addterm("bs1_4", &stat_saom_bs1_4(), &change_saom_bs1_4(), pre + "bs1_4")
+		else if (nm == "bs1_5") Mbeh.addterm("bs1_5", &stat_saom_bs1_5(), &change_saom_bs1_5(), pre + "bs1_5")
+		else if (nm == "bs1_6") Mbeh.addterm("bs1_6", &stat_saom_bs1_6(), &change_saom_bs1_6(), pre + "bs1_6")
+		else if (nm == "bs1_7") Mbeh.addterm("bs1_7", &stat_saom_bs1_7(), &change_saom_bs1_7(), pre + "bs1_7")
+		else if (nm == "bs1_8") Mbeh.addterm("bs1_8", &stat_saom_bs1_8(), &change_saom_bs1_8(), pre + "bs1_8")
+		else if (nm == "bs2_1") Mbeh.addterm("bs2_1", &stat_saom_bs2_1(), &change_saom_bs2_1(), pre + "bs2_1")
+		else if (nm == "bs2_2") Mbeh.addterm("bs2_2", &stat_saom_bs2_2(), &change_saom_bs2_2(), pre + "bs2_2")
+		else if (nm == "bs2_3") Mbeh.addterm("bs2_3", &stat_saom_bs2_3(), &change_saom_bs2_3(), pre + "bs2_3")
+		else if (nm == "bs2_4") Mbeh.addterm("bs2_4", &stat_saom_bs2_4(), &change_saom_bs2_4(), pre + "bs2_4")
+		else if (nm == "bs2_5") Mbeh.addterm("bs2_5", &stat_saom_bs2_5(), &change_saom_bs2_5(), pre + "bs2_5")
+		else if (nm == "bs2_6") Mbeh.addterm("bs2_6", &stat_saom_bs2_6(), &change_saom_bs2_6(), pre + "bs2_6")
+		else if (nm == "bs2_7") Mbeh.addterm("bs2_7", &stat_saom_bs2_7(), &change_saom_bs2_7(), pre + "bs2_7")
+		else if (nm == "bs2_8") Mbeh.addterm("bs2_8", &stat_saom_bs2_8(), &change_saom_bs2_8(), pre + "bs2_8")
+		else if (nm == "bs3_1") Mbeh.addterm("bs3_1", &stat_saom_bs3_1(), &change_saom_bs3_1(), pre + "bs3_1")
+		else if (nm == "bs3_2") Mbeh.addterm("bs3_2", &stat_saom_bs3_2(), &change_saom_bs3_2(), pre + "bs3_2")
+		else if (nm == "bs3_3") Mbeh.addterm("bs3_3", &stat_saom_bs3_3(), &change_saom_bs3_3(), pre + "bs3_3")
+		else if (nm == "bs3_4") Mbeh.addterm("bs3_4", &stat_saom_bs3_4(), &change_saom_bs3_4(), pre + "bs3_4")
+		else if (nm == "bs3_5") Mbeh.addterm("bs3_5", &stat_saom_bs3_5(), &change_saom_bs3_5(), pre + "bs3_5")
+		else if (nm == "bs3_6") Mbeh.addterm("bs3_6", &stat_saom_bs3_6(), &change_saom_bs3_6(), pre + "bs3_6")
+		else if (nm == "bs3_7") Mbeh.addterm("bs3_7", &stat_saom_bs3_7(), &change_saom_bs3_7(), pre + "bs3_7")
+		else if (nm == "bs3_8") Mbeh.addterm("bs3_8", &stat_saom_bs3_8(), &change_saom_bs3_8(), pre + "bs3_8")
+		else if (nm == "bs4_1") Mbeh.addterm("bs4_1", &stat_saom_bs4_1(), &change_saom_bs4_1(), pre + "bs4_1")
+		else if (nm == "bs4_2") Mbeh.addterm("bs4_2", &stat_saom_bs4_2(), &change_saom_bs4_2(), pre + "bs4_2")
+		else if (nm == "bs4_3") Mbeh.addterm("bs4_3", &stat_saom_bs4_3(), &change_saom_bs4_3(), pre + "bs4_3")
+		else if (nm == "bs4_4") Mbeh.addterm("bs4_4", &stat_saom_bs4_4(), &change_saom_bs4_4(), pre + "bs4_4")
+		else if (nm == "bs4_5") Mbeh.addterm("bs4_5", &stat_saom_bs4_5(), &change_saom_bs4_5(), pre + "bs4_5")
+		else if (nm == "bs4_6") Mbeh.addterm("bs4_6", &stat_saom_bs4_6(), &change_saom_bs4_6(), pre + "bs4_6")
+		else if (nm == "bs4_7") Mbeh.addterm("bs4_7", &stat_saom_bs4_7(), &change_saom_bs4_7(), pre + "bs4_7")
+		else if (nm == "bs4_8") Mbeh.addterm("bs4_8", &stat_saom_bs4_8(), &change_saom_bs4_8(), pre + "bs4_8")
+		else if (nm == "bs5_1") Mbeh.addterm("bs5_1", &stat_saom_bs5_1(), &change_saom_bs5_1(), pre + "bs5_1")
+		else if (nm == "bs5_2") Mbeh.addterm("bs5_2", &stat_saom_bs5_2(), &change_saom_bs5_2(), pre + "bs5_2")
+		else if (nm == "bs5_3") Mbeh.addterm("bs5_3", &stat_saom_bs5_3(), &change_saom_bs5_3(), pre + "bs5_3")
+		else if (nm == "bs5_4") Mbeh.addterm("bs5_4", &stat_saom_bs5_4(), &change_saom_bs5_4(), pre + "bs5_4")
+		else if (nm == "bs5_5") Mbeh.addterm("bs5_5", &stat_saom_bs5_5(), &change_saom_bs5_5(), pre + "bs5_5")
+		else if (nm == "bs5_6") Mbeh.addterm("bs5_6", &stat_saom_bs5_6(), &change_saom_bs5_6(), pre + "bs5_6")
+		else if (nm == "bs5_7") Mbeh.addterm("bs5_7", &stat_saom_bs5_7(), &change_saom_bs5_7(), pre + "bs5_7")
+		else if (nm == "bs5_8") Mbeh.addterm("bs5_8", &stat_saom_bs5_8(), &change_saom_bs5_8(), pre + "bs5_8")
+		else if (nm == "bs6_1") Mbeh.addterm("bs6_1", &stat_saom_bs6_1(), &change_saom_bs6_1(), pre + "bs6_1")
+		else if (nm == "bs6_2") Mbeh.addterm("bs6_2", &stat_saom_bs6_2(), &change_saom_bs6_2(), pre + "bs6_2")
+		else if (nm == "bs6_3") Mbeh.addterm("bs6_3", &stat_saom_bs6_3(), &change_saom_bs6_3(), pre + "bs6_3")
+		else if (nm == "bs6_4") Mbeh.addterm("bs6_4", &stat_saom_bs6_4(), &change_saom_bs6_4(), pre + "bs6_4")
+		else if (nm == "bs6_5") Mbeh.addterm("bs6_5", &stat_saom_bs6_5(), &change_saom_bs6_5(), pre + "bs6_5")
+		else if (nm == "bs6_6") Mbeh.addterm("bs6_6", &stat_saom_bs6_6(), &change_saom_bs6_6(), pre + "bs6_6")
+		else if (nm == "bs6_7") Mbeh.addterm("bs6_7", &stat_saom_bs6_7(), &change_saom_bs6_7(), pre + "bs6_7")
+		else if (nm == "bs6_8") Mbeh.addterm("bs6_8", &stat_saom_bs6_8(), &change_saom_bs6_8(), pre + "bs6_8")
+		else if (nm == "bs7_1") Mbeh.addterm("bs7_1", &stat_saom_bs7_1(), &change_saom_bs7_1(), pre + "bs7_1")
+		else if (nm == "bs7_2") Mbeh.addterm("bs7_2", &stat_saom_bs7_2(), &change_saom_bs7_2(), pre + "bs7_2")
+		else if (nm == "bs7_3") Mbeh.addterm("bs7_3", &stat_saom_bs7_3(), &change_saom_bs7_3(), pre + "bs7_3")
+		else if (nm == "bs7_4") Mbeh.addterm("bs7_4", &stat_saom_bs7_4(), &change_saom_bs7_4(), pre + "bs7_4")
+		else if (nm == "bs7_5") Mbeh.addterm("bs7_5", &stat_saom_bs7_5(), &change_saom_bs7_5(), pre + "bs7_5")
+		else if (nm == "bs7_6") Mbeh.addterm("bs7_6", &stat_saom_bs7_6(), &change_saom_bs7_6(), pre + "bs7_6")
+		else if (nm == "bs7_7") Mbeh.addterm("bs7_7", &stat_saom_bs7_7(), &change_saom_bs7_7(), pre + "bs7_7")
+		else if (nm == "bs7_8") Mbeh.addterm("bs7_8", &stat_saom_bs7_8(), &change_saom_bs7_8(), pre + "bs7_8")
+		else if (nm == "bs8_1") Mbeh.addterm("bs8_1", &stat_saom_bs8_1(), &change_saom_bs8_1(), pre + "bs8_1")
+		else if (nm == "bs8_2") Mbeh.addterm("bs8_2", &stat_saom_bs8_2(), &change_saom_bs8_2(), pre + "bs8_2")
+		else if (nm == "bs8_3") Mbeh.addterm("bs8_3", &stat_saom_bs8_3(), &change_saom_bs8_3(), pre + "bs8_3")
+		else if (nm == "bs8_4") Mbeh.addterm("bs8_4", &stat_saom_bs8_4(), &change_saom_bs8_4(), pre + "bs8_4")
+		else if (nm == "bs8_5") Mbeh.addterm("bs8_5", &stat_saom_bs8_5(), &change_saom_bs8_5(), pre + "bs8_5")
+		else if (nm == "bs8_6") Mbeh.addterm("bs8_6", &stat_saom_bs8_6(), &change_saom_bs8_6(), pre + "bs8_6")
+		else if (nm == "bs8_7") Mbeh.addterm("bs8_7", &stat_saom_bs8_7(), &change_saom_bs8_7(), pre + "bs8_7")
+		else if (nm == "bs8_8") Mbeh.addterm("bs8_8", &stat_saom_bs8_8(), &change_saom_bs8_8(), pre + "bs8_8")
+		else if (nm == "bs9_1") Mbeh.addterm("bs9_1", &stat_saom_bs9_1(), &change_saom_bs9_1(), pre + "bs9_1")
+		else if (nm == "bs9_2") Mbeh.addterm("bs9_2", &stat_saom_bs9_2(), &change_saom_bs9_2(), pre + "bs9_2")
+		else if (nm == "bs9_3") Mbeh.addterm("bs9_3", &stat_saom_bs9_3(), &change_saom_bs9_3(), pre + "bs9_3")
+		else if (nm == "bs9_4") Mbeh.addterm("bs9_4", &stat_saom_bs9_4(), &change_saom_bs9_4(), pre + "bs9_4")
+		else if (nm == "bs9_5") Mbeh.addterm("bs9_5", &stat_saom_bs9_5(), &change_saom_bs9_5(), pre + "bs9_5")
+		else if (nm == "bs9_6") Mbeh.addterm("bs9_6", &stat_saom_bs9_6(), &change_saom_bs9_6(), pre + "bs9_6")
+		else if (nm == "bs9_7") Mbeh.addterm("bs9_7", &stat_saom_bs9_7(), &change_saom_bs9_7(), pre + "bs9_7")
+		else if (nm == "bs9_8") Mbeh.addterm("bs9_8", &stat_saom_bs9_8(), &change_saom_bs9_8(), pre + "bs9_8")
+		else if (nm == "bs10_1") Mbeh.addterm("bs10_1", &stat_saom_bs10_1(), &change_saom_bs10_1(), pre + "bs10_1")
+		else if (nm == "bs10_2") Mbeh.addterm("bs10_2", &stat_saom_bs10_2(), &change_saom_bs10_2(), pre + "bs10_2")
+		else if (nm == "bs10_3") Mbeh.addterm("bs10_3", &stat_saom_bs10_3(), &change_saom_bs10_3(), pre + "bs10_3")
+		else if (nm == "bs10_4") Mbeh.addterm("bs10_4", &stat_saom_bs10_4(), &change_saom_bs10_4(), pre + "bs10_4")
+		else if (nm == "bs10_5") Mbeh.addterm("bs10_5", &stat_saom_bs10_5(), &change_saom_bs10_5(), pre + "bs10_5")
+		else if (nm == "bs10_6") Mbeh.addterm("bs10_6", &stat_saom_bs10_6(), &change_saom_bs10_6(), pre + "bs10_6")
+		else if (nm == "bs10_7") Mbeh.addterm("bs10_7", &stat_saom_bs10_7(), &change_saom_bs10_7(), pre + "bs10_7")
+		else if (nm == "bs10_8") Mbeh.addterm("bs10_8", &stat_saom_bs10_8(), &change_saom_bs10_8(), pre + "bs10_8")
+		else if (nm == "bs11_1") Mbeh.addterm("bs11_1", &stat_saom_bs11_1(), &change_saom_bs11_1(), pre + "bs11_1")
+		else if (nm == "bs11_2") Mbeh.addterm("bs11_2", &stat_saom_bs11_2(), &change_saom_bs11_2(), pre + "bs11_2")
+		else if (nm == "bs11_3") Mbeh.addterm("bs11_3", &stat_saom_bs11_3(), &change_saom_bs11_3(), pre + "bs11_3")
+		else if (nm == "bs11_4") Mbeh.addterm("bs11_4", &stat_saom_bs11_4(), &change_saom_bs11_4(), pre + "bs11_4")
+		else if (nm == "bs11_5") Mbeh.addterm("bs11_5", &stat_saom_bs11_5(), &change_saom_bs11_5(), pre + "bs11_5")
+		else if (nm == "bs11_6") Mbeh.addterm("bs11_6", &stat_saom_bs11_6(), &change_saom_bs11_6(), pre + "bs11_6")
+		else if (nm == "bs11_7") Mbeh.addterm("bs11_7", &stat_saom_bs11_7(), &change_saom_bs11_7(), pre + "bs11_7")
+		else if (nm == "bs11_8") Mbeh.addterm("bs11_8", &stat_saom_bs11_8(), &change_saom_bs11_8(), pre + "bs11_8")
+		else if (nm == "bs12_1") Mbeh.addterm("bs12_1", &stat_saom_bs12_1(), &change_saom_bs12_1(), pre + "bs12_1")
+		else if (nm == "bs12_2") Mbeh.addterm("bs12_2", &stat_saom_bs12_2(), &change_saom_bs12_2(), pre + "bs12_2")
+		else if (nm == "bs12_3") Mbeh.addterm("bs12_3", &stat_saom_bs12_3(), &change_saom_bs12_3(), pre + "bs12_3")
+		else if (nm == "bs12_4") Mbeh.addterm("bs12_4", &stat_saom_bs12_4(), &change_saom_bs12_4(), pre + "bs12_4")
+		else if (nm == "bs12_5") Mbeh.addterm("bs12_5", &stat_saom_bs12_5(), &change_saom_bs12_5(), pre + "bs12_5")
+		else if (nm == "bs12_6") Mbeh.addterm("bs12_6", &stat_saom_bs12_6(), &change_saom_bs12_6(), pre + "bs12_6")
+		else if (nm == "bs12_7") Mbeh.addterm("bs12_7", &stat_saom_bs12_7(), &change_saom_bs12_7(), pre + "bs12_7")
+		else if (nm == "bs12_8") Mbeh.addterm("bs12_8", &stat_saom_bs12_8(), &change_saom_bs12_8(), pre + "bs12_8")
+		else if (nm == "bs13_1") Mbeh.addterm("bs13_1", &stat_saom_bs13_1(), &change_saom_bs13_1(), pre + "bs13_1")
+		else if (nm == "bs13_2") Mbeh.addterm("bs13_2", &stat_saom_bs13_2(), &change_saom_bs13_2(), pre + "bs13_2")
+		else if (nm == "bs13_3") Mbeh.addterm("bs13_3", &stat_saom_bs13_3(), &change_saom_bs13_3(), pre + "bs13_3")
+		else if (nm == "bs13_4") Mbeh.addterm("bs13_4", &stat_saom_bs13_4(), &change_saom_bs13_4(), pre + "bs13_4")
+		else if (nm == "bs13_5") Mbeh.addterm("bs13_5", &stat_saom_bs13_5(), &change_saom_bs13_5(), pre + "bs13_5")
+		else if (nm == "bs13_6") Mbeh.addterm("bs13_6", &stat_saom_bs13_6(), &change_saom_bs13_6(), pre + "bs13_6")
+		else if (nm == "bs13_7") Mbeh.addterm("bs13_7", &stat_saom_bs13_7(), &change_saom_bs13_7(), pre + "bs13_7")
+		else if (nm == "bs13_8") Mbeh.addterm("bs13_8", &stat_saom_bs13_8(), &change_saom_bs13_8(), pre + "bs13_8")
+		else if (nm == "bs14_1") Mbeh.addterm("bs14_1", &stat_saom_bs14_1(), &change_saom_bs14_1(), pre + "bs14_1")
+		else if (nm == "bs14_2") Mbeh.addterm("bs14_2", &stat_saom_bs14_2(), &change_saom_bs14_2(), pre + "bs14_2")
+		else if (nm == "bs14_3") Mbeh.addterm("bs14_3", &stat_saom_bs14_3(), &change_saom_bs14_3(), pre + "bs14_3")
+		else if (nm == "bs14_4") Mbeh.addterm("bs14_4", &stat_saom_bs14_4(), &change_saom_bs14_4(), pre + "bs14_4")
+		else if (nm == "bs14_5") Mbeh.addterm("bs14_5", &stat_saom_bs14_5(), &change_saom_bs14_5(), pre + "bs14_5")
+		else if (nm == "bs14_6") Mbeh.addterm("bs14_6", &stat_saom_bs14_6(), &change_saom_bs14_6(), pre + "bs14_6")
+		else if (nm == "bs14_7") Mbeh.addterm("bs14_7", &stat_saom_bs14_7(), &change_saom_bs14_7(), pre + "bs14_7")
+		else if (nm == "bs14_8") Mbeh.addterm("bs14_8", &stat_saom_bs14_8(), &change_saom_bs14_8(), pre + "bs14_8")
+		else if (nm == "bs15_1") Mbeh.addterm("bs15_1", &stat_saom_bs15_1(), &change_saom_bs15_1(), pre + "bs15_1")
+		else if (nm == "bs15_2") Mbeh.addterm("bs15_2", &stat_saom_bs15_2(), &change_saom_bs15_2(), pre + "bs15_2")
+		else if (nm == "bs15_3") Mbeh.addterm("bs15_3", &stat_saom_bs15_3(), &change_saom_bs15_3(), pre + "bs15_3")
+		else if (nm == "bs15_4") Mbeh.addterm("bs15_4", &stat_saom_bs15_4(), &change_saom_bs15_4(), pre + "bs15_4")
+		else if (nm == "bs15_5") Mbeh.addterm("bs15_5", &stat_saom_bs15_5(), &change_saom_bs15_5(), pre + "bs15_5")
+		else if (nm == "bs15_6") Mbeh.addterm("bs15_6", &stat_saom_bs15_6(), &change_saom_bs15_6(), pre + "bs15_6")
+		else if (nm == "bs15_7") Mbeh.addterm("bs15_7", &stat_saom_bs15_7(), &change_saom_bs15_7(), pre + "bs15_7")
+		else if (nm == "bs15_8") Mbeh.addterm("bs15_8", &stat_saom_bs15_8(), &change_saom_bs15_8(), pre + "bs15_8")
+		else if (nm == "bs16_1") Mbeh.addterm("bs16_1", &stat_saom_bs16_1(), &change_saom_bs16_1(), pre + "bs16_1")
+		else if (nm == "bs16_2") Mbeh.addterm("bs16_2", &stat_saom_bs16_2(), &change_saom_bs16_2(), pre + "bs16_2")
+		else if (nm == "bs16_3") Mbeh.addterm("bs16_3", &stat_saom_bs16_3(), &change_saom_bs16_3(), pre + "bs16_3")
+		else if (nm == "bs16_4") Mbeh.addterm("bs16_4", &stat_saom_bs16_4(), &change_saom_bs16_4(), pre + "bs16_4")
+		else if (nm == "bs16_5") Mbeh.addterm("bs16_5", &stat_saom_bs16_5(), &change_saom_bs16_5(), pre + "bs16_5")
+		else if (nm == "bs16_6") Mbeh.addterm("bs16_6", &stat_saom_bs16_6(), &change_saom_bs16_6(), pre + "bs16_6")
+		else if (nm == "bs16_7") Mbeh.addterm("bs16_7", &stat_saom_bs16_7(), &change_saom_bs16_7(), pre + "bs16_7")
+		else if (nm == "bs16_8") Mbeh.addterm("bs16_8", &stat_saom_bs16_8(), &change_saom_bs16_8(), pre + "bs16_8")
+		else if (nm == "bs17_1") Mbeh.addterm("bs17_1", &stat_saom_bs17_1(), &change_saom_bs17_1(), pre + "bs17_1")
+		else if (nm == "bs17_2") Mbeh.addterm("bs17_2", &stat_saom_bs17_2(), &change_saom_bs17_2(), pre + "bs17_2")
+		else if (nm == "bs17_3") Mbeh.addterm("bs17_3", &stat_saom_bs17_3(), &change_saom_bs17_3(), pre + "bs17_3")
+		else if (nm == "bs17_4") Mbeh.addterm("bs17_4", &stat_saom_bs17_4(), &change_saom_bs17_4(), pre + "bs17_4")
+		else if (nm == "bs17_5") Mbeh.addterm("bs17_5", &stat_saom_bs17_5(), &change_saom_bs17_5(), pre + "bs17_5")
+		else if (nm == "bs17_6") Mbeh.addterm("bs17_6", &stat_saom_bs17_6(), &change_saom_bs17_6(), pre + "bs17_6")
+		else if (nm == "bs17_7") Mbeh.addterm("bs17_7", &stat_saom_bs17_7(), &change_saom_bs17_7(), pre + "bs17_7")
+		else if (nm == "bs17_8") Mbeh.addterm("bs17_8", &stat_saom_bs17_8(), &change_saom_bs17_8(), pre + "bs17_8")
+		else if (nm == "bs18_1") Mbeh.addterm("bs18_1", &stat_saom_bs18_1(), &change_saom_bs18_1(), pre + "bs18_1")
+		else if (nm == "bs18_2") Mbeh.addterm("bs18_2", &stat_saom_bs18_2(), &change_saom_bs18_2(), pre + "bs18_2")
+		else if (nm == "bs18_3") Mbeh.addterm("bs18_3", &stat_saom_bs18_3(), &change_saom_bs18_3(), pre + "bs18_3")
+		else if (nm == "bs18_4") Mbeh.addterm("bs18_4", &stat_saom_bs18_4(), &change_saom_bs18_4(), pre + "bs18_4")
+		else if (nm == "bs18_5") Mbeh.addterm("bs18_5", &stat_saom_bs18_5(), &change_saom_bs18_5(), pre + "bs18_5")
+		else if (nm == "bs18_6") Mbeh.addterm("bs18_6", &stat_saom_bs18_6(), &change_saom_bs18_6(), pre + "bs18_6")
+		else if (nm == "bs18_7") Mbeh.addterm("bs18_7", &stat_saom_bs18_7(), &change_saom_bs18_7(), pre + "bs18_7")
+		else if (nm == "bs18_8") Mbeh.addterm("bs18_8", &stat_saom_bs18_8(), &change_saom_bs18_8(), pre + "bs18_8")
+		else if (nm == "bs19_1") Mbeh.addterm("bs19_1", &stat_saom_bs19_1(), &change_saom_bs19_1(), pre + "bs19_1")
+		else if (nm == "bs19_2") Mbeh.addterm("bs19_2", &stat_saom_bs19_2(), &change_saom_bs19_2(), pre + "bs19_2")
+		else if (nm == "bs19_3") Mbeh.addterm("bs19_3", &stat_saom_bs19_3(), &change_saom_bs19_3(), pre + "bs19_3")
+		else if (nm == "bs19_4") Mbeh.addterm("bs19_4", &stat_saom_bs19_4(), &change_saom_bs19_4(), pre + "bs19_4")
+		else if (nm == "bs19_5") Mbeh.addterm("bs19_5", &stat_saom_bs19_5(), &change_saom_bs19_5(), pre + "bs19_5")
+		else if (nm == "bs19_6") Mbeh.addterm("bs19_6", &stat_saom_bs19_6(), &change_saom_bs19_6(), pre + "bs19_6")
+		else if (nm == "bs19_7") Mbeh.addterm("bs19_7", &stat_saom_bs19_7(), &change_saom_bs19_7(), pre + "bs19_7")
+		else if (nm == "bs19_8") Mbeh.addterm("bs19_8", &stat_saom_bs19_8(), &change_saom_bs19_8(), pre + "bs19_8")
 		else if (substr(nm, strlen(nm) - 7, .) == "creation") continue		// the partner of an endow term, added with it
 		else {
 			errprintf("nwsaom: unknown behavior effect '" + nm + "'\n")

@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -493,7 +493,7 @@ program nwsaom, eclass
 		}
 		local __nwsaom_coev = 1
 	}
-	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" | "`behfrom'" != "" | "`behavxalt'`behavsamexalt'`behtotxalt'`behtotsamexalt'" != "" {
+	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" | "`behfrom'`behx'" != "" | "`behavxalt'`behavsamexalt'`behtotxalt'`behtotsamexalt'" != "" {
 		di "{err}{bf:behsim}/{bf:behegox}/{bf:behaltx}/{bf:behegoplusalt} (selection effects of the co-evolving behavior) require {bf:behavior()} to be specified."
 		error 198
 	}
@@ -2515,7 +2515,19 @@ program nwsaom, eclass
 		}
 		// RSiena's behavior effects of the network position, the alters and the similarity family (protocol 35), behavior 1
 		capture mata: mata drop __saom_behcov __saom_behcovnames __saom_behcovoff __saom_behcovper __saom_behcov_pd
-		local __bcvall "`behfrom' `behavxalt' `behavsamexalt' `behtotxalt' `behtotsamexalt'"
+		// behx(family:var ...): the 20 RSiena behavior effects of the network x a covariate of protocol 43 (avxinalt ... degnegcontrx)
+		local __bxfam "avxinalt totxinalt avxrecalt totxrecalt avsamexinalt totsamexinalt avsamexrecalt totsamexrecalt avaltsamex totaltsamex avrecaltsamex totrecaltsamex avaltaltx avsimaltx totsimaltx minxalt maxxalt degabscontrx degposcontrx degnegcontrx"
+		local __bxvars ""
+		foreach __t of local behx {
+			gettoken __f __vv : __t, parse(":")
+			local __vv = subinstr("`__vv'", ":", "", 1)
+			if `: list posof "`__f'" in __bxfam' == 0 | "`__vv'" == "" {
+				di "{err}behx(): `__t' is not family:variable; families: `__bxfam'."
+				error 198
+			}
+			local __bxvars "`__bxvars' `__vv'"
+		}
+		local __bcvall "`behfrom' `behavxalt' `behavsamexalt' `behtotxalt' `behtotsamexalt' `__bxvars'"
 		local __bcvall : list uniq __bcvall
 		if "`__bcvall'" != "" {
 			local __nbf : word count `__bcvall'
@@ -2530,6 +2542,13 @@ program nwsaom, eclass
 					local __slot : list posof "`__v'" in __bcvall
 					local beheff "`beheff' `__pre'`__slot'"
 				}
+			}
+			foreach __t of local behx {
+				gettoken __f __vv : __t, parse(":")
+				local __vv = subinstr("`__vv'", ":", "", 1)
+				local __slot : list posof "`__vv'" in __bcvall
+				local __fi : list posof "`__f'" in __bxfam
+				local beheff "`beheff' bs`=`__fi'-1'_`__slot'"
 			}
 			mata: SaomBehCovInit()
 			foreach __v of local __bcvall {
@@ -2549,7 +2568,7 @@ program nwsaom, eclass
 		if "`beheff'" != "" {
 			local __nwsaom_newbeh "indeg outdeg recipdeg isolate outisolate totalt avaltpop totaltpop maxalt minalt avrecalt totrecalt totsim avatthigher avattlower totatthigher totattlower avsimpopalt totsimpopalt avsimpopego"
 			foreach __e of local beheff {
-				if !`: list __e in __nwsaom_newbeh' & !regexm("`__e'", "^(effcov|avxalt|avsamexalt|totxalt|totsamexalt)[1-8]$") {
+				if !`: list __e in __nwsaom_newbeh' & !regexm("`__e'", "^((effcov|avxalt|avsamexalt|totxalt|totsamexalt)[1-8]|bs[0-9]+_[1-8])$") {
 					di "{err}beheff(): unknown effect {bf:`__e'}; available: `__nwsaom_newbeh'."
 					error 198
 				}

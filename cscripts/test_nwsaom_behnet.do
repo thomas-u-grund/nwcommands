@@ -94,4 +94,16 @@ if _rc == 0 {
 	local cn : colnames e(b)
 	assert strpos("`cn'", "beh_from_tw") & strpos("`cn'", "beh_avxalt_tw")
 }
+* behavior effects of the network x a covariate (behx(family:var), protocol 43)
+foreach fm in avxinalt totxrecalt avsamexinalt totrecaltsamex avaltaltx avsimaltx minxalt maxxalt degabscontrx {
+	capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) behx(`fm':cv1) k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 {
+		assert "`e(engine)'" == "native" & colsof(e(b)) == 4
+		local cn : colnames e(b)
+		assert strpos("`cn'", "beh_`fm'_cv1")
+	}
+}
+capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) behx(nosuchfamily:cv1) k3(30)
+assert _rc == 198
 di as text "behavior network effects PASS"
