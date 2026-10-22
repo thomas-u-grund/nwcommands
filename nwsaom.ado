@@ -197,7 +197,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(varlist numeric) DIFFXTRANSTRIP(varlist numeric) SIMXTRANSTRIP(varlist numeric) HOMXTRANSTRIP(varlist numeric) SAMEXOUTACT(varlist numeric) DIFFXOUTACT(varlist numeric) SAMEXRECIACT(varlist numeric) DIFFXRECIACT(varlist numeric) HOMXOUTACT(varlist numeric) ALTXOUTACT(varlist numeric) INPOPX(varlist numeric) OUTPOPX(varlist numeric) INACTX(varlist numeric) OUTACTX(varlist numeric) SAMEXINPOP(varlist numeric) DIFFXINPOP(varlist numeric) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -545,7 +545,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx inpopc outpopc outactc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact outtrunc outmore outthreshold outinv outsqinv gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1087,7 +1087,7 @@ program nwsaom, eclass
 		// are absent, and this package implements none of those
 		// interaction forms regardless, so no restriction is needed for
 		// the covariate family.
-		if "`cycle3'" != "" | "`inactivity'" != "" | "`inpop'" != "" | "`outpop'" != "" | "`inact'" != "" | "`outactsqrt'" != "" | "`outpopularity'" != "" | "`ininass'" != "" | "`inoutass'" != "" | "`outoutass'" != "" | "`antiiso'" != "" | "`isolatepop'" != "" | "`transrectrip'" != "" | "`transtrip'" != "" {
+		if "`cycle3'" != "" | "`inactivity'" != "" | "`outpop'" != "" | "`inact'" != "" | "`outpopularity'" != "" | "`ininass'" != "" | "`inoutass'" != "" | "`outoutass'" != "" | "`antiiso'" != "" | "`isolatepop'" != "" | "`transrectrip'" != "" | "`transtrip'" != "" {
 			di "{err}under {bf:symmetric}, {bf:cycle3}/{bf:inactivity}/{bf:outpopularity}/{bf:ininass}/{bf:inoutass}/{bf:outoutass}/{bf:antiiso}/{bf:isolatepop}/{bf:transrectrip}/{bf:transtrip} are each either a constant, an exact duplicate of an already-available effect, or an effect real RSiena itself does not offer for a non-directed relation (confirmed against RSiena's own real {bf:getEffects()} output, not assumed) - {bf:outdegree}/{bf:indegpopularity}/{bf:outactivity}/{bf:cycle4}/{bf:isolatenet}/{bf:outiso}/{bf:antiiniso}/{bf:antiiniso2}/{bf:outinass}/{bf:gwesp}/{bf:transties}/{bf:balance} and every covariate effect remain available."
 			error 198
 		}
@@ -1503,6 +1503,44 @@ program nwsaom, eclass
 			}
 		}
 	}
+	// protocol 40: centred / combined degree effects, avDeg, transTriads (native only; the observed statistic is evaluated in Mata)
+	foreach __dk in inpopc outpopc outactc inactc degplus degplusc transtriads avdeg {
+		if "``__dk''" != "" {
+			if "`__dk'" == "transtriads" & "`symmetric'" == "" {
+				di "{err}{bf:transtriads} is RSiena's triangle count for a non-directed relation; use {bf:symmetric} (for a directed relation see transtrip)."
+				error 198
+			}
+			if "`symmetric'" == "" & inlist("`__dk'", "degplus", "degplusc") {
+				di "{err}{bf:`__dk'} is offered by RSiena for a non-directed relation only; use {bf:symmetric}."
+				error 198
+			}
+			if "`symmetric'" != "" & inlist("`__dk'", "outpopc", "inactc") {
+				di "{err}{bf:`__dk'} duplicates inpopc/outactc under {bf:symmetric} (RSiena offers inPop.c and outAct.c)."
+				error 198
+			}
+			tempname __td_df
+			mata: `__td_df' = ErgmTermData()
+			if "`__dk'" == "avdeg" {
+				capture confirm number ``__dk''
+				if _rc {
+					di "{err}{bf:avdeg()} needs the centring constant, e.g. {bf:avdeg(2)} (RSiena's default is 2)."
+					error 198
+				}
+				mata: `__td_df'.decay = ``__dk''
+			}
+			else {
+				// RSiena: average in-/out-degree over all waves (degPlus.c: twice the average out-degree)
+				mata: __nwsaom_dfc = 0
+				forvalues __w = 1/`__nwsaom_nwaves' {
+					mata: __nwsaom_dfc = __nwsaom_dfc + sum(__nwsaom_last_G`__w'.to_dense() :!= 0) / (`nodes' * `__nwsaom_nwaves')
+				}
+				mata: `__td_df'.decay = __nwsaom_dfc * ("`__dk'" == "degplusc" ? 2 : 1)
+				capture mata: mata drop __nwsaom_dfc
+			}
+			mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_df', ("`__dk'"))
+			local __nwsaom_efflist "`__nwsaom_efflist' `__dk'"
+		}
+	}
 	foreach __dk in absdiffx egoxaltx {
 		if "``__dk''" != "" {
 			unab `__dk' : ``__dk''
@@ -1570,10 +1608,6 @@ program nwsaom, eclass
 	// one term per value given
 	foreach __e in outtrunc outmore outthreshold outinv outsqinv {
 		if "``__e''" != "" {
-			if "`symmetric'" != "" {
-				di "{err}{bf:`__e'()} is not available for a non-directed relation ({bf:symmetric})."
-				error 198
-			}
 			foreach __cv of local `__e' {
 				tempname __td_df
 				mata: `__td_df' = ErgmTermData()
@@ -1621,10 +1655,6 @@ program nwsaom, eclass
 		local __e "`__o'"
 		if "`__e'" == "dblnbrdist2" local __e "nbrdist2twice"
 		if "``__o''" != "" {
-			if "`symmetric'" != "" {
-				di "{err}{bf:`__e'} is not available for a non-directed relation ({bf:symmetric})."
-				error 198
-			}
 			tempname __td_nd
 			mata: `__td_nd' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_nd', ("`__e'"))
@@ -1632,10 +1662,6 @@ program nwsaom, eclass
 		}
 	}
 	if "`between'" != "" {
-		if "`symmetric'" != "" {
-			di "{err}{bf:between} is not available for a non-directed relation ({bf:symmetric})."
-			error 198
-		}
 		tempname __td_bt
 		mata: `__td_bt' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("between", 1, &stat_saom_between(), &change_saom_between(), `__td_bt', ("between"))

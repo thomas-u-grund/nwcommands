@@ -3018,6 +3018,65 @@ real rowvector change_saom_samexinpop(class ErgmGraph scalar G, real scalar i, r
 real rowvector stat_saom_diffxinpop(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_cxstat(15, G, td))
 real rowvector change_saom_diffxinpop(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_cxchg("diffxinpop"))
 
+/* protocol 40: centred / combined degree effects and transTriads (RSiena inPop.c, outPop.c, outAct.c, inAct.c, degPlus, degPlus.c, avDeg,
+   transTriads). NATIVE ONLY: Mata evaluates the observed statistic (arcs of the graph, td.decay = the centring constant); the simulation
+   needs the plugin (protocol 40). */
+real scalar _saom_dfstat(real scalar v, class ErgmGraph scalar G, class ErgmTermData scalar td) {
+	real rowvector nb, nbj, nbi
+	real colvector dout, din
+	real scalar i, m, j, tot, n, D, h, c
+	n = G.n
+	c = td.decay
+	dout = J(n, 1, 0)
+	din = J(n, 1, 0)
+	for (i=1; i<=n; i++) {
+		nb = G.neighbors_out(i)
+		dout[i] = cols(nb)
+		for (m=1; m<=cols(nb); m++) din[nb[m]] = din[nb[m]] + 1
+	}
+	D = sum(dout)
+	if (v == 6) return(D * (D / n - c))
+	tot = 0
+	for (i=1; i<=n; i++) {
+		nb = G.neighbors_out(i)
+		for (m=1; m<=cols(nb); m++) {
+			j = nb[m]
+			if (v == 0) tot = tot + din[j] - c
+			else if (v == 1) tot = tot + dout[j] - c
+			else if (v == 2) tot = tot + dout[i] - c
+			else if (v == 3) tot = tot + din[i] - c
+			else if (v == 4) tot = tot + din[j] + dout[i]
+			else if (v == 5) tot = tot + din[j] + dout[i] - c
+			else {
+				nbi = G.neighbors_out(i)
+				for (h=1; h<=cols(nbi); h++) tot = tot + G.has_edge(nbi[h], j)
+			}
+		}
+	}
+	return(v == 7 ? tot / 6 : tot)
+}
+real rowvector _saom_dfchg(string scalar nm) {
+	errprintf("nwsaom: " + nm + " needs the native plugin (protocol 40 or later); there is no Mata implementation of this effect.\n")
+	exit(198)
+	return(0)
+}
+real rowvector stat_saom_inpopc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(0, G, td))
+real rowvector change_saom_inpopc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("inpopc"))
+real rowvector stat_saom_outpopc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(1, G, td))
+real rowvector change_saom_outpopc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("outpopc"))
+real rowvector stat_saom_outactc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(2, G, td))
+real rowvector change_saom_outactc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("outactc"))
+real rowvector stat_saom_inactc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(3, G, td))
+real rowvector change_saom_inactc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("inactc"))
+real rowvector stat_saom_degplus(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(4, G, td))
+real rowvector change_saom_degplus(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("degplus"))
+real rowvector stat_saom_degplusc(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(5, G, td))
+real rowvector change_saom_degplusc(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("degplusc"))
+real rowvector stat_saom_avdeg(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(6, G, td))
+real rowvector change_saom_avdeg(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("avdeg"))
+real rowvector stat_saom_transtriads(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_dfstat(7, G, td))
+real rowvector change_saom_transtriads(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_dfchg("transtriads"))
+
 /* is this term instance a covariate effect with a missing-value mask? */
 real scalar _saom_cov_masked(class ErgmTermData scalar td, string scalar nm, real scalar n) {
 	return((nm == "nodematch" | nm == "nodecov" | nm == "nodeicov" | nm == "nodeocov" | nm == "simcov" | nm == "absdiffx" | nm == "egoxaltx" | ///
@@ -8584,7 +8643,7 @@ real scalar SaomNativeAvailable(){
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
-	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39
+	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40
 	string scalar nm, nmb
 	string rowvector nms
 
@@ -8603,6 +8662,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv33 = 0
 	needv34 = 0
 	needv39 = 0
+	needv40 = 0
 	needv9 = 0
 	needv10 = 0
 	needv12 = 0
@@ -8689,6 +8749,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.attr : (cfg.attrmat, tdt.attr))
 			if (nm == "simxtranstrip") cfg.p1[t] = tdt.center
 			needv39 = 1
+		}
+		else if (nm == "inpopc" | nm == "outpopc" | nm == "outactc" | nm == "inactc" | nm == "degplus" | nm == "degplusc" | nm == "avdeg" | nm == "transtriads") {
+			cfg.termcodes[t] = 181 + (nm == "inpopc" ? 0 : (nm == "outpopc" ? 1 : (nm == "outactc" ? 2 : (nm == "inactc" ? 3 : (nm == "degplus" ? 4 : (nm == "degplusc" ? 5 : (nm == "avdeg" ? 6 : 7)))))))
+			tdt = *M.td[t]
+			cfg.p1[t] = tdt.decay
+			needv40 = 1
 		}
 		else if (nm == "dyadcov" | nm == "dyadcovrecip") {
 			// protocol 15: the n x n matrix goes to the plugin as n attribute columns (column i = row i)
@@ -9040,6 +9106,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 24) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 24 (missing values in the covariate variants)"
+		}
+	}
+	if (cfg.eligible & needv40) {
+		if (SaomNativePluginVersion() < 40) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 40 (centred / combined degree effects, avDeg, transTriads)"
 		}
 	}
 	if (cfg.eligible & needv39) {
@@ -9811,6 +9883,14 @@ string scalar _SaomRSLabel1(string scalar term, string scalar coef, real scalar 
 	if (term == "outactx") return(v + " outdegree activity weighted by x")
 	if (term == "samexinpop") return(v + " indegree popularity from same x")
 	if (term == "diffxinpop") return(v + " indegree popularity from different x")
+	if (term == "inpopc") return("indegree popularity (centred)")
+	if (term == "outpopc") return("outdegree popularity (centred)")
+	if (term == "outactc") return("outdegree activity (centred)")
+	if (term == "inactc") return("indegree activity (centred)")
+	if (term == "degplus") return("degree activity + popularity")
+	if (term == "degplusc") return("degree activity + popularity (centred)")
+	if (term == "avdeg") return("average degree")
+	if (term == "transtriads") return("transitive triads")
 	if (term == "absdiffx") return(v + " abs. difference")
 	if (term == "diffx") return(v + " difference")
 	if (term == "higher") return(v + " higher")
