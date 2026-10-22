@@ -4173,42 +4173,51 @@ void SaomTimedFromVars(real scalar n, real scalar W, string scalar jv, string sc
    logic. The rate score's compensator is the time-integral of the active
    rates (SaomTimedIntegral()).
    =================================================================== */
-void SaomTimedInit(struct SaomNetCtx scalar C) {
+/* loads the externals into (presentPd = active at the start of each period, compEv, npresentPd = the time-integrated number
+   of active actors); returns 0 if no composition change at fractional times was set */
+real scalar SaomTimedLoad(real scalar n, real scalar P, real matrix presentPd, pointer(real matrix) rowvector compEv,
+	real rowvector npresentPd) {
 	pointer(real matrix) scalar ps, pe
 	real matrix ev, evp
 	real scalar pd
 
-	C.hastimed = 0
-	C.compEv = J(1, C.P, NULL)
 	ps = findexternal("__nwsaom_compstart")
-	if (ps == NULL) return
-	if (rows(*ps) != C.n | cols(*ps) != C.P) {
+	if (ps == NULL) return(0)
+	if (rows(*ps) != n | cols(*ps) != P) {
 		errprintf("internal error: the composition-change start matrix must be n x P\n")
 		exit(498)
 	}
-	C.hastimed = 1
-	C.haspresent = 1
-	C.presentPd = *ps
+	presentPd = *ps
 	pe = findexternal("__nwsaom_compev")
 	ev = (pe == NULL ? J(0, 4, 0) : *pe)
 	if (rows(ev) == 0) ev = J(0, 4, 0)
-	for (pd=1; pd<=C.P; pd++) {
+	compEv = J(1, P, NULL)
+	npresentPd = J(1, P, 0)
+	for (pd=1; pd<=P; pd++) {
 		evp = select(ev[., 2..4], ev[., 1] :== pd)
 		if (rows(evp) > 0) evp = sort(evp, 1)
 		else evp = J(0, 3, 0)
-		C.compEv[pd] = &(evp :+ 0)
-		C.npresentPd[pd] = SaomTimedIntegral(C, pd, J(C.n, 1, 1))
+		compEv[pd] = &(evp :+ 0)
+		npresentPd[pd] = SaomTimedIntegralG(presentPd[., pd], evp, J(n, 1, 1))
+	}
+	return(1)
+}
+
+void SaomTimedInit(struct SaomNetCtx scalar C) {
+	C.hastimed = 0
+	C.compEv = J(1, C.P, NULL)
+	if (SaomTimedLoad(C.n, C.P, C.presentPd, C.compEv, C.npresentPd)) {
+		C.hastimed = 1
+		C.haspresent = 1
 	}
 }
 
-/* the time-integral over the period of sum_i w_i * active_i(t) */
-real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real colvector w) {
+/* the time-integral over the period of sum_i w_i * active_i(t); act0 = active at the start, ev = (time, actor, type) sorted */
+real scalar SaomTimedIntegralG(real colvector act0, real matrix ev, real colvector w) {
 	real colvector act
-	real matrix ev
 	real scalar t, tot, s
 
-	ev = *C.compEv[pd]
-	act = (C.presentPd[., pd] :!= 0)
+	act = (act0 :!= 0)
 	t = 0
 	tot = 0
 	for (s=1; s<=rows(ev); s++) {
@@ -4217,6 +4226,10 @@ real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real c
 		t = ev[s,1]
 	}
 	return(tot + (1 - t) * sum(w :* act))
+}
+
+real scalar SaomTimedIntegral(struct SaomNetCtx scalar C, real scalar pd, real colvector w) {
+	return(SaomTimedIntegralG(C.presentPd[., pd], *C.compEv[pd], w))
 }
 
 void SaomSetTie(class ErgmGraph scalar G, real scalar i, real scalar j, real scalar v) {
@@ -6964,7 +6977,9 @@ struct SaomCoevCtx {
 	real rowvector targetRateNet, targetRateBeh, npresentPd
 	real matrix missDyadsPd		// stacked (period, i, j)
 	real matrix missBehPd			// n x nperiods, 0/1
-	real matrix presentPd			// n x nperiods, 0/1
+	real matrix presentPd			// n x nperiods, 0/1 (timed composition change: active at the start of the period)
+	real scalar hastimed			// composition change at fractional times (joinat()/leaveat())
+	pointer(real matrix) rowvector compEv
 	real scalar perok		// the plugin returns per-period statistics and scores (protocol 18+)
 }
 
@@ -6982,6 +6997,65 @@ real rowvector SaomCoevStatBeh(class SaomBehavior scalar Beh, class ErgmGraph sc
 	Bm.init(Beh.values, Beh.minval, Beh.maxval, Beh.overallMean, Beh.simMean)
 	for (i=1; i<=Beh.n; i++) if (missBeh[i] != 0) Bm.setvalue(i, Beh.overallMean)
 	return(Mbeh.full_statistic(Bm, Gstat))
+}
+
+/* one period of a co-evolution model with composition change at fractional times, see SaomPeriodTimed(): segments of constant
+   composition by the ordinary engines (rate*duration), the network joiner/leaver rules between them, the behavior of an inactive
+   actor put back to its starting value at the end of a period with events. The statistics are evaluated here, on the final state. */
+void SaomCoevPeriodTimed(struct SaomCoevCtx scalar C, class ErgmModel scalar M, class SaomBehaviorModel scalar Mbeh,
+	real rowvector thetaNet, real rowvector thetaBeh, real scalar rateNet, real scalar rateBeh, real scalar pd,
+	class SaomBehavior scalar Behwork, real colvector behStart, real colvector missBeh,
+	struct SaomCoevScoredResult scalar sres, real rowvector statNet, real rowvector statBeh, real scalar distNet) {
+
+	struct SaomCoevScoredResult scalar seg
+	class ErgmGraph scalar Gwork
+	real colvector act
+	real matrix ev, mdy
+	real scalar t, s, tend, d, j
+
+	ev = *C.compEv[pd]
+	act = (C.presentPd[., pd] :!= 0)
+	Gwork = ErgmGraph()
+	SaomCopyGraph(*C.Gwaves[pd], Gwork)
+	mdy = J(0, 2, 0)
+	if (C.use_native & rows(C.missDyadsPd) > 0) {
+		mdy = select(C.missDyadsPd[., 2..3], C.missDyadsPd[., 1] :== pd)
+		if (rows(mdy) == 0) mdy = J(0, 2, 0)
+	}
+	sres.stepsNet = 0
+	sres.stepsBeh = 0
+	sres.scoreNet = J(1, C.pNet, 0)
+	sres.scoreBeh = J(1, C.pBeh, 0)
+	t = 0
+	for (s=1; s<=rows(ev)+1; s++) {
+		tend = (s <= rows(ev) ? ev[s,1] : 1)
+		d = tend - t
+		if (d > 1e-12) {
+			if (C.use_native) seg = SaomSimulateIntervalCoevNative(Gwork, M, C.cfg, thetaNet, Behwork, Mbeh, C.cfgBeh, thetaBeh, rateNet*d, rateBeh*d, 1, mdy, missBeh, act)
+			else seg = SaomSimulateIntervalCoevScored(Gwork, M, thetaNet, Behwork, Mbeh, thetaBeh, rateNet*d, rateBeh*d, act)
+			sres.stepsNet = sres.stepsNet + seg.stepsNet
+			sres.stepsBeh = sres.stepsBeh + seg.stepsBeh
+			sres.scoreNet = sres.scoreNet + seg.scoreNet
+			sres.scoreBeh = sres.scoreBeh + seg.scoreBeh
+		}
+		if (s <= rows(ev)) SaomTimedApply(Gwork, *C.Gwaves[pd], ev[s,2], ev[s,3], act)
+		t = tend
+	}
+	if (rows(ev) > 0) {
+		for (j=1; j<=C.n; j++) if (!act[j]) {
+			SaomTimedApply(Gwork, *C.Gwaves[pd], j, 3, act)
+			Behwork.setvalue(j, behStart[j])
+		}
+	}
+	if (C.hasmiss) {
+		statNet = SaomMaskedStatistic(Gwork, M, *C.missMaskNetPd[pd])
+		distNet = SaomCountDifferingMasked(*C.Gwaves[pd], Gwork, *C.missMaskNetPd[pd])
+	}
+	else {
+		statNet = M.full_statistic(Gwork)
+		distNet = SaomCountDiffering(*C.Gwaves[pd], Gwork)
+	}
+	statBeh = SaomCoevStatBeh(Behwork, *C.GpStat[pd], Mbeh, missBeh)
 }
 
 /* One simulated replicate over every period at parameter vector `theta'
@@ -7018,7 +7092,10 @@ void SaomCoevReplicate(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 		Behwork = SaomBehavior()
 		Behwork.init(behStart, C.behminval, C.behmaxval, C.overallMean, C.simMean)
 
-		if (C.use_native) {
+		if (C.hastimed) {
+			SaomCoevPeriodTimed(C, M, Mbeh, thetaNet, thetaBeh, rateNet, rateBeh, pd, Behwork, behStart, missBeh, sres, statNet, statBeh, distNet)
+		}
+		else if (C.use_native) {
 			if (C.needsExtras) {
 				mdy = (rows(C.missDyadsPd) ? select(C.missDyadsPd[.,2..3], C.missDyadsPd[.,1] :== pd) : J(0, 2, 0))
 				if (rows(mdy) == 0) mdy = J(0, 2, 0)
@@ -7215,6 +7292,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		for (pd=1; pd<=P; pd++) C.presentPd[.,pd] = presentMat[.,pd] :* presentMat[.,pd+1]
 	}
 	C.npresentPd = colsum(C.presentPd)
+	C.compEv = J(1, P, NULL)
+	C.hastimed = SaomTimedLoad(n, P, C.presentPd, C.compEv, C.npresentPd)
+	if (C.hastimed) C.haspresent = 1
 	C.hasmiss = (args() >= 14)
 	if (C.hasmiss) C.hasmiss = (cols(missMaskNetPd) > 0)
 	// network endowment/creation (a 15th, trailing argument: the role of every network term)
@@ -7252,6 +7332,12 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
+		// the alters of an active ego include the inactive actors (RSiena), protocol 26
+		if (C.haspresent & k < 26) {
+			C.use_native = 0
+			C.use_batch = 0
+		}
+		if (C.hastimed) C.use_batch = 0
 		// behavior endowment/creation from protocol 12 on (RSiena's
 		// statistics; protocol 11 had the linear one for every split)
 		if (any(C.cfgBeh.fntype :!= 0) & k < 12) {

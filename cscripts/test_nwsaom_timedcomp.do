@@ -48,6 +48,16 @@ nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity joinat(jn) k0(30) k3(100) seed(
 nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity leaveat(lv) ratecov(jn) k0(30) k3(100) seed(3)
 di as text "joinat() / leaveat() alone, with ratecov() PASS"
 
+* co-evolving behavior with timed composition change
+gen double bh1 = mod(_n * 3, 5)
+gen double bh2 = mod(_n * 3 + (_n > 10), 5)
+gen double bh3 = mod(_n * 3 + (_n > 10) + (_n > 20), 5)
+nwsaom, waves(tc1 tc2 tc3) outdegree reciprocity behavior(bh1 bh2 bh3 : linear quadratic) joinat(jn) leaveat(lv) k0(30) k3(100) seed(4)
+assert e(b)[1,1] < .
+di as text "behavior() with joinat()/leaveat() PASS"
+capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree behavior(bh1 bh2 bh3 : linear behsim) joinat(jn) leaveat(lv) k3(50)
+assert _rc == 198
+
 * invalid input
 capture noisily nwsaom, waves(tc1 tc2 tc3) outdegree joinat(jn) leaveat(lv) present(jn jn jn) k3(50)
 assert _rc == 198

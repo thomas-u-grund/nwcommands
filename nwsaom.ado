@@ -676,7 +676,15 @@ program nwsaom, eclass
 				confirm numeric variable ``__opt''
 			}
 		}
-		foreach __opt in symmetric symtype behavior endow creation tvcov {
+		foreach __opt in symmetric symtype endow creation tvcov {
+			if "``__opt''" != "" {
+				di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with {bf:`__opt'}."
+				error 198
+			}
+		}
+		// co-evolution: the lagged behavior statistics (behsim, endowment/creation) need the period-start state inside the segments
+		foreach __opt in behsim linearendow linearcreation quadraticendow quadraticcreation avaltendow avaltcreation avsimendow avsimcreation ///
+			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation {
 			if "``__opt''" != "" {
 				di "{err}{bf:joinat()}/{bf:leaveat()} cannot yet be combined with {bf:`__opt'}."
 				error 198
