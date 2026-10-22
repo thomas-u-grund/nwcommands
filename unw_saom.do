@@ -743,7 +743,8 @@ struct SaomScoredResult scalar SaomSimIntScoredRateCov(class ErgmGraph scalar G,
 	// below) - omitting that same `rate' factor here under-scaled the
 	// compensator relative to the jump term, which fires at the TRUE
 	// combined rate `rate*wfull[i]'. Fixed by including it explicitly.
-	covrateSum = rate * (wfull * ratecovattr)
+	// composition change: an absent actor has rate 0, so the compensator sums over the present actors only (RSiena's lrate[i] = 0)
+	covrateSum = rate * (haspresent ? wfull[presentIdx] * ratecovattr[presentIdx, .] : wfull * ratecovattr)
 
 	t = 0
 	while (iscond ? (res.steps == 0 | simDist < condtarget) : (t < 1)) {
@@ -3503,7 +3504,7 @@ real scalar SaomCountDiffering(class ErgmGraph scalar G1, class ErgmGraph scalar
    accumulator) already works for the eval parameters' own deviation).
    =================================================================== */
 real rowvector SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGraph scalar G2,
-	real matrix ratecovattr) {
+	real matrix ratecovattr, | real matrix missMask) {
 
 	real matrix t1, t2
 	real scalar k
@@ -3513,8 +3514,14 @@ real rowvector SaomCovariateDifferingSum(class ErgmGraph scalar G1, class ErgmGr
 	t1 = G1.all_ties()
 	t2 = G2.all_ties()
 	s = J(1, cols(ratecovattr), 0)
-	for (k=1; k<=rows(t1); k++) if (!G2.has_edge(t1[k,1], t1[k,2])) s = s + ratecovattr[t1[k,1],.]
-	for (k=1; k<=rows(t2); k++) if (!G1.has_edge(t2[k,1], t2[k,2])) s = s + ratecovattr[t2[k,1],.]
+	for (k=1; k<=rows(t1); k++) {
+		if (args() >= 4) if (rows(missMask) > 0) if (missMask[t1[k,1], t1[k,2]] != 0) continue		// missing dyads do not count
+		if (!G2.has_edge(t1[k,1], t1[k,2])) s = s + ratecovattr[t1[k,1],.]
+	}
+	for (k=1; k<=rows(t2); k++) {
+		if (args() >= 4) if (rows(missMask) > 0) if (missMask[t2[k,1], t2[k,2]] != 0) continue
+		if (!G1.has_edge(t2[k,1], t2[k,2])) s = s + ratecovattr[t2[k,1],.]
+	}
 	return(s)
 }
 
@@ -4162,7 +4169,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 			C.targetRate[pd] = SaomCountDiffering(*Gwaves[pd], *Gwaves[pd+1])
 		}
 		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1], (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
-		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr)
+		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr, (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
 	}
 
 	// native dispatch, decided once per fit. Endowment/creation gating
@@ -4228,7 +4235,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	struct SaomScoredResult scalar sres
 	class ErgmGraph scalar Gwork
 	real rowvector theta, stat
-	real colvector pres, presNat
+	real colvector pres, presNat, pmask
 	real matrix mdy
 	real scalar pd, p, P, rate, steps, netdist, active, rebuild, K
 	real rowvector ratecoef, rcstat, rcscore, rcix, scpd
@@ -4267,7 +4274,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 				if (C.hasratecov) cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate, 1, want_score, mdy, presNat, C.symtype, C.ratecovattr, ratecoef)
 				else cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, rate, 1, want_score, mdy, presNat, C.symtype)
 				if (C.hasratecov) {
-					rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+					rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 					if (want_score) rcscore = cres.rcscore
 				}
 				if (C.native_netdist) netdist = cres.netdist
@@ -4312,7 +4319,7 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 				netdist = SaomCountDiffering(*C.Gwaves[pd], Gwork)
 			}
 			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
-			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
 		dev[p + pd] = netdist - C.targetRate[pd]
@@ -4324,10 +4331,12 @@ void SaomNetReplicate(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 		}
 		if (want_score) {
 			sco[1..p] = sco[1..p] + scpd
-			active = (K ? sum(exp(C.ratecovattr * ratecoef')) : C.npresentPd[pd])
+			// present actors only (RSiena: rate 0 for absent actors)
+			pmask = (C.presentPd[., pd] :!= 0)
+			active = (K ? sum(exp(C.ratecovattr * ratecoef') :* pmask) : C.npresentPd[pd])
 			// pairwise models with ratecov(): total rate rate * (S^2 -
 			// sum w^2) / (n - 1), see saom_sim.c
-			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')))) / (C.n - 1)
+			if (C.hasratecov & C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')) :* pmask)) / (C.n - 1)
 			sco[p + pd] = steps / rate - active
 			if (K) sco[rcix] = sco[rcix] + rcscore
 			if (wantp) {
@@ -4445,7 +4454,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			if (C.hasratecov) {
 				SaomCopyGraph(*C.Gwaves[pd], Gwork)
 				cres = SaomSimulateIntervalNative(Gwork, M, C.cfg, theta, 1, 1, want_score, mdy, presNat, C.symtype, rcattr, ratecoef, ct)
-				rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+				rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 				if (want_score) rcscore = cres.rcscore
 			}
 			else cres = SaomSimulateIntervalNative(*C.Gwaves[pd], M, C.cfg, theta, 1, 0, want_score, mdy, presNat, C.symtype, rcattr, 0, ct)
@@ -4469,7 +4478,7 @@ void SaomNetReplicateCond(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 			}
 			stat = (C.hasmiss ? SaomMaskedStatistic(Gwork, M, *C.missMaskPd[pd]) : M.full_statistic(Gwork))
 			if (C.hasnetgate) stat = SaomNetworkPatchEndowCreation(M, C.fntype, stat, *C.Gwaves[pd], Gwork, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
-			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr)
+			if (C.hasratecov) rcstat = SaomCovariateDifferingSum(*C.Gwaves[pd], Gwork, C.ratecovattr, (C.hasmiss ? *C.missMaskPd[pd] : J(0, 0, 0)))
 		}
 		dev[1..p] = dev[1..p] + (stat - C.target[pd, .])
 		if (want_score) sco[1..p] = sco[1..p] + scpd
@@ -4619,8 +4628,8 @@ real scalar SaomActiveRate(struct SaomNetCtx scalar C, real rowvector par, real 
 	K = C.hasratecov
 	if (!K) return(C.npresentPd[pd])
 	ratecoef = par[(C.ptot-K+1)..C.ptot]
-	active = sum(exp(C.ratecovattr * ratecoef'))
-	if (C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')))) / (C.n - 1)
+	active = sum(exp(C.ratecovattr * ratecoef') :* (C.presentPd[., pd] :!= 0))
+	if (C.symtype >= 1 & C.symtype <= 3) active = (active^2 - sum(exp(2 :* (C.ratecovattr * ratecoef')) :* (C.presentPd[., pd] :!= 0))) / (C.n - 1)
 	return(active)
 }
 

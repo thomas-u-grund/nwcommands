@@ -865,12 +865,8 @@ program nwsaom, eclass
 			di "{err}{bf:ratecov()} is not yet supported for co-evolution models."
 			error 198
 		}
-		if `__nwsaom_haspresent' {
-			di "{err}{bf:ratecov()} cannot currently be combined with {bf:present()} (composition change) - not yet supported together."
-			error 198
-		}
-		if `__nwsaom_hasmissnet' {
-			di "{err}{bf:ratecov()} cannot currently be combined with {bf:missnet()} - not yet supported together."
+		if `__nwsaom_haspresent' & "`symmetric'" != "" {
+			di "{err}{bf:ratecov()} with {bf:present()} is not yet supported for a non-directed relation ({bf:symmetric})."
 			error 198
 		}
 	}
