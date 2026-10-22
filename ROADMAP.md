@@ -18,7 +18,8 @@ areas, and preserve compatibility for everything already shipped.
   native (C) MCMC backend for performance.
 - `nwsaom` — stochastic actor-oriented models (Snijders-style SAOM), including the full RSiena
   effect catalog for wave 1, multi-wave chaining, standard errors, network/behavior co-evolution,
-  composition change (joiners and leavers at fractional times, exactly as RSiena), and missing-data
+  composition change (joiners and leavers at fractional times, exactly as RSiena), `nwsaom_meta` (multi-group
+  meta-analysis of separate fits, as RSiena's `siena08`), and missing-data
   handling (including missing covariate values), with a
   native (C) backend for the ministep sampler. Also: endowment/creation splits of the main network
   effects (`endow()`/`creation()`), dyadic covariates, undirected (symmetric) relations over several
@@ -80,8 +81,6 @@ scale.
 
 - Leiden community detection, refining Louvain's known tendency toward badly-connected
   communities.
-- `nwsaom`: a multi-group meta-analysis of separate Method-of-Moments fits (many small networks, such as
-  classrooms, pooled with random effects, as RSiena's `siena08`).
 - Larger-scale layouts for `nwplot` (current layouts are designed for graphs up to a few hundred
   to low thousands of nodes).
 - Faster `nwplot` layout computation — the current (Mata) layout algorithm is noticeably slow;

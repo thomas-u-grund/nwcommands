@@ -1159,6 +1159,323 @@ real rowvector change_saom_nbrdist2(class ErgmGraph scalar G, real scalar i, rea
 real rowvector stat_saom_nbrdist2twice(class ErgmGraph scalar G, class ErgmTermData scalar td) return(_saom_nbrdist2_stat(G, 2))
 real rowvector change_saom_nbrdist2twice(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) return(_saom_nbrdist2_change(G, i, j, 2))
 
+
+/* ===================================================================
+   MULTI-GROUP META-ANALYSIS of separate nwsaom fits (RSiena's siena08, R/siena08.r, iwlsm.R, observationErrors.r; Snijders & Baerveldt 2003).
+   Per effect, from the group estimates theta_j and standard errors s_j: the IWLS (robust random-effects) mean, the t test, the heterogeneity
+   test Q, Fisher's combination of one-sided tests, and the ML estimate of mean and between-group standard deviation under normality with
+   profile-likelihood confidence intervals. R's optimize() (Brent fmin) and uniroot() (Brent zeroin) are ported with their default tolerances.
+   The only difference from R: the correlation diagnostic between estimates and standard errors uses the normal-theory t approximation for its p value.
+   =================================================================== */
+real scalar _saom_meta_dev(real scalar mu, real scalar sig, real colvector x, real colvector se) {
+	real colvector v
+	v = sig^2 :+ se:^2
+	return(sum((x :- mu):^2 :/ v) + sum(ln(v)))
+}
+/* objective of kind: 1 = deviance(mu = p1, sig = t); 2 = deviance(mu = t, sig = p1); 3 = profile deviance for mu = t; 4 = profile deviance for sigma = t */
+real scalar _saom_meta_f(real scalar kind, real scalar t, real scalar p1, real colvector x, real colvector se) {
+	real colvector r
+	if (kind == 1) return(_saom_meta_dev(p1, t, x, se))
+	if (kind == 2) return(_saom_meta_dev(t, p1, x, se))
+	if (kind == 3) {
+		r = _saom_meta_fmin(1, 0, max(x) - min(x), t, x, se)
+		return(r[2])
+	}
+	r = _saom_meta_fmin(2, min(x), max(x), t, x, se)
+	return(r[2])
+}
+/* R's optimize(): Brent's fmin, tol = .Machine$double.eps^0.25; returns (minimum, objective) */
+real rowvector _saom_meta_fmin(real scalar kind, real scalar a, real scalar b, real scalar p1, real colvector x, real colvector se) {
+	real scalar c, eps, v, w, xx, d, e, fx, fv, fw, tol3, xm, tol1, t2, p, q, r, u, fu, tol
+	tol = 2.220446049250313e-16^0.25
+	c = (3 - sqrt(5)) * 0.5
+	eps = sqrt(2.220446049250313e-16)
+	v = a + c * (b - a)
+	w = v
+	xx = v
+	d = 0
+	e = 0
+	fx = _saom_meta_f(kind, xx, p1, x, se)
+	fv = fx
+	fw = fx
+	tol3 = tol / 3
+	while (1) {
+		xm = (a + b) * 0.5
+		tol1 = eps * abs(xx) + tol3
+		t2 = tol1 * 2
+		if (abs(xx - xm) <= t2 - (b - a) * 0.5) break
+		p = 0
+		q = 0
+		r = 0
+		if (abs(e) > tol1) {
+			r = (xx - w) * (fx - fv)
+			q = (xx - v) * (fx - fw)
+			p = (xx - v) * q - (xx - w) * r
+			q = (q - r) * 2
+			if (q > 0) p = -p
+			else q = -q
+			r = e
+			e = d
+		}
+		if (abs(p) >= abs(q * 0.5 * r) | p <= q * (a - xx) | p >= q * (b - xx)) {
+			if (xx < xm) e = b - xx
+			else e = a - xx
+			d = c * e
+		}
+		else {
+			d = p / q
+			u = xx + d
+			if (u - a < t2 | b - u < t2) {
+				d = tol1
+				if (xx >= xm) d = -d
+			}
+		}
+		if (abs(d) >= tol1) u = xx + d
+		else if (d > 0) u = xx + tol1
+		else u = xx - tol1
+		fu = _saom_meta_f(kind, u, p1, x, se)
+		if (fu <= fx) {
+			if (u < xx) b = xx
+			else a = xx
+			v = w
+			w = xx
+			xx = u
+			fv = fw
+			fw = fx
+			fx = fu
+		}
+		else {
+			if (u < xx) a = u
+			else b = u
+			if (fu <= fw | w == xx) {
+				v = w
+				fv = fw
+				w = u
+				fw = fu
+			}
+			else if (fu <= fv | v == xx | v == w) {
+				v = u
+				fv = fu
+			}
+		}
+	}
+	return((xx, fx))
+}
+/* maximum likelihood (mu, sigma, se(mu), deviance), R's maxlik() */
+real rowvector _saom_meta_maxlik(real colvector x, real colvector se) {
+	real rowvector opmu, inner
+	real scalar mu, dev, sig, semu
+	opmu = _saom_meta_fmin(3, min(x), max(x), 0, x, se)
+	mu = opmu[1]
+	dev = opmu[2]
+	inner = _saom_meta_fmin(1, 0, max(x) - min(x), mu, x, se)
+	sig = inner[1]
+	semu = sqrt(1 / sum(1 :/ (se:^2 :+ sig^2)))
+	return((mu, sig, semu, dev))
+}
+/* R's uniroot() (zeroin), f of kind/p-offset: root of g(t) = _saom_meta_f(kind, t, 0, x, se) - target */
+real scalar _saom_meta_g(real scalar kind, real scalar t, real scalar target, real colvector x, real colvector se) {
+	return(_saom_meta_f(kind + 2, t, 0, x, se) - target)
+}
+real scalar _saom_meta_uniroot(real scalar kind, real scalar target, real scalar ax, real scalar bx, real colvector x, real colvector se) {
+	real scalar a, b, c, fa, fb, fc, tol, tolact, newstep, prevstep, cb, t1, t2, p, q, it, EPS
+	EPS = 2.220446049250313e-16
+	tol = EPS^0.25
+	a = ax
+	b = bx
+	fa = _saom_meta_g(kind, a, target, x, se)
+	fb = _saom_meta_g(kind, b, target, x, se)
+	c = a
+	fc = fa
+	if (fa == 0) return(a)
+	if (fb == 0) return(b)
+	for (it=1; it<=1001; it++) {
+		prevstep = b - a
+		if (abs(fc) < abs(fb)) {
+			a = b
+			b = c
+			c = a
+			fa = fb
+			fb = fc
+			fc = fa
+		}
+		tolact = 2 * EPS * abs(b) + tol / 2
+		newstep = (c - b) / 2
+		if (abs(newstep) <= tolact | fb == 0) return(b)
+		if (abs(prevstep) >= tolact & abs(fa) > abs(fb)) {
+			cb = c - b
+			if (a == c) {
+				t1 = fb / fa
+				p = cb * t1
+				q = 1 - t1
+			}
+			else {
+				q = fa / fc
+				t1 = fb / fc
+				t2 = fb / fa
+				p = t2 * (cb * q * (q - t1) - (b - a) * (t1 - 1))
+				q = (q - 1) * (t1 - 1) * (t2 - 1)
+			}
+			if (p > 0) q = -q
+			else p = -p
+			if (p < (0.75 * cb * q - abs(tolact * q) / 2) & p < abs(prevstep * q / 2)) newstep = p / q
+		}
+		if (abs(newstep) < tolact) newstep = (newstep > 0 ? tolact : -tolact)
+		a = b
+		fa = fb
+		b = b + newstep
+		fb = _saom_meta_g(kind, b, target, x, se)
+		if ((fb > 0 & fc > 0) | (fb < 0 & fc < 0)) {
+			c = a
+			fc = fa
+		}
+	}
+	return(.)
+}
+/* R's unisroot(): extend the interval to the left (or right) until the endpoints have opposite signs */
+real scalar _saom_meta_unisroot(real scalar kind, real scalar target, real scalar lo, real scalar hi, real scalar left, real colvector x, real colvector se) {
+	real scalar x1, x2, ra, it
+	x1 = lo
+	x2 = hi
+	if (_saom_meta_g(kind, x1, target, x, se) * _saom_meta_g(kind, x2, target, x, se) < 0) return(_saom_meta_uniroot(kind, target, x1, x2, x, se))
+	ra = x2 - x1
+	for (it=1; it<=1000; it++) {
+		if (left) x1 = x1 - ra
+		else x2 = x2 + ra
+		if (_saom_meta_g(kind, x1, target, x, se) * _saom_meta_g(kind, x2, target, x, se) < 0) break
+	}
+	if (_saom_meta_g(kind, x1, target, x, se) * _saom_meta_g(kind, x2, target, x, se) < 0) return(_saom_meta_uniroot(kind, target, x1, x2, x, se))
+	return(.)
+}
+real scalar _saom_meta_median(real colvector v) {
+	real colvector s
+	real scalar n
+	s = sort(v, 1)
+	n = rows(s)
+	return(mod(n, 2) ? s[(n + 1) / 2] : (s[n / 2] + s[n / 2 + 1]) / 2)
+}
+/* R's iwlsm(theta ~ 1, psi = psi.iwlsm, ses = se^2, maxit): returns (mean, se of mean, stddev) */
+real rowvector _saom_meta_iwls(real colvector y, real colvector se, real scalar maxit) {
+	real colvector w, resid, hh, s2, old, ww
+	real scalar n, mu, scale, v, v1, conv, it, S
+	n = rows(y)
+	s2 = se:^2
+	w = J(n, 1, 1 / n)
+	mu = mean(y)
+	resid = y :- mu
+	hh = w / sum(w)
+	for (it=1; it<=maxit; it++) {
+		old = resid
+		scale = _saom_meta_median(abs(resid)) / 0.6745
+		if (scale == 0) break
+		v = sum(w :* resid:^2) / (1 - sum(w :* hh))
+		v1 = max((0, v - sum(w :* s2) / sum(w)))
+		ww = 1 :/ (v1 :+ s2)
+		w = ww / sum(ww)
+		mu = sum(w :* y) / sum(w)
+		resid = y :- mu
+		hh = w / sum(w)
+		conv = sqrt(sum((old :- resid):^2) / max((1e-20, sum(old:^2))))
+		if (conv <= 1e-4) break
+	}
+	hh = w / sum(w)
+	S = sum(w :* resid:^2) / (1 - sum(w :* hh))
+	return((mu, sqrt(S) / sqrt(n), sqrt(S)))
+}
+/* one effect: theta and se (column vectors, one entry per group); returns the 1 x 24 result row */
+real rowvector SaomMetaOne(real colvector theta, real colvector se, real scalar bound, real scalar alpha, real scalar maxit) {
+	real rowvector R, im, ml
+	real colvector x, s, rk1, rk2
+	real scalar n1, rho, tsq, ttilde, qst, cjp, cjm, chi, mu, sig, mu1, mu2, sg1, sg2, mindev, chidev, ra, mlesig, mlemu, tt
+	R = J(1, 24, .)
+	x = select(theta, theta :< . :& se :< . :& se :< bound)
+	s = select(se, theta :< . :& se :< . :& se :< bound)
+	n1 = rows(x)
+	R[1] = n1
+	if (n1 < 1) return(R)
+	if (all(x :== 0)) {
+		R[1] = 0
+		return(R)
+	}
+	if (n1 >= 3) {
+		rk1 = mm_ranks_dummy(x)
+		rk2 = mm_ranks_dummy(s)
+		rho = correlation((rk1, rk2))[1, 2]
+		tt = rho * sqrt((n1 - 2) / max((1e-12, 1 - rho^2)))
+		R[2] = rho
+		R[3] = 2 * ttail(n1 - 2, abs(tt))
+	}
+	if (n1 < 2) {
+		R[4] = x[1]
+		R[5] = s[1]
+		return(R)
+	}
+	im = _saom_meta_iwls(x, s, maxit)
+	R[4] = im[1]
+	R[5] = im[2]
+	R[6] = im[1] / im[2]
+	R[7] = 2 * ttail(n1 - 1, abs(R[6]))
+	R[8] = im[3]
+	tsq = sum((x :/ s):^2)
+	R[9] = tsq
+	R[10] = chi2tail(n1, tsq)
+	ttilde = sum(x :/ s:^2) / sqrt(sum(1 :/ s:^2))
+	qst = tsq - ttilde^2
+	R[11] = qst
+	R[12] = chi2tail(n1 - 1, qst)
+	cjp = -2 * sum(lnnormal(-(x :/ s)))
+	cjm = -2 * sum(lnnormal(x :/ s))
+	R[20] = cjp
+	R[21] = chi2tail(2 * n1, cjp)
+	R[22] = cjm
+	R[23] = chi2tail(2 * n1, cjm)
+	ml = _saom_meta_maxlik(x, s)
+	mlemu = ml[1]
+	mlesig = ml[2]
+	mindev = ml[4]
+	R[13] = mlemu
+	R[14] = ml[3]
+	R[17] = mlesig
+	chidev = invchi2(1, 1 - alpha)
+	ra = max(x) - min(x)
+	R[15] = _saom_meta_unisroot(1, mindev + chidev, min(x), mlemu, 1, x, s)
+	R[16] = _saom_meta_unisroot(1, mindev + chidev, mlemu, max(x), 0, x, s)
+	if (_saom_meta_f(4, 0, 0, x, s) <= mindev + chidev) R[18] = 0
+	else R[18] = _saom_meta_uniroot(2, mindev + chidev, 0, mlesig, x, s)
+	R[19] = _saom_meta_unisroot(2, mindev + chidev, mlesig, ra, 0, x, s)
+	R[24] = 1 - alpha
+	return(R)
+}
+real colvector mm_ranks_dummy(real colvector v) {
+	real scalar n, i, j, lo, hi
+	real colvector o, r, sv
+	n = rows(v)
+	o = order(v, 1)
+	sv = v[o]
+	r = J(n, 1, .)
+	i = 1
+	while (i <= n) {
+		j = i
+		while (j < n) {
+			if (sv[j + 1] == sv[i]) j++
+			else break
+		}
+		lo = i
+		hi = j
+		r[o[i::j]] = J(j - i + 1, 1, (lo + hi) / 2)
+		i = j + 1
+	}
+	return(r)
+}
+/* all effects: THETA, SE are groups x effects; returns effects x 24 */
+real matrix SaomMeta(real matrix THETA, real matrix SE, real scalar bound, real scalar alpha, real scalar maxit) {
+	real matrix R
+	real scalar k
+	R = J(cols(THETA), 24, .)
+	for (k=1; k<=cols(THETA); k++) R[k, .] = SaomMetaOne(THETA[., k], SE[., k], bound, alpha, maxit)
+	return(R)
+}
+
 /* RSiena's functions of the outdegree: outTrunc(c) min(d,c), outMore(c) max(d-c,0), outThreshold(c) 1{d>c}, outInv(c) 1/(d+c),
    outSqInv(c) 1/((d+c)(d+c+1)); statistic = sum over actors, change = f(d_without+1) - f(d_without), negated for an existing tie */
 real scalar _saom_degfun(real scalar kind, real scalar d, real scalar c) {

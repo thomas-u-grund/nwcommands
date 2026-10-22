@@ -331,6 +331,8 @@ graphics primitives allow) with the test's own p-value as the plot's x-axis titl
 RSiena's own convention exactly.
 
 {pstd}
+To combine the same model fitted to several networks (for example school classes) see {help nwsaom_meta}, the counterpart of RSiena's {cmd:siena08}.
+
 See {help nwsaom_estat} for the full option reference for {cmd:estat gof} (and {cmd:estat mems},
 Duxbury's Micro Effects on Macro Structure sensitivity analysis).
 
