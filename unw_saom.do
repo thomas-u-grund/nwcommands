@@ -8018,7 +8018,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			C.use_native = 0
 			C.use_batch = 0
 		}
-		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 36)) {
+		if ((C.cfgBeh.needv35 & k < 35) | (C.cfgBeh.needv36 & k < 37)) {
 			C.use_native = 0
 			C.use_batch = 0
 		}
@@ -9013,6 +9013,11 @@ struct SaomBehaviorNativeConfig scalar SaomBehaviorNativeSetup(class SaomBehavio
 		else if (nm == "avsim") cfg.termcodes[t] = 104
 		else if (substr(nm, 1, 6) == "effcov" & strtoreal(substr(nm, 7, .)) >= 1 & strtoreal(substr(nm, 7, .)) <= 8) {
 			cfg.termcodes[t] = 124 + strtoreal(substr(nm, 7, .))
+			if (cfg.fntype[t] != 0) cfg.eligible = 0
+			cfg.needv36 = 1
+		}
+		else if (_sb_xaltparse(nm)[1] >= 0) {
+			cfg.termcodes[t] = 133 + 8 * _sb_xaltparse(nm)[1] + _sb_xaltparse(nm)[2] - 1
 			if (cfg.fntype[t] != 0) cfg.eligible = 0
 			cfg.needv36 = 1
 		}
@@ -10619,7 +10624,7 @@ struct SaomMBCtx scalar SaomMBInit(
 		C.fnt = (C.fnt, cb.fntype)
 	}
 	C.use_native = why_ok & SaomNativeAvailable()
-	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 36))
+	if (C.use_native) C.use_native = (SaomNativePluginVersion() >= (C.hastimed ? 27 : 19) & (!anyneed35 | SaomNativePluginVersion() >= 35) & (!anyneed36 | SaomNativePluginVersion() >= 37))
 	why = ""
 	if (!SaomNativeAvailable()) why = "no native plugin for this platform"
 	else if (!C.cfg.eligible) why = C.cfg.whynot
@@ -10988,8 +10993,115 @@ void SaomBehCovSet(string rowvector vars) {
 	}
 }
 void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars) {
-	real scalar j, t
-	for (j=1; j<=cols(vars); j++) for (t=1; t<=Mbeh.nterms; t++) if (Mbeh.coefnames[t] == "beh_effcov" + strofreal(j)) Mbeh.coefnames[t] = "beh_from_" + vars[j]
+	real scalar j, t, v
+	string rowvector pf, lab
+	pf = ("effcov", "avxalt", "avsamexalt", "totxalt", "totsamexalt")
+	lab = ("from", "avxalt", "avsamexalt", "totxalt", "totsamexalt")
+	for (j=1; j<=cols(vars); j++) for (t=1; t<=Mbeh.nterms; t++) for (v=1; v<=5; v++) if (Mbeh.coefnames[t] == "beh_" + pf[v] + strofreal(j)) Mbeh.coefnames[t] = "beh_" + lab[v] + "_" + vars[j]
+}
+/* protocol 37: avXAlt / avSameXAlt / totXAlt / totSameXAlt (RSiena AltersCovariateAverageEffect) on covariate column j of __saom_behcov:
+   contribution diff * T_i, statistic z_i * T_i, T_i = average (av) or sum (tot) over i's out-alters of the centred covariate (X)
+   or of the indicator "same covariate value as ego" (SameX), 0 without out-ties */
+real scalar _sb_xaltT(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar j, real scalar v) {
+	external real matrix __saom_behcov
+	real scalar k, t, nb, a
+	real rowvector al
+	al = G.neighbors_out(i)
+	nb = cols(al)
+	if (nb == 0) return(0)
+	t = 0
+	for (k=1; k<=nb; k++) {
+		a = al[k]
+		if (v == 1 | v == 3) t = t + (abs(__saom_behcov[a, j] - __saom_behcov[i, j]) < 1e-6)
+		else t = t + __saom_behcov[a, j]
+	}
+	return(v <= 1 ? t / nb : t)
+}
+real rowvector stat_saom_xalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar j, real scalar v) {
+	real scalar i, tot
+	tot = 0
+	for (i=1; i<=Beh.n; i++) tot = tot + _sb_c(Beh, i) * _sb_xaltT(Beh, G, i, j, v)
+	return(tot)
+}
+real scalar change_saom_xalt(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff, real scalar j, real scalar v) {
+	return(diff * _sb_xaltT(Beh, G, i, j, v))
+}
+real rowvector stat_saom_avxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 0))
+real scalar change_saom_avxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 0))
+real rowvector stat_saom_avxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 0))
+real scalar change_saom_avxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 0))
+real rowvector stat_saom_avxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 0))
+real scalar change_saom_avxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 0))
+real rowvector stat_saom_avxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 0))
+real scalar change_saom_avxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 0))
+real rowvector stat_saom_avxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 0))
+real scalar change_saom_avxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 0))
+real rowvector stat_saom_avxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 0))
+real scalar change_saom_avxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 0))
+real rowvector stat_saom_avxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 0))
+real scalar change_saom_avxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 0))
+real rowvector stat_saom_avxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 0))
+real scalar change_saom_avxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 0))
+real rowvector stat_saom_avsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 1))
+real scalar change_saom_avsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 1))
+real rowvector stat_saom_avsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 1))
+real scalar change_saom_avsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 1))
+real rowvector stat_saom_avsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 1))
+real scalar change_saom_avsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 1))
+real rowvector stat_saom_avsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 1))
+real scalar change_saom_avsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 1))
+real rowvector stat_saom_avsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 1))
+real scalar change_saom_avsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 1))
+real rowvector stat_saom_avsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 1))
+real scalar change_saom_avsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 1))
+real rowvector stat_saom_avsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 1))
+real scalar change_saom_avsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 1))
+real rowvector stat_saom_avsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 1))
+real scalar change_saom_avsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 1))
+real rowvector stat_saom_totxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 2))
+real scalar change_saom_totxalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 2))
+real rowvector stat_saom_totxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 2))
+real scalar change_saom_totxalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 2))
+real rowvector stat_saom_totxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 2))
+real scalar change_saom_totxalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 2))
+real rowvector stat_saom_totxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 2))
+real scalar change_saom_totxalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 2))
+real rowvector stat_saom_totxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 2))
+real scalar change_saom_totxalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 2))
+real rowvector stat_saom_totxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 2))
+real scalar change_saom_totxalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 2))
+real rowvector stat_saom_totxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 2))
+real scalar change_saom_totxalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 2))
+real rowvector stat_saom_totxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 2))
+real scalar change_saom_totxalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 2))
+real rowvector stat_saom_totsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 1, 3))
+real scalar change_saom_totsamexalt1(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 1, 3))
+real rowvector stat_saom_totsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 2, 3))
+real scalar change_saom_totsamexalt2(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 2, 3))
+real rowvector stat_saom_totsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 3, 3))
+real scalar change_saom_totsamexalt3(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 3, 3))
+real rowvector stat_saom_totsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 4, 3))
+real scalar change_saom_totsamexalt4(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 4, 3))
+real rowvector stat_saom_totsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 5, 3))
+real scalar change_saom_totsamexalt5(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 5, 3))
+real rowvector stat_saom_totsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 6, 3))
+real scalar change_saom_totsamexalt6(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 6, 3))
+real rowvector stat_saom_totsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 7, 3))
+real scalar change_saom_totsamexalt7(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 7, 3))
+real rowvector stat_saom_totsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_xalt(Beh, G, 8, 3))
+real scalar change_saom_totsamexalt8(class SaomBehavior scalar Beh, class ErgmGraph scalar G, real scalar i, real scalar diff) return(change_saom_xalt(Beh, G, i, diff, 8, 3))
+/* term name "avxalt3" etc. -> (variant 0..3, slot 1..8), or (-1, 0) */
+real rowvector _sb_xaltparse(string scalar nm) {
+	string rowvector pf
+	real scalar v, sl
+	pf = ("avxalt", "avsamexalt", "totxalt", "totsamexalt")
+	for (v=1; v<=4; v++) {
+		if (substr(nm, 1, strlen(pf[v])) == pf[v]) {
+			sl = strtoreal(substr(nm, strlen(pf[v]) + 1, .))
+			if (sl >= 1 & sl <= 8 & sl == floor(sl)) return((v - 1, sl))
+		}
+	}
+	return((-1, 0))
 }
 string scalar SaomBehCovTrailer(real scalar n) {
 	external real matrix __saom_behcov
@@ -11022,6 +11134,10 @@ real scalar change_saom_effcov8(class SaomBehavior scalar Beh, class ErgmGraph s
 string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
 	real scalar j
+	if (_sb_xaltparse(base)[1] >= 0) {
+		j = _sb_xaltparse(base)[2]
+		return((("avXAlt", "avSameXAlt", "totXAlt", "totSameXAlt"))[_sb_xaltparse(base)[1] + 1] + (findexternal("__saom_behcovnames") != NULL ? " " + __saom_behcovnames[j] : ""))
+	}
 	if (substr(base, 1, 6) == "effcov") {
 		j = strtoreal(substr(base, 7, .))
 		if (findexternal("__saom_behcovnames") != NULL) if (j >= 1 & j <= cols(__saom_behcovnames)) return("effFrom " + __saom_behcovnames[j])
@@ -11121,6 +11237,38 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "effcov6") Mbeh.addterm("effcov6", &stat_saom_effcov6(), &change_saom_effcov6(), pre + "effcov6")
 		else if (nm == "effcov7") Mbeh.addterm("effcov7", &stat_saom_effcov7(), &change_saom_effcov7(), pre + "effcov7")
 		else if (nm == "effcov8") Mbeh.addterm("effcov8", &stat_saom_effcov8(), &change_saom_effcov8(), pre + "effcov8")
+		else if (nm == "avxalt1") Mbeh.addterm("avxalt1", &stat_saom_avxalt1(), &change_saom_avxalt1(), pre + "avxalt1")
+		else if (nm == "avxalt2") Mbeh.addterm("avxalt2", &stat_saom_avxalt2(), &change_saom_avxalt2(), pre + "avxalt2")
+		else if (nm == "avxalt3") Mbeh.addterm("avxalt3", &stat_saom_avxalt3(), &change_saom_avxalt3(), pre + "avxalt3")
+		else if (nm == "avxalt4") Mbeh.addterm("avxalt4", &stat_saom_avxalt4(), &change_saom_avxalt4(), pre + "avxalt4")
+		else if (nm == "avxalt5") Mbeh.addterm("avxalt5", &stat_saom_avxalt5(), &change_saom_avxalt5(), pre + "avxalt5")
+		else if (nm == "avxalt6") Mbeh.addterm("avxalt6", &stat_saom_avxalt6(), &change_saom_avxalt6(), pre + "avxalt6")
+		else if (nm == "avxalt7") Mbeh.addterm("avxalt7", &stat_saom_avxalt7(), &change_saom_avxalt7(), pre + "avxalt7")
+		else if (nm == "avxalt8") Mbeh.addterm("avxalt8", &stat_saom_avxalt8(), &change_saom_avxalt8(), pre + "avxalt8")
+		else if (nm == "avsamexalt1") Mbeh.addterm("avsamexalt1", &stat_saom_avsamexalt1(), &change_saom_avsamexalt1(), pre + "avsamexalt1")
+		else if (nm == "avsamexalt2") Mbeh.addterm("avsamexalt2", &stat_saom_avsamexalt2(), &change_saom_avsamexalt2(), pre + "avsamexalt2")
+		else if (nm == "avsamexalt3") Mbeh.addterm("avsamexalt3", &stat_saom_avsamexalt3(), &change_saom_avsamexalt3(), pre + "avsamexalt3")
+		else if (nm == "avsamexalt4") Mbeh.addterm("avsamexalt4", &stat_saom_avsamexalt4(), &change_saom_avsamexalt4(), pre + "avsamexalt4")
+		else if (nm == "avsamexalt5") Mbeh.addterm("avsamexalt5", &stat_saom_avsamexalt5(), &change_saom_avsamexalt5(), pre + "avsamexalt5")
+		else if (nm == "avsamexalt6") Mbeh.addterm("avsamexalt6", &stat_saom_avsamexalt6(), &change_saom_avsamexalt6(), pre + "avsamexalt6")
+		else if (nm == "avsamexalt7") Mbeh.addterm("avsamexalt7", &stat_saom_avsamexalt7(), &change_saom_avsamexalt7(), pre + "avsamexalt7")
+		else if (nm == "avsamexalt8") Mbeh.addterm("avsamexalt8", &stat_saom_avsamexalt8(), &change_saom_avsamexalt8(), pre + "avsamexalt8")
+		else if (nm == "totxalt1") Mbeh.addterm("totxalt1", &stat_saom_totxalt1(), &change_saom_totxalt1(), pre + "totxalt1")
+		else if (nm == "totxalt2") Mbeh.addterm("totxalt2", &stat_saom_totxalt2(), &change_saom_totxalt2(), pre + "totxalt2")
+		else if (nm == "totxalt3") Mbeh.addterm("totxalt3", &stat_saom_totxalt3(), &change_saom_totxalt3(), pre + "totxalt3")
+		else if (nm == "totxalt4") Mbeh.addterm("totxalt4", &stat_saom_totxalt4(), &change_saom_totxalt4(), pre + "totxalt4")
+		else if (nm == "totxalt5") Mbeh.addterm("totxalt5", &stat_saom_totxalt5(), &change_saom_totxalt5(), pre + "totxalt5")
+		else if (nm == "totxalt6") Mbeh.addterm("totxalt6", &stat_saom_totxalt6(), &change_saom_totxalt6(), pre + "totxalt6")
+		else if (nm == "totxalt7") Mbeh.addterm("totxalt7", &stat_saom_totxalt7(), &change_saom_totxalt7(), pre + "totxalt7")
+		else if (nm == "totxalt8") Mbeh.addterm("totxalt8", &stat_saom_totxalt8(), &change_saom_totxalt8(), pre + "totxalt8")
+		else if (nm == "totsamexalt1") Mbeh.addterm("totsamexalt1", &stat_saom_totsamexalt1(), &change_saom_totsamexalt1(), pre + "totsamexalt1")
+		else if (nm == "totsamexalt2") Mbeh.addterm("totsamexalt2", &stat_saom_totsamexalt2(), &change_saom_totsamexalt2(), pre + "totsamexalt2")
+		else if (nm == "totsamexalt3") Mbeh.addterm("totsamexalt3", &stat_saom_totsamexalt3(), &change_saom_totsamexalt3(), pre + "totsamexalt3")
+		else if (nm == "totsamexalt4") Mbeh.addterm("totsamexalt4", &stat_saom_totsamexalt4(), &change_saom_totsamexalt4(), pre + "totsamexalt4")
+		else if (nm == "totsamexalt5") Mbeh.addterm("totsamexalt5", &stat_saom_totsamexalt5(), &change_saom_totsamexalt5(), pre + "totsamexalt5")
+		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
+		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
+		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
 		else if (substr(nm, strlen(nm) - 7, .) == "creation") continue		// the partner of an endow term, added with it
 		else {
 			errprintf("nwsaom: unknown behavior effect '" + nm + "'\n")

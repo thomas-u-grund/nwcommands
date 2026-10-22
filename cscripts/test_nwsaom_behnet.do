@@ -68,4 +68,12 @@ if _rc == 0 {
 }
 capture noisily nwsaom, waves(bs1 bs2 bs3) outdegree behfrom(cv1) k3(50)
 assert _rc != 0
+* covariate-moderated influence (avXAlt, avSameXAlt, totXAlt, totSameXAlt), sharing the covariate slots with behfrom()
+capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) behfrom(cv1) behavxalt(cv2) behavsamexalt(cv1) behtotxalt(cv1) behtotsamexalt(cv2) k0(10) k3(40) seed(3)
+assert inlist(_rc, 0, 498)
+if _rc == 0 {
+	assert "`e(engine)'" == "native" & colsof(e(b)) == 8
+	local cn : colnames e(b)
+	assert strpos("`cn'", "beh_avxalt_cv2") & strpos("`cn'", "beh_totsamexalt_cv2") & strpos("`cn'", "beh_from_cv1")
+}
 di as text "behavior network effects PASS"
