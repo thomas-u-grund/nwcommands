@@ -4874,6 +4874,29 @@ void _ergm_op_init(class ErgmModel scalar M){
 		M.opparam = J(1, M.nparam(), 0)
 	}
 }
+// native wire trailer for transformed columns: " 0 0 nops {slot kind param raw}..."
+string scalar _ergm_native_opstr(class ErgmModel scalar M, class ErgmGraph scalar G){
+	real scalar t, k, pos, n
+	real rowvector raw
+	string scalar out
+
+	out = ""
+	n = 0
+	if (cols(M.opkind) > 0) {
+		pos = 1
+		for (t=1; t<=M.nterms; t++) {
+			raw = (*M.statfn[t])(G, *M.td[t])
+			for (k=1; k<=M.npar[t]; k++) {
+				if (M.opkind[pos] > 0) {
+					out = out + " " + strofreal(pos-1) + " " + strofreal(M.opkind[pos]) + " " + strofreal(M.opparam[pos], "%25.17g") + " " + strofreal(raw[k], "%25.17g")
+					n++
+				}
+				pos++
+			}
+		}
+	}
+	return(" 0 0 " + strofreal(n) + out)
+}
 real scalar _ergm_op_apply(real scalar kind, real scalar param, real scalar x){
 	if (kind == 1) return(x == 0 ? param : ln(x))
 	return(exp(x))
@@ -5892,7 +5915,9 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 
 	if (!ErgmNativeAvailable()) return(0)
 	if (cols(M.opkind) > 0) {
-		if (any(M.opkind :> 0)) return(0)	// statistic transforms (logstat/expstat) run on the Mata sampler
+		if (any(M.opkind :> 0) & rows(G) > 0) {
+			if (G.has_dyadmask) return(0)	// statistic transforms are not combined with freedyads() on the native sampler
+		}
 	}
 
 	// freedyads() masked TNT native port (harmonisation unit 168):
@@ -6655,6 +6680,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i], "%25.17g")
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i], "%25.17g")
+	argstr = argstr + _ergm_native_opstr(M, G)
 
 	// Stata will not let an already-loaded plugin-type program be
 	// dropped and redefined within the same session (confirmed by
@@ -6828,6 +6854,7 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
+	argstr = argstr + _ergm_native_opstr(M, G)
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 

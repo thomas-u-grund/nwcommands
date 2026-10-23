@@ -28,8 +28,8 @@ edgecov           | extended | edgecov(netname|matname) | n x n Stata matrix acc
 
 --- operators ---
 Label             | IMPLEMENTED | coeflabel(old new [old new ...]) | tested on colnames
-Log               | IMPLEMENTED (Mata sampler only) | logstat(coefname ... [, log0(#)]) | in-place transform of the named columns as R Log(~term); stat and MPLE vs R (see spec ids logU1, logU2, logD1); native sampler is disabled for such models (uses the Mata sampler)
-Exp               | IMPLEMENTED (Mata sampler only) | expstat(coefname ...) | spec ids expU1, expD1
+Log               | IMPLEMENTED (native + Mata) | logstat(coefname ... [, log0(#)]) | in-place transform of the named columns as R Log(~term); stat and MPLE vs R (see spec ids logU1, logU2, logD1); native sampler supports it (raw statistic tracked per slot, wire trailer nops/slot/kind/param/raw); MCMLE native vs Mata agree within noise (-2.34/11.60/-0.072 native, -2.35/11.79/-0.067 Mata, R MPLE 13.1 with SE 6.5). R QUIRK copied: a Log()/Exp() of a dyad-independent submodel is still classified dyad-independent by ergm (MCMC % 0, result = MPLE), so nwergm also defaults to method(mple) then
+Exp               | IMPLEMENTED (native + Mata) | expstat(coefname ...) | spec ids expU1, expD1
 Sum, Prod         | NOT DONE | | would need hidden sub-model columns in the native engine (sub-statistics tracked but not estimated); not attempted
 S, F, I, For, Symmetrize, Project, NodematchFilter | NOT DONE | | these need an auxiliary network / sub-model engine and a formula language (I and For are macro operators: Stata locals/foreach cover them); no sensible nwergm syntax without that
 Offset            | already covered by offset()

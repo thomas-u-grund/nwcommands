@@ -2135,6 +2135,30 @@ static long next_long(void) {
 #define MAXATTR  32  /* must match unw_ergm.do's own ErgmNativeSetup() maxattr */
 #define MAXCOVMAT 8  /* must match unw_ergm.do's own ErgmNativeSetup() maxcovmat (harmonisation unit 160) - distinct dense n x n edgecov()/hamming() matrices are far heavier per slot (n^2 doubles, not n) than an attribute array, so this cap is deliberately much smaller than MAXATTR */
 
+/* ---- statistic transforms (R's Log()/Exp(), agent E4) -------------------
+   A model column can be declared a transformed column: the slot's raw
+   change comes from change_term() and is turned into the change of
+   f(raw statistic) using the raw statistic tracked in g_raw[] (kept in
+   step on every accepted toggle).  kind 1 = log (value log0 at zero),
+   2 = exp.  All other slots pass through untouched. */
+static int g_opkind[MAXTERMS];
+static double g_opparam[MAXTERMS], g_raw[MAXTERMS], g_rawchg[MAXTERMS];
+
+static double op_f(int kind, double param, double x) {
+	if (kind == 1) return (x == 0.0) ? param : log(x);
+	return exp(x);
+}
+static double change_slot(long k, graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	double c = change_term(g, termcode, p1, p2, attr, cm, n, delta, i, j);
+	if (g_opkind[k]) {
+		g_rawchg[k] = c;
+		if (c == 0.0) return 0.0;
+		return op_f(g_opkind[k], g_opparam[k], g_raw[k] + c) - op_f(g_opkind[k], g_opparam[k], g_raw[k]);
+	}
+	return c;
+}
+
+
 /* eta = theta_to_eta(theta): the first (nterms-ncurved) eta slots equal
    the corresponding theta values one-for-one (an ordinary term IS its
    own eta - ErgmModel::theta_to_eta()'s own "else" branch in
@@ -2593,6 +2617,17 @@ STDLL stata_call(int argc, char *argv[]) {
 	   decay - for the whole block). */
 	ncurved = (long)next_double();
 	curved_decay_start = next_double();
+	/* optional trailing block (agent E4): nops, then per transformed slot: slot index (0-based), kind, parameter, raw observed statistic */
+	for (i = 0; i < MAXTERMS; i++) { g_opkind[i] = 0; g_opparam[i] = 0.0; g_raw[i] = 0.0; g_rawchg[i] = 0.0; }
+	{
+		long nops = (long)next_double(), oi;
+		for (oi = 0; oi < nops; oi++) {
+			long sl = (long)next_double();
+			int kd = (int)next_double();
+			double prm = next_double(), rw = next_double();
+			if (sl >= 0 && sl < nterms) { g_opkind[sl] = kd; g_opparam[sl] = prm; g_raw[sl] = rw; }
+		}
+	}
 	free(argbuf);
 
 	/* --- build graph from dataset columns v1=ego v2=alter (rows
@@ -2790,7 +2825,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i2, j2);
+					double chg = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i2, j2);
 					double chg_toward_one = tied ? -chg : chg;
 					SF_vstore((int)(outcol_base + k), pos, chg_toward_one);
 				}
@@ -2860,7 +2895,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					double chg = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i, j);
+					double chg = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, i, j);
 					xrow[k] = tied ? -chg : chg;
 				}
 				Y[pos] = tied;
@@ -2935,13 +2970,13 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+				chg1[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
 			}
 			toggle(&g, t1, h1);
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+				chg2[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
 				cutoff += theta[k] * (chg1[k] + chg2[k]);
 			}
 			if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
@@ -2964,13 +2999,13 @@ STDLL stata_call(int argc, char *argv[]) {
 		for (k = 0; k < nterms; k++) {
 			double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 			double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-			chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
+			chg[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 			cutoff += theta[k] * chg[k];
 		}
 		cutoff += logratio;
 		if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
 			toggle(&g, pi, pj);
-			for (k = 0; k < nterms; k++) cur[k] += chg[k];
+			for (k = 0; k < nterms; k++) { cur[k] += chg[k]; g_raw[k] += g_rawchg[k]; }
 		}
 	}
 
@@ -2987,13 +3022,13 @@ STDLL stata_call(int argc, char *argv[]) {
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					chg1[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
+					chg1[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, -1.0, t1, h1);
 				}
 				toggle(&g, t1, h1);
 				for (k = 0; k < nterms; k++) {
 					double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 					double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-					chg2[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
+					chg2[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, t2, h2);
 					cutoff += theta[k] * (chg1[k] + chg2[k]);
 				}
 				ntried++;
@@ -3018,14 +3053,14 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (k = 0; k < nterms; k++) {
 				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
 				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
-				chg[k] = change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
+				chg[k] = change_slot(k, &g, termcodes[k], p1[k], p2[k], a, cmk, n, delta, pi, pj);
 				cutoff += theta[k] * chg[k];
 			}
 			cutoff += logratio;
 			ntried++;
 			if (cutoff >= 0.0 || log(rng_unif(&rng)) < cutoff) {
 				toggle(&g, pi, pj);
-				for (k = 0; k < nterms; k++) cur[k] += chg[k];
+				for (k = 0; k < nterms; k++) { cur[k] += chg[k]; g_raw[k] += g_rawchg[k]; }
 				naccept++;
 			}
 		}
