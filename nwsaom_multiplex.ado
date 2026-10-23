@@ -41,7 +41,7 @@ capture program drop nwsaom_multiplex
 program define nwsaom_multiplex, eclass
 	version 14
 	syntax , NETAWAVE1(string) NETAWAVE2(string) NETBWAVE1(string) NETBWAVE2(string) ///
-		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB ]
+		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB DETail ]
 
 	di as text "note: {bf:nwsaom multiplex} is deprecated; use {bf:nwsaom multinet} (net1() net2() ...), which includes everything multiplex does."
 	// the estimates of multiplex and multinet agree (same model, same engine); forward unless start values are given
@@ -82,13 +82,19 @@ program define nwsaom_multiplex, eclass
 	local wantcrprod = ("`crprod'" != "")
 	local wantcrprodb = ("`crprodb'" != "")
 
-	// Mata row-vector literal syntax needs COMMA-separated elements
-	// (`(0, 0)', not `(0 0)') - confirmed directly, not assumed (the
-	// space-separated form is a genuine parse error, "invalid
-	// expression"), so theta01()/theta02() must be given comma-separated
-	// too if a user overrides the default. Default length now tracks
-	// whether crprod()/crprodb() add a third parameter to that network's
-	// own effect list.
+	// theta01()/theta02(): numbers separated by spaces or commas, passed to
+	// Mata as a comma-separated row vector; one value per effect of that
+	// network (outdegree, reciprocity, and crprod/crprodb if requested)
+	foreach __t in theta01 theta02 {
+		if "``__t''" != "" {
+			local __v : subinstr local `__t' "," " ", all
+			local `__t' ""
+			foreach __x of local __v {
+				confirm number `__x'
+				local `__t' = cond("``__t''" == "", "`__x'", "``__t'', `__x'")
+			}
+		}
+	}
 	if "`theta01'" == "" local theta01 = cond(`wantcrprod', "0, 0, 0", "0, 0")
 	if "`theta02'" == "" local theta02 = cond(`wantcrprodb', "0, 0, 0", "0, 0")
 
@@ -135,5 +141,5 @@ program define nwsaom_multiplex, eclass
 	di as text "{hline}"
 	ereturn display
 	di as text "Rates (estimated): net1 " as result %6.3f e(rate1) as text " (" as result %5.3f e(rate1_se) as text "), net2 " as result %6.3f e(rate2) as text " (" as result %5.3f e(rate2_se) as text ")"
-	_nwsaom_tconvtable
+	_nwsaom_tconvtable, `detail'
 end

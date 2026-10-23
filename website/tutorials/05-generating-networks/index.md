@@ -157,17 +157,17 @@ characteristic *hub* structure — a few nodes accumulate far more ties than the
 
    Degree centralization:: .427
 
-. sort deg
+. sort deg _nwnode
 
 . list _nwnode deg in -5/-1
 
      +---------------+
      | _nwnode   deg |
      |---------------|
- 16. |     n15     5 |
+ 16. |      n8     5 |
  17. |      n3     6 |
- 18. |      n4     7 |
- 19. |      n2     7 |
+ 18. |      n2     7 |
+ 19. |      n4     7 |
  20. |      n1    11 |
      +---------------+
 ```

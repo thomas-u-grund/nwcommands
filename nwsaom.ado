@@ -105,7 +105,7 @@ program nwsaom, eclass
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) FIX(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
-		ENDOW(string) CREATION(string) ACTORMODE(integer 0) TVCOV(string) ]
+		ENDOW(string) CREATION(string) ACTORMODE(integer 0) TVCOV(string) DETail ]
 	set more off
 
 	// --- endow(effects) creation(effects): RSiena's effect "types" (includeEffects(type = "endow" /
@@ -3066,6 +3066,11 @@ program nwsaom, eclass
 	if `__nwsaom_coev' {
 		if "`behtheta0'" == "" {
 			mata: __nwsaom_theta0beh = J(1, `__nwsaom_pbeh', 0)
+			// the linear shape starts at RSiena's data-derived value
+			// (getEffects(): "tendency"), as RSiena does
+			if "`linear'" != "" & !`__nwsaom_hasmissbeh' {
+				mata: __nwsaom_theta0beh[1] = SaomBehLinearStart(__nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval)
+			}
 		}
 		else {
 			local __nwsaom_ntbeh : word count `behtheta0'
@@ -3742,7 +3747,7 @@ program nwsaom, eclass
 		ereturn display
 		di as text "Rate parameters (estimated, one per inter-wave period):"
 		matlist `ratetab', format(%9.4f)
-		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
+		if `__nwsaom_iscond' & "`detail'" != "" di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 
 		ereturn matrix rates = `rates'
 		ereturn matrix rate_tratios = `ratetr'
@@ -3848,7 +3853,7 @@ program nwsaom, eclass
 		if `__nwsaom_tm' di as text "Two-mode network: " as result `__nwsaom_tm_na' as text " actors choose among " as result `__nwsaom_tm_ne' as text " events"
 		di as text "{hline}"
 		ereturn display
-		if `__nwsaom_iscond' di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
+		if `__nwsaom_iscond' & "`detail'" != "" di as text "(conditional: rate = mean time to reach the observed distance, se = its SD)"
 		if "`symmetric'" != "" di as text "(non-directed relation, model type " as result "`__nwsaom_symtypenm'" as text " = RSiena modelType " as result "`__nwsaom_mtnum'" as text ")"
 		if "`symmetric'" != "" & inlist(0`__nwsaom_symtypeval', 1, 2, 3) {
 			if `__nwsaom_iscond' di as text "(pairwise model: RSiena's time scale, mean time / (actors - 1); per-actor" _n " rate e(rate_actor) = " as result %6.3f e(rate_actor) as text ")"
@@ -3866,8 +3871,10 @@ program nwsaom, eclass
 			}
 		}
 	}
-	_nwsaom_rsnotes
-	_nwsaom_tconvtable
+	// the RSiena names, covariate means and every convergence t-ratio are
+	// in e(rsiena_labels), e(covmeans) and e(tconv); shown with detail
+	if "`detail'" != "" _nwsaom_rsnotes
+	_nwsaom_tconvtable, `detail'
 end
 
 

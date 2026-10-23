@@ -21,28 +21,44 @@ framing is what actually distinguishes an SAOM from an ERGM, not just "two waves
 an ERGM has no actors or ministeps at all, only a single probability distribution over entire
 graphs.
 
+Here are three yearly waves of friendship among 50 pupils in a Scottish school (the Glasgow
+data, RSiena's `s50` data), with outdegree, reciprocity, transitive closure, and homophily on
+smoking:
+
 ```stata
-. nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(wave1)
+. nwwebuse glasgow, nwclear
 
-. nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(wave2)
-
-. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity
-------------------------------------------------------------------------------------------------------------------
-SAOM (Method of Moments), waves: wave1 -> wave2
-Actors: 6                              Estimated rate:  1.328 (0.584)
-------------------------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
-wave1_to_w~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -.0427608   .6120532    -0.07   0.944    -1.242363    1.156841
- reciprocity |    1.40833   .9113804     1.55   0.122    -.3779423    3.194603
+   outdegree |  -2.761729   .1480041   -18.66   0.000    -3.051812   -2.471647
+ reciprocity |   2.430146   .1968398    12.35   0.000     2.044347    2.815945
+samex_smoke1 |   .1289793   .1416724     0.91   0.363    -.1486936    .4066521
+   transtrip |   .6264698   .0756481     8.28   0.000     .4782023    .7747373
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.4403     5.2362 
+          se |    1.1121     0.9281 
+Overall maximum convergence ratio: 0.185 (good; all t-ratios below 0.1)
 ```
 
-`outdegree` plays the same baseline-density role `edges` plays in an ERGM; `reciprocity` asks
-whether an actor is more likely to create a tie back to someone already tied to them. With only
-6 actors and 2 waves there's little information to pin either coefficient down precisely (both
-confidence intervals are wide) — expected for a toy example, not a sign of a problem.
+`outdegree` plays the same baseline-density role `edges` plays in an ERGM. `reciprocity` and
+`transtrip` (transitive triplets: a friend of a friend becomes a friend) are both strongly
+positive; once they are in the model, pupils show no significant tendency to befriend others with
+the same smoking status (`samex_smoke1`). The rate table says how often, on average, a pupil had the
+opportunity to change a friendship: about 6.4 times between the first and second waves and 5.2
+times between the second and third. The last line checks convergence: an overall maximum
+convergence ratio below 0.25 with every t-ratio below 0.1 means the estimates can be used;
+otherwise, run the model again starting from them (see the examples in
+[nwsaom](../../reference/nwsaom)).
 
 ## Relational event models (REM)
 
@@ -81,8 +97,8 @@ Events: 10                             Log likelihood:  -15.9033
 ------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      nodsnd |   1.268585   1.354195     0.94   0.349    -1.385589    3.922759
-      nidrec |  -5.567764   3.511139    -1.59   0.113    -12.44947    1.313942
+      nodsnd |   1.268597   1.354196     0.94   0.349    -1.385579    3.922772
+      nidrec |   -5.56779   3.511146    -1.59   0.113    -12.44951    1.313929
 ------------------------------------------------------------------------------
 ```
 

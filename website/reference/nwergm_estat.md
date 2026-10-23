@@ -39,6 +39,7 @@ Not applicable - these postestimation tools operate on the fitted model and its 
 
 **Matrices**
 
+- **r(ess)** 1 x *p* row vector of effective sample sizes, as `coda`'s `effectiveSize()`
 - **r(geweke)** 1 x *p* row vector of Geweke z-scores, one per model term (same
 - column order as **e(b)**)
 - **r(heidel)** *p* x 6 matrix, one row per model term, columns

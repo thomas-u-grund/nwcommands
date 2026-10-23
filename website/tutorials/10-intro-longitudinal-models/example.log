@@ -20,8 +20,8 @@ Notes:
       2. Unicode is supported; see help unicode_advice.
 
 
-Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347296a-3069-4626-96ee-d04a2b6b3a8c/s
-> cratchpad/tutorials_workdir/profile.do ...
+Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/dd506fca-d14d-47db-993d-6a7ac002e250/scratchp
+> ad/tutdev/website/tutorials/10-intro-longitudinal-models/profile.do ...
 
 . do example.do 
 
@@ -31,21 +31,29 @@ Running /private/tmp/claude-501/-Users-tgrund-FILES-NEW-SOFTWARE-nwcommands/0347
 . * SAOM: model network CHANGE between two observed waves as a sequence
 . * of actor-driven "ministeps" - each activated actor may create or
 . * drop one outgoing tie at a time
-. nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(wave1)
+. * three yearly waves of friendship among 50 pupils (RSiena's s50 data)
+. nwwebuse glasgow, nwclear
 
-. nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(wave2)
-
-. nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity
-------------------------------------------------------------------------------------------------------------------
-SAOM (Method of Moments), waves: wave1 -> wave2
-Actors: 6                              Estimated rate:  1.328 (0.584)
-------------------------------------------------------------------------------------------------------------------
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
-wave1_to_w~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-   outdegree |  -.0427608   .6120532    -0.07   0.944    -1.242363    1.156841
- reciprocity |    1.40833   .9113804     1.55   0.122    -.3779423    3.194603
+   outdegree |  -2.761729   .1480041   -18.66   0.000    -3.051812   -2.471647
+ reciprocity |   2.430146   .1968398    12.35   0.000     2.044347    2.815945
+samex_smoke1 |   .1289793   .1416724     0.91   0.363    -.1486936    .4066521
+   transtrip |   .6264698   .0756481     8.28   0.000     .4782023    .7747373
 ------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.4403     5.2362 
+          se |    1.1121     0.9281 
+Overall maximum convergence ratio: 0.185 (good; all t-ratios below 0.1)
 
 . 
 . * REM: model a raw, timestamped event stream directly - no snapshots,
@@ -78,8 +86,8 @@ Events: 10                             Log likelihood:  -15.9033
 ------------------------------------------------------------------------------
         chat | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
 -------------+----------------------------------------------------------------
-      nodsnd |   1.268585   1.354195     0.94   0.349    -1.385589    3.922759
-      nidrec |  -5.567764   3.511139    -1.59   0.113    -12.44947    1.313942
+      nodsnd |   1.268597   1.354196     0.94   0.349    -1.385579    3.922772
+      nidrec |   -5.56779   3.511146    -1.59   0.113    -12.44951    1.313929
 ------------------------------------------------------------------------------
 
 . 

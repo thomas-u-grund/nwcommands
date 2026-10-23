@@ -27,7 +27,7 @@ nwplot, layout(circle) scheme(s1network) export("plot_smallworld.svg") replace
 nwpref 20, undirected
 nwsummarize
 nwdegree, generate(deg)
-sort deg
+sort deg _nwnode
 list _nwnode deg in -5/-1
 nwplot, layout(circle) scheme(s1network) size(deg) export("plot_prefattach.svg") replace
 

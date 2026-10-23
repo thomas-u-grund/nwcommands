@@ -1,12 +1,12 @@
 * Tutorial 10: Intro to Longitudinal Network Models
 * Run from a directory with nwcommands net-installed (not a dev checkout).
 
-* SAOM: model network CHANGE between two observed waves as a sequence
+* SAOM: model network CHANGE between observed waves as a sequence
 * of actor-driven "ministeps" - each activated actor may create or
 * drop one outgoing tie at a time
-nwset, mat((0,1,1,0,1,0\0,0,1,0,0,1\1,0,0,1,0,0\0,0,0,0,1,1\1,0,0,0,0,1\0,1,0,0,0,0)) directed name(wave1)
-nwset, mat((0,1,1,1,1,0\1,0,1,0,0,1\1,1,0,1,0,0\0,0,1,0,1,1\1,0,1,0,0,1\0,1,0,1,0,0)) directed name(wave2)
-nwsaom, wave1(wave1) wave2(wave2) outdegree reciprocity
+* three yearly waves of friendship among 50 pupils (RSiena's s50 data)
+nwwebuse glasgow, nwclear
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) seed(1)
 
 * REM: model a raw, timestamped event stream directly - no snapshots,
 * no aggregation into waves at all
