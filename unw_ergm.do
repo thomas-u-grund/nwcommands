@@ -7054,6 +7054,59 @@ real scalar ergm_spec0_scalar(real colvector xcentered){
 // against the MCMC sampling itself) - rather than needing R's own
 // dual-space machinery (built for the many-test-point case this
 // package's own architecture never triggers).
+// Fast MPLE logistic regression (speed): Newton-Raphson/IRLS on the dyad
+// data matrix D = (statistics | outcome) with no constant, the same fit
+// Stata's `logit y x1 .. xp, noconstant' gives (same MLE, same inverse
+// observed-information covariance), minus the ~60 ms Stata overhead per
+// 45k-row fit. Returns 1 and posts e(b)/e(V)-style matrices only when the fit
+// is plain (converged, finite, full rank, no (quasi-)separation signs);
+// returns 0 otherwise and the caller falls back to `logit' itself, which
+// keeps Stata's own handling and messages for the degenerate cases.
+real scalar ergm_mple_irls(real matrix D, string scalar bname, string scalar Vname){
+	real matrix X, H, Hi
+	real colvector y, b, eta, mu, w, g, db
+	real scalar p, it, ll, ll0, conv, k
+
+	p = cols(D) - 1
+	if (p < 1 | rows(D) < p + 1) return(0)
+	if (missing(D) > 0) return(0)
+	X = D[., 1::p]
+	y = D[., p+1]
+	if (min(y) < 0 | max(y) > 1) return(0)
+	if (sum(y) == 0 | sum(y) == rows(y)) return(0)
+	b = J(p, 1, 0)
+	ll0 = -.
+	conv = 0
+	for (it=1; it<=40; it++) {
+		eta = X*b
+		if (max(abs(eta)) > 30) return(0)
+		mu = invlogit(eta)
+		ll = sum(y:*eta :- log1p(exp(eta)))
+		if (ll0 != -. & ll < ll0 - 1e-9) return(0)
+		w = mu :* (1 :- mu)
+		g = cross(X, y :- mu)
+		H = cross(X, w, X)
+		Hi = invsym(H)
+		for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+		db = Hi * g
+		b = b + db
+		ll0 = ll
+		if (max(abs(db)) < 1e-11) { conv = 1; break; }
+	}
+	if (!conv) return(0)
+	eta = X*b
+	if (max(abs(eta)) > 30) return(0)
+	mu = invlogit(eta)
+	w = mu :* (1 :- mu)
+	H = cross(X, w, X)
+	Hi = invsym(H)
+	for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+	if (min(diagonal(Hi)) <= 0 | max(abs(b)) > 25) return(0)
+	st_matrix(bname, b')
+	st_matrix(Vname, Hi)
+	return(1)
+}
+
 real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	real scalar n, k, i, j, ii, iter, ncols, nrows, entering, leaving
 	real scalar mincost, ratio, minratio, phase1obj, pivot, tol
