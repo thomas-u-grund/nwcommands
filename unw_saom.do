@@ -3681,6 +3681,18 @@ void SaomRegDycTV(class ErgmModel scalar M, string scalar kind, real scalar code
 	}
 }
 
+/* protocol 54: an own-network effect without a covariate (codes 260 + v); the term carries the average degree (over all waves) and the average reciprocal degree
+   in its dummy attribute column */
+void SaomRegDg(class ErgmModel scalar M, string scalar eff, real scalar v, real scalar p1, real scalar n, real scalar avDeg, real scalar avRec) {
+	class ErgmTermData scalar td
+	td = ErgmTermData()
+	td.levels = (260 + v \ 0)
+	td.decay = p1
+	td.attr = J(n, 1, 0)
+	td.attr[1] = avDeg
+	td.attr[2] = avRec
+	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff))
+}
 /* protocol 49: a native-only network effect of a dyadic covariate: W is the raw n x n matrix (missing and the diagonal 0, never centred) */
 void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
 	class ErgmTermData scalar td

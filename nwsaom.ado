@@ -202,7 +202,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) TVDYADCOV(string) TVDYADCOVRECIP(string) TVDYADX(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) NETX0(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -550,7 +550,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx netx0 dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1745,6 +1745,35 @@ program nwsaom, eclass
 		}
 		mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam')
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
+	}
+	// protocol 54: netx0(effect[:#] ...) - own-network effects without a covariate, native only: jin jout transtrip1 transtrip2 transrectrip2 (= transtripfr) transtripfe transtripee
+	// outpopmore:# outpopsqrtmore:# outpopthreshold:# and the ego degree effects outactego[:2] outactmoreego:# outactsqrtmoreego:# outmoreego:# divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]
+	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego"
+	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17"
+	if "`netx0'" != "" {
+		mata: __nwsaom_dg_ties = 0
+		mata: __nwsaom_dg_rec = 0
+		forvalues __w = 1/`__nwsaom_nwaves' {
+			mata: __nwsaom_dg_acc(__nwsaom_last_G`__w')
+		}
+	}
+	foreach __t of local netx0 {
+		gettoken __f __pp : __t, parse(":")
+		local __pp = subinstr("`__pp'", ":", "", 1)
+		if "`__f'" == "transtripfr" local __f "transrectrip2"
+		local __fi : list posof "`__f'" in __n0_names
+		if `__fi' == 0 {
+			di "{err}netx0(): `__t' is not an effect; effects: `__n0_names' (transtripfr = transrectrip2)."
+			error 198
+		}
+		local __code : word `__fi' of `__n0_codes'
+		if "`__pp'" == "" {
+			if inlist("`__f'", "outpopmore", "outpopsqrtmore", "outpopthreshold", "outmoreego") local __pp 1
+			else if inlist("`__f'", "outactmoreego", "outactsqrtmoreego") local __pp 1
+			else local __pp 0
+		}
+		mata: SaomRegDg(__nwsaom_last_M, "`__f'", `__code', `__pp', `nodes', __nwsaom_dg_ties / (`nodes' * `__nwsaom_nwaves'), __nwsaom_dg_rec / (`nodes' * `__nwsaom_nwaves'))
+		local __nwsaom_efflist "`__nwsaom_efflist' `__f'"
 	}
 	// protocol 49: dyadx(effect:matrix ...) - network effects of a constant dyadic covariate W (RSiena WWX cyWWX InWWX OutWWX WXX XWX XWX1 XWX2 XXW),
 	// native only; the matrix is used raw (never centred), as RSiena does for these effects
@@ -4153,11 +4182,23 @@ program define nwsaom_multiplex, eclass
 	_nwsaom_tconvtable
 end
 
+capture mata: mata drop __nwsaom_dg_acc()
 capture mata: mata drop __nwsaom_mn_addwave()
 capture mata: mata drop __nwsaom_mn_post()
 capture mata: mata drop __nwsaom_mn_avg()
 capture mata: mata drop __nwsaom_mn_avgsq()
 mata:
+/* netx0(): accumulate the number of ties and of reciprocated out-ties of one wave (for the averages over all waves) */
+void __nwsaom_dg_acc(class ErgmGraph scalar G) {
+	external real scalar __nwsaom_dg_ties, __nwsaom_dg_rec
+	real matrix e
+	real scalar k, r
+	e = G.all_ties()
+	__nwsaom_dg_ties = __nwsaom_dg_ties + rows(e)
+	r = 0
+	for (k=1; k<=rows(e); k++) r = r + G.has_edge(e[k,2], e[k,1])
+	__nwsaom_dg_rec = __nwsaom_dg_rec + r
+}
 /* nwsaom multinet (protocol 52): collects the wave graphs of one network (slot 1 or 2) and posts the fit */
 void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot) {
 	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
