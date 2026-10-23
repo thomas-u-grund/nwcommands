@@ -23,10 +23,21 @@ program nwergm, eclass
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
-		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
+		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 60) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) ///
+		INIT(string) MPLETYPE(string) MPLECHECK(string) MPLECOVariance(string) ESTimate(string) MAINMETHOD(string) ///
+		MCMLETERMination(string) MCMLECONFidence(real 0.99) MCMLESTEPLength(real 1) MCMLESTEPMargin(real 0.05) ///
+		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SAMAXit(integer 60) ]
 	set more off
+	_nwergm_est opts, estimate(`estimate') method(`method') mainmethod(`mainmethod') mpletype(`mpletype') ///
+		mplecovariance(`mplecovariance') mcmletermination(`mcmletermination') mplecheck(`mplecheck')
+	local method "`s(method)'"
+	local mainmethod "`s(mainmethod)'"
+	local mpletype "`s(mpletype)'"
+	local mplecovariance "`s(mplecovariance)'"
+	local mcmletermination "`s(mcmletermination)'"
+	local mplecheck "`s(mplecheck)'"
 
 	if "`edges'" == "" {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
@@ -1744,6 +1755,17 @@ program nwergm, eclass
 	// accordingly. Found and fixed while building the R-vs-Stata
 	// benchmark suite's own large-network control case
 	// (docs/CERTIFICATION.md harmonisation unit 81).
+	// init(): R's control.ergm(init=); starting values / offset values
+	local __e7_initmode 0
+	if `"`init'"' != "" {
+		if `__ergm_curved' {
+			di "{err}option {bf:init()} is not currently supported for a model containing a curved (free-decay) term."
+			error 198
+		}
+		_nwergm_est init `"`init'"' "`method'"
+		local __e7_initmode = r(mode)
+	}
+
 	tempname __nw_D
 	// Harmonisation unit 145: route the design-matrix build through the
 	// native (C) backend when eligible, exactly the same "is this whole
@@ -1890,24 +1912,37 @@ program nwergm, eclass
 		// would leave the caller's own dataset in the modified,
 		// mid-preserve state (the same class of bug already fixed once
 		// in nwrename.ado this same pass).
-		capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
-		if _rc != 0 {
-			local __ergm_mple_rc = _rc
+		tempname __e7_sb __e7_sV
+		local __e7_special 0
+		_nwergm_est mple `__nw_D' `__e7_sb' `__e7_sV' "`mpletype'" "`mplecheck'" `__ergm_has_offset' "`method'"
+		local __e7_special = r(special)
+		local __e7_rcx 0
+		if !`__e7_special' {
+			capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
+			local __e7_rcx = _rc
+		}
+		if `__e7_rcx' != 0 {
+			local __ergm_mple_rc = `__e7_rcx'
 			restore
 			di "{err}The MPLE fit did not converge (outcome does not vary - e.g. a fully edgeless network with no ties at all). Cannot estimate this model."
 			error `__ergm_mple_rc'
 		}
-		if `__ergm_has_offset' {
-			tempname __b_mple_free __V_mple_free
+		tempname __b_mple_free __V_mple_free
+		if `__e7_special' {
+			matrix `__b_mple_free' = `__e7_sb'
+			matrix `__V_mple_free' = `__e7_sV'
+		}
+		else {
 			matrix `__b_mple_free' = e(b)
 			matrix `__V_mple_free' = e(V)
-			restore
+		}
+		restore
+		if `__ergm_has_offset' {
 			mata: ergm_mple_expand_fixed(__nwergm_last_M, st_matrix("`__b_mple_free'"), st_matrix("`__V_mple_free'"), "`__b_mple'", "`__V_mple'")
 		}
 		else {
-			matrix `__b_mple' = e(b)
-			matrix `__V_mple' = e(V)
-			restore
+			matrix `__b_mple' = `__b_mple_free'
+			matrix `__V_mple' = `__V_mple_free'
 		}
 	}
 
@@ -1954,6 +1989,16 @@ program nwergm, eclass
 	}
 	else {
 		tempname __theta0
+		if `__e7_initmode' == 1 {
+			mata: __e7_fx = __nwergm_last_M.isfixed; __e7_fx[__e7_tmpfix] = J(1, cols(__e7_tmpfix), 0); __nwergm_last_M.isfixed = __e7_fx
+			mata: __e7_fx = __nwergm_last_M.fixedvalue; __e7_fx[__e7_tmpfix] = J(1, cols(__e7_tmpfix), 0); __nwergm_last_M.fixedvalue = __e7_fx
+			mata: mata drop __e7_fx
+			mata: mata drop __e7_tmpfix
+		}
+		if `__e7_initmode' == 2 {
+			mata: __e7_th = __e7_init; __e7_th = editmissing(__e7_th, 0) :* (1 :- __nwergm_last_M.isfixed) + (__nwergm_last_M.isfixed :* __nwergm_last_M.fixedvalue); st_matrix("`__b_mple'", __e7_th)
+			mata: mata drop __e7_th
+		}
 		// Curved gwesp (harmonisation unit 138): `__b_mple' is now
 		// THETA-space for a curved model (unit 136's own MPLE change -
 		// it reports gwesp_weight/gwesp_decay directly, not raw
@@ -2079,6 +2124,8 @@ program nwergm, eclass
 		// equal, so this is a no-op change there.
 		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled_sample))
 
+		_nwergm_est ctl, termination(`mcmletermination') confidence(`mcmleconfidence') steplength(`mcmlesteplength') ///
+			margin(`mcmlestepmargin') effsize(`mcmleeffectivesize')
 		tempname __fit
 		if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
