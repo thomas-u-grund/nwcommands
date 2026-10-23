@@ -453,7 +453,7 @@ program nwsaom, eclass
 			di "{err}{bf:actormode()} must be 1 or 2 (the mode whose nodes are the actors)."
 			error 198
 		}
-		foreach __opt in symmetric ratecov joinat leaveat missnet missbeh structural interact nodecov nodematch simcov ///
+		foreach __opt in symmetric joinat leaveat missnet missbeh structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
@@ -698,7 +698,7 @@ program nwsaom, eclass
 			di "{err}option {bf:structural()} is v1 scope: not yet combinable with {bf:symmetric}."
 			error 198
 		}
-		if "`ratecov'" != "" {
+		if "`ratecov'" != "" & !`__nwsaom_tm' {
 			di "{err}option {bf:structural()} is v1 scope: not yet combinable with {bf:ratecov()}."
 			error 198
 		}
@@ -802,15 +802,20 @@ program nwsaom, eclass
 	local __nwsaom_srtypes = trim("`__nwsaom_srtypes'")
 	capture mata: mata drop __saom_srtypes
 	if `__nwsaom_nsr' > 0 {
-		foreach __o in symmetric present joinat leaveat missnet missbeh behavior structural interact {
-			if "``__o''" != "" | (`__nwsaom_tm' & "`__o'" == "symmetric") {
+		foreach __o in present joinat leaveat missnet missbeh behavior structural interact {
+			if "``__o''" != "" & !(`__nwsaom_tm' & "`__o'" == "structural") {
 				di "{err}the structural rate effects (outrate, inrate, ...) are not yet available together with {bf:`__o'}."
 				error 198
 			}
 		}
-		if `__nwsaom_tm' {
-			di "{err}the structural rate effects (outrate, inrate, ...) are not yet available for a two-mode network."
-			error 198
+		// a non-directed or a two-mode network has only the out-degree (the degree) versions of RSiena's structural rate effects
+		if "`symmetric'" != "" | `__nwsaom_tm' {
+			foreach __o in inrate reciprate inrateinv reciprateinv inratelog recipratelog {
+				if "``__o''" != "" {
+					di "{err}{bf:`__o'} is not available for a non-directed or a two-mode network (available: outrate, outrateinv, outratelog)."
+					error 198
+				}
+			}
 		}
 		mata: __saom_srtypes = (`=subinstr("`__nwsaom_srtypes'", " ", ",", .)')
 	}
@@ -3222,7 +3227,13 @@ program nwsaom, eclass
 		// period, rate is period-specific - see SaomEstimateRMMulti()'s
 		// own header comment (unw_saom.do) for the real-RSiena
 		// verification this pooling convention is based on.
-		if `__nwsaom_hasstructural' {
+		if `__nwsaom_hasstructural' & `__nwsaom_hasratecov' {
+			// the two-mode embedding with covariate / structural rate effects
+			mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
+			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
+				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', J(0, 0, 0), J(1, 0, NULL), __nwsaom_rates0, J(1, 0, 0), 0, __nwsaom_mw_rcattr, `ratecovcoef', __nwsaom_structmat)
+		}
+		else if `__nwsaom_hasstructural' {
 			// structural dyads with waves() (the two-mode embedding): the trailing arguments are placeholders
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', J(0, 0, 0), J(1, 0, NULL), __nwsaom_rates0, J(1, 0, 0), 0, J(0, 1, 0), J(1, 0, 0), __nwsaom_structmat)
@@ -3256,7 +3267,7 @@ program nwsaom, eclass
 				local __nwsaom_mw_sym = 0
 			}
 			if `__nwsaom_hasratecov' {
-				mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
+				mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 				mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 					__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_mw_present, __nwsaom_mw_missptr, __nwsaom_rates0, __nwsaom_mw_fntype, `__nwsaom_mw_sym', __nwsaom_mw_rcattr, `ratecovcoef')
 			}
@@ -3319,7 +3330,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symrc_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_symrc_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_symrc_fntype = J(1, __nwsaom_last_M.nterms, 0)
-			mata: __nwsaom_symrc_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
+			mata: __nwsaom_symrc_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
 		}
@@ -3338,6 +3349,15 @@ program nwsaom, eclass
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_sym_allpresent, __nwsaom_sym_nomiss, __nwsaom_sym_fntype, __nwsaom_sym_ratecovattr, 0, `__nwsaom_symtypeval')
 		}
+		else if `__nwsaom_hasratecov' & `__nwsaom_hasstructural' {
+			// the two-mode embedding with covariate / structural rate effects
+			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
+			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
+			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
+			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
+			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
+				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef', 0, __nwsaom_structmat)
+		}
 		else if `__nwsaom_hasratecov' {
 			// Same chained-optional-argument placeholders `hasnetgate'
 			// already established above (all-present, all-eval fntype,
@@ -3346,7 +3366,7 @@ program nwsaom, eclass
 			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
-			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr')
+			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
 		}

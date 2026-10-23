@@ -3151,9 +3151,15 @@ real colvector SaomCovPrepIdx(real colvector xfull, real colvector idx, real sca
 }
 /* protocol 42: rate covariates = the user's ratecov() columns plus S zero placeholder columns for the structural rate effects (the plugin
    computes their values from each period's starting network) */
-real matrix SaomRateAttr(real scalar n, string scalar vars, real scalar center, real scalar S) {
-	real matrix U
+real matrix SaomRateAttr(real scalar n, string scalar vars, real scalar center, real scalar S, | real colvector idx) {
+	real matrix U, X
 	if (strtrim(vars) == "") U = J(n, 0, 0)
+	else if (args() >= 5) {
+		/* two-mode network (protocol 70): the covariate belongs to the actors (rows idx of the node list), centred by their mean; the events get 0 */
+		X = st_data(1::n, vars)
+		U = J(n, cols(X), 0)
+		U[idx, .] = SaomCovPrepMat(X[idx, .], center)
+	}
 	else U = SaomCovPrepMat(st_data(1::n, vars), center)
 	return((U, J(n, S, 0)))
 }
@@ -6072,7 +6078,15 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.perok = (ver >= 18)
 	// the threaded batch path: every model from protocol 11 on
 	C.use_batch = C.use_native & (!C.hastimed | ver >= 27) & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
+	if (C.hasratecov & C.hasstructural & ver < 70) {
+		errprintf("nwsaom: rate effects of a two-mode network need the native plugin, protocol 70 or later; there is no Mata implementation.\n")
+		exit(198)
+	}
 	if (cols(SaomSRTypes()) > 0) {
+		if (C.symtype != 0 & ver < 70) {
+			errprintf("nwsaom: the structural rate effects of a non-directed network need the native plugin, protocol 70 or later; there is no Mata implementation.\n")
+			exit(198)
+		}
 		if (!C.use_batch | ver < 42) {
 			errprintf("nwsaom: the structural rate effects (outrate, inrate, ...) need the native plugin, protocol 42 or later; there is no Mata implementation.\n")
 			exit(198)
