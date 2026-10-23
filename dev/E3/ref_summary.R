@@ -1,7 +1,7 @@
 # R reference: summary() of every term in spec.csv on the 4 test networks -> ref_summary.csv
 suppressMessages({library(ergm); library(network)})
 sp <- read.csv("spec.csv", stringsAsFactors=FALSE)
-nets <- list(und_a=FALSE, und_b=FALSE, dir_a=TRUE, dir_b=TRUE)
+nets <- list(und_a=FALSE, und_b=FALSE, und_c=FALSE, dir_a=TRUE, dir_b=TRUE, dir_c=TRUE)
 res <- list()
 for (nm in names(nets)) {
   A <- as.matrix(read.csv(paste0(nm,"_adj.csv"), header=FALSE)); nd <- read.csv(paste0(nm,"_nodes.csv"))

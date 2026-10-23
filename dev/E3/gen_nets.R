@@ -9,7 +9,12 @@ nets <- list()
 nets$und_a <- mk_und(30, .14)
 data(florentine); nets$und_b <- as.matrix(network::as.sociomatrix(flomarriage))
 nets$dir_a <- mk_dir(25, .10)
-data(samplk); nets$dir_b <- as.matrix(network::as.sociomatrix(samplk1))
+data(samplk); # denser, structured networks (so that MPLE comparisons are not separated)
+cl <- function(U, rep) { n <- nrow(U); for (r in 1:rep) { cn <- U %*% U; add <- (cn > 0) & (U == 0) & (matrix(runif(n*n),n) < 0.25); add[lower.tri(add, TRUE)] <- FALSE; U <- U + add + t(add) }; diag(U) <- 0; U }
+nets$und_c <- cl(mk_und(60, .05), 2)
+D <- mk_dir(40, .06); for (r in 1:2) { D2 <- D %*% D; add <- (D2 > 0) & (D == 0) & (matrix(runif(1600),40) < .2); D <- D + add; rec <- t(D) * (D == 0) * (matrix(runif(1600),40) < .3); D <- D + rec }; D[D > 1] <- 1; diag(D) <- 0
+nets$dir_c <- D
+nets$dir_b <- as.matrix(network::as.sociomatrix(samplk1))
 for (nm in names(nets)) {
   m <- nets[[nm]]; n <- nrow(m)
   wm(m, paste0(nm, "_adj.csv"))
