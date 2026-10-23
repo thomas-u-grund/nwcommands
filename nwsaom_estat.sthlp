@@ -15,6 +15,10 @@ The following postestimation command is available after {helpb nwsaom}:
 {p2colset 9 22 23 2}{...}
 {p2col: {cmd:estat gof}}RSiena-style goodness-of-fit test and violin plot{p_end}
 {p2col: {cmd:estat mems}}Micro Effects on Macro Structure (Duxbury) mediation-style sensitivity analysis{p_end}
+{p2col: {cmd:estat simulate}}Simulate the fitted model (or the model at chosen coefficients) forward from the observed waves{p_end}
+{p2col: {cmd:estat score}}Generalised score-type test of the effects held fixed with {opt fix()}{p_end}
+{p2col: {cmd:estat timetest}}Test of time heterogeneity of the effects (RSiena's {cmd:sienaTimeTest}){p_end}
+{p2col: {cmd:estat importance}}Relative importance of the effects (RSiena's {cmd:sienaRI}){p_end}
 {p2colreset}{...}
 
 {title:Supported network types}
@@ -169,6 +173,74 @@ reproducing, and a corrected reimplementation was not this pass's own priority. 
 common-random-numbers pairing between a draw's own interval simulations either - only the THETA
 draw itself is shared across a row's own interval values, each simulation call draws its own fresh
 randomness.
+
+{marker estat_simulate}{...}
+{title:estat simulate}
+
+{p 8 17 2}
+{cmd:estat simulate} [{cmd:,} {opt nsim(int)} {opt seed(int)} {opt theta(matname)} {opt rates(numlist)} {opt ratesbeh(numlist)} {opt gen:erate(stub)}]
+
+{pstd}
+Simulates the fitted model {opt nsim()} times (default 100). Every inter-wave period starts at the observed
+start wave of the period and runs for the period's length at the fitted coefficients and rates, the same
+simulation that {cmd:estat gof} uses. With {opt theta()} (a row vector in the order of {cmd:e(b)}) and
+{opt rates()} (one rate per period; {opt ratesbeh()} for the behavior) the model is simulated at coefficients
+of your choice, which is the simulation-only mode (RSiena's {cmd:siena07} with {cmd:simOnly}). {opt generate(stub)}
+saves the simulated networks as {cmd:nwcommands} networks named {it:stub}{cmd:_}{it:s}{cmd:_p}{it:period}; after a
+co-evolution fit the simulated behavior is saved as variables of the same names.
+
+{pstd}
+Returns {cmd:r(sim)} (one row per simulation and period: simulation, period, number of ties, mutual dyads,
+transitive triples, mean behavior), {cmd:r(obs)} (the same for the observed end waves) and {cmd:r(nsim)}.
+To simulate without a prior fit, give the model options of {cmd:nwsaom} and the coefficients to
+{cmd:nwsaom simulate} ({help nwsaom##simulate:see the nwsaom help}).
+
+{marker estat_score}{...}
+{title:estat score}
+
+{p 8 17 2}
+{cmd:estat score} [{cmd:,} {opt tested(namelist)}]
+
+{pstd}
+The generalised score-type test of Schweinberger (2012), RSiena's {cmd:test = TRUE} effects and
+{cmd:score.Test()}. Fit the restricted model first, with the effects to be tested held fixed at the restricted
+values: {cmd:nwsaom ..., theta0(}{it:values}{cmd:) fix(}{it:effects}{cmd:)}. {cmd:estat score} then asks, from
+the phase-3 simulations of the restricted model alone, whether freeing the fixed effects would improve the fit.
+It reports the joint chi-squared test (degrees of freedom = number of tested effects), each tested effect
+separately (two-sided chi-squared and the one-sided normal variate, signed so that it is positive when the
+effect is expected to be positive) and the one-step estimates of all parameters. {opt tested()} restricts the
+test to some of the fixed effects. Returns {cmd:r(chi2)}, {cmd:r(df)}, {cmd:r(p)}, {cmd:r(separate)} and
+{cmd:r(onestep)}.
+
+{marker estat_timetest}{...}
+{title:estat timetest}
+
+{p 8 17 2}
+{cmd:estat timetest} [{cmd:,} {opt eff:ects(namelist)}]
+
+{pstd}
+Tests whether the effects of a fit with at least three waves have the same parameter in every period
+(RSiena's {cmd:sienaTimeTest}). For every effect the model is extended by period-specific deviations (periods 2
+to P), and a score-type test of "no deviation" is computed from the phase-3 simulations of the fit in memory; no
+second fit is needed. Reported: a joint test of all deviations, a test per effect (degrees of freedom P - 1), and
+per effect and period the one-step estimate of the deviation with its separate test. Returns {cmd:r(chi2)},
+{cmd:r(df)}, {cmd:r(p)}, {cmd:r(effect)} and {cmd:r(individual)}.
+
+{marker estat_importance}{...}
+{title:estat importance}
+
+{p 8 17 2}
+{cmd:estat importance}
+
+{pstd}
+The relative importance of the effects (RSiena's {cmd:sienaRI}). At the start network of every period the change
+contribution of each actor's every possible tie change is computed; the importance of an effect for an actor is the
+L1 distance between the actor's choice probabilities with and without the effect, its relative importance the share
+among all effects, averaged over the actors. Also reported: sigma (the within-actor standard deviation of the
+contributions), the semi-standardised estimate (estimate times sigma) and the certainty R_H of the choices.
+Available after fits of a directed one-mode network without behavior, endowment/creation effects, {opt structural()},
+{opt present()} or missing-data options (as in RSiena). Returns {cmd:r(ri)}, {cmd:r(importance)}, {cmd:r(sigma)},
+{cmd:r(sigma_period)} and {cmd:r(certainty)}. Needs the native plugin.
 
 {title:Stored results}
 

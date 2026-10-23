@@ -212,6 +212,7 @@
 
 {marker ratecov_options}{...}
 {syntab:Covariate-dependent rate}
+{synopt:{opt fix(namelist)}}Hold the named effects fixed at their {opt theta0()} values (RSiena's {cmd:fix = TRUE}): they are not estimated and have no standard error; {cmd:fix(_all)} fixes every effect. Used to fit a restricted model for {help nwsaom_estat##estat_score:estat score}, to simulate at chosen coefficients ({cmd:nwsaom simulate}) and to profile models. Works with {opt behavior()}; not with {cmd:nwsaom multinet}{p_end}
 {synopt:{opth ratecov(varlist)}}Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the period - actor i's own rate becomes {it:rate}*exp(sum of {it:b_k}*{it:x_k}[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated jointly with every other effect. Works with {opt waves()} (one shared coefficient per variable, as RSiena's RateX) and with {opt symmetric}; not yet supported combined with co-evolution, {opt present()}, or {opt missnet()}. See {help nwsaom_remarks:Remarks}{p_end}
 {synopt:{opt ratecovcoef(numlist)}}Starting values for the {opt ratecov()} coefficients, one per variable or one for all (default 0){p_end}
 {synopt:{opt nocenter}}Use the raw values of the covariates of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()}. By default they are centred by their means (missing values set to the mean), as RSiena's {cmd:coCovar(centered = TRUE)}, so that all coefficients, including outdegree and the rate, are RSiena's; the means are listed under the table and returned in {bf:e(covmeans)}. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients. {opt samex()} does not depend on it; {opt simx()} is centred by its similarity mean either way{p_end}
@@ -343,6 +344,26 @@ within a type, the variables in the order listed; {cmd:matrix list e(b)} shows i
 2026-10-01 each of these options took one variable.)
 
 {marker effects}{...}
+
+{marker simulate}{...}
+{title:Simulation without estimation: nwsaom simulate}
+
+{p 8 17 2}
+{cmd:nwsaom simulate,} {it:model options of nwsaom} {opt theta(numlist)} [{opt behtheta(numlist)}] {opt rates(numlist)}
+[{opt ratesbeh(numlist)} {opt nsim(int)} {opt seed(int)} {opt gen:erate(stub)}]
+
+{pstd}
+Simulates a model at coefficients chosen by you, without estimating anything (RSiena's {cmd:siena07} with
+{cmd:simOnly = TRUE}). The model is specified exactly as in {cmd:nwsaom} (waves, effects, covariates, {opt behavior()},
+...). {opt theta()} gives one coefficient per network effect in the order of the effect options, {opt behtheta()} one
+per behavior effect, {opt rates()} the rate of every period and {opt ratesbeh()} the behavior rates. The result is that of
+{help nwsaom_estat##estat_simulate:estat simulate}. After a fit, {cmd:estat simulate} simulates the fitted model.
+
+{pstd}
+{bf:Syntax rule.} A property of the data (two-mode, non-directed) is detected from the network; an option changes
+how a model is specified or fitted ({opt behavior()}, {opt present()}, {opt fix()}); a different job is a subcommand
+({cmd:nwsaom multinet}, {cmd:nwsaom simulate}) or a postestimation command ({cmd:estat}). {cmd:nwsaom multiplex} is
+deprecated: use {cmd:nwsaom multinet}.
 
 {title:Remarks}
 
