@@ -2,8 +2,14 @@
 capture program drop nwergm
 program nwergm, eclass
 	version 14
-	if `"`1'"' == "simulate" {
-		gettoken __ergm_sub 0 : 0
+	gettoken __ergm_t1 : 0, parse(" ,")
+	if `"`__ergm_t1'"' == "simulate" {
+		gettoken __ergm_sub 0 : 0, parse(" ,")
+		gettoken __ergm_first : 0, parse(" ,")
+		if `"`__ergm_first'"' == "" | `"`__ergm_first'"' == "," {
+			_nwergm_simfit `0'
+			exit
+		}
 		nwergm_simulate `0'
 		exit
 	}

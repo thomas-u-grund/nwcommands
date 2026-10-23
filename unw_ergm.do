@@ -4488,6 +4488,389 @@ real matrix ergm_gof_sum5(real matrix draws){
 	return(out)
 }
 
+// sets G to the network A0 (dense 0/1) by toggling the dyads that differ
+void ergm_reset_graph(class ErgmGraph scalar G, real matrix A0){
+	real scalar i, j, n
+	real matrix A
+	n = G.n
+	A = G.to_dense()
+	for (i=1; i<=n; i++) {
+		for (j=(G.directed ? 1 : i+1); j<=n; j++) {
+			if (i == j) continue
+			if (A[i,j] != A0[i,j]) G.toggle(i, j)
+		}
+	}
+}
+
+/*
+	simulate from a fitted model (R simulate.ergm): nsim draws at theta starting from the network A0 held in G.
+	sequential: one chain (burnin once, `interval' steps between draws); otherwise every draw restarts from A0
+	with the full burnin.  Posts prefix_stats (nsim x p); wantnet=1 also keeps each draw, posted by
+	ergm_sim_get() as dense matrices, wantnet=2 builds prefix_el (sim, tail, head).
+*/
+transmorphic scalar ergm_sim_run(class ErgmModel scalar M, class ErgmGraph scalar G, real matrix A0,
+	real rowvector theta, real scalar nsim, real scalar burnin, real scalar interval,
+	pointer(real rowvector function) scalar proposalfn, real scalar sequential, real scalar wantnet, string scalar prefix){
+	real scalar s, i, j
+	real matrix S, A, el
+	transmorphic scalar nets
+
+	nets = asarray_create("real", 1)
+	S = J(nsim, M.nparam(), .)
+	el = J(0, 3, .)
+	if (!sequential) ergm_reset_graph(G, A0)
+	for (s=1; s<=nsim; s++) {
+		if (!sequential & s > 1) ergm_reset_graph(G, A0)
+		S[s, .] = ErgmMCMCSample(M, G, theta, (s == 1 | !sequential ? burnin : 0), interval, 1, proposalfn)
+		if (wantnet) {
+			A = G.to_dense()
+			if (wantnet == 1) asarray(nets, s, A)
+			else {
+				for (i=1; i<=G.n; i++) for (j=(G.directed ? 1 : i+1); j<=G.n; j++) {
+					if (i != j & A[i,j]) el = el \ (s, i, j)
+				}
+			}
+		}
+	}
+	st_matrix(prefix + "_stats", S)
+	if (wantnet == 2) st_matrix(prefix + "_el", el)
+	return(nets)
+}
+
+/* ===================================================================
+   mcmc.diagnostics() of R ergm: coda/statnet.common building blocks
+   (multivariate Yule-Walker AR, spectrum at zero, Hotelling tests,
+   Geweke diagnostics), written to give the same numbers on the same
+   sample.  Rows with missing values are allowed (as in R's na.pass).
+   =================================================================== */
+
+// R acf(type="covariance", demean=TRUE, na.action=na.pass): block lag*p+1..(lag+1)*p, entry [u,v] = cov(x_u[t+lag], x_v[t])
+real matrix ergm_acf_cov(real matrix X, real scalar lagmax){
+	real scalar n, p, k, lag, m2, k2
+	real matrix Z, Mk, S, N, out
+	n = rows(X)
+	p = cols(X)
+	Z = X
+	for (k=1; k<=p; k++) {
+		m2 = mean(select(X[., k], X[., k] :< .))
+		Z[., k] = X[., k] :- m2
+	}
+	Mk = (Z :< .)
+	Z = editmissing(Z, 0)
+	out = J((lagmax+1)*p, p, .)
+	for (lag=0; lag<=lagmax; lag++) {
+		S = Z[(lag+1)::n, .]' * Z[1::(n-lag), .]
+		N = Mk[(lag+1)::n, .]' * Mk[1::(n-lag), .]
+		out[(lag*p+1)::((lag+1)*p), .] = S :/ (N :+ lag)
+		for (k=1; k<=p; k++) for (k2=1; k2<=p; k2++) if (N[k,k2] == 0) out[lag*p+k, k2] = .
+	}
+	return(out)
+}
+
+// R ar.yw.default (Whittle recursion for nser>1, the same sequence for nser==1): chosen order, sum of AR coefficient
+// matrices, prediction variance, aic differences (0..ordmax)
+void ergm_ar_yw(real matrix X, real scalar ordmax, real scalar useaic, real scalar ord, real matrix arsum,
+	real matrix varpred, real rowvector xaic){
+	real scalar n, nser, nobs, m, i, ld
+	real matrix xacf, A, B, Aold, Bold, EA, EB, KA, KB, betaA, betaB, Im
+	n = rows(X)
+	nser = cols(X)
+	nobs = sum(X[., 1] :< .)
+	xacf = ergm_acf_cov(X, ordmax)
+	Im = I(nser)
+	A = J((ordmax+1)*nser, nser, 0)
+	B = A
+	A[1::nser, .] = Im
+	B[1::nser, .] = Im
+	EA = xacf[1::nser, .]
+	EB = EA
+	xaic = J(1, ordmax+1, .)
+	ord = 0
+	arsum = J(nser, nser, 0)
+	varpred = EA * nobs / (nobs - nser)
+	for (m=0; m<=ordmax; m++) {
+		ld = ln(abs(det(EA)))
+		xaic[m+1] = nobs * ld + 2 * m * nser * nser
+		if (!useaic | xaic[m+1] <= min(xaic[1..(m+1)])) {
+			ord = m
+			varpred = EA * nobs / (nobs - nser * (m + 1))
+			arsum = J(nser, nser, 0)
+			for (i=1; i<=m; i++) arsum = arsum - A[(i*nser+1)::((i+1)*nser), .]
+		}
+		if (m < ordmax) {
+			betaA = J(nser, nser, 0)
+			betaB = J(nser, nser, 0)
+			for (i=0; i<=m; i++) {
+				betaA = betaA + A[(i*nser+1)::((i+1)*nser), .] * xacf[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+				betaB = betaB + B[(i*nser+1)::((i+1)*nser), .] * xacf[((m+1-i)*nser+1)::((m+2-i)*nser), .]'
+			}
+			KA = -betaA * luinv(EB)
+			KB = -betaB * luinv(EA)
+			EB = (Im - KB * KA) * EB
+			EA = (Im - KA * KB) * EA
+			Aold = A
+			Bold = B
+			for (i=1; i<=m+1; i++) {
+				A[(i*nser+1)::((i+1)*nser), .] = Aold[(i*nser+1)::((i+1)*nser), .] + KA * Bold[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+				B[(i*nser+1)::((i+1)*nser), .] = Bold[(i*nser+1)::((i+1)*nser), .] + KB * Aold[((m+1-i)*nser+1)::((m+2-i)*nser), .]
+			}
+		}
+	}
+	xaic = xaic :- min(xaic)
+}
+
+// coda spectrum0.ar for one series (missing rows dropped): innovations variance / (1 - sum of AR)^2; 0 for a (linearly trending) constant
+real scalar ergm_spec0_ar(real colvector x0){
+	real colvector x, z, r
+	real scalar n, ordmax, ord, b
+	real matrix arsum, varpred
+	real rowvector xaic
+	x = select(x0, x0 :< .)
+	n = rows(x)
+	z = (1::n)
+	b = (cross(z :- mean(z), x :- mean(x))) / cross(z :- mean(z), z :- mean(z))
+	r = x :- mean(x) :- b * (z :- mean(z))
+	if (sqrt(variance(r)) < 1.5e-8) return(0)
+	ordmax = min((n-1, floor(10*log10(n))))
+	ergm_ar_yw(x, ordmax, 1, ord, arsum, varpred, xaic)
+	return(varpred[1,1] / (1 - arsum[1,1])^2)
+}
+
+// R statnet.common/ergm spectrum0.mvar: spectral covariance matrix at zero of the (possibly NA-padded) series X; infl and rank returned
+real matrix ergm_spec0_mvar(real matrix Xfull, real scalar infl, real scalar rnk){
+	real scalar p, pv, k, ord, tol, ordsel, i, j, ok
+	real matrix x, xf, evec, xr, unmapper, indvar, v, vvar, adj, arsum, varpred
+	real rowvector xscl, ev, xrsd, xaic, d, keep, ind
+	real colvector rows_ok
+	real scalar ord_ar
+
+	tol = sqrt(2.220446049250313e-16)
+	p = cols(Xfull)
+	rows_ok = (rowmissing(Xfull) :== 0)
+	x = select(Xfull, rows_ok)
+	v = J(p, p, 0)
+	xscl = sqrt(diagonal(variance(x)))'
+	keep = selectindex(xscl :>= tol)
+	pv = cols(keep)
+	if (pv == 0) _error(3498, "All variables are constant.")
+	x = x[., keep]
+	xf = Xfull[., keep]
+	xscl = xscl[keep]
+	x = x :/ xscl
+	xf = xf :/ xscl
+	symeigensystem(variance(x), evec, ev)
+	xr = J(rows(xf), pv, .)
+	for (k=1; k<=pv; k++) xr[., k] = (xf * evec[., k]) / sqrt(max((ev[k], 0)))
+	xrsd = J(1, pv, .)
+	for (k=1; k<=pv; k++) {
+		d = select(xr[., k], xr[., k] :< .)
+		xrsd[k] = (rows(d) > 1 ? sqrt(variance(d)) : .)
+	}
+	ind = selectindex((xrsd :< .) :& (abs(xrsd :- 1) :< tol))
+	unmapper = diag(xscl) * evec[., ind] * diag(sqrt(ev[ind]))
+	xr = xr[., ind]
+	rnk = cols(ind)
+	indvar = variance(select(xr, rowmissing(xr) :== 0))
+	ord = ceil(10 * log10(rows(xr)))
+	ok = 0
+	ord = ord + 1
+	while (!ok & ord > 0) {
+		ord = ord - 1
+		if (ord <= 0) _error(3498, "Unable to fit ar() even with order 1; this is likely to be due to insufficient sample size or a trend in the data.")
+		ergm_ar_yw(xr, ord, 1, ord_ar, arsum, varpred, xaic)
+		ok = !hasmissing(varpred)
+		if (ok) {
+			symeigensystem(0.5 * (varpred + varpred'), evec, ev)
+			if (min(ev) < 0) ok = 0
+		}
+	}
+	// the AIC curve's first local minimum bounds the order
+	d = (. , xaic, .)
+	ordsel = -1
+	for (i=2; i<=cols(d); i++) {
+		if (d[i] >= d[i-1]) {
+			ordsel = i - 2 - 1
+			break
+		}
+	}
+	if (ord_ar > ordsel) {
+		ergm_ar_yw(xr, max((ordsel, 1)), (ordsel == 0), ord_ar, arsum, varpred, xaic)
+	}
+	adj = I(cols(xr)) - arsum
+	vvar = luinv(adj) * varpred * luinv(adj)'
+	infl = exp((ln(det(vvar)) - ln(det(indvar))) / cols(indvar))
+	vvar = unmapper * vvar * unmapper'
+	for (i=1; i<=pv; i++) for (j=1; j<=pv; j++) v[keep[i], keep[j]] = vvar[i, j]
+	return(v)
+}
+
+// quadratic form x' A^- x with a symmetric-eigen generalised inverse (statnet.common xTAx_seigen)
+real scalar ergm_xtax_seigen(real colvector x, real matrix A){
+	real matrix evec
+	real rowvector ev
+	real colvector u
+	real scalar t
+	symeigensystem(0.5 * (A + A'), evec, ev)
+	t = max(abs(ev)) * sqrt(2.220446049250313e-16)
+	u = evec' * x
+	return(sum((u:^2 :/ ev')[selectindex(ev' :> t)]))
+}
+
+// ergm approx.hotelling.diff.test: one-sample (Y empty) or pooled two-sample test with autocorrelation correction;
+// returns T^2, the F-transform parameters and the p-value (the covariance of the difference of means is returned in V)
+void ergm_hotelling(real matrix X, real matrix Y, real rowvector mu0, real scalar T2, real scalar prm, real scalar df,
+	real scalar pval, real matrix V){
+	real scalar nx, ny, infl, rnk, k, p, pad
+	real matrix vc, xp, yp, xy, ds
+	real rowvector d, dm, nov
+	real colvector sel
+
+	nx = rows(X)
+	if (rows(Y) == 0) {
+		vc = ergm_spec0_mvar(X, infl, rnk)
+		d = mean(X) - mu0
+		V = vc / nx
+		df = nx / infl - 1
+	}
+	else {
+		ny = rows(Y)
+		xp = X :- mean(X)
+		yp = Y :- mean(Y)
+		pad = ceil(10 * log10(nx + ny))
+		xy = xp \ J(pad, cols(X), .) \ yp
+		vc = ergm_spec0_mvar(xy, infl, rnk)
+		d = mean(X) - mean(Y) - mu0
+		V = (vc * (nx - 1) + vc * (ny - 1)) / (nx + ny - 2) * (1/nx + 1/ny)
+		df = nx / infl + ny / infl - 2
+	}
+	nov = (diagonal(V)' :== 0)
+	sel = selectindex(!nov)
+	prm = cols(sel)
+	if (prm == 0) _error(3498, "data are essentially constant")
+	if (any((d :!= 0) :& nov)) T2 = .
+	else T2 = ergm_xtax_seigen(d[sel]', V[sel, sel])
+	if (prm >= df | T2 >= .) pval = .
+	else pval = Ftail(prm, df - prm + 1, T2 * (df - prm + 1) / (prm * df))
+}
+
+// Geweke windows (coda): indices of the first frac1 and the last frac2 of the chain
+void ergm_geweke_windows(real scalar n, real scalar frac1, real scalar frac2, real scalar e1, real scalar s2){
+	e1 = 1 + floor(frac1 * (n - 1) + 1e-5)
+	s2 = ceil(n - frac2 * (n - 1) - 1e-5)
+}
+
+// univariate Geweke z (coda geweke.diag) for each column
+real rowvector ergm_geweke_z2(real matrix S, real scalar frac1, real scalar frac2){
+	real scalar n, e1, s2, k
+	real rowvector z
+	real colvector a, b
+	n = rows(S)
+	ergm_geweke_windows(n, frac1, frac2, e1, s2)
+	z = J(1, cols(S), .)
+	for (k=1; k<=cols(S); k++) {
+		a = S[1::e1, k]
+		b = S[s2::n, k]
+		z[k] = (mean(a) - mean(b)) / sqrt(ergm_spec0_ar(a) / rows(a) + ergm_spec0_ar(b) / rows(b))
+	}
+	return(z)
+}
+
+// multivariate Geweke p-value (ergm geweke.diag.mv)
+real scalar ergm_geweke_mv(real matrix S, real scalar frac1, real scalar frac2){
+	real scalar n, e1, s2, T2, prm, df, pval
+	real matrix V
+	n = rows(S)
+	ergm_geweke_windows(n, frac1, frac2, e1, s2)
+	ergm_hotelling(S[1::e1, .], S[s2::n, .], J(1, cols(S), 0), T2, prm, df, pval, V)
+	if (pval >= .) pval = 0
+	return(pval)
+}
+
+// coda autocorr: lags 0..lagmax of the autocorrelation of each column
+real matrix ergm_autocorr(real matrix S, real scalar lagmax){
+	real matrix acv, out
+	real scalar k, p, lag
+	p = cols(S)
+	acv = ergm_acf_cov(S, lagmax)
+	out = J(lagmax+1, p, .)
+	for (k=1; k<=p; k++) for (lag=0; lag<=lagmax; lag++) out[lag+1, k] = acv[lag*p+k, k] / acv[k, k]
+	return(out)
+}
+
+// the pieces of estat mcmcdiag; results are posted to Stata matrices
+void ergm_mcdiag_summary(real matrix C, string scalar sname, string scalar qname){
+	real scalar n, p, k
+	real matrix S, Q
+	real colvector x
+	n = rows(C)
+	p = cols(C)
+	S = J(p, 4, .)
+	Q = J(p, 5, .)
+	for (k=1; k<=p; k++) {
+		x = C[., k]
+		S[k,1] = mean(x)
+		S[k,2] = sqrt(variance(x))
+		S[k,3] = S[k,2] / sqrt(n)
+		S[k,4] = sqrt(ergm_spec0_ar(x) / n)
+		Q[k,.] = ergm_quantile7(x, (0.025, 0.25, 0.5, 0.75, 0.975))
+	}
+	st_matrix(sname, S)
+	st_matrix(qname, Q)
+}
+
+// R quantile(type 7)
+real rowvector ergm_quantile7(real colvector x, real rowvector probs){
+	real colvector xs
+	real rowvector out
+	real scalar n, j, h, lo
+	xs = sort(x, 1)
+	n = rows(xs)
+	out = J(1, cols(probs), .)
+	for (j=1; j<=cols(probs); j++) {
+		h = (n - 1) * probs[j] + 1
+		lo = floor(h + 1e-12)
+		out[j] = (lo >= n ? xs[n] : xs[lo] + (h - lo) * (xs[lo+1] - xs[lo]))
+	}
+	return(out)
+}
+
+// "Are sample statistics significantly different from observed?" : rows diff, z, p for each statistic; last column the omnibus test
+void ergm_mcdiag_obstest(real matrix C, string scalar name){
+	real scalar n, p, k, T2, prm, df, pval, ess, v0
+	real matrix V, out
+	n = rows(C)
+	p = cols(C)
+	out = J(3, p+1, .)
+	for (k=1; k<=p; k++) {
+		v0 = ergm_spec0_ar(C[., k])
+		ess = (v0 == 0 ? 0 : n * variance(C[., k]) / v0)
+		out[1,k] = mean(C[., k])
+		out[2,k] = out[1,k] / sqrt(variance(C[., k])) * sqrt(ess)
+		out[3,k] = 2 * normal(-abs(out[2,k]))
+	}
+	ergm_hotelling(C, J(0, p, .), J(1, p, 0), T2, prm, df, pval, V)
+	out[2, p+1] = T2
+	out[3, p+1] = pval
+	st_matrix(name, out)
+}
+
+void ergm_mcdiag_corr(real matrix C, string scalar xname, string scalar aname){
+	st_matrix(xname, correlation(C))
+	st_matrix(aname, ergm_autocorr(C, 5))
+}
+
+// Geweke z, individual and joint p-values (row 1: z, row 2: p, last entry of row 2: joint p)
+void ergm_mcdiag_geweke(real matrix C, string scalar name){
+	real rowvector z
+	real matrix out
+	z = ergm_geweke_z2(C, 0.1, 0.5)
+	out = J(2, cols(C)+1, .)
+	out[1, 1..cols(C)] = z
+	out[2, 1..cols(C)] = 2 * normal(-abs(z))
+	out[2, cols(C)+1] = ergm_geweke_mv(C, 0.1, 0.5)
+	st_matrix(name, out)
+}
+
 real scalar ErgmModel::nparam(){
 	return(sum(npar))
 }

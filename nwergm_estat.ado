@@ -6,6 +6,8 @@ program define nwergm_estat, rclass
 	if "`subcmd'" == "mcmcdiag" {
 		nwergm_estat_mcmcdiag `rest'
 		return add
+		capture noisily _nwergm_mcdiag
+		capture return add
 	}
 	else if "`subcmd'" == "gof" {
 		nwergm_estat_gof `rest'

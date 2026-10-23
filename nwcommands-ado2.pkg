@@ -54,6 +54,8 @@ f _nwsaom_nx.ado
 f _nwergm_est.ado
 f _nwergm_gof.ado
 f _nwergm_gofplot.ado
+f _nwergm_simfit.ado
+f _nwergm_mcdiag.ado
 f _nwsaom_mnbeh.ado
 f _nwsaom_rsnotes.ado
 f _nwsaom_tconvtable.ado
