@@ -1849,6 +1849,10 @@ program nwergm, eclass
 			local __ergm_xlist "`__ergm_xlist' __ergm_x`__k'"
 		}
 
+		local __ergm_irls 0
+		mata: st_local("__ergm_has_offset", strofreal(sum(__nwergm_last_M.isfixed)>0))
+		if !`__ergm_has_offset' mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		if !`__ergm_irls' {
 		preserve
 		qui drop _all
 		qui set obs `__ergm_nrows'
@@ -1908,6 +1912,7 @@ program nwergm, eclass
 			matrix `__b_mple' = e(b)
 			matrix `__V_mple' = e(V)
 			restore
+		}
 		}
 	}
 

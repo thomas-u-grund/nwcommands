@@ -7054,6 +7054,59 @@ real scalar ergm_spec0_scalar(real colvector xcentered){
 // against the MCMC sampling itself) - rather than needing R's own
 // dual-space machinery (built for the many-test-point case this
 // package's own architecture never triggers).
+// Fast MPLE logistic regression (speed): Newton-Raphson/IRLS on the dyad
+// data matrix D = (statistics | outcome) with no constant, the same fit
+// Stata's `logit y x1 .. xp, noconstant' gives (same MLE, same inverse
+// observed-information covariance), minus the ~60 ms Stata overhead per
+// 45k-row fit. Returns 1 and posts e(b)/e(V)-style matrices only when the fit
+// is plain (converged, finite, full rank, no (quasi-)separation signs);
+// returns 0 otherwise and the caller falls back to `logit' itself, which
+// keeps Stata's own handling and messages for the degenerate cases.
+real scalar ergm_mple_irls(real matrix D, string scalar bname, string scalar Vname){
+	real matrix X, H, Hi
+	real colvector y, b, eta, mu, w, g, db
+	real scalar p, it, ll, ll0, conv, k
+
+	p = cols(D) - 1
+	if (p < 1 | rows(D) < p + 1) return(0)
+	if (missing(D) > 0) return(0)
+	X = D[., 1::p]
+	y = D[., p+1]
+	if (min(y) < 0 | max(y) > 1) return(0)
+	if (sum(y) == 0 | sum(y) == rows(y)) return(0)
+	b = J(p, 1, 0)
+	ll0 = -.
+	conv = 0
+	for (it=1; it<=40; it++) {
+		eta = X*b
+		if (max(abs(eta)) > 30) return(0)
+		mu = invlogit(eta)
+		ll = sum(y:*eta :- log1p(exp(eta)))
+		if (ll0 != -. & ll < ll0 - 1e-9) return(0)
+		w = mu :* (1 :- mu)
+		g = cross(X, y :- mu)
+		H = cross(X, w, X)
+		Hi = invsym(H)
+		for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+		db = Hi * g
+		b = b + db
+		ll0 = ll
+		if (max(abs(db)) < 1e-11) { conv = 1; break; }
+	}
+	if (!conv) return(0)
+	eta = X*b
+	if (max(abs(eta)) > 30) return(0)
+	mu = invlogit(eta)
+	w = mu :* (1 :- mu)
+	H = cross(X, w, X)
+	Hi = invsym(H)
+	for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+	if (min(diagonal(Hi)) <= 0 | max(abs(b)) > 25) return(0)
+	st_matrix(bname, b')
+	st_matrix(Vname, Hi)
+	return(1)
+}
+
 real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	real scalar n, k, i, j, ii, iter, ncols, nrows, entering, leaving
 	real scalar mincost, ratio, minratio, phase1obj, pivot, tol
@@ -7109,16 +7162,13 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	for (i=1; i<=nrows; i++) cost1[artcol0+i] = 1
 
 	for (iter=1; iter<=2000; iter++) {
-		redcost = J(1,ncols,0)
-		for (j=1; j<=ncols; j++) {
-			redcost[j] = cost1[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost1[basis[i]]*T[i,j]
-		}
-		entering = 0
-		for (j=1; j<=ncols; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		// vectorised reduced costs (speed: was an interpreted double loop over
+		// every column x every basis row; same arithmetic, same first-negative
+		// entering rule)
+		redcost = cost1 - cost1[basis]*T
+		entering = selectindex(redcost :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		minratio = .
 		leaving = 0
@@ -7204,27 +7254,12 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 
 	for (iter=1; iter<=5000; iter++) {
 		redcost = J(1,ncols,0)
-		for (j=1; j<=artcol0-1; j++) {
-			redcost[j] = cost2[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost2[basis[i]]*T[i,j]
-		}
-		// Bland's rule (smallest-index entering, not steepest-descent)
-		// here too, matching phase 1 - guarantees termination even on
-		// the degenerate/ill-conditioned MCMC samples a badly-mixed
-		// chain can produce (measured directly: steepest-descent
-		// entering selection here, paired with Bland's-rule-tie-broken
-		// leaving selection, does NOT guarantee anti-cycling - Bland's
-		// rule requires the smallest-index rule on BOTH sides - and
-		// this mismatch was observed to hang for minutes on the
-		// project's own `curvedgwespnet' certification network, whose
-		// MCMC sample is already known to be pathological: R's own
-		// `ergm' independently fails outright on curved MCMLE for this
-		// exact network too, see docs/ERGM_ROADMAP.md).
-		entering = 0
-		for (j=1; j<=artcol0-1; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		redcost[1..artcol0-1] = cost2[1..artcol0-1] - cost2[basis]*T[., 1..artcol0-1]
+		// Bland's rule (smallest-index entering AND smallest-index leaving)
+		// as in phase 1: required for anti-cycling on degenerate MCMC samples.
+		entering = selectindex(redcost[1..artcol0-1] :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		// Same Bland's-rule tie-break as phase 1's own leaving selection
 		// (smallest BASIS-VARIABLE index among tied rows, not smallest
