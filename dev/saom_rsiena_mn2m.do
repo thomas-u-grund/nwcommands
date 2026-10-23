@@ -11,7 +11,8 @@ clear
 forvalues w = 1/3 {
 	import delimited using "dev/saom_mn2m_B`w'.csv", clear varnames(nonames)
 	mkmat v*, matrix(__B`w')
-	import delimited using "dev/saom_mn2m_F`w'.csv", clear varnames(nonames)
+	if "`: environment ONE'" == "S" import delimited using "dev/saom_mn1m_S`w'.csv", clear varnames(nonames)
+	else import delimited using "dev/saom_mn2m_F`w'.csv", clear varnames(nonames)
 	mkmat v*, matrix(__F`w')
 }
 import delimited using "dev/saom_mn2m_cov.csv", clear varnames(nonames)
@@ -23,15 +24,20 @@ mkmat v*, matrix(__dyE)
 clear
 forvalues w = 1/3 {
 	nwset, mat(__B`w') bipartite name(nb`w') nooutput
-	nwset, mat(__F`w') directed name(nf`w') nooutput
+	if "`: environment ONE'" == "S" nwset, mat(__F`w') undirected name(nf`w') nooutput
+	else nwset, mat(__F`w') directed name(nf`w') nooutput
 }
 gen double cv = .
 mata: md = st_sdata(., "_nwmode"); st_store(selectindex(md :== "2"), "cv", st_matrix("__cv"))
+gen double ct1 = .
+gen double ct2 = .
+mata: ia = selectindex(md :== "2"); st_store(ia, "ct1", mod((1::30) :* 3 :+ 7, 4) :+ 1); st_store(ia, "ct2", mod((1::30) :* 3 :+ 14, 4) :+ 1)
 foreach v in EFFS DEP MODE NSEEDS EFF1 EFF2 PARM {
 	local __e : environment `v'
 	global `v' "`__e'"
 }
 if "$EFF1" == "" global EFF1 outdegree
+if "$EFF2" == "" & "`: environment ONE'" == "S" global EFF2 outdegree
 if "$EFF2" == "" global EFF2 outdegree reciprocity
 if "$DEP" == "" global DEP B
 if "$MODE" == "" global MODE targets
@@ -53,6 +59,8 @@ foreach ef of global EFFS {
 		else {
 			local cmd nwsaom multinet, net1(nb1 nb2 nb3) net2(nf1 nf2 nf3) cross2(`ef'$PARM)
 		}
+		if "`: environment ONE'" == "S" local cmd `cmd' sym2
+		local cmd `cmd' tvcov(ct1 ct2)
 		local cmd `cmd' eff1($EFF1) eff2($EFF2) k0($K0) k3($K3) seed(`sd')
 		if "$MODE" == "targets" local cmd `cmd' fix(_all)
 		capture noisily `cmd'

@@ -1633,7 +1633,7 @@ static double xt_fromwind(graph_t *W, graph_t *Z, double p1, long i, long j) {
 	return st;
 }
 /* protocol 90: cross-network effects with a dyadic covariate D (centred, rows in saom_tl_dy): 0 toU, 1 sharedToU, 2 avAltU.2M.tie. g = own (second network of the RSiena functions),
-   h = the other network (first). toU (WeightedMixedTwoPathFunction): sum over the other-network out-neighbours q of i with a tie q -> j in the own network of D(i,q).
+   h = the other network (first). toU (WeightedMixedTwoPathFunction): sum over the own-network out-neighbours q of i with a tie q -> j in the other network of D(i,q).
    sharedToU / avAltU.2M.tie (MixedDyadicCovThreeCyclesFunction, parameter 0..6: 1,3,4,6 weight the first path by D(i,k), 2,3,5,6 the second by D(q,k), 4-6 take the square root). */
 static double xtd_value(graph_t *g, int v, double p1, long i, long j) {
 	graph_t *h = (graph_t *)saom_tl_xg;
@@ -1641,10 +1641,11 @@ static double xtd_value(graph_t *g, int v, double p1, long i, long j) {
 	long m, m2, par = (long)floor(p1 + 0.5);
 	if (!h || !D) return 0.0;
 	if (v == 0) {
+		/* as RSiena computes it (checked against siena07): the steps i -> q are those of the OWN network, q -> j the other network's */
 		double st = 0.0;
-		for (m = 0; m < h->outadj[i].len; m++) {
-			long q = h->outadj[i].nb[m];
-			if (has_edge(g, q, j)) st += D[i - 1][q];
+		for (m = 0; m < g->outadj[i].len; m++) {
+			long q = g->outadj[i].nb[m];
+			if (has_edge(h, q, j)) st += D[i - 1][q];
 		}
 		return st;
 	}

@@ -105,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) THETA0(numlist) FIX(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) THETA0(numlist) FIX(string) TVCOV(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ACTORmode(integer 2) ]
 
 	if `seed' != -1 set seed `seed'
@@ -130,6 +130,15 @@ program define nwsaom_multinet, eclass
 	capture mata: mata drop __nwsaom_mn_Gs1 __nwsaom_mn_Gs2 __nwsaom_mn_M1 __nwsaom_mn_M2
 	mata: __nwsaom_mn_Gs1 = J(1, 0, NULL)
 	mata: __nwsaom_mn_Gs2 = J(1, 0, NULL)
+	// changing covariates: tvcov(a1 a2 a3 | s1 s2 s3), referred to by the stem of the first variable (the name without trailing digits)
+	local __tvrest `"`tvcov'"'
+	while `"`__tvrest'"' != "" {
+		gettoken __g __tvrest : __tvrest, parse("|")
+		if `"`__g'"' == "|" continue
+		local __st : word 1 of `__g'
+		local __st = regexr("`__st'", "[0-9]+$", "")
+		local __tvl_`__st' `__g'
+	}
 	local nodes = .
 	// a two-mode (bipartite) member: the actors (mode actormode(), default 2 = the rows of the affiliation matrix of nwset, bipartite) choose among the events;
 	// every member is embedded in the graph on all nodes of the two-mode network (actors first), see SaomMNAddWave()
@@ -187,8 +196,8 @@ program define nwsaom_multinet, eclass
 			di "{err}the actors of the two networks differ in number (`__nA1' and `__nA2'); a two-mode network and a one-mode one need the same actors."
 			error 198
 		}
-		if `__tm1' & `__tm2' & `mn1_1nodes' != `mn2_1nodes' {
-			di "{err}two two-mode networks need the same events."
+		if `__tm1' & `__tm2' {
+			di "{err}only one of the two networks can be two-mode (the other one is a one-mode network on the actors)."
 			error 198
 		}
 		local nodes = cond(`__tm1', `mn1_1nodes', `mn2_1nodes')
@@ -270,6 +279,10 @@ program define nwsaom_multinet, eclass
 				gettoken __cv __pp : __pp, parse(":")
 				local __pp = subinstr("`__pp'", ":", "", 1)
 				if "`__pp'" == "" local __pp 1
+				if "`__tvl_`__cv''" != "" {
+					mata: SaomMNAddCrossCovTV(__nwsaom_mn_M`__s', "`__e'", "`__tvl_`__cv''", `nodes', `__pp', `=`nw1'-1')
+					continue
+				}
 				mata: SaomMNAddCrossCov(__nwsaom_mn_M`__s', "`__e'", "`__cv'", `nodes', `__pp')
 				continue
 			}
@@ -348,6 +361,12 @@ program define nwsaom_multinet, eclass
 	ereturn post `b' `V', obs(`nodes')
 	ereturn matrix target = `tg'
 	ereturn scalar nwaves = `nw1'
+	ereturn scalar twomode1 = `__tm1'
+	ereturn scalar twomode2 = `__tm2'
+	if `__tmany' {
+		ereturn scalar n_actors = `__nA1'
+		ereturn scalar n_events = `nodes' - `__nA1'
+	}
 	ereturn local estat_cmd "nwsaom_estat"
 	capture mata: mata drop __nwsaom_mn_theta0
 	local P = `nw1' - 1
@@ -364,7 +383,8 @@ program define nwsaom_multinet, eclass
 	ereturn local cmd "nwsaom_multinet"
 	_nwsaom_postengine
 	di as text "{hline}"
-	di as text "Several co-evolving networks (Method of Moments), `nw1' waves, `nodes' actors"
+	if `__tmany' di as text "Several co-evolving networks (Method of Moments), `nw1' waves, `__nA1' actors and `=`nodes'-`__nA1'' events (network " cond(`__tm1', "1", "2") " is two-mode)"
+	else di as text "Several co-evolving networks (Method of Moments), `nw1' waves, `nodes' actors"
 	di as text "{hline}"
 	ereturn display
 	di as text "Rates (estimated):"

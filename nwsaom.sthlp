@@ -462,7 +462,7 @@ between-group standard deviation of every effect, heterogeneity test, Fisher's c
 {title:Several dependent networks: nwsaom multinet}
 
 {p 8 17 2}
-{cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)} [{opt sym1}] [{opt sym2}]
+{cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)} [{opt sym1}] [{opt sym2}] [{opt actormode(#)}] [{opt tvcov(groups)}]
 [{opt beh:avior(namelist)} {opt beheff1(effects)} {opt beheff2(effects)}] [{opt theta0(numlist)} {opt fix(namelist)}] {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
 
 {p 4 4 2}
@@ -474,6 +474,8 @@ each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity t
 (RSiena's crprod, crprodRecip, crprodMutual, from, fromMutual, fromAny, to, toBack, toRecip, cl.XWX, cl.XWX1, cl.XWX2, mixedInXW; a parameter after a colon,
 e.g. {cmd:from:2}, is RSiena's effect parameter). The cross-network statistics read the other network at the start of the period, the simulation its current
 state, as RSiena. {opt sym1} / {opt sym2} declare the first / second network non-directed (undirected {cmd:nwset}, forcing model, protocol 62). {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
+{bf:A two-mode network.} One of the two networks may be two-mode ({cmd:nwset, bipartite}, detected from the data): its actors (the mode given by {opt actormode()}, default 2 = the rows)
+choose among the events, and the other network is a one-mode network among the same actors. See {help nwsaom_remarks##twomode:the remarks on two-mode networks}.
 
 {p 4 4 2}
 {bf:A co-evolving behavior.} {opt behavior(}{it:b1 b2 ...}{opt )} adds one behavior variable (one variable per wave, as in {cmd:nwsaom}) that
@@ -494,7 +496,11 @@ Further cross-network effects (all validated against siena07; the names are RSie
 families ({cmd:inpopintn inactintn crprodinactintn outpopintn outactintn divoutegointn divinegointn divoutaltintn divinaltintn avdegintn absoutdiffintn both outoutactintn
 outoutavintn dist2outinactintn outoutdist2actintn outoutdist2avintn ndist2actintn doubleoutact}), closure and mixed-triad effects ({cmd:closure cyclosure sharedin wwxee wwxfr wxxfe
 wxxer xwxer xwxfe jinmix joutmix gwespffmix gwespbbmix gwespbfmix gwespfbmix gwesprrmix inpopoutw sharedto avalt2mtie avalt2mtot doubleinpop}).
-{bf:With a covariate} of the actors (a variable in the current dataset, written {it:effect}{cmd::}{it:var}[{cmd::}{it:#}], e.g. {cmd:cross1(covnetnet:alc homcovnetnet:alc)}), protocol 56:
+Also {cmd:toany}, {cmd:betweenpop} and {cmd:gwespmix} (= gwespfbmix), and RSiena's from.w.ind as {cmd:fromwindoo} (the other network for both the agreement and the in-degree weights),
+{cmd:fromwindow} (agreement in the other, weights from the own network) and {cmd:fromwindwo} (agreement in the own, weights from the other network).
+With a {bf:dyadic covariate} (a Stata matrix, written {it:effect}{cmd::}{it:matrix}[{cmd::}{it:#}], e.g. {cmd:cross1(sharedtou:W:1)}): {cmd:tou sharedtou avaltutie} (RSiena toU, sharedToU, avAltU.2M.tie).
+{bf:With a covariate} of the actors (a variable in the current dataset, written {it:effect}{cmd::}{it:var}[{cmd::}{it:#}], e.g. {cmd:cross1(covnetnet:alc homcovnetnet:alc)}; a covariate that changes between waves is declared with
+{cmd:tvcov(a1 a2 a3)}, one variable per period, and used by its stem: {cmd:cross1(samewxclosure:a)}; not for the three similarity effects), protocol 56:
 {cmd:samewwclosure diffwwclosure jumpwwclosure jumpfrom jumpsharedin samewxclosure diffwxclosure jumpwxclosure homwxclosure samexwclosure diffxwclosure covnetnet homcovnetnet
 contrastcovnetnet alldifcovnetnet covnetnetin homcovnetnetin contrastcovnetnetin alldifcovnetnetin inpopintnx inactintnx outpopintnx outactintnx samexinpopintn samexinactintn
 samexoutpopintn samexoutactintn altdist2w totdist2w simdist2w altindist2w totindist2w simegodist2w simegoindist2w} (RSiena sameWWClosure, diffWWClosure, jumpWWClosure, jumpFrom,

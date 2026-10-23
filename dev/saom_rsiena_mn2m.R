@@ -25,14 +25,16 @@ if (!file.exists("dev/saom_mn2m_cov.csv")) {
 	write.table(matrix(sample(0:3, nA * nE, replace = TRUE), nA, nE), "dev/saom_mn2m_dyE.csv", sep = ",", row.names = FALSE, col.names = FALSE)
 }
 Bm <- lapply(1:3, function(w) as.matrix(read.csv(sprintf("dev/saom_mn2m_B%d.csv", w), header = FALSE)))
-Fm <- lapply(1:3, function(w) as.matrix(read.csv(sprintf("dev/saom_mn2m_F%d.csv", w), header = FALSE)))
+one <- Sys.getenv("ONE", "F")		# the one-mode partner: F (directed, dev/saom_mn2m_F*.csv) or S (non-directed, dev/saom_mn1m_S*.csv, written by saom_rsiena_mn1m.R)
+Fm <- lapply(1:3, function(w) as.matrix(read.csv(ifelse(one == "S", sprintf("dev/saom_mn1m_S%d.csv", w), sprintf("dev/saom_mn2m_F%d.csv", w)), header = FALSE)))
 Fd <- sienaDependent(array(unlist(Fm), dim = c(nA, nA, 3)), nodeSet = "A")
 Bd <- sienaDependent(array(unlist(Bm), dim = c(nA, nE, 3)), type = "bipartite", nodeSet = c("A", "E"))
 cv <- coCovar(as.numeric(read.csv("dev/saom_mn2m_cov.csv", header = FALSE)[, 1]), nodeSet = "A")
 dyv <- as.matrix(read.csv("dev/saom_mn2m_dy.csv", header = FALSE)); diag(dyv) <- 0
 dy <- coDyadCovar(dyv, nodeSets = c("A", "A"))
 dyE <- coDyadCovar(as.matrix(read.csv("dev/saom_mn2m_dyE.csv", header = FALSE)), nodeSets = c("A", "E"))
-d <- sienaDataCreate(Fd = Fd, Bd = Bd, cv = cv, dy = dy, dyE = dyE, nodeSets = list(A = sienaNodeSet(nA, "A"), E = sienaNodeSet(nE, "E")))
+cvt <- varCovar(cbind(((1:nA * 3 + 7) %% 4) + 1, ((1:nA * 3 + 14) %% 4) + 1), nodeSet = "A")
+d <- sienaDataCreate(Fd = Fd, Bd = Bd, cv = cv, cvt = cvt, dy = dy, dyE = dyE, nodeSets = list(A = sienaNodeSet(nA, "A"), E = sienaNodeSet(nE, "E")))
 dep <- Sys.getenv("DEP", "Bd")
 oth <- ifelse(dep == "Bd", "Fd", "Bd")
 nseed <- as.integer(Sys.getenv("SEEDS", "2"))

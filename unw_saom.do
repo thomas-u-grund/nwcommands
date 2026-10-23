@@ -8511,7 +8511,7 @@ string rowvector SaomMNCrossNames() return(("crprod", "crprodrecip", "crprodmutu
 /* RSiena's default effect parameters (allEffects.csv column parm) */
 real scalar SaomMNDefaultParam(string scalar eff) {
 	if (anyof(("inpopintn", "inactintn", "crprodinactintn", "outpopintn", "outactintn", "divoutegointn", "divinegointn", "divoutaltintn", "divinaltintn", "avdegintn", "doubleoutact"), eff)) return(2)
-	if (anyof(("gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix"), eff)) return(69)
+	if (anyof(("gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix", "gwespmix"), eff)) return(69)
 	if (eff == "sharedto" | eff == "doubleinpop") return(eff == "sharedto" ? 3 : 2)
 	if (eff == "betweenpop") return(2)
 	if (anyof(("fromwindoo", "fromwindow", "fromwindwo"), eff)) return(1)
@@ -8526,7 +8526,8 @@ void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, 
 	string rowvector nm
 	nm = SaomMNCrossNames()
 	v = -1
-	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) v = k - 1
+	// gwespMix is RSiena's name of gwespFBMix for a non-directed other network (the same effect)
+	for (k=1; k<=cols(nm); k++) if (nm[k] == (eff == "gwespmix" ? "gwespfbmix" : eff)) v = k - 1
 	if (v < 0) {
 		errprintf("nwsaom multinet: unknown cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
 		exit(198)
@@ -8641,6 +8642,47 @@ void SaomMNAddCrossDy(class ErgmModel scalar M, string scalar eff, string scalar
 	td.decay = p1
 	td.edgecovmat = W
 	M.addterm("nat_xd" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xd_" + eff + "_" + matname))
+}
+/* a CHANGING covariate (RSiena varCovar: one variable per period, vlist = the variables of the periods) in a cross-network covariate effect; centred by the mean of all periods' values */
+void SaomMNAddCrossCovTV(class ErgmModel scalar M, string scalar eff, string scalar vlist, real scalar n, real scalar p1, real scalar nper) {
+	class ErgmTermData scalar td
+	string rowvector nm
+	string colvector md
+	real colvector ia
+	real scalar k, w, m, nact, am
+	nm = SaomMNCovNames()
+	w = -1
+	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) w = k - 1
+	if (w < 0) {
+		errprintf("nwsaom multinet: unknown covariate cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
+		exit(198)
+	}
+	if (anyof(("simdist2w", "simegodist2w", "simegoindist2w"), eff)) {
+		errprintf("nwsaom multinet: " + eff + " is not available with a changing covariate.\n")
+		exit(198)
+	}
+	nact = n
+	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) nact = *findexternal("__nwsaom_mn_nA")
+	td = ErgmTermData()
+	td.decay = p1
+	if (nact == n) SaomCovTVAttr(td, vlist, n, nper, 1, m)
+	else if (st_nobs() == nact) {
+		SaomCovTVAttr(td, vlist, nact, nper, 1, m)
+		td.attrpd = td.attrpd \ J(n - nact, nper, 0)
+		td.attr = td.attrpd[., 1]
+	}
+	else {
+		am = 2
+		if (findexternal("__nwsaom_mn_actmode") != NULL) am = *findexternal("__nwsaom_mn_actmode")
+		md = st_sdata(., "_nwmode")
+		ia = selectindex(md :== strofreal(am))
+		// the actors come first in the embedded graph: their values (in the order of the actors) in rows 1..nact, zeros for the events
+		SaomCovTVAttr(td, vlist, n, nper, 1, m, ia)
+		td.attrpd = td.attrpd[ia, .] \ J(n - nact, nper, 0)
+		td.attr = td.attrpd[., 1]
+	}
+	td.levels = (3100 + w \ 0)
+	M.addterm("nat_xc" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xc_" + eff + "_" + tokens(vlist)[1]))
 }
 /* the within-network effects: structural ones by name, covariate ones by (name, variable) */
 void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {

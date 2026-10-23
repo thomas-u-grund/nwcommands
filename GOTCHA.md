@@ -788,3 +788,17 @@ restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 
 with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
 correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
 not one: the failure is rare and moves between seeds when anything upstream changes.
+
+## `nwsaom multinet` with a two-mode member: embedding, RSiena index quirks, and a test-script trap
+
+A two-mode network is embedded in the graph on ALL its nodes with the actors first (`SaomMNAddWave()`), the one-mode network gets isolated event nodes, and
+structural dyads (plugin protocol 90) keep each member to its own dyads. Constants of the cross terms (average in/out degree, number of receivers) are
+RSiena's own for each network (`SaomMNDeg()`), not `ties / n`. Three things cost time and are not obvious:
+- Several RSiena effects index the OTHER network (or the own one) with the node number of an EVENT (divInAltIntn, JoutMix, gwespFBMix of a two-mode dependent
+  network; outOutActIntn, outOutAvIntn of a one-mode network that depends on a two-mode one). siena07 reads the actor with the same number (outside the network
+  when there are more events than actors). Copied (graph field `off`), and refused in the ado when events > actors.
+- RSiena's `toU` takes the first step i -> q in the DEPENDENT network and q -> j in the other network, the reverse of its effect description. Found by brute force
+  against siena07 targets; the other dyadic-covariate effects (sharedToU, avAltU.2M.tie) follow their description.
+- `cscript` clears global macros: a do-file run by `cscript` cannot be parameterised with `global` lines written before it; read OS environment variables with
+  `local x : environment NAME` after `cscript`. (The dev/saom_rsiena_mn*.do harnesses do this.)
+Also: a network whose model has exactly one parameter used to start from a missing theta0 in `multinet` (the placeholder `(.)` has one column); fixed.
