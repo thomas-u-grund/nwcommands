@@ -105,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) THETA0(numlist) FIX(string) TVCOV(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) MISSBEH(string) BEHINT(string) THETA0(numlist) FIX(string) TVCOV(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ACTORmode(integer 2) ]
 
 	if `seed' != -1 set seed `seed'
@@ -234,13 +234,35 @@ program define nwsaom_multinet, eclass
 			error 198
 		}
 		mata: __nwsaom_mn_Bw = J(1, 0, NULL)
-		foreach __v of local behavior {
-			mata: SaomMNAddBeh("`__v'", `nodes')
+		mata: __nwsaom_mn_Miss = J(1, 0, NULL)
+		if "`missbeh'" != "" {
+			if `: word count `missbeh'' != `nb' {
+				di "{err}missbeh() needs one 0/1 variable per wave (`nb'): 1 = the behavior value is missing."
+				error 198
+			}
 		}
+		local __iw 0
+		foreach __v of local behavior {
+			local ++__iw
+			local __mv : word `__iw' of `missbeh'
+			if "`__mv'" != "" mata: SaomMNAddBeh("`__v'", `nodes', "`__mv'")
+			else mata: SaomMNAddBeh("`__v'", `nodes')
+		}
+		if "`missbeh'" != "" mata: SaomMNImputeBeh(`nb', `nodes')
 		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
 		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
+		mata: __nwsaom_last_Behwaves = __nwsaom_mn_Bw
+		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
+		mata: __nwsaom_mn_Mbeh.init()
 	}
-	else capture mata: mata drop __nwsaom_mn_Bw
+	else {
+		capture mata: mata drop __nwsaom_mn_Bw
+		capture mata: mata drop __nwsaom_mn_Miss
+		if "`missbeh'`beheff1'`beheff2'`beheff12'`beheff21'`behint'" != "" {
+			di "{err}missbeh(), beheff1(), beheff2(), beheff12(), beheff21() and behint() need behavior()."
+			error 198
+		}
+	}
 	if "`eff1'" == "" local eff1 = cond("`sym1'" != "" | `__tm1', "outdegree", "outdegree reciprocity")
 	if "`eff2'" == "" local eff2 = cond("`sym2'" != "" | `__tm2', "outdegree", "outdegree reciprocity")
 	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
@@ -306,14 +328,27 @@ program define nwsaom_multinet, eclass
 	}
 	local hasbeh = ("`behavior'" != "")
 	if `hasbeh' {
-		if "`beheff1'`beheff2'" == "" local beheff1 "linear quadratic avalt"
+		if "`beheff1'`beheff2'`beheff12'`beheff21'" == "" local beheff1 "linear quadratic avalt"
+		// covariate, shape and further network effects named as family:variable (see _nwsaom_mnbeh.ado)
+		_nwsaom_mnbeh, nodes(`nodes') eff1(`beheff1') eff2(`beheff2')
+		local beheff1 "`r(eff1)'"
+		local beheff2 "`r(eff2)'"
+		local __bcovs "`r(covs)'"
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
-		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))
-		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh2_"))
-		local __n1 : word count `beheff1'
-		local __n2 : word count `beheff2'
-		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1))
+		mata: SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_")
+		mata: st_local("__n1", strofreal(__nwsaom_mn_Mbeh.nterms))
+		mata: SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh_")
+		mata: st_local("__n2", strofreal(__nwsaom_mn_Mbeh.nterms - `__n1'))
+		// coefficient names: covariate / shape terms get their readable names; the terms of the second network the prefix beh2_
+		mata: SaomBehCovRename(__nwsaom_mn_Mbeh, tokens("`__bcovs'"))
+		mata: SaomMNPrefix2(__nwsaom_mn_Mbeh, `__n1')
+		// behavior effects of both networks (beheff12: the first network of the effect is net1, beheff21: it is net2)
+		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff12'", 0, "beh12_")
+		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff21'", 1, "beh21_")
+		mata: SaomMNAddBehInt(__nwsaom_mn_Mbeh, "`behint'")
+		mata: st_local("__n34", strofreal(__nwsaom_mn_Mbeh.nterms - `__n1' - `__n2'))
+		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1), J(1, `__n34', 0))
 		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
 	}
 	// theta0() / fix(): starting values and fixed effects, in the order of the coefficients (net1_*, net2_*, beh_*)
