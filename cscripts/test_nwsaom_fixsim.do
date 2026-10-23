@@ -88,9 +88,14 @@ forvalues pd = 1/2 {
 }
 matrix RH = r(certainty)
 assert RH[1,1] > 0 & RH[1,1] < 1
-nwsaom, wave1(glasgow1) wave2(glasgow2) behavior(smoke1 smoke2) outdegree reciprocity linear quadratic k3(100) seed(1)
-capture estat importance
-assert _rc == 198
+* a co-evolution fit: network and behavior effects (sienaRI gives 0.4330/0.3406/0.2264 and 0.4975/0.1436/0.2922/0.0666 at the estimates of the model below)
+qui nwsaom, waves(glasgow1 glasgow2 glasgow3) behavior(smoke1 smoke2 smoke3) outdegree reciprocity transties linear quadratic avalt avsim cores(1) k3(500) seed(1)
+estat importance
+matrix RIb = r(ri_beh)
+assert rowsof(RIb) == 4 & colsof(RIb) == 2
+forvalues pd = 1/2 {
+	assert abs(RIb[1,`pd'] + RIb[2,`pd'] + RIb[3,`pd'] + RIb[4,`pd'] - 1) < 1e-8
+}
 * two-mode and non-directed networks (values from sienaRI at the same estimates; data files in dev/)
 capture confirm file "dev/saom_twomode_w1.csv"
 if _rc == 0 {

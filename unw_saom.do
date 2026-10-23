@@ -11842,16 +11842,76 @@ void SaomTimeTestRun(real scalar nper, real rowvector effects) {
    importance of effect k for ego i is the L1 distance between that distribution and the one with theta_k set to 0, the relative importance its
    share among the effects, averaged over the egos. Also the semi-standardised estimates theta_k * sigma_k (sigma: the within-ego standard
    deviation of the contributions) and the certainty R_H = 1 - entropy / log(choices). Results in Stata matrices __nwsaom_imp_*. */
+/* one period of the importance calculation. Cm[k] is the (actors x choices) matrix of the change contributions of effect k; a choice that is
+   not available (a structural dyad, a behavior step beyond the range) is missing. Returns the expected relative importance (eRI), the
+   expected importance (eI) and the sigma of every effect, and the certainty R_H. As RSiena's expectedRelativeImportance(): the choices of an
+   actor are those available for every effect, an actor with fewer than two does not count. */
+void SaomImpPeriod(pointer(real matrix) rowvector Cm, real rowvector theta, real colvector eRI, real colvector eI, real colvector sg, real scalar rh) {
+	real scalar K, n, nc, i, k, nvalid, mx, ent
+	real matrix X, RIm, SIG, Lw
+	real rowvector ok, sel, u, p, th, pk
+	real colvector cert, valid
+	K = cols(theta)
+	n = rows(*Cm[1])
+	nc = cols(*Cm[1])
+	RIm = J(K, n, .)
+	SIG = J(K, n, .)
+	cert = J(n, 1, .)
+	nvalid = 0
+	for (i=1; i<=n; i++) {
+		ok = J(1, nc, 1)
+		for (k=1; k<=K; k++) ok = ok :* ((*Cm[k])[i, .] :< .)
+		if (sum(ok) < 2) continue
+		nvalid++
+		sel = selectindex(ok)
+		X = J(K, cols(sel), 0)
+		for (k=1; k<=K; k++) X[k, .] = (*Cm[k])[i, sel]
+		u = theta * X
+		mx = max(u)
+		p = exp(u :- mx)
+		p = p / sum(p)
+		for (k=1; k<=K; k++) {
+			th = theta
+			th[k] = 0
+			pk = exp(th * X :- max(th * X))
+			pk = pk / sum(pk)
+			RIm[k, i] = sum(abs(p :- pk))
+			SIG[k, i] = sqrt(variance(X[k, .]'))
+		}
+		ent = -sum(p :* ln(p :+ (p :== 0)))
+		cert[i] = 1 - ent / ln(cols(sel))
+	}
+	valid = selectindex(colsum(RIm :< .)' :> 0)
+	RIm = RIm[., valid]
+	SIG = SIG[., valid]
+	Lw = RIm :/ colsum(RIm)
+	eRI = rowsum(Lw) / nvalid
+	eI = rowsum(RIm) / nvalid
+	sg = sqrt(rowsum(SIG :^ 2) / nvalid)
+	rh = mean(cert[valid])
+}
+
 void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta) {
+	class SaomBehaviorModel scalar Md
+	Md = SaomBehaviorModel()
+	SaomImportanceCore(Gstart, P, M, theta, Md, J(1, 0, NULL), 0, 0, J(1, 0, 0), 0)
+}
+void SaomImportanceRunB(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta,
+	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax, real rowvector thetab) {
+	SaomImportanceCore(Gstart, P, M, theta, Mbeh, Behwaves, behmin, behmax, thetab, 1)
+}
+void SaomImportanceCore(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta,
+	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax, real rowvector thetab, real scalar coev) {
 	struct SaomNativeConfig scalar cfg
-	pointer(real matrix) rowvector Cm
-	real matrix X, SIG, RIm, Im, SIGp, Lw
-	real rowvector RH, u, p, th, pk, cert
-	real scalar n, K, w, k, i, j, junk, ver, ent, nvalid, mx
+	struct SaomBehaviorNativeConfig scalar cfgB
+	pointer(real matrix) rowvector Cm, Cb
+	real matrix expRI, expI, sigmas, st0, X0, mk, expRIb, expIb, sigmasb
+	real rowvector RH, RHb
+	real colvector eRI, eI, sg
+	real scalar n, K, Kb, w, k, junk, ver, rh, overallMean
+	real colvector allb
+	pointer(real matrix) rowvector noev
 	string scalar origframe
-	real colvector sdk, L1, sigmaSq, valid
-	real matrix expRI, expI, sigmas, st0
-	real rowvector ok, sel
 
 	n = (*Gstart[1]).n
 	st0 = _SaomGofExt("__nwsaom_last_struct", J(0, 0, 0))
@@ -11862,11 +11922,29 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 	}
 	cfg = SaomNativeSetup(M)
 	ver = SaomNativePluginVersion()
-	if (!cfg.eligible | !SaomNativeAvailable() | ver < 63) {
-		errprintf("estat importance needs the native plugin (version 63 or later) and a model the plugin covers.\n")
+	if (!cfg.eligible | !SaomNativeAvailable() | ver < (coev ? 66 : 63)) {
+		errprintf("estat importance needs the native plugin (version " + (coev ? "66" : "63") + " or later) and a model the plugin covers.\n")
 		exit(198)
 	}
-	SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
+	Kb = 0
+	if (coev) {
+		cfgB = SaomBehaviorNativeSetup(Mbeh)
+		if (!cfgB.eligible | any(cfgB.fntype :!= 0)) {
+			errprintf("estat importance is not available with a behavior effect that has no native implementation or with endowment/creation effects.\n")
+			exit(198)
+		}
+		Kb = Mbeh.nterms
+		if (cols(thetab) != Kb) {
+			errprintf("estat importance: the behavior coefficients do not match the model.\n")
+			exit(198)
+		}
+		allb = *Behwaves[1]
+		for (w=2; w<=cols(Behwaves); w++) allb = allb \ *Behwaves[w]
+		overallMean = mean(allb)
+		noev = J(1, P, NULL)
+		SaomBatchSetup(Gstart, P, cfg, cfgB.termcodes, Behwaves, behmin, behmax, Mbeh.simMean, overallMean, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), cfgB.fntype, 0, J(0, 0, 0), noev)
+	}
+	else SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_contrib")
 	stata("frame create __saom_contrib")
@@ -11878,50 +11956,45 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 	expI = J(K, P, .)
 	sigmas = J(K, P, .)
 	RH = J(1, P, .)
+	expRIb = J(Kb, P, .)
+	expIb = J(Kb, P, .)
+	sigmasb = J(Kb, P, .)
+	RHb = J(1, P, .)
+	mk = J(0, 0, 0)
+	if (rows(st0) > 0) {
+		mk = (st0 :!= 0)
+		_diag(mk, 0)
+		mk = (mk :== 0)		// 1 = the choice is available
+	}
 	for (w=1; w<=P; w++) {
 		Cm = J(1, K, NULL)
 		for (k=1; k<=K; k++) {
 			stata("plugin call saomnativesim " + invtokens("c" :+ strofreal(1..n)) + ", " + char(34) + "CONTRIBK|" + strofreal(w) + " " + strofreal(k) + char(34))
-			Cm[k] = &(st_data((1::n), (1..n)))
+			X0 = st_data((1::n), (1..n))
+			if (rows(mk) > 0) X0 = X0 :/ mk
+			Cm[k] = &(X0 :+ 0)
 		}
-		SIG = J(K, n, .)
-		RIm = J(K, n, .)
-		cert = J(1, n, .)
-		nvalid = 0
-		for (i=1; i<=n; i++) {
-			// the alternatives of ego i: staying, and (two-mode networks) the free dyads only; an actor with no free dyad does not act
-			ok = (rows(st0) == 0 ? J(1, n, 1) : (st0[i, .] :== 0))
-			ok[i] = 1
-			if (sum(ok) < 2) continue
-			nvalid++
-			sel = selectindex(ok)
-			X = J(K, cols(sel), 0)
-			for (k=1; k<=K; k++) X[k, .] = (*Cm[k])[i, sel]
-			u = theta * X
-			mx = max(u)
-			p = exp(u :- mx)
-			p = p / sum(p)
-			for (k=1; k<=K; k++) {
-				th = theta
-				th[k] = 0
-				pk = exp(th * X :- max(th * X))
-				pk = pk / sum(pk)
-				RIm[k, i] = sum(abs(p :- pk))
-				SIG[k, i] = sqrt(variance(X[k, .]'))
-			}
-			ent = -sum(p :* ln(p :+ (p :== 0)))
-			cert[i] = 1 - ent / ln(cols(sel))
-		}
-		valid = selectindex(colsum(RIm :< .) :> 0)
-		RIm = RIm[., valid]
-		SIG = SIG[., valid]
-		cert = cert[valid]
-		Lw = RIm :/ colsum(RIm)
-		expRI[., w] = rowsum(Lw) / nvalid
-		expI[., w] = rowsum(RIm) / nvalid
-		sigmas[., w] = sqrt(rowsum(SIG :^ 2) / nvalid)
-		RH[w] = mean(cert')
+		SaomImpPeriod(Cm, theta, eRI, eI, sg, rh)
+		expRI[., w] = eRI
+		expI[., w] = eI
+		sigmas[., w] = sg
+		RH[w] = rh
 		for (k=1; k<=K; k++) Cm[k] = NULL
+		if (coev) {
+			Cb = J(1, Kb, NULL)
+			for (k=1; k<=Kb; k++) {
+				stata("plugin call saomnativesim c1 c2, " + char(34) + "CONTRIBB|" + strofreal(w) + " " + strofreal(k) + char(34))
+				X0 = st_data((1::n), (1, 2))
+				X0 = (X0[., 1], J(n, 1, 0), X0[., 2])
+				Cb[k] = &(X0 :+ 0)
+			}
+			SaomImpPeriod(Cb, thetab, eRI, eI, sg, rh)
+			expRIb[., w] = eRI
+			expIb[., w] = eI
+			sigmasb[., w] = sg
+			RHb[w] = rh
+			for (k=1; k<=Kb; k++) Cb[k] = NULL
+		}
 	}
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_contrib")
@@ -11931,6 +12004,13 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 	st_matrix("__nwsaom_imp_sigmas", sigmas)
 	st_matrix("__nwsaom_imp_sigma", sqrt(rowsum(sigmas :^ 2) / P))
 	st_matrix("__nwsaom_imp_RH", RH)
+	if (coev) {
+		st_matrix("__nwsaom_impb_RI", expRIb)
+		st_matrix("__nwsaom_impb_I", expIb)
+		st_matrix("__nwsaom_impb_sigmas", sigmasb)
+		st_matrix("__nwsaom_impb_sigma", sqrt(rowsum(sigmasb :^ 2) / P))
+		st_matrix("__nwsaom_impb_RH", RHb)
+	}
 }
 
 /* estat simulate: summary statistics of one simulated (or observed) network, row (., period, ties, mutual dyads, transitive triples, behavior mean) */
