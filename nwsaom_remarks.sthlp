@@ -552,6 +552,12 @@ after a colon.
 when the behavior decreases) and a creation effect (it counts when the behavior increases); the coefficients are {cmd:beh_}{it:effect}{cmd:_endow} and {cmd:beh_}{it:effect}{cmd:_creation}.
 
 {p 4 4 2}
+{bf:Interactions of behavior effects.} {opt behint(}{it:effect1#effect2}[{it:#effect3}] ...{opt )} adds the product of two or three behavior effects of the model (RSiena: {cmd:includeInteraction()} of behavior effects),
+each written by its coefficient name, e.g. {cmd:beheff1(linear quadratic avalt avsim) behint(beh_quadratic#beh_avalt beh_avalt#beh_avsim)}. The components must be {cmd:linear}, {cmd:quadratic},
+{cmd:avalt} or {cmd:avsim} (of the first network: {cmd:beh_}{it:effect}, of the second: {cmd:beh2_}{it:effect}); the interaction is a further coefficient, shown as {cmd:beh_}{it:a}{cmd:_x_}{it:b}.
+The change contribution is the product of the components' contributions divided by the size of the change, the statistic the product of the actors' statistics divided by the centred behavior.
+
+{p 4 4 2}
 {bf:Missing behavior values.} {opt missbeh(}{it:m1 m2 ...}{opt )} names one 0/1 variable per wave (1 = the value of {opt behavior()} is missing). Missing values are replaced by the actor's previous observation, else the
 next, else the wave's most frequent value, as in the single-network fit, and they do not enter the statistics. Missing ties and composition change are not available with a behavior in {cmd:nwsaom multinet}.
 

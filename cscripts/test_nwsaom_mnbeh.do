@@ -120,6 +120,24 @@ chk beh_avsim_creation 25.3167
 chk beh2_avalt_endow -2.9203
 di as text "PASS endowment and creation of behavior effects (statistics equal siena07)"
 
+* interactions of behavior effects (behint(); siena07: includeInteraction() of behavior effects, the unspecified interaction behUnspInt)
+nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(a1 a2 a3) beheff1(linear quadratic avalt avsim) beheff2(avalt) ///
+	behint(beh_quadratic#beh_avalt beh_avalt#beh2_avalt beh_linear#beh_quadratic#beh_avalt beh_avalt#beh_avsim) k0(3) k3(10) ///
+	fix(net1_reciprocity net2_reciprocity beh_linear beh_quadratic beh_avalt beh_avsim beh2_avalt beh_quadratic_x_avalt beh_avalt_x_avalt@2 beh_linear_x_quadratic_x_avalt beh_avalt_x_avsim) seed(1)
+matrix tg = e(target)
+local cn : colnames tg
+foreach x in "beh_quadratic_x_avalt 40.0069" "beh_avalt_x_avalt@2 11.2151" "beh_linear_x_quadratic_x_avalt 40.0069" "beh_avalt_x_avsim -0.195" {
+	gettoken nm v : x
+	local j : list posof "`nm'" in cn
+	assert `j' > 0
+	assert reldif(tg[1,`j'] + tg[2,`j'], `v') < 2e-3
+}
+capture noisily nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(a1 a2 a3) beheff1(linear quadratic avalt) behint(beh_avalt#beh_nosuch) k3(10)
+assert _rc == 198
+capture noisily nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(a1 a2 a3) beheff1(linear quadratic avalt indeg) behint(beh_avalt#beh_indeg) k3(10)
+assert _rc == 198
+di as text "PASS interactions of behavior effects (statistics equal siena07)"
+
 * missing behavior values: siena07's target of avAlt with the same missing values
 preserve
 import delimited "dev/saom_rsiena_mnbeh_miss.csv", clear varnames(1)
@@ -138,6 +156,12 @@ capture nwsaom multinet, net1(mna1 mna2 mna3) net2(mnb1 mnb2 mnb3) behavior(a1 a
 assert _rc == 198
 restore
 di as text "PASS missing behavior values (statistic equals siena07)"
+
+* a non-directed second network with a free density (one coefficient in the network)
+capture nwsaom multinet, net1(na1 na2 na3) net2(ns1 ns2 ns3) sym2 eff2(outdegree) k0(30) k3(150) seed(2)
+assert _rc == 0
+assert abs(_b[net1_outdegree] + 2.36) < 0.4 & abs(_b[net2_outdegree]) < 0.5
+di as text "PASS a single coefficient in the second network"
 
 * estimates: the well-identified effects agree with siena07 (dev/saom_rsiena_mnbeh.R: siena07 -0.044 / -0.025 / 0.85)
 capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(a1 a2 a3) beheff1(linear quadratic avalt) beheff12(ffdeg) beheff21(indegmixedpop outdegmixedpop) k0(40) k3(400) seed(5)

@@ -463,7 +463,7 @@ between-group standard deviation of every effect, heterogeneity test, Fisher's c
 
 {p 8 17 2}
 {cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)} [{opt sym1}] [{opt sym2}]
-[{opt beh:avior(namelist)} {opt beheff1(effects)} {opt beheff2(effects)} {opt beheff12(effects)} {opt beheff21(effects)} {opt missbeh(namelist)}] [{opt theta0(numlist)} {opt fix(namelist)}] {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
+[{opt beh:avior(namelist)} {opt beheff1(effects)} {opt beheff2(effects)} {opt beheff12(effects)} {opt beheff21(effects)} {opt behint(interactions)} {opt missbeh(namelist)}] [{opt theta0(numlist)} {opt fix(namelist)}] {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
 
 {p 4 4 2}
 Two one-mode networks (directed, or undirected with {opt sym1}/{opt sym2}) on the same actors evolve together (RSiena: two dependent network variables; unconditional Method of Moments, rates per
@@ -483,7 +483,7 @@ and of the {it:first} network on it ({cmd:linear quadratic avalt avsim} and the 
 as {cmd:beh2_}{it:effect}). The behavior can also be a covariate of the network effects: {cmd:behsim behegox behaltx behegoplusalt} in
 {opt eff1()}/{opt eff2()}, and of the cross-network effects: {it:effect}{cmd::behavior} in {opt cross1()}/{opt cross2()} (any of the covariate
 cross-network effects below, e.g. {cmd:cross1(samewwclosure:behavior)}). Behavior effects of both networks ({opt beheff12()}, {opt beheff21()}), covariate and shape effects, {cmd:netbeh:} effects of the
-behavior on tie formation, endowment/creation and {opt missbeh()} are described in {help nwsaom_remarks##multinetbeh:the remarks}. {bf:Native plugin only}.
+behavior on tie formation, endowment/creation, {opt behint()} and {opt missbeh()} are described in {help nwsaom_remarks##multinetbeh:the remarks}. {bf:Native plugin only}.
 
 {p 4 4 2}
 {opt theta0()} gives the starting values of all effects in the order of the coefficients ({cmd:net1_*}, {cmd:net2_*}, then the behavior effects) and

@@ -788,3 +788,17 @@ restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 
 with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
 correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
 not one: the failure is rare and moves between seeds when anything upstream changes.
+
+## `nwsaom multinet` with a behavior: state shared between the BATCHSETUP slots of the plugin
+
+Three things looked like model bugs and were plugin / wire-format state (found while adding covariate effects of the behavior to multinet):
+
+- The covariate arrays of the behavior covariate effects (effFrom, avXAlt, behx ..., from the `BATCHSETUP` trailer) are global staging arrays, and every `BATCHSETUP` call used to
+  free the previous ones. Multinet sets up one slot per network, so the second slot freed the arrays that slot 0 (the behavior) points into. With one covariate the freed memory happened to be
+  reallocated with identical values, with two covariates the fit diverged (thetaBound, rc 498). The old arrays are now kept until `BATCHCLEAN`.
+- `MNOBS` (the observed statistics of the networks) did not set the thread-local similarity scale (`saom_tl_behscale`) of the terms that use the dependent behavior as covariate, so all
+  similarity-type observed statistics (simdist2, simrecipx, ... and the 4000+ cross-network terms) were off while the simulated ones were right. Any new thread-local that a term reads
+  has to be set in `simulate_period_mn()` AND in `mn_obs()`.
+- `__nwsaom_mn_post()` receives "no starting values" as the 1 x 1 missing `(.)`. A model with exactly ONE coefficient in a network (or in the behavior) has `cols((.)) == nparam()`, so the missing
+  value was taken as the starting value and the fit ended with "estimates post: matrix has missing values" (rc 504), e.g. `eff2(outdegree)` for a non-directed second network. The test is now
+  `& !missing(theta)`.

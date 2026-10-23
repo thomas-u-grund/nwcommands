@@ -51,8 +51,8 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 	struct SaomMNFit scalar fit
 	real scalar p, P
 	real rowvector t1, t2
-	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
-	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
+	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() & !missing(theta01) ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
+	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() & !missing(theta02) ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
 	if (findexternal("__nwsaom_mn_theta0") != NULL) {
 		t1 = (*findexternal("__nwsaom_mn_theta0"))[1..__nwsaom_mn_M1.nparam()]
 		t2 = (*findexternal("__nwsaom_mn_theta0"))[(__nwsaom_mn_M1.nparam()+1)..(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam())]
@@ -80,9 +80,9 @@ void __nwsaom_mnb_post(real rowvector theta01, real rowvector theta02, real rowv
 	struct SaomMNBFit scalar fit
 	real scalar p, P
 	real rowvector t1, t2, tb
-	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
-	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
-	tb = (cols(thetab0) == __nwsaom_mn_Mbeh.nparam() ? thetab0 : J(1, __nwsaom_mn_Mbeh.nparam(), 0))
+	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() & !missing(theta01) ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
+	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() & !missing(theta02) ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
+	tb = (cols(thetab0) == __nwsaom_mn_Mbeh.nparam() & !missing(thetab0) ? thetab0 : J(1, __nwsaom_mn_Mbeh.nparam(), 0))
 	if (findexternal("__nwsaom_mn_theta0") != NULL) {
 		t1 = (*findexternal("__nwsaom_mn_theta0"))[1..__nwsaom_mn_M1.nparam()]
 		t2 = (*findexternal("__nwsaom_mn_theta0"))[(__nwsaom_mn_M1.nparam()+1)..(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam())]
@@ -105,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) MISSBEH(string) THETA0(numlist) FIX(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) MISSBEH(string) BEHINT(string) THETA0(numlist) FIX(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
@@ -180,8 +180,8 @@ program define nwsaom_multinet, eclass
 	else {
 		capture mata: mata drop __nwsaom_mn_Bw
 		capture mata: mata drop __nwsaom_mn_Miss
-		if "`missbeh'`beheff1'`beheff2'`beheff12'`beheff21'" != "" {
-			di "{err}missbeh(), beheff1(), beheff2(), beheff12() and beheff21() need behavior()."
+		if "`missbeh'`beheff1'`beheff2'`beheff12'`beheff21'`behint'" != "" {
+			di "{err}missbeh(), beheff1(), beheff2(), beheff12(), beheff21() and behint() need behavior()."
 			error 198
 		}
 	}
@@ -230,6 +230,7 @@ program define nwsaom_multinet, eclass
 		// behavior effects of both networks (beheff12: the first network of the effect is net1, beheff21: it is net2)
 		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff12'", 0, "beh12_")
 		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff21'", 1, "beh21_")
+		mata: SaomMNAddBehInt(__nwsaom_mn_Mbeh, "`behint'")
 		mata: st_local("__n34", strofreal(__nwsaom_mn_Mbeh.nterms - `__n1' - `__n2'))
 		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1), J(1, `__n34', 0))
 		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
