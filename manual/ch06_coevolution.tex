@@ -289,7 +289,7 @@ The following are things RSiena can do (or that this chapter would naturally wan
 \item \textbf{Native plugin only.} Almost everything on this page after \opt{avsim} (\opt{beheff()} tokens beyond the first 20, \opt{behnet2()}, \opt{behx()}, \opt{behw()}, \opt{tvbehw()}, \opt{netbeh()}, \opt{behshape()}, \opt{behavxalt()} and relatives) needs the C plugin. The Linux and Windows plugins can lag behind the macOS one.
 \item \textbf{Degenerate or unestimable effects.} \opt{behshape(constant)} cannot be estimated. For a number of effects \texttt{siena07} itself is unstable or degenerate (\opt{beheff()}: \texttt{outisolate totaltpop maxalt avaltpop avattlower totattlower totsim}; \opt{behw()} with parameter 2; some \opt{netbeh()} effects), so no reference estimate exists. In a non-directed network \texttt{degabsdiffx}, \texttt{degposdiffx} and \texttt{higher} with the behavior as covariate end in a singular phase-3 Jacobian (return code 505) whereas \texttt{siena07} estimates them; \texttt{minxalt}/\texttt{maxxalt} with \opt{symmetric} stay open.
 \item \textbf{Symmetric co-evolution} is only partly validated against RSiena, because RSiena's own fit of the model is unstable on the test data. The agreement is by simulation from known parameters.
-\item \textbf{Behavior inside \texttt{nwsaom multinet}} (several networks) is not available; see Chapter~\ref{ch:networktypes}.
+\item \textbf{Behavior inside \texttt{nwsaom multinet}} (several networks) is available with limits; see Section~\ref{sec:mn-behavior}.
 \item \textbf{Inference.} Estimation is Method of Moments only. Maximum-likelihood and Bayesian SAOM estimation (\texttt{siena07} with \texttt{maxlike}, \texttt{sienaBayes}) are not planned.
 \end{itemize}
 \endgroup

@@ -323,11 +323,37 @@ Twenty cross effects were validated against \texttt{siena07} for a non-directed 
 
 Observed statistics and estimates of the cross effects agree with \texttt{siena07} on RSiena's s50 friendship data with a second network built from it: the 13 basic cross effects (for example \texttt{crprod} and \texttt{mixedInXW} 1.258 against 1.258; rates 6.1/4.8 and 4.36/4.14 against 6.2/4.8 and 4.36/4.16), and, for the 34 covariate effects, all targets equal and estimates within about 0.05 for the similarity effects. The families in the degree and closure rows were validated against \texttt{siena07} as well.
 
+\subsection{A co-evolving behavior}\label{sec:mn-behavior}
+
+\opt{behavior(\emph{b1 b2 \ldots})} adds one behavior variable (one variable per wave, as in plain \nwsaom{}) that evolves together with the two networks, with its own rate in every period. \opt{beheff1()} lists the behavior effects of the behavior itself and of the first network on it (\texttt{linear quadratic avalt avsim} and the other tokens of the behavior effects of \nwsaom{}; the default is \texttt{linear quadratic avalt}); \opt{beheff2()} lists behavior effects driven by the \emph{second} network, shown as \texttt{beh2\_}\emph{effect}.
+\begin{lstlisting}
+. nwsaom multinet, net1(glasgow1 glasgow2 glasgow3) net2(nb1 nb2 nb3) behavior(smoke1 smoke2 smoke3) beheff1(linear quadratic avalt) beheff2(avalt) k0(100) k3(1000) seed(1)
+  net1_outdegree |  -2.357408   .0979547   -24.07   0.000
+net1_reciprocity |   2.820887   .1781864    15.83   0.000
+  net2_outdegree |    .220287   .1533902     1.44   0.151
+net2_reciprocity |   -.444934   .2799107    -1.59   0.112
+      beh_linear |  -1.878621   .3780448    -4.97   0.000
+   beh_quadratic |   2.006742   .4216608     4.76   0.000
+       beh_avalt |   1.774456    1.18047     1.50   0.133
+      beh2_avalt |  -.1019861   1.064681    -0.10   0.924
+Rates (estimated):
+           period1  period2
+rate_net1    5.799    4.521
+rate_net2    1.893    2.139
+ rate_beh    2.782    2.645
+Overall maximum convergence ratio: 0.209
+\end{lstlisting}
+(\texttt{nb1 nb2 nb3} is a second, randomly generated network in this example.) The behavior can also be a covariate of the network effects, with \texttt{behsim}, \texttt{behegox}, \texttt{behaltx} and \texttt{behegoplusalt} in \opt{eff1()}/\opt{eff2()}, and of the cross-network effects, written \emph{effect}\texttt{:behavior} in \opt{cross1()}/\opt{cross2()}; any of the covariate cross-network effects of Section~\ref{sec:mn-cross} works this way, for example \texttt{cross1(samewwclosure:behavior covnetnet:behavior)}. In the plugin the behavior statistics are the end behavior on the \emph{starting} network of the period, as in RSiena.
+
+All of these were compared with \texttt{siena07}: the observed statistics are equal (RSiena counts a reciprocated dyad twice and centres the linear and quadratic statistics of a behavior, which changes the targets but not the estimates), and the coefficients and rates agree within simulation noise (at most 0.06 standard errors in the main models), for shape and \texttt{avalt} effects of either network, \texttt{behsim}, \texttt{behegox}, \texttt{behaltx}, and all 34 covariate cross-network effects with the behavior as covariate.
+
+\paragraph{A caution on collinear effects.} A model with \texttt{avalt}, \texttt{avsim} and \texttt{linear} together, or with \texttt{avalt} and \texttt{totalt} of a sparse network, has enormous standard errors in both \nwsaom{} and RSiena on the Glasgow data. The estimates of these effects are correlated at $\pm0.95$ to $\pm1.00$: with a behavior of three categories and 50 actors, most of whom are in the lowest category, the statistics are nearly linear functions of each other and the data can identify only a combination of the coefficients. Use one influence effect at a time.
+
 \subsection{Limits}\label{sec:mn-limits}
 
 \begin{itemize}
 \item \textbf{Exactly two networks.} There is no third dependent network, only \opt{net1()} and \opt{net2()}.
-\item \textbf{No behavior inside multinet.} A co-evolving behavior as a third dependent variable is a stated follow-up and is not available; the cross effects with a covariate therefore cannot use a \emph{dynamic} behavior.
+\item \textbf{One behavior; limited behavior options.} Exactly one behavior can be added. Endowment and creation effects of the behavior, missing behavior values, composition change and the covariate behavior effects of Chapter~\ref{ch:coevolution} (\opt{behx()}, \opt{netbeh()} and so on) are not available inside multinet.
 \item \textbf{No two-mode members.} Both networks must be directed one-mode (or undirected with \opt{sym1}/\opt{sym2}); a two-mode member is refused (return code 198).
 \item \textbf{Within-network effects are a short list} (\texttt{outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact} plus the four covariate effects). None of the general options of plain \nwsaom{} (\opt{ratecov()}, \opt{present()}, \opt{missnet()}, \opt{tvcov()}, \opt{endow()}/\opt{creation()}, \opt{interact()}, \opt{structural()}) are accepted; there is no composition change or missing data inside multinet.
 \item \textbf{Options.} Only \opt{k0()}, \opt{k3()}, \opt{firstg()} and \opt{seed()} control estimation; there is no \opt{theta0()} or \opt{cores()} for multinet in the syntax, and conditional estimation does not exist (unconditional only, as in RSiena).
