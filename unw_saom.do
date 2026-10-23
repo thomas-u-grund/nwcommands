@@ -8507,18 +8507,20 @@ string rowvector SaomMNCrossNames() return(("crprod", "crprodrecip", "crprodmutu
 	"inpopintn", "inactintn", "crprodinactintn", "outpopintn", "outactintn", "divoutegointn", "divinegointn", "divoutaltintn", "divinaltintn", "avdegintn", "absoutdiffintn", "both", ///
 	"outoutactintn", "outoutavintn", "dist2outinactintn", "outoutdist2actintn", "outoutdist2avintn", "ndist2actintn", "doubleoutact", ///
 	"closure", "cyclosure", "sharedin", "wwxee", "wwxfr", "wxxfe", "wxxer", "xwxer", "xwxfe", "jinmix", "joutmix", "gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix", ///
-	"inpopoutw", "sharedto", "avalt2mtie", "avalt2mtot", "doubleinpop"))
+	"inpopoutw", "sharedto", "avalt2mtie", "avalt2mtot", "doubleinpop", "toany", "betweenpop", "fromwindoo", "fromwindow", "fromwindwo"))
 /* RSiena's default effect parameters (allEffects.csv column parm) */
 real scalar SaomMNDefaultParam(string scalar eff) {
 	if (anyof(("inpopintn", "inactintn", "crprodinactintn", "outpopintn", "outactintn", "divoutegointn", "divinegointn", "divoutaltintn", "divinaltintn", "avdegintn", "doubleoutact"), eff)) return(2)
 	if (anyof(("gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix"), eff)) return(69)
 	if (eff == "sharedto" | eff == "doubleinpop") return(eff == "sharedto" ? 3 : 2)
+	if (eff == "betweenpop") return(2)
+	if (anyof(("fromwindoo", "fromwindow", "fromwindwo"), eff)) return(1)
 	if (eff == "avalt2mtie" | eff == "avalt2mtot") return(eff == "avalt2mtie" ? 1 : 1)
 	if (anyof(("absoutdiffintn", "both", "outoutactintn", "outoutavintn", "dist2outinactintn", "outoutdist2actintn", "outoutdist2avintn", "ndist2actintn"), eff)) return(1)
 	return(0)
 }
 /* a native-only cross-network term; code = 3000 + v */
-void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1, real scalar avOther, real scalar avOwn, real scalar avSqOther) {
+void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1, real scalar avOther, real scalar avOwn, real scalar avSqOther, | real scalar avOutOther, real scalar mOther) {
 	class ErgmTermData scalar td
 	real scalar k, v
 	string rowvector nm
@@ -8532,10 +8534,15 @@ void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, 
 	td = ErgmTermData()
 	td.levels = (3000 + v \ 0)
 	td.decay = p1
-	td.attr = J(n, 1, 0)
+	td.attr = J(max((n, 8)), 1, 0)
 	td.attr[1] = avOther
 	td.attr[2] = avOwn
 	td.attr[3] = avSqOther
+	// protocol 90: the other network's average out-degree and its number of receivers (a two-mode member: the sides differ)
+	if (args() >= 9) {
+		td.attr[4] = avOutOther
+		td.attr[5] = mOther
+	}
 	M.addterm("nat_x" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("x_" + eff))
 }
 /* protocol 56: cross-network effects with a constant covariate (term code 3100 + w); eff:var[:#] */
@@ -8547,7 +8554,7 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 	class ErgmTermData scalar td
 	string rowvector nm
 	real colvector X
-	real scalar k, w, rng, sm
+	real scalar k, w, rng, sm, nact
 	nm = SaomMNCovNames()
 	w = -1
 	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) w = k - 1
@@ -8574,7 +8581,11 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 		SaomRegNatBeh(M, "xc_" + eff, 3100 + w, *__nwsaom_mn_Bw[1], bmean, psim, 1 / brng)
 		return
 	}
-	X = st_data(1::n, vn)
+	// protocol 90: with a two-mode member the covariate belongs to the actors (the first observations); the events get 0
+	nact = n
+	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) nact = *findexternal("__nwsaom_mn_nA")
+	if (nact < n) X = SaomMNActorData(vn, nact, n)
+	else X = st_data(1::n, vn)
 	if (any(X :>= .)) {
 		errprintf("nwsaom multinet: " + eff + "(): " + vn + " has missing values (not supported).\n")
 		exit(198)
@@ -8582,14 +8593,54 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 	td = ErgmTermData()
 	td.levels = (3100 + w \ 0)
 	td.decay = p1
-	td.attr = X :- mean(X)
+	td.attr = (X :- mean(X)) \ J(n - nact, 1, 0)
 	if (anyof(("simdist2w", "simegodist2w", "simegoindist2w"), eff)) {
 		rng = max(X) - min(X)
 		if (rng <= 0) rng = 1
 		td.decay = SaomSimMean(X)
-		td.attr = (X :- mean(X)) :/ rng
+		td.attr = ((X :- mean(X)) :/ rng) \ J(n - nact, 1, 0)
 	}
 	M.addterm("nat_xc" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xc_" + eff + "_" + vn))
+}
+/* protocol 90: cross-network effects with a dyadic covariate (a Stata matrix; centred by its mean as RSiena): toU (code 3200), sharedToU (3201), avAltU.2M.tie (3202); eff:matrix[:#] */
+string rowvector SaomMNDyNames() return(("tou", "sharedtou", "avaltutie"))
+real scalar SaomMNDyDefaultParam(string scalar eff) return(eff == "tou" ? 0 : 1)
+void SaomMNAddCrossDy(class ErgmModel scalar M, string scalar eff, string scalar matname, real scalar n, real scalar p1, real scalar coloff) {
+	class ErgmTermData scalar td
+	string rowvector nm
+	real matrix X, W
+	real scalar k, w, m, nact, ncol
+	nm = SaomMNDyNames()
+	w = -1
+	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) w = k - 1
+	if (w < 0) {
+		errprintf("nwsaom multinet: unknown dyadic-covariate cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
+		exit(198)
+	}
+	nact = n
+	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) nact = *findexternal("__nwsaom_mn_nA")
+	X = st_matrix(matname)
+	ncol = (coloff > 0 ? n - nact : nact)
+	if (rows(X) != nact | cols(X) != ncol) {
+		errprintf("nwsaom multinet: " + eff + ": the matrix " + matname + " must be " + strofreal(nact) + " x " + strofreal(ncol) + " (the actors by the receivers of the other network).\n")
+		exit(198)
+	}
+	if (any(X :>= .)) {
+		errprintf("nwsaom multinet: " + eff + ": the matrix " + matname + " has missing values (not supported).\n")
+		exit(198)
+	}
+	if (ncol == nact) W = SaomDyadPrep(X, 1, m)
+	else {
+		// an actors x events matrix: the mean over all cells
+		m = mean(vec(X))
+		W = X :- m
+	}
+	if (nact < n) W = (J(nact, coloff, 0), W, J(nact, n - coloff - cols(W), 0)) \ J(n - nact, n, 0)
+	td = ErgmTermData()
+	td.levels = (3200 + w \ 0)
+	td.decay = p1
+	td.edgecovmat = W
+	M.addterm("nat_xd" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xd_" + eff + "_" + matname))
 }
 /* the within-network effects: structural ones by name, covariate ones by (name, variable) */
 void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
@@ -8643,6 +8694,108 @@ void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn,
 	}
 }
 
+/* ===================================================================
+   protocol 90: a TWO-MODE (bipartite) network as a member of several co-evolving networks. Every member is embedded in the graph on all nodes of the two-mode
+   network: the actors first (1..nA, the nodes of the one-mode member), then the events (nA+1..n). The two-mode member can only change actor -> event dyads, the
+   one-mode member (its n nodes: the actors, then isolated nodes for the events) only actor -> actor dyads; every other dyad is structural (fixed). Externals:
+   __nwsaom_mn_nA (actors; 0 = no two-mode member), __nwsaom_mn_tm1/2 (the member is two-mode), __nwsaom_mn_nsr (senders and receivers of both members).
+   =================================================================== */
+/* a wave of the member `slot': a one-mode network (nOne nodes; embedded in n) or a two-mode one (actors of mode actmode first) */
+void SaomMNAddWave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot, real scalar tm, real scalar actmode, real scalar nOne) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	class ErgmGraph scalar G
+	real rowvector isact, ia, ie, inv
+	string rowvector modes
+	real matrix nb
+	real scalar i, k, nA
+	G = ErgmGraph()
+	G.init(n, 1)
+	if (tm) {
+		modes = netobj->get_modes()
+		isact = (modes :== strofreal(actmode))
+		ia = select(1..cols(isact), isact)
+		ie = select(1..cols(isact), 1 :- isact)
+		nA = cols(ia)
+		inv = J(1, cols(isact), 0)
+		inv[ia] = 1..nA
+		inv[ie] = (nA+1)..(nA+cols(ie))
+		for (i=1; i<=nA; i++) {
+			nb = netobj->neighbors(ia[i])
+			for (k=1; k<=rows(nb); k++) if (!isact[nb[k]]) G.toggle(i, inv[nb[k]])
+		}
+	}
+	else {
+		for (i=1; i<=nOne; i++) {
+			nb = netobj->neighbors(i)
+			for (k=1; k<=rows(nb); k++) G.toggle(i, nb[k])
+		}
+	}
+	if (slot == 1) __nwsaom_mn_Gs1 = (__nwsaom_mn_Gs1, &(G))
+	else __nwsaom_mn_Gs2 = (__nwsaom_mn_Gs2, &(G))
+}
+/* the structural mask (1 = fixed dyad) of a member: two-mode actor -> event free, one-mode (among the nA actors) actor -> actor free */
+real matrix SaomMNStructMask(real scalar n, real scalar nA, real scalar tm) {
+	real matrix S
+	S = J(n, n, 1)
+	if (tm) S[1..nA, (nA+1)..n] = J(nA, n - nA, 0)
+	else S[1..nA, 1..nA] = J(nA, nA, 0)
+	S = S - diag(diag(S))
+	return(S)
+}
+/* the values of a variable for the actors when a two-mode member is present: the dataset of the two-mode network (n observations, the actors are the nodes with _nwmode == actormode) or one
+   with one observation per actor */
+real colvector SaomMNActorData(string scalar vn, real scalar nact, real scalar n) {
+	real colvector x, ia
+	string colvector md
+	real scalar am
+	if (st_nobs() == nact) return(st_data(1::nact, vn))
+	if (st_nobs() == n) {
+		am = 2
+		if (findexternal("__nwsaom_mn_actmode") != NULL) am = *findexternal("__nwsaom_mn_actmode")
+		md = st_sdata(., "_nwmode")
+		ia = selectindex(md :== strofreal(am))
+		if (rows(ia) == nact) {
+			x = st_data(., vn)
+			return(x[ia])
+		}
+	}
+	errprintf("nwsaom multinet: the covariate " + vn + " needs one observation per actor (" + strofreal(nact) + ") or the node data of the two-mode network (" + strofreal(n) + " observations).\n")
+	exit(198)
+}
+/* senders / receivers of the members, in the order (nS1, nR1, nS2, nR2) */
+void SaomMNSetNSR(real scalar n, real scalar nA, real scalar tm1, real scalar tm2) {
+	external real rowvector __nwsaom_mn_nsr
+	__nwsaom_mn_nsr = (nA, (tm1 ? n - nA : nA), nA, (tm2 ? n - nA : nA))
+}
+/* RSiena's average in-degree, out-degree and squared in-degree over all waves, the numbers of senders and receivers: (avIn, avOut, avSqIn, nS, nR) */
+real rowvector SaomMNDeg(real scalar slot) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external real rowvector __nwsaom_mn_nsr
+	pointer(class ErgmGraph scalar) rowvector Gs
+	real scalar w, k, tot, sq, nS, nR, n
+	real colvector d
+	real matrix e
+	Gs = (slot == 1 ? __nwsaom_mn_Gs1 : __nwsaom_mn_Gs2)
+	n = (*Gs[1]).n
+	nS = n
+	nR = n
+	if (cols(__nwsaom_mn_nsr) == 4) {
+		nS = __nwsaom_mn_nsr[2*slot-1]
+		nR = __nwsaom_mn_nsr[2*slot]
+	}
+	tot = 0
+	sq = 0
+	for (w=1; w<=cols(Gs); w++) {
+		e = (*Gs[w]).all_ties()
+		d = J(n, 1, 0)
+		if (rows(e) > 0) {
+			tot = tot + rows(e)
+			for (k=1; k<=rows(e); k++) d[e[k,2]] = d[e[k,2]] + 1
+		}
+		sq = sq + sum(d :^ 2)
+	}
+	return((tot / (nR * cols(Gs)), tot / (nS * cols(Gs)), sq / (nR * cols(Gs)), nS, nR))
+}
 struct SaomMNCtx {
 	real scalar P, n, p1, p2, p
 	real matrix target		// P x p
@@ -8767,7 +8920,7 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 	struct SaomMNCtx scalar C
 	struct SaomNativeConfig scalar cfg1, cfg2
 	struct SaomNetFit scalar nf
-	real scalar P, n, p1, p2, pd, ver
+	real scalar P, n, p1, p2, pd, ver, nfree1, nfree2
 	real rowvector par0, israte, rate10, rate20
 	pointer(real matrix) rowvector noev
 	P = cols(G1) - 1
@@ -8798,6 +8951,26 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 		errprintf("nwsaom multinet: an effect has no native implementation (" + (cfg1.eligible ? cfg2.whynot : cfg1.whynot) + ").\n")
 		exit(198)
 	}
+	nfree1 = n * (n - 1)
+	nfree2 = n * (n - 1)
+	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) {
+		// protocol 90: a two-mode member (structural dyads for both members)
+		real scalar nA, tmf1, tmf2
+		real matrix Sm
+		nA = *findexternal("__nwsaom_mn_nA")
+		tmf1 = *findexternal("__nwsaom_mn_tm1")
+		tmf2 = *findexternal("__nwsaom_mn_tm2")
+		if (ver < 90) {
+			errprintf("nwsaom multinet with a two-mode network needs a plugin of protocol 90 or later (this one is " + strofreal(ver) + "); rebuild or update it.\n")
+			exit(198)
+		}
+		Sm = SaomMNStructMask(n, nA, tmf1)
+		cfg1.structpairs = SaomMaskToDyadList(Sm :== 1)
+		nfree1 = n * (n - 1) - sum(Sm)
+		Sm = SaomMNStructMask(n, nA, tmf2)
+		cfg2.structpairs = SaomMaskToDyadList(Sm :== 1)
+		nfree2 = n * (n - 1) - sum(Sm)
+	}
 	SaomSetEngine(1, "")
 	noev = J(1, P, NULL)
 	SaomSetBatchSlot(0)
@@ -8809,8 +8982,8 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 	rate10 = J(1, P, 0)
 	rate20 = J(1, P, 0)
 	for (pd=1; pd<=P; pd++) {
-		rate10[pd] = n * (0.2 + 2 * C.tr1[pd]) / (n * (n - 1) + 1)
-		rate20[pd] = n * (0.2 + 2 * C.tr2[pd]) / (n * (n - 1) + 1)
+		rate10[pd] = n * (0.2 + 2 * C.tr1[pd]) / (nfree1 + 1)
+		rate20[pd] = n * (0.2 + 2 * C.tr2[pd]) / (nfree2 + 1)
 	}
 	par0 = (theta01, theta02, rate10, rate20)
 	israte = (J(1, p1 + p2, 0), J(1, 2 * P, 1))

@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 66		// 66 = CONTRIBB: the change contributions of a behavior term for the -1/+1 options of every actor (estat importance with a behavior; the network contributions read the start behavior); 65 (dist-2 W average/similarity effects with the behavior: constant covariate mean, similarity scale) = cross-network terms with the dependent behavior as covariate (codes 4000+: 3000+ code + 1000); 64 = a co-evolving behavior in several networks (MNRUN with behavior terms of BATCHSETUP slot 0, behavior terms >= 10000 driven by the second network); 63 = CONTRIBK: the change contributions of every ego/alternative for one network term (estat importance); 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 62 = non-directed (forcing) members in several co-evolving networks; 61 = primary-setting effects primary primCompress nonPCompress primDegAct* (codes 296-304, the period's start network); 60 = behavior effects varAlt avSimVarAlt behDenseTriads simDenseTriads (bu 14-17, the behavior variance in the trailer); 59 = sameXV/sameXVInPop (codes 293, 294); 58 = similarity effects with the dependent behavior as covariate (scale 1/range); 57 = changing dyadic covariates of the behavior effects (tvbehw); 56 = cross-network effects with a constant covariate (codes 3100+), covariate effects in two-mode networks; 55 = behavior effects indegAvGroup indegTotGroup avAlt_cc totAlt_cc avInAltDist2_nc ... totGwdspFBAlt_nc avInSimDist2 totInSimDist2 (codes 2800+); 54 = own-network effects without a covariate (Jin Jout transTrip1/2 transRecTrip2 transTrip.FR/FE/EE outPopMore outPopSqrtMore outPopThreshold and the ego degree effects; codes 260+); 53 = another co-evolving behavior as the covariate of the behavior-1 covariate effects (slot flag in the covariate trailer); 52 = several co-evolving networks (BATCHSETUP<k>|, MNRUN, MNOBS) and the cross-network terms 3000+; 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
+#define SAOM_NATIVE_VERSION 90		// 90 = a two-mode member of several co-evolving networks (structural dyads in MNRUN, sender/receiver constants of the cross terms); 66 = CONTRIBB: the change contributions of a behavior term for the -1/+1 options of every actor (estat importance with a behavior; the network contributions read the start behavior); 65 (dist-2 W average/similarity effects with the behavior: constant covariate mean, similarity scale) = cross-network terms with the dependent behavior as covariate (codes 4000+: 3000+ code + 1000); 64 = a co-evolving behavior in several networks (MNRUN with behavior terms of BATCHSETUP slot 0, behavior terms >= 10000 driven by the second network); 63 = CONTRIBK: the change contributions of every ego/alternative for one network term (estat importance); 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 62 = non-directed (forcing) members in several co-evolving networks; 61 = primary-setting effects primary primCompress nonPCompress primDegAct* (codes 296-304, the period's start network); 60 = behavior effects varAlt avSimVarAlt behDenseTriads simDenseTriads (bu 14-17, the behavior variance in the trailer); 59 = sameXV/sameXVInPop (codes 293, 294); 58 = similarity effects with the dependent behavior as covariate (scale 1/range); 57 = changing dyadic covariates of the behavior effects (tvbehw); 56 = cross-network effects with a constant covariate (codes 3100+), covariate effects in two-mode networks; 55 = behavior effects indegAvGroup indegTotGroup avAlt_cc totAlt_cc avInAltDist2_nc ... totGwdspFBAlt_nc avInSimDist2 totInSimDist2 (codes 2800+); 54 = own-network effects without a covariate (Jin Jout transTrip1/2 transRecTrip2 transTrip.FR/FE/EE outPopMore outPopSqrtMore outPopThreshold and the ego degree effects; codes 260+); 53 = another co-evolving behavior as the covariate of the behavior-1 covariate effects (slot flag in the covariate trailer); 52 = several co-evolving networks (BATCHSETUP<k>|, MNRUN, MNOBS) and the cross-network terms 3000+; 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -585,6 +585,7 @@ typedef struct {
 	long *dout, *din;
 	adjlist_t *outadj, *inadj;
 	unsigned char *adjm;		// optional dense (n+1)x(n+1) adjacency (2026-10-01): O(1) has_edge() without hashing; NULL = use the hash table
+	long nS, nR, off;		// protocol 90: the senders / receivers of a two-mode member of several networks (RSiena n() and m()); n for a one-mode network; off = (first receiver) - 1
 } graph_t;
 
 static long dyadkey(graph_t *g, long i, long j) {
@@ -1428,7 +1429,9 @@ static double cz_indties_ego(graph_t *g, const double *a, long i) {
    v: 0 crprod 1 crprodRecip 2 crprodMutual 3 from 4 fromMutual 5 fromAny 6 to 7 toBack 8 toRecip 9 cl.XWX 10 cl.XWX1 11 cl.XWX2 12 mixedInXW
    =================================================================== */
 #define TERMCODE_XT0 3000
-#define SAOM_XTC(tc) ((tc) >= TERMCODE_XT0 && (tc) < TERMCODE_XT0 + 1000)
+#define SAOM_XTC(tc) ((tc) >= TERMCODE_XT0 && (tc) < TERMCODE_XT0 + 200)
+#define SAOM_XDC(tc) ((tc) >= TERMCODE_XT0 + 200 && (tc) < TERMCODE_XT0 + 300)	/* protocol 90: cross-network terms with a dyadic covariate (toU, sharedToU, avAltU.2M.tie), the covariate rows in saom_tl_dy */
+static __thread double **saom_tl_dy;
 static int xt_step_has(graph_t *G, char d, long h, long j) {
 	switch (d) {
 		case 'F': return has_edge(G, h, j);
@@ -1602,31 +1605,120 @@ static double xc_value(graph_t *g, int w, const double *c, double p1, long i, lo
 	return 0.0;
 }
 /* a[1] = the average degree of the OTHER network (all waves), a[2] = that of the OWN network (RSiena NetworkLongitudinalData::averageInDegree()) */
+static double xt_toany_value(graph_t *g, graph_t *h, long i, long j);
+/* betweenPop (v 54): RSiena BetweennessTable of the other network: the two-paths k -> j -> l without a tie k -> l (k != l) that pass through j */
+static double xt_between(graph_t *h, long j) {
+	long m, m2;
+	double b = 0.0;
+	for (m = 0; m < h->inadj[j].len; m++) {
+		long k = h->inadj[j].nb[m];
+		for (m2 = 0; m2 < h->outadj[j].len; m2++) {
+			long l = h->outadj[j].nb[m2];
+			if (l != k && !has_edge(h, k, l)) b += 1.0;
+		}
+	}
+	return b;
+}
+/* from.w.ind (v 55-57; RSiena InStarsTimesDegreesFunction): the common out-neighbours q of i and j in the network W, weighted by the Z in-degree of q (p1: 2 sqrt, -1 1/(d+1)) */
+static double xt_fromwind(graph_t *W, graph_t *Z, double p1, long i, long j) {
+	long m;
+	double st = 0.0;
+	for (m = 0; m < W->outadj[i].len; m++) {
+		long q = W->outadj[i].nb[m];
+		if (!has_edge(W, j, q)) continue;
+		if (fabs(p1 - 2.0) < 1e-9) st += sqrt((double)Z->din[q]);
+		else if (fabs(p1 + 1.0) < 1e-9) st += 1.0 / ((double)Z->din[q] + 1.0);
+		else st += (double)Z->din[q];
+	}
+	return st;
+}
+/* protocol 90: cross-network effects with a dyadic covariate D (centred, rows in saom_tl_dy): 0 toU, 1 sharedToU, 2 avAltU.2M.tie. g = own (second network of the RSiena functions),
+   h = the other network (first). toU (WeightedMixedTwoPathFunction): sum over the other-network out-neighbours q of i with a tie q -> j in the own network of D(i,q).
+   sharedToU / avAltU.2M.tie (MixedDyadicCovThreeCyclesFunction, parameter 0..6: 1,3,4,6 weight the first path by D(i,k), 2,3,5,6 the second by D(q,k), 4-6 take the square root). */
+static double xtd_value(graph_t *g, int v, double p1, long i, long j) {
+	graph_t *h = (graph_t *)saom_tl_xg;
+	double **D = saom_tl_dy;
+	long m, m2, par = (long)floor(p1 + 0.5);
+	if (!h || !D) return 0.0;
+	if (v == 0) {
+		double st = 0.0;
+		for (m = 0; m < h->outadj[i].len; m++) {
+			long q = h->outadj[i].nb[m];
+			if (has_edge(g, q, j)) st += D[i - 1][q];
+		}
+		return st;
+	}
+	else {
+		int root = (par >= 4 && par <= 6), w1 = (par == 1 || par == 3 || par == 4 || par == 6), w2 = (par == 2 || par == 3 || par == 5 || par == 6);
+		double st = 0.0, sumd = 1.0;
+		if (v == 2) {
+			double degs = 0.0;
+			double *tf = root ? (double *)calloc((size_t)(g->n + 1), sizeof(double)) : NULL;
+			for (m = 0; m < h->outadj[i].len; m++) {
+				long k = h->outadj[i].nb[m];
+				for (m2 = 0; m2 < h->inadj[k].len; m2++) {
+					long q = h->inadj[k].nb[m2];
+					double mult = 1.0;
+					if (q == i) continue;
+					if (w1) mult *= D[i - 1][k];
+					if (w2) mult *= D[q - 1][k];
+					if (root) tf[q] += mult; else degs += mult;
+				}
+			}
+			if (root) { long q; degs = 0.0; for (q = 1; q <= g->n; q++) degs += sqrt(tf[q]); free(tf); }
+			sumd = degs;
+		}
+		for (m = 0; m < g->inadj[j].len; m++) {
+			long q = g->inadj[j].nb[m];
+			double c = 0.0;
+			if (q == i) continue;
+			for (m2 = 0; m2 < h->outadj[i].len; m2++) {
+				long k = h->outadj[i].nb[m2];
+				double ck = 1.0;
+				if (!has_edge(h, q, k)) continue;
+				if (w1) ck *= D[i - 1][k];
+				if (w2) ck *= D[q - 1][k];
+				c += ck;
+			}
+			st += root ? sqrt(c) : c;
+		}
+		if (v == 2 && sumd != 0.0) st /= sumd;
+		return st;
+	}
+}
+static double xtd_stat(graph_t *g, int v, double p1) {
+	long k;
+	double tot = 0.0;
+	for (k = 0; k < g->nties; k++) tot += xtd_value(g, v, p1, g->elist_i[k], g->elist_j[k]);
+	return tot;
+}
 static double xt_value(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	graph_t *h = (graph_t *)saom_tl_xg;
 	double avO = a ? a[1] : 0.0, avG = a ? a[2] : 0.0, avSq = a ? a[3] : 0.0;
+	/* protocol 90: a[4] = the average OUT-degree of the other network, a[5] = its number of receivers (RSiena m()); equal to a[1] and n for a one-mode network */
+	double avOut = (a && a[4] != 0.0) ? a[4] : avO, mOth = (a && a[5] > 0.0) ? a[5] : (double)g->n;
 	if (!h) return 0.0;
 	if (v >= 100) return xc_value(g, v - 100, a, p1, i, j);
 	switch (v) {
 		case 13: return xt_S((double)h->din[j], p1) - xt_S(avO, p1);
 		case 14: return xt_S((double)h->din[i], p1) - xt_S(avO, p1);
 		case 15: return has_edge(h, i, j) ? xt_S((double)h->din[i], p1) - xt_S(avO, p1) : 0.0;
-		case 16: return xt_S((double)h->dout[j], p1) - xt_S(avO, p1);
+		case 16: return xt_S((double)h->dout[j], p1) - xt_S(avOut, p1);
 		case 17: {
-			if (p1 < 0.5) return (h->dout[i] > 0 ? log((double)h->dout[i]) : 0.0) - log(avO);
-			return xt_S((double)h->dout[i], p1) - xt_S(avO, p1);
+			if (p1 < 0.5) return (h->dout[i] > 0 ? log((double)h->dout[i]) : 0.0) - log(avOut);
+			return xt_S((double)h->dout[i], p1) - xt_S(avOut, p1);
 		}
 		case 18: return xt_recip(xt_S((double)h->dout[i], p1));
 		case 19: return xt_recip(xt_S((double)h->din[i], p1));
 		case 20: return xt_recip(xt_S((double)h->dout[j], p1));
-		case 21: return xt_recip(xt_S((double)h->din[j], p1));
-		case 22: { long q; double t = 0.0; for (q = 1; q <= h->n; q++) t += (double)h->dout[q]; return t / (double)h->n - p1; }
+		case 21: return xt_recip(xt_S((double)h->din[j - g->off], p1));	/* a two-mode dependent network: RSiena reads the other network's node with the alter's own (event) index */
+		case 22: { long q; double t = 0.0; for (q = 1; q <= h->n; q++) t += (double)h->dout[q]; return t / (double)h->nS - p1; }
 		case 23: return fabs(xt_S((double)h->dout[j], p1) - xt_S((double)h->dout[i], p1));
 		case 24: return (xt_S((double)h->din[j], p1) - xt_S(avO, p1)) * (xt_S((double)h->din[i], p1) - xt_S(avO, p1));
 		case 25: case 26: {
 			long m, d = 0;
 			double st = 0.0, av = p1 >= 2.0 ? sqrt(avG) : avG;
-			for (m = 0; m < h->outadj[i].len; m++) { st += xt_S((double)g->dout[h->outadj[i].nb[m]], p1) - av; d++; }
+			for (m = 0; m < h->outadj[i].len; m++) { st += xt_S((double)g->dout[h->outadj[i].nb[m] - h->off], p1) - av; d++; }	/* another two-mode network: RSiena reads the own network's node with the event's own index */
 			if (v == 26 && d > 0) st /= (double)d;
 			return st;
 		}
@@ -1677,16 +1769,16 @@ static double xt_value(graph_t *g, int v, const double *a, double p1, long i, lo
 		case 39: return xt_mtp(g, h, 'E', 'R', i, j);
 		case 40: return xt_mtp(g, h, 'F', 'E', i, j);
 		case 41: { double os = xt_mtp(h, h, 'B', 'F', i, j), den = (double)h->din[j] + (double)h->din[i] - os; return den >= 1.0 ? os / den : 0.0; }
-		case 42: { double is = xt_mtp(h, h, 'F', 'B', i, j), den = (double)h->dout[j] + (double)h->dout[i] - is; return den >= 1.0 ? is / den : 0.0; }
+		case 42: { long jh = j - g->off; double is = xt_mtp(h, h, 'F', 'B', i, jh), den = (double)h->dout[jh] + (double)h->dout[i] - is; return den >= 1.0 ? is / den : 0.0; }
 		case 43: return xt_gwesp(xt_mtp(h, h, 'F', 'F', i, j), p1);
 		case 44: return xt_gwesp(xt_mtp(h, h, 'B', 'B', i, j), p1);
 		case 45: return xt_gwesp(xt_mtp(h, h, 'B', 'F', i, j), p1);
-		case 46: return xt_gwesp(xt_mtp(h, h, 'F', 'B', i, j), p1);
+		case 46: return xt_gwesp(xt_mtp(h, h, 'F', 'B', i, j - g->off), p1);
 		case 47: return xt_gwesp(xt_mtp(h, h, 'R', 'R', i, j), p1);
 		case 48: {
 			/* inPopOutW: the in-neighbours k of j in the OWN network (k != i): S(outdegree of k in the other network) - (centred: the average) */
 			long m;
-			double st = 0.0, av = (p1 >= 3.0 ? avO : 0.0);
+			double st = 0.0, av = (p1 >= 3.0 ? avOut : 0.0);
 			int root = (fabs(p1 - 2.0) < 0.001 || fabs(p1 - 4.0) < 0.001);
 			if (root) av = sqrt(av);
 			for (m = 0; m < g->inadj[j].len; m++) { long k = g->inadj[j].nb[m]; if (k != i) st += (root ? sqrt((double)h->dout[k]) : (double)h->dout[k]) - av; }
@@ -1697,7 +1789,7 @@ static double xt_value(graph_t *g, int v, const double *a, double p1, long i, lo
 			long m, m2;
 			double st = 0.0, sumd = 1.0, avc = 0.0;
 			int root = (fabs(p1 - 2.0) < 0.001 || fabs(p1 - 4.0) < 0.001), center = (p1 >= 3.0);
-			if (center) { avc = (avSq - avO) / (double)(g->n - 1); if (root) avc = sqrt(avc); }
+			if (center) { avc = (avSq - avO) / (mOth - 1.0); if (root) avc = sqrt(avc); }
 			if (v == 50) {
 				long *tf = (long *)calloc((size_t)(g->n + 1), sizeof(long));
 				double degs = 0.0;
@@ -1720,6 +1812,11 @@ static double xt_value(graph_t *g, int v, const double *a, double p1, long i, lo
 			if (v == 50 && sumd > 0.0) st /= sumd;
 			return st;
 		}
+		case 53: return xt_toany_value(g, h, i, j);
+		case 54: return (p1 >= 2.0 ? sqrt(xt_between(h, j)) : xt_between(h, j));
+		case 55: return xt_fromwind(h, h, p1, i, j);
+		case 56: return xt_fromwind(h, g, p1, i, j);
+		case 57: return xt_fromwind(g, h, p1, i, j);
 		case 52: {
 			/* doubleInPop, the CONTRIBUTION: 1 + the common in-neighbours of j in the two networks other than i, if the tie is in the other network */
 			long m;
@@ -1752,6 +1849,45 @@ static double xt_value(graph_t *g, int v, const double *a, double p1, long i, lo
 	}
 	return 0.0;
 }
+/* protocol 90: toAny (RSiena MixedOnlyTwoPathEffect, v 53), copied as coded: k in the other network's out-ties of i counts when i and k have a (single) common out-neighbour
+   in the own network; the contribution of the tie i -> j keeps RSiena's two branches (a present tie: the common neighbours of i and k are exactly {j}; an absent
+   tie: k -> j and no other out-neighbour x of k with a tie i -> x in the OTHER network, as RSiena's secondOutTieExists()) */
+static double xt_toany_value(graph_t *g, graph_t *h, long i, long j) {
+	long m, a;
+	double c = 0.0;
+	int exists = has_edge(g, i, j);
+	for (m = 0; m < h->outadj[i].len; m++) {
+		long k = h->outadj[i].nb[m];
+		int third = 0, noOther = 1;
+		if (exists) {
+			for (a = 0; a < g->outadj[i].len && noOther; a++) {
+				long x = g->outadj[i].nb[a];
+				if (!has_edge(g, k, x)) continue;
+				if (x == j) third = 1; else noOther = 0;
+			}
+		}
+		else {
+			for (a = 0; a < g->outadj[k].len && noOther; a++) {
+				long x = g->outadj[k].nb[a];
+				if (x == j) third = 1;
+				else if (has_edge(h, i, x)) noOther = 0;
+			}
+		}
+		if (noOther && third) c += 1.0;
+	}
+	return c;
+}
+static double xt_toany_stat(graph_t *g, graph_t *h) {
+	long i, m, a;
+	double st = 0.0;
+	for (i = 1; i <= g->n; i++) {
+		for (m = 0; m < h->outadj[i].len; m++) {
+			long k = h->outadj[i].nb[m];
+			for (a = 0; a < g->outadj[i].len; a++) if (has_edge(g, k, g->outadj[i].nb[a])) { st += 1.0; break; }
+		}
+	}
+	return st;
+}
 /* the tie statistic: the value itself except doubleOutAct (v 31), whose statistic is the common out-degree m (sqrt m) at a tie also present in the other network */
 static double xt_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	if (v == 31) {
@@ -1775,6 +1911,7 @@ static double xt_stat(graph_t *g, int termcode, const double *a, double p1) {
 	long k;
 	double tot = 0.0;
 	int v = termcode - TERMCODE_XT0;
+	if (v == 53) return saom_tl_xg ? xt_toany_stat(g, (graph_t *)saom_tl_xg) : 0.0;
 	for (k = 0; k < g->nties; k++) tot += xt_tie(g, v, a, p1, g->elist_i[k], g->elist_j[k]);
 	return tot;
 }
@@ -2727,6 +2864,12 @@ static double saom_eval_change(int k, int *termcodes, int *attridx, double *p1, 
 		return (ij_exists ? -1.0 : 1.0) * cvA * cvB;
 	}
 	if (SAOM_DWTC(termcodes[k])) return dw_change(g, termcodes[k], attrs, attridx[k] - 1, i, j, ij_exists);
+	if (SAOM_XDC(termcodes[k])) {
+		double v2;
+		saom_tl_dy = &attrs[attridx[k] - 1];
+		v2 = xtd_value(g, termcodes[k] - TERMCODE_XT0 - 200, p1[k], i, j);
+		return ij_exists ? -v2 : v2;
+	}
 	if (termcodes[k] == TERMCODE_DYADCOV || termcodes[k] == TERMCODE_DYADCOVRECIP) {
 		double d = attrs[attridx[k] - 1 + (i - 1)][j];
 		if (termcodes[k] == TERMCODE_DYADCOVRECIP && !has_edge(g, j, i)) return 0.0;
@@ -2768,6 +2911,10 @@ static double saom_eval_stat(int k, int *termcodes, int *attridx, double *p1, do
 		return ix_stat(g, 2, codes, as, p1s);
 	}
 	if (SAOM_DWTC(termcodes[k])) return dw_stat(g, termcodes[k], attrs, attridx[k] - 1);
+	if (SAOM_XDC(termcodes[k])) {
+		saom_tl_dy = &attrs[attridx[k] - 1];
+		return xtd_stat(g, termcodes[k] - TERMCODE_XT0 - 200, p1[k]);
+	}
 	if (termcodes[k] == TERMCODE_DYADCOV || termcodes[k] == TERMCODE_DYADCOVRECIP) {
 		double tot = 0.0;
 		long kk;
@@ -2875,7 +3022,7 @@ static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int
 	if (tc == TERMCODE_GWDSPFF || tc == TERMCODE_GWDSPFB || tc == TERMCODE_BETWEEN) *need_adj = 1;
 	if ((tc >= TERMCODE_GWESPFB && tc <= TERMCODE_CYCLE4SQRT)) *need_adj = 1;
 	if (tc == TERMCODE_RECIPOP || tc == TERMCODE_RECIPOPSQRT || tc == TERMCODE_RECIACT || tc == TERMCODE_RECIACTSQRT) *need_adj = 1;
-	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE || SAOM_DWTC(tc) || SAOM_XTC(tc) || (tc >= 4000 && tc < 5000) || SAOM_DGTC(tc)) *need_adj = 1;
+	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE || SAOM_DWTC(tc) || SAOM_XTC(tc) || SAOM_XDC(tc) || (tc >= 4000 && tc < 5000) || SAOM_DGTC(tc)) *need_adj = 1;
 }
 
 /* ===================================================================
@@ -4305,6 +4452,7 @@ typedef struct {
 static void graph_init(graph_t *g, long n, int need_adj, long cap_hint) {
 	long i;
 	g->n = n;
+	g->nS = n; g->nR = n; g->off = 0;
 	g->need_adj = need_adj;
 	ht_alloc(&g->ht, ht_next_pow2(cap_hint * 2 + 16));
 	g->elist_i = NULL; g->elist_j = NULL; g->ecap = 0; g->nties = 0;
@@ -6061,6 +6209,25 @@ static long mn_count_diff(graph_t *a, graph_t *b) {
 	for (k = 0; k < b->nties; k++) if (!has_edge(a, b->elist_i[k], b->elist_j[k])) d++;
 	return d;
 }
+/* protocol 90: the senders (nodes with a free alter) and receivers (nodes free for some sender) of a member with structural dyads (a two-mode network, or a one-mode network
+   among the actors of a two-mode one): RSiena's n() and m() of that network's data. Without structural dyads both are n. */
+static void model_nsr(const model_t *M, long *nS, long *nR, long *off) {
+	long i, k, n = M->n, ns = 0, nr = 0, r0 = 0;
+	long *blocked;
+	unsigned char *isS;
+	*off = 0;
+	if (M->nstruct <= 0 || !M->struct_off) { *nS = n; *nR = n; return; }
+	blocked = (long *)calloc((size_t)(n + 1), sizeof(long));
+	isS = (unsigned char *)calloc((size_t)(n + 1), 1);
+	for (i = 1; i <= n; i++) if (M->struct_off[i + 1] - M->struct_off[i] < n - 1) { isS[i] = 1; ns++; }
+	for (i = 1; i <= n; i++) {
+		if (!isS[i]) continue;
+		for (k = M->struct_off[i]; k < M->struct_off[i + 1]; k++) blocked[M->struct_j[k]]++;
+	}
+	for (i = 1; i <= n; i++) if (ns - blocked[i] - (isS[i] ? 1 : 0) > 0) { nr++; if (!r0) r0 = i; }
+	free(blocked); free(isS);
+	*nS = ns; *nR = nr; *off = r0 > 0 ? r0 - 1 : 0;
+}
 #define BEHNET2 10000		/* protocol 64: a behavior term whose code is >= BEHNET2 is driven by the SECOND network (code - BEHNET2) */
 static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs, const simparams_t **Ps, unsigned long long seed, simres_t *R) {
 	long n = Ms[0]->n, i, k, j, kk;
@@ -6068,6 +6235,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 	graph_t g[MAXNETS], g0[MAXNETS];
 	double *attrs[MAXNETS][MAXATTR + 2];
 	double *u[MAXNETS], *ev[MAXNETS], *tt[MAXNETS], *c3[MAXNETS], *chg[MAXNETS];
+	double *availbuf = NULL;
 	unsigned char *ijx = (unsigned char *)malloc((size_t)(n + 1));
 	rng_t rng;
 	double t = 0.0, grand = 0.0, stride = (double)(n + 1);
@@ -6099,6 +6267,8 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		attrs[net][M->nattr + 1] = hasb ? behc : NULL;
 		graph_init(&g[net], n, 1, PD->nties);
 		graph_init(&g0[net], n, 1, PD->nties);
+		model_nsr(M, &g[net].nS, &g[net].nR, &g[net].off);
+		g0[net].nS = g[net].nS; g0[net].nR = g[net].nR; g0[net].off = g[net].off;
 		for (i = 0; i < PD->nties; i++) { toggle(&g[net], PD->ti[i], PD->tj[i]); toggle(&g0[net], PD->ti[i], PD->tj[i]); }
 		u[net] = (double *)malloc((size_t)(n + 1) * sizeof(double));
 		ev[net] = (double *)malloc((size_t)(n + 1) * sizeof(double));
@@ -6114,6 +6284,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		const model_t *M;
 		const simparams_t *P;
 		double *score;
+		const double *avail;
 		int isbeh = 0;
 		t += -log(rng_unif(&rng)) / grand;
 		if (t >= 1.0) break;
@@ -6183,13 +6354,23 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		score = R[net].score;
 		actor = 1 + (long)(rng_unif(&rng) * (double)n);
 		saom_tl_xg = &g[(net + 1) % nnet];
+		avail = NULL;
+		if (M->nstruct > 0) {
+			/* protocol 90: structural dyads (a two-mode member): the fixed dyads of the actor are no alternatives; a node without any free alter (an event) never acts */
+			if (M->struct_off[actor + 1] - M->struct_off[actor] >= n - 1) { R[net].stepsNet += 1.0; continue; }
+			if (!availbuf) availbuf = (double *)malloc((size_t)(n + 1) * sizeof(double));
+			for (j = 1; j <= n; j++) availbuf[j] = 1.0;
+			for (k = M->struct_off[actor]; k < M->struct_off[actor + 1]; k++) availbuf[M->struct_j[k]] = 0.0;
+			avail = availbuf;
+		}
 		if (M->need_transtrip) { memset(tt[net], 0, (size_t)(n + 1) * sizeof(double)); batch_otp_plus_osp(&g[net], actor, tt[net]); }
 		if (M->need_cycle3) { memset(c3[net], 0, (size_t)(n + 1) * sizeof(double)); batch_otp_reverse(&g[net], actor, c3[net]); }
-		maxu = eval_network_alternatives(M, P, &g[net], attrs[net], actor, NULL, tt[net], c3[net], chg[net], u[net], ijx);
+		maxu = eval_network_alternatives(M, P, &g[net], attrs[net], actor, avail, tt[net], c3[net], chg[net], u[net], ijx);
 		stayterm = exp(0.0 - maxu);
 		denom = stayterm;
 		for (j = 1; j <= n; j++) {
 			if (j == actor) continue;
+			if (avail && avail[j] == 0.0) continue;
 			ev[net][j] = exp(u[net][j] - maxu);
 			denom += ev[net][j];
 		}
@@ -6199,6 +6380,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		if (draw > cum) {
 			for (j = 1; j <= n; j++) {
 				if (j == actor) continue;
+				if (avail && avail[j] == 0.0) continue;
 				cum += ev[net][j];
 				choice = j;
 				if (draw <= cum) break;
@@ -6208,7 +6390,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 			for (k = 0; k < M->nterms; k++) {
 				double ebar = 0.0;
 				const double *c = chg[net] + k * (n + 1);
-				for (j = 1; j <= n; j++) { if (j == actor) continue; ebar += (ev[net][j] / denom) * c[j]; }
+				for (j = 1; j <= n; j++) { if (j == actor) continue; if (avail && avail[j] == 0.0) continue; ebar += (ev[net][j] / denom) * c[j]; }
 				score[k] += (choice != 0 ? c[choice] : 0.0) - ebar;
 			}
 		}
@@ -6252,7 +6434,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		graph_free(&g0[net]);
 		free(u[net]); free(ev[net]); free(tt[net]); free(c3[net]); free(chg[net]);
 	}
-	free(ijx);
+	free(ijx); free(availbuf);
 	free(bv); free(behc); free(behc0);
 	return 0;
 }
@@ -6422,6 +6604,8 @@ static ST_retcode mn_obs(char *arg) {
 			const period_t *PD = &batch_states[net].per[pd];
 			graph_init(&ge[net], n, 1, nedges + 8);
 			graph_init(&g0[net], n, 1, PD->nties + 8);
+			model_nsr(M, &ge[net].nS, &ge[net].nR, &ge[net].off);
+			g0[net].nS = ge[net].nS; g0[net].nR = ge[net].nR; g0[net].off = ge[net].off;
 			for (e = 0; e < PD->nties; e++) toggle(&g0[net], PD->ti[e], PD->tj[e]);
 			for (k = 0; k < M->nattr; k++) attrs[net][k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
 			attrs[net][M->nattr] = NULL;
