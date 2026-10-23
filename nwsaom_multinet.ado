@@ -105,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) THETA0(numlist) FIX(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) MISSBEH(string) THETA0(numlist) FIX(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
@@ -156,16 +156,35 @@ program define nwsaom_multinet, eclass
 			error 198
 		}
 		mata: __nwsaom_mn_Bw = J(1, 0, NULL)
-		foreach __v of local behavior {
-			mata: SaomMNAddBeh("`__v'", `nodes')
+		mata: __nwsaom_mn_Miss = J(1, 0, NULL)
+		if "`missbeh'" != "" {
+			if `: word count `missbeh'' != `nb' {
+				di "{err}missbeh() needs one 0/1 variable per wave (`nb'): 1 = the behavior value is missing."
+				error 198
+			}
 		}
+		local __iw 0
+		foreach __v of local behavior {
+			local ++__iw
+			local __mv : word `__iw' of `missbeh'
+			if "`__mv'" != "" mata: SaomMNAddBeh("`__v'", `nodes', "`__mv'")
+			else mata: SaomMNAddBeh("`__v'", `nodes')
+		}
+		if "`missbeh'" != "" mata: SaomMNImputeBeh(`nb', `nodes')
 		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
 		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
 		mata: __nwsaom_last_Behwaves = __nwsaom_mn_Bw
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
 	}
-	else capture mata: mata drop __nwsaom_mn_Bw
+	else {
+		capture mata: mata drop __nwsaom_mn_Bw
+		capture mata: mata drop __nwsaom_mn_Miss
+		if "`missbeh'" != "" {
+			di "{err}missbeh() needs behavior()."
+			error 198
+		}
+	}
 	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
 	forvalues __s = 1/2 {
 		mata: __nwsaom_mn_M`__s' = ErgmModel()

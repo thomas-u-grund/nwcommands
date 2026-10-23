@@ -9013,9 +9013,10 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	struct SaomBehaviorNativeConfig scalar cfgB
 	struct SaomNetFit scalar nf
 	class SaomBehavior scalar Bend
-	real scalar P, n, p1, p2, pb, pd, ver, overallMean, k
+	real scalar P, n, p1, p2, pb, pd, ver, overallMean, k, hasmissb
 	real rowvector par0, israte, rate10, rate20, rateb0, codes, tb1, tb2
 	real colvector allb, zero
+	real matrix missPd
 	pointer(real matrix) rowvector noev
 	P = cols(G1) - 1
 	if (cols(G2) - 1 != P | cols(Behwaves) != P + 1) {
@@ -9053,12 +9054,25 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	}
 	allb = *Behwaves[1]
 	for (pd=2; pd<=P+1; pd++) allb = allb \ *Behwaves[pd]
+	// missing behavior values (missbeh()): the period masks (missing at either wave), the statistics skip them
+	missPd = J(n, P, 0)
+	hasmissb = 0
+	if (findexternal("__nwsaom_mn_Miss") != NULL) {
+		if (cols(*findexternal("__nwsaom_mn_Miss")) == P + 1) {
+			if (ver < 102) {
+				errprintf("nwsaom multinet: missbeh() needs a newer plugin (this one is protocol " + strofreal(ver) + "); rebuild or update it.\n")
+				exit(198)
+			}
+			for (pd=1; pd<=P; pd++) missPd[., pd] = ((*(*findexternal("__nwsaom_mn_Miss"))[pd] :| *(*findexternal("__nwsaom_mn_Miss"))[pd+1]) :!= 0)
+			hasmissb = (max(missPd) > 0)
+		}
+	}
 	overallMean = mean(allb)
 	SaomSetEngine(1, "")
 	noev = J(1, P, NULL)
 	codes = cfgB.termcodes :+ 10000 * net2flag
 	SaomSetBatchSlot(0)
-	SaomBatchSetup(G1, P, cfg1, codes, Behwaves, behmin, behmax, Mbeh.simMean, overallMean, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), cfgB.fntype, 4 * sym1, J(0, 0, 0), noev)
+	SaomBatchSetup(G1, P, cfg1, codes, Behwaves, behmin, behmax, Mbeh.simMean, overallMean, hasmissb, J(0, 3, 0), missPd, 0, J(n, P, 1), cfgB.fntype, 4 * sym1, J(0, 0, 0), noev)
 	SaomSetBatchSlot(1)
 	SaomBatchSetup(G2, P, cfg2, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), 4 * sym2, J(0, 0, 0), noev)
 	SaomSetBatchSlot(0)
@@ -9071,18 +9085,18 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	for (pd=1; pd<=P; pd++) {
 		Bend = SaomBehavior()
 		Bend.init(*Behwaves[pd+1], behmin, behmax, overallMean, Mbeh.simMean)
-		tb1 = SaomCoevStatBeh(Bend, *G1[pd], Mbeh, zero)
-		tb2 = SaomCoevStatBeh(Bend, *G2[pd], Mbeh, zero)
+		tb1 = SaomCoevStatBeh(Bend, *G1[pd], Mbeh, missPd[., pd])
+		tb2 = SaomCoevStatBeh(Bend, *G2[pd], Mbeh, missPd[., pd])
 		for (k=1; k<=pb; k++) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
 		if (any(cfgB.fntype :!= 0)) {
 			// endowment / creation: RSiena's statistics from the decreases / increases of the period, on the starting network of the term
-			tb1 = SaomBehaviorPatchEndowCreation(Mbeh, tb1, 0, *Behwaves[pd], *Behwaves[pd+1], G1[pd], overallMean, zero)
-			tb2 = SaomBehaviorPatchEndowCreation(Mbeh, tb2, 0, *Behwaves[pd], *Behwaves[pd+1], G2[pd], overallMean, zero)
+			tb1 = SaomBehaviorPatchEndowCreation(Mbeh, tb1, 0, *Behwaves[pd], *Behwaves[pd+1], G1[pd], overallMean, missPd[., pd])
+			tb2 = SaomBehaviorPatchEndowCreation(Mbeh, tb2, 0, *Behwaves[pd], *Behwaves[pd+1], G2[pd], overallMean, missPd[., pd])
 			for (k=1; k<=pb; k++) if (cfgB.fntype[k] != 0) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
 		}
-		for (k=1; k<=pb; k++) if (cfgB.termcodes[k] >= 20000) C.target[pd, p1 + p2 + k] = SaomMNBothStat(*Behwaves[pd+1], *G1[pd], *G2[pd], cfgB.termcodes[k], overallMean)
-		C.trb[pd] = sum(abs(*Behwaves[pd+1] - *Behwaves[pd]))
-		rateb0[pd] = SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1])
+		for (k=1; k<=pb; k++) if (cfgB.termcodes[k] >= 20000) C.target[pd, p1 + p2 + k] = SaomMNBothStat(*Behwaves[pd+1] :* (missPd[., pd] :== 0) :+ overallMean :* (missPd[., pd] :!= 0), *G1[pd], *G2[pd], cfgB.termcodes[k], overallMean)
+		C.trb[pd] = sum(abs(*Behwaves[pd+1] - *Behwaves[pd]) :* (missPd[., pd] :== 0))
+		rateb0[pd] = (hasmissb ? SaomBehaviorRateStartMasked(*Behwaves[pd], *Behwaves[pd+1], missPd[., pd]) : SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1]))
 	}
 	rate10 = J(1, P, 0)
 	rate20 = J(1, P, 0)
@@ -9191,26 +9205,49 @@ void SaomMNPrefix2(class SaomBehaviorModel scalar Mbeh, real scalar n1) {
 	for (t=n1+1; t<=Mbeh.nterms; t++) if (substr(Mbeh.coefnames[t], 1, 4) == "beh_") Mbeh.coefnames[t] = "beh2_" + substr(Mbeh.coefnames[t], 5, .)
 }
 /* nwsaom multinet with a behavior: the wave variables (one value per actor), the range of the behavior over all waves */
-void SaomMNAddBeh(string scalar vn, real scalar n) {
-	external pointer(real colvector) rowvector __nwsaom_mn_Bw
-	real colvector x
+void SaomMNAddBeh(string scalar vn, real scalar n, | string scalar mvn) {
+	external pointer(real colvector) rowvector __nwsaom_mn_Bw, __nwsaom_mn_Miss
+	real colvector x, m
 	x = st_data(1::n, vn)
+	m = J(n, 1, 0)
+	if (args() >= 3) {
+		m = st_data(1::n, mvn)
+		if (any((m :!= 0) :& (m :!= 1))) {
+			errprintf("nwsaom multinet: missbeh() variable " + mvn + " must be coded 0 (observed) / 1 (missing).\n")
+			exit(198)
+		}
+		x = x :* (m :== 0)
+		if (any(x :>= .)) x = editmissing(x, 0)
+	}
 	if (any(x :>= .)) {
-		errprintf("nwsaom multinet: behavior() variable " + vn + " has missing values (not supported).\n")
+		errprintf("nwsaom multinet: behavior() variable " + vn + " has missing values (declare them with missbeh()).\n")
 		exit(198)
 	}
 	__nwsaom_mn_Bw = (__nwsaom_mn_Bw, &(x))
+	__nwsaom_mn_Miss = (__nwsaom_mn_Miss, &(m))
+}
+/* nwsaom multinet missbeh(): replace the missing values of each wave by the previous observation, else the next, else the observation-wise mode (RSiena's rule; SaomImputeBehaviorWave()) */
+void SaomMNImputeBeh(real scalar nwaves, real scalar n) {
+	external pointer(real colvector) rowvector __nwsaom_mn_Bw, __nwsaom_mn_Miss
+	pointer(real colvector) rowvector raw, imp
+	real scalar w
+	raw = __nwsaom_mn_Bw
+	imp = J(1, 0, NULL)
+	for (w=1; w<=nwaves; w++) imp = (imp, &(SaomImputeBehaviorWave(raw, __nwsaom_mn_Miss, nwaves, n, w)))
+	__nwsaom_mn_Bw = imp
 }
 real scalar SaomMNBehMin(pointer(real colvector) rowvector Bw) {
+	external pointer(real colvector) rowvector __nwsaom_mn_Miss
 	real scalar w, m
-	m = min(*Bw[1])
-	for (w=2; w<=cols(Bw); w++) m = min((m, min(*Bw[w])))
+	m = .
+	for (w=1; w<=cols(Bw); w++) if (any(*__nwsaom_mn_Miss[w] :== 0)) m = min((m, min(select(*Bw[w], *__nwsaom_mn_Miss[w] :== 0))))
 	return(m)
 }
 real scalar SaomMNBehMax(pointer(real colvector) rowvector Bw) {
+	external pointer(real colvector) rowvector __nwsaom_mn_Miss
 	real scalar w, m
-	m = max(*Bw[1])
-	for (w=2; w<=cols(Bw); w++) m = max((m, max(*Bw[w])))
+	m = .
+	for (w=1; w<=cols(Bw); w++) if (any(*__nwsaom_mn_Miss[w] :== 0)) m = (m >= . ? max(select(*Bw[w], *__nwsaom_mn_Miss[w] :== 0)) : max((m, max(select(*Bw[w], *__nwsaom_mn_Miss[w] :== 0)))))
 	return(m)
 }
 
