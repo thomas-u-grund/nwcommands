@@ -65,6 +65,9 @@ f nwdynam.ado
 f nwego.ado
 f nwergm.ado
 f nwergm_estat.ado
+f _nwergm_bip.ado
+f _nwergm_bipgof.ado
+f _nwergm_bip_curved.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado

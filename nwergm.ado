@@ -21,12 +21,25 @@ program nwergm, eclass
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
+		BCONCURRENT1(string) BCONCURRENT2(string) BMINDEGREE1(string) BMINDEGREE2(string) ///
+		BDEGRANGE1(string) BDEGRANGE2(string) BCOVRANGE1(string) BCOVRANGE2(string) ///
+		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
+		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
+		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
+		BGWDEGREEFREE1(string) BGWDEGREEFREE2(string) BGWDSPFREE1(string) BGWDSPFREE2(string) ///
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
 		OFFSET(string) ]
 	set more off
+	// numlist-valued options accept ranges such as degree(0/3), as in R's d=0:3
+	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
+		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
+			capture numlist "``__ergm_o''"
+			if !_rc local `__ergm_o' `r(numlist)'
+		}
+	}
 
 	if "`edges'" == "" {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
@@ -127,11 +140,19 @@ program nwergm, eclass
 		error 198
 	}
 	if "`is2mode'" == "true" {
-		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + ("`gwesp'"!="") + ("`gwdsp'"!="") + ("`gwnsp'"!="") + ("`gwdegree'"!="") + ("`gwodegree'"!="") + ("`gwidegree'"!="") + ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
-		if `__ergm_b2mode_otherterm' > 0 {
-			di "{err}nwergm's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; {bf:`netname'} is two-mode and this model requests at least one other (one-mode-only) term."
-			di "{err}nwergm never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
-			error 198
+		// R's ergm accepts the undirected one-mode terms on a bipartite network (statistics are defined on
+		// the whole node set) but refuses the directed-only terms and the one-mode degree distribution terms
+		foreach __ergm_bo in mutual nodeicov nodeocov nodeifactor nodeofactor sender receiver odegree idegree ostar istar ctriple odegrange odegrangeto idegrange idegrangeto gwodegree gwidegree gwodegreefree gwidegreefree {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with directed==FALSE."
+				error 198
+			}
+		}
+		foreach __ergm_bo in gwdegree gwdegreefree {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite > 0."
+				error 198
+			}
 		}
 	}
 	else {
@@ -148,6 +169,18 @@ program nwergm, eclass
 		// rejected on a one-mode network with the same "reject, never
 		// silently reinterpret" discipline `mutual' (directed-only)
 		// already uses below.
+		local __ergm_bipall ""
+		foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
+		if "`__ergm_bipall'" != "" {
+			foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+				if `"``__ergm_bo''"' != "" {
+					di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite==FALSE."
+					error 198
+				}
+			}
+		}
 		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'`bgwdegree1'`bgwdegree2'" != "" {
 			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require a two-mode (bipartite) network; {bf:`netname'} is one-mode."
 			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode network's own analogous effect."
@@ -176,7 +209,7 @@ program nwergm, eclass
 	// before any of the five options' own validation blocks below, so
 	// each block can just check `` `__ergm_ncurved' > 1 `` instead of
 	// naming every other curved option individually.
-	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="")
+	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"!="")
 
 	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
 	// (free-decay) gwesp - the first user-facing curved term. Dyad-
@@ -643,6 +676,19 @@ program nwergm, eclass
 		mata: `__td_edges' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
+	}
+
+	// bipartite terms with sub-arguments (b*concurrent, b*mindegree, b*degrange, by=/attr= forms, ...): see _nwergm_bip.ado
+	local __ergm_bipdep 0
+	foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 bgwdegreefree1 bgwdegreefree2 bgwdspfree1 bgwdspfree2 {
+		if `"``__ergm_bo''"' != "" local __ergm_bipdep 1
+	}
+	foreach __ergm_bo in bdegree1 bdegree2 bstar1 bstar2 bnodematch1 bnodematch2 bgwdegree1 bgwdegree2 {
+		if strpos(`"``__ergm_bo''"', ",") > 0 local __ergm_bipdep 1
+	}
+	if "`is2mode'" == "true" {
+		_nwergm_bip, nodes(`nodes') bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`nodemix'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
 	}
 
 	if "`mutual'" != "" {
@@ -1518,6 +1564,15 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdegreefree'"
 	}
+	// curved bipartite terms (gwb1degree/gwb2degree/gwb1dsp/gwb2dsp with fixed=FALSE in R): see _nwergm_bip.ado
+	if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" {
+		if "`is2mode'" != "true" {
+			di "{err}In term {bf:bgwdegreefree/bgwdspfree}: Term may not be used with networks with bipartite==FALSE."
+			error 198
+		}
+		_nwergm_bip_curved, bgwdegreefree1(`"`bgwdegreefree1'"') bgwdegreefree2(`"`bgwdegreefree2'"') bgwdspfree1(`"`bgwdspfree1'"') bgwdspfree2(`"`bgwdspfree2'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
+	}
 	// gwdspfree() (harmonisation unit 140): mirrors the other two
 	// curved options' own exact pattern, registered under "dsp"
 	// (reusing stat_dsp()/change_dsp() directly).
@@ -1652,6 +1707,7 @@ program nwergm, eclass
 	else if "`gwdspfree'" != "" local __ergm_curved_start "`gwdspfree'"
 	else if "`gwnspfree'" != "" local __ergm_curved_start "`gwnspfree'"
 	else if "`gwodegreefree'" != "" local __ergm_curved_start "`gwodegreefree'"
+	else if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" local __ergm_curved_start "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"
 	else local __ergm_curved_start "`gwidegreefree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
@@ -1673,7 +1729,7 @@ program nwergm, eclass
 	// own comment above) - previously harmless to omit only because
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep')
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1894,7 +1950,9 @@ program nwergm, eclass
 		// would leave the caller's own dataset in the modified,
 		// mid-preserve state (the same class of bug already fixed once
 		// in nwrename.ado this same pass).
-		capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
+		capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt' tolerance(1e-9) ltolerance(1e-11)
+		// near-separated fits may not reach the tight tolerance: fall back to logit's defaults
+		if _rc == 430 capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
 		if _rc != 0 {
 			local __ergm_mple_rc = _rc
 			restore
@@ -2352,11 +2410,22 @@ program nwergm_simulate
 		TYPE(string) ///
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
-		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(real 0) BGWDEGREE2(real 0) ///
+		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
+		BCONCURRENT1(string) BCONCURRENT2(string) BMINDEGREE1(string) BMINDEGREE2(string) ///
+		BDEGRANGE1(string) BDEGRANGE2(string) BCOVRANGE1(string) BCOVRANGE2(string) ///
+		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
+		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
+		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
 		BIPARTITE(integer 0) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
 		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
 
+	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
+		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
+			capture numlist "``__ergm_o''"
+			if !_rc local `__ergm_o' `r(numlist)'
+		}
+	}
 	confirm integer number `nodes'
 	if `nodes' < 2 {
 		di "{err}nwergm simulate needs at least 2 nodes."
@@ -2385,15 +2454,25 @@ program nwergm_simulate
 		error 198
 	}
 	if `bipartite' != 0 {
-		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + (`gwesp'!=0) + (`gwdsp'!=0) + (`gwnsp'!=0) + (`gwdegree'!=0) + (`gwodegree'!=0) + (`gwidegree'!=0) + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
-		if `__ergm_b2mode_otherterm' > 0 {
-			di "{err}nwergm simulate's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; this model requests at least one other (one-mode-only) term."
-			di "{err}nwergm simulate never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
-			error 198
+		foreach __ergm_bo in mutual nodeicov nodeocov nodeifactor nodeofactor sender receiver odegree idegree ostar istar ctriple odegrange odegrangeto idegrange idegrangeto {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with directed==FALSE."
+				error 198
+			}
+		}
+		foreach __ergm_bo in gwodegree gwidegree gwdegree {
+			if ``__ergm_bo'' != 0 {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite > 0."
+				error 198
+			}
 		}
 	}
 	else {
-		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `bgwdegree1' != 0 | `bgwdegree2' != 0 {
+		local __ergm_bipall ""
+		foreach __ergm_bo in bgwdegree1 bgwdegree2 bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
+		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `"`__ergm_bipall'"' != "" {
 			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require {bf:bipartite()} (the mode-1 node count)."
 			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode simulation's own analogous effect."
 			error 198
@@ -2607,6 +2686,11 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
 	}
 	local __ergm_termidx = 0
+	local __ergm_nodemix_b ""
+	if `bipartite' != 0 {
+		local __ergm_nodemix_b `"`nodemix'"'
+		local nodemix ""
+	}
 	foreach __ergm_v of local nodemix {
 		_nwergm_numvar `__ergm_v' nodemix
 		local ++__ergm_termidx
@@ -2629,6 +2713,21 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' `__ergm_cnames'"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
 		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	}
+
+	if `bipartite' != 0 {
+		capture mata: mata drop __nwergm_bipG
+		mata: __nwergm_bipG = ErgmGraph()
+		mata: __nwergm_bipG.init(`nodes', 0)
+		mata: __nwergm_bipG.set_bipartite((J(`bipartite',1,1) \ J(`nodes'-`bipartite',1,2)))
+		mata: st_local("__ergm_c0", strofreal(cols(__nwergm_last_M.coefnames)))
+		_nwergm_bip, nodes(`nodes') gname(__nwergm_bipG) bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`__ergm_nodemix_b'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
+		local __ergm_newn ""
+		mata: st_local("__ergm_c1", strofreal(cols(__nwergm_last_M.coefnames)))
+		if `__ergm_c1' > `__ergm_c0' mata: st_local("__ergm_newn", invtokens(__nwergm_last_M.coefnames[(`__ergm_c0'+1)..`__ergm_c1']))
+		local ntermtok "`ntermtok' `__ergm_newn'"
+		capture mata: mata drop __nwergm_bipG
 	}
 
 	// --- bipartite (two-mode) terms: bcov1()/bcov2()/bfactor1()/
@@ -2781,7 +2880,7 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' b2nodematch_`__ergm_v'"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
 	}
-	if `bgwdegree1' != 0 {
+	if "`bgwdegree1'" != "" {
 		tempname __td_bgwd1
 		mata: `__td_bgwd1' = ErgmTermData()
 		mata: `__td_bgwd1'.decay = `bgwdegree1'
@@ -2789,7 +2888,7 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' bgwdegree1"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
 	}
-	if `bgwdegree2' != 0 {
+	if "`bgwdegree2'" != "" {
 		tempname __td_bgwd2
 		mata: `__td_bgwd2' = ErgmTermData()
 		mata: `__td_bgwd2'.decay = `bgwdegree2'
