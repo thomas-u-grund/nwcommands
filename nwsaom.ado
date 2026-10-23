@@ -4110,6 +4110,8 @@ end
 
 capture mata: mata drop __nwsaom_mn_addwave()
 capture mata: mata drop __nwsaom_mn_post()
+capture mata: mata drop __nwsaom_mn_avg()
+capture mata: mata drop __nwsaom_mn_avgsq()
 mata:
 /* nwsaom multinet (protocol 52): collects the wave graphs of one network (slot 1 or 2) and posts the fit */
 void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot) {
@@ -4121,8 +4123,37 @@ void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar
 	if (slot == 1) __nwsaom_mn_Gs1 = (__nwsaom_mn_Gs1, &(G))
 	else __nwsaom_mn_Gs2 = (__nwsaom_mn_Gs2, &(G))
 }
+/* average degree over all waves of network `slot' (RSiena NetworkLongitudinalData::averageInDegree()) */
+real scalar __nwsaom_mn_avg(real scalar slot) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	pointer(class ErgmGraph scalar) rowvector Gs
+	real scalar w, tot, n
+	Gs = (slot == 1 ? __nwsaom_mn_Gs1 : __nwsaom_mn_Gs2)
+	tot = 0
+	n = (*Gs[1]).n
+	for (w=1; w<=cols(Gs); w++) tot = tot + rows((*Gs[w]).all_ties())
+	return(tot / (n * cols(Gs)))
+}
+/* average squared in-degree over all waves of network `slot' */
+real scalar __nwsaom_mn_avgsq(real scalar slot) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	pointer(class ErgmGraph scalar) rowvector Gs
+	real scalar w, tot, n, k
+	real colvector d
+	real matrix e
+	Gs = (slot == 1 ? __nwsaom_mn_Gs1 : __nwsaom_mn_Gs2)
+	tot = 0
+	n = (*Gs[1]).n
+	for (w=1; w<=cols(Gs); w++) {
+		d = J(n, 1, 0)
+		e = (*Gs[w]).all_ties()
+		if (rows(e) > 0) for (k=1; k<=rows(e); k++) d[e[k,2]] = d[e[k,2]] + 1
+		tot = tot + sum(d :^ 2)
+	}
+	return(tot / (n * cols(Gs)))
+}
 void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg,
-	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname) {
+	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname, string scalar targetname) {
 	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
 	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
 	struct SaomMNFit scalar fit
@@ -4137,6 +4168,7 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 	st_matrix(Vname, fit.Vfull[1..p, 1..p])
 	st_matrix(ratename, (fit.par[(p+1)..(p+P)] \ fit.par[(p+P+1)..(p+2*P)] \ sqrt(diagonal(fit.Vfull)[(p+1)..(p+P)])' \ sqrt(diagonal(fit.Vfull)[(p+P+1)..(p+2*P)])'))
 	st_matrix(tcname, fit.tconv)
+	st_matrix(targetname, fit.target)
 	st_numscalar(tcname + "_max", fit.tconvMax)
 	st_global(ncoefname, invtokens(("net1_" :+ __nwsaom_mn_M1.coefnames, "net2_" :+ __nwsaom_mn_M2.coefnames)))
 }
@@ -4191,18 +4223,21 @@ program define nwsaom_multinet, eclass
 		foreach __t of local cross`__s' {
 			gettoken __e __pp : __t, parse(":")
 			local __pp = subinstr("`__pp'", ":", "", 1)
-			if "`__pp'" == "" local __pp 0
-			mata: SaomMNAddCross(__nwsaom_mn_M`__s', "`__e'", `nodes', `__pp')
+			if "`__pp'" == "" mata: st_local("__pp", strofreal(SaomMNDefaultParam("`__e'")))
+			local __os = 3 - `__s'
+			mata: SaomMNAddCross(__nwsaom_mn_M`__s', "`__e'", `nodes', `__pp', __nwsaom_mn_avg(`__os'), __nwsaom_mn_avg(`__s'), __nwsaom_mn_avgsq(`__os'))
 		}
 	}
-	tempname b V R tc
-	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__")
+	tempname b V R tc tg
+	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
 	local __cn "$__NWSAOM_MN_COEFNAMES__"
 	macro drop __NWSAOM_MN_COEFNAMES__
 	matrix colnames `b' = `__cn'
 	matrix colnames `V' = `__cn'
 	matrix rownames `V' = `__cn'
+	matrix colnames `tg' = `__cn'
 	ereturn post `b' `V', obs(`nodes')
+	ereturn matrix target = `tg'
 	local P = `nw1' - 1
 	forvalues __k = 1/`P' {
 		local __rn "`__rn' period`__k'"

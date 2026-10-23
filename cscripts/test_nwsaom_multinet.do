@@ -34,7 +34,10 @@ forvalues w = 1/3 {
 	nwset, mat(__B`w') directed name(nb`w') nooutput
 }
 gen double xa = mod(_n * 7, 4)
-foreach ef in crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw {
+foreach ef in crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw ///
+	inpopintn inactintn crprodinactintn outpopintn outactintn divoutegointn divinegointn divoutaltintn divinaltintn avdegintn absoutdiffintn both ///
+	outoutactintn outoutavintn dist2outinactintn outoutdist2actintn ndist2actintn doubleoutact ///
+	closure cyclosure sharedin wwxee wwxfr wxxfe wxxer xwxer xwxfe jinmix joutmix gwespffmix gwespbbmix gwespbfmix gwespfbmix gwesprrmix inpopoutw sharedto avalt2mtie avalt2mtot doubleinpop {
 	capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) cross1(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 {

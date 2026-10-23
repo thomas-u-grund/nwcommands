@@ -1422,10 +1422,153 @@ static double xt_shape(double v, double par) {
 	if (fabs(par - 3.0) < 0.001) return v >= 1.0 ? 1.0 : 0.0;
 	return v;
 }
-static double xt_value(graph_t *g, int v, double p1, long i, long j) {
+static double xt_gwesp(double k, double par) {
+	double w = -0.01 * par, f = 1.0 - exp(w);
+	return exp(-w) * (1.0 - pow(f, k));
+}
+static double xt_S(double x, double p1) { return p1 >= 2.0 ? sqrt(x) : x; }
+static double xt_recip(double x) { return x == 0.0 ? 0.0 : 1.0 / x; }
+/* common out-neighbours of i in g and h */
+static double xt_common_out(graph_t *g, graph_t *h, long i) {
+	long m;
+	double c = 0.0;
+	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(h, i, g->outadj[i].nb[m])) c++;
+	return c;
+}
+/* a[1] = the average degree of the OTHER network (all waves), a[2] = that of the OWN network (RSiena NetworkLongitudinalData::averageInDegree()) */
+static double xt_value(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	graph_t *h = (graph_t *)saom_tl_xg;
+	double avO = a ? a[1] : 0.0, avG = a ? a[2] : 0.0, avSq = a ? a[3] : 0.0;
 	if (!h) return 0.0;
 	switch (v) {
+		case 13: return xt_S((double)h->din[j], p1) - xt_S(avO, p1);
+		case 14: return xt_S((double)h->din[i], p1) - xt_S(avO, p1);
+		case 15: return has_edge(h, i, j) ? xt_S((double)h->din[i], p1) - xt_S(avO, p1) : 0.0;
+		case 16: return xt_S((double)h->dout[j], p1) - xt_S(avO, p1);
+		case 17: {
+			if (p1 < 0.5) return (h->dout[i] > 0 ? log((double)h->dout[i]) : 0.0) - log(avO);
+			return xt_S((double)h->dout[i], p1) - xt_S(avO, p1);
+		}
+		case 18: return xt_recip(xt_S((double)h->dout[i], p1));
+		case 19: return xt_recip(xt_S((double)h->din[i], p1));
+		case 20: return xt_recip(xt_S((double)h->dout[j], p1));
+		case 21: return xt_recip(xt_S((double)h->din[j], p1));
+		case 22: { long q; double t = 0.0; for (q = 1; q <= h->n; q++) t += (double)h->dout[q]; return t / (double)h->n - p1; }
+		case 23: return fabs(xt_S((double)h->dout[j], p1) - xt_S((double)h->dout[i], p1));
+		case 24: return (xt_S((double)h->din[j], p1) - xt_S(avO, p1)) * (xt_S((double)h->din[i], p1) - xt_S(avO, p1));
+		case 25: case 26: {
+			long m, d = 0;
+			double st = 0.0, av = p1 >= 2.0 ? sqrt(avG) : avG;
+			for (m = 0; m < h->outadj[i].len; m++) { st += xt_S((double)g->dout[h->outadj[i].nb[m]], p1) - av; d++; }
+			if (v == 26 && d > 0) st /= (double)d;
+			return st;
+		}
+		case 27: {
+			long m, d = 0;
+			double st = 0.0, av = p1 >= 2.0 ? sqrt(avO) : avO;
+			for (m = 0; m < h->outadj[i].len; m++) { st += xt_S((double)h->din[h->outadj[i].nb[m]], p1) - av; d++; }
+			return st;
+		}
+		case 28: case 29: case 51: {
+			long m, m2, d;
+			double st = 0.0, degs = 0.0;
+			long *tf = (long *)calloc((size_t)(h->n + 1), sizeof(long));
+			(void)d;
+			for (m = 0; m < h->outadj[i].len; m++) {
+				long k = h->outadj[i].nb[m];
+				for (m2 = 0; m2 < h->inadj[k].len; m2++) {
+					long q = h->inadj[k].nb[m2];
+					if (q != i) {
+						double inc = p1 >= 2.0 ? sqrt((double)(tf[q] + 1)) - sqrt((double)tf[q]) : 1.0;
+						st += inc * ((double)g->dout[q] - avG);
+						degs += inc;
+						tf[q]++;
+					}
+				}
+			}
+			free(tf);
+			if ((v == 29 || v == 51) && degs > 0.0) st /= degs;
+			return st;
+		}
+		case 30: {
+			long m, m2, cnt = 0;
+			unsigned char *mk = (unsigned char *)calloc((size_t)(h->n + 1), 1);
+			for (m = 0; m < h->outadj[i].len; m++) {
+				long k = h->outadj[i].nb[m];
+				for (m2 = 0; m2 < h->inadj[k].len; m2++) { long q = h->inadj[k].nb[m2]; if (q != i && !mk[q]) { mk[q] = 1; cnt++; } }
+			}
+			free(mk);
+			return p1 >= 2.0 ? sqrt((double)cnt) : (double)cnt;
+		}
+		case 32: return xt_mtp(h, h, 'F', 'F', i, j);
+		case 33: return xt_mtp(h, h, 'B', 'B', i, j);
+		case 34: return xt_mtp(h, h, 'B', 'F', i, j);
+		case 35: return xt_mtp(h, h, 'E', 'E', i, j);
+		case 36: return xt_mtp(h, h, 'F', 'R', i, j);
+		case 37: return xt_mtp(h, g, 'F', 'E', i, j);
+		case 38: return xt_mtp(h, g, 'E', 'R', i, j);
+		case 39: return xt_mtp(g, h, 'E', 'R', i, j);
+		case 40: return xt_mtp(g, h, 'F', 'E', i, j);
+		case 41: { double os = xt_mtp(h, h, 'B', 'F', i, j), den = (double)h->din[j] + (double)h->din[i] - os; return den >= 1.0 ? os / den : 0.0; }
+		case 42: { double is = xt_mtp(h, h, 'F', 'B', i, j), den = (double)h->dout[j] + (double)h->dout[i] - is; return den >= 1.0 ? is / den : 0.0; }
+		case 43: return xt_gwesp(xt_mtp(h, h, 'F', 'F', i, j), p1);
+		case 44: return xt_gwesp(xt_mtp(h, h, 'B', 'B', i, j), p1);
+		case 45: return xt_gwesp(xt_mtp(h, h, 'B', 'F', i, j), p1);
+		case 46: return xt_gwesp(xt_mtp(h, h, 'F', 'B', i, j), p1);
+		case 47: return xt_gwesp(xt_mtp(h, h, 'R', 'R', i, j), p1);
+		case 48: {
+			/* inPopOutW: the in-neighbours k of j in the OWN network (k != i): S(outdegree of k in the other network) - (centred: the average) */
+			long m;
+			double st = 0.0, av = (p1 >= 3.0 ? avO : 0.0);
+			int root = (fabs(p1 - 2.0) < 0.001 || fabs(p1 - 4.0) < 0.001);
+			if (root) av = sqrt(av);
+			for (m = 0; m < g->inadj[j].len; m++) { long k = g->inadj[j].nb[m]; if (k != i) st += (root ? sqrt((double)h->dout[k]) : (double)h->dout[k]) - av; }
+			return st;
+		}
+		case 49: case 50: {
+			/* sharedTo / avAlt.2M.tie (MixedThreeCyclesFunction): the in-neighbours k of j in the OWN network */
+			long m, m2;
+			double st = 0.0, sumd = 1.0, avc = 0.0;
+			int root = (fabs(p1 - 2.0) < 0.001 || fabs(p1 - 4.0) < 0.001), center = (p1 >= 3.0);
+			if (center) { avc = (avSq - avO) / (double)(g->n - 1); if (root) avc = sqrt(avc); }
+			if (v == 50) {
+				long *tf = (long *)calloc((size_t)(g->n + 1), sizeof(long));
+				double degs = 0.0;
+				for (m = 0; m < h->outadj[i].len; m++) {
+					long k = h->outadj[i].nb[m];
+					for (m2 = 0; m2 < h->inadj[k].len; m2++) { long q = h->inadj[k].nb[m2]; if (q != i) { if (root) tf[q]++; else degs += 1.0; } }
+				}
+				if (root) { degs = 0.0; for (m = 1; m <= g->n; m++) degs += sqrt((double)tf[m]); }
+				sumd = degs;
+				free(tf);
+			}
+			for (m = 0; m < g->inadj[j].len; m++) {
+				long k = g->inadj[j].nb[m];
+				if (k == i) continue;
+				{
+					double is = xt_mtp(h, h, 'F', 'B', i, k);
+					st += (root ? sqrt(is) : is) - avc;
+				}
+			}
+			if (v == 50 && sumd > 0.0) st /= sumd;
+			return st;
+		}
+		case 52: {
+			/* doubleInPop, the CONTRIBUTION: 1 + the common in-neighbours of j in the two networks other than i, if the tie is in the other network */
+			long m;
+			double c = 1.0;
+			if (!has_edge(h, i, j)) return 0.0;
+			for (m = 0; m < g->inadj[j].len; m++) { long k = g->inadj[j].nb[m]; if (k != i && has_edge(h, k, j)) c++; }
+			return p1 >= 2.0 ? sqrt(c) : c;
+		}
+		case 31: {
+			/* doubleOutAct, the CHANGE version (the statistic version is xt_tie) */
+			double c;
+			if (!has_edge(h, i, j)) return 0.0;
+			c = xt_common_out(g, h, i);
+			if (p1 >= 2.0) return has_edge(g, i, j) ? c * sqrt(c) - (c - 1.0) * sqrt(c - 1.0) : (c + 1.0) * sqrt(c + 1.0) - c * sqrt(c);
+			return has_edge(g, i, j) ? 2.0 * c - 1.0 : 2.0 * c + 1.0;
+		}
 		case 0: return has_edge(h, i, j) ? 1.0 : 0.0;
 		case 1: return has_edge(h, j, i) ? 1.0 : 0.0;
 		case 2: return (has_edge(h, i, j) && has_edge(h, j, i)) ? 1.0 : 0.0;
@@ -1442,18 +1585,37 @@ static double xt_value(graph_t *g, int v, double p1, long i, long j) {
 	}
 	return 0.0;
 }
-static double xt_stat(graph_t *g, int termcode, double p1) {
+/* the tie statistic: the value itself except doubleOutAct (v 31), whose statistic is the common out-degree m (sqrt m) at a tie also present in the other network */
+static double xt_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
+	if (v == 31) {
+		graph_t *h = (graph_t *)saom_tl_xg;
+		double c;
+		if (!h || !has_edge(h, i, j)) return 0.0;
+		c = xt_common_out(g, h, i);
+		return p1 >= 2.0 ? sqrt(c) : c;
+	}
+	if (v == 52) {
+		graph_t *h = (graph_t *)saom_tl_xg;
+		long m;
+		double c = 0.0;
+		if (!h || !has_edge(h, i, j)) return 0.0;
+		for (m = 0; m < g->inadj[j].len; m++) if (has_edge(h, g->inadj[j].nb[m], j)) c++;
+		return p1 >= 2.0 ? sqrt(c) : c;
+	}
+	return xt_value(g, v, a, p1, i, j);
+}
+static double xt_stat(graph_t *g, int termcode, const double *a, double p1) {
 	long k;
 	double tot = 0.0;
 	int v = termcode - TERMCODE_XT0;
-	for (k = 0; k < g->nties; k++) tot += xt_value(g, v, p1, g->elist_i[k], g->elist_j[k]);
+	for (k = 0; k < g->nties; k++) tot += xt_tie(g, v, a, p1, g->elist_i[k], g->elist_j[k]);
 	return tot;
 }
 
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
-	if (SAOM_XTC(termcode)) return xt_stat(g, termcode, p1);
+	if (SAOM_XTC(termcode)) return xt_stat(g, termcode, a, p1);
 	if (termcode >= 1000) termcode -= 1000;
 	if (SAOM_CZTC(termcode)) {
 		int v = termcode - TERMCODE_CZ0;
@@ -1682,7 +1844,7 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 static double saom_change_term(graph_t *g, int termcode, double *a, double p1, long i, long j, int ij_exists,
 	double *tt_arr, double *c3_arr) {
 	if (SAOM_XTC(termcode)) {
-		double v2 = xt_value(g, termcode - TERMCODE_XT0, p1, i, j);
+		double v2 = xt_value(g, termcode - TERMCODE_XT0, a, p1, i, j);
 		return ij_exists ? -v2 : v2;
 	}
 	if (termcode >= 1000) termcode -= 1000;

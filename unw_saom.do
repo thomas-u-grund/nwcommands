@@ -8225,9 +8225,22 @@ void SaomSetBatchSlot(real scalar k) {
 	__saom_bslot = k
 }
 real rowvector SaomMNCodes() return((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
-string rowvector SaomMNCrossNames() return(("crprod", "crprodrecip", "crprodmutual", "from", "frommutual", "fromany", "to", "toback", "torecip", "clxwx", "clxwx1", "clxwx2", "mixedinxw"))
+string rowvector SaomMNCrossNames() return(("crprod", "crprodrecip", "crprodmutual", "from", "frommutual", "fromany", "to", "toback", "torecip", "clxwx", "clxwx1", "clxwx2", "mixedinxw", ///
+	"inpopintn", "inactintn", "crprodinactintn", "outpopintn", "outactintn", "divoutegointn", "divinegointn", "divoutaltintn", "divinaltintn", "avdegintn", "absoutdiffintn", "both", ///
+	"outoutactintn", "outoutavintn", "dist2outinactintn", "outoutdist2actintn", "outoutdist2avintn", "ndist2actintn", "doubleoutact", ///
+	"closure", "cyclosure", "sharedin", "wwxee", "wwxfr", "wxxfe", "wxxer", "xwxer", "xwxfe", "jinmix", "joutmix", "gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix", ///
+	"inpopoutw", "sharedto", "avalt2mtie", "avalt2mtot", "doubleinpop"))
+/* RSiena's default effect parameters (allEffects.csv column parm) */
+real scalar SaomMNDefaultParam(string scalar eff) {
+	if (anyof(("inpopintn", "inactintn", "crprodinactintn", "outpopintn", "outactintn", "divoutegointn", "divinegointn", "divoutaltintn", "divinaltintn", "avdegintn", "doubleoutact"), eff)) return(2)
+	if (anyof(("gwespffmix", "gwespbbmix", "gwespbfmix", "gwespfbmix", "gwesprrmix"), eff)) return(69)
+	if (eff == "sharedto" | eff == "doubleinpop") return(eff == "sharedto" ? 3 : 2)
+	if (eff == "avalt2mtie" | eff == "avalt2mtot") return(eff == "avalt2mtie" ? 1 : 1)
+	if (anyof(("absoutdiffintn", "both", "outoutactintn", "outoutavintn", "dist2outinactintn", "outoutdist2actintn", "outoutdist2avintn", "ndist2actintn"), eff)) return(1)
+	return(0)
+}
 /* a native-only cross-network term; code = 3000 + v */
-void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1) {
+void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1, real scalar avOther, real scalar avOwn, real scalar avSqOther) {
 	class ErgmTermData scalar td
 	real scalar k, v
 	string rowvector nm
@@ -8242,6 +8255,9 @@ void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, 
 	td.levels = (3000 + v \ 0)
 	td.decay = p1
 	td.attr = J(n, 1, 0)
+	td.attr[1] = avOther
+	td.attr[2] = avOwn
+	td.attr[3] = avSqOther
 	M.addterm("nat_x" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("x_" + eff))
 }
 /* the within-network effects: structural ones by name, covariate ones by (name, variable) */
@@ -8274,7 +8290,7 @@ struct SaomMNCtx {
 }
 struct SaomMNFit {
 	real rowvector par, tconv
-	real matrix Vfull
+	real matrix Vfull, target
 	real scalar tconvMax, p1, p2, P
 }
 real matrix SaomMNRun(real scalar P, real scalar K, real scalar want_score, real rowvector th1, real rowvector th2, real rowvector r1, real rowvector r2) {
@@ -8440,6 +8456,7 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 	fit.Vfull = nf.Vfull
 	fit.tconvMax = nf.tconvMax
 	fit.p1 = p1; fit.p2 = p2; fit.P = P
+	fit.target = C.target
 	SaomBatchCleanup()
 	SaomNativeCleanupFrame()
 	return(fit)
