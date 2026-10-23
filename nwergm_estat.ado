@@ -11,6 +11,10 @@ program define nwergm_estat, rclass
 		nwergm_estat_gof `rest'
 		return add
 	}
+	else if "`subcmd'" == "ic" {
+		nwergm_estat_ic
+		return add
+	}
 	else {
 		di as err "estat `subcmd' not allowed after nwergm"
 		exit 321
@@ -785,4 +789,27 @@ real matrix ergm_gof_summary5(real matrix draws) {
 	}
 	return(out)
 }
+end
+
+
+capture program drop nwergm_estat_ic
+program define nwergm_estat_ic, rclass
+	if missing(e(ll)) {
+		di as err "no log-likelihood was stored for this fit (it was fitted with the nologlik option)"
+		exit 498
+	}
+	tempname M
+	matrix `M' = (e(N), e(ll_0), e(ll), e(df_m), e(aic), e(bic))
+	matrix colnames `M' = N ll(null) ll(model) df AIC BIC
+	matrix rownames `M' = `e(depvar)'
+	di
+	di as txt "Akaike's information criterion and Bayesian information criterion"
+	di
+	di as txt "{hline 13}{c TT}{hline 63}"
+	di as txt %12s "Model" " {c |}" %9s "N" %13s "ll(null)" %13s "ll(model)" %6s "df" %10s "AIC" %10s "BIC"
+	di as txt "{hline 13}{c +}{hline 63}"
+	di as txt %12s abbrev("`e(depvar)'", 12) " {c |}" as res %9.0g e(N) %13.5g e(ll_0) %13.5g e(ll) %6.0f e(df_m) %10.5g e(aic) %10.5g e(bic)
+	di as txt "{hline 13}{c BT}{hline 63}"
+	di as txt "Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood = " as res %7.5g e(ll_se)
+	return matrix S = `M'
 end

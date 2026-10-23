@@ -4306,6 +4306,15 @@ class ErgmModel {
 	// `nwergm.ado' validation stage for a curved term's own columns,
 	// not silently mishandled here.
 	real rowvector isfixed
+
+	// Missing-dyad (observational) support: when obs_active==1 the MCMLE
+	// draws a second, constrained sample (only the missing dyads free,
+	// every observed dyad held fixed) from obs_G and estimates with the
+	// difference of the two samples, as R ergm does for a network with NA dyads.
+	real scalar obs_active
+	pointer scalar obs_G
+	pointer scalar obs_propfn
+	real matrix obs_mask
 	real rowvector fixedvalue
 
 	void init()
@@ -4337,6 +4346,7 @@ void ErgmModel::init(){
 	native_enabled = 0
 	native_enabled_sample = 0
 	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
+	obs_active = 0
 	curved = J(1, 0, .)
 	isfixed = J(1, 0, .)
 	fixedvalue = J(1, 0, .)
@@ -8199,6 +8209,10 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	real rowvector theta_c_try
 	real scalar bt_domain
 	real rowvector freeidx, delta_apply
+	real matrix sampo, Dobs, Dtesto, Vtesto, Svo, covmean, So
+	real rowvector inflo, Sdiago
+	real colvector lwo, wo
+	real scalar samplesize_o, ess_o, neff_o, has_obs
 
 	// Mata passes a bare-variable argument by reference, so this
 	// function's own adaptive-interval growth (below) reassigning its
@@ -8225,6 +8239,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	samplesize_cap = samplesize0 * 20	// R has no hard cap on this (only an indirect one via MCMLE.MCMC.max.ESS.frac in "precision" mode, which this package does not implement) - added purely so a chain that never escapes the tolerance region cannot grow samplesize (and therefore runtime/memory) unboundedly across maxit iterations
 
 	obs = M.full_statistic(G)
+	has_obs = M.obs_active
+	samplesize_o = max((round(samplesize0 / 2), min((samplesize0, 500))))
 	theta = theta0
 	p = cols(theta)
 	coefhist = J(0, p, 0)
@@ -8332,6 +8348,14 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	for (iter=1; iter<=maxit; iter++) {
 		theta_old = theta	// the eta point THIS iteration's sample was actually drawn at - needed below to reweight that (by-then-stale) sample toward the point the Newton step is about to propose, mirroring R's own importance-sampling reweighting.
 		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
+		if (has_obs) {
+			// missing dyads: the "observed" statistic is the mean of the constrained sample
+			// (only the missing dyads free), as in R ergm's observational-process MCMLE
+			sampo = ErgmMCMCSampleConstrained(M, theta, burnin, interval, samplesize_o)
+			obs = mean(sampo)
+			Dobs = sampo :- obs
+		}
+		D = samp :- obs
 		D = samp :- obs
 
 		// THETA-SPACE Newton step for curved models (harmonisation unit
@@ -8372,6 +8396,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		if (is_curved) {
 			Jac = M.theta_to_eta_jacobian(theta_c)
 			Dtest = D * Jac
+			if (has_obs) Dtesto = Dobs * Jac
 		}
 		else {
 			Jac = I(p)
@@ -8388,9 +8413,14 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 			// step with the fixed entries merely zeroed out afterward,
 			// which would ignore the free/fixed covariance structure.
 			Dtest = D[., freeidx]
+			if (has_obs) Dtesto = Dobs[., freeidx]
 		}
 		Dtestbar = mean(Dtest)
 		Vtest = variance(Dtest)
+		if (has_obs) {
+			Vtesto = variance(Dtesto)
+			Vtest = ergm_psd_fix(Vtest - Vtesto)
+		}
 
 		// Non-identifiability/collinearity check (harmonisation unit 179,
 		// docs/ERGM_ROADMAP.md's own scoped item #2 for this) - ported
@@ -8666,6 +8696,28 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		// own degrees of freedom invalid or the test meaningless.
 		if (neff < ptest_const + 2) neff = ptest_const + 2
 		T2 = neff * (Dtestbar_w * Vcinv * Dtestbar_w')
+		if (has_obs) {
+			// two independent samples: test the difference of the (reweighted) means against
+			// the sum of the two Monte-Carlo covariances of the means
+			lwo = Dobs * etadiff'
+			wo = exp(lwo :- max(lwo))
+			wo = wo :/ sum(wo)
+			Dtestbar_w = Dtestbar_w - wo' * Dtesto
+			ess_o = rows(Dtesto) * sum(wo:^2)
+			inflo = ergm_spectral0_ar(Dtesto)
+			neff_o = rows(Dtesto) / (mean(inflo') * ess_o)
+			if (neff_o < ptest_const + 2) neff_o = ptest_const + 2
+			Vtesto = variance(Dtesto)
+			Vc = variance(Dtest)
+			for (k=1; k<=ptest_const; k++) {
+				Vc[k,k] = Vc[k,k] * infl[k] * ess_factor
+				Vtesto[k,k] = Vtesto[k,k] * inflo[k] * ess_o
+			}
+			covmean = Vc / (samplesize / (mean(infl') * ess_factor)) + Vtesto / neff_o
+			T2 = Dtestbar_w * invsym(covmean) * Dtestbar_w'
+			neff = min((neff, neff_o))
+			if (neff < ptest_const + 2) neff = ptest_const + 2
+		}
 		Fstat = T2 * (neff - ptest_const) / (ptest_const * (neff - 1))
 		Fcrit = invF(ptest_const, neff - ptest_const, confidence)
 		if (verbose) {
@@ -8892,6 +8944,15 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// and n the MCMC sample size.
 	Sdiag = sqrt(infl)
 	S = V :* (Sdiag' * Sdiag)
+	if (has_obs) {
+		// missing dyads: information = V(unconstrained) - V(constrained); Monte Carlo error from both samples
+		sampo = ErgmMCMCSampleConstrained(M, theta, burnin, interval, max((samplesize_o, round(samplesize / 2))))
+		Svo = variance(sampo)
+		Sdiago = sqrt(ergm_spectral0_ar(sampo :- mean(sampo)))
+		So = Svo :* (Sdiago' * Sdiago)
+		V = ergm_psd_fix(V - Svo)
+		S = (S / rows(samp) + So / rows(sampo)) * rows(samp)
+	}
 
 	// Zero out every fixed coefficient's own row/column of `V' before
 	// inverting (harmonisation unit 183) - matches R ergm's own real
@@ -8936,6 +8997,317 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	if (is_curved) res.coef_theta = theta_c
 	res.coefhist_theta = coefhist_theta
 	return(res)
+}
+
+end
+
+
+/* ===================================================================
+   Missing dyads (NA ties) and fit statistics support
+   =================================================================== */
+mata:
+
+// nearest symmetric positive semi-definite matrix (eigenvalues floored), as R's snearPD(posd.tol=0) role
+real matrix ergm_psd_fix(real matrix A)
+{
+	real matrix X, L
+	real rowvector ev
+	real scalar mx
+	A = (A + A') / 2
+	symeigensystem(A, X=., ev=.)
+	mx = max(abs(ev))
+	if (mx <= 0 | mx == .) return(A)
+	ev = editmissing(ev, 0)
+	ev = ev :* (ev :> 1e-10 * mx) + (1e-10 * mx) :* (ev :<= 1e-10 * mx)
+	return(X * diag(ev) * X')
+}
+
+// constrained (observational) sample: only the missing dyads are free
+real matrix ErgmMCMCSampleConstrained(class ErgmModel scalar M, real rowvector theta,
+	real scalar burnin, real scalar interval, real scalar samplesize)
+{
+	real matrix hold, out
+	hold = M.native_maskmat
+	M.native_maskmat = M.obs_mask
+	out = ErgmMCMCSample(M, *M.obs_G, theta, burnin, interval, samplesize, M.obs_propfn)
+	M.native_maskmat = hold
+	return(out)
+}
+
+// n x n 0/1 matrix of missing (NA) dyads of a dense network matrix (symmetric if undirected)
+real matrix ergm_missing_dyads(real matrix E, class ErgmGraph scalar G)
+{
+	real matrix Mm
+	real colvector mo
+	real scalar i, j, n
+	n = G.n
+	Mm = J(n, n, 0)
+	if (G.bipartite & (rows(E) != n | cols(E) != n)) {
+		// rectangular (mode1 x mode2) incidence matrix
+		for (i=1; i<=rows(E); i++) for (j=1; j<=cols(E); j++) {
+			if (E[i,j] == .) {
+				Mm[G.mode1nodes[i], G.mode2nodes[j]] = 1
+				Mm[G.mode2nodes[j], G.mode1nodes[i]] = 1
+			}
+		}
+		return(Mm)
+	}
+	Mm = (E :== .)
+	for (i=1; i<=n; i++) Mm[i,i] = 0
+	if (!G.directed) Mm = ((Mm + Mm') :> 0)
+	if (G.bipartite) {
+		mo = G.mode
+		Mm = Mm :* ((mo * J(1,n,1)) :!= (J(n,1,1) * mo'))
+	}
+	return(Mm)
+}
+
+// does the matrix contain a missing value off the diagonal?
+real scalar ergm_offdiag_missing(real matrix E)
+{
+	real scalar i
+	real matrix F
+	F = (E :== .)
+	for (i=1; i<=rows(F); i++) F[i,i] = 0
+	return(sum(F) > 0)
+}
+
+// number of missing dyads (each undirected dyad once)
+real scalar ergm_count_missing(real matrix Mm, real scalar directed)
+{
+	return(directed ? sum(Mm) : sum(Mm) / 2)
+}
+
+// R's single.impute.dyads(): impute round(density * nmissing) of the missing dyads as ties, uniformly at random
+void ergm_impute_missing(class ErgmGraph scalar G, real matrix Mm)
+{
+	real matrix idx
+	real scalar i, j, nae, tot, d, nimp, k
+	real colvector ord
+	idx = J(0, 2, 0)
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (!Mm[i,j]) continue
+			if (!G.directed & j < i) continue
+			idx = idx \ (i, j)
+		}
+	}
+	nae = rows(idx)
+	if (nae == 0) return
+	tot = ergm_total_dyads(G) - nae
+	if (tot <= 0) return
+	d = G.nties / tot
+	nimp = round(d * nae)
+	if (nimp == 0) return
+	ord = order(runiform(nae, 1), 1)
+	for (k=1; k<=nimp; k++) G.toggle(idx[ord[k], 1], idx[ord[k], 2])
+}
+
+// rows of the MPLE design matrix (same canonical dyad walk as build_mple_data) that are NOT missing
+real colvector ergm_mple_keep(class ErgmGraph scalar G, real matrix Mm)
+{
+	real colvector keep
+	real scalar i, j, a, b, pos, masked
+	masked = G.has_dyadmask
+	keep = J(0, 1, 0)
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) {
+			for (b=1; b<=rows(G.mode2nodes); b++) {
+				i = G.mode1nodes[a]; j = G.mode2nodes[b]
+				if (masked) if (!G.freedyadmat[i,j]) continue
+				keep = keep \ !Mm[i,j]
+			}
+		}
+		return(keep)
+	}
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed & j<i) continue
+			if (masked) if (!G.freedyadmat[i,j]) continue
+			keep = keep \ !Mm[i,j]
+		}
+	}
+	return(keep)
+}
+
+// independent copy of a graph (class instances are references in Mata)
+class ErgmGraph scalar ergm_graph_clone(class ErgmGraph scalar G)
+{
+	class ErgmGraph scalar G2
+	real matrix t
+	real scalar k
+	G2 = ErgmGraph()
+	G2.init(G.n, G.directed)
+	if (G.bipartite) G2.set_bipartite(G.mode)
+	t = G.all_ties()
+	for (k=1; k<=rows(t); k++) G2.toggle(t[k,1], t[k,2])
+	return(G2)
+}
+
+
+// pseudo-log-likelihood sum(y*lp - log(1+exp(lp))) of the MPLE design matrix D = (x | y) at eta
+real scalar ergm_mple_ll(real matrix D, real rowvector eta)
+{
+	real colvector lp, y
+	lp = D[., 1..cols(eta)] * eta'
+	y = D[., cols(eta)+1]
+	return(sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp))))))
+}
+
+// logistic regression by Newton-Raphson with step halving; rank-deficient columns get coefficient 0
+real rowvector ergm_irls(real matrix X, real colvector y, real colvector off)
+{
+	real rowvector b
+	real colvector lp, pr, g, st
+	real matrix H
+	real scalar it, ll0, ll1, h, p
+	p = cols(X)
+	b = J(1, p, 0)
+	lp = off
+	ll0 = sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp)))))
+	for (it=1; it<=50; it++) {
+		lp = X * b' + off
+		pr = 1 :/ (1 :+ exp(-lp))
+		g = X' * (y - pr)
+		H = cross(X, pr :* (1 :- pr), X)
+		st = invsym(H) * g
+		for (h=0; h<=20; h++) {
+			lp = X * (b + st' / 2^h)' + off
+			ll1 = sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp)))))
+			if (ll1 >= ll0 - 1e-12) break
+		}
+		b = b + st' / 2^h
+		if (max(abs(st / 2^h)) < 1e-10) {
+			ll0 = ll1
+			break
+		}
+		ll0 = ll1
+	}
+	return(b)
+}
+
+real scalar ergm_term_is_dind(string scalar nm)
+{
+	return(anyof(("edges","nodematch","nodematch_diff","nodecov","nodeicov","nodeocov","absdist","nodefactor",
+		"nodeifactor","nodeofactor","nodemix","edgecov","hamming","sender","receiver","b1cov","b2cov","b1factor",
+		"b2factor","b1nodematch","b2nodematch","absdiff","sociality"), nm))
+}
+
+// MPLE of the dyad-independent submodel (dyad-independent terms of the model; R: ergm.bridge.dindstart.llk).
+// Returns (log-likelihood, theta_d) with theta_d zero on dyad-dependent columns.
+real rowvector ergm_dind_submodel(class ErgmModel scalar M, real matrix D)
+{
+	real rowvector isd, bd, full, fx
+	real colvector off
+	real scalar t, k, pos, p, ll
+	p = M.nparam()
+	isd = J(1, p, 0)
+	pos = 0
+	for (t=1; t<=M.nterms; t++) {
+		for (k=1; k<=M.npar[t]; k++) isd[pos+k] = ergm_term_is_dind(M.names[t])
+		pos = pos + M.npar[t]
+	}
+	fx = (rows(M.isfixed) * cols(M.isfixed) == p ? M.isfixed : J(1, p, 0))
+	full = J(1, p, 0)
+	for (k=1; k<=p; k++) if (fx[k] & isd[k]) full[k] = M.fixedvalue[k]
+	off = D[., 1..p] * full'
+	isd = isd :* (1 :- fx)
+	if (sum(isd) > 0) {
+		bd = ergm_irls(D[., selectindex(isd)], D[., p+1], off)
+		full[selectindex(isd)] = bd
+	}
+	ll = ergm_mple_ll(D, full)
+	return(ll, full)
+}
+
+// R's mkpath/ergm.bridge.llr for a straight-line path from theta to thetad (bidirectional shift of the
+// first attempt is 0, so the u points are the equally weighted midpoints). Returns (llr, variance of llr).
+real rowvector ergm_bridge_llr(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector from,
+	real rowvector to, real rowvector obsstat, real scalar nsteps, real scalar burnin, real scalar between,
+	real scalar interval, real scalar samplesize, pointer scalar propfn)
+{
+	real scalar i, u, llr, vr, b, m1, nso
+	real rowvector th, dth
+	real matrix s, so
+	real colvector x, xo
+	dth = to - from
+	llr = 0
+	vr = 0
+	nso = max((round(samplesize / 2), min((samplesize, 500))))
+	for (i=1; i<=nsteps; i++) {
+		u = (i - 0.5) / nsteps
+		th = from + u * dth
+		b = (i == 1 ? burnin : between)
+		s = ErgmMCMCSample(M, G, th, b, interval, samplesize, propfn)
+		if (M.obs_active) {
+			so = ErgmMCMCSampleConstrained(M, th, b, interval, nso)
+			x = s * dth'
+			xo = so * dth'
+			llr = llr + (mean(x) - mean(xo)) / nsteps
+			vr = vr + (variance(x) * ergm_spectral0_ar(x)[1] / rows(x) + variance(xo) * ergm_spectral0_ar(xo)[1] / rows(xo)) / nsteps^2
+		}
+		else {
+			x = (s :- obsstat) * dth'
+			llr = llr + mean(x) / nsteps
+			vr = vr + variance(x) * ergm_spectral0_ar(x)[1] / rows(x) / nsteps^2
+		}
+	}
+	return(llr, vr)
+}
+
+
+// R's predict.ergm(): for every informative dyad the tail, head and the conditional log-odds of a tie
+// (change statistics x eta); same canonical dyad walk as build_mple_data()
+real matrix ergm_predict_data(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector eta, real matrix Mm)
+{
+	real matrix out
+	real scalar i, j, a, b
+	out = J(0, 3, 0)
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) for (b=1; b<=rows(G.mode2nodes); b++) {
+			i = G.mode1nodes[a]
+			j = G.mode2nodes[b]
+			if (Mm[i,j]) continue
+			out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+		}
+		return(out)
+	}
+	for (i=1; i<=G.n; i++) for (j=1; j<=G.n; j++) {
+		if (i==j) continue
+		if (!G.directed & j<i) continue
+		if (Mm[i,j]) continue
+		out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+	}
+	return(out)
+}
+
+
+real matrix ergm_predict_matrix(real matrix P, real scalar n, real scalar directed, real matrix Mm)
+{
+	real matrix out
+	real scalar k, j
+	out = J(n, n, 0)
+	for (k=1; k<=rows(P); k++) {
+		out[P[k,1], P[k,2]] = P[k,3]
+		if (!directed) out[P[k,2], P[k,1]] = P[k,3]
+	}
+	for (k=1; k<=n; k++) for (j=1; j<=n; j++) if (Mm[k,j]) out[k,j] = .
+	return(out)
+}
+
+
+void ergm_netobj_to_graph(pointer(class nw_def scalar) scalar netobj, class ErgmGraph scalar G, real scalar directed)
+{
+	real scalar i, k
+	real matrix nb
+	for (i=1; i<=G.n; i++) {
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!directed & nb[k] <= i) continue
+			G.toggle(i, nb[k])
+		}
+	}
 }
 
 end

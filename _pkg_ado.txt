@@ -69,6 +69,9 @@ f _nwergm_bip.ado
 f _nwergm_bipgof.ado
 f _nwergm_bip_curved.ado
 f _nwergm_struct.ado
+f nwergm_p.ado
+f _nwergm_miss.ado
+f _nwergm_fitstats.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado
