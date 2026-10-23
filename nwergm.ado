@@ -592,6 +592,19 @@ program nwergm, eclass
 		local __con_active 1
 		if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
 	}
+	local __obs_active 0
+	if `"`obsconstraints'"' != "" {
+		if "`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "" {
+			di "{err}obsconstraints() cannot be combined with freedyads(), blockdiag() or fixdensity."
+			error 198
+		}
+		if "`method'" == "mple" {
+			di "{err}obsconstraints() needs {bf:method(mcmle)}."
+			error 198
+		}
+		local method "mcmle"
+		local __obs_active 1
+	}
 	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
 	// .nties mutates throughout MCMLE's own simulation (it IS the live
 	// MCMC state, not a frozen copy of the observed network - see its
@@ -2020,6 +2033,7 @@ program nwergm, eclass
 			if `__con_active' {
 				if `con_dind' == 0 mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
 			}
+			if `__obs_active' mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
@@ -2107,6 +2121,27 @@ program nwergm, eclass
 			else mata: __nwergm_last_M.con_par = J(1, 10, 0)
 			if `mcmcmaxedges' > 0 mata: __nwergm_last_M.con_par[10] = `mcmcmaxedges'
 		}
+		if `__obs_active' {
+			mata: st_local("__con_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+			if `__con_ok' != 1 {
+				di "{err}obsconstraints() needs the native plugin, which is not available for this model, platform or the nonative option."
+				error 198
+			}
+			local __obs_spec `"`obsconstraints'"'
+			if `"`constraints'"' != "" {
+				local __obs_first = substr(strtrim(`"`obsconstraints'"'), 1, 1)
+				if "`__obs_first'" == "-" local __obs_spec `"`constraints' `obsconstraints'"'
+				else local __obs_spec `"`constraints' + `obsconstraints'"'
+			}
+			_nwergm_constr, spec(`__obs_spec') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(default) prefix(o)
+			capture mata: mata drop __nwergm_obs_G
+			mata: __nwergm_obs_G = ErgmGraph()
+			mata: __nwergm_obs_G.init(`nodes', ("`directed'"=="true"))
+			mata: ergm_bridge_from_netobj(`netobj', __nwergm_obs_G, ("`directed'"=="true"))
+			if `ocon_hasdyad' mata: __nwergm_obs_G.set_dyadmask(__ncon_free)
+			mata: __nwergm_obs_par = __ncon_par
+			mata: __nwergm_obs_cols = __ncon_cols
+		}
 		// fixdensity: this is the single place that sets M.fixed_density=1,
 		// guaranteed to run before ErgmMCMLE() is ever called below.
 		// `native_enabled' (the MPLE-design-matrix-build flag) is forced
@@ -2140,13 +2175,30 @@ program nwergm, eclass
 		// equal, so this is a no-op change there.
 		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled_sample))
 
+		mata: __nwergm_ties0 = __nwergm_last_G.all_ties()
 		tempname __fit
-		if `__ergm_curved' {
+		if `__obs_active' {
+			mata: `__fit' = ErgmMCMLEObs(__nwergm_last_M, __nwergm_last_G, __nwergm_obs_G, __nwergm_obs_par, __nwergm_obs_cols, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', ("`verbose'"!=""))
+		}
+		else if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
 			mata: mata drop __ergm_theta_c0_mcmle
 		}
 		else {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+			// Without a dyad-independent sample space there is no MPLE start (as in R): the first sample is drawn
+			// at zero and can be far from the estimate, so refit from the estimate until it stops moving.
+			if `__con_active' {
+				if `con_dind' == 0 {
+					forvalues __r = 2/5 {
+						mata: st_local("__con_chg", strofreal(max(abs((`__fit'.coef - `__theta0')[__nwergm_last_M.freeidx()]) :/ sqrt(diagonal(`__fit'.vcov)[__nwergm_last_M.freeidx()])')))
+						if `__con_chg' < 0.05 continue, break
+						mata: `__theta0' = `__fit'.coef
+						mata: _ergm_con_resetG(__nwergm_last_G, __nwergm_ties0)
+						mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+					}
+				}
+			}
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
@@ -2262,6 +2314,7 @@ program nwergm, eclass
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
 		if `__con_active' ereturn local constraints `"`constraints'"'
+		if `__obs_active' ereturn local obsconstraints `"`obsconstraints'"'
 		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'

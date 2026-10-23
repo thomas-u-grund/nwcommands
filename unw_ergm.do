@@ -8814,7 +8814,7 @@ void _ergm_con_finish(string scalar weights)
 			else if (nb[1] == "degreedist" & !hasbd) code = 35
 			else if (nb[1] == "odegreedist" & !hasbd) code = 36
 			else if (nb[1] == "idegreedist" & !hasbd) code = 37
-			else if (nb[1] == "dyadnoise" & !hasbd & !__ncon_hasdyad) code = 51
+			else if (nb[1] == "dyadnoise" & !hasbd & !__ncon_hasdyad) code = (rnd ? 50 : 51)
 		}
 		else if (cols(nb) == 2 & !hasbd & !__ncon_hasdyad) {
 			if (any(nb :== "idegrees") & any(nb :== "odegrees")) code = 30
@@ -8907,5 +8907,105 @@ real rowvector _ergm_con_conflicts(class ErgmModel scalar M, string scalar impli
 		else if (nm == "receiver" & any(imp :== "idegrees")) out = out, k
 	}
 	return(out)
+}
+end
+
+mata:
+mata set matastrict off
+// E6: draw a sample from the constrained chain described by (par, cols, maskmat), restoring M afterwards
+real matrix ErgmSampleCon(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector par, real matrix cols,
+	real matrix maskmat, real rowvector theta, real scalar burnin, real scalar interval, real scalar ss)
+{
+	real rowvector sp
+	real matrix sc, sm, out
+	sp = M.con_par; sc = M.con_cols; sm = M.native_maskmat
+	M.con_par = par; M.con_cols = cols; M.native_maskmat = maskmat
+	out = ErgmMCMCSample(M, G, theta, burnin, interval, ss, &ergm_propose_tnt())
+	M.con_par = sp; M.con_cols = sc; M.native_maskmat = sm
+	return(out)
+}
+
+// E6: MCMLE with an observation process (R: obs.constraints). Two chains are run at every
+// iteration, the constrained one (G, as set up for M) and the one that is also restricted by
+// the observation constraints (Gobs, starting from the observed network); the estimating
+// equation is E_obs[g] - E[g] = 0 and the information is Var - Var_obs (Hummel/Handcock).
+struct ErgmMCMLEFit scalar ErgmMCMLEObs(class ErgmModel scalar M, class ErgmGraph scalar G, class ErgmGraph scalar Gobs,
+	real rowvector par2, real matrix cols2, real rowvector theta0, real scalar maxit, real scalar burnin,
+	real scalar interval, real scalar samplesize, real scalar verbose)
+{
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, g, delta, freeidx, infl1, infl2, delta_full
+	real matrix s1, s2, V, Vf, S, Sg, coefhist, mask1, mask2, Vinv, Xe
+	real scalar iter, p, converged, nfree, T2, neff, pval, gamma, k, a1, a2
+	real colvector ev
+
+	p = cols(theta0)
+	theta = theta0
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	mask1 = M.native_maskmat
+	mask2 = Gobs.has_dyadmask ? Gobs.freedyadmat : J(0, 0, .)
+	coefhist = J(0, p, .)
+	converged = 0
+	for (iter = 1; iter <= maxit; iter++) {
+		coefhist = coefhist \ theta
+		s1 = ErgmSampleCon(M, G, M.con_par, M.con_cols, mask1, theta, (iter == 1 ? burnin : burnin / 4), interval, samplesize)
+		s2 = ErgmSampleCon(M, Gobs, par2, cols2, mask2, theta, (iter == 1 ? burnin : burnin / 4), interval, samplesize)
+		g = (mean(s2) - mean(s1))[freeidx]
+		Vf = (variance(s1) - variance(s2))[freeidx, freeidx]
+		infl1 = ergm_spectral0_ar(s1[., freeidx] :- mean(s1[., freeidx]))
+		infl2 = ergm_spectral0_ar(s2[., freeidx] :- mean(s2[., freeidx]))
+		// covariance of the estimated estimating equation: long-run covariances of both chains
+		Sg = (variance(s1[., freeidx]) :* (sqrt(infl1)' * sqrt(infl1))) / rows(s1) + (variance(s2[., freeidx]) :* (sqrt(infl2)' * sqrt(infl2))) / rows(s2)
+		T2 = g * invsym(Sg) * g'
+		pval = chi2tail(nfree, T2)
+		if (verbose) printf("obs-MCMLE iteration %g: |g|=%9.5f  T2=%9.3f  p=%6.4f\n", iter, sqrt(g * g'), T2, pval)
+		if (iter >= 2 & pval > 0.01) {
+			converged = 1
+			break
+		}
+		// Newton step with a ridge when the information estimate is not positive definite
+		symeigensystem(Vf, Xe = ., ev = .)
+		if (min(ev) <= 1e-8 * max((max(ev), 1e-8))) Vf = Vf + I(nfree) * (1e-8 * max((max(ev), 1)) - min((min(ev), 0)) + 1e-6)
+		delta = g * invsym(Vf)
+		gamma = 1
+		if (max(abs(delta)) > 3) gamma = 3 / max(abs(delta))
+		delta_full = J(1, p, 0)
+		delta_full[freeidx] = gamma * delta
+		theta = theta + delta_full
+	}
+	// final simulation at the estimate for the covariance
+	s1 = ErgmSampleCon(M, G, M.con_par, M.con_cols, mask1, theta, burnin / 4, interval, samplesize)
+	s2 = ErgmSampleCon(M, Gobs, par2, cols2, mask2, theta, burnin / 4, interval, samplesize)
+	Vf = (variance(s1) - variance(s2))[freeidx, freeidx]
+	infl1 = ergm_spectral0_ar(s1[., freeidx] :- mean(s1[., freeidx]))
+	infl2 = ergm_spectral0_ar(s2[., freeidx] :- mean(s2[., freeidx]))
+	Sg = (variance(s1[., freeidx]) :* (sqrt(infl1)' * sqrt(infl1))) / rows(s1) + (variance(s2[., freeidx]) :* (sqrt(infl2)' * sqrt(infl2))) / rows(s2)
+	Vinv = invsym(Vf)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = Vinv + Vinv * Sg * Vinv
+	res.converged = converged
+	res.niter = min((iter, maxit))
+	res.coefhist = coefhist
+	res.finalsample = s1
+	res.acceptrate = M.native_lastaccept
+	res.final_interval = interval
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, 0, .)
+	return(res)
+}
+end
+
+mata:
+mata set matastrict off
+// put the chain graph back to a given tie set (the observed network) without rebuilding it
+void _ergm_con_resetG(class ErgmGraph scalar G, real matrix ties0)
+{
+	real matrix cur
+	real scalar i
+	cur = G.all_ties()
+	for (i = 1; i <= rows(cur); i++) G.toggle(cur[i,1], cur[i,2])
+	for (i = 1; i <= rows(ties0); i++) G.toggle(ties0[i,1], ties0[i,2])
 }
 end

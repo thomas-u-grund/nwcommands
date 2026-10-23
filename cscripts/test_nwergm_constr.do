@@ -48,7 +48,8 @@ class ErgmGraph scalar e6_graph(real matrix A, real scalar directed)
 // (stat1, stat2, probability) rows aggregated over distinct (stat1,stat2)
 real matrix e6_exact(real matrix A0, real scalar directed, string scalar kind, real rowvector theta, real matrix freem, real scalar maxd)
 {
-	real scalar n, nd, code, k, i, j, ok, w, Z, s1, s2
+	external real scalar e6_p01, e6_p10
+	real scalar n, nd, code, k, i, j, ok, w, Z, s1, s2, st, ob
 	real matrix dy, A, res, u, out
 	real colvector d0, d, do0, di0, dod, did
 	n = rows(A0)
@@ -82,12 +83,18 @@ real matrix e6_exact(real matrix A0, real scalar directed, string scalar kind, r
 		else if (kind == "idegrees") ok = all(did :== di0)
 		else if (kind == "degreedist") ok = all(sort(dod, 1) :== sort(do0, 1))
 		else if (kind == "bd") ok = all(dod :<= maxd) & (directed ? all(did :<= maxd) : 1)
-		else if (kind == "none") ok = 1
+		else if (kind == "none" | kind == "dyadnoise") ok = 1
 		if (!ok) continue
 		s1 = directed ? sum(A) : sum(A) / 2
 		if (directed) s2 = sum(A :* A') / 2
 		else s2 = trace(A * A * A) / 6
 		w = exp(theta[1] * s1 + theta[2] * s2)
+		if (kind == "dyadnoise") {
+			for (k = 1; k <= nd; k++) {
+				st = A[dy[k,1], dy[k,2]]; ob = A0[dy[k,1], dy[k,2]]
+				w = w * (ob == 1 ? (st == 1 ? 1 - e6_p10 : e6_p01) : (st == 1 ? e6_p10 : 1 - e6_p01))
+			}
+		}
 		Z = Z + w
 		res = res \ (s1, s2, w)
 	}
@@ -137,6 +144,13 @@ real scalar e6_compare(real matrix smp, real matrix ex, string scalar label)
 	mx = max(zs)
 	printf("  %s max |z| = %5.2f over %g checks\n", label, mx, cols(zs))
 	return(mx)
+}
+
+void e6_setnoise(real scalar a, real scalar b)
+{
+	external real scalar e6_p01, e6_p10
+	e6_p01 = a
+	e6_p10 = b
 }
 
 // invariants that must hold at the end of any constrained chain
@@ -356,6 +370,101 @@ if scalar(e6_simz) > 5 {
 if `nsimfail' == 0 di "PASS simulated statistics under constraints agree with R ergm"
 else exit 9
 
+capture program drop e6fitchk
+program define e6fitchk
+	args kind nm a b c
+	if "`kind'" == "omitted" {
+		* R reports NA (collinear); nwergm omits the coefficient or reports it exactly 0
+		exit
+	}
+	capture local bs = _b[`nm']
+	if _rc {
+		di as err "FAIL: coefficient `nm' not in e(b)"
+		global e6fitfail 1
+		exit
+	}
+	local ses = _se[`nm']
+	if "`kind'" == "mple" {
+		* a = R coefficient, b = R se
+		local dif = abs(`bs' - `a')
+		local sedif = abs(`ses' - `b')
+		if `dif' > 1e-4 | (`sedif' > 2e-3 & `b' > 0) {
+			di as err "FAIL MPLE `nm': nwergm `bs' (se `ses') vs R `a' (se `b')"
+			global e6fitfail 1
+		}
+		else di "  ok MPLE `nm': nwergm `bs' R `a'  (|diff| " %9.2e `dif' ")"
+	}
+	else {
+		* a = mean of R over seeds, b = sd across R seeds, c = R reported se
+		local tol = max(4*`b', 0.06)
+		local dif = abs(`bs' - `a')
+		if `dif' > `tol' {
+			di as err "FAIL MCMLE `nm': nwergm `bs' vs R `a' (tol `tol')"
+			global e6fitfail 1
+		}
+		else di "  ok MCMLE `nm': nwergm " %8.4f `bs' " (se " %6.4f `ses' ") R " %8.4f `a' " (se " %6.4f `c' ")  |diff| " %7.4f `dif'
+	}
+end
+
+* ---- fits under constraints vs R ergm 4.12.0 (dev/e6_fit_ref.R): MPLE coefficients and standard errors; MCMLE coefficients ----
+global e6fitfail
+local nfitfail 0
+qui nwergm U, edges nodematch(g) triangle constraints(fixedas(present=UP, absent=UA)) method(mple)
+e6fitchk mple "edges" -1.46062606 0.44761124
+e6fitchk mple "nodematch_g" 0.20325681 0.68240109
+e6fitchk mple "triangle" 0.34608247 0.47746588
+qui nwergm U, edges nodematch(g) triangle constraints(blockdiag(g)) method(mple)
+e6fitchk mple "edges" -1.38629436 0.79056568
+e6fitchk omitted "nodematch_g"
+e6fitchk mple "triangle" 0.28768207 1.13651226
+qui nwergm U, edges nodematch(g) triangle constraints(blocks(g, levels2=-c(1,2,3))) method(mple)
+e6fitchk mple "edges" -1.03839223 0.65564141
+e6fitchk mple "nodematch_g" -0.53644075 0.97530070
+e6fitchk mple "triangle" -0.14353761 0.77150720
+qui nwergm U, edges nodematch(g) triangle constraints(bd(maxout=4)) method(mple)
+e6fitchk mple "edges" -1.25946563 0.41618355
+e6fitchk mple "nodematch_g" -0.13995451 0.65989344
+e6fitchk mple "triangle" 0.31470533 0.45627407
+qui nwergm U, edges nodematch(g) triangle constraints(edges) method(mple)
+e6fitchk mple "edges" 0.00000000 0.00000000
+e6fitchk mple "nodematch_g" -1.03659965 0.58659711
+e6fitchk mple "triangle" -0.52971978 0.37073792
+qui nwergm U, edges nodematch(g) triangle constraints(degrees) method(mple)
+e6fitchk mple "edges" 0.00000000 0.00000000
+e6fitchk mple "nodematch_g" -1.03659965 0.58659711
+e6fitchk mple "triangle" -0.52971978 0.37073792
+qui nwergm D, edges mutual nodematch(gd) constraints(blockdiag(gd)) method(mple)
+e6fitchk mple "edges" -1.01160091 0.41285477
+e6fitchk mple "mutual" -0.37469345 0.89187619
+e6fitchk omitted "nodematch_gd"
+qui nwergm D, edges mutual nodematch(gd) constraints(odegrees) method(mple)
+e6fitchk mple "edges" 0.00000000 0.00000000
+e6fitchk mple "mutual" -1.24230212 0.56802028
+e6fitchk mple "nodematch_gd" -0.86123176 0.37951099
+qui nwergm D, edges mutual nodematch(gd) constraints(bd(maxout=4,maxin=4)) method(mple)
+e6fitchk mple "edges" -0.90047610 0.34681385
+e6fitchk mple "mutual" -0.63224262 0.61334711
+e6fitchk mple "nodematch_gd" -0.05912346 0.49009173
+if "$e6fitfail" != "" local nfitfail 1
+qui nwergm U, edges triangle constraints(edges) method(mcmle) mcmcsamplesize(4000) mcmcburnin(20000) mcmcinterval(1000) mcmleiterations(30) seed(7)
+e6fitchk mcmle "edges" 0.000000 0.000000 0.000000
+e6fitchk mcmle "triangle" 0.159561 0.009370 0.601971
+qui nwergm U, edges triangle constraints(degrees) method(mcmle) mcmcsamplesize(4000) mcmcburnin(20000) mcmcinterval(1000) mcmleiterations(30) seed(7)
+e6fitchk mcmle "edges" 0.000000 0.000000 0.000000
+e6fitchk mcmle "triangle" 1.152235 0.005794 0.770032
+qui nwergm U, edges triangle constraints(bd(maxout=4)) method(mcmle) mcmcsamplesize(4000) mcmcburnin(20000) mcmcinterval(1000) mcmleiterations(30) seed(7)
+e6fitchk mcmle "edges" -0.855853 0.003842 0.526927
+e6fitchk mcmle "triangle" 0.628142 0.011976 0.728216
+qui nwergm D, edges mutual constraints(odegrees) method(mcmle) mcmcsamplesize(4000) mcmcburnin(20000) mcmcinterval(1000) mcmleiterations(30) seed(7)
+e6fitchk mcmle "edges" 0.000000 0.000000 0.000000
+e6fitchk mcmle "mutual" -0.570639 0.009124 0.868780
+qui nwergm D, edges mutual constraints(idegrees) method(mcmle) mcmcsamplesize(4000) mcmcburnin(20000) mcmcinterval(1000) mcmleiterations(30) seed(7)
+e6fitchk mcmle "edges" 0.000000 0.000000 0.000000
+e6fitchk mcmle "mutual" -0.596971 0.011843 0.850873
+if "$e6fitfail" != "" local nfitfail 1
+if `nfitfail' == 0 di "PASS fitted coefficients under constraints agree with R ergm"
+else exit 9
+
 * ---- undirected, 5 nodes: edges, triangle ----
 nwclear
 matrix A0 = (0,1,1,0,0 \ 1,0,1,1,0 \ 1,1,0,0,0 \ 0,1,0,0,1 \ 0,0,0,1,0)
@@ -403,6 +512,30 @@ foreach c in "edges" "degrees" "odegrees" "idegrees" "idegreedist" "degreedist" 
 	if inlist("`c'", "degrees", "degreedist") local zmax 100
 	if scalar(e6_maxz) > `zmax' | scalar(e6_inv) != 1 {
 		di as err "FAIL: `c' max |z| = " scalar(e6_maxz) " invariants " scalar(e6_inv)
+		local failed 1
+	}
+}
+
+* ---- dyadnoise (soft constraint): the noise likelihood enters the target; both proposals (tie/no-tie and uniform) ----
+nwclear
+matrix A0 = (0,1,1,0,0 \ 1,0,1,1,0 \ 1,1,0,0,0 \ 0,1,0,0,1 \ 0,0,0,1,0)
+nwset, mat(A0) undirected name(u5)
+mata: e6_setnoise(0.15, 0.25)
+foreach w in default random {
+	if "`w'" == "random" local pp "uniform"
+	else local pp "tnt"
+	_nwsyntax u5, max(1)
+	_nwergm_constr, spec(dyadnoise(0.15, 0.25)) nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(`w')
+	di "dyadnoise with weights `w': proposal code `con_code'"
+	mata: G = e6_graph(st_matrix("A0"), 0)
+	mata: M = ErgmModel(); M.init(); td1 = ErgmTermData(); td2 = ErgmTermData()
+	mata: M.addterm("edges", 1, &stat_edges(), &change_edges(), td1, ("edges"))
+	mata: M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), td2, ("triangle"))
+	mata: rc0 = ErgmNativeSetup(M, 2, G)
+	mata: M.con_par = __ncon_par; M.con_cols = __ncon_cols
+	e6run dyadnoise 0.3 0.4 3
+	if scalar(e6_maxz) > 4.5 {
+		di as err "FAIL: dyadnoise (`w') max |z| = " scalar(e6_maxz)
 		local failed 1
 	}
 }

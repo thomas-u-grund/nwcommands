@@ -146,7 +146,11 @@
 {synopt:{opt mcmcinterval(int)}}MCMC steps between recorded draws; default 50{p_end}
 {synopt:{opt mcmcsamplesize(int)}}Number of recorded MCMC draws per simulation; default 3,000{p_end}
 {synopt:{opt mcmleiterations(int)}}Maximum MCMLE outer iterations; default 20{p_end}
-{synopt:{opt proposal(uniform|tnt)}}Metropolis-Hastings proposal; default {it:tnt}. Both have a masked variant when {opt freedyads()} or {opt blockdiag()} is given{p_end}
+{synopt:{opt proposal(uniform|random|tnt)}}Metropolis-Hastings proposal weights (R's {cmd:MCMC.prop.weights}); default {it:tnt}. Both have a masked variant when {opt freedyads()} or {opt blockdiag()} is given{p_end}
+{synopt:{opt constraints(formula)}}Sample-space constraints written as in R's {cmd:constraints=} (edges, degrees, odegrees, idegrees, bd, blocks, blockdiag, fixedas, fixallbut, ...), several at once; see {help nwergm_constraints}{p_end}
+{synopt:{opt obsconstraints(formula)}}Observation-process constraints (R's {cmd:obs.constraints}); see {help nwergm_constraints}{p_end}
+{synopt:{opt mcmcprop(hints)}}R's {cmd:MCMC.prop} hint formula, for example {cmd:sparse}{p_end}
+{synopt:{opt mcmcmaxedges(#)}}R's {cmd:MCMC.maxedges}: stop sampling when the network has more ties than this{p_end}
 {synopt:{opth freedyads(netname)}}Restrict the dyad space to fit (see {bf:Remarks}): {bf:netname}'s own ties mark which dyads of the network being fit are free to vary during MCMC; every dyad NOT tied in {bf:netname} is held fixed at its observed value for the rest of the fit (R ergm's own {cmd:fixallbut()} constraint). Compatible with both {opt proposal(uniform)} and {opt proposal(tnt)}, and native (C)-accelerated when otherwise eligible. See {bf:Limitations (v1 scope)} below{p_end}
 {synopt:{opth blockdiag(varname)}}Restrict the dyad space to fit (see {bf:Remarks}): only dyads sharing the same value of {bf:varname} are free to vary during MCMC; every cross-value dyad is held fixed at its observed value for the rest of the fit (R ergm's own {cmd:blockdiag()} constraint). Cannot be combined with {opt freedyads()}. Compatible with both {opt proposal(uniform)} and {opt proposal(tnt)}, and native (C)-accelerated when otherwise eligible{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}

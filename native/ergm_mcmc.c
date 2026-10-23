@@ -2812,15 +2812,15 @@ STDLL stata_call(int argc, char *argv[]) {
 	}
 
 	for (step = 0; step < burnin; step++) {
+		long pi, pj;
+		double logratio, cutoff = 0.0, delta;
+		double chg[MAXTERMS];
+		int propfail = 0;
 		if (e6c.code) {
 			if (e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur) < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
 			if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 			continue;
 		}
-		long pi, pj;
-		double logratio, cutoff = 0.0, delta;
-		double chg[MAXTERMS];
-		int propfail = 0;
 		if (fixed_density) {
 			long t1, h1, t2, h2;
 			double chg1[MAXTERMS], chg2[MAXTERMS];
@@ -2869,6 +2869,10 @@ STDLL stata_call(int argc, char *argv[]) {
 
 	for (draw = 0; draw < samplesize; draw++) {
 		for (step = 0; step < interval; step++) {
+			long pi, pj;
+			double logratio, cutoff = 0.0, delta;
+			double chg[MAXTERMS];
+			int propfail = 0;
 			if (e6c.code) {
 				int e6r = e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur);
 				if (e6r < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
@@ -2876,10 +2880,6 @@ STDLL stata_call(int argc, char *argv[]) {
 				if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 				continue;
 			}
-			long pi, pj;
-			double logratio, cutoff = 0.0, delta;
-			double chg[MAXTERMS];
-			int propfail = 0;
 			if (fixed_density) {
 				long t1, h1, t2, h2;
 				double chg1[MAXTERMS], chg2[MAXTERMS];
