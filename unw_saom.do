@@ -9524,6 +9524,16 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 
 	Dhat3 = SaomJacobianPerPeriod(Zp3, Sp3, cols(Zp3) / ptot, ptot)
 	SaomStoreScoreInputs(Dhat3, S3, m3, userfixc, theta, Zp3, Sp3)
+	{
+		real scalar tq, tl
+		tq = .
+		tl = .
+		for (k=1; k<=Mbeh.nterms; k++) {
+			if (Mbeh.names[k] == "quadratic") tq = k
+			if (Mbeh.names[k] == "linear") tl = k
+		}
+		if (tq < . & tl < .) SaomStoreQuadFix(C.pNet + tq, C.pNet + tl, C.overallMean)
+	}
 	// a fixed effect gets no standard error (0; RSiena: NA)
 	for (k=1; k<=ptot; k++) {
 		if (coevfixed[k]) {
@@ -11290,6 +11300,16 @@ void SaomStoreScoreInputs(real matrix D, real matrix S, real rowvector m, real r
 	__nwsaom_score_par = par
 	__nwsaom_score_Zp = Zp
 	__nwsaom_score_Sp = Sp
+	external real rowvector __nwsaom_score_qf
+	__nwsaom_score_qf = J(1, 0, .)
+}
+
+/* the raw quadratic-shape statistic of the behavior (sum of squares) differs from RSiena's centred one by a multiple of the linear statistic;
+   estat timetest drops other dummies in its separate tests, so it needs the centred form: qi, li = positions of the quadratic and linear
+   effects, m = the overall behavior mean */
+void SaomStoreQuadFix(real scalar qi, real scalar li, real scalar m) {
+	external real rowvector __nwsaom_score_qf
+	__nwsaom_score_qf = (qi, li, m)
 }
 
 /* RSiena's EvaluateTestStatistic() (R/Sienatest.r) for the generalised score test (maxlike = FALSE). test, redundant: 1 x n 0/1.
@@ -11367,7 +11387,8 @@ void SaomScoreRun(real rowvector test) {
    period), and the effect indices in __nwsaom_tt_eff. effects: 1 x ptot 0/1 of the effects to test. */
 void SaomTimeTestRun(real scalar nper, real rowvector effects) {
 	external real matrix __nwsaom_score_Zp, __nwsaom_score_Sp
-	external real rowvector __nwsaom_score_fix, __nwsaom_score_par
+	external real rowvector __nwsaom_score_fix, __nwsaom_score_par, __nwsaom_score_qf
+	real matrix Zq2, Dq2
 	real scalar ptot, K, q, j, k, i, ne, nd, N, idx
 	real matrix Dq, Ztot, Daug, Saug, Zaug, Zq, Sq, Dsum, D2, res, effres
 	real rowvector maug, eff, test, redundant, ev, jt, one, dq, os, tt
@@ -11391,19 +11412,25 @@ void SaomTimeTestRun(real scalar nper, real rowvector effects) {
 		Ztot = Ztot + Zq
 		Dq = ((Zq :- mean(Zq))' * (Sq :- mean(Sq))) / K
 		Dsum = Dsum + Dq
+		Zq2 = Zq
+		Dq2 = Dq
+		if (cols(__nwsaom_score_qf) == 3) {
+			Zq2[., __nwsaom_score_qf[1]] = Zq[., __nwsaom_score_qf[1]] - 2 * __nwsaom_score_qf[3] * Zq[., __nwsaom_score_qf[2]]
+			Dq2[__nwsaom_score_qf[1], .] = Dq[__nwsaom_score_qf[1], .] - 2 * __nwsaom_score_qf[3] * Dq[__nwsaom_score_qf[2], .]
+		}
 		if (q >= 2) {
 			for (j=1; j<=ne; j++) {
 				idx = ptot + (j-1)*(nper-1) + (q-1)
 				dumq[idx - ptot] = q
 				dumj[idx - ptot] = eff[j]
-				Zaug[., idx] = Zq[., eff[j]]
+				Zaug[., idx] = Zq2[., eff[j]]
 				// rows: total statistics k, columns: dummy (j, q) = D_q[k, eff j]
 				Daug[1..ptot, idx] = Dq[., eff[j]]
 				// rows: the dummy statistics of period q (k, q), columns: theta_l and dummy (j, q)
 				for (k=1; k<=ne; k++) {
 					i = ptot + (k-1)*(nper-1) + (q-1)
-					Daug[i, 1..ptot] = Dq[eff[k], .]
-					Daug[i, idx] = Dq[eff[k], eff[j]]
+					Daug[i, 1..ptot] = Dq2[eff[k], .]
+					Daug[i, idx] = Dq2[eff[k], eff[j]]
 				}
 			}
 		}

@@ -105,6 +105,11 @@ simulation is kept for them. Models with several co-evolving dependent networks 
 the single-network model description once per network (one plugin slot each) and a joint simulator in
 which the network to change is drawn in proportion to the rates; cross-network effects read the other
 network's current state in the ministeps and its period-start state in the statistics.
+Postestimation reuses the same machinery: `estat simulate` and `estat gof` run the single-period simulator at the
+fitted (or chosen) coefficients; `estat score` and `estat timetest` are score-type tests computed from the final
+simulations of the fit (the derivative matrix and covariance of the statistics, per period for the time test);
+`estat importance` asks the plugin for the change contributions of every actor and alternative at each period's
+start network. `fix()` holds parameters at their start values inside the Robbins-Monro loop.
 
 DyNAM factors the same kind of actor-oriented dynamics into two separate sub-models — which
 actor acts next (a continuous-time competing-risks rate model), and which receiver they choose
