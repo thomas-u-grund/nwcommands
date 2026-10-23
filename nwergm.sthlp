@@ -41,6 +41,7 @@
 {p2col:{it:{help nwergm##sharedpartner_effects:sharedpartner_effects}}}fixed (non-geometric) shared-partner count terms, and the directed shared-partner {opt type()} selector{p_end}
 {p2col:{it:{help nwergm##triad_effects_directed:triad_effects_directed}}}directed triad-closure existence-indicator terms{p_end}
 {p2col:{it:{help nwergm##nodelevel_effects:nodelevel_effects}}}dyadic-covariate and per-node fixed-effect terms{p_end}
+{p2col:{opt structural(termlist)}}further structural terms of R's ergm ({opt twopath}, {opt transitive}, {opt cycle()}, {opt altkstar()}, {opt degree()} with {opt by()} ...), see {help nwergm_structural}{p_end}
 {p2col:{it:{help nwergm##estimation_control:estimation_control}}}estimation method, MCMC tuning, constraints, and output control{p_end}
 
 {synoptset 25 tabbed}{...}
