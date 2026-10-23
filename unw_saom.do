@@ -8554,6 +8554,35 @@ void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn,
 	else if (eff == "altx") SaomRegCov(M, "nodeicov", vn, n, 1, td, ("altx_" + vn), m)
 	else if (eff == "samex") SaomRegCov(M, "nodematch", vn, n, 1, td, ("samex_" + vn), m)
 	else if (eff == "simx") SaomRegCov(M, "simcov", vn, n, 1, td, ("simx_" + vn), m)
+	else if (eff == "behsim" | eff == "behegox" | eff == "behaltx" | eff == "behegoplusalt") {
+		// the co-evolving behavior as the covariate (needs behavior()); the statistic uses the starting behavior, the simulation the live one
+		external pointer(real colvector) rowvector __nwsaom_mn_Bw
+		real colvector allb
+		real scalar k, brng
+		if (cols(__nwsaom_mn_Bw) == 0) {
+			errprintf("nwsaom multinet: " + eff + " needs behavior().\n")
+			exit(198)
+		}
+		allb = *__nwsaom_mn_Bw[1]
+		for (k=2; k<=cols(__nwsaom_mn_Bw); k++) allb = allb \ *__nwsaom_mn_Bw[k]
+		brng = max(allb) - min(allb)
+		if (brng <= 0) {
+			errprintf("nwsaom multinet: " + eff + ": the behavior variable does not vary.\n")
+			exit(198)
+		}
+		td.attr = *__nwsaom_mn_Bw[1]
+		if (eff == "behsim") {
+			td.decay = brng
+			td.center = saom_similarity_mean(__nwsaom_mn_Bw, brng)
+			M.addterm("behsim", 1, &stat_saom_behsim(), &change_saom_behsim(), td, ("behsim"))
+		}
+		else {
+			td.center = mean(allb)
+			if (eff == "behegox") M.addterm("behegox", 1, &stat_saom_behegox(), &change_saom_behegox(), td, ("behegox"))
+			else if (eff == "behaltx") M.addterm("behaltx", 1, &stat_saom_behaltx(), &change_saom_behaltx(), td, ("behaltx"))
+			else M.addterm("behegoplusalt", 1, &stat_saom_behegoplusalt(), &change_saom_behegoplusalt(), td, ("behegoplusalt"))
+		}
+	}
 	else {
 		errprintf("nwsaom multinet: unknown effect " + eff + "; available: outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact egox:var altx:var samex:var simx:var\n")
 		exit(198)

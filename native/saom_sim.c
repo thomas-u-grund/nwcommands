@@ -5645,7 +5645,7 @@ static ST_retcode batch_setup(char *arg) {
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
 	for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->has_behsim = 1;
 	for (k = 0; k < M->nbehterms; k++) if (M->behtermcodes[k] == TERMCODE_BEH_AVALT || M->behtermcodes[k] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->behtermcodes[k]) || SAOM_BEH_XALTTC(M->behtermcodes[k]) || SAOM_BSTC(M->behtermcodes[k]) || SAOM_BQTC(M->behtermcodes[k]) || SAOM_BRTC(M->behtermcodes[k]) || SAOM_BUTC(M->behtermcodes[k])) M->need_adj = 1;
-	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
+	if (M->has_behsim && M->nbehterms == 0 && batch_cur == &batch_states[0]) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
 	for (k = 0; k < M->nterms; k++) if (SAOM_STARTTC(M->termcodes[k])) M->has_start = 1;
@@ -6036,6 +6036,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		saom_tl_beh0 = PDs[0]->beh0;
 		saom_tl_behscale = (M0->behrange > 0.0) ? 1.0 / M0->behrange : 1.0;
 		saom_tl_behvar = M0->behVariance;
+		saom_behsim_range = (M0->behrange > 0.0) ? M0->behrange : 1.0;
 		grand += (double)n * rateB;
 	}
 	for (net = 0; net < nnet; net++) {
@@ -6043,7 +6044,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 		const period_t *PD = PDs[net];
 		memset(&R[net], 0, sizeof(simres_t));
 		for (k = 0; k < M->nattr; k++) attrs[net][k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
-		attrs[net][M->nattr] = NULL;
+		attrs[net][M->nattr] = (hasb && M->has_behsim) ? bv : NULL;
 		attrs[net][M->nattr + 1] = hasb ? behc : NULL;
 		graph_init(&g[net], n, 1, PD->nties);
 		graph_init(&g0[net], n, 1, PD->nties);
@@ -6170,7 +6171,7 @@ static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs
 	for (net = 0; net < nnet; net++) {
 		const model_t *M = Ms[net];
 		saom_tl_xg = &g0[(net + 1) % nnet];
-		if (hasb) attrs[net][M->nattr + 1] = behc0;		/* the statistics of the terms with the behavior as covariate use the STARTING behavior */
+		if (hasb) { attrs[net][M->nattr + 1] = behc0; if (M->has_behsim) attrs[net][M->nattr] = (double *)PDs[0]->beh0; }		/* the statistics of the terms with the behavior as covariate use the STARTING behavior */
 		for (k = 0; k < M->nterms; k++) R[net].stat[k] = saom_eval_stat((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs[net], &g[net]);
 		R[net].netdist = (double)mn_count_diff(&g[net], &g0[net]);
 	}
@@ -6380,6 +6381,8 @@ static ST_retcode mn_obs(char *arg) {
 				double *bc = (double *)calloc((size_t)(n + 1), sizeof(double));
 				for (q = 1; q <= n; q++) bc[q] = batch_states[0].per[pd].beh0[q] - batch_states[0].M.behOverallMean;
 				attrs[net][M->nattr + 1] = bc;
+				if (M->has_behsim) attrs[net][M->nattr] = (double *)batch_states[0].per[pd].beh0;
+				saom_behsim_range = (batch_states[0].M.behrange > 0.0) ? batch_states[0].M.behrange : 1.0;
 			}
 		}
 		for (e = 1; e <= nedges; e++) {
