@@ -202,7 +202,7 @@ program nwsaom, eclass
 		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) TVDYADCOV(string) TVDYADCOVRECIP(string) TVDYADX(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
-		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) BEHNET2(string) OWNX(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
+		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) TVBEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) BEHNET2(string) OWNX(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
@@ -498,7 +498,7 @@ program nwsaom, eclass
 		}
 		local __nwsaom_coev = 1
 	}
-	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" | "`behfrom'`behx'`netbeh'`behw'`behshape'`behnet2'" != "" | "`behavxalt'`behavsamexalt'`behtotxalt'`behtotsamexalt'" != "" {
+	else if "`behsim'" != "" | "`behegox'" != "" | "`behaltx'" != "" | "`behegoplusalt'" != "" | "`beheff'" != "" | "`behfrom'`behx'`netbeh'`behw'`tvbehw'`behshape'`behnet2'" != "" | "`behavxalt'`behavsamexalt'`behtotxalt'`behtotsamexalt'" != "" {
 		di "{err}{bf:behsim}/{bf:behegox}/{bf:behaltx}/{bf:behegoplusalt} (selection effects of the co-evolving behavior) require {bf:behavior()} to be specified."
 		error 198
 	}
@@ -2722,9 +2722,32 @@ program nwsaom, eclass
 			local __bwmats "`__bwmats' `__vv'"
 		}
 		local __bwmats : list uniq __bwmats
+		// tvbehw(family:stem ...): the same effects with a changing dyadic covariate, the matrices stem1 .. stem(waves-1) (protocol 57)
+		local __bwtv ""
+		foreach __t of local tvbehw {
+			gettoken __f __vv : __t, parse(":")
+			local __vv = subinstr("`__vv'", ":", "", 1)
+			if `: list posof "`__f'" in __bwfam' == 0 | "`__vv'" == "" {
+				di "{err}tvbehw(): `__t' is not family:stem; families: `__bwfam'."
+				error 198
+			}
+			forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+				capture confirm matrix `__vv'`__p'
+				if _rc {
+					di "{err}tvbehw(): matrix {bf:`__vv'`__p'} not found (the stem needs one n x n matrix per period)."
+					error 111
+				}
+				if rowsof(`__vv'`__p') != `nodes' | colsof(`__vv'`__p') != `nodes' {
+					di "{err}tvbehw(): matrix {bf:`__vv'`__p'} must be `nodes' x `nodes'."
+					error 198
+				}
+			}
+			local __bwtv "`__bwtv' `__vv'"
+		}
+		local __bwtv : list uniq __bwtv
 		mata: SaomBehDyInit()
-		if "`__bwmats'" != "" {
-			if `: word count `__bwmats'' > 8 {
+		if "`__bwmats'`__bwtv'" != "" {
+			if `: word count `__bwmats' `__bwtv'' > 8 {
 				di "{err}behw(): at most 8 different dyadic covariates."
 				error 198
 			}
@@ -2736,8 +2759,20 @@ program nwsaom, eclass
 				local __bpar = cond(`behwparam' == 2 & inlist("`__f'", "avaltw", "avinaltw", "avsimw"), 10, 0)	// RSiena's default parameter of these three is 2
 				local beheff "`beheff' br`=`__fi'-1+`__bpar''_`__slot'"
 			}
+			foreach __t of local tvbehw {
+				gettoken __f __vv : __t, parse(":")
+				local __vv = subinstr("`__vv'", ":", "", 1)
+				local __slot : list posof "`__vv'" in __bwtv
+				local __slot = `__slot' + `: word count `__bwmats''
+				local __fi : list posof "`__f'" in __bwfam
+				local __bpar = cond(`behwparam' == 2 & inlist("`__f'", "avaltw", "avinaltw", "avsimw"), 10, 0)
+				local beheff "`beheff' br`=`__fi'-1+`__bpar''_`__slot'"
+			}
 			foreach __v of local __bwmats {
 				mata: SaomBehDyAdd("`__v'", "`__v'", `__nwsaom_center')
+			}
+			foreach __v of local __bwtv {
+				mata: SaomBehDyAddTV("`__v'", "`__v'", `=`__nwsaom_nwaves'-1', `__nwsaom_center')
 			}
 		}
 		// behshape(effect[:#] ...): RSiena's behavior shape effects (protocol 51): quad_cc quad_nc constant threshold:# simallnear:# simallfar:# avgroup[:#] totgroup[:#]
@@ -2851,7 +2886,7 @@ program nwsaom, eclass
 				}
 			}
 			mata: st_local("__nwsaom_newadded", SaomMBAddTerms(__nwsaom_last_Mbeh, "`beheff'", "beh_"))
-			if "`__bcvall'" != "" | "`__bwmats'" != "" | "`behshape'" != "" | "`behnet2'" != "" {
+			if "`__bcvall'" != "" | "`__bwmats'`__bwtv'" != "" | "`behshape'" != "" | "`behnet2'" != "" {
 				mata: SaomBehCovRename(__nwsaom_last_Mbeh, tokens("`__bcvall'"))
 			}
 			local __nwsaom_effbeh "`__nwsaom_effbeh' `__nwsaom_newadded'"

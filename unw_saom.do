@@ -9263,6 +9263,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	for (pd=1; pd<=P; pd++) {
 		Gp = *Gwaves[pd]
 		Gpend = *Gwaves[pd+1]
+		SaomBehCovPd(pd)
 		if (C.hasmiss) C.GpStat[pd] = &(SaomBuildMaskedGraph(*Gwaves[pd], *missMaskNetPd[pd]))
 		else C.GpStat[pd] = Gwaves[pd]
 		Behpend = SaomBehavior()
@@ -13154,10 +13155,11 @@ real rowvector stat_saom_bn(class SaomBehavior scalar Beh, class ErgmGraph scala
 	u = strpos(nm, "_")
 	real scalar code, d
 	external real matrix __saom_behdy
+	external real scalar __saom_behcov_pd
 	code = strtoreal(substr(nm, 1, u - 1))
 	if (code >= 840 & code < 1000) {
 		d = mod(code - 840, 8)
-		return(SaomNativeBehStat(Beh, G, code, 0, __saom_behdy[., (d * Beh.n + 1)..((d + 1) * Beh.n)]))
+		return(SaomNativeBehStat(Beh, G, code, 0, SaomBehDyBlock(d + 1, (findexternal("__saom_behcov_pd") == NULL ? 1 : __saom_behcov_pd), Beh.n)))
 	}
 	return(SaomNativeBehStat(Beh, G, code, strtoreal(substr(nm, u + 1, .))))
 }
@@ -13170,45 +13172,95 @@ real scalar _sb_bnqcode(string scalar nm) {
 	for (k=1; k<=cols(tk); k++) if (tk[k] == nm) return(832 + k - 1)
 	return(0)
 }
-/* protocol 48: dyadic covariates of the behavior effects (avAltW ... totSimW): __saom_behdy = n x (n * k), the centred n x n matrices side by side */
+/* protocol 48 / 57: dyadic covariates of the behavior effects (avAltW ... totSimW): __saom_behdy = n x (n * sum of the slots' period counts), the (centred) n x n
+   matrices side by side, slot by slot; __saom_behdyper[slot] = 1 for a constant covariate, the number of periods for a changing one (tvbehw) */
 void SaomBehDyInit() {
 	external real matrix __saom_behdy
 	external string rowvector __saom_behdynames
+	external real rowvector __saom_behdyper
 	__saom_behdy = J(0, 0, 0)
 	__saom_behdynames = J(1, 0, "")
+	__saom_behdyper = J(1, 0, 0)
 }
 void SaomBehDyAdd(string scalar name, string scalar matname, real scalar center) {
 	external real matrix __saom_behdy
 	external string rowvector __saom_behdynames
+	external real rowvector __saom_behdyper
 	real matrix W
 	real scalar m
 	W = SaomDyadPrep(st_matrix(matname), center, m)
 	__saom_behdy = (cols(__saom_behdy) == 0 ? W : (__saom_behdy, W))
 	__saom_behdynames = (__saom_behdynames, name)
+	__saom_behdyper = (__saom_behdyper, 1)
+}
+/* a changing dyadic covariate: the matrices stem1 .. stemP, centred by the overall mean (RSiena varDyadCovar) */
+void SaomBehDyAddTV(string scalar name, string scalar stem, real scalar P, real scalar center) {
+	external real matrix __saom_behdy
+	external string rowvector __saom_behdynames
+	external real rowvector __saom_behdyper
+	external real scalar __saom_behcov_pd
+	real matrix W, X, ok
+	real scalar m, pd, i, n
+	if (__saom_behcov_pd >= .) __saom_behcov_pd = 1
+	n = rows(st_matrix(stem + "1"))
+	W = SaomDycTVPrep(stem, P, n, 0, m)
+	if (center) {
+		for (pd=1; pd<=P; pd++) {
+			X = st_matrix(stem + strofreal(pd))
+			ok = (X :< .)
+			for (i=1; i<=n; i++) ok[i,i] = 0
+			W[., ((pd-1)*n+1)..(pd*n)] = (editmissing(W[., ((pd-1)*n+1)..(pd*n)], 0) :- m) :* ok
+		}
+	}
+	__saom_behdy = (cols(__saom_behdy) == 0 ? W : (__saom_behdy, W))
+	__saom_behdynames = (__saom_behdynames, name)
+	__saom_behdyper = (__saom_behdyper, P)
+}
+real scalar SaomBehDyNP() {
+	external real rowvector __saom_behdyper
+	if (findexternal("__saom_behdyper") == NULL) return(1)
+	if (cols(__saom_behdyper) == 0) return(1)
+	return(max(__saom_behdyper))
+}
+real scalar SaomBehDySlots() {
+	external real rowvector __saom_behdyper
+	if (findexternal("__saom_behdyper") == NULL) return(0)
+	return(cols(__saom_behdyper))
+}
+/* the n x n matrix of slot d (1-based) in period pd */
+real matrix SaomBehDyBlock(real scalar d, real scalar pd, real scalar n) {
+	external real matrix __saom_behdy
+	external real rowvector __saom_behdyper
+	real scalar off, q
+	off = (d > 1 ? sum(__saom_behdyper[1..(d-1)]) : 0)
+	q = (__saom_behdyper[d] > 1 ? min((max((pd, 1)), __saom_behdyper[d])) : 1)
+	return(__saom_behdy[., ((off + q - 1) * n + 1)..((off + q) * n)])
 }
 string scalar SaomBehDyTrailer(real scalar n) {
 	external real matrix __saom_behdy
 	if (findexternal("__saom_behdy") == NULL) return(" 0")
 	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return(" 0")
-	return(" " + strofreal(cols(__saom_behdy) / n))
+	return(" " + strofreal(SaomBehDySlots()) + " " + strofreal(SaomBehDyNP()))
 }
-/* the frame columns of the dyadic covariates: dy<k>_<j> holds column j of covariate k (read by the plugin after the last other column) */
+/* the frame columns of the dyadic covariates: dy<k>_<q n + j> holds column j of covariate k in period q (read by the plugin after the last other column) */
 string rowvector SaomBehDyNames(real scalar n) {
 	external real matrix __saom_behdy
 	string rowvector nm
-	real scalar k, j
+	real scalar k, j, q
 	nm = J(1, 0, "")
 	if (findexternal("__saom_behdy") == NULL) return(nm)
 	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return(nm)
-	for (k=1; k<=cols(__saom_behdy)/n; k++) for (j=1; j<=n; j++) nm = nm, ("dy" + strofreal(k) + "_" + strofreal(j))
+	for (k=1; k<=SaomBehDySlots(); k++) for (q=1; q<=SaomBehDyNP(); q++) for (j=1; j<=n; j++) nm = nm, ("dy" + strofreal(k) + "_" + strofreal((q-1)*n + j))
 	return(nm)
 }
 void SaomBehDyStore(real scalar n) {
 	external real matrix __saom_behdy
-	real scalar k
+	real scalar k, q
+	string rowvector nm
 	if (findexternal("__saom_behdy") == NULL) return
 	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return
-	for (k=1; k<=cols(__saom_behdy)/n; k++) st_store((1::n), SaomBehDyNames(n)[((k-1)*n+1)..(k*n)], __saom_behdy[., ((k-1)*n+1)..(k*n)])
+	nm = SaomBehDyNames(n)
+	for (k=1; k<=SaomBehDySlots(); k++) for (q=1; q<=SaomBehDyNP(); q++) st_store((1::n), nm[(((k-1)*SaomBehDyNP() + q - 1) * n + 1)..(((k-1)*SaomBehDyNP() + q) * n)], SaomBehDyBlock(k, q, n))
 }
 string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
 /* protocol 51: behavior shape effects. Tokens "sh<f>_<par>" (f 0..7) -> bn_<2000 + 100 f + par>_0 */

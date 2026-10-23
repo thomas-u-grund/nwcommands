@@ -60,3 +60,19 @@ assert _rc == 198
 capture noisily nwsaom, waves(bw1 bw2 bw3) outdegree behw(avaltw:DW) k3(50)
 assert _rc == 198
 di "PASS behw"
+
+* changing dyadic covariates (protocol 57): tvbehw(family:stem) with the matrices stem1, stem2 (siena07: dev/saom_rsiena_tvbehw.R/.do)
+matrix TV1 = DW
+matrix TV2 = DW'
+foreach ef in avaltw totaltw avinaltw totinaltw avwalt totwalt avwinalt totwinalt avsimw totsimw {
+	capture nwsaom, waves(bw1 bw2 bw3) outdegree reciprocity behavior(z1 z2 z3 : linear) tvbehw(`ef':TV) k0(10) k3(40) seed(3)
+	assert inlist(_rc, 0, 498)
+	if _rc == 0 {
+		assert "`e(engine)'" == "native" & colsof(e(b)) == 4
+		local nm : colnames e(b)
+		assert strpos("`nm'", "`ef'_TV") > 0
+	}
+}
+capture noisily nwsaom, waves(bw1 bw2 bw3) outdegree behavior(z1 z2 z3 : linear) tvbehw(avaltw:NOSTEM) k3(50)
+assert _rc == 111
+di "PASS tvbehw"
