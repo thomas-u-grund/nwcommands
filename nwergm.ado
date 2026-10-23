@@ -766,28 +766,9 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodemix {
-		_nwergm_numvar `__ergm_v' nodemix
-		local ++__ergm_termidx
-		tempname __td_mx`__ergm_termidx'
-		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_mx`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __ergm_lv = uniqrows(`__td_mx`__ergm_termidx''.attr)
-		mata: __ergm_np = rows(__ergm_lv)
-		mata: __ergm_lp = J(0,2,0)
-		mata: for (__ergm_a=1; __ergm_a<=__ergm_np; __ergm_a++) for (__ergm_b=__ergm_a; __ergm_b<=__ergm_np; __ergm_b++) __ergm_lp = __ergm_lp \ (__ergm_lv[__ergm_a], __ergm_lv[__ergm_b])
-		mata: `__td_mx`__ergm_termidx''.levelpairs = __ergm_lp
-		mata: st_local("__ergm_nlp", strofreal(rows(__ergm_lp)))
-		tempname __ergm_lpmat
-		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlp' {
-			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]'"
-		}
-		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
-		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	if `"`nodemix'"' != "" {
+		_nwergm_cov nodemix, spec(`"`nodemix'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- bipartite (two-mode) Stage 2 terms (harmonisation unit 156):
@@ -1940,6 +1921,8 @@ program nwergm, eclass
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
 		ereturn scalar curved = `__ergm_curved'
+		// observed model statistics (R: summary(formula)), one per eta-column
+		capture mata: st_matrix("e(obs_stats)", __nwergm_last_M.full_statistic(__nwergm_last_G))
 		// Harmonisation unit 145: report whether the design-matrix build
 		// itself used the native backend, mirroring e(native) on the
 		// MCMLE branch below - previously only ever set there, leaving

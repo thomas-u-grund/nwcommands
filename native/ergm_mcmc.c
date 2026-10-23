@@ -1537,6 +1537,21 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 	return (double)cnt;
 }
 
+/* ===================================================================
+   Covariate terms added by agent E4 (term codes 2000-2999). All of
+   them are dispatched from the tail of change_term() below through
+   change_term_cov(), so the main switch is untouched.
+   =================================================================== */
+#define TERMCODE_NODEMIXD       2001  /* directed nodemix: ordered cell (attr[tail]==p1, attr[head]==p2) */
+
+static double change_term_cov(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	switch (termcode) {
+		case TERMCODE_NODEMIXD:
+			return (attr[i] == p1 && attr[j] == p2) ? delta : 0.0;
+	}
+	return 0.0;
+}
+
 /*
 	`delta' (+1 if the toggle ADDS the dyad, -1 if it REMOVES it) is
 	computed ONCE per toggle by the caller (harmonisation unit 91
@@ -1836,7 +1851,7 @@ static double change_term(graph_t *g, int termcode, double p1, double p2, double
 			return gw_kernel(d2 + delta, p1) - gw_kernel(d2, p1);
 		}
 	}
-	return 0.0;
+	return change_term_cov(g, termcode, p1, p2, attr, cm, n, delta, i, j);
 }
 
 /* ===================================================================

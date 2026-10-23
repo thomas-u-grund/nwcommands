@@ -1,0 +1,8 @@
+id,net,nw,r
+nmD1,D,"nodemix(a)","nodemix('a')"
+nmD2,S,"nodemix(grp)","nodemix('grp')"
+nmU1,U,"nodemix(a)","nodemix('a')"
+nmU2,U,"nodemix(g)","nodemix('g')"
+nmU3,M,"nodemix(grade, levels(1/4))","nodemix('grade',levels=1:4)"
+nmD3,D,"nodemix(a, levels2(-2))","nodemix('a',levels2=-2)"
+nmD4,D,"nodemix(a, base(2))","nodemix('a',base=2)"

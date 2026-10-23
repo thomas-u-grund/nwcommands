@@ -1445,6 +1445,157 @@ real rowvector change_nodemix(class ErgmGraph scalar G, real scalar i, real scal
 }
 
 /* ===================================================================
+   Covariate-term layer (agent E4): R-style level selection
+   (levels/levelvalues/base), directed nodemix with R's ordered cells,
+   and the extra covariate terms. Helper functions only used by
+   _nwergm_cov.ado and the native setup hook.
+   =================================================================== */
+
+// R's `levels[object]' for numeric `object' (positive = keep these
+// positions, negative = drop these positions, zeros ignored).
+real colvector _ergm_cov_pick(real colvector u, real rowvector idx){
+	real rowvector pos, neg
+	real colvector keep
+	real scalar k
+
+	pos = select(idx, idx :> 0)
+	neg = select(idx, idx :< 0)
+	if (cols(pos) > 0 & cols(neg) > 0) {
+		errprintf("levels(): cannot mix positive and negative level positions.\n")
+		exit(198)
+	}
+	if (cols(neg) > 0) {
+		keep = J(rows(u), 1, 1)
+		for (k=1; k<=cols(neg); k++) {
+			if (-neg[k] <= rows(u)) keep[-neg[k]] = 0
+		}
+		return(select(u, keep))
+	}
+	if (cols(pos) > 0) {
+		if (max(pos) > rows(u)) {
+			errprintf("levels(): position %g is larger than the number of distinct attribute values (%g).\n", max(pos), rows(u))
+			exit(198)
+		}
+		return(u[pos'])
+	}
+	return(J(0, 1, .))
+}
+
+// Level set of an attribute: R's ergm_attr_levels() plus the `base'
+// convention (base is only used when levels was not given and usebase).
+real colvector _ergm_cov_levels(real colvector attr, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
+	real colvector u
+	real rowvector idx
+
+	u = uniqrows(select(attr, attr :< .))
+	if (lval != "") return(strtoreal(tokens(lval))')
+	if (lev != "") return(_ergm_cov_pick(u, strtoreal(tokens(lev))))
+	if (usebase & base != "") {
+		idx = strtoreal(tokens(base))
+		idx = select(idx, idx :!= 0)
+		if (cols(idx) > 0) return(_ergm_cov_pick(u, -abs(idx)))
+	}
+	return(u)
+}
+
+// Directed nodemix: one statistic per ORDERED (row level, col level) cell
+// (levelpairs holds (tail level, head level) per output column).
+real scalar _ergm_cellindex_dir(real matrix cells, real scalar a, real scalar b){
+	real scalar k
+	for (k=1; k<=rows(cells); k++) {
+		if (cells[k,1]==a & cells[k,2]==b) return(k)
+	}
+	return(0)
+}
+real rowvector stat_nodemixd(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_cellindex_dir(td.levelpairs, td.attr[ties[k,1]], td.attr[ties[k,2]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodemixd(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	idx = _ergm_cellindex_dir(td.levelpairs, td.attr[i], td.attr[j])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+
+// nodemix cell list exactly as R's InitErgmTerm.nodemix (one-mode):
+// expand.grid(row, col) order (row fastest), upper triangle incl.
+// diagonal when undirected, then levels2 (numeric positions, default
+// -1 = drop the first cell) or the deprecated base.
+// Fills td.levels (row/col level list), td.levelpairs and returns
+// the coefficient-name suffixes through the Stata local `nmlocal'.
+void _ergm_nodemix_setup(class ErgmTermData scalar td, real scalar directed, string scalar lev, string scalar lval, string scalar base, string scalar lev2, string scalar vname, string scalar nmlocal, string scalar nlocal){
+	real colvector u
+	real matrix cells, cidx, sel
+	real scalar r, c, nr, k
+	real colvector keep
+	string scalar nm
+
+	u = _ergm_cov_levels(td.attr, lev, lval, "", 0)
+	nr = rows(u)
+	cells = J(0, 2, .)
+	cidx = J(0, 2, .)
+	for (c=1; c<=nr; c++) {
+		for (r=1; r<=nr; r++) {
+			if (directed | r <= c) {
+				cells = cells \ (u[r], u[c])
+				cidx = cidx \ (r, c)
+			}
+		}
+	}
+	if (rows(cells) == 0) {
+		td.levelpairs = J(0, 2, .)
+		st_local(nlocal, "0")
+		st_local(nmlocal, "")
+		return
+	}
+	if (lev2 != "") {
+		keep = J(rows(cells), 1, 0)
+		sel = _ergm_cov_pick((1::rows(cells)), strtoreal(tokens(lev2)))
+		for (k=1; k<=rows(sel); k++) keep[sel[k]] = 1
+	}
+	else if (base != "" & max(abs(strtoreal(tokens(base)))) > 0) {
+		keep = J(rows(cells), 1, 1)
+		sel = abs(select(strtoreal(tokens(base)), strtoreal(tokens(base)) :!= 0))'
+		for (k=1; k<=rows(sel); k++) if (sel[k] <= rows(cells)) keep[sel[k]] = 0
+	}
+	else {
+		keep = J(rows(cells), 1, 1)
+		keep[1] = 0
+	}
+	cells = select(cells, keep)
+	cidx = select(cidx, keep)
+	nm = ""
+	for (k=1; k<=rows(cells); k++) {
+		nm = nm + " nodemix_" + vname + "_" + strofreal(cells[k,1]) + "_" + strofreal(cells[k,2])
+	}
+	if (!directed) {
+		for (k=1; k<=rows(cells); k++) {
+			r = min((cells[k,1], cells[k,2]))
+			c = max((cells[k,1], cells[k,2]))
+			cells[k,1] = r
+			cells[k,2] = c
+		}
+	}
+	td.levels = u
+	td.levelpairs = cells
+	st_local(nlocal, strofreal(rows(cells)))
+	st_local(nmlocal, strtrim(nm))
+}
+
+/* ===================================================================
    Bipartite (two-mode) Stage 2 terms (harmonisation unit 156,
    docs/ERGM_ROADMAP.md/docs/CERTIFICATION.md): the first bipartite-
    family terms beyond `edges' (Stage 1, unit 155). Definitions taken
@@ -5445,6 +5596,19 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			pos++
 			termcodes[pos] = 79
 			p1v[pos] = tdt.decay
+		}
+
+		else if (nm == "nodemixd") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 2001
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = tdt.levelpairs[k,2]
+			}
 		}
 		else return(0)
 	}
