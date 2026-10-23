@@ -1,0 +1,68 @@
+\chapter{Introduction}\label{ch:intro}
+
+\section{What \texorpdfstring{\nwsaom}{nwsaom} is}
+
+\nwsaom{} estimates stochastic actor-oriented models (SAOMs) in Stata. A SAOM is a statistical model for network panel data: the same set of actors is observed at two or more points in time, and the model describes how the ties between them change from one observation to the next as the outcome of the decisions of the individual actors. The model was introduced by Snijders and co-workers; the standard introduction is Snijders, van de Bunt and Steglich~\cite{snijders2010}. Chapter~\ref{ch:model} summarises the model for readers who have not met it before.
+
+\nwsaom{} is part of the \texttt{nwcommands} package. It works on networks that were declared with \texttt{nwset} (or created by one of the other \texttt{nw} commands), it reads actor attributes from the ordinary Stata dataset, and it returns its results in \texttt{e()} like any other Stata estimation command. The heavy computation, the simulation of the network evolution, runs in a compiled C plugin that is called from Mata. No R installation or other external statistical software is used when you fit a model.
+
+\section{Relation to RSiena}
+
+The reference implementation of SAOMs is the R package RSiena~\cite{ripley}, whose estimation function is \texttt{siena07}. \nwsaom{} follows RSiena closely in its model, in its estimation algorithm, in the names of its effects and in the conventions that matter for the numbers (centring of covariates, the treatment of missing data, the scale of the rate parameters), so that RSiena's documentation and the published literature on SAOMs apply to \nwsaom{} as well.
+
+\nwsaom{} is nevertheless an \emph{independent reimplementation}. It was written in Stata/Mata and C, using RSiena's published manual and, where the manual was not specific enough, RSiena's open-source code as the methodological reference. During development, RSiena (version 1.6.6) was used to certify the results: for the effects that were validated, the observed statistics (the targets of the method of moments) are identical to those of \texttt{siena07} and the estimates agree within simulation noise. The validation is documented effect by effect in the validation chapter. \nwsaom{} is not affiliated with, endorsed by or supported by the RSiena project.
+
+Where the two programs differ in a way that matters to a user, the manual says so. The most important differences are these.
+\begin{itemize}[nosep]
+  \item Effects are chosen by Stata options (for example \opt{transtrip}, \opt{egox(alcohol1)}) and not by an effects table that is edited object by object.
+  \item The goodness-of-fit test (\texttt{estat gof}) simulates new replicates at the fitted parameters instead of re-using networks stored during the fit; the test itself is the same Mahalanobis-distance test as in RSiena's \texttt{sienaGOF}.
+  \item The option \opt{gwesp()} takes the decay parameter on the scale used in the \texttt{ergm} literature, which is $1/100$ of RSiena's parameter: RSiena's \texttt{gwespFF} with parameter 69 is \opt{gwesp(.69)}.
+\end{itemize}
+
+\section{What is covered}
+
+\begin{itemize}[nosep]
+  \item \textbf{Directed one-mode networks}, with two or more waves. With three or more waves the effects are pooled over the periods between consecutive waves and each period has its own rate.
+  \item \textbf{Non-directed (symmetric) networks}, with RSiena's model types for non-directed relations (\opt{symtype()}).
+  \item \textbf{Two-mode networks}, in which one set of nodes (the actors) chooses its ties to the other set (the events).
+  \item \textbf{Behavior co-evolution}: a bounded integer behavior (an attitude, a count of cigarettes) evolves together with the network, so that selection and influence can be separated in one model; several behaviors are possible.
+  \item \textbf{Several dependent networks} that evolve together on the same actors, with cross-network effects, through \texttt{nwsaom multinet}.
+  \item \textbf{Composition change}: actors that join or leave the network, either between waves (\opt{present()}) or at fractional times inside a period (\opt{joinat()}, \opt{leaveat()}).
+  \item \textbf{Missing data}: missing ties (\opt{missnet()}), missing behavior values (\opt{missbeh()}) and missing covariate values; and \textbf{structural zeros and ones} (\opt{structural()}).
+  \item \textbf{Rate covariates}: actor attributes that raise or lower an actor's rate of change (\opt{ratecov()}), and structural rate effects that depend on an actor's degree.
+  \item \textbf{Covariates}: constant and time-varying actor covariates, and dyadic covariates.
+  \item \textbf{Interactions} between effects, and the \textbf{endowment and creation} split of effects.
+  \item \textbf{Postestimation}: goodness of fit (\texttt{estat gof}) and micro effects on macro structure (\texttt{estat mems}); and a meta-analysis of the same model fitted to several networks (\texttt{nwsaom\_meta}), the counterpart of RSiena's \texttt{siena08}.
+\end{itemize}
+The effects library follows RSiena's table of effects. Of its \nTotal{} rows, \nImpl{} are implemented; Chapter~\ref{ch:effects} and Appendix~\ref{app:effects} give the details.
+
+Binary ties only are supported: a valued network is rejected with an error and is never silently dichotomised. All waves of a model must have the same number of nodes; the actors are identified by their position, so node $i$ must be the same actor in every wave.
+
+\section{Installation and requirements}
+
+\nwsaom{} is installed with the rest of the package:
+\begin{lstlisting}
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net install nwcommands
+. nwinstall, all
+\end{lstlisting}
+Alternatively, add a clone of the repository to the ado-path with \texttt{adopath + "/path/to/nwcommands"}. The \texttt{master} branch is the tested release; \texttt{develop} is the branch on which new effects are added.
+
+\paragraph{Software.} The ado-files declare Stata version~14 as their language level, but the native simulator exchanges data with Mata through Stata frames, and frames exist from Stata~16. The development and the examples of this manual used Stata/BE~18. The edition of Stata determines how large a network can be when it is passed as a matrix (Section~\ref{sec:limits}).
+
+\paragraph{The native plugin.} The simulator is the compiled plugin \texttt{saom\_sim}. The repository contains builds for macOS (\texttt{saom\_sim\_macos.plugin}), for Linux (\texttt{saom\_sim\_unix.plugin}) and for Windows (\texttt{saom\_sim\_windows.plugin}). The macOS build is compiled on the development machine; the Linux and Windows builds are produced by continuous integration and can be older than the \texttt{.ado} files. A plugin that is older than a model needs is detected (the plugin reports a protocol version), and the model is then either fitted by the slower Mata simulator or, for the effects that exist only in the plugin, refused with an error message. Chapter~\ref{ch:technical} explains this in detail and tells you how to check which engine ran: look at \texttt{e(engine)}.
+
+\section{How to read this manual}
+
+If you know SAOMs from RSiena, read Chapter~\ref{ch:start} for the syntax of a first model and use Chapter~\ref{ch:options} as a dictionary from RSiena concepts to \nwsaom{} options. If you are new to SAOMs, read Chapter~\ref{ch:model} first; it is short and uses only the equations that you need to interpret the output.
+
+\begin{description}[style=nextline,nosep]
+  \item[Chapter~\ref{ch:model}] The model in brief: rate function, objective function, ministeps, the method of moments and its three phases, conditional and unconditional estimation, convergence.
+  \item[Chapter~\ref{ch:start}] How the data must look, a complete first analysis with real output, and the results that \nwsaom{} stores.
+  \item[Chapter~\ref{ch:options}] Reference of all options of \texttt{nwsaom}, organised by topic.
+  \item[Chapter~\ref{ch:effects}] The effects: what each statistic counts, its RSiena name and the option that selects it.
+  \item[Later chapters] Behavior co-evolution, the network types, rates and covariate data, estimation practice, validation against RSiena, and composition change and missing data.
+  \item[Chapter~\ref{ch:technical}] Technical notes: the plugin, threads, size limits, performance and the file layout of the source.
+\end{description}
+
+\paragraph{Typographic conventions.} Stata commands and options are set in \texttt{typewriter}. Output shown in listings was produced by the commands above it with the version of \nwsaom{} described in this manual; the random-number seed is always given, so that the output can be reproduced. Simulation-based estimates change in the last digits when the model or the seed changes, and, for a given seed, they do not depend on the number of processor cores.

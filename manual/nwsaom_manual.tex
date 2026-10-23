@@ -3,6 +3,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern,microtype}
 \usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
 \usepackage{booktabs,longtable,array,amsmath,amssymb,xcolor,listings,hyperref,enumitem,titlesec}
 \hypersetup{colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black}
 \lstdefinestyle{stata}{basicstyle=\ttfamily\small,backgroundcolor=\color{black!4},frame=single,rulecolor=\color{black!20},breaklines=true,columns=fullflexible,keepspaces=true,xleftmargin=2pt,xrightmargin=2pt,aboveskip=8pt,belowskip=8pt}
@@ -15,6 +16,8 @@
 \date{\today}
 \begin{document}
 \maketitle
+\begin{quote}\noindent\textbf{How to cite.} Please cite this manual together with the book~\cite{grundbook}, which treats network analysis with the \texttt{nwcommands} package in Stata in full; its Chapter~23 introduces stochastic actor-oriented models. % TODO: add the DOI once the manual is archived
+\end{quote}
 \tableofcontents
 \input{ch01_intro}
 \input{ch02_model}
@@ -28,6 +31,7 @@
 \input{ch10_validation}
 \input{ch11_missing}
 \input{ch12_technical}
+\input{ch13_benchmark}
 \appendix
 \input{app_effects}
 \bibliographystyle{plain}
@@ -36,5 +40,6 @@
 \bibitem{ripley} Ripley, R.M., Snijders, T.A.B., Bo\'{o}da, Z., V\"{o}r\"{o}s, A., Preciado, P. RSiena: Simulation Investigation for Empirical Network Analysis. R package and manual.
 \bibitem{steglich2010} Steglich, C.E.G., Snijders, T.A.B., Pearson, M. (2010). Dynamic networks and behavior: separating selection from influence. \emph{Sociological Methodology} 40, 329--393.
 \bibitem{lospinoso2019} Lospinoso, J., Snijders, T.A.B. (2019). Goodness of fit for stochastic actor-oriented models. \emph{Methodology} 15.
+\bibitem{grundbook} Grund, T.U. (2027). \emph{Network Analysis with Stata: Concepts, Methods, and Applications}. College Station, TX: Stata Press (forthcoming).
 \end{thebibliography}
 \end{document}

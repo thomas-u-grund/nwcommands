@@ -1,0 +1,211 @@
+\chapter{Rates and composition change}\label{ch:rates}
+\begingroup\raggedright\sloppy
+
+In a SAOM the \emph{rate} says how often actors get an opportunity to change their ties (or their behavior). By default every actor shares one constant rate per period. This chapter describes how to let the rate depend on actor attributes or on the actor's current network position, and how to handle actors who join or leave the study between waves (composition change). Structural zeros and ones, and missing data, are treated in Chapter~\ref{ch:missing}.
+
+All examples use the Glasgow data of Chapter~\ref{ch:coevolution} (\texttt{nwwebuse glasgow}, three waves, 50 pupils) unless stated otherwise.
+
+\section{Covariate-dependent rates}\label{sec:ratecov}
+
+\opt{ratecov(varlist)} lets node covariates speed some actors up and slow others down: the rate of actor $i$ in a period becomes
+\[
+  \lambda_i = \lambda \exp\Big(\sum_k b_k\,x_k[i]\Big),
+\]
+with one coefficient $b_k$ per variable (RSiena's \texttt{RateX} effects). A positive coefficient means that actors with higher covariate values get more opportunities to act. The coefficient is estimated jointly with all other parameters by the same Robbins--Monro procedure. By default the covariates are centred by their means (RSiena's \texttt{coCovar(centered = TRUE)}); \opt{nocenter} uses raw values, and the means are shown below the table and stored in \texttt{e(covmeans)}.
+
+\begin{lstlisting}
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip ///
+    ratecov(alcohol1) seed(1) k3(300)
+\end{lstlisting}
+\begin{lstlisting}
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+   outdegree |  -2.673144   .1092592   -24.47   0.000
+ reciprocity |   2.456564   .1741169    14.11   0.000
+   transtrip |   .6110999   .0662107     9.23   0.000
+        rate |    6.2097     5.2876
+Covariate-rate coefficient (alcohol1):    0.3915 (se 0.1182)
+Covariates centred by their means: alcohol1  2.880
+Overall maximum convergence ratio:  0.074
+\end{lstlisting}
+Pupils who drink more get significantly more opportunities to revise their friendships ($\exp(0.39)\approx1.5$ per category). The coefficients are returned in the 1$\times$K matrix \texttt{e(ratecoefs)} (columns named by the variables), with \texttt{e(ratecoefs\_se)}, \texttt{e(ratecoefs\_tratio)} and \texttt{e(ratecoefs\_fixed)}; with one variable the scalars \texttt{e(ratecoef)}, \texttt{e(ratecoef\_se)}, \texttt{e(ratecoef\_tratio)} and \texttt{e(ratecoef\_fixed)} exist as well.
+
+\begin{longtable}{@{}p{3.4cm}p{3.0cm}p{7.4cm}@{}}
+\toprule
+option & RSiena effect & what it does \\
+\midrule
+\endhead
+\opt{ratecov(varlist)} & \texttt{RateX} & One covariate-rate coefficient per variable. With \opt{waves()} the coefficient is one value shared by all periods (RSiena's \texttt{RateX} has no period index); each period keeps its own basic rate. \\
+\opt{ratecovcoef(numlist)} & starting values & Starting values for the coefficients, one per variable or one for all (default 0). \\
+\opt{nocenter} & \texttt{centered = FALSE} & Use raw covariate values in \opt{ratecov()}, \opt{nodecov()}, \opt{egox()} and \opt{altx()}. \\
+\bottomrule
+\end{longtable}
+
+If the data do not identify a coefficient (non-positive derivative estimate and the plain fit diverges), it is held fixed at its starting value, as RSiena does; \texttt{e(ratecoef\_fixed)} says whether this happened. With \opt{waves()} the rates are as in RSiena's: checked on \texttt{s501}--\texttt{s503} with the alcohol covariate, \texttt{RateX} 0.355 against RSiena's 0.357, density $-2.38$ against $-2.375$, rates 5.7/4.4 against 5.67/4.47.
+
+A ratecov effect can be combined with \opt{symmetric}. In a non-directed network the rate of actor $i$ is $\lambda e^{b x_i}$ and the alter is drawn in proportion to the same rates; the conversion to RSiena's scale (Chapter~\ref{ch:networktypes}) uses all $n$ actors. Example, again with the symmetrised Glasgow waves \texttt{sg1}--\texttt{sg3}:
+\begin{lstlisting}
+nwsaom, waves(sg1 sg2 sg3) outdegree gwesp(0.69) ratecov(smoke1) seed(1) k3(300)
+\end{lstlisting}
+\begin{lstlisting}
+   outdegree |  -2.232523   .1623717   -13.75   0.000
+  gwesp_0.69 |   1.604636   .1818313     8.82   0.000
+        rate |    2.3363     1.9205
+Covariate-rate coefficient (smoke1):    0.5906 (se 0.2126)
+\end{lstlisting}
+For the symmetrised glasgow waves, the help file reports agreement with RSiena for \texttt{joint} (RateX 0.153 against 0.151, density $-1.316$ against $-1.312$, rates 0.307/0.264 against 0.305/0.263) and, for all three pairwise types, agreement within 0.1 standard errors.
+
+\section{Structural rate effects}\label{sec:strate}
+
+A rate may also depend on the actor's current network position. The structural rate effects (RSiena's \texttt{outRate}, \texttt{inRate}, \texttt{recipRate} and their \texttt{Inv}/\texttt{Log} versions) multiply the period rate by $\exp(\sum_k b_k f_k)$, where $f$ is a function of the actor's \emph{current} out-degree, in-degree or number of reciprocated ties $d$ in the simulated network. The rate therefore changes with every tie change in the simulation, which makes the opportunity process depend on the network itself.
+
+\begin{longtable}{@{}p{3.0cm}p{2.4cm}p{8.4cm}@{}}
+\toprule
+option & RSiena effect & $f(d)$ \\
+\midrule
+\endhead
+\opt{outrate} & \texttt{outRate} & out-degree $d$ \\
+\opt{inrate} & \texttt{inRate} & in-degree $d$ \\
+\opt{reciprate} & \texttt{recipRate} & number of reciprocated ties $d$ \\
+\opt{outrateinv}, \opt{inrateinv}, \opt{reciprateinv} & \texttt{outRateInv}, \dots{} & $1/(d+1)$ of the respective degree \\
+\opt{outratelog}, \opt{inratelog}, \opt{recipratelog} & \texttt{outRateLog}, \dots{} & $\log(d+1)$ of the respective degree \\
+\bottomrule
+\end{longtable}
+
+Each adds one covariate-rate coefficient to \texttt{e(ratecoefs)}, handled like \opt{ratecov()} coefficients. The observed statistic is the sum, over the dyads that differ between the waves, of the degree function of the tie sender at the start of the period.
+
+\begin{lstlisting}
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip outrate ///
+    seed(1) k3(300)
+\end{lstlisting}
+\begin{lstlisting}
+   outdegree |  -2.524311   .1519365   -16.61   0.000
+ reciprocity |   2.393603   .2012056    11.90   0.000
+   transtrip |   .5707772   .1006059     5.67   0.000
+        rate |    3.8587     3.0975
+Covariate-rate coefficient (outrate):    0.1971 (se 0.1110)
+Overall maximum convergence ratio:  0.206
+\end{lstlisting}
+Pupils with more friends are slightly faster, but the effect is not significant ($t=1.8$). A trial with two structural rate effects at once (\opt{inrateinv} and \opt{outratelog}) stopped with ``a simulated period did not reach the observed distance within 1000000 ministeps'' (return code 498); structural rate effects are strongly dependent and one at a time is the safe starting point.
+
+Validation (s50, conditional estimation, two \texttt{siena07} seeds): all nine effects agree, for example \texttt{outRate} rates 2.81/2.15 against 2.79/2.10 and coefficient 0.297 against 0.300, \texttt{inRate} 0.370 against 0.379/0.377, \texttt{outRateInv} $-1.096$ against $-1.12/-1.14$.
+
+\section{Composition change}\label{sec:compchange}
+
+Actors may join or leave the network during the study. RSiena handles this with the ``joiners and leavers'' method (Huisman and Snijders 2003; Section~5.3.3 of the RSiena manual): the actor set is fixed over the whole study, and each actor is marked as present or absent. \nwsaom{} offers two ways.
+
+\subsection{Whole-period presence: present()}
+
+\opt{present(varlist)} takes one 0/1 variable per wave, in temporal order (the same convention as \opt{behavior()}): 1 marks an actor as present (eligible to act and to be chosen as an alter) at that wave. An actor is treated as present for an inter-wave \emph{period} only if present at \emph{both} of its endpoint waves. Actors who join or leave exactly at an observation moment are therefore covered, which is the common case (a pupil enrolled between survey waves).
+
+Composition change requires \emph{unconditional} estimation in RSiena (manual, Section~7.12.1) and \nwsaom{} uses it automatically, even without \opt{unconditional}: rates are estimated with the other parameters, only present actors get opportunities to act, and a rate's score counts only them. The fit runs in the native backend at about the speed of the same model without composition change.
+
+Example. We let pupils 1--5 join after wave 1 and pupils 46--50 leave after wave 2. For the absent waves the ties of absent actors are coded 0:
+
+\begin{lstlisting}
+nwwebuse glasgow, nwclear
+forvalues w = 1/3 {
+    nwtomata glasgow`w', mat(G`w')
+}
+mata:
+for (w=1; w<=3; w++) {
+    Z = (w==1 ? G1 : (w==2 ? G2 : G3))
+    ab = J(50, 1, 0)
+    if (w == 1) ab[1::5] = J(5, 1, 1)
+    if (w == 3) ab[46::50] = J(5, 1, 1)
+    out = selectindex(ab :== 1)
+    Z[out, .] = J(rows(out), 50, 0)
+    Z[., out] = J(50, rows(out), 0)
+    st_matrix("__C" + strofreal(w), Z)
+}
+end
+forvalues w = 1/3 {
+    nwset, mat(__C`w') directed name(cc`w') nooutput
+}
+gen byte p1 = !inrange(_n, 1, 5)
+gen byte p2 = 1
+gen byte p3 = !inrange(_n, 46, 50)
+nwsaom, waves(cc1 cc2 cc3) outdegree reciprocity transtrip present(p1 p2 p3) ///
+    seed(1) k3(300)
+\end{lstlisting}
+\begin{lstlisting}
+SAOM (Method of Moments, unconditional), waves: cc1 cc2 cc3
+   outdegree |    -2.6153   .1360758   -19.22   0.000
+ reciprocity |   2.520413   .2129212    11.84   0.000
+   transtrip |   .5735564    .094382     6.08   0.000
+        rate |    8.9589     4.9796
+Overall maximum convergence ratio:  0.240
+\end{lstlisting}
+Rates are unconditional here and therefore not on the scale of the conditional rates of the earlier examples.
+
+\paragraph{How to prepare the data.} The remarks of the help file stress that \nwsaom{} does not derive the data of absent actors for you. The two relevant statements in the sources differ in detail: the older text says an absent actor's ties should be 0 before the actor joins and \emph{frozen} at the last observed values after it leaves; the text on \opt{joinat()}/\opt{leaveat()} (RSiena's option~1), whose rules since 2026-10-22 also apply to \opt{present()}, says the ties an absent actor has in the data are used as given and counted in the distance, so one should code them 0 for the waves in which the actor is absent. In the example above the leavers' ties are coded 0 at the wave they have left. Whichever you choose, code consistently: an absent actor's row and column that look like activity the actor can never explain are a real, avoidable way to trigger the \texttt{thetaBound} error. Since 2026-10-22 an absent actor stays among the possible alters of an active actor, as in RSiena.
+
+\subsection{Joiners and leavers at fractional times: joinat() and leaveat()}
+
+RSiena's \texttt{sienaCompositionChange()} (option~1) lets an actor join or leave at any time inside a period. \opt{joinat(varname)} and \opt{leaveat(varname)} give each actor's joining and leaving time on RSiena's time scale: wave 1 is time 1 and the last wave is time $W$. An actor is active from \opt{joinat()} to \opt{leaveat()}; a missing value means from the first wave / to the last wave; one interval per actor, and every interval must contain a wave. The rules, from RSiena's source:
+\begin{itemize}[nosep]
+\item inactive actors have rate 0 but stay among the alters of an active actor;
+\item a joiner takes on the ties it had in the start network; a leaver loses all its ties;
+\item a tie made to an inactive actor is removed again at the end of a period that has join or leave events;
+\item the rate parameter's compensator is the time-integral of the number of active actors.
+\end{itemize}
+
+\begin{lstlisting}
+gen double jn = .
+gen double lv = .
+replace jn = 1.5 in 1/5
+replace lv = 2.5 in 46/50
+nwsaom, waves(cc1 cc2 cc3) outdegree reciprocity transtrip joinat(jn) leaveat(lv) ///
+    seed(1) k3(300)
+\end{lstlisting}
+\begin{lstlisting}
+SAOM (Method of Moments, unconditional), waves: cc1 cc2 cc3
+   outdegree |  -2.676591   .1317424   -20.32   0.000
+ reciprocity |   2.550914   .2125371    12.00   0.000
+   transtrip |   .5951937   .0917836     6.48   0.000
+        rate |    8.2655     5.6119
+Overall maximum convergence ratio:  0.239
+\end{lstlisting}
+(Pupils 1--5 join in the middle of period 1, pupils 46--50 leave in the middle of period 2; their ties in the data are coded 0 for the waves they are absent. Note that actor 1--5 are marked absent at wave 1 and present at wave 2, so \opt{joinat(1.5)} is consistent.) \opt{present()} is the special case of whole-period presence.
+
+\paragraph{Validation.} Five single-event scenarios at fixed parameters give the same deviations from the targets as \texttt{siena07}; on s50 with 10 joiners/leavers the estimates (density, reciprocity, transitive triplets, both rates, and a rate covariate) lie within noise of RSiena over three seeds. With one or several co-evolving behaviors (via \opt{joinat()}) the rates and shape effects agree with \texttt{siena07} as well (network rates 6.46/5.10 against 6.48/5.10, alcohol rates 0.99/1.32 against 0.98/1.32, smoking rates 2.85/2.47 against 2.88/2.49).
+
+\subsection{What combines with composition change}
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+combined with & \opt{present()} & \opt{joinat()}/\opt{leaveat()} \\
+\midrule
+\opt{waves()} & yes & yes \\
+one co-evolving behavior & yes & yes (not with \opt{behsim}) \\
+several behaviors & no (checked, 198) & yes (not with \opt{behsim}) \\
+\opt{symmetric} & yes & yes (not with \opt{ratecov()}) \\
+\opt{ratecov()} & yes (checked) & yes (checked) \\
+\opt{missnet()} & --- & --- \\
+\opt{tvcov()} & --- & yes \\
+\opt{endow()}/\opt{creation()} & not stated & no (checked, 198) \\
+structural rate effects & no (checked, 198) & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+Cells marked --- were not stated in the sources and not tested for this manual. ``checked'' means a trial call for this manual produced the stated result.
+
+\section{Limits}\label{sec:rates-limits}
+
+\begin{itemize}
+\item \textbf{Rate effects.} Only constant-covariate \opt{ratecov()} and the nine structural rate effects exist. RSiena's rate effect with a \emph{changing} covariate is a stated open item. There is no rate effect that depends on the behavior or on another covariate-by-network interaction, and no period-specific covariate-rate coefficient (as in RSiena, \texttt{RateX} has no period index).
+\item \textbf{\opt{ratecov()} with co-evolution is refused} (checked: ``ratecov() is not yet supported for co-evolution models''), also with several behaviors and in two-mode networks (checked, 198).
+\item \textbf{Structural rate effects} are restricted to directed one-mode relations and plain waves: no \opt{behavior()}, \opt{present()}, \opt{missnet()}, \opt{symmetric} and no two-mode networks (the last two, and \opt{present()}, checked: 198). No \opt{endow()}/\opt{creation()}. They are native-only (plugin protocol 42). The sources say unconditional estimation was compared only through the coefficient. Combining several structural rate effects can fail (see above).
+\item \textbf{Composition change.}
+  \begin{itemize}[nosep]
+  \item RSiena's composition-change options 2--4 (other treatments of the data of absent actors) and several intervals per actor are not offered: only RSiena option~1 with one interval per actor.
+  \item The ``structural zeros/ones'' alternative documented in RSiena's manual is not a substitute here; joiners and leavers was chosen instead.
+  \item \opt{present()} cannot be used with several behaviors; \opt{joinat()}/\opt{leaveat()} cannot be used with \opt{behsim} or endowment/creation effects, and not (yet) with \opt{endow()}/\opt{creation()}.
+  \item With \opt{symmetric}, \opt{joinat()}/\opt{leaveat()} cannot be combined with \opt{ratecov()}.
+  \item Conditional estimation is not possible with composition change.
+  \item The user must code absent actors' tie data consistently (see above); \nwsaom{} neither derives nor checks it.
+  \end{itemize}
+\item \textbf{Multinet and two-mode.} \texttt{nwsaom multinet} has no composition change; two-mode networks with composition change are untested.
+\end{itemize}
+\endgroup

@@ -1,0 +1,248 @@
+\chapter{Getting started}\label{ch:start}
+
+This chapter takes you from data to a first fitted model, shows how to read the output and which results are stored. All commands were run with the development version of \nwsaom{} on the Glasgow data of RSiena's tutorial.
+
+\section{The data}
+
+\paragraph{Networks are \texttt{nwset} objects.} \nwsaom{} does not read the network from variables. It takes the \emph{names} of networks that exist in the current \texttt{nwcommands} session. Each wave is one network, and a model is told which networks are its waves, in temporal order.
+
+\paragraph{Waves.} A model needs at least two waves. With exactly two waves you can write \opt{wave1()} and \opt{wave2()}; with two or more waves you write \opt{waves()}, which takes the names in temporal order (\opt{wave1()}/\opt{wave2()} and \opt{waves()} cannot be combined). With $W$ waves there are $W-1$ periods. The effects are shared by all periods, so that the statistics of the periods are added up in the estimation, and every period has its own rate parameter (\texttt{e(rates)}, a $1\times(W-1)$ matrix, in place of the scalar \texttt{e(rate)} of a two-wave model).
+
+\paragraph{The actors.} All waves must describe the same set of actors, with the same number of nodes. The actors are identified by their position (node $i$ is the same actor in every wave), and the node attributes are read by row from the dataset.
+
+\paragraph{Covariates and behavior.} Actor attributes are ordinary variables in the dataset that holds the nodes. \opt{samex(smoke1)} refers to the variable \texttt{smoke1} in the current dataset. A time-varying attribute or a behavior is given as one variable per wave, and the variables are listed in the temporal order of the waves, for example \opt{behavior(alcohol1 alcohol2 alcohol3)}. Dyadic covariates and the indicators for missing data are Stata matrices; see the chapters on rates and data and on missing data.
+
+\paragraph{Binary ties.} The ties must be binary. Valued networks are rejected.
+
+\subsection*{The Glasgow data}
+
+The data of the examples are the three waves of friendship among 50 pupils of a Scottish school (RSiena's \texttt{s50}), with their alcohol use, smoking and sport. They are downloaded by \texttt{nwwebuse}:
+\begin{lstlisting}
+. nwwebuse glasgow, nwclear
+. nwset
+(3 networks)
+--------------------
+      glasgow1
+      glasgow2
+      glasgow3
+\end{lstlisting}
+The option \texttt{nwclear} removes the networks that are in memory first. The dataset has one row per pupil and the variables \texttt{alcohol1}--\texttt{alcohol3} (1--5), \texttt{smoke1}--\texttt{smoke3} (1--3) and \texttt{sport1}--\texttt{sport3} (1--2).
+
+\subsection*{Your own data}
+
+A network is declared from an adjacency matrix with \texttt{nwset, mat()} or from an edge list with \texttt{nwfromedge} (see \texttt{help nwset} and \texttt{help nwfromedge}). The following sequence builds the Glasgow waves from three Stata matrices \texttt{A1}, \texttt{A2}, \texttt{A3} and a dataset with 50 rows, in the way that you would build them from your own data. The matrices come from the original networks with \texttt{nwtomata}; the dataset keeps the covariates:
+\begin{lstlisting}
+. nwwebuse glasgow, nwclear
+. forvalues w = 1/3 {
+  2.     nwtomata glasgow`w', mat(M`w')
+  3.     mata: st_matrix("A`w'", M`w')
+  4. }
+. keep smoke1 alcohol1 alcohol2 alcohol3
+. save glasgow_cov, replace
+. nwclear
+. use glasgow_cov, clear
+. forvalues w = 1/3 {
+  2.     nwset, mat(A`w') directed name(w`w')
+  3. }
+. nwset
+(3 networks)
+--------------------
+      w1
+      w2
+      w3
+. nwsaom, waves(w1 w2 w3) outdegree reciprocity transtrip samex(smoke1) seed(1)
+\end{lstlisting}
+The last command fits the model; its result is in Section~\ref{sec:firstexample} (with the same effects plus the covariate it gives \texttt{samex\_smoke1} $=0.133$ with standard error $0.146$).
+
+\section{A first complete example}\label{sec:firstexample}
+
+The classical first model has three effects: the outdegree (density) effect, the reciprocity effect and the transitive triplets effect. The first effect is required in every model.
+\begin{lstlisting}
+. nwwebuse glasgow, nwclear
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1)
+-----------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-----------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.687867   .1214406   -22.13   0.000    -2.925886   -2.449847
+ reciprocity |   2.457453   .2035477    12.07   0.000     2.058507      2.8564
+   transtrip |   .6202674   .0789534     7.86   0.000     .4655217    .7750132
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2
+-------------+---------------------
+        rate |    6.5292     5.2435
+          se |    1.0759     0.9023
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+  outdegree                 -0.139      reciprocity               -0.130
+  transtrip                 -0.096
+Overall maximum convergence ratio:  0.142
+\end{lstlisting}
+The fit takes a second or two.
+
+\paragraph{Reading the output.}
+\begin{itemize}[nosep]
+  \item The first line says that the model is estimated by the method of moments and, for a network-only model, conditionally (Section~\ref{sec:convergence}). \texttt{Periods: 2} are the periods between the three waves. With a two-wave model the line shows the estimated rate instead.
+  \item The coefficient table contains the parameters of the objective function with the standard errors from phase 3, the $z$-ratios and the confidence intervals. The label in the upper left corner shortens the name of the dependent network. A negative outdegree coefficient is typical: ties are rare, and an actor creates one only if the other effects make it worthwhile. The positive reciprocity coefficient says that actors prefer to reciprocate ties; the positive transitive triplets coefficient that they prefer to befriend friends of friends.
+  \item The rate parameters are listed per period below the table. Under conditional estimation the rate is the mean simulated time that the process needs, at rate 1 for every actor, to reproduce the observed amount of change, and the ``se'' is the standard deviation of that time. Under unconditional estimation the rates are estimated like the other parameters.
+  \item The convergence $t$-ratios are discussed next.
+\end{itemize}
+
+\paragraph{Checking convergence.} All $t$-ratios should be smaller than $0.1$ in absolute value, and the overall maximum convergence ratio smaller than $0.25$. In the example the overall ratio is $0.142$, which is acceptable, but two of the three individual ratios are larger than $0.1$. RSiena's advice is to run the estimation again from the current estimates when this happens. In \nwsaom{} that is done with \opt{theta0()}, which takes the starting values of the coefficients in the order of \texttt{e(b)}. An example with covariates, where the starting values are taken from the first fit:
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(2)
+. matrix b = e(b)
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) egox(alcohol1) altx(alcohol1) simx(alcohol1) theta0(`=b[1,1]' `=b[1,2]' `=b[1,3]' `=b[1,4]' `=b[1,5]' `=b[1,6]' `=b[1,7]') seed(3)
+\end{lstlisting}
+The first of these two fits has the overall maximum convergence ratio $0.087$ and all individual ratios below $0.05$; the second, started from its estimates, gives $0.082$. The coefficients of the two runs differ by much less than a standard error, which is the kind of agreement that you want to see. Another seed gives different digits but should give the same picture. The unconditional fit has the option \opt{unconditional}, and a restart must then also give the rates with \opt{rate0()} (an example is in the help file).
+
+\section{A model with covariates}
+
+Covariates are selected by options named after RSiena's effects. The first of the two fits above gives:
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip samex(smoke1) egox(alcohol1) altx(alcohol1) simx(alcohol1) seed(2)
+...
+-------------------------------------------------------------------------------
+glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    outdegree |  -2.780192   .1546546   -17.98   0.000     -3.08331   -2.477075
+  reciprocity |   2.425105   .1974413    12.28   0.000     2.038127    2.812083
+ samex_smoke1 |   .1092749   .1775741     0.62   0.538     -.238764    .4573139
+altx_alcohol1 |  -.0370562   .0735461    -0.50   0.614    -.1812038    .1070915
+egox_alcohol1 |   .0586204   .0876213     0.67   0.503    -.1131142     .230355
+    transtrip |   .6257352   .0735918     8.50   0.000     .4814978    .7699725
+simx_alcohol1 |   .5886311   .3123791     1.88   0.060    -.0236207    1.200883
+-------------------------------------------------------------------------------
+...
+RSiena effect names:
+  samex_smoke1                  same smoke1
+  altx_alcohol1                 alcohol1 alter
+  egox_alcohol1                 alcohol1 ego
+  simx_alcohol1                 alcohol1 similarity
+Covariates centred by their means, as RSiena's coCovar(centered = TRUE):
+  alcohol1                          2.880
+\end{lstlisting}
+Note three things. First, the coefficients are named \emph{effect}\texttt{\_}\emph{variable} in the spelling of the option; the effect types come in a fixed order, which is not the order of the options on the command line (\texttt{matrix list e(b)} shows it). Second, covariates are centred by their means by default, as in RSiena, so that the outdegree coefficient is RSiena's; the means are listed under the table and stored in \texttt{e(covmeans)}; \opt{nocenter} switches centring off. Third, the lines ``RSiena effect names'' give the names that RSiena uses for the effects, which are stored in \texttt{e(rsiena\_labels)}. A model with all effects of the table in the chapter on effects is written in the same way.
+
+\section{Two waves}
+
+Two waves can be given as \opt{wave1()} and \opt{wave2()}. The rate is then a scalar:
+\begin{lstlisting}
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity seed(1)
+-----------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 -> glasgow2
+Actors: 50                             Estimated rate:  5.500 (0.842)
+-----------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~2 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.249605   .1248134   -18.02   0.000    -2.494234   -2.004975
+ reciprocity |    2.46621   .2371179    10.40   0.000     2.001468    2.930953
+------------------------------------------------------------------------------
+(conditional: rate = mean time to reach the observed distance, se = its SD)
+Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
+  outdegree                 -0.054      reciprocity                0.024
+Overall maximum convergence ratio:  0.138
+\end{lstlisting}
+
+\section{A model with behavior co-evolution}
+
+A behavior is added with \opt{behavior()}, with one variable per wave. At least the effect \opt{linear} is required with it. The network side then has the effect \opt{behsim} (similarity of the behavior as a selection effect), and the behavior side has the effects \opt{linear}, \opt{quadratic} and \opt{avalt} (average alter, an influence effect). Co-evolution models are always estimated unconditionally.
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim behavior(alcohol1 alcohol2 alcohol3) linear quadratic avalt seed(12345)
+-----------------------------------------------------------------------------------------
+SAOM co-evolution (Method of Moments), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+Behavior: alcohol1 alcohol2 alcohol3
+-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+glasgow1_to~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    outdegree |  -2.760383   .1463104   -18.87   0.000    -3.047146    -2.47362
+  reciprocity |   2.367478   .2085952    11.35   0.000     1.958639    2.776317
+    transtrip |   .6150662   .0751121     8.19   0.000     .4678492    .7622831
+       behsim |   1.446294   .6382165     2.27   0.023     .1954127    2.697175
+   beh_linear |   .3965896   .2292768     1.73   0.084    -.0527847    .8459639
+beh_quadratic |   -.607822   .3590868    -1.69   0.091    -1.311619    .0959752
+    beh_avalt |   1.317363    .875507     1.50   0.132    -.3985988    3.033325
+-------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+             |   period1    period2
+-------------+---------------------
+network_rate |    6.4518     5.1274
+          se |    1.2578     0.9181
+behavior_r~e |    1.3194     1.8041
+          se |    0.3397     0.5375
+...
+Overall maximum convergence ratio:  0.143
+\end{lstlisting}
+The behavior coefficients carry the prefix \texttt{beh\_}; the network coefficients come first in \texttt{e(b)} (their number is \texttt{e(p\_net)}, here 4). The rates of the behavior are in \texttt{e(rates\_beh)}. The co-evolution is the subject of its own chapter.
+
+\section{Goodness of fit}
+
+After a fit, \texttt{estat gof} compares the observed network with networks simulated at the estimates, for the distributions of the outdegrees, of the indegrees and of the geodesic distances (the same three statistics as RSiena's defaults), with a Mahalanobis-distance test for each:
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip seed(1)
+. estat gof
+Goodness of fit (nwsaom), Mahalanobis-distance test (Lospinoso & Snijders 2019, ...), 50 simulated repl. at the fitted coefficients
+(pooled across all 2 periods by summation - real RSiena's own join=TRUE default)
+------------------------------------------------------------
+Outdegree     | Mahalanobis dist. =    8.739   p =  0.420 (no evidence against fit)
+Indegree      | Mahalanobis dist. =    9.308   p =  0.460 (no evidence against fit)
+Geodesic      | Mahalanobis dist. =   21.918   p =  0.020 (evidence AGAINST fit)
+------------------------------------------------------------
+\end{lstlisting}
+(In the output the plots are announced as well; the lines about them are omitted here.) A small $p$-value is evidence against the model for that statistic: here the three-effect model does not reproduce the distribution of the geodesic distances. The $p$-values are returned in \texttt{r(p\_outdegree)}, \texttt{r(p\_indegree)} and \texttt{r(p\_geodesic)}. Goodness of fit has its own chapter.
+
+\section{Stored results}\label{sec:eresults}
+
+The most used results of the three-wave fit above are these (\texttt{ereturn list} shows all of them):
+\begin{lstlisting}
+. matrix list e(b)
+e(b)[1,3]
+      outdegree  reciprocity    transtrip
+y1   -2.6878666    2.4574534    .62026743
+. display e(tconv_max)
+.1420811
+. matrix list e(rates)
+e(rates)[1,2]
+        period1    period2
+rate   6.529248  5.2435416
+\end{lstlisting}
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.6cm}p{11cm}@{}}
+\toprule
+Result & Content \\
+\midrule
+\texttt{e(b)}, \texttt{e(V)} & Coefficients and their covariance matrix; only the parameters of the objective function (the rates are not included). In a co-evolution fit the network coefficients come first, then the behavior coefficients (\texttt{beh\_}), \texttt{e(p\_net)} is the number of the network ones. \\
+\texttt{e(tratio)}, \texttt{e(tconv)}, \texttt{e(tconv\_max)} & Convergence $t$-ratios of the coefficients, of all parameters including the rates, and the overall maximum convergence ratio. \\
+\texttt{e(rate)}, \texttt{e(rate\_se)} & Rate and its standard error in a two-wave fit (\opt{wave1()}/\opt{wave2()}). \\
+\texttt{e(rates)}, \texttt{e(rates\_se)}, \texttt{e(rate\_tratios)} & The same per period, $1\times(W-1)$ matrices, in a fit with \opt{waves()}. \\
+\texttt{e(rates\_beh)} & Behavior rates per period (co-evolution). \\
+\texttt{e(ratecoefs)} & Covariate-rate coefficients of \opt{ratecov()} (with standard errors, $t$-ratios and the flag whether a coefficient was kept fixed). \\
+\texttt{e(covmeans)} & Means used to centre the covariates. \\
+\texttt{e(rsiena\_labels)} & RSiena's names of the coefficients, in the order of \texttt{e(b)}, separated by \texttt{|}. \\
+\texttt{e(conditional)} & 1 for conditional, 0 for unconditional estimation. \\
+\texttt{e(engine)} & \texttt{native} or \texttt{mata}: which simulator ran (Chapter~\ref{ch:technical}). \\
+\texttt{e(waves)} & The names of the waves. \\
+\texttt{e(nodes)}, \texttt{e(nwaves)} & Number of actors and of waves. \\
+\bottomrule
+\end{tabular}
+\end{center}
+Because \texttt{e(b)} and \texttt{e(V)} are in place, ordinary Stata postestimation works on them, for example \texttt{test} and \texttt{lincom} for Wald tests of the coefficients:
+\begin{lstlisting}
+. test reciprocity = transtrip
+ ( 1)  reciprocity - transtrip = 0
+           chi2(  1) =   66.36
+         Prob > chi2 =    0.0000
+\end{lstlisting}
+
+\section{A word on run time and reproducibility}
+
+The examples of this chapter run in one to a few seconds each. The estimates depend on the random-number seed, which you set with \opt{seed()}; for a given seed, the result is the same with any number of threads (\opt{cores()}). Always report the seed together with the model, and judge a model by the convergence ratios and not by the digits of a single run.

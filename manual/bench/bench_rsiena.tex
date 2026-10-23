@@ -1,0 +1,43 @@
+\begin{table}[htbp]
+\centering
+\caption{\texttt{nwsaom} and RSiena 1.6.6 on the same models and data, both single-threaded:
+largest difference in a mean estimate (in RSiena standard errors) and median seconds per fit}
+\label{tab:bench}
+\footnotesize
+\begin{tabular}{l>{\raggedright\arraybackslash}p{0.30\textwidth}rrrrrr}
+\toprule
+ & Specification & $n$ & Waves & Max diff & \texttt{nwsaom} & RSiena & Speed-up \\
+\midrule
+\multicolumn{8}{l}{\textit{Network}} \\
+N1 & \texttt{outdegree}, \texttt{reciprocity} & 50 & 2 & 0.02 & 0.31 & 1.33 & 4.3 \\
+N2 & + \texttt{gwesp} & 50 & 3 & 0.07 & 1.46 & 2.78 & 1.9 \\
+N4 & + \texttt{gwesp}, \texttt{samex()} & 50 & 3 & 0.03 & 1.52 & 3.42 & 2.2 \\
+N5 & + \texttt{gwesp}, \texttt{indegpopularity}, \texttt{outactivity} & 50 & 3 & 0.07 & 2.63 & 5.02 & 1.9 \\
+N6 & + \texttt{gwesp}, \texttt{egox()}, \texttt{altx()}, \texttt{simx()} & 50 & 3 & 0.06 & 1.96 & 4.99 & 2.5 \\
+N7 & N2, unconditional estimation & 50 & 3 & 0.03 & 1.71 & 3.55 & 2.1 \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Undirected}} \\
+U1 & \texttt{outdegree}, default model (forcing) & 50 & 2 & 0.02 & 0.20 & 0.52 & 2.6 \\
+U2 & \texttt{outdegree}, \texttt{symtype(joint)} & 50 & 2 & 0.06 & 0.23 & 1.75 & 7.7 \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Co-evolution}} \\
+C1 & N2 + alcohol: \texttt{linear}, \texttt{quadratic}, \texttt{avalt} & 50 & 3 & 0.07 & 2.60 & 7.38 & 2.8 \\
+C2 & N2 + smoking: \texttt{linear}, \texttt{quadratic}, \texttt{avsim} & 50 & 3 & 0.06 & 2.75 & 8.74 & 3.2 \\
+C3 & N1 + alcohol: \texttt{linear}, \texttt{avalt} & 50 & 2 & 0.04 & 0.63 & 2.74 & 4.4 \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Realistic}} \\
+R1 & full network model (see text) & 50 & 3 & 0.06 & 4.50 & 8.57 & 1.9 \\
+R2 & R1 network part + alcohol co-evolution & 50 & 3 & 0.05 & 5.49 & 12.1 & 2.2 \\
+R3 & undirected: \texttt{gwesp}, \texttt{samex()}, \texttt{simx()} & 50 & 2 & 0.03 & 0.66 & 1.21 & 1.8 \\
+R4 & R1 & 200 & 3 & 0.05 & 72.9 & 173 & 2.4 \\
+R5 & R2 & 200 & 3 & 0.07 & 87.6 & 177 & 2.0 \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Larger networks}} \\
+S100 & N2 & 100 & 3 & 0.04 & 5.90 & 11.2 & 1.9 \\
+S200 & N2 & 200 & 3 & 0.04 & 25.6 & 55.2 & 2.2 \\
+S500 & N2 & 500 & 3 & 0.03 & 200 & 375 & 1.9 \\
+T200 & C1 & 200 & 3 & 0.05 & 41.8 & 109 & 2.6 \\
+\bottomrule
+\end{tabular}
+
+\end{table}

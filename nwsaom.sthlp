@@ -323,8 +323,8 @@ and valued/weighted waves are rejected with an explicit error - never silently c
 {p2col: o}Composition change (actors joining/leaving between waves, {opt present()}) and missing
 tie/behavior data ({opt missnet()}/{opt missbeh()}) are both supported - see
 {help nwsaom_remarks##compchange:Composition change} and {help nwsaom_remarks##missingdata:Missing data} in nwsaom_remarks for
-each one's own scope and caveats. RSiena's own more general continuous/fractional within-period
-join-leave timing is out of scope - {cmd:nwsaom} supports whole-period composition change only.{p_end}
+each one's own scope and caveats. Joiners and leavers at fractional times inside a period are supported through
+{opt joinat()}/{opt leaveat()} (RSiena's {cmd:sienaCompositionChange()} option 1).{p_end}
 {p2col: o}Behavior co-evolution ({opt behavior()}) supports several co-evolving behaviors
 ({cmd:behavior(a1 a2 a3 : linear quadratic avalt | s1 s2 s3 : linear avalt)}), which interact only through the
 network; see {help nwsaom_remarks##multibeh:Several behaviors}. The linear shape effect can be split into endowment/creation roles

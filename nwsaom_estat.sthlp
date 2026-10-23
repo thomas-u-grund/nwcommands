@@ -84,9 +84,8 @@ report entirely for that call rather than adding to it.
 own {cmd:TriadCensus()}), reusing {helpb nwtriads}'s own census machinery on a temporary network
 built from each simulated/observed wave. Unlike the three distribution statistics above, the triad
 census reports RAW counts, not proportions - verified directly against real RSiena's own R source,
-matching it exactly (not merely "similar in spirit"). {cmd:nwsaom}'s own networks are always
-directed, so all 16 categories are always reported (no undirected-network special case, unlike
-{helpb nwergm}'s own triad-census report).
+matching it exactly (not merely "similar in spirit"). All 16 categories are always reported. After a non-directed fit ({opt symmetric} or undirected
+waves) every dyad is mutual or null, so only the categories without asymmetric dyads can be non-zero.
 
 {pstd}
 {bf:Limits.} {cmd:estat gof} is not yet available after a two-mode (bipartite) fit (it stops with an error), and not after {cmd:nwsaom multinet}. It works after directed and non-directed one-mode fits with the native-only effects.
