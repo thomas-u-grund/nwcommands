@@ -48,6 +48,12 @@ f nwreplacemat.ado
 f nwrestore.ado
 f nwring.ado
 f nwsaom.ado
+f nwsaom_multiplex.ado
+f nwsaom_multinet.ado
+f _nwsaom_nx.ado
+f _nwsaom_rsnotes.ado
+f _nwsaom_tconvtable.ado
+f _nwsaom_postengine.ado
 f nwsaom_estat.ado
 f nwsave.ado
 f nwset.ado

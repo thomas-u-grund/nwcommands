@@ -74,4 +74,14 @@ foreach ef in simdist2 simegodist2 simegoindist2 {
 	capture nwsaom, waves(cs1 cs2 cs3) symmetric outdegree behavior(z1 z2 z3 : linear) netbeh(`ef') k0(10) k3(30) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 }
+* two category covariates (protocol 59): netx(samexv:v1:v2) netx(samexvinpop:v1:v2[:#]); siena07: dev/saom_rsiena_dbl.R/.do
+gen double ca1 = 1 + mod(_n, 3)
+gen double ca2 = 1 + mod(_n * 5, 4)
+foreach sp in samexv:ca1:ca2 samexvinpop:ca1:ca2 samexvinpop:ca1:ca2:1 samexvinpop:ca1:ca2:2 samexvinpop2:ca1:ca2 {
+	capture nwsaom, waves(cd1 cd2 cd3) outdegree reciprocity netx(`sp') k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 3
+}
+capture nwsaom, waves(cd1 cd2 cd3) outdegree netx(samexv:ca1) k3(30)
+assert _rc != 0
 di "PASS cz2"

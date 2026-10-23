@@ -1764,7 +1764,7 @@ static double xt_stat(graph_t *g, int termcode, const double *a, double p1) {
    a[2] = its average reciprocal degree. The ego effects (10-17) are the functions of the ego's degree that RSiena offers for its interactions, used here alone.
    =================================================================== */
 #define TERMCODE_DG0 260
-#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 30)
+#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 40)
 static double dg_recdeg(graph_t *g, long i) {
 	long m, c = 0;
 	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, g->outadj[i].nb[m], i)) c++;
@@ -1801,6 +1801,35 @@ static double dg_value(graph_t *g, int v, const double *a, double p1, long i, lo
 		case 15: return xt_S((double)g->din[i], p1) - xt_S(av, p1);
 		case 16: return xt_recip(xt_S((double)g->din[i], p1));
 		case 17: return xt_S(dg_recdeg(g, i), p1) - xt_S(avr, p1);
+		case 33: case 34: {
+			/* sameXV / sameXVInPop (sameXVInPop2 is the same function without missing values): two integer covariates packed as 64 * first + second in the attribute */
+			long ci = (long)floor(a[i] / 64.0), cj2 = (long)floor(a[j] + 0.5) - 64 * (long)floor(a[j] / 64.0);
+			long q, m2, h, b;
+			if (v == 33) return (ci == cj2 && cj2 >= 1) ? 1.0 : 0.0;
+			b = cj2;
+			if (ci < 1 || b < 1) return 0.0;
+			{
+				double cnt = 0.0, val;
+				for (q = 1; q <= g->n; q++) {
+					if ((long)floor(a[q] / 64.0) != ci) continue;
+					for (m2 = 0; m2 < g->outadj[q].len; m2++) {
+						h = g->outadj[q].nb[m2];
+						if ((long)floor(a[h] + 0.5) - 64 * (long)floor(a[h] / 64.0) == b) cnt++;
+					}
+				}
+				val = cnt;
+				if (p1 >= 3.0 - 1e-9) {
+					double n1 = 0.0, n2 = 0.0;
+					for (q = 1; q <= g->n; q++) {
+						if ((long)floor(a[q] / 64.0) == ci) n1++;
+						if ((long)floor(a[q] + 0.5) - 64 * (long)floor(a[q] / 64.0) == b) n2++;
+					}
+					val /= (n1 * n2);
+				}
+				if (fabs(p1 - 2.0) < 1e-9 || fabs(p1 - 4.0) < 1e-9) val = sqrt(val);
+				return val;
+			}
+		}
 		case 20: return g->din[i] == 0 ? 1.0 : 0.0;		/* inIsDegree: the tie statistic and the contribution are 1 for an in-isolate ego */
 		case 21: {
 			/* inStructEq: (n - 2) * structmean - |In(i) symmetric-difference In(j)| without i and j (RSiena InStructuralEquivalenceEffect); a[3] = structmean */

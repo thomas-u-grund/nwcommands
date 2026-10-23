@@ -3765,6 +3765,44 @@ void SaomRegDg(class ErgmModel scalar M, string scalar eff, real scalar v, real 
 	td.attr[3] = (args() >= 8 ? sm : 0)
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff))
 }
+/* protocol 59: two integer covariates (sameXV / sameXVInPop): attr = 64 * first + second (raw categories 0 .. 20), code 260 + v */
+void SaomRegDc(class ErgmModel scalar M, string scalar eff, real scalar v, string scalar var1, string scalar var2, real scalar n, real scalar p1) {
+	class ErgmTermData scalar td
+	real colvector x1, x2
+	x1 = st_data(1::n, var1)
+	x2 = st_data(1::n, var2)
+	if (any(x1 :>= .) | any(x2 :>= .) | any(x1 :< 0) | any(x2 :< 0) | any(x1 :> 20) | any(x2 :> 20)) {
+		errprintf("nwsaom: " + eff + "(): " + var1 + " and " + var2 + " must be integer categories 0 .. 20 without missing values.\n")
+		exit(198)
+	}
+	td = ErgmTermData()
+	td.levels = (260 + v \ 0)
+	td.decay = p1
+	td.attr = 64 :* round(x1) :+ round(x2)
+	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + var1 + "_" + var2))
+}
+/* netx(samexv:var1:var2[:#]): returns the display name, "" when the token is another netx effect */
+string scalar SaomRegDcAll(class ErgmModel scalar M, string scalar opt, real scalar n) {
+	string rowvector tk, parts
+	string scalar nm, eff
+	real scalar k, p1
+	nm = ""
+	tk = tokens(opt)
+	for (k=1; k<=cols(tk); k++) {
+		parts = tokens(tk[k], ":")
+		parts = select(parts, parts :!= ":")
+		if (!anyof(("samexv", "samexvinpop", "samexvinpop2"), parts[1])) continue
+		if (cols(parts) < 3) {
+			errprintf("netx(): " + tk[k] + " needs two variables: samexv:var1:var2[:#].\n")
+			exit(198)
+		}
+		eff = parts[1]
+		p1 = (cols(parts) >= 4 ? strtoreal(parts[4]) : 3)
+		SaomRegDc(M, eff, (eff == "samexv" ? 33 : 34), parts[2], parts[3], n, p1)
+		nm = nm + " " + eff + "(" + parts[2] + "," + parts[3] + ")"
+	}
+	return(nm)
+}
 /* protocol 49: a native-only network effect of a dyadic covariate: W is the raw n x n matrix (missing and the diagonal 0, never centred) */
 void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
 	class ErgmTermData scalar td
@@ -13773,4 +13811,129 @@ void SaomMBEngineCheck(pointer(class ErgmGraph scalar) rowvector Gwaves, class E
 	}
 }
 
+/* ownx() / instructeq averages (were in nwsaom.ado; Mata functions of an ado-file are private to that file, so _nwsaom_nx.ado cannot see them) */
+/* ownx(): accumulate the number of ties and of reciprocated out-ties of one wave (for the averages over all waves) */
+void __nwsaom_dg_acc(class ErgmGraph scalar G) {
+	external real scalar __nwsaom_dg_ties, __nwsaom_dg_rec
+	real matrix e
+	real scalar k, r
+	e = G.all_ties()
+	__nwsaom_dg_ties = __nwsaom_dg_ties + rows(e)
+	r = 0
+	for (k=1; k<=rows(e); k++) r = r + G.has_edge(e[k,2], e[k,1])
+	__nwsaom_dg_rec = __nwsaom_dg_rec + r
+}
+/* inStructEq: RSiena calcStructmeanGroup(), the sums over the waves 1 .. W-1 (2 * outdegree * (n - 1 - outdegree) and n * (n - 1) * (n - 2)) */
+void __nwsaom_sm_acc(class ErgmGraph scalar G) {
+	external real scalar __nwsaom_dg_sma, __nwsaom_dg_smb
+	real scalar i, d, n
+	n = G.n
+	for (i=1; i<=n; i++) {
+		d = G.dout[i]
+		__nwsaom_dg_sma = __nwsaom_dg_sma + 2 * d * (n - 1 - d)
+	}
+	__nwsaom_dg_smb = __nwsaom_dg_smb + n * (n - 1) * (n - 2)
+}
+/* the bridges of nwsaom.ado and the multiplex fit (Mata functions of an ado-file are private to that file; nwsaom_multinet.ado / nwsaom_multiplex.ado / _nwsaom_nx.ado need them) */
+/* two-mode: the ties actor -> event only (the network is stored symmetrically over all nodes) */
+void __nwsaom_bridge_twomode(pointer(class nw_def scalar) scalar netobj,
+	class ErgmGraph scalar G, real rowvector isactor){
+	real scalar i, k
+	real matrix nb
+
+	for (i=1; i<=G.n; i++) {
+		if (!isactor[i]) continue
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!isactor[nb[k]]) G.toggle(i, nb[k])
+		}
+	}
+}
+
+void __nwsaom_bridge_from_netobj(pointer(class nw_def scalar) scalar netobj,
+	class ErgmGraph scalar G){
+	real scalar i, k
+	real matrix nb
+
+	for (i=1; i<=G.n; i++) {
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			G.toggle(i, nb[k])
+		}
+	}
+}
+void __nwsaom_mp_fit_and_post(
+	pointer(class nw_def scalar) scalar netobj1a, pointer(class nw_def scalar) scalar netobj1b,
+	pointer(class nw_def scalar) scalar netobj2a, pointer(class nw_def scalar) scalar netobj2b,
+	real scalar n, real rowvector theta01, real rowvector theta02,
+	real scalar K0, real scalar K3, real scalar firstg,
+	real scalar wantcrprod, real scalar wantcrprodb,
+	string scalar bname, string scalar Vname, string scalar rate1name, string scalar rate2name,
+	string scalar ncoefname) {
+
+	class ErgmGraph scalar G1a, G1b, G2a, G2b
+	class ErgmModel scalar M1, M2
+	class ErgmTermData scalar td1a, td1b, td1c, td2a, td2b, td2c
+	struct SaomCoevNetNetFit scalar fit
+
+	G1a = ErgmGraph()
+	G1a.init(n, 1)
+	__nwsaom_bridge_from_netobj(netobj1a, G1a)
+	G1b = ErgmGraph()
+	G1b.init(n, 1)
+	__nwsaom_bridge_from_netobj(netobj1b, G1b)
+	G2a = ErgmGraph()
+	G2a.init(n, 1)
+	__nwsaom_bridge_from_netobj(netobj2a, G2a)
+	G2b = ErgmGraph()
+	G2b.init(n, 1)
+	__nwsaom_bridge_from_netobj(netobj2b, G2b)
+
+	M1 = ErgmModel()
+	M1.init()
+	td1a = ErgmTermData()
+	M1.addterm("outdegree", 1, &stat_edges(), &change_edges(), td1a, ("outdegree"))
+	td1b = ErgmTermData()
+	M1.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td1b, ("reciprocity"))
+	// crprod (Stage 2): net1's own effect list gets a term reading net2's
+	// CURRENT tie state - td1c.xnet itself is left NULL here; it is
+	// re-pointed at whichever G2 working copy is "live" for a given
+	// simulation replicate by SaomEstimateRMCoevNetNet() itself (see that
+	// function's own "crprod" re-pointing loops), not set once here,
+	// since G2a/G2b (the OBSERVED start/end networks) are never what a
+	// ministep actually reads mid-simulation.
+	if (wantcrprod) {
+		td1c = ErgmTermData()
+		M1.addterm("crprod", 1, &stat_crprod(), &change_crprod(), td1c, ("crprod"))
+	}
+
+	M2 = ErgmModel()
+	M2.init()
+	td2a = ErgmTermData()
+	M2.addterm("outdegree", 1, &stat_edges(), &change_edges(), td2a, ("outdegree"))
+	td2b = ErgmTermData()
+	M2.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td2b, ("reciprocity"))
+	if (wantcrprodb) {
+		td2c = ErgmTermData()
+		M2.addterm("crprod", 1, &stat_crprod(), &change_crprod(), td2c, ("crprod"))
+	}
+
+	fit = SaomEstimateRMCoevNetNet(G1a, G1b, M1, G2a, G2b, M2, theta01, theta02, K0, K3, firstg)
+
+	st_matrix(bname, (fit.theta1, fit.theta2))
+	st_matrix(Vname, fit.V)
+	st_numscalar(rate1name, fit.rate1)
+	st_numscalar(rate2name, fit.rate2)
+	st_numscalar(rate1name + "_se", fit.rate1SE)
+	st_numscalar(rate2name + "_se", fit.rate2SE)
+	st_numscalar(rate1name + "_tconvmax", fit.tconvMax)
+	st_matrix(rate1name + "_tconv", fit.tconv)
+	// Coefficient names built here (not hardcoded in nwsaom_multiplex's
+	// own Stata code) since the column count/order now varies with
+	// wantcrprod/wantcrprodb - posted as one space-separated string
+	// Stata reads back into `matrix colnames', the same "Mata decides,
+	// Stata just applies" split this file's own single-network dispatch
+	// already uses elsewhere for variable-length coefficient lists.
+	st_global(ncoefname, invtokens(("net1_" :+ M1.coefnames, "net2_" :+ M2.coefnames)))
+}
 end
