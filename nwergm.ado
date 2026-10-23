@@ -25,7 +25,7 @@ program nwergm, eclass
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) BRIDGEINTERVAL(integer 0) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -588,6 +588,13 @@ program nwergm, eclass
 	// correct observed density and its own reported "Observed" column
 	// didn't match the true network by hand-inspection.
 	mata: st_local("__ergm_obsties", strofreal(__nwergm_last_G.nties))
+	// missing dyads (NA ties): excluded from the pseudolikelihood, imputed for the MCMC start (as R ergm)
+	_nwergm_miss detect, netobj(`netobj') directed(`directed') twomode(`is2mode') nodes(`nodes') netname(`netname')
+	local __ergm_nmiss = r(nmiss)
+	if `__ergm_nmiss' > 0 & ("`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "") {
+		di "{err}missing dyads cannot currently be combined with freedyads(), blockdiag() or fixdensity."
+		error 198
+	}
 
 	// --- spcache (Part XXV performance work, docs/CERTIFICATION.md unit
 	// 82/132): the incremental shared-partner cache exists and is fully
@@ -1310,6 +1317,11 @@ program nwergm, eclass
 			error 198
 		}
 		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"=="true")))
+		mata: st_local("__nacov", strofreal(ergm_offdiag_missing(`__td_ec`__ergm_termidx''.edgecovmat)))
+		if `__nacov' {
+			di "{err}In term {bf:edgecov/hamming}: network {bf:`__ergm_v'} has missing dyads, which is not supported for a dyadic covariate."
+			error 416
+		}
 		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
 	}
@@ -1330,6 +1342,11 @@ program nwergm, eclass
 			error 198
 		}
 		mata: `__td_hm`__ergm_termidx''.edgecovmat = *(`hm`__ergm_termidx'netobj'->get_matrix_mod(0,("`directed'"=="true")))
+		mata: st_local("__nacov", strofreal(ergm_offdiag_missing(`__td_hm`__ergm_termidx''.edgecovmat)))
+		if `__nacov' {
+			di "{err}In term {bf:edgecov/hamming}: network {bf:`__ergm_v'} has missing dyads, which is not supported for a dyadic covariate."
+			error 416
+		}
 		mata: __nwergm_last_M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), `__td_hm`__ergm_termidx'', ("hamming_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_hm`__ergm_termidx''"
 	}
@@ -1788,6 +1805,9 @@ program nwergm, eclass
 		mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
 	}
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
+	if `__ergm_nmiss' > 0 {
+		mata: `__nw_D' = select(`__nw_D', ergm_mple_keep(__nwergm_last_G, __nwergm_missmat))
+	}
 	mata: st_local("__ergm_nrows", strofreal(rows(`__nw_D')))
 	mata: st_local("__ergm_p", strofreal(cols(`__nw_D')-1))
 
@@ -1829,7 +1849,7 @@ program nwergm, eclass
 		// re-fetching of anything, `__nw_D' was already built above
 		// regardless of which path fits it).
 		local __ergm_curved_native_used = 0
-		if `__ergm_mple_native_used' {
+		if `__ergm_mple_native_used' & `__ergm_nmiss' == 0 {
 			mata: st_local("__ergm_curved_native_used", strofreal(ErgmNativeCurvedMPLEFit(__nwergm_last_M, __nwergm_last_G, `__ergm_curved_start', "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")))
 		}
 		if !`__ergm_curved_native_used' {
@@ -1939,6 +1959,7 @@ program nwergm, eclass
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
+		ereturn scalar nmissing = `__ergm_nmiss'
 		ereturn scalar curved = `__ergm_curved'
 		// Harmonisation unit 145: report whether the design-matrix build
 		// itself used the native backend, mirroring e(native) on the
@@ -1948,6 +1969,7 @@ program nwergm, eclass
 		ereturn scalar native = `__ergm_mple_native_used'
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
+		_nwergm_fitstats, dmat(`__nw_D') method(mple) dind(`__ergm_dind') curved(`__ergm_curved')
 		if `__ergm_curved' {
 			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own BFGS-based fit)"
 		}
@@ -2078,7 +2100,20 @@ program nwergm, eclass
 		// whole time. For an unmasked model the two fields are always
 		// equal, so this is a no-op change there.
 		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled_sample))
+		if `__ergm_nmiss' > 0 {
+			// missing dyads: second, constrained chain (only the missing dyads free), as R ergm
+			capture mata: mata drop __nwergm_last_Gobs
+			mata: __nwergm_last_Gobs = ergm_graph_clone(__nwergm_last_G)
+			mata: __nwergm_last_Gobs.set_dyadmask(__nwergm_missmat)
+			mata: __nwergm_last_M.obs_G = &__nwergm_last_Gobs
+			mata: __nwergm_last_M.obs_mask = __nwergm_missmat
+			if "`proposal'" == "tnt" mata: __nwergm_last_M.obs_propfn = &ergm_propose_tnt_masked()
+			else mata: __nwergm_last_M.obs_propfn = &ergm_propose_uniform_masked()
+			mata: __nwergm_last_M.obs_active = 1
+		}
 
+		capture mata: mata drop __ergm_obsstat
+		mata: __ergm_obsstat = __nwergm_last_M.full_statistic(__nwergm_last_G)
 		tempname __fit
 		if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
@@ -2239,6 +2274,7 @@ program nwergm, eclass
 		ereturn scalar curved = `__ergm_curved'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
+		ereturn scalar nmissing = `__ergm_nmiss'
 		// the final simulation's own sufficient-statistic draws
 		// (samplesize x nparam), doubling as nwergm's basic MCMC
 		// diagnostics sample (Part XIX) - consumed by `estat mcmcdiag'
@@ -2283,6 +2319,9 @@ program nwergm, eclass
 		}
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
+		_nwergm_fitstats, dmat(`__nw_D') method(mcmle) propfn(`__ergm_propfn') mcmcburnin(`mcmcburnin') mcmcinterval(`mcmcinterval') ///
+			mcmcsamplesize(`mcmcsamplesize') intervalfinal(`__ergm_interval_final') curved(`__ergm_curved') bridgesteps(`bridgesteps') ///
+			bridgesamplesize(`bridgesamplesize') bridgeinterval(`bridgeinterval') `nologlik'
 		if `__ergm_curved' {
 			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own curved-model machinery)"
 		}
@@ -3352,5 +3391,12 @@ program _nwergm_numvar
 		di "{err}{bf:`term'(`v')}: {bf:`v'} is a string variable; nwergm needs a numeric attribute."
 		di "{err}Encode it first, e.g. {bf:encode `v', generate(`v'_n)}, and specify {bf:`term'(`v'_n)}."
 		error 109
+	}
+	local __nn = _N
+	capture mata: st_local("__nn", strofreal(__nwergm_last_G.n))
+	qui count if missing(`v') in 1/`__nn'
+	if r(N) > 0 {
+		di "{err}In term {bf:`term'}: attribute {bf:`v'} has missing data, which is not currently supported by ergm."
+		error 416
 	}
 end
