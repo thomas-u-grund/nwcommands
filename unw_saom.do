@@ -9189,12 +9189,14 @@ struct SaomCoevMultiFit {
 
 /* a two-mode network with a co-evolving behavior: the behavior of the EVENT rows is set to the actors' mean (so the mean, the range and the centred shape statistics are those of the actors) */
 real colvector SaomTmBeh(real colvector x) {
-	external real rowvector __nwsaom_tm_isactor
+	pointer(real rowvector) scalar pa
+	real rowvector ia
 	real colvector out
-	if (findexternal("__nwsaom_tm_isactor") == NULL) return(x)
-	if (cols(__nwsaom_tm_isactor) != rows(x)) return(x)
-	out = x
-	out = out :* __nwsaom_tm_isactor' :+ mean(select(x, __nwsaom_tm_isactor')) :* (1 :- __nwsaom_tm_isactor')
+	pa = findexternal("__nwsaom_tm_isactor")
+	if (pa == NULL) return(x)
+	ia = *pa
+	if (cols(ia) != rows(x)) return(x)
+	out = x :* ia' :+ mean(select(x, ia')) :* (1 :- ia')
 	return(out)
 }
 /* protocol 62: structural (fixed) dyads of a two-mode network with a co-evolving behavior: the mask is the external __nwsaom_coev_struct (1 = fixed), set by nwsaom.ado */
