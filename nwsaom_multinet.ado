@@ -105,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) THETA0(numlist) FIX(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) BEHEFF12(string) BEHEFF21(string) THETA0(numlist) FIX(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
@@ -190,14 +190,19 @@ program define nwsaom_multinet, eclass
 	}
 	local hasbeh = ("`behavior'" != "")
 	if `hasbeh' {
-		if "`beheff1'`beheff2'" == "" local beheff1 "linear quadratic avalt"
+		if "`beheff1'`beheff2'`beheff12'`beheff21'" == "" local beheff1 "linear quadratic avalt"
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
 		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))
 		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh2_"))
-		local __n1 : word count `beheff1'
-		local __n2 : word count `beheff2'
-		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1))
+		local __n1 : word count `__b1'
+		local __n2 : word count `__b2'
+		// behavior effects of both networks (beheff12: the first network of the effect is net1, beheff21: it is net2)
+		mata: st_local("__b3", SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff12'", 0, "beh12_"))
+		mata: st_local("__b4", SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff21'", 1, "beh21_"))
+		local __n3 : word count `__b3'
+		local __n4 : word count `__b4'
+		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1), J(1, `__n3' + `__n4', 0))
 		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
 	}
 	// theta0() / fix(): starting values and fixed effects, in the order of the coefficients (net1_*, net2_*, beh_*)

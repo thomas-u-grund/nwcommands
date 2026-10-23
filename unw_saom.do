@@ -8952,6 +8952,10 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	cfg1 = SaomNativeSetup(M1)
 	cfg2 = SaomNativeSetup(M2)
 	cfgB = SaomBehaviorNativeSetup(Mbeh)
+	if (any(cfgB.termcodes :>= 20000) & ver < 100) {
+		errprintf("nwsaom multinet: the behavior effects of both networks need a newer plugin (this one is protocol " + strofreal(ver) + "); rebuild or update it.\n")
+		exit(198)
+	}
 	if (!cfg1.eligible | !cfg2.eligible | !cfgB.eligible) {
 		errprintf("nwsaom multinet: an effect has no native implementation.\n")
 		exit(198)
@@ -8983,6 +8987,7 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 		tb1 = SaomCoevStatBeh(Bend, *G1[pd], Mbeh, zero)
 		tb2 = SaomCoevStatBeh(Bend, *G2[pd], Mbeh, zero)
 		for (k=1; k<=pb; k++) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
+		for (k=1; k<=pb; k++) if (cfgB.termcodes[k] >= 20000) C.target[pd, p1 + p2 + k] = SaomMNBothStat(*Behwaves[pd+1], *G1[pd], *G2[pd], cfgB.termcodes[k], overallMean)
 		C.trb[pd] = sum(abs(*Behwaves[pd+1] - *Behwaves[pd]))
 		rateb0[pd] = SaomBehaviorRateStart(*Behwaves[pd], *Behwaves[pd+1])
 	}
@@ -9014,6 +9019,77 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	SaomBatchCleanup()
 	SaomNativeCleanupFrame()
 	return(fit)
+}
+
+/* protocol 100: behavior effects of two networks (RSiena FFDeg BBDeg FBDeg FRDeg BRDeg BFDeg indegMixedPop outdegMixedPop). code = 20000 + 100*swap + 10*f + sub
+   (see native/saom_sim.c): the observed statistic sum_i (z_i - mean) * D_i of the end behavior z on the STARTING networks. */
+real colvector SaomMNBothDeg(class ErgmGraph scalar Ga, class ErgmGraph scalar Gb, real scalar code) {
+	real scalar n, f, sub, swap, r
+	real matrix A1, A2, e
+	real colvector D
+	n = Ga.n
+	sub = mod(code - 20000, 10)
+	f = mod(floor((code - 20000) / 10), 10)
+	A1 = J(n, n, 0)
+	A2 = J(n, n, 0)
+	e = Ga.all_ties()
+	for (r=1; r<=rows(e); r++) A1[e[r,1], e[r,2]] = 1
+	e = Gb.all_ties()
+	for (r=1; r<=rows(e); r++) A2[e[r,1], e[r,2]] = 1
+	if (f == 0) D = rowsum(A1 :* A2)
+	else if (f == 1) D = colsum(A1 :* A2)'
+	else if (f == 2) D = rowsum(A1 :* A2')
+	else if (f == 3) D = rowsum(A1 :* A2 :* A2')
+	else if (f == 4) D = colsum(A1 :* A2 :* A2')'
+	else if (f == 5) D = colsum(A1 :* A2')'
+	else if (f == 6) D = A1' * colsum(A2)'
+	else D = A1 * colsum(A2)'
+	if (sub & f < 6) D = D - ((f == 0 | f == 2 | f == 3) ? rowsum(A1) : colsum(A1)')
+	return(D)
+}
+real scalar SaomMNBothStat(real colvector z, class ErgmGraph scalar G1, class ErgmGraph scalar G2, real scalar code, real scalar zmean) {
+	if (mod(floor((code - 20000) / 100), 10) == 1) return(sum((z :- zmean) :* SaomMNBothDeg(G2, G1, code)))
+	return(sum((z :- zmean) :* SaomMNBothDeg(G1, G2, code)))
+}
+/* adds the behavior effects of two networks named in `tokens' (ffdeg bbdeg fbdeg frdeg brdeg bfdeg indegmixedpop outdegmixedpop, each optionally with :2 = subtract the
+   degree, as RSiena's parameter 2) to a behavior model; swap = 1 when the first network of the effect is the second network of the model. Returns the names added. */
+string scalar SaomMNAddBoth(class SaomBehaviorModel scalar Mbeh, string scalar tokens, real scalar swap, string scalar pre) {
+	string rowvector tk
+	string scalar nm, par, out
+	real scalar i, f, sub
+	string rowvector fams
+	fams = ("ffdeg", "bbdeg", "fbdeg", "frdeg", "brdeg", "bfdeg", "indegmixedpop", "outdegmixedpop")
+	tk = tokens(tokens)
+	out = ""
+	for (i=1; i<=cols(tk); i++) {
+		nm = tk[i]
+		par = ""
+		if (strpos(nm, ":")) {
+			par = substr(nm, strpos(nm, ":") + 1, .)
+			nm = substr(nm, 1, strpos(nm, ":") - 1)
+		}
+		f = 0
+		for (sub=1; sub<=cols(fams); sub++) if (fams[sub] == nm) f = sub
+		if (f == 0) {
+			errprintf("nwsaom multinet: unknown behavior effect of both networks " + nm + "; available: " + invtokens(fams) + "\n")
+			exit(198)
+		}
+		sub = 0
+		if (par != "") {
+			if (par != "1" & par != "2" & par != "0") {
+				errprintf("nwsaom multinet: the parameter of " + nm + " must be 1 or 2 (2 subtracts the degree in the first network).\n")
+				exit(198)
+			}
+			sub = (strtoreal(par) >= 2)
+			if (sub & f >= 7) {
+				errprintf("nwsaom multinet: " + nm + " has no parameter.\n")
+				exit(198)
+			}
+		}
+		Mbeh.addterm("bn_" + strofreal(20000 + 100 * swap + 10 * (f - 1) + sub) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm + (sub ? "2" : ""))
+		out = out + (out == "" ? "" : " ") + nm
+	}
+	return(out)
 }
 
 /* nwsaom multinet with a behavior: the wave variables (one value per actor), the range of the behavior over all waves */
