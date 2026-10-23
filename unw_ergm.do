@@ -4528,6 +4528,16 @@ real scalar _ergm_cov_add(class ErgmTermData scalar td, string scalar term, real
 		_ergm_cov_set("sociality", rows(d), "stat_covw", "change_covw", tokens(nms))
 		return(rows(d))
 	}
+	if (term == "nodecov" | term == "nodeicov" | term == "nodeocov") {
+		if (term != "nodecov" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		if (term == "nodecov") _ergm_cov_set(term, 1, "stat_nodecov", "change_nodecov", (term + "_" + vname))
+		else if (term == "nodeicov") _ergm_cov_set(term, 1, "stat_nodeicov", "change_nodeicov", (term + "_" + vname))
+		else _ergm_cov_set(term, 1, "stat_nodeocov", "change_nodeocov", (term + "_" + vname))
+		return(1)
+	}
 	if (term == "nodecovrange" | term == "nodeocovrange" | term == "nodeicovrange") {
 		if (term != "nodecovrange" & !directed) {
 			errprintf("%s() requires a directed network.\n", term)

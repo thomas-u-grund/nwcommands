@@ -27,7 +27,7 @@ program nwergm, eclass
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) COEFLABEL(string) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -430,6 +430,10 @@ program nwergm, eclass
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:gwdegree()} for an undirected network."
 		error 198
 	}
+	if "`gwdegree'" != "" & "`directed'" == "true" {
+		di "{err}In term {bf:gwdegree}: term may not be used with directed networks. Use {bf:gwodegree()}/{bf:gwidegree()} for a directed network."
+		error 198
+	}
 	if "`degree'" != "" & "`directed'" == "true" {
 		di "{err}option {bf:degree()} is undirected only; {bf:`netname'} is directed. Use {bf:odegree()}/{bf:idegree()} for a directed network."
 		error 198
@@ -659,37 +663,19 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodecov {
-		_nwergm_numvar `__ergm_v' nodecov
-		local ++__ergm_termidx
-		tempname __td_nc`__ergm_termidx'
-		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nc`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nc`__ergm_termidx''"
+	if `"`nodecov'"' != "" {
+		_nwergm_cov nodecov, spec(`"`nodecov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeicov {
-		_nwergm_numvar `__ergm_v' nodeicov
-		local ++__ergm_termidx
-		tempname __td_ni`__ergm_termidx'
-		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_ni`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_ni`__ergm_termidx''"
+	if `"`nodeicov'"' != "" {
+		_nwergm_cov nodeicov, spec(`"`nodeicov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeocov {
-		_nwergm_numvar `__ergm_v' nodeocov
-		local ++__ergm_termidx
-		tempname __td_no`__ergm_termidx'
-		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_no`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_no`__ergm_termidx''"
+	if `"`nodeocov'"' != "" {
+		_nwergm_cov nodeocov, spec(`"`nodeocov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- term-expansion wave 1 (harmonisation unit 88): absdist,
@@ -1612,7 +1598,7 @@ program nwergm, eclass
 	// own comment above) - previously harmless to omit only because
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & "`nodecovrange'`nodeocovrange'`nodeicovrange'`nodefactordistinct'`nodeofactordistinct'`nodeifactordistinct'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1620,6 +1606,9 @@ program nwergm, eclass
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
 	}
 
+	if `"`coeflabel'"' != "" {
+		_nwergm_coeflabel `coeflabel'
+	}
 	// offset() (harmonisation unit 183, docs/ERGM_ROADMAP.md's own
 	// "Offsets/fixed-coefficient terms" row) - holds one or more named
 	// coefficients fixed at a user-supplied value rather than
