@@ -246,7 +246,7 @@
 
 {p 8 17 2}
 {cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)} [{opt sym1}] [{opt sym2}]
-{opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
+[{opt beh:avior(namelist)} {opt beheff1(effects)} {opt beheff2(effects)}] {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
 
 {p 4 4 2}
 Two one-mode networks (directed, or undirected with {opt sym1}/{opt sym2}) on the same actors evolve together (RSiena: two dependent network variables; unconditional Method of Moments, rates per
@@ -257,6 +257,15 @@ each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity t
 (RSiena's crprod, crprodRecip, crprodMutual, from, fromMutual, fromAny, to, toBack, toRecip, cl.XWX, cl.XWX1, cl.XWX2, mixedInXW; a parameter after a colon,
 e.g. {cmd:from:2}, is RSiena's effect parameter). The cross-network statistics read the other network at the start of the period, the simulation its current
 state, as RSiena. {opt sym1} / {opt sym2} declare the first / second network non-directed (undirected {cmd:nwset}, forcing model, protocol 62). {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
+
+{p 4 4 2}
+{bf:A co-evolving behavior.} {opt behavior(}{it:b1 b2 ...}{opt )} adds one behavior variable (one variable per wave, as in {cmd:nwsaom}) that
+evolves together with the two networks (own rate per period, like each network). {opt beheff1()} lists the behavior effects of the behavior itself
+and of the {it:first} network on it ({cmd:linear quadratic avalt avsim} and the other tokens of the behavior effects of {cmd:nwsaom}; default
+{cmd:linear quadratic avalt}), {opt beheff2()} the behavior effects driven by the {it:second} network (for example {cmd:avalt}; they are shown
+as {cmd:beh2_}{it:effect}). The behavior can also be a covariate of the network effects: {cmd:behsim behegox behaltx behegoplusalt} in
+{opt eff1()}/{opt eff2()}, and of the cross-network effects: {it:effect}{cmd::behavior} in {opt cross1()}/{opt cross2()} (any of the covariate
+cross-network effects below, e.g. {cmd:cross1(samewwclosure:behavior)}). {bf:Native plugin only} (protocols 64 and 65).
 
 {p 4 4 2}
 Further cross-network effects (all validated against siena07; the names are RSiena's short names in lower case, see the effects inventory): the degree and distance-two

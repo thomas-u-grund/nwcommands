@@ -93,3 +93,21 @@ foreach ef in crprod from to closure outpopintn outactintn divoutegointn divineg
 capture noisily nwsaom multinet, net1(ns1 ns2 ns3) net2(nb1 nb2 nb3) cross1(crprod) k3(30)
 assert _rc == 198
 di "PASS multinet non-directed"
+
+* a co-evolving behavior (protocol 64/65): shape + influence from either network, network effects of the behavior, cross effects with the behavior
+* (synthetic data: a fit may stop at thetaBound, rc 498; the point is that the native path runs and the result has the right shape)
+gen double bv1 = mod(_n * 3, 4)
+gen double bv2 = mod(_n * 3, 4) + (mod(_n, 5) == 0)
+gen double bv3 = mod(_n * 3, 4) + (mod(_n, 5) == 0) - (mod(_n, 7) == 0)
+capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(bv1 bv2 bv3) beheff1(linear quadratic avalt) beheff2(avalt) k0(20) k3(60) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 8 & rowsof(e(rates)) == 6
+capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) eff1(outdegree reciprocity behegox behaltx behsim) behavior(bv1 bv2 bv3) k0(20) k3(60) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 9
+capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) behavior(bv1 bv2 bv3) cross1(samewwclosure:behavior) k0(20) k3(60) seed(2)
+assert inlist(_rc, 0, 498)
+if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 8
+capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) eff1(outdegree behsim) k0(10) k3(20)
+assert _rc != 0
+di "PASS multinet behavior"
