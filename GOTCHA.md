@@ -735,3 +735,8 @@ crashing thread with the function names (the plugin is not stripped): parse it w
 `external real scalar x` at the top of a function creates `x` (missing) if it does not exist, so a following `findexternal("x") == NULL` test is never true. To test for an optional
 external use `pointer(real scalar) scalar p; p = findexternal("x")` without a declaration. (2026-10-23: `SaomBatchSlotTag()` declared `__saom_bslot`, returned "." and every
 batch setup sent `BATCHSETUP.|...`, which the plugin sent to its legacy parser: the whole co-evolution suite hung at 100% CPU.) A struct used in a function must be defined EARLIER in the file.
+
+## Do not name a new option `<existing>0` / `<existing>2`: Stata's `syntax` routes the SHORTER name to the first declared option
+
+With `NETX0(string)` declared before `NETX(string)` in nwsaom's `syntax`, the existing option `netx(homxtransrectrip:xa)` was parsed as `netx0` (the error showed "netx0(): ... is not an effect",
+two tests failed). Exact matches do not take precedence over abbreviations of an option declared earlier. Pick names that are not prefixes of each other (`ownx` for the own-network effects).

@@ -1,4 +1,4 @@
-* own-network effects without a covariate (netx0(): jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold and the ego
+* own-network effects without a covariate (ownx(): jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold and the ego
 * degree effects), plugin protocol 54; siena07 agreement (s50, symmetric waves for jout): dev/saom_rsiena_dg.{R,do}, dev/saom_rsiena_symdg.R
 cscript
 do unw_core.do
@@ -29,12 +29,12 @@ forvalues w = 1/3 {
 	nwset, mat(__S`w') directed name(ds`w') nooutput
 }
 foreach ef in jin jout transtrip1 transtrip2 transrectrip2 transtripfr transtripfe transtripee outpopmore:2 outpopsqrtmore:2 outpopthreshold:2 outactego outactmoreego:2 outactsqrtmoreego:2 outmoreego:2 divoutego inactego divinego reciactego {
-	capture nwsaom, waves(dd1 dd2 dd3) outdegree reciprocity netx0(`ef') k0(10) k3(40) seed(3)
+	capture nwsaom, waves(dd1 dd2 dd3) outdegree reciprocity ownx(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 3
 }
-capture nwsaom, waves(ds1 ds2 ds3) symmetric outdegree netx0(jout) k0(10) k3(40) seed(3)
+capture nwsaom, waves(ds1 ds2 ds3) symmetric outdegree ownx(jout) k0(10) k3(40) seed(3)
 assert inlist(_rc, 0, 498, 505)
-capture noisily nwsaom, waves(dd1 dd2 dd3) outdegree netx0(nosuch) k3(30)
+capture noisily nwsaom, waves(dd1 dd2 dd3) outdegree ownx(nosuch) k3(30)
 assert _rc == 198
-di "PASS netx0"
+di "PASS ownx"
