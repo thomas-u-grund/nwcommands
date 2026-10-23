@@ -1559,6 +1559,11 @@ static double change_bipx(graph_t *g, int kind, double p1, double p2, double *at
 	double chg = 0.0;
 	adjlist_t *nb;
 	/* kind-specific mode: kinds with mode in p2 use it; others handled below */
+	if (kind == 14) {
+		long n1node = (g->mode[i] == 1) ? i : j;
+		long n2node = (n1node == i) ? j : i;
+		return (attr[n1node] == p1 && attr[n2node] == p2) ? delta : 0.0;
+	}
 	if (kind == 6) {
 		long node = (long)p1;
 		return (i == node || j == node) ? delta : 0.0;

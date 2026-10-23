@@ -2373,6 +2373,15 @@ real scalar _bx_one(class ErgmGraph scalar G, class ErgmTermData scalar td, real
 			}
 		}
 	}
+	else if (kind==14) {
+		nodes = G.mode1nodes
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=p1) continue
+			nb = G.neighbors_out(u)
+			for (b=1; b<=cols(nb); b++) s = s + (td.attr[nb[b]]==p2)
+		}
+	}
 	else if (kind==13) {
 		pk = _bx_unpack(p2); m = pk[1]; lev = pk[2]
 		nodes = _bx_nodes(G, m)
@@ -2604,6 +2613,22 @@ string rowvector _bx_build(class ErgmTermData scalar td, class ErgmGraph scalar 
 		for (l=1; l<=rows(u); l++) {
 			rows_ = rows_ \ (13, P[1], _bx_pack(m, l, 0))
 			names = names, "gw"+pre+"degree_"+strofreal(P[1])+"_"+an+"_"+strofreal(u[l])
+		}
+	}
+	else if (nm=="bmix") {
+		// nodemix on a bipartite network: edges between b1 level a and b2 level b (R drops the first cell by default)
+		u = _bx_sel(_bx_uniq(A1[G.mode1nodes]), L1)
+		u2 = _bx_sel(_bx_uniq(A1[G.mode2nodes]), L2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(A1[G.mode1nodes], u, 0) :* (_bx_code(A1[G.mode1nodes], u, 0) :<= rows(u))
+		td.attr[G.mode2nodes] = _bx_code(A1[G.mode2nodes], u2, 0) :* (_bx_code(A1[G.mode2nodes], u2, 0) :<= rows(u2))
+		grid = J(0, 2, 0)
+		for (b=1; b<=rows(u2); b++) for (a=1; a<=rows(u); a++) grid = grid \ (a, b)
+		if (cols(TO)==0) TO = -1
+		grid = grid[_bx_sel((1::rows(grid)), TO),.]
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (14, grid[k,1], grid[k,2])
+			names = names, "nodemix_"+an+"_"+strofreal(u[grid[k,1]])+"_"+strofreal(u2[grid[k,2]])
 		}
 	}
 	else if (nm=="bnm") {

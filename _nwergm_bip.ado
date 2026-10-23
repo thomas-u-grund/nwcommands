@@ -5,14 +5,15 @@ program _nwergm_bip
 	// Options consumed here are cleared in the caller (c_local); plain forms of the older
 	// bipartite options (bdegree1(0 1 2), bnodematch1(var), ...) are handed back untouched.
 	version 14
-	syntax , NODES(integer) [ ///
+	syntax , NODES(integer) [ GNAME(string) ///
 		BCONCURRENT1(string) BCONCURRENT2(string) BMINDEGREE1(string) BMINDEGREE2(string) ///
 		BDEGRANGE1(string) BDEGRANGE2(string) BDEGREE1(string) BDEGREE2(string) ///
 		BSTAR1(string) BSTAR2(string) BCOVRANGE1(string) BCOVRANGE2(string) ///
 		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
 		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
 		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
-		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ]
+		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) NODEMIX(string) ]
+	if "`gname'" == "" local gname "__nwergm_last_G"
 	local temps ""
 	foreach o in bconcurrent bmindegree bdegrange bdegree bstar bcovrange bfactordistinct bsociality bstarmix btwostar bdsp bgwdsp bnodematch bgwdegree {
 		forvalues m = 1/2 {
@@ -22,13 +23,18 @@ program _nwergm_bip
 			if inlist("`o'", "bdegree", "bstar", "bnodematch", "bgwdegree") {
 				if strpos(`"`spec'"', ",") == 0 continue
 			}
-			_nwergm_bip_one `o' `m' `nodes' `"`spec'"'
+			_nwergm_bip_one `o' `m' `nodes' `gname' `"`spec'"'
 			local temps "`temps' `r(temps)'"
 			c_local `o'`m' ""
 		}
 	}
+	foreach v of local nodemix {
+		_nwergm_bip_one nodemix 1 `nodes' `gname' `"`v'"'
+		local temps "`temps' `r(temps)'"
+	}
+	if `"`nodemix'"' != "" c_local nodemix ""
 	if `"`coincidence'"' != "" {
-		_nwergm_bip_one coincidence 2 `nodes' `"`coincidence'"'
+		_nwergm_bip_one coincidence 2 `nodes' `gname' `"`coincidence'"'
 		local temps "`temps' `r(temps)'"
 		c_local coincidence ""
 	}
@@ -58,7 +64,7 @@ end
 
 capture program drop _nwergm_bip_one
 program _nwergm_bip_one, rclass
-	args term m nodes spec
+	args term m nodes gname spec
 	local spec = trim(`"`spec'"')
 	local pos = strpos(`"`spec'"', ",")
 	if `pos' > 0 {
@@ -172,6 +178,12 @@ program _nwergm_bip_one, rclass
 			local TO = substr("`TO'",2,.)
 		}
 	}
+	else if "`term'" == "nodemix" {
+		local nm bmix
+		local a1 "`main'"
+		local L1 "`levels1'"
+		local L2 "`levels2'"
+	}
 	else if "`term'" == "coincidence" {
 		local nm coinc
 		local F "`active'"
@@ -256,7 +268,7 @@ program _nwergm_bip_one, rclass
 	if _rc mata: __nwbx_cnt = 1
 	mata: st_local("td", "__nwbx" + strofreal(__nwbx_cnt))
 	mata: `td' = ErgmTermData()
-	mata: __bxn = _bx_build(`td', __nwergm_last_G, "`nm'", `m', `Xm', `Tm', `A1m', `A2m', `L1m', `L2m', `Fm', `Pm', "`an'", "`an2'")
+	mata: __bxn = _bx_build(`td', `gname', "`nm'", `m', `Xm', `Tm', `A1m', `A2m', `L1m', `L2m', `Fm', `Pm', "`an'", "`an2'")
 	mata: st_local("__bxk", strofreal(cols(__bxn)))
 	if `__bxk' > 0 {
 		mata: __nwergm_last_M.addterm("bipx", `__bxk', &stat_bipx(), &change_bipx(), `td', __bxn)
