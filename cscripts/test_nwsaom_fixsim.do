@@ -76,3 +76,19 @@ nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity k3(100) seed(1)
 capture estat timetest
 assert _rc == 198
 di "PASS estat timetest"
+
+* estat importance (the exact comparison with sienaRI is in dev/saom_rsiena_ri_*)
+nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip k0(50) k3(200) seed(1)
+estat importance
+matrix RI = r(ri)
+assert rowsof(RI) == 3 & colsof(RI) == 2
+forvalues pd = 1/2 {
+	scalar s = RI[1,`pd'] + RI[2,`pd'] + RI[3,`pd']
+	assert abs(s - 1) < 1e-8
+}
+matrix RH = r(certainty)
+assert RH[1,1] > 0 & RH[1,1] < 1
+nwsaom, wave1(glasgow1) wave2(glasgow2) behavior(smoke1 smoke2) outdegree reciprocity linear quadratic k3(100) seed(1)
+capture estat importance
+assert _rc == 198
+di "PASS estat importance"

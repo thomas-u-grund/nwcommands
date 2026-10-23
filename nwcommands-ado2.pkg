@@ -58,6 +58,7 @@ f nwsaom_estat.ado
 f nwsaom_estat_simulate.ado
 f nwsaom_estat_score.ado
 f nwsaom_estat_timetest.ado
+f nwsaom_estat_importance.ado
 f nwsaom_simulate.ado
 f nwsave.ado
 f nwset.ado

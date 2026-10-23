@@ -11442,6 +11442,89 @@ void SaomTimeTestRun(real scalar nper, real rowvector effects) {
 	st_matrix("__nwsaom_tt_onestep", __nwsaom_score_par + os[1..ptot])
 }
 
+/* estat importance (RSiena's sienaRI(), R/sienaRI.r): for every inter-wave period the change contributions of every ego i and alternative j on the
+   START network of the period come from the plugin (CONTRIBK); the choice distribution of ego i is exp(theta' c_ij) / sum_j exp(theta' c_ij); the
+   importance of effect k for ego i is the L1 distance between that distribution and the one with theta_k set to 0, the relative importance its
+   share among the effects, averaged over the egos. Also the semi-standardised estimates theta_k * sigma_k (sigma: the within-ego standard
+   deviation of the contributions) and the certainty R_H = 1 - entropy / log(choices). Results in Stata matrices __nwsaom_imp_*. */
+void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real scalar P, class ErgmModel scalar M, real rowvector theta) {
+	struct SaomNativeConfig scalar cfg
+	pointer(real matrix) rowvector Cm
+	real matrix X, SIG, RIm, Im, SIGp, Lw
+	real rowvector RH, u, p, th, pk, cert
+	real scalar n, K, w, k, i, j, junk, ver, ent, nvalid, mx
+	string scalar origframe
+	real colvector sdk, L1, sigmaSq
+	real matrix expRI, expI, sigmas
+
+	n = (*Gstart[1]).n
+	K = cols(theta)
+	if (K != M.nterms) {
+		errprintf("estat importance: the coefficient vector does not match the model.\n")
+		exit(198)
+	}
+	cfg = SaomNativeSetup(M)
+	ver = SaomNativePluginVersion()
+	if (!cfg.eligible | !SaomNativeAvailable() | ver < 63) {
+		errprintf("estat importance needs the native plugin (version 63 or later) and a model the plugin covers.\n")
+		exit(198)
+	}
+	SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_contrib")
+	stata("frame create __saom_contrib")
+	st_framecurrent("__saom_contrib")
+	st_addobs(n)
+	junk = st_addvar("double", "c" :+ strofreal(1..n))
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	expRI = J(K, P, .)
+	expI = J(K, P, .)
+	sigmas = J(K, P, .)
+	RH = J(1, P, .)
+	for (w=1; w<=P; w++) {
+		Cm = J(1, K, NULL)
+		for (k=1; k<=K; k++) {
+			stata("plugin call saomnativesim " + invtokens("c" :+ strofreal(1..n)) + ", " + char(34) + "CONTRIBK|" + strofreal(w) + " " + strofreal(k) + char(34))
+			Cm[k] = &(st_data((1::n), (1..n)))
+		}
+		SIG = J(K, n, .)
+		RIm = J(K, n, .)
+		cert = J(1, n, .)
+		for (i=1; i<=n; i++) {
+			X = J(K, n, 0)
+			for (k=1; k<=K; k++) X[k, .] = (*Cm[k])[i, .]
+			u = theta * X
+			mx = max(u)
+			p = exp(u :- mx)
+			p = p / sum(p)
+			for (k=1; k<=K; k++) {
+				th = theta
+				th[k] = 0
+				pk = exp(th * X :- max(th * X))
+				pk = pk / sum(pk)
+				RIm[k, i] = sum(abs(p :- pk))
+				SIG[k, i] = sqrt(variance(X[k, .]'))
+			}
+			ent = -sum(p :* ln(p :+ (p :== 0)))
+			cert[i] = 1 - ent / ln(n)
+		}
+		Lw = RIm :/ colsum(RIm)
+		expRI[., w] = rowsum(Lw) / n
+		expI[., w] = rowsum(RIm) / n
+		sigmas[., w] = sqrt(rowsum(SIG :^ 2) / n)
+		RH[w] = mean(cert')
+		for (k=1; k<=K; k++) Cm[k] = NULL
+	}
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_contrib")
+	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	st_matrix("__nwsaom_imp_RI", expRI)
+	st_matrix("__nwsaom_imp_I", expI)
+	st_matrix("__nwsaom_imp_sigmas", sigmas)
+	st_matrix("__nwsaom_imp_sigma", sqrt(rowsum(sigmas :^ 2) / P))
+	st_matrix("__nwsaom_imp_RH", RH)
+}
+
 /* estat simulate: summary statistics of one simulated (or observed) network, row (., period, ties, mutual dyads, transitive triples, behavior mean) */
 real rowvector SaomSimSummary(real matrix A, real scalar pd, real scalar behmean) {
 	real matrix B
