@@ -226,4 +226,19 @@ qui nwergm flo, edges triangle nodecov(wealth) seed(3) mcmletermination(hummel) 
 capture nwergm flo, edges triangle nodecov(wealth) mcmletermination(bogus)
 assert _rc == 198
 
+* ---------- offset (R: offset(nodecov("wealth")) with offset.coef = 0.01): MPLE equals R's
+qui nwergm flo, edges triangle nodecov(wealth) offset(nodecov_wealth 0.01) estimate(mple)
+matrix b = e(b)
+matrix V = e(V)
+_chk off_edges b[1,1] -2.5589561 1e-4
+_chk off_triangle b[1,3] 0.0447718 1e-4
+_chk off_se_edges sqrt(V[1,1]) 0.3137405 1e-4
+_chk off_se_triangle sqrt(V[3,3]) 0.4376998 1e-4
+_chk off_value b[1,2] 0.01 1e-12
+* init() supplies the offset value as R's control.ergm(init=) does
+qui nwergm flo, edges triangle nodecov(wealth) offset(nodecov_wealth 0.5) estimate(mple) init(. 0.01 .)
+matrix b = e(b)
+_chk off_init b[1,2] 0.01 1e-12
+_chk off_init_edges b[1,1] -2.5589561 1e-4
+
 display "PASS test_nwergm_est"
