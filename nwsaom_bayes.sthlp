@@ -54,7 +54,6 @@ The names and default values of the controls follow multiSiena's {cmd:set_algori
 {pstd}
 Differences from multiSiena's {cmd:multi_siena()}: only one group is supported (no hierarchical prior with a group-level mean and covariance matrix, no randomly varying effects); the effects have a flat prior unless {opt priorsd()} is given; the rates have a gamma prior and are drawn directly instead of by a Metropolis step;
 the proposal tuning is a stochastic-approximation update instead of the batch rule of {cmd:improveMH}; the Metropolis-Hastings steps on the sequence are the three kinds listed above and not the exact set of RSiena's maximum likelihood sampler.
-The posterior is checked against enumeration of a small model (the expected number of ministeps) and against RSiena's maximum likelihood estimates for the Glasgow data, see {bf:Remarks}.
 
 {title:Remarks}
 
