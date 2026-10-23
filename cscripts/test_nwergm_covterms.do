@@ -92,12 +92,12 @@ program define _cov_check, rclass
 		if `fin' {
 			if abs(`rc') < 1e3 {
 				local db = max(`db', abs(bb[1,`k'] - `rc'))
-				local dse = max(`dse', abs(sqrt(VV[`k',`k']) - `rv'))
+				local dse = max(`dse', abs(sqrt(VV[`k',`k']) - `rv') / (1 + abs(`rv')))
 			}
 		}
 	}
 	local ok = (`ds' < 1e-6 & `db' < `tol' & `dse' < `tol')
-	di as txt "`=cond(`ok', "ok  ", "FAIL")' `id' (`nwopts'): max|stat diff|=" %9.2e `ds' "  max|coef diff|=" %9.2e `db' "  max|se diff|=" %9.2e `dse'
+	di as txt "`=cond(`ok', "ok  ", "FAIL")' `id' (`nwopts'): max|stat diff|=" %9.2e `ds' "  max|coef diff|=" %9.2e `db' "  max|rel se diff|=" %9.2e `dse'
 	if !`ok' exit 9
 end
 

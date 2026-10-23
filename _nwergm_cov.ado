@@ -1,4 +1,4 @@
-*! _nwergm_cov: covariate-term registration helper for nwergm (R ergm's nodemix, ...)
+*! _nwergm_cov: covariate-term registration helper for nwergm (R ergm's nodemix, nodefactor, ...)
 capture program drop _nwergm_cov
 program _nwergm_cov, rclass
 	version 14
@@ -8,16 +8,33 @@ program _nwergm_cov, rclass
 		error 198
 	}
 	local isdir = ("`directed'" == "true")
+	local nn = `nodes'
 	local 0 `"`spec'"'
-	syntax anything(name=vars) [, LEVels(numlist) LEVELValues(numlist) BASE(numlist) LEVELS2(numlist)]
+	syntax anything(name=vars) [, LEVels(numlist) LEVELValues(numlist) BASE(numlist) LEVELS2(numlist) ///
+		DIFF KEEP(numlist) POW(string) DIR(string) SIGNaction(string) CUTOFF(string) NODES(numlist) MAT(string)]
+	if "`term'" == "nodematchdiff" {
+		local term "nodematch"
+		local diff "diff"
+	}
+	// R default: base=1 for the factor family (first level dropped unless levels() is given)
+	if inlist("`term'", "nodefactor", "nodeifactor", "nodeofactor") & "`base'" == "" local base "1"
 	local temps ""
+	mata: st_local("__c0", strofreal(cols(__nwergm_last_M.coefnames)))
 	foreach v of local vars {
-		_nwergm_covattr `v', term(`term') nodes(`nodes')
-		local av "`r(var)'"
-		local vn "`r(name)'"
-		tempname td
-		mata: `td' = ErgmTermData()
-		mata: `td'.attr = st_data(1::`nodes', "`av'")
+		if "`term'" == "sociality" & "`v'" == "." {
+			tempname td
+			mata: `td' = ErgmTermData()
+			mata: `td'.attr = J(0, 1, .)
+			local vn "."
+		}
+		else {
+			_nwergm_covattr `v', term(`term') nodes(`nn')
+			local av "`r(var)'"
+			local vn "`r(name)'"
+			tempname td
+			mata: `td' = ErgmTermData()
+			mata: `td'.attr = st_data(1::`nn', "`av'")
+		}
 		if "`term'" == "nodemix" {
 			mata: _ergm_nodemix_setup(`td', `isdir', "`levels'", "`levelvalues'", "`base'", "`levels2'", "`vn'", "__ergm_cn", "__ergm_nc")
 			if `__ergm_nc' > 0 {
@@ -29,8 +46,28 @@ program _nwergm_cov, rclass
 				}
 			}
 		}
+		else {
+			local o1 ""
+			local o2 ""
+			local o3 ""
+			if "`term'" == "nodematch" {
+				local o1 "`diff'"
+				local o2 "`keep'"
+			}
+			if "`term'" == "absdist" local o1 "`pow'"
+			if "`term'" == "diff" {
+				local o1 "`pow'"
+				local o2 "`dir'"
+				local o3 "`signaction'"
+			}
+			if "`term'" == "smalldiff" local o1 "`cutoff'"
+			if "`term'" == "sociality" local o1 "`nodes'"
+			mata: st_local("__ergm_nc", strofreal(_ergm_cov_add(__nwergm_last_M, `td', "`term'", `isdir', `nn', "`vn'", "`levels'", "`levelvalues'", "`base'", "`o1'", "`o2'", "`o3'")))
+		}
 		local temps "`temps' `td'"
 	}
+	mata: st_local("__cn", (cols(__nwergm_last_M.coefnames) > `__c0' ? invtokens(__nwergm_last_M.coefnames[(`__c0'+1)..cols(__nwergm_last_M.coefnames)]) : ""))
+	return local cnames "`__cn'"
 	return local temps "`temps'"
 end
 

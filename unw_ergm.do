@@ -1481,13 +1481,12 @@ real colvector _ergm_cov_pick(real colvector u, real rowvector idx){
 	return(J(0, 1, .))
 }
 
-// Level set of an attribute: R's ergm_attr_levels() plus the `base'
-// convention (base is only used when levels was not given and usebase).
-real colvector _ergm_cov_levels(real colvector attr, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
-	real colvector u
+// Level selection given the candidate list u (R's ergm_attr_levels()
+// plus the `base' convention: base is only used when levels was not
+// given and usebase).
+real colvector _ergm_cov_sel(real colvector u, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
 	real rowvector idx
 
-	u = uniqrows(select(attr, attr :< .))
 	if (lval != "") return(strtoreal(tokens(lval))')
 	if (lev != "") return(_ergm_cov_pick(u, strtoreal(tokens(lev))))
 	if (usebase & base != "") {
@@ -1496,6 +1495,9 @@ real colvector _ergm_cov_levels(real colvector attr, string scalar lev, string s
 		if (cols(idx) > 0) return(_ergm_cov_pick(u, -abs(idx)))
 	}
 	return(u)
+}
+real colvector _ergm_cov_levels(real colvector attr, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
+	return(_ergm_cov_sel(uniqrows(select(attr, attr :< .)), lev, lval, base, usebase))
 }
 
 // Directed nodemix: one statistic per ORDERED (row level, col level) cell
@@ -1593,6 +1595,73 @@ void _ergm_nodemix_setup(class ErgmTermData scalar td, real scalar directed, str
 	td.levelpairs = cells
 	st_local(nlocal, strofreal(rows(cells)))
 	st_local(nmlocal, strtrim(nm))
+}
+
+// ---- generic dyad-independent covariate terms (kind in td.sptype) ----
+// weights of dyad (i,j) for one tie, one entry per output column.
+//   absdistpow: |a_i-a_j|^p                    (td.decay = p)
+//   absdiffcat: 1{|a_i-a_j| == level_k}, k>0   (td.levels = nonzero differences)
+//   diffterm:   f(a_tail - a_head)             (td.decay = pow, td.levels = (dirmul \ signcode))
+//   smalldiff:  1{|a_i-a_j| <= cutoff}         (td.decay = cutoff)
+//   sociality:  1{node_k in {i,j}} [* 1{code_i==code_j}]  (td.levels = node ids; td.center = 1 if td.attr holds match codes)
+real rowvector _ergm_cov_w(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar i, real scalar j){
+	real scalar d, t, h, ch, k, mul, sc
+	real rowvector w
+
+	if (td.sptype == "absdistpow") {
+		return(abs(td.attr[i] - td.attr[j])^td.decay)
+	}
+	if (td.sptype == "absdiffcat") {
+		d = abs(td.attr[i] - td.attr[j])
+		w = J(1, rows(td.levels), 0)
+		if (d > 0) w = (d :== td.levels')
+		return(w)
+	}
+	if (td.sptype == "diffterm") {
+		t = i
+		h = j
+		if (!G.directed & i > j) {
+			t = j
+			h = i
+		}
+		mul = td.levels[1]
+		sc = td.levels[2]
+		ch = (td.attr[t] - td.attr[h]) * mul
+		if (sc == 2) ch = abs(ch)
+		else if (sc == 3) ch = (ch < 0 ? 0 : ch)
+		else if (sc == 4) ch = (ch > 0 ? 0 : ch)
+		if (td.decay == 0) ch = sign(ch)
+		else if (td.decay != 1) ch = ch^td.decay
+		return(ch)
+	}
+	if (td.sptype == "smalldiff") {
+		return(abs(td.attr[i] - td.attr[j]) <= td.decay)
+	}
+	if (td.sptype == "sociality") {
+		w = J(1, rows(td.levels), 0)
+		if (td.center == 1) {
+			if (td.attr[i] != td.attr[j]) return(w)
+		}
+		for (k=1; k<=rows(td.levels); k++) {
+			w[k] = (td.levels[k] == i) + (td.levels[k] == j)
+		}
+		return(w)
+	}
+	errprintf("unknown covariate term kind %s\n", td.sptype)
+	exit(198)
+}
+real rowvector stat_covw(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k
+
+	ties = G.all_ties()
+	out = J(1, (td.sptype == "absdistpow" | td.sptype == "diffterm" | td.sptype == "smalldiff") ? 1 : rows(td.levels), 0)
+	for (k=1; k<=rows(ties); k++) out = out + _ergm_cov_w(G, td, ties[k,1], ties[k,2])
+	return(out)
+}
+real rowvector change_covw(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return((G.has_edge(i,j) ? -1 : 1) * _ergm_cov_w(G, td, i, j))
 }
 
 /* ===================================================================
@@ -4065,6 +4134,167 @@ real scalar ErgmModel::findcoef(string scalar cname){
 	return(0)
 }
 
+// Registers one covariate-term instance (td already holds the attribute
+// in td.attr); returns the number of output columns (0 = term dropped,
+// as R drops a term without levels).  Option strings o1..o3 are
+// term-specific (see the per-term branches).
+real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td, string scalar term, real scalar directed, real scalar n, string scalar vname, string scalar lev, string scalar lval, string scalar base, string scalar o1, string scalar o2, string scalar o3){
+	real colvector u, d, nodes, codes, cand
+	real rowvector idx
+	real scalar k, pw, mul, sc, nm
+	string scalar nms, sfx, dr, sa
+	string rowvector DIRS, SAS
+	real matrix av
+
+	if (term == "nodefactor" | term == "nodeifactor" | term == "nodeofactor") {
+		if ((term != "nodefactor") & !directed) {
+			errprintf("%s() requires a directed network; use nodefactor() for an undirected network.\n", term)
+			exit(198)
+		}
+		u = _ergm_cov_levels(td.attr, lev, lval, base, 1)
+		if (rows(u) == 0) return(0)
+		td.levels = u
+		nms = ""
+		for (k=1; k<=rows(u); k++) nms = nms + " " + term + "_" + vname + "_" + strofreal(u[k])
+		if (term == "nodefactor") M.addterm(term, rows(u), &stat_nodefactor(), &change_nodefactor(), td, tokens(nms))
+		else if (term == "nodeifactor") M.addterm(term, rows(u), &stat_nodeifactor(), &change_nodeifactor(), td, tokens(nms))
+		else M.addterm(term, rows(u), &stat_nodeofactor(), &change_nodeofactor(), td, tokens(nms))
+		return(rows(u))
+	}
+	if (term == "nodematch") {
+		u = uniqrows(select(td.attr, td.attr :< .))
+		u = _ergm_cov_sel(u, lev, lval, "", 0)
+		if (lev == "" & lval == "" & o2 != "") u = _ergm_cov_pick(uniqrows(select(td.attr, td.attr :< .)), strtoreal(tokens(o2)))
+		if (o1 == "diff") {
+			if (rows(u) == 0) return(0)
+			td.levels = u
+			nms = ""
+			for (k=1; k<=rows(u); k++) nms = nms + " nodematch_" + vname + "_" + strofreal(u[k])
+			M.addterm("nodematch_diff", rows(u), &stat_nodematch_diff(), &change_nodematch_diff(), td, tokens(nms))
+			return(rows(u))
+		}
+		// attribute values outside the level set never match (not even each other)
+		codes = td.attr
+		nm = max(abs(codes)) + 1
+		for (k=1; k<=rows(codes); k++) {
+			if (!any(u :== codes[k])) {
+				codes[k] = nm
+				nm++
+			}
+		}
+		td.attr = codes
+		M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, ("nodematch_" + vname))
+		return(1)
+	}
+	if (term == "absdist") {
+		pw = strtoreal(o1)
+		if (pw >= .) pw = 1
+		if (pw == 1) {
+			M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), td, ("absdist_" + vname))
+		}
+		else {
+			td.sptype = "absdistpow"
+			td.decay = pw
+			M.addterm("absdistpow", 1, &stat_covw(), &change_covw(), td, ("absdist" + strofreal(pw) + "_" + vname))
+		}
+		return(1)
+	}
+	if (term == "absdiffcat") {
+		u = uniqrows(select(td.attr, td.attr :< .))
+		cand = J(0, 1, .)
+		for (k=1; k<=rows(u); k++) cand = cand \ abs(u[k] :- u)
+		cand = uniqrows(cand)
+		cand = select(cand, cand :> 0)
+		cand = _ergm_cov_sel(cand, lev, lval, base, 1)
+		if (rows(cand) == 0) {
+			errprintf("Argument to absdiffcat() has too few distinct differences\n")
+			exit(198)
+		}
+		td.sptype = "absdiffcat"
+		td.levels = cand
+		nms = ""
+		for (k=1; k<=rows(cand); k++) nms = nms + " absdiffcat_" + vname + "_" + strofreal(cand[k])
+		M.addterm("absdiffcat", rows(cand), &stat_covw(), &change_covw(), td, tokens(nms))
+		return(rows(cand))
+	}
+	if (term == "diff") {
+		DIRS = ("t-h", "tail-head", "b1-b2", "h-t", "head-tail", "b2-b1")
+		SAS = ("identity", "abs", "posonly", "negonly")
+		dr = (o2 == "" ? "t-h" : strlower(o2))
+		sa = (o3 == "" ? "identity" : strlower(o3))
+		pw = (o1 == "" ? 1 : strtoreal(o1))
+		if (!any(DIRS :== dr)) {
+			errprintf("diff(): dir() must be one of t-h, tail-head, b1-b2, h-t, head-tail, b2-b1\n")
+			exit(198)
+		}
+		if (!any(SAS :== sa)) {
+			errprintf("diff(): signaction() must be one of identity, abs, posonly, negonly\n")
+			exit(198)
+		}
+		idx = select((1..cols(DIRS)), DIRS :== dr)
+		mul = (idx[1] <= 3 ? 1 : -1)
+		idx = select((1..cols(SAS)), SAS :== sa)
+		sc = idx[1]
+		if ((sc == 1 | sc == 4) & pw != round(pw)) {
+			errprintf("diff(): pow() must be an integer with signaction(%s)\n", sa)
+			exit(198)
+		}
+		td.sptype = "diffterm"
+		td.decay = pw
+		td.levels = (mul \ sc)
+		sfx = "diff" + (pw != 1 ? strofreal(pw) : "") + (sc != 1 ? "_" + sa : "") + (sc != 2 ? "_" + subinstr(dr, "-", "_") : "") + "_" + vname
+		M.addterm("diffterm", 1, &stat_covw(), &change_covw(), td, (sfx))
+		return(1)
+	}
+	if (term == "smalldiff") {
+		pw = strtoreal(o1)
+		if (pw >= .) {
+			errprintf("smalldiff(): cutoff() is required and must be a number\n")
+			exit(198)
+		}
+		td.sptype = "smalldiff"
+		td.decay = pw
+		M.addterm("smalldiff", 1, &stat_covw(), &change_covw(), td, ("smalldiff_" + vname + "_" + strofreal(pw)))
+		return(1)
+	}
+	if (term == "sociality") {
+		if (directed) {
+			errprintf("sociality() is for undirected networks; use sender()/receiver() for a directed network.\n")
+			exit(198)
+		}
+		d = (1::n)
+		if (o1 != "") d = _ergm_cov_pick(d, strtoreal(tokens(o1)))
+		else if (base != "" & max(abs(strtoreal(tokens(base)))) > 0) {
+			idx = abs(select(strtoreal(tokens(base)), strtoreal(tokens(base)) :!= 0))
+			d = _ergm_cov_pick(d, -idx)
+		}
+		else d = d[2::n]
+		if (rows(d) == 0) return(0)
+		td.sptype = "sociality"
+		td.levels = d
+		td.center = 0
+		sfx = ""
+		if (vname != ".") {
+			u = uniqrows(select(td.attr, td.attr :< .))
+			u = _ergm_cov_sel(u, lev, lval, "", 0)
+			codes = td.attr
+			for (k=1; k<=rows(codes); k++) {
+				idx = select((1..rows(u)), (u :== codes[k])')
+				codes[k] = (cols(idx) > 0 ? idx[1] : rows(u) + 1)
+			}
+			td.attr = codes
+			td.center = 1
+			sfx = "_" + vname
+		}
+		nms = ""
+		for (k=1; k<=rows(d); k++) nms = nms + " sociality" + strofreal(d[k]) + sfx
+		M.addterm("sociality", rows(d), &stat_covw(), &change_covw(), td, tokens(nms))
+		return(rows(d))
+	}
+	errprintf("unknown covariate term %s\n", term)
+	exit(198)
+}
+
 /*
 	Expands a REDUCED (free-columns-only, in `freeidx()' order) MPLE
 	coefficient vector/covariance into their full eta-space width,
@@ -5598,6 +5828,30 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			p1v[pos] = tdt.decay
 		}
 
+		else if (nm == "absdistpow" | nm == "smalldiff" | nm == "diffterm" | nm == "absdiffcat" | nm == "sociality") {
+			if (nm == "sociality" & tdt.center != 1) aidx = 0
+			else {
+				if (cols(attrmat) + 1 > maxattr) return(0)
+				attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+				aidx = cols(attrmat)
+			}
+			if (nm == "absdiffcat" | nm == "sociality") {
+				for (k=1; k<=M.npar[t]; k++) {
+					pos++
+					termcodes[pos] = (nm == "absdiffcat" ? 2003 : 2006)
+					attridxs[pos] = aidx
+					p1v[pos] = tdt.levels[k]
+					p2v[pos] = (tdt.center == 1)
+				}
+			}
+			else {
+				pos++
+				termcodes[pos] = (nm == "absdistpow" ? 2002 : (nm == "diffterm" ? 2004 : 2005))
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.decay
+				if (nm == "diffterm") p2v[pos] = tdt.levels[2] + (tdt.levels[1] < 0 ? 10 : 0)
+			}
+		}
 		else if (nm == "nodemixd") {
 			if (cols(attrmat) + 1 > maxattr) return(0)
 			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)

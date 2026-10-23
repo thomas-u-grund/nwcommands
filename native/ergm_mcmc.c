@@ -1544,10 +1544,41 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
    =================================================================== */
 #define TERMCODE_NODEMIXD       2001  /* directed nodemix: ordered cell (attr[tail]==p1, attr[head]==p2) */
 
+#define TERMCODE_ABSDIFFPOW     2002  /* absdiff(attr, pow): delta*|a_i-a_j|^p1 */
+#define TERMCODE_ABSDIFFCAT     2003  /* absdiffcat: |a_i-a_j| == p1 (>0) */
+#define TERMCODE_DIFF           2004  /* diff(attr,pow,dir,sign.action): p1=pow, p2 = signcode (+10 if dir is h-t) */
+#define TERMCODE_SMALLDIFF      2005  /* smalldiff: |a_i-a_j| <= p1 */
+#define TERMCODE_SOCIALITY      2006  /* sociality: node p1 is an endpoint (p2=1: only if attr[i]==attr[j]) */
+
 static double change_term_cov(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
 	switch (termcode) {
 		case TERMCODE_NODEMIXD:
 			return (attr[i] == p1 && attr[j] == p2) ? delta : 0.0;
+		case TERMCODE_ABSDIFFPOW:
+			return delta * pow(fabs(attr[i] - attr[j]), p1);
+		case TERMCODE_ABSDIFFCAT: {
+			double d = fabs(attr[i] - attr[j]);
+			return (d > 0.0 && d == p1) ? delta : 0.0;
+		}
+		case TERMCODE_DIFF: {
+			long t = i, h = j;
+			int code = (int)p2;
+			double mul = (code >= 10) ? -1.0 : 1.0, ch;
+			if (!g->directed && i > j) { t = j; h = i; }
+			if (code >= 10) code -= 10;
+			ch = (attr[t] - attr[h]) * mul;
+			if (code == 2) ch = fabs(ch);
+			else if (code == 3) ch = (ch < 0.0) ? 0.0 : ch;
+			else if (code == 4) ch = (ch > 0.0) ? 0.0 : ch;
+			if (p1 == 0.0) ch = (ch > 0.0) - (ch < 0.0);
+			else if (p1 != 1.0) ch = pow(ch, p1);
+			return delta * ch;
+		}
+		case TERMCODE_SMALLDIFF:
+			return (fabs(attr[i] - attr[j]) <= p1) ? delta : 0.0;
+		case TERMCODE_SOCIALITY:
+			if (p2 != 0.0 && attr[i] != attr[j]) return 0.0;
+			return ((double)i == p1 || (double)j == p1) ? delta : 0.0;
 	}
 	return 0.0;
 }
