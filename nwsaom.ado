@@ -453,8 +453,8 @@ program nwsaom, eclass
 			di "{err}{bf:actormode()} must be 1 or 2 (the mode whose nodes are the actors)."
 			error 198
 		}
-		foreach __opt in symmetric ratecov joinat leaveat missnet missbeh structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+		foreach __opt in symmetric ratecov joinat leaveat missnet missbeh structural nodecov nodematch simcov ///
+			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1704,11 +1704,21 @@ program nwsaom, eclass
 				tempname __td_dc
 				mata: `__td_dc' = ErgmTermData()
 				mata: st_local("__dcn", strofreal(rows(st_matrix("`__dm'"))))
-				if `__dcn' != `nodes' | colsof(`__dm') != `nodes' {
-					di "{err}{bf:`__dk'()}: matrix {bf:`__dm'} must be `nodes' x `nodes' (one row/column per actor)."
-					error 198
+				if `__nwsaom_tm' {
+					// a two-mode network: the matrix has one row per actor and one column per event (in the order of the nodes of each mode), as RSiena's bipartite dyadic covariate
+					if `__dcn' != `__nwsaom_tm_na' | colsof(`__dm') != `__nwsaom_tm_ne' {
+						di "{err}{bf:`__dk'()}: for a two-mode network matrix {bf:`__dm'} must be `__nwsaom_tm_na' x `__nwsaom_tm_ne' (one row per actor, one column per event)."
+						error 198
+					}
+					mata: `__td_dc'.edgecovmat = SaomDyadPrepTm(st_matrix("`__dm'"), __nwsaom_tm_actidx, __nwsaom_tm_evidx, `nodes', `__nwsaom_center', __nwsaom_cm)
 				}
-				mata: `__td_dc'.edgecovmat = SaomDyadPrep(st_matrix("`__dm'"), `__nwsaom_center', __nwsaom_cm)
+				else {
+					if `__dcn' != `nodes' | colsof(`__dm') != `nodes' {
+						di "{err}{bf:`__dk'()}: matrix {bf:`__dm'} must be `nodes' x `nodes' (one row/column per actor)."
+						error 198
+					}
+					mata: `__td_dc'.edgecovmat = SaomDyadPrep(st_matrix("`__dm'"), `__nwsaom_center', __nwsaom_cm)
+				}
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_dc', ("`__dk'_`__dm'"))
 				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__dm')"
 			}

@@ -2878,6 +2878,20 @@ real matrix SaomDyadPrep(real matrix X, real scalar center, real scalar m) {
 	else W = W :* ok
 	return(W)
 }
+/* a bipartite dyadic covariate (RSiena X with two node sets): X is actors x events; embedded in the n x n matrix of the two-mode graph at the actor / event nodes (ia, ie),
+   centred by the mean of all its non-missing cells (RSiena does not drop a diagonal for a bipartite covariate); a missing cell stays 0 */
+real matrix SaomDyadPrepTm(real matrix X, real colvector ia, real colvector ie, real scalar n, real scalar center, real scalar m) {
+	real matrix W, ok, V
+	real scalar r, c
+	ok = (X :< .)
+	m = (sum(ok) > 0 ? sum(select(vec(X), vec(ok))) / sum(ok) : 0)
+	V = editmissing(X, 0)
+	if (center) V = (V :- m) :* ok
+	else V = V :* ok
+	W = J(n, n, 0)
+	for (r=1; r<=rows(X); r++) for (c=1; c<=cols(X); c++) W[ia[r], ie[c]] = V[r, c]
+	return(W)
+}
 real rowvector stat_saom_dyadcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	real matrix ties
 	real scalar k, tot
