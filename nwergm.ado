@@ -31,7 +31,7 @@ program nwergm, eclass
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) STRUCTURAL(string asis) ]
 	set more off
 	// numlist-valued options accept ranges such as degree(0/3), as in R's d=0:3
 	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
@@ -41,7 +41,9 @@ program nwergm, eclass
 		}
 	}
 
-	if "`edges'" == "" {
+	// edges may be left out only when density or meandeg (collinear with it) stands in for it
+	local __ns_noedges = ("`edges'" == "" & (strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " density ") > 0 | strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " meandeg ") > 0))
+	if "`edges'" == "" & !`__ns_noedges' {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
 		error 198
 	}
@@ -153,6 +155,10 @@ program nwergm, eclass
 				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite > 0."
 				error 198
 			}
+		if `"`structural'"' != "" {
+			di "{err}structural() terms are not available for a two-mode network; use the bipartite terms."
+			error 198
+		}
 		}
 	}
 	else {
@@ -671,7 +677,7 @@ program nwergm, eclass
 	// user still typed `edges' (required, checked above) for a
 	// consistent model-specification syntax, it just contributes
 	// nothing to the fitted parameter vector.
-	if "`fixdensity'" == "" {
+	if "`fixdensity'" == "" & !`__ns_noedges' {
 		tempname __td_edges
 		mata: `__td_edges' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
@@ -1314,6 +1320,15 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
 
+	// structural() option: the structural terms of R ergm that have no option of their own
+	// (parsed and registered by _nwergm_struct.ado)
+	local __ns_dep 0
+	if `"`structural'"' != "" {
+		_nwergm_struct `netname', terms(`structural') nodes(`nodes') directed(`directed') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local __ns_dep = r(dep)
+	}
+
 	// --- term-expansion wave 7 (harmonisation unit 91 continuation):
 	// sender()/receiver() (per-node out-/in-degree fixed effects, base=1
 	// omitted, matching R ergm's own default) - a thin convenience
@@ -1729,7 +1744,7 @@ program nwergm, eclass
 	// own comment above) - previously harmless to omit only because
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep')
+	local __ergm_dind = (`"`mutual'"'=="" & `__ns_dep' == 0 & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep')
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -2407,7 +2422,7 @@ program nwergm_simulate
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
-		TYPE(string) ///
+		TYPE(string) STRUCTURAL(string asis) ///
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
@@ -3174,6 +3189,11 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' cyclicalties"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
+	if `"`structural'"' != "" {
+		_nwergm_struct simulated, terms(`structural') nodes(`nodes') directed(`=cond("`directed'" != "", "true", "false")') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local ntermtok "`ntermtok' `r(cnames)'"
+	}
 
 	// sender()/receiver(): per-node out-/in-degree fixed effects, base=1
 	// omitted - the node's own identity (1..nodes) IS the "attribute",
@@ -3374,6 +3394,8 @@ program nwergm_simulate
 		// instructions warn against. __nwergm_last_M.native_enabled
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
+		// structural() terms have no Mata change statistic: they need the native sampler
+		mata: ns_native_setup(__nwergm_last_M, `=cond("`proposal'"=="tnt",2,1)', __nwergm_last_G)
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 

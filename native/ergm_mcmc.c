@@ -1713,7 +1713,9 @@ static double change_bipx(graph_t *g, int kind, double p1, double p2, double *at
 	header comment there for the exact Mata source each was checked
 	against before porting.
 */
+#include "ergm_struct.h"
 static double change_term(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
+	if (termcode >= 1000 && termcode < 2000) return change_struct(g, termcode, p1, p2, attr, cm, n, delta, i, j);
 	if (termcode >= 3000 && termcode < 4000) return change_bipx(g, termcode - 3000, p1, p2, attr, delta, i, j);
 	switch (termcode) {
 		case TERMCODE_EDGES:
@@ -2515,6 +2517,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		p1[i] = next_double();
 		p2[i] = next_double();
 		covidx[i] = (int)next_long();
+		if (termcodes[i] >= 1000 && termcodes[i] < 2000) { need_adj = 1; need_outin = 1; need_dirsp = 1; }
 		switch (termcodes[i]) {
 			case TERMCODE_GWESP: case TERMCODE_GWDSP: case TERMCODE_GWNSP:
 			case TERMCODE_ESP: case TERMCODE_DSP: case TERMCODE_TRIANGLE:
@@ -2800,6 +2803,42 @@ STDLL stata_call(int argc, char *argv[]) {
 			for (i = 0; i <= n; i++) free(g.inadj[i].nb);
 			free(g.inadj);
 		}
+		return(0);
+	}
+
+	if (mode == 3) {
+		/* observed statistics by build-up (as R's summary() does for terms
+		   without a dedicated s_ function): empty the graph, then add the
+		   observed ties one by one, summing each slot's change statistic.
+		   Result goes to row 1 of the output columns. */
+		long ne = g.nties;
+		long *ti = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		long *tj = (long *)malloc((size_t)(ne + 1) * sizeof(long));
+		double acc[MAXTERMS];
+		long e;
+		for (e = 0; e < ne; e++) { ti[e] = g.elist_i[e]; tj[e] = g.elist_j[e]; }
+		for (e = 0; e < ne; e++) toggle(&g, ti[e], tj[e]);
+		for (k = 0; k < nterms; k++) acc[k] = 0.0;
+		for (e = 0; e < ne; e++) {
+			for (k = 0; k < nterms; k++) {
+				double *a = (attridx[k] > 0) ? attrs[attridx[k] - 1] : NULL;
+				double *cmk = (covidx[k] > 0) ? covmats[covidx[k] - 1] : NULL;
+				acc[k] += change_term(&g, termcodes[k], p1[k], p2[k], a, cmk, n, 1.0, ti[e], tj[e]);
+			}
+			toggle(&g, ti[e], tj[e]);
+		}
+		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), 1, acc[k]);
+		free(ti); free(tj);
+		for (k = 0; k < nattr; k++) free(attrs[k]);
+		for (k = 0; k < ncovmat; k++) free(covmats[k]);
+		free(g.mode); free(g.mode1nodes); free(g.mode2nodes);
+		free(g.deg); free(g.outdeg); free(g.indeg);
+		ht_free(&g.ht);
+		free(g.elist_i); free(g.elist_j);
+		free(g.mask); free(g.free_pos); free(g.free_elist_i); free(g.free_elist_j);
+		if (g.adj) { for (i = 0; i <= n; i++) free(g.adj[i].nb); free(g.adj); }
+		if (g.outadj) { for (i = 0; i <= n; i++) free(g.outadj[i].nb); free(g.outadj); }
+		if (g.inadj) { for (i = 0; i <= n; i++) free(g.inadj[i].nb); free(g.inadj); }
 		return(0);
 	}
 
