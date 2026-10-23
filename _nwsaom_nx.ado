@@ -66,9 +66,16 @@ program define _nwsaom_nx, rclass
 	}
 	// protocol 54: ownx(effect[:#] ...) - own-network effects without a covariate, native only: jin jout transtrip1 transtrip2 transrectrip2 (= transtripfr) transtripfe transtripee
 	// outpopmore:# outpopsqrtmore:# outpopthreshold:# and the ego degree effects outactego[:2] outactmoreego:# outactsqrtmoreego:# outmoreego:# divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]
-	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego outinass inpopdya inisdegree instructeq densetriads outoutass ininass inoutass"
-	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25"
+	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego outinass inpopdya inisdegree instructeq densetriads outoutass ininass inoutass primary primcompress nonpcompress primdegact primdegactlog primdegactsqrt primdegactinv primdegactdiff primdegactdiffsqrt"
+	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 36 37 38 39 40 41 42 43 44"
 	if "`ownx'" != "" {
+		// the primary-setting effects read the start network of each period: the wave graphs travel in __saom_sg
+		local __sgl "&__nwsaom_last_G1"
+		forvalues __w = 2/`__nwsaom_nwaves' {
+			local __sgl "`__sgl', &__nwsaom_last_G`__w'"
+		}
+		capture mata: mata drop __saom_sg
+		mata: __saom_sg = (`__sgl')
 		mata: __nwsaom_dg_ties = 0
 		mata: __nwsaom_dg_rec = 0
 		forvalues __w = 1/`__nwsaom_nwaves' {
@@ -95,6 +102,8 @@ program define _nwsaom_nx, rclass
 			else if inlist("`__f'", "outactmoreego", "outactsqrtmoreego") local __pp 1
 			else if inlist("`__f'", "outinass", "outoutass", "ininass", "inoutass") local __pp 2
 			else if "`__f'" == "densetriads" local __pp 5
+			else if inlist("`__f'", "primary", "primcompress") local __pp 10
+			else if "`__f'" == "nonpcompress" local __pp 1
 			else local __pp 0
 		}
 		local __dgn `nodes'

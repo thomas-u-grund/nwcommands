@@ -3567,7 +3567,11 @@ real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar 
    (the dependent behavior as covariate: td.attr = raw behavior, td.center = its overall mean) carries td.levels = (term code \ dynamic flag), td.attr
    the covariate (td.attrpd per period for a changing covariate) and td.decay = p1 (similarity mean, the parameter c, ...). */
 real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd, real scalar scale) {
-	real matrix E
+	external pointer(class ErgmGraph scalar) rowvector __saom_sg
+	external real scalar __saom_curpd
+	class ErgmGraph scalar G0
+	real matrix E, E0
+	real scalar ne0
 	real rowvector nb
 	real scalar i, m, ne, n, junk
 	string scalar origframe
@@ -3578,18 +3582,34 @@ real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real s
 		for (m=1; m<=cols(nb); m++) E = E \ (i, nb[m])
 	}
 	ne = rows(E)
+	// protocol 61: the primary-setting effects also need the START network of the period (the arcs go in the last two columns)
+	E0 = J(0, 2, 0)
+	if (code >= 296 & code <= 304 & findexternal("__saom_sg") != NULL) {
+		if (__saom_curpd >= 1 & __saom_curpd <= cols(__saom_sg)) {
+			G0 = *__saom_sg[__saom_curpd]
+			for (i=1; i<=n; i++) {
+				nb = G0.neighbors_out(i)
+				for (m=1; m<=cols(nb); m++) E0 = E0 \ (i, nb[m])
+			}
+		}
+	}
+	ne0 = rows(E0)
 	origframe = st_framecurrent()
 	stata("capture frame drop __saom_netstat")
 	stata("frame create __saom_netstat")
 	st_framecurrent("__saom_netstat")
-	st_addobs(max((ne, n, 1)))
+	st_addobs(max((ne, ne0, n, 1)))
 	junk = st_addvar("double", ("ev1", "ev2", "aa"))
 	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) junk = st_addvar("double", "dd" + strofreal(i))
+	if (ne0 > 0) {
+		junk = st_addvar("double", ("s1", "s2"))
+		st_store((1::ne0), ("s1", "s2"), E0)
+	}
 	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
 	st_store((1::n), "aa", a)
 	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + (args() >= 6 ? " " + strofreal(scale, "%25.17g") : "") + char(34))
+	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + (ne0 > 0 ? " s1 s2" : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + " " + (args() >= 6 ? strofreal(scale, "%25.17g") : "1") + " " + strofreal(ne0) + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_netstat")
 	return(st_numscalar("__saom_netstat_val"))
@@ -3844,12 +3864,15 @@ real scalar SaomModelHasTV(class ErgmModel scalar M) {
 		pt = M.td[t]
 		if (rows(pt->attrpd) > 0) return(1)
 		if (cols(pt->edgecovpd) > 0) return(1)
+		if (rows(pt->levels) >= 2) if (pt->levels[1] >= 296 & pt->levels[1] <= 304) return(1)		// protocol 61: the primary-setting effects read the start network of the period
 	}
 	return(0)
 }
 
 void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
+	external real scalar __saom_curpd
 	real scalar t
+	__saom_curpd = pd
 	pointer(class ErgmTermData scalar) scalar pt
 	for (t=1; t<=M.nterms; t++) {
 		pt = M.td[t]

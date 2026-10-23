@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 60		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 60 = behavior effects varAlt avSimVarAlt behDenseTriads simDenseTriads (bu 14-17, the behavior variance in the trailer); 59 = sameXV/sameXVInPop (codes 293, 294); 58 = similarity effects with the dependent behavior as covariate (scale 1/range); 57 = changing dyadic covariates of the behavior effects (tvbehw); 56 = cross-network effects with a constant covariate (codes 3100+), covariate effects in two-mode networks; 55 = behavior effects indegAvGroup indegTotGroup avAlt_cc totAlt_cc avInAltDist2_nc ... totGwdspFBAlt_nc avInSimDist2 totInSimDist2 (codes 2800+); 54 = own-network effects without a covariate (Jin Jout transTrip1/2 transRecTrip2 transTrip.FR/FE/EE outPopMore outPopSqrtMore outPopThreshold and the ego degree effects; codes 260+); 53 = another co-evolving behavior as the covariate of the behavior-1 covariate effects (slot flag in the covariate trailer); 52 = several co-evolving networks (BATCHSETUP<k>|, MNRUN, MNOBS) and the cross-network terms 3000+; 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
+#define SAOM_NATIVE_VERSION 61		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 61 = primary-setting effects primary primCompress nonPCompress primDegAct* (codes 296-304, the period's start network); 60 = behavior effects varAlt avSimVarAlt behDenseTriads simDenseTriads (bu 14-17, the behavior variance in the trailer); 59 = sameXV/sameXVInPop (codes 293, 294); 58 = similarity effects with the dependent behavior as covariate (scale 1/range); 57 = changing dyadic covariates of the behavior effects (tvbehw); 56 = cross-network effects with a constant covariate (codes 3100+), covariate effects in two-mode networks; 55 = behavior effects indegAvGroup indegTotGroup avAlt_cc totAlt_cc avInAltDist2_nc ... totGwdspFBAlt_nc avInSimDist2 totInSimDist2 (codes 2800+); 54 = own-network effects without a covariate (Jin Jout transTrip1/2 transRecTrip2 transTrip.FR/FE/EE outPopMore outPopSqrtMore outPopThreshold and the ego degree effects; codes 260+); 53 = another co-evolving behavior as the covariate of the behavior-1 covariate effects (slot flag in the covariate trailer); 52 = several co-evolving networks (BATCHSETUP<k>|, MNRUN, MNOBS) and the cross-network terms 3000+; 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -1764,11 +1764,34 @@ static double xt_stat(graph_t *g, int termcode, const double *a, double p1) {
    a[2] = its average reciprocal degree. The ego effects (10-17) are the functions of the ego's degree that RSiena offers for its interactions, used here alone.
    =================================================================== */
 #define TERMCODE_DG0 260
-#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 40)
+#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 50)
+#define SAOM_STARTTC(tc) ((tc) >= TERMCODE_DG0 + 36 && (tc) <= TERMCODE_DG0 + 44)	/* protocol 61: the primary-setting effects read the period's START network */
+static __thread const void *saom_tl_g0 = NULL;	/* the start graph of the period (graph_t *), set by simulate_period() / NETSTAT */
 static double dg_recdeg(graph_t *g, long i) {
 	long m, c = 0;
 	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, g->outadj[i].nb[m], i)) c++;
 	return (double)c;
+}
+/* RSiena NetworkWithPrimaryEffect::primaryProperties(): the primary setting of ego = its neighbours (either direction) and their neighbours, without ego; returns its size, mark[1..n] flags it */
+static long prim_set(const graph_t *gp, long ego, unsigned char *mark) {
+	long m, m2, j, k, deg = 0;
+	for (m = 0; m <= gp->n; m++) mark[m] = 0;
+	for (m = 0; m < gp->outadj[ego].len + gp->inadj[ego].len; m++) {
+		j = (m < gp->outadj[ego].len) ? gp->outadj[ego].nb[m] : gp->inadj[ego].nb[m - gp->outadj[ego].len];
+		if (!mark[j]) { mark[j] = 1; deg++; }
+		for (m2 = 0; m2 < gp->outadj[j].len + gp->inadj[j].len; m2++) {
+			k = (m2 < gp->outadj[j].len) ? gp->outadj[j].nb[m2] : gp->inadj[j].nb[m2 - gp->outadj[j].len];
+			if (!mark[k]) { mark[k] = 1; deg++; }
+		}
+	}
+	if (mark[ego]) { mark[ego] = 0; deg--; }
+	return deg;
+}
+static double prim_transform(int v, double x) {
+	if (v == 40) return log(x + 1.0);		/* primDegActLog */
+	if (v == 41 || v == 44) return sqrt(x);		/* Sqrt, DiffSqrt */
+	if (v == 42) return 1.0 / (x + 1.0);		/* Inv */
+	return x;
 }
 static double dg_value(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	double av = a ? a[1] : 0.0, avr = a ? a[2] : 0.0, deg, os, is, den;
@@ -1801,6 +1824,23 @@ static double dg_value(graph_t *g, int v, const double *a, double p1, long i, lo
 		case 15: return xt_S((double)g->din[i], p1) - xt_S(av, p1);
 		case 16: return xt_recip(xt_S((double)g->din[i], p1));
 		case 17: return xt_S(dg_recdeg(g, i), p1) - xt_S(avr, p1);
+		case 36: case 37: case 38: case 39: case 40: case 41: case 42: case 43: case 44: {
+			/* the primary-setting effects, contributions (RSiena PrimaryCompressionEffect / PrimarySettingEffect): the primary setting of the CURRENT network */
+			long pdc, od = (long)g->dout[i];
+			unsigned char *mk = (unsigned char *)malloc((size_t)(g->n + 1));
+			double r = 0.0, lp;
+			pdc = prim_set(g, i, mk);
+			if (v == 36) r = mk[j] ? 1.0 : 0.0;
+			else if (v == 37) {
+				if (mk[j]) { lp = 0.0; if (od < pdc) { lp = ((double)(pdc - od)) / p1; if (lp < 1.0) lp = 1.0; lp = log(lp); } r = -lp; }
+			}
+			else if (v == 38) {
+				if (!mk[j]) { lp = 0.0; if (pdc < g->n - 1) { lp = ((double)(g->n - 1 - pdc)) / p1; if (lp < 1.0) lp = 1.0; lp = log(lp); } r = -lp; }
+			}
+			else r = prim_transform(v, (double)pdc - ((v == 43 || v == 44) ? (double)od : 0.0));
+			free(mk);
+			return r;
+		}
 		case 33: case 34: {
 			/* sameXV / sameXVInPop (sameXVInPop2 is the same function without missing values): two integer covariates packed as 64 * first + second in the attribute */
 			long ci = (long)floor(a[i] / 64.0), cj2 = (long)floor(a[j] + 0.5) - 64 * (long)floor(a[j] / 64.0);
@@ -1919,6 +1959,27 @@ static double dg_stat(graph_t *g, int termcode, const double *a, double p1) {
 	double tot = 0.0;
 	int v = termcode - TERMCODE_DG0;
 	if (v == 22) return dg_dense_stat(g, p1);
+	if (v >= 36 && v <= 44) {
+		/* RSiena egoStatistic(): the primary setting of the START network, the outdegree of the current one */
+		const graph_t *g0 = saom_tl_g0 ? (const graph_t *)saom_tl_g0 : g;
+		unsigned char *mk0 = (unsigned char *)malloc((size_t)(g->n + 1)), *mkc = (unsigned char *)malloc((size_t)(g->n + 1));
+		long i, m, outside;
+		for (i = 1; i <= g->n; i++) {
+			long pd0 = prim_set(g0, i, mk0), pdc = prim_set(g, i, mkc), od = (long)g->dout[i];
+			outside = 0;
+			for (m = 0; m < g->outadj[i].len; m++) if (!mk0[g->outadj[i].nb[m]]) outside++;
+			if (v == 36) tot += (double)(od - outside);
+			else if (v == 37) tot += (double)(outside - od);
+			else if (v == 38) tot += -(double)outside;
+			else {
+				double val = (double)pd0 - ((v == 43 || v == 44) ? (double)g0->dout[i] : 0.0), add = 0.0;
+				if (p1 >= 2.0 - 1e-9) add = prim_transform(v, (double)pdc - ((v == 43 || v == 44) ? (double)od : 0.0));
+				tot += (prim_transform(v, val) + add) * (double)od;
+			}
+		}
+		free(mk0); free(mkc);
+		return tot;
+	}
 	for (k = 0; k < g->nties; k++) tot += dg_tie(g, v, a, p1, g->elist_i[k], g->elist_j[k]);
 	return tot;
 }
@@ -4123,6 +4184,7 @@ typedef struct model_s {
 	double *attrs[MAXATTR + 1];		// attrs[nattr] is the behsim slot, filled per simulation
 	int need_adj, need_transtrip, need_cycle3;
 	int has_behsim;
+	int has_start;		/* protocol 61: a term reads the period's start network (saom_tl_g0) */
 	int has_behcov;		/* protocol 45: network terms with the dependent behavior as covariate (term code + 1000, attribute slot nattr + 1) */
 	long nbehterms;
 	int behtermcodes[MAXBEHTERMS];
@@ -4427,7 +4489,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	unsigned long long seed, int keep_final, simres_t *R) {
 
 	long n = M->n, i, k, stride = n + 1;
-	graph_t g, gm;
+	graph_t g, gm, g0s;
 	int have_gm = 0;
 	rng_t rng;
 	{ int jc; for (jc = 0; jc < 8; jc++) { saom_tl_cov[jc] = PD->bcov[jc]; saom_tl_bdy[jc] = PD->bdy[jc]; } }
@@ -4465,6 +4527,12 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 
 	graph_init(&g, n, M->need_adj, PD->nties);
 	for (i = 0; i < PD->nties; i++) toggle(&g, PD->ti[i], PD->tj[i]);
+	if (M->has_start) {
+		graph_init(&g0s, n, 1, PD->nties);
+		for (i = 0; i < PD->nties; i++) toggle(&g0s, PD->ti[i], PD->tj[i]);
+		saom_tl_g0 = &g0s;
+	}
+	else saom_tl_g0 = NULL;
 
 	if (P->condmode) {
 		ht_alloc(&horig, ht_next_pow2(PD->nties * 2 + 16));
@@ -5217,6 +5285,7 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 	PROF_ADD(PR_END, pt_end);
 	free(behc); free(behc0);
 	{ int sl5; for (sl5 = 0; sl5 < 8; sl5++) free(dyncov[sl5]); }
+	if (M->has_start) { graph_free(&g0s); saom_tl_g0 = NULL; }
 	if (keep_final) {
 		R->gfinal = (graph_t *)malloc(sizeof(graph_t));
 		*R->gfinal = g;
@@ -5577,6 +5646,7 @@ static ST_retcode batch_setup(char *arg) {
 	if (M->has_behsim && M->nbehterms == 0) { SF_error("saom_sim: behsim needs a co-evolving behavior\n"); return 198; }
 	saom_behsim_range = (M->behrange > 0.0) ? M->behrange : 1.0;
 	if (M->has_behsim) for (k = 0; k < M->nterms; k++) if (SAOM_DYNTC(M->termcodes[k])) M->attridx[k] = (int)(M->nattr + 1);
+	for (k = 0; k < M->nterms; k++) if (SAOM_STARTTC(M->termcodes[k])) M->has_start = 1;
 	for (k = 0; k < M->nterms; k++) if (M->termcodes[k] >= 1000 && M->termcodes[k] < 2000) { M->has_behcov = 1; M->attridx[k] = (int)(M->nattr + 2); }
 	if (M->has_behcov && (M->nbehterms == 0 || M->nattr + 2 > MAXATTR)) { SF_error("saom_sim: network terms with the behavior as covariate need a co-evolving behavior\n"); return 198; }
 
@@ -6299,6 +6369,7 @@ static ST_retcode legacy_call(char *arg0) {
 	if (M.has_behsim && M.nattr >= MAXATTR) { free(P.ratecovattr); SF_error("saom_sim: too many attribute arrays for behsim\n"); return(198); }
 	if (!directed) { free(P.ratecovattr); SF_error("saom_sim: directed networks only\n"); return(198); }
 	if (M.has_behsim) for (i = 0; i < M.nterms; i++) if (SAOM_DYNTC(M.termcodes[i])) M.attridx[i] = (int)(M.nattr + 1);
+	for (i = 0; i < M.nterms; i++) if (SAOM_STARTTC(M.termcodes[i])) M.has_start = 1;
 	for (i = 0; i < M.nterms; i++) if (M.termcodes[i] >= 1000 && M.termcodes[i] < 2000) { M.has_behcov = 1; M.attridx[i] = (int)(M.nattr + 2); }
 	if (M.has_behcov && (M.nbehterms == 0 || M.nattr + 2 > MAXATTR)) { free(P.ratecovattr); SF_error("saom_sim: network terms with the behavior as covariate need a co-evolving behavior\n"); return(198); }
 
@@ -6426,7 +6497,8 @@ static double prof_calls = 0.0;
    native-only term needs no Mata twin for its target. Data in the current frame: columns 1, 2 = the arcs (ne rows), column 3 = the attribute
    (n rows, 1-based actors). The value is returned in the scalar __saom_netstat_val. */
 static ST_retcode netstat_cmd(char *arg) {
-	long n, ne, i;
+	long n, ne, i, ne0 = 0;
+	graph_t g0n;
 	int tc;
 	double p1, *a, val;
 	graph_t g;
@@ -6437,6 +6509,7 @@ static ST_retcode netstat_cmd(char *arg) {
 	tok = strtok(NULL, " \t"); tc = (int)atof(tok);
 	tok = strtok(NULL, " \t"); p1 = atof(tok);
 	tok = strtok(NULL, " \t"); saom_tl_behscale = tok ? atof(tok) : 1.0;	/* protocol 58: 1 / behavior range for the sim effects with the behavior as covariate */
+	tok = strtok(NULL, " \t"); ne0 = tok ? (long)atof(tok) : 0;			/* protocol 61: the arcs of the period's start network in the last two columns */
 	graph_init(&g, n, 1, ne + 8);
 	for (i = 1; i <= ne; i++) {
 		ST_double v1, v2;
@@ -6455,7 +6528,16 @@ static ST_retcode netstat_cmd(char *arg) {
 		for (ii = 0; ii < n; ii++) free(cols[ii]);
 		free(cols);
 	}
-	else val = saom_stat_term(&g, tc, a, p1);
+	else {
+		if (ne0 > 0) {
+			long nv = (long)SF_nvars();
+			graph_init(&g0n, n, 1, ne0 + 8);
+			for (i = 1; i <= ne0; i++) { ST_double v1, v2; SF_vdata((int)(nv - 1), i, &v1); SF_vdata((int)nv, i, &v2); toggle(&g0n, (long)v1, (long)v2); }
+			saom_tl_g0 = &g0n;
+		}
+		val = saom_stat_term(&g, tc, a, p1);
+		if (ne0 > 0) { graph_free(&g0n); saom_tl_g0 = NULL; }
+	}
 	SF_scal_save("__saom_netstat_val", (ST_double)val);
 	free(a);
 	graph_free(&g);

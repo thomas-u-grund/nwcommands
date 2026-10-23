@@ -28,7 +28,7 @@ forvalues w = 1/3 {
 	nwset, mat(__W`w') directed name(dd`w') nooutput
 	nwset, mat(__S`w') directed name(ds`w') nooutput
 }
-foreach ef in outinass:1 outinass:2 outoutass outoutass:1 ininass ininass:1 inoutass inoutass:1 inpopdya inpopdya:2 inisdegree instructeq densetriads:5 densetriads:6 jin jout transtrip1 transtrip2 transrectrip2 transtripfr transtripfe transtripee outpopmore:2 outpopsqrtmore:2 outpopthreshold:2 outactego outactmoreego:2 outactsqrtmoreego:2 outmoreego:2 divoutego inactego divinego reciactego {
+foreach ef in primary primcompress nonpcompress primdegact primdegactlog primdegactsqrt primdegactinv primdegactdiff primdegactdiffsqrt primdegact:2 outinass:1 outinass:2 outoutass outoutass:1 ininass ininass:1 inoutass inoutass:1 inpopdya inpopdya:2 inisdegree instructeq densetriads:5 densetriads:6 jin jout transtrip1 transtrip2 transrectrip2 transtripfr transtripfe transtripee outpopmore:2 outpopsqrtmore:2 outpopthreshold:2 outactego outactmoreego:2 outactsqrtmoreego:2 outmoreego:2 divoutego inactego divinego reciactego {
 	capture nwsaom, waves(dd1 dd2 dd3) outdegree reciprocity ownx(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 3
