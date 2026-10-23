@@ -80,4 +80,61 @@ foreach ef in inrate reciprate inrateinv inratelog {
 	capture nwsaom, waves(tm1 tm2 tm3) outdegree `ef' k3(30)
 	assert _rc != 0
 }
+
+* ---- RateX with a changing covariate: tvcov() names in ratecov() (siena07 varCovar; dev/saom_rsiena_rates_tv.R)
+clear
+forvalues w = 1/3 {
+	import delimited "dev/saom_rsiena_netendow_w`w'.csv", clear varnames(1)
+	mkmat v1-v50, matrix(D`w')
+}
+import delimited "dev/saom_rsiena_multibeh_data.csv", clear varnames(1)
+forvalues w = 1/3 {
+	nwset, mat(D`w') directed name(dr`w') nooutput
+	nwset, mat(W`w') directed name(sy`w') nooutput
+}
+* observed statistics: the sum over the tie changes of the actor's centred covariate of the period (siena07 targets 51.21 directed, 58.66 non-directed)
+mata:
+real scalar tv_target(string scalar mat1, real scalar sym) {
+	real scalar pd, i, j, s, m
+	real matrix A, B, X
+	X = st_data(., ("a1", "a2"))
+	m = mean(vec(X))
+	s = 0
+	for (pd=1; pd<=2; pd++) {
+		A = st_matrix(mat1 + strofreal(pd)); B = st_matrix(mat1 + strofreal(pd+1))
+		for (i=1; i<=50; i++) for (j=1; j<=50; j++) if (A[i,j] != B[i,j]) s = s + (X[i,pd] - m)
+	}
+	return(s)
+}
+end
+mata: assert(abs(tv_target("D", 0) - 51.21) < 1e-2 & abs(tv_target("W", 1) - 58.66) < 1e-2)
+nwsaom, waves(dr1 dr2 dr3) outdegree reciprocity tvcov(a1 a2 a3) ratecov(a) k0(50) k3(1000) seed(1)
+assert "`e(engine)'" == "native" & abs(e(ratecoef) - 0.275) < 0.06 & abs(el(e(b),1,1) + 2.366) < 0.12 & abs(el(e(b),1,2) - 2.84) < 0.25
+nwsaom, waves(sy1 sy2 sy3) symmetric outdegree tvcov(a1 a2 a3) ratecov(a) k0(50) k3(1000) seed(1)
+assert abs(e(ratecoef) - 0.30) < 0.08 & abs(el(e(b),1,1) + 1.39) < 0.1
+* a changing and a constant covariate together, in this order and in the other
+gen double cst = mod(_n, 4)
+nwsaom, waves(dr1 dr2 dr3) outdegree reciprocity tvcov(a1 a2 a3) ratecov(a cst) k0(20) k3(60) seed(1)
+assert colsof(e(ratecoefs)) == 2
+nwsaom, waves(dr1 dr2 dr3) outdegree reciprocity tvcov(a1 a2 a3) ratecov(cst a) k0(20) k3(60) seed(1)
+assert colsof(e(ratecoefs)) == 2
+* two-mode network
+nwclear
+clear
+forvalues w = 1/3 {
+	import delimited "dev/saom_rates_tm_w`w'.csv", clear varnames(1)
+	mkmat v1-v20, matrix(T`w')
+}
+import delimited "dev/saom_rates_tm_tv.csv", clear varnames(1)
+mkmat t1 t2, matrix(TV)
+mata: TVm = st_matrix("TV")
+clear
+forvalues w = 1/3 {
+	nwset, mat(T`w') bipartite name(tm`w') nooutput
+}
+gen double t1 = .
+gen double t2 = .
+mata: md = st_sdata(., "_nwmode"); ia = selectindex(md :== "2"); st_store(ia, ("t1", "t2"), TVm)
+nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity tvcov(t1 t2) ratecov(t) k0(50) k3(1000) seed(1)
+assert abs(e(ratecoef) - 0.163) < 0.09 & abs(el(e(b),1,1) + 1.78) < 0.15
 di as text "rate effects PASS"

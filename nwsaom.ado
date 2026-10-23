@@ -823,7 +823,36 @@ program nwsaom, eclass
 	local __nwsaom_nratecov 0
 	local __nwsaom_rclist ""
 	if `__nwsaom_hasratecov' {
-		if "`ratecov'" != "" unab ratecov : `ratecov'
+		// protocol 71: a name declared in tvcov() is a changing covariate; the other names are variables
+		mata: SaomRateTVReset()
+		local __nwsaom_rcstems ""
+		if `"`tvcov'"' != "" & "`ratecov'" != "" {
+			local __rest `"`tvcov'"'
+			while `"`__rest'"' != "" {
+				local __bar = strpos(`"`__rest'"', "|")
+				if `__bar' > 0 {
+					local __grp = strtrim(substr(`"`__rest'"', 1, `__bar' - 1))
+					local __rest = strtrim(substr(`"`__rest'"', `__bar' + 1, .))
+				}
+				else {
+					local __grp = strtrim(`"`__rest'"')
+					local __rest ""
+				}
+				local __fv : word 1 of `__grp'
+				local __stem = ustrregexra("`__fv'", "[0-9]+$", "")
+				if "`__stem'" == "" local __stem "tv`=wordcount("`__nwsaom_rcstems'")+1'"
+				local __nwsaom_rcstems "`__nwsaom_rcstems' `__stem'"
+			}
+		}
+		local __rc2 ""
+		foreach __t of local ratecov {
+			if `: list __t in __nwsaom_rcstems' local __rc2 "`__rc2' `__t'"
+			else {
+				unab __u : `__t'
+				local __rc2 "`__rc2' `__u'"
+			}
+		}
+		local ratecov = strtrim("`__rc2'")
 		local __nwsaom_rclist "`ratecov' `__nwsaom_srnames'"
 		local __nwsaom_rclist = trim("`__nwsaom_rclist'")
 		local __nwsaom_nratecov : word count `__nwsaom_rclist'
@@ -3114,6 +3143,22 @@ program nwsaom, eclass
 	mata: __nwsaom_last_fntype = SaomFntypeFromNames(__nwsaom_last_M)
 	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
 	if `__nwsaom_hasstructural' mata: __nwsaom_coev_struct = __nwsaom_structmat
+	// changing covariates among the ratecov() variables (protocol 71): the variables behind the columns, the per-period values to Mata
+	local __nwsaom_rcvars "`ratecov'"
+	if `__nwsaom_hasratecov' & "`ratecov'" != "" {
+		local __nwsaom_rcvars ""
+		local __ci 0
+		foreach __t of local ratecov {
+			local ++__ci
+			if `: list __t in __nwsaom_tvnames' {
+				local __v1 : word 1 of `__nwsaom_tvv_`__t''
+				local __nwsaom_rcvars "`__nwsaom_rcvars' `__v1'"
+				mata: SaomRateTVAdd(`__ci', "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
+			}
+			else local __nwsaom_rcvars "`__nwsaom_rcvars' `__t'"
+		}
+		local __nwsaom_rcvars = strtrim("`__nwsaom_rcvars'")
+	}
 	else mata: __nwsaom_last_struct = J(0, 0, 0)
 	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
 	else mata: __nwsaom_last_present = J(0, 1, 0)
@@ -3229,7 +3274,7 @@ program nwsaom, eclass
 		// verification this pooling convention is based on.
 		if `__nwsaom_hasstructural' & `__nwsaom_hasratecov' {
 			// the two-mode embedding with covariate / structural rate effects
-			mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
+			mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`__nwsaom_rcvars'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
 			mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 				__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', J(0, 0, 0), J(1, 0, NULL), __nwsaom_rates0, J(1, 0, 0), 0, __nwsaom_mw_rcattr, `ratecovcoef', __nwsaom_structmat)
 		}
@@ -3267,7 +3312,7 @@ program nwsaom, eclass
 				local __nwsaom_mw_sym = 0
 			}
 			if `__nwsaom_hasratecov' {
-				mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
+				mata: __nwsaom_mw_rcattr = SaomRateAttr(`nodes', "`__nwsaom_rcvars'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 				mata: __nwsaom_fit = SaomEstimateRMMulti(__nwsaom_last_Gwaves, ///
 					__nwsaom_last_M, __nwsaom_theta0, `k0', `k3', `firstg', __nwsaom_mw_present, __nwsaom_mw_missptr, __nwsaom_rates0, __nwsaom_mw_fntype, `__nwsaom_mw_sym', __nwsaom_mw_rcattr, `ratecovcoef')
 			}
@@ -3330,7 +3375,7 @@ program nwsaom, eclass
 			mata: __nwsaom_symrc_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_symrc_nomiss = J(`nodes', `nodes', 0)
 			mata: __nwsaom_symrc_fntype = J(1, __nwsaom_last_M.nterms, 0)
-			mata: __nwsaom_symrc_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
+			mata: __nwsaom_symrc_ratecovattr = SaomRateAttr(`nodes', "`__nwsaom_rcvars'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_symrc_allpresent, __nwsaom_symrc_nomiss, __nwsaom_symrc_fntype, __nwsaom_symrc_ratecovattr, `ratecovcoef', `__nwsaom_symtypeval')
 		}
@@ -3354,7 +3399,7 @@ program nwsaom, eclass
 			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
-			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
+			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`__nwsaom_rcvars'", `__nwsaom_center', `__nwsaom_nsr', __nwsaom_tm_actidx)
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef', 0, __nwsaom_structmat)
 		}
@@ -3366,7 +3411,7 @@ program nwsaom, eclass
 			mata: __nwsaom_ratecov_fntype = __nwsaom_last_fntype
 			mata: __nwsaom_ratecov_allpresent = J(`nodes', 1, 1)
 			mata: __nwsaom_ratecov_nomiss = J(`nodes', `nodes', 0)
-			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`ratecov'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
+			mata: __nwsaom_ratecovattr = SaomRateAttr(`nodes', "`__nwsaom_rcvars'", `__nwsaom_center', `__nwsaom_nsr'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
 			mata: __nwsaom_fit = SaomEstimateRM(__nwsaom_last_G1, __nwsaom_last_G2, ///
 				__nwsaom_last_M, __nwsaom_theta0, `__nwsaom_rate0', `k0', `k3', `firstg', __nwsaom_ratecov_allpresent, __nwsaom_ratecov_nomiss, __nwsaom_ratecov_fntype, __nwsaom_ratecovattr, `ratecovcoef')
 		}
@@ -3508,6 +3553,7 @@ program nwsaom, eclass
 	ereturn local rsiena_labels `"`__nwsaom_rslab'"'
 	if `__nwsaom_hasratecov' {
 		foreach __v of local ratecov {
+			if `: list __v in __nwsaom_tvnames' continue
 			qui summarize `__v' in 1/`nodes', meanonly
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `=r(mean)'"
 		}

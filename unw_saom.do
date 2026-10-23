@@ -3163,6 +3163,57 @@ real matrix SaomRateAttr(real scalar n, string scalar vars, real scalar center, 
 	else U = SaomCovPrepMat(st_data(1::n, vars), center)
 	return((U, J(n, S, 0)))
 }
+/* protocol 71: changing covariates among the ratecov() columns: the (pooled-mean centred) values of the periods, n x nper per covariate.
+   SaomRateTVReset() at the start of every fit, SaomRateTVAdd() for each (1-based column of the ratecov() matrix, its per-period variables). */
+void SaomRateTVReset() {
+	external real rowvector __saom_rctvcol
+	external real matrix __saom_rctvval
+	external real scalar __saom_rctvnper
+	__saom_rctvcol = J(1, 0, 0)
+	__saom_rctvval = J(0, 0, 0)
+	__saom_rctvnper = 0
+}
+void SaomRateTVAdd(real scalar col, string scalar vlist, real scalar n, real scalar nper, real scalar center, | real colvector idx) {
+	external real rowvector __saom_rctvcol
+	external real matrix __saom_rctvval
+	external real scalar __saom_rctvnper
+	class ErgmTermData scalar td
+	real scalar m
+	td = ErgmTermData()
+	if (args() >= 6) SaomCovTVAttr(td, vlist, n, nper, center, m, idx)
+	else SaomCovTVAttr(td, vlist, n, nper, center, m)
+	__saom_rctvcol = __saom_rctvcol, col
+	__saom_rctvval = (cols(__saom_rctvval) > 0 ? (__saom_rctvval, td.attrpd) : td.attrpd)
+	__saom_rctvnper = nper
+}
+real scalar SaomRateTVCount() {
+	external real rowvector __saom_rctvcol
+	return(cols(__saom_rctvcol))
+}
+/* the ratecov() matrix as it is in period pd (changing covariates take that period's values) */
+real matrix SaomRCPd(real matrix rcattr, real scalar pd) {
+	external real rowvector __saom_rctvcol
+	external real matrix __saom_rctvval
+	external real scalar __saom_rctvnper
+	real matrix A
+	real scalar t
+	if (cols(__saom_rctvcol) == 0) return(rcattr)
+	A = rcattr
+	for (t=1; t<=cols(__saom_rctvcol); t++) A[., __saom_rctvcol[t]] = __saom_rctvval[., (t-1) * __saom_rctvnper + pd]
+	return(A)
+}
+string scalar SaomRCTVTrailer() {
+	external real rowvector __saom_rctvcol
+	external real matrix __saom_rctvval
+	external real scalar __saom_rctvnper
+	real scalar t, nper
+	string scalar s
+	if (cols(__saom_rctvcol) == 0) return(" 0")
+	nper = __saom_rctvnper
+	s = " " + strofreal(cols(__saom_rctvcol))
+	for (t=1; t<=cols(__saom_rctvcol); t++) s = s + " " + strofreal(__saom_rctvcol[t]) + " " + invtokens(strofreal(vec(__saom_rctvval[., ((t-1) * nper + 1)..(t * nper)])', "%25.17g"))
+	return(s)
+}
 /* start-of-period values of the structural rate covariates (types as in sr_value() of native/saom_sim.c): n x S */
 real matrix SaomStructRateAttr(class ErgmGraph scalar G, real rowvector types) {
 	real matrix A
@@ -6035,7 +6086,7 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 			C.targetRate[pd] = SaomCountDiffering(*Gwaves[pd], *Gwaves[pd+1])
 		}
 		if (C.hasnetgate) C.target[pd,.] = SaomNetworkPatchEndowCreation(M, fntype, C.target[pd,.], *Gwaves[pd], *Gwaves[pd+1], (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
-		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], ratecovattr, (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
+		if (C.hasratecov) C.targetRateCov[pd,.] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], SaomRCPd(ratecovattr, pd), (C.hasmiss ? *missMaskPd[pd] : J(0, 0, 0)))
 		if (cols(SaomSRTypes()) > 0) C.targetRateCov[pd, (C.hasratecov - cols(SaomSRTypes()) + 1)..C.hasratecov] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], SaomStructRateAttr(*Gwaves[pd], SaomSRTypes()), J(0, 0, 0))
 	}
 
@@ -6078,6 +6129,12 @@ void SaomNetCtxInit(struct SaomNetCtx scalar C, pointer(class ErgmGraph scalar) 
 	C.perok = (ver >= 18)
 	// the threaded batch path: every model from protocol 11 on
 	C.use_batch = C.use_native & (!C.hastimed | ver >= 27) & (ver >= 5) & ((!C.hasratecov & C.symtype == 0 & !C.hasnetgate & !C.hasstructural) | ver >= 11)
+	if (SaomRateTVCount() > 0) {
+		if (!C.use_batch | ver < 71) {
+			errprintf("nwsaom: a changing covariate in ratecov() needs the native plugin, protocol 71 or later; there is no Mata implementation.\n")
+			exit(198)
+		}
+	}
 	if (C.hasratecov & C.hasstructural & ver < 70) {
 		errprintf("nwsaom: rate effects of a two-mode network need the native plugin, protocol 70 or later; there is no Mata implementation.\n")
 		exit(198)
@@ -12234,7 +12291,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 	argstr = argstr + SaomBehCovTrailer(n)
 	argstr = argstr + SaomBehDyTrailer(n)
-	argstr = argstr + SaomSRTrailer() + SaomBehVarTrailer()
+	argstr = argstr + SaomSRTrailer() + SaomBehVarTrailer() + SaomRCTVTrailer()
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
