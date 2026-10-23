@@ -3006,17 +3006,29 @@ program nwsaom, eclass
 	capture mata: mata drop __nwsaom_score_Zp
 	capture mata: mata drop __nwsaom_score_Sp
 	if "`fix'" != "" {
-		if "`fix'" == "_all" local fix "`__nwsaom_efflist'"
-		local __nwsaom_fm ""
+		local __nwsaom_fn ""
 		forvalues __i = 1/`__nwsaom_p' {
-			local __w : word `__i' of `__nwsaom_efflist'
-			local __nwsaom_fm `__nwsaom_fm' `=("`: list __w & fix'" != "")'
+			local __nwsaom_fn `__nwsaom_fn' `: word `__i' of `__nwsaom_efflist''
 		}
+		if `__nwsaom_coev' {
+			foreach __t of local __nwsaom_effbeh {
+				local __nwsaom_fn `__nwsaom_fn' beh_`__t'
+			}
+		}
+		if "`fix'" == "_all" local fix "`__nwsaom_fn'"
+		local __nwsaom_fx ""
 		foreach __w of local fix {
-			if !`: list __w in __nwsaom_efflist' {
-				di "{err}fix(): `__w' is not one of the requested effects: `__nwsaom_efflist'."
+			if `: list __w in __nwsaom_fn' local __nwsaom_fx `__nwsaom_fx' `__w'
+			else if `: list posof "beh_`__w'" in __nwsaom_fn' local __nwsaom_fx `__nwsaom_fx' beh_`__w'
+			else {
+				di "{err}fix(): `__w' is not one of the requested effects: `__nwsaom_fn'."
 				error 198
 			}
+		}
+		local __nwsaom_fm ""
+		foreach __w of local __nwsaom_fn {
+			local __nwsaom_pos : list posof "`__w'" in __nwsaom_fx
+			local __nwsaom_fm `__nwsaom_fm' `=(`__nwsaom_pos' > 0)'
 		}
 		mata: __nwsaom_fixmask = strtoreal(tokens("`__nwsaom_fm'"))
 	}
