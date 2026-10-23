@@ -541,3 +541,125 @@ foreach w in default random {
 }
 if `failed' == 0 di "PASS nwergm constraints: exact enumeration (undirected and directed)"
 else exit 9
+
+* ---- simulate with basis()/constraints() and estat gof / mcmcmaxedges under the fit's constraints ----
+nwclear
+clear
+set obs 12
+gen g = ceil(_n/4)
+nwset, mat((0,0,0,0,0,0,1,0,0,1,1,1 \ 0,0,0,1,0,0,0,0,1,0,0,1 \ 0,0,0,0,1,0,0,1,0,0,0,0 \ 0,1,0,0,0,1,0,0,1,0,0,0 \ 0,0,1,0,0,0,0,0,0,0,0,0 \ 0,0,0,1,0,0,0,0,1,0,0,0 \ 1,0,0,0,0,0,0,1,0,0,0,0 \ 0,0,1,0,0,0,1,0,0,0,0,1 \ 0,1,0,1,0,1,0,0,0,1,0,0 \ 1,0,0,0,0,0,0,0,1,0,1,0 \ 1,0,0,0,0,0,0,0,0,1,0,0 \ 1,1,0,0,0,0,0,1,0,0,0,0)) undirected name(U)
+_nwsyntax U, max(1)
+mata: dU = rowsum(*(`netobj'->get_matrix_mod(0,0)))
+qui nwergm simulate 12, edges triangle theta(-1 0.1) basis(U) constraints(degrees) nsim(4) mcmcburnin(3000) mcmcinterval(300) generate(e6sim) seed(5)
+forvalues s = 1/4 {
+	_nwsyntax e6sim_`s', max(1)
+	mata: st_numscalar("e6_degok", all(rowsum(*(`netobj'->get_matrix_mod(0,0))) :== dU))
+	assert scalar(e6_degok) == 1
+}
+di "PASS nwergm simulate with basis() and constraints(degrees) keeps every node's degree"
+clear
+set obs 12
+gen g = ceil(_n/4)
+qui nwergm simulate 12, edges theta(-1) basis(U) constraints(edges) nsim(3) mcmcburnin(3000) mcmcinterval(300) generate(e6sim2) seed(6)
+forvalues s = 1/3 {
+	_nwsyntax e6sim2_`s', max(1)
+	mata: st_numscalar("e6_ne", sum(*(`netobj'->get_matrix_mod(0,0))) / 2)
+	assert scalar(e6_ne) == 16
+}
+di "PASS nwergm simulate with constraints(edges) keeps the number of ties"
+capture nwergm simulate 12, edges theta(-1) constraints(edges) nsim(1) generate(e6x)
+assert _rc != 0
+clear
+set obs 12
+gen g = ceil(_n/4)
+qui nwergm U, edges triangle constraints(edges) method(mcmle) mcmcsamplesize(500) mcmcburnin(2000) mcmcinterval(100) seed(2)
+qui estat gof, nsim(6) seed(9)
+mata: st_numscalar("e6_gofties", __nwergm_last_G.nties)
+assert scalar(e6_gofties) == 16
+di "PASS estat gof simulates under the fitted constraints (tie count kept)"
+assert `"`e(constraints)'"' == "edges"
+capture nwergm U, edges triangle constraints(edges) method(mcmle) mcmcsamplesize(100) mcmcburnin(100) mcmcinterval(10) mcmcmaxedges(5)
+assert _rc != 0
+di "PASS mcmcmaxedges() stops a chain that exceeds the limit"
+capture nwergm U, edges triangle constraints(hamming)
+assert _rc != 0
+capture nwergm U, edges triangle constraints(degrees + blockdiag(g))
+assert _rc != 0
+capture nwergm U, edges triangle constraints(nosuchconstraint)
+assert _rc != 0
+capture nwergm U, edges triangle constraints(odegrees)
+assert _rc != 0
+di "PASS unsupported/unknown constraints and combinations are refused"
+
+* ---- obsconstraints(): MCMLE of the observed-data likelihood against its exact maximiser (5 nodes, 3 unobserved dyads) ----
+mata:
+mata set matastrict off
+void e6_ll(todo, p, A0, miss, ll, g, H)
+{
+	real scalar n, nd, code, k, Z, Zo, s1, s2, ok, w, i, j
+	real matrix dy, A
+	n = rows(A0)
+	dy = J(0,2,0)
+	for (i=1;i<=n;i++) for (j=i+1;j<=n;j++) dy = dy \ (i,j)
+	nd = rows(dy)
+	Z = 0
+	Zo = 0
+	for (code=0; code<2^nd; code++) {
+		A = J(n,n,0)
+		for (k=1;k<=nd;k++) {
+			if (mod(floor(code/2^(k-1)),2)) {
+				A[dy[k,1],dy[k,2]]=1
+				A[dy[k,2],dy[k,1]]=1
+			}
+		}
+		s1 = sum(A)/2
+		s2 = trace(A*A*A)/6
+		w = exp(p[1]*s1 + p[2]*s2)
+		Z = Z + w
+		ok = 1
+		for (k=1;k<=nd&ok;k++) if (!miss[dy[k,1],dy[k,2]] & A[dy[k,1],dy[k,2]] != A0[dy[k,1],dy[k,2]]) ok = 0
+		if (ok) Zo = Zo + w
+	}
+	ll = ln(Zo) - ln(Z)
+}
+void e6_exactmle()
+{
+	transmorphic S
+	real rowvector pe
+	S = optimize_init()
+	optimize_init_evaluator(S, &e6_ll())
+	optimize_init_evaluatortype(S, "d0")
+	optimize_init_params(S, (0,0))
+	optimize_init_argument(S, 1, st_matrix("A0"))
+	optimize_init_argument(S, 2, st_matrix("M0"))
+	optimize_init_tracelevel(S, "none")
+	pe = optimize(S)
+	st_matrix("pe", pe)
+}
+end
+nwclear
+matrix A0 = (0,1,1,0,0 \ 1,0,1,1,0 \ 1,1,0,0,0 \ 0,1,0,0,1 \ 0,0,0,1,0)
+matrix M0 = (0,0,0,1,0 \ 0,0,0,0,1 \ 0,0,0,1,0 \ 1,0,1,0,0 \ 0,1,0,0,0)
+nwset, mat(A0) undirected name(a5)
+nwset, mat(M0) undirected name(m5)
+mata: e6_exactmle()
+foreach sd in 1 2 {
+	qui nwergm a5, edges triangle obsconstraints(fixallbut(m5)) mcmcsamplesize(20000) mcmcburnin(20000) mcmcinterval(100) mcmleiterations(40) seed(`sd')
+	di "  obs fit seed `sd': edges " _b[edges] " (exact " el(pe,1,1) ")  triangle " _b[triangle] " (exact " el(pe,1,2) ")"
+	assert abs(_b[edges] - el(pe,1,1)) < 0.15
+	assert abs(_b[triangle] - el(pe,1,2)) < 0.15
+	assert e(converged) == 1
+}
+di "PASS obsconstraints(): MCMLE equals the exact maximiser of the observed-data likelihood"
+
+* ---- obsconstraints() against R ergm 4.12.0 obs.constraints (dev/e6_obs_ref.R): 14 nodes, 10 unobserved dyads ----
+nwclear
+nwset, mat((0,1,0,1,1,0,1,1,1,1,0,0,1,0 \ 1,0,0,1,0,0,0,0,0,0,0,0,1,1 \ 0,0,0,1,1,0,1,0,0,0,0,0,0,0 \ 1,1,1,0,1,1,0,1,0,0,0,1,0,0 \ 1,0,1,1,0,1,0,0,1,0,0,0,1,0 \ 0,0,0,1,1,0,0,1,1,0,1,0,1,0 \ 1,0,1,0,0,0,0,0,0,0,1,1,0,1 \ 1,0,0,1,0,1,0,0,0,0,0,0,0,0 \ 1,0,0,0,1,1,0,0,0,0,1,0,0,0 \ 1,0,0,0,0,0,0,0,0,0,1,1,1,1 \ 0,0,0,0,0,1,1,0,1,1,0,0,1,0 \ 0,0,0,1,0,0,1,0,0,1,0,0,0,0 \ 1,1,0,0,1,1,0,0,0,1,1,0,0,0 \ 0,1,0,0,0,0,1,0,0,1,0,0,0,0)) undirected name(V)
+nwset, mat((0,0,1,0,0,0,0,0,0,1,0,0,0,0 \ 0,0,1,0,0,0,0,0,0,0,0,0,0,0 \ 1,1,0,0,0,0,0,0,1,0,0,0,0,0 \ 0,0,0,0,0,0,0,1,0,0,0,0,0,0 \ 0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ 0,0,0,0,0,0,0,0,0,0,0,0,0,1 \ 0,0,0,0,0,0,0,1,0,0,0,0,0,0 \ 0,0,0,1,0,0,1,0,0,0,0,1,0,0 \ 0,0,1,0,0,0,0,0,0,0,0,0,1,0 \ 1,0,0,0,0,0,0,0,0,0,0,0,0,0 \ 0,0,0,0,0,0,0,0,0,0,0,0,0,0 \ 0,0,0,0,0,0,0,1,0,0,0,0,0,0 \ 0,0,0,0,0,0,0,0,1,0,0,0,0,1 \ 0,0,0,0,0,1,0,0,0,0,0,0,1,0)) undirected name(VM)
+global e6fitfail
+qui nwergm V, edges triangle obsconstraints(fixallbut(VM)) mcmcsamplesize(8000) mcmcburnin(20000) mcmcinterval(500) mcmleiterations(40) seed(11)
+assert e(converged) == 1
+e6fitchk mcmle "edges" 0.373682 0.002744 0.696670
+e6fitchk mcmle "triangle" -0.472697 0.000558 0.391943
+if "$e6fitfail" != "" exit 9
+di "PASS obsconstraints(): MCMLE agrees with R ergm obs.constraints"

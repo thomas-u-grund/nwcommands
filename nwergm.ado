@@ -591,8 +591,14 @@ program nwergm, eclass
 		_nwergm_constr, spec(`constraints') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(`__con_w')
 		local __con_active 1
 		if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
+		mata: __nwergm_c1_par = __ncon_par
+		mata: __nwergm_c1_cols = __ncon_cols
+		mata: __nwergm_c1_free = __ncon_free
+		local __c1_hasdyad `con_hasdyad'
 	}
 	local __obs_active 0
+	local __obs_info 0
+	if `__con_active' == 0 local __c1_hasdyad 0
 	if `"`obsconstraints'"' != "" {
 		if "`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "" {
 			di "{err}obsconstraints() cannot be combined with freedyads(), blockdiag() or fixdensity."
@@ -604,6 +610,31 @@ program nwergm, eclass
 		}
 		local method "mcmle"
 		local __obs_active 1
+		local __obs_spec `"`obsconstraints'"'
+		if `"`constraints'"' != "" {
+			local __obs_first = substr(strtrim(`"`obsconstraints'"'), 1, 1)
+			if "`__obs_first'" == "-" local __obs_spec `"`constraints' `obsconstraints'"'
+			else local __obs_spec `"`constraints' + `obsconstraints'"'
+		}
+		_nwergm_constr, spec(`__obs_spec') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(default) prefix(o)
+		capture mata: mata drop __nwergm_obs_G
+		mata: __nwergm_obs_G = ErgmGraph()
+		mata: __nwergm_obs_G.init(`nodes', ("`directed'"=="true"))
+		mata: ergm_bridge_from_netobj(`netobj', __nwergm_obs_G, ("`directed'"=="true"))
+		if `ocon_hasdyad' mata: __nwergm_obs_G.set_dyadmask(__ncon_free)
+		mata: __nwergm_obs_par = __ncon_par
+		mata: __nwergm_obs_cols = __ncon_cols
+		// dyad-independent sample spaces: the pseudolikelihood start uses the informative dyads, i.e. those that
+		// vary under the constraints but are fixed once the observation constraints are added (R: which="informative")
+		if `ocon_dind' {
+			if `__con_active' {
+				mata: __nwergm_info = __nwergm_c1_free :& !(`=cond(`ocon_hasdyad',"__ncon_free","J(`nodes',`nodes',1)")')
+			}
+			else {
+				mata: __nwergm_info = !(`=cond(`ocon_hasdyad',"__ncon_free","J(`nodes',`nodes',1)")')
+			}
+			mata: st_local("__obs_info", strofreal(sum(__nwergm_info :* (1 :- I(`nodes'))) > 0))
+		}
 	}
 	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
 	// .nties mutates throughout MCMLE's own simulation (it IS the live
@@ -1833,6 +1864,7 @@ program nwergm, eclass
 	// is simply never called when set, so `__nwergm_last_M.native_enabled'
 	// stays at its own default 0 - identical in effect to every other
 	// "native unavailable" case already handled below.
+	if `__obs_info' mata: __nwergm_last_G.set_dyadmask(__nwergm_info)
 	if "`nonative'" == "" {
 		mata: __ergm_mple_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
 		mata: mata drop __ergm_mple_native_setup_rc
@@ -1843,6 +1875,14 @@ program nwergm, eclass
 	}
 	else {
 		mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
+	}
+	if `__obs_info' {
+		if `__con_active' & `__c1_hasdyad' {
+			mata: __nwergm_last_G.set_dyadmask(__nwergm_c1_free)
+		}
+		else {
+			mata: __nwergm_last_G.has_dyadmask = 0
+		}
 	}
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
 	mata: st_local("__ergm_nrows", strofreal(rows(`__nw_D')))
@@ -2033,7 +2073,7 @@ program nwergm, eclass
 			if `__con_active' {
 				if `con_dind' == 0 mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
 			}
-			if `__obs_active' mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
+			if `__obs_active' & !`__obs_info' mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
@@ -2115,10 +2155,12 @@ program nwergm, eclass
 				error 198
 			}
 			if `__con_active' {
-				mata: __nwergm_last_M.con_par = __ncon_par
-				mata: __nwergm_last_M.con_cols = __ncon_cols
+				mata: __nwergm_last_M.con_par = __nwergm_c1_par
+				mata: __nwergm_last_M.con_cols = __nwergm_c1_cols
 			}
-			else mata: __nwergm_last_M.con_par = J(1, 10, 0)
+			else {
+				mata: __nwergm_last_M.con_par = J(1, 10, 0)
+			}
 			if `mcmcmaxedges' > 0 mata: __nwergm_last_M.con_par[10] = `mcmcmaxedges'
 		}
 		if `__obs_active' {
@@ -2127,20 +2169,6 @@ program nwergm, eclass
 				di "{err}obsconstraints() needs the native plugin, which is not available for this model, platform or the nonative option."
 				error 198
 			}
-			local __obs_spec `"`obsconstraints'"'
-			if `"`constraints'"' != "" {
-				local __obs_first = substr(strtrim(`"`obsconstraints'"'), 1, 1)
-				if "`__obs_first'" == "-" local __obs_spec `"`constraints' `obsconstraints'"'
-				else local __obs_spec `"`constraints' + `obsconstraints'"'
-			}
-			_nwergm_constr, spec(`__obs_spec') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(default) prefix(o)
-			capture mata: mata drop __nwergm_obs_G
-			mata: __nwergm_obs_G = ErgmGraph()
-			mata: __nwergm_obs_G.init(`nodes', ("`directed'"=="true"))
-			mata: ergm_bridge_from_netobj(`netobj', __nwergm_obs_G, ("`directed'"=="true"))
-			if `ocon_hasdyad' mata: __nwergm_obs_G.set_dyadmask(__ncon_free)
-			mata: __nwergm_obs_par = __ncon_par
-			mata: __nwergm_obs_cols = __ncon_cols
 		}
 		// fixdensity: this is the single place that sets M.fixed_density=1,
 		// guaranteed to run before ErgmMCMLE() is ever called below.

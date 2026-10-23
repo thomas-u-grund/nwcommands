@@ -5481,6 +5481,7 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	else {
 		M.native_enabled = 1
 		M.native_enabled_sample = 1
+		M.native_maskmat = J(0, 0, 0)
 	}
 	return(1)
 }
@@ -8936,8 +8937,10 @@ struct ErgmMCMLEFit scalar ErgmMCMLEObs(class ErgmModel scalar M, class ErgmGrap
 	struct ErgmMCMLEFit scalar res
 	real rowvector theta, g, delta, freeidx, infl1, infl2, delta_full
 	real matrix s1, s2, V, Vf, S, Sg, coefhist, mask1, mask2, Vinv, Xe
-	real scalar iter, p, converged, nfree, T2, neff, pval, gamma, k, a1, a2
-	real colvector ev
+	real scalar iter, p, converged, nfree, T2, neff, pval, gamma, k, a1, a2, gi, gm, best, nn
+	real colvector ev, w1, w2
+	real rowvector gg
+	real matrix Vfi
 
 	p = cols(theta0)
 	theta = theta0
@@ -8968,8 +8971,26 @@ struct ErgmMCMLEFit scalar ErgmMCMLEObs(class ErgmModel scalar M, class ErgmGrap
 		symeigensystem(Vf, Xe = ., ev = .)
 		if (min(ev) <= 1e-8 * max((max(ev), 1e-8))) Vf = Vf + I(nfree) * (1e-8 * max((max(ev), 1)) - min((min(ev), 0)) + 1e-6)
 		delta = g * invsym(Vf)
-		gamma = 1
-		if (max(abs(delta)) > 3) gamma = 3 / max(abs(delta))
+		// step length by importance sampling (Hummel et al.): the estimating equation at theta + gamma*delta is
+		// estimated by reweighting both samples, and the gamma that brings it closest to zero (in the metric of
+		// the information) is taken, among those for which both reweighted samples keep a usable size.
+		gamma = 0.02
+		best = .
+		Vfi = invsym(Vf)
+		for (gi = 1; gi <= 9; gi++) {
+			gm = (1, 0.75, 0.5, 0.35, 0.25, 0.15, 0.1, 0.05, 0.02)[gi]
+			w1 = exp((gm * delta * s1[., freeidx]')')
+			w2 = exp((gm * delta * s2[., freeidx]')')
+			w1 = w1 / sum(w1)
+			w2 = w2 / sum(w2)
+			if (1 / sum(w1 :^ 2) < 0.1 * rows(s1) | 1 / sum(w2 :^ 2) < 0.1 * rows(s2)) continue
+			gg = (w2' * s2[., freeidx]) - (w1' * s1[., freeidx])
+			nn = gg * Vfi * gg'
+			if (best >= . | nn < best) {
+				best = nn
+				gamma = gm
+			}
+		}
 		delta_full = J(1, p, 0)
 		delta_full[freeidx] = gamma * delta
 		theta = theta + delta_full
