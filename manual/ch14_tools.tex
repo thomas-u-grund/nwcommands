@@ -17,7 +17,7 @@ A property of the data is detected from the data: a two-mode network or a non-di
 \end{lstlisting}
 The fixed coefficient equals its start value and its variance is 0. Fixing is used for the score test below, for fitting a model with a known part, and for the simulation-only mode.
 
-\section{Simulation: \texttt{estat simulate} and \texttt{nwsaom simulate}}
+\section{Simulation: \texttt{estat simulate} and \texttt{nwsaom simulate}}\label{sec:sim}
 
 \texttt{estat simulate} simulates the fitted model forward. Every period starts at the observed start wave of the period and runs for the period's length at the fitted coefficients and rates, the same simulation that \texttt{estat gof} uses; the default is 100 replications.
 \begin{lstlisting}
@@ -95,6 +95,29 @@ cycle3                   -0.1133   0.2936    0.3374     -0.0382   0.0159   0.014
 Certainty R_H of the actors' choices:   0.2660   0.3518
 \end{lstlisting}
 The command is available after fits of a directed one-mode network without behavior, endowment and creation effects, \opt{structural()}, \opt{present()} or missing-data options; RSiena has the same restrictions. It needs the native plugin.
+
+\section{Several groups: \texttt{nwsaom meta}}\label{sec:meta}
+
+When the same model is fitted to several networks of the same kind, for example school classes, the group estimates can be combined, which is what RSiena's \texttt{siena08} does. \texttt{nwsaom meta} takes the stored estimates (\texttt{estimates store}) of the same model fitted to each group, with the same effects in the same order. (The name \texttt{nwsaom\_meta}, used by earlier versions, still works.) For every effect it reports the combined mean and its standard error (an iteratively reweighted least squares estimate with a random effect for the group, Snijders and Baerveldt 2003), the estimated standard deviation between groups, a heterogeneity test $Q$, the maximum likelihood estimates of the mean and the between-group standard deviation with profile-likelihood intervals, and Fisher's combination of the one-sided tests.
+
+The following example runs with the data of the package. It makes four groups by simulating the model four times from the same start network at known coefficients (Section~\ref{sec:sim}), fits each group on its own, and combines the fits. The combined estimates should be close to the values used for the simulation ($-2.3$, 2 and 0.5).
+\begin{lstlisting}
+. nwwebuse glasgow, nwclear
+. nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip theta(-2.3 2 0.5) rates(5) nsim(4) seed(7) generate(g)
+. forvalues s = 1/4 {
+.     quietly nwsaom, wave1(glasgow1) wave2(g_`s'_p1) outdegree reciprocity transtrip k3(500) seed(`s')
+.     estimates store grp`s'
+. }
+. nwsaom meta grp1 grp2 grp3 grp4
+Meta-analysis of 4 fits (RSiena siena08): estimates with a standard error of at least 10 are excluded
+IWLS estimates (Snijders & Baerveldt 2003)
+      effect |   n      mean     s.e.       t       p       sd        Q    p(Q)
+-------------+------------------------------------------------------------------
+   outdegree |   4   -2.2557   0.0572  -39.47   0.000   0.1143     2.49   0.477
+ reciprocity |   4    1.8729   0.0691   27.09   0.000   0.1383     0.99   0.804
+   transtrip |   4    0.4749   0.0121   39.27   0.000   0.0242     0.16   0.983
+\end{lstlisting}
+The combined means recover the coefficients, and no effect differs between the groups ($p(Q)$ between 0.48 and 0.98), as it should for groups simulated from the same model. In a real analysis a small $p(Q)$ for an effect means that the groups differ in that effect by more than their standard errors allow, and the estimated between-group standard deviation shows by how much. The full set of results is returned in \texttt{r(meta)}; the option \opt{rates} combines the rate parameters as well, and \opt{bound(\#)} excludes groups with a standard error of at least \# (default 10), as RSiena does. The results reproduce RSiena's functions to five decimals (Chapter~\ref{ch:validation}).
 
 \section{What is not available}
 

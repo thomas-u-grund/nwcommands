@@ -11,7 +11,7 @@
 
 \paragraph{Step 3: simulation studies.} Where RSiena's own estimation is unstable, as for non-directed co-evolution, replicates were simulated by RSiena from known parameters and re-estimated with \nwsaom{}, to check recovery of the truth rather than agreement with a failing reference.
 
-\paragraph{Step 4: other ports.} For the multi-group meta-analysis (\texttt{nwsaom\_meta}, RSiena's \texttt{siena08}) the Mata port was compared with RSiena's own \texttt{iwlsm}, \texttt{maxlik} and \texttt{confint} functions on made-up estimates.
+\paragraph{Step 4: other ports.} For the multi-group meta-analysis (\texttt{nwsaom meta}, RSiena's \texttt{siena08}) the Mata port was compared with RSiena's own \texttt{iwlsm}, \texttt{maxlik} and \texttt{confint} functions on made-up estimates.
 
 A good agreement does not make an effect \emph{correct} in every setting: the checks cover one or two data sets per effect family, and the tolerance is seed noise. The ``validated'' flag in the effects tables (Appendix) means that steps~1 and~2 were passed for at least one data set, unless the table says otherwise.
 
@@ -51,7 +51,7 @@ Behavior effects & quad\_cc: linear $1.791$, quadratic $-0.448$, avAlt $1.057$ a
 Behavior as covariate, selection & netbeh(samex): $-2.53/2.79/0.556$ against $-2.52/2.78/0.554$. & 75\\
 Several dependent networks (multinet) & Targets equal, estimates agree within seed noise, with the exceptions listed below; 20 effects validated for non-directed members. & 78, 79, 84, 96\\
 Symmetric co-evolution & Simulation study, 40 replicates from known parameters: network rate $0.612$ (true $0.6$), behavior rate $1.60$ ($1.5$), outdegree $-1.44$ ($-1.4$), linear median $0.37$ ($0.3$), avAlt median $1.29$ ($1.5$). & 26\\
-Multi-group meta-analysis (\texttt{nwsaom\_meta}) & 17 numbers identical to five decimals with RSiena's functions. & 55\\
+Multi-group meta-analysis (\texttt{nwsaom meta}) & 17 numbers identical to five decimals with RSiena's functions. & 55\\
 \bottomrule
 \end{longtable}}
 
@@ -85,7 +85,7 @@ The following cases are the honest edge of the validation. They fall into four k
 \item \texttt{outMore(2)} in a \emph{non-directed} network: the same target (578), but \nwsaom{} estimates $0.27$--$0.49$ and $-0.20$ to $-0.42$ where \texttt{siena07} gets $0.11$--$0.14$ and $-0.06$ to $-0.12$. The ego-degree contribution in the pairwise ministep needs a look. Open.
 \item Multinet with a non-directed member: \texttt{outOutActIntn} (estimate $+0.02$ against $-0.03$, equal statistic), \texttt{outOutAvIntn} ($0.09$ against $-0.30$, the contribution differs for a non-directed network) and \texttt{both} (statistic 194 against 25.5) are not claimed.
 \item Cycle4 endowment/creation estimates differ from RSiena by less than 0.1 with a standard error of 0.55 (six seeds each), judged to be noise.
-\item \texttt{estat gof}: RSiena reuses networks stored during the fit; \nwsaom{} simulates afresh (Chapter~\ref{ch:estimation}). The p-value of the correlation diagnostic in \texttt{nwsaom\_meta} uses the $t$ approximation, RSiena the exact (Edgeworth) value.
+\item \texttt{estat gof}: RSiena reuses networks stored during the fit; \nwsaom{} simulates afresh (Chapter~\ref{ch:estimation}). The p-value of the correlation diagnostic in \texttt{nwsaom meta} uses the $t$ approximation, RSiena the exact (Edgeworth) value.
 \item The simulated statistic of a few endowment/creation effects uses the union of the dyads missing at either wave, where RSiena treats start-missing and end-missing dyads differently. The observed target is exact; the simulated statistic differs for a handful of ties. This is a stated approximation.
 \end{itemize}
 
