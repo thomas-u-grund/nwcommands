@@ -8643,6 +8643,50 @@ struct ErgmMCMLEFit scalar ErgmSA(class ErgmModel scalar M, class ErgmGraph scal
 	return(res)
 }
 
+/*
+	MPLE covariance beyond the inverse Hessian (R: MPLE.covariance.method = "Godambe" or "bootstrap").
+	R simulated networks from the model at the MPLE (burn-in once, then `interval' steps between draws);
+	Godambe: invHess * Var(u) * invHess with u = X'(y - p) summed over dyads of each simulated network
+	(R's formula ignores offset terms there); bootstrap: the covariance of the MPLEs of the simulated networks.
+	invHess is the free-coefficient block.  Returns the free-block covariance.
+*/
+real matrix ergm_mple_cov(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta, real matrix invHess,
+	real scalar kind, real scalar R, real scalar burnin, real scalar interval, pointer(real rowvector function) scalar proposalfn){
+	real scalar r, p, pf
+	real rowvector fidx
+	real matrix D, X, U, B, Uc
+	real colvector y, pr, off
+	string scalar nb, nv
+
+	p = M.nparam()
+	fidx = M.freeidx()
+	pf = cols(fidx)
+	U = J(R, pf, 0)
+	B = J(R, pf, 0)
+	nb = st_tempname()
+	nv = st_tempname()
+	for (r=1; r<=R; r++) {
+		(void) ErgmMCMCSample(M, G, theta, (r == 1 ? burnin : 0), interval, 1, proposalfn)
+		D = (M.native_enabled ? ErgmNativeBuildMPLEData(M, G) : M.build_mple_data(G))
+		X = D[., fidx]
+		y = D[., p+1]
+		if (kind == 1) {
+			pr = invlogit(X * theta[fidx]')
+			U[r, .] = (X' * (y - pr))'
+		}
+		else {
+			off = D[., 1..p] * (M.isfixed :* M.fixedvalue)'
+			(void) ergm_glm_irls((X, y), nb, nv, off)
+			B[r, .] = st_matrix(nb)
+		}
+	}
+	if (kind == 1) {
+		Uc = U :- mean(U)
+		return(invHess * (cross(Uc, Uc) / (R - 1)) * invHess)
+	}
+	return(variance(B))
+}
+
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize0, pointer(real rowvector function) scalar proposalfn,

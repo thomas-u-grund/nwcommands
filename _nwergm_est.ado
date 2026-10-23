@@ -34,7 +34,7 @@ program _nwergm_est_opts, sclass
 	_opts_oneof "glm penalized" "mpletype" "`mpletype'" 198
 	if "`mplecovariance'" == "" local mplecovariance "invhess"
 	local mplecovariance = lower("`mplecovariance'")
-	_opts_oneof "invhess godambe" "mplecovariance" "`mplecovariance'" 198
+	_opts_oneof "invhess godambe bootstrap" "mplecovariance" "`mplecovariance'" 198
 	if "`mcmletermination'" == "" local mcmletermination "confidence"
 	local mcmletermination = lower("`mcmletermination'")
 	_opts_oneof "confidence hummel hotelling none" "mcmletermination" "`mcmletermination'" 198
@@ -161,4 +161,27 @@ program _nwergm_est_cdstart
 		mata: `th' = editmissing(__e7_init, 0)
 	}
 	mata: `th' = `th' :* (1 :- __nwergm_last_M.isfixed) + __nwergm_last_M.isfixed :* __nwergm_last_M.fixedvalue
+end
+
+capture program drop _nwergm_est_mplecov
+program _nwergm_est_mplecov
+	// MPLE.covariance.method = Godambe / bootstrap (simulated networks at the MPLE)
+	args bmat vmat kind proposal
+	if "`proposal'" == "uniform" local pf "&ergm_propose_uniform()"
+	else local pf "&ergm_propose_tnt()"
+	mata: st_local("hasmask", strofreal(__nwergm_last_G.has_dyadmask))
+	if `hasmask' {
+		if "`proposal'" == "tnt" local pf "&ergm_propose_tnt_masked()"
+		else local pf "&ergm_propose_uniform_masked()"
+	}
+	di as txt "(estimating the " cond("`kind'" == "godambe", "Godambe", "bootstrap") " covariance from 500 simulated networks)"
+	mata: __e7_fi = __nwergm_last_M.freeidx()
+	mata: __e7_V = st_matrix("`vmat'")
+	mata: __e7_C = ergm_mple_cov(__nwergm_last_M, __nwergm_last_G, st_matrix("`bmat'"), __e7_V[__e7_fi, __e7_fi], ("`kind'" == "godambe" ? 1 : 2), 500, 1024, 1024, `pf')
+	local cn : colnames `vmat'
+	local rn : rownames `vmat'
+	mata: __e7_V = J(rows(__e7_V), cols(__e7_V), 0); __e7_V[__e7_fi, __e7_fi] = __e7_C; st_matrix("`vmat'", __e7_V)
+	matrix colnames `vmat' = `cn'
+	matrix rownames `vmat' = `rn'
+	mata: mata drop __e7_fi __e7_V __e7_C
 end

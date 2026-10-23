@@ -13,8 +13,8 @@
 The following postestimation commands are available after {helpb nwergm}:
 
 {p2colset 9 22 23 2}{...}
-{p2col: {cmd:estat mcmcdiag}}Basic MCMC diagnostics for the final simulation (method(mcmle) only){p_end}
-{p2col: {cmd:estat gof}}Basic simulation-based goodness of fit{p_end}
+{p2col: {cmd:estat mcmcdiag}}MCMC diagnostics for the final simulation, including the report of R's {cmd:mcmc.diagnostics()} (method(mcmle) only); see {help nwergm_estimation}{p_end}
+{p2col: {cmd:estat gof}}Simulation-based goodness of fit as in R's {cmd:gof()}; see {help nwergm_estimation}{p_end}
 {p2colreset}{...}
 
 {title:Supported network types}

@@ -9,6 +9,9 @@
 {p2col :nwergm {hline 2}}Exponential-family random graph model (ERGM) estimation{p_end}
 {p2colreset}{...}
 
+{pstd}
+Estimation methods (MPLE variants, contrastive divergence, stochastic approximation), the {cmd:init()} option, the MCMLE controls, {cmd:nwergm simulate} from a fit and the goodness-of-fit and diagnostic reports are described in {help nwergm_estimation}.{p_end}
+
 {title:Syntax}
 
 {p 8 17 2}

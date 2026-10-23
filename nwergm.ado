@@ -1974,6 +1974,9 @@ program nwergm, eclass
 		matrix rownames `__V_mple' = `__ergm_coefnames'
 		matrix colnames `__V_mple' = `__ergm_coefnames'
 
+		if "`mplecovariance'" != "invhess" & ("`mplecovariance'" == "bootstrap" | !`__ergm_dind') & !`__ergm_curved' {
+			_nwergm_est mplecov `__b_mple' `__V_mple' "`mplecovariance'" "`proposal'"
+		}
 		ereturn post `__b_mple' `__V_mple', depname(`netname') obs(`__ergm_nrows')
 		ereturn local cmd "nwergm"
 		ereturn local title "Exponential-family random graph model (MPLE)"
