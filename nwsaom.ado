@@ -550,11 +550,11 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx ownx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher samexrecip simrecipx ownx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
-				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events)."
+				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events, egosqx() on the actors, altsqx() on the events, netx(altindist2 totindist2 simegoindist2 sameegoindist2 crossxoutact samexcycle4 avgroupegox totgroupegox on the actors; sameinxcycle4 homxoutact2 on the events), tvcov() covariates in these effects)."
 				error 198
 			}
 		}
@@ -1329,8 +1329,8 @@ program nwsaom, eclass
 	// nodematch()/simcov() (egox()/altx()/samex()/simx()); the covariate is centred by the mean of all its values.
 	local __nwsaom_tvnames ""
 	if `"`tvcov'"' != "" {
-		if `__nwsaom_tm' | "`interact'" != "" {
-			di "{err}{bf:tvcov()} cannot yet be combined with two-mode networks or {bf:interact()}."
+		if "`interact'" != "" {
+			di "{err}{bf:tvcov()} cannot yet be combined with {bf:interact()}."
 			error 198
 		}
 		local __rest `"`tvcov'"'
@@ -1391,7 +1391,14 @@ program nwsaom, eclass
 					}
 					tempname __td_tv
 					mata: `__td_tv' = ErgmTermData()
-					mata: SaomRegCovTV(__nwsaom_last_M, "`__eff'", "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `__td_tv', ("`__lab'"), __nwsaom_cm)
+					if `__nwsaom_tm' {
+						if !inlist("`__eff'", "nodeicov", "nodeocov") {
+							di "{err}`__eff'() is not available for a two-mode network."
+							error 198
+						}
+						mata: SaomRegCovTV(__nwsaom_last_M, "`__eff'", "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `__td_tv', ("`__lab'"), __nwsaom_cm, `=cond("`__eff'" == "nodeocov", "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")')
+					}
+					else mata: SaomRegCovTV(__nwsaom_last_M, "`__eff'", "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `__td_tv', ("`__lab'"), __nwsaom_cm)
 					if inlist("`__eff'", "nodecov", "nodeicov", "nodeocov") {
 						mata: st_local("__m", strofreal(__nwsaom_cm, "%21.0g"))
 						if !strpos(" `__nwsaom_cmeans' ", " `__t' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__t' `__m'"
@@ -1497,6 +1504,10 @@ program nwsaom, eclass
 	// protocol 23: diffx (x_j - x_i), higher (x_i > x_j), egosqx (x_i^2), altsqx (x_j^2), samexrecip, simrecipx
 	foreach __dk in diffx higher egosqx altsqx samexrecip simrecipx {
 		if "``__dk''" != "" {
+			if `__nwsaom_tm' & !inlist("`__dk'", "egosqx", "altsqx") {
+				di "{err}{bf:`__dk'()} is not available for a two-mode network."
+				error 198
+			}
 			local __ul ""
 			foreach __t of local `__dk' {
 				if `: list __t in __nwsaom_tvnames' local __ul "`__ul' `__t'"
@@ -1519,7 +1530,8 @@ program nwsaom, eclass
 					}
 					tempname __td_tvx
 					mata: `__td_tvx' = ErgmTermData()
-					mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
+					if `__nwsaom_tm' mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm, `=cond("`__dk'" == "egosqx", "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")')
+					else mata: SaomCovTVAttr(`__td_tvx', "`__nwsaom_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __nwsaom_cm)
 					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
 					mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_tvx', ("`__dk'_`__v'"))
 					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
@@ -1533,6 +1545,10 @@ program nwsaom, eclass
 					mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), 0, __nwsaom_cm)
 					mata: `__td_cv'.decay = max(`__td_cv'.attr) - min(`__td_cv'.attr)
 					mata: `__td_cv'.center = (rows(`__td_cv'.levels) > 0 ? SaomSimMeanObs(__nwsaom_xx, `__td_cv'.levels) : SaomSimMean(`__td_cv'.attr))
+				}
+				else if `__nwsaom_tm' {
+					local __tmidx = cond("`__dk'" == "egosqx", "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")
+					mata: `__td_cv'.attr = SaomCovPrepIdx(st_data(1::`nodes', "`__v'"), `__tmidx', `__nwsaom_center', __nwsaom_cm)
 				}
 				else mata: `__td_cv'.attr = SaomCovPrep(st_data(1::`nodes', "`__v'"), `__nwsaom_center', __nwsaom_cm)
 				mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_cv', ("`__dk'_`__v'"))
@@ -1743,7 +1759,24 @@ program nwsaom, eclass
 				error 198
 			}
 		}
-		mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam')
+		if `__nwsaom_tm' {
+			local __tmnx "altindist2 totindist2 simegoindist2 sameegoindist2 crossxoutact samexcycle4 homxoutact2 sameinxcycle4 avgroupegox totgroupegox"
+			if !`: list __f in __tmnx' {
+				di "{err}netx(`__f') is not available for a two-mode network."
+				error 198
+			}
+			local __tmidx = cond(inlist("`__f'", "sameinxcycle4", "homxoutact2"), "__nwsaom_tm_evidx", "__nwsaom_tm_actidx")
+			if inlist("`__f'", "crossxoutact", "avgroupegox", "totgroupegox") {
+				// RSiena reads the actor covariate at the EVENT's index within its mode for the alter (copied): needs at least as many actors as events
+				if `__nwsaom_tm_ne' > `__nwsaom_tm_na' {
+					di "{err}netx(`__f') in a two-mode network needs at least as many actors as events (RSiena reads the actor covariate at the event's index)."
+					error 198
+				}
+				mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam', `__tmidx', __nwsaom_tm_evidx)
+			}
+			else mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam', `__tmidx')
+		}
+		else mata: SaomRegNat(__nwsaom_last_M, "`__f'", `__code', "`__kind'", "`__vv'", "`__vl'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', `xparam')
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
 	}
 	// protocol 54: ownx(effect[:#] ...) - own-network effects without a covariate, native only: jin jout transtrip1 transtrip2 transrectrip2 (= transtripfr) transtripfe transtripee

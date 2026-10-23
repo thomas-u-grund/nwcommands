@@ -1226,7 +1226,7 @@ static double cz_value(graph_t *g, int v, const double *a, double p1, long i, lo
 		case 19: return cz_cyc_value(g, a, p1, i, j, 0);
 		case 20: return cz_cyc_value(g, a, p1, i, j, 1);
 		case 21: return cz_groupmean(g, a);
-		case 22: return cz_groupmean(g, a) * (double)g->n;
+		case 22: return cz_groupmean(g, a) * (p1 > 0.5 ? p1 : (double)g->n);		/* p1 = the number of events of a two-mode network */
 		case 0: {
 			long ds = 0, dd = 0;
 			for (m = 0; m < g->outadj[i].len; m++) { if (cx_same(a, g->outadj[i].nb[m], i)) ds++; else dd++; }
@@ -1238,7 +1238,12 @@ static double cz_value(graph_t *g, int v, const double *a, double p1, long i, lo
 			if (b < 1) return 0.0;
 			for (m = 0; m < g->outadj[i].len; m++) if ((long)floor(a[g->outadj[i].nb[m]] + 0.5) == b) cnt++;
 			if (ex) cnt -= 2;
-			return 2.0 * (double)cnt + 1.0;
+			{
+				int root = (fabs(p1 - 2.0) < 1e-9 || fabs(p1 - 4.0) < 1e-9), avg = (p1 >= 3.0 - 1e-9);
+				double ct = root ? ((double)cnt + 1.0) * sqrt((double)cnt + 1.0) - (double)cnt * sqrt((double)cnt) : 2.0 * (double)cnt + 1.0;
+				if (avg) { long nb = 0, q; for (q = 1; q <= g->n; q++) if ((long)floor(a[q] + 0.5) == b) nb++; ct /= root ? sqrt((double)nb) : (double)nb; }
+				return ct;
+			}
 		}
 		case 2: {
 			long outd = -(long)floor(p1 + 0.001);
@@ -1331,7 +1336,12 @@ static double cz_tie(graph_t *g, int v, const double *a, double p1, long i, long
 			long b = (long)floor(a[j] + 0.5), cnt = 0;
 			if (b < 1) return 0.0;
 			for (m = 0; m < g->outadj[i].len; m++) if ((long)floor(a[g->outadj[i].nb[m]] + 0.5) == b) cnt++;
-			return (double)cnt;
+			{
+				int root = (fabs(p1 - 2.0) < 1e-9 || fabs(p1 - 4.0) < 1e-9), avg = (p1 >= 3.0 - 1e-9);
+				double st = root ? sqrt((double)cnt) : (double)cnt;
+				if (avg) { long nb = 0, q; for (q = 1; q <= g->n; q++) if ((long)floor(a[q] + 0.5) == b) nb++; st /= root ? sqrt((double)nb) : (double)nb; }
+				return st;
+			}
 		}
 		case 4: {
 			long instar = 0;
@@ -1359,7 +1369,7 @@ static double cz_ego(graph_t *g, int v, const double *a, double p1, long i) {
 		return st;
 	}
 	if (v == 21) return (double)g->outadj[i].len * cz_groupmean(g, a);
-	if (v == 22) return (double)g->outadj[i].len * cz_groupmean(g, a) * (double)g->n;
+	if (v == 22) return (double)g->outadj[i].len * cz_groupmean(g, a) * (p1 > 0.5 ? p1 : (double)g->n);
 	if (v == 0) {
 		long ds = 0, dd = 0;
 		for (m = 0; m < g->outadj[i].len; m++) { if (cx_same(a, g->outadj[i].nb[m], i)) ds++; else dd++; }

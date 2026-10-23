@@ -3196,21 +3196,37 @@ string scalar SaomSRTrailer() {
 	return(" " + strofreal(cols(t)) + " " + invtokens(strofreal(t)))
 }
 /* time-varying covariate of one of the native covariate effects: td.attrpd = the (pooled-mean centred) values of the periods, td.attr = period 1 */
-void SaomCovTVAttr(class ErgmTermData scalar td, string scalar vlist, real scalar n, real scalar nper, real scalar center, real scalar m) {
+void SaomCovTVAttr(class ErgmTermData scalar td, string scalar vlist, real scalar n, real scalar nper, real scalar center, real scalar m, | real colvector idx) {
 	string rowvector vv
-	real matrix X
+	real matrix X, Xi
+	real colvector oth
 	vv = tokens(vlist)
 	if (cols(vv) < nper) {
 		errprintf("nwsaom: the time-varying covariate " + vlist + " needs a variable for each of the " + strofreal(nper) + " periods.\n")
 		exit(198)
 	}
 	X = st_data(1::n, vv[1..nper])
+	if (args() >= 7) {
+		// a two-mode network: the covariate lives on the nodes idx (one mode) only
+		Xi = X[idx, .]
+		if (any(Xi :>= .)) {
+			errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
+			exit(198)
+		}
+		X = J(n, nper, mean(vec(Xi)))
+		X[idx, .] = Xi
+	}
 	if (any(X :>= .)) {
 		errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
 		exit(198)
 	}
 	m = mean(vec(X))
 	td.attrpd = (center ? X :- m : X)
+	if (args() >= 7) {
+		oth = J(n, 1, 1)
+		oth[idx] = J(rows(idx), 1, 0)
+		td.attrpd[selectindex(oth), .] = J(sum(oth), nper, 0)
+	}
 	td.attr = td.attrpd[., 1]
 	td.levels = J(0, 1, 0)
 }
@@ -3594,7 +3610,7 @@ real rowvector change_saom_nat(class ErgmGraph scalar G, real scalar i, real sca
 /* registers a native-only covariate network effect. kind: "c" centred covariate, "r" raw values (categories), "s" similarity type (centred /
    range, p1 = the similarity mean). vlist: one variable, or the per-period variables of a tvcov covariate. */
 void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar kind, string scalar label, string scalar vlist,
-	real scalar n, real scalar nper, real scalar center, real scalar p1) {
+	real scalar n, real scalar nper, real scalar center, real scalar p1, | real colvector idx, real colvector idx2) {
 	class ErgmTermData scalar td
 	string rowvector vv
 	real matrix X
@@ -3604,15 +3620,68 @@ void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, s
 	td.levels = (code \ 0)
 	td.decay = p1
 	if (cols(vv) > 1) {
+		if (args() >= 11) SaomCovTVAttr(td, vlist, n, nper, (kind == "r" ? 0 : center), m, idx)
+		else SaomCovTVAttr(td, vlist, n, nper, (kind == "r" ? 0 : center), m)
 		if (kind == "s") {
-			errprintf("nwsaom: " + eff + " is not available for a time-varying covariate.\n")
-			exit(198)
+			// similarity effects of a changing covariate: the pooled range and the pooled similarity mean (as simcov of a tvcov)
+			real colvector ix
+			real matrix Xs
+			real scalar rngs, ss, cn, p2, a2, b2
+			ix = (args() >= 11 ? idx : (1::n))
+			Xs = td.attrpd[ix, .]
+			rngs = max(vec(Xs)) - min(vec(Xs))
+			if (rngs <= 0) rngs = 1
+			td.attrpd = td.attrpd :/ rngs
+			Xs = td.attrpd[ix, .]
+			ss = 0
+			cn = 0
+			for (p2=1; p2<=cols(Xs); p2++) for (a2=1; a2<=rows(Xs); a2++) for (b2=1; b2<=rows(Xs); b2++) {
+				if (a2 == b2) continue
+				ss = ss + 1 - abs(Xs[a2,p2] - Xs[b2,p2])
+				cn++
+			}
+			td.decay = (max(vec(Xs)) == min(vec(Xs)) ? 0 : ss / cn)
+			td.attr = td.attrpd[., 1]
 		}
-		SaomCovTVAttr(td, vlist, n, nper, center, m)
+		if (args() >= 12) {
+			if (eff == "crossxoutact") {
+				// RSiena reads the actor covariate at the event's index within its mode (crossXOutAct)
+				td.attrpd[idx2, .] = td.attrpd[idx[1..rows(idx2)], .]
+			}
+			else {
+				// avGroupEgoX / totGroupEgoX: RSiena averages the covariate over the first m (= number of events) ACTORS and multiplies by m; every node carries that period mean
+				real scalar pd2
+				for (pd2=1; pd2<=cols(td.attrpd); pd2++) td.attrpd[., pd2] = J(n, 1, mean(td.attrpd[idx[1..rows(idx2)], pd2]))
+				td.decay = rows(idx2)
+			}
+			td.attr = td.attrpd[., 1]
+		}
 		td.levels = (code \ 0)
 	}
 	else {
 		X = st_data(1::n, vv[1])
+		if (args() >= 11) {
+			// a two-mode network: the covariate lives on the nodes idx (one mode) only, the other nodes get 0
+			real colvector Xf
+			Xf = X
+			X = Xf[idx]
+			if (any(X :>= .)) {
+				errprintf("nwsaom: " + eff + "(): " + vv[1] + " has missing values (not supported).\n")
+				exit(198)
+			}
+			m = mean(X)
+			td.attr = J(n, 1, 0)
+			if (kind == "r") td.attr[idx] = X
+			else if (kind == "s") {
+				rng = max(X) - min(X)
+				if (rng <= 0) rng = 1
+				td.decay = SaomSimMean(X)
+				td.attr[idx] = (X :- m) :/ rng
+			}
+			else td.attr[idx] = (center ? X :- m : X)
+			if (args() >= 12) td.attr[idx2] = td.attr[idx[1..rows(idx2)]]
+		}
+		else {
 		if (any(X :>= .)) {
 			errprintf("nwsaom: " + eff + "(): " + vv[1] + " has missing values (not supported).\n")
 			exit(198)
@@ -3626,6 +3695,7 @@ void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, s
 			td.attr = (X :- m) :/ rng
 		}
 		else td.attr = (center ? X :- m : X)
+		}
 	}
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + label))
 }
@@ -3751,10 +3821,11 @@ void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
    per period (the period's start wave); centred (nodecov/nodeicov/nodeocov) by the mean of ALL the values, as RSiena
    centres a varCovar; simX's range and similarity mean pool all periods. Missing values are refused. */
 void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vlist, real scalar n,
-	real scalar nper, real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m) {
+	real scalar nper, real scalar center, class ErgmTermData scalar td, string rowvector coefname, real scalar m, | real colvector idx) {
 
 	string rowvector vv
-	real matrix X, Xc
+	real matrix X, Xc, Xi
+	real colvector oth
 	real scalar usecenter, pd, i, j, tot, cnt
 
 	vv = tokens(vlist)
@@ -3763,6 +3834,15 @@ void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vl
 		exit(198)
 	}
 	X = st_data(1::n, vv[1..nper])
+	if (args() >= 10) {
+		Xi = X[idx, .]
+		if (any(Xi :>= .)) {
+			errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
+			exit(198)
+		}
+		X = J(n, nper, mean(vec(Xi)))
+		X[idx, .] = Xi
+	}
 	if (any(X :>= .)) {
 		errprintf("nwsaom: the time-varying covariate " + vlist + " has missing values (not supported).\n")
 		exit(198)
@@ -3770,6 +3850,11 @@ void SaomRegCovTV(class ErgmModel scalar M, string scalar kind, string scalar vl
 	usecenter = (kind == "nodecov" | kind == "nodeicov" | kind == "nodeocov") ? center : 0
 	m = mean(vec(X))
 	Xc = (usecenter ? X :- m : X)
+	if (args() >= 10) {
+		oth = J(n, 1, 1)
+		oth[idx] = J(rows(idx), 1, 0)
+		Xc[selectindex(oth), .] = J(sum(oth), nper, 0)
+	}
 	td.attrpd = Xc
 	td.attr = Xc[., 1]
 	if (kind == "simcov") {
