@@ -2,6 +2,7 @@
 capture program drop _nwergm_fitstats
 program _nwergm_fitstats, eclass
 	version 14
+	capture confirm number 0
 	syntax , DMAT(string) METHOD(string) [PROPFN(string) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) ///
 		BRIDGEINTERVAL(integer 0) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) MCMCSAMPLESIZE(integer 3000) ///
 		INTERVALFINAL(integer 0) CURVED(integer 0) DIND(integer 1) QUIET]

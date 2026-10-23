@@ -8300,15 +8300,30 @@ real matrix ErgmMCMCSampleConstrained(class ErgmModel scalar M, real rowvector t
 }
 
 // n x n 0/1 matrix of missing (NA) dyads of a dense network matrix (symmetric if undirected)
-real matrix ergm_missing_dyads(real matrix E, real scalar directed, real scalar bip, real colvector mode)
+real matrix ergm_missing_dyads(real matrix E, class ErgmGraph scalar G)
 {
 	real matrix Mm
-	real scalar i, n
-	n = rows(E)
+	real colvector mo
+	real scalar i, j, n
+	n = G.n
+	Mm = J(n, n, 0)
+	if (G.bipartite & (rows(E) != n | cols(E) != n)) {
+		// rectangular (mode1 x mode2) incidence matrix
+		for (i=1; i<=rows(E); i++) for (j=1; j<=cols(E); j++) {
+			if (E[i,j] == .) {
+				Mm[G.mode1nodes[i], G.mode2nodes[j]] = 1
+				Mm[G.mode2nodes[j], G.mode1nodes[i]] = 1
+			}
+		}
+		return(Mm)
+	}
 	Mm = (E :== .)
 	for (i=1; i<=n; i++) Mm[i,i] = 0
-	if (!directed) Mm = ((Mm + Mm') :> 0)
-	if (bip) Mm = Mm :* (mode :!= mode')
+	if (!G.directed) Mm = ((Mm + Mm') :> 0)
+	if (G.bipartite) {
+		mo = G.mode
+		Mm = Mm :* ((mo * J(1,n,1)) :!= (J(n,1,1) * mo'))
+	}
 	return(Mm)
 }
 

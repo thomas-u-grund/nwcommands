@@ -2103,6 +2103,7 @@ program nwergm, eclass
 		if `__ergm_nmiss' > 0 {
 			// missing dyads: second, constrained chain (only the missing dyads free), as R ergm
 			capture mata: mata drop __nwergm_last_Gobs
+			capture confirm number 0
 			mata: __nwergm_last_Gobs = ergm_graph_clone(__nwergm_last_G)
 			mata: __nwergm_last_Gobs.set_dyadmask(__nwergm_missmat)
 			mata: __nwergm_last_M.obs_G = &__nwergm_last_Gobs
@@ -2113,6 +2114,7 @@ program nwergm, eclass
 		}
 
 		capture mata: mata drop __ergm_obsstat
+		capture confirm number 0
 		mata: __ergm_obsstat = __nwergm_last_M.full_statistic(__nwergm_last_G)
 		tempname __fit
 		if `__ergm_curved' {
