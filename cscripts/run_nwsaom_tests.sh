@@ -11,7 +11,7 @@ mode=${1:-quick}
 plug=${2:-}
 jobs=${3:-6}
 STATA=${STATA:-/Applications/Stata/StataBE.app/Contents/MacOS/StataBE}
-quick=(test_nwsaom_ado test_nwsaom_dyadcov test_nwsaom_covmiss test_nwsaom_multibeh test_nwsaom_twomode test_nwsaom_tvcov test_nwsaom_degfx test_nwsaom_cov2 test_nwsaom_timedcomp test_nwsaom_meta test_nwsaom_behsel test_nwsaom_behnet test_nwsaom_covtriad test_nwsaom_symdeg test_nwsaom_covthr test_nwsaom_tmextra test_nwsaom_strate test_nwsaom_symcov test_nwsaom_behw test_nwsaom_dyadx test_nwsaom_symnb test_nwsaom_cz2 test_nwsaom_bshape test_nwsaom_multinet test_nwsaom_tvdyad test_nwsaom_bdyn test_nwsaom_ownx test_nwsaom_behnet2 test_nwsaom_twomode_cov test_nwsaom_fixsim test_nwsaom_mnpost)
+quick=(test_nwsaom_ado test_nwsaom_dyadcov test_nwsaom_covmiss test_nwsaom_multibeh test_nwsaom_twomode test_nwsaom_tvcov test_nwsaom_degfx test_nwsaom_cov2 test_nwsaom_timedcomp test_nwsaom_meta test_nwsaom_behsel test_nwsaom_behnet test_nwsaom_covtriad test_nwsaom_symdeg test_nwsaom_covthr test_nwsaom_tmextra test_nwsaom_strate test_nwsaom_symcov test_nwsaom_behw test_nwsaom_dyadx test_nwsaom_symnb test_nwsaom_cz2 test_nwsaom_bshape test_nwsaom_multinet test_nwsaom_tvdyad test_nwsaom_bdyn test_nwsaom_ownx test_nwsaom_behnet2 test_nwsaom_twomode_cov test_nwsaom_fixsim test_nwsaom_mnpost test_nwsaom_mnbeh)
 # slowest first, so that the long ones start at once
 full=(test_nwsaom_rsiena test_nwsaom_mata test_nwsaom_native test_nwsaom_netendow_multi test_nwsaom_coev_rsiena test_nwsaom_multiplex test_nwsaom_covariates test_nwsaom_engine $quick)
 [[ $mode == full ]] && tests=($full) || tests=($quick)
