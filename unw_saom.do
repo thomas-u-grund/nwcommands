@@ -13327,7 +13327,7 @@ void SaomBehDyStore(real scalar n) {
 }
 /* netbeh(): (p1, scale) of a network effect with the dependent behavior as the covariate: the similarity effects carry the behavior's similarity mean and 1/range (RSiena) */
 real rowvector SaomNbSim(string scalar eff, real scalar xparam, class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar rng) {
-	if (!anyof(("simdist2", "simegodist2", "simegoindist2"), eff)) return((xparam, 1))
+	if (!anyof(("simdist2", "simegodist2", "simegoindist2", "simrecipx", "simxtranstrip"), eff)) return((xparam, 1))
 	if (rng <= 0) {
 		errprintf("nwsaom: netbeh(" + eff + "): the behavior variable does not vary.\n")
 		exit(198)

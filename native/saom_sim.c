@@ -367,6 +367,8 @@ static long saom_bdy_np = 1;			/* protocol 48: dyadic covariates of the behavior
 static long saom_bdy_pending = 0;
 static long saom_bdy_n = 0;		/* the covariates' raw means (RSiena's covariateMean(), the value of min / max without alters) */
 static int saom_bcov_dyn[8];	/* protocol 53: covariate slot c is another co-evolving behavior (its number, 1-based from 0 = the first behavior), 0 = a fixed covariate */
+static __thread double saom_tl_behscale = 1.0;	/* protocol 58: 1 / the range of the dependent behavior (the behavior-as-covariate similarity effects) */
+static __thread double saom_tl_sscale = 1.0;
 static __thread void *saom_tl_xg;	/* protocol 52: the OTHER network's graph for the cross-network terms (codes 3000+), set by the multi-network simulation */
 static __thread const double *saom_tl_beh0;	/* protocol 51: the starting behavior of the current period/behavior (the constant effect), set in simulate_period() */
 static __thread const double *saom_tl_cov[8];	/* the current period's covariates, set at the start of simulate_period() */
@@ -956,7 +958,7 @@ static double cov2_val(int code, double vi, double vj, double p1) {
 		case TERMCODE_EGOSQX: return vi * vi;
 		case TERMCODE_ALTSQX: return vj * vj;
 		case TERMCODE_SAMEXRECIP: return (vi == vj) ? 1.0 : 0.0;
-		case TERMCODE_SIMRECIPX: return 1.0 - fabs(vi - vj) - p1;
+		case TERMCODE_SIMRECIPX: return 1.0 - fabs(vi - vj) * saom_tl_sscale - p1;
 	}
 	return 0.0;
 }
@@ -992,8 +994,8 @@ static double cx_value(graph_t *g, int v, const double *a, double p1, long i, lo
 			return t;
 		}
 		case 2: {
-			double t = (1.0 - fabs(a[i] - a[j]) - p1) * (double)cx_twopath(g, i, j);
-			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (has_edge(g, h, j)) t += 1.0 - fabs(a[i] - a[h]) - p1; }
+			double t = (1.0 - fabs(a[i] - a[j]) * saom_tl_sscale - p1) * (double)cx_twopath(g, i, j);
+			for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (has_edge(g, h, j)) t += 1.0 - fabs(a[i] - a[h]) * saom_tl_sscale - p1; }
 			return t;
 		}
 		case 3: {
@@ -1043,7 +1045,7 @@ static double cx_tie(graph_t *g, int v, const double *a, double p1, long i, long
 	adjlist_t *O = &g->outadj[i];
 	switch (v) {
 		case 0: case 1: return ((cx_same(a, j, i) != 0) == (v == 0)) ? (double)cx_twopath(g, i, j) : 0.0;
-		case 2: return (1.0 - fabs(a[i] - a[j]) - p1) * (double)cx_twopath(g, i, j);
+		case 2: return (1.0 - fabs(a[i] - a[j]) * saom_tl_sscale - p1) * (double)cx_twopath(g, i, j);
 		case 3:
 			if (cx_same(a, j, i)) for (m = 0; m < O->len; m++) { long h = O->nb[m]; if (cx_same(a, h, i) && has_edge(g, h, j)) c++; }
 			return (double)c;
@@ -1160,8 +1162,6 @@ static double cz_avgout(graph_t *g, const double *a, long j, int tot) {
 	for (m = 0; m < d; m++) t += a[g->outadj[j].nb[m]];
 	return tot ? t : t / (double)d;
 }
-static __thread double saom_tl_behscale = 1.0;	/* protocol 58: 1 / the range of the dependent behavior (the behavior-as-covariate similarity effects) */
-static __thread double saom_tl_sscale = 1.0;
 static double cz_sim(double x, double y, double p1) { return 1.0 - fabs(x - y) * saom_tl_sscale - p1; }
 /* 15 homXTransRecTrip, 16 sameXTransRecTrip, 17 diffXTransRecTrip, 18 egoXaltXRecip, 19 sameXCycle4, 20 sameInXCycle4, 21 avGroupEgoX, 22 totGroupEgoX
    (protocol 50; RSiena HomCovariateTransitiveTripletsEffect, SameCovariateTransitiveReciprocatedTripletsEffect, CovariateEgoAlterEffect,

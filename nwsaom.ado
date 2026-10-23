@@ -2827,9 +2827,9 @@ program nwsaom, eclass
 		// covariate x triad / popularity / activity families and the threshold / contrast families); behavior 1, centred by its overall mean.
 		if "`netbeh'" != "" {
 			local __nb_ok "samex diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx"
-			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox simdist2 simegodist2 simegoindist2"
-			local __nbn_sim "simdist2 simegodist2 simegoindist2"
-			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234 235 236 237 238 239 240 241 242 228 229 233"
+			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox simdist2 simegodist2 simegoindist2 simrecipx simxtranstrip"
+			local __nbn_sim "simdist2 simegodist2 simegoindist2 simrecipx simxtranstrip"
+			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234 235 236 237 238 239 240 241 242 228 229 233 53 167"
 			foreach __e of local netbeh {
 				local __ni : list posof "`__e'" in __nbn_names
 				if `__ni' > 0 {

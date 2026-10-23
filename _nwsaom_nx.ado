@@ -13,8 +13,8 @@ program define _nwsaom_nx, rclass
 	// protocol 46: netx(effect:var ...) - further covariate network effects, native only (the observed statistic comes from the plugin's NETSTAT):
 	// crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2
 	// simegoindist2 sameegoindist2; var is a numeric variable or a tvcov stem. xparam(#) is outxmore's c.
-	local __nx_names "crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox"
-	local __nx_codes "220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242"
+	local __nx_names "crossxoutact homxoutact2 outxmore indties transtripx jumpxtranstrip altdist2 totdist2 simdist2 simegodist2 sameegodist2 altindist2 totindist2 simegoindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox simrecipx simxtranstrip"
+	local __nx_codes "220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 53 167"
 	foreach __t of local netx {
 		// protocol 59: sameXV / sameXVInPop / sameXVInPop2 take two category covariates, netx(samexv:var1:var2[:#]); registered in Mata (SaomRegDcAll)
 		mata: st_local("__vl", SaomRegDcAll(__nwsaom_last_M, `"`__t'"', `nodes'))
@@ -30,7 +30,7 @@ program define _nwsaom_nx, rclass
 		local __code : word `__fi' of `__nx_codes'
 		local __kind "c"
 		if "`__f'" == "homxoutact2" local __kind "r"
-		if inlist("`__f'", "simdist2", "simegodist2", "simegoindist2") local __kind "s"
+		if inlist("`__f'", "simdist2", "simegodist2", "simegoindist2", "simrecipx", "simxtranstrip") local __kind "s"
 		local __vl "`__vv'"
 		if inlist("`__f'", "avgroupegox", "totgroupegox") & !`: list __vv in __nwsaom_tvnames' {
 			di "{err}netx(`__f'): RSiena defines it for a changing covariate (tvcov()) or the dependent behavior only."

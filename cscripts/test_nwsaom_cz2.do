@@ -67,7 +67,7 @@ foreach ef in samexcycle4 sameinxcycle4 avgroupegox {
 	assert inlist(_rc, 0, 198, 498, 505)
 }
 * similarity effects with the dependent behavior as the covariate (protocol 58; siena07: dev/saom_rsiena_nx2.do modes C and F)
-foreach ef in simdist2 simegodist2 simegoindist2 {
+foreach ef in simdist2 simegodist2 simegoindist2 simrecipx simxtranstrip {
 	capture nwsaom, waves(cd1 cd2 cd3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(`ef') k0(10) k3(30) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 4
@@ -84,4 +84,11 @@ foreach sp in samexv:ca1:ca2 samexvinpop:ca1:ca2 samexvinpop:ca1:ca2:1 samexvinp
 }
 capture nwsaom, waves(cd1 cd2 cd3) outdegree netx(samexv:ca1) k3(30)
 assert _rc != 0
+* simRecipX / simXTransTrip as netx effects of a changing covariate (protocol 61: codes 53 / 167)
+foreach ef in simrecipx simxtranstrip {
+	capture nwsaom, waves(cd1 cd2 cd3) outdegree reciprocity tvcov(tw1 tw2 tw3) netx(`ef':tw) k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	capture nwsaom, waves(cd1 cd2 cd3) outdegree reciprocity netx(`ef':xa) k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+}
 di "PASS cz2"
