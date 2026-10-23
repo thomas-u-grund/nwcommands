@@ -81,4 +81,4 @@ cmbU1,U,"nodematch(a) nodefactor(g) absdiffcat(z) smalldiff(z, cutoff(1)) social
 cmbU2,U,"nodecov(x) absdist(x, pow(2)) nodefactor(a) mm(g) nodecovrange(x) nodefactordistinct(a)","nodecov('x')+absdiff('x',pow=2)+nodefactor('a')+mm('g')+nodecovrange('x')+nodefactordistinct('a')"
 cmbD1,D,"nodemix(g) diff(x) nodecovrange(x) nodeifactordistinct(z) nodeofactor(a) edgecov(Dec)","nodemix('g')+diff('x')+nodecovrange('x')+nodeifactordistinct('z')+nodeofactor('a')+edgecov(ec)"
 cmbD2,D,"nodematch(a, diff) absdiffcat(z) attrcov(a, mat(M3)) nodeocovrange(x) nodeofactordistinct(a) nodeifactor(z, levels(2/3)) dyadcov(Dec)","nodematch('a',diff=TRUE)+absdiffcat('z')+attrcov('a',M3)+nodeocovrange('x')+nodeofactordistinct('a')+nodeifactor('z',levels=2:3)+dyadcov(ec)"
-cmbS1,S,"nodecovrange(grp) nodefactordistinct(cl) nodeofactor(grp)","nodecovrange('grp')+nodefactordistinct('cl')+nodeofactor('grp')"
+cmbS1,S,"nodecovrange(grp) nodefactordistinct(grp) nodeofactor(cl)","nodecovrange('grp')+nodefactordistinct('grp')+nodeofactor('cl')"
