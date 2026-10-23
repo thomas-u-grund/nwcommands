@@ -25,7 +25,7 @@ program nwergm, eclass
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) STRUCTURAL(string asis) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -127,7 +127,7 @@ program nwergm, eclass
 		error 198
 	}
 	if "`is2mode'" == "true" {
-		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + ("`gwesp'"!="") + ("`gwdsp'"!="") + ("`gwnsp'"!="") + ("`gwdegree'"!="") + ("`gwodegree'"!="") + ("`gwidegree'"!="") + ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
+		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + ("`gwesp'"!="") + ("`gwdsp'"!="") + ("`gwnsp'"!="") + ("`gwdegree'"!="") + ("`gwodegree'"!="") + ("`gwidegree'"!="") + ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="") + (`"`structural'"'!="")
 		if `__ergm_b2mode_otherterm' > 0 {
 			di "{err}nwergm's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; {bf:`netname'} is two-mode and this model requests at least one other (one-mode-only) term."
 			di "{err}nwergm never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
@@ -1268,6 +1268,15 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
 
+	// structural() option: the structural terms of R ergm that have no option of their own
+	// (parsed and registered by _nwergm_struct.ado)
+	local __ns_dep 0
+	if `"`structural'"' != "" {
+		_nwergm_struct `netname', terms(`structural') nodes(`nodes') directed(`directed') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local __ns_dep = r(dep)
+	}
+
 	// --- term-expansion wave 7 (harmonisation unit 91 continuation):
 	// sender()/receiver() (per-node out-/in-degree fixed effects, base=1
 	// omitted, matching R ergm's own default) - a thin convenience
@@ -1673,7 +1682,7 @@ program nwergm, eclass
 	// own comment above) - previously harmless to omit only because
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `__ns_dep' == 0 & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}

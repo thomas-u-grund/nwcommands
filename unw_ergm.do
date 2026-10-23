@@ -4947,6 +4947,143 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	controlled, exactly the same discipline the Mata term-expansion
 	waves used throughout.
 */
+/* ===================================================================
+   Structural terms, term codes 1000-1999 (native/ergm_struct.h).  A term
+   instance is registered by _nwergm_struct.ado under the name "ns:<term>"
+   with stat_ns()/change_ns().  Its td holds: sptype = term key,
+   levelpairs = one row per coefficient (code, p1, p2, empty-network value,
+   uses attr, uses covariate matrix), attr = node attribute (R's coding),
+   edgecovmat = covariate matrix (localtriangle), decay = scalar parameter.
+   The statistic is the sum of the change statistics along a build-up of the
+   observed network (native plugin mode 3), plus the empty-network value,
+   which is how R's summary() obtains it for terms without an s_ function.
+   There is deliberately no Mata change statistic: the terms need the
+   plugin (change_ns() stops with a message).
+   =================================================================== */
+real rowvector ErgmNativeTermStat(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar n, nties, p, i, k, __junk, hasattr, hascov
+	string scalar origframe, argstr, cmd, vlist
+	real rowvector out
+
+	if (!ErgmNativeAvailable()) {
+		errprintf("this term needs the native plugin (ergm_mcmc), which could not be loaded\n")
+		_error(198)
+	}
+	n = G.n
+	ties = G.all_ties()
+	nties = rows(ties)
+	p = rows(td.levelpairs)
+	hasattr = sum(td.levelpairs[., 5]) > 0
+	hascov = sum(td.levelpairs[., 6]) > 0
+	origframe = st_framecurrent()
+	stata("capture frame drop __ergm_native")
+	stata("frame create __ergm_native")
+	st_framecurrent("__ergm_native")
+	st_addobs(max((nties, n, 1)))
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	vlist = ""
+	if (hasattr) {
+		__junk = st_addvar("double", "a1")
+		st_store((1::n), "a1", td.attr)
+		vlist = vlist + " a1"
+	}
+	if (hascov) {
+		for (i=1; i<=n; i++) {
+			__junk = st_addvar("double", "cm" + strofreal(i))
+			vlist = vlist + " cm" + strofreal(i)
+		}
+		st_store((1::n), "cm" :+ strofreal(1..n), td.edgecovmat)
+	}
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+	for (i=1; i<=p; i++) {
+		__junk = st_addvar("double", "o" + strofreal(i))
+		vlist = vlist + " o" + strofreal(i)
+	}
+	argstr = "3 " + strofreal(n) + " " + strofreal(G.directed) + " 0 " + strofreal(nties) + " 0 0 0 0 0 " + strofreal(hasattr) + " " + strofreal(hascov) + " 0 0 " + strofreal(p)
+	for (i=1; i<=p; i++) {
+		argstr = argstr + " " + strofreal(td.levelpairs[i,1]) + " " + strofreal(td.levelpairs[i,5]) + " " +
+			strofreal(td.levelpairs[i,2], "%25.17g") + " " + strofreal(td.levelpairs[i,3], "%25.17g") + " " + strofreal(td.levelpairs[i,6])
+	}
+	for (i=1; i<=p; i++) argstr = argstr + " 0"
+	for (i=1; i<=p; i++) argstr = argstr + " 0"
+	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
+	cmd = "plugin call ergmnativemcmc v1 v2" + vlist + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+	out = st_data(1, ("o" :+ strofreal(1..p)))
+	st_framecurrent(origframe)
+	stata("capture frame drop __ergm_native")
+	return(out)
+}
+real scalar ns_degcor_sigma2(class ErgmGraph scalar G){
+	real matrix ties
+	real colvector deg, all
+	ties = G.all_ties()
+	deg = G.dout
+	all = (deg[ties[., 1]] \ deg[ties[., 2]])
+	return(sum(all :* all) - rows(all) * mean(all)^2)
+}
+real rowvector ns_degcor_stat(class ErgmGraph scalar G){
+	real matrix ties
+	real colvector deg, d1, d2
+	real scalar E, mu, sig, cross
+	ties = G.all_ties()
+	deg = G.dout
+	d1 = deg[ties[., 1]]
+	d2 = deg[ties[., 2]]
+	E = rows(ties)
+	mu = (sum(d1) + sum(d2)) / (2 * E)
+	sig = (sum(d1 :* d1) + sum(d2 :* d2)) / (2 * E) - mu^2
+	cross = 2 * sum(d1 :* d2)
+	return((cross / (2 * E) - mu^2) / sig)
+}
+real scalar ns_attr_load(class ErgmTermData scalar td, string scalar var, real scalar n, real scalar mode){
+	real colvector x, u, code
+	real scalar i, nl, extra
+	x = st_data((1::n), var)
+	u = uniqrows(select(x, x :< .))
+	nl = rows(u)
+	code = J(n, 1, 0)
+	extra = 0
+	for (i=1; i<=n; i++) {
+		if (x[i] >= .) {
+			if (mode == 1) {
+				extra++
+				code[i] = nl + extra
+			}
+			else if (mode >= 2) code[i] = nl + 1
+		}
+		else code[i] = sum(u :< x[i]) + 1
+	}
+	td.attr = code
+	td.levels = u
+	return(nl)
+}
+real matrix ns_slots(string scalar s){
+	string rowvector rows_, cols_
+	real matrix out
+	real scalar r, c
+	rows_ = tokens(s, ";")
+	rows_ = select(rows_, rows_ :!= ";")
+	out = J(cols(rows_), 6, 0)
+	for (r=1; r<=cols(rows_); r++) {
+		cols_ = tokens(rows_[r], ",")
+		cols_ = select(cols_, cols_ :!= ",")
+		for (c=1; c<=cols(cols_); c++) out[r, c] = strtoreal(cols_[c])
+	}
+	return(out)
+}
+real rowvector stat_ns(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	if (td.sptype == "degcor") return(ns_degcor_stat(G))
+	return(td.levelpairs[., 4]' + ErgmNativeTermStat(G, td))
+}
+real rowvector change_ns(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	errprintf("this term is only available with the native plugin (ergm_mcmc)\n")
+	_error(198)
+	return(J(1, rows(td.levelpairs), 0))
+}
+
 real scalar ErgmNativeSPCode(string scalar sptype, real scalar utp, real scalar otp, real scalar itp, real scalar osp, real scalar isp, real scalar rtp){
 	if (sptype == "OTP") return(otp)
 	if (sptype == "ITP") return(itp)
@@ -5445,6 +5582,30 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			pos++
 			termcodes[pos] = 79
 			p1v[pos] = tdt.decay
+		}
+		else if (substr(nm, 1, 3) == "ns:") {
+			// structural terms (term codes 1000-1999, native/ergm_struct.h): per-slot table in td.levelpairs = (code, p1, p2, empty-network value, uses attr, uses covariate matrix)
+			real scalar aidx2, cidx2
+			aidx2 = 0
+			cidx2 = 0
+			if (sum(tdt.levelpairs[., 5]) > 0) {
+				if (cols(attrmat) + 1 > maxattr) return(0)
+				attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+				aidx2 = cols(attrmat)
+			}
+			if (sum(tdt.levelpairs[., 6]) > 0) {
+				if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+				covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+				cidx2 = cols(covmatstack) / cols(tdt.edgecovmat)
+			}
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = tdt.levelpairs[k, 1]
+				p1v[pos] = tdt.levelpairs[k, 2]
+				p2v[pos] = tdt.levelpairs[k, 3]
+				if (tdt.levelpairs[k, 5]) attridxs[pos] = aidx2
+				if (tdt.levelpairs[k, 6]) covidxs[pos] = cidx2
+			}
 		}
 		else return(0)
 	}
