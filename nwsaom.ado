@@ -3074,13 +3074,16 @@ program nwsaom, eclass
 		// covariate x triad / popularity / activity families and the threshold / contrast families); behavior 1, centred by its overall mean.
 		if "`netbeh'" != "" {
 			local __nb_ok "samex diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx"
-			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox"
-			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234 235 236 237 238 239 240 241 242"
+			local __nbn_names "crossxoutact outxmore indties transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox simdist2 simegodist2 simegoindist2"
+			local __nbn_sim "simdist2 simegodist2 simegoindist2"
+			local __nbn_codes "220 222 223 224 225 226 227 230 231 232 234 235 236 237 238 239 240 241 242 228 229 233"
 			foreach __e of local netbeh {
 				local __ni : list posof "`__e'" in __nbn_names
 				if `__ni' > 0 {
 					local __nc : word `__ni' of `__nbn_codes'
-					mata: SaomRegNatBeh(__nwsaom_last_M, "`__e'", `__nc', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `xparam')
+					mata: st_local("__nbps", invtokens(strofreal(SaomNbSim("`__e'", `xparam', __nwsaom_last_Mbeh, __nwsaom_last_Behwaves, __nwsaom_beh_maxval - __nwsaom_beh_minval), "%25.17g")))
+					gettoken __nbp __nbs : __nbps
+					mata: SaomRegNatBeh(__nwsaom_last_M, "`__e'", `__nc', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `__nbp', `__nbs')
 					local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " natb_`__e' [behavior:"
 					mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
 					continue

@@ -66,4 +66,12 @@ foreach ef in samexcycle4 sameinxcycle4 avgroupegox {
 	capture nwsaom, waves(cs1 cs2 cs3) symmetric outdegree netx(`ef':xa) k0(10) k3(30) seed(3)
 	assert inlist(_rc, 0, 198, 498, 505)
 }
+* similarity effects with the dependent behavior as the covariate (protocol 58; siena07: dev/saom_rsiena_nx2.do modes C and F)
+foreach ef in simdist2 simegodist2 simegoindist2 {
+	capture nwsaom, waves(cd1 cd2 cd3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(`ef') k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 4
+	capture nwsaom, waves(cs1 cs2 cs3) symmetric outdegree behavior(z1 z2 z3 : linear) netbeh(`ef') k0(10) k3(30) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+}
 di "PASS cz2"

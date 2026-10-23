@@ -3566,7 +3566,7 @@ real rowvector change_saom_bv_degnegdiffx(class ErgmGraph scalar G, real scalar 
    saom_stat_term() the simulation uses), so a new native term needs no Mata twin. A term "nat_<effect>" (static or tvcov covariate) or "natb_<effect>"
    (the dependent behavior as covariate: td.attr = raw behavior, td.center = its overall mean) carries td.levels = (term code \ dynamic flag), td.attr
    the covariate (td.attrpd per period for a changing covariate) and td.decay = p1 (similarity mean, the parameter c, ...). */
-real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd) {
+real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real scalar p1, real colvector a, | real matrix Wd, real scalar scale) {
 	real matrix E
 	real rowvector nb
 	real scalar i, m, ne, n, junk
@@ -3589,7 +3589,7 @@ real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real s
 	st_store((1::n), "aa", a)
 	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + char(34))
+	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + (args() >= 6 ? " " + strofreal(scale, "%25.17g") : "") + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_netstat")
 	return(st_numscalar("__saom_netstat_val"))
@@ -3600,6 +3600,7 @@ real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar
 	dyn = (td.levels[2] != 0)
 	if (rows(td.edgecovmat) == G.n) return(SaomNativeNetStat(G, td.levels[1], td.decay, J(G.n, 1, 0), td.edgecovmat))
 	a = (dyn ? td.attr :- td.center : td.attr)
+	if (dyn & rows(td.levels) >= 3) return(SaomNativeNetStat(G, td.levels[1] + 1000, td.decay, a, J(0, 0, 0), td.levels[3]))
 	return(SaomNativeNetStat(G, td.levels[1] + (dyn ? 1000 : 0), td.decay, a))
 }
 real rowvector change_saom_nat(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td) {
@@ -3775,10 +3776,11 @@ void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code,
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + matname))
 }
 /* the dependent behavior (first one, raw start values behw1, overall mean bmean) as the covariate */
-void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1) {
+void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, | real scalar scale) {
 	class ErgmTermData scalar td
 	td = ErgmTermData()
 	td.levels = (code \ 1)
+	if (args() >= 7) td.levels = (code \ 1 \ scale)
 	td.attr = behw1
 	td.center = bmean
 	td.decay = p1
@@ -13261,6 +13263,16 @@ void SaomBehDyStore(real scalar n) {
 	if (cols(__saom_behdy) == 0 | rows(__saom_behdy) != n) return
 	nm = SaomBehDyNames(n)
 	for (k=1; k<=SaomBehDySlots(); k++) for (q=1; q<=SaomBehDyNP(); q++) st_store((1::n), nm[(((k-1)*SaomBehDyNP() + q - 1) * n + 1)..(((k-1)*SaomBehDyNP() + q) * n)], SaomBehDyBlock(k, q, n))
+}
+/* netbeh(): (p1, scale) of a network effect with the dependent behavior as the covariate: the similarity effects carry the behavior's similarity mean and 1/range (RSiena) */
+real rowvector SaomNbSim(string scalar eff, real scalar xparam, class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar rng) {
+	if (!anyof(("simdist2", "simegodist2", "simegoindist2"), eff)) return((xparam, 1))
+	if (rng <= 0) {
+		errprintf("nwsaom: netbeh(" + eff + "): the behavior variable does not vary.\n")
+		exit(198)
+	}
+	Mbeh.setsimmean(saom_similarity_mean(Behwaves, rng))
+	return((Mbeh.simMean, 1 / rng))
 }
 string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
 /* protocol 51: behavior shape effects. Tokens "sh<f>_<par>" (f 0..7) -> bn_<2000 + 100 f + par>_0 */

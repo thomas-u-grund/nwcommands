@@ -740,3 +740,7 @@ batch setup sent `BATCHSETUP.|...`, which the plugin sent to its legacy parser: 
 
 With `NETX0(string)` declared before `NETX(string)` in nwsaom's `syntax`, the existing option `netx(homxtransrectrip:xa)` was parsed as `netx0` (the error showed "netx0(): ... is not an effect",
 two tests failed). Exact matches do not take precedence over abbreviations of an option declared earlier. Pick names that are not prefixes of each other (`ownx` for the own-network effects).
+
+## "system limit exceeded - see manual (error occurred while loading nwsaom.ado)"
+
+Adding a nested `if ... { ... }` / `else mata: ...` (about 10 lines) inside the big `behavior` block of `nwsaom.ado` (the `foreach __e of local netbeh` loop, ~line 3080) made the ado fail to LOAD with r(1000) once the Mata library was loaded - while the same file loaded fine in an empty Stata. It is not the file size (comments stripped: still failing) but the nesting/compile complexity of that block. Fix used: no new nested braces there; put the decision in a Mata helper (`SaomNbSim`) and call it with one `mata: st_local(...)` line. If `nwsaom` suddenly reports r(1000) at load after an edit of that region, move logic into Mata instead of adding Stata control flow. (A Mata function that uses a class must be placed AFTER the class definition in unw_saom.do, or `do unw_saom.do` fails with r(3000).)
