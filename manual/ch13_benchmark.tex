@@ -9,11 +9,7 @@ data, for agreement of the estimates and for speed. The benchmark was run for
 the Stata Journal article on \nwsaom{}; the numbers below are taken from it
 (benchmark scripts: \texttt{benchmark/} in the article's repository,
 \texttt{rsiena\_bench.R}, \texttt{nwsaom\_bench.do}, \texttt{make\_tables.py}).
-It covers the model families that existed when the article was written:
-directed and undirected one-mode networks and one co-evolving behavior.
-Two-mode networks, multi-network models and the other effects added since are
-validated against \texttt{siena07} for statistics and estimates (Chapter~\ref{ch:validation}),
-but have \emph{not} been timed against RSiena.
+Section~\ref{sec:benchextra} adds models for families that came later: two-mode networks, several networks (with and without a behavior, and with a non-directed network), and some of the newer effects.
 
 \section{Design}
 
@@ -89,6 +85,20 @@ the largest gains for cheap-to-simulate models. For N2 removing the overhead
 alone would give at most a factor 1.3; the observed \benchNtwoSp{} means the
 simulation code itself is also faster.
 
+\section{Further models}\label{sec:benchextra}
+
+The same comparison, with the same conventions (default settings of both programs, one thread each, wall-clock seconds per fit, a fit counts as converged when RSiena's overall convergence ratio is below 0.25), for the later model families. The data are the Glasgow friendship panel, a second randomly generated network and the smoking behavior (several networks), and simulated bipartite data (two-mode). The table uses the median over three converged fits per program.
+
+\input{bench/bench_extra.tex}
+
+All eight models agree with RSiena (the largest difference of a mean estimate, rates included, is 0.07 RSiena standard errors). The speed differs by family:
+\begin{itemize}
+\item \textbf{Several networks} (X3--X6) are 2.4 to 6.0 times as fast, most of all with a behavior and effects of the behavior on both networks (X4). A likely reason is the per-simulation overhead of RSiena's R code, which is paid for every dependent variable (see the profile at the end of the section on one thread); this was not profiled for these models.
+\item \textbf{Newer single-network effects} (X7, X8) are 1.4 and 1.6 times as fast.
+\item \textbf{Two-mode networks} are \emph{not} faster: X1 takes 3.4 seconds in \nwsaom{} against 2.8 in RSiena, X2 0.5 against 0.6. \nwsaom{} represents a two-mode network as a directed network on the actors and the events together, which may make the plugin do work (for example on dyads that are never free) that RSiena's bipartite code avoids; this was not investigated and is a candidate for optimisation.
+\end{itemize}
+Some effect sets were chosen so that RSiena converges: on the 40$\times$20 data \texttt{outactivity} together with \texttt{indegpopularity} and \texttt{cycle4} does not converge in RSiena, \texttt{antiiniso2} on the same data and the effects \texttt{Jin} and \texttt{Jout} together on the Glasgow data make \texttt{siena07} stop with ``thetaBound should be set higher'', and the \texttt{Jout} estimate in X8 is large (about 9.6, standard error about 4) in both programs. Some fits did not converge in one of the programs (RSiena: X1 two of eight seeds, X4 and X5 two each, X8 one; \nwsaom{}: X8 one); they are left out of the table and replaced by the next seed. The machine was not completely idle while these timings were taken (load average 1.2 to 2.6), so small differences are noise.
+
 \section{Using several cores}
 
 RSiena can spread a fit over several R processes only on request
@@ -112,9 +122,7 @@ random numbers depend only on the seed and the simulation's position.
       speed-ups may differ for other effects and sparser or denser networks.
 \item Both programs at default settings; RSiena's \texttt{nbrNodes} was only used
       where stated.
-\item No timings for two-mode, multi-network, non-directed multinet or the
-      effects added after the article; for those only statistics and estimates
-      were compared (Chapter~\ref{ch:validation}).
+\item The further models of Section~\ref{sec:benchextra} are one specification per family; the timings of other effect sets and sizes may differ.
 \item Older \texttt{nwsaom} versions simulated structural terms (e.g.\ transitive
       reciprocated triplets, outdegree assortativity) in Mata, which was up to
       two orders of magnitude slower than RSiena; with the native plugin these
