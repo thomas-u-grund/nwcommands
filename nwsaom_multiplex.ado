@@ -51,6 +51,14 @@ program define nwsaom_multiplex, eclass
 		if "`crprod'" != "" local __c1 "cross1(crprod)"
 		if "`crprodb'" != "" local __c2 "cross2(crprod)"
 		nwsaom_multinet , net1(`netawave1' `netawave2') net2(`netbwave1' `netbwave2') `__c1' `__c2' k0(`k0') k3(`k3') firstg(`firstg') seed(`seed')
+		// the results nwsaom multiplex always returned (two waves: one rate per network)
+		tempname __r
+		matrix `__r' = e(rates)
+		ereturn scalar rate1 = `__r'[1, 1]
+		ereturn scalar rate2 = `__r'[2, 1]
+		ereturn scalar rate1_se = `__r'[3, 1]
+		ereturn scalar rate2_se = `__r'[4, 1]
+		ereturn local cmd "nwsaom_multiplex"
 		exit
 	}
 	if `seed' != -1 set seed `seed'
