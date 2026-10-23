@@ -7,13 +7,17 @@
 	new fit is needed beyond the one in memory, which must have at least three
 	waves (two periods).
 
+	With fixrates the rate parameters are treated as known (as RSiena's
+	sienaTimeTest does); by default they are estimated together with the
+	effects, which is the score test of a model with a fixed time dummy.
+
 	Reported: a joint test of all deviations, one test per effect (d.f. = P-1),
 	and one test per effect and period with the one-step estimate of the
 	deviation.
 */
 capture program drop nwsaom_estat_timetest
 program define nwsaom_estat_timetest, rclass
-	syntax [, EFFects(string) ]
+	syntax [, EFFects(string) FIXRates ]
 
 	if !inlist(`"`e(cmd)'"', "nwsaom", "nwsaom_multinet") {
 		di as err "last nwsaom estimates not found"
@@ -47,7 +51,7 @@ program define nwsaom_estat_timetest, rclass
 			exit 198
 		}
 	}
-	mata: SaomTimeTestRun(`nper', strtoreal(tokens("`flags'")))
+	mata: SaomTimeTestRun(`nper', strtoreal(tokens("`flags'")), `p', ("`fixrates'" != ""))
 	tempname joint eff ind
 	matrix `joint' = __nwsaom_tt_joint
 	matrix `eff' = __nwsaom_tt_effect
