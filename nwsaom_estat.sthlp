@@ -37,7 +37,7 @@ Not applicable - {cmd:estat gof} operates on the fitted model and the wave data 
 {synopt:{opt maxdeg(int)}}Highest EXACT out-/in-degree category before the ("maxdeg+") overflow bin; default 15{p_end}
 {synopt:{opt maxdist(int)}}Highest EXACT geodesic-distance category before the ("NR", not reached) overflow bin; default 6{p_end}
 {synopt:{opt twotailed}}Report a two-tailed p-value instead of the one-tailed default (RSiena's own {cmd:twoTailed=FALSE} default: reject for a SMALL p only, i.e. the observed network is an outlier relative to what the fitted model simulates){p_end}
-{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {cmd:{it:name}_outdegree}, {cmd:{it:name}_indegree}, {cmd:{it:name}_geodesic}, {cmd:{it:name}_triad}, and {cmd:{it:name}_behavior} for a co-evolution fit's fourth statistic; with {opt join(off)} each period gets its own graph instead, e.g. {cmd:{it:name}_outdegree_p1}/{cmd:{it:name}_outdegree_p2}){p_end}
+{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {it:name}{cmd:_outdegree}, {it:name}{cmd:_indegree}, {it:name}{cmd:_geodesic}, {it:name}{cmd:_triad}, and {it:name}{cmd:_behavior} for a co-evolution fit's fourth statistic; with {opt join(off)} each period gets its own graph instead, e.g. {it:name}{cmd:_outdegree_p1}/{it:name}{cmd:_outdegree_p2}){p_end}
 {synopt:{opt join(off)}}Run a SEPARATE Mahalanobis test (and violin) per wave-period instead of the default pooled/summed one - real RSiena's own {cmd:join=FALSE} (non-default); omit for the default pooled behavior ({cmd:join=TRUE}){p_end}
 {synoptline}
 
