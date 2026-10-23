@@ -15693,4 +15693,58 @@ void SaomBayesSummary(string scalar frname, real scalar K, real scalar Kp, real 
 	st_matrix("__nwsaom_bayes_q", Q)
 	st_matrix("__nwsaom_bayes_ess", ess)
 }
+
+/* nwsaom ..., ml: maximum likelihood estimation by the plugin (MLRUN) for the model of the last nwsaom fit. Returns a (K+P) x (3+K+P) matrix:
+   the estimates (effects, then the rate of every period), the convergence t-ratios, the covariance matrix, the mean score of phase 3. */
+real matrix SaomMLRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M,
+	real rowvector theta, real rowvector rho0, real scalar n1, real scalar nsub, real scalar n2start, real scalar n3,
+	real scalar nmh, real scalar seed, real scalar mult, real scalar gain)
+{
+	struct SaomNativeConfig scalar cfg
+	pointer(class ErgmGraph scalar) rowvector Gstart
+	real matrix E, t, out
+	real scalar n, K, KP, pd, junk, nrows, i
+	string scalar origframe, argstr
+	string rowvector vn
+
+	n = (*Gall[1]).n
+	K = cols(theta)
+	KP = K + P
+	if (K != M.nparam()) {
+		errprintf("nwsaom ml: the coefficient vector does not match the model.\n")
+		exit(198)
+	}
+	cfg = SaomNativeSetup(M)
+	if (!cfg.eligible | !SaomNativeAvailable() | SaomNativePluginVersion() < 140) {
+		errprintf("nwsaom ml needs the native plugin (a current build) and a model the plugin covers.\n")
+		exit(198)
+	}
+	Gstart = J(1, P, NULL)
+	for (pd=1; pd<=P; pd++) Gstart[pd] = Gall[pd]
+	SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
+	E = J(0, 3, 0)
+	for (pd=1; pd<=P; pd++) {
+		t = (*Gall[pd+1]).all_ties()
+		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t[., 1..2])
+	}
+	nrows = max((rows(E), KP, 1))
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_ml")
+	stata("frame create __saom_ml")
+	st_framecurrent("__saom_ml")
+	st_addobs(nrows)
+	vn = ("e_pd", "e_i", "e_j", "est", "tconv", "c" :+ strofreal(1..KP), "score")
+	junk = st_addvar("double", vn)
+	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
+	argstr = "MLRUN|" + strofreal(rows(E)) + " " + strofreal(n1) + " " + strofreal(nsub) + " " + strofreal(n2start) + " " + strofreal(n3) + " " + strofreal(nmh)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(gain, "%20.10g") + " " + strofreal(K) + " " + strofreal(P)
+	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g")) + " " + invtokens(strofreal(rho0, "%25.17g"))
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(vn) + ", " + char(34) + argstr + char(34))
+	out = st_data((1::KP), (4..6+KP))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_ml")
+	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	return(out)
+}
 end

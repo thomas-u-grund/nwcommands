@@ -105,7 +105,7 @@ program nwsaom, eclass
 		nwsaom_multiplex , `0'
 		exit
 	}
-	syntax [, WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
+	syntax [, ML MLOPTIONS(string) WAVE1(string) WAVE2(string) WAVES(string) OUTDEGREE RECIPROCITY NODEMATCH(string) ///
 		OUTDEGREEENDOW OUTDEGREECREATION RECIPROCITYENDOW RECIPROCITYCREATION TRANSTIESENDOW TRANSTIESCREATION ///
 		NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		GWESPFB(string) GWESPBF(string) GWESPBB(string) GWESPRR(string) SQRTCYCLE4 DBLNBRDIST2 NBRDIST2 GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
@@ -3951,6 +3951,7 @@ program nwsaom, eclass
 	// in e(rsiena_labels), e(covmeans) and e(tconv); shown with detail
 	if "`detail'" != "" _nwsaom_rsnotes
 	_nwsaom_tconvtable, `detail'
+	if "`ml'" != "" nwsaom_ml, `mloptions'
 end
 
 

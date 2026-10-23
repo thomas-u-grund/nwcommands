@@ -613,6 +613,90 @@ static int bimprove(bctx_t *B, bst_t *S, bmoves_t *mv, long totruns, double targ
 	return (int)iter;
 }
 
+/* common setup of the chain machinery: scratch buffers, the minimal chains (the differences between the waves, from the end ties in the
+   current frame's columns 1-3, rows 1..nend), the number of Metropolis-Hastings steps per batch and period, pre-burn-in */
+static int bctx_open(bctx_t *B, const model_t *M, long nend, unsigned long long seed, const double *th0, const double *rho0, double mult, long nmhfix, long *nmpd) {
+	long n = M->n, K = M->nterms, nper = batch_cur->P, pd, i, k;
+	long **ei_end, **ej_end, *nend_pd;
+	bmoves_t mv;
+	memset(B, 0, sizeof(*B));
+	B->M = M; B->n = n; B->K = K; B->nper = nper;
+	rng_seed(&B->rng, seed);
+	B->tt = M->need_transtrip ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
+	B->c3 = M->need_cycle3 ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
+	B->chg = (double *)calloc((size_t)(n + 1) * (size_t)(K > 0 ? K : 1), sizeof(double));
+	B->u = (double *)calloc((size_t)(n + 1), sizeof(double));
+	B->ijx = (unsigned char *)malloc((size_t)(n + 1));
+	B->ch = (bchain_t *)calloc((size_t)nper, sizeof(bchain_t));
+	B->rho = (double *)calloc((size_t)nper, sizeof(double));
+	B->c0 = (double *)calloc((size_t)nper, sizeof(double));
+	B->pg = (graph_t *)calloc((size_t)nper, sizeof(graph_t));
+	B->ppos = (long *)calloc((size_t)nper, sizeof(long));
+	B->pvalid = (int *)calloc((size_t)nper, sizeof(int));
+	B->coff = (long *)calloc((size_t)nper, sizeof(long));
+	B->adaptc0 = 1;
+	for (k = 0; k < K; k++) B->P.theta[k] = th0[k];
+	for (pd = 0; pd < nper; pd++) { B->rho[pd] = rho0[pd]; B->c0[pd] = 20.0; }
+	nend_pd = (long *)calloc((size_t)nper, sizeof(long));
+	ei_end = (long **)calloc((size_t)nper, sizeof(long *)); ej_end = (long **)calloc((size_t)nper, sizeof(long *));
+	for (i = 1; i <= nend; i++) {
+		ST_double a, b, c;
+		long p;
+		SF_vdata(1, (ST_int)i, &a); SF_vdata(2, (ST_int)i, &b); SF_vdata(3, (ST_int)i, &c);
+		p = (long)a - 1;
+		if (p < 0 || p >= nper) continue;
+		ei_end[p] = (long *)realloc(ei_end[p], (size_t)(nend_pd[p] + 1) * sizeof(long));
+		ej_end[p] = (long *)realloc(ej_end[p], (size_t)(nend_pd[p] + 1) * sizeof(long));
+		ei_end[p][nend_pd[p]] = (long)b; ej_end[p][nend_pd[p]] = (long)c; nend_pd[p]++;
+	}
+	for (pd = 0; pd < nper; pd++) {
+		const period_t *PD = &batch_cur->per[pd];
+		graph_t gs, ge;
+		bchain_t *c = &B->ch[pd];
+		long r, m;
+		graph_init(&gs, n, 1, PD->nties); graph_init(&ge, n, 1, nend_pd[pd]);
+		for (r = 0; r < PD->nties; r++) toggle(&gs, PD->ti[r], PD->tj[r]);
+		for (r = 0; r < nend_pd[pd]; r++) toggle(&ge, ei_end[pd][r], ej_end[pd][r]);
+		bchain_ensure(c, PD->nties + nend_pd[pd] + 16);
+		c->R = 0;
+		for (r = 0; r < PD->nties; r++) if (!has_edge(&ge, PD->ti[r], PD->tj[r])) { c->ei[c->R] = (int)PD->ti[r]; c->ej[c->R] = (int)PD->tj[r]; c->R++; }
+		for (r = 0; r < nend_pd[pd]; r++) if (!has_edge(&gs, ei_end[pd][r], ej_end[pd][r])) { c->ei[c->R] = (int)ei_end[pd][r]; c->ej[c->R] = (int)ej_end[pd][r]; c->R++; }
+		for (r = c->R - 1; r > 0; r--) {
+			m = b_randint(B, r + 1);
+			{ int t1 = c->ei[r], t2 = c->ej[r]; c->ei[r] = c->ei[m]; c->ej[r] = c->ej[m]; c->ei[m] = t1; c->ej[m] = t2; }
+		}
+		graph_free(&gs); graph_free(&ge);
+		bwork_ensure(B, c->R + 16);
+		/* the number of Metropolis-Hastings steps per batch: mult times the observed distance (RSiena), rounded to hundreds when above 100 */
+		nmpd[pd] = nmhfix > 0 ? nmhfix : (long)floor(mult * (double)c->R);
+		if (nmpd[pd] > 100) nmpd[pd] = (long)(floor((double)nmpd[pd] / 100.0 + 0.5) * 100.0);
+		if (nmpd[pd] < 1) nmpd[pd] = 1;
+	}
+	for (pd = 0; pd < nper; pd++) { free(ei_end[pd]); free(ej_end[pd]); }
+	free(ei_end); free(ej_end); free(nend_pd);
+	if (!bcache_build(B)) return 0;
+	(void)bcache_ll(B, th0, 1);
+	memset(&mv, 0, sizeof(mv));
+	/* pre-burn-in (RSiena's preburnin(): insert diagonal ministeps, then pairs, until 50 rejections each) */
+	for (pd = 0; pd < nper; pd++) {
+		long rej = 0, guard = 0;
+		double save = B->c0[pd];
+		while (rej < 50 && guard++ < 20000) { double a0 = mv.acc[0]; bmove_diag(B, pd, &mv, 1); if (mv.acc[0] == a0) rej++; }
+		rej = 0; guard = 0; B->c0[pd] = 1.0; B->adaptc0 = 0;
+		while (rej < 50 && guard++ < 20000) { double a3 = mv.acc[3]; bmove_insperm(B, pd, &mv); if (mv.acc[3] == a3) rej++; }
+		B->c0[pd] = save; B->adaptc0 = 1;
+	}
+	if (!bcache_build(B)) return 0;
+	(void)bcache_ll(B, th0, 1);
+	return 1;
+}
+static void bctx_close(bctx_t *B) {
+	long pd;
+	for (pd = 0; pd < B->nper; pd++) { binvalidate(B, pd); free(B->ch[pd].ei); free(B->ch[pd].ej); free(B->ch[pd].lp); }
+	free(B->ch); free(B->rho); free(B->c0); free(B->pg); free(B->ppos); free(B->pvalid); free(B->coff); free(B->cache); free(B->tei); free(B->tej); free(B->tlp); free(B->pl); free(B->hk); free(B->hv); free(B->nxt);
+	free(B->tt); free(B->c3); free(B->chg); free(B->u); free(B->ijx);
+}
+
 static ST_retcode bayes_run(char *arg) {
 	bctx_t B;
 	bst_t S;
@@ -621,7 +705,6 @@ static ST_retcode bayes_run(char *arg) {
 	unsigned long long seed;
 	double mult, targetmh, *rho0, t0, sumR = 0.0, accepts_earlier = 10.0;
 	bmoves_t mv;
-	long **ei_end, **ej_end, *nend_pd;
 	char *tok;
 	int ratemode;
 
@@ -664,79 +747,14 @@ static ST_retcode bayes_run(char *arg) {
 	if (nrunmh < 1) nrunmh = 1;
 	nout = K + nper + 2;
 	if ((long)SF_nvars() < 3 + nout || (long)SF_nobs() < (nmain > nend ? nmain : nend)) { SF_error("saom_bayes: frame too small\n"); return 198; }
-	rng_seed(&B.rng, seed);
-	memset(&B.P, 0, sizeof(B.P));
-	B.tt = M->need_transtrip ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
-	B.c3 = M->need_cycle3 ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
-	B.chg = (double *)calloc((size_t)(n + 1) * (size_t)(K > 0 ? K : 1), sizeof(double));
-	B.u = (double *)calloc((size_t)(n + 1), sizeof(double));
-	B.ijx = (unsigned char *)malloc((size_t)(n + 1));
-	B.ch = (bchain_t *)calloc((size_t)nper, sizeof(bchain_t));
-	B.rho = (double *)calloc((size_t)nper, sizeof(double));
-	B.c0 = (double *)calloc((size_t)nper, sizeof(double));
-	B.pg = (graph_t *)calloc((size_t)nper, sizeof(graph_t));
-	B.ppos = (long *)calloc((size_t)nper, sizeof(long));
-	B.pvalid = (int *)calloc((size_t)nper, sizeof(int));
-	B.coff = (long *)calloc((size_t)nper, sizeof(long));
-	B.adaptc0 = 1;
-	for (k = 0; k < K; k++) B.P.theta[k] = S.th[k];
-	for (pd = 0; pd < nper; pd++) { B.rho[pd] = rho0[pd]; B.c0[pd] = 20.0; }
+	if (!bctx_open(&B, M, nend, seed, S.th, rho0, mult, nmhfix, S.nmpd)) { SF_error("saom_bayes: out of memory\n"); return 198; }
+	t0 = (double)clock() / (double)CLOCKS_PER_SEC;
 	S.scaleEta = 2.38 * 2.38 / (double)(K > 0 ? K : 1); S.scale0 = S.scaleEta; S.scaleRate = 2.38 * 2.38 / (double)(K + nper);
 	{
 		long a, b2;
 		for (a = 0; a < K * K; a++) { b2 = a; (void)b2; }
 		if (!bchol(S.Sig, S.L, K)) { for (a = 0; a < K * K; a++) S.Sig[a] = (a % (K + 1) == 0) ? 0.01 : 0.0; bchol(S.Sig, S.L, K); }
 	}
-	nend_pd = (long *)calloc((size_t)nper, sizeof(long));
-	ei_end = (long **)calloc((size_t)nper, sizeof(long *)); ej_end = (long **)calloc((size_t)nper, sizeof(long *));
-	for (i = 1; i <= nend; i++) {
-		ST_double a, b, c;
-		long p;
-		SF_vdata(1, (ST_int)i, &a); SF_vdata(2, (ST_int)i, &b); SF_vdata(3, (ST_int)i, &c);
-		p = (long)a - 1;
-		if (p < 0 || p >= nper) continue;
-		ei_end[p] = (long *)realloc(ei_end[p], (size_t)(nend_pd[p] + 1) * sizeof(long));
-		ej_end[p] = (long *)realloc(ej_end[p], (size_t)(nend_pd[p] + 1) * sizeof(long));
-		ei_end[p][nend_pd[p]] = (long)b; ej_end[p][nend_pd[p]] = (long)c; nend_pd[p]++;
-	}
-	/* the minimal chains: the differences between the waves in random order */
-	for (pd = 0; pd < nper; pd++) {
-		const period_t *PD = &batch_cur->per[pd];
-		graph_t gs, ge;
-		bchain_t *c = &B.ch[pd];
-		long r, m;
-		graph_init(&gs, n, 1, PD->nties); graph_init(&ge, n, 1, nend_pd[pd]);
-		for (r = 0; r < PD->nties; r++) toggle(&gs, PD->ti[r], PD->tj[r]);
-		for (r = 0; r < nend_pd[pd]; r++) toggle(&ge, ei_end[pd][r], ej_end[pd][r]);
-		bchain_ensure(c, PD->nties + nend_pd[pd] + 16);
-		c->R = 0;
-		for (r = 0; r < PD->nties; r++) if (!has_edge(&ge, PD->ti[r], PD->tj[r])) { c->ei[c->R] = (int)PD->ti[r]; c->ej[c->R] = (int)PD->tj[r]; c->R++; }
-		for (r = 0; r < nend_pd[pd]; r++) if (!has_edge(&gs, ei_end[pd][r], ej_end[pd][r])) { c->ei[c->R] = (int)ei_end[pd][r]; c->ej[c->R] = (int)ej_end[pd][r]; c->R++; }
-		for (r = c->R - 1; r > 0; r--) {
-			m = b_randint(&B, r + 1);
-			{ int t1 = c->ei[r], t2 = c->ej[r]; c->ei[r] = c->ei[m]; c->ej[r] = c->ej[m]; c->ei[m] = t1; c->ej[m] = t2; }
-		}
-		graph_free(&gs); graph_free(&ge);
-		bwork_ensure(&B, c->R + 16);
-		/* the number of Metropolis-Hastings steps per batch: mult times the observed distance (RSiena), rounded to hundreds when above 100 */
-		S.nmpd[pd] = nmhfix > 0 ? nmhfix : (long)floor(mult * (double)c->R);
-		if (S.nmpd[pd] > 100) S.nmpd[pd] = (long)(floor((double)S.nmpd[pd] / 100.0 + 0.5) * 100.0);
-		if (S.nmpd[pd] < 1) S.nmpd[pd] = 1;
-	}
-	t0 = (double)clock() / (double)CLOCKS_PER_SEC;
-	if (!bcache_build(&B)) { SF_error("saom_bayes: out of memory\n"); return 198; }
-	S.llcur = bcache_ll(&B, S.th, 1);
-	memset(&mv, 0, sizeof(mv));
-	/* pre-burn-in (RSiena's preburnin(): insert diagonal ministeps, then pairs, until 50 rejections each) */
-	for (pd = 0; pd < nper; pd++) {
-		long rej = 0, guard = 0;
-		double save = B.c0[pd];
-		while (rej < 50 && guard++ < 20000) { double a0 = mv.acc[0]; bmove_diag(&B, pd, &mv, 1); if (mv.acc[0] == a0) rej++; }
-		rej = 0; guard = 0; B.c0[pd] = 1.0; B.adaptc0 = 0;
-		while (rej < 50 && guard++ < 20000) { double a3 = mv.acc[3]; bmove_insperm(&B, pd, &mv); if (mv.acc[3] == a3) rej++; }
-		B.c0[pd] = save; B.adaptc0 = 1;
-	}
-	if (!bcache_build(&B)) { SF_error("saom_bayes: out of memory\n"); return 198; }
 	S.llcur = bcache_ll(&B, S.th, 1);
 	memset(&mv, 0, sizeof(mv));
 	{
@@ -789,11 +807,9 @@ static ST_retcode bayes_run(char *arg) {
 	SF_scal_save("__saom_bayes_c0", B.c0[0]);
 	SF_scal_save("__saom_bayes_meanR", nsave > 0 ? sumR / (double)nsave : 0.0);
 	SF_scal_save("__saom_bayes_secs", (double)clock() / (double)CLOCKS_PER_SEC - t0);
-	for (pd = 0; pd < nper; pd++) { binvalidate(&B, pd); free(B.ch[pd].ei); free(B.ch[pd].ej); free(B.ch[pd].lp); free(ei_end[pd]); free(ej_end[pd]); }
-	free(B.ch); free(B.rho); free(B.c0); free(B.pg); free(B.ppos); free(B.pvalid); free(B.coff); free(B.cache); free(B.tei); free(B.tej); free(B.tlp); free(B.pl); free(B.hk); free(B.hv); free(B.nxt);
-	free(B.tt); free(B.c3); free(B.chg); free(B.u); free(B.ijx);
+	bctx_close(&B);
 	free(S.th); free(S.thp); free(S.pmean); free(S.psd); free(S.Sig); free(S.L); free(S.z); free(S.rsd); free(S.rpm); free(S.rps); free(S.gshape); free(S.grate); free(S.nmpd);
-	free(rho0); free(ei_end); free(ej_end); free(nend_pd);
+	free(rho0);
 	return 0;
 }
 
