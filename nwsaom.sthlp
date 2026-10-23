@@ -275,6 +275,16 @@ Two networks that change together ({help nwsaom##multiplex:nwsaom multiplex}):
 {synoptline}
 {p2colreset}{...}
 
+{marker meta}{...}
+{title:Several groups: nwsaom meta}
+
+{p 8 17 2}
+{cmd:nwsaom meta} {it:name1 name2} [{it:name3} ...] [{cmd:,} {opt bound(#)} {opt alpha(#)} {opt maxit(#)} {opt rates} {opt notable}]
+
+{pstd}
+Combines the estimates of the same model fitted separately to several groups (stored with {cmd:estimates store}), as RSiena's {cmd:siena08}: random-effects mean and
+between-group standard deviation of every effect, heterogeneity test, Fisher's combination of one-sided tests. See {help nwsaom_meta}, which has a complete example.
+
 {marker multinet}{...}
 {title:Several dependent networks: nwsaom multinet}
 

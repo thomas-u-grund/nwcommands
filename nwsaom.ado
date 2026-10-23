@@ -72,6 +72,12 @@ program nwsaom, eclass
 		nwsaom_multinet , `0'
 		exit
 	}
+	if `"`1'"' == "meta" | `"`1'"' == "meta," {
+		// nwsaom meta: multi-group meta-analysis of stored nwsaom fits (same program as nwsaom_meta)
+		gettoken __saom_sub 0 : 0
+		nwsaom_meta `0'
+		exit
+	}
 	if `"`1'"' == "simulate" | `"`1'"' == "simulate," {
 		gettoken __saom_sub 0 : 0
 		nwsaom_simulate , `0'

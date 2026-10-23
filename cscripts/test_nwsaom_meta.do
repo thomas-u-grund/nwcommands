@@ -72,3 +72,13 @@ assert _rc == 111
 capture noisily nwsaom_meta g1 c1
 assert _rc == 198
 di as text "nwsaom_meta input checks PASS"
+
+* 4. the subcommand form: nwsaom meta == nwsaom_meta
+capture noisily nwsaom meta c1 nosuch
+assert _rc == 111
+nwsaom_meta c1 c2, notable
+matrix M1 = r(meta)
+nwsaom meta c1 c2, notable
+matrix M2 = r(meta)
+assert mreldif(M1, M2) < 1e-12
+di as text "nwsaom meta subcommand PASS"
