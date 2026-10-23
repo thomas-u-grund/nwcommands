@@ -104,6 +104,18 @@ for (i in seq_len(nrow(sp))) {
     cnt <- cnt + 1
   }
 }
+# localtriangle(x): x is a symmetric 0/1 network (a Stata nw network here)
+for (nt in c("U","D")) {
+  M <- get(nt); n <- nrow(M); X <- matrix(rbinom(n*n,1,.85),n,n); X <- X*t(X); diag(X) <- 0
+  nw <- if (nt=="U") nwU else nwD; x <- X
+  s <- summary(nw ~ localtriangle(x))
+  w("matrix X_%s = J(%d,%d,0)", tolower(nt), n, n)
+  for (i in 1:n) for (j in 1:n) if (X[i,j]==1) w("matrix X_%s[%d,%d] = 1", tolower(nt), i, j)
+  w("qui nwclear")
+  w("qui nwset, mat(X_%s) undirected name(xnet)", tolower(nt))
+  w("ns_check localtriangle_%s %s %d \"localtriangle(x=xnet)\" \"%s\"", nt, tolower(nt), as.integer(nt=="D"), format(as.numeric(s), digits=15))
+  cnt <- cnt + 1
+}
 w("di \"test_nwergm_structural: %d statistics match R summary()\"", cnt)
 w("")
 # ---------------- MPLE comparison -------------------

@@ -5086,7 +5086,7 @@ real rowvector stat_ns(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	return(td.levelpairs[., 4]' + ErgmNativeTermStat(G, td))
 }
 real rowvector change_ns(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
-	errprintf("this term is only available with the native plugin (ergm_mcmc)\n")
+	errprintf("this term runs only in the native plugin (ergm_mcmc): the plugin must be installed and the model may have at most 64 coefficients\n")
 	_error(198)
 	return(J(1, rows(td.levelpairs), 0))
 }
