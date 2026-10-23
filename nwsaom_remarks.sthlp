@@ -245,7 +245,12 @@ not a defect in this port. A model with an interaction between two effects unrel
 converges normally.
 
 {marker multiplex}{...}
-{title:Multiplex (two networks)}
+{title:Multiplex (two networks) - deprecated}
+
+{pstd}
+{bf:Deprecated:} {cmd:nwsaom multiplex} still works but prints a note; use {cmd:nwsaom multinet}, which
+covers everything described here and much more, and will be the only command for several networks
+in a later release.
 
 {pstd}
 {cmd:nwsaom multiplex} fits two networks co-evolving over the same two waves, each with its own

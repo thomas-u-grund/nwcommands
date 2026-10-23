@@ -43,6 +43,16 @@ program define nwsaom_multiplex, eclass
 	syntax , NETAWAVE1(string) NETAWAVE2(string) NETBWAVE1(string) NETBWAVE2(string) ///
 		[ THETA01(string) THETA02(string) K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) CRPROD CRPRODB ]
 
+	di as text "note: {bf:nwsaom multiplex} is deprecated; use {bf:nwsaom multinet} (net1() net2() ...), which includes everything multiplex does."
+	// the estimates of multiplex and multinet agree (same model, same engine); forward unless start values are given
+	if "`theta01'" == "" & "`theta02'" == "" {
+		local __c1 ""
+		local __c2 ""
+		if "`crprod'" != "" local __c1 "cross1(crprod)"
+		if "`crprodb'" != "" local __c2 "cross2(crprod)"
+		nwsaom_multinet , net1(`netawave1' `netawave2') net2(`netbwave1' `netbwave2') `__c1' `__c2' k0(`k0') k3(`k3') firstg(`firstg') seed(`seed')
+		exit
+	}
 	if `seed' != -1 set seed `seed'
 
 	mata: __nwsaom_engine = ""
