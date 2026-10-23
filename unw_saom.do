@@ -3214,6 +3214,92 @@ string scalar SaomRCTVTrailer() {
 	for (t=1; t<=cols(__saom_rctvcol); t++) s = s + " " + strofreal(__saom_rctvcol[t]) + " " + invtokens(strofreal(vec(__saom_rctvval[., ((t-1) * nper + 1)..(t * nper)])', "%25.17g"))
 	return(s)
 }
+/* protocol 72: rate effects of the dependent behavior (RSiena's behavior rate effects: covariates, the behavior itself, structural effects of the network,
+   diffusion effects) and the ratecov() columns of the NETWORK rate that are the live behavior. State of one fit, set by the caller:
+   SaomBRReset(); SaomBRAddData(values) -> index of a data column (n x 1: constant, n x nper: changing); SaomBRAdd(type, datacolumn or 0, parameter);
+   SaomBRNetBeh(column of ratecov()). Types as br_value() of native/saom_sim.c. */
+void SaomBRReset() {
+	external real rowvector __saom_brtype, __saom_brcol, __saom_brpar, __saom_brdattv, __saom_rcbehcol
+	external real matrix __saom_brdatv
+	external real scalar __saom_brnper
+	__saom_brnper = 0
+	__saom_brtype = J(1, 0, 0)
+	__saom_brcol = J(1, 0, 0)
+	__saom_brpar = J(1, 0, 0)
+	__saom_brdattv = J(1, 0, 0)
+	__saom_rcbehcol = J(1, 0, 0)
+	__saom_brdatv = J(0, 0, 0)
+}
+void SaomRatesReset() {
+	SaomRateTVReset()
+	SaomBRReset()
+}
+real scalar SaomBRAddData(real matrix vals) {
+	external real rowvector __saom_brdattv
+	external real matrix __saom_brdatv
+	external real scalar __saom_brnper
+	if (cols(vals) > 1) __saom_brnper = cols(vals)
+	__saom_brdattv = __saom_brdattv, (cols(vals) > 1)
+	__saom_brdatv = (cols(__saom_brdatv) > 0 ? (__saom_brdatv, vals) : vals)
+	return(cols(__saom_brdattv))
+}
+/* a constant covariate (centred as RSiena's coCovar) / a changing covariate (pooled-mean centred, one variable per period) as a data column */
+real scalar SaomBRDataConst(string scalar var, real scalar n, real scalar center) {
+	real scalar m
+	return(SaomBRAddData(SaomCovPrep(st_data(1::n, var), center, m)))
+}
+real scalar SaomBRDataTV(string scalar vlist, real scalar n, real scalar nper, real scalar center) {
+	class ErgmTermData scalar td
+	real scalar m
+	td = ErgmTermData()
+	SaomCovTVAttr(td, vlist, n, nper, center, m)
+	return(SaomBRAddData(td.attrpd))
+}
+void SaomBRAdd(real scalar type, real scalar datacol, real scalar par) {
+	external real rowvector __saom_brtype, __saom_brcol, __saom_brpar
+	__saom_brtype = __saom_brtype, type
+	__saom_brcol = __saom_brcol, (datacol > 0 ? datacol - 1 : -1)
+	__saom_brpar = __saom_brpar, par
+}
+void SaomBRNetBeh(real scalar col) {
+	external real rowvector __saom_rcbehcol
+	__saom_rcbehcol = __saom_rcbehcol, col
+}
+real scalar SaomBRCount() {
+	external real rowvector __saom_brtype
+	return(cols(__saom_brtype))
+}
+real scalar SaomRCBehCount() {
+	external real rowvector __saom_rcbehcol
+	return(cols(__saom_rcbehcol))
+}
+string scalar SaomBRTrailer() {
+	external real rowvector __saom_brtype, __saom_brcol, __saom_brpar, __saom_brdattv, __saom_rcbehcol
+	external real matrix __saom_brdatv
+	external real scalar __saom_brnper
+	real scalar k, c, off
+	string scalar s
+	s = " " + strofreal(cols(__saom_rcbehcol))
+	for (k=1; k<=cols(__saom_rcbehcol); k++) s = s + " " + strofreal(__saom_rcbehcol[k])
+	s = s + " " + strofreal(cols(__saom_brtype))
+	for (k=1; k<=cols(__saom_brtype); k++) s = s + " " + strofreal(__saom_brtype[k]) + " " + strofreal(__saom_brcol[k]) + " " + strofreal(__saom_brpar[k], "%25.17g")
+	if (cols(__saom_brtype) > 0) {
+		s = s + " " + strofreal(cols(__saom_brdattv))
+		off = 0
+		for (c=1; c<=cols(__saom_brdattv); c++) {
+			s = s + " " + strofreal(__saom_brdattv[c])
+			if (__saom_brdattv[c]) {
+				s = s + " " + invtokens(strofreal(vec(__saom_brdatv[., (off+1)..(off+__saom_brnper)])', "%25.17g"))
+				off = off + __saom_brnper
+			}
+			else {
+				s = s + " " + invtokens(strofreal(__saom_brdatv[., off+1]', "%25.17g"))
+				off = off + 1
+			}
+		}
+	}
+	return(s)
+}
 /* start-of-period values of the structural rate covariates (types as in sr_value() of native/saom_sim.c): n x S */
 real matrix SaomStructRateAttr(class ErgmGraph scalar G, real rowvector types) {
 	real matrix A
@@ -9324,6 +9410,9 @@ struct SaomCoevCtx {
 	real scalar hastimed			// composition change at fractional times (joinat()/leaveat())
 	pointer(real matrix) rowvector compEv
 	real scalar perok		// the plugin returns per-period statistics and scores (protocol 18+)
+	real scalar nrcN, nrcB		// protocol 72: covariate rate effects of the network / of the behavior
+	real matrix targetRC		// nperiods x (nrcN + nrcB)
+	real matrix rcattr		// n x nrcN
 }
 
 /* behavior statistics on a given (lagged) network, missing actors set to
@@ -9498,7 +9587,7 @@ void SaomCoevSimMany(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 
 	real matrix out, devp, scop
 	real rowvector dev, sco, tsum, idx, ic
-	real scalar k, pd, P, p, b, doper, blk, base, perok
+	real scalar k, pd, P, p, b, doper, blk, base, perok, nrcT, kc, bint
 
 	P = C.nperiods
 	p = C.p
@@ -9512,21 +9601,30 @@ void SaomCoevSimMany(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 	if (C.use_batch) {
 		doper = doper & want_score
 		perok = C.perok
+		nrcT = C.nrcN + C.nrcB
 		out = SaomBatchRun(P, C.pNet, C.pBeh, theta[1..C.pNet], theta[(C.pNet+1)..p],
-			theta[(p+1)..(p+P)], theta[(p+P+1)..C.ptot], J(1, 0, 0), K, want_score, 0, J(1, 0, 0), doper & perok)
+			theta[(p+1)..(p+P)], theta[(p+P+1)..(p+2*P)], J(1, 0, 0), K, want_score, 0, (nrcT > 0 ? theta[(p+2*P+1)..C.ptot] : J(1, 0, 0)), doper & perok, (nrcT > 0))
 		tsum = colsum(C.target)
 		Z[., 1..p] = out[., 1..p] :- tsum
 		S[., 1..p] = out[., (p+1)..(2*p)]
 		idx = (1..p)
+		// with rate covariates the rate scores' compensators are the plugin's time integrals of the total rates
+		bint = 2*p + 6*P + 2*nrcT + (doper & perok ? P * (2*p + 2*nrcT) : 0)
 		for (pd=1; pd<=P; pd++) {
 			b = 2*p + 6*(pd-1)
 			Z[., p+pd] = out[., b+1] :- C.targetRateNet[pd]
 			Z[., p+P+pd] = out[., b+2] :- C.targetRateBeh[pd]
-			S[., p+pd] = out[., b+3] / theta[p+pd] :- C.npresentPd[pd]
-			S[., p+P+pd] = out[., b+4] / theta[p+P+pd] :- C.npresentPd[pd]
+			S[., p+pd] = out[., b+3] / theta[p+pd] :- (nrcT > 0 ? out[., bint + 2*pd - 1] : C.npresentPd[pd])
+			S[., p+P+pd] = out[., b+4] / theta[p+P+pd] :- (nrcT > 0 ? out[., bint + 2*pd] : C.npresentPd[pd])
+		}
+		for (kc=1; kc<=nrcT; kc++) {
+			Z[., p+2*P+kc] = out[., 2*p + 6*P + 2*kc - 1] :- colsum(C.targetRC[., kc])
+			S[., p+2*P+kc] = out[., 2*p + 6*P + 2*kc]
+		}
+		for (pd=1; pd<=P; pd++) {
 			if (doper & perok) {
 				blk = (pd-1) * C.ptot
-				base = 2*p + 6*P + 2*p*(pd-1)
+				base = 2*p + 6*P + 2*nrcT + (2*p + 2*nrcT)*(pd-1)
 				ic = blk :+ idx
 				Zp[., ic] = out[., base :+ idx] :- C.target[pd, .]
 				Sp[., ic] = out[., (base + p) :+ idx]
@@ -9534,6 +9632,10 @@ void SaomCoevSimMany(struct SaomCoevCtx scalar C, class ErgmModel scalar M,
 				Zp[., blk + p + P + pd] = Z[., p+P+pd]
 				Sp[., blk + p + pd] = S[., p+pd]
 				Sp[., blk + p + P + pd] = S[., p+P+pd]
+				for (kc=1; kc<=nrcT; kc++) {
+					Zp[., blk + p + 2*P + kc] = out[., base + 2*p + 2*kc - 1] :- C.targetRC[pd, kc]
+					Sp[., blk + p + 2*P + kc] = out[., base + 2*p + 2*kc]
+				}
 			}
 		}
 		if (doper & !perok) {
@@ -9581,6 +9683,8 @@ struct SaomCoevMultiFit {
 	real matrix V			// effects only, (pNet+pBeh) x (pNet+pBeh)
 	real matrix Vfull		// every parameter incl. rates, internal order
 	real rowvector fixed		// 1 for an effect kept fixed at its starting value (non-positive phase-1 derivative, RSiena's rule)
+	real rowvector rateCovTarget		// the observed statistics of the covariate rate effects (sum over the periods)
+	real rowvector rateCov, rateCovSE, rateCovTratio		// protocol 72: coefficients of the covariate rate effects (network, then behavior), standard errors, convergence t-ratios
 }
 
 /* a two-mode network with a co-evolving behavior: the behavior of the EVENT rows is set to the actors' mean (so the mean, the range and the centred shape statistics are those of the actors) */
@@ -9596,6 +9700,12 @@ real colvector SaomTmBeh(real colvector x) {
 	return(out)
 }
 /* protocol 62: structural (fixed) dyads of a two-mode network with a co-evolving behavior: the mask is the external __nwsaom_coev_struct (1 = fixed), set by nwsaom.ado */
+/* no structural dyads in this fit: also drop the mask of an earlier two-mode fit (it would be applied to the next co-evolution fit) */
+void SaomClearStruct() {
+	external real matrix __nwsaom_last_struct, __nwsaom_coev_struct
+	__nwsaom_last_struct = J(0, 0, 0)
+	__nwsaom_coev_struct = J(0, 0, 0)
+}
 void SaomCfgStruct(struct SaomNativeConfig scalar cfg) {
 	external real matrix __nwsaom_coev_struct
 	if (findexternal("__nwsaom_coev_struct") == NULL) return
@@ -9610,9 +9720,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real rowvector theta0Net, real rowvector theta0Beh,
 	real scalar K0, real scalar K3, real scalar firstg, | real matrix presentMat,
 	pointer(real matrix) rowvector missMaskNetPd, pointer(real colvector) rowvector missMaskBehPd,
-	real rowvector fntype, real scalar symtype) {
+	real rowvector fntype, real scalar symtype, real matrix ratecovattr, real rowvector ratecoef0) {
 	string scalar why
-	real scalar m1, rho, d
+	real scalar m1, rho, d, nrcT, kc
 
 	struct SaomCoevMultiFit scalar fit
 	struct SaomCoevCtx scalar C
@@ -9643,7 +9753,16 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	C.pNet = M.nparam()
 	C.pBeh = Mbeh.nparam()
 	p = C.pNet + C.pBeh
-	ptot = p + 2*P
+	// protocol 72: covariate rate effects of the network (ratecov()) and of the behavior
+	C.nrcN = 0
+	C.nrcB = SaomBRCount()
+	C.rcattr = J(0, 0, 0)
+	if (args() >= 17) if (rows(ratecovattr) > 0) {
+		C.nrcN = cols(ratecovattr)
+		C.rcattr = ratecovattr
+	}
+	nrcT = C.nrcN + C.nrcB
+	ptot = p + 2*P + nrcT
 	C.p = p
 	C.ptot = ptot
 	C.behminval = behminval
@@ -9726,6 +9845,16 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		errprintf("nwsaom: co-evolution of a non-directed (symmetric) relation needs the native (C) plugin with the threaded batch path (protocol 11 or later), which is not available for this model/platform.\n")
 		exit(198)
 	}
+	if (nrcT > 0 | SaomRCBehCount() > 0) {
+		if (!C.use_batch) {
+			errprintf("nwsaom: rate effects in a model with a behavior need the native plugin, protocol 72 or later; there is no Mata implementation.\n")
+			exit(198)
+		}
+		if (SaomNativePluginVersion() < 72) {
+			errprintf("nwsaom: rate effects in a model with a behavior need the native plugin, protocol 72 or later; there is no Mata implementation.\n")
+			exit(198)
+		}
+	}
 	C.missDyadsPd = J(0, 3, 0)
 	if (C.use_native & C.hasmiss) {
 		for (pd=1; pd<=P; pd++) {
@@ -9773,12 +9902,24 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	}
 
 	theta0 = (theta0Net, theta0Beh, ratesNet0, ratesBeh0)
+	if (nrcT > 0) theta0 = (theta0, (args() >= 18 ? (cols(ratecoef0) == nrcT ? ratecoef0 : J(1, nrcT, ratecoef0[1])) : J(1, nrcT, 0)))
 
 	if (C.use_batch) {
 		if (C.hasmiss & rows(C.missDyadsPd) == 0) C.missDyadsPd = J(0, 3, 0)
 		SaomBatchSetup(Gwaves, P, C.cfg, C.cfgBeh.termcodes, Behwaves, behminval, behmaxval,
 			C.simMean, C.overallMean, C.hasmiss, C.missDyadsPd, C.missBehPd, C.haspresent, C.presentPd,
-			C.cfgBeh.fntype, C.symtype, J(0, 0, 0), C.compEv)
+			C.cfgBeh.fntype, C.symtype, (C.nrcN > 0 ? C.rcattr : J(0, 0, 0)), C.compEv)
+	}
+	// the observed statistics of the covariate rate effects, from the start values of the plugin (one implementation of every effect)
+	C.targetRC = J(P, max((nrcT, 1)), 0)
+	if (nrcT > 0) {
+		real matrix rcs, rcA
+		rcs = SaomRCStart(P, n, C.nrcN, C.nrcB)
+		for (pd=1; pd<=P; pd++) {
+			rcA = rcs[., ((pd-1) * nrcT + 1)..(pd * nrcT)]
+			if (C.nrcN > 0) C.targetRC[pd, 1..C.nrcN] = SaomCovariateDifferingSum(*Gwaves[pd], *Gwaves[pd+1], rcA[., 1..C.nrcN], (C.hasmiss ? *missMaskNetPd[pd] : J(0, 0, 0)))
+			if (C.nrcB > 0) C.targetRC[pd, (C.nrcN+1)..nrcT] = (abs(*Behwaves[pd+1] - *Behwaves[pd]) :* (1 :- C.missBehPd[., pd]))' * rcA[., (C.nrcN+1)..nrcT]
+		}
 	}
 
 	// A behavior can get stuck (see phase 2 below). Then phases 1 and 2
@@ -9842,7 +9983,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	step1 = (Dinv * mean(Zdev)')' * (0.5 * firstg) :* (1 :- coevfixed)
 	if (hasmissing(step1)) step1 = J(1, ptot, 0)
 	if (max(abs(step1)) > 1) step1 = step1 / max(abs(step1))
-	for (k=p+1; k<=ptot; k++) if (step1[k] >= theta0[k]) step1[k] = 0.5 * theta0[k]
+	for (k=p+1; k<=p+2*P; k++) if (step1[k] >= theta0[k]) step1[k] = 0.5 * theta0[k]
 	theta0 = theta0 - step1
 
 	// --- Phase 2: Robbins-Monro, same schedule as before
@@ -9887,7 +10028,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			SaomCoevSimMany(C, M, Mbeh, theta, 1, 0, Z1, S1)
 			dev = Z1[1,.]
 			if (attempt == 1 & behtarget > 0 & subphase == 1) {
-				behwin = behwin + Z1[1,(p+P+1)..ptot]
+				behwin = behwin + Z1[1,(p+P+1)..(p+2*P)]
 				if (mod(nit, 25) == 0) {
 					if (nit >= 50 & all(behwin/25 :< -0.25 * C.targetRateBeh)) nshort = nshort + 1
 					else nshort = 0
@@ -9915,7 +10056,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 			thprev = theta
 			theta = (thav / thavn) - fchange
 			// rates stay positive: never more than halve one in a step
-			for (k=p+1; k<=ptot; k++) if (theta[k] < 0.5*thprev[k]) theta[k] = 0.5*thprev[k]
+			for (k=p+1; k<=p+2*P; k++) if (theta[k] < 0.5*thprev[k]) theta[k] = 0.5*thprev[k]
 			thav = thav + theta
 			thavn = thavn + 1
 			SaomCheckThetaBound(select(theta[1..p], !coevfixed[1..p]), 50)
@@ -9943,7 +10084,9 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.thetaNet = theta[1..C.pNet]
 	fit.thetaBeh = theta[(C.pNet+1)..p]
 	fit.ratesNet = theta[(p+1)..(p+P)]
-	fit.ratesBeh = theta[(p+P+1)..ptot]
+	fit.ratesBeh = theta[(p+P+1)..(p+2*P)]
+	fit.rateCov = (nrcT > 0 ? theta[(p+2*P+1)..ptot] : J(1, 0, 0))
+	fit.rateCovTarget = (nrcT > 0 ? colsum(C.targetRC) : J(1, 0, 0))
 
 	// --- Phase 3: convergence check and sandwich covariance
 	SaomCoevSimMany(C, M, Mbeh, theta, K3, 1, Zphase3, Zsco3, Zp3, Sp3)
@@ -9959,7 +10102,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.tratioNet = fit.tconv[1..C.pNet]
 	fit.tratioBeh = fit.tconv[(C.pNet+1)..p]
 	fit.rateNetTratios = fit.tconv[(p+1)..(p+P)]
-	fit.rateBehTratios = fit.tconv[(p+P+1)..ptot]
+	fit.rateBehTratios = fit.tconv[(p+P+1)..(p+2*P)]
+	fit.rateCovTratio = (nrcT > 0 ? fit.tconv[(p+2*P+1)..ptot] : J(1, 0, 0))
 
 	Dhat3 = SaomJacobianPerPeriod(Zp3, Sp3, cols(Zp3) / ptot, ptot)
 	SaomStoreScoreInputs(Dhat3, S3, m3, userfixc, theta, Zp3, Sp3)
@@ -9988,7 +10132,8 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	SaomCheckCovarianceFinite(fit.Vfull)
 	fit.V = fit.Vfull[1..p, 1..p]
 	fit.ratesNetSE = sqrt(diagonal(fit.Vfull)[(p+1)..(p+P)])'
-	fit.ratesBehSE = sqrt(diagonal(fit.Vfull)[(p+P+1)..ptot])'
+	fit.ratesBehSE = sqrt(diagonal(fit.Vfull)[(p+P+1)..(p+2*P)])'
+	fit.rateCovSE = (nrcT > 0 ? sqrt(diagonal(fit.Vfull)[(p+2*P+1)..ptot])' : J(1, 0, 0))
 
 	// pairwise (B) symmetric types: report each period's network rate on RSiena's scale, as the
 	// network-only symmetric fits do (SaomSymRateToRSiena()); the behavior rates are unchanged
@@ -12291,7 +12436,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 	argstr = argstr + SaomBehCovTrailer(n)
 	argstr = argstr + SaomBehDyTrailer(n)
-	argstr = argstr + SaomSRTrailer() + SaomBehVarTrailer() + SaomRCTVTrailer()
+	argstr = argstr + SaomSRTrailer() + SaomBehVarTrailer() + SaomRCTVTrailer() + SaomBRTrailer()
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
@@ -12310,9 +12455,9 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	real rowvector thetaNet, real rowvector thetaBeh, real rowvector ratesNet,
 	real rowvector ratesBeh, real rowvector targets, real scalar K,
-	real scalar want_score, real scalar condmode, | real rowvector ratecoef, real scalar perper) {
+	real scalar want_score, real scalar condmode, | real rowvector ratecoef, real scalar perper, real scalar wantint) {
 
-	real scalar W, i, seed, junk, nrc, doper
+	real scalar W, i, seed, junk, nrc, doper, dowint
 	string rowvector names
 	string scalar origframe, argstr
 	real matrix out
@@ -12321,7 +12466,8 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	// score in 2 more columns
 	nrc = (args() >= 12 ? cols(ratecoef) : 0)
 	doper = (args() >= 13 ? (perper != 0 & condmode != 1) : 0)
-	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P + 2*nrc + doper * P * (2*(pNet + pBeh) + 2*nrc)
+	dowint = (args() >= 14 ? (wantint != 0 & condmode != 1) : 0)
+	W = (condmode == 1) ? P : 2*(pNet + pBeh) + (condmode == 2 ? 7 : 6)*P + 2*nrc + doper * P * (2*(pNet + pBeh) + 2*nrc) + dowint * 2 * P
 	names = J(1, W, "")
 	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
 	origframe = st_framecurrent()
@@ -12340,10 +12486,31 @@ real matrix SaomBatchRun(real scalar P, real scalar pNet, real scalar pBeh,
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(ratesBeh) ? ratesBeh[i] : 0), "%25.17g")
 	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal((cols(targets) ? targets[i] : 0), "%25.17g")
 	for (i=1; i<=nrc; i++) argstr = argstr + " " + strofreal(ratecoef[i], "%25.17g")
-	if (doper) argstr = argstr + " 1"
+	if (doper | dowint) argstr = argstr + " " + strofreal(doper)
+	if (dowint) argstr = argstr + " 1"
 
 	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
 	out = st_data((1::K), names)
+	st_framecurrent(origframe)
+	return(out)
+}
+
+/* protocol 72: the values of the rate covariates at the START of every period (RCSTART of the plugin): n x (P * (nrc + nbrc)) */
+real matrix SaomRCStart(real scalar P, real scalar n, real scalar nrc, real scalar nbrc) {
+	real scalar W, i, junk
+	string rowvector names
+	string scalar origframe
+	real matrix out
+	W = P * (nrc + nbrc)
+	names = J(1, W, "")
+	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
+	origframe = st_framecurrent()
+	if (!st_frameexists("__saom_batch_out")) stata("frame create __saom_batch_out")
+	st_framecurrent("__saom_batch_out")
+	if (st_nvar() < W) for (i=st_nvar()+1; i<=W; i++) junk = st_addvar("double", names[i])
+	if (st_nobs() < n) st_addobs(n - st_nobs())
+	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + "RCSTART|" + char(34))
+	out = st_data((1::n), names)
 	st_framecurrent(origframe)
 	return(out)
 }

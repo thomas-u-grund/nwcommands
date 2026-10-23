@@ -137,4 +137,116 @@ gen double t2 = .
 mata: md = st_sdata(., "_nwmode"); ia = selectindex(md :== "2"); st_store(ia, ("t1", "t2"), TVm)
 nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity tvcov(t1 t2) ratecov(t) k0(50) k3(1000) seed(1)
 assert abs(e(ratecoef) - 0.163) < 0.09 & abs(el(e(b),1,1) + 1.78) < 0.15
+
+* ---- rate effects in a model with a behavior (co-evolution, waves()): RateX of the network with the behavior / a covariate / a changing covariate,
+* RateX of the behavior (constant, changing covariate, the behavior), structural and diffusion rate effects of the behavior. siena07: dev/saom_rsiena_rates_coev.R
+nwclear
+clear
+forvalues w = 1/3 {
+	import delimited "dev/saom_rsiena_netendow_w`w'.csv", clear varnames(1)
+	mkmat v1-v50, matrix(D`w')
+}
+import delimited "dev/saom_rsiena_multibeh_data.csv", clear varnames(1)
+forvalues w = 1/3 {
+	nwset, mat(D`w') directed name(co`w') nooutput
+}
+* option | siena07's observed statistic of the rate effect | siena07's coefficient (0 = not checked) | tolerance
+local n 0
+foreach row in ///
+	"ratecov(a)|712|0.317|0.3" "ratecov(s1)|35.02|0.68|0.4" "tvcov(s1 s2 s3) ratecov(s)|20.55|0.40|0.4" ///
+	"behratecov(s1)|-1.8|0|0" "tvcov(s1 s2 s3) behratecov(s)|-2|0|0" "behratecov(a)|167|0|0" ///
+	"behrate(outrate)|139|0|0" "behrate(inrate)|140|0|0" "behrate(reciprate)|85|0|0" "behrate(avexposure)|184.25|0.40|0.7" ///
+	"behrate(totexposure)|453|0.08|0.1" "behrate(susceptavin)|451.417|0.048|0.08" "behrate(infectin)|1658|0.025|0.03" "behrate(infectout)|1306|0.037|0.04" ///
+	"behrate(avtinexposuredist2)|400.75|0|0" "behrate(totinexposuredist2)|1058|0|0" "behrate(totainexposuredist2)|398.402|0|0" "behrate(anyinexposuredist2)|128|0|0" ///
+	"behrate(susceptavcovar(s1))|21.318|0|0" "behrate(infectcovar(s1))|38.86|0|0" "tvcov(s1 s2 s3) behrate(susceptavcovar(s))|18.254|0|0" {
+	tokenize `"`row'"', parse("|")
+	local opt `"`1'"'
+	capture nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) `opt' k0(30) k3(300) seed(2)
+	if _rc {
+		di as err "coev rate effect `opt': error " _rc
+		exit 9
+	}
+	assert "`e(engine)'" == "native"
+	local k = colsof(e(rc_target))
+	assert abs(el(e(rc_target), 1, `k') - `3') < 0.01
+	if `5' != 0 {
+		matrix C = e(behratecoefs)
+		if strpos(`"`opt'"', "ratecov(") & !strpos(`"`opt'"', "behratecov(") matrix C = e(ratecoefs)
+		assert abs(C[1,1] - `5') < `7'
+	}
+}
+* the covariate rate effect of the behavior and of the network together, several effects of the behavior
+nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) ratecov(s1) behratecov(s1) behrate(totexposure outrate) k0(20) k3(60) seed(2)
+assert colsof(e(ratecoefs)) == 1 & colsof(e(behratecoefs)) == 3 & colsof(e(rc_target)) == 4
+* a threshold of a diffusion effect (RSiena's internal effect parameter)
+nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) behrate(totexposure=3) k0(20) k3(60) seed(2)
+assert colsof(e(behratecoefs)) == 1
+* refusals
+foreach bad in "behrate(infectdeg)" "behrate(nosuch)" "behrate(susceptavcovar)" "behrate(outrate(s1))" "behratecov(nosuchvar)" {
+	capture nwsaom, waves(co1 co2 co3) outdegree behavior(a1 a2 a3 : linear) `bad' k3(30)
+	assert _rc == 198
+}
+capture nwsaom, waves(co1 co2 co3) outdegree behratecov(s1) k3(30)
+assert _rc == 198
+capture nwsaom, wave1(co1) wave2(co2) outdegree behavior(a1 a2 : linear) behratecov(s1) k3(30)
+assert _rc == 198
+* estat is not available after covariate rate effects with a behavior
+nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear) behrate(totexposure) k0(10) k3(30) seed(2)
+capture estat gof
+assert _rc == 198
+
+* non-directed network with a behavior (siena07 modelType 2: dev/saom_rsiena_rates_coev_sym.R)
+nwclear
+clear
+forvalues w = 1/3 {
+	import delimited "dev/saom_rsiena_symmulti_w`w'.csv", clear varnames(1)
+	mkmat v1-v50, matrix(S`w')
+}
+import delimited "dev/saom_rsiena_multibeh_data.csv", clear varnames(1)
+forvalues w = 1/3 {
+	nwset, mat(S`w') directed name(sy`w') nooutput
+}
+foreach row in ///
+	"ratecov(a)|854|0.43|0.4" "behratecov(s1)|-1.8|0|0" "behrate(outrate)|194|0|0" "behrate(avexposure)|186.629|0.42|0.7" "behrate(totexposure)|637|0.06|0.08" ///
+	"behrate(infectdeg)|2814|0.015|0.012" "behrate(susceptavcovar(s1))|15.081|0|0" "behrate(infectcovar(s1))|76.94|0|0" {
+	tokenize `"`row'"', parse("|")
+	local opt `"`1'"'
+	capture nwsaom, waves(sy1 sy2 sy3) symmetric outdegree behavior(a1 a2 a3 : linear quadratic avalt) `opt' k0(30) k3(300) seed(2)
+	if _rc {
+		di as err "non-directed coev rate effect `opt': error " _rc
+		exit 9
+	}
+	local k = colsof(e(rc_target))
+	assert abs(el(e(rc_target), 1, `k') - `3') < 0.01
+	if `5' != 0 {
+		matrix C = e(behratecoefs)
+		if strpos(`"`opt'"', "ratecov(") & !strpos(`"`opt'"', "behratecov(") matrix C = e(ratecoefs)
+		assert abs(C[1,1] - `5') < `7'
+	}
+}
+capture nwsaom, waves(sy1 sy2 sy3) symmetric outdegree behavior(a1 a2 a3 : linear) behrate(inrate) k3(30)
+assert _rc == 198
+
+* two-mode network with a behavior of the actors: RateX of the network with the behavior (siena07: dev/saom_rsiena_rates_tmbeh.R, target 582)
+nwclear
+clear
+forvalues w = 1/3 {
+	import delimited "dev/saom_rates_tm_w`w'.csv", clear varnames(1)
+	mkmat v1-v20, matrix(T`w')
+}
+import delimited "dev/saom_rates_tm_beh.csv", clear varnames(1)
+mkmat z1 z2 z3, matrix(ZB)
+mata: ZBm = st_matrix("ZB")
+clear
+forvalues w = 1/3 {
+	nwset, mat(T`w') bipartite name(tm`w') nooutput
+}
+gen double z1 = 0
+gen double z2 = 0
+gen double z3 = 0
+mata: md = st_sdata(., "_nwmode"); ia = selectindex(md :== "2"); st_store(ia, ("z1", "z2", "z3"), ZBm)
+nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity behavior(z1 z2 z3 : linear quadratic) ratecov(z) k0(30) k3(300) seed(1)
+assert abs(el(e(rc_target), 1, 1) - 582) < 0.01 & abs(e(ratecoef)) < 0.3
+capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(z1 z2 z3 : linear) behrate(outrate) k3(30)
+assert _rc == 198
 di as text "rate effects PASS"

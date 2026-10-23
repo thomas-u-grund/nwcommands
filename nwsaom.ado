@@ -108,11 +108,12 @@ program nwsaom, eclass
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) TVBEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) BEHNET2(string) OWNX(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
-		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
+		RATECOV(string) RATECOVCOEF(string) BEHRATECOV(string) BEHRATE(string) BEHRATECOEF(string) SYMMETRIC SYMTYPE(string) ///
 		RATE0(numlist >0) THETA0(string) FIX(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
 		ENDOW(string) CREATION(string) ACTORMODE(integer 0) TVCOV(string) DETail ]
 	set more off
+	mata: SaomRatesReset()
 
 	// --- endow(effects) creation(effects): RSiena's effect "types" (includeEffects(type = "endow" /
 	// "creation")) as two role lists instead of a pair of options per effect. An effect named in
@@ -823,36 +824,9 @@ program nwsaom, eclass
 	local __nwsaom_nratecov 0
 	local __nwsaom_rclist ""
 	if `__nwsaom_hasratecov' {
-		// protocol 71: a name declared in tvcov() is a changing covariate; the other names are variables
-		mata: SaomRateTVReset()
-		local __nwsaom_rcstems ""
-		if `"`tvcov'"' != "" & "`ratecov'" != "" {
-			local __rest `"`tvcov'"'
-			while `"`__rest'"' != "" {
-				local __bar = strpos(`"`__rest'"', "|")
-				if `__bar' > 0 {
-					local __grp = strtrim(substr(`"`__rest'"', 1, `__bar' - 1))
-					local __rest = strtrim(substr(`"`__rest'"', `__bar' + 1, .))
-				}
-				else {
-					local __grp = strtrim(`"`__rest'"')
-					local __rest ""
-				}
-				local __fv : word 1 of `__grp'
-				local __stem = ustrregexra("`__fv'", "[0-9]+$", "")
-				if "`__stem'" == "" local __stem "tv`=wordcount("`__nwsaom_rcstems'")+1'"
-				local __nwsaom_rcstems "`__nwsaom_rcstems' `__stem'"
-			}
-		}
-		local __rc2 ""
-		foreach __t of local ratecov {
-			if `: list __t in __nwsaom_rcstems' local __rc2 "`__rc2' `__t'"
-			else {
-				unab __u : `__t'
-				local __rc2 "`__rc2' `__u'"
-			}
-		}
-		local ratecov = strtrim("`__rc2'")
+		_nwsaom_rates parse, coev(`__nwsaom_coev') ratecov(`ratecov') tvcov(`"`tvcov'"') behavior(`behavior')
+		local ratecov "`r(ratecov)'"
+		local __nwsaom_behstem "`r(behstem)'"
 		local __nwsaom_rclist "`ratecov' `__nwsaom_srnames'"
 		local __nwsaom_rclist = trim("`__nwsaom_rclist'")
 		local __nwsaom_nratecov : word count `__nwsaom_rclist'
@@ -880,12 +854,10 @@ program nwsaom, eclass
 	// immediately above: this reuses SaomEstimateRM()'s own chained-
 	// optional-argument machinery, not yet extended to co-evolution/
 	// multi-wave/composition-change/missing-data.
+	local __nwsaom_hasbr = ("`behratecov'" != "" | "`behrate'" != "")
+	_nwsaom_rates check, hasratecov(`__nwsaom_hasratecov') hasbr(`__nwsaom_hasbr') coev(`__nwsaom_coev') multi(`__nwsaom_multi') mb(`__nwsaom_mb') haspresent(`__nwsaom_haspresent') tm(`__nwsaom_tm') hastimed(`__nwsaom_hastimed') hasmiss(`__nwsaom_hasmiss') nsr(`__nwsaom_nsr')
 	if `__nwsaom_hasratecov' {
-		if `__nwsaom_coev' {
-			di "{err}{bf:ratecov()} is not yet supported for co-evolution models."
-			error 198
-		}
-		if `__nwsaom_haspresent' & "`symmetric'" != "" {
+		if `__nwsaom_haspresent' & "`symmetric'" != "" & !`__nwsaom_coev' {
 			di "{err}{bf:ratecov()} with {bf:present()}/{bf:joinat()}/{bf:leaveat()} is not yet supported for a non-directed relation ({bf:symmetric}): siena07 itself fails on that combination, so there is no reference to check against."
 			error 198
 		}
@@ -994,8 +966,8 @@ program nwsaom, eclass
 	// for a different NWdef storage mode, only a different ministep
 	// mechanism on data that happens to already be tie-symmetric.
 	if "`symmetric'" != "" {
-		if `__nwsaom_hasnetgate' | (`__nwsaom_coev' & `__nwsaom_hasratecov') {
-			di "{err}{bf:symmetric} cannot be combined with {bf:endow()}/{bf:creation()} of network effects, nor ({bf:behavior()}) with {bf:ratecov()} - disclosed follow-ons. {bf:waves()}, {bf:present()}, {bf:missnet()}, {bf:ratecov()} and {bf:behavior()} are otherwise combinable with {bf:symmetric}."
+		if `__nwsaom_hasnetgate' {
+			di "{err}{bf:symmetric} cannot be combined with {bf:endow()}/{bf:creation()} of network effects. {bf:waves()}, {bf:present()}, {bf:missnet()}, {bf:ratecov()} and {bf:behavior()} are otherwise combinable with {bf:symmetric}."
 			error 198
 		}
 		if "`reciprocity'" != "" {
@@ -3143,23 +3115,13 @@ program nwsaom, eclass
 	mata: __nwsaom_last_fntype = SaomFntypeFromNames(__nwsaom_last_M)
 	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
 	if `__nwsaom_hasstructural' mata: __nwsaom_coev_struct = __nwsaom_structmat
-	// changing covariates among the ratecov() variables (protocol 71): the variables behind the columns, the per-period values to Mata
-	local __nwsaom_rcvars "`ratecov'"
-	if `__nwsaom_hasratecov' & "`ratecov'" != "" {
-		local __nwsaom_rcvars ""
-		local __ci 0
-		foreach __t of local ratecov {
-			local ++__ci
-			if `: list __t in __nwsaom_tvnames' {
-				local __v1 : word 1 of `__nwsaom_tvv_`__t''
-				local __nwsaom_rcvars "`__nwsaom_rcvars' `__v1'"
-				mata: SaomRateTVAdd(`__ci', "`__nwsaom_tvv_`__t''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center'`=cond(`__nwsaom_tm', ", __nwsaom_tm_actidx", "")')
-			}
-			else local __nwsaom_rcvars "`__nwsaom_rcvars' `__t'"
-		}
-		local __nwsaom_rcvars = strtrim("`__nwsaom_rcvars'")
-	}
-	else mata: __nwsaom_last_struct = J(0, 0, 0)
+	else mata: SaomClearStruct()
+	// changing covariates and the behavior among the ratecov() variables, the rate effects of the behavior (behratecov(), behrate())
+	_nwsaom_rates prep, nodes(`nodes') nwaves(`__nwsaom_nwaves') center(`__nwsaom_center') tm(`__nwsaom_tm') coev(`__nwsaom_coev') hasratecov(`__nwsaom_hasratecov') hasbr(`__nwsaom_hasbr') nratecov(`__nwsaom_nratecov') ratecov(`ratecov') ratecovcoef(`ratecovcoef') behavior(`behavior') behratecov(`behratecov') behrate(`behrate') behratecoef(`behratecoef') tvnames(`__nwsaom_tvnames') behstem(`__nwsaom_behstem') symmetric(`=("`symmetric'" != "")')
+	local __nwsaom_rcvars "`r(rcvars)'"
+	local __nwsaom_brnames "`r(brnames)'"
+	local __nwsaom_rc0 "`r(rc0)'"
+	local __nwsaom_rctn "`r(tn)'"
 	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
 	else mata: __nwsaom_last_present = J(0, 1, 0)
 	mata: __nwsaom_engine = ""
@@ -3181,7 +3143,10 @@ program nwsaom, eclass
 		capture mata: mata drop __nwsaom_fit_coevmulti
 		local __nwsaom_cn_sym = 0
 		if "`symmetric'" != "" local __nwsaom_cn_sym = `__nwsaom_symtypeval'
-		if `__nwsaom_hasnetgate' | "`symmetric'" != "" {
+		if `__nwsaom_hasratecov' | `__nwsaom_hasbr' {
+			_nwsaom_rates fit, nodes(`nodes') nwaves(`__nwsaom_nwaves') k0(`k0') k3(`k3') firstg(`firstg') center(`__nwsaom_center') cnsym(`__nwsaom_cn_sym') haspresent(`__nwsaom_haspresent') hasratecov(`__nwsaom_hasratecov') tm(`__nwsaom_tm') rc0(`__nwsaom_rc0') rcvars(`__nwsaom_rcvars')
+		}
+		else if `__nwsaom_hasnetgate' | "`symmetric'" != "" {
 			// network endowment/creation + behavior: presentMat, the mask pointers and fntype are all
 			// supplied (real ones when present()/missnet()/missbeh() are active, placeholders otherwise)
 			if !`__nwsaom_haspresent' & !`__nwsaom_hasmiss' {
@@ -3553,7 +3518,7 @@ program nwsaom, eclass
 	ereturn local rsiena_labels `"`__nwsaom_rslab'"'
 	if `__nwsaom_hasratecov' {
 		foreach __v of local ratecov {
-			if `: list __v in __nwsaom_tvnames' continue
+			if `: list __v in __nwsaom_tvnames' | ("`__v'" == "`__nwsaom_behstem'" & `__nwsaom_coev') continue
 			qui summarize `__v' in 1/`nodes', meanonly
 			if !strpos(" `__nwsaom_cmeans' ", " `__v' ") local __nwsaom_cmeans "`__nwsaom_cmeans' `__v' `=r(mean)'"
 		}
@@ -3584,6 +3549,7 @@ program nwsaom, eclass
 	// fails with a generic "estat gof not valid" before ever reaching
 	// nwsaom_estat.ado at all.
 	ereturn local estat_cmd "nwsaom_estat"
+	mata: SaomRatesReset()
 	ereturn local title "Stochastic actor-oriented model (Method of Moments)"
 	ereturn local waves "`__nwsaom_wavelist'"
 	ereturn scalar N = `nodes'
@@ -3708,13 +3674,13 @@ program nwsaom, eclass
 		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
 			local __nwsaom_tconvnames "`__nwsaom_tconvnames' rate_beh_period`__p'"
 		}
+		local __nwsaom_tconvnames "`__nwsaom_tconvnames' `__nwsaom_rctn'"
 		matrix colnames `tconv' = `__nwsaom_tconvnames'
 		matrix rownames `tconv' = tconv
 		matrix `ratetab' = `ratesnet' \ `ratesnetse' \ `ratesbeh' \ `ratesbehse'
 		matrix rownames `ratetab' = network_rate se behavior_rate se
 		ereturn local waves "`__nwsaom_wavelist'"
 		ereturn local behavior "`behavior'"
-
 		di as text "{hline}"
 		di as text "SAOM co-evolution (Method of Moments), waves: " as result "`__nwsaom_wavelist'"
 		di as text "Actors: " as result `nodes' _col(40) as text "Periods: " as result `=`__nwsaom_nwaves'-1'
@@ -3732,6 +3698,7 @@ program nwsaom, eclass
 		ereturn matrix rates_beh_se = `ratesbehse'
 		ereturn matrix tconv = `tconv'
 		ereturn scalar tconv_max = `__nwsaom_tconvmax'
+		if `__nwsaom_hasratecov' | `__nwsaom_hasbr' _nwsaom_rates post, hasratecov(`__nwsaom_hasratecov') hasbr(`__nwsaom_hasbr') ratecov(`ratecov') brnames(`__nwsaom_brnames') behratecov(`behratecov') behrate(`behrate')
 	}
 	else if `__nwsaom_coev' {
 		// harmonisation unit 26: TWO separate rate parameters, one per
