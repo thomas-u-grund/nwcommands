@@ -12338,6 +12338,10 @@ void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars
 	string rowvector fam
 	fam = _sb_bsfamilies()
 	for (t=1; t<=Mbeh.nterms; t++) {
+		if (_sb_buparse(substr(Mbeh.coefnames[t], 5, .))[1] >= 0) {
+			Mbeh.coefnames[t] = "beh_" + _sb_buname(substr(Mbeh.coefnames[t], 5, .))
+			continue
+		}
 		if (_sb_shparse(substr(Mbeh.coefnames[t], 5, .))[1] >= 0) {
 			Mbeh.coefnames[t] = "beh_" + _sb_shname(substr(Mbeh.coefnames[t], 5, .))
 			continue
@@ -13088,6 +13092,25 @@ void SaomBehDyStore(real scalar n) {
 }
 string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
 /* protocol 51: behavior shape effects. Tokens "sh<f>_<par>" (f 0..7) -> bn_<2000 + 100 f + par>_0 */
+/* protocol 55: more behavior-network effects. Tokens "bu<f>_<par>" (f 0..13) -> bn_<2800 + 100 f + par>_0 */
+string rowvector _sb_bufamilies() return(("indegAvGroup", "indegTotGroup", "avAlt_cc", "totAlt_cc", "avInAltDist2_nc", "totInAltDist2_nc", "avTInAltDist2_nc", "totAInAltDist2_nc", "avInSimDist2", "totInSimDist2", "totGwdspFFAlt", "totGwdspFBAlt", "totGwdspFFAlt_nc", "totGwdspFBAlt_nc"))
+real rowvector _sb_buparse(string scalar nm) {
+	real scalar u, f, d
+	if (substr(nm, 1, 2) != "bu") return((-1, 0))
+	u = strpos(nm, "_")
+	if (u == 0) return((-1, 0))
+	f = strtoreal(substr(nm, 3, u - 3))
+	d = strtoreal(substr(nm, u + 1, .))
+	if (f >= 0 & f < 14 & d >= 0 & d < 100 & f == floor(f) & d == floor(d)) return((f, d))
+	return((-1, 0))
+}
+string scalar _sb_buname(string scalar nm) {
+	real rowvector q
+	q = _sb_buparse(nm)
+	if (q[1] < 0) return(nm)
+	if (q[1] == 0 | q[1] == 1 | q[1] >= 10) return(_sb_bufamilies()[q[1] + 1] + "(" + strofreal(q[2]) + ")")
+	return(_sb_bufamilies()[q[1] + 1])
+}
 string rowvector _sb_shfamilies() return(("quad_cc", "quad_nc", "constant", "threshold", "simAllNear", "simAllFar", "avGroup", "totGroup"))
 real rowvector _sb_shparse(string scalar nm) {
 	real scalar u, f, d
@@ -13123,6 +13146,7 @@ string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
 	external string rowvector __saom_behdynames
 	real scalar j
+	if (_sb_buparse(base)[1] >= 0) return(_sb_buname(base))
 	if (_sb_shparse(base)[1] >= 0) return(_sb_shname(base))
 	if (_sb_brparse(base)[1] >= 0) {
 		return(_sb_brfamilies()[mod(_sb_brparse(base)[1], 10) + 1] + (_sb_brparse(base)[1] < 10 & anyof((0, 2, 8), _sb_brparse(base)[1]) ? " (parameter 1)" : "") + (cols(__saom_behdynames) >= _sb_brparse(base)[2] ? " " + __saom_behdynames[_sb_brparse(base)[2]] : ""))
@@ -13288,6 +13312,7 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
 		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
 		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
+		else if (_sb_buparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(2800 + 100 * _sb_buparse(nm)[1] + _sb_buparse(nm)[2]) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_shparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(2000 + 100 * _sb_shparse(nm)[1] + _sb_shparse(nm)[2]) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_brparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(840 + 80 * (_sb_brparse(nm)[1] >= 10) + 8 * mod(_sb_brparse(nm)[1], 10) + _sb_brparse(nm)[2] - 1) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_bnqcode(nm) > 0) Mbeh.addterm("bn_" + strofreal(_sb_bnqcode(nm)) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
