@@ -12,7 +12,7 @@
 {pstd}
 The following postestimation command is available after {helpb nwsaom}:
 
-{p2colset 9 22 23 2}{...}
+{p2colset 9 29 30 2}{...}
 {p2col: {cmd:estat gof}}RSiena-style goodness-of-fit test and violin plot{p_end}
 {p2col: {cmd:estat mems}}Micro Effects on Macro Structure (Duxbury) mediation-style sensitivity analysis{p_end}
 {p2col: {cmd:estat simulate}}Simulate the fitted model (or the model at chosen coefficients) forward from the observed waves{p_end}
@@ -37,11 +37,15 @@ Not applicable - {cmd:estat gof} operates on the fitted model and the wave data 
 {synoptline}
 {synopt:{opt nsim(int)}}Number of fresh post-fit simulated replicates forming the reference distribution; default 50, minimum 5{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
-{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:triad}, {bf:behavior}; default the three network distribution statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself requires a co-evolution fit; {bf:triad} is never added by default, request it explicitly){p_end}
+{synopt:{opt stats(namelist)}}Auxiliary statistics to test, any of {bf:outdegree}, {bf:indegree}, {bf:geodesic}, {bf:triad}, {bf:behavior}; default
+the three network distribution statistics, plus {bf:behavior} automatically whenever the fit in memory used {opt behavior()} ({bf:behavior} itself
+requires a co-evolution fit; {bf:triad} is never added by default, request it explicitly){p_end}
 {synopt:{opt maxdeg(int)}}Highest EXACT out-/in-degree category before the ("maxdeg+") overflow bin; default 15{p_end}
 {synopt:{opt maxdist(int)}}Highest EXACT geodesic-distance category before the ("NR", not reached) overflow bin; default 6{p_end}
 {synopt:{opt twotailed}}Report a two-tailed p-value instead of the one-tailed default (RSiena's own {cmd:twoTailed=FALSE} default: reject for a SMALL p only, i.e. the observed network is an outlier relative to what the fitted model simulates){p_end}
-{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {it:name}{cmd:_outdegree}, {it:name}{cmd:_indegree}, {it:name}{cmd:_geodesic}, {it:name}{cmd:_triad}, and {it:name}{cmd:_behavior} for a co-evolution fit's fourth statistic; with {opt join(off)} each period gets its own graph instead, e.g. {it:name}{cmd:_outdegree_p1}/{it:name}{cmd:_outdegree_p2}){p_end}
+{synopt:{opt name(string)}}Stub for the violin-plot graph names; default {cmd:gof} (graphs are named {it:name}{cmd:_outdegree},
+{it:name}{cmd:_indegree}, {it:name}{cmd:_geodesic}, {it:name}{cmd:_triad}, and {it:name}{cmd:_behavior} for a co-evolution fit's fourth statistic;
+with {opt join(off)} each period gets its own graph instead, e.g. {it:name}{cmd:_outdegree_p1}/{it:name}{cmd:_outdegree_p2}){p_end}
 {synopt:{opt join(off)}}Run a SEPARATE Mahalanobis test (and violin) per wave-period instead of the default pooled/summed one - real RSiena's own {cmd:join=FALSE} (non-default); omit for the default pooled behavior ({cmd:join=TRUE}){p_end}
 {synoptline}
 
@@ -124,7 +128,9 @@ title, matching RSiena's own {cmd:xlabel = paste("p:", round(x$p,3))} convention
 {synopthdr}
 {synoptline}
 {synopt:{opt effect(string)}}Which fitted coefficient is the "micro process" under test - must be one of this fit's own {help nwsaom##estimation:e(b)} column names{p_end}
-{synopt:{opt macro(string)}}Name of a Stata program computing ONE macro-level network summary - takes a single argument (a network name) and must {cmd:return scalar stat} - your own choice of statistic (density, centralization, segregation, ...), matching real {cmd:netmediate}'s own user-supplied {cmd:macro_function}{p_end}
+{synopt:{opt macro(string)}}Name of a Stata program computing ONE macro-level network summary - takes a single argument (a network name) and must
+{cmd:return scalar stat} - your own choice of statistic (density, centralization, segregation, ...), matching real {cmd:netmediate}'s own
+user-supplied {cmd:macro_function}{p_end}
 {synopt:{opt nsim(int)}}Number of Monte Carlo theta draws; default 500 (matching real {cmd:netmediate}'s own default), minimum 20{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating{p_end}
 {synopt:{opt interval(numlist)}}Multipliers applied to {opt effect()}'s own coefficient, in order; default {bf:0 1} (real {cmd:netmediate}'s own default: "as if the effect did not operate at all" vs "at its actual fitted strength"){p_end}
