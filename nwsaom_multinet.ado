@@ -138,6 +138,20 @@ program define nwsaom_multinet, eclass
 			mata: __nwsaom_mn_addwave(`mn`__s'_`__w'netobj', `nodes', `__s')
 		}
 	}
+	if "`behavior'" != "" {
+		local nb : word count `behavior'
+		if `nb' != `nw1' {
+			di "{err}behavior() needs one variable per wave (`nw1')."
+			error 198
+		}
+		mata: __nwsaom_mn_Bw = J(1, 0, NULL)
+		foreach __v of local behavior {
+			mata: SaomMNAddBeh("`__v'", `nodes')
+		}
+		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
+		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
+	}
+	else capture mata: mata drop __nwsaom_mn_Bw
 	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
 	forvalues __s = 1/2 {
 		mata: __nwsaom_mn_M`__s' = ErgmModel()
@@ -165,18 +179,7 @@ program define nwsaom_multinet, eclass
 	}
 	local hasbeh = ("`behavior'" != "")
 	if `hasbeh' {
-		local nb : word count `behavior'
-		if `nb' != `nw1' {
-			di "{err}behavior() needs one variable per wave (`nw1')."
-			error 198
-		}
 		if "`beheff1'`beheff2'" == "" local beheff1 "linear quadratic avalt"
-		mata: __nwsaom_mn_Bw = J(1, 0, NULL)
-		foreach __v of local behavior {
-			mata: SaomMNAddBeh("`__v'", `nodes')
-		}
-		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
-		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
 		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))

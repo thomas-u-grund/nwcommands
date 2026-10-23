@@ -8501,6 +8501,25 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 		errprintf("nwsaom multinet: unknown covariate cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
 		exit(198)
 	}
+	if (vn == "behavior") {
+		// protocol 65: the co-evolving behavior as the covariate of the cross-network effect (the dynamic variant, code + 1000)
+		external pointer(real colvector) rowvector __nwsaom_mn_Bw
+		real colvector allb
+		real scalar bmean, brng, psim
+		if (cols(__nwsaom_mn_Bw) == 0) {
+			errprintf("nwsaom multinet: " + eff + ":behavior needs behavior().\n")
+			exit(198)
+		}
+		allb = *__nwsaom_mn_Bw[1]
+		for (k=2; k<=cols(__nwsaom_mn_Bw); k++) allb = allb \ *__nwsaom_mn_Bw[k]
+		bmean = mean(allb)
+		brng = max(allb) - min(allb)
+		if (brng <= 0) brng = 1
+		psim = p1
+		if (anyof(("simdist2w", "simegodist2w", "simegoindist2w"), eff)) psim = saom_similarity_mean(__nwsaom_mn_Bw, brng)
+		SaomRegNatBeh(M, "xc_" + eff, 3100 + w, *__nwsaom_mn_Bw[1], bmean, psim, 1 / brng)
+		return
+	}
 	X = st_data(1::n, vn)
 	if (any(X :>= .)) {
 		errprintf("nwsaom multinet: " + eff + "(): " + vn + " has missing values (not supported).\n")
