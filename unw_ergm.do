@@ -8619,7 +8619,7 @@ void _ergm_con_apply(string scalar nm, real scalar sgn, string scalar args)
 		else if (l2 == "FALSE" | l2 == "F") sel = J(1, 0, .)
 		else {
 			sel = _ergm_con_numlist(l2, neg)
-			if (neg) sel = select(1..rows(pairs), !rowsum(((1..rows(pairs))') :== sel)')
+			if (neg) sel = select(1..rows(pairs), !rowsum(((1..rows(pairs))' * J(1, cols(sel), 1)) :== (J(rows(pairs), 1, 1) * sel))')
 		}
 		off = __ncon_bip ? nrl : 0
 		amat = J(nrl + 1, ncl + 1, 1)

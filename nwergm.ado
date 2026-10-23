@@ -26,7 +26,7 @@ program nwergm, eclass
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
 		OFFSET(string) ///
-		CONSTRAINTS(string asis) OBSCONSTRAINTS(string asis) ]
+		CONSTRAINTS(string asis) OBSCONSTRAINTS(string asis) MCMCMAXEDGES(integer 0) MCMCPROP(string asis) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -71,7 +71,9 @@ program nwergm, eclass
 	// default, `proposal()' defaults to `tnt' exactly as it does without
 	// freedyads().
 	if "`proposal'" == "" local proposal "tnt"
-	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
+	_opts_oneof "uniform random tnt" "proposal" "`proposal'" 6556
+	if "`proposal'" == "random" local proposal "uniform"
+	if `"`mcmcprop'"' != "" _nwergm_hints, spec(`mcmcprop')
 	if "`method'" != "" {
 		_opts_oneof "mple mcmle" "method" "`method'" 6556
 	}
@@ -1694,6 +1696,9 @@ program nwergm, eclass
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
+	if "`method'" == "mple" & `__con_active' {
+		if `con_dind' == 0 di "{txt}Maximum Pseudo-Likelihood (MPLE) estimation for ERGMs with dyad-dependent constraints is not implemented at this time. You may want to use {bf:method(mcmle)} instead."
+	}
 	if "`method'" == "mple" & !`__ergm_dind' {
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
 	}
@@ -2089,14 +2094,18 @@ program nwergm, eclass
 			mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode', __nwergm_last_G)
 			mata: mata drop __ergm_native_setup_rc
 		}
-		if `__con_active' {
+		if `__con_active' | `mcmcmaxedges' > 0 {
 			mata: st_local("__con_ok", strofreal(__nwergm_last_M.native_enabled_sample))
 			if `__con_ok' != 1 {
-				di "{err}constraints() need the native plugin, which is not available for this model, platform or the nonative option."
+				di "{err}constraints() and mcmcmaxedges() need the native plugin, which is not available for this model, platform or the nonative option."
 				error 198
 			}
-			mata: __nwergm_last_M.con_par = __ncon_par
-			mata: __nwergm_last_M.con_cols = __ncon_cols
+			if `__con_active' {
+				mata: __nwergm_last_M.con_par = __ncon_par
+				mata: __nwergm_last_M.con_cols = __ncon_cols
+			}
+			else mata: __nwergm_last_M.con_par = J(1, 10, 0)
+			if `mcmcmaxedges' > 0 mata: __nwergm_last_M.con_par[10] = `mcmcmaxedges'
 		}
 		// fixdensity: this is the single place that sets M.fixed_density=1,
 		// guaranteed to run before ErgmMCMLE() is ever called below.
@@ -2252,6 +2261,7 @@ program nwergm, eclass
 		ereturn local method "mcmle"
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
+		if `__con_active' ereturn local constraints `"`constraints'"'
 		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
@@ -2402,7 +2412,8 @@ program nwergm_simulate
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(real 0) BGWDEGREE2(real 0) ///
 		BIPARTITE(integer 0) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
-		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
+		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ///
+		BASIS(string) CONSTRAINTS(string asis) ]
 
 	confirm integer number `nodes'
 	if `nodes' < 2 {
@@ -3292,7 +3303,46 @@ program nwergm_simulate
 	// already use) and has no size limit to hit.
 	tempname __ergm_simmat
 	tempname __ergm_simmat_bip
+	// basis()/constraints(): R's simulate(basis=, constraints=) - one chain started from the basis
+	// network, burn-in once, `interval' steps between draws, all within the constrained sample space.
+	local __sim_con 0
+	if "`basis'" != "" | `"`constraints'"' != "" {
+		if "`basis'" == "" {
+			di "{err}constraints() needs basis(): the network the constraints refer to."
+			error 198
+		}
+		if `bipartite' != 0 {
+			di "{err}basis()/constraints() are not available together with bipartite()."
+			error 198
+		}
+		_nwsyntax `basis', max(1) other(b)
+		if `bnodes' != `nodes' | ("`bdirected'" == "true") != ("`directed'" != "") {
+			di "{err}basis() must have `nodes' nodes and the same directedness as the simulation."
+			error 198
+		}
+		capture mata: mata drop __nwergm_last_G
+		mata: __nwergm_last_G = ErgmGraph()
+		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
+		mata: ergm_bridge_from_netobj(`bnetobj', __nwergm_last_G, ("`directed'"!=""))
+		if `"`constraints'"' != "" {
+			_nwergm_constr, spec(`constraints') nodes(`nodes') directed(`bdirected') twomode(false) matobj(`bnetobj') weights(`=cond("`proposal'"=="uniform","random","default")')
+			if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
+		}
+		mata: __sim_rc = ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
+		mata: mata drop __sim_rc
+		mata: st_local("__sim_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+		if `__sim_ok' != 1 {
+			di "{err}basis()/constraints() need the native plugin, which is not available for this model or platform."
+			error 198
+		}
+		if `"`constraints'"' != "" {
+			mata: __nwergm_last_M.con_par = __ncon_par
+			mata: __nwergm_last_M.con_cols = __ncon_cols
+		}
+		local __sim_con 1
+	}
 	forvalues __s = 1/`nsim' {
+		if !`__sim_con' {
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
 		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
@@ -3322,7 +3372,9 @@ program nwergm_simulate
 		// instructions warn against. __nwergm_last_M.native_enabled
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
-		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
+		}
+		local __sim_burn = cond(`__sim_con' & `__s' > 1, 0, `mcmcburnin')
+		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `__sim_burn', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 
 		local __ergm_simname = cond(`nsim'==1, "`generate'", "`generate'_`__s'")

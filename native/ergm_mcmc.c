@@ -2298,7 +2298,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	int need_dirsp = 0;
 	e6con_t e6c;                 /* E6: sample-space constraint / proposal block */
 	double e6par[16];
-	long e6npar = 0, e6cols = 0, concol_base = 0, e6k;
+	long e6npar = 0, e6cols = 0, concol_base = 0, e6k, e6maxedges = 0;
 
 	if (argc < 1) { SF_error("ergm_mcmc: missing argument string\n"); return(198); }
 
@@ -2430,6 +2430,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	e6c.dn_mode = (int)e6par[3];
 	for (e6k = 0; e6k < 4; e6k++) e6c.dn_s[e6k] = e6par[4+e6k];
 	e6c.dn_nobs = (long)e6par[8];
+	e6maxedges = (long)e6par[9];   /* MCMC.maxedges; 0 = no limit */
 	if (e6c.code != 0 || e6c.bdK > 0) {
 		/* the constraint proposals need neighbour lists and in/out degrees */
 		if (directed) { need_dirsp = 1; need_outin = 1; }
@@ -2813,6 +2814,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	for (step = 0; step < burnin; step++) {
 		if (e6c.code) {
 			if (e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur) < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
+			if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 			continue;
 		}
 		long pi, pj;
@@ -2871,6 +2873,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				int e6r = e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur);
 				if (e6r < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
 				ntried++; naccept += e6r;
+				if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 				continue;
 			}
 			long pi, pj;
@@ -2926,6 +2929,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				naccept++;
 			}
 		}
+		if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), draw + 1, cur[k]);
 	}
 
