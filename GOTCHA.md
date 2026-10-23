@@ -823,3 +823,26 @@ Three things looked like model bugs and were plugin / wire-format state (found w
 - `__nwsaom_mn_post()` receives "no starting values" as the 1 x 1 missing `(.)`. A model with exactly ONE coefficient in a network (or in the behavior) has `cols((.)) == nparam()`, so the missing
   value was taken as the starting value and the fit ended with "estimates post: matrix has missing values" (rc 504), e.g. `eff2(outdegree)` for a non-directed second network. The test is now
   `& !missing(theta)`.
+## `nwsaom.ado` is at Stata's program-size limit; helper programs return values through `r()`, not `c_local`
+
+`nwsaom.ado` stops loading with `system limit exceeded - see manual (error occurred while loading nwsaom.ado)` once the
+program grows past about 207-213 KB; deleting comment lines does not help (it is the compiled program that counts), and
+the failure shows up on the first `nwsaom` call, not at build time. Put new Stata-side code into a helper file
+(`_nwsaom_rates.ado` is the pattern: one dispatcher program plus sub-programs, called as `_nwsaom_rates <sub>, ...`).
+A `c_local` inside a sub-program lands in the *dispatcher*, not in `nwsaom` - the sub-programs are `rclass`, the dispatcher
+does `return add`, and `nwsaom` reads `r(...)` right after the call.
+
+## A two-mode fit left `__nwsaom_coev_struct` behind and corrupted the next co-evolution fit (fixed)
+
+The structural-dyad mask of a two-mode fit lives in the Mata external `__nwsaom_coev_struct`. It was only set (never
+cleared) by `nwsaom.ado`, so the next *co-evolution* fit of a different network applied the old mask (`SaomCfgStruct()`)
+to its own, smaller node set: heap corruption inside `simulate_period()` and a Stata crash (exit code 133, no message).
+Reproduce with a two-mode `waves()` fit followed by any `behavior()` fit in the same session. `SaomClearStruct()` now
+clears both masks when a fit has no structural dyads. Any other "set only when the option is given" Mata external is the
+same trap: clear it at the start of the fit.
+
+## RSiena: `includeEffects(..., parameter =)` does nothing; the internal parameter of a rate effect needs `setEffect()`
+
+`includeEffects(e, totExposure, ..., parameter = 3)` only warns ("argument 'parameter' has no effect"); the observed statistic
+then equals the unthresholded one. Use `setEffect(e, totExposure, name = ..., type = "rate", interaction1 = ..., parameter = 3,
+include = TRUE)` when validating the thresholds of the diffusion rate effects.

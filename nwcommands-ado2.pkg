@@ -55,6 +55,7 @@ f _nwsaom_mnbeh.ado
 f _nwsaom_rsnotes.ado
 f _nwsaom_tconvtable.ado
 f _nwsaom_postengine.ado
+f _nwsaom_rates.ado
 f nwsaom_estat.ado
 f nwsaom_estat_simulate.ado
 f nwsaom_estat_score.ado

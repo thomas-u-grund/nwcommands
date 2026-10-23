@@ -317,8 +317,8 @@ and avSimW with parameter 2 (RSiena's default) are unstable in siena07 as well w
 {synopt:{opt outrate}, {opt inrate}, {opt reciprate}, {opt outrateinv}, {opt inrateinv}, {opt reciprateinv}, {opt outratelog}, {opt inratelog}, {opt recipratelog}}Structural rate
 effects (RSiena's outRate, inRate, recipRate and their Inv / Log versions): the actor's rate is the period rate times exp(sum of b_k f_k) with f = out-, in- or reciprocated degree
 (or 1/(d+1), log(d+1) of it) of the actor in the {it:current} network; the rate changes with every tie change of the simulation. Each adds one covariate-rate coefficient
-(e(ratecoefs), like {opt ratecov()}); the statistic is the sum over the differing dyads of the degree function at the start of the period. Directed one-mode relations, plain waves
-only (no behavior, present(), missnet(), symmetric, two-mode). Estimates agree with siena07. {bf:Native plugin only} (protocol 42){p_end}
+(e(ratecoefs), like {opt ratecov()}); the statistic is the sum over the differing dyads of the degree function at the start of the period. Plain waves only (no behavior, present(),
+missnet()). A non-directed or a two-mode network has only the degree versions {opt outrate}, {opt outrateinv}, {opt outratelog}, as in RSiena. Estimates agree with siena07. {bf:Native plugin only}{p_end}
 {synopt:{opt egoplusaltsqx(varlist)}, {opt diffsqx()}, {opt egodiffx()}, {opt althigheregox()}, {opt unequalx()}, {opt egolthresholdx()}, {opt egorthresholdx()}, {opt altlthresholdx()}, {opt altrthresholdx()}, {opt degabsdiffx()}, {opt degposdiffx()}, {opt degnegdiffx()}, {opt covthreshold(#)}}Covariate
 contrast and threshold effects (RSiena's egoPlusAltSqX, diffSqX, egoDiffX, altHigherEgoX, unequalX, egoLThresholdX, egoRThresholdX, altLThresholdX, altRThresholdX, degAbsDiffX,
 degPosDiffX, degNegDiffX). The four threshold effects compare the {it:centred} covariate with {opt covthreshold(#)} (default 0, as RSiena's internal parameter). The deg*DiffX
@@ -372,9 +372,12 @@ no standard error; {cmd:fix(_all)} fixes every effect. Used to fit a restricted 
 chosen coefficients ({cmd:nwsaom simulate}) and to profile models. Works with {opt behavior()}; not with {cmd:nwsaom multinet}{p_end}
 {synopt:{opth ratecov(varlist)}}Let node covariates raise or lower each actor's own opportunity to make a network change, instead of every actor sharing one constant rate for the
 period - actor i's own rate becomes {it:rate}*exp(sum of {it:b_k}*{it:x_k}[i]) over the variables, one coefficient each (RSiena's RateX effects). The coefficient is estimated
-jointly with every other effect. Works with {opt waves()} (one shared coefficient per variable, as RSiena's RateX) and with {opt symmetric}; not yet supported combined with
-co-evolution, {opt present()}, or {opt missnet()}. See {help nwsaom_remarks:Remarks}{p_end}
+jointly with every other effect. Works with {opt waves()} (one shared coefficient per variable, as RSiena's RateX), {opt symmetric} and two-mode networks. A name of {opt tvcov()} is a changing
+covariate; with {opt behavior()} the behavior's name is the behavior itself. Not with {opt present()}, {opt missnet()}. See {help nwsaom_remarks:Remarks}{p_end}
 {synopt:{opt ratecovcoef(numlist)}}Starting values for the {opt ratecov()} coefficients, one per variable or one for all (default 0){p_end}
+{synopt:{opt behratecov(varlist)}}Covariates of the behavior's rate (RSiena's RateX of the behavior): constants, changing covariates of {opt tvcov()}, the behavior itself; needs {opt behavior()}, {opt waves()}{p_end}
+{synopt:{opt behrate(list)}}Network-dependent rate effects of the behavior (outrate, inrate, reciprate, avexposure, totexposure, infectin, ... ); see {help nwsaom_remarks##behrate:Remarks}{p_end}
+{synopt:{opt behratecoef(numlist)}}Starting values for the {opt behratecov()}/{opt behrate()} coefficients (default 0){p_end}
 {synopt:{opt nocenter}}Use the raw values of the covariates of {opt egox()}, {opt altx()}, {opt nodecov()} and {opt ratecov()}. By default they are centred by their means (missing
 values set to the mean), as RSiena's {cmd:coCovar(centered = TRUE)}, so that all coefficients, including outdegree and the rate, are RSiena's; the means are returned in
 {bf:e(covmeans)} and listed under the table with {opt detail}. Centring changes only the outdegree coefficient (and the rate intercept), not the covariate coefficients.
@@ -673,6 +676,7 @@ fits: on RSiena's scale for pairwise models (see {help nwsaom_remarks##undirecte
 		  {bf:e(ratecoefs)}		{opt ratecov()} fits: 1 x K covariate-rate coefficients, columns named by the variables; also {bf:e(ratecoefs_se)},
 {bf:e(ratecoefs_tratio)}, {bf:e(ratecoefs_fixed)} (with one variable also the scalars {bf:e(ratecoef)}, {bf:e(ratecoef_se)}, {bf:e(ratecoef_tratio)},
 {bf:e(ratecoef_fixed)})
+		  {bf:e(behratecoefs)}		{opt behratecov()}/{opt behrate()} fits: 1 x K coefficients; also {bf:e(behratecoefs_se)}, {bf:e(behratecoefs_tratio)}, and {bf:e(rc_target)} (observed statistics of the covariate rate effects)
 		  {bf:e(engine)}		{bf:native} if the simulations ran in the C plugin, {bf:mata} if in Mata (then also a note after the table and {bf:e(engine_why)})
 		  {bf:e(rsiena_labels)}	RSiena's effect names of the coefficients, in {bf:e(b)}'s order, separated by "|" (e.g. "alcohol1 ego", "same smoke1", "alcohol1 ego x reciprocity")
 		  {bf:e(rate_actor)}		non-directed fits only: the rate at which an actor gets an opportunity to change, the scale of every other {cmd:nwsaom} rate (differs from e(rate), RSiena's rate, only for the pairwise types force/agree/joint)

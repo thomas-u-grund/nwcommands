@@ -127,6 +127,10 @@ program define nwsaom_estat, rclass
 		di as err "estat `subcmd' is not yet available after a fit with time-varying covariates ({bf:tvcov()})."
 		exit 198
 	}
+	if "`e(behratecov)'`e(behrate)'" != "" | (e(has_behavior) == 1 & "`e(ratecov)'" != "") {
+		di as err "estat `subcmd' is not yet available after a fit with a behavior and covariate rate effects ({bf:ratecov()}, {bf:behratecov()}, {bf:behrate()})."
+		exit 198
+	}
 	if e(nbeh) < . {
 		if e(nbeh) > 1 {
 			di as err "estat `subcmd' is not yet available after a fit with several behaviors in {bf:behavior()}."
