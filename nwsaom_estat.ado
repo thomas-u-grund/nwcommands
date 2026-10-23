@@ -119,6 +119,10 @@ capture program drop nwsaom_estat
 program define nwsaom_estat, rclass
 	gettoken subcmd rest : 0, parse(" ,")
 	local subcmd = lower(trim("`subcmd'"))
+	if `"`e(cmd)'"' == "nwsaom_multinet" & !inlist("`subcmd'", "score", "timetest") {
+		di as err "estat `subcmd' is not yet available after nwsaom multinet (available: {bf:score}, {bf:timetest})."
+		exit 198
+	}
 	if "`e(tvcov)'" != "" {
 		di as err "estat `subcmd' is not yet available after a fit with time-varying covariates ({bf:tvcov()})."
 		exit 198

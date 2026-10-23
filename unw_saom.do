@@ -8995,6 +8995,16 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	par0 = (theta01, theta02, thetab0, rate10, rate20, rateb0)
 	israte = (J(1, C.p, 0), J(1, 3 * P, 1))
 	nf = SaomRMCore(C, &SaomMNBSimManyCB(), par0, C.p, israte, 1 :- israte, K0, K3, firstg)
+	{
+		real scalar tq, tl
+		tq = .
+		tl = .
+		for (k=1; k<=Mbeh.nterms; k++) {
+			if (Mbeh.names[k] == "quadratic") tq = k
+			if (Mbeh.names[k] == "linear") tl = k
+		}
+		if (tq < . & tl < .) SaomStoreQuadFix(p1 + p2 + tq, p1 + p2 + tl, overallMean)
+	}
 	fit.par = nf.par
 	fit.tconv = nf.tconv
 	fit.Vfull = nf.Vfull

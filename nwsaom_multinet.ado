@@ -53,6 +53,10 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 	real rowvector t1, t2
 	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
 	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
+	if (findexternal("__nwsaom_mn_theta0") != NULL) {
+		t1 = (*findexternal("__nwsaom_mn_theta0"))[1..__nwsaom_mn_M1.nparam()]
+		t2 = (*findexternal("__nwsaom_mn_theta0"))[(__nwsaom_mn_M1.nparam()+1)..(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam())]
+	}
 	fit = SaomEstimateMN(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, t1, t2, K0, K3, firstg, sym1, sym2)
 	p = fit.p1 + fit.p2
 	P = fit.P
@@ -79,6 +83,11 @@ void __nwsaom_mnb_post(real rowvector theta01, real rowvector theta02, real rowv
 	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
 	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
 	tb = (cols(thetab0) == __nwsaom_mn_Mbeh.nparam() ? thetab0 : J(1, __nwsaom_mn_Mbeh.nparam(), 0))
+	if (findexternal("__nwsaom_mn_theta0") != NULL) {
+		t1 = (*findexternal("__nwsaom_mn_theta0"))[1..__nwsaom_mn_M1.nparam()]
+		t2 = (*findexternal("__nwsaom_mn_theta0"))[(__nwsaom_mn_M1.nparam()+1)..(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam())]
+		tb = (*findexternal("__nwsaom_mn_theta0"))[(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam()+1)..(__nwsaom_mn_M1.nparam()+__nwsaom_mn_M2.nparam()+__nwsaom_mn_Mbeh.nparam())]
+	}
 	fit = SaomEstimateMNB(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, __nwsaom_mn_Bw, __nwsaom_mn_behmin, __nwsaom_mn_behmax, __nwsaom_mn_Mbeh,
 		__nwsaom_mn_net2flag, t1, t2, tb, K0, K3, firstg, sym1, sym2)
 	p = fit.p1 + fit.p2 + fit.pb
@@ -96,7 +105,7 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) THETA0(numlist) FIX(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
@@ -108,6 +117,8 @@ program define nwsaom_multinet, eclass
 	capture mata: mata drop __nwsaom_score_par
 	capture mata: mata drop __nwsaom_score_Zp
 	capture mata: mata drop __nwsaom_score_Sp
+	capture mata: mata drop __nwsaom_score_qf
+	capture mata: mata drop __nwsaom_mn_theta0
 	if "`eff1'" == "" local eff1 = cond("`sym1'" != "", "outdegree", "outdegree reciprocity")
 	if "`eff2'" == "" local eff2 = cond("`sym2'" != "", "outdegree", "outdegree reciprocity")
 	local nw1 : word count `net1'
@@ -189,6 +200,37 @@ program define nwsaom_multinet, eclass
 		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1))
 		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
 	}
+	// theta0() / fix(): starting values and fixed effects, in the order of the coefficients (net1_*, net2_*, beh_*)
+	if "`theta0'`fix'" != "" {
+		mata: st_local("__cnall", invtokens(("net1_" :+ __nwsaom_mn_M1.coefnames, "net2_" :+ __nwsaom_mn_M2.coefnames)))
+		if `hasbeh' {
+			mata: st_local("__cnb", invtokens(__nwsaom_mn_Mbeh.coefnames))
+			local __cnall `__cnall' `__cnb'
+		}
+		local __pall : word count `__cnall'
+		if "`theta0'" != "" {
+			local __nt : word count `theta0'
+			if `__nt' != `__pall' {
+				di "{err}theta0() must supply exactly `__pall' starting value(s), in the order: `__cnall'."
+				error 198
+			}
+			mata: __nwsaom_mn_theta0 = strtoreal(tokens("`theta0'"))
+		}
+		if "`fix'" != "" {
+			if "`fix'" == "_all" local fix "`__cnall'"
+			foreach __w of local fix {
+				if !`: list __w in __cnall' {
+					di "{err}fix(): `__w' is not one of the effects: `__cnall'."
+					error 198
+				}
+			}
+			local __fm ""
+			foreach __w of local __cnall {
+				local __fm `__fm' `: list __w in fix'
+			}
+			mata: __nwsaom_fixmask = strtoreal(tokens("`__fm'"))
+		}
+	}
 	tempname b V R tc tg
 	if `hasbeh' {
 		mata: __nwsaom_mnb_post((.), (.), (.), `k0', `k3', `firstg', ("`sym1'" != ""), ("`sym2'" != ""), "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
@@ -202,6 +244,9 @@ program define nwsaom_multinet, eclass
 	matrix colnames `tg' = `__cn'
 	ereturn post `b' `V', obs(`nodes')
 	ereturn matrix target = `tg'
+	ereturn scalar nwaves = `nw1'
+	ereturn local estat_cmd "nwsaom_estat"
+	capture mata: mata drop __nwsaom_mn_theta0
 	local P = `nw1' - 1
 	forvalues __k = 1/`P' {
 		local __rn "`__rn' period`__k'"

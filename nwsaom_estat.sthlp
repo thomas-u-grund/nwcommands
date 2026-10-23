@@ -96,7 +96,7 @@ matching it exactly (not merely "similar in spirit"). All 16 categories are alwa
 waves) every dyad is mutual or null, so only the categories without asymmetric dyads can be non-zero.
 
 {pstd}
-{bf:Limits.} {cmd:estat gof} is not yet available after a two-mode (bipartite) fit (it stops with an error), and not after {cmd:nwsaom multinet}. It works after directed and non-directed one-mode fits with the native-only effects.
+{bf:Limits.} {cmd:estat gof} is not yet available after a two-mode (bipartite) fit (it stops with an error), and not after {cmd:nwsaom multinet} (only {cmd:estat score} and {cmd:estat timetest} are). It works after directed and non-directed one-mode fits with the native-only effects.
 
 {pstd}
 {bf:Co-evolution fits} (a {opt behavior()} model) add a fourth default auxiliary statistic,
@@ -218,6 +218,9 @@ effect is expected to be positive) and the one-step estimates of all parameters.
 test to some of the fixed effects. Returns {cmd:r(chi2)}, {cmd:r(df)}, {cmd:r(p)}, {cmd:r(separate)} and
 {cmd:r(onestep)}.
 
+{pstd}
+After {cmd:nwsaom multinet} the restricted model is fitted with {cmd:theta0()} and {cmd:fix()} of that command (coefficient names such as {cmd:net1_x_crprod}); the rates of all networks and of the behavior are estimated along.
+
 {marker estat_timetest}{...}
 {title:estat timetest}
 
@@ -231,6 +234,9 @@ to P), and a score-type test of "no deviation" is computed from the phase-3 simu
 second fit is needed. Reported: a joint test of all deviations, a test per effect (degrees of freedom P - 1), and
 per effect and period the one-step estimate of the deviation with its separate test. Returns {cmd:r(chi2)},
 {cmd:r(df)}, {cmd:r(p)}, {cmd:r(effect)} and {cmd:r(individual)}.
+
+{pstd}
+Also available after {cmd:nwsaom multinet}, for the effects of all networks and of the behavior.
 
 {marker estat_importance}{...}
 {title:estat importance}

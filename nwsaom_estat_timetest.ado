@@ -15,7 +15,7 @@ capture program drop nwsaom_estat_timetest
 program define nwsaom_estat_timetest, rclass
 	syntax [, EFFects(string) ]
 
-	if `"`e(cmd)'"' != "nwsaom" {
+	if !inlist(`"`e(cmd)'"', "nwsaom", "nwsaom_multinet") {
 		di as err "last nwsaom estimates not found"
 		exit 301
 	}

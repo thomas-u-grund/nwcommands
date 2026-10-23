@@ -18,7 +18,7 @@ capture program drop nwsaom_estat_score
 program define nwsaom_estat_score, rclass
 	syntax [, TESTED(string) ]
 
-	if `"`e(cmd)'"' != "nwsaom" {
+	if !inlist(`"`e(cmd)'"', "nwsaom", "nwsaom_multinet") {
 		di as err "last nwsaom estimates not found"
 		exit 301
 	}
