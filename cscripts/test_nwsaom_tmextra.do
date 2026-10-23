@@ -37,6 +37,6 @@ foreach spec in "outtrunc(2)" "outmore(2)" "outthreshold(2)" "outinv(1)" "outsqi
 * an effect with a covariate of the wrong kind for a two-mode network is refused
 capture nwsaom, waves(te1 te2 te3) outdegree diffsqx(xa) k3(30)
 assert _rc == 198
-capture nwsaom, waves(te1 te2 te3) outdegree avdeg(2) k3(30)
+capture nwsaom, waves(te1 te2 te3) outdegree outpopc k3(30)
 assert _rc == 198
 di as text "two-mode extras PASS"

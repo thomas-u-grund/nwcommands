@@ -550,8 +550,8 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher samexrecip simrecipx ownx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
-			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
+			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
 				di "{err}`__opt' is not available for a two-mode network (available: outdegree, indegpopularity, outactivity, cycle4, outiso, antiiniso, antiiniso2, inplus3, nodeocov() = egoX on the actors, nodeicov() = altX on the events, egosqx() on the actors, altsqx() on the events, netx(altindist2 totindist2 simegoindist2 sameegoindist2 crossxoutact samexcycle4 avgroupegox totgroupegox on the actors; sameinxcycle4 homxoutact2 on the events), tvcov() covariates in these effects)."
@@ -1631,7 +1631,7 @@ program nwsaom, eclass
 				di "{err}{bf:transtriads} is RSiena's triangle count for a non-directed relation; use {bf:symmetric} (for a directed relation see transtrip)."
 				error 198
 			}
-			if `__nwsaom_tm' & !inlist("`__dk'", "inpopc", "outactc") {
+			if `__nwsaom_tm' & !inlist("`__dk'", "inpopc", "outactc", "avdeg") {
 				di "{err}{bf:`__dk'} is not available for a two-mode network."
 				error 198
 			}
@@ -1663,6 +1663,11 @@ program nwsaom, eclass
 				}
 				mata: `__td_df'.decay = __nwsaom_dfc * ("`__dk'" == "degplusc" ? 2 : 1)
 				capture mata: mata drop __nwsaom_dfc
+			}
+			if `__nwsaom_tm' & "`__dk'" == "avdeg" {
+				// the number of actors (RSiena: Outdegree sum squared / n) travels in a dummy attribute column
+				mata: `__td_df'.attr = J(`nodes', 1, 0)
+				mata: `__td_df'.attr[1] = `__nwsaom_tm_na'
 			}
 			mata: __nwsaom_last_M.addterm("`__dk'", 1, &stat_saom_`__dk'(), &change_saom_`__dk'(), `__td_df', ("`__dk'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__dk'"
@@ -1781,13 +1786,18 @@ program nwsaom, eclass
 	}
 	// protocol 54: ownx(effect[:#] ...) - own-network effects without a covariate, native only: jin jout transtrip1 transtrip2 transrectrip2 (= transtripfr) transtripfe transtripee
 	// outpopmore:# outpopsqrtmore:# outpopthreshold:# and the ego degree effects outactego[:2] outactmoreego:# outactsqrtmoreego:# outmoreego:# divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]
-	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego"
-	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17"
+	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego outinass inpopdya inisdegree instructeq densetriads"
+	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22"
 	if "`ownx'" != "" {
 		mata: __nwsaom_dg_ties = 0
 		mata: __nwsaom_dg_rec = 0
 		forvalues __w = 1/`__nwsaom_nwaves' {
 			mata: __nwsaom_dg_acc(__nwsaom_last_G`__w')
+		}
+		mata: __nwsaom_dg_sma = 0
+		mata: __nwsaom_dg_smb = 0
+		forvalues __w = 1/`=`__nwsaom_nwaves'-1' {
+			mata: __nwsaom_sm_acc(__nwsaom_last_G`__w')
 		}
 	}
 	foreach __t of local ownx {
@@ -1803,9 +1813,13 @@ program nwsaom, eclass
 		if "`__pp'" == "" {
 			if inlist("`__f'", "outpopmore", "outpopsqrtmore", "outpopthreshold", "outmoreego") local __pp 1
 			else if inlist("`__f'", "outactmoreego", "outactsqrtmoreego") local __pp 1
+			else if "`__f'" == "outinass" local __pp = cond(`__nwsaom_tm', 2, 1)
+			else if "`__f'" == "densetriads" local __pp 5
 			else local __pp 0
 		}
-		mata: SaomRegDg(__nwsaom_last_M, "`__f'", `__code', `__pp', `nodes', __nwsaom_dg_ties / (`nodes' * `__nwsaom_nwaves'), __nwsaom_dg_rec / (`nodes' * `__nwsaom_nwaves'))
+		local __dgn `nodes'
+		if `__nwsaom_tm' local __dgn `__nwsaom_tm_na'
+		mata: SaomRegDg(__nwsaom_last_M, "`__f'", `__code', `__pp', `nodes', __nwsaom_dg_ties / (`__dgn' * `__nwsaom_nwaves'), __nwsaom_dg_rec / (`__dgn' * `__nwsaom_nwaves'), __nwsaom_dg_sma / __nwsaom_dg_smb)
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'"
 	}
 	// protocol 49: dyadx(effect:matrix ...) - network effects of a constant dyadic covariate W (RSiena WWX cyWWX InWWX OutWWX WXX XWX XWX1 XWX2 XXW),
@@ -4239,6 +4253,7 @@ program define nwsaom_multiplex, eclass
 end
 
 capture mata: mata drop __nwsaom_dg_acc()
+capture mata: mata drop __nwsaom_sm_acc()
 capture mata: mata drop __nwsaom_mn_addwave()
 capture mata: mata drop __nwsaom_mn_post()
 capture mata: mata drop __nwsaom_mn_avg()
@@ -4254,6 +4269,17 @@ void __nwsaom_dg_acc(class ErgmGraph scalar G) {
 	r = 0
 	for (k=1; k<=rows(e); k++) r = r + G.has_edge(e[k,2], e[k,1])
 	__nwsaom_dg_rec = __nwsaom_dg_rec + r
+}
+/* inStructEq: RSiena calcStructmeanGroup(), the sums over the waves 1 .. W-1 (2 * outdegree * (n - 1 - outdegree) and n * (n - 1) * (n - 2)) */
+void __nwsaom_sm_acc(class ErgmGraph scalar G) {
+	external real scalar __nwsaom_dg_sma, __nwsaom_dg_smb
+	real scalar i, d, n
+	n = G.n
+	for (i=1; i<=n; i++) {
+		d = G.dout[i]
+		__nwsaom_dg_sma = __nwsaom_dg_sma + 2 * d * (n - 1 - d)
+	}
+	__nwsaom_dg_smb = __nwsaom_dg_smb + n * (n - 1) * (n - 2)
 }
 /* nwsaom multinet (protocol 52): collects the wave graphs of one network (slot 1 or 2) and posts the fit */
 void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot) {

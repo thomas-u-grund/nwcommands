@@ -1075,7 +1075,7 @@ static double cx_tie(graph_t *g, int v, const double *a, double p1, long i, long
    calculateContribution() (negated by the simulation for an existing tie), df_tie() its tieStatistic(); avDeg's statistic is the ego statistic. */
 #define TERMCODE_DF0 181
 #define SAOM_DFTC(tc) ((tc) >= TERMCODE_DF0 && (tc) < TERMCODE_DF0 + 8)
-static double df_value(graph_t *g, int v, double c, long i, long j) {
+static double df_value(graph_t *g, int v, double c, long i, long j, const double *a) {
 	int ex = has_edge(g, i, j);
 	double d = (double)g->dout[i];
 	switch (v) {
@@ -1084,7 +1084,7 @@ static double df_value(graph_t *g, int v, double c, long i, long j) {
 		case 2: return (ex ? 2.0 * d - 1.0 : 2.0 * d + 1.0) - c;
 		case 3: return (double)g->din[i] - c;
 		case 4: case 5: return (double)g->din[j] + (ex ? 0.0 : 1.0) + (ex ? 2.0 * d - 1.0 : 2.0 * d + 1.0) - (v == 5 ? c : 0.0);
-		case 6: return ((double)g->nties + d) / (double)g->n - c;
+		case 6: return ((double)g->nties + d) / ((a && a[1] > 0.5) ? a[1] : (double)g->n) - c;		/* a[1] = the number of actors of a two-mode network */
 		case 7: return (double)pair_otp(g, i, j);
 	}
 	return 0.0;
@@ -1759,7 +1759,7 @@ static double xt_stat(graph_t *g, int termcode, const double *a, double p1) {
    a[2] = its average reciprocal degree. The ego effects (10-17) are the functions of the ego's degree that RSiena offers for its interactions, used here alone.
    =================================================================== */
 #define TERMCODE_DG0 260
-#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 20)
+#define SAOM_DGTC(tc) ((tc) >= TERMCODE_DG0 && (tc) < TERMCODE_DG0 + 30)
 static double dg_recdeg(graph_t *g, long i) {
 	long m, c = 0;
 	for (m = 0; m < g->outadj[i].len; m++) if (has_edge(g, g->outadj[i].nb[m], i)) c++;
@@ -1796,18 +1796,78 @@ static double dg_value(graph_t *g, int v, const double *a, double p1, long i, lo
 		case 15: return xt_S((double)g->din[i], p1) - xt_S(av, p1);
 		case 16: return xt_recip(xt_S((double)g->din[i], p1));
 		case 17: return xt_S(dg_recdeg(g, i), p1) - xt_S(avr, p1);
+		case 20: return g->din[i] == 0 ? 1.0 : 0.0;		/* inIsDegree: the tie statistic and the contribution are 1 for an in-isolate ego */
+		case 21: {
+			/* inStructEq: (n - 2) * structmean - |In(i) symmetric-difference In(j)| without i and j (RSiena InStructuralEquivalenceEffect); a[3] = structmean */
+			double sm = a ? a[3] : 0.0;
+			double common = xt_mtp(g, g, 'B', 'F', i, j);
+			return ((double)g->n - 2.0) * sm - (double)g->din[i] - (double)g->din[j] + (has_edge(g, j, i) ? 1.0 : 0.0) + (has_edge(g, i, j) ? 1.0 : 0.0) + 2.0 * common;
+		}
+		case 22: {
+			/* denseTriads, the CONTRIBUTION (parameter 5 or 6): RSiena DenseTriadsEffect::calculateContribution() with its R/F/B tables */
+			int six = (fabs(p1 - 6.0) < 1e-9);
+			double rr = xt_mtp(g, g, 'R', 'R', i, j);
+			if (six) return has_edge(g, j, i) ? 2.0 * rr : 0.0;
+			if (has_edge(g, j, i)) return 2.0 * xt_mtp(g, g, 'R', 'F', i, j) + 2.0 * xt_mtp(g, g, 'R', 'B', i, j) + 2.0 * xt_mtp(g, g, 'F', 'R', i, j) + xt_mtp(g, g, 'B', 'R', i, j) - 6.0 * rr;
+			return 2.0 * rr;
+		}
+		case 19: return xt_S((double)g->din[j], p1) - xt_S(av, p1);		/* inPop_dya: GenericNetworkEffect(InDegreeFunction - the average in-degree), parameter 2 = square roots */
+		case 18: {
+			/* outInAss with RSiena's parameter (2: square roots) - OutInDegreeAssortativityEffect::calculateContribution() */
+			long m, h;
+			double d = (double)g->dout[i], ain = (double)g->din[j], nsum = 0.0;
+			for (m = 0; m < g->outadj[i].len; m++) { h = g->outadj[i].nb[m]; nsum += rt ? sqrt((double)g->din[h]) : (double)g->din[h]; }
+			if (has_edge(g, i, j)) return rt ? (nsum - sqrt(ain)) * (sqrt(d) - sqrt(d - 1.0)) + sqrt(d) * sqrt(ain) : (nsum - ain) + d * ain;
+			return rt ? nsum * (sqrt(d + 1.0) - sqrt(d)) + sqrt(d + 1.0) * sqrt(ain + 1.0) : nsum + (d + 1.0) * (ain + 1.0);
+		}
 	}
 	(void)rt;
 	return 0.0;
 }
 static double dg_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	if (v == 3) return xt_mtp(g, g, 'F', 'F', i, j);
+	if (v == 18) return xt_S((double)g->dout[i], p1) * xt_S((double)g->din[j], p1);
 	return dg_value(g, v, a, p1, i, j);
+}
+/* denseTriads tie statistic summed over the ties (RSiena DenseTriadsEffect::tieStatistic() with its mark array) */
+static double dg_dense_stat(graph_t *g, double p1) {
+	long i, m, j, h, n = g->n, k;
+	int six = (fabs(p1 - 6.0) < 1e-9);
+	double tot = 0.0;
+	int *mark = (int *)calloc((size_t)(n + 1), sizeof(int));
+	for (i = 1; i <= n; i++) {
+		for (j = 1; j <= n; j++) mark[j] = 0;
+		for (m = 0; m < g->inadj[i].len; m++) mark[g->inadj[i].nb[m]] = 1;
+		for (m = 0; m < g->outadj[i].len; m++) { j = g->outadj[i].nb[m]; mark[j] = (mark[j] == 0) ? 1 : mark[j] + 1; }
+		for (m = 0; m < g->outadj[i].len; m++) {
+			long st = 0;
+			j = g->outadj[i].nb[m];
+			if ((six && mark[j] == 2) || (!six && mark[j] == 1)) {
+				for (k = 0; k < g->outadj[j].len; k++) { h = g->outadj[j].nb[k]; if (has_edge(g, h, j) && mark[h] == 2) st++; }
+			}
+			else if (!six) {
+				/* the union of the out- and in-neighbours of j: h in both = reciprocated with j */
+				for (k = 0; k < g->outadj[j].len; k++) {
+					h = g->outadj[j].nb[k];
+					if (has_edge(g, h, j)) { if (mark[h] > 0) st++; }
+					else if (mark[h] == 2) st++;
+				}
+				for (k = 0; k < g->inadj[j].len; k++) {
+					h = g->inadj[j].nb[k];
+					if (!has_edge(g, j, h) && mark[h] == 2) st++;
+				}
+			}
+			tot += (double)st;
+		}
+	}
+	free(mark);
+	return tot;
 }
 static double dg_stat(graph_t *g, int termcode, const double *a, double p1) {
 	long k;
 	double tot = 0.0;
 	int v = termcode - TERMCODE_DG0;
+	if (v == 22) return dg_dense_stat(g, p1);
 	for (k = 0; k < g->nties; k++) tot += dg_tie(g, v, a, p1, g->elist_i[k], g->elist_j[k]);
 	return tot;
 }
@@ -1835,7 +1895,7 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 		int v = termcode - TERMCODE_DF0;
 		if (v == 6) {
 			double D = (double)g->nties;
-			return D * (D / (double)g->n - p1);
+			return D * (D / ((a && a[1] > 0.5) ? a[1] : (double)g->n) - p1);
 		}
 		for (k = 0; k < g->nties; k++) tot += df_tie(g, v, p1, g->elist_i[k], g->elist_j[k]);
 		return tot;
@@ -2062,7 +2122,7 @@ static double saom_change_term(graph_t *g, int termcode, double *a, double p1, l
 		return ij_exists ? -v : v;
 	}
 	if (SAOM_DFTC(termcode)) {
-		double v = df_value(g, termcode - TERMCODE_DF0, p1, i, j);
+		double v = df_value(g, termcode - TERMCODE_DF0, p1, i, j, a);
 		return ij_exists ? -v : v;
 	}
 	if (SAOM_CTTC(termcode)) {
