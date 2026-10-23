@@ -64,6 +64,7 @@ f nwdyads.sthlp
 f nwdynam.sthlp
 f nwego.sthlp
 f nwergm.sthlp
+f nwergm_bipartite.sthlp
 f nwergm_estat.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp

@@ -64,6 +64,7 @@
 
 {marker bipartite_effects}{...}
 {syntab:Two-mode (bipartite) effects}
+{synopt:{it:further two-mode terms}}b1/b2 concurrent, mindegree, degrange, covrange, factordistinct, sociality, starmix, twostar, coincidence, dsp and gwdsp, curved versions, sub-arguments such as {cmd:by()} - see {help nwergm_bipartite:nwergm (two-mode)}{p_end}
 {synopt:{opth bcov1(varlist)}}Bipartite (two-mode) networks only: the {cmd:b1cov()} term from R's own {cmd:ergm} package (renamed to {cmd:bcov1()} because Stata's {cmd:syntax} command rejects an option name with a digit followed by a letter, e.g. {cmd:b1cov}) - continuous node covariate main effect for the MODE-1 endpoint only (sum, over ties, of the mode-1 endpoint's own covariate value; the mode-2 endpoint's value is never added). Reported coefficient name keeps R's own {cmd:b1cov_}{it:varname} spelling{p_end}
 {synopt:{opth bcov2(varlist)}}Bipartite networks only: the {cmd:b2cov()} term - the {opt bcov1()} mirror for the MODE-2 endpoint. Reported coefficient name: {cmd:b2cov_}{it:varname}{p_end}
 {synopt:{opth bfactor1(varlist)}}Bipartite networks only: the {cmd:b1factor()} term - one coefficient per NON-BASE distinct level of each listed categorical attribute (lowest-sorted level omitted, same convention as {opt nodefactor()}), each counting the number of ties whose MODE-1 endpoint carries that level (the mode-2 endpoint never gets credit, unlike {opt nodefactor()}'s own both-endpoints convention). Reported coefficient name: {cmd:b1factor_}{it:varname}{cmd:_}{it:level}{p_end}
@@ -230,7 +231,7 @@ coefficients may be fixed in one model: {bf:offset(mutual 2 gwesp_weight 0.5)}.
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - a narrow term family so far ({opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}, {opt bnodematch1()}/{opt bnodematch2()}, {opt bgwdegree1()}/{opt bgwdegree2()}); see Limitations below.
+Binary: yes (only) - MPLE/MCMLE estimation here is for a binary tie-formation model; a valued network's own tie values are not used as an outcome (no weighted ERGM family is implemented). Directed: yes, most terms have both directed and undirected forms (see the term list). Weighted: not applicable (see Binary). Signed: not applicable. Two-mode: yes, undirected only - the two-mode terms are listed in {help nwergm_bipartite:nwergm (two-mode)} (the older ones are {opt edges}, {opt bcov1()}/{opt bcov2()}/{opt bfactor1()}/{opt bfactor2()}, {opt bdegree1()}/{opt bdegree2()}/{opt bstar1()}/{opt bstar2()}, {opt bnodematch1()}/{opt bnodematch2()}, {opt bgwdegree1()}/{opt bgwdegree2()}); see Limitations below.
 
 {title:Limitations (v1 scope)}
 

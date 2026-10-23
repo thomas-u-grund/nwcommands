@@ -2817,7 +2817,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		   (theta, the covariance matrix, a converged flag) cross back
 		   via SF_scal_save() - the dyad-scale design matrix itself
 		   never needs to leave this call at all. */
-		long ndyads = directed ? n * (n - 1) : n * (n - 1) / 2;
+		long ndyads = bipartite ? g.n1 * g.n2 : (directed ? n * (n - 1) : n * (n - 1) / 2);
 		long ntheta = (nterms - ncurved) + 2;
 		double *X, *Y;
 		double theta_out[MAXTERMS], V_out[MAXTERMS*MAXTERMS];
@@ -2834,6 +2834,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				double *xrow;
 				if (i == j) continue;
 				if (!directed && j < i) continue;
+				if (bipartite && g.mode[i] == g.mode[j]) continue;
 				tied = has_edge(&g, i, j) ? 1.0 : 0.0;
 				delta = tied ? -1.0 : 1.0;
 				xrow = X + (size_t)pos * (size_t)nterms;

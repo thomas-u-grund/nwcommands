@@ -1,0 +1,41 @@
+INVENTORY UPDATES - agent E5 (bipartite terms and behaviour), branch ergmE5, test tag bip
+term | status | nwergm syntax | validation (what, max difference)
+Validation set: 3 bipartite networks (A 12x10, B 8x15, C 20x6 with hubs and 2 isolated mode-1 nodes), dev/bip_gen.R; R ergm 4.12.0.
+ (a) observed statistic == summary(), (b) change statistics == R ergmMPLE() design matrix over ALL dyads (sorted, 1e-6), (c) MPLE coefficients/SE vs ergm(estimate="MPLE")
+ where R's fit is well identified, (d) MCMLE on a 30x25 network (50 ties), R 4 seeds vs nwergm 3 seeds. Files: dev/bip_spec*.txt, dev/bip_ref.R, dev/bip_run.do, cscripts/test_nwergm_bip.do (206 cases, passes).
+b1concurrent | IMPLEMENTED | bconcurrent1(all) / bconcurrent1(by(var) levels(numlist)) | stat+design exact on A,B,C; MPLE <1e-6; MCMLE 0.02 SE
+b2concurrent | IMPLEMENTED | bconcurrent2(all) / bconcurrent2(by(var)) | same
+b1mindegree, b2mindegree | IMPLEMENTED | bmindegree1(numlist), bmindegree2(numlist) | same (d=0 included, as R's emptynwstats)
+b1degrange, b2degrange | IMPLEMENTED | bdegrange1(from, to(numlist) by(var) levels() homophily), bdegrange2 | same; to=. is Inf
+b1degree, b2degree by= / levels= / homophily= | IMPLEMENTED | bdegree1(numlist, by(var) levels() homophily) | same; plain bdegree1(numlist) unchanged; ranges such as bdegree1(0/3) now expand (also degree, kstar, ... : numlist ranges)
+b1star, b2star attr=/levels= | IMPLEMENTED | bstar1(k, attr(var) levels()) | same; copies R quirk: values outside levels= are all recoded to one extra "other" value that matches itself (R 4.12.0 b1star(2,attr=,levels=1) counts stars among the other values)
+b1covrange, b2covrange | IMPLEMENTED | bcovrange1(var), bcovrange2(var) | same (x is a float in Stata: stat diff 2e-5)
+b1factordistinct, b2factordistinct | IMPLEMENTED | bfactordistinct1(var, levels()) | same
+b1sociality, b2sociality | IMPLEMENTED | bsociality1(numlist) e.g. bsociality1(-1) (R default nodes=-1), bsociality2 | same; numeric nodes= are POSITIONS within the mode (R: levels spec), not node ids
+b1starmix, b2starmix | IMPLEMENTED | bstarmix1(k, attr(var) nodiff base(numlist)) | same (diff=TRUE/FALSE, base=)
+b1twostar, b2twostar | IMPLEMENTED | btwostar1(var, attr2(var) levels1() levels2() levels3() base()) | same
+coincidence | IMPLEMENTED | coincidence(all), coincidence(active(#)) | same on B,C; on A the 45-parameter MPLE is quasi-separated (logit does not converge, R returns a fit)
+b1dsp, b2dsp | IMPLEMENTED | bdsp1(numlist), bdsp2 | same (d=0 counts all pairs of the mode)
+gwb1dsp, gwb2dsp fixed=TRUE | IMPLEMENTED | bgwdsp1(decay), bgwdsp2(decay) | same
+gwb1dsp, gwb2dsp, gwb1degree, gwb2degree fixed=FALSE (curved) | see status line at the end of this file
+gwb1degree/gwb2degree attr= (fixed=TRUE) | IMPLEMENTED | bgwdegree1(decay, attr(var) levels()) | same
+b1nodematch, b2nodematch full | IMPLEMENTED | bnodematch1(var, diff alpha(#) beta(#) byattr(var) keep() levels()) | same; alpha/beta types as R's C code (beta type unless beta>=1 & alpha<1); byattr() is R's byb2attr/byb1attr; plain bnodematch1(var) unchanged
+nodemix on bipartite | IMPLEMENTED | nodemix(var) (b1 level x b2 level cells, first cell dropped as R) | same
+one-mode terms R accepts on bipartite: nodecov nodefactor nodematch(+diff) absdiff degree kstar concurrent degrange esp dsp gwesp gwdsp gwnsp triangle edgecov hamming | now accepted on bipartite | unchanged syntax | stat+design exact on A,B,C (dev/bip_spec2.txt)
+ transitiveties, cyclicalties on bipartite: R accepts (value 0); nwergm still says "directed only" (not done: the undirected versions are not implemented for one-mode either)
+directed-only terms and gwdegree family on bipartite | R errors copied | "In term mutual: Term may not be used with networks with directed==FALSE." / "...bipartite > 0." (gwdegree*) ; bipartite terms on a one-mode network: "...bipartite==FALSE."
+simulate (bipartite) | IMPLEMENTED | nwergm simulate N, edges <bip options> bipartite(n1) theta(...) | smoke-tested (stat identical code path as estimation)
+gof (bipartite) | IMPLEMENTED | estat gof after a two-mode model: b1degree, b2degree, dspartners, distance tables (obs/min/mean/max/MC p) as R's default bipartite GOF | observed dsp row equals R's dsp(0:k) (167,34,20,8 on A); not compared draw by draw
+constraints on bipartite | blockdiag() works | nwergm bip, edges ... blockdiag(var) | MPLE equals R constraints=~blockdiag() (<1e-3 SE-level: -6.112807 vs -6.112807, SE 3.4547 vs 3.4546) on contiguous blocks. R REFUSES non-contiguous blocks ("requires that either the blocks be contiguous"), nwergm accepts any partition (not changed)
+edgecov(two-mode network) on bipartite | works | edgecov(netname) | MPLE equals R edgecov(matrix n1 x n2): -0.8346497/-0.046532/0.129772 vs -0.834650/-0.046532/0.129772
+spcache on bipartite | accepted, same numbers as without | spcache | MPLE dsp(1)+esp(0) equals R with cache.sp=FALSE
+NOTES / GOTCHAS
+ - nwset, mat(M) bipartite takes the MODE-1 nodes from the matrix COLUMNS (not rows): to build a n1 x n2 network pass the n2 x n1 transpose. nwset person event, twomode cannot represent isolated nodes.
+ - A stale ergm_mcmc_macos.plugin in the Stata PLUS folder shadows lib/plugins (findfile): copy the built plugin to the scratch tree root (dev runs do).
+ - Mata: "*/" inside a /* */ comment (e.g. "b1*/b2*") ends the comment.
+ - tempnames created in a helper ado can be recycled for later tempnames in the caller: Mata objects that must outlive the helper use their own counter names (__nwbx<N>).
+ - logit tolerance for the MPLE tightened (tolerance(1e-9) ltolerance(1e-11), falls back to defaults on rc 430): default tolerance gave 1e-3 coefficient differences to R on weakly curved fits.
+ - Native plugin: MAXTERMS 64 -> 256 (ErgmNativeSetup maxcols too); generic bipartite family = TERMCODE 3000+kind (1 DEGR 2 DEGRH 3 STARATTR 4 COVRANGE 5 FACTDIST 6 SOC 7 STARMIX 8 TWOSTAR 9 COINC 10 DSP 11 GWDSP 12 BNM 13 GWDEGA 14 MIX); curved MPLE (mode 2) now enumerates bipartite dyads only.
+ - Not equal to R: models where R's MPLE is separated/degenerate (b1twostar with an empty cell gives -Inf in R; nwergm's MCMLE on that model does not terminate in reasonable time).
+ - Term order in the coefficient table follows nwergm's option order, not the order of R's formula (the MCMLE comparison reorders).
+MCMLE (30x25 network, 50 ties; R 4 seeds, nwergm 3 seeds, difference of means in units of R's SE; nwergm seed-sd ~0.05 SE): conc 0.02, dsp 0.01, range 0.02, gwdsp 0.02, nodematch 0.01, nodematch alpha 0.04, starmix 0.09, covrange 0.14, factordistinct 0.01, degree by 0.06, star attr 0.03, sociality 0.04 (after re-ordering), gwdegree attr 0.02, nodemix+kstar 0.02. Not compared: b1twostar (R -Inf).

@@ -26,6 +26,7 @@ program nwergm, eclass
 		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
 		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
 		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
+		BGWDEGREEFREE1(string) BGWDEGREEFREE2(string) BGWDSPFREE1(string) BGWDSPFREE2(string) ///
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
@@ -168,7 +169,10 @@ program nwergm, eclass
 		// rejected on a one-mode network with the same "reject, never
 		// silently reinterpret" discipline `mutual' (directed-only)
 		// already uses below.
-		local __ergm_bipall "`bconcurrent1'`bconcurrent2'`bmindegree1'`bmindegree2'`bdegrange1'`bdegrange2'`bcovrange1'`bcovrange2'`bfactordistinct1'`bfactordistinct2'`bsociality1'`bsociality2'`bstarmix1'`bstarmix2'`btwostar1'`btwostar2'`coincidence'`bdsp1'`bdsp2'`bgwdsp1'`bgwdsp2'"
+		local __ergm_bipall ""
+		foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
 		if "`__ergm_bipall'" != "" {
 			foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
 				if `"``__ergm_bo''"' != "" {
@@ -205,7 +209,7 @@ program nwergm, eclass
 	// before any of the five options' own validation blocks below, so
 	// each block can just check `` `__ergm_ncurved' > 1 `` instead of
 	// naming every other curved option individually.
-	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="")
+	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"!="")
 
 	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
 	// (free-decay) gwesp - the first user-facing curved term. Dyad-
@@ -675,7 +679,13 @@ program nwergm, eclass
 	}
 
 	// bipartite terms with sub-arguments (b*concurrent, b*mindegree, b*degrange, by=/attr= forms, ...): see _nwergm_bip.ado
-	local __ergm_bipdep = ("`bconcurrent1'`bconcurrent2'`bmindegree1'`bmindegree2'`bdegrange1'`bdegrange2'`bcovrange1'`bcovrange2'`bfactordistinct1'`bfactordistinct2'`bstarmix1'`bstarmix2'`btwostar1'`btwostar2'`coincidence'`bdsp1'`bdsp2'`bgwdsp1'`bgwdsp2'" != "") | (strpos(`"`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'`bgwdegree1'`bgwdegree2'"', ",") > 0)
+	local __ergm_bipdep 0
+	foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 bgwdegreefree1 bgwdegreefree2 bgwdspfree1 bgwdspfree2 {
+		if `"``__ergm_bo''"' != "" local __ergm_bipdep 1
+	}
+	foreach __ergm_bo in bdegree1 bdegree2 bstar1 bstar2 bnodematch1 bnodematch2 bgwdegree1 bgwdegree2 {
+		if strpos(`"``__ergm_bo''"', ",") > 0 local __ergm_bipdep 1
+	}
 	if "`is2mode'" == "true" {
 		_nwergm_bip, nodes(`nodes') bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`nodemix'"')
 		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
@@ -1554,6 +1564,15 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdegreefree'"
 	}
+	// curved bipartite terms (gwb1degree/gwb2degree/gwb1dsp/gwb2dsp with fixed=FALSE in R): see _nwergm_bip.ado
+	if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" {
+		if "`is2mode'" != "true" {
+			di "{err}In term {bf:bgwdegreefree/bgwdspfree}: Term may not be used with networks with bipartite==FALSE."
+			error 198
+		}
+		_nwergm_bip_curved, bgwdegreefree1(`"`bgwdegreefree1'"') bgwdegreefree2(`"`bgwdegreefree2'"') bgwdspfree1(`"`bgwdspfree1'"') bgwdspfree2(`"`bgwdspfree2'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
+	}
 	// gwdspfree() (harmonisation unit 140): mirrors the other two
 	// curved options' own exact pattern, registered under "dsp"
 	// (reusing stat_dsp()/change_dsp() directly).
@@ -1688,6 +1707,7 @@ program nwergm, eclass
 	else if "`gwdspfree'" != "" local __ergm_curved_start "`gwdspfree'"
 	else if "`gwnspfree'" != "" local __ergm_curved_start "`gwnspfree'"
 	else if "`gwodegreefree'" != "" local __ergm_curved_start "`gwodegreefree'"
+	else if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" local __ergm_curved_start "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"
 	else local __ergm_curved_start "`gwidegreefree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
@@ -2443,7 +2463,11 @@ program nwergm_simulate
 		}
 	}
 	else {
-		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | "`bgwdegree1'`bgwdegree2'`bconcurrent1'`bconcurrent2'`bmindegree1'`bmindegree2'`bdegrange1'`bdegrange2'`bcovrange1'`bcovrange2'`bfactordistinct1'`bfactordistinct2'`bsociality1'`bsociality2'`bstarmix1'`bstarmix2'`btwostar1'`btwostar2'`coincidence'`bdsp1'`bdsp2'`bgwdsp1'`bgwdsp2'" != "" {
+		local __ergm_bipall ""
+		foreach __ergm_bo in bgwdegree1 bgwdegree2 bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
+		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `"`__ergm_bipall'"' != "" {
 			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require {bf:bipartite()} (the mode-1 node count)."
 			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode simulation's own analogous effect."
 			error 198
@@ -2694,7 +2718,9 @@ program nwergm_simulate
 		mata: st_local("__ergm_c0", strofreal(cols(__nwergm_last_M.coefnames)))
 		_nwergm_bip, nodes(`nodes') gname(__nwergm_bipG) bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`__ergm_nodemix_b'"')
 		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
-		mata: st_local("__ergm_newn", invtokens(__nwergm_last_M.coefnames[(`__ergm_c0'+1)..cols(__nwergm_last_M.coefnames)]))
+		local __ergm_newn ""
+		mata: st_local("__ergm_c1", strofreal(cols(__nwergm_last_M.coefnames)))
+		if `__ergm_c1' > `__ergm_c0' mata: st_local("__ergm_newn", invtokens(__nwergm_last_M.coefnames[(`__ergm_c0'+1)..`__ergm_c1']))
 		local ntermtok "`ntermtok' `__ergm_newn'"
 		capture mata: mata drop __nwergm_bipG
 	}

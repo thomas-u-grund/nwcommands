@@ -2699,6 +2699,22 @@ real rowvector ergm_bip_gofstats(class ErgmGraph scalar G){
 	return((b1, b2, dsp, dist))
 }
 
+// largest degree among the mode-m nodes / largest number of common neighbours among mode-m node pairs (tight bounds for the curved bipartite terms)
+real scalar _bx_maxdeg(class ErgmGraph scalar G, real scalar m){
+	real colvector nodes
+	real scalar a, best
+	nodes = _bx_nodes(G, m); best = 0
+	for (a=1; a<=rows(nodes); a++) best = max((best, G.degree_total(nodes[a])))
+	return(best)
+}
+real scalar _bx_maxsp(class ErgmGraph scalar G, real scalar m){
+	real colvector nodes
+	real scalar a, b, best
+	nodes = _bx_nodes(G, m); best = 0
+	for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) best = max((best, G.common_neighbors(nodes[a], nodes[b])))
+	return(best)
+}
+
 /*
 	Degrange/idegrange/odegrange: semi-open-interval degree counts -
 	generalizes `degree(d)' (exact match) to a RANGE [from,to). `td.levelpairs'
@@ -6399,7 +6415,8 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 
 	real matrix ties, attrpad, theta_out, V_out
 	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, j, k, __junk, ncurved, ntheta, rc
-	string scalar origframe, argstr, cmd, attrvarlist, covmatvarlist
+	string scalar origframe, argstr, cmd, attrvarlist, covmatvarlist, modevarlist
+	real scalar bipartite__
 	string rowvector attrvarnames, covmatvarnames
 
 	n = G.n
@@ -6427,6 +6444,15 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	st_addobs(nobs_needed)
 	__junk = st_addvar("double", "v1")
 	__junk = st_addvar("double", "v2")
+
+	// two-mode graphs send the per-node mode as their own column (as ErgmNativeBuildMPLEData())
+	modevarlist = ""
+	bipartite__ = G.bipartite
+	if (bipartite__) {
+		__junk = st_addvar("double", "m")
+		modevarlist = " m"
+		st_store((1::n), "m", G.mode[1::n])
+	}
 
 	attrvarlist = ""
 	attrvarnames = J(1, nattr, "")
@@ -6483,7 +6509,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	// fixed_density: always 0 here, same reasoning as hasmask's own
 	// comment just above - curved MPLE is never a fixed-density model
 	// either.
-	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " 0 " + strofreal(nties) + " " +
+	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite__) + " " + strofreal(nties) + " " +
 		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
@@ -6495,7 +6521,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + covmatvarlist + ", " + char(34) + argstr + char(34)
+	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + ", " + char(34) + argstr + char(34)
 	stata(cmd)
 
 	st_framecurrent(origframe)
