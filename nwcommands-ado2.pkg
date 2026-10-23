@@ -55,6 +55,10 @@ f _nwsaom_rsnotes.ado
 f _nwsaom_tconvtable.ado
 f _nwsaom_postengine.ado
 f nwsaom_estat.ado
+f nwsaom_estat_simulate.ado
+f nwsaom_estat_score.ado
+f nwsaom_estat_timetest.ado
+f nwsaom_simulate.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado
