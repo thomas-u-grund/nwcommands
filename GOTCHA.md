@@ -748,3 +748,11 @@ UPDATE (the cause): Stata refuses to load ONE ado program larger than about 141,
 (Old symptom notes:)
 
 Adding a nested `if ... { ... }` / `else mata: ...` (about 10 lines) inside the big `behavior` block of `nwsaom.ado` (the `foreach __e of local netbeh` loop, ~line 3080) made the ado fail to LOAD with r(1000) once the Mata library was loaded - while the same file loaded fine in an empty Stata. It is not the file size (comments stripped: still failing) but the nesting/compile complexity of that block. Fix used: no new nested braces there; put the decision in a Mata helper (`SaomNbSim`) and call it with one `mata: st_local(...)` line. If `nwsaom` suddenly reports r(1000) at load after an edit of that region, move logic into Mata instead of adding Stata control flow. (A Mata function that uses a class must be placed AFTER the class definition in unw_saom.do, or `do unw_saom.do` fails with r(3000).)
+
+## Copying a rebuilt plugin over a loaded one kills Stata with no message (macOS)
+
+Symptom: `cp new.plugin scratch/lib/plugins/macos/saom_sim_macos.plugin` over an existing copy, then the next
+Stata run simply ends in the middle of a command - no error, no `end of do-file` in the log. The crash report
+in `~/Library/Logs/DiagnosticReports/StataBE-*.ips` says `SIGKILL (Code Signature Invalid)`.
+Cause: macOS caches the code signature of the file; overwriting it in place leaves a stale signature.
+Fix: `rm` the old file first, then `cp` (or `cp` to a new name and `mv`). Applies to every scratch directory used for testing.
