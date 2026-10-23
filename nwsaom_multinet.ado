@@ -191,10 +191,19 @@ program define nwsaom_multinet, eclass
 	local hasbeh = ("`behavior'" != "")
 	if `hasbeh' {
 		if "`beheff1'`beheff2'`beheff12'`beheff21'" == "" local beheff1 "linear quadratic avalt"
+		// covariate, shape and further network effects named as family:variable (see _nwsaom_mnbeh.ado)
+		_nwsaom_mnbeh, nodes(`nodes') eff1(`beheff1') eff2(`beheff2')
+		local beheff1 "`r(eff1)'"
+		local beheff2 "`r(eff2)'"
+		local __bcovs "`r(covs)'"
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
 		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))
-		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh2_"))
+		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh_"))
+		// coefficient names: covariate / shape terms get their readable names; the terms of the second network the prefix beh2_
+		mata: SaomBehCovRename(__nwsaom_mn_Mbeh, tokens("`__bcovs'"))
+		local __nb1 : word count `__b1'
+		mata: SaomMNPrefix2(__nwsaom_mn_Mbeh, `__nb1')
 		local __n1 : word count `__b1'
 		local __n2 : word count `__b2'
 		// behavior effects of both networks (beheff12: the first network of the effect is net1, beheff21: it is net2)

@@ -359,6 +359,9 @@ static double saom_behsim_range = 1.0;
 #define SAOM_BEH_XALTTC(tc) ((tc) >= TERMCODE_BEH_XALT0 && (tc) < TERMCODE_BEH_XALT0 + 32)
 static double **saom_behcov_pp[8];			/* centred covariates (1-based): per covariate 1 (constant) or P (changing) value arrays, from the BATCHSETUP trailer */
 static int saom_behcov_np[8];
+static void *saom_gyard[1024];		/* protocol 100: covariate arrays of an earlier BATCHSETUP stay allocated (the period data of another slot of nwsaom multinet point into them) until BATCHCLEAN */
+static int saom_ngyard = 0;
+static void saom_gyard_add(void *p) { if (p && saom_ngyard < 1024) saom_gyard[saom_ngyard++] = p; else free(p); }
 static double saom_behcov_mean[8];
 static double *saom_bdy[8];
 static __thread const double *saom_tl_bdy[8];	/* protocol 57: the dyadic covariates of the current period (NULL: saom_bdy) */
@@ -5654,7 +5657,7 @@ static ST_retcode batch_setup(char *arg) {
 		long nc = next_long_opt(0), c, ii, q;
 		if (nc < 0 || nc > 8) { SF_error("saom_sim: BATCHSETUP too many behavior covariates\n"); return 198; }
 		for (c = 0; c < 8; c++) {
-			if (saom_behcov_pp[c]) { for (q = 0; q < saom_behcov_np[c]; q++) free(saom_behcov_pp[c][q]); free(saom_behcov_pp[c]); }
+			if (saom_behcov_pp[c]) { for (q = 0; q < saom_behcov_np[c]; q++) saom_gyard_add(saom_behcov_pp[c][q]); saom_gyard_add(saom_behcov_pp[c]); }
 			saom_behcov_pp[c] = NULL; saom_behcov_np[c] = 0;
 		}
 		for (c = 0; c < nc; c++) {
@@ -6962,7 +6965,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		free(buf);
 		return rc;
 	}
-	if (strncmp(argv[0], "BATCHCLEAN|", 11) == 0) { int sl; for (sl = MAXNETS - 1; sl >= 0; sl--) { batch_cur = &batch_states[sl]; batch_free(); } batch_cur = &batch_states[0]; return 0; }
+	if (strncmp(argv[0], "BATCHCLEAN|", 11) == 0) { int sl; for (sl = MAXNETS - 1; sl >= 0; sl--) { batch_cur = &batch_states[sl]; batch_free(); } batch_cur = &batch_states[0]; while (saom_ngyard > 0) free(saom_gyard[--saom_ngyard]); return 0; }
 	if (strncmp(argv[0], "BEHSTAT|", 8) == 0) {
 		char *buf = (char *)malloc(strlen(argv[0]) + 1);
 		ST_retcode rc;

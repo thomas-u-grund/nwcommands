@@ -9092,6 +9092,11 @@ string scalar SaomMNAddBoth(class SaomBehaviorModel scalar Mbeh, string scalar t
 	return(out)
 }
 
+/* nwsaom multinet: the behavior terms after the first n1 ones are driven by the second network: coefficient prefix beh_ -> beh2_ */
+void SaomMNPrefix2(class SaomBehaviorModel scalar Mbeh, real scalar n1) {
+	real scalar t
+	for (t=n1+1; t<=Mbeh.nterms; t++) if (substr(Mbeh.coefnames[t], 1, 4) == "beh_") Mbeh.coefnames[t] = "beh2_" + substr(Mbeh.coefnames[t], 5, .)
+}
 /* nwsaom multinet with a behavior: the wave variables (one value per actor), the range of the behavior over all waves */
 void SaomMNAddBeh(string scalar vn, real scalar n) {
 	external pointer(real colvector) rowvector __nwsaom_mn_Bw
