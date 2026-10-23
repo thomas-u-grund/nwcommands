@@ -1,0 +1,101 @@
+\chapter{Simulation, tests and importance of effects}\label{ch:tools}
+
+This chapter describes the commands that work with a fitted model or simulate one: holding effects fixed, simulating a model at chosen parameters, the score-type test for effects that were left out of a model, the test for differences between periods, and the relative importance of the effects. All of them follow the corresponding procedures of RSiena; the comparison is in Chapter~\ref{ch:validation}.
+
+\section{How the commands are organised}
+
+A property of the data is detected from the data: a two-mode network or a non-directed network is recognised from the way the network was declared and needs no option. An option changes how a model is specified or fitted (\opt{behavior()}, \opt{present()}, \opt{fix()}). A different job is a subcommand (\texttt{nwsaom multinet}, \texttt{nwsaom simulate}) or a postestimation command (\texttt{estat}). \texttt{nwsaom multiplex} is deprecated and forwards to \texttt{nwsaom multinet}.
+
+\section{Holding effects fixed: \opt{fix()}}
+
+\opt{fix(\emph{effects})} keeps the named effects at their \opt{theta0()} values. They are not estimated and have no standard error; this is RSiena's \texttt{fix = TRUE}. \opt{fix(\_all)} fixes every effect. The names are those of the effects in the call; the effects of a co-evolving behavior are named by their token (\opt{fix(avalt)}) or by the label in the coefficient table (\texttt{beh\_avalt}).
+\begin{lstlisting}
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip theta0(-2 1 0) fix(reciprocity) k3(300) seed(1)
+   outdegree |  -2.302964   .1339931   -17.19   0.000
+ reciprocity |          1          .        .       .
+   transtrip |   .7612309   .1304464     5.84   0.000
+\end{lstlisting}
+The fixed coefficient equals its start value and its variance is 0. Fixing is used for the score test below, for fitting a model with a known part, and for the simulation-only mode.
+
+\section{Simulation: \texttt{estat simulate} and \texttt{nwsaom simulate}}
+
+\texttt{estat simulate} simulates the fitted model forward. Every period starts at the observed start wave of the period and runs for the period's length at the fitted coefficients and rates, the same simulation that \texttt{estat gof} uses; the default is 100 replications.
+\begin{lstlisting}
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip k3(200) seed(1)
+. estat simulate, nsim(20) seed(5)
+Simulation from the fitted model: 20 replication(s) of 1 period(s).
+Mean over replications (observed end wave in brackets):
+period          ties      mutual    transitive    behavior
+1          110.2 ( 116)    33.4 (  35)      77.2 (  88)
+\end{lstlisting}
+Options: \opt{theta(\emph{matname})} replaces the coefficients (a row vector in the order of \texttt{e(b)}), \opt{rates()} and \opt{ratesbeh()} replace the rates, \opt{generate(\emph{stub})} saves the simulated networks as networks named \emph{stub}\texttt{\_}\emph{s}\texttt{\_p}\emph{period} (and the behaviors as variables of the same names). The result \texttt{r(sim)} has one row per replication and period (number of ties, mutual dyads, transitive triples, mean behavior), \texttt{r(obs)} the same for the observed end waves.
+
+\paragraph{Simulation-only mode.} \texttt{nwsaom simulate} simulates at coefficients you choose, without any estimation (RSiena's \texttt{siena07} with \texttt{simOnly = TRUE}). The model is specified exactly as in \texttt{nwsaom}; \opt{theta()} gives one coefficient per network effect in the order of the coefficient table of a fit of the same model (the order in which \nwsaom{} lists the effects, which is not always the order in which you typed them), \opt{behtheta()} one per behavior effect, \opt{rates()} the rate of each period.
+\begin{lstlisting}
+. nwsaom simulate, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip theta(-2.3 2 0.5) rates(5) nsim(30) seed(3)
+period          ties      mutual    transitive    behavior
+1          127.1 ( 116)    36.3 (  35)      72.0 (  88)
+\end{lstlisting}
+Internally the model is set up by a short call of \texttt{nwsaom} with all coefficients fixed, so every data option of \texttt{nwsaom} is understood.
+
+\section{Score-type tests: \texttt{estat score}}
+
+The score-type test of Schweinberger (2012) asks, for effects that are not in the model, whether adding them would improve the fit, using only the restricted model. Fit the restricted model with the effects to be tested in the model but held fixed at the restricted value (usually 0), then call \texttt{estat score}:
+\begin{lstlisting}
+. nwsaom, wave1(glasgow1) wave2(glasgow2) outdegree reciprocity transtrip cycle3 theta0(-2.3 2 0 0) fix(transtrip cycle3) k0(100) k3(1000) seed(1)
+. estat score
+Generalised score-type test of the model restricted by:
+  (1)  transtrip                =    0.0000
+  (2)  cycle3                   =    0.0000
+------------------------------------------------------------
+Joint test:  c =  82.2543   d.f. = 2   p-value = 0.0000
+  (1) transtrip separately: c =  82.0640  d.f. = 1  p-value = 0.0000   one-sided:   9.0589
+  (2) cycle3 separately: c =  67.8301  d.f. = 1  p-value = 0.0000   one-sided:   8.2359
+One-step estimates (restricted estimate plus the one-step correction):
+  outdegree                 -2.6919
+  reciprocity                2.2197
+  transtrip                  1.2905
+  cycle3                     0.1595
+\end{lstlisting}
+The joint statistic $c$ is chi-squared with as many degrees of freedom as tested effects. The one-sided variate is a normal variate with the sign changed, as in RSiena, so that it is positive when the effect is expected to be positive. The one-step estimates give the value each coefficient would approximately take if the tested effects were freed, which is a quick way to see the size of the effects before fitting the larger model. \opt{tested(\emph{effects})} restricts the test to some of the fixed effects; the others stay fixed and are treated as redundant. The test works for network effects and for the effects of a co-evolving behavior.
+
+\section{Time heterogeneity: \texttt{estat timetest}}
+
+\texttt{estat timetest} asks whether the effects of a model with at least three waves have the same size in all periods (RSiena's \texttt{sienaTimeTest}). For each effect the model is extended by deviations for the periods 2 to $P$, and the hypothesis that all deviations are 0 is tested by a score-type test, from the simulations of the fit in memory; no second fit is needed.
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip k0(100) k3(1000) seed(1)
+. estat timetest
+Joint test of all period-specific deviations:  c =    3.9104   d.f. = 3   p-value = 0.2713
+
+Test of each effect (is its parameter the same in all periods?)
+effect                           c  d.f.   p-value
+outdegree                    0.115     1    0.7340
+reciprocity                  1.179     1    0.2776
+transtrip                    0.485     1    0.4861
+
+Period-specific deviations (one-step estimates) and separate tests
+effect                    period   deviation         c   p-value
+outdegree                      2     -0.3636     0.115    0.7340
+reciprocity                    2      0.7264     1.179    0.2776
+transtrip                      2      0.0683     0.485    0.4861
+\end{lstlisting}
+With $P$ periods there are $P-1$ deviations per effect. In this example there is no evidence that the effects change between the two periods. The tests are most informative when the deviation of an effect is the question: the deviation is reported as the one-step estimate of the difference between the period and the first period. \opt{effects(\emph{names})} restricts the test to some effects.
+
+\section{Relative importance of effects: \texttt{estat importance}}
+
+\texttt{estat importance} computes the relative importance of the effects of a network model (RSiena's \texttt{sienaRI}, \texttt{interpret\_size}). At the start network of each period the contribution of every effect to every possible tie change of every actor is computed. The importance of an effect for an actor is the $L^1$ distance between the actor's choice probabilities with the fitted coefficients and with the effect's coefficient set to 0; the relative importance is its share among all effects, averaged over the actors. The command also reports $\sigma$ (the within-actor standard deviation of the effect's contributions), the semi-standardised estimate (the coefficient times $\sigma$, which compares effects on a common scale) and the certainty $R_H$ of the actors' choices.
+\begin{lstlisting}
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip cycle3 k0(100) k3(500) seed(1)
+. estat importance
+effect                  estimate     s.e.     sigma   semi-std.    RI p1    RI p2
+outdegree                -2.6928   0.1259    0.4384     -1.1805   0.4337   0.5043
+reciprocity               2.4849   0.2188    0.2140      0.5317   0.3777   0.3098
+transtrip                 0.6716   0.1432    0.6514      0.4375   0.1727   0.1713
+cycle3                   -0.1133   0.2936    0.3374     -0.0382   0.0159   0.0147
+Certainty R_H of the actors' choices:   0.2660   0.3518
+\end{lstlisting}
+The command is available after fits of a directed one-mode network without behavior, endowment and creation effects, \opt{structural()}, \opt{present()} or missing-data options; RSiena has the same restrictions. It needs the native plugin.
+
+\section{What is not available}
+
+The Bayesian estimation of \texttt{sienaBayes} is not implemented (Chapter~\ref{ch:missing}). \texttt{estat importance} has no version for behavior effects yet, and the tests of this chapter are not available after \texttt{nwsaom multinet}.

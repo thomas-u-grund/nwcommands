@@ -355,7 +355,7 @@ within a type, the variables in the order listed; {cmd:matrix list e(b)} shows i
 {pstd}
 Simulates a model at coefficients chosen by you, without estimating anything (RSiena's {cmd:siena07} with
 {cmd:simOnly = TRUE}). The model is specified exactly as in {cmd:nwsaom} (waves, effects, covariates, {opt behavior()},
-...). {opt theta()} gives one coefficient per network effect in the order of the effect options, {opt behtheta()} one
+...). {opt theta()} gives one coefficient per network effect in the order of the coefficient table of a fit of the same model (the order {cmd:nwsaom} lists the effects, not necessarily the order you typed them), {opt behtheta()} one
 per behavior effect, {opt rates()} the rate of every period and {opt ratesbeh()} the behavior rates. The result is that of
 {help nwsaom_estat##estat_simulate:estat simulate}. After a fit, {cmd:estat simulate} simulates the fitted model.
 
