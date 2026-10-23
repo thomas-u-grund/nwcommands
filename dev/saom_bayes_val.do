@@ -1,5 +1,5 @@
 * Validation of nwsaom bayes against RSiena (dev/saom_bayes_ml.R): Glasgow s501-s503. args: model (glas|cov) seed nprewarm nwarm nmain nrunmh
-args model seed npw nw nm nr
+args model seed npw nw nm nr nimp opts
 do unw_core.do
 do unw_ergm.do
 do unw_saom.do
@@ -21,7 +21,7 @@ if "`model'" == "glas" nwsaom, waves(cx1 cx2 cx3) outdegree reciprocity transtri
 else nwsaom, waves(cx1 cx2 cx3) outdegree reciprocity transtrip egox(alc) altx(alc) simx(alc) k3(1000) seed(`seed')
 matrix MOM = e(b)
 matrix list MOM
-nwsaom bayes, nprewarm(`npw') nwarm(`nw') nmain(`nm') nrunmh(`nr') seed(`seed')
+nwsaom bayes, nprewarm(`npw') nwarm(`nw') nmain(`nm') nrunmh(`nr') nimprovemh(`nimp') seed(`seed') `opts'
 di "BAYESRESULT `model' seed `seed'"
 matrix list e(b)
 matrix list e(rates)

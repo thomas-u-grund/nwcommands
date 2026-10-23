@@ -14769,9 +14769,11 @@ void __nwsaom_mp_fit_and_post(
    Vprop: the starting covariance of the random-walk proposal for the effects.
 --------------------------------------------------------------------------- */
 real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M,
-	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd, real scalar pshape, real scalar prate,
-	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh, real scalar ntheta, real scalar W, real scalar seed,
-	real scalar mult, real scalar targetmh, string scalar frname, string rowvector names)
+	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd,
+	real rowvector ratepm, real rowvector ratepsd, real scalar pshape, real scalar prate, real rowvector rsd,
+	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh,
+	real scalar nsampconst, real scalar nsamprates, real scalar seed, real scalar mult, real scalar targetmh, real scalar ratemode,
+	string scalar frname, string rowvector names)
 {
 	struct SaomNativeConfig scalar cfg
 	pointer(class ErgmGraph scalar) rowvector Gstart
@@ -14810,14 +14812,18 @@ real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real sc
 	vn = ("e_pd", "e_i", "e_j", "o" :+ strofreal(1..nout))
 	junk = st_addvar("double", vn)
 	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
-	argstr = "BAYESRUN|" + strofreal(rows(E)) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(ntheta) + " " + strofreal(W) + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g")
+	argstr = "BAYESRUN|" + strofreal(rows(E)) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(nsampconst) + " " + strofreal(nsamprates)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g") + " " + strofreal(ratemode)
 	argstr = argstr + " " + strofreal(K) + " " + strofreal(P)
 	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g"))
 	argstr = argstr + " " + invtokens(strofreal(pmean, "%25.17g"))
 	argstr = argstr + " " + invtokens(strofreal(psd, "%25.17g"))
 	argstr = argstr + " " + invtokens(strofreal(rho0, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(ratepm, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(ratepsd, "%25.17g"))
 	argstr = argstr + " " + invtokens(J(1, P, strofreal(pshape, "%25.17g")))
 	argstr = argstr + " " + invtokens(J(1, P, strofreal(prate, "%25.17g")))
+	argstr = argstr + " " + invtokens(strofreal(rsd, "%25.17g"))
 	for (i=1; i<=K; i++) argstr = argstr + " " + invtokens(strofreal(Vprop[i, .], "%25.17g"))
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	stata("plugin call saomnativesim " + invtokens(vn) + ", " + char(34) + argstr + char(34))

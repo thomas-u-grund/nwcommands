@@ -58,7 +58,7 @@ __nwsaom_last_G1 = tb_graph(st_matrix("W1"))
 __nwsaom_last_G2 = tb_graph(st_matrix("W2"))
 __nwsaom_last_G3 = tb_graph(st_matrix("W3"))
 end
-nwsaom bayes, nprewarm(0) nwarm(20) nmain(15000) nrunmh(3) nimprovemh(0) nmh(40) theta0(-2 1.5 0) rate0(4 4) fixrates nsampconst(0) seed(11) notable
+nwsaom bayes, nprewarm(0) nwarm(20) nmain(15000) nrunmh(3) nimprovemh(0) theta0(-2 1.5 0) rate0(4 4) fixrates nsampconst(0) seed(11) notable
 di "mean number of ministeps: " e(mean_chain_length) " (exact 29.831)"
 assert abs(e(mean_chain_length) - 29.831) < 0.6
 di "PASS nwsaom bayes: Glasgow run, results, fixed rates, dispatch"
