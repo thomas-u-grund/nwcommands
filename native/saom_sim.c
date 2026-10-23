@@ -701,6 +701,26 @@ static void batch_otp_reverse(graph_t *g, long actor, double *out) {
 	}
 }
 
+/* cycle4 for every alternative of one ego in one pass: out[j] = pair_cycle4_threepaths(g, actor, j) for all j.
+   Every path actor->h<-k (k != actor) adds one to each out-neighbour j of k; the paths that leave through
+   h == j are removed afterwards (h ranges over the out-neighbours of the actor except j, and k->j holds for
+   all k in inadj[j], so they number din[j] - 1). Integer counts, identical to the pairwise port. */
+static void batch_cycle4(graph_t *g, long actor, double *out) {
+	long m, mm, a, h, k, j;
+	for (m = 0; m < g->outadj[actor].len; m++) {
+		h = g->outadj[actor].nb[m];
+		for (mm = 0; mm < g->inadj[h].len; mm++) {
+			k = g->inadj[h].nb[mm];
+			if (k == actor) continue;
+			for (a = 0; a < g->outadj[k].len; a++) out[g->outadj[k].nb[a]] += 1.0;
+		}
+	}
+	for (m = 0; m < g->outadj[actor].len; m++) {
+		j = g->outadj[actor].nb[m];
+		out[j] -= (double)(g->din[j] - 1);
+	}
+}
+
 /* ===================================================================
    Pair-wise OTP/ISP for the AGGREGATE statistic computation
    (harmonisation unit 14 - see saom_stat_term()'s own header comment
@@ -2187,7 +2207,20 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 			for (k = 0; k < g->nties; k++) tot += (double)g->din[g->elist_i[k]] * (double)g->dout[g->elist_j[k]];
 			return tot;
 		case TERMCODE_CYCLE4:						// stat_saom_cycle4(): 0.25 * sum over ties (i,j) of pair_cycle4_threepaths(i,j)
-			for (k = 0; k < g->nties; k++) tot += (double)pair_cycle4_threepaths(g, g->elist_i[k], g->elist_j[k]);
+			if (!g->outadj || !g->inadj) {
+				for (k = 0; k < g->nties; k++) tot += (double)pair_cycle4_threepaths(g, g->elist_i[k], g->elist_j[k]);
+			}
+			else {
+				double *c4 = (double *)calloc((size_t)(g->n + 1), sizeof(double));
+				long ii, mm;
+				for (ii = 1; ii <= g->n; ii++) {
+					if (g->outadj[ii].len == 0) continue;
+					memset(c4, 0, (size_t)(g->n + 1) * sizeof(double));
+					batch_cycle4(g, ii, c4);
+					for (mm = 0; mm < g->outadj[ii].len; mm++) tot += c4[g->outadj[ii].nb[mm]];
+				}
+				free(c4);
+			}
 			return tot * 0.25;
 	}
 	return 0.0;
@@ -4303,6 +4336,9 @@ static void graph_free(graph_t *g) {
    loop it replaces), and the maximum utility (including "stay" = 0) is
    returned. Alternatives excluded by composition change are skipped (u
    and chg left untouched there; callers never read them). */
+static __thread double *saom_c4buf = NULL;
+static __thread long saom_c4cap = 0;
+
 static double eval_network_alternatives(const model_t *M, const simparams_t *P, graph_t *g,
 	double **attrs, long actor, const double *presentArr, double *tt_arr, double *c3_arr,
 	double *chg, double *u, unsigned char *ijx) {
@@ -4349,6 +4385,19 @@ static double eval_network_alternatives(const model_t *M, const simparams_t *P, 
 				break;
 			case TERMCODE_CYCLE3:
 				for (j = 1; j <= n; j++) c[j] = ijx[j] ? -c3_arr[j] : c3_arr[j];
+				break;
+			case TERMCODE_CYCLE4:
+				if (g->outadj && g->inadj) {
+					if (saom_c4cap < n + 1) { free(saom_c4buf); saom_c4buf = (double *)malloc((size_t)(n + 1) * sizeof(double)); saom_c4cap = n + 1; }
+					memset(saom_c4buf, 0, (size_t)(n + 1) * sizeof(double));
+					batch_cycle4(g, actor, saom_c4buf);
+					for (j = 1; j <= n; j++) c[j] = ijx[j] ? -saom_c4buf[j] : saom_c4buf[j];
+				}
+				else for (j = 1; j <= n; j++) {
+					if (j == actor) continue;
+					if (presentArr && presentArr[j] == 0.0) continue;
+					c[j] = saom_eval_change((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs, g, actor, j, ijx[j], tt_arr, c3_arr);
+				}
 				break;
 			case TERMCODE_SIMCOV:
 				for (j = 1; j <= n; j++) { double d = 1.0 - fabs(a[actor] - a[j]) - p1; c[j] = ijx[j] ? -d : d; }
