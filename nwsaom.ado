@@ -4332,6 +4332,14 @@ program define nwsaom_multinet, eclass
 		foreach __t of local cross`__s' {
 			gettoken __e __pp : __t, parse(":")
 			local __pp = subinstr("`__pp'", ":", "", 1)
+			mata: st_local("__iscov", strofreal(anyof(SaomMNCovNames(), "`__e'")))
+			if `__iscov' {
+				gettoken __cv __pp : __pp, parse(":")
+				local __pp = subinstr("`__pp'", ":", "", 1)
+				if "`__pp'" == "" local __pp 1
+				mata: SaomMNAddCrossCov(__nwsaom_mn_M`__s', "`__e'", "`__cv'", `nodes', `__pp')
+				continue
+			}
 			if "`__pp'" == "" mata: st_local("__pp", strofreal(SaomMNDefaultParam("`__e'")))
 			local __os = 3 - `__s'
 			mata: SaomMNAddCross(__nwsaom_mn_M`__s', "`__e'", `nodes', `__pp', __nwsaom_mn_avg(`__os'), __nwsaom_mn_avg(`__s'), __nwsaom_mn_avgsq(`__os'))

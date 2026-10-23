@@ -255,6 +255,17 @@ each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity t
 e.g. {cmd:from:2}, is RSiena's effect parameter). The cross-network statistics read the other network at the start of the period, the simulation its current
 state, as RSiena. {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
 
+{p 4 4 2}
+Further cross-network effects (all validated against siena07; the names are RSiena's short names in lower case, see the effects inventory): the degree and distance-two
+families ({cmd:inpopintn inactintn crprodinactintn outpopintn outactintn divoutegointn divinegointn divoutaltintn divinaltintn avdegintn absoutdiffintn both outoutactintn
+outoutavintn dist2outinactintn outoutdist2actintn outoutdist2avintn ndist2actintn doubleoutact}), closure and mixed-triad effects ({cmd:closure cyclosure sharedin wwxee wwxfr wxxfe
+wxxer xwxer xwxfe jinmix joutmix gwespffmix gwespbbmix gwespbfmix gwespfbmix gwesprrmix inpopoutw sharedto avalt2mtie avalt2mtot doubleinpop}).
+{bf:With a covariate} of the actors (a variable in the current dataset, written {it:effect}{cmd::}{it:var}[{cmd::}{it:#}], e.g. {cmd:cross1(covnetnet:alc homcovnetnet:alc)}), protocol 56:
+{cmd:samewwclosure diffwwclosure jumpwwclosure jumpfrom jumpsharedin samewxclosure diffwxclosure jumpwxclosure homwxclosure samexwclosure diffxwclosure covnetnet homcovnetnet
+contrastcovnetnet alldifcovnetnet covnetnetin homcovnetnetin contrastcovnetnetin alldifcovnetnetin inpopintnx inactintnx outpopintnx outactintnx samexinpopintn samexinactintn
+samexoutpopintn samexoutactintn altdist2w totdist2w simdist2w altindist2w totindist2w simegodist2w simegoindist2w} (RSiena sameWWClosure, diffWWClosure, jumpWWClosure, jumpFrom,
+jumpSharedIn, sameWXClosure, ..., covNetNet, homCovNetNet, ..., inPopIntnX, ..., altDist2W, ..., simEgoInDist2W; the number is RSiena's effect parameter).
+
 {title:Description}
 
 {pstd}

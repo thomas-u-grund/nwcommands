@@ -58,3 +58,21 @@ assert _rc == 198
 capture noisily nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) eff1(nosuch) k3(30)
 assert _rc == 198
 di "PASS multinet"
+
+* cross-network effects with a covariate (protocol 56): siena07 agreement in dev/saom_rsiena_xc.R/.do; here every effect fits natively
+gen double xc = mod(_n * 7, 5)
+foreach ef in samewwclosure diffwwclosure jumpwwclosure jumpfrom jumpsharedin samewxclosure diffwxclosure jumpwxclosure homwxclosure samexwclosure diffxwclosure ///
+	covnetnet homcovnetnet contrastcovnetnet alldifcovnetnet covnetnetin homcovnetnetin contrastcovnetnetin alldifcovnetnetin inpopintnx inactintnx outpopintnx outactintnx ///
+	samexinpopintn samexinactintn samexoutpopintn samexoutactintn altdist2w totdist2w simdist2w altindist2w totindist2w simegodist2w simegoindist2w {
+	capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) cross1(`ef':xc) k0(10) k3(40) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 {
+		assert "`e(engine)'" == "native" & colsof(e(b)) == 5
+		local nm : colnames e(b)
+		assert strpos("`nm'", "xc_`ef'_xc") > 0
+	}
+}
+capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) cross1(covnetnet:nosuchvar) k3(30)
+assert _rc != 0
+di "PASS multinet covariate effects"
+

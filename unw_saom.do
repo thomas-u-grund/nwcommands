@@ -8326,6 +8326,40 @@ void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, 
 	td.attr[3] = avSqOther
 	M.addterm("nat_x" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("x_" + eff))
 }
+/* protocol 56: cross-network effects with a constant covariate (term code 3100 + w); eff:var[:#] */
+string rowvector SaomMNCovNames() return(("samewwclosure", "diffwwclosure", "jumpwwclosure", "jumpfrom", "jumpsharedin", "samewxclosure", "diffwxclosure", "jumpwxclosure", "homwxclosure", ///
+	"samexwclosure", "diffxwclosure", "covnetnet", "homcovnetnet", "contrastcovnetnet", "alldifcovnetnet", "covnetnetin", "homcovnetnetin", "contrastcovnetnetin", "alldifcovnetnetin", ///
+	"inpopintnx", "inactintnx", "outpopintnx", "outactintnx", "samexinpopintn", "samexinactintn", "samexoutpopintn", "samexoutactintn", "altdist2w", "totdist2w", "simdist2w", ///
+	"altindist2w", "totindist2w", "simegodist2w", "simegoindist2w"))
+void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
+	class ErgmTermData scalar td
+	string rowvector nm
+	real colvector X
+	real scalar k, w, rng, sm
+	nm = SaomMNCovNames()
+	w = -1
+	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) w = k - 1
+	if (w < 0) {
+		errprintf("nwsaom multinet: unknown covariate cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
+		exit(198)
+	}
+	X = st_data(1::n, vn)
+	if (any(X :>= .)) {
+		errprintf("nwsaom multinet: " + eff + "(): " + vn + " has missing values (not supported).\n")
+		exit(198)
+	}
+	td = ErgmTermData()
+	td.levels = (3100 + w \ 0)
+	td.decay = p1
+	td.attr = X :- mean(X)
+	if (anyof(("simdist2w", "simegodist2w", "simegoindist2w"), eff)) {
+		rng = max(X) - min(X)
+		if (rng <= 0) rng = 1
+		td.decay = SaomSimMean(X)
+		td.attr = (X :- mean(X)) :/ rng
+	}
+	M.addterm("nat_xc" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xc_" + eff + "_" + vn))
+}
 /* the within-network effects: structural ones by name, covariate ones by (name, variable) */
 void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
 	class ErgmTermData scalar td
