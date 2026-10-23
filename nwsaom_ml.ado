@@ -7,7 +7,7 @@
 capture program drop nwsaom_ml
 program nwsaom_ml, eclass
 	version 14
-	syntax [, N1(integer 50) NSUB(integer 4) NSTART2(integer 100) N3(integer 1000) MULT(real 5) NMH(integer 0) GAIN(real 0.2) SEED(integer -1) THETA0(numlist) RATE0(numlist >0) NOTABLE]
+	syntax [, N1(integer 50) NSUB(integer 4) NSTART2(integer 100) N3(integer 1000) MULT(real 5) NMH(integer 0) GAIN(real 0.2) MHGEOM(real 0) SEED(integer -1) THETA0(numlist) RATE0(numlist >0) NOTABLE]
 	if `"`e(cmd)'"' != "nwsaom" {
 		di as err "nwsaom ml works on the model of the last nwsaom fit."
 		exit 301
@@ -60,7 +60,7 @@ program nwsaom_ml, eclass
 	}
 	mata: __nwsaom_ml_Gs = (`gs')
 	di as txt "Maximum likelihood: phase 1 `n1' iterations, phase 2 `nsub' subphases from `nstart2' iterations, phase 3 `n3' iterations ..."
-	mata: st_matrix("`out'", SaomMLRun(__nwsaom_ml_Gs, `nper', __nwsaom_last_M, `coev', `mbs', st_matrix("`b'"), st_matrix("`rt'"), `n1', `nsub', `nstart2', `n3', `nmh', `seed', `mult', `gain'))
+	mata: st_matrix("`out'", SaomMLRun(__nwsaom_ml_Gs, `nper', __nwsaom_last_M, `coev', `mbs', st_matrix("`b'"), st_matrix("`rt'"), `n1', `nsub', `nstart2', `n3', `nmh', `seed', `mult', `gain', `mhgeom'))
 	capture mata: mata drop __nwsaom_ml_Gs __nwsaom_ml_Mb0 __nwsaom_ml_Bw0
 	local KP = `K' + `NR'
 	local ok = scalar(__saom_ml_okinfo)

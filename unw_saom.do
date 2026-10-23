@@ -15680,7 +15680,7 @@ real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real sc
 	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd,
 	real rowvector ratepm, real rowvector ratepsd, real scalar pshape, real scalar prate, real rowvector rsd,
 	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh,
-	real scalar nsampconst, real scalar nsamprates, real scalar seed, real scalar mult, real scalar targetmh, real scalar ratemode,
+	real scalar nsampconst, real scalar nsamprates, real scalar seed, real scalar mult, real scalar targetmh, real scalar ratemode, real scalar geo,
 	string scalar frname, string rowvector names)
 {
 	real matrix draws
@@ -15701,7 +15701,7 @@ real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real sc
 	vn = "o" :+ strofreal(1..nout)
 	SaomChainPrepare(Gall, P, M, coev, Mbeh, Behwaves, behmin, behmax, "__saom_bayes", vn, nsave, nE, nBE)
 	argstr = "BAYESRUN|" + strofreal(nE) + " " + strofreal(nBE) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(nsampconst) + " " + strofreal(nsamprates)
-	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g") + " " + strofreal(ratemode)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g") + " " + strofreal(ratemode) + " " + strofreal(geo, "%20.10g")
 	argstr = argstr + " " + strofreal(K) + " " + strofreal(Kb) + " " + strofreal(P)
 	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g"))
 	argstr = argstr + " " + invtokens(strofreal(pmean, "%25.17g"))
@@ -15737,7 +15737,7 @@ real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real sc
 real matrix SaomMLRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
 	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
 	real rowvector theta, real rowvector rho0, real scalar n1, real scalar nsub, real scalar n2start, real scalar n3,
-	real scalar nmh, real scalar seed, real scalar mult, real scalar gain)
+	real scalar nmh, real scalar seed, real scalar mult, real scalar gain, real scalar geo)
 {
 	real matrix out
 	real scalar KT, NR, KP, K, Kb, nE, nBE
@@ -15756,7 +15756,7 @@ real matrix SaomMLRun(pointer(class ErgmGraph scalar) rowvector Gall, real scala
 	vn = ("est", "tconv", "c" :+ strofreal(1..KP), "score")
 	SaomChainPrepare(Gall, P, M, coev, Mbeh, Behwaves, behmin, behmax, "__saom_ml", vn, KP, nE, nBE)
 	argstr = "MLRUN|" + strofreal(nE) + " " + strofreal(nBE) + " " + strofreal(n1) + " " + strofreal(nsub) + " " + strofreal(n2start) + " " + strofreal(n3) + " " + strofreal(nmh)
-	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(gain, "%20.10g") + " " + strofreal(K) + " " + strofreal(Kb) + " " + strofreal(P)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(gain, "%20.10g") + " " + strofreal(geo, "%20.10g") + " " + strofreal(K) + " " + strofreal(Kb) + " " + strofreal(P)
 	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g")) + " " + invtokens(strofreal(rho0, "%25.17g"))
 	origframe = st_framecurrent()
 	st_framecurrent("__saom_ml")

@@ -63,6 +63,7 @@ typedef struct {
 	long *pl;
 	long plcap;
 	double *zend;			/* behavior at the end of each period, zend[pd * n + (i-1)] */
+	double geo;			/* msb of an inserted pair: truncated geometric offset with this ratio (0: uniform, RSiena) */
 } bctx_t;
 
 static double b_unif(bctx_t *B) {
@@ -281,6 +282,24 @@ static void bc0update(bctx_t *B, long pd, long cused, int accept) {
 	if (c0 < 2.0) c0 = 2.0;
 	B->c0[pd] = c0;
 }
+/* offset o in 1..CL of the second ministep of an inserted pair: uniform (RSiena) or truncated geometric; *lw = -log(probability of o) */
+static long bpickoffset(bctx_t *B, long CL, double *lw) {
+	double g = B->geo;
+	if (g <= 0.0 || g >= 1.0 || CL <= 1) { *lw = log((double)CL); return 1 + b_randint(B, CL); }
+	{
+		double gc = pow(g, (double)CL), u = b_unif(B), W = (1.0 - gc) / (1.0 - g);
+		long o = 1 + (long)floor(log(1.0 - u * (1.0 - gc)) / log(g));
+		if (o > CL) o = CL;
+		if (o < 1) o = 1;
+		*lw = log(W) - (double)(o - 1) * log(g);
+		return o;
+	}
+}
+static double blwoffset(const bctx_t *B, long CL, long o) {		/* -log(probability of offset o) */
+	double g = B->geo;
+	if (g <= 0.0 || g >= 1.0 || CL <= 1) return log((double)CL);
+	return log((1.0 - pow(g, (double)CL)) / (1.0 - g)) - (double)(o - 1) * log(g);
+}
 static int bpickvar(bctx_t *B, long pd) {		/* the dependent variable of a proposed ministep, in proportion to the rates */
 	if (B->nvar == 1) return 0;
 	return (rng_unif(&B->rng) * bsumrho(B, pd) < B->rho[pd]) ? 0 : 1;
@@ -372,7 +391,7 @@ static void bmove_insperm(bctx_t *B, long pd, bmoves_t *mv) {
 	long c0i = (long)B->c0[pd];
 	int perm[64], k0;
 	bstate_t *st;
-	double lz, uu, acc, lpX1, lpX2, dl, la, rho = 0.0, srho = bsumrho(B, pd);
+	double lz, uu, acc, lpX1, lpX2, dl, la, rho = 0.0, srho = bsumrho(B, pd), lwoff = 0.0;
 	if (R < 1 || n < 2) return;
 	msa = b_randint(B, R);
 	k0 = bpickvar(B, pd);
@@ -404,7 +423,7 @@ static void bmove_insperm(bctx_t *B, long pd, bmoves_t *mv) {
 	msd = R;
 	for (s = msa + 1; s < R; s++) if (bkey(B, c->ek[s], c->ei[s], c->ej[s]) == bkey(B, k0, i0, j0)) { msd = s; break; }
 	CL = msd - msa;
-	msb = msa + 1 + b_randint(B, CL);
+	{ double lwo; msb = msa + bpickoffset(B, CL, &lwo); lwoff = lwo; }
 	TL = msb - msa;
 	cc = (TL < c0i) ? TL : c0i;
 	if (cc > 40) cc = 40;
@@ -448,7 +467,7 @@ static void bmove_insperm(bctx_t *B, long pd, bmoves_t *mv) {
 	B->ppos[pd] = msb;
 	Kp = bccp(B, B->tek, B->tei, B->tej, R + 2, 0);
 	if (Kp < 1) Kp = 1;
-	la = dl + log(rho) + log(srho) + log((double)n) + log((double)R) + log((double)CL) - log((double)(R + 1)) - log((double)(R + 2)) - log((double)Kp);
+	la = dl + log(rho) + log(srho) + log((double)n) + log((double)R) + lwoff - log((double)(R + 1)) - log((double)(R + 2)) - log((double)Kp);
 	mv->tried[3] += 1.0;
 	if (log(b_unif(B)) < la) {
 		bchain_ensure(c, R + 2);
@@ -512,7 +531,7 @@ static void bmove_delperm(bctx_t *B, long pd, bmoves_t *mv) {
 	Rc = R - 2;
 	if (CL < 1) CL = 1;
 	/* the inverse insertion has Delta = lp(X2) - dl */
-	la = -(c->lp[msb] - dl) - log(rho) - log(srho) - log((double)n) - log((double)Rc) - log((double)CL) + log((double)(Rc + 1)) + log((double)(Rc + 2)) + log((double)K);
+	la = -(c->lp[msb] - dl) - log(rho) - log(srho) - log((double)n) - log((double)Rc) - blwoffset(B, CL, m) + log((double)(Rc + 1)) + log((double)(Rc + 2)) + log((double)K);
 	mv->tried[4] += 1.0;
 	if (log(b_unif(B)) < la) {
 		for (s = 0; s < m; s++) { c->ei[msa + s] = B->tei[s]; c->ej[msa + s] = B->tej[s]; c->ek[msa + s] = B->tek[s]; c->lp[msa + s] = B->tlp[s]; }
@@ -822,11 +841,15 @@ static double beta_prop(bctx_t *B, bst_t *S, int change, int *accepted) {
 }
 
 /* one batch: Metropolis-Hastings steps on the chains, then the proposals for the rates and the effects */
+static double b_prof[4];
 static int bbatch(bctx_t *B, bst_t *S, bmoves_t *mv, int change, double *prate, double *peta) {
 	long pd, q, i, w;
 	int acc, anyacc = 0;
+	double tt0 = (double)clock();
 	for (pd = 0; pd < S->nper; pd++) for (q = 0; q < S->nmpd[pd]; q++) bmh_step(B, pd, mv);
+	b_prof[0] += (double)clock() - tt0; tt0 = (double)clock();
 	if (!bcache_build(B)) return -1;
+	b_prof[1] += (double)clock() - tt0;
 	S->llcur = bcache_ll(B, S->th, 0);
 	*prate = 0.0; *peta = 0.0;
 	if (S->ratemode == 0) {
@@ -888,7 +911,7 @@ static ST_retcode bayes_run(char *arg) {
 	const model_t *M;
 	long n, K, Kb, KT, nper, NR, nvar, pd, i, k, it, nend, nbend, nprewarm, nwarm, nmain, nrunmh, nimprove, nmhfix, nsampconst, nsamprates, nsave = 0, nout, batch, w;
 	unsigned long long seed;
-	double mult, targetmh, *rho0, t0, sumR = 0.0, accepts_earlier = 10.0;
+	double mult, targetmh, *rho0, t0, sumR = 0.0, accepts_earlier = 10.0, geo;
 	bmoves_t mv;
 	char *tok;
 	int ratemode;
@@ -905,7 +928,7 @@ static ST_retcode bayes_run(char *arg) {
 	nbend = next_long();
 	nprewarm = next_long(); nwarm = next_long(); nmain = next_long(); nrunmh = next_long(); nimprove = next_long(); nmhfix = next_long();
 	nsampconst = next_long(); nsamprates = next_long();
-	seed = (unsigned long long)next_double(); mult = next_double(); targetmh = next_double(); ratemode = (int)next_long();
+	seed = (unsigned long long)next_double(); mult = next_double(); targetmh = next_double(); ratemode = (int)next_long(); geo = next_double();
 	if (next_long() != K || next_long() != Kb || next_long() != nper) { SF_error("saom_bayes: dimension mismatch\n"); return 198; }
 	S.KT = KT; S.nper = nper; S.NR = NR; S.ratemode = ratemode; S.nsampconst = nsampconst; S.nsamprates = nsamprates;
 	S.th = (double *)calloc((size_t)KT, sizeof(double)); S.thp = (double *)calloc((size_t)KT, sizeof(double));
@@ -930,6 +953,7 @@ static ST_retcode bayes_run(char *arg) {
 	nout = KT + NR + 2;
 	if ((long)SF_nvars() < 6 + nout || (long)SF_nobs() < (nmain > nend ? (nmain > nbend ? nmain : nbend) : (nend > nbend ? nend : nbend))) { SF_error("saom_bayes: frame too small\n"); return 198; }
 	if (!bctx_open(&B, M, nend, nbend, seed, S.th, rho0, mult, nmhfix, nmpd)) { SF_error("saom_bayes: out of memory\n"); return 198; }
+	B.geo = geo;
 	t0 = (double)clock() / (double)CLOCKS_PER_SEC;
 	S.scaleEta = 2.38 * 2.38 / (double)(KT > 0 ? KT : 1); S.scale0 = S.scaleEta; S.scaleRate = 2.38 * 2.38 / (double)(KT + NR);
 	if (!bchol(S.Sig, S.L, KT)) { for (k = 0; k < KT * KT; k++) S.Sig[k] = (k % (KT + 1) == 0) ? 0.01 : 0.0; bchol(S.Sig, S.L, KT); }
@@ -969,6 +993,8 @@ static ST_retcode bayes_run(char *arg) {
 		SF_scal_save("__saom_bayes_improve1", (ST_double)iters_improve1);
 		SF_scal_save("__saom_bayes_improve2", (ST_double)iters_improve2);
 	}
+	SF_scal_save("__saom_bayes_prof_steps", b_prof[0] / (double)CLOCKS_PER_SEC);
+	SF_scal_save("__saom_bayes_prof_cache", b_prof[1] / (double)CLOCKS_PER_SEC);
 	SF_scal_save("__saom_bayes_nsave", (ST_double)nsave);
 	SF_scal_save("__saom_bayes_acc_rates", S.nRateProp > 0 ? S.sumRateAcc / S.nRateProp : 0.0);
 	SF_scal_save("__saom_bayes_acc_theta", S.nEtaProp > 0 ? S.sumEtaAcc / S.nEtaProp : 0.0);

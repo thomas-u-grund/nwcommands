@@ -157,7 +157,7 @@ static ST_retcode ml_run(char *arg) {
 	const model_t *M;
 	long n, K, Kb, KT, nper, NR, KP, pd, k, l, it, nend, nbend, n1, nsub, n2start, n3, nmhfix, sub, nb, nvar;
 	unsigned long long seed;
-	double mult, gain, t0, *th, *rho0, *S, *H, *I, *Hbar, *Cov, *step, *thavg, *tconv, *cov;
+	double mult, gain, geo, t0, *th, *rho0, *S, *H, *I, *Hbar, *Cov, *step, *thavg, *tconv, *cov;
 	long nmpd[64];
 	bml_acc_t A;
 	bmoves_t mv;
@@ -172,7 +172,7 @@ static ST_retcode ml_run(char *arg) {
 	nend = (long)atof(tok);
 	nbend = next_long();
 	n1 = next_long(); nsub = next_long(); n2start = next_long(); n3 = next_long(); nmhfix = next_long();
-	seed = (unsigned long long)next_double(); mult = next_double(); gain = next_double();
+	seed = (unsigned long long)next_double(); mult = next_double(); gain = next_double(); geo = next_double();
 	if (next_long() != K || next_long() != Kb || next_long() != nper) { SF_error("saom_ml: dimension mismatch\n"); return 198; }
 	th = (double *)calloc((size_t)KP, sizeof(double)); rho0 = (double *)calloc((size_t)NR, sizeof(double));
 	for (k = 0; k < KT; k++) th[k] = next_double();
@@ -180,6 +180,7 @@ static ST_retcode ml_run(char *arg) {
 	if (wire_parse_error) { SF_error("saom_ml: argument string too short\n"); return 198; }
 	if ((long)SF_nvars() < 6 + 3 + KP || (long)SF_nobs() < (KP > nend ? (KP > nbend ? KP : nbend) : (nend > nbend ? nend : nbend))) { SF_error("saom_ml: frame too small\n"); return 198; }
 	if (!bctx_open(&B, M, nend, nbend, seed, th, rho0, mult, nmhfix, nmpd)) { SF_error("saom_ml: out of memory\n"); return 198; }
+	B.geo = geo;
 	S = (double *)calloc((size_t)KP, sizeof(double)); H = (double *)calloc((size_t)(KP * KP), sizeof(double));
 	I = (double *)calloc((size_t)(KP * KP), sizeof(double)); Hbar = (double *)calloc((size_t)(KP * KP), sizeof(double)); Cov = (double *)calloc((size_t)(KP * KP), sizeof(double));
 	step = (double *)calloc((size_t)KP, sizeof(double)); thavg = (double *)calloc((size_t)KP, sizeof(double));

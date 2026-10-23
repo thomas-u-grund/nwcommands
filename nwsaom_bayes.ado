@@ -8,7 +8,7 @@
 capture program drop nwsaom_bayes
 program nwsaom_bayes, eclass
 	version 14
-	syntax [, NPREWARM(integer 50) NWARM(integer 50) NMAIN(integer 250) NRUNMH(integer 20) NIMPROVEMH(integer 100) MULT(real 5) TARGETMH(real 0.25) ///
+	syntax [, NPREWARM(integer 50) NWARM(integer 50) NMAIN(integer 250) NRUNMH(integer 20) NIMPROVEMH(integer 100) MHGEOM(real 0) MULT(real 5) TARGETMH(real 0.25) ///
 		NMH(integer 0) NSAMPCONST(integer 1) NSAMPRATES(integer 0) THETA0(numlist) RATE0(numlist >0) FIXRATES ///
 		SEED(integer -1) PRIORMEANETA(numlist) PRIORSIGETA(numlist >0) RATEPRIORMEAN(numlist) RATEPRIORSD(real 1) GIBBSRATES PRIORRATE(numlist min=2 max=2 >=0) ///
 		FRAME(name) LEVEL(cilevel) NOTABLE NOHEADER]
@@ -163,7 +163,7 @@ program nwsaom_bayes, eclass
 	mata: __nwsaom_by_rps = strtoreal(tokens("`rps'"))
 	mata: __nwsaom_by_rsd = strtoreal(tokens("`rsdl'"))
 	di as txt "Sampling: `nprewarm' pre-warming + `nwarm' warming + `nmain' main iterations of `nrunmh' batches ..."
-	mata: st_numscalar("__nwsaom_by_n", SaomBayesRun(__nwsaom_by_Gs, `nper', __nwsaom_last_M, `coev', `mbs', __nwsaom_by_th, __nwsaom_by_V, __nwsaom_by_rho, __nwsaom_by_pm, __nwsaom_by_ps, __nwsaom_by_rpm, __nwsaom_by_rps, `pshape', `prate', __nwsaom_by_rsd, `nprewarm', `nwarm', `nmain', `nrunmh', `nimprovemh', `nmh', `nsampconst', `nsamprates', `seed', `mult', `targetmh', `ratemode', "`frame'", __nwsaom_by_names))
+	mata: st_numscalar("__nwsaom_by_n", SaomBayesRun(__nwsaom_by_Gs, `nper', __nwsaom_last_M, `coev', `mbs', __nwsaom_by_th, __nwsaom_by_V, __nwsaom_by_rho, __nwsaom_by_pm, __nwsaom_by_ps, __nwsaom_by_rpm, __nwsaom_by_rps, `pshape', `prate', __nwsaom_by_rsd, `nprewarm', `nwarm', `nmain', `nrunmh', `nimprovemh', `nmh', `nsampconst', `nsamprates', `seed', `mult', `targetmh', `ratemode', `mhgeom', "`frame'", __nwsaom_by_names))
 	capture mata: mata drop __nwsaom_by_Mb0 __nwsaom_by_Bw0 __nwsaom_by_Gs __nwsaom_by_names __nwsaom_by_th __nwsaom_by_V __nwsaom_by_rho __nwsaom_by_pm __nwsaom_by_ps __nwsaom_by_rpm __nwsaom_by_rps __nwsaom_by_rsd
 	local ndraw = scalar(__nwsaom_by_n)
 	local acc_th = scalar(__saom_bayes_acc_theta)
