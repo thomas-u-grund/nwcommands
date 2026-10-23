@@ -663,3 +663,129 @@ e6fitchk mcmle "edges" 0.373682 0.002744 0.696670
 e6fitchk mcmle "triangle" -0.472697 0.000558 0.391943
 if "$e6fitfail" != "" exit 9
 di "PASS obsconstraints(): MCMLE agrees with R ergm obs.constraints"
+
+* ---- bipartite (3 + 3 nodes): masks against R ergm and exact enumeration of b1degrees / b2degrees / edges ----
+mata:
+mata set matastrict off
+class ErgmGraph scalar e6_bgraph(real matrix A, real colvector modes)
+{
+	class ErgmGraph scalar G
+	real scalar i, j
+	G.init(rows(A), 0)
+	for (i = 1; i <= rows(A); i++) {
+		for (j = i + 1; j <= rows(A); j++) {
+			if (A[i,j] != 0 & A[i,j] < .) G.toggle(i, j)
+		}
+	}
+	G.set_bipartite(modes)
+	return(G)
+}
+real matrix e6_exact_bip(real matrix A0, real colvector modes, string scalar kind, real rowvector theta, real matrix freem)
+{
+	real scalar n, nd, code, k, ok, w, Z, s1, s2, i, j, a
+	real matrix dy, A, res, u, out
+	real colvector d, d0
+	n = rows(A0)
+	dy = J(0, 2, 0)
+	for (i = 1; i <= n; i++) {
+		for (j = i + 1; j <= n; j++) {
+			if (modes[i] == 1 & modes[j] == 2) dy = dy \ (i, j)
+		}
+	}
+	nd = rows(dy)
+	res = J(0, 3, 0)
+	Z = 0
+	d0 = rowsum(A0)
+	for (code = 0; code < 2^nd; code++) {
+		A = J(n, n, 0)
+		for (k = 1; k <= nd; k++) {
+			if (mod(floor(code / 2^(k-1)), 2)) {
+				A[dy[k,1], dy[k,2]] = 1
+				A[dy[k,2], dy[k,1]] = 1
+			}
+		}
+		ok = 1
+		for (k = 1; k <= nd & ok; k++) {
+			if (!freem[dy[k,1], dy[k,2]] & A[dy[k,1], dy[k,2]] != A0[dy[k,1], dy[k,2]]) ok = 0
+		}
+		if (!ok) continue
+		d = rowsum(A)
+		if (kind == "edges") ok = (sum(A) == sum(A0))
+		else if (kind == "b1degrees") ok = all(select(d, modes :== 1) :== select(d0, modes :== 1))
+		else if (kind == "b2degrees") ok = all(select(d, modes :== 2) :== select(d0, modes :== 2))
+		else if (kind == "b1b2degrees") ok = all(d :== d0)
+		if (!ok) continue
+		s1 = sum(A) / 2
+		s2 = 0
+		for (a = 1; a <= n; a++) {
+			if (modes[a] == 1) s2 = s2 + d[a] * (d[a] - 1) / 2
+		}
+		w = exp(theta[1] * s1 + theta[2] * s2)
+		Z = Z + w
+		res = res \ (s1, s2, w)
+	}
+	res[., 3] = res[., 3] / Z
+	u = uniqrows(res[., 1..2])
+	out = J(rows(u), 3, 0)
+	for (i = 1; i <= rows(u); i++) {
+		out[i, 1..2] = u[i, .]
+		out[i, 3] = sum(select(res[., 3], (res[., 1] :== u[i,1]) :& (res[., 2] :== u[i,2])))
+	}
+	return(out)
+}
+end
+
+nwclear
+matrix B0 = (1,1,0 \ 0,1,1 \ 1,0,1)
+nwset, mat(B0) bipartite name(b33)
+clear
+set obs 6
+gen h = cond(_n == 3 | _n >= 5, 2, 1)
+_nwsyntax b33, max(1)
+mata: modes33 = strtoreal(`netobj'->get_modes())'
+mata: A33 = *(`netobj'->get_matrix_mod(0,0))
+mata: modes33'
+mata: A33
+local bipfail 0
+local R_b1 "000011000011000111001000111000111000"
+local R_b2 "000100000100000000110000000000000000"
+local R_bd "000100000100000011110000001000001000"
+foreach t in b1 b2 bd {
+	if "`t'" == "b1" local sp "blocks(h, levels2=1)"
+	if "`t'" == "b2" local sp "blocks(h, levels2=-1)"
+	if "`t'" == "bd" local sp "blockdiag(h)"
+	_nwergm_constr, spec(`sp') nodes(`nodes') directed(`directed') twomode(true) matobj(`netobj') weights(default)
+	* cross-mode dyads only (mode-1 rows 1..3, mode-2 columns 4..6): compare with R's rows
+	mata: st_local("m", invtokens(strofreal(vec((__ncon_free[1::3, 4::6])')'), ""))
+	local want ""
+	forvalues r = 0/2 {
+		local want "`want'`=substr("`R_`t''", `r'*6+4, 3)'"
+	}
+	if "`m'" != "`want'" {
+		di as err "FAIL bipartite mask `t': got `m' want `want'"
+		local bipfail 1
+	}
+}
+di "bipartite masks compared with R"
+foreach c in "edges" "b1degrees" "b2degrees" "b1degrees + b2degrees" {
+	local kind "`c'"
+	if "`c'" == "b1degrees + b2degrees" local kind "b1b2degrees"
+	_nwergm_constr, spec(`c') nodes(`nodes') directed(`directed') twomode(true) matobj(`netobj') weights(default)
+	di "bipartite constraint `c': proposal code `con_code'"
+	mata: G = e6_bgraph(A33, modes33)
+	mata: M = ErgmModel(); M.init(); td1 = ErgmTermData(); td2 = ErgmTermData()
+	mata: M.addterm("edges", 1, &stat_edges(), &change_edges(), td1, ("edges"))
+	mata: td2.levels = 2; M.addterm("b1star", 1, &stat_b1star(), &change_b1star(), td2, ("b1star_2"))
+	mata: rc0 = ErgmNativeSetup(M, 2, G)
+	mata: M.con_par = __ncon_par; M.con_cols = __ncon_cols
+	mata: th = (0.3, 0.4)
+	mata: ex = e6_exact_bip(A33, modes33, "`kind'", th, J(6, 6, 1))
+	mata: smp = ErgmMCMCSample(M, G, th, 2000, 20, 100000, &ergm_propose_tnt())
+	mata: st_numscalar("e6_maxz", e6_compare(smp, ex, "`c'"))
+	if scalar(e6_maxz) > 4.5 {
+		di as err "FAIL: bipartite `c' max |z| = " scalar(e6_maxz)
+		local bipfail 1
+	}
+}
+if `bipfail' == 0 di "PASS bipartite constraints: masks equal R, samplers equal exact enumeration"
+else exit 9
