@@ -161,6 +161,9 @@ program define nwsaom_multinet, eclass
 		}
 		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
 		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
+		mata: __nwsaom_last_Behwaves = __nwsaom_mn_Bw
+		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
+		mata: __nwsaom_mn_Mbeh.init()
 	}
 	else capture mata: mata drop __nwsaom_mn_Bw
 	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
@@ -198,20 +201,18 @@ program define nwsaom_multinet, eclass
 		local __bcovs "`r(covs)'"
 		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
 		mata: __nwsaom_mn_Mbeh.init()
-		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))
-		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh_"))
+		mata: SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_")
+		mata: st_local("__n1", strofreal(__nwsaom_mn_Mbeh.nterms))
+		mata: SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh_")
+		mata: st_local("__n2", strofreal(__nwsaom_mn_Mbeh.nterms - `__n1'))
 		// coefficient names: covariate / shape terms get their readable names; the terms of the second network the prefix beh2_
 		mata: SaomBehCovRename(__nwsaom_mn_Mbeh, tokens("`__bcovs'"))
-		local __nb1 : word count `__b1'
-		mata: SaomMNPrefix2(__nwsaom_mn_Mbeh, `__nb1')
-		local __n1 : word count `__b1'
-		local __n2 : word count `__b2'
+		mata: SaomMNPrefix2(__nwsaom_mn_Mbeh, `__n1')
 		// behavior effects of both networks (beheff12: the first network of the effect is net1, beheff21: it is net2)
-		mata: st_local("__b3", SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff12'", 0, "beh12_"))
-		mata: st_local("__b4", SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff21'", 1, "beh21_"))
-		local __n3 : word count `__b3'
-		local __n4 : word count `__b4'
-		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1), J(1, `__n3' + `__n4', 0))
+		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff12'", 0, "beh12_")
+		mata: SaomMNAddBoth(__nwsaom_mn_Mbeh, "`beheff21'", 1, "beh21_")
+		mata: st_local("__n34", strofreal(__nwsaom_mn_Mbeh.nterms - `__n1' - `__n2'))
+		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1), J(1, `__n34', 0))
 		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
 	}
 	// theta0() / fix(): starting values and fixed effects, in the order of the coefficients (net1_*, net2_*, beh_*)
