@@ -2560,7 +2560,7 @@ program nwsaom, eclass
 		}
 		// behnet2(effect[:#] ...): further RSiena behavior effects of the network (protocol 55): indegavgroup[:#] indegtotgroup[:#] avaltcc totaltcc avinaltdist2nc totinaltdist2nc avtinaltdist2nc
 		// totainaltdist2nc avinsimdist2 totinsimdist2 totgwdspffalt[:#] totgwdspfbalt[:#] totgwdspffaltnc[:#] totgwdspfbaltnc[:#] (the gwdsp parameter is RSiena's, default 69)
-		local __bu_fam "indegavgroup indegtotgroup avaltcc totaltcc avinaltdist2nc totinaltdist2nc avtinaltdist2nc totainaltdist2nc avinsimdist2 totinsimdist2 totgwdspffalt totgwdspfbalt totgwdspffaltnc totgwdspfbaltnc"
+		local __bu_fam "indegavgroup indegtotgroup avaltcc totaltcc avinaltdist2nc totinaltdist2nc avtinaltdist2nc totainaltdist2nc avinsimdist2 totinsimdist2 totgwdspffalt totgwdspfbalt totgwdspffaltnc totgwdspfbaltnc varalt avsimvaralt behdensetriads simdensetriads"
 		foreach __t of local behnet2 {
 			gettoken __f __pp : __t, parse(":")
 			local __pp = subinstr("`__pp'", ":", "", 1)
@@ -2571,6 +2571,8 @@ program nwsaom, eclass
 			}
 			if "`__pp'" == "" {
 				if inlist(`__fi', 1, 2) local __pp 1
+				else if `__fi' >= 17 local __pp 5
+				else if `__fi' >= 15 local __pp 0
 				else if `__fi' >= 11 local __pp 69
 				else local __pp 0
 			}

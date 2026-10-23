@@ -29,7 +29,7 @@ forvalues w = 1/3 {
 gen double z1 = mod(_n * 7, 5)
 gen double z2 = mod(_n * 7 + (_n > 20), 5)
 gen double z3 = mod(_n * 7 + (_n > 20) + (_n > 10), 5)
-foreach ef in indegavgroup indegtotgroup indegavgroup:2 avaltcc totaltcc avinaltdist2nc totinaltdist2nc avtinaltdist2nc totainaltdist2nc avinsimdist2 totinsimdist2 totgwdspffalt totgwdspfbalt totgwdspffaltnc totgwdspfbaltnc totgwdspffalt:50 {
+foreach ef in indegavgroup indegtotgroup indegavgroup:2 avaltcc totaltcc avinaltdist2nc totinaltdist2nc avtinaltdist2nc totainaltdist2nc avinsimdist2 totinsimdist2 totgwdspffalt totgwdspfbalt totgwdspffaltnc totgwdspfbaltnc totgwdspffalt:50 varalt avsimvaralt behdensetriads simdensetriads behdensetriads:6 simdensetriads:6 {
 	capture nwsaom, waves(bu1 bu2 bu3) outdegree reciprocity behavior(z1 z2 z3 : linear avalt) behnet2(`ef') k0(10) k3(40) seed(3)
 	assert inlist(_rc, 0, 498, 505)
 	if _rc == 0 assert "`e(engine)'" == "native" & colsof(e(b)) == 5

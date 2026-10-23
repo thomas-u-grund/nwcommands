@@ -11415,7 +11415,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	argstr = argstr + " " + strofreal(rows(EV))		// protocol 27: composition-change events (in the frame's last four columns)
 	argstr = argstr + SaomBehCovTrailer(n)
 	argstr = argstr + SaomBehDyTrailer(n)
-	argstr = argstr + SaomSRTrailer()
+	argstr = argstr + SaomSRTrailer() + SaomBehVarTrailer()
 
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
 	if (strtoreal(st_global("NWSAOM_TRACE")) == 4) printf("TRACE BATCHSETUP argument string: %f characters\n", strlen(argstr))
@@ -13182,7 +13182,7 @@ real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph sca
 	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
 	for (i=1; i<=n; i++) st_store(i, "cc", (sl > 0 ? _sb_cv(i, sl) : 0))
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 bb cc " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + " " + strofreal(args() >= 5 ? (rows(Wd) == n) : 0) + char(34))
+	stata("plugin call saomnativesim ev1 ev2 bb cc " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + " " + strofreal(args() >= 5 ? (rows(Wd) == n) : 0) + SaomBehVarTrailer() + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_behstat")
 	return(st_numscalar("__saom_behstat_val"))
@@ -13312,10 +13312,21 @@ real rowvector SaomNbSim(string scalar eff, real scalar xparam, class SaomBehavi
 	Mbeh.setsimmean(saom_similarity_mean(Behwaves, rng))
 	return((Mbeh.simMean, 1 / rng))
 }
+/* protocol 60: the pooled (population) variance of the first dependent behavior over the waves 1 .. W-1 (RSiena BehaviorLongitudinalData::variance()), appended to the batch / BEHSTAT strings */
+string scalar SaomBehVarTrailer() {
+	external pointer(real colvector) rowvector __nwsaom_last_Behwaves
+	real colvector all
+	real scalar w
+	if (findexternal("__nwsaom_last_Behwaves") == NULL) return(" 0")
+	if (cols(__nwsaom_last_Behwaves) < 2) return(" 0")
+	all = *__nwsaom_last_Behwaves[1]
+	for (w=2; w<=cols(__nwsaom_last_Behwaves)-1; w++) all = all \ *__nwsaom_last_Behwaves[w]
+	return(" " + strofreal(mean(all :^ 2) - mean(all)^2, "%25.17g"))
+}
 string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
 /* protocol 51: behavior shape effects. Tokens "sh<f>_<par>" (f 0..7) -> bn_<2000 + 100 f + par>_0 */
 /* protocol 55: more behavior-network effects. Tokens "bu<f>_<par>" (f 0..13) -> bn_<2800 + 100 f + par>_0 */
-string rowvector _sb_bufamilies() return(("indegAvGroup", "indegTotGroup", "avAlt_cc", "totAlt_cc", "avInAltDist2_nc", "totInAltDist2_nc", "avTInAltDist2_nc", "totAInAltDist2_nc", "avInSimDist2", "totInSimDist2", "totGwdspFFAlt", "totGwdspFBAlt", "totGwdspFFAlt_nc", "totGwdspFBAlt_nc"))
+string rowvector _sb_bufamilies() return(("indegAvGroup", "indegTotGroup", "avAlt_cc", "totAlt_cc", "avInAltDist2_nc", "totInAltDist2_nc", "avTInAltDist2_nc", "totAInAltDist2_nc", "avInSimDist2", "totInSimDist2", "totGwdspFFAlt", "totGwdspFBAlt", "totGwdspFFAlt_nc", "totGwdspFBAlt_nc", "varAlt", "avSimVarAlt", "behDenseTriads", "simDenseTriads"))
 real rowvector _sb_buparse(string scalar nm) {
 	real scalar u, f, d
 	if (substr(nm, 1, 2) != "bu") return((-1, 0))
@@ -13323,14 +13334,14 @@ real rowvector _sb_buparse(string scalar nm) {
 	if (u == 0) return((-1, 0))
 	f = strtoreal(substr(nm, 3, u - 3))
 	d = strtoreal(substr(nm, u + 1, .))
-	if (f >= 0 & f < 14 & d >= 0 & d < 100 & f == floor(f) & d == floor(d)) return((f, d))
+	if (f >= 0 & f < 18 & d >= 0 & d < 100 & f == floor(f) & d == floor(d)) return((f, d))
 	return((-1, 0))
 }
 string scalar _sb_buname(string scalar nm) {
 	real rowvector q
 	q = _sb_buparse(nm)
 	if (q[1] < 0) return(nm)
-	if (q[1] == 0 | q[1] == 1 | q[1] >= 10) return(_sb_bufamilies()[q[1] + 1] + "(" + strofreal(q[2]) + ")")
+	if (q[1] == 0 | q[1] == 1 | (q[1] >= 10 & q[1] < 14) | q[1] >= 16) return(_sb_bufamilies()[q[1] + 1] + "(" + strofreal(q[2]) + ")")
 	return(_sb_bufamilies()[q[1] + 1])
 }
 string rowvector _sb_shfamilies() return(("quad_cc", "quad_nc", "constant", "threshold", "simAllNear", "simAllFar", "avGroup", "totGroup"))
