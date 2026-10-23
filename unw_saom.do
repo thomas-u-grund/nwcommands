@@ -11849,10 +11849,12 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 	real rowvector RH, u, p, th, pk, cert
 	real scalar n, K, w, k, i, j, junk, ver, ent, nvalid, mx
 	string scalar origframe
-	real colvector sdk, L1, sigmaSq
-	real matrix expRI, expI, sigmas
+	real colvector sdk, L1, sigmaSq, valid
+	real matrix expRI, expI, sigmas, st0
+	real rowvector ok, sel
 
 	n = (*Gstart[1]).n
+	st0 = _SaomGofExt("__nwsaom_last_struct", J(0, 0, 0))
 	K = cols(theta)
 	if (K != M.nterms) {
 		errprintf("estat importance: the coefficient vector does not match the model.\n")
@@ -11885,9 +11887,16 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 		SIG = J(K, n, .)
 		RIm = J(K, n, .)
 		cert = J(1, n, .)
+		nvalid = 0
 		for (i=1; i<=n; i++) {
-			X = J(K, n, 0)
-			for (k=1; k<=K; k++) X[k, .] = (*Cm[k])[i, .]
+			// the alternatives of ego i: staying, and (two-mode networks) the free dyads only; an actor with no free dyad does not act
+			ok = (rows(st0) == 0 ? J(1, n, 1) : (st0[i, .] :== 0))
+			ok[i] = 1
+			if (sum(ok) < 2) continue
+			nvalid++
+			sel = selectindex(ok)
+			X = J(K, cols(sel), 0)
+			for (k=1; k<=K; k++) X[k, .] = (*Cm[k])[i, sel]
 			u = theta * X
 			mx = max(u)
 			p = exp(u :- mx)
@@ -11901,12 +11910,16 @@ void SaomImportanceRun(pointer(class ErgmGraph scalar) rowvector Gstart, real sc
 				SIG[k, i] = sqrt(variance(X[k, .]'))
 			}
 			ent = -sum(p :* ln(p :+ (p :== 0)))
-			cert[i] = 1 - ent / ln(n)
+			cert[i] = 1 - ent / ln(cols(sel))
 		}
+		valid = selectindex(colsum(RIm :< .) :> 0)
+		RIm = RIm[., valid]
+		SIG = SIG[., valid]
+		cert = cert[valid]
 		Lw = RIm :/ colsum(RIm)
-		expRI[., w] = rowsum(Lw) / n
-		expI[., w] = rowsum(RIm) / n
-		sigmas[., w] = sqrt(rowsum(SIG :^ 2) / n)
+		expRI[., w] = rowsum(Lw) / nvalid
+		expI[., w] = rowsum(RIm) / nvalid
+		sigmas[., w] = sqrt(rowsum(SIG :^ 2) / nvalid)
 		RH[w] = mean(cert')
 		for (k=1; k<=K; k++) Cm[k] = NULL
 	}

@@ -10,7 +10,7 @@
 	deviation of the effect's contributions) and the certainty R_H of the
 	actors' choices.
 
-	Available after fits of a directed one-mode network without behavior,
+	Available after fits of a one-mode (directed or non-directed) or two-mode network without behavior,
 	endowment/creation effects, missing-data or composition-change options.
 */
 capture program drop nwsaom_estat_importance
@@ -30,13 +30,9 @@ program define nwsaom_estat_importance, rclass
 		di as err "estat importance is not yet available for fits with a behavior (network effects only)."
 		exit 198
 	}
-	if "`e(symtype)'" != "" {
-		di as err "estat importance is not yet available for non-directed (symmetric) fits."
-		exit 198
-	}
-	mata: st_numscalar("__nwsaom_imp_bad", any(_SaomGofExt("__nwsaom_last_fntype", J(1, 0, 0)) :!= 0) | rows(_SaomGofExt("__nwsaom_last_struct", J(0, 0, 0))) > 0 | rows(_SaomGofExt("__nwsaom_last_present", J(0, 1, 0))) > 0)
+	mata: st_numscalar("__nwsaom_imp_bad", any(_SaomGofExt("__nwsaom_last_fntype", J(1, 0, 0)) :!= 0) | rows(_SaomGofExt("__nwsaom_last_present", J(0, 1, 0))) > 0)
 	if scalar(__nwsaom_imp_bad) == 1 {
-		di as err "estat importance is not available with endowment/creation effects, structural(), present() or missing-data options (as in RSiena's sienaRI)."
+		di as err "estat importance is not available with endowment/creation effects, present() or missing-data options (as in RSiena's sienaRI)."
 		exit 198
 	}
 	local nwaves = e(nwaves)
@@ -62,6 +58,7 @@ program define nwsaom_estat_importance, rclass
 
 	di
 	di as txt "Relative importance of effects (RSiena's sienaRI); expected over the actors at the start of each period"
+	if "`e(symtype)'" != "" di as txt "Non-directed network: effect sizes are for the forcing model (RSiena modelType 2), as in RSiena."
 	di as txt "{hline 78}"
 	di as txt %-22s "effect" %10s "estimate" %9s "s.e." %10s "sigma" %12s "semi-std." _continue
 	forvalues pd = 1/`nper' {

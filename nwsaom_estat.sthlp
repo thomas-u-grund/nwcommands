@@ -250,8 +250,8 @@ contribution of each actor's every possible tie change is computed; the importan
 L1 distance between the actor's choice probabilities with and without the effect, its relative importance the share
 among all effects, averaged over the actors. Also reported: sigma (the within-actor standard deviation of the
 contributions), the semi-standardised estimate (estimate times sigma) and the certainty R_H of the choices.
-Available after fits of a directed one-mode network without behavior, endowment/creation effects, {opt structural()},
-{opt present()} or missing-data options (as in RSiena). Returns {cmd:r(ri)}, {cmd:r(importance)}, {cmd:r(sigma)},
+Available after fits of a one-mode (directed or non-directed) or two-mode network without behavior, endowment/creation effects,
+{opt present()} or missing-data options (as in RSiena). For a non-directed network the sizes are those of the forcing model, as in RSiena. Returns {cmd:r(ri)}, {cmd:r(importance)}, {cmd:r(sigma)},
 {cmd:r(sigma_period)} and {cmd:r(certainty)}. Needs the native plugin.
 
 {title:Stored results}

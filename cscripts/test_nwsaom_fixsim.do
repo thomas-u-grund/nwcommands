@@ -91,4 +91,37 @@ assert RH[1,1] > 0 & RH[1,1] < 1
 nwsaom, wave1(glasgow1) wave2(glasgow2) behavior(smoke1 smoke2) outdegree reciprocity linear quadratic k3(100) seed(1)
 capture estat importance
 assert _rc == 198
+* two-mode and non-directed networks (values from sienaRI at the same estimates; data files in dev/)
+capture confirm file "dev/saom_twomode_w1.csv"
+if _rc == 0 {
+	nwclear
+	forvalues w = 1/3 {
+		qui import delimited "dev/saom_twomode_w`w'.csv", clear varnames(1)
+		mkmat v1-v20, matrix(T`w')
+	}
+	clear
+	forvalues w = 1/3 {
+		qui nwset, mat(T`w') bipartite name(tm`w') nooutput
+	}
+	qui nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity cycle4 unconditional cores(1) seed(1)
+	estat importance
+	matrix RH = r(certainty)
+	assert abs(RH[1,1] - 0.0611) < 0.01
+}
+capture confirm file "dev/saom_rsiena_symmulti_w1.csv"
+if _rc == 0 {
+	nwclear
+	forvalues w = 1/3 {
+		qui import delimited "dev/saom_rsiena_symmulti_w`w'.csv", clear varnames(1) case(preserve)
+		mkmat V1-V50, matrix(A`w')
+	}
+	clear
+	forvalues w = 1/3 {
+		qui nwset, mat(A`w') undirected name(ma`w') nooutput
+	}
+	qui nwsaom, waves(ma1 ma2 ma3) outdegree transties cores(1) seed(1)
+	estat importance
+	matrix RI = r(ri)
+	assert abs(RI[1,1] - 0.600) < 0.03
+}
 di "PASS estat importance"
