@@ -194,4 +194,36 @@ _chk acf_lag3 AC[1,4] 0.289285246291 1e-6
 mata: st_numscalar("SP3", ergm_spec0_ar(SS[., 3]))
 _chk spec0ar3 SP3 84395.64350873492 1e-2
 
+* ---------- estimate(cd) and mainmethod(sa) agree with R (estimate="CD" / main.method="Stochastic-Approximation") within Monte Carlo noise
+* R, 4 seeds each (flomarriage ~ edges + triangle + nodecov(wealth)):
+*   CD: edges -2.60..-2.76, triangle -0.06..-0.26, wealth 0.0119..0.0139 ; SA: edges -2.55..-2.61, triangle -0.11, wealth 0.0107..0.0110, SE 0.56/0.62-0.67/0.005
+qui nwclear
+qui clear
+qui nwset, mat(Aflo) undirected name(flo)
+qui svmat Nflo, names(c)
+qui rename c1 wealth
+foreach sd in 1 2 {
+	qui nwergm flo, edges triangle nodecov(wealth) estimate(cd) seed(`sd')
+	matrix b = e(b)
+	assert "`e(estimate)'" == "CD"
+	assert b[1,1] > -3.1 & b[1,1] < -2.3
+	assert b[1,3] > -0.7 & b[1,3] < 0.3
+	assert b[1,2] > 0.008 & b[1,2] < 0.017
+	qui nwergm flo, edges triangle nodecov(wealth) mainmethod(sa) seed(`sd')
+	matrix b = e(b)
+	matrix V = e(V)
+	assert "`e(estimate)'" == "SA"
+	assert b[1,1] > -2.95 & b[1,1] < -2.25
+	assert b[1,3] > -0.6 & b[1,3] < 0.3
+	assert b[1,2] > 0.0075 & b[1,2] < 0.0145
+	assert sqrt(V[1,1]) > 0.4 & sqrt(V[1,1]) < 0.8
+	assert sqrt(V[2,2]) > 0.003 & sqrt(V[2,2]) < 0.008
+}
+* MCMLE termination controls
+qui nwergm flo, edges triangle nodecov(wealth) seed(3) mcmletermination(hotelling) mcmleiterations(30)
+assert e(mcmle_iterations) >= 1
+qui nwergm flo, edges triangle nodecov(wealth) seed(3) mcmletermination(hummel) mcmleiterations(30)
+capture nwergm flo, edges triangle nodecov(wealth) mcmletermination(bogus)
+assert _rc == 198
+
 display "PASS test_nwergm_est"

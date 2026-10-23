@@ -34,7 +34,7 @@ program nwergm, eclass
 		OFFSET(string) ///
 		INIT(string) MPLETYPE(string) MPLECHECK(string) MPLECOVariance(string) ESTimate(string) MAINMETHOD(string) ///
 		MCMLETERMination(string) MCMLECONFidence(real 0.99) MCMLESTEPLength(real 1) MCMLESTEPMargin(real 0.05) ///
-		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SAMAXit(integer 60) ]
+		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SABURNin(integer 16384) SAINTERval(integer 1024) SAPHASE3(integer 1000) SAGAIN(real 0.1) SANSUB(integer 4) ]
 	set more off
 	_nwergm_est opts, estimate(`estimate') method(`method') mainmethod(`mainmethod') mpletype(`mpletype') ///
 		mplecovariance(`mplecovariance') mcmletermination(`mcmletermination') mplecheck(`mplecheck')
@@ -89,7 +89,7 @@ program nwergm, eclass
 	if "`proposal'" == "" local proposal "tnt"
 	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
 	if "`method'" != "" {
-		_opts_oneof "mple mcmle" "method" "`method'" 6556
+		_opts_oneof "mple mcmle cd" "method" "`method'" 6556
 	}
 	local __ergm_type_explicit = ("`type'" != "")
 	local type = upper("`type'")
@@ -1692,7 +1692,7 @@ program nwergm, eclass
 	// this check's own result, a forcing that no longer happens.
 	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
 	if "`method'" == "" {
-		local method = cond(`__ergm_dind', "mple", "mcmle")
+		local method = cond(`__ergm_dind' & "`mainmethod'" != "sa", "mple", "mcmle")
 	}
 	if "`method'" == "mple" & !`__ergm_dind' {
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
@@ -1761,6 +1761,10 @@ program nwergm, eclass
 	// accordingly. Found and fixed while building the R-vs-Stata
 	// benchmark suite's own large-network control case
 	// (docs/CERTIFICATION.md harmonisation unit 81).
+	if `__ergm_curved' & ("`method'" == "cd" | "`mainmethod'" == "sa") {
+		di "{err}contrastive divergence and stochastic approximation are not available for models with curved terms."
+		error 198
+	}
 	// init(): R's control.ergm(init=); starting values / offset values
 	local __e7_initmode 0
 	if `"`init'"' != "" {
@@ -2138,7 +2142,16 @@ program nwergm, eclass
 			mata: mata drop __ergm_theta_c0_mcmle
 		}
 		else {
-			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+			if "`method'" == "cd" {
+				_nwergm_est cdstart `__theta0' `__ergm_curved'
+				mata: `__fit' = ErgmCD(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `cdnsteps', `cdsamplesize', `__ergm_propfn', ("`verbose'"!=""), 0.5, 0.5)
+			}
+			else if "`mainmethod'" == "sa" {
+				mata: __e7_q = cols(__nwergm_last_M.freeidx())
+				mata: `__fit' = ErgmSA(__nwergm_last_M, __nwergm_last_G, `__theta0', `saburnin', `sainterval', `sagain', max((200, 7 + 3*__e7_q)), `sansub', 7 + __e7_q, 207 + __e7_q, `saphase3', `__ergm_propfn', ("`verbose'"!=""))
+				mata: mata drop __e7_q
+			}
+			else mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
@@ -2226,6 +2239,7 @@ program nwergm, eclass
 			}
 			mata: st_matrix("`__b_mcmle'", `__fit'.coef)
 			mata: st_matrix("`__V_mcmle'", `__fit'.vcov)
+
 		}
 		// captured into plain locals, NOT e(name)-style scalars: `ereturn
 		// post' below clears whatever the e() results namespace
@@ -2251,6 +2265,7 @@ program nwergm, eclass
 		ereturn local title "Exponential-family random graph model (MCMLE)"
 		ereturn local depvar "`netname'"
 		ereturn local method "mcmle"
+		ereturn local estimate "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MLE"))'"
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
 		ereturn local estat_cmd "nwergm_estat"
@@ -2335,7 +2350,7 @@ program nwergm, eclass
 			di "{err}Results are reported but should not be treated as a converged fit - consider increasing mcmleiterations()/mcmcsamplesize()."
 		}
 
-		nwergm_display "`netname'" "`nodes'" "`directed'" "MCMLE" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
+		nwergm_display "`netname'" "`nodes'" "`directed'" "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MCMLE"))'" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
 		if `__ergm_curved' {
 			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own curved-model machinery)"
 		}
@@ -2355,14 +2370,20 @@ program nwergm_display
 	di "{txt}Nodes:{col 24}={res}  `nodes'"
 	di "{txt}Ties:{col 24}={res}  `=e(ties)'"
 	di "{txt}Directed:{col 24}={res}  " cond("`directed'"=="true","Yes","No")
-	di "{txt}Estimation:{col 24}={res}  `method'"
+	di "{txt}Estimation:{col 24}={res}  " cond("`method'"=="CD","Contrastive divergence",cond("`method'"=="SA","Stochastic approximation","`method'"))
 	if "`method'" == "MCMLE" {
 		di "{txt}MCMC sample size:{col 24}={res}  `mcmcsamplesize'"
 	}
 	di
 	ereturn display
 	di
-	if "`method'" == "MCMLE" {
+	if "`method'" == "CD" {
+		di "{txt}Contrastive divergence estimate (`niter' iteration(s)); standard errors come from the covariance of the short-run CD sample."
+	}
+	else if "`method'" == "SA" {
+		di "{txt}Stochastic approximation estimate (`niter' phase-2 iteration(s))."
+	}
+	else if "`method'" == "MCMLE" {
 		if "`converged'" == "1" {
 			di "{txt}MCMLE converged after `niter' iteration(s)."
 		}

@@ -8364,6 +8364,285 @@ real matrix ergm_heidel_diag(real matrix samp, real scalar critval, real scalar 
 	return(out)
 }
 
+/* ===================================================================
+   Contrastive divergence (R: estimate="CD") and Stochastic
+   Approximation (R: main.method="Stochastic-Approximation").
+   =================================================================== */
+
+// CD sample: every draw starts from the current network G, takes `nsteps' Metropolis-Hastings steps at theta and
+// records the accumulated statistic change; the toggles are undone afterwards, so G is left unchanged.
+// Returns the (samplesize x p) change matrix; acc (out) = number of accepted steps.
+real matrix ergm_cd_sample(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta,
+	real scalar nsteps, real scalar samplesize, pointer(real rowvector function) scalar proposalfn, real scalar acc){
+	real scalar d, step, k, tail, head, logratio, cutoff, ntog
+	real rowvector prop, chg, cum
+	real matrix out, tog
+
+	out = J(samplesize, cols(theta), 0)
+	acc = 0
+	for (d=1; d<=samplesize; d++) {
+		cum = J(1, cols(theta), 0)
+		tog = J(nsteps, 2, 0)
+		ntog = 0
+		for (step=1; step<=nsteps; step++) {
+			prop = (*proposalfn)(G)
+			tail = prop[1]
+			head = prop[2]
+			logratio = prop[3]
+			chg = M.full_change(G, tail, head)
+			cutoff = (theta * chg') + logratio
+			if (cutoff >= 0 | ln(runiform(1,1)) < cutoff) {
+				G.toggle(tail, head)
+				ntog++
+				tog[ntog, .] = (tail, head)
+				cum = cum + chg
+				acc++
+			}
+		}
+		for (k=ntog; k>=1; k--) G.toggle(tog[k,1], tog[k,2])
+		out[d, .] = cum
+	}
+	return(out)
+}
+
+// maximiser of the importance-sampling log-likelihood ratio -log(sum exp(x*delta)) (R: metric "naive"/"IS" in ergm.estimate)
+real rowvector ergm_is_newton(real matrix X){
+	real scalar p, it, f, fnew, step, ok, i
+	real rowvector delta, dnew, m
+	real colvector lw, w
+	real matrix V
+	p = cols(X)
+	delta = J(1, p, 0)
+	lw = X * delta'
+	f = -(max(lw) + ln(sum(exp(lw :- max(lw)))))
+	for (it=1; it<=100; it++) {
+		lw = X * delta'
+		w = exp(lw :- max(lw))
+		w = w / sum(w)
+		m = w' * X
+		V = cross(X :- m, w, X :- m)
+		step = 1
+		ok = 0
+		for (i=1; i<=30; i++) {
+			dnew = delta + step * (-m * invsym(V))
+			lw = X * dnew'
+			fnew = -(max(lw) + ln(sum(exp(lw :- max(lw)))))
+			if (fnew >= f - 1e-12) {
+				ok = 1
+				break
+			}
+			step = step / 2
+		}
+		if (!ok) break
+		if (max(abs(dnew - delta)) < 1e-10) {
+			delta = dnew
+			break
+		}
+		delta = dnew
+		f = fnew
+	}
+	return(delta)
+}
+
+// one-sample Hotelling p-value of "mean of X is zero" assuming independent draws (assume.indep=TRUE)
+real scalar ergm_hotel_indep(real matrix X){
+	real scalar n, p, T2, df
+	real rowvector m
+	real matrix V
+	real colvector sel
+	n = rows(X)
+	m = mean(X)
+	V = variance(X) / n
+	sel = selectindex(diagonal(V) :> 0)
+	p = rows(sel)
+	if (p == 0) return(any(m :!= 0) ? 0 : 1)
+	if (any(m[selectindex(diagonal(V) :== 0)'] :!= 0)) return(0)
+	T2 = ergm_xtax_seigen(m[sel]', V[sel, sel])
+	df = n - 1
+	if (p >= df) return(.)
+	return(Ftail(p, df - p + 1, T2 * (df - p + 1) / (p * df)))
+}
+
+struct ErgmMCMLEFit scalar ErgmCD(class ErgmModel scalar M, class ErgmGraph scalar G,
+	real rowvector theta0, real scalar maxit, real scalar nsteps, real scalar samplesize0,
+	pointer(real rowvector function) scalar proposalfn, real scalar verbose, real scalar minpval, real scalar margin){
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, obs, freeidx, delta, mu, w0, steps
+	real matrix samp, X, Xs, coefhist, V
+	real scalar iter, ss, pval, finished, steplen, acc, tot, p, nfree, converged, k
+	real colvector lw, w
+
+	p = cols(theta0)
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	obs = M.full_statistic(G)
+	theta = theta0
+	ss = (samplesize0 > 0 ? samplesize0 : 128 * nfree)
+	coefhist = J(0, p, 0)
+	steps = J(1, 0, 0)
+	finished = 0
+	converged = 0
+	acc = 0
+	tot = 0
+	for (iter=1; iter<=maxit; iter++) {
+		if (iter == maxit) finished = 1
+		samp = ergm_cd_sample(M, G, theta, nsteps, ss, proposalfn, k)
+		acc = acc + k
+		tot = tot + ss * nsteps
+		X = samp[., freeidx]
+		if (all(diagonal(variance(X)) :< 1e-20) & any(X :!= 0)) {
+			errprintf("Unconstrained CD sampling did not mix at all. Optimization cannot continue.\n")
+			_error(498)
+		}
+		pval = ergm_hotel_indep(X)
+		if (verbose) printf("CD iter %g: convergence test p-value %9.3g\n", iter, pval)
+		if (pval < . & pval > minpval) {
+			finished = 1
+			converged = 1
+		}
+		steplen = (margin < . ? ergm_hummel_steplength(X, margin, 1) : 1)
+		if (steplen >= .) steplen = 1
+		steps = steps, steplen
+		if (cols(steps) > 2) {
+			if (steps[cols(steps)] + steps[cols(steps)-1] < 2 * 0.0001) {
+				errprintf("CD-MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data.\n")
+				_error(498)
+			}
+		}
+		Xs = X :- (1 - steplen) * mean(X)
+		delta = ergm_is_newton(Xs)
+		theta[freeidx] = theta[freeidx] + delta
+		coefhist = coefhist \ theta
+		if (verbose) {
+			printf("   step length %5.3f  theta:", steplen)
+			for (k=1; k<=p; k++) printf(" %9.5f", theta[k])
+			printf("\n")
+		}
+		if (finished) break
+	}
+	// covariance: inverse of the importance-weighted variance of the (unshrunk) CD statistics at the update
+	lw = X * delta'
+	w = exp(lw :- max(lw))
+	w = w / sum(w)
+	mu = w' * X
+	V = cross(X :- mu, w, X :- mu)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = invsym(V)
+	res.converged = converged
+	res.niter = min((iter, maxit))
+	res.coefhist = coefhist
+	res.finalsample = samp :+ obs
+	res.acceptrate = acc / tot
+	res.final_interval = nsteps
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, M.ntheta(), 0)
+	return(res)
+}
+
+// Stochastic approximation (Snijders 2002; ergm's MCMCPhase12 followed by a Newton step on a phase-3 sample)
+struct ErgmMCMLEFit scalar ErgmSA(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector theta0,
+	real scalar burnin, real scalar interval, real scalar gain, real scalar nphase1, real scalar nsub,
+	real scalar minit, real scalar maxit, real scalar phase3n, pointer(real rowvector function) scalar proposalfn, real scalar verbose){
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, obs, freeidx, ubar, u2bar, adiag, esteq, esteq_old, prod_cum, theta_sum, s, delta, infl, Sdiag
+	real matrix samp, V, S, Vinv
+	real scalar p, i, j, sub, n2lo, n2hi, done, totit, nfree, k
+	real colvector xx
+
+	p = cols(theta0)
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	obs = M.full_statistic(G)
+	theta = theta0
+	// burn-in and phase 1 at theta0
+	s = ErgmMCMCSample(M, G, theta, burnin, 0, 1, proposalfn) - obs
+	ubar = J(1, p, 0)
+	u2bar = J(1, p, 0)
+	for (i=0; i<=nphase1; i++) {
+		s = ErgmMCMCSample(M, G, theta, 0, interval, 1, proposalfn) - obs
+		if (i > 0) {
+			ubar = ubar + s
+			u2bar = u2bar + s:^2
+		}
+	}
+	adiag = J(1, p, 0)
+	for (j=1; j<=p; j++) {
+		if (M.isfixed[j]) continue
+		adiag[j] = u2bar[j] - ubar[j]^2 / nphase1
+		adiag[j] = (adiag[j] > 0 ? nphase1 * gain / adiag[j] : 0.00001)
+	}
+	if (verbose) {
+		printf("SA phase 1 done; gain/V:")
+		for (j=1; j<=p; j++) printf(" %g", adiag[j])
+		printf("\n")
+	}
+	esteq = J(1, p, 0)
+	totit = 0
+	for (sub=1; sub<=nsub; sub++) {
+		n2lo = trunc(minit * 2.52^(sub-1)) + 1
+		n2hi = maxit - minit + n2lo
+		theta_sum = J(1, p, 0)
+		prod_cum = J(1, p, 0)
+		for (i=1; i<=1000000; i++) {
+			s = ErgmMCMCSample(M, G, theta, 0, interval, 1, proposalfn) - obs
+			esteq_old = esteq
+			esteq = J(1, p, 0)
+			for (j=1; j<=p; j++) {
+				if (M.isfixed[j]) continue
+				esteq[j] = s[j]
+				prod_cum[j] = prod_cum[j] + esteq[j] * esteq_old[j]
+				theta[j] = theta[j] - adiag[j] * esteq[j]
+				theta_sum[j] = theta_sum[j] + theta[j]
+			}
+			totit++
+			done = 0
+			if (i >= n2hi) done = 1
+			else if (i >= n2lo) {
+				done = 1
+				for (j=1; j<=p; j++) if (!M.isfixed[j] & prod_cum[j] >= 0) {
+					done = 0
+					break
+				}
+			}
+			if (done) {
+				for (j=1; j<=p; j++) {
+					if (M.isfixed[j]) continue
+					if (sub == nsub) theta[j] = theta_sum[j] / i
+					adiag[j] = adiag[j] / 2
+				}
+				break
+			}
+		}
+		if (verbose) {
+			printf("SA subphase %g: %g iterations; theta:", sub, i)
+			for (j=1; j<=p; j++) printf(" %9.5f", theta[j])
+			printf("\n")
+		}
+	}
+	// phase 3: sample at the SA estimate and take one Newton step; covariance from the same sample
+	samp = ErgmMCMCSample(M, G, theta, burnin, interval, phase3n, proposalfn)
+	V = variance(samp[., freeidx])
+	delta = -(mean(samp[., freeidx] :- obs[freeidx])) * invsym(V)
+	theta[freeidx] = theta[freeidx] + delta
+	infl = ergm_spectral0_ar(samp[., freeidx] :- mean(samp[., freeidx]))
+	Sdiag = sqrt(infl)
+	S = V :* (Sdiag' * Sdiag)
+	Vinv = invsym(V)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = Vinv + Vinv * (S / rows(samp)) * Vinv
+	res.converged = 1
+	res.niter = totit
+	res.coefhist = theta
+	res.finalsample = samp
+	res.acceptrate = .
+	res.final_interval = interval
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, M.ntheta(), 0)
+	return(res)
+}
+
 struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph scalar G,
 	real rowvector theta0, real scalar maxit, real scalar burnin, real scalar interval0,
 	real scalar samplesize0, pointer(real rowvector function) scalar proposalfn,

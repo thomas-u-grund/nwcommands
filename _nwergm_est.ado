@@ -9,6 +9,7 @@ capture program drop _nwergm_est_opts
 program _nwergm_est_opts, sclass
 	syntax [, estimate(string) method(string) mainmethod(string) mpletype(string) mplecovariance(string) mcmletermination(string) mplecheck(string)]
 	sreturn clear
+	capture mata: mata drop __e7_init
 	if "`estimate'" != "" {
 		local estimate = lower("`estimate'")
 		_opts_oneof "mle mple cd" "estimate" "`estimate'" 198
@@ -121,7 +122,7 @@ program _nwergm_est_mple, rclass
 	}
 	else {
 		if "`nocheck'" == "on" mata: st_local("ok", strofreal(ergm_mple_exists(__e7_Df)))
-		if !`ok' di "{err}Warning: The MPLE does not exist!"
+		if !`ok' & "`method'" != "cd" di "{err}Warning: The MPLE does not exist!"
 		// as a starting value for MCMLE the pseudolikelihood fit is left to logit, which drops perfectly predicted terms
 		if (!`ok' & "`method'" == "mple") | "`nocheck'" == "off" {
 			mata: st_local("cv", strofreal(ergm_glm_irls(__e7_Df, "`bname'", "`vname'", __e7_off)))
@@ -148,4 +149,16 @@ program _nwergm_est_ctl
 	}
 	if `effsize' < 0 local effsize .
 	mata: ergm_ctl = (`tcode', `confidence', `steplength', `margin', `effsize', 0.5)
+end
+
+capture program drop _nwergm_est_cdstart
+program _nwergm_est_cdstart
+	// contrastive divergence starts from zeros (R: init.method "skip"), keeping fixed coefficients and given init() values
+	args th curved
+	mata: `th' = J(1, __nwergm_last_M.nparam(), 0)
+	capture mata: __e7_init
+	if _rc == 0 {
+		mata: `th' = editmissing(__e7_init, 0)
+	}
+	mata: `th' = `th' :* (1 :- __nwergm_last_M.isfixed) + __nwergm_last_M.isfixed :* __nwergm_last_M.fixedvalue
 end
