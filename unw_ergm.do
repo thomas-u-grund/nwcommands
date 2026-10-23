@@ -8521,4 +8521,58 @@ real rowvector ergm_bridge_llr(class ErgmModel scalar M, class ErgmGraph scalar 
 	return(llr, vr)
 }
 
+
+// R's predict.ergm(): for every informative dyad the tail, head and the conditional log-odds of a tie
+// (change statistics x eta); same canonical dyad walk as build_mple_data()
+real matrix ergm_predict_data(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector eta, real matrix Mm)
+{
+	real matrix out
+	real scalar i, j, a, b
+	out = J(0, 3, 0)
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) for (b=1; b<=rows(G.mode2nodes); b++) {
+			i = G.mode1nodes[a]
+			j = G.mode2nodes[b]
+			if (Mm[i,j]) continue
+			out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+		}
+		return(out)
+	}
+	for (i=1; i<=G.n; i++) for (j=1; j<=G.n; j++) {
+		if (i==j) continue
+		if (!G.directed & j<i) continue
+		if (Mm[i,j]) continue
+		out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+	}
+	return(out)
+}
+
+
+real matrix ergm_predict_matrix(real matrix P, real scalar n, real scalar directed, real matrix Mm)
+{
+	real matrix out
+	real scalar k, j
+	out = J(n, n, 0)
+	for (k=1; k<=rows(P); k++) {
+		out[P[k,1], P[k,2]] = P[k,3]
+		if (!directed) out[P[k,2], P[k,1]] = P[k,3]
+	}
+	for (k=1; k<=n; k++) for (j=1; j<=n; j++) if (Mm[k,j]) out[k,j] = .
+	return(out)
+}
+
+
+void ergm_netobj_to_graph(pointer(class nw_def scalar) scalar netobj, class ErgmGraph scalar G, real scalar directed)
+{
+	real scalar i, k
+	real matrix nb
+	for (i=1; i<=G.n; i++) {
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!directed & nb[k] <= i) continue
+			G.toggle(i, nb[k])
+		}
+	}
+}
+
 end

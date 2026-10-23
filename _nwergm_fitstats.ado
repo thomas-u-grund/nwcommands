@@ -55,10 +55,13 @@ program _nwergm_fitstats, eclass
 	ereturn scalar aic = -2 * scalar(`ll') + 2 * `k'
 	ereturn scalar bic = -2 * scalar(`ll') + ln(`N') * `k'
 	ereturn local ll_method "`how'"
+	ereturn local predict "nwergm_p"
 	if "`quiet'" == "" {
 		di
-		di as txt "     Null Deviance: " as res %9.1f e(deviance_0) as txt "  on " as res `N' as txt " degrees of freedom"
-		di as txt " Residual Deviance: " as res %9.1f e(deviance) as txt "  on " as res `N' - `k' as txt " degrees of freedom"
+		local pd = cond("`how'" == "pseudolikelihood", "Pseudo-", "")
+		local pdl = cond("`pd'" == "", "", "d")
+		di as txt %28s "Null `pd'`=cond("`pd'"=="","D","d")'eviance: " as res %9.1f e(deviance_0) as txt "  on " as res `N' as txt " degrees of freedom"
+		di as txt %28s "Residual `pd'`=cond("`pd'"=="","D","d")'eviance: " as res %9.1f e(deviance) as txt "  on " as res `N' - `k' as txt " degrees of freedom"
 		di
 		di as txt "Log-likelihood: " as res %10.4f e(ll) as txt " (df = `k')   AIC: " as res %9.1f e(aic) as txt "   BIC: " as res %9.1f e(bic) ///
 			as txt "   (MC std. err. = " as res %7.5g e(ll_se) as txt ")"

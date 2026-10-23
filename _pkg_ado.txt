@@ -65,6 +65,9 @@ f nwdynam.ado
 f nwego.ado
 f nwergm.ado
 f nwergm_estat.ado
+f nwergm_p.ado
+f _nwergm_miss.ado
+f _nwergm_fitstats.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado

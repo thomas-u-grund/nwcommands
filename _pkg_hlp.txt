@@ -65,6 +65,7 @@ f nwdynam.sthlp
 f nwego.sthlp
 f nwergm.sthlp
 f nwergm_estat.sthlp
+f nwergm_fit.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp
 f nwexport.sthlp

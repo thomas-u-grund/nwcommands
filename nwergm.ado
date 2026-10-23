@@ -3397,7 +3397,13 @@ program _nwergm_numvar
 	local __nn = _N
 	capture mata: st_local("__nn", strofreal(__nwergm_last_G.n))
 	qui count if missing(`v') in 1/`__nn'
-	if r(N) > 0 {
+	local __nna = r(N)
+	if `__nna' > 0 & inlist("`term'", "bcov1", "bfactor1", "bnodematch1", "bcov2", "bfactor2", "bnodematch2") {
+		// two-mode terms only use the attribute of their own mode (R trims before checking)
+		local __md = substr("`term'", -1, 1)
+		capture mata: st_local("__nna", strofreal(missing(st_data(1::`__nn', "`v'")[__nwergm_last_G.mode`__md'nodes])))
+	}
+	if `__nna' > 0 {
 		di "{err}In term {bf:`term'}: attribute {bf:`v'} has missing data, which is not currently supported by ergm."
 		error 416
 	}
