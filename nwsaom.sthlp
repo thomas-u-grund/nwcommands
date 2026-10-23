@@ -235,6 +235,23 @@
 {synoptline}
 {p2colreset}{...}
 
+{marker multinet}{...}
+{title:Several dependent networks: nwsaom multinet}
+
+{p 8 17 2}
+{cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)}
+{opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
+
+{p 4 4 2}
+Two directed one-mode networks on the same actors evolve together (RSiena: two dependent network variables; unconditional Method of Moments, rates per
+network and period). {opt net1()} and {opt net2()} list the waves (the same number, at least two). {opt eff1()} / {opt eff2()}: the within-network effects of
+each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact} and, with a variable,
+{cmd:egox:}{it:var} {cmd:altx:}{it:var} {cmd:samex:}{it:var} {cmd:simx:}{it:var}. {opt cross1()} lists the cross-network effects of network 1 that depend on network 2,
+{opt cross2()} those of network 2 on network 1: {cmd:crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw}
+(RSiena's crprod, crprodRecip, crprodMutual, from, fromMutual, fromAny, to, toBack, toRecip, cl.XWX, cl.XWX1, cl.XWX2, mixedInXW; a parameter after a colon,
+e.g. {cmd:from:2}, is RSiena's effect parameter). The cross-network statistics read the other network at the start of the period, the simulation its current
+state, as RSiena. {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
+
 {title:Description}
 
 {pstd}

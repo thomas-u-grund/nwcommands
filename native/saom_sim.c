@@ -321,7 +321,7 @@ static double saom_degfun(int termcode, double d, double c) {
 	}
 }
 
-#define SAOM_NATIVE_VERSION 51		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
+#define SAOM_NATIVE_VERSION 52		// 3 = __saom_native_statbehlag%d; 4 = BATCHSETUP/BATCHRUN/BATCHCLEAN (threaded batch simulation), NCORES; 5 = netdist for network-only models too, multiplex per-network steps/distances; 6 = conditional mode with missing dyads/symmetric networks, BATCHRUN condmode 2; 7 = pairwise (symmetric) models with ratecov(): alter drawn by the covariate, RSiena total rate; 8 = symtype 4/5, unilateral-initiative non-directed model types (RSiena AFORCE/AAGREE); 9 = several ratecov() covariates, MAXTERMS 32, MAXATTR 24; 10 = two-way interaction sign on withdrawals (RSiena); 11 = endowment/creation (network and behavior), structural(), three-way interactions, batch for ratecov()/non-directed models, MAXTERMS 256/MAXATTR 128/MAXBEHTERMS 64; 12 = RSiena behavior endowment/creation statistics, interactions of more effects (RSiena tie statistics); 26 = an inactive (absent) actor stays among the alters of an active ego, as RSiena (composition change); 27 = composition change at fractional times in the batch path (join/leave events per period); 28 = pairwise (symmetric) models draw the alter among the active actors only (RSiena: alters in proportion to their rates), events recompute the pairwise rate terms; 29 = creation statistic of the ego-activity degree effects on the start-network degrees (RSiena); 30 = outTrunc, outMore, outThreshold, outInv, outSqInv (term codes 54-58, parameter c); 31 = reciPop, reciPopSqrt, reciAct, reciAct(2) (59-62); 32 = gwdspFF, gwdspFB, betweenness (63-65); 33 = gwespFB/BF/BB/RR, nbrDist2, nbrDist2twice (66-71); 34 = egoX/altX/egoPlusAltX of the dependent behavior (73-75); 35 = behavior effects indeg, outdeg, recipDeg, isolate, outIsolate, totAlt, avAltPop, totAltPop, maxAlt, minAlt, avRecAlt, totRecAlt and the similarity family (105-124); 36 = effFrom: covariate main effects on the behavior (term codes 125-132, centred covariates in the BATCHSETUP trailer); 37 = avXAlt, avSameXAlt, totXAlt, totSameXAlt (term codes 133-164) on the behavior-covariate store; 38 = changing (per-period) covariates for the behavior covariate effects; 39 = covariate x triad/popularity/activity effects (term codes 165-180); 40 = centred and combined degree effects, avDeg, transTriads (term codes 181-188); 41 = covariate threshold and contrast effects (term codes 189-200); 42 = structural rate effects (outRate, inRate, recipRate, Inv, Log versions) as dynamic rate covariates; 43 = behavior effects of the network x a covariate (term codes 300+: avXInAlt ... degNegContrX); 44 = behavior effects avInSim ... totInAlt (term codes 820+); 45 = network terms with the dependent behavior as the covariate (term code + 1000); 46 = NETSTAT: the observed statistic of one network term computed by the plugin; 47 = BEHSTAT: the observed statistic of one behavior term computed by the plugin; 48 = behavior effects with a dyadic covariate (term codes 840+: avAltW ... totSimW); 49 = network effects of a dyadic covariate WWX ... XXW (term codes 250-258); 52 = several co-evolving networks (BATCHSETUP<k>|, MNRUN, MNOBS) and the cross-network terms 3000+; 51 = behavior shape effects quad_cc quad_nc constant threshold simAllNear simAllFar avGroup totGroup (term codes 2000+); 50 = homXTransRecTrip, sameXTransRecTrip, diffXTransRecTrip, egoXaltXRecip, sameXCycle4, sameInXCycle4, avGroupEgoX, totGroupEgoX (term codes 235-242)
 
 /* behavior range for TERMCODE_BEHSIM, set by stata_call() once the
    behavior block is parsed (saom_change_term()'s signature has no room
@@ -363,6 +363,7 @@ static double saom_behcov_mean[8];
 static double *saom_bdy[8];			/* protocol 48: dyadic covariates of the behavior effects, n x n, row-major (i-1)*n + (j-1) */
 static long saom_bdy_pending = 0;
 static long saom_bdy_n = 0;		/* the covariates' raw means (RSiena's covariateMean(), the value of min / max without alters) */
+static __thread void *saom_tl_xg;	/* protocol 52: the OTHER network's graph for the cross-network terms (codes 3000+), set by the multi-network simulation */
 static __thread const double *saom_tl_beh0;	/* protocol 51: the starting behavior of the current period/behavior (the constant effect), set in simulate_period() */
 static __thread const double *saom_tl_cov[8];	/* the current period's covariates, set at the start of simulate_period() */
 #define SAOM_BEH_NEWTC(tc) ((tc) >= TERMCODE_BEH_INDEG && (tc) <= TERMCODE_BEH_AVSIMPOPEGO)
@@ -1383,9 +1384,76 @@ static double cz_indties_ego(graph_t *g, const double *a, long i) {
 	return st;
 }
 
+/* ===================================================================
+   protocol 52: cross-network terms (RSiena GenericNetworkEffect with a second dependent network, codes 3000 + v). g = the own network, the OTHER
+   network is saom_tl_xg (the current simulated state in the ministeps, the START of the period in the statistics, as RSiena). The tables are
+   RSiena's MixedTwoPathTable counts: # of middle actors h with a first step i -(d1)-> h in network G1 and a second step h -(d2)-> j in G2
+   (F forward, B backward, R reciprocated, E "either" - for the FIRST step RSiena uses the reciprocated ties for E as well, copied).
+   v: 0 crprod 1 crprodRecip 2 crprodMutual 3 from 4 fromMutual 5 fromAny 6 to 7 toBack 8 toRecip 9 cl.XWX 10 cl.XWX1 11 cl.XWX2 12 mixedInXW
+   =================================================================== */
+#define TERMCODE_XT0 3000
+#define SAOM_XTC(tc) ((tc) >= TERMCODE_XT0 && (tc) < TERMCODE_XT0 + 1000)
+static int xt_step_has(graph_t *G, char d, long h, long j) {
+	switch (d) {
+		case 'F': return has_edge(G, h, j);
+		case 'B': return has_edge(G, j, h);
+		case 'R': return has_edge(G, h, j) && has_edge(G, j, h);
+		default: return has_edge(G, h, j) || has_edge(G, j, h);
+	}
+}
+static double xt_mtp(graph_t *G1, graph_t *G2, char d1, char d2, long i, long j) {
+	long m, h, c = 0;
+	if (!G1 || !G2) return 0.0;
+	if (d1 == 'B') {
+		for (m = 0; m < G1->inadj[i].len; m++) { h = G1->inadj[i].nb[m]; if (xt_step_has(G2, d2, h, j)) c++; }
+	}
+	else {
+		/* F: the out-ties of i; R and E (copied from RSiena): the reciprocated ties of i */
+		for (m = 0; m < G1->outadj[i].len; m++) {
+			h = G1->outadj[i].nb[m];
+			if (d1 != 'F' && !has_edge(G1, h, i)) continue;
+			if (xt_step_has(G2, d2, h, j)) c++;
+		}
+	}
+	return (double)c;
+}
+static double xt_shape(double v, double par) {
+	if (fabs(par - 2.0) < 0.001) return sqrt(v);
+	if (fabs(par - 3.0) < 0.001) return v >= 1.0 ? 1.0 : 0.0;
+	return v;
+}
+static double xt_value(graph_t *g, int v, double p1, long i, long j) {
+	graph_t *h = (graph_t *)saom_tl_xg;
+	if (!h) return 0.0;
+	switch (v) {
+		case 0: return has_edge(h, i, j) ? 1.0 : 0.0;
+		case 1: return has_edge(h, j, i) ? 1.0 : 0.0;
+		case 2: return (has_edge(h, i, j) && has_edge(h, j, i)) ? 1.0 : 0.0;
+		case 3: { double c = xt_mtp(h, h, 'F', 'B', i, j); return p1 >= 2.0 ? sqrt(c) : c; }
+		case 4: { double c = xt_mtp(h, h, 'R', 'R', i, j); return p1 >= 2.0 ? sqrt(c) : c; }
+		case 5: return xt_mtp(h, h, 'F', 'B', i, j) > 0.0 ? 1.0 : 0.0;
+		case 6: return xt_shape(xt_mtp(h, g, 'F', 'F', i, j), p1);
+		case 7: return xt_shape(xt_mtp(h, g, 'B', 'F', i, j), p1);
+		case 8: return xt_shape(xt_mtp(h, g, 'R', 'F', i, j), p1);
+		case 9: return xt_mtp(g, h, 'F', 'F', i, j) + xt_mtp(g, h, 'F', 'B', i, j);
+		case 10: return xt_mtp(g, h, 'F', 'F', i, j);
+		case 11: return xt_mtp(g, h, 'F', 'B', i, j);
+		case 12: return xt_shape(xt_mtp(g, h, 'B', 'F', i, j), p1);
+	}
+	return 0.0;
+}
+static double xt_stat(graph_t *g, int termcode, double p1) {
+	long k;
+	double tot = 0.0;
+	int v = termcode - TERMCODE_XT0;
+	for (k = 0; k < g->nties; k++) tot += xt_value(g, v, p1, g->elist_i[k], g->elist_j[k]);
+	return tot;
+}
+
 static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
 	long i, k;
 	double tot = 0.0;
+	if (SAOM_XTC(termcode)) return xt_stat(g, termcode, p1);
 	if (termcode >= 1000) termcode -= 1000;
 	if (SAOM_CZTC(termcode)) {
 		int v = termcode - TERMCODE_CZ0;
@@ -1613,6 +1681,10 @@ static double saom_stat_term(graph_t *g, int termcode, double *a, double p1) {
    model. */
 static double saom_change_term(graph_t *g, int termcode, double *a, double p1, long i, long j, int ij_exists,
 	double *tt_arr, double *c3_arr) {
+	if (SAOM_XTC(termcode)) {
+		double v2 = xt_value(g, termcode - TERMCODE_XT0, p1, i, j);
+		return ij_exists ? -v2 : v2;
+	}
 	if (termcode >= 1000) termcode -= 1000;
 	if (SAOM_CZTC(termcode)) {
 		double v2 = cz_value(g, termcode - TERMCODE_CZ0, a, p1, i, j);
@@ -2227,7 +2299,7 @@ static void saom_mark_need_flags(int tc, int *need_adj, int *need_transtrip, int
 	if (tc == TERMCODE_GWDSPFF || tc == TERMCODE_GWDSPFB || tc == TERMCODE_BETWEEN) *need_adj = 1;
 	if ((tc >= TERMCODE_GWESPFB && tc <= TERMCODE_CYCLE4SQRT)) *need_adj = 1;
 	if (tc == TERMCODE_RECIPOP || tc == TERMCODE_RECIPOPSQRT || tc == TERMCODE_RECIACT || tc == TERMCODE_RECIACTSQRT) *need_adj = 1;
-	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE || SAOM_DWTC(tc)) *need_adj = 1;
+	if (tc == TERMCODE_GWESP || tc == TERMCODE_TRANSTIES || tc == TERMCODE_BALANCE || SAOM_DWTC(tc) || SAOM_XTC(tc)) *need_adj = 1;
 }
 
 /* ===================================================================
@@ -4472,7 +4544,7 @@ static long saom_physical_cores(void) {
 
      BATCHSETUP|<header>   reads the frame once (all periods' starting
                            ties, attributes, behavior, missingness,
-                           presence) and stores it in batch_state.
+                           presence) and stores it in batch_cur->
      BATCHRUN|<params>     runs K replicates x P periods; unit (k, pd)
                            uses its own random stream seeded from
                            (seed, k, pd), so results do not depend on the
@@ -4496,25 +4568,27 @@ typedef struct {
 	double **rcper;		// per period: rcattr with the structural columns computed from the starting network
 } batch_state_t;
 
-static batch_state_t batch_state = {0};
+#define MAXNETS 4
+static batch_state_t batch_states[MAXNETS];		/* protocol 52: slot 0 = the model of BATCHSETUP; slots 1.. = further dependent networks (BATCHSETUP1| ...) */
+static batch_state_t *batch_cur = &batch_states[0];
 
 static void batch_free(void) {
 	long pd, k;
-	if (!batch_state.ready) return;
-	for (pd = 0; pd < batch_state.P; pd++) {
-		period_t *p = &batch_state.per[pd];
+	if (!batch_cur->ready) return;
+	for (pd = 0; pd < batch_cur->P; pd++) {
+		period_t *p = &batch_cur->per[pd];
 		free(p->ti); free(p->tj); free(p->beh0); free(p->mi); free(p->mj); free(p->missbeh); free(p->present); free(p->evt); free(p->eva); free(p->evk);
 		{ long b; for (b = 1; b < MAXBEH; b++) { free(p->xbeh0[b]); free(p->xmissbeh[b]); } }
 		{ long a; for (a = 0; a <= MAXATTR; a++) free(p->xattr[a]); }
 	}
-	{ long b; for (b = 1; b < MAXBEH; b++) free(batch_state.M.bm[b]); }
-	free(batch_state.per);
-	for (k = 0; k < batch_state.M.nattr; k++) free(batch_state.attrmem[k]);
-	free(batch_state.attrmem);
-	free(batch_state.M.struct_off); free(batch_state.M.struct_j);
-	free(batch_state.rcattr);
-	if (batch_state.rcper) { long q; for (q = 0; q < batch_state.P; q++) free(batch_state.rcper[q]); free(batch_state.rcper); }
-	memset(&batch_state, 0, sizeof(batch_state));
+	{ long b; for (b = 1; b < MAXBEH; b++) free(batch_cur->M.bm[b]); }
+	free(batch_cur->per);
+	for (k = 0; k < batch_cur->M.nattr; k++) free(batch_cur->attrmem[k]);
+	free(batch_cur->attrmem);
+	free(batch_cur->M.struct_off); free(batch_cur->M.struct_j);
+	free(batch_cur->rcattr);
+	if (batch_cur->rcper) { long q; for (q = 0; q < batch_cur->P; q++) free(batch_cur->rcper[q]); free(batch_cur->rcper); }
+	memset(batch_cur, 0, sizeof(*batch_cur));
 }
 
 static unsigned long long unit_seed(unsigned long long seed, long k, long pd) {
@@ -4646,7 +4720,7 @@ static ST_retcode batch_setup(char *arg) {
 	char *tok0;
 
 	batch_free();
-	M = &batch_state.M;
+	M = &batch_cur->M;
 	memset(M, 0, sizeof(model_t));
 	tok0 = strtok(arg, " \t");
 	if (!tok0) { SF_error("saom_sim: BATCHSETUP empty\n"); return 198; }
@@ -4679,12 +4753,12 @@ static ST_retcode batch_setup(char *arg) {
 	/* protocol 11 trailer: model trailer, then the simulation type
 	   (symtype) and the ratecov() covariates (K, then K x n values) */
 	parse_model_trailer11(M);
-	batch_state.symtype = next_long_opt(0);
-	batch_state.nrc = next_long_opt(0);
-	if (batch_state.nrc < 0 || batch_state.nrc > MAXRC) { SF_error("saom_sim: BATCHSETUP too many ratecov() covariates\n"); return 198; }
-	if (batch_state.nrc > 0) {
-		batch_state.rcattr = (double *)malloc((size_t)(n * batch_state.nrc) * sizeof(double));
-		for (i = 0; i < n * batch_state.nrc; i++) batch_state.rcattr[i] = next_double();
+	batch_cur->symtype = next_long_opt(0);
+	batch_cur->nrc = next_long_opt(0);
+	if (batch_cur->nrc < 0 || batch_cur->nrc > MAXRC) { SF_error("saom_sim: BATCHSETUP too many ratecov() covariates\n"); return 198; }
+	if (batch_cur->nrc > 0) {
+		batch_cur->rcattr = (double *)malloc((size_t)(n * batch_cur->nrc) * sizeof(double));
+		for (i = 0; i < n * batch_cur->nrc; i++) batch_cur->rcattr[i] = next_double();
 	}
 	/* protocol 19: behaviors 1.. (trailer: nbx, then per extra behavior its term count, term codes, behmin behmax
 	   simMean overallMean and the endowment/creation code of every term) */
@@ -4748,9 +4822,9 @@ static ST_retcode batch_setup(char *arg) {
 		saom_bdy_pending = nd;
 	}
 	/* protocol 42: structural rate covariates (count, then their types) */
-	batch_state.nsr = next_long_opt(0);
-	if (batch_state.nsr < 0 || batch_state.nsr > MAXRC) { SF_error("saom_sim: BATCHSETUP too many structural rate effects\n"); return 198; }
-	for (k = 0; k < batch_state.nsr; k++) batch_state.srtype[k] = (int)next_long();
+	batch_cur->nsr = next_long_opt(0);
+	if (batch_cur->nsr < 0 || batch_cur->nsr > MAXRC) { SF_error("saom_sim: BATCHSETUP too many structural rate effects\n"); return 198; }
+	for (k = 0; k < batch_cur->nsr; k++) batch_cur->srtype[k] = (int)next_long();
 	if (wire_parse_error) { SF_error("saom_sim: BATCHSETUP argument string ran out of fields\n"); return 198; }
 
 	saom_model_need_flags((int)M->nterms, M->termcodes, M->attridx, M->p1, &M->need_adj, &M->need_transtrip, &M->need_cycle3);
@@ -4764,60 +4838,60 @@ static ST_retcode batch_setup(char *arg) {
 
 	{ long b2, k2; for (b2 = 1; b2 < M->nbeh; b2++) for (k2 = 0; k2 < M->bm[b2]->nbehterms; k2++) if (M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVALT || M->bm[b2]->behtermcodes[k2] == TERMCODE_BEH_AVSIM || SAOM_BEH_NEWTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BEH_XALTTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BSTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BQTC(M->bm[b2]->behtermcodes[k2]) || SAOM_BRTC(M->bm[b2]->behtermcodes[k2])) M->need_adj = 1; }
 
-	{ long q; for (q = 0; q < batch_state.nsr; q++) { int ty = batch_state.srtype[q]; int kd = (ty <= 3) ? ty : ((ty <= 6) ? ty - 3 : ty - 6); if (kd == 3) M->need_adj = 1; } }
-	batch_state.P = P;
-	batch_state.per = (period_t *)calloc((size_t)P, sizeof(period_t));
-	{ long c, q; for (c = 0; c < 8; c++) if (saom_behcov_pp[c]) for (q = 0; q < P; q++) batch_state.per[q].bcov[c] = saom_behcov_pp[c][saom_behcov_np[c] == 1 ? 0 : q]; }
-	batch_state.attrmem = (double **)calloc((size_t)(M->nattr > 0 ? M->nattr : 1), sizeof(double *));
+	{ long q; for (q = 0; q < batch_cur->nsr; q++) { int ty = batch_cur->srtype[q]; int kd = (ty <= 3) ? ty : ((ty <= 6) ? ty - 3 : ty - 6); if (kd == 3) M->need_adj = 1; } }
+	batch_cur->P = P;
+	batch_cur->per = (period_t *)calloc((size_t)P, sizeof(period_t));
+	{ long c, q; for (c = 0; c < 8; c++) if (saom_behcov_pp[c]) for (q = 0; q < P; q++) batch_cur->per[q].bcov[c] = saom_behcov_pp[c][saom_behcov_np[c] == 1 ? 0 : q]; }
+	batch_cur->attrmem = (double **)calloc((size_t)(M->nattr > 0 ? M->nattr : 1), sizeof(double *));
 
 	/* starting ties, stacked */
 	{
 		long *cnt = (long *)calloc((size_t)P, sizeof(long));
 		for (i = 1; i <= ntot; i++) { ST_double v; SF_vdata(1, i, &v); cnt[(long)v - 1]++; }
 		for (pd = 0; pd < P; pd++) {
-			batch_state.per[pd].ti = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
-			batch_state.per[pd].tj = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
-			batch_state.per[pd].nties = 0;
+			batch_cur->per[pd].ti = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
+			batch_cur->per[pd].tj = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
+			batch_cur->per[pd].nties = 0;
 		}
 		for (i = 1; i <= ntot; i++) {
 			ST_double vp, vi, vj;
 			period_t *p;
 			SF_vdata(1, i, &vp); SF_vdata(2, i, &vi); SF_vdata(3, i, &vj);
-			p = &batch_state.per[(long)vp - 1];
+			p = &batch_cur->per[(long)vp - 1];
 			p->ti[p->nties] = (long)vi; p->tj[p->nties] = (long)vj; p->nties++;
 		}
 		free(cnt);
 	}
 	/* protocol 42: per period the rate covariates, the structural columns from the period's starting network */
-	batch_state.rcper = NULL;
-	if (batch_state.nsr > 0) {
-		long pdq, sq, a, c0 = batch_state.nrc - batch_state.nsr, e2;
+	batch_cur->rcper = NULL;
+	if (batch_cur->nsr > 0) {
+		long pdq, sq, a, c0 = batch_cur->nrc - batch_cur->nsr, e2;
 		if (c0 < 0) { SF_error("saom_sim: BATCHSETUP more structural rate effects than rate covariates\n"); return 198; }
-		batch_state.rcper = (double **)calloc((size_t)P, sizeof(double *));
+		batch_cur->rcper = (double **)calloc((size_t)P, sizeof(double *));
 		for (pdq = 0; pdq < P; pdq++) {
 			graph_t gt;
-			period_t *pq = &batch_state.per[pdq];
-			double *arr = (double *)malloc((size_t)(n * batch_state.nrc) * sizeof(double));
-			memcpy(arr, batch_state.rcattr, (size_t)(n * batch_state.nrc) * sizeof(double));
+			period_t *pq = &batch_cur->per[pdq];
+			double *arr = (double *)malloc((size_t)(n * batch_cur->nrc) * sizeof(double));
+			memcpy(arr, batch_cur->rcattr, (size_t)(n * batch_cur->nrc) * sizeof(double));
 			graph_init(&gt, n, 1, pq->nties + 8);
 			for (e2 = 0; e2 < pq->nties; e2++) toggle(&gt, pq->ti[e2], pq->tj[e2]);
-			for (sq = 0; sq < batch_state.nsr; sq++) for (a = 1; a <= n; a++) arr[(c0 + sq) * n + a - 1] = sr_value(&gt, batch_state.srtype[sq], a);
+			for (sq = 0; sq < batch_cur->nsr; sq++) for (a = 1; a <= n; a++) arr[(c0 + sq) * n + a - 1] = sr_value(&gt, batch_cur->srtype[sq], a);
 			graph_free(&gt);
-			batch_state.rcper[pdq] = arr;
+			batch_cur->rcper[pdq] = arr;
 		}
 	}
 	col = 4;
 	for (k = 0; k < M->nattr; k++) {
-		batch_state.attrmem[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
-		for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); batch_state.attrmem[k][i] = SF_is_missing(v) ? 0.0 : v; }
-		M->attrs[k] = batch_state.attrmem[k];
+		batch_cur->attrmem[k] = (double *)calloc((size_t)(n + 1), sizeof(double));
+		for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); batch_cur->attrmem[k][i] = SF_is_missing(v) ? 0.0 : v; }
+		M->attrs[k] = batch_cur->attrmem[k];
 		col++;
 	}
 	if (M->nbehterms > 0) {
 		for (pd = 0; pd < P; pd++) {
 			double *b = (double *)calloc((size_t)(n + 1), sizeof(double));
 			for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); b[i] = v; }
-			batch_state.per[pd].beh0 = b;
+			batch_cur->per[pd].beh0 = b;
 			col++;
 		}
 	}
@@ -4825,16 +4899,16 @@ static ST_retcode batch_setup(char *arg) {
 		long *cnt = (long *)calloc((size_t)P, sizeof(long));
 		for (i = 1; i <= nmtot; i++) { ST_double v; SF_vdata((int)col, i, &v); cnt[(long)v - 1]++; }
 		for (pd = 0; pd < P; pd++) {
-			batch_state.per[pd].hasmiss = 1;
-			batch_state.per[pd].mi = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
-			batch_state.per[pd].mj = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
-			batch_state.per[pd].nmiss = 0;
+			batch_cur->per[pd].hasmiss = 1;
+			batch_cur->per[pd].mi = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
+			batch_cur->per[pd].mj = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
+			batch_cur->per[pd].nmiss = 0;
 		}
 		for (i = 1; i <= nmtot; i++) {
 			ST_double vp, vi, vj;
 			period_t *p;
 			SF_vdata((int)col, i, &vp); SF_vdata((int)(col + 1), i, &vi); SF_vdata((int)(col + 2), i, &vj);
-			p = &batch_state.per[(long)vp - 1];
+			p = &batch_cur->per[(long)vp - 1];
 			p->mi[p->nmiss] = (long)vi; p->mj[p->nmiss] = (long)vj; p->nmiss++;
 		}
 		free(cnt);
@@ -4844,7 +4918,7 @@ static ST_retcode batch_setup(char *arg) {
 			if (M->nbehterms > 0) {
 				for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); mb[i] = v; }
 			}
-			batch_state.per[pd].missbeh = mb;
+			batch_cur->per[pd].missbeh = mb;
 			if (M->nbehterms > 0) col++;
 		}
 	}
@@ -4852,8 +4926,8 @@ static ST_retcode batch_setup(char *arg) {
 		for (pd = 0; pd < P; pd++) {
 			double *pr = (double *)calloc((size_t)(n + 1), sizeof(double));
 			for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); pr[i] = v; }
-			batch_state.per[pd].present = pr;
-			batch_state.per[pd].haspresent = 1;
+			batch_cur->per[pd].present = pr;
+			batch_cur->per[pd].haspresent = 1;
 			col++;
 		}
 	}
@@ -4864,13 +4938,13 @@ static ST_retcode batch_setup(char *arg) {
 			for (pd = 0; pd < P; pd++) {
 				double *bb = (double *)calloc((size_t)(n + 1), sizeof(double));
 				for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); bb[i] = v; }
-				batch_state.per[pd].xbeh0[b] = bb;
+				batch_cur->per[pd].xbeh0[b] = bb;
 				col++;
 			}
 			for (pd = 0; pd < P; pd++) {
 				double *mm = (double *)calloc((size_t)(n + 1), sizeof(double));
 				if (hasmiss) { for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); mm[i] = v; } col++; }
-				batch_state.per[pd].xmissbeh[b] = mm;
+				batch_cur->per[pd].xmissbeh[b] = mm;
 			}
 		}
 	}
@@ -4880,7 +4954,7 @@ static ST_retcode batch_setup(char *arg) {
 			for (pd = 0; pd < P; pd++) {
 				double *xa = (double *)calloc((size_t)(n + 1), sizeof(double));
 				for (i = 1; i <= n; i++) { ST_double v; SF_vdata((int)col, i, &v); xa[i] = v; }
-				batch_state.per[pd].xattr[M->tvcol[j] - 1] = xa;
+				batch_cur->per[pd].xattr[M->tvcol[j] - 1] = xa;
 				col++;
 			}
 		}
@@ -4902,7 +4976,7 @@ static ST_retcode batch_setup(char *arg) {
 		long *cnt = (long *)calloc((size_t)P, sizeof(long));
 		for (q = 1; q <= ne; q++) { ST_double v; SF_vdata((int)col, q, &v); cnt[(long)v - 1]++; }
 		for (pd = 0; pd < P; pd++) {
-			period_t *pp = &batch_state.per[pd];
+			period_t *pp = &batch_cur->per[pd];
 			pp->nev = 0;
 			pp->evt = (double *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(double));
 			pp->eva = (long *)malloc((size_t)(cnt[pd] > 0 ? cnt[pd] : 1) * sizeof(long));
@@ -4912,7 +4986,7 @@ static ST_retcode batch_setup(char *arg) {
 			ST_double vp, vt, va, vk;
 			period_t *pp;
 			SF_vdata((int)col, q, &vp); SF_vdata((int)(col + 1), q, &vt); SF_vdata((int)(col + 2), q, &va); SF_vdata((int)(col + 3), q, &vk);
-			pp = &batch_state.per[(long)vp - 1];
+			pp = &batch_cur->per[(long)vp - 1];
 			pp->evt[pp->nev] = vt; pp->eva[pp->nev] = (long)va; pp->evk[pp->nev] = (int)vk; pp->nev++;
 		}
 		free(cnt);
@@ -4929,7 +5003,7 @@ static ST_retcode batch_setup(char *arg) {
 		}
 		saom_bdy_pending = 0;
 	}
-	batch_state.ready = 1;
+	batch_cur->ready = 1;
 	SF_scal_save("__saom_native_version", (ST_double)SAOM_NATIVE_VERSION);
 	return 0;
 }
@@ -4945,7 +5019,7 @@ static ST_retcode batch_setup(char *arg) {
      condmode=2: conditional simulation, the mode-0 columns with a 7th
        per-period column (after nchangesBeh), the simulated time. */
 static ST_retcode batch_run(char *arg) {
-	model_t *M = &batch_state.M;
+	model_t *M = &batch_cur->M;
 	long K, nthreads, pd, k, u, P, pNet, pBeh, W, c;
 	unsigned long long seed;
 	int want_score, condmode, perper = 0;
@@ -4955,8 +5029,8 @@ static ST_retcode batch_run(char *arg) {
 	simres_t *res;
 	double rcoef[MAXRC];
 
-	if (!batch_state.ready) { SF_error("saom_sim: BATCHRUN without BATCHSETUP\n"); return 198; }
-	P = batch_state.P;
+	if (!batch_cur->ready) { SF_error("saom_sim: BATCHRUN without BATCHSETUP\n"); return 198; }
+	P = batch_cur->P;
 	pNet = M->nterms;
 	pBeh = M->nbehtermsAll;
 	tok0 = strtok(arg, " \t");
@@ -4981,7 +5055,7 @@ static ST_retcode batch_run(char *arg) {
 		for (pd = 0; pd < P; pd++) prm[pd].rateBeh = next_double();
 		for (pd = 0; pd < P; pd++) prm[pd].targetChange = next_double();
 		/* protocol 11: the ratecov() coefficients (nrc of them) */
-		for (k = 0; k < batch_state.nrc; k++) rcoef[k] = next_double();
+		for (k = 0; k < batch_cur->nrc; k++) rcoef[k] = next_double();
 		/* protocol 18: optional trailing flag, per-period statistics and scores appended to the output */
 		perper = (int)next_long_opt(0);
 		/* protocol 19: the coefficients and rates of behaviors 1.. */
@@ -4992,11 +5066,11 @@ static ST_retcode batch_run(char *arg) {
 			for (b2 = 1; b2 < M->nbeh; b2++) for (pd = 0; pd < P; pd++) prm[pd].xrateBeh[b2] = next_double();
 		}
 		for (pd = 0; pd < P; pd++) {
-			prm[pd].symtype = batch_state.symtype;
-			prm[pd].hasratecov = batch_state.nrc;
-			prm[pd].ratecovattr = batch_state.rcper ? batch_state.rcper[pd] : batch_state.rcattr;
-			prm[pd].nsr = (int)batch_state.nsr;
-			memcpy(prm[pd].srtype, batch_state.srtype, sizeof(batch_state.srtype));
+			prm[pd].symtype = batch_cur->symtype;
+			prm[pd].hasratecov = batch_cur->nrc;
+			prm[pd].ratecovattr = batch_cur->rcper ? batch_cur->rcper[pd] : batch_cur->rcattr;
+			prm[pd].nsr = (int)batch_cur->nsr;
+			memcpy(prm[pd].srtype, batch_cur->srtype, sizeof(batch_cur->srtype));
 			prm[pd].ratecoef = rcoef;
 		}
 	}
@@ -5012,14 +5086,14 @@ static ST_retcode batch_run(char *arg) {
 	}
 
 	res = (simres_t *)calloc((size_t)(K * P), sizeof(simres_t));
-	J.M = M; J.per = batch_state.per; J.prm = prm; J.K = K; J.P = P; J.seed = seed; J.res = res;
+	J.M = M; J.per = batch_cur->per; J.prm = prm; J.K = K; J.P = P; J.seed = seed; J.res = res;
 	batch_run_units(&J, nthreads);
 
 	/* condmode 2 = conditional simulation with the full output of mode 0
 	   plus a 7th per-period column, the simulated time */
 	/* protocol 11: with ratecov(), 2*nrc more columns at the end: per
 	   covariate the statistic and the score, summed over periods */
-	W = (condmode == 1) ? P : (2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc);
+	W = (condmode == 1) ? P : (2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_cur->nrc);
 	for (k = 0; k < K; k++) {
 		if (condmode == 1) {
 			for (pd = 0; pd < P; pd++) SF_vstore((int)(pd + 1), (int)(k + 1), res[k * P + pd].t);
@@ -5051,8 +5125,8 @@ static ST_retcode batch_run(char *arg) {
 				/* protocol 18: per period, the statistics (network, lagged behavior), the scores (network, behavior)
 				   and per ratecov() covariate the statistic and the score; RSiena's derivative matrix is the sum over
 				   the periods of the covariance of that period's score and deviation */
-				long wper = 2 * (pNet + pBeh) + 2 * batch_state.nrc;
-				long base1 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc + 1;
+				long wper = 2 * (pNet + pBeh) + 2 * batch_cur->nrc;
+				long base1 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_cur->nrc + 1;
 				for (pd = 0; pd < P; pd++) {
 					simres_t *r = &res[k * P + pd];
 					long b2 = base1 + wper * pd, kr;
@@ -5060,7 +5134,7 @@ static ST_retcode batch_run(char *arg) {
 					for (c = 0; c < pBeh; c++) SF_vstore((int)(b2 + pNet + c), (int)(k + 1), r->statBehLag[c]);
 					for (c = 0; c < pNet; c++) SF_vstore((int)(b2 + pNet + pBeh + c), (int)(k + 1), r->score[c]);
 					for (c = 0; c < pBeh; c++) SF_vstore((int)(b2 + 2 * pNet + pBeh + c), (int)(k + 1), r->scoreBeh[c]);
-					for (kr = 0; kr < batch_state.nrc; kr++) {
+					for (kr = 0; kr < batch_cur->nrc; kr++) {
 						SF_vstore((int)(b2 + 2 * (pNet + pBeh) + 2 * kr), (int)(k + 1), r->rcstat[kr]);
 						SF_vstore((int)(b2 + 2 * (pNet + pBeh) + 2 * kr + 1), (int)(k + 1), r->rcscore[kr]);
 					}
@@ -5068,8 +5142,8 @@ static ST_retcode batch_run(char *arg) {
 			}
 			if (M->nbeh > 1 && condmode != 1) {
 				/* protocol 19: last columns, per period and behavior 1..: behdist, stepsBeh, nchangesBeh */
-				long wper0 = 2 * (pNet + pBeh) + 2 * batch_state.nrc;
-				long baseX = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_state.nrc + (perper ? P * wper0 : 0) + 1, b2;
+				long wper0 = 2 * (pNet + pBeh) + 2 * batch_cur->nrc;
+				long baseX = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 2 * batch_cur->nrc + (perper ? P * wper0 : 0) + 1, b2;
 				for (pd = 0; pd < P; pd++) {
 					simres_t *r = &res[k * P + pd];
 					for (b2 = 1; b2 < M->nbeh; b2++) {
@@ -5080,10 +5154,10 @@ static ST_retcode batch_run(char *arg) {
 					}
 				}
 			}
-			if (batch_state.nrc > 0) {
+			if (batch_cur->nrc > 0) {
 				long base0 = 2 * (pNet + pBeh) + (condmode == 2 ? 7 : 6) * P + 1;
 				long kr;
-				for (kr = 0; kr < batch_state.nrc; kr++) {
+				for (kr = 0; kr < batch_cur->nrc; kr++) {
 					double sc = 0.0, st = 0.0;
 					for (pd = 0; pd < P; pd++) { sc += res[k * P + pd].rcscore[kr]; st += res[k * P + pd].rcstat[kr]; }
 					SF_vstore((int)(base0 + 2 * kr), (int)(k + 1), st);
@@ -5095,6 +5169,281 @@ static ST_retcode batch_run(char *arg) {
 	(void)u; (void)W;
 	free(res);
 	free(prm);
+	return 0;
+}
+
+/* ===================================================================
+   protocol 52: several co-evolving dependent networks (up to MAXNETS, all one-mode directed, same actor set). BATCHSETUP<k>| fills the slot of network k
+   (its model, its attributes, its period start ties); MNRUN simulates K replicates of all P periods of all networks together (EpochSimulation: a
+   variable chosen in proportion to its total rate, then an actor), MNOBS evaluates the statistics of the OBSERVED end networks. A cross-network term
+   reads the other network (saom_tl_xg): the current simulated state in the ministeps, the START of the period in the statistics.
+   No composition change, no missing data, no behaviors in this version.
+   =================================================================== */
+static long mn_count_diff(graph_t *a, graph_t *b) {
+	long k, d = 0;
+	for (k = 0; k < a->nties; k++) if (!has_edge(b, a->elist_i[k], a->elist_j[k])) d++;
+	for (k = 0; k < b->nties; k++) if (!has_edge(a, b->elist_i[k], b->elist_j[k])) d++;
+	return d;
+}
+static int simulate_period_mn(int nnet, const model_t **Ms, const period_t **PDs, const simparams_t **Ps, unsigned long long seed, simres_t *R) {
+	long n = Ms[0]->n, i, k, j, kk;
+	int net;
+	graph_t g[MAXNETS], g0[MAXNETS];
+	double *attrs[MAXNETS][MAXATTR + 1];
+	double *u[MAXNETS], *ev[MAXNETS], *tt[MAXNETS], *c3[MAXNETS], *chg[MAXNETS];
+	unsigned char *ijx = (unsigned char *)malloc((size_t)(n + 1));
+	rng_t rng;
+	double t = 0.0, grand = 0.0, stride = (double)(n + 1);
+	(void)stride;
+	for (net = 0; net < nnet; net++) {
+		const model_t *M = Ms[net];
+		const period_t *PD = PDs[net];
+		memset(&R[net], 0, sizeof(simres_t));
+		for (k = 0; k < M->nattr; k++) attrs[net][k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
+		attrs[net][M->nattr] = NULL;
+		attrs[net][M->nattr + 1] = NULL;
+		graph_init(&g[net], n, 1, PD->nties);
+		graph_init(&g0[net], n, 1, PD->nties);
+		for (i = 0; i < PD->nties; i++) { toggle(&g[net], PD->ti[i], PD->tj[i]); toggle(&g0[net], PD->ti[i], PD->tj[i]); }
+		u[net] = (double *)malloc((size_t)(n + 1) * sizeof(double));
+		ev[net] = (double *)malloc((size_t)(n + 1) * sizeof(double));
+		tt[net] = M->need_transtrip ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
+		c3[net] = M->need_cycle3 ? (double *)calloc((size_t)(n + 1), sizeof(double)) : NULL;
+		chg[net] = (double *)malloc((size_t)(n + 1) * (size_t)(M->nterms > 0 ? M->nterms : 1) * sizeof(double));
+		grand += (double)n * Ps[net]->rate;
+	}
+	rng_seed(&rng, seed);
+	while (1) {
+		double uvar, cumr = 0.0, maxu, stayterm, denom, draw, cum;
+		long actor, choice;
+		const model_t *M;
+		const simparams_t *P;
+		double *score;
+		t += -log(rng_unif(&rng)) / grand;
+		if (t >= 1.0) break;
+		uvar = rng_unif(&rng) * grand;
+		net = nnet - 1;
+		for (kk = 0; kk < nnet; kk++) { cumr += (double)n * Ps[kk]->rate; if (uvar <= cumr) { net = (int)kk; break; } }
+		M = Ms[net];
+		P = Ps[net];
+		score = R[net].score;
+		actor = 1 + (long)(rng_unif(&rng) * (double)n);
+		saom_tl_xg = &g[(net + 1) % nnet];
+		if (M->need_transtrip) { memset(tt[net], 0, (size_t)(n + 1) * sizeof(double)); batch_otp_plus_osp(&g[net], actor, tt[net]); }
+		if (M->need_cycle3) { memset(c3[net], 0, (size_t)(n + 1) * sizeof(double)); batch_otp_reverse(&g[net], actor, c3[net]); }
+		maxu = eval_network_alternatives(M, P, &g[net], attrs[net], actor, NULL, tt[net], c3[net], chg[net], u[net], ijx);
+		stayterm = exp(0.0 - maxu);
+		denom = stayterm;
+		for (j = 1; j <= n; j++) {
+			if (j == actor) continue;
+			ev[net][j] = exp(u[net][j] - maxu);
+			denom += ev[net][j];
+		}
+		draw = rng_unif(&rng) * denom;
+		cum = stayterm;
+		choice = 0;
+		if (draw > cum) {
+			for (j = 1; j <= n; j++) {
+				if (j == actor) continue;
+				cum += ev[net][j];
+				choice = j;
+				if (draw <= cum) break;
+			}
+		}
+		if (P->want_score) {
+			for (k = 0; k < M->nterms; k++) {
+				double ebar = 0.0;
+				const double *c = chg[net] + k * (n + 1);
+				for (j = 1; j <= n; j++) { if (j == actor) continue; ebar += (ev[net][j] / denom) * c[j]; }
+				score[k] += (choice != 0 ? c[choice] : 0.0) - ebar;
+			}
+		}
+		R[net].stepsNet += 1.0;
+		if (choice != 0) { toggle(&g[net], actor, choice); R[net].nchanges += 1.0; }
+	}
+	for (net = 0; net < nnet; net++) {
+		const model_t *M = Ms[net];
+		saom_tl_xg = &g0[(net + 1) % nnet];
+		for (k = 0; k < M->nterms; k++) R[net].stat[k] = saom_eval_stat((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs[net], &g[net]);
+		R[net].netdist = (double)mn_count_diff(&g[net], &g0[net]);
+	}
+	saom_tl_xg = NULL;
+	for (net = 0; net < nnet; net++) {
+		graph_free(&g[net]);
+		graph_free(&g0[net]);
+		free(u[net]); free(ev[net]); free(tt[net]); free(c3[net]); free(chg[net]);
+	}
+	free(ijx);
+	return 0;
+}
+
+typedef struct {
+	int nnet;
+	const model_t *M[MAXNETS];
+	const period_t *per[MAXNETS];		/* per[k] = the P periods of network k */
+	const simparams_t *prm[MAXNETS];	/* prm[k] = P entries */
+	long K, P;
+	unsigned long long seed;
+	simres_t *res;				/* K * P * nnet */
+	long next;
+	saom_mutex_t mu;
+} mn_job_t;
+static void mn_worker_loop(mn_job_t *J) {
+	for (;;) {
+		long u;
+		SAOM_MUTEX_LOCK(&J->mu);
+		u = J->next++;
+		SAOM_MUTEX_UNLOCK(&J->mu);
+		if (u >= J->K * J->P) break;
+		{
+			long k = u / J->P, pd = u % J->P;
+			const period_t *pds[MAXNETS];
+			const simparams_t *pss[MAXNETS];
+			int q;
+			for (q = 0; q < J->nnet; q++) { pds[q] = &J->per[q][pd]; pss[q] = &J->prm[q][pd]; }
+			simulate_period_mn(J->nnet, J->M, pds, pss, unit_seed(J->seed, k, pd), &J->res[u * J->nnet]);
+		}
+	}
+}
+#if defined(_WIN32)
+static DWORD WINAPI mn_worker(LPVOID arg) { mn_worker_loop((mn_job_t *)arg); return 0; }
+#else
+static void *mn_worker(void *arg) { mn_worker_loop((mn_job_t *)arg); return NULL; }
+#endif
+static void mn_run_units(mn_job_t *J, long nthreads) {
+	long t, nunits = J->K * J->P;
+	saom_thread_t *th;
+	if (nthreads > nunits) nthreads = nunits;
+	if (nthreads < 1) nthreads = 1;
+	J->next = 0;
+	SAOM_MUTEX_INIT(&J->mu);
+	if (nthreads == 1) { mn_worker_loop(J); SAOM_MUTEX_DESTROY(&J->mu); return; }
+	th = (saom_thread_t *)malloc((size_t)nthreads * sizeof(saom_thread_t));
+	for (t = 1; t < nthreads; t++) {
+#if defined(_WIN32)
+		th[t] = CreateThread(NULL, 0, mn_worker, J, 0, NULL);
+#else
+		pthread_create(&th[t], NULL, mn_worker, J);
+#endif
+	}
+	mn_worker_loop(J);
+	for (t = 1; t < nthreads; t++) {
+#if defined(_WIN32)
+		WaitForSingleObject(th[t], INFINITE);
+		CloseHandle(th[t]);
+#else
+		pthread_join(th[t], NULL);
+#endif
+	}
+	free(th);
+	SAOM_MUTEX_DESTROY(&J->mu);
+}
+
+/* MNRUN|K seed nthreads want_score nnet  then per network its coefficients, then per network its P rates.
+   Output (the plugin varlist, K rows): per period, per network: statistics (nterms), scores (nterms), distance, ministeps, changes. */
+static ST_retcode mn_run(char *arg) {
+	long K, nthreads, P = 0, pd, k, q, c, W;
+	unsigned long long seed;
+	int want_score, nnet, net;
+	char *tok0;
+	simparams_t *prm[MAXNETS];
+	mn_job_t J;
+	simres_t *res;
+	tok0 = strtok(arg, " 	");
+	if (!tok0) { SF_error("saom_sim: MNRUN empty\n"); return 198; }
+	K = (long)atof(tok0);
+	seed = (unsigned long long)next_double();
+	nthreads = next_long();
+	want_score = (int)next_long();
+	nnet = (int)next_long();
+	if (nnet < 2 || nnet > MAXNETS) { SF_error("saom_sim: MNRUN needs 2 to 4 networks\n"); return 198; }
+	for (net = 0; net < nnet; net++) {
+		if (!batch_states[net].ready) { SF_error("saom_sim: MNRUN without BATCHSETUP for every network\n"); return 198; }
+		if (net == 0) P = batch_states[0].P;
+		else if (batch_states[net].P != P) { SF_error("saom_sim: MNRUN networks with different numbers of periods\n"); return 198; }
+	}
+	for (net = 0; net < nnet; net++) {
+		prm[net] = (simparams_t *)calloc((size_t)P, sizeof(simparams_t));
+		for (k = 0; k < batch_states[net].M.nterms; k++) {
+			double th = next_double();
+			for (pd = 0; pd < P; pd++) prm[net][pd].theta[k] = th;
+		}
+		for (pd = 0; pd < P; pd++) prm[net][pd].want_score = want_score;
+	}
+	for (net = 0; net < nnet; net++) for (pd = 0; pd < P; pd++) prm[net][pd].rate = next_double();
+	if (wire_parse_error) { for (net = 0; net < nnet; net++) free(prm[net]); SF_error("saom_sim: MNRUN argument string ran out of fields\n"); return 198; }
+	if (nthreads <= 0) nthreads = saom_physical_cores();
+	res = (simres_t *)calloc((size_t)(K * P * nnet), sizeof(simres_t));
+	J.nnet = nnet; J.K = K; J.P = P; J.seed = seed; J.res = res;
+	for (net = 0; net < nnet; net++) { J.M[net] = &batch_states[net].M; J.per[net] = batch_states[net].per; J.prm[net] = prm[net]; }
+	mn_run_units(&J, nthreads);
+	W = 0;
+	for (net = 0; net < nnet; net++) W += 2 * batch_states[net].M.nterms + 3;
+	for (k = 0; k < K; k++) {
+		c = 0;
+		for (pd = 0; pd < P; pd++) {
+			for (net = 0; net < nnet; net++) {
+				simres_t *r = &res[(k * P + pd) * nnet + net];
+				long nt = batch_states[net].M.nterms;
+				for (q = 0; q < nt; q++) SF_vstore((int)(++c), (int)(k + 1), r->stat[q]);
+				for (q = 0; q < nt; q++) SF_vstore((int)(++c), (int)(k + 1), r->score[q]);
+				SF_vstore((int)(++c), (int)(k + 1), r->netdist);
+				SF_vstore((int)(++c), (int)(k + 1), r->stepsNet);
+				SF_vstore((int)(++c), (int)(k + 1), r->nchanges);
+			}
+		}
+	}
+	(void)W;
+	free(res);
+	for (net = 0; net < nnet; net++) free(prm[net]);
+	return 0;
+}
+
+/* MNOBS|nnet nedges: the statistics of the OBSERVED end networks, one period at a time; the plugin varlist: network, period, i, j (nedges rows, the
+   end ties of network `network` in period `period`, 1-based) then the output columns (row 1): per period, per network the nterms statistics and the
+   distance from the period's start network. The other network is the START network of the period (RSiena). */
+static ST_retcode mn_obs(char *arg) {
+	long nedges, P = 0, e, pd, k, c;
+	int nnet, net;
+	char *tok0;
+	graph_t ge[MAXNETS], g0[MAXNETS];
+	double *attrs[MAXNETS][MAXATTR + 1];
+	tok0 = strtok(arg, " \t");
+	if (!tok0) { SF_error("saom_sim: MNOBS empty\n"); return 198; }
+	nnet = (int)atof(tok0);
+	nedges = next_long();
+	if (nnet < 2 || nnet > MAXNETS) return 198;
+	for (net = 0; net < nnet; net++) {
+		if (!batch_states[net].ready) { SF_error("saom_sim: MNOBS without BATCHSETUP for every network\n"); return 198; }
+		P = batch_states[net].P;
+	}
+	c = 0;
+	for (pd = 0; pd < P; pd++) {
+		long n = batch_states[0].M.n;
+		for (net = 0; net < nnet; net++) {
+			const model_t *M = &batch_states[net].M;
+			const period_t *PD = &batch_states[net].per[pd];
+			graph_init(&ge[net], n, 1, nedges + 8);
+			graph_init(&g0[net], n, 1, PD->nties + 8);
+			for (e = 0; e < PD->nties; e++) toggle(&g0[net], PD->ti[e], PD->tj[e]);
+			for (k = 0; k < M->nattr; k++) attrs[net][k] = PD->xattr[k] ? PD->xattr[k] : M->attrs[k];
+			attrs[net][M->nattr] = NULL;
+			attrs[net][M->nattr + 1] = NULL;
+		}
+		for (e = 1; e <= nedges; e++) {
+			ST_double vn, vp, vi, vj;
+			SF_vdata(1, (int)e, &vn); SF_vdata(2, (int)e, &vp); SF_vdata(3, (int)e, &vi); SF_vdata(4, (int)e, &vj);
+			if ((long)vp == pd + 1 && (int)vn >= 1 && (int)vn <= nnet) toggle(&ge[(int)vn - 1], (long)vi, (long)vj);
+		}
+		for (net = 0; net < nnet; net++) {
+			const model_t *M = &batch_states[net].M;
+			saom_tl_xg = &g0[(net + 1) % nnet];
+			for (k = 0; k < M->nterms; k++) SF_vstore((int)(5 + c++), 1, saom_eval_stat((int)k, (int *)M->termcodes, (int *)M->attridx, (double *)M->p1, attrs[net], &ge[net]));
+			SF_vstore((int)(5 + c++), 1, (double)mn_count_diff(&ge[net], &g0[net]));
+		}
+		saom_tl_xg = NULL;
+		for (net = 0; net < nnet; net++) { graph_free(&ge[net]); graph_free(&g0[net]); }
+	}
 	return 0;
 }
 
@@ -5414,11 +5763,30 @@ STDLL stata_call(int argc, char *argv[]) {
 #endif
 	if (argc < 1) { SF_error("saom_sim: missing argument string\n"); return(198); }
 	if (strncmp(argv[0], "NNMULTIPLEX|", 12) == 0) return nn_call(argv);
-	if (strncmp(argv[0], "BATCHSETUP|", 11) == 0) {
+	if (strncmp(argv[0], "BATCHSETUP", 10) == 0 && (argv[0][10] == '|' || (argv[0][10] >= '0' && argv[0][10] < '0' + MAXNETS && argv[0][11] == '|'))) {
 		char *buf = (char *)malloc(strlen(argv[0]) + 1);
 		ST_retcode rc;
-		strcpy(buf, argv[0] + 11);
+		int slot = (argv[0][10] == '|') ? 0 : argv[0][10] - '0';
+		strcpy(buf, argv[0] + (argv[0][10] == '|' ? 11 : 12));
+		batch_cur = &batch_states[slot];
 		rc = batch_setup(buf);
+		batch_cur = &batch_states[0];
+		free(buf);
+		return rc;
+	}
+	if (strncmp(argv[0], "MNRUN|", 6) == 0) {
+		char *buf = (char *)malloc(strlen(argv[0]) + 1);
+		ST_retcode rc;
+		strcpy(buf, argv[0] + 6);
+		rc = mn_run(buf);
+		free(buf);
+		return rc;
+	}
+	if (strncmp(argv[0], "MNOBS|", 6) == 0) {
+		char *buf = (char *)malloc(strlen(argv[0]) + 1);
+		ST_retcode rc;
+		strcpy(buf, argv[0] + 6);
+		rc = mn_obs(buf);
 		free(buf);
 		return rc;
 	}
@@ -5430,7 +5798,7 @@ STDLL stata_call(int argc, char *argv[]) {
 		free(buf);
 		return rc;
 	}
-	if (strncmp(argv[0], "BATCHCLEAN|", 11) == 0) { batch_free(); return 0; }
+	if (strncmp(argv[0], "BATCHCLEAN|", 11) == 0) { int sl; for (sl = MAXNETS - 1; sl >= 0; sl--) { batch_cur = &batch_states[sl]; batch_free(); } batch_cur = &batch_states[0]; return 0; }
 	if (strncmp(argv[0], "BEHSTAT|", 8) == 0) {
 		char *buf = (char *)malloc(strlen(argv[0]) + 1);
 		ST_retcode rc;

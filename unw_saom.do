@@ -8207,6 +8207,244 @@ struct SaomCoevNetNetScoredResult scalar SaomSimulateIntervalCoevNetNet(
    ministeps but its START-of-period state in the statistics (targets and
    simulated), as RSiena does: on a two-network s50 example RSiena's
    crprod targets are sum(x1(t2) * x2(t1)). */
+/* ===================================================================
+   protocol 52: several co-evolving networks (nwsaom multinet). Two one-mode directed networks, any number of waves (the same for both), the
+   unconditional Method of Moments by SaomRMCore(); the simulation, the observed statistics and every cross-network term are native (the plugin's
+   MNRUN / MNOBS), there is no Mata twin. Parameters: theta1, theta2, rate1 (per period), rate2 (per period). Cross-network statistics read the OTHER
+   network at the START of the period, the ministeps its current state (RSiena).
+   =================================================================== */
+string scalar SaomBatchSlotTag() {
+	pointer(real scalar) scalar ps
+	ps = findexternal("__saom_bslot")
+	if (ps == NULL) return("")
+	if (*ps >= . | *ps < 1) return("")
+	return(strofreal(*ps))
+}
+void SaomSetBatchSlot(real scalar k) {
+	external real scalar __saom_bslot
+	__saom_bslot = k
+}
+real rowvector SaomMNCodes() return((0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
+string rowvector SaomMNCrossNames() return(("crprod", "crprodrecip", "crprodmutual", "from", "frommutual", "fromany", "to", "toback", "torecip", "clxwx", "clxwx1", "clxwx2", "mixedinxw"))
+/* a native-only cross-network term; code = 3000 + v */
+void SaomMNAddCross(class ErgmModel scalar M, string scalar eff, real scalar n, real scalar p1) {
+	class ErgmTermData scalar td
+	real scalar k, v
+	string rowvector nm
+	nm = SaomMNCrossNames()
+	v = -1
+	for (k=1; k<=cols(nm); k++) if (nm[k] == eff) v = k - 1
+	if (v < 0) {
+		errprintf("nwsaom multinet: unknown cross-network effect " + eff + "; available: " + invtokens(nm) + "\n")
+		exit(198)
+	}
+	td = ErgmTermData()
+	td.levels = (3000 + v \ 0)
+	td.decay = p1
+	td.attr = J(n, 1, 0)
+	M.addterm("nat_x" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("x_" + eff))
+}
+/* the within-network effects: structural ones by name, covariate ones by (name, variable) */
+void SaomMNAddEff(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
+	class ErgmTermData scalar td
+	real scalar m
+	td = ErgmTermData()
+	if (eff == "outdegree") M.addterm("outdegree", 1, &stat_edges(), &change_edges(), td, ("outdegree"))
+	else if (eff == "reciprocity") M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), td, ("reciprocity"))
+	else if (eff == "transtrip") M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), td, ("transtrip"))
+	else if (eff == "cycle3") M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), td, ("cycle3"))
+	else if (eff == "transmedtrip") M.addterm("transmedtrip", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), td, ("transmedtrip"))
+	else if (eff == "cycle4") M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), td, ("cycle4"))
+	else if (eff == "indegpop") M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), td, ("indegpopularity"))
+	else if (eff == "outact") M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), td, ("outactivity"))
+	else if (eff == "egox") SaomRegCov(M, "nodeocov", vn, n, 1, td, ("egox_" + vn), m)
+	else if (eff == "altx") SaomRegCov(M, "nodeicov", vn, n, 1, td, ("altx_" + vn), m)
+	else if (eff == "samex") SaomRegCov(M, "nodematch", vn, n, 1, td, ("samex_" + vn), m)
+	else if (eff == "simx") SaomRegCov(M, "simcov", vn, n, 1, td, ("simx_" + vn), m)
+	else {
+		errprintf("nwsaom multinet: unknown effect " + eff + "; available: outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact egox:var altx:var samex:var simx:var\n")
+		exit(198)
+	}
+}
+
+struct SaomMNCtx {
+	real scalar P, n, p1, p2, p
+	real matrix target		// P x p
+	real rowvector tr1, tr2		// observed distances per period
+}
+struct SaomMNFit {
+	real rowvector par, tconv
+	real matrix Vfull
+	real scalar tconvMax, p1, p2, P
+}
+real matrix SaomMNRun(real scalar P, real scalar K, real scalar want_score, real rowvector th1, real rowvector th2, real rowvector r1, real rowvector r2) {
+	real scalar W, i, seed, junk
+	string rowvector names
+	string scalar origframe, argstr
+	real matrix out
+	W = P * (2 * cols(th1) + 3 + 2 * cols(th2) + 3)
+	names = J(1, W, "")
+	for (i=1; i<=W; i++) names[i] = "o" + strofreal(i)
+	origframe = st_framecurrent()
+	if (!st_frameexists("__saom_batch_out")) stata("frame create __saom_batch_out")
+	st_framecurrent("__saom_batch_out")
+	if (st_nvar() < W) for (i=st_nvar()+1; i<=W; i++) junk = st_addvar("double", names[i])
+	if (st_nobs() < K) st_addobs(K - st_nobs())
+	seed = floor(runiform(1,1) * 2147483647)
+	argstr = "MNRUN|" + strofreal(K) + " " + strofreal(seed, "%12.0f") + " " + strofreal(SaomCores()) + " " + strofreal(want_score) + " 2"
+	for (i=1; i<=cols(th1); i++) argstr = argstr + " " + strofreal(th1[i], "%25.17g")
+	for (i=1; i<=cols(th2); i++) argstr = argstr + " " + strofreal(th2[i], "%25.17g")
+	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal(r1[i], "%25.17g")
+	for (i=1; i<=P; i++) argstr = argstr + " " + strofreal(r2[i], "%25.17g")
+	stata("plugin call saomnativesim " + invtokens(names) + ", " + char(34) + argstr + char(34))
+	out = st_data((1::K), names)
+	st_framecurrent(origframe)
+	return(out)
+}
+/* the observed statistics of the end networks: P x (p1 + p2) and the distances (P x 2) */
+void SaomMNObs(pointer(class ErgmGraph scalar) rowvector G1, pointer(class ErgmGraph scalar) rowvector G2, real scalar P, real scalar p1, real scalar p2,
+	real matrix target, real rowvector tr1, real rowvector tr2) {
+	real matrix E, e, rowv
+	real scalar pd, ne, W, i, junk, c
+	string rowvector names, vn
+	string scalar origframe
+	E = J(0, 4, 0)
+	for (pd=1; pd<=P; pd++) {
+		e = (*G1[pd+1]).all_ties()
+		if (rows(e) > 0) E = E \ (J(rows(e), 1, 1), J(rows(e), 1, pd), e)
+		e = (*G2[pd+1]).all_ties()
+		if (rows(e) > 0) E = E \ (J(rows(e), 1, 2), J(rows(e), 1, pd), e)
+	}
+	ne = rows(E)
+	W = P * (p1 + 1 + p2 + 1)
+	vn = ("en", "ep", "ei", "ej")
+	names = J(1, W, "")
+	for (i=1; i<=W; i++) names[i] = "q" + strofreal(i)
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_mnobs")
+	stata("frame create __saom_mnobs")
+	st_framecurrent("__saom_mnobs")
+	st_addobs(max((ne, 1)))
+	junk = st_addvar("double", vn)
+	junk = st_addvar("double", names)
+	if (ne > 0) st_store((1::ne), vn, E)
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(vn) + " " + invtokens(names) + ", " + char(34) + "MNOBS|2 " + strofreal(ne) + char(34))
+	rowv = st_data(1, names)
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_mnobs")
+	target = J(P, p1 + p2, 0)
+	tr1 = J(1, P, 0)
+	tr2 = J(1, P, 0)
+	c = 0
+	for (pd=1; pd<=P; pd++) {
+		target[pd, 1..p1] = rowv[(c+1)..(c+p1)]
+		tr1[pd] = rowv[c+p1+1]
+		c = c + p1 + 1
+		target[pd, (p1+1)..(p1+p2)] = rowv[(c+1)..(c+p2)]
+		tr2[pd] = rowv[c+p2+1]
+		c = c + p2 + 1
+	}
+}
+/* SaomRMCore() callback */
+void SaomMNSimManyCB(struct SaomMNCtx scalar C, real rowvector par, real scalar K, real scalar want_score, real matrix Z, real matrix S, | real matrix Zp, real matrix Sp) {
+	real matrix out
+	real scalar P, p1, p2, p, ptot, pd, w1, wper, base, b2, n
+	real rowvector r1, r2
+	real matrix st1, sc1, st2, sc2
+	P = C.P; p1 = C.p1; p2 = C.p2; p = C.p; n = C.n
+	ptot = p + 2 * P
+	r1 = par[(p+1)..(p+P)]
+	r2 = par[(p+P+1)..ptot]
+	out = SaomMNRun(P, K, want_score, par[1..p1], par[(p1+1)..p], r1, r2)
+	Z = J(K, ptot, 0)
+	S = J(K, ptot, 0)
+	Zp = J(K, P * ptot, 0)
+	Sp = J(K, P * ptot, 0)
+	w1 = 2 * p1 + 3
+	wper = w1 + 2 * p2 + 3
+	for (pd=1; pd<=P; pd++) {
+		base = (pd - 1) * wper
+		b2 = base + w1
+		st1 = out[., (base+1)..(base+p1)] :- C.target[pd, 1..p1]
+		sc1 = out[., (base+p1+1)..(base+2*p1)]
+		st2 = out[., (b2+1)..(b2+p2)] :- C.target[pd, (p1+1)..p]
+		sc2 = out[., (b2+p2+1)..(b2+2*p2)]
+		Z[., 1..p] = Z[., 1..p] + (st1, st2)
+		S[., 1..p] = S[., 1..p] + (sc1, sc2)
+		Zp[., ((pd-1)*ptot+1)..((pd-1)*ptot+p)] = (st1, st2)
+		Sp[., ((pd-1)*ptot+1)..((pd-1)*ptot+p)] = (sc1, sc2)
+		Z[., p+pd] = out[., base+2*p1+1] :- C.tr1[pd]
+		Z[., p+P+pd] = out[., b2+2*p2+1] :- C.tr2[pd]
+		S[., p+pd] = out[., base+2*p1+2] :/ r1[pd] :- n
+		S[., p+P+pd] = out[., b2+2*p2+2] :/ r2[pd] :- n
+		Zp[., (pd-1)*ptot+p+pd] = Z[., p+pd]
+		Zp[., (pd-1)*ptot+p+P+pd] = Z[., p+P+pd]
+		Sp[., (pd-1)*ptot+p+pd] = S[., p+pd]
+		Sp[., (pd-1)*ptot+p+P+pd] = S[., p+P+pd]
+	}
+}
+struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector G1, class ErgmModel scalar M1,
+	pointer(class ErgmGraph scalar) rowvector G2, class ErgmModel scalar M2,
+	real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg) {
+	struct SaomMNFit scalar fit
+	struct SaomMNCtx scalar C
+	struct SaomNativeConfig scalar cfg1, cfg2
+	struct SaomNetFit scalar nf
+	real scalar P, n, p1, p2, pd, ver
+	real rowvector par0, israte, rate10, rate20
+	pointer(real matrix) rowvector noev
+	P = cols(G1) - 1
+	if (cols(G2) - 1 != P) {
+		errprintf("nwsaom multinet: both networks need the same number of waves\n")
+		exit(198)
+	}
+	n = (*G1[1]).n
+	p1 = M1.nparam()
+	p2 = M2.nparam()
+	C.P = P; C.n = n; C.p1 = p1; C.p2 = p2; C.p = p1 + p2
+	if (!SaomNativeAvailable()) {
+		errprintf("nwsaom multinet needs the native plugin (there is no Mata engine for several networks).\n")
+		exit(198)
+	}
+	ver = SaomNativePluginVersion()
+	if (ver < 52) {
+		errprintf("nwsaom multinet needs a plugin of protocol 52 or later (this one is " + strofreal(ver) + "); rebuild or update it.\n")
+		exit(198)
+	}
+	cfg1 = SaomNativeSetup(M1)
+	cfg2 = SaomNativeSetup(M2)
+	if (!cfg1.eligible | !cfg2.eligible) {
+		errprintf("nwsaom multinet: an effect has no native implementation (" + (cfg1.eligible ? cfg2.whynot : cfg1.whynot) + ").\n")
+		exit(198)
+	}
+	SaomSetEngine(1, "")
+	noev = J(1, P, NULL)
+	SaomSetBatchSlot(0)
+	SaomBatchSetup(G1, P, cfg1, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), 0, J(0, 0, 0), noev)
+	SaomSetBatchSlot(1)
+	SaomBatchSetup(G2, P, cfg2, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), 0, J(0, 0, 0), noev)
+	SaomSetBatchSlot(0)
+	SaomMNObs(G1, G2, P, p1, p2, C.target, C.tr1, C.tr2)
+	rate10 = J(1, P, 0)
+	rate20 = J(1, P, 0)
+	for (pd=1; pd<=P; pd++) {
+		rate10[pd] = n * (0.2 + 2 * C.tr1[pd]) / (n * (n - 1) + 1)
+		rate20[pd] = n * (0.2 + 2 * C.tr2[pd]) / (n * (n - 1) + 1)
+	}
+	par0 = (theta01, theta02, rate10, rate20)
+	israte = (J(1, p1 + p2, 0), J(1, 2 * P, 1))
+	nf = SaomRMCore(C, &SaomMNSimManyCB(), par0, p1 + p2, israte, 1 :- israte, K0, K3, firstg)
+	fit.par = nf.par
+	fit.tconv = nf.tconv
+	fit.Vfull = nf.Vfull
+	fit.tconvMax = nf.tconvMax
+	fit.p1 = p1; fit.p2 = p2; fit.P = P
+	SaomBatchCleanup()
+	SaomNativeCleanupFrame()
+	return(fit)
+}
+
 struct SaomCoevNetNetFit {
 	real rowvector theta1
 	real rowvector theta2
@@ -10897,7 +11135,7 @@ void SaomBatchSetup(pointer(class ErgmGraph scalar) rowvector Gwaves, real scala
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
 	if (rows(EV) > 0) st_store((1::rows(EV)), ("ev_p", "ev_t", "ev_a", "ev_k"), EV)
 
-	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
+	argstr = "BATCHSETUP" + SaomBatchSlotTag() + "|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
 	for (i=1; i<=cols(cfg.termcodes); i++) argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
 	argstr = argstr + " " + strofreal(nbeh)
 	for (i=1; i<=nbeh; i++) argstr = argstr + " " + strofreal(behtermcodes[i])
@@ -11219,7 +11457,7 @@ void SaomBatchSetupMB(pointer(class ErgmGraph scalar) rowvector Gwaves, real sca
 	for (k=1; k<=ntv; k++) for (pd=1; pd<=P; pd++) st_store((1::n), "tv" + strofreal(k) + "_" + strofreal(pd), cfg.tvmat[., (k-1)*P + pd])
 	if (sframe) st_store((1::rows(cfg.structpairs)), ("st_i", "st_j"), cfg.structpairs)
 
-	argstr = "BATCHSETUP|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
+	argstr = "BATCHSETUP" + SaomBatchSlotTag() + "|" + strofreal(n) + " " + strofreal(P) + " " + strofreal(nattr) + " " + strofreal(cols(cfg.termcodes))
 	for (i=1; i<=cols(cfg.termcodes); i++) argstr = argstr + " " + strofreal(cfg.termcodes[i]) + " " + strofreal(cfg.attridx[i]) + " " + strofreal(cfg.p1[i], "%25.17g")
 	argstr = argstr + " " + strofreal(pB[1])
 	for (k=off[1]; k<off[2]; k++) argstr = argstr + " " + strofreal(codes[k])

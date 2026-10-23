@@ -99,7 +99,12 @@ exploiting the fact that the pooled waiting time across `n` actors with a consta
 minimum of `n` i.i.d. exponentials. Parameters are estimated via Robbins-Monro stochastic
 approximation, matching RSiena's own algorithm: unconditional Method of Moments, with the rate
 parameters estimated jointly with the effects (the shared `SaomRMCore()`; co-evolution has its own
-copy of the same loop).
+copy of the same loop). Newer SAOM effects are native-only: the plugin computes both the simulation and
+the observed statistic (a small bridge command evaluates one term on observed data), so no Mata twin of the
+simulation is kept for them. Models with several co-evolving dependent networks (`nwsaom multinet`) reuse
+the single-network model description once per network (one plugin slot each) and a joint simulator in
+which the network to change is drawn in proportion to the rates; cross-network effects read the other
+network's current state in the ministeps and its period-start state in the statistics.
 
 DyNAM factors the same kind of actor-oriented dynamics into two separate sub-models — which
 actor acts next (a continuous-time competing-risks rate model), and which receiver they choose

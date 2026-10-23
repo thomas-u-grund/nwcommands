@@ -723,3 +723,9 @@ coefficient as omitted or diverges (rc 498) while the Mata engine is fine (seen 
 2. `SaomNativePluginPath()` looks for `lib/plugins/<os>/` next to the `nwsaom.ado` that `findfile` finds first. A scratch directory that has its
    own `nwsaom.ado` plus an old `lib/plugins` copy silently runs the OLD plugin (symptom: `wire-protocol argument string ran out of fields` for
    a term code the new plugin knows). Copy the rebuilt plugin into that `lib/plugins/macos/` too, or set the Mata external `__nwsaom_saom_plugin`.
+
+## A `stata -e` run that just stops (no error, no r() code) is a plugin crash: read the macOS crash report
+
+A segmentation fault in the plugin ends the Stata process without any message in the log. `~/Library/Logs/DiagnosticReports/StataBE-<date>.ips` has the
+crashing thread with the function names (the plugin is not stripped): parse it with `json.loads(text.split("\n", 1)[1])`, take the thread with
+`"triggered": true` and print its `frames[*].symbol` (seen 2026-10-23: `xt_value` called through `saom_stat_term`, a dangling pointer to a freed graph).

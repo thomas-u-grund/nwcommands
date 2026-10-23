@@ -174,6 +174,11 @@ end
 capture program drop nwsaom
 program nwsaom, eclass
 	version 14
+	if `"`1'"' == "multinet" | `"`1'"' == "multinet," {
+		gettoken __saom_sub 0 : 0
+		nwsaom_multinet , `0'
+		exit
+	}
 	if `"`1'"' == "multiplex" | `"`1'"' == "multiplex," {
 		// `gettoken' consumes a comma attached to "multiplex" (Stata's
 		// own tokenizer attaches a trailing comma to whatever word
@@ -4103,3 +4108,118 @@ program define nwsaom_multiplex, eclass
 	_nwsaom_tconvtable
 end
 
+capture mata: mata drop __nwsaom_mn_addwave()
+capture mata: mata drop __nwsaom_mn_post()
+mata:
+/* nwsaom multinet (protocol 52): collects the wave graphs of one network (slot 1 or 2) and posts the fit */
+void __nwsaom_mn_addwave(pointer(class nw_def scalar) scalar netobj, real scalar n, real scalar slot) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	class ErgmGraph scalar G
+	G = ErgmGraph()
+	G.init(n, 1)
+	__nwsaom_bridge_from_netobj(netobj, G)
+	if (slot == 1) __nwsaom_mn_Gs1 = (__nwsaom_mn_Gs1, &(G))
+	else __nwsaom_mn_Gs2 = (__nwsaom_mn_Gs2, &(G))
+}
+void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg,
+	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
+	struct SaomMNFit scalar fit
+	real scalar p, P
+	real rowvector t1, t2
+	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
+	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
+	fit = SaomEstimateMN(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, t1, t2, K0, K3, firstg)
+	p = fit.p1 + fit.p2
+	P = fit.P
+	st_matrix(bname, fit.par[1..p])
+	st_matrix(Vname, fit.Vfull[1..p, 1..p])
+	st_matrix(ratename, (fit.par[(p+1)..(p+P)] \ fit.par[(p+P+1)..(p+2*P)] \ sqrt(diagonal(fit.Vfull)[(p+1)..(p+P)])' \ sqrt(diagonal(fit.Vfull)[(p+P+1)..(p+2*P)])'))
+	st_matrix(tcname, fit.tconv)
+	st_numscalar(tcname + "_max", fit.tconvMax)
+	st_global(ncoefname, invtokens(("net1_" :+ __nwsaom_mn_M1.coefnames, "net2_" :+ __nwsaom_mn_M2.coefnames)))
+}
+end
+
+capture program drop nwsaom_multinet
+program define nwsaom_multinet, eclass
+	version 14
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) ///
+		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
+
+	if `seed' != -1 set seed `seed'
+	if "`eff1'" == "" local eff1 "outdegree reciprocity"
+	if "`eff2'" == "" local eff2 "outdegree reciprocity"
+	local nw1 : word count `net1'
+	local nw2 : word count `net2'
+	if `nw1' != `nw2' | `nw1' < 2 {
+		di "{err}net1() and net2() need the same number (at least two) of waves."
+		error 198
+	}
+	mata: __nwsaom_engine = ""
+	mata: __nwsaom_engine_why = ""
+	capture mata: mata drop __nwsaom_mn_Gs1 __nwsaom_mn_Gs2 __nwsaom_mn_M1 __nwsaom_mn_M2
+	mata: __nwsaom_mn_Gs1 = J(1, 0, NULL)
+	mata: __nwsaom_mn_Gs2 = J(1, 0, NULL)
+	local nodes = .
+	forvalues __s = 1/2 {
+		forvalues __w = 1/`nw`__s'' {
+			local __wname : word `__w' of `net`__s''
+			_nwsyntax `__wname', max(1) other(mn`__s'_`__w')
+			if "`mn`__s'_`__w'directed'" != "true" | "`mn`__s'_`__w'is2mode'" == "true" {
+				di "{err}nwsaom multinet needs directed one-mode networks."
+				error 198
+			}
+			if `nodes' == . local nodes = `mn`__s'_`__w'nodes'
+			if `mn`__s'_`__w'nodes' != `nodes' {
+				di "{err}every network/wave passed to nwsaom multinet must share the same number of nodes."
+				error 198
+			}
+			mata: __nwsaom_mn_addwave(`mn`__s'_`__w'netobj', `nodes', `__s')
+		}
+	}
+	// the models: within-network effects, then the cross-network effects of the other network (effect[:#])
+	forvalues __s = 1/2 {
+		mata: __nwsaom_mn_M`__s' = ErgmModel()
+		mata: __nwsaom_mn_M`__s'.init()
+		foreach __t of local eff`__s' {
+			gettoken __e __v : __t, parse(":")
+			local __v = subinstr("`__v'", ":", "", 1)
+			mata: SaomMNAddEff(__nwsaom_mn_M`__s', "`__e'", "`__v'", `nodes', 0)
+		}
+		foreach __t of local cross`__s' {
+			gettoken __e __pp : __t, parse(":")
+			local __pp = subinstr("`__pp'", ":", "", 1)
+			if "`__pp'" == "" local __pp 0
+			mata: SaomMNAddCross(__nwsaom_mn_M`__s', "`__e'", `nodes', `__pp')
+		}
+	}
+	tempname b V R tc
+	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__")
+	local __cn "$__NWSAOM_MN_COEFNAMES__"
+	macro drop __NWSAOM_MN_COEFNAMES__
+	matrix colnames `b' = `__cn'
+	matrix colnames `V' = `__cn'
+	matrix rownames `V' = `__cn'
+	ereturn post `b' `V', obs(`nodes')
+	local P = `nw1' - 1
+	forvalues __k = 1/`P' {
+		local __rn "`__rn' period`__k'"
+	}
+	matrix colnames `R' = `__rn'
+	matrix rownames `R' = rate_net1 rate_net2 se_net1 se_net2
+	ereturn matrix rates = `R'
+	matrix `tc' = `tc'
+	ereturn matrix tconv = `tc'
+	ereturn scalar tconv_max = scalar(`tc'_max)
+	ereturn local cmd "nwsaom_multinet"
+	_nwsaom_postengine
+	di as text "{hline}"
+	di as text "Several co-evolving networks (Method of Moments), `nw1' waves, `nodes' actors"
+	di as text "{hline}"
+	ereturn display
+	di as text "Rates (estimated):"
+	matrix list e(rates), noheader format(%8.3f)
+	di as text "Overall maximum convergence ratio: " as result %5.3f e(tconv_max)
+end
