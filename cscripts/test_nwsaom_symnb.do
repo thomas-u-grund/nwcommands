@@ -45,4 +45,11 @@ foreach ef in behegox behaltx behegoplusalt {
 		assert "`e(engine)'" == "native" & colsof(e(b)) == 3
 	}
 }
+* behavior effects of a non-directed network x a covariate (avXAlt totXAlt avSameXAlt totSameXAlt), siena07: dev/_sb.R
+gen double cvx = mod(_n * 3, 5)
+foreach ef in behavxalt behtotxalt behavsamexalt behtotsamexalt {
+	capture nwsaom, waves(sn1 sn2 sn3) symmetric outdegree behavior(z1 z2 z3 : linear) `ef'(cvx) k0(10) k3(40) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 assert "`e(engine)'" == "native"
+}
 di "PASS symnb"
