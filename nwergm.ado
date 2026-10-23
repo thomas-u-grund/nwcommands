@@ -1762,7 +1762,7 @@ program nwergm, eclass
 		}
 		if !`__ergm_curved_native_used' {
 			mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `__ergm_curved_start')
-			mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
+			mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 10000, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
 			mata: mata drop __ergm_theta_start
 		}
 		mata: st_local("__ergm_curved_converged", strofreal(st_matrix("`__ergm_curvedconv'")[1,1]))

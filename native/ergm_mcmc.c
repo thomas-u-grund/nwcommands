@@ -2189,198 +2189,263 @@ static double curved_loglik_c(const double *X, const double *y, long ndyads, lon
    undefined in that case - a real but exceedingly unlikely failure
    mode on a well-posed problem that already survived 100 Newton
    iterations without it). */
+/* ---- R's curved MPLE (ergm.logitreg -> trust::trust), agent E4 ----------
+   Line-by-line port of the trust-region optimiser R uses (rinit=1,
+   rmax=100, fterm=mterm=sqrt(eps), maximisation), started at theta=0
+   with the decay at sqrt(eps) (ergm's .constrain_init lower bound 0 +
+   sqrt(eps)), the objective -Inf (here -1e300) for decay < 0.  On flat or
+   weakly identified likelihoods the path R takes ends at a point that is
+   not the optimum; reproducing the algorithm reproduces that end point.
+   Mirrors ErgmCurvedMPLEFit() in unw_ergm.do. */
+typedef struct {
+	const double *X, *y;
+	long nd, nterms, ntheta, ncurved;
+} cobj_t;
+
+static void curved_obj_c(cobj_t *o, const double *theta, double *val, double *grad, double *H) {
+	long nterms = o->nterms, ntheta = o->ntheta, ncurved = o->ncurved, nord = nterms - ncurved;
+	long i, j, k;
+	double eta[MAXTERMS], dw[MAXTERMS], dalpha[MAXTERMS];
+	double *Jac = (double *)calloc((size_t)nterms * (size_t)ntheta, sizeof(double));
+	double *XJ = (double *)malloc((size_t)ntheta * sizeof(double));
+	double ll = 0.0;
+	if (theta[ntheta-1] < 0.0) { *val = -1e300; free(Jac); free(XJ); return; }
+	theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
+	for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
+	if (ncurved > 0) {
+		gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
+		for (k = 0; k < ncurved; k++) {
+			Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
+			Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
+		}
+	}
+	for (i = 0; i < ntheta; i++) grad[i] = 0.0;
+	for (i = 0; i < ntheta * ntheta; i++) H[i] = 0.0;
+	for (i = 0; i < o->nd; i++) {
+		const double *xi = o->X + (size_t)i * (size_t)nterms;
+		double xb = 0.0, p, w;
+		for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
+		if (xb != xb) continue;
+		p = 1.0 / (1.0 + exp(-xb));
+		w = p * (1.0 - p);
+		ll += (o->y[i] != 0.0) ? log(p) : log(1.0 - p);
+		for (k = 0; k < ntheta; k++) {
+			double s = 0.0;
+			for (j = 0; j < nterms; j++) s += xi[j] * Jac[j*ntheta+k];
+			XJ[k] = s;
+		}
+		for (j = 0; j < ntheta; j++) {
+			grad[j] += XJ[j] * (o->y[i] - p);
+			if (XJ[j] == 0.0) continue;
+			for (k = j; k < ntheta; k++) H[j*ntheta+k] -= w * XJ[j] * XJ[k];
+		}
+	}
+	for (j = 0; j < ntheta; j++)
+		for (k = j+1; k < ntheta; k++) H[k*ntheta+j] = H[j*ntheta+k];
+	*val = ll;
+	free(Jac); free(XJ);
+}
+
+/* symmetric eigendecomposition (cyclic Jacobi); eigenvalues returned in
+   decreasing order, eigenvectors as columns of V (row-major n x n) */
+static void sym_eigen(const double *A0, long n, double *vals, double *V) {
+	double *A = (double *)malloc((size_t)n * (size_t)n * sizeof(double));
+	long i, j, k, sweep;
+	long *ord = (long *)malloc((size_t)n * sizeof(long));
+	for (i = 0; i < n*n; i++) A[i] = A0[i];
+	for (i = 0; i < n; i++) for (j = 0; j < n; j++) V[i*n+j] = (i == j) ? 1.0 : 0.0;
+	for (sweep = 0; sweep < 100; sweep++) {
+		double off = 0.0;
+		for (i = 0; i < n; i++) for (j = i+1; j < n; j++) off += A[i*n+j] * A[i*n+j];
+		if (off < 1e-300) break;
+		for (i = 0; i < n-1; i++) {
+			for (j = i+1; j < n; j++) {
+				double apq = A[i*n+j], theta, t, c, s;
+				if (fabs(apq) < 1e-300) continue;
+				theta = (A[j*n+j] - A[i*n+i]) / (2.0 * apq);
+				t = ((theta >= 0.0) ? 1.0 : -1.0) / (fabs(theta) + sqrt(theta*theta + 1.0));
+				c = 1.0 / sqrt(t*t + 1.0);
+				s = t * c;
+				for (k = 0; k < n; k++) {
+					double akp = A[k*n+i], akq = A[k*n+j];
+					A[k*n+i] = c*akp - s*akq;
+					A[k*n+j] = s*akp + c*akq;
+				}
+				for (k = 0; k < n; k++) {
+					double apk = A[i*n+k], aqk = A[j*n+k];
+					A[i*n+k] = c*apk - s*aqk;
+					A[j*n+k] = s*apk + c*aqk;
+				}
+				for (k = 0; k < n; k++) {
+					double vkp = V[k*n+i], vkq = V[k*n+j];
+					V[k*n+i] = c*vkp - s*vkq;
+					V[k*n+j] = s*vkp + c*vkq;
+				}
+			}
+		}
+	}
+	for (i = 0; i < n; i++) { vals[i] = A[i*n+i]; ord[i] = i; }
+	for (i = 0; i < n-1; i++) for (j = i+1; j < n; j++) if (vals[ord[j]] > vals[ord[i]]) { long t = ord[i]; ord[i] = ord[j]; ord[j] = t; }
+	{
+		double *vs = (double *)malloc((size_t)n * sizeof(double)), *Vs = (double *)malloc((size_t)n * (size_t)n * sizeof(double));
+		for (i = 0; i < n; i++) { vs[i] = vals[ord[i]]; for (k = 0; k < n; k++) Vs[k*n+i] = V[k*n+ord[i]]; }
+		for (i = 0; i < n; i++) vals[i] = vs[i];
+		for (i = 0; i < n*n; i++) V[i] = Vs[i];
+		free(vs); free(Vs);
+	}
+	free(A); free(ord);
+}
+
+static double trust_fred(double beep, const double *gq, const double *beta, long n, double r, double C1, double C2) {
+	long i;
+	double sum = 0.0;
+	if (beep == 0.0) return (C2 > 0.0) ? -1.0/r : sqrt(1.0/C1) - 1.0/r;
+	for (i = 0; i < n; i++) { double t = gq[i] / (beta[i] + beep); sum += t*t; }
+	return sqrt(1.0/sum) - 1.0/r;
+}
+/* R_zeroin2 (Brent) as used by uniroot(), tol = eps^0.25 */
+static double trust_uniroot(double ax, double bx, const double *gq, const double *beta, long n, double r, double C1, double C2) {
+	double EPS = 2.220446049250313e-16, tol = pow(EPS, 0.25);
+	double a = ax, b = bx, c, fa, fb, fc, prev_step, tol_act, new_step, cb, t1, t2, p, q;
+	long maxit = 1001;
+	fa = trust_fred(a, gq, beta, n, r, C1, C2);
+	fb = trust_fred(b, gq, beta, n, r, C1, C2);
+	c = a; fc = fa;
+	if (fa == 0.0) return a;
+	if (fb == 0.0) return b;
+	while (maxit-- > 0) {
+		prev_step = b - a;
+		if (fabs(fc) < fabs(fb)) { a = b; b = c; c = a; fa = fb; fb = fc; fc = fa; }
+		tol_act = 2.0*EPS*fabs(b) + tol/2.0;
+		new_step = (c - b)/2.0;
+		if (fabs(new_step) <= tol_act || fb == 0.0) return b;
+		if (fabs(prev_step) >= tol_act && fabs(fa) > fabs(fb)) {
+			cb = c - b;
+			if (a == c) { t1 = fb/fa; p = cb*t1; q = 1.0 - t1; }
+			else {
+				q = fa/fc; t1 = fb/fc; t2 = fb/fa;
+				p = t2*(cb*q*(q - t1) - (b - a)*(t1 - 1.0));
+				q = (q - 1.0)*(t1 - 1.0)*(t2 - 1.0);
+			}
+			if (p > 0.0) q = -q; else p = -p;
+			if (p < (0.75*cb*q - fabs(tol_act*q)/2.0) && p < fabs(prev_step*q/2.0)) new_step = p/q;
+		}
+		if (fabs(new_step) < tol_act) new_step = (new_step > 0.0) ? tol_act : -tol_act;
+		a = b; fa = fb;
+		b += new_step;
+		fb = trust_fred(b, gq, beta, n, r, C1, C2);
+		if ((fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0)) { c = a; fc = fa; }
+	}
+	return b;
+}
+
 static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long nterms,
 		long ncurved, double curved_decay_start,
 		double *theta_out, double *V_out, long *converged_out) {
 	long ntheta = (nterms - ncurved) + 2;
-	long decay_pos = ntheta - 1;
-	long maxit = 100;
-	double tol = 1e-10;
-	double theta[MAXTERMS], theta_try[MAXTERMS];
-	double eta[MAXTERMS];
-	double g_eta[MAXTERMS], g_theta[MAXTERMS];
-	double delta[MAXTERMS];
-	double *I_eta, *I_theta, *Jac;
-	double ll0, ll1;
-	long iter, i, j, k, halvings, found, converged;
-	double step, maxabs;
-
-	for (i = 0; i < ntheta - 2; i++) theta[i] = 0.0;
-	theta[ntheta-2] = 0.0;
-	theta[ntheta-1] = curved_decay_start;
-
-	I_eta = (double *)malloc((size_t)nterms * (size_t)nterms * sizeof(double));
-	I_theta = (double *)malloc((size_t)ntheta * (size_t)ntheta * sizeof(double));
-	Jac = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-
-	ll0 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta);
-	converged = 0;
-
+	long n = ntheta, i, j, k, iter, maxit = 10000;
+	double EPS = 2.220446049250313e-16, fterm = sqrt(EPS), mterm = sqrt(EPS);
+	cobj_t o;
+	double *theta = (double *)calloc((size_t)n, sizeof(double)), *theta_try = (double *)calloc((size_t)n, sizeof(double));
+	double *grad = (double *)calloc((size_t)n, sizeof(double)), *gradt = (double *)calloc((size_t)n, sizeof(double));
+	double *H = (double *)calloc((size_t)n*n, sizeof(double)), *Ht = (double *)calloc((size_t)n*n, sizeof(double));
+	double *B = (double *)calloc((size_t)n*n, sizeof(double)), *g = (double *)calloc((size_t)n, sizeof(double));
+	double *ev = (double *)calloc((size_t)n, sizeof(double)), *V = (double *)calloc((size_t)n*n, sizeof(double));
+	double *gq = (double *)calloc((size_t)n, sizeof(double)), *ptry = (double *)calloc((size_t)n, sizeof(double));
+	double *beta = (double *)calloc((size_t)n, sizeof(double)), *wtry = (double *)calloc((size_t)n, sizeof(double));
+	double r = 1.0, rmax = 100.0, val, valt, f = 0.0, ftry, rho, preddiff;
+	int accept = 1, isnewton, term, conv = 0;
+	(void)curved_decay_start; /* R ignores a user decay start in the MPLE (decay= has no effect when fixed=FALSE) */
+	o.X = X; o.y = y; o.nd = ndyads; o.nterms = nterms; o.ntheta = ntheta; o.ncurved = ncurved;
+	theta[n-1] = sqrt(EPS);
+	curved_obj_c(&o, theta, &val, grad, H);
 	for (iter = 1; iter <= maxit; iter++) {
-		double dw[MAXTERMS], dalpha[MAXTERMS];
-		long nord = nterms - ncurved;
-
-		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
-
-		/* Jacobian: nterms x ntheta, row-major. Ordinary block =
-		   identity (d eta_i/d theta_i = 1); curved block = gwdecay_
-		   gradient()'s own 2 x ncurved output, transposed. */
-		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
-		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
-		if (ncurved > 0) {
-			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
-			for (k = 0; k < ncurved; k++) {
-				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
-				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
-			}
+		if (accept) {
+			for (i = 0; i < n*n; i++) B[i] = -H[i];
+			for (i = 0; i < n; i++) g[i] = -grad[i];
+			f = -val;
+			sym_eigen(B, n, ev, V);
+			for (i = 0; i < n; i++) { double s = 0.0; for (k = 0; k < n; k++) s += V[k*n+i] * g[k]; gq[i] = s; }
 		}
-
-		for (i = 0; i < nterms; i++) g_eta[i] = 0.0;
-		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
-		for (i = 0; i < ndyads; i++) {
-			const double *xi = X + (size_t)i * (size_t)nterms;
-			double xb = 0.0, p, w;
-			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
-			p = 1.0 / (1.0 + exp(-xb));
-			w = p * (1.0 - p);
-			for (k = 0; k < nterms; k++) g_eta[k] += xi[k] * (y[i] - p);
-			for (j = 0; j < nterms; j++) {
-				double wxj = w * xi[j];
-				if (wxj == 0.0) continue;
-				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
-			}
-		}
-		/* I_eta is symmetric - only the upper triangle was accumulated
-		   above (halves the inner work); mirror it before use. */
-		for (j = 0; j < nterms; j++)
-			for (k = j+1; k < nterms; k++)
-				I_eta[k*nterms+j] = I_eta[j*nterms+k];
-
-		/* g_theta = g_eta * Jac  [1 x ntheta] */
-		for (k = 0; k < ntheta; k++) {
-			g_theta[k] = 0.0;
-			for (i = 0; i < nterms; i++) g_theta[k] += g_eta[i] * Jac[i*ntheta+k];
-		}
-		/* I_theta = Jac' * I_eta * Jac  [ntheta x ntheta] - via the
-		   nterms x ntheta intermediate M = I_eta * Jac, then
-		   Jac' * M, avoiding ever materializing a second nterms x
-		   nterms temporary. */
+		isnewton = 0;
 		{
-			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-			for (i = 0; i < nterms; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
-					M[i*ntheta+k] = s;
+			int allpos = 1;
+			for (i = 0; i < n; i++) if (!(ev[i] > 0.0)) allpos = 0;
+			if (allpos) {
+				double nrm = 0.0;
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * (gq[i] / ev[i]); ptry[k] = -s; nrm += ptry[k]*ptry[k]; }
+				if (sqrt(nrm) <= r) isnewton = 1;
+			}
+		}
+		if (!isnewton) {
+			double lmin = ev[0], C1 = 0.0, C2 = 0.0, C3 = 0.0;
+			int *imin = (int *)calloc((size_t)n, sizeof(int));
+			for (i = 1; i < n; i++) if (ev[i] < lmin) lmin = ev[i];
+			for (i = 0; i < n; i++) { beta[i] = ev[i] - lmin; imin[i] = (beta[i] == 0.0); }
+			for (i = 0; i < n; i++) {
+				if (!imin[i]) { double t = gq[i]/beta[i]; C1 += t*t; }
+				else C2 += gq[i]*gq[i];
+				C3 += gq[i]*gq[i];
+			}
+			if (C2 > 0.0 || C1 > r*r) {
+				double bdn = sqrt(C2)/r, bup = sqrt(C3)/r, root;
+				if (trust_fred(bup, gq, beta, n, r, C1, C2) <= 0.0) root = bup;
+				else if (trust_fred(bdn, gq, beta, n, r, C1, C2) >= 0.0) root = bdn;
+				else root = trust_uniroot(bdn, bup, gq, beta, n, r, C1, C2);
+				for (i = 0; i < n; i++) wtry[i] = gq[i] / (beta[i] + root);
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * wtry[i]; ptry[k] = -s; }
+			}
+			else {
+				double ss = 0.0, utry;
+				for (i = 0; i < n; i++) wtry[i] = imin[i] ? 0.0 : gq[i]/beta[i];
+				for (k = 0; k < n; k++) { double s = 0.0; for (i = 0; i < n; i++) s += V[k*n+i] * wtry[i]; ptry[k] = -s; ss += ptry[k]*ptry[k]; }
+				utry = sqrt(r*r - ss);
+				if (utry > 0.0) {
+					long first = 0;
+					for (i = 0; i < n; i++) if (imin[i]) { first = i; break; }
+					for (k = 0; k < n; k++) ptry[k] += utry * V[k*n+first];
 				}
 			}
-			for (i = 0; i < ntheta; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
-					I_theta[i*ntheta+k] = s;
-				}
+			free(imin);
+		}
+		preddiff = 0.0;
+		for (i = 0; i < n; i++) {
+			double Bp = 0.0;
+			for (k = 0; k < n; k++) Bp += B[i*n+k] * ptry[k];
+			preddiff += ptry[i] * (g[i] + Bp/2.0);
+		}
+		for (i = 0; i < n; i++) theta_try[i] = theta[i] + ptry[i];
+		curved_obj_c(&o, theta_try, &valt, gradt, Ht);
+		ftry = -valt;
+		rho = (ftry - f)/preddiff;
+		if (ftry < 1e299) term = (fabs(ftry - f) < fterm || fabs(preddiff) < mterm);
+		else { term = 0; rho = -1e300; }
+		if (term) {
+			if (ftry < f) {
+				accept = 1;
+				for (i = 0; i < n; i++) theta[i] = theta_try[i];
+				val = valt; for (i = 0; i < n; i++) grad[i] = gradt[i]; for (i = 0; i < n*n; i++) H[i] = Ht[i];
 			}
-			free(M);
 		}
-
-		/* delta = invsym(I_theta) * g_theta' - a generalized-inverse
-		   solve, not solve_linear()'s old hard-failing Gauss-Jordan
-		   solve, exactly matching ErgmCurvedMPLEFit()'s own
-		   invsym()-based delta in unw_ergm.do (see invert_matrix()'s
-		   own header comment for why this is required, not optional,
-		   on the curved gwesp decay->0 boundary). */
-		invert_matrix(I_theta, ntheta);
-		for (i = 0; i < ntheta; i++) {
-			double s = 0.0;
-			for (j = 0; j < ntheta; j++) s += I_theta[i*ntheta+j] * g_theta[j];
-			delta[i] = s;
-		}
-
-		step = 1.0;
-		found = 0;
-		for (halvings = 1; halvings <= 30; halvings++) {
-			for (i = 0; i < ntheta; i++) theta_try[i] = theta[i] + step * delta[i];
-			if (theta_try[decay_pos] > 1e-6) {
-				ll1 = curved_loglik_c(X, y, ndyads, nterms, ntheta, ncurved, theta_try);
-				if (ll1 >= ll0) { found = 1; break; }
+		else {
+			if (rho < 0.25) { accept = 0; r = r/4.0; }
+			else {
+				accept = 1;
+				for (i = 0; i < n; i++) theta[i] = theta_try[i];
+				val = valt; for (i = 0; i < n; i++) grad[i] = gradt[i]; for (i = 0; i < n*n; i++) H[i] = Ht[i];
+				if (rho > 0.75 && !isnewton) r = (2.0*r < rmax) ? 2.0*r : rmax;
 			}
-			step = step / 2.0;
 		}
-		if (!found) {
-			theta[decay_pos] = 1e-6;
-			converged = 1;
-			break;
-		}
-		for (i = 0; i < ntheta; i++) theta[i] = theta_try[i];
-		ll0 = ll1;
-		maxabs = 0.0;
-		for (i = 0; i < ntheta; i++) {
-			double d = fabs(step * delta[i]);
-			if (d > maxabs) maxabs = d;
-		}
-		if (maxabs < tol) { converged = 1; break; }
+		if (term) { conv = 1; break; }
 	}
-
-	/* Final Fisher information at the converged (or last-tried) theta -
-	   recomputed fresh, not reused from the last iteration's own
-	   pre-update value, matching ErgmCurvedMPLEFit()'s own identical
-	   convention in unw_ergm.do. */
-	{
-		long nord = nterms - ncurved;
-		double dw[MAXTERMS], dalpha[MAXTERMS];
-		theta_to_eta_c(theta, ntheta, nterms, ncurved, eta);
-		for (i = 0; i < nterms * ntheta; i++) Jac[i] = 0.0;
-		for (i = 0; i < nord; i++) Jac[i*ntheta + i] = 1.0;
-		if (ncurved > 0) {
-			gwdecay_gradient(theta[ntheta-2], theta[ntheta-1], ncurved, dw, dalpha);
-			for (k = 0; k < ncurved; k++) {
-				Jac[(nord+k)*ntheta + (ntheta-2)] = dw[k];
-				Jac[(nord+k)*ntheta + (ntheta-1)] = dalpha[k];
-			}
-		}
-		for (i = 0; i < nterms * nterms; i++) I_eta[i] = 0.0;
-		for (i = 0; i < ndyads; i++) {
-			const double *xi = X + (size_t)i * (size_t)nterms;
-			double xb = 0.0, p, w;
-			for (k = 0; k < nterms; k++) xb += xi[k] * eta[k];
-			p = 1.0 / (1.0 + exp(-xb));
-			w = p * (1.0 - p);
-			for (j = 0; j < nterms; j++) {
-				double wxj = w * xi[j];
-				if (wxj == 0.0) continue;
-				for (k = j; k < nterms; k++) I_eta[j*nterms+k] += wxj * xi[k];
-			}
-		}
-		for (j = 0; j < nterms; j++)
-			for (k = j+1; k < nterms; k++)
-				I_eta[k*nterms+j] = I_eta[j*nterms+k];
-		{
-			double *M = (double *)malloc((size_t)nterms * (size_t)ntheta * sizeof(double));
-			for (i = 0; i < nterms; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += I_eta[i*nterms+j] * Jac[j*ntheta+k];
-					M[i*ntheta+k] = s;
-				}
-			}
-			for (i = 0; i < ntheta; i++) {
-				for (k = 0; k < ntheta; k++) {
-					double s = 0.0;
-					for (j = 0; j < nterms; j++) s += Jac[j*ntheta+i] * M[j*ntheta+k];
-					I_theta[i*ntheta+k] = s;
-				}
-			}
-			free(M);
-		}
-	}
-
-	for (i = 0; i < ntheta; i++) theta_out[i] = theta[i];
-	invert_matrix(I_theta, ntheta);
-	for (i = 0; i < ntheta * ntheta; i++) V_out[i] = I_theta[i];
-	*converged_out = converged;
-
-	free(I_eta); free(I_theta); free(Jac);
+	curved_obj_c(&o, theta, &val, grad, H);
+	for (i = 0; i < n; i++) theta_out[i] = theta[i];
+	for (i = 0; i < n*n; i++) V_out[i] = -H[i];
+	invert_matrix(V_out, n);
+	*converged_out = conv;
+	free(theta); free(theta_try); free(grad); free(gradt); free(H); free(Ht); free(B); free(g);
+	free(ev); free(V); free(gq); free(ptry); free(beta); free(wtry);
+	(void)j;
 	return 0;
 }
 

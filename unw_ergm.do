@@ -4893,6 +4893,230 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 	return(out)
 }
 
+// ---- R's curved MPLE (ergm.logitreg -> trust::trust), ported -------------
+// Agent E4.  R fits a curved MPLE with the trust-region optimiser of the
+// `trust' package (rinit=1, rmax=100, iterlim=200, fterm=mterm=sqrt(eps))
+// started at theta=0 with the decay at its lower bound plus sqrt(eps)
+// (ergm's .constrain_init), the decay constrained to >= 0 (objective -Inf
+// outside).  On flat/weakly identified likelihoods this path ends at a
+// point that is not the global optimum; to match R the same algorithm is
+// reproduced step by step.
+
+// Brent's zeroin as in R's uniroot() (R_zeroin2) for the trust-region
+// radius equation; f(b) = sqrt(1/sum((gq/(beta+b))^2)) - 1/r.
+real scalar _ergm_trust_fred(real scalar beep, real colvector gq, real colvector beta, real scalar r, real scalar C1, real scalar C2){
+	if (beep == 0) {
+		if (C2 > 0) return(-1/r)
+		return(sqrt(1/C1) - 1/r)
+	}
+	return(sqrt(1/sum((gq :/ (beta :+ beep)):^2)) - 1/r)
+}
+real scalar _ergm_trust_uniroot(real scalar ax, real scalar bx, real colvector gq, real colvector beta, real scalar r, real scalar C1, real scalar C2){
+	real scalar a, b, c, fa, fb, fc, tol, maxit, prev_step, tol_act, new_step, cb, t1, t2, p, q, EPS
+
+	EPS = 2.220446049250313e-16
+	tol = EPS^0.25
+	a = ax
+	b = bx
+	fa = _ergm_trust_fred(a, gq, beta, r, C1, C2)
+	fb = _ergm_trust_fred(b, gq, beta, r, C1, C2)
+	c = a
+	fc = fa
+	maxit = 1001
+	if (fa == 0) return(a)
+	if (fb == 0) return(b)
+	while (maxit > 0) {
+		maxit--
+		prev_step = b - a
+		if (abs(fc) < abs(fb)) {
+			a = b
+			b = c
+			c = a
+			fa = fb
+			fb = fc
+			fc = fa
+		}
+		tol_act = 2*EPS*abs(b) + tol/2
+		new_step = (c - b)/2
+		if (abs(new_step) <= tol_act | fb == 0) return(b)
+		if (abs(prev_step) >= tol_act & abs(fa) > abs(fb)) {
+			cb = c - b
+			if (a == c) {
+				t1 = fb/fa
+				p = cb*t1
+				q = 1 - t1
+			}
+			else {
+				q = fa/fc
+				t1 = fb/fc
+				t2 = fb/fa
+				p = t2*(cb*q*(q - t1) - (b - a)*(t1 - 1))
+				q = (q - 1)*(t1 - 1)*(t2 - 1)
+			}
+			if (p > 0) q = -q
+			else p = -p
+			if (p < (0.75*cb*q - abs(tol_act*q)/2) & p < abs(prev_step*q/2)) new_step = p/q
+		}
+		if (abs(new_step) < tol_act) new_step = (new_step > 0 ? tol_act : -tol_act)
+		a = b
+		fa = fb
+		b = b + new_step
+		fb = _ergm_trust_fred(b, gq, beta, r, C1, C2)
+		if ((fb > 0 & fc > 0) | (fb < 0 & fc < 0)) {
+			c = a
+			fc = fa
+		}
+	}
+	return(b)
+}
+
+// objective of R's ergm.logitreg for a curved model: returns value
+// (-Inf outside the box), gradient and Hessian in theta space.
+void _ergm_curved_obj(class ErgmModel scalar M, real matrix X, real colvector y, real rowvector theta, real scalar alpha_pos, real scalar val, real colvector grad, real matrix hess){
+	real rowvector eta
+	real colvector xb, p, w, yl
+	real matrix Jac, XJ, Xl
+	real colvector keep
+
+	if (any(theta :>= .) | theta[alpha_pos] < 0) {
+		val = -1e300
+		return
+	}
+	eta = M.theta_to_eta(theta)
+	xb = X * eta'
+	keep = (xb :< .)
+	Xl = X
+	yl = y
+	if (!all(keep)) {
+		Xl = select(X, keep)
+		yl = select(y, keep)
+		xb = select(xb, keep)
+	}
+	Jac = M.theta_to_eta_jacobian(theta)
+	XJ = Xl * Jac
+	p = invlogit(xb)
+	val = sum(yl :* ln(p) :+ (1 :- yl) :* ln(1 :- p))
+	grad = (XJ' * (yl - p))
+	w = p :* (1 :- p)
+	hess = -(XJ' * (w :* XJ))
+}
+
+void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
+	real rowvector theta_start, real scalar maxit, real scalar tol,
+	string scalar theta_matname, string scalar V_theta_matname,
+	string scalar converged_matname){
+
+	real matrix X, B, V, L, hess, Bh, hesst
+	real colvector y, g, gq, ev, beta, ptry, grad, wtry, gt, vtry
+	real rowvector theta, theta_try
+	real scalar ncol, alpha_pos, r, rmax, iter, accept, f, ftry, val, valtry, rho, preddiff
+	real scalar isnewton, lmin, C1, C2, C3, bdn, bup, root, utry, fterm, mterm, term, conv, EPS, k
+	real colvector imin
+
+	EPS = 2.220446049250313e-16
+	ncol = cols(D) - 1
+	X = D[., (1..ncol)]
+	y = D[., ncol+1]
+	alpha_pos = cols(theta_start)
+	// R: curved weight/other parameters start at ~0 (noise of order sqrt(eps)),
+	// the decay at its lower bound (0) plus sqrt(eps)
+	theta = theta_start
+	theta[1..(alpha_pos-1)] = J(1, alpha_pos-1, 0)
+	theta[alpha_pos] = sqrt(EPS)
+	fterm = sqrt(EPS)
+	mterm = sqrt(EPS)
+	r = 1
+	rmax = 100
+	_ergm_curved_obj(M, X, y, theta, alpha_pos, val, grad, hess)
+	accept = 1
+	conv = 0
+	for (iter=1; iter<=maxit; iter++) {
+		if (accept) {
+			B = -hess
+			g = -grad
+			f = -val
+			symeigensystem(B, V, L)
+			ev = L'
+			gq = V' * g
+		}
+		isnewton = 0
+		if (all(ev :> 0)) {
+			ptry = -V * (gq :/ ev)
+			if (sqrt(sum(ptry:^2)) <= r) isnewton = 1
+		}
+		if (!isnewton) {
+			lmin = min(ev)
+			beta = ev :- lmin
+			imin = (beta :== 0)
+			C1 = sum(select(gq :/ beta, !imin):^2)
+			C2 = sum(select(gq, imin):^2)
+			C3 = sum(gq:^2)
+			if (C2 > 0 | C1 > r^2) {
+				bdn = sqrt(C2)/r
+				bup = sqrt(C3)/r
+				if (_ergm_trust_fred(bup, gq, beta, r, C1, C2) <= 0) root = bup
+				else if (_ergm_trust_fred(bdn, gq, beta, r, C1, C2) >= 0) root = bdn
+				else root = _ergm_trust_uniroot(bdn, bup, gq, beta, r, C1, C2)
+				wtry = gq :/ (beta :+ root)
+				ptry = -V * wtry
+			}
+			else {
+				wtry = gq :/ beta
+				for (k=1; k<=rows(wtry); k++) if (imin[k]) wtry[k] = 0
+				ptry = -V * wtry
+				utry = sqrt(r^2 - sum(ptry:^2))
+				if (utry > 0) {
+					vtry = V[., selectindex(imin)[1]]
+					ptry = ptry + utry * vtry
+				}
+			}
+		}
+		preddiff = sum(ptry :* (g + (B * ptry)/2))
+		theta_try = theta + ptry'
+		_ergm_curved_obj(M, X, y, theta_try, alpha_pos, valtry, grad, hesst)
+		ftry = -valtry
+		rho = (ftry - f)/preddiff
+		if (ftry < 1e299) {
+			term = (abs(ftry - f) < fterm | abs(preddiff) < mterm)
+		}
+		else {
+			term = 0
+			rho = -1e300
+		}
+		if (term) {
+			if (ftry < f) {
+				accept = 1
+				theta = theta_try
+				val = valtry
+				hess = hesst
+			}
+		}
+		else {
+			if (rho < 1/4) {
+				accept = 0
+				r = r/4
+			}
+			else {
+				accept = 1
+				theta = theta_try
+				val = valtry
+				hess = hesst
+				if (rho > 3/4 & !isnewton) r = min((2*r, rmax))
+			}
+		}
+		if (term) {
+			conv = 1
+			break
+		}
+	}
+	// R re-evaluates the objective at the final theta; covariance = generalized inverse of -Hessian
+	_ergm_curved_obj(M, X, y, theta, alpha_pos, val, grad, hess)
+	st_matrix(theta_matname, theta)
+	st_matrix(V_theta_matname, invsym(-hess))
+	st_matrix(converged_matname, (conv))
+}
+
+
 /*
 	Curved MPLE fit (harmonisation unit 136, revised - the first
 	user-facing consumer of units 133-135's own certified theta<->eta
@@ -4946,7 +5170,7 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 	principle already documented at this file's own build_mple_data()
 	call site in nwergm.ado, harmonisation unit 81).
 */
-void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
+void ErgmCurvedMPLEFit_newton(class ErgmModel scalar M, real matrix D,
 	real rowvector theta_start, real scalar maxit, real scalar tol,
 	string scalar theta_matname, string scalar V_theta_matname,
 	string scalar converged_matname){
@@ -4955,6 +5179,7 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 	real colvector y, p, xb, w
 	real rowvector theta, theta_try, eta, g_eta, g_theta, delta
 	real scalar iter, converged, ncol, ll0, ll1, step, halvings, alpha_pos, found
+	real scalar fix_decay, decay_floor, kk
 
 	ncol = cols(D) - 1
 	X = D[., (1..ncol)]
@@ -4974,7 +5199,9 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 	theta = theta_start
 	ll0 = ergm_curved_loglik(M, X, y, theta)
 	converged = 0
-	for (iter=1; iter<=maxit; iter++) {
+	fix_decay = 0
+	decay_floor = 1e-6
+	for (iter=1; iter<=2*maxit; iter++) {
 		eta = M.theta_to_eta(theta)
 		xb = X * eta'
 		p = invlogit(xb)
@@ -4984,6 +5211,12 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 		w = p :* (1 :- p)
 		I_eta = X' * (w :* X)
 		I_theta = Jac' * I_eta * Jac
+		if (fix_decay) {
+			I_theta[alpha_pos, .] = J(1, cols(I_theta), 0)
+			I_theta[., alpha_pos] = J(rows(I_theta), 1, 0)
+			I_theta[alpha_pos, alpha_pos] = 1
+			g_theta[alpha_pos] = 0
+		}
 		delta = (invsym(I_theta) * g_theta')'
 
 		// Damped Newton-Raphson (backtracking line search): a full,
@@ -5022,7 +5255,7 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 			// and already far past any statistically meaningful decay value
 			// (every other curved term's own near-boundary certification
 			// case in this file tops out under 20).
-			if (theta_try[alpha_pos] > 1e-6 & theta_try[alpha_pos] < 500) {
+			if (theta_try[alpha_pos] > decay_floor & theta_try[alpha_pos] < 500) {
 				ll1 = ergm_curved_loglik(M, X, y, theta_try)
 				// `missing(ll1)' MUST be checked explicitly before
 				// comparing - Stata/Mata's own missing-value ordering
@@ -5063,7 +5296,17 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 			// whatever the final failed attempt happened to be, which is
 			// what was cascading to missing everywhere downstream before
 			// this fix.
-			theta[alpha_pos] = (delta[alpha_pos] < 0) ? 1e-6 : 500
+			if (!fix_decay & delta[alpha_pos] < 0) {
+				// pinned at the lower boundary: re-optimise the other
+				// parameters with decay held at ~0 (R's trust-region fit
+				// ends at decay ~ 1e-12 with the rest optimal given it)
+				fix_decay = 1
+				decay_floor = 1e-13
+				theta[alpha_pos] = 1e-12
+				ll0 = ergm_curved_loglik(M, X, y, theta)
+				continue
+			}
+			theta[alpha_pos] = (delta[alpha_pos] < 0) ? (fix_decay ? 1e-12 : 1e-6) : 500
 			converged = 1
 			break
 		}

@@ -122,6 +122,58 @@ forvalues i = 1/`nspec' {
 	capture noisily _cov_check `sid_`i'' `snet_`i'' `"`snw_`i''"' `dir' 1e-4
 	if _rc local ++nfail
 }
+* ---- curved (free-decay) MPLE incl. R's boundary solutions ----
+capture program drop _cov_curved
+program define _cov_curved
+	args id net opt native
+	preserve
+	qui import delimited "dev/covterms/curved/curved_ref.csv", clear asdouble
+	qui keep if id == "`id'"
+	local nR = _N
+	forvalues k = 1/`nR' {
+		local rc`k' = coef[`k']
+		local rs`k' = se[`k']
+	}
+	restore
+	qui nwclear
+	qui clear
+	qui import delimited "dev/covterms/curved/`=cond("`net'"=="dir","dir","und")'_adj.csv", clear asdouble
+	qui mkmat v*, mat(_A)
+	qui clear
+	qui nwset, mat(_A) `=cond("`net'"=="dir","directed","undirected")' name(`net')
+	capture noisily nwergm `net', edges `opt' method(mple) `native'
+	if _rc {
+		di as err "FAIL `id' `native': nwergm error"
+		exit 9
+	}
+	matrix bb = e(b)
+	matrix VV = e(V)
+	local bad 0
+	local seok 1
+	forvalues k = 1/`nR' {
+		if `rs`k'' >= 1e3 local seok 0
+	}
+	forvalues k = 1/`nR' {
+		if abs(bb[1,`k'] - `rc`k'') > 1e-4 local bad 1
+		if `seok' {
+			if abs(sqrt(VV[`k',`k']) - `rs`k'') > 5e-4 * (1 + `rs`k'') local bad 1
+		}
+	}
+	if `bad' {
+		di as err "FAIL `id' `native': " bb[1,1] " " bb[1,2] " " bb[1,3] " vs R " `rc1' " " `rc2' " " `rc3'
+		exit 9
+	}
+	di "ok  curved `id' (`opt' `native')"
+end
+local nfailc 0
+foreach c in "cDe dir gwespfree(.5)" "cDi dir gwidegreefree(.5)" "cDo dir gwodegreefree(.5)" "cDd dir gwdspfree(.5)" "cDn dir gwnspfree(.5)" "cUe und gwespfree(.5)" "cUd und gwdegreefree(.5)" "cUs und gwdspfree(.5)" "cUn und gwnspfree(.5)" {
+	tokenize `c'
+	foreach nat in "" "nonative" {
+		capture noisily _cov_curved `1' `2' `3' `nat'
+		if _rc local ++nfailc
+	}
+}
+local nfail = `nfail' + `nfailc'
 if `nfail' > 0 {
 	di as err "FAIL test_nwergm_covterms: `nfail' of `nspec' specs failed"
 	exit 9
