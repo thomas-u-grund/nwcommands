@@ -61,6 +61,28 @@ chk beh12_ffdeg2 -26.76
 chk beh21_bbdeg2 -49.1
 di as text "PASS behavior effects of both networks (statistics equal siena07)"
 
+* a non-directed second network (sym2): BFDeg exists only there (siena07: behaviorOneModeSym objective); the density of the non-directed network is held at 0.045
+preserve
+forvalues w = 1/3 {
+	import delimited "sym_w`w'.csv", clear varnames(1)
+	mkmat v1-v50, matrix(S`w')
+}
+import delimited "dev/saom_rsiena_multibeh_data.csv", clear varnames(1)
+forvalues w = 1/3 {
+	nwset, mat(S`w') undirected name(ns`w') nooutput
+}
+nwsaom multinet, net1(na1 na2 na3) net2(ns1 ns2 ns3) sym2 behavior(a1 a2 a3) eff2(outdegree) beheff1(linear quadratic avalt) beheff12(bfdeg ffdeg indegmixedpop) k0(3) k3(10) ///
+	theta0(-2.3 2.8 0.045 0 0 0 0 0 0) fix(net1_reciprocity net2_outdegree beh_linear beh_quadratic beh_avalt beh12_bfdeg beh12_ffdeg beh12_indegmixedpop) seed(1)
+matrix tg = e(target)
+local cn : colnames tg
+foreach x in "beh12_bfdeg 7.96" "beh12_ffdeg 8.96" "beh12_indegmixedpop 286.347" {
+	gettoken nm v : x
+	local j : list posof "`nm'" in cn
+	assert reldif(tg[1,`j'] + tg[2,`j'], `v') < 2e-3
+}
+restore
+di as text "PASS behavior effects with a non-directed network (statistics equal siena07)"
+
 * covariate effects of the behavior (driven by network 1 or by network 2), the network effects of the behavior as covariate
 mnt, b1(from:s1 avxalt:s1) b2(avxinalt:xa totsimaltx:xa) fix(beh_from_s1 beh_avxalt_s1 beh2_avxinalt_xa beh2_totsimaltx_xa)
 chk beh_from_s1 28.26
