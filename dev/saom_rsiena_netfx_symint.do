@@ -15,7 +15,7 @@ forvalues w = 1/3 {
 }
 merge 1:1 _n using `tvd', nogen
 forvalues s = 1/2 {
-	nwsaom, waves(sk1 sk2 sk3) symmetric outdegree egox(v1) altx(v1) interact(egox#altx) k0(50) k3(1000) seed(`s')
+	nwsaom, waves(sk1 sk2 sk3) symmetric outdegree altx(v1) samex(v1) interact(altx#samex) k0(50) k3(1000) seed(`s')
 	matrix b = e(b)
 	matrix V = e(V)
 	local est ""

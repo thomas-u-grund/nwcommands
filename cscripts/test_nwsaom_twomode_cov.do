@@ -65,6 +65,8 @@ foreach sp in "" behegox "netbeh(egosqx)" "netbeh(altindist2)" "netbeh(totindist
 	assert inlist(_rc, 0, 498, 505, 301)
 	if _rc == 0 assert "`e(engine)'" == "native" & e(twomode) == 1
 }
-capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(zb1 zb2 zb3 : linear) netbeh(crossxoutact) k3(30)
+capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(zb1 zb2 zb3 : linear) netbeh(simdist2) k3(30)
+assert _rc == 198
+capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(zb1 zb2 zb3 : linear) netbeh(samexoutact) k3(30)
 assert _rc == 198
 di "PASS twomode covariate effects"
