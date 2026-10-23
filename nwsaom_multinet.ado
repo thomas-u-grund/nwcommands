@@ -1,6 +1,7 @@
 *! nwsaom multinet (split out of nwsaom.ado, see nwsaom_multiplex.ado)
 capture mata: mata drop __nwsaom_mn_addwave()
 capture mata: mata drop __nwsaom_mn_post()
+capture mata: mata drop __nwsaom_mnb_post()
 capture mata: mata drop __nwsaom_mn_avg()
 capture mata: mata drop __nwsaom_mn_avgsq()
 mata:
@@ -63,12 +64,39 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 	st_numscalar(tcname + "_max", fit.tconvMax)
 	st_global(ncoefname, invtokens(("net1_" :+ __nwsaom_mn_M1.coefnames, "net2_" :+ __nwsaom_mn_M2.coefnames)))
 }
+/* nwsaom multinet with a behavior (protocol 64) */
+void __nwsaom_mnb_post(real rowvector theta01, real rowvector theta02, real rowvector thetab0, real scalar K0, real scalar K3, real scalar firstg, real scalar sym1, real scalar sym2,
+	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname, string scalar targetname) {
+	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
+	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
+	external class SaomBehaviorModel scalar __nwsaom_mn_Mbeh
+	external pointer(real colvector) rowvector __nwsaom_mn_Bw
+	external real rowvector __nwsaom_mn_net2flag
+	external real scalar __nwsaom_mn_behmin, __nwsaom_mn_behmax
+	struct SaomMNBFit scalar fit
+	real scalar p, P
+	real rowvector t1, t2, tb
+	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
+	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
+	tb = (cols(thetab0) == __nwsaom_mn_Mbeh.nparam() ? thetab0 : J(1, __nwsaom_mn_Mbeh.nparam(), 0))
+	fit = SaomEstimateMNB(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, __nwsaom_mn_Bw, __nwsaom_mn_behmin, __nwsaom_mn_behmax, __nwsaom_mn_Mbeh,
+		__nwsaom_mn_net2flag, t1, t2, tb, K0, K3, firstg, sym1, sym2)
+	p = fit.p1 + fit.p2 + fit.pb
+	P = fit.P
+	st_matrix(bname, fit.par[1..p])
+	st_matrix(Vname, fit.Vfull[1..p, 1..p])
+	st_matrix(ratename, (fit.par[(p+1)..(p+P)] \ fit.par[(p+P+1)..(p+2*P)] \ fit.par[(p+2*P+1)..(p+3*P)] \ sqrt(diagonal(fit.Vfull)[(p+1)..(p+P)])' \ sqrt(diagonal(fit.Vfull)[(p+P+1)..(p+2*P)])' \ sqrt(diagonal(fit.Vfull)[(p+2*P+1)..(p+3*P)])'))
+	st_matrix(tcname, fit.tconv)
+	st_matrix(targetname, fit.target)
+	st_numscalar(tcname + "_max", fit.tconvMax)
+	st_global(ncoefname, invtokens(("net1_" :+ __nwsaom_mn_M1.coefnames, "net2_" :+ __nwsaom_mn_M2.coefnames, __nwsaom_mn_Mbeh.coefnames)))
+}
 end
 
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 BEHavior(string) BEHEFF1(string) BEHEFF2(string) ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
@@ -135,8 +163,34 @@ program define nwsaom_multinet, eclass
 			mata: SaomMNAddCross(__nwsaom_mn_M`__s', "`__e'", `nodes', `__pp', __nwsaom_mn_avg(`__os'), __nwsaom_mn_avg(`__s'), __nwsaom_mn_avgsq(`__os'))
 		}
 	}
+	local hasbeh = ("`behavior'" != "")
+	if `hasbeh' {
+		local nb : word count `behavior'
+		if `nb' != `nw1' {
+			di "{err}behavior() needs one variable per wave (`nw1')."
+			error 198
+		}
+		if "`beheff1'`beheff2'" == "" local beheff1 "linear quadratic avalt"
+		mata: __nwsaom_mn_Bw = J(1, 0, NULL)
+		foreach __v of local behavior {
+			mata: SaomMNAddBeh("`__v'", `nodes')
+		}
+		mata: __nwsaom_mn_behmin = SaomMNBehMin(__nwsaom_mn_Bw)
+		mata: __nwsaom_mn_behmax = SaomMNBehMax(__nwsaom_mn_Bw)
+		mata: __nwsaom_mn_Mbeh = SaomBehaviorModel()
+		mata: __nwsaom_mn_Mbeh.init()
+		mata: st_local("__b1", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff1'", "beh_"))
+		mata: st_local("__b2", SaomMBAddTerms(__nwsaom_mn_Mbeh, "`beheff2'", "beh2_"))
+		local __n1 : word count `beheff1'
+		local __n2 : word count `beheff2'
+		mata: __nwsaom_mn_net2flag = (J(1, `__n1', 0), J(1, `__n2', 1))
+		mata: __nwsaom_mn_Mbeh.setsimmean(saom_similarity_mean(__nwsaom_mn_Bw, __nwsaom_mn_behmax - __nwsaom_mn_behmin))
+	}
 	tempname b V R tc tg
-	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', ("`sym1'" != ""), ("`sym2'" != ""), "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
+	if `hasbeh' {
+		mata: __nwsaom_mnb_post((.), (.), (.), `k0', `k3', `firstg', ("`sym1'" != ""), ("`sym2'" != ""), "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
+	}
+	else mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', ("`sym1'" != ""), ("`sym2'" != ""), "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
 	local __cn "$__NWSAOM_MN_COEFNAMES__"
 	macro drop __NWSAOM_MN_COEFNAMES__
 	matrix colnames `b' = `__cn'
@@ -150,7 +204,8 @@ program define nwsaom_multinet, eclass
 		local __rn "`__rn' period`__k'"
 	}
 	matrix colnames `R' = `__rn'
-	matrix rownames `R' = rate_net1 rate_net2 se_net1 se_net2
+	if `hasbeh' matrix rownames `R' = rate_net1 rate_net2 rate_beh se_net1 se_net2 se_beh
+	else matrix rownames `R' = rate_net1 rate_net2 se_net1 se_net2
 	ereturn matrix rates = `R'
 	matrix `tc' = `tc'
 	ereturn matrix tconv = `tc'
