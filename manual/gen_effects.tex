@@ -1,0 +1,1141 @@
+\subsection*{A. One-mode, non-directed and two-mode network: density and reciprocity}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{density} & one-mode network & siena07 & \texttt{outdegree}\\
+\texttt{recip} & one-mode network & siena07 & \texttt{reciprocity}\\
+\texttt{density} & two-mode network & siena07 & \texttt{outdegree}\\
+\texttt{density} & non-directed network & siena07 & \texttt{outdegree}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{B. Network structural effects: triadic and distance-two effects}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{transTrip} & one-mode network & siena07 & \texttt{transtrip}\\
+\texttt{transTrip1} & one-mode network & siena07 & \texttt{ownx(transtrip1)}\\
+\texttt{transTrip2} & one-mode network & siena07 & \texttt{ownx(transtrip2)}\\
+\texttt{transMedTrip} & one-mode network & siena07 & \texttt{transmedtrip}\\
+\texttt{transRecTrip} & one-mode network & siena07 & \texttt{transrectrip}\\
+\texttt{transRecTrip2} & one-mode network & siena07 & \texttt{ownx(transrectrip2)}\\
+\texttt{cycle3} & one-mode network & siena07 & \texttt{cycle3}\\
+\texttt{transTies} & one-mode network & siena07 & \texttt{transties}\\
+\texttt{between} & one-mode network & siena07 & \texttt{between}\\
+\texttt{balance} & one-mode network & siena07 & \texttt{balance}\\
+\texttt{nbrDist2} & one-mode network & siena07 & \texttt{nbrdist2}\\
+\texttt{nbrDist2twice} & one-mode network & siena07 & \texttt{dblnbrdist2}\\
+\texttt{denseTriads} & one-mode network & siena07 & \texttt{ownx(densetriads:5)}\\
+\texttt{gwespFF} & one-mode network & siena07 & \texttt{gwesp(\#)}\\
+\texttt{gwespBB} & one-mode network & siena07 & \texttt{gwespbb(\#)}\\
+\texttt{gwespFB} & one-mode network & siena07 & \texttt{gwespfb(\#)}\\
+\texttt{gwespBF} & one-mode network & siena07 & \texttt{gwespbf(\#)}\\
+\texttt{gwespRR} & one-mode network & siena07 & \texttt{gwesprr(\#)}\\
+\texttt{gwdspFF} & one-mode network & siena07 & \texttt{gwdspff(\#)}\\
+\texttt{gwdspFB} & one-mode network & siena07 & \texttt{gwdspfb(\#)}\\
+\texttt{sharedPop} & one-mode network & siena07 & \texttt{cycle4 / sqrtcycle4}\\
+\texttt{cycle4} & one-mode network & siena07 & \texttt{cycle4 / sqrtcycle4}\\
+\texttt{inStructEq} & one-mode network & siena07 & \texttt{ownx(instructeq)}\\
+\texttt{Jin} & one-mode network & siena07 & \texttt{ownx(jin)}\\
+\texttt{Jout} & one-mode network & siena07 & \texttt{ownx(jout)}\\
+\texttt{transTrip.FR} & one-mode network & siena07 & \texttt{ownx(transtripfr)}\\
+\texttt{transTrip.FE} & one-mode network & siena07 & \texttt{ownx(transtripfe)}\\
+\texttt{transTrip.EE} & one-mode network & siena07 & \texttt{ownx(transtripee)}\\
+\texttt{cycle4} & two-mode network & siena07 & \texttt{cycle4}\\
+\texttt{gwdspFB} & two-mode network & siena07 & \texttt{gwdspfb(0.69)}\\
+\texttt{transTriads} & non-directed network & siena07 & \texttt{transtriads}\\
+\texttt{transTies} & non-directed network &  & \texttt{transties}\\
+\texttt{between} & non-directed network & siena07 & \texttt{between}\\
+\texttt{balance} & non-directed network &  & \texttt{balance}\\
+\texttt{nbrDist2} & non-directed network & siena07 & \texttt{nbrdist2}\\
+\texttt{nbrDist2twice} & non-directed network & siena07 & \texttt{dblnbrdist2}\\
+\texttt{gwesp} & non-directed network &  & \texttt{gwesp(\#)}\\
+\texttt{cycle4} & non-directed network &  & \texttt{cycle4}\\
+\texttt{Jout} & non-directed network & siena07 & \texttt{ownx(jout)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{C. Network structural effects: degree effects (popularity, activity, assortativity, reciprocal degree)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{inPop} & one-mode network & siena07 & \texttt{inpop}\\
+\texttt{inPop.c} & one-mode network & siena07 & \texttt{inpopc}\\
+\texttt{inPopSqrt} & one-mode network & siena07 & \texttt{indegpopularity}\\
+\texttt{inPop\_dya} & one-mode network & siena07 & \texttt{ownx(inpopdya)}\\
+\texttt{outPop} & one-mode network & siena07 & \texttt{outpop}\\
+\texttt{outPop.c} & one-mode network & siena07 & \texttt{outpopc}\\
+\texttt{outPopSqrt} & one-mode network & siena07 & \texttt{outpopularity}\\
+\texttt{outPopMore} & one-mode network & siena07 & \texttt{ownx(outpopmore:\#)}\\
+\texttt{outPopSqrtMore} & one-mode network & siena07 & \texttt{ownx(outpopsqrtmore:\#)}\\
+\texttt{outPopThreshold} & one-mode network & siena07 & \texttt{ownx(outpopthreshold:\#)}\\
+\texttt{reciPop} & one-mode network & siena07 & \texttt{recipop}\\
+\texttt{reciPopSqrt} & one-mode network & siena07 & \texttt{recipopsqrt}\\
+\texttt{inActSqrt} & one-mode network & siena07 & \texttt{inactivity}\\
+\texttt{outAct} & one-mode network & siena07 & \texttt{outactivity}\\
+\texttt{outAct.c} & one-mode network & siena07 & \texttt{outactc}\\
+\texttt{outActSqrt} & one-mode network & siena07 & \texttt{outactsqrt}\\
+\texttt{inAct} & one-mode network & siena07 & \texttt{inact}\\
+\texttt{inAct.c} & one-mode network & siena07 & \texttt{inactc}\\
+\texttt{reciAct} & one-mode network & siena07 & \texttt{reciact / reciactsqrt}\\
+\texttt{avDeg} & one-mode network & siena07 & \texttt{avdeg(c)}\\
+\texttt{outOutAss} & one-mode network & siena07 & \texttt{ownx(outoutass)}\\
+\texttt{outInAss} & one-mode network & siena07 & \texttt{ownx(outinass)}\\
+\texttt{inOutAss} & one-mode network & siena07 & \texttt{ownx(inoutass)}\\
+\texttt{inInAss} & one-mode network & siena07 & \texttt{ownx(ininass)}\\
+\texttt{outAct\_ego} & one-mode network & siena07 & \texttt{ownx(outactego)}\\
+\texttt{outActMore\_ego} & one-mode network & siena07 & \texttt{ownx(outactmoreego:\#)}\\
+\texttt{outActSqrtMore\_ego} & one-mode network & siena07 & \texttt{ownx(outactsqrtmoreego:\#)}\\
+\texttt{outMore\_ego} & one-mode network & siena07 & \texttt{ownx(outmoreego:\#)}\\
+\texttt{divOut\_ego} & one-mode network & siena07 & \texttt{ownx(divoutego)}\\
+\texttt{inAct\_ego} & one-mode network & siena07 & \texttt{ownx(inactego)}\\
+\texttt{divIn\_ego} & one-mode network & siena07 & \texttt{ownx(divinego)}\\
+\texttt{reciAct\_ego} & one-mode network & siena07 & \texttt{ownx(reciactego)}\\
+\texttt{inPop} & two-mode network & siena07 & \texttt{inpop}\\
+\texttt{inPop.c} & two-mode network & siena07 & \texttt{inpopc}\\
+\texttt{inPopSqrt} & two-mode network & siena07 & \texttt{indegpopularity}\\
+\texttt{outAct} & two-mode network & siena07 & \texttt{outactivity}\\
+\texttt{outAct.c} & two-mode network & siena07 & \texttt{outactc}\\
+\texttt{outActSqrt} & two-mode network & siena07 & \texttt{outactsqrt}\\
+\texttt{avDeg} & two-mode network & siena07 & \texttt{avdeg(2)}\\
+\texttt{outInAss} & two-mode network & siena07 & \texttt{ownx(outinass:2)}\\
+\texttt{outAct\_ego} & two-mode network & siena07 & \texttt{ownx(outactego)}\\
+\texttt{divOut\_ego} & two-mode network & siena07 & \texttt{ownx(divoutego:1)}\\
+\texttt{outActMore\_ego} & two-mode network & siena07 & \texttt{ownx(outactmoreego:0)}\\
+\texttt{outActSqrtMore\_ego} & two-mode network & siena07 & \texttt{ownx(outactsqrtmoreego:0)}\\
+\texttt{outMore\_ego} & two-mode network & siena07 & \texttt{ownx(outmoreego:0)}\\
+\texttt{inPop} & non-directed network & siena07 & \texttt{inpop}\\
+\texttt{inPop.c} & non-directed network & siena07 & \texttt{inpopc}\\
+\texttt{inPopSqrt} & non-directed network &  & \texttt{indegpopularity}\\
+\texttt{inPop\_dya} & non-directed network & siena07 & \texttt{ownx(inpopdya)}\\
+\texttt{outAct} & non-directed network &  & \texttt{outactivity}\\
+\texttt{outAct.c} & non-directed network & siena07 & \texttt{outactc}\\
+\texttt{outActSqrt} & non-directed network & siena07 & \texttt{outactsqrt}\\
+\texttt{degPlus} & non-directed network & siena07 & \texttt{degplus}\\
+\texttt{degPlus.c} & non-directed network & siena07 & \texttt{degplusc}\\
+\texttt{outInAss} & non-directed network & siena07 & \texttt{ownx(outinass:2)}\\
+\texttt{divOut\_ego} & non-directed network & siena07 & \texttt{ownx(divoutego:1)}\\
+\texttt{avDeg} & non-directed network & siena07 & \texttt{avdeg(c)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{D. Network structural effects: functions of the outdegree}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{outTrunc} & one-mode network & siena07 & \texttt{outtrunc(\#)}\\
+\texttt{outTrunc2} & one-mode network & siena07 & \texttt{outtrunc(\#), parameter value of RSiena outTrunc2}\\
+\texttt{outMore} & one-mode network & siena07 & \texttt{outmore(\#)}\\
+\texttt{outMore2} & one-mode network & siena07 & \texttt{outmore(\#), parameter value of RSiena outMore2}\\
+\texttt{outMore3} & one-mode network & siena07 & \texttt{outmore(\#), parameter value of RSiena outMore3}\\
+\texttt{outThreshold} & one-mode network & siena07 & \texttt{outthreshold(\#)}\\
+\texttt{outThreshold2} & one-mode network & siena07 & \texttt{outthreshold(\#), parameter value of RSiena outThreshold2}\\
+\texttt{outInv} & one-mode network & siena07 & \texttt{outinv(\#)}\\
+\texttt{outSqInv} & one-mode network & siena07 & \texttt{outsqinv(\#)}\\
+\texttt{outTrunc} & two-mode network & siena07 & \texttt{outtrunc(c)}\\
+\texttt{outTrunc2} & two-mode network & siena07 & \texttt{outtrunc(5)}\\
+\texttt{outMore} & two-mode network & siena07 & \texttt{outmore(c)}\\
+\texttt{outMore2} & two-mode network & siena07 & \texttt{outmore(1)}\\
+\texttt{outMore3} & two-mode network & siena07 & \texttt{outmore(1)}\\
+\texttt{outThreshold} & two-mode network & siena07 & \texttt{outthreshold(c)}\\
+\texttt{outThreshold2} & two-mode network & siena07 & \texttt{outthreshold(1)}\\
+\texttt{outInv} & two-mode network & siena07 & \texttt{outinv(c)}\\
+\texttt{outSqInv} & two-mode network & siena07 & \texttt{outsqinv(c)}\\
+\texttt{outTrunc} & non-directed network & siena07 & \texttt{outtrunc(c)}\\
+\texttt{outTrunc2} & non-directed network & siena07 & \texttt{outtrunc(5)}\\
+\texttt{outMore} & non-directed network & siena07 & \texttt{outmore(c)}\\
+\texttt{outMore2} & non-directed network & siena07 & \texttt{outmore(1)}\\
+\texttt{outMore3} & non-directed network & siena07 & \texttt{outmore(1)}\\
+\texttt{outThreshold} & non-directed network & siena07 & \texttt{outthreshold(c)}\\
+\texttt{outThreshold2} & non-directed network & siena07 & \texttt{outthreshold(1)}\\
+\texttt{outInv} & non-directed network & siena07 & \texttt{outinv(c)}\\
+\texttt{outSqInv} & non-directed network & siena07 & \texttt{outsqinv(c)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{E. Network structural effects: isolates and degree thresholds}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{outIso} & one-mode network & siena07 & \texttt{outiso}\\
+\texttt{inIsDegree} & one-mode network & siena07 & \texttt{ownx(inisdegree)}\\
+\texttt{isolateNet} & one-mode network & siena07 & \texttt{isolatenet}\\
+\texttt{antiIso} & one-mode network & siena07 & \texttt{antiiso}\\
+\texttt{antiInIso} & one-mode network & siena07 & \texttt{antiiniso}\\
+\texttt{antiInIso2} & one-mode network & siena07 & \texttt{antiiniso2}\\
+\texttt{in2Plus} & one-mode network & siena07 & \texttt{antiiniso2}\\
+\texttt{in3Plus} & one-mode network & siena07 & \texttt{inplus3}\\
+\texttt{isolatePop} & one-mode network & siena07 & \texttt{isolatepop}\\
+\texttt{outIso} & two-mode network &  & \texttt{outiso}\\
+\texttt{antiInIso} & two-mode network &  & \texttt{antiiniso}\\
+\texttt{antiInIso2} & two-mode network &  & \texttt{antiiniso2}\\
+\texttt{in2Plus} & two-mode network &  & \texttt{antiiniso2}\\
+\texttt{in3Plus} & two-mode network &  & \texttt{inplus3}\\
+\texttt{outIso} & non-directed network &  & \texttt{outiso}\\
+\texttt{isolateNet} & non-directed network &  & \texttt{isolatenet}\\
+\texttt{antiInIso} & non-directed network &  & \texttt{antiiniso}\\
+\texttt{antiInIso2} & non-directed network &  & \texttt{antiiniso2}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{F. Network structural effects: compression, primary-setting and other}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{nonPCompress} & one-mode network & siena07 & \texttt{ownx(nonpcompress)}\\
+\texttt{primCompress} & one-mode network & siena07 & \texttt{ownx(primcompress)}\\
+\texttt{primary} & one-mode network & siena07 & \texttt{ownx(primary)}\\
+\texttt{primDegAct} & one-mode network & siena07 & \texttt{ownx(primdegact)}\\
+\texttt{primDegActLog} & one-mode network & siena07 & \texttt{ownx(primdegactlog)}\\
+\texttt{primDegActSqrt} & one-mode network & siena07 & \texttt{ownx(primdegactsqrt)}\\
+\texttt{primDegActInv} & one-mode network & siena07 & \texttt{ownx(primdegactinv)}\\
+\texttt{primDegActDiff} & one-mode network & siena07 & \texttt{ownx(primdegactdiff)}\\
+\texttt{primDegActDiffSqrt} & one-mode network & siena07 & \texttt{ownx(primdegactdiffsqrt)}\\
+\texttt{unspInt} & one-mode network & siena07 & \texttt{interact()}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{G. Network effects of monadic covariates (constant covariate, coCovar)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{altX} & one-mode network + constant covariate & siena07 & \texttt{altx() / nodeicov()}\\
+\texttt{altSqX} & one-mode network + constant covariate & siena07 & \texttt{altsqx()}\\
+\texttt{altLThresholdX} & one-mode network + constant covariate & siena07 & \texttt{altlthresholdx()}\\
+\texttt{altRThresholdX} & one-mode network + constant covariate & siena07 & \texttt{altrthresholdx()}\\
+\texttt{outXMore} & one-mode network + constant covariate & siena07 & \texttt{netx(outxmore:var)}\\
+\texttt{egoX} & one-mode network + constant covariate & siena07 & \texttt{egox() / nodeocov()}\\
+\texttt{egoSqX} & one-mode network + constant covariate & siena07 & \texttt{egosqx()}\\
+\texttt{egoLThresholdX} & one-mode network + constant covariate & siena07 & \texttt{egolthresholdx()}\\
+\texttt{egoRThresholdX} & one-mode network + constant covariate & siena07 & \texttt{egorthresholdx()}\\
+\texttt{degAbsDiffX} & one-mode network + constant covariate & siena07 & \texttt{degabsdiffx()}\\
+\texttt{degPosDiffX} & one-mode network + constant covariate & siena07 & \texttt{degposdiffx()}\\
+\texttt{degNegDiffX} & one-mode network + constant covariate & siena07 & \texttt{degnegdiffx()}\\
+\texttt{diffX} & one-mode network + constant covariate & siena07 & \texttt{diffx()}\\
+\texttt{absDiffX} & one-mode network + constant covariate & siena07 & \texttt{absdiffx()}\\
+\texttt{diffSqX} & one-mode network + constant covariate & siena07 & \texttt{diffsqx()}\\
+\texttt{egoDiffX} & one-mode network + constant covariate & siena07 & \texttt{egodiffx()}\\
+\texttt{egoPlusAltX} & one-mode network + constant covariate & siena07 & \texttt{nodecov()}\\
+\texttt{altHigherEgoX} & one-mode network + constant covariate & siena07 & \texttt{althigheregox()}\\
+\texttt{higher} & one-mode network + constant covariate & siena07 & \texttt{higher()}\\
+\texttt{egoPlusAltSqX} & one-mode network + constant covariate & siena07 & \texttt{egoplusaltsqx()}\\
+\texttt{simX} & one-mode network + constant covariate & siena07 & \texttt{simx() / simcov()}\\
+\texttt{simRecipX} & one-mode network + constant covariate & siena07 & \texttt{simrecipx()}\\
+\texttt{simXTransTrip} & one-mode network + constant covariate & siena07 & \texttt{simxtranstrip()}\\
+\texttt{sameX} & one-mode network + constant covariate & siena07 & \texttt{samex() / nodematch()}\\
+\texttt{unequalX} & one-mode network + constant covariate & siena07 & \texttt{unequalx()}\\
+\texttt{sameXRecip} & one-mode network + constant covariate & siena07 & \texttt{samexrecip()}\\
+\texttt{inPopX} & one-mode network + constant covariate & siena07 & \texttt{inpopx()}\\
+\texttt{outPopX} & one-mode network + constant covariate & siena07 & \texttt{outpopx()}\\
+\texttt{inActX} & one-mode network + constant covariate & siena07 & \texttt{inactx()}\\
+\texttt{outActX} & one-mode network + constant covariate & siena07 & \texttt{outactx()}\\
+\texttt{sameXInPop} & one-mode network + constant covariate & siena07 & \texttt{samexinpop()}\\
+\texttt{diffXInPop} & one-mode network + constant covariate & siena07 & \texttt{diffxinpop()}\\
+\texttt{sameXOutAct} & one-mode network + constant covariate & siena07 & \texttt{samexoutact()}\\
+\texttt{diffXOutAct} & one-mode network + constant covariate & siena07 & \texttt{diffxoutact()}\\
+\texttt{crossXOutAct} & one-mode network + constant covariate & siena07 & \texttt{netx(crossxoutact:var)}\\
+\texttt{homXOutAct} & one-mode network + constant covariate & siena07 & \texttt{homxoutact()}\\
+\texttt{homXOutAct2} & one-mode network + constant covariate & siena07 & \texttt{netx(homxoutact2:var)}\\
+\texttt{altXOutAct} & one-mode network + constant covariate & siena07 & \texttt{altxoutact()}\\
+\texttt{sameXReciAct} & one-mode network + constant covariate & siena07 & \texttt{samexreciact()}\\
+\texttt{diffXReciAct} & one-mode network + constant covariate & siena07 & \texttt{diffxreciact()}\\
+\texttt{transTripX} & one-mode network + constant covariate & siena07 & \texttt{netx(transtripx:var)}\\
+\texttt{sameXTransTrip} & one-mode network + constant covariate & siena07 & \texttt{samextranstrip()}\\
+\texttt{diffXTransTrip} & one-mode network + constant covariate & siena07 & \texttt{diffxtranstrip()}\\
+\texttt{homXTransTrip} & one-mode network + constant covariate & siena07 & \texttt{homxtranstrip()}\\
+\texttt{jumpXTransTrip} & one-mode network + constant covariate & siena07 & \texttt{netx(jumpxtranstrip:var)}\\
+\texttt{homXTransRecTrip} & one-mode network + constant covariate & siena07 & \texttt{netx(homxtransrectrip:var)}\\
+\texttt{sameXTransRecTrip} & one-mode network + constant covariate & siena07 & \texttt{netx(samextransrectrip:var)}\\
+\texttt{diffXTransRecTrip} & one-mode network + constant covariate & siena07 & \texttt{netx(diffxtransrectrip:var)}\\
+\texttt{sameXCycle4} & one-mode network + constant covariate & siena07 & \texttt{netx(samexcycle4:var)}\\
+\texttt{sameInXCycle4} & one-mode network + constant covariate & siena07 & \texttt{netx(sameinxcycle4:var)}\\
+\texttt{egoXaltX} & one-mode network + constant covariate & siena07 & \texttt{egoxaltx()}\\
+\texttt{egoXaltXRecip} & one-mode network + constant covariate & siena07 & \texttt{netx(egoxaltxrecip:var)}\\
+\texttt{IndTies} & one-mode network + constant covariate & siena07 & \texttt{netx(indties:var)}\\
+\texttt{altDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(altdist2:var)}\\
+\texttt{totDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(totdist2:var)}\\
+\texttt{simDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(simdist2:var)}\\
+\texttt{simEgoDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(simegodist2:var)}\\
+\texttt{sameEgoDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(sameegodist2:var)}\\
+\texttt{altInDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(altindist2:var)}\\
+\texttt{totInDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(totindist2:var)}\\
+\texttt{simEgoInDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(simegoindist2:var)}\\
+\texttt{sameEgoInDist2} & one-mode network + constant covariate & siena07 & \texttt{netx(sameegoindist2:var)}\\
+\texttt{egoX} & two-mode network + constant covariate & siena07 & \texttt{nodeocov() / egox()}\\
+\texttt{egoSqX} & two-mode network + constant covariate & siena07 & \texttt{egosqx(var)}\\
+\texttt{egoLThresholdX} & two-mode network + constant covariate & siena07 & \texttt{egolthresholdx(varlist)}\\
+\texttt{egoRThresholdX} & two-mode network + constant covariate & siena07 & \texttt{egorthresholdx(varlist)}\\
+\texttt{degAbsDiffX} & two-mode network + constant covariate & siena07 & \texttt{degabsdiffx(varlist)}\\
+\texttt{degPosDiffX} & two-mode network + constant covariate & siena07 & \texttt{degposdiffx(varlist)}\\
+\texttt{degNegDiffX} & two-mode network + constant covariate & siena07 & \texttt{degnegdiffx(varlist)}\\
+\texttt{altInDist2} & two-mode network + constant covariate & siena07 & \texttt{netx(altindist2:var)}\\
+\texttt{totInDist2} & two-mode network + constant covariate & siena07 & \texttt{netx(totindist2:var)}\\
+\texttt{simEgoInDist2} & two-mode network + constant covariate & siena07 & \texttt{netx(simegoindist2:var)}\\
+\texttt{sameEgoInDist2} & two-mode network + constant covariate & siena07 & \texttt{netx(sameegoindist2:var)}\\
+\texttt{inPopX} & two-mode network + constant covariate & siena07 & \texttt{inpopx(varlist)}\\
+\texttt{sameXInPop} & two-mode network + constant covariate & siena07 & \texttt{samexinpop(varlist)}\\
+\texttt{diffXInPop} & two-mode network + constant covariate & siena07 & \texttt{diffxinpop(varlist)}\\
+\texttt{crossXOutAct} & two-mode network + constant covariate & siena07 & \texttt{netx(crossxoutact:var)}\\
+\texttt{sameXCycle4} & two-mode network + constant covariate & siena07 & \texttt{netx(samexcycle4:var)}\\
+\texttt{altX} & two-mode network + constant covariate & siena07 & \texttt{nodeicov() / altx()}\\
+\texttt{altSqX} & two-mode network + constant covariate & siena07 & \texttt{altsqx(var)}\\
+\texttt{altLThresholdX} & two-mode network + constant covariate & siena07 & \texttt{altlthresholdx(varlist)}\\
+\texttt{altRThresholdX} & two-mode network + constant covariate & siena07 & \texttt{altrthresholdx(varlist)}\\
+\texttt{outActX} & two-mode network + constant covariate & siena07 & \texttt{outactx(varlist)}\\
+\texttt{sameInXCycle4} & two-mode network + constant covariate & siena07 & \texttt{netx(sameinxcycle4:var)}\\
+\texttt{homXOutAct} & two-mode network + constant covariate & siena07 & \texttt{homxoutact(varlist)}\\
+\texttt{homXOutAct2} & two-mode network + constant covariate & siena07 & \texttt{netx(homxoutact2:var) xparam(3)}\\
+\texttt{altXOutAct} & two-mode network + constant covariate & siena07 & \texttt{altxoutact(varlist)}\\
+\texttt{altX} & non-directed network + constant covariate & siena07 & \texttt{altx()}\\
+\texttt{altSqX} & non-directed network + constant covariate & siena07 & \texttt{altsqx()}\\
+\texttt{altLThresholdX} & non-directed network + constant covariate & siena07 & \texttt{altlthresholdx()}\\
+\texttt{altRThresholdX} & non-directed network + constant covariate & siena07 & \texttt{altrthresholdx()}\\
+\texttt{outXMore} & non-directed network + constant covariate & siena07 & \texttt{netx(outxmore:var)}\\
+\texttt{egoX} & non-directed network + constant covariate & siena07 & \texttt{egox()}\\
+\texttt{egoSqX} & non-directed network + constant covariate & siena07 & \texttt{egosqx()}\\
+\texttt{egoPlusAltX} & non-directed network + constant covariate &  & \texttt{nodecov()}\\
+\texttt{egoPlusAltSqX} & non-directed network + constant covariate & siena07 & \texttt{egoplusaltsqx()}\\
+\texttt{egoLThresholdX} & non-directed network + constant covariate & siena07 & \texttt{egolthresholdx()}\\
+\texttt{egoRThresholdX} & non-directed network + constant covariate & siena07 & \texttt{egorthresholdx()}\\
+\texttt{degAbsDiffX} & non-directed network + constant covariate & siena07 & \texttt{degabsdiffx()}\\
+\texttt{degPosDiffX} & non-directed network + constant covariate & siena07 & \texttt{degposdiffx()}\\
+\texttt{degNegDiffX} & non-directed network + constant covariate & siena07 & \texttt{degnegdiffx()}\\
+\texttt{diffX} & non-directed network + constant covariate & siena07 & \texttt{diffx()}\\
+\texttt{absDiffX} & non-directed network + constant covariate & siena07 & \texttt{absdiffx()}\\
+\texttt{diffSqX} & non-directed network + constant covariate & siena07 & \texttt{diffsqx()}\\
+\texttt{egoDiffX} & non-directed network + constant covariate & siena07 & \texttt{egodiffx()}\\
+\texttt{altHigherEgoX} & non-directed network + constant covariate & siena07 & \texttt{althigheregox()}\\
+\texttt{higher} & non-directed network + constant covariate &  & \texttt{higher()}\\
+\texttt{simX} & non-directed network + constant covariate & siena07 & \texttt{simx()}\\
+\texttt{inPopX} & non-directed network + constant covariate & siena07 & \texttt{inpopx()}\\
+\texttt{outPopX} & non-directed network + constant covariate & siena07 & \texttt{outpopx()}\\
+\texttt{inActX} & non-directed network + constant covariate & siena07 & \texttt{inactx()}\\
+\texttt{outActX} & non-directed network + constant covariate & siena07 & \texttt{outactx()}\\
+\texttt{sameX} & non-directed network + constant covariate & siena07 & \texttt{samex()}\\
+\texttt{unequalX} & non-directed network + constant covariate & siena07 & \texttt{unequalx()}\\
+\texttt{sameXInPop} & non-directed network + constant covariate & siena07 & \texttt{samexinpop()}\\
+\texttt{diffXInPop} & non-directed network + constant covariate & siena07 & \texttt{diffxinpop()}\\
+\texttt{sameXOutAct} & non-directed network + constant covariate & siena07 & \texttt{samexoutact()}\\
+\texttt{diffXOutAct} & non-directed network + constant covariate & siena07 & \texttt{diffxoutact()}\\
+\texttt{crossXOutAct} & non-directed network + constant covariate & siena07 & \texttt{netx(crossxoutact:var)}\\
+\texttt{homXOutAct} & non-directed network + constant covariate & siena07 & \texttt{homxoutact()}\\
+\texttt{homXOutAct2} & non-directed network + constant covariate & siena07 & \texttt{netx(homxoutact2:var)}\\
+\texttt{altXOutAct} & non-directed network + constant covariate & siena07 & \texttt{altxoutact()}\\
+\texttt{transTripX} & non-directed network + constant covariate & siena07 & \texttt{netx(transtripx:var)}\\
+\texttt{sameXTransTrip} & non-directed network + constant covariate & siena07 & \texttt{samextranstrip()}\\
+\texttt{diffXTransTrip} & non-directed network + constant covariate & siena07 & \texttt{diffxtranstrip()}\\
+\texttt{homXTransTrip} & non-directed network + constant covariate & siena07 & \texttt{homxtranstrip()}\\
+\texttt{jumpXTransTrip} & non-directed network + constant covariate & siena07 & \texttt{netx(jumpxtranstrip:var)}\\
+\texttt{sameXCycle4} & non-directed network + constant covariate & siena07 & \texttt{netx(samexcycle4:var)}\\
+\texttt{sameInXCycle4} & non-directed network + constant covariate & siena07 & \texttt{netx(sameinxcycle4:var)}\\
+\texttt{egoXaltX} & non-directed network + constant covariate & siena07 & \texttt{egoxaltx()}\\
+\texttt{IndTies} & non-directed network + constant covariate & siena07 & \texttt{netx(indties:var)}\\
+\texttt{altDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(altdist2:var)}\\
+\texttt{totDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(totdist2:var)}\\
+\texttt{simEgoDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(simegodist2:var)}\\
+\texttt{sameEgoDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(sameegodist2:var)}\\
+\texttt{simDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(simdist2:var)}\\
+\texttt{altInDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(altindist2:var)}\\
+\texttt{totInDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(totindist2:var)}\\
+\texttt{simEgoInDist2} & non-directed network + constant covariate & siena07 & \texttt{netx(simegoindist2:var)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{H. Network effects of monadic covariates (changing covariate, varCovar)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{altX} & one-mode network + changing covariate & siena07 & \texttt{altx() with a tvcov stem}\\
+\texttt{altSqX} & one-mode network + changing covariate & siena07 & \texttt{altsqx() with a tvcov stem}\\
+\texttt{altLThresholdX} & one-mode network + changing covariate & siena07 & \texttt{altlthresholdx() with a tvcov stem}\\
+\texttt{altRThresholdX} & one-mode network + changing covariate & siena07 & \texttt{altrthresholdx() with a tvcov stem}\\
+\texttt{outXMore} & one-mode network + changing covariate & siena07 & \texttt{netx(outxmore:var)}\\
+\texttt{egoX} & one-mode network + changing covariate & siena07 & \texttt{egox() with a tvcov stem}\\
+\texttt{egoSqX} & one-mode network + changing covariate & siena07 & \texttt{egosqx() with a tvcov stem}\\
+\texttt{egoLThresholdX} & one-mode network + changing covariate & siena07 & \texttt{egolthresholdx() with a tvcov stem}\\
+\texttt{egoRThresholdX} & one-mode network + changing covariate & siena07 & \texttt{egorthresholdx() with a tvcov stem}\\
+\texttt{degAbsDiffX} & one-mode network + changing covariate & siena07 & \texttt{degabsdiffx() with a tvcov stem}\\
+\texttt{degPosDiffX} & one-mode network + changing covariate & siena07 & \texttt{degposdiffx() with a tvcov stem}\\
+\texttt{degNegDiffX} & one-mode network + changing covariate & siena07 & \texttt{degnegdiffx() with a tvcov stem}\\
+\texttt{diffX} & one-mode network + changing covariate & siena07 & \texttt{diffx() with a tvcov stem}\\
+\texttt{absDiffX} & one-mode network + changing covariate & siena07 & \texttt{absdiffx() with a tvcov stem}\\
+\texttt{diffSqX} & one-mode network + changing covariate & siena07 & \texttt{diffsqx() with a tvcov stem}\\
+\texttt{egoDiffX} & one-mode network + changing covariate & siena07 & \texttt{egodiffx() with a tvcov stem}\\
+\texttt{egoPlusAltX} & one-mode network + changing covariate & siena07 & \texttt{nodecov() with a tvcov stem}\\
+\texttt{altHigherEgoX} & one-mode network + changing covariate & siena07 & \texttt{althigheregox() with a tvcov stem}\\
+\texttt{higher} & one-mode network + changing covariate & siena07 & \texttt{higher() with a tvcov stem}\\
+\texttt{egoPlusAltSqX} & one-mode network + changing covariate & siena07 & \texttt{egoplusaltsqx() with a tvcov stem}\\
+\texttt{simX} & one-mode network + changing covariate & siena07 & \texttt{simx() with a tvcov stem}\\
+\texttt{simRecipX} & one-mode network + changing covariate & siena07 & \texttt{netx(simrecipx:var) / netbeh(simrecipx)}\\
+\texttt{simXTransTrip} & one-mode network + changing covariate & siena07 & \texttt{netx(simxtranstrip:var) / netbeh(simxtranstrip)}\\
+\texttt{sameX} & one-mode network + changing covariate & siena07 & \texttt{samex() with a tvcov stem}\\
+\texttt{unequalX} & one-mode network + changing covariate & siena07 & \texttt{unequalx() with a tvcov stem}\\
+\texttt{sameXRecip} & one-mode network + changing covariate & siena07 & \texttt{samexrecip() with a tvcov stem}\\
+\texttt{inPopX} & one-mode network + changing covariate & siena07 & \texttt{inpopx() with a tvcov stem}\\
+\texttt{outPopX} & one-mode network + changing covariate & siena07 & \texttt{outpopx() with a tvcov stem}\\
+\texttt{inActX} & one-mode network + changing covariate & siena07 & \texttt{inactx() with a tvcov stem}\\
+\texttt{outActX} & one-mode network + changing covariate & siena07 & \texttt{outactx() with a tvcov stem}\\
+\texttt{sameXInPop} & one-mode network + changing covariate & siena07 & \texttt{samexinpop() with a tvcov stem}\\
+\texttt{diffXInPop} & one-mode network + changing covariate & siena07 & \texttt{diffxinpop() with a tvcov stem}\\
+\texttt{sameXOutAct} & one-mode network + changing covariate & siena07 & \texttt{samexoutact() with a tvcov stem}\\
+\texttt{diffXOutAct} & one-mode network + changing covariate & siena07 & \texttt{diffxoutact() with a tvcov stem}\\
+\texttt{crossXOutAct} & one-mode network + changing covariate & siena07 & \texttt{netx(crossxoutact:var)}\\
+\texttt{homXOutAct} & one-mode network + changing covariate & siena07 & \texttt{homxoutact() with a tvcov stem}\\
+\texttt{homXOutAct2} & one-mode network + changing covariate & siena07 & \texttt{netx(homxoutact2:var)}\\
+\texttt{altXOutAct} & one-mode network + changing covariate & siena07 & \texttt{altxoutact() with a tvcov stem}\\
+\texttt{sameXReciAct} & one-mode network + changing covariate & siena07 & \texttt{samexreciact() with a tvcov stem}\\
+\texttt{diffXReciAct} & one-mode network + changing covariate & siena07 & \texttt{diffxreciact() with a tvcov stem}\\
+\texttt{transTripX} & one-mode network + changing covariate & siena07 & \texttt{netx(transtripx:var)}\\
+\texttt{sameXTransTrip} & one-mode network + changing covariate & siena07 & \texttt{samextranstrip() with a tvcov stem}\\
+\texttt{diffXTransTrip} & one-mode network + changing covariate & siena07 & \texttt{diffxtranstrip() with a tvcov stem}\\
+\texttt{homXTransTrip} & one-mode network + changing covariate & siena07 & \texttt{homxtranstrip() with a tvcov stem}\\
+\texttt{jumpXTransTrip} & one-mode network + changing covariate & siena07 & \texttt{netx(jumpxtranstrip:var)}\\
+\texttt{homXTransRecTrip} & one-mode network + changing covariate & siena07 & \texttt{netx(homxtransrectrip:var)}\\
+\texttt{sameXTransRecTrip} & one-mode network + changing covariate & siena07 & \texttt{netx(samextransrectrip:var)}\\
+\texttt{diffXTransRecTrip} & one-mode network + changing covariate & siena07 & \texttt{netx(diffxtransrectrip:var)}\\
+\texttt{sameXCycle4} & one-mode network + changing covariate & siena07 & \texttt{netx(samexcycle4:var)}\\
+\texttt{sameInXCycle4} & one-mode network + changing covariate & siena07 & \texttt{netx(sameinxcycle4:var)}\\
+\texttt{egoXaltX} & one-mode network + changing covariate & siena07 & \texttt{egoxaltx() with a tvcov stem}\\
+\texttt{egoXaltXRecip} & one-mode network + changing covariate & siena07 & \texttt{netx(egoxaltxrecip:var)}\\
+\texttt{IndTies} & one-mode network + changing covariate & siena07 & \texttt{netx(indties:var)}\\
+\texttt{altDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(altdist2:var)}\\
+\texttt{totDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(totdist2:var)}\\
+\texttt{simDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(simdist2:var)}\\
+\texttt{simEgoDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(simegodist2:var)}\\
+\texttt{sameEgoDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(sameegodist2:var)}\\
+\texttt{altInDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(altindist2:var)}\\
+\texttt{totInDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(totindist2:var)}\\
+\texttt{simEgoInDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(simegoindist2:var)}\\
+\texttt{sameEgoInDist2} & one-mode network + changing covariate & siena07 & \texttt{netx(sameegoindist2:var)}\\
+\texttt{avGroupEgoX} & one-mode network + changing covariate & siena07 & \texttt{netx(avgroupegox:var)}\\
+\texttt{totGroupEgoX} & one-mode network + changing covariate & siena07 & \texttt{netx(totgroupegox:var)}\\
+\texttt{egoX} & two-mode network + changing covariate & siena07 & \texttt{nodeocov(tvstem)}\\
+\texttt{egoSqX} & two-mode network + changing covariate & siena07 & \texttt{egosqx(tvstem)}\\
+\texttt{egoLThresholdX} & two-mode network + changing covariate & siena07 & \texttt{egolthresholdx(varlist)}\\
+\texttt{egoRThresholdX} & two-mode network + changing covariate & siena07 & \texttt{egorthresholdx(varlist)}\\
+\texttt{degAbsDiffX} & two-mode network + changing covariate & siena07 & \texttt{degabsdiffx(varlist)}\\
+\texttt{degPosDiffX} & two-mode network + changing covariate & siena07 & \texttt{degposdiffx(varlist)}\\
+\texttt{degNegDiffX} & two-mode network + changing covariate & siena07 & \texttt{degnegdiffx(varlist)}\\
+\texttt{altInDist2} & two-mode network + changing covariate & siena07 & \texttt{netx(altindist2:tvstem)}\\
+\texttt{totInDist2} & two-mode network + changing covariate & siena07 & \texttt{netx(totindist2:tvstem)}\\
+\texttt{simEgoInDist2} & two-mode network + changing covariate & siena07 & \texttt{netx(simegoindist2:tvstem)}\\
+\texttt{sameEgoInDist2} & two-mode network + changing covariate & siena07 & \texttt{netx(sameegoindist2:tvstem)}\\
+\texttt{inPopX} & two-mode network + changing covariate & siena07 & \texttt{inpopx(varlist)}\\
+\texttt{sameXInPop} & two-mode network + changing covariate & siena07 & \texttt{samexinpop(varlist)}\\
+\texttt{diffXInPop} & two-mode network + changing covariate & siena07 & \texttt{diffxinpop(varlist)}\\
+\texttt{crossXOutAct} & two-mode network + changing covariate & siena07 & \texttt{netx(crossxoutact:tvstem)}\\
+\texttt{sameXCycle4} & two-mode network + changing covariate & siena07 & \texttt{netx(samexcycle4:tvstem)}\\
+\texttt{avGroupEgoX} & two-mode network + changing covariate & siena07 & \texttt{netx(avgroupegox:tvstem)}\\
+\texttt{totGroupEgoX} & two-mode network + changing covariate & siena07 & \texttt{netx(totgroupegox:tvstem)}\\
+\texttt{altX} & non-directed network + changing covariate & siena07 & \texttt{altx()}\\
+\texttt{altSqX} & non-directed network + changing covariate & siena07 & \texttt{altsqx()}\\
+\texttt{altLThresholdX} & non-directed network + changing covariate & siena07 & \texttt{altlthresholdx()}\\
+\texttt{altRThresholdX} & non-directed network + changing covariate & siena07 & \texttt{altrthresholdx()}\\
+\texttt{outXMore} & non-directed network + changing covariate & siena07 & \texttt{netx(outxmore:var)}\\
+\texttt{egoX} & non-directed network + changing covariate & siena07 & \texttt{egox()}\\
+\texttt{egoSqX} & non-directed network + changing covariate & siena07 & \texttt{egosqx()}\\
+\texttt{egoPlusAltX} & non-directed network + changing covariate & siena07 & \texttt{tvcov() + nodecov(stem)}\\
+\texttt{egoPlusAltSqX} & non-directed network + changing covariate & siena07 & \texttt{egoplusaltsqx()}\\
+\texttt{egoLThresholdX} & non-directed network + changing covariate & siena07 & \texttt{egolthresholdx()}\\
+\texttt{egoRThresholdX} & non-directed network + changing covariate & siena07 & \texttt{egorthresholdx()}\\
+\texttt{degAbsDiffX} & non-directed network + changing covariate & siena07 & \texttt{degabsdiffx()}\\
+\texttt{degPosDiffX} & non-directed network + changing covariate & siena07 & \texttt{degposdiffx()}\\
+\texttt{degNegDiffX} & non-directed network + changing covariate & siena07 & \texttt{degnegdiffx()}\\
+\texttt{diffX} & non-directed network + changing covariate & siena07 & \texttt{diffx()}\\
+\texttt{absDiffX} & non-directed network + changing covariate & siena07 & \texttt{absdiffx()}\\
+\texttt{diffSqX} & non-directed network + changing covariate & siena07 & \texttt{diffsqx()}\\
+\texttt{egoDiffX} & non-directed network + changing covariate & siena07 & \texttt{egodiffx()}\\
+\texttt{altHigherEgoX} & non-directed network + changing covariate & siena07 & \texttt{althigheregox()}\\
+\texttt{simX} & non-directed network + changing covariate & siena07 & \texttt{simx()}\\
+\texttt{inPopX} & non-directed network + changing covariate & siena07 & \texttt{inpopx()}\\
+\texttt{outPopX} & non-directed network + changing covariate & siena07 & \texttt{outpopx()}\\
+\texttt{inActX} & non-directed network + changing covariate & siena07 & \texttt{inactx()}\\
+\texttt{outActX} & non-directed network + changing covariate & siena07 & \texttt{outactx()}\\
+\texttt{sameX} & non-directed network + changing covariate & siena07 & \texttt{samex()}\\
+\texttt{unequalX} & non-directed network + changing covariate & siena07 & \texttt{unequalx()}\\
+\texttt{sameXInPop} & non-directed network + changing covariate & siena07 & \texttt{samexinpop()}\\
+\texttt{diffXInPop} & non-directed network + changing covariate & siena07 & \texttt{diffxinpop()}\\
+\texttt{sameXOutAct} & non-directed network + changing covariate & siena07 & \texttt{samexoutact()}\\
+\texttt{diffXOutAct} & non-directed network + changing covariate & siena07 & \texttt{diffxoutact()}\\
+\texttt{crossXOutAct} & non-directed network + changing covariate & siena07 & \texttt{netx(crossxoutact:var)}\\
+\texttt{homXOutAct} & non-directed network + changing covariate & siena07 & \texttt{homxoutact()}\\
+\texttt{homXOutAct2} & non-directed network + changing covariate & siena07 & \texttt{netx(homxoutact2:var)}\\
+\texttt{altXOutAct} & non-directed network + changing covariate & siena07 & \texttt{altxoutact()}\\
+\texttt{transTripX} & non-directed network + changing covariate & siena07 & \texttt{netx(transtripx:var)}\\
+\texttt{sameXTransTrip} & non-directed network + changing covariate & siena07 & \texttt{samextranstrip()}\\
+\texttt{diffXTransTrip} & non-directed network + changing covariate & siena07 & \texttt{diffxtranstrip()}\\
+\texttt{homXTransTrip} & non-directed network + changing covariate & siena07 & \texttt{homxtranstrip()}\\
+\texttt{jumpXTransTrip} & non-directed network + changing covariate & siena07 & \texttt{netx(jumpxtranstrip:var)}\\
+\texttt{sameXCycle4} & non-directed network + changing covariate & siena07 & \texttt{netx(samexcycle4:var)}\\
+\texttt{sameInXCycle4} & non-directed network + changing covariate & siena07 & \texttt{netx(sameinxcycle4:var)}\\
+\texttt{egoXaltX} & non-directed network + changing covariate & siena07 & \texttt{egoxaltx()}\\
+\texttt{IndTies} & non-directed network + changing covariate & siena07 & \texttt{netx(indties:var)}\\
+\texttt{altDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(altdist2:var)}\\
+\texttt{totDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(totdist2:var)}\\
+\texttt{simEgoDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(simegodist2:var)}\\
+\texttt{sameEgoDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(sameegodist2:var)}\\
+\texttt{simDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(simdist2:var)}\\
+\texttt{altInDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(altindist2:var)}\\
+\texttt{totInDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(totindist2:var)}\\
+\texttt{simEgoInDist2} & non-directed network + changing covariate & siena07 & \texttt{netx(simegoindist2:var)}\\
+\texttt{avGroupEgoX} & non-directed network + changing covariate & siena07 & \texttt{netx(avgroupegox:var)}\\
+\texttt{totGroupEgoX} & non-directed network + changing covariate & siena07 & \texttt{netx(totgroupegox:var)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{I. Network effects of two covariates (double covariate effects)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{sameXV} & one-mode network + constant covariate + constant covariate & siena07 & \texttt{netx(samexv:var1:var2)}\\
+\texttt{sameXVInPop} & one-mode network + constant covariate + constant covariate & siena07 & \texttt{netx(samexvinpop:var1:var2)}\\
+\texttt{sameXVInPop2} & one-mode network + constant covariate + constant covariate & siena07 & \texttt{netx(samexvinpop2:var1:var2)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{J. Network effects of dyadic covariates (coDyadCovar, varDyadCovar)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{X} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadcov()}\\
+\texttt{XRecip} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadcovrecip()}\\
+\texttt{WWX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(wwx:matrix)}\\
+\texttt{cyWWX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(cywwx:matrix)}\\
+\texttt{InWWX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(inwwx:matrix)}\\
+\texttt{OutWWX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(outwwx:matrix)}\\
+\texttt{WXX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(wxx:matrix)}\\
+\texttt{XWX} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx:matrix)}\\
+\texttt{XWX1} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx1:matrix)}\\
+\texttt{XWX2} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx2:matrix)}\\
+\texttt{XXW} & one-mode network + constant dyadic covariate & siena07 & \texttt{dyadx(xxw:matrix)}\\
+\texttt{X} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadcov(stem)}\\
+\texttt{XRecip} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadcovrecip(stem)}\\
+\texttt{WWX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(wwx:stem)}\\
+\texttt{cyWWX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(cywwx:stem)}\\
+\texttt{InWWX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(inwwx:stem)}\\
+\texttt{OutWWX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(outwwx:stem)}\\
+\texttt{WXX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(wxx:stem)}\\
+\texttt{XWX} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx:stem)}\\
+\texttt{XWX1} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx1:stem)}\\
+\texttt{XWX2} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx2:stem)}\\
+\texttt{XXW} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xxw:stem)}\\
+\texttt{X} & non-directed network + constant dyadic covariate &  & \texttt{dyadcov()}\\
+\texttt{XRecip} & non-directed network + constant dyadic covariate &  & \texttt{dyadcovrecip()}\\
+\texttt{WWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(wwx:matrix)}\\
+\texttt{cyWWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(cywwx:matrix)}\\
+\texttt{InWWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(inwwx:matrix)}\\
+\texttt{OutWWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(outwwx:matrix)}\\
+\texttt{WXX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(wxx:matrix)}\\
+\texttt{XWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx:matrix)}\\
+\texttt{XWX1} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx1:matrix)}\\
+\texttt{XWX2} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx2:matrix)}\\
+\texttt{XXW} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xxw:matrix)}\\
+\texttt{X} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadcov(stem)}\\
+\texttt{WWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(wwx:stem)}\\
+\texttt{cyWWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(cywwx:stem)}\\
+\texttt{InWWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(inwwx:stem)}\\
+\texttt{OutWWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(outwwx:stem)}\\
+\texttt{WXX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(wxx:stem)}\\
+\texttt{XWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx:stem)}\\
+\texttt{XWX1} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx1:stem)}\\
+\texttt{XWX2} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx2:stem)}\\
+\texttt{XXW} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xxw:stem)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{K. Network effects of a dependent behavior variable (behavior as covariate: selection)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{altX} & one-mode network + a behavior variable & siena07 & \texttt{behaltx}\\
+\texttt{altSqX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altsqx)}\\
+\texttt{altLThresholdX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altlthresholdx)}\\
+\texttt{altRThresholdX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altrthresholdx)}\\
+\texttt{outXMore} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(outxmore)}\\
+\texttt{egoX} & one-mode network + a behavior variable & siena07 & \texttt{behegox}\\
+\texttt{egoSqX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egosqx)}\\
+\texttt{egoLThresholdX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egolthresholdx)}\\
+\texttt{egoRThresholdX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egorthresholdx)}\\
+\texttt{degAbsDiffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(degabsdiffx)}\\
+\texttt{degPosDiffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(degposdiffx)}\\
+\texttt{degNegDiffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(degnegdiffx)}\\
+\texttt{diffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffx)}\\
+\texttt{absDiffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(absdiffx)}\\
+\texttt{diffSqX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffsqx)}\\
+\texttt{egoDiffX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egodiffx)}\\
+\texttt{egoPlusAltX} & one-mode network + a behavior variable & siena07 & \texttt{behegoplusalt}\\
+\texttt{altHigherEgoX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(althigheregox)}\\
+\texttt{higher} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(higher)}\\
+\texttt{egoPlusAltSqX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egoplusaltsqx)}\\
+\texttt{simX} & one-mode network + a behavior variable & siena07 & \texttt{behsim}\\
+\texttt{simRecipX} & one-mode network + a behavior variable & siena07 & \texttt{netx(simrecipx:var) / netbeh(simrecipx)}\\
+\texttt{simXTransTrip} & one-mode network + a behavior variable & siena07 & \texttt{netx(simxtranstrip:var) / netbeh(simxtranstrip)}\\
+\texttt{sameX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samex)}\\
+\texttt{unequalX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(unequalx)}\\
+\texttt{sameXRecip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samexrecip)}\\
+\texttt{inPopX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(inpopx)}\\
+\texttt{outPopX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(outpopx)}\\
+\texttt{inActX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(inactx)}\\
+\texttt{outActX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(outactx)}\\
+\texttt{sameXInPop} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samexinpop)}\\
+\texttt{diffXInPop} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffxinpop)}\\
+\texttt{sameXOutAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samexoutact)}\\
+\texttt{diffXOutAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffxoutact)}\\
+\texttt{crossXOutAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(crossxoutact)}\\
+\texttt{homXOutAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(homxoutact)}\\
+\texttt{altXOutAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altxoutact)}\\
+\texttt{sameXReciAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samexreciact)}\\
+\texttt{diffXReciAct} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffxreciact)}\\
+\texttt{transTripX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(transtripx)}\\
+\texttt{sameXTransTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samextranstrip)}\\
+\texttt{diffXTransTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffxtranstrip)}\\
+\texttt{homXTransTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(homxtranstrip)}\\
+\texttt{jumpXTransTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(jumpxtranstrip)}\\
+\texttt{homXTransRecTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(homxtransrectrip)}\\
+\texttt{sameXTransRecTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samextransrectrip)}\\
+\texttt{diffXTransRecTrip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(diffxtransrectrip)}\\
+\texttt{sameXCycle4} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(samexcycle4)}\\
+\texttt{sameInXCycle4} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(sameinxcycle4)}\\
+\texttt{egoXaltX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egoxaltx)}\\
+\texttt{egoXaltXRecip} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(egoxaltxrecip)}\\
+\texttt{IndTies} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(indties)}\\
+\texttt{altDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altdist2)}\\
+\texttt{totDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(totdist2)}\\
+\texttt{simDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(simdist2)}\\
+\texttt{simEgoDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(simegodist2)}\\
+\texttt{sameEgoDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(sameegodist2)}\\
+\texttt{altInDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(altindist2)}\\
+\texttt{totInDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(totindist2)}\\
+\texttt{simEgoInDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(simegoindist2)}\\
+\texttt{sameEgoInDist2} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(sameegoindist2)}\\
+\texttt{avGroupEgoX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(avgroupegox)}\\
+\texttt{totGroupEgoX} & one-mode network + a behavior variable & siena07 & \texttt{netbeh(totgroupegox)}\\
+\texttt{egoX} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + behegox}\\
+\texttt{egoSqX} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(egosqx)}\\
+\texttt{egoLThresholdX} & two-mode network + a behavior variable & siena07 & \texttt{egolthresholdx(varlist)}\\
+\texttt{egoRThresholdX} & two-mode network + a behavior variable & siena07 & \texttt{egorthresholdx(varlist)}\\
+\texttt{degAbsDiffX} & two-mode network + a behavior variable & siena07 & \texttt{degabsdiffx(varlist)}\\
+\texttt{degPosDiffX} & two-mode network + a behavior variable & siena07 & \texttt{degposdiffx(varlist)}\\
+\texttt{degNegDiffX} & two-mode network + a behavior variable & siena07 & \texttt{degnegdiffx(varlist)}\\
+\texttt{altInDist2} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(altindist2)}\\
+\texttt{totInDist2} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(totindist2)}\\
+\texttt{simEgoInDist2} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(simegoindist2)}\\
+\texttt{sameEgoInDist2} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(sameegoindist2)}\\
+\texttt{inPopX} & two-mode network + a behavior variable & siena07 & \texttt{inpopx(varlist)}\\
+\texttt{sameXInPop} & two-mode network + a behavior variable & siena07 & \texttt{samexinpop(varlist)}\\
+\texttt{diffXInPop} & two-mode network + a behavior variable & siena07 & \texttt{diffxinpop(varlist)}\\
+\texttt{sameXCycle4} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(samexcycle4)}\\
+\texttt{altX} & non-directed network + a behavior variable & siena07 & \texttt{behaltx}\\
+\texttt{altSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altsqx)}\\
+\texttt{altLThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altlthresholdx)}\\
+\texttt{altRThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altrthresholdx)}\\
+\texttt{outXMore} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(outxmore)}\\
+\texttt{egoX} & non-directed network + a behavior variable & siena07 & \texttt{behegox}\\
+\texttt{egoSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egosqx)}\\
+\texttt{egoPlusAltX} & non-directed network + a behavior variable & siena07 & \texttt{behegoplusalt}\\
+\texttt{egoPlusAltSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egoplusaltsqx)}\\
+\texttt{egoLThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egolthresholdx)}\\
+\texttt{egoRThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egorthresholdx)}\\
+\texttt{degNegDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(degnegdiffx)}\\
+\texttt{diffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffx)}\\
+\texttt{absDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(absdiffx)}\\
+\texttt{diffSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffsqx)}\\
+\texttt{egoDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egodiffx)}\\
+\texttt{altHigherEgoX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(althigheregox)}\\
+\texttt{simX} & non-directed network + a behavior variable &  & \texttt{behsim}\\
+\texttt{inPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(inpopx)}\\
+\texttt{outPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(outpopx)}\\
+\texttt{inActX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(inactx)}\\
+\texttt{outActX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(outactx)}\\
+\texttt{sameX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(samex)}\\
+\texttt{unequalX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(unequalx)}\\
+\texttt{sameXInPop} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(samexinpop)}\\
+\texttt{diffXInPop} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffxinpop)}\\
+\texttt{sameXOutAct} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(samexoutact)}\\
+\texttt{diffXOutAct} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffxoutact)}\\
+\texttt{crossXOutAct} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(crossxoutact)}\\
+\texttt{homXOutAct} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(homxoutact)}\\
+\texttt{altXOutAct} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altxoutact)}\\
+\texttt{transTripX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(transtripx)}\\
+\texttt{sameXTransTrip} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(samextranstrip)}\\
+\texttt{diffXTransTrip} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffxtranstrip)}\\
+\texttt{homXTransTrip} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(homxtranstrip)}\\
+\texttt{jumpXTransTrip} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(jumpxtranstrip)}\\
+\texttt{sameXCycle4} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(samexcycle4)}\\
+\texttt{sameInXCycle4} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(sameinxcycle4)}\\
+\texttt{egoXaltX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egoxaltx)}\\
+\texttt{IndTies} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(indties)}\\
+\texttt{altDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altdist2)}\\
+\texttt{totDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(totdist2)}\\
+\texttt{simEgoDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(simegodist2)}\\
+\texttt{sameEgoDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(sameegodist2)}\\
+\texttt{simDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(simdist2)}\\
+\texttt{altInDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altindist2)}\\
+\texttt{totInDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(totindist2)}\\
+\texttt{simEgoInDist2} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(simegoindist2)}\\
+\texttt{avGroupEgoX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(avgroupegox)}\\
+\texttt{totGroupEgoX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(totgroupegox)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{L. Cross-network effects (several dependent networks)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{crprod} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprod)}\\
+\texttt{crprodRecip} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprodrecip)}\\
+\texttt{crprodMutual} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprodmutual)}\\
+\texttt{inPopIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(inpopintn)}\\
+\texttt{inActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(inactintn)}\\
+\texttt{crprodInActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprodinactintn)}\\
+\texttt{outPopIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(outpopintn)}\\
+\texttt{outActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(outactintn)}\\
+\texttt{divOutEgoIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(divoutegointn)}\\
+\texttt{divInEgoIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(divinegointn)}\\
+\texttt{divOutAltIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(divoutaltintn)}\\
+\texttt{divInAltIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(divinaltintn)}\\
+\texttt{outOutActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(outoutactintn)}\\
+\texttt{outOutAvIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(outoutavintn)}\\
+\texttt{dist2OutInActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(dist2outinactintn)}\\
+\texttt{outOutDist2ActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(outoutdist2actintn)}\\
+\texttt{avAlt.2M.tot} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(avalt2mtot)}\\
+\texttt{avDegIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(avdegintn)}\\
+\texttt{absOutDiffIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(absoutdiffintn)}\\
+\texttt{both} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(both)}\\
+\texttt{doubleOutAct} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(doubleoutact)}\\
+\texttt{doubleInPop} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(doubleinpop)}\\
+\texttt{from} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(from)}\\
+\texttt{fromMutual} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(frommutual)}\\
+\texttt{fromAny} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(fromany)}\\
+\texttt{to} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(to)}\\
+\texttt{toBack} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(toback)}\\
+\texttt{toRecip} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(torecip)}\\
+\texttt{cl.XWX} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx)}\\
+\texttt{cl.XWX1} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx1)}\\
+\texttt{cl.XWX2} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx2)}\\
+\texttt{WWX.EE} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(wwxee)}\\
+\texttt{WWX.FR} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(wwxfr)}\\
+\texttt{WXX.FE} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(wxxfe)}\\
+\texttt{WXX.ER} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(wxxer)}\\
+\texttt{XWX.ER} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(xwxer)}\\
+\texttt{XWX.FE} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(xwxfe)}\\
+\texttt{closure} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(closure)}\\
+\texttt{cyClosure} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(cyclosure)}\\
+\texttt{sharedIn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(sharedin)}\\
+\texttt{mixedInXW} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(mixedinxw)}\\
+\texttt{sharedTo} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(sharedto)}\\
+\texttt{avAlt.2M.tie} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(avalt2mtie)}\\
+\texttt{inPopOutW} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(inpopoutw)}\\
+\texttt{nDist2ActIntn} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(ndist2actintn)}\\
+\texttt{JinMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(jinmix)}\\
+\texttt{JoutMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(joutmix)}\\
+\texttt{gwespFFMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwespffmix)}\\
+\texttt{gwespBBMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwespbbmix)}\\
+\texttt{gwespBFMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwespbfmix)}\\
+\texttt{gwespFBMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwespfbmix)}\\
+\texttt{gwespRRMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwesprrmix)}\\
+\texttt{gwespMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet cross1(gwespfbmix)}\\
+\texttt{outPopIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outpopintn)}\\
+\texttt{outActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outactintn)}\\
+\texttt{divOutEgoIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(divoutegointn)}\\
+\texttt{divInEgoIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(divinegointn)}\\
+\texttt{avDegIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(avdegintn)}\\
+\texttt{from} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(from)}\\
+\texttt{fromAny} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(fromany)}\\
+\texttt{to} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(to)}\\
+\texttt{cl.XWX} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(clxwx)}\\
+\texttt{closure} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(closure)}\\
+\texttt{mixedInXW} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(mixedinxw)}\\
+\texttt{JoutMix} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(joutmix)}\\
+\texttt{crprod} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(crprod)}\\
+\texttt{dist2OutInActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(dist2outinactintn)}\\
+\texttt{outOutDist2ActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outoutdist2actintn)}\\
+\texttt{absOutDiffIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(absoutdiffintn)}\\
+\texttt{doubleOutAct} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(doubleoutact)}\\
+\texttt{sharedTo} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(sharedto)}\\
+\texttt{inPopOutW} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(inpopoutw)}\\
+\texttt{nDist2ActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(ndist2actintn)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{M. Cross-network effects combined with a covariate, a behavior or a dyadic covariate}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{sameWWClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samewwclosure:var)}\\
+\texttt{diffWWClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(diffwwclosure:var)}\\
+\texttt{jumpWWClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(jumpwwclosure:var)}\\
+\texttt{jumpFrom} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(jumpfrom:var)}\\
+\texttt{jumpSharedIn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(jumpsharedin:var)}\\
+\texttt{sameWXClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samewxclosure:var)}\\
+\texttt{diffWXClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(diffwxclosure:var)}\\
+\texttt{jumpWXClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(jumpwxclosure:var)}\\
+\texttt{homWXClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(homwxclosure:var)}\\
+\texttt{sameXWClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samexwclosure:var)}\\
+\texttt{diffXWClosure} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(diffxwclosure:var)}\\
+\texttt{homCovNetNet} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(homcovnetnet:var)}\\
+\texttt{contrastCovNetNet} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(contrastcovnetnet:var)}\\
+\texttt{allDifCovNetNet} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(alldifcovnetnet:var)}\\
+\texttt{homCovNetNetIn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(homcovnetnetin:var)}\\
+\texttt{contrastCovNetNetIn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(contrastcovnetnetin:var)}\\
+\texttt{allDifCovNetNetIn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(alldifcovnetnetin:var)}\\
+\texttt{simEgoDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(simegodist2w:var)}\\
+\texttt{altInDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(altindist2w:var)}\\
+\texttt{totInDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(totindist2w:var)}\\
+\texttt{inActIntnX} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(inactintnx:var)}\\
+\texttt{sameXInActIntn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samexinactintn:var)}\\
+\texttt{covNetNet} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(covnetnet:var)}\\
+\texttt{covNetNetIn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(covnetnetin:var)}\\
+\texttt{inPopIntnX} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(inpopintnx:var)}\\
+\texttt{sameXInPopIntn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samexinpopintn:var)}\\
+\texttt{simEgoInDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(simegoindist2w:var)}\\
+\texttt{outPopIntnX} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(outpopintnx:var)}\\
+\texttt{outActIntnX} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(outactintnx:var)}\\
+\texttt{sameXOutPopIntn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samexoutpopintn:var)}\\
+\texttt{sameXOutActIntn} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(samexoutactintn:var)}\\
+\texttt{altDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(altdist2w:var)}\\
+\texttt{totDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(totdist2w:var)}\\
+\texttt{simDist2W} & one-mode network + another network + constant covariate & siena07 & \texttt{nwsaom multinet cross1(simdist2w:var)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{P. Behavior: shape effects}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{linear} & behavior & siena07 & \texttt{linear}\\
+\texttt{quad} & behavior & siena07 & \texttt{quadratic}\\
+\texttt{quad\_cc} & behavior & siena07 & \texttt{behshape(quad\_cc)}\\
+\texttt{quad\_nc} & behavior & siena07 & \texttt{behshape(quad\_nc)}\\
+\texttt{threshold} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
+\texttt{threshold2} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
+\texttt{threshold3} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
+\texttt{threshold4} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
+\texttt{simAllNear} & behavior & siena07 & \texttt{behshape(simallnear:\#)}\\
+\texttt{simAllFar} & behavior & siena07 & \texttt{behshape(simallfar:\#)}\\
+\texttt{avGroup} & behavior & siena07 & \texttt{behshape(avgroup:\#)}\\
+\texttt{totGroup} & behavior & siena07 & \texttt{behshape(totgroup:\#)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{Q. Behavior: effects of the network (influence, degree and exposure effects)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{avSim} & behavior + another network & siena07 & \texttt{avsim}\\
+\texttt{avAttHigher} & behavior + another network & siena07 & \texttt{beheff(avatthigher)}\\
+\texttt{avAttLower} & behavior + another network & siena07 & \texttt{beheff(avattlower)}\\
+\texttt{totSim} & behavior + another network & siena07 & \texttt{beheff(totsim)}\\
+\texttt{totAttHigher} & behavior + another network & siena07 & \texttt{beheff(totatthigher)}\\
+\texttt{totAttLower} & behavior + another network & siena07 & \texttt{beheff(totattlower)}\\
+\texttt{avInSim} & behavior + another network & siena07 & \texttt{beheff(avinsim)}\\
+\texttt{totInSim} & behavior + another network & siena07 & \texttt{beheff(totinsim)}\\
+\texttt{indegAvGroup} & behavior + another network & siena07 & \texttt{behnet2(indegavgroup:\#)}\\
+\texttt{indegTotGroup} & behavior + another network & siena07 & \texttt{behnet2(indegtotgroup:\#)}\\
+\texttt{indeg} & behavior + another network & siena07 & \texttt{beheff(indeg)}\\
+\texttt{outdeg} & behavior + another network & siena07 & \texttt{beheff(outdeg)}\\
+\texttt{isolate} & behavior + another network & siena07 & \texttt{beheff(isolate)}\\
+\texttt{outIsolate} & behavior + another network & siena07 & \texttt{beheff(outisolate)}\\
+\texttt{avSimRecip} & behavior + another network & siena07 & \texttt{beheff(avsimrecip)}\\
+\texttt{totSimRecip} & behavior + another network & siena07 & \texttt{beheff(totsimrecip)}\\
+\texttt{avSimPopAlt} & behavior + another network & siena07 & \texttt{beheff(avsimpopalt)}\\
+\texttt{totSimPopAlt} & behavior + another network & siena07 & \texttt{beheff(totsimpopalt)}\\
+\texttt{avInSimPopAlt} & behavior + another network & siena07 & \texttt{beheff(avinsimpopalt)}\\
+\texttt{totInSimPopAlt} & behavior + another network & siena07 & \texttt{beheff(totinsimpopalt)}\\
+\texttt{popAlt} & behavior + another network & siena07 & \texttt{beheff(popalt)}\\
+\texttt{totPopAlt} & behavior + another network & siena07 & \texttt{beheff(totpopalt)}\\
+\texttt{avSimRecPop} & behavior + another network & siena07 & \texttt{beheff(avsimrecpop)}\\
+\texttt{totSimRecPop} & behavior + another network & siena07 & \texttt{beheff(totsimrecpop)}\\
+\texttt{avSimVarAlt} & behavior + another network & siena07 & \texttt{behnet2(avsimvaralt)}\\
+\texttt{avAlt} & behavior + another network & siena07 & \texttt{avalt}\\
+\texttt{avAlt\_cc} & behavior + another network & siena07 & \texttt{behnet2(avaltcc)}\\
+\texttt{totAlt} & behavior + another network & siena07 & \texttt{beheff(totalt)}\\
+\texttt{totAlt\_cc} & behavior + another network & siena07 & \texttt{behnet2(totaltcc)}\\
+\texttt{avRecAlt} & behavior + another network & siena07 & \texttt{beheff(avrecalt)}\\
+\texttt{totRecAlt} & behavior + another network & siena07 & \texttt{beheff(totrecalt)}\\
+\texttt{avAltPop} & behavior + another network & siena07 & \texttt{beheff(avaltpop)}\\
+\texttt{totAltPop} & behavior + another network & siena07 & \texttt{beheff(totaltpop)}\\
+\texttt{avInAlt} & behavior + another network & siena07 & \texttt{beheff(avinalt)}\\
+\texttt{totInAlt} & behavior + another network & siena07 & \texttt{beheff(totinalt)}\\
+\texttt{avAltDist2} & behavior + another network & siena07 & \texttt{beheff(avaltdist2)}\\
+\texttt{totAltDist2} & behavior + another network & siena07 & \texttt{beheff(totaltdist2)}\\
+\texttt{avTAltDist2} & behavior + another network & siena07 & \texttt{beheff(avtaltdist2)}\\
+\texttt{totAAltDist2} & behavior + another network & siena07 & \texttt{beheff(totaaltdist2)}\\
+\texttt{avInAltDist2} & behavior + another network & siena07 & \texttt{beheff(avinaltdist2)}\\
+\texttt{totInAltDist2} & behavior + another network & siena07 & \texttt{beheff(totinaltdist2)}\\
+\texttt{avTInAltDist2} & behavior + another network & siena07 & \texttt{beheff(avtinaltdist2)}\\
+\texttt{avInAltDist2\_nc} & behavior + another network & siena07 & \texttt{behnet2(avinaltdist2nc)}\\
+\texttt{totInAltDist2\_nc} & behavior + another network & siena07 & \texttt{behnet2(totinaltdist2nc)}\\
+\texttt{avTInAltDist2\_nc} & behavior + another network & siena07 & \texttt{behnet2(avtinaltdist2nc)}\\
+\texttt{totAInAltDist2\_nc} & behavior + another network & siena07 & \texttt{behnet2(totainaltdist2nc)}\\
+\texttt{avInSimDist2} & behavior + another network & siena07 & \texttt{behnet2(avinsimdist2)}\\
+\texttt{totInSimDist2} & behavior + another network & siena07 & \texttt{behnet2(totinsimdist2)}\\
+\texttt{totGwdspFFAlt} & behavior + another network & siena07 & \texttt{behnet2(totgwdspffalt:\#)}\\
+\texttt{totGwdspFBAlt} & behavior + another network & siena07 & \texttt{behnet2(totgwdspfbalt:\#)}\\
+\texttt{totGwdspFFAlt\_nc} & behavior + another network & siena07 & \texttt{behnet2(totgwdspffaltnc:\#)}\\
+\texttt{totGwdspFBAlt\_nc} & behavior + another network & siena07 & \texttt{behnet2(totgwdspfbaltnc:\#)}\\
+\texttt{maxAlt} & behavior + another network & siena07 & \texttt{beheff(maxalt)}\\
+\texttt{minAlt} & behavior + another network & siena07 & \texttt{beheff(minalt)}\\
+\texttt{totAInAltDist2} & behavior + another network & siena07 & \texttt{beheff(totainaltdist2)}\\
+\texttt{varAlt} & behavior + another network & siena07 & \texttt{behnet2(varalt)}\\
+\texttt{behDenseTriads} & behavior + another network & siena07 & \texttt{behnet2(behdensetriads)}\\
+\texttt{simDenseTriads} & behavior + another network & siena07 & \texttt{behnet2(simdensetriads)}\\
+\texttt{recipDeg} & behavior + another network & siena07 & \texttt{beheff(recipdeg)}\\
+\texttt{avSimPopEgo} & behavior + another network & siena07 & \texttt{beheff(avsimpopego)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{R. Behavior: effects of two networks, and of a network with a dyadic covariate}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{avAltW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(avaltw:matrix)}\\
+\texttt{avInAltW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(avinaltw:matrix)}\\
+\texttt{totAltW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(totaltw:matrix)}\\
+\texttt{totInAltW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(totinaltw:matrix)}\\
+\texttt{avSimW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(avsimw:matrix)}\\
+\texttt{totSimW} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(totsimw:matrix)}\\
+\texttt{avWAlt} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(avwalt:matrix)}\\
+\texttt{avWInAlt} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(avwinalt:matrix)}\\
+\texttt{totWAlt} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(totwalt:matrix)}\\
+\texttt{totWInAlt} & behavior + another network + constant dyadic covariate & siena07 & \texttt{behw(totwinalt:matrix)}\\
+\texttt{avAltW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avaltw:stem)}\\
+\texttt{avInAltW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avinaltw:stem)}\\
+\texttt{totAltW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totaltw:stem)}\\
+\texttt{totInAltW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totinaltw:stem)}\\
+\texttt{avSimW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avsimw:stem)}\\
+\texttt{totSimW} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totsimw:stem)}\\
+\texttt{avWAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avwalt:stem)}\\
+\texttt{avWInAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avwinalt:stem)}\\
+\texttt{totWAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totwalt:stem)}\\
+\texttt{totWInAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totwinalt:stem)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{S. Behavior: effects of covariates and of other behaviors}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{effFrom} & behavior + constant covariate & siena07 & \texttt{behfrom()}\\
+\texttt{totSimAltX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totsimaltx:var)}\\
+\texttt{avSimAltX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avsimaltx:var)}\\
+\texttt{avAltAltX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avaltaltx:var)}\\
+\texttt{avXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behavxalt()}\\
+\texttt{totXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behtotxalt()}\\
+\texttt{minXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(minxalt:var)}\\
+\texttt{maxXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(maxxalt:var)}\\
+\texttt{avXInAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(avxinalt:var)}\\
+\texttt{totXInAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(totxinalt:var)}\\
+\texttt{avXRecAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(avxrecalt:var)}\\
+\texttt{totXRecAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(totxrecalt:var)}\\
+\texttt{avSameXRecAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(avsamexrecalt:var)}\\
+\texttt{totSameXRecAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(totsamexrecalt:var)}\\
+\texttt{avSameXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behavsamexalt()}\\
+\texttt{totSameXAlt} & behavior + constant covariate + another network & siena07 & \texttt{behtotsamexalt()}\\
+\texttt{avSameXInAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(avsamexinalt:var)}\\
+\texttt{totSameXInAlt} & behavior + constant covariate + another network & siena07 & \texttt{behx(totsamexinalt:var)}\\
+\texttt{avAltSameX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avaltsamex:var)}\\
+\texttt{totAltSameX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totaltsamex:var)}\\
+\texttt{avRecAltSameX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avrecaltsamex:var)}\\
+\texttt{totRecAltSameX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totrecaltsamex:var)}\\
+\texttt{avXAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(avxaltdist2:var)}\\
+\texttt{totXAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(totxaltdist2:var)}\\
+\texttt{avTXAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(avtxaltdist2:var)}\\
+\texttt{totAXAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(totaxaltdist2:var)}\\
+\texttt{avXInAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(avxinaltdist2:var)}\\
+\texttt{totXInAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(totxinaltdist2:var)}\\
+\texttt{avTXInAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(avtxinaltdist2:var)}\\
+\texttt{totAXInAltDist2} & behavior + constant covariate + another network & siena07 & \texttt{behx(totaxinaltdist2:var)}\\
+\texttt{degAbsContrX} & behavior + constant covariate + another network & siena07 & \texttt{behx(degabscontrx:var)}\\
+\texttt{degPosContrX} & behavior + constant covariate + another network & siena07 & \texttt{behx(degposcontrx:var)}\\
+\texttt{degNegContrX} & behavior + constant covariate + another network & siena07 & \texttt{behx(degnegcontrx:var)}\\
+\texttt{avSimEgoX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avsimegox:var)}\\
+\texttt{totSimEgoX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totsimegox:var)}\\
+\texttt{avAltEgoX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avaltegox:var)}\\
+\texttt{totAltEgoX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totaltegox:var)}\\
+\texttt{effFrom} & behavior + changing covariate & siena07 & \texttt{behfrom(stem)}\\
+\texttt{totSimAltX} & behavior + changing covariate + another network & siena07 & \texttt{behx(totsimaltx:var)}\\
+\texttt{avSimAltX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avsimaltx:var)}\\
+\texttt{avAltAltX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avaltaltx:var)}\\
+\texttt{avXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behavxalt(stem)}\\
+\texttt{totXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behtotxalt(stem)}\\
+\texttt{minXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(minxalt:var)}\\
+\texttt{maxXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(maxxalt:var)}\\
+\texttt{avXInAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(avxinalt:var)}\\
+\texttt{totXInAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(totxinalt:var)}\\
+\texttt{avXRecAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(avxrecalt:var)}\\
+\texttt{totXRecAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(totxrecalt:var)}\\
+\texttt{avSameXRecAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(avsamexrecalt:var)}\\
+\texttt{totSameXRecAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(totsamexrecalt:var)}\\
+\texttt{avSameXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behavsamexalt(stem)}\\
+\texttt{totSameXAlt} & behavior + changing covariate + another network & siena07 & \texttt{behtotsamexalt(stem)}\\
+\texttt{avSameXInAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(avsamexinalt:var)}\\
+\texttt{totSameXInAlt} & behavior + changing covariate + another network & siena07 & \texttt{behx(totsamexinalt:var)}\\
+\texttt{avAltSameX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avaltsamex:var)}\\
+\texttt{totAltSameX} & behavior + changing covariate + another network & siena07 & \texttt{behx(totaltsamex:var)}\\
+\texttt{avRecAltSameX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avrecaltsamex:var)}\\
+\texttt{totRecAltSameX} & behavior + changing covariate + another network & siena07 & \texttt{behx(totrecaltsamex:var)}\\
+\texttt{avXAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(avxaltdist2:var)}\\
+\texttt{totXAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(totxaltdist2:var)}\\
+\texttt{avTXAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(avtxaltdist2:var)}\\
+\texttt{totAXAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(totaxaltdist2:var)}\\
+\texttt{avXInAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(avxinaltdist2:var)}\\
+\texttt{totXInAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(totxinaltdist2:var)}\\
+\texttt{avTXInAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(avtxinaltdist2:var)}\\
+\texttt{totAXInAltDist2} & behavior + changing covariate + another network & siena07 & \texttt{behx(totaxinaltdist2:var)}\\
+\texttt{degAbsContrX} & behavior + changing covariate + another network & siena07 & \texttt{behx(degabscontrx:var)}\\
+\texttt{degPosContrX} & behavior + changing covariate + another network & siena07 & \texttt{behx(degposcontrx:var)}\\
+\texttt{degNegContrX} & behavior + changing covariate + another network & siena07 & \texttt{behx(degnegcontrx:var)}\\
+\texttt{avSimEgoX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avsimegox:var)}\\
+\texttt{totSimEgoX} & behavior + changing covariate + another network & siena07 & \texttt{behx(totsimegox:var)}\\
+\texttt{avAltEgoX} & behavior + changing covariate + another network & siena07 & \texttt{behx(avaltegox:var)}\\
+\texttt{totAltEgoX} & behavior + changing covariate + another network & siena07 & \texttt{behx(totaltegox:var)}\\
+\texttt{effFrom} & behavior + a behavior variable & siena07 & \texttt{behfrom(beh2)}\\
+\texttt{totSimAltX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totsimaltx:beh2)}\\
+\texttt{avSimAltX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avsimaltx:beh2)}\\
+\texttt{avAltAltX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avaltaltx:beh2)}\\
+\texttt{avXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behavxalt(beh2)}\\
+\texttt{totXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behtotxalt(beh2)}\\
+\texttt{minXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(minxalt:beh2)}\\
+\texttt{maxXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(maxxalt:beh2)}\\
+\texttt{avXInAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avxinalt:beh2)}\\
+\texttt{totXInAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totxinalt:beh2)}\\
+\texttt{avXRecAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avxrecalt:beh2)}\\
+\texttt{totXRecAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totxrecalt:beh2)}\\
+\texttt{avSameXRecAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avsamexrecalt:beh2)}\\
+\texttt{totSameXRecAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totsamexrecalt:beh2)}\\
+\texttt{avSameXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behavsamexalt(beh2)}\\
+\texttt{totSameXAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behtotsamexalt(beh2)}\\
+\texttt{avSameXInAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avsamexinalt:beh2)}\\
+\texttt{totSameXInAlt} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totsamexinalt:beh2)}\\
+\texttt{avAltSameX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avaltsamex:beh2)}\\
+\texttt{totAltSameX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totaltsamex:beh2)}\\
+\texttt{avRecAltSameX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avrecaltsamex:beh2)}\\
+\texttt{totRecAltSameX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totrecaltsamex:beh2)}\\
+\texttt{avXAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avxaltdist2:beh2)}\\
+\texttt{totXAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totxaltdist2:beh2)}\\
+\texttt{avTXAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avtxaltdist2:beh2)}\\
+\texttt{totAXAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totaxaltdist2:beh2)}\\
+\texttt{avXInAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avxinaltdist2:beh2)}\\
+\texttt{totXInAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totxinaltdist2:beh2)}\\
+\texttt{avTXInAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avtxinaltdist2:beh2)}\\
+\texttt{totAXInAltDist2} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totaxinaltdist2:beh2)}\\
+\texttt{degAbsContrX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(degabscontrx:beh2)}\\
+\texttt{degPosContrX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(degposcontrx:beh2)}\\
+\texttt{degNegContrX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(degnegcontrx:beh2)}\\
+\texttt{avSimEgoX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avsimegox:beh2)}\\
+\texttt{totSimEgoX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totsimegox:beh2)}\\
+\texttt{avAltEgoX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(avaltegox:beh2)}\\
+\texttt{totAltEgoX} & behavior + a behavior variable + another network & siena07 & \texttt{behx(totaltegox:beh2)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{T. Rate effects (network and behavior)}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{Rate} & rate (one-mode network) & siena07 & \texttt{automatic rate}\\
+\texttt{outRate} & rate (one-mode network) & siena07 & \texttt{outrate}\\
+\texttt{inRate} & rate (one-mode network) & siena07 & \texttt{inrate}\\
+\texttt{recipRate} & rate (one-mode network) & siena07 & \texttt{reciprate}\\
+\texttt{outRateInv} & rate (one-mode network) & siena07 & \texttt{outrateinv}\\
+\texttt{outRateLog} & rate (one-mode network) & siena07 & \texttt{outratelog}\\
+\texttt{inRateInv} & rate (one-mode network) & siena07 & \texttt{inrateinv}\\
+\texttt{inRateLog} & rate (one-mode network) & siena07 & \texttt{inratelog}\\
+\texttt{recipRateInv} & rate (one-mode network) & siena07 & \texttt{reciprateinv}\\
+\texttt{recipRateLog} & rate (one-mode network) & siena07 & \texttt{recipratelog}\\
+\texttt{RateX} & rate (one-mode network) + constant covariate & siena07 & \texttt{ratecov()}\\
+\texttt{Rate} & rate (behavior) & siena07 & \texttt{automatic rate}\\
+\texttt{Rate} & rate (two-mode network) & siena07 & \texttt{automatic rate}\\
+\texttt{Rate} & rate (non-directed network) & siena07 & \texttt{automatic rate}\\
+\texttt{RateX} & rate (non-directed network) + constant covariate &  & \texttt{ratecov()}\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{V. Placeholder rows and GMoM statistics}
+\footnotesize
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{2.9cm}p{5.4cm}@{}}
+\toprule
+RSiena name & Network / context & Validated & nwsaom option\\
+\midrule
+\endhead
+\texttt{avXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & siena07 & \texttt{behavxalt(var)}\\
+\texttt{totXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & siena07 & \texttt{behtotxalt(var)}\\
+\texttt{avSameXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & siena07 & \texttt{behavsamexalt(var)}\\
+\texttt{totSameXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & siena07 & \texttt{behtotsamexalt(var)}\\
+\bottomrule
+\end{longtable}
+\normalsize
+

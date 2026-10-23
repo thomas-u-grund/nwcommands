@@ -248,7 +248,7 @@
 {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
 
 {p 4 4 2}
-Two directed one-mode networks on the same actors evolve together (RSiena: two dependent network variables; unconditional Method of Moments, rates per
+Two one-mode networks (directed, or undirected with {opt sym1}/{opt sym2}) on the same actors evolve together (RSiena: two dependent network variables; unconditional Method of Moments, rates per
 network and period). {opt net1()} and {opt net2()} list the waves (the same number, at least two). {opt eff1()} / {opt eff2()}: the within-network effects of
 each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity transtrip cycle3 transmedtrip cycle4 indegpop outact} and, with a variable,
 {cmd:egox:}{it:var} {cmd:altx:}{it:var} {cmd:samex:}{it:var} {cmd:simx:}{it:var}. {opt cross1()} lists the cross-network effects of network 1 that depend on network 2,
@@ -347,7 +347,7 @@ within a type, the variables in the order listed; {cmd:matrix list e(b)} shows i
 {title:Remarks}
 
 {pstd}
-See {help nwsaom_remarks} for the full effect-derivation library (every effect's own ministep
+A user manual and reference (nwsaom_manual.pdf, in the {cmd:manual} folder of the package source) covers the model, every option, the complete effects reference, the validation against siena07 and a list of what RSiena offers that nwsaom does not (yet). See {help nwsaom_remarks} for the full effect-derivation library (every effect's own ministep
 formula and how it was verified against RSiena's real source), interaction/multiplex/co-evolution
 mechanics, composition-change/missing-data/structural-zero handling, the full performance
 benchmark, and the estimation-algorithm background (Method-of-Moments phase structure, rate
