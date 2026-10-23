@@ -2721,6 +2721,15 @@ program nwsaom, eclass
 			}
 			mata: SaomBehCovInit()
 			foreach __v of local __bcvall {
+				if regexm("`__v'", "^beh[2-9]$") {
+					// another co-evolving behavior (protocol 53) as the covariate: behx(avxalt:beh2)
+					if !`__nwsaom_mb' {
+						di "{err}the covariate {bf:`__v'} is the second behavior of {bf:behavior()}, which has only one."
+						error 198
+					}
+					mata: SaomBehCovAddDyn("`__v'", `=real(substr("`__v'", 4, 1))', `=`__nwsaom_nwaves'-1')
+					continue
+				}
 				if `: list __v in __nwsaom_tvnames' {
 					mata: SaomBehCovAdd("`__v'", "`__nwsaom_tvv_`__v''", `=`__nwsaom_nwaves'-1')
 				}

@@ -11840,6 +11840,7 @@ struct SaomMBCtx scalar SaomMBInit(
 	real scalar pd, b, p, why_ok, anyneed35, anyneed36, anyneed43
 	string scalar why
 
+	SaomBehCovFillDyn(Behwaves, overallMean)
 	C.Gwaves = Gwaves
 	C.Mp = &M
 	C.Mbehs = Mbehs
@@ -12250,7 +12251,9 @@ void SaomBehCovInit() {
 	external real rowvector __saom_behcovoff, __saom_behcovper
 	external real scalar __saom_behcov_pd
 	external string rowvector __saom_behcovnames
+	external real rowvector __saom_behcovdyn
 	__saom_behcov = J(st_nobs(), 0, 0)
+	__saom_behcovdyn = J(1, 0, 0)
 	__saom_behcovnames = J(1, 0, "")
 	__saom_behcovoff = J(1, 0, 0)
 	__saom_behcovper = J(1, 0, 1)
@@ -12262,6 +12265,7 @@ void SaomBehCovAdd(string scalar name, string scalar vlist, real scalar nper) {
 	external real rowvector __saom_behcovoff, __saom_behcovper
 	external string rowvector __saom_behcovnames
 	external real rowvector __saom_behcovmean
+	external real rowvector __saom_behcovdyn
 	real matrix X
 	string rowvector vv
 	vv = tokens(vlist)
@@ -12273,6 +12277,38 @@ void SaomBehCovAdd(string scalar name, string scalar vlist, real scalar nper) {
 	__saom_behcovoff = (__saom_behcovoff, cols(__saom_behcov) + 1)
 	__saom_behcovper = (__saom_behcovper, cols(vv))
 	__saom_behcov = (__saom_behcov, X :- mean(vec(X)))
+	__saom_behcovdyn = (__saom_behcovdyn, 0)
+}
+/* protocol 53: another co-evolving behavior (number bidx >= 2 in behavior()) as the covariate of the behavior-1 effects: a slot with a placeholder; the values
+   (centred wave values of that behavior, period p = the period's start wave) are filled by SaomBehCovFillDyn() once the estimator knows the waves */
+void SaomBehCovAddDyn(string scalar name, real scalar bidx, real scalar nper) {
+	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper
+	external string rowvector __saom_behcovnames
+	external real rowvector __saom_behcovmean
+	external real rowvector __saom_behcovdyn
+	__saom_behcovmean = (__saom_behcovmean, 0)
+	__saom_behcovnames = (__saom_behcovnames, name)
+	__saom_behcovoff = (__saom_behcovoff, cols(__saom_behcov) + 1)
+	__saom_behcovper = (__saom_behcovper, nper)
+	__saom_behcov = (__saom_behcov, J(rows(__saom_behcov), nper, 0))
+	__saom_behcovdyn = (__saom_behcovdyn, bidx)
+}
+void SaomBehCovFillDyn(pointer(real colvector) matrix Behwaves, real rowvector overallMean) {
+	external real matrix __saom_behcov
+	external real rowvector __saom_behcovoff, __saom_behcovper, __saom_behcovmean, __saom_behcovdyn
+	real scalar j, pd, b
+	if (findexternal("__saom_behcovdyn") == NULL) return
+	for (j=1; j<=cols(__saom_behcovdyn); j++) {
+		b = __saom_behcovdyn[j]
+		if (b < 1) continue
+		if (b > rows(Behwaves)) {
+			errprintf("nwsaom: behx()/behfrom() name the covariate beh" + strofreal(b) + ", but behavior() has only " + strofreal(rows(Behwaves)) + " behaviors.\n")
+			exit(198)
+		}
+		for (pd=1; pd<=__saom_behcovper[j]; pd++) __saom_behcov[., __saom_behcovoff[j] + pd - 1] = *Behwaves[b, pd] :- overallMean[b]
+		__saom_behcovmean[j] = overallMean[b]
+	}
 }
 void SaomBehCovPd(real scalar pd) {
 	external real scalar __saom_behcov_pd
@@ -12413,6 +12449,7 @@ real rowvector _sb_xaltparse(string scalar nm) {
 string scalar SaomBehCovTrailer(real scalar n) {
 	external real matrix __saom_behcov
 	external real rowvector __saom_behcovoff, __saom_behcovper, __saom_behcovmean
+	external real rowvector __saom_behcovdyn
 	string scalar out
 	real scalar j, i, q
 	if (findexternal("__saom_behcov") == NULL) return(" 0")
@@ -12423,6 +12460,7 @@ string scalar SaomBehCovTrailer(real scalar n) {
 		for (q=0; q<__saom_behcovper[j]; q++) for (i=1; i<=n; i++) out = out + " " + strofreal(__saom_behcov[i, __saom_behcovoff[j] + q], "%25.17g")
 		out = out + " " + strofreal(__saom_behcovmean[j], "%25.17g")
 	}
+	for (j=1; j<=cols(__saom_behcovoff); j++) out = out + " " + strofreal(findexternal("__saom_behcovdyn") == NULL ? 0 : max((__saom_behcovdyn[j] - 1, 0)))
 	return(out)
 }
 real rowvector stat_saom_effcov1(class SaomBehavior scalar Beh, class ErgmGraph scalar G) return(stat_saom_effcov(Beh, 1))
