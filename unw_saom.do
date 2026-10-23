@@ -14759,4 +14759,128 @@ void __nwsaom_mp_fit_and_post(
 	// already uses elsewhere for variable-length coefficient lists.
 	st_global(ncoefname, invtokens(("net1_" :+ M1.coefnames, "net2_" :+ M2.coefnames)))
 }
+
+/* ---------------------------------------------------------------------------
+   nwsaom bayes: the Bayesian sampler of the plugin (BAYESRUN) for the model of the last nwsaom fit.
+   Gall = all waves (P+1 graphs); the starting networks of the periods go to the plugin's resident
+   model (BATCHSETUP), the end networks to the sampler's input columns. Returns the number of saved draws;
+   the draws (effects, rates, total chain length, log-likelihood given the chains) are stored in frame frname.
+   prior: normal(pmean, psd) for every effect, gamma(pshape, prate) for the rate of every period.
+   Vprop: the starting covariance of the random-walk proposal for the effects.
+--------------------------------------------------------------------------- */
+real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M,
+	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd, real scalar pshape, real scalar prate,
+	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh, real scalar ntheta, real scalar W, real scalar seed,
+	real scalar mult, real scalar targetmh, string scalar frname, string rowvector names)
+{
+	struct SaomNativeConfig scalar cfg
+	pointer(class ErgmGraph scalar) rowvector Gstart
+	real matrix E, t, draws
+	real scalar n, K, pd, junk, nrows, nsave, nout, i
+	string scalar origframe, argstr
+	string rowvector vn
+
+	n = (*Gall[1]).n
+	K = cols(theta)
+	if (K != M.nparam()) {
+		errprintf("nwsaom bayes: the coefficient vector does not match the model.\n")
+		exit(198)
+	}
+	cfg = SaomNativeSetup(M)
+	if (!cfg.eligible | !SaomNativeAvailable() | SaomNativePluginVersion() < 120) {
+		errprintf("nwsaom bayes needs the native plugin (a current build) and a model the plugin covers.\n")
+		exit(198)
+	}
+	Gstart = J(1, P, NULL)
+	for (pd=1; pd<=P; pd++) Gstart[pd] = Gall[pd]
+	SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
+	E = J(0, 3, 0)
+	for (pd=1; pd<=P; pd++) {
+		t = (*Gall[pd+1]).all_ties()
+		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t[., 1..2])
+	}
+	nsave = nmain
+	nout = K + P + 2
+	nrows = max((rows(E), nsave, 1))
+	origframe = st_framecurrent()
+	stata("capture frame drop __saom_bayes")
+	stata("frame create __saom_bayes")
+	st_framecurrent("__saom_bayes")
+	st_addobs(nrows)
+	vn = ("e_pd", "e_i", "e_j", "o" :+ strofreal(1..nout))
+	junk = st_addvar("double", vn)
+	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
+	argstr = "BAYESRUN|" + strofreal(rows(E)) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(ntheta) + " " + strofreal(W) + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g")
+	argstr = argstr + " " + strofreal(K) + " " + strofreal(P)
+	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(pmean, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(psd, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(rho0, "%25.17g"))
+	argstr = argstr + " " + invtokens(J(1, P, strofreal(pshape, "%25.17g")))
+	argstr = argstr + " " + invtokens(J(1, P, strofreal(prate, "%25.17g")))
+	for (i=1; i<=K; i++) argstr = argstr + " " + invtokens(strofreal(Vprop[i, .], "%25.17g"))
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(vn) + ", " + char(34) + argstr + char(34))
+	nsave = st_numscalar("__saom_bayes_nsave")
+	draws = (nsave > 0 ? st_data((1::nsave), (4..3+nout)) : J(0, nout, .))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_bayes")
+	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	stata("capture frame drop " + frname)
+	stata("frame create " + frname)
+	st_framecurrent(frname)
+	st_addobs(rows(draws))
+	junk = st_addvar("double", names)
+	if (rows(draws) > 0) st_store((1::rows(draws)), names, draws)
+	st_framecurrent(origframe)
+	return(rows(draws))
+}
+
+/* posterior summaries of a draws frame written by SaomBayesRun(): the first Kp columns (effects and rates) -> matrices
+   __nwsaom_bayes_mean (1 x Kp), _sd, _V (covariance of the first K), _q (3 x Kp: lower, median, upper limit of the equal-tailed interval), _ess (1 x Kp) */
+void SaomBayesSummary(string scalar frname, real scalar K, real scalar Kp, real scalar level)
+{
+	real matrix D, Q
+	real colvector x, ac, so
+	real rowvector mn, sd, ess
+	real scalar j, N, lag, rho, s, a, b, lo, hi, qq, alpha
+	string scalar origframe
+
+	origframe = st_framecurrent()
+	st_framecurrent(frname)
+	D = st_data(., (1..Kp))
+	st_framecurrent(origframe)
+	N = rows(D)
+	mn = mean(D)
+	sd = sqrt(diagonal(variance(D))')
+	Q = J(3, Kp, .)
+	ess = J(1, Kp, .)
+	alpha = (1 - level / 100) / 2
+	for (j=1; j<=Kp; j++) {
+		so = sort(D[., j], 1)
+		for (qq=1; qq<=3; qq++) {
+			b = (qq == 1 ? alpha : (qq == 2 ? 0.5 : 1 - alpha)) * (N - 1) + 1
+			lo = floor(b)
+			hi = min((lo + 1, N))
+			Q[qq, j] = so[lo] + (b - lo) * (so[hi] - so[lo])
+		}
+		x = D[., j] :- mn[j]
+		s = sum(x:^2)
+		if (s <= 0 | N < 10) continue
+		/* effective sample size: sum of the autocorrelations up to the first non-positive pair (Geyer) */
+		rho = 0
+		for (lag=1; lag<N-2; lag=lag+2) {
+			a = sum(x[1..N-lag] :* x[1+lag..N]) / s
+			b = sum(x[1..N-lag-1] :* x[2+lag..N]) / s
+			if (a + b <= 0) break
+			rho = rho + a + b
+		}
+		ess[j] = N / max((1, 1 + 2 * rho))
+	}
+	st_matrix("__nwsaom_bayes_mean", mn)
+	st_matrix("__nwsaom_bayes_sd", sd)
+	st_matrix("__nwsaom_bayes_V", variance(D[., 1..K]))
+	st_matrix("__nwsaom_bayes_q", Q)
+	st_matrix("__nwsaom_bayes_ess", ess)
+}
 end
