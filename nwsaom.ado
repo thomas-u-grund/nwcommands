@@ -199,7 +199,7 @@ program nwsaom, eclass
 		GWESPFB(string) GWESPBF(string) GWESPBB(string) GWESPRR(string) SQRTCYCLE4 DBLNBRDIST2 NBRDIST2 GWDSPFF(string) GWDSPFB(string) BETWEEN RECIPOP RECIPOPSQRT RECIACT RECIACTSQRT OUTTRUNC(numlist >=1) OUTMORE(numlist >=1) OUTTHRESHOLD(numlist >=1) OUTINV(numlist >=1) OUTSQINV(numlist >=1) INDEGPOPULARITY OUTACTIVITY TRANSTRIP TRANSMEDTRIP CYCLE3 CYCLE4 OUTPOPULARITY INACTIVITY INPOP OUTPOP INACT OUTACTSQRT SIMCOV(string) ///
 		ISOLATENET OUTISO ANTIISO ANTIINISO ANTIINISO2 INPLUS3 ISOLATEPOP ///
 		TRANSRECTRIP OUTOUTASS ININASS OUTINASS INOUTASS ///
-		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
+		GWESP(string) TRANSTIES BALANCE INTERACT(string) DYADCOV(string) DYADCOVRECIP(string) TVDYADCOV(string) TVDYADCOVRECIP(string) TVDYADX(string) ABSDIFFX(string) EGOXALTX(string) DIFFX(string) HIGHER(string) EGOSQX(string) ALTSQX(string) SAMEXRECIP(string) SIMRECIPX(string) ///
 		EGOX(string) ALTX(string) SAMEX(string) SIMX(string) ///
 		BEHAVIOR(string) LINEAR LINEARENDOW LINEARCREATION QUADRATIC QUADRATICENDOW QUADRATICCREATION ///
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
@@ -550,7 +550,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx dyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher egosqx altsqx samexrecip simrecipx netx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc avdeg transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff gwdspfb between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass outinass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {
@@ -1833,6 +1833,42 @@ program nwsaom, eclass
 				local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__dm')"
 			}
 		}
+	}
+
+	// --- changing dyadic covariates (RSiena varDyadCovar), protocol 15/49 with time-varying attribute columns:
+	// tvdyadcov(stem ...) / tvdyadcovrecip(stem ...): the matrices stem1 .. stem`P' (P = waves - 1, the period's START wave), centred by their overall
+	// mean; tvdyadx(effect:stem ...): RSiena's WWX ... XXW with changing W, raw. Native plugin only (the matrices travel as time-varying attribute columns).
+	foreach __dk in tvdyadcov tvdyadcovrecip {
+		foreach __st of local `__dk' {
+			forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+				capture confirm matrix `__st'`__p'
+				if _rc {
+					di "{err}{bf:`__dk'()}: matrix {bf:`__st'`__p'} not found (a matrix for each of the `=`__nwsaom_nwaves'-1' periods: `__st'1 ...)."
+					error 111
+				}
+			}
+			mata: SaomRegDycTV(__nwsaom_last_M, "`=cond("`__dk'" == "tvdyadcov", "dyadcov", "dyadcovrecip")'", 0, "`__st'", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center')
+			local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__st')"
+		}
+	}
+	local __dx_names "wwx cywwx inwwx outwwx wxx xwx xwx1 xwx2 xxw"
+	foreach __t of local tvdyadx {
+		gettoken __f __vv : __t, parse(":")
+		local __vv = subinstr("`__vv'", ":", "", 1)
+		local __fi : list posof "`__f'" in __dx_names
+		if `__fi' == 0 | "`__vv'" == "" {
+			di "{err}tvdyadx(): `__t' is not effect:stem; effects: `__dx_names'."
+			error 198
+		}
+		forvalues __p = 1/`=`__nwsaom_nwaves'-1' {
+			capture confirm matrix `__vv'`__p'
+			if _rc {
+				di "{err}tvdyadx(): matrix {bf:`__vv'`__p'} not found."
+				error 111
+			}
+		}
+		mata: SaomRegDycTV(__nwsaom_last_M, "`__f'", `=249+`__fi'', "`__vv'", `nodes', `=`__nwsaom_nwaves'-1', 0)
+		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
 	}
 
 	// --- indegpopularity/outactivity: freshly-derived SAOM-native

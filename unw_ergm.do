@@ -1039,6 +1039,7 @@ class ErgmTermData {
 	real scalar decay		// gwesp/gwdegree/gwodegree/gwidegree/gwdsp
 	real colvector attr		// nodematch/nodecov/nodeicov/nodeocov/absdist/nodefactor/nodemix: node-indexed covariate (already numeric-coded)
 	real matrix edgecovmat		// edgecov: dense n x n dyadic covariate
+	real matrix edgecovpd		// nwsaom changing dyadic covariates: n x (n * periods), the period p matrix in columns (p-1)*n+1..p*n (td.edgecovmat holds the current period's matrix); 0 x 0 for every other term
 	real matrix attrpd		// nwsaom time-varying covariates: n x periods, column p = the values used in period p (td.attr holds the current period's column); 0 x 0 for every other term
 	real colvector levels		// nodematch(diff=TRUE)/nodefactor: distinct attribute levels present, one per output statistic (index k <-> levels[k])
 	real matrix levelpairs		// nodemix: distinct UNORDERED level-pairs present, one row (a,b), a<=b, per output statistic

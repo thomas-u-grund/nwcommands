@@ -3629,6 +3629,58 @@ void SaomRegNat(class ErgmModel scalar M, string scalar eff, real scalar code, s
 	}
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + label))
 }
+/* the period matrices stem1 .. stemP (Stata matrices) side by side, missing cells and the diagonal 0; center: subtract the mean of ALL the periods' non-missing
+   off-diagonal cells from the non-missing off-diagonal cells (RSiena centres a varDyadCovar by its overall mean); m returns that mean */
+real matrix SaomDycTVPrep(string scalar stem, real scalar P, real scalar n, real scalar center, real scalar m) {
+	real matrix W, X, ok
+	real scalar pd, i, tot, cnt
+	W = J(n, 0, 0)
+	tot = 0
+	cnt = 0
+	for (pd=1; pd<=P; pd++) {
+		X = st_matrix(stem + strofreal(pd))
+		if (rows(X) != n | cols(X) != n) {
+			errprintf("nwsaom: the matrix " + stem + strofreal(pd) + " must be " + strofreal(n) + " x " + strofreal(n) + "\n")
+			exit(198)
+		}
+		ok = (X :< .)
+		for (i=1; i<=n; i++) ok[i,i] = 0
+		tot = tot + sum(select(vec(X), vec(ok)))
+		cnt = cnt + sum(ok)
+		X = editmissing(X, 0)
+		for (i=1; i<=n; i++) X[i,i] = 0
+		W = (W, X :* ok)
+	}
+	m = (cnt > 0 ? tot / cnt : 0)
+	return(W)
+}
+/* registers a changing dyadic covariate effect: kind "dyadcov", "dyadcovrecip" or a W effect code (3250 + v) */
+void SaomRegDycTV(class ErgmModel scalar M, string scalar kind, real scalar code, string scalar stem, real scalar n, real scalar P, real scalar center) {
+	class ErgmTermData scalar td
+	real matrix W, X, ok
+	real scalar m, pd, i
+	td = ErgmTermData()
+	W = SaomDycTVPrep(stem, P, n, 0, m)
+	if (center) {
+		// centre the non-missing off-diagonal cells by the overall mean (a missing cell stays 0)
+		for (pd=1; pd<=P; pd++) {
+			X = st_matrix(stem + strofreal(pd))
+			ok = (X :< .)
+			for (i=1; i<=n; i++) ok[i,i] = 0
+			W[., ((pd-1)*n+1)..(pd*n)] = (editmissing(W[., ((pd-1)*n+1)..(pd*n)], 0) :- m) :* ok
+		}
+	}
+	td.edgecovpd = W
+	td.edgecovmat = W[., 1..n]
+	if (kind == "dyadcov") M.addterm("dyadcov", 1, &stat_saom_dyadcov(), &change_saom_dyadcov(), td, ("dyadcov_" + stem))
+	else if (kind == "dyadcovrecip") M.addterm("dyadcovrecip", 1, &stat_saom_dyadcovrecip(), &change_saom_dyadcovrecip(), td, ("dyadcovrecip_" + stem))
+	else {
+		td.levels = (code \ 0)
+		td.decay = 0
+		M.addterm("nat_" + kind, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + kind + "_" + stem))
+	}
+}
+
 /* protocol 49: a native-only network effect of a dyadic covariate: W is the raw n x n matrix (missing and the diagonal 0, never centred) */
 void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar matname, real scalar n) {
 	class ErgmTermData scalar td
@@ -3668,6 +3720,7 @@ real scalar SaomModelHasTV(class ErgmModel scalar M) {
 	for (t=1; t<=M.nterms; t++) {
 		pt = M.td[t]
 		if (rows(pt->attrpd) > 0) return(1)
+		if (cols(pt->edgecovpd) > 0) return(1)
 	}
 	return(0)
 }
@@ -3678,6 +3731,7 @@ void SaomTVSync(class ErgmModel scalar M, real scalar pd) {
 	for (t=1; t<=M.nterms; t++) {
 		pt = M.td[t]
 		if (rows(pt->attrpd) > 0) pt->attr = pt->attrpd[., pd]
+		if (cols(pt->edgecovpd) > 0) pt->edgecovmat = pt->edgecovpd[., ((pd-1)*rows(pt->edgecovpd)+1)..(pd*rows(pt->edgecovpd))]
 	}
 }
 
@@ -9481,6 +9535,20 @@ real scalar SaomNativeAvailable(){
    happen to share the same underlying covariate) - simple over
    maximally compact, matching `MAXATTR`'s own generous cap in the C
    plugin. */
+/* changing dyadic covariates (RSiena varDyadCovar): the n attribute columns of the matrix (column i = row i) are time-varying: column nextattr + i holds
+   row i of the period matrices, one frame column per period */
+void SaomDycTVCfg(struct SaomNativeConfig scalar cfg, class ErgmTermData scalar td, real scalar nextattr) {
+	real scalar n, P, i, pd
+	real matrix blk
+	n = rows(td.edgecovmat)
+	P = cols(td.edgecovpd) / n
+	for (i=1; i<=n; i++) {
+		blk = J(n, P, 0)
+		for (pd=1; pd<=P; pd++) blk[., pd] = td.edgecovpd[i, ((pd-1)*n+1)..(pd*n)]'
+		cfg.tvcol = (cfg.tvcol, nextattr + i)
+		cfg.tvmat = (cols(cfg.tvmat)==0 ? blk : (cfg.tvmat, blk))
+	}
+}
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
@@ -9545,6 +9613,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 				// protocol 49: the dyadic matrix as n attribute columns (column i = row i)
 				cfg.attridx[t] = nextattr + 1
 				cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.edgecovmat' : (cfg.attrmat, tdt.edgecovmat'))
+				if (cols(tdt.edgecovpd) > 0) SaomDycTVCfg(cfg, tdt, nextattr)
 				nextattr = nextattr + rows(tdt.edgecovmat)
 				needv49 = 1
 			}
@@ -9665,6 +9734,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			tdt = *M.td[t]
 			cfg.attridx[t] = nextattr + 1
 			cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.edgecovmat' : (cfg.attrmat, tdt.edgecovmat'))
+			if (cols(tdt.edgecovpd) > 0) SaomDycTVCfg(cfg, tdt, nextattr)
 			nextattr = nextattr + rows(tdt.edgecovmat)
 			needv15 = 1
 		}

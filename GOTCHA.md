@@ -729,3 +729,9 @@ coefficient as omitted or diverges (rc 498) while the Mata engine is fine (seen 
 A segmentation fault in the plugin ends the Stata process without any message in the log. `~/Library/Logs/DiagnosticReports/StataBE-<date>.ips` has the
 crashing thread with the function names (the plugin is not stripped): parse it with `json.loads(text.split("\n", 1)[1])`, take the thread with
 `"triggered": true` and print its `frames[*].symbol` (seen 2026-10-23: `xt_value` called through `saom_stat_term`, a dangling pointer to a freed graph).
+
+## A Mata `external` declaration CREATES the external
+
+`external real scalar x` at the top of a function creates `x` (missing) if it does not exist, so a following `findexternal("x") == NULL` test is never true. To test for an optional
+external use `pointer(real scalar) scalar p; p = findexternal("x")` without a declaration. (2026-10-23: `SaomBatchSlotTag()` declared `__saom_bslot`, returned "." and every
+batch setup sent `BATCHSETUP.|...`, which the plugin sent to its legacy parser: the whole co-evolution suite hung at 100% CPU.) A struct used in a function must be defined EARLIER in the file.
