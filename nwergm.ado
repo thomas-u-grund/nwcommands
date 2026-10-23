@@ -10,7 +10,7 @@ program nwergm, eclass
 	syntax [anything(name=netname)] [, edges mutual ///
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
-		ABSDIFFCAT(string) DIFF(string) SMALLDIFF(string) SOCIALITY(string) ///
+		ABSDIFFCAT(string) DIFF(string) SMALLDIFF(string) SOCIALITY(string) ATTRCOV(string) DYADCOV(string) MM(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
 		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) GWNSPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
@@ -731,6 +731,14 @@ program nwergm, eclass
 		_nwergm_cov sociality, spec(`"`sociality'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
 		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
+	if `"`attrcov'"' != "" {
+		_nwergm_cov attrcov, spec(`"`attrcov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`mm'"' != "" {
+		_nwergm_cov mm, spec(`"`mm'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
 
 	// --- bipartite (two-mode) Stage 2 terms (harmonisation unit 156):
 	// bcov1()/bcov2() (R ergm's own b1cov()/b2cov(), renamed as Stata
@@ -1211,19 +1219,13 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_recv'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local edgecov {
-		local ++__ergm_termidx
-		tempname __td_ec`__ergm_termidx'
-		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
-		_nwsyntax `__ergm_v', max(1) other(ec`__ergm_termidx')
-		if `ec`__ergm_termidx'nodes' != `nodes' {
-			di "{err}edgecov() network {bf:`__ergm_v'} has a different number of nodes than {bf:`netname'}."
-			error 198
-		}
-		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"=="true")))
-		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
+	if `"`edgecov'"' != "" {
+		_nwergm_cov edgecov, spec(`"`edgecov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`dyadcov'"' != "" {
+		_nwergm_cov dyadcov, spec(`"`dyadcov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- hamming(netname): Hamming distance to a reference network,

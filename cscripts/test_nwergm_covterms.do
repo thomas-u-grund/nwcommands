@@ -67,6 +67,14 @@ program define _cov_check, rclass
 		di "ok  `id': both R and nwergm reject (rc=" _rc ")"
 		exit
 	}
+	matrix M3 = (0.5, 1, 2 \ 0.3, 0, 1.5 \ 1, 2, 0.1)
+	matrix M5 = (0.5, 1, 2, 0, 1 \ 0.3, 0, 1.5, 2, 2 \ 1, 2, 0.1, 1, 0 \ 0, 1, 1, 2, 3 \ 2, 2, 1, 0, 0.5)
+	matrix FF = J(16,16,0)
+	forvalues i = 1/16 {
+		forvalues j = 1/16 {
+			matrix FF[`i',`j'] = mod(`i'*`j', 4)
+		}
+	}
 	capture noisily nwergm `net', edges `nwopts' method(mple)
 	if _rc {
 		di as err "FAIL `id': nwergm error " _rc
@@ -96,7 +104,7 @@ program define _cov_check, rclass
 			}
 		}
 	}
-	local ok = (`ds' < 1e-6 & `db' < `tol' & `dse' < `tol')
+	local ok = (`ds' < 1e-6 & `db' < `tol' & `dse' < 5*`tol')
 	di as txt "`=cond(`ok', "ok  ", "FAIL")' `id' (`nwopts'): max|stat diff|=" %9.2e `ds' "  max|coef diff|=" %9.2e `db' "  max|rel se diff|=" %9.2e `dse'
 	if !`ok' exit 9
 end

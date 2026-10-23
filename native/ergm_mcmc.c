@@ -1548,6 +1548,9 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 #define TERMCODE_ABSDIFFCAT     2003  /* absdiffcat: |a_i-a_j| == p1 (>0) */
 #define TERMCODE_DIFF           2004  /* diff(attr,pow,dir,sign.action): p1=pow, p2 = signcode (+10 if dir is h-t) */
 #define TERMCODE_SMALLDIFF      2005  /* smalldiff: |a_i-a_j| <= p1 */
+#define TERMCODE_DYADCOV_MUT    2007  /* directed dyadcov: mutual / "utri" / "ltri" columns, see stat_dyadcov() in unw_ergm.do */
+#define TERMCODE_DYADCOV_U      2008
+#define TERMCODE_DYADCOV_L      2009
 #define TERMCODE_SOCIALITY      2006  /* sociality: node p1 is an endpoint (p2=1: only if attr[i]==attr[j]) */
 
 static double change_term_cov(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
@@ -1576,6 +1579,13 @@ static double change_term_cov(graph_t *g, int termcode, double p1, double p2, do
 		}
 		case TERMCODE_SMALLDIFF:
 			return (fabs(attr[i] - attr[j]) <= p1) ? delta : 0.0;
+		case TERMCODE_DYADCOV_MUT: case TERMCODE_DYADCOV_U: case TERMCODE_DYADCOV_L: {
+			double v = cm[(j-1)*n + (i-1)];
+			int ref = has_edge(g, j, i);
+			if (termcode == TERMCODE_DYADCOV_MUT) return ref ? delta * v : 0.0;
+			if (termcode == TERMCODE_DYADCOV_U) return ref ? ((j > i) ? -delta * v : 0.0) : ((j < i) ? delta * v : 0.0);
+			return ref ? ((j < i) ? -delta * v : 0.0) : ((j > i) ? delta * v : 0.0);
+		}
 		case TERMCODE_SOCIALITY:
 			if (p2 != 0.0 && attr[i] != attr[j]) return 0.0;
 			return ((double)i == p1 || (double)j == p1) ? delta : 0.0;

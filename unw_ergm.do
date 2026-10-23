@@ -1597,6 +1597,105 @@ void _ergm_nodemix_setup(class ErgmTermData scalar td, real scalar directed, str
 	st_local(nmlocal, strtrim(nm))
 }
 
+// dyadcov(x): directed -> 3 statistics (mutual, utri, ltri; R's labelling
+// copied: "utri" = dyads with ONLY the arc from the higher to the lower
+// node index, "ltri" = only the arc from lower to higher), each the sum
+// of x over the dyads in that state; undirected -> edgecov.
+real rowvector stat_dyadcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, i, j, v
+
+	if (!G.directed) return(stat_edgecov(G, td))
+	ties = G.all_ties()
+	out = J(1, 3, 0)
+	for (k=1; k<=rows(ties); k++) {
+		i = ties[k,1]
+		j = ties[k,2]
+		v = td.edgecovmat[i,j]
+		if (G.has_edge(j,i)) {
+			if (i < j) out[1] = out[1] + v
+		}
+		else if (i > j) out[2] = out[2] + v
+		else out[3] = out[3] + v
+	}
+	return(out)
+}
+real rowvector change_dyadcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar dl, v, ref
+
+	dl = G.has_edge(i,j) ? -1 : 1
+	v = td.edgecovmat[i,j]
+	if (!G.directed) return(dl * v)
+	ref = G.has_edge(j,i)
+	return((ref ? dl*v : 0, ref ? (j > i ? -dl*v : 0) : (j < i ? dl*v : 0), ref ? (j < i ? -dl*v : 0) : (j > i ? dl*v : 0)))
+}
+
+// attrcov(attr, mat): edge covariate x[i,j] = mat[code_i, code_j] (codes =
+// rank among sorted distinct values); undirected reads the (min,max) orientation.
+real matrix _ergm_attrcov_matrix(real colvector attr, real matrix mat, real scalar directed){
+	real colvector u, c
+	real scalar n, i, j, a, b
+	real matrix X
+
+	u = uniqrows(select(attr, attr :< .))
+	if (rows(mat) != rows(u) | cols(mat) != rows(u)) {
+		errprintf("attrcov(): mat has wrong dimensions for the attribute (%g distinct values, matrix is %g x %g).\n", rows(u), rows(mat), cols(mat))
+		exit(198)
+	}
+	n = rows(attr)
+	c = J(n, 1, 0)
+	for (i=1; i<=n; i++) c[i] = sum(u :<= attr[i])
+	X = J(n, n, 0)
+	for (i=1; i<=n; i++) {
+		for (j=1; j<=n; j++) {
+			if (i == j) continue
+			if (directed) X[i,j] = mat[c[i], c[j]]
+			else {
+				a = min((i,j))
+				b = max((i,j))
+				X[i,j] = mat[c[a], c[b]]
+			}
+		}
+	}
+	return(X)
+}
+
+// loads a Stata matrix as a dense n x n dyadic covariate; undirected: the
+// upper triangle (row < column) is mirrored, as R reads x[tail,head].
+void _ergm_covmat_load(class ErgmTermData scalar td, string scalar mname, real scalar n, real scalar directed){
+	real matrix X
+	real scalar i, j
+
+	X = st_matrix(mname)
+	if (rows(X) != n | cols(X) != n) {
+		errprintf("Dyadic covariate matrix has dimension %g x %g, %g x %g expected.\n", rows(X), cols(X), n, n)
+		exit(198)
+	}
+	if (!directed) {
+		for (i=1; i<=n; i++) for (j=i+1; j<=n; j++) X[j,i] = X[i,j]
+	}
+	_diag(X, 0)
+	td.edgecovmat = X
+}
+// directed dyadcov: R keeps the upper triangle when the covariate is
+// asymmetric (xm[lower] <- t(xm)[lower]); returns 1 if it had to.
+real scalar _ergm_dyadcov_upper(class ErgmTermData scalar td){
+	real matrix X
+	real scalar n, i, j, ch
+
+	X = td.edgecovmat
+	n = rows(X)
+	ch = 0
+	for (i=1; i<=n; i++) for (j=i+1; j<=n; j++) {
+		if (X[i,j] != X[j,i]) {
+			ch = 1
+			X[j,i] = X[i,j]
+		}
+	}
+	td.edgecovmat = X
+	return(ch)
+}
 // ---- generic dyad-independent covariate terms (kind in td.sptype) ----
 // weights of dyad (i,j) for one tie, one entry per output column.
 //   absdistpow: |a_i-a_j|^p                    (td.decay = p)
@@ -5850,6 +5949,16 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 				attridxs[pos] = aidx
 				p1v[pos] = tdt.decay
 				if (nm == "diffterm") p2v[pos] = tdt.levels[2] + (tdt.levels[1] < 0 ? 10 : 0)
+			}
+		}
+		else if (nm == "dyadcov") {
+			if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+			covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+			cidx = cols(covmatstack) / cols(tdt.edgecovmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = (M.npar[t] == 1 ? 68 : 2006 + k)
+				covidxs[pos] = cidx
 			}
 		}
 		else if (nm == "nodemixd") {

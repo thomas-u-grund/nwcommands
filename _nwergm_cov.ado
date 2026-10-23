@@ -21,6 +21,39 @@ program _nwergm_cov, rclass
 	local temps ""
 	mata: st_local("__c0", strofreal(cols(__nwergm_last_M.coefnames)))
 	foreach v of local vars {
+		if inlist("`term'", "edgecov", "dyadcov") {
+			tempname td
+			mata: `td' = ErgmTermData()
+			capture quietly _nwsyntax `v', max(1) other(zz)
+			if _rc == 0 {
+				if `zznodes' != `nn' {
+					di "{err}`term'() network {bf:`v'} has a different number of nodes than the model network."
+					error 198
+				}
+				mata: `td'.edgecovmat = *(`zznetobj'->get_matrix_mod(1, `isdir'))
+			}
+			else {
+				capture confirm matrix `v'
+				if _rc {
+					di "{err}`term'(): {bf:`v'} is neither a network nor a Stata matrix."
+					error 198
+				}
+				mata: _ergm_covmat_load(`td', "`v'", `nn', `isdir')
+			}
+			if "`term'" == "edgecov" {
+				mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `td', ("edgecov_`v'"))
+			}
+			else if `isdir' {
+				mata: st_local("__asym", strofreal(_ergm_dyadcov_upper(`td')))
+				if `__asym' di "{txt}note: asymmetric covariate in dyadcov; using upper triangle only"
+				mata: __nwergm_last_M.addterm("dyadcov", 3, &stat_dyadcov(), &change_dyadcov(), `td', ("dyadcov_`v'_mutual", "dyadcov_`v'_utri", "dyadcov_`v'_ltri"))
+			}
+			else {
+				mata: __nwergm_last_M.addterm("dyadcov", 1, &stat_dyadcov(), &change_dyadcov(), `td', ("dyadcov_`v'"))
+			}
+			local temps "`temps' `td'"
+			continue
+		}
 		if "`term'" == "sociality" & "`v'" == "." {
 			tempname td
 			mata: `td' = ErgmTermData()
@@ -35,8 +68,22 @@ program _nwergm_cov, rclass
 			mata: `td' = ErgmTermData()
 			mata: `td'.attr = st_data(1::`nn', "`av'")
 		}
-		if "`term'" == "nodemix" {
+		if "`term'" == "attrcov" {
+			if "`mat'" == "" {
+				di "{err}attrcov(): option {bf:mat()} (a Stata matrix) is required."
+				error 198
+			}
+			capture confirm matrix `mat'
+			if _rc {
+				di "{err}attrcov(): `mat' is not a Stata matrix."
+				error 198
+			}
+			mata: `td'.edgecovmat = _ergm_attrcov_matrix(`td'.attr, st_matrix("`mat'"), `isdir')
+			mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `td', ("attrcov_`vn'"))
+		}
+		else if inlist("`term'", "nodemix", "mm") {
 			mata: _ergm_nodemix_setup(`td', `isdir', "`levels'", "`levelvalues'", "`base'", "`levels2'", "`vn'", "__ergm_cn", "__ergm_nc")
+			if "`term'" == "mm" local __ergm_cn : subinstr local __ergm_cn "nodemix_" "mm_", all
 			if `__ergm_nc' > 0 {
 				if `isdir' {
 					mata: __nwergm_last_M.addterm("nodemixd", `__ergm_nc', &stat_nodemixd(), &change_nodemixd(), `td', tokens("`__ergm_cn'"))

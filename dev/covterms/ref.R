@@ -44,6 +44,9 @@ for (nm in names(nets)) {
   if (!is.directed(nets[[nm]])) { X[lower.tri(X)] <- t(X)[lower.tri(X)] }
   wm(X, file.path(out, paste0("net_", nm, "_ec.csv")))
 }
+M3 <- matrix(c(.5,1,2,.3,0,1.5,1,2,.1), 3, byrow=TRUE)
+M5 <- matrix(c(.5,1,2,0,1,.3,0,1.5,2,2,1,2,.1,1,0,0,1,1,2,3,2,2,1,0,.5), 5, byrow=TRUE)
+FF <- outer(1:16, 1:16, function(i,j) (i*j) %% 4)
 spec <- read.csv(specf, stringsAsFactors=FALSE)
 res <- list()
 for (k in seq_len(nrow(spec))) {
