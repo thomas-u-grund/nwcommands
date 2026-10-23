@@ -2207,6 +2207,437 @@ real rowvector change_bgwdegree2(class ErgmGraph scalar G, real scalar i, real s
 	return(gw_kernel(d2+delta, td.decay) - gw_kernel(d2, td.decay))
 }
 
+/* ===================================================================
+   Bipartite Stage 5 (generic "bipx" family): the R ergm b1 and b2 terms
+   that need per-statistic parameters - b1concurrent/b1mindegree/
+   b1degrange/b1degree(by=)/b1star(attr=)/b1covrange/b1factordistinct/
+   b1sociality/b1starmix/b1twostar/coincidence/b1dsp/gwb1dsp/
+   b1nodematch(full)/gwb1degree(attr=) and their mode-2 mirrors.
+   One term instance holds ONE node-indexed attribute array (td.attr,
+   already recoded to integer codes by _nwergm_bip.ado; every node has
+   exactly one mode, so a mode-1 attribute and a mode-2 attribute share
+   one array) and td.levelpairs = one row (kind, p1, p2) per output
+   statistic. Integers are packed three to a double with _bx_pack().
+   Kinds (must match native/ergm_mcmc.c, TERMCODE = 3000 + kind):
+    1 DEGR      p1=pack(from,to,lev) p2=m   mode-m nodes, degree in [from,to), attr==lev (lev 0 = any)
+    2 DEGRH     p1=pack(from,to,0)   p2=m   degree counted over same-attr neighbours only
+    3 STARATTR  p1=k                 p2=m   sum C(#neighbours with centre's attr, k)
+    4 COVRANGE  p2=m                        sum of max-min of neighbours' attr
+    5 FACTDIST  p2=m                        sum of #distinct nonzero neighbour codes
+    6 SOC       p1=node                     degree of one node
+    7 STARMIX   p1=pack(k,t,h)       p2=m   sum_{u:attr=t} C(#nbrs with attr h,k); h=0: summed over all values
+    8 TWOSTAR   p1=pack(t,lo,hi)     p2=m   2-stars centred on mode-m attr t with neighbour attrs (lo,hi)
+    9 COINC     p1,p2 = two mode-2 node ids  number of common neighbours
+   10 DSP       p1=d                 p2=m   pairs of mode-m nodes with exactly d common neighbours
+   11 GWDSP     p1=decay             p2=m   sum over mode-m pairs of gw_kernel(common neighbours)
+   12 BNM       p1=pack(A,B,t+2(m-1)) p2=e  b1nodematch/b2nodematch (A own code, B other-mode code, t=0 beta,1 alpha, e exponent)
+   13 GWDEGA    p1=decay  p2=pack(m,lev,0)  sum gw_kernel(deg) over mode-m nodes with attr==lev
+   =================================================================== */
+real scalar _bx_pack(real scalar a, real scalar b, real scalar c){
+	return(a + 131072*b + 17179869184*c)
+}
+real rowvector _bx_unpack(real scalar p){
+	real scalar a, b, c
+	c = floor(p/17179869184)
+	b = floor((p - c*17179869184)/131072)
+	a = p - c*17179869184 - b*131072
+	return((a,b,c))
+}
+real colvector _bx_nodes(class ErgmGraph scalar G, real scalar m){
+	return(m==1 ? G.mode1nodes : G.mode2nodes)
+}
+real scalar _bx_g(real scalar c, real scalar e){
+	if (c < 1) return(0)
+	if (e == 0) return(c==1 ? 0 : 0.5*c)
+	return(0.5*c*(c-1)^e)
+}
+real scalar _bx_one(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind, real scalar p1, real scalar p2){
+	real colvector nodes, nodes2
+	real rowvector pk, nb, nb2
+	real scalar a, b, c, u, v, s, d, cnt, mn, mx, from, to, lev, k, t, h, lo, hi, nlo, nhi, e, A, B, ty, m, i, j
+	real rowvector seen
+
+	s = 0
+	if (kind==1 | kind==2) {
+		pk = _bx_unpack(p1); from = pk[1]; to = pk[2]; lev = pk[3]
+		if (to >= 131071) to = 1e12
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (kind==1) {
+				if (lev>0) if (td.attr[u]!=lev) continue
+				d = G.degree_total(u)
+			}
+			else {
+				nb = G.neighbors_out(u); d = 0
+				for (b=1; b<=cols(nb); b++) d = d + (td.attr[nb[b]]==td.attr[u])
+			}
+			s = s + (d>=from & d<to)
+		}
+	}
+	else if (kind==3) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]; nb = G.neighbors_out(u); d = 0
+			for (b=1; b<=cols(nb); b++) d = d + (td.attr[nb[b]]==td.attr[u])
+			s = s + _ergm_choose(d, p1)
+		}
+	}
+	else if (kind==4) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			nb = G.neighbors_out(nodes[a])
+			if (cols(nb)==0) continue
+			s = s + max(td.attr[nb']) - min(td.attr[nb'])
+		}
+	}
+	else if (kind==5) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			nb = G.neighbors_out(nodes[a])
+			if (cols(nb)==0) continue
+			seen = uniqrows(td.attr[nb'])'
+			s = s + sum(seen :> 0)
+		}
+	}
+	else if (kind==6) {
+		s = G.degree_total(p1)
+	}
+	else if (kind==7) {
+		pk = _bx_unpack(p1); k = pk[1]; t = pk[2]; h = pk[3]
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=t) continue
+			nb = G.neighbors_out(u)
+			if (cols(nb)==0) continue
+			if (h>0) s = s + _ergm_choose(sum(td.attr[nb']:==h), k)
+			else {
+				seen = uniqrows(td.attr[nb'])'
+				for (b=1; b<=cols(seen); b++) s = s + _ergm_choose(sum(td.attr[nb']:==seen[b]), k)
+			}
+		}
+	}
+	else if (kind==8) {
+		pk = _bx_unpack(p1); t = pk[1]; lo = pk[2]; hi = pk[3]
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=t) continue
+			nb = G.neighbors_out(u)
+			if (cols(nb)==0) continue
+			nlo = sum(td.attr[nb']:==lo); nhi = sum(td.attr[nb']:==hi)
+			s = s + (lo==hi ? _ergm_choose(nlo,2) : nlo*nhi)
+		}
+	}
+	else if (kind==9) {
+		s = G.common_neighbors(p1, p2)
+	}
+	else if (kind==10 | kind==11) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) {
+			c = G.common_neighbors(nodes[a], nodes[b])
+			if (kind==10) s = s + (c==p1)
+			else s = s + gw_kernel(c, p1)
+		}
+	}
+	else if (kind==12) {
+		pk = _bx_unpack(p1); A = pk[1]; B = pk[2]; ty = mod(pk[3],2); m = floor(pk[3]/2)+1; e = p2
+		nodes = _bx_nodes(G, m)
+		nodes2 = _bx_nodes(G, 3-m)
+		if (ty==0) {
+			for (a=1; a<=rows(nodes2); a++) {
+				v = nodes2[a]
+				if (B>0) if (td.attr[v]!=B) continue
+				nb = G.neighbors_out(v)
+				if (cols(nb)==0) continue
+				seen = uniqrows(td.attr[nb'])'
+				for (b=1; b<=cols(seen); b++) {
+					if (A>0) if (seen[b]!=A) continue
+					s = s + _bx_g(sum(td.attr[nb']:==seen[b]), e)
+				}
+			}
+		}
+		else {
+			for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) {
+				u = nodes[a]; v = nodes[b]
+				if (td.attr[u]!=td.attr[v]) continue
+				if (A>0) if (td.attr[u]!=A) continue
+				nb = G.neighbors_out(u); cnt = 0
+				for (i=1; i<=cols(nb); i++) {
+					if (!G.has_edge(v, nb[i])) continue
+					if (B>0) if (td.attr[nb[i]]!=B) continue
+					cnt++
+				}
+				s = s + (cnt>0 ? cnt^e : 0)
+			}
+		}
+	}
+	else if (kind==13) {
+		pk = _bx_unpack(p2); m = pk[1]; lev = pk[2]
+		nodes = _bx_nodes(G, m)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (lev>0) if (td.attr[u]!=lev) continue
+			s = s + gw_kernel(G.degree_total(u), p1)
+		}
+	}
+	return(s)
+}
+real rowvector stat_bipx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar k
+	out = J(1, rows(td.levelpairs), 0)
+	for (k=1; k<=rows(td.levelpairs); k++) out[k] = _bx_one(G, td, td.levelpairs[k,1], td.levelpairs[k,2], td.levelpairs[k,3])
+	return(out)
+}
+// generic (slow) change statistic: statistic difference under the toggle. The native plugin has the fast per-kind versions.
+real rowvector change_bipx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector s0, s1
+	s0 = stat_bipx(G, td)
+	G.toggle(i, j)
+	s1 = stat_bipx(G, td)
+	G.toggle(i, j)
+	return(s1 - s0)
+}
+
+/* ---- Stage 5 builders: fill an ErgmTermData for the "bipx" term and return the coefficient names (called by _nwergm_bip.ado) ---- */
+real colvector _bx_uniq(real colvector x){
+	real colvector y
+	y = select(x, x :< .)
+	if (rows(y)==0) return(J(0,1,.))
+	return(uniqrows(y))
+}
+// R levels selection by index: empty = all; positive = those positions; negative = drop those positions
+real colvector _bx_sel(real colvector u, real rowvector lev){
+	real rowvector keep
+	real colvector sel
+	real scalar i
+	if (cols(lev)==0) return(u)
+	if (all(lev :> 0)) {
+		// out-of-range positions give a statistic that is always 0 (R: NA level), kept as a missing level
+		sel = J(cols(lev), 1, .)
+		for (i=1; i<=cols(lev); i++) if (lev[i] <= rows(u)) sel[i] = u[lev[i]]
+		return(sel)
+	}
+	keep = select((1..rows(u)), (rowsum(((1..rows(u))' :== (-lev))) :== 0)')
+	return(cols(keep)==0 ? J(0,1,.) : u[keep'])
+}
+// codes 1..rows(u) by match, rows(u)+1 for non-matching
+real colvector _bx_code(real colvector x, real colvector u, real scalar nomatch){
+	real colvector c
+	real scalar i, j
+	c = J(rows(x), 1, rows(u)+1)
+	for (i=1; i<=rows(x); i++) for (j=1; j<=rows(u); j++) if (x[i]==u[j]) { c[i] = j; break; }
+	return(c)
+}
+string rowvector _bx_build(class ErgmTermData scalar td, class ErgmGraph scalar G, string scalar nm, real scalar m,
+	real rowvector X, real rowvector TO, real colvector A1, real colvector A2, real rowvector L1, real rowvector L2,
+	real rowvector F, real rowvector P, string scalar an, string scalar an2){
+
+	real colvector own, oth, u, u2, v, cd, cd2, un
+	real matrix rows_, grid
+	string rowvector names
+	string scalar pre, lbl
+	real scalar n, i, j, k, l, K, hom, lo, hi, INF, nr, nc, a, b, e, ty, diff
+	real rowvector ks, idx
+	real colvector c1, c2, nb1, nb2
+
+	n = G.n
+	INF = 131071
+	pre = (m==1 ? "b1" : "b2")
+	own = _bx_nodes(G, m)
+	oth = _bx_nodes(G, 3-m)
+	td.attr = J(n, 1, 0)
+	rows_ = J(0, 3, 0)
+	names = J(1, 0, "")
+
+	if (nm=="mindeg" | nm=="deg" | nm=="degrange" | nm=="conc") {
+		if (nm=="mindeg") { ks = X; TO = J(1, cols(X), INF); }
+		else if (nm=="conc") { ks = 2; TO = INF; }
+		else if (nm=="deg") { ks = X; TO = X :+ 1; }
+		else {
+			ks = X
+			if (cols(TO)==0) TO = J(1, 1, INF)
+			if (cols(TO)==1 & cols(ks)>1) TO = J(1, cols(ks), TO)
+			else if (cols(ks)==1 & cols(TO)>1) ks = J(1, cols(TO), ks)
+			else if (cols(ks)!=cols(TO)) _error(3200, "The arguments of term degrange must have arguments either of the same length, or one of them must have length 1.")
+			TO = editvalue(TO, ., INF)
+			TO = colmin((TO \ J(1,cols(TO),INF)))
+			if (any(ks :>= TO)) _error(3200, "Term " + pre + "degrange must have from<to.")
+		}
+		hom = (cols(F)>0 ? F[1] : 0)
+		if (rows(A1)==0) {
+			for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (1, _bx_pack(ks[k], TO[k], 0), m)
+				if (nm=="mindeg") names = names, pre+"mindeg"+strofreal(ks[k])
+				else if (nm=="conc") names = names, pre+"concurrent"
+				else if (nm=="deg") names = names, pre+"degree"+strofreal(ks[k])
+				else names = names, (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+" : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k]))
+			}
+		}
+		else if (hom) {
+			u = _bx_sel(_bx_uniq(A1), L1)
+			td.attr = _bx_code(A1, u, 0)
+			for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (2, _bx_pack(ks[k], TO[k], 0), m)
+				names = names, (nm=="deg" ? pre+"deg"+strofreal(ks[k])+"_homophily_"+an : (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+_homophily_"+an : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k])+"_homophily_"+an))
+			}
+		}
+		else {
+			u = _bx_sel(_bx_uniq(A1[own]), L1)
+			td.attr = _bx_code(A1, u, 0)
+			for (l=1; l<=rows(u); l++) for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (1, _bx_pack(ks[k], TO[k], l), m)
+				lbl = an + "_" + strofreal(u[l])
+				if (nm=="conc") names = names, pre+"concurrent_"+lbl
+				else if (nm=="mindeg") names = names, pre+"mindeg"+strofreal(ks[k])+"_"+lbl
+				else if (nm=="deg") names = names, pre+"deg"+strofreal(ks[k])+"_"+lbl
+				else names = names, (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+_"+lbl : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k])+"_"+lbl)
+			}
+		}
+	}
+	else if (nm=="star") {
+		if (rows(A1)==0) _error(3200, "internal: star without attribute")
+		u = _bx_sel(_bx_uniq(A1), L1)
+		td.attr = _bx_code(A1, u, 0)
+		for (k=1; k<=cols(X); k++) {
+			rows_ = rows_ \ (3, X[k], m)
+			names = names, pre+"star_"+strofreal(X[k])+"_"+an
+		}
+	}
+	else if (nm=="covrange") {
+		td.attr = A1
+		rows_ = (4, 0, m)
+		names = pre+"covrange_"+an
+	}
+	else if (nm=="factdist") {
+		u = _bx_sel(_bx_uniq(A1[oth]), L1)
+		if (rows(u)==0) return(J(1,0,""))
+		td.attr = _bx_code(A1, u, 0)
+		td.attr = td.attr :* (td.attr :<= rows(u))
+		rows_ = (5, 0, m)
+		names = pre+"factordistinct_"+an
+	}
+	else if (nm=="soc") {
+		u = own
+		un = (1::rows(own))
+		if (cols(X)==0) X = -1
+		un = _bx_sel(un, X)
+		for (k=1; k<=rows(un); k++) {
+			rows_ = rows_ \ (6, own[un[k]], 0)
+			names = names, pre+"sociality"+strofreal(own[un[k]])
+		}
+	}
+	else if (nm=="starmix") {
+		diff = (cols(F)>0 ? F[1] : 1)
+		u = _bx_uniq(A1)
+		cd = _bx_code(A1, u, 0)
+		nb1 = _bx_uniq(cd[G.mode1nodes]); nb2 = _bx_uniq(cd[G.mode2nodes])
+		nr = rows(nb1); nc = rows(nb2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(cd[G.mode1nodes], nb1, 0)
+		td.attr[G.mode2nodes] = _bx_code(cd[G.mode2nodes], nb2, 0) :+ nr
+		if (diff) {
+			grid = J(nr*nc, 2, 0)
+			for (j=1; j<=nc; j++) for (i=1; i<=nr; i++) grid[(j-1)*nr+i,.] = (i, nr+j)
+			if (cols(TO)>0) grid = grid[_bx_sel((1::rows(grid)), TO),.]
+			for (k=1; k<=rows(grid); k++) {
+				if (m==1) { a = grid[k,1]; b = grid[k,2]; } else { a = grid[k,2]; b = grid[k,1]; }
+				rows_ = rows_ \ (7, _bx_pack(X[1], a, b), m)
+				lbl = (m==1 ? strofreal(u[nb1[grid[k,1]]])+"_"+strofreal(u[nb2[grid[k,2]-nr]]) : strofreal(u[nb2[grid[k,2]-nr]])+"_"+strofreal(u[nb1[grid[k,1]]]))
+				names = names, pre+"starmix_"+strofreal(X[1])+"_"+an+"_"+lbl
+			}
+		}
+		else {
+			idx = (m==1 ? (1..nr) : (nr+1..nr+nc))
+			if (cols(TO)>0) idx = idx[_bx_sel((1::cols(idx)), TO)']
+			for (k=1; k<=cols(idx); k++) {
+				rows_ = rows_ \ (7, _bx_pack(X[1], idx[k], 0), m)
+				names = names, pre+"starmix_"+strofreal(X[1])+"_"+an+"_"+strofreal(m==1 ? u[nb1[idx[k]]] : u[nb2[idx[k]-nr]])
+			}
+		}
+	}
+	else if (nm=="twostar") {
+		// A1 = attribute of the b1 nodes, A2 = attribute of the b2 nodes
+		u = _bx_sel(_bx_uniq(A1[G.mode1nodes]), L1)
+		u2 = _bx_sel(_bx_uniq(A2[G.mode2nodes]), L2)
+		nr = rows(u); nc = rows(u2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(A1[G.mode1nodes], u, 0)
+		td.attr[G.mode2nodes] = _bx_code(A2[G.mode2nodes], u2, 0)
+		// combos: centre level (mode m), leaf pair lo<=hi (other mode); R order: centre fastest, then lo, then hi
+		if (m==1) { c1 = u; c2 = u2; } else { c1 = u2; c2 = u; }
+		grid = J(0, 3, 0)
+		for (b=1; b<=rows(c2); b++) for (a=1; a<=b; a++) for (i=1; i<=rows(c1); i++) grid = grid \ (i, a, b)
+		if (cols(TO)>0) grid = grid[_bx_sel((1::rows(grid)), TO),.]
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (8, _bx_pack(grid[k,1], grid[k,2], grid[k,3]), m)
+			names = names, pre+"twostar_"+an+"_"+strofreal(c1[grid[k,1]])+"_"+an2+"_"+strofreal(c2[grid[k,2]])+"_"+strofreal(c2[grid[k,3]])
+		}
+	}
+	else if (nm=="coinc") {
+		K = rows(G.mode2nodes)
+		grid = J(0, 2, 0)
+		for (i=1; i<K; i++) for (j=i+1; j<=K; j++) grid = grid \ (i, j)
+		if (cols(F)>0) if (F[1] > 0) {
+			// keep pairs whose observed count exceeds `active'
+			idx = J(1, 0, 0)
+			for (k=1; k<=rows(grid); k++) if (G.common_neighbors(G.mode2nodes[grid[k,1]], G.mode2nodes[grid[k,2]]) > F[1]) idx = idx, k
+			grid = (cols(idx)==0 ? J(0,2,0) : grid[idx',.])
+		}
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (9, G.mode2nodes[grid[k,1]], G.mode2nodes[grid[k,2]])
+			names = names, "coincidence_"+strofreal(grid[k,1])+"_"+strofreal(grid[k,2])
+		}
+	}
+	else if (nm=="dsp") {
+		for (k=1; k<=cols(X); k++) { rows_ = rows_ \ (10, X[k], m); names = names, pre+"dsp"+strofreal(X[k]); }
+	}
+	else if (nm=="gwdsp") {
+		rows_ = (11, P[1], m)
+		names = "gw"+pre+"dsp_fixed_"+strofreal(P[1])
+	}
+	else if (nm=="gwdega") {
+		u = _bx_sel(_bx_uniq(A1[own]), L1)
+		td.attr = _bx_code(A1, u, 0)
+		for (l=1; l<=rows(u); l++) {
+			rows_ = rows_ \ (13, P[1], _bx_pack(m, l, 0))
+			names = names, "gw"+pre+"degree_"+strofreal(P[1])+"_"+an+"_"+strofreal(u[l])
+		}
+	}
+	else if (nm=="bnm") {
+		// A1: attr of the own-mode nodes; A2 (optional): by-attribute of the other mode
+		diff = (cols(F)>0 ? F[1] : 0)
+		if (cols(TO)>0 & cols(L1)==0) L1 = TO
+		u = _bx_sel(_bx_uniq(A1[own]), L1)
+		cd = J(n, 1, 0)
+		cd[own] = _bx_code(A1[own], u, 0)
+		// unmatched / missing nodes get unique ids that never match
+		k = 0
+		for (i=1; i<=rows(own); i++) if (cd[own[i]] > rows(u)) { k++; cd[own[i]] = rows(u) + k; }
+		td.attr = cd
+		nc = 0
+		if (rows(A2)>0) {
+			v = _bx_uniq(A2[oth])
+			if (rows(v) < 2) _error(3200, "byattr should have at least two levels")
+			td.attr[oth] = _bx_code(A2[oth], v, 0)
+			k = rows(v) + 1
+			for (i=1; i<=rows(oth); i++) if (td.attr[oth[i]] > rows(v)) { td.attr[oth[i]] = k; k++; }
+			nc = rows(v)
+		}
+		if (P[2] >= 1 & P[1] < 1) { ty = 1; e = P[1]; } else { ty = 0; e = P[2]; }
+		pre = pre + "nodematch_" + an
+		if (diff & nc>0) { for (a=1; a<=rows(u); a++) for (b=1; b<=nc; b++) { rows_ = rows_ \ (12, _bx_pack(a, b, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(u[a])+"_"+strofreal(v[b]); } }
+		else if (diff) { for (a=1; a<=rows(u); a++) { rows_ = rows_ \ (12, _bx_pack(a, 0, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(u[a]); } }
+		else if (nc>0) { for (b=1; b<=nc; b++) { rows_ = rows_ \ (12, _bx_pack(0, b, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(v[b]); } }
+		else { rows_ = (12, _bx_pack(0, 0, ty+2*(m-1)), e); names = pre; }
+	}
+	else _error(3200, "internal: unknown bipx builder " + nm)
+	td.levelpairs = rows_
+	return(names)
+}
+
 /*
 	Degrange/idegrange/odegrange: semi-open-interval degree counts -
 	generalizes `degree(d)' (exact match) to a RANGE [from,to). `td.levelpairs'
@@ -5021,7 +5452,7 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	// must match native/ergm_mcmc.c's own MAXTERMS/MAXATTR exactly - a
 	// model exceeding either falls back to Mata rather than risking the
 	// C plugin's own hard-coded array bounds.
-	maxcols = 64
+	maxcols = 256
 	maxattr = 32
 	maxcovmat = 8
 
@@ -5445,6 +5876,20 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			pos++
 			termcodes[pos] = 79
 			p1v[pos] = tdt.decay
+		}
+		// generic bipartite family (Stage 5, see "bipx" above): one slot per
+		// levelpairs row, termcode 3000 + kind, kind parameters in p1/p2
+		else if (nm == "bipx") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 3000 + tdt.levelpairs[k,1]
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levelpairs[k,2]
+				p2v[pos] = tdt.levelpairs[k,3]
+			}
 		}
 		else return(0)
 	}
