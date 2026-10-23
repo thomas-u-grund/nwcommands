@@ -6531,7 +6531,7 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 
 	real matrix out, devp, scop
 	real rowvector dev, sco, tim, rcc
-	real scalar k, pd, p, b, doper, doperb
+	real scalar k, pd, p, b, doper, doperb, useint, bint
 
 	p = C.p
 	Z = J(K, C.ptot, 0)
@@ -6577,16 +6577,19 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 	}
 	if (C.use_batch) {
 		doperb = doper & C.perok
-		out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0, rcc, doperb)
+		// structural rate effects change during the period: the rate score's compensator is the plugin's time integral of the total rate (protocol 72)
+		useint = (C.hasratecov & cols(SaomSRTypes()) > 0 & want_score & SaomNativePluginVersion() >= 72)
+		out = SaomBatchRun(C.P, p, 0, par[1..p], J(1, 0, 0), par[(p+1)..(p+C.P)], J(1, 0, 0), J(1, 0, 0), K, want_score, 0, rcc, doperb, useint)
 		Z[., 1..p] = out[., 1..p] :- colsum(C.target)
 		if (want_score) S[., 1..p] = out[., (p+1)..(2*p)]
+		bint = 2*p + 6*C.P + 2*C.hasratecov + (doperb ? C.P * (2*p + 2*C.hasratecov) : 0)
 		for (pd=1; pd<=C.P; pd++) {
 			b = 2*p + 6*(pd-1)
 			Z[., p+pd] = out[., b+1] :- C.targetRate[pd]
-			if (want_score) S[., p+pd] = out[., b+3] / par[p+pd] :- SaomActiveRate(C, par, pd)
+			if (want_score) S[., p+pd] = out[., b+3] / par[p+pd] :- (useint ? out[., bint + 2*pd - 1] : SaomActiveRate(C, par, pd))
 		}
 		if (C.hasratecov) SaomBatchRateCovCols(C, out, 2*p + 6*C.P, want_score, Z, S)
-		if (doperb) SaomBatchPerPeriod(C, out, par, 0)
+		if (doperb) SaomBatchPerPeriod(C, out, par, 0, useint, bint)
 		else if (doper) {
 			C.Zper = Z
 			C.Sper = S
@@ -6607,7 +6610,7 @@ void SaomNetSimMany(struct SaomNetCtx scalar C, class ErgmModel scalar M,
 
 /* per-period deviations and scores from the batch output (protocol 18, appended after the summed columns):
    C.Zper / C.Sper, period pd in columns (pd-1)*ptot+1..pd*ptot */
-void SaomBatchPerPeriod(struct SaomNetCtx scalar C, real matrix out, real rowvector par, real scalar cond) {
+void SaomBatchPerPeriod(struct SaomNetCtx scalar C, real matrix out, real rowvector par, real scalar cond, | real scalar useint, real scalar bint) {
 	real scalar pd, kk, p, P, nrc, W0, wper, blk, b, bb
 	real rowvector ie, ic
 
@@ -6626,7 +6629,7 @@ void SaomBatchPerPeriod(struct SaomNetCtx scalar C, real matrix out, real rowvec
 		if (!cond) {
 			bb = 2*p + 6*(pd-1)
 			C.Zper[., blk + p + pd] = out[., bb+1] :- C.targetRate[pd]
-			C.Sper[., blk + p + pd] = out[., bb+3] / par[p+pd] :- SaomActiveRate(C, par, pd)
+			C.Sper[., blk + p + pd] = out[., bb+3] / par[p+pd] :- (args() >= 6 ? (useint ? out[., bint + 2*pd - 1] : SaomActiveRate(C, par, pd)) : SaomActiveRate(C, par, pd))
 		}
 		for (kk=1; kk<=nrc; kk++) {
 			C.Zper[., blk + C.ptot - nrc + kk] = out[., b + 2*p + 2*kk - 1] :- C.targetRateCov[pd, kk]

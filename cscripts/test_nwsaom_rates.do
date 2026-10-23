@@ -75,6 +75,9 @@ nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity ratecov(ega) k0(50) k3(1000
 assert abs(e(ratecoef) - 0.225) < 0.1 & abs(el(e(b),1,1) + 1.795) < 0.15
 nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity ratecov(ega) outrate k0(50) k3(1000) seed(2)
 assert colsof(e(ratecoefs)) == 2 & abs(el(e(ratecoefs),1,1) - 0.22) < 0.1 & abs(el(e(ratecoefs),1,2) - 0.18) < 0.12
+* unconditional estimation: the rate score uses the time integral of the changing rate (siena07: outRate 0.18/0.17, se 0.147/0.115)
+nwsaom, waves(tm1 tm2 tm3) outdegree indegpopularity outrate unconditional k0(50) k3(1000) seed(1)
+assert abs(e(ratecoef) - 0.17) < 0.12 & e(ratecoef_se) > 0.07 & e(ratecoef_se) < 0.2 & abs(el(e(rates),1,1) - 3.5) < 0.9
 * siena07 has no in-degree / reciprocal rate effect for a two-mode network (inRateInv, inRateLog stop with an error)
 foreach ef in inrate reciprate inrateinv inratelog {
 	capture nwsaom, waves(tm1 tm2 tm3) outdegree `ef' k3(30)
@@ -158,7 +161,8 @@ foreach row in ///
 	"behrate(outrate)|139|0|0" "behrate(inrate)|140|0|0" "behrate(reciprate)|85|0|0" "behrate(avexposure)|184.25|0.40|0.7" ///
 	"behrate(totexposure)|453|0.08|0.1" "behrate(susceptavin)|451.417|0.048|0.08" "behrate(infectin)|1658|0.025|0.03" "behrate(infectout)|1306|0.037|0.04" ///
 	"behrate(avtinexposuredist2)|400.75|0|0" "behrate(totinexposuredist2)|1058|0|0" "behrate(totainexposuredist2)|398.402|0|0" "behrate(anyinexposuredist2)|128|0|0" ///
-	"behrate(susceptavcovar(s1))|21.318|0|0" "behrate(infectcovar(s1))|38.86|0|0" "tvcov(s1 s2 s3) behrate(susceptavcovar(s))|18.254|0|0" {
+	"behrate(susceptavcovar(s1))|21.318|0|0" "behrate(infectcovar(s1))|38.86|0|0" "tvcov(s1 s2 s3) behrate(susceptavcovar(s))|18.254|0|0" "tvcov(s1 s2 s3) behrate(infectcovar(s))|106.15|0.057|0.15" ///
+	"behrate(totexposure=3)|292|0.022|0.1" "behrate(totexposure=-3)|72|-0.177|0.35" "behrate(avexposure=2)|144.25|0.293|0.5" "behrate(infectin=2)|1538|0.021|0.03" {
 	tokenize `"`row'"', parse("|")
 	local opt `"`1'"'
 	capture nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) `opt' k0(30) k3(300) seed(2)
@@ -178,9 +182,7 @@ foreach row in ///
 * the covariate rate effect of the behavior and of the network together, several effects of the behavior
 nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) ratecov(s1) behratecov(s1) behrate(totexposure outrate) k0(20) k3(60) seed(2)
 assert colsof(e(ratecoefs)) == 1 & colsof(e(behratecoefs)) == 3 & colsof(e(rc_target)) == 4
-* a threshold of a diffusion effect (RSiena's internal effect parameter)
-nwsaom, waves(co1 co2 co3) outdegree reciprocity behavior(a1 a2 a3 : linear quadratic avalt) behrate(totexposure=3) k0(20) k3(60) seed(2)
-assert colsof(e(behratecoefs)) == 1
+* (the thresholds of the diffusion effects, RSiena's internal effect parameter, are among the effects above)
 * refusals
 foreach bad in "behrate(infectdeg)" "behrate(nosuch)" "behrate(susceptavcovar)" "behrate(outrate(s1))" "behratecov(nosuchvar)" {
 	capture nwsaom, waves(co1 co2 co3) outdegree behavior(a1 a2 a3 : linear) `bad' k3(30)

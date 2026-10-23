@@ -3117,7 +3117,7 @@ program nwsaom, eclass
 	if `__nwsaom_hasstructural' mata: __nwsaom_coev_struct = __nwsaom_structmat
 	else mata: SaomClearStruct()
 	// changing covariates and the behavior among the ratecov() variables, the rate effects of the behavior (behratecov(), behrate())
-	_nwsaom_rates prep, nodes(`nodes') nwaves(`__nwsaom_nwaves') center(`__nwsaom_center') tm(`__nwsaom_tm') coev(`__nwsaom_coev') hasratecov(`__nwsaom_hasratecov') hasbr(`__nwsaom_hasbr') nratecov(`__nwsaom_nratecov') ratecov(`ratecov') ratecovcoef(`ratecovcoef') behavior(`behavior') behratecov(`behratecov') behrate(`behrate') behratecoef(`behratecoef') tvnames(`__nwsaom_tvnames') behstem(`__nwsaom_behstem') symmetric(`=("`symmetric'" != "")')
+	_nwsaom_rates prep, nodes(`nodes') nwaves(`__nwsaom_nwaves') center(`__nwsaom_center') tm(`__nwsaom_tm') coev(`__nwsaom_coev') hasratecov(`__nwsaom_hasratecov') hasbr(`__nwsaom_hasbr') nratecov(`__nwsaom_nratecov') ratecov(`ratecov') ratecovcoef(`ratecovcoef') behavior(`behavior') behratecov(`behratecov') behrate(`behrate') behratecoef(`behratecoef') tvnames(`__nwsaom_tvnames') behstem(`__nwsaom_behstem') symmetric(`=("`symmetric'" != "")') symtype(0`__nwsaom_symtypeval')
 	local __nwsaom_rcvars "`r(rcvars)'"
 	local __nwsaom_brnames "`r(brnames)'"
 	local __nwsaom_rc0 "`r(rc0)'"

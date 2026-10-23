@@ -4892,8 +4892,8 @@ static int simulate_period(const model_t *M, const period_t *PD, const simparams
 			}
 			t += dt_rc;
 			if (P->hasratecov && P->want_score && (P->condmode || t < 1.0)) for (krc = 0; krc < nrc; krc++) rcscore[krc] -= dt_rc * covrateSum_rc[krc];
-			if (P->want_score && !P->condmode && M->nbehterms > 0 && (hasbrc || P->hasratecov)) {
-				/* protocol 72 (co-evolution): the compensators of the rate scores over the whole period, including the last, truncated interval */
+			if (P->want_score && !P->condmode && (hasbrc || P->hasratecov)) {
+				/* protocol 72 (co-evolution, and structural rate effects without conditioning): the compensators of the rate scores over the whole period, including the last, truncated interval */
 				double dteff = (t < 1.0) ? dt_rc : 1.0 - (t - dt_rc);
 				rintN_l += dteff * (P->hasratecov ? (symB ? symGfac_rc : totw_rc) : (double)npresent);
 				rintB_l += dteff * (hasbrc ? totwb : (double)npresent);

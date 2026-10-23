@@ -562,8 +562,12 @@ rate) in one Robbins-Monro parameter vector. {opt ratecovcoef(numlist)} sets the
 one per variable or one for all (default 0). If the data do not identify a coefficient (a
 non-positive derivative estimate), it is kept fixed at its starting value, as RSiena does;
 {bf:e(ratecoefs_fixed)} (with one variable {bf:e(ratecoef_fixed)}) reports whether this happened.
-{opt ratecov()} cannot yet be combined with co-evolution, multi-wave models, {opt present()}, or
-{opt missnet()}; it can be combined with {opt symmetric}.
+{opt ratecov()} cannot be combined with {opt present()} or {opt missnet()}; it can be combined with {opt symmetric},
+{opt waves()}, two-mode networks (the covariates belong to the actors) and, with {opt waves()}, {opt behavior()}.
+A name declared in {opt tvcov()} is a changing covariate: period p uses its value at wave p (centred by the mean of
+all its values). With {opt behavior()} the name of the behavior is the behavior itself as a covariate of the
+network's rate (RSiena's RateX with a behavior): the actor's rate follows the behavior's value as it changes during
+the period; the statistic uses the value at the start of the period.
 
 {pstd}
 With {opt waves()} the coefficient is one value shared by every period (RSiena's {cmd:RateX} has no
@@ -572,6 +576,32 @@ with the alcohol covariate of s50a (directed, density and reciprocity): RateX 0.
 0.357, density -2.38 and reciprocity 2.85 against -2.375 and 2.849, rates 5.7/4.4 against 5.67/4.47;
 and for a symmetrized version (BJOINT, {opt symtype(joint)}): RateX 0.153 against 0.151, density
 -1.316 against -1.312, rates 0.307/0.264 against 0.305/0.263.
+
+{marker behrate}{...}
+{title:Rate of the behavior}
+
+{pstd}
+With {opt behavior()} and {opt waves()} the behavior's own rate can depend on actor characteristics, as the
+network's rate does with {opt ratecov()}: actor i's rate of behavior change in a period is the period's behavior rate
+times exp(sum_k {it:b_k}*{it:x_k}[i]). {opt behratecov(varlist)} takes constant covariates, changing covariates
+declared in {opt tvcov()} and the name of the behavior itself (its current value); {opt behrate(list)} takes
+effects of the network position and of the exposure to the behavior of the alters (RSiena's behavior rate effects),
+with x_i the value of the effect for actor i in the {it:current} state of the network and the behavior:
+{opt outrate}, {opt inrate}, {opt reciprate} (out-degree, in-degree, reciprocated degree);
+{opt totexposure} (sum of the alters' behavior values), {opt avexposure} (their mean), {opt susceptavin} (mean exposure
+times the in-degree), {opt infectin}, {opt infectout} (sum of the alters' values times their in- or out-degree; in a
+non-directed network {opt infectdeg}), {opt avtinexposuredist2}, {opt totinexposuredist2}, {opt totainexposuredist2},
+{opt anyinexposuredist2} (exposure through the alters' in-neighbours), and {opt susceptavcovar(var)}, {opt infectcovar(var)}
+(the same with a covariate of the actors; {it:var} can be a changing covariate). {opt effect=#} sets the threshold that
+RSiena calls the internal effect parameter: with # > 0 the exposure counts only if at least # alters have a value of 0.5 or
+more, with # < 0 the exposure is also capped at |#|. A non-directed network has {opt outrate}, {opt avexposure},
+{opt totexposure}, {opt infectdeg} and the two covariate effects. Every coefficient is estimated with the other
+parameters ({bf:e(behratecoefs)}); {bf:e(rc_target)} gives the observed statistics.
+
+{pstd}
+Not combinable with {opt present()}, {opt joinat()}, {opt missnet()}/{opt missbeh()}, several behaviors, the structural rate
+effects of the network ({opt outrate} ...), a two-mode network, or the pairwise non-directed model types
+(joint, force, agree); {cmd:estat} is not available afterwards. Native plugin only.
 
 {marker dyadcov}{...}
 {title:Dyadic covariates}

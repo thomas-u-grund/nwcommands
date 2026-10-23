@@ -84,8 +84,12 @@ end
 capture program drop _nwsaom_rates_prep
 program define _nwsaom_rates_prep, rclass
 	syntax , NODES(integer) NWAVES(integer) CENTER(integer) TM(integer) COEV(integer) HASRATECOV(integer) HASBR(integer) NRATECOV(integer) ///
-		[ RATECOV(string) RATECOVCOEF(string) BEHAVIOR(string) BEHRATECOV(string) BEHRATE(string) BEHRATECOEF(string) TVNAMES(string) BEHSTEM(string) SYMMETRIC(integer 0) ]
+		[ RATECOV(string) RATECOVCOEF(string) BEHAVIOR(string) BEHRATECOV(string) BEHRATE(string) BEHRATECOEF(string) TVNAMES(string) BEHSTEM(string) SYMMETRIC(integer 0) SYMTYPE(integer 0) ]
 	local nper = `nwaves' - 1
+	if `coev' & inlist(`symtype', 1, 2, 3) & (`hasratecov' | `hasbr') {
+		di "{err}rate effects with a behavior are available for the non-directed model types forcing and confirmation (symtype()), not for the pairwise types joint, force and agree."
+		error 198
+	}
 	if `coev' & "`behstem'" == "" {
 		local behstem : word 1 of `behavior'
 		local behstem = ustrregexra("`behstem'", "[0-9]+$", "")
