@@ -280,6 +280,23 @@ program define nwergm_estat_gof, rclass
 		exit 498
 	}
 
+	// a bipartite model gets R's bipartite gof (b1degree, b2degree, dspartners, distance)
+	mata: st_local("__gof_isbip", strofreal(__nwergm_last_G.bipartite))
+	if `__gof_isbip' {
+		tempname obsG obsvec
+		mata: `obsG' = ErgmGraph()
+		mata: `obsG'.init(`nodes', 0)
+		mata: nwergm_estat_bridge_from_netobj(`netobj', `obsG', 0)
+		mata: `obsG'.set_bipartite(__nwergm_last_G.mode)
+		mata: `obsvec' = ergm_bip_gofstats(`obsG')
+		mata: st_local("__gof_n1", strofreal(rows(`obsG'.mode1nodes)))
+		mata: mata drop `obsG'
+		_nwergm_bipgof, obs(`obsvec') nsim(`nsim') burnin(`gofburnin') interval(`gofinterval') n1(`__gof_n1') n2(`=`nodes'-`__gof_n1'') nodes(`nodes')
+		return add
+		mata: mata drop `obsvec'
+		exit
+	}
+
 	// observed comparison statistics (Part XX: reuse the package's own
 	// existing algorithms - nwgeodesic's real BFS/Dijkstra machinery and
 	// nwtriads' real MAN-census machinery - rather than duplicating

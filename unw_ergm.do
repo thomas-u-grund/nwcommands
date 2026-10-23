@@ -2663,6 +2663,42 @@ string rowvector _bx_build(class ErgmTermData scalar td, class ErgmGraph scalar 
 	return(names)
 }
 
+/* Goodness-of-fit statistics of R's gof() for a bipartite network (default GOF = b1degree + b2degree + dspartners + distance):
+   one row vector = b1 degree counts 0..n2, b2 degree counts 0..n1, dyadwise-shared-partner counts 0..n-2, geodesic distance counts 1..n-1 then "infinite". */
+real rowvector ergm_bip_gofstats(class ErgmGraph scalar G){
+	real scalar n, n1, n2, i, j, k, c, d, h, t
+	real rowvector b1, b2, dsp, dist, nb, frontier, nxt
+	real colvector seen, dd
+
+	n = G.n; n1 = rows(G.mode1nodes); n2 = rows(G.mode2nodes)
+	b1 = J(1, n2+1, 0); b2 = J(1, n1+1, 0); dsp = J(1, n-1, 0); dist = J(1, n, 0)
+	for (i=1; i<=n1; i++) b1[G.degree_total(G.mode1nodes[i])+1] = b1[G.degree_total(G.mode1nodes[i])+1] + 1
+	for (i=1; i<=n2; i++) b2[G.degree_total(G.mode2nodes[i])+1] = b2[G.degree_total(G.mode2nodes[i])+1] + 1
+	for (i=1; i<n; i++) for (j=i+1; j<=n; j++) {
+		c = G.common_neighbors(i, j)
+		dsp[c+1] = dsp[c+1] + 1
+	}
+	for (i=1; i<n; i++) {
+		dd = J(n, 1, .)
+		dd[i] = 0
+		frontier = i; d = 0
+		while (cols(frontier) > 0) {
+			d++
+			nxt = J(1, 0, .)
+			for (k=1; k<=cols(frontier); k++) {
+				nb = G.neighbors_out(frontier[k])
+				for (h=1; h<=cols(nb); h++) if (dd[nb[h]] >= .) { dd[nb[h]] = d; nxt = nxt, nb[h]; }
+			}
+			frontier = nxt
+		}
+		for (j=i+1; j<=n; j++) {
+			if (dd[j] >= .) dist[n] = dist[n] + 1
+			else dist[dd[j]] = dist[dd[j]] + 1
+		}
+	}
+	return((b1, b2, dsp, dist))
+}
+
 /*
 	Degrange/idegrange/odegrange: semi-open-interval degree counts -
 	generalizes `degree(d)' (exact match) to a RANGE [from,to). `td.levelpairs'
