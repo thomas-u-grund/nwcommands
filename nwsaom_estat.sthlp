@@ -89,6 +89,9 @@ directed, so all 16 categories are always reported (no undirected-network specia
 {helpb nwergm}'s own triad-census report).
 
 {pstd}
+{bf:Limits.} {cmd:estat gof} is not yet available after a two-mode (bipartite) fit (it stops with an error), and not after {cmd:nwsaom multinet}. It works after directed and non-directed one-mode fits with the native-only effects.
+
+{pstd}
 {bf:Co-evolution fits} (a {opt behavior()} model) add a fourth default auxiliary statistic,
 {bf:behavior} (real RSiena's own {cmd:BehaviorDistribution()}), and simulate network and behavior
 JOINTLY for every replicate regardless of which {opt stats()} were actually requested - the fitted

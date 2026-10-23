@@ -169,6 +169,11 @@ program define nwsaom_estat_gof, rclass
 		di as err "last nwsaom estimates not found"
 		exit 301
 	}
+
+	if "`e(twomode)'" == "1" {
+		di as error "estat gof is not yet available after a two-mode (bipartite) fit."
+		exit 198
+	}
 	capture mata: __nwsaom_last_M.nparam()
 	if _rc {
 		di as err "no fitted nwsaom model available for simulation - re-run nwsaom before estat gof."
