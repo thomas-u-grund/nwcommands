@@ -306,14 +306,16 @@ for a full wall-clock benchmark against real RSiena and the performance-tuning h
 {title:Supported network types}
 
 {pstd}
-Binary: yes (only) - a valued/weighted wave is rejected. Directed: yes (required) - SAOM's own
-ministep formulation is inherently directed (an actor controls only its own outgoing ties); an
-undirected wave is rejected. Two-mode: no (rejected). Signed: not applicable/not supported.
+Binary: yes (only) - a valued/weighted wave is rejected. Directed one-mode: yes (the default
+model; an actor controls its own outgoing ties). Non-directed (undirected or tie-symmetric waves,
+RSiena's non-directed model types): yes, see {opt symmetric}. Two-mode (bipartite, actors choose
+events): yes, see {opt actormode()}. Several co-evolving networks: {help nwsaom##multinet:nwsaom multinet}.
+Signed: not applicable/not supported.
 
 {title:Limitations (v1 scope)}
 
 {pstd}
-{cmd:nwsaom} estimates {bf:binary, directed, one-mode} SAOMs:
+{cmd:nwsaom} estimates {bf:binary} SAOMs (directed one-mode, non-directed and two-mode); remaining limits:
 
 {p2colset 9 13 15 2}{...}
 {p2col: o}Two-mode (bipartite) waves are supported (see {help nwsaom_remarks##twomode:Two-mode networks}); temporal-metadata
