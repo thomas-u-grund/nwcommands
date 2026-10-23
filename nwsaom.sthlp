@@ -244,7 +244,7 @@
 {title:Several dependent networks: nwsaom multinet}
 
 {p 8 17 2}
-{cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)}
+{cmd:nwsaom multinet,} {opt net1(namelist)} {opt net2(namelist)} [{opt eff1(effects)} {opt eff2(effects)} {opt cross1(effects)} {opt cross2(effects)} [{opt sym1}] [{opt sym2}]
 {opt k0(#)} {opt k3(#)} {opt firstg(#)} {opt seed(#)}]
 
 {p 4 4 2}
@@ -255,7 +255,7 @@ each network (default {cmd:outdegree reciprocity}): {cmd:outdegree reciprocity t
 {opt cross2()} those of network 2 on network 1: {cmd:crprod crprodrecip crprodmutual from frommutual fromany to toback torecip clxwx clxwx1 clxwx2 mixedinxw}
 (RSiena's crprod, crprodRecip, crprodMutual, from, fromMutual, fromAny, to, toBack, toRecip, cl.XWX, cl.XWX1, cl.XWX2, mixedInXW; a parameter after a colon,
 e.g. {cmd:from:2}, is RSiena's effect parameter). The cross-network statistics read the other network at the start of the period, the simulation its current
-state, as RSiena. {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
+state, as RSiena. {opt sym1} / {opt sym2} declare the first / second network non-directed (undirected {cmd:nwset}, forcing model, protocol 62). {bf:Native plugin only} (protocol 52); observed statistics and estimates agree with siena07.
 
 {p 4 4 2}
 Further cross-network effects (all validated against siena07; the names are RSiena's short names in lower case, see the effects inventory): the degree and distance-two

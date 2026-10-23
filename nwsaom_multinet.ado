@@ -43,7 +43,7 @@ real scalar __nwsaom_mn_avgsq(real scalar slot) {
 	}
 	return(tot / (n * cols(Gs)))
 }
-void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg,
+void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg, real scalar sym1, real scalar sym2,
 	string scalar bname, string scalar Vname, string scalar ratename, string scalar tcname, string scalar ncoefname, string scalar targetname) {
 	external pointer(class ErgmGraph scalar) rowvector __nwsaom_mn_Gs1, __nwsaom_mn_Gs2
 	external class ErgmModel scalar __nwsaom_mn_M1, __nwsaom_mn_M2
@@ -52,7 +52,7 @@ void __nwsaom_mn_post(real rowvector theta01, real rowvector theta02, real scala
 	real rowvector t1, t2
 	t1 = (cols(theta01) == __nwsaom_mn_M1.nparam() ? theta01 : J(1, __nwsaom_mn_M1.nparam(), 0))
 	t2 = (cols(theta02) == __nwsaom_mn_M2.nparam() ? theta02 : J(1, __nwsaom_mn_M2.nparam(), 0))
-	fit = SaomEstimateMN(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, t1, t2, K0, K3, firstg)
+	fit = SaomEstimateMN(__nwsaom_mn_Gs1, __nwsaom_mn_M1, __nwsaom_mn_Gs2, __nwsaom_mn_M2, t1, t2, K0, K3, firstg, sym1, sym2)
 	p = fit.p1 + fit.p2
 	P = fit.P
 	st_matrix(bname, fit.par[1..p])
@@ -68,12 +68,12 @@ end
 capture program drop nwsaom_multinet
 program define nwsaom_multinet, eclass
 	version 14
-	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) ///
+	syntax , NET1(string) NET2(string) [ EFF1(string) EFF2(string) CROSS1(string) CROSS2(string) SYM1 SYM2 ///
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
-	if "`eff1'" == "" local eff1 "outdegree reciprocity"
-	if "`eff2'" == "" local eff2 "outdegree reciprocity"
+	if "`eff1'" == "" local eff1 = cond("`sym1'" != "", "outdegree", "outdegree reciprocity")
+	if "`eff2'" == "" local eff2 = cond("`sym2'" != "", "outdegree", "outdegree reciprocity")
 	local nw1 : word count `net1'
 	local nw2 : word count `net2'
 	if `nw1' != `nw2' | `nw1' < 2 {
@@ -90,8 +90,8 @@ program define nwsaom_multinet, eclass
 		forvalues __w = 1/`nw`__s'' {
 			local __wname : word `__w' of `net`__s''
 			_nwsyntax `__wname', max(1) other(mn`__s'_`__w')
-			if "`mn`__s'_`__w'directed'" != "true" | "`mn`__s'_`__w'is2mode'" == "true" {
-				di "{err}nwsaom multinet needs directed one-mode networks."
+			if "`mn`__s'_`__w'is2mode'" == "true" | ("`mn`__s'_`__w'directed'" != "true" & "`sym`__s''" == "") {
+				di "{err}nwsaom multinet needs directed one-mode networks (or undirected ones with sym1 / sym2)."
 				error 198
 			}
 			if `nodes' == . local nodes = `mn`__s'_`__w'nodes'
@@ -128,7 +128,7 @@ program define nwsaom_multinet, eclass
 		}
 	}
 	tempname b V R tc tg
-	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
+	mata: __nwsaom_mn_post((.), (.), `k0', `k3', `firstg', ("`sym1'" != ""), ("`sym2'" != ""), "`b'", "`V'", "`R'", "`tc'", "__NWSAOM_MN_COEFNAMES__", "`tg'")
 	local __cn "$__NWSAOM_MN_COEFNAMES__"
 	macro drop __NWSAOM_MN_COEFNAMES__
 	matrix colnames `b' = `__cn'

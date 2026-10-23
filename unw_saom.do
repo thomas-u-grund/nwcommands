@@ -8651,7 +8651,7 @@ void SaomMNSimManyCB(struct SaomMNCtx scalar C, real rowvector par, real scalar 
 }
 struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector G1, class ErgmModel scalar M1,
 	pointer(class ErgmGraph scalar) rowvector G2, class ErgmModel scalar M2,
-	real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg) {
+	real rowvector theta01, real rowvector theta02, real scalar K0, real scalar K3, real scalar firstg, | real scalar sym1, real scalar sym2) {
 	struct SaomMNFit scalar fit
 	struct SaomMNCtx scalar C
 	struct SaomNativeConfig scalar cfg1, cfg2
@@ -8673,6 +8673,10 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 		exit(198)
 	}
 	ver = SaomNativePluginVersion()
+	if ((args() >= 10 ? (sym1 | sym2) : 0) & ver < 62) {
+		errprintf("nwsaom multinet with a non-directed network needs a plugin of protocol 62 or later (this one is " + strofreal(ver) + ").\n")
+		exit(198)
+	}
 	if (ver < 52) {
 		errprintf("nwsaom multinet needs a plugin of protocol 52 or later (this one is " + strofreal(ver) + "); rebuild or update it.\n")
 		exit(198)
@@ -8686,9 +8690,9 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 	SaomSetEngine(1, "")
 	noev = J(1, P, NULL)
 	SaomSetBatchSlot(0)
-	SaomBatchSetup(G1, P, cfg1, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), 0, J(0, 0, 0), noev)
+	SaomBatchSetup(G1, P, cfg1, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), (args() >= 10 ? 4 * sym1 : 0), J(0, 0, 0), noev)
 	SaomSetBatchSlot(1)
-	SaomBatchSetup(G2, P, cfg2, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), 0, J(0, 0, 0), noev)
+	SaomBatchSetup(G2, P, cfg2, J(1, 0, 0), J(1, 0, NULL), 0, 0, 0, 0, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), J(1, 0, 0), (args() >= 11 ? 4 * sym2 : 0), J(0, 0, 0), noev)
 	SaomSetBatchSlot(0)
 	SaomMNObs(G1, G2, P, p1, p2, C.target, C.tr1, C.tr2)
 	rate10 = J(1, P, 0)

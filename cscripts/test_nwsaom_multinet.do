@@ -76,3 +76,20 @@ capture nwsaom multinet, net1(na1 na2 na3) net2(nb1 nb2 nb3) cross1(covnetnet:no
 assert _rc != 0
 di "PASS multinet covariate effects"
 
+* a NON-DIRECTED first network (sym1, forcing: the actor's choice changes the tie in both directions) with cross-network effects of a directed second network (protocol 62)
+forvalues w = 1/3 {
+	mata: st_matrix("__S`w'", ((st_matrix("__A`w'") + st_matrix("__A`w'")') :> 0))
+	nwset, mat(__S`w') undirected name(ns`w') nooutput
+}
+foreach ef in crprod from to closure outpopintn outactintn divoutegointn divinegointn avdegintn fromany clxwx mixedinxw joutmix dist2outinactintn outoutdist2actintn absoutdiffintn doubleoutact sharedto inpopoutw ndist2actintn {
+	capture nwsaom multinet, net1(ns1 ns2 ns3) net2(nb1 nb2 nb3) sym1 cross1(`ef') k0(10) k3(40) seed(3)
+	assert inlist(_rc, 0, 498, 505)
+	if _rc == 0 {
+		assert "`e(engine)'" == "native" & colsof(e(b)) == 4
+		local nm : colnames e(b)
+		assert strpos("`nm'", "net1_x_`ef'") > 0
+	}
+}
+capture noisily nwsaom multinet, net1(ns1 ns2 ns3) net2(nb1 nb2 nb3) cross1(crprod) k3(30)
+assert _rc == 198
+di "PASS multinet non-directed"
