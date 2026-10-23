@@ -116,6 +116,6 @@ foreach ef in diffx higher egosqx absdiffx samextranstrip samexoutact homxoutact
 		assert strpos("`cn'", "bv_`ef'") | strpos("`cn'", "natb_`ef'")
 	}
 }
-capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(simxtranstrip) k3(30)
+capture nwsaom, waves(bs1 bs2 bs3) outdegree reciprocity behavior(z1 z2 z3 : linear) netbeh(homxoutact2) k3(30)
 assert _rc == 198
 di as text "behavior network effects PASS"
