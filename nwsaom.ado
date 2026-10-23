@@ -442,7 +442,7 @@ program nwsaom, eclass
 			di "{err}{bf:actormode()} must be 1 or 2 (the mode whose nodes are the actors)."
 			error 198
 		}
-		foreach __opt in symmetric ratecov present joinat leaveat missnet missbeh behavior structural interact nodecov nodematch simcov ///
+		foreach __opt in symmetric ratecov joinat leaveat missnet missbeh structural interact nodecov nodematch simcov ///
 			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcov dyadcovrecip dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
@@ -551,6 +551,13 @@ program nwsaom, eclass
 	// present() entirely is a true no-op (every actor present the whole
 	// time), matching every pre-existing model.
 	local __nwsaom_haspresent = 0
+	// a two-mode network with a co-evolving behavior: the events are ABSENT actors (they never act and stay among the alters; protocol 26), one 0/1 variable per wave
+	forvalues __w = 1/`=cond(`__nwsaom_tm' & "`behavior'" != "", `__nwsaom_nwaves', 0)' {
+		tempvar __tmp`__w'
+		generate byte `__tmp`__w'' = 0
+		mata: st_store(__nwsaom_tm_actidx, "`__tmp`__w''", J(rows(__nwsaom_tm_actidx), 1, 1))
+		local present "`present' `__tmp`__w''"
+	}
 	if "`present'" != "" {
 		local __nwsaom_npresent : word count `present'
 		if `__nwsaom_npresent' != `__nwsaom_nwaves' {
@@ -672,7 +679,7 @@ program nwsaom, eclass
 			di "{err}option {bf:structural()} is v1 scope: exactly two waves ({bf:wave1()}/{bf:wave2()}, not {bf:waves()})."
 			error 198
 		}
-		if `__nwsaom_coev' {
+		if `__nwsaom_coev' & !`__nwsaom_tm' {
 			di "{err}option {bf:structural()} is v1 scope: network-only, not combinable with {bf:behavior()}."
 			error 198
 		}
@@ -2674,7 +2681,7 @@ program nwsaom, eclass
 			local __wbeh : word `__w' of `behavior'
 			confirm variable `__wbeh'
 			capture mata: mata drop __nwsaom_beh_w`__w' __nwsaom_missbeh_w`__w' __nwsaom_beh_obs`__w'
-			mata: __nwsaom_beh_w`__w' = st_data(1::`nodes', "`__wbeh'")
+			mata: __nwsaom_beh_w`__w' = SaomTmBeh(st_data(1::`nodes', "`__wbeh'"))
 			if `__nwsaom_hasmissbeh' {
 				local __wmissbeh : word `__w' of `missbeh'
 				confirm variable `__wmissbeh'
@@ -3049,6 +3056,7 @@ program nwsaom, eclass
 	capture mata: mata drop __nwsaom_last_fntype __nwsaom_last_struct __nwsaom_last_present
 	mata: __nwsaom_last_fntype = SaomFntypeFromNames(__nwsaom_last_M)
 	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
+	if `__nwsaom_hasstructural' mata: __nwsaom_coev_struct = __nwsaom_structmat
 	else mata: __nwsaom_last_struct = J(0, 0, 0)
 	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
 	else mata: __nwsaom_last_present = J(0, 1, 0)

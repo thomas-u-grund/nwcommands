@@ -55,4 +55,16 @@ capture nwsaom, waves(tm1 tm2 tm3) outdegree samexoutact(ega) k3(30)
 assert _rc == 198
 capture nwsaom, waves(tm1 tm2 tm3) outdegree netx(homxtransrectrip:ega) k3(30)
 assert _rc == 198
+* a co-evolving behavior of the actors in a two-mode network (events are absent actors); network effects with the behavior as covariate (siena07: dev/saom_rsiena_tmbeh.R)
+gen double zb1 = 0
+gen double zb2 = 0
+gen double zb3 = 0
+mata: st_store(ia, "zb1", 1 :+ mod(1::rows(ia), 4)); st_store(ia, "zb2", 1 :+ mod((1::rows(ia)) :+ (mod(1::rows(ia), 5) :== 0), 4)); st_store(ia, "zb3", 1 :+ mod(1::rows(ia), 4))
+foreach sp in "" behegox "netbeh(egosqx)" "netbeh(altindist2)" "netbeh(totindist2)" "netbeh(simegoindist2)" "netbeh(sameegoindist2)" "netbeh(samexcycle4)" {
+	capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(zb1 zb2 zb3 : linear) `sp' k0(10) k3(40) seed(3)
+	assert inlist(_rc, 0, 498, 505, 301)
+	if _rc == 0 assert "`e(engine)'" == "native" & e(twomode) == 1
+}
+capture nwsaom, waves(tm1 tm2 tm3) outdegree behavior(zb1 zb2 zb3 : linear) netbeh(crossxoutact) k3(30)
+assert _rc == 198
 di "PASS twomode covariate effects"

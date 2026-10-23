@@ -9187,6 +9187,23 @@ struct SaomCoevMultiFit {
 	real rowvector fixed		// 1 for an effect kept fixed at its starting value (non-positive phase-1 derivative, RSiena's rule)
 }
 
+/* a two-mode network with a co-evolving behavior: the behavior of the EVENT rows is set to the actors' mean (so the mean, the range and the centred shape statistics are those of the actors) */
+real colvector SaomTmBeh(real colvector x) {
+	external real rowvector __nwsaom_tm_isactor
+	real colvector out
+	if (findexternal("__nwsaom_tm_isactor") == NULL) return(x)
+	if (cols(__nwsaom_tm_isactor) != rows(x)) return(x)
+	out = x
+	out = out :* __nwsaom_tm_isactor' :+ mean(select(x, __nwsaom_tm_isactor')) :* (1 :- __nwsaom_tm_isactor')
+	return(out)
+}
+/* protocol 62: structural (fixed) dyads of a two-mode network with a co-evolving behavior: the mask is the external __nwsaom_coev_struct (1 = fixed), set by nwsaom.ado */
+void SaomCfgStruct(struct SaomNativeConfig scalar cfg) {
+	external real matrix __nwsaom_coev_struct
+	if (findexternal("__nwsaom_coev_struct") == NULL) return
+	if (rows(__nwsaom_coev_struct) == 0) return
+	cfg.structpairs = SaomMaskToDyadList(__nwsaom_coev_struct :== 1)
+}
 struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	pointer(class ErgmGraph scalar) rowvector Gwaves,
 	class ErgmModel scalar M,
@@ -9260,6 +9277,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	// native dispatch: every term on both sides natively covered, and a
 	// plugin new enough for unconditional estimation (protocol >= 3)
 	C.cfg = SaomNativeSetup(M)
+	SaomCfgStruct(C.cfg)
 	if (C.hasnetgate) C.cfg.fntype = fntype
 	C.cfgBeh = SaomBehaviorNativeSetup(Mbeh)
 	C.use_native = C.cfg.eligible & C.cfgBeh.eligible & SaomNativeAvailable()
@@ -12069,6 +12087,7 @@ struct SaomMBCtx scalar SaomMBInit(
 
 	// native dispatch: every term on every side natively covered, and a plugin that knows several behaviors
 	C.cfg = SaomNativeSetup(M)
+	SaomCfgStruct(C.cfg)
 	C.codes = J(1, 0, 0)
 	C.fnt = J(1, 0, 0)
 	why_ok = C.cfg.eligible
@@ -13331,6 +13350,12 @@ void SaomBehDyStore(real scalar n) {
 }
 /* netbeh(): (p1, scale) of a network effect with the dependent behavior as the covariate: the similarity effects carry the behavior's similarity mean and 1/range (RSiena) */
 real rowvector SaomNbSim(string scalar eff, real scalar xparam, class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar rng) {
+	if (findexternal("__nwsaom_tm_isactor") != NULL) {
+		if (!anyof(("altindist2", "totindist2", "simegoindist2", "sameegoindist2", "samexcycle4", "egosqx", "behegox"), eff)) {
+			errprintf("nwsaom: netbeh(" + eff + ") is not available for a two-mode network (available: egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4; behegox).\n")
+			exit(198)
+		}
+	}
 	if (!anyof(("simdist2", "simegodist2", "simegoindist2", "simrecipx", "simxtranstrip"), eff)) return((xparam, 1))
 	if (rng <= 0) {
 		errprintf("nwsaom: netbeh(" + eff + "): the behavior variable does not vary.\n")
