@@ -1,8 +1,6 @@
 \chapter{Estimation and diagnostics}\label{ch:estimation}
 
-This chapter explains what \nwsaom{} does when it fits a model, which options steer the algorithm, how to decide whether a fit has converged, what the error messages mean, and which results are available afterwards. The statements follow the help files \texttt{nwsaom}, \texttt{nwsaom\_remarks} (section Estimation) and \texttt{nwsaom\_estat}, and the developer's decision log.
-
-\section{The algorithm in brief}
+This chapter explains what \nwsaom{} does when it fits a model, which options steer the algorithm, how to decide whether a fit has converged, what the error messages mean, and which results are available afterwards. \section{The algorithm in brief}
 Coefficients are estimated by the method of moments with Robbins--Monro stochastic approximation, which is also the default of RSiena's \texttt{siena07}. It is \emph{not} maximum likelihood and not a Bayesian method (Section~\ref{sec:est-notimpl}). The estimation runs in three phases.
 \begin{description}[leftmargin=0pt,labelindent=0pt]
 \item[Phase 1] estimates the Jacobian, that is, the sensitivity of each expected statistic to each parameter, from \opt{k0()} independent simulated replicates at the starting values (score-function derivative estimator), and ends with a partial quasi-Newton step.
@@ -37,7 +35,7 @@ Option & Meaning\\
 \end{tabular}
 \end{center}
 
-\paragraph{Replicates.} Larger \opt{k0()} stabilises the Jacobian; larger \opt{k3()} reduces the noise in the standard errors and in the convergence $t$-ratios. In the developer's tests, \opt{k0()} mattered for sparse effects: for the transitive-reciprocated-triplet endowment/creation split on \texttt{s50}, \texttt{k0(200)} turned two diverging seeds into converged fits that agree with RSiena. See the next paragraph for the safeguard that now does this automatically.
+\paragraph{Replicates.} Larger \opt{k0()} stabilises the Jacobian; larger \opt{k3()} reduces the noise in the standard errors and in the convergence $t$-ratios. In tests, \opt{k0()} mattered for sparse effects: for the transitive-reciprocated-triplet endowment/creation split on \texttt{s50}, \texttt{k0(200)} turned two diverging seeds into converged fits that agree with RSiena. See the next paragraph for the safeguard that now does this automatically.
 
 \paragraph{Non-positive derivatives.} If the phase-1 derivative of an effect is non-positive, the effect cannot be estimated from the simulated data. As RSiena does (\texttt{R/phase1.r}), \nwsaom{} first doubles the length of phase 1, up to 200 replicates (for network-only fits and for co-evolution fits), and only if the derivative is still non-positive keeps the parameter fixed at its starting value with standard error~0. It prints a note naming the parameter. This is loud, not silent: look for the note, because a fixed parameter is not an estimate.
 
@@ -62,7 +60,7 @@ nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip ///
 \end{lstlisting}
 A start far from the data, for example twice the closed-form rate, can make the phase-1 derivative estimates unusable and the fit diverge.
 
-\paragraph{Which engine ran.} If a model exceeds a limit of the native engine, \nwsaom{} falls back to the Mata engine without an error. The results are the same, but the fit is orders of magnitude slower, and a note is printed after the table. After fitting a large network look at \texttt{e(engine)} (\texttt{native} or \texttt{mata}); \texttt{e(engine\_why)} gives the reason. Effects added since plugin protocol~46 exist only natively; a missing or too-old plugin gives an explicit error rather than a fallback (Chapter~\ref{ch:effects}).
+\paragraph{Which engine ran.} If a model exceeds a limit of the native engine, \nwsaom{} falls back to the Mata engine without an error. The results are the same, but the fit is orders of magnitude slower, and a note is printed after the table. After fitting a large network look at \texttt{e(engine)} (\texttt{native} or \texttt{mata}); \texttt{e(engine\_why)} gives the reason. Many effects exist only natively (Appendix~\ref{app:mata} lists those that also run in Mata); a missing or too-old plugin then gives an explicit error rather than a fallback (Chapter~\ref{ch:effects}).
 
 \section{Judging convergence}
 After the coefficient table, \nwsaom{} prints the rate table and the convergence $t$-ratios. Each $t$-ratio is the phase-3 mean deviation between simulated and target statistic divided by its standard deviation, one per parameter, rates included (under conditional estimation the rates have none). As in RSiena a fit is considered converged when
@@ -88,7 +86,7 @@ Convergence t-ratios (|t| < 0.1 good; overall maximum ratio < 0.25 good):
   transtrip                 -0.096
 Overall maximum convergence ratio:  0.142
 \end{lstlisting}
-(Columns trimmed. The table is the output of the development build used for this manual; the digits depend on the seed.) By the criterion above this fit is acceptable but borderline in two $t$-ratios; restarting from these estimates would be the cautious next step.
+(Columns trimmed. The digits depend on the seed.) By the criterion above this fit is acceptable but borderline in two $t$-ratios; restarting from these estimates would be the cautious next step.
 
 \section{Errors, divergence and what to do}
 \nwsaom{} stops loudly rather than return numbers it cannot support. The return codes below are those the code sets.
@@ -108,7 +106,7 @@ Stata's own ``last estimates not found'': a postestimation command such as \text
 \noindent \texttt{estat gof} of a non-directed fit also stops with rc 498 if the native simulator is unavailable.
 
 \paragraph{Known sources of rc 498 and 505.}
-The developer's decision log records these cases.
+
 \begin{itemize}
 \item \textbf{Sparse effects.} The transitive-reciprocated-triplet endowment/creation split diverged on some seeds in early versions. After the per-period Jacobian (RSiena's \texttt{derivativeFromScoresAndDeviations}, summed over periods) and the phase-1 doubling were adopted, 1 of 50 seeds still diverged, compared with 3 of 200 seeds (1.5\%) for RSiena's \texttt{siena07} on the same model. Divergences of this size are expected for sparse effects in both programs.
 \item \textbf{Collinear effects.} The linear shape effect split into endowment and creation together with the behavior rate, or the outdegree endowment and creation together with the network rate, is not identified, because the two statistics add up to the rate's distance statistic. These combinations are refused (rc 198), as RSiena reports a singular covariance matrix for them. Likewise a constant behavior effect equals minus the behavior-rate statistic, so under unconditional estimation its row is collinear with the behavior rate and the fit ends in rc 505.
@@ -181,4 +179,4 @@ The algorithm draws \opt{nsim()} coefficient vectors (default 500) from a multiv
 \paragraph{Scope.} Version~1 handles exactly two waves (\opt{wave1()}/\opt{wave2()}) and network-only fits; co-evolution, \opt{waves()}, \opt{symmetric} and multiplex fits are rejected with a message. The VanderWeele E-value sensitivity bound of \texttt{netmediate} is not implemented. The theta draw is shared across a row's interval values, but each simulation draws fresh randomness (no common random numbers).
 
 \section{Run time}
-With the native engine, fit time grows roughly with the cube of the number of actors above about 1,000 actors. For a plain model (outdegree, reciprocity, transitive triplets; three waves; about ten ties per actor; \texttt{k0(30) k3(200)}) the help file reports 1.5~s for 250 actors, 2.6~s for 500, 10~s for 1,000, 67~s for 2,000 and 520~s for 4,000; a full-length run costs several times more. Timings on one 18-core machine: the \texttt{s50} three-wave model \texttt{outdegree reciprocity transtrip} 0.33~s, and the \texttt{s50} three-wave co-evolution model 0.63~s. Beyond roughly 10,000 actors the model itself (every ministep considers all possible alters) is the limit. Stata's own limits matter for matrices passed to \nwsaom{} (\opt{dyadcov()}, \opt{missnet()}): 800$\times$800 in Stata/BE, 11,000$\times$11,000 in Stata/SE.
+With the native engine, fit time grows roughly with the cube of the number of actors above about 1,000 actors. For a plain model (outdegree, reciprocity, transitive triplets; three waves; about ten ties per actor; \texttt{k0(30) k3(200)}) it takes 1.5~s for 250 actors, 2.6~s for 500, 10~s for 1,000, 67~s for 2,000 and 520~s for 4,000; a full-length run costs several times more. Timings on one 18-core machine: the \texttt{s50} three-wave model \texttt{outdegree reciprocity transtrip} 0.33~s, and the \texttt{s50} three-wave co-evolution model 0.63~s. Beyond roughly 10,000 actors the model itself (every ministep considers all possible alters) is the limit. Stata's own limits matter for matrices passed to \nwsaom{} (\opt{dyadcov()}, \opt{missnet()}): 800$\times$800 in Stata/BE, 11,000$\times$11,000 in Stata/SE.

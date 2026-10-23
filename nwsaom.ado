@@ -72,6 +72,11 @@ program nwsaom, eclass
 		nwsaom_multinet , `0'
 		exit
 	}
+	if `"`1'"' == "simulate" | `"`1'"' == "simulate," {
+		gettoken __saom_sub 0 : 0
+		nwsaom_simulate , `0'
+		exit
+	}
 	if `"`1'"' == "multiplex" | `"`1'"' == "multiplex," {
 		// `gettoken' consumes a comma attached to "multiplex" (Stata's
 		// own tokenizer attaches a trailing comma to whatever word
@@ -98,7 +103,7 @@ program nwsaom, eclass
 		AVALT AVALTENDOW AVALTCREATION AVSIM AVSIMENDOW AVSIMCREATION BEHSIM BEHEGOX BEHALTX BEHEGOPLUSALT BEHEFF(string) SAMEXTRANSTRIP(string) DIFFXTRANSTRIP(string) SIMXTRANSTRIP(string) HOMXTRANSTRIP(string) SAMEXOUTACT(string) DIFFXOUTACT(string) SAMEXRECIACT(string) DIFFXRECIACT(string) HOMXOUTACT(string) ALTXOUTACT(string) INPOPX(string) OUTPOPX(string) INACTX(string) OUTACTX(string) SAMEXINPOP(string) DIFFXINPOP(string) INPOPC OUTPOPC OUTACTC INACTC DEGPLUS DEGPLUSC TRANSTRIADS AVDEG(string) EGOPLUSALTSQX(string) DIFFSQX(string) EGODIFFX(string) ALTHIGHEREGOX(string) UNEQUALX(string) EGOLTHRESHOLDX(string) EGORTHRESHOLDX(string) ALTLTHRESHOLDX(string) ALTRTHRESHOLDX(string) DEGABSDIFFX(string) DEGPOSDIFFX(string) DEGNEGDIFFX(string) COVTHRESHOLD(real 0) OUTRATE INRATE RECIPRATE OUTRATEINV INRATEINV RECIPRATEINV OUTRATELOG INRATELOG RECIPRATELOG BEHX(string) BEHW(string) TVBEHW(string) BEHWPARAM(real 2) BEHSHAPE(string) BEHNET2(string) OWNX(string) DYADX(string) NETX(string) XPARAM(real 1) NETBEH(string) BEHFROM(string) BEHAVXALT(string) BEHAVSAMEXALT(string) BEHTOTXALT(string) BEHTOTSAMEXALT(string) BEHTHETA0(string) ///
 		PRESENT(string) JOINAT(string) LEAVEAT(string) MISSNET(string) MISSBEH(string) STRUCTURAL(string) ///
 		RATECOV(string) RATECOVCOEF(string) SYMMETRIC SYMTYPE(string) ///
-		RATE0(numlist >0) THETA0(string) K0(integer 50) K3(integer 1000) ///
+		RATE0(numlist >0) THETA0(string) FIX(string) K0(integer 50) K3(integer 1000) ///
 		FIRSTG(real 0.2) SEED(integer -1) CORES(integer 0) UNCONDitional NOCENTER ///
 		ENDOW(string) CREATION(string) ACTORMODE(integer 0) TVCOV(string) ]
 	set more off
@@ -2990,6 +2995,30 @@ program nwsaom, eclass
 			error 198
 		}
 		mata: __nwsaom_theta0 = strtoreal(tokens("`theta0'"))
+	}
+	// fix(): keep the named effects at their starting values (RSiena's fix = TRUE); no standard error
+	capture mata: mata drop __nwsaom_fixmask
+	capture mata: mata drop __nwsaom_score_D
+	capture mata: mata drop __nwsaom_score_S
+	capture mata: mata drop __nwsaom_score_m
+	capture mata: mata drop __nwsaom_score_fix
+	capture mata: mata drop __nwsaom_score_par
+	capture mata: mata drop __nwsaom_score_Zp
+	capture mata: mata drop __nwsaom_score_Sp
+	if "`fix'" != "" {
+		if "`fix'" == "_all" local fix "`__nwsaom_efflist'"
+		local __nwsaom_fm ""
+		forvalues __i = 1/`__nwsaom_p' {
+			local __w : word `__i' of `__nwsaom_efflist'
+			local __nwsaom_fm `__nwsaom_fm' `=("`: list __w & fix'" != "")'
+		}
+		foreach __w of local fix {
+			if !`: list __w in __nwsaom_efflist' {
+				di "{err}fix(): `__w' is not one of the requested effects: `__nwsaom_efflist'."
+				error 198
+			}
+		}
+		mata: __nwsaom_fixmask = strtoreal(tokens("`__nwsaom_fm'"))
 	}
 	// network-only models without theta0(): start the outdegree effect
 	// at RSiena's data-derived value (getNetworkStartingVals()) instead of

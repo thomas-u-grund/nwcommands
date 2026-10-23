@@ -12,6 +12,16 @@ def tex(s):
         s = s.replace(a, b)
     s = s.replace("\\textbackslash\\{\\}", "\\textbackslash{}")
     return s
+def clean(s):
+    """Drop references to internal files and numbered decisions from an inventory note."""
+    s = s or ""
+    s = s.replace("; no plan recorded in DECISIONS/ROADMAP", "")
+    s = re.sub(r"\(DECISIONS \d+: ", "(", s)
+    s = s.replace(" (guard in nwsaom.ado)", " (refused with an error message)")
+    s = re.sub(r"\s*\(?see [^)]*\.md\)?", "", s)
+    s = re.sub(r"\bprotocol[ ~]?\d+\b", "plugin version", s)
+    s = re.sub(r"DECISIONS( \d+)?", "the project notes", s)
+    return s.strip()
 def tt(s):
     return "\\texttt{" + tex(s) + "}" if s else ""
 def shorten(s, n):
@@ -42,7 +52,7 @@ with open("gen_effects.tex", "w") as f:
             opt = re.sub(r"^IMPLEMENTED \(as (.*)\)$", r"\1", x["nwsaom_status"])
             if opt == x["nwsaom_status"] or opt.startswith("IMPLEMENTED") or opt.startswith("PARTIAL"):
                 opt = x["nwsaom_option"] or ("(partial)" if st(x) == "PARTIAL" else "")
-            val = {"yes": "siena07", "unknown": "", "": ""}.get(x["validated_against_RSiena"], x["validated_against_RSiena"])
+            val = {"yes": "siena07", "unknown": "not compared", "": "not compared"}.get(x["validated_against_RSiena"], x["validated_against_RSiena"])
             f.write("%s & %s & %s & %s\\\\\n" % (tt(x["RSiena_shortName"]), tex(shorten(ctx, 60)), tex(val), tt(shorten(opt, 90))))
         f.write("\\bottomrule\n\\end{longtable}\n\\normalsize\n\n")
 
@@ -75,7 +85,7 @@ with open("gen_missing.tex", "w") as f:
         f.write("\\footnotesize\n\\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}\n\\toprule\nRSiena name & Network / context & Note\\\\\n\\midrule\n\\endhead\n")
         for x in xs:
             ctx = x["variable_type"] + ((" + " + x["interaction_context"]) if x["interaction_context"] else "")
-            f.write("%s & %s & %s\\\\\n" % (tt(x["RSiena_shortName"]), tex(shorten(ctx, 70)), tex(shorten(x["notes"], 160))))
+            f.write("%s & %s & %s\\\\\n" % (tt(x["RSiena_shortName"]), tex(shorten(ctx, 70)), tex(shorten(clean(x["notes"]), 160))))
         f.write("\\bottomrule\n\\end{longtable}\n\\normalsize\n\n")
     np = [x for x in rows if st(x) == "NOT PLANNED"]
     f.write("\\subsection*{Deliberately out of scope (%d rows)}\n\\noindent Continuous (SDE) dependent variables and their effects are not part of nwsaom (%d rows of the RSiena effects table).\n\n" % (len(np), len(np)))

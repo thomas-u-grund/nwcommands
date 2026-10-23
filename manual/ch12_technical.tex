@@ -14,15 +14,15 @@ The Mata layer talks to the plugin through Stata frames. The calls are made once
 
 \section{The native plugin}
 
-\subsection{Protocol versions}
+\subsection{Plugin versions}
 
-The plugin and the Mata layer communicate through a wire protocol. The plugin reports the version of the protocol that it implements, and the Mata layer checks the version before it uses a feature that needs a newer one. The version of the plugin in the repository at the time of writing is 62. New effects, and new ways of combining existing ones, increase the version; for example, version 11 introduced network and behavior endowment/creation, structural values and the threaded path for non-directed models and rate covariates, versions 26 and 27 composition change at fractional times, version 52 several co-evolving networks, and version 56 covariate effects in two-mode networks.
+The plugin and the Mata layer communicate through a versioned interface. The plugin reports its version, and the Mata layer checks it before it uses a feature that needs a newer plugin. New effects, and new ways of combining existing ones, make the plugin newer.
 
-A plugin that is older than the \texttt{.ado} files cannot run models that need a newer protocol. This happens most often on Linux and Windows: those two binaries are built by continuous integration (a workflow on GitHub), whereas the macOS binary is compiled by the developer, so that the three can differ for a while after a commit. If you install from a repository checkout, \nwsaom{} looks for the plugin first in \texttt{lib/plugins/<platform>/} next to the \texttt{nwsaom.ado} that is being run and only then with \texttt{findfile}. After a \texttt{net install} there is no \texttt{lib/plugins/} next to \texttt{nwsaom.ado}, and the copy in the PLUS directory is used.
+A plugin that is older than the \texttt{.ado} files cannot run models that need a newer one. This happens most often on Linux and Windows: those two binaries are built by continuous integration (a workflow on GitHub), whereas the macOS binary is compiled on the development machine, so that the three can differ for a while after a commit. If you install from a repository checkout, \nwsaom{} looks for the plugin first in \texttt{lib/plugins/<platform>/} next to the \texttt{nwsaom.ado} that is being run and only then with \texttt{findfile}. After a \texttt{net install} there is no \texttt{lib/plugins/} next to \texttt{nwsaom.ado}, and the copy in the PLUS directory is used.
 
 \subsection{Native-only effects}
 
-Not all effects are implemented twice. The Mata layer contains a simulator for the older core of the model, which is used if no plugin is available for the platform. The effects added later, for the most part the large families of RSiena effects that were ported after the core was finished, exist only in the plugin: the plugin computes the simulation and the observed statistic, and there is no Mata twin. This is a design decision and not an omission to be repaired; extending the C plugin is how new effects are added. In the help file such effects are marked \emph{native plugin only}, together with the protocol version in which they were introduced (for example, the covariate-by-triad effects of \opt{samextranstrip()} and its relatives, protocol 39).
+Not all effects are implemented twice. The Mata layer contains a simulator for the older core of the model, which is used if no plugin is available for the platform. The effects added later, for the most part the large families of RSiena effects that were ported after the core was finished, exist only in the plugin: the plugin computes the simulation and the observed statistic, and there is no Mata twin. The Mata simulator is far too slow for the long simulations that estimation needs, so new effects are added to the plugin only. In the help file such effects are marked \emph{native plugin only}; Appendix~\ref{app:mata} lists the effects that do work without the plugin.
 
 If you ask for a native-only effect and the native engine cannot be used, \nwsaom{} stops with an error and does not fall back. With the Mata engine forced by the debugging switch described below, the request
 \begin{lstlisting}
@@ -30,7 +30,7 @@ If you ask for a native-only effect and the native engine cannot be used, \nwsao
 \end{lstlisting}
 gives
 \begin{lstlisting}
-nwsaom: egoplusaltsqx needs the native plugin (protocol 41 or later); there is no Mata implementation of this effect.
+nwsaom: egoplusaltsqx needs the native plugin (a newer plugin version); there is no Mata implementation of this effect.
 \end{lstlisting}
 and the return code is 198. The reverse also holds: a model that consists of effects with a Mata implementation runs without a plugin, correctly but slowly.
 
@@ -40,7 +40,7 @@ Two consequences follow for the user. First, with a plugin that is too old the s
 
 After a fit, \texttt{e(engine)} is \texttt{native} or \texttt{mata}. If it is \texttt{mata}, a note is printed after the table and \texttt{e(engine\_why)} gives the reason. Look at it after every large fit. The Mata engine gives statistically equivalent results (the random streams of the two engines are not the same, so that the digits differ), but it is slower by orders of magnitude. As an illustration, a two-wave Glasgow model with outdegree and reciprocity and \texttt{k0(10) k3(10)} took about 30 seconds in the Mata engine, where the native engine needs a small fraction of a second for the same model.
 
-For tests, setting the global macro \texttt{NWSAOM\_NONATIVE} to 1 before the call forces the Mata engine (and \texttt{e(engine\_why)} then gives the message of a missing plugin); setting \texttt{NWSAOM\_TRACE} to 4 prints a line with the protocol version of the plugin that was found and whether the native and the batch paths are used. These are development switches.
+For tests, setting the global macro \texttt{NWSAOM\_NONATIVE} to 1 before the call forces the Mata engine (and \texttt{e(engine\_why)} then gives the message of a missing plugin); setting \texttt{NWSAOM\_TRACE} to 4 prints a line with the version of the plugin that was found and whether the native and the batch paths are used. These are development switches.
 
 \subsection{Fixed limits of the plugin}
 
@@ -52,7 +52,7 @@ The plugin is multi-threaded. In phase 1 and phase 3 all replicates of all perio
 
 \paragraph{The number of threads.} \opt{cores(\#)} sets it; the default 0 uses all physical cores and \opt{cores(1)} runs single-threaded.
 
-\paragraph{Reproducibility.} Every simulated period draws from its own random stream, which is derived from the seed and from its position (replicate and period), and sums over the periods are formed after the threads have joined, in a fixed order. A given \opt{seed()} therefore gives identical results whatever the number of threads. This was checked in the preparation of this manual on the two-wave example with \opt{cores(1)} and \opt{cores(4)}: the coefficients were identical to all printed digits (the outdegree coefficient in both runs $-2.2380415$). The results change if the model, the seed or the version of the program changes.
+\paragraph{Reproducibility.} Every simulated period draws from its own random stream, which is derived from the seed and from its position (replicate and period), and sums over the periods are formed after the threads have joined, in a fixed order. A given \opt{seed()} therefore gives identical results whatever the number of threads. On the two-wave example with \opt{cores(1)} and \opt{cores(4)}: the coefficients were identical to all printed digits (the outdegree coefficient in both runs $-2.2380415$). The results change if the model, the seed or the version of the program changes.
 
 \section{Size limits}\label{sec:limits}
 
@@ -71,7 +71,7 @@ Variables & 2\,048 & 32\,767 & 120\,000 \\
 \bottomrule
 \end{tabular}
 \end{center}
-Only the Stata/BE values were checked on the development machine; the SE and MP values are taken from the Stata documentation. The consequences for networks are these. A network that is declared from a matrix (\texttt{nwset, mat()}), and every matrix given to \opt{dyadcov()}, \opt{dyadcovrecip()}, \opt{dyadx()}, \opt{missnet()} or \opt{structural()}, is limited by the matrix size: 800 actors in Stata/BE. Larger networks are brought in as edge lists (\texttt{nwfromedge}); nothing dense is needed for the network itself. A dyadic covariate also travels to the plugin as one variable per actor, so that the native engine handles it up to about 1\,000 actors (1\,023 covariate arrays), and Stata/BE with its 2\,048 variables stops at about 2\,000 actors in any case. Mata itself has no such limits; the networks are kept as sparse adjacency lists, and only dense by-products scale with $n^2$.
+ The consequences for networks are these. A network that is declared from a matrix (\texttt{nwset, mat()}), and every matrix given to \opt{dyadcov()}, \opt{dyadcovrecip()}, \opt{dyadx()}, \opt{missnet()} or \opt{structural()}, is limited by the matrix size: 800 actors in Stata/BE. Larger networks are brought in as edge lists (\texttt{nwfromedge}); nothing dense is needed for the network itself. A dyadic covariate also travels to the plugin as one variable per actor, so that the native engine handles it up to about 1\,000 actors (1\,023 covariate arrays), and Stata/BE with its 2\,048 variables stops at about 2\,000 actors in any case. Mata itself has no such limits; the networks are kept as sparse adjacency lists, and only dense by-products scale with $n^2$.
 
 \subsection{What \nwsaom{} costs}
 
@@ -144,7 +144,7 @@ File & Content \\
 \texttt{nwsaom\_multiplex.ado} & \texttt{nwsaom multiplex}: the earlier two-network subcommand with outdegree, reciprocity and the cross-network product. \\
 \texttt{\_nwsaom\_postengine.ado}, \texttt{\_nwsaom\_rsnotes.ado}, \texttt{\_nwsaom\_tconvtable.ado} & Posting of \texttt{e(engine)}, the notes with RSiena's effect names, and the printing of the convergence table. \\
 \texttt{nwsaom\_estat.ado}, \texttt{nwsaom\_meta.ado} & \texttt{estat gof} and \texttt{estat mems}; the meta-analysis. \\
-\texttt{unw\_saom.do} & The Mata core: model, estimator, reference simulator, wire protocol. \\
+\texttt{unw\_saom.do} & The Mata core: model, estimator, reference simulator, interface to the plugin. \\
 \texttt{native/saom\_sim.c} & The C plugin source; \texttt{native/Makefile} builds it. \\
 \texttt{lib/plugins/<platform>/} & The compiled plugins for \texttt{macos}, \texttt{unix} and \texttt{windows}. \\
 \texttt{nwsaom.sthlp}, \texttt{nwsaom\_remarks.sthlp} & The help file and its remarks. The help file was split in two because Stata's help Viewer fails on a very long file. \\
@@ -153,6 +153,6 @@ File & Content \\
 \end{tabular}
 \end{center}
 
-\paragraph{Testing.} The tests are run in two modes: in \emph{development mode}, in which the Mata sources are loaded directly (\texttt{do unw\_core.do}, \texttt{do unw\_ergm.do}, \texttt{do unw\_saom.do}, and \texttt{nwclear} --- never \texttt{clear all}, which would delete the loaded Mata functions) and in \emph{production mode} against the compiled library and plugin. The native simulator is checked against the Mata simulator at fixed parameters for statistical equivalence of the simulated statistics (the two do not share a random stream), and the estimates are checked against RSiena as described in the validation chapter.
+\paragraph{Testing.} The tests are run in two modes: in \emph{development mode}, in which the Mata sources are loaded directly (\texttt{do unw\_core.do}, \texttt{do unw\_ergm.do}, \texttt{do unw\_saom.do}, and \texttt{nwclear} --- never \texttt{clear all}, which would delete the loaded Mata functions) and in \emph{production mode} against the compiled library and plugin. The native simulator is compared with the Mata simulator at fixed parameters for statistical equivalence of the simulated statistics (the two do not share a random stream), and the estimates are compared with RSiena as described in the validation chapter.
 
-\paragraph{A stale plugin.} A plugin from an earlier installation in the PLUS directory can shadow the plugin of a freshly built checkout in some set-ups and silently run an old binary. If a new effect is refused as unknown to the plugin, or the protocol shown by \texttt{NWSAOM\_TRACE} is older than expected, check which plugin file is used.
+\paragraph{A stale plugin.} A plugin from an earlier installation in the PLUS directory can shadow the plugin of a freshly built checkout in some set-ups and silently run an old binary. If a new effect is refused as unknown to the plugin, or the version shown by \texttt{NWSAOM\_TRACE} is older than expected, check which plugin file is used.

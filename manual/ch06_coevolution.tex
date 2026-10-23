@@ -10,7 +10,7 @@ A behavior is a bounded integer variable, given as one Stata variable per wave. 
 \item a \emph{network ministep}: an actor reconsiders one outgoing tie, exactly as in Chapter~\ref{ch:model};
 \item a \emph{behavior ministep}: an actor changes its own behavior value by $-1$, $0$ or $+1$ (clamped to the observed minimum and maximum). The three alternatives are chosen with the same multinomial-logit rule as a network ministep, now over three alternatives instead of $n$.
 \end{itemize}
-One pooled waiting time is drawn from the sum of the network rate and the behavior rate. Which variable acts is chosen in proportion to its share of that total, and then the actor is chosen uniformly. This is RSiena's construction (verified against its \texttt{EpochSimulation.cpp} according to the help file). Every period has its own network rate and its own behavior rate.
+One pooled waiting time is drawn from the sum of the network rate and the behavior rate. Which variable acts is chosen in proportion to its share of that total, and then the actor is chosen uniformly. This is RSiena's construction (as in its \texttt{EpochSimulation.cpp}). Every period has its own network rate and its own behavior rate.
 
 Co-evolution models are always estimated by \emph{unconditional} Method of Moments, as in RSiena: both kinds of rates are estimated jointly with the effects, and they come with standard errors. The statistic of a network rate is the number of dyads in which the simulated end network differs from the start network; the statistic of a behavior rate is the sum of the absolute changes of the behavior. Statistics that link the two variables are \emph{lagged} as in RSiena: network effects that read the behavior (\opt{behsim}, \opt{behegox}, \dots) use the behavior at the \emph{start} of the period, behavior effects that read the network (\opt{avalt}, \dots) use the network at the start of the period. The ministep change statistics always use the current simulated state.
 
@@ -45,12 +45,12 @@ Overall maximum convergence ratio:  0.222
 \end{lstlisting}
 (Rate standard errors and the convergence $t$-ratios are omitted here; \texttt{e(rates)}, \texttt{e(rates\_beh)} and \texttt{e(tconv)} hold them.) The first four coefficients belong to the network side, the last three to the behavior side. Network coefficients keep their plain names; behavior coefficients start with \texttt{beh\_}. The network effects use the \opt{waves()} and \opt{seed()} options exactly as in Chapter~\ref{ch:start}.
 
-The help file documents a comparison with RSiena 1.6.6 on this model (RSiena estimate, standard error in brackets; the \nwsaom{} column is the value in the help file, the run above with \opt{k3(300)} gives values of the same size, e.g.\ \opt{behsim} 1.446, \texttt{beh\_avalt} 1.317):
+A comparison with RSiena 1.6.6 on this model (RSiena estimate, standard error in brackets; the run above with \opt{k3(300)} gives values of the same size, e.g.\ \opt{behsim} 1.446, \texttt{beh\_avalt} 1.317):
 
 \begin{center}
 \begin{tabular}{lrr}
 \toprule
-effect & RSiena & \nwsaom{} (help file) \\
+effect & RSiena & \nwsaom{} \\
 \midrule
 friendship rate, period 1 / 2 & 6.48 / 5.17 & 6.43 / 5.12 \\
 outdegree & $-2.760$ (.145) & $-2.752$ (.188) \\
@@ -86,7 +86,7 @@ option & RSiena effect & what it does \\
 \bottomrule
 \end{longtable}
 
-Coefficients of \opt{behshape()} effects are named \texttt{beh\_}\emph{effect}[\texttt{(}\emph{\#}\texttt{)}]. The help file reports agreement with \texttt{siena07} on the s50 data (for example \opt{quad\_cc}, linear 1.791 / quad $-0.448$ / avAlt 1.057 against 1.790 / $-0.450$ / 1.071).
+Coefficients of \opt{behshape()} effects are named \texttt{beh\_}\emph{effect}[\texttt{(}\emph{\#}\texttt{)}]. The estimates agree with \texttt{siena07} on the s50 data (for example \opt{quad\_cc}, linear 1.791 / quad $-0.448$ / avAlt 1.057 against 1.790 / $-0.450$ / 1.071).
 
 \section{Influence effects}
 
@@ -146,7 +146,7 @@ option & what it adds \\
 \bottomrule
 \end{longtable}
 
-The help file states that for all of these the observed statistics equal \texttt{siena07}'s targets and the estimates agree within simulation noise, with a handful of exceptions that are unstable or degenerate in \texttt{siena07} as well (for example \texttt{avAltW} and \texttt{avSimW} with parameter 2 when the weights nearly sum to zero). Combining many weakly identified effects makes the standard errors explode; the next fit is shown only to illustrate the syntax:
+For all of these the observed statistics equal \texttt{siena07}'s targets and the estimates agree within simulation noise, with a handful of exceptions that are unstable or degenerate in \texttt{siena07} as well (for example \texttt{avAltW} and \texttt{avSimW} with parameter 2 when the weights nearly sum to zero). Combining many weakly identified effects makes the standard errors explode; the next fit is shown only to illustrate the syntax:
 
 \begin{lstlisting}
 nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip behsim ///
@@ -212,7 +212,7 @@ beh_quadratic |  -.5643059   .3146445    -1.79   0.073
     beh_avalt |     1.2566   .7310308     1.72   0.086
 \end{lstlisting}
 
-According to the help file and decision log, 32 \opt{netbeh()} estimates agree with \texttt{siena07} on the s50 data; \texttt{degNegDiffX} is degenerate in both programs.
+According to the validation runs, 32 \opt{netbeh()} estimates agree with \texttt{siena07} on the s50 data; \texttt{degNegDiffX} is degenerate in both programs.
 
 \section{Several behaviors}\label{sec:multibeh}
 
@@ -236,7 +236,7 @@ beh_alcohol_quadratic |  -.5937406   .3414086    -1.74   0.082
   beh_smoke_quadratic |   1.947808   .4002872     4.87   0.000
       beh_smoke_avalt |   1.761282    .858102     2.05   0.040
 \end{lstlisting}
-\opt{behsim} is written inside the group of the \emph{first} behavior. (In the version tested for this manual, a global \opt{behsim} given outside the groups together with several behaviors was accepted without error but produced no \texttt{behsim} coefficient and the same estimates as the model without it, so always put it inside the first group.)
+\opt{behsim} is written inside the group of the \emph{first} behavior. (A global \opt{behsim} given outside the groups together with several behaviors was accepted without error but produced no \texttt{behsim} coefficient and the same estimates as the model without it, so always put it inside the first group.)
 
 Coefficients are named \texttt{beh\_}\emph{name}\texttt{\_}\emph{effect}, with \emph{name} the first variable without trailing digits. \texttt{e(rates\_beh)} has one row per behavior (values of the model above):
 \begin{lstlisting}
@@ -244,7 +244,7 @@ Coefficients are named \texttt{beh\_}\emph{name}\texttt{\_}\emph{effect}, with \
 rate_alcohol  1.3350     1.7769
   rate_smoke  2.9479     2.6810
 \end{lstlisting}
-The help file's validation against RSiena 1.6.6 (alcohol and smoking, \texttt{s501}--\texttt{s503}) gives, for example, alcohol linear 0.42 (RSiena 0.43), smoking linear $-1.91$ to $-1.94$ ($-1.92$ to $-1.94$), smoking avAlt 1.92--1.97 (2.01--2.06), with the network and behavior rates agreeing.
+Validation against RSiena 1.6.6 (alcohol and smoking, \texttt{s501}--\texttt{s503}) gives, for example, alcohol linear 0.42 (RSiena 0.43), smoking linear $-1.91$ to $-1.94$ ($-1.92$ to $-1.94$), smoking avAlt 1.92--1.97 (2.01--2.06), with the network and behavior rates agreeing.
 
 The behaviors interact through the network, and in one further way: another behavior can be the \emph{covariate} of the behavior effects that take one, by writing \texttt{beh2}, \texttt{beh3}, \dots{} in place of a variable name in \opt{behfrom()}, \opt{behx()}, \opt{behavxalt()} and relatives (the statistics read its start-of-period values, the ministeps its current ones):
 \begin{lstlisting}
@@ -270,23 +270,23 @@ beh_alcohol_from_beh2 |  -.7376024   1.023347    -0.72   0.471
 \section{Estimation notes}
 
 \begin{itemize}[nosep]
-\item With few actors, \opt{avalt} can make the joint Robbins--Monro fit diverge: a stronger pull makes the ministep more deterministic, which makes the pull look stronger. The help file reports that this is a small-sample identification problem (checked: the Jacobian is well conditioned and the simulator unbiased at the true parameter), resolved by using more actors or more behavior activity. A divergence stops with an explicit \texttt{thetaBound} error (return code 498), as in RSiena.
+\item With few actors, \opt{avalt} can make the joint Robbins--Monro fit diverge: a stronger pull makes the ministep more deterministic, which makes the pull look stronger. This is a small-sample identification problem (the Jacobian is well conditioned and the simulator unbiased at the true parameter), resolved by using more actors or more behavior activity. A divergence stops with an explicit \texttt{thetaBound} error (return code 498), as in RSiena.
 \item Several of the examples above have a maximum convergence ratio between 0.22 and 0.33; RSiena's guideline is 0.25. Rerun with another \opt{seed()} or a larger \opt{k3()} when a fit is above the limit and the reported $t$-ratios of individual parameters exceed 0.1.
 \item Random or weakly varying behaviors are usually not identified; the test suite therefore accepts return codes 0 and 498 for synthetic co-evolution data.
 \end{itemize}
 
 \section{Limits}\label{sec:coev-limits}
 
-The following are things RSiena can do (or that this chapter would naturally want) and \nwsaom{} cannot, taken from the help file, the remarks, the decision log, and checks run for this chapter (``checked'' means an error was observed).
+The following are things RSiena can do (or that this chapter would naturally want) and \nwsaom{} cannot.
 
 \begin{itemize}
 \item \textbf{Behavior type.} Behaviors are bounded integers, one Stata variable per wave. There is no continuous behavior.
 \item \textbf{Linear endowment/creation is refused} (not identified with an estimated behavior rate; RSiena also yields a singular covariance matrix). Network \opt{outdegreeendow} with \opt{outdegreecreation} is refused too, with or without a behavior. The other endow/creation splits of behavior effects are allowed but weakly identified.
-\item \textbf{Several behaviors.} The following are not combinable with several behaviors: \opt{symmetric} (checked), \opt{present()} (checked; use \opt{joinat()}/\opt{leaveat()} with integer times), \opt{ratecov()}, \opt{missnet()}, \opt{structural()}, network \opt{endow()}/\opt{creation()}, and \texttt{estat gof}/\texttt{estat mems}. \opt{behsim} refers to the first behavior only (checked: \texttt{behsim} inside the group of the second behavior is rejected with return code 198; a global \opt{behsim} with several behaviors is silently ignored, see Section~\ref{sec:multibeh}). The same first-behavior restriction holds for \opt{behegox}, \opt{behaltx}, \opt{behegoplusalt} and \opt{netbeh()}.
+\item \textbf{Several behaviors.} The following are not combinable with several behaviors: \opt{symmetric}, \opt{present()} (use \opt{joinat()}/\opt{leaveat()} with integer times), \opt{ratecov()}, \opt{missnet()}, \opt{structural()}, network \opt{endow()}/\opt{creation()}, and \texttt{estat gof}/\texttt{estat mems}. \opt{behsim} refers to the first behavior only (\texttt{behsim} inside the group of the second behavior is rejected with return code 198; a global \opt{behsim} with several behaviors is silently ignored, see Section~\ref{sec:multibeh}). The same first-behavior restriction holds for \opt{behegox}, \opt{behaltx}, \opt{behegoplusalt} and \opt{netbeh()}.
 \item \textbf{Cross-behavior effects} exist only through the covariate slot (\texttt{beh2} in \opt{behfrom()}, \opt{behx()}, \opt{behavxalt()} \dots). No other effects between two dependent behaviors are offered.
-\item \textbf{\opt{ratecov()} with \opt{behavior()}} is refused (checked: ``ratecov() is not yet supported for co-evolution models''). Structural rate effects are also refused with a behavior (Chapter~\ref{ch:rates}).
-\item \textbf{\opt{missbeh()} with several behaviors} is not available in the form the design note describes: a call \texttt{missbeh(a1 a2 a3 | b1 b2 b3)} is rejected (checked). Note also that \opt{missbeh()} variables are 0/1 flags, not Stata missing values.
-\item \textbf{Native plugin only.} Since the project policy of 2026-10-22 new effects have no Mata fallback. Almost everything on this page after \opt{avsim} (\opt{beheff()} tokens beyond the first 20, \opt{behnet2()}, \opt{behx()}, \opt{behw()}, \opt{tvbehw()}, \opt{netbeh()}, \opt{behshape()}, \opt{behavxalt()} and relatives) needs the C plugin. The decision log notes that the Linux and Windows plugins lagged behind the macOS one in protocol versions; whether current builds exist for those platforms was not verified.
+\item \textbf{\opt{ratecov()} with \opt{behavior()}} is refused (``ratecov() is not yet supported for co-evolution models''). Structural rate effects are also refused with a behavior (Chapter~\ref{ch:rates}).
+\item \textbf{\opt{missbeh()} with several behaviors} is not available in the form the design note describes: a call \texttt{missbeh(a1 a2 a3 | b1 b2 b3)} is rejected. Note also that \opt{missbeh()} variables are 0/1 flags, not Stata missing values.
+\item \textbf{Native plugin only.} Almost everything on this page after \opt{avsim} (\opt{beheff()} tokens beyond the first 20, \opt{behnet2()}, \opt{behx()}, \opt{behw()}, \opt{tvbehw()}, \opt{netbeh()}, \opt{behshape()}, \opt{behavxalt()} and relatives) needs the C plugin. The Linux and Windows plugins can lag behind the macOS one.
 \item \textbf{Degenerate or unestimable effects.} \opt{behshape(constant)} cannot be estimated. For a number of effects \texttt{siena07} itself is unstable or degenerate (\opt{beheff()}: \texttt{outisolate totaltpop maxalt avaltpop avattlower totattlower totsim}; \opt{behw()} with parameter 2; some \opt{netbeh()} effects), so no reference estimate exists. In a non-directed network \texttt{degabsdiffx}, \texttt{degposdiffx} and \texttt{higher} with the behavior as covariate end in a singular phase-3 Jacobian (return code 505) whereas \texttt{siena07} estimates them; \texttt{minxalt}/\texttt{maxxalt} with \opt{symmetric} stay open.
 \item \textbf{Symmetric co-evolution} is only partly validated against RSiena, because RSiena's own fit of the model is unstable on the test data. The agreement is by simulation from known parameters.
 \item \textbf{Behavior inside \texttt{nwsaom multinet}} (several networks) is not available; see Chapter~\ref{ch:networktypes}.

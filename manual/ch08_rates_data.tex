@@ -40,7 +40,7 @@ option & RSiena effect & what it does \\
 \bottomrule
 \end{longtable}
 
-If the data do not identify a coefficient (non-positive derivative estimate and the plain fit diverges), it is held fixed at its starting value, as RSiena does; \texttt{e(ratecoef\_fixed)} says whether this happened. With \opt{waves()} the rates are as in RSiena's: checked on \texttt{s501}--\texttt{s503} with the alcohol covariate, \texttt{RateX} 0.355 against RSiena's 0.357, density $-2.38$ against $-2.375$, rates 5.7/4.4 against 5.67/4.47.
+If the data do not identify a coefficient (non-positive derivative estimate and the plain fit diverges), it is held fixed at its starting value, as RSiena does; \texttt{e(ratecoef\_fixed)} says whether this happened. With \opt{waves()} the rates are as in RSiena's: on \texttt{s501}--\texttt{s503} with the alcohol covariate, \texttt{RateX} 0.355 against RSiena's 0.357, density $-2.38$ against $-2.375$, rates 5.7/4.4 against 5.67/4.47.
 
 A ratecov effect can be combined with \opt{symmetric}. In a non-directed network the rate of actor $i$ is $\lambda e^{b x_i}$ and the alter is drawn in proportion to the same rates; the conversion to RSiena's scale (Chapter~\ref{ch:networktypes}) uses all $n$ actors. Example, again with the symmetrised Glasgow waves \texttt{sg1}--\texttt{sg3}:
 \begin{lstlisting}
@@ -52,7 +52,7 @@ nwsaom, waves(sg1 sg2 sg3) outdegree gwesp(0.69) ratecov(smoke1) seed(1) k3(300)
         rate |    2.3363     1.9205
 Covariate-rate coefficient (smoke1):    0.5906 (se 0.2126)
 \end{lstlisting}
-For the symmetrised glasgow waves, the help file reports agreement with RSiena for \texttt{joint} (RateX 0.153 against 0.151, density $-1.316$ against $-1.312$, rates 0.307/0.264 against 0.305/0.263) and, for all three pairwise types, agreement within 0.1 standard errors.
+For the symmetrised glasgow waves, agreement with RSiena holds for \texttt{joint} (RateX 0.153 against 0.151, density $-1.316$ against $-1.312$, rates 0.307/0.264 against 0.305/0.263) and, for all three pairwise types, agreement within 0.1 standard errors.
 
 \section{Structural rate effects}\label{sec:strate}
 
@@ -137,7 +137,7 @@ Overall maximum convergence ratio:  0.240
 \end{lstlisting}
 Rates are unconditional here and therefore not on the scale of the conditional rates of the earlier examples.
 
-\paragraph{How to prepare the data.} The remarks of the help file stress that \nwsaom{} does not derive the data of absent actors for you. The two relevant statements in the sources differ in detail: the older text says an absent actor's ties should be 0 before the actor joins and \emph{frozen} at the last observed values after it leaves; the text on \opt{joinat()}/\opt{leaveat()} (RSiena's option~1), whose rules since 2026-10-22 also apply to \opt{present()}, says the ties an absent actor has in the data are used as given and counted in the distance, so one should code them 0 for the waves in which the actor is absent. In the example above the leavers' ties are coded 0 at the wave they have left. Whichever you choose, code consistently: an absent actor's row and column that look like activity the actor can never explain are a real, avoidable way to trigger the \texttt{thetaBound} error. Since 2026-10-22 an absent actor stays among the possible alters of an active actor, as in RSiena.
+\paragraph{How to prepare the data.} \nwsaom{} does not derive the data of absent actors for you. The ties an absent actor has in the data are used as given and counted in the distance, so code them 0 for the waves in which the actor is absent, as in the example above, where the leavers' ties are coded 0 at the wave they have left. Code consistently: an absent actor's row and column that look like activity the actor can never explain are a real, avoidable way to trigger the \texttt{thetaBound} error. An absent actor stays among the possible alters of an active actor, as in RSiena.
 
 \subsection{Joiners and leavers at fractional times: joinat() and leaveat()}
 
@@ -179,24 +179,24 @@ combined with & \opt{present()} & \opt{joinat()}/\opt{leaveat()} \\
 \midrule
 \opt{waves()} & yes & yes \\
 one co-evolving behavior & yes & yes (not with \opt{behsim}) \\
-several behaviors & no (checked, 198) & yes (not with \opt{behsim}) \\
+several behaviors & no (error 198) & yes (not with \opt{behsim}) \\
 \opt{symmetric} & yes & yes (not with \opt{ratecov()}) \\
-\opt{ratecov()} & yes (checked) & yes (checked) \\
+\opt{ratecov()} & yes & yes \\
 \opt{missnet()} & --- & --- \\
 \opt{tvcov()} & --- & yes \\
-\opt{endow()}/\opt{creation()} & not stated & no (checked, 198) \\
-structural rate effects & no (checked, 198) & --- \\
+\opt{endow()}/\opt{creation()} & not stated & no (error 198) \\
+structural rate effects & no (error 198) & --- \\
 \bottomrule
 \end{tabular}
 \end{center}
-Cells marked --- were not stated in the sources and not tested for this manual. ``checked'' means a trial call for this manual produced the stated result.
+A dash means the combination is not determined.
 
 \section{Limits}\label{sec:rates-limits}
 
 \begin{itemize}
 \item \textbf{Rate effects.} Only constant-covariate \opt{ratecov()} and the nine structural rate effects exist. RSiena's rate effect with a \emph{changing} covariate is a stated open item. There is no rate effect that depends on the behavior or on another covariate-by-network interaction, and no period-specific covariate-rate coefficient (as in RSiena, \texttt{RateX} has no period index).
-\item \textbf{\opt{ratecov()} with co-evolution is refused} (checked: ``ratecov() is not yet supported for co-evolution models''), also with several behaviors and in two-mode networks (checked, 198).
-\item \textbf{Structural rate effects} are restricted to directed one-mode relations and plain waves: no \opt{behavior()}, \opt{present()}, \opt{missnet()}, \opt{symmetric} and no two-mode networks (the last two, and \opt{present()}, checked: 198). No \opt{endow()}/\opt{creation()}. They are native-only (plugin protocol 42). The sources say unconditional estimation was compared only through the coefficient. Combining several structural rate effects can fail (see above).
+\item \textbf{\opt{ratecov()} with co-evolution is refused} (``ratecov() is not yet supported for co-evolution models''), also with several behaviors and in two-mode networks (error 198).
+\item \textbf{Structural rate effects} are restricted to directed one-mode relations and plain waves: no \opt{behavior()}, \opt{present()}, \opt{missnet()}, \opt{symmetric} and no two-mode networks (error 198 for the last two and for \opt{present()}). No \opt{endow()}/\opt{creation()}. They run in the plugin only. Combining several structural rate effects can fail (see above).
 \item \textbf{Composition change.}
   \begin{itemize}[nosep]
   \item RSiena's composition-change options 2--4 (other treatments of the data of absent actors) and several intervals per actor are not offered: only RSiena option~1 with one interval per actor.

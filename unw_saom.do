@@ -4460,6 +4460,7 @@ real rowvector stat_saom_balance(class ErgmGraph scalar G, class ErgmTermData sc
    by running it, not assumed safe).
    =================================================================== */
 void SaomCheckThetaBound(real rowvector theta, real scalar thetaBound) {
+	if (cols(theta) == 0) return
 	if (max(abs(theta)) > thetaBound) {
 		errprintf("SAOM estimation diverged during phase 2: a coefficient's own magnitude exceeded thetaBound (" + strofreal(thetaBound) + ") after a Robbins-Monro update step - matching real RSiena's own safeguard (R/phase2.r), which halts under the identical condition rather than let an update run away. This usually signals a genuine identification problem for this specific model/data combination (a real, diagnosed example: a co-evolution behavior effect's own joint parameter direction turning out to be an unidentified saturation ridge), not a software defect. Try a narrower effect specification, a larger/different dataset, or different starting values (theta0()/theta0beh()).\n")
 		exit(498)
@@ -6566,7 +6567,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	struct SaomNetFit scalar fit
 	real matrix Zdev, Zsco, Dhat, DhatDec, Dinv, DinvOrig, DinvDec, msf, sfinvcov, Z1, S1, Z3, S3, Sc3, Dhat3, Zp1, Sp1, Zp3, Sp3
 	real rowvector par, par1, dev, prevdev, prod0, prod1, ac, stdcap, thav, fchange, changestep, thprev, m3
-	real rowvector rmfixed, rmfixedDec
+	real rowvector rmfixed, rmfixedDec, userfix, fm
 	real scalar ptot, k, nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
 	real scalar attempt, diverged, kp1
 	real rowvector n2minimum, n2maximum
@@ -6594,8 +6595,15 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	}
 	rmfixedDec = J(1, ptot, 0)
 	DhatDec = Dhat
+	// user-fixed parameters (the fix() option, RSiena's fix = TRUE): kept at their starting values, never updated,
+	// no standard error; the decoupled derivative matrix is used from the start
+	userfix = J(1, ptot, 0)
+	if (findexternal("__nwsaom_fixmask") != NULL) {
+		fm = *findexternal("__nwsaom_fixmask")
+		if (cols(fm) <= ptot) userfix[1..cols(fm)] = fm
+	}
 	for (k=1; k<=ptot; k++) {
-		if (Dhat[k,k] <= 0) {
+		if (Dhat[k,k] <= 0 | userfix[k]) {
 			rmfixedDec[k] = 1
 			DhatDec[k,.] = J(1, ptot, 0)
 			DhatDec[.,k] = J(ptot, 1, 0)
@@ -6629,7 +6637,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 		n2maximum[k] = n2minimum[k] + 200
 	}
 
-	attempt = 1
+	attempt = (any(userfix) ? 2 : 1)
 	while (1) {
 		if (attempt == 1) {
 			Dinv = DinvOrig
@@ -6643,7 +6651,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 			Dinv = DinvDec
 			rmfixed = rmfixedDec
 			for (k=1; k<=ptot; k++) {
-				if (rmfixed[k]) printf("{txt}note: parameter %f of the Robbins-Monro estimation has a non-positive derivative estimate (%9.6f) and could not be estimated on this data; as RSiena does (R/phase1.r), it is kept fixed at its starting value (standard error 0). The other parameters are estimated.\n", k, Dhat[k,k])
+				if (rmfixed[k] & !userfix[k]) printf("{txt}note: parameter %f of the Robbins-Monro estimation has a non-positive derivative estimate (%9.6f) and could not be estimated on this data; as RSiena does (R/phase1.r), it is kept fixed at its starting value (standard error 0). The other parameters are estimated.\n", k, Dhat[k,k])
 			}
 		}
 		stdcap = J(1, ptot, 1)
@@ -6695,7 +6703,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 					printf("TRACE    dev =")
 					dev
 				}
-				if (max(abs(select(par, bounded :& !rmfixed))) > 50) {
+				if (any(bounded :& !rmfixed)) if (max(abs(select(par, bounded :& !rmfixed))) > 50) {
 					diverged = 1
 					break
 				}
@@ -6733,6 +6741,7 @@ struct SaomNetFit scalar SaomRMCore(transmorphic C, pointer(function) scalar sim
 	if (max(rmfixed) == 0) fit.tconvMax = sqrt(max((m3 * invsym(S3) * m3', 0)))
 	else fit.tconvMax = sqrt(max((select(m3, !rmfixed) * invsym(select(select(S3, !rmfixed'), !rmfixed)) * select(m3, !rmfixed)', 0)))
 	Dhat3 = SaomJacobianPerPeriod(Zp3, Sp3, cols(Zp3) / ptot, ptot)
+	SaomStoreScoreInputs(Dhat3, S3, m3, userfix, par, Zp3, Sp3)
 	// a fixed parameter gets no standard error (0): decoupled Jacobian,
 	// no variance
 	for (k=1; k<=ptot; k++) {
@@ -9230,7 +9239,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	real scalar nsub, subphase, gain, reduceg, n2min0, maxRatio, thavn, nit, maxacor
 	real rowvector n2minimum, n2maximum
 	real scalar kp1
-	real rowvector coevfixed
+	real rowvector coevfixed, userfixc, fmc
 	real colvector allbehvals, missBehZero
 
 	nwaves = cols(Gwaves)
@@ -9400,13 +9409,18 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 		Dhat = SaomJacobianPerPeriod(Zp1, Sp1, cols(Zp1) / ptot, ptot)
 	}
 	coevfixed = J(1, ptot, 0)
+	userfixc = J(1, ptot, 0)
+	if (findexternal("__nwsaom_fixmask") != NULL) {
+		fmc = *findexternal("__nwsaom_fixmask")
+		if (cols(fmc) <= ptot) userfixc[1..cols(fmc)] = fmc
+	}
 	for (k=1; k<=p; k++) {
-		if (Dhat[k,k] <= 0) {
+		if (Dhat[k,k] <= 0 | userfixc[k]) {
 			coevfixed[k] = 1
 			Dhat[k,.] = J(1, ptot, 0)
 			Dhat[.,k] = J(ptot, 1, 0)
 			Dhat[k,k] = 1
-			printf("{txt}note: parameter %f has a non-positive derivative estimate and is kept fixed at its starting value, as RSiena does (R/phase1.r).\n", k)
+			if (!userfixc[k]) printf("{txt}note: parameter %f has a non-positive derivative estimate and is kept fixed at its starting value, as RSiena does (R/phase1.r).\n", k)
 		}
 	}
 	fit.fixed = coevfixed
@@ -9509,6 +9523,7 @@ struct SaomCoevMultiFit scalar SaomEstimateRMCoevMulti(
 	fit.rateBehTratios = fit.tconv[(p+P+1)..ptot]
 
 	Dhat3 = SaomJacobianPerPeriod(Zp3, Sp3, cols(Zp3) / ptot, ptot)
+	SaomStoreScoreInputs(Dhat3, S3, m3, userfixc, theta, Zp3, Sp3)
 	// a fixed effect gets no standard error (0; RSiena: NA)
 	for (k=1; k<=ptot; k++) {
 		if (coevfixed[k]) {
@@ -11261,6 +11276,178 @@ transmorphic _SaomGofExt(string scalar nm, transmorphic dflt) {
 	p = findexternal(nm)
 	if (p == NULL) return(dflt)
 	return(*p)
+}
+
+/* Score-type tests (estat score): the phase-3 inputs of RSiena's ScoreTest(): the derivative matrix dfra, the covariance msf and the
+   mean deviation fra of the statistics at the final estimate, with the flags of the parameters fixed by the user (the tested ones). */
+void SaomStoreScoreInputs(real matrix D, real matrix S, real rowvector m, real rowvector fixedflag, real rowvector par, real matrix Zp, real matrix Sp) {
+	external real matrix __nwsaom_score_D, __nwsaom_score_S, __nwsaom_score_Zp, __nwsaom_score_Sp
+	external real rowvector __nwsaom_score_m, __nwsaom_score_fix, __nwsaom_score_par
+	__nwsaom_score_D = D
+	__nwsaom_score_S = S
+	__nwsaom_score_m = m
+	__nwsaom_score_fix = fixedflag
+	__nwsaom_score_par = par
+	__nwsaom_score_Zp = Zp
+	__nwsaom_score_Sp = Sp
+}
+
+/* RSiena's EvaluateTestStatistic() (R/Sienatest.r) for the generalised score test (maxlike = FALSE). test, redundant: 1 x n 0/1.
+   Returns (c, oneSided) and fills cov. */
+real rowvector SaomScoreEval(real matrix D, real matrix S, real rowvector m, real rowvector test, real rowvector redundant) {
+	real colvector it, if_
+	real matrix d11, d21, id11, rg, sigma11, sigma12, sigma22, sigma21, v2, v6, v9, vav
+	real colvector z1, z2, ov
+	real scalar cvalue, oneSided
+	it = selectindex(test')
+	if_ = selectindex(!(test :| redundant)')
+	d11 = D[if_, if_]
+	d21 = D[it, if_]
+	id11 = luinv(d11)
+	if (hasmissing(id11)) return((., .))
+	rg = d21 * id11
+	sigma11 = S[if_, if_]
+	sigma12 = S[if_, it]
+	sigma22 = S[it, it]
+	sigma21 = sigma12'
+	z1 = m[if_]'
+	z2 = m[it]'
+	ov = z2 - rg * z1
+	v2 = sigma21 - rg * sigma11
+	v6 = v2 * id11' * d21'
+	v9 = sigma22 - rg * sigma12 - v6
+	vav = luinv(v9)
+	if (hasmissing(vav)) return((., .))
+	cvalue = ov' * vav * ov
+	if (cvalue < 0) cvalue = 0
+	oneSided = 0
+	if (cols(it) == 1 | rows(it) == 1) if (length(it) == 1) {
+		if (vav[1,1] > 0) oneSided = -ov[1] * sqrt(vav[1,1])
+	}
+	return((cvalue, oneSided))
+}
+
+/* estat score: joint test, tests of each tested parameter separately, one-step estimates. Results go to Stata matrices
+   __nwsaom_score_res (tested x 2: c, oneSided), scalars __nwsaom_score_c, and matrix __nwsaom_score_onestep (1 x n). */
+void SaomScoreRun(real rowvector test) {
+	external real matrix __nwsaom_score_D, __nwsaom_score_S
+	external real rowvector __nwsaom_score_m, __nwsaom_score_fix, __nwsaom_score_par
+	real rowvector redundant, tt, joint, one, os
+	real matrix res, D2
+	real scalar k, n, j
+	n = cols(__nwsaom_score_par)
+	redundant = (__nwsaom_score_fix :& !test)
+	joint = SaomScoreEval(__nwsaom_score_D, __nwsaom_score_S, __nwsaom_score_m, test, redundant)
+	st_numscalar("__nwsaom_score_c", joint[1])
+	st_numscalar("__nwsaom_score_df", sum(test))
+	res = J(sum(test), 2, .)
+	j = 0
+	for (k=1; k<=n; k++) {
+		if (test[k]) {
+			j++
+			tt = J(1, n, 0)
+			tt[k] = 1
+			one = SaomScoreEval(__nwsaom_score_D, __nwsaom_score_S, __nwsaom_score_m, tt, redundant :| (test :& !tt))
+			res[j, .] = one
+		}
+	}
+	st_matrix("__nwsaom_score_res", res)
+	D2 = luinv(__nwsaom_score_D)
+	os = (-D2 * __nwsaom_score_m')'
+	st_matrix("__nwsaom_score_onestep", __nwsaom_score_par + os)
+	st_numscalar("__nwsaom_score_oneS", (sum(test) == 1 ? joint[2] : 0))
+}
+
+/* estat timetest (RSiena's sienaTimeTest): a score-type test of the hypothesis that each effect has the same parameter in every period.
+   The model is augmented by one dummy parameter per effect and period 2..P (the effect is theta + delta_period in that period);
+   under the null all deltas are 0. The statistics of the dummy (j, q) are the period-q deviations of statistic j, and the augmented
+   derivative matrix is made of the per-period derivative matrices D_q = cov(Z_q, S_q): d z_k / d delta_(j,q) = D_q[k,j],
+   d z_(k,p) / d theta_j = D_p[k,j], d z_(k,p) / d delta_(j,q) = 1(p = q) D_q[k,j].
+   Results in Stata matrices: __nwsaom_tt_joint (c, df), __nwsaom_tt_effect (neff x 2), __nwsaom_tt_indiv (ndummies x 3: c, onestep delta,
+   period), and the effect indices in __nwsaom_tt_eff. effects: 1 x ptot 0/1 of the effects to test. */
+void SaomTimeTestRun(real scalar nper, real rowvector effects) {
+	external real matrix __nwsaom_score_Zp, __nwsaom_score_Sp
+	external real rowvector __nwsaom_score_fix, __nwsaom_score_par
+	real scalar ptot, K, q, j, k, i, ne, nd, N, idx
+	real matrix Dq, Ztot, Daug, Saug, Zaug, Zq, Sq, Dsum, D2, res, effres
+	real rowvector maug, eff, test, redundant, ev, jt, one, dq, os, tt
+	real colvector dumq, dumj
+
+	ptot = cols(__nwsaom_score_par)
+	K = rows(__nwsaom_score_Zp)
+	eff = select((1..ptot), effects :& !__nwsaom_score_fix)
+	ne = cols(eff)
+	nd = ne * (nper - 1)
+	N = ptot + nd
+	Ztot = J(K, ptot, 0)
+	Dsum = J(ptot, ptot, 0)
+	Daug = J(N, N, 0)
+	Zaug = J(K, N, 0)
+	dumq = J(nd, 1, 0)
+	dumj = J(nd, 1, 0)
+	for (q=1; q<=nper; q++) {
+		Zq = __nwsaom_score_Zp[., ((q-1)*ptot+1)..(q*ptot)]
+		Sq = __nwsaom_score_Sp[., ((q-1)*ptot+1)..(q*ptot)]
+		Ztot = Ztot + Zq
+		Dq = ((Zq :- mean(Zq))' * (Sq :- mean(Sq))) / K
+		Dsum = Dsum + Dq
+		if (q >= 2) {
+			for (j=1; j<=ne; j++) {
+				idx = ptot + (j-1)*(nper-1) + (q-1)
+				dumq[idx - ptot] = q
+				dumj[idx - ptot] = eff[j]
+				Zaug[., idx] = Zq[., eff[j]]
+				// rows: total statistics k, columns: dummy (j, q) = D_q[k, eff j]
+				Daug[1..ptot, idx] = Dq[., eff[j]]
+				// rows: the dummy statistics of period q (k, q), columns: theta_l and dummy (j, q)
+				for (k=1; k<=ne; k++) {
+					i = ptot + (k-1)*(nper-1) + (q-1)
+					Daug[i, 1..ptot] = Dq[eff[k], .]
+					Daug[i, idx] = Dq[eff[k], eff[j]]
+				}
+			}
+		}
+	}
+	Zaug[., 1..ptot] = Ztot
+	Daug[1..ptot, 1..ptot] = Dsum
+	maug = mean(Zaug)
+	Saug = variance(Zaug)
+	test = (J(1, ptot, 0), J(1, nd, 1))
+	redundant = (__nwsaom_score_fix, J(1, nd, 0))
+	jt = SaomScoreEval(Daug, Saug, maug, test, redundant)
+	st_matrix("__nwsaom_tt_joint", (jt[1], nd))
+	// effect-wise: all dummies of one effect, the other dummies left out
+	effres = J(ne, 2, .)
+	for (j=1; j<=ne; j++) {
+		tt = J(1, N, 0)
+		for (q=2; q<=nper; q++) tt[ptot + (j-1)*(nper-1) + (q-1)] = 1
+		one = SaomScoreEval(Daug, Saug, maug, tt, redundant :| (test :& !tt))
+		effres[j, .] = (one[1], nper - 1)
+	}
+	st_matrix("__nwsaom_tt_effect", effres)
+	// individual dummies
+	res = J(nd, 3, .)
+	for (i=1; i<=nd; i++) {
+		tt = J(1, N, 0)
+		tt[ptot + i] = 1
+		one = SaomScoreEval(Daug, Saug, maug, tt, redundant :| (test :& !tt))
+		res[i, 1] = one[1]
+		res[i, 3] = dumq[i]
+	}
+	D2 = luinv(Daug)
+	os = (-D2 * maug')'
+	for (i=1; i<=nd; i++) res[i, 2] = os[ptot + i]
+	st_matrix("__nwsaom_tt_indiv", res)
+	st_matrix("__nwsaom_tt_eff", eff)
+	st_matrix("__nwsaom_tt_onestep", __nwsaom_score_par + os[1..ptot])
+}
+
+/* estat simulate: summary statistics of one simulated (or observed) network, row (., period, ties, mutual dyads, transitive triples, behavior mean) */
+real rowvector SaomSimSummary(real matrix A, real scalar pd, real scalar behmean) {
+	real matrix B
+	B = A :!= 0
+	_diag(B, 0)
+	return((., pd, sum(B), sum(B :* B') / 2, sum((B * B) :* B), behmean))
 }
 
 real scalar SaomGofSimNet(class ErgmGraph scalar G, class ErgmModel scalar M,

@@ -1,6 +1,6 @@
 \chapter{Options reference}\label{ch:options}
 
-This chapter lists the options of \nwsaom{} by topic. The definition of each effect (what is counted, its RSiena name and its validation) is in Chapter~\ref{ch:effects} and Appendix~\ref{app:effects}; here you find which option selects it, which arguments it takes and what it can be combined with. The text is derived from the help files \texttt{nwsaom.sthlp} and \texttt{nwsaom\_remarks.sthlp}; if the two disagree with the program, the program is right and the help file should be reported. Options marked \emph{native} exist only in the C plugin: with a plugin that is too old, or with the Mata engine, they are refused with an error message (Chapter~\ref{ch:technical}).
+This chapter lists the options of \nwsaom{} by topic. The definition of each effect (what is counted, its RSiena name and its validation) is in Chapter~\ref{ch:effects} and Appendix~\ref{app:effects}; here you find which option selects it, which arguments it takes and what it can be combined with. The same information is in the help files \texttt{nwsaom.sthlp} and \texttt{nwsaom\_remarks.sthlp}. Options marked \emph{native} exist only in the C plugin: with a plugin that is too old, or with the Mata engine, they are refused with an error message (Chapter~\ref{ch:technical}).
 
 \section{Syntax}
 
@@ -163,7 +163,6 @@ Composition change implies unconditional estimation. Data preparation (coding of
 \opt{cores(\#)} & Threads of the native simulator; 0 (default) is all physical cores, 1 is single-threaded. Results for a given seed do not depend on it. \\
 \bottomrule
 \end{longtable}
-{\sloppy Fragments of this chapter that were run with Stata (three waves of the Glasgow data, \texttt{k0(20) k3(50) seed(7)} added to shorten the runs) and finished without error: \texttt{outdegree reciprocity endow(transties) creation(transties)}; \texttt{outdegree reciprocity ratecov(alcohol1)}; \texttt{outdegree reciprocity tvcov(alcohol1 alcohol2 alcohol3) egox(alcohol)}; \texttt{samex(smoke1) egox(alcohol1) interact(samex\_smoke1\#egox\_alcohol1)}; \texttt{outdegree reciprocity egox(alcohol1) nocenter}; and \texttt{outdegree reciprocity gwesp(0.69) unconditional cores(1)}.\par}
 
 \section{Several dependent networks: \texttt{nwsaom multinet}}
 

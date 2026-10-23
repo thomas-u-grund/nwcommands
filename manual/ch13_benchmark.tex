@@ -34,12 +34,13 @@ square-root indegree and outdegree popularity, \texttt{samex(smoke1)} and
 as co-evolving behavior; R3 is undirected; R4 and R5 repeat R1 and R2 on 200
 actors.
 
-\paragraph{A caveat on \texttt{outPopSqrt}.} Since RSiena 1.6.1 the default
-parameter 0 of \texttt{outPopSqrt} makes the statistic use start-of-period
-outdegrees without the square root, while the ministep still uses the square
-root; RSiena does not converge on these models with that default. The benchmark
-therefore gives it internal parameter 1 (its documented definition); \nwsaom{}
-implements the documented effect.
+\paragraph{A caveat on \texttt{outPopSqrt}.} From RSiena 1.6.1 until 1.6.12 the default
+internal parameter 0 of \texttt{outPopSqrt} (and of \texttt{outPop.c}, \texttt{outPopMore},
+\texttt{inActSqrt} and related effects) made the statistic use start-of-period outdegrees without
+the square root, while the ministep still used the square root, and RSiena did not converge on
+these models. RSiena 1.6.13 corrected this: these effects now have internal parameter 1 by
+default. The benchmark was run with RSiena \benchrsiena{}, so it sets the parameter to 1
+explicitly, which is the documented definition and what \nwsaom{} implements.
 
 \section{Agreement of the estimates}
 

@@ -51,13 +51,13 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{cycle4} & two-mode network & siena07 & \texttt{cycle4}\\
 \texttt{gwdspFB} & two-mode network & siena07 & \texttt{gwdspfb(0.69)}\\
 \texttt{transTriads} & non-directed network & siena07 & \texttt{transtriads}\\
-\texttt{transTies} & non-directed network &  & \texttt{transties}\\
+\texttt{transTies} & non-directed network & siena07 & \texttt{transties}\\
 \texttt{between} & non-directed network & siena07 & \texttt{between}\\
-\texttt{balance} & non-directed network &  & \texttt{balance}\\
+\texttt{balance} & non-directed network & siena07 & \texttt{balance}\\
 \texttt{nbrDist2} & non-directed network & siena07 & \texttt{nbrdist2}\\
 \texttt{nbrDist2twice} & non-directed network & siena07 & \texttt{dblnbrdist2}\\
-\texttt{gwesp} & non-directed network &  & \texttt{gwesp(\#)}\\
-\texttt{cycle4} & non-directed network &  & \texttt{cycle4}\\
+\texttt{gwesp} & non-directed network & siena07 & \texttt{gwesp(\#)}\\
+\texttt{cycle4} & non-directed network & siena07 & \texttt{cycle4}\\
 \texttt{Jout} & non-directed network & siena07 & \texttt{ownx(jout)}\\
 \bottomrule
 \end{longtable}
@@ -117,9 +117,9 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{outMore\_ego} & two-mode network & siena07 & \texttt{ownx(outmoreego:0)}\\
 \texttt{inPop} & non-directed network & siena07 & \texttt{inpop}\\
 \texttt{inPop.c} & non-directed network & siena07 & \texttt{inpopc}\\
-\texttt{inPopSqrt} & non-directed network &  & \texttt{indegpopularity}\\
+\texttt{inPopSqrt} & non-directed network & siena07 & \texttt{indegpopularity}\\
 \texttt{inPop\_dya} & non-directed network & siena07 & \texttt{ownx(inpopdya)}\\
-\texttt{outAct} & non-directed network &  & \texttt{outactivity}\\
+\texttt{outAct} & non-directed network & siena07 & \texttt{outactivity}\\
 \texttt{outAct.c} & non-directed network & siena07 & \texttt{outactc}\\
 \texttt{outActSqrt} & non-directed network & siena07 & \texttt{outactsqrt}\\
 \texttt{degPlus} & non-directed network & siena07 & \texttt{degplus}\\
@@ -185,15 +185,15 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{in2Plus} & one-mode network & siena07 & \texttt{antiiniso2}\\
 \texttt{in3Plus} & one-mode network & siena07 & \texttt{inplus3}\\
 \texttt{isolatePop} & one-mode network & siena07 & \texttt{isolatepop}\\
-\texttt{outIso} & two-mode network &  & \texttt{outiso}\\
-\texttt{antiInIso} & two-mode network &  & \texttt{antiiniso}\\
-\texttt{antiInIso2} & two-mode network &  & \texttt{antiiniso2}\\
-\texttt{in2Plus} & two-mode network &  & \texttt{antiiniso2}\\
-\texttt{in3Plus} & two-mode network &  & \texttt{inplus3}\\
-\texttt{outIso} & non-directed network &  & \texttt{outiso}\\
-\texttt{isolateNet} & non-directed network &  & \texttt{isolatenet}\\
-\texttt{antiInIso} & non-directed network &  & \texttt{antiiniso}\\
-\texttt{antiInIso2} & non-directed network &  & \texttt{antiiniso2}\\
+\texttt{outIso} & two-mode network & siena07 & \texttt{outiso}\\
+\texttt{antiInIso} & two-mode network & siena07 & \texttt{antiiniso}\\
+\texttt{antiInIso2} & two-mode network & siena07 & \texttt{antiiniso2}\\
+\texttt{in2Plus} & two-mode network & siena07 & \texttt{antiiniso2}\\
+\texttt{in3Plus} & two-mode network & siena07 & \texttt{inplus3}\\
+\texttt{outIso} & non-directed network & siena07 & \texttt{outiso}\\
+\texttt{isolateNet} & non-directed network & siena07 & \texttt{isolatenet}\\
+\texttt{antiInIso} & non-directed network & siena07 & \texttt{antiiniso}\\
+\texttt{antiInIso2} & non-directed network & siena07 & \texttt{antiiniso2}\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -320,7 +320,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{outXMore} & non-directed network + constant covariate & siena07 & \texttt{netx(outxmore:var)}\\
 \texttt{egoX} & non-directed network + constant covariate & siena07 & \texttt{egox()}\\
 \texttt{egoSqX} & non-directed network + constant covariate & siena07 & \texttt{egosqx()}\\
-\texttt{egoPlusAltX} & non-directed network + constant covariate &  & \texttt{nodecov()}\\
+\texttt{egoPlusAltX} & non-directed network + constant covariate & siena07 & \texttt{nodecov()}\\
 \texttt{egoPlusAltSqX} & non-directed network + constant covariate & siena07 & \texttt{egoplusaltsqx()}\\
 \texttt{egoLThresholdX} & non-directed network + constant covariate & siena07 & \texttt{egolthresholdx()}\\
 \texttt{egoRThresholdX} & non-directed network + constant covariate & siena07 & \texttt{egorthresholdx()}\\
@@ -332,7 +332,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{diffSqX} & non-directed network + constant covariate & siena07 & \texttt{diffsqx()}\\
 \texttt{egoDiffX} & non-directed network + constant covariate & siena07 & \texttt{egodiffx()}\\
 \texttt{altHigherEgoX} & non-directed network + constant covariate & siena07 & \texttt{althigheregox()}\\
-\texttt{higher} & non-directed network + constant covariate &  & \texttt{higher()}\\
+\texttt{higher} & non-directed network + constant covariate & siena07 & \texttt{higher()}\\
 \texttt{simX} & non-directed network + constant covariate & siena07 & \texttt{simx()}\\
 \texttt{inPopX} & non-directed network + constant covariate & siena07 & \texttt{inpopx()}\\
 \texttt{outPopX} & non-directed network + constant covariate & siena07 & \texttt{outpopx()}\\
@@ -558,8 +558,8 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{XWX1} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx1:stem)}\\
 \texttt{XWX2} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx2:stem)}\\
 \texttt{XXW} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xxw:stem)}\\
-\texttt{X} & non-directed network + constant dyadic covariate &  & \texttt{dyadcov()}\\
-\texttt{XRecip} & non-directed network + constant dyadic covariate &  & \texttt{dyadcovrecip()}\\
+\texttt{X} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadcov()}\\
+\texttt{XRecip} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadcovrecip()}\\
 \texttt{WWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(wwx:matrix)}\\
 \texttt{cyWWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(cywwx:matrix)}\\
 \texttt{InWWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(inwwx:matrix)}\\
@@ -685,7 +685,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{diffSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffsqx)}\\
 \texttt{egoDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egodiffx)}\\
 \texttt{altHigherEgoX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(althigheregox)}\\
-\texttt{simX} & non-directed network + a behavior variable &  & \texttt{behsim}\\
+\texttt{simX} & non-directed network + a behavior variable & siena07 & \texttt{behsim}\\
 \texttt{inPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(inpopx)}\\
 \texttt{outPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(outpopx)}\\
 \texttt{inActX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(inactx)}\\
@@ -1119,7 +1119,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{Rate} & rate (behavior) & siena07 & \texttt{automatic rate}\\
 \texttt{Rate} & rate (two-mode network) & siena07 & \texttt{automatic rate}\\
 \texttt{Rate} & rate (non-directed network) & siena07 & \texttt{automatic rate}\\
-\texttt{RateX} & rate (non-directed network) + constant covariate &  & \texttt{ratecov()}\\
+\texttt{RateX} & rate (non-directed network) + constant covariate & siena07 & \texttt{ratecov()}\\
 \bottomrule
 \end{longtable}
 \normalsize

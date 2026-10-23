@@ -141,8 +141,20 @@ program define nwsaom_estat, rclass
 		nwsaom_estat_mems `rest'
 		return add
 	}
+	else if "`subcmd'" == "score" {
+		nwsaom_estat_score `rest'
+		return add
+	}
+	else if "`subcmd'" == "timetest" {
+		nwsaom_estat_timetest `rest'
+		return add
+	}
+	else if "`subcmd'" == "simulate" {
+		nwsaom_estat_simulate `rest'
+		return add
+	}
 	else {
-		di as err "estat `subcmd' not allowed after nwsaom - only {bf:gof} and {bf:mems} are currently supported."
+		di as err "estat `subcmd' not allowed after nwsaom - only {bf:gof}, {bf:mems}, {bf:simulate}, {bf:score} and {bf:timetest} are currently supported."
 		exit 321
 	}
 end

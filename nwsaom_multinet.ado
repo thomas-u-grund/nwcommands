@@ -72,6 +72,14 @@ program define nwsaom_multinet, eclass
 		K0(integer 30) K3(integer 200) FIRSTG(real 0.2) seed(integer -1) ]
 
 	if `seed' != -1 set seed `seed'
+	capture mata: mata drop __nwsaom_fixmask
+	capture mata: mata drop __nwsaom_score_D
+	capture mata: mata drop __nwsaom_score_S
+	capture mata: mata drop __nwsaom_score_m
+	capture mata: mata drop __nwsaom_score_fix
+	capture mata: mata drop __nwsaom_score_par
+	capture mata: mata drop __nwsaom_score_Zp
+	capture mata: mata drop __nwsaom_score_Sp
 	if "`eff1'" == "" local eff1 = cond("`sym1'" != "", "outdegree", "outdegree reciprocity")
 	if "`eff2'" == "" local eff2 = cond("`sym2'" != "", "outdegree", "outdegree reciprocity")
 	local nw1 : word count `net1'

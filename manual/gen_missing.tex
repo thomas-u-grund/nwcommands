@@ -86,8 +86,8 @@ RSiena name & Network / context & Note\\
 \texttt{outRate} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
 \texttt{outRateInv} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
 \texttt{outRateLog} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{RateX} & rate (non-directed network) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov.\\
-\texttt{RateX} & rate (non-directed network) + a behavior variable & ratecov() is a network-rate option for constant node covariates only.\\
+\texttt{RateX} & rate (non-directed network) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov. Validated 2026-10-23: plain 3-wave pairwise fit agrees with siena07 to three d…\\
+\texttt{RateX} & rate (non-directed network) + a behavior variable & ratecov() is a network-rate option for constant node covariates only. Validated 2026-10-23: plain 3-wave pairwise fit agrees with siena07 to three digits\\
 \texttt{infectDeg} & rate (behavior (non-directed network)) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
 \bottomrule
 \end{longtable}
@@ -103,15 +103,15 @@ RSiena name & Network / context & Note\\
 \texttt{inPop\_ego} & two-mode network & Not implemented.\\
 \texttt{unspInt} & two-mode network & Two-mode: interact() is refused.\\
 \texttt{unspInt} & non-directed network & interact() is refused with symmetric (tvcov/interact guard).\\
-\texttt{sameXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (guard in nwsaom.ado).\\
-\texttt{diffXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (guard in nwsaom.ado).\\
-\texttt{avGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (guard in nwsaom.ado).\\
-\texttt{totGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (guard in nwsaom.ado).\\
+\texttt{sameXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
+\texttt{diffXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
+\texttt{avGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
+\texttt{totGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
 \texttt{sameXOutAct} & two-mode network + changing covariate & tvcov() is refused with two-mode networks.\\
 \texttt{diffXOutAct} & two-mode network + changing covariate & tvcov() is refused with two-mode networks.\\
-\texttt{higher} & non-directed network + changing covariate & tvcov() is refused with symmetric.\\
+\texttt{higher} & non-directed network + changing covariate & tvcov() is refused with symmetric. Validated 2026-10-23: observed statistic equals siena07 and estimates agree over 2 seeds (target only; the effect is refused…\\
 \texttt{X} & two-mode network + constant dyadic covariate & dyadcov() is refused for two-mode.\\
-\texttt{XRecip} & non-directed network + changing dyadic covariate & dyadcov() is time-constant only (a single matrix); no changing dyadic covariate.\\
+\texttt{XRecip} & non-directed network + changing dyadic covariate & dyadcov() is time-constant only (a single matrix); no changing dyadic covariate. Validated 2026-10-23: observed statistic equals siena07 and estimates agree ov…\\
 \texttt{homXOutAct2} & one-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
 \texttt{sameXOutAct} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
 \texttt{diffXOutAct} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
@@ -120,7 +120,7 @@ RSiena name & Network / context & Note\\
 \texttt{totGroupEgoX} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
 \texttt{degAbsDiffX} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
 \texttt{degPosDiffX} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{higher} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
+\texttt{higher} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior. Validated 2026-10-23: o…\\
 \texttt{homXOutAct2} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
 \texttt{from.w.ind} & one-mode network + another network + another network & Not implemented.\\
 \texttt{betweenPop} & one-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
@@ -128,8 +128,8 @@ RSiena name & Network / context & Note\\
 \texttt{toU} & one-mode network + another network + constant dyadic covariate & Not implemented.\\
 \texttt{constant} & behavior & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
 \texttt{behUnspInt} & behavior & interact() does not support behavior interactions.\\
-\texttt{avGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (DECISIONS 28: several behaviors interact only through the network).\\
-\texttt{totGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (DECISIONS 28: several behaviors interact only through the network).\\
+\texttt{avGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (several behaviors interact only through the network).\\
+\texttt{totGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (several behaviors interact only through the network).\\
 \texttt{minXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder row: RSiena lists this effect for a non-directed network with unresolved interaction placeholders (interaction1 = yyyyyy); not a usable effect with…\\
 \texttt{maxXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder row: RSiena lists this effect for a non-directed network with unresolved interaction placeholders (interaction1 = yyyyyy); not a usable effect with…\\
 \bottomrule
@@ -143,37 +143,37 @@ RSiena name & Network / context & Note\\
 RSiena name & Network / context & Note\\
 \midrule
 \endhead
-\texttt{newrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{persistrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{realrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{realtrans} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{agreetrans} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (one-mode network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (one-mode network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (one-mode network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (one-mode network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (one-mode network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (one-mode network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{avSim\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{avAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{totAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{maxAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{minAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{crprod\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{from\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{to\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{to\_gmm} & gmm (two-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (one-mode network) + continuous variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (one-mode network) + continuous variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (non-directed network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (non-directed network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (non-directed network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (non-directed network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{egoX\_gmm} & gmm (non-directed network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{simX\_gmm} & gmm (non-directed network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{from\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{to\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
-\texttt{crprod\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator; no plan recorded in DECISIONS/ROADMAP).\\
+\texttt{newrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{persistrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{realrecip} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{realtrans} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{agreetrans} & gmm (one-mode network) & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (one-mode network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (one-mode network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (one-mode network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (one-mode network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (one-mode network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (one-mode network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{avSim\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{avAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{totAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{maxAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{minAlt\_gmm} & gmm (behavior) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{crprod\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{from\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{to\_gmm} & gmm (one-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{to\_gmm} & gmm (two-mode network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (one-mode network) + continuous variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (one-mode network) + continuous variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (non-directed network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (non-directed network) + constant covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (non-directed network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (non-directed network) + changing covariate & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{egoX\_gmm} & gmm (non-directed network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{simX\_gmm} & gmm (non-directed network) + a behavior variable & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{from\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{to\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
+\texttt{crprod\_gmm} & gmm (non-directed network) + another network & GMoM statistic: nwsaom estimates by Method of Moments only (no GMoM estimator).\\
 \bottomrule
 \end{longtable}
 \normalsize
