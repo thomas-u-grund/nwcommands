@@ -66,8 +66,8 @@ program define _nwsaom_nx, rclass
 	}
 	// protocol 54: ownx(effect[:#] ...) - own-network effects without a covariate, native only: jin jout transtrip1 transtrip2 transrectrip2 (= transtripfr) transtripfe transtripee
 	// outpopmore:# outpopsqrtmore:# outpopthreshold:# and the ego degree effects outactego[:2] outactmoreego:# outactsqrtmoreego:# outmoreego:# divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]
-	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego outinass inpopdya inisdegree instructeq densetriads"
-	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22"
+	local __n0_names "jin jout transtrip1 transtrip2 transrectrip2 transtripfe transtripee outpopmore outpopsqrtmore outpopthreshold outactego outactmoreego outactsqrtmoreego outmoreego divoutego inactego divinego reciactego outinass inpopdya inisdegree instructeq densetriads outoutass ininass inoutass"
+	local __n0_codes "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25"
 	if "`ownx'" != "" {
 		mata: __nwsaom_dg_ties = 0
 		mata: __nwsaom_dg_rec = 0
@@ -93,7 +93,7 @@ program define _nwsaom_nx, rclass
 		if "`__pp'" == "" {
 			if inlist("`__f'", "outpopmore", "outpopsqrtmore", "outpopthreshold", "outmoreego") local __pp 1
 			else if inlist("`__f'", "outactmoreego", "outactsqrtmoreego") local __pp 1
-			else if "`__f'" == "outinass" local __pp = cond(`__nwsaom_tm', 2, 1)
+			else if inlist("`__f'", "outinass", "outoutass", "ininass", "inoutass") local __pp 2
 			else if "`__f'" == "densetriads" local __pp 5
 			else local __pp 0
 		}

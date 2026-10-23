@@ -1830,6 +1830,20 @@ static double dg_value(graph_t *g, int v, const double *a, double p1, long i, lo
 				return val;
 			}
 		}
+		case 23: case 24: case 25: {
+			/* outOutAss / inInAss / inOutAss with RSiena's parameter (2: square roots): the contribution of OutOut-/InIn-/InOutDegreeAssortativityEffect */
+			double d, ad, nsum = 0.0;
+			long m, h;
+			if (v == 23) {
+				d = (double)g->dout[i]; ad = (double)g->dout[j];
+				for (m = 0; m < g->outadj[i].len; m++) { h = g->outadj[i].nb[m]; nsum += rt ? sqrt((double)g->dout[h]) : (double)g->dout[h]; }
+				if (has_edge(g, i, j)) return rt ? (nsum - sqrt(ad)) * (sqrt(d) - sqrt(d - 1.0)) + sqrt(d) * sqrt(ad) : (nsum - ad) + d * ad;
+				return rt ? nsum * (sqrt(d + 1.0) - sqrt(d)) + sqrt(d + 1.0) * sqrt(ad) : nsum + (d + 1.0) * ad;
+			}
+			if (v == 24) { d = (double)g->din[i]; ad = (double)g->din[j] + (has_edge(g, i, j) ? 0.0 : 1.0); }
+			else { d = (double)g->din[i]; ad = (double)g->dout[j]; }
+			return rt ? sqrt(d) * sqrt(ad) : d * ad;
+		}
 		case 20: return g->din[i] == 0 ? 1.0 : 0.0;		/* inIsDegree: the tie statistic and the contribution are 1 for an in-isolate ego */
 		case 21: {
 			/* inStructEq: (n - 2) * structmean - |In(i) symmetric-difference In(j)| without i and j (RSiena InStructuralEquivalenceEffect); a[3] = structmean */
@@ -1861,6 +1875,9 @@ static double dg_value(graph_t *g, int v, const double *a, double p1, long i, lo
 static double dg_tie(graph_t *g, int v, const double *a, double p1, long i, long j) {
 	if (v == 3) return xt_mtp(g, g, 'F', 'F', i, j);
 	if (v == 18) return xt_S((double)g->dout[i], p1) * xt_S((double)g->din[j], p1);
+	if (v == 23) return xt_S((double)g->dout[i], p1) * xt_S((double)g->dout[j], p1);
+	if (v == 24) return xt_S((double)g->din[i], p1) * xt_S((double)g->din[j], p1);
+	if (v == 25) return xt_S((double)g->din[i], p1) * xt_S((double)g->dout[j], p1);
 	return dg_value(g, v, a, p1, i, j);
 }
 /* denseTriads tie statistic summed over the ties (RSiena DenseTriadsEffect::tieStatistic() with its mark array) */
