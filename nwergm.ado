@@ -25,7 +25,8 @@ program nwergm, eclass
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 20) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ]
+		OFFSET(string) ///
+		CONSTRAINTS(string asis) OBSCONSTRAINTS(string asis) ]
 	set more off
 
 	if "`edges'" == "" {
@@ -575,6 +576,19 @@ program nwergm, eclass
 		}
 		confirm variable `blockdiag'
 		mata: __nwergm_last_G.set_dyadmask(_ergm_blockdiag_mask(st_data(1::`nodes', "`blockdiag'")))
+	}
+	// constraints(): R ergm's constraints= formula (see _nwergm_constr.ado)
+	local __con_active 0
+	if `"`constraints'"' != "" {
+		if "`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "" {
+			di "{err}constraints() cannot be combined with freedyads(), blockdiag() or fixdensity."
+			error 198
+		}
+		local __con_w "default"
+		if "`proposal'" == "uniform" local __con_w "random"
+		_nwergm_constr, spec(`constraints') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(`__con_w')
+		local __con_active 1
+		if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
 	}
 	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
 	// .nties mutates throughout MCMLE's own simulation (it IS the live
@@ -1674,6 +1688,9 @@ program nwergm, eclass
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
 	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	if `__con_active' {
+		if `con_dind' == 0 local __ergm_dind 0
+	}
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind', "mple", "mcmle")
 	}
@@ -1726,6 +1743,28 @@ program nwergm, eclass
 		if `__ergm_nfree' == 0 {
 			di "{err}option {bf:offset()} cannot fix every coefficient in the model - at least one must remain free to estimate."
 			error 198
+		}
+	}
+
+	// constraints(): statistics held constant by the sample-space constraint are
+	// fixed at 0 and ignored (R: ergm.checkconstraints.model()).
+	if `__con_active' {
+		mata: st_local("__con_conf", invtokens(strofreal(_ergm_con_conflicts(__nwergm_last_M, "`con_implies'"))))
+		if "`__con_conf'" != "" {
+			local __con_confnames ""
+			foreach __c of local __con_conf {
+				mata: st_local("__con_cn", __nwergm_last_M.coefnames[`__c'])
+				local __con_confnames "`__con_confnames' `__con_cn'"
+				mata: __nwergm_last_M.mark_fixed(`__c', 0)
+			}
+			di "{txt}Note: the specified model's sample space constraint holds statistic(s)" _c
+			di "{res}`__con_confnames'" _c
+			di "{txt} constant. They will be ignored."
+			mata: st_local("__ergm_nfree", strofreal(cols(__nwergm_last_M.freeidx())))
+			if `__ergm_nfree' == 0 {
+				di "{err}all terms are either offsets or held constant by the constraints; there is nothing to estimate."
+				error 198
+			}
 		}
 	}
 
@@ -1972,6 +2011,10 @@ program nwergm, eclass
 		}
 		else {
 			mata: `__theta0' = st_matrix("`__b_mple'")
+			// R: without a dyad-independent sample space MPLE is not an initial-value method; start from zeros
+			if `__con_active' {
+				if `con_dind' == 0 mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
+			}
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
@@ -2045,6 +2088,15 @@ program nwergm, eclass
 		if "`nonative'" == "" {
 			mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode', __nwergm_last_G)
 			mata: mata drop __ergm_native_setup_rc
+		}
+		if `__con_active' {
+			mata: st_local("__con_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+			if `__con_ok' != 1 {
+				di "{err}constraints() need the native plugin, which is not available for this model, platform or the nonative option."
+				error 198
+			}
+			mata: __nwergm_last_M.con_par = __ncon_par
+			mata: __nwergm_last_M.con_cols = __ncon_cols
 		}
 		// fixdensity: this is the single place that sets M.fixed_density=1,
 		// guaranteed to run before ErgmMCMLE() is ever called below.
