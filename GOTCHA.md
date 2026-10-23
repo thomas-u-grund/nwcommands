@@ -796,3 +796,17 @@ not one: the failure is rare and moves between seeds when anything upstream chan
 beyond its node count, and the plugin corrupted the heap: the `stata -e` run just stopped (exit status 133, crash report with `beh_stats_on_edges` / `calloc` on a worker
 thread). Fixed by resetting the global in `nwsaom.ado` whenever a fit has no structural dyads. A Mata global that a later fit reads must be reset by every fit that does not
 set it; and a test file that mixes a two-mode part with a later one-mode part in one process is what finds this.
+
+## `nwsaom multinet` with a two-mode member: embedding, RSiena index quirks, and a test-script trap
+
+A two-mode network is embedded in the graph on ALL its nodes with the actors first (`SaomMNAddWave()`), the one-mode network gets isolated event nodes, and
+structural dyads (plugin protocol 90) keep each member to its own dyads. Constants of the cross terms (average in/out degree, number of receivers) are
+RSiena's own for each network (`SaomMNDeg()`), not `ties / n`. Three things cost time and are not obvious:
+- Several RSiena effects index the OTHER network (or the own one) with the node number of an EVENT (divInAltIntn, JoutMix, gwespFBMix of a two-mode dependent
+  network; outOutActIntn, outOutAvIntn of a one-mode network that depends on a two-mode one). siena07 reads the actor with the same number (outside the network
+  when there are more events than actors). Copied (graph field `off`), and refused in the ado when events > actors.
+- RSiena's `toU` takes the first step i -> q in the DEPENDENT network and q -> j in the other network, the reverse of its effect description. Found by brute force
+  against siena07 targets; the other dyadic-covariate effects (sharedToU, avAltU.2M.tie) follow their description.
+- `cscript` clears global macros: a do-file run by `cscript` cannot be parameterised with `global` lines written before it; read OS environment variables with
+  `local x : environment NAME` after `cscript`. (The dev/saom_rsiena_mn*.do harnesses do this.)
+Also: a network whose model has exactly one parameter used to start from a missing theta0 in `multinet` (the placeholder `(.)` has one column); fixed.

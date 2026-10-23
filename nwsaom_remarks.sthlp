@@ -512,12 +512,27 @@ are variables on the {it:node} rows of the dataset after {cmd:nwset} (one row pe
 the actors is possible (the events are generated as absent actors); its network effects are {opt behegox} and
 {cmd:netbeh(egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4 crossxoutact avgroupegox totgroupegox)}. A dyadic covariate ({opt dyadcov()}, a matrix with one row per actor and one column per event)
 and {opt interact()} of the effects above are available too. Several waves ({opt waves()}) are supported. Not available: reciprocity, triads, balance,
-gwesp, structural rate effects, {opt missnet()}, endowment/creation, two-mode members in {cmd:nwsaom multinet}; RSiena's sameXOutAct/diffXOutAct cannot be evaluated by siena07 in a
+gwesp, structural rate effects, {opt missnet()}, endowment/creation; RSiena's sameXOutAct/diffXOutAct cannot be evaluated by siena07 in a
 two-mode network and are not offered. Validation against RSiena 1.6.6 on a simulated 40 x 20, 3-wave network
 (known parameters; dev/saom_rsiena_twomode_sim.R): the observed statistics are identical to RSiena's targets (density 529,
 cycle4 12990, inPopSqrt 2399.29, outAct 4359, egoX 103.142, altX 71.484), and the estimates agree: density -2.37..-2.50 against -2.42..-2.53,
 cycle4 0.094 (0.09-0.096), inPopSqrt 0.57 (0.57-0.59), outAct 0.06-0.08 (0.07-0.08), egoX 0.55-0.57 (0.55-0.57), altX 0.217 (0.215),
 rates 4.49 and 3.03 (4.52, 3.05).
+
+{pstd}
+{bf:A two-mode network in {cmd:nwsaom multinet}.} One of the two networks may be two-mode and the other a one-mode network (directed, or non-directed with {opt sym1}/{opt sym2}) among the
+same actors of the two-mode network (the same number; at least 12 nodes in all). The actors of the two-mode network are the nodes of the mode {opt actormode()} (default 2, the rows
+of the affiliation matrix of {cmd:nwset, bipartite}); they change their ties to the events, at a rate of their own per period, together with the one-mode network. The effects of the two-mode
+network itself are {cmd:outdegree indegpop outact cycle4} (default {cmd:outdegree}); the one-mode network has the effects of any {cmd:multinet} fit. The cross-network effects are those of
+RSiena for such a pair: for a two-mode network that depends on a one-mode network {cmd:inactintn outactintn divoutegointn divinegointn divinaltintn avdegintn outoutactintn outoutavintn
+dist2outinactintn outoutdist2actintn avalt2mtot to toback torecip sharedto avalt2mtie inpopoutw ndist2actintn toany joutmix gwespfbmix} and the covariate effect {cmd:samewxclosure:}{it:var};
+for a one-mode network that depends on a two-mode one {cmd:outpopintn outactintn divoutegointn divoutaltintn avdegintn outoutactintn outoutavintn dist2outinactintn absoutdiffintn from fromany sharedto
+avalt2mtie inpopoutw ndist2actintn joutmix gwespmix}; and, with a dyadic covariate (actors by actors for a one-mode other network, actors by events for a two-mode one),
+{cmd:sharedtou avaltutie} and {cmd:fromwindoo} (a two-mode other network for both roles). A covariate of the actors is read from the first observations of the dataset (one per actor) or from the
+node rows of the two-mode network ({cmd:_nwmode}). Some effects of RSiena index both networks by the same node number (the alters of the two-mode network are events, not actors):
+divinaltintn, joutmix and gwespfbmix of a two-mode network, and outoutactintn and outoutavintn of a one-mode network that depends on a two-mode one; they are available if there are not more events than actors,
+as in RSiena. avalt2mtie needs the parameter 1 or 2 (RSiena refuses the centred versions); give it as {cmd:avalt2mtie:2}. A co-evolving {opt behavior()} is not available with a two-mode network.
+The observed statistics of these effects equal siena07's, and the estimates agree within the Monte Carlo error of both programs.
 
 {marker multibeh}{...}
 {pstd}
