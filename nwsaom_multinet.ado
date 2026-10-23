@@ -180,8 +180,8 @@ program define nwsaom_multinet, eclass
 	else {
 		capture mata: mata drop __nwsaom_mn_Bw
 		capture mata: mata drop __nwsaom_mn_Miss
-		if "`missbeh'" != "" {
-			di "{err}missbeh() needs behavior()."
+		if "`missbeh'`beheff1'`beheff2'`beheff12'`beheff21'" != "" {
+			di "{err}missbeh(), beheff1(), beheff2(), beheff12() and beheff21() need behavior()."
 			error 198
 		}
 	}

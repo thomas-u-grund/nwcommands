@@ -9088,11 +9088,11 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 		tb1 = SaomCoevStatBeh(Bend, *G1[pd], Mbeh, missPd[., pd])
 		tb2 = SaomCoevStatBeh(Bend, *G2[pd], Mbeh, missPd[., pd])
 		for (k=1; k<=pb; k++) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
-		if (any(cfgB.fntype :!= 0)) {
-			// endowment / creation: RSiena's statistics from the decreases / increases of the period, on the starting network of the term
+		if (any(cfgB.fntype :!= 0) | any(cfgB.termcodes :== 2200)) {
+			// endowment / creation (and RSiena's constant effect): RSiena's statistics from the decreases / increases of the period, on the starting network of the term
 			tb1 = SaomBehaviorPatchEndowCreation(Mbeh, tb1, 0, *Behwaves[pd], *Behwaves[pd+1], G1[pd], overallMean, missPd[., pd])
 			tb2 = SaomBehaviorPatchEndowCreation(Mbeh, tb2, 0, *Behwaves[pd], *Behwaves[pd+1], G2[pd], overallMean, missPd[., pd])
-			for (k=1; k<=pb; k++) if (cfgB.fntype[k] != 0) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
+			for (k=1; k<=pb; k++) if (cfgB.fntype[k] != 0 | cfgB.termcodes[k] == 2200) C.target[pd, p1 + p2 + k] = (net2flag[k] ? tb2[k] : tb1[k])
 		}
 		for (k=1; k<=pb; k++) if (cfgB.termcodes[k] >= 20000) C.target[pd, p1 + p2 + k] = SaomMNBothStat(*Behwaves[pd+1] :* (missPd[., pd] :== 0) :+ overallMean :* (missPd[., pd] :!= 0), *G1[pd], *G2[pd], cfgB.termcodes[k], overallMean)
 		C.trb[pd] = sum(abs(*Behwaves[pd+1] - *Behwaves[pd]) :* (missPd[., pd] :== 0))

@@ -518,6 +518,43 @@ cycle4 12990, inPopSqrt 2399.29, outAct 4359, egoX 103.142, altX 71.484), and th
 cycle4 0.094 (0.09-0.096), inPopSqrt 0.57 (0.57-0.59), outAct 0.06-0.08 (0.07-0.08), egoX 0.55-0.57 (0.55-0.57), altX 0.217 (0.215),
 rates 4.49 and 3.03 (4.52, 3.05).
 
+{marker multinetbeh}{...}
+{title:A behavior in nwsaom multinet}
+
+{p 4 4 2}
+{cmd:nwsaom multinet} with {opt behavior()} (see {help nwsaom##multinet:nwsaom multinet}) accepts the following further specifications of the behavior. All of them are native-plugin effects of RSiena.
+
+{p 4 4 2}
+{bf:Behavior effects of both networks.} {opt beheff12()} lists effects that use the first network as RSiena's first network and the second as its second network, {opt beheff21()} the same with the networks
+exchanged. For the actor {it:i} with behavior {it:z_i} (centred by the overall mean) they add {it:z_i} times a count over {it:i}'s alters in the first network: {cmd:ffdeg} (the alters {it:j} that {it:i} nominates
+in both networks), {cmd:bbdeg} (in-alters in the first and the second network), {cmd:fbdeg} (out-alter in the first, in-alter in the second), {cmd:bfdeg} (in-alter in the first, out-alter in the second),
+{cmd:frdeg} and {cmd:brdeg} (out- / in-alters of the first network that are reciprocated in the second), {cmd:indegmixedpop} and {cmd:outdegmixedpop} (the sum of the second network's in-degrees of the
+first network's in- / out-alters). {cmd:ffdeg:2}, {cmd:bbdeg:2}, ... subtract the degree in the first network (RSiena's parameter 2). Coefficients are named {cmd:beh12_}{it:effect} and {cmd:beh21_}{it:effect}.
+
+{p 4 4 2}
+{bf:Covariate, shape and network effects in beheff1() and beheff2().} A token {it:family}{cmd::}{it:varname} names a covariate effect of the behavior (the covariate is a numeric variable, constant over time, at most 8
+different ones): {cmd:from:}{it:x} (the covariate's main effect, RSiena effFrom), {cmd:avxalt:}{it:x} {cmd:avsamexalt:}{it:x} {cmd:totxalt:}{it:x} {cmd:totsamexalt:}{it:x}, and the families of {opt behx()}
+({cmd:avxinalt:}{it:x} {cmd:totxinalt:}{it:x} {cmd:avsimaltx:}{it:x} {cmd:degabscontrx:}{it:x} ...). The shape effects {cmd:quad_cc quad_nc constant threshold:}{it:#} {cmd:simallnear:}{it:#}
+{cmd:simallfar:}{it:#} {cmd:avgroup}[{cmd::}{it:#}] {cmd:totgroup}[{cmd::}{it:#}] and the further network effects of {opt behnet2()} ({cmd:indegavgroup avaltcc totaltcc avinsimdist2 varalt} ...) are written the
+same way. As for all effects of {opt beheff1()} the first network drives the effect, in {opt beheff2()} the second. RSiena's {cmd:constant} effect is the negative number of behavior changes and
+is confounded with the behavior rate, so a fit that includes it stops with a message about the covariance matrix.
+
+{p 4 4 2}
+{bf:The behavior as a covariate of the network effects.} In {opt eff1()} / {opt eff2()}, {cmd:netbeh:}{it:effect} adds the effect of the (centred) behavior of the actors on the formation of ties in that network,
+for example {cmd:eff2(outdegree reciprocity netbeh:absdiffx netbeh:avgroupegox)}. Available: {cmd:samex diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip
+samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx
+altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx crossxoutact outxmore transtripx jumpxtranstrip altdist2 totdist2 sameegodist2 altindist2 totindist2 sameegoindist2 simdist2 simegodist2
+simegoindist2 simrecipx simxtranstrip homxtransrectrip samextransrectrip diffxtransrectrip egoxaltxrecip samexcycle4 sameinxcycle4 avgroupegox totgroupegox}; the threshold effects take their threshold
+after a colon.
+
+{p 4 4 2}
+{bf:Endowment and creation.} In {opt beheff1()} / {opt beheff2()}, {cmd:linearendow quadraticendow avaltendow avsimendow} replace the evaluation effect by the pair of an endowment effect (the effect counts
+when the behavior decreases) and a creation effect (it counts when the behavior increases); the coefficients are {cmd:beh_}{it:effect}{cmd:_endow} and {cmd:beh_}{it:effect}{cmd:_creation}.
+
+{p 4 4 2}
+{bf:Missing behavior values.} {opt missbeh(}{it:m1 m2 ...}{opt )} names one 0/1 variable per wave (1 = the value of {opt behavior()} is missing). Missing values are replaced by the actor's previous observation, else the
+next, else the wave's most frequent value, as in the single-network fit, and they do not enter the statistics. Missing ties and composition change are not available with a behavior in {cmd:nwsaom multinet}.
+
 {marker multibeh}{...}
 {pstd}
 {bf:Several behaviors.} {cmd:behavior(}{it:vars}{cmd: : }{it:effects}{cmd: | }{it:vars}{cmd: : }{it:effects}{cmd:)}: '|' separates
