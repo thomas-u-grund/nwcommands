@@ -294,10 +294,13 @@ estimates agree with siena07{p_end}
 {cmd:outtrunc()}/{cmd:outmore()}/{cmd:outthreshold()} there): {cmd:jin jout transtrip1 transtrip2 transrectrip2 transtripfr transtripfe transtripee outpopmore:}{it:#}
 {cmd:outpopsqrtmore:}{it:#} {cmd:outpopthreshold:}{it:#} (RSiena Jin, Jout, transTrip1, transTrip2, transRecTrip2, transTrip.FR/FE/EE, outPopMore, outPopSqrtMore, outPopThreshold)
 and the ego degree effects {cmd:outactego[:2] outactmoreego:}{it:#} {cmd:outactsqrtmoreego:}{it:#} {cmd:outmoreego:}{it:#}
-{cmd:divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]} (RSiena's *_ego forms; parameter 2 = square root). Statistics and estimates agree with siena07{p_end}
+{cmd:divoutego[:2] inactego[:2] divinego[:2] reciactego[:2]} (RSiena's *_ego forms; parameter 2 = square root). {cmd:outpopmore}, {cmd:outpopsqrtmore} and {cmd:outpopthreshold}
+need a parameter of at least 1 (the default; RSiena stops with an error below 1). Statistics and estimates agree with siena07{p_end}
 {synopt:{opt dyadx(effect:matrix ...)}}Network effects of a constant dyadic covariate W (RSiena's WWX, cyWWX, InWWX, OutWWX, WXX, XWX, XWX1, XWX2,
 XXW): {it:effect} is the lower-case name, {it:matrix} a Stata {it:n} x {it:n} matrix used {bf:raw} (not centred, missing cells = 0), e.g.
-{cmd:dyadx(xwx:DM wwx:DM)}. Coefficients {cmd:nat_}{it:effect}{cmd:_}{it:matrix}. Observed statistics and estimates agree with siena07.
+{cmd:dyadx(xwx:DM wwx:DM)}. {cmd:wxzx:}{it:W}{cmd::}{it:Z} is RSiena's WXZX, the closure of the paths i -W-> h -X-> k -Z-> j by the tie i -> j, with two matrices.
+In a two-mode network the available effects are {cmd:wxx} (a matrix among the actors, {it:na} x {it:na}), {cmd:xwx xwx1 xwx2} (a matrix among the events) and {cmd:wxzx:}{it:W}{cmd::}{it:Z}
+(W among the actors, Z among the events). Coefficients {cmd:nat_}{it:effect}{cmd:_}{it:matrix}. Observed statistics and estimates agree with siena07.
 {bf:Native plugin only} (protocol 49){p_end}
 {synopt:{opt behshape(effect[:#] ...)}}RSiena's further behavior shape effects (native, protocol 51): {cmd:quad_cc} and {cmd:quad_nc} (centred / non-centred quadratic shape - use
 them {it:instead of} {cmd:quadratic}), {cmd:threshold:}{it:#}, {cmd:simallnear:}{it:#} (default 2), {cmd:simallfar:}{it:#} (default 4), {cmd:avgroup}[{cmd::}{it:#}],
@@ -502,7 +505,9 @@ outoutavintn dist2outinactintn outoutdist2actintn outoutdist2avintn ndist2actint
 wxxer xwxer xwxfe jinmix joutmix gwespffmix gwespbbmix gwespbfmix gwespfbmix gwesprrmix inpopoutw sharedto avalt2mtie avalt2mtot doubleinpop}).
 Also {cmd:toany}, {cmd:betweenpop} and {cmd:gwespmix} (= gwespfbmix), and RSiena's from.w.ind as {cmd:fromwindoo} (the other network for both the agreement and the in-degree weights),
 {cmd:fromwindow} (agreement in the other, weights from the own network) and {cmd:fromwindwo} (agreement in the own, weights from the other network).
-With a {bf:dyadic covariate} (a Stata matrix, written {it:effect}{cmd::}{it:matrix}[{cmd::}{it:#}], e.g. {cmd:cross1(sharedtou:W:1)}): {cmd:tou sharedtou avaltutie} (RSiena toU, sharedToU, avAltU.2M.tie).
+With a {bf:dyadic covariate} (a Stata matrix, written {it:effect}{cmd::}{it:matrix}[{cmd::}{it:#}], e.g. {cmd:cross1(sharedtou:W:1)}): {cmd:tou sharedtou avaltutie} (RSiena toU, sharedToU, avAltU.2M.tie). 
+{cmd:tou} counts, for the ego i and the alter j, the actors q with a tie i -> q in the {it:other} network and a tie q -> j in the own network,
+each weighted by the covariate value for (i,q) (RSiena 1.6.12 and later).
 {bf:With a covariate} of the actors (a variable in the current dataset, written {it:effect}{cmd::}{it:var}[{cmd::}{it:#}], e.g. {cmd:cross1(covnetnet:alc homcovnetnet:alc)}; a covariate that changes between waves is declared with
 {cmd:tvcov(a1 a2 a3)}, one variable per period, and used by its stem: {cmd:cross1(samewxclosure:a)}; not for the three similarity effects), protocol 56:
 {cmd:samewwclosure diffwwclosure jumpwwclosure jumpfrom jumpsharedin samewxclosure diffwxclosure jumpwxclosure homwxclosure samexwclosure diffxwclosure covnetnet homcovnetnet

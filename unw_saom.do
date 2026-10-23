@@ -3755,18 +3755,18 @@ real scalar SaomNativeNetStat(class ErgmGraph scalar G, real scalar code, real s
 	stata("capture frame drop __saom_netstat")
 	stata("frame create __saom_netstat")
 	st_framecurrent("__saom_netstat")
-	st_addobs(max((ne, ne0, n, 1)))
+	st_addobs(max((ne, ne0, n, (args() >= 5 ? rows(Wd) : 0), 1)))
 	junk = st_addvar("double", ("ev1", "ev2", "aa"))
-	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) junk = st_addvar("double", "dd" + strofreal(i))
+	if (args() >= 5) if (rows(Wd) == n | rows(Wd) == 2*n) for (i=1; i<=n; i++) junk = st_addvar("double", "dd" + strofreal(i))
 	if (ne0 > 0) {
 		junk = st_addvar("double", ("s1", "s2"))
 		st_store((1::ne0), ("s1", "s2"), E0)
 	}
 	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
 	st_store((1::n), "aa", a)
-	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
+	if (args() >= 5) if (rows(Wd) == n | rows(Wd) == 2*n) for (i=1; i<=n; i++) st_store((1::rows(Wd)), "dd" + strofreal(i), Wd[., i])
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + (ne0 > 0 ? " s1 s2" : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + " " + (args() >= 6 ? strofreal(scale, "%25.17g") : "1") + " " + strofreal(ne0) + char(34))
+	stata("plugin call saomnativesim ev1 ev2 aa " + (args() >= 5 ? ((rows(Wd) == n | rows(Wd) == 2*n) ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + (ne0 > 0 ? " s1 s2" : "") + ", " + char(34) + "NETSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(p1, "%25.17g") + " " + (args() >= 6 ? strofreal(scale, "%25.17g") : "1") + " " + strofreal(ne0) + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_netstat")
 	return(st_numscalar("__saom_netstat_val"))
@@ -3775,7 +3775,7 @@ real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar
 	real colvector a
 	real scalar dyn
 	dyn = (td.levels[2] != 0)
-	if (rows(td.edgecovmat) == G.n) return(SaomNativeNetStat(G, td.levels[1], td.decay, J(G.n, 1, 0), td.edgecovmat))
+	if (rows(td.edgecovmat) == G.n | (rows(td.edgecovmat) == 2 * G.n & td.levels[1] == 259)) return(SaomNativeNetStat(G, td.levels[1], td.decay, J(G.n, 1, 0), td.edgecovmat))
 	if (td.levels[2] == 2) {
 		// a two-mode network, the behavior of the actors as the covariate of crossXOutAct / avGroupEgoX / totGroupEgoX: the events carry the behavior of the actor with
 		// the same index within its mode (RSiena reads the covariate at the event's index); the mean over those is passed in the scale slot
@@ -4001,6 +4001,43 @@ void SaomRegNatDy(class ErgmModel scalar M, string scalar eff, real scalar code,
 	td.decay = 0
 	td.edgecovmat = SaomDyadPrep(st_matrix(matname), 0, m)
 	M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + matname))
+}
+/* protocol 130: dyadx() effects in a two-mode network and WXZX. mat1 = W (WXX: actors x actors; XWX XWX1 XWX2: events x events in a two-mode network), mat2 = Z (WXZX only, events x events
+   in a two-mode network); the matrices are embedded in the n x n graph at the nodes ia (actors) / ie (events); a one-mode network has tm = 0 (all matrices n x n). WXZX (code 259) carries W and Z stacked. */
+void SaomRegNatDy2(class ErgmModel scalar M, string scalar eff, real scalar code, string scalar mat1, string scalar mat2, real scalar n, real scalar tm, | real colvector ia, real colvector ie) {
+	class ErgmTermData scalar td
+	real matrix W, Z
+	real scalar m
+	if ((code == 259 | tm) & (!SaomNativeAvailable() | SaomNativePluginVersion() < 130)) {
+		errprintf("nwsaom: dyadx(" + eff + ") needs the native plugin of a newer version; rebuild or update it.\n")
+		exit(198)
+	}
+	td = ErgmTermData()
+	td.levels = (code \ 0)
+	td.decay = 0
+	W = SaomDyadPrep(st_matrix(mat1), 0, m)
+	if (tm) {
+		real matrix Wf
+		Wf = J(n, n, 0)
+		if (code == 259 | code == 254) Wf[ia, ia] = W
+		else Wf[ie, ie] = W
+		W = Wf
+	}
+	if (code == 259) {
+		Z = SaomDyadPrep(st_matrix(mat2), 0, m)
+		if (tm) {
+			real matrix Zf
+			Zf = J(n, n, 0)
+			Zf[ie, ie] = Z
+			Z = Zf
+		}
+		td.edgecovmat = W \ Z
+		M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + mat1 + "_" + mat2))
+	}
+	else {
+		td.edgecovmat = W
+		M.addterm("nat_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("nat_" + eff + "_" + mat1))
+	}
 }
 /* the dependent behavior (first one, raw start values behw1, overall mean bmean) as the covariate */
 void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, | real scalar scale) {
@@ -8751,7 +8788,7 @@ string rowvector SaomMNCovNames() return(("samewwclosure", "diffwwclosure", "jum
 void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scalar vn, real scalar n, real scalar p1) {
 	class ErgmTermData scalar td
 	string rowvector nm
-	real colvector X
+	real colvector X, XE
 	real scalar k, w, rng, sm, nact
 	nm = SaomMNCovNames()
 	w = -1
@@ -8782,6 +8819,34 @@ void SaomMNAddCrossCov(class ErgmModel scalar M, string scalar eff, string scala
 	// protocol 90: with a two-mode member the covariate belongs to the actors (the first observations); the events get 0
 	nact = n
 	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) nact = *findexternal("__nwsaom_mn_nA")
+	// protocol 130: a covariate of the EVENTS of the two-mode member (RSiena: a covariate of the second node set), recognised by the node data: values for the events only, the actors missing
+	XE = (nact < n ? SaomMNEventData(vn, nact, n) : J(0, 1, .))
+	if (rows(XE) > 0) {
+		if (SaomNativePluginVersion() < 130) {
+			errprintf("nwsaom multinet: a covariate of the events needs a newer plugin; rebuild or update it.\n")
+			exit(198)
+		}
+		if (!anyof(("altdist2w", "totdist2w", "simdist2w", "outactintnx", "outpopintnx"), eff)) {
+			errprintf("nwsaom multinet: " + eff + "(): " + vn + " is a covariate of the events; RSiena offers a covariate of the events only for altdist2w, totdist2w, simdist2w, outactintnx and outpopintnx.\n")
+			exit(198)
+		}
+		if (anyof(("outactintnx", "outpopintnx"), eff) & n - nact < nact) {
+			errprintf("nwsaom multinet: " + eff + "(): a covariate of the events needs at least as many events as actors (RSiena reads it with the index of an actor).\n")
+			exit(198)
+		}
+		td = ErgmTermData()
+		td.levels = (3100 + w \ 0)
+		td.decay = p1
+		td.attr = J(nact, 1, 0) \ (XE :- mean(XE))
+		if (eff == "simdist2w") {
+			rng = max(XE) - min(XE)
+			if (rng <= 0) rng = 1
+			td.decay = SaomSimMean(XE)
+			td.attr = J(nact, 1, 0) \ ((XE :- mean(XE)) :/ rng)
+		}
+		M.addterm("nat_xc" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("xc_" + eff + "_" + vn))
+		return
+	}
 	if (nact < n) X = SaomMNActorData(vn, nact, n)
 	else X = st_data(1::n, vn)
 	if (any(X :>= .)) {
@@ -9001,6 +9066,23 @@ real colvector SaomMNActorData(string scalar vn, real scalar nact, real scalar n
 	}
 	errprintf("nwsaom multinet: the covariate " + vn + " needs one observation per actor (" + strofreal(nact) + ") or the node data of the two-mode network (" + strofreal(n) + " observations).\n")
 	exit(198)
+}
+/* protocol 130: the values of a covariate that belongs to the events of the two-mode member: the node data (n observations) hold values for the events only (the actors are
+   missing); an empty vector otherwise */
+real colvector SaomMNEventData(string scalar vn, real scalar nact, real scalar n) {
+	real colvector x, ia, ie
+	string colvector md
+	real scalar am
+	if (st_nobs() != n) return(J(0, 1, .))
+	am = 2
+	if (findexternal("__nwsaom_mn_actmode") != NULL) am = *findexternal("__nwsaom_mn_actmode")
+	md = st_sdata(., "_nwmode")
+	ia = selectindex(md :== strofreal(am))
+	ie = selectindex(md :!= strofreal(am))
+	if (rows(ia) != nact) return(J(0, 1, .))
+	x = st_data(., vn)
+	if (all(x[ia] :>= .) & all(x[ie] :< .)) return(x[ie])
+	return(J(0, 1, .))
 }
 /* senders / receivers of the members, in the order (nS1, nR1, nS2, nR2) */
 void SaomMNSetNSR(real scalar n, real scalar nA, real scalar tm1, real scalar tm2) {
@@ -9277,6 +9359,10 @@ struct SaomMNFit scalar SaomEstimateMN(pointer(class ErgmGraph scalar) rowvector
 		errprintf("nwsaom multinet: an effect has no native implementation (" + (cfg1.eligible ? cfg2.whynot : cfg1.whynot) + ").\n")
 		exit(198)
 	}
+	if ((any(cfg1.termcodes :== 3200) | any(cfg2.termcodes :== 3200)) & ver < 130) {
+		errprintf("nwsaom multinet: tou needs a newer plugin (this one is protocol " + strofreal(ver) + "); rebuild or update it.\n")
+		exit(198)
+	}
 	nfree1 = n * (n - 1)
 	nfree2 = n * (n - 1)
 	if (findexternal("__nwsaom_mn_nA") != NULL) if (*findexternal("__nwsaom_mn_nA") > 0) {
@@ -9452,6 +9538,10 @@ struct SaomMNBFit scalar SaomEstimateMNB(pointer(class ErgmGraph scalar) rowvect
 	cfg1 = SaomNativeSetup(M1)
 	cfg2 = SaomNativeSetup(M2)
 	cfgB = SaomBehaviorNativeSetup(Mbeh)
+	if ((any(cfg1.termcodes :== 3200) | any(cfg2.termcodes :== 3200)) & ver < 130) {
+		errprintf("nwsaom multinet: tou needs a newer plugin (this one is protocol " + strofreal(ver) + "); rebuild or update it.\n")
+		exit(198)
+	}
 	if (any(cfgB.termcodes :>= 30000) & ver < 103) {
 		errprintf("nwsaom multinet: interactions of behavior effects need a newer plugin (this one is protocol " + strofreal(ver) + "); rebuild or update it.\n")
 		exit(198)
@@ -14788,10 +14878,10 @@ real scalar SaomNativeBehStat(class SaomBehavior scalar Beh, class ErgmGraph sca
 	}
 	if (ne > 0) st_store((1::ne), ("ev1", "ev2"), E)
 	st_store((1::n), "bb", Beh.values)
-	if (args() >= 5) if (rows(Wd) == n) for (i=1; i<=n; i++) st_store((1::n), "dd" + strofreal(i), Wd[., i])
+	if (args() >= 5) if (rows(Wd) == n | rows(Wd) == 2*n) for (i=1; i<=n; i++) st_store((1::rows(Wd)), "dd" + strofreal(i), Wd[., i])
 	for (i=1; i<=n; i++) st_store(i, "cc", (sl > 0 ? _sb_cv(i, sl) : 0))
 	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim ev1 ev2 bb cc " + (args() >= 5 ? (rows(Wd) == n ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + " " + strofreal(args() >= 5 ? (rows(Wd) == n) : 0) + SaomBehVarTrailer() + char(34))
+	stata("plugin call saomnativesim ev1 ev2 bb cc " + (args() >= 5 ? ((rows(Wd) == n | rows(Wd) == 2*n) ? invtokens("dd" :+ strofreal(1..n)) : "") : "") + ", " + char(34) + "BEHSTAT|" + strofreal(n) + " " + strofreal(ne) + " " + strofreal(code) + " " + strofreal(Beh.range, "%25.17g") + " " + strofreal(Beh.simMean, "%25.17g") + " " + strofreal(Beh.overallMean, "%25.17g") + " " + strofreal(args() >= 5 ? (rows(Wd) == n) : 0) + SaomBehVarTrailer() + char(34))
 	st_framecurrent(origframe)
 	stata("capture frame drop __saom_behstat")
 	return(st_numscalar("__saom_behstat_val"))

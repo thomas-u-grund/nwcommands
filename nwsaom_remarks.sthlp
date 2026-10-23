@@ -528,7 +528,10 @@ RSiena for such a pair: for a two-mode network that depends on a one-mode networ
 dist2outinactintn outoutdist2actintn avalt2mtot to toback torecip sharedto avalt2mtie inpopoutw ndist2actintn toany joutmix gwespfbmix} and the covariate effect {cmd:samewxclosure:}{it:var};
 for a one-mode network that depends on a two-mode one {cmd:outpopintn outactintn divoutegointn divoutaltintn avdegintn outoutactintn outoutavintn dist2outinactintn absoutdiffintn from fromany sharedto
 avalt2mtie inpopoutw ndist2actintn joutmix gwespmix}; and, with a dyadic covariate (actors by actors for a one-mode other network, actors by events for a two-mode one),
-{cmd:sharedtou avaltutie} and {cmd:fromwindoo} (a two-mode other network for both roles). A covariate of the actors is read from the first observations of the dataset (one per actor) or from the
+{cmd:tou sharedtou avaltutie} and {cmd:fromwindoo} (a two-mode other network for both roles). 
+For a one-mode network that depends on a two-mode one, a covariate of the events (a variable of the node data that is missing for the actors) is available for {cmd:altdist2w totdist2w simdist2w} and, with at least as many events as actors, {cmd:outactintnx outpopintnx};
+for a two-mode network that depends on a one-mode one, {cmd:diffwxclosure inactintnx outactintnx samexinactintn samexoutactintn altdist2w totdist2w simdist2w} are available with a covariate of the actors
+(the dist-2 effects with at most as many events as actors). A covariate of the actors is read from the first observations of the dataset (one per actor) or from the
 node rows of the two-mode network ({cmd:_nwmode}). Some effects of RSiena index both networks by the same node number (the alters of the two-mode network are events, not actors):
 divinaltintn, joutmix and gwespfbmix of a two-mode network, and outoutactintn and outoutavintn of a one-mode network that depends on a two-mode one; they are available if there are not more events than actors,
 as in RSiena. avalt2mtie needs the parameter 1 or 2 (RSiena refuses the centred versions); give it as {cmd:avalt2mtie:2}. A co-evolving {opt behavior()} is not available with a two-mode network.

@@ -463,7 +463,7 @@ program nwsaom, eclass
 			error 198
 		}
 		foreach __opt in symmetric joinat leaveat missnet missbeh structural  nodecov nodematch simcov ///
-			absdiffx egoxaltx diffx higher samexrecip simrecipx dyadx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
+			absdiffx egoxaltx diffx higher samexrecip simrecipx tvdyadcov tvdyadcovrecip tvdyadx egoplusaltsqx diffsqx egodiffx althigheregox unequalx outpopc inactc degplus degplusc transtriads samextranstrip diffxtranstrip simxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact outpopx inactx dyadcovrecip reciprocity transties transtrip transmedtrip cycle3 transrectrip balance ///
 			outpopularity inactivity outpop inact gwespfb gwespbf gwespbb gwesprr nbrdist2 dblnbrdist2 sqrtcycle4 gwdspff between recipop recipopsqrt reciact reciactsqrt isolatenet antiiso outoutass ininass inoutass gwesp ///
 			outdegreeendow outdegreecreation reciprocityendow reciprocitycreation transtiesendow transtiescreation endow creation {
 			if "``__opt''" != "" {

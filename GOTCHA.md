@@ -846,3 +846,19 @@ same trap: clear it at the start of the fit.
 `includeEffects(e, totExposure, ..., parameter = 3)` only warns ("argument 'parameter' has no effect"); the observed statistic
 then equals the unthresholded one. Use `setEffect(e, totExposure, name = ..., type = "rate", interaction1 = ..., parameter = 3,
 include = TRUE)` when validating the thresholds of the diffusion rate effects.
+
+## The RSiena reference is version 1.6.14 now (1.6.6 numbers can silently differ)
+
+The installed RSiena was updated from 1.6.6 to 1.6.14 (2026-10-22). Reference numbers written into the cscripts before that date
+came from 1.6.6; the effect statistics (targets) of everything checked equal in both versions, with these exceptions that were
+changed in the code and tests:
+- `toU` (cross1(tou:matrix)): RSiena 1.6.12 swapped the two networks in `WeightedMixedTwoPathFunction`. 1.6.6 took the first step in
+  the dependent network (the reverse of the name); 1.6.14 takes it in the other network. nwsaom follows 1.6.14 (plugin protocol 130);
+  a plugin older than 130 would silently compute the 1.6.6 value, hence the version gate in `SaomMNRun`.
+- `outPop.c`, `outPopSqrt`, `inAct.c`, `inActSqrt` and the `*More`/`Threshold` forms: the DEFAULT internal parameter became 1
+  (end-of-period degrees; a value below 1 is an error for the `*More`/`Threshold` forms). Up to 1.6.6 the default 0 gave the
+  START-of-period degrees in the target (outPopSqrt then did not even take the square root).
+- `sienaRI` is `interpret_size` (class `siena_sizes`, a list with one object per dependent variable) and needs a sienaFit; the old
+  call `sienaRI(data, theta = , effects = )` is gone. To get the importance at a given theta run siena07 with `nsub = 0` and
+  `initialValue = theta`.
+- A dev R script that writes data files (`saom_rsiena_r1614_dyadx.R`) is deterministic (`set.seed`), rerunning it rewrites the same CSVs.
