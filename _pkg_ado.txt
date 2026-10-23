@@ -124,6 +124,7 @@ f nwrestore.ado
 f nwring.ado
 f nwsaom.ado
 f nwsaom_estat.ado
+f nwsaom_bayes.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado

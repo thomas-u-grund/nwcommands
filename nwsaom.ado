@@ -78,6 +78,14 @@ program nwsaom, eclass
 		nwsaom_meta `0'
 		exit
 	}
+	if `"`1'"' == "bayes" | `"`1'"' == "bayes," {
+		// nwsaom bayes: Bayesian estimation of the last fitted model (same program as nwsaom_bayes)
+		gettoken __saom_sub 0 : 0
+		local __saom_rest = trim(`"`0'"')
+		if substr(`"`__saom_rest'"', 1, 1) == "," local __saom_rest = substr(`"`__saom_rest'"', 2, .)
+		nwsaom_bayes , `__saom_rest'
+		exit
+	}
 	if `"`1'"' == "simulate" | `"`1'"' == "simulate," {
 		gettoken __saom_sub 0 : 0
 		nwsaom_simulate , `0'
