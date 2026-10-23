@@ -46,6 +46,15 @@
 #define STC_MUTUAL          1028  /* with attr: same (p2=0) / same,diff (p2=1, p1=level) */
 #define STC_MUTUALBY        1029  /* mutual(by=): p1 = level */
 #define STC_CONCURRENT_BY   1030  /* concurrent(by=): p1 = level */
+#define STC_DEGR_BY         1031  /* degree/degrange by attribute, undirected: p1 = from, p2 = to + level * 1e6 */
+#define STC_ODEGR_BY        1032
+#define STC_IDEGR_BY        1033
+#define STC_DEGR_HOM        1034  /* degree/degrange with homophily: p1 = from, p2 = to */
+#define STC_ODEGR_HOM       1035
+#define STC_IDEGR_HOM       1036
+#define STC_KSTAR_ATTR      1037  /* kstar/ostar/istar with attr: p1 = k */
+#define STC_OSTAR_ATTR      1038
+#define STC_ISTAR_ATTR      1039
 
 #define S_OUT(g, v) ((g)->directed ? &(g)->outadj[(v)] : &(g)->adj[(v)])
 #define S_IN(g, v)  ((g)->directed ? &(g)->inadj[(v)] : (adjlist_t *)NULL)
@@ -68,6 +77,16 @@ static int s_match(double *attr, double p1, double p2, long i, long j) {
 	if (attr[i] != attr[j]) return 0;
 	if (p2 != 0.0) return attr[i] == p1;
 	return 1;
+}
+
+static int s_inr(double d, double from, double to) { return (d >= from && d < to) ? 1 : 0; }
+/* number of neighbours of v (out list, plus in list when directed) carrying attribute value a */
+static long s_nbcount(graph_t *g, long v, double *attr, double a, int which) {
+	long cnt = 0;
+	if (which == 0) { S_NB_FOR(g, v, k) if (attr[k] == a) cnt++; S_NB_END }
+	else if (which == 1) { adjlist_t *L = S_OUT(g, v); long m; for (m = 0; m < L->len; m++) if (attr[L->nb[m]] == a) cnt++; }
+	else { adjlist_t *L = g->directed ? &g->inadj[v] : &g->adj[v]; long m; for (m = 0; m < L->len; m++) if (attr[L->nb[m]] == a) cnt++; }
+	return cnt;
 }
 
 static double s_f15(double d) { return d * sqrt(d); }
@@ -548,6 +567,60 @@ static double change_struct(graph_t *g, int code, double p1, double p2, double *
 		}
 		case STC_TRIADCENSUS:
 			return s_triadcensus(g, i, j, tied, (long)p1);
+		case STC_DEGR_BY: case STC_ODEGR_BY: case STC_IDEGR_BY: {
+			double lev = floor(p2 / 1e6), to = p2 - lev * 1e6;
+			double e = delta;
+			if (code == STC_DEGR_BY) {
+				if (attr[i] == lev) chg += s_inr((double)g->deg[i] + e, p1, to) - s_inr((double)g->deg[i], p1, to);
+				if (attr[j] == lev) chg += s_inr((double)g->deg[j] + e, p1, to) - s_inr((double)g->deg[j], p1, to);
+			}
+			else if (code == STC_ODEGR_BY) {
+				if (attr[i] == lev) chg += s_inr((double)g->outdeg[i] + e, p1, to) - s_inr((double)g->outdeg[i], p1, to);
+			}
+			else {
+				if (attr[j] == lev) chg += s_inr((double)g->indeg[j] + e, p1, to) - s_inr((double)g->indeg[j], p1, to);
+			}
+			return chg;
+		}
+		case STC_DEGR_HOM: case STC_ODEGR_HOM: case STC_IDEGR_HOM: {
+			if (attr[i] != attr[j]) return 0.0;
+			if (code == STC_DEGR_HOM) {
+				double ti = (double)s_nbcount(g, i, attr, attr[i], 0), tj = (double)s_nbcount(g, j, attr, attr[j], 0);
+				chg += s_inr(ti + delta, p1, p2) - s_inr(ti, p1, p2);
+				chg += s_inr(tj + delta, p1, p2) - s_inr(tj, p1, p2);
+			}
+			else if (code == STC_ODEGR_HOM) {
+				double ti = (double)s_nbcount(g, i, attr, attr[i], 1);
+				chg += s_inr(ti + delta, p1, p2) - s_inr(ti, p1, p2);
+			}
+			else {
+				double tj = (double)s_nbcount(g, j, attr, attr[j], 2);
+				chg += s_inr(tj + delta, p1, p2) - s_inr(tj, p1, p2);
+			}
+			return chg;
+		}
+		case STC_KSTAR_ATTR: {
+			double es = tied ? 1.0 : 0.0, ti, tj, c;
+			if (attr[i] != attr[j]) return 0.0;
+			ti = (double)s_nbcount(g, i, attr, attr[i], 0) - es;
+			tj = (double)s_nbcount(g, j, attr, attr[i], 0) - es;
+			c = ergm_choose(ti, p1 - 1.0) + ergm_choose(tj, p1 - 1.0);
+			return tied ? -c : c;
+		}
+		case STC_OSTAR_ATTR: {
+			double es = tied ? 1.0 : 0.0, hd, c;
+			if (attr[i] != attr[j]) return 0.0;
+			hd = (double)s_nbcount(g, i, attr, attr[j], 1) - es;
+			c = ergm_choose(hd, p1 - 1.0);
+			return tied ? -c : c;
+		}
+		case STC_ISTAR_ATTR: {
+			double es = tied ? 1.0 : 0.0, hd, c;
+			if (attr[i] != attr[j]) return 0.0;
+			hd = (double)s_nbcount(g, j, attr, attr[i], 2) - es;
+			c = ergm_choose(hd, p1 - 1.0);
+			return tied ? -c : c;
+		}
 	}
 	return 0.0;
 }

@@ -1,7 +1,7 @@
 # R reference: MPLE coefficients/SE for edges + term (term only for density/meandeg) -> ref_mple.csv
 suppressMessages({library(ergm); library(network)})
 sp <- read.csv("spec.csv", stringsAsFactors=FALSE)
-nets <- list(und_a=FALSE, und_b=FALSE, und_c=FALSE, dir_a=TRUE, dir_b=TRUE, dir_c=TRUE)
+nets <- list(und_a=FALSE, und_b=FALSE, und_c=FALSE, und_d=FALSE, dir_a=TRUE, dir_b=TRUE, dir_c=TRUE, dir_d=TRUE)
 res <- list()
 for (nm in names(nets)) {
   A <- as.matrix(read.csv(paste0(nm,"_adj.csv"), header=FALSE)); nd <- read.csv(paste0(nm,"_nodes.csv"))

@@ -425,6 +425,7 @@ program define nwergm_estat_gof, rclass
 	else {
 		local __gof_propfn "&ergm_propose_tnt()"
 	}
+	mata: ns_native_setup(__nwergm_last_M, 2, __nwergm_last_G)
 	preserve
 	forvalues __s = 1/`nsim' {
 		local __gof_thisburnin = cond(`__s'==1, `gofburnin', 0)

@@ -5074,6 +5074,13 @@ real matrix ns_slots(string scalar s){
 	}
 	return(out)
 }
+void ns_native_setup(class ErgmModel scalar M, real scalar code, class ErgmGraph scalar G){
+	real scalar rc
+	if (sum(substr(M.names, 1, 3) :== "ns:") > 0) rc = ErgmNativeSetup(M, code, G)
+}
+real scalar ns_has_struct(class ErgmModel scalar M){
+	return(sum(substr(M.names, 1, 3) :== "ns:") > 0)
+}
 real rowvector stat_ns(class ErgmGraph scalar G, class ErgmTermData scalar td){
 	if (td.sptype == "degcor") return(ns_degcor_stat(G))
 	return(td.levelpairs[., 4]' + ErgmNativeTermStat(G, td))

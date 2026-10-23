@@ -19,7 +19,7 @@ save `ref'
 tempname fh
 file open `fh' using "`D'/stata_summary.csv", write replace
 file write `fh' "net,id,idx,sname,sval" _n
-foreach net in und_a und_b und_c dir_a dir_b dir_c {
+foreach net in und_a und_b und_c und_d dir_a dir_b dir_c dir_d {
 	local isd = (substr("`net'",1,3) == "dir")
 	import delimited "`D'/`net'_adj.csv", clear
 	qui mkmat v*, mat(A)

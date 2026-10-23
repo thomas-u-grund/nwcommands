@@ -20,3 +20,11 @@ for (nm in names(nets)) {
   wm(m, paste0(nm, "_adj.csv"))
   write.csv(data.frame(a=sample(1:3, n, TRUE), b=sample(0:1, n, TRUE), x=round(rnorm(n),3)), paste0(nm, "_nodes.csv"), row.names=FALSE)
 }
+# sparse networks (isolated edges, many low degrees); separate seed so the networks above stay unchanged
+set.seed(777)
+nets2 <- list(und_d = mk_und(100, .012), dir_d = mk_dir(60, .03))
+for (nm in names(nets2)) {
+  m <- nets2[[nm]]; n <- nrow(m)
+  wm(m, paste0(nm, "_adj.csv"))
+  write.csv(data.frame(a=sample(1:3, n, TRUE), b=sample(0:1, n, TRUE), x=round(rnorm(n),3)), paste0(nm, "_nodes.csv"), row.names=FALSE)
+}

@@ -28,7 +28,9 @@ program nwergm, eclass
 		OFFSET(string) STRUCTURAL(string asis) ]
 	set more off
 
-	if "`edges'" == "" {
+	// edges may be left out only when density or meandeg (collinear with it) stands in for it
+	local __ns_noedges = ("`edges'" == "" & (strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " density ") > 0 | strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " meandeg ") > 0))
+	if "`edges'" == "" & !`__ns_noedges' {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
 		error 198
 	}
@@ -638,7 +640,7 @@ program nwergm, eclass
 	// user still typed `edges' (required, checked above) for a
 	// consistent model-specification syntax, it just contributes
 	// nothing to the fitted parameter vector.
-	if "`fixdensity'" == "" {
+	if "`fixdensity'" == "" & !`__ns_noedges' {
 		tempname __td_edges
 		mata: `__td_edges' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
@@ -2353,7 +2355,7 @@ program nwergm_simulate
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
-		TYPE(string) ///
+		TYPE(string) STRUCTURAL(string asis) ///
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(real 0) BGWDEGREE2(real 0) ///
@@ -3079,6 +3081,11 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' cyclicalties"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
+	if `"`structural'"' != "" {
+		_nwergm_struct simulated, terms(`structural') nodes(`nodes') directed(`=cond("`directed'" != "", "true", "false")') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local ntermtok "`ntermtok' `r(cnames)'"
+	}
 
 	// sender()/receiver(): per-node out-/in-degree fixed effects, base=1
 	// omitted - the node's own identity (1..nodes) IS the "attribute",
@@ -3279,6 +3286,8 @@ program nwergm_simulate
 		// instructions warn against. __nwergm_last_M.native_enabled
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
+		// structural() terms have no Mata change statistic: they need the native sampler
+		mata: ns_native_setup(__nwergm_last_M, `=cond("`proposal'"=="tnt",2,1)', __nwergm_last_G)
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 

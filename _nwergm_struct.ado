@@ -7,6 +7,7 @@ program _nwergm_struct, rclass
 	if "`type'" == "" local type "OTP"
 	local rest = trim(`"`terms'"')
 	local temps ""
+	local allcn ""
 	local dep 0
 	local nterm 0
 	while `"`rest'"' != "" {
@@ -36,6 +37,9 @@ program _nwergm_struct, rclass
 		local LEVS "`r(levels)'"
 		local XV "`r(x)'"
 		local TYPEV "`r(type)'"
+		local FROMV "`r(from)'"
+		local TOV "`r(to)'"
+		local HOMO = r(homophily)
 		local POSV "`r(pos)'"
 		local KEEP "`r(keep)'"
 		if inlist("`tname'", "triangle", "tripercent", "ttriple", "ctriple", "asymmetric") & "`ATTR'" == "" {
@@ -130,14 +134,24 @@ program _nwergm_struct, rclass
 		else if "`tname'" == "degcrossprod" {
 			_nwergm_struct_need und `dir' `tname' `netname'
 			_nwergm_struct_noargs `tname', pos(`POSV') attr(`ATTR')
-			mata: st_local("__ns_ne2", strofreal(2 * __nwergm_last_G.nties))
+			local __ns_ne2 ""
+			capture mata: st_local("__ns_ne2", strofreal(2 * __nwergm_last_G.nties))
+			if "`__ns_ne2'" == "" {
+				di "{err}degcrossprod needs an observed network (it is scaled by the observed number of ties); it is not available in nwergm simulate."
+				error 198
+			}
 			local slots "1009,`__ns_ne2',0,0,0,0"
 			local cn "degcrossprod"
 		}
 		else if "`tname'" == "degcor" {
 			_nwergm_struct_need und `dir' `tname' `netname'
 			_nwergm_struct_noargs `tname', pos(`POSV') attr(`ATTR')
-			mata: st_local("__ns_sig", strofreal(ns_degcor_sigma2(__nwergm_last_G), "%25.17g"))
+			local __ns_sig ""
+			capture mata: st_local("__ns_sig", strofreal(ns_degcor_sigma2(__nwergm_last_G), "%25.17g"))
+			if "`__ns_sig'" == "" {
+				di "{err}degcor needs an observed network (its change statistic is standardised by the observed degree variance); it is not available in nwergm simulate."
+				error 198
+			}
 			local slots "1010,`__ns_sig',0,0,0,0"
 			local cn "degcor"
 			local special "degcor"
@@ -361,6 +375,128 @@ program _nwergm_struct, rclass
 				local cn "`cn' triadcensus_`lv'"
 			}
 		}
+		else if inlist("`tname'", "degree", "odegree", "idegree", "degrange", "odegrange", "idegrange") {
+			local pfx = cond(substr("`tname'", 1, 1) == "o", "o", cond(substr("`tname'", 1, 1) == "i", "i", ""))
+			local isrange = (substr("`tname'", -5, .) == "range")
+			if "`pfx'" == "" {
+				_nwergm_struct_need und `dir' `tname' `netname'
+			}
+			else {
+				_nwergm_struct_need dir `dir' `tname' `netname'
+			}
+			if `isrange' {
+				if "`FROMV'" == "" {
+					local FROMV : word 1 of `POSV'
+					if "`TOV'" == "" local TOV : word 2 of `POSV'
+				}
+				if "`FROMV'" == "" {
+					di "{err}Term {bf:`tname'} requires the argument {bf:from}."
+					error 198
+				}
+				if "`TOV'" == "" local TOV "Inf"
+				local nf : word count `FROMV'
+				local nt : word count `TOV'
+				if `nt' == 1 & `nf' > 1 {
+					local t1 `TOV'
+					local TOV ""
+					forvalues q = 1/`nf' {
+						local TOV "`TOV' `t1'"
+					}
+				}
+				else if `nf' == 1 & `nt' > 1 {
+					local f1 `FROMV'
+					local FROMV ""
+					forvalues q = 1/`nt' {
+						local FROMV "`FROMV' `f1'"
+					}
+				}
+				else if `nf' != `nt' {
+					di "{err}The arguments of term {bf:`tname'} must have either the same length, or one of them must have length 1."
+					error 198
+				}
+				local nf : word count `FROMV'
+				local f2 ""
+				local t2 ""
+				forvalues q = 1/`nf' {
+					local fq : word `q' of `FROMV'
+					local tq : word `q' of `TOV'
+					if inlist("`tq'", "Inf", "inf", ".") | real("`tq'") >= . {
+						local tq = max(`fq', `nodes') + 1
+					}
+					if `fq' >= `tq' {
+						di "{err}Term {bf:`tname'} must have from < to."
+						error 198
+					}
+					local f2 "`f2' `fq'"
+					local t2 "`t2' `tq'"
+				}
+			}
+			else {
+				if "`DV'" == "" local DV "`POSV'"
+				if "`DV'" == "" {
+					di "{err}Term {bf:`tname'} requires the argument {bf:d}."
+					error 198
+				}
+				local f2 ""
+				local t2 ""
+				foreach dq of numlist `DV' {
+					local f2 "`f2' `dq'"
+					local t2 "`t2' `=`dq'+1'"
+				}
+			}
+			local nf : word count `f2'
+			local attrvar "`BYV'"
+			local code0 = cond("`pfx'" == "", 17, cond("`pfx'" == "o", 18, 19))
+			if `isrange' local code0 = cond("`pfx'" == "", 24, cond("`pfx'" == "o", 25, 26))
+			local cpre "`pfx'deg"
+			if "`attrvar'" == "" {
+				forvalues q = 1/`nf' {
+					local fq : word `q' of `f2'
+					local tq : word `q' of `t2'
+					local emp = cond(`fq' == 0, `nodes', 0)
+					if `isrange' {
+						local ts = cond(`tq' >= `nodes' + 1, "`fq'plus", "`fq'to`tq'")
+						local cn "`cn' `cpre'`ts'"
+						local slots "`slots'`code0',`fq',`tq',`emp',0,0;"
+					}
+					else {
+						local cn "`cn' `pfx'degree`fq'"
+						local slots "`slots'`code0',`fq',0,`emp',0,0;"
+					}
+				}
+			}
+			else {
+				local useattr 1
+				local attrmode 2
+				local special "degby"
+			}
+		}
+		else if inlist("`tname'", "kstar", "ostar", "istar") {
+			if "`tname'" == "kstar" {
+				_nwergm_struct_need und `dir' `tname' `netname'
+			}
+			else {
+				_nwergm_struct_need dir `dir' `tname' `netname'
+			}
+			if "`KV'" == "" local KV "`POSV'"
+			if "`KV'" == "" {
+				di "{err}Term {bf:`tname'} requires the argument {bf:k}."
+				error 198
+			}
+			local attrvar "`ATTR'"
+			if "`attrvar'" == "" {
+				local code0 = cond("`tname'" == "kstar", 21, cond("`tname'" == "ostar", 22, 23))
+				foreach kq of numlist `KV' {
+					local slots "`slots'`code0',`kq',0,0,0,0;"
+					local cn "`cn' `tname'`kq'"
+				}
+			}
+			else {
+				local useattr 1
+				local attrmode 2
+				local special "kstarattr"
+			}
+		}
 		else if "`tname'" == "nsp" {
 			if "`DV'" == "" {
 				di "{err}Term {bf:nsp} requires the argument {bf:d}."
@@ -377,6 +513,7 @@ program _nwergm_struct, rclass
 			local nd : word count `DV'
 			mata: __nwergm_last_M.addterm("nsp", `nd', &stat_nsp(), &change_nsp(), `__td_nsp', tokens("`cn'"))
 			local temps "`temps' `__td_nsp'"
+			local allcn "`allcn' `cn'"
 			local dep 1
 			continue
 		}
@@ -412,6 +549,52 @@ program _nwergm_struct, rclass
 					local ++q
 					local slots "`slots'`code',`q',0,0,1,0;"
 					local cn "`cn' `tname'_`attrvar'`lv'"
+				}
+			}
+			else if "`special'" == "degby" {
+				local isrange = (substr("`tname'", -5, .) == "range")
+				local q 0
+				if `HOMO' {
+					forvalues r = 1/`nf' {
+						local fq : word `r' of `f2'
+						local tq : word `r' of `t2'
+						local emp = cond(`fq' == 0, `nodes', 0)
+						local c3 = cond("`pfx'" == "", 1034, cond("`pfx'" == "o", 1035, 1036))
+						local slots "`slots'`c3',`fq',`tq',`emp',1,0;"
+						if `isrange' {
+							local ts = cond(`tq' >= `nodes' + 1, "`fq'plus", "`fq'to`tq'")
+							local cn "`cn' `cpre'`ts'_homophily_`attrvar'"
+						}
+						else local cn "`cn' `cpre'`fq'_homophily_`attrvar'"
+					}
+				}
+				else {
+					local c3 = cond("`pfx'" == "", 1031, cond("`pfx'" == "o", 1032, 1033))
+					forvalues lv = 1/`__ns_nlev' {
+						local lvv : word `lv' of `__ns_levs'
+						forvalues r = 1/`nf' {
+							local fq : word `r' of `f2'
+							local tq : word `r' of `t2'
+							local emp 0
+							if `fq' == 0 {
+								mata: st_local("emp", strofreal(sum(`__td'.attr :== `lv')))
+							}
+							local p2 = `tq' + `lv' * 1000000
+							local slots "`slots'`c3',`fq',`p2',`emp',1,0;"
+							if `isrange' {
+								local ts = cond(`tq' >= `nodes' + 1, "`fq'plus", "`fq'to`tq'")
+								local cn "`cn' `cpre'`ts'_`attrvar'`lvv'"
+							}
+							else local cn "`cn' `cpre'`fq'_`attrvar'_`lvv'"
+						}
+					}
+				}
+			}
+			else if "`special'" == "kstarattr" {
+				local c3 = cond("`tname'" == "kstar", 1037, cond("`tname'" == "ostar", 1038, 1039))
+				foreach kq of numlist `KV' {
+					local slots "`slots'`c3',`kq',0,0,1,0;"
+					local cn "`cn' `tname'`kq'_`attrvar'"
 				}
 			}
 			else if "`tname'" == "mutual" & "`SAMEV'" == "" {
@@ -456,9 +639,11 @@ program _nwergm_struct, rclass
 		local np : word count `cn'
 		mata: __nwergm_last_M.addterm("ns:`tname'", `np', &stat_ns(), &change_ns(), `__td', tokens("`cn'"))
 		local temps "`temps' `__td'"
+		local allcn "`allcn' `cn'"
 		if `isdep' local dep 1
 	}
 	return local temps "`temps'"
+	return local cnames "`allcn'"
 	return scalar dep = `dep'
 end
 
@@ -490,12 +675,13 @@ program _nwergm_struct_args, rclass
 	syntax anything(name=tname) [, ARGS(string asis)]
 	local a = subinstr(`"`args'"', ",", " ", .)
 	local cur "pos"
-	foreach nm in attr by same d k lambda levels x type pos keep {
+	foreach nm in attr by same d k lambda levels x type pos keep from to {
 		local v_`nm' ""
 	}
 	local diff 0
 	local fixed 0
 	local semi 0
+	local homophily 0
 	while `"`a'"' != "" {
 		gettoken tok a : a
 		local eq = strpos("`tok'", "=")
@@ -503,12 +689,12 @@ program _nwergm_struct_args, rclass
 			local key = substr("`tok'", 1, `eq' - 1)
 			local val = substr("`tok'", `eq' + 1, .)
 			if "`key'" == "attrname" local key "attr"
-			if "`key'" == "diff" | "`key'" == "fixed" | "`key'" == "semi" {
+			if "`key'" == "diff" | "`key'" == "fixed" | "`key'" == "semi" | "`key'" == "homophily" {
 				local `key' = inlist(lower("`val'"), "true", "t", "1")
 				local cur "pos"
 				continue
 			}
-			if strpos(" attr by same d k lambda levels x type keep ", " `key' ") == 0 {
+			if strpos(" attr by same d k lambda levels x type keep from to ", " `key' ") == 0 {
 				di "{err}structural(): unknown argument {bf:`key'} for term {bf:`tname'}."
 				error 198
 			}
@@ -518,7 +704,7 @@ program _nwergm_struct_args, rclass
 		else {
 			capture confirm number `tok'
 			if _rc {
-				if inlist("`tok'", "diff", "fixed", "semi") {
+				if inlist("`tok'", "diff", "fixed", "semi", "homophily") {
 					local `tok' 1
 					local cur "pos"
 				}
@@ -530,10 +716,11 @@ program _nwergm_struct_args, rclass
 			else local v_`cur' "`v_`cur'' `tok'"
 		}
 	}
-	foreach nm in attr by same d k lambda levels x type pos keep {
+	foreach nm in attr by same d k lambda levels x type pos keep from to {
 		return local `nm' = trim("`v_`nm''")
 	}
 	return scalar diff = `diff'
 	return scalar fixed = `fixed'
 	return scalar semi = `semi'
+	return scalar homophily = `homophily'
 end
