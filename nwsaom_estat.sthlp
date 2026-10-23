@@ -225,7 +225,7 @@ After {cmd:nwsaom multinet} the restricted model is fitted with {cmd:theta0()} a
 {title:estat timetest}
 
 {p 8 17 2}
-{cmd:estat timetest} [{cmd:,} {opt eff:ects(namelist)}]
+{cmd:estat timetest} [{cmd:,} {opt eff:ects(namelist)} {opt fixr:ates}]
 
 {pstd}
 Tests whether the effects of a fit with at least three waves have the same parameter in every period
@@ -234,6 +234,12 @@ to P), and a score-type test of "no deviation" is computed from the phase-3 simu
 second fit is needed. Reported: a joint test of all deviations, a test per effect (degrees of freedom P - 1), and
 per effect and period the one-step estimate of the deviation with its separate test. Returns {cmd:r(chi2)},
 {cmd:r(df)}, {cmd:r(p)}, {cmd:r(effect)} and {cmd:r(individual)}.
+
+{pstd}
+By default the rate parameters are treated as estimated, so the tests are the score tests of the models that add one fixed period dummy to the fit
+(the result of {cmd:score.Test} after adding a fixed time dummy in RSiena). {opt fixrates} treats the rate parameters as known instead, which is what
+RSiena's {cmd:sienaTimeTest} does; the two agree closely except for effects whose statistic is strongly correlated with the rate, typically the outdegree
+effect of a network whose changes are close to random, where the default gives the larger value.
 
 {pstd}
 Also available after {cmd:nwsaom multinet}, for the effects of all networks and of the behavior.

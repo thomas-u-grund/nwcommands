@@ -12624,14 +12624,14 @@ void SaomScoreRun(real rowvector test) {
    d z_(k,p) / d theta_j = D_p[k,j], d z_(k,p) / d delta_(j,q) = 1(p = q) D_q[k,j].
    Results in Stata matrices: __nwsaom_tt_joint (c, df), __nwsaom_tt_effect (neff x 2), __nwsaom_tt_indiv (ndummies x 3: c, onestep delta,
    period), and the effect indices in __nwsaom_tt_eff. effects: 1 x ptot 0/1 of the effects to test. */
-void SaomTimeTestRun(real scalar nper, real rowvector effects) {
+void SaomTimeTestRun(real scalar nper, real rowvector effects, real scalar neffpar, real scalar fixrates) {
 	external real matrix __nwsaom_score_Zp, __nwsaom_score_Sp
 	external real rowvector __nwsaom_score_fix, __nwsaom_score_par, __nwsaom_score_qf
 	real matrix Zq2, Dq2
 	real scalar ptot, K, q, j, k, i, ne, nd, N, idx
 	real matrix Dq, Ztot, Daug, Saug, Zaug, Zq, Sq, Dsum, D2, res, effres
 	real rowvector maug, eff, test, redundant, ev, jt, one, dq, os, tt
-	real colvector dumq, dumj
+	real colvector dumq, dumj, keep
 
 	ptot = cols(__nwsaom_score_par)
 	K = rows(__nwsaom_score_Zp)
@@ -12680,6 +12680,7 @@ void SaomTimeTestRun(real scalar nper, real rowvector effects) {
 	Saug = variance(Zaug)
 	test = (J(1, ptot, 0), J(1, nd, 1))
 	redundant = (__nwsaom_score_fix, J(1, nd, 0))
+	if (fixrates & neffpar < ptot) redundant[(neffpar+1)..ptot] = J(1, ptot - neffpar, 1)
 	jt = SaomScoreEval(Daug, Saug, maug, test, redundant)
 	st_matrix("__nwsaom_tt_joint", (jt[1], nd))
 	// effect-wise: all dummies of one effect, the other dummies left out
@@ -12700,8 +12701,9 @@ void SaomTimeTestRun(real scalar nper, real rowvector effects) {
 		res[i, 1] = one[1]
 		res[i, 3] = dumq[i]
 	}
-	D2 = luinv(Daug)
-	os = (-D2 * maug')'
+	keep = (fixrates & neffpar < ptot ? ((1..neffpar), (ptot+1)..N) : (1..N))
+	os = J(1, N, 0)
+	os[keep] = (-luinv(Daug[keep, keep]) * maug[keep]')'
 	for (i=1; i<=nd; i++) res[i, 2] = os[ptot + i]
 	st_matrix("__nwsaom_tt_indiv", res)
 	st_matrix("__nwsaom_tt_eff", eff)
