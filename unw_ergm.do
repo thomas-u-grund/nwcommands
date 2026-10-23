@@ -1696,6 +1696,134 @@ real scalar _ergm_dyadcov_upper(class ErgmTermData scalar td){
 	td.edgecovmat = X
 	return(ch)
 }
+// ---- nodecovrange / nodeocovrange / nodeicovrange and the *factordistinct
+// family (dyad-DEPENDENT; R's changestats_diversity.c).  td.levels[1] holds
+// the mode: 1 = node (undirected: all neighbors; directed: out- and in-part),
+// 2 = out only, 3 = in only.
+real scalar _ergm_range_of(real colvector x, real rowvector nb, real scalar skip, real scalar extra, real scalar hasextra){
+	real scalar k, lo, hi, v
+
+	lo = .
+	hi = .
+	for (k=1; k<=cols(nb); k++) {
+		if (nb[k] == skip) continue
+		v = x[nb[k]]
+		if (lo >= . | v < lo) lo = v
+		if (hi >= . | v > hi) hi = v
+	}
+	if (hasextra) {
+		if (lo >= . | extra < lo) lo = extra
+		if (hi >= . | extra > hi) hi = extra
+	}
+	if (lo >= .) return(0)
+	return(hi - lo)
+}
+// change in range(neighbor values of v) when node w is toggled in/out of v's neighbor list
+real scalar _ergm_range_change(real colvector x, real rowvector nb, real scalar w, real scalar present){
+	real scalar rw, rwo
+
+	rwo = _ergm_range_of(x, nb, w, 0, 0)
+	rw = _ergm_range_of(x, nb, w, x[w], 1)
+	return(present ? rwo - rw : rw - rwo)
+}
+real rowvector stat_covrange(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar v, tot, mode
+
+	mode = td.levels[1]
+	tot = 0
+	for (v=1; v<=G.n; v++) {
+		if (!G.directed) tot = tot + _ergm_range_of(td.attr, G.neighbors_out(v), 0, 0, 0)
+		else {
+			if (mode == 1 | mode == 2) tot = tot + _ergm_range_of(td.attr, G.neighbors_out(v), 0, 0, 0)
+			if (mode == 1 | mode == 3) tot = tot + _ergm_range_of(td.attr, G.neighbors_in(v), 0, 0, 0)
+		}
+	}
+	return(tot)
+}
+real rowvector change_covrange(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar mode, pres, ch
+
+	mode = td.levels[1]
+	pres = G.has_edge(i,j)
+	ch = 0
+	if (!G.directed) {
+		ch = _ergm_range_change(td.attr, G.neighbors_out(i), j, pres) + _ergm_range_change(td.attr, G.neighbors_out(j), i, pres)
+	}
+	else {
+		if (mode == 1 | mode == 2) ch = ch + _ergm_range_change(td.attr, G.neighbors_out(i), j, pres)
+		if (mode == 1 | mode == 3) ch = ch + _ergm_range_change(td.attr, G.neighbors_in(j), i, pres)
+	}
+	return(ch)
+}
+// number of neighbors of v (out and/or in list) whose category equals c
+real scalar _ergm_nfd_count(class ErgmGraph scalar G, real colvector cat, real scalar v, real scalar c, real scalar useout, real scalar usein){
+	real rowvector nb
+	real scalar k, cnt
+
+	cnt = 0
+	if (useout) {
+		nb = G.neighbors_out(v)
+		for (k=1; k<=cols(nb); k++) cnt = cnt + (cat[nb[k]] == c)
+	}
+	if (usein) {
+		nb = G.neighbors_in(v)
+		for (k=1; k<=cols(nb); k++) cnt = cnt + (cat[nb[k]] == c)
+	}
+	return(cnt)
+}
+real rowvector stat_nfd(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar v, c, tot, mode, uo, ui
+	real colvector u
+
+	mode = td.levels[1]
+	u = td.levels[2::rows(td.levels)]
+	tot = 0
+	for (v=1; v<=G.n; v++) {
+		uo = (!G.directed | mode == 1 | mode == 2)
+		ui = (G.directed & (mode == 1 | mode == 3))
+		for (c=1; c<=rows(u); c++) {
+			tot = tot + (_ergm_nfd_count(G, td.attr, v, c, uo, ui) > 0)
+		}
+	}
+	return(tot)
+}
+real rowvector change_nfd(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar mode, dl, ch, cnt, c
+
+	mode = td.levels[1]
+	dl = G.has_edge(i,j) ? -1 : 1
+	ch = 0
+	if (!G.directed) {
+		c = td.attr[j]
+		if (c > 0) {
+			cnt = _ergm_nfd_count(G, td.attr, i, c, 1, 0)
+			ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+		}
+		c = td.attr[i]
+		if (c > 0) {
+			cnt = _ergm_nfd_count(G, td.attr, j, c, 1, 0)
+			ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+		}
+	}
+	else {
+		if (mode == 1 | mode == 2) {
+			c = td.attr[j]
+			if (c > 0) {
+				cnt = _ergm_nfd_count(G, td.attr, i, c, 1, (mode == 1))
+				ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+			}
+		}
+		if (mode == 1 | mode == 3) {
+			c = td.attr[i]
+			if (c > 0) {
+				cnt = _ergm_nfd_count(G, td.attr, j, c, (mode == 1), 1)
+				ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+			}
+		}
+	}
+	return(ch)
+}
+
 // ---- generic dyad-independent covariate terms (kind in td.sptype) ----
 // weights of dyad (i,j) for one tie, one entry per output column.
 //   absdistpow: |a_i-a_j|^p                    (td.decay = p)
@@ -4233,11 +4361,21 @@ real scalar ErgmModel::findcoef(string scalar cname){
 	return(0)
 }
 
+// stores the registration details for the caller (Stata) which performs
+// the actual addterm() at top level (class objects must not be re-passed
+// through a function layer before their address is taken).
+void _ergm_cov_set(string scalar nm, real scalar np, string scalar sfn, string scalar cfn, string rowvector names){
+	st_local("__cv_nm", nm)
+	st_local("__cv_np", strofreal(np))
+	st_local("__cv_sfn", sfn)
+	st_local("__cv_cfn", cfn)
+	st_local("__cv_names", invtokens(names))
+}
 // Registers one covariate-term instance (td already holds the attribute
 // in td.attr); returns the number of output columns (0 = term dropped,
 // as R drops a term without levels).  Option strings o1..o3 are
 // term-specific (see the per-term branches).
-real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td, string scalar term, real scalar directed, real scalar n, string scalar vname, string scalar lev, string scalar lval, string scalar base, string scalar o1, string scalar o2, string scalar o3){
+real scalar _ergm_cov_add(class ErgmTermData scalar td, string scalar term, real scalar directed, real scalar n, string scalar vname, string scalar lev, string scalar lval, string scalar base, string scalar o1, string scalar o2, string scalar o3){
 	real colvector u, d, nodes, codes, cand
 	real rowvector idx
 	real scalar k, pw, mul, sc, nm
@@ -4255,9 +4393,9 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 		td.levels = u
 		nms = ""
 		for (k=1; k<=rows(u); k++) nms = nms + " " + term + "_" + vname + "_" + strofreal(u[k])
-		if (term == "nodefactor") M.addterm(term, rows(u), &stat_nodefactor(), &change_nodefactor(), td, tokens(nms))
-		else if (term == "nodeifactor") M.addterm(term, rows(u), &stat_nodeifactor(), &change_nodeifactor(), td, tokens(nms))
-		else M.addterm(term, rows(u), &stat_nodeofactor(), &change_nodeofactor(), td, tokens(nms))
+		if (term == "nodefactor") _ergm_cov_set(term, rows(u), "stat_nodefactor", "change_nodefactor", tokens(nms))
+		else if (term == "nodeifactor") _ergm_cov_set(term, rows(u), "stat_nodeifactor", "change_nodeifactor", tokens(nms))
+		else _ergm_cov_set(term, rows(u), "stat_nodeofactor", "change_nodeofactor", tokens(nms))
 		return(rows(u))
 	}
 	if (term == "nodematch") {
@@ -4269,7 +4407,7 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 			td.levels = u
 			nms = ""
 			for (k=1; k<=rows(u); k++) nms = nms + " nodematch_" + vname + "_" + strofreal(u[k])
-			M.addterm("nodematch_diff", rows(u), &stat_nodematch_diff(), &change_nodematch_diff(), td, tokens(nms))
+			_ergm_cov_set("nodematch_diff", rows(u), "stat_nodematch_diff", "change_nodematch_diff", tokens(nms))
 			return(rows(u))
 		}
 		// attribute values outside the level set never match (not even each other)
@@ -4282,19 +4420,19 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 			}
 		}
 		td.attr = codes
-		M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), td, ("nodematch_" + vname))
+		_ergm_cov_set("nodematch", 1, "stat_nodematch", "change_nodematch", ("nodematch_" + vname))
 		return(1)
 	}
 	if (term == "absdist") {
 		pw = strtoreal(o1)
 		if (pw >= .) pw = 1
 		if (pw == 1) {
-			M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), td, ("absdist_" + vname))
+			_ergm_cov_set("absdist", 1, "stat_absdist", "change_absdist", ("absdist_" + vname))
 		}
 		else {
 			td.sptype = "absdistpow"
 			td.decay = pw
-			M.addterm("absdistpow", 1, &stat_covw(), &change_covw(), td, ("absdist" + strofreal(pw) + "_" + vname))
+			_ergm_cov_set("absdistpow", 1, "stat_covw", "change_covw", ("absdist" + strofreal(pw) + "_" + vname))
 		}
 		return(1)
 	}
@@ -4313,7 +4451,7 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 		td.levels = cand
 		nms = ""
 		for (k=1; k<=rows(cand); k++) nms = nms + " absdiffcat_" + vname + "_" + strofreal(cand[k])
-		M.addterm("absdiffcat", rows(cand), &stat_covw(), &change_covw(), td, tokens(nms))
+		_ergm_cov_set("absdiffcat", rows(cand), "stat_covw", "change_covw", tokens(nms))
 		return(rows(cand))
 	}
 	if (term == "diff") {
@@ -4342,7 +4480,7 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 		td.decay = pw
 		td.levels = (mul \ sc)
 		sfx = "diff" + (pw != 1 ? strofreal(pw) : "") + (sc != 1 ? "_" + sa : "") + (sc != 2 ? "_" + subinstr(dr, "-", "_") : "") + "_" + vname
-		M.addterm("diffterm", 1, &stat_covw(), &change_covw(), td, (sfx))
+		_ergm_cov_set("diffterm", 1, "stat_covw", "change_covw", (sfx))
 		return(1)
 	}
 	if (term == "smalldiff") {
@@ -4353,7 +4491,7 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 		}
 		td.sptype = "smalldiff"
 		td.decay = pw
-		M.addterm("smalldiff", 1, &stat_covw(), &change_covw(), td, ("smalldiff_" + vname + "_" + strofreal(pw)))
+		_ergm_cov_set("smalldiff", 1, "stat_covw", "change_covw", ("smalldiff_" + vname + "_" + strofreal(pw)))
 		return(1)
 	}
 	if (term == "sociality") {
@@ -4387,8 +4525,34 @@ real scalar _ergm_cov_add(class ErgmModel scalar M, class ErgmTermData scalar td
 		}
 		nms = ""
 		for (k=1; k<=rows(d); k++) nms = nms + " sociality" + strofreal(d[k]) + sfx
-		M.addterm("sociality", rows(d), &stat_covw(), &change_covw(), td, tokens(nms))
+		_ergm_cov_set("sociality", rows(d), "stat_covw", "change_covw", tokens(nms))
 		return(rows(d))
+	}
+	if (term == "nodecovrange" | term == "nodeocovrange" | term == "nodeicovrange") {
+		if (term != "nodecovrange" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		td.levels = (term == "nodecovrange" ? 1 : (term == "nodeocovrange" ? 2 : 3))
+		_ergm_cov_set(term, 1, "stat_covrange", "change_covrange", (term + "_" + vname))
+		return(1)
+	}
+	if (term == "nodefactordistinct" | term == "nodeofactordistinct" | term == "nodeifactordistinct") {
+		if (term != "nodefactordistinct" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		u = _ergm_cov_levels(td.attr, lev, lval, "", 0)
+		if (rows(u) == 0) return(0)
+		codes = td.attr
+		for (k=1; k<=rows(codes); k++) {
+			idx = select((1..rows(u)), (u :== codes[k])')
+			codes[k] = (cols(idx) > 0 ? idx[1] : 0)
+		}
+		td.attr = codes
+		td.levels = ((term == "nodefactordistinct" ? 1 : (term == "nodeofactordistinct" ? 2 : 3)) \ (1::rows(u)))
+		_ergm_cov_set(term, 1, "stat_nfd", "change_nfd", (term + "_" + vname))
+		return(1)
 	}
 	errprintf("unknown covariate term %s\n", term)
 	exit(198)
@@ -5960,6 +6124,14 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 				termcodes[pos] = (M.npar[t] == 1 ? 68 : 2006 + k)
 				covidxs[pos] = cidx
 			}
+		}
+		else if (nm == "nodecovrange" | nm == "nodeocovrange" | nm == "nodeicovrange" | nm == "nodefactordistinct" | nm == "nodeofactordistinct" | nm == "nodeifactordistinct") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 2010 + (nm == "nodecovrange" ? 0 : (nm == "nodeocovrange" ? 1 : (nm == "nodeicovrange" ? 2 : (nm == "nodefactordistinct" ? 3 : (nm == "nodeofactordistinct" ? 4 : 5)))))
+			attridxs[pos] = aidx
 		}
 		else if (nm == "nodemixd") {
 			if (cols(attrmat) + 1 > maxattr) return(0)

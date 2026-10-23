@@ -22,7 +22,8 @@ program _nwergm_cov, rclass
 	mata: st_local("__c0", strofreal(cols(__nwergm_last_M.coefnames)))
 	foreach v of local vars {
 		if inlist("`term'", "edgecov", "dyadcov") {
-			tempname td
+			_nwergm_covname
+		local td "`r(name)'"
 			mata: `td' = ErgmTermData()
 			capture quietly _nwsyntax `v', max(1) other(zz)
 			if _rc == 0 {
@@ -55,7 +56,8 @@ program _nwergm_cov, rclass
 			continue
 		}
 		if "`term'" == "sociality" & "`v'" == "." {
-			tempname td
+			_nwergm_covname
+		local td "`r(name)'"
 			mata: `td' = ErgmTermData()
 			mata: `td'.attr = J(0, 1, .)
 			local vn "."
@@ -64,7 +66,8 @@ program _nwergm_cov, rclass
 			_nwergm_covattr `v', term(`term') nodes(`nn')
 			local av "`r(var)'"
 			local vn "`r(name)'"
-			tempname td
+			_nwergm_covname
+		local td "`r(name)'"
 			mata: `td' = ErgmTermData()
 			mata: `td'.attr = st_data(1::`nn', "`av'")
 		}
@@ -109,13 +112,26 @@ program _nwergm_cov, rclass
 			}
 			if "`term'" == "smalldiff" local o1 "`cutoff'"
 			if "`term'" == "sociality" local o1 "`nodes'"
-			mata: st_local("__ergm_nc", strofreal(_ergm_cov_add(__nwergm_last_M, `td', "`term'", `isdir', `nn', "`vn'", "`levels'", "`levelvalues'", "`base'", "`o1'", "`o2'", "`o3'")))
+			mata: st_local("__ergm_nc", strofreal(_ergm_cov_add(`td', "`term'", `isdir', `nn', "`vn'", "`levels'", "`levelvalues'", "`base'", "`o1'", "`o2'", "`o3'")))
+			if `__ergm_nc' > 0 {
+				mata: __nwergm_last_M.addterm("`__cv_nm'", `__cv_np', &`__cv_sfn'(), &`__cv_cfn'(), `td', tokens("`__cv_names'"))
+			}
 		}
 		local temps "`temps' `td'"
 	}
 	mata: st_local("__cn", (cols(__nwergm_last_M.coefnames) > `__c0' ? invtokens(__nwergm_last_M.coefnames[(`__c0'+1)..cols(__nwergm_last_M.coefnames)]) : ""))
 	return local cnames "`__cn'"
 	return local temps "`temps'"
+end
+
+// Mata objects must outlive this program (the model keeps pointers to
+// them), so they cannot use tempnames (which Stata recycles after the
+// program exits): a session-wide counter makes unique permanent names.
+capture program drop _nwergm_covname
+program _nwergm_covname, rclass
+	if "$NWERGM_CVN" == "" global NWERGM_CVN 0
+	global NWERGM_CVN = $NWERGM_CVN + 1
+	return local name "__nwcv$NWERGM_CVN"
 end
 
 capture program drop _nwergm_covattr

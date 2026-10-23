@@ -11,6 +11,7 @@ program nwergm, eclass
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
 		ABSDIFFCAT(string) DIFF(string) SMALLDIFF(string) SOCIALITY(string) ATTRCOV(string) DYADCOV(string) MM(string) ///
+		NODECOVRANGE(string) NODEOCOVRANGE(string) NODEICOVRANGE(string) NODEFACTORDISTINCT(string) NODEOFACTORDISTINCT(string) NODEIFACTORDISTINCT(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
 		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) GWNSPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
@@ -737,6 +738,30 @@ program nwergm, eclass
 	}
 	if `"`mm'"' != "" {
 		_nwergm_cov mm, spec(`"`mm'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodecovrange'"' != "" {
+		_nwergm_cov nodecovrange, spec(`"`nodecovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeocovrange'"' != "" {
+		_nwergm_cov nodeocovrange, spec(`"`nodeocovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeicovrange'"' != "" {
+		_nwergm_cov nodeicovrange, spec(`"`nodeicovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodefactordistinct'"' != "" {
+		_nwergm_cov nodefactordistinct, spec(`"`nodefactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeofactordistinct'"' != "" {
+		_nwergm_cov nodeofactordistinct, spec(`"`nodeofactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeifactordistinct'"' != "" {
+		_nwergm_cov nodeifactordistinct, spec(`"`nodeifactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
 		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 

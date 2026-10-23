@@ -1551,7 +1551,40 @@ static double bnodematch_partner_count(graph_t *g, long node1, long node2, doubl
 #define TERMCODE_DYADCOV_MUT    2007  /* directed dyadcov: mutual / "utri" / "ltri" columns, see stat_dyadcov() in unw_ergm.do */
 #define TERMCODE_DYADCOV_U      2008
 #define TERMCODE_DYADCOV_L      2009
+#define TERMCODE_NODECOVRANGE   2010  /* range of neighbors' covariate: node (both parts) / out / in, then nodefactordistinct likewise (2013-2015) */
+#define TERMCODE_NODEOCOVRANGE  2011
+#define TERMCODE_NODEICOVRANGE  2012
+#define TERMCODE_NFD            2013
+#define TERMCODE_NODEOFD        2014
+#define TERMCODE_NODEIFD        2015
 #define TERMCODE_SOCIALITY      2006  /* sociality: node p1 is an endpoint (p2=1: only if attr[i]==attr[j]) */
+
+/* change in range(x over a node's neighbor list) when node w is toggled in/out of it (R's c_nodecovrange) */
+static double cov_range_change(adjlist_t *nb, long w, double *x, int present) {
+	double lo = INFINITY, hi = -INFINITY, lo2, hi2;
+	long m;
+	for (m = 0; m < nb->len; m++) {
+		long u = nb->nb[m];
+		if (u == w) continue;
+		if (x[u] < lo) lo = x[u];
+		if (x[u] > hi) hi = x[u];
+	}
+	lo2 = (x[w] < lo) ? x[w] : lo;
+	hi2 = (x[w] > hi) ? x[w] : hi;
+	{
+		double rwo = isinf(hi) ? 0.0 : hi - lo;
+		double rw = hi2 - lo2;
+		return present ? rwo - rw : rw - rwo;
+	}
+}
+/* nodefactordistinct part: change in [count of neighbors of v (list a1 plus optional a2) in category c is nonzero] */
+static double nfd_part(adjlist_t *a1, adjlist_t *a2, double *cat, double c, double delta) {
+	long cnt = 0, m;
+	if (c <= 0.0) return 0.0;
+	for (m = 0; m < a1->len; m++) if (cat[a1->nb[m]] == c) cnt++;
+	if (a2) for (m = 0; m < a2->len; m++) if (cat[a2->nb[m]] == c) cnt++;
+	return (double)(((double)cnt + delta) != 0.0) - (double)(cnt != 0);
+}
 
 static double change_term_cov(graph_t *g, int termcode, double p1, double p2, double *attr, double *cm, long n, double delta, long i, long j) {
 	switch (termcode) {
@@ -1585,6 +1618,30 @@ static double change_term_cov(graph_t *g, int termcode, double p1, double p2, do
 			if (termcode == TERMCODE_DYADCOV_MUT) return ref ? delta * v : 0.0;
 			if (termcode == TERMCODE_DYADCOV_U) return ref ? ((j > i) ? -delta * v : 0.0) : ((j < i) ? delta * v : 0.0);
 			return ref ? ((j < i) ? -delta * v : 0.0) : ((j > i) ? delta * v : 0.0);
+		}
+		case TERMCODE_NODECOVRANGE: case TERMCODE_NODEOCOVRANGE: case TERMCODE_NODEICOVRANGE: {
+			int present = (delta < 0.0);
+			double ch = 0.0;
+			if (!g->directed) {
+				ch = cov_range_change(&g->adj[i], j, attr, present) + cov_range_change(&g->adj[j], i, attr, present);
+			}
+			else {
+				if (termcode != TERMCODE_NODEICOVRANGE) ch += cov_range_change(&g->outadj[i], j, attr, present);
+				if (termcode != TERMCODE_NODEOCOVRANGE) ch += cov_range_change(&g->inadj[j], i, attr, present);
+			}
+			return ch;
+		}
+		case TERMCODE_NFD: case TERMCODE_NODEOFD: case TERMCODE_NODEIFD: {
+			double ch = 0.0;
+			if (!g->directed) {
+				ch = nfd_part(&g->adj[i], NULL, attr, attr[j], delta) + nfd_part(&g->adj[j], NULL, attr, attr[i], delta);
+			}
+			else {
+				if (termcode == TERMCODE_NFD) ch = nfd_part(&g->outadj[i], &g->inadj[i], attr, attr[j], delta) + nfd_part(&g->outadj[j], &g->inadj[j], attr, attr[i], delta);
+				else if (termcode == TERMCODE_NODEOFD) ch = nfd_part(&g->outadj[i], NULL, attr, attr[j], delta);
+				else ch = nfd_part(&g->inadj[j], NULL, attr, attr[i], delta);
+			}
+			return ch;
 		}
 		case TERMCODE_SOCIALITY:
 			if (p2 != 0.0 && attr[i] != attr[j]) return 0.0;
@@ -2446,6 +2503,11 @@ STDLL stata_call(int argc, char *argv[]) {
 			case TERMCODE_NSP_OSP: case TERMCODE_NSP_ISP:
 			case TERMCODE_NSP_RTP:
 				need_dirsp = 1;
+		}
+	}
+	for (i = 0; i < nterms; i++) {
+		if (termcodes[i] >= TERMCODE_NODECOVRANGE && termcodes[i] <= TERMCODE_NODEIFD) {
+			if (directed) need_dirsp = 1; else need_adj = 1;
 		}
 	}
 	for (i = 0; i < nterms; i++) theta[i] = next_double();

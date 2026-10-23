@@ -16,11 +16,11 @@ program define _cov_load
 	args net dir directed
 	qui nwclear
 	qui clear
-	qui import delimited "`dir'/net_`net'_adj.csv", clear
+	qui import delimited "`dir'/net_`net'_adj.csv", clear asdouble
 	qui mkmat v*, mat(_A)
-	qui import delimited "`dir'/net_`net'_ec.csv", clear
+	qui import delimited "`dir'/net_`net'_ec.csv", clear asdouble
 	qui mkmat v*, mat(_E)
-	qui import delimited "`dir'/net_`net'_nodes.csv", clear
+	qui import delimited "`dir'/net_`net'_nodes.csv", clear asdouble
 	qui ds
 	local vn `r(varlist)'
 	mata: _Nm = st_data(., .)
