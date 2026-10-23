@@ -7109,16 +7109,13 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	for (i=1; i<=nrows; i++) cost1[artcol0+i] = 1
 
 	for (iter=1; iter<=2000; iter++) {
-		redcost = J(1,ncols,0)
-		for (j=1; j<=ncols; j++) {
-			redcost[j] = cost1[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost1[basis[i]]*T[i,j]
-		}
-		entering = 0
-		for (j=1; j<=ncols; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		// vectorised reduced costs (speed: was an interpreted double loop over
+		// every column x every basis row; same arithmetic, same first-negative
+		// entering rule)
+		redcost = cost1 - cost1[basis]*T
+		entering = selectindex(redcost :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		minratio = .
 		leaving = 0
@@ -7204,27 +7201,12 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 
 	for (iter=1; iter<=5000; iter++) {
 		redcost = J(1,ncols,0)
-		for (j=1; j<=artcol0-1; j++) {
-			redcost[j] = cost2[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost2[basis[i]]*T[i,j]
-		}
-		// Bland's rule (smallest-index entering, not steepest-descent)
-		// here too, matching phase 1 - guarantees termination even on
-		// the degenerate/ill-conditioned MCMC samples a badly-mixed
-		// chain can produce (measured directly: steepest-descent
-		// entering selection here, paired with Bland's-rule-tie-broken
-		// leaving selection, does NOT guarantee anti-cycling - Bland's
-		// rule requires the smallest-index rule on BOTH sides - and
-		// this mismatch was observed to hang for minutes on the
-		// project's own `curvedgwespnet' certification network, whose
-		// MCMC sample is already known to be pathological: R's own
-		// `ergm' independently fails outright on curved MCMLE for this
-		// exact network too, see docs/ERGM_ROADMAP.md).
-		entering = 0
-		for (j=1; j<=artcol0-1; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		redcost[1..artcol0-1] = cost2[1..artcol0-1] - cost2[basis]*T[., 1..artcol0-1]
+		// Bland's rule (smallest-index entering AND smallest-index leaving)
+		// as in phase 1: required for anti-cycling on degenerate MCMC samples.
+		entering = selectindex(redcost[1..artcol0-1] :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		// Same Bland's-rule tie-break as phase 1's own leaving selection
 		// (smallest BASIS-VARIABLE index among tied rows, not smallest
