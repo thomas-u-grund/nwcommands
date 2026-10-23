@@ -788,3 +788,11 @@ restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 
 with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
 correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
 not one: the failure is rare and moves between seeds when anything upstream changes.
+
+## A two-mode fit left its structural mask behind and a later fit with a behavior crashed Stata (fixed 2026-10-23)
+
+`nwsaom` stored the structural-dyad mask of a two-mode network in the Mata global `__nwsaom_coev_struct` and never cleared it. The next fit in the same session (any
+`behavior()` model on a network with FEWER nodes, e.g. a 50-node non-directed network after a 34- or 60-node two-mode one) read that stale mask, handed the plugin dyads
+beyond its node count, and the plugin corrupted the heap: the `stata -e` run just stopped (exit status 133, crash report with `beh_stats_on_edges` / `calloc` on a worker
+thread). Fixed by resetting the global in `nwsaom.ado` whenever a fit has no structural dyads. A Mata global that a later fit reads must be reset by every fit that does not
+set it; and a test file that mixes a two-mode part with a later one-mode part in one process is what finds this.

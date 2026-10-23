@@ -2864,13 +2864,29 @@ program nwsaom, eclass
 					local __nc : word `__ni' of `__nbn_codes'
 					mata: st_local("__nbps", invtokens(strofreal(SaomNbSim("`__e'", `xparam', __nwsaom_last_Mbeh, __nwsaom_last_Behwaves, __nwsaom_beh_maxval - __nwsaom_beh_minval), "%25.17g")))
 					gettoken __nbp __nbs : __nbps
-					mata: SaomRegNatBeh(__nwsaom_last_M, "`__e'", `__nc', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `__nbp', `__nbs')
+					if `__nwsaom_tm' & inlist("`__e'", "crossxoutact", "avgroupegox", "totgroupegox") {
+						// a two-mode network: RSiena reads the behavior of the actors at the event's index within its mode (needs at least as many actors as events)
+						if `__nwsaom_tm_ne' > `__nwsaom_tm_na' {
+							di "{err}netbeh(`__e') in a two-mode network needs at least as many actors as events (RSiena reads the actors' behavior at the event's index)."
+							error 198
+						}
+						mata: __nwsaom_tm_map = J(`nodes', 1, 0)
+						mata: __nwsaom_tm_map[__nwsaom_tm_evidx] = __nwsaom_tm_actidx[1..rows(__nwsaom_tm_evidx)]
+						local __nbtmcode = cond("`__e'" == "crossxoutact", 220, cond("`__e'" == "avgroupegox", 243, 244))
+						local __nbtmp1 = cond("`__e'" == "crossxoutact", `__nbp', `__nwsaom_tm_ne')
+						mata: SaomRegNatBehTm(__nwsaom_last_M, "`__e'", `__nbtmcode', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `__nbtmp1', __nwsaom_tm_map)
+					}
+					else mata: SaomRegNatBeh(__nwsaom_last_M, "`__e'", `__nc', __nwsaom_beh_w1, mean(SaomMBPooled(__nwsaom_last_Behwaves)), `__nbp', `__nbs')
 					local __nwsaom_efflist : subinstr local __nwsaom_efflist " [behavior:" " natb_`__e' [behavior:"
 					mata: st_local("__nwsaom_p", strofreal(__nwsaom_last_M.nparam()))
 					continue
 				}
 				if `: list posof "`__e'" in __nb_ok' == 0 {
 					di "{err}netbeh(): `__e' is not available with the behavior as covariate; available: `__nb_ok'."
+					error 198
+				}
+				if `__nwsaom_tm' & "`__e'" != "egosqx" {
+					di "{err}netbeh(`__e') is not available for a two-mode network (available: egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4 crossxoutact avgroupegox totgroupegox; behegox). RSiena's sameXOutAct/diffXOutAct cannot be evaluated by siena07 in a two-mode network."
 					error 198
 				}
 				mata: st_local("__nwsaom_behrange", strofreal(__nwsaom_beh_maxval - __nwsaom_beh_minval))
@@ -3119,7 +3135,11 @@ program nwsaom, eclass
 	mata: __nwsaom_last_fntype = SaomFntypeFromNames(__nwsaom_last_M)
 	if `__nwsaom_hasstructural' mata: __nwsaom_last_struct = __nwsaom_structmat
 	if `__nwsaom_hasstructural' mata: __nwsaom_coev_struct = __nwsaom_structmat
-	else mata: __nwsaom_last_struct = J(0, 0, 0)
+	else {
+		mata: __nwsaom_last_struct = J(0, 0, 0)
+		// the mask of an earlier two-mode fit must not leak into this one (its node numbers can exceed this network's)
+		mata: __nwsaom_coev_struct = J(0, 0, 0)
+	}
 	if `__nwsaom_haspresent' & !`__nwsaom_multi' & !`__nwsaom_coev' mata: __nwsaom_last_present = __nwsaom_present1
 	else mata: __nwsaom_last_present = J(0, 1, 0)
 	mata: __nwsaom_engine = ""

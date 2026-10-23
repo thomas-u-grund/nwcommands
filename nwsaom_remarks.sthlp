@@ -510,7 +510,8 @@ unchanged; the rate is the per-actor rate. Available effects: {opt outdegree} (d
 totindist2 simegoindist2 sameegoindist2 crossxoutact samexcycle4 sameinxcycle4 homxoutact2 avgroupegox totgroupegox); {opt tvcov()} covariates work in all of them. The covariates
 are variables on the {it:node} rows of the dataset after {cmd:nwset} (one row per node, {cmd:_nwmode} tells the mode), centred within their mode. A co-evolving {opt behavior()} of
 the actors is possible (the events are generated as absent actors); its network effects are {opt behegox} and
-{cmd:netbeh(egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4)}. Several waves ({opt waves()}) are supported. Not available: reciprocity, triads, balance,
+{cmd:netbeh(egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4 crossxoutact avgroupegox totgroupegox)}. A dyadic covariate ({opt dyadcov()}, a matrix with one row per actor and one column per event)
+and {opt interact()} of the effects above are available too. Several waves ({opt waves()}) are supported. Not available: reciprocity, triads, balance,
 gwesp, structural rate effects, {opt missnet()}, endowment/creation, two-mode members in {cmd:nwsaom multinet}; RSiena's sameXOutAct/diffXOutAct cannot be evaluated by siena07 in a
 two-mode network and are not offered. Validation against RSiena 1.6.6 on a simulated 40 x 20, 3-wave network
 (known parameters; dev/saom_rsiena_twomode_sim.R): the observed statistics are identical to RSiena's targets (density 529,

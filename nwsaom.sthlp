@@ -65,7 +65,7 @@ Two networks that change together ({help nwsaom##multiplex:nwsaom multiplex}):
 covariates); period {it:p} takes the value of wave {it:p} (the last wave's value is not used). Each is named after its first variable without trailing digits ({cmd:a}, {cmd:s}) and
 used by that name in {opt nodeocov()}/{opt nodeicov()}/{opt nodecov()}/{opt nodematch()}/{opt simcov()} (or {opt egox()}/{opt altx()}/{opt samex()}/{opt simx()}), e.g.
 {cmd:tvcov(a1 a2 a3) egox(a) simx(a)}. Centred by the mean of all values, as RSiena. No missing values; also with {opt behavior()} (network covariate effects; not yet as behavior
-covariates), also with two-mode networks (nodeocov/nodeicov, egosqx/altsqx and the two-mode netx effects below), not with {opt interact()}, {opt symmetric} or {cmd:estat gof}. See
+covariates), also with two-mode networks (nodeocov/nodeicov, egosqx/altsqx and the two-mode netx effects below), not with {opt interact()} or {cmd:estat gof}. See
 {help nwsaom_remarks##tvcov:Time-varying covariates}{p_end}
 {synopt:{opt actormode(#)}}Two-mode networks: the mode whose nodes are the actors (they choose their ties to the other mode, the events); 1 or 2, default 2 = the {it:rows} of the
 affiliation matrix given to {cmd:nwset, bipartite}. Covariate effects in a two-mode network (protocol 56, native; the covariate is a variable on the nodes of one mode, other nodes
@@ -118,7 +118,7 @@ yet with {opt symmetric}{p_end}
 {synopt:{opt simrecipx(varlist)}}RSiena {cmd:simRecipX}: similarity (as {opt simx}) summed over reciprocated ties{p_end}
 {synopt:{opt dyadcov(matnames)}}Dyadic covariate (RSiena's {cmd:X} effect): each name is a Stata {it:n} x {it:n} matrix (rows and columns in the node order of the waves) whose
 value x_ij enters an actor's utility for the tie i -> j. Centred by the mean of its non-missing off-diagonal cells (not with {opt nocenter}); missing cells ({bf:.}) count as 0
-after centring and are left out of the statistic, as in RSiena. One effect and coefficient ({cmd:dyadcov_}{it:name}) per matrix; constant over time. Uses {it:n} native attribute
+after centring and are left out of the statistic, as in RSiena. One effect and coefficient ({cmd:dyadcov_}{it:name}) per matrix; constant over time. In a two-mode network the matrix has one row per actor and one column per event (in the node order of each mode), RSiena's bipartite dyadic covariate, centred by the mean of all its cells ({opt dyadcovrecip()} does not exist there). Uses {it:n} native attribute
 columns per matrix (Stata variable limit). Not combinable with {opt interact()}{p_end}
 {synopt:{opt dyadcovrecip(matnames)}}RSiena's {cmd:XRecip}: the same matrices, but the value counts only when the reverse tie j -> i exists{p_end}
 {synopt:{opth nodematch(varlist)}}Homophily on categorical node attributes (exact match), one effect per variable - RSiena alias {opt samex()}{p_end}
@@ -199,7 +199,7 @@ as main effects, with its own coefficient; its contribution to a ministep is the
 follow RSiena's rule: each effect is an ego effect ({opt egox()}, {opt inactivity}, {opt isolatenet}, {opt isolatepop}), a dyadic effect ({opt outdegree}, {opt reciprocity},
 {opt samex()}, {opt altx()}, {opt nodecov()}, {opt simx()}, {opt gwesp()}, {opt outpopularity}, {opt inoutass}) or another effect ({opt transtrip}, {opt transmedtrip},
 {opt transrectrip}, {opt cycle3}, {opt cycle4}, {opt transties}, {opt balance}, {opt indegpopularity}, {opt outactivity}, {opt outiso}, {opt outoutass}, {opt outinass},
-{opt ininass}); two effects need an ego effect or two dyadic effects, three effects two ego effects or only ego and dyadic effects. Interactions RSiena accepts but cannot compute
+{opt ininass}), in directed, non-directed and two-mode networks (a two-mode network: {opt egox()}, {opt altx()}, {opt outdegree} ...); two effects need an ego effect or two dyadic effects, three effects two ego effects or only ego and dyadic effects. Interactions RSiena accepts but cannot compute
 are refused too: {opt outiso} and {opt isolatenet} only with {opt egox()} (and {opt outdegree}), and the anti-isolate effects not at all. A covariate effect given for several
 variables is named by its coefficient name, e.g. {cmd:interact(samex_smoke1#egox_alcohol1)} (either spelling, {cmd:nodematch_smoke1} or {cmd:samex_smoke1}); with one variable the
 effect type alone works ({cmd:interact(samex#egox)}). Coefficients are named interact_{it:A}_{it:B}, or ix_{it:A}_{it:B} when that is longer than 32 characters; RSiena's name is in
@@ -275,7 +275,7 @@ the dependent behavior as the covariate{p_end}
 {synopt:{opt netbeh(effects)}}Network effects with the {it:dependent behavior} as the covariate (RSiena's "a behavior variable" contexts): any of
 {cmd:samex diffx higher egosqx altsqx samexrecip absdiffx egoxaltx samextranstrip diffxtranstrip homxtranstrip samexoutact diffxoutact samexreciact diffxreciact homxoutact altxoutact inpopx outpopx inactx outactx samexinpop diffxinpop egoplusaltsqx diffsqx egodiffx althigheregox unequalx egolthresholdx egorthresholdx altlthresholdx altrthresholdx degabsdiffx degposdiffx degnegdiffx}.
 The value is the behavior's current value minus its overall mean in the simulation and its value at the start of the period in the statistic (like {opt behsim}). First behavior
-only; coefficients {cmd:bv_}{it:effect}. Estimates agree with siena07. {bf:Native plugin only} (protocol 45){p_end}
+only; in a two-mode network {cmd:crossxoutact}, {cmd:avgroupegox} and {cmd:totgroupegox} (the behavior of the actors, read at the event's index within its mode as RSiena does, so at least as many actors as events are needed) are available besides {cmd:egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4}; coefficients {cmd:bv_}{it:effect}. Estimates agree with siena07. {bf:Native plugin only} (protocol 45){p_end}
 {synopt:{opt behx(family:var ...)}}Behavior effects of the network x a covariate (RSiena's avXInAlt, totXInAlt, avXRecAlt, totXRecAlt, avSameXInAlt, totSameXInAlt, avSameXRecAlt,
 totSameXRecAlt, avAltSameX, totAltSameX, avRecAltSameX, totRecAltSameX, avAltAltX, avSimAltX, totSimAltX, minXAlt, maxXAlt, degAbsContrX, degPosContrX, degNegContrX): {it:family}
 is the lower-case effect name, {it:var} a numeric variable or a {opt tvcov()} stem, e.g. {cmd:behx(avsamexinalt:sex maxxalt:age)}; shares the covariate slots (at most 8 different

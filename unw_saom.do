@@ -3633,6 +3633,18 @@ real rowvector stat_saom_nat(class ErgmGraph scalar G, class ErgmTermData scalar
 	real scalar dyn
 	dyn = (td.levels[2] != 0)
 	if (rows(td.edgecovmat) == G.n) return(SaomNativeNetStat(G, td.levels[1], td.decay, J(G.n, 1, 0), td.edgecovmat))
+	if (td.levels[2] == 2) {
+		// a two-mode network, the behavior of the actors as the covariate of crossXOutAct / avGroupEgoX / totGroupEgoX: the events carry the behavior of the actor with
+		// the same index within its mode (RSiena reads the covariate at the event's index); the mean over those is passed in the scale slot
+		real colvector mp, am
+		real scalar gm
+		mp = td.levels[4..rows(td.levels)]
+		a = td.attr :- td.center
+		am = selectindex(mp :> 0.5)
+		a[am] = a[mp[am]]
+		gm = (rows(am) > 0 ? mean(a[am]) : 0)
+		return(SaomNativeNetStat(G, td.levels[1] + 1000, td.decay, a, J(0, 0, 0), gm))
+	}
 	a = (dyn ? td.attr :- td.center : td.attr)
 	if (dyn & rows(td.levels) >= 3) return(SaomNativeNetStat(G, td.levels[1] + 1000, td.decay, a, J(0, 0, 0), td.levels[3]))
 	return(SaomNativeNetStat(G, td.levels[1] + (dyn ? 1000 : 0), td.decay, a))
@@ -3853,6 +3865,17 @@ void SaomRegNatBeh(class ErgmModel scalar M, string scalar eff, real scalar code
 	td = ErgmTermData()
 	td.levels = (code \ 1)
 	if (args() >= 7) td.levels = (code \ 1 \ scale)
+	td.attr = behw1
+	td.center = bmean
+	td.decay = p1
+	M.addterm("natb_" + eff, 1, &stat_saom_nat(), &change_saom_nat(), td, ("natb_" + eff))
+}
+/* a two-mode network: the dependent behavior of the actors (first behavior, start values behw1, overall mean bmean) as the covariate of RSiena's crossXOutAct (code 220),
+   avGroupEgoX (243) or totGroupEgoX (244); map[v] = for an event node the actor node of the same index within its mode, else 0; p1 = the number of events */
+void SaomRegNatBehTm(class ErgmModel scalar M, string scalar eff, real scalar code, real colvector behw1, real scalar bmean, real scalar p1, real colvector map) {
+	class ErgmTermData scalar td
+	td = ErgmTermData()
+	td.levels = (code \ 2 \ 0 \ map)
 	td.attr = behw1
 	td.center = bmean
 	td.decay = p1
@@ -10179,6 +10202,7 @@ void SaomDycTVCfg(struct SaomNativeConfig scalar cfg, class ErgmTermData scalar 
 struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	struct SaomNativeConfig scalar cfg
 	class ErgmTermData scalar tdt
+	real scalar needv80
 	real scalar t, nextattr, subA, subB, subC, si, hassimcov, needv9, needv10, needv12, needv13, needv14, needv15, needv16, needv22, needv23, needv24, needv29, needv30, needv31, needv32, needv33, needv34, needv39, needv40, needv41, needv45, needv46, needv49
 	string scalar nm, nmb
 	string rowvector nms
@@ -10202,6 +10226,7 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 	needv41 = 0
 	needv45 = 0
 	needv46 = 0
+	needv80 = 0
 	needv49 = 0
 	needv9 = 0
 	needv10 = 0
@@ -10232,7 +10257,15 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 			tdt = *M.td[t]
 			cfg.termcodes[t] = tdt.levels[1]
 			cfg.p1[t] = tdt.decay
-			if (tdt.levels[2] != 0) {
+			if (tdt.levels[2] == 2) {
+				// protocol 80: two-mode, the mirror map of the events travels as an attribute column; the plugin finds the live behavior itself
+				cfg.termcodes[t] = cfg.termcodes[t] + 5000
+				nextattr++
+				cfg.attridx[t] = nextattr
+				cfg.attrmat = (cols(cfg.attrmat)==0 ? tdt.levels[4..rows(tdt.levels)] : (cfg.attrmat, tdt.levels[4..rows(tdt.levels)]))
+				needv80 = 1
+			}
+			else if (tdt.levels[2] != 0) {
 				cfg.termcodes[t] = cfg.termcodes[t] + 1000
 				cfg.attridx[t] = 0
 			}
@@ -10712,6 +10745,12 @@ struct SaomNativeConfig scalar SaomNativeSetup(class ErgmModel scalar M){
 		if (SaomNativePluginVersion() < 49) {
 			cfg.eligible = 0
 			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 49 (network effects of a dyadic covariate)"
+		}
+	}
+	if (cfg.eligible & needv80) {
+		if (SaomNativePluginVersion() < 80) {
+			cfg.eligible = 0
+			if (cfg.whynot == "") cfg.whynot = "plugin older than protocol 80 (two-mode networks with the behavior as covariate of crossXOutAct / avGroupEgoX / totGroupEgoX)"
 		}
 	}
 	if (cfg.eligible & needv46) {
@@ -14125,8 +14164,8 @@ void SaomBehDyStore(real scalar n) {
 /* netbeh(): (p1, scale) of a network effect with the dependent behavior as the covariate: the similarity effects carry the behavior's similarity mean and 1/range (RSiena) */
 real rowvector SaomNbSim(string scalar eff, real scalar xparam, class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar rng) {
 	if (findexternal("__nwsaom_tm_isactor") != NULL) {
-		if (!anyof(("altindist2", "totindist2", "simegoindist2", "sameegoindist2", "samexcycle4", "egosqx", "behegox"), eff)) {
-			errprintf("nwsaom: netbeh(" + eff + ") is not available for a two-mode network (available: egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4; behegox).\n")
+		if (!anyof(("altindist2", "totindist2", "simegoindist2", "sameegoindist2", "samexcycle4", "egosqx", "behegox", "crossxoutact", "avgroupegox", "totgroupegox"), eff)) {
+			errprintf("nwsaom: netbeh(" + eff + ") is not available for a two-mode network (available: egosqx altindist2 totindist2 simegoindist2 sameegoindist2 samexcycle4 crossxoutact avgroupegox totgroupegox; behegox).\n")
 			exit(198)
 		}
 	}
