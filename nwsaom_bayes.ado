@@ -8,7 +8,7 @@
 capture program drop nwsaom_bayes
 program nwsaom_bayes, eclass
 	version 14
-	syntax [, NPREWARM(integer 50) NWARM(integer 50) NMAIN(integer 250) NRUNMH(integer 20) NIMPROVEMH(integer 100) MULT(real 5) TARGETMH(real 0.25) ///
+	syntax [, NPREWARM(integer 50) NWARM(integer 50) NMAIN(integer 250) NRUNMH(integer 20) NIMPROVEMH(integer 100) MHGEOM(real 0) MULT(real 5) TARGETMH(real 0.25) ///
 		NMH(integer 0) NSAMPCONST(integer 1) NSAMPRATES(integer 0) THETA0(numlist) RATE0(numlist >0) FIXRATES ///
 		SEED(integer -1) PRIORMEANETA(numlist) PRIORSIGETA(numlist >0) RATEPRIORMEAN(numlist) RATEPRIORSD(real 1) GIBBSRATES PRIORRATE(numlist min=2 max=2 >=0) ///
 		FRAME(name) LEVEL(cilevel) NOTABLE NOHEADER]
@@ -22,8 +22,8 @@ program nwsaom_bayes, eclass
 		di as err "no fitted nwsaom model available - re-run nwsaom before nwsaom bayes."
 		exit 498
 	}
-	if e(has_behavior) == 1 | e(twomode) == 1 | `"`e(symtype)'"' != "" | `"`e(ratecov)'"' != "" {
-		di as err "nwsaom bayes covers one directed one-mode network without a co-evolving behavior, two-mode data, non-directed models or rate covariates."
+	if e(twomode) == 1 | `"`e(symtype)'"' != "" | `"`e(ratecov)'"' != "" {
+		di as err "nwsaom bayes covers one directed one-mode network with at most one co-evolving behavior, without two-mode data, non-directed models or rate covariates."
 		exit 198
 	}
 	mata: st_numscalar("__nwsaom_by_bad", any(_SaomGofExt("__nwsaom_last_fntype", J(1, 0, 0)) :!= 0) | rows(_SaomGofExt("__nwsaom_last_present", J(0, 1, 0))) > 0 | rows(_SaomGofExt("__nwsaom_last_struct", J(0, 0, 0))) > 0)
@@ -42,14 +42,14 @@ program nwsaom_bayes, eclass
 	matrix `V' = e(V)
 	local names : colnames `b'
 	local K = colsof(`b')
-	capture confirm matrix e(rates)
-	if !_rc {
-		matrix `rt' = e(rates)
-		matrix `rt' = `rt'[1, 1..`nper']
-	}
-	else {
-		matrix `rt' = J(1, `nper', e(rate))
-	}
+	local coev = (e(has_behavior) == 1)
+	local pnet = e(p_net)
+	local nvar = 1 + `coev'
+	local NR = `nper' * `nvar'
+	_nwsaom_getrates `nper' `coev'
+	matrix `rt' = r(rt)
+	tempname rse
+	matrix `rse' = r(se)
 	if "`theta0'" != "" {
 		if `: word count `theta0'' != `K' {
 			di as err "theta0() takes one value per effect (`K')."
@@ -60,11 +60,11 @@ program nwsaom_bayes, eclass
 		}
 	}
 	if "`rate0'" != "" {
-		if `: word count `rate0'' != `nper' {
-			di as err "rate0() takes one value per period (`nper')."
+		if `: word count `rate0'' != `NR' {
+			di as err "rate0() takes one value per period and dependent variable (`NR')."
 			exit 198
 		}
-		forvalues pd = 1/`nper' {
+		forvalues pd = 1/`NR' {
 			matrix `rt'[1, `pd'] = `: word `pd' of `rate0''
 		}
 	}
@@ -107,22 +107,7 @@ program nwsaom_bayes, eclass
 	local rpm ""
 	local rps ""
 	local rsdl ""
-	tempname rse
-	capture confirm matrix e(rates_se)
-	if !_rc {
-		matrix `rse' = e(rates_se)
-	}
-	else {
-		matrix `rse' = J(1, `nper', .)
-	}
-	capture confirm matrix e(rates)
-	if !_rc {
-		if rowsof(e(rates)) == 2 {
-			matrix `rse' = e(rates)
-			matrix `rse' = `rse'[2, 1..`nper']
-		}
-	}
-	forvalues pd = 1/`nper' {
+	forvalues pd = 1/`NR' {
 		local m = `rt'[1, `pd']
 		if "`ratepriormean'" != "" local m : word `pd' of `ratepriormean'
 		local rpm `rpm' `m'
@@ -154,7 +139,19 @@ program nwsaom_bayes, eclass
 	forvalues pd = 1/`nper' {
 		local vn `vn' rate`pd'
 	}
+	if `coev' {
+		forvalues pd = 1/`nper' {
+			local vn `vn' brate`pd'
+		}
+	}
 	local vn `vn' nchain loglik
+	if `coev' local mbs "__nwsaom_last_Mbeh, __nwsaom_last_Behwaves, __nwsaom_beh_minval, __nwsaom_beh_maxval"
+	else {
+		capture mata: mata drop __nwsaom_by_Mb0 __nwsaom_by_Bw0
+		mata: __nwsaom_by_Mb0 = SaomBehaviorModel()
+		mata: __nwsaom_by_Bw0 = J(1, 0, NULL)
+		local mbs "__nwsaom_by_Mb0, __nwsaom_by_Bw0, 0, 0"
+	}
 	mata: __nwsaom_by_Gs = (`gs')
 	mata: __nwsaom_by_names = tokens("`vn'")
 	mata: __nwsaom_by_th = st_matrix("`b'")
@@ -166,8 +163,8 @@ program nwsaom_bayes, eclass
 	mata: __nwsaom_by_rps = strtoreal(tokens("`rps'"))
 	mata: __nwsaom_by_rsd = strtoreal(tokens("`rsdl'"))
 	di as txt "Sampling: `nprewarm' pre-warming + `nwarm' warming + `nmain' main iterations of `nrunmh' batches ..."
-	mata: st_numscalar("__nwsaom_by_n", SaomBayesRun(__nwsaom_by_Gs, `nper', __nwsaom_last_M, __nwsaom_by_th, __nwsaom_by_V, __nwsaom_by_rho, __nwsaom_by_pm, __nwsaom_by_ps, __nwsaom_by_rpm, __nwsaom_by_rps, `pshape', `prate', __nwsaom_by_rsd, `nprewarm', `nwarm', `nmain', `nrunmh', `nimprovemh', `nmh', `nsampconst', `nsamprates', `seed', `mult', `targetmh', `ratemode', "`frame'", __nwsaom_by_names))
-	capture mata: mata drop __nwsaom_by_Gs __nwsaom_by_names __nwsaom_by_th __nwsaom_by_V __nwsaom_by_rho __nwsaom_by_pm __nwsaom_by_ps __nwsaom_by_rpm __nwsaom_by_rps __nwsaom_by_rsd
+	mata: st_numscalar("__nwsaom_by_n", SaomBayesRun(__nwsaom_by_Gs, `nper', __nwsaom_last_M, `coev', `mbs', __nwsaom_by_th, __nwsaom_by_V, __nwsaom_by_rho, __nwsaom_by_pm, __nwsaom_by_ps, __nwsaom_by_rpm, __nwsaom_by_rps, `pshape', `prate', __nwsaom_by_rsd, `nprewarm', `nwarm', `nmain', `nrunmh', `nimprovemh', `nmh', `nsampconst', `nsamprates', `seed', `mult', `targetmh', `ratemode', `mhgeom', "`frame'", __nwsaom_by_names))
+	capture mata: mata drop __nwsaom_by_Mb0 __nwsaom_by_Bw0 __nwsaom_by_Gs __nwsaom_by_names __nwsaom_by_th __nwsaom_by_V __nwsaom_by_rho __nwsaom_by_pm __nwsaom_by_ps __nwsaom_by_rpm __nwsaom_by_rps __nwsaom_by_rsd
 	local ndraw = scalar(__nwsaom_by_n)
 	local acc_th = scalar(__saom_bayes_acc_theta)
 	local acc_dg = scalar(__saom_bayes_acc_diag)
@@ -181,7 +178,7 @@ program nwsaom_bayes, eclass
 		di as err "too few draws saved."
 		exit 498
 	}
-	local Kp = `K' + `nper'
+	local Kp = `K' + `NR'
 	mata: SaomBayesSummary("`frame'", `K', `Kp', `level')
 	// label the draws
 	forvalues k = 1/`K' {
@@ -199,13 +196,19 @@ program nwsaom_bayes, eclass
 	matrix colnames `bb' = `names'
 	matrix colnames `Vb' = `names'
 	matrix rownames `Vb' = `names'
-	matrix `rr' = `mean'[1, `K'+1..`Kp'] \ `sd'[1, `K'+1..`Kp']
+	tempname rrb
+	matrix `rr' = `mean'[1, `K'+1..`K'+`nper'] \ `sd'[1, `K'+1..`K'+`nper']
 	local rcn ""
 	forvalues pd = 1/`nper' {
 		local rcn `rcn' rate_period`pd'
 	}
 	matrix colnames `rr' = `rcn'
 	matrix rownames `rr' = mean sd
+	if `coev' {
+		matrix `rrb' = `mean'[1, `K'+`nper'+1..`Kp'] \ `sd'[1, `K'+`nper'+1..`Kp']
+		matrix colnames `rrb' = `rcn'
+		matrix rownames `rrb' = mean sd
+	}
 	local nobs_keep = e(nodes)
 	local nodes_keep = e(nodes)
 	local waves_keep `"`e(waves)'"'
@@ -219,7 +222,8 @@ program nwsaom_bayes, eclass
 	ereturn local priors "effects: flat or normal(priormean, priorsd); rates: gamma(shape, rate), flat by default"
 	ereturn scalar nodes = `nodes_keep'
 	ereturn scalar nwaves = `nwaves'
-	ereturn scalar has_behavior = 0
+	ereturn scalar has_behavior = `coev'
+	ereturn scalar p_net = `pnet'
 	ereturn scalar twomode = 0
 	ereturn scalar centered = `cent_keep'
 	ereturn scalar nwarm = `nwarm'
@@ -239,6 +243,7 @@ program nwsaom_bayes, eclass
 	ereturn scalar mean_chain_length = `meanR'
 	ereturn scalar seconds = `secs'
 	ereturn matrix rates = `rr'
+	if `coev' ereturn matrix rates_beh = `rrb'
 	ereturn matrix ess = `ess'
 	ereturn matrix interval = `Q'
 
@@ -258,12 +263,13 @@ program nwsaom_bayes, eclass
 		di as txt "{hline 13}{c +}{hline 63}"
 		forvalues k = 1/`Kp' {
 			if `k' <= `K' local nmk : word `k' of `names'
-			else local nmk "rate_period`=`k'-`K''"
+			else if `k' <= `K' + `nper' local nmk "rate_period`=`k'-`K''"
+			else local nmk "brate_period`=`k'-`K'-`nper''"
 			local nmk = abbrev("`nmk'", 12)
 			di as txt %12s "`nmk'" " {c |}" as res %10.4f `mean'[1, `k'] %10.4f `sd'[1, `k'] %10.4f `QQ'[1, `k'] %10.4f `QQ'[3, `k'] %10.4f `QQ'[2, `k'] %9.0f `EQ'[1, `k']
 		}
 		di as txt "{hline 13}{c BT}{hline 63}"
-		di as txt "Draws (one per main iteration) are in frame {bf:`frame'} (b1..b`K' effects, rate1..rate`nper', nchain, loglik); flat priors unless priormean()/priorsd()/priorrate() are given."
+		di as txt "Draws (one per main iteration) are in frame {bf:`frame'} (b1..b`K' effects, rate1..rate`nper'`=cond(`coev', ", brate1..brate`nper'", "")', nchain, loglik); flat priors unless priormean()/priorsd()/priorrate() are given."
 	}
 	mata: st_numscalar("__nwsaom_by_dummy", 0)
 	capture scalar drop __nwsaom_by_dummy __nwsaom_by_bad __nwsaom_by_n

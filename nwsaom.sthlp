@@ -419,6 +419,8 @@ omitted or mis-sized (outdegree first, then every other effect in the order its 
 network-only model starts {opt outdegree} at RSiena's data-derived starting value{p_end}
 {synopt:{opt k0(int)}}Phase-1 replicate count (Jacobian estimation via the score-function derivative estimator); default 50{p_end}
 {synopt:{opt k3(int)}}Phase-3 replicate count (convergence diagnostics and the covariance matrix e(V)); default 1,000{p_end}
+{synopt:{opt ml}}estimate by maximum likelihood (Robbins-Monro on the likelihood of the augmented data) instead of the method of moments; see {help nwsaom_remarks##ml:Maximum likelihood}{p_end}
+{synopt:{opt mloptions(string)}}controls of the maximum likelihood estimator: {opt n1(#)}, {opt nsub(#)}, {opt nstart2(#)}, {opt n3(#)}, {opt mult(#)}, {opt gain(#)}, {opt seed(#)}{p_end}
 {synopt:{opt firstg(real)}}Phase-2 starting gain (Robbins-Monro step size); default 0.2, matching RSiena's own default{p_end}
 {synopt:{opt seed(int)}}Set the random-number seed before simulating (for reproducibility){p_end}
 {synopt:{opt cores(#)}}Number of threads the native simulator uses; default 0, all physical cores; {cmd:cores(1)} runs single-threaded. Every

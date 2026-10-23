@@ -15656,88 +15656,6 @@ void __nwsaom_mp_fit_and_post(
 	st_global(ncoefname, invtokens(("net1_" :+ M1.coefnames, "net2_" :+ M2.coefnames)))
 }
 
-/* ---------------------------------------------------------------------------
-   nwsaom bayes: the Bayesian sampler of the plugin (BAYESRUN) for the model of the last nwsaom fit.
-   Gall = all waves (P+1 graphs); the starting networks of the periods go to the plugin's resident
-   model (BATCHSETUP), the end networks to the sampler's input columns. Returns the number of saved draws;
-   the draws (effects, rates, total chain length, log-likelihood given the chains) are stored in frame frname.
-   prior: normal(pmean, psd) for every effect, gamma(pshape, prate) for the rate of every period.
-   Vprop: the starting covariance of the random-walk proposal for the effects.
---------------------------------------------------------------------------- */
-real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M,
-	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd,
-	real rowvector ratepm, real rowvector ratepsd, real scalar pshape, real scalar prate, real rowvector rsd,
-	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh,
-	real scalar nsampconst, real scalar nsamprates, real scalar seed, real scalar mult, real scalar targetmh, real scalar ratemode,
-	string scalar frname, string rowvector names)
-{
-	struct SaomNativeConfig scalar cfg
-	pointer(class ErgmGraph scalar) rowvector Gstart
-	real matrix E, t, draws
-	real scalar n, K, pd, junk, nrows, nsave, nout, i
-	string scalar origframe, argstr
-	string rowvector vn
-
-	n = (*Gall[1]).n
-	K = cols(theta)
-	if (K != M.nparam()) {
-		errprintf("nwsaom bayes: the coefficient vector does not match the model.\n")
-		exit(198)
-	}
-	cfg = SaomNativeSetup(M)
-	if (!cfg.eligible | !SaomNativeAvailable() | SaomNativePluginVersion() < 120) {
-		errprintf("nwsaom bayes needs the native plugin (a current build) and a model the plugin covers.\n")
-		exit(198)
-	}
-	Gstart = J(1, P, NULL)
-	for (pd=1; pd<=P; pd++) Gstart[pd] = Gall[pd]
-	SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
-	E = J(0, 3, 0)
-	for (pd=1; pd<=P; pd++) {
-		t = (*Gall[pd+1]).all_ties()
-		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t[., 1..2])
-	}
-	nsave = nmain
-	nout = K + P + 2
-	nrows = max((rows(E), nsave, 1))
-	origframe = st_framecurrent()
-	stata("capture frame drop __saom_bayes")
-	stata("frame create __saom_bayes")
-	st_framecurrent("__saom_bayes")
-	st_addobs(nrows)
-	vn = ("e_pd", "e_i", "e_j", "o" :+ strofreal(1..nout))
-	junk = st_addvar("double", vn)
-	if (rows(E) > 0) st_store((1::rows(E)), ("e_pd", "e_i", "e_j"), E)
-	argstr = "BAYESRUN|" + strofreal(rows(E)) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(nsampconst) + " " + strofreal(nsamprates)
-	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g") + " " + strofreal(ratemode)
-	argstr = argstr + " " + strofreal(K) + " " + strofreal(P)
-	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g"))
-	argstr = argstr + " " + invtokens(strofreal(pmean, "%25.17g"))
-	argstr = argstr + " " + invtokens(strofreal(psd, "%25.17g"))
-	argstr = argstr + " " + invtokens(strofreal(rho0, "%25.17g"))
-	argstr = argstr + " " + invtokens(strofreal(ratepm, "%25.17g"))
-	argstr = argstr + " " + invtokens(strofreal(ratepsd, "%25.17g"))
-	argstr = argstr + " " + invtokens(J(1, P, strofreal(pshape, "%25.17g")))
-	argstr = argstr + " " + invtokens(J(1, P, strofreal(prate, "%25.17g")))
-	argstr = argstr + " " + invtokens(strofreal(rsd, "%25.17g"))
-	for (i=1; i<=K; i++) argstr = argstr + " " + invtokens(strofreal(Vprop[i, .], "%25.17g"))
-	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
-	stata("plugin call saomnativesim " + invtokens(vn) + ", " + char(34) + argstr + char(34))
-	nsave = st_numscalar("__saom_bayes_nsave")
-	draws = (nsave > 0 ? st_data((1::nsave), (4..3+nout)) : J(0, nout, .))
-	st_framecurrent(origframe)
-	stata("capture frame drop __saom_bayes")
-	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
-	stata("capture frame drop " + frname)
-	stata("frame create " + frname)
-	st_framecurrent(frname)
-	st_addobs(rows(draws))
-	junk = st_addvar("double", names)
-	if (rows(draws) > 0) st_store((1::rows(draws)), names, draws)
-	st_framecurrent(origframe)
-	return(rows(draws))
-}
-
 /* posterior summaries of a draws frame written by SaomBayesRun(): the first Kp columns (effects and rates) -> matrices
    __nwsaom_bayes_mean (1 x Kp), _sd, _V (covariance of the first K), _q (3 x Kp: lower, median, upper limit of the equal-tailed interval), _ess (1 x Kp) */
 void SaomBayesSummary(string scalar frname, real scalar K, real scalar Kp, real scalar level)
@@ -15784,5 +15702,162 @@ void SaomBayesSummary(string scalar frname, real scalar K, real scalar Kp, real 
 	st_matrix("__nwsaom_bayes_V", variance(D[., 1..K]))
 	st_matrix("__nwsaom_bayes_q", Q)
 	st_matrix("__nwsaom_bayes_ess", ess)
+}
+
+
+/* nwsaom bayes / nwsaom ..., ml: set up the plugin's resident model (the starting networks and behaviors of the periods) and the input frame of
+   the sampler: columns 1-3 the end ties (period, i, j), columns 4-6 the end behavior (period, actor, value); nextra further columns follow.
+   Returns the number of end-tie rows nE and of end-behavior rows nBE and the number of rows the frame needs (at least nrowsmin). */
+void SaomChainPrepare(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
+	string scalar frname, string rowvector extranames, real scalar nrowsmin, real scalar nE, real scalar nBE)
+{
+	struct SaomNativeConfig scalar cfg
+	struct SaomBehaviorNativeConfig scalar cfgB
+	pointer(class ErgmGraph scalar) rowvector Gstart
+	pointer(real matrix) rowvector noev
+	real matrix E, BE, t
+	real colvector allb
+	real scalar n, pd, w, junk, nrows, overallMean, i
+	string scalar origframe
+	string rowvector vn
+
+	n = (*Gall[1]).n
+	cfg = SaomNativeSetup(M)
+	if (!cfg.eligible | !SaomNativeAvailable() | SaomNativePluginVersion() < 140) {
+		errprintf("this estimator needs the native plugin (a current build) and a model the plugin covers.\n")
+		exit(198)
+	}
+	Gstart = J(1, P, NULL)
+	for (pd=1; pd<=P; pd++) Gstart[pd] = Gall[pd]
+	BE = J(0, 3, 0)
+	if (coev) {
+		cfgB = SaomBehaviorNativeSetup(Mbeh)
+		if (!cfgB.eligible | any(cfgB.fntype :!= 0)) {
+			errprintf("the behavior effects of this model are not available here (no native implementation, or endowment/creation effects).\n")
+			exit(198)
+		}
+		allb = *Behwaves[1]
+		for (w=2; w<=cols(Behwaves); w++) allb = allb \ *Behwaves[w]
+		overallMean = mean(allb)
+		noev = J(1, P, NULL)
+		SaomBatchSetup(Gstart, P, cfg, cfgB.termcodes, Behwaves, behmin, behmax, Mbeh.simMean, overallMean, 0, J(0, 3, 0), J(n, P, 0), 0, J(n, P, 1), cfgB.fntype, 0, J(0, 0, 0), noev)
+		for (pd=1; pd<=P; pd++) BE = BE \ (J(n, 1, pd), (1::n), *Behwaves[pd+1])
+	}
+	else SaomBatchSetup(Gstart, P, cfg, J(1,0,0), J(1,0,NULL), 0, 0, 0, 0, 0, J(0,3,0), J(n,P,0), 0, J(n,P,1))
+	E = J(0, 3, 0)
+	for (pd=1; pd<=P; pd++) {
+		t = (*Gall[pd+1]).all_ties()
+		if (rows(t) > 0) E = E \ (J(rows(t), 1, pd), t[., 1..2])
+	}
+	nE = rows(E)
+	nBE = rows(BE)
+	nrows = max((nE, nBE, nrowsmin, 1))
+	origframe = st_framecurrent()
+	stata("capture frame drop " + frname)
+	stata("frame create " + frname)
+	st_framecurrent(frname)
+	st_addobs(nrows)
+	vn = ("e_pd", "e_i", "e_j", "b_pd", "b_i", "b_z", extranames)
+	junk = st_addvar("double", vn)
+	if (nE > 0) st_store((1::nE), ("e_pd", "e_i", "e_j"), E)
+	if (nBE > 0) st_store((1::nBE), ("b_pd", "b_i", "b_z"), BE)
+	st_framecurrent(origframe)
+}
+
+/* nwsaom bayes: the Bayesian sampler of the plugin (BAYESRUN). theta holds the network effects, then the behavior effects; rho0 and the rate arguments
+   the network rates of the periods, then the behavior rates. The draws are stored in frame frname; returns their number. */
+real scalar SaomBayesRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
+	real rowvector theta, real matrix Vprop, real rowvector rho0, real rowvector pmean, real rowvector psd,
+	real rowvector ratepm, real rowvector ratepsd, real scalar pshape, real scalar prate, real rowvector rsd,
+	real scalar nprewarm, real scalar nwarm, real scalar nmain, real scalar nrunmh, real scalar nimprove, real scalar nmh,
+	real scalar nsampconst, real scalar nsamprates, real scalar seed, real scalar mult, real scalar targetmh, real scalar ratemode, real scalar geo,
+	string scalar frname, string rowvector names)
+{
+	real matrix draws
+	real scalar KT, NR, K, Kb, nout, nsave, nE, nBE, i, junk
+	string scalar origframe, argstr
+	string rowvector vn
+
+	KT = cols(theta)
+	NR = cols(rho0)
+	Kb = (coev ? Mbeh.nparam() : 0)
+	K = KT - Kb
+	if (K != M.nparam()) {
+		errprintf("nwsaom bayes: the coefficient vector does not match the model.\n")
+		exit(198)
+	}
+	nsave = nmain
+	nout = KT + NR + 2
+	vn = "o" :+ strofreal(1..nout)
+	SaomChainPrepare(Gall, P, M, coev, Mbeh, Behwaves, behmin, behmax, "__saom_bayes", vn, nsave, nE, nBE)
+	argstr = "BAYESRUN|" + strofreal(nE) + " " + strofreal(nBE) + " " + strofreal(nprewarm) + " " + strofreal(nwarm) + " " + strofreal(nmain) + " " + strofreal(nrunmh) + " " + strofreal(nimprove) + " " + strofreal(nmh) + " " + strofreal(nsampconst) + " " + strofreal(nsamprates)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(targetmh, "%20.10g") + " " + strofreal(ratemode) + " " + strofreal(geo, "%20.10g")
+	argstr = argstr + " " + strofreal(K) + " " + strofreal(Kb) + " " + strofreal(P)
+	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(pmean, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(psd, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(rho0, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(ratepm, "%25.17g"))
+	argstr = argstr + " " + invtokens(strofreal(ratepsd, "%25.17g"))
+	argstr = argstr + " " + invtokens(J(1, NR, strofreal(pshape, "%25.17g")))
+	argstr = argstr + " " + invtokens(J(1, NR, strofreal(prate, "%25.17g")))
+	argstr = argstr + " " + invtokens(strofreal(rsd, "%25.17g"))
+	for (i=1; i<=KT; i++) argstr = argstr + " " + invtokens(strofreal(Vprop[i, .], "%25.17g"))
+	origframe = st_framecurrent()
+	st_framecurrent("__saom_bayes")
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(st_varname(1..st_nvar())) + ", " + char(34) + argstr + char(34))
+	nsave = st_numscalar("__saom_bayes_nsave")
+	draws = (nsave > 0 ? st_data((1::nsave), (7..6+nout)) : J(0, nout, .))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_bayes")
+	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	stata("capture frame drop " + frname)
+	stata("frame create " + frname)
+	st_framecurrent(frname)
+	st_addobs(rows(draws))
+	junk = st_addvar("double", names)
+	if (rows(draws) > 0) st_store((1::rows(draws)), names, draws)
+	st_framecurrent(origframe)
+	return(rows(draws))
+}
+
+/* nwsaom ..., ml: maximum likelihood estimation by the plugin (MLRUN) for the model of the last nwsaom fit. Returns a (KT+NR) x (3+KT+NR) matrix:
+   the estimates (effects, then the rates of the periods: network, then behavior), the convergence t-ratios, the covariance matrix, the mean score of phase 3. */
+real matrix SaomMLRun(pointer(class ErgmGraph scalar) rowvector Gall, real scalar P, class ErgmModel scalar M, real scalar coev,
+	class SaomBehaviorModel scalar Mbeh, pointer(real colvector) rowvector Behwaves, real scalar behmin, real scalar behmax,
+	real rowvector theta, real rowvector rho0, real scalar n1, real scalar nsub, real scalar n2start, real scalar n3,
+	real scalar nmh, real scalar seed, real scalar mult, real scalar gain, real scalar geo)
+{
+	real matrix out
+	real scalar KT, NR, KP, K, Kb, nE, nBE
+	string scalar origframe, argstr
+	string rowvector vn
+
+	KT = cols(theta)
+	NR = cols(rho0)
+	KP = KT + NR
+	Kb = (coev ? Mbeh.nparam() : 0)
+	K = KT - Kb
+	if (K != M.nparam()) {
+		errprintf("nwsaom ml: the coefficient vector does not match the model.\n")
+		exit(198)
+	}
+	vn = ("est", "tconv", "c" :+ strofreal(1..KP), "score")
+	SaomChainPrepare(Gall, P, M, coev, Mbeh, Behwaves, behmin, behmax, "__saom_ml", vn, KP, nE, nBE)
+	argstr = "MLRUN|" + strofreal(nE) + " " + strofreal(nBE) + " " + strofreal(n1) + " " + strofreal(nsub) + " " + strofreal(n2start) + " " + strofreal(n3) + " " + strofreal(nmh)
+	argstr = argstr + " " + strofreal(seed, "%20.0f") + " " + strofreal(mult, "%20.10g") + " " + strofreal(gain, "%20.10g") + " " + strofreal(geo, "%20.10g") + " " + strofreal(K) + " " + strofreal(Kb) + " " + strofreal(P)
+	argstr = argstr + " " + invtokens(strofreal(theta, "%25.17g")) + " " + invtokens(strofreal(rho0, "%25.17g"))
+	origframe = st_framecurrent()
+	st_framecurrent("__saom_ml")
+	stata("capture program saomnativesim, plugin using(" + char(34) + SaomNativePluginPath() + char(34) + ")")
+	stata("plugin call saomnativesim " + invtokens(st_varname(1..st_nvar())) + ", " + char(34) + argstr + char(34))
+	out = st_data((1::KP), (7..9+KP))
+	st_framecurrent(origframe)
+	stata("capture frame drop __saom_ml")
+	stata("plugin call saomnativesim, " + char(34) + "BATCHCLEAN|" + char(34))
+	return(out)
 }
 end

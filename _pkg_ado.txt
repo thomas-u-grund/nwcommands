@@ -125,6 +125,8 @@ f nwring.ado
 f nwsaom.ado
 f nwsaom_estat.ado
 f nwsaom_bayes.ado
+f nwsaom_ml.ado
+f _nwsaom_getrates.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado
