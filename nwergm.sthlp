@@ -58,9 +58,10 @@
 {synopt:{opth nodeicov(varlist)}}Directed receiver-covariate effect; directed networks only{p_end}
 {synopt:{opth nodeocov(varlist)}}Directed sender-covariate effect; directed networks only{p_end}
 {synopt:{opth edgecov(netname)}}Dyadic covariate effect, taken from an already-loaded network's own tie values{p_end}
+{synopt:{it:more covariate terms}}{opt absdiffcat()}, {opt diff()}, {opt smalldiff()}, {opt sociality()}, {opt attrcov()}, {opt dyadcov()}, {opt mm()}, {opt nodecovrange()}, {opt nodefactordistinct()}, level selection ({opt levels()}, {opt base()}) and {opt coeflabel()}: see {help nwergm_covterms}{p_end}
 {synopt:{opth absdist(varlist)}}Absolute-difference effect on a continuous node covariate: sum over ties of |x_i - x_j|{p_end}
 {synopt:{opth nodefactor(varlist)}}One coefficient per NON-BASE distinct level of each listed categorical attribute (the lowest-sorted level is omitted, matching R ergm's own default, to avoid exact collinearity with edges), each counting total degree among nodes at that level{p_end}
-{synopt:{opth nodemix(varlist)}}Full categorical mixing matrix: one coefficient per distinct unordered pair of levels of each listed attribute{p_end}
+{synopt:{opth nodemix(varlist)}}Categorical mixing matrix as in R ergm: ordered (tail, head) level cells on a directed network, cells with row level before column level on an undirected one, first cell dropped by default; see {help nwergm_covterms}{p_end}
 
 {marker bipartite_effects}{...}
 {syntab:Two-mode (bipartite) effects}

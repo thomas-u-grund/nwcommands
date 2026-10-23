@@ -14,7 +14,7 @@ mods <- list(
   m1=list(net="U", f=~edges+nodecovrange("x")+nodefactordistinct("a")),
   m2=list(net="D", f=~edges+nodeocovrange("x")+nodeifactordistinct("z")),
   m3=list(net="D", f=~edges+nodecovrange("x")+nodefactordistinct("a")),
-  m4=list(net="U", f=~edges+absdiffcat("z")+smalldiff("z",cutoff=1)+sociality(nodes=1:3)),
+  m4=list(net="U", f=~edges+absdiffcat("z")+smalldiff("x",cutoff=5)+sociality(nodes=1:3)),
   m5=list(net="D", f=~edges+nodemix("g")+diff("x")+dyadcov(DEC)))
 DEC <- as.matrix(read.csv(file.path(d, "net_D_ec.csv"), header=FALSE))
 res <- list()

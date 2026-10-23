@@ -4246,6 +4246,11 @@ class ErgmModel {
 	// not silently mishandled here.
 	real rowvector isfixed
 	real rowvector fixedvalue
+	// statistic transforms (R's Log()/Exp() operators), per coefficient
+	// column: opkind 0 = none, 1 = log, 2 = exp; opparam = log0.  Empty
+	// (0 columns) unless nwergm's logstat()/expstat() set them.
+	real rowvector opkind
+	real rowvector opparam
 
 	void init()
 	void addterm()
@@ -4279,6 +4284,8 @@ void ErgmModel::init(){
 	curved = J(1, 0, .)
 	isfixed = J(1, 0, .)
 	fixedvalue = J(1, 0, .)
+	opkind = J(1, 0, .)
+	opparam = J(1, 0, .)
 }
 
 /*
@@ -4861,6 +4868,16 @@ string rowvector ErgmModel::theta_coefnames(){
 	return(out)
 }
 
+void _ergm_op_init(class ErgmModel scalar M){
+	if (cols(M.opkind) == 0) {
+		M.opkind = J(1, M.nparam(), 0)
+		M.opparam = J(1, M.nparam(), 0)
+	}
+}
+real scalar _ergm_op_apply(real scalar kind, real scalar param, real scalar x){
+	if (kind == 1) return(x == 0 ? param : ln(x))
+	return(exp(x))
+}
 real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
 	real rowvector out, part
 	real scalar t, pos, k
@@ -4870,21 +4887,32 @@ real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
 	for (t=1; t<=nterms; t++) {
 		part = (*statfn[t])(G, *td[t])
 		for (k=1; k<=npar[t]; k++) {
+			if (cols(opkind) >= pos) {
+				if (opkind[pos] > 0) part[k] = _ergm_op_apply(opkind[pos], opparam[pos], part[k])
+			}
 			out[pos] = part[k]
 			pos++
 		}
 	}
 	return(out)
 }
-
 real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, real scalar j){
-	real rowvector out, part
+	real rowvector out, part, raw
 	real scalar t, pos, k
 
 	out = J(1, nparam(), 0)
 	pos = 1
 	for (t=1; t<=nterms; t++) {
 		part = (*chgfn[t])(G, i, j, *td[t])
+		if (cols(opkind) > 0) {
+			if (any(opkind[pos..(pos+npar[t]-1)] :> 0)) raw = (*statfn[t])(G, *td[t])
+			for (k=1; k<=npar[t]; k++) {
+				if (opkind[pos+k-1] > 0) {
+					if (part[k] == 0) part[k] = 0
+					else part[k] = _ergm_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k] + part[k]) - _ergm_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k])
+				}
+			}
+		}
 		for (k=1; k<=npar[t]; k++) {
 			out[pos] = part[k]
 			pos++
@@ -4892,7 +4920,6 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 	}
 	return(out)
 }
-
 // ---- R's curved MPLE (ergm.logitreg -> trust::trust), ported -------------
 // Agent E4.  R fits a curved MPLE with the trust-region optimiser of the
 // `trust' package (rinit=1, rmax=100, iterlim=200, fterm=mterm=sqrt(eps))
@@ -5864,6 +5891,9 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	M.fixed_density = 0		// explicit default for EVERY model (an uninitialized Mata class real scalar reads as missing, which is nonzero/"true" in an `if()` - nwergm.ado overrides this to 1, after this call returns, only for a fixdensity model)
 
 	if (!ErgmNativeAvailable()) return(0)
+	if (cols(M.opkind) > 0) {
+		if (any(M.opkind :> 0)) return(0)	// statistic transforms (logstat/expstat) run on the Mata sampler
+	}
 
 	// freedyads() masked TNT native port (harmonisation unit 168):
 	// masking no longer forces a whole-model Mata bailout here - it

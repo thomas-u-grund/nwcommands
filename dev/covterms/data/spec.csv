@@ -85,3 +85,8 @@ cmbS1,S,"nodecovrange(grp) nodefactordistinct(grp) nodeofactor(cl)","nodecovrang
 ncvU1,U,"nodecov(ln(x))","nodecov(~log(x))"
 ncvU2,U,"nodecov(x z)","nodecov('x')+nodecov('z')"
 ncvD1,D,"nodecov(x^2) nodeicov(x) nodeocov(z)","nodecov(~x^2)+nodeicov('x')+nodeocov('z')"
+logU1,U,"nodematch(a) logstat(nodematch_a)","Log(~nodematch('a'))"
+logU2,U,"nodefactor(a) nodematch(g) logstat(nodefactor_a_2 nodefactor_a_3, log0(-5))","nodematch('g')+Log(~nodefactor('a'),log0=-5)"
+logD1,D,"nodematch(a) nodecov(x) logstat(nodecov_x)","nodematch('a')+Log(~nodecov('x'))"
+expU1,U,"nodematch(a, diff keep(3)) expstat(nodematch_a_3)","Exp(~nodematch('a',diff=TRUE,keep=3))"
+expD1,D,"absdiffcat(z, levels(2)) expstat(absdiffcat_z_2)","Exp(~absdiffcat('z',levels=2))"

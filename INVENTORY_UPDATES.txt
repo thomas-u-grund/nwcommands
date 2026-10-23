@@ -1,0 +1,54 @@
+INVENTORY_UPDATES for agent E4 (covariate terms, operators, behaviour fixes), branch ergmE4
+Format: term | status | nwergm syntax | validation (what, max difference)
+Validation = test cscripts/test_nwergm_covterms.do against R ergm 4.12.0 (R script dev/covterms/ref.R; data dev/covterms/data):
+networks U (random undirected n=30), D (random directed n=25), F (flomarriage n=16), M (faux.mesa.high n=205), S (samplk1 directed n=18);
+for every spec: observed statistic == R summary() (max |diff| < 1e-6), MPLE coef == R ergm(estimate="MPLE") (< 1e-4), SE (relative 5e-4, R's own glm SEs scatter ~1e-5 on symmetric parameters).
+Native codes used: 2001-2015 (term-code range 2000-2999).
+
+--- covariate: nodal attribute ---
+nodemix           | IMPLEMENTED (was PARTIAL) | nodemix(var [, levels() levelvalues() levels2() base()]) | directed: 9 ordered cells (row=tail level, col=head level, first cell dropped = R's levels2=-1), undirected: upper-triangle cells with the first cell dropped (the aliased column no longer appears); D, S, U, M; MPLE <1e-4 (1.3e-5 worst); native code 2001 (directed) / 13 (undirected)
+mm                | PARTIAL | mm(var [, levels() levels2()]) | single attribute only (== nodemix with R's mm[...] cell set); stat/MPLE == R on U, D, M. Row/column attribute pairs and margins (mm(~a, levels=~.)) NOT done
+absdiffcat        | IMPLEMENTED | absdiffcat(var [, levels() levelvalues() base()]) | U, D, M; MPLE <5e-8..3e-7; native 2003
+diff              | IMPLEMENTED | diff(var [, pow() dir() signaction()]) | dir t-h/h-t, sign.action identity/abs/posonly/negonly, pow 0/2/3; U, D, S; native 2004
+smalldiff         | IMPLEMENTED | smalldiff(var, cutoff(#)) | U, D; native 2005
+sociality         | IMPLEMENTED | sociality(. [, nodes()]) , sociality(var [, nodes() levels()]) | with/without attribute (R's quirk kept: attribute values outside levels share one code and so DO match each other); U, F; native 2006 (one slot per node; > 64 columns -> Mata fallback via the existing 64-column rule)
+nodecovrange      | IMPLEMENTED | nodecovrange(var) nodeocovrange(var) nodeicovrange(var) | sum over nodes of range of neighbour covariate (R: undirected = all neighbours; directed node = out-part + in-part); dyad-dependent; MPLE equal to R on U, F, M, D, S; native 2010-2012
+nodeofactordistinct / nodeifactordistinct / nodefactordistinct | IMPLEMENTED | nodefactordistinct(var [, levels() levelvalues()]) etc. | dyad-dependent; R's quirk kept (directed nodefactordistinct counts out- and in-neighbours jointly); U, F, M, D, S; native 2013-2015
+nodecovrange etc. MCMLE | validated | m1 (U) nodecovrange+nodefactordistinct, m2 (D) nodeocovrange+nodeifactordistinct, m3 (D): 2 and 3 seeds vs R 3 seeds: max |diff of means| 0.024 (R sd up to 0.011, SE >= 0.185); in test: m1, m2, m4
+nodefactor/nodeofactor/nodeifactor | extended | levels() levelvalues() base() (default base(1), base(0) keeps all levels; no level -> term dropped silently like R) | U, D, M
+nodematch         | extended | nodematch(var [, diff keep() levels() levelvalues()]); nodematchdiff(var) kept | levels outside the selection never match; U, D, M
+absdiff (absdist) | extended | absdist(var [, pow(#)]) | pow 2, 0.5; U, D, F; native 2002
+nodecov/nodeicov/nodeocov | extended | attribute may be a Stata expression, e.g. nodecov(ln(x)) (R: nodecov(~log(x)); R 4.12 has no transform=/transformname= arguments any more) | U, D
+all attribute terms | behaviour | missing attribute values are an error (R: "Attribute has missing data, which is not currently supported by ergm") | tested
+
+--- covariate: dyadic ---
+dyadcov           | IMPLEMENTED | dyadcov(netname|matrix) | directed: 3 coefficients (mutual, utri, ltri; R's labelling copied), asymmetric covariate -> upper triangle with a note like R's warning; undirected == edgecov; U, D, S, F; native 2007-2009
+attrcov           | IMPLEMENTED | attrcov(var, mat(matname)) | x(i,j) = mat[level_i, level_j], undirected reads the (min,max) orientation; U, D, F (3x3 and 5x5 asymmetric matrices); implemented through the edgecov kernel (native 68)
+edgecov           | extended | edgecov(netname|matname) | n x n Stata matrix accepted (undirected: upper triangle); dimension error like R
+
+--- operators ---
+Label             | IMPLEMENTED | coeflabel(old new [old new ...]) | tested on colnames
+Log               | IMPLEMENTED (Mata sampler only) | logstat(coefname ... [, log0(#)]) | in-place transform of the named columns as R Log(~term); stat and MPLE vs R (see spec ids logU1, logU2, logD1); native sampler is disabled for such models (uses the Mata sampler)
+Exp               | IMPLEMENTED (Mata sampler only) | expstat(coefname ...) | spec ids expU1, expD1
+Sum, Prod         | NOT DONE | | would need hidden sub-model columns in the native engine (sub-statistics tracked but not estimated); not attempted
+S, F, I, For, Symmetrize, Project, NodematchFilter | NOT DONE | | these need an auxiliary network / sub-model engine and a formula language (I and For are macro operators: Stata locals/foreach cover them); no sensible nwergm syntax without that
+Offset            | already covered by offset()
+
+--- behaviour fixes ---
+directed gwdegree | FIXED | gwdegree on a directed network now stops with rc 198 ("term may not be used with directed networks"), as R | tested
+undirected nodemix aliased column | FIXED | the first cell is not listed any more (R's levels2=-1) | nmU1, nmU2, nmU3
+curved MPLE boundary cases (gwespfree directed, gwidegreefree, gwdspfree, gwnspfree) | FIXED | R's curved MPLE is ergm.logitreg -> trust::trust (trust region, rinit 1, rmax 100, start theta=0, decay = sqrt(eps), decay>=0 box, iterlim 10000, fterm=mterm=sqrt(eps)); on flat likelihoods it stops far from the optimum (e.g. D30: logLik -278 vs -231 at the real optimum). nwergm now runs the same algorithm (Mata ErgmCurvedMPLEFit and native curved_mple_fit_c, Jacobi eigen + zeroin port) and reproduces R's end points: cDe (-0.99954971, 0.0300341, 2.96e-12 = R 2.96e-12), cDi, cDd, cDn, plus the non-boundary cases cUe, cUd, cUs, cUn, cDo; coefficient diff < 1e-4 (observed < 1e-6), SE equal where R's SE is finite. The decay given in gwespfree(#) etc. is no longer a start value of the MPLE (R ignores decay= when fixed=FALSE); it is still the MCMLE start.
+   Known difference: native fit, singular information matrix (cDn, decay -> infinity): native SE of the weight 0.0495 vs R 0.0571 (Mata path 0.0571); R's decay SE there is 2e8 (noise level).
+
+--- items observed, not changed ---
+* nwergm shows a zero-count cell of nodemix as "0 (omitted)" where R reports -Inf with SE 0 (generic MPLE separation handling, not term specific).
+* sender/receiver have no nodes()/base arguments (flags only); not changed.
+* nwergm simulate: only nodemix was moved to the new helper; the other new terms are fit-only.
+* e(obs_stats): new matrix with the observed model statistics after an MPLE fit (R: summary(formula)); used by the test.
+
+--- GOTCHA-style notes ---
+1. Mata ErgmTermData objects registered with ErgmModel::addterm() must be top-level, permanent variables (the model stores &td0); Stata tempnames created inside a helper program are recycled after it exits and silently overwrite earlier terms. _nwergm_cov.ado names them __nwcv<counter>. Do not pass a td through a second Mata function layer before addterm (the address taken is the layer's parameter).
+2. cscript clears Mata: a cscript must "quietly do unw_core.do" and "quietly do unw_ergm.do" after the "cscript" line. A Mata function whose signature uses "class ErgmModel" must be defined AFTER the class (otherwise "ErgmModel() already exists").
+3. import delimited makes float variables unless "asdouble" is given: R statistics then differ at 1e-6.
+4. Stata max double is 8.98e307: a sentinel of 1e308 is a missing value.
+5. R's trust-based curved MPLE is not a maximiser on flat likelihoods; match it, do not "fix" it.

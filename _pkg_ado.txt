@@ -64,6 +64,9 @@ f nwdyads.ado
 f nwdynam.ado
 f nwego.ado
 f nwergm.ado
+f _nwergm_cov.ado
+f _nwergm_coeflabel.ado
+f _nwergm_statop.ado
 f nwergm_estat.ado
 f nwevcent.ado
 f nwexpand.ado

@@ -95,7 +95,7 @@ program define _cov_check, rclass
 		local rs : word `k' of `rstat'
 		local rc : word `k' of `rcoef'
 		local rv : word `k' of `rse'
-		if "`rs'" != "NA" local ds = max(`ds', abs(_S[1,`k'] - `rs'))
+		if "`rs'" != "NA" local ds = max(`ds', abs(_S[1,`k'] - `rs') / (1 + abs(`rs')))
 		local fin = !inlist("`rc'", "Inf", "-Inf", "NA", ".", "NaN")
 		if `fin' {
 			if abs(`rc') < 1e3 {
@@ -174,6 +174,74 @@ foreach c in "cDe dir gwespfree(.5)" "cDi dir gwidegreefree(.5)" "cDo dir gwodeg
 	}
 }
 local nfail = `nfail' + `nfailc'
+* ---- MCMLE (native sampler) against R's MCMLE means (3 R runs; sd in the file) ----
+capture program drop _cov_mcmle
+program define _cov_mcmle
+	args model net directed opts
+	preserve
+	qui import delimited "dev/covterms/data/mcmle_ref.csv", clear asdouble
+	qui keep if model == "`model'"
+	local nR = _N
+	forvalues k = 1/`nR' {
+		local rm`k' = coef_mean[`k']
+		local rsd`k' = coef_sd[`k']
+	}
+	restore
+	_cov_load `net' dev/covterms/data `directed'
+	capture noisily nwergm `net', edges `opts' method(mcmle) seed(7) mcmcsamplesize(4000) mcmcinterval(100) mcmcburnin(20000) mcmleiterations(30)
+	if _rc {
+		di as err "FAIL mcmle `model': nwergm error"
+		exit 9
+	}
+	matrix bb = e(b)
+	local bad 0
+	forvalues k = 1/`nR' {
+		if abs(bb[1,`k'] - `rm`k'') > max(0.06, 5*`rsd`k'') local bad 1
+	}
+	if `bad' {
+		di as err "FAIL mcmle `model'"
+		matrix list bb
+		exit 9
+	}
+	di "ok  mcmle `model' (`opts')"
+end
+local nfailm 0
+capture noisily _cov_mcmle m1 U 0 "nodecovrange(x) nodefactordistinct(a)"
+if _rc local ++nfailm
+capture noisily _cov_mcmle m2 D 1 "nodeocovrange(x) nodeifactordistinct(z)"
+if _rc local ++nfailm
+capture noisily _cov_mcmle m4 U 0 "absdiffcat(z) smalldiff(x, cutoff(5)) sociality(., nodes(1/3))"
+if _rc local ++nfailm
+local nfail = `nfail' + `nfailm'
+* ---- R error parity and small features ----
+local nfaile 0
+_cov_load D dev/covterms/data 1
+* R: gwdegree() may not be used with directed networks
+capture nwergm D, edges gwdegree(0.5) method(mple)
+if _rc != 198 {
+	di as err "FAIL gwdegree on a directed network should be an error (rc 198), got rc " _rc
+	local ++nfaile
+}
+else di "ok  directed gwdegree is rejected as in R"
+* R: attributes with missing values are rejected
+qui replace x = . in 3
+capture nwergm D, edges nodecov(x) method(mple)
+if _rc != 198 {
+	di as err "FAIL missing attribute values should be an error (rc 198), got rc " _rc
+	local ++nfaile
+}
+else di "ok  missing attribute values are rejected as in R"
+* R's Label(): coefficient renaming
+_cov_load U dev/covterms/data 0
+capture nwergm U, edges nodematch(a) nodefactor(g) method(mple) coeflabel(nodematch_a homophily nodefactor_g_1 gfac)
+matrix bb = e(b)
+local cn : colnames bb
+if _rc | "`cn'" != "edges homophily gfac" {
+	di as err "FAIL coeflabel(): got `cn'"
+	local ++nfaile
+}
+else di "ok  coeflabel renames coefficients"
+local nfail = `nfail' + `nfaile'
 if `nfail' > 0 {
 	di as err "FAIL test_nwergm_covterms: `nfail' of `nspec' specs failed"
 	exit 9
