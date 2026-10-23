@@ -7310,6 +7310,8 @@ real rowvector SaomBehaviorPatchEndowCreation(class SaomBehaviorModel scalar Mbe
 	G0 = ErgmGraph()
 	c = (currentvals :- (args() >= 7 ? overallMean : 0)) :* (miss :== 0)
 	dd = (startvals - currentvals) :* (miss :== 0)
+	// protocol 51: RSiena's constant effect, minus the sum of the absolute changes of the period (start vs current values)
+	for (t=1; t<=Mbeh.nterms; t++) if (Mbeh.names[t] == "bn_2200_0") stat[pNet+t] = -sum(abs(currentvals - startvals) :* (miss :== 0))
 	for (t=1; t<=Mbeh.nterms; t++) {
 		if (Mbeh.fntype[t] == 0) continue
 		nm = Mbeh.names[t]
@@ -11963,6 +11965,10 @@ void SaomBehCovRename(class SaomBehaviorModel scalar Mbeh, string rowvector vars
 	string rowvector fam
 	fam = _sb_bsfamilies()
 	for (t=1; t<=Mbeh.nterms; t++) {
+		if (_sb_shparse(substr(Mbeh.coefnames[t], 5, .))[1] >= 0) {
+			Mbeh.coefnames[t] = "beh_" + _sb_shname(substr(Mbeh.coefnames[t], 5, .))
+			continue
+		}
 		if (_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1] >= 0) {
 			Mbeh.coefnames[t] = "beh_" + _sb_brfamilies()[mod(_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1], 10) + 1] + (_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1] < 10 & anyof((0, 2, 8), _sb_brparse(substr(Mbeh.coefnames[t], 5, .))[1]) ? "_p1" : "") + "_" + __saom_behdynames[_sb_brparse(substr(Mbeh.coefnames[t], 5, .))[2]]
 			continue
@@ -12706,6 +12712,25 @@ void SaomBehDyStore(real scalar n) {
 	for (k=1; k<=cols(__saom_behdy)/n; k++) st_store((1::n), SaomBehDyNames(n)[((k-1)*n+1)..(k*n)], __saom_behdy[., ((k-1)*n+1)..(k*n)])
 }
 string rowvector _sb_brfamilies() return(("avaltw", "totaltw", "avinaltw", "totinaltw", "avwalt", "totwalt", "avwinalt", "totwinalt", "avsimw", "totsimw"))
+/* protocol 51: behavior shape effects. Tokens "sh<f>_<par>" (f 0..7) -> bn_<2000 + 100 f + par>_0 */
+string rowvector _sb_shfamilies() return(("quad_cc", "quad_nc", "constant", "threshold", "simAllNear", "simAllFar", "avGroup", "totGroup"))
+real rowvector _sb_shparse(string scalar nm) {
+	real scalar u, f, d
+	if (substr(nm, 1, 2) != "sh") return((-1, 0))
+	u = strpos(nm, "_")
+	if (u == 0) return((-1, 0))
+	f = strtoreal(substr(nm, 3, u - 3))
+	d = strtoreal(substr(nm, u + 1, .))
+	if (f >= 0 & f < 8 & d >= 0 & d < 100 & f == floor(f) & d == floor(d)) return((f, d))
+	return((-1, 0))
+}
+string scalar _sb_shname(string scalar nm) {
+	real rowvector q
+	q = _sb_shparse(nm)
+	if (q[1] < 0) return(nm)
+	if (q[1] <= 2) return(_sb_shfamilies()[q[1] + 1])
+	return(_sb_shfamilies()[q[1] + 1] + "(" + strofreal(q[2]) + ")")
+}
 /* "br8_2" -> (8, 2), else (-1, 0) */
 real rowvector _sb_brparse(string scalar nm) {
 	real scalar u, f, d
@@ -12723,6 +12748,7 @@ string scalar _sb_label(string scalar base) {
 	external string rowvector __saom_behcovnames
 	external string rowvector __saom_behdynames
 	real scalar j
+	if (_sb_shparse(base)[1] >= 0) return(_sb_shname(base))
 	if (_sb_brparse(base)[1] >= 0) {
 		return(_sb_brfamilies()[mod(_sb_brparse(base)[1], 10) + 1] + (_sb_brparse(base)[1] < 10 & anyof((0, 2, 8), _sb_brparse(base)[1]) ? " (parameter 1)" : "") + (cols(__saom_behdynames) >= _sb_brparse(base)[2] ? " " + __saom_behdynames[_sb_brparse(base)[2]] : ""))
 	}
@@ -12887,6 +12913,7 @@ string scalar SaomMBAddTerms(class SaomBehaviorModel scalar Mbeh, string scalar 
 		else if (nm == "totsamexalt6") Mbeh.addterm("totsamexalt6", &stat_saom_totsamexalt6(), &change_saom_totsamexalt6(), pre + "totsamexalt6")
 		else if (nm == "totsamexalt7") Mbeh.addterm("totsamexalt7", &stat_saom_totsamexalt7(), &change_saom_totsamexalt7(), pre + "totsamexalt7")
 		else if (nm == "totsamexalt8") Mbeh.addterm("totsamexalt8", &stat_saom_totsamexalt8(), &change_saom_totsamexalt8(), pre + "totsamexalt8")
+		else if (_sb_shparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(2000 + 100 * _sb_shparse(nm)[1] + _sb_shparse(nm)[2]) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_brparse(nm)[1] >= 0) Mbeh.addterm("bn_" + strofreal(840 + 80 * (_sb_brparse(nm)[1] >= 10) + 8 * mod(_sb_brparse(nm)[1], 10) + _sb_brparse(nm)[2] - 1) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_bnqcode(nm) > 0) Mbeh.addterm("bn_" + strofreal(_sb_bnqcode(nm)) + "_0", &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
 		else if (_sb_bsparse(nm)[1] >= 20) Mbeh.addterm("bn_" + strofreal(300 + 16 * _sb_bsparse(nm)[1] + _sb_bsparse(nm)[2] - 1) + "_" + strofreal(_sb_bsparse(nm)[2]), &stat_saom_bn(), &change_saom_bs0_1(), pre + nm)
