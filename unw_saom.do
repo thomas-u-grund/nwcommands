@@ -8875,6 +8875,7 @@ real rowvector SaomMNDeg(real scalar slot) {
 		sq = sq + sum(d :^ 2)
 	}
 	return((tot / (nR * cols(Gs)), tot / (nS * cols(Gs)), sq / (nR * cols(Gs)), nS, nR))
+}
 /* nwsaom multinet: network effects with the dependent behavior as the covariate (RSiena's effects of a behavior variable on tie formation), spec = effect[:#] with the
    parameter # of the threshold effects (egolthresholdx ... degnegdiffx) or of outxmore; the first wave of the behavior is the covariate, centred by its pooled mean */
 void SaomMNAddNetBeh(class ErgmModel scalar M, string scalar spec) {
