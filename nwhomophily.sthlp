@@ -138,7 +138,7 @@ Binary: yes (only). Directed: yes, via {opt undirected} (default is directed). W
 {title:Remarks}
 
 {pstd}
-The program requires some additional programs ({bf:gsample, moremata}) that it will automatically install with a working internet connection. 
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded or installed.
 
 	
 {title:See also}

@@ -155,7 +155,7 @@ The result can be nicely plotted in the following way:
 {title:Remarks}
 
 {pstd}
-The program requires some additional programs ({bf:gsample, moremata}) that it automatically installs from the internet. 
+The program needs no additional packages: the weighted sampling of ties is built in (it gives the same sample as the user-written {bf:gsample}, for the same random-number seed). Nothing is downloaded or installed.
 
 
 {title:See also}
