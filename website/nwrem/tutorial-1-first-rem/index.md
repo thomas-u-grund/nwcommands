@@ -1,8 +1,9 @@
 ---
-title: "REM: A first relational event model"
-parent: "nwrem (REM)"
-nav_order: 2
+title: "Tutorial 1: A first relational event model"
+parent: "nwrem tutorials"
+nav_order: 1
 description: "Fit a first relational event model with nwrem to a log of phone calls: declare the event sequence, fit degree and inertia effects, and read the coefficient table."
+grand_parent: "nwrem (REM)"
 ---
 
 # Tutorial 1: A first relational event model on a phone-call log

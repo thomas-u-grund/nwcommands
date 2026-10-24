@@ -1,5 +1,5 @@
 ---
-title: "DyNAM: Install"
+title: "Install"
 parent: "nwdynam (DyNAM)"
 nav_order: 1
 permalink: /nwdynam/install/

@@ -1,8 +1,9 @@
 ---
-title: "DyNAM: A first DyNAM"
-parent: "nwdynam (DyNAM)"
-nav_order: 2
+title: "Tutorial 1: A first DyNAM"
+parent: "nwdynam tutorials"
+nav_order: 1
 description: "Fit a first dynamic network actor model with nwdynam to a log of phone calls: declare the events, fit the choice and the rate sub-model, and read the tables."
+grand_parent: "nwdynam (DyNAM)"
 ---
 
 # Tutorial 1: A first DyNAM on a phone-call log

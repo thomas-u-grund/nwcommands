@@ -1,8 +1,9 @@
 ---
-title: "ERGM 3: Diagnostics and goodness of fit"
-parent: "nwergm (ERGM)"
-nav_order: 4
+title: "Tutorial 3: Diagnostics and goodness of fit"
+parent: "nwergm tutorials"
+nav_order: 3
 description: "Check a Monte Carlo ERGM fit with estat mcmcdiag, judge it with estat gof, and what to do when a model does not converge."
+grand_parent: "nwergm (ERGM)"
 ---
 
 # ERGM 3: Diagnostics and goodness of fit

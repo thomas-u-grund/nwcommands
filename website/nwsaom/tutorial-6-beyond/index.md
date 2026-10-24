@@ -1,8 +1,9 @@
 ---
 title: "Tutorial 6: Beyond the basic model"
-parent: "nwsaom (SAOM)"
-nav_order: 7
+parent: "nwsaom tutorials"
+nav_order: 6
 description: "Maximum likelihood and Bayesian estimation with nwsaom, and two networks that change together (nwsaom multinet), with short runnable examples."
+grand_parent: "nwsaom (SAOM)"
 ---
 
 # Tutorial 6: Beyond the basic model

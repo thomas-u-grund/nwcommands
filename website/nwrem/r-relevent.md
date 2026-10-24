@@ -1,7 +1,7 @@
 ---
 title: "REM: nwrem and relevent"
 parent: "nwrem (REM)"
-nav_order: 5
+nav_order: 3
 permalink: /nwrem/r-relevent/
 description: "Where nwrem comes from, what it shares with the R package relevent, what it lacks, how it was compared, and a translation table from relevent to nwrem."
 ---

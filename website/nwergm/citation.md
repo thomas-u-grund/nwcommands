@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwergm (ERGM)"
-nav_order: 8
+nav_order: 5
 permalink: /nwergm/citation/
 description: "How to cite nwergm, and the statnet and ergm papers it builds on."
 ---

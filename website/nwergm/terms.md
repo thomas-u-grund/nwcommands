@@ -1,7 +1,7 @@
 ---
 title: "Terms"
 parent: "nwergm (ERGM)"
-nav_order: 2
+nav_order: 4
 permalink: /nwergm/terms/
 description: "An overview of the term families of nwergm: structural, degree, triad, covariate, two-mode, curved and operator terms, with pointers to the help files."
 ---
