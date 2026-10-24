@@ -34,7 +34,14 @@ program nwtab1
 	_nwedgelabs `anything'
 	local edgelabs r(edgelabs)
 	
-	nwtoedge `netname', `upper'
+	// the distinct tie values and their dyad counts (zeros counted, not
+	// listed), tabulated with frequency weights: the table of listing all
+	// N x N dyads without the N x N rows
+	_nwsyntax `netname'
+	drop _all
+	tempvar freq
+	mata: `netobj'->value_counts_to_vars(("`directed'" == "false"), "`netname'", "`freq'")
+	qui compress `netname'
 	
 	local ident = length("`netname'") + 20
 	di
@@ -42,7 +49,7 @@ program nwtab1
 	di "{txt}                           {txt}{col `ident'}Selfloops: {res}`selfloops'{txt}"
 	capture label def elab `edgelabs'
 	capture label val `netname' elab
-	tab `netname', `options'
+	tab `netname' [fweight = `freq'], `options'
 	restore
 end
 

@@ -3091,6 +3091,8 @@ class `NWdef' {
 
 	string matrix get_edgelist()
 	string matrix get_edgelist_sparse()
+	void edgelist_full_to_vars()
+	void value_counts_to_vars()
 	real scalar edgelist_sparse_ok()
 	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
@@ -3479,6 +3481,144 @@ string scalar nw_labs_string(string rowvector names){
 	if (cols(names) == 0) return("")
 	if (sum(strlen(names)) + cols(names) > 200000) return("")
 	return(invtokens(names, ","))
+}
+
+/*
+	nw_group_counts(x, cw): the distinct values of x (missing last) and the
+	sum of the weights cw of the entries holding each, as a two column matrix.
+*/
+real matrix nw_group_counts(real colvector x, real colvector cw){
+	real colvector p, xs, cs, d, cum, ends, cnt
+	real scalar m
+
+	m = rows(x)
+	if (m == 0) return(J(0, 2, 0))
+	p = order(x, 1)
+	xs = x[p]
+	cs = cw[p]
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = xs[|2 \ m|] :!= xs[|1 \ m-1|]
+	cum = runningsum(cs)
+	ends = nw_which(d)
+	// last row of every group
+	ends = (m > 1 ? (ends[|2 \ rows(ends)|] :- 1) : J(0, 1, 0)) \ m
+	cnt = cum[ends]
+	if (rows(ends) > 1) cnt = cnt - (0 \ cnt[|1 \ rows(ends)-1|])
+	return((xs[nw_which(d)], cnt))
+}
+
+/*
+	Export writers (nwexport): the text a Stata-level `file write' loop used
+	to produce one tie at a time, built in blocks and appended with fwrite().
+	Numbers are written the way a macro expansion of `local x = ...' shows
+	them (%18.0g), so the files are byte-for-byte what the loops wrote.
+*/
+string colvector nw_exp_num(real colvector x){
+	return(strofreal(x, "%18.0g"))
+}
+
+/*
+	Append the tie rows held in the data in memory (variables vk, vl: node
+	numbers, vv: tie value) to fname: head, then newline, K, L, V per row
+	(and the reversed row L, K, V right after it when `both'), then tail.
+*/
+void nw_exp_ties(string scalar fname, string scalar vk, string scalar vl, string scalar vv,
+		real scalar both, string scalar head, string scalar tail){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector ks, ls, vs, s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	fwrite(fh, head)
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		ks = nw_exp_num(st_data((a::b), vk))
+		ls = nw_exp_num(st_data((a::b), vl))
+		vs = nw_exp_num(st_data((a::b), vv))
+		s = nl :+ ks :+ " " :+ ls :+ " " :+ vs
+		if (both) s = s :+ (nl :+ ls :+ " " :+ ks :+ " " :+ vs)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, tail)
+	fclose(fh)
+}
+
+/*
+	Pajek vertex block: (re)create fname with "*Vertices n" and one
+	`i   "label"' row per node, the labels read from the first n rows of
+	variable vname.
+*/
+void nw_exp_pajek_vertices(string scalar fname, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "*Vertices " + strofreal(n, "%18.0g") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((nw_exp_num((1::n)) :+ "   " :+ char(34) :+ lab :+ char(34) :+ nl)', ""))
+	}
+	fclose(fh)
+}
+
+/*
+	UCINET header: "dl n=", format, the comma separated labels (every label,
+	whatever the number of nodes), "data:".
+*/
+void nw_exp_ucinet_head(string scalar fname, string rowvector names){
+	real scalar fh
+	string scalar nl
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(names, ",") + nl + "data:")
+	fclose(fh)
+}
+
+/*
+	GML: header and node blocks (labels from the first n rows of vname);
+	nw_exp_gml_edges() then appends the edge blocks and the closing bracket.
+*/
+void nw_exp_gml_nodes(string scalar fname, real scalar directed, string scalar vname, real scalar n){
+	real scalar fh
+	string scalar nl
+	string colvector lab
+
+	nl = char(10)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "graph [" + nl + "  directed " + (directed ? "1" : "0") + nl)
+	if (n > 0){
+		lab = st_sdata((1::n), vname)
+		fwrite(fh, invtokens((("  node [" + nl + "    id ") :+ strofreal((1::n)) :+ (nl + "    label ") :+ char(34) :+ lab :+ char(34) :+ (nl + "  ]" + nl))', ""))
+	}
+	fclose(fh)
+}
+
+void nw_exp_gml_edges(string scalar fname, string scalar vk, string scalar vl, string scalar vv){
+	real scalar fh, n, a, b, chunk
+	string scalar nl
+	string colvector s
+
+	nl = char(10)
+	fh = fopen(fname, "a")
+	n = st_nobs()
+	chunk = 200000
+	for (a = 1; a <= n; a = a + chunk){
+		b = min((a + chunk - 1, n))
+		s = ("  edge [" + nl + "    source ") :+ strofreal(st_data((a::b), vk)) :+ (nl + "    target ") :+ strofreal(st_data((a::b), vl)) :+ (nl + "    value ") :+ strofreal(st_data((a::b), vv)) :+ (nl + "  ]" + nl)
+		fwrite(fh, invtokens(s', ""))
+	}
+	fwrite(fh, "]" + nl)
+	fclose(fh)
 }
 
 /*
@@ -7750,6 +7890,108 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 	return(select((vec(sender), vec(receiver), strofreal(vec(e)), strofreal(vec(z)), strofreal(vec(e')),strofreal(vec(sender_num)), strofreal(vec(receiver_num))), vec(z)))
 }
 
+
+/*
+	The ego, alter and value columns get_edgelist() lists (all N x N cells, or
+	the lower triangle with `undirected'), written straight into three new
+	variables of the data in memory (which must have no observations): ego and
+	alter as the node names, value as the number get_edgelist() would show as
+	text and destring would read back (12 significant digits), in the same row
+	order.  Replaces building a seven-column string matrix and parsing it again
+	(four times slower).  Refused beyond 5e7 rows, where the list would take
+	several GB and minutes; nwtoedge, compress lists only the ties.
+*/
+void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, string scalar valter, string scalar vnet){
+	real scalar n, m, ml, k
+	real colvector v, ri, ci, sel, p, d, g, vals
+	string rowvector nm
+	string colvector s
+
+	n = get_nodes()
+	m = (undirected ? n*(n+1)/2 : n*n)
+	if (m > 5e7){
+		error_handle("Listing every dyad of the " + strofreal(n) + " nodes of network `" + get_name() + "' would create " + strofreal(m) + " rows (more than 50,000,000). Use the option compress, which lists only the ties.", `errDenseTooLarge')
+	}
+	if (m == 0) {
+		st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+		return
+	}
+	v = vec(get_matrix_copy())
+	ri = mod((1::n*n) :- 1, n) :+ 1
+	ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+	if (undirected){
+		sel = nw_which(ri :>= ci)
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+	}
+	// the text round trip, once per distinct value
+	p = order(v, 1)
+	d = J(m, 1, 0)
+	d[1] = 1
+	if (m > 1) d[|2 \ m|] = (v[p])[|2 \ m|] :!= (v[p])[|1 \ m-1|]
+	g = runningsum(d)
+	vals = strtoreal(strofreal((v[p])[nw_which(d)]))
+	v[p] = vals[g]
+	nm = nodes
+	st_addobs(m)
+	ml = max(strlen(nm))
+	s = (nm')[ri]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), vego), s)
+	s = (nm')[ci]
+	st_sstore(., st_addvar((ml > 2045 ? "strL" : "str" + strofreal(max((ml, 1)))), valter), s)
+	st_store(., st_addvar("double", vnet), v)
+}
+
+/*
+	The distinct tie values of get_edgelist() (every cell, or the lower triangle
+	with `undirected', missing diagonal included) with the number of cells
+	holding each, written to two new variables (vval: the value as get_edgelist()
+	shows it and destring reads it back, vfreq: the count) of the data in memory,
+	which must have no observations.  O(ties): the zeros are counted, not
+	listed.  What nwtabulate tabulates.
+*/
+void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, string scalar vfreq){
+	real scalar n, total, nz
+	real colvector r, c, w, cw, keep, ri, ci, rt
+	real matrix uc
+
+	n = get_nodes()
+	total = (undirected ? n*(n+1)/2 : n*n)
+	if (total > 2147483647){
+		error_handle("Tabulating the " + strofreal(n) + " nodes of network `" + get_name() + "' needs more than 2,147,483,647 dyad counts (Stata frequency weights). Use nwsummarize or nwdegree for networks of this size.", `errDenseTooLarge')
+	}
+	if (edgelist_sparse_ok()){
+		ensure_sparse_built()
+		r = csr_rows()
+		c = colidx
+		w = cweight
+		if (undirected){
+			keep = nw_which(r :>= c)
+			w = w[keep]
+		}
+		if (isselfloop == 0) w = w \ J(n, 1, .)
+		cw = J(rows(w), 1, 1)
+		nz = total - rows(w)
+		w = w \ 0
+		cw = cw \ nz
+	}
+	else {
+		w = vec(get_matrix_copy())
+		if (undirected){
+			ri = mod((1::n*n) :- 1, n) :+ 1
+			ci = floor(((1::n*n) :- 1) :/ n) :+ 1
+			w = w[nw_which(ri :>= ci)]
+		}
+		cw = J(rows(w), 1, 1)
+	}
+	uc = nw_group_counts(w, cw)
+	// the text round trip, then merge values that coincide afterwards
+	rt = strtoreal(strofreal(uc[,1]))
+	uc = nw_group_counts(rt, uc[,2])
+	uc = select(uc, uc[,2] :> 0)
+	st_addobs(rows(uc))
+	st_store(., st_addvar("double", vval), uc[,1])
+	st_store(., st_addvar("double", vfreq), uc[,2])
+}
 
 /*
 	The rows of get_edgelist() whose cell is not exactly 0, computed from the
