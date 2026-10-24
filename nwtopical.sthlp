@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 2.0 5sep2026}{...}
+{* *! version 3.1.1  24oct2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} 
 {hline 2} Topical list of network commands
@@ -25,6 +25,8 @@
 {help nwtopical##visualization:{col 14}{bf:[NW-2.8]}{...}{col 31}{bf:Visualization}}
 
 {help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}
+
+{help nwtopical##models:{col 14}{bf:[NW-2.10]}{...}{col 31}{bf:Statistical models (separate packages)}}
 
 {marker concept}{...}
 
@@ -149,6 +151,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwbridges }}}Calculate bridges{p_end}
 {p2col:    {bf:{help nwclique }}}Maximal clique enumeration{p_end}
+{p2col:    {bf:{help nwcohesion }}}Moody-White structural cohesion hierarchy{p_end}
 {p2col:    {bf:{help nwcomponents }}}Calculate network components / largest component{p_end}
 {p2col:    {bf:{help nwkcomponents }}}Maximal k-component enumeration{p_end}
 {p2col:    {bf:{help nwkcore }}}k-core decomposition{p_end}
@@ -211,9 +214,7 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
-{p2col:    {bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation (moved to its own package){p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
-{p2col:    {bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves (moved to its own package){p_end}
 {p2col:    {bf:{help nwutility }}}Calculate utility scores according to Jackson and Wollinsky (1996){p_end}
 {marker analysis_other}{...}
 
@@ -228,14 +229,6 @@
 {p2col:    {bf:{help nwnode }}}Checks if node exists in a network{p_end}
 {p2col:    {bf:{help nwturnover }}}Tie turnover/stability between two waves of the same network{p_end}
 {p2col:    {bf:{help nwvalue }}}Returns a tie value{p_end}
-{marker analysis_dynamicmodels}{...}
-
-{col 8}   {c TLC}{hline 24}{c TRC}
-{col 8}{hline 3}{c RT}       {it:Dynamic & Event-Based Models}{col 36}{c LT}{hline}
-{col 8}   {c BLC}{hline 24}{c BRC}
-{p2colset 12 35 36 2}
-{p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE) (moved to its own package){p_end}
-{p2col:    {bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE) (moved to its own package){p_end}
 {marker utilities}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
@@ -245,7 +238,7 @@
 {p2col:    {bf:{help nwclear }}}Clear all networks and variables from memory{p_end}
 {p2col:    {bf:{help nwcurrent }}}Report and set current network{p_end}
 {p2col:    {bf:{help nwerrorcodes }}}What this package's own custom return codes mean{p_end}
-{p2col:    {bf:{help nwinstall }}}Install Stata menu/dialogs{p_end}
+{p2col:    {bf:{help nwinstall }}}Install Stata menu/dialogs and the model packages{p_end}
 {p2col:    {bf:{help nwload }}}Load a network as Stata variables{p_end}
 {p2col:    {bf:{help nwnetworktypes }}}How commands classify binary/directed/weighted/signed/two-mode networks{p_end}
 {p2col:    {bf:{help nworder }}}Reorder networks in dataset{p_end}
@@ -256,6 +249,7 @@
 {p2col:    {bf:{help nwunab }}}Unabbreviate network list{p_end}
 {p2col:    {bf:{help nwvalidate }}}Validate network name{p_end}
 {p2col:    {bf:{help nwvalidvars }}}Validate Stata variables for network{p_end}
+{p2col:    {bf:{help nwversion }}}Version of nwcommands and of the installed model packages{p_end}
 {marker analysis_utility}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}
@@ -269,6 +263,7 @@
 {col 8}{hline 3}{c RT}       {it:Visualization}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
+{p2col:    {bf:{help animate }}}Animate graphs{p_end}
 {p2col:    {bf:{help nwdendrogram }}}Plot a wheel dendrogram{p_end}
 {p2col:    {bf:{help nwmovie }}}Interactive, animated network movie (panel waves or a relational-event timeline){p_end}
 {p2col:    {bf:{help nwmoviexy }}}Animate a sequence of networks (alias for {bf:nwmovie}){p_end}
@@ -281,6 +276,24 @@
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcompressobs }}}Compresses observations in Stata{p_end}
+{marker models}{...}
+
+{col 8}   {c TLC}{hline 24}{c TRC}
+{col 8}{hline 3}{c RT}       {it:Statistical models (separate packages)}{col 36}{c LT}{hline}
+{col 8}   {c BLC}{hline 24}{c BRC}
+
+{pstd}
+The statistical network models are separate packages that need the core. Install them with
+{stata "nwinstall, models":nwinstall, models} (see {help nwinstall}; {help nwversion} shows which are installed).
+Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
+{p_end}
+
+{p2colset 12 35 36 2}
+{p2col:    {bf:{browse "https://nwcommands.org/nwsaom/":nwsaom}}}Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwergm/":nwergm}}}Exponential random graph models (ERGM) for cross-sectional networks{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwdynam/":nwdynam}}}Dynamic network actor models (DyNAM): choice and rate models for event sequences{p_end}
+{p2col:    {bf:{browse "https://nwcommands.org/nwrem/":nwrem}}}Relational event models (REM) for timed interaction events{p_end}
+
 {marker uncategorized}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}

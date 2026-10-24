@@ -1,6 +1,6 @@
 {smcl}
 {* *! version 1.0.0  11aug2014}{...}
-{marker topical}
+{marker topic}
 {helpb nwtopical##visualization:[NW-2.8] Visualization}
 {cmd:help animate}
 {hline}

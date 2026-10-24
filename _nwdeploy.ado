@@ -2,13 +2,11 @@ capture program drop _nwdeploy
 program _nwdeploy
 	syntax , version(string) [author(string) email(string) other(string)]
 
-	_write_nwcommands, version(`version')
-	tempname versionlog
-	file open `versionlog' using versionlog.sh, replace write
-	
 	set more off
 	local d = lower(subinstr(c(current_date)," ","",.))
-	// the release version and date come from the file VERSION (see RELEASING.md); without it the package files carry no Version line
+	// the release version and date come from the file VERSION (see RELEASING.md); without it the package files carry no Version line.
+	// When VERSION exists it wins over the version() argument, so every generated file (nwcommands.sthlp, nwtopical.sthlp,
+	// nwalphabetical.sthlp, the .pkg files, stata.toc) shows the same release.
 	global NW_VERSION ""
 	capture file open __nwvf using "VERSION", read text
 	if _rc == 0 {
@@ -18,6 +16,16 @@ program _nwdeploy
 		global NW_VERSION "`__nwv1'"
 		if "`__nwv2'" != "" local d "`__nwv2'"
 	}
+	if "$NW_VERSION" != "" local version "$NW_VERSION"
+	// long date for the visible version line, e.g. 24 October 2026
+	local longdate = string(date("`d'", "DMY"), "%tdDD_Month_CCYY")
+	if substr("`longdate'", 1, 1) == "0" local longdate = substr("`longdate'", 2, .)
+	if "`longdate'" == "" | "`longdate'" == "." local longdate "`d'"
+
+	_write_nwcommands, version(`version') reldate(`d') longrel("`longdate'")
+	tempname versionlog
+	file open `versionlog' using versionlog.sh, replace write
+
 	// BUGFIX: a monolithic nwcommands-ado.pkg (117 f-lines, ~122 lines
 	// total with its own header) silently fails "net install" with
 	// "package file too long" - a real, previously-undiscovered Stata
@@ -79,7 +87,7 @@ program _nwdeploy
 	tempname topical
 	file open `topical' using nwtopical.sthlp, replace write
 	file write `topical' "{smcl}" _n ///	
-			"{* *! version `version' `d'}{...}"  _n ///
+			"{* *! version `version'  `d'}{...}"  _n ///
 		    "{phang}" _n ///
 			"{help nwcommands:NW-2 topical} {hline 2} " _n ///
 			"{hline 2} Topical list of network commands" _n ///
@@ -104,7 +112,9 @@ program _nwdeploy
 	"" _n ///
 "{help nwtopical##visualization:{col 14}{bf:[NW-2.8]}{...}{col 31}{bf:Visualization}}" _n ///
 	"" _n ///
-"{help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}" _n _n
+"{help nwtopical##programming:{col 14}{bf:[NW-2.9]}{...}{col 31}{bf:Programming}}" _n ///
+	"" _n ///
+"{help nwtopical##models:{col 14}{bf:[NW-2.10]}{...}{col 31}{bf:Statistical models (separate packages)}}" _n _n
 
 	set more off
 	// Was a hardcoded `substr(link, 13, .)`, tuned for the old
@@ -165,6 +175,22 @@ program _nwdeploy
 		}
 	}
 	
+	// Statistical models: separate packages, not part of the core, so no {help} link that could be broken
+	// when they are not installed (the web pages and the install line always work).
+	file write `topical' "{marker models}{...}" _n ///
+					"" _n ///
+					"{col 8}   {c TLC}{hline 24}{c TRC}" _n ///
+					"{col 8}{hline 3}{c RT}       {it:Statistical models (separate packages)}{col 36}{c LT}{hline}" _n ///
+					"{col 8}   {c BLC}{hline 24}{c BRC}" _n ///
+					"" _n
+	_nwdeploy_modelsintro `topical'
+	file write `topical' "{p2colset 12 35 36 2}" _n
+	foreach m in nwsaom nwergm nwdynam nwrem {
+		_nwdeploy_modelline `m'
+		file write `topical' `"{p2col:    {bf:`r(link)'}}`r(desc)'{p_end}"' _n
+	}
+	file write `topical' "" _n
+
 	local tc = "Uncategorized"
 	file write `topical' "{marker uncategorized}{...}" _n ///
 					"" _n ///
@@ -181,7 +207,8 @@ program _nwdeploy
 		// nwinternals.sthlp) - never meant to be called by name
 		// directly, so they don't belong in the general topical index
 		// even as an "Uncategorized" catch-all entry.
-		if "`r(cmddesc)'" == "{err}no help file yet{txt}" & substr("`cmdname'", 1, 1) != "_" {
+		// nwinstall_models is the worker behind "nwinstall, models" (documented in nwinstall.sthlp), not a command of its own
+		if "`r(cmddesc)'" == "{err}no help file yet{txt}" & substr("`cmdname'", 1, 1) != "_" & "`cmdname'" != "nwinstall_models" {
 			file write `topical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 		}
 		file write `versionlog' `"echo "*! v`version' __ `c(current_date)' __ `c(current_time)'" >> `file'"'  _n
@@ -194,15 +221,22 @@ program _nwdeploy
 	tempname alphabetical
 	file open `alphabetical' using nwalphabetical.sthlp, replace write
 	file write `alphabetical' "{smcl}" _n ///	
-			"{* *! version 1.0.0  3sept2014}{...}"  _n ///
+			"{* *! version `version'  `d'}{...}"  _n ///
 			"{phang}" _n ///
 			"{help nwcommands:NW-3 alphabetical} {hline 2} Alphabetical list of network programs" _n ///
 			" "_n ///
 			"{col 5}{hline}" _n ///
 			"{p2colset 5 32 34 2}" 
 	set more off
+
+	// the four model packages are listed in their alphabetical place, with web links instead of {help} links
+	local alphafiles `adofiles'
+	foreach m in nwsaom nwergm nwdynam nwrem {
+		local alphafiles `alphafiles' `m'.ado
+	}
+	mata: st_local("alphafiles", invtokens(sort(tokens(st_local("alphafiles"))', 1)'))
 	
-	foreach file in `adofiles' {
+	foreach file in `alphafiles' {
 
 		// add meta to dofiles
 		// di "ado: `file'"
@@ -215,9 +249,17 @@ program _nwdeploy
 		if substr("`cmdname'", 1, 1) == "_" {
 			continue
 		}
+		if "`cmdname'" == "nwinstall_models" continue
+		if inlist("`cmdname'", "nwsaom", "nwergm", "nwdynam", "nwrem") {
+			_nwdeploy_modelline `cmdname'
+			file write `alphabetical' `"{p2col:{bf:`r(link)'}}`r(desc)' (separate package){p_end}"' _n
+			continue
+		}
 		getcmddesc `cmdname'
 		file write `alphabetical' "{p2col:{bf:{help `cmdname' }}}`r(cmddesc)'{p_end}" _n
 	}
+	file write `alphabetical' "{p2colreset}{...}" _n "" _n
+	_nwdeploy_modelsintro `alphabetical'
 
 	file close `alphabetical'
 
@@ -478,16 +520,37 @@ program getcmdtopic, rclass
 	//shell sh versionlog.sh
 end
 
+capture program drop _nwdeploy_modelline
+program _nwdeploy_modelline, rclass
+	// name, web page and one-line description of a statistical model package (not in the core)
+	args m
+	local d_nwsaom "Stochastic actor-oriented models (SAOM): network and behavior dynamics between observed waves"
+	local d_nwergm "Exponential random graph models (ERGM) for cross-sectional networks"
+	local d_nwdynam "Dynamic network actor models (DyNAM): choice and rate models for event sequences"
+	local d_nwrem "Relational event models (REM) for timed interaction events"
+	return local desc "`d_`m''"
+	return local link `"{browse "https://nwcommands.org/`m'/":`m'}"'
+end
+
+capture program drop _nwdeploy_modelsintro
+program _nwdeploy_modelsintro
+	// install line and package guide shared by nwtopical and nwalphabetical
+	args fh
+	file write `fh' "{pstd}" _n ///
+		"The statistical network models are separate packages that need the core. Install them with" _n ///
+		`"{stata "nwinstall, models":nwinstall, models}"' " (see {help nwinstall}; {help nwversion} shows which are installed)." _n ///
+		`"Which package do you need? See {browse "https://nwcommands.org/which-package/"}."' _n ///
+		"{p_end}" _n "" _n
+end
+
 capture program drop _write_nwcommands
 program _write_nwcommands
-	syntax , version(string)
+	syntax , version(string) reldate(string) longrel(string)
 	set more off
 	tempname nw
 	file open `nw' using nwcommands.sthlp, replace write
 	file write `nw' "{smcl}" _n ///
-"{* *! version `version'  `c(current_date)'}{...}" _n ///
-"" _n ///
-"{pstd}{it:nwcommands version `version', `c(current_date)'}{p_end}" _n ///
+"{* *! version `version'  `reldate'}{...}" _n ///
 "" _n ///
 "{pstd}" _n ///
 "New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else" _n ///
@@ -521,12 +584,13 @@ program _write_nwcommands
 "nwcommands is free software under the GNU General Public License, version 3, as are the model packages." _n ///
 "{p_end}" _n ///
 "" _n ///
-"		*! Date        : `c(current_date)'" _n ///
-"		*! Version     : `version'" _n ///
 "		*! Authors     : Thomas U. Grund " _n ///
 "		*! Contact     : thomas.u.grund@gmail.com" _n ///
 `"		 *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}"' _n ///
-`"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"'
+`"		 *! Bugs        : {browse "mailto:thomas.u.grund@gmail.com"}"' _n ///
+"" _n ///
+"{hline}" _n ///
+"{pstd}{it:nwcommands version `version', `longrel'}{p_end}{* nwversion}" _n
 	file close `nw'
 end
 
