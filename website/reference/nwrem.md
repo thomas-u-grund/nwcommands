@@ -11,7 +11,7 @@ description: "nwrem has moved to its own package"
 `nwrem` (relational event models) has moved to its own package, licensed under GPL-3.
 
 ```stata
-net install nwrem, from(https://raw.githubusercontent.com/<account>/nwrem/main/)
+net install nwrem, from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)
 ```
 
-The package requires the core `nwcommands`. Repository: https://github.com/<account>/nwrem
+The package requires the core `nwcommands`. Repository: https://github.com/thomas-u-grund/nwrem

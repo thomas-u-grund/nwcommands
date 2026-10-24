@@ -11,7 +11,7 @@ Exponential-family random graph models (`nwergm`) now live in their own GPL-3 pa
 builds on the core `nwcommands`:
 
 ```stata
-net install nwergm, from(https://raw.githubusercontent.com/<account>/nwergm/main/)
+net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
 ```
 
 The tutorial for this model moved with it; see the package's README.

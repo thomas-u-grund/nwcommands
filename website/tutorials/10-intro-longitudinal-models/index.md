@@ -11,7 +11,7 @@ The models for network change are no longer part of the core `nwcommands`. Each 
 GPL-3 package that requires the core:
 
 ```stata
-net install nwsaom,  from(https://raw.githubusercontent.com/<account>/nwsaom/main/)   // stochastic actor-oriented models
-net install nwrem,   from(https://raw.githubusercontent.com/<account>/nwrem/main/)    // relational event models
-net install nwdynam, from(https://raw.githubusercontent.com/<account>/nwdynam/main/)  // dynamic network actor models
+net install nwsaom,  from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)   // stochastic actor-oriented models
+net install nwrem,   from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)    // relational event models
+net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)  // dynamic network actor models
 ```

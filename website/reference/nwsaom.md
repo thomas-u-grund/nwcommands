@@ -11,7 +11,7 @@ description: "nwsaom has moved to its own package"
 `nwsaom` (stochastic actor-oriented models (SAOM)) has moved to its own package, licensed under GPL-3.
 
 ```stata
-net install nwsaom, from(https://raw.githubusercontent.com/<account>/nwsaom/main/)
+net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)
 ```
 
-The package requires the core `nwcommands`. Repository: https://github.com/<account>/nwsaom
+The package requires the core `nwcommands`. Repository: https://github.com/thomas-u-grund/nwsaom

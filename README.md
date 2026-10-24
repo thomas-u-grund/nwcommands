@@ -23,7 +23,7 @@ data commands.
 - **Statistical network models** live in separate packages that build on this one (all GPL-3):
   `nwergm` (exponential-family random graph models), `nwsaom` (stochastic actor-oriented
   models), `nwrem` (relational event models) and `nwdynam` (Dynamic Network Actor Models).
-  Install each with `net install <name>, from(https://raw.githubusercontent.com/<account>/<name>/main/)`.
+  Install each with `net install <name>, from(https://raw.githubusercontent.com/thomas-u-grund/<name>/main/)`.
   They are separate packages, so they are not part of the core: installing or updating `nwcommands`
   never replaces them.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).

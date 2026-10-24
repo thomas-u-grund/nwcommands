@@ -11,7 +11,7 @@ description: "nwdynam has moved to its own package"
 `nwdynam` (Dynamic Network Actor Models) has moved to its own package, licensed under GPL-3.
 
 ```stata
-net install nwdynam, from(https://raw.githubusercontent.com/<account>/nwdynam/main/)
+net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
 ```
 
-The package requires the core `nwcommands`. Repository: https://github.com/<account>/nwdynam
+The package requires the core `nwcommands`. Repository: https://github.com/thomas-u-grund/nwdynam
