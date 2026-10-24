@@ -2,6 +2,7 @@
 capture program drop nwergm
 program nwergm, eclass
 	version 14
+	local __ne_n = 0
 	gettoken __ergm_t1 : 0, parse(" ,")
 	if `"`__ergm_t1'"' == "simulate" {
 		gettoken __ergm_sub 0 : 0, parse(" ,")
@@ -768,7 +769,7 @@ program nwergm, eclass
 	// consistent model-specification syntax, it just contributes
 	// nothing to the fitted parameter vector.
 	if "`fixdensity'" == "" & !`__ns_noedges' {
-		tempname __td_edges
+		local __td_edges "__netd_`++__ne_n'"
 		mata: `__td_edges' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
@@ -788,7 +789,7 @@ program nwergm, eclass
 	}
 
 	if "`mutual'" != "" {
-		tempname __td_mutual
+		local __td_mutual "__netd_`++__ne_n'"
 		mata: `__td_mutual' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("mutual", 1, &stat_mutual(), &change_mutual(), `__td_mutual', ("mutual"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mutual'"
@@ -906,7 +907,7 @@ program nwergm, eclass
 	foreach __ergm_v of local bcov1 {
 		_nwergm_numvar `__ergm_v' bcov1
 		local ++__ergm_termidx
-		tempname __td_b1c`__ergm_termidx'
+		local __td_b1c`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b1cov", 1, &stat_b1cov(), &change_b1cov(), `__td_b1c`__ergm_termidx'', ("b1cov_`__ergm_v'"))
@@ -917,7 +918,7 @@ program nwergm, eclass
 	foreach __ergm_v of local bcov2 {
 		_nwergm_numvar `__ergm_v' bcov2
 		local ++__ergm_termidx
-		tempname __td_b2c`__ergm_termidx'
+		local __td_b2c`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b2cov", 1, &stat_b2cov(), &change_b2cov(), `__td_b2c`__ergm_termidx'', ("b2cov_`__ergm_v'"))
@@ -928,7 +929,7 @@ program nwergm, eclass
 	foreach __ergm_v of local bfactor1 {
 		_nwergm_numvar `__ergm_v' bfactor1
 		local ++__ergm_termidx
-		tempname __td_b1f`__ergm_termidx'
+		local __td_b1f`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		// BUGFIX (harmonisation unit 156, caught via a real end-to-end
@@ -962,7 +963,7 @@ program nwergm, eclass
 	foreach __ergm_v of local bfactor2 {
 		_nwergm_numvar `__ergm_v' bfactor2
 		local ++__ergm_termidx
-		tempname __td_b2f`__ergm_termidx'
+		local __td_b2f`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		// BUGFIX: mode-2 mirror of b1factor()'s own fix above - see its
@@ -993,7 +994,7 @@ program nwergm, eclass
 	// four correctly defaults to method(mcmle), exercising the Stage-1
 	// bipartite MCMC proposal for real.
 	if "`bdegree1'" != "" {
-		tempname __td_bd1
+		local __td_bd1 "__netd_`++__ne_n'"
 		mata: `__td_bd1' = ErgmTermData()
 		mata: `__td_bd1'.levels = strtoreal(tokens("`bdegree1'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd1'.levels)))
@@ -1005,7 +1006,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bd1'"
 	}
 	if "`bdegree2'" != "" {
-		tempname __td_bd2
+		local __td_bd2 "__netd_`++__ne_n'"
 		mata: `__td_bd2' = ErgmTermData()
 		mata: `__td_bd2'.levels = strtoreal(tokens("`bdegree2'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd2'.levels)))
@@ -1017,7 +1018,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bd2'"
 	}
 	if "`bstar1'" != "" {
-		tempname __td_bs1
+		local __td_bs1 "__netd_`++__ne_n'"
 		mata: `__td_bs1' = ErgmTermData()
 		mata: `__td_bs1'.levels = strtoreal(tokens("`bstar1'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs1'.levels)))
@@ -1029,7 +1030,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bs1'"
 	}
 	if "`bstar2'" != "" {
-		tempname __td_bs2
+		local __td_bs2 "__netd_`++__ne_n'"
 		mata: `__td_bs2' = ErgmTermData()
 		mata: `__td_bs2'.levels = strtoreal(tokens("`bstar2'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs2'.levels)))
@@ -1059,7 +1060,7 @@ program nwergm, eclass
 	foreach __ergm_v of local bnodematch1 {
 		_nwergm_numvar `__ergm_v' bnodematch1
 		local ++__ergm_termidx
-		tempname __td_b1nm`__ergm_termidx'
+		local __td_b1nm`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), `__td_b1nm`__ergm_termidx'', ("b1nodematch_`__ergm_v'"))
@@ -1069,21 +1070,21 @@ program nwergm, eclass
 	foreach __ergm_v of local bnodematch2 {
 		_nwergm_numvar `__ergm_v' bnodematch2
 		local ++__ergm_termidx
-		tempname __td_b2nm`__ergm_termidx'
+		local __td_b2nm`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), `__td_b2nm`__ergm_termidx'', ("b2nodematch_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
 	}
 	if "`bgwdegree1'" != "" {
-		tempname __td_bgwd1
+		local __td_bgwd1 "__netd_`++__ne_n'"
 		mata: `__td_bgwd1' = ErgmTermData()
 		mata: `__td_bgwd1'.decay = `bgwdegree1'
 		mata: __nwergm_last_M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), `__td_bgwd1', ("bgwdegree1_`bgwdegree1'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
 	}
 	if "`bgwdegree2'" != "" {
-		tempname __td_bgwd2
+		local __td_bgwd2 "__netd_`++__ne_n'"
 		mata: `__td_bgwd2' = ErgmTermData()
 		mata: `__td_bgwd2'.decay = `bgwdegree2'
 		mata: __nwergm_last_M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), `__td_bgwd2', ("bgwdegree2_`bgwdegree2'"))
@@ -1098,7 +1099,7 @@ program nwergm, eclass
 	// attributes), so none of these are added to the MPLE-eligibility
 	// check below - matching mutual/every geometrically-weighted term.
 	if "`degree'" != "" {
-		tempname __td_deg
+		local __td_deg "__netd_`++__ne_n'"
 		mata: `__td_deg' = ErgmTermData()
 		mata: `__td_deg'.levels = strtoreal(tokens("`degree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_deg'.levels)))
@@ -1110,7 +1111,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_deg'"
 	}
 	if "`odegree'" != "" {
-		tempname __td_odeg
+		local __td_odeg "__netd_`++__ne_n'"
 		mata: `__td_odeg' = ErgmTermData()
 		mata: `__td_odeg'.levels = strtoreal(tokens("`odegree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_odeg'.levels)))
@@ -1122,7 +1123,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_odeg'"
 	}
 	if "`idegree'" != "" {
-		tempname __td_ideg
+		local __td_ideg "__netd_`++__ne_n'"
 		mata: `__td_ideg' = ErgmTermData()
 		mata: `__td_ideg'.levels = strtoreal(tokens("`idegree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_ideg'.levels)))
@@ -1134,19 +1135,19 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ideg'"
 	}
 	if "`concurrent'" != "" {
-		tempname __td_conc
+		local __td_conc "__netd_`++__ne_n'"
 		mata: `__td_conc' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("concurrent", 1, &stat_concurrent(), &change_concurrent(), `__td_conc', ("concurrent"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_conc'"
 	}
 	if "`triangle'" != "" {
-		tempname __td_tri
+		local __td_tri "__netd_`++__ne_n'"
 		mata: `__td_tri' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), `__td_tri', ("triangle"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_tri'"
 	}
 	if "`ctriple'" != "" {
-		tempname __td_ctri
+		local __td_ctri "__netd_`++__ne_n'"
 		mata: `__td_ctri' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), `__td_ctri', ("ctriple"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ctri'"
@@ -1167,7 +1168,7 @@ program nwergm, eclass
 	}
 
 	if "`kstar'" != "" {
-		tempname __td_kstar
+		local __td_kstar "__netd_`++__ne_n'"
 		mata: `__td_kstar' = ErgmTermData()
 		mata: `__td_kstar'.levels = strtoreal(tokens("`kstar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_kstar'.levels)))
@@ -1179,7 +1180,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_kstar'"
 	}
 	if "`ostar'" != "" {
-		tempname __td_ostar
+		local __td_ostar "__netd_`++__ne_n'"
 		mata: `__td_ostar' = ErgmTermData()
 		mata: `__td_ostar'.levels = strtoreal(tokens("`ostar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_ostar'.levels)))
@@ -1191,7 +1192,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ostar'"
 	}
 	if "`istar'" != "" {
-		tempname __td_istar
+		local __td_istar "__netd_`++__ne_n'"
 		mata: `__td_istar' = ErgmTermData()
 		mata: `__td_istar'.levels = strtoreal(tokens("`istar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_istar'.levels)))
@@ -1219,7 +1220,7 @@ program nwergm, eclass
 				error 198
 			}
 		}
-		tempname __td_dr
+		local __td_dr "__netd_`++__ne_n'"
 		mata: `__td_dr' = ErgmTermData()
 		mata: `__td_dr'.levelpairs = strtoreal(tokens("`degrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -1245,7 +1246,7 @@ program nwergm, eclass
 				error 198
 			}
 		}
-		tempname __td_odr
+		local __td_odr "__netd_`++__ne_n'"
 		mata: `__td_odr' = ErgmTermData()
 		mata: `__td_odr'.levelpairs = strtoreal(tokens("`odegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -1271,7 +1272,7 @@ program nwergm, eclass
 				error 198
 			}
 		}
-		tempname __td_idr
+		local __td_idr "__netd_`++__ne_n'"
 		mata: `__td_idr' = ErgmTermData()
 		mata: `__td_idr'.levelpairs = strtoreal(tokens("`idegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -1290,7 +1291,7 @@ program nwergm, eclass
 	// whenever the network is directed, left blank (UTP) otherwise.
 	if "`esp'" != "" {
 		local __ergm_nd : word count `esp'
-		tempname __td_esp
+		local __td_esp "__netd_`++__ne_n'"
 		mata: `__td_esp' = ErgmTermData()
 		mata: `__td_esp'.levels = strtoreal(tokens("`esp'"))'
 		if "`directed'" == "true" {
@@ -1305,7 +1306,7 @@ program nwergm, eclass
 	}
 	if "`dsp'" != "" {
 		local __ergm_nd : word count `dsp'
-		tempname __td_dsp
+		local __td_dsp "__netd_`++__ne_n'"
 		mata: `__td_dsp' = ErgmTermData()
 		mata: `__td_dsp'.levels = strtoreal(tokens("`dsp'"))'
 		if "`directed'" == "true" {
@@ -1323,13 +1324,13 @@ program nwergm, eclass
 	// transitiveties/cyclicalties, directed-only, built on wave 5's OTP
 	// shared-partner machinery.
 	if "`transitiveties'" != "" {
-		tempname __td_tt
+		local __td_tt "__netd_`++__ne_n'"
 		mata: `__td_tt' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("transitiveties", 1, &stat_transitiveties(), &change_transitiveties(), `__td_tt', ("transitiveties"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_tt'"
 	}
 	if "`cyclicalties'" != "" {
-		tempname __td_ct
+		local __td_ct "__netd_`++__ne_n'"
 		mata: `__td_ct' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("cyclicalties", 1, &stat_cyclicalties(), &change_cyclicalties(), `__td_ct', ("cyclicalties"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
@@ -1351,7 +1352,7 @@ program nwergm, eclass
 	// reusing the already-certified stat_nodeofactor()/stat_nodeifactor()
 	// with zero new Mata code.
 	if "`sender'" != "" {
-		tempname __td_send
+		local __td_send "__netd_`++__ne_n'"
 		mata: `__td_send' = ErgmTermData()
 		mata: `__td_send'.attr = (1::`nodes')
 		mata: `__td_send'.levels = (2::`nodes')
@@ -1363,7 +1364,7 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_send'"
 	}
 	if "`receiver'" != "" {
-		tempname __td_recv
+		local __td_recv "__netd_`++__ne_n'"
 		mata: `__td_recv' = ErgmTermData()
 		mata: `__td_recv'.attr = (1::`nodes')
 		mata: `__td_recv'.levels = (2::`nodes')
@@ -1392,7 +1393,7 @@ program nwergm, eclass
 	local __ergm_termidx = 0
 	foreach __ergm_v of local hamming {
 		local ++__ergm_termidx
-		tempname __td_hm`__ergm_termidx'
+		local __td_hm`__ergm_termidx' "__netd_`++__ne_n'"
 		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
 		_nwsyntax `__ergm_v', max(1) other(hm`__ergm_termidx')
 		if `hm`__ergm_termidx'nodes' != `nodes' {
@@ -1411,7 +1412,7 @@ program nwergm, eclass
 
 	if "`gwesp'" != "" {
 		confirm number `gwesp'
-		tempname __td_gwesp
+		local __td_gwesp "__netd_`++__ne_n'"
 		mata: `__td_gwesp' = ErgmTermData()
 		mata: `__td_gwesp'.decay = `gwesp'
 		if "`directed'" == "true" {
@@ -1448,7 +1449,7 @@ program nwergm, eclass
 	}
 	if "`gwdsp'" != "" {
 		confirm number `gwdsp'
-		tempname __td_gwdsp
+		local __td_gwdsp "__netd_`++__ne_n'"
 		mata: `__td_gwdsp' = ErgmTermData()
 		mata: `__td_gwdsp'.decay = `gwdsp'
 		if "`directed'" == "true" {
@@ -1459,7 +1460,7 @@ program nwergm, eclass
 	}
 	if "`gwnsp'" != "" {
 		confirm number `gwnsp'
-		tempname __td_gwnsp
+		local __td_gwnsp "__netd_`++__ne_n'"
 		mata: `__td_gwnsp' = ErgmTermData()
 		mata: `__td_gwnsp'.decay = `gwnsp'
 		if "`directed'" == "true" {
@@ -1470,7 +1471,7 @@ program nwergm, eclass
 	}
 	if "`gwdegree'" != "" {
 		confirm number `gwdegree'
-		tempname __td_gwdeg
+		local __td_gwdeg "__netd_`++__ne_n'"
 		mata: `__td_gwdeg' = ErgmTermData()
 		mata: `__td_gwdeg'.decay = `gwdegree'
 		mata: __nwergm_last_M.addterm("gwdegree", 1, &stat_gwdegree(), &change_gwdegree(), `__td_gwdeg', ("gwdegree_`gwdegree'"))
@@ -1478,7 +1479,7 @@ program nwergm, eclass
 	}
 	if "`gwodegree'" != "" {
 		confirm number `gwodegree'
-		tempname __td_gwod
+		local __td_gwod "__netd_`++__ne_n'"
 		mata: `__td_gwod' = ErgmTermData()
 		mata: `__td_gwod'.decay = `gwodegree'
 		mata: __nwergm_last_M.addterm("gwodegree", 1, &stat_gwodegree(), &change_gwodegree(), `__td_gwod', ("gwodegree_`gwodegree'"))
@@ -1486,7 +1487,7 @@ program nwergm, eclass
 	}
 	if "`gwidegree'" != "" {
 		confirm number `gwidegree'
-		tempname __td_gwid
+		local __td_gwid "__netd_`++__ne_n'"
 		mata: `__td_gwid' = ErgmTermData()
 		mata: `__td_gwid'.decay = `gwidegree'
 		mata: __nwergm_last_M.addterm("gwidegree", 1, &stat_gwidegree(), &change_gwidegree(), `__td_gwid', ("gwidegree_`gwidegree'"))
@@ -1532,7 +1533,7 @@ program nwergm, eclass
 			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
 		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
-		tempname __td_gwespfree
+		local __td_gwespfree "__netd_`++__ne_n'"
 		mata: `__td_gwespfree' = ErgmTermData()
 		mata: `__td_gwespfree'.levels = (1..`__ergm_curved_maxd')'
 		// Sets the same td.sptype fixed-decay gwesp() itself sets for a
@@ -1582,7 +1583,7 @@ program nwergm, eclass
 		// network that is not itself nearly complete.
 		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "total")))
 		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
-		tempname __td_gwdegreefree
+		local __td_gwdegreefree "__netd_`++__ne_n'"
 		mata: `__td_gwdegreefree' = ErgmTermData()
 		mata: `__td_gwdegreefree'.levels = (1..`__ergm_curved_maxd')'
 		local __ergm_curved_cnames ""
@@ -1623,7 +1624,7 @@ program nwergm, eclass
 			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
 		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
-		tempname __td_gwdspfree
+		local __td_gwdspfree "__netd_`++__ne_n'"
 		mata: `__td_gwdspfree' = ErgmTermData()
 		mata: `__td_gwdspfree'.levels = (1..`__ergm_curved_maxd')'
 		// Sets td.sptype exactly as gwespfree()'s own registration site
@@ -1655,7 +1656,7 @@ program nwergm, eclass
 			mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_max_shared_partners(__nwergm_last_G) + 1))
 		}
 		local __ergm_curved_maxd = max(1, min(`nodes' - 2, `__ergm_maxdeg'))
-		tempname __td_gwnspfree
+		local __td_gwnspfree "__netd_`++__ne_n'"
 		mata: `__td_gwnspfree' = ErgmTermData()
 		mata: `__td_gwnspfree'.levels = (1..`__ergm_curved_maxd')'
 		// nsp inherits td.sptype dispatch for free via stat_dsp()/
@@ -1684,7 +1685,7 @@ program nwergm, eclass
 		// rather than total degree.
 		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "out")))
 		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
-		tempname __td_gwodegreefree
+		local __td_gwodegreefree "__netd_`++__ne_n'"
 		mata: `__td_gwodegreefree' = ErgmTermData()
 		mata: `__td_gwodegreefree'.levels = (1..`__ergm_curved_maxd')'
 		local __ergm_curved_cnames ""
@@ -1700,7 +1701,7 @@ program nwergm, eclass
 		// Harmonisation unit 145: same rationale, bounded by in-degree.
 		mata: st_local("__ergm_maxdeg", strofreal(ergm_graph_maxdegree(__nwergm_last_G, "in")))
 		local __ergm_curved_maxd = max(1, min(`nodes' - 1, `__ergm_maxdeg' + 1))
-		tempname __td_gwidegreefree
+		local __td_gwidegreefree "__netd_`++__ne_n'"
 		mata: `__td_gwidegreefree' = ErgmTermData()
 		mata: `__td_gwidegreefree'.levels = (1..`__ergm_curved_maxd')'
 		local __ergm_curved_cnames ""
@@ -2615,6 +2616,7 @@ end
 capture program drop nwergm_simulate
 program nwergm_simulate
 	version 14
+	local __nes_n = 0
 	syntax anything(name=nodes) , edges [mutual ///
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
@@ -2814,7 +2816,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodematch {
 		_nwergm_numvar `__ergm_v' nodematch
 		local ++__ergm_termidx
-		tempname __td_nm`__ergm_termidx'
+		local __td_nm`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm`__ergm_termidx'', ("nodematch_`__ergm_v'"))
@@ -2825,7 +2827,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodecov {
 		_nwergm_numvar `__ergm_v' nodecov
 		local ++__ergm_termidx
-		tempname __td_nc`__ergm_termidx'
+		local __td_nc`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nc`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
@@ -2836,7 +2838,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodeicov {
 		_nwergm_numvar `__ergm_v' nodeicov
 		local ++__ergm_termidx
-		tempname __td_ni`__ergm_termidx'
+		local __td_ni`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_ni`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
@@ -2847,7 +2849,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodeocov {
 		_nwergm_numvar `__ergm_v' nodeocov
 		local ++__ergm_termidx
-		tempname __td_no`__ergm_termidx'
+		local __td_no`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_no`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
@@ -2858,7 +2860,7 @@ program nwergm_simulate
 	foreach __ergm_v of local absdist {
 		_nwergm_numvar `__ergm_v' absdist
 		local ++__ergm_termidx
-		tempname __td_ad`__ergm_termidx'
+		local __td_ad`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_ad`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), `__td_ad`__ergm_termidx'', ("absdist_`__ergm_v'"))
@@ -2869,7 +2871,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodematchdiff {
 		_nwergm_numvar `__ergm_v' nodematchdiff
 		local ++__ergm_termidx
-		tempname __td_nmd`__ergm_termidx'
+		local __td_nmd`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nmd`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_nmd`__ergm_termidx''.levels = uniqrows(`__td_nmd`__ergm_termidx''.attr)
@@ -2888,7 +2890,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodefactor {
 		_nwergm_numvar `__ergm_v' nodefactor
 		local ++__ergm_termidx
-		tempname __td_nf`__ergm_termidx'
+		local __td_nf`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nf`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
@@ -2948,7 +2950,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bcov1 {
 		_nwergm_numvar `__ergm_v' bcov1
 		local ++__ergm_termidx
-		tempname __td_b1c`__ergm_termidx'
+		local __td_b1c`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b1c`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b1cov", 1, &stat_b1cov(), &change_b1cov(), `__td_b1c`__ergm_termidx'', ("b1cov_`__ergm_v'"))
@@ -2959,7 +2961,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bcov2 {
 		_nwergm_numvar `__ergm_v' bcov2
 		local ++__ergm_termidx
-		tempname __td_b2c`__ergm_termidx'
+		local __td_b2c`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b2c`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2c`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b2cov", 1, &stat_b2cov(), &change_b2cov(), `__td_b2c`__ergm_termidx'', ("b2cov_`__ergm_v'"))
@@ -2970,7 +2972,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bfactor1 {
 		_nwergm_numvar `__ergm_v' bfactor1
 		local ++__ergm_termidx
-		tempname __td_b1f`__ergm_termidx'
+		local __td_b1f`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b1f`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_b1f`__ergm_termidx''.levels = uniqrows(`__td_b1f`__ergm_termidx''.attr[1::`bipartite'])
@@ -2990,7 +2992,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bfactor2 {
 		_nwergm_numvar `__ergm_v' bfactor2
 		local ++__ergm_termidx
-		tempname __td_b2f`__ergm_termidx'
+		local __td_b2f`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b2f`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2f`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_b2f`__ergm_termidx''.levels = uniqrows(`__td_b2f`__ergm_termidx''.attr[(`bipartite'+1)::`nodes'])
@@ -3007,7 +3009,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_b2f`__ergm_termidx''"
 	}
 	if "`bdegree1'" != "" {
-		tempname __td_bd1
+		local __td_bd1 "__netds_`++__nes_n'"
 		mata: `__td_bd1' = ErgmTermData()
 		mata: `__td_bd1'.levels = strtoreal(tokens("`bdegree1'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd1'.levels)))
@@ -3020,7 +3022,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bd1'"
 	}
 	if "`bdegree2'" != "" {
-		tempname __td_bd2
+		local __td_bd2 "__netds_`++__nes_n'"
 		mata: `__td_bd2' = ErgmTermData()
 		mata: `__td_bd2'.levels = strtoreal(tokens("`bdegree2'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_bd2'.levels)))
@@ -3033,7 +3035,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bd2'"
 	}
 	if "`bstar1'" != "" {
-		tempname __td_bs1
+		local __td_bs1 "__netds_`++__nes_n'"
 		mata: `__td_bs1' = ErgmTermData()
 		mata: `__td_bs1'.levels = strtoreal(tokens("`bstar1'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs1'.levels)))
@@ -3046,7 +3048,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bs1'"
 	}
 	if "`bstar2'" != "" {
-		tempname __td_bs2
+		local __td_bs2 "__netds_`++__nes_n'"
 		mata: `__td_bs2' = ErgmTermData()
 		mata: `__td_bs2'.levels = strtoreal(tokens("`bstar2'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_bs2'.levels)))
@@ -3062,7 +3064,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bnodematch1 {
 		_nwergm_numvar `__ergm_v' bnodematch1
 		local ++__ergm_termidx
-		tempname __td_b1nm`__ergm_termidx'
+		local __td_b1nm`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b1nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b1nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b1nodematch", 1, &stat_b1nodematch(), &change_b1nodematch(), `__td_b1nm`__ergm_termidx'', ("b1nodematch_`__ergm_v'"))
@@ -3073,7 +3075,7 @@ program nwergm_simulate
 	foreach __ergm_v of local bnodematch2 {
 		_nwergm_numvar `__ergm_v' bnodematch2
 		local ++__ergm_termidx
-		tempname __td_b2nm`__ergm_termidx'
+		local __td_b2nm`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_b2nm`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_b2nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: __nwergm_last_M.addterm("b2nodematch", 1, &stat_b2nodematch(), &change_b2nodematch(), `__td_b2nm`__ergm_termidx'', ("b2nodematch_`__ergm_v'"))
@@ -3081,7 +3083,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
 	}
 	if "`bgwdegree1'" != "" {
-		tempname __td_bgwd1
+		local __td_bgwd1 "__netds_`++__nes_n'"
 		mata: `__td_bgwd1' = ErgmTermData()
 		mata: `__td_bgwd1'.decay = `bgwdegree1'
 		mata: __nwergm_last_M.addterm("bgwdegree1", 1, &stat_bgwdegree1(), &change_bgwdegree1(), `__td_bgwd1', ("bgwdegree1"))
@@ -3089,7 +3091,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
 	}
 	if "`bgwdegree2'" != "" {
-		tempname __td_bgwd2
+		local __td_bgwd2 "__netds_`++__nes_n'"
 		mata: `__td_bgwd2' = ErgmTermData()
 		mata: `__td_bgwd2'.decay = `bgwdegree2'
 		mata: __nwergm_last_M.addterm("bgwdegree2", 1, &stat_bgwdegree2(), &change_bgwdegree2(), `__td_bgwd2', ("bgwdegree2"))
@@ -3104,7 +3106,7 @@ program nwergm_simulate
 	// ported verbatim from the estimation path, which needs nothing
 	// beyond the term's own parameters either.
 	if "`degree'" != "" {
-		tempname __td_deg
+		local __td_deg "__netds_`++__nes_n'"
 		mata: `__td_deg' = ErgmTermData()
 		mata: `__td_deg'.levels = strtoreal(tokens("`degree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_deg'.levels)))
@@ -3117,7 +3119,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_deg'"
 	}
 	if "`odegree'" != "" {
-		tempname __td_odeg
+		local __td_odeg "__netds_`++__nes_n'"
 		mata: `__td_odeg' = ErgmTermData()
 		mata: `__td_odeg'.levels = strtoreal(tokens("`odegree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_odeg'.levels)))
@@ -3130,7 +3132,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_odeg'"
 	}
 	if "`idegree'" != "" {
-		tempname __td_ideg
+		local __td_ideg "__netds_`++__nes_n'"
 		mata: `__td_ideg' = ErgmTermData()
 		mata: `__td_ideg'.levels = strtoreal(tokens("`idegree'"))'
 		mata: st_local("__ergm_ndeg", strofreal(rows(`__td_ideg'.levels)))
@@ -3143,21 +3145,21 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ideg'"
 	}
 	if "`concurrent'" != "" {
-		tempname __td_conc
+		local __td_conc "__netds_`++__nes_n'"
 		mata: `__td_conc' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("concurrent", 1, &stat_concurrent(), &change_concurrent(), `__td_conc', ("concurrent"))
 		local ntermtok "`ntermtok' concurrent"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_conc'"
 	}
 	if "`triangle'" != "" {
-		tempname __td_tri
+		local __td_tri "__netds_`++__nes_n'"
 		mata: `__td_tri' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("triangle", 1, &stat_triangle(), &change_triangle(), `__td_tri', ("triangle"))
 		local ntermtok "`ntermtok' triangle"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_tri'"
 	}
 	if "`ctriple'" != "" {
-		tempname __td_ctri
+		local __td_ctri "__netds_`++__nes_n'"
 		mata: `__td_ctri' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("ctriple", 1, &stat_ctriple(), &change_ctriple(), `__td_ctri', ("ctriple"))
 		local ntermtok "`ntermtok' ctriple"
@@ -3168,7 +3170,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodeofactor {
 		_nwergm_numvar `__ergm_v' nodeofactor
 		local ++__ergm_termidx
-		tempname __td_nof`__ergm_termidx'
+		local __td_nof`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nof`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_nof`__ergm_termidx''.levels = uniqrows(`__td_nof`__ergm_termidx''.attr)
@@ -3188,7 +3190,7 @@ program nwergm_simulate
 	foreach __ergm_v of local nodeifactor {
 		_nwergm_numvar `__ergm_v' nodeifactor
 		local ++__ergm_termidx
-		tempname __td_nif`__ergm_termidx'
+		local __td_nif`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
 		mata: `__td_nif`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
 		mata: `__td_nif`__ergm_termidx''.levels = uniqrows(`__td_nif`__ergm_termidx''.attr)
@@ -3206,7 +3208,7 @@ program nwergm_simulate
 	}
 
 	if "`kstar'" != "" {
-		tempname __td_kstar
+		local __td_kstar "__netds_`++__nes_n'"
 		mata: `__td_kstar' = ErgmTermData()
 		mata: `__td_kstar'.levels = strtoreal(tokens("`kstar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_kstar'.levels)))
@@ -3219,7 +3221,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_kstar'"
 	}
 	if "`ostar'" != "" {
-		tempname __td_ostar
+		local __td_ostar "__netds_`++__nes_n'"
 		mata: `__td_ostar' = ErgmTermData()
 		mata: `__td_ostar'.levels = strtoreal(tokens("`ostar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_ostar'.levels)))
@@ -3232,7 +3234,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ostar'"
 	}
 	if "`istar'" != "" {
-		tempname __td_istar
+		local __td_istar "__netds_`++__nes_n'"
 		mata: `__td_istar' = ErgmTermData()
 		mata: `__td_istar'.levels = strtoreal(tokens("`istar'"))'
 		mata: st_local("__ergm_nk", strofreal(rows(`__td_istar'.levels)))
@@ -3261,7 +3263,7 @@ program nwergm_simulate
 				error 198
 			}
 		}
-		tempname __td_dr
+		local __td_dr "__netds_`++__nes_n'"
 		mata: `__td_dr' = ErgmTermData()
 		mata: `__td_dr'.levelpairs = strtoreal(tokens("`degrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -3288,7 +3290,7 @@ program nwergm_simulate
 				error 198
 			}
 		}
-		tempname __td_odr
+		local __td_odr "__netds_`++__nes_n'"
 		mata: `__td_odr' = ErgmTermData()
 		mata: `__td_odr'.levelpairs = strtoreal(tokens("`odegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -3315,7 +3317,7 @@ program nwergm_simulate
 				error 198
 			}
 		}
-		tempname __td_idr
+		local __td_idr "__netds_`++__nes_n'"
 		mata: `__td_idr' = ErgmTermData()
 		mata: `__td_idr'.levelpairs = strtoreal(tokens("`idegrange'"))' , strtoreal(tokens("`__ergm_dto'"))'
 		local __ergm_cnames ""
@@ -3329,7 +3331,7 @@ program nwergm_simulate
 
 	if "`esp'" != "" {
 		local __ergm_nd : word count `esp'
-		tempname __td_esp
+		local __td_esp "__netds_`++__nes_n'"
 		mata: `__td_esp' = ErgmTermData()
 		mata: `__td_esp'.levels = strtoreal(tokens("`esp'"))'
 		if "`directed'" != "" {
@@ -3345,7 +3347,7 @@ program nwergm_simulate
 	}
 	if "`dsp'" != "" {
 		local __ergm_nd : word count `dsp'
-		tempname __td_dsp2
+		local __td_dsp2 "__netds_`++__nes_n'"
 		mata: `__td_dsp2' = ErgmTermData()
 		mata: `__td_dsp2'.levels = strtoreal(tokens("`dsp'"))'
 		if "`directed'" != "" {
@@ -3361,14 +3363,14 @@ program nwergm_simulate
 	}
 
 	if "`transitiveties'" != "" {
-		tempname __td_tt
+		local __td_tt "__netds_`++__nes_n'"
 		mata: `__td_tt' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("transitiveties", 1, &stat_transitiveties(), &change_transitiveties(), `__td_tt', ("transitiveties"))
 		local ntermtok "`ntermtok' transitiveties"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_tt'"
 	}
 	if "`cyclicalties'" != "" {
-		tempname __td_ct
+		local __td_ct "__netds_`++__nes_n'"
 		mata: `__td_ct' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("cyclicalties", 1, &stat_cyclicalties(), &change_cyclicalties(), `__td_ct', ("cyclicalties"))
 		local ntermtok "`ntermtok' cyclicalties"
@@ -3385,7 +3387,7 @@ program nwergm_simulate
 	// reusing stat_nodeofactor()/stat_nodeifactor() with no new Mata code,
 	// exactly as the estimation path does.
 	if "`sender'" != "" {
-		tempname __td_send
+		local __td_send "__netds_`++__nes_n'"
 		mata: `__td_send' = ErgmTermData()
 		mata: `__td_send'.attr = (1::`nodes')
 		mata: `__td_send'.levels = (2::`nodes')
@@ -3398,7 +3400,7 @@ program nwergm_simulate
 		local __ergm_matatemps "`__ergm_matatemps' `__td_send'"
 	}
 	if "`receiver'" != "" {
-		tempname __td_recv
+		local __td_recv "__netds_`++__nes_n'"
 		mata: `__td_recv' = ErgmTermData()
 		mata: `__td_recv'.attr = (1::`nodes')
 		mata: `__td_recv'.levels = (2::`nodes')
@@ -3419,7 +3421,7 @@ program nwergm_simulate
 	local __ergm_termidx = 0
 	foreach __ergm_v of local edgecov {
 		local ++__ergm_termidx
-		tempname __td_ec`__ergm_termidx'
+		local __td_ec`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
 		_nwsyntax `__ergm_v', max(1) other(ec`__ergm_termidx')
 		if `ec`__ergm_termidx'nodes' != `nodes' {
@@ -3434,7 +3436,7 @@ program nwergm_simulate
 	local __ergm_termidx = 0
 	foreach __ergm_v of local hamming {
 		local ++__ergm_termidx
-		tempname __td_hm`__ergm_termidx'
+		local __td_hm`__ergm_termidx' "__netds_`++__nes_n'"
 		mata: `__td_hm`__ergm_termidx'' = ErgmTermData()
 		_nwsyntax `__ergm_v', max(1) other(hm`__ergm_termidx')
 		if `hm`__ergm_termidx'nodes' != `nodes' {
