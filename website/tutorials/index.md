@@ -1,6 +1,6 @@
 ---
 title: Tutorials
-nav_order: 2
+nav_order: 3
 has_children: true
 description: "Worked, step-by-step tutorials for nwcommands, with real Stata output."
 ---

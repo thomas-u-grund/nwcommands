@@ -46,6 +46,20 @@ Every command works alongside ordinary Stata variables — a network can be load
 variables when you want to, but this is opt-in, not automatic, so building and analyzing a
 network never has to spend Stata's own variable budget unless you ask it to.
 
+## The packages
+
+nwcommands is a family of packages. The core handles networks in Stata; the statistical models are separate
+GPL-3 packages that build on it. Each has its own section in the menu on the left, with installation notes, a
+comparison with the R package it follows, and worked tutorials.
+
+| Package | What it does | Section |
+|---|---|---|
+| **nwcommands** (core, 3.0.0) | Import, generate, describe, analyze and visualize networks; 130+ commands and dialog boxes | [nwcommands](nwcommands/), [Tutorials](tutorials/), [Command reference](reference/) |
+| **nwsaom** (1.0.1) | Stochastic actor-oriented models for network panels (follows RSiena) | [nwsaom](nwsaom/) |
+| **nwergm** (1.0.1) | Exponential random graph models (follows statnet's ergm) | [nwergm](nwergm/) |
+| **nwdynam** (1.0.1) | Dynamic network actor models for event data (follows goldfish) | [nwdynam](nwdynam/) |
+| **nwrem** (1.0.1) | Relational event models (cross-checked with relevent) | [nwrem](nwrem/) |
+
 ## Installation
 
 The core, version 3.0.0:
