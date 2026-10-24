@@ -31,7 +31,7 @@ its correctness rests on numerical comparison with the R package.
   degree-accumulation semantics were checked against the output of relevent's `acl.deg()`.
 - **The comparison.** Coefficients and log likelihoods were compared with `rem.dyad()` of relevent 1.2-1 on identical simulated event
   sequences; they agree within the tolerances of the package's test scripts. See [Tutorial 3](../tutorial-3-comparing/) for how
-  the optimiser's starting point changes the fifth digit at most.
+  the optimizer's starting point changes the fifth digit at most.
 
 ## What differs
 

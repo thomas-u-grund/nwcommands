@@ -32,8 +32,10 @@ prefer similar others, ...), and it estimates how strong each rule is. The behav
 
 `nwsaom` is for people who work in Stata, or prefer it to R, and who are new to these models. The
 tutorials start from a plain-language explanation, then run a real command and read the real output.
-It does not aim to replace RSiena. RSiena is the reference implementation and the more complete
-program, and the page [nwsaom and RSiena](rsiena/) says exactly what `nwsaom` has and what it lacks.
+`nwsaom` follows the R package RSiena and is not a replacement for it: RSiena is the reference
+implementation and the more complete program, and the page [nwsaom and RSiena](rsiena/) says exactly what
+`nwsaom` has and what it lacks. `nwsaom` is not affiliated with or endorsed by the authors of RSiena;
+errors in `nwsaom` are the author's.
 
 ## Key facts
 

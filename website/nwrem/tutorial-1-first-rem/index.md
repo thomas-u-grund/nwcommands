@@ -138,7 +138,7 @@ specifications, as in [Tutorial 3](../tutorial-3-comparing/).
 
 - Fit `nwrem calls, frpsndsnd` alone, and then `nwrem calls, frrecsnd` alone.
 - Replace the shares by recency: `nwrem calls, rsndsnd rrecsnd` asks whether the *most recent* partners are the ones returned to.
-- Add `seed(1)` to any call; it only decides which optimiser restart is tried first and never changes a converged result.
+- Add `seed(1)` to any call; it only decides which optimizer restart is tried first and never changes a converged result.
 
 ## Next
 

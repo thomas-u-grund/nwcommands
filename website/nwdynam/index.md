@@ -30,9 +30,10 @@ goldfish to Stata and is part of the nwcommands family of packages.
 ## Who it is for
 
 `nwdynam` is for people who work in Stata, or prefer it to R, and who have a stream of timed events
-between actors. It does not aim to replace goldfish. goldfish is the reference implementation and the
-more complete program, and the page [nwdynam and goldfish](r-goldfish/) says what `nwdynam` has and what
-it lacks. For how a DyNAM differs from the other longitudinal models of the nwcommands family, see
+between actors. `nwdynam` follows the R package goldfish and is not a replacement for it: goldfish is the reference
+implementation and the more complete program, and the page [nwdynam and goldfish](r-goldfish/) says what `nwdynam` has and what
+it lacks. `nwdynam` is not affiliated with or endorsed by the authors of goldfish; errors in `nwdynam` are
+the author's. For how a DyNAM differs from the other longitudinal models of the nwcommands family, see
 [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/); the sister package for
 the simpler relational event model is [nwrem](../nwrem/).
 
@@ -44,7 +45,7 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Effects | inertia, reciprocity, in- and out-degree, transitivity and other closure effects, covariate effects (same, diff, sim, ego, alter and more), windowed and weighted versions, a separate static network |
 | Networks | directed one-mode, undirected one-mode (coordination), two-mode (a narrow set of effects) |
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data and on small hand-built examples |
-| Engine | a compiled plugin for the likelihood and gradient (macOS, Linux, Windows); the optimisation runs in Mata |
+| Engine | a compiled plugin for the likelihood and gradient (macOS, Linux, Windows); the optimization runs in Mata |
 | Version | 1.0.1 (24 October 2026) |
 | License | GNU General Public License, version 3 |
 

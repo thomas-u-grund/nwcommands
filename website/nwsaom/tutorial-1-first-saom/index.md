@@ -42,7 +42,7 @@ nwsaom version 1.0.1, 24oct2026
 
 `nwwebuse` loads the three friendship networks `glasgow1`, `glasgow2` and `glasgow3` and the
 actor variables `smoke1`-`smoke3`, `alcohol1`-`alcohol3` and `sport1`-`sport3` into the current
-dataset. Always look at the data before modelling. `nwsaom describe` prints what RSiena prints
+dataset. Always look at the data before modeling. `nwsaom describe` prints what RSiena prints
 before an estimation:
 
 ```stata

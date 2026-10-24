@@ -37,7 +37,7 @@ Events: 10                             Log likelihood:   -3.9890
 ------------------------------------------------------------
 ```
 
-Three things in this output say "do not use": the message *flat region encountered* from the optimiser, coefficients of
+Three things in this output say "do not use": the message *flat region encountered* from the optimizer, coefficients of
 -17 and -20 that are about as far from zero as a log odds can sensibly get, and standard errors in the thousands.
 With three actors, a caller has only two possible choices; if some effect (here `inertia` and `indeg`)
 happens to predict the observed choices perfectly or never, the likelihood has no maximum and the

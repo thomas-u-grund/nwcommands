@@ -8,7 +8,7 @@ description: "Compare relational event models fitted with nwrem by log likelihoo
 # Tutorial 3: Comparing specifications
 
 **Goal.** Choose between several relational event models for the same events, check that the estimates do not depend on the
-starting point of the optimiser, and know what `nwrem` does not do.
+starting point of the optimizer, and know what `nwrem` does not do.
 
 **Data.** The 439 phone calls among 84 students of [Tutorial 1](../tutorial-1-first-rem/) (the data files: [events](../data/calls_events.csv), [actors](../data/calls_actors.csv)). You need
 the core `nwcommands` and `nwrem` (see [Install](../install/)); the commands were run with `nwrem` 1.0.1 and the core 3.0.0.
@@ -82,7 +82,7 @@ The number of events is `N`, but the events are not independent draws in the usu
 
 The help file warns that degree effects are running shares that become more alike over the log, and that several of them in one
 model can form a nearly flat ridge in the likelihood. Check this for the most crowded model by changing the `seed()`, which
-decides which restart of the optimiser is tried first:
+decides which restart of the optimizer is tried first:
 
 ```stata
 . nwrem calls, nodsnd nidrec frpsndsnd frrecsnd seed(1)
@@ -101,7 +101,7 @@ decides which restart of the optimiser is tried first:
 ```
 
 The two fits agree to four digits, so this model is well determined by these data. (The estimates in the earlier tutorials differ from these in the
-fifth digit, which is the tolerance of the optimiser.) If your own model changes visibly with the seed while the log likelihood stays
+fifth digit, which is the tolerance of the optimizer.) If your own model changes visibly with the seed while the log likelihood stays
 about the same, you are on the ridge: do not interpret the individual degree coefficients, and prefer a simpler model or more events.
 
 ## What `nwrem` refuses
