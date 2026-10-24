@@ -219,7 +219,7 @@ over a different node set, `_nwdatasync netname` puts the rows back into `netnam
 ## Work on `develop`, not on whatever branch is checked out (check first!)
 
 Feature work (nwsaom, nwergm, nwrem, nwdynam, native plugins, tests, help files) happens on
-**`develop`**, which the owner later merges into `master` (the release branch). Other branches
+**`develop`**, which the owner later merges into `main` (the release branch; `master` is an automatically synced copy kept for older links). Other branches
 (for example `website-docs`) are task branches that can be many commits BEHIND `develop`.
 On 2026-10-21 a whole session of nwsaom work was done on `website-docs`, 38 commits behind
 `develop`, and mostly had to be discarded because `develop` already had it (varlist covariates,
@@ -233,7 +233,7 @@ Before the first edit of a session:
 2. Docs under `docs/` are gitignored and shared, so they describe `develop`'s state even when your
    checkout is older. If they name a function, option or commit that `grep`/`git cat-file` cannot
    find in your checkout, you are on the wrong branch.
-3. Commit to `develop` only. Never commit to or merge into `master` unless explicitly asked.
+3. Commit to `develop` only. Never commit to or merge into `main` (or `master`) unless explicitly asked; the release is done with `promote.sh`.
 4. A stale plugin in Stata's PLUS folder shadows the repo build (see GOTCHA.md): test a rebuilt
    plugin through a scratch `adopath`.
 

@@ -7,7 +7,7 @@
 * now-dead nwcommands.org host to this project's own new GitHub repository
 * (raw.githubusercontent.com), resolving a gap previously logged in
 * docs/CERTIFICATION.md's own Pending list ("nwcommands.org's own data host
-* is dead"). Points at the "master" branch (the current, tested release
+* is dead"). Points at the "main" branch (the current, tested release
 * branch users are told to install from) - a user can still override via
 * `nwwebuse set <path>` at any time, and `$nwwebpath` remains the single,
 * centralized place this would need to change again (e.g. to a
@@ -47,14 +47,14 @@ program nwwebuse
 
 	if "`subcommand'" != "set" {
 		if "`thispath'" == "" | "`thispath'" == "\" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data"
 		}
 	}
 
 	if "`subcommand'" == "set" {
 		local subcmd2 = word("`anything'",2)
 		if  "`subcmd2'" == "" {
-			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data"
+			global nwwebpath = "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data"
 		}
 		else {
 			global nwwebpath = word("`anything'",2)

@@ -16,6 +16,7 @@ on:
     # ever, despite native/*.c having changed across many commits on
     # develop since this workflow was added).
     branches: [develop, main, master]
+    # The rebuilt binaries are committed back on develop only; main and master receive them by merge/sync.
     paths:
       - "native/**"
       - ".github/workflows/build-plugins.yml"
@@ -134,7 +135,7 @@ jobs:
 
   commit-binaries:
     needs: [macos, windows, linux]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

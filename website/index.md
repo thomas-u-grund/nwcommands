@@ -45,7 +45,7 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 {: #install-in-three-steps }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
 . net install nwcommands
 . nwinstall, all
 ```

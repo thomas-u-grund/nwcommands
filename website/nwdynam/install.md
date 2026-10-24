@@ -13,7 +13,7 @@ description: "Install nwdynam for Stata: the core nwcommands first, then the nwd
 ## 1. The core
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
 . net install nwcommands
 . nwinstall, all
 ```

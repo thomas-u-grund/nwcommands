@@ -148,7 +148,7 @@ dataset already had:
 
 . describe
 
-Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/florentine.nwdta
+Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/florentine.nwdta
  Observations:            16                  
     Variables:             6                  16 May 2019 17:02
 ------------------------------------------------------------------------------------------------------------------
