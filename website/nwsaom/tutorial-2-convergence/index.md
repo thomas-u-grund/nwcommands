@@ -7,7 +7,7 @@ description: "How to read the convergence diagnostics of nwsaom and what to do w
 
 # Tutorial 2: Reading convergence, and what to do when it fails
 
-**Goal.** Recognise a model that has not converged, restart it from its own estimates, and
+**Goal.** Recognize a model that has not converged, restart it from its own estimates, and
 test hypotheses about the coefficients afterwards.
 
 **Data.** The Glasgow friendship data again (`nwwebuse glasgow, nwclear`); see

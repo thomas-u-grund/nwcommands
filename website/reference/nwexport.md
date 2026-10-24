@@ -1,6 +1,7 @@
 ---
 title: "nwexport"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Export network as Pajek or Ucinet file"

@@ -1,0 +1,230 @@
+
+. * nwergm tutorial 4: missing data and comparing models
+. * Requires the core nwcommands and the package nwergm.
+. 
+. * ---- missing dyads: blank out three marriages of the Florentine families
+. nwwebuse florentine, nwclear
+
+. nwtomata flomarriage, mat(A)
+
+. mata: A[1,2] = A[2,1] = .
+
+. mata: A[3,5] = A[5,3] = .
+
+. mata: A[4,9] = A[9,4] = .
+
+. mata: st_matrix("Am", A)
+
+. tempfile nodes
+
+. save `nodes'
+file /var/folders/hx/2zp2k5ps2y7d_6hx015fcr1h0000gn/T//S_03586.000001 saved as .dta format
+
+. nwset, mat(Am) undirected name(flomiss)
+
+. use `nodes', clear
+
+. 
+. nwergm flomarriage, edges nodecov(wealth)
+
+Exponential-family random graph model
+
+Network:               =  flomarriage
+Nodes:                 =  16
+Ties:                  =  20
+Directed:              =  No
+Estimation:            =  MPLE
+
+--------------------------------------------------------------------------------
+   flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |  -2.594929   .5360561    -4.84   0.000     -3.64558   -1.544278
+nodecov_wealth |   .0105459   .0046743     2.26   0.024     .0013845    .0197073
+--------------------------------------------------------------------------------
+
+Maximum pseudolikelihood estimate (not full ERGM maximum likelihood unless the model is dyad-independent).
+
+             Null Deviance:     166.4  on 120 degrees of freedom
+         Residual Deviance:     103.1  on 118 degrees of freedom
+
+Log-likelihood:   -51.5543 (df = 2)   AIC:     107.1   BIC:     112.7   (MC std. err. =       0)
+
+. nwergm flomiss, edges nodecov(wealth)
+Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)likelihood and handled as in R's ergm (mi
+> ssing-data MCMLE).
+
+Exponential-family random graph model
+
+Network:               =  flomiss
+Nodes:                 =  16
+Ties:                  =  19
+Directed:              =  No
+Estimation:            =  MPLE
+
+--------------------------------------------------------------------------------
+       flomiss | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |  -2.692927    .552001    -4.88   0.000    -3.774829   -1.611025
+nodecov_wealth |   .0111924   .0047613     2.35   0.019     .0018604    .0205244
+--------------------------------------------------------------------------------
+
+Maximum pseudolikelihood estimate (not full ERGM maximum likelihood unless the model is dyad-independent).
+
+             Null Deviance:     162.2  on 117 degrees of freedom
+         Residual Deviance:      98.3  on 115 degrees of freedom
+
+Log-likelihood:   -49.1649 (df = 2)   AIC:     102.3   BIC:     107.9   (MC std. err. =       0)
+
+. display "missing dyads: " e(nmissing) "   informative dyads: " e(N)
+missing dyads: 3   informative dyads: 117
+
+. nwergm flomiss, edges nodecov(wealth) gwesp(0.5) seed(1)
+Note: network flomiss has 3 missing dyad(s); they are excluded from the (pseudo)likelihood and handled as in R's ergm (mi
+> ssing-data MCMLE).
+
+Exponential-family random graph model
+
+Network:               =  flomiss
+Nodes:                 =  16
+Ties:                  =  19
+Directed:              =  No
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+--------------------------------------------------------------------------------
+       flomiss | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |  -2.720961   .5657285    -4.81   0.000    -3.829769   -1.612154
+nodecov_wealth |   .0109066   .0051222     2.13   0.033     .0008673     .020946
+     gwesp_0.5 |   .0439604   .2876392     0.15   0.879     -.519802    .6077229
+--------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:     162.2  on 117 degrees of freedom
+         Residual Deviance:      98.3  on 114 degrees of freedom
+
+Log-likelihood:   -49.1501 (df = 3)   AIC:     104.3   BIC:     112.6   (MC std. err. =   .0008)
+
+. display "missing dyads: " e(nmissing) "   informative dyads: " e(N)
+missing dyads: 3   informative dyads: 117
+
+. 
+. * ---- comparing models for the Lazega friendship network
+. nwwebuse lazega, nwclear
+
+. encode practice, generate(prac)
+
+. nwergm lazega_fr, edges mutual nodematch(prac) seed(1) mcmcinterval(1000) mcmcburnin(20000)
+
+Exponential-family random graph model
+
+Network:               =  lazega_fr
+Nodes:                 =  71
+Ties:                  =  575
+Directed:              =  Yes
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+--------------------------------------------------------------------------------
+     lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |  -2.738682   .0826148   -33.15   0.000    -2.900604    -2.57676
+        mutual |   .9914678    .154956     6.40   0.000     .6877596    1.295176
+nodematch_prac |   .9011504   .0942444     9.56   0.000     .7164347    1.085866
+--------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:    6889.9  on 4970 degrees of freedom
+         Residual Deviance:    3404.9  on 4967 degrees of freedom
+
+Log-likelihood: -1702.4691 (df = 3)   AIC:    3410.9   BIC:    3430.5   (MC std. err. =  .05116)
+
+. estimates store m1
+
+. nwergm lazega_fr, edges mutual nodematch(prac) gwesp(0.5) seed(1) mcmcinterval(1000) mcmcburnin(20000)
+
+Exponential-family random graph model
+
+Network:               =  lazega_fr
+Nodes:                 =  71
+Ties:                  =  575
+Directed:              =  Yes
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+--------------------------------------------------------------------------------
+     lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |   -3.48324   .1093771   -31.85   0.000    -3.697615   -3.268865
+        mutual |   .8028959   .1655745     4.85   0.000     .4783759    1.127416
+nodematch_prac |   .6967167   .0820735     8.49   0.000     .5358556    .8575778
+     gwesp_0.5 |   .4988006   .0614886     8.11   0.000     .3782851    .6193161
+--------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:    6889.9  on 4970 degrees of freedom
+         Residual Deviance:    3341.9  on 4966 degrees of freedom
+
+Log-likelihood: -1670.9667 (df = 4)   AIC:    3349.9   BIC:    3376.0   (MC std. err. =  .09969)
+
+. estimates store m2
+
+. estat ic
+
+Akaike's information criterion and Bayesian information criterion
+
+-----------------------------------------------------------------------------
+       Model |        N     ll(null)    ll(model)    df       AIC       BIC
+-------------+---------------------------------------------------------------
+   lazega_fr |     4970      -3444.9        -1671     4    3349.9      3376
+-----------------------------------------------------------------------------
+Note: BIC uses N = number of informative dyads; MC std. err. of the log-likelihood =  .09969
+
+. estimates stats m1 m2
+
+Akaike's information criterion and Bayesian information criterion
+
+-----------------------------------------------------------------------------
+       Model |          N   ll(null)  ll(model)      df        AIC        BIC
+-------------+---------------------------------------------------------------
+          m1 |      4,970  -3444.941  -1702.469       3   3410.938   3430.472
+          m2 |      4,970  -3444.941  -1670.967       4   3349.933   3375.978
+-----------------------------------------------------------------------------
+Note: BIC uses N = number of observations. See [R] IC note.
+
+. lrtest m2 m1
+
+Likelihood-ratio test
+Assumption: m1 nested within m2
+
+ LR chi2(1) =  63.00
+Prob > chi2 = 0.0000
+
+. 
+. * ---- predicted tie probabilities
+. predict, frame(pp) pr
+(frame pp contains one row per informative dyad: tail, head, p = conditional tie probability)
+
+. frame pp: summarize p
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+           p |      4,970    .1149874    .0917936   .0297929   .8006354
+
+. frame pp: list in 1/5
+
+     +-------------------------+
+     | tail   head           p |
+     |-------------------------|
+  1. |    1      2   .02979288 |
+  2. |    1      3   .35583197 |
+  3. |    1      4   .10142015 |
+  4. |    1      5    .3056845 |
+  5. |    1      6   .03602065 |
+     +-------------------------+

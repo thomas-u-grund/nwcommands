@@ -1,6 +1,7 @@
 ---
 title: "nwpreserve"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Preserve and restore network data"

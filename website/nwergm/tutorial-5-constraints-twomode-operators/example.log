@@ -1,0 +1,231 @@
+
+. * nwergm tutorial 5: constraints, two-mode networks and operators
+. * Requires the core nwcommands and the package nwergm.
+. 
+. * ---- a constraint: keep the number of ties fixed
+. nwwebuse florentine, nwclear
+
+. nwergm flomarriage, edges nodecov(wealth) gwesp(0.5) seed(1)
+
+Exponential-family random graph model
+
+Network:               =  flomarriage
+Nodes:                 =  16
+Ties:                  =  20
+Directed:              =  No
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+--------------------------------------------------------------------------------
+   flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |  -2.605989   .5516758    -4.72   0.000    -3.687253   -1.524724
+nodecov_wealth |   .0106207   .0049005     2.17   0.030     .0010159    .0202256
+     gwesp_0.5 |  -.0110212   .2695755    -0.04   0.967    -.5393795    .5173372
+--------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:     166.4  on 120 degrees of freedom
+         Residual Deviance:     103.1  on 117 degrees of freedom
+
+Log-likelihood:   -51.5556 (df = 3)   AIC:     109.1   BIC:     117.5   (MC std. err. =  .00137)
+
+. nwergm flomarriage, edges nodecov(wealth) gwesp(0.5) constraints(edges) seed(1)
+Note: the specified model's sample space constraint holds statistic(s) edges constant. They will be ignored.
+
+Exponential-family random graph model
+
+Network:               =  flomarriage
+Nodes:                 =  16
+Ties:                  =  20
+Directed:              =  No
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+--------------------------------------------------------------------------------
+   flomarriage | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+---------------+----------------------------------------------------------------
+         edges |          0  (omitted)
+nodecov_wealth |   .0101067   .0049302     2.05   0.040     .0004436    .0197698
+     gwesp_0.5 |   .0416532    .269677     0.15   0.877     -.486904    .5702104
+--------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:     166.4  on 120 degrees of freedom
+         Residual Deviance:     110.6  on 118 degrees of freedom
+
+Log-likelihood:   -55.3094 (df = 2)   AIC:     114.6   BIC:     120.2   (MC std. err. =  .03135)
+
+. 
+. * ---- a two-mode network: 30 people by 12 clubs (simulated for this tutorial)
+. clear
+
+. set seed 20261024
+
+. nwclear
+
+. mata:
+------------------------------------------------- mata (type end to exit) -----------------------------------------------
+: g1 = (runiform(30,1) :> 0.5) :+ 1
+
+: g2 = (runiform(12,1) :> 0.5) :+ 1
+
+: P = J(30,12,0.08)
+
+: for (i=1;i<=30;i++) for (j=1;j<=12;j++) if (g1[i]==g2[j]) P[i,j] = 0.30
+> B = (runiform(30,12) :< P)
+
+: st_matrix("B", B')
+
+: end
+-------------------------------------------------------------------------------------------------------------------------
+
+. nwset, mat(B) bipartite name(clubs)
+
+. set obs 42
+Number of observations (_N) was 42, now 42.
+
+. generate byte kind = .
+(42 missing values generated)
+
+. mata: st_store(., "kind", (g1 \ g2))
+
+. nwsummarize
+--------------------------------------------------
+   Network name:  clubs
+   Network id:  1
+   Directed: false
+   Valued: false
+   Two-mode: true
+   Nodes: 42
+      Level 1: 30 ()
+      Level 2: 12 ()
+   Selfloop: false
+   Edges: 71
+   Minimum value:  0
+   Maximum value:  1
+   Density:  .197
+   Temporal: false
+
+. nwergm clubs, edges nodemix(kind)
+
+Exponential-family random graph model
+
+Network:               =  clubs
+Nodes:                 =  42
+Ties:                  =  71
+Directed:              =  No
+Estimation:            =  MPLE
+
+----------------------------------------------------------------------------------
+           clubs | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+           edges |  -.7563261   .1787266    -4.23   0.000    -1.106624   -.4060283
+nodemix_kind_2_1 |  -1.512357   .3931267    -3.85   0.000    -2.282872   -.7418434
+nodemix_kind_1_2 |  -2.379168   .6162542    -3.86   0.000    -3.587004   -1.171332
+nodemix_kind_2_2 |  -.2340726   .3707259    -0.63   0.528    -.9606821    .4925369
+----------------------------------------------------------------------------------
+
+Maximum pseudolikelihood estimate (not full ERGM maximum likelihood unless the model is dyad-independent).
+
+             Null Deviance:     499.1  on 360 degrees of freedom
+         Residual Deviance:     321.2  on 356 degrees of freedom
+
+Log-likelihood:  -160.5841 (df = 4)   AIC:     329.2   BIC:     344.7   (MC std. err. =       0)
+
+. nwergm clubs, edges nodemix(kind) bgwdegree2(0.5) seed(1)
+
+Exponential-family random graph model
+
+Network:               =  clubs
+Nodes:                 =  42
+Ties:                  =  71
+Directed:              =  No
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+----------------------------------------------------------------------------------
+           clubs | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+           edges |  -.7193805   .1700763    -4.23   0.000    -1.052724   -.3860371
+nodemix_kind_2_1 |  -1.508956   .3994583    -3.78   0.000     -2.29188   -.7260322
+nodemix_kind_1_2 |  -2.281624   .6240499    -3.66   0.000    -3.504739   -1.058508
+nodemix_kind_2_2 |  -.0955488   .3818886    -0.25   0.802    -.8440367    .6529391
+  bgwdegree2_0.5 |  -1.780811   1.446186    -1.23   0.218    -4.615284    1.053662
+----------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:     499.1  on 360 degrees of freedom
+         Residual Deviance:     320.7  on 355 degrees of freedom
+
+Log-likelihood:  -160.3273 (df = 5)   AIC:     330.7   BIC:     350.1   (MC std. err. =  .02951)
+
+. 
+. * ---- operators (development version): terms evaluated on a derived network
+. nwergm clubs, edges nodemix(kind) operators(Proj1(edges triangle)) seed(1)
+
+Exponential-family random graph model
+
+Network:               =  clubs
+Nodes:                 =  42
+Ties:                  =  71
+Directed:              =  No
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+----------------------------------------------------------------------------------
+           clubs | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-----------------+----------------------------------------------------------------
+           edges |  -1.139001    .379029    -3.01   0.003    -1.881884   -.3961175
+nodemix_kind_2_1 |  -1.723024   .4929781    -3.50   0.000    -2.689243   -.7568042
+nodemix_kind_1_2 |  -2.436596   .6572586    -3.71   0.000    -3.724799   -1.148393
+nodemix_kind_2_2 |  -.2391259   .4489509    -0.53   0.594    -1.119054    .6408018
+     Proj1~edges |   .1819743    .186709     0.97   0.330    -.1839686    .5479173
+  Proj1~triangle |  -.0118757   .0252019    -0.47   0.637    -.0612706    .0375191
+----------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:     499.1  on 360 degrees of freedom
+         Residual Deviance:     319.6  on 354 degrees of freedom
+
+Log-likelihood:  -159.7977 (df = 6)   AIC:     331.6   BIC:     354.9   (MC std. err. =  .03068)
+
+. nwwebuse lazega, nwclear
+
+. encode practice, generate(prac)
+
+. nwergm lazega_fr, edges mutual nodematch(prac) operators(Symmetrize(triangle, rule(strong))) seed(1)
+
+Exponential-family random graph model
+
+Network:               =  lazega_fr
+Nodes:                 =  71
+Ties:                  =  575
+Directed:              =  Yes
+Estimation:            =  MCMLE
+MCMC sample size:      =  3000
+
+---------------------------------------------------------------------------------------------
+                  lazega_fr | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------------------+----------------------------------------------------------------
+                      edges |  -2.753317   .0810188   -33.98   0.000    -2.912111   -2.594523
+                     mutual |   .9896271   .1824762     5.42   0.000     .6319803    1.347274
+             nodematch_prac |   .9098446   .0939548     9.68   0.000     .7256965    1.093993
+Symmetrize(strong)~triangle |   1.017895    .271825     3.74   0.000     .4851273    1.550662
+---------------------------------------------------------------------------------------------
+
+MCMLE converged after 1 iteration(s).
+Evaluating log-likelihood at the estimate (bridge sampling with 16 bridges) ...
+
+             Null Deviance:    6889.9  on 4970 degrees of freedom
+         Residual Deviance:    3406.9  on 4966 degrees of freedom
+
+Log-likelihood: -1703.4419 (df = 4)   AIC:    3414.9   BIC:    3440.9   (MC std. err. =  .02772)

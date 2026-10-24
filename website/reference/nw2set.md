@@ -1,6 +1,7 @@
 ---
 title: "nw2set"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Declare data to be two-mode network data"

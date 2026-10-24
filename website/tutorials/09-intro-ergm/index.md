@@ -1,7 +1,7 @@
 ---
 title: "Intro to ERGM in Stata"
-parent: Tutorials
-nav_order: 9
+parent: "nwergm (ERGM)"
+nav_order: 2.5
 description: "Exponential-family random graph models with the nwergm package: a first model, missing data, information criteria and goodness of fit."
 ---
 
@@ -193,7 +193,7 @@ After an MCMC fit, `estat mcmcdiag` reports diagnostics of the simulation itself
 
 ## Where to go from here
 
-`nwergm` follows R's `ergm` closely: besides the terms above it has homophily and mixing terms
+`nwergm` follows the R package `ergm` closely: besides the terms above it has homophily and mixing terms
 (`nodematch()`, `nodefactor()`, `nodemix()`), degree and star terms, directed and two-mode
 variants, curved terms with an estimated decay (`gwespfree()`), constraints, `predict`, and the
 handling of missing dyads (they are dropped from the likelihood, as in R). See the

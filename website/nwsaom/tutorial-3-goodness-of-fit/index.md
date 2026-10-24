@@ -136,7 +136,7 @@ All three statistics are now within what the model can produce.
 
 ![Geodesic distribution, better model](gof_final_geodesic.png)
 
-The red line follows the centre of the simulated distributions, including the large "NR" category
+The red line follows the center of the simulated distributions, including the large "NR" category
 (pairs without a path between them). Three remarks on this model:
 
 - The clustering is carried by `gwesp_.69` (3.28, z = 2.5); with it in the model `transtrip` is

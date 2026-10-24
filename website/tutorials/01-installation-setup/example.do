@@ -1,11 +1,10 @@
 * Tutorial 1: Installation & Setup
-* Run from a clean directory with no local nwcommands checkout on adopath,
-* to capture the real experience of installing from scratch.
+* The installation commands from the tutorial. They download from GitHub
+* and change your Stata installation, so run them once, on purpose.
 
 net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
 net install nwcommands
 nwinstall, all
 
-which nwinstall
-which nwdegree
-ado dir nwcommands
+* Check what is installed
+nwversion

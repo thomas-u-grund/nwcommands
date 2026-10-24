@@ -22,7 +22,7 @@ and the more complete program.
   compared with `siena07`.
 - **The algorithm and the defaults.** Method of moments by Robbins-Monro stochastic approximation in
   three phases, conditional estimation for one network, the same starting values, the same convergence
-  rule (all t-ratios below 0.1, overall maximum ratio below 0.25), centred covariates.
+  rule (all t-ratios below 0.1, overall maximum ratio below 0.25), centered covariates.
 - **The output.** Coefficients, rates and convergence statistics as in RSiena; the option `detail`
   prints RSiena's names of the effects.
 - **The postestimation tools:** goodness of fit, score tests, time-heterogeneity test, relative importance.

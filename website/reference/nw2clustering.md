@@ -1,6 +1,7 @@
 ---
 title: "nw2clustering"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Clustering coefficient (transitivity) of a two-mode network"

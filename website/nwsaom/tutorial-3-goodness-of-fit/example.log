@@ -1,0 +1,155 @@
+-------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-3-goodness-of-fit/example.log
+  log type:  text
+ opened on:  24 Oct 2026, 19:44:27
+
+. * nwsaom tutorial 3: goodness of fit and fixing a poor model
+. * Requires the core nwcommands and the package nwsaom.
+. 
+. nwwebuse glasgow, nwclear
+
+. 
+. * A deliberately thin model
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+glasgow1_t~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   outdegree |  -2.378798   .1097313   -21.68   0.000    -2.593868   -2.163729
+ reciprocity |   2.860568     .18893    15.14   0.000     2.490272    3.230864
+------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    5.7818     4.5006 
+          se |    0.9153     0.6716 
+Overall maximum convergence ratio: 0.054 (good; all t-ratios below 0.1)
+
+. estat gof, nsim(100) seed(7)
+
+Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
+------------------------------------------------------------
+Outdegree     | Mahalanobis dist. =    5.875   p =  0.550 (no evidence against fit)
+Indegree      | Mahalanobis dist. =    8.594   p =  0.370 (no evidence against fit)
+Geodesic      | Mahalanobis dist. =  209.758   p =  0.000 (evidence AGAINST fit)
+------------------------------------------------------------
+p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic
+
+. graph export "gof_thin_geodesic.png", name(gof_geodesic) width(900) replace
+file
+    .../
+    > /web2_wt/website/nwsaom/tutorial-3-goodness-of-fit/gof_thin_geodesic.png saved as PNG format
+
+. 
+. * Add transitive triplets and degree effects: better, but not enough
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity transtrip indegpopularity outactivity seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      outdegree |  -1.314935    .406812    -3.23   0.001    -2.112272   -.5175985
+    reciprocity |   2.277673   .2019793    11.28   0.000     1.881801    2.673545
+indegpopularity |  -.3762948   .2156656    -1.74   0.081    -.7989915     .046402
+    outactivity |  -.1522856   .0496435    -3.07   0.002     -.249585   -.0549861
+      transtrip |   .7932102   .0859546     9.23   0.000     .6247423    .9616781
+---------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    7.2036     5.5928 
+          se |    1.3031     0.9747 
+Overall maximum convergence ratio: 0.089 (good; all t-ratios below 0.1)
+
+. estat gof, nsim(100) seed(7)
+
+Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
+------------------------------------------------------------
+Outdegree     | Mahalanobis dist. =    3.318   p =  0.870 (no evidence against fit)
+Indegree      | Mahalanobis dist. =    6.876   p =  0.490 (no evidence against fit)
+Geodesic      | Mahalanobis dist. =   19.007   p =  0.000 (evidence AGAINST fit)
+------------------------------------------------------------
+p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic
+
+. 
+. * Add a smoother triadic closure effect (gwesp) and out-popularity
+. nwsaom, waves(glasgow1 glasgow2 glasgow3) outdegree reciprocity gwesp(.69) transtrip indegpopularity outactivity outpop
+> ularity seed(1)
+-------------------------------------------------------------------------------------------------------------------------
+SAOM (Method of Moments, conditional), waves: glasgow1 glasgow2 glasgow3
+Actors: 50                             Periods: 2
+-------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+glasgow1_to_g~3 | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+----------------+----------------------------------------------------------------
+      outdegree |  -1.250331   .5142486    -2.43   0.015     -2.25824   -.2424224
+    reciprocity |   2.865521   .3582165     8.00   0.000      2.16343    3.567613
+indegpopularity |  -.3861618   .5134133    -0.75   0.452    -1.392433    .6201099
+    outactivity |  -.1657485    .052155    -3.18   0.001    -.2679703   -.0635266
+      transtrip |   -.452402   .4809604    -0.94   0.347    -1.395067    .4902631
+      gwesp_.69 |   3.278733   1.322956     2.48   0.013     .6857865    5.871679
+  outpopularity |  -.3304203   .3708519    -0.89   0.373    -1.057277    .3964361
+---------------------------------------------------------------------------------
+Rate parameters (estimated, one per inter-wave period):
+
+             |   period1    period2 
+-------------+---------------------
+        rate |    6.8290     5.2721 
+          se |    1.2023     0.8919 
+Overall maximum convergence ratio: 0.150 (good; all t-ratios below 0.1)
+
+. estat gof, nsim(100) seed(7)
+
+Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
+------------------------------------------------------------
+Outdegree     | Mahalanobis dist. =    3.688   p =  0.830 (no evidence against fit)
+Indegree      | Mahalanobis dist. =    4.087   p =  0.790 (no evidence against fit)
+Geodesic      | Mahalanobis dist. =    8.904   p =  0.170 (no evidence against fit)
+------------------------------------------------------------
+p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+Violin plots: gof_outdegree gof_indegree gof_geodesic
+
+. graph export "gof_final_geodesic.png", name(gof_geodesic) width(900) replace
+file
+    .../
+    > /web2_wt/website/nwsaom/tutorial-3-goodness-of-fit/gof_final_geodesic.png saved as PNG format
+
+. 
+. * The triad census, and one test per period
+. estat gof, nsim(100) seed(7) stats(triad)
+
+Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (2 periods pooled)
+------------------------------------------------------------
+Triad         | Mahalanobis dist. =   90.343   p =  0.000 (evidence AGAINST fit)
+------------------------------------------------------------
+p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+Violin plots: gof_triad
+
+. estat gof, nsim(100) seed(7) stats(outdegree) join(off)
+
+Goodness of fit: Mahalanobis distance test, 100 simulations at the estimates (one test per period)
+------------------------------------------------------------
+Outdegree (period 1)    | Mahalanobis dist. =    3.863   p =  0.730 (no evidence against fit)
+Outdegree (period 2)    | Mahalanobis dist. =    7.579   p =  0.330 (no evidence against fit)
+------------------------------------------------------------
+p < 0.05: the observed statistic is unlikely under the fitted model (one-tailed test).
+Violin plots: gof_outdegree_p1 gof_outdegree_p2
+
+. log close
+      name:  <unnamed>
+       log:  .../
+> atchpad/web2_wt/website/nwsaom/tutorial-3-goodness-of-fit/example.log
+  log type:  text
+ closed on:  24 Oct 2026, 19:44:49
+-------------------------------------------------------------------------------------------------------------------------

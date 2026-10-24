@@ -1,6 +1,7 @@
 ---
 title: "nwrem"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwrem: relational event models (REM), in the separate nwrem package (GPL-3)."
@@ -8,7 +9,7 @@ description: "nwrem: relational event models (REM), in the separate nwrem packag
 
 # `nwrem`
 
-`nwrem` fits relational event models to a timestamped sequence of events by maximizing the ordinal partial likelihood, after R's `relevent`.
+`nwrem` fits relational event models to a timestamped sequence of events by maximizing the ordinal partial likelihood, after the R package `relevent`.
 
 `nwrem` is not part of the core `nwcommands`. It is a package of its own, released under the
 GNU General Public License, version 3, and it needs the core installed first.
@@ -38,4 +39,4 @@ A first model:
 . nwrem chat, nodsnd nidrec
 ```
 
-Tutorial: [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+Section: [nwrem](../nwrem/). First tutorial: [A first relational event model](../nwrem/tutorial-1-first-rem/). `nwrem` is written from Butts (2008) and cross-checked with the R package `relevent`; it is not a replacement for it.
