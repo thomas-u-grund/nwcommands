@@ -2,17 +2,16 @@
 title: "Command reference"
 parent: "nwcommands (core)"
 nav_order: 3
-has_children: true
+has_children: false
 ---
 
 # Command reference
 
 All nwcommands commands, grouped as in `help nwtopical`.
 
-The statistical network models `nwsaom`, `nwergm`, `nwdynam` and `nwrem` are separate GPL-3
-packages that build on the core (see [Installation & Setup](../tutorials/01-installation-setup/));
-their entries below are short pages with the package link and install line, and the complete
-syntax is in each package's own Stata help (`help nwsaom` etc.).
+`nwsaom`, `nwergm`, `nwdynam` and `nwrem` are not part of the core. They are separate GPL-3
+packages with their own sections (see the menu); the entries below only point to them. The
+complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ## Concepts
 
@@ -162,13 +161,11 @@ syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwrandomwalk`](nwrandomwalk) --- Mean random-walk hitting time to a target node
 - [`nwreach`](nwreach) --- Calculate reachability network
 
-### Statistical Estimation of Networks
+### Statistical Estimation of Networks (core)
 
 - [`nwcorrelate`](nwcorrelate) --- Correlate networks and variables
 - [`nwcug`](nwcug) --- Conditional Uniform Graph (CUG) test
-- [`nwergm`](nwergm) --- Exponential-family random graph model (ERGM) estimation (separate package)
 - [`nwqap`](nwqap) --- Multivariate QAP regression
-- [`nwsaom`](nwsaom) --- Stochastic actor-oriented model (SAOM) estimation between observed network waves (separate package)
 - [`nwutility`](nwutility) --- Calculate utility scores according to Jackson and Wollinsky (1996)
 
 ### Other Analysis Utilities
@@ -181,14 +178,17 @@ syntax is in each package's own Stata help (`help nwsaom` etc.).
 - [`nwturnover`](nwturnover) --- Tie turnover/stability between two waves of the same network
 - [`nwvalue`](nwvalue) --- Returns a tie value
 
-### Dynamic & Event-Based Models
-
-- [`nwdynam`](nwdynam) --- Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE; separate package)
-- [`nwrem`](nwrem) --- Relational event model (ordinal partial likelihood, MLE; separate package)
 
 ### Utility Commands
 
 - [`nwds`](nwds) --- List loaded networks, in the style of Stata's own `ds`
+
+## Model packages (separate, GPL-3)
+
+- [`nwsaom`](nwsaom) --- Stochastic actor-oriented models (SAOM) for network panels. Section: [nwsaom](../nwsaom/)
+- [`nwergm`](nwergm) --- Exponential random graph models (ERGM). Section: [nwergm](../nwergm/)
+- [`nwdynam`](nwdynam) --- Dynamic network actor models (DyNAM) for event data. Section: [nwdynam](../nwdynam/)
+- [`nwrem`](nwrem) --- Relational event models (REM) for event data. Section: [nwrem](../nwrem/)
 
 ## Utilities
 

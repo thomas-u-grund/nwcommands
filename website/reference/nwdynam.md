@@ -39,4 +39,4 @@ A first model:
 . nwdynam chat, submodel(rate)
 ```
 
-Tutorial: [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+Section: [nwdynam](../nwdynam/). First tutorial: [A first DyNAM](../nwdynam/tutorial-1-first-dynam/). `nwdynam` follows the R package `goldfish` and is not a replacement for it.

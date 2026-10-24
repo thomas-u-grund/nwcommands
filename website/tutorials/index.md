@@ -35,14 +35,15 @@ command directly, see the [command reference](../reference/).
 8. [Paths & Ego Networks](08-paths-ego-networks/) — geodesics, reachability, ego-network
    extraction
 
-## Statistical modeling
+## Longitudinal models
 
-9. [Intro to ERGM in Stata](09-intro-ergm/) — what an exponential-family random graph model is,
-   installing the `nwergm` package, a first model, information criteria and goodness of fit
-10. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — stochastic
-    actor-oriented models (`nwsaom`), relational event models (`nwrem`) and dynamic network actor
-    models (`nwdynam`), with their install steps
+9. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — a first look at
+   stochastic actor-oriented models (`nwsaom`), relational event models (`nwrem`) and dynamic network
+   actor models (`nwdynam`), with their install steps
 
-`nwsaom` has its own section with installation notes, six worked tutorials (a first model, convergence,
-goodness of fit, selection and influence, testing, maximum likelihood and Bayesian estimation) and a
-guide for RSiena users: see [nwsaom](../nwsaom/).
+## Statistical models
+
+The statistical models are separate packages with their own sections, each with installation notes,
+a comparison with the R package it follows and worked tutorials: [nwsaom](../nwsaom/) (SAOM),
+[nwergm](../nwergm/) (ERGM; the introduction to ERGM that used to be Tutorial 9 is now the first
+tutorial of that section), [nwdynam](../nwdynam/) (DyNAM) and [nwrem](../nwrem/) (REM).

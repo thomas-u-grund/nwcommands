@@ -39,4 +39,4 @@ A first model:
 . nwrem chat, nodsnd nidrec
 ```
 
-Tutorial: [Intro to Longitudinal Network Models](../tutorials/10-intro-longitudinal-models/).
+Section: [nwrem](../nwrem/). First tutorial: [A first relational event model](../nwrem/tutorial-1-first-rem/). `nwrem` is written from Butts (2008) and cross-checked with the R package `relevent`; it is not a replacement for it.

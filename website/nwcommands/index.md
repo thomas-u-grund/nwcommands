@@ -1,6 +1,6 @@
 ---
 title: "nwcommands (core)"
-nav_order: 2
+nav_order: 3
 has_children: true
 description: "The nwcommands core package: network import, generation, description, analysis and visualization in Stata."
 permalink: /nwcommands/
@@ -43,7 +43,7 @@ for a "Network Analysis" menu in Stata. `nwinstall, models` installs the four mo
 - **Structural analysis**: centrality, components, cliques, k-cores, cohesive subgroups, community
   detection, structural equivalence, QAP and more.
 - **Visualization**: static plots and network movies.
-- **Dialog boxes**: around 120 dialogs for nearly every command.
+- **Dialog boxes**: 120 dialogs for nearly every command.
 
 Every command works alongside ordinary Stata variables. Two backends, a sparse native Mata
 representation and compiled C kernels, are chosen automatically.

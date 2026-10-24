@@ -2,7 +2,7 @@
 
 **Version 3.0.0** (24 October 2026)
 
-Network analysis for Stata — over 120 commands for importing, generating, describing,
+Network analysis for Stata — 134 commands for importing, generating, describing,
 analyzing, and visualizing networks, alongside Stata's own regular
 data commands.
 
@@ -29,7 +29,7 @@ data commands.
   They are separate packages, so they are not part of the core: installing or updating `nwcommands`
   never replaces them.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
-- **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
+- **Dialog boxes**: 120 dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, gui` (or `db <command>` directly) — for
   users who prefer point-and-click to typing syntax.
 
@@ -47,7 +47,7 @@ variable budget unless you ask it to.
 ```
 
 The first two lines install just `nwinstall` itself and the landing help topics; `nwinstall,
-all` then downloads everything else — every command, all help files, and all ~120 dialog
+all` then downloads everything else — every command, all help files, and all 120 dialog
 boxes — and installs them permanently. Add `nwinstall, gui` to also add a "Network
 Analysis" menu to Stata's own User menu, so every command is reachable through a dialog box,
 not just the command line. See `help nwinstall` for the full option reference.

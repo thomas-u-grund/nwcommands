@@ -177,7 +177,7 @@ A screenshot of the "Network Analysis" menu and a dialog box in action is coming
 ## Installing the model packages
 
 The model commands are packages of their own, released under the GPL-3, and need the core
-installed first (the core itself keeps its own licence):
+installed first (the core itself keeps its own license):
 
 | Package | Model | Install |
 |---|---|---|

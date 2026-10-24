@@ -7,7 +7,7 @@ description: "What a small event log cannot tell you: a ten-event toy log gives 
 
 # Tutorial 3: Limits and diagnostics
 
-**Goal.** Learn to recognise a fit that cannot be trusted, see how much data a DyNAM needs, and know what the
+**Goal.** Learn to recognize a fit that cannot be trusted, see how much data a DyNAM needs, and know what the
 command refuses and what it does not do.
 
 **Data.** First the ten-event toy log from the `nwdynam` help file, then the first 60 and all 439 phone calls of
