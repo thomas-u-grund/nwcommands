@@ -29,7 +29,11 @@
 {opth path(string)}
 {opt localcopy}
 {opth from(string)}
-{opth dest(string)}]
+{opth dest(string)}
+{opt models}
+{opth modelpkg(namelist)}
+{opth release(string)}
+{opth modelsfrom(string)}]
 
 
 
@@ -52,6 +56,22 @@
 {synopt:{opth from(string)}}with {opt localcopy}: the local folder to copy nwcommands files from; default: the current directory{p_end}
 {synopt:{opth dest(string)}}with {opt localcopy}: the local ado directory to copy files into; default: your PERSONAL ado directory (already on Stata's ado path, so nothing further needs to be configured for the default case){p_end}
 
+{synopt:{opt models}}also install the four model packages {cmd:nwsaom}, {cmd:nwergm}, {cmd:nwdynam} and {cmd:nwrem} (see below); with {opt remove} they are uninstalled{p_end}
+{synopt:{opth modelpkg(namelist)}}install only these model packages (any of nwsaom, nwergm, nwdynam, nwrem); can be used alone{p_end}
+{synopt:{opth release(string)}}with {opt models} or {opt modelpkg()}: the release to install, for example {cmd:v1.0.0}; default: the current release{p_end}
+{synopt:{opth modelsfrom(string)}}with {opt models}: a folder or URL with one subfolder per package, instead of the GitHub repositories (for local clones and offline installs){p_end}
+{synoptline}
+
+
+{marker models}{...}
+{title:The model packages}
+
+{pstd}
+The commands {cmd:nwsaom} (stochastic actor-oriented models), {cmd:nwergm} (exponential random graph models), {cmd:nwdynam} (dynamic network actor models) and {cmd:nwrem} (relational event models) are packages of their own, installed separately from {cmd:nwcommands} and distributed under the GNU General Public License, version 3.
+They need {cmd:nwcommands} (install it first, then run {cmd:nwinstall, all}).
+{cmd:nwinstall, models} installs all four from their GitHub repositories; {cmd:nwinstall, modelpkg(nwsaom nwergm)} installs only some, and {cmd:nwinstall, models release(v1.0.0)} installs a particular release.
+Each package has a {cmd:version} subcommand, for example {cmd:nwsaom version}.
+Updating {cmd:nwcommands} never replaces an installed model package.
 
 {title:Description}
 

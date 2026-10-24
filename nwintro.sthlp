@@ -1,5 +1,7 @@
 {smcl}
-{* *! version  30nov2014}{...}
+{* *! version 3.0.0  24oct2026}{...}
+
+{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
 {phang}
 {help nwcommands:NW-1 intro}
 {hline 2} Introduction and concepts
@@ -142,30 +144,13 @@ network's data into ordinary Stata commands - just no longer something every gen
 automatically.
 
 {marker limits_ergm}{...}
-{title:Statistical network models ({help nwergm}, {help nwsaom}, {help nwrem})}
+{title:Statistical network models}
 
 {pstd}
-{cmd:nwergm}'s own native (C) MCMC backend (see its own "Performance" help section) has been benchmarked directly
-against R's {cmd:ergm} package at up to 2,000 nodes, reaching near performance parity (roughly 1.5-1.8x R's own
-running time on models mixing several term families) - a large improvement over the pure-Mata fallback, which
-remains available for any term the native backend does not yet implement. It has not been benchmarked beyond
-2,000 nodes in this project. Its own per-proposal cost scales with each node's degree, not with the total node
-count, so sparser networks and dyad-independent/degree-based terms should continue to scale well well beyond
-that; models using the geometrically-weighted shared-partner (GWESP) term family carry a proportionally higher
-constant cost per proposal and are the main remaining gap versus R on larger, denser networks.
-
-{pstd}
-{cmd:nwsaom} (stochastic actor-oriented models, RSiena-style) also has a native (C) simulation backend, used
-automatically whenever the fitted model's own effects all have native coverage. Benchmarked directly against a
-real, installed RSiena on its own standard s50 tutorial dataset (50 actors): at parity with RSiena for a
-network-only model, and genuinely faster for a network+behavior co-evolution model - see {help nwsaom}'s own
-"Performance" section for the exact figures and methodology. Not yet benchmarked beyond that scale in this
-project.
-
-{pstd}
-{cmd:nwrem} (relational event models) has no native C backend yet - its pure-Mata engine is nonetheless already
-2-3x faster than R's own {cmd:relevent::rem.dyad()} on direct head-to-head wall-clock benchmarks (identical
-data/model), per {help nwrem}'s own documented figures.
+The statistical models for networks ({cmd:nwergm}, {cmd:nwsaom}, {cmd:nwrem}, {cmd:nwdynam}) are no longer part of the
+core package. Each is a separate package that builds on {cmd:nwcommands}; see {help nwergm}, {help nwsaom},
+{help nwrem} and {help nwdynam} for the installation commands. Performance figures for these models are given in the
+documentation of each package.
 
 {pstd}
 None of the figures on this page are promises for every possible network shape or every command - a command's

@@ -1,43 +1,10 @@
 name: Build native plugins
 
-# Harmonisation unit 87 (phase C, cross-platform native builds -
-# docs/CERTIFICATION.md), extended in unit 95 to also build nwgraph.c
-# (docs/NATIVE_GRAPH_LIBRARIES.md's own native graph-algorithm kernel -
-# currently betweenness centrality), again (2026-08-29) to also build
-# saom_sim.c (nwsaom's own native ministep-simulation kernel), and again
-# (2026-09-02) to also build dynam_sim.c (nwdynam's own native
-# log-likelihood/gradient kernel - see docs/DYNAM_ROADMAP.md and
-# dynam_sim.c's own header; unlike saom_sim.c/ergm_mcmc.c, this plugin
-# does not run a full sampling/simulation loop in C - it accelerates
-# only the hot inner evaluation Mata's own optimize() calls repeatedly,
-# the optimizer itself stays in Mata). Each addition was already a
-# dependency of native/Makefile's own `macos`/`unix` targets, so
-# macOS/Linux were silently already BUILDING it and just never
-# uploading/committing it; Windows never even compiled it. No Windows/Linux
-# toolchain or
-# cross-compiler was available in the environment this workflow was
-# authored in, so those two platforms' own plugin binaries are built here,
-# on GitHub's own hosted runners, rather than locally. macOS is rebuilt
-# here too, purely as a cross-check against the copy already committed via
-# native/Makefile's own `macos` target (which builds every plugin, not
-# just one) on a real Apple Silicon development machine.
-#
-# On a push to the repository's default branch that touches native/, the
-# freshly-built plugins are committed back into lib/plugins/ under
-# per-platform-suffixed filenames (ergm_mcmc_macos.plugin,
-# ergm_mcmc_windows.plugin, ergm_mcmc_unix.plugin, etc. - harmonisation
-# 2026-09-02, docs/CERTIFICATION.md: a real `net install` flattens every
-# package file into one shared PLUS folder by basename alone, so macOS's
-# and Windows's binaries would collide without distinct names even though
-# they sit in separate lib/plugins/<os>/ subdirectories here). Each
-# command's own *NativePluginPath() dispatcher (unw_ergm.do's
-# ErgmNativePluginPath(), unw_core.do's NativeGraphPluginPath(), etc.)
-# tries `findfile()` on that platform-specific basename first, falls back
-# to the subdirectory-relative path for a raw dev-mode git checkout, and
-# falls back further to its own pure Mata implementation wherever a given
-# platform's binary is absent altogether - so this workflow failing or
-# being skipped never breaks the package, only leaves that platform
-# unaccelerated.
+# Builds the core package's native plugins (nwgraph) and the nwedit_viewer
+# launcher on macOS, Windows and Linux. On a push to the default branch that
+# touches native/, the freshly built binaries are committed back into
+# lib/plugins/ under per-platform-suffixed filenames. The model packages
+# (nwergm, nwsaom, nwdynam, nwrem) have their own repositories and workflows.
 
 on:
   push:
@@ -78,10 +45,7 @@ jobs:
         with:
           name: plugins-macos
           path: |
-            lib/plugins/macos/ergm_mcmc_macos.plugin
             lib/plugins/macos/nwgraph_macos.plugin
-            lib/plugins/macos/saom_sim_macos.plugin
-            lib/plugins/macos/dynam_sim_macos.plugin
             lib/plugins/macos/nwedit_viewer_macos
 
   windows:
@@ -106,10 +70,7 @@ jobs:
         run: |
           mkdir lib\plugins\windows
           cd native
-          cl /LD /DSYSTEM=STWIN32 /I spi ergm_mcmc.c spi\stplugin.c /Fe:..\lib\plugins\windows\ergm_mcmc_windows.plugin
           cl /LD /DSYSTEM=STWIN32 /I spi nwgraph.c spi\stplugin.c /Fe:..\lib\plugins\windows\nwgraph_windows.plugin
-          cl /LD /DSYSTEM=STWIN32 /I spi saom_sim.c spi\stplugin.c /Fe:..\lib\plugins\windows\saom_sim_windows.plugin
-          cl /LD /DSYSTEM=STWIN32 /I spi dynam_sim.c spi\stplugin.c /Fe:..\lib\plugins\windows\dynam_sim_windows.plugin
       - name: Fetch WebView2 SDK + WIL headers (nwedit_viewer dependency)
         shell: cmd
         run: |
@@ -144,11 +105,8 @@ jobs:
         with:
           name: plugins-windows
           path: |
-            lib/plugins/windows/ergm_mcmc_windows.plugin
             lib/plugins/windows/nwedit_viewer_windows.exe
             lib/plugins/windows/nwgraph_windows.plugin
-            lib/plugins/windows/saom_sim_windows.plugin
-            lib/plugins/windows/dynam_sim_windows.plugin
 
   linux:
     runs-on: ubuntu-latest
@@ -171,10 +129,7 @@ jobs:
         with:
           name: plugins-linux
           path: |
-            lib/plugins/unix/ergm_mcmc_unix.plugin
             lib/plugins/unix/nwgraph_unix.plugin
-            lib/plugins/unix/saom_sim_unix.plugin
-            lib/plugins/unix/dynam_sim_unix.plugin
             lib/plugins/unix/nwedit_viewer_unix
 
   commit-binaries:

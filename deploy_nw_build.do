@@ -4,8 +4,7 @@
 * temporarily cd's into lib/:
 *   1. Rebuild lib/lnwcommands.mlib from every unw_*.do source file
 *      (lib/build.do's own job - this is the step that silently went stale
-*      for nwdynam until 2026-09-02, since unw_dynam.do was never added to
-*      lib/build.do's own source list; lib/build.do itself is the single
+*      for a while;  lib/build.do itself is the single
 *      source of truth for which unw_*.do files are compiled in, not
 *      duplicated here).
 *   2. Regenerate the package manifests (nwcommands-ado1.pkg/-ado2.pkg,
@@ -21,13 +20,15 @@
 * and each chunked .pkg's own "d" description line) - kept in sync with
 * whatever nwcommands.sthlp already has rather than force-bumped on every
 * run, since this package does not follow strict semver.
+* run from the repository root
 version 14
+local root_nw "`c(pwd)'"
 clear all
-cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
+cd "`root_nw'"
 
 do "lib/build.do"
 
-cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
+cd "`root_nw'"
 do "_nwdeploy.ado"
 _nwdeploy, version("2.0")
 

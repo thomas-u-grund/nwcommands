@@ -142,8 +142,8 @@ Two commands from the real run above confirm everything landed correctly:
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23
 *! v2.1.0 __ added LOCALcopy/from()/dest() offline install path
 
-. which nwergm
-/Users/tgrund/Library/Application Support/Stata/ado/plus/n/nwergm.ado
+. which nwdegree
+/Users/tgrund/Library/Application Support/Stata/ado/plus/n/nwdegree.ado
 
 . ado dir nwcommands
 

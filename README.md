@@ -1,7 +1,9 @@
 # nwcommands
 
-Network analysis for Stata — over 130 commands for importing, generating, describing,
-analyzing, visualizing, and statistically modeling networks, alongside Stata's own regular
+**Version 3.0.0** (24 October 2026)
+
+Network analysis for Stata — over 120 commands for importing, generating, describing,
+analyzing, and visualizing networks, alongside Stata's own regular
 data commands.
 
 ```stata
@@ -20,13 +22,12 @@ data commands.
 - **Structural analysis**: centrality, components, cliques/k-plexes/k-cores, cohesive
   subgroups, community detection, structural equivalence, QAP, and more (see
   `help nwtopical` once installed for the full, organized command index).
-- **Statistical network models**: `nwergm` — exponential-family random graph models (ERGM),
-  with maximum pseudolikelihood and MCMC maximum likelihood estimation, a substantial term
-  library, and an optional native (C) MCMC backend for performance; `nwsaom` — stochastic
-  actor-oriented models (SAOM) between observed network waves, with network/behavior
-  co-evolution and a native (C) ministep-sampler backend; `nwrem` — relational event models
-  (REM) for continuous-time event-stream data; `nwdynam` — Dynamic Network Actor Models
-  (DyNAM), with separate rate and choice sub-models (see `ARCHITECTURE.md` for all four).
+- **Statistical network models** live in separate packages that build on this one (all GPL-3):
+  `nwergm` (exponential-family random graph models), `nwsaom` (stochastic actor-oriented
+  models), `nwrem` (relational event models) and `nwdynam` (Dynamic Network Actor Models).
+  Install each with `net install <name>, from(https://raw.githubusercontent.com/thomas-u-grund/<name>/main/)`.
+  They are separate packages, so they are not part of the core: installing or updating `nwcommands`
+  never replaces them.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, permanently` (or `db <command>` directly) — for
@@ -88,7 +89,7 @@ there is nothing to configure, and results are identical either way:
   1,000,000 edges with no external dependencies.
 - **Compiled native (C) kernels** (Stata plugins, source in `native/`) for the specific
   operations where Stata's own Mata interpreter is the actual bottleneck, not the algorithm:
-  `nwergm`'s own MCMC sampler and betweenness centrality. Falls back to an equivalent,
+  betweenness centrality. Falls back to an equivalent,
   fully-supported pure-Mata implementation on any platform without a compiled plugin for it.
 
 `help nwintro` (section "Limitations and feasible network sizes") is the practical,
@@ -99,9 +100,10 @@ evidence-based summary of what to expect at various network sizes.
 - `cscripts/` — 140+ regression tests, one per command family, run in both "dev mode" (against
   the Mata source directly, `do unw_core.do`) and "production mode" (against the compiled
   `lib/lnwcommands.mlib`, mirrored under `lib/cscripts_prod/`, a gitignored build artifact).
-- `native/` — C sources for the native plugins (`ergm_mcmc.c`, `saom_sim.c`, `dynam_sim.c`,
-  `nwgraph.c`) and their own `Makefile`; `.github/workflows/build-plugins.yml` builds and commits
-  all three platforms' binaries on push.
+- `native/` — C sources for the native plugin `nwgraph.c` and the `nwedit_viewer` launcher, with
+  their own `Makefile`; `.github/workflows/build-plugins.yml` builds and commits all three
+  platforms' binaries on push.
+- `lib/build.do` — rebuilds `lib/lnwcommands.mlib` from `unw_core.do` (run from the repository root).
 
 ## License
 

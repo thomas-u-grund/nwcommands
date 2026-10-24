@@ -1,5 +1,8 @@
 # Gotchas
 
+The model families (nwergm, nwsaom, nwdynam, nwrem) moved to their own repositories; their gotchas
+live there. Some entries below still mention them as historical examples.
+
 Practical pitfalls specific to this repo, worth checking before you repeat them. Not a general
 Stata reference — just things that have actually bitten someone working on this codebase.
 
@@ -146,88 +149,17 @@ reciprocity pattern; the no-flag auto-detect default and explicit `undirected` a
 grep for where the resulting local macro is actually *read*, not just declared, especially for an
 option that silently degrades to "no error, wrong default" rather than failing loudly.
 
-## `nwsaom`'s native backend can leave state that crashes a later, unrelated `nwsaom` call
-
-Found while building the SAOM chapter's own convergence-workflow example: in one continuous Stata
-session, fitting a multi-wave structural model (`nwsaom, waves(...) outdegree reciprocity transtrip
-nodematch(...)`), then running `estat gof` on it, then attempting an unrelated co-evolution fit
-(`nwsaom, wave1(...) wave2(...) ... behavior(...) linear avsim`) crashes the co-evolution call with
-`variable vbeh not found` / `st_store(): invalid Stata variable name` — a raw Mata-level error, not
-the clean, documented `SAOM estimation diverged during phase 2...` message the identical
-co-evolution command produces when run in a fresh Stata process, or even in the same process
-without that specific `estat gof` call first.
-
-Bisected across roughly a dozen isolated repro attempts (see the SAOM chapter's own build session
-for the trail): the trigger needs *both* a preceding `estat gof` call on a multi-wave/structural
-fit *and* a distinct-shaped `nwsaom` call afterward — plain repeated `nwsaom` calls alone (even
-five or six in a row, even using `theta0()` restarts) never reproduce it; nor does `estat gof` on a
-plain two-effect model followed by co-evolution. Confirmed the corruption isn't one-directional
-either: running the co-evolution call (even one that only reaches the clean divergence path) before
-a later plain multi-wave `nwsaom` call can *also* poison that later call instead (`variable a1 not
-found`). `nwsaom.ado` documents a deliberate "one persistent Mata object per wave" convention
-(around its own line ~1490) for performance, backed by a compiled `native/saom_sim.c` plugin; the
-most likely mechanism is that this persistent per-wave object isn't fully invalidated/rebuilt when
-the *shape* of the fit changes (network-only vs. co-evolution) between calls, especially after a
-call that takes a non-standard exit path like `estat gof`'s own simulation or a divergence.
-
-**Not fixed** — the root cause almost certainly lives in the native C plugin, not the `.ado` layer,
-and wasn't chased further given the scope of the task that found it (writing the book chapter, not
-debugging the native backend). **Workaround that IS verified to work**: never run `estat gof` and a
-`behavior()`/co-evolution `nwsaom` call in the same Stata session with anything else `nwsaom`-shaped
-between them — if a chapter, script, or analysis needs both, do the co-evolution work in its own
-process (or before any `estat gof` call), never after. The SAOM chapter's own do-file structures
-its command order specifically to route around this: every clean/successful demonstration runs
-first, and the (intentionally diverging) co-evolution attempt runs last, with no `estat gof` call
-anywhere in the same script.
-
-**For whoever picks this up next**: start from `dev/`'s own existing SAOM cross-check scripts
-(`dev/dynam_unit*_crosscheck.*` show the pattern used elsewhere in this codebase for isolating a
-native-backend discrepancy) and reproduce the minimal repro above (`waves()` fit with `transtrip`
-+ `nodematch()`, then `estat gof`, then any `behavior()` fit) as a permanent regression test before
-touching `native/saom_sim.c` itself.
-
-## `nwergm` MCMLE standard errors: the autocorrelation factor goes on the Monte Carlo error, not the information (fixed 2026-09-30)
-
-`ErgmMCMLE()` (unw_ergm.do) estimates the Fisher information as `V = variance(samp)`, the covariance
-of the statistics simulated at the final theta. It used to multiply `V`'s diagonal by the AR(p)
-spectral inflation factors (`infl`) and then report `invsym(V)`. Inflating the *information*
-shrinks every standard error by `sqrt(infl)`, and the worse the chain mixes, the larger `infl`
-gets, so the SEs shrank most exactly where they should be widest. On the 5-node certification network
-in `test_nwergm_mcmle.do` the chain mixes almost perfectly (`infl` about 1), so it passed and the
-bug went unnoticed. On real models it was drastic. Checked against R `ergm` 4.12:
-
-| model | nwergm before | nwergm after | R ergm |
-|---|---|---|---|
-| florentine `edges gwesp(.5) nodematch(seat)`, edges SE | .181 | .450 | .45-.48 |
-| glasgow1 `edges mutual nodematch(smoke1)`, edges SE | .0067 | .199 | .206 |
-| mesa `edges gwesp(.25) nodematch(grade race)`, edges SE | .0012 | .176 | .155 |
-
-Now `vcov = Vinv + Vinv*(S/n)*Vinv` with `S = D*V*D`, `D = diag(sqrt(infl))`: the model variance plus
-the MCMC error of the estimate, as R `ergm` reports by default. **Lesson:** a certification test on a
-network where a correction factor is about 1 cannot detect that the factor is applied in the wrong
-place. Validate variance code on at least one sticky, realistic chain.
-
-## `nwergm` node-attribute terms silently mis-read string variables (fixed 2026-09-30)
-
-Every node-attribute term reads its variable with Mata's `st_data()`, which returns missing values
-for a string variable, with no error. For `nodematch()`, missing == missing for every pair, so the
-term became an exact copy of `edges` (coefficient 0, a "rank k-1 of k" warning every iteration,
-and a meaningless fit). All 32 attribute-read sites (estimation and `simulate`) now go through
-`_nwergm_numvar`, which stops with r(109) and suggests `encode`. Proper string support (with
-readable level names in `nodefactor`/`nodemix` coefficient names) would be a feature, not a fix.
-
 ## `nwdyadprob, undirected` doubled the tie probability (fixed 2026-09-30)
 
 The mat()/probability-network path drew from the full matrix *before* applying `undirected`, and
 the final `nwsym` OR-ed i->j with j->i, so each tie appeared with probability 1-(1-p)^2 (p = .1 gave
 density .188 on 200 nodes). One draw per unordered pair now; the `density()` path was already right.
 
-## `lib/build.do` and `deploy_nw_build.do` hardcode the checkout path
+## `lib/build.do` and `deploy_nw_build.do` must be run from the repository root
 
-Both `cd` into `/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands` by absolute path. Run from a git
-worktree or any other copy, they silently rebuild the *main checkout's* mlib instead of the one
-you are working on. From a worktree, build with a copy of `lib/build.do` whose paths point at the
-worktree.
+Fixed in the split of the model families: both now work relative to the current directory. Run
+them from the repository root (`do lib/build.do`); `lib/build.do` stops with an error if
+`unw_core.do` is not found there.
 
 ## `nwmixing` on undirected networks: one-sided table and a wrong E-I index (fixed 2026-09-30)
 
@@ -238,188 +170,6 @@ ties with `diagonal()`, which silently pairs *different* categories whenever the
 square (faux.mesa.high race: .025 instead of the correct -.015). The fix asks `nwtoedge` for both
 orientations (`full`) when the network is undirected, and matches row and column *values*
 rather than positions. The permutation p-value (`rep_EIvar()`) was never affected.
-
-## `nwsaom` co-evolution: rates were never estimated; cross statistics must be lagged (fixed 2026-09-30)
-
-With `behavior()` there are two dependent variables, so RSiena uses UNCONDITIONAL Method of
-Moments: every period's network rate and behavior rate is an ordinary MoM parameter, estimated
-with the others in phases 1-3. The rate statistics are DISTANCES from the period's starting
-observation: differing dyads (network), sum of |z_end - z_start| (behavior). `nwsaom` instead kept
-both rates at their closed-form starting values (the conditional shortcut that is fine for a
-network-only fit) and only reported t-ratios on the number of toggles, which is not the distance.
-On s50 the behavior parameters ran away (linear shape -40, SE 274). The help text even claimed
-this was RSiena's default for 2+ dependent variables; it is not. Now `SaomEstimateRMCoevMulti()`
-estimates `(thetaNet, thetaBeh, net rates, behavior rates)` jointly, rate score =
-ministeps/rate - active actors; `SaomEstimateRMCoev()` is a one-period wrapper.
-
-Three further RSiena mismatches surfaced while matching RSiena's per-period targets
-(`ans$targets2`) on s50, each invisible without that comparison:
-- Statistics linking the two variables are LAGGED: a behavior-dependent network effect uses the
-  START-of-period behavior, a network-dependent behavior effect (avAlt, avSim) the START-of-period
-  network, for targets and simulated statistics alike. We used end-of-period values.
-- avAlt is CENTERED in RSiena (statistic and ministep change): `(z_i - zbar) * avg_j (z_j - zbar)`.
-  The uncentered version is a different model, not a reparametrization.
-- There was no selection effect on the co-evolving behavior: `simcov()` reads a fixed covariate.
-  New `behsim` = RSiena's simX(behavior), centered by the behavior's similarity mean, reading the
-  CURRENT simulated behavior (the simulators keep `td.attr` in step: `SaomBehSimSync()`).
-
-After the fix nwsaom matches RSiena on s50 within a fraction of an SE for every parameter, 3 and 2
-waves (`cscripts/test_nwsaom_coev_rsiena.do`). **Lesson:** compare per-period TARGET statistics
-with RSiena before comparing estimates; a target that differs pins the bug to a definition, not to
-the optimizer.
-
-Network-only fits had the same flaw in a milder form; fixed 2026-10-01, see "`nwsaom` network-only
-rates" below.
-
-## The saom_sim plugin: a stale installed copy in PLUS used to win over the repo's own (fixed 2026-09-30)
-
-`SaomNativePluginPath()` used to try `findfile("saom_sim_macos.plugin")` first, which finds a `net
-install`ed copy in PLUS before the checkout's `lib/plugins/<os>/` one. Running from a checkout then
-silently exercised an OLD binary. Two real consequences on 2026-09-30: the baseline
-`test_nwsaom_native.do` run hung in `saom_test_native_cycle4_equiv`, and the new co-evolution
-estimator, which needs plugin protocol >= 3 (`__saom_native_version`, checked by
-`SaomNativePluginVersion()`), fell back to the pure-Mata simulator: the s50 three-wave model took
-over 10 minutes (two waves: 1,038 s) instead of 5 s. The lookup now prefers the plugin next to the
-`nwsaom.ado` being run and only then `findfile()`; after a real net install there is no
-`lib/plugins/` next to `nwsaom.ado`, so nothing changes there. The unix/windows binaries are rebuilt
-by CI, not locally: until then they report an older protocol and co-evolution runs (correctly, but
-slowly) in Mata on those platforms. Other plugins (`ergm_mcmc`, `nwgraph`, `dynam_sim`) still use
-the old findfile-first order.
-
-Timing, s50 three-wave model (`outdegree reciprocity transtrip behsim` / `linear quadratic
-avalt`), native path: 5.0 s (phase 1 0.07 s, phase 2 3.2 s, phase 3 1.6 s; 6,014 simulated periods
-at 0.7 ms each, almost all of it the C ministep loop; a plugin call itself costs about 0.01 ms).
-The lagged behavior statistics were computed in Mata at first (0.5 ms per period, 3 s per fit) and
-now come from the plugin (`__saom_native_statbehlag%d`).
-
-## `nwsaom` multiplex: rates fixed, crprod not lagged (fixed 2026-10-01)
-
-`SaomEstimateRMCoevNetNet()` held both rates at their closed-form starting values, like the
-network+behavior estimator before 2026-09-30, and evaluated `crprod` (a tie of network 1 where
-network 2 has one) with the other network's END state. RSiena estimates both rates by unconditional
-MoM and lags the cross-network statistic: its targets on a two-network s50 example are
-`sum(x1(t2) * x2(t1))` (43) and `sum(x2(t2) * x1(t1))` (66). Now the estimator runs on
-`SaomRMCore()` with `(theta1, theta2, rate1, rate2)`; the NN branch of `native/saom_sim.c` returns
-per-network ministep counts, end-vs-start distances and lagged crprod statistics (protocol 5). On
-that example (`cscripts/test_nwsaom_multiplex.do`) every parameter agrees with RSiena within 0.06
-SE. The 6-actor toy networks the ado-level test used before cannot identify the model.
-
-## Plugin programs defined inside nwsaom are not the ones a do-file defines (found 2026-10-01)
-
-`program saomnativesim, plugin using("other.plugin")` typed in a do-file does NOT make nwsaom use
-`other.plugin`: the plugin program nwsaom's own Mata code defines (via `stata("capture program
-saomnativesim, plugin using(...)")` while the ado-file runs) is a separate definition, and a
-`plugin call saomnativesim` from the do-file afterwards even reports "unrecognized command". Two
-"old vs new plugin" comparisons and a pinned-baseline benchmark silently ran the checkout plugin
-before this was noticed (a static call counter in a profiling build showed calls=1). To choose a
-plugin file for testing or benchmarking, set the Mata external `__nwsaom_saom_plugin` to its path;
-`SaomNativePluginPath()` returns it when set. Likewise, a diagnostic `plugin call` (e.g. a
-profiling dump) must be issued from inside the same Mata code path, not from the do-file.
-
-## nwsaom threads: results must not depend on the number of cores (2026-10-01)
-
-The batch entry points (`BATCHSETUP|`/`BATCHRUN|`/`BATCHCLEAN|` in `native/saom_sim.c`) keep the
-periods' starting data resident in the plugin between calls (static `batch_state`; freed by
-`SaomBatchCleanup()`), and run K replicates x P periods on worker threads. Unit (k, pd) seeds its
-own RNG from (seed, k, pd), and per-replicate sums over periods are formed after the join in a
-fixed order, so `cores(1)` and the default give bit-identical results (checked on six benchmark
-models). Worker threads call only `simulate_period()`, which touches no Stata API and no mutable
-statics (`saom_behsim_range` is set before the threads start). Keep it that way: any new term
-that caches state in a static breaks thread safety. Outputs come back through a frame
-(`__saom_batch_out`), not a Stata matrix: Stata/BE matrices are limited to 800 rows, below k3 =
-1000. For small networks, phase-2 steps run single-threaded (waking threads costs more than a
-50-actor simulation); that choice does not affect results. The new random streams changed results
-for a given seed relative to 2332434: the 6-model RSiena validation moved from max |diff|/SE 0.19
-to 0.17 (mean 0.06 both). Only the macOS plugin is rebuilt locally; the Windows build uses Win32
-threads (`#if defined(_WIN32)`), untested here until CI builds it.
-
-## `nwsaom` network-only rates: fixed during estimation, refined afterwards (fixed 2026-10-01)
-
-`SaomEstimateRM()`/`SaomEstimateRMMulti()` held the rate at RSiena's closed-form STARTING value
-(`n*(0.2 + 2*distance)/(n*(n-1)+1)`) throughout phases 1-3 and only replaced the REPORTED rate
-afterwards by a conditional-simulation estimate. The effects were thus estimated from simulations
-with about 14% too few ministeps, 0.3-0.6 SE off RSiena (reciprocity too small, gwesp too large),
-stable across seeds. Now both, and the multiplex estimator, call `SaomRMCore()` with the rates as
-ordinary MoM parameters (statistic: dyads in which the simulated end network differs from the
-period's start; score: ministeps/rate - active actors), RSiena's `cond = FALSE`. Validation (six
-models on s50, five seeds each; reference numbers in `cscripts/test_nwsaom_rsiena.do`): every
-parameter within 0.06 SE of RSiena's unconditional estimates. Things found on the way:
-
-- **RSiena's DEFAULT for a single network is conditional estimation, and its conditional and
-  unconditional estimates differ by up to 0.3 SE** (outdegree more negative, reciprocity larger
-  under `cond = TRUE`; seed-to-seed SD about 0.005). Matching RSiena "default output" and matching
-  RSiena "unconditional" are not the same target; nwsaom matches the latter.
-- **Simulation seeds were passed to the plugin as `strofreal(seed)`, i.e. `%9.0g`, four
-  significant digits.** With K=1 batch calls in phase 2 the simulated distances came out biased
-  (mean deviation -1.2 instead of +0.35 over 5000 calls at fixed parameters, 7 SE), which pushed
-  the estimated rate up by 0.1 (rate t-ratio +0.13 on average). All seed arguments now use
-  `%12.0f`. nwergm had the same bug (`unw_ergm.do`, the MCMC seed, and theta, term parameters and
-  observed statistics sent with the default `%9.0g`); fixed the same way on 2026-10-01 (seed
-  `%12.0f`, reals `%25.17g`).
-- **Starting values matter more once the rate moves.** RSiena starts outdegree at a data-derived
-  value (`getNetworkStartingVals()`, now `SaomOutdegreeStart()`) and ends phase 1 with a partial
-  quasi-Newton step (`phase1.2`); nwsaom did neither. From outdegree = 0 the network explodes in
-  phase 1 and the Jacobian is useless; outdegree + isolatenet on the isoiso data diverged. Both are
-  in now (network-only; co-evolution unchanged).
-- **Network endowment/creation statistics were not RSiena's.** The statistic was the effect's
-  statistic on the lost-/gained-ties network, which for reciprocity counts dyads lost/gained in
-  BOTH directions (14/10 on s50) instead of RSiena's lost ties reciprocated at the start (-35) and
-  gained ties reciprocated at the end (27); the endowment sign was also flipped (its phase-1
-  derivative came out negative - the "persistently negative outdegreeendow diagonal" of unit 169).
-  With a fixed rate the fits "converged" anyway; with the rate estimated they diverged.
-  `outdegreeendow`+`outdegreecreation` cannot be estimated with the rate at all (lost + gained ties
-  = the rate's distance statistic, RSiena: singular covariance) and are now refused.
-- The non-positive-derivative safeguard now FIXES the parameter (no updates, SE 0), as RSiena
-  does; a decoupled but still-updated parameter drifted and, with the rates estimated, dragged a
-  rate to 70+ (glacially slow simulations).
-- `cscripts/test_nwsaom_multiplex.do` did `cd` to the main checkout and so tested that checkout's
-  Mata code from any worktree; it now runs from the repository root like the other cscripts.
-- The ado smoke tests ran on 6-actor toy networks that cannot identify a model once the rate is
-  estimated (RSiena stops with thetaBound on them under both estimators); they now use glasgow.
-
-
-## `nwsaom, symmetric`: BAGREE rule, symmetric scores, ratecov actor draw (fixed 2026-10-01)
-
-Checked against RSiena's pairwise model types on symmetrized s50 (joint = modelType 6, force = 4,
-agree = 5). Three things were off in the B-family branch of `native/saom_sim.c`: (1) BAGREE used
-`sigma(-u_alter)` for the alter; RSiena's `calculateSymmetricTieFlipProbabilities()` computes
-`1/(1+exp(u))` for u > 0 and `exp(u)/(1+exp(u))` otherwise, i.e. `sigma(-|u|)` - reproduced as is
-(density -2.44 before, RSiena -1.08, now -1.08); (2) the ministep scores used only the initiating
-actor's change statistic, so BJOINT standard errors were twice RSiena's; the scores are now RSiena's
-(`accumulateSymmetricModelScores()`); (3) with `ratecov()` the acting actor was drawn uniformly,
-so the covariate only rescaled the rate - with the rate estimated the two raced off together.
-Effects and SEs now agree with RSiena within 0.01 SE. The rate is per actor in nwsaom and per pair
-in RSiena (ratio about 27-29 on these data, depending on the rule - not a clean constant; not
-chased).
-
-## `nwsaom` e(tratio) was not on RSiena's scale (changed 2026-10-01)
-
-`e(tratio)`, `e(rate_tratio(s))` and the co-evolution/multiplex t-ratios were mean / (sd/sqrt(k3)),
-i.e. about 31.6 times RSiena's convergence t-ratio (mean / sd) with k3(1000). Compared with
-RSiena's 0.1 threshold (a book example did) they flagged every converged fit. All of them are now on
-RSiena's scale (`e(tratio)` = the effect columns of `e(tconv)`), and every fit prints the whole
-`e(tconv)` table plus `e(tconv_max)` below the coefficients.
-
-## `nwsaom` conditional estimation is the default for network-only models (2026-10-01)
-
-RSiena's `initializeFRAN()`: `cconditional <- !maxlike && (number of dependent variables == 1)`,
-and not with composition change. nwsaom follows that: network-only fits are conditional unless
-`unconditional` is given; co-evolution and multiplex fits are always unconditional; `present()`
-that restricts an actor switches a network-only fit to unconditional. Conditional mode simulates
-each period at rate 1 until the distance from the start reaches the observed distance
-(`EpochSimulation::runEpoch()`: checked after every step, so at least one step; missing dyads not
-counted; symmetric networks in steps of two); the rate is the mean phase-3 time and its reported
-"SE" the SD of those times (`terminateFRAN()`). Details that matter for matching RSiena:
-- The distance must exclude missing dyads and count symmetric changes twice in the plugin's
-  conditional mode too (protocol 6); protocol 5 counted every toggle.
-- RSiena's conditional and unconditional estimates differ by up to 0.3 SE on s50; each nwsaom mode
-  matches its RSiena counterpart within 0.07 SE (`cscripts/test_nwsaom_rsiena.do`).
-- For the symmetric (pairwise) model types RSiena's conditional rate is per pair: nwsaom's
-  per-actor rate divided by n - 1. RSiena's UNCONDITIONAL pairwise rates are on yet another scale
-  (about 1.8 times its conditional ones on s50); not chased.
-- `outdegreeendow`+`outdegreecreation` stays refused: lost + gained ties is the distance that
-  conditional estimation holds fixed, and RSiena's covariance is singular under both estimators.
-  `linearendow`+`linearcreation` (co-evolution) is refused for the same reason (behavior distance).
 
 ## `nwset, mat()` re-sorted the dataset under existing networks (found 2026-10-01, fixed 2026-10-01)
 
@@ -466,201 +216,45 @@ command; nwsaom and nwergm estimates identical before and after declaring new ne
 Other commands that read attributes by row position were not audited; after declaring a network
 over a different node set, `_nwdatasync netname` puts the rows back into `netname`'s node order.
 
-## nwsaom: everything runs in the plugin (protocol 11, 2026-10-01)
+## Work on `develop`, not on whatever branch is checked out (check first!)
 
-Formerly Mata-only, now native (and threaded), certified against the Mata simulator at fixed
-parameters (test_nwsaom_native.do) and against RSiena (5 seeds, cond/uncond, within 0.1 SE):
-network endowment/creation (gating + RSiena's endowment/creation statistics computed in C),
-structural() fixed dyads (excluded from the actor's alternatives), three-way interact()
-(TERMCODE_INTERACT3), behavior endowment/creation (gating + statistics as Mata), the threaded batch
-path for ratecov() (statistic and score per covariate in C) and non-directed models, estat gof for
-co-evolution (before always Mata) and for endowment/creation/structural/ratecov/present/non-directed
-fits (before, network gof simulated the plain model). Limits MAXTERMS 256, MAXATTR 128, MAXBEHTERMS 64.
-Timings on glasgow (seed 1, before -> after): reciprocity endowment/creation 58.6 -> 0.21 s;
-structural() 42.1 -> 0.17 s; three-way interaction 227 -> 0.29 s; co-evolution with quadratic
-endowment/creation 118 -> 0.45 s; ratecov() two covariates 3.5 -> 0.27 s; joint + ratecov() 3.3 ->
-0.21 s. Mata remains only as the fallback (no plugin for the platform, an older plugin, more than 256
-effects); e(engine) shows which ran.
-estat mems now simulates the fitted model the same way. Open: the multiplex command offers only
-outdegree/reciprocity/crprod (all native already, not threaded). Pre-existing, found while porting (C reproduces
-Mata): the behavior endowment/creation STATISTIC was the linear one for every term - fixed, see
-"behavior endowment/creation splits" below.
+Feature work (nwsaom, nwergm, nwrem, nwdynam, native plugins, tests, help files) happens on
+**`develop`**, which the owner later merges into `master` (the release branch). Other branches
+(for example `website-docs`) are task branches that can be many commits BEHIND `develop`.
+On 2026-10-21 a whole session of nwsaom work was done on `website-docs`, 38 commits behind
+`develop`, and mostly had to be discarded because `develop` already had it (varlist covariates,
+native endow/creation, a much larger plugin, joint rate estimation).
 
-## nwsaom two-way interactions had the wrong sign on tie withdrawals (fixed 2026-10-01)
+Before the first edit of a session:
+1. Run `git branch --show-current` and `git log --oneline HEAD..develop | wc -l`. If the current
+   branch is not `develop` and `develop` is ahead, do not edit here: use a worktree of `develop`
+   (`git worktree prune`, then `git worktree add <dir> develop`) or switch branches if the tree
+   is clean.
+2. Docs under `docs/` are gitignored and shared, so they describe `develop`'s state even when your
+   checkout is older. If they name a function, option or commit that `grep`/`git cat-file` cannot
+   find in your checkout, you are on the wrong branch.
+3. Commit to `develop` only. Never commit to or merge into `master` unless explicitly asked.
+4. A stale plugin in Stata's PLUS folder shadows the repo build (see GOTCHA.md): test a rebuilt
+   plugin through a scratch `adopath`.
 
-RSiena's interaction contribution is the product of the components' contributions for creating the
-tie (NetworkInteractionEffect::calculateContribution()), negated once when the tie exists
-(NetworkVariable::calculateTieFlipContributions()). nwsaom multiplied the components' SIGNED
-changes, so for two components a withdrawal got +c_A*c_B instead of -c_A*c_B (Mata
-change_saom_interact() and the plugin's saom_eval_change(); three-way products happened to have the
-right sign). On glasgow, `samex(smoke1) interact(samex#reciprocity)` then stopped in phase 3
-(r(505)) while RSiena estimates it (interaction 0.07, SE 0.53), and `egox#reciprocity` was off.
-Fixed in both; the plugin's interaction runs natively from protocol 10 only (older plugins: Mata).
-Validated: sameX x recip and egoX x recip, 5 seeds, cond/uncond, all within 0.05 SE of RSiena.
+## Mata: `A[., c + (1..p)]` is a conformability error
 
-## nwsaom covariate effects take varlists; simx() centred (changed 2026-10-01)
+Inside a subscript the `..` range binds in a way that makes `A[., blk + (1..p)]` fail with 3200. Build the index
+first (`ic = blk :+ (1..p)`; `A[., ic]`).
 
-`samex()/nodematch()`, `egox()/nodeocov()`, `altx()/nodeicov()`, `nodecov()`, `simx()/simcov()` and
-`ratecov()` took ONE variable each, which made realistic models (homophily on several attributes,
-ego/alter/similarity on several covariates) impossible. Each now takes a varlist: one term and one
-coefficient per variable, named `<effect>_<variable>` with the option's spelling (`samex_smoke1`);
-single-variable names are unchanged. Order in e(b)/theta0(): effect types in their fixed order,
-variables as listed. `ratecov(varlist)`: one coefficient per variable (w_i = exp(sum b_k x_ik)),
-`ratecovcoef(numlist)`, e(ratecoefs)/e(ratecoefs_se)/... matrices (scalars e(ratecoef) etc. kept for
-one variable); plugin protocol 9 passes K covariates (K = 1 is the old layout).
-`interact()` resolves components by coefficient name (`samex_smoke1#transtrip`); the instance index
-is stored in the interaction's td.levels, so SaomNativeSetup() finds the right term when an effect
-type occurs several times (before, the first instance by type name). An effect type that occurs
-several times must be named by variable (error otherwise).
-`simx()` is now centred by the similarity mean over all ordered pairs, as RSiena's simX
-(`rangeAndSimilarity()`); this changes the outdegree coefficient of simx models (simx's own
-coefficient is unchanged). The plugin gets x/range and the mean (protocol 9; older plugins: Mata).
-Plugin limits raised: MAXTERMS 32, MAXATTR 24 (larger models fall back to Mata).
-Validated against RSiena (5 seeds, cond/uncond) - see nwsaom_remarks "Covariate effects for
-several variables": all within 0.07 SE. (Covariates are now centred by default, see "covariates are
-centred" below.)
+## Mata: `C.x[pd] = &(local)` stores a pointer to the variable, not to a copy
 
-## nwsaom conditional estimation could run forever; e(engine) (changed 2026-10-01)
+In a loop, `ptrs[k] = &(evp)` makes every pointer point at the same variable `evp`, which holds only the last value after the loop
+(the symptom: the join/leave event lists of all periods were empty, the fit ran without any events and still looked plausible).
+Use `&(evp :+ 0)` (an expression is copied) or a function result. Same family: an optional class argument cannot be declared
+`class X scalar` (error 3000 "class scalars may not be received as optional arguments"); declare it `| class X Gout`.
 
-A conditional simulation runs until the simulated distance reaches the observed one. When the
-Robbins-Monro estimates diverge (e.g. `interact(samex#transtrip)` on glasgow, an interaction RSiena
-itself rejects - "must be at least one ego or both dyadic effects"), that distance may never be
-reached and the native plugin (or Mata) looped indefinitely at 100% of one core. This looked like
-a silent fallback to Mata, but the model ran natively. Now, as RSiena ("Unlikely to terminate this
-epoch: more than 1000000 steps"), a period is abandoned after 10^6 ministeps and nwsaom stops
-with a clear error (r(498)) - within 2 seconds for that model.
-To make the simulator visible: e(engine) is "native" or "mata", e(engine_why) gives the reason, and
-a note follows the output when it is Mata. `antiiso` and `isolatepop` had no termcode and ran in
-Mata; they are now native (protocol 9). cscripts/test_nwsaom_engine.do asserts e(engine)=="native"
-for one model per effect family and path.
+## Stata: `"$NAME"` does not read an environment variable inside a do-file run with `-e`
 
-## nwsaom: undirected / tie-symmetric waves are a non-directed relation; default model type forcing (changed 2026-10-01)
+Use `local v : environ NAME` to read an environment variable (e.g. to parameterise a dev script from the shell).
 
-nwsaom refused networks declared undirected ("store the data as directed ... and use symmetric").
-RSiena treats a symmetric one-mode dependent network as non-directed automatically, and its default
-model type for it is 2, AFORCE (`initializeFRAN()`: `z$modelType[(z$modelType == 1) & symms] <- 2`),
-a unilateral-initiative type nwsaom did not have (it had only the pairwise B types 4-6, default
-joint = 6). Now:
-- undirected waves, or directed waves that are all tie-symmetric, are modeled as non-directed
-  without `symmetric` (tie-symmetric directed waves stay directed with `reciprocity`, `waves()`,
-  `behavior()` or endowment/creation effects, with a note); undirected waves mixed with asymmetric
-  directed ones, and `symmetric` with asymmetric directed waves, are errors;
-- `symtype()` adds `forcing` (modelType 2, AFORCE, the new default also for `symmetric`) and
-  `confirmation` (3, AAGREE), and accepts RSiena's modelType numbers; `e(modeltype)` is returned.
-  Both follow `NetworkVariable::makeChange()`: the directed multinomial choice, then the tie changes
-  in both directions; AAGREE: a new tie only if the alter confirms, probability sigma(alter's utility),
-  scores as `addAlterAgreementScores()` (RSiena's confirmation step for the no-change option, which
-  changes nothing, is left out). Rate: per-actor, RSiena's. Plugin protocol 8 (native only, as the
-  B types).
-- Validated (glasgow 1-2 symmetrized, declared undirected; density; density + sameX(smoke1);
-  cond/uncond; 5 seeds): all within 0.06 RSiena SE. RSiena's default run equals modelType 2.
-- Plain `symmetric` without `symtype()` now gives forcing, not joint: results of earlier
-  `symmetric` fits change unless `symtype(joint)` is added.
+## Stata `syntax` flag options that start with "no" lose the prefix
 
-## Symmetric nwsaom models report the rate on RSiena's scale (changed 2026-10-01)
+`syntax [, NOMPLECHECK]` creates the local `mplecheck`, not `nomplecheck`; testing `"`nomplecheck'" == ""` is then always true.
+Use a string option (`mplecheck(on|off)`) or a name that does not start with "no".
 
-`e(rate)` of a `symmetric` fit used to be the per-actor rate rho (about 14.7 on glasgow waves 1-2
-symmetrized). RSiena's pairwise model types give each actor the basic rate lambda and pairs the rate
-lambda^2 (total rate (sum lambda_i)^2 - sum lambda_i^2, `DependentVariable::calculateRates()`), so
-lambda^2 = rho/(n-1). `e(rate)` is now RSiena's: unconditional lambda = sqrt(rho/(n-1)) (0.55; SE by
-the delta method), conditional the mean time at basic rate 1, nwsaom's time/(n-1) (0.30; RSiena's
-`terminateFRAN()` reports the time, which is on the lambda^2 scale). `e(rate_actor)` keeps rho,
-`rate0()` takes RSiena's scale, `estat gof` simulates with `e(rate_actor)` and the pairwise ministep
-(`e(symtype)`). With `ratecov()` the alter is now drawn by the covariate as in RSiena (it was
-uniform), with RSiena's total rate (plugin protocol 7). Validated for joint/force/agree, conditional
-and unconditional, 5 seeds: all within 0.1 RSiena SE except one conditional ratecov coefficient
-(0.13). RSiena's own default start for these rates is on the per-actor scale (5.6) and its
-unconditional estimation then often fails; the references start the rate at 0.5.
-
-## `nwergm` estat mcmcdiag ESS was overstated; estat gof chains too short (changed 2026-10-01)
-
-`estat mcmcdiag` computed ESS as n(1-rho1)/(1+rho1), which assumes geometric decay of the
-autocorrelation. ERGM chains on sparse networks decay much more slowly (Faux Mesa High: lag-1 0.86,
-lag-10 still 0.62), so ESS was overstated severalfold (472-539 reported, 262-318 true). It is now
-coda's `effectiveSize()`, n*var(x)/spectrum0.ar(x) via `ergm_spec0_scalar()`, and is returned as
-`r(ess)` (checked against coda in `cscripts/test_nwergm_ess.do`). `estat gof` used a fixed
-3000/50 burn-in/interval and 50 draws regardless of the fit; on slowly mixing models its simulated
-averages then drifted with the seed (mean degree 2.25-2.41 vs observed 1.98). Defaults now follow
-R's `gof.ergm()`: 100 draws and the fit's `e(mcmc_burnin)`/`e(mcmc_interval_final)`. Even so, such
-models vary from seed to seed in R too (same theta: mean degree 1.97-2.12 over 4 seeds).
-
-## nwsaom covariates are centred by default; RSiena's effect names (changed 2026-10-01)
-
-RSiena's `coCovar()` is `centered = TRUE` by default: the values are stored minus their mean
-(missing values imputed by the mean), so egoX, altX, egoPlusAltX and RateX use centred values (sameX
-is unaffected, simX has its own similarity mean). nwsaom used the raw values, so with an uncentred
-covariate the outdegree coefficient (and the rate) differed from RSiena's although the covariate
-coefficients agreed. nwsaom now centres egox/altx/nodecov/ratecov covariates (`SaomCovPrep()`),
-`nocenter` keeps the raw values; `e(covmeans)` and `e(centered)` are returned and the means are
-listed under the table, with RSiena's effect names for the covariate, interaction and behavior
-effects (`e(rsiena_labels)`, all coefficients in e(b) order). Results of earlier fits with an
-uncentred egox/altx/nodecov/ratecov variable change in outdegree (and rate/ratecov intercepts);
-the coefficient names are unchanged. Validated with raw variables (glasgow, realistic model with
-gwesp, transrectrip, inPopSqrt, outAct, sameX, egoX/altX/simX of alcohol1; cond/uncond, 5 seeds):
-all coefficients including outdegree within 0.07 RSiena SE; RateX of two raw covariates within 0.03.
-
-## nwsaom behavior endowment/creation splits were not RSiena's (fixed 2026-10-01)
-
-`SaomBehaviorPatchEndowCreation()` gave every split the linear statistic (sum of decreases or
-increases). RSiena (`StatisticCalculator::calculateBehaviorStatistics()`): with c = current -
-overall mean and d = initial - current (0 if missing), endowment = sum over actors with d_i > 0 of
-the effect's egoEndowmentStatistic, creation = -endowment(-d). linear: -d_i; quadratic:
-c_i^2 - (c_i + d_i)^2; avAlt: (c_i sum_j c_j - (c_i + d_i) sum_j (c_j + d_j)) / outdeg_i; avSim:
-(sum_j |c_j - c_i| - sum_j |c_j + d_j - c_i - d_i|) / n_i over non-missing alters, all on the
-period's starting network. Mata and the plugin (protocol 12) now compute these. Co-evolution phase 1
-also follows RSiena's rule for a non-positive derivative (repeat with more runs, then fix the
-parameter): RSiena fixes avSim endowment/creation (not estimable), and so does nwsaom now. Validated
-(glasgow alcohol co-evolution, 5 seeds): linear + quadratic endow/creation + avAlt within 0.03 SE;
-linear + quadratic + avAlt endow/creation within 0.02 SE; avSim endow/creation fixed by both, the
-rest within 0.07 SE.
-
-## nwsaom interact(): RSiena's rule and RSiena's interaction statistic (changed 2026-10-01)
-
-interact() accepted only "dyadic" effects, with its own list. It now follows RSiena
-(`R/sienaeffects.r`): each effect is ego, dyadic or other (interactionType); two effects need an ego
-effect or two dyadic ones, three effects two ego effects or only ego and dyadic ones; RSiena's
-messages. Interactions RSiena accepts but its C++ cannot compute (no tieStatistic: isolateNet and
-outIso unless every other effect is egoX/outdegree, and the anti-isolate effects, whose statistic
-RSiena gives to the first actor) are refused. The statistic is RSiena's
-`NetworkInteractionEffect::egoStatistic()`: with all effects but one C++ ego effects (egoX,
-density) the product of their values and the other's egoStatistic, otherwise the sum over ties of
-the product of tie statistics. Two tie statistics were wrong (only their sum over all ties was
-right, so the main effects were unaffected): transtrip used in-shared partners (RSiena: two-paths
-ego -> h -> alter), cycle3 all reverse two-paths (RSiena: a third). Checked against RSiena on 581
-combinations: same accept/reject decision and message, and for the 119 computable ones the same
-statistic (exact). New in interactions: indegpopularity, outpopularity, outactivity, inactivity,
-outiso, isolatenet, isolatepop (plugin protocol 12). Note: RSiena 1.6.6 gives inActSqrt and
-outPopSqrt the internal parameter 0, with which their STATISTIC uses the period's starting degrees
-(outPopSqrt then without the square root) while the ministep uses current degrees; nwsaom uses the
-documented statistic, which is RSiena's with `setEffect(..., parameter = 1)`. This is a deliberate
-divergence, decided 2026-10-01: the RSiena default looks like a bug (introduced in 1.6.1, commit
-1155e31, which moved only outPop/inAct to default 1 and left outPop.c, outPopSqrt, outPopMore,
-outPopSqrtMore, outPopThreshold, inAct.c, inActSqrt at 0) and was reported as
-https://github.com/stocnet/rsiena/issues/151. Do NOT "fix" nwsaom to match RSiena's default; when
-validating against RSiena, set parameter = 1 for these effects. Revisit if the issue is resolved.
-
-## Never store a Mata object under a Stata `tempname` in nwsaom code
-
-`nwsaom.ado` keeps each effect's term data in Mata variables named with Stata `tempname`s
-(`__td_*`), referenced by pointer from `__nwsaom_last_M`. Stata reissues a tempname string once
-the program that created it returns, so any later program that does
-`tempname x` + `mata: \`x' = ...` (or `mata drop \`x'`) can overwrite or delete the fitted model's
-term data. Symptom: the NEXT command that reads the model fails, e.g. a second `estat gof` with
-`SaomNativeSetup(): 3261 non class/struct found where class/struct required`, or
-`[6,6] found where scalar required` in a change function. Found 2026-10-01 in `estat gof`'s
-violin-plot routine (`__gv_summ`, `__gv_stack`); fixed by using fixed names (`__nwsaom_gv_*`).
-Rule: in any code that runs after an nwsaom fit, name Mata objects explicitly with a `__nwsaom_`
-prefix; `tempname` is fine only for Stata matrices and scalars.
-
-## Co-evolution phase 2 can run into a "stuck behavior" trap (fixed 2026-10-01)
-
-On roughly 3% of seeds, the smoking co-evolution model (3-category behavior, quadratic + avSim)
-ran away in phase 2: the quadratic effect overshot early, simulated actors (nearly) stopped
-changing the behavior, the behavior-rate deviations stayed negative whatever the rate, and
-linear/quadratic/rates drifted to 15-30 (r(505), singular phase-3 matrix, or tconv_max ~50-150).
-RSiena 1.6.6 converged on all 60 seeds. Fixed in SaomEstimateRMCoevMulti(): RSiena's data-derived
-starts (outdegree, linear "tendency", range-2 behavior rate) and its phase-1 Newton step, plus a
-restart of phases 1-2 when the stuck pattern is detected. Restarting only phase 2 does NOT help:
-with the same phase-1 derivative matrix the same seed runs away again. Adding RSiena's dolby
-correction made convergence WORSE in nwsaom (rate scores); not used. Diagnose with 20-60 seeds,
-not one: the failure is rare and moves between seeds when anything upstream changes.

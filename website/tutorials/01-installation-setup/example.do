@@ -7,5 +7,5 @@ net install nwcommands
 nwinstall, all
 
 which nwinstall
-which nwergm
+which nwdegree
 ado dir nwcommands

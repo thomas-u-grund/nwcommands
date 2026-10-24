@@ -9360,7 +9360,7 @@ end
 	has been auto-loaded via a real command call earlier in the same
 	session - confirmed directly. This package's own reliable mechanism
 	for cross-file-shared Mata code (e.g. the NWdef class above) is
-	compiling it from unw_core.do/unw_ergm.do/unw_saom.do/unw_rem.do into
+	compiling it from unw_core.do into
 	lib/lnwcommands.mlib via lib/build.do, so these three live here
 	instead of in nwplot.ado.
 */

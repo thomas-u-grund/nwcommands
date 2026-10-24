@@ -211,9 +211,9 @@
 {p2colset 12 35 36 2}
 {p2col:    {bf:{help nwcorrelate }}}Correlate networks and variables{p_end}
 {p2col:    {bf:{help nwcug }}}Conditional Uniform Graph (CUG) test{p_end}
-{p2col:    {bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
+{p2col:    {bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation (moved to its own package){p_end}
 {p2col:    {bf:{help nwqap }}}Multivariate QAP regression{p_end}
-{p2col:    {bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves{p_end}
+{p2col:    {bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves (moved to its own package){p_end}
 {p2col:    {bf:{help nwutility }}}Calculate utility scores according to Jackson and Wollinsky (1996){p_end}
 {marker analysis_other}{...}
 
@@ -234,8 +234,8 @@
 {col 8}{hline 3}{c RT}       {it:Dynamic & Event-Based Models}{col 36}{c LT}{hline}
 {col 8}   {c BLC}{hline 24}{c BRC}
 {p2colset 12 35 36 2}
-{p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE){p_end}
-{p2col:    {bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}
+{p2col:    {bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE) (moved to its own package){p_end}
+{p2col:    {bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE) (moved to its own package){p_end}
 {marker utilities}{...}
 
 {col 8}   {c TLC}{hline 24}{c TRC}

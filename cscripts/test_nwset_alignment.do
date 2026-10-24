@@ -1,8 +1,6 @@
 cscript
 
 do unw_core.do
-do unw_ergm.do
-do unw_saom.do
 
 * Regression test: declaring a network must not re-sort the data under the
 * networks already in memory.
@@ -12,17 +10,14 @@ do unw_saom.do
 * 2026-10-01 an unlabelled `nwset, mat()' gave the new network the
 * default labels n1, n2, ..., and _nwdatasync then sorted the rows into
 * that order; after `nwwebuse glasgow' (rows n1, n10, n11, ...) this moved
-* the row of n10 to row 10 etc. under glasgow1/glasgow2, and e.g. nwsaom's
-* ratecov(smoke1) coefficient went from 0.90 to 0.12. Datasets whose
+* the row of n10 to row 10 etc. under glasgow1/glasgow2, which silently
+* changed every estimate that reads node attributes by row. Datasets whose
 * labels are not n1..nN (gang: g1, g10, ...; s50: v1, v10, ...) got 2N
 * rows instead.
 *
 * Checked here, on four datasets and for each network-creating command:
 * the rows keep their order and count, every node keeps its attribute
-* value, and the new network lists its nodes in the order of the rows;
-* nwsaom and nwergm give identical estimates before and after the new
-* networks are declared, also after a network with a different node set
-* has re-sorted the rows (nwsaom/nwergm then sort them back, with a note).
+* value, and the new network lists its nodes in the order of the rows.
 
 capture program drop _al_snap
 program define _al_snap
@@ -116,60 +111,5 @@ foreach spec in "glasgow glasgow1 smoke1" "gang gang Age" "s50 s50_w1 smoke1" "l
 	_al_check `attr' `net' "original network"
 	capture mata: mata drop __al_M __al_M2 __al_M3 __al_R
 }
-
-* --------------------------------------------------------------------------
-* nwsaom and nwergm: identical estimates before and after declaring new
-* networks (glasgow: ratecov(), nodematch(); smoke1 is not symmetric in
-* the node order, so a misaligned read changes the estimates)
-* --------------------------------------------------------------------------
-
-nwwebuse glasgow, nwclear
-qui sum smoke1
-gen double smkc = smoke1 - r(mean)
-
-local saom "wave1(glasgow1) wave2(glasgow2) outdegree reciprocity nodematch(smoke1) ratecov(smkc) seed(1)"
-local ergm "glasgow1, edges mutual nodematch(smoke1) nodecov(smkc) seed(1)"
-
-qui nwsaom, `saom'
-matrix __al_bs0 = e(b)
-qui nwergm `ergm'
-matrix __al_be0 = e(b)
-di as txt "nwsaom before: " _c
-matrix list __al_bs0, noheader format(%9.4f)
-
-* (a) networks over the same node set
-nwtomata glasgow1, mat(__al_g1)
-mata: __al_s1 = (__al_g1 + __al_g1') :> 0
-nwset, mat(__al_s1) directed name(sym1)
-nwrandom 50, prob(.05) name(rnd50)
-qui nwsaom, `saom'
-matrix __al_bs1 = e(b)
-qui nwergm `ergm'
-matrix __al_be1 = e(b)
-assert mreldif(__al_bs1, __al_bs0) == 0
-assert mreldif(__al_be1, __al_be0) == 0
-
-* (b) a network over a different node set re-sorts the rows (datasync);
-* nwsaom/nwergm sort them back into glasgow1's node order
-nwrandom 10, prob(.2) name(rnd10)
-nwsaom, `saom'
-matrix __al_bs2 = e(b)
-nwrandom 10, prob(.2) name(rnd10b)
-nwergm `ergm'
-matrix __al_be2 = e(b)
-assert mreldif(__al_bs2, __al_bs0) == 0
-assert mreldif(__al_be2, __al_be0) == 0
-
-* (c) waves that list their nodes in different orders are refused
-mata: __al_g2 = __al_g1[(50::1), (50::1)]
-_nwsyntax glasgow1, max(1)
-mata: st_local("revlabs", invtokens(`netobj'->get_nodenames()[50..1], ","))
-nwset, mat(__al_g2) labs(`revlabs') name(g1rev)
-* g1rev was reordered into row order by nwset, so it is accepted
-qui nwsaom, wave1(g1rev) wave2(glasgow2) outdegree reciprocity seed(1)
-_nwsyntax g1rev, max(1) other(gr)
-mata: `grnetobj'->set_nodenames(`grnetobj'->get_nodenames()[50..1])
-capture nwsaom, wave1(g1rev) wave2(glasgow2) outdegree reciprocity seed(1)
-assert _rc == 198
 
 di as res "test_nwset_alignment: all checks passed"

@@ -1,5 +1,7 @@
 {smcl}
-{* *! version 1.0.0  3sept2014}{...}
+{* *! version 3.0.0  24oct2026}{...}
+
+{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
 
 {pstd}
 New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
@@ -23,8 +25,8 @@ New here? If this is all you have installed so far, run {cmd:nwinstall, all} to 
 {help nwinternals:{col 14}{bf:[NW-7]}{...}{col 31}{bf:Internal helper files}}
 
 
-               *! Date        :  5 Sep 2026
-               *! Version     : 2.0
+               *! Date        :  24 October 2026
+               *! Version     : 3.0.0
                *! Authors     : Thomas U. Grund 
                *! Contact     : thomas.u.grund@gmail.com
                *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}

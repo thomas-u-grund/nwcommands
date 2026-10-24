@@ -61,10 +61,7 @@ f nwds.sthlp
 f nwduplicate.sthlp
 f nwdyadprob.sthlp
 f nwdyads.sthlp
-f nwdynam.sthlp
 f nwego.sthlp
-f nwergm.sthlp
-f nwergm_estat.sthlp
 f nwevcent.sthlp
 f nwexpand.sthlp
 f nwexport.sthlp
@@ -79,6 +76,7 @@ f nwhomophily.sthlp
 f nwimport.sthlp
 f nwinduced.sthlp
 f nwinstall.sthlp
+f nwversion.sthlp
 f nwissymmetric.sthlp
 f nwkatz.sthlp
 f nwkcomponents.sthlp
@@ -116,15 +114,11 @@ f nwrandom.sthlp
 f nwrandomwalk.sthlp
 f nwreach.sthlp
 f nwrecode.sthlp
-f nwrem.sthlp
 f nwrename.sthlp
 f nwreplace.sthlp
 f nwreplacemat.sthlp
 f nwrestore.sthlp
 f nwring.sthlp
-f nwsaom.sthlp
-f nwsaom_estat.sthlp
-f nwsaom_remarks.sthlp
 f nwsave.sthlp
 f nwset.sthlp
 f nwshared.sthlp

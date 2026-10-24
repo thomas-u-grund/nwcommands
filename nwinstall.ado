@@ -1,7 +1,13 @@
 capture program drop nwinstall
 program nwinstall
-	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string)]
+	syntax [, update menu(string) usermenu permanently dialog remove downloadoff help ado ext all path(string) LOCALcopy from(string) dest(string) MODELs MODELPkg(string) RELease(string) MODELSFrom(string)]
 	
+	// the model packages nwsaom, nwergm, nwdynam, nwrem are separate GPL-3 packages (nwinstall_models.ado)
+	local __nw_models = ("`models'" != "" | "`modelpkg'" != "")
+	if `__nw_models' & "`update'`usermenu'`permanently'`dialog'`downloadoff'`help'`ado'`ext'`all'`localcopy'" == "" {
+		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
+		exit
+	}
 	if "`usermenu'" != "" | "`downloadoff'" != "" {
 		window menu clear
 		qui nwinstall_menu, menu("`menu'")
@@ -152,6 +158,10 @@ program nwinstall
 	}
 	
 	
+	if `__nw_models' {
+		nwinstall_models, pkgs(`modelpkg') release(`release') from(`modelsfrom') `remove'
+	}
+
 	set more off
 	
 	if "`remove'" != "" {
@@ -321,7 +331,6 @@ program nwinstall_menu
 	window menu append submenu "Network Analysis" "Statistical Models"
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
-	window menu append item "Statistical Models" "Exponential-family random graph model (ERGM) estimation" "db nwergm"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 

@@ -49,10 +49,9 @@
 {p2col:{bf:{help nwduplicate }}}Duplicate a network{p_end}
 {p2col:{bf:{help nwdyadprob }}}Generate a network based on tie probabilities{p_end}
 {p2col:{bf:{help nwdyads }}}Dyad census{p_end}
-{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE){p_end}
+{p2col:{bf:{help nwdynam }}}Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE) (moved to its own package){p_end}
 {p2col:{bf:{help nwego }}}Ego-network size and density{p_end}
-{p2col:{bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation{p_end}
-{p2col:{bf:{help nwergm_estat }}}Postestimation tools for {cmd:nwergm}{p_end}
+{p2col:{bf:{help nwergm }}}Exponential-family random graph model (ERGM) estimation (moved to its own package){p_end}
 {p2col:{bf:{help nwevcent }}}Calculate eigenvector centrality{p_end}
 {p2col:{bf:{help nwexpand }}}Expand variable to network{p_end}
 {p2col:{bf:{help nwexport }}}Export network as Pajek or Ucinet file{p_end}
@@ -104,14 +103,13 @@
 {p2col:{bf:{help nwrandomwalk }}}Mean random-walk hitting time to a target node{p_end}
 {p2col:{bf:{help nwreach }}}Calculate reachability network{p_end}
 {p2col:{bf:{help nwrecode }}}Recode network{p_end}
-{p2col:{bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE){p_end}
+{p2col:{bf:{help nwrem }}}Relational event model (ordinal partial likelihood, MLE) (moved to its own package){p_end}
 {p2col:{bf:{help nwrename }}}Rename a network{p_end}
 {p2col:{bf:{help nwreplace }}}Replace network{p_end}
 {p2col:{bf:{help nwreplacemat }}}Replace network with Stata or Mata matrix{p_end}
 {p2col:{bf:{help nwrestore }}}Restore network data previously preserved{p_end}
 {p2col:{bf:{help nwring }}}Generate a ring-lattice network{p_end}
-{p2col:{bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves{p_end}
-{p2col:{bf:{help nwsaom_estat }}}Postestimation tools for {cmd:nwsaom}{p_end}
+{p2col:{bf:{help nwsaom }}}Stochastic actor-oriented model (SAOM) estimation between observed network waves (moved to its own package){p_end}
 {p2col:{bf:{help nwsave }}}Save network data in file{p_end}
 {p2col:{bf:{help nwset }}}Declare data to be network data{p_end}
 {p2col:{bf:{help nwshared }}}Calculate number of shared neighbors between nodes and saves information in network{p_end}
