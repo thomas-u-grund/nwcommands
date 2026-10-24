@@ -44,7 +44,7 @@ errors in `nwsaom` are the author's.
 
 | | |
 |---|---|
-| Effects | 1,058 of the 1,121 RSiena effects that are planned for `nwsaom` (94%); the remaining rows of RSiena's effects table are accounted for in [nwsaom and RSiena](rsiena/) |
+| Effects | about 94% of the effects in the effects table of RSiena 1.6.6 that are planned for `nwsaom` (1,058 of 1,121 rows; effects added in RSiena 1.6.7 to 1.6.14 are implemented too but not counted, and the counts change with RSiena releases); the remaining rows of that table are accounted for in [nwsaom and RSiena](rsiena/) |
 | Agreement with RSiena | every implemented effect was compared with `siena07`, by the observed statistic and by the estimates |
 | Estimators | method of moments (conditional and unconditional), maximum likelihood, Bayesian |
 | Networks | directed, undirected, two-mode, several networks at once, network-behavior co-evolution |
