@@ -67,6 +67,7 @@
 capture program drop nwsaom
 program nwsaom, eclass
 	version 14
+	local __ns_n = 0
 	if `"`1'"' == "multinet" | `"`1'"' == "multinet," {
 		gettoken __saom_sub 0 : 0
 		nwsaom_multinet , `0'
@@ -1207,7 +1208,8 @@ program nwsaom, eclass
 	// always-eval network effect once every option has been processed,
 	// see this file's own SaomEstimateRM() dispatch call further below).
 	if "`outdegreeendow'" != "" {
-		tempname __td_ode __td_odc
+		local __td_ode "__nstd_`++__ns_n'"
+		local __td_odc "__nstd_`++__ns_n'"
 		mata: `__td_ode' = ErgmTermData()
 		mata: `__td_odc' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outdegreeendow", 1, &stat_edges(), &change_edges(), `__td_ode', ("outdegreeendow"))
@@ -1216,7 +1218,7 @@ program nwsaom, eclass
 		local __ns_netfntype_list "1 2"
 	}
 	else {
-		tempname __td_od
+		local __td_od "__nstd_`++__ns_n'"
 		mata: `__td_od' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outdegree", 1, &stat_edges(), &change_edges(), `__td_od', ("outdegree"))
 		local __nwsaom_efflist "outdegree"
@@ -1224,7 +1226,8 @@ program nwsaom, eclass
 	}
 
 	if "`reciprocityendow'" != "" {
-		tempname __td_rece __td_recc
+		local __td_rece "__nstd_`++__ns_n'"
+		local __td_recc "__nstd_`++__ns_n'"
 		mata: `__td_rece' = ErgmTermData()
 		mata: `__td_recc' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("reciprocityendow", 1, &stat_mutual(), &change_mutual(), `__td_rece', ("reciprocityendow"))
@@ -1233,7 +1236,7 @@ program nwsaom, eclass
 		local __ns_netfntype_list "`__ns_netfntype_list' 1 2"
 	}
 	else if "`reciprocity'" != "" {
-		tempname __td_recip
+		local __td_recip "__nstd_`++__ns_n'"
 		mata: `__td_recip' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("reciprocity", 1, &stat_mutual(), &change_mutual(), `__td_recip', ("reciprocity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' reciprocity"
@@ -1322,7 +1325,7 @@ program nwsaom, eclass
 						local __lab "`__ns_simlab'_`__t'"
 						local __efl "`__ns_simlab'(`__t')"
 					}
-					tempname __td_tv
+					local __td_tv "__nstd_`++__ns_n'"
 					mata: `__td_tv' = ErgmTermData()
 					if `__nwsaom_tm' {
 						if !inlist("`__eff'", "nodeicov", "nodeocov") {
@@ -1350,7 +1353,7 @@ program nwsaom, eclass
 	if "`nodematch'" != "" {
 		unab nodematch : `nodematch'
 		foreach __v of local nodematch {
-			tempname __td_nm
+			local __td_nm "__nstd_`++__ns_n'"
 			mata: `__td_nm' = ErgmTermData()
 			mata: SaomRegCov(__nwsaom_last_M, "nodematch", "`__v'", `nodes', `__nwsaom_center', `__td_nm', ("`__ns_samelab'_`__v'"), __ns_cm)
 			local __nwsaom_efflist "`__nwsaom_efflist' `__ns_samelab'(`__v')"
@@ -1365,7 +1368,7 @@ program nwsaom, eclass
 	if "`nodecov'" != "" {
 		unab nodecov : `nodecov'
 		foreach __v of local nodecov {
-			tempname __td_nc
+			local __td_nc "__nstd_`++__ns_n'"
 			mata: `__td_nc' = ErgmTermData()
 			mata: SaomRegCov(__nwsaom_last_M, "nodecov", "`__v'", `nodes', `__nwsaom_center', `__td_nc', ("nodecov_`__v'"), __ns_cm)
 			mata: st_local("__m", strofreal(__ns_cm, "%21.0g"))
@@ -1376,7 +1379,7 @@ program nwsaom, eclass
 	if "`nodeicov'" != "" {
 		unab nodeicov : `nodeicov'
 		foreach __v of local nodeicov {
-			tempname __td_nic
+			local __td_nic "__nstd_`++__ns_n'"
 			mata: `__td_nic' = ErgmTermData()
 			mata: SaomRegCov(__nwsaom_last_M, "nodeicov", "`__v'", `nodes', `__nwsaom_center', `__td_nic', ("`__ns_altlab'_`__v'"), __ns_cm`__ns_idxE')
 			mata: st_local("__m", strofreal(__ns_cm, "%21.0g"))
@@ -1387,7 +1390,7 @@ program nwsaom, eclass
 	if "`nodeocov'" != "" {
 		unab nodeocov : `nodeocov'
 		foreach __v of local nodeocov {
-			tempname __td_noc
+			local __td_noc "__nstd_`++__ns_n'"
 			mata: `__td_noc' = ErgmTermData()
 			mata: SaomRegCov(__nwsaom_last_M, "nodeocov", "`__v'", `nodes', `__nwsaom_center', `__td_noc', ("`__ns_egolab'_`__v'"), __ns_cm`__ns_idxA')
 			mata: st_local("__m", strofreal(__ns_cm, "%21.0g"))
@@ -1424,7 +1427,8 @@ program nwsaom, eclass
 			di "{err}`__ef':`__vv' is split into endowment and creation; do not also give `__vv' in the plain `__ef'() option."
 			error 198
 		}
-		tempname __td_s1 __td_s2
+		local __td_s1 "__nstd_`++__ns_n'"
+		local __td_s2 "__nstd_`++__ns_n'"
 		mata: `__td_s1' = ErgmTermData()
 		mata: `__td_s2' = ErgmTermData()
 		mata: SaomRegCovSplit(__nwsaom_last_M, "`__kind'", "`__vv'", `nodes', `__nwsaom_center', `__td_s1', `__td_s2', ("`__ef'endow_`__vv'", "`__ef'creation_`__vv'"), __ns_cm)
@@ -1461,7 +1465,7 @@ program nwsaom, eclass
 						di "{err}`__dk'() is not available for a time-varying covariate."
 						error 198
 					}
-					tempname __td_tvx
+					local __td_tvx "__nstd_`++__ns_n'"
 					mata: `__td_tvx' = ErgmTermData()
 					if `__nwsaom_tm' mata: SaomCovTVAttr(`__td_tvx', "`__ns_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __ns_cm, `=cond("`__dk'" == "egosqx", "__nwsaom_tm_actidx", "__nwsaom_tm_evidx")')
 					else mata: SaomCovTVAttr(`__td_tvx', "`__ns_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __ns_cm)
@@ -1470,7 +1474,7 @@ program nwsaom, eclass
 					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
 					continue
 				}
-				tempname __td_cv
+				local __td_cv "__nstd_`++__ns_n'"
 				mata: `__td_cv' = ErgmTermData()
 				mata: __ns_xx = st_data(1::`nodes', "`__v'")
 				mata: `__td_cv'.levels = (any(__ns_xx :>= .) ? (__ns_xx :>= .) : J(0, 1, 0))
@@ -1522,7 +1526,7 @@ program nwsaom, eclass
 						di "{err}`__dk'() is not available for a time-varying covariate."
 						error 198
 					}
-					tempname __td_tvx
+					local __td_tvx "__nstd_`++__ns_n'"
 					mata: `__td_tvx' = ErgmTermData()
 					mata: SaomCovTVAttr(`__td_tvx', "`__ns_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __ns_cm)
 					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
@@ -1537,7 +1541,7 @@ program nwsaom, eclass
 						error 198
 					}
 				}
-				tempname __td_cv
+				local __td_cv "__nstd_`++__ns_n'"
 				mata: `__td_cv' = ErgmTermData()
 				mata: `__td_cv'.levels = J(0, 1, 0)
 				if "`__dk'" == "simxtranstrip" {
@@ -1576,7 +1580,7 @@ program nwsaom, eclass
 				di "{err}{bf:`__dk'} duplicates inpopc/outactc under {bf:symmetric} (RSiena offers inPop.c and outAct.c)."
 				error 198
 			}
-			tempname __td_df
+			local __td_df "__nstd_`++__ns_n'"
 			mata: `__td_df' = ErgmTermData()
 			if "`__dk'" == "avdeg" {
 				capture confirm number ``__dk''
@@ -1637,7 +1641,7 @@ program nwsaom, eclass
 						di "{err}`__dk'() is not available for a time-varying covariate."
 						error 198
 					}
-					tempname __td_tvx
+					local __td_tvx "__nstd_`++__ns_n'"
 					mata: `__td_tvx' = ErgmTermData()
 					mata: SaomCovTVAttr(`__td_tvx', "`__ns_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __ns_cm)
 					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
@@ -1652,7 +1656,7 @@ program nwsaom, eclass
 						error 198
 					}
 				}
-				tempname __td_ct
+				local __td_ct "__nstd_`++__ns_n'"
 				mata: `__td_ct' = ErgmTermData()
 				mata: `__td_ct'.levels = J(0, 1, 0)
 				if `__nwsaom_tm' {
@@ -1692,7 +1696,7 @@ program nwsaom, eclass
 						di "{err}`__dk'() is not available for a time-varying covariate."
 						error 198
 					}
-					tempname __td_tvx
+					local __td_tvx "__nstd_`++__ns_n'"
 					mata: `__td_tvx' = ErgmTermData()
 					mata: SaomCovTVAttr(`__td_tvx', "`__ns_tvv_`__v''", `nodes', `=`__nwsaom_nwaves'-1', `__nwsaom_center', __ns_cm)
 					mata: `__td_tvx'.decay = `=cond(inlist("`__dk'", "egolthresholdx", "egorthresholdx", "altlthresholdx", "altrthresholdx"), real("`covthreshold'"), 0)'
@@ -1700,7 +1704,7 @@ program nwsaom, eclass
 					local __nwsaom_efflist "`__nwsaom_efflist' `__dk'(`__v')"
 					continue
 				}
-				tempname __td_ad
+				local __td_ad "__nstd_`++__ns_n'"
 				mata: `__td_ad' = ErgmTermData()
 				mata: __ns_xx = st_data(1::`nodes', "`__v'")
 				mata: `__td_ad'.levels = (any(__ns_xx :>= .) ? (__ns_xx :>= .) : J(0, 1, 0))
@@ -1722,7 +1726,7 @@ program nwsaom, eclass
 					di "{err}{bf:`__dk'()}: matrix {bf:`__dm'} not found."
 					error 111
 				}
-				tempname __td_dc
+				local __td_dc "__nstd_`++__ns_n'"
 				mata: `__td_dc' = ErgmTermData()
 				mata: st_local("__dcn", strofreal(rows(st_matrix("`__dm'"))))
 				if `__nwsaom_tm' {
@@ -1751,7 +1755,7 @@ program nwsaom, eclass
 	// effects (unw_saom.do's own "SAOM-native effect library" section) -
 	// NOT ports of any nwergm term. See docs/SAOM_ROADMAP.md unit 3.
 	if "`indegpopularity'" != "" {
-		tempname __td_ip
+		local __td_ip "__nstd_`++__ns_n'"
 		mata: `__td_ip' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("indegpopularity", 1, &stat_saom_indegpop(), &change_saom_indegpop(), `__td_ip', ("indegpopularity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' indegpopularity"
@@ -1763,7 +1767,7 @@ program nwsaom, eclass
 	}
 	foreach __e in inpop outpop inact outactsqrt {
 		if "``__e''" != "" {
-			tempname __td_dg
+			local __td_dg "__nstd_`++__ns_n'"
 			local __tn = cond("`__e'" == "outpop", "outpoplin", cond("`__e'" == "inact", "inactlin", "`__e'"))
 			mata: `__td_dg' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__tn'", 1, &stat_saom_`__tn'(), &change_saom_`__tn'(), `__td_dg', ("`__e'"))
@@ -1775,7 +1779,7 @@ program nwsaom, eclass
 	foreach __e in outtrunc outmore outthreshold outinv outsqinv {
 		if "``__e''" != "" {
 			foreach __cv of local `__e' {
-				tempname __td_df
+				local __td_df "__nstd_`++__ns_n'"
 				mata: `__td_df' = ErgmTermData()
 				mata: `__td_df'.decay = `__cv'
 				mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_df', ("`__e'_`__cv'"))
@@ -1795,7 +1799,7 @@ program nwsaom, eclass
 				di "{err}{bf:`__e'()} needs a non-negative decay, e.g. {bf:`__e'(0.69)}."
 				error 198
 			}
-			tempname __td_gd
+			local __td_gd "__nstd_`++__ns_n'"
 			mata: `__td_gd' = ErgmTermData()
 			mata: `__td_gd'.decay = ``__e''
 			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_gd', ("`__e'"))
@@ -1812,7 +1816,7 @@ program nwsaom, eclass
 			di "{err}give either {bf:cycle4} or {bf:sqrtcycle4} (RSiena: the same effect with parameter 1 or 2)."
 			error 198
 		}
-		tempname __td_c4s
+		local __td_c4s "__nstd_`++__ns_n'"
 		mata: `__td_c4s' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("cycle4sqrt", 1, &stat_saom_cycle4sqrt(), &change_saom_cycle4sqrt(), `__td_c4s', ("cycle4sqrt"))
 		local __nwsaom_efflist "`__nwsaom_efflist' cycle4sqrt"
@@ -1821,14 +1825,14 @@ program nwsaom, eclass
 		local __e "`__o'"
 		if "`__e'" == "dblnbrdist2" local __e "nbrdist2twice"
 		if "``__o''" != "" {
-			tempname __td_nd
+			local __td_nd "__nstd_`++__ns_n'"
 			mata: `__td_nd' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_nd', ("`__e'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__e'"
 		}
 	}
 	if "`between'" != "" {
-		tempname __td_bt
+		local __td_bt "__nstd_`++__ns_n'"
 		mata: `__td_bt' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("between", 1, &stat_saom_between(), &change_saom_between(), `__td_bt', ("between"))
 		local __nwsaom_efflist "`__nwsaom_efflist' between"
@@ -1840,14 +1844,14 @@ program nwsaom, eclass
 				di "{err}{bf:`__e'} is not available for a non-directed relation ({bf:symmetric})."
 				error 198
 			}
-			tempname __td_rc
+			local __td_rc "__nstd_`++__ns_n'"
 			mata: `__td_rc' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__e'", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_rc', ("`__e'"))
 			local __nwsaom_efflist "`__nwsaom_efflist' `__e'"
 		}
 	}
 	if "`outactivity'" != "" {
-		tempname __td_oa
+		local __td_oa "__nstd_`++__ns_n'"
 		mata: `__td_oa' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outactivity", 1, &stat_saom_outactivity(), &change_saom_outactivity(), `__td_oa', ("outactivity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' outactivity"
@@ -1862,13 +1866,13 @@ program nwsaom, eclass
 	// ALTER's own indegree, which can independently change the alter's
 	// own isolate status too) that outiso does not.
 	if "`isolatenet'" != "" {
-		tempname __td_isn
+		local __td_isn "__nstd_`++__ns_n'"
 		mata: `__td_isn' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("isolatenet", 1, &stat_saom_isolatenet(), &change_saom_isolatenet(), `__td_isn', ("isolatenet"))
 		local __nwsaom_efflist "`__nwsaom_efflist' isolatenet"
 	}
 	if "`outiso'" != "" {
-		tempname __td_oiso
+		local __td_oiso "__nstd_`++__ns_n'"
 		mata: `__td_oiso' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outiso", 1, &stat_saom_outiso(), &change_saom_outiso(), `__td_oiso', ("outiso"))
 		local __nwsaom_efflist "`__nwsaom_efflist' outiso"
@@ -1884,19 +1888,19 @@ program nwsaom, eclass
 	// has a multi-actor spillover - their own change() already captures
 	// the FULL global-statistic delta for a given toggle.
 	if "`antiiso'" != "" {
-		tempname __td_aiso
+		local __td_aiso "__nstd_`++__ns_n'"
 		mata: `__td_aiso' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("antiiso", 1, &stat_saom_antiiso(), &change_saom_antiiso(), `__td_aiso', ("antiiso"))
 		local __nwsaom_efflist "`__nwsaom_efflist' antiiso"
 	}
 	if "`antiiniso'" != "" {
-		tempname __td_ains
+		local __td_ains "__nstd_`++__ns_n'"
 		mata: `__td_ains' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("antiiniso", 1, &stat_saom_antiiniso(), &change_saom_antiiniso(), `__td_ains', ("antiiniso"))
 		local __nwsaom_efflist "`__nwsaom_efflist' antiiniso"
 	}
 	if "`antiiniso2'" != "" {
-		tempname __td_ains2
+		local __td_ains2 "__nstd_`++__ns_n'"
 		mata: `__td_ains2' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("antiiniso2", 1, &stat_saom_antiiniso2(), &change_saom_antiiniso2(), `__td_ains2', ("antiiniso2"))
 		local __nwsaom_efflist "`__nwsaom_efflist' antiiniso2"
@@ -1915,13 +1919,13 @@ program nwsaom, eclass
 	// unchanged, since Mata identifiers and matrix row names are not
 	// subject to this restriction.
 	if "`inplus3'" != "" {
-		tempname __td_in3p
+		local __td_in3p "__nstd_`++__ns_n'"
 		mata: `__td_in3p' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("in3plus", 1, &stat_saom_in3plus(), &change_saom_in3plus(), `__td_in3p', ("in3plus"))
 		local __nwsaom_efflist "`__nwsaom_efflist' in3plus"
 	}
 	if "`isolatepop'" != "" {
-		tempname __td_ipop
+		local __td_ipop "__nstd_`++__ns_n'"
 		mata: `__td_ipop' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("isolatepop", 1, &stat_saom_isolatepop(), &change_saom_isolatepop(), `__td_ipop', ("isolatepop"))
 		local __nwsaom_efflist "`__nwsaom_efflist' isolatepop"
@@ -1937,19 +1941,19 @@ program nwsaom, eclass
 	// discovered mid-unit and NOT re-implemented here; see docs/SAOM_ROADMAP.md
 	// unit 37's own account of this near-duplication.)
 	if "`transrectrip'" != "" {
-		tempname __td_trt
+		local __td_trt "__nstd_`++__ns_n'"
 		mata: `__td_trt' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transrectrip", 1, &stat_saom_transrectrip(), &change_saom_transrectrip(), `__td_trt', ("transrectrip"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transrectrip"
 	}
 	if "`outoutass'" != "" {
-		tempname __td_ooa
+		local __td_ooa "__nstd_`++__ns_n'"
 		mata: `__td_ooa' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outoutass", 1, &stat_saom_outoutass(), &change_saom_outoutass(), `__td_ooa', ("outoutass"))
 		local __nwsaom_efflist "`__nwsaom_efflist' outoutass"
 	}
 	if "`ininass'" != "" {
-		tempname __td_iia
+		local __td_iia "__nstd_`++__ns_n'"
 		mata: `__td_iia' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("ininass", 1, &stat_saom_ininass(), &change_saom_ininass(), `__td_iia', ("ininass"))
 		local __nwsaom_efflist "`__nwsaom_efflist' ininass"
@@ -1964,13 +1968,13 @@ program nwsaom, eclass
 	// outoutass - a real asymmetry in the source's own creating-branch
 	// formula would have been missed by that shortcut).
 	if "`outinass'" != "" {
-		tempname __td_oia
+		local __td_oia "__nstd_`++__ns_n'"
 		mata: `__td_oia' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outinass", 1, &stat_saom_outinass(), &change_saom_outinass(), `__td_oia', ("outinass"))
 		local __nwsaom_efflist "`__nwsaom_efflist' outinass"
 	}
 	if "`inoutass'" != "" {
-		tempname __td_ioa
+		local __td_ioa "__nstd_`++__ns_n'"
 		mata: `__td_ioa' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("inoutass", 1, &stat_saom_inoutass(), &change_saom_inoutass(), `__td_ioa', ("inoutass"))
 		local __nwsaom_efflist "`__nwsaom_efflist' inoutass"
@@ -1982,7 +1986,7 @@ program nwsaom, eclass
 	// internally (see unw_saom.do's own header comments on each for the
 	// exact derivation). See docs/SAOM_ROADMAP.md units 4-5.
 	if "`transtrip'" != "" {
-		tempname __td_tt
+		local __td_tt "__nstd_`++__ns_n'"
 		mata: `__td_tt' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transtrip", 1, &stat_saom_transtrip(), &change_saom_transtrip(), `__td_tt', ("transtrip"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transtrip"
@@ -1992,7 +1996,7 @@ program nwsaom, eclass
 	// the source-verified derivation): pure ISP(ego,alter), not
 	// transTrip's own OTP+OSP combination.
 	if "`transmedtrip'" != "" {
-		tempname __td_tmt
+		local __td_tmt "__nstd_`++__ns_n'"
 		mata: `__td_tmt' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transmedtrip", 1, &stat_saom_transmedtrip(), &change_saom_transmedtrip(), `__td_tmt', ("transmedtrip"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transmedtrip"
@@ -2006,7 +2010,7 @@ program nwsaom, eclass
 	// effects specifically - left as a documented starting point, not
 	// registered here.
 	if "`cycle3'" != "" {
-		tempname __td_c3
+		local __td_c3 "__nstd_`++__ns_n'"
 		mata: `__td_c3' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("cycle3", 1, &stat_saom_cycle3(), &change_saom_cycle3(), `__td_c3', ("cycle3"))
 		local __nwsaom_efflist "`__nwsaom_efflist' cycle3"
@@ -2016,13 +2020,14 @@ program nwsaom, eclass
 	// 168 completed - see unw_saom.do's own header comment above
 	// stat_saom_cycle4() for the full source-verified derivation.
 	if "`cycle4'" != "" {
-		tempname __td_c4
+		local __td_c4 "__nstd_`++__ns_n'"
 		mata: `__td_c4' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("cycle4", 1, &stat_saom_cycle4(), &change_saom_cycle4(), `__td_c4', ("cycle4"))
 		local __nwsaom_efflist "`__nwsaom_efflist' cycle4"
 	}
 	if "`cycle4endow'" != "" {
-		tempname __td_c4e __td_c4c
+		local __td_c4e "__nstd_`++__ns_n'"
+		local __td_c4c "__nstd_`++__ns_n'"
 		mata: `__td_c4e' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("cycle4endow", 1, &stat_saom_cycle4(), &change_saom_cycle4(), `__td_c4e', ("cycle4endow"))
 		mata: `__td_c4c' = ErgmTermData()
@@ -2064,7 +2069,7 @@ program nwsaom, eclass
 	// any model using this term.
 	if "`gwesp'" != "" & "`gwespendow'" == "" {
 		confirm number `gwesp'
-		tempname __td_gw
+		local __td_gw "__nstd_`++__ns_n'"
 		mata: `__td_gw' = ErgmTermData()
 		mata: `__td_gw'.decay = `gwesp'
 		mata: `__td_gw'.sptype = "OTP"
@@ -2073,7 +2078,8 @@ program nwsaom, eclass
 	}
 	if "`gwespendow'" != "" {
 		confirm number `gwesp'
-		tempname __td_gwe __td_gwc
+		local __td_gwe "__nstd_`++__ns_n'"
+		local __td_gwc "__nstd_`++__ns_n'"
 		mata: `__td_gwe' = ErgmTermData()
 		mata: `__td_gwe'.decay = `gwesp'
 		mata: `__td_gwe'.sptype = "OTP"
@@ -2103,7 +2109,7 @@ program nwsaom, eclass
 	// anything, not just a statistic formula). NOT YET natively ported
 	// (v1 Mata-only).
 	if "`transties'" != "" {
-		tempname __td_tt2
+		local __td_tt2 "__nstd_`++__ns_n'"
 		mata: `__td_tt2' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transties", 1, &stat_transitiveties(), &change_saom_transties(), `__td_tt2', ("transties"))
 		local __nwsaom_efflist "`__nwsaom_efflist' transties"
@@ -2111,7 +2117,8 @@ program nwsaom, eclass
 	// transTies split into its endowment / creation roles (RSiena: transTies endow / creation).
 	// The role of every term is read off its name by SaomFntypeFromNames().
 	if "`transtiesendow'" != "" {
-		tempname __td_tte __td_ttc
+		local __td_tte "__nstd_`++__ns_n'"
+		local __td_ttc "__nstd_`++__ns_n'"
 		mata: `__td_tte' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("transtiesendow", 1, &stat_transitiveties(), &change_saom_transties(), `__td_tte', ("transtiesendow"))
 		mata: `__td_ttc' = ErgmTermData()
@@ -2140,7 +2147,8 @@ program nwsaom, eclass
 				local __tn "inactlin"
 				local __sf "inactlin"
 			}
-			tempname __td_dge __td_dgc
+			local __td_dge "__nstd_`++__ns_n'"
+			local __td_dgc "__nstd_`++__ns_n'"
 			mata: `__td_dge' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__tn'endow", 1, &stat_saom_`__sf'(), &change_saom_`__sf'(), `__td_dge', ("`__e'endow"))
 			mata: `__td_dgc' = ErgmTermData()
@@ -2169,7 +2177,7 @@ program nwsaom, eclass
 	// ego-level brute-force methodology. NOT YET natively ported (v1
 	// Mata-only).
 	if "`balance'" != "" {
-		tempname __td_bal
+		local __td_bal "__nstd_`++__ns_n'"
 		mata: `__td_bal' = ErgmTermData()
 		mata: `__td_bal'.decay = `__ns_balmean'
 		mata: __nwsaom_last_M.addterm("balance", 1, &stat_saom_balance(), &change_saom_balance(), `__td_bal', ("balance"))
@@ -2178,7 +2186,8 @@ program nwsaom, eclass
 	// the triad-type effects with a simple tie statistic: one generic registration
 	foreach __e in transtrip cycle3 transmedtrip transrectrip {
 		if "``__e'endow'" != "" {
-			tempname __td_x1 __td_x2
+			local __td_x1 "__nstd_`++__ns_n'"
+			local __td_x2 "__nstd_`++__ns_n'"
 			mata: `__td_x1' = ErgmTermData()
 			mata: __nwsaom_last_M.addterm("`__e'endow", 1, &stat_saom_`__e'(), &change_saom_`__e'(), `__td_x1', ("`__e'endow"))
 			mata: `__td_x2' = ErgmTermData()
@@ -2187,7 +2196,8 @@ program nwsaom, eclass
 		}
 	}
 	if "`balanceendow'" != "" {
-		tempname __td_bale __td_balc
+		local __td_bale "__nstd_`++__ns_n'"
+		local __td_balc "__nstd_`++__ns_n'"
 		mata: `__td_bale' = ErgmTermData()
 		mata: `__td_bale'.decay = `__ns_balmean'
 		mata: __nwsaom_last_M.addterm("balanceendow", 1, &stat_saom_balance(), &change_saom_balance(), `__td_bale', ("balanceendow"))
@@ -2202,13 +2212,13 @@ program nwsaom, eclass
 	// unw_saom.do's own header comments) before implementation. See
 	// docs/SAOM_ROADMAP.md unit 9.
 	if "`outpopularity'" != "" {
-		tempname __td_op
+		local __td_op "__nstd_`++__ns_n'"
 		mata: `__td_op' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("outpopularity", 1, &stat_saom_outpop(), &change_saom_outpop(), `__td_op', ("outpopularity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' outpopularity"
 	}
 	if "`inactivity'" != "" {
-		tempname __td_ia
+		local __td_ia "__nstd_`++__ns_n'"
 		mata: `__td_ia' = ErgmTermData()
 		mata: __nwsaom_last_M.addterm("inactivity", 1, &stat_saom_inact(), &change_saom_inact(), `__td_ia', ("inactivity"))
 		local __nwsaom_efflist "`__nwsaom_efflist' inactivity"
@@ -2216,7 +2226,7 @@ program nwsaom, eclass
 	if "`simcov'" != "" {
 		unab simcov : `simcov'
 		foreach __v of local simcov {
-			tempname __td_sc
+			local __td_sc "__nstd_`++__ns_n'"
 			mata: `__td_sc' = ErgmTermData()
 			// simX: missing values imputed by the mean (RSiena); centring
 			// does not change a similarity
@@ -2340,7 +2350,7 @@ program nwsaom, eclass
 				}
 			}
 			local __ns_ixn = `__ns_ixn' + 1
-			tempname __td_ix`__ns_ixn'
+			local __td_ix`__ns_ixn' "__nstd_`++__ns_n'"
 			mata: `__td_ix`__ns_ixn'' = ErgmTermData()
 			mata: SaomBuildInteractTd(__nwsaom_last_M, `nodes', "`__ns_ixa'", "`__ns_ixb'", "`__ns_ixc'", `__td_ix`__ns_ixn'')
 			if "`__ns_ixc'" == "" {
@@ -2841,7 +2851,7 @@ program nwsaom, eclass
 				di "{err}{bf:behsim}: the behavior variable does not vary, so behavior similarity is undefined."
 				error 198
 			}
-			tempname __td_bs
+			local __td_bs "__nstd_`++__ns_n'"
 			mata: `__td_bs' = ErgmTermData()
 			mata: `__td_bs'.attr = __ns_beh_w1
 			mata: `__td_bs'.decay = __nwsaom_beh_maxval - __nwsaom_beh_minval
@@ -2861,7 +2871,7 @@ program nwsaom, eclass
 					di "{err}{bf:`__e'}: the behavior variable does not vary."
 					error 198
 				}
-				tempname __td_be
+				local __td_be "__nstd_`++__ns_n'"
 				mata: `__td_be' = ErgmTermData()
 				mata: `__td_be'.attr = __ns_beh_w1
 				mata: `__td_be'.center = mean(SaomMBPooled(__nwsaom_last_Behwaves))
@@ -2915,7 +2925,7 @@ program nwsaom, eclass
 					di "{err}netbeh(`__e'): the behavior variable does not vary."
 					error 198
 				}
-				tempname __td_nbv
+				local __td_nbv "__nstd_`++__ns_n'"
 				mata: `__td_nbv' = ErgmTermData()
 				mata: `__td_nbv'.attr = __ns_beh_w1
 				mata: `__td_nbv'.center = mean(SaomMBPooled(__nwsaom_last_Behwaves))
