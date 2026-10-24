@@ -2,7 +2,7 @@ title: nwcommands
 description: >-
   Network analysis for Stata — import, generate, analyze, model, and
   visualize network data, with statistical network models (ERGM, SAOM,
-  DyNAM, relational event models) built in.
+  DyNAM, relational event models) as companion packages.
 url: "https://nwcommands.org"
 baseurl: ""
 

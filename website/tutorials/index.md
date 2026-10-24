@@ -37,7 +37,7 @@ command directly, see the [command reference](../reference/).
 ## Statistical modeling
 
 9. [Intro to ERGM in Stata](09-intro-ergm/) — what an exponential-family random graph model is,
-   and a minimal `nwergm` example
-10. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — a conceptual
-    orientation to stochastic actor-oriented models (`nwsaom`) and relational event models
-    (`nwrem`)
+   installing the `nwergm` package, a first model, information criteria and goodness of fit
+10. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — stochastic
+    actor-oriented models (`nwsaom`), relational event models (`nwrem`) and dynamic network actor
+    models (`nwdynam`), with their install steps

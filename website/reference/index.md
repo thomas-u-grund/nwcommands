@@ -8,6 +8,11 @@ has_children: false
 
 All nwcommands commands, grouped as in `help nwtopical`.
 
+The statistical network models `nwsaom`, `nwergm`, `nwdynam` and `nwrem` are separate GPL-3
+packages that build on the core (see [Installation & Setup](../tutorials/01-installation-setup/));
+their entries below are short pages with the package link and install line, and the complete
+syntax is in each package's own Stata help (`help nwsaom` etc.).
+
 ## Concepts
 
 - [`netexample`](netexample)
@@ -160,9 +165,9 @@ All nwcommands commands, grouped as in `help nwtopical`.
 
 - [`nwcorrelate`](nwcorrelate) --- Correlate networks and variables
 - [`nwcug`](nwcug) --- Conditional Uniform Graph (CUG) test
-- [`nwergm`](nwergm) --- Exponential-family random graph model (ERGM) estimation
+- [`nwergm`](nwergm) --- Exponential-family random graph model (ERGM) estimation (separate package)
 - [`nwqap`](nwqap) --- Multivariate QAP regression
-- [`nwsaom`](nwsaom) --- Stochastic actor-oriented model (SAOM) estimation between observed network waves
+- [`nwsaom`](nwsaom) --- Stochastic actor-oriented model (SAOM) estimation between observed network waves (separate package)
 - [`nwutility`](nwutility) --- Calculate utility scores according to Jackson and Wollinsky (1996)
 
 ### Other Analysis Utilities
@@ -177,8 +182,8 @@ All nwcommands commands, grouped as in `help nwtopical`.
 
 ### Dynamic & Event-Based Models
 
-- [`nwdynam`](nwdynam) --- Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE)
-- [`nwrem`](nwrem) --- Relational event model (ordinal partial likelihood, MLE)
+- [`nwdynam`](nwdynam) --- Dynamic Network Actor Model - choice, rate, and choice_coordination sub-models (MLE; separate package)
+- [`nwrem`](nwrem) --- Relational event model (ordinal partial likelihood, MLE; separate package)
 
 ### Utility Commands
 
@@ -215,11 +220,6 @@ All nwcommands commands, grouped as in `help nwtopical`.
 
 ## Uncategorized
 
-- [`nw_helpwriter`](nw_helpwriter) --- errno help file yet
-- [`nw_resetrc`](nw_resetrc) --- errno help file yet
-- [`schemeinfo`](schemeinfo) --- errno help file yet
-- [`unw_defs`](unw_defs) --- errno help file yet
-
 - [`_nwdatasync`](_nwdatasync)
 - [`_nwnodeid`](_nwnodeid)
 - [`_nwnodelab`](_nwnodelab)
@@ -228,12 +228,9 @@ All nwcommands commands, grouped as in `help nwtopical`.
 - [`nwalphabetical`](nwalphabetical)
 - [`nwcohesion`](nwcohesion)
 - [`nwcommands`](nwcommands)
-- [`nwergm_estat`](nwergm_estat)
 - [`nwinternals`](nwinternals)
 - [`nwintro`](nwintro)
 - [`nwprogramming`](nwprogramming)
-- [`nwsaom_estat`](nwsaom_estat)
-- [`nwsaom_remarks`](nwsaom_remarks)
 - [`nwstart`](nwstart)
 - [`nwtab1`](nwtab1)
 - [`nwtab2`](nwtab2)
