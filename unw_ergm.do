@@ -7209,7 +7209,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 
 	real matrix ties, out, newties, attrpad
 	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, k, rngseed, nties_out, __junk
-	real scalar bipartite, hasmask, ncon
+	real scalar bipartite, hasmask, ncon, rc_pl
 	string rowvector convarnames
 	string scalar convarlist
 	real colvector modevec
@@ -7416,7 +7416,13 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
 	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + maskvarlist + convarlist + outvarlist + ", " + char(34) + argstr + char(34)
-	stata(cmd)
+	rc_pl = _stata(cmd)
+	if (rc_pl) {
+		// E6: leave no half-built frame behind when the plugin stops (e.g. mcmcmaxedges())
+		st_framecurrent(origframe)
+		stata("capture frame drop __ergm_native")
+		exit(rc_pl)
+	}
 
 	nties_out = st_numscalar("__ergm_native_nties_out")
 	M.native_lastaccept = st_numscalar("__ergm_native_naccept") / st_numscalar("__ergm_native_ntried")
