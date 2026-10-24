@@ -77,6 +77,7 @@ f nwhomophily.ado
 f nwimport.ado
 f nwinduced.ado
 f nwinstall.ado
+f nwinstall_models.ado
 f nwissymmetric.ado
 f nwkatz.ado
 f nwkcomponents.ado
