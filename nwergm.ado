@@ -16,6 +16,8 @@ program nwergm, eclass
 	syntax [anything(name=netname)] [, edges mutual ///
 		NODEMATCH(string) NODEMATCHDIFF(string) NODECOV(string) NODEICOV(string) NODEOCOV(string) ///
 		EDGECOV(string) ABSDIST(string) NODEFACTOR(string) NODEMIX(string) ///
+		ABSDIFFCAT(string) DIFF(string) SMALLDIFF(string) SOCIALITY(string) ATTRCOV(string) DYADCOV(string) MM(string) ///
+		NODECOVRANGE(string) NODEOCOVRANGE(string) NODEICOVRANGE(string) NODEFACTORDISTINCT(string) NODEOFACTORDISTINCT(string) NODEIFACTORDISTINCT(string) ///
 		GWESP(string) GWDSP(string) GWNSP(string) GWDEGREE(string) GWODEGREE(string) GWIDEGREE(string) ///
 		GWESPFREE(string) GWDEGREEFREE(string) GWDSPFREE(string) GWODEGREEFREE(string) GWIDEGREEFREE(string) GWNSPFREE(string) ///
 		DEGREE(string) ODEGREE(string) IDEGREE(string) CONCURRENT TRIANGLE CTRIPLE ///
@@ -27,11 +29,17 @@ program nwergm, eclass
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
 		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
+		BCONCURRENT1(string) BCONCURRENT2(string) BMINDEGREE1(string) BMINDEGREE2(string) ///
+		BDEGRANGE1(string) BDEGRANGE2(string) BCOVRANGE1(string) BCOVRANGE2(string) ///
+		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
+		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
+		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
+		BGWDEGREEFREE1(string) BGWDEGREEFREE2(string) BGWDSPFREE1(string) BGWDSPFREE2(string) ///
 		TYPE(string) FREEDYADS(string) BLOCKDIAG(string) FIXDENSITY ///
 		METHOD(string) MCMCBURNIN(integer 3000) MCMCINTERVAL(integer 50) ///
 		MCMCSAMPLESIZE(integer 3000) MCMLEITERATIONS(integer 60) ///
 		PROPOSAL(string) SEED(integer -1) VERBOSE SPCACHE NOMCMCSAMPLE NONATIVE ///
-		OFFSET(string) ///
+		OFFSET(string) COEFLABEL(string) LOGSTAT(string) EXPSTAT(string) STRUCTURAL(string asis) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) BRIDGEINTERVAL(integer 0) ///
 		INIT(string) MPLETYPE(string) MPLECHECK(string) MPLECOVariance(string) ESTimate(string) MAINMETHOD(string) ///
 		MCMLETERMination(string) MCMLECONFidence(real 0.99) MCMLESTEPLength(real 1) MCMLESTEPMargin(real 0.05) ///
 		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SABURNin(integer 16384) SAINTERval(integer 1024) SAPHASE3(integer 1000) SAGAIN(real 0.1) SANSUB(integer 4) ]
@@ -44,8 +52,17 @@ program nwergm, eclass
 	local mplecovariance "`s(mplecovariance)'"
 	local mcmletermination "`s(mcmletermination)'"
 	local mplecheck "`s(mplecheck)'"
+	// numlist-valued options accept ranges such as degree(0/3), as in R's d=0:3
+	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
+		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
+			capture numlist "``__ergm_o''"
+			if !_rc local `__ergm_o' `r(numlist)'
+		}
+	}
 
-	if "`edges'" == "" {
+	// edges may be left out only when density or meandeg (collinear with it) stands in for it
+	local __ns_noedges = ("`edges'" == "" & (strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " density ") > 0 | strpos(" " + subinstr(`"`structural'"', "(", " (", .) + " ", " meandeg ") > 0))
+	if "`edges'" == "" & !`__ns_noedges' {
 		di "{err}option {bf:edges} is required - every v1 nwergm model includes an edges term."
 		error 198
 	}
@@ -144,11 +161,23 @@ program nwergm, eclass
 		error 198
 	}
 	if "`is2mode'" == "true" {
-		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + ("`gwesp'"!="") + ("`gwdsp'"!="") + ("`gwnsp'"!="") + ("`gwdegree'"!="") + ("`gwodegree'"!="") + ("`gwidegree'"!="") + ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
-		if `__ergm_b2mode_otherterm' > 0 {
-			di "{err}nwergm's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; {bf:`netname'} is two-mode and this model requests at least one other (one-mode-only) term."
-			di "{err}nwergm never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
+		// R's ergm accepts the undirected one-mode terms on a bipartite network (statistics are defined on
+		// the whole node set) but refuses the directed-only terms and the one-mode degree distribution terms
+		foreach __ergm_bo in mutual nodeicov nodeocov nodeifactor nodeofactor sender receiver odegree idegree ostar istar ctriple odegrange odegrangeto idegrange idegrangeto gwodegree gwidegree gwodegreefree gwidegreefree {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with directed==FALSE."
+				error 198
+			}
+		}
+		foreach __ergm_bo in gwdegree gwdegreefree {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite > 0."
+				error 198
+			}
+		if `"`structural'"' != "" {
+			di "{err}structural() terms are not available for a two-mode network; use the bipartite terms."
 			error 198
+		}
 		}
 	}
 	else {
@@ -165,6 +194,18 @@ program nwergm, eclass
 		// rejected on a one-mode network with the same "reject, never
 		// silently reinterpret" discipline `mutual' (directed-only)
 		// already uses below.
+		local __ergm_bipall ""
+		foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
+		if "`__ergm_bipall'" != "" {
+			foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+				if `"``__ergm_bo''"' != "" {
+					di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite==FALSE."
+					error 198
+				}
+			}
+		}
 		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'`bgwdegree1'`bgwdegree2'" != "" {
 			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require a two-mode (bipartite) network; {bf:`netname'} is one-mode."
 			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode network's own analogous effect."
@@ -193,7 +234,7 @@ program nwergm, eclass
 	// before any of the five options' own validation blocks below, so
 	// each block can just check `` `__ergm_ncurved' > 1 `` instead of
 	// naming every other curved option individually.
-	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="")
+	local __ergm_ncurved = ("`gwespfree'"!="") + ("`gwdegreefree'"!="") + ("`gwdspfree'"!="") + ("`gwodegreefree'"!="") + ("`gwidegreefree'"!="") + ("`gwnspfree'"!="") + ("`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"!="")
 
 	// gwespfree() (harmonisation unit 136 MPLE, unit 138 MCMLE): curved
 	// (free-decay) gwesp - the first user-facing curved term. Dyad-
@@ -445,6 +486,10 @@ program nwergm, eclass
 		di "{err}options {bf:gwodegree()}/{bf:gwidegree()} require a directed network; {bf:`netname'} is undirected. Use {bf:gwdegree()} for an undirected network."
 		error 198
 	}
+	if "`gwdegree'" != "" & "`directed'" == "true" {
+		di "{err}In term {bf:gwdegree}: term may not be used with directed networks. Use {bf:gwodegree()}/{bf:gwidegree()} for a directed network."
+		error 198
+	}
 	if "`degree'" != "" & "`directed'" == "true" {
 		di "{err}option {bf:degree()} is undirected only; {bf:`netname'} is directed. Use {bf:odegree()}/{bf:idegree()} for a directed network."
 		error 198
@@ -605,6 +650,13 @@ program nwergm, eclass
 	// correct observed density and its own reported "Observed" column
 	// didn't match the true network by hand-inspection.
 	mata: st_local("__ergm_obsties", strofreal(__nwergm_last_G.nties))
+	// missing dyads (NA ties): excluded from the pseudolikelihood, imputed for the MCMC start (as R ergm)
+	_nwergm_miss detect, netobj(`netobj') directed(`directed') twomode(`is2mode') nodes(`nodes') netname(`netname')
+	local __ergm_nmiss = r(nmiss)
+	if `__ergm_nmiss' > 0 & ("`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "") {
+		di "{err}missing dyads cannot currently be combined with freedyads(), blockdiag() or fixdensity."
+		error 198
+	}
 
 	// --- spcache (Part XXV performance work, docs/CERTIFICATION.md unit
 	// 82/132): the incremental shared-partner cache exists and is fully
@@ -655,11 +707,24 @@ program nwergm, eclass
 	// user still typed `edges' (required, checked above) for a
 	// consistent model-specification syntax, it just contributes
 	// nothing to the fitted parameter vector.
-	if "`fixdensity'" == "" {
+	if "`fixdensity'" == "" & !`__ns_noedges' {
 		tempname __td_edges
 		mata: `__td_edges' = ErgmTermData()
 		mata: __nwergm_last_M.addterm("edges", 1, &stat_edges(), &change_edges(), `__td_edges', ("edges"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_edges'"
+	}
+
+	// bipartite terms with sub-arguments (b*concurrent, b*mindegree, b*degrange, by=/attr= forms, ...): see _nwergm_bip.ado
+	local __ergm_bipdep 0
+	foreach __ergm_bo in bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 bgwdegreefree1 bgwdegreefree2 bgwdspfree1 bgwdspfree2 {
+		if `"``__ergm_bo''"' != "" local __ergm_bipdep 1
+	}
+	foreach __ergm_bo in bdegree1 bdegree2 bstar1 bstar2 bnodematch1 bnodematch2 bgwdegree1 bgwdegree2 {
+		if strpos(`"``__ergm_bo''"', ",") > 0 local __ergm_bipdep 1
+	}
+	if "`is2mode'" == "true" {
+		_nwergm_bip, nodes(`nodes') bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`nodemix'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
 	}
 
 	if "`mutual'" != "" {
@@ -669,48 +734,24 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_mutual'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodematch {
-		_nwergm_numvar `__ergm_v' nodematch
-		local ++__ergm_termidx
-		tempname __td_nm`__ergm_termidx'
-		mata: `__td_nm`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nm`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodematch", 1, &stat_nodematch(), &change_nodematch(), `__td_nm`__ergm_termidx'', ("nodematch_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nm`__ergm_termidx''"
+	if `"`nodematch'"' != "" {
+		_nwergm_cov nodematch, spec(`"`nodematch'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodecov {
-		_nwergm_numvar `__ergm_v' nodecov
-		local ++__ergm_termidx
-		tempname __td_nc`__ergm_termidx'
-		mata: `__td_nc`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nc`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodecov", 1, &stat_nodecov(), &change_nodecov(), `__td_nc`__ergm_termidx'', ("nodecov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nc`__ergm_termidx''"
+	if `"`nodecov'"' != "" {
+		_nwergm_cov nodecov, spec(`"`nodecov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeicov {
-		_nwergm_numvar `__ergm_v' nodeicov
-		local ++__ergm_termidx
-		tempname __td_ni`__ergm_termidx'
-		mata: `__td_ni`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_ni`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodeicov", 1, &stat_nodeicov(), &change_nodeicov(), `__td_ni`__ergm_termidx'', ("nodeicov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_ni`__ergm_termidx''"
+	if `"`nodeicov'"' != "" {
+		_nwergm_cov nodeicov, spec(`"`nodeicov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeocov {
-		_nwergm_numvar `__ergm_v' nodeocov
-		local ++__ergm_termidx
-		tempname __td_no`__ergm_termidx'
-		mata: `__td_no`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_no`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("nodeocov", 1, &stat_nodeocov(), &change_nodeocov(), `__td_no`__ergm_termidx'', ("nodeocov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_no`__ergm_termidx''"
+	if `"`nodeocov'"' != "" {
+		_nwergm_cov nodeocov, spec(`"`nodeocov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- term-expansion wave 1 (harmonisation unit 88): absdist,
@@ -718,93 +759,72 @@ program nwergm, eclass
 	// file's own header comment on why a suboption on nodematch() itself
 	// was not used), nodefactor, nodemix - see unw_ergm.do's own header
 	// comment on these four terms for the full statistical definitions.
-	local __ergm_termidx = 0
-	foreach __ergm_v of local absdist {
-		_nwergm_numvar `__ergm_v' absdist
-		local ++__ergm_termidx
-		tempname __td_ad`__ergm_termidx'
-		mata: `__td_ad`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_ad`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __nwergm_last_M.addterm("absdist", 1, &stat_absdist(), &change_absdist(), `__td_ad`__ergm_termidx'', ("absdist_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_ad`__ergm_termidx''"
+	if `"`absdist'"' != "" {
+		_nwergm_cov absdist, spec(`"`absdist'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodematchdiff {
-		_nwergm_numvar `__ergm_v' nodematchdiff
-		local ++__ergm_termidx
-		tempname __td_nmd`__ergm_termidx'
-		mata: `__td_nmd`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nmd`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__td_nmd`__ergm_termidx''.levels = uniqrows(`__td_nmd`__ergm_termidx''.attr)
-		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nmd`__ergm_termidx''.levels)))
-		tempname __ergm_levvec
-		mata: st_matrix("`__ergm_levvec'", `__td_nmd`__ergm_termidx''.levels')
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodematch_`__ergm_v'_`=`__ergm_levvec'[1,`__k']'"
-		}
-		mata: __nwergm_last_M.addterm("nodematch_diff", `__ergm_nlev', &stat_nodematch_diff(), &change_nodematch_diff(), `__td_nmd`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nmd`__ergm_termidx''"
+	if `"`nodematchdiff'"' != "" {
+		_nwergm_cov nodematchdiff, spec(`"`nodematchdiff'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodefactor {
-		_nwergm_numvar `__ergm_v' nodefactor
-		local ++__ergm_termidx
-		tempname __td_nf`__ergm_termidx'
-		mata: `__td_nf`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nf`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		// Omit the first (lowest-sorted) level by default, matching R
-		// ergm's own nodefactor(attr, base=1) convention (harmonisation
-		// unit 90, docs/CERTIFICATION.md) - fresh verification of R's
-		// current InitErgmTerm.R confirmed nodefactor sums, per level,
-		// "number of times a node with that attribute appears in an
-		// edge"; for an undirected network this equals 2*edges once ALL
-		// levels are summed, making the FULL-level parameterization
-		// exactly collinear with the already-present `edges' term (one
-		// level's own coefficient is unidentified) - precisely the
-		// redundancy R's own `base' convention exists to avoid. An
-		// earlier version of this term (unit 88) shipped without this
-		// omission; `stat_nodefactor()'/`change_nodefactor()' themselves
-		// needed NO change to fix this - both are already fully generic
-		// over whatever `td.levels' holds, so this is a pure `nwergm.ado'
-		// construction-time fix.
-		mata: `__td_nf`__ergm_termidx''.levels = uniqrows(`__td_nf`__ergm_termidx''.attr)
-		mata: `__td_nf`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nf`__ergm_termidx''.levels)
-		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nf`__ergm_termidx''.levels)))
-		tempname __ergm_levvec2
-		mata: st_matrix("`__ergm_levvec2'", `__td_nf`__ergm_termidx''.levels')
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodefactor_`__ergm_v'_`=`__ergm_levvec2'[1,`__k']'"
-		}
-		mata: __nwergm_last_M.addterm("nodefactor", `__ergm_nlev', &stat_nodefactor(), &change_nodefactor(), `__td_nf`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
+	if `"`nodefactor'"' != "" {
+		_nwergm_cov nodefactor, spec(`"`nodefactor'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodemix {
-		_nwergm_numvar `__ergm_v' nodemix
-		local ++__ergm_termidx
-		tempname __td_mx`__ergm_termidx'
-		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_mx`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __ergm_lv = uniqrows(`__td_mx`__ergm_termidx''.attr)
-		mata: __ergm_np = rows(__ergm_lv)
-		mata: __ergm_lp = J(0,2,0)
-		mata: for (__ergm_a=1; __ergm_a<=__ergm_np; __ergm_a++) for (__ergm_b=__ergm_a; __ergm_b<=__ergm_np; __ergm_b++) __ergm_lp = __ergm_lp \ (__ergm_lv[__ergm_a], __ergm_lv[__ergm_b])
-		mata: `__td_mx`__ergm_termidx''.levelpairs = __ergm_lp
-		mata: st_local("__ergm_nlp", strofreal(rows(__ergm_lp)))
-		tempname __ergm_lpmat
-		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlp' {
-			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]'"
-		}
-		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
-		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	if `"`nodemix'"' != "" {
+		_nwergm_cov nodemix, spec(`"`nodemix'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`absdiffcat'"' != "" {
+		_nwergm_cov absdiffcat, spec(`"`absdiffcat'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`diff'"' != "" {
+		_nwergm_cov diff, spec(`"`diff'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`smalldiff'"' != "" {
+		_nwergm_cov smalldiff, spec(`"`smalldiff'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`sociality'"' != "" {
+		_nwergm_cov sociality, spec(`"`sociality'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`attrcov'"' != "" {
+		_nwergm_cov attrcov, spec(`"`attrcov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`mm'"' != "" {
+		_nwergm_cov mm, spec(`"`mm'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodecovrange'"' != "" {
+		_nwergm_cov nodecovrange, spec(`"`nodecovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeocovrange'"' != "" {
+		_nwergm_cov nodeocovrange, spec(`"`nodeocovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeicovrange'"' != "" {
+		_nwergm_cov nodeicovrange, spec(`"`nodeicovrange'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodefactordistinct'"' != "" {
+		_nwergm_cov nodefactordistinct, spec(`"`nodefactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeofactordistinct'"' != "" {
+		_nwergm_cov nodeofactordistinct, spec(`"`nodeofactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`nodeifactordistinct'"' != "" {
+		_nwergm_cov nodeifactordistinct, spec(`"`nodeifactordistinct'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- bipartite (two-mode) Stage 2 terms (harmonisation unit 156):
@@ -1077,43 +1097,13 @@ program nwergm, eclass
 	// omission), kstar()/istar()/ostar() (general k-star family, k as a
 	// numlist), degrange()/odegrange()/idegrange() (semi-open-interval
 	// degree counts, from()/to() as paired numlists).
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeofactor {
-		_nwergm_numvar `__ergm_v' nodeofactor
-		local ++__ergm_termidx
-		tempname __td_nof`__ergm_termidx'
-		mata: `__td_nof`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nof`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__td_nof`__ergm_termidx''.levels = uniqrows(`__td_nof`__ergm_termidx''.attr)
-		mata: `__td_nof`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nof`__ergm_termidx''.levels)
-		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nof`__ergm_termidx''.levels)))
-		tempname __ergm_levvec3
-		mata: st_matrix("`__ergm_levvec3'", `__td_nof`__ergm_termidx''.levels')
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeofactor_`__ergm_v'_`=`__ergm_levvec3'[1,`__k']'"
-		}
-		mata: __nwergm_last_M.addterm("nodeofactor", `__ergm_nlev', &stat_nodeofactor(), &change_nodeofactor(), `__td_nof`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nof`__ergm_termidx''"
+	if `"`nodeofactor'"' != "" {
+		_nwergm_cov nodeofactor, spec(`"`nodeofactor'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodeifactor {
-		_nwergm_numvar `__ergm_v' nodeifactor
-		local ++__ergm_termidx
-		tempname __td_nif`__ergm_termidx'
-		mata: `__td_nif`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_nif`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: `__td_nif`__ergm_termidx''.levels = uniqrows(`__td_nif`__ergm_termidx''.attr)
-		mata: `__td_nif`__ergm_termidx''.levels = _ergm_drop_base_level(`__td_nif`__ergm_termidx''.levels)
-		mata: st_local("__ergm_nlev", strofreal(rows(`__td_nif`__ergm_termidx''.levels)))
-		tempname __ergm_levvec4
-		mata: st_matrix("`__ergm_levvec4'", `__td_nif`__ergm_termidx''.levels')
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlev' {
-			local __ergm_cnames "`__ergm_cnames' nodeifactor_`__ergm_v'_`=`__ergm_levvec4'[1,`__k']'"
-		}
-		mata: __nwergm_last_M.addterm("nodeifactor", `__ergm_nlev', &stat_nodeifactor(), &change_nodeifactor(), `__td_nif`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_nif`__ergm_termidx''"
+	if `"`nodeifactor'"' != "" {
+		_nwergm_cov nodeifactor, spec(`"`nodeifactor'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	if "`kstar'" != "" {
@@ -1285,6 +1275,15 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
 
+	// structural() option: the structural terms of R ergm that have no option of their own
+	// (parsed and registered by _nwergm_struct.ado)
+	local __ns_dep 0
+	if `"`structural'"' != "" {
+		_nwergm_struct `netname', terms(`structural') nodes(`nodes') directed(`directed') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local __ns_dep = r(dep)
+	}
+
 	// --- term-expansion wave 7 (harmonisation unit 91 continuation):
 	// sender()/receiver() (per-node out-/in-degree fixed effects, base=1
 	// omitted, matching R ergm's own default) - a thin convenience
@@ -1316,19 +1315,13 @@ program nwergm, eclass
 		local __ergm_matatemps "`__ergm_matatemps' `__td_recv'"
 	}
 
-	local __ergm_termidx = 0
-	foreach __ergm_v of local edgecov {
-		local ++__ergm_termidx
-		tempname __td_ec`__ergm_termidx'
-		mata: `__td_ec`__ergm_termidx'' = ErgmTermData()
-		_nwsyntax `__ergm_v', max(1) other(ec`__ergm_termidx')
-		if `ec`__ergm_termidx'nodes' != `nodes' {
-			di "{err}edgecov() network {bf:`__ergm_v'} has a different number of nodes than {bf:`netname'}."
-			error 198
-		}
-		mata: `__td_ec`__ergm_termidx''.edgecovmat = *(`ec`__ergm_termidx'netobj'->get_matrix_mod(1,("`directed'"=="true")))
-		mata: __nwergm_last_M.addterm("edgecov", 1, &stat_edgecov(), &change_edgecov(), `__td_ec`__ergm_termidx'', ("edgecov_`__ergm_v'"))
-		local __ergm_matatemps "`__ergm_matatemps' `__td_ec`__ergm_termidx''"
+	if `"`edgecov'"' != "" {
+		_nwergm_cov edgecov, spec(`"`edgecov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+	if `"`dyadcov'"' != "" {
+		_nwergm_cov dyadcov, spec(`"`dyadcov'"') nodes(`nodes') directed(`directed') twomode(`is2mode')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
 	}
 
 	// --- hamming(netname): Hamming distance to a reference network,
@@ -1347,6 +1340,11 @@ program nwergm, eclass
 			error 198
 		}
 		mata: `__td_hm`__ergm_termidx''.edgecovmat = *(`hm`__ergm_termidx'netobj'->get_matrix_mod(0,("`directed'"=="true")))
+		mata: st_local("__nacov", strofreal(ergm_offdiag_missing(`__td_hm`__ergm_termidx''.edgecovmat)))
+		if `__nacov' {
+			di "{err}In term {bf:edgecov/hamming}: network {bf:`__ergm_v'} has missing dyads, which is not supported for a dyadic covariate."
+			error 416
+		}
 		mata: __nwergm_last_M.addterm("hamming", 1, &stat_hamming(), &change_hamming(), `__td_hm`__ergm_termidx'', ("hamming_`__ergm_v'"))
 		local __ergm_matatemps "`__ergm_matatemps' `__td_hm`__ergm_termidx''"
 	}
@@ -1535,6 +1533,15 @@ program nwergm, eclass
 		mata: __nwergm_last_M.mark_curved()
 		local __ergm_matatemps "`__ergm_matatemps' `__td_gwdegreefree'"
 	}
+	// curved bipartite terms (gwb1degree/gwb2degree/gwb1dsp/gwb2dsp with fixed=FALSE in R): see _nwergm_bip.ado
+	if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" {
+		if "`is2mode'" != "true" {
+			di "{err}In term {bf:bgwdegreefree/bgwdspfree}: Term may not be used with networks with bipartite==FALSE."
+			error 198
+		}
+		_nwergm_bip_curved, bgwdegreefree1(`"`bgwdegreefree1'"') bgwdegreefree2(`"`bgwdegreefree2'"') bgwdspfree1(`"`bgwdspfree1'"') bgwdspfree2(`"`bgwdspfree2'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
+	}
 	// gwdspfree() (harmonisation unit 140): mirrors the other two
 	// curved options' own exact pattern, registered under "dsp"
 	// (reusing stat_dsp()/change_dsp() directly).
@@ -1669,6 +1676,7 @@ program nwergm, eclass
 	else if "`gwdspfree'" != "" local __ergm_curved_start "`gwdspfree'"
 	else if "`gwnspfree'" != "" local __ergm_curved_start "`gwnspfree'"
 	else if "`gwodegreefree'" != "" local __ergm_curved_start "`gwodegreefree'"
+	else if "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'" != "" local __ergm_curved_start "`bgwdegreefree1'`bgwdegreefree2'`bgwdspfree1'`bgwdspfree2'"
 	else local __ergm_curved_start "`gwidegreefree'"
 
 	// dyad-independent iff only edges/nodematch/nodecov/nodeicov/nodeocov/
@@ -1690,7 +1698,7 @@ program nwergm, eclass
 	// own comment above) - previously harmless to omit only because
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
-	local __ergm_dind = (`"`mutual'"'=="" & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="")
+	local __ergm_dind = (`"`mutual'"'=="" & `__ns_dep' == 0 & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep' & "`nodecovrange'`nodeocovrange'`nodeicovrange'`nodefactordistinct'`nodeofactordistinct'`nodeifactordistinct'"=="")
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind' & "`mainmethod'" != "sa", "mple", "mcmle")
 	}
@@ -1698,6 +1706,19 @@ program nwergm, eclass
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
 	}
 
+	if `"`logstat'`expstat'"' != "" & ("`fixdensity'" != "" | `__ergm_curved') {
+		di "{err}options {bf:logstat()}/{bf:expstat()} cannot be combined with {bf:fixdensity} or a curved (free-decay) term."
+		error 198
+	}
+	if `"`logstat'"' != "" {
+		_nwergm_statop log `logstat'
+	}
+	if `"`expstat'"' != "" {
+		_nwergm_statop exp `expstat'
+	}
+	if `"`coeflabel'"' != "" {
+		_nwergm_coeflabel `coeflabel'
+	}
 	// offset() (harmonisation unit 183, docs/ERGM_ROADMAP.md's own
 	// "Offsets/fixed-coefficient terms" row) - holds one or more named
 	// coefficients fixed at a user-supplied value rather than
@@ -1820,6 +1841,9 @@ program nwergm, eclass
 		mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
 	}
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
+	if `__ergm_nmiss' > 0 {
+		mata: `__nw_D' = select(`__nw_D', ergm_mple_keep(__nwergm_last_G, __nwergm_missmat))
+	}
 	mata: st_local("__ergm_nrows", strofreal(rows(`__nw_D')))
 	mata: st_local("__ergm_p", strofreal(cols(`__nw_D')-1))
 
@@ -1861,12 +1885,12 @@ program nwergm, eclass
 		// re-fetching of anything, `__nw_D' was already built above
 		// regardless of which path fits it).
 		local __ergm_curved_native_used = 0
-		if `__ergm_mple_native_used' {
+		if `__ergm_mple_native_used' & `__ergm_nmiss' == 0 {
 			mata: st_local("__ergm_curved_native_used", strofreal(ErgmNativeCurvedMPLEFit(__nwergm_last_M, __nwergm_last_G, `__ergm_curved_start', "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")))
 		}
 		if !`__ergm_curved_native_used' {
 			mata: __ergm_theta_start = (J(1, __nwergm_last_M.ntheta()-2, 0), 0, `__ergm_curved_start')
-			mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 100, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
+			mata: ErgmCurvedMPLEFit(__nwergm_last_M, `__nw_D', __ergm_theta_start, 10000, 1e-10, "`__b_mple'", "`__V_mple'", "`__ergm_curvedconv'")
 			mata: mata drop __ergm_theta_start
 		}
 		mata: st_local("__ergm_curved_converged", strofreal(st_matrix("`__ergm_curvedconv'")[1,1]))
@@ -1881,6 +1905,10 @@ program nwergm, eclass
 			local __ergm_xlist "`__ergm_xlist' __ergm_x`__k'"
 		}
 
+		local __ergm_irls 0
+		mata: st_local("__ergm_has_offset", strofreal(sum(__nwergm_last_M.isfixed)>0))
+		if !`__ergm_has_offset' mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		if !`__ergm_irls' {
 		preserve
 		qui drop _all
 		qui set obs `__ergm_nrows'
@@ -1928,7 +1956,9 @@ program nwergm, eclass
 		local __e7_special = r(special)
 		local __e7_rcx 0
 		if !`__e7_special' {
-			capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
+			capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt' tolerance(1e-9) ltolerance(1e-11)
+			// near-separated fits may not reach the tight tolerance: fall back to logit's defaults
+			if _rc == 430 capture qui logit __ergm_y `__ergm_free_xlist', noconstant `__ergm_offset_opt'
 			local __e7_rcx = _rc
 		}
 		if `__e7_rcx' != 0 {
@@ -1953,6 +1983,7 @@ program nwergm, eclass
 		else {
 			matrix `__b_mple' = `__b_mple_free'
 			matrix `__V_mple' = `__V_mple_free'
+		}
 		}
 	}
 
@@ -1987,7 +2018,10 @@ program nwergm, eclass
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
 		ereturn scalar ties = `__ergm_obsties'
+		ereturn scalar nmissing = `__ergm_nmiss'
 		ereturn scalar curved = `__ergm_curved'
+		// observed model statistics (R: summary(formula)), one per eta-column
+		capture mata: st_matrix("e(obs_stats)", __nwergm_last_M.full_statistic(__nwergm_last_G))
 		// Harmonisation unit 145: report whether the design-matrix build
 		// itself used the native backend, mirroring e(native) on the
 		// MCMLE branch below - previously only ever set there, leaving
@@ -1996,6 +2030,7 @@ program nwergm, eclass
 		ereturn scalar native = `__ergm_mple_native_used'
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "MPLE" "" ""
+		_nwergm_fitstats, dmat(`__nw_D') method(mple) dind(`__ergm_dind') curved(`__ergm_curved')
 		if `__ergm_curved' {
 			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own BFGS-based fit)"
 		}
@@ -2136,9 +2171,24 @@ program nwergm, eclass
 		// whole time. For an unmasked model the two fields are always
 		// equal, so this is a no-op change there.
 		mata: st_local("__ergm_native_used", strofreal(__nwergm_last_M.native_enabled_sample))
+		if `__ergm_nmiss' > 0 {
+			// missing dyads: second, constrained chain (only the missing dyads free), as R ergm
+			capture mata: mata drop __nwergm_last_Gobs
+			capture confirm number 0
+			mata: __nwergm_last_Gobs = ergm_graph_clone(__nwergm_last_G)
+			mata: __nwergm_last_Gobs.set_dyadmask(__nwergm_missmat)
+			mata: __nwergm_last_M.obs_G = &__nwergm_last_Gobs
+			mata: __nwergm_last_M.obs_mask = __nwergm_missmat
+			if "`proposal'" == "tnt" mata: __nwergm_last_M.obs_propfn = &ergm_propose_tnt_masked()
+			else mata: __nwergm_last_M.obs_propfn = &ergm_propose_uniform_masked()
+			mata: __nwergm_last_M.obs_active = 1
+		}
 
 		_nwergm_est ctl, termination(`mcmletermination') confidence(`mcmleconfidence') steplength(`mcmlesteplength') ///
 			margin(`mcmlestepmargin') effsize(`mcmleeffectivesize')
+		capture mata: mata drop __ergm_obsstat
+		capture confirm number 0
+		mata: __ergm_obsstat = __nwergm_last_M.full_statistic(__nwergm_last_G)
 		tempname __fit
 		if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
@@ -2310,6 +2360,7 @@ program nwergm, eclass
 		ereturn scalar curved = `__ergm_curved'
 		ereturn scalar mcmc_samplesize = `mcmcsamplesize'
 		ereturn scalar ties = `__ergm_obsties'
+		ereturn scalar nmissing = `__ergm_nmiss'
 		// the final simulation's own sufficient-statistic draws
 		// (samplesize x nparam), doubling as nwergm's basic MCMC
 		// diagnostics sample (Part XIX) - consumed by `estat mcmcdiag'
@@ -2354,6 +2405,9 @@ program nwergm, eclass
 		}
 
 		nwergm_display "`netname'" "`nodes'" "`directed'" "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MCMLE"))'" "`__ergm_converged'" "`__ergm_niter'" "`mcmcsamplesize'"
+		_nwergm_fitstats, dmat(`__nw_D') method(mcmle) propfn(`__ergm_propfn') mcmcburnin(`mcmcburnin') mcmcinterval(`mcmcinterval') ///
+			mcmcsamplesize(`mcmcsamplesize') intervalfinal(`__ergm_interval_final') curved(`__ergm_curved') bridgesteps(`bridgesteps') ///
+			bridgesamplesize(`bridgesamplesize') bridgeinterval(`bridgeinterval') `nologlik'
 		if `__ergm_curved' {
 			di as text "(decay is an estimated curved parameter here - see {help nwergm##gw_effects:help nwergm, gw_effects} for how this differs from R ergm's own curved-model machinery)"
 		}
@@ -2421,14 +2475,25 @@ program nwergm_simulate
 		DEGRANGE(string) DEGRANGETO(string) ODEGRANGE(string) ODEGRANGETO(string) ///
 		IDEGRANGE(string) IDEGRANGETO(string) ESP(string) DSP(string) ///
 		TRANSITIVETIES CYCLICALTIES HAMMING(string) SENDER RECEIVER ///
-		TYPE(string) ///
+		TYPE(string) STRUCTURAL(string asis) ///
 		BCOV1(string) BCOV2(string) BFACTOR1(string) BFACTOR2(string) ///
 		BDEGREE1(string) BDEGREE2(string) BSTAR1(string) BSTAR2(string) ///
-		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(real 0) BGWDEGREE2(real 0) ///
+		BNODEMATCH1(string) BNODEMATCH2(string) BGWDEGREE1(string) BGWDEGREE2(string) ///
+		BCONCURRENT1(string) BCONCURRENT2(string) BMINDEGREE1(string) BMINDEGREE2(string) ///
+		BDEGRANGE1(string) BDEGRANGE2(string) BCOVRANGE1(string) BCOVRANGE2(string) ///
+		BFACTORDISTINCT1(string) BFACTORDISTINCT2(string) BSOCIALITY1(string) BSOCIALITY2(string) ///
+		BSTARMIX1(string) BSTARMIX2(string) BTWOSTAR1(string) BTWOSTAR2(string) COINCIDENCE(string) ///
+		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
 		BIPARTITE(integer 0) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
 		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
 
+	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
+		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
+			capture numlist "``__ergm_o''"
+			if !_rc local `__ergm_o' `r(numlist)'
+		}
+	}
 	confirm integer number `nodes'
 	if `nodes' < 2 {
 		di "{err}nwergm simulate needs at least 2 nodes."
@@ -2457,15 +2522,25 @@ program nwergm_simulate
 		error 198
 	}
 	if `bipartite' != 0 {
-		local __ergm_b2mode_otherterm = ("`mutual'"!="") + ("`nodematch'"!="") + ("`nodematchdiff'"!="") + ("`nodecov'"!="") + ("`nodeicov'"!="") + ("`nodeocov'"!="") + ("`edgecov'"!="") + ("`absdist'"!="") + ("`nodefactor'"!="") + ("`nodemix'"!="") + (`gwesp'!=0) + (`gwdsp'!=0) + (`gwnsp'!=0) + (`gwdegree'!=0) + (`gwodegree'!=0) + (`gwidegree'!=0) + ("`degree'"!="") + ("`odegree'"!="") + ("`idegree'"!="") + ("`concurrent'"!="") + ("`triangle'"!="") + ("`ctriple'"!="") + ("`nodeifactor'"!="") + ("`nodeofactor'"!="") + ("`kstar'"!="") + ("`istar'"!="") + ("`ostar'"!="") + ("`degrange'"!="") + ("`degrangeto'"!="") + ("`odegrange'"!="") + ("`odegrangeto'"!="") + ("`idegrange'"!="") + ("`idegrangeto'"!="") + ("`esp'"!="") + ("`dsp'"!="") + ("`transitiveties'"!="") + ("`cyclicalties'"!="") + ("`hamming'"!="")
-		if `__ergm_b2mode_otherterm' > 0 {
-			di "{err}nwergm simulate's bipartite (two-mode) support currently covers only {bf:edges}/{bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()}; this model requests at least one other (one-mode-only) term."
-			di "{err}nwergm simulate never silently applies a one-mode term's change statistic to a two-mode dyad space it was never derived for."
-			error 198
+		foreach __ergm_bo in mutual nodeicov nodeocov nodeifactor nodeofactor sender receiver odegree idegree ostar istar ctriple odegrange odegrangeto idegrange idegrangeto {
+			if `"``__ergm_bo''"' != "" {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with directed==FALSE."
+				error 198
+			}
+		}
+		foreach __ergm_bo in gwodegree gwidegree gwdegree {
+			if ``__ergm_bo'' != 0 {
+				di "{err}In term {bf:`__ergm_bo'}: Term may not be used with networks with bipartite > 0."
+				error 198
+			}
 		}
 	}
 	else {
-		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `bgwdegree1' != 0 | `bgwdegree2' != 0 {
+		local __ergm_bipall ""
+		foreach __ergm_bo in bgwdegree1 bgwdegree2 bconcurrent1 bconcurrent2 bmindegree1 bmindegree2 bdegrange1 bdegrange2 bcovrange1 bcovrange2 bfactordistinct1 bfactordistinct2 bsociality1 bsociality2 bstarmix1 bstarmix2 btwostar1 btwostar2 coincidence bdsp1 bdsp2 bgwdsp1 bgwdsp2 {
+			local __ergm_bipall `"`__ergm_bipall'``__ergm_bo''"'
+		}
+		if "`bcov1'`bcov2'`bfactor1'`bfactor2'`bdegree1'`bdegree2'`bstar1'`bstar2'`bnodematch1'`bnodematch2'" != "" | `"`__ergm_bipall'"' != "" {
 			di "{err}options {bf:bcov1()}/{bf:bcov2()}/{bf:bfactor1()}/{bf:bfactor2()}/{bf:bdegree1()}/{bf:bdegree2()}/{bf:bstar1()}/{bf:bstar2()}/{bf:bnodematch1()}/{bf:bnodematch2()}/{bf:bgwdegree1()}/{bf:bgwdegree2()} require {bf:bipartite()} (the mode-1 node count)."
 			di "{err}Use {bf:nodematch()}/{bf:nodecov()}/{bf:nodefactor()}/{bf:degree()}/{bf:kstar()}/{bf:gwdegree()} for a one-mode simulation's own analogous effect."
 			error 198
@@ -2678,29 +2753,30 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' `__ergm_cnames'"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_nf`__ergm_termidx''"
 	}
-	local __ergm_termidx = 0
-	foreach __ergm_v of local nodemix {
-		_nwergm_numvar `__ergm_v' nodemix
-		local ++__ergm_termidx
-		tempname __td_mx`__ergm_termidx'
-		mata: `__td_mx`__ergm_termidx'' = ErgmTermData()
-		mata: `__td_mx`__ergm_termidx''.attr = st_data(1::`nodes', "`__ergm_v'")
-		mata: __ergm_lv = uniqrows(`__td_mx`__ergm_termidx''.attr)
-		mata: __ergm_np = rows(__ergm_lv)
-		mata: __ergm_lp = J(0,2,0)
-		mata: for (__ergm_a=1; __ergm_a<=__ergm_np; __ergm_a++) for (__ergm_b=__ergm_a; __ergm_b<=__ergm_np; __ergm_b++) __ergm_lp = __ergm_lp \ (__ergm_lv[__ergm_a], __ergm_lv[__ergm_b])
-		mata: `__td_mx`__ergm_termidx''.levelpairs = __ergm_lp
-		mata: st_local("__ergm_nlp", strofreal(rows(__ergm_lp)))
-		tempname __ergm_lpmat
-		mata: st_matrix("`__ergm_lpmat'", __ergm_lp)
-		local __ergm_cnames ""
-		forvalues __k = 1/`__ergm_nlp' {
-			local __ergm_cnames "`__ergm_cnames' nodemix_`__ergm_v'_`=`__ergm_lpmat'[`__k',1]'_`=`__ergm_lpmat'[`__k',2]'"
-		}
-		mata: __nwergm_last_M.addterm("nodemix", `__ergm_nlp', &stat_nodemix(), &change_nodemix(), `__td_mx`__ergm_termidx'', tokens("`__ergm_cnames'"))
-		local ntermtok "`ntermtok' `__ergm_cnames'"
-		local __ergm_matatemps "`__ergm_matatemps' `__td_mx`__ergm_termidx''"
-		capture mata: mata drop __ergm_lv __ergm_np __ergm_lp __ergm_a __ergm_b
+	local __ergm_nodemix_b ""
+	if `bipartite' != 0 {
+		local __ergm_nodemix_b `"`nodemix'"'
+		local nodemix ""
+	}
+	if `"`nodemix'"' != "" {
+		_nwergm_cov nodemix, spec(`"`nodemix'"') nodes(`nodes') directed(`=cond("`directed'"!="","true","false")') twomode(`=cond(`bipartite'!=0,"true","false")')
+		local ntermtok "`ntermtok' `r(cnames)'"
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+	}
+
+	if `bipartite' != 0 {
+		capture mata: mata drop __nwergm_bipG
+		mata: __nwergm_bipG = ErgmGraph()
+		mata: __nwergm_bipG.init(`nodes', 0)
+		mata: __nwergm_bipG.set_bipartite((J(`bipartite',1,1) \ J(`nodes'-`bipartite',1,2)))
+		mata: st_local("__ergm_c0", strofreal(cols(__nwergm_last_M.coefnames)))
+		_nwergm_bip, nodes(`nodes') gname(__nwergm_bipG) bconcurrent1(`"`bconcurrent1'"') bconcurrent2(`"`bconcurrent2'"') bmindegree1(`"`bmindegree1'"') bmindegree2(`"`bmindegree2'"') bdegrange1(`"`bdegrange1'"') bdegrange2(`"`bdegrange2'"') bdegree1(`"`bdegree1'"') bdegree2(`"`bdegree2'"') bstar1(`"`bstar1'"') bstar2(`"`bstar2'"') bcovrange1(`"`bcovrange1'"') bcovrange2(`"`bcovrange2'"') bfactordistinct1(`"`bfactordistinct1'"') bfactordistinct2(`"`bfactordistinct2'"') bsociality1(`"`bsociality1'"') bsociality2(`"`bsociality2'"') bstarmix1(`"`bstarmix1'"') bstarmix2(`"`bstarmix2'"') btwostar1(`"`btwostar1'"') btwostar2(`"`btwostar2'"') coincidence(`"`coincidence'"') bdsp1(`"`bdsp1'"') bdsp2(`"`bdsp2'"') bgwdsp1(`"`bgwdsp1'"') bgwdsp2(`"`bgwdsp2'"') bnodematch1(`"`bnodematch1'"') bnodematch2(`"`bnodematch2'"') bgwdegree1(`"`bgwdegree1'"') bgwdegree2(`"`bgwdegree2'"') nodemix(`"`__ergm_nodemix_b'"')
+		local __ergm_matatemps "`__ergm_matatemps' `__ergm_bipnewtemps'"
+		local __ergm_newn ""
+		mata: st_local("__ergm_c1", strofreal(cols(__nwergm_last_M.coefnames)))
+		if `__ergm_c1' > `__ergm_c0' mata: st_local("__ergm_newn", invtokens(__nwergm_last_M.coefnames[(`__ergm_c0'+1)..`__ergm_c1']))
+		local ntermtok "`ntermtok' `__ergm_newn'"
+		capture mata: mata drop __nwergm_bipG
 	}
 
 	// --- bipartite (two-mode) terms: bcov1()/bcov2()/bfactor1()/
@@ -2853,7 +2929,7 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' b2nodematch_`__ergm_v'"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_b2nm`__ergm_termidx''"
 	}
-	if `bgwdegree1' != 0 {
+	if "`bgwdegree1'" != "" {
 		tempname __td_bgwd1
 		mata: `__td_bgwd1' = ErgmTermData()
 		mata: `__td_bgwd1'.decay = `bgwdegree1'
@@ -2861,7 +2937,7 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' bgwdegree1"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_bgwd1'"
 	}
-	if `bgwdegree2' != 0 {
+	if "`bgwdegree2'" != "" {
 		tempname __td_bgwd2
 		mata: `__td_bgwd2' = ErgmTermData()
 		mata: `__td_bgwd2'.decay = `bgwdegree2'
@@ -3147,6 +3223,11 @@ program nwergm_simulate
 		local ntermtok "`ntermtok' cyclicalties"
 		local __ergm_matatemps "`__ergm_matatemps' `__td_ct'"
 	}
+	if `"`structural'"' != "" {
+		_nwergm_struct simulated, terms(`structural') nodes(`nodes') directed(`=cond("`directed'" != "", "true", "false")') type(`type')
+		local __ergm_matatemps "`__ergm_matatemps' `r(temps)'"
+		local ntermtok "`ntermtok' `r(cnames)'"
+	}
 
 	// sender()/receiver(): per-node out-/in-degree fixed effects, base=1
 	// omitted - the node's own identity (1..nodes) IS the "attribute",
@@ -3347,6 +3428,8 @@ program nwergm_simulate
 		// instructions warn against. __nwergm_last_M.native_enabled
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
+		// structural() terms have no Mata change statistic: they need the native sampler
+		mata: ns_native_setup(__nwergm_last_M, `=cond("`proposal'"=="tnt",2,1)', __nwergm_last_G)
 		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 
@@ -3429,5 +3512,18 @@ program _nwergm_numvar
 		di "{err}{bf:`term'(`v')}: {bf:`v'} is a string variable; nwergm needs a numeric attribute."
 		di "{err}Encode it first, e.g. {bf:encode `v', generate(`v'_n)}, and specify {bf:`term'(`v'_n)}."
 		error 109
+	}
+	local __nn = _N
+	capture mata: st_local("__nn", strofreal(__nwergm_last_G.n))
+	qui count if missing(`v') in 1/`__nn'
+	local __nna = r(N)
+	if `__nna' > 0 & inlist("`term'", "bcov1", "bfactor1", "bnodematch1", "bcov2", "bfactor2", "bnodematch2") {
+		// two-mode terms only use the attribute of their own mode (R trims before checking)
+		local __md = substr("`term'", -1, 1)
+		capture mata: st_local("__nna", strofreal(missing(st_data(1::`__nn', "`v'")[__nwergm_last_G.mode`__md'nodes])))
+	}
+	if `__nna' > 0 {
+		di "{err}In term {bf:`term'}: attribute {bf:`v'} has missing data, which is not currently supported by ergm."
+		error 416
 	}
 end

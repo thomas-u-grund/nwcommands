@@ -876,3 +876,29 @@ coercion to 'logical(1)'" (R >= 4.3); fixed in 4.13 (`anyNA(start)`), which `erg
 `logit` silently drops perfectly predicted terms/observations, so the old MCMLE start from a separated pseudolikelihood was finite
 (or failed with "no observations", which `test_nwergm_ado.do` relies on for a 3-node cycle). The new check (`ergm_mple_exists()`, Konis'
 LP) only warns for method(mcmle); the glm-style iterate R reports (huge coefficients) is used for `estimate(mple)` only.
+## The RSiena reference is version 1.6.14 now (1.6.6 numbers can silently differ)
+
+The installed RSiena was updated from 1.6.6 to 1.6.14 (2026-10-22). Reference numbers written into the cscripts before that date
+came from 1.6.6; the effect statistics (targets) of everything checked equal in both versions, with these exceptions that were
+changed in the code and tests:
+- `toU` (cross1(tou:matrix)): RSiena 1.6.12 swapped the two networks in `WeightedMixedTwoPathFunction`. 1.6.6 took the first step in
+  the dependent network (the reverse of the name); 1.6.14 takes it in the other network. nwsaom follows 1.6.14 (plugin protocol 130);
+  a plugin older than 130 would silently compute the 1.6.6 value, hence the version gate in `SaomMNRun`.
+- `outPop.c`, `outPopSqrt`, `inAct.c`, `inActSqrt` and the `*More`/`Threshold` forms: the DEFAULT internal parameter became 1
+  (end-of-period degrees; a value below 1 is an error for the `*More`/`Threshold` forms). Up to 1.6.6 the default 0 gave the
+  START-of-period degrees in the target (outPopSqrt then did not even take the square root).
+- `sienaRI` is `interpret_size` (class `siena_sizes`, a list with one object per dependent variable) and needs a sienaFit; the old
+  call `sienaRI(data, theta = , effects = )` is gone. To get the importance at a given theta run siena07 with `nsub = 0` and
+  `initialValue = theta`.
+- A dev R script that writes data files (`saom_rsiena_r1614_dyadx.R`) is deterministic (`set.seed`), rerunning it rewrites the same CSVs.
+
+## estat timetest vs RSiena: sienaTimeTest holds the rates fixed, score.Test does not
+
+`sienaTimeTest()` leaves the basic rate parameters out of the test (rates known). A fixed-time-dummy model tested with `score.Test()` estimates them.
+For an effect whose statistic is strongly correlated with its rate (outdegree of a nearly random network, e.g. the second network of the multinet benchmark)
+the two differ a lot: net2 outdegree, Glasgow + random net2, 3 waves, seeds 1-3: sienaTimeTest 0.29/0.28/0.33, fixed-dummy score.Test 1.16/1.26/1.10,
+nwsaom 1.23/1.30/1.12 (default, rates estimated) and 0.29/0.23/0.20 with `estat timetest, fixrates`. Other effects agree within noise either way.
+Trap when building the RSiena reference: `includeTimeDummy()` only marks the BASE effect row (timeDummy column); `siena07` creates the dummy rows itself
+(and regenerates them, so a fix set on them is lost). Setting fix/test on the marked base row tests the base effect = 0 (gave 3.14), not the dummy.
+Build the fixed-dummy model by hand: a varCovar `cbind(0,1)` + `includeEffects(egoX, interaction1="dm")` (density) or
+`includeInteraction(e, "<short>", "egoX", character=TRUE, interaction1=c(<eff cov>, "dm"), interaction2=c("",""), name=<dv>)`, then fix=TRUE, test=TRUE.

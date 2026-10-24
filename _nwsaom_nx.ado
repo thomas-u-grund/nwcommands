@@ -106,14 +106,22 @@ program define _nwsaom_nx, rclass
 			else if "`__f'" == "nonpcompress" local __pp 1
 			else local __pp 0
 		}
+		if inlist("`__f'", "outpopmore", "outpopsqrtmore", "outpopthreshold") {
+			// RSiena (since 1.6.13): the internal effect parameter must be at least 1 (an error otherwise)
+			if missing(real("`__pp'")) | round(real("`__pp'")) < 1 {
+				di "{err}ownx(`__f'): the parameter must be at least 1."
+				error 198
+			}
+		}
 		local __dgn `nodes'
 		if `__nwsaom_tm' local __dgn `__nwsaom_tm_na'
 		mata: SaomRegDg(__nwsaom_last_M, "`__f'", `__code', `__pp', `nodes', __nwsaom_dg_ties / (`__dgn' * `__nwsaom_nwaves'), __nwsaom_dg_rec / (`__dgn' * `__nwsaom_nwaves'), __nwsaom_dg_sma / __nwsaom_dg_smb)
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'"
 	}
 	// protocol 49: dyadx(effect:matrix ...) - network effects of a constant dyadic covariate W (RSiena WWX cyWWX InWWX OutWWX WXX XWX XWX1 XWX2 XXW),
-	// native only; the matrix is used raw (never centred), as RSiena does for these effects
-	local __dx_names "wwx cywwx inwwx outwwx wxx xwx xwx1 xwx2 xxw"
+	// native only; the matrix is used raw (never centred), as RSiena does for these effects. Protocol 130: wxzx:W:Z (RSiena WXZX, two covariates), and in a two-mode
+	// network wxx:W (W among the actors), xwx xwx1 xwx2:Z (Z among the events) and wxzx:W:Z.
+	local __dx_names "wwx cywwx inwwx outwwx wxx xwx xwx1 xwx2 xxw wxzx"
 	foreach __t of local dyadx {
 		gettoken __f __vv : __t, parse(":")
 		local __vv = subinstr("`__vv'", ":", "", 1)
@@ -122,16 +130,41 @@ program define _nwsaom_nx, rclass
 			di "{err}dyadx(): `__t' is not effect:matrix; effects: `__dx_names'."
 			error 198
 		}
-		capture confirm matrix `__vv'
-		if _rc {
-			di "{err}dyadx(): matrix {bf:`__vv'} not found."
-			error 111
-		}
-		if rowsof(`__vv') != `nodes' | colsof(`__vv') != `nodes' {
-			di "{err}dyadx(): matrix {bf:`__vv'} must be `nodes' x `nodes'."
+		gettoken __m1 __m2 : __vv, parse(":")
+		local __m2 = subinstr("`__m2'", ":", "", 1)
+		if ("`__f'" == "wxzx") != ("`__m2'" != "") {
+			di "{err}dyadx(): wxzx needs two matrices, written wxzx:W:Z (and the other effects one)."
 			error 198
 		}
-		mata: SaomRegNatDy(__nwsaom_last_M, "`__f'", `=249+`__fi'', "`__vv'", `nodes')
+		local __r1 = `nodes'
+		local __r2 = `nodes'
+		if `__nwsaom_tm' {
+			if !inlist("`__f'", "wxx", "xwx", "xwx1", "xwx2", "wxzx") {
+				di "{err}dyadx(`__f') is not available for a two-mode network (available: wxx with a matrix among the actors, xwx xwx1 xwx2 with a matrix among the events, wxzx:W:Z)."
+				error 198
+			}
+			local __r1 = cond(inlist("`__f'", "wxx", "wxzx"), `__nwsaom_tm_na', `__nwsaom_tm_ne')
+			local __r2 = `__nwsaom_tm_ne'
+		}
+		foreach __mm in `__m1' `__m2' {
+			capture confirm matrix `__mm'
+			if _rc {
+				di "{err}dyadx(): matrix {bf:`__mm'} not found."
+				error 111
+			}
+		}
+		if rowsof(`__m1') != `__r1' | colsof(`__m1') != `__r1' {
+			di "{err}dyadx(): matrix {bf:`__m1'} must be `__r1' x `__r1'."
+			error 198
+		}
+		if "`__m2'" != "" {
+			if rowsof(`__m2') != `__r2' | colsof(`__m2') != `__r2' {
+				di "{err}dyadx(): matrix {bf:`__m2'} must be `__r2' x `__r2'."
+				error 198
+			}
+		}
+		if `__nwsaom_tm' mata: SaomRegNatDy2(__nwsaom_last_M, "`__f'", `=249+`__fi'', "`__m1'", "`__m2'", `nodes', 1, __nwsaom_tm_actidx, __nwsaom_tm_evidx)
+		else mata: SaomRegNatDy2(__nwsaom_last_M, "`__f'", `=249+`__fi'', "`__m1'", "`__m2'", `nodes', 0)
 		local __nwsaom_efflist "`__nwsaom_efflist' `__f'(`__vv')"
 	}
 	// tvdyadcov(stem ...) / tvdyadcovrecip(stem ...): the matrices stem1 .. stem`P' (P = waves - 1, the period's START wave), centred by their overall

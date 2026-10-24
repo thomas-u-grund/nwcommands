@@ -1445,6 +1445,453 @@ real rowvector change_nodemix(class ErgmGraph scalar G, real scalar i, real scal
 }
 
 /* ===================================================================
+   Covariate-term layer (agent E4): R-style level selection
+   (levels/levelvalues/base), directed nodemix with R's ordered cells,
+   and the extra covariate terms. Helper functions only used by
+   _nwergm_cov.ado and the native setup hook.
+   =================================================================== */
+
+// R's `levels[object]' for numeric `object' (positive = keep these
+// positions, negative = drop these positions, zeros ignored).
+real colvector _ergm_cov_pick(real colvector u, real rowvector idx){
+	real rowvector pos, neg
+	real colvector keep
+	real scalar k
+
+	pos = select(idx, idx :> 0)
+	neg = select(idx, idx :< 0)
+	if (cols(pos) > 0 & cols(neg) > 0) {
+		errprintf("levels(): cannot mix positive and negative level positions.\n")
+		exit(198)
+	}
+	if (cols(neg) > 0) {
+		keep = J(rows(u), 1, 1)
+		for (k=1; k<=cols(neg); k++) {
+			if (-neg[k] <= rows(u)) keep[-neg[k]] = 0
+		}
+		return(select(u, keep))
+	}
+	if (cols(pos) > 0) {
+		if (max(pos) > rows(u)) {
+			errprintf("levels(): position %g is larger than the number of distinct attribute values (%g).\n", max(pos), rows(u))
+			exit(198)
+		}
+		return(u[pos'])
+	}
+	return(J(0, 1, .))
+}
+
+// Level selection given the candidate list u (R's ergm_attr_levels()
+// plus the `base' convention: base is only used when levels was not
+// given and usebase).
+real colvector _ergm_cov_sel(real colvector u, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
+	real rowvector idx
+
+	if (lval != "") return(strtoreal(tokens(lval))')
+	if (lev != "") return(_ergm_cov_pick(u, strtoreal(tokens(lev))))
+	if (usebase & base != "") {
+		idx = strtoreal(tokens(base))
+		idx = select(idx, idx :!= 0)
+		if (cols(idx) > 0) return(_ergm_cov_pick(u, -abs(idx)))
+	}
+	return(u)
+}
+real colvector _ergm_cov_levels(real colvector attr, string scalar lev, string scalar lval, string scalar base, real scalar usebase){
+	return(_ergm_cov_sel(uniqrows(select(attr, attr :< .)), lev, lval, base, usebase))
+}
+
+// Directed nodemix: one statistic per ORDERED (row level, col level) cell
+// (levelpairs holds (tail level, head level) per output column).
+real scalar _ergm_cellindex_dir(real matrix cells, real scalar a, real scalar b){
+	real scalar k
+	for (k=1; k<=rows(cells); k++) {
+		if (cells[k,1]==a & cells[k,2]==b) return(k)
+	}
+	return(0)
+}
+real rowvector stat_nodemixd(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	ties = G.all_ties()
+	for (k=1; k<=rows(ties); k++) {
+		idx = _ergm_cellindex_dir(td.levelpairs, td.attr[ties[k,1]], td.attr[ties[k,2]])
+		if (idx) out[idx] = out[idx] + 1
+	}
+	return(out)
+}
+real rowvector change_nodemixd(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar idx
+
+	out = J(1, rows(td.levelpairs), 0)
+	idx = _ergm_cellindex_dir(td.levelpairs, td.attr[i], td.attr[j])
+	if (idx) out[idx] = G.has_edge(i,j) ? -1 : 1
+	return(out)
+}
+
+// nodemix cell list exactly as R's InitErgmTerm.nodemix (one-mode):
+// expand.grid(row, col) order (row fastest), upper triangle incl.
+// diagonal when undirected, then levels2 (numeric positions, default
+// -1 = drop the first cell) or the deprecated base.
+// Fills td.levels (row/col level list), td.levelpairs and returns
+// the coefficient-name suffixes through the Stata local `nmlocal'.
+void _ergm_nodemix_setup(class ErgmTermData scalar td, real scalar directed, string scalar lev, string scalar lval, string scalar base, string scalar lev2, string scalar vname, string scalar nmlocal, string scalar nlocal){
+	real colvector u
+	real matrix cells, cidx, sel
+	real scalar r, c, nr, k
+	real colvector keep
+	string scalar nm
+
+	u = _ergm_cov_levels(td.attr, lev, lval, "", 0)
+	nr = rows(u)
+	cells = J(0, 2, .)
+	cidx = J(0, 2, .)
+	for (c=1; c<=nr; c++) {
+		for (r=1; r<=nr; r++) {
+			if (directed | r <= c) {
+				cells = cells \ (u[r], u[c])
+				cidx = cidx \ (r, c)
+			}
+		}
+	}
+	if (rows(cells) == 0) {
+		td.levelpairs = J(0, 2, .)
+		st_local(nlocal, "0")
+		st_local(nmlocal, "")
+		return
+	}
+	if (lev2 != "") {
+		keep = J(rows(cells), 1, 0)
+		sel = _ergm_cov_pick((1::rows(cells)), strtoreal(tokens(lev2)))
+		for (k=1; k<=rows(sel); k++) keep[sel[k]] = 1
+	}
+	else if (base != "" & max(abs(strtoreal(tokens(base)))) > 0) {
+		keep = J(rows(cells), 1, 1)
+		sel = abs(select(strtoreal(tokens(base)), strtoreal(tokens(base)) :!= 0))'
+		for (k=1; k<=rows(sel); k++) if (sel[k] <= rows(cells)) keep[sel[k]] = 0
+	}
+	else {
+		keep = J(rows(cells), 1, 1)
+		keep[1] = 0
+	}
+	cells = select(cells, keep)
+	cidx = select(cidx, keep)
+	nm = ""
+	for (k=1; k<=rows(cells); k++) {
+		nm = nm + " nodemix_" + vname + "_" + strofreal(cells[k,1]) + "_" + strofreal(cells[k,2])
+	}
+	if (!directed) {
+		for (k=1; k<=rows(cells); k++) {
+			r = min((cells[k,1], cells[k,2]))
+			c = max((cells[k,1], cells[k,2]))
+			cells[k,1] = r
+			cells[k,2] = c
+		}
+	}
+	td.levels = u
+	td.levelpairs = cells
+	st_local(nlocal, strofreal(rows(cells)))
+	st_local(nmlocal, strtrim(nm))
+}
+
+// dyadcov(x): directed -> 3 statistics (mutual, utri, ltri; R's labelling
+// copied: "utri" = dyads with ONLY the arc from the higher to the lower
+// node index, "ltri" = only the arc from lower to higher), each the sum
+// of x over the dyads in that state; undirected -> edgecov.
+real rowvector stat_dyadcov(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k, i, j, v
+
+	if (!G.directed) return(stat_edgecov(G, td))
+	ties = G.all_ties()
+	out = J(1, 3, 0)
+	for (k=1; k<=rows(ties); k++) {
+		i = ties[k,1]
+		j = ties[k,2]
+		v = td.edgecovmat[i,j]
+		if (G.has_edge(j,i)) {
+			if (i < j) out[1] = out[1] + v
+		}
+		else if (i > j) out[2] = out[2] + v
+		else out[3] = out[3] + v
+	}
+	return(out)
+}
+real rowvector change_dyadcov(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar dl, v, ref
+
+	dl = G.has_edge(i,j) ? -1 : 1
+	v = td.edgecovmat[i,j]
+	if (!G.directed) return(dl * v)
+	ref = G.has_edge(j,i)
+	return((ref ? dl*v : 0, ref ? (j > i ? -dl*v : 0) : (j < i ? dl*v : 0), ref ? (j < i ? -dl*v : 0) : (j > i ? dl*v : 0)))
+}
+
+// attrcov(attr, mat): edge covariate x[i,j] = mat[code_i, code_j] (codes =
+// rank among sorted distinct values); undirected reads the (min,max) orientation.
+real matrix _ergm_attrcov_matrix(real colvector attr, real matrix mat, real scalar directed){
+	real colvector u, c
+	real scalar n, i, j, a, b
+	real matrix X
+
+	u = uniqrows(select(attr, attr :< .))
+	if (rows(mat) != rows(u) | cols(mat) != rows(u)) {
+		errprintf("attrcov(): mat has wrong dimensions for the attribute (%g distinct values, matrix is %g x %g).\n", rows(u), rows(mat), cols(mat))
+		exit(198)
+	}
+	n = rows(attr)
+	c = J(n, 1, 0)
+	for (i=1; i<=n; i++) c[i] = sum(u :<= attr[i])
+	X = J(n, n, 0)
+	for (i=1; i<=n; i++) {
+		for (j=1; j<=n; j++) {
+			if (i == j) continue
+			if (directed) X[i,j] = mat[c[i], c[j]]
+			else {
+				a = min((i,j))
+				b = max((i,j))
+				X[i,j] = mat[c[a], c[b]]
+			}
+		}
+	}
+	return(X)
+}
+
+// loads a Stata matrix as a dense n x n dyadic covariate; undirected: the
+// upper triangle (row < column) is mirrored, as R reads x[tail,head].
+void _ergm_covmat_load(class ErgmTermData scalar td, string scalar mname, real scalar n, real scalar directed){
+	real matrix X
+	real scalar i, j
+
+	X = st_matrix(mname)
+	if (rows(X) != n | cols(X) != n) {
+		errprintf("Dyadic covariate matrix has dimension %g x %g, %g x %g expected.\n", rows(X), cols(X), n, n)
+		exit(198)
+	}
+	if (!directed) {
+		for (i=1; i<=n; i++) for (j=i+1; j<=n; j++) X[j,i] = X[i,j]
+	}
+	_diag(X, 0)
+	td.edgecovmat = X
+}
+// directed dyadcov: R keeps the upper triangle when the covariate is
+// asymmetric (xm[lower] <- t(xm)[lower]); returns 1 if it had to.
+real scalar _ergm_dyadcov_upper(class ErgmTermData scalar td){
+	real matrix X
+	real scalar n, i, j, ch
+
+	X = td.edgecovmat
+	n = rows(X)
+	ch = 0
+	for (i=1; i<=n; i++) for (j=i+1; j<=n; j++) {
+		if (X[i,j] != X[j,i]) {
+			ch = 1
+			X[j,i] = X[i,j]
+		}
+	}
+	td.edgecovmat = X
+	return(ch)
+}
+// ---- nodecovrange / nodeocovrange / nodeicovrange and the *factordistinct
+// family (dyad-DEPENDENT; R's changestats_diversity.c).  td.levels[1] holds
+// the mode: 1 = node (undirected: all neighbors; directed: out- and in-part),
+// 2 = out only, 3 = in only.
+real scalar _ergm_range_of(real colvector x, real rowvector nb, real scalar skip, real scalar extra, real scalar hasextra){
+	real scalar k, lo, hi, v
+
+	lo = .
+	hi = .
+	for (k=1; k<=cols(nb); k++) {
+		if (nb[k] == skip) continue
+		v = x[nb[k]]
+		if (lo >= . | v < lo) lo = v
+		if (hi >= . | v > hi) hi = v
+	}
+	if (hasextra) {
+		if (lo >= . | extra < lo) lo = extra
+		if (hi >= . | extra > hi) hi = extra
+	}
+	if (lo >= .) return(0)
+	return(hi - lo)
+}
+// change in range(neighbor values of v) when node w is toggled in/out of v's neighbor list
+real scalar _ergm_range_change(real colvector x, real rowvector nb, real scalar w, real scalar present){
+	real scalar rw, rwo
+
+	rwo = _ergm_range_of(x, nb, w, 0, 0)
+	rw = _ergm_range_of(x, nb, w, x[w], 1)
+	return(present ? rwo - rw : rw - rwo)
+}
+real rowvector stat_covrange(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar v, tot, mode
+
+	mode = td.levels[1]
+	tot = 0
+	for (v=1; v<=G.n; v++) {
+		if (!G.directed) tot = tot + _ergm_range_of(td.attr, G.neighbors_out(v), 0, 0, 0)
+		else {
+			if (mode == 1 | mode == 2) tot = tot + _ergm_range_of(td.attr, G.neighbors_out(v), 0, 0, 0)
+			if (mode == 1 | mode == 3) tot = tot + _ergm_range_of(td.attr, G.neighbors_in(v), 0, 0, 0)
+		}
+	}
+	return(tot)
+}
+real rowvector change_covrange(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar mode, pres, ch
+
+	mode = td.levels[1]
+	pres = G.has_edge(i,j)
+	ch = 0
+	if (!G.directed) {
+		ch = _ergm_range_change(td.attr, G.neighbors_out(i), j, pres) + _ergm_range_change(td.attr, G.neighbors_out(j), i, pres)
+	}
+	else {
+		if (mode == 1 | mode == 2) ch = ch + _ergm_range_change(td.attr, G.neighbors_out(i), j, pres)
+		if (mode == 1 | mode == 3) ch = ch + _ergm_range_change(td.attr, G.neighbors_in(j), i, pres)
+	}
+	return(ch)
+}
+// number of neighbors of v (out and/or in list) whose category equals c
+real scalar _ergm_nfd_count(class ErgmGraph scalar G, real colvector cat, real scalar v, real scalar c, real scalar useout, real scalar usein){
+	real rowvector nb
+	real scalar k, cnt
+
+	cnt = 0
+	if (useout) {
+		nb = G.neighbors_out(v)
+		for (k=1; k<=cols(nb); k++) cnt = cnt + (cat[nb[k]] == c)
+	}
+	if (usein) {
+		nb = G.neighbors_in(v)
+		for (k=1; k<=cols(nb); k++) cnt = cnt + (cat[nb[k]] == c)
+	}
+	return(cnt)
+}
+real rowvector stat_nfd(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real scalar v, c, tot, mode, uo, ui
+	real colvector u
+
+	mode = td.levels[1]
+	u = td.levels[2::rows(td.levels)]
+	tot = 0
+	for (v=1; v<=G.n; v++) {
+		uo = (!G.directed | mode == 1 | mode == 2)
+		ui = (G.directed & (mode == 1 | mode == 3))
+		for (c=1; c<=rows(u); c++) {
+			tot = tot + (_ergm_nfd_count(G, td.attr, v, c, uo, ui) > 0)
+		}
+	}
+	return(tot)
+}
+real rowvector change_nfd(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real scalar mode, dl, ch, cnt, c
+
+	mode = td.levels[1]
+	dl = G.has_edge(i,j) ? -1 : 1
+	ch = 0
+	if (!G.directed) {
+		c = td.attr[j]
+		if (c > 0) {
+			cnt = _ergm_nfd_count(G, td.attr, i, c, 1, 0)
+			ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+		}
+		c = td.attr[i]
+		if (c > 0) {
+			cnt = _ergm_nfd_count(G, td.attr, j, c, 1, 0)
+			ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+		}
+	}
+	else {
+		if (mode == 1 | mode == 2) {
+			c = td.attr[j]
+			if (c > 0) {
+				cnt = _ergm_nfd_count(G, td.attr, i, c, 1, (mode == 1))
+				ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+			}
+		}
+		if (mode == 1 | mode == 3) {
+			c = td.attr[i]
+			if (c > 0) {
+				cnt = _ergm_nfd_count(G, td.attr, j, c, (mode == 1), 1)
+				ch = ch + ((cnt + dl) != 0) - (cnt != 0)
+			}
+		}
+	}
+	return(ch)
+}
+
+// ---- generic dyad-independent covariate terms (kind in td.sptype) ----
+// weights of dyad (i,j) for one tie, one entry per output column.
+//   absdistpow: |a_i-a_j|^p                    (td.decay = p)
+//   absdiffcat: 1{|a_i-a_j| == level_k}, k>0   (td.levels = nonzero differences)
+//   diffterm:   f(a_tail - a_head)             (td.decay = pow, td.levels = (dirmul \ signcode))
+//   smalldiff:  1{|a_i-a_j| <= cutoff}         (td.decay = cutoff)
+//   sociality:  1{node_k in {i,j}} [* 1{code_i==code_j}]  (td.levels = node ids; td.center = 1 if td.attr holds match codes)
+real rowvector _ergm_cov_w(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar i, real scalar j){
+	real scalar d, t, h, ch, k, mul, sc
+	real rowvector w
+
+	if (td.sptype == "absdistpow") {
+		return(abs(td.attr[i] - td.attr[j])^td.decay)
+	}
+	if (td.sptype == "absdiffcat") {
+		d = abs(td.attr[i] - td.attr[j])
+		w = J(1, rows(td.levels), 0)
+		if (d > 0) w = (d :== td.levels')
+		return(w)
+	}
+	if (td.sptype == "diffterm") {
+		t = i
+		h = j
+		if (!G.directed & i > j) {
+			t = j
+			h = i
+		}
+		mul = td.levels[1]
+		sc = td.levels[2]
+		ch = (td.attr[t] - td.attr[h]) * mul
+		if (sc == 2) ch = abs(ch)
+		else if (sc == 3) ch = (ch < 0 ? 0 : ch)
+		else if (sc == 4) ch = (ch > 0 ? 0 : ch)
+		if (td.decay == 0) ch = sign(ch)
+		else if (td.decay != 1) ch = ch^td.decay
+		return(ch)
+	}
+	if (td.sptype == "smalldiff") {
+		return(abs(td.attr[i] - td.attr[j]) <= td.decay)
+	}
+	if (td.sptype == "sociality") {
+		w = J(1, rows(td.levels), 0)
+		if (td.center == 1) {
+			if (td.attr[i] != td.attr[j]) return(w)
+		}
+		for (k=1; k<=rows(td.levels); k++) {
+			w[k] = (td.levels[k] == i) + (td.levels[k] == j)
+		}
+		return(w)
+	}
+	errprintf("unknown covariate term kind %s\n", td.sptype)
+	exit(198)
+}
+real rowvector stat_covw(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real rowvector out
+	real scalar k
+
+	ties = G.all_ties()
+	out = J(1, (td.sptype == "absdistpow" | td.sptype == "diffterm" | td.sptype == "smalldiff") ? 1 : rows(td.levels), 0)
+	for (k=1; k<=rows(ties); k++) out = out + _ergm_cov_w(G, td, ties[k,1], ties[k,2])
+	return(out)
+}
+real rowvector change_covw(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	return((G.has_edge(i,j) ? -1 : 1) * _ergm_cov_w(G, td, i, j))
+}
+
+/* ===================================================================
    Bipartite (two-mode) Stage 2 terms (harmonisation unit 156,
    docs/ERGM_ROADMAP.md/docs/CERTIFICATION.md): the first bipartite-
    family terms beyond `edges' (Stage 1, unit 155). Definitions taken
@@ -2205,6 +2652,514 @@ real rowvector change_bgwdegree2(class ErgmGraph scalar G, real scalar i, real s
 	node2 = (G.mode[i]==2 ? i : j)
 	d2 = G.degree_total(node2)
 	return(gw_kernel(d2+delta, td.decay) - gw_kernel(d2, td.decay))
+}
+
+/* ===================================================================
+   Bipartite Stage 5 (generic "bipx" family): the R ergm b1 and b2 terms
+   that need per-statistic parameters - b1concurrent/b1mindegree/
+   b1degrange/b1degree(by=)/b1star(attr=)/b1covrange/b1factordistinct/
+   b1sociality/b1starmix/b1twostar/coincidence/b1dsp/gwb1dsp/
+   b1nodematch(full)/gwb1degree(attr=) and their mode-2 mirrors.
+   One term instance holds ONE node-indexed attribute array (td.attr,
+   already recoded to integer codes by _nwergm_bip.ado; every node has
+   exactly one mode, so a mode-1 attribute and a mode-2 attribute share
+   one array) and td.levelpairs = one row (kind, p1, p2) per output
+   statistic. Integers are packed three to a double with _bx_pack().
+   Kinds (must match native/ergm_mcmc.c, TERMCODE = 3000 + kind):
+    1 DEGR      p1=pack(from,to,lev) p2=m   mode-m nodes, degree in [from,to), attr==lev (lev 0 = any)
+    2 DEGRH     p1=pack(from,to,0)   p2=m   degree counted over same-attr neighbours only
+    3 STARATTR  p1=k                 p2=m   sum C(#neighbours with centre's attr, k)
+    4 COVRANGE  p2=m                        sum of max-min of neighbours' attr
+    5 FACTDIST  p2=m                        sum of #distinct nonzero neighbour codes
+    6 SOC       p1=node                     degree of one node
+    7 STARMIX   p1=pack(k,t,h)       p2=m   sum_{u:attr=t} C(#nbrs with attr h,k); h=0: summed over all values
+    8 TWOSTAR   p1=pack(t,lo,hi)     p2=m   2-stars centred on mode-m attr t with neighbour attrs (lo,hi)
+    9 COINC     p1,p2 = two mode-2 node ids  number of common neighbours
+   10 DSP       p1=d                 p2=m   pairs of mode-m nodes with exactly d common neighbours
+   11 GWDSP     p1=decay             p2=m   sum over mode-m pairs of gw_kernel(common neighbours)
+   12 BNM       p1=pack(A,B,t+2(m-1)) p2=e  b1nodematch/b2nodematch (A own code, B other-mode code, t=0 beta,1 alpha, e exponent)
+   13 GWDEGA    p1=decay  p2=pack(m,lev,0)  sum gw_kernel(deg) over mode-m nodes with attr==lev
+   =================================================================== */
+real scalar _bx_pack(real scalar a, real scalar b, real scalar c){
+	return(a + 131072*b + 17179869184*c)
+}
+real rowvector _bx_unpack(real scalar p){
+	real scalar a, b, c
+	c = floor(p/17179869184)
+	b = floor((p - c*17179869184)/131072)
+	a = p - c*17179869184 - b*131072
+	return((a,b,c))
+}
+real colvector _bx_nodes(class ErgmGraph scalar G, real scalar m){
+	return(m==1 ? G.mode1nodes : G.mode2nodes)
+}
+real scalar _bx_g(real scalar c, real scalar e){
+	if (c < 1) return(0)
+	if (e == 0) return(c==1 ? 0 : 0.5*c)
+	return(0.5*c*(c-1)^e)
+}
+real scalar _bx_one(class ErgmGraph scalar G, class ErgmTermData scalar td, real scalar kind, real scalar p1, real scalar p2){
+	real colvector nodes, nodes2
+	real rowvector pk, nb, nb2
+	real scalar a, b, c, u, v, s, d, cnt, mn, mx, from, to, lev, k, t, h, lo, hi, nlo, nhi, e, A, B, ty, m, i, j
+	real rowvector seen
+
+	s = 0
+	if (kind==1 | kind==2) {
+		pk = _bx_unpack(p1); from = pk[1]; to = pk[2]; lev = pk[3]
+		if (to >= 131071) to = 1e12
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (kind==1) {
+				if (lev>0) if (td.attr[u]!=lev) continue
+				d = G.degree_total(u)
+			}
+			else {
+				nb = G.neighbors_out(u); d = 0
+				for (b=1; b<=cols(nb); b++) d = d + (td.attr[nb[b]]==td.attr[u])
+			}
+			s = s + (d>=from & d<to)
+		}
+	}
+	else if (kind==3) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]; nb = G.neighbors_out(u); d = 0
+			for (b=1; b<=cols(nb); b++) d = d + (td.attr[nb[b]]==td.attr[u])
+			s = s + _ergm_choose(d, p1)
+		}
+	}
+	else if (kind==4) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			nb = G.neighbors_out(nodes[a])
+			if (cols(nb)==0) continue
+			s = s + max(td.attr[nb']) - min(td.attr[nb'])
+		}
+	}
+	else if (kind==5) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			nb = G.neighbors_out(nodes[a])
+			if (cols(nb)==0) continue
+			seen = uniqrows(td.attr[nb'])'
+			s = s + sum(seen :> 0)
+		}
+	}
+	else if (kind==6) {
+		s = G.degree_total(p1)
+	}
+	else if (kind==7) {
+		pk = _bx_unpack(p1); k = pk[1]; t = pk[2]; h = pk[3]
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=t) continue
+			nb = G.neighbors_out(u)
+			if (cols(nb)==0) continue
+			if (h>0) s = s + _ergm_choose(sum(td.attr[nb']:==h), k)
+			else {
+				seen = uniqrows(td.attr[nb'])'
+				for (b=1; b<=cols(seen); b++) s = s + _ergm_choose(sum(td.attr[nb']:==seen[b]), k)
+			}
+		}
+	}
+	else if (kind==8) {
+		pk = _bx_unpack(p1); t = pk[1]; lo = pk[2]; hi = pk[3]
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=t) continue
+			nb = G.neighbors_out(u)
+			if (cols(nb)==0) continue
+			nlo = sum(td.attr[nb']:==lo); nhi = sum(td.attr[nb']:==hi)
+			s = s + (lo==hi ? _ergm_choose(nlo,2) : nlo*nhi)
+		}
+	}
+	else if (kind==9) {
+		s = G.common_neighbors(p1, p2)
+	}
+	else if (kind==10 | kind==11) {
+		nodes = _bx_nodes(G, p2)
+		for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) {
+			c = G.common_neighbors(nodes[a], nodes[b])
+			if (kind==10) s = s + (c==p1)
+			else s = s + gw_kernel(c, p1)
+		}
+	}
+	else if (kind==12) {
+		pk = _bx_unpack(p1); A = pk[1]; B = pk[2]; ty = mod(pk[3],2); m = floor(pk[3]/2)+1; e = p2
+		nodes = _bx_nodes(G, m)
+		nodes2 = _bx_nodes(G, 3-m)
+		if (ty==0) {
+			for (a=1; a<=rows(nodes2); a++) {
+				v = nodes2[a]
+				if (B>0) if (td.attr[v]!=B) continue
+				nb = G.neighbors_out(v)
+				if (cols(nb)==0) continue
+				seen = uniqrows(td.attr[nb'])'
+				for (b=1; b<=cols(seen); b++) {
+					if (A>0) if (seen[b]!=A) continue
+					s = s + _bx_g(sum(td.attr[nb']:==seen[b]), e)
+				}
+			}
+		}
+		else {
+			for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) {
+				u = nodes[a]; v = nodes[b]
+				if (td.attr[u]!=td.attr[v]) continue
+				if (A>0) if (td.attr[u]!=A) continue
+				nb = G.neighbors_out(u); cnt = 0
+				for (i=1; i<=cols(nb); i++) {
+					if (!G.has_edge(v, nb[i])) continue
+					if (B>0) if (td.attr[nb[i]]!=B) continue
+					cnt++
+				}
+				s = s + (cnt>0 ? cnt^e : 0)
+			}
+		}
+	}
+	else if (kind==14) {
+		nodes = G.mode1nodes
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (td.attr[u]!=p1) continue
+			nb = G.neighbors_out(u)
+			for (b=1; b<=cols(nb); b++) s = s + (td.attr[nb[b]]==p2)
+		}
+	}
+	else if (kind==13) {
+		pk = _bx_unpack(p2); m = pk[1]; lev = pk[2]
+		nodes = _bx_nodes(G, m)
+		for (a=1; a<=rows(nodes); a++) {
+			u = nodes[a]
+			if (lev>0) if (td.attr[u]!=lev) continue
+			s = s + gw_kernel(G.degree_total(u), p1)
+		}
+	}
+	return(s)
+}
+real rowvector stat_bipx(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real rowvector out
+	real scalar k
+	out = J(1, rows(td.levelpairs), 0)
+	for (k=1; k<=rows(td.levelpairs); k++) out[k] = _bx_one(G, td, td.levelpairs[k,1], td.levelpairs[k,2], td.levelpairs[k,3])
+	return(out)
+}
+// generic (slow) change statistic: statistic difference under the toggle. The native plugin has the fast per-kind versions.
+real rowvector change_bipx(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	real rowvector s0, s1
+	s0 = stat_bipx(G, td)
+	G.toggle(i, j)
+	s1 = stat_bipx(G, td)
+	G.toggle(i, j)
+	return(s1 - s0)
+}
+
+/* ---- Stage 5 builders: fill an ErgmTermData for the "bipx" term and return the coefficient names (called by _nwergm_bip.ado) ---- */
+real colvector _bx_uniq(real colvector x){
+	real colvector y
+	y = select(x, x :< .)
+	if (rows(y)==0) return(J(0,1,.))
+	return(uniqrows(y))
+}
+// R levels selection by index: empty = all; positive = those positions; negative = drop those positions
+real colvector _bx_sel(real colvector u, real rowvector lev){
+	real rowvector keep
+	real colvector sel
+	real scalar i
+	if (cols(lev)==0) return(u)
+	if (all(lev :> 0)) {
+		// out-of-range positions give a statistic that is always 0 (R: NA level), kept as a missing level
+		sel = J(cols(lev), 1, .)
+		for (i=1; i<=cols(lev); i++) if (lev[i] <= rows(u)) sel[i] = u[lev[i]]
+		return(sel)
+	}
+	keep = select((1..rows(u)), (rowsum(((1..rows(u))' :== (-lev))) :== 0)')
+	return(cols(keep)==0 ? J(0,1,.) : u[keep'])
+}
+// codes 1..rows(u) by match, rows(u)+1 for non-matching
+real colvector _bx_code(real colvector x, real colvector u, real scalar nomatch){
+	real colvector c
+	real scalar i, j
+	c = J(rows(x), 1, rows(u)+1)
+	for (i=1; i<=rows(x); i++) for (j=1; j<=rows(u); j++) if (x[i]==u[j]) { c[i] = j; break; }
+	return(c)
+}
+string rowvector _bx_build(class ErgmTermData scalar td, class ErgmGraph scalar G, string scalar nm, real scalar m,
+	real rowvector X, real rowvector TO, real colvector A1, real colvector A2, real rowvector L1, real rowvector L2,
+	real rowvector F, real rowvector P, string scalar an, string scalar an2){
+
+	real colvector own, oth, u, u2, v, cd, cd2, un
+	real matrix rows_, grid
+	string rowvector names
+	string scalar pre, lbl
+	real scalar n, i, j, k, l, K, hom, lo, hi, INF, nr, nc, a, b, e, ty, diff
+	real rowvector ks, idx
+	real colvector c1, c2, nb1, nb2
+
+	n = G.n
+	INF = 131071
+	pre = (m==1 ? "b1" : "b2")
+	own = _bx_nodes(G, m)
+	oth = _bx_nodes(G, 3-m)
+	td.attr = J(n, 1, 0)
+	rows_ = J(0, 3, 0)
+	names = J(1, 0, "")
+
+	if (nm=="mindeg" | nm=="deg" | nm=="degrange" | nm=="conc") {
+		if (nm=="mindeg") { ks = X; TO = J(1, cols(X), INF); }
+		else if (nm=="conc") { ks = 2; TO = INF; }
+		else if (nm=="deg") { ks = X; TO = X :+ 1; }
+		else {
+			ks = X
+			if (cols(TO)==0) TO = J(1, 1, INF)
+			if (cols(TO)==1 & cols(ks)>1) TO = J(1, cols(ks), TO)
+			else if (cols(ks)==1 & cols(TO)>1) ks = J(1, cols(TO), ks)
+			else if (cols(ks)!=cols(TO)) _error(3200, "The arguments of term degrange must have arguments either of the same length, or one of them must have length 1.")
+			TO = editvalue(TO, ., INF)
+			TO = colmin((TO \ J(1,cols(TO),INF)))
+			if (any(ks :>= TO)) _error(3200, "Term " + pre + "degrange must have from<to.")
+		}
+		hom = (cols(F)>0 ? F[1] : 0)
+		if (rows(A1)==0) {
+			for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (1, _bx_pack(ks[k], TO[k], 0), m)
+				if (nm=="mindeg") names = names, pre+"mindeg"+strofreal(ks[k])
+				else if (nm=="conc") names = names, pre+"concurrent"
+				else if (nm=="deg") names = names, pre+"degree"+strofreal(ks[k])
+				else names = names, (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+" : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k]))
+			}
+		}
+		else if (hom) {
+			u = _bx_sel(_bx_uniq(A1), L1)
+			td.attr = _bx_code(A1, u, 0)
+			for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (2, _bx_pack(ks[k], TO[k], 0), m)
+				names = names, (nm=="deg" ? pre+"deg"+strofreal(ks[k])+"_homophily_"+an : (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+_homophily_"+an : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k])+"_homophily_"+an))
+			}
+		}
+		else {
+			u = _bx_sel(_bx_uniq(A1[own]), L1)
+			td.attr = _bx_code(A1, u, 0)
+			for (l=1; l<=rows(u); l++) for (k=1; k<=cols(ks); k++) {
+				rows_ = rows_ \ (1, _bx_pack(ks[k], TO[k], l), m)
+				lbl = an + "_" + strofreal(u[l])
+				if (nm=="conc") names = names, pre+"concurrent_"+lbl
+				else if (nm=="mindeg") names = names, pre+"mindeg"+strofreal(ks[k])+"_"+lbl
+				else if (nm=="deg") names = names, pre+"deg"+strofreal(ks[k])+"_"+lbl
+				else names = names, (TO[k]>=INF ? pre+"deg"+strofreal(ks[k])+"+_"+lbl : pre+"deg"+strofreal(ks[k])+"to"+strofreal(TO[k])+"_"+lbl)
+			}
+		}
+	}
+	else if (nm=="star") {
+		if (rows(A1)==0) _error(3200, "internal: star without attribute")
+		u = _bx_sel(_bx_uniq(A1), L1)
+		td.attr = _bx_code(A1, u, 0)
+		for (k=1; k<=cols(X); k++) {
+			rows_ = rows_ \ (3, X[k], m)
+			names = names, pre+"star_"+strofreal(X[k])+"_"+an
+		}
+	}
+	else if (nm=="covrange") {
+		td.attr = A1
+		rows_ = (4, 0, m)
+		names = pre+"covrange_"+an
+	}
+	else if (nm=="factdist") {
+		u = _bx_sel(_bx_uniq(A1[oth]), L1)
+		if (rows(u)==0) return(J(1,0,""))
+		td.attr = _bx_code(A1, u, 0)
+		td.attr = td.attr :* (td.attr :<= rows(u))
+		rows_ = (5, 0, m)
+		names = pre+"factordistinct_"+an
+	}
+	else if (nm=="soc") {
+		u = own
+		un = (1::rows(own))
+		if (cols(X)==0) X = -1
+		un = _bx_sel(un, X)
+		for (k=1; k<=rows(un); k++) {
+			rows_ = rows_ \ (6, own[un[k]], 0)
+			names = names, pre+"sociality"+strofreal(own[un[k]])
+		}
+	}
+	else if (nm=="starmix") {
+		diff = (cols(F)>0 ? F[1] : 1)
+		u = _bx_uniq(A1)
+		cd = _bx_code(A1, u, 0)
+		nb1 = _bx_uniq(cd[G.mode1nodes]); nb2 = _bx_uniq(cd[G.mode2nodes])
+		nr = rows(nb1); nc = rows(nb2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(cd[G.mode1nodes], nb1, 0)
+		td.attr[G.mode2nodes] = _bx_code(cd[G.mode2nodes], nb2, 0) :+ nr
+		if (diff) {
+			grid = J(nr*nc, 2, 0)
+			for (j=1; j<=nc; j++) for (i=1; i<=nr; i++) grid[(j-1)*nr+i,.] = (i, nr+j)
+			if (cols(TO)>0) grid = grid[_bx_sel((1::rows(grid)), TO),.]
+			for (k=1; k<=rows(grid); k++) {
+				if (m==1) { a = grid[k,1]; b = grid[k,2]; } else { a = grid[k,2]; b = grid[k,1]; }
+				rows_ = rows_ \ (7, _bx_pack(X[1], a, b), m)
+				lbl = (m==1 ? strofreal(u[nb1[grid[k,1]]])+"_"+strofreal(u[nb2[grid[k,2]-nr]]) : strofreal(u[nb2[grid[k,2]-nr]])+"_"+strofreal(u[nb1[grid[k,1]]]))
+				names = names, pre+"starmix_"+strofreal(X[1])+"_"+an+"_"+lbl
+			}
+		}
+		else {
+			idx = (m==1 ? (1..nr) : (nr+1..nr+nc))
+			if (cols(TO)>0) idx = idx[_bx_sel((1::cols(idx)), TO)']
+			for (k=1; k<=cols(idx); k++) {
+				rows_ = rows_ \ (7, _bx_pack(X[1], idx[k], 0), m)
+				names = names, pre+"starmix_"+strofreal(X[1])+"_"+an+"_"+strofreal(m==1 ? u[nb1[idx[k]]] : u[nb2[idx[k]-nr]])
+			}
+		}
+	}
+	else if (nm=="twostar") {
+		// A1 = attribute of the b1 nodes, A2 = attribute of the b2 nodes
+		u = _bx_sel(_bx_uniq(A1[G.mode1nodes]), L1)
+		u2 = _bx_sel(_bx_uniq(A2[G.mode2nodes]), L2)
+		nr = rows(u); nc = rows(u2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(A1[G.mode1nodes], u, 0)
+		td.attr[G.mode2nodes] = _bx_code(A2[G.mode2nodes], u2, 0)
+		// combos: centre level (mode m), leaf pair lo<=hi (other mode); R order: centre fastest, then lo, then hi
+		if (m==1) { c1 = u; c2 = u2; } else { c1 = u2; c2 = u; }
+		grid = J(0, 3, 0)
+		for (b=1; b<=rows(c2); b++) for (a=1; a<=b; a++) for (i=1; i<=rows(c1); i++) grid = grid \ (i, a, b)
+		if (cols(TO)>0) grid = grid[_bx_sel((1::rows(grid)), TO),.]
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (8, _bx_pack(grid[k,1], grid[k,2], grid[k,3]), m)
+			names = names, pre+"twostar_"+an+"_"+strofreal(c1[grid[k,1]])+"_"+an2+"_"+strofreal(c2[grid[k,2]])+"_"+strofreal(c2[grid[k,3]])
+		}
+	}
+	else if (nm=="coinc") {
+		K = rows(G.mode2nodes)
+		grid = J(0, 2, 0)
+		for (i=1; i<K; i++) for (j=i+1; j<=K; j++) grid = grid \ (i, j)
+		if (cols(F)>0) if (F[1] > 0) {
+			// keep pairs whose observed count exceeds `active'
+			idx = J(1, 0, 0)
+			for (k=1; k<=rows(grid); k++) if (G.common_neighbors(G.mode2nodes[grid[k,1]], G.mode2nodes[grid[k,2]]) > F[1]) idx = idx, k
+			grid = (cols(idx)==0 ? J(0,2,0) : grid[idx',.])
+		}
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (9, G.mode2nodes[grid[k,1]], G.mode2nodes[grid[k,2]])
+			names = names, "coincidence_"+strofreal(grid[k,1])+"_"+strofreal(grid[k,2])
+		}
+	}
+	else if (nm=="dsp") {
+		for (k=1; k<=cols(X); k++) { rows_ = rows_ \ (10, X[k], m); names = names, pre+"dsp"+strofreal(X[k]); }
+	}
+	else if (nm=="gwdsp") {
+		rows_ = (11, P[1], m)
+		names = "gw"+pre+"dsp_fixed_"+strofreal(P[1])
+	}
+	else if (nm=="gwdega") {
+		u = _bx_sel(_bx_uniq(A1[own]), L1)
+		td.attr = _bx_code(A1, u, 0)
+		for (l=1; l<=rows(u); l++) {
+			rows_ = rows_ \ (13, P[1], _bx_pack(m, l, 0))
+			names = names, "gw"+pre+"degree_"+strofreal(P[1])+"_"+an+"_"+strofreal(u[l])
+		}
+	}
+	else if (nm=="bmix") {
+		// nodemix on a bipartite network: edges between b1 level a and b2 level b (R drops the first cell by default)
+		u = _bx_sel(_bx_uniq(A1[G.mode1nodes]), L1)
+		u2 = _bx_sel(_bx_uniq(A1[G.mode2nodes]), L2)
+		td.attr = J(n, 1, 0)
+		td.attr[G.mode1nodes] = _bx_code(A1[G.mode1nodes], u, 0) :* (_bx_code(A1[G.mode1nodes], u, 0) :<= rows(u))
+		td.attr[G.mode2nodes] = _bx_code(A1[G.mode2nodes], u2, 0) :* (_bx_code(A1[G.mode2nodes], u2, 0) :<= rows(u2))
+		grid = J(0, 2, 0)
+		for (b=1; b<=rows(u2); b++) for (a=1; a<=rows(u); a++) grid = grid \ (a, b)
+		if (cols(TO)==0) TO = -1
+		grid = grid[_bx_sel((1::rows(grid)), TO),.]
+		for (k=1; k<=rows(grid); k++) {
+			rows_ = rows_ \ (14, grid[k,1], grid[k,2])
+			names = names, "nodemix_"+an+"_"+strofreal(u[grid[k,1]])+"_"+strofreal(u2[grid[k,2]])
+		}
+	}
+	else if (nm=="bnm") {
+		// A1: attr of the own-mode nodes; A2 (optional): by-attribute of the other mode
+		diff = (cols(F)>0 ? F[1] : 0)
+		if (cols(TO)>0 & cols(L1)==0) L1 = TO
+		u = _bx_sel(_bx_uniq(A1[own]), L1)
+		cd = J(n, 1, 0)
+		cd[own] = _bx_code(A1[own], u, 0)
+		// unmatched / missing nodes get unique ids that never match
+		k = 0
+		for (i=1; i<=rows(own); i++) if (cd[own[i]] > rows(u)) { k++; cd[own[i]] = rows(u) + k; }
+		td.attr = cd
+		nc = 0
+		if (rows(A2)>0) {
+			v = _bx_uniq(A2[oth])
+			if (rows(v) < 2) _error(3200, "byattr should have at least two levels")
+			td.attr[oth] = _bx_code(A2[oth], v, 0)
+			k = rows(v) + 1
+			for (i=1; i<=rows(oth); i++) if (td.attr[oth[i]] > rows(v)) { td.attr[oth[i]] = k; k++; }
+			nc = rows(v)
+		}
+		if (P[2] >= 1 & P[1] < 1) { ty = 1; e = P[1]; } else { ty = 0; e = P[2]; }
+		pre = pre + "nodematch_" + an
+		if (diff & nc>0) { for (a=1; a<=rows(u); a++) for (b=1; b<=nc; b++) { rows_ = rows_ \ (12, _bx_pack(a, b, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(u[a])+"_"+strofreal(v[b]); } }
+		else if (diff) { for (a=1; a<=rows(u); a++) { rows_ = rows_ \ (12, _bx_pack(a, 0, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(u[a]); } }
+		else if (nc>0) { for (b=1; b<=nc; b++) { rows_ = rows_ \ (12, _bx_pack(0, b, ty+2*(m-1)), e); names = names, pre+"_"+strofreal(v[b]); } }
+		else { rows_ = (12, _bx_pack(0, 0, ty+2*(m-1)), e); names = pre; }
+	}
+	else _error(3200, "internal: unknown bipx builder " + nm)
+	td.levelpairs = rows_
+	return(names)
+}
+
+/* Goodness-of-fit statistics of R's gof() for a bipartite network (default GOF = b1degree + b2degree + dspartners + distance):
+   one row vector = b1 degree counts 0..n2, b2 degree counts 0..n1, dyadwise-shared-partner counts 0..n-2, geodesic distance counts 1..n-1 then "infinite". */
+real rowvector ergm_bip_gofstats(class ErgmGraph scalar G){
+	real scalar n, n1, n2, i, j, k, c, d, h, t
+	real rowvector b1, b2, dsp, dist, nb, frontier, nxt
+	real colvector seen, dd
+
+	n = G.n; n1 = rows(G.mode1nodes); n2 = rows(G.mode2nodes)
+	b1 = J(1, n2+1, 0); b2 = J(1, n1+1, 0); dsp = J(1, n-1, 0); dist = J(1, n, 0)
+	for (i=1; i<=n1; i++) b1[G.degree_total(G.mode1nodes[i])+1] = b1[G.degree_total(G.mode1nodes[i])+1] + 1
+	for (i=1; i<=n2; i++) b2[G.degree_total(G.mode2nodes[i])+1] = b2[G.degree_total(G.mode2nodes[i])+1] + 1
+	for (i=1; i<n; i++) for (j=i+1; j<=n; j++) {
+		c = G.common_neighbors(i, j)
+		dsp[c+1] = dsp[c+1] + 1
+	}
+	for (i=1; i<n; i++) {
+		dd = J(n, 1, .)
+		dd[i] = 0
+		frontier = i; d = 0
+		while (cols(frontier) > 0) {
+			d++
+			nxt = J(1, 0, .)
+			for (k=1; k<=cols(frontier); k++) {
+				nb = G.neighbors_out(frontier[k])
+				for (h=1; h<=cols(nb); h++) if (dd[nb[h]] >= .) { dd[nb[h]] = d; nxt = nxt, nb[h]; }
+			}
+			frontier = nxt
+		}
+		for (j=i+1; j<=n; j++) {
+			if (dd[j] >= .) dist[n] = dist[n] + 1
+			else dist[dd[j]] = dist[dd[j]] + 1
+		}
+	}
+	return((b1, b2, dsp, dist))
+}
+
+// largest degree among the mode-m nodes / largest number of common neighbours among mode-m node pairs (tight bounds for the curved bipartite terms)
+real scalar _bx_maxdeg(class ErgmGraph scalar G, real scalar m){
+	real colvector nodes
+	real scalar a, best
+	nodes = _bx_nodes(G, m); best = 0
+	for (a=1; a<=rows(nodes); a++) best = max((best, G.degree_total(nodes[a])))
+	return(best)
+}
+real scalar _bx_maxsp(class ErgmGraph scalar G, real scalar m){
+	real colvector nodes
+	real scalar a, b, best
+	nodes = _bx_nodes(G, m); best = 0
+	for (a=1; a<rows(nodes); a++) for (b=a+1; b<=rows(nodes); b++) best = max((best, G.common_neighbors(nodes[a], nodes[b])))
+	return(best)
 }
 
 /*
@@ -3798,7 +4753,21 @@ class ErgmModel {
 	// `nwergm.ado' validation stage for a curved term's own columns,
 	// not silently mishandled here.
 	real rowvector isfixed
+
+	// Missing-dyad (observational) support: when obs_active==1 the MCMLE
+	// draws a second, constrained sample (only the missing dyads free,
+	// every observed dyad held fixed) from obs_G and estimates with the
+	// difference of the two samples, as R ergm does for a network with NA dyads.
+	real scalar obs_active
+	pointer scalar obs_G
+	pointer scalar obs_propfn
+	real matrix obs_mask
 	real rowvector fixedvalue
+	// statistic transforms (R's Log()/Exp() operators), per coefficient
+	// column: opkind 0 = none, 1 = log, 2 = exp; opparam = log0.  Empty
+	// (0 columns) unless nwergm's logstat()/expstat() set them.
+	real rowvector opkind
+	real rowvector opparam
 
 	void init()
 	void addterm()
@@ -3829,9 +4798,12 @@ void ErgmModel::init(){
 	native_enabled = 0
 	native_enabled_sample = 0
 	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
+	obs_active = 0
 	curved = J(1, 0, .)
 	isfixed = J(1, 0, .)
 	fixedvalue = J(1, 0, .)
+	opkind = J(1, 0, .)
+	opparam = J(1, 0, .)
 }
 
 /*
@@ -3912,6 +4884,213 @@ real scalar ErgmModel::findcoef(string scalar cname){
 	real scalar k
 	for (k=1; k<=cols(coefnames); k++) if (coefnames[k]==cname) return(k)
 	return(0)
+}
+
+// stores the registration details for the caller (Stata) which performs
+// the actual addterm() at top level (class objects must not be re-passed
+// through a function layer before their address is taken).
+void _ergm_cov_set(string scalar nm, real scalar np, string scalar sfn, string scalar cfn, string rowvector names){
+	st_local("__cv_nm", nm)
+	st_local("__cv_np", strofreal(np))
+	st_local("__cv_sfn", sfn)
+	st_local("__cv_cfn", cfn)
+	st_local("__cv_names", invtokens(names))
+}
+// Registers one covariate-term instance (td already holds the attribute
+// in td.attr); returns the number of output columns (0 = term dropped,
+// as R drops a term without levels).  Option strings o1..o3 are
+// term-specific (see the per-term branches).
+real scalar _ergm_cov_add(class ErgmTermData scalar td, string scalar term, real scalar directed, real scalar n, string scalar vname, string scalar lev, string scalar lval, string scalar base, string scalar o1, string scalar o2, string scalar o3){
+	real colvector u, d, nodes, codes, cand
+	real rowvector idx
+	real scalar k, pw, mul, sc, nm
+	string scalar nms, sfx, dr, sa
+	string rowvector DIRS, SAS
+	real matrix av
+
+	if (term == "nodefactor" | term == "nodeifactor" | term == "nodeofactor") {
+		if ((term != "nodefactor") & !directed) {
+			errprintf("%s() requires a directed network; use nodefactor() for an undirected network.\n", term)
+			exit(198)
+		}
+		u = _ergm_cov_levels(td.attr, lev, lval, base, 1)
+		if (rows(u) == 0) return(0)
+		td.levels = u
+		nms = ""
+		for (k=1; k<=rows(u); k++) nms = nms + " " + term + "_" + vname + "_" + strofreal(u[k])
+		if (term == "nodefactor") _ergm_cov_set(term, rows(u), "stat_nodefactor", "change_nodefactor", tokens(nms))
+		else if (term == "nodeifactor") _ergm_cov_set(term, rows(u), "stat_nodeifactor", "change_nodeifactor", tokens(nms))
+		else _ergm_cov_set(term, rows(u), "stat_nodeofactor", "change_nodeofactor", tokens(nms))
+		return(rows(u))
+	}
+	if (term == "nodematch") {
+		u = uniqrows(select(td.attr, td.attr :< .))
+		u = _ergm_cov_sel(u, lev, lval, "", 0)
+		if (lev == "" & lval == "" & o2 != "") u = _ergm_cov_pick(uniqrows(select(td.attr, td.attr :< .)), strtoreal(tokens(o2)))
+		if (o1 == "diff") {
+			if (rows(u) == 0) return(0)
+			td.levels = u
+			nms = ""
+			for (k=1; k<=rows(u); k++) nms = nms + " nodematch_" + vname + "_" + strofreal(u[k])
+			_ergm_cov_set("nodematch_diff", rows(u), "stat_nodematch_diff", "change_nodematch_diff", tokens(nms))
+			return(rows(u))
+		}
+		// attribute values outside the level set never match (not even each other)
+		codes = td.attr
+		nm = max(abs(codes)) + 1
+		for (k=1; k<=rows(codes); k++) {
+			if (!any(u :== codes[k])) {
+				codes[k] = nm
+				nm++
+			}
+		}
+		td.attr = codes
+		_ergm_cov_set("nodematch", 1, "stat_nodematch", "change_nodematch", ("nodematch_" + vname))
+		return(1)
+	}
+	if (term == "absdist") {
+		pw = strtoreal(o1)
+		if (pw >= .) pw = 1
+		if (pw == 1) {
+			_ergm_cov_set("absdist", 1, "stat_absdist", "change_absdist", ("absdist_" + vname))
+		}
+		else {
+			td.sptype = "absdistpow"
+			td.decay = pw
+			_ergm_cov_set("absdistpow", 1, "stat_covw", "change_covw", ("absdist" + strofreal(pw) + "_" + vname))
+		}
+		return(1)
+	}
+	if (term == "absdiffcat") {
+		u = uniqrows(select(td.attr, td.attr :< .))
+		cand = J(0, 1, .)
+		for (k=1; k<=rows(u); k++) cand = cand \ abs(u[k] :- u)
+		cand = uniqrows(cand)
+		cand = select(cand, cand :> 0)
+		cand = _ergm_cov_sel(cand, lev, lval, base, 1)
+		if (rows(cand) == 0) {
+			errprintf("Argument to absdiffcat() has too few distinct differences\n")
+			exit(198)
+		}
+		td.sptype = "absdiffcat"
+		td.levels = cand
+		nms = ""
+		for (k=1; k<=rows(cand); k++) nms = nms + " absdiffcat_" + vname + "_" + strofreal(cand[k])
+		_ergm_cov_set("absdiffcat", rows(cand), "stat_covw", "change_covw", tokens(nms))
+		return(rows(cand))
+	}
+	if (term == "diff") {
+		DIRS = ("t-h", "tail-head", "b1-b2", "h-t", "head-tail", "b2-b1")
+		SAS = ("identity", "abs", "posonly", "negonly")
+		dr = (o2 == "" ? "t-h" : strlower(o2))
+		sa = (o3 == "" ? "identity" : strlower(o3))
+		pw = (o1 == "" ? 1 : strtoreal(o1))
+		if (!any(DIRS :== dr)) {
+			errprintf("diff(): dir() must be one of t-h, tail-head, b1-b2, h-t, head-tail, b2-b1\n")
+			exit(198)
+		}
+		if (!any(SAS :== sa)) {
+			errprintf("diff(): signaction() must be one of identity, abs, posonly, negonly\n")
+			exit(198)
+		}
+		idx = select((1..cols(DIRS)), DIRS :== dr)
+		mul = (idx[1] <= 3 ? 1 : -1)
+		idx = select((1..cols(SAS)), SAS :== sa)
+		sc = idx[1]
+		if ((sc == 1 | sc == 4) & pw != round(pw)) {
+			errprintf("diff(): pow() must be an integer with signaction(%s)\n", sa)
+			exit(198)
+		}
+		td.sptype = "diffterm"
+		td.decay = pw
+		td.levels = (mul \ sc)
+		sfx = "diff" + (pw != 1 ? strofreal(pw) : "") + (sc != 1 ? "_" + sa : "") + (sc != 2 ? "_" + subinstr(dr, "-", "_") : "") + "_" + vname
+		_ergm_cov_set("diffterm", 1, "stat_covw", "change_covw", (sfx))
+		return(1)
+	}
+	if (term == "smalldiff") {
+		pw = strtoreal(o1)
+		if (pw >= .) {
+			errprintf("smalldiff(): cutoff() is required and must be a number\n")
+			exit(198)
+		}
+		td.sptype = "smalldiff"
+		td.decay = pw
+		_ergm_cov_set("smalldiff", 1, "stat_covw", "change_covw", ("smalldiff_" + vname + "_" + strofreal(pw)))
+		return(1)
+	}
+	if (term == "sociality") {
+		if (directed) {
+			errprintf("sociality() is for undirected networks; use sender()/receiver() for a directed network.\n")
+			exit(198)
+		}
+		d = (1::n)
+		if (o1 != "") d = _ergm_cov_pick(d, strtoreal(tokens(o1)))
+		else if (base != "" & max(abs(strtoreal(tokens(base)))) > 0) {
+			idx = abs(select(strtoreal(tokens(base)), strtoreal(tokens(base)) :!= 0))
+			d = _ergm_cov_pick(d, -idx)
+		}
+		else d = d[2::n]
+		if (rows(d) == 0) return(0)
+		td.sptype = "sociality"
+		td.levels = d
+		td.center = 0
+		sfx = ""
+		if (vname != ".") {
+			u = uniqrows(select(td.attr, td.attr :< .))
+			u = _ergm_cov_sel(u, lev, lval, "", 0)
+			codes = td.attr
+			for (k=1; k<=rows(codes); k++) {
+				idx = select((1..rows(u)), (u :== codes[k])')
+				codes[k] = (cols(idx) > 0 ? idx[1] : rows(u) + 1)
+			}
+			td.attr = codes
+			td.center = 1
+			sfx = "_" + vname
+		}
+		nms = ""
+		for (k=1; k<=rows(d); k++) nms = nms + " sociality" + strofreal(d[k]) + sfx
+		_ergm_cov_set("sociality", rows(d), "stat_covw", "change_covw", tokens(nms))
+		return(rows(d))
+	}
+	if (term == "nodecov" | term == "nodeicov" | term == "nodeocov") {
+		if (term != "nodecov" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		if (term == "nodecov") _ergm_cov_set(term, 1, "stat_nodecov", "change_nodecov", (term + "_" + vname))
+		else if (term == "nodeicov") _ergm_cov_set(term, 1, "stat_nodeicov", "change_nodeicov", (term + "_" + vname))
+		else _ergm_cov_set(term, 1, "stat_nodeocov", "change_nodeocov", (term + "_" + vname))
+		return(1)
+	}
+	if (term == "nodecovrange" | term == "nodeocovrange" | term == "nodeicovrange") {
+		if (term != "nodecovrange" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		td.levels = (term == "nodecovrange" ? 1 : (term == "nodeocovrange" ? 2 : 3))
+		_ergm_cov_set(term, 1, "stat_covrange", "change_covrange", (term + "_" + vname))
+		return(1)
+	}
+	if (term == "nodefactordistinct" | term == "nodeofactordistinct" | term == "nodeifactordistinct") {
+		if (term != "nodefactordistinct" & !directed) {
+			errprintf("%s() requires a directed network.\n", term)
+			exit(198)
+		}
+		u = _ergm_cov_levels(td.attr, lev, lval, "", 0)
+		if (rows(u) == 0) return(0)
+		codes = td.attr
+		for (k=1; k<=rows(codes); k++) {
+			idx = select((1..rows(u)), (u :== codes[k])')
+			codes[k] = (cols(idx) > 0 ? idx[1] : 0)
+		}
+		td.attr = codes
+		td.levels = ((term == "nodefactordistinct" ? 1 : (term == "nodeofactordistinct" ? 2 : 3)) \ (1::rows(u)))
+		_ergm_cov_set(term, 1, "stat_nfd", "change_nfd", (term + "_" + vname))
+		return(1)
+	}
+	errprintf("unknown covariate term %s\n", term)
+	exit(198)
 }
 
 /*
@@ -5134,6 +6313,39 @@ string rowvector ErgmModel::theta_coefnames(){
 	return(out)
 }
 
+void _ergm_op_init(class ErgmModel scalar M){
+	if (cols(M.opkind) == 0) {
+		M.opkind = J(1, M.nparam(), 0)
+		M.opparam = J(1, M.nparam(), 0)
+	}
+}
+// native wire trailer for transformed columns: " 0 0 nops {slot kind param raw}..."
+string scalar _ergm_native_opstr(class ErgmModel scalar M, class ErgmGraph scalar G){
+	real scalar t, k, pos, n
+	real rowvector raw
+	string scalar out
+
+	out = ""
+	n = 0
+	if (cols(M.opkind) > 0) {
+		pos = 1
+		for (t=1; t<=M.nterms; t++) {
+			raw = (*M.statfn[t])(G, *M.td[t])
+			for (k=1; k<=M.npar[t]; k++) {
+				if (M.opkind[pos] > 0) {
+					out = out + " " + strofreal(pos-1) + " " + strofreal(M.opkind[pos]) + " " + strofreal(M.opparam[pos], "%25.17g") + " " + strofreal(raw[k], "%25.17g")
+					n++
+				}
+				pos++
+			}
+		}
+	}
+	return(" 0 0 " + strofreal(n) + out)
+}
+real scalar _ergm_op_apply(real scalar kind, real scalar param, real scalar x){
+	if (kind == 1) return(x == 0 ? param : ln(x))
+	return(exp(x))
+}
 real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
 	real rowvector out, part
 	real scalar t, pos, k
@@ -5143,21 +6355,32 @@ real rowvector ErgmModel::full_statistic(class ErgmGraph scalar G){
 	for (t=1; t<=nterms; t++) {
 		part = (*statfn[t])(G, *td[t])
 		for (k=1; k<=npar[t]; k++) {
+			if (cols(opkind) >= pos) {
+				if (opkind[pos] > 0) part[k] = _ergm_op_apply(opkind[pos], opparam[pos], part[k])
+			}
 			out[pos] = part[k]
 			pos++
 		}
 	}
 	return(out)
 }
-
 real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, real scalar j){
-	real rowvector out, part
+	real rowvector out, part, raw
 	real scalar t, pos, k
 
 	out = J(1, nparam(), 0)
 	pos = 1
 	for (t=1; t<=nterms; t++) {
 		part = (*chgfn[t])(G, i, j, *td[t])
+		if (cols(opkind) > 0) {
+			if (any(opkind[pos..(pos+npar[t]-1)] :> 0)) raw = (*statfn[t])(G, *td[t])
+			for (k=1; k<=npar[t]; k++) {
+				if (opkind[pos+k-1] > 0) {
+					if (part[k] == 0) part[k] = 0
+					else part[k] = _ergm_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k] + part[k]) - _ergm_op_apply(opkind[pos+k-1], opparam[pos+k-1], raw[k])
+				}
+			}
+		}
 		for (k=1; k<=npar[t]; k++) {
 			out[pos] = part[k]
 			pos++
@@ -5165,6 +6388,229 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 	}
 	return(out)
 }
+// ---- R's curved MPLE (ergm.logitreg -> trust::trust), ported -------------
+// Agent E4.  R fits a curved MPLE with the trust-region optimiser of the
+// `trust' package (rinit=1, rmax=100, iterlim=200, fterm=mterm=sqrt(eps))
+// started at theta=0 with the decay at its lower bound plus sqrt(eps)
+// (ergm's .constrain_init), the decay constrained to >= 0 (objective -Inf
+// outside).  On flat/weakly identified likelihoods this path ends at a
+// point that is not the global optimum; to match R the same algorithm is
+// reproduced step by step.
+
+// Brent's zeroin as in R's uniroot() (R_zeroin2) for the trust-region
+// radius equation; f(b) = sqrt(1/sum((gq/(beta+b))^2)) - 1/r.
+real scalar _ergm_trust_fred(real scalar beep, real colvector gq, real colvector beta, real scalar r, real scalar C1, real scalar C2){
+	if (beep == 0) {
+		if (C2 > 0) return(-1/r)
+		return(sqrt(1/C1) - 1/r)
+	}
+	return(sqrt(1/sum((gq :/ (beta :+ beep)):^2)) - 1/r)
+}
+real scalar _ergm_trust_uniroot(real scalar ax, real scalar bx, real colvector gq, real colvector beta, real scalar r, real scalar C1, real scalar C2){
+	real scalar a, b, c, fa, fb, fc, tol, maxit, prev_step, tol_act, new_step, cb, t1, t2, p, q, EPS
+
+	EPS = 2.220446049250313e-16
+	tol = EPS^0.25
+	a = ax
+	b = bx
+	fa = _ergm_trust_fred(a, gq, beta, r, C1, C2)
+	fb = _ergm_trust_fred(b, gq, beta, r, C1, C2)
+	c = a
+	fc = fa
+	maxit = 1001
+	if (fa == 0) return(a)
+	if (fb == 0) return(b)
+	while (maxit > 0) {
+		maxit--
+		prev_step = b - a
+		if (abs(fc) < abs(fb)) {
+			a = b
+			b = c
+			c = a
+			fa = fb
+			fb = fc
+			fc = fa
+		}
+		tol_act = 2*EPS*abs(b) + tol/2
+		new_step = (c - b)/2
+		if (abs(new_step) <= tol_act | fb == 0) return(b)
+		if (abs(prev_step) >= tol_act & abs(fa) > abs(fb)) {
+			cb = c - b
+			if (a == c) {
+				t1 = fb/fa
+				p = cb*t1
+				q = 1 - t1
+			}
+			else {
+				q = fa/fc
+				t1 = fb/fc
+				t2 = fb/fa
+				p = t2*(cb*q*(q - t1) - (b - a)*(t1 - 1))
+				q = (q - 1)*(t1 - 1)*(t2 - 1)
+			}
+			if (p > 0) q = -q
+			else p = -p
+			if (p < (0.75*cb*q - abs(tol_act*q)/2) & p < abs(prev_step*q/2)) new_step = p/q
+		}
+		if (abs(new_step) < tol_act) new_step = (new_step > 0 ? tol_act : -tol_act)
+		a = b
+		fa = fb
+		b = b + new_step
+		fb = _ergm_trust_fred(b, gq, beta, r, C1, C2)
+		if ((fb > 0 & fc > 0) | (fb < 0 & fc < 0)) {
+			c = a
+			fc = fa
+		}
+	}
+	return(b)
+}
+
+// objective of R's ergm.logitreg for a curved model: returns value
+// (-Inf outside the box), gradient and Hessian in theta space.
+void _ergm_curved_obj(class ErgmModel scalar M, real matrix X, real colvector y, real rowvector theta, real scalar alpha_pos, real scalar val, real colvector grad, real matrix hess){
+	real rowvector eta
+	real colvector xb, p, w, yl
+	real matrix Jac, XJ, Xl
+	real colvector keep
+
+	if (any(theta :>= .) | theta[alpha_pos] < 0) {
+		val = -1e300
+		return
+	}
+	eta = M.theta_to_eta(theta)
+	xb = X * eta'
+	keep = (xb :< .)
+	Xl = X
+	yl = y
+	if (!all(keep)) {
+		Xl = select(X, keep)
+		yl = select(y, keep)
+		xb = select(xb, keep)
+	}
+	Jac = M.theta_to_eta_jacobian(theta)
+	XJ = Xl * Jac
+	p = invlogit(xb)
+	val = sum(yl :* ln(p) :+ (1 :- yl) :* ln(1 :- p))
+	grad = (XJ' * (yl - p))
+	w = p :* (1 :- p)
+	hess = -(XJ' * (w :* XJ))
+}
+
+void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
+	real rowvector theta_start, real scalar maxit, real scalar tol,
+	string scalar theta_matname, string scalar V_theta_matname,
+	string scalar converged_matname){
+
+	real matrix X, B, V, L, hess, Bh, hesst
+	real colvector y, g, gq, ev, beta, ptry, grad, wtry, gt, vtry
+	real rowvector theta, theta_try
+	real scalar ncol, alpha_pos, r, rmax, iter, accept, f, ftry, val, valtry, rho, preddiff
+	real scalar isnewton, lmin, C1, C2, C3, bdn, bup, root, utry, fterm, mterm, term, conv, EPS, k
+	real colvector imin
+
+	EPS = 2.220446049250313e-16
+	ncol = cols(D) - 1
+	X = D[., (1..ncol)]
+	y = D[., ncol+1]
+	alpha_pos = cols(theta_start)
+	// R: curved weight/other parameters start at ~0 (noise of order sqrt(eps)),
+	// the decay at its lower bound (0) plus sqrt(eps)
+	theta = theta_start
+	theta[1..(alpha_pos-1)] = J(1, alpha_pos-1, 0)
+	theta[alpha_pos] = sqrt(EPS)
+	fterm = sqrt(EPS)
+	mterm = sqrt(EPS)
+	r = 1
+	rmax = 100
+	_ergm_curved_obj(M, X, y, theta, alpha_pos, val, grad, hess)
+	accept = 1
+	conv = 0
+	for (iter=1; iter<=maxit; iter++) {
+		if (accept) {
+			B = -hess
+			g = -grad
+			f = -val
+			symeigensystem(B, V, L)
+			ev = L'
+			gq = V' * g
+		}
+		isnewton = 0
+		if (all(ev :> 0)) {
+			ptry = -V * (gq :/ ev)
+			if (sqrt(sum(ptry:^2)) <= r) isnewton = 1
+		}
+		if (!isnewton) {
+			lmin = min(ev)
+			beta = ev :- lmin
+			imin = (beta :== 0)
+			C1 = sum(select(gq :/ beta, !imin):^2)
+			C2 = sum(select(gq, imin):^2)
+			C3 = sum(gq:^2)
+			if (C2 > 0 | C1 > r^2) {
+				bdn = sqrt(C2)/r
+				bup = sqrt(C3)/r
+				if (_ergm_trust_fred(bup, gq, beta, r, C1, C2) <= 0) root = bup
+				else if (_ergm_trust_fred(bdn, gq, beta, r, C1, C2) >= 0) root = bdn
+				else root = _ergm_trust_uniroot(bdn, bup, gq, beta, r, C1, C2)
+				wtry = gq :/ (beta :+ root)
+				ptry = -V * wtry
+			}
+			else {
+				wtry = gq :/ beta
+				for (k=1; k<=rows(wtry); k++) if (imin[k]) wtry[k] = 0
+				ptry = -V * wtry
+				utry = sqrt(r^2 - sum(ptry:^2))
+				if (utry > 0) {
+					vtry = V[., selectindex(imin)[1]]
+					ptry = ptry + utry * vtry
+				}
+			}
+		}
+		preddiff = sum(ptry :* (g + (B * ptry)/2))
+		theta_try = theta + ptry'
+		_ergm_curved_obj(M, X, y, theta_try, alpha_pos, valtry, grad, hesst)
+		ftry = -valtry
+		rho = (ftry - f)/preddiff
+		if (ftry < 1e299) {
+			term = (abs(ftry - f) < fterm | abs(preddiff) < mterm)
+		}
+		else {
+			term = 0
+			rho = -1e300
+		}
+		if (term) {
+			if (ftry < f) {
+				accept = 1
+				theta = theta_try
+				val = valtry
+				hess = hesst
+			}
+		}
+		else {
+			if (rho < 1/4) {
+				accept = 0
+				r = r/4
+			}
+			else {
+				accept = 1
+				theta = theta_try
+				val = valtry
+				hess = hesst
+				if (rho > 3/4 & !isnewton) r = min((2*r, rmax))
+			}
+		}
+		if (term) {
+			conv = 1
+			break
+		}
+	}
+	// R re-evaluates the objective at the final theta; covariance = generalized inverse of -Hessian
+	_ergm_curved_obj(M, X, y, theta, alpha_pos, val, grad, hess)
+	st_matrix(theta_matname, theta)
+	st_matrix(V_theta_matname, invsym(-hess))
+	st_matrix(converged_matname, (conv))
+}
+
 
 /*
 	Curved MPLE fit (harmonisation unit 136, revised - the first
@@ -5219,7 +6665,7 @@ real rowvector ErgmModel::full_change(class ErgmGraph scalar G, real scalar i, r
 	principle already documented at this file's own build_mple_data()
 	call site in nwergm.ado, harmonisation unit 81).
 */
-void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
+void ErgmCurvedMPLEFit_newton(class ErgmModel scalar M, real matrix D,
 	real rowvector theta_start, real scalar maxit, real scalar tol,
 	string scalar theta_matname, string scalar V_theta_matname,
 	string scalar converged_matname){
@@ -5228,6 +6674,7 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 	real colvector y, p, xb, w
 	real rowvector theta, theta_try, eta, g_eta, g_theta, delta
 	real scalar iter, converged, ncol, ll0, ll1, step, halvings, alpha_pos, found
+	real scalar fix_decay, decay_floor, kk
 
 	ncol = cols(D) - 1
 	X = D[., (1..ncol)]
@@ -5247,7 +6694,9 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 	theta = theta_start
 	ll0 = ergm_curved_loglik(M, X, y, theta)
 	converged = 0
-	for (iter=1; iter<=maxit; iter++) {
+	fix_decay = 0
+	decay_floor = 1e-6
+	for (iter=1; iter<=2*maxit; iter++) {
 		eta = M.theta_to_eta(theta)
 		xb = X * eta'
 		p = invlogit(xb)
@@ -5257,6 +6706,12 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 		w = p :* (1 :- p)
 		I_eta = X' * (w :* X)
 		I_theta = Jac' * I_eta * Jac
+		if (fix_decay) {
+			I_theta[alpha_pos, .] = J(1, cols(I_theta), 0)
+			I_theta[., alpha_pos] = J(rows(I_theta), 1, 0)
+			I_theta[alpha_pos, alpha_pos] = 1
+			g_theta[alpha_pos] = 0
+		}
 		delta = (invsym(I_theta) * g_theta')'
 
 		// Damped Newton-Raphson (backtracking line search): a full,
@@ -5295,7 +6750,7 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 			// and already far past any statistically meaningful decay value
 			// (every other curved term's own near-boundary certification
 			// case in this file tops out under 20).
-			if (theta_try[alpha_pos] > 1e-6 & theta_try[alpha_pos] < 500) {
+			if (theta_try[alpha_pos] > decay_floor & theta_try[alpha_pos] < 500) {
 				ll1 = ergm_curved_loglik(M, X, y, theta_try)
 				// `missing(ll1)' MUST be checked explicitly before
 				// comparing - Stata/Mata's own missing-value ordering
@@ -5336,7 +6791,17 @@ void ErgmCurvedMPLEFit(class ErgmModel scalar M, real matrix D,
 			// whatever the final failed attempt happened to be, which is
 			// what was cascading to missing everywhere downstream before
 			// this fix.
-			theta[alpha_pos] = (delta[alpha_pos] < 0) ? 1e-6 : 500
+			if (!fix_decay & delta[alpha_pos] < 0) {
+				// pinned at the lower boundary: re-optimise the other
+				// parameters with decay held at ~0 (R's trust-region fit
+				// ends at decay ~ 1e-12 with the rest optimal given it)
+				fix_decay = 1
+				decay_floor = 1e-13
+				theta[alpha_pos] = 1e-12
+				ll0 = ergm_curved_loglik(M, X, y, theta)
+				continue
+			}
+			theta[alpha_pos] = (delta[alpha_pos] < 0) ? (fix_decay ? 1e-12 : 1e-6) : 500
 			converged = 1
 			break
 		}
@@ -5874,6 +7339,150 @@ real matrix _ergm_mat_appendcol(real matrix A, real colvector v){
 	controlled, exactly the same discipline the Mata term-expansion
 	waves used throughout.
 */
+/* ===================================================================
+   Structural terms, term codes 1000-1999 (native/ergm_struct.h).  A term
+   instance is registered by _nwergm_struct.ado under the name "ns:<term>"
+   with stat_ns()/change_ns().  Its td holds: sptype = term key,
+   levelpairs = one row per coefficient (code, p1, p2, empty-network value,
+   uses attr, uses covariate matrix), attr = node attribute (R's coding),
+   edgecovmat = covariate matrix (localtriangle), decay = scalar parameter.
+   The statistic is the sum of the change statistics along a build-up of the
+   observed network (native plugin mode 3), plus the empty-network value,
+   which is how R's summary() obtains it for terms without an s_ function.
+   There is deliberately no Mata change statistic: the terms need the
+   plugin (change_ns() stops with a message).
+   =================================================================== */
+real rowvector ErgmNativeTermStat(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	real matrix ties
+	real scalar n, nties, p, i, k, __junk, hasattr, hascov
+	string scalar origframe, argstr, cmd, vlist
+	real rowvector out
+
+	if (!ErgmNativeAvailable()) {
+		errprintf("this term needs the native plugin (ergm_mcmc), which could not be loaded\n")
+		_error(198)
+	}
+	n = G.n
+	ties = G.all_ties()
+	nties = rows(ties)
+	p = rows(td.levelpairs)
+	hasattr = sum(td.levelpairs[., 5]) > 0
+	hascov = sum(td.levelpairs[., 6]) > 0
+	origframe = st_framecurrent()
+	stata("capture frame drop __ergm_native")
+	stata("frame create __ergm_native")
+	st_framecurrent("__ergm_native")
+	st_addobs(max((nties, n, 1)))
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	vlist = ""
+	if (hasattr) {
+		__junk = st_addvar("double", "a1")
+		st_store((1::n), "a1", td.attr)
+		vlist = vlist + " a1"
+	}
+	if (hascov) {
+		for (i=1; i<=n; i++) {
+			__junk = st_addvar("double", "cm" + strofreal(i))
+			vlist = vlist + " cm" + strofreal(i)
+		}
+		st_store((1::n), "cm" :+ strofreal(1..n), td.edgecovmat)
+	}
+	if (nties > 0) st_store((1::nties), ("v1","v2"), ties)
+	for (i=1; i<=p; i++) {
+		__junk = st_addvar("double", "o" + strofreal(i))
+		vlist = vlist + " o" + strofreal(i)
+	}
+	argstr = "3 " + strofreal(n) + " " + strofreal(G.directed) + " 0 " + strofreal(nties) + " 0 0 0 0 0 " + strofreal(hasattr) + " " + strofreal(hascov) + " 0 0 " + strofreal(p)
+	for (i=1; i<=p; i++) {
+		argstr = argstr + " " + strofreal(td.levelpairs[i,1]) + " " + strofreal(td.levelpairs[i,5]) + " " +
+			strofreal(td.levelpairs[i,2], "%25.17g") + " " + strofreal(td.levelpairs[i,3], "%25.17g") + " " + strofreal(td.levelpairs[i,6])
+	}
+	for (i=1; i<=p; i++) argstr = argstr + " 0"
+	for (i=1; i<=p; i++) argstr = argstr + " 0"
+	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
+	cmd = "plugin call ergmnativemcmc v1 v2" + vlist + ", " + char(34) + argstr + char(34)
+	stata(cmd)
+	out = st_data(1, ("o" :+ strofreal(1..p)))
+	st_framecurrent(origframe)
+	stata("capture frame drop __ergm_native")
+	return(out)
+}
+real scalar ns_degcor_sigma2(class ErgmGraph scalar G){
+	real matrix ties
+	real colvector deg, all
+	ties = G.all_ties()
+	deg = G.dout
+	all = (deg[ties[., 1]] \ deg[ties[., 2]])
+	return(sum(all :* all) - rows(all) * mean(all)^2)
+}
+real rowvector ns_degcor_stat(class ErgmGraph scalar G){
+	real matrix ties
+	real colvector deg, d1, d2
+	real scalar E, mu, sig, cross
+	ties = G.all_ties()
+	deg = G.dout
+	d1 = deg[ties[., 1]]
+	d2 = deg[ties[., 2]]
+	E = rows(ties)
+	mu = (sum(d1) + sum(d2)) / (2 * E)
+	sig = (sum(d1 :* d1) + sum(d2 :* d2)) / (2 * E) - mu^2
+	cross = 2 * sum(d1 :* d2)
+	return((cross / (2 * E) - mu^2) / sig)
+}
+real scalar ns_attr_load(class ErgmTermData scalar td, string scalar var, real scalar n, real scalar mode){
+	real colvector x, u, code
+	real scalar i, nl, extra
+	x = st_data((1::n), var)
+	u = uniqrows(select(x, x :< .))
+	nl = rows(u)
+	code = J(n, 1, 0)
+	extra = 0
+	for (i=1; i<=n; i++) {
+		if (x[i] >= .) {
+			if (mode == 1) {
+				extra++
+				code[i] = nl + extra
+			}
+			else if (mode >= 2) code[i] = nl + 1
+		}
+		else code[i] = sum(u :< x[i]) + 1
+	}
+	td.attr = code
+	td.levels = u
+	return(nl)
+}
+real matrix ns_slots(string scalar s){
+	string rowvector rows_, cols_
+	real matrix out
+	real scalar r, c
+	rows_ = tokens(s, ";")
+	rows_ = select(rows_, rows_ :!= ";")
+	out = J(cols(rows_), 6, 0)
+	for (r=1; r<=cols(rows_); r++) {
+		cols_ = tokens(rows_[r], ",")
+		cols_ = select(cols_, cols_ :!= ",")
+		for (c=1; c<=cols(cols_); c++) out[r, c] = strtoreal(cols_[c])
+	}
+	return(out)
+}
+void ns_native_setup(class ErgmModel scalar M, real scalar code, class ErgmGraph scalar G){
+	real scalar rc
+	if (sum(substr(M.names, 1, 3) :== "ns:") > 0) rc = ErgmNativeSetup(M, code, G)
+}
+real scalar ns_has_struct(class ErgmModel scalar M){
+	return(sum(substr(M.names, 1, 3) :== "ns:") > 0)
+}
+real rowvector stat_ns(class ErgmGraph scalar G, class ErgmTermData scalar td){
+	if (td.sptype == "degcor") return(ns_degcor_stat(G))
+	return(td.levelpairs[., 4]' + ErgmNativeTermStat(G, td))
+}
+real rowvector change_ns(class ErgmGraph scalar G, real scalar i, real scalar j, class ErgmTermData scalar td){
+	errprintf("this term runs only in the native plugin (ergm_mcmc): the plugin must be installed and the model may have at most 64 coefficients\n")
+	_error(198)
+	return(J(1, rows(td.levelpairs), 0))
+}
+
 real scalar ErgmNativeSPCode(string scalar sptype, real scalar utp, real scalar otp, real scalar itp, real scalar osp, real scalar isp, real scalar rtp){
 	if (sptype == "OTP") return(otp)
 	if (sptype == "ITP") return(itp)
@@ -5894,6 +7503,11 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	M.fixed_density = 0		// explicit default for EVERY model (an uninitialized Mata class real scalar reads as missing, which is nonzero/"true" in an `if()` - nwergm.ado overrides this to 1, after this call returns, only for a fixdensity model)
 
 	if (!ErgmNativeAvailable()) return(0)
+	if (cols(M.opkind) > 0) {
+		if (any(M.opkind :> 0) & rows(G) > 0) {
+			if (G.has_dyadmask) return(0)	// statistic transforms are not combined with freedyads() on the native sampler
+		}
+	}
 
 	// freedyads() masked TNT native port (harmonisation unit 168):
 	// masking no longer forces a whole-model Mata bailout here - it
@@ -5948,7 +7562,7 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	// must match native/ergm_mcmc.c's own MAXTERMS/MAXATTR exactly - a
 	// model exceeding either falls back to Mata rather than risking the
 	// C plugin's own hard-coded array bounds.
-	maxcols = 64
+	maxcols = 256
 	maxattr = 32
 	maxcovmat = 8
 
@@ -6373,6 +7987,99 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 			termcodes[pos] = 79
 			p1v[pos] = tdt.decay
 		}
+
+		else if (nm == "absdistpow" | nm == "smalldiff" | nm == "diffterm" | nm == "absdiffcat" | nm == "sociality") {
+			if (nm == "sociality" & tdt.center != 1) aidx = 0
+			else {
+				if (cols(attrmat) + 1 > maxattr) return(0)
+				attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+				aidx = cols(attrmat)
+			}
+			if (nm == "absdiffcat" | nm == "sociality") {
+				for (k=1; k<=M.npar[t]; k++) {
+					pos++
+					termcodes[pos] = (nm == "absdiffcat" ? 2003 : 2006)
+					attridxs[pos] = aidx
+					p1v[pos] = tdt.levels[k]
+					p2v[pos] = (tdt.center == 1)
+				}
+			}
+			else {
+				pos++
+				termcodes[pos] = (nm == "absdistpow" ? 2002 : (nm == "diffterm" ? 2004 : 2005))
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.decay
+				if (nm == "diffterm") p2v[pos] = tdt.levels[2] + (tdt.levels[1] < 0 ? 10 : 0)
+			}
+		}
+		else if (nm == "dyadcov") {
+			if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+			covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+			cidx = cols(covmatstack) / cols(tdt.edgecovmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = (M.npar[t] == 1 ? 68 : 2006 + k)
+				covidxs[pos] = cidx
+			}
+		}
+		else if (nm == "nodecovrange" | nm == "nodeocovrange" | nm == "nodeicovrange" | nm == "nodefactordistinct" | nm == "nodeofactordistinct" | nm == "nodeifactordistinct") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			pos++
+			termcodes[pos] = 2010 + (nm == "nodecovrange" ? 0 : (nm == "nodeocovrange" ? 1 : (nm == "nodeicovrange" ? 2 : (nm == "nodefactordistinct" ? 3 : (nm == "nodeofactordistinct" ? 4 : 5)))))
+			attridxs[pos] = aidx
+		}
+		else if (nm == "nodemixd") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 2001
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levelpairs[k,1]
+				p2v[pos] = tdt.levelpairs[k,2]
+			}
+		}
+		// generic bipartite family (Stage 5, see "bipx" above): one slot per
+		// levelpairs row, termcode 3000 + kind, kind parameters in p1/p2
+		else if (nm == "bipx") {
+			if (cols(attrmat) + 1 > maxattr) return(0)
+			attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+			aidx = cols(attrmat)
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = 3000 + tdt.levelpairs[k,1]
+				attridxs[pos] = aidx
+				p1v[pos] = tdt.levelpairs[k,2]
+				p2v[pos] = tdt.levelpairs[k,3]
+			}
+		}
+		else if (substr(nm, 1, 3) == "ns:") {
+			// structural terms (term codes 1000-1999, native/ergm_struct.h): per-slot table in td.levelpairs = (code, p1, p2, empty-network value, uses attr, uses covariate matrix)
+			real scalar aidx2, cidx2
+			aidx2 = 0
+			cidx2 = 0
+			if (sum(tdt.levelpairs[., 5]) > 0) {
+				if (cols(attrmat) + 1 > maxattr) return(0)
+				attrmat = _ergm_mat_appendcol(attrmat, tdt.attr)
+				aidx2 = cols(attrmat)
+			}
+			if (sum(tdt.levelpairs[., 6]) > 0) {
+				if (cols(covmatstack) / cols(tdt.edgecovmat) + 1 > maxcovmat) return(0)
+				covmatstack = (cols(covmatstack) == 0 ? tdt.edgecovmat : (covmatstack, tdt.edgecovmat))
+				cidx2 = cols(covmatstack) / cols(tdt.edgecovmat)
+			}
+			for (k=1; k<=M.npar[t]; k++) {
+				pos++
+				termcodes[pos] = tdt.levelpairs[k, 1]
+				p1v[pos] = tdt.levelpairs[k, 2]
+				p2v[pos] = tdt.levelpairs[k, 3]
+				if (tdt.levelpairs[k, 5]) attridxs[pos] = aidx2
+				if (tdt.levelpairs[k, 6]) covidxs[pos] = cidx2
+			}
+		}
 		else return(0)
 	}
 
@@ -6600,6 +8307,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i], "%25.17g")
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i], "%25.17g")
+	argstr = argstr + _ergm_native_opstr(M, G)
 
 	// Stata will not let an already-loaded plugin-type program be
 	// dropped and redefined within the same session (confirmed by
@@ -6773,6 +8481,7 @@ real matrix ErgmNativeBuildMPLEData(class ErgmModel scalar M, class ErgmGraph sc
 	}
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// theta (unused)
 	for (i=1; i<=p; i++) argstr = argstr + " 0"	// obs (unused)
+	argstr = argstr + _ergm_native_opstr(M, G)
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
@@ -6820,7 +8529,8 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 
 	real matrix ties, attrpad, theta_out, V_out
 	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, j, k, __junk, ncurved, ntheta, rc
-	string scalar origframe, argstr, cmd, attrvarlist, covmatvarlist
+	string scalar origframe, argstr, cmd, attrvarlist, covmatvarlist, modevarlist
+	real scalar bipartite__
 	string rowvector attrvarnames, covmatvarnames
 
 	n = G.n
@@ -6848,6 +8558,15 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	st_addobs(nobs_needed)
 	__junk = st_addvar("double", "v1")
 	__junk = st_addvar("double", "v2")
+
+	// two-mode graphs send the per-node mode as their own column (as ErgmNativeBuildMPLEData())
+	modevarlist = ""
+	bipartite__ = G.bipartite
+	if (bipartite__) {
+		__junk = st_addvar("double", "m")
+		modevarlist = " m"
+		st_store((1::n), "m", G.mode[1::n])
+	}
 
 	attrvarlist = ""
 	attrvarnames = J(1, nattr, "")
@@ -6904,7 +8623,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 	// fixed_density: always 0 here, same reasoning as hasmask's own
 	// comment just above - curved MPLE is never a fixed-density model
 	// either.
-	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " 0 " + strofreal(nties) + " " +
+	argstr = "2 " + strofreal(n) + " " + strofreal(directed) + " " + strofreal(bipartite__) + " " + strofreal(nties) + " " +
 		"0 0 0 0 0 " + strofreal(nattr) + " " + strofreal(ncovmat) + " 0 0 " + strofreal(p)
 	for (i=1; i<=p; i++) {
 		argstr = argstr + " " + strofreal(M.native_termcodes[i]) + " " + strofreal(M.native_attridx[i]) +
@@ -6916,7 +8635,7 @@ real scalar ErgmNativeCurvedMPLEFit(class ErgmModel scalar M, class ErgmGraph sc
 
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + attrvarlist + covmatvarlist + ", " + char(34) + argstr + char(34)
+	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + ", " + char(34) + argstr + char(34)
 	stata(cmd)
 
 	st_framecurrent(origframe)
@@ -7981,6 +9700,59 @@ real scalar ergm_spec0_scalar(real colvector xcentered){
 // against the MCMC sampling itself) - rather than needing R's own
 // dual-space machinery (built for the many-test-point case this
 // package's own architecture never triggers).
+// Fast MPLE logistic regression (speed): Newton-Raphson/IRLS on the dyad
+// data matrix D = (statistics | outcome) with no constant, the same fit
+// Stata's `logit y x1 .. xp, noconstant' gives (same MLE, same inverse
+// observed-information covariance), minus the ~60 ms Stata overhead per
+// 45k-row fit. Returns 1 and posts e(b)/e(V)-style matrices only when the fit
+// is plain (converged, finite, full rank, no (quasi-)separation signs);
+// returns 0 otherwise and the caller falls back to `logit' itself, which
+// keeps Stata's own handling and messages for the degenerate cases.
+real scalar ergm_mple_irls(real matrix D, string scalar bname, string scalar Vname){
+	real matrix X, H, Hi
+	real colvector y, b, eta, mu, w, g, db
+	real scalar p, it, ll, ll0, conv, k
+
+	p = cols(D) - 1
+	if (p < 1 | rows(D) < p + 1) return(0)
+	if (missing(D) > 0) return(0)
+	X = D[., 1::p]
+	y = D[., p+1]
+	if (min(y) < 0 | max(y) > 1) return(0)
+	if (sum(y) == 0 | sum(y) == rows(y)) return(0)
+	b = J(p, 1, 0)
+	ll0 = -.
+	conv = 0
+	for (it=1; it<=40; it++) {
+		eta = X*b
+		if (max(abs(eta)) > 30) return(0)
+		mu = invlogit(eta)
+		ll = sum(y:*eta :- log1p(exp(eta)))
+		if (ll0 != -. & ll < ll0 - 1e-9) return(0)
+		w = mu :* (1 :- mu)
+		g = cross(X, y :- mu)
+		H = cross(X, w, X)
+		Hi = invsym(H)
+		for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+		db = Hi * g
+		b = b + db
+		ll0 = ll
+		if (max(abs(db)) < 1e-11) { conv = 1; break; }
+	}
+	if (!conv) return(0)
+	eta = X*b
+	if (max(abs(eta)) > 30) return(0)
+	mu = invlogit(eta)
+	w = mu :* (1 :- mu)
+	H = cross(X, w, X)
+	Hi = invsym(H)
+	for (k=1; k<=p; k++) if (Hi[k,k] == 0) return(0)
+	if (min(diagonal(Hi)) <= 0 | max(abs(b)) > 25) return(0)
+	st_matrix(bname, b')
+	st_matrix(Vname, Hi)
+	return(1)
+}
+
 real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	real scalar n, k, i, j, ii, iter, ncols, nrows, entering, leaving
 	real scalar mincost, ratio, minratio, phase1obj, pivot, tol
@@ -8036,16 +9808,13 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 	for (i=1; i<=nrows; i++) cost1[artcol0+i] = 1
 
 	for (iter=1; iter<=2000; iter++) {
-		redcost = J(1,ncols,0)
-		for (j=1; j<=ncols; j++) {
-			redcost[j] = cost1[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost1[basis[i]]*T[i,j]
-		}
-		entering = 0
-		for (j=1; j<=ncols; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		// vectorised reduced costs (speed: was an interpreted double loop over
+		// every column x every basis row; same arithmetic, same first-negative
+		// entering rule)
+		redcost = cost1 - cost1[basis]*T
+		entering = selectindex(redcost :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		minratio = .
 		leaving = 0
@@ -8131,27 +9900,12 @@ real scalar ergm_hummel_gammamax(real matrix Mm, real rowvector x){
 
 	for (iter=1; iter<=5000; iter++) {
 		redcost = J(1,ncols,0)
-		for (j=1; j<=artcol0-1; j++) {
-			redcost[j] = cost2[j]
-			for (i=1; i<=nrows; i++) redcost[j] = redcost[j] - cost2[basis[i]]*T[i,j]
-		}
-		// Bland's rule (smallest-index entering, not steepest-descent)
-		// here too, matching phase 1 - guarantees termination even on
-		// the degenerate/ill-conditioned MCMC samples a badly-mixed
-		// chain can produce (measured directly: steepest-descent
-		// entering selection here, paired with Bland's-rule-tie-broken
-		// leaving selection, does NOT guarantee anti-cycling - Bland's
-		// rule requires the smallest-index rule on BOTH sides - and
-		// this mismatch was observed to hang for minutes on the
-		// project's own `curvedgwespnet' certification network, whose
-		// MCMC sample is already known to be pathological: R's own
-		// `ergm' independently fails outright on curved MCMLE for this
-		// exact network too, see docs/ERGM_ROADMAP.md).
-		entering = 0
-		for (j=1; j<=artcol0-1; j++) {
-			if (redcost[j] < -tol) { entering = j; break; }
-		}
-		if (entering==0) break
+		redcost[1..artcol0-1] = cost2[1..artcol0-1] - cost2[basis]*T[., 1..artcol0-1]
+		// Bland's rule (smallest-index entering AND smallest-index leaving)
+		// as in phase 1: required for anti-cycling on degenerate MCMC samples.
+		entering = selectindex(redcost[1..artcol0-1] :< -tol)
+		if (length(entering)==0) break
+		entering = entering[1]
 
 		// Same Bland's-rule tie-break as phase 1's own leaving selection
 		// (smallest BASIS-VARIABLE index among tied rows, not smallest
@@ -8727,6 +10481,10 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	hmargin = ctl[4]
 	minpval = ctl[6]
 	last_ok = 0
+	real matrix sampo, Dobs, Dtesto, Vtesto, Svo, covmean, So
+	real rowvector inflo, Sdiago
+	real colvector lwo, wo
+	real scalar samplesize_o, ess_o, neff_o, has_obs
 
 	// Mata passes a bare-variable argument by reference, so this
 	// function's own adaptive-interval growth (below) reassigning its
@@ -8753,6 +10511,8 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	samplesize_cap = samplesize0 * 20	// R has no hard cap on this (only an indirect one via MCMLE.MCMC.max.ESS.frac in "precision" mode, which this package does not implement) - added purely so a chain that never escapes the tolerance region cannot grow samplesize (and therefore runtime/memory) unboundedly across maxit iterations
 
 	obs = M.full_statistic(G)
+	has_obs = M.obs_active
+	samplesize_o = max((round(samplesize0 / 2), min((samplesize0, 500))))
 	theta = theta0
 	p = cols(theta)
 	coefhist = J(0, p, 0)
@@ -8861,6 +10621,14 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	for (iter=1; iter<=maxit; iter++) {
 		theta_old = theta	// the eta point THIS iteration's sample was actually drawn at - needed below to reweight that (by-then-stale) sample toward the point the Newton step is about to propose, mirroring R's own importance-sampling reweighting.
 		samp = ErgmMCMCSample(M, G, theta, burnin, interval, samplesize, proposalfn)
+		if (has_obs) {
+			// missing dyads: the "observed" statistic is the mean of the constrained sample
+			// (only the missing dyads free), as in R ergm's observational-process MCMLE
+			sampo = ErgmMCMCSampleConstrained(M, theta, burnin, interval, samplesize_o)
+			obs = mean(sampo)
+			Dobs = sampo :- obs
+		}
+		D = samp :- obs
 		D = samp :- obs
 
 		// THETA-SPACE Newton step for curved models (harmonisation unit
@@ -8901,6 +10669,7 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		if (is_curved) {
 			Jac = M.theta_to_eta_jacobian(theta_c)
 			Dtest = D * Jac
+			if (has_obs) Dtesto = Dobs * Jac
 		}
 		else {
 			Jac = I(p)
@@ -8917,9 +10686,14 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 			// step with the fixed entries merely zeroed out afterward,
 			// which would ignore the free/fixed covariance structure.
 			Dtest = D[., freeidx]
+			if (has_obs) Dtesto = Dobs[., freeidx]
 		}
 		Dtestbar = mean(Dtest)
 		Vtest = variance(Dtest)
+		if (has_obs) {
+			Vtesto = variance(Dtesto)
+			Vtest = ergm_psd_fix(Vtest - Vtesto)
+		}
 
 		// Non-identifiability/collinearity check (harmonisation unit 179,
 		// docs/ERGM_ROADMAP.md's own scoped item #2 for this) - ported
@@ -9200,6 +10974,28 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 		// own degrees of freedom invalid or the test meaningless.
 		if (neff < ptest_const + 2) neff = ptest_const + 2
 		T2 = neff * (Dtestbar_w * Vcinv * Dtestbar_w')
+		if (has_obs) {
+			// two independent samples: test the difference of the (reweighted) means against
+			// the sum of the two Monte-Carlo covariances of the means
+			lwo = Dobs * etadiff'
+			wo = exp(lwo :- max(lwo))
+			wo = wo :/ sum(wo)
+			Dtestbar_w = Dtestbar_w - wo' * Dtesto
+			ess_o = rows(Dtesto) * sum(wo:^2)
+			inflo = ergm_spectral0_ar(Dtesto)
+			neff_o = rows(Dtesto) / (mean(inflo') * ess_o)
+			if (neff_o < ptest_const + 2) neff_o = ptest_const + 2
+			Vtesto = variance(Dtesto)
+			Vc = variance(Dtest)
+			for (k=1; k<=ptest_const; k++) {
+				Vc[k,k] = Vc[k,k] * infl[k] * ess_factor
+				Vtesto[k,k] = Vtesto[k,k] * inflo[k] * ess_o
+			}
+			covmean = Vc / (samplesize / (mean(infl') * ess_factor)) + Vtesto / neff_o
+			T2 = Dtestbar_w * invsym(covmean) * Dtestbar_w'
+			neff = min((neff, neff_o))
+			if (neff < ptest_const + 2) neff = ptest_const + 2
+		}
 		Fstat = T2 * (neff - ptest_const) / (ptest_const * (neff - 1))
 		Fcrit = invF(ptest_const, neff - ptest_const, confidence)
 		if (verbose) {
@@ -9446,6 +11242,15 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	// and n the MCMC sample size.
 	Sdiag = sqrt(infl)
 	S = V :* (Sdiag' * Sdiag)
+	if (has_obs) {
+		// missing dyads: information = V(unconstrained) - V(constrained); Monte Carlo error from both samples
+		sampo = ErgmMCMCSampleConstrained(M, theta, burnin, interval, max((samplesize_o, round(samplesize / 2))))
+		Svo = variance(sampo)
+		Sdiago = sqrt(ergm_spectral0_ar(sampo :- mean(sampo)))
+		So = Svo :* (Sdiago' * Sdiago)
+		V = ergm_psd_fix(V - Svo)
+		S = (S / rows(samp) + So / rows(sampo)) * rows(samp)
+	}
 
 	// Zero out every fixed coefficient's own row/column of `V' before
 	// inverting (harmonisation unit 183) - matches R ergm's own real
@@ -9490,6 +11295,317 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	if (is_curved) res.coef_theta = theta_c
 	res.coefhist_theta = coefhist_theta
 	return(res)
+}
+
+end
+
+
+/* ===================================================================
+   Missing dyads (NA ties) and fit statistics support
+   =================================================================== */
+mata:
+
+// nearest symmetric positive semi-definite matrix (eigenvalues floored), as R's snearPD(posd.tol=0) role
+real matrix ergm_psd_fix(real matrix A)
+{
+	real matrix X, L
+	real rowvector ev
+	real scalar mx
+	A = (A + A') / 2
+	symeigensystem(A, X=., ev=.)
+	mx = max(abs(ev))
+	if (mx <= 0 | mx == .) return(A)
+	ev = editmissing(ev, 0)
+	ev = ev :* (ev :> 1e-10 * mx) + (1e-10 * mx) :* (ev :<= 1e-10 * mx)
+	return(X * diag(ev) * X')
+}
+
+// constrained (observational) sample: only the missing dyads are free
+real matrix ErgmMCMCSampleConstrained(class ErgmModel scalar M, real rowvector theta,
+	real scalar burnin, real scalar interval, real scalar samplesize)
+{
+	real matrix hold, out
+	hold = M.native_maskmat
+	M.native_maskmat = M.obs_mask
+	out = ErgmMCMCSample(M, *M.obs_G, theta, burnin, interval, samplesize, M.obs_propfn)
+	M.native_maskmat = hold
+	return(out)
+}
+
+// n x n 0/1 matrix of missing (NA) dyads of a dense network matrix (symmetric if undirected)
+real matrix ergm_missing_dyads(real matrix E, class ErgmGraph scalar G)
+{
+	real matrix Mm
+	real colvector mo
+	real scalar i, j, n
+	n = G.n
+	Mm = J(n, n, 0)
+	if (G.bipartite & (rows(E) != n | cols(E) != n)) {
+		// rectangular (mode1 x mode2) incidence matrix
+		for (i=1; i<=rows(E); i++) for (j=1; j<=cols(E); j++) {
+			if (E[i,j] == .) {
+				Mm[G.mode1nodes[i], G.mode2nodes[j]] = 1
+				Mm[G.mode2nodes[j], G.mode1nodes[i]] = 1
+			}
+		}
+		return(Mm)
+	}
+	Mm = (E :== .)
+	for (i=1; i<=n; i++) Mm[i,i] = 0
+	if (!G.directed) Mm = ((Mm + Mm') :> 0)
+	if (G.bipartite) {
+		mo = G.mode
+		Mm = Mm :* ((mo * J(1,n,1)) :!= (J(n,1,1) * mo'))
+	}
+	return(Mm)
+}
+
+// does the matrix contain a missing value off the diagonal?
+real scalar ergm_offdiag_missing(real matrix E)
+{
+	real scalar i
+	real matrix F
+	F = (E :== .)
+	for (i=1; i<=rows(F); i++) F[i,i] = 0
+	return(sum(F) > 0)
+}
+
+// number of missing dyads (each undirected dyad once)
+real scalar ergm_count_missing(real matrix Mm, real scalar directed)
+{
+	return(directed ? sum(Mm) : sum(Mm) / 2)
+}
+
+// R's single.impute.dyads(): impute round(density * nmissing) of the missing dyads as ties, uniformly at random
+void ergm_impute_missing(class ErgmGraph scalar G, real matrix Mm)
+{
+	real matrix idx
+	real scalar i, j, nae, tot, d, nimp, k
+	real colvector ord
+	idx = J(0, 2, 0)
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (!Mm[i,j]) continue
+			if (!G.directed & j < i) continue
+			idx = idx \ (i, j)
+		}
+	}
+	nae = rows(idx)
+	if (nae == 0) return
+	tot = ergm_total_dyads(G) - nae
+	if (tot <= 0) return
+	d = G.nties / tot
+	nimp = round(d * nae)
+	if (nimp == 0) return
+	ord = order(runiform(nae, 1), 1)
+	for (k=1; k<=nimp; k++) G.toggle(idx[ord[k], 1], idx[ord[k], 2])
+}
+
+// rows of the MPLE design matrix (same canonical dyad walk as build_mple_data) that are NOT missing
+real colvector ergm_mple_keep(class ErgmGraph scalar G, real matrix Mm)
+{
+	real colvector keep
+	real scalar i, j, a, b, pos, masked
+	masked = G.has_dyadmask
+	keep = J(0, 1, 0)
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) {
+			for (b=1; b<=rows(G.mode2nodes); b++) {
+				i = G.mode1nodes[a]; j = G.mode2nodes[b]
+				if (masked) if (!G.freedyadmat[i,j]) continue
+				keep = keep \ !Mm[i,j]
+			}
+		}
+		return(keep)
+	}
+	for (i=1; i<=G.n; i++) {
+		for (j=1; j<=G.n; j++) {
+			if (i==j) continue
+			if (!G.directed & j<i) continue
+			if (masked) if (!G.freedyadmat[i,j]) continue
+			keep = keep \ !Mm[i,j]
+		}
+	}
+	return(keep)
+}
+
+// independent copy of a graph (class instances are references in Mata)
+class ErgmGraph scalar ergm_graph_clone(class ErgmGraph scalar G)
+{
+	class ErgmGraph scalar G2
+	real matrix t
+	real scalar k
+	G2 = ErgmGraph()
+	G2.init(G.n, G.directed)
+	if (G.bipartite) G2.set_bipartite(G.mode)
+	t = G.all_ties()
+	for (k=1; k<=rows(t); k++) G2.toggle(t[k,1], t[k,2])
+	return(G2)
+}
+
+
+// pseudo-log-likelihood sum(y*lp - log(1+exp(lp))) of the MPLE design matrix D = (x | y) at eta
+real scalar ergm_mple_ll(real matrix D, real rowvector eta)
+{
+	real colvector lp, y
+	lp = D[., 1..cols(eta)] * eta'
+	y = D[., cols(eta)+1]
+	return(sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp))))))
+}
+
+// logistic regression by Newton-Raphson with step halving; rank-deficient columns get coefficient 0
+real rowvector ergm_irls(real matrix X, real colvector y, real colvector off)
+{
+	real rowvector b
+	real colvector lp, pr, g, st
+	real matrix H
+	real scalar it, ll0, ll1, h, p
+	p = cols(X)
+	b = J(1, p, 0)
+	lp = off
+	ll0 = sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp)))))
+	for (it=1; it<=50; it++) {
+		lp = X * b' + off
+		pr = 1 :/ (1 :+ exp(-lp))
+		g = X' * (y - pr)
+		H = cross(X, pr :* (1 :- pr), X)
+		st = invsym(H) * g
+		for (h=0; h<=20; h++) {
+			lp = X * (b + st' / 2^h)' + off
+			ll1 = sum(y :* lp - (lp :* (lp :> 0) + ln(1 :+ exp(-abs(lp)))))
+			if (ll1 >= ll0 - 1e-12) break
+		}
+		b = b + st' / 2^h
+		if (max(abs(st / 2^h)) < 1e-10) {
+			ll0 = ll1
+			break
+		}
+		ll0 = ll1
+	}
+	return(b)
+}
+
+real scalar ergm_term_is_dind(string scalar nm)
+{
+	return(anyof(("edges","nodematch","nodematch_diff","nodecov","nodeicov","nodeocov","absdist","nodefactor",
+		"nodeifactor","nodeofactor","nodemix","edgecov","hamming","sender","receiver","b1cov","b2cov","b1factor",
+		"b2factor","b1nodematch","b2nodematch","absdiff","sociality"), nm))
+}
+
+// MPLE of the dyad-independent submodel (dyad-independent terms of the model; R: ergm.bridge.dindstart.llk).
+// Returns (log-likelihood, theta_d) with theta_d zero on dyad-dependent columns.
+real rowvector ergm_dind_submodel(class ErgmModel scalar M, real matrix D)
+{
+	real rowvector isd, bd, full, fx
+	real colvector off
+	real scalar t, k, pos, p, ll
+	p = M.nparam()
+	isd = J(1, p, 0)
+	pos = 0
+	for (t=1; t<=M.nterms; t++) {
+		for (k=1; k<=M.npar[t]; k++) isd[pos+k] = ergm_term_is_dind(M.names[t])
+		pos = pos + M.npar[t]
+	}
+	fx = (rows(M.isfixed) * cols(M.isfixed) == p ? M.isfixed : J(1, p, 0))
+	full = J(1, p, 0)
+	for (k=1; k<=p; k++) if (fx[k] & isd[k]) full[k] = M.fixedvalue[k]
+	off = D[., 1..p] * full'
+	isd = isd :* (1 :- fx)
+	if (sum(isd) > 0) {
+		bd = ergm_irls(D[., selectindex(isd)], D[., p+1], off)
+		full[selectindex(isd)] = bd
+	}
+	ll = ergm_mple_ll(D, full)
+	return(ll, full)
+}
+
+// R's mkpath/ergm.bridge.llr for a straight-line path from theta to thetad (bidirectional shift of the
+// first attempt is 0, so the u points are the equally weighted midpoints). Returns (llr, variance of llr).
+real rowvector ergm_bridge_llr(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector from,
+	real rowvector to, real rowvector obsstat, real scalar nsteps, real scalar burnin, real scalar between,
+	real scalar interval, real scalar samplesize, pointer scalar propfn)
+{
+	real scalar i, u, llr, vr, b, m1, nso
+	real rowvector th, dth
+	real matrix s, so
+	real colvector x, xo
+	dth = to - from
+	llr = 0
+	vr = 0
+	nso = max((round(samplesize / 2), min((samplesize, 500))))
+	for (i=1; i<=nsteps; i++) {
+		u = (i - 0.5) / nsteps
+		th = from + u * dth
+		b = (i == 1 ? burnin : between)
+		s = ErgmMCMCSample(M, G, th, b, interval, samplesize, propfn)
+		if (M.obs_active) {
+			so = ErgmMCMCSampleConstrained(M, th, b, interval, nso)
+			x = s * dth'
+			xo = so * dth'
+			llr = llr + (mean(x) - mean(xo)) / nsteps
+			vr = vr + (variance(x) * ergm_spectral0_ar(x)[1] / rows(x) + variance(xo) * ergm_spectral0_ar(xo)[1] / rows(xo)) / nsteps^2
+		}
+		else {
+			x = (s :- obsstat) * dth'
+			llr = llr + mean(x) / nsteps
+			vr = vr + variance(x) * ergm_spectral0_ar(x)[1] / rows(x) / nsteps^2
+		}
+	}
+	return(llr, vr)
+}
+
+
+// R's predict.ergm(): for every informative dyad the tail, head and the conditional log-odds of a tie
+// (change statistics x eta); same canonical dyad walk as build_mple_data()
+real matrix ergm_predict_data(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector eta, real matrix Mm)
+{
+	real matrix out
+	real scalar i, j, a, b
+	out = J(0, 3, 0)
+	if (G.bipartite) {
+		for (a=1; a<=rows(G.mode1nodes); a++) for (b=1; b<=rows(G.mode2nodes); b++) {
+			i = G.mode1nodes[a]
+			j = G.mode2nodes[b]
+			if (Mm[i,j]) continue
+			out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+		}
+		return(out)
+	}
+	for (i=1; i<=G.n; i++) for (j=1; j<=G.n; j++) {
+		if (i==j) continue
+		if (!G.directed & j<i) continue
+		if (Mm[i,j]) continue
+		out = out \ (i, j, M.change_toward_one(G, i, j) * eta')
+	}
+	return(out)
+}
+
+
+real matrix ergm_predict_matrix(real matrix P, real scalar n, real scalar directed, real matrix Mm)
+{
+	real matrix out
+	real scalar k, j
+	out = J(n, n, 0)
+	for (k=1; k<=rows(P); k++) {
+		out[P[k,1], P[k,2]] = P[k,3]
+		if (!directed) out[P[k,2], P[k,1]] = P[k,3]
+	}
+	for (k=1; k<=n; k++) for (j=1; j<=n; j++) if (Mm[k,j]) out[k,j] = .
+	return(out)
+}
+
+
+void ergm_netobj_to_graph(pointer(class nw_def scalar) scalar netobj, class ErgmGraph scalar G, real scalar directed)
+{
+	real scalar i, k
+	real matrix nb
+	for (i=1; i<=G.n; i++) {
+		nb = netobj->neighbors(i)
+		for (k=1; k<=rows(nb); k++) {
+			if (!directed & nb[k] <= i) continue
+			G.toggle(i, nb[k])
+		}
+	}
 }
 
 end

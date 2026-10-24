@@ -89,7 +89,8 @@ assert _rc == 0
 assert e(nodes) == 6
 assert e(ties) == 5
 assert reldif(_b[edges], ln(5/4)) < 1e-6
-capture noisily nwergm twomode, edges triangle
+* R refuses a directed-only term on a two-mode network (and accepts the undirected one-mode terms)
+capture noisily nwergm twomode, edges mutual
 assert _rc != 0
 
 nwclear
