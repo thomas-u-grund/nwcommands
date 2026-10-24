@@ -23,7 +23,13 @@ git worktree add --detach "$tmp" origin/main
 (
   cd "$tmp"
   git switch -C main origin/main
-  git merge --no-ff -m "Merge develop into main" develop
+  if ! git merge --no-ff -m "Merge develop into main" develop; then
+    # the CI rebuilds the binaries on develop; if only binaries under lib/plugins conflict, take develop's
+    other=$(git diff --name-only --diff-filter=U | grep -v '^lib/plugins/' || true)
+    if [ -n "$other" ]; then echo "conflicts outside lib/plugins:" >&2; echo "$other" >&2; exit 1; fi
+    git diff --name-only --diff-filter=U | while read -r f; do git checkout --theirs -- "$f"; git add "$f"; done
+    git commit -q -m "Merge develop into main"
+  fi
   git push origin main
 )
 git worktree remove --force "$tmp"
