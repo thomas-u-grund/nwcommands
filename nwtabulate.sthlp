@@ -179,6 +179,15 @@ where families have both a marriage and a business relationship. In contrast, th
 relationship.
 
 
+{title:Requirements}
+
+{pstd}
+The {opt plot} option draws the table with the user-written command {help tabplot} (Nick Cox, SSC). It is the only
+part of this command that needs an additional package. {cmd:nwcommands} never installs it for you: if {cmd:tabplot}
+is missing, the command stops with a message before doing anything, and you install it yourself with
+{stata ssc install tabplot}. Without {opt plot}, nothing external is needed.
+
+
 {title:See also}
 
 	{help nwtab1:one-way nwtabulate}, {help nwtab3:two-way nwtabulate attribute}, {help nwcorrelate}, {help nwqap}, {help tabulate}
@@ -274,6 +283,15 @@ has a seat in the civic council and the other one does not.
      {txt}   E-I Index: {res}-.2{txt}   p-value: {res}.84
 
 	
+
+{title:Requirements}
+
+{pstd}
+The {opt plot} option draws the table with the user-written command {help tabplot} (Nick Cox, SSC). It is the only
+part of this command that needs an additional package. {cmd:nwcommands} never installs it for you: if {cmd:tabplot}
+is missing, the command stops with a message before doing anything, and you install it yourself with
+{stata ssc install tabplot}. Without {opt plot}, nothing external is needed.
+
 
 {title:See also}
 {pstd}

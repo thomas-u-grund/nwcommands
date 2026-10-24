@@ -52,10 +52,7 @@ program nwtab2
 	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
 	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
+		_nwrequire tabplot
 	}
 	
 	local netname0 `netname'
@@ -175,10 +172,7 @@ program nwtab3
 	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
 	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
+		_nwrequire tabplot
 	}
 	
 	_nwsyntax `netname', max(1) min(1)
