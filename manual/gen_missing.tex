@@ -1,93 +1,3 @@
-\subsection*{Rate effects (covariates on the rate of two-mode networks and behaviors, exposure and infection effects) (36 rows)}
-\footnotesize
-\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
-\toprule
-RSiena name & Network / context & Note\\
-\midrule
-\endhead
-\texttt{RateX} & rate (one-mode network) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov.\\
-\texttt{RateX} & rate (one-mode network) + a behavior variable & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{outRate} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{inRate} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{recipRate} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{avExposure} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{susceptAvIn} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{totExposure} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{infectIn} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{infectOut} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{avTinExposureDist2} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{totInExposureDist2} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{totAInExposureDist2} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{anyInExposureDist2} & rate (behavior) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{RateX} & rate (behavior) + constant covariate & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{susceptAvCovar} & rate (behavior) + another network + constant covariate & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{infectCovar} & rate (behavior) + another network + constant covariate & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{RateX} & rate (behavior) + a behavior variable & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{RateX} & rate (behavior) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov.\\
-\texttt{susceptAvCovar} & rate (behavior) + another network + changing covariate & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{infectCovar} & rate (behavior) + another network + changing covariate & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{outRate} & rate (two-mode network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{outRateInv} & rate (two-mode network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{outRateLog} & rate (two-mode network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{inRateInv} & rate (two-mode network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{inRateLog} & rate (two-mode network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{RateX} & rate (two-mode network) + constant covariate & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{RateX} & rate (two-mode network) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov.\\
-\texttt{RateX} & rate (two-mode network) + a behavior variable & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{RateX} & rate (one-mode network) + continuous variable & ratecov() is a network-rate option for constant node covariates only.\\
-\texttt{outRate} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{outRateInv} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{outRateLog} & rate (non-directed network) & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{RateX} & rate (non-directed network) + changing covariate & ratecov() takes constant covariates; tvcov() names are not resolved for ratecov. Validated 2026-10-23: plain 3-wave pairwise fit agrees with siena07 to three d…\\
-\texttt{RateX} & rate (non-directed network) + a behavior variable & ratecov() is a network-rate option for constant node covariates only. Validated 2026-10-23: plain 3-wave pairwise fit agrees with siena07 to three digits\\
-\texttt{infectDeg} & rate (behavior (non-directed network)) + another network & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\bottomrule
-\end{longtable}
-\normalsize
-
-\subsection*{Other (see the effect notes) (32 rows)}
-\footnotesize
-\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
-\toprule
-RSiena name & Network / context & Note\\
-\midrule
-\endhead
-\texttt{inPop\_ego} & two-mode network & Not implemented.\\
-\texttt{unspInt} & two-mode network & Two-mode: interact() is refused.\\
-\texttt{unspInt} & non-directed network & interact() is refused with symmetric (tvcov/interact guard).\\
-\texttt{sameXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
-\texttt{diffXOutAct} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
-\texttt{avGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
-\texttt{totGroupEgoX} & two-mode network + constant covariate & Other covariate effects are refused for two-mode (refused with an error message).\\
-\texttt{sameXOutAct} & two-mode network + changing covariate & tvcov() is refused with two-mode networks.\\
-\texttt{diffXOutAct} & two-mode network + changing covariate & tvcov() is refused with two-mode networks.\\
-\texttt{higher} & non-directed network + changing covariate & tvcov() is refused with symmetric. Validated 2026-10-23: observed statistic equals siena07 and estimates agree over 2 seeds (target only; the effect is refused…\\
-\texttt{X} & two-mode network + constant dyadic covariate & dyadcov() is refused for two-mode.\\
-\texttt{XRecip} & non-directed network + changing dyadic covariate & dyadcov() is time-constant only (a single matrix); no changing dyadic covariate. Validated 2026-10-23: observed statistic equals siena07 and estimates agree ov…\\
-\texttt{homXOutAct2} & one-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{sameXOutAct} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{diffXOutAct} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{crossXOutAct} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{avGroupEgoX} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{totGroupEgoX} & two-mode network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{degAbsDiffX} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{degPosDiffX} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{higher} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior. Validated 2026-10-23: o…\\
-\texttt{homXOutAct2} & non-directed network + a behavior variable & Only simX of the dependent behavior is available (behsim); nodeocov()/nodeicov() take fixed Stata variables, not the evolving behavior.\\
-\texttt{from.w.ind} & one-mode network + another network + another network & Not implemented.\\
-\texttt{betweenPop} & one-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{toAny} & one-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{toU} & one-mode network + another network + constant dyadic covariate & Not implemented.\\
-\texttt{constant} & behavior & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{behUnspInt} & behavior & interact() does not support behavior interactions.\\
-\texttt{avGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (several behaviors interact only through the network).\\
-\texttt{totGroupEgoX} & behavior + a behavior variable & nwsaom has no covariate or cross-behavior effects on a behavior (several behaviors interact only through the network).\\
-\texttt{minXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder row: RSiena lists this effect for a non-directed network with unresolved interaction placeholders (interaction1 = yyyyyy); not a usable effect with…\\
-\texttt{maxXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder row: RSiena lists this effect for a non-directed network with unresolved interaction placeholders (interaction1 = yyyyyy); not a usable effect with…\\
-\bottomrule
-\end{longtable}
-\normalsize
-
 \subsection*{GMoM statistics (the generalised method of moments estimator is not implemented) (31 rows)}
 \footnotesize
 \begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
@@ -130,38 +40,26 @@ RSiena name & Network / context & Note\\
 \end{longtable}
 \normalsize
 
-\subsection*{Several networks with a two-mode member (nwsaom multinet supports directed and non-directed members only) (25 rows)}
+\subsection*{Other (see the effect notes) (13 rows)}
 \footnotesize
 \begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
 \toprule
 RSiena name & Network / context & Note\\
 \midrule
 \endhead
-\texttt{inActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{divOutEgoIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{divInEgoIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{divInAltIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{avDegIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutAvIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{dist2OutInActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutDist2ActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{avAlt.2M.tot} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{to} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{toBack} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{toRecip} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{sharedTo} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{avAlt.2M.tie} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{inPopOutW} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{nDist2ActIntn} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{toAny} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{JoutMix} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{gwespFBMix} & two-mode network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{sameWXClosure} & two-mode network + another network + constant covariate & Not implemented.\\
-\texttt{sameWXClosure} & two-mode network + another network + changing covariate & Not implemented.\\
-\texttt{sharedToU} & two-mode network + another network + constant dyadic covariate & Not implemented.\\
-\texttt{avAltU.2M.tie} & two-mode network + another network + constant dyadic covariate & Not implemented.\\
+\texttt{inPop\_ego} & two-mode network & Not implemented: siena07 itself stops with a C++ exception for this effect in a two-mode network, so there is nothing to compare with.\\
+\texttt{sameXOutAct} & two-mode network + constant covariate & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{diffXOutAct} & two-mode network + constant covariate & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{avGroupEgoX} & two-mode network + constant covariate & Not implemented: RSiena reports the effect as not meaningful for a constant covariate.\\
+\texttt{totGroupEgoX} & two-mode network + constant covariate & Not implemented: RSiena reports the effect as not meaningful for a constant covariate.\\
+\texttt{sameXOutAct} & two-mode network + changing covariate & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{diffXOutAct} & two-mode network + changing covariate & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{homXOutAct2} & one-mode network + a behavior variable & Not implemented: RSiena reports the effect as not implemented for a behavior variable.\\
+\texttt{sameXOutAct} & two-mode network + a behavior variable & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{diffXOutAct} & two-mode network + a behavior variable & Not implemented: siena07 crashes (R aborts) when it evaluates this effect in a two-mode network, so nwsaom refuses it.\\
+\texttt{homXOutAct2} & non-directed network + a behavior variable & Not implemented: RSiena reports the effect as not implemented for a behavior variable.\\
+\texttt{minXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
+\texttt{maxXAlt} & non-directed network + ?yyyyyy + ?zzzzzz & Placeholder entry of the RSiena effects table; the effect is not offered by siena07 for these variables.\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -173,56 +71,18 @@ RSiena name & Network / context & Note\\
 RSiena name & Network / context & Note\\
 \midrule
 \endhead
-\texttt{settingSizeAct} & one-mode network & Not implemented.\\
-\texttt{settingSizeActSqrt} & one-mode network & Not implemented.\\
-\texttt{settingSizeActLog} & one-mode network & Not implemented.\\
-\texttt{settingSizeActInv} & one-mode network & Not implemented.\\
-\texttt{settingOppAct} & one-mode network & Not implemented.\\
-\texttt{settingOppActSqrt} & one-mode network & Not implemented.\\
-\texttt{settingOppActLog} & one-mode network & Not implemented.\\
-\texttt{settingLogCreationAct} & one-mode network & Not implemented.\\
-\texttt{settingOppActD} & one-mode network & Not implemented.\\
-\texttt{settingOppActSqrtD} & one-mode network & Not implemented.\\
-\texttt{settingOppActLogD} & one-mode network & Not implemented.\\
-\texttt{settingLogCreationActD} & one-mode network & Not implemented.\\
-\bottomrule
-\end{longtable}
-\normalsize
-
-\subsection*{Non-directed network with another network: not validated or differs from siena07 (see the notes) (8 rows)}
-\footnotesize
-\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
-\toprule
-RSiena name & Network / context & Note\\
-\midrule
-\endhead
-\texttt{from.w.ind} & non-directed network + another network + another network & Not implemented.\\
-\texttt{toAny} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{gwespMix} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutActIntn} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutAvIntn} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{outOutDist2AvIntn} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{both} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\texttt{avAlt.2M.tie} & non-directed network + another network & Cross-network effect: nwsaom multiplex supports only outdegree, reciprocity and crprod (two directed networks, two waves).\\
-\bottomrule
-\end{longtable}
-\normalsize
-
-\subsection*{Behavior effects of two networks / further behavior-network effects (8 rows)}
-\footnotesize
-\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
-\toprule
-RSiena name & Network / context & Note\\
-\midrule
-\endhead
-\texttt{FFDeg} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{BBDeg} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{FBDeg} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{FRDeg} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{BRDeg} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{indegMixedPop} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{outdegMixedPop} & behavior + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
-\texttt{BFDeg} & behavior (non-directed network) + another network + another network & nwsaom behavior(): only linear, quadratic, avalt, avsim (plus endow/creation of quadratic/avalt/avsim) are available.\\
+\texttt{settingSizeAct} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingSizeActSqrt} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingSizeActLog} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingSizeActInv} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppAct} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppActSqrt} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppActLog} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingLogCreationAct} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppActD} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppActSqrtD} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingOppActLogD} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
+\texttt{settingLogCreationActD} & one-mode network & Not implemented: RSiena's settings model is a separate model family (setting steps with rates per setting). In siena07 the effect has no estimate to compare wi…\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -234,9 +94,23 @@ RSiena name & Network / context & Note\\
 RSiena name & Network / context & Note\\
 \midrule
 \endhead
-\texttt{sameWXClosure} & two-mode network + another network + a behavior variable & Not implemented.\\
-\texttt{susceptAvCovar} & rate (behavior) + another network + a behavior variable & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
-\texttt{infectCovar} & rate (behavior) + another network + a behavior variable & Structural/exposure/diffusion rate effects are not implemented; only a constant rate and ratecov() exist.\\
+\texttt{sameWXClosure} & two-mode network + another network + a behavior variable & Not implemented in nwsaom multinet: a two-mode member together with a co-evolving behavior.\\
+\texttt{susceptAvCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
+\texttt{infectCovar} & rate (behavior) + another network + a behavior variable & Not implemented: RSiena has no such effect (the covariate can only be a constant or a changing covariate).\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection*{Rate effects (covariates on the rate of two-mode networks and behaviors, exposure and infection effects) (3 rows)}
+\footnotesize
+\begin{longtable}{@{}p{2.8cm}p{4.6cm}p{6.5cm}@{}}
+\toprule
+RSiena name & Network / context & Note\\
+\midrule
+\endhead
+\texttt{inRateInv} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
+\texttt{inRateLog} & rate (two-mode network) & Not implemented: siena07 stops with an error for this effect in a two-mode network (the receivers of ties are not the actors).\\
+\texttt{RateX} & rate (one-mode network) + continuous variable & Not implemented: continuous (stochastic differential equation) behavior variables are not planned.\\
 \bottomrule
 \end{longtable}
 \normalsize

@@ -47,7 +47,8 @@ eliminates interpreter overhead, and a bespoke kernel avoids licensing questions
 build systems a general library would bring along for a handful of functions actually used.
 
 - `ergm_mcmc.c` — the ERGM MCMC/MPLE sampler.
-- `saom_sim.c` — the SAOM ministep sampler.
+- `saom_sim.c` — the SAOM ministep sampler (it also includes `saom_bayes.c` and `saom_ml.c`: the Metropolis-Hastings
+  chain over ministep sequences that drives maximum-likelihood and Bayesian estimation).
 - `dynam_sim.c` — the DyNAM likelihood/gradient evaluation.
 - `nwgraph.c` — betweenness centrality (Brandes' algorithm), structured to host further
   general graph kernels behind the same plugin binary over time.
@@ -105,6 +106,10 @@ simulation is kept for them. Models with several co-evolving dependent networks 
 the single-network model description once per network (one plugin slot each) and a joint simulator in
 which the network to change is drawn in proportion to the rates; cross-network effects read the other
 network's current state in the ministeps and its period-start state in the statistics.
+Maximum likelihood (`nwsaom ..., ml`) and Bayesian estimation (`nwsaom bayes`) treat the ministep sequence between two waves
+as missing data: a native Markov chain over sequences (insert, delete and permute moves, as in RSiena's likelihood code) gives the
+complete-data score for a Robbins-Monro run or the likelihood for a Metropolis sampler of the parameters. One Stata program
+is limited in size, so newer subcommands live in their own ado files and the main program only dispatches to them.
 Postestimation reuses the same machinery: `estat simulate` and `estat gof` run the single-period simulator at the
 fitted (or chosen) coefficients; `estat score` and `estat timetest` are score-type tests computed from the final
 simulations of the fit (the derivative matrix and covariance of the statistics, per period for the time test);

@@ -25,10 +25,10 @@ areas, and preserve compatibility for everything already shipped.
   effects (`endow()`/`creation()`), dyadic covariates, undirected (symmetric) relations over several
   waves and with a co-evolving behavior, covariate-dependent rates, several co-evolving behaviors,
   two-mode (bipartite) networks, several co-evolving networks (`nwsaom multinet`, including non-directed
-  members), and over 900 of RSiena's effects. Postestimation: goodness of fit (`estat gof`), simulation at fitted
+  members, two-mode members and a co-evolving behavior), maximum likelihood (`ml`) and Bayesian estimation (`nwsaom bayes`) for one network, a data description (`nwsaom describe`), and about 1,050 of RSiena's 1,200 effect-table rows. Postestimation: goodness of fit (`estat gof`), simulation at fitted
   or chosen parameters (`estat simulate`, `nwsaom simulate`), score-type tests (`estat score`, with
   `fix()`), tests for time heterogeneity (`estat timetest`) and relative importance of effects
-  (`estat importance`). Every extension is checked against RSiena (statistics and estimates).
+  (`estat importance`), also after `nwsaom multinet`. Every extension is checked against RSiena (statistics and estimates).
 - `nwrem` — relational event models (Butts 2008), fit via the ordinal partial likelihood, with
   degree, inertia, recency-rank, and covariate effect families.
 - `nwdynam` — Dynamic Network Actor Models (Stadtfeld & Block 2017), with separate rate and
@@ -74,9 +74,12 @@ scale.
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.
-- **`nwsaom` coverage**: a co-evolving behavior inside `nwsaom multinet`, rate effects for two-mode networks and
-  behaviors, and the generalised-method-of-moments and settings-model estimators are the main RSiena features
-  not yet implemented; Bayesian estimation (`sienaBayes`) is not planned.
+- **`nwsaom` coverage**: the generalised-method-of-moments estimator, the settings model, joint estimation of several
+  groups (hierarchical Bayes), composition change and missing ties inside `nwsaom multinet`, and `estat gof` after
+  `multinet` are the main RSiena features not yet implemented.
+- **`nwergm` coverage**: the project to match R's `ergm` closely (terms, features, behaviour) is under way: missing
+  data, fit statistics (log-likelihood, AIC/BIC, `predict`), a much larger term library, constraints and more
+  estimation methods; valued and temporal ERGMs are not planned yet.
 - **DyNAM effect coverage**: most of the reference effect catalog is implemented; a handful of
   effects that need genuinely different internal machinery (`tertiusDiff`, dynamically-evolving
   cross-network effects, two-mode support for a few remaining effect types) are still open.

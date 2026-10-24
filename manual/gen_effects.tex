@@ -215,6 +215,8 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{primDegActDiff} & one-mode network & siena07 & \texttt{ownx(primdegactdiff)}\\
 \texttt{primDegActDiffSqrt} & one-mode network & siena07 & \texttt{ownx(primdegactdiffsqrt)}\\
 \texttt{unspInt} & one-mode network & siena07 & \texttt{interact()}\\
+\texttt{unspInt} & two-mode network & siena07 & \texttt{interact}\\
+\texttt{unspInt} & non-directed network & siena07 & \texttt{symmetric + interact}\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -477,6 +479,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{diffSqX} & non-directed network + changing covariate & siena07 & \texttt{diffsqx()}\\
 \texttt{egoDiffX} & non-directed network + changing covariate & siena07 & \texttt{egodiffx()}\\
 \texttt{altHigherEgoX} & non-directed network + changing covariate & siena07 & \texttt{althigheregox()}\\
+\texttt{higher} & non-directed network + changing covariate & siena07 & \texttt{symmetric higher}\\
 \texttt{simX} & non-directed network + changing covariate & siena07 & \texttt{simx()}\\
 \texttt{inPopX} & non-directed network + changing covariate & siena07 & \texttt{inpopx()}\\
 \texttt{outPopX} & non-directed network + changing covariate & siena07 & \texttt{outpopx()}\\
@@ -558,6 +561,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{XWX1} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx1:stem)}\\
 \texttt{XWX2} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xwx2:stem)}\\
 \texttt{XXW} & one-mode network + changing dyadic covariate & siena07 & \texttt{tvdyadx(xxw:stem)}\\
+\texttt{X} & two-mode network + constant dyadic covariate & siena07 & \texttt{dyadcov}\\
 \texttt{X} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadcov()}\\
 \texttt{XRecip} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadcovrecip()}\\
 \texttt{WWX} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(wwx:matrix)}\\
@@ -570,6 +574,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{XWX2} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xwx2:matrix)}\\
 \texttt{XXW} & non-directed network + constant dyadic covariate & siena07 & \texttt{dyadx(xxw:matrix)}\\
 \texttt{X} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadcov(stem)}\\
+\texttt{XRecip} & non-directed network + changing dyadic covariate & siena07 & \texttt{symmetric tvdyadcovrecip}\\
 \texttt{WWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(wwx:stem)}\\
 \texttt{cyWWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(cywwx:stem)}\\
 \texttt{InWWX} & non-directed network + changing dyadic covariate & siena07 & \texttt{tvdyadx(inwwx:stem)}\\
@@ -667,7 +672,10 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{inPopX} & two-mode network + a behavior variable & siena07 & \texttt{inpopx(varlist)}\\
 \texttt{sameXInPop} & two-mode network + a behavior variable & siena07 & \texttt{samexinpop(varlist)}\\
 \texttt{diffXInPop} & two-mode network + a behavior variable & siena07 & \texttt{diffxinpop(varlist)}\\
+\texttt{crossXOutAct} & two-mode network + a behavior variable & siena07 & \texttt{behavior}\\
 \texttt{sameXCycle4} & two-mode network + a behavior variable & siena07 & \texttt{behavior() + netbeh(samexcycle4)}\\
+\texttt{avGroupEgoX} & two-mode network + a behavior variable & siena07 & \texttt{netbeh}\\
+\texttt{totGroupEgoX} & two-mode network + a behavior variable & siena07 & \texttt{netbeh}\\
 \texttt{altX} & non-directed network + a behavior variable & siena07 & \texttt{behaltx}\\
 \texttt{altSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altsqx)}\\
 \texttt{altLThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(altlthresholdx)}\\
@@ -679,12 +687,15 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{egoPlusAltSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egoplusaltsqx)}\\
 \texttt{egoLThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egolthresholdx)}\\
 \texttt{egoRThresholdX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egorthresholdx)}\\
+\texttt{degAbsDiffX} & non-directed network + a behavior variable & siena07 & \texttt{symmetric + behavior}\\
+\texttt{degPosDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh}\\
 \texttt{degNegDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(degnegdiffx)}\\
 \texttt{diffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffx)}\\
 \texttt{absDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(absdiffx)}\\
 \texttt{diffSqX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(diffsqx)}\\
 \texttt{egoDiffX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(egodiffx)}\\
 \texttt{altHigherEgoX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(althigheregox)}\\
+\texttt{higher} & non-directed network + a behavior variable & siena07 & \texttt{netbeh}\\
 \texttt{simX} & non-directed network + a behavior variable & siena07 & \texttt{behsim}\\
 \texttt{inPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(inpopx)}\\
 \texttt{outPopX} & non-directed network + a behavior variable & siena07 & \texttt{netbeh(outpopx)}\\
@@ -729,6 +740,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 RSiena name & Network / context & Validated & nwsaom option\\
 \midrule
 \endhead
+\texttt{from.w.ind} & one-mode network + another network + another network & siena07 & \texttt{cross1}\\
 \texttt{crprod} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprod)}\\
 \texttt{crprodRecip} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprodrecip)}\\
 \texttt{crprodMutual} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(crprodmutual)}\\
@@ -751,12 +763,14 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{both} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(both)}\\
 \texttt{doubleOutAct} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(doubleoutact)}\\
 \texttt{doubleInPop} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(doubleinpop)}\\
+\texttt{betweenPop} & one-mode network + another network & siena07 & \texttt{cross1}\\
 \texttt{from} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(from)}\\
 \texttt{fromMutual} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(frommutual)}\\
 \texttt{fromAny} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(fromany)}\\
 \texttt{to} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(to)}\\
 \texttt{toBack} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(toback)}\\
 \texttt{toRecip} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(torecip)}\\
+\texttt{toAny} & one-mode network + another network & siena07 & \texttt{cross1}\\
 \texttt{cl.XWX} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx)}\\
 \texttt{cl.XWX1} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx1)}\\
 \texttt{cl.XWX2} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(clxwx2)}\\
@@ -782,6 +796,28 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{gwespFBMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwespfbmix)}\\
 \texttt{gwespRRMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet, cross1(gwesprrmix)}\\
 \texttt{gwespMix} & one-mode network + another network & siena07 & \texttt{nwsaom multinet cross1(gwespfbmix)}\\
+\texttt{inActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{outActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{divOutEgoIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{divInEgoIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{divInAltIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{avDegIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{outOutActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{outOutAvIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{dist2OutInActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{outOutDist2ActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{avAlt.2M.tot} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{to} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{toBack} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{toRecip} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{sharedTo} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{avAlt.2M.tie} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{inPopOutW} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{nDist2ActIntn} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{toAny} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{JoutMix} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{gwespFBMix} & two-mode network + another network & siena07 & \texttt{cross1}\\
+\texttt{from.w.ind} & non-directed network + another network + another network & siena07 & \texttt{cross1}\\
 \texttt{outPopIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outpopintn)}\\
 \texttt{outActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outactintn)}\\
 \texttt{divOutEgoIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(divoutegointn)}\\
@@ -790,16 +826,23 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{from} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(from)}\\
 \texttt{fromAny} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(fromany)}\\
 \texttt{to} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(to)}\\
+\texttt{toAny} & non-directed network + another network & siena07 & \texttt{cross1}\\
 \texttt{cl.XWX} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(clxwx)}\\
 \texttt{closure} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(closure)}\\
 \texttt{mixedInXW} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(mixedinxw)}\\
 \texttt{JoutMix} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(joutmix)}\\
+\texttt{gwespMix} & non-directed network + another network & siena07 & \texttt{cross1}\\
 \texttt{crprod} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(crprod)}\\
+\texttt{outOutActIntn} & non-directed network + another network & siena07 & \texttt{cross1}\\
+\texttt{outOutAvIntn} & non-directed network + another network & siena07 & \texttt{cross1}\\
 \texttt{dist2OutInActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(dist2outinactintn)}\\
 \texttt{outOutDist2ActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(outoutdist2actintn)}\\
+\texttt{outOutDist2AvIntn} & non-directed network + another network & siena07 & \texttt{NOT IMPLEMENTED}\\
+\texttt{both} & non-directed network + another network & siena07 & \texttt{cross1}\\
 \texttt{absOutDiffIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(absoutdiffintn)}\\
 \texttt{doubleOutAct} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(doubleoutact)}\\
 \texttt{sharedTo} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(sharedto)}\\
+\texttt{avAlt.2M.tie} & non-directed network + another network & siena07 & \texttt{cross1}\\
 \texttt{inPopOutW} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(inpopoutw)}\\
 \texttt{nDist2ActIntn} & non-directed network + another network & siena07 & \texttt{nwsaom multinet sym1 cross1(ndist2actintn)}\\
 \bottomrule
@@ -881,6 +924,11 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{altDist2W} & one-mode network + another network + a behavior variable & siena07 & \texttt{cross1(altdist2w:behavior)}\\
 \texttt{totDist2W} & one-mode network + another network + a behavior variable & siena07 & \texttt{cross1(totdist2w:behavior)}\\
 \texttt{simDist2W} & one-mode network + another network + a behavior variable & siena07 & \texttt{cross1(simdist2w:behavior)}\\
+\texttt{sameWXClosure} & two-mode network + another network + constant covariate & siena07 & \texttt{cross1}\\
+\texttt{sameWXClosure} & two-mode network + another network + changing covariate & target only & \texttt{cross1(samewxclosure:var) with tvcov()}\\
+\texttt{sharedToU} & two-mode network + another network + constant dyadic covari… & siena07 & \texttt{cross1}\\
+\texttt{avAltU.2M.tie} & two-mode network + another network + constant dyadic covari… & siena07 & \texttt{cross1}\\
+\texttt{toU} & one-mode network + another network + constant dyadic covari… & siena07 & \texttt{cross1}\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -896,6 +944,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{quad} & behavior & siena07 & \texttt{quadratic}\\
 \texttt{quad\_cc} & behavior & siena07 & \texttt{behshape(quad\_cc)}\\
 \texttt{quad\_nc} & behavior & siena07 & \texttt{behshape(quad\_nc)}\\
+\texttt{constant} & behavior & siena07 & \texttt{beheff1}\\
 \texttt{threshold} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
 \texttt{threshold2} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
 \texttt{threshold3} & behavior & siena07 & \texttt{behshape(threshold:\#)}\\
@@ -904,6 +953,7 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{simAllFar} & behavior & siena07 & \texttt{behshape(simallfar:\#)}\\
 \texttt{avGroup} & behavior & siena07 & \texttt{behshape(avgroup:\#)}\\
 \texttt{totGroup} & behavior & siena07 & \texttt{behshape(totgroup:\#)}\\
+\texttt{behUnspInt} & behavior & siena07 & \texttt{behint}\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -1006,6 +1056,14 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{avWInAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(avwinalt:stem)}\\
 \texttt{totWAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totwalt:stem)}\\
 \texttt{totWInAlt} & behavior + another network + changing dyadic covariate & siena07 & \texttt{tvbehw(totwinalt:stem)}\\
+\texttt{FFDeg} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{BBDeg} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{FBDeg} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{FRDeg} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{BRDeg} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{indegMixedPop} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{outdegMixedPop} & behavior + another network + another network & siena07 & \texttt{beheff12}\\
+\texttt{BFDeg} & behavior (non-directed network) + another network + another… & siena07 & \texttt{beheff12}\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -1017,6 +1075,8 @@ RSiena name & Network / context & Validated & nwsaom option\\
 RSiena name & Network / context & Validated & nwsaom option\\
 \midrule
 \endhead
+\texttt{avGroupEgoX} & behavior + a behavior variable & siena07 & \texttt{this row is the network effect avGroupEgoX with the dependen}\\
+\texttt{totGroupEgoX} & behavior + a behavior variable & siena07 & \texttt{eff2}\\
 \texttt{effFrom} & behavior + constant covariate & siena07 & \texttt{behfrom()}\\
 \texttt{totSimAltX} & behavior + constant covariate + another network & siena07 & \texttt{behx(totsimaltx:var)}\\
 \texttt{avSimAltX} & behavior + constant covariate + another network & siena07 & \texttt{behx(avsimaltx:var)}\\
@@ -1150,10 +1210,43 @@ RSiena name & Network / context & Validated & nwsaom option\\
 \texttt{recipRateInv} & rate (one-mode network) & siena07 & \texttt{reciprateinv}\\
 \texttt{recipRateLog} & rate (one-mode network) & siena07 & \texttt{recipratelog}\\
 \texttt{RateX} & rate (one-mode network) + constant covariate & siena07 & \texttt{ratecov()}\\
+\texttt{RateX} & rate (one-mode network) + changing covariate & siena07 & \texttt{tvcov}\\
+\texttt{RateX} & rate (one-mode network) + a behavior variable & siena07 & \texttt{ratecov}\\
 \texttt{Rate} & rate (behavior) & siena07 & \texttt{automatic rate}\\
+\texttt{outRate} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{inRate} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{recipRate} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{avExposure} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{susceptAvIn} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{totExposure} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{infectIn} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{infectOut} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{avTinExposureDist2} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{totInExposureDist2} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{totAInExposureDist2} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{anyInExposureDist2} & rate (behavior) + another network & siena07 & \texttt{behrate}\\
+\texttt{RateX} & rate (behavior) + constant covariate & siena07 & \texttt{behratecov}\\
+\texttt{susceptAvCovar} & rate (behavior) + another network + constant covariate & siena07 & \texttt{behrate}\\
+\texttt{infectCovar} & rate (behavior) + another network + constant covariate & siena07 & \texttt{behrate}\\
+\texttt{RateX} & rate (behavior) + a behavior variable & siena07 & \texttt{behratecov}\\
+\texttt{RateX} & rate (behavior) + changing covariate & siena07 & \texttt{tvcov}\\
+\texttt{susceptAvCovar} & rate (behavior) + another network + changing covariate & siena07 & \texttt{tvcov}\\
+\texttt{infectCovar} & rate (behavior) + another network + changing covariate & siena07 & \texttt{tvcov}\\
 \texttt{Rate} & rate (two-mode network) & siena07 & \texttt{automatic rate}\\
+\texttt{outRate} & rate (two-mode network) & siena07 & \texttt{outrate}\\
+\texttt{outRateInv} & rate (two-mode network) & siena07 & \texttt{outrateinv}\\
+\texttt{outRateLog} & rate (two-mode network) & siena07 & \texttt{outratelog}\\
+\texttt{RateX} & rate (two-mode network) + constant covariate & siena07 & \texttt{ratecov}\\
+\texttt{RateX} & rate (two-mode network) + changing covariate & siena07 & \texttt{tvcov}\\
+\texttt{RateX} & rate (two-mode network) + a behavior variable & siena07 & \texttt{ratecov}\\
 \texttt{Rate} & rate (non-directed network) & siena07 & \texttt{automatic rate}\\
+\texttt{outRate} & rate (non-directed network) & siena07 & \texttt{outrate}\\
+\texttt{outRateInv} & rate (non-directed network) & siena07 & \texttt{outrateinv}\\
+\texttt{outRateLog} & rate (non-directed network) & siena07 & \texttt{outratelog}\\
 \texttt{RateX} & rate (non-directed network) + constant covariate & siena07 & \texttt{ratecov()}\\
+\texttt{RateX} & rate (non-directed network) + changing covariate & siena07 & \texttt{tvcov}\\
+\texttt{RateX} & rate (non-directed network) + a behavior variable & siena07 & \texttt{ratecov}\\
+\texttt{infectDeg} & rate (behavior (non-directed network)) + another network & siena07 & \texttt{behrate}\\
 \bottomrule
 \end{longtable}
 \normalsize
