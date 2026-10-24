@@ -4,7 +4,8 @@ title: "nwcommands: Network Analysis in Stata"
 authors:
   - family-names: Grund
     given-names: Thomas U.
-version: "3.0.0"
+    affiliation: RWTH Aachen University
+version: "3.1.0"
 date-released: "2026-10-24"
 repository-code: "https://github.com/thomas-u-grund/nwcommands"
 license: GPL-3.0-only
