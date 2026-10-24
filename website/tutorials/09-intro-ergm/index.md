@@ -1,9 +1,8 @@
 ---
 title: "Tutorial 1: A first ERGM"
-parent: "nwergm tutorials"
-nav_order: 1
+parent: "nwergm (ERGM)"
+nav_order: 2
 description: "Exponential-family random graph models with the nwergm package: a first model, missing data, information criteria and goodness of fit."
-grand_parent: "nwergm (ERGM)"
 ---
 
 # Intro to ERGM in Stata

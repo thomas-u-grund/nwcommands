@@ -1,9 +1,7 @@
 ---
 title: "nwcommands tutorials"
-parent: "nwcommands (core)"
-nav_order: 2
-has_children: true
 description: "Worked, step-by-step tutorials for nwcommands, with real Stata output."
+nav_exclude: true
 ---
 
 # nwcommands tutorials

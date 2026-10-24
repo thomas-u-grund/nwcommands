@@ -1,10 +1,9 @@
 ---
 title: "nwrem tutorials"
-parent: "nwrem (REM)"
 nav_order: 2
-has_children: true
 permalink: /nwrem/tutorials/
 description: "Worked tutorials for nwrem."
+nav_exclude: true
 ---
 
 # nwrem tutorials

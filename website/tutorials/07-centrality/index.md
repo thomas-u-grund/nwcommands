@@ -1,8 +1,7 @@
 ---
 title: "Tutorial 7: Centrality"
-parent: "nwcommands tutorials"
-grand_parent: "nwcommands (core)"
-nav_order: 7
+parent: "nwcommands (core)"
+nav_order: 8
 description: "Degree, betweenness, closeness, eigenvector, PageRank, and Katz centrality."
 ---
 

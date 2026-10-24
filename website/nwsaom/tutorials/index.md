@@ -1,10 +1,9 @@
 ---
 title: "nwsaom tutorials"
-parent: "nwsaom (SAOM)"
 nav_order: 2
-has_children: true
 permalink: /nwsaom/tutorials/
 description: "Worked tutorials for nwsaom."
+nav_exclude: true
 ---
 
 # nwsaom tutorials
