@@ -1,6 +1,7 @@
 ---
 title: "_nwdatasync"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Utility to sync current network with dataset"

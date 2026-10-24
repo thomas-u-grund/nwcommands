@@ -1,6 +1,7 @@
 ---
 title: "nwergm"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwergm: exponential-family random graph models (ERGM), in the separate nwergm package (GPL-3)."

@@ -1,6 +1,7 @@
 ---
 title: "nwsaom"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwsaom: stochastic actor-oriented models (SAOM), in the separate nwsaom package (GPL-3)."

@@ -1,7 +1,8 @@
 ---
 title: "Command reference"
-nav_order: 4
-has_children: false
+parent: "nwcommands (core)"
+nav_order: 3
+has_children: true
 ---
 
 # Command reference

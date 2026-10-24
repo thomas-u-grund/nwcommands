@@ -1,6 +1,7 @@
 ---
 title: "nwrem"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "nwrem: relational event models (REM), in the separate nwrem package (GPL-3)."

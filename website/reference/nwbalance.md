@@ -1,6 +1,7 @@
 ---
 title: "nwbalance"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Structural balance of a signed network"

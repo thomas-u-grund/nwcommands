@@ -1,6 +1,7 @@
 ---
 title: "nwsimindex"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "Common-neighbor similarity indices between all node pairs"

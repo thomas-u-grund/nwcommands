@@ -1,6 +1,7 @@
 ---
 title: "nwcommands (core)"
 nav_order: 2
+has_children: true
 description: "The nwcommands core package: network import, generation, description, analysis and visualization in Stata."
 permalink: /nwcommands/
 ---

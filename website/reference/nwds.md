@@ -1,6 +1,7 @@
 ---
 title: "nwds"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "List loaded networks, in the style of Stata's own `ds`"

@@ -1,6 +1,7 @@
 ---
 title: "nw2project"
 parent: "Command reference"
+grand_parent: "nwcommands (core)"
 nav_exclude: true
 search_exclude: false
 description: "One-mode projection of a two-mode network"

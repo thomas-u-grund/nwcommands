@@ -1,6 +1,7 @@
 ---
 title: "Visualization"
 parent: Tutorials
+grand_parent: "nwcommands (core)"
 nav_order: 4
 description: "Plot styling and network movies."
 ---
