@@ -99,6 +99,10 @@
 #define ALG_BETWEENNESS 1
 #define ALG_BFS_DISTANCES 2
 
+/* algorithm codes 3..100: the combinatorial kernels (cohesion, factions, lambda, motifs,
+   two-mode clustering, n-cliques/n-clans, k-plexes), in nwcomb.h / nwcomb2.h */
+#include "nwcomb.h"
+
 /* ===================================================================
    Betweenness centrality (Brandes 2001), unweighted/dichotomized.
    Direct, hand-verified port of `NWdef::calculate_betweenness()' in
@@ -305,6 +309,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	int rc = 0;
 
 	if (argc < 1) { SF_error("nwgraph: missing argument string\n"); return(198); }
+	if (comb_handles(argv[0])) return comb_call(argc, argv);
 
 	argbuf = (char *)malloc(strlen(argv[0]) + 1);
 	strcpy(argbuf, argv[0]);

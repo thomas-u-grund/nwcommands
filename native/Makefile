@@ -47,7 +47,7 @@ unix: unix-nwgraph
 unix-nwgraph:
 	mkdir -p ../lib/plugins/unix
 	gcc -shared -fPIC -DSYSTEM=OPUNIX $(CFLAGS) -o ../lib/plugins/unix/nwgraph_unix.plugin \
-		nwgraph.c spi/stplugin.c -ldl
+		nwgraph.c spi/stplugin.c -ldl -lm
 	@echo "Built ../lib/plugins/unix/nwgraph_unix.plugin"
 	@file ../lib/plugins/unix/nwgraph_unix.plugin
 
