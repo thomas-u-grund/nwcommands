@@ -1907,7 +1907,12 @@ program nwergm, eclass
 
 		local __ergm_irls 0
 		mata: st_local("__ergm_has_offset", strofreal(sum(__nwergm_last_M.isfixed)>0))
-		if !`__ergm_has_offset' mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		if !`__ergm_has_offset' & "`mpletype'" == "glm" & ("`mplecheck'" == "on" | "`method'" != "mple") mata: st_local("__ergm_irls", strofreal(ergm_mple_irls(`__nw_D', "`__b_mple'", "`__V_mple'")))
+		// a separated pseudolikelihood goes through the existence check and R's glm iterate below
+		if `__ergm_irls' & "`mplecheck'" == "on" {
+			mata: st_local("__e7_ex", strofreal(ergm_mple_exists(`__nw_D')))
+			if !`__e7_ex' local __ergm_irls 0
+		}
 		if !`__ergm_irls' {
 		preserve
 		qui drop _all
