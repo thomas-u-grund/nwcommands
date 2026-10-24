@@ -45,12 +45,11 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 {: #install-in-three-steps }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
-1. The first two lines install `nwinstall` itself.
+1. The first line installs `nwinstall` itself and the landing help topics.
 2. `nwinstall, all` downloads everything else: every command, all help files and every dialog box.
 3. Optional: `nwinstall, gui` installs the "Network Analysis" menu in Stata's User menu (the older
    option name `permanently` still works), and `nwinstall, models` installs the four model packages.

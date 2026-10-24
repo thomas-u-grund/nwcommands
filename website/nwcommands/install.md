@@ -10,12 +10,11 @@ permalink: /nwcommands/install/
 {: .no_toc }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
-The first two lines install `nwinstall` and the landing help topics. `nwinstall, all` then downloads every
+The first line installs `nwinstall` and the landing help topics. `nwinstall, all` then downloads every
 command, all help files and every dialog box. Add `nwinstall, gui` to also get a "Network Analysis" menu in Stata.
 
 ## Check the version

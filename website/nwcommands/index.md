@@ -17,8 +17,7 @@ it but are installed separately.
 ## Install
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 

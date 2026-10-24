@@ -41,12 +41,11 @@ variable budget unless you ask it to.
 ## Installation
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
-The first two lines install just `nwinstall` itself and the landing help topics; `nwinstall,
+The first line installs just `nwinstall` itself and the landing help topics; `nwinstall,
 all` then downloads everything else — every command, all help files, and all 120 dialog
 boxes — and installs them permanently. Add `nwinstall, gui` to also add a "Network
 Analysis" menu to Stata's own User menu, so every command is reachable through a dialog box,
