@@ -1,5 +1,6 @@
 {smcl}
 {* *! version 1.0.0  22aug2026 author: Thomas Grund}{...}
+{marker topic}
 {helpb nwtopical##analysis_cohesion:[NW-2.6.2] Cohesion, Components & Subgroups}
 
 {title:Title}
@@ -105,3 +106,6 @@ of SNA datasets.
 	{help nwkcomponents}, {help nwcomponents}, {help nwclique}, {help nwkplex}
 
 last certified : 22 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

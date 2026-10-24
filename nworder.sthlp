@@ -114,3 +114,6 @@ is a netlist in {cmd:sequential} order: {cmd:a x7 x8 x70 x80 z}.
 {title:See also}
 
 	{help nwds}, {help order}, {help netlist}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

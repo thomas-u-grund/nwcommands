@@ -92,3 +92,6 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 	{help nwevcent}, {help nwrandomwalk}, {help nwbetween}, {help nwcloseness}
 
 last certified : 31 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -58,3 +58,6 @@ Not applicable - a pure network-listing utility (in the style of Stata's own {he
 	{help ds}, {help nwcurrent}, {help nwclear}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

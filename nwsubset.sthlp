@@ -64,3 +64,5 @@ Binary: yes. Directed: yes. Weighted: yes, tie values are preserved in the extra
 
 	{help nwgenerate}, {help nwduplicate}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

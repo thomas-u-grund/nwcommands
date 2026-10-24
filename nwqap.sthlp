@@ -244,3 +244,5 @@ values directly, at the one point internally where they are genuinely meaningful
 
 	{help nwergm}, {help nwpermute}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

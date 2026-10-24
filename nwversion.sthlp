@@ -9,7 +9,6 @@
 {p2col :nwversion {hline 2}}Version of nwcommands and of the installed model packages{p_end}
 {p2colreset}{...}
 
-{pstd}{it:nwcommands version 3.1.1, 24 October 2026}{p_end}
 
 {title:Syntax}
 
@@ -33,3 +32,6 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). A given release can be 
 {title:Author}
 
 {pstd}Thomas U. Grund, University College Dublin{p_end}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

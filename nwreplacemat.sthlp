@@ -82,3 +82,6 @@ network with a new Mata matrix {bf:J(5,5,99)}.
 {title:See also}
 
 	{help nwreplace}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

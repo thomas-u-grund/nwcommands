@@ -85,3 +85,5 @@ command is:
 This evaluates whatever is in {it:netexp} and generates a new mata matrix {it:matatrix} with the
 result of the network expression.
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

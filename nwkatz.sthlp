@@ -108,3 +108,6 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -85,3 +85,5 @@ However, the preferred method to change the same tie value would be using {help 
 
 	{help nwload}, {help nwreplace}, {help nwname}
 
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

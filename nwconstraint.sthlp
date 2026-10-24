@@ -105,3 +105,6 @@ Press.
 	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

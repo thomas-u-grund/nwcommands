@@ -1,5 +1,8 @@
 f nwinstall.ado
+f nwinstall_models.ado
+f nwversion.ado
 f nwinstall.sthlp
+f nwversion.sthlp
 f nwcommands.sthlp
 f nwintro.sthlp
 f nwstart.sthlp

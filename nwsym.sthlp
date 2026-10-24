@@ -120,3 +120,6 @@ a complete network (produced with {opt prob(1))}, where everybody is connected w
 	{help nwsymmetrize} (an exact alias for this command)
 
 last certified : 28 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -64,3 +64,6 @@ Drop only certain nodes from a network, using {help if}:
 {title:Supported network types}
 
 {pstd}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

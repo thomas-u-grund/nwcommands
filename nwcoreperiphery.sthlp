@@ -93,3 +93,6 @@ isolate) is handled without error and is simply assigned to the periphery.
 	{help nwconcor}, {help nwcommunity}, {help nwconstraint}
 
 last certified : 21 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -103,3 +103,6 @@ Binary: yes. Directed: yes. Weighted: yes. Signed: yes - a purely structural ope
 {title:See also}
    
    {help nwkeepnodes}, {help nwdrop}, {help nwclear}, {help nwkeep}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

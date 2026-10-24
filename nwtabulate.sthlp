@@ -280,3 +280,6 @@ has a seat in the civic council and the other one does not.
 	{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}
 
 last certified : 24 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

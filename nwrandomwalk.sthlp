@@ -87,3 +87,6 @@ Lovasz, L. (1993). Random walks on graphs: A survey. {it:Combinatorics, Paul Erd
 	{help nwpagerank}, {help nwgeodesic}, {help nwkatz}, {help nwmaxflow}
 
 last certified : 31 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -138,3 +138,6 @@ node-for-node.
 {title:See also}
 
 	{help nwdissimilar}, {help nwcorrelate}, {help nwhierarchy}
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

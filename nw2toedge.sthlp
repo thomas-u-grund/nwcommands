@@ -91,3 +91,6 @@ Two-mode: **T1**, native - this command's entire purpose is converting a two-mod
 	{help nw2fromedge}, {help nwtoedge}, {help nwsave}
 
 last certified : 28 Aug 2026
+
+{hline}
+{pstd}{it:nwcommands version 3.1.1, 24 October 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

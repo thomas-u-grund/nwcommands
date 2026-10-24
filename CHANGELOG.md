@@ -15,6 +15,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - `nwimport` of a `.dta` edge list passed `directed` on under a misspelled name, so it was ignored.
 ### Changed
 - Documentation (`README.md`, `help nwintro`) states the measured end-to-end times for `nwfromedge` and the sparse-native commands, and which commands still need the dense matrix (guard at 20,000 nodes), including `nwtoedge` and `nwsave`.
+- Every help file ends with the package version (and a link to `nwversion`) instead of showing it at the top of four landing pages.
+- `nwtopical` and `nwalphabetical` list `animate`, `nwcohesion` and `nwversion`, and a new section "Statistical models (separate packages)" (nwsaom, nwergm, nwdynam, nwrem) with web links and the `nwinstall, models` line.
 
 ## [3.1.1] - 2026-10-24
 ### Fixed
