@@ -56,7 +56,7 @@ The core, version 3.0.0:
 
 The first two lines install just `nwinstall` itself and the landing help topics; `nwinstall,
 all` then downloads everything else — every command, all help files, and every dialog box —
-and installs them permanently. Add `nwinstall, permanently` to also add a "Network Analysis"
+and installs them permanently. Add `nwinstall, gui` to also add a "Network Analysis"
 menu to Stata's own User menu.
 
 The statistical network models are separate GPL-3 packages (each currently at version 1.0.1) that

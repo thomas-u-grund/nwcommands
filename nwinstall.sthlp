@@ -15,7 +15,7 @@
 {p 8 17 2}
 {cmdab: nwinstall}
 [,
-{opt permanently}
+{opt gui}
 {opt remove }
 {opt help}
 {opt ado}
@@ -40,7 +40,7 @@
 {synoptset 30 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt permanently}}install the menu/dialogs permanently on your Stata{p_end}
+{synopt:{opt gui}}install the "Network Analysis" menu and the dialog boxes permanently on your Stata (the older name {opt permanently} still works){p_end}
 {synopt:{opt remove}}remove the "Network Analysis" menu from your Stata{p_end}
 {synopt:{opt help}}download the help files{p_end}
 {synopt:{opt ado}}download the core command (.ado) files{p_end}
@@ -103,7 +103,7 @@ everything else - the core commands, all help files, and the dialog boxes - and 
 {pstd}
 This installs a menu for the nwcommands:
 
-	{cmd:. nwinstall, permanently}
+	{cmd:. nwinstall, gui}
 
 
 {marker offline}{title:Computers without internet access or admin rights}
@@ -140,12 +140,12 @@ this default case: {cmd:nwset}, {cmd:nwdegree}, and the rest are immediately ava
 so are the dialog boxes (e.g. {cmd:db nwplot}).{p_end}
 
 {phang}
-3. To also get the "Network Analysis" menu, permanently:{p_end}
+3. To also get the "Network Analysis" menu:{p_end}
 
-{phang2}{cmd:. nwinstall, permanently}{p_end}
+{phang2}{cmd:. nwinstall, gui}{p_end}
 
 {phang}
-This is the same {opt permanently} step used after a normal install (step 3 does not depend
+This is the same {opt gui} step used after a normal install (step 3 does not depend
 on {opt localcopy} at all - it only edits your local {cmd:profile.do}).{p_end}
 
 {pstd}
