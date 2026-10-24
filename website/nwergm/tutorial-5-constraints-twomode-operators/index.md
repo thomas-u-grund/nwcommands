@@ -13,9 +13,7 @@ defined on, **two-mode** terms for networks between two kinds of nodes (people a
 
 * Builds on [ERGM 2](../tutorial-2-terms/) to [ERGM 4](../tutorial-4-missing-comparing/).
 * Needs the core `nwcommands` and `nwergm` (see [Install](../install/)).
-* **The operators in the last section are in the development version of `nwergm` and will be in the
-  next release; they are not in the 1.0.1 release.** Everything else on this page is in 1.0.1: I ran
-  those commands with both the development version and the 1.0.1 tag, and the coefficient tables are identical.
+* **The operators in the last section need `nwergm` 1.1.0 or later.** The other sections work with 1.0.1 as well.
 
 **Data.** The Florentine marriage network and the Lazega friendship network (both shipped with
 `nwcommands`), and a small two-mode network of 30 people and 12 clubs that is **simulated** in the
@@ -154,7 +152,7 @@ two-mode networks are listed in `help nwergm_bipartite`: concurrency, minimum de
 stars, covariate ranges, shared-partner terms (`dsp`, `gwdsp`, `coincidence`) and the curved versions with an
 estimated decay.
 
-## Operators (development version)
+## Operators (version 1.1.0)
 
 An operator evaluates terms on a derived network, or combines and transforms terms: `Sum`, `Prod`,
 `S` (the subgraph induced by a set of nodes), `F` (filtered ties), `NodematchFilter`, `Symmetrize`, `Project`,

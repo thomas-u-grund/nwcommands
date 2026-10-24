@@ -13,8 +13,7 @@ description: "Install nwergm for Stata: the core nwcommands first, then the nwer
 ## 1. The core
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
@@ -32,22 +31,20 @@ This installs the state of the main branch of the repository. As a shortcut, the
 
 ### A specific release
 
-Every release is tagged on GitHub and each tag has its own address. For version 1.0.1:
+Every release is tagged on GitHub and each tag has its own address. For version 1.1.0:
 
 ```stata
-. net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/v1.0.1/) replace
+. net install nwergm, from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/v1.1.0/) replace
 ```
 
 Use a tagged release when you want an analysis to be reproducible: you can then say exactly which
-version produced the results. The operator terms and the other additions described in this section are in the
-development version and will be in the next release; with the 1.0.1 tag they are not available. The
-tutorials say which of their examples need the development version.
+version produced the results. The operator terms and the other additions described in this section need version 1.1.0 or later.
 
 ## 3. Check the installation
 
 ```stata
 . nwergm version
-nwergm version 1.0.1, 24oct2026
+nwergm version 1.1.0, 24oct2026
   core package nwcommands : installed (development copy, no distribution date)
   native plugin           : .../nwergm/lib/plugins/macos/ergm_mcmc_macos.plugin (ships with 
 > the package, no separate version number)

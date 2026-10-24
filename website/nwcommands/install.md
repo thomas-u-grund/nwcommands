@@ -10,12 +10,11 @@ permalink: /nwcommands/install/
 {: .no_toc }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
-The first two lines install `nwinstall` and the landing help topics. `nwinstall, all` then downloads every
+The first line installs `nwinstall` and the landing help topics. `nwinstall, all` then downloads every
 command, all help files and every dialog box. Add `nwinstall, gui` to also get a "Network Analysis" menu in Stata.
 
 ## Check the version
@@ -40,6 +39,6 @@ or pick one on its own page.
 ## Updating and releases
 
 To update, repeat the `net install ... replace` line. Updating the core never overwrites a model package.
-To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.0.0/`.
+To install a particular release, put its tag in the URL, for example `.../nwcommands/v3.1.1/`.
 The [Installation & Setup tutorial](../../tutorials/01-installation-setup/) covers choosing a release and installing on
 computers without internet access or administrator rights.

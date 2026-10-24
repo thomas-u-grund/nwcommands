@@ -9,11 +9,11 @@ description: "How to cite nwsaom, and the original papers and software it builds
 # How to cite
 
 **nwsaom.** Cite the nwsaom manual and report the version that produced your results, as printed by
-`nwsaom version` (for example "nwsaom 1.0.1"):
+`nwsaom version` (for example "nwsaom 1.0.2"):
 
-> Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.0.1.* Zenodo. [https://doi.org/10.5281/zenodo.23623808](https://doi.org/10.5281/zenodo.23623808)
+> Grund, T. U. (2026). *nwsaom: Stochastic actor-oriented models in Stata. Manual for version 1.0.2.* Zenodo. [https://doi.org/10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)
 
-The manual (PDF) is archived at Zenodo ([doi:10.5281/zenodo.23623808](https://doi.org/10.5281/zenodo.23623808)); a copy is in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf). A Stata Journal article is in preparation.
+The manual (PDF) is archived at Zenodo ([doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)); a copy is in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf). A Stata Journal article is in preparation.
 
 **The model and RSiena.** `nwsaom` implements the model of Snijders and follows RSiena, so please also cite them:
 

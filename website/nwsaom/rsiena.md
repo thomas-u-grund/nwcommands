@@ -17,9 +17,12 @@ and the more complete program.
 
 ## What is the same
 
-- **The model and the effects.** The effect library follows RSiena's table of effects. Of the 1,121
-  rows that are planned for `nwsaom`, 1,058 (94%) are implemented, and every implemented effect was
-  compared with `siena07`.
+- **The model and the effects.** The effect library follows RSiena's table of effects. In the effects table of
+  RSiena 1.6.6 (`getEffects()` over twelve data configurations) 1,121 rows are planned for `nwsaom`;
+  1,058 of them (94%) are implemented, and every implemented effect was compared with `siena07`.
+  The effects that RSiena 1.6.7 to 1.6.14 added or changed (for example WXZX and the two-mode
+  toU) are implemented and compared with RSiena 1.6.14 but are not part of these counts; the counts
+  change with RSiena releases.
 - **The algorithm and the defaults.** Method of moments by Robbins-Monro stochastic approximation in
   three phases, conditional estimation for one network, the same starting values, the same convergence
   rule (all t-ratios below 0.1, overall maximum ratio below 0.25), centered covariates.

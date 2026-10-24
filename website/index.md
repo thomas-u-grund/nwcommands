@@ -33,9 +33,9 @@ General Public License, version 3.
 
 | Package | What it does | Follows | Version |
 |---|---|---|---|
-| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.0.0 |
-| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([manual: doi:10.5281/zenodo.23623808](https://doi.org/10.5281/zenodo.23623808)) | R package RSiena | 1.0.1 |
-| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network | R package `ergm` (statnet) | 1.0.1 |
+| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.1.1 |
+| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels ([manual: doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807)) | R package RSiena | 1.0.2 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network | R package `ergm` (statnet) | 1.1.0 |
 | [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.0.1 |
 | [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.1 |
 
@@ -45,12 +45,11 @@ Not sure which one you need? See [Which package do I need?](which-package/).
 {: #install-in-three-steps }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
-. net install nwcommands
+. net install nwcommands, from("https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/")
 . nwinstall, all
 ```
 
-1. The first two lines install `nwinstall` itself.
+1. The first line installs `nwinstall` itself and the landing help topics.
 2. `nwinstall, all` downloads everything else: every command, all help files and every dialog box.
 3. Optional: `nwinstall, gui` installs the "Network Analysis" menu in Stata's User menu (the older
    option name `permanently` still works), and `nwinstall, models` installs the four model packages.

@@ -20,7 +20,7 @@ direction; its correctness rests on numerical comparison with R's `ergm`.
 ## What is the same
 
 - **The model.** The terms are those of `ergm`, with the same definitions and the same coefficient names
-  (with `.` written as `_`). The development version implements 125 of the 139 terms of `ergm` 4.12.0
+  (with `.` written as `_`). Version 1.1.0 implements 125 of the 139 terms of `ergm` 4.12.0
   (89.9%), and 125 of the 126 that apply to binary networks; version 1.0.1 has about 110.
 - **The estimators.** Maximum pseudolikelihood and Monte Carlo maximum likelihood with the same
   defaults as R (the TNT proposal, bridge-sampling log-likelihood), plus the variants of the pseudolikelihood,
@@ -67,7 +67,7 @@ R-style terms inside Stata options; a fit is stored in `e()` like any Stata esti
 | `nodematch("sex", diff=TRUE)` | `nodematchdiff(sex)` |
 | `b1degree(0:2)`, `gwb2degree(0.5, fixed=TRUE)` | `bdegree1(0 1 2)`, `bgwdegree2(0.5)` |
 | `gwesp(0.5, fixed=TRUE)`, `gwesp(fixed=FALSE)` | `gwesp(0.5)`, `gwespfree(0.5)` |
-| `Symmetrize(~triangle, rule="strong")` | `operators(Symmetrize(triangle, rule(strong)))` (development version) |
+| `Symmetrize(~triangle, rule="strong")` | `operators(Symmetrize(triangle, rule(strong)))` (version 1.1.0) |
 | `ergm(..., estimate="MPLE")`, `main.method=` | `estimate(mple)`, `mainmethod(mcmle)` or `mainmethod(sa)` |
 | `control.ergm(MCMC.burnin=, MCMC.interval=, MCMC.samplesize=, MCMLE.maxit=)` | `mcmcburnin()`, `mcmcinterval()`, `mcmcsamplesize()`, `mcmleiterations()` |
 | `constraints = ~edges`, `obs.constraints = ~...` | `constraints(edges)`, `obsconstraints(...)` |

@@ -9,12 +9,11 @@ description: "How to cite nwergm, and the statnet and ergm papers it builds on."
 # How to cite
 
 **nwergm.** Cite the package by repository and report the version that produced your results, as printed by
-`nwergm version` (for example "nwergm 1.0.1"). There is no archived record with a DOI yet.
+`nwergm version` (for example "nwergm 1.1.0"). There is no archived record with a DOI yet.
 
-> Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata* (version 1.0.1). [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
+> Grund, T. U. (2026). *nwergm: Exponential random graph models in Stata* (version 1.1.0). [https://github.com/thomas-u-grund/nwergm](https://github.com/thomas-u-grund/nwergm)
 
-If you used one of the additions of the development version (the operator terms, for example), say so
-and give the version printed by `nwergm version` together with the date you installed it.
+Give the version printed by `nwergm version`: the operator terms and some other additions need version 1.1.0 or later.
 
 **The model and the software it follows.** `nwergm` implements the ERGM framework and follows R's
 `ergm` of the statnet project, so please also cite:
