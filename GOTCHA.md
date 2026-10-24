@@ -258,3 +258,14 @@ Use `local v : environ NAME` to read an environment variable (e.g. to parameteri
 `syntax [, NOMPLECHECK]` creates the local `mplecheck`, not `nomplecheck`; testing `"`nomplecheck'" == ""` is then always true.
 Use a string option (`mplecheck(on|off)`) or a name that does not start with "no".
 
+
+## Neighbor order depended on the session: Mata `order()` is not stable (fixed 2026-10-24)
+
+`set_edge_from_triplets()` (used by `nwfromedge`, `nwset` with an edge list, `nw2project`, `nwattime`) built the CSR with
+`order(ego, 1)`. Mata's `order()` does not keep the input order of tied keys, and the tie order varied with the session
+(memory/sort state, e.g. after another network had been loaded), so `neighbors(i)` returned a node's neighbors in a
+different order from session to session. `build_reverse_index()` had the same problem (`order(colidx, 1)`). It changed
+the starting edge list of seeded MCMC fits (nwergm `seed()`). The dense path (`build_sparse_index()`) was always sorted.
+Fix: sort by one combined key `ego*(n+1)+alter` (and `target*(n+1)+source` for in-neighbors), so every adjacency list is
+ascending with no per-call sort. **Lesson:** never rely on the tie order of `order()`/`sort()`; add the tie-breaking
+column to the key. Test: `cscripts/test_core_neighbor_order.do`.

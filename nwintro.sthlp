@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3.0.0  24oct2026}{...}
+{* *! version 3.1.0  24oct2026}{...}
 
-{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
+{pstd}{it:nwcommands version 3.1.0, 24 October 2026}{p_end}
 {phang}
 {help nwcommands:NW-1 intro}
 {hline 2} Introduction and concepts

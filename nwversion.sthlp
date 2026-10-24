@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.0.0  24oct2026}{...}
+{* *! version 3.1.0  24oct2026}{...}
 {marker topic}
 {helpb nwtopical##utilities:[NW-2.7] Utilities}
 
@@ -9,7 +9,7 @@
 {p2col :nwversion {hline 2}}Version of nwcommands and of the installed model packages{p_end}
 {p2colreset}{...}
 
-{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
+{pstd}{it:nwcommands version 3.1.0, 24 October 2026}{p_end}
 
 {title:Syntax}
 

@@ -1,7 +1,7 @@
 {smcl}
-{* *! version 3.0.0  24oct2026}{...}
+{* *! version 3.1.0  24oct2026}{...}
 
-{pstd}{it:nwcommands version 3.0.0, 24 October 2026}{p_end}
+{pstd}{it:nwcommands version 3.1.0, 24 October 2026}{p_end}
 
 {pstd}
 New here? If this is all you have installed so far, run {cmd:nwinstall, all} to download everything else
@@ -36,7 +36,7 @@ nwcommands is free software under the GNU General Public License, version 3, as 
 {p_end}
 
                *! Date        :  24 October 2026
-               *! Version     : 3.0.0
+               *! Version     : 3.1.0
                *! Authors     : Thomas U. Grund 
                *! Contact     : thomas.u.grund@gmail.com
                *! Web         : {browse "https://github.com/thomas-u-grund/nwcommands"}
