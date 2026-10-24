@@ -15,7 +15,8 @@ data commands.
 
 [Get started](#installation){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[nwsaom](nwsaom/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -35,7 +36,8 @@ data commands.
 - **Statistical network models** — available as separate GPL-3 packages that build on the core:
   `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
   models), and `nwdynam` (Dynamic Network Actor Models); see the
-  [ERGM](tutorials/09-intro-ergm/) and [longitudinal models](tutorials/10-intro-longitudinal-models/) tutorials
+  [ERGM](tutorials/09-intro-ergm/) and [longitudinal models](tutorials/10-intro-longitudinal-models/) tutorials;
+  `nwsaom` has its own section with [worked tutorials](nwsaom/)
 - **Visualization** — static plots and network movies (`nwplot`, `nwmovie`)
 - **Dialog boxes** — around 120 GUI dialogs covering nearly every command, reachable via
   Stata's own "Network Analysis" menu, for anyone who prefers point-and-click to typing syntax

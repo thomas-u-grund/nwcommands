@@ -41,3 +41,7 @@ command directly, see the [command reference](../reference/).
 10. [Intro to Longitudinal Network Models](10-intro-longitudinal-models/) — stochastic
     actor-oriented models (`nwsaom`), relational event models (`nwrem`) and dynamic network actor
     models (`nwdynam`), with their install steps
+
+`nwsaom` has its own section with installation notes, six worked tutorials (a first model, convergence,
+goodness of fit, selection and influence, testing, maximum likelihood and Bayesian estimation) and a
+guide for RSiena users: see [nwsaom](../nwsaom/).
