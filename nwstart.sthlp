@@ -225,7 +225,7 @@ the Gang network and calculates for each node the number of network neighbors wh
 give a very quick overview about the ties that exist in the network between nodes with certain attributes (see also {help nwtabulate}). 
 
 {pstd}
-Some more sophisticated programs exist for the statistical modelling of networks: {help nwqap:MR-QAP regression}, {help nwergm:exponential random graph modeling}, {help nwsaom:stochastic actor-oriented models} for longitudinal network+behavior co-evolution, and {help nwrem:relational event models} for continuous-time event-stream data.
+Some more sophisticated programs exist for the statistical modelling of networks: {help nwqap:MR-QAP regression}, {help nwergm:exponential random graph modeling}, {help nwsaom:stochastic actor-oriented models}, {help nwrem:relational event models} and {help nwdynam:dynamic network actor models} are available as separate packages (see the linked help pages for how to install them).
 
 {pstd}
 Another set of commands calculates {help nwpath:paths between network nodes}, the entire set of {help nwgeodesic:shortest paths between network nodes}, or the expected {help nwrandomwalk:random-walk hitting time} to a target node.

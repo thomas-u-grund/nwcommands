@@ -32,9 +32,9 @@ data commands.
   expression-based networks (`nwrandom`, `nwsmall`, `nwpref`, `nwlattice`, `nwgenerate`, ...)
 - **Structural analysis** — centrality, components, cliques/k-plexes/k-cores, cohesive
   subgroups, community detection, structural equivalence, QAP, and more
-- **Statistical network models** — exponential-family random graph models (`nwergm`),
-  stochastic actor-oriented models (`nwsaom`), relational event models (`nwrem`), and
-  Dynamic Network Actor Models (`nwdynam`)
+- **Statistical network models** — available as separate GPL-3 packages that build on the core:
+  `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
+  models), and `nwdynam` (Dynamic Network Actor Models)
 - **Visualization** — static plots and network movies (`nwplot`, `nwmovie`)
 - **Dialog boxes** — around 120 GUI dialogs covering nearly every command, reachable via
   Stata's own "Network Analysis" menu, for anyone who prefers point-and-click to typing syntax

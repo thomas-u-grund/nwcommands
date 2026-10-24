@@ -9,8 +9,7 @@ Technical overview for anyone reading or extending the codebase, not just using 
   option validation, dispatch into Mata, and `ereturn`/`return` result posting. This is also
   literally the installable package — the repository root *is* the flat directory a plain
   `net install` lays out, so there is no separate `src/`-vs-`build/` split to reason about.
-- **Mata core** (`unw_core.do`, plus `unw_ergm.do`/`unw_saom.do`/`unw_rem.do`/`unw_dynam.do` for
-  the statistical model families) — compiled into `lib/lnwcommands.mlib`. `NWdef` is the central
+- **Mata core** (`unw_core.do`) — compiled into `lib/lnwcommands.mlib`. `NWdef` is the central
   class: every network is an `NWdef` instance, holding node/edge state, metadata (directedness,
   valued-ness, two-mode status, temporal declaration), and the algorithms that operate on it.
 - **Native (C) plugins** (`native/`, compiled to `lib/plugins/<platform>/`) — optional,
@@ -46,16 +45,10 @@ where crossing the Mata/native boundary *once per outer loop* (not once per inne
 eliminates interpreter overhead, and a bespoke kernel avoids licensing questions and heavyweight
 build systems a general library would bring along for a handful of functions actually used.
 
-- `ergm_mcmc.c` — the ERGM MCMC/MPLE sampler.
-- `saom_sim.c` — the SAOM ministep sampler (it also includes `saom_bayes.c` and `saom_ml.c`: the Metropolis-Hastings
-  chain over ministep sequences that drives maximum-likelihood and Bayesian estimation).
-- `dynam_sim.c` — the DyNAM likelihood/gradient evaluation.
 - `nwgraph.c` — betweenness centrality (Brandes' algorithm), structured to host further
   general graph kernels behind the same plugin binary over time.
 
-The boundary is always crossed once per outer loop (once per MCMC sampling call, once per
-likelihood evaluation), never once per inner step — a proposal, a ministep, or a single change
-statistic never round-trips back into Mata. Reproducibility across the Mata/native boundary is
+The boundary is always crossed once per outer loop, never once per inner step. Reproducibility across the Mata/native boundary is
 handled by seeding each plugin's own self-contained RNG from a value the Mata caller draws, so a
 given `set seed` reproducibly drives the same native run (the two backends do not share a
 bit-identical RNG stream, only statistically equivalent output, which is what the test suite
@@ -63,88 +56,22 @@ certifies). `.github/workflows/build-plugins.yml` builds and commits all three p
 binaries on push, so a compiled plugin is normally available regardless of what platform a given
 commit was authored on.
 
-## Statistical model families
+## Statistical model packages
 
-### ERGM (`nwergm`)
-
-MCMC needs to toggle a single edge millions of times over one estimation run; `NWdef`'s sparse
-index rebuilds from scratch on every structural change, which is fine for ordinary use but far
-too slow for that access pattern. `nwergm` therefore uses its own graph representation,
-`ErgmGraph` — an associative-array-backed adjacency set giving O(1)-average toggle and lookup —
-read from the network exactly once at the start of estimation and never touching `NWdef` again.
-
-Terms follow a fixed, generic API contract (a per-term-instance data container plus matched
-`stat_*`/`change_*` Mata function pairs), so adding a new term means writing that one pair and
-registering it — the sampler, MPLE builder, and MCMLE controller never change. The same
-contract has a native-C mirror for the terms the compiled backend supports.
-
-Estimation offers both MPLE (exact for dyad-independent models, and the automatic starting value
-for MCMLE otherwise) and MCMC-MLE (Geyer & Thompson 1992: simulate at the current parameter,
-take a trust-region-capped Newton step on the centered simulated statistics, repeat), with
-convergence declared via a joint Hotelling's T² test that the centered sample mean is
-statistically indistinguishable from zero.
-
-### SAOM and DyNAM (`nwsaom`, `nwdynam`)
-
-SAOM's ministep sampler has the same repeated-single-toggle access pattern MCMC does, so it
-reuses `ErgmGraph`/`ErgmModel`/`ErgmTermData` directly rather than reimplementing a parallel
-graph class — a read-only dependency on the ERGM engine's own classes. This reuse is exact, not
-approximate: for every effect in the shared family (outdegree, reciprocity, homophily), the
-ERGM change statistic *is* the SAOM ego-effect's ministep delta, because both frameworks define
-these effects the same way — as a sum of contributions fully local to the one toggled dyad.
-
-The ministep sampler itself is a direct implementation of Snijders' multinomial-logit rule: for
-the acting actor, compute the objective-function delta for every possible alternative tie
-change, softmax, and draw. Continuous time is handled without a Poisson-count generator, by
-exploiting the fact that the pooled waiting time across `n` actors with a constant rate is the
-minimum of `n` i.i.d. exponentials. Parameters are estimated via Robbins-Monro stochastic
-approximation, matching RSiena's own algorithm: unconditional Method of Moments, with the rate
-parameters estimated jointly with the effects (the shared `SaomRMCore()`; co-evolution has its own
-copy of the same loop). Newer SAOM effects are native-only: the plugin computes both the simulation and
-the observed statistic (a small bridge command evaluates one term on observed data), so no Mata twin of the
-simulation is kept for them. Models with several co-evolving dependent networks (`nwsaom multinet`) reuse
-the single-network model description once per network (one plugin slot each) and a joint simulator in
-which the network to change is drawn in proportion to the rates; cross-network effects read the other
-network's current state in the ministeps and its period-start state in the statistics.
-Maximum likelihood (`nwsaom ..., ml`) and Bayesian estimation (`nwsaom bayes`) treat the ministep sequence between two waves
-as missing data: a native Markov chain over sequences (insert, delete and permute moves, as in RSiena's likelihood code) gives the
-complete-data score for a Robbins-Monro run or the likelihood for a Metropolis sampler of the parameters. One Stata program
-is limited in size, so newer subcommands live in their own ado files and the main program only dispatches to them.
-Postestimation reuses the same machinery: `estat simulate` and `estat gof` run the single-period simulator at the
-fitted (or chosen) coefficients; `estat score` and `estat timetest` are score-type tests computed from the final
-simulations of the fit (the derivative matrix and covariance of the statistics, per period for the time test);
-`estat importance` asks the plugin for the change contributions of every actor and alternative at each period's
-start network. `fix()` holds parameters at their start values inside the Robbins-Monro loop.
-
-DyNAM factors the same kind of actor-oriented dynamics into two separate sub-models — which
-actor acts next (a continuous-time competing-risks rate model), and which receiver they choose
-(a discrete choice model) — plus a third sub-model for undirected, coordinated tie formation.
-It shares the relational-event data model with `nwrem` (below) but not its engine, since the
-rate/choice factorization needs different machinery.
-
-### REM (`nwrem`)
-
-Relational event models consume the same raw `(sender, receiver, time)` event stream that the
-two-mode/temporal architecture already provides via `nwset ..., eventtime()` — no separate
-data-ingestion mechanism was needed. Estimation uses the ordinal partial likelihood: given that
-some event happened next, the probability it was this specific ordered pair rather than any
-other pair that could have happened instead — structurally the same idea as a Cox
-proportional-hazards partial likelihood, and for the same reason, no intercept term is
-identifiable (a term constant across every candidate pair cancels exactly in the normalizer).
-
-REM is deliberately a standalone engine, sharing no code with the ERGM/SAOM machinery: its
-continuous-time, per-event risk-set evaluation (recomputing a value for every possible sender-
-receiver pair at every event) is structurally unlike ERGM's dyad-toggle MCMC or SAOM's discrete
-ministeps, so forcing a shared engine would have cost more in awkward abstraction than it saved
-in reuse.
+The statistical models for networks are separate packages in separate repositories, each
+GPL-3 and each depending only on this core (never on one another, and the core never depends on
+them): `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
+models) and `nwdynam` (Dynamic Network Actor Models). They use the core's `NWdef` network
+objects, `nwset`, `_nwsyntax` and the Mata library `lnwcommands.mlib`, and ship their own Mata
+library and native plugins. The core only keeps stub commands with these four names that print
+the installation hint and exit with error 199. See each repository for its own architecture notes.
 
 ## Testing and certification
 
 Every command family has a corresponding `cscripts/test_*.do` regression test, run in both dev
 mode (sourcing the Mata files directly) and production mode (against the compiled library and
 plugins), so a change is checked against both the source of truth and what actually ships.
-Statistical model estimates are additionally cross-checked numerically against independent
-reference implementations for the same models. Native/Mata backend pairs are certified either
+Native/Mata backend pairs are certified either
 for exact agreement (deterministic algorithms like betweenness) or statistical equivalence of
 sampled distributions (stochastic algorithms like MCMC), whichever matches what the two backends
 actually guarantee.
@@ -153,8 +80,6 @@ actually guarantee.
 
 `nwprogramming.sthlp` (`help nwprogramming` once installed) documents the internal
 `NWdef`/network-registry API for anyone writing a new command against it, including a pitfalls
-list drawn from real bugs found during development. The ERGM/SAOM/DyNAM term-extension pattern
-above is the right model for adding a new effect to any of the three statistical engines; adding
-an ordinary new structural command follows the same shape as any existing `nw*` command — parse
+list drawn from real bugs found during development. Adding an ordinary new structural command follows the same shape as any existing `nw*` command — parse
 options, resolve the network via the registry, call or add an `NWdef` method, return results the
 usual Stata way.

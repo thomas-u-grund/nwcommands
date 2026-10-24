@@ -1,17 +1,23 @@
+* Builds lib/lnwcommands.mlib (core Mata library) from unw_core.do.
+* Run from the repository root:  do lib/build.do
+* (the model packages nwergm, nwsaom, nwdynam, nwrem build their own libraries.)
 version 12
+local root "`c(pwd)'"
+capture confirm file "`root'/unw_core.do"
+if _rc {
+    display as error "run lib/build.do from the repository root (the folder containing unw_core.do)"
+    exit 601
+}
 clear all
 capture mata: mata clear
 
-cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands"
-do "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/unw_core.do"
-do "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/unw_ergm.do"
-do "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/unw_saom.do"
-do "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/unw_rem.do"
-do "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/unw_dynam.do"
+cd "`root'"
+do "`root'/unw_core.do"
 
-cd "/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/lib"
-mata: mata mlib create lnwcommands, dir("/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/lib") replace
-mata: mata mlib add lnwcommands *(), dir("/Users/tgrund/FILES_NEW/SOFTWARE/nwcommands/lib")
+cd "`root'/lib"
+mata: mata mlib create lnwcommands, dir("`root'/lib") replace
+mata: mata mlib add lnwcommands *(), dir("`root'/lib")
 mata: mata mlib index
 
 mata: mata describe using lnwcommands
+cd "`root'"

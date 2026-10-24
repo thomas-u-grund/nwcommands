@@ -429,7 +429,6 @@ program getcmdtopic, rclass
 	else {
 		tempname cmdsthlp
 		file open `cmdsthlp' using `cmd'.sthlp, read
-		//file open `cmdsthlp' using nwergm.sthlp, read		
 
 		file read `cmdsthlp' line
 		local found = 0

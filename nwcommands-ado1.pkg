@@ -69,9 +69,6 @@ f nwdyads.ado
 f nwdynam.ado
 f nwego.ado
 f nwergm.ado
-f nwergm_estat.ado
-f _nwergm_constr.ado
-f _nwergm_hints.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado

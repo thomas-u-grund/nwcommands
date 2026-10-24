@@ -321,7 +321,6 @@ program nwinstall_menu
 	window menu append submenu "Network Analysis" "Statistical Models"
 	window menu append item "Statistical Models" "Correlate networks and variables" "db nwcorrelate"
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
-	window menu append item "Statistical Models" "Exponential-family random graph model (ERGM) estimation" "db nwergm"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
 	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
 

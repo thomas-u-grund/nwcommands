@@ -9,32 +9,10 @@ areas, and preserve compatibility for everything already shipped.
 
 ## Recently added
 
-**Statistical network models** — the biggest area of recent growth:
-
-- `nwergm` — exponential-family random graph models (ERGM), with MPLE and MCMC-MLE estimation,
-  a substantial term library (dyad-independent covariate/factor terms, the full triangle/k-star
-  family, all five geometrically-weighted shared-partner definitions, degree-distribution terms,
-  the full bipartite/two-mode term family, curved parameters via a decay map), and an optional
-  native (C) MCMC backend for performance.
-- `nwsaom` — stochastic actor-oriented models (Snijders-style SAOM), including the full RSiena
-  effect catalog for wave 1, multi-wave chaining, standard errors, network/behavior co-evolution,
-  composition change (joiners and leavers at fractional times, exactly as RSiena), `nwsaom_meta` (multi-group
-  meta-analysis of separate fits, as RSiena's `siena08`), and missing-data
-  handling (including missing covariate values), with a
-  native (C) backend for the ministep sampler. Also: endowment/creation splits of the main network
-  effects (`endow()`/`creation()`), dyadic covariates, undirected (symmetric) relations over several
-  waves and with a co-evolving behavior, covariate-dependent rates, several co-evolving behaviors,
-  two-mode (bipartite) networks, several co-evolving networks (`nwsaom multinet`, including non-directed
-  members, two-mode members and a co-evolving behavior), maximum likelihood (`ml`) and Bayesian estimation (`nwsaom bayes`) for one network, a data description (`nwsaom describe`), and about 1,050 of RSiena's 1,200 effect-table rows. Postestimation: goodness of fit (`estat gof`), simulation at fitted
-  or chosen parameters (`estat simulate`, `nwsaom simulate`), score-type tests (`estat score`, with
-  `fix()`), tests for time heterogeneity (`estat timetest`) and relative importance of effects
-  (`estat importance`), also after `nwsaom multinet`. Every extension is checked against RSiena (statistics and estimates).
-- `nwrem` — relational event models (Butts 2008), fit via the ordinal partial likelihood, with
-  degree, inertia, recency-rank, and covariate effect families.
-- `nwdynam` — Dynamic Network Actor Models (Stadtfeld & Block 2017), with separate rate and
-  choice sub-models, a broad effect catalog (homophily/similarity, closure, tertius, windowed
-  recency effects, two-mode support, a coordination sub-model for undirected tie formation), and
-  a native (C) backend for the likelihood/gradient evaluation.
+**Statistical network models** now live in their own packages (all GPL-3, each requiring this
+core): `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
+models) and `nwdynam` (Dynamic Network Actor Models). Their roadmaps are kept in their own
+repositories. The core keeps the temporal/two-mode groundwork they build on.
 
 **Cohesive subgroups and graph structure**: k-cores, cliques, k-plexes, n-cliques/n-clans,
 k-components, and a full multi-level Moody-White cohesive-blocking hierarchy (`nwcohesion`);
@@ -74,17 +52,6 @@ scale.
 - **Two-mode/temporal architecture**: the core metadata and a first slicing command
   (`nwattime`) are in place; migrating more existing commands to be temporal-aware, and
   windowed/ranged (rather than exact-timestamp) event slicing, remain open.
-- **`nwsaom` coverage**: the generalised-method-of-moments estimator, the settings model, joint estimation of several
-  groups (hierarchical Bayes), composition change and missing ties inside `nwsaom multinet`, and `estat gof` after
-  `multinet` are the main RSiena features not yet implemented.
-- **`nwergm` coverage**: the project to match R's `ergm` closely (terms, features, behaviour) is under way: missing
-  data, fit statistics (log-likelihood, AIC/BIC, `predict`), a much larger term library, constraints and more
-  estimation methods; valued and temporal ERGMs are not planned yet.
-- **DyNAM effect coverage**: most of the reference effect catalog is implemented; a handful of
-  effects that need genuinely different internal machinery (`tertiusDiff`, dynamically-evolving
-  cross-network effects, two-mode support for a few remaining effect types) are still open.
-- **REM effect coverage**: triad/shared-partner effects are the one remaining item before the
-  planned v1 effect set is complete.
 
 ## Planned / under consideration
 
@@ -95,26 +62,17 @@ scale.
 - Faster `nwplot` layout computation — the current (Mata) layout algorithm is noticeably slow;
   a plot should render close to instantaneously. Worth profiling to find the actual bottleneck,
   and likely a candidate for a native (C) kernel alongside the package's existing native
-  betweenness/ERGM/SAOM/DyNAM backends, rather than a purely algorithmic fix.
+  betweenness backend, rather than a purely algorithmic fix.
 - Self-loop rendering, automatic two-mode color/symbol styling, and parallel-edge rendering in
   `nwplot`.
 - Full blockmodeling (image matrices, stochastic block models, goodness-of-fit) building on the
   existing structural-equivalence engine.
 - A general induced-subgraph extraction primitive, for any future feature that needs a real
   standalone subgraph object rather than per-node neighbor aggregation.
-- A tutorial for writing custom ERGM terms — the term registry already supports this; what
-  remains is documentation.
 
 ## Known limitations, by design
 
-- Curved ERGM MCMC-MLE (e.g. `gwesp` with an estimated decay parameter) can be genuinely
-  statistically degenerate on small, dense networks — this is a property of the likelihood
-  surface itself, not an unfixed bug, and is reported as a clear error rather than an unreliable
-  fit. Curved MPLE is unaffected.
 - General (non-bipartite) matching is out of scope; `nwmatching` covers the bipartite case, where
   a much simpler exact algorithm applies.
-- Valued/signed ERGMs and temporal ERGM (TERGM) extensions are not planned — relational-event and
-  actor-oriented dynamics are instead covered by `nwrem`/`nwdynam`/`nwsaom`, dedicated engines
-  built for exactly that purpose.
 - Networks are not automatically re-projected between one-mode and two-mode representations under
   any circumstance; a command that needs a one-mode network will error rather than guess.

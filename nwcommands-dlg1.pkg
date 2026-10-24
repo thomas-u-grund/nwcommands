@@ -71,7 +71,6 @@ f nw2degree.dlg
 f nwissymmetric.dlg
 f nw_nodes_labels.dlg
 f nwcollapse.dlg
-f nwsaom.dlg
 f nw_edges_color.dlg
 f nwuse.dlg
 f nw_edges_size.dlg

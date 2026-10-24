@@ -63,10 +63,7 @@ echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwds.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwduplicate.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwdyadprob.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwdyads.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwdynam.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwego.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwergm.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwergm_estat.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwevcent.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwexpand.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwexport.ado
@@ -118,14 +115,11 @@ echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrandom.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrandomwalk.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwreach.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrecode.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrem.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrename.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwreplace.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwreplacemat.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwrestore.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwring.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwsaom.ado
-echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwsaom_estat.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwsave.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwset.ado
 echo "*! v2.0 __  5 Sep 2026 __ 18:13:32" >> nwshared.ado
