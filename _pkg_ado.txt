@@ -1,3 +1,4 @@
+f _nwrowalign.ado
 f _extract_valuelabels.ado
 f _gnwdegree.ado
 f _growmedian2.ado
