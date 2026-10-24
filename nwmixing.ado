@@ -85,7 +85,7 @@ program nwmixing
 	tab `egoname' `altername' if `netname' != 0 & `netname' != ., matcell(`tableres') matcol(`tablecol') matrow(`tablerow') `options'
 
 	if "`plot'" != "" {
-		tabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `egoname' `altername' if `netname' != 0 & `netname' != ., horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 

@@ -51,12 +51,6 @@ capture program drop nwtab2
 program nwtab2
 	syntax anything(name=netname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
-	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
-	}
 	
 	local netname0 `netname'
 	_nwsyntax `netname', max(2) min(2)
@@ -101,7 +95,7 @@ program nwtab2
 	}
 	
 	if "`plot'" != "" {
-		tabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `net1' `net2', horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 
@@ -174,12 +168,6 @@ capture program drop nwtab3
 program nwtab3
 	syntax anything(name=netname), attribute(varname) [, eiplot eiplotoptions(string) unvalued plot plotoptions(string) permutations(integer 100) *]
 		
-	if "`plot'" != "" {
-		capture which tabplot
-		if _rc != 0 {
-			capture ssc install tabplot
-		}
-	}
 	
 	_nwsyntax `netname', max(1) min(1)
 	
@@ -216,7 +204,7 @@ program nwtab3
 	}
 	
 	if "`plot'" != "" {
-		tabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `plotoptions'
+		_nwtabplot `attribute'`nw_ego' `attribute'`nw_alter', horizontal plotregion(margin(b = 0)) `plotoptions'
 	}
 	
 	tempname __nwtable __nwcol __nwrow __nwinternal __nwexternal __nwei_index 

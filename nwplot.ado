@@ -186,11 +186,6 @@ program nwplot, rclass
 		local label "`nw_nodename'"
 	}
 	
-	capture which labellist
-	if _rc != 0 {
-		ssc install labellist
-	}
-
 		
 	if "`aspectratio'" == "" {
 		local aspectratio = 1
@@ -2003,23 +1998,34 @@ capture program drop _getvaluelabel
 program _getvaluelabel
 	syntax varlist(min=1 max=1), key(string)
 	
-	qui labellist `varlist'
-	local labkeys "`r(values)'"
-	local lablabels `"`r(labels)'"'
-	if ("`r(lblname)'"!= ""){
-		local lnum = `r(`r(lblname)'_k)'
-		local llab "`varlist' = `key'"
-		forvalues j = 1 /`lnum' {
-			local lkey : word `j' of `labkeys'
-			if "`lkey'" == "`key'" {
-				local llab : word `j' of `lablabels'
-			}
+	// Built-in replacement for the user-written -labellist- (SSC): look up
+	// the value-label text of -key- for a numeric variable. Builds the
+	// keys (strofreal of the value, as -labellist- returned in r(values))
+	// and label texts of the variable's value label.
+	local llab "`varlist' = `key'"
+	local lbln ""
+	capture confirm numeric variable `varlist'
+	if _rc == 0 {
+		local lbln : value label `varlist'
+	}
+	if "`lbln'" != "" {
+		capture label list `lbln'
+		if _rc | r(k) == 0 {
+			local lbln ""
 		}
 	}
-	else{
-		local llab "`varlist' = `key'"
+	if "`lbln'" != "" {
+		mata: st_vlload("`lbln'", _nwv = ., _nwt = "")
+		mata: st_local("lnum", strofreal(rows(_nwv)))
+		forvalues j = 1 /`lnum' {
+			mata: st_local("lkey", strofreal(_nwv[`j', 1]))
+			if "`lkey'" == "`key'" {
+				mata: st_local("llab", _nwt[`j', 1])
+			}
+		}
+		mata: mata drop _nwv _nwt
 	}
-	mata: st_global("r(key_label)", "`llab'")
+	mata: st_global("r(key_label)", `"`llab'"')
 	mata: st_global("r(key)", "`key'")
 end
 

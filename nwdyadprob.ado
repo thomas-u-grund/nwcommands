@@ -45,16 +45,6 @@ program nwdyadprob
 	}
 
 
-	// Install gsample if needed
-	capture which gsample
-	if _rc != 0 {
-		ssc install gsample
-	}
-	capture mata: mata which mm_sample()
-	if _rc != 0 {
-		ssc install moremata
-	}
-
 	if "`weightnet'" != "" {
 		_nwsyntax `weightnet', other(_wn)
 		mata: `mat' = transformIntoProbs((*`_wnnetobj'->get_matrix()))
@@ -182,7 +172,7 @@ program nwdyadprob
 			error 198
 		}
 		qui drop if `nw_ego' == `nw_alter'
-		gsample `ties' [aweight=_tempdyad], generate(link) wor
+		_nwgsample `ties' [aweight=_tempdyad], generate(link)
 		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked
 		// nwhomophily investigation - "homophily(2) and homophily(-2)
 		// produce identical output"): this used to hand the selected
