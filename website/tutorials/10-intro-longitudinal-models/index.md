@@ -50,6 +50,17 @@ The examples below were run with release 1.0.1 of each package and the core `nwc
 
 ## Stochastic actor-oriented models (SAOM)
 
+> **Full nwsaom tutorials.** This page is an overview. `nwsaom` has its own section with six worked tutorials, each with real output:
+> 1. [A first SAOM](../../nwsaom/tutorial-1-first-saom/)
+> 2. [Convergence](../../nwsaom/tutorial-2-convergence/)
+> 3. [Goodness of fit](../../nwsaom/tutorial-3-goodness-of-fit/)
+> 4. [Selection and influence](../../nwsaom/tutorial-4-selection-influence/)
+> 5. [Testing and comparing](../../nwsaom/tutorial-5-testing-comparing/)
+> 6. [Beyond the basic model](../../nwsaom/tutorial-6-beyond/)
+>
+> See also [nwsaom and RSiena](../../nwsaom/rsiena/) and the [installation page](../../nwsaom/install/).
+{: .note }
+
 An SAOM (`nwsaom`) models change between two or more observed **panel waves** of the same
 network as a sequence of unobserved, actor-driven "ministeps": one at a time, an actor is
 activated and may create or drop exactly one of its own outgoing ties, choosing among the
