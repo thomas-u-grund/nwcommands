@@ -2666,6 +2666,35 @@ real rowvector csr_neighbors(real colvector rowptr, real colvector colidx, real 
 }
 
 /*
+	nw_csr_from_edges(n, eu, ev, rowptrP, colidxP): the CSR of the arc list
+	(eu, ev) - rows in node order, each row's entries in the order the arcs
+	come, exactly what build_edgelist_csr_dense() builds - without its
+	element-by-element loops.
+*/
+void nw_csr_from_edges(real scalar n, real colvector eu, real colvector ev,
+		pointer(real colvector) scalar rowptrP, pointer(real colvector) scalar colidxP){
+	real scalar m, g
+	real colvector o, es, starts, cnt, deg
+
+	m = rows(eu)
+	deg = J(n, 1, 0)
+	if (m > 0){
+		o = order((eu, (1::m)), (1, 2))
+		es = eu[o]
+		starts = nw_which((es :!= (0 \ es[|1 \ m-1|])))
+		g = rows(starts)
+		cnt = (g > 1 ? starts[|2 \ g|] : J(0, 1, 0)) \ (m + 1)
+		cnt = cnt - starts
+		deg[es[starts]] = cnt
+		(*colidxP) = ev[o]
+	}
+	else {
+		(*colidxP) = J(0, 1, 0)
+	}
+	(*rowptrP) = 0 \ runningsum(deg)
+}
+
+/*
 	KComponentsEdges(nfull, eu, ev, rowptr, colidx, nodeset, k): the
 	edge-list/CSR-native equivalent of KComponents() above - identical
 	algorithm (see that function's own header comment for the full
@@ -2731,7 +2760,8 @@ real matrix KComponentsEdges(real scalar nfull, real colvector eu, real colvecto
 	// completely unaffected - the early exit only ever fires once
 	// minflow is already known to be below k, which cannot happen on a
 	// branch that reports conn >= k.
-	search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
+	if (NativeGraphAvailable()) search = nw_kconn_search_native(cols(idx), eu_local, ev_local, k)
+	else search = fast_min_cut_search_edges(cols(idx), eu_local, ev_local, k)
 	conn = search[1]
 	if (conn >= k) {
 		results = nodeset
@@ -4933,11 +4963,42 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 	real rowvector nodeset
 	real scalar n
 
+	real matrix el
+	real colvector r, c, w, keep, key, o, eu, ev, rowptr, colidx
+
 	n = get_nodes()
+	nodeset = J(1, n, 1)
+
+	if (edgelist_sparse_ok()){
+		// the undirected, unvalued graph from the stored ties alone (what
+		// get_matrix_mod(0,0) :!= 0 gives, without the N x N matrix): a
+		// tie counts when it is not 0 (unvalued, undirected network) or
+		// positive (otherwise), in either direction; no loops
+		ensure_sparse_built()
+		el = edgelist()
+		eu = J(0, 1, 0)
+		ev = J(0, 1, 0)
+		if (rows(el) > 0){
+			r = el[,1]; c = el[,2]; w = el[,3]
+			if (isdirect == 0 & isvalued == 0) keep = nw_which((w :!= 0) :& (r :!= c))
+			else keep = nw_which((w :> 0) :& (r :!= c))
+			if (rows(keep) > 0){
+				r = r[keep]; c = c[keep]
+				// each tie in both directions, once, in the order of a column
+				// by column scan of the symmetric 0/1 matrix (key = column
+				// * (n+1) + row, column = ev)
+				key = sort((c :* (n + 1) :+ r) \ (r :* (n + 1) :+ c), 1)
+				if (rows(key) > 1) key = key[nw_which((key[|2 \ rows(key)|] :!= key[|1 \ rows(key)-1|]) \ 1)]
+				ev = floor((key :- 1) :/ (n + 1))
+				eu = key :- ev :* (n + 1)
+			}
+		}
+		nw_csr_from_edges(n, eu, ev, &rowptr, &colidx)
+		return(KComponentsEdges(n, eu, ev, rowptr, colidx, nodeset, k))
+	}
+
 	adj = (*get_matrix_mod(0,0)) :!= 0
 	_diag(adj, 0)
-
-	nodeset = J(1, n, 1)
 	return(KComponents(adj, nodeset, k))
 }
 
@@ -7516,6 +7577,39 @@ real matrix `NWdef'::calculate_betweenness_native(){
 	stata("capture frame drop __nwgraph_native")
 
 	return(Cb)
+}
+
+/*
+	Native (C) counterpart of fast_min_cut_search_edges(n, eu, ev, target)
+	for nwkcomponents (native/nwgraph.c, ALG_KCONN_SEARCH): the vertex
+	connectivity search of the graph with n nodes and the symmetric arc list
+	(eu, ev), stopping as soon as a pair with fewer than `target' disjoint
+	paths is found.  Returns (minflow, best_s, best_t); a connectivity of
+	`target' or more comes back as `target' (see the C source).
+	CALLER'S RESPONSIBILITY: NativeGraphAvailable().
+*/
+real rowvector nw_kconn_search_native(real scalar n, real colvector eu, real colvector ev, real scalar target){
+	real scalar m, __junk
+	string scalar origframe, argstr
+	real rowvector res
+
+	m = rows(eu)
+	origframe = st_framecurrent()
+	stata("capture frame drop __nwgraph_native")
+	stata("frame create __nwgraph_native")
+	st_framecurrent("__nwgraph_native")
+	st_addobs(max((n, m, 3)))
+	__junk = st_addvar("double", "v1")
+	__junk = st_addvar("double", "v2")
+	__junk = st_addvar("double", "v3")
+	if (m > 0) st_store((1::m), ("v1","v2"), (eu, ev))
+	argstr = "20 " + strofreal(n) + " 0 " + strofreal(m) + " " + strofreal(target)
+	stata("capture program nwgraph_native, plugin using(" + char(34) + NativeGraphPluginPath() + char(34) + ")")
+	stata("plugin call nwgraph_native v1 v2 v3, " + char(34) + argstr + char(34))
+	res = st_data((1::3), "v3")'
+	st_framecurrent(origframe)
+	stata("capture frame drop __nwgraph_native")
+	return(res)
 }
 
 /*

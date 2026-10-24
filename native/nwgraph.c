@@ -98,6 +98,7 @@
 
 #define ALG_BETWEENNESS 1
 #define ALG_BFS_DISTANCES 2
+#define ALG_KCONN_SEARCH 20
 
 /* ===================================================================
    Betweenness centrality (Brandes 2001), unweighted/dichotomized.
@@ -291,6 +292,151 @@ cleanup:
 }
 
 /* ===================================================================
+   Vertex-connectivity search for nwkcomponents (ALG_KCONN_SEARCH): the
+   compiled counterpart to `fast_min_cut_search_edges()' in unw_core.do
+   called with its optional `target' (Esfahanian & Hakimi 1984 on the
+   vertex-split flow graph, Even 1979).  Same query order as the Mata
+   function (v0 to every non-neighbour in node order, then every
+   non-adjacent pair of v0's neighbours), same early exit as soon as a
+   query gives a flow below `target'.  Differences, none of which the
+   caller can see: a query stops augmenting once its flow reaches
+   `target' (so a flow >= target is reported as `target'), which saves
+   the final failing breadth-first search that explores the whole
+   residual graph.  Output (v3, rows 1-3): minflow, best_s, best_t.
+   `ei'/`ej' are the symmetric arc list of the (loop-free) graph.
+   =================================================================== */
+
+typedef struct {
+	long N;              /* flow-graph nodes: in(v)=v, out(v)=n+v, 1-indexed */
+	long *head, *nxt, *to;
+	long *cap, *res;     /* base capacity and residual capacity per arc */
+	long nedge;
+} flowgraph_t;
+
+static void fg_add(flowgraph_t *g, long u, long v, long c) {
+	long e = g->nedge;
+	g->to[e] = v; g->cap[e] = c; g->nxt[e] = g->head[u]; g->head[u] = e;
+	g->to[e + 1] = u; g->cap[e + 1] = 0; g->nxt[e + 1] = g->head[v]; g->head[v] = e + 1;
+	g->nedge += 2;
+}
+
+static int kconn_search(long n, long *ei, long *ej, long m, long target) {
+	long i, j, e, delta, v0, minflow, best_s = 0, best_t = 0, big = n + 10;
+	long *deg = NULL, *rowptr = NULL, *colidx = NULL, *cursor = NULL;
+	char *isnb = NULL, *isnb2 = NULL;
+	long *queue = NULL, *parent = NULL, *stamp = NULL, curstamp = 0;
+	flowgraph_t g;
+	int rc = 0;
+	long nv0 = 0, *nbv0 = NULL;
+
+	memset(&g, 0, sizeof(g));
+	deg = (long *)calloc((size_t)(n + 2), sizeof(long));
+	for (e = 0; e < m; e++) deg[ei[e]]++;
+	delta = deg[1]; v0 = 1;
+	for (i = 2; i <= n; i++) if (deg[i] < delta) { delta = deg[i]; v0 = i; }
+	minflow = delta;
+
+	if (minflow < target) goto done;
+
+	rowptr = (long *)malloc((size_t)(n + 2) * sizeof(long));
+	rowptr[1] = 0;
+	for (i = 1; i <= n; i++) rowptr[i + 1] = rowptr[i] + deg[i];
+	cursor = (long *)malloc((size_t)(n + 1) * sizeof(long));
+	for (i = 1; i <= n; i++) cursor[i] = rowptr[i];
+	colidx = (long *)malloc((size_t)(m > 0 ? m : 1) * sizeof(long));
+	for (e = 0; e < m; e++) colidx[cursor[ei[e]]++] = ej[e];
+
+	g.N = 2 * n;
+	g.nedge = 0;
+	g.head = (long *)calloc((size_t)(g.N + 1), sizeof(long));      /* arcs are numbered from 1; 0 = none */
+	{
+		long total = 2 * (n + m) + 2;
+		g.to = (long *)malloc((size_t)total * sizeof(long));
+		g.nxt = (long *)malloc((size_t)total * sizeof(long));
+		g.cap = (long *)malloc((size_t)total * sizeof(long));
+		g.res = (long *)malloc((size_t)total * sizeof(long));
+	}
+	queue = (long *)malloc((size_t)(g.N + 1) * sizeof(long));
+	parent = (long *)malloc((size_t)(g.N + 1) * sizeof(long));
+	stamp = (long *)calloc((size_t)(g.N + 1), sizeof(long));
+	isnb = (char *)calloc((size_t)(n + 1), 1);
+	isnb2 = (char *)calloc((size_t)(n + 1), 1);
+	if (!g.head || !g.to || !g.nxt || !g.cap || !g.res || !queue || !parent || !stamp || !isnb || !isnb2) { rc = 909; goto done; }
+	/* arc index 0 is a dummy so that head[]==0 means "no arc" */
+	g.nedge = 2;
+	for (i = 1; i <= n; i++) fg_add(&g, i, n + i, 1);              /* split arc: arc 2i+... */
+	for (e = 0; e < m; e++) fg_add(&g, n + ei[e], ej[e], big);
+
+	nv0 = rowptr[v0 + 1] - rowptr[v0];
+	nbv0 = colidx + rowptr[v0];
+	for (i = 0; i < nv0; i++) isnb[nbv0[i]] = 1;
+
+	/* the flow between s and t, stopping at `target' */
+#define QUERY(S, T, OUT) do { \
+	long s_ = (S), t_ = (T), maxf_ = 0; \
+	long as_ = 2 + 2 * (s_ - 1), at_ = 2 + 2 * (t_ - 1); \
+	memcpy(g.res, g.cap, (size_t)g.nedge * sizeof(long)); \
+	g.res[as_] = big; g.res[at_] = big; \
+	while (maxf_ < target) { \
+		long qh_ = 0, qt_ = 0, found_ = 0, u_, a_, v_, pf_; \
+		curstamp++; \
+		queue[qt_++] = n + s_; stamp[n + s_] = curstamp; \
+		while (qh_ < qt_ && !found_) { \
+			u_ = queue[qh_++]; \
+			for (a_ = g.head[u_]; a_ != 0; a_ = g.nxt[a_]) { \
+				if (g.res[a_] > 0) { \
+					v_ = g.to[a_]; \
+					if (stamp[v_] != curstamp) { \
+						stamp[v_] = curstamp; parent[v_] = a_; \
+						if (v_ == t_) { found_ = 1; break; } \
+						queue[qt_++] = v_; \
+					} \
+				} \
+			} \
+		} \
+		if (!found_) break; \
+		pf_ = big; v_ = t_; \
+		while (v_ != n + s_) { a_ = parent[v_]; if (g.res[a_] < pf_) pf_ = g.res[a_]; v_ = g.to[a_ ^ 1]; } \
+		v_ = t_; \
+		while (v_ != n + s_) { a_ = parent[v_]; g.res[a_] -= pf_; g.res[a_ ^ 1] += pf_; v_ = g.to[a_ ^ 1]; } \
+		maxf_ += pf_; \
+	} \
+	(OUT) = maxf_; } while (0)
+
+	/* (2) v0 to every vertex it is not adjacent to */
+	for (i = 1; i <= n && !(minflow < target); i++) {
+		if (i != v0 && !isnb[i]) {
+			long f;
+			QUERY(v0, i, f);
+			if (f < minflow) { minflow = f; best_s = v0; best_t = i; }
+		}
+	}
+	/* (3) every non-adjacent pair among v0's neighbours */
+	for (i = 0; i < nv0 && !(minflow < target); i++) {
+		long ni = nbv0[i];
+		memset(isnb2, 0, (size_t)(n + 1));
+		for (e = rowptr[ni]; e < rowptr[ni + 1]; e++) isnb2[colidx[e]] = 1;
+		for (j = i + 1; j < nv0 && !(minflow < target); j++) {
+			if (!isnb2[nbv0[j]]) {
+				long f;
+				QUERY(ni, nbv0[j], f);
+				if (f < minflow) { minflow = f; best_s = ni; best_t = nbv0[j]; }
+			}
+		}
+	}
+#undef QUERY
+
+done:
+	SF_vstore(3, 1, (double)minflow);
+	SF_vstore(3, 2, (double)best_s);
+	SF_vstore(3, 3, (double)best_t);
+	free(deg); free(rowptr); free(colidx); free(cursor);
+	free(g.head); free(g.to); free(g.nxt); free(g.cap); free(g.res);
+	free(queue); free(parent); free(stamp); free(isnb); free(isnb2);
+	return rc;
+}
+
+/* ===================================================================
    Plugin entry point
    =================================================================== */
 
@@ -300,7 +446,7 @@ static long next_long(void) {
 
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
-	long algcode, n, directed, nties, source, i;
+	long algcode, n, directed, nties, source, target = 0, i;
 	long *ei = NULL, *ej = NULL;
 	int rc = 0;
 
@@ -315,6 +461,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	/* ALG_BFS_DISTANCES carries one further argument (source), read
 	   before freeing argbuf - strtok() state lives inside it. */
 	source   = (algcode == ALG_BFS_DISTANCES) ? next_long() : 0;
+	if (algcode == ALG_KCONN_SEARCH) target = next_long();
 	free(argbuf);
 
 	if (nties > 0) {
@@ -333,6 +480,9 @@ STDLL stata_call(int argc, char *argv[]) {
 			break;
 		case ALG_BFS_DISTANCES:
 			rc = bfs_distances_from(n, ei, ej, nties, source);
+			break;
+		case ALG_KCONN_SEARCH:
+			rc = kconn_search(n, ei, ej, nties, target);
 			break;
 		default:
 			SF_error("nwgraph: unknown algorithm code\n");
