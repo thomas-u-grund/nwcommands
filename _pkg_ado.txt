@@ -75,6 +75,8 @@ f _nwergm_struct.ado
 f nwergm_p.ado
 f _nwergm_miss.ado
 f _nwergm_fitstats.ado
+f _nwergm_constr.ado
+f _nwergm_hints.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado

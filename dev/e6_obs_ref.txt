@@ -1,0 +1,6 @@
+OBS|V_miss|edges|1|0.374262|0.691335
+OBS|V_miss|triangle|1|-0.473482|0.392880
+OBS|V_miss|edges|2|0.376715|0.716084
+OBS|V_miss|triangle|2|-0.472237|0.390945
+OBS|V_miss|edges|3|0.370068|0.682590
+OBS|V_miss|triangle|3|-0.472373|0.392005

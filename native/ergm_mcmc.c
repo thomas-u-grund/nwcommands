@@ -2633,6 +2633,8 @@ static int curved_mple_fit_c(const double *X, const double *y, long ndyads, long
 	return 0;
 }
 
+#include "ergm_mcmc_e6.h"
+
 STDLL stata_call(int argc, char *argv[]) {
 	char *argbuf;
 	long mode, n, directed, bipartite, nties_in, samplesize, burnin, interval, proposal_code, nattr, ncovmat, hasmask, fixed_density, nterms, i, k;
@@ -2656,6 +2658,9 @@ STDLL stata_call(int argc, char *argv[]) {
 	int need_adj = 0;
 	int need_outin = 0;
 	int need_dirsp = 0;
+	e6con_t e6c;                 /* E6: sample-space constraint / proposal block */
+	double e6par[16];
+	long e6npar = 0, e6cols = 0, concol_base = 0, e6k, e6maxedges = 0;
 
 	if (argc < 1) { SF_error("ergm_mcmc: missing argument string\n"); return(198); }
 
@@ -2793,6 +2798,27 @@ STDLL stata_call(int argc, char *argv[]) {
 			if (sl >= 0 && sl < nterms) { g_opkind[sl] = kd; g_opparam[sl] = prm; g_raw[sl] = rw; }
 		}
 	}
+	/* E6 block: optional constraint/proposal parameters at the very end of the
+	   argument string (absent for the older callers: strtok returns NULL and
+	   next_double() yields 0). */
+	e6_init(&e6c);
+	for (e6k = 0; e6k < 16; e6k++) e6par[e6k] = 0.0;
+	e6npar = next_long();
+	if (e6npar > 16) e6npar = 16;
+	for (e6k = 0; e6k < e6npar; e6k++) e6par[e6k] = next_double();
+	e6cols = next_long();
+	e6c.code = (long)e6par[0];
+	e6c.bdK = (long)e6par[1];
+	e6c.bd_maxonly = (int)e6par[3-1];
+	e6c.dn_mode = (int)e6par[3];
+	for (e6k = 0; e6k < 4; e6k++) e6c.dn_s[e6k] = e6par[4+e6k];
+	e6c.dn_nobs = (long)e6par[8];
+	e6maxedges = (long)e6par[9];   /* MCMC.maxedges; 0 = no limit */
+	if (e6c.code != 0 || e6c.bdK > 0) {
+		/* the constraint proposals need neighbour lists and in/out degrees */
+		if (directed) { need_dirsp = 1; need_outin = 1; }
+		else need_adj = 1;
+	}
 	free(argbuf);
 
 	/* --- build graph from dataset columns v1=ego v2=alter (rows
@@ -2873,7 +2899,8 @@ STDLL stata_call(int argc, char *argv[]) {
 	   every one of those sites below so none of them silently shift. */
 	covmatcol_base = attrcol_base + nattr;
 	maskcol_base = covmatcol_base + ncovmat * n;
-	outcol_base = maskcol_base + (hasmask ? n : 0);
+	concol_base = maskcol_base + (hasmask ? n : 0);
+	outcol_base = concol_base + e6cols;
 	for (k = 0; k < ncovmat; k++) {
 		long c, r;
 		covmats[k] = (double *)calloc((size_t)n * (size_t)n, sizeof(double));
@@ -2940,6 +2967,40 @@ STDLL stata_call(int argc, char *argv[]) {
 			}
 		}
 		free(maskraw);
+	}
+	/* E6: read bd / dyadnoise data columns */
+	e6c.n = n;
+	if (e6c.bdK > 0) {
+		long K = e6c.bdK, kk, rr;
+		int **arrs[5];
+		arrs[0] = &e6c.bd_att; arrs[1] = &e6c.bd_maxout; arrs[2] = &e6c.bd_maxin; arrs[3] = &e6c.bd_minout; arrs[4] = &e6c.bd_minin;
+		for (e6k = 0; e6k < 5; e6k++) {
+			*arrs[e6k] = (int *)calloc((size_t)(n * K), sizeof(int));
+			for (kk = 0; kk < K; kk++) for (rr = 1; rr <= n; rr++) {
+				ST_double v;
+				SF_vdata((int)(concol_base + e6k * K + kk), rr, &v);
+				(*arrs[e6k])[(rr-1) + kk*n] = SF_is_missing(v) ? 0 : (int)v;
+			}
+		}
+	}
+	if (e6c.dn_mode > 0) {
+		long base = concol_base + (e6c.bdK > 0 ? 5 * e6c.bdK : 0), rr, cc;
+		e6c.dn_obs = (char *)calloc((size_t)((n + 1) * (n + 1)), 1);
+		for (rr = 1; rr <= e6c.dn_nobs; rr++) {
+			ST_double a, b;
+			SF_vdata((int)base, rr, &a); SF_vdata((int)(base + 1), rr, &b);
+			e6c.dn_obs[dyadkey(&g, (long)a, (long)b)] = 1;
+		}
+		if (e6c.dn_mode == 2) {
+			for (e6k = 0; e6k < 4; e6k++) {
+				e6c.dn_m[e6k] = (double *)calloc((size_t)(n * n), sizeof(double));
+				for (cc = 1; cc <= n; cc++) for (rr = 1; rr <= n; rr++) {
+					ST_double v;
+					SF_vdata((int)(base + 2 + e6k * n + cc - 1), rr, &v);
+					e6c.dn_m[e6k][(rr-1) + (cc-1)*n] = SF_is_missing(v) ? 0.0 : v;
+				}
+			}
+		}
 	}
 	for (i = 1; i <= nties_in; i++) {
 		ST_double vi, vj;
@@ -3154,6 +3215,16 @@ STDLL stata_call(int argc, char *argv[]) {
 	cur = (double *)malloc((size_t)nterms * sizeof(double));
 	for (i = 0; i < nterms; i++) cur[i] = obs[i];
 
+	if (e6c.bdK > 0 && !e6_bd_initial_ok(&g, &e6c)) {
+		if (e6c.bd_maxonly) {
+			SF_error("ergm_mcmc: degree bound is violated by initial network; proposal cannot proceed\n");
+			free(cur);
+			return(198);
+		}
+		SF_display("Warning:  Initial network does not satisfy degree constraints. Proceeding anyway, but final network may not satisfy constraints.\n");
+	}
+	if (e6c.dn_mode > 0 && e6c.code == 0) e6c.code = E6_DYADNOISETNT;
+
 	if (fixed_density && (g.nties == 0 || (double)g.nties == total_dyads(&g))) {
 		SF_error("ergm_mcmc: fixdensity: network has no ties, or is complete - no valid tie/non-tie swap exists.\n");
 		free(cur);
@@ -3165,6 +3236,11 @@ STDLL stata_call(int argc, char *argv[]) {
 		double logratio, cutoff = 0.0, delta;
 		double chg[MAXTERMS];
 		int propfail = 0;
+		if (e6c.code) {
+			if (e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur) < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
+			if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
+			continue;
+		}
 		if (fixed_density) {
 			long t1, h1, t2, h2;
 			double chg1[MAXTERMS], chg2[MAXTERMS];
@@ -3217,6 +3293,13 @@ STDLL stata_call(int argc, char *argv[]) {
 			double logratio, cutoff = 0.0, delta;
 			double chg[MAXTERMS];
 			int propfail = 0;
+			if (e6c.code) {
+				int e6r = e6_step(&g, &rng, &e6c, nterms, termcodes, attridx, p1, p2, covidx, attrs, covmats, n, theta, cur);
+				if (e6r < 0) { SF_error("ergm_mcmc: the Metropolis-Hastings proposal failed (no valid move for this constraint)\n"); return(198); }
+				ntried++; naccept += e6r;
+				if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
+				continue;
+			}
 			if (fixed_density) {
 				long t1, h1, t2, h2;
 				double chg1[MAXTERMS], chg2[MAXTERMS];
@@ -3266,6 +3349,7 @@ STDLL stata_call(int argc, char *argv[]) {
 				naccept++;
 			}
 		}
+		if (e6maxedges > 0 && g.nties > e6maxedges) { SF_error("ergm_mcmc: the number of ties exceeded mcmcmaxedges()\n"); return(198); }
 		for (k = 0; k < nterms; k++) SF_vstore((int)(outcol_base + k), draw + 1, cur[k]);
 	}
 
@@ -3282,6 +3366,7 @@ STDLL stata_call(int argc, char *argv[]) {
 	SF_scal_save("__ergm_native_ntried", (ST_double)ntried);
 
 	free(cur);
+	e6_free(&e6c);
 	for (k = 0; k < nattr; k++) free(attrs[k]);
 	for (k = 0; k < ncovmat; k++) free(covmats[k]);
 	free(g.mode); free(g.mode1nodes); free(g.mode2nodes);

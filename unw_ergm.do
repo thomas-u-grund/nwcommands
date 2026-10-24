@@ -4722,6 +4722,8 @@ class ErgmModel {
 	real scalar native_enabled_sample	// harmonisation unit 168 (freedyads() masked TNT native port): native_enabled itself stays FORCED TO 0 for a masked model (ErgmNativeBuildMPLEData()/ErgmNativeCurvedMPLEFit() have no mask awareness at all - MPLE keeps using its own already-correct Mata free-dyad-only path), but MCMC SAMPLING now has a real native masked proposal - this SEPARATE flag gates ONLY the two ErgmMCMCSample()/ErgmMCMCSampleDiag() call sites. For an UNMASKED model this is always set equal to native_enabled (byte-identical old behavior, single shared flag in practice) - the split only ever does anything for a masked model.
 	real matrix native_maskmat		// G.freedyadmat, copied here only when native_enabled_sample==1 for a masked model - ErgmNativeSampleCore()'s own wire-protocol payload for the new dense n x n mask field, mirroring native_covmatstack's own "stash on M, read back by the wire-building function" contract
 
+	real rowvector con_par		// E6: constraint/proposal block sent to the native plugin (see native/ergm_mcmc_e6.h); 0 = none
+	real matrix con_cols		// E6: extra data columns that go with con_par
 	real scalar fixed_density		// R ergm's own `constraints=~edges` (nwergm's `fixdensity` option): 0 (default, explicitly set by ErgmNativeSetup(), which runs for every model) or 1 - when 1, ErgmMCMCSample()/ErgmMCMCSampleDiag() dispatch to ErgmMCMCSampleSwap()/ErgmMCMCSampleDiagSwap() instead of their own ordinary single-toggle loop; not a dyad-eligibility mask like has_dyadmask above (that restricts WHICH dyads may be proposed; this changes the PROPOSAL SHAPE itself to a tie/non-tie swap that holds the total tie count invariant) - see those functions' own header comments. Native (C) port not attempted (v1 Mata-only, matching this option's own initial scope) - set alongside native_enabled/native_enabled_sample being forced to 0 for a fixed-density model in nwergm.ado.
 
 	// Curved-parameter support (harmonisation unit 134, second slice -
@@ -4797,6 +4799,8 @@ void ErgmModel::init(){
 	coefnames = J(1, 0, "")
 	native_enabled = 0
 	native_enabled_sample = 0
+	con_par = J(1, 0, 0)
+	con_cols = J(0, 0, 0)
 	fixed_density = 0		// see this field's own class-header comment - this is the TRUE universal init site (init() always runs, unlike ErgmNativeSetup(), which is skipped entirely for a `nonative' fit, so relying on that call alone would leave this at Mata's own missing-value default - truthy in an if() - for every nonative model)
 	obs_active = 0
 	curved = J(1, 0, .)
@@ -8111,6 +8115,7 @@ real scalar ErgmNativeSetup(class ErgmModel scalar M, real scalar proposal_code,
 	else {
 		M.native_enabled = 1
 		M.native_enabled_sample = 1
+		M.native_maskmat = J(0, 0, 0)
 	}
 	return(1)
 }
@@ -8131,7 +8136,9 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 
 	real matrix ties, out, newties, attrpad
 	real scalar n, directed, nties, p, nattr, ncovmat, nobs_needed, i, k, rngseed, nties_out, __junk
-	real scalar bipartite, hasmask
+	real scalar bipartite, hasmask, ncon, rc_pl
+	string rowvector convarnames
+	string scalar convarlist
 	real colvector modevec
 	string scalar origframe, argstr, cmd, outvarlist, attrvarlist, modevarlist, covmatvarlist, maskvarlist
 
@@ -8148,7 +8155,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	hasmask = rows(M.native_maskmat) > 0 ? 1 : 0
 	ncovmat = n > 0 ? cols(M.native_covmatstack) / n : 0
 
-	nobs_needed = max((ergm_total_dyads(G), samplesize, n, 1))
+	nobs_needed = max((ergm_total_dyads(G), samplesize, n, 1, rows(M.con_cols)))
 
 	origframe = st_framecurrent()
 	stata("capture frame drop __ergm_native")
@@ -8237,6 +8244,15 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// that ever sends hasmask=1 - ErgmNativeBuildMPLEData()/
 	// ErgmNativeCurvedMPLEFit() always send 0, see their own header
 	// comments on why masking stays their own Mata-only concern).
+	// E6: constraint block columns (after the mask block)
+	ncon = cols(M.con_cols)
+	convarnames = J(1, ncon, "")
+	convarlist = ""
+	for (i=1; i<=ncon; i++) {
+		convarnames[i] = "ec" + strofreal(i)
+		__junk = st_addvar("double", convarnames[i])
+		convarlist = convarlist + " " + convarnames[i]
+	}
 	maskvarlist = ""
 	maskvarnames = J(1, hasmask * n, "")
 	if (hasmask) {
@@ -8265,6 +8281,7 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 
 	if (ncovmat > 0) st_store((1::n), covmatvarnames, M.native_covmatstack)
 	if (hasmask) st_store((1::n), maskvarnames, M.native_maskmat)
+	if (ncon > 0) st_store((1::rows(M.con_cols)), convarnames, M.con_cols)
 
 	rngseed = floor(runiform(1,1) * 2147483647)
 
@@ -8308,6 +8325,11 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(theta[i], "%25.17g")
 	for (i=1; i<=p; i++) argstr = argstr + " " + strofreal(obs[i], "%25.17g")
 	argstr = argstr + _ergm_native_opstr(M, G)
+	if (cols(M.con_par) > 0) {
+		argstr = argstr + " " + strofreal(cols(M.con_par))
+		for (i=1; i<=cols(M.con_par); i++) argstr = argstr + " " + strofreal(M.con_par[i], "%25.17g")
+		argstr = argstr + " " + strofreal(ncon)
+	}
 
 	// Stata will not let an already-loaded plugin-type program be
 	// dropped and redefined within the same session (confirmed by
@@ -8320,8 +8342,14 @@ real matrix ErgmNativeSampleCore(class ErgmModel scalar M, class ErgmGraph scala
 	// when the `plugin call' below cannot find the command.
 	stata("capture program ergmnativemcmc, plugin using(" + char(34) + ErgmNativePluginPath() + char(34) + ")")
 
-	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + maskvarlist + outvarlist + ", " + char(34) + argstr + char(34)
-	stata(cmd)
+	cmd = "plugin call ergmnativemcmc v1 v2" + modevarlist + attrvarlist + covmatvarlist + maskvarlist + convarlist + outvarlist + ", " + char(34) + argstr + char(34)
+	rc_pl = _stata(cmd)
+	if (rc_pl) {
+		// E6: leave no half-built frame behind when the plugin stops (e.g. mcmcmaxedges())
+		st_framecurrent(origframe)
+		stata("capture frame drop __ergm_native")
+		exit(rc_pl)
+	}
 
 	nties_out = st_numscalar("__ergm_native_nties_out")
 	M.native_lastaccept = st_numscalar("__ergm_native_naccept") / st_numscalar("__ergm_native_ntried")
@@ -9107,6 +9135,7 @@ real matrix ErgmMCMCSample(class ErgmModel scalar M, class ErgmGraph scalar G,
 	if (M.native_enabled_sample) {
 		return(ErgmNativeSampleCore(M, G, theta, burnin, interval, samplesize, cur))
 	}
+	if (cols(M.con_par) > 0) _error("constraints and proposals other than the default ones need the native plugin, which is not available for this model or platform")
 
 	// Fixed-density Mata fallback (M.fixed_density, set in nwergm.ado
 	// only for a `fixdensity' model) - reached only when native is
@@ -9253,6 +9282,7 @@ struct ErgmMCMCDiag scalar ErgmMCMCSampleDiag(class ErgmModel scalar M, class Er
 		res.acceptrate = M.native_lastaccept
 		return(res)
 	}
+	if (cols(M.con_par) > 0) _error("constraints and proposals other than the default ones need the native plugin, which is not available for this model or platform")
 
 	// Fixed-density Mata fallback - see ErgmMCMCSample()'s own identical
 	// branch for the full rationale.
@@ -11297,6 +11327,807 @@ struct ErgmMCMLEFit scalar ErgmMCMLE(class ErgmModel scalar M, class ErgmGraph s
 	return(res)
 }
 
+end
+
+* ---------------------------------------------------------------------
+* E6: sample-space constraints (R ergm's `constraints=` / `obs.constraints=`)
+* The parser below turns a constraint formula such as
+*     degrees      blocks(grp, levels2=TRUE) + edges      bd(maxout=3)
+* into (a) a free-dyad mask for the dyad-level constraints, combined left
+* to right exactly as R does ("+" intersects, "-" unions), and (b) a set
+* of constraints that restrict the sample space in a dyad-dependent way,
+* from which the Metropolis-Hastings proposal is chosen with the same
+* table R uses (ergm_proposal_table()). The result is stored in the
+* external objects __ncon_* and handed to ErgmModel (con_par/con_cols)
+* and ErgmGraph (dyad mask) by nwergm.ado.
+* ---------------------------------------------------------------------
+mata:
+mata set matastrict off
+
+// split a constraint formula into signed top-level terms; results in locals
+// __cn (count), __cs# (+1/-1), __cnm# (name), __car# (argument text)
+void _ergm_con_split(string scalar spec)
+{
+	string scalar s, tok, c
+	real scalar i, depth, k, sgn, nxt
+
+	s = strtrim(spec)
+	if (substr(s, 1, 1) == "~") s = strtrim(substr(s, 2, .))
+	k = 0
+	depth = 0
+	tok = ""
+	sgn = 1
+	for (i = 1; i <= strlen(s) + 1; i++) {
+		c = (i <= strlen(s)) ? substr(s, i, 1) : "+"
+		if (c == "(") depth++
+		else if (c == ")") depth--
+		if (depth == 0 & (c == "+" | c == "-")) {
+			tok = strtrim(tok)
+			if (tok != "") {
+				k++
+				_ergm_con_storeterm(k, sgn, tok)
+			}
+			sgn = (c == "+") ? 1 : -1
+			tok = ""
+		}
+		else tok = tok + c
+	}
+	st_local("__cn", strofreal(k))
+}
+
+void _ergm_con_storeterm(real scalar k, real scalar sgn, string scalar tok)
+{
+	real scalar p
+	string scalar nm, ar
+	p = strpos(tok, "(")
+	if (p > 0) {
+		nm = strtrim(substr(tok, 1, p - 1))
+		ar = strtrim(substr(tok, p + 1, strlen(tok) - p - 1))
+	}
+	else {
+		nm = tok
+		ar = ""
+	}
+	st_local("__cs" + strofreal(k), strofreal(sgn))
+	st_local("__cnm" + strofreal(k), nm)
+	st_local("__car" + strofreal(k), ar)
+}
+
+// split an argument string at top-level commas
+string rowvector _ergm_con_commasplit(string scalar a)
+{
+	string rowvector out
+	string scalar c, tok
+	real scalar i, depth
+	out = J(1, 0, "")
+	depth = 0
+	tok = ""
+	if (strtrim(a) == "") return(out)
+	for (i = 1; i <= strlen(a); i++) {
+		c = substr(a, i, 1)
+		if (c == "(") depth++
+		if (c == ")") depth--
+		if (c == "," & depth == 0) {
+			out = out, strtrim(tok)
+			tok = ""
+		}
+		else tok = tok + c
+	}
+	out = out, strtrim(tok)
+	return(out)
+}
+
+string scalar _ergm_con_unquote(string scalar s)
+{
+	s = strtrim(s)
+	if (strlen(s) >= 2) {
+		if ((substr(s, 1, 1) == `"""' & substr(s, -1, 1) == `"""') | (substr(s, 1, 1) == "'" & substr(s, -1, 1) == "'")) s = substr(s, 2, strlen(s) - 2)
+	}
+	return(s)
+}
+
+// bind positional/named arguments to the argument names of a constraint
+string rowvector _ergm_con_bind(string scalar cname, string scalar a, string rowvector names)
+{
+	string rowvector parts, out
+	real scalar i, p, pos, j
+	string scalar nm, val
+	parts = _ergm_con_commasplit(a)
+	out = J(1, cols(names), "")
+	pos = 0
+	for (i = 1; i <= cols(parts); i++) {
+		p = strpos(parts[i], "=")
+		nm = ""
+		val = parts[i]
+		if (p > 1) {
+			nm = strtrim(substr(parts[i], 1, p - 1))
+			if (regexm(nm, "^[A-Za-z_.][A-Za-z0-9_.]*$")) val = strtrim(substr(parts[i], p + 1, .))
+			else nm = ""
+		}
+		if (nm != "") {
+			j = selectindex(names :== nm)
+			if (cols(j) == 0) {
+				errprintf("In constraint '%s': unknown argument '%s'.\n", cname, nm)
+				exit(error(198))
+			}
+			out[j[1]] = _ergm_con_unquote(val)
+		}
+		else {
+			pos++
+			while (pos <= cols(names) & out[pos] != "") pos++
+			if (pos > cols(names)) {
+				errprintf("In constraint '%s': too many arguments.\n", cname)
+				exit(error(198))
+			}
+			out[pos] = _ergm_con_unquote(val)
+		}
+	}
+	return(out)
+}
+
+real colvector _ergm_con_nodevar(string scalar v, real scalar n, string scalar cname)
+{
+	real scalar idx
+	idx = _st_varindex(v)
+	if (idx >= .) {
+		errprintf("In constraint '%s': variable '%s' not found.\n", cname, v)
+		exit(error(111))
+	}
+	return(st_data(1::n, idx))
+}
+
+// numbers from "c(1,2,3)" / "3" / "-c(1,2)" ; returns the numbers and sets neg
+real rowvector _ergm_con_numlist(string scalar s, real scalar neg)
+{
+	string rowvector parts
+	real rowvector out
+	real scalar i
+	s = strtrim(s)
+	neg = 0
+	if (substr(s, 1, 1) == "-") {
+		neg = 1
+		s = strtrim(substr(s, 2, .))
+	}
+	if (substr(s, 1, 2) == "c(") s = substr(s, 3, strlen(s) - 3)
+	parts = _ergm_con_commasplit(s)
+	out = J(1, 0, .)
+	for (i = 1; i <= cols(parts); i++) out = out, strtoreal(strtrim(parts[i]))
+	return(out)
+}
+
+// initialise the external constraint state
+void _ergm_con_init(real scalar n, real scalar directed, real scalar bip, real colvector modevec, real matrix y)
+{
+	external real matrix __ncon_free, __ncon_y, __ncon_bdatt, __ncon_bdmaxout, __ncon_bdmaxin, __ncon_bdminout, __ncon_bdminin
+	external real colvector __ncon_mode
+	external real scalar __ncon_n, __ncon_dir, __ncon_bip, __ncon_hasdyad, __ncon_bdmaxonly, __ncon_dn
+	external real rowvector __ncon_dnpar
+	external string rowvector __ncon_set
+	external string scalar __ncon_text
+	__ncon_n = n
+	__ncon_dir = directed
+	__ncon_bip = bip
+	__ncon_mode = modevec
+	__ncon_y = y
+	__ncon_free = J(n, n, 1)
+	__ncon_hasdyad = 0
+	__ncon_set = J(1, 0, "")
+	__ncon_bdatt = J(0, 0, .)
+	__ncon_bdmaxout = J(0, 0, .)
+	__ncon_bdmaxin = J(0, 0, .)
+	__ncon_bdminout = J(0, 0, .)
+	__ncon_bdminin = J(0, 0, .)
+	__ncon_bdmaxonly = 0
+	__ncon_dn = 0
+	__ncon_dnpar = J(1, 4, 0)
+	__ncon_text = ""
+}
+
+void _ergm_con_dyadic(real scalar sgn, real matrix M)
+{
+	external real matrix __ncon_free
+	external real scalar __ncon_hasdyad, __ncon_dir, __ncon_bip
+	if (!__ncon_dir & !__ncon_bip) M = (M :!= 0) :| (M' :!= 0)
+	else M = (M :!= 0)
+	if (sgn > 0) __ncon_free = __ncon_free :& M
+	else __ncon_free = __ncon_free :| M
+	__ncon_hasdyad = 1
+}
+
+void _ergm_con_addset(string scalar nm)
+{
+	external string rowvector __ncon_set
+	if (!any(__ncon_set :== nm)) __ncon_set = __ncon_set, nm
+}
+
+// the argument names of each constraint (empty rowvector if no arguments)
+string rowvector _ergm_con_argnames(string scalar nm)
+{
+	if (nm == "fixedas") return(("fixed.dyads", "present", "absent"))
+	if (nm == "fixallbut") return(("free.dyads"))
+	if (nm == "blocks") return(("attr", "b1levels", "b2levels", "levels", "levels2"))
+	if (nm == "blockdiag") return(("attr", "noncontig"))
+	if (nm == "bd") return(("attribs", "maxout", "maxin", "minout", "minin"))
+	if (nm == "dyadnoise") return(("p01", "p10"))
+	if (nm == "egocentric") return(("attr", "direction"))
+	return(J(1, 0, ""))
+}
+
+// which of the (bound) arguments of a constraint name networks
+real rowvector _ergm_con_netargs(string scalar nm)
+{
+	if (nm == "fixedas") return((1, 1, 1))
+	if (nm == "fixallbut") return((1))
+	return(J(1, 0, 0))
+}
+
+// apply one constraint term. netpresent[k]=1 when the k-th network argument
+// was resolved into the external matrix __ncon_net<k>.
+void _ergm_con_apply(string scalar nm, real scalar sgn, string scalar args)
+{
+	external real matrix __ncon_free, __ncon_y, __ncon_bdatt, __ncon_bdmaxout, __ncon_bdmaxin, __ncon_bdminout, __ncon_bdminin
+	external real matrix __ncon_net1, __ncon_net2, __ncon_net3
+	external real colvector __ncon_mode
+	external real scalar __ncon_n, __ncon_dir, __ncon_bip, __ncon_hasdyad, __ncon_bdmaxonly, __ncon_dn
+	external real rowvector __ncon_dnpar
+	string rowvector b, names
+	real matrix M, F, Y
+	real colvector a
+	real scalar n, i, j, K, merge, nrl, ncl, neg, off, p, t, p01, p10, bigv
+	real colvector runid, vals, aa, ra, ca, rcode, ccode
+	real rowvector rl, cl, sel
+	real matrix amat, pairs, att, mo, mi, lo, li
+	string scalar dirn, l2
+	n = __ncon_n
+	names = _ergm_con_argnames(nm)
+	b = _ergm_con_bind(nm, args, names)
+
+	if (nm == "edges" | nm == "degrees" | nm == "nodedegrees" | nm == "odegrees" | nm == "idegrees" | nm == "b1degrees" | nm == "b2degrees" | nm == "degreedist" | nm == "idegreedist" | nm == "odegreedist") {
+		if (nm == "nodedegrees") nm = "degrees"
+		if (cols(_ergm_con_commasplit(args)) > 0) {
+			errprintf("In constraint '%s': too many arguments.\n", nm)
+			exit(error(198))
+		}
+		if (sgn < 0) {
+			errprintf("Only dyad-independent constraints can have negative signs.\n")
+			exit(error(198))
+		}
+		if ((nm == "odegrees" | nm == "idegrees" | nm == "idegreedist" | nm == "odegreedist") & !__ncon_dir) {
+			errprintf("In constraint '%s': Term may not be used with networks with directed==FALSE.\n", nm)
+			exit(error(198))
+		}
+		if ((nm == "b1degrees" | nm == "b2degrees") & !__ncon_bip) {
+			errprintf("In constraint '%s': Term may only be used with bipartite networks.\n", nm)
+			exit(error(198))
+		}
+		_ergm_con_addset(nm)
+		return
+	}
+	if (nm == "hamming") {
+		errprintf("Constraint 'hamming' is currently broken and will hopefully be fixed in a future release.\n")
+		exit(error(198))
+	}
+	if (nm == "observed") {
+		_ergm_con_dyadic(sgn, (__ncon_y :>= .))
+		return
+	}
+	if (nm == "fixallbut") {
+		if (b[1] == "") {
+			errprintf("In constraint 'fixallbut': argument 'free.dyads' is required.\n")
+			exit(error(198))
+		}
+		_ergm_con_dyadic(sgn, __ncon_net1)
+		return
+	}
+	if (nm == "fixedas") {
+		if (b[1] == "" & b[2] == "" & b[3] == "") {
+			errprintf("'fixedas()' constraint requires at least one argument.\n")
+			exit(error(198))
+		}
+		Y = (__ncon_y :!= 0) :& (__ncon_y :< .)
+		F = J(n, n, 0)
+		if (b[1] != "") F = F :| (__ncon_net1 :!= 0)
+		if (b[2] != "") {
+			if (any(((__ncon_net2 :!= 0) :& !Y) :* (1 :- I(n)))) {
+				errprintf("Edges constrained to be present are absent in the LHS network.\n")
+				exit(error(198))
+			}
+			F = F :| (__ncon_net2 :!= 0)
+		}
+		if (b[3] != "") {
+			if (any(((__ncon_net3 :!= 0) :& Y) :* (1 :- I(n)))) {
+				errprintf("Edges constrained to be absent are present in the LHS network.\n")
+				exit(error(198))
+			}
+			F = F :| (__ncon_net3 :!= 0)
+		}
+		_ergm_con_dyadic(sgn, !F)
+		return
+	}
+	if (nm == "blockdiag") {
+		if (b[1] == "") {
+			errprintf("In constraint 'blockdiag': argument 'attr' is required.\n")
+			exit(error(198))
+		}
+		merge = (b[2] == "" | b[2] == "merge")
+		if (!merge & b[2] != "split") {
+			errprintf("In constraint 'blockdiag': 'noncontig' must be 'merge' or 'split'.\n")
+			exit(error(198))
+		}
+		a = _ergm_con_nodevar(b[1], n, nm)
+		runid = J(n, 1, 1)
+		for (i = 2; i <= n; i++) runid[i] = runid[i-1] + (a[i] != a[i-1])
+		if (merge) {
+			// R: noncontiguous blocks are refused under noncontig="merge"
+			if (rows(uniqrows(runid)) > rows(uniqrows(a)) & !__ncon_bip) {
+				errprintf("Current implementation of the block-diagonal constraint requires that either the blocks be contiguous or be treated as separate; this may change in the future.\n")
+				exit(error(198))
+			}
+		}
+		if (merge) M = (a * J(1, n, 1)) :== (J(n, 1, 1) * a')
+		else M = (runid * J(1, n, 1)) :== (J(n, 1, 1) * runid')
+		_ergm_con_dyadic(sgn, M)
+		return
+	}
+	if (nm == "egocentric") {
+		dirn = (b[2] == "") ? "both" : b[2]
+		if (dirn != "both" & dirn != "out" & dirn != "in") {
+			errprintf("'arg' should be one of both, out, in\n")
+			exit(error(198))
+		}
+		if (!__ncon_dir & dirn != "both") {
+			errprintf("Directed egocentric constraint cannot be used for an undirected network.\n")
+			exit(error(198))
+		}
+		if (b[1] == "") aa = J(n, 1, 1)
+		else aa = (_ergm_con_nodevar(b[1], n, nm) :== 0)
+		if (dirn == "both") M = (aa * J(1, n, 1)) :& (J(n, 1, 1) * aa')
+		else if (dirn == "out") M = (aa * J(1, n, 1))
+		else M = (J(n, 1, 1) * aa')
+		_ergm_con_dyadic(sgn, M)
+		return
+	}
+	if (nm == "blocks") {
+		if (b[1] == "") {
+			errprintf("In constraint 'blocks': argument 'attr' is required.\n")
+			exit(error(198))
+		}
+		a = _ergm_con_nodevar(b[1], n, nm)
+		if (__ncon_bip) {
+			ra = select(a, __ncon_mode :== 1)
+			ca = select(a, __ncon_mode :== 2)
+			rl = sort(uniqrows(ra), 1)'
+			cl = sort(uniqrows(ca), 1)'
+			if (b[2] != "") rl = rl[_ergm_con_numlist(b[2], neg)]
+			if (b[3] != "") cl = cl[_ergm_con_numlist(b[3], neg)]
+		}
+		else {
+			rl = sort(uniqrows(a), 1)'
+			if (b[4] != "") rl = rl[_ergm_con_numlist(b[4], neg)]
+			cl = rl
+		}
+		nrl = cols(rl)
+		ncl = cols(cl)
+		// pairs in expand.grid order (row index varies fastest); unipartite undirected keeps row<=col
+		pairs = J(0, 2, .)
+		for (j = 1; j <= ncl; j++) for (i = 1; i <= nrl; i++) {
+			if (!__ncon_dir & !__ncon_bip & i > j) continue
+			pairs = pairs \ (i, j)
+		}
+		l2 = (b[5] == "") ? "FALSE" : b[5]
+		if (l2 == "TRUE" | l2 == "T") sel = 1..rows(pairs)
+		else if (l2 == "FALSE" | l2 == "F") sel = J(1, 0, .)
+		else {
+			sel = _ergm_con_numlist(l2, neg)
+			if (neg) sel = select(1..rows(pairs), !rowsum(((1..rows(pairs))' * J(1, cols(sel), 1)) :== (J(rows(pairs), 1, 1) * sel))')
+		}
+		off = __ncon_bip ? nrl : 0
+		amat = J(nrl + 1, ncl + 1, 1)
+		for (t = 1; t <= cols(sel); t++) if (sel[t] >= 1 & sel[t] <= rows(pairs)) amat[pairs[sel[t], 1], pairs[sel[t], 2]] = 0
+		if (!__ncon_dir & !__ncon_bip) amat = amat :& amat'
+		// node codes
+		rcode = J(n, 1, nrl + 1)
+		ccode = J(n, 1, ncl + 1)
+		for (i = 1; i <= n; i++) {
+			if (__ncon_bip) {
+				if (__ncon_mode[i] == 1) {
+					p = selectindex(rl :== a[i])
+					if (cols(p)) rcode[i] = p[1]
+				}
+				else {
+					p = selectindex(cl :== a[i])
+					if (cols(p)) ccode[i] = p[1]
+				}
+			}
+			else {
+				p = selectindex(rl :== a[i]); if (cols(p)) {
+					rcode[i] = p[1]
+					ccode[i] = p[1]
+				}
+			}
+		}
+		M = J(n, n, 1)
+		for (i = 1; i <= n; i++) for (j = 1; j <= n; j++) M[i, j] = amat[rcode[i], ccode[j]]
+		_ergm_con_dyadic(sgn, M)
+		return
+	}
+	if (nm == "bd") {
+		if (sgn < 0) {
+			errprintf("Only dyad-independent constraints can have negative signs.\n")
+			exit(error(198))
+		}
+		if (!__ncon_dir & (b[3] != "" | b[5] != "")) {
+			errprintf("'minin' and 'maxin' cannot be used with undirected networks.\n")
+			exit(error(198))
+		}
+		// attribs: 0/1 indicator variables (space separated); default one all-ones column
+		if (b[1] == "") att = J(n, 1, 1)
+		else {
+			vv = tokens(b[1])
+			att = J(n, cols(vv), .)
+			for (j = 1; j <= cols(vv); j++) att[., j] = _ergm_con_nodevar(vv[j], n, nm)
+			att = (att :!= 0) :& (att :< .)
+			if (!any(att)) att = J(n, 1, 1)
+		}
+		K = cols(att)
+		mo = _ergm_con_bdval(b[2], n, K, nm)
+		mi = _ergm_con_bdval(b[3], n, K, nm)
+		lo = _ergm_con_bdval(b[4], n, K, nm)
+		li = _ergm_con_bdval(b[5], n, K, nm)
+		// R: values clamped to [0, n-1]; NA max -> n-1, NA min -> 0
+		mo = _ergm_con_bdfix(mo, n, 1)
+		mi = _ergm_con_bdfix(mi, n, 1)
+		lo = _ergm_con_bdfix(lo, n, 0)
+		li = _ergm_con_bdfix(li, n, 0)
+		if (!__ncon_dir) {
+			mi = mo
+			li = lo
+		}
+		__ncon_bdatt = att
+		__ncon_bdmaxout = mo
+		__ncon_bdmaxin = mi
+		__ncon_bdminout = lo
+		__ncon_bdminin = li
+		__ncon_bdmaxonly = (b[4] == "" & b[5] == "")
+		if (all(att :== 0)) return
+		_ergm_con_addset("bd")
+		return
+	}
+	if (nm == "dyadnoise") {
+		if (b[1] == "" | b[2] == "") {
+			errprintf("In constraint 'dyadnoise': arguments 'p01' and 'p10' are required.\n")
+			exit(error(198))
+		}
+		p01 = strtoreal(b[1])
+		p10 = strtoreal(b[2])
+		if (p01 >= . | p10 >= . | p01 < 0 | p01 > 1 | p10 < 0 | p10 > 1) {
+			errprintf("In constraint 'dyadnoise': p01 and p10 must be probabilities.\n")
+			exit(error(198))
+		}
+		bigv = 1 / epsilon(1)
+		__ncon_dnpar = (_ergm_con_deinf(ln(p10) - ln(1 - p01), bigv), _ergm_con_deinf(ln(1 - p01) - ln(p10), bigv), _ergm_con_deinf(ln(1 - p10) - ln(p01), bigv), _ergm_con_deinf(ln(p01) - ln(1 - p10), bigv))
+		__ncon_dn = 1
+		_ergm_con_addset("dyadnoise")
+		return
+	}
+	if (nm == "ChangeStats" | nm == "Dyads" | nm == "I") {
+		errprintf("Constraint '%s' is not available in nwergm.\n", nm)
+		exit(error(198))
+	}
+	errprintf("Sample space constraint '%s' not found.\n", nm)
+	exit(error(198))
+}
+
+real scalar _ergm_con_deinf(real scalar x, real scalar big)
+{
+	if (x >= . ) return(.)
+	if (abs(x) < big) return(x)
+	return(sign(x) * big)
+}
+
+// bd bound argument: "" -> missing; number -> constant; variable names -> per node (K columns)
+real matrix _ergm_con_bdval(string scalar s, real scalar n, real scalar K, string scalar nm)
+{
+	string rowvector vv
+	real matrix out
+	real scalar j, v
+	if (s == "") return(J(n, K, .))
+	v = strtoreal(s)
+	if (v < .) return(J(n, K, v))
+	vv = tokens(s)
+	out = J(n, K, .)
+	for (j = 1; j <= K; j++) out[., j] = _ergm_con_nodevar(vv[min((j, cols(vv)))], n, nm)
+	return(out)
+}
+
+real matrix _ergm_con_bdfix(real matrix x, real scalar n, real scalar ismax)
+{
+	real matrix y
+	y = editmissing(x, ismax ? n - 1 : 0)
+	y = (y :< 0) :* 0 :+ (y :>= 0) :* y
+	y = (y :> n - 1) :* (n - 1) :+ (y :<= n - 1) :* y
+	return(y)
+}
+
+string rowvector _ergm_con_implies(string scalar nm)
+{
+	if (nm == "edges") return(("edges"))
+	if (nm == "degrees") return(("degrees", "edges", "idegrees", "odegrees", "idegreedist", "odegreedist", "degreedist", "bd"))
+	if (nm == "odegrees") return(("odegrees", "edges", "odegreedist"))
+	if (nm == "idegrees") return(("idegrees", "edges", "idegreedist"))
+	if (nm == "b1degrees" | nm == "b2degrees") return((nm, "edges"))
+	if (nm == "degreedist") return(("degreedist", "edges", "idegreedist", "odegreedist"))
+	if (nm == "idegreedist") return(("idegreedist", "edges"))
+	if (nm == "odegreedist") return(("odegreedist", "edges"))
+	return((nm))
+}
+
+// Choose the proposal for the collected constraints (R's ergm_proposal_table())
+// and build the native parameter block. Sets locals __con_code (0 = default
+// proposals, nothing to send), __con_dind, __con_implies, __con_err.
+void _ergm_con_finish(string scalar weights)
+{
+	external real matrix __ncon_free, __ncon_y, __ncon_bdatt, __ncon_bdmaxout, __ncon_bdmaxin, __ncon_bdminout, __ncon_bdminin, __ncon_cols
+	external real scalar __ncon_n, __ncon_dir, __ncon_bip, __ncon_hasdyad, __ncon_bdmaxonly, __ncon_dn
+	external real rowvector __ncon_dnpar, __ncon_par
+	external string rowvector __ncon_set
+	string rowvector set, keep, imp, impall
+	real scalar i, j, code, hasbd, n, K, nobs, R, rnd, dropit
+	real matrix ties, cc
+	string scalar err, nmstr
+
+	n = __ncon_n
+	set = __ncon_set
+	keep = J(1, 0, "")
+	for (i = 1; i <= cols(set); i++) {
+		dropit = 0
+		for (j = 1; j <= cols(set); j++) {
+			if (i == j) continue
+			if (any(_ergm_con_implies(set[j]) :== set[i]) & !any(_ergm_con_implies(set[i]) :== set[j])) dropit = 1
+		}
+		if (!dropit) keep = keep, set[i]
+	}
+	// implied set (for term conflicts) is taken from the pruned list
+	impall = J(1, 0, "")
+	for (i = 1; i <= cols(keep); i++) impall = impall, _ergm_con_implies(keep[i])
+	st_local("__con_implies", invtokens(uniqrows(impall')'))
+
+	hasbd = any(keep :== "bd")
+	rnd = (weights == "random")
+	code = .
+	err = ""
+	nmstr = ""
+	for (i = 1; i <= cols(keep); i++) nmstr = nmstr + (i > 1 ? ", " : "") + "'" + keep[i] + "'"
+	if (__ncon_hasdyad) nmstr = nmstr + (nmstr == "" ? "" : ", ") + "'dyads'"
+	if (cols(keep) == 0 | (cols(keep) == 1 & hasbd)) code = rnd ? 11 : 10
+	else {
+		string rowvector nb
+		nb = select(keep, keep :!= "bd")
+		if (__ncon_hasdyad & cols(nb) > 0 & !(cols(nb) == 1 & nb[1] == "edges")) nb = ("__no__")
+		if (cols(nb) == 1) {
+			if (nb[1] == "edges") code = 20
+			else if (nb[1] == "degrees" & !hasbd) code = 30
+			else if (nb[1] == "odegrees" & !hasbd) code = 31
+			else if (nb[1] == "idegrees" & !hasbd) code = 32
+			else if (nb[1] == "b1degrees" & !hasbd) code = 33
+			else if (nb[1] == "b2degrees" & !hasbd) code = 34
+			else if (nb[1] == "degreedist" & !hasbd) code = 35
+			else if (nb[1] == "odegreedist" & !hasbd) code = 36
+			else if (nb[1] == "idegreedist" & !hasbd) code = 37
+			else if (nb[1] == "dyadnoise" & !hasbd & !__ncon_hasdyad) code = (rnd ? 50 : 51)
+		}
+		else if (cols(nb) == 2 & !hasbd & !__ncon_hasdyad) {
+			if (any(nb :== "idegrees") & any(nb :== "odegrees")) code = 30
+			else if (any(nb :== "b1degrees") & any(nb :== "b2degrees")) code = 30
+		}
+	}
+	if (code >= .) {
+		err = "The combination of class (c), model constraints and hints (" + nmstr + "), reference measure (" + char(34) + "Bernoulli" + char(34) + "), proposal weighting (" + weights + "), and conjunctions and disjunctions is not implemented. Check your arguments for typos."
+		st_local("__con_err", err)
+		return
+	}
+	if (code == 36 & __ncon_dir) {
+		st_local("__con_err", "The odegreedist constraint cannot be used: the corresponding proposal fails to initialise in the reference implementation (object 'proposals' not found).")
+		return
+	}
+	if ((code == 35 | code == 36 | code == 37) & __ncon_bip) {
+		st_local("__con_err", "The degree-distribution constraints are not available for bipartite networks.")
+		return
+	}
+	if (code == 51 & __ncon_bip) {
+		st_local("__con_err", "The dyadnoise constraint is not available for bipartite networks.")
+		return
+	}
+	K = hasbd ? cols(__ncon_bdatt) : 0
+	nobs = 0
+	cc = J(0, 0, .)
+	if (K > 0) cc = (__ncon_bdatt, __ncon_bdmaxout, __ncon_bdmaxin, __ncon_bdminout, __ncon_bdminin)
+	if (__ncon_dn) {
+		ties = J(0, 2, .)
+		for (i = 1; i <= n; i++) for (j = 1; j <= n; j++) {
+			if (i == j) continue
+			if (!__ncon_dir & j < i) continue
+			if (__ncon_y[i, j] != 0 & __ncon_y[i, j] < .) ties = ties \ (i, j)
+		}
+		nobs = rows(ties)
+		R = max((n, nobs))
+		if (K > 0) cc = cc \ J(R - n, cols(cc), 0)
+		else cc = J(R, 0, 0)
+		cc = cc, (ties \ J(R - nobs, 2, 0))
+	}
+	__ncon_cols = cc
+	__ncon_par = J(1, 10, 0)
+	__ncon_par[1] = code
+	__ncon_par[2] = K
+	__ncon_par[3] = __ncon_bdmaxonly
+	__ncon_par[4] = __ncon_dn
+	__ncon_par[5..8] = __ncon_dnpar
+	__ncon_par[9] = nobs
+	st_local("__con_code", strofreal(code))
+	st_local("__con_dind", strofreal(cols(keep) == 0))
+	st_local("__con_maxonly", strofreal(__ncon_bdmaxonly & hasbd))
+	st_local("__con_hasdyad", strofreal(__ncon_hasdyad))
+	st_local("__con_hasbd", strofreal(hasbd))
+}
+end
+
+mata:
+mata set matastrict off
+// bind the arguments of a network-valued constraint and hand the names back as locals __cb1..__cb3
+void _ergm_con_netnames(string scalar nm, string scalar args)
+{
+	string rowvector b
+	real scalar k
+	b = _ergm_con_bind(nm, args, _ergm_con_argnames(nm))
+	for (k = 1; k <= cols(b); k++) st_local("__cb" + strofreal(k), b[k])
+	st_local("__cbn", strofreal(cols(b)))
+}
+end
+
+mata:
+mata set matastrict off
+// R's term "conflicts.constraints": coefficients whose statistic is held constant by the constraints
+// (given as the implied-constraint set) are fixed at 0 and ignored. Returns their positions.
+real rowvector _ergm_con_conflicts(class ErgmModel scalar M, string scalar implied)
+{
+	string rowvector imp
+	real rowvector out
+	real scalar k
+	string scalar nm
+	imp = tokens(implied)
+	out = J(1, 0, .)
+	for (k = 1; k <= cols(M.coefnames); k++) {
+		nm = M.coefnames[k]
+		if (M.isfixed[k]) continue
+		if (nm == "edges" & any(imp :== "edges")) out = out, k
+		else if (regexm(nm, "^(degree|degrange|gwdegree|kstar)") & any(imp :== "degreedist")) out = out, k
+		else if (regexm(nm, "^(odegree|odegrange|gwodegree|ostar)") & any(imp :== "odegreedist")) out = out, k
+		else if (regexm(nm, "^(idegree|idegrange|gwidegree|istar)") & any(imp :== "idegreedist")) out = out, k
+		else if (nm == "sender" & any(imp :== "odegrees")) out = out, k
+		else if (nm == "receiver" & any(imp :== "idegrees")) out = out, k
+	}
+	return(out)
+}
+end
+
+mata:
+mata set matastrict off
+// E6: draw a sample from the constrained chain described by (par, cols, maskmat), restoring M afterwards
+real matrix ErgmSampleCon(class ErgmModel scalar M, class ErgmGraph scalar G, real rowvector par, real matrix cols,
+	real matrix maskmat, real rowvector theta, real scalar burnin, real scalar interval, real scalar ss)
+{
+	real rowvector sp
+	real matrix sc, sm, out
+	sp = M.con_par; sc = M.con_cols; sm = M.native_maskmat
+	M.con_par = par; M.con_cols = cols; M.native_maskmat = maskmat
+	out = ErgmMCMCSample(M, G, theta, burnin, interval, ss, &ergm_propose_tnt())
+	M.con_par = sp; M.con_cols = sc; M.native_maskmat = sm
+	return(out)
+}
+
+// E6: MCMLE with an observation process (R: obs.constraints). Two chains are run at every
+// iteration, the constrained one (G, as set up for M) and the one that is also restricted by
+// the observation constraints (Gobs, starting from the observed network); the estimating
+// equation is E_obs[g] - E[g] = 0 and the information is Var - Var_obs (Hummel/Handcock).
+struct ErgmMCMLEFit scalar ErgmMCMLEObs(class ErgmModel scalar M, class ErgmGraph scalar G, class ErgmGraph scalar Gobs,
+	real rowvector par2, real matrix cols2, real rowvector theta0, real scalar maxit, real scalar burnin,
+	real scalar interval, real scalar samplesize, real scalar verbose)
+{
+	struct ErgmMCMLEFit scalar res
+	real rowvector theta, g, delta, freeidx, infl1, infl2, delta_full
+	real matrix s1, s2, V, Vf, S, Sg, coefhist, mask1, mask2, Vinv, Xe
+	real scalar iter, p, converged, nfree, T2, neff, pval, gamma, k, a1, a2, gi, gm, best, nn
+	real colvector ev, w1, w2
+	real rowvector gg
+	real matrix Vfi
+
+	p = cols(theta0)
+	theta = theta0
+	freeidx = M.freeidx()
+	nfree = cols(freeidx)
+	mask1 = M.native_maskmat
+	mask2 = Gobs.has_dyadmask ? Gobs.freedyadmat : J(0, 0, .)
+	coefhist = J(0, p, .)
+	converged = 0
+	for (iter = 1; iter <= maxit; iter++) {
+		coefhist = coefhist \ theta
+		s1 = ErgmSampleCon(M, G, M.con_par, M.con_cols, mask1, theta, (iter == 1 ? burnin : burnin / 4), interval, samplesize)
+		s2 = ErgmSampleCon(M, Gobs, par2, cols2, mask2, theta, (iter == 1 ? burnin : burnin / 4), interval, samplesize)
+		g = (mean(s2) - mean(s1))[freeidx]
+		Vf = (variance(s1) - variance(s2))[freeidx, freeidx]
+		infl1 = ergm_spectral0_ar(s1[., freeidx] :- mean(s1[., freeidx]))
+		infl2 = ergm_spectral0_ar(s2[., freeidx] :- mean(s2[., freeidx]))
+		// covariance of the estimated estimating equation: long-run covariances of both chains
+		Sg = (variance(s1[., freeidx]) :* (sqrt(infl1)' * sqrt(infl1))) / rows(s1) + (variance(s2[., freeidx]) :* (sqrt(infl2)' * sqrt(infl2))) / rows(s2)
+		T2 = g * invsym(Sg) * g'
+		pval = chi2tail(nfree, T2)
+		if (verbose) printf("obs-MCMLE iteration %g: |g|=%9.5f  T2=%9.3f  p=%6.4f\n", iter, sqrt(g * g'), T2, pval)
+		if (iter >= 2 & pval > 0.01) {
+			converged = 1
+			break
+		}
+		// Newton step with a ridge when the information estimate is not positive definite
+		symeigensystem(Vf, Xe = ., ev = .)
+		if (min(ev) <= 1e-8 * max((max(ev), 1e-8))) Vf = Vf + I(nfree) * (1e-8 * max((max(ev), 1)) - min((min(ev), 0)) + 1e-6)
+		delta = g * invsym(Vf)
+		// step length by importance sampling (Hummel et al.): the estimating equation at theta + gamma*delta is
+		// estimated by reweighting both samples, and the gamma that brings it closest to zero (in the metric of
+		// the information) is taken, among those for which both reweighted samples keep a usable size.
+		gamma = 0.02
+		best = .
+		Vfi = invsym(Vf)
+		for (gi = 1; gi <= 9; gi++) {
+			gm = (1, 0.75, 0.5, 0.35, 0.25, 0.15, 0.1, 0.05, 0.02)[gi]
+			w1 = exp((gm * delta * s1[., freeidx]')')
+			w2 = exp((gm * delta * s2[., freeidx]')')
+			w1 = w1 / sum(w1)
+			w2 = w2 / sum(w2)
+			if (1 / sum(w1 :^ 2) < 0.1 * rows(s1) | 1 / sum(w2 :^ 2) < 0.1 * rows(s2)) continue
+			gg = (w2' * s2[., freeidx]) - (w1' * s1[., freeidx])
+			nn = gg * Vfi * gg'
+			if (best >= . | nn < best) {
+				best = nn
+				gamma = gm
+			}
+		}
+		delta_full = J(1, p, 0)
+		delta_full[freeidx] = gamma * delta
+		theta = theta + delta_full
+	}
+	// final simulation at the estimate for the covariance
+	s1 = ErgmSampleCon(M, G, M.con_par, M.con_cols, mask1, theta, burnin / 4, interval, samplesize)
+	s2 = ErgmSampleCon(M, Gobs, par2, cols2, mask2, theta, burnin / 4, interval, samplesize)
+	Vf = (variance(s1) - variance(s2))[freeidx, freeidx]
+	infl1 = ergm_spectral0_ar(s1[., freeidx] :- mean(s1[., freeidx]))
+	infl2 = ergm_spectral0_ar(s2[., freeidx] :- mean(s2[., freeidx]))
+	Sg = (variance(s1[., freeidx]) :* (sqrt(infl1)' * sqrt(infl1))) / rows(s1) + (variance(s2[., freeidx]) :* (sqrt(infl2)' * sqrt(infl2))) / rows(s2)
+	Vinv = invsym(Vf)
+	res.coef = theta
+	res.vcov = J(p, p, 0)
+	res.vcov[freeidx, freeidx] = Vinv + Vinv * Sg * Vinv
+	res.converged = converged
+	res.niter = min((iter, maxit))
+	res.coefhist = coefhist
+	res.finalsample = s1
+	res.acceptrate = M.native_lastaccept
+	res.final_interval = interval
+	res.coef_theta = J(1, 0, .)
+	res.coefhist_theta = J(0, 0, .)
+	return(res)
+}
+end
+
+mata:
+mata set matastrict off
+// put the chain graph back to a given tie set (the observed network) without rebuilding it
+void _ergm_con_resetG(class ErgmGraph scalar G, real matrix ties0)
+{
+	real matrix cur
+	real scalar i
+	cur = G.all_ties()
+	for (i = 1; i <= rows(cur); i++) G.toggle(cur[i,1], cur[i,2])
+	for (i = 1; i <= rows(ties0); i++) G.toggle(ties0[i,1], ties0[i,2])
+}
 end
 
 

@@ -42,7 +42,8 @@ program nwergm, eclass
 		OFFSET(string) COEFLABEL(string) LOGSTAT(string) EXPSTAT(string) STRUCTURAL(string asis) NOLOGLIK BRIDGESTEPS(integer 16) BRIDGESAMPLESIZE(integer 0) BRIDGEINTERVAL(integer 0) ///
 		INIT(string) MPLETYPE(string) MPLECHECK(string) MPLECOVariance(string) ESTimate(string) MAINMETHOD(string) ///
 		MCMLETERMination(string) MCMLECONFidence(real 0.99) MCMLESTEPLength(real 1) MCMLESTEPMargin(real 0.05) ///
-		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SABURNin(integer 16384) SAINTERval(integer 1024) SAPHASE3(integer 1000) SAGAIN(real 0.1) SANSUB(integer 4) ]
+		MCMLEEFFectivesize(real -1) CDNSteps(integer 8) CDSAMPLEsize(integer 0) SABURNin(integer 16384) SAINTERval(integer 1024) SAPHASE3(integer 1000) SAGAIN(real 0.1) SANSUB(integer 4) ///
+		CONSTRAINTS(string asis) OBSCONSTRAINTS(string asis) MCMCMAXEDGES(integer 0) MCMCPROP(string asis) ]
 	set more off
 	_nwergm_est opts, estimate(`estimate') method(`method') mainmethod(`mainmethod') mpletype(`mpletype') ///
 		mplecovariance(`mplecovariance') mcmletermination(`mcmletermination') mplecheck(`mplecheck')
@@ -104,7 +105,9 @@ program nwergm, eclass
 	// default, `proposal()' defaults to `tnt' exactly as it does without
 	// freedyads().
 	if "`proposal'" == "" local proposal "tnt"
-	_opts_oneof "uniform tnt" "proposal" "`proposal'" 6556
+	_opts_oneof "uniform random tnt" "proposal" "`proposal'" 6556
+	if "`proposal'" == "random" local proposal "uniform"
+	if `"`mcmcprop'"' != "" _nwergm_hints, spec(`mcmcprop')
 	if "`method'" != "" {
 		_opts_oneof "mple mcmle cd" "method" "`method'" 6556
 	}
@@ -637,6 +640,63 @@ program nwergm, eclass
 		}
 		confirm variable `blockdiag'
 		mata: __nwergm_last_G.set_dyadmask(_ergm_blockdiag_mask(st_data(1::`nodes', "`blockdiag'")))
+	}
+	// constraints(): R ergm's constraints= formula (see _nwergm_constr.ado)
+	local __con_active 0
+	if `"`constraints'"' != "" {
+		if "`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "" {
+			di "{err}constraints() cannot be combined with freedyads(), blockdiag() or fixdensity."
+			error 198
+		}
+		local __con_w "default"
+		if "`proposal'" == "uniform" local __con_w "random"
+		_nwergm_constr, spec(`constraints') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(`__con_w')
+		local __con_active 1
+		if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
+		mata: __nwergm_c1_par = __ncon_par
+		mata: __nwergm_c1_cols = __ncon_cols
+		mata: __nwergm_c1_free = __ncon_free
+		local __c1_hasdyad `con_hasdyad'
+	}
+	local __obs_active 0
+	local __obs_info 0
+	if `__con_active' == 0 local __c1_hasdyad 0
+	if `"`obsconstraints'"' != "" {
+		if "`freedyads'" != "" | "`blockdiag'" != "" | "`fixdensity'" != "" {
+			di "{err}obsconstraints() cannot be combined with freedyads(), blockdiag() or fixdensity."
+			error 198
+		}
+		if "`method'" == "mple" {
+			di "{err}obsconstraints() needs {bf:method(mcmle)}."
+			error 198
+		}
+		local method "mcmle"
+		local __obs_active 1
+		local __obs_spec `"`obsconstraints'"'
+		if `"`constraints'"' != "" {
+			local __obs_first = substr(strtrim(`"`obsconstraints'"'), 1, 1)
+			if "`__obs_first'" == "-" local __obs_spec `"`constraints' `obsconstraints'"'
+			else local __obs_spec `"`constraints' + `obsconstraints'"'
+		}
+		_nwergm_constr, spec(`__obs_spec') nodes(`nodes') directed(`directed') twomode(`is2mode') matobj(`netobj') weights(default) prefix(o)
+		capture mata: mata drop __nwergm_obs_G
+		mata: __nwergm_obs_G = ErgmGraph()
+		mata: __nwergm_obs_G.init(`nodes', ("`directed'"=="true"))
+		mata: ergm_bridge_from_netobj(`netobj', __nwergm_obs_G, ("`directed'"=="true"))
+		if `ocon_hasdyad' mata: __nwergm_obs_G.set_dyadmask(__ncon_free)
+		mata: __nwergm_obs_par = __ncon_par
+		mata: __nwergm_obs_cols = __ncon_cols
+		// dyad-independent sample spaces: the pseudolikelihood start uses the informative dyads, i.e. those that
+		// vary under the constraints but are fixed once the observation constraints are added (R: which="informative")
+		if `ocon_dind' {
+			if `__con_active' {
+				mata: __nwergm_info = __nwergm_c1_free :& !(`=cond(`ocon_hasdyad',"__ncon_free","J(`nodes',`nodes',1)")')
+			}
+			else {
+				mata: __nwergm_info = !(`=cond(`ocon_hasdyad',"__ncon_free","J(`nodes',`nodes',1)")')
+			}
+			mata: st_local("__obs_info", strofreal(sum(__nwergm_info :* (1 :- I(`nodes'))) > 0))
+		}
 	}
 	// captured HERE, before any MCMC ever runs: __nwergm_last_G's own
 	// .nties mutates throughout MCMLE's own simulation (it IS the live
@@ -1699,8 +1759,14 @@ program nwergm, eclass
 	// gwnspfree() unconditionally forced method(mple) regardless of
 	// this check's own result, a forcing that no longer happens.
 	local __ergm_dind = (`"`mutual'"'=="" & `__ns_dep' == 0 & `"`gwesp'"'=="" & `"`gwdsp'"'=="" & `"`gwnsp'"'=="" & `"`gwdegree'"'=="" & `"`gwodegree'"'=="" & `"`gwidegree'"'=="" & `"`degree'"'=="" & `"`odegree'"'=="" & `"`idegree'"'=="" & `"`concurrent'"'=="" & `"`triangle'"'=="" & `"`ctriple'"'=="" & `"`kstar'"'=="" & `"`ostar'"'=="" & `"`istar'"'=="" & `"`degrange'"'=="" & `"`odegrange'"'=="" & `"`idegrange'"'=="" & `"`esp'"'=="" & `"`dsp'"'=="" & "`transitiveties'"=="" & "`cyclicalties'"=="" & "`gwespfree'"=="" & "`gwdegreefree'"=="" & "`gwdspfree'"=="" & "`gwodegreefree'"=="" & "`gwidegreefree'"=="" & "`gwnspfree'"=="" & "`bdegree1'"=="" & "`bdegree2'"=="" & "`bstar1'"=="" & "`bstar2'"=="" & "`bnodematch1'"=="" & "`bnodematch2'"=="" & "`bgwdegree1'"=="" & "`bgwdegree2'"=="" & !`__ergm_bipdep' & "`nodecovrange'`nodeocovrange'`nodeicovrange'`nodefactordistinct'`nodeofactordistinct'`nodeifactordistinct'"=="")
+	if `__con_active' {
+		if `con_dind' == 0 local __ergm_dind 0
+	}
 	if "`method'" == "" {
 		local method = cond(`__ergm_dind' & "`mainmethod'" != "sa", "mple", "mcmle")
+	}
+	if "`method'" == "mple" & `__con_active' {
+		if `con_dind' == 0 di "{txt}Maximum Pseudo-Likelihood (MPLE) estimation for ERGMs with dyad-dependent constraints is not implemented at this time. You may want to use {bf:method(mcmle)} instead."
 	}
 	if "`method'" == "mple" & !`__ergm_dind' {
 		di "{txt}Note: {bf:method(mple)} requested for a dyad-dependent model - reporting pseudolikelihood, NOT full ERGM maximum likelihood."
@@ -1767,6 +1833,28 @@ program nwergm, eclass
 		}
 	}
 
+	// constraints(): statistics held constant by the sample-space constraint are
+	// fixed at 0 and ignored (R: ergm.checkconstraints.model()).
+	if `__con_active' {
+		mata: st_local("__con_conf", invtokens(strofreal(_ergm_con_conflicts(__nwergm_last_M, "`con_implies'"))))
+		if "`__con_conf'" != "" {
+			local __con_confnames ""
+			foreach __c of local __con_conf {
+				mata: st_local("__con_cn", __nwergm_last_M.coefnames[`__c'])
+				local __con_confnames "`__con_confnames' `__con_cn'"
+				mata: __nwergm_last_M.mark_fixed(`__c', 0)
+			}
+			di "{txt}Note: the specified model's sample space constraint holds statistic(s)" _c
+			di "{res}`__con_confnames'" _c
+			di "{txt} constant. They will be ignored."
+			mata: st_local("__ergm_nfree", strofreal(cols(__nwergm_last_M.freeidx())))
+			if `__ergm_nfree' == 0 {
+				di "{err}all terms are either offsets or held constant by the constraints; there is nothing to estimate."
+				error 198
+			}
+		}
+	}
+
 	// Built directly as a Mata matrix and handed straight to st_store()
 	// below - NEVER routed through an intermediate Stata MATRIX
 	// (st_matrix()), which is fine at the tiny scale of this suite's own
@@ -1829,6 +1917,7 @@ program nwergm, eclass
 	// is simply never called when set, so `__nwergm_last_M.native_enabled'
 	// stays at its own default 0 - identical in effect to every other
 	// "native unavailable" case already handled below.
+	if `__obs_info' mata: __nwergm_last_G.set_dyadmask(__nwergm_info)
 	if "`nonative'" == "" {
 		mata: __ergm_mple_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
 		mata: mata drop __ergm_mple_native_setup_rc
@@ -1839,6 +1928,14 @@ program nwergm, eclass
 	}
 	else {
 		mata: `__nw_D' = __nwergm_last_M.build_mple_data(__nwergm_last_G)
+	}
+	if `__obs_info' {
+		if `__con_active' & `__c1_hasdyad' {
+			mata: __nwergm_last_G.set_dyadmask(__nwergm_c1_free)
+		}
+		else {
+			mata: __nwergm_last_G.has_dyadmask = 0
+		}
 	}
 	local __ergm_matatemps "`__ergm_matatemps' `__nw_D'"
 	if `__ergm_nmiss' > 0 {
@@ -2070,6 +2167,11 @@ program nwergm, eclass
 		}
 		else {
 			mata: `__theta0' = st_matrix("`__b_mple'")
+			// R: without a dyad-independent sample space MPLE is not an initial-value method; start from zeros
+			if `__con_active' {
+				if `con_dind' == 0 mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
+			}
+			if `__obs_active' & !`__obs_info' mata: `__theta0' = `__theta0' :* __nwergm_last_M.isfixed
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__theta0'"
 
@@ -2144,6 +2246,28 @@ program nwergm, eclass
 			mata: __ergm_native_setup_rc = ErgmNativeSetup(__nwergm_last_M, `__ergm_propcode', __nwergm_last_G)
 			mata: mata drop __ergm_native_setup_rc
 		}
+		if `__con_active' | `mcmcmaxedges' > 0 {
+			mata: st_local("__con_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+			if `__con_ok' != 1 {
+				di "{err}constraints() and mcmcmaxedges() need the native plugin, which is not available for this model, platform or the nonative option."
+				error 198
+			}
+			if `__con_active' {
+				mata: __nwergm_last_M.con_par = __nwergm_c1_par
+				mata: __nwergm_last_M.con_cols = __nwergm_c1_cols
+			}
+			else {
+				mata: __nwergm_last_M.con_par = J(1, 10, 0)
+			}
+			if `mcmcmaxedges' > 0 mata: __nwergm_last_M.con_par[10] = `mcmcmaxedges'
+		}
+		if `__obs_active' {
+			mata: st_local("__con_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+			if `__con_ok' != 1 {
+				di "{err}obsconstraints() needs the native plugin, which is not available for this model, platform or the nonative option."
+				error 198
+			}
+		}
 		// fixdensity: this is the single place that sets M.fixed_density=1,
 		// guaranteed to run before ErgmMCMLE() is ever called below.
 		// `native_enabled' (the MPLE-design-matrix-build flag) is forced
@@ -2191,11 +2315,15 @@ program nwergm, eclass
 
 		_nwergm_est ctl, termination(`mcmletermination') confidence(`mcmleconfidence') steplength(`mcmlesteplength') ///
 			margin(`mcmlestepmargin') effsize(`mcmleeffectivesize')
+		mata: __nwergm_ties0 = __nwergm_last_G.all_ties()
 		capture mata: mata drop __ergm_obsstat
 		capture confirm number 0
 		mata: __ergm_obsstat = __nwergm_last_M.full_statistic(__nwergm_last_G)
 		tempname __fit
-		if `__ergm_curved' {
+		if `__obs_active' {
+			mata: `__fit' = ErgmMCMLEObs(__nwergm_last_M, __nwergm_last_G, __nwergm_obs_G, __nwergm_obs_par, __nwergm_obs_cols, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', ("`verbose'"!=""))
+		}
+		else if `__ergm_curved' {
 			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""), __ergm_theta_c0_mcmle)
 			mata: mata drop __ergm_theta_c0_mcmle
 		}
@@ -2209,7 +2337,22 @@ program nwergm, eclass
 				mata: `__fit' = ErgmSA(__nwergm_last_M, __nwergm_last_G, `__theta0', `saburnin', `sainterval', `sagain', max((200, 7 + 3*__e7_q)), `sansub', 7 + __e7_q, 207 + __e7_q, `saphase3', `__ergm_propfn', ("`verbose'"!=""))
 				mata: mata drop __e7_q
 			}
-			else mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+			else {
+			mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+			// Without a dyad-independent sample space there is no MPLE start (as in R): the first sample is drawn
+			// at zero and can be far from the estimate, so refit from the estimate until it stops moving.
+			if `__con_active' {
+				if `con_dind' == 0 {
+					forvalues __r = 2/5 {
+						mata: st_local("__con_chg", strofreal(max(abs((`__fit'.coef - `__theta0')[__nwergm_last_M.freeidx()]) :/ sqrt(diagonal(`__fit'.vcov)[__nwergm_last_M.freeidx()])')))
+						if `__con_chg' < 0.05 continue, break
+						mata: `__theta0' = `__fit'.coef
+						mata: _ergm_con_resetG(__nwergm_last_G, __nwergm_ties0)
+						mata: `__fit' = ErgmMCMLE(__nwergm_last_M, __nwergm_last_G, `__theta0', `mcmleiterations', `mcmcburnin', `mcmcinterval', `mcmcsamplesize', `__ergm_propfn', ("`verbose'"!=""))
+					}
+				}
+			}
+			}
 		}
 		local __ergm_matatemps "`__ergm_matatemps' `__fit'"
 
@@ -2326,6 +2469,8 @@ program nwergm, eclass
 		ereturn local estimate "`=cond("`method'"=="cd","CD",cond("`mainmethod'"=="sa","SA","MLE"))'"
 		ereturn local directed "`directed'"
 		ereturn local proposal "`proposal'"
+		if `__con_active' ereturn local constraints `"`constraints'"'
+		if `__obs_active' ereturn local obsconstraints `"`obsconstraints'"'
 		ereturn local estat_cmd "nwergm_estat"
 		ereturn scalar N = `__ergm_nrows'
 		ereturn scalar nodes = `nodes'
@@ -2491,7 +2636,8 @@ program nwergm_simulate
 		BDSP1(string) BDSP2(string) BGWDSP1(string) BGWDSP2(string) ///
 		BIPARTITE(integer 0) ///
 		THETA(numlist) directed NSIM(integer 1) MCMCBURNIN(integer 3000) ///
-		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ]
+		MCMCINTERVAL(integer 50) PROPOSAL(string) SEED(integer -1) GENERATE(string) SPCACHE ///
+		BASIS(string) CONSTRAINTS(string asis) ]
 
 	foreach __ergm_o in degree odegree idegree kstar ostar istar degrange degrangeto odegrange odegrangeto idegrange idegrangeto esp dsp bdegree1 bdegree2 bstar1 bstar2 {
 		if `"``__ergm_o''"' != "" & strpos(`"``__ergm_o''"', ",") == 0 {
@@ -3403,7 +3549,46 @@ program nwergm_simulate
 	// already use) and has no size limit to hit.
 	tempname __ergm_simmat
 	tempname __ergm_simmat_bip
+	// basis()/constraints(): R's simulate(basis=, constraints=) - one chain started from the basis
+	// network, burn-in once, `interval' steps between draws, all within the constrained sample space.
+	local __sim_con 0
+	if "`basis'" != "" | `"`constraints'"' != "" {
+		if "`basis'" == "" {
+			di "{err}constraints() needs basis(): the network the constraints refer to."
+			error 198
+		}
+		if `bipartite' != 0 {
+			di "{err}basis()/constraints() are not available together with bipartite()."
+			error 198
+		}
+		_nwsyntax `basis', max(1) other(b)
+		if `bnodes' != `nodes' | ("`bdirected'" == "true") != ("`directed'" != "") {
+			di "{err}basis() must have `nodes' nodes and the same directedness as the simulation."
+			error 198
+		}
+		capture mata: mata drop __nwergm_last_G
+		mata: __nwergm_last_G = ErgmGraph()
+		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
+		mata: ergm_bridge_from_netobj(`bnetobj', __nwergm_last_G, ("`directed'"!=""))
+		if `"`constraints'"' != "" {
+			_nwergm_constr, spec(`constraints') nodes(`nodes') directed(`bdirected') twomode(false) matobj(`bnetobj') weights(`=cond("`proposal'"=="uniform","random","default")')
+			if `con_hasdyad' mata: __nwergm_last_G.set_dyadmask(__ncon_free)
+		}
+		mata: __sim_rc = ErgmNativeSetup(__nwergm_last_M, 2, __nwergm_last_G)
+		mata: mata drop __sim_rc
+		mata: st_local("__sim_ok", strofreal(__nwergm_last_M.native_enabled_sample))
+		if `__sim_ok' != 1 {
+			di "{err}basis()/constraints() need the native plugin, which is not available for this model or platform."
+			error 198
+		}
+		if `"`constraints'"' != "" {
+			mata: __nwergm_last_M.con_par = __ncon_par
+			mata: __nwergm_last_M.con_cols = __ncon_cols
+		}
+		local __sim_con 1
+	}
 	forvalues __s = 1/`nsim' {
+		if !`__sim_con' {
 		capture mata: mata drop __nwergm_last_G
 		mata: __nwergm_last_G = ErgmGraph()
 		mata: __nwergm_last_G.init(`nodes', ("`directed'"!=""))
@@ -3434,8 +3619,12 @@ program nwergm_simulate
 		// therefore simply stays at its ErgmModel::init() default of 0
 		// here, so every draw runs on the unmodified Mata sampler.
 		// structural() terms have no Mata change statistic: they need the native sampler
+		if !`__sim_con' {
 		mata: ns_native_setup(__nwergm_last_M, `=cond("`proposal'"=="tnt",2,1)', __nwergm_last_G)
-		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `mcmcburnin', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
+		}
+		}
+		local __sim_burn = cond(`__sim_con' & `__s' > 1, 0, `mcmcburnin')
+		mata: __gof_discard = ErgmMCMCSample(__nwergm_last_M, __nwergm_last_G, st_matrix("`thetamat'"), `__sim_burn', `mcmcinterval', 1, `=cond("`proposal'"=="tnt","&ergm_propose_tnt()","&ergm_propose_uniform()")')
 		mata: `__ergm_simmat' = __nwergm_last_G.to_dense()
 
 		local __ergm_simname = cond(`nsim'==1, "`generate'", "`generate'_`__s'")
