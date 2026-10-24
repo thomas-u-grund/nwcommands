@@ -334,3 +334,37 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
 - **Stata `-e` puts the batch log in the directory named by the `PWD` environment variable**, not the process
   cwd. Launching from Python with `cwd=d` but an inherited PWD wrote `audit.log` into the repo root and the
   do-file was not found. Set `env PWD=d` as well.
+
+## Native combinatorial kernels (`native/nwcomb.h`, `nwcomb2.h`): things that cost time to find
+
+- **Mata `sort()` on one key breaks ties at random**, using the random-number stream, so the result depends on
+  the RNG state at that moment (confirmed: the same 12 numbers sorted after `rseed(1)`, `rseed(2)` and after
+  100 x 100 `runiform()` give three different orders of the tied rows). `Factions()` seeded its partition from
+  `sort((1::n, deg), -2)`, so `nwfactions` gave different partitions on identical calls whenever two nodes had
+  the same degree, and no old-vs-new comparison could be exact. Sort with a second key (`(-2,1)`: node number)
+  whenever ties are possible and the order matters.
+- **`_nwsyntax` clears `r()`.** In a cscript, read `r(...)` into a local or Mata variable before the next
+  `_nwsyntax`; `st_numscalar("r(x)")` then returns a 0x0 void and the assertion fails far from the cause.
+- **`st_numscalar()` of a scalar that does not exist returns a void, not a missing**: assigning it to a vector
+  element is a conformability error. `nwg_scalar()` wraps it.
+- **`strofreal(x)` without a format keeps 9 significant digits** (`nwmotifs` cut every count above 999,999,999,
+  i.e. from about 800 nodes on, when it passed them through `st_local`). Use `strofreal(x, "%21.0g")`.
+- **Stata's `comb(n,k)` is not exact** (floating point via gamma functions); compare counts with an integer
+  product in a cscript. A network built with `nwfromedge` has as many nodes as distinct ids in the edge list,
+  not the largest id you meant.
+- **A Stata session keeps the plugin it loaded first.** `nwg_comb_ok()` probes the plugin once per session
+  (external scalar `nwg_comb_state`: `.` = not probed, 1 = kernels available, 0 = use the Mata code); a
+  cscript sets it to 0 to run the Mata reference and back to `.` afterwards. After rebuilding the plugin start
+  a new Stata process (`rm` the file first, never `cp` over a loaded one). A stale `nwgraph_macos.plugin` in
+  PLUS shadows the repo's one (the probe then finds no kernels and silently uses the slow Mata path).
+- **Why the cohesion kernel may reorder flows but not change results:** the value of a maximum flow and the set of
+  nodes reachable from the source in its residual graph do not depend on the order of the augmenting paths, so
+  the C search (bidirectional BFS, early stop at the current minimum) returns the same minimum, witness pair and
+  cutset as the Mata one; what does depend on order is only *which* equal-valued pair is found first, and the
+  loops visit the pairs in the Mata order. A block certified by the parent's `k`-component step carries its exact
+  connectivity and witness pair into the next level (the target search that ran to the end is the same query
+  sequence as the plain connectivity search).
+- **The n-clan search prunes**, it does not enumerate-then-filter: a branch is dropped when a member of `R` is
+  farther than `n` steps from the newest member inside `R` + candidates (distances only grow in the subsets a
+  clan below the branch can be). The scratch distance array must be all `-1` between uses; `clan_ok()` once left
+  it dirty and the pruned search lost clans (found by the exact old-vs-new comparison, not by the size tests).

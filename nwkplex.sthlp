@@ -19,6 +19,10 @@
 {opth generate(newvarname)}
 {opt replace}
 {opth minsize(int)}
+{opt maxplexes(#)}
+{opt maxtime(#)}
+{opt countonly}
+{opt nomatrix}
 {opt silent}]
 
 
@@ -29,6 +33,10 @@
 {synopt:{opth generate(newvarname)}}Name of the Stata variable that stores each node's largest maximal-k-plex membership size; default = {it:_kplexnum}{p_end}
 {synopt:{opt replace}}Replace existing variable{p_end}
 {synopt:{opth minsize(int)}}Smallest k-plex size to report; default = {it:k}+1{p_end}
+{synopt:{opt maxplexes(#)}}Stop with an error when more than this many maximal k-plexes of at least {opt minsize()} members are found (the result matrix needs sets x nodes numbers); default = 100,000{p_end}
+{synopt:{opt maxtime(#)}}Stop with an error when the search has run for this many seconds without finishing; default = 60{p_end}
+{synopt:{opt countonly}}Only count the sets (and tabulate them by size) - nothing is stored, so the count is not limited by memory; {opth generate(newvarname)} is then not needed{p_end}
+{synopt:{opt nomatrix}}Do not build the sets-by-nodes matrix; the {opth generate(newvarname)} variable and the count are still returned{p_end}
 {synopt:{opt silent}}Suppress display of results{p_end}
 
 {p2colreset}{...}
@@ -69,9 +77,11 @@ variable, not a spurious 0.
 
 	Scalars
 	  {bf:r(kplexes)}		number of maximal k-plexes found meeting {opth minsize(int)}
+	  {bf:r(maxsize)}	size of the largest set (with {opt countonly} or {opt nomatrix})
 
 	Matrices
-	  {bf:r(kplex_matrix)}	k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex
+	  {bf:r(size_table)}	(with {opt countonly} or {opt nomatrix}) sizes and the number of sets of each size
+	  {bf:r(kplex_matrix)}	k-plexes-by-nodes 0/1 membership matrix, one row per maximal k-plex (not with {opt countonly} or {opt nomatrix})
 
 {title:Examples}
 
@@ -107,8 +117,27 @@ itself, true of any correct algorithm) and, for a fixed network, generally slowe
 {help nwclique}'s own clique enumeration for the same reason its own "Supported network types"
 section already notes for cliques, compounded further here since checking whether a candidate can
 still be added requires examining the whole candidate set's own induced structure, not just a
-simple neighbor lookup - fine for the moderate network sizes typical of SNA datasets, not
-specially guarded against here beyond this note.
+simple neighbor lookup. The number of maximal k-plexes is what limits this command, not the size of the
+network; see {bf:Limits} below.
+
+{title:Limits}
+
+{pstd}
+{bf:Feasible sizes.} The search runs in compiled code on bitset adjacency and takes the sets in the order the Mata
+version did. It is limited by the number of maximal k-plexes, which can be enormous (any set of {opt k} or fewer
+nodes is a k-plex, and large sparse networks have very many bigger ones), and by the sets-by-nodes matrix
+{bf:r(kplex_matrix)}, which needs sets x nodes numbers. Measured in Stata/BE on a random network with 10 ties drawn
+per node, {opt k(2)}, {opt minsize(3)}: 100 nodes have 10,141 maximal 2-plexes (0.2 s), 300 nodes 31,081 (2.1 s, nearly
+all of it building the 31,081 x 300 matrix; 0.04 s with {opt nomatrix}), 1,000 nodes 148,070 (0.2 s with
+{opt nomatrix}), 5,000 nodes (2.9 s with {opt nomatrix}; 1.9 s with {opt countonly}). For {opt k(3)}, 300 nodes have
+3,968,148 maximal 3-plexes, counted in 0.5 s. The previous Mata version needed 17 s and 6.6 GB at 300 nodes.
+
+{pstd}
+{bf:Guards.} The command stops with r(484) and a message that names the option to raise when it has found more than
+{opt maxplexes()} maximal k-plexes (default 100,000), when the result matrix would be too large to build (more than
+50 million numbers; use {opt nomatrix}), or when the search has run for {opt maxtime()} seconds (default 60) without
+finishing. {opt countonly} does not store the sets and is not limited by memory; {opt nomatrix} keeps the per-node
+variable and the counts but not the matrix.
 
 {title:See also}
 

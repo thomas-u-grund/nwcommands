@@ -88,11 +88,18 @@ directed 4-node census has 218 distinct isomorphism classes and is not attempted
 is printed to this effect. Weighted: not applicable (a motif census is inherently a binary
 count). Signed: not checked. Two-mode: not checked. Requires at least 4 nodes.
 
+{title:Limits}
+
 {pstd}
-{cmd:nwmotifs} enumerates every 4-node combination explicitly (O(n^4)) - fine for the moderate
-network sizes typical of SNA datasets, but not specially guarded against for very large
-networks, the same disclosed scaling limitation {help nwclique}'s own maximal-clique
-enumeration and {help nwfactions}'s own combinatorial search already carry.
+The census is not obtained by listing the {it:n}({it:n}-1)({it:n}-2)({it:n}-3)/24 four-node sets. The numbers of
+stars, paths, 4-cycles, triangles with a pendant tie, diamonds and complete 4-sets are counted as subgraphs from the
+degrees, the triangles on each tie and the common neighbours of node pairs (time proportional to the number of ties
+times the largest degree), and turned into counts of {it:induced} subgraphs with the exact inclusion relations between
+the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the
+enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take
+0.007 / 0.015 / 0.06 seconds (the enumeration did not finish in 3 minutes at 300 nodes). Counts are exact up to the
+size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of
+four-node sets).
 
 {title:Stored results}
 
