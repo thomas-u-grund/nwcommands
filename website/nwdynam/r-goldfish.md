@@ -1,5 +1,5 @@
 ---
-title: "DyNAM: nwdynam and goldfish"
+title: "nwdynam and goldfish"
 parent: "nwdynam (DyNAM)"
 nav_order: 5
 permalink: /nwdynam/r-goldfish/
