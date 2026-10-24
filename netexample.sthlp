@@ -428,26 +428,30 @@ Project).
 
 {pstd}
 {bf:Networks:} {it:s50_w1, s50_w2, s50_w3} (directed - friendship nominations among the same 50
-university students at three time points){p_end}
+girls at three time points){p_end}
 {pstd}
 {bf:Vertex attributes:} {it:alcohol1, alcohol2, alcohol3, smoke1, smoke2, smoke3}
 
 {pstd}
-This is Van de Bunt's university-freshmen friendship panel (a subset of 50 students from a larger
-study), collected at three points during their first year - the single most commonly used
-teaching dataset for Stochastic Actor-Oriented Models (SAOM, {help nwsaom}), distributed as the
-"s50" example data with the RSiena software this package's own SAOM implementation was
-cross-validated against. {it:alcohol1-3} (1 = never to 5 = more than once a week) and
-{it:smoke1-3} (1 = non-smoker to 3 = regular smoker) are each student's own self-reported behavior
+This is the 50-girl excerpt of the Teenage Friends and Lifestyle Study that is distributed as the
+"s50" example data with the RSiena software, the single most commonly used teaching dataset for
+Stochastic Actor-Oriented Models (SAOM, {help nwsaom}); its networks are the same as those of the
+{help netexample##glasgow:Glasgow data}, which in addition has the sport variable. The study is
+described there. {it:alcohol1-3} (1 = never to 5 = more than once a week) and
+{it:smoke1-3} (1 = non-smoker to 3 = regular smoker) are each girl's own self-reported behavior
 at the matching wave. Node labels are plain sequential ids (1-50).
 
 {pmore}
-{bf:Reference}
+{bf:References}
 
 {pmore}
-Van de Bunt, G.G., Van Duijn, M.A.J., and Snijders, T.A.B. (1999). Friendship networks through
-time: An actor-oriented dynamic statistical network model. Computational and Mathematical
-Organization Theory, 5, 167-192.
+Michell, L., and A. Amos 1997. Girls, pecking order and smoking. Social Science and Medicine, 44, 1861 - 1869.
+
+{pmore}
+Pearson, M.A., and L. Michell. 2000. Smoke Rings: Social network analysis of friendship groups, smoking and drug-taking. Drugs: education, prevention and policy, 7, 21-37.
+
+{pmore}
+Pearson, M., and P. West. 2003. Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking. Connections, 25(2), 59-76.
 
 {pmore}
 Distributed with the RSiena software/package (part of the Siena/RSiena project,
