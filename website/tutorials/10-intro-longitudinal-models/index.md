@@ -140,10 +140,11 @@ RI: expected relative importance of the effect (shares sum to 1 within a period)
 
 Reciprocity and the outdegree term dominate the actors' choices; smoking similarity hardly
 matters. Further postestimation includes `estat gof` (goodness of fit), `estat score` (a test of
-effects held fixed with `fix()`) and `estat simulate`. Beyond this model, `nwsaom` also fits
+effects held fixed with `fix()`) and `estat simulate`. This is only an overview; the [nwsaom section](../../nwsaom/) has six worked tutorials, an
+installation page and a guide for RSiena users. Beyond this model, `nwsaom` also fits
 co-evolving behavior (`behavior()`), several dependent networks (`nwsaom multinet`), maximum
 likelihood instead of the method of moments (`ml`), and Bayesian estimation (`nwsaom bayes`); see
-the [`nwsaom` reference page](../../reference/nwsaom).
+[Tutorial 6](../../nwsaom/tutorial-6-beyond/) and the [`nwsaom` reference page](../../reference/nwsaom).
 
 ## Relational event models (REM)
 
