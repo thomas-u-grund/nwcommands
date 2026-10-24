@@ -26,6 +26,8 @@ GNU General Public License, version 3, and it needs the core installed first.
 core never overwrites the package; to update the package, repeat the `net install` line with
 `replace`. Inside Stata, `help nwsaom` gives the complete syntax, options and examples.
 
+Worked tutorials, an installation page and a guide for RSiena users are in the [nwsaom section](../nwsaom/) of this website.
+
 What it offers:
 
 - a rich set of network, covariate and behavior effects, including interactions, endowment and creation effects, and composition change

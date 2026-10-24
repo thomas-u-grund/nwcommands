@@ -159,11 +159,11 @@ Two commands from the real run above confirm everything landed correctly:
 
 ## The Network Analysis menu
 
-Add `permanently` to also add a "Network Analysis" menu to Stata's own User menu, so every
+Add `gui` to also add a "Network Analysis" menu to Stata's own User menu, so every
 command is reachable through a dialog box, not just the command line:
 
 ```stata
-. nwinstall, permanently
+. nwinstall, gui
 ```
 
 This is worth doing even if you're comfortable typing syntax — nwcommands ships around 120
