@@ -36,7 +36,7 @@ threshold(#)
 - knowing [nwrecode](nwrecode)'s own general recode-rule syntax. For anything beyond a single cutoff
 - (multiple bands, missing-value handling, etc.), use [nwrecode](nwrecode) directly.
 
-As with [nwrecode](nwrecode) (and following the package's general convention - see [the style guide](NWCOMMANDS_COMMAND_STYLE.md)'s "Output creation" section - for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
+As with [nwrecode](nwrecode) (and following the package's general convention for commands where in-place modification is the default), the network is dichotomized in place unless `generate()` or `prefix()` is specified, in which case the original is left untouched and the result is saved under a new name instead.
 
 ## Examples
 
