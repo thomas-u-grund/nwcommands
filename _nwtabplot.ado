@@ -5,7 +5,8 @@
 // same arguments: one bar per cell of the table (row variable on the y
 // axis, column variable on the x axis), bar length proportional to the
 // cell frequency, the weight total, or a percent / fraction / per mille.
-// Written for nwcommands; it does not call or copy -tabplot-.
+// Written for nwcommands; it does not call or copy -tabplot-. The idea and the
+// look follow Nick Cox's -tabplot-: thanks to N. J. Cox.
 //
 // Supported: varlist (1 or 2 variables) [if] [in] [fweight aweight iweight],
 // percent[(varlist)] fraction[(varlist)] permille[(varlist)] missing

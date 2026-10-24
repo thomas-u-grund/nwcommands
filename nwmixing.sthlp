@@ -104,7 +104,7 @@ simulation. {it:Social Psychology Quarterly} 51(2), 123-140.
 {title:Remarks on plot}
 
 {pstd}
-The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}.
+The {opt plot} option draws the table with a built-in bar plot (the same plot the user-written {help tabplot} draws; {cmd:tabplot} itself is not needed, and is not used even if it is installed). Any further options in {opt plotoptions()} are passed to {help twoway}. The built-in plot follows the idea and the look of Nick Cox's {cmd:tabplot} (SSC); thanks to N. J. Cox.
 
 
 {title:See also}
