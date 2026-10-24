@@ -1,8 +1,7 @@
 ---
 title: "Tutorial 3: Importing & Exporting"
-parent: "nwcommands tutorials"
-grand_parent: "nwcommands (core)"
-nav_order: 3
+parent: "nwcommands (core)"
+nav_order: 4
 description: "Edgelists, UCINET/Pajek formats, and moving networks in and out of nwcommands."
 ---
 

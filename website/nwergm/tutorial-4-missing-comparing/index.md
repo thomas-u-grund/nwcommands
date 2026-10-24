@@ -1,9 +1,8 @@
 ---
 title: "Tutorial 4: Missing data and comparing models"
-parent: "nwergm tutorials"
-nav_order: 4
+parent: "nwergm (ERGM)"
+nav_order: 5
 description: "Fit an ERGM to a network with missing dyads, compare models with AIC, BIC and likelihood-ratio tests, and compute predicted tie probabilities."
-grand_parent: "nwergm (ERGM)"
 ---
 
 # ERGM 4: Missing data and comparing models

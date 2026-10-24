@@ -1,10 +1,9 @@
 ---
 title: "nwdynam tutorials"
-parent: "nwdynam (DyNAM)"
 nav_order: 2
-has_children: true
 permalink: /nwdynam/tutorials/
 description: "Worked tutorials for nwdynam."
+nav_exclude: true
 ---
 
 # nwdynam tutorials

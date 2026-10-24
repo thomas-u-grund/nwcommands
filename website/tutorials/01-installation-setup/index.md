@@ -1,8 +1,7 @@
 ---
 title: "Tutorial 1: Installation & Setup"
-parent: "nwcommands tutorials"
-grand_parent: "nwcommands (core)"
-nav_order: 1
+parent: "nwcommands (core)"
+nav_order: 2
 description: "Installing nwcommands 3.0.0 from scratch, installing the model packages, choosing a release, and updating."
 ---
 

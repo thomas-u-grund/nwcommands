@@ -1,9 +1,8 @@
 ---
 title: "Tutorial 2: Effects and interpretation"
-parent: "nwdynam tutorials"
-nav_order: 2
+parent: "nwdynam (DyNAM)"
+nav_order: 3
 description: "Add covariates, closure effects, recency windows and weights to a DyNAM with nwdynam, and compare models by their log likelihoods."
-grand_parent: "nwdynam (DyNAM)"
 ---
 
 # Tutorial 2: Effects and interpretation

@@ -1,9 +1,8 @@
 ---
 title: "Tutorial 2: Convergence"
-parent: "nwsaom tutorials"
-nav_order: 2
+parent: "nwsaom (SAOM)"
+nav_order: 3
 description: "How to read the convergence diagnostics of nwsaom and what to do when a model has not converged: restart from the estimates, simplify, and test hypotheses with Stata's own Wald tests."
-grand_parent: "nwsaom (SAOM)"
 ---
 
 # Tutorial 2: Reading convergence, and what to do when it fails

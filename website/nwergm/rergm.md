@@ -1,7 +1,7 @@
 ---
 title: "nwergm and R's ergm"
 parent: "nwergm (ERGM)"
-nav_order: 3
+nav_order: 7
 permalink: /nwergm/rergm/
 description: "What nwergm shares with R's ergm, what it lacks, how it was compared, and a translation table from ergm functions to nwergm commands."
 ---

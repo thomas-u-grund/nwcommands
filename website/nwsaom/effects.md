@@ -1,7 +1,7 @@
 ---
 title: "Effects"
 parent: "nwsaom (SAOM)"
-nav_order: 4
+nav_order: 9
 permalink: /nwsaom/effects/
 description: "An overview of the effect families of nwsaom; the full list is in help nwsaom and in the manual."
 ---

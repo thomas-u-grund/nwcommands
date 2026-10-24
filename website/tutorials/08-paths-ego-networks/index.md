@@ -1,8 +1,7 @@
 ---
 title: "Tutorial 8: Paths & Ego Networks"
-parent: "nwcommands tutorials"
-grand_parent: "nwcommands (core)"
-nav_order: 8
+parent: "nwcommands (core)"
+nav_order: 9
 description: "Geodesics, reachability, and ego-network extraction."
 ---
 

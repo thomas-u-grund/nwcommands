@@ -1,10 +1,9 @@
 ---
 title: "nwergm tutorials"
-parent: "nwergm (ERGM)"
 nav_order: 2
-has_children: true
 permalink: /nwergm/tutorials/
 description: "Worked tutorials for nwergm."
+nav_exclude: true
 ---
 
 # nwergm tutorials

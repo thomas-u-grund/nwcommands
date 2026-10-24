@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwdynam (DyNAM)"
-nav_order: 5
+nav_order: 6
 permalink: /nwdynam/citation/
 description: "How to cite nwdynam, and the original papers and software it builds on."
 ---
