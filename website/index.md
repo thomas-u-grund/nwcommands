@@ -1,22 +1,21 @@
 ---
 title: Home
 nav_order: 1
-description: "nwcommands: network analysis for Stata — import, generate, analyze, model, and visualize network data."
+description: "nwcommands: network analysis for Stata. Import, generate, describe, analyze and plot networks; fit statistical network models with the companion packages nwsaom (SAOM), nwergm (ERGM), nwdynam (DyNAM) and nwrem (REM)."
 permalink: /
 ---
 
 # nwcommands
 {: .fs-9 }
 
-Network analysis for Stata — over 130 commands for importing, generating, describing,
-analyzing, visualizing, and statistically modeling networks, alongside Stata's own regular
-data commands.
+Network analysis in Stata: import, generate, describe, analyze and plot networks, and fit statistical
+network models, from the Stata command line or from dialog boxes.
 {: .fs-6 .fw-300 }
 
-[Get started](#installation){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Install](#install-in-three-steps){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[nwsaom](nwsaom/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -25,44 +24,25 @@ data commands.
 . sum _between
 ```
 
-## What's here
-
-- **Import / export** — edgelists, adjacency matrices, UCINET/Pajek-style formats
-  (`nwfromedge`, `nwimport`, `nwset`, `nwexport`, ...)
-- **Generators** — random, small-world, preferential-attachment, lattice, and
-  expression-based networks (`nwrandom`, `nwsmall`, `nwpref`, `nwlattice`, `nwgenerate`, ...)
-- **Structural analysis** — centrality, components, cliques/k-plexes/k-cores, cohesive
-  subgroups, community detection, structural equivalence, QAP, and more
-- **Statistical network models** — available as separate GPL-3 packages that build on the core:
-  `nwergm` (ERGM), `nwsaom` (stochastic actor-oriented models), `nwrem` (relational event
-  models), and `nwdynam` (Dynamic Network Actor Models); see the
-  [ERGM](tutorials/09-intro-ergm/) and [longitudinal models](tutorials/10-intro-longitudinal-models/) tutorials;
-  `nwsaom` has its own section with [worked tutorials](nwsaom/)
-- **Visualization** — static plots and network movies (`nwplot`, `nwmovie`)
-- **Dialog boxes** — around 120 GUI dialogs covering nearly every command, reachable via
-  Stata's own "Network Analysis" menu, for anyone who prefers point-and-click to typing syntax
-
-Every command works alongside ordinary Stata variables — a network can be loaded as Stata
-variables when you want to, but this is opt-in, not automatic, so building and analyzing a
-network never has to spend Stata's own variable budget unless you ask it to.
-
 ## The packages
 
-nwcommands is a family of packages. The core handles networks in Stata; the statistical models are separate
-GPL-3 packages that build on it. Each has its own section in the menu on the left, with installation notes, a
-comparison with the R package it follows, and worked tutorials.
+nwcommands is a family of five packages. The core handles networks (134 commands and 120 dialog boxes).
+Four model packages build on it. They are installed separately, and each follows an established R
+package without replacing it. The core and all four model packages are free software under the GNU
+General Public License, version 3.
 
-| Package | What it does | Section |
-|---|---|---|
-| **nwcommands** (core, 3.0.0) | Import, generate, describe, analyze and visualize networks; 130+ commands and dialog boxes | [nwcommands](nwcommands/), [Tutorials](tutorials/), [Command reference](reference/) |
-| **nwsaom** (1.0.1) | Stochastic actor-oriented models for network panels (follows RSiena) | [nwsaom](nwsaom/) |
-| **nwergm** (1.0.1) | Exponential random graph models (follows statnet's ergm) | [nwergm](nwergm/) |
-| **nwdynam** (1.0.1) | Dynamic network actor models for event data (follows goldfish) | [nwdynam](nwdynam/) |
-| **nwrem** (1.0.1) | Relational event models (cross-checked with relevent) | [nwrem](nwrem/) |
+| Package | What it does | Follows | Version |
+|---|---|---|---|
+| [**nwcommands**](nwcommands/) (core) | Import, generate, describe, analyze and plot networks | | 3.0.0 |
+| [**nwsaom**](nwsaom/) | Stochastic actor-oriented models (SAOM) for network panels | R package RSiena | 1.0.1 |
+| [**nwergm**](nwergm/) | Exponential random graph models (ERGM) for one network | R package `ergm` (statnet) | 1.0.1 |
+| [**nwdynam**](nwdynam/) | Dynamic network actor models (DyNAM) for event data | R package `goldfish` | 1.0.1 |
+| [**nwrem**](nwrem/) | Relational event models (REM) for event data | R package `relevent` | 1.0.1 |
 
-## Installation
+Not sure which one you need? See [Which package do I need?](which-package/).
 
-The core, version 3.0.0:
+## Install in three steps
+{: #install-in-three-steps }
 
 ```stata
 . net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
@@ -70,41 +50,23 @@ The core, version 3.0.0:
 . nwinstall, all
 ```
 
-The first two lines install just `nwinstall` itself and the landing help topics; `nwinstall,
-all` then downloads everything else — every command, all help files, and every dialog box —
-and installs them permanently. Add `nwinstall, gui` to also add a "Network Analysis"
-menu to Stata's own User menu.
+1. The first two lines install `nwinstall` itself.
+2. `nwinstall, all` downloads everything else: every command, all help files and every dialog box.
+3. Optional: `nwinstall, gui` installs the "Network Analysis" menu in Stata's User menu (the older
+   option name `permanently` still works), and `nwinstall, models` installs the four model packages.
+   To install one model package only, for example nwsaom, type
+   `net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
 
-The statistical network models are separate GPL-3 packages (each currently at version 1.0.1) that
-need the core. Install all four with `nwinstall, models`, or one by one:
+`nwversion` shows the installed versions. More on installation, releases and computers without
+internet access: [Installation & Setup](tutorials/01-installation-setup/).
 
-```stata
-. net install nwsaom,  from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)
-. net install nwergm,  from(https://raw.githubusercontent.com/thomas-u-grund/nwergm/main/)
-. net install nwdynam, from(https://raw.githubusercontent.com/thomas-u-grund/nwdynam/main/)
-. net install nwrem,   from(https://raw.githubusercontent.com/thomas-u-grund/nwrem/main/)
-```
+## Where to start
 
-`nwversion` shows the core version and which model packages are installed. To update, repeat the
-`net install ... replace` line; updating the core never overwrites a model package. To install a
-particular release, use its tag in the URL, for example `.../nwsaom/v1.0.1/`.
-
-See the [Installation & Setup](tutorials/01-installation-setup/) tutorial for a full walkthrough,
-including choosing a release and options for computers without internet access or admin rights.
-
-## Learn
-
-- **New to nwcommands?** Start with the [tutorials](tutorials/) — short, worked walkthroughs
-  with real Stata output, one topic at a time.
-- **Know what command you need?** Jump straight to the [command reference](reference/).
-- **Curious how it's built, or what's planned?** See the project's
-  [architecture](https://github.com/thomas-u-grund/nwcommands/blob/master/ARCHITECTURE.md) and
-  [roadmap](https://github.com/thomas-u-grund/nwcommands/blob/master/ROADMAP.md) on GitHub.
-
-## Performance
-
-Two backends exist for the commands where it matters, chosen automatically and
-transparently — there is nothing to configure, and results are identical either way: a
-sparse-native Mata graph representation for the core structural commands, proven at 100,000
-nodes / 1,000,000 edges, and compiled native (C) kernels for the handful of operations where
-Stata's own interpreter, not the algorithm, is the bottleneck.
+- New to networks in Stata: the [tutorials](tutorials/), starting with Installation & Setup and Core Concepts.
+- You know the command you want: the [command reference](reference/).
+- Coming from R (RSiena, statnet, goldfish, relevent): [nwsaom and RSiena](nwsaom/rsiena/) and the
+  "Follows" column above.
+- Citing the software, licenses and releases: [Citing and licenses](citing/).
+- Problems: issues with the core go to the
+  [nwcommands repository](https://github.com/thomas-u-grund/nwcommands/issues); issues with a model
+  package go to that package's own repository on GitHub.
