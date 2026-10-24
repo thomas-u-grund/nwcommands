@@ -1,8 +1,9 @@
 title: nwcommands
 description: >-
-  Network analysis for Stata — import, generate, analyze, model, and
-  visualize network data, with statistical network models (ERGM, SAOM,
-  DyNAM, relational event models) as companion packages.
+  Network analysis for Stata: import, generate, describe, analyze and plot
+  networks, with the companion packages nwsaom (stochastic actor-oriented
+  models), nwergm (exponential random graph models), nwdynam (dynamic network
+  actor models) and nwrem (relational event models).
 url: "https://nwcommands.org"
 baseurl: ""
 
@@ -13,18 +14,21 @@ search_enabled: true
 heading_anchors: true
 
 aux_links:
-  "nwcommands on GitHub":
-    - "https://github.com/thomas-u-grund/nwcommands"
-  "Request a feature":
-    - "https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"
-  "Report an issue":
-    - "https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"
+  "nwcommands": ["https://github.com/thomas-u-grund/nwcommands"]
+  "nwsaom": ["https://github.com/thomas-u-grund/nwsaom"]
+  "nwergm": ["https://github.com/thomas-u-grund/nwergm"]
+  "nwdynam": ["https://github.com/thomas-u-grund/nwdynam"]
+  "nwrem": ["https://github.com/thomas-u-grund/nwrem"]
+  "Request a feature": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"]
+  "Report an issue": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"]
 
 footer_content: >-
   nwcommands is free software under the GNU General Public License, version 3,
-  as are the model packages nwsaom, nwergm, nwdynam and nwrem. See the
-  <a href="https://github.com/thomas-u-grund/nwcommands">GitHub repository</a>
-  for source, license, and issue tracking.
+  as are the model packages nwsaom, nwergm, nwdynam and nwrem.
+  <a href="/citing/">Citing and licenses</a> ·
+  <a href="https://github.com/thomas-u-grund/nwcommands">GitHub</a>.
+  Issues with the core go to the nwcommands repository; issues with a model
+  package go to that package's own repository.
 
 back_to_top: true
 back_to_top_text: "Back to top"
