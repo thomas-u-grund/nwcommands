@@ -87,7 +87,7 @@ in {cmd:r(gof_}{it:statistic}{cmd:)}. The earlier summary values ({cmd:r(obs_mea
 {pstd}
 After the summary of the final sample, {cmd:estat mcmcdiag} prints the report of {cmd:mcmc.diagnostics()}: mean, standard deviation, naive and time-series standard error and quantiles of the centered
 statistics, the test that the sample statistics differ from the observed ones (with the Hotelling omnibus test), cross-correlations, autocorrelations at lags of {cmd:interval} proposals, and the Geweke
-statistic with individual and joint p-values. The matrices are returned in {cmd:r(summary)}, {cmd:r(quantiles)}, {cmd:r(obstest)}, {cmd:r(crosscorr)}, {cmd:r(autocorr)} and {cmd:r(geweke)}.
+statistic with individual and joint p-values. The matrices are returned in {cmd:r(mc_summary)}, {cmd:r(mc_quantiles)}, {cmd:r(mc_obstest)}, {cmd:r(mc_crosscorr)}, {cmd:r(mc_autocorr)} and {cmd:r(mc_geweke)}.
 
 {title:References}
 

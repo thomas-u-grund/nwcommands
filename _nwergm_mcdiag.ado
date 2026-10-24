@@ -150,11 +150,11 @@ program _nwergm_mcdiag, rclass
 	di
 	di as txt "Note: MCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimates. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate model performance. To directly assess the performance of the final model on in-model statistics, please use {bf:estat gof}."
 
-	return matrix summary = `SUM'
-	return matrix quantiles = `Q'
-	return matrix obstest = `DT'
-	return matrix crosscorr = `XC'
-	return matrix autocorr = `AC'
-	return matrix geweke = `GW'
+	return matrix mc_summary = `SUM'
+	return matrix mc_quantiles = `Q'
+	return matrix mc_obstest = `DT'
+	return matrix mc_crosscorr = `XC'
+	return matrix mc_autocorr = `AC'
+	return matrix mc_geweke = `GW'
 	mata: mata drop `obsstat' `C'
 end
