@@ -323,11 +323,18 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
 
 ## Scaling audit harness (`tools/scale_audit/`): three measurement traps
 
-- **An empty scratch PLUS makes some commands download packages.** `nwdyadprob` (and `nwhomophily` through it)
-  `ssc install`s gsample and moremata, `nwplot` installs labellist, `nwtabulate` installs tabplot, on first use.
-  With the fresh PLUS the test convention requires, the first call measures about 20 s of download (and fails
-  offline). The harness seeds a PLUS once and copies it per run. Found 2026-10-25: nwdyadprob "took 23 s" for a
-  30-node network.
+- **An empty scratch PLUS used to make some commands download packages (fixed).** `nwdyadprob` (and
+  `nwhomophily` through it) `ssc install`ed gsample and moremata, `nwplot` labellist, `nwtabulate` tabplot, on
+  first use (about 20 s, needs internet, wrote to the user's PLUS). Gone: `gsample` is replaced by the built-in
+  `_nwgsample.ado` (same algorithm and same random-number stream as `gsample ..., wor`: random order via
+  `uniform(N,2)`, then systematic sampling along the cumulated weights; verified identical samples, errors and
+  RNG state against the real package on 300 random inputs), the `labellist` call in `nwplot`'s
+  `_getvaluelabel` is a direct `st_vlload()` lookup, and `tabplot` (only the `plot` option of nwtab2, nwtab3,
+  nwmixing) is an explicit requirement checked by `_nwrequire.ado` (stops with rc 199, never installs).
+  `cscripts/test_no_ssc_install.do` fails if a new `ssc install` sneaks in. The harness no longer needs the
+  seeded PLUS for these commands (it is harmless). Do not reintroduce `ssc install` in core code. Mata trap met
+  on the way: a one-line `mata: for (...) { ... }` is "invalid expression" in Stata (braces need separate
+  lines), so loops inside an ado must be vectorised or live in a compiled function.
 - **`quietly` hides `display as error` messages**, so `capture quietly cmd` leaves rc 999 with no explanation
   in the log. The harness times `capture quietly cmd` and, only for a quick failure, reruns it with output on
   to read the message. `set output error` is not a substitute (it changed timings).
