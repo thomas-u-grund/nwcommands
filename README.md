@@ -24,8 +24,8 @@ data commands.
   `nwergm` (exponential-family random graph models), `nwsaom` (stochastic actor-oriented
   models), `nwrem` (relational event models) and `nwdynam` (Dynamic Network Actor Models).
   Install each with `net install <name>, from(https://raw.githubusercontent.com/<account>/<name>/main/)`.
-  The commands `nwergm`, `nwsaom`, `nwrem` and `nwdynam` remain in the core only as stubs that
-  print this installation hint.
+  They are separate packages, so they are not part of the core: installing or updating `nwcommands`
+  never replaces them.
 - **Visualization**: static plots and network movies (`nwplot`, `nwmovie`).
 - **Dialog boxes**: ~120 GUI dialogs covering nearly every command, reachable via Stata's own
   "Network Analysis" menu after `nwinstall, permanently` (or `db <command>` directly) — for

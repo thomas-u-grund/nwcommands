@@ -61,9 +61,7 @@ f nwds.ado
 f nwduplicate.ado
 f nwdyadprob.ado
 f nwdyads.ado
-f nwdynam.ado
 f nwego.ado
-f nwergm.ado
 f nwevcent.ado
 f nwexpand.ado
 f nwexport.ado
@@ -115,13 +113,11 @@ f nwrandom.ado
 f nwrandomwalk.ado
 f nwreach.ado
 f nwrecode.ado
-f nwrem.ado
 f nwrename.ado
 f nwreplace.ado
 f nwreplacemat.ado
 f nwrestore.ado
 f nwring.ado
-f nwsaom.ado
 f nwsave.ado
 f nwset.ado
 f nwshared.ado
