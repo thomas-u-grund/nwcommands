@@ -99,8 +99,18 @@ there is nothing to configure, and results are identical either way:
 
   Building with automatic directed/undirected detection (no `directed` option) took 8.8 s at
   100,000 nodes, `forceundirected` 14 s. None of these builds the dense N x N matrix.
+  Saving and exchanging a big network also works (same random networks, same machine, load average
+  about 5, seconds; `nwtoedge, compress` and `nwsave` list only the stored ties):
+
+  | nodes | `nwtoedge, compress` | `nwfromedge` of that list | `nwsave` (file) | `nwuse` | `nwappend` |
+  |---|---|---|---|---|---|
+  | 25,000 | 2.0 | 3.3 | 2.7 (30 MB) | 4.4 | 4.0 |
+  | 40,000 | 2.9 | 5.6 | 6.4 (49 MB) | 10.4 | 10.4 |
+  | 100,000 | 14.7 | 20.2 | 14.8 (124 MB) | 28.1 | 36.4 |
+
   Commands that still need the full adjacency matrix (for example the all-pairs `nwgeodesic`,
-  `nwtoedge`/`nwsave`, `nwsummarize`, most weighted-distance commands) are refused above 20,000 nodes.
+  `nwsummarize`, uncompressed `nwtoedge`, `nwtoedge`/`nwsave` of several networks at once, two-mode
+  networks, most weighted-distance commands) are refused above 20,000 nodes.
 - **Compiled native (C) kernels** (Stata plugins, source in `native/`) for the specific
   operations where Stata's own Mata interpreter is the actual bottleneck, not the algorithm:
   betweenness centrality. Falls back to an equivalent,

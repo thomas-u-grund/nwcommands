@@ -101,7 +101,9 @@ program nwuse
 		local m1d ""
 		local m2d ""
 		local prov ""
-		if `has_modes' local md = _nw_modes[`i']
+		// the mode list goes through Mata, never through a macro
+		capture mata: mata drop __nwmd
+		if `has_modes' mata: __nwmd = st_sdata(`i', "_nw_modes")
 		if `has_mode1desc' local m1d = _nw_mode1desc[`i']
 		if `has_mode2desc' local m2d = _nw_mode2desc[`i']
 		if `has_provenance' local prov = _nw_provenance[`i']
@@ -161,7 +163,12 @@ program nwuse
 		// crash on every dataset that reaches this line (i.e. every
 		// genuine .nwdta restoration - previously undiagnosed beyond
 		// "some macro-quoting mismatch").
-		nwname `ncreate', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmodes(`"`md'"') newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
+		nwname `ncreate', new2mode("`t'") newselfloop("`sl'") newtitle("`tl'") newvalued("`v'") newmode1desc(`"`m1d'"') newmode2desc(`"`m2d'"') newprovenance(`"`prov'"')
+		if `has_modes' {
+			_nwsyntax `ncreate', other(other)
+			mata: `othernetobj'->set_modes_from_labeled_string(__nwmd)
+			mata: mata drop __nwmd
+		}
 		if "`d'"  == "false" {
 			nwsym `ncreate'
 		}

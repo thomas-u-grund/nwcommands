@@ -11,6 +11,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - Duplicate rows (same ego and alter) in an edge list now give one tie, the last row given winning, in the stored sparse index too; before, the adjacency matrix had one tie but `nwdegree`/`nwclustering` counted the duplicate rows.
 - Node labels of string identifiers that contain a space or a comma are kept as given (the old macro route split them into several labels and could drop a node's label).
 
+- `nwtoedge, compress`, `nwsave`, `nwuse` and `nwappend` work for a single big network (tested to 100,000 nodes / 1,000,000 ties). `nwtoedge, compress` lists the stored ties instead of building the N x N list of dyads (new `get_edgelist_sparse()`; the output is identical, including the blanked diagonal). The isolates note it stores in the edge list (a Stata characteristic, 67,784 characters at most) falls back to the isolated nodes only when all node names do not fit. `nwsave` writes the mode list from Mata into a strL variable and `nwuse` reads it back through Mata (a macro of all modes was longer than Stata/BE allows from about 40,000 nodes), and `set_modes_from_labeled_string()` no longer scans the string character by character (28 s at 25,000 nodes, now under 1 s).
+- `nwimport` of a `.dta` edge list passed `directed` on under a misspelled name, so it was ignored.
 ### Changed
 - Documentation (`README.md`, `help nwintro`) states the measured end-to-end times for `nwfromedge` and the sparse-native commands, and which commands still need the dense matrix (guard at 20,000 nodes), including `nwtoedge` and `nwsave`.
 

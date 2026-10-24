@@ -310,6 +310,13 @@ dense-matrix refusal `r(484)` at 25,000. The Mata construction (`create_by_name_
   with `do unw_core.do` from the worktree root (what every cscript does) and put the worktree on the
   adopath explicitly. Parallel test runs that share one PLUS directory can collide while an ado such as
   `gsample` is being installed (a one-off `r(499)` in `test_nwhomophily`); rerun before suspecting code.
-- `nwtoedge` (and so `nwsave`) still builds the full N x N list of dyads in `get_edgelist()`, even with
-  `compress`; above 20,000 nodes it is refused (after about a minute at 25,000 nodes). That is a separate
-  limit from the one fixed here.
+- `nwtoedge` built the full N x N list of dyads in `get_edgelist()` even with `compress` (so `nwsave` was
+  refused above 20,000 nodes, after a minute or two). `nwtoedge, compress` of ONE network now uses
+  `get_edgelist_sparse()`, which must list exactly the non-zero cells of `get_edgelist()`: that is only
+  true if the dense matrix holds no missing cell besides the blanked diagonal (a cleaned two-mode network
+  does), which `edgelist_sparse_ok()` checks. Several networks at once need the zero cells for the merge
+  and still go through the dense list. Other limits met on the way: a Stata characteristic holds at most
+  67,784 characters (the isolate list in `_dta[nwtoedge_nodes]`), `st_sdata()`/`st_sstore()` and strL are
+  the way to move long strings, and `set_modes_from_labeled_string()` was O(n^2).
+- An `.ado` file's extra programs (`_nwimport_edgelist` in `nwimport.ado`) are private to that file: a
+  cscript cannot call them directly, only through the command.

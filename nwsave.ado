@@ -62,7 +62,9 @@ program nwsave
 	 // lost its real mode membership (confirmed via a direct
 	 // round-trip probe before this fix - see get_modes_labeled_string()'s
 	 // own header comment in unw_core.do for the full explanation).
-	 gen _nw_modes = ""
+		 // strL, and filled from Mata below: a big network's mode list is far
+	 // longer than a Stata macro or a str# value can be
+	 gen strL _nw_modes = ""
 	 gen _nw_mode1desc = ""
 	 gen _nw_mode2desc = ""
 	 gen _nw_provenance = ""
@@ -80,10 +82,12 @@ program nwsave
 		replace _nw_twomode = "`r(mode2)'" in `i'
 		replace _nw_valued = "`r(valued)'" in `i'
 		replace _nw_title = "`r(title)'" in `i'
-		replace _nw_modes = `"`r(modes)'"' in `i'
 		replace _nw_mode1desc = `"`r(mode1desc)'"' in `i'
 		replace _nw_mode2desc = `"`r(mode2desc)'"' in `i'
 		replace _nw_provenance = `"`r(provenance)'"' in `i'
+		// last, because _nwsyntax resets r()
+		_nwsyntax `onenet', other(other)
+		mata: st_sstore(`i', "_nw_modes", `othernetobj'->get_modes_labeled_string())
 		local i = `i' + 1
 	}
 	qui replace _nw_nets = `=`i'-1' in 1

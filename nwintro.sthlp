@@ -109,6 +109,9 @@ shared computer, for a random directed network with 10 ties per node: {help nwfr
 1,000,000 ties, {help nwdegree} takes 0.5, {help nwcomponents} 0.5, {help nwneighbor} (one node) 0.4 and
 {help nwclustering} 16 seconds (at 25,000 nodes: 0.13, 0.12, 0.13 and 2.0 seconds). Building the network from an edge
 list ({help nwfromedge}, {cmd:nwset, edgelist}, {help nwimport} type(edgelist)) never allocates the dense matrix.
+{help nwtoedge} with {opt compress}, {help nwsave}, {help nwuse} and {help nwappend} of a single network work at this
+size too (100,000 nodes / 1,000,000 ties: {cmd:nwtoedge, compress} 15, {cmd:nwsave} 15 seconds and a 124 MB file,
+{cmd:nwuse} 28, {cmd:nwappend} 36 seconds on a busy computer; 25,000 nodes: 2.0, 2.7, 4.4 and 4.0 seconds).
 {help nwgeodesic} is {bf:not} in this group at the command level: it returns the full matrix of distances between
 all pairs, which is dense (10,000 nodes: 19 seconds; refused above 20,000 nodes).
 ({help nwfactions} and {help nwmotifs} are combinatorial rather than sparse-traversal in nature - see their own
@@ -125,8 +128,8 @@ silently exhausting memory (at 20,000 nodes the matrix alone is already several 
 practice, comfortable, responsive use of these specific commands is closer to a few thousand nodes than to the
 20,000-node hard ceiling - memory and running time both grow with the SQUARE of the node count for anything that
 touches this matrix directly. Among the commands people reach for with big data, {help nwgeodesic}, {help nwsummarize},
-{help nwtoedge} and {help nwsave} (which writes edge lists with {cmd:nwtoedge}) are in this group: at 25,000 nodes
-{cmd:nwtoedge} was refused after about a minute. ({help nwspectral}'s own Laplacian-spectrum analysis is a deliberate exception in
+the uncompressed {help nwtoedge} (it lists every dyad), {cmd:nwtoedge} and {cmd:nwsave} of several networks at once,
+and {help nw2toedge} are in this group; so are two-mode networks in {cmd:nwtoedge, compress}. ({help nwspectral}'s own Laplacian-spectrum analysis is a deliberate exception in
 this same category even though it is newer - it genuinely needs the full eigenspectrum, not just a dominant
 pair, so there is no sparse equivalent available the way there now is for {help nwevcent}.)
 

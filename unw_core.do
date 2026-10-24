@@ -3090,6 +3090,9 @@ class `NWdef' {
 	real scalar get_nodeid_from_nodename()
 
 	string matrix get_edgelist()
+	string matrix get_edgelist_sparse()
+	real scalar edgelist_sparse_ok()
+	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
 	real matrix get_outdegree()
 	real matrix get_indegree()
@@ -7635,28 +7638,32 @@ string scalar `NWdef'::get_modes_labeled_string(){
 	nwuse.ado's own new2mode() handling already follows for is2mode.
 */
 void `NWdef'::set_modes_from_labeled_string(string scalar s){
-	string scalar remaining, onepair, lab, md
-	real scalar idx, eqpos, commapos
+	string rowvector pairs
+	string scalar lab, md, onepair
+	real scalar idx, eqpos, i
+	transmorphic scalar t, pos
 
 	if (s == "") return
 	get_modes()
-	remaining = s
-	while (strlen(remaining) > 0) {
-		commapos = strpos(remaining, ",")
-		if (commapos == 0) {
-			onepair = remaining
-			remaining = ""
-		}
-		else {
-			onepair = substr(remaining, 1, commapos-1)
-			remaining = substr(remaining, commapos+1, .)
-		}
+	// Split at every comma (no whitespace splitting) and look labels up in a
+	// hash of the node names: the former character-by-character scan with a
+	// linear label search was O(n^2), minutes at 40,000 nodes.
+	t = tokeninit("", ",", "", 0, 0)
+	tokenset(t, s)
+	pairs = tokengetall(t)
+	pos = asarray_create("string")
+	for (i = cols(nodes); i >= 1; i--) asarray(pos, nodes[i], i)
+	for (i = 1; i <= cols(pairs); i++) {
+		onepair = pairs[i]
+		if (onepair == ",") continue
 		eqpos = strpos(onepair, "=")
 		if (eqpos > 0) {
 			lab = substr(onepair, 1, eqpos-1)
 			md = substr(onepair, eqpos+1, .)
-			idx = first_index_match(nodes, lab)
-			if (idx > 0) modes[idx] = md
+			if (asarray_contains(pos, lab)) {
+				idx = asarray(pos, lab)
+				modes[idx] = md
+			}
 		}
 	}
 }
@@ -7743,6 +7750,96 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 	return(select((vec(sender), vec(receiver), strofreal(vec(e)), strofreal(vec(z)), strofreal(vec(e')),strofreal(vec(sender_num)), strofreal(vec(receiver_num))), vec(z)))
 }
 
+
+/*
+	The rows of get_edgelist() whose cell is not exactly 0, computed from the
+	stored ties (O(nnz) time and memory, no N x N matrix).  Same 7 columns as
+	get_edgelist() (sender, receiver, value, in-selection flag "1", reverse
+	cell value, sender index, receiver index), rows in no particular order.
+	The blanked diagonal of a network without self-loops (value ".") is
+	listed exactly as get_edgelist() lists it; with `undirected' only the
+	lower triangle including the diagonal is listed.  Cells of value 0 are
+	left out - callers that need them (the uncompressed edge list) use
+	get_edgelist().
+*/
+string matrix `NWdef'::get_edgelist_sparse(real scalar undirected){
+	real colvector r, c, w, keep, k1, k2, tag, K, ord, tg, wrev, hit, dg
+	real scalar n, m
+	string colvector rv
+
+	ensure_sparse_built()
+	n = get_nodes()
+	r = csr_rows()
+	c = colidx
+	w = cweight
+	// reverse cell value of every stored tie: look up (c,r) among the keys (r,c)
+	m = rows(r)
+	wrev = J(m, 1, 0)
+	if (m > 0){
+		k1 = r :* (n + 1) :+ c
+		k2 = c :* (n + 1) :+ r
+		K = k1 \ k2
+		tag = J(m, 1, 1) \ J(m, 1, 2)
+		ord = order((K, tag), (1, 2))
+		tg = tag[ord]
+		hit = selectindex(tg[2::2*m] :== 2 :& tg[1::2*m-1] :== 1 :& K[ord][2::2*m] :== K[ord][1::2*m-1])
+		if (rows(hit) > 0){
+			// position (in the stacked vector) of the probe row, and of its match just before it
+			wrev[ord[hit :+ 1] :- m] = w[ord[hit]]
+		}
+	}
+	if (undirected){
+		keep = nw_which(r :>= c)
+		r = r[keep,1]; c = c[keep,1]; w = w[keep,1]; wrev = wrev[keep,1]
+	}
+	if (isselfloop == 0){
+		dg = (1::n)
+		r = r \ dg
+		c = c \ dg
+		w = w \ J(n, 1, .)
+		wrev = wrev \ J(n, 1, .)
+	}
+	m = rows(r)
+	if (m == 0) return(J(0, 7, ""))
+	rv = strofreal(r)
+	return((nodes[r]', nodes[c]', strofreal(w), J(m, 1, "1"), strofreal(wrev), rv, strofreal(c)))
+}
+
+/*
+	TRUE when get_edgelist_sparse() lists exactly the non-zero cells of
+	get_edgelist(): the network was never expanded to a dense matrix, or
+	its dense matrix holds no missing cell besides the blanked diagonal
+	(a missing cell - e.g. the same-mode dyads of a cleaned two-mode
+	network - is not part of the sparse tie store).
+*/
+real scalar `NWdef'::edgelist_sparse_ok(){
+	if (edge_dense_built == `False') return(1)
+	return(sum(edge :== .) == (isselfloop == 0 ? get_nodes() : 0))
+}
+
+/*
+	The ";"-delimited node list nwtoedge stores in the edge list dataset
+	(characteristic _dta[nwtoedge_nodes]) so that nwfromedge can restore the
+	isolates: all node names when that fits a Stata characteristic (67,784
+	characters), otherwise only the names of the isolated nodes (appended
+	after the tied nodes on reload), otherwise "".
+*/
+string scalar `NWdef'::get_isolate_source_string(){
+	string scalar all
+	real colvector dout, din
+	real scalar n
+
+	all = get_nodenames_string()
+	if (strlen(all) <= 60000) return(all)
+	ensure_sparse_built()
+	n = get_nodes()
+	dout = rowptr[|2 \ n+1|] - rowptr[|1 \ n|]
+	if (isdirect) din = rowptr_in[|2 \ n+1|] - rowptr_in[|1 \ n|]
+	else din = dout
+	all = invtokens(select(nodes, (dout :== 0 :& din :== 0)'), ";")
+	if (strlen(all) <= 60000) return(all)
+	return("")
+}
 
 void `NWdef'::drop_nodes(rowvector d){
 	keep_nodes(d:==0)
