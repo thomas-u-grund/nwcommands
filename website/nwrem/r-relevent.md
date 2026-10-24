@@ -1,5 +1,5 @@
 ---
-title: "REM: nwrem and relevent"
+title: "nwrem and relevent"
 parent: "nwrem (REM)"
 nav_order: 5
 permalink: /nwrem/r-relevent/
