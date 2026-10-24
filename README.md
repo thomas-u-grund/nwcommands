@@ -41,7 +41,7 @@ variable budget unless you ask it to.
 ## Installation
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
 . net install nwcommands
 . nwinstall, all
 ```
@@ -75,9 +75,11 @@ out (one flat directory Stata's own `adopath` can point at directly) rather than
 index; `help nwintro` covers general concepts, conventions, and — importantly — realistic
 guidance on what network sizes are actually feasible for which commands.
 
-**Branches**: `master` is the current, tested release — install/point at this by default.
-`develop` is where active work happens and is merged into `master` once a batch of changes is
-regression-tested; day to day the two are kept in sync.
+**Branches**: `main` is the current, tested release — install/point at this by default (the
+model packages nwsaom, nwergm, nwdynam and nwrem also use `main`). `develop` is where active work
+happens and is merged into `main` once a batch of changes is regression-tested. `master` is an
+exact copy of `main`, kept so that older install lines and links keep working; it is updated
+automatically.
 
 ## Performance
 

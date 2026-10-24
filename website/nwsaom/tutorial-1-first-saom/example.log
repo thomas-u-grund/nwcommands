@@ -20,7 +20,7 @@ nwsaom version 1.0.1, 24oct2026
 
 . describe
 
-Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master/data/glasgow.nwdta
+Contains data from https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main/data/glasgow.nwdta
  Observations:            50                  
     Variables:            11                  14 May 2019 16:09
 -------------------------------------------------------------------------------------------------------------------------

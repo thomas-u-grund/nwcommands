@@ -10,7 +10,7 @@ permalink: /nwcommands/install/
 {: .no_toc }
 
 ```stata
-. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/master"
+. net from "https://raw.githubusercontent.com/thomas-u-grund/nwcommands/main"
 . net install nwcommands
 . nwinstall, all
 ```

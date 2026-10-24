@@ -1,0 +1,33 @@
+name: Keep master in sync with main
+
+# `main` is the release branch and the branch that users install from. `master`
+# is kept as an exact copy so that every older install line and link
+# (articles, books, tutorials from before the switch) keeps working.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward master to main
+        run: |
+          git fetch origin master
+          # fast-forward only: if master has commits that main does not, stop and report
+          if git merge-base --is-ancestor origin/master HEAD; then
+            git push origin HEAD:refs/heads/master
+          else
+            echo "master has commits that are not in main; not overwriting it." >&2
+            exit 1
+          fi
