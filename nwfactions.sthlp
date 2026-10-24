@@ -54,10 +54,15 @@ order, for reproducibility) to every OTHER group, keeping whichever single move 
 fitness correlation, until a full sweep produces no further improvement or {opt maxiter()} sweeps
 are reached. This is a greedy local optimum, not a guaranteed global one - the discrete factions
 problem is combinatorial, the same character of problem Louvain's own greedy search already accepts
-for modularity. A real, disclosed v1 scope choice: unlike {help nwcoreperiphery}'s own later
-performance pass (an O(n) incremental fitness update for its 2-group case), each candidate move
-here recomputes the full fitness correlation directly - fine for the moderate network sizes typical
-of SNA datasets, not yet optimized for very large ones.
+for modularity.
+
+{pstd}
+{bf:Starting partition.} Nodes with the same degree are taken in the order of their node number, so the same call
+always gives the same partition. (Earlier versions sorted with ties broken at random, which made the result differ
+from run to run on any network with equal degrees.) The fitness of a candidate move is computed from the total tie
+weight inside the groups and the number of same-group pairs, which takes time proportional to the node's degree plus
+the number of groups, not to the square of the number of nodes; {cmd:r(fitness)} agrees with a direct computation of
+the correlation to rounding error (about 1e-15).
 
 {title:Supported network types}
 
@@ -66,6 +71,13 @@ Binary: yes. Directed: yes, automatically symmetrized (the classical factions de
 distinguish in-ties from out-ties, the same choice {help nwcoreperiphery} already makes). Weighted:
 yes, via {opt measure(valued)} - tie VALUES then enter the fitness correlation directly rather than
 just their presence/absence. Signed: not checked. Two-mode: not checked.
+
+{title:Limits}
+
+{pstd}
+Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes with
+{opt groups(3)} take 0.014 / 0.019 / 0.05 seconds (the previous version: 38 seconds at 300 nodes, more than 60
+seconds at 1,000). The memory needed is proportional to the number of ties; no N-by-N matrix is built.
 
 {title:Stored results}
 

@@ -1,0 +1,28 @@
+command,N,ties,outcome,seconds,gen_seconds,peak_mem_mb,load_avg_1m,rc,message,timestamp
+nwmotifs,300,2941,OK,.006,.041,181.0,7.33,0,,2026-10-25 01:41:15
+nw2clustering,300,2899,OK,.091,.064,193.1,7.33,0,,2026-10-25 01:41:15
+nwmotifs,1000,9960,OK,.014,.06,170.0,7.33,0,,2026-10-25 01:41:15
+nw2clustering,1000,9932,OK,.242,.245,291.5,7.31,0,,2026-10-25 01:41:16
+nwmotifs,5000,49940,OK,.052,.207,219.9,7.31,0,,2026-10-25 01:41:16
+nwinduced,300,2941,OK,.022,.046,158.7,7.31,0,,2026-10-25 01:41:17
+nwinduced,1000,9960,OK,.032,.07,153.2,7.31,0,,2026-10-25 01:41:18
+nwinduced,5000,49940,OK,.089,.211,187.8,7.31,0,,2026-10-25 01:41:19
+nwlambda,300,2941,OK,.021,.041,185.1,7.31,0,,2026-10-25 01:41:19
+nwlambda,1000,9960,OK,.086,.074,216.2,7.31,0,,2026-10-25 01:41:20
+nwlambda,5000,49940,OK,1.941,.231,1371.7,7.31,0,,2026-10-25 01:41:22
+nwcohesion,300,2941,OK,.021,.049,181.7,7.44,0,,2026-10-25 01:41:23
+nw2clustering,5000,49897,OK,1.381,4.651,3650.9,7.31,0,,2026-10-25 01:41:23
+nwfactions,300,2941,OK,.017,.045,181.0,7.44,0,,2026-10-25 01:41:24
+nwcohesion,1000,9960,OK,.096,.071,177.8,7.44,0,,2026-10-25 01:41:24
+nwfactions,1000,9960,OK,.023,.074,168.8,7.44,0,,2026-10-25 01:41:24
+nwfactions,5000,49940,OK,.047,.236,207.3,7.44,0,,2026-10-25 01:41:25
+nwcohesion,5000,49940,OK,1.435,.24,377.5,7.44,0,,2026-10-25 01:41:27
+nwnclique,300,2941,REFUSED_GUARD,.045,.044,212.0,7.41,484,nwnclique: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 01:41:28
+nwnclique,1000,9960,REFUSED_GUARD,.037,.07,183.3,7.41,484,nwnclique: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 01:41:29
+nwnclique,5000,49940,REFUSED_GUARD,.075,.219,216.5,7.41,484,nwnclique: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 01:41:30
+nwnclan,300,2941,OK,1.975,.039,182.2,5.99,0,,2026-10-25 01:45:52
+nwnclan,1000,9960,OK,1.79,.061,326.5,5.99,0,,2026-10-25 01:45:54
+nwnclan,5000,49940,REFUSED_GUARD,2.206,.197,306.9,5.99,484,"nwnclan: the result matrix (165097 sets x 5000 nodes = 825485000 numbers, several copies of it are made) is too large to build.",2026-10-25 01:46:00
+nwkplex,300,2941,OK,2.126,.04,451.1,5.83,0,,2026-10-25 01:46:02
+nwkplex,1000,9960,REFUSED_GUARD,.046,.064,174.4,6.17,484,nwkplex: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 01:46:03
+nwkplex,5000,49940,REFUSED_GUARD,.193,.21,223.0,6.17,484,nwkplex: more than 100000 maximal sets (size >= minsize) found; stopped to protect memory.,2026-10-25 01:46:04

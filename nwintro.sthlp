@@ -134,6 +134,31 @@ and {help nw2toedge} are in this group; so are two-mode networks in {cmd:nwtoedg
 this same category even though it is newer - it genuinely needs the full eigenspectrum, not just a dominant
 pair, so there is no sparse equivalent available the way there now is for {help nwevcent}.)
 
+{marker limits_combinatorial}{...}
+{title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
+
+{pstd}
+{help nwcohesion}, {help nwfactions}, {help nwlambda}, {help nwmotifs}, {help nw2clustering} and {help nwinduced}
+with {opt measure(degree)} run in compiled code on the list of ties and no longer build N-by-N matrices
+(except that {help nwlambda}'s result is itself a dense N-by-N network). Measured in Stata/BE on a random network with
+10 ties drawn per node, seconds at 300 / 1,000 / 5,000 nodes: {cmd:nwcohesion} 0.02 / 0.10 / 1.4, {cmd:nwfactions}
+0.02 / 0.02 / 0.05, {cmd:nwlambda} 0.02 / 0.09 / 1.9 (1.4 GB at 5,000 nodes), {cmd:nwmotifs} 0.006 / 0.014 / 0.05,
+{cmd:nw2clustering} (N and N/2 nodes) 0.09 / 0.24 / 1.4, {cmd:nwinduced, measure(degree)} 0.02 / 0.03 / 0.09.
+Before, each of them took from 11 seconds to more than a minute at 300 nodes. {cmd:nwinduced} with betweenness,
+closeness or eigenvector centrality still recomputes the measure for every node left out and takes minutes at a few
+hundred nodes.
+
+{pstd}
+{help nwkplex}, {help nwnclique} and {help nwnclan} list {it:all} maximal subgroups, and the number of those, not
+the number of nodes, decides what is feasible: a random network with 10 ties per node and 100 nodes already has
+46,580,136 maximal 2-cliques of at least 3 nodes (100 nodes, 10,141 maximal 2-plexes; 1,000 nodes, 148,070; 300 nodes,
+3,968,148 maximal 3-plexes). The search itself is fast (maximal 2-plexes of 5,000 nodes are counted in 2 seconds; the
+n-clans of 5,000 nodes in 2.5 seconds), but the result is a sets-by-nodes matrix. These commands therefore stop with a
+clear message (r(484)) when they find more than {opt maxplexes()} / {opt maxcliques()} sets (default 100,000), when
+the matrix would be too large, or after {opt maxtime()} seconds (default 60); {opt countonly} counts the sets
+without storing them and {opt nomatrix} keeps only the per-node variable and the counts. See the help file of each
+command for its measured sizes.
+
 {marker limits_stata}{...}
 {title:Loading a network as Stata variables}
 

@@ -45,8 +45,13 @@ where crossing the Mata/native boundary *once per outer loop* (not once per inne
 eliminates interpreter overhead, and a bespoke kernel avoids licensing questions and heavyweight
 build systems a general library would bring along for a handful of functions actually used.
 
-- `nwgraph.c` — betweenness centrality (Brandes' algorithm), structured to host further
-  general graph kernels behind the same plugin binary over time.
+- `nwgraph.c` — betweenness centrality (Brandes' algorithm) and unweighted distances, structured to
+  host further general graph kernels behind the same plugin binary over time. `nwcomb.h` and
+  `nwcomb2.h` (included by `nwgraph.c`, so still one binary) add the combinatorial kernels: cohesive
+  blocking, factions, line connectivity (equivalent-flow tree), the 4-node motif census, two-mode
+  clustering, and the exhaustive subgroup searches (n-cliques, n-clans, k-plexes) with result and
+  work limits. The Mata side (`nwg_comb()` in `unw_core.do`) probes the plugin once per session and
+  keeps the older Mata code as the fallback.
 
 The boundary is always crossed once per outer loop, never once per inner step. Reproducibility across the Mata/native boundary is
 handled by seeding each plugin's own self-contained RNG from a value the Mata caller draws, so a

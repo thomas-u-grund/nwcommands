@@ -28,13 +28,15 @@ program nwmotifs, rclass
 	// local first, then publishing via `return scalar', matching every
 	// other command built this session (nwfactions/nwmaxflow/
 	// nwmatching/nwpagerank/nwrandomwalk/nwlambda).
-	mata: st_local("__nwmotifs_path", strofreal(`mc'[1]))
-	mata: st_local("__nwmotifs_star", strofreal(`mc'[2]))
-	mata: st_local("__nwmotifs_cycle", strofreal(`mc'[3]))
-	mata: st_local("__nwmotifs_paw", strofreal(`mc'[4]))
-	mata: st_local("__nwmotifs_diamond", strofreal(`mc'[5]))
-	mata: st_local("__nwmotifs_k4", strofreal(`mc'[6]))
-	mata: st_local("__nwmotifs_disc", strofreal(`mc'[7]))
+	// strofreal() without a format keeps 9 significant digits, which cut counts above 999,999,999
+	// (a 1,000-node network has 4 x 10^10 4-node sets); %21.0g keeps every digit of an integer count
+	mata: st_local("__nwmotifs_path", strofreal(`mc'[1], "%21.0g"))
+	mata: st_local("__nwmotifs_star", strofreal(`mc'[2], "%21.0g"))
+	mata: st_local("__nwmotifs_cycle", strofreal(`mc'[3], "%21.0g"))
+	mata: st_local("__nwmotifs_paw", strofreal(`mc'[4], "%21.0g"))
+	mata: st_local("__nwmotifs_diamond", strofreal(`mc'[5], "%21.0g"))
+	mata: st_local("__nwmotifs_k4", strofreal(`mc'[6], "%21.0g"))
+	mata: st_local("__nwmotifs_disc", strofreal(`mc'[7], "%21.0g"))
 
 	return scalar path = `__nwmotifs_path'
 	return scalar star = `__nwmotifs_star'
@@ -55,13 +57,13 @@ program nwmotifs, rclass
 		di
 		di "{txt}    4-node motif census: {res}`netname'{txt}"
 		di
-		di "{txt}{ralign 10:path}{col 12}{c |}{ralign 10:star}{col 24}{c |}{ralign 10:cycle}{col 36}{c |}{ralign 10:paw}{col 48}{c |}"
-		di "{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}"
-		di "{res}{ralign 10:`__nwmotifs_path'}{col 12}{c |}{ralign 10:`__nwmotifs_star'}{col 24}{c |}{ralign 10:`__nwmotifs_cycle'}{col 36}{c |}{ralign 10:`__nwmotifs_paw'}{col 48}{c |}"
+		di "{txt}{ralign 14:path}{col 16}{c |}{ralign 14:star}{col 32}{c |}{ralign 14:cycle}{col 48}{c |}{ralign 14:paw}{col 64}{c |}"
+		di "{hline 15}{c +}{hline 15}{c +}{hline 15}{c +}{hline 15}{c +}"
+		di "{res}{ralign 14:`__nwmotifs_path'}{col 16}{c |}{ralign 14:`__nwmotifs_star'}{col 32}{c |}{ralign 14:`__nwmotifs_cycle'}{col 48}{c |}{ralign 14:`__nwmotifs_paw'}{col 64}{c |}"
 		di
-		di "{txt}{ralign 10:diamond}{col 12}{c |}{ralign 10:k4}{col 24}{c |}{ralign 10:disconn.}{col 36}{c |}"
-		di "{hline 11}{c +}{hline 11}{c +}{hline 11}{c +}"
-		di "{res}{ralign 10:`__nwmotifs_diamond'}{col 12}{c |}{ralign 10:`__nwmotifs_k4'}{col 24}{c |}{ralign 10:`__nwmotifs_disc'}{col 36}{c |}"
+		di "{txt}{ralign 14:diamond}{col 16}{c |}{ralign 14:k4}{col 32}{c |}{ralign 14:disconn.}{col 48}{c |}"
+		di "{hline 15}{c +}{hline 15}{c +}{hline 15}{c +}"
+		di "{res}{ralign 14:`__nwmotifs_diamond'}{col 16}{c |}{ralign 14:`__nwmotifs_k4'}{col 32}{c |}{ralign 14:`__nwmotifs_disc'}{col 48}{c |}"
 	}
 
 	// plot(): a bar chart of the 7 motif-category counts, via this

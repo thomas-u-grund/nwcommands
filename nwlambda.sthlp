@@ -88,6 +88,16 @@ Directed: yes - automatically symmetrized first (edge connectivity has no standa
 generalization in the classical cohesive-subgroup literature, the same choice {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwkcomponents} already make). Weighted: not
 applicable. Signed: not applicable. Two-mode: not checked.
 
+{title:Limits}
+
+{pstd}
+The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): {it:n}-1 maximum flows on the
+sparse network instead of {it:n}({it:n}-1)/2, each stopped as soon as it reaches the smaller degree of the two ends.
+The result is a dense {it:n}-by-{it:n} valued network, which is what takes the memory: 5,000 nodes need about 1.4 GB
+in Stata/BE (200 MB for the matrix itself, the rest for the copies made while the new network is registered).
+Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds
+(the previous version did not finish in 3 minutes at 300 nodes).
+
 {title:Stored results}
 
 	Scalars

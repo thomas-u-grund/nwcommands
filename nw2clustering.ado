@@ -133,6 +133,9 @@ void _nw2c_run(pointer(class nw_def scalar) scalar netobj, real scalar nodes,
 	real scalar pot, clo, m, w1, w2, w3, w4, closed, total_pot, total_clo
 	real colvector alters_c, egos_a0, egos_a1, alters_e0, levelnodes
 	real colvector potv, clov
+	real matrix res, el
+	real rowvector aux
+	real scalar st, mcode
 	string matrix modes
 	string scalar levelstr
 
@@ -147,6 +150,29 @@ void _nw2c_run(pointer(class nw_def scalar) scalar netobj, real scalar nodes,
 	clov = J(nodes,1,.)
 	total_pot = 0
 	total_clo = 0
+
+	// Native kernel (native/nwcomb.h): the same enumeration in C, with the closure test done on a
+	// marker array instead of a neighbour-list copy per path; sums are accumulated in the same
+	// order, so the result is bit-identical. Falls back to the loops below without the plugin.
+	if (nwg_comb_ok()) {
+		el = netobj->edgelist()
+		mcode = (measure=="binary" ? 0 : (measure=="arithmetic" ? 1 : (measure=="geometric" ? 2 : (measure=="maximum" ? 3 : 4))))
+		res = nwg_comb(7, nodes, el, (modes[1,.] :== levelstr)', (mcode), aux, st)
+		if (st != 0) nwg_fail(st, "nw2clustering")
+		potv = J(nodes,1,.)
+		clov = J(nodes,1,.)
+		levelnodes = selectindex(res[.,1] :> 0)
+		if (rows(levelnodes) > 0) {
+			potv[levelnodes] = res[levelnodes,1]
+			clov[levelnodes] = res[levelnodes,2]
+		}
+		total_pot = aux[1]
+		total_clo = aux[2]
+		st_store(., genvar, clov :/ potv)
+		st_numscalar("r(C_global)", total_pot > 0 ? total_clo/total_pot : .)
+		st_numscalar("r(C_avg)", mean(select(clov:/potv, potv:>0)))
+		return
+	}
 
 	for (ci=1; ci<=rows(levelnodes); ci++) {
 		c = levelnodes[ci,1]
