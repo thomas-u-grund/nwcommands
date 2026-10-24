@@ -16,9 +16,9 @@ change over time.
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Start with Tutorial 1](tutorial-1-first-saom/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsaom on GitHub](https://github.com/thomas-u-grund/nwsaom){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Manual on Zenodo](https://doi.org/10.5281/zenodo.23623808){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Manual on Zenodo](https://doi.org/10.5281/zenodo.23623807){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23623808.svg)](https://doi.org/10.5281/zenodo.23623808)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23623807.svg)](https://doi.org/10.5281/zenodo.23623807)
 
 ## What nwsaom is
 
@@ -51,7 +51,7 @@ errors in `nwsaom` are the author's.
 | Data features | covariates, composition change, missing data, structural zeros |
 | Engine | a compiled, multithreaded plugin for macOS, Linux and Windows |
 | Postestimation | goodness of fit, score tests, time-heterogeneity test, relative importance, simulation |
-| Version | 1.0.1 (24 October 2026) |
+| Version | 1.0.2 (24 October 2026) |
 | License | GNU General Public License, version 3 |
 
 ## In this section
@@ -70,7 +70,7 @@ errors in `nwsaom` are the author's.
 ## Links
 
 - Source code and releases: [github.com/thomas-u-grund/nwsaom](https://github.com/thomas-u-grund/nwsaom)
-- The manual (PDF), archived at Zenodo: [doi:10.5281/zenodo.23623808](https://doi.org/10.5281/zenodo.23623808); also in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf)
+- The manual (PDF), archived at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); also in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf)
 - Stata's own documentation: `help nwsaom`, `help nwsaom_estat`, `help nwsaom_remarks`; or the
   [`nwsaom` reference page](../reference/nwsaom)
 - A Stata Journal article on `nwsaom` is in preparation.

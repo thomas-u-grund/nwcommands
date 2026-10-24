@@ -18,7 +18,7 @@ the options and the names that R uses, are in Stata's help files:
 | `help nwergm_structural` | the terms of `structural()`: `twopath`, `transitive`, `cycle()`, `altkstar()`, `degree()` with `by()`, `isolates`, ... |
 | `help nwergm_covterms` | node and dyad covariate terms |
 | `help nwergm_bipartite` | terms for two-mode networks |
-| `help nwergm_operators` | operator terms (development version) |
+| `help nwergm_operators` | operator terms (version 1.1.0) |
 | `help nwergm_constraints` | sampling and observation constraints, proposals |
 | `help nwergm_estimation` | estimation methods and controls, `nwergm simulate`, `estat gof`, `estat mcmcdiag` |
 | `help nwergm_fit` | missing data, fit statistics, `predict` |
@@ -35,7 +35,7 @@ the options and the names that R uses, are in Stata's help files:
 | Dyadic covariates | `edgecov()`, `dyadcov()`, `hamming()` | does another network (kinship, distance) predict ties |
 | Two-mode | `bcov1()`, `bcov2()`, `bfactor1()`, `bdegree1()`, `bdegree2()`, `bstar1()`, `bnodematch1()`, `bgwdegree1()`, `bgwdegree2()`, `bconcurrent1()`, `bdsp1()`, `coincidence()`, `btwostar1()` | how people attach to groups, clubs or events |
 | Curved (estimated decay) | `gwespfree()`, `gwdegreefree()`, `gwodegreefree()`, `gwidegreefree()`, `gwdspfree()`, `gwnspfree()`; two-mode `bgwdegreefree1()`, `bgwdspfree1()`; `altkstar()` | the data choose the decay |
-| Operators (development version) | `operators(Sum() Prod() S() F() NodematchFilter() Symmetrize() Project() I() For() Label() Log() Exp() Offset() Curve())` | terms on a derived network, transformed or combined terms |
+| Operators (version 1.1.0) | `operators(Sum() Prod() S() F() NodematchFilter() Symmetrize() Project() I() For() Label() Log() Exp() Offset() Curve())` | terms on a derived network, transformed or combined terms |
 
 ## How the terms are written
 

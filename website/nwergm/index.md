@@ -39,7 +39,7 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 
 | | |
 |---|---|
-| Terms | 125 of the 139 terms of R's `ergm` 4.12.0 (89.9%), and 125 of the 126 that apply to binary networks (99%); the missing ones are the 13 terms for valued networks and the operator `B`, see [nwergm and R's ergm](rergm/). These counts are those of the development version; version 1.0.1 has about 110 of the 139 |
+| Terms | 125 of the 139 terms of R's `ergm` 4.12.0 (89.9%), and 125 of the 126 that apply to binary networks (99%); the missing ones are the 13 terms for valued networks and the operator `B`, see [nwergm and R's ergm](rergm/). These counts are those of version 1.1.0; version 1.0.1 has about 110 of the 139 terms.|
 | Agreement with ergm | for each term, the observed statistics, the maximum pseudolikelihood estimates and the Monte Carlo maximum likelihood estimates were compared with `ergm` 4.12.0 |
 | Estimators | maximum pseudolikelihood (also penalized and other variants), Monte Carlo maximum likelihood, contrastive divergence, stochastic approximation |
 | Networks | directed, undirected and two-mode (bipartite), binary ties |
@@ -48,12 +48,10 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 | Constraints | sampling and observation constraints (`constraints()`, `obsconstraints()`) |
 | Postestimation | goodness of fit (`estat gof`), MCMC diagnostics (`estat mcmcdiag`), simulation from a fit (`nwergm simulate`) |
 | Engine | a compiled plugin for the Monte Carlo sampler (macOS, Linux, Windows) |
-| Version | 1.0.1 (24 October 2026) |
+| Version | 1.1.0 (24 October 2026) |
 | License | GNU General Public License, version 3 |
 
-Some features described in this section are in the development version and will be in the next release,
-not in 1.0.1: the operator terms (`operators()`: `Sum`, `Prod`, `S`, `F`, `Symmetrize`, `Project`, ...), the term
-`balance`, the curved two-mode terms, and `altkstar` with an estimated decay. Where a page uses them, it says so.
+The operator terms (`operators()`), the term `balance`, the curved two-mode terms and `altkstar` with an estimated decay were added in version 1.1.0; earlier releases do not have them.
 
 ## In this section
 
