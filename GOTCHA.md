@@ -282,3 +282,17 @@ because it ran with such an adopath entry. Fix: no `shell` for file edits; write
 with Stata's `copy`, restore on failure. **Lesson:** never erase a file before its replacement is verified in place,
 never interpolate `c(adopath)`/`c(pwd)`/paths into a shell string, and prefer Stata's `copy`/`erase`/`mkdir` over `shell`.
 Also: subprograms of an ado-file are not callable from a do-file (the test defines its own line counter).
+
+## Scaling audit harness (`tools/scale_audit/`): three measurement traps
+
+- **An empty scratch PLUS makes some commands download packages.** `nwdyadprob` (and `nwhomophily` through it)
+  `ssc install`s gsample and moremata, `nwplot` installs labellist, `nwtabulate` installs tabplot, on first use.
+  With the fresh PLUS the test convention requires, the first call measures about 20 s of download (and fails
+  offline). The harness seeds a PLUS once and copies it per run. Found 2026-10-25: nwdyadprob "took 23 s" for a
+  30-node network.
+- **`quietly` hides `display as error` messages**, so `capture quietly cmd` leaves rc 999 with no explanation
+  in the log. The harness times `capture quietly cmd` and, only for a quick failure, reruns it with output on
+  to read the message. `set output error` is not a substitute (it changed timings).
+- **Stata `-e` puts the batch log in the directory named by the `PWD` environment variable**, not the process
+  cwd. Launching from Python with `cwd=d` but an inherited PWD wrote `audit.log` into the repo root and the
+  do-file was not found. Set `env PWD=d` as well.
