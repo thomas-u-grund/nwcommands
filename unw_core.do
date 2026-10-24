@@ -3093,6 +3093,7 @@ class `NWdef' {
 	string matrix get_edgelist_sparse()
 	void edgelist_full_to_vars()
 	void value_counts_to_vars()
+	real scalar recode_weights()
 	real scalar edgelist_sparse_ok()
 	string scalar get_isolate_source_string()
 	string matrix get_edgelist_compressed()
@@ -7901,10 +7902,10 @@ string matrix `NWdef'::get_edgelist(real scalar undirected){
 	(four times slower).  Refused beyond 5e7 rows, where the list would take
 	several GB and minutes; nwtoedge, compress lists only the ties.
 */
-void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, string scalar valter, string scalar vnet){
+void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, string scalar valter, string scalar vnet, | real scalar crossmode){
 	real scalar n, m, ml, k
 	real colvector v, ri, ci, sel, p, d, g, vals
-	string rowvector nm
+	string rowvector nm, md
 	string colvector s
 
 	n = get_nodes()
@@ -7922,6 +7923,17 @@ void `NWdef'::edgelist_full_to_vars(real scalar undirected, string scalar vego, 
 	if (undirected){
 		sel = nw_which(ri :>= ci)
 		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+	}
+	// two-mode: only the dyads between the modes (what nw2toedge keeps)
+	if (crossmode == 1){
+		md = get_modes()
+		sel = nw_which((md')[ri] :!= (md')[ci])
+		v = v[sel]; ri = ri[sel]; ci = ci[sel]
+		m = rows(v)
+		if (m == 0){
+			st_addvar("str1", vego); st_addvar("str1", valter); st_addvar("double", vnet)
+			return
+		}
 	}
 	// the text round trip, once per distinct value
 	p = order(v, 1)
@@ -7991,6 +8003,92 @@ void `NWdef'::value_counts_to_vars(real scalar undirected, string scalar vval, s
 	st_addobs(rows(uc))
 	st_store(., st_addvar("double", vval), uc[,1])
 	st_store(., st_addvar("double", vfreq), uc[,2])
+}
+
+/*
+	Recode the tie values in place (nwrecode): oldv holds the distinct values
+	the cells of this network show (as value_counts_to_vars() lists them,
+	ascending, missing last) and newv what each becomes.  Every stored tie
+	takes the new value of its (text-round-tripped) old one; ties that become
+	0 are dropped.  Only valid when 0 stays 0, missing stays missing and no
+	tie becomes missing (nw_recode_fastok()).  O(ties).  Returns 1 when the
+	recoded matrix is symmetric, else 0.
+*/
+real scalar `NWdef'::recode_weights(real colvector oldv, real colvector newv){
+	real matrix el
+	real colvector rt, x, o, isold, pos, idx, neww, keep, r, c, k1, k2, o1, o2
+	real scalar m, n, wasvalued
+
+	ensure_sparse_built()
+	n = get_nodes()
+	// like the dense code (set_edge()), leave the valued flag as it was
+	wasvalued = isvalued
+	el = edgelist()
+	m = rows(el)
+	if (m == 0){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	rt = strtoreal(strofreal(el[,3]))
+	// position of every tie value among the distinct old values
+	x = oldv \ rt
+	isold = J(rows(oldv), 1, 1) \ J(m, 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	neww = newv[idx]
+	if (!any(neww :!= 0)){
+		set_edge_from_triplets(J(0,1,0), J(0,1,0), J(0,1,0), 1)
+		isvalued = wasvalued
+		return(1)
+	}
+	keep = nw_which(neww :!= 0)
+	r = el[keep, 1]
+	c = el[keep, 2]
+	neww = neww[keep]
+	set_edge_from_triplets(r, c, neww, 1)
+	isvalued = wasvalued
+	k1 = r :* (n + 1) :+ c
+	k2 = c :* (n + 1) :+ r
+	o1 = order(k1, 1)
+	o2 = order(k2, 1)
+	return(all(k1[o1] :== k2[o2]) & all(neww[o1] :== neww[o2]))
+}
+
+/*
+	nw_recode_matrix(M, oldv, newv): M with every cell replaced by the new
+	value of its (text-round-tripped) old value; the cells of M hold only
+	values listed in oldv.
+*/
+real matrix nw_recode_matrix(real matrix M, real colvector oldv, real colvector newv){
+	real colvector x, o, isold, pos, idx
+
+	x = oldv \ strtoreal(strofreal(vec(M)))
+	isold = J(rows(oldv), 1, 1) \ J(rows(x) - rows(oldv), 1, 0)
+	o = order((x, isold :== 0), (1, 2))
+	pos = J(rows(x), 1, 0)
+	pos[o] = runningsum(isold[o])
+	idx = pos[|rows(oldv)+1 \ rows(x)|]
+	return(colshape(newv[idx], rows(M))')
+}
+
+/*
+	nw_recode_fastok(oldv, newv): TRUE when a recode that maps the distinct
+	values oldv to newv can be applied to the stored ties alone: 0 stays 0,
+	missing stays missing, and no tie value becomes missing.
+*/
+real scalar nw_recode_fastok(real colvector oldv, real colvector newv){
+	real colvector z, mm, nn
+
+	z = oldv :== 0
+	mm = oldv :>= .
+	nn = (oldv :!= 0) :& (oldv :< .)
+	if (any(z)) if (any(newv[nw_which(z)] :!= 0)) return(0)
+	if (any(mm)) if (any(newv[nw_which(mm)] :!= oldv[nw_which(mm)])) return(0)
+	if (any(nn)) if (any(newv[nw_which(nn)] :>= .)) return(0)
+	return(1)
 }
 
 /*

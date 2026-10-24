@@ -34,67 +34,106 @@ program nwrecode
 		// exports it directly.
 		_nwsyntax `onenet'
 		local onedirected `directed'
-		// was "forcedirected" - nwtoedge has no such option; the
-		// option that actually forces both (i,j) and (j,i) into the
-		// edgelist (so an undirected network's recode applies
-		// symmetrically, not just to the upper triangle) is "full".
-		nwtoedge `onenet', full
-		// Isolate preservation (#5) is for a genuine round trip back to
-		// the SAME node set nwtoedge started from - wrong here, where
-		// `recode' below can legitimately zero out every one of a
-		// node's own ties (a real recode effect, not an accidental
-		// loss). Clear it so the nwfromedge call further below treats
-		// this edgelist as it would any other with no such history.
-		char _dta[nwtoedge_nodes] ""
-		recode `onenet' `rules', `options'
-		// was "_fromid _toid" - nwtoedge's actual default output
-		// variable names are _ego/_alter (see nwtoedge.ado's own
-		// ego()/alter() option defaults); _fromid/_toid never existed.
-		qui nwfromedge _ego _alter `onenet', name(__temp_network)
-		nwtomata __temp_network, mat(recodeNet)
-		if "`generate'" == "" & "`prefix'" == "" {
-			nwreplacemat `onenet', newmat(recodeNet)
+
+		// The recode is applied to the DISTINCT tie values (with the number
+		// of dyads holding each, zeros included), not to a listing of all
+		// N x N dyads: Stata's own recode on a small dataset, so every rule
+		// form recode knows works, and then the stored ties take the new
+		// values.  O(ties).
+		drop _all
+		mata: `netobj'->value_counts_to_vars(0, "`onenet'", "__nwrec_fq")
+		qui gen double __nwrec_old = `onenet'
+		if `"`options'"' == "" {
+			qui recode `onenet' `rules'
 		}
 		else {
-			// BUGFIX: nwduplicate's own collision guard silently
-			// auto-renames the DUPLICATE to a fresh name on collision
-			// (e.g. `target'_1), but this code still called
-			// nwreplacemat on the literal REQUESTED name regardless -
-			// so if that name already belonged to some unrelated,
-			// pre-existing network, THAT network got silently resized
-			// and overwritten with the recoded result, while the
-			// actual recoded duplicate was left un-recoded under the
-			// auto-renamed orphan name. Resolved the same way as
-			// nwtranspose.ado's own identical bug: resolve the actual
-			// (possibly auto-incremented) target name via nwvalidate
-			// BEFORE calling nwduplicate, so nwduplicate is only ever
-			// asked to create under a name already confirmed free -
-			// nwreplacemat then always operates on the exact network
-			// nwduplicate actually just created.
+			recode `onenet' `rules', `options'
+		}
+		mata: st_local("__fast", strofreal(nw_recode_fastok(st_data(., "__nwrec_old"), st_data(., "`onenet'"))))
+		mata: st_local("__nchg", strofreal(sum(st_data(., "__nwrec_fq") :* (st_data(., "`onenet'") :!= st_data(., "__nwrec_old"))), "%18.0g"))
+		di "{txt}(" string(`__nchg', "%18.0gc") " changes made to `onenet')"
+
+		if `__fast' {
+			// every target: the network itself, or a copy of it
+			local targets ""
+			local inplace = ("`generate'" == "" & "`prefix'" == "")
 			if "`prefix'" != "" {
 				nwvalidate `prefix'`onenet'
 				local prefixtarget = r(validname)
 				nwduplicate `onenet', name(`prefixtarget')
-				nwreplacemat `prefixtarget', newmat(recodeNet)
+				local targets "`targets' `prefixtarget'"
 			}
 			if "`generate'" != "" {
 				if "``i''" != "" {
 					nwvalidate ``i''
 					local gentarget = r(validname)
 					nwduplicate `onenet', name(`gentarget')
-					nwreplacemat `gentarget', newmat(recodeNet)
+					local targets "`targets' `gentarget'"
 				}
 				else {
-					nwreplacemat `onenet', newmat(recodeNet)
+					local inplace 1
 				}
 			}
+			foreach tg in `targets' {
+				_nwsyntax `tg'
+				mata: st_numscalar("__nwrec_sym", `netobj'->recode_weights(st_data(., "__nwrec_old"), st_data(., "`onenet'")))
+				mata: `netobj'->set_directed(1 - st_numscalar("__nwrec_sym"))
+			}
+			if `inplace' {
+				_nwsyntax `onenet'
+				mata: st_numscalar("__nwrec_sym", `netobj'->recode_weights(st_data(., "__nwrec_old"), st_data(., "`onenet'")))
+				nwname `onenet', newdirected(`onedirected')
+			}
+			capture scalar drop __nwrec_sym
 		}
-		capture nwdrop __temp_network
-		mata: mata drop recodeNet
+		else {
+			// a rule that gives the empty dyads a value, or turns ties into
+			// missing values: the whole matrix is recoded
+			mata: __nwrec_o = st_data(., "__nwrec_old")
+			mata: __nwrec_n = st_data(., "`onenet'")
+			_nwrecode_dense `onenet', rules(`"`rules'"') generate("`generate'") prefix("`prefix'") gi(`i') onedirected(`onedirected')
+			capture mata: mata drop __nwrec_o __nwrec_n
+		}
 		local i = `i' + 1
-		nwname `onenet', newdirected(`onedirected')
 	}
 	restore
 end
+
+
+// The general case of nwrecode: the matrix itself is recoded cell by cell
+// (the distinct-value map __nwrec_o -> __nwrec_n is in Mata).
+capture program drop _nwrecode_dense
+program _nwrecode_dense
+	syntax anything(name=onenet), rules(string) [generate(string) prefix(string) gi(integer 1) onedirected(string)]
+
+	tokenize `generate'
+	_nwsyntax `onenet'
+	mata: __nwrec_M = nw_recode_matrix(`netobj'->get_matrix_copy(), __nwrec_o, __nwrec_n)
+	if "`generate'" == "" & "`prefix'" == "" {
+		nwreplacemat `onenet', newmat(__nwrec_M)
+	}
+	else {
+		if "`prefix'" != "" {
+			nwvalidate `prefix'`onenet'
+			local prefixtarget = r(validname)
+			nwduplicate `onenet', name(`prefixtarget')
+			nwreplacemat `prefixtarget', newmat(__nwrec_M)
+		}
+		if "`generate'" != "" {
+			if "``gi''" != "" {
+				nwvalidate ``gi''
+				local gentarget = r(validname)
+				nwduplicate `onenet', name(`gentarget')
+				nwreplacemat `gentarget', newmat(__nwrec_M)
+			}
+			else {
+				nwreplacemat `onenet', newmat(__nwrec_M)
+			}
+		}
+	}
+	mata: mata drop __nwrec_M
+	nwname `onenet', newdirected(`onedirected')
+end
+
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

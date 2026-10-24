@@ -59,6 +59,7 @@ program nw2toedge
 	}
 
 	local i = 0
+	local __early 0
 	qui foreach net in `nets' {
 		_nwsyntax `net'
 		tempfile __nwedgelist`i'
@@ -66,19 +67,40 @@ program nw2toedge
 		if "`upper'" != "" & "`directed'" == "true" {
 			noi di "{txt}Warning! Network {res}`net'{txt} is directed. Option {res}upper{txt} surpressed."
 		}
-		mata: __nwedgelist`i' = (`netobj'->get_edgelist((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
-		preserve
-		drop _all
-		tempvar include
-		tempvar transp
-		getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
-		destring `include', replace force
-		capture drop if `include' != 1
-		capture drop `include'
-		destring `net', replace force
-		mata: mata drop __nwedgelist`i'
-		save `__nwedgelist`i''
-		restore
+		// compress with ONE network: list only the stored ties (see nwtoedge);
+		// otherwise every dyad - of a two-mode network only those between
+		// the modes, the only ones kept at the end
+		local __sparseok 0
+		if "`compress'" != "" & `: word count `nets'' == 1 {
+			mata: st_local("__sparseok", strofreal(`netobj'->edgelist_sparse_ok()))
+		}
+		local __cross = ("`is2mode'" == "true" & "`ignore2mode'" == "" & `: word count `nets'' == 1)
+		if `__sparseok' {
+			mata: __nwedgelist`i' = (`netobj'->get_edgelist_sparse((("`upper'" != "" | "`directed'" == "false") & "`full'" == "")))[,(1::5)]
+			preserve
+			drop _all
+			tempvar include
+			tempvar transp
+			getmata (`ego' `alter' `net' `include' `transp') = __nwedgelist`i', force
+			destring `include', replace force
+			capture drop if `include' != 1
+			capture drop `include'
+			destring `net', replace force
+			mata: mata drop __nwedgelist`i'
+			save `__nwedgelist`i''
+			restore
+			local __early 1
+		}
+		else {
+			preserve
+			drop _all
+			// ego, alter and value straight into variables (see nwtoedge)
+			mata: `netobj'->edgelist_full_to_vars((("`upper'" != "" | "`directed'" == "false") & "`full'" == ""), "`ego'", "`alter'", "`net'", `__cross')
+			compress `net'
+			save `__nwedgelist`i''
+			restore
+			if `__cross' local __early 1
+		}
 		local i = `i' + 1
 	}
 
@@ -92,12 +114,12 @@ program nw2toedge
 	qui if trim("`egovars'") != "" {
 		capture drop `nw_nodename'
 		gen `nw_nodename' = `ego'
-		merge m:n (`nw_nodename') using `fromfile', nogenerate
+		merge m:n (`nw_nodename') using `fromfile', nogenerate `=cond(`__early', "keep(master match)", "")'
 	}
 	qui if trim("`altervars'") != "" {
 		capture drop `nw_nodename'
 		gen `nw_nodename' = `alter'
-		merge m:n (`nw_nodename') using `tofile', nogenerate
+		merge m:n (`nw_nodename') using `tofile', nogenerate `=cond(`__early', "keep(master match)", "")'
 	}
 	capture drop `nw_nodename'
 	sort `ego' `alter'
