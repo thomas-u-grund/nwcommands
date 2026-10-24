@@ -7,6 +7,10 @@ lib/*.log
 # docs/TUTORIALS_STYLE.md, each is the real, traceable Stata run backing
 # that tutorial page's code blocks, not a disposable debug log.
 !website/tutorials/**/example.log
+!website/nwsaom/**/example.log
+!website/nwergm/**/example.log
+!website/nwdynam/**/example.log
+!website/nwrem/**/example.log
 
 # Editor/OS
 .DS_Store
