@@ -1,5 +1,5 @@
 ---
-title: "REM: Install"
+title: "Install"
 parent: "nwrem (REM)"
 nav_order: 1
 permalink: /nwrem/install/

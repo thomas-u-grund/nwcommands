@@ -1,7 +1,7 @@
 ---
-title: "REM: How to cite"
+title: "How to cite"
 parent: "nwrem (REM)"
-nav_order: 6
+nav_order: 5
 permalink: /nwrem/citation/
 description: "How to cite nwrem, and the original paper and software it builds on."
 ---

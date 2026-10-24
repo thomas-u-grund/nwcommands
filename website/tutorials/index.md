@@ -1,12 +1,12 @@
 ---
-title: Tutorials
+title: "nwcommands tutorials"
 parent: "nwcommands (core)"
 nav_order: 2
 has_children: true
 description: "Worked, step-by-step tutorials for nwcommands, with real Stata output."
 ---
 
-# Tutorials
+# nwcommands tutorials
 
 Short, worked walkthroughs — plain-language explanation first, then a real Stata command,
 then the actual console output that command produces. If you'd rather look up a specific
