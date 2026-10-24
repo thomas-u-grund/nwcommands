@@ -183,91 +183,154 @@ program nwinstall
 		
 		
 	if "`permanently'" != "" {
-		if "`remove'" != "" {
-			capture findfile "profile.do", path("`path'")
-			local existingProfile "`r(fn)'"
-			if _rc == 0 {
-				file open `fh1' using "`r(fn)'", read
-				// BUGFIX: was "`path'\profile_temp.do" - a literal
-				// backslash is not a path separator on Mac/Linux, so
-				// this actually opened a file named "<path's own last
-				// component>\profile_temp.do" in path's PARENT
-				// directory, not "profile_temp.do" inside path itself.
-				// Combined with the erase below (unconditional) and the
-				// MacOSX branch's own mv sourcing from the wrong
-				// location entirely (c(sysdir_stata), never touched by
-				// this file open), the net effect on Mac (and, since no
-				// Unix branch existed at all, presumably Linux) was
-				// silent, permanent data loss: the original profile.do
-				// was deleted and no replacement was ever written in its
-				// place, with rc=0 throughout. Fixed to a forward slash,
-				// which works correctly on every platform including
-				// Windows (Stata's own file-open path handling accepts
-				// forward slashes there too).
-				file open `fh2' using "`path'/profile_temp.do", write replace
-				file read `fh1' line
-				while r(eof) == 0 {
-					if "`line'" != "nwinstall, usermenu" {
-						file write `fh2' `"`line'"' _n
-					}
-					file read `fh1' line
-				}
-				file close `fh1'
-				file close `fh2'
-				erase `existingProfile'
-				if c(os) == "MacOSX" | c(os) == "Unix" {
-					// BUGFIX: sourced from `c(sysdir_stata)' - a
-					// completely different location than where fh2 was
-					// actually written just above (`path') - so this mv
-					// always failed ("No such file or directory",
-					// visible in the log but not surfaced as a Stata
-					// error since `shell' does not propagate the
-					// underlying command's own exit code to `_rc').
-					// Fixed to source from `path', matching the file
-					// open above. Also now covers plain "Unix" (Linux),
-					// not just "MacOSX" - previously c(os) values other
-					// than "MacOSX"/"Windows" silently did nothing after
-					// the erase, an equally destructive gap.
-					shell export PATH="$PATH:`:environ PATH':`c(pwd)':`path':`c(adopath)':/usr/local/bin:/usr/bin:/opt/local/bin:/opt/ImageMagick/bin/:`imagick'/";mv `path'/profile_temp.do `existingProfile'
-				}
-				if c(os) == "Windows" {
-					di "shell rename `path'/profile_temp.do `existingProfile'"
-					shell rename `path'\profile_temp.do `existingProfile'
-				}
+		// BUGFIX (3.1.1): the profile.do edit no longer uses `shell' (mv/rename) at all.
+		// The old Mac/Unix code built  shell export PATH="...`c(adopath)'..."; mv ...
+		// and c(adopath) contains compound-quoted entries (`"dir"') whenever a directory
+		// was added with `adopath ++ "dir"'. That unbalanced the shell quote, so mv never ran,
+		// while the original profile.do had already been erased: silent loss of the user's
+		// profile.do. Now the new content goes to a temp file, is verified, and replaces the
+		// original with Stata's own copy (no shell, no quoting issue, same on every OS); the
+		// original is never erased, and any failure leaves it untouched (or restores it).
+		capture findfile "profile.do", path(`"`path'"')
+		if _rc == 0 {
+			local existingProfile `"`r(fn)'"'
+			if "`remove'" != "" {
+				nwinstall_rewriteprofile, file(`"`existingProfile'"') tmp(`"`path'/profile_nwinstall.tmp"') action(remove)
 			}
-
-		}
-		
-			
-		// add to profile
-		else  {
-			capture findfile "profile.do",  path("`path'")
-			if _rc == 0{
-				local alreadyInstalled = 0
-				file open `fh1' using "`path'/profile.do", read 
-				file read `fh1' line
-				while r(eof) == 0 {
-					if `"`line'"' == "nwinstall, usermenu" {
-						local alreadyInstalled = 1
-					}
-					file read `fh1' line
-				}
-				file close `fh1'
-				
-				if `alreadyInstalled' == 0 {
-					file open `fh2' using "`path'/profile.do", write append
-					file write `fh2' `"nwinstall, downloadoff"' _n
-					file close `fh2'
-				}	
-			}
-			// write profile.do
 			else {
-				file open `fh2' using "`path'/profile.do", write
+				nwinstall_rewriteprofile, file(`"`existingProfile'"') tmp(`"`path'/profile_nwinstall.tmp"') action(add)
+			}
+		}
+		else if "`remove'" == "" {
+			// no profile.do yet: create it
+			capture file open `fh2' using `"`path'/profile.do"', write text
+			if _rc != 0 {
+				di as error `"nwinstall: could not create `path'/profile.do (rc = `=_rc')"'
+			}
+			else {
 				file write `fh2' `"nwinstall, usermenu"' _n
 				file close `fh2'
 			}
 		}
 	}	
+end
+
+
+capture program drop nwinstall_countlines
+program nwinstall_countlines, rclass
+	// number of lines of a text file; r(rc) != 0 if it cannot be read
+	syntax , file(string)
+	tempname fh
+	return scalar n = 0
+	capture file open `fh' using `"`file'"', read text
+	if _rc != 0 {
+		return scalar rc = _rc
+		exit
+	}
+	local n = 0
+	capture {
+		file read `fh' line
+		while r(eof) == 0 {
+			local ++n
+			file read `fh' line
+		}
+	}
+	local rc = _rc
+	capture file close `fh'
+	return scalar rc = `rc'
+	return scalar n = `n'
+end
+
+
+capture program drop nwinstall_rewriteprofile
+program nwinstall_rewriteprofile
+	// Adds (action(add)) or removes (action(remove)) the line "nwinstall, usermenu"
+	// ("nwinstall, downloadoff", written by older versions, counts as the same line) in profile.do.
+	// Safe edit: new content -> tmp file, verified by line count, backup of the original, replace
+	// via -copy- (no shell), verify again, restore the backup on any failure. The original is
+	// never erased; if anything fails it is left as it was and a message is printed.
+	syntax , file(string) tmp(string) action(string)
+	tempname fin fout
+	capture erase `"`tmp'"'
+	capture file open `fin' using `"`file'"', read text
+	if _rc != 0 {
+		di as error `"nwinstall: cannot read `file' (rc = `=_rc'); profile.do left unchanged"'
+		exit
+	}
+	capture file open `fout' using `"`tmp'"', write text replace
+	if _rc != 0 {
+		local rc = _rc
+		capture file close `fin'
+		di as error `"nwinstall: cannot write the temporary file `tmp' (rc = `rc'); profile.do left unchanged"'
+		exit
+	}
+	local found = 0
+	local nout = 0
+	capture {
+		file read `fin' line
+		while r(eof) == 0 {
+			local t = strtrim(`"`line'"')
+			if `"`t'"' == "nwinstall, usermenu" | `"`t'"' == "nwinstall, downloadoff" {
+				local found = 1
+				if "`action'" == "add" {
+					file write `fout' `"`line'"' _n
+					local ++nout
+				}
+			}
+			else {
+				file write `fout' `"`line'"' _n
+				local ++nout
+			}
+			file read `fin' line
+		}
+		if "`action'" == "add" & `found' == 0 {
+			file write `fout' `"nwinstall, usermenu"' _n
+			local ++nout
+		}
+	}
+	local rc = _rc
+	capture file close `fin'
+	capture file close `fout'
+	if `rc' != 0 {
+		capture erase `"`tmp'"'
+		di as error `"nwinstall: editing profile.do failed (rc = `rc'); profile.do left unchanged"'
+		exit
+	}
+	// nothing to change
+	if (`found' == 1 & "`action'" == "add") | (`found' == 0 & "`action'" == "remove") {
+		capture erase `"`tmp'"'
+		exit
+	}
+	nwinstall_countlines, file(`"`tmp'"')
+	if r(rc) != 0 | r(n) != `nout' {
+		capture erase `"`tmp'"'
+		di as error "nwinstall: the edited copy of profile.do could not be verified; profile.do left unchanged"
+		exit
+	}
+	local bak `"`file'.nwinstall_bak"'
+	capture copy `"`file'"' `"`bak'"', replace
+	if _rc != 0 {
+		capture erase `"`tmp'"'
+		di as error "nwinstall: could not make a backup of profile.do; profile.do left unchanged"
+		exit
+	}
+	capture copy `"`tmp'"' `"`file'"', replace
+	local rc = _rc
+	nwinstall_countlines, file(`"`file'"')
+	if `rc' != 0 | r(rc) != 0 | r(n) != `nout' {
+		capture copy `"`bak'"' `"`file'"', replace
+		if _rc != 0 {
+			di as error `"nwinstall: writing profile.do failed and it could not be restored automatically; your original is saved as `bak'"'
+		}
+		else {
+			capture erase `"`bak'"'
+			di as error "nwinstall: writing profile.do failed; the original was restored"
+		}
+		capture erase `"`tmp'"'
+		exit
+	}
+	capture erase `"`tmp'"'
+	capture erase `"`bak'"'
 end
 
 
